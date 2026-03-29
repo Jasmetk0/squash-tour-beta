@@ -1,0 +1,69 @@
+{
+  "countries": [
+    {
+      "code": "EGY",
+      "name": "Egypt",
+      "region": "MENA",
+      "population": 112000000,
+      "squash_popularity": 0.95,
+      "infrastructure_level": 0.9,
+      "development_pipeline_quality": 0.94,
+      "elite_system_strength": 0.96,
+      "historical_tradition": 0.93,
+      "travel_region": "MENA",
+      "travel_affinity": {"EUROPE": 0.76, "ASIA": 0.68, "AMERICAS": 0.55}
+    },
+    {
+      "code": "ENG",
+      "name": "England",
+      "region": "EUROPE",
+      "population": 57000000,
+      "squash_popularity": 0.78,
+      "infrastructure_level": 0.87,
+      "development_pipeline_quality": 0.86,
+      "elite_system_strength": 0.84,
+      "historical_tradition": 0.92,
+      "travel_region": "EUROPE",
+      "travel_affinity": {"MENA": 0.72, "ASIA": 0.66, "AMERICAS": 0.71}
+    },
+    {
+      "code": "PAK",
+      "name": "Pakistan",
+      "region": "ASIA",
+      "population": 241000000,
+      "squash_popularity": 0.62,
+      "infrastructure_level": 0.58,
+      "development_pipeline_quality": 0.61,
+      "elite_system_strength": 0.63,
+      "historical_tradition": 0.96,
+      "travel_region": "ASIA",
+      "travel_affinity": {"MENA": 0.61, "EUROPE": 0.54, "AMERICAS": 0.43}
+    },
+    {
+      "code": "USA",
+      "name": "United States",
+      "region": "AMERICAS",
+      "population": 333000000,
+      "squash_popularity": 0.42,
+      "infrastructure_level": 0.61,
+      "development_pipeline_quality": 0.54,
+      "elite_system_strength": 0.5,
+      "historical_tradition": 0.38,
+      "travel_region": "AMERICAS",
+      "travel_affinity": {"EUROPE": 0.72, "MENA": 0.49, "ASIA": 0.53}
+    },
+    {
+      "code": "NGA",
+      "name": "Nigeria",
+      "region": "AFRICA",
+      "population": 223000000,
+      "squash_popularity": 0.24,
+      "infrastructure_level": 0.28,
+      "development_pipeline_quality": 0.22,
+      "elite_system_strength": 0.2,
+      "historical_tradition": 0.19,
+      "travel_region": "AFRICA",
+      "travel_affinity": {"EUROPE": 0.58, "MENA": 0.52, "ASIA": 0.33}
+    }
+  ]
+}

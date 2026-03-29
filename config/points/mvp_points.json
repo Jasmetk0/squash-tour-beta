@@ -1,0 +1,28 @@
+{
+  "point_distributions": {
+    "world_tour_platinum": {
+      "winner": 2500,
+      "finalist": 1650,
+      "semifinalist": 1000,
+      "quarterfinalist": 520,
+      "round_of_16": 270,
+      "round_of_32": 140
+    },
+    "world_tour_gold": {
+      "winner": 1400,
+      "finalist": 920,
+      "semifinalist": 560,
+      "quarterfinalist": 290,
+      "round_of_16": 150,
+      "round_of_32": 80
+    },
+    "elite_challenger": {
+      "winner": 800,
+      "finalist": 525,
+      "semifinalist": 320,
+      "quarterfinalist": 165,
+      "round_of_16": 85,
+      "round_of_32": 45
+    }
+  }
+}

@@ -11,6 +11,17 @@ from beta_engine.domain.draws import (
     GeneratedDraw,
     LuckyLoserHook,
 )
+from beta_engine.domain.matches import (
+    MatchContext,
+    MatchEngine,
+    MatchParticipantContext,
+    MatchResult,
+    MatchTerminationReason,
+    RetirementRule,
+    RetirementTrigger,
+    SetResult,
+)
+
 from beta_engine.domain.entries import (
     AcceptanceList,
     AcceptanceStatus,
@@ -44,6 +55,14 @@ __all__ = [
     "DrawType",
     "GeneratedDraw",
     "LuckyLoserHook",
+    "MatchContext",
+    "MatchEngine",
+    "MatchParticipantContext",
+    "MatchResult",
+    "MatchTerminationReason",
+    "RetirementRule",
+    "RetirementTrigger",
+    "SetResult",
     "AcceptanceList",
     "AcceptanceStatus",
     "EntryDecision",

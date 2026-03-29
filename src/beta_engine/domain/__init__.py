@@ -2,6 +2,15 @@
 
 from beta_engine.domain.countries import CountriesConfig, Country, CountryTalentModel
 from beta_engine.domain.players import HiddenCareerTraits, Player, PlayerGenerator
+from beta_engine.domain.draws import (
+    DrawEngine,
+    DrawEntrantType,
+    DrawNode,
+    DrawSlot,
+    DrawType,
+    GeneratedDraw,
+    LuckyLoserHook,
+)
 from beta_engine.domain.entries import (
     AcceptanceList,
     AcceptanceStatus,
@@ -28,6 +37,13 @@ __all__ = [
     "HiddenCareerTraits",
     "Player",
     "PlayerGenerator",
+    "DrawEngine",
+    "DrawEntrantType",
+    "DrawNode",
+    "DrawSlot",
+    "DrawType",
+    "GeneratedDraw",
+    "LuckyLoserHook",
     "AcceptanceList",
     "AcceptanceStatus",
     "EntryDecision",

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import exp
+from typing import ClassVar
 
 from beta_engine.core import DeterministicRng, SeedScope
 from beta_engine.domain.matches.models import (
@@ -20,6 +21,34 @@ class MatchEngine:
     """Set-by-set BO5 simulation using deterministic RNG only."""
 
     rng: DeterministicRng
+
+    STYLE_MATCHUP_EDGES: ClassVar[dict[tuple[str, str], float]] = {
+        ("attacking", "retrieving"): 0.014,
+        ("retrieving", "attacking"): -0.014,
+        ("counter-punching", "attacking"): 0.012,
+        ("attacking", "counter-punching"): -0.012,
+        ("front-court", "counter-punching"): 0.011,
+        ("counter-punching", "front-court"): -0.011,
+        ("retrieving", "front-court"): 0.009,
+        ("front-court", "retrieving"): -0.009,
+        ("tempo-controller", "attacking"): 0.008,
+        ("attacking", "tempo-controller"): -0.008,
+        ("tempo-controller", "retrieving"): -0.006,
+        ("retrieving", "tempo-controller"): 0.006,
+    }
+
+    ARCHETYPE_MATCHUP_EDGES: ClassVar[dict[tuple[str, str], float]] = {
+        ("explosive shotmaker", "durable grinder"): 0.011,
+        ("durable grinder", "explosive shotmaker"): -0.011,
+        ("durable grinder", "late-blooming worker"): 0.007,
+        ("late-blooming worker", "durable grinder"): -0.007,
+        ("all-court tactician", "explosive shotmaker"): 0.01,
+        ("explosive shotmaker", "all-court tactician"): -0.01,
+        ("quick interceptor", "all-court tactician"): 0.009,
+        ("all-court tactician", "quick interceptor"): -0.009,
+        ("late-blooming worker", "quick interceptor"): 0.008,
+        ("quick interceptor", "late-blooming worker"): -0.008,
+    }
 
     def simulate(self, context: MatchContext) -> MatchResult:
         player_a = context.player_a.player
@@ -187,21 +216,10 @@ class MatchEngine:
         archetype_a: str,
         archetype_b: str,
     ) -> tuple[float, float]:
-        style_edges: dict[tuple[str, str], float] = {
-            ("attacking", "counter"): 0.022,
-            ("counter", "attacking"): -0.022,
-            ("balanced", "attacking"): 0.008,
-            ("attacking", "balanced"): -0.008,
-            ("counter", "balanced"): 0.008,
-            ("balanced", "counter"): -0.008,
-        }
-        archetype_edges: dict[tuple[str, str], float] = {
-            ("all_court", "defensive"): 0.01,
-            ("defensive", "all_court"): -0.01,
-            ("aggressive", "defensive"): 0.01,
-            ("defensive", "aggressive"): -0.01,
-        }
-        adj_a = style_edges.get((style_a, style_b), 0.0) + archetype_edges.get((archetype_a, archetype_b), 0.0)
+        adj_a = MatchEngine.STYLE_MATCHUP_EDGES.get((style_a, style_b), 0.0) + MatchEngine.ARCHETYPE_MATCHUP_EDGES.get(
+            (archetype_a, archetype_b),
+            0.0,
+        )
         return adj_a, -adj_a
 
     @staticmethod

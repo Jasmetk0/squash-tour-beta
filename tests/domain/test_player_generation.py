@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.countries import Country, CountryTalentModel
+from beta_engine.domain.matches import MatchEngine
 from beta_engine.domain.players import PlayerGenerator
 from beta_engine.infrastructure.world_config import (
     PlayerIdentityConfig,
@@ -131,3 +132,23 @@ def test_generated_player_has_required_mvp_fields() -> None:
         "resilience",
     }
     assert set(player.hidden_career_traits.model_dump().keys()) == hidden_fields
+
+
+def test_generated_identity_values_are_supported_by_matchup_logic() -> None:
+    generator, countries, _ = _generator(444)
+
+    generated_styles: set[str] = set()
+    generated_archetypes: set[str] = set()
+    for country in countries:
+        for sequence in range(1, 26):
+            player = generator.generate(country=country, sequence=sequence)
+            generated_styles.add(player.play_style)
+            generated_archetypes.add(player.archetype)
+
+    supported_styles = {left for left, _ in MatchEngine.STYLE_MATCHUP_EDGES}
+    supported_archetypes = {left for left, _ in MatchEngine.ARCHETYPE_MATCHUP_EDGES}
+
+    assert generated_styles
+    assert generated_archetypes
+    assert generated_styles.issubset(supported_styles)
+    assert generated_archetypes.issubset(supported_archetypes)

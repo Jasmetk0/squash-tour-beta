@@ -1,0 +1,39 @@
+{
+  "player_quality_weight": 0.36,
+  "tournament_strength_weight": 0.18,
+  "prestige_weight": 0.14,
+  "travel_weight": 0.12,
+  "ambition_weight": 0.08,
+  "professionalism_weight": 0.04,
+  "schedule_aggression_weight": 0.05,
+  "travel_tolerance_weight": 0.04,
+  "age_weight": 0.03,
+  "baseline_bias": -0.22,
+  "main_quality_target": 0.62,
+  "qualification_quality_target": 0.45,
+  "main_margin": 0.03,
+  "qualification_margin": 0.1,
+  "withdrawal_placeholder_slots": 1,
+  "late_replacement_placeholder_slots": 1,
+  "direct_acceptance_slots_buffer": 0,
+  "tour_level_strength": {
+    "WORLD_TOUR": 0.92,
+    "ELITE_TOUR": 0.74
+  },
+  "tour_level_prestige": {
+    "WORLD_TOUR": 0.95,
+    "ELITE_TOUR": 0.78
+  },
+  "category_strength": {
+    "PLATINUM": 0.97,
+    "GOLD": 0.84,
+    "ELITE_MAJOR": 0.76,
+    "ELITE_CHALLENGER": 0.62
+  },
+  "category_prestige": {
+    "PLATINUM": 0.98,
+    "GOLD": 0.87,
+    "ELITE_MAJOR": 0.81,
+    "ELITE_CHALLENGER": 0.64
+  }
+}

@@ -7,6 +7,12 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from beta_engine.application.finals_models import FinalsSimulationResult
+from beta_engine.application.rollover_models import (
+    NextSeasonPlayerRecord,
+    PersistedPlayerTransition,
+    SeasonRolloverResponse,
+    SeasonRolloverSummaryResponse,
+)
 from beta_engine.application.season_models import RaceSnapshot, RankingSnapshot, SeasonState, SimulationStepResult
 from beta_engine.domain.finals import FinalsQualificationResult, FinalsResult
 
@@ -111,3 +117,24 @@ class FinalsSummaryApiResponse(BaseModel):
     season: int
     qualification: FinalsQualificationResponse | None = None
     result: FinalsResultResponse | None = None
+
+
+class SeasonRolloverExecutionResponse(BaseModel):
+    run: RunSummaryResponse
+    rollover: SeasonRolloverResponse
+
+
+class SeasonRolloverSummaryApiResponse(BaseModel):
+    rollover: SeasonRolloverSummaryResponse
+
+
+class NextSeasonPlayersResponse(BaseModel):
+    run_id: str
+    to_season: int
+    players: list[NextSeasonPlayerRecord] = Field(default_factory=list)
+
+
+class PlayerTransitionsResponse(BaseModel):
+    run_id: str
+    to_season: int
+    transitions: list[PersistedPlayerTransition] = Field(default_factory=list)

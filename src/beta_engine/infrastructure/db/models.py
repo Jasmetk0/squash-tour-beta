@@ -117,3 +117,53 @@ class FinalsResultModel(Base):
     source_as_of_season: Mapped[int] = mapped_column(Integer, nullable=False)
     source_as_of_week: Mapped[int] = mapped_column(Integer, nullable=False)
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class SeasonRolloverModel(Base):
+    __tablename__ = "season_rollovers"
+    __table_args__ = (UniqueConstraint("run_id", "to_season", name="uq_season_rollovers_run_to_season"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    from_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    to_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    transitioned_players: Mapped[int] = mapped_column(Integer, nullable=False)
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class PlayerSeasonTransitionModel(Base):
+    __tablename__ = "player_season_transitions"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "to_season",
+            "player_id",
+            name="uq_player_season_transitions_run_to_season_player",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    from_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    to_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    player_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class NextSeasonPlayerModel(Base):
+    __tablename__ = "next_season_players"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "to_season",
+            "player_id",
+            name="uq_next_season_players_run_to_season_player",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    from_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    to_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    player_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)

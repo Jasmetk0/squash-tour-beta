@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from beta_engine.application.persistence import SimulationPersistenceService
 from beta_engine.application.finals_service import FinalsOrchestrationService
+from beta_engine.application.rollover_service import SeasonRolloverOrchestrationService
 from beta_engine.application.services import SeasonSimulationOrchestrator
+from beta_engine.application.careers import SeasonRolloverService
 from beta_engine.core import DeterministicRng
+from beta_engine.domain.careers import CareerProgressionEngine
 from beta_engine.domain.countries import Country, CountryTalentModel
 from beta_engine.domain.players import Player, PlayerGenerator
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationRunInfo, create_session_factory, create_sqlite_engine
@@ -67,8 +70,11 @@ def test_database_bootstrap_creates_required_tables(tmp_path) -> None:
         "completed_tournament_inputs",
         "finals_qualification",
         "finals_results",
+        "next_season_players",
+        "player_season_transitions",
         "race_snapshots",
         "ranking_snapshots",
+        "season_rollovers",
         "season_state",
         "simulation_runs",
     ]
@@ -204,3 +210,36 @@ def test_finals_qualification_and_result_can_be_persisted_and_reloaded(tmp_path)
     assert persisted_result is not None
     assert persisted_qualification.qualification.model_dump() == simulation.qualification.qualification.model_dump()
     assert persisted_result.result.model_dump() == simulation.result.result.model_dump()
+
+
+def test_rollover_records_are_persisted_and_reloadable(tmp_path) -> None:
+    orchestrator = _orchestrator(seed=9402)
+    full_season = orchestrator.simulate_full_season(state=orchestrator.initialize_state())
+
+    repository = _repository(tmp_path)
+    persistence = SimulationPersistenceService(repository=repository)
+    run = SimulationRunInfo(run_id="run-rollover-persist", season=full_season.season_state.season, seed=9402)
+    persistence.initialize_run(run=run)
+    persistence.persist_step(run_id=run.run_id, step=full_season)
+
+    players, _ = _players(seed=99)
+    rollover_service = SeasonRolloverOrchestrationService(
+        repository=repository,
+        rollover_service=SeasonRolloverService(
+            progression_engine=CareerProgressionEngine(rng=DeterministicRng(run.seed))
+        ),
+    )
+    rollover = rollover_service.rollover_to_next_season(
+        run=run,
+        state=full_season.season_state,
+        players_by_id={player.player_id: player for player in players},
+    )
+
+    summary = repository.get_season_rollover(run_id=run.run_id, to_season=run.season + 1)
+    transitions = repository.list_player_transitions(run_id=run.run_id, to_season=run.season + 1)
+    next_players = repository.list_next_season_players(run_id=run.run_id, to_season=run.season + 1)
+
+    assert summary is not None
+    assert summary.transitioned_players == rollover.transitioned_players
+    assert len(transitions) == rollover.transitioned_players
+    assert len(next_players) == rollover.transitioned_players

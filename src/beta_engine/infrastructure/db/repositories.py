@@ -10,6 +10,7 @@ from sqlalchemy import Engine, Select, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from beta_engine.application.season_models import RaceSnapshot, RankingSnapshot, SeasonState, TournamentSimulationResult
+from beta_engine.domain.careers import NextSeasonPlayerState, PlayerSeasonTransition
 from beta_engine.domain.finals import FinalsQualificationResult, FinalsResult
 from beta_engine.domain.rankings import CompletedTournamentPointsInput
 
@@ -18,6 +19,9 @@ from beta_engine.infrastructure.db.models import (
     CompletedEventMetadataModel,
     FinalsQualificationModel,
     FinalsResultModel,
+    NextSeasonPlayerModel,
+    PlayerSeasonTransitionModel,
+    SeasonRolloverModel,
     CompletedEventModel,
     CompletedTournamentInputModel,
     RaceSnapshotModel,
@@ -82,6 +86,33 @@ class PersistedFinalsResultRecord:
     source_as_of_season: int
     source_as_of_week: int
     result: FinalsResult
+
+
+@dataclass(frozen=True)
+class PersistedSeasonRolloverRecord:
+    run_id: str
+    from_season: int
+    to_season: int
+    transitioned_players: int
+    metadata: dict[str, object]
+
+
+@dataclass(frozen=True)
+class PersistedPlayerTransitionRecord:
+    run_id: str
+    from_season: int
+    to_season: int
+    player_id: str
+    transition: PlayerSeasonTransition
+
+
+@dataclass(frozen=True)
+class NextSeasonPlayerRecord:
+    run_id: str
+    from_season: int
+    to_season: int
+    player_id: str
+    state: NextSeasonPlayerState
 
 
 class SimulationPersistenceRepository:
@@ -493,6 +524,162 @@ class SimulationPersistenceRepository:
                 source_as_of_week=model.source_as_of_week,
                 result=FinalsResult.model_validate(_from_json(model.payload_json)),
             )
+
+    def upsert_season_rollover(
+        self,
+        *,
+        run_id: str,
+        from_season: int,
+        to_season: int,
+        transitioned_players: int,
+        metadata: dict[str, object],
+        transitions: list[PlayerSeasonTransition],
+        next_player_states: list[NextSeasonPlayerState],
+    ) -> None:
+        with self._session_factory.begin() as session:
+            statement = select(SeasonRolloverModel).where(
+                SeasonRolloverModel.run_id == run_id,
+                SeasonRolloverModel.to_season == to_season,
+            )
+            model = session.execute(statement).scalar_one_or_none()
+            metadata_json = _to_json(metadata)
+            if model is None:
+                session.add(
+                    SeasonRolloverModel(
+                        run_id=run_id,
+                        from_season=from_season,
+                        to_season=to_season,
+                        transitioned_players=transitioned_players,
+                        metadata_json=metadata_json,
+                    )
+                )
+            else:
+                model.from_season = from_season
+                model.transitioned_players = transitioned_players
+                model.metadata_json = metadata_json
+
+            for transition in transitions:
+                transition_statement = select(PlayerSeasonTransitionModel).where(
+                    PlayerSeasonTransitionModel.run_id == run_id,
+                    PlayerSeasonTransitionModel.to_season == to_season,
+                    PlayerSeasonTransitionModel.player_id == transition.player_id,
+                )
+                transition_model = session.execute(transition_statement).scalar_one_or_none()
+                transition_payload = _to_json(transition.model_dump())
+                if transition_model is None:
+                    session.add(
+                        PlayerSeasonTransitionModel(
+                            run_id=run_id,
+                            from_season=from_season,
+                            to_season=to_season,
+                            player_id=transition.player_id,
+                            payload_json=transition_payload,
+                        )
+                    )
+                else:
+                    transition_model.from_season = from_season
+                    transition_model.payload_json = transition_payload
+
+            for next_state in next_player_states:
+                next_player_id = next_state.player.player_id
+                next_state_statement = select(NextSeasonPlayerModel).where(
+                    NextSeasonPlayerModel.run_id == run_id,
+                    NextSeasonPlayerModel.to_season == to_season,
+                    NextSeasonPlayerModel.player_id == next_player_id,
+                )
+                next_state_model = session.execute(next_state_statement).scalar_one_or_none()
+                next_state_payload = _to_json(next_state.model_dump())
+                if next_state_model is None:
+                    session.add(
+                        NextSeasonPlayerModel(
+                            run_id=run_id,
+                            from_season=from_season,
+                            to_season=to_season,
+                            player_id=next_player_id,
+                            payload_json=next_state_payload,
+                        )
+                    )
+                else:
+                    next_state_model.from_season = from_season
+                    next_state_model.payload_json = next_state_payload
+
+    def get_season_rollover(self, *, run_id: str, to_season: int) -> PersistedSeasonRolloverRecord | None:
+        with self._session_factory() as session:
+            statement = select(SeasonRolloverModel).where(
+                SeasonRolloverModel.run_id == run_id,
+                SeasonRolloverModel.to_season == to_season,
+            )
+            model = session.execute(statement).scalar_one_or_none()
+            if model is None:
+                return None
+            return PersistedSeasonRolloverRecord(
+                run_id=model.run_id,
+                from_season=model.from_season,
+                to_season=model.to_season,
+                transitioned_players=model.transitioned_players,
+                metadata=_from_json(model.metadata_json),
+            )
+
+    def get_latest_season_rollover(self, *, run_id: str) -> PersistedSeasonRolloverRecord | None:
+        with self._session_factory() as session:
+            statement = (
+                select(SeasonRolloverModel)
+                .where(SeasonRolloverModel.run_id == run_id)
+                .order_by(SeasonRolloverModel.to_season.desc(), SeasonRolloverModel.id.desc())
+                .limit(1)
+            )
+            model = session.execute(statement).scalar_one_or_none()
+            if model is None:
+                return None
+            return PersistedSeasonRolloverRecord(
+                run_id=model.run_id,
+                from_season=model.from_season,
+                to_season=model.to_season,
+                transitioned_players=model.transitioned_players,
+                metadata=_from_json(model.metadata_json),
+            )
+
+    def list_player_transitions(self, *, run_id: str, to_season: int) -> list[PersistedPlayerTransitionRecord]:
+        with self._session_factory() as session:
+            statement = (
+                select(PlayerSeasonTransitionModel)
+                .where(
+                    PlayerSeasonTransitionModel.run_id == run_id,
+                    PlayerSeasonTransitionModel.to_season == to_season,
+                )
+                .order_by(PlayerSeasonTransitionModel.player_id.asc(), PlayerSeasonTransitionModel.id.asc())
+            )
+            return [
+                PersistedPlayerTransitionRecord(
+                    run_id=row.run_id,
+                    from_season=row.from_season,
+                    to_season=row.to_season,
+                    player_id=row.player_id,
+                    transition=PlayerSeasonTransition.model_validate(_from_json(row.payload_json)),
+                )
+                for row in session.execute(statement).scalars().all()
+            ]
+
+    def list_next_season_players(self, *, run_id: str, to_season: int) -> list[NextSeasonPlayerRecord]:
+        with self._session_factory() as session:
+            statement = (
+                select(NextSeasonPlayerModel)
+                .where(
+                    NextSeasonPlayerModel.run_id == run_id,
+                    NextSeasonPlayerModel.to_season == to_season,
+                )
+                .order_by(NextSeasonPlayerModel.player_id.asc(), NextSeasonPlayerModel.id.asc())
+            )
+            return [
+                NextSeasonPlayerRecord(
+                    run_id=row.run_id,
+                    from_season=row.from_season,
+                    to_season=row.to_season,
+                    player_id=row.player_id,
+                    state=NextSeasonPlayerState.model_validate(_from_json(row.payload_json)),
+                )
+                for row in session.execute(statement).scalars().all()
+            ]
 
     @staticmethod
     def _upsert_completed_events(

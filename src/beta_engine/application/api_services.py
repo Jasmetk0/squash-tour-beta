@@ -12,9 +12,17 @@ from beta_engine.application.finals_models import (
 )
 from beta_engine.application.finals_service import FinalsOrchestrationService
 from beta_engine.application.persistence import SimulationPersistenceService
+from beta_engine.application.rollover_models import (
+    NextSeasonPlayerRecord,
+    PersistedPlayerTransition,
+    SeasonRolloverResponse,
+    SeasonRolloverSummaryResponse,
+)
+from beta_engine.application.rollover_service import SeasonRolloverOrchestrationService
 from beta_engine.application.season_models import RaceSnapshot, RankingSnapshot, SeasonState, SimulationStepResult
 from beta_engine.application.services import SeasonSimulationOrchestrator
-from beta_engine.core import DeterministicRng
+from beta_engine.core import DeterministicRng, SeedScope
+from beta_engine.domain.careers import CareerProgressionEngine
 from beta_engine.domain.countries import Country, CountryTalentModel
 from beta_engine.domain.players import Player, PlayerGenerator
 from beta_engine.infrastructure.db import SimulationPersistenceRepository, SimulationRunInfo
@@ -22,6 +30,7 @@ from beta_engine.infrastructure.entry_config import load_entry_tuning_config
 from beta_engine.infrastructure.points_config import load_points_config
 from beta_engine.infrastructure.tournament_config import load_season_calendar, load_tournament_templates_config
 from beta_engine.infrastructure.world_config import load_countries_config, load_player_identity_config
+from beta_engine.application.careers import SeasonRolloverService
 
 
 @dataclass(frozen=True)
@@ -160,6 +169,35 @@ class SimulationApiService:
         derived = self.get_finals_qualification(run_id=run_id)
         return summary.model_copy(update={"qualification": derived})
 
+    def rollover_to_next_season(self, *, run_id: str) -> SeasonRolloverResponse:
+        run_info, state = self._load_run_context(run_id=run_id)
+        orchestration = self._build_rollover_orchestration(seed=run_info.seed, season=run_info.season)
+        return orchestration.rollover_to_next_season(
+            run=run_info,
+            state=state,
+            players_by_id=self._build_players_by_id(seed=run_info.seed),
+        )
+
+    def get_latest_rollover(self, *, run_id: str) -> SeasonRolloverSummaryResponse | None:
+        run_info, _ = self._load_run_context(run_id=run_id)
+        orchestration = self._build_rollover_orchestration(seed=run_info.seed, season=run_info.season)
+        return orchestration.get_latest_rollover_summary(run_id=run_id)
+
+    def get_rollover(self, *, run_id: str, to_season: int) -> SeasonRolloverSummaryResponse | None:
+        run_info, _ = self._load_run_context(run_id=run_id)
+        orchestration = self._build_rollover_orchestration(seed=run_info.seed, season=run_info.season)
+        return orchestration.get_rollover_summary(run_id=run_id, to_season=to_season)
+
+    def list_next_season_players(self, *, run_id: str, to_season: int) -> list[NextSeasonPlayerRecord]:
+        run_info, _ = self._load_run_context(run_id=run_id)
+        orchestration = self._build_rollover_orchestration(seed=run_info.seed, season=run_info.season)
+        return orchestration.list_next_season_players(run_id=run_id, to_season=to_season)
+
+    def list_player_transitions(self, *, run_id: str, to_season: int) -> list[PersistedPlayerTransition]:
+        run_info, _ = self._load_run_context(run_id=run_id)
+        orchestration = self._build_rollover_orchestration(seed=run_info.seed, season=run_info.season)
+        return orchestration.list_transitions(run_id=run_id, to_season=to_season)
+
     def list_events(self, *, run_id: str) -> list[PersistedEventRecord]:
         return self.repository.list_completed_events(run_id=run_id)
 
@@ -232,3 +270,12 @@ class SimulationApiService:
     def _build_players_by_id(self, *, seed: int) -> dict[str, Player]:
         countries = load_countries_config().countries
         return {player.player_id: player for player in self._build_players(seed=seed, countries=countries)}
+
+    def _build_rollover_orchestration(self, *, seed: int, season: int) -> SeasonRolloverOrchestrationService:
+        progression_engine = CareerProgressionEngine(
+            rng=DeterministicRng(seed).branch(SeedScope.SEASON, season, "season_rollover")
+        )
+        return SeasonRolloverOrchestrationService(
+            repository=self.repository,
+            rollover_service=SeasonRolloverService(progression_engine=progression_engine),
+        )

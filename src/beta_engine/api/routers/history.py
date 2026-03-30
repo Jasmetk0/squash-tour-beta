@@ -7,10 +7,15 @@ from beta_engine.api.schemas import (
     FinalsQualificationResponse,
     FinalsResultResponse,
     FinalsSummaryApiResponse,
+    NextSeasonPlayersResponse,
+    PlayerTransitionsResponse,
     RaceSnapshotListResponse,
     RaceSnapshotRecordResponse,
     RankingSnapshotListResponse,
     RankingSnapshotRecordResponse,
+    RunSummaryResponse,
+    SeasonRolloverExecutionResponse,
+    SeasonRolloverSummaryApiResponse,
 )
 from beta_engine.application.api_services import SimulationApiService
 
@@ -130,3 +135,70 @@ def get_finals_summary(run_id: str, service: SimulationApiService = Depends(get_
         ),
         result=(FinalsResultResponse.model_validate(summary.result.model_dump()) if summary.result is not None else None),
     )
+
+
+@router.post("/rollover/next-season", response_model=SeasonRolloverExecutionResponse)
+def rollover_next_season(
+    run_id: str, service: SimulationApiService = Depends(get_simulation_api_service)
+) -> SeasonRolloverExecutionResponse:
+    try:
+        rollover = service.rollover_to_next_season(run_id=run_id)
+        run = service.get_run_summary(run_id=run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return SeasonRolloverExecutionResponse(
+        run=RunSummaryResponse.model_validate(run.__dict__),
+        rollover=rollover,
+    )
+
+
+@router.get("/rollover/latest", response_model=SeasonRolloverSummaryApiResponse)
+def get_latest_rollover(
+    run_id: str, service: SimulationApiService = Depends(get_simulation_api_service)
+) -> SeasonRolloverSummaryApiResponse:
+    try:
+        rollover = service.get_latest_rollover(run_id=run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+    if rollover is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No rollover found for run")
+    return SeasonRolloverSummaryApiResponse(rollover=rollover)
+
+
+@router.get("/rollover/{to_season}", response_model=SeasonRolloverSummaryApiResponse)
+def get_rollover_by_season(
+    run_id: str, to_season: int, service: SimulationApiService = Depends(get_simulation_api_service)
+) -> SeasonRolloverSummaryApiResponse:
+    try:
+        rollover = service.get_rollover(run_id=run_id, to_season=to_season)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+    if rollover is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No rollover found for season {to_season}")
+    return SeasonRolloverSummaryApiResponse(rollover=rollover)
+
+
+@router.get("/players/next-season/{to_season}", response_model=NextSeasonPlayersResponse)
+def get_next_season_players(
+    run_id: str, to_season: int, service: SimulationApiService = Depends(get_simulation_api_service)
+) -> NextSeasonPlayersResponse:
+    try:
+        players = service.list_next_season_players(run_id=run_id, to_season=to_season)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return NextSeasonPlayersResponse(run_id=run_id, to_season=to_season, players=players)
+
+
+@router.get("/players/transitions/{to_season}", response_model=PlayerTransitionsResponse)
+def get_player_transitions(
+    run_id: str, to_season: int, service: SimulationApiService = Depends(get_simulation_api_service)
+) -> PlayerTransitionsResponse:
+    try:
+        transitions = service.list_player_transitions(run_id=run_id, to_season=to_season)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return PlayerTransitionsResponse(run_id=run_id, to_season=to_season, transitions=transitions)

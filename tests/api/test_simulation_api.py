@@ -175,3 +175,48 @@ def test_finals_endpoint_rejects_incomplete_season(tmp_path) -> None:
         status, payload = _request("POST", f"{server.base_url}/runs/run-finals-incomplete/simulate/world-tour-finals")
         assert status == 400
         assert "completed regular season" in payload["detail"]
+
+
+def test_rollover_endpoints_execute_and_read_persisted_data(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-rollover.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/runs",
+            {"run_id": "run-rollover", "seed": 4004, "season": 2027},
+        )
+        assert status == 201
+
+        status, rollover_incomplete = _request("POST", f"{server.base_url}/runs/run-rollover/rollover/next-season")
+        assert status == 400
+        assert "completed season" in rollover_incomplete["detail"]
+
+        status, _ = _request("POST", f"{server.base_url}/runs/run-rollover/simulate/full-season")
+        assert status == 200
+
+        status, rollover = _request("POST", f"{server.base_url}/runs/run-rollover/rollover/next-season")
+        assert status == 200
+        assert rollover["rollover"]["from_season"] == 2027
+        assert rollover["rollover"]["to_season"] == 2028
+        assert rollover["rollover"]["already_persisted"] is False
+
+        status, rollover_cached = _request("POST", f"{server.base_url}/runs/run-rollover/rollover/next-season")
+        assert status == 200
+        assert rollover_cached["rollover"]["already_persisted"] is True
+        assert rollover_cached["rollover"]["transitions"] == rollover["rollover"]["transitions"]
+
+        status, latest = _request("GET", f"{server.base_url}/runs/run-rollover/rollover/latest")
+        assert status == 200
+        assert latest["rollover"]["to_season"] == 2028
+
+        status, by_season = _request("GET", f"{server.base_url}/runs/run-rollover/rollover/2028")
+        assert status == 200
+        assert by_season["rollover"]["transitioned_players"] == rollover["rollover"]["transitioned_players"]
+
+        status, next_players = _request("GET", f"{server.base_url}/runs/run-rollover/players/next-season/2028")
+        assert status == 200
+        assert len(next_players["players"]) == rollover["rollover"]["transitioned_players"]
+
+        status, transitions = _request("GET", f"{server.base_url}/runs/run-rollover/players/transitions/2028")
+        assert status == 200
+        assert len(transitions["transitions"]) == rollover["rollover"]["transitioned_players"]

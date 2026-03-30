@@ -2,6 +2,15 @@
 
 from beta_engine.domain.countries import CountriesConfig, Country, CountryTalentModel
 from beta_engine.domain.players import HiddenCareerTraits, Player, PlayerGenerator
+from beta_engine.domain.careers import (
+    CareerProgressionEngine,
+    CareerProgressionResult,
+    NextSeasonPlayerState,
+    PlayerDevelopmentDelta,
+    PlayerSeasonTransition,
+    SeasonHealthInput,
+    SeasonRolloverResult,
+)
 from beta_engine.domain.draws import (
     DrawEngine,
     DrawEntrantType,
@@ -73,6 +82,13 @@ __all__ = [
     "HiddenCareerTraits",
     "Player",
     "PlayerGenerator",
+    "CareerProgressionEngine",
+    "CareerProgressionResult",
+    "NextSeasonPlayerState",
+    "PlayerDevelopmentDelta",
+    "PlayerSeasonTransition",
+    "SeasonHealthInput",
+    "SeasonRolloverResult",
     "DrawEngine",
     "DrawEntrantType",
     "DrawNode",

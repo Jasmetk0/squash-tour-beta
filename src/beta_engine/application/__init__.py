@@ -9,6 +9,7 @@ from beta_engine.application.season_models import (
     TournamentSimulationResult,
     WeeklySimulationResult,
 )
+from beta_engine.application.careers import SeasonRolloverService
 from beta_engine.application.services import SeasonSimulationOrchestrator
 
 __all__ = [
@@ -16,6 +17,7 @@ __all__ = [
     "RankingSnapshot",
     "SeasonSimulationResult",
     "SeasonSimulationOrchestrator",
+    "SeasonRolloverService",
     "SeasonState",
     "SimulationStepResult",
     "TournamentSimulationResult",

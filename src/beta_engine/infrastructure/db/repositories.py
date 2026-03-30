@@ -52,6 +52,16 @@ class PersistedSnapshotRecord:
     as_of_week: int
 
 
+@dataclass(frozen=True)
+class PersistedCompletedEventRecord:
+    event_sequence: int
+    event_id: str
+    season: int | None = None
+    week: int | None = None
+    template_id: str | None = None
+    tournament_result: dict[str, object] | None = None
+
+
 class SimulationPersistenceRepository:
     """SQLAlchemy repository for deterministic simulation persistence."""
 
@@ -203,6 +213,19 @@ class SimulationPersistenceRepository:
                 }
             )
 
+    def get_simulation_run(self, *, run_id: str) -> SimulationRunInfo | None:
+        with self._session_factory() as session:
+            model = session.get(SimulationRunModel, run_id)
+            if model is None:
+                return None
+            return SimulationRunInfo(
+                run_id=model.run_id,
+                season=model.season,
+                seed=model.seed,
+                config_version=model.config_version,
+                config_fingerprint=model.config_fingerprint,
+            )
+
     def list_table_names(self) -> list[str]:
         with self._session_factory() as session:
             return sorted(session.bind.dialect.get_table_names(session.connection()))
@@ -215,6 +238,61 @@ class SimulationPersistenceRepository:
                 .order_by(CompletedEventModel.event_sequence.asc(), CompletedEventModel.id.asc())
             )
             return [row.event_id for row in session.execute(statement).scalars().all()]
+
+    def list_completed_events(self, *, run_id: str) -> list[PersistedCompletedEventRecord]:
+        with self._session_factory() as session:
+            statement = (
+                select(CompletedEventModel)
+                .where(CompletedEventModel.run_id == run_id)
+                .order_by(CompletedEventModel.event_sequence.asc(), CompletedEventModel.id.asc())
+            )
+            events = session.execute(statement).scalars().all()
+            records: list[PersistedCompletedEventRecord] = []
+            for event in events:
+                metadata_statement = select(CompletedEventMetadataModel).where(
+                    CompletedEventMetadataModel.run_id == run_id,
+                    CompletedEventMetadataModel.event_id == event.event_id,
+                )
+                metadata = session.execute(metadata_statement).scalar_one_or_none()
+                records.append(
+                    PersistedCompletedEventRecord(
+                        event_sequence=event.event_sequence,
+                        event_id=event.event_id,
+                        season=metadata.season if metadata else None,
+                        week=metadata.week if metadata else None,
+                        template_id=metadata.template_id if metadata else None,
+                        tournament_result=(
+                            _from_json(metadata.tournament_result_json) if metadata and metadata.tournament_result_json else None
+                        ),
+                    )
+                )
+            return records
+
+    def get_completed_event(self, *, run_id: str, event_id: str) -> PersistedCompletedEventRecord | None:
+        with self._session_factory() as session:
+            event_statement = select(CompletedEventModel).where(
+                CompletedEventModel.run_id == run_id,
+                CompletedEventModel.event_id == event_id,
+            )
+            event = session.execute(event_statement).scalar_one_or_none()
+            if event is None:
+                return None
+
+            metadata_statement = select(CompletedEventMetadataModel).where(
+                CompletedEventMetadataModel.run_id == run_id,
+                CompletedEventMetadataModel.event_id == event_id,
+            )
+            metadata = session.execute(metadata_statement).scalar_one_or_none()
+            return PersistedCompletedEventRecord(
+                event_sequence=event.event_sequence,
+                event_id=event.event_id,
+                season=metadata.season if metadata else None,
+                week=metadata.week if metadata else None,
+                template_id=metadata.template_id if metadata else None,
+                tournament_result=(
+                    _from_json(metadata.tournament_result_json) if metadata and metadata.tournament_result_json else None
+                ),
+            )
 
     def list_ranking_snapshot_records(self, *, run_id: str) -> list[PersistedSnapshotRecord]:
         with self._session_factory() as session:
@@ -234,6 +312,24 @@ class SimulationPersistenceRepository:
                 for row in session.execute(statement).scalars().all()
             ]
 
+    def list_ranking_snapshots(self, *, run_id: str) -> list[tuple[int, str, str | None, RankingSnapshot]]:
+        with self._session_factory() as session:
+            statement = (
+                select(RankingSnapshotModel)
+                .where(RankingSnapshotModel.run_id == run_id)
+                .order_by(RankingSnapshotModel.snapshot_sequence.asc(), RankingSnapshotModel.id.asc())
+            )
+            rows = session.execute(statement).scalars().all()
+            return [
+                (
+                    row.snapshot_sequence,
+                    row.snapshot_kind,
+                    row.source_event_id,
+                    RankingSnapshot.model_validate(_from_json(row.payload_json)),
+                )
+                for row in rows
+            ]
+
     def list_race_snapshot_records(self, *, run_id: str) -> list[PersistedSnapshotRecord]:
         with self._session_factory() as session:
             statement = (
@@ -250,6 +346,24 @@ class SimulationPersistenceRepository:
                     as_of_week=row.as_of_week,
                 )
                 for row in session.execute(statement).scalars().all()
+            ]
+
+    def list_race_snapshots(self, *, run_id: str) -> list[tuple[int, str, str | None, RaceSnapshot]]:
+        with self._session_factory() as session:
+            statement = (
+                select(RaceSnapshotModel)
+                .where(RaceSnapshotModel.run_id == run_id)
+                .order_by(RaceSnapshotModel.snapshot_sequence.asc(), RaceSnapshotModel.id.asc())
+            )
+            rows = session.execute(statement).scalars().all()
+            return [
+                (
+                    row.snapshot_sequence,
+                    row.snapshot_kind,
+                    row.source_event_id,
+                    RaceSnapshot.model_validate(_from_json(row.payload_json)),
+                )
+                for row in rows
             ]
 
     def count_ranking_snapshots(self, *, run_id: str) -> int:

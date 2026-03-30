@@ -22,6 +22,19 @@ from beta_engine.domain.matches import (
     SetResult,
 )
 
+from beta_engine.domain.finals import (
+    FinalsEngine,
+    FinalsGroup,
+    FinalsGroupMatch,
+    FinalsGroupSlot,
+    FinalsGroupStandingEntry,
+    FinalsKnockoutMatch,
+    FinalsPlacement,
+    FinalsQualificationResult,
+    FinalsQualifiedPlayer,
+    FinalsResult,
+)
+
 from beta_engine.domain.entries import (
     AcceptanceList,
     AcceptanceStatus,
@@ -75,6 +88,16 @@ __all__ = [
     "RetirementRule",
     "RetirementTrigger",
     "SetResult",
+    "FinalsEngine",
+    "FinalsGroup",
+    "FinalsGroupMatch",
+    "FinalsGroupSlot",
+    "FinalsGroupStandingEntry",
+    "FinalsKnockoutMatch",
+    "FinalsPlacement",
+    "FinalsQualificationResult",
+    "FinalsQualifiedPlayer",
+    "FinalsResult",
     "AcceptanceList",
     "AcceptanceStatus",
     "EntryDecision",

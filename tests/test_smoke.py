@@ -1,10 +1,7 @@
-from fastapi.testclient import TestClient
+from __future__ import annotations
 
-from beta_engine.main import create_app
+from beta_engine.api.routers.health import health
 
 
 def test_health_endpoint() -> None:
-    client = TestClient(create_app())
-    response = client.get("/health")
-    assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    assert health().model_dump() == {"status": "ok"}

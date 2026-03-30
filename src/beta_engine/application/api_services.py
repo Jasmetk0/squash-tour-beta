@@ -4,6 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from beta_engine.application.finals_models import (
+    FinalsSimulationResult,
+    FinalsSummaryResponse,
+    PersistedFinalsQualification,
+    PersistedFinalsResult,
+)
+from beta_engine.application.finals_service import FinalsOrchestrationService
 from beta_engine.application.persistence import SimulationPersistenceService
 from beta_engine.application.season_models import RaceSnapshot, RankingSnapshot, SeasonState, SimulationStepResult
 from beta_engine.application.services import SeasonSimulationOrchestrator
@@ -102,6 +109,57 @@ class SimulationApiService:
     def simulate_full_season(self, *, run_id: str) -> SimulationStepResult:
         return self._simulate_step(run_id=run_id, mode="simulate_full_season")
 
+    def simulate_world_tour_finals(self, *, run_id: str) -> FinalsSimulationResult:
+        run_info, state = self._load_run_context(run_id=run_id)
+        orchestrator = FinalsOrchestrationService(repository=self.repository)
+        return orchestrator.simulate_world_tour_finals(
+            run=run_info,
+            state=state,
+            players_by_id=self._build_players_by_id(seed=run_info.seed),
+        )
+
+    def get_finals_qualification(self, *, run_id: str) -> PersistedFinalsQualification:
+        run_info, state = self._load_run_context(run_id=run_id)
+        orchestrator = FinalsOrchestrationService(repository=self.repository)
+        existing = self.repository.get_finals_qualification(run_id=run_id, season=run_info.season)
+        if existing is not None:
+            return PersistedFinalsQualification(
+                run_id=existing.run_id,
+                season=existing.season,
+                source_as_of_season=existing.source_as_of_season,
+                source_as_of_week=existing.source_as_of_week,
+                qualification=existing.qualification,
+            )
+        return orchestrator.derive_qualification(
+            run=run_info,
+            state=state,
+            players_by_id=self._build_players_by_id(seed=run_info.seed),
+        )
+
+    def get_finals_result(self, *, run_id: str) -> PersistedFinalsResult | None:
+        run_info, _ = self._load_run_context(run_id=run_id)
+        existing = self.repository.get_finals_result(run_id=run_id, season=run_info.season)
+        if existing is None:
+            return None
+        return PersistedFinalsResult(
+            run_id=existing.run_id,
+            season=existing.season,
+            event_id=existing.event_id,
+            source_as_of_season=existing.source_as_of_season,
+            source_as_of_week=existing.source_as_of_week,
+            result=existing.result,
+        )
+
+    def get_finals_summary(self, *, run_id: str) -> FinalsSummaryResponse:
+        run_info, state = self._load_run_context(run_id=run_id)
+        summary = FinalsOrchestrationService(repository=self.repository).get_summary(run_id=run_id, season=run_info.season)
+        if summary.qualification is not None:
+            return summary
+        if state.has_remaining_events or state.race_snapshot is None:
+            return summary
+        derived = self.get_finals_qualification(run_id=run_id)
+        return summary.model_copy(update={"qualification": derived})
+
     def list_events(self, *, run_id: str) -> list[PersistedEventRecord]:
         return self.repository.list_completed_events(run_id=run_id)
 
@@ -115,10 +173,7 @@ class SimulationApiService:
         return self.repository.list_race_snapshots(run_id=run_id)
 
     def _simulate_step(self, *, run_id: str, mode: str) -> SimulationStepResult:
-        run_info = self.repository.get_simulation_run(run_id=run_id)
-        state = self.repository.load_season_state(run_id=run_id)
-        if run_info is None or state is None:
-            raise KeyError(f"run_id {run_id} was not found")
+        run_info, state = self._load_run_context(run_id=run_id)
 
         orchestrator = self._build_orchestrator(season=run_info.season, seed=run_info.seed)
         if mode == "simulate_next_tournament":
@@ -156,6 +211,13 @@ class SimulationApiService:
             seed=seed,
         )
 
+    def _load_run_context(self, *, run_id: str) -> tuple[SimulationRunInfo, SeasonState]:
+        run_info = self.repository.get_simulation_run(run_id=run_id)
+        state = self.repository.load_season_state(run_id=run_id)
+        if run_info is None or state is None:
+            raise KeyError(f"run_id {run_id} was not found")
+        return run_info, state
+
     def _build_players(self, *, seed: int, countries: list[Country]) -> list[Player]:
         generator = PlayerGenerator(
             rng=DeterministicRng(seed),
@@ -166,3 +228,7 @@ class SimulationApiService:
         for country in countries:
             players.extend(generator.generate(country=country, sequence=index + 1) for index in range(self.players_per_country))
         return players
+
+    def _build_players_by_id(self, *, seed: int) -> dict[str, Player]:
+        countries = load_countries_config().countries
+        return {player.player_id: player for player in self._build_players(seed=seed, countries=countries)}

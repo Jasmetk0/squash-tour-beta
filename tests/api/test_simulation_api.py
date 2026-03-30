@@ -130,3 +130,48 @@ def test_simulation_endpoints_and_snapshot_queries_work(tmp_path) -> None:
         assert status == 200
         assert event_detail["event_id"] == first_event_id
         assert event_detail["tournament_result"] is not None
+
+        status, finals_qualification = _request("GET", f"{server.base_url}/runs/run-sim/finals/qualification")
+        assert status == 200
+        assert finals_qualification["qualification"]["target_season"] == 2027
+
+        status, finals_summary_pre = _request("GET", f"{server.base_url}/runs/run-sim/finals/summary")
+        assert status == 200
+        assert finals_summary_pre["qualification"] is not None
+        assert finals_summary_pre["result"] is None
+
+        status, finals_result_missing = _request("GET", f"{server.base_url}/runs/run-sim/finals/result")
+        assert status == 404
+
+        status, finals_early = _request("POST", f"{server.base_url}/runs/run-sim/simulate/world-tour-finals")
+        assert status == 200
+        assert finals_early["finals"]["already_simulated"] is False
+
+        status, finals_cached = _request("POST", f"{server.base_url}/runs/run-sim/simulate/world-tour-finals")
+        assert status == 200
+        assert finals_cached["finals"]["already_simulated"] is True
+        assert finals_cached["finals"]["result"] == finals_early["finals"]["result"]
+
+        status, finals_result = _request("GET", f"{server.base_url}/runs/run-sim/finals/result")
+        assert status == 200
+        assert finals_result["result"]["event_id"] == "WORLD_TOUR_FINALS"
+
+        status, finals_summary = _request("GET", f"{server.base_url}/runs/run-sim/finals/summary")
+        assert status == 200
+        assert finals_summary["qualification"] is not None
+        assert finals_summary["result"] is not None
+
+
+def test_finals_endpoint_rejects_incomplete_season(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-finals-incomplete.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/runs",
+            {"run_id": "run-finals-incomplete", "seed": 3003, "season": 2027},
+        )
+        assert status == 201
+
+        status, payload = _request("POST", f"{server.base_url}/runs/run-finals-incomplete/simulate/world-tour-finals")
+        assert status == 400
+        assert "completed regular season" in payload["detail"]

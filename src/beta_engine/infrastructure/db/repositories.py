@@ -10,11 +10,14 @@ from sqlalchemy import Engine, Select, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from beta_engine.application.season_models import RaceSnapshot, RankingSnapshot, SeasonState, TournamentSimulationResult
+from beta_engine.domain.finals import FinalsQualificationResult, FinalsResult
 from beta_engine.domain.rankings import CompletedTournamentPointsInput
 
 from beta_engine.infrastructure.db.models import (
     Base,
     CompletedEventMetadataModel,
+    FinalsQualificationModel,
+    FinalsResultModel,
     CompletedEventModel,
     CompletedTournamentInputModel,
     RaceSnapshotModel,
@@ -60,6 +63,25 @@ class PersistedCompletedEventRecord:
     week: int | None = None
     template_id: str | None = None
     tournament_result: dict[str, object] | None = None
+
+
+@dataclass(frozen=True)
+class PersistedFinalsQualificationRecord:
+    run_id: str
+    season: int
+    source_as_of_season: int
+    source_as_of_week: int
+    qualification: FinalsQualificationResult
+
+
+@dataclass(frozen=True)
+class PersistedFinalsResultRecord:
+    run_id: str
+    season: int
+    event_id: str
+    source_as_of_season: int
+    source_as_of_week: int
+    result: FinalsResult
 
 
 class SimulationPersistenceRepository:
@@ -371,6 +393,106 @@ class SimulationPersistenceRepository:
 
     def count_race_snapshots(self, *, run_id: str) -> int:
         return len(self.list_race_snapshot_records(run_id=run_id))
+
+    def upsert_finals_qualification(
+        self,
+        *,
+        run_id: str,
+        season: int,
+        source_as_of_season: int,
+        source_as_of_week: int,
+        qualification: FinalsQualificationResult,
+    ) -> None:
+        with self._session_factory.begin() as session:
+            statement = select(FinalsQualificationModel).where(
+                FinalsQualificationModel.run_id == run_id,
+                FinalsQualificationModel.season == season,
+            )
+            model = session.execute(statement).scalar_one_or_none()
+            payload = _to_json(qualification.model_dump())
+            if model is None:
+                session.add(
+                    FinalsQualificationModel(
+                        run_id=run_id,
+                        season=season,
+                        source_as_of_season=source_as_of_season,
+                        source_as_of_week=source_as_of_week,
+                        payload_json=payload,
+                    )
+                )
+                return
+            model.source_as_of_season = source_as_of_season
+            model.source_as_of_week = source_as_of_week
+            model.payload_json = payload
+
+    def get_finals_qualification(self, *, run_id: str, season: int) -> PersistedFinalsQualificationRecord | None:
+        with self._session_factory() as session:
+            statement = select(FinalsQualificationModel).where(
+                FinalsQualificationModel.run_id == run_id,
+                FinalsQualificationModel.season == season,
+            )
+            model = session.execute(statement).scalar_one_or_none()
+            if model is None:
+                return None
+            return PersistedFinalsQualificationRecord(
+                run_id=model.run_id,
+                season=model.season,
+                source_as_of_season=model.source_as_of_season,
+                source_as_of_week=model.source_as_of_week,
+                qualification=FinalsQualificationResult.model_validate(_from_json(model.payload_json)),
+            )
+
+    def upsert_finals_result(
+        self,
+        *,
+        run_id: str,
+        season: int,
+        event_id: str,
+        source_as_of_season: int,
+        source_as_of_week: int,
+        result: FinalsResult,
+    ) -> None:
+        with self._session_factory.begin() as session:
+            statement = select(FinalsResultModel).where(
+                FinalsResultModel.run_id == run_id,
+                FinalsResultModel.season == season,
+            )
+            model = session.execute(statement).scalar_one_or_none()
+            payload = _to_json(result.model_dump())
+            if model is None:
+                session.add(
+                    FinalsResultModel(
+                        run_id=run_id,
+                        season=season,
+                        event_id=event_id,
+                        source_as_of_season=source_as_of_season,
+                        source_as_of_week=source_as_of_week,
+                        payload_json=payload,
+                    )
+                )
+                return
+            model.event_id = event_id
+            model.source_as_of_season = source_as_of_season
+            model.source_as_of_week = source_as_of_week
+            model.payload_json = payload
+
+    def get_finals_result(self, *, run_id: str, season: int) -> PersistedFinalsResultRecord | None:
+        with self._session_factory() as session:
+            statement = select(FinalsResultModel).where(
+                FinalsResultModel.run_id == run_id,
+                FinalsResultModel.season == season,
+            )
+            model = session.execute(statement).scalar_one_or_none()
+            if model is None:
+                return None
+            return PersistedFinalsResultRecord(
+                run_id=model.run_id,
+                season=model.season,
+                event_id=model.event_id,
+                source_as_of_season=model.source_as_of_season,
+                source_as_of_week=model.source_as_of_week,
+                result=FinalsResult.model_validate(_from_json(model.payload_json)),
+            )
 
     @staticmethod
     def _upsert_completed_events(

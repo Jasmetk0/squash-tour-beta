@@ -4,6 +4,9 @@ from beta_engine.api.deps import get_simulation_api_service
 from beta_engine.api.schemas import (
     EventListResponse,
     EventRecordResponse,
+    FinalsQualificationResponse,
+    FinalsResultResponse,
+    FinalsSummaryApiResponse,
     RaceSnapshotListResponse,
     RaceSnapshotRecordResponse,
     RankingSnapshotListResponse,
@@ -82,4 +85,48 @@ def list_race_snapshots(run_id: str, service: SimulationApiService = Depends(get
             )
             for sequence, kind, source_event_id, payload in snapshots
         ],
+    )
+
+
+@router.get("/finals/qualification", response_model=FinalsQualificationResponse)
+def get_finals_qualification(
+    run_id: str, service: SimulationApiService = Depends(get_simulation_api_service)
+) -> FinalsQualificationResponse:
+    try:
+        qualification = service.get_finals_qualification(run_id=run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return FinalsQualificationResponse.model_validate(qualification.model_dump())
+
+
+@router.get("/finals/result", response_model=FinalsResultResponse)
+def get_finals_result(run_id: str, service: SimulationApiService = Depends(get_simulation_api_service)) -> FinalsResultResponse:
+    try:
+        result = service.get_finals_result(run_id=run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="World Tour Finals result not found for run")
+    return FinalsResultResponse.model_validate(result.model_dump())
+
+
+@router.get("/finals/summary", response_model=FinalsSummaryApiResponse)
+def get_finals_summary(run_id: str, service: SimulationApiService = Depends(get_simulation_api_service)) -> FinalsSummaryApiResponse:
+    try:
+        summary = service.get_finals_summary(run_id=run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+    return FinalsSummaryApiResponse(
+        run_id=summary.run_id,
+        season=summary.season,
+        qualification=(
+            FinalsQualificationResponse.model_validate(summary.qualification.model_dump())
+            if summary.qualification is not None
+            else None
+        ),
+        result=(FinalsResultResponse.model_validate(summary.result.model_dump()) if summary.result is not None else None),
     )

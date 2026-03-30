@@ -1,0 +1,175 @@
+from __future__ import annotations
+
+from beta_engine.application.persistence import SimulationPersistenceService
+from beta_engine.application.services import SeasonSimulationOrchestrator
+from beta_engine.core import DeterministicRng
+from beta_engine.domain.countries import Country, CountryTalentModel
+from beta_engine.domain.players import Player, PlayerGenerator
+from beta_engine.infrastructure.db import DatabaseSettings, SimulationRunInfo, create_session_factory, create_sqlite_engine
+from beta_engine.infrastructure.db.repositories import PersistedSnapshotRecord, SimulationPersistenceRepository
+from beta_engine.infrastructure.entry_config import load_entry_tuning_config
+from beta_engine.infrastructure.points_config import load_points_config
+from beta_engine.infrastructure.tournament_config import load_season_calendar, load_tournament_templates_config
+from beta_engine.infrastructure.world_config import load_countries_config, load_player_identity_config
+
+
+def _players(seed: int, per_country: int = 24) -> tuple[list[Player], dict[str, Country]]:
+    countries = load_countries_config().countries
+    generator = PlayerGenerator(
+        rng=DeterministicRng(seed),
+        identity_config=load_player_identity_config(),
+        country_talent_model=CountryTalentModel(),
+    )
+    players: list[Player] = []
+    for country in countries:
+        players.extend(generator.generate(country=country, sequence=i + 1) for i in range(per_country))
+    return players, {country.code: country for country in countries}
+
+
+def _orchestrator(seed: int = 6060) -> SeasonSimulationOrchestrator:
+    calendar = load_season_calendar()
+    templates = load_tournament_templates_config().templates
+    players, countries_by_code = _players(seed=99)
+    return SeasonSimulationOrchestrator.build(
+        calendar=calendar,
+        templates=templates,
+        players=players,
+        countries_by_code=countries_by_code,
+        points_by_ref=load_points_config(),
+        entry_tuning=load_entry_tuning_config(),
+        seed=seed,
+    )
+
+
+def _repository(tmp_path) -> SimulationPersistenceRepository:
+    db_file = tmp_path / "sim_state.db"
+    engine = create_sqlite_engine(DatabaseSettings(url=f"sqlite:///{db_file}"))
+    session_factory = create_session_factory(engine)
+    return SimulationPersistenceRepository(engine=engine, session_factory=session_factory)
+
+
+def _snapshot_summary(records: list[PersistedSnapshotRecord]) -> list[tuple[int, str, str | None, int, int]]:
+    return [
+        (record.snapshot_sequence, record.snapshot_kind, record.source_event_id, record.as_of_season, record.as_of_week)
+        for record in records
+    ]
+
+
+def test_database_bootstrap_creates_required_tables(tmp_path) -> None:
+    repository = _repository(tmp_path)
+
+    repository.bootstrap_schema()
+
+    assert repository.list_table_names() == [
+        "completed_event_metadata",
+        "completed_events",
+        "completed_tournament_inputs",
+        "race_snapshots",
+        "ranking_snapshots",
+        "season_state",
+        "simulation_runs",
+    ]
+
+
+def test_simulation_step_state_can_be_saved_and_reloaded(tmp_path) -> None:
+    orchestrator = _orchestrator(seed=8801)
+    first_step = orchestrator.simulate_next_week(state=orchestrator.initialize_state())
+
+    repository = _repository(tmp_path)
+    persistence = SimulationPersistenceService(repository=repository)
+    run = SimulationRunInfo(run_id="run-001", season=first_step.season_state.season, seed=8801)
+
+    persistence.initialize_run(run=run)
+    persistence.persist_step(run_id=run.run_id, step=first_step)
+
+    loaded = repository.load_season_state(run_id=run.run_id)
+
+    assert loaded is not None
+    assert loaded.model_dump() == first_step.season_state.model_dump()
+
+
+def test_simulate_next_tournament_persists_same_week_event_snapshots_without_overwrite(tmp_path) -> None:
+    orchestrator = _orchestrator(seed=9001)
+    initial = orchestrator.initialize_state()
+
+    first = orchestrator.simulate_next_tournament(state=initial)
+    second = orchestrator.simulate_next_tournament(state=first.season_state)
+
+    assert first.tournament_result is not None
+    assert second.tournament_result is not None
+    assert first.tournament_result.event.week == second.tournament_result.event.week
+
+    repository = _repository(tmp_path)
+    persistence = SimulationPersistenceService(repository=repository)
+    run = SimulationRunInfo(run_id="run-tournament", season=initial.season, seed=9001)
+
+    persistence.initialize_run(run=run)
+    persistence.persist_step(run_id=run.run_id, step=first)
+    persistence.persist_step(run_id=run.run_id, step=second)
+
+    ranking_records = repository.list_ranking_snapshot_records(run_id=run.run_id)
+    race_records = repository.list_race_snapshot_records(run_id=run.run_id)
+
+    assert _snapshot_summary(ranking_records) == [
+        (1, "tournament", first.tournament_result.event.event_id, first.tournament_result.event.season, first.tournament_result.event.week),
+        (11, "tournament", second.tournament_result.event.event_id, second.tournament_result.event.season, second.tournament_result.event.week),
+    ]
+    assert _snapshot_summary(race_records) == [
+        (1, "tournament", first.tournament_result.event.event_id, first.tournament_result.event.season, first.tournament_result.event.week),
+        (11, "tournament", second.tournament_result.event.event_id, second.tournament_result.event.season, second.tournament_result.event.week),
+    ]
+
+
+def test_simulate_next_week_persists_tournament_and_week_snapshots_deterministically(tmp_path) -> None:
+    orchestrator = _orchestrator(seed=9101)
+    state = orchestrator.initialize_state()
+    week_one = orchestrator.simulate_next_week(state=state)
+    assert week_one.weekly_result is not None
+
+    repository = _repository(tmp_path)
+    persistence = SimulationPersistenceService(repository=repository)
+    run = SimulationRunInfo(run_id="run-week", season=state.season, seed=9101)
+
+    persistence.initialize_run(run=run)
+    persistence.persist_step(run_id=run.run_id, step=week_one)
+
+    ranking_records = repository.list_ranking_snapshot_records(run_id=run.run_id)
+    race_records = repository.list_race_snapshot_records(run_id=run.run_id)
+
+    expected_tournament_records = [
+        (index * 10 + 1, "tournament", tournament.event.event_id, tournament.event.season, tournament.event.week)
+        for index, tournament in enumerate(week_one.weekly_result.tournaments)
+    ]
+    expected_week_record = (
+        (len(week_one.weekly_result.tournaments) - 1) * 10 + 9,
+        "week",
+        week_one.weekly_result.tournaments[-1].event.event_id,
+        week_one.weekly_result.season,
+        week_one.weekly_result.week,
+    )
+
+    assert _snapshot_summary(ranking_records) == [*expected_tournament_records, expected_week_record]
+    assert _snapshot_summary(race_records) == [*expected_tournament_records, expected_week_record]
+
+
+def test_completed_event_order_and_reloaded_state_remain_deterministic_across_weeks(tmp_path) -> None:
+    orchestrator = _orchestrator(seed=9201)
+    state = orchestrator.initialize_state()
+    week_one = orchestrator.simulate_next_week(state=state)
+    week_two = orchestrator.simulate_next_week(state=week_one.season_state)
+    assert week_one.weekly_result is not None
+    assert week_two.weekly_result is not None
+
+    repository = _repository(tmp_path)
+    persistence = SimulationPersistenceService(repository=repository)
+    run = SimulationRunInfo(run_id="run-ordered", season=state.season, seed=9201)
+
+    persistence.initialize_run(run=run)
+    persistence.persist_step(run_id=run.run_id, step=week_one)
+    persistence.persist_step(run_id=run.run_id, step=week_two)
+
+    loaded = repository.load_season_state(run_id=run.run_id)
+    assert loaded is not None
+    assert loaded.model_dump() == week_two.season_state.model_dump()
+
+    assert repository.list_completed_event_ids(run_id=run.run_id) == week_two.season_state.completed_event_ids

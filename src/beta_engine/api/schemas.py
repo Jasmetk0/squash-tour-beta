@@ -6,7 +6,9 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from beta_engine.application.finals_models import FinalsSimulationResult
 from beta_engine.application.season_models import RaceSnapshot, RankingSnapshot, SeasonState, SimulationStepResult
+from beta_engine.domain.finals import FinalsQualificationResult, FinalsResult
 
 
 class HealthResponse(BaseModel):
@@ -79,3 +81,33 @@ class RaceSnapshotListResponse(BaseModel):
 class SeasonStateResponse(BaseModel):
     run: RunSummaryResponse
     season_state: SeasonState
+
+
+class FinalsQualificationResponse(BaseModel):
+    run_id: str
+    season: int
+    source_as_of_season: int
+    source_as_of_week: int
+    qualification: FinalsQualificationResult
+
+
+class FinalsResultResponse(BaseModel):
+    run_id: str
+    season: int
+    event_id: str
+    source_as_of_season: int
+    source_as_of_week: int
+    result: FinalsResult
+
+
+class FinalsSimulationResponse(BaseModel):
+    mode: Literal["simulate_world_tour_finals"]
+    run: RunSummaryResponse
+    finals: FinalsSimulationResult
+
+
+class FinalsSummaryApiResponse(BaseModel):
+    run_id: str
+    season: int
+    qualification: FinalsQualificationResponse | None = None
+    result: FinalsResultResponse | None = None

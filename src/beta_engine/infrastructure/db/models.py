@@ -92,3 +92,28 @@ class RaceSnapshotModel(Base):
     as_of_season: Mapped[int] = mapped_column(Integer, nullable=False)
     as_of_week: Mapped[int] = mapped_column(Integer, nullable=False)
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class FinalsQualificationModel(Base):
+    __tablename__ = "finals_qualification"
+    __table_args__ = (UniqueConstraint("run_id", "season", name="uq_finals_qualification_run_season"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    season: Mapped[int] = mapped_column(Integer, nullable=False)
+    source_as_of_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    source_as_of_week: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class FinalsResultModel(Base):
+    __tablename__ = "finals_results"
+    __table_args__ = (UniqueConstraint("run_id", "season", name="uq_finals_results_run_season"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    season: Mapped[int] = mapped_column(Integer, nullable=False)
+    event_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    source_as_of_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    source_as_of_week: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)

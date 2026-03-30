@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from beta_engine.application.persistence import SimulationPersistenceService
+from beta_engine.application.finals_service import FinalsOrchestrationService
 from beta_engine.application.services import SeasonSimulationOrchestrator
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.countries import Country, CountryTalentModel
@@ -64,6 +65,8 @@ def test_database_bootstrap_creates_required_tables(tmp_path) -> None:
         "completed_event_metadata",
         "completed_events",
         "completed_tournament_inputs",
+        "finals_qualification",
+        "finals_results",
         "race_snapshots",
         "ranking_snapshots",
         "season_state",
@@ -173,3 +176,31 @@ def test_completed_event_order_and_reloaded_state_remain_deterministic_across_we
     assert loaded.model_dump() == week_two.season_state.model_dump()
 
     assert repository.list_completed_event_ids(run_id=run.run_id) == week_two.season_state.completed_event_ids
+
+
+def test_finals_qualification_and_result_can_be_persisted_and_reloaded(tmp_path) -> None:
+    orchestrator = _orchestrator(seed=9301)
+    full_season = orchestrator.simulate_full_season(state=orchestrator.initialize_state())
+    assert full_season.season_state.race_snapshot is not None
+
+    repository = _repository(tmp_path)
+    persistence = SimulationPersistenceService(repository=repository)
+    run = SimulationRunInfo(run_id="run-finals-persist", season=full_season.season_state.season, seed=9301)
+    persistence.initialize_run(run=run)
+    persistence.persist_step(run_id=run.run_id, step=full_season)
+
+    players, _ = _players(seed=99)
+    finals_service = FinalsOrchestrationService(repository=repository)
+    simulation = finals_service.simulate_world_tour_finals(
+        run=run,
+        state=full_season.season_state,
+        players_by_id={player.player_id: player for player in players},
+    )
+    assert simulation.already_simulated is False
+
+    persisted_qualification = repository.get_finals_qualification(run_id=run.run_id, season=run.season)
+    persisted_result = repository.get_finals_result(run_id=run.run_id, season=run.season)
+    assert persisted_qualification is not None
+    assert persisted_result is not None
+    assert persisted_qualification.qualification.model_dump() == simulation.qualification.qualification.model_dump()
+    assert persisted_result.result.model_dump() == simulation.result.result.model_dump()

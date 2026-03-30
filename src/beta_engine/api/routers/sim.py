@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from beta_engine.api.deps import get_simulation_api_service
-from beta_engine.api.schemas import RunSummaryResponse, SimulateResponse
+from beta_engine.api.schemas import FinalsSimulationResponse, RunSummaryResponse, SimulateResponse
 from beta_engine.application.api_services import PersistedRunSummary, SimulationApiService
 
 router = APIRouter(prefix="/runs/{run_id}/simulate", tags=["simulation"])
@@ -43,3 +43,21 @@ def simulate_next_week(run_id: str, service: SimulationApiService = Depends(get_
 @router.post("/full-season", response_model=SimulateResponse)
 def simulate_full_season(run_id: str, service: SimulationApiService = Depends(get_simulation_api_service)) -> SimulateResponse:
     return _run_step(run_id=run_id, mode="full-season", service=service)
+
+
+@router.post("/world-tour-finals", response_model=FinalsSimulationResponse)
+def simulate_world_tour_finals(
+    run_id: str, service: SimulationApiService = Depends(get_simulation_api_service)
+) -> FinalsSimulationResponse:
+    try:
+        finals = service.simulate_world_tour_finals(run_id=run_id)
+        summary = service.get_run_summary(run_id=run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return FinalsSimulationResponse(
+        mode="simulate_world_tour_finals",
+        run=_to_run_summary(summary),
+        finals=finals,
+    )

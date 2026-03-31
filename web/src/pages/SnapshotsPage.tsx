@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 
 import { listRaceSnapshots, listRankingSnapshots } from '../api/client'
-import { EmptyState, JsonPayloadBlock, MetadataList, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
+import { CurrentContextStrip, EmptyState, JsonPayloadBlock, MetadataList, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
 import { SelectableHistoryList } from '../components/SelectableHistoryList'
 import type { RankingSnapshot } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
@@ -53,6 +53,14 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
         title={title}
         runId={runId}
         subtitle="Browse stored snapshot history and inspect payload details by sequence."
+      />
+      <CurrentContextStrip
+        items={[
+          { label: 'Run', value: runId || 'unknown' },
+          { label: 'Mode', value: mode },
+          { label: 'Snapshots', value: snapshots.length },
+          { label: 'Selected', value: selected?.snapshot_sequence ?? 'None' }
+        ]}
       />
 
       <SectionCard title="Snapshot timeline">

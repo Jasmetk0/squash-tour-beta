@@ -119,6 +119,7 @@ describe('RunPage', () => {
   it('calls finals quick action endpoint from run detail', async () => {
     renderWithRoute(<RunPage />, '/runs/run-a')
 
+    expect(await screen.findByRole('list', { name: 'Current context' })).toBeInTheDocument()
     await userEvent.click(await screen.findByRole('button', { name: 'Simulate World Tour Finals' }))
 
     await waitFor(() => expect(api.simulateWorldTourFinals).toHaveBeenCalledWith('run-a'))

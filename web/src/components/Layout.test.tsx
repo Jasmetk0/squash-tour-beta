@@ -18,5 +18,6 @@ describe('Layout run-scoped navigation', () => {
       '/runs/run-a/snapshots/ranking'
     )
     expect(screen.getByRole('link', { name: 'Race Snapshots' })).toHaveAttribute('href', '/runs/run-a/snapshots/race')
+    expect(screen.getByText('Current run context: run-a')).toBeInTheDocument()
   })
 })

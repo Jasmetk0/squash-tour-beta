@@ -65,6 +65,7 @@ describe('BootstrapLineagePage', () => {
     renderWithRoute(<BootstrapLineagePage />, '/runs/run-a/bootstrap-lineage')
 
     expect(await screen.findByText('Bootstrap / Lineage')).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Current context' })).toBeInTheDocument()
     expect(await screen.findByText(/Source type/i)).toBeInTheDocument()
     expect(await screen.findByText(/Lineage summary and navigation/i)).toBeInTheDocument()
     expect(await screen.findByRole('link', { name: 'run-parent' })).toBeInTheDocument()

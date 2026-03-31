@@ -9,6 +9,7 @@ import {
 } from '../api/client'
 import {
   ActionStatusBlock,
+  CurrentContextStrip,
   EmptyState,
   JsonPayloadBlock,
   MetadataList,
@@ -69,6 +70,8 @@ export function FinalsPage(): JSX.Element {
   const groupCount = readArrayFieldLength(qualificationQuery.data?.qualification, 'groups')
   const championPlayerId = readStringField(resultQuery.data?.result, 'champion_player_id')
   const runnerUpPlayerId = readStringField(resultQuery.data?.result, 'runner_up_player_id')
+  const contextSeason =
+    summaryQuery.data?.season ?? qualificationQuery.data?.season ?? resultQuery.data?.season ?? '—'
 
   return (
     <section className="panel">
@@ -76,6 +79,14 @@ export function FinalsPage(): JSX.Element {
         title="World Tour Finals"
         runId={runId}
         subtitle="Inspect Finals qualification/results and run the Finals simulation action."
+      />
+      <CurrentContextStrip
+        items={[
+          { label: 'Run', value: runId || 'unknown' },
+          { label: 'Season', value: contextSeason },
+          { label: 'Qualification', value: summaryQuery.data?.qualification ? 'Ready' : 'Pending' },
+          { label: 'Result', value: summaryQuery.data?.result ? 'Recorded' : 'Not simulated' }
+        ]}
       />
 
       <div className="actions">

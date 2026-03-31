@@ -54,6 +54,7 @@ describe('FinalsPage', () => {
     renderWithRoute(<FinalsPage />, '/runs/run-a/finals')
 
     expect(await screen.findByText('World Tour Finals')).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Current context' })).toBeInTheDocument()
     expect(await screen.findByText(/Qualification status/i)).toBeInTheDocument()
     expect(await screen.findByText(/Qualified players/i)).toBeInTheDocument()
     expect((await screen.findAllByText(/Groups/i)).length).toBeGreaterThan(0)

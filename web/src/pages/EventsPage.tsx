@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 
 import { getEvent, listEvents } from '../api/client'
-import { EmptyState, JsonPayloadBlock, MetadataList, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
+import { CurrentContextStrip, EmptyState, JsonPayloadBlock, MetadataList, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
 import { SelectableHistoryList } from '../components/SelectableHistoryList'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -48,6 +48,13 @@ export function EventsPage(): JSX.Element {
         title="Events history"
         runId={runId}
         subtitle="Browse the event timeline and inspect payload details for each event."
+      />
+      <CurrentContextStrip
+        items={[
+          { label: 'Run', value: runId || 'unknown' },
+          { label: 'Events', value: events.length },
+          { label: 'Selected', value: selectedEvent?.event_id ?? 'None' }
+        ]}
       />
 
       <SectionCard title="Event timeline">

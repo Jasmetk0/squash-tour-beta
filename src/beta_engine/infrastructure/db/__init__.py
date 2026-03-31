@@ -5,6 +5,7 @@ from beta_engine.infrastructure.db.repositories import (
     NextSeasonPlayerRecord,
     PersistedPlayerTransitionRecord,
     PersistedSeasonRolloverRecord,
+    RunLineageRecord,
     SimulationPersistenceRepository,
     SimulationRunInfo,
 )
@@ -14,6 +15,7 @@ __all__ = [
     "NextSeasonPlayerRecord",
     "PersistedPlayerTransitionRecord",
     "PersistedSeasonRolloverRecord",
+    "RunLineageRecord",
     "SimulationPersistenceRepository",
     "SimulationRunInfo",
     "create_session_factory",

@@ -83,6 +83,12 @@ describe('Module 17 pages through routes', () => {
         children: []
       }
     })
+    api.listRankingSnapshots.mockResolvedValue({
+      snapshots: [{ snapshot_sequence: 4, snapshot_kind: 'WEEK', source_event_id: 'E2', payload: { name: 'ranking-4' } }]
+    })
+    api.listRaceSnapshots.mockResolvedValue({
+      snapshots: [{ snapshot_sequence: 7, snapshot_kind: 'WEEK', source_event_id: 'E2', payload: { name: 'race-7' } }]
+    })
   })
 
   it('renders Finals route', async () => {
@@ -104,5 +110,15 @@ describe('Module 17 pages through routes', () => {
   it('renders Event detail route', async () => {
     renderAppAt('/runs/run-a/events/E2')
     expect(await screen.findByRole('heading', { name: 'Event detail' })).toBeInTheDocument()
+  })
+
+  it('renders ranking snapshot detail route', async () => {
+    renderAppAt('/runs/run-a/snapshots/ranking/4')
+    expect(await screen.findByRole('heading', { name: 'Ranking snapshot detail' })).toBeInTheDocument()
+  })
+
+  it('renders race snapshot detail route', async () => {
+    renderAppAt('/runs/run-a/snapshots/race/7')
+    expect(await screen.findByRole('heading', { name: 'Race snapshot detail' })).toBeInTheDocument()
   })
 })

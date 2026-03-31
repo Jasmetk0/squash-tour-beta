@@ -106,10 +106,19 @@ describe('history list ordering, detail selection, and states', () => {
     expect(snapshotItems[0]).toHaveClass('is-selected')
     expect(snapshotItems[1]).not.toHaveClass('is-selected')
     expect(await screen.findByText(/snapshot-4/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Open dedicated snapshot detail page/i })).toHaveAttribute(
+      'href',
+      '/runs/run-a/snapshots/ranking/4'
+    )
+    expect(screen.getByRole('link', { name: /Open source event detail page/i })).toHaveAttribute('href', '/runs/run-a/events/E2')
 
     await user.click(screen.getByRole('button', { name: /3\. WEEK/i }))
     expect(await screen.findByText(/snapshot-3/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /3\. WEEK/i })).toHaveClass('is-selected')
+    expect(screen.getByRole('link', { name: /Open dedicated snapshot detail page/i })).toHaveAttribute(
+      'href',
+      '/runs/run-a/snapshots/ranking/3'
+    )
   })
 
   it('respects selectedSequence query params for ranking and race snapshots', async () => {

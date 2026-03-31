@@ -8,6 +8,7 @@ import { EventsPage } from './pages/EventsPage'
 import { FinalsPage } from './pages/FinalsPage'
 import { RolloverPage } from './pages/RolloverPage'
 import { RunPage } from './pages/RunPage'
+import { SnapshotDetailPage } from './pages/SnapshotDetailPage'
 import { SnapshotsPage } from './pages/SnapshotsPage'
 
 export default function App(): JSX.Element {
@@ -22,7 +23,9 @@ export default function App(): JSX.Element {
         <Route path="runs/:runId/rollover" element={<RolloverPage />} />
         <Route path="runs/:runId/bootstrap-lineage" element={<BootstrapLineagePage />} />
         <Route path="runs/:runId/snapshots/ranking" element={<SnapshotsPage mode="ranking" />} />
+        <Route path="runs/:runId/snapshots/ranking/:snapshotSequence" element={<SnapshotDetailPage mode="ranking" />} />
         <Route path="runs/:runId/snapshots/race" element={<SnapshotsPage mode="race" />} />
+        <Route path="runs/:runId/snapshots/race/:snapshotSequence" element={<SnapshotDetailPage mode="race" />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { listRaceSnapshots, listRankingSnapshots } from '../api/client'
 import { CurrentContextStrip, EmptyState, JsonPayloadBlock, MetadataList, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
@@ -92,7 +92,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
 
       <SectionCard title="Selected snapshot detail">
         {selected ? (
-          <SnapshotDetail snapshot={selected} />
+          <SnapshotDetail snapshot={selected} mode={mode} runId={runId} />
         ) : (
           <EmptyState message="Select a snapshot to inspect details." />
         )}
@@ -101,16 +101,25 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
   )
 }
 
-function SnapshotDetail({ snapshot }: { snapshot: RankingSnapshot }): JSX.Element {
+function SnapshotDetail({ snapshot, mode, runId }: { snapshot: RankingSnapshot; mode: Mode; runId: string }): JSX.Element {
   return (
     <>
       <MetadataList
         items={[
           { label: 'Sequence', value: snapshot.snapshot_sequence },
           { label: 'Kind', value: snapshot.snapshot_kind },
+          { label: 'Mode', value: mode },
           { label: 'Source event ID', value: snapshot.source_event_id ?? '—' }
         ]}
       />
+      <p>
+        <Link to={`/runs/${runId}/snapshots/${mode}/${snapshot.snapshot_sequence}`}>Open dedicated snapshot detail page</Link>
+      </p>
+      {snapshot.source_event_id ? (
+        <p>
+          <Link to={`/runs/${runId}/events/${encodeURIComponent(snapshot.source_event_id)}`}>Open source event detail page</Link>
+        </p>
+      ) : null}
 
       <JsonPayloadBlock title="Snapshot payload" emptyText="No snapshot payload is available for this item." payload={snapshot.payload} />
     </>

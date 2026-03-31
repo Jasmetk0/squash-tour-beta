@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { ActionStatusBlock, CurrentContextStrip, EmptyState, JsonPayloadBlock, MetadataList, PageIntro } from './RunScopedUi'
+import { ActionStatusBlock, CurrentContextStrip, EmptyState, JsonPayloadBlock, MetadataList, PageIntro, PreviewListCard } from './RunScopedUi'
 
 describe('RunScopedUi helpers', () => {
   it('renders error state ahead of success state for action status block', () => {
@@ -43,5 +43,58 @@ describe('RunScopedUi helpers', () => {
     expect(screen.getByText('run-a')).toBeInTheDocument()
     expect(screen.getByText('Season')).toBeInTheDocument()
     expect(screen.getByText('2028')).toBeInTheDocument()
+  })
+
+  it('renders preview list card loading, items, and empty states', () => {
+    const { rerender } = render(
+      <PreviewListCard
+        title="Recent events"
+        isLoading
+        loadingText="Loading recent events..."
+        items={[]}
+        emptyText="No events"
+        listAriaLabel="Recent events preview"
+        getKey={(item) => String(item)}
+        renderItem={(item) => <span>{String(item)}</span>}
+        viewAllLink={<a href="/runs/run-a/events">View all events</a>}
+      />
+    )
+
+    expect(screen.getByText('Loading recent events...')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'View all events' })).toHaveAttribute('href', '/runs/run-a/events')
+
+    rerender(
+      <PreviewListCard
+        title="Recent events"
+        isLoading={false}
+        loadingText="Loading recent events..."
+        items={['E3', 'E1']}
+        emptyText="No events"
+        listAriaLabel="Recent events preview"
+        getKey={(item) => item}
+        renderItem={(item) => <span>{item}</span>}
+        viewAllLink={<a href="/runs/run-a/events">View all events</a>}
+      />
+    )
+
+    expect(screen.getByRole('list', { name: 'Recent events preview' })).toBeInTheDocument()
+    expect(screen.getByText('E3')).toBeInTheDocument()
+    expect(screen.getByText('E1')).toBeInTheDocument()
+
+    rerender(
+      <PreviewListCard
+        title="Recent events"
+        isLoading={false}
+        loadingText="Loading recent events..."
+        items={[]}
+        emptyText="No events"
+        listAriaLabel="Recent events preview"
+        getKey={(item) => String(item)}
+        renderItem={(item) => <span>{String(item)}</span>}
+        viewAllLink={<a href="/runs/run-a/events">View all events</a>}
+      />
+    )
+
+    expect(screen.getByText('No events')).toBeInTheDocument()
   })
 })

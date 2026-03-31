@@ -155,6 +155,7 @@ describe('RunDiagnosticsPage', () => {
       'href',
       '/runs/run-a/bootstrap-lineage'
     )
+    expect(screen.getByRole('link', { name: 'Season Chain' })).toHaveAttribute('href', '/runs/run-a/season-chain')
     expect(screen.getByRole('link', { name: 'Ranking snapshots' })).toHaveAttribute('href', '/runs/run-a/snapshots/ranking')
     expect(screen.getByRole('link', { name: 'Race snapshots' })).toHaveAttribute('href', '/runs/run-a/snapshots/race')
   })

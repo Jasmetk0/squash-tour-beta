@@ -12,6 +12,7 @@ export function Layout(): JSX.Element {
         { to: `/runs/${runId}/finals`, label: 'World Tour Finals' },
         { to: `/runs/${runId}/rollover`, label: 'Season Rollover' },
         { to: `/runs/${runId}/bootstrap-lineage`, label: 'Bootstrap / Lineage' },
+        { to: `/runs/${runId}/season-chain`, label: 'Season Chain' },
         { to: `/runs/${runId}/snapshots/ranking`, label: 'Ranking Snapshots' },
         { to: `/runs/${runId}/snapshots/race`, label: 'Race Snapshots' }
       ]

@@ -128,6 +128,12 @@ describe('Module 17 pages through routes', () => {
   })
 
 
+  it('renders Season Chain route', async () => {
+    renderAppAt('/runs/run-a/season-chain')
+    expect(await screen.findByRole('heading', { name: 'Season Chain' })).toBeInTheDocument()
+  })
+
+
   it('renders Event detail route', async () => {
     renderAppAt('/runs/run-a/events/E2')
     expect(await screen.findByRole('heading', { name: 'Event detail' })).toBeInTheDocument()

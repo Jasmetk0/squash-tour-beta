@@ -290,6 +290,8 @@ export function RunPage(): JSX.Element {
             )}
             <p>
               <Link to={`/runs/${runId}/bootstrap-lineage`}>View bootstrap and lineage</Link>
+              {' · '}
+              <Link to={`/runs/${runId}/season-chain`}>View season chain</Link>
             </p>
           </SectionCard>
 

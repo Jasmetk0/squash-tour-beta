@@ -173,7 +173,7 @@ describe('RunPage', () => {
     await waitFor(() => expect(api.simulateFullSeason).toHaveBeenCalledWith('run-a'))
   })
 
-  it('renders navigation links for finals, rollover, and bootstrap lineage', async () => {
+  it('renders navigation links for finals, rollover, bootstrap lineage, and season chain', async () => {
     renderWithRoute(<RunPage />, '/runs/run-a')
 
     expect(await screen.findByRole('link', { name: /View World Tour Finals/i })).toHaveAttribute('href', '/runs/run-a/finals')
@@ -182,6 +182,7 @@ describe('RunPage', () => {
       'href',
       '/runs/run-a/bootstrap-lineage'
     )
+    expect(screen.getByRole('link', { name: /View season chain/i })).toHaveAttribute('href', '/runs/run-a/season-chain')
   })
 
   it('renders run summary card values', async () => {

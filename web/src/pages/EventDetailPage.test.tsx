@@ -7,6 +7,7 @@ import { EventDetailPage } from './EventDetailPage'
 
 const api = vi.hoisted(() => ({
   getEvent: vi.fn(),
+  listEvents: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
     constructor(message: string, status: number) {
@@ -46,6 +47,13 @@ describe('EventDetailPage', () => {
       template_id: 'psa-gold',
       tournament_result: { champion_id: 'P-1' }
     })
+    api.listEvents.mockResolvedValue({
+      events: [
+        { event_sequence: 10, event_id: 'E10', season: 2028, week: 3, template_id: 'psa-silver', tournament_result: {} },
+        { event_sequence: 11, event_id: 'E11', season: 2028, week: 4, template_id: 'psa-gold', tournament_result: {} },
+        { event_sequence: 12, event_id: 'E12', season: 2028, week: 5, template_id: 'psa-platinum', tournament_result: {} }
+      ]
+    })
 
     renderEventDetailRoute('/runs/run-a/events/E11')
 
@@ -54,15 +62,20 @@ describe('EventDetailPage', () => {
     expect(screen.getAllByText('E11').length).toBeGreaterThan(0)
     expect(screen.getByRole('heading', { name: 'Raw event payload' })).toBeInTheDocument()
     expect(api.getEvent).toHaveBeenCalledWith('run-a', 'E11')
-    expect(screen.getByRole('link', { name: /Back to events history/i })).toHaveAttribute('href', '/runs/run-a/events')
+    expect(api.listEvents).toHaveBeenCalledWith('run-a')
+    expect(screen.getByRole('link', { name: 'Back to events history' })).toHaveAttribute('href', '/runs/run-a/events')
+    expect(screen.getByRole('link', { name: 'E10' })).toHaveAttribute('href', '/runs/run-a/events/E10')
+    expect(screen.getByRole('link', { name: 'E12' })).toHaveAttribute('href', '/runs/run-a/events/E12')
   })
 
   it('shows readable missing-event behavior for invalid event IDs', async () => {
     api.getEvent.mockRejectedValue(new api.ApiError('event not found', 404))
+    api.listEvents.mockResolvedValue({ events: [] })
 
     renderEventDetailRoute('/runs/run-a/events/UNKNOWN')
 
     expect(await screen.findByText('Event UNKNOWN was not found for this run.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Back to events history/i })).toHaveAttribute('href', '/runs/run-a/events')
+    expect(screen.getByRole('link', { name: 'Back to events history' })).toHaveAttribute('href', '/runs/run-a/events')
+    expect(screen.getAllByText('None').length).toBeGreaterThan(0)
   })
 })

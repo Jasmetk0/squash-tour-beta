@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
-import { getEvent } from '../api/client'
+import { getEvent, listEvents } from '../api/client'
 import { CompactSummaryCard, CurrentContextStrip, EmptyState, JsonPayloadBlock, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
@@ -14,6 +14,15 @@ export function EventDetailPage(): JSX.Element {
     enabled: Boolean(runId && eventId),
     retry: false
   })
+  const eventsQuery = useQuery({
+    queryKey: ['events', runId],
+    queryFn: () => listEvents(runId),
+    enabled: Boolean(runId && eventId)
+  })
+  const events = eventsQuery.data?.events ?? []
+  const currentEventIndex = events.findIndex((item) => item.event_id === eventId)
+  const previousEvent = currentEventIndex > 0 ? events[currentEventIndex - 1] : null
+  const nextEvent = currentEventIndex >= 0 && currentEventIndex < events.length - 1 ? events[currentEventIndex + 1] : null
 
   return (
     <section className="panel">
@@ -34,6 +43,23 @@ export function EventDetailPage(): JSX.Element {
       <SectionCard title="Event context">
         <p>
           <Link to={`/runs/${runId}/events`}>Back to events history</Link>
+        </p>
+        <p>
+          Previous:{' '}
+          {previousEvent ? (
+            <Link to={`/runs/${runId}/events/${encodeURIComponent(previousEvent.event_id)}`}>{previousEvent.event_id}</Link>
+          ) : (
+            <span>None</span>
+          )}{' '}
+          · Next:{' '}
+          {nextEvent ? (
+            <Link to={`/runs/${runId}/events/${encodeURIComponent(nextEvent.event_id)}`}>{nextEvent.event_id}</Link>
+          ) : (
+            <span>None</span>
+          )}
+        </p>
+        <p>
+          <Link to={`/runs/${runId}/events#event-${encodeURIComponent(eventId)}`}>Back to events history at this event</Link>
         </p>
       </SectionCard>
 

@@ -95,6 +95,58 @@ def list_race_snapshots(run_id: str, service: SimulationApiService = Depends(get
     )
 
 
+@router.get("/snapshots/ranking/{snapshot_sequence}", response_model=RankingSnapshotRecordResponse)
+def get_ranking_snapshot(
+    run_id: str,
+    snapshot_sequence: int,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> RankingSnapshotRecordResponse:
+    try:
+        service.get_run_summary(run_id=run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+    snapshot = service.get_ranking_snapshot(run_id=run_id, snapshot_sequence=snapshot_sequence)
+    if snapshot is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"ranking snapshot sequence {snapshot_sequence} was not found",
+        )
+    sequence, kind, source_event_id, payload = snapshot
+    return RankingSnapshotRecordResponse(
+        snapshot_sequence=sequence,
+        snapshot_kind=kind,
+        source_event_id=source_event_id,
+        payload=payload,
+    )
+
+
+@router.get("/snapshots/race/{snapshot_sequence}", response_model=RaceSnapshotRecordResponse)
+def get_race_snapshot(
+    run_id: str,
+    snapshot_sequence: int,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> RaceSnapshotRecordResponse:
+    try:
+        service.get_run_summary(run_id=run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+    snapshot = service.get_race_snapshot(run_id=run_id, snapshot_sequence=snapshot_sequence)
+    if snapshot is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"race snapshot sequence {snapshot_sequence} was not found",
+        )
+    sequence, kind, source_event_id, payload = snapshot
+    return RaceSnapshotRecordResponse(
+        snapshot_sequence=sequence,
+        snapshot_kind=kind,
+        source_event_id=source_event_id,
+        payload=payload,
+    )
+
+
 @router.get("/finals/qualification", response_model=FinalsQualificationResponse)
 def get_finals_qualification(
     run_id: str, service: SimulationApiService = Depends(get_simulation_api_service)

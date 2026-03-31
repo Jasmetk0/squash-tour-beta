@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
-import { createRun, getHealth, getRun } from '../api/client'
+import { createRun, getHealth, getRun, getRunStatusSummary } from '../api/client'
 import { CompactSummaryCard, EmptyState, PageIntro } from '../components/RunScopedUi'
 import { SUPPORTED_CALENDAR_SEASON } from '../config'
 import { formatApiError } from '../utils/apiErrors'
@@ -33,7 +33,7 @@ export function DashboardPage(): JSX.Element {
   const health = useQuery({ queryKey: ['health'], queryFn: getHealth, retry: false })
   const rememberedRunQuery = useQuery({
     queryKey: ['dashboard-remembered-run', lastRunId],
-    queryFn: () => getRun(lastRunId ?? ''),
+    queryFn: () => getRunStatusSummary(lastRunId ?? ''),
     enabled: Boolean(lastRunId),
     retry: false
   })
@@ -106,11 +106,11 @@ export function DashboardPage(): JSX.Element {
               {rememberedRunQuery.data && (
                 <CompactSummaryCard
                   items={[
-                    { label: 'Season', value: rememberedRunQuery.data.run.season },
-                    { label: 'Seed', value: rememberedRunQuery.data.run.seed },
+                    { label: 'Season', value: rememberedRunQuery.data.season },
+                    { label: 'Seed', value: rememberedRunQuery.data.seed },
                     {
                       label: 'Progress',
-                      value: `${rememberedRunQuery.data.run.next_event_index} / ${rememberedRunQuery.data.run.total_events}`
+                      value: `${rememberedRunQuery.data.progress.next_event_index} / ${rememberedRunQuery.data.progress.total_events}`
                     }
                   ]}
                 />

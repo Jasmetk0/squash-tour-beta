@@ -27,6 +27,7 @@ const api = vi.hoisted(() => {
     ApiError,
     createRun: vi.fn(),
     getHealth: vi.fn(),
+    getRunStatusSummary: vi.fn(),
     getRun: vi.fn()
   }
 })
@@ -38,6 +39,12 @@ describe('DashboardPage', () => {
     localStorage.clear()
     api.getHealth.mockResolvedValue({ status: 'ok' })
     api.createRun.mockResolvedValue({ run_id: 'run-a' })
+    api.getRunStatusSummary.mockResolvedValue({
+      run_id: 'run-a',
+      season: 2027,
+      seed: 77,
+      progress: { next_event_index: 2, total_events: 14, completed_event_count: 2 }
+    })
     api.getRun.mockResolvedValue({ run: { run_id: 'run-a' } })
     navigateMock.mockReset()
   })
@@ -97,11 +104,18 @@ describe('DashboardPage', () => {
 
   it('renders remembered last run id and resumes it', async () => {
     localStorage.setItem('beta_engine:last_run_id', 'remembered-run')
-    api.getRun.mockResolvedValue({ run: { run_id: 'remembered-run', season: 2027, seed: 77, next_event_index: 2, total_events: 14 } })
+    api.getRunStatusSummary.mockResolvedValue({
+      run_id: 'remembered-run',
+      season: 2027,
+      seed: 77,
+      progress: { next_event_index: 2, total_events: 14, completed_event_count: 2 }
+    })
+    api.getRun.mockResolvedValue({ run: { run_id: 'remembered-run' } })
 
     renderWithRoute(<DashboardPage />, '/')
 
     expect(await screen.findByText('Remembered run ID: remembered-run')).toBeInTheDocument()
+    expect(api.getRunStatusSummary).toHaveBeenCalledWith('remembered-run')
     const resumePanel = screen.getByRole('heading', { name: 'Resume remembered run' }).closest('section') as HTMLElement
     expect(await within(resumePanel).findByText('Season')).toBeInTheDocument()
     expect(await within(resumePanel).findByText('Seed')).toBeInTheDocument()
@@ -163,7 +177,7 @@ describe('DashboardPage', () => {
 
   it('shows a readable remembered-run summary fallback if summary cannot be loaded yet', async () => {
     localStorage.setItem('beta_engine:last_run_id', 'missing-run')
-    api.getRun.mockRejectedValue(new api.ApiError('{"detail":"Run not found"}', 404))
+    api.getRunStatusSummary.mockRejectedValue(new api.ApiError('{"detail":"Run not found"}', 404))
 
     renderWithRoute(<DashboardPage />, '/')
 

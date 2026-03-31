@@ -14,6 +14,7 @@ const api = vi.hoisted(() => ({
     }
   },
   getRun: vi.fn(),
+  getRunStatusSummary: vi.fn(),
   getFinalsSummary: vi.fn(),
   getLatestRollover: vi.fn(),
   getRunSource: vi.fn(),
@@ -36,6 +37,17 @@ describe('RunPage', () => {
     api.getRun.mockResolvedValue({
       run: { run_id: 'run-a', season: 2025, seed: 3, next_event_index: 1, total_events: 4, completed_event_ids: ['E1'] },
       season_state: { season: 2025, next_event_index: 1, completed_event_ids: ['E1'], ordered_events: [] }
+    })
+    api.getRunStatusSummary.mockResolvedValue({
+      run_id: 'run-a',
+      season: 2025,
+      seed: 3,
+      progress: { next_event_index: 1, total_events: 4, completed_event_count: 1 },
+      finals: { qualification_available: true, result_available: false },
+      rollover: { latest_to_season: 2026, transitioned_players: 128 },
+      source: { source_type: 'bootstrap', parent_run_id: 'run-parent' },
+      lineage: { child_run_count: 2 },
+      history_counts: { events: 3, ranking_snapshots: 3, race_snapshots: 3 }
     })
     api.getFinalsSummary.mockResolvedValue({
       run_id: 'run-a',
@@ -182,6 +194,7 @@ describe('RunPage', () => {
     expect(within(runSummary as HTMLElement).getByText('run-a')).toBeInTheDocument()
     expect(within(runSummary as HTMLElement).getByText('Completed events')).toBeInTheDocument()
     expect(within(runSummary as HTMLElement).getByText('1')).toBeInTheDocument()
+    expect(api.getRunStatusSummary).toHaveBeenCalledWith('run-a')
   })
 
   it('renders finals overview from finals summary data', async () => {
@@ -230,6 +243,7 @@ describe('RunPage', () => {
 
     await screen.findByText('World Tour Finals overview')
     expect(api.getFinalsSummary).toHaveBeenCalledTimes(1)
+    expect(api.getRunStatusSummary).toHaveBeenCalledTimes(1)
     expect(api.getLatestRollover).toHaveBeenCalledTimes(1)
     expect(api.getRunSource).toHaveBeenCalledTimes(1)
     expect(api.getRunLineage).toHaveBeenCalledTimes(1)
@@ -240,6 +254,7 @@ describe('RunPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Simulate World Tour Finals' }))
 
     await waitFor(() => expect(api.getFinalsSummary).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(api.getRunStatusSummary).toHaveBeenCalledTimes(2))
     await waitFor(() => expect(api.getLatestRollover).toHaveBeenCalledTimes(2))
     await waitFor(() => expect(api.getRunSource).toHaveBeenCalledTimes(2))
     await waitFor(() => expect(api.getRunLineage).toHaveBeenCalledTimes(2))
@@ -250,6 +265,7 @@ describe('RunPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Roll over to next season' }))
 
     await waitFor(() => expect(api.getFinalsSummary).toHaveBeenCalledTimes(3))
+    await waitFor(() => expect(api.getRunStatusSummary).toHaveBeenCalledTimes(3))
     await waitFor(() => expect(api.getLatestRollover).toHaveBeenCalledTimes(3))
     await waitFor(() => expect(api.getRunSource).toHaveBeenCalledTimes(3))
     await waitFor(() => expect(api.getRunLineage).toHaveBeenCalledTimes(3))
@@ -263,6 +279,7 @@ describe('RunPage', () => {
 
     await screen.findByText('World Tour Finals overview')
     expect(api.getFinalsSummary).toHaveBeenCalledTimes(1)
+    expect(api.getRunStatusSummary).toHaveBeenCalledTimes(1)
     expect(api.getLatestRollover).toHaveBeenCalledTimes(1)
     expect(api.getRunSource).toHaveBeenCalledTimes(1)
     expect(api.getRunLineage).toHaveBeenCalledTimes(1)
@@ -273,6 +290,7 @@ describe('RunPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Simulate next tournament' }))
 
     await waitFor(() => expect(api.getFinalsSummary).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(api.getRunStatusSummary).toHaveBeenCalledTimes(2))
     await waitFor(() => expect(api.getLatestRollover).toHaveBeenCalledTimes(2))
     await waitFor(() => expect(api.getRunSource).toHaveBeenCalledTimes(2))
     await waitFor(() => expect(api.getRunLineage).toHaveBeenCalledTimes(2))

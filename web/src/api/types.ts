@@ -11,6 +11,37 @@ export type RunSummary = {
   completed_event_ids: string[]
 }
 
+export type RunStatusSummary = {
+  run_id: string
+  season: number
+  seed: number
+  progress: {
+    next_event_index: number
+    total_events: number
+    completed_event_count: number
+  }
+  finals: {
+    qualification_available: boolean
+    result_available: boolean
+  }
+  rollover: {
+    latest_to_season: number
+    transitioned_players: number
+  } | null
+  source: {
+    source_type: string
+    parent_run_id: string | null
+  } | null
+  lineage: {
+    child_run_count: number
+  }
+  history_counts: {
+    events: number
+    ranking_snapshots: number
+    race_snapshots: number
+  }
+}
+
 export type SeasonStateResponse = {
   run: RunSummary
   season_state: {

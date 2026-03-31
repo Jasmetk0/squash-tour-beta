@@ -274,3 +274,55 @@ def test_bootstrap_next_season_and_lineage_endpoints(tmp_path) -> None:
         status, child_step = _request("POST", f"{server.base_url}/runs/run-child/simulate/next-week")
         assert status == 200
         assert child_step["step"]["season_state"]["season"] == 2028
+
+
+def test_run_status_summary_endpoint_returns_compact_aggregates(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-status-summary.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/runs",
+            {"run_id": "run-status", "seed": 5151, "season": 2027},
+        )
+        assert status == 201
+
+        status, pre = _request("GET", f"{server.base_url}/runs/run-status/status-summary")
+        assert status == 200
+        assert pre == {
+            "run_id": "run-status",
+            "season": 2027,
+            "seed": 5151,
+            "progress": {"next_event_index": 0, "total_events": 18, "completed_event_count": 0},
+            "finals": {"qualification_available": False, "result_available": False},
+            "rollover": None,
+            "source": None,
+            "lineage": {"child_run_count": 0},
+            "history_counts": {"events": 0, "ranking_snapshots": 0, "race_snapshots": 0},
+        }
+
+        status, _ = _request("POST", f"{server.base_url}/runs/run-status/simulate/full-season")
+        assert status == 200
+        status, _ = _request("POST", f"{server.base_url}/runs/run-status/rollover/next-season")
+        assert status == 200
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/runs/run-status/bootstrap-next-season",
+            {"child_run_id": "run-status-child"},
+        )
+        assert status == 200
+
+        status, post = _request("GET", f"{server.base_url}/runs/run-status/status-summary")
+        assert status == 200
+        assert post["run_id"] == "run-status"
+        assert post["finals"]["qualification_available"] is True
+        assert post["finals"]["result_available"] is False
+        assert post["rollover"] == {"latest_to_season": 2028, "transitioned_players": 128}
+        assert post["source"] is None
+        assert post["lineage"] == {"child_run_count": 1}
+        assert post["history_counts"]["events"] == 18
+        assert post["history_counts"]["ranking_snapshots"] > 0
+        assert post["history_counts"]["race_snapshots"] > 0
+
+        status, child = _request("GET", f"{server.base_url}/runs/run-status-child/status-summary")
+        assert status == 200
+        assert child["source"] == {"source_type": "rollover_bootstrap", "parent_run_id": "run-status"}

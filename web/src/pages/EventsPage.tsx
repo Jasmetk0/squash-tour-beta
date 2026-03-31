@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { getEvent, listEvents } from '../api/client'
-import { JsonPayloadBlock, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
+import { EmptyState, JsonPayloadBlock, MetadataList, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
 import { SelectableHistoryList } from '../components/SelectableHistoryList'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -35,13 +35,17 @@ export function EventsPage(): JSX.Element {
 
   return (
     <section className="panel">
-      <RunScopedHeader title="Events history" runId={runId} />
+      <RunScopedHeader
+        title="Events history"
+        runId={runId}
+        subtitle="Browse the event timeline and inspect payload details for each event."
+      />
 
       <SectionCard title="Event timeline">
         {eventsQuery.isLoading && <p className="status">Loading events history...</p>}
         {eventsQuery.error && <p className="error">Failed to load events history: {formatApiError(eventsQuery.error)}</p>}
         {!eventsQuery.isLoading && !eventsQuery.error && events.length === 0 && (
-          <p className="status">No events are available for this run yet.</p>
+          <EmptyState message="No events are available for this run yet." />
         )}
 
         {events.length > 0 && (
@@ -60,24 +64,14 @@ export function EventsPage(): JSX.Element {
       <SectionCard title="Selected event detail">
         {selectedEvent ? (
           <>
-            <dl className="kv-grid">
-              <div>
-                <dt>Event ID</dt>
-                <dd>{selectedEvent.event_id}</dd>
-              </div>
-              <div>
-                <dt>Sequence</dt>
-                <dd>{selectedEvent.event_sequence}</dd>
-              </div>
-              <div>
-                <dt>Season</dt>
-                <dd>{selectedEvent.season ?? '—'}</dd>
-              </div>
-              <div>
-                <dt>Week</dt>
-                <dd>{selectedEvent.week ?? '—'}</dd>
-              </div>
-            </dl>
+            <MetadataList
+              items={[
+                { label: 'Event ID', value: selectedEvent.event_id },
+                { label: 'Sequence', value: selectedEvent.event_sequence },
+                { label: 'Season', value: selectedEvent.season ?? '—' },
+                { label: 'Week', value: selectedEvent.week ?? '—' }
+              ]}
+            />
 
             {eventDetailQuery.isLoading && <p className="status">Loading selected event payload...</p>}
             {eventDetailQuery.error && (
@@ -92,7 +86,7 @@ export function EventsPage(): JSX.Element {
             )}
           </>
         ) : (
-          <p className="status">Select an event to inspect details.</p>
+          <EmptyState message="Select an event to inspect details." />
         )}
       </SectionCard>
     </section>

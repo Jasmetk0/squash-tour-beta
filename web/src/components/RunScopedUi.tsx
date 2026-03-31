@@ -1,6 +1,13 @@
+import type { ReactNode } from 'react'
+
 type SectionCardProps = {
   title: string
-  children: JSX.Element | JSX.Element[] | null
+  children: ReactNode
+}
+
+type MetadataField = {
+  label: string
+  value: ReactNode
 }
 
 type JsonPayloadProps = {
@@ -16,12 +23,38 @@ type ActionStatusProps = {
   isLoading?: boolean
 }
 
-export function RunScopedHeader({ title, runId }: { title: string; runId: string }): JSX.Element {
+export function PageIntro({
+  title,
+  subtitle,
+  meta
+}: {
+  title: string
+  subtitle?: string
+  meta?: string
+}): JSX.Element {
   return (
-    <>
+    <header className="page-intro">
       <h2>{title}</h2>
-      <p className="status">Run: {runId || 'unknown'}</p>
-    </>
+      {subtitle ? <p className="subtitle">{subtitle}</p> : null}
+      {meta ? <p className="status">{meta}</p> : null}
+    </header>
+  )
+}
+
+export function RunScopedHeader({ title, runId, subtitle }: { title: string; runId: string; subtitle?: string }): JSX.Element {
+  return <PageIntro title={title} subtitle={subtitle} meta={`Run: ${runId || 'unknown'}`} />
+}
+
+export function MetadataList({ items }: { items: MetadataField[] }): JSX.Element {
+  return (
+    <dl className="kv-grid">
+      {items.map((item) => (
+        <div key={item.label}>
+          <dt>{item.label}</dt>
+          <dd>{item.value}</dd>
+        </div>
+      ))}
+    </dl>
   )
 }
 
@@ -41,6 +74,10 @@ export function JsonPayloadBlock({ title, emptyText, payload }: JsonPayloadProps
       {payload ? <pre className="json-block">{JSON.stringify(payload, null, 2)}</pre> : <p className="status">{emptyText}</p>}
     </>
   )
+}
+
+export function EmptyState({ message }: { message: string }): JSX.Element {
+  return <p className="status">{message}</p>
 }
 
 export function ActionStatusBlock({ isLoading, loadingText, successText, errorText }: ActionStatusProps): JSX.Element | null {

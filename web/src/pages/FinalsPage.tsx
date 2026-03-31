@@ -7,7 +7,7 @@ import {
   getFinalsSummary,
   simulateWorldTourFinals
 } from '../api/client'
-import { ActionStatusBlock, JsonPayloadBlock, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
+import { ActionStatusBlock, EmptyState, JsonPayloadBlock, MetadataList, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
 export function FinalsPage(): JSX.Element {
@@ -49,7 +49,11 @@ export function FinalsPage(): JSX.Element {
 
   return (
     <section className="panel">
-      <RunScopedHeader title="World Tour Finals" runId={runId} />
+      <RunScopedHeader
+        title="World Tour Finals"
+        runId={runId}
+        subtitle="Inspect Finals qualification/results and run the Finals simulation action."
+      />
 
       <div className="actions">
         <button onClick={() => finalsSimulator.mutate()} disabled={!runId || finalsSimulator.isPending}>
@@ -73,24 +77,14 @@ export function FinalsPage(): JSX.Element {
 
       {summaryQuery.data && (
         <SectionCard title="Finals summary">
-          <dl className="kv-grid">
-            <div>
-              <dt>Run ID</dt>
-              <dd>{summaryQuery.data.run_id}</dd>
-            </div>
-            <div>
-              <dt>Season</dt>
-              <dd>{summaryQuery.data.season}</dd>
-            </div>
-            <div>
-              <dt>Qualification status</dt>
-              <dd>{summaryQuery.data.qualification ? 'Available' : 'Unavailable'}</dd>
-            </div>
-            <div>
-              <dt>Result status</dt>
-              <dd>{summaryQuery.data.result ? 'Available' : 'Not simulated yet'}</dd>
-            </div>
-          </dl>
+          <MetadataList
+            items={[
+              { label: 'Run ID', value: summaryQuery.data.run_id },
+              { label: 'Season', value: summaryQuery.data.season },
+              { label: 'Qualification status', value: summaryQuery.data.qualification ? 'Available' : 'Unavailable' },
+              { label: 'Result status', value: summaryQuery.data.result ? 'Available' : 'Not simulated yet' }
+            ]}
+          />
         </SectionCard>
       )}
 
@@ -107,14 +101,14 @@ export function FinalsPage(): JSX.Element {
             />
           </>
         ) : qualificationNotFound ? (
-          <p className="status">No Finals qualification is available for this run yet.</p>
+          <EmptyState message="No Finals qualification is available for this run yet." />
         ) : (
-          !qualificationQuery.isLoading && <p className="status">No qualification data available.</p>
+          !qualificationQuery.isLoading && <EmptyState message="No qualification data available." />
         )}
       </SectionCard>
 
       <SectionCard title="Finals result">
-        {resultNotFound && <p className="status">Finals result has not been recorded for this run yet.</p>}
+        {resultNotFound && <EmptyState message="Finals result has not been recorded for this run yet." />}
         {hasResultError && <p className="error">Failed to load Finals result: {formatApiError(resultQuery.error)}</p>}
         {resultQuery.data ? (
           <>

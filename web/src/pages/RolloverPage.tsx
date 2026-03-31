@@ -9,7 +9,14 @@ import {
   getRolloverBySeason,
   rolloverNextSeason
 } from '../api/client'
-import { ActionStatusBlock, JsonPayloadBlock, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
+import {
+  ActionStatusBlock,
+  EmptyState,
+  JsonPayloadBlock,
+  MetadataList,
+  RunScopedHeader,
+  SectionCard
+} from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
 export function RolloverPage(): JSX.Element {
@@ -82,29 +89,26 @@ export function RolloverPage(): JSX.Element {
 
   return (
     <section className="panel">
-      <RunScopedHeader title="Season Rollover" runId={runId} />
+      <RunScopedHeader
+        title="Season Rollover"
+        runId={runId}
+        subtitle="Run rollover actions and inspect rollover outputs for each target season."
+      />
 
       <SectionCard title="Latest rollover summary">
         {latestQuery.isLoading && <p className="status">Loading latest rollover...</p>}
-        {latestNotFound && <p className="status">No rollover has been executed for this run yet.</p>}
+        {latestNotFound && <EmptyState message="No rollover has been executed for this run yet." />}
         {latestQuery.error && !latestNotFound && (
           <p className="error">Failed to load latest rollover: {formatApiError(latestQuery.error)}</p>
         )}
         {latestQuery.data && (
-          <dl className="kv-grid">
-            <div>
-              <dt>From season</dt>
-              <dd>{latestQuery.data.rollover.from_season}</dd>
-            </div>
-            <div>
-              <dt>To season</dt>
-              <dd>{latestQuery.data.rollover.to_season}</dd>
-            </div>
-            <div>
-              <dt>Transitioned players</dt>
-              <dd>{latestQuery.data.rollover.transitioned_players}</dd>
-            </div>
-          </dl>
+          <MetadataList
+            items={[
+              { label: 'From season', value: latestQuery.data.rollover.from_season },
+              { label: 'To season', value: latestQuery.data.rollover.to_season },
+              { label: 'Transitioned players', value: latestQuery.data.rollover.transitioned_players }
+            ]}
+          />
         )}
       </SectionCard>
 
@@ -140,32 +144,25 @@ export function RolloverPage(): JSX.Element {
           </label>
           <button type="submit">Load season data</button>
         </form>
-        {selectedSeason === null && <p className="status">Select a season to inspect rollover payloads.</p>}
+        {selectedSeason === null && <EmptyState message="Select a season to inspect rollover payloads." />}
       </SectionCard>
 
       {selectedSeason !== null && (
         <>
           <SectionCard title={`Season summary (S${selectedSeason})`}>
             {seasonSummaryQuery.isLoading && <p className="status">Loading rollover summary...</p>}
-            {seasonNotFound && <p className="status">No rollover summary found for season {selectedSeason}.</p>}
+            {seasonNotFound && <EmptyState message={`No rollover summary found for season ${selectedSeason}.`} />}
             {seasonSummaryQuery.error && !seasonNotFound && (
               <p className="error">Failed to load rollover summary: {formatApiError(seasonSummaryQuery.error)}</p>
             )}
             {seasonSummaryQuery.data && (
-              <dl className="kv-grid">
-                <div>
-                  <dt>From season</dt>
-                  <dd>{seasonSummaryQuery.data.rollover.from_season}</dd>
-                </div>
-                <div>
-                  <dt>To season</dt>
-                  <dd>{seasonSummaryQuery.data.rollover.to_season}</dd>
-                </div>
-                <div>
-                  <dt>Transitioned players</dt>
-                  <dd>{seasonSummaryQuery.data.rollover.transitioned_players}</dd>
-                </div>
-              </dl>
+              <MetadataList
+                items={[
+                  { label: 'From season', value: seasonSummaryQuery.data.rollover.from_season },
+                  { label: 'To season', value: seasonSummaryQuery.data.rollover.to_season },
+                  { label: 'Transitioned players', value: seasonSummaryQuery.data.rollover.transitioned_players }
+                ]}
+              />
             )}
           </SectionCard>
 

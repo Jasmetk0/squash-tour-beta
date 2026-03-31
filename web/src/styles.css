@@ -43,6 +43,19 @@ nav a.active {
   margin-bottom: 1rem;
 }
 
+.page-intro {
+  margin-bottom: 1rem;
+}
+
+.page-intro h2 {
+  margin: 0 0 0.35rem;
+}
+
+.page-intro .subtitle,
+.page-intro .status {
+  margin: 0.2rem 0 0;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -75,6 +88,12 @@ button {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+
+.actions button {
+  white-space: nowrap;
 }
 
 .linkish {
@@ -86,6 +105,7 @@ button {
 .item-list {
   list-style: none;
   padding: 0;
+  margin: 0.4rem 0 0;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -129,10 +149,28 @@ button {
   box-shadow: inset 0 0 0 1px #1d4ed8;
 }
 
+.history-list-item:hover {
+  border-color: #93c5fd;
+}
+
 .kv-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 1rem;
+}
+
+.kv-grid dt,
+.kv-grid dd {
+  margin: 0;
+}
+
+.kv-grid dt {
+  font-weight: 600;
+  color: #334155;
+}
+
+.kv-grid dd {
+  margin-top: 0.2rem;
 }
 
 
@@ -161,4 +199,8 @@ button {
 
 .nested-panel {
   margin-top: 1rem;
+}
+
+.nested-panel h3 {
+  margin-top: 0;
 }

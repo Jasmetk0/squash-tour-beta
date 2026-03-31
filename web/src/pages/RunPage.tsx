@@ -13,7 +13,7 @@ import {
   simulateNextWeek,
   simulateWorldTourFinals
 } from '../api/client'
-import { ActionStatusBlock, SectionCard } from '../components/RunScopedUi'
+import { ActionStatusBlock, EmptyState, MetadataList, PageIntro, SectionCard } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
 export function RunPage(): JSX.Element {
@@ -91,35 +91,20 @@ export function RunPage(): JSX.Element {
 
   return (
     <section className="panel">
-      <h2>Run detail</h2>
-      {runQuery.isLoading && <p>Loading run...</p>}
+      <PageIntro title="Run detail" subtitle="Review run status, execute quick actions, and navigate to detailed run views." />
+      {runQuery.isLoading && <p className="status">Loading run...</p>}
       {runQuery.error && <p className="error">Failed to load run: {String(runQuery.error)}</p>}
       {runQuery.data && (
         <>
-          <dl className="kv-grid">
-            <div>
-              <dt>Run ID</dt>
-              <dd>{runQuery.data.run.run_id}</dd>
-            </div>
-            <div>
-              <dt>Season</dt>
-              <dd>{runQuery.data.run.season}</dd>
-            </div>
-            <div>
-              <dt>Seed</dt>
-              <dd>{runQuery.data.run.seed}</dd>
-            </div>
-            <div>
-              <dt>Progress</dt>
-              <dd>
-                {runQuery.data.run.next_event_index} / {runQuery.data.run.total_events}
-              </dd>
-            </div>
-            <div>
-              <dt>Completed event IDs</dt>
-              <dd>{runQuery.data.run.completed_event_ids.length}</dd>
-            </div>
-          </dl>
+          <MetadataList
+            items={[
+              { label: 'Run ID', value: runQuery.data.run.run_id },
+              { label: 'Season', value: runQuery.data.run.season },
+              { label: 'Seed', value: runQuery.data.run.seed },
+              { label: 'Progress', value: `${runQuery.data.run.next_event_index} / ${runQuery.data.run.total_events}` },
+              { label: 'Completed event IDs', value: runQuery.data.run.completed_event_ids.length }
+            ]}
+          />
 
           <SectionCard title="World Tour Finals overview">
             {finalsSummaryQuery.isLoading && <p className="status">Loading Finals status...</p>}
@@ -127,16 +112,12 @@ export function RunPage(): JSX.Element {
               <p className="error">Failed to load Finals summary: {formatApiError(finalsSummaryQuery.error)}</p>
             )}
             {finalsSummaryQuery.data && (
-              <dl className="kv-grid">
-                <div>
-                  <dt>Qualification</dt>
-                  <dd>{finalsSummaryQuery.data.qualification ? 'Available' : 'Not generated yet'}</dd>
-                </div>
-                <div>
-                  <dt>Finals result</dt>
-                  <dd>{finalsSummaryQuery.data.result ? 'Available' : 'Not simulated yet'}</dd>
-                </div>
-              </dl>
+              <MetadataList
+                items={[
+                  { label: 'Qualification', value: finalsSummaryQuery.data.qualification ? 'Available' : 'Not generated yet' },
+                  { label: 'Finals result', value: finalsSummaryQuery.data.result ? 'Available' : 'Not simulated yet' }
+                ]}
+              />
             )}
             <div className="actions">
               <button onClick={() => finalsQuickAction.mutate()} disabled={!runId || finalsQuickAction.isPending}>
@@ -167,20 +148,13 @@ export function RunPage(): JSX.Element {
               <p className="error">Failed to load latest rollover: {formatApiError(latestRolloverQuery.error)}</p>
             )}
             {latestRolloverQuery.data && (
-              <dl className="kv-grid">
-                <div>
-                  <dt>From season</dt>
-                  <dd>{latestRolloverQuery.data.rollover.from_season}</dd>
-                </div>
-                <div>
-                  <dt>To season</dt>
-                  <dd>{latestRolloverQuery.data.rollover.to_season}</dd>
-                </div>
-                <div>
-                  <dt>Transitioned players</dt>
-                  <dd>{latestRolloverQuery.data.rollover.transitioned_players}</dd>
-                </div>
-              </dl>
+              <MetadataList
+                items={[
+                  { label: 'From season', value: latestRolloverQuery.data.rollover.from_season },
+                  { label: 'To season', value: latestRolloverQuery.data.rollover.to_season },
+                  { label: 'Transitioned players', value: latestRolloverQuery.data.rollover.transitioned_players }
+                ]}
+              />
             )}
             <div className="actions">
               <button onClick={() => rolloverQuickAction.mutate()} disabled={!runId || rolloverQuickAction.isPending}>
@@ -217,28 +191,20 @@ export function RunPage(): JSX.Element {
               <p className="error">Failed to load run lineage: {formatApiError(lineageQuery.error)}</p>
             )}
             {sourceQuery.data && (
-              <dl className="kv-grid">
-                <div>
-                  <dt>Source type</dt>
-                  <dd>{sourceQuery.data.source.source_type || 'Unknown'}</dd>
-                </div>
-                <div>
-                  <dt>Parent run</dt>
-                  <dd>
-                    {sourceQuery.data.source.parent_run_id ? (
-                      <Link to={`/runs/${sourceQuery.data.source.parent_run_id}`}>
-                        {sourceQuery.data.source.parent_run_id}
-                      </Link>
+              <MetadataList
+                items={[
+                  { label: 'Source type', value: sourceQuery.data.source.source_type || 'Unknown' },
+                  {
+                    label: 'Parent run',
+                    value: sourceQuery.data.source.parent_run_id ? (
+                      <Link to={`/runs/${sourceQuery.data.source.parent_run_id}`}>{sourceQuery.data.source.parent_run_id}</Link>
                     ) : (
                       'No parent run'
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Child run count</dt>
-                  <dd>{lineageQuery.data?.lineage.children.length ?? 0}</dd>
-                </div>
-              </dl>
+                    )
+                  },
+                  { label: 'Child run count', value: lineageQuery.data?.lineage.children.length ?? 0 }
+                ]}
+              />
             )}
             {!sourceQuery.data && isApiNotFound(sourceQuery.error) && (
               <p className="status">No source metadata available for this run.</p>
@@ -253,28 +219,31 @@ export function RunPage(): JSX.Element {
               </ul>
             )}
             {lineageQuery.data && lineageQuery.data.lineage.children.length === 0 && (
-              <p className="status">No child runs created yet.</p>
+              <EmptyState message="No child runs created yet." />
             )}
             {!lineageQuery.data && isApiNotFound(lineageQuery.error) && (
-              <p className="status">No lineage metadata available for this run.</p>
+              <EmptyState message="No lineage metadata available for this run." />
             )}
             <p>
               <Link to={`/runs/${runId}/bootstrap-lineage`}>View bootstrap and lineage</Link>
             </p>
           </SectionCard>
 
-          <h3>Simulation controls</h3>
-          <div className="actions">
-            <button onClick={() => simulator.mutate('next-tournament')}>Simulate next tournament</button>
-            <button onClick={() => simulator.mutate('next-week')}>Simulate next week</button>
-            <button onClick={() => simulator.mutate('full-season')}>Simulate full season</button>
-          </div>
-          {simulator.error && <p className="error">Simulation failed: {String(simulator.error)}</p>}
-          {simulator.data && (
-            <pre className="json-block" aria-label="simulation-result">
-              {JSON.stringify(simulator.data.step, null, 2)}
-            </pre>
-          )}
+          <SectionCard title="Simulation controls">
+            <div className="actions">
+              <button onClick={() => simulator.mutate('next-tournament')}>Simulate next tournament</button>
+              <button onClick={() => simulator.mutate('next-week')}>Simulate next week</button>
+              <button onClick={() => simulator.mutate('full-season')}>Simulate full season</button>
+            </div>
+            <ActionStatusBlock
+              errorText={simulator.error ? `Simulation failed: ${formatApiError(simulator.error)}` : undefined}
+            />
+            {simulator.data && (
+              <pre className="json-block" aria-label="simulation-result">
+                {JSON.stringify(simulator.data.step, null, 2)}
+              </pre>
+            )}
+          </SectionCard>
         </>
       )}
     </section>

@@ -3,6 +3,7 @@ import { FormEvent, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { createRun, getHealth, getRun } from '../api/client'
+import { EmptyState, PageIntro } from '../components/RunScopedUi'
 import { SUPPORTED_CALENDAR_SEASON } from '../config'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -70,8 +71,7 @@ export function DashboardPage(): JSX.Element {
 
   return (
     <section className="panel">
-      <h2>Dashboard</h2>
-      <p className="subtitle">Launch a deterministic simulation run or open an existing run from the API.</p>
+      <PageIntro title="Dashboard" subtitle="Launch a deterministic simulation run or open an existing run from the API." />
 
       <div className="grid">
         <section className="panel" aria-labelledby="dashboard-health-heading">
@@ -120,7 +120,7 @@ export function DashboardPage(): JSX.Element {
               </div>
             </>
           ) : (
-            <p className="status">No remembered run yet. Create or open a run to enable quick resume.</p>
+            <EmptyState message="No remembered run yet. Create or open a run to enable quick resume." />
           )}
           {resumeError && <p className="error">{resumeError}</p>}
         </section>

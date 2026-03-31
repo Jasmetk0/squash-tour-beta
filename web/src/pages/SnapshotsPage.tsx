@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 
 import { listRaceSnapshots, listRankingSnapshots } from '../api/client'
 import { EmptyState, JsonPayloadBlock, MetadataList, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
@@ -12,7 +12,10 @@ type Mode = 'ranking' | 'race'
 
 export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
   const { runId = '' } = useParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [selectedSequence, setSelectedSequence] = useState<number | null>(null)
+  const requestedSequence = Number.parseInt(searchParams.get('selectedSequence') ?? '', 10)
+  const hasRequestedSequence = Number.isInteger(requestedSequence)
 
   const query = useQuery({
     queryKey: [`${mode}-snapshots`, runId],
@@ -28,10 +31,17 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
       return
     }
 
+    if (hasRequestedSequence && snapshots.some((snapshot) => snapshot.snapshot_sequence === requestedSequence)) {
+      if (selectedSequence !== requestedSequence) {
+        setSelectedSequence(requestedSequence)
+      }
+      return
+    }
+
     if (!selectedSequence || !snapshots.some((snapshot) => snapshot.snapshot_sequence === selectedSequence)) {
       setSelectedSequence(snapshots[0].snapshot_sequence)
     }
-  }, [snapshots, selectedSequence])
+  }, [hasRequestedSequence, requestedSequence, selectedSequence, snapshots])
 
   const selected = snapshots.find((snapshot) => snapshot.snapshot_sequence === selectedSequence) ?? null
 
@@ -59,7 +69,14 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
             getLabel={(snapshot) => `${snapshot.snapshot_sequence}. ${snapshot.snapshot_kind}`}
             getSubLabel={(snapshot) => (snapshot.source_event_id ? `Source ${snapshot.source_event_id}` : undefined)}
             isSelected={(snapshot) => snapshot.snapshot_sequence === selectedSequence}
-            onSelect={(snapshot) => setSelectedSequence(snapshot.snapshot_sequence)}
+            onSelect={(snapshot) => {
+              setSelectedSequence(snapshot.snapshot_sequence)
+              setSearchParams((current) => {
+                const next = new URLSearchParams(current)
+                next.set('selectedSequence', String(snapshot.snapshot_sequence))
+                return next
+              })
+            }}
             ariaLabel={`${title} list`}
           />
         )}

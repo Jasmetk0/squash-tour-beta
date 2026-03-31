@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 
 import { getEvent, listEvents } from '../api/client'
 import { EmptyState, JsonPayloadBlock, MetadataList, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
@@ -9,7 +9,9 @@ import { formatApiError } from '../utils/apiErrors'
 
 export function EventsPage(): JSX.Element {
   const { runId = '' } = useParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
+  const requestedEventId = searchParams.get('selectedEventId')
 
   const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId) })
   const events = eventsQuery.data?.events ?? []
@@ -20,10 +22,17 @@ export function EventsPage(): JSX.Element {
       return
     }
 
+    if (requestedEventId && events.some((event) => event.event_id === requestedEventId)) {
+      if (selectedEventId !== requestedEventId) {
+        setSelectedEventId(requestedEventId)
+      }
+      return
+    }
+
     if (!selectedEventId || !events.some((event) => event.event_id === selectedEventId)) {
       setSelectedEventId(events[0].event_id)
     }
-  }, [events, selectedEventId])
+  }, [events, requestedEventId, selectedEventId])
 
   const selectedEvent = events.find((event) => event.event_id === selectedEventId) ?? null
 
@@ -55,7 +64,14 @@ export function EventsPage(): JSX.Element {
             getLabel={(event) => `${event.event_sequence}. ${event.event_id}`}
             getSubLabel={(event) => (event.season != null && event.week != null ? `S${event.season} / W${event.week}` : undefined)}
             isSelected={(event) => event.event_id === selectedEventId}
-            onSelect={(event) => setSelectedEventId(event.event_id)}
+            onSelect={(event) => {
+              setSelectedEventId(event.event_id)
+              setSearchParams((current) => {
+                const next = new URLSearchParams(current)
+                next.set('selectedEventId', event.event_id)
+                return next
+              })
+            }}
             ariaLabel="Events history list"
           />
         )}

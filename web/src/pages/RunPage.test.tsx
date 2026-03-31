@@ -298,6 +298,19 @@ describe('RunPage', () => {
       '/runs/run-a/snapshots/ranking'
     )
     expect(screen.getByRole('link', { name: 'View all race snapshots' })).toHaveAttribute('href', '/runs/run-a/snapshots/race')
+
+    expect(within(eventsPreview).getByRole('link', { name: /E3/i })).toHaveAttribute(
+      'href',
+      '/runs/run-a/events?selectedEventId=E3'
+    )
+    expect(within(rankingPreview).getByRole('link', { name: /Seq 10 • WEEK/i })).toHaveAttribute(
+      'href',
+      '/runs/run-a/snapshots/ranking?selectedSequence=10'
+    )
+    expect(within(racePreview).getByRole('link', { name: /Seq 7 • WEEK/i })).toHaveAttribute(
+      'href',
+      '/runs/run-a/snapshots/race?selectedSequence=7'
+    )
   })
 
   it('renders readable empty and error states per preview section', async () => {

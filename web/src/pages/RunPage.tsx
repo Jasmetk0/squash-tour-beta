@@ -261,12 +261,14 @@ export function RunPage(): JSX.Element {
                   <ul className="item-list" aria-label="Recent events preview">
                     {eventsQuery.data?.events.slice(0, previewLimit).map((event) => (
                       <li key={event.event_id}>
-                        <strong>{event.event_id}</strong>{' '}
-                        <span className="status">
-                          • Seq {event.event_sequence}
-                          {event.season != null ? ` • S${event.season}` : ''}
-                          {event.week != null ? ` • W${event.week}` : ''}
-                        </span>
+                        <Link to={`/runs/${runId}/events?selectedEventId=${encodeURIComponent(event.event_id)}`}>
+                          <strong>{event.event_id}</strong>{' '}
+                          <span className="status">
+                            • Seq {event.event_sequence}
+                            {event.season != null ? ` • S${event.season}` : ''}
+                            {event.week != null ? ` • W${event.week}` : ''}
+                          </span>
+                        </Link>
                       </li>
                     ))}
                   </ul>
@@ -293,12 +295,14 @@ export function RunPage(): JSX.Element {
                   <ul className="item-list" aria-label="Recent ranking snapshots preview">
                     {rankingSnapshotsQuery.data?.snapshots.slice(0, previewLimit).map((snapshot) => (
                       <li key={`${snapshot.snapshot_kind}-${snapshot.snapshot_sequence}`}>
-                        <strong>
-                          Seq {snapshot.snapshot_sequence} • {snapshot.snapshot_kind}
-                        </strong>{' '}
-                        <span className="status">
-                          {snapshot.source_event_id ? `• Source ${snapshot.source_event_id}` : '• Source —'}
-                        </span>
+                        <Link to={`/runs/${runId}/snapshots/ranking?selectedSequence=${snapshot.snapshot_sequence}`}>
+                          <strong>
+                            Seq {snapshot.snapshot_sequence} • {snapshot.snapshot_kind}
+                          </strong>{' '}
+                          <span className="status">
+                            {snapshot.source_event_id ? `• Source ${snapshot.source_event_id}` : '• Source —'}
+                          </span>
+                        </Link>
                       </li>
                     ))}
                   </ul>
@@ -321,12 +325,14 @@ export function RunPage(): JSX.Element {
                   <ul className="item-list" aria-label="Recent race snapshots preview">
                     {raceSnapshotsQuery.data?.snapshots.slice(0, previewLimit).map((snapshot) => (
                       <li key={`${snapshot.snapshot_kind}-${snapshot.snapshot_sequence}`}>
-                        <strong>
-                          Seq {snapshot.snapshot_sequence} • {snapshot.snapshot_kind}
-                        </strong>{' '}
-                        <span className="status">
-                          {snapshot.source_event_id ? `• Source ${snapshot.source_event_id}` : '• Source —'}
-                        </span>
+                        <Link to={`/runs/${runId}/snapshots/race?selectedSequence=${snapshot.snapshot_sequence}`}>
+                          <strong>
+                            Seq {snapshot.snapshot_sequence} • {snapshot.snapshot_kind}
+                          </strong>{' '}
+                          <span className="status">
+                            {snapshot.source_event_id ? `• Source ${snapshot.source_event_id}` : '• Source —'}
+                          </span>
+                        </Link>
                       </li>
                     ))}
                   </ul>

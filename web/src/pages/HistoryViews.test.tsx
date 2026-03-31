@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -44,37 +44,49 @@ describe('history list ordering, detail selection, and states', () => {
     })
   })
 
-  it('renders events in API order with default selected detail and click-to-update detail', async () => {
+  it('renders events in API order with default selected styling and click-to-update detail', async () => {
     const user = userEvent.setup()
     renderWithRoute(<EventsPage />, '/runs/run-a/events')
 
-    const items = await screen.findAllByRole('button')
+    const list = await screen.findByRole('list', { name: 'Events history list' })
+    const items = within(list).getAllByRole('button')
     expect(items[0]).toHaveTextContent('2. E2')
     expect(items[1]).toHaveTextContent('1. E1')
+
+    expect(items[0]).toHaveClass('is-selected')
+    expect(items[0]).toHaveAttribute('aria-current', 'true')
+    expect(items[1]).not.toHaveClass('is-selected')
 
     expect(await screen.findByText('E2')).toBeInTheDocument()
     expect(await screen.findByText(/payload-E2/)).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '1. E1' }))
+    await user.click(screen.getByRole('button', { name: /1\. E1/i }))
 
     await waitFor(() => {
       expect(screen.getByText('E1')).toBeInTheDocument()
     })
     expect(await screen.findByText(/payload-E1/)).toBeInTheDocument()
+
+    expect(screen.getByRole('button', { name: /1\. E1/i })).toHaveClass('is-selected')
+    expect(screen.getByRole('button', { name: /2\. E2/i })).not.toHaveClass('is-selected')
   })
 
-  it('renders ranking snapshots in API order with default selected detail and click-to-update detail', async () => {
+  it('renders ranking snapshots in API order with default selected styling and click-to-update detail', async () => {
     const user = userEvent.setup()
     renderWithRoute(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
 
-    const snapshotItems = await screen.findAllByRole('button')
+    const list = await screen.findByRole('list', { name: 'Ranking snapshots list' })
+    const snapshotItems = within(list).getAllByRole('button')
     expect(snapshotItems[0]).toHaveTextContent('4. WEEK')
     expect(snapshotItems[1]).toHaveTextContent('3. WEEK')
 
+    expect(snapshotItems[0]).toHaveClass('is-selected')
+    expect(snapshotItems[1]).not.toHaveClass('is-selected')
     expect(await screen.findByText(/snapshot-4/)).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '3. WEEK' }))
+    await user.click(screen.getByRole('button', { name: /3\. WEEK/i }))
     expect(await screen.findByText(/snapshot-3/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /3\. WEEK/i })).toHaveClass('is-selected')
   })
 
   it('renders race snapshots route with readable empty state', async () => {

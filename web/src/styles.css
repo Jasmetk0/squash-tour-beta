@@ -91,6 +91,44 @@ button {
   gap: 0.35rem;
 }
 
+
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.history-list-item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #0f172a;
+  padding: 0.55rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.history-list-item__title {
+  font-weight: 600;
+}
+
+.history-list-item__meta {
+  color: #475569;
+  font-size: 0.85rem;
+}
+
+.history-list-item.is-selected {
+  border-color: #1d4ed8;
+  background: #eff6ff;
+  box-shadow: inset 0 0 0 1px #1d4ed8;
+}
+
 .kv-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));

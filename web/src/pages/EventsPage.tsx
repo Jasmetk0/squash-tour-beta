@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom'
 
 import { getEvent, listEvents } from '../api/client'
 import { JsonPayloadBlock, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
+import { SelectableHistoryList } from '../components/SelectableHistoryList'
 import { formatApiError } from '../utils/apiErrors'
 
 export function EventsPage(): JSX.Element {
@@ -44,15 +45,15 @@ export function EventsPage(): JSX.Element {
         )}
 
         {events.length > 0 && (
-          <ul className="item-list">
-            {events.map((event) => (
-              <li key={event.event_id}>
-                <button className="linkish" onClick={() => setSelectedEventId(event.event_id)}>
-                  {event.event_sequence}. {event.event_id}
-                </button>
-              </li>
-            ))}
-          </ul>
+          <SelectableHistoryList
+            items={events}
+            getKey={(event) => event.event_id}
+            getLabel={(event) => `${event.event_sequence}. ${event.event_id}`}
+            getSubLabel={(event) => (event.season != null && event.week != null ? `S${event.season} / W${event.week}` : undefined)}
+            isSelected={(event) => event.event_id === selectedEventId}
+            onSelect={(event) => setSelectedEventId(event.event_id)}
+            ariaLabel="Events history list"
+          />
         )}
       </SectionCard>
 

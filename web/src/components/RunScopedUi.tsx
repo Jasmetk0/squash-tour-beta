@@ -10,6 +10,11 @@ type MetadataField = {
   value: ReactNode
 }
 
+type SummaryItem = {
+  label: string
+  value: ReactNode
+}
+
 type JsonPayloadProps = {
   title: string
   emptyText: string
@@ -55,6 +60,19 @@ export function MetadataList({ items }: { items: MetadataField[] }): JSX.Element
         </div>
       ))}
     </dl>
+  )
+}
+
+export function SummaryPills({ items }: { items: SummaryItem[] }): JSX.Element {
+  return (
+    <ul className="summary-pill-list" aria-label="Summary highlights">
+      {items.map((item) => (
+        <li key={item.label} className="summary-pill">
+          <span className="summary-pill__label">{item.label}</span>
+          <strong className="summary-pill__value">{item.value}</strong>
+        </li>
+      ))}
+    </ul>
   )
 }
 

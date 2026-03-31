@@ -9,7 +9,8 @@ import {
   JsonPayloadBlock,
   MetadataList,
   RunScopedHeader,
-  SectionCard
+  SectionCard,
+  SummaryPills
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
@@ -72,19 +73,27 @@ export function BootstrapLineagePage(): JSX.Element {
         {sourceNotFound && <EmptyState message="No source metadata is available for this run." />}
         {sourceQuery.error && !sourceNotFound && <p className="error">Failed to load run source: {formatApiError(sourceQuery.error)}</p>}
         {source && (
-          <MetadataList
-            items={[
-              { label: 'Source type', value: source.source_type },
-              { label: 'Parent run ID', value: source.parent_run_id ?? 'None' },
-              { label: 'Rollover source run', value: source.source_rollover_run_id ?? 'None' },
-              { label: 'Rollover from season', value: source.source_rollover_from_season ?? 'None' },
-              { label: 'Rollover to season', value: source.source_rollover_to_season ?? 'None' }
-            ]}
-          />
+          <>
+            <SummaryPills
+              items={[
+                { label: 'Source type', value: source.source_type },
+                { label: 'Parent linked', value: source.parent_run_id ? 'Yes' : 'No' },
+                { label: 'Rollover source linked', value: source.source_rollover_run_id ? 'Yes' : 'No' }
+              ]}
+            />
+            <MetadataList
+              items={[
+                { label: 'Parent run ID', value: source.parent_run_id ?? 'None' },
+                { label: 'Rollover source run', value: source.source_rollover_run_id ?? 'None' },
+                { label: 'Rollover from season', value: source.source_rollover_from_season ?? 'None' },
+                { label: 'Rollover to season', value: source.source_rollover_to_season ?? 'None' }
+              ]}
+            />
+          </>
         )}
       </SectionCard>
 
-      <SectionCard title="Lineage summary">
+      <SectionCard title="Lineage summary and navigation">
         {lineageQuery.isLoading && <p className="status">Loading lineage metadata...</p>}
         {lineageNotFound && <EmptyState message="No lineage record is available for this run yet." />}
         {lineageQuery.error && !lineageNotFound && (
@@ -92,9 +101,10 @@ export function BootstrapLineagePage(): JSX.Element {
         )}
         {lineage && (
           <>
-            <MetadataList
+            <SummaryPills
               items={[
-                { label: 'Lineage run ID', value: lineage.run_id },
+                { label: 'Current run', value: lineage.run_id },
+                { label: 'Parent runs', value: lineage.source.parent_run_id ? 1 : 0 },
                 { label: 'Child runs', value: lineage.children.length }
               ]}
             />
@@ -162,10 +172,14 @@ export function BootstrapLineagePage(): JSX.Element {
 
         {bootstrapMutation.data && (
           <div>
-            <p className="status">
-              Bootstrap complete for child run <strong>{bootstrapMutation.data.bootstrap.child_run_id}</strong>
-              {bootstrapMutation.data.bootstrap.already_bootstrapped ? ' (already bootstrapped).' : '.'}
-            </p>
+            <SummaryPills
+              items={[
+                { label: 'Child run', value: bootstrapMutation.data.bootstrap.child_run_id },
+                { label: 'To season', value: bootstrapMutation.data.bootstrap.to_season },
+                { label: 'Transitioned players', value: bootstrapMutation.data.bootstrap.transitioned_players },
+                { label: 'Status', value: bootstrapMutation.data.bootstrap.already_bootstrapped ? 'Already bootstrapped' : 'Created' }
+              ]}
+            />
             <p>
               <Link to={`/runs/${bootstrapMutation.data.bootstrap.child_run_id}`}>Open child run</Link>
             </p>

@@ -15,7 +15,8 @@ import {
   JsonPayloadBlock,
   MetadataList,
   RunScopedHeader,
-  SectionCard
+  SectionCard,
+  SummaryPills
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
@@ -86,6 +87,8 @@ export function RolloverPage(): JSX.Element {
 
   const latestNotFound = isApiNotFound(latestQuery.error)
   const seasonNotFound = isApiNotFound(seasonSummaryQuery.error)
+  const transitionCount = transitionsQuery.data?.transitions.length ?? 0
+  const nextSeasonPlayerCount = playersQuery.data?.players.length ?? 0
 
   return (
     <section className="panel">
@@ -102,13 +105,16 @@ export function RolloverPage(): JSX.Element {
           <p className="error">Failed to load latest rollover: {formatApiError(latestQuery.error)}</p>
         )}
         {latestQuery.data && (
-          <MetadataList
-            items={[
-              { label: 'From season', value: latestQuery.data.rollover.from_season },
-              { label: 'To season', value: latestQuery.data.rollover.to_season },
-              { label: 'Transitioned players', value: latestQuery.data.rollover.transitioned_players }
-            ]}
-          />
+          <>
+            <SummaryPills
+              items={[
+                { label: 'From season', value: latestQuery.data.rollover.from_season },
+                { label: 'To season', value: latestQuery.data.rollover.to_season },
+                { label: 'Transitioned players', value: latestQuery.data.rollover.transitioned_players }
+              ]}
+            />
+            <MetadataList items={[{ label: 'Run ID', value: latestQuery.data.rollover.run_id }]} />
+          </>
         )}
       </SectionCard>
 
@@ -158,6 +164,7 @@ export function RolloverPage(): JSX.Element {
             {seasonSummaryQuery.data && (
               <MetadataList
                 items={[
+                  { label: 'Run ID', value: seasonSummaryQuery.data.rollover.run_id },
                   { label: 'From season', value: seasonSummaryQuery.data.rollover.from_season },
                   { label: 'To season', value: seasonSummaryQuery.data.rollover.to_season },
                   { label: 'Transitioned players', value: seasonSummaryQuery.data.rollover.transitioned_players }
@@ -166,17 +173,39 @@ export function RolloverPage(): JSX.Element {
             )}
           </SectionCard>
 
+          <SectionCard title="Target season inspection summary">
+            <SummaryPills
+              items={[
+                { label: 'Target season', value: selectedSeason },
+                { label: 'Transition records', value: transitionsQuery.isLoading ? 'Loading...' : transitionCount },
+                { label: 'Next-season players', value: playersQuery.isLoading ? 'Loading...' : nextSeasonPlayerCount }
+              ]}
+            />
+          </SectionCard>
+
           <SectionCard title="Transition metadata and payload">
             {transitionsQuery.isLoading && <p className="status">Loading transitions...</p>}
             {transitionsQuery.error && <p className="error">Failed to load transitions: {formatApiError(transitionsQuery.error)}</p>}
             {transitionsQuery.data && (
               <>
-                <p className="status">Transition records: {transitionsQuery.data.transitions.length}</p>
-                <JsonPayloadBlock
-                  title="Transition payload"
-                  payload={transitionsQuery.data.transitions}
-                  emptyText="No transition payload available."
-                />
+                {transitionsQuery.data.transitions.length === 0 ? (
+                  <EmptyState message="No transition records are available for this target season." />
+                ) : (
+                  <>
+                    <MetadataList
+                      items={[
+                        { label: 'Run ID', value: transitionsQuery.data.run_id },
+                        { label: 'To season', value: transitionsQuery.data.to_season },
+                        { label: 'Transition records', value: transitionsQuery.data.transitions.length }
+                      ]}
+                    />
+                    <JsonPayloadBlock
+                      title="Transition payload"
+                      payload={transitionsQuery.data.transitions}
+                      emptyText="No transition payload available."
+                    />
+                  </>
+                )}
               </>
             )}
           </SectionCard>
@@ -186,12 +215,24 @@ export function RolloverPage(): JSX.Element {
             {playersQuery.error && <p className="error">Failed to load next-season players: {formatApiError(playersQuery.error)}</p>}
             {playersQuery.data && (
               <>
-                <p className="status">Player records: {playersQuery.data.players.length}</p>
-                <JsonPayloadBlock
-                  title="Players payload"
-                  payload={playersQuery.data.players}
-                  emptyText="No next-season player payload available."
-                />
+                {playersQuery.data.players.length === 0 ? (
+                  <EmptyState message="No next-season players are available for this target season." />
+                ) : (
+                  <>
+                    <MetadataList
+                      items={[
+                        { label: 'Run ID', value: playersQuery.data.run_id },
+                        { label: 'To season', value: playersQuery.data.to_season },
+                        { label: 'Player records', value: playersQuery.data.players.length }
+                      ]}
+                    />
+                    <JsonPayloadBlock
+                      title="Players payload"
+                      payload={playersQuery.data.players}
+                      emptyText="No next-season player payload available."
+                    />
+                  </>
+                )}
               </>
             )}
           </SectionCard>

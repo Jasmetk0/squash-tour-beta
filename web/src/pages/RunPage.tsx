@@ -18,6 +18,7 @@ import {
 } from '../api/client'
 import {
   ActionStatusBlock,
+  CompactSummaryCard,
   CurrentContextStrip,
   EmptyState,
   MetadataList,
@@ -138,13 +139,13 @@ export function RunPage(): JSX.Element {
       {runQuery.data && (
         <>
           <SectionCard title="Run summary">
-            <MetadataList
+            <CompactSummaryCard
               items={[
                 { label: 'Run ID', value: runQuery.data.run.run_id },
                 { label: 'Season', value: runQuery.data.run.season },
                 { label: 'Seed', value: runQuery.data.run.seed },
                 { label: 'Progress', value: `${runQuery.data.run.next_event_index} / ${runQuery.data.run.total_events}` },
-                { label: 'Completed event IDs', value: runQuery.data.run.completed_event_ids.length }
+                { label: 'Completed events', value: runQuery.data.run.completed_event_ids.length }
               ]}
             />
           </SectionCard>
@@ -234,7 +235,7 @@ export function RunPage(): JSX.Element {
               <p className="error">Failed to load run lineage: {formatApiError(lineageQuery.error)}</p>
             )}
             {sourceQuery.data && (
-              <MetadataList
+              <CompactSummaryCard
                 items={[
                   { label: 'Source type', value: sourceQuery.data.source.source_type || 'Unknown' },
                   {

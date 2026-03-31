@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { ActionStatusBlock, CurrentContextStrip, EmptyState, JsonPayloadBlock, MetadataList, PageIntro, PreviewListCard } from './RunScopedUi'
+import { ActionStatusBlock, CompactSummaryCard, CurrentContextStrip, EmptyState, JsonPayloadBlock, MetadataList, PageIntro, PreviewListCard } from './RunScopedUi'
 
 describe('RunScopedUi helpers', () => {
   it('renders error state ahead of success state for action status block', () => {
@@ -23,6 +23,7 @@ describe('RunScopedUi helpers', () => {
       <>
         <PageIntro title="Run detail" subtitle="Subtitle" meta="Run: run-a" />
         <MetadataList items={[{ label: 'Season', value: 2027 }]} />
+        <CompactSummaryCard items={[{ label: 'Seed', value: 42 }, { label: 'Progress', value: '3 / 12' }]} />
         <EmptyState message="Nothing here yet" />
       </>
     )
@@ -32,6 +33,9 @@ describe('RunScopedUi helpers', () => {
     expect(screen.getByText('Run: run-a')).toBeInTheDocument()
     expect(screen.getByText('Season')).toBeInTheDocument()
     expect(screen.getByText('2027')).toBeInTheDocument()
+    expect(screen.getByText('Seed')).toBeInTheDocument()
+    expect(screen.getByText('42')).toBeInTheDocument()
+    expect(screen.getByText('3 / 12')).toBeInTheDocument()
     expect(screen.getByText('Nothing here yet')).toBeInTheDocument()
   })
 

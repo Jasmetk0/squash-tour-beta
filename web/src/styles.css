@@ -205,6 +205,34 @@ button {
   margin-top: 0;
 }
 
+
+.compact-summary-card {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 0.5rem;
+}
+
+.compact-summary-card__item {
+  margin: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0.45rem 0.6rem;
+  background: #f8fafc;
+}
+
+.compact-summary-card__label {
+  font-size: 0.78rem;
+  color: #475569;
+}
+
+.compact-summary-card__value {
+  margin: 0.2rem 0 0;
+  font-size: 0.92rem;
+  color: #0f172a;
+  font-weight: 600;
+}
+
 .summary-pill-list {
   list-style: none;
   padding: 0;

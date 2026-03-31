@@ -172,6 +172,18 @@ describe('RunPage', () => {
     )
   })
 
+  it('renders run summary card values', async () => {
+    const { container } = renderWithRoute(<RunPage />, '/runs/run-a')
+
+    expect(await screen.findByText('Run summary')).toBeInTheDocument()
+    const runSummary = container.querySelector('article.nested-panel .compact-summary-card')
+    expect(runSummary).not.toBeNull()
+    expect(within(runSummary as HTMLElement).getByText('Run ID')).toBeInTheDocument()
+    expect(within(runSummary as HTMLElement).getByText('run-a')).toBeInTheDocument()
+    expect(within(runSummary as HTMLElement).getByText('Completed events')).toBeInTheDocument()
+    expect(within(runSummary as HTMLElement).getByText('1')).toBeInTheDocument()
+  })
+
   it('renders finals overview from finals summary data', async () => {
     renderWithRoute(<RunPage />, '/runs/run-a')
 

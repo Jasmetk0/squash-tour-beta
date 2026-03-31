@@ -7,6 +7,7 @@ import { EventDetailPage } from './pages/EventDetailPage'
 import { EventsPage } from './pages/EventsPage'
 import { FinalsPage } from './pages/FinalsPage'
 import { RolloverPage } from './pages/RolloverPage'
+import { RunDiagnosticsPage } from './pages/RunDiagnosticsPage'
 import { RunPage } from './pages/RunPage'
 import { SnapshotDetailPage } from './pages/SnapshotDetailPage'
 import { SnapshotsPage } from './pages/SnapshotsPage'
@@ -18,6 +19,7 @@ export default function App(): JSX.Element {
         <Route index element={<DashboardPage />} />
         <Route path="runs/:runId" element={<RunPage />} />
         <Route path="runs/:runId/events" element={<EventsPage />} />
+        <Route path="runs/:runId/diagnostics" element={<RunDiagnosticsPage />} />
         <Route path="runs/:runId/events/:eventId" element={<EventDetailPage />} />
         <Route path="runs/:runId/finals" element={<FinalsPage />} />
         <Route path="runs/:runId/rollover" element={<RolloverPage />} />

@@ -8,6 +8,7 @@ export function Layout(): JSX.Element {
     ? [
         { to: `/runs/${runId}`, label: 'Run Detail' },
         { to: `/runs/${runId}/events`, label: 'Events' },
+        { to: `/runs/${runId}/diagnostics`, label: 'Diagnostics' },
         { to: `/runs/${runId}/finals`, label: 'World Tour Finals' },
         { to: `/runs/${runId}/rollover`, label: 'Season Rollover' },
         { to: `/runs/${runId}/bootstrap-lineage`, label: 'Bootstrap / Lineage' },

@@ -51,6 +51,22 @@ function renderAppAt(route: string): void {
 describe('Module 17 pages through routes', () => {
   beforeEach(() => {
     api.getEvent.mockResolvedValue({ event_sequence: 2, event_id: 'E2', season: 2027, week: 9, template_id: null, tournament_result: {} })
+    api.getRun.mockResolvedValue({
+      run: { run_id: 'run-a', season: 2027, seed: 5, next_event_index: 1, total_events: 10, completed_event_ids: [] },
+      season_state: { season: 2027, next_event_index: 1, completed_event_ids: [], ordered_events: [] }
+    })
+    api.getRunStatusSummary.mockResolvedValue({
+      run_id: 'run-a',
+      season: 2027,
+      seed: 5,
+      progress: { next_event_index: 1, total_events: 10, completed_event_count: 0 },
+      finals: { qualification_available: false, result_available: false },
+      rollover: null,
+      source: null,
+      lineage: { child_run_count: 0 },
+      history_counts: { events: 0, ranking_snapshots: 1, race_snapshots: 1 }
+    })
+    api.listEvents.mockResolvedValue({ events: [] })
     api.getFinalsSummary.mockResolvedValue({ run_id: 'run-a', season: 2027, qualification: {}, result: null })
     api.getFinalsQualification.mockResolvedValue({
       run_id: 'run-a',
@@ -99,6 +115,11 @@ describe('Module 17 pages through routes', () => {
   it('renders Rollover route', async () => {
     renderAppAt('/runs/run-a/rollover')
     expect(await screen.findByRole('heading', { name: 'Season Rollover' })).toBeInTheDocument()
+  })
+
+  it('renders diagnostics route', async () => {
+    renderAppAt('/runs/run-a/diagnostics')
+    expect(await screen.findByRole('heading', { name: 'Run diagnostics' })).toBeInTheDocument()
   })
 
   it('renders Bootstrap/Lineage route', async () => {

@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -18,6 +18,9 @@ const api = vi.hoisted(() => ({
   getLatestRollover: vi.fn(),
   getRunSource: vi.fn(),
   getRunLineage: vi.fn(),
+  listEvents: vi.fn(),
+  listRankingSnapshots: vi.fn(),
+  listRaceSnapshots: vi.fn(),
   simulateWorldTourFinals: vi.fn(),
   rolloverNextSeason: vi.fn(),
   simulateNextTournament: vi.fn(),
@@ -64,6 +67,30 @@ describe('RunPage', () => {
         },
         children: ['run-child-1', 'run-child-2']
       }
+    })
+    api.listEvents.mockResolvedValue({
+      events: [
+        { event_sequence: 3, event_id: 'E3', season: 2025, week: 11, template_id: null, tournament_result: null },
+        { event_sequence: 1, event_id: 'E1', season: 2025, week: 9, template_id: null, tournament_result: null },
+        { event_sequence: 2, event_id: 'E2', season: 2025, week: 10, template_id: null, tournament_result: null },
+        { event_sequence: 4, event_id: 'E4', season: 2025, week: 12, template_id: null, tournament_result: null }
+      ]
+    })
+    api.listRankingSnapshots.mockResolvedValue({
+      snapshots: [
+        { snapshot_sequence: 10, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: {} },
+        { snapshot_sequence: 8, snapshot_kind: 'TOURNAMENT', source_event_id: null, payload: {} },
+        { snapshot_sequence: 9, snapshot_kind: 'WEEK', source_event_id: 'E2', payload: {} },
+        { snapshot_sequence: 11, snapshot_kind: 'WEEK', source_event_id: 'E4', payload: {} }
+      ]
+    })
+    api.listRaceSnapshots.mockResolvedValue({
+      snapshots: [
+        { snapshot_sequence: 7, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: {} },
+        { snapshot_sequence: 5, snapshot_kind: 'TOURNAMENT', source_event_id: null, payload: {} },
+        { snapshot_sequence: 6, snapshot_kind: 'WEEK', source_event_id: 'E2', payload: {} },
+        { snapshot_sequence: 8, snapshot_kind: 'WEEK', source_event_id: 'E4', payload: {} }
+      ]
     })
     api.simulateWorldTourFinals.mockResolvedValue({
       finals: {
@@ -193,6 +220,9 @@ describe('RunPage', () => {
     expect(api.getLatestRollover).toHaveBeenCalledTimes(1)
     expect(api.getRunSource).toHaveBeenCalledTimes(1)
     expect(api.getRunLineage).toHaveBeenCalledTimes(1)
+    expect(api.listEvents).toHaveBeenCalledTimes(1)
+    expect(api.listRankingSnapshots).toHaveBeenCalledTimes(1)
+    expect(api.listRaceSnapshots).toHaveBeenCalledTimes(1)
 
     await userEvent.click(screen.getByRole('button', { name: 'Simulate World Tour Finals' }))
 
@@ -200,6 +230,9 @@ describe('RunPage', () => {
     await waitFor(() => expect(api.getLatestRollover).toHaveBeenCalledTimes(2))
     await waitFor(() => expect(api.getRunSource).toHaveBeenCalledTimes(2))
     await waitFor(() => expect(api.getRunLineage).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(api.listEvents).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(api.listRankingSnapshots).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(api.listRaceSnapshots).toHaveBeenCalledTimes(2))
 
     await userEvent.click(screen.getByRole('button', { name: 'Roll over to next season' }))
 
@@ -207,6 +240,9 @@ describe('RunPage', () => {
     await waitFor(() => expect(api.getLatestRollover).toHaveBeenCalledTimes(3))
     await waitFor(() => expect(api.getRunSource).toHaveBeenCalledTimes(3))
     await waitFor(() => expect(api.getRunLineage).toHaveBeenCalledTimes(3))
+    await waitFor(() => expect(api.listEvents).toHaveBeenCalledTimes(3))
+    await waitFor(() => expect(api.listRankingSnapshots).toHaveBeenCalledTimes(3))
+    await waitFor(() => expect(api.listRaceSnapshots).toHaveBeenCalledTimes(3))
   })
 
   it('refreshes overview queries after simulation succeeds', async () => {
@@ -217,6 +253,9 @@ describe('RunPage', () => {
     expect(api.getLatestRollover).toHaveBeenCalledTimes(1)
     expect(api.getRunSource).toHaveBeenCalledTimes(1)
     expect(api.getRunLineage).toHaveBeenCalledTimes(1)
+    expect(api.listEvents).toHaveBeenCalledTimes(1)
+    expect(api.listRankingSnapshots).toHaveBeenCalledTimes(1)
+    expect(api.listRaceSnapshots).toHaveBeenCalledTimes(1)
 
     await userEvent.click(screen.getByRole('button', { name: 'Simulate next tournament' }))
 
@@ -224,5 +263,54 @@ describe('RunPage', () => {
     await waitFor(() => expect(api.getLatestRollover).toHaveBeenCalledTimes(2))
     await waitFor(() => expect(api.getRunSource).toHaveBeenCalledTimes(2))
     await waitFor(() => expect(api.getRunLineage).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(api.listEvents).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(api.listRankingSnapshots).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(api.listRaceSnapshots).toHaveBeenCalledTimes(2))
+  })
+
+  it('renders recent history previews in API order with correct links', async () => {
+    renderWithRoute(<RunPage />, '/runs/run-a')
+
+    const eventsPreview = await screen.findByRole('list', { name: 'Recent events preview' })
+    const eventRows = within(eventsPreview).getAllByRole('listitem')
+    expect(eventRows).toHaveLength(3)
+    expect(eventRows[0]).toHaveTextContent('E3')
+    expect(eventRows[1]).toHaveTextContent('E1')
+    expect(eventRows[2]).toHaveTextContent('E2')
+
+    const rankingPreview = await screen.findByRole('list', { name: 'Recent ranking snapshots preview' })
+    const rankingRows = within(rankingPreview).getAllByRole('listitem')
+    expect(rankingRows).toHaveLength(3)
+    expect(rankingRows[0]).toHaveTextContent('Seq 10')
+    expect(rankingRows[1]).toHaveTextContent('Seq 8')
+    expect(rankingRows[2]).toHaveTextContent('Seq 9')
+
+    const racePreview = await screen.findByRole('list', { name: 'Recent race snapshots preview' })
+    const raceRows = within(racePreview).getAllByRole('listitem')
+    expect(raceRows).toHaveLength(3)
+    expect(raceRows[0]).toHaveTextContent('Seq 7')
+    expect(raceRows[1]).toHaveTextContent('Seq 5')
+    expect(raceRows[2]).toHaveTextContent('Seq 6')
+
+    expect(screen.getByRole('link', { name: 'View all events' })).toHaveAttribute('href', '/runs/run-a/events')
+    expect(screen.getByRole('link', { name: 'View all ranking snapshots' })).toHaveAttribute(
+      'href',
+      '/runs/run-a/snapshots/ranking'
+    )
+    expect(screen.getByRole('link', { name: 'View all race snapshots' })).toHaveAttribute('href', '/runs/run-a/snapshots/race')
+  })
+
+  it('renders readable empty and error states per preview section', async () => {
+    api.listEvents.mockResolvedValueOnce({ events: [] })
+    api.listRankingSnapshots.mockRejectedValueOnce(new Error('ranking unavailable'))
+    api.listRaceSnapshots.mockResolvedValueOnce({ snapshots: [] })
+
+    renderWithRoute(<RunPage />, '/runs/run-a')
+
+    expect(await screen.findByText('No events are available for this run yet.')).toBeInTheDocument()
+    expect(await screen.findByText('Failed to load recent ranking snapshots: ranking unavailable')).toBeInTheDocument()
+    expect(await screen.findByText('No race snapshots are available for this run yet.')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Simulation controls' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Simulate next tournament' })).toBeInTheDocument()
   })
 })

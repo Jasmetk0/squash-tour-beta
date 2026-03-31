@@ -185,25 +185,61 @@ describe('RunPage', () => {
     expect(screen.getByRole('link', { name: /View season chain/i })).toHaveAttribute('href', '/runs/run-a/season-chain')
   })
 
-  it('renders run summary card values', async () => {
+  it('renders run landing summary signals', async () => {
     const { container } = renderWithRoute(<RunPage />, '/runs/run-a')
 
-    expect(await screen.findByText('Run summary')).toBeInTheDocument()
+    expect(await screen.findByText('Run landing summary')).toBeInTheDocument()
+    expect(screen.getByText('Current season')).toBeInTheDocument()
+    expect(screen.getByText('Finals')).toBeInTheDocument()
+    expect(screen.getByText('Rollover')).toBeInTheDocument()
     const runSummary = container.querySelector('article.nested-panel .compact-summary-card')
     expect(runSummary).not.toBeNull()
     expect(within(runSummary as HTMLElement).getByText('Run ID')).toBeInTheDocument()
     expect(within(runSummary as HTMLElement).getByText('run-a')).toBeInTheDocument()
-    expect(within(runSummary as HTMLElement).getByText('Completed events')).toBeInTheDocument()
-    expect(within(runSummary as HTMLElement).getByText('1')).toBeInTheDocument()
+    expect(within(runSummary as HTMLElement).getByText('Seed')).toBeInTheDocument()
+    expect(within(runSummary as HTMLElement).getByText('3')).toBeInTheDocument()
     expect(api.getRunStatusSummary).toHaveBeenCalledWith('run-a')
+  })
+
+  it('renders most relevant next inspection links from loaded artifacts', async () => {
+    renderWithRoute(<RunPage />, '/runs/run-a')
+
+    expect(await screen.findByRole('heading', { name: 'Most relevant next inspections' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'E3' })).toHaveAttribute('href', '/runs/run-a/events/E3')
+    expect(screen.getByRole('link', { name: 'Seq 10' })).toHaveAttribute('href', '/runs/run-a/snapshots/ranking/10')
+    expect(screen.getByRole('link', { name: 'Seq 7' })).toHaveAttribute('href', '/runs/run-a/snapshots/race/7')
+    expect(screen.getByRole('link', { name: 'Inspect pending Finals result' })).toHaveAttribute('href', '/runs/run-a/finals')
+    expect(screen.getByRole('link', { name: 'Inspect latest rollover' })).toHaveAttribute('href', '/runs/run-a/rollover')
+    expect(screen.getByRole('link', { name: 'Inspect season chain' })).toHaveAttribute('href', '/runs/run-a/season-chain')
+    expect(screen.getByRole('link', { name: 'Inspect source metadata' })).toHaveAttribute(
+      'href',
+      '/runs/run-a/bootstrap-lineage'
+    )
+  })
+
+  it('renders readable current artifact state statuses', async () => {
+    renderWithRoute(<RunPage />, '/runs/run-a')
+
+    const sectionHeading = await screen.findByRole('heading', { name: 'Current artifact state' })
+    const section = sectionHeading.closest('article')
+    expect(section).not.toBeNull()
+    expect(within(section as HTMLElement).getByText('Finals qualification')).toBeInTheDocument()
+    expect(within(section as HTMLElement).getByText('Finals result')).toBeInTheDocument()
+    expect(within(section as HTMLElement).getByText('Source metadata')).toBeInTheDocument()
+    expect(within(section as HTMLElement).getByText('Lineage metadata')).toBeInTheDocument()
+    expect(within(section as HTMLElement).getByText('Events')).toBeInTheDocument()
+    expect(within(section as HTMLElement).getAllByText('Available').length).toBeGreaterThan(0)
+    expect(within(section as HTMLElement).getAllByText('None yet').length).toBeGreaterThan(0)
   })
 
   it('renders finals overview from finals summary data', async () => {
     renderWithRoute(<RunPage />, '/runs/run-a')
 
-    expect(await screen.findByText('World Tour Finals overview')).toBeInTheDocument()
-    expect(screen.getByText('Available')).toBeInTheDocument()
-    expect(screen.getByText('Not simulated yet')).toBeInTheDocument()
+    const sectionHeading = await screen.findByRole('heading', { name: 'World Tour Finals overview' })
+    const section = sectionHeading.closest('article')
+    expect(section).not.toBeNull()
+    expect(within(section as HTMLElement).getByText('Available')).toBeInTheDocument()
+    expect(within(section as HTMLElement).getByText('Not simulated yet')).toBeInTheDocument()
   })
 
   it('renders latest rollover overview from rollover api data', async () => {

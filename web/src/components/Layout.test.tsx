@@ -1,0 +1,22 @@
+import { screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
+
+import { Layout } from './Layout'
+import { renderWithRoute } from '../test/testUtils'
+
+describe('Layout run-scoped navigation', () => {
+  it('includes all run sub-pages for a selected run', async () => {
+    renderWithRoute(<Layout />, '/runs/run-a/finals')
+
+    expect(await screen.findByRole('link', { name: 'Run Detail' })).toHaveAttribute('href', '/runs/run-a')
+    expect(screen.getByRole('link', { name: 'Events' })).toHaveAttribute('href', '/runs/run-a/events')
+    expect(screen.getByRole('link', { name: 'World Tour Finals' })).toHaveAttribute('href', '/runs/run-a/finals')
+    expect(screen.getByRole('link', { name: 'Season Rollover' })).toHaveAttribute('href', '/runs/run-a/rollover')
+    expect(screen.getByRole('link', { name: 'Bootstrap / Lineage' })).toHaveAttribute('href', '/runs/run-a/bootstrap-lineage')
+    expect(screen.getByRole('link', { name: 'Ranking Snapshots' })).toHaveAttribute(
+      'href',
+      '/runs/run-a/snapshots/ranking'
+    )
+    expect(screen.getByRole('link', { name: 'Race Snapshots' })).toHaveAttribute('href', '/runs/run-a/snapshots/race')
+  })
+})

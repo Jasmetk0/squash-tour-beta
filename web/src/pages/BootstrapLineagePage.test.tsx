@@ -106,4 +106,14 @@ describe('BootstrapLineagePage', () => {
 
     expect(await screen.findByText(/Persist rollover before bootstrapping/i)).toBeInTheDocument()
   })
+
+  it('shows readable not-found messages for missing source and lineage metadata', async () => {
+    api.getRunSource.mockRejectedValueOnce(new api.ApiError('{"detail":"Run source not found"}', 404))
+    api.getRunLineage.mockRejectedValueOnce(new api.ApiError('{"detail":"Run lineage not found"}', 404))
+
+    renderWithRoute(<BootstrapLineagePage />, '/runs/run-a/bootstrap-lineage')
+
+    expect(await screen.findByText(/No source metadata is available/i)).toBeInTheDocument()
+    expect(await screen.findByText(/No lineage record is available/i)).toBeInTheDocument()
+  })
 })

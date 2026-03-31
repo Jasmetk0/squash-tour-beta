@@ -2,27 +2,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 
 import {
-  ApiError,
   getFinalsQualification,
   getFinalsResult,
   getFinalsSummary,
   simulateWorldTourFinals
 } from '../api/client'
-
-function extractReadableError(error: unknown): string {
-  if (error instanceof ApiError) {
-    try {
-      const parsed = JSON.parse(error.message) as { detail?: string }
-      if (parsed.detail) return parsed.detail
-    } catch {
-      // Fallback to raw API error message when body is not JSON
-    }
-    return error.message
-  }
-
-  if (error instanceof Error) return error.message
-  return String(error)
-}
+import { ActionStatusBlock, JsonPayloadBlock, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
+import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
 export function FinalsPage(): JSX.Element {
   const { runId = '' } = useParams()
@@ -57,35 +43,36 @@ export function FinalsPage(): JSX.Element {
   })
 
   const isLoading = summaryQuery.isLoading || qualificationQuery.isLoading
+  const qualificationNotFound = isApiNotFound(qualificationQuery.error)
+  const resultNotFound = isApiNotFound(resultQuery.error)
+  const hasResultError = resultQuery.error && !resultNotFound
 
   return (
     <section className="panel">
-      <h2>World Tour Finals</h2>
-      <p className="status">Run: {runId || 'unknown'}</p>
+      <RunScopedHeader title="World Tour Finals" runId={runId} />
 
       <div className="actions">
         <button onClick={() => finalsSimulator.mutate()} disabled={!runId || finalsSimulator.isPending}>
           {finalsSimulator.isPending ? 'Simulating Finals...' : 'Simulate World Tour Finals'}
         </button>
       </div>
-      {finalsSimulator.error && (
-        <p className="error">Could not simulate Finals: {extractReadableError(finalsSimulator.error)}</p>
-      )}
-      {finalsSimulator.data && (
-        <p className="status">
-          Finals simulation complete{finalsSimulator.data.finals.already_simulated ? ' (already simulated)' : ''}.
-        </p>
-      )}
+      <ActionStatusBlock
+        errorText={finalsSimulator.error ? `Could not simulate Finals: ${formatApiError(finalsSimulator.error)}` : undefined}
+        successText={
+          finalsSimulator.data
+            ? `Finals simulation complete${finalsSimulator.data.finals.already_simulated ? ' (already simulated)' : ''}.`
+            : undefined
+        }
+      />
 
       {isLoading && <p>Loading Finals data...</p>}
-      {summaryQuery.error && <p className="error">Failed to load Finals summary: {extractReadableError(summaryQuery.error)}</p>}
-      {qualificationQuery.error && (
-        <p className="error">Failed to load Finals qualification: {extractReadableError(qualificationQuery.error)}</p>
+      {summaryQuery.error && <p className="error">Failed to load Finals summary: {formatApiError(summaryQuery.error)}</p>}
+      {qualificationQuery.error && !qualificationNotFound && (
+        <p className="error">Failed to load Finals qualification: {formatApiError(qualificationQuery.error)}</p>
       )}
 
       {summaryQuery.data && (
-        <article className="panel nested-panel">
-          <h3>Finals summary</h3>
+        <SectionCard title="Finals summary">
           <dl className="kv-grid">
             <div>
               <dt>Run ID</dt>
@@ -104,36 +91,41 @@ export function FinalsPage(): JSX.Element {
               <dd>{summaryQuery.data.result ? 'Available' : 'Not simulated yet'}</dd>
             </div>
           </dl>
-        </article>
+        </SectionCard>
       )}
 
-      <article className="panel nested-panel">
-        <h3>Finals qualification</h3>
+      <SectionCard title="Finals qualification">
         {qualificationQuery.data ? (
           <>
             <p className="status">
               As of S{qualificationQuery.data.source_as_of_season}, W{qualificationQuery.data.source_as_of_week}
             </p>
-            <pre className="json-block">{JSON.stringify(qualificationQuery.data.qualification, null, 2)}</pre>
+            <JsonPayloadBlock
+              title="Qualification payload"
+              payload={qualificationQuery.data.qualification}
+              emptyText="No qualification payload available."
+            />
           </>
+        ) : qualificationNotFound ? (
+          <p className="status">No Finals qualification is available for this run yet.</p>
         ) : (
           !qualificationQuery.isLoading && <p className="status">No qualification data available.</p>
         )}
-      </article>
+      </SectionCard>
 
-      <article className="panel nested-panel">
-        <h3>Finals result</h3>
-        {resultQuery.error && <p className="status">Finals result not available yet.</p>}
+      <SectionCard title="Finals result">
+        {resultNotFound && <p className="status">Finals result has not been recorded for this run yet.</p>}
+        {hasResultError && <p className="error">Failed to load Finals result: {formatApiError(resultQuery.error)}</p>}
         {resultQuery.data ? (
           <>
             <p className="status">
               Event: {resultQuery.data.event_id} · As of S{resultQuery.data.source_as_of_season}, W
               {resultQuery.data.source_as_of_week}
             </p>
-            <pre className="json-block">{JSON.stringify(resultQuery.data.result, null, 2)}</pre>
+            <JsonPayloadBlock title="Result payload" payload={resultQuery.data.result} emptyText="No result payload available." />
           </>
         ) : null}
-      </article>
+      </SectionCard>
     </section>
   )
 }

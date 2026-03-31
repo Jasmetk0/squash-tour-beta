@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { listRaceSnapshots, listRankingSnapshots } from '../api/client'
-import { JsonPayloadBlock, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
+import { EmptyState, JsonPayloadBlock, MetadataList, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
 import { SelectableHistoryList } from '../components/SelectableHistoryList'
 import type { RankingSnapshot } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
@@ -39,13 +39,17 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
 
   return (
     <section className="panel">
-      <RunScopedHeader title={title} runId={runId} />
+      <RunScopedHeader
+        title={title}
+        runId={runId}
+        subtitle="Browse stored snapshot history and inspect payload details by sequence."
+      />
 
       <SectionCard title="Snapshot timeline">
         {query.isLoading && <p className="status">Loading snapshots history...</p>}
         {query.error && <p className="error">Failed to load snapshots history: {formatApiError(query.error)}</p>}
         {!query.isLoading && !query.error && snapshots.length === 0 && (
-          <p className="status">No snapshots are available for this run yet.</p>
+          <EmptyState message="No snapshots are available for this run yet." />
         )}
 
         {snapshots.length > 0 && (
@@ -65,7 +69,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
         {selected ? (
           <SnapshotDetail snapshot={selected} />
         ) : (
-          <p className="status">Select a snapshot to inspect details.</p>
+          <EmptyState message="Select a snapshot to inspect details." />
         )}
       </SectionCard>
     </section>
@@ -75,20 +79,13 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
 function SnapshotDetail({ snapshot }: { snapshot: RankingSnapshot }): JSX.Element {
   return (
     <>
-      <dl className="kv-grid">
-        <div>
-          <dt>Sequence</dt>
-          <dd>{snapshot.snapshot_sequence}</dd>
-        </div>
-        <div>
-          <dt>Kind</dt>
-          <dd>{snapshot.snapshot_kind}</dd>
-        </div>
-        <div>
-          <dt>Source event ID</dt>
-          <dd>{snapshot.source_event_id ?? '—'}</dd>
-        </div>
-      </dl>
+      <MetadataList
+        items={[
+          { label: 'Sequence', value: snapshot.snapshot_sequence },
+          { label: 'Kind', value: snapshot.snapshot_kind },
+          { label: 'Source event ID', value: snapshot.source_event_id ?? '—' }
+        ]}
+      />
 
       <JsonPayloadBlock title="Snapshot payload" emptyText="No snapshot payload is available for this item." payload={snapshot.payload} />
     </>

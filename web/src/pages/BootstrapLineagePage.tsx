@@ -3,7 +3,14 @@ import { FormEvent, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { bootstrapNextSeason, getRunLineage, getRunSource } from '../api/client'
-import { ActionStatusBlock, JsonPayloadBlock, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
+import {
+  ActionStatusBlock,
+  EmptyState,
+  JsonPayloadBlock,
+  MetadataList,
+  RunScopedHeader,
+  SectionCard
+} from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
 export function BootstrapLineagePage(): JSX.Element {
@@ -54,56 +61,43 @@ export function BootstrapLineagePage(): JSX.Element {
 
   return (
     <section className="panel">
-      <RunScopedHeader title="Bootstrap / Lineage" runId={runId} />
+      <RunScopedHeader
+        title="Bootstrap / Lineage"
+        runId={runId}
+        subtitle="Review source/lineage metadata and bootstrap the next-season child run."
+      />
 
       <SectionCard title="Run source summary">
         {sourceQuery.isLoading && <p className="status">Loading source metadata...</p>}
-        {sourceNotFound && <p className="status">No source metadata is available for this run.</p>}
+        {sourceNotFound && <EmptyState message="No source metadata is available for this run." />}
         {sourceQuery.error && !sourceNotFound && <p className="error">Failed to load run source: {formatApiError(sourceQuery.error)}</p>}
         {source && (
-          <dl className="kv-grid">
-            <div>
-              <dt>Source type</dt>
-              <dd>{source.source_type}</dd>
-            </div>
-            <div>
-              <dt>Parent run ID</dt>
-              <dd>{source.parent_run_id ?? 'None'}</dd>
-            </div>
-            <div>
-              <dt>Rollover source run</dt>
-              <dd>{source.source_rollover_run_id ?? 'None'}</dd>
-            </div>
-            <div>
-              <dt>Rollover from season</dt>
-              <dd>{source.source_rollover_from_season ?? 'None'}</dd>
-            </div>
-            <div>
-              <dt>Rollover to season</dt>
-              <dd>{source.source_rollover_to_season ?? 'None'}</dd>
-            </div>
-          </dl>
+          <MetadataList
+            items={[
+              { label: 'Source type', value: source.source_type },
+              { label: 'Parent run ID', value: source.parent_run_id ?? 'None' },
+              { label: 'Rollover source run', value: source.source_rollover_run_id ?? 'None' },
+              { label: 'Rollover from season', value: source.source_rollover_from_season ?? 'None' },
+              { label: 'Rollover to season', value: source.source_rollover_to_season ?? 'None' }
+            ]}
+          />
         )}
       </SectionCard>
 
       <SectionCard title="Lineage summary">
         {lineageQuery.isLoading && <p className="status">Loading lineage metadata...</p>}
-        {lineageNotFound && <p className="status">No lineage record is available for this run yet.</p>}
+        {lineageNotFound && <EmptyState message="No lineage record is available for this run yet." />}
         {lineageQuery.error && !lineageNotFound && (
           <p className="error">Failed to load run lineage: {formatApiError(lineageQuery.error)}</p>
         )}
         {lineage && (
           <>
-            <dl className="kv-grid">
-              <div>
-                <dt>Lineage run ID</dt>
-                <dd>{lineage.run_id}</dd>
-              </div>
-              <div>
-                <dt>Child runs</dt>
-                <dd>{lineage.children.length}</dd>
-              </div>
-            </dl>
+            <MetadataList
+              items={[
+                { label: 'Lineage run ID', value: lineage.run_id },
+                { label: 'Child runs', value: lineage.children.length }
+              ]}
+            />
 
             <h4>Parent run</h4>
             {lineage.source.parent_run_id ? (
@@ -111,12 +105,12 @@ export function BootstrapLineagePage(): JSX.Element {
                 <Link to={`/runs/${lineage.source.parent_run_id}`}>{lineage.source.parent_run_id}</Link>
               </p>
             ) : (
-              <p className="status">No parent run linked for this run.</p>
+              <EmptyState message="No parent run linked for this run." />
             )}
 
             <h4>Child runs</h4>
             {lineage.children.length === 0 ? (
-              <p className="status">No child runs yet.</p>
+              <EmptyState message="No child runs yet." />
             ) : (
               <ul className="item-list">
                 {lineage.children.map((child) => (

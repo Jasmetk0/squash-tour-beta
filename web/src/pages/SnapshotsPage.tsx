@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom'
 
 import { listRaceSnapshots, listRankingSnapshots } from '../api/client'
 import { JsonPayloadBlock, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
+import { SelectableHistoryList } from '../components/SelectableHistoryList'
 import type { RankingSnapshot } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -48,15 +49,15 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
         )}
 
         {snapshots.length > 0 && (
-          <ul className="item-list">
-            {snapshots.map((snapshot) => (
-              <li key={`${snapshot.snapshot_kind}-${snapshot.snapshot_sequence}`}>
-                <button className="linkish" onClick={() => setSelectedSequence(snapshot.snapshot_sequence)}>
-                  {snapshot.snapshot_sequence}. {snapshot.snapshot_kind}
-                </button>
-              </li>
-            ))}
-          </ul>
+          <SelectableHistoryList
+            items={snapshots}
+            getKey={(snapshot) => `${snapshot.snapshot_kind}-${snapshot.snapshot_sequence}`}
+            getLabel={(snapshot) => `${snapshot.snapshot_sequence}. ${snapshot.snapshot_kind}`}
+            getSubLabel={(snapshot) => (snapshot.source_event_id ? `Source ${snapshot.source_event_id}` : undefined)}
+            isSelected={(snapshot) => snapshot.snapshot_sequence === selectedSequence}
+            onSelect={(snapshot) => setSelectedSequence(snapshot.snapshot_sequence)}
+            ariaLabel={`${title} list`}
+          />
         )}
       </SectionCard>
 

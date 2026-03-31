@@ -7,16 +7,36 @@ import {
   getRun,
   getRunLineage,
   getRunSource,
+  rolloverNextSeason,
   simulateFullSeason,
   simulateNextTournament,
-  simulateNextWeek
+  simulateNextWeek,
+  simulateWorldTourFinals
 } from '../api/client'
-import { SectionCard } from '../components/RunScopedUi'
+import { ActionStatusBlock, SectionCard } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
 export function RunPage(): JSX.Element {
   const { runId = '' } = useParams()
   const queryClient = useQueryClient()
+
+  const invalidateRunDetailQueries = async (): Promise<void> => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['run', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['events', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['ranking-snapshots', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['race-snapshots', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['finals-summary', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['finals-qualification', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['finals-result', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['rollover-latest', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['rollover-by-season', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['rollover-transitions', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['rollover-next-season-players', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['run-source', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['run-lineage', runId] })
+    ])
+  }
 
   const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId) })
   const finalsSummaryQuery = useQuery({
@@ -44,6 +64,20 @@ export function RunPage(): JSX.Element {
     retry: false
   })
 
+  const finalsQuickAction = useMutation({
+    mutationFn: () => simulateWorldTourFinals(runId),
+    onSuccess: async () => {
+      await invalidateRunDetailQueries()
+    }
+  })
+
+  const rolloverQuickAction = useMutation({
+    mutationFn: () => rolloverNextSeason(runId),
+    onSuccess: async () => {
+      await invalidateRunDetailQueries()
+    }
+  })
+
   const simulator = useMutation({
     mutationFn: async (mode: 'next-tournament' | 'next-week' | 'full-season') => {
       if (mode === 'next-tournament') return simulateNextTournament(runId)
@@ -51,16 +85,7 @@ export function RunPage(): JSX.Element {
       return simulateFullSeason(runId)
     },
     onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['run', runId] }),
-        queryClient.invalidateQueries({ queryKey: ['events', runId] }),
-        queryClient.invalidateQueries({ queryKey: ['ranking-snapshots', runId] }),
-        queryClient.invalidateQueries({ queryKey: ['race-snapshots', runId] }),
-        queryClient.invalidateQueries({ queryKey: ['finals-summary', runId] }),
-        queryClient.invalidateQueries({ queryKey: ['rollover-latest', runId] }),
-        queryClient.invalidateQueries({ queryKey: ['run-source', runId] }),
-        queryClient.invalidateQueries({ queryKey: ['run-lineage', runId] })
-      ])
+      await invalidateRunDetailQueries()
     }
   })
 
@@ -113,6 +138,23 @@ export function RunPage(): JSX.Element {
                 </div>
               </dl>
             )}
+            <div className="actions">
+              <button onClick={() => finalsQuickAction.mutate()} disabled={!runId || finalsQuickAction.isPending}>
+                {finalsQuickAction.isPending ? 'Simulating Finals...' : 'Simulate World Tour Finals'}
+              </button>
+            </div>
+            <ActionStatusBlock
+              isLoading={finalsQuickAction.isPending}
+              loadingText="Simulating World Tour Finals..."
+              errorText={
+                finalsQuickAction.error ? `Could not simulate Finals: ${formatApiError(finalsQuickAction.error)}` : undefined
+              }
+              successText={
+                finalsQuickAction.data
+                  ? `Finals simulation complete${finalsQuickAction.data.finals.already_simulated ? ' (already simulated)' : ''}.`
+                  : undefined
+              }
+            />
             <p>
               <Link to={`/runs/${runId}/finals`}>View World Tour Finals</Link>
             </p>
@@ -140,6 +182,27 @@ export function RunPage(): JSX.Element {
                 </div>
               </dl>
             )}
+            <div className="actions">
+              <button onClick={() => rolloverQuickAction.mutate()} disabled={!runId || rolloverQuickAction.isPending}>
+                {rolloverQuickAction.isPending ? 'Rolling over...' : 'Roll over to next season'}
+              </button>
+            </div>
+            <ActionStatusBlock
+              isLoading={rolloverQuickAction.isPending}
+              loadingText="Rolling over to next season..."
+              errorText={
+                rolloverQuickAction.error
+                  ? `Could not execute rollover: ${formatApiError(rolloverQuickAction.error)}`
+                  : undefined
+              }
+              successText={
+                rolloverQuickAction.data
+                  ? `Rollover complete for season ${rolloverQuickAction.data.rollover.to_season}${
+                      rolloverQuickAction.data.rollover.already_persisted ? ' (already persisted)' : ''
+                    }.`
+                  : undefined
+              }
+            />
             <p>
               <Link to={`/runs/${runId}/rollover`}>View season rollover</Link>
             </p>
@@ -171,26 +234,26 @@ export function RunPage(): JSX.Element {
                     )}
                   </dd>
                 </div>
+                <div>
+                  <dt>Child run count</dt>
+                  <dd>{lineageQuery.data?.lineage.children.length ?? 0}</dd>
+                </div>
               </dl>
             )}
             {!sourceQuery.data && isApiNotFound(sourceQuery.error) && (
               <p className="status">No source metadata available for this run.</p>
             )}
-            {lineageQuery.data && (
-              <>
-                <p className="status">Child runs: {lineageQuery.data.lineage.children.length}</p>
-                {lineageQuery.data.lineage.children.length > 0 ? (
-                  <ul>
-                    {lineageQuery.data.lineage.children.map((childRunId) => (
-                      <li key={childRunId}>
-                        <Link to={`/runs/${childRunId}`}>{childRunId}</Link>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="status">No child runs created yet.</p>
-                )}
-              </>
+            {lineageQuery.data && lineageQuery.data.lineage.children.length > 0 && (
+              <ul>
+                {lineageQuery.data.lineage.children.map((childRunId) => (
+                  <li key={childRunId}>
+                    <Link to={`/runs/${childRunId}`}>{childRunId}</Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {lineageQuery.data && lineageQuery.data.lineage.children.length === 0 && (
+              <p className="status">No child runs created yet.</p>
             )}
             {!lineageQuery.data && isApiNotFound(lineageQuery.error) && (
               <p className="status">No lineage metadata available for this run.</p>

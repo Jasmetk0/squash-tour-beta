@@ -18,6 +18,8 @@ const api = vi.hoisted(() => ({
   getLatestRollover: vi.fn(),
   getRunSource: vi.fn(),
   getRunLineage: vi.fn(),
+  simulateWorldTourFinals: vi.fn(),
+  rolloverNextSeason: vi.fn(),
   simulateNextTournament: vi.fn(),
   simulateNextWeek: vi.fn(),
   simulateFullSeason: vi.fn()
@@ -63,9 +65,59 @@ describe('RunPage', () => {
         children: ['run-child-1', 'run-child-2']
       }
     })
+    api.simulateWorldTourFinals.mockResolvedValue({
+      finals: {
+        run_id: 'run-a',
+        season: 2025,
+        event_id: 'WTF-2025',
+        already_simulated: false,
+        result: { champion_id: 'p-1' }
+      }
+    })
+    api.rolloverNextSeason.mockResolvedValue({
+      rollover: {
+        run_id: 'run-a',
+        from_season: 2025,
+        to_season: 2026,
+        transitioned_players: 128,
+        metadata: {},
+        already_persisted: false
+      }
+    })
     api.simulateNextTournament.mockResolvedValue({ step: { mode: 'simulate_next_tournament' } })
     api.simulateNextWeek.mockResolvedValue({ step: { mode: 'simulate_next_week' } })
     api.simulateFullSeason.mockResolvedValue({ step: { mode: 'simulate_full_season' } })
+  })
+
+  it('calls finals quick action endpoint from run detail', async () => {
+    renderWithRoute(<RunPage />, '/runs/run-a')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Simulate World Tour Finals' }))
+
+    await waitFor(() => expect(api.simulateWorldTourFinals).toHaveBeenCalledWith('run-a'))
+    expect(await screen.findByText('Finals simulation complete.')).toBeInTheDocument()
+  })
+
+  it('calls rollover quick action endpoint from run detail', async () => {
+    renderWithRoute(<RunPage />, '/runs/run-a')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Roll over to next season' }))
+
+    await waitFor(() => expect(api.rolloverNextSeason).toHaveBeenCalledWith('run-a'))
+    expect(await screen.findByText('Rollover complete for season 2026.')).toBeInTheDocument()
+  })
+
+  it('shows readable quick action errors', async () => {
+    api.simulateWorldTourFinals.mockRejectedValueOnce(new api.ApiError('finals blocked', 409))
+    api.rolloverNextSeason.mockRejectedValueOnce(new api.ApiError('rollover blocked', 409))
+
+    renderWithRoute(<RunPage />, '/runs/run-a')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Simulate World Tour Finals' }))
+    expect(await screen.findByText('Could not simulate Finals: finals blocked')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Roll over to next season' }))
+    expect(await screen.findByText('Could not execute rollover: rollover blocked')).toBeInTheDocument()
   })
 
   it('calls each simulation endpoint', async () => {
@@ -115,7 +167,8 @@ describe('RunPage', () => {
 
     expect(await screen.findByText('Run source and lineage overview')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'run-parent' })).toHaveAttribute('href', '/runs/run-parent')
-    expect(screen.getByText('Child runs: 2')).toBeInTheDocument()
+    expect(screen.getByText('Child run count')).toBeInTheDocument()
+    expect(screen.getByText('2')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'run-child-1' })).toHaveAttribute('href', '/runs/run-child-1')
     expect(screen.getByRole('link', { name: 'run-child-2' })).toHaveAttribute('href', '/runs/run-child-2')
   })
@@ -130,6 +183,30 @@ describe('RunPage', () => {
     expect(await screen.findByText('No rollover yet for this run.')).toBeInTheDocument()
     expect(await screen.findByText('No source metadata available for this run.')).toBeInTheDocument()
     expect(await screen.findByText('No lineage metadata available for this run.')).toBeInTheDocument()
+  })
+
+  it('refreshes overview queries after quick actions succeed', async () => {
+    renderWithRoute(<RunPage />, '/runs/run-a')
+
+    await screen.findByText('World Tour Finals overview')
+    expect(api.getFinalsSummary).toHaveBeenCalledTimes(1)
+    expect(api.getLatestRollover).toHaveBeenCalledTimes(1)
+    expect(api.getRunSource).toHaveBeenCalledTimes(1)
+    expect(api.getRunLineage).toHaveBeenCalledTimes(1)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Simulate World Tour Finals' }))
+
+    await waitFor(() => expect(api.getFinalsSummary).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(api.getLatestRollover).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(api.getRunSource).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(api.getRunLineage).toHaveBeenCalledTimes(2))
+
+    await userEvent.click(screen.getByRole('button', { name: 'Roll over to next season' }))
+
+    await waitFor(() => expect(api.getFinalsSummary).toHaveBeenCalledTimes(3))
+    await waitFor(() => expect(api.getLatestRollover).toHaveBeenCalledTimes(3))
+    await waitFor(() => expect(api.getRunSource).toHaveBeenCalledTimes(3))
+    await waitFor(() => expect(api.getRunLineage).toHaveBeenCalledTimes(3))
   })
 
   it('refreshes overview queries after simulation succeeds', async () => {

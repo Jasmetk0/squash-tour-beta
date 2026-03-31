@@ -2,7 +2,7 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
 import { getRunLineage, getRunSource, getRunStatusSummary } from '../api/client'
-import type { RunStatusSummary } from '../api/types'
+import type { RunSourceApiResponse, RunStatusSummary } from '../api/types'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -14,6 +14,20 @@ import {
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
+function describeFinalsSignal(summary?: RunStatusSummary): string {
+  if (!summary) return 'Unknown'
+  if (summary.finals.result_available) return 'Qualification + result'
+  if (summary.finals.qualification_available) return 'Qualification only'
+  return 'Not available'
+}
+
+function describeRunOrigin(source?: RunSourceApiResponse['source'] | null): string {
+  if (!source) return 'Unknown (no source metadata)'
+  if (source.source_type === 'new_run') return 'Fresh seed/bootstrap run (new_run)'
+  if (source.source_rollover_run_id || source.parent_run_id) return `Rollover-derived (${source.source_type})`
+  return `${source.source_type} (source metadata available)`
+}
+
 function SeasonChainRunCard({
   title,
   runId,
@@ -23,7 +37,8 @@ function SeasonChainRunCard({
   sourceType,
   parentRunId,
   childCount,
-  isCurrent
+  isCurrent,
+  seasonProgressNote
 }: {
   title: string
   runId: string
@@ -34,6 +49,7 @@ function SeasonChainRunCard({
   parentRunId?: string | null
   childCount?: number
   isCurrent?: boolean
+  seasonProgressNote?: string
 }): JSX.Element {
   return (
     <SectionCard title={title}>
@@ -51,11 +67,7 @@ function SeasonChainRunCard({
               },
               {
                 label: 'Finals availability',
-                value: summary.finals.result_available
-                  ? 'Qualification + result'
-                  : summary.finals.qualification_available
-                    ? 'Qualification only'
-                    : 'Not available'
+                value: describeFinalsSignal(summary)
               },
               {
                 label: 'Latest rollover',
@@ -75,9 +87,22 @@ function SeasonChainRunCard({
               { label: 'Child runs', value: childCount ?? summary.lineage.child_run_count }
             ]}
           />
+          {seasonProgressNote ? <p className="status">{seasonProgressNote}</p> : null}
           <p>
             <Link to={`/runs/${runId}`}>Run Detail</Link> · <Link to={`/runs/${runId}/diagnostics`}>Diagnostics</Link> ·{' '}
             <Link to={`/runs/${runId}/bootstrap-lineage`}>Bootstrap / Lineage</Link>
+            {summary.rollover ? (
+              <>
+                {' '}
+                · <Link to={`/runs/${runId}/rollover`}>Rollover</Link>
+              </>
+            ) : null}
+            {(summary.finals.qualification_available || summary.finals.result_available) ? (
+              <>
+                {' '}
+                · <Link to={`/runs/${runId}/finals`}>World Tour Finals</Link>
+              </>
+            ) : null}
             {isCurrent ? (
               <>
                 {' '}
@@ -139,6 +164,37 @@ export function SeasonChainPage(): JSX.Element {
   })
 
   const chainKnown = Boolean(sourceQuery.data || lineageQuery.data)
+  const sourceMetadataExists = Boolean(sourceQuery.data?.source)
+  const lineageMetadataExists = Boolean(lineageQuery.data?.lineage)
+  const currentSource = sourceQuery.data?.source ?? currentStatusQuery.data?.source
+
+  const nextInspectionLinks: Array<{ key: string; label: string; to: string }> = [
+    { key: 'current-detail', label: 'Current run detail', to: `/runs/${runId}` },
+    { key: 'current-diagnostics', label: 'Current diagnostics', to: `/runs/${runId}/diagnostics` },
+    { key: 'current-chain', label: 'Current season chain', to: `/runs/${runId}/season-chain` }
+  ]
+
+  if (parentRunId) {
+    nextInspectionLinks.push({ key: 'parent-diagnostics', label: 'Parent diagnostics', to: `/runs/${parentRunId}/diagnostics` })
+    nextInspectionLinks.push({ key: 'parent-detail', label: 'Parent run detail', to: `/runs/${parentRunId}` })
+  }
+
+  if (currentStatusQuery.data?.rollover) {
+    nextInspectionLinks.push({ key: 'current-rollover', label: 'Current rollover', to: `/runs/${runId}/rollover` })
+  }
+
+  if (currentStatusQuery.data?.finals.qualification_available && !currentStatusQuery.data.finals.result_available) {
+    nextInspectionLinks.push({ key: 'current-finals', label: 'Current finals', to: `/runs/${runId}/finals` })
+  }
+
+  if (sourceMetadataExists) {
+    nextInspectionLinks.push({ key: 'current-bootstrap-lineage', label: 'Current bootstrap / lineage', to: `/runs/${runId}/bootstrap-lineage` })
+  }
+
+  childRunIds.forEach((childRunId) => {
+    nextInspectionLinks.push({ key: `child-diag-${childRunId}`, label: `Child diagnostics: ${childRunId}`, to: `/runs/${childRunId}/diagnostics` })
+    nextInspectionLinks.push({ key: `child-detail-${childRunId}`, label: `Child run detail: ${childRunId}`, to: `/runs/${childRunId}` })
+  })
 
   return (
     <section className="panel">
@@ -150,7 +206,7 @@ export function SeasonChainPage(): JSX.Element {
       <CurrentContextStrip
         items={[
           { label: 'Run', value: runId || 'unknown' },
-          { label: 'Source type', value: sourceQuery.data?.source.source_type ?? currentStatusQuery.data?.source?.source_type ?? '—' },
+          { label: 'Source type', value: currentSource?.source_type ?? '—' },
           { label: 'Parent', value: parentRunId ?? 'None' },
           { label: 'Children', value: childRunIds.length },
           {
@@ -177,10 +233,13 @@ export function SeasonChainPage(): JSX.Element {
           <>
             <SummaryPills
               items={[
-                { label: 'Source type', value: sourceQuery.data?.source.source_type ?? currentStatusQuery.data.source?.source_type ?? 'Unknown' },
-                { label: 'Parent linked', value: parentRunId ? 'Yes' : 'No' },
-                { label: 'Child runs', value: childRunIds.length },
-                { label: 'Rollover exists', value: currentStatusQuery.data.rollover ? 'Yes' : 'No' }
+                { label: 'Parent status', value: parentRunId ? 'Linked' : 'None' },
+                { label: 'Current status', value: currentStatusQuery.data.run_id ? 'Loaded' : 'Unavailable' },
+                { label: 'Children status', value: childRunIds.length > 0 ? `${childRunIds.length} linked` : 'None' },
+                { label: 'Rollover exists', value: currentStatusQuery.data.rollover ? 'Yes' : 'No' },
+                { label: 'Finals signal', value: describeFinalsSignal(currentStatusQuery.data) },
+                { label: 'Source metadata', value: sourceMetadataExists ? 'Present' : 'Absent' },
+                { label: 'Lineage metadata', value: lineageMetadataExists ? 'Present' : 'Absent' }
               ]}
             />
             <MetadataList
@@ -198,7 +257,7 @@ export function SeasonChainPage(): JSX.Element {
                     ? `To ${currentStatusQuery.data.rollover.latest_to_season} (${currentStatusQuery.data.rollover.transitioned_players} players)`
                     : 'None recorded'
                 },
-                { label: 'Lineage child count', value: childRunIds.length }
+                { label: 'Finals availability', value: describeFinalsSignal(currentStatusQuery.data) }
               ]}
             />
           </>
@@ -206,6 +265,54 @@ export function SeasonChainPage(): JSX.Element {
         {!chainKnown && isApiNotFound(sourceQuery.error) && isApiNotFound(lineageQuery.error) ? (
           <EmptyState message="No source/lineage metadata is available for this run yet." />
         ) : null}
+      </SectionCard>
+
+      <SectionCard title="Season-to-season signals">
+        <MetadataList
+          items={[
+            {
+              label: 'Parent vs current',
+              value: parentStatusQuery?.data && currentStatusQuery.data
+                ? `Parent season ${parentStatusQuery.data.season} → current season ${currentStatusQuery.data.season}`
+                : parentRunId
+                  ? 'Parent run linked but parent season summary is unavailable'
+                  : 'No parent run linked'
+            },
+            {
+              label: 'Current vs children',
+              value: childRunIds.length === 0
+                ? 'No child runs to compare'
+                : childRunIds
+                    .map((childRunId, index) => {
+                      const childSeason = childStatusQueries[index]?.data?.season
+                      return childSeason
+                        ? `${currentStatusQuery.data?.season ?? 'Current ?'} → ${childSeason} (${childRunId})`
+                        : `${currentStatusQuery.data?.season ?? 'Current ?'} → ? (${childRunId})`
+                    })
+                    .join('; ')
+            },
+            {
+              label: 'Current rollover signal',
+              value: currentStatusQuery.data?.rollover
+                ? `Latest rollover to season ${currentStatusQuery.data.rollover.latest_to_season}`
+                : 'No rollover recorded for current run'
+            },
+            {
+              label: 'Current run origin signal',
+              value: describeRunOrigin(sourceQuery.data?.source)
+            }
+          ]}
+        />
+      </SectionCard>
+
+      <SectionCard title="Most relevant next inspection links">
+        <ul className="item-list" aria-label="Season chain next inspection links">
+          {nextInspectionLinks.map((item) => (
+            <li key={item.key}>
+              <Link to={item.to}>{item.label}</Link>
+            </li>
+          ))}
+        </ul>
       </SectionCard>
 
       {parentRunId ? (
@@ -242,6 +349,9 @@ export function SeasonChainPage(): JSX.Element {
         {!lineageQuery.isLoading && childRunIds.length === 0 ? <EmptyState message="No child runs exist for this run yet." /> : null}
         {childRunIds.map((childRunId, index) => {
           const childQuery = childStatusQueries[index]
+          const seasonProgressNote = childQuery?.data && currentStatusQuery.data
+            ? `Season progression: ${currentStatusQuery.data.season} → ${childQuery.data.season}`
+            : undefined
           return (
             <article key={childRunId} className="panel nested-panel">
               <h4>{childRunId}</h4>
@@ -259,11 +369,7 @@ export function SeasonChainPage(): JSX.Element {
                       },
                       {
                         label: 'Finals availability',
-                        value: childQuery.data.finals.result_available
-                          ? 'Qualification + result'
-                          : childQuery.data.finals.qualification_available
-                            ? 'Qualification only'
-                            : 'Not available'
+                        value: describeFinalsSignal(childQuery.data)
                       },
                       {
                         label: 'Latest rollover',
@@ -283,6 +389,7 @@ export function SeasonChainPage(): JSX.Element {
                       { label: 'Child runs', value: childQuery.data.lineage.child_run_count }
                     ]}
                   />
+                  {seasonProgressNote ? <p className="status">{seasonProgressNote}</p> : null}
                   <p>
                     <Link to={`/runs/${childRunId}`}>Run Detail</Link> ·{' '}
                     <Link to={`/runs/${childRunId}/diagnostics`}>Diagnostics</Link> ·{' '}
@@ -293,70 +400,6 @@ export function SeasonChainPage(): JSX.Element {
             </article>
           )
         })}
-      </SectionCard>
-
-      <SectionCard title="Relationship notes">
-        <MetadataList
-          items={[
-            {
-              label: 'Source relationship',
-              value: sourceQuery.data?.source.source_type
-                ? `${sourceQuery.data.source.source_type}${parentRunId ? ` (parent: ${parentRunId})` : ''}`
-                : 'No source metadata available'
-            },
-            {
-              label: 'Parent/current/children',
-              value: parentRunId ? `Parent → Current (${runId}) → ${childRunIds.length} child run(s)` : `Current (${runId}) with ${childRunIds.length} child run(s)`
-            },
-            {
-              label: 'Season progression visibility',
-              value: parentStatusQuery?.data
-                ? `${parentStatusQuery.data.season} → ${currentStatusQuery.data?.season ?? '—'}`
-                : 'Only current run season is visible from available data'
-            },
-            {
-              label: 'Current run rollover',
-              value: currentStatusQuery.data?.rollover ? 'Latest rollover exists' : 'No rollover found for current run'
-            }
-          ]}
-        />
-      </SectionCard>
-
-      <SectionCard title="Quick navigation">
-        <ul className="item-list" aria-label="Season chain quick navigation">
-          <li>
-            <Link to={`/runs/${runId}`}>Current run detail</Link>
-          </li>
-          <li>
-            <Link to={`/runs/${runId}/diagnostics`}>Current diagnostics</Link>
-          </li>
-          <li>
-            <Link to={`/runs/${runId}/bootstrap-lineage`}>Current bootstrap / lineage</Link>
-          </li>
-          {parentRunId ? (
-            <>
-              <li>
-                <Link to={`/runs/${parentRunId}`}>Parent run detail</Link>
-              </li>
-              <li>
-                <Link to={`/runs/${parentRunId}/diagnostics`}>Parent diagnostics</Link>
-              </li>
-              <li>
-                <Link to={`/runs/${parentRunId}/bootstrap-lineage`}>Parent bootstrap / lineage</Link>
-              </li>
-            </>
-          ) : null}
-          {childRunIds.map((childRunId) => (
-            <li key={`quick-${childRunId}`}>
-              <Link to={`/runs/${childRunId}`}>Child run detail: {childRunId}</Link>
-            </li>
-          ))}
-          {childRunIds.map((childRunId) => (
-            <li key={`quick-diag-${childRunId}`}>
-              <Link to={`/runs/${childRunId}/diagnostics`}>Child diagnostics: {childRunId}</Link>
-            </li>
-          ))}
-        </ul>
       </SectionCard>
     </section>
   )

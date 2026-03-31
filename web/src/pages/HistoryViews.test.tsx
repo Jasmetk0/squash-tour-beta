@@ -32,11 +32,12 @@ describe('history list ordering and errors', () => {
   })
 
   it('renders events and ranking snapshots in API order', async () => {
-    renderWithRoute(<EventsPage />, '/runs/run-a/events')
+    const eventsView = renderWithRoute(<EventsPage />, '/runs/run-a/events')
     const items = await screen.findAllByRole('button')
     expect(items[0]).toHaveTextContent('#2 · E2')
     expect(items[1]).toHaveTextContent('#1 · E1')
 
+    eventsView.unmount()
     renderWithRoute(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
     const snapshotItems = await screen.findAllByRole('button')
     expect(snapshotItems[0]).toHaveTextContent('Seq 2')

@@ -68,3 +68,40 @@ export type RankingSnapshot = {
 
 export type RankingSnapshotListResponse = { run_id: string; snapshots: RankingSnapshot[] }
 export type RaceSnapshotListResponse = RankingSnapshotListResponse
+
+export type FinalsQualificationResponse = {
+  run_id: string
+  season: number
+  source_as_of_season: number
+  source_as_of_week: number
+  qualification: Record<string, unknown>
+}
+
+export type FinalsResultResponse = {
+  run_id: string
+  season: number
+  event_id: string
+  source_as_of_season: number
+  source_as_of_week: number
+  result: Record<string, unknown>
+}
+
+export type FinalsSummaryResponse = {
+  run_id: string
+  season: number
+  qualification: FinalsQualificationResponse | null
+  result: FinalsResultResponse | null
+}
+
+export type FinalsSimulationResponse = {
+  mode: 'simulate_world_tour_finals'
+  run: RunSummary
+  finals: {
+    run_id: string
+    season: number
+    event_id: string
+    qualification: FinalsQualificationResponse
+    result: FinalsResultResponse
+    already_simulated: boolean
+  }
+}

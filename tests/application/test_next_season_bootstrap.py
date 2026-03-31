@@ -1,0 +1,88 @@
+from __future__ import annotations
+
+import pytest
+
+from beta_engine.application.api_services import SimulationApiService
+from beta_engine.infrastructure.db import DatabaseSettings, create_session_factory, create_sqlite_engine
+from beta_engine.infrastructure.db.repositories import SimulationPersistenceRepository
+
+
+def _service(tmp_path) -> SimulationApiService:
+    db_file = tmp_path / "bootstrap_app.db"
+    engine = create_sqlite_engine(DatabaseSettings(url=f"sqlite:///{db_file}"))
+    session_factory = create_session_factory(engine)
+    repository = SimulationPersistenceRepository(engine=engine, session_factory=session_factory)
+    return SimulationApiService(repository=repository)
+
+
+def test_bootstrap_next_season_requires_persisted_rollover(tmp_path) -> None:
+    service = _service(tmp_path)
+    service.initialize_run(run_id="run-parent", season=2027, seed=5151, config_version=None, config_fingerprint=None)
+
+    with pytest.raises(ValueError, match="No persisted rollover"):
+        service.bootstrap_next_season_run(run_id="run-parent", child_run_id="run-child")
+
+
+def test_bootstrap_next_season_creates_child_run_with_lineage_and_simulation(tmp_path) -> None:
+    service = _service(tmp_path)
+    service.initialize_run(run_id="run-parent", season=2027, seed=5252, config_version="mvp", config_fingerprint="cfg-1")
+    service.simulate_full_season(run_id="run-parent")
+    service.rollover_to_next_season(run_id="run-parent")
+
+    bootstrap = service.bootstrap_next_season_run(run_id="run-parent", child_run_id="run-child")
+    assert bootstrap.already_bootstrapped is False
+    assert bootstrap.to_season == 2028
+
+    child_summary = service.get_run_summary(run_id="run-child")
+    assert child_summary.season == 2028
+
+    lineage = service.get_run_lineage(run_id="run-parent")
+    assert lineage.children == ["run-child"]
+
+    child_source = service.get_run_source(run_id="run-child")
+    assert child_source.source_type == "rollover_bootstrap"
+    assert child_source.parent_run_id == "run-parent"
+    assert child_source.source_rollover_to_season == 2028
+
+    step = service.simulate_next_week(run_id="run-child")
+    assert step.mode == "simulate_next_week"
+    assert step.season_state.season == 2028
+
+
+def test_bootstrap_next_season_is_idempotent_and_rejects_conflicting_child_seed(tmp_path) -> None:
+    service = _service(tmp_path)
+    service.initialize_run(run_id="run-parent", season=2027, seed=5353, config_version=None, config_fingerprint=None)
+    service.simulate_full_season(run_id="run-parent")
+    service.rollover_to_next_season(run_id="run-parent")
+
+    first = service.bootstrap_next_season_run(run_id="run-parent", child_run_id="run-child", child_seed=999)
+    second = service.bootstrap_next_season_run(run_id="run-parent", child_run_id="run-child", child_seed=999)
+
+    assert first.already_bootstrapped is False
+    assert second.already_bootstrapped is True
+    assert first.model_dump(exclude={"already_bootstrapped"}) == second.model_dump(exclude={"already_bootstrapped"})
+
+    with pytest.raises(ValueError, match="conflicting bootstrap metadata"):
+        service.bootstrap_next_season_run(run_id="run-parent", child_run_id="run-child", child_seed=1000)
+
+
+def test_child_run_uses_rollover_player_pool_for_next_rollover(tmp_path) -> None:
+    service = _service(tmp_path)
+    service.initialize_run(run_id="run-parent", season=2027, seed=5454, config_version=None, config_fingerprint=None)
+    service.simulate_full_season(run_id="run-parent")
+    service.rollover_to_next_season(run_id="run-parent")
+
+    parent_next_players = service.list_next_season_players(run_id="run-parent", to_season=2028)
+    player_ages_2028 = {record.player_id: record.state.player.age for record in parent_next_players}
+
+    service.bootstrap_next_season_run(run_id="run-parent", child_run_id="run-child")
+    service.simulate_full_season(run_id="run-child")
+    service.rollover_to_next_season(run_id="run-child")
+
+    child_transitions = service.list_player_transitions(run_id="run-child", to_season=2029)
+    observed_age_before = {transition.player_id: transition.transition.age_before for transition in child_transitions}
+
+    common_player_ids = sorted(set(player_ages_2028).intersection(observed_age_before))
+    assert common_player_ids
+    sample_id = common_player_ids[0]
+    assert observed_age_before[sample_id] == player_ages_2028[sample_id]

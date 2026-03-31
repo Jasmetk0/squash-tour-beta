@@ -48,6 +48,21 @@ class SimulationRunInfo:
     seed: int
     config_version: str | None = None
     config_fingerprint: str | None = None
+    parent_run_id: str | None = None
+    source_type: str = "fresh_seed"
+    source_rollover_run_id: str | None = None
+    source_rollover_from_season: int | None = None
+    source_rollover_to_season: int | None = None
+
+
+@dataclass(frozen=True)
+class RunLineageRecord:
+    run_id: str
+    parent_run_id: str | None
+    source_type: str
+    source_rollover_run_id: str | None
+    source_rollover_from_season: int | None
+    source_rollover_to_season: int | None
 
 
 @dataclass(frozen=True)
@@ -135,6 +150,11 @@ class SimulationPersistenceRepository:
                     seed=run.seed,
                     config_version=run.config_version,
                     config_fingerprint=run.config_fingerprint,
+                    parent_run_id=run.parent_run_id,
+                    source_type=run.source_type,
+                    source_rollover_run_id=run.source_rollover_run_id,
+                    source_rollover_from_season=run.source_rollover_from_season,
+                    source_rollover_to_season=run.source_rollover_to_season,
                 )
                 session.add(model)
                 return
@@ -142,6 +162,11 @@ class SimulationPersistenceRepository:
             model.seed = run.seed
             model.config_version = run.config_version
             model.config_fingerprint = run.config_fingerprint
+            model.parent_run_id = run.parent_run_id
+            model.source_type = run.source_type
+            model.source_rollover_run_id = run.source_rollover_run_id
+            model.source_rollover_from_season = run.source_rollover_from_season
+            model.source_rollover_to_season = run.source_rollover_to_season
 
     def save_season_state(self, *, run_id: str, state: SeasonState) -> None:
         with self._session_factory.begin() as session:
@@ -277,7 +302,45 @@ class SimulationPersistenceRepository:
                 seed=model.seed,
                 config_version=model.config_version,
                 config_fingerprint=model.config_fingerprint,
+                parent_run_id=model.parent_run_id,
+                source_type=model.source_type,
+                source_rollover_run_id=model.source_rollover_run_id,
+                source_rollover_from_season=model.source_rollover_from_season,
+                source_rollover_to_season=model.source_rollover_to_season,
             )
+
+    def get_run_lineage(self, *, run_id: str) -> RunLineageRecord | None:
+        with self._session_factory() as session:
+            model = session.get(SimulationRunModel, run_id)
+            if model is None:
+                return None
+            return RunLineageRecord(
+                run_id=model.run_id,
+                parent_run_id=model.parent_run_id,
+                source_type=model.source_type,
+                source_rollover_run_id=model.source_rollover_run_id,
+                source_rollover_from_season=model.source_rollover_from_season,
+                source_rollover_to_season=model.source_rollover_to_season,
+            )
+
+    def list_child_runs(self, *, parent_run_id: str) -> list[RunLineageRecord]:
+        with self._session_factory() as session:
+            statement = (
+                select(SimulationRunModel)
+                .where(SimulationRunModel.parent_run_id == parent_run_id)
+                .order_by(SimulationRunModel.run_id.asc())
+            )
+            return [
+                RunLineageRecord(
+                    run_id=model.run_id,
+                    parent_run_id=model.parent_run_id,
+                    source_type=model.source_type,
+                    source_rollover_run_id=model.source_rollover_run_id,
+                    source_rollover_from_season=model.source_rollover_from_season,
+                    source_rollover_to_season=model.source_rollover_to_season,
+                )
+                for model in session.execute(statement).scalars().all()
+            ]
 
     def list_table_names(self) -> list[str]:
         with self._session_factory() as session:

@@ -12,6 +12,8 @@ from beta_engine.application.finals_models import (
 )
 from beta_engine.application.finals_service import FinalsOrchestrationService
 from beta_engine.application.persistence import SimulationPersistenceService
+from beta_engine.application.run_bootstrap_models import BootstrapNextSeasonResponse, RunLineageRecord, RunSourceSummary
+from beta_engine.application.run_bootstrap_service import NextSeasonRunBootstrapService
 from beta_engine.application.rollover_models import (
     NextSeasonPlayerRecord,
     PersistedPlayerTransition,
@@ -71,7 +73,7 @@ class SimulationApiService:
         config_version: str | None,
         config_fingerprint: str | None,
     ) -> PersistedRunSummary:
-        orchestrator = self._build_orchestrator(season=season, seed=seed)
+        orchestrator = self._build_orchestrator(season=season, seed=seed, run_info=None)
         state = orchestrator.initialize_state()
 
         run_info = SimulationRunInfo(
@@ -80,6 +82,7 @@ class SimulationApiService:
             seed=seed,
             config_version=config_version,
             config_fingerprint=config_fingerprint,
+            source_type="fresh_seed",
         )
         persistence = SimulationPersistenceService(repository=self.repository)
         persistence.initialize_run(run=run_info)
@@ -124,7 +127,7 @@ class SimulationApiService:
         return orchestrator.simulate_world_tour_finals(
             run=run_info,
             state=state,
-            players_by_id=self._build_players_by_id(seed=run_info.seed),
+            players_by_id=self._load_players_by_id_for_run(run_info=run_info),
         )
 
     def get_finals_qualification(self, *, run_id: str) -> PersistedFinalsQualification:
@@ -142,7 +145,7 @@ class SimulationApiService:
         return orchestrator.derive_qualification(
             run=run_info,
             state=state,
-            players_by_id=self._build_players_by_id(seed=run_info.seed),
+            players_by_id=self._load_players_by_id_for_run(run_info=run_info),
         )
 
     def get_finals_result(self, *, run_id: str) -> PersistedFinalsResult | None:
@@ -175,7 +178,7 @@ class SimulationApiService:
         return orchestration.rollover_to_next_season(
             run=run_info,
             state=state,
-            players_by_id=self._build_players_by_id(seed=run_info.seed),
+            players_by_id=self._load_players_by_id_for_run(run_info=run_info),
         )
 
     def get_latest_rollover(self, *, run_id: str) -> SeasonRolloverSummaryResponse | None:
@@ -198,6 +201,58 @@ class SimulationApiService:
         orchestration = self._build_rollover_orchestration(seed=run_info.seed, season=run_info.season)
         return orchestration.list_transitions(run_id=run_id, to_season=to_season)
 
+    def bootstrap_next_season_run(
+        self,
+        *,
+        run_id: str,
+        child_run_id: str,
+        child_seed: int | None = None,
+    ) -> BootstrapNextSeasonResponse:
+        parent_run, _ = self._load_run_context(run_id=run_id)
+        effective_seed = parent_run.seed if child_seed is None else child_seed
+        bootstrap_service = NextSeasonRunBootstrapService(repository=self.repository)
+        response = bootstrap_service.bootstrap_from_rollover(
+            parent_run=parent_run,
+            child_run_id=child_run_id,
+            child_seed=effective_seed,
+        )
+        if response.already_bootstrapped:
+            return response
+
+        orchestrator = self._build_orchestrator(season=response.to_season, seed=effective_seed, run_info=None, parent_run_id=run_id)
+        state = orchestrator.initialize_state()
+        self.repository.save_season_state(run_id=child_run_id, state=state)
+        return response
+
+    def get_run_lineage(self, *, run_id: str) -> RunLineageRecord:
+        lineage = self.repository.get_run_lineage(run_id=run_id)
+        if lineage is None:
+            raise KeyError(f"run_id {run_id} was not found")
+        children = self.repository.list_child_runs(parent_run_id=run_id)
+        return RunLineageRecord(
+            run_id=lineage.run_id,
+            source=RunSourceSummary(
+                source_type=lineage.source_type,
+                parent_run_id=lineage.parent_run_id,
+                source_rollover_run_id=lineage.source_rollover_run_id,
+                source_rollover_from_season=lineage.source_rollover_from_season,
+                source_rollover_to_season=lineage.source_rollover_to_season,
+            ),
+            children=[child.run_id for child in children],
+        )
+
+    def get_run_source(self, *, run_id: str) -> RunSourceSummary:
+        lineage = self.repository.get_run_lineage(run_id=run_id)
+        if lineage is None:
+            raise KeyError(f"run_id {run_id} was not found")
+        return RunSourceSummary(
+            source_type=lineage.source_type,
+            parent_run_id=lineage.parent_run_id,
+            source_rollover_run_id=lineage.source_rollover_run_id,
+            source_rollover_from_season=lineage.source_rollover_from_season,
+            source_rollover_to_season=lineage.source_rollover_to_season,
+        )
+
     def list_events(self, *, run_id: str) -> list[PersistedEventRecord]:
         return self.repository.list_completed_events(run_id=run_id)
 
@@ -213,7 +268,7 @@ class SimulationApiService:
     def _simulate_step(self, *, run_id: str, mode: str) -> SimulationStepResult:
         run_info, state = self._load_run_context(run_id=run_id)
 
-        orchestrator = self._build_orchestrator(season=run_info.season, seed=run_info.seed)
+        orchestrator = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info)
         if mode == "simulate_next_tournament":
             step = orchestrator.simulate_next_tournament(state=state)
         elif mode == "simulate_next_week":
@@ -227,17 +282,26 @@ class SimulationApiService:
         persistence.persist_step(run_id=run_id, step=step)
         return step
 
-    def _build_orchestrator(self, *, season: int, seed: int) -> SeasonSimulationOrchestrator:
-        calendar = load_season_calendar()
-        if calendar.season != season:
-            raise ValueError(
-                f"Configured calendar season {calendar.season} does not match requested run season {season}"
-            )
+    def _build_orchestrator(
+        self,
+        *,
+        season: int,
+        seed: int,
+        run_info: SimulationRunInfo | None,
+        parent_run_id: str | None = None,
+    ) -> SeasonSimulationOrchestrator:
+        calendar = load_season_calendar(season=season)
 
         templates = load_tournament_templates_config().templates
         countries = load_countries_config().countries
         countries_by_code = {country.code: country for country in countries}
-        players = self._build_players(seed=seed, countries=countries)
+        players = self._build_players_for_run(
+            run_info=run_info,
+            season=season,
+            seed=seed,
+            countries=countries,
+            parent_run_id=parent_run_id,
+        )
 
         return SeasonSimulationOrchestrator.build(
             calendar=calendar,
@@ -270,6 +334,37 @@ class SimulationApiService:
     def _build_players_by_id(self, *, seed: int) -> dict[str, Player]:
         countries = load_countries_config().countries
         return {player.player_id: player for player in self._build_players(seed=seed, countries=countries)}
+
+    def _load_players_by_id_for_run(self, *, run_info: SimulationRunInfo) -> dict[str, Player]:
+        countries = load_countries_config().countries
+        players = self._build_players_for_run(
+            run_info=run_info,
+            season=run_info.season,
+            seed=run_info.seed,
+            countries=countries,
+        )
+        return {player.player_id: player for player in players}
+
+    def _build_players_for_run(
+        self,
+        *,
+        run_info: SimulationRunInfo | None,
+        season: int,
+        seed: int,
+        countries: list[Country],
+        parent_run_id: str | None = None,
+    ) -> list[Player]:
+        source_rollover_run_id = run_info.source_rollover_run_id if run_info is not None else parent_run_id
+        source_rollover_to_season = run_info.source_rollover_to_season if run_info is not None else season
+
+        if source_rollover_run_id is not None and source_rollover_to_season is not None:
+            records = self.repository.list_next_season_players(
+                run_id=source_rollover_run_id,
+                to_season=source_rollover_to_season,
+            )
+            if records:
+                return [record.state.player for record in records]
+        return self._build_players(seed=seed, countries=countries)
 
     def _build_rollover_orchestration(self, *, seed: int, season: int) -> SeasonRolloverOrchestrationService:
         progression_engine = CareerProgressionEngine(

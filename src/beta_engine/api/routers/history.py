@@ -16,6 +16,8 @@ from beta_engine.api.schemas import (
     RunSummaryResponse,
     SeasonRolloverExecutionResponse,
     SeasonRolloverSummaryApiResponse,
+    RunLineageApiResponse,
+    RunSourceApiResponse,
 )
 from beta_engine.application.api_services import SimulationApiService
 
@@ -202,3 +204,21 @@ def get_player_transitions(
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     return PlayerTransitionsResponse(run_id=run_id, to_season=to_season, transitions=transitions)
+
+
+@router.get("/lineage", response_model=RunLineageApiResponse)
+def get_run_lineage(run_id: str, service: SimulationApiService = Depends(get_simulation_api_service)) -> RunLineageApiResponse:
+    try:
+        lineage = service.get_run_lineage(run_id=run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return RunLineageApiResponse(lineage=lineage)
+
+
+@router.get("/source", response_model=RunSourceApiResponse)
+def get_run_source(run_id: str, service: SimulationApiService = Depends(get_simulation_api_service)) -> RunSourceApiResponse:
+    try:
+        source = service.get_run_source(run_id=run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return RunSourceApiResponse(source=source)

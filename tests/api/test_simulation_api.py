@@ -220,3 +220,57 @@ def test_rollover_endpoints_execute_and_read_persisted_data(tmp_path) -> None:
         status, transitions = _request("GET", f"{server.base_url}/runs/run-rollover/players/transitions/2028")
         assert status == 200
         assert len(transitions["transitions"]) == rollover["rollover"]["transitioned_players"]
+
+
+def test_bootstrap_next_season_and_lineage_endpoints(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-bootstrap.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/runs",
+            {"run_id": "run-parent", "seed": 4114, "season": 2027},
+        )
+        assert status == 201
+
+        status, missing_rollover = _request(
+            "POST",
+            f"{server.base_url}/runs/run-parent/bootstrap-next-season",
+            {"child_run_id": "run-child"},
+        )
+        assert status == 400
+        assert "No persisted rollover" in missing_rollover["detail"]
+
+        status, _ = _request("POST", f"{server.base_url}/runs/run-parent/simulate/full-season")
+        assert status == 200
+        status, _ = _request("POST", f"{server.base_url}/runs/run-parent/rollover/next-season")
+        assert status == 200
+
+        status, bootstrap = _request(
+            "POST",
+            f"{server.base_url}/runs/run-parent/bootstrap-next-season",
+            {"child_run_id": "run-child"},
+        )
+        assert status == 200
+        assert bootstrap["run"]["season"] == 2028
+        assert bootstrap["bootstrap"]["already_bootstrapped"] is False
+
+        status, bootstrap_cached = _request(
+            "POST",
+            f"{server.base_url}/runs/run-parent/bootstrap-next-season",
+            {"child_run_id": "run-child"},
+        )
+        assert status == 200
+        assert bootstrap_cached["bootstrap"]["already_bootstrapped"] is True
+
+        status, lineage = _request("GET", f"{server.base_url}/runs/run-parent/lineage")
+        assert status == 200
+        assert lineage["lineage"]["children"] == ["run-child"]
+
+        status, source = _request("GET", f"{server.base_url}/runs/run-child/source")
+        assert status == 200
+        assert source["source"]["source_type"] == "rollover_bootstrap"
+        assert source["source"]["parent_run_id"] == "run-parent"
+
+        status, child_step = _request("POST", f"{server.base_url}/runs/run-child/simulate/next-week")
+        assert status == 200
+        assert child_step["step"]["season_state"]["season"] == 2028

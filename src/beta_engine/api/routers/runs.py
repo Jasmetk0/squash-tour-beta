@@ -1,7 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from beta_engine.api.deps import get_simulation_api_service
-from beta_engine.api.schemas import CreateRunRequest, RunSummaryResponse, SeasonStateResponse
+from beta_engine.api.schemas import (
+    BootstrapNextSeasonApiResponse,
+    BootstrapNextSeasonRequest,
+    RunSummaryResponse,
+    CreateRunRequest,
+    SeasonStateResponse,
+)
 from beta_engine.application.api_services import PersistedRunSummary, SimulationApiService
 
 router = APIRouter(prefix="/runs", tags=["runs"])
@@ -35,3 +41,27 @@ def get_run(run_id: str, service: SimulationApiService = Depends(get_simulation_
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
     return SeasonStateResponse(run=_to_run_summary(summary), season_state=state)
+
+
+@router.post("/{run_id}/bootstrap-next-season", response_model=BootstrapNextSeasonApiResponse)
+def bootstrap_next_season_run(
+    run_id: str,
+    payload: BootstrapNextSeasonRequest,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> BootstrapNextSeasonApiResponse:
+    try:
+        bootstrap = service.bootstrap_next_season_run(
+            run_id=run_id,
+            child_run_id=payload.child_run_id,
+            child_seed=payload.child_seed,
+        )
+        run = service.get_run_summary(run_id=payload.child_run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    return BootstrapNextSeasonApiResponse(
+        run=_to_run_summary(run),
+        bootstrap=bootstrap,
+    )

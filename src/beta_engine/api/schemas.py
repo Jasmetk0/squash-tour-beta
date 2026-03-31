@@ -7,6 +7,12 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from beta_engine.application.finals_models import FinalsSimulationResult
+from beta_engine.application.run_bootstrap_models import (
+    BootstrapNextSeasonRequest,
+    BootstrapNextSeasonResponse,
+    RunLineageRecord,
+    RunSourceSummary,
+)
 from beta_engine.application.rollover_models import (
     NextSeasonPlayerRecord,
     PersistedPlayerTransition,
@@ -138,3 +144,16 @@ class PlayerTransitionsResponse(BaseModel):
     run_id: str
     to_season: int
     transitions: list[PersistedPlayerTransition] = Field(default_factory=list)
+
+
+class BootstrapNextSeasonApiResponse(BaseModel):
+    run: RunSummaryResponse
+    bootstrap: BootstrapNextSeasonResponse
+
+
+class RunLineageApiResponse(BaseModel):
+    lineage: RunLineageRecord
+
+
+class RunSourceApiResponse(BaseModel):
+    source: RunSourceSummary

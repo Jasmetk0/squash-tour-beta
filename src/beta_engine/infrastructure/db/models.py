@@ -18,6 +18,11 @@ class SimulationRunModel(Base):
     seed: Mapped[int] = mapped_column(Integer, nullable=False)
     config_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
     config_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    parent_run_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    source_type: Mapped[str] = mapped_column(String(32), nullable=False, default="fresh_seed")
+    source_rollover_run_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    source_rollover_from_season: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    source_rollover_to_season: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 
 class SeasonStateModel(Base):

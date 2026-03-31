@@ -105,3 +105,48 @@ export type FinalsSimulationResponse = {
     already_simulated: boolean
   }
 }
+
+export type SeasonRolloverSummary = {
+  run_id: string
+  from_season: number
+  to_season: number
+  transitioned_players: number
+  metadata: Record<string, unknown>
+}
+
+export type SeasonRolloverExecutionResponse = {
+  run: RunSummary
+  rollover: SeasonRolloverSummary & {
+    transitions: Record<string, unknown>[]
+    next_season_players: Record<string, unknown>[]
+    already_persisted: boolean
+  }
+}
+
+export type SeasonRolloverSummaryApiResponse = {
+  rollover: SeasonRolloverSummary
+}
+
+export type NextSeasonPlayersResponse = {
+  run_id: string
+  to_season: number
+  players: Array<{
+    run_id: string
+    from_season: number
+    to_season: number
+    player_id: string
+    state: Record<string, unknown>
+  }>
+}
+
+export type PlayerTransitionsResponse = {
+  run_id: string
+  to_season: number
+  transitions: Array<{
+    run_id: string
+    from_season: number
+    to_season: number
+    player_id: string
+    transition: Record<string, unknown>
+  }>
+}

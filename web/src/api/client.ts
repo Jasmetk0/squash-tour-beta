@@ -9,6 +9,10 @@ import type {
   HealthResponse,
   RaceSnapshotListResponse,
   RankingSnapshotListResponse,
+  NextSeasonPlayersResponse,
+  PlayerTransitionsResponse,
+  SeasonRolloverExecutionResponse,
+  SeasonRolloverSummaryApiResponse,
   RunSummary,
   SeasonStateResponse,
   SimulateResponse
@@ -98,6 +102,26 @@ export function getFinalsSummary(runId: string): Promise<FinalsSummaryResponse> 
 
 export function simulateWorldTourFinals(runId: string): Promise<FinalsSimulationResponse> {
   return simulate<FinalsSimulationResponse>(runId, 'world-tour-finals')
+}
+
+export function rolloverNextSeason(runId: string): Promise<SeasonRolloverExecutionResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/rollover/next-season`, { method: 'POST' })
+}
+
+export function getLatestRollover(runId: string): Promise<SeasonRolloverSummaryApiResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/rollover/latest`)
+}
+
+export function getRolloverBySeason(runId: string, toSeason: number): Promise<SeasonRolloverSummaryApiResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/rollover/${toSeason}`)
+}
+
+export function getNextSeasonPlayers(runId: string, toSeason: number): Promise<NextSeasonPlayersResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/players/next-season/${toSeason}`)
+}
+
+export function getPlayerTransitions(runId: string, toSeason: number): Promise<PlayerTransitionsResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/players/transitions/${toSeason}`)
 }
 
 export { ApiError }

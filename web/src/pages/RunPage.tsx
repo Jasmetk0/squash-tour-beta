@@ -25,7 +25,8 @@ import {
   MetadataList,
   PageIntro,
   PreviewListCard,
-  SectionCard
+  SectionCard,
+  SummaryPills
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
@@ -128,6 +129,25 @@ export function RunPage(): JSX.Element {
   const recentEvents = eventsQuery.data?.events.slice(0, previewLimit) ?? []
   const recentRankingSnapshots = rankingSnapshotsQuery.data?.snapshots.slice(0, previewLimit) ?? []
   const recentRaceSnapshots = raceSnapshotsQuery.data?.snapshots.slice(0, previewLimit) ?? []
+  const latestCompletedEvent = eventsQuery.data?.events[0]
+  const latestRankingSnapshot = rankingSnapshotsQuery.data?.snapshots[0]
+  const latestRaceSnapshot = raceSnapshotsQuery.data?.snapshots[0]
+
+  const artifactState = (
+    query: { isLoading: boolean; error: unknown; data: unknown },
+    availableLabel = 'Available',
+    noneLabel = 'None yet'
+  ): string => {
+    if (query.isLoading) return 'Loading'
+    if (query.error) return isApiNotFound(query.error) ? noneLabel : 'Error'
+    if (query.data) return availableLabel
+    return 'Missing'
+  }
+
+  const finalsInspectionNeeded = Boolean(finalsSummaryQuery.data?.qualification && !finalsSummaryQuery.data?.result)
+  const hasLineageRelationships = Boolean(
+    sourceQuery.data?.source.parent_run_id || (lineageQuery.data?.lineage.children.length ?? 0) > 0
+  )
 
   return (
     <section className="panel">
@@ -150,21 +170,144 @@ export function RunPage(): JSX.Element {
       {runQuery.error && <p className="error">Failed to load run: {String(runQuery.error)}</p>}
       {runQuery.data && (
         <>
-          <SectionCard title="Run summary">
-            <CompactSummaryCard
+          <SectionCard title="Run landing summary">
+            <SummaryPills
               items={[
-                { label: 'Run ID', value: runQuery.data.run.run_id },
-                { label: 'Season', value: statusSummaryQuery.data?.season ?? runQuery.data.run.season },
-                { label: 'Seed', value: statusSummaryQuery.data?.seed ?? runQuery.data.run.seed },
+                { label: 'Current season', value: statusSummaryQuery.data?.season ?? runQuery.data.run.season },
                 {
                   label: 'Progress',
                   value: statusSummaryQuery.data
-                    ? `${statusSummaryQuery.data.progress.next_event_index} / ${statusSummaryQuery.data.progress.total_events}`
-                    : `${runQuery.data.run.next_event_index} / ${runQuery.data.run.total_events}`
+                    ? `${statusSummaryQuery.data.progress.next_event_index}/${statusSummaryQuery.data.progress.total_events}`
+                    : `${runQuery.data.run.next_event_index}/${runQuery.data.run.total_events}`
                 },
                 {
                   label: 'Completed events',
                   value: statusSummaryQuery.data?.progress.completed_event_count ?? runQuery.data.run.completed_event_ids.length
+                },
+                {
+                  label: 'Finals',
+                  value: finalsSummaryQuery.data?.result
+                    ? 'Result available'
+                    : finalsSummaryQuery.data?.qualification
+                      ? 'Qualification available'
+                      : finalsSummaryQuery.isLoading
+                        ? 'Loading'
+                        : finalsSummaryQuery.error
+                          ? 'Error'
+                          : 'None yet'
+                },
+                {
+                  label: 'Rollover',
+                  value: latestRolloverQuery.data
+                    ? `To S${latestRolloverQuery.data.rollover.to_season}`
+                    : latestRolloverQuery.isLoading
+                      ? 'Loading'
+                      : latestRolloverQuery.error
+                        ? isApiNotFound(latestRolloverQuery.error)
+                          ? 'None yet'
+                          : 'Error'
+                        : 'Missing'
+                },
+                {
+                  label: 'Source / lineage',
+                  value: hasLineageRelationships ? 'Connected' : sourceQuery.data || lineageQuery.data ? 'Standalone' : 'None yet'
+                }
+              ]}
+            />
+            <CompactSummaryCard
+              items={[
+                { label: 'Run ID', value: runQuery.data.run.run_id },
+                { label: 'Seed', value: statusSummaryQuery.data?.seed ?? runQuery.data.run.seed }
+              ]}
+            />
+          </SectionCard>
+
+          <SectionCard title="Most relevant next inspections">
+            <MetadataList
+              items={[
+                {
+                  label: 'Latest completed event',
+                  value: latestCompletedEvent ? (
+                    <Link to={`/runs/${runId}/events/${encodeURIComponent(latestCompletedEvent.event_id)}`}>
+                      {latestCompletedEvent.event_id}
+                    </Link>
+                  ) : (
+                    'None yet'
+                  )
+                },
+                {
+                  label: 'Latest ranking snapshot',
+                  value: latestRankingSnapshot ? (
+                    <Link to={`/runs/${runId}/snapshots/ranking/${latestRankingSnapshot.snapshot_sequence}`}>
+                      Seq {latestRankingSnapshot.snapshot_sequence}
+                    </Link>
+                  ) : (
+                    'None yet'
+                  )
+                },
+                {
+                  label: 'Latest race snapshot',
+                  value: latestRaceSnapshot ? (
+                    <Link to={`/runs/${runId}/snapshots/race/${latestRaceSnapshot.snapshot_sequence}`}>
+                      Seq {latestRaceSnapshot.snapshot_sequence}
+                    </Link>
+                  ) : (
+                    'None yet'
+                  )
+                },
+                {
+                  label: 'World Tour Finals',
+                  value: finalsInspectionNeeded ? <Link to={`/runs/${runId}/finals`}>Inspect pending Finals result</Link> : 'None yet'
+                },
+                {
+                  label: 'Latest rollover',
+                  value: latestRolloverQuery.data ? <Link to={`/runs/${runId}/rollover`}>Inspect latest rollover</Link> : 'None yet'
+                },
+                {
+                  label: 'Season chain',
+                  value: hasLineageRelationships ? <Link to={`/runs/${runId}/season-chain`}>Inspect season chain</Link> : 'None yet'
+                },
+                {
+                  label: 'Bootstrap / lineage',
+                  value: sourceQuery.data ? <Link to={`/runs/${runId}/bootstrap-lineage`}>Inspect source metadata</Link> : 'None yet'
+                }
+              ]}
+            />
+          </SectionCard>
+
+          <SectionCard title="Current artifact state">
+            <CompactSummaryCard
+              items={[
+                {
+                  label: 'Finals qualification',
+                  value: artifactState(
+                    finalsSummaryQuery,
+                    finalsSummaryQuery.data?.qualification ? 'Available' : 'None yet',
+                    'None yet'
+                  )
+                },
+                {
+                  label: 'Finals result',
+                  value: artifactState(finalsSummaryQuery, finalsSummaryQuery.data?.result ? 'Available' : 'None yet', 'None yet')
+                },
+                { label: 'Latest rollover', value: artifactState(latestRolloverQuery, 'Available', 'None yet') },
+                { label: 'Source metadata', value: artifactState(sourceQuery, 'Available', 'None yet') },
+                { label: 'Lineage metadata', value: artifactState(lineageQuery, 'Available', 'None yet') },
+                {
+                  label: 'Events',
+                  value: artifactState(eventsQuery, eventsQuery.data?.events.length ? 'Available' : 'None yet', 'None yet')
+                },
+                {
+                  label: 'Ranking snapshots',
+                  value: artifactState(
+                    rankingSnapshotsQuery,
+                    rankingSnapshotsQuery.data?.snapshots.length ? 'Available' : 'None yet',
+                    'None yet'
+                  )
+                },
+                {
+                  label: 'Race snapshots',
+                  value: artifactState(raceSnapshotsQuery, raceSnapshotsQuery.data?.snapshots.length ? 'Available' : 'None yet', 'None yet')
                 }
               ]}
             />

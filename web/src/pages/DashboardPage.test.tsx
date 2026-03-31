@@ -35,6 +35,7 @@ vi.mock('../api/client', () => api)
 
 describe('DashboardPage', () => {
   beforeEach(() => {
+    localStorage.clear()
     api.getHealth.mockResolvedValue({ status: 'ok' })
     api.createRun.mockResolvedValue({ run_id: 'run-a' })
     api.getRun.mockResolvedValue({ run: { run_id: 'run-a' } })
@@ -84,6 +85,51 @@ describe('DashboardPage', () => {
 
     await waitFor(() => expect(api.getRun).toHaveBeenCalledWith('run-b'))
     expect(navigateMock).toHaveBeenCalledWith('/runs/run-a')
+  })
+
+  it('shows empty resume state when no remembered run exists', async () => {
+    renderWithRoute(<DashboardPage />, '/')
+
+    expect(
+      screen.getByText('No remembered run yet. Create or open a run to enable quick resume.')
+    ).toBeInTheDocument()
+  })
+
+  it('renders remembered last run id and resumes it', async () => {
+    localStorage.setItem('beta_engine:last_run_id', 'remembered-run')
+
+    renderWithRoute(<DashboardPage />, '/')
+
+    expect(screen.getByText('Remembered run ID: remembered-run')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Resume Run' }))
+
+    await waitFor(() => expect(api.getRun).toHaveBeenCalledWith('remembered-run'))
+    expect(navigateMock).toHaveBeenCalledWith('/runs/run-a')
+  })
+
+  it('shows readable resume error if remembered run cannot be opened', async () => {
+    localStorage.setItem('beta_engine:last_run_id', 'missing-run')
+    api.getRun.mockRejectedValueOnce(new api.ApiError('{"detail":"Run not found"}', 404))
+
+    renderWithRoute(<DashboardPage />, '/')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Resume Run' }))
+
+    expect(await screen.findByText('Could not open run: Run not found')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Open existing run/i })).toBeInTheDocument()
+  })
+
+  it('clears remembered run from localStorage and updates visible state', async () => {
+    localStorage.setItem('beta_engine:last_run_id', 'remembered-run')
+
+    renderWithRoute(<DashboardPage />, '/')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Clear remembered run' }))
+
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBeNull()
+    expect(
+      screen.getByText('No remembered run yet. Create or open a run to enable quick resume.')
+    ).toBeInTheDocument()
   })
 
   it('shows create-run failures with a readable message', async () => {

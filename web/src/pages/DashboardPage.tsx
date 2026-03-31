@@ -12,6 +12,8 @@ type CreateInputState = {
   season: number
 }
 
+const LAST_RUN_ID_STORAGE_KEY = 'beta_engine:last_run_id'
+
 export function DashboardPage(): JSX.Element {
   const navigate = useNavigate()
   const [createInput, setCreateInput] = useState<CreateInputState>({
@@ -20,10 +22,12 @@ export function DashboardPage(): JSX.Element {
     season: SUPPORTED_CALENDAR_SEASON
   })
   const [loadRunId, setLoadRunId] = useState('')
+  const [lastRunId, setLastRunId] = useState(() => localStorage.getItem(LAST_RUN_ID_STORAGE_KEY))
   const [isCreating, setIsCreating] = useState(false)
-  const [isOpening, setIsOpening] = useState(false)
+  const [openingTarget, setOpeningTarget] = useState<'manual' | 'resume' | null>(null)
   const [createError, setCreateError] = useState<string | null>(null)
   const [openError, setOpenError] = useState<string | null>(null)
+  const [resumeError, setResumeError] = useState<string | null>(null)
 
   const health = useQuery({ queryKey: ['health'], queryFn: getHealth, retry: false })
 
@@ -33,7 +37,8 @@ export function DashboardPage(): JSX.Element {
     setIsCreating(true)
     try {
       const run = await createRun(createInput)
-      localStorage.setItem('beta_engine:last_run_id', run.run_id)
+      localStorage.setItem(LAST_RUN_ID_STORAGE_KEY, run.run_id)
+      setLastRunId(run.run_id)
       navigate(`/runs/${run.run_id}`)
     } catch (err) {
       setCreateError(`Could not create run: ${formatApiError(err)}`)
@@ -42,19 +47,25 @@ export function DashboardPage(): JSX.Element {
     }
   }
 
-  const onLoad = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setOpenError(null)
-    setIsOpening(true)
+  const openRunById = async (runId: string, target: 'manual' | 'resume') => {
+    const setError = target === 'manual' ? setOpenError : setResumeError
+    setError(null)
+    setOpeningTarget(target)
     try {
-      const run = await getRun(loadRunId)
-      localStorage.setItem('beta_engine:last_run_id', run.run.run_id)
+      const run = await getRun(runId)
+      localStorage.setItem(LAST_RUN_ID_STORAGE_KEY, run.run.run_id)
+      setLastRunId(run.run.run_id)
       navigate(`/runs/${run.run.run_id}`)
     } catch (err) {
-      setOpenError(`Could not open run: ${formatApiError(err)}`)
+      setError(`Could not open run: ${formatApiError(err)}`)
     } finally {
-      setIsOpening(false)
+      setOpeningTarget(null)
     }
+  }
+
+  const onLoad = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    await openRunById(loadRunId, 'manual')
   }
 
   return (
@@ -78,6 +89,40 @@ export function DashboardPage(): JSX.Element {
             <li>After launch/open, continue from Run Detail and its linked views.</li>
           </ul>
           <p className="status">Supported season default: {SUPPORTED_CALENDAR_SEASON}.</p>
+        </section>
+
+        <section className="panel" aria-labelledby="dashboard-resume-heading">
+          <h3 id="dashboard-resume-heading">Resume last run</h3>
+          {lastRunId ? (
+            <>
+              <p className="status">Remembered run ID: {lastRunId}</p>
+              <div className="dashboard-actions-row">
+                <button
+                  type="button"
+                  disabled={openingTarget !== null}
+                  onClick={() => {
+                    void openRunById(lastRunId, 'resume')
+                  }}
+                >
+                  {openingTarget === 'resume' ? 'Resuming...' : 'Resume Run'}
+                </button>
+                <button
+                  type="button"
+                  disabled={openingTarget !== null}
+                  onClick={() => {
+                    localStorage.removeItem(LAST_RUN_ID_STORAGE_KEY)
+                    setLastRunId(null)
+                    setResumeError(null)
+                  }}
+                >
+                  Clear remembered run
+                </button>
+              </div>
+            </>
+          ) : (
+            <p className="status">No remembered run yet. Create or open a run to enable quick resume.</p>
+          )}
+          {resumeError && <p className="error">{resumeError}</p>}
         </section>
 
         <form className="panel" aria-labelledby="dashboard-create-heading" onSubmit={onCreate}>
@@ -120,8 +165,8 @@ export function DashboardPage(): JSX.Element {
             Existing run ID
             <input value={loadRunId} onChange={(e) => setLoadRunId(e.target.value)} required />
           </label>
-          <button type="submit" disabled={isOpening}>
-            {isOpening ? 'Opening...' : 'Open Run'}
+          <button type="submit" disabled={openingTarget !== null}>
+            {openingTarget === 'manual' ? 'Opening...' : 'Open Run'}
           </button>
           {openError && <p className="error">{openError}</p>}
         </form>

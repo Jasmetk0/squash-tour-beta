@@ -332,7 +332,7 @@ export function RunPage(): JSX.Element {
                 listAriaLabel="Recent ranking snapshots preview"
                 getKey={(snapshot) => `${snapshot.snapshot_kind}-${snapshot.snapshot_sequence}`}
                 renderItem={(snapshot) => (
-                  <Link to={`/runs/${runId}/snapshots/ranking?selectedSequence=${snapshot.snapshot_sequence}`}>
+                  <Link to={`/runs/${runId}/snapshots/ranking/${snapshot.snapshot_sequence}`}>
                     <strong>
                       Seq {snapshot.snapshot_sequence} • {snapshot.snapshot_kind}
                     </strong>{' '}
@@ -354,7 +354,7 @@ export function RunPage(): JSX.Element {
                 listAriaLabel="Recent race snapshots preview"
                 getKey={(snapshot) => `${snapshot.snapshot_kind}-${snapshot.snapshot_sequence}`}
                 renderItem={(snapshot) => (
-                  <Link to={`/runs/${runId}/snapshots/race?selectedSequence=${snapshot.snapshot_sequence}`}>
+                  <Link to={`/runs/${runId}/snapshots/race/${snapshot.snapshot_sequence}`}>
                     <strong>
                       Seq {snapshot.snapshot_sequence} • {snapshot.snapshot_kind}
                     </strong>{' '}

@@ -37,4 +37,15 @@ describe('RunPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Simulate full season' }))
     await waitFor(() => expect(api.simulateFullSeason).toHaveBeenCalledWith('run-a'))
   })
+
+  it('renders navigation links for finals, rollover, and bootstrap lineage', async () => {
+    renderWithRoute(<RunPage />, '/runs/run-a')
+
+    expect(await screen.findByRole('link', { name: /View World Tour Finals/i })).toHaveAttribute('href', '/runs/run-a/finals')
+    expect(await screen.findByRole('link', { name: /View season rollover/i })).toHaveAttribute('href', '/runs/run-a/rollover')
+    expect(await screen.findByRole('link', { name: /View bootstrap and lineage/i })).toHaveAttribute(
+      'href',
+      '/runs/run-a/bootstrap-lineage'
+    )
+  })
 })

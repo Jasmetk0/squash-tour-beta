@@ -54,7 +54,7 @@ describe('DashboardPage', () => {
     renderWithRoute(<DashboardPage />, '/')
 
     expect(await screen.findByText('Health check unavailable: health down')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Create new simulation run/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Create run/i })).toBeInTheDocument()
   })
 
   it('creates a run and navigates to run detail', async () => {
@@ -65,7 +65,7 @@ describe('DashboardPage', () => {
     const runIdInput = screen.getByLabelText('Run ID')
     await userEvent.clear(runIdInput)
     await userEvent.type(runIdInput, 'run-a')
-    await userEvent.click(screen.getByRole('button', { name: 'Initialize Simulation Run' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Create and open run' }))
 
     await waitFor(() =>
       expect(api.createRun).toHaveBeenCalledWith({
@@ -81,7 +81,7 @@ describe('DashboardPage', () => {
     renderWithRoute(<DashboardPage />, '/')
 
     await userEvent.type(screen.getByLabelText('Existing run ID'), 'run-b')
-    await userEvent.click(screen.getByRole('button', { name: 'Open Run' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Open and continue' }))
 
     await waitFor(() => expect(api.getRun).toHaveBeenCalledWith('run-b'))
     expect(navigateMock).toHaveBeenCalledWith('/runs/run-a')
@@ -97,26 +97,31 @@ describe('DashboardPage', () => {
 
   it('renders remembered last run id and resumes it', async () => {
     localStorage.setItem('beta_engine:last_run_id', 'remembered-run')
+    api.getRun.mockResolvedValue({ run: { run_id: 'remembered-run', season: 2027, seed: 77, next_event_index: 2, total_events: 14 } })
 
     renderWithRoute(<DashboardPage />, '/')
 
-    expect(screen.getByText('Remembered run ID: remembered-run')).toBeInTheDocument()
+    expect(await screen.findByText('Remembered run ID: remembered-run')).toBeInTheDocument()
+    expect(await screen.findByText(/2\s*\/\s*14/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Run Detail' })).toHaveAttribute('href', '/runs/remembered-run')
+    expect(screen.getByRole('link', { name: 'Events' })).toHaveAttribute('href', '/runs/remembered-run/events')
+    expect(screen.getByRole('link', { name: 'Finals' })).toHaveAttribute('href', '/runs/remembered-run/finals')
     await userEvent.click(screen.getByRole('button', { name: 'Resume Run' }))
 
     await waitFor(() => expect(api.getRun).toHaveBeenCalledWith('remembered-run'))
-    expect(navigateMock).toHaveBeenCalledWith('/runs/run-a')
+    expect(navigateMock).toHaveBeenCalledWith('/runs/remembered-run')
   })
 
   it('shows readable resume error if remembered run cannot be opened', async () => {
     localStorage.setItem('beta_engine:last_run_id', 'missing-run')
-    api.getRun.mockRejectedValueOnce(new api.ApiError('{"detail":"Run not found"}', 404))
+    api.getRun.mockRejectedValue(new api.ApiError('{"detail":"Run not found"}', 404))
 
     renderWithRoute(<DashboardPage />, '/')
 
     await userEvent.click(screen.getByRole('button', { name: 'Resume Run' }))
 
     expect(await screen.findByText('Could not open run: Run not found')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Open existing run/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Open run by ID/i })).toBeInTheDocument()
   })
 
   it('clears remembered run from localStorage and updates visible state', async () => {
@@ -137,7 +142,7 @@ describe('DashboardPage', () => {
 
     renderWithRoute(<DashboardPage />, '/')
 
-    await userEvent.click(screen.getByRole('button', { name: 'Initialize Simulation Run' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Create and open run' }))
 
     expect(await screen.findByText('Could not create run: Run already exists')).toBeInTheDocument()
   })
@@ -148,8 +153,17 @@ describe('DashboardPage', () => {
     renderWithRoute(<DashboardPage />, '/')
 
     await userEvent.type(screen.getByLabelText('Existing run ID'), 'missing-run')
-    await userEvent.click(screen.getByRole('button', { name: 'Open Run' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Open and continue' }))
 
     expect(await screen.findByText('Could not open run: Run not found')).toBeInTheDocument()
+  })
+
+  it('shows a readable remembered-run summary fallback if summary cannot be loaded yet', async () => {
+    localStorage.setItem('beta_engine:last_run_id', 'missing-run')
+    api.getRun.mockRejectedValue(new api.ApiError('{"detail":"Run not found"}', 404))
+
+    renderWithRoute(<DashboardPage />, '/')
+
+    expect(await screen.findByText('Summary unavailable until this run is opened again.')).toBeInTheDocument()
   })
 })

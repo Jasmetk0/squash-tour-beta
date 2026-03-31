@@ -7,6 +7,9 @@ import {
   getRun,
   getRunLineage,
   getRunSource,
+  listEvents,
+  listRaceSnapshots,
+  listRankingSnapshots,
   rolloverNextSeason,
   simulateFullSeason,
   simulateNextTournament,
@@ -17,6 +20,7 @@ import { ActionStatusBlock, EmptyState, MetadataList, PageIntro, SectionCard } f
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
 export function RunPage(): JSX.Element {
+  const previewLimit = 3
   const { runId = '' } = useParams()
   const queryClient = useQueryClient()
 
@@ -62,6 +66,21 @@ export function RunPage(): JSX.Element {
     queryFn: () => getRunLineage(runId),
     enabled: Boolean(runId),
     retry: false
+  })
+  const eventsQuery = useQuery({
+    queryKey: ['events', runId],
+    queryFn: () => listEvents(runId),
+    enabled: Boolean(runId)
+  })
+  const rankingSnapshotsQuery = useQuery({
+    queryKey: ['ranking-snapshots', runId],
+    queryFn: () => listRankingSnapshots(runId),
+    enabled: Boolean(runId)
+  })
+  const raceSnapshotsQuery = useQuery({
+    queryKey: ['race-snapshots', runId],
+    queryFn: () => listRaceSnapshots(runId),
+    enabled: Boolean(runId)
   })
 
   const finalsQuickAction = useMutation({
@@ -227,6 +246,96 @@ export function RunPage(): JSX.Element {
             <p>
               <Link to={`/runs/${runId}/bootstrap-lineage`}>View bootstrap and lineage</Link>
             </p>
+          </SectionCard>
+
+          <SectionCard title="Recent history previews">
+            <div className="grid">
+              <article className="panel nested-panel">
+                <h4>Recent events</h4>
+                {eventsQuery.isLoading && <p className="status">Loading recent events...</p>}
+                {eventsQuery.error && <p className="error">Failed to load recent events: {formatApiError(eventsQuery.error)}</p>}
+                {!eventsQuery.isLoading && !eventsQuery.error && (eventsQuery.data?.events.length ?? 0) === 0 && (
+                  <EmptyState message="No events are available for this run yet." />
+                )}
+                {(eventsQuery.data?.events.length ?? 0) > 0 && (
+                  <ul className="item-list" aria-label="Recent events preview">
+                    {eventsQuery.data?.events.slice(0, previewLimit).map((event) => (
+                      <li key={event.event_id}>
+                        <strong>{event.event_id}</strong>{' '}
+                        <span className="status">
+                          • Seq {event.event_sequence}
+                          {event.season != null ? ` • S${event.season}` : ''}
+                          {event.week != null ? ` • W${event.week}` : ''}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p>
+                  <Link to={`/runs/${runId}/events`}>View all events</Link>
+                </p>
+              </article>
+
+              <article className="panel nested-panel">
+                <h4>Recent ranking snapshots</h4>
+                {rankingSnapshotsQuery.isLoading && <p className="status">Loading recent ranking snapshots...</p>}
+                {rankingSnapshotsQuery.error && (
+                  <p className="error">
+                    Failed to load recent ranking snapshots: {formatApiError(rankingSnapshotsQuery.error)}
+                  </p>
+                )}
+                {!rankingSnapshotsQuery.isLoading &&
+                  !rankingSnapshotsQuery.error &&
+                  (rankingSnapshotsQuery.data?.snapshots.length ?? 0) === 0 && (
+                    <EmptyState message="No ranking snapshots are available for this run yet." />
+                  )}
+                {(rankingSnapshotsQuery.data?.snapshots.length ?? 0) > 0 && (
+                  <ul className="item-list" aria-label="Recent ranking snapshots preview">
+                    {rankingSnapshotsQuery.data?.snapshots.slice(0, previewLimit).map((snapshot) => (
+                      <li key={`${snapshot.snapshot_kind}-${snapshot.snapshot_sequence}`}>
+                        <strong>
+                          Seq {snapshot.snapshot_sequence} • {snapshot.snapshot_kind}
+                        </strong>{' '}
+                        <span className="status">
+                          {snapshot.source_event_id ? `• Source ${snapshot.source_event_id}` : '• Source —'}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p>
+                  <Link to={`/runs/${runId}/snapshots/ranking`}>View all ranking snapshots</Link>
+                </p>
+              </article>
+
+              <article className="panel nested-panel">
+                <h4>Recent race snapshots</h4>
+                {raceSnapshotsQuery.isLoading && <p className="status">Loading recent race snapshots...</p>}
+                {raceSnapshotsQuery.error && (
+                  <p className="error">Failed to load recent race snapshots: {formatApiError(raceSnapshotsQuery.error)}</p>
+                )}
+                {!raceSnapshotsQuery.isLoading && !raceSnapshotsQuery.error && (raceSnapshotsQuery.data?.snapshots.length ?? 0) === 0 && (
+                  <EmptyState message="No race snapshots are available for this run yet." />
+                )}
+                {(raceSnapshotsQuery.data?.snapshots.length ?? 0) > 0 && (
+                  <ul className="item-list" aria-label="Recent race snapshots preview">
+                    {raceSnapshotsQuery.data?.snapshots.slice(0, previewLimit).map((snapshot) => (
+                      <li key={`${snapshot.snapshot_kind}-${snapshot.snapshot_sequence}`}>
+                        <strong>
+                          Seq {snapshot.snapshot_sequence} • {snapshot.snapshot_kind}
+                        </strong>{' '}
+                        <span className="status">
+                          {snapshot.source_event_id ? `• Source ${snapshot.source_event_id}` : '• Source —'}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p>
+                  <Link to={`/runs/${runId}/snapshots/race`}>View all race snapshots</Link>
+                </p>
+              </article>
+            </div>
           </SectionCard>
 
           <SectionCard title="Simulation controls">

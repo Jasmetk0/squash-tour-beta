@@ -2,22 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FormEvent, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { ApiError, bootstrapNextSeason, getRunLineage, getRunSource } from '../api/client'
-
-function extractReadableError(error: unknown): string {
-  if (error instanceof ApiError) {
-    try {
-      const parsed = JSON.parse(error.message) as { detail?: string }
-      if (parsed.detail) return parsed.detail
-    } catch {
-      // Fallback to raw response body when error payload is not JSON.
-    }
-    return error.message
-  }
-
-  if (error instanceof Error) return error.message
-  return String(error)
-}
+import { bootstrapNextSeason, getRunLineage, getRunSource } from '../api/client'
+import { ActionStatusBlock, JsonPayloadBlock, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
+import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
 export function BootstrapLineagePage(): JSX.Element {
   const { runId = '' } = useParams()
@@ -62,16 +49,17 @@ export function BootstrapLineagePage(): JSX.Element {
 
   const source = sourceQuery.data?.source
   const lineage = lineageQuery.data?.lineage
+  const sourceNotFound = isApiNotFound(sourceQuery.error)
+  const lineageNotFound = isApiNotFound(lineageQuery.error)
 
   return (
     <section className="panel">
-      <h2>Bootstrap / Lineage</h2>
-      <p className="status">Run: {runId || 'unknown'}</p>
+      <RunScopedHeader title="Bootstrap / Lineage" runId={runId} />
 
-      <article className="panel nested-panel">
-        <h3>Run source summary</h3>
+      <SectionCard title="Run source summary">
         {sourceQuery.isLoading && <p className="status">Loading source metadata...</p>}
-        {sourceQuery.error && <p className="error">Failed to load run source: {extractReadableError(sourceQuery.error)}</p>}
+        {sourceNotFound && <p className="status">No source metadata is available for this run.</p>}
+        {sourceQuery.error && !sourceNotFound && <p className="error">Failed to load run source: {formatApiError(sourceQuery.error)}</p>}
         {source && (
           <dl className="kv-grid">
             <div>
@@ -96,12 +84,14 @@ export function BootstrapLineagePage(): JSX.Element {
             </div>
           </dl>
         )}
-      </article>
+      </SectionCard>
 
-      <article className="panel nested-panel">
-        <h3>Lineage summary</h3>
+      <SectionCard title="Lineage summary">
         {lineageQuery.isLoading && <p className="status">Loading lineage metadata...</p>}
-        {lineageQuery.error && <p className="error">Failed to load run lineage: {extractReadableError(lineageQuery.error)}</p>}
+        {lineageNotFound && <p className="status">No lineage record is available for this run yet.</p>}
+        {lineageQuery.error && !lineageNotFound && (
+          <p className="error">Failed to load run lineage: {formatApiError(lineageQuery.error)}</p>
+        )}
         {lineage && (
           <>
             <dl className="kv-grid">
@@ -138,10 +128,9 @@ export function BootstrapLineagePage(): JSX.Element {
             )}
           </>
         )}
-      </article>
+      </SectionCard>
 
-      <article className="panel nested-panel">
-        <h3>Bootstrap next season child run</h3>
+      <SectionCard title="Bootstrap next season child run">
         <form onSubmit={handleSubmit}>
           <label>
             Child run ID
@@ -171,9 +160,11 @@ export function BootstrapLineagePage(): JSX.Element {
           </div>
         </form>
 
-        {bootstrapMutation.error && (
-          <p className="error">Could not bootstrap next season: {extractReadableError(bootstrapMutation.error)}</p>
-        )}
+        <ActionStatusBlock
+          errorText={
+            bootstrapMutation.error ? `Could not bootstrap next season: ${formatApiError(bootstrapMutation.error)}` : undefined
+          }
+        />
 
         {bootstrapMutation.data && (
           <div>
@@ -184,10 +175,14 @@ export function BootstrapLineagePage(): JSX.Element {
             <p>
               <Link to={`/runs/${bootstrapMutation.data.bootstrap.child_run_id}`}>Open child run</Link>
             </p>
-            <pre className="json-block">{JSON.stringify(bootstrapMutation.data.bootstrap, null, 2)}</pre>
+            <JsonPayloadBlock
+              title="Bootstrap payload"
+              payload={bootstrapMutation.data.bootstrap}
+              emptyText="No bootstrap payload available."
+            />
           </div>
         )}
-      </article>
+      </SectionCard>
     </section>
   )
 }

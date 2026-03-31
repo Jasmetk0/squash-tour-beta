@@ -64,7 +64,7 @@ describe('RolloverPage', () => {
   it('renders latest rollover data and target season payloads', async () => {
     renderWithRoute(<RolloverPage />, '/runs/run-a/rollover')
 
-    expect(await screen.findByText('Season rollover')).toBeInTheDocument()
+    expect(await screen.findByText('Season Rollover')).toBeInTheDocument()
     expect(await screen.findByText(/Latest rollover summary/i)).toBeInTheDocument()
     expect(await screen.findByText('2028')).toBeInTheDocument()
     expect(await screen.findByText(/Transition records: 1/i)).toBeInTheDocument()

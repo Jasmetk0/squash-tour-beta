@@ -82,4 +82,19 @@ describe('FinalsPage', () => {
 
     expect(await screen.findByText(/Cannot simulate finals before completed regular season/i)).toBeInTheDocument()
   })
+
+  it('shows a readable not-found message for missing finals result', async () => {
+    api.getFinalsResult.mockRejectedValueOnce(new api.ApiError('{"detail":"No finals result for run"}', 404))
+    renderWithRoute(<FinalsPage />, '/runs/run-a/finals')
+
+    expect(await screen.findByText(/Finals result has not been recorded/i)).toBeInTheDocument()
+  })
+
+  it('shows true errors as errors when finals result request fails', async () => {
+    api.getFinalsResult.mockRejectedValueOnce(new api.ApiError('{"detail":"Finals result service unavailable"}', 500))
+    renderWithRoute(<FinalsPage />, '/runs/run-a/finals')
+
+    expect(await screen.findByText(/Failed to load Finals result/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Finals result service unavailable/i)).toBeInTheDocument()
+  })
 })

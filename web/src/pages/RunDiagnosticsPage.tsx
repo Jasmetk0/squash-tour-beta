@@ -24,6 +24,22 @@ import {
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
+function artifactAvailability({
+  isLoading,
+  error,
+  availableLabel,
+  noneLabel
+}: {
+  isLoading: boolean
+  error: unknown
+  availableLabel: string
+  noneLabel: string
+}): string {
+  if (isLoading) return 'Loading...'
+  if (error) return isApiNotFound(error) ? 'Missing' : 'Error'
+  return availableLabel || noneLabel
+}
+
 export function RunDiagnosticsPage(): JSX.Element {
   const { runId = '' } = useParams()
 
@@ -73,6 +89,7 @@ export function RunDiagnosticsPage(): JSX.Element {
   const latestCompletedEvent = eventsQuery.data?.events.find((event) => event.tournament_result)
   const latestRankingSnapshot = rankingSnapshotsQuery.data?.snapshots[0]
   const latestRaceSnapshot = raceSnapshotsQuery.data?.snapshots[0]
+  const hasLineageChildren = (lineageQuery.data?.lineage.children.length ?? 0) > 0
 
   return (
     <section className="panel">
@@ -207,74 +224,204 @@ export function RunDiagnosticsPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title="Recent activity">
-        <div className="grid">
-          <PreviewListCard
-            title="Recent events"
-            subtitle="Shows latest events in API order."
-            isLoading={eventsQuery.isLoading}
-            loadingText="Loading recent events..."
-            errorText={eventsQuery.error ? `Failed to load events: ${formatApiError(eventsQuery.error)}` : undefined}
-            items={(eventsQuery.data?.events ?? []).slice(0, 3)}
-            emptyText="No events are available yet."
-            listAriaLabel="Diagnostics recent events"
-            getKey={(event) => event.event_id}
-            renderItem={(event) => (
-              <Link to={`/runs/${runId}/events/${encodeURIComponent(event.event_id)}`}>
-                <strong>{event.event_id}</strong> <span className="status">• Seq {event.event_sequence}</span>
-              </Link>
-            )}
-            viewAllLink={<Link to={`/runs/${runId}/events`}>View all events</Link>}
-          />
+        <MetadataList
+          items={[
+            {
+              label: 'Latest completed event',
+              value: eventsQuery.isLoading
+                ? 'Loading...'
+                : eventsQuery.error
+                  ? `Error: ${formatApiError(eventsQuery.error)}`
+                  : latestCompletedEvent
+                    ? (
+                        <>
+                          Available —{' '}
+                          <Link to={`/runs/${runId}/events/${encodeURIComponent(latestCompletedEvent.event_id)}`}>
+                            {latestCompletedEvent.event_id} (Seq {latestCompletedEvent.event_sequence})
+                          </Link>
+                        </>
+                      )
+                    : 'None yet'
+            },
+            {
+              label: 'Latest ranking snapshot',
+              value: rankingSnapshotsQuery.isLoading
+                ? 'Loading...'
+                : rankingSnapshotsQuery.error
+                  ? `Error: ${formatApiError(rankingSnapshotsQuery.error)}`
+                  : latestRankingSnapshot
+                    ? (
+                        <>
+                          Available —{' '}
+                          <Link to={`/runs/${runId}/snapshots/ranking/${latestRankingSnapshot.snapshot_sequence}`}>
+                            Seq {latestRankingSnapshot.snapshot_sequence}
+                          </Link>
+                        </>
+                      )
+                    : 'None yet'
+            },
+            {
+              label: 'Latest race snapshot',
+              value: raceSnapshotsQuery.isLoading
+                ? 'Loading...'
+                : raceSnapshotsQuery.error
+                  ? `Error: ${formatApiError(raceSnapshotsQuery.error)}`
+                  : latestRaceSnapshot
+                    ? (
+                        <>
+                          Available —{' '}
+                          <Link to={`/runs/${runId}/snapshots/race/${latestRaceSnapshot.snapshot_sequence}`}>
+                            Seq {latestRaceSnapshot.snapshot_sequence}
+                          </Link>
+                        </>
+                      )
+                    : 'None yet'
+            }
+          ]}
+        />
+        <PreviewListCard
+          title="Recent events"
+          subtitle="Shows latest events in API order."
+          isLoading={eventsQuery.isLoading}
+          loadingText="Loading recent events..."
+          errorText={eventsQuery.error ? `Failed to load events: ${formatApiError(eventsQuery.error)}` : undefined}
+          items={(eventsQuery.data?.events ?? []).slice(0, 3)}
+          emptyText="No events are available yet."
+          listAriaLabel="Diagnostics recent events"
+          getKey={(event) => event.event_id}
+          renderItem={(event) => (
+            <Link to={`/runs/${runId}/events/${encodeURIComponent(event.event_id)}`}>
+              <strong>{event.event_id}</strong> <span className="status">• Seq {event.event_sequence}</span>
+            </Link>
+          )}
+          viewAllLink={<Link to={`/runs/${runId}/events`}>View all events</Link>}
+        />
+      </SectionCard>
 
-          <SectionCard title="Latest snapshots">
-            <MetadataList
-              items={[
-                {
-                  label: 'Latest ranking snapshot',
-                  value: rankingSnapshotsQuery.isLoading
-                    ? 'Loading...'
-                    : rankingSnapshotsQuery.error
-                      ? `Error loading ranking snapshots: ${formatApiError(rankingSnapshotsQuery.error)}`
-                      : latestRankingSnapshot
-                        ? (
-                            <Link to={`/runs/${runId}/snapshots/ranking/${latestRankingSnapshot.snapshot_sequence}`}>
-                              Seq {latestRankingSnapshot.snapshot_sequence}
-                            </Link>
-                          )
-                        : 'None'
-                },
-                {
-                  label: 'Latest race snapshot',
-                  value: raceSnapshotsQuery.isLoading
-                    ? 'Loading...'
-                    : raceSnapshotsQuery.error
-                      ? `Error loading race snapshots: ${formatApiError(raceSnapshotsQuery.error)}`
-                      : latestRaceSnapshot
-                        ? (
-                            <Link to={`/runs/${runId}/snapshots/race/${latestRaceSnapshot.snapshot_sequence}`}>
-                              Seq {latestRaceSnapshot.snapshot_sequence}
-                            </Link>
-                          )
-                        : 'None'
-                },
-                {
-                  label: 'Last completed event',
-                  value: eventsQuery.isLoading
-                    ? 'Loading...'
-                    : eventsQuery.error
-                      ? `Error loading events: ${formatApiError(eventsQuery.error)}`
-                      : latestCompletedEvent
-                        ? (
-                            <Link to={`/runs/${runId}/events/${encodeURIComponent(latestCompletedEvent.event_id)}`}>
-                              {latestCompletedEvent.event_id}
-                            </Link>
-                          )
-                        : 'None recorded yet'
-                }
-              ]}
-            />
-          </SectionCard>
-        </div>
+      <SectionCard title="Availability / artifact state">
+        <SummaryPills
+          items={[
+            {
+              label: 'Finals qualification',
+              value: finalsSummaryQuery.isLoading
+                ? 'Loading...'
+                : finalsSummaryQuery.error
+                  ? isApiNotFound(finalsSummaryQuery.error)
+                    ? 'Missing'
+                    : 'Error'
+                  : finalsSummaryQuery.data?.qualification
+                    ? 'Available'
+                    : 'None yet'
+            },
+            {
+              label: 'Finals result',
+              value: finalsSummaryQuery.isLoading
+                ? 'Loading...'
+                : finalsSummaryQuery.error
+                  ? isApiNotFound(finalsSummaryQuery.error)
+                    ? 'Missing'
+                    : 'Error'
+                  : finalsSummaryQuery.data?.result
+                    ? 'Available'
+                    : 'None yet'
+            },
+            {
+              label: 'Latest rollover',
+              value: latestRolloverQuery.isLoading
+                ? 'Loading...'
+                : latestRolloverQuery.error
+                  ? isApiNotFound(latestRolloverQuery.error)
+                    ? 'Missing'
+                    : 'Error'
+                  : latestRolloverQuery.data?.rollover
+                    ? 'Available'
+                    : 'None yet'
+            },
+            { label: 'Source metadata', value: artifactAvailability({ isLoading: sourceQuery.isLoading, error: sourceQuery.error, availableLabel: sourceQuery.data ? 'Available' : '', noneLabel: 'None yet' }) },
+            { label: 'Lineage metadata', value: artifactAvailability({ isLoading: lineageQuery.isLoading, error: lineageQuery.error, availableLabel: lineageQuery.data ? 'Available' : '', noneLabel: 'None yet' }) },
+            {
+              label: 'Events',
+              value: eventsQuery.isLoading
+                ? 'Loading...'
+                : eventsQuery.error
+                  ? 'Error'
+                  : (eventsQuery.data?.events.length ?? 0) > 0
+                    ? 'Available'
+                    : 'None yet'
+            },
+            {
+              label: 'Ranking snapshots',
+              value: rankingSnapshotsQuery.isLoading
+                ? 'Loading...'
+                : rankingSnapshotsQuery.error
+                  ? 'Error'
+                  : (rankingSnapshotsQuery.data?.snapshots.length ?? 0) > 0
+                    ? 'Available'
+                    : 'None yet'
+            },
+            {
+              label: 'Race snapshots',
+              value: raceSnapshotsQuery.isLoading
+                ? 'Loading...'
+                : raceSnapshotsQuery.error
+                  ? 'Error'
+                  : (raceSnapshotsQuery.data?.snapshots.length ?? 0) > 0
+                    ? 'Available'
+                    : 'None yet'
+            }
+          ]}
+        />
+      </SectionCard>
+
+      <SectionCard title="Most relevant next inspection links">
+        <ul className="item-list" aria-label="Diagnostics next inspection links">
+          {latestCompletedEvent ? (
+            <li>
+              <Link to={`/runs/${runId}/events/${encodeURIComponent(latestCompletedEvent.event_id)}`}>
+                Inspect latest completed event ({latestCompletedEvent.event_id})
+              </Link>
+            </li>
+          ) : null}
+          {latestRankingSnapshot ? (
+            <li>
+              <Link to={`/runs/${runId}/snapshots/ranking/${latestRankingSnapshot.snapshot_sequence}`}>
+                Inspect latest ranking snapshot (Seq {latestRankingSnapshot.snapshot_sequence})
+              </Link>
+            </li>
+          ) : null}
+          {latestRaceSnapshot ? (
+            <li>
+              <Link to={`/runs/${runId}/snapshots/race/${latestRaceSnapshot.snapshot_sequence}`}>
+                Inspect latest race snapshot (Seq {latestRaceSnapshot.snapshot_sequence})
+              </Link>
+            </li>
+          ) : null}
+          {finalsSummaryQuery.data?.qualification && !finalsSummaryQuery.data?.result ? (
+            <li>
+              <Link to={`/runs/${runId}/finals`}>Inspect Finals status (qualification available, result pending)</Link>
+            </li>
+          ) : null}
+          {latestRolloverQuery.data?.rollover ? (
+            <li>
+              <Link to={`/runs/${runId}/rollover`}>Inspect latest rollover details</Link>
+            </li>
+          ) : null}
+          {hasLineageChildren ? (
+            <li>
+              <Link to={`/runs/${runId}/season-chain`}>Inspect season chain ({lineageQuery.data?.lineage.children.length} child run(s))</Link>
+            </li>
+          ) : null}
+          {!latestCompletedEvent &&
+          !latestRankingSnapshot &&
+          !latestRaceSnapshot &&
+          !latestRolloverQuery.data?.rollover &&
+          !hasLineageChildren &&
+          !(finalsSummaryQuery.data?.qualification && !finalsSummaryQuery.data?.result) ? (
+            <li>
+              <span className="status">No targeted inspection links yet. Use quick navigation below.</span>
+            </li>
+          ) : null}
+        </ul>
       </SectionCard>
 
       <SectionCard title="Quick navigation">

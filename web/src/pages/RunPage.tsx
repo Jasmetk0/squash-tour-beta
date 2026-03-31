@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 
 import { getRun, simulateFullSeason, simulateNextTournament, simulateNextWeek } from '../api/client'
 
@@ -64,6 +64,9 @@ export function RunPage(): JSX.Element {
             <button onClick={() => simulator.mutate('full-season')}>Simulate full season</button>
           </div>
           {simulator.error && <p className="error">Simulation failed: {String(simulator.error)}</p>}
+          <p>
+            <Link to={`/runs/${runId}/finals`}>View World Tour Finals</Link>
+          </p>
           {simulator.data && (
             <pre className="json-block" aria-label="simulation-result">
               {JSON.stringify(simulator.data.step, null, 2)}

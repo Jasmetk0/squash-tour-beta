@@ -9,6 +9,9 @@ export function renderWithRoute(ui: JSX.Element, route: string): ReturnType<type
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[route]}>
         <Routes>
+          <Route path="/" element={ui} />
+          <Route path="/runs/:runId" element={ui} />
+          <Route path="/runs/:runId/*" element={ui} />
           <Route path="*" element={ui} />
         </Routes>
       </MemoryRouter>

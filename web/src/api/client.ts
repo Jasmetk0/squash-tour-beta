@@ -2,6 +2,10 @@ import type {
   CreateRunPayload,
   EventListResponse,
   EventRecord,
+  FinalsQualificationResponse,
+  FinalsResultResponse,
+  FinalsSimulationResponse,
+  FinalsSummaryResponse,
   HealthResponse,
   RaceSnapshotListResponse,
   RankingSnapshotListResponse,
@@ -47,20 +51,20 @@ export function getRun(runId: string): Promise<SeasonStateResponse> {
   return request(`/runs/${encodeURIComponent(runId)}`)
 }
 
-function simulate(runId: string, suffix: string): Promise<SimulateResponse> {
+function simulate<T>(runId: string, suffix: string): Promise<T> {
   return request(`/runs/${encodeURIComponent(runId)}/simulate/${suffix}`, { method: 'POST' })
 }
 
 export function simulateNextTournament(runId: string): Promise<SimulateResponse> {
-  return simulate(runId, 'next-tournament')
+  return simulate<SimulateResponse>(runId, 'next-tournament')
 }
 
 export function simulateNextWeek(runId: string): Promise<SimulateResponse> {
-  return simulate(runId, 'next-week')
+  return simulate<SimulateResponse>(runId, 'next-week')
 }
 
 export function simulateFullSeason(runId: string): Promise<SimulateResponse> {
-  return simulate(runId, 'full-season')
+  return simulate<SimulateResponse>(runId, 'full-season')
 }
 
 export function listEvents(runId: string): Promise<EventListResponse> {
@@ -77,6 +81,23 @@ export function listRankingSnapshots(runId: string): Promise<RankingSnapshotList
 
 export function listRaceSnapshots(runId: string): Promise<RaceSnapshotListResponse> {
   return request(`/runs/${encodeURIComponent(runId)}/snapshots/race`)
+}
+
+
+export function getFinalsQualification(runId: string): Promise<FinalsQualificationResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/finals/qualification`)
+}
+
+export function getFinalsResult(runId: string): Promise<FinalsResultResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/finals/result`)
+}
+
+export function getFinalsSummary(runId: string): Promise<FinalsSummaryResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/finals/summary`)
+}
+
+export function simulateWorldTourFinals(runId: string): Promise<FinalsSimulationResponse> {
+  return simulate<FinalsSimulationResponse>(runId, 'world-tour-finals')
 }
 
 export { ApiError }

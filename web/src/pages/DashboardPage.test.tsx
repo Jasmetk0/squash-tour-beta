@@ -34,8 +34,9 @@ describe('DashboardPage', () => {
 
     expect(screen.getByLabelText('Season')).toHaveValue(SUPPORTED_CALENDAR_SEASON)
 
-    await userEvent.clear(screen.getByLabelText('Run ID'))
-    await userEvent.type(screen.getByLabelText('Run ID'), 'run-a')
+    const runIdInput = screen.getAllByLabelText('Run ID')[0]
+    await userEvent.clear(runIdInput)
+    await userEvent.type(runIdInput, 'run-a')
     await userEvent.click(screen.getByRole('button', { name: 'Initialize Simulation Run' }))
 
     await waitFor(() =>

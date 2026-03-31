@@ -16,5 +16,9 @@ export function formatApiError(error: unknown): string {
 }
 
 export function isApiNotFound(error: unknown): boolean {
-  return error instanceof ApiError && error.status === 404
+  if (error instanceof ApiError) return error.status === 404
+  if (typeof error === 'object' && error !== null && 'status' in error) {
+    return (error as { status?: unknown }).status === 404
+  }
+  return false
 }

@@ -9,6 +9,7 @@ import type {
   FinalsSimulationResponse,
   FinalsSummaryResponse,
   HealthResponse,
+  RankingSnapshot,
   RaceSnapshotListResponse,
   RankingSnapshotListResponse,
   NextSeasonPlayersResponse,
@@ -94,6 +95,14 @@ export function listRankingSnapshots(runId: string): Promise<RankingSnapshotList
 
 export function listRaceSnapshots(runId: string): Promise<RaceSnapshotListResponse> {
   return request(`/runs/${encodeURIComponent(runId)}/snapshots/race`)
+}
+
+export function getRankingSnapshot(runId: string, snapshotSequence: number): Promise<RankingSnapshot> {
+  return request(`/runs/${encodeURIComponent(runId)}/snapshots/ranking/${snapshotSequence}`)
+}
+
+export function getRaceSnapshot(runId: string, snapshotSequence: number): Promise<RankingSnapshot> {
+  return request(`/runs/${encodeURIComponent(runId)}/snapshots/race/${snapshotSequence}`)
 }
 
 

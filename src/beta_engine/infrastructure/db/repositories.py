@@ -446,6 +446,31 @@ class SimulationPersistenceRepository:
                 for row in rows
             ]
 
+    def get_ranking_snapshot(
+        self,
+        *,
+        run_id: str,
+        snapshot_sequence: int,
+    ) -> tuple[int, str, str | None, RankingSnapshot] | None:
+        with self._session_factory() as session:
+            statement = (
+                select(RankingSnapshotModel)
+                .where(
+                    RankingSnapshotModel.run_id == run_id,
+                    RankingSnapshotModel.snapshot_sequence == snapshot_sequence,
+                )
+                .order_by(RankingSnapshotModel.id.asc())
+            )
+            row = session.execute(statement).scalars().first()
+            if row is None:
+                return None
+            return (
+                row.snapshot_sequence,
+                row.snapshot_kind,
+                row.source_event_id,
+                RankingSnapshot.model_validate(_from_json(row.payload_json)),
+            )
+
     def list_race_snapshot_records(self, *, run_id: str) -> list[PersistedSnapshotRecord]:
         with self._session_factory() as session:
             statement = (
@@ -481,6 +506,31 @@ class SimulationPersistenceRepository:
                 )
                 for row in rows
             ]
+
+    def get_race_snapshot(
+        self,
+        *,
+        run_id: str,
+        snapshot_sequence: int,
+    ) -> tuple[int, str, str | None, RaceSnapshot] | None:
+        with self._session_factory() as session:
+            statement = (
+                select(RaceSnapshotModel)
+                .where(
+                    RaceSnapshotModel.run_id == run_id,
+                    RaceSnapshotModel.snapshot_sequence == snapshot_sequence,
+                )
+                .order_by(RaceSnapshotModel.id.asc())
+            )
+            row = session.execute(statement).scalars().first()
+            if row is None:
+                return None
+            return (
+                row.snapshot_sequence,
+                row.snapshot_kind,
+                row.source_event_id,
+                RaceSnapshot.model_validate(_from_json(row.payload_json)),
+            )
 
     def count_ranking_snapshots(self, *, run_id: str) -> int:
         return len(self.list_ranking_snapshot_records(run_id=run_id))

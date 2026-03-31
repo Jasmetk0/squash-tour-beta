@@ -124,6 +124,31 @@ def test_simulation_endpoints_and_snapshot_queries_work(tmp_path) -> None:
         race_sequences = [record["snapshot_sequence"] for record in race_payload["snapshots"]]
         assert ranking_sequences == sorted(ranking_sequences)
         assert race_sequences == sorted(race_sequences)
+        assert ranking_sequences
+        assert race_sequences
+
+        first_ranking_sequence = ranking_sequences[0]
+        status, ranking_detail = _request(
+            "GET",
+            f"{server.base_url}/runs/run-sim/snapshots/ranking/{first_ranking_sequence}",
+        )
+        assert status == 200
+        assert set(ranking_detail.keys()) == {"snapshot_sequence", "snapshot_kind", "source_event_id", "payload"}
+        assert ranking_detail["snapshot_sequence"] == first_ranking_sequence
+
+        first_race_sequence = race_sequences[0]
+        status, race_detail = _request(
+            "GET",
+            f"{server.base_url}/runs/run-sim/snapshots/race/{first_race_sequence}",
+        )
+        assert status == 200
+        assert set(race_detail.keys()) == {"snapshot_sequence", "snapshot_kind", "source_event_id", "payload"}
+        assert race_detail["snapshot_sequence"] == first_race_sequence
+
+        status, _ = _request("GET", f"{server.base_url}/runs/run-sim/snapshots/ranking/999999")
+        assert status == 404
+        status, _ = _request("GET", f"{server.base_url}/runs/run-sim/snapshots/race/999999")
+        assert status == 404
 
         first_event_id = events_payload["events"][0]["event_id"]
         status, event_detail = _request("GET", f"{server.base_url}/runs/run-sim/events/{first_event_id}")

@@ -360,8 +360,18 @@ class SimulationApiService:
     def list_ranking_snapshots(self, *, run_id: str) -> list[tuple[int, str, str | None, RankingSnapshot]]:
         return self.repository.list_ranking_snapshots(run_id=run_id)
 
+    def get_ranking_snapshot(
+        self, *, run_id: str, snapshot_sequence: int
+    ) -> tuple[int, str, str | None, RankingSnapshot] | None:
+        return self.repository.get_ranking_snapshot(run_id=run_id, snapshot_sequence=snapshot_sequence)
+
     def list_race_snapshots(self, *, run_id: str) -> list[tuple[int, str, str | None, RaceSnapshot]]:
         return self.repository.list_race_snapshots(run_id=run_id)
+
+    def get_race_snapshot(
+        self, *, run_id: str, snapshot_sequence: int
+    ) -> tuple[int, str, str | None, RaceSnapshot] | None:
+        return self.repository.get_race_snapshot(run_id=run_id, snapshot_sequence=snapshot_sequence)
 
     def _simulate_step(self, *, run_id: str, mode: str) -> SimulationStepResult:
         run_info, state = self._load_run_context(run_id=run_id)

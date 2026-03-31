@@ -295,6 +295,9 @@ export function RunDiagnosticsPage(): JSX.Element {
             <Link to={`/runs/${runId}/bootstrap-lineage`}>Bootstrap / Lineage</Link>
           </li>
           <li>
+            <Link to={`/runs/${runId}/season-chain`}>Season Chain</Link>
+          </li>
+          <li>
             <Link to={`/runs/${runId}/snapshots/ranking`}>Ranking snapshots</Link>
           </li>
           <li>

@@ -61,11 +61,12 @@ describe('BootstrapLineagePage', () => {
     })
   })
 
-  it('renders source and lineage data from API', async () => {
+  it('renders source and lineage summaries from API', async () => {
     renderWithRoute(<BootstrapLineagePage />, '/runs/run-a/bootstrap-lineage')
 
     expect(await screen.findByText('Bootstrap / Lineage')).toBeInTheDocument()
-    expect(await screen.findByText(/bootstrapped_rollover/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Source type/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Lineage summary and navigation/i)).toBeInTheDocument()
     expect(await screen.findByRole('link', { name: 'run-parent' })).toBeInTheDocument()
     expect(await screen.findByRole('link', { name: 'run-child-existing' })).toBeInTheDocument()
   })
@@ -82,6 +83,7 @@ describe('BootstrapLineagePage', () => {
     )
     await waitFor(() => expect(api.getRunSource.mock.calls.length).toBeGreaterThanOrEqual(2))
     await waitFor(() => expect(api.getRunLineage.mock.calls.length).toBeGreaterThanOrEqual(2))
+    expect(await screen.findByText(/Transitioned players/i)).toBeInTheDocument()
     expect(await screen.findByRole('link', { name: /Open child run/i })).toHaveAttribute('href', '/runs/run-child-2029')
   })
 

@@ -7,8 +7,26 @@ import {
   getFinalsSummary,
   simulateWorldTourFinals
 } from '../api/client'
-import { ActionStatusBlock, EmptyState, JsonPayloadBlock, MetadataList, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
+import {
+  ActionStatusBlock,
+  EmptyState,
+  JsonPayloadBlock,
+  MetadataList,
+  RunScopedHeader,
+  SectionCard,
+  SummaryPills
+} from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
+
+function readArrayFieldLength(payload: Record<string, unknown> | null | undefined, key: string): number | null {
+  const value = payload?.[key]
+  return Array.isArray(value) ? value.length : null
+}
+
+function readStringField(payload: Record<string, unknown> | null | undefined, key: string): string | null {
+  const value = payload?.[key]
+  return typeof value === 'string' ? value : null
+}
 
 export function FinalsPage(): JSX.Element {
   const { runId = '' } = useParams()
@@ -46,6 +64,11 @@ export function FinalsPage(): JSX.Element {
   const qualificationNotFound = isApiNotFound(qualificationQuery.error)
   const resultNotFound = isApiNotFound(resultQuery.error)
   const hasResultError = resultQuery.error && !resultNotFound
+
+  const qualifiedPlayersCount = readArrayFieldLength(qualificationQuery.data?.qualification, 'qualified_player_ids')
+  const groupCount = readArrayFieldLength(qualificationQuery.data?.qualification, 'groups')
+  const championPlayerId = readStringField(resultQuery.data?.result, 'champion_player_id')
+  const runnerUpPlayerId = readStringField(resultQuery.data?.result, 'runner_up_player_id')
 
   return (
     <section className="panel">
@@ -91,9 +114,14 @@ export function FinalsPage(): JSX.Element {
       <SectionCard title="Finals qualification">
         {qualificationQuery.data ? (
           <>
-            <p className="status">
-              As of S{qualificationQuery.data.source_as_of_season}, W{qualificationQuery.data.source_as_of_week}
-            </p>
+            <SummaryPills
+              items={[
+                { label: 'As of season', value: qualificationQuery.data.source_as_of_season },
+                { label: 'As of week', value: qualificationQuery.data.source_as_of_week },
+                { label: 'Qualified players', value: qualifiedPlayersCount ?? 'Unknown' },
+                { label: 'Groups', value: groupCount ?? 'Unknown' }
+              ]}
+            />
             <JsonPayloadBlock
               title="Qualification payload"
               payload={qualificationQuery.data.qualification}
@@ -112,10 +140,15 @@ export function FinalsPage(): JSX.Element {
         {hasResultError && <p className="error">Failed to load Finals result: {formatApiError(resultQuery.error)}</p>}
         {resultQuery.data ? (
           <>
-            <p className="status">
-              Event: {resultQuery.data.event_id} · As of S{resultQuery.data.source_as_of_season}, W
-              {resultQuery.data.source_as_of_week}
-            </p>
+            <SummaryPills
+              items={[
+                { label: 'Event', value: resultQuery.data.event_id },
+                { label: 'As of season', value: resultQuery.data.source_as_of_season },
+                { label: 'As of week', value: resultQuery.data.source_as_of_week },
+                { label: 'Champion', value: championPlayerId ?? 'Unknown' },
+                { label: 'Runner-up', value: runnerUpPlayerId ?? 'Unknown' }
+              ]}
+            />
             <JsonPayloadBlock title="Result payload" payload={resultQuery.data.result} emptyText="No result payload available." />
           </>
         ) : null}

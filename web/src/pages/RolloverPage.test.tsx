@@ -61,14 +61,14 @@ describe('RolloverPage', () => {
     })
   })
 
-  it('renders latest rollover data and target season payloads', async () => {
+  it('renders latest rollover data and target season summary counts', async () => {
     renderWithRoute(<RolloverPage />, '/runs/run-a/rollover')
 
     expect(await screen.findByText('Season Rollover')).toBeInTheDocument()
     expect(await screen.findByText(/Latest rollover summary/i)).toBeInTheDocument()
-    expect(await screen.findByText('2028')).toBeInTheDocument()
-    expect(await screen.findByText(/Transition records: 1/i)).toBeInTheDocument()
-    expect(await screen.findByText(/Player records: 1/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Target season inspection summary/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Transition records/i)).toBeInTheDocument()
+    expect((await screen.findAllByText(/Next-season players/i)).length).toBeGreaterThan(0)
   })
 
   it('calls rollover endpoint and refreshes rollover queries', async () => {
@@ -102,6 +102,16 @@ describe('RolloverPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /Load season data/i }))
 
     await waitFor(() => expect(api.getRolloverBySeason).toHaveBeenCalledWith('run-a', 2029))
+  })
+
+  it('shows readable empty states for no transitions and no players payloads', async () => {
+    api.getPlayerTransitions.mockResolvedValueOnce({ run_id: 'run-a', to_season: 2028, transitions: [] })
+    api.getNextSeasonPlayers.mockResolvedValueOnce({ run_id: 'run-a', to_season: 2028, players: [] })
+
+    renderWithRoute(<RolloverPage />, '/runs/run-a/rollover')
+
+    expect(await screen.findByText(/No transition records are available/i)).toBeInTheDocument()
+    expect(await screen.findByText(/No next-season players are available/i)).toBeInTheDocument()
   })
 
   it('shows readable error when rollover action fails', async () => {

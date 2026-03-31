@@ -35,7 +35,7 @@ describe('FinalsPage', () => {
       season: 2027,
       source_as_of_season: 2027,
       source_as_of_week: 42,
-      qualification: { qualified_player_ids: ['P1', 'P2'] }
+      qualification: { qualified_player_ids: ['P1', 'P2'], groups: [{ id: 'A' }, { id: 'B' }] }
     })
     api.getFinalsResult.mockResolvedValue({
       run_id: 'run-a',
@@ -43,21 +43,23 @@ describe('FinalsPage', () => {
       event_id: 'WORLD_TOUR_FINALS',
       source_as_of_season: 2027,
       source_as_of_week: 42,
-      result: { champion_player_id: 'P1' }
+      result: { champion_player_id: 'P1', runner_up_player_id: 'P2' }
     })
     api.simulateWorldTourFinals.mockResolvedValue({
       finals: { already_simulated: false }
     })
   })
 
-  it('renders finals summary, qualification, and result payloads', async () => {
+  it('renders finals summary highlights and payloads', async () => {
     renderWithRoute(<FinalsPage />, '/runs/run-a/finals')
 
     expect(await screen.findByText('World Tour Finals')).toBeInTheDocument()
     expect(await screen.findByText(/Qualification status/i)).toBeInTheDocument()
-    expect((await screen.findAllByText(/As of S2027, W42/i)).length).toBeGreaterThanOrEqual(1)
+    expect(await screen.findByText(/Qualified players/i)).toBeInTheDocument()
+    expect((await screen.findAllByText(/Groups/i)).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText(/Champion/i)).length).toBeGreaterThan(0)
     expect(await screen.findByText(/WORLD_TOUR_FINALS/i)).toBeInTheDocument()
-    expect(await screen.findByText(/champion_player_id/i)).toBeInTheDocument()
+    expect(await screen.findByText(/runner_up_player_id/i)).toBeInTheDocument()
   })
 
   it('calls finals simulation endpoint and refetches finals data', async () => {

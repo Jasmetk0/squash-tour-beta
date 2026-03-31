@@ -135,6 +135,13 @@ button {
   gap: 1rem;
 }
 
+
+.dashboard-help-list {
+  margin: 0.25rem 0 0.75rem;
+  padding-left: 1.1rem;
+  color: #334155;
+}
+
 .error {
   color: #b91c1c;
 }

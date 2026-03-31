@@ -13,11 +13,23 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => navigateMock }
 })
 
-const api = vi.hoisted(() => ({
-  createRun: vi.fn(),
-  getHealth: vi.fn(),
-  getRun: vi.fn()
-}))
+const api = vi.hoisted(() => {
+  class ApiError extends Error {
+    status: number
+
+    constructor(message: string, status: number) {
+      super(message)
+      this.status = status
+    }
+  }
+
+  return {
+    ApiError,
+    createRun: vi.fn(),
+    getHealth: vi.fn(),
+    getRun: vi.fn()
+  }
+})
 
 vi.mock('../api/client', () => api)
 
@@ -29,12 +41,27 @@ describe('DashboardPage', () => {
     navigateMock.mockReset()
   })
 
+  it('renders API health status when health check succeeds', async () => {
+    renderWithRoute(<DashboardPage />, '/')
+
+    expect(await screen.findByText('API status: ok')).toBeInTheDocument()
+  })
+
+  it('shows a readable health error when health check fails', async () => {
+    api.getHealth.mockRejectedValueOnce(new api.ApiError('health down', 503))
+
+    renderWithRoute(<DashboardPage />, '/')
+
+    expect(await screen.findByText('Health check unavailable: health down')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Create new simulation run/i })).toBeInTheDocument()
+  })
+
   it('creates a run and navigates to run detail', async () => {
     renderWithRoute(<DashboardPage />, '/')
 
     expect(screen.getByLabelText('Season')).toHaveValue(SUPPORTED_CALENDAR_SEASON)
 
-    const runIdInput = screen.getAllByLabelText('Run ID')[0]
+    const runIdInput = screen.getByLabelText('Run ID')
     await userEvent.clear(runIdInput)
     await userEvent.type(runIdInput, 'run-a')
     await userEvent.click(screen.getByRole('button', { name: 'Initialize Simulation Run' }))
@@ -47,5 +74,36 @@ describe('DashboardPage', () => {
       })
     )
     expect(navigateMock).toHaveBeenCalledWith('/runs/run-a')
+  })
+
+  it('opens an existing run and navigates using the same route pattern', async () => {
+    renderWithRoute(<DashboardPage />, '/')
+
+    await userEvent.type(screen.getByLabelText('Existing run ID'), 'run-b')
+    await userEvent.click(screen.getByRole('button', { name: 'Open Run' }))
+
+    await waitFor(() => expect(api.getRun).toHaveBeenCalledWith('run-b'))
+    expect(navigateMock).toHaveBeenCalledWith('/runs/run-a')
+  })
+
+  it('shows create-run failures with a readable message', async () => {
+    api.createRun.mockRejectedValueOnce(new api.ApiError('{"detail":"Run already exists"}', 409))
+
+    renderWithRoute(<DashboardPage />, '/')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Initialize Simulation Run' }))
+
+    expect(await screen.findByText('Could not create run: Run already exists')).toBeInTheDocument()
+  })
+
+  it('shows open-run failures with a readable message', async () => {
+    api.getRun.mockRejectedValueOnce(new api.ApiError('{"detail":"Run not found"}', 404))
+
+    renderWithRoute(<DashboardPage />, '/')
+
+    await userEvent.type(screen.getByLabelText('Existing run ID'), 'missing-run')
+    await userEvent.click(screen.getByRole('button', { name: 'Open Run' }))
+
+    expect(await screen.findByText('Could not open run: Run not found')).toBeInTheDocument()
   })
 })

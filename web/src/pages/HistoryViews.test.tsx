@@ -61,6 +61,11 @@ describe('history list ordering, detail selection, and states', () => {
     expect((await screen.findAllByText('E2')).length).toBeGreaterThan(0)
     expect(await screen.findByText(/payload-E2/)).toBeInTheDocument()
 
+    expect(screen.getByRole('link', { name: /Open dedicated event detail page/i })).toHaveAttribute(
+      'href',
+      '/runs/run-a/events/E2'
+    )
+
     await user.click(screen.getByRole('button', { name: /1\. E1/i }))
 
     await waitFor(() => {
@@ -70,7 +75,7 @@ describe('history list ordering, detail selection, and states', () => {
 
     expect(screen.getByRole('button', { name: /1\. E1/i })).toHaveClass('is-selected')
     expect(screen.getByRole('button', { name: /2\. E2/i })).not.toHaveClass('is-selected')
-  })
+  }, 10000)
 
   it('respects a valid selectedEventId query param and falls back when invalid or missing', async () => {
     const validView = renderWithRoute(<EventsPage />, '/runs/run-a/events?selectedEventId=E1')

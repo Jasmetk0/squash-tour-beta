@@ -306,7 +306,7 @@ export function RunPage(): JSX.Element {
                 listAriaLabel="Recent events preview"
                 getKey={(event) => event.event_id}
                 renderItem={(event) => (
-                  <Link to={`/runs/${runId}/events?selectedEventId=${encodeURIComponent(event.event_id)}`}>
+                  <Link to={`/runs/${runId}/events/${encodeURIComponent(event.event_id)}`}>
                     <strong>{event.event_id}</strong>{' '}
                     <span className="status">
                       • Seq {event.event_sequence}

@@ -71,6 +71,22 @@ describe('history list ordering, detail selection, and states', () => {
     expect(screen.getByRole('button', { name: /2\. E2/i })).not.toHaveClass('is-selected')
   })
 
+  it('respects a valid selectedEventId query param and falls back when invalid or missing', async () => {
+    const validView = renderWithRoute(<EventsPage />, '/runs/run-a/events?selectedEventId=E1')
+
+    expect(await screen.findByText('E1')).toBeInTheDocument()
+    expect(await screen.findByText(/payload-E1/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /1\. E1/i })).toHaveClass('is-selected')
+
+    validView.unmount()
+
+    renderWithRoute(<EventsPage />, '/runs/run-a/events?selectedEventId=UNKNOWN')
+
+    expect(await screen.findByText('E2')).toBeInTheDocument()
+    expect(await screen.findByText(/payload-E2/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /2\. E2/i })).toHaveClass('is-selected')
+  })
+
   it('renders ranking snapshots in API order with default selected styling and click-to-update detail', async () => {
     const user = userEvent.setup()
     renderWithRoute(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
@@ -87,6 +103,27 @@ describe('history list ordering, detail selection, and states', () => {
     await user.click(screen.getByRole('button', { name: /3\. WEEK/i }))
     expect(await screen.findByText(/snapshot-3/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /3\. WEEK/i })).toHaveClass('is-selected')
+  })
+
+  it('respects selectedSequence query params for ranking and race snapshots', async () => {
+    api.listRaceSnapshots.mockResolvedValue({
+      snapshots: [
+        { snapshot_sequence: 9, snapshot_kind: 'WEEK', source_event_id: 'E2', payload: { name: 'race-9' } },
+        { snapshot_sequence: 7, snapshot_kind: 'WEEK', source_event_id: 'E1', payload: { name: 'race-7' } }
+      ]
+    })
+
+    const rankingView = renderWithRoute(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking?selectedSequence=3')
+
+    expect(await screen.findByText(/snapshot-3/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /3\. WEEK/i })).toHaveClass('is-selected')
+
+    rankingView.unmount()
+
+    renderWithRoute(<SnapshotsPage mode="race" />, '/runs/run-a/snapshots/race?selectedSequence=7')
+
+    expect(await screen.findByText(/race-7/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /7\. WEEK/i })).toHaveClass('is-selected')
   })
 
   it('renders race snapshots route with readable empty state', async () => {

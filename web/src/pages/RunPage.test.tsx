@@ -332,7 +332,7 @@ describe('RunPage', () => {
 
     expect(within(eventsPreview).getByRole('link', { name: /E3/i })).toHaveAttribute(
       'href',
-      '/runs/run-a/events?selectedEventId=E3'
+      '/runs/run-a/events/E3'
     )
     expect(within(rankingPreview).getByRole('link', { name: /Seq 10 • WEEK/i })).toHaveAttribute(
       'href',

@@ -9,6 +9,7 @@ const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
   createRun: vi.fn(),
   getRun: vi.fn(),
+  getRunStatusSummary: vi.fn(),
   listEvents: vi.fn(),
   getEvent: vi.fn(),
   listRankingSnapshots: vi.fn(),
@@ -49,6 +50,7 @@ function renderAppAt(route: string): void {
 
 describe('Module 17 pages through routes', () => {
   beforeEach(() => {
+    api.getEvent.mockResolvedValue({ event_sequence: 2, event_id: 'E2', season: 2027, week: 9, template_id: null, tournament_result: {} })
     api.getFinalsSummary.mockResolvedValue({ run_id: 'run-a', season: 2027, qualification: {}, result: null })
     api.getFinalsQualification.mockResolvedValue({
       run_id: 'run-a',
@@ -96,5 +98,11 @@ describe('Module 17 pages through routes', () => {
   it('renders Bootstrap/Lineage route', async () => {
     renderAppAt('/runs/run-a/bootstrap-lineage')
     expect(await screen.findByRole('heading', { name: 'Bootstrap / Lineage' })).toBeInTheDocument()
+  })
+
+
+  it('renders Event detail route', async () => {
+    renderAppAt('/runs/run-a/events/E2')
+    expect(await screen.findByRole('heading', { name: 'Event detail' })).toBeInTheDocument()
   })
 })

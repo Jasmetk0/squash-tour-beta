@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { getEvent, listEvents } from '../api/client'
 import { CurrentContextStrip, EmptyState, JsonPayloadBlock, MetadataList, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
@@ -101,11 +101,16 @@ export function EventsPage(): JSX.Element {
               <p className="error">Failed to load selected event payload: {formatApiError(eventDetailQuery.error)}</p>
             )}
             {eventDetailQuery.data && (
-              <JsonPayloadBlock
-                title="Event payload"
-                emptyText="No event payload is available for this item."
-                payload={eventDetailQuery.data}
-              />
+              <>
+                <p>
+                  <Link to={`/runs/${runId}/events/${selectedEvent.event_id}`}>Open dedicated event detail page</Link>
+                </p>
+                <JsonPayloadBlock
+                  title="Event payload"
+                  emptyText="No event payload is available for this item."
+                  payload={eventDetailQuery.data}
+                />
+              </>
             )}
           </>
         ) : (

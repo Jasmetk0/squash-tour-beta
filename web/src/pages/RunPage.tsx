@@ -16,7 +16,15 @@ import {
   simulateNextWeek,
   simulateWorldTourFinals
 } from '../api/client'
-import { ActionStatusBlock, CurrentContextStrip, EmptyState, MetadataList, PageIntro, SectionCard } from '../components/RunScopedUi'
+import {
+  ActionStatusBlock,
+  CurrentContextStrip,
+  EmptyState,
+  MetadataList,
+  PageIntro,
+  PreviewListCard,
+  SectionCard
+} from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
 export function RunPage(): JSX.Element {
@@ -108,6 +116,10 @@ export function RunPage(): JSX.Element {
     }
   })
 
+  const recentEvents = eventsQuery.data?.events.slice(0, previewLimit) ?? []
+  const recentRankingSnapshots = rankingSnapshotsQuery.data?.snapshots.slice(0, previewLimit) ?? []
+  const recentRaceSnapshots = raceSnapshotsQuery.data?.snapshots.slice(0, previewLimit) ?? []
+
   return (
     <section className="panel">
       <PageIntro title="Run detail" subtitle="Review run status, execute quick actions, and navigate to detailed run views." />
@@ -125,15 +137,17 @@ export function RunPage(): JSX.Element {
       {runQuery.error && <p className="error">Failed to load run: {String(runQuery.error)}</p>}
       {runQuery.data && (
         <>
-          <MetadataList
-            items={[
-              { label: 'Run ID', value: runQuery.data.run.run_id },
-              { label: 'Season', value: runQuery.data.run.season },
-              { label: 'Seed', value: runQuery.data.run.seed },
-              { label: 'Progress', value: `${runQuery.data.run.next_event_index} / ${runQuery.data.run.total_events}` },
-              { label: 'Completed event IDs', value: runQuery.data.run.completed_event_ids.length }
-            ]}
-          />
+          <SectionCard title="Run summary">
+            <MetadataList
+              items={[
+                { label: 'Run ID', value: runQuery.data.run.run_id },
+                { label: 'Season', value: runQuery.data.run.season },
+                { label: 'Seed', value: runQuery.data.run.seed },
+                { label: 'Progress', value: `${runQuery.data.run.next_event_index} / ${runQuery.data.run.total_events}` },
+                { label: 'Completed event IDs', value: runQuery.data.run.completed_event_ids.length }
+              ]}
+            />
+          </SectionCard>
 
           <SectionCard title="World Tour Finals overview">
             {finalsSummaryQuery.isLoading && <p className="status">Loading Finals status...</p>}
@@ -259,98 +273,75 @@ export function RunPage(): JSX.Element {
           </SectionCard>
 
           <SectionCard title="Recent history previews">
+            <p className="subtitle">Recent entries are shown in API order to match the full history views.</p>
             <div className="grid">
-              <article className="panel nested-panel">
-                <h4>Recent events</h4>
-                {eventsQuery.isLoading && <p className="status">Loading recent events...</p>}
-                {eventsQuery.error && <p className="error">Failed to load recent events: {formatApiError(eventsQuery.error)}</p>}
-                {!eventsQuery.isLoading && !eventsQuery.error && (eventsQuery.data?.events.length ?? 0) === 0 && (
-                  <EmptyState message="No events are available for this run yet." />
+              <PreviewListCard
+                title="Recent events"
+                isLoading={eventsQuery.isLoading}
+                loadingText="Loading recent events..."
+                errorText={eventsQuery.error ? `Failed to load recent events: ${formatApiError(eventsQuery.error)}` : undefined}
+                items={recentEvents}
+                emptyText="No events are available for this run yet."
+                listAriaLabel="Recent events preview"
+                getKey={(event) => event.event_id}
+                renderItem={(event) => (
+                  <Link to={`/runs/${runId}/events?selectedEventId=${encodeURIComponent(event.event_id)}`}>
+                    <strong>{event.event_id}</strong>{' '}
+                    <span className="status">
+                      • Seq {event.event_sequence}
+                      {event.season != null ? ` • S${event.season}` : ''}
+                      {event.week != null ? ` • W${event.week}` : ''}
+                    </span>
+                  </Link>
                 )}
-                {(eventsQuery.data?.events.length ?? 0) > 0 && (
-                  <ul className="item-list" aria-label="Recent events preview">
-                    {eventsQuery.data?.events.slice(0, previewLimit).map((event) => (
-                      <li key={event.event_id}>
-                        <Link to={`/runs/${runId}/events?selectedEventId=${encodeURIComponent(event.event_id)}`}>
-                          <strong>{event.event_id}</strong>{' '}
-                          <span className="status">
-                            • Seq {event.event_sequence}
-                            {event.season != null ? ` • S${event.season}` : ''}
-                            {event.week != null ? ` • W${event.week}` : ''}
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <p>
-                  <Link to={`/runs/${runId}/events`}>View all events</Link>
-                </p>
-              </article>
+                viewAllLink={<Link to={`/runs/${runId}/events`}>View all events</Link>}
+              />
 
-              <article className="panel nested-panel">
-                <h4>Recent ranking snapshots</h4>
-                {rankingSnapshotsQuery.isLoading && <p className="status">Loading recent ranking snapshots...</p>}
-                {rankingSnapshotsQuery.error && (
-                  <p className="error">
-                    Failed to load recent ranking snapshots: {formatApiError(rankingSnapshotsQuery.error)}
-                  </p>
+              <PreviewListCard
+                title="Recent ranking snapshots"
+                isLoading={rankingSnapshotsQuery.isLoading}
+                loadingText="Loading recent ranking snapshots..."
+                errorText={
+                  rankingSnapshotsQuery.error
+                    ? `Failed to load recent ranking snapshots: ${formatApiError(rankingSnapshotsQuery.error)}`
+                    : undefined
+                }
+                items={recentRankingSnapshots}
+                emptyText="No ranking snapshots are available for this run yet."
+                listAriaLabel="Recent ranking snapshots preview"
+                getKey={(snapshot) => `${snapshot.snapshot_kind}-${snapshot.snapshot_sequence}`}
+                renderItem={(snapshot) => (
+                  <Link to={`/runs/${runId}/snapshots/ranking?selectedSequence=${snapshot.snapshot_sequence}`}>
+                    <strong>
+                      Seq {snapshot.snapshot_sequence} • {snapshot.snapshot_kind}
+                    </strong>{' '}
+                    <span className="status">{snapshot.source_event_id ? `• Source ${snapshot.source_event_id}` : '• Source —'}</span>
+                  </Link>
                 )}
-                {!rankingSnapshotsQuery.isLoading &&
-                  !rankingSnapshotsQuery.error &&
-                  (rankingSnapshotsQuery.data?.snapshots.length ?? 0) === 0 && (
-                    <EmptyState message="No ranking snapshots are available for this run yet." />
-                  )}
-                {(rankingSnapshotsQuery.data?.snapshots.length ?? 0) > 0 && (
-                  <ul className="item-list" aria-label="Recent ranking snapshots preview">
-                    {rankingSnapshotsQuery.data?.snapshots.slice(0, previewLimit).map((snapshot) => (
-                      <li key={`${snapshot.snapshot_kind}-${snapshot.snapshot_sequence}`}>
-                        <Link to={`/runs/${runId}/snapshots/ranking?selectedSequence=${snapshot.snapshot_sequence}`}>
-                          <strong>
-                            Seq {snapshot.snapshot_sequence} • {snapshot.snapshot_kind}
-                          </strong>{' '}
-                          <span className="status">
-                            {snapshot.source_event_id ? `• Source ${snapshot.source_event_id}` : '• Source —'}
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <p>
-                  <Link to={`/runs/${runId}/snapshots/ranking`}>View all ranking snapshots</Link>
-                </p>
-              </article>
+                viewAllLink={<Link to={`/runs/${runId}/snapshots/ranking`}>View all ranking snapshots</Link>}
+              />
 
-              <article className="panel nested-panel">
-                <h4>Recent race snapshots</h4>
-                {raceSnapshotsQuery.isLoading && <p className="status">Loading recent race snapshots...</p>}
-                {raceSnapshotsQuery.error && (
-                  <p className="error">Failed to load recent race snapshots: {formatApiError(raceSnapshotsQuery.error)}</p>
+              <PreviewListCard
+                title="Recent race snapshots"
+                isLoading={raceSnapshotsQuery.isLoading}
+                loadingText="Loading recent race snapshots..."
+                errorText={
+                  raceSnapshotsQuery.error ? `Failed to load recent race snapshots: ${formatApiError(raceSnapshotsQuery.error)}` : undefined
+                }
+                items={recentRaceSnapshots}
+                emptyText="No race snapshots are available for this run yet."
+                listAriaLabel="Recent race snapshots preview"
+                getKey={(snapshot) => `${snapshot.snapshot_kind}-${snapshot.snapshot_sequence}`}
+                renderItem={(snapshot) => (
+                  <Link to={`/runs/${runId}/snapshots/race?selectedSequence=${snapshot.snapshot_sequence}`}>
+                    <strong>
+                      Seq {snapshot.snapshot_sequence} • {snapshot.snapshot_kind}
+                    </strong>{' '}
+                    <span className="status">{snapshot.source_event_id ? `• Source ${snapshot.source_event_id}` : '• Source —'}</span>
+                  </Link>
                 )}
-                {!raceSnapshotsQuery.isLoading && !raceSnapshotsQuery.error && (raceSnapshotsQuery.data?.snapshots.length ?? 0) === 0 && (
-                  <EmptyState message="No race snapshots are available for this run yet." />
-                )}
-                {(raceSnapshotsQuery.data?.snapshots.length ?? 0) > 0 && (
-                  <ul className="item-list" aria-label="Recent race snapshots preview">
-                    {raceSnapshotsQuery.data?.snapshots.slice(0, previewLimit).map((snapshot) => (
-                      <li key={`${snapshot.snapshot_kind}-${snapshot.snapshot_sequence}`}>
-                        <Link to={`/runs/${runId}/snapshots/race?selectedSequence=${snapshot.snapshot_sequence}`}>
-                          <strong>
-                            Seq {snapshot.snapshot_sequence} • {snapshot.snapshot_kind}
-                          </strong>{' '}
-                          <span className="status">
-                            {snapshot.source_event_id ? `• Source ${snapshot.source_event_id}` : '• Source —'}
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <p>
-                  <Link to={`/runs/${runId}/snapshots/race`}>View all race snapshots</Link>
-                </p>
-              </article>
+                viewAllLink={<Link to={`/runs/${runId}/snapshots/race`}>View all race snapshots</Link>}
+              />
             </div>
           </SectionCard>
 

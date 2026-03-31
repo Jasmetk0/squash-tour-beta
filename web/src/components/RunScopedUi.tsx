@@ -33,6 +33,20 @@ type ActionStatusProps = {
   isLoading?: boolean
 }
 
+type PreviewListCardProps<T> = {
+  title: string
+  subtitle?: string
+  isLoading: boolean
+  loadingText: string
+  errorText?: string
+  items: T[]
+  emptyText: string
+  listAriaLabel: string
+  getKey: (item: T) => string
+  renderItem: (item: T) => ReactNode
+  viewAllLink: ReactNode
+}
+
 export function PageIntro({
   title,
   subtitle,
@@ -123,4 +137,36 @@ export function ActionStatusBlock({ isLoading, loadingText, successText, errorTe
   if (errorText) return <p className="error">{errorText}</p>
   if (successText) return <p className="status">{successText}</p>
   return null
+}
+
+export function PreviewListCard<T>({
+  title,
+  subtitle,
+  isLoading,
+  loadingText,
+  errorText,
+  items,
+  emptyText,
+  listAriaLabel,
+  getKey,
+  renderItem,
+  viewAllLink
+}: PreviewListCardProps<T>): JSX.Element {
+  return (
+    <article className="panel nested-panel">
+      <h4>{title}</h4>
+      {subtitle ? <p className="subtitle">{subtitle}</p> : null}
+      {isLoading ? <p className="status">{loadingText}</p> : null}
+      {!isLoading && errorText ? <p className="error">{errorText}</p> : null}
+      {!isLoading && !errorText && items.length === 0 ? <EmptyState message={emptyText} /> : null}
+      {!isLoading && !errorText && items.length > 0 ? (
+        <ul className="item-list" aria-label={listAriaLabel}>
+          {items.map((item) => (
+            <li key={getKey(item)}>{renderItem(item)}</li>
+          ))}
+        </ul>
+      ) : null}
+      <p>{viewAllLink}</p>
+    </article>
+  )
 }

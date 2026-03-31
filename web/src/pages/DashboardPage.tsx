@@ -3,7 +3,7 @@ import { FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { createRun, getHealth, getRun } from '../api/client'
-import { EmptyState, PageIntro } from '../components/RunScopedUi'
+import { CompactSummaryCard, EmptyState, PageIntro } from '../components/RunScopedUi'
 import { SUPPORTED_CALENDAR_SEASON } from '../config'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -104,22 +104,16 @@ export function DashboardPage(): JSX.Element {
               <p className="status">Remembered run ID: {lastRunId}</p>
               {rememberedRunQuery.isLoading && <p className="status">Loading remembered run summary...</p>}
               {rememberedRunQuery.data && (
-                <dl className="kv-grid">
-                  <div>
-                    <dt>Season</dt>
-                    <dd>{rememberedRunQuery.data.run.season}</dd>
-                  </div>
-                  <div>
-                    <dt>Seed</dt>
-                    <dd>{rememberedRunQuery.data.run.seed}</dd>
-                  </div>
-                  <div>
-                    <dt>Progress</dt>
-                    <dd>
-                      {rememberedRunQuery.data.run.next_event_index} / {rememberedRunQuery.data.run.total_events}
-                    </dd>
-                  </div>
-                </dl>
+                <CompactSummaryCard
+                  items={[
+                    { label: 'Season', value: rememberedRunQuery.data.run.season },
+                    { label: 'Seed', value: rememberedRunQuery.data.run.seed },
+                    {
+                      label: 'Progress',
+                      value: `${rememberedRunQuery.data.run.next_event_index} / ${rememberedRunQuery.data.run.total_events}`
+                    }
+                  ]}
+                />
               )}
               {rememberedRunQuery.isError && <p className="status">Summary unavailable until this run is opened again.</p>}
               <div className="dashboard-actions-row">

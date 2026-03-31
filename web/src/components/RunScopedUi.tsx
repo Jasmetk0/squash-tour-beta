@@ -10,6 +10,11 @@ type MetadataField = {
   value: ReactNode
 }
 
+type CompactSummaryField = {
+  label: string
+  value: ReactNode
+}
+
 type SummaryItem = {
   label: string
   value: ReactNode
@@ -91,6 +96,20 @@ export function MetadataList({ items }: { items: MetadataField[] }): JSX.Element
         <div key={item.label}>
           <dt>{item.label}</dt>
           <dd>{item.value}</dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
+
+export function CompactSummaryCard({ items }: { items: CompactSummaryField[] }): JSX.Element {
+  return (
+    <dl className="compact-summary-card">
+      {items.map((item) => (
+        <div key={item.label} className="compact-summary-card__item">
+          <dt className="compact-summary-card__label">{item.label}</dt>
+          <dd className="compact-summary-card__value">{item.value}</dd>
         </div>
       ))}
     </dl>

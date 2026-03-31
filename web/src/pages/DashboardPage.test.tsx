@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -102,7 +102,10 @@ describe('DashboardPage', () => {
     renderWithRoute(<DashboardPage />, '/')
 
     expect(await screen.findByText('Remembered run ID: remembered-run')).toBeInTheDocument()
-    expect(await screen.findByText(/2\s*\/\s*14/)).toBeInTheDocument()
+    const resumePanel = screen.getByRole('heading', { name: 'Resume remembered run' }).closest('section') as HTMLElement
+    expect(await within(resumePanel).findByText('Season')).toBeInTheDocument()
+    expect(await within(resumePanel).findByText('Seed')).toBeInTheDocument()
+    expect(await within(resumePanel).findByText(/2\s*\/\s*14/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Run Detail' })).toHaveAttribute('href', '/runs/remembered-run')
     expect(screen.getByRole('link', { name: 'Events' })).toHaveAttribute('href', '/runs/remembered-run/events')
     expect(screen.getByRole('link', { name: 'Finals' })).toHaveAttribute('href', '/runs/remembered-run/finals')

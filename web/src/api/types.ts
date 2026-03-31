@@ -150,3 +150,46 @@ export type PlayerTransitionsResponse = {
     transition: Record<string, unknown>
   }>
 }
+
+
+export type BootstrapNextSeasonPayload = {
+  child_run_id: string
+  child_seed?: number
+}
+
+export type RunSourceSummary = {
+  source_type: string
+  parent_run_id: string | null
+  source_rollover_run_id: string | null
+  source_rollover_from_season: number | null
+  source_rollover_to_season: number | null
+}
+
+export type RunSourceApiResponse = {
+  source: RunSourceSummary
+}
+
+export type RunLineageRecord = {
+  run_id: string
+  source: RunSourceSummary
+  children: string[]
+}
+
+export type RunLineageApiResponse = {
+  lineage: RunLineageRecord
+}
+
+export type BootstrapNextSeasonResponse = {
+  run: RunSummary
+  bootstrap: {
+    parent_run_id: string
+    child_run_id: string
+    from_season: number
+    to_season: number
+    child_seed: number
+    transitioned_players: number
+    source_rollover_run_id: string
+    source_rollover_to_season: number
+    already_bootstrapped: boolean
+  }
+}

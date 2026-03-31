@@ -1,4 +1,6 @@
 import type {
+  BootstrapNextSeasonPayload,
+  BootstrapNextSeasonResponse,
   CreateRunPayload,
   EventListResponse,
   EventRecord,
@@ -11,6 +13,8 @@ import type {
   RankingSnapshotListResponse,
   NextSeasonPlayersResponse,
   PlayerTransitionsResponse,
+  RunLineageApiResponse,
+  RunSourceApiResponse,
   SeasonRolloverExecutionResponse,
   SeasonRolloverSummaryApiResponse,
   RunSummary,
@@ -102,6 +106,25 @@ export function getFinalsSummary(runId: string): Promise<FinalsSummaryResponse> 
 
 export function simulateWorldTourFinals(runId: string): Promise<FinalsSimulationResponse> {
   return simulate<FinalsSimulationResponse>(runId, 'world-tour-finals')
+}
+
+
+export function bootstrapNextSeason(
+  runId: string,
+  payload: BootstrapNextSeasonPayload
+): Promise<BootstrapNextSeasonResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/bootstrap-next-season`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}
+
+export function getRunLineage(runId: string): Promise<RunLineageApiResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/lineage`)
+}
+
+export function getRunSource(runId: string): Promise<RunSourceApiResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/source`)
 }
 
 export function rolloverNextSeason(runId: string): Promise<SeasonRolloverExecutionResponse> {

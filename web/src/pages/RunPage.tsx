@@ -70,6 +70,9 @@ export function RunPage(): JSX.Element {
           <p>
             <Link to={`/runs/${runId}/rollover`}>View season rollover</Link>
           </p>
+          <p>
+            <Link to={`/runs/${runId}/bootstrap-lineage`}>View bootstrap and lineage</Link>
+          </p>
           {simulator.data && (
             <pre className="json-block" aria-label="simulation-result">
               {JSON.stringify(simulator.data.step, null, 2)}

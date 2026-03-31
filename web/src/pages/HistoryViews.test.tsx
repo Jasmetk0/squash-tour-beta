@@ -49,6 +49,7 @@ describe('history list ordering, detail selection, and states', () => {
     renderWithRoute(<EventsPage />, '/runs/run-a/events')
 
     const list = await screen.findByRole('list', { name: 'Events history list' })
+    expect(screen.getByRole('list', { name: 'Current context' })).toBeInTheDocument()
     const items = within(list).getAllByRole('button')
     expect(items[0]).toHaveTextContent('2. E2')
     expect(items[1]).toHaveTextContent('1. E1')
@@ -57,13 +58,13 @@ describe('history list ordering, detail selection, and states', () => {
     expect(items[0]).toHaveAttribute('aria-current', 'true')
     expect(items[1]).not.toHaveClass('is-selected')
 
-    expect(await screen.findByText('E2')).toBeInTheDocument()
+    expect((await screen.findAllByText('E2')).length).toBeGreaterThan(0)
     expect(await screen.findByText(/payload-E2/)).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /1\. E1/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('E1')).toBeInTheDocument()
+      expect(screen.getAllByText('E1').length).toBeGreaterThan(0)
     })
     expect(await screen.findByText(/payload-E1/)).toBeInTheDocument()
 
@@ -74,7 +75,7 @@ describe('history list ordering, detail selection, and states', () => {
   it('respects a valid selectedEventId query param and falls back when invalid or missing', async () => {
     const validView = renderWithRoute(<EventsPage />, '/runs/run-a/events?selectedEventId=E1')
 
-    expect(await screen.findByText('E1')).toBeInTheDocument()
+    expect((await screen.findAllByText('E1')).length).toBeGreaterThan(0)
     expect(await screen.findByText(/payload-E1/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /1\. E1/i })).toHaveClass('is-selected')
 
@@ -82,7 +83,7 @@ describe('history list ordering, detail selection, and states', () => {
 
     renderWithRoute(<EventsPage />, '/runs/run-a/events?selectedEventId=UNKNOWN')
 
-    expect(await screen.findByText('E2')).toBeInTheDocument()
+    expect((await screen.findAllByText('E2')).length).toBeGreaterThan(0)
     expect(await screen.findByText(/payload-E2/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /2\. E2/i })).toHaveClass('is-selected')
   })
@@ -92,6 +93,7 @@ describe('history list ordering, detail selection, and states', () => {
     renderWithRoute(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
 
     const list = await screen.findByRole('list', { name: 'Ranking snapshots list' })
+    expect(screen.getByRole('list', { name: 'Current context' })).toBeInTheDocument()
     const snapshotItems = within(list).getAllByRole('button')
     expect(snapshotItems[0]).toHaveTextContent('4. WEEK')
     expect(snapshotItems[1]).toHaveTextContent('3. WEEK')

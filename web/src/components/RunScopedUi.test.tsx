@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { ActionStatusBlock, EmptyState, JsonPayloadBlock, MetadataList, PageIntro } from './RunScopedUi'
+import { ActionStatusBlock, CurrentContextStrip, EmptyState, JsonPayloadBlock, MetadataList, PageIntro } from './RunScopedUi'
 
 describe('RunScopedUi helpers', () => {
   it('renders error state ahead of success state for action status block', () => {
@@ -33,5 +33,15 @@ describe('RunScopedUi helpers', () => {
     expect(screen.getByText('Season')).toBeInTheDocument()
     expect(screen.getByText('2027')).toBeInTheDocument()
     expect(screen.getByText('Nothing here yet')).toBeInTheDocument()
+  })
+
+  it('renders compact current context strip values', () => {
+    render(<CurrentContextStrip items={[{ label: 'Run', value: 'run-a' }, { label: 'Season', value: 2028 }]} />)
+
+    expect(screen.getByRole('list', { name: 'Current context' })).toBeInTheDocument()
+    expect(screen.getByText('Run')).toBeInTheDocument()
+    expect(screen.getByText('run-a')).toBeInTheDocument()
+    expect(screen.getByText('Season')).toBeInTheDocument()
+    expect(screen.getByText('2028')).toBeInTheDocument()
   })
 })

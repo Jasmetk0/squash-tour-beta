@@ -11,6 +11,7 @@ import {
 } from '../api/client'
 import {
   ActionStatusBlock,
+  CurrentContextStrip,
   EmptyState,
   JsonPayloadBlock,
   MetadataList,
@@ -89,6 +90,7 @@ export function RolloverPage(): JSX.Element {
   const seasonNotFound = isApiNotFound(seasonSummaryQuery.error)
   const transitionCount = transitionsQuery.data?.transitions.length ?? 0
   const nextSeasonPlayerCount = playersQuery.data?.players.length ?? 0
+  const contextSeason = selectedSeason ?? latestQuery.data?.rollover.to_season ?? '—'
 
   return (
     <section className="panel">
@@ -96,6 +98,13 @@ export function RolloverPage(): JSX.Element {
         title="Season Rollover"
         runId={runId}
         subtitle="Run rollover actions and inspect rollover outputs for each target season."
+      />
+      <CurrentContextStrip
+        items={[
+          { label: 'Run', value: runId || 'unknown' },
+          { label: 'Target season', value: contextSeason },
+          { label: 'Latest rollover', value: latestQuery.data ? `S${latestQuery.data.rollover.to_season}` : 'None yet' }
+        ]}
       />
 
       <SectionCard title="Latest rollover summary">

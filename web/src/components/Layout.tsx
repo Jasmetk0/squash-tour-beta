@@ -29,6 +29,7 @@ export function Layout(): JSX.Element {
           </NavLink>
         ))}
       </nav>
+      {runId ? <p className="status">Current run context: {runId}</p> : null}
       <main>
         <Outlet />
       </main>

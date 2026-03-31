@@ -16,7 +16,7 @@ import {
   simulateNextWeek,
   simulateWorldTourFinals
 } from '../api/client'
-import { ActionStatusBlock, EmptyState, MetadataList, PageIntro, SectionCard } from '../components/RunScopedUi'
+import { ActionStatusBlock, CurrentContextStrip, EmptyState, MetadataList, PageIntro, SectionCard } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
 export function RunPage(): JSX.Element {
@@ -111,6 +111,16 @@ export function RunPage(): JSX.Element {
   return (
     <section className="panel">
       <PageIntro title="Run detail" subtitle="Review run status, execute quick actions, and navigate to detailed run views." />
+      <CurrentContextStrip
+        items={[
+          { label: 'Run', value: runQuery.data?.run.run_id ?? runId ?? 'unknown' },
+          { label: 'Season', value: runQuery.data?.run.season ?? '—' },
+          {
+            label: 'Progress',
+            value: runQuery.data ? `${runQuery.data.run.next_event_index}/${runQuery.data.run.total_events}` : '—'
+          }
+        ]}
+      />
       {runQuery.isLoading && <p className="status">Loading run...</p>}
       {runQuery.error && <p className="error">Failed to load run: {String(runQuery.error)}</p>}
       {runQuery.data && (

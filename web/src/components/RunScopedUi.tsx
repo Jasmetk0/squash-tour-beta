@@ -15,6 +15,11 @@ type SummaryItem = {
   value: ReactNode
 }
 
+type ContextItem = {
+  label: string
+  value: ReactNode
+}
+
 type JsonPayloadProps = {
   title: string
   emptyText: string
@@ -48,6 +53,21 @@ export function PageIntro({
 
 export function RunScopedHeader({ title, runId, subtitle }: { title: string; runId: string; subtitle?: string }): JSX.Element {
   return <PageIntro title={title} subtitle={subtitle} meta={`Run: ${runId || 'unknown'}`} />
+}
+
+export function CurrentContextStrip({ items }: { items: ContextItem[] }): JSX.Element | null {
+  if (items.length === 0) return null
+
+  return (
+    <ul className="context-strip" aria-label="Current context">
+      {items.map((item) => (
+        <li key={item.label} className="context-strip__item">
+          <span className="context-strip__label">{item.label}</span>
+          <strong className="context-strip__value">{item.value}</strong>
+        </li>
+      ))}
+    </ul>
+  )
 }
 
 export function MetadataList({ items }: { items: MetadataField[] }): JSX.Element {

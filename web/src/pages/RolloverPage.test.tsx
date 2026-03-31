@@ -65,6 +65,7 @@ describe('RolloverPage', () => {
     renderWithRoute(<RolloverPage />, '/runs/run-a/rollover')
 
     expect(await screen.findByText('Season Rollover')).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Current context' })).toBeInTheDocument()
     expect(await screen.findByText(/Latest rollover summary/i)).toBeInTheDocument()
     expect(await screen.findByText(/Target season inspection summary/i)).toBeInTheDocument()
     expect(await screen.findByText(/Transition records/i)).toBeInTheDocument()

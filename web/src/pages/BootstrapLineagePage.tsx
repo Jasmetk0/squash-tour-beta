@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router-dom'
 import { bootstrapNextSeason, getRunLineage, getRunSource } from '../api/client'
 import {
   ActionStatusBlock,
+  CurrentContextStrip,
   EmptyState,
   JsonPayloadBlock,
   MetadataList,
@@ -66,6 +67,13 @@ export function BootstrapLineagePage(): JSX.Element {
         title="Bootstrap / Lineage"
         runId={runId}
         subtitle="Review source/lineage metadata and bootstrap the next-season child run."
+      />
+      <CurrentContextStrip
+        items={[
+          { label: 'Run', value: runId || 'unknown' },
+          { label: 'Parent', value: source?.parent_run_id ?? lineage?.source.parent_run_id ?? 'None' },
+          { label: 'Children', value: lineage?.children.length ?? 0 }
+        ]}
       />
 
       <SectionCard title="Run source summary">

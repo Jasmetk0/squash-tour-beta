@@ -96,6 +96,82 @@ describe('RunDiagnosticsPage', () => {
     expect(screen.getByText('7')).toBeInTheDocument()
   })
 
+  it('renders richer latest-activity summaries with direct detail links', async () => {
+    api.listEvents.mockResolvedValueOnce({
+      events: [{ event_sequence: 5, event_id: 'E5', season: 2028, week: 12, template_id: null, tournament_result: { done: true } }]
+    })
+    api.listRankingSnapshots.mockResolvedValueOnce({
+      snapshots: [{ snapshot_sequence: 17, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} }]
+    })
+    api.listRaceSnapshots.mockResolvedValueOnce({
+      snapshots: [{ snapshot_sequence: 14, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} }]
+    })
+    renderWithRoute(<RunDiagnosticsPage />, '/runs/run-rich/diagnostics')
+
+    expect(await screen.findByText('Latest completed event')).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: /E5 \(Seq 5\)/ })).toHaveAttribute('href', '/runs/run-rich/events/E5')
+    expect(await screen.findByRole('link', { name: 'Seq 17' })).toHaveAttribute('href', '/runs/run-rich/snapshots/ranking/17')
+    expect(await screen.findByRole('link', { name: 'Seq 14' })).toHaveAttribute('href', '/runs/run-rich/snapshots/race/14')
+  })
+
+  it('renders availability and artifact-state statuses', async () => {
+    renderWithRoute(<RunDiagnosticsPage />, '/runs/run-availability/diagnostics')
+
+    expect(await screen.findByText('Availability / artifact state')).toBeInTheDocument()
+    expect(await screen.findByText('new_run')).toBeInTheDocument()
+    expect(screen.getAllByText('Finals qualification').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('None yet').length).toBeGreaterThan(0)
+    expect(screen.getByText('Latest rollover')).toBeInTheDocument()
+    expect(screen.getAllByText('Available').length).toBeGreaterThan(0)
+    expect(screen.getByText('Source metadata')).toBeInTheDocument()
+    expect(screen.getByText('Lineage metadata')).toBeInTheDocument()
+  })
+
+  it('renders most relevant next inspection links from loaded data', async () => {
+    api.getFinalsSummary.mockResolvedValueOnce({
+      run_id: 'run-a',
+      season: 2028,
+      qualification: { qualified_players: [] },
+      result: null
+    })
+    api.listEvents.mockResolvedValueOnce({
+      events: [{ event_sequence: 5, event_id: 'E5', season: 2028, week: 12, template_id: null, tournament_result: { done: true } }]
+    })
+    api.listRankingSnapshots.mockResolvedValueOnce({
+      snapshots: [{ snapshot_sequence: 17, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} }]
+    })
+    api.listRaceSnapshots.mockResolvedValueOnce({
+      snapshots: [{ snapshot_sequence: 14, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} }]
+    })
+    renderWithRoute(<RunDiagnosticsPage />, '/runs/run-links/diagnostics')
+
+    expect(await screen.findByText('Most relevant next inspection links')).toBeInTheDocument()
+    expect(await screen.findByText('new_run')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Inspect latest completed event (E5)' })).toHaveAttribute(
+      'href',
+      '/runs/run-links/events/E5'
+    )
+    expect(screen.getByRole('link', { name: 'Inspect latest ranking snapshot (Seq 17)' })).toHaveAttribute(
+      'href',
+      '/runs/run-links/snapshots/ranking/17'
+    )
+    expect(screen.getByRole('link', { name: 'Inspect latest race snapshot (Seq 14)' })).toHaveAttribute(
+      'href',
+      '/runs/run-links/snapshots/race/14'
+    )
+    expect(
+      screen.getByRole('link', { name: 'Inspect Finals status (qualification available, result pending)' })
+    ).toHaveAttribute('href', '/runs/run-links/finals')
+    expect(screen.getByRole('link', { name: 'Inspect latest rollover details' })).toHaveAttribute(
+      'href',
+      '/runs/run-links/rollover'
+    )
+    expect(screen.getByRole('link', { name: 'Inspect season chain (1 child run(s))' })).toHaveAttribute(
+      'href',
+      '/runs/run-links/season-chain'
+    )
+  })
+
   it('shows readable empty/not-found states for optional diagnostics sections', async () => {
     api.getLatestRollover.mockRejectedValueOnce({ status: 404, message: 'not found' })
     api.getRunSource.mockRejectedValueOnce({ status: 404, message: 'not found' })
@@ -110,7 +186,8 @@ describe('RunDiagnosticsPage', () => {
     expect(await screen.findByText('No source metadata available.')).toBeInTheDocument()
     expect(await screen.findByText('No lineage metadata available.')).toBeInTheDocument()
     expect(await screen.findByText('No events are available yet.')).toBeInTheDocument()
-    expect(screen.getAllByText('None').length).toBeGreaterThan(1)
+    expect(await screen.findByText('No targeted inspection links yet. Use quick navigation below.')).toBeInTheDocument()
+    expect(screen.getAllByText('Missing').length).toBeGreaterThan(1)
   })
 
 
@@ -119,7 +196,8 @@ describe('RunDiagnosticsPage', () => {
 
     renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
 
-    expect(await screen.findByText('Error loading ranking snapshots: ranking unavailable')).toBeInTheDocument()
+    expect(await screen.findByText('Error: ranking unavailable')).toBeInTheDocument()
+    expect(screen.getAllByText('Error').length).toBeGreaterThan(0)
   })
 
   it('shows readable error state for race snapshots in latest snapshots summary', async () => {
@@ -127,7 +205,7 @@ describe('RunDiagnosticsPage', () => {
 
     renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
 
-    expect(await screen.findByText('Error loading race snapshots: race unavailable')).toBeInTheDocument()
+    expect(await screen.findByText('Error: race unavailable')).toBeInTheDocument()
   })
 
   it('keeps true empty states for latest snapshots when snapshot queries succeed with no data', async () => {
@@ -137,11 +215,10 @@ describe('RunDiagnosticsPage', () => {
 
     renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
 
-    expect(await screen.findByText('Latest snapshots')).toBeInTheDocument()
-    expect(await screen.findByText('None recorded yet')).toBeInTheDocument()
-    expect(screen.getAllByText('None').length).toBeGreaterThan(1)
-    expect(screen.queryByText(/Error loading ranking snapshots/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Error loading race snapshots/i)).not.toBeInTheDocument()
+    expect(await screen.findByText('Latest ranking snapshot')).toBeInTheDocument()
+    await screen.findByText('No events are available yet.')
+    expect(screen.getAllByText('None yet').length).toBeGreaterThan(1)
+    expect(screen.queryByText(/Error:/i)).not.toBeInTheDocument()
   })
 
   it('includes quick navigation links to run subpages', async () => {

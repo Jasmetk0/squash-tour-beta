@@ -14,6 +14,7 @@ import type {
   NextSeasonPlayersResponse,
   PlayerTransitionsResponse,
   RunLineageApiResponse,
+  RunStatusSummary,
   RunSourceApiResponse,
   SeasonRolloverExecutionResponse,
   SeasonRolloverSummaryApiResponse,
@@ -57,6 +58,10 @@ export function createRun(payload: CreateRunPayload): Promise<RunSummary> {
 
 export function getRun(runId: string): Promise<SeasonStateResponse> {
   return request(`/runs/${encodeURIComponent(runId)}`)
+}
+
+export function getRunStatusSummary(runId: string): Promise<RunStatusSummary> {
+  return request(`/runs/${encodeURIComponent(runId)}/status-summary`)
 }
 
 function simulate<T>(runId: string, suffix: string): Promise<T> {

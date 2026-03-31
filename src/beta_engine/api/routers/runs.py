@@ -4,17 +4,22 @@ from beta_engine.api.deps import get_simulation_api_service
 from beta_engine.api.schemas import (
     BootstrapNextSeasonApiResponse,
     BootstrapNextSeasonRequest,
+    RunStatusSummaryResponse,
     RunSummaryResponse,
     CreateRunRequest,
     SeasonStateResponse,
 )
-from beta_engine.application.api_services import PersistedRunSummary, SimulationApiService
+from beta_engine.application.api_services import PersistedRunSummary, RunStatusSummary, SimulationApiService
 
 router = APIRouter(prefix="/runs", tags=["runs"])
 
 
 def _to_run_summary(summary: PersistedRunSummary) -> RunSummaryResponse:
     return RunSummaryResponse.model_validate(summary.__dict__)
+
+
+def _to_run_status_summary(summary: RunStatusSummary) -> RunStatusSummaryResponse:
+    return RunStatusSummaryResponse.model_validate(summary, from_attributes=True)
 
 
 @router.post("", response_model=RunSummaryResponse, status_code=status.HTTP_201_CREATED)
@@ -41,6 +46,18 @@ def get_run(run_id: str, service: SimulationApiService = Depends(get_simulation_
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
     return SeasonStateResponse(run=_to_run_summary(summary), season_state=state)
+
+
+@router.get("/{run_id}/status-summary", response_model=RunStatusSummaryResponse)
+def get_run_status_summary(
+    run_id: str,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> RunStatusSummaryResponse:
+    try:
+        summary = service.get_run_status_summary(run_id=run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return _to_run_status_summary(summary)
 
 
 @router.post("/{run_id}/bootstrap-next-season", response_model=BootstrapNextSeasonApiResponse)

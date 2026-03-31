@@ -6,6 +6,7 @@ import {
   getLatestRollover,
   getRun,
   getRunLineage,
+  getRunStatusSummary,
   getRunSource,
   listEvents,
   listRaceSnapshots,
@@ -36,6 +37,7 @@ export function RunPage(): JSX.Element {
   const invalidateRunDetailQueries = async (): Promise<void> => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['run', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['run-status-summary', runId] }),
       queryClient.invalidateQueries({ queryKey: ['events', runId] }),
       queryClient.invalidateQueries({ queryKey: ['ranking-snapshots', runId] }),
       queryClient.invalidateQueries({ queryKey: ['race-snapshots', runId] }),
@@ -52,6 +54,12 @@ export function RunPage(): JSX.Element {
   }
 
   const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId) })
+  const statusSummaryQuery = useQuery({
+    queryKey: ['run-status-summary', runId],
+    queryFn: () => getRunStatusSummary(runId),
+    enabled: Boolean(runId),
+    retry: false
+  })
   const finalsSummaryQuery = useQuery({
     queryKey: ['finals-summary', runId],
     queryFn: () => getFinalsSummary(runId),
@@ -127,10 +135,14 @@ export function RunPage(): JSX.Element {
       <CurrentContextStrip
         items={[
           { label: 'Run', value: runQuery.data?.run.run_id ?? runId ?? 'unknown' },
-          { label: 'Season', value: runQuery.data?.run.season ?? '—' },
+          { label: 'Season', value: statusSummaryQuery.data?.season ?? runQuery.data?.run.season ?? '—' },
           {
             label: 'Progress',
-            value: runQuery.data ? `${runQuery.data.run.next_event_index}/${runQuery.data.run.total_events}` : '—'
+            value: statusSummaryQuery.data
+              ? `${statusSummaryQuery.data.progress.next_event_index}/${statusSummaryQuery.data.progress.total_events}`
+              : runQuery.data
+                ? `${runQuery.data.run.next_event_index}/${runQuery.data.run.total_events}`
+                : '—'
           }
         ]}
       />
@@ -142,10 +154,18 @@ export function RunPage(): JSX.Element {
             <CompactSummaryCard
               items={[
                 { label: 'Run ID', value: runQuery.data.run.run_id },
-                { label: 'Season', value: runQuery.data.run.season },
-                { label: 'Seed', value: runQuery.data.run.seed },
-                { label: 'Progress', value: `${runQuery.data.run.next_event_index} / ${runQuery.data.run.total_events}` },
-                { label: 'Completed events', value: runQuery.data.run.completed_event_ids.length }
+                { label: 'Season', value: statusSummaryQuery.data?.season ?? runQuery.data.run.season },
+                { label: 'Seed', value: statusSummaryQuery.data?.seed ?? runQuery.data.run.seed },
+                {
+                  label: 'Progress',
+                  value: statusSummaryQuery.data
+                    ? `${statusSummaryQuery.data.progress.next_event_index} / ${statusSummaryQuery.data.progress.total_events}`
+                    : `${runQuery.data.run.next_event_index} / ${runQuery.data.run.total_events}`
+                },
+                {
+                  label: 'Completed events',
+                  value: statusSummaryQuery.data?.progress.completed_event_count ?? runQuery.data.run.completed_event_ids.length
+                }
               ]}
             />
           </SectionCard>

@@ -57,6 +57,56 @@ class PersistedRunSummary:
     completed_event_ids: list[str]
 
 
+@dataclass(frozen=True)
+class RunStatusSummaryProgress:
+    next_event_index: int
+    total_events: int
+    completed_event_count: int
+
+
+@dataclass(frozen=True)
+class RunStatusSummaryFinals:
+    qualification_available: bool
+    result_available: bool
+
+
+@dataclass(frozen=True)
+class RunStatusSummaryRollover:
+    latest_to_season: int
+    transitioned_players: int
+
+
+@dataclass(frozen=True)
+class RunStatusSummarySource:
+    source_type: str
+    parent_run_id: str | None
+
+
+@dataclass(frozen=True)
+class RunStatusSummaryLineage:
+    child_run_count: int
+
+
+@dataclass(frozen=True)
+class RunStatusSummaryHistoryCounts:
+    events: int
+    ranking_snapshots: int
+    race_snapshots: int
+
+
+@dataclass(frozen=True)
+class RunStatusSummary:
+    run_id: str
+    season: int
+    seed: int
+    progress: RunStatusSummaryProgress
+    finals: RunStatusSummaryFinals
+    rollover: RunStatusSummaryRollover | None
+    source: RunStatusSummarySource | None
+    lineage: RunStatusSummaryLineage
+    history_counts: RunStatusSummaryHistoryCounts
+
+
 @dataclass(slots=True)
 class SimulationApiService:
     """High-level API-facing service that keeps orchestration out of routers."""
@@ -251,6 +301,54 @@ class SimulationApiService:
             source_rollover_run_id=lineage.source_rollover_run_id,
             source_rollover_from_season=lineage.source_rollover_from_season,
             source_rollover_to_season=lineage.source_rollover_to_season,
+        )
+
+    def get_run_status_summary(self, *, run_id: str) -> RunStatusSummary:
+        run_info, state = self._load_run_context(run_id=run_id)
+        finals_summary = self.get_finals_summary(run_id=run_id)
+        latest_rollover = self.repository.get_latest_season_rollover(run_id=run_id)
+        source_summary = self.get_run_source(run_id=run_id)
+        child_count = len(self.repository.list_child_runs(parent_run_id=run_id))
+
+        source: RunStatusSummarySource | None = None
+        if (
+            source_summary.source_type != "fresh_seed"
+            or source_summary.parent_run_id is not None
+            or source_summary.source_rollover_run_id is not None
+        ):
+            source = RunStatusSummarySource(
+                source_type=source_summary.source_type,
+                parent_run_id=source_summary.parent_run_id,
+            )
+
+        return RunStatusSummary(
+            run_id=run_info.run_id,
+            season=run_info.season,
+            seed=run_info.seed,
+            progress=RunStatusSummaryProgress(
+                next_event_index=state.next_event_index,
+                total_events=len(state.ordered_events),
+                completed_event_count=len(state.completed_event_ids),
+            ),
+            finals=RunStatusSummaryFinals(
+                qualification_available=finals_summary.qualification is not None,
+                result_available=finals_summary.result is not None,
+            ),
+            rollover=(
+                RunStatusSummaryRollover(
+                    latest_to_season=latest_rollover.to_season,
+                    transitioned_players=latest_rollover.transitioned_players,
+                )
+                if latest_rollover is not None
+                else None
+            ),
+            source=source,
+            lineage=RunStatusSummaryLineage(child_run_count=child_count),
+            history_counts=RunStatusSummaryHistoryCounts(
+                events=len(self.repository.list_completed_event_ids(run_id=run_id)),
+                ranking_snapshots=self.repository.count_ranking_snapshots(run_id=run_id),
+                race_snapshots=self.repository.count_race_snapshots(run_id=run_id),
+            ),
         )
 
     def list_events(self, *, run_id: str) -> list[PersistedEventRecord]:

@@ -46,6 +46,49 @@ class RunSummaryResponse(BaseModel):
     completed_event_ids: list[str] = Field(default_factory=list)
 
 
+class RunStatusSummaryProgressResponse(BaseModel):
+    next_event_index: int
+    total_events: int
+    completed_event_count: int
+
+
+class RunStatusSummaryFinalsResponse(BaseModel):
+    qualification_available: bool
+    result_available: bool
+
+
+class RunStatusSummaryRolloverResponse(BaseModel):
+    latest_to_season: int
+    transitioned_players: int
+
+
+class RunStatusSummarySourceResponse(BaseModel):
+    source_type: str
+    parent_run_id: str | None = None
+
+
+class RunStatusSummaryLineageResponse(BaseModel):
+    child_run_count: int
+
+
+class RunStatusSummaryHistoryCountsResponse(BaseModel):
+    events: int
+    ranking_snapshots: int
+    race_snapshots: int
+
+
+class RunStatusSummaryResponse(BaseModel):
+    run_id: str
+    season: int
+    seed: int
+    progress: RunStatusSummaryProgressResponse
+    finals: RunStatusSummaryFinalsResponse
+    rollover: RunStatusSummaryRolloverResponse | None = None
+    source: RunStatusSummarySourceResponse | None = None
+    lineage: RunStatusSummaryLineageResponse
+    history_counts: RunStatusSummaryHistoryCountsResponse
+
+
 class SimulateResponse(BaseModel):
     mode: str
     run: RunSummaryResponse

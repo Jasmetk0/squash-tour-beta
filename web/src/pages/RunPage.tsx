@@ -131,6 +131,8 @@ export function RunPage(): JSX.Element {
   const recentRankingSnapshots = rankingSnapshotsQuery.data?.snapshots.slice(0, previewLimit) ?? []
   const recentRaceSnapshots = raceSnapshotsQuery.data?.snapshots.slice(0, previewLimit) ?? []
   const latestCompletedEvent = eventsQuery.data?.events[0]
+
+  const nextPlannedEvent = runQuery.data?.season_state.ordered_events[runQuery.data.season_state.next_event_index] ?? null
   const latestRankingSnapshot = rankingSnapshotsQuery.data?.snapshots[0]
   const latestRaceSnapshot = raceSnapshotsQuery.data?.snapshots[0]
 
@@ -286,6 +288,16 @@ export function RunPage(): JSX.Element {
                 {
                   label: 'Season calendar',
                   value: <Link to={`/runs/${runId}/calendar`}>Inspect ordered season calendar</Link>
+                },
+                {
+                  label: 'Inspect next planned event',
+                  value: nextPlannedEvent ? (
+                    <Link to={`/runs/${runId}/calendar/${encodeURIComponent(nextPlannedEvent.event_id)}`}>
+                      {nextPlannedEvent.event_id}
+                    </Link>
+                  ) : (
+                    'None (season complete)'
+                  )
                 },
                 {
                   label: 'Bootstrap / lineage',

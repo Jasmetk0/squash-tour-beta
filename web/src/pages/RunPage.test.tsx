@@ -36,7 +36,16 @@ describe('RunPage', () => {
     vi.clearAllMocks()
     api.getRun.mockResolvedValue({
       run: { run_id: 'run-a', season: 2025, seed: 3, next_event_index: 1, total_events: 4, completed_event_ids: ['E1'] },
-      season_state: { season: 2025, next_event_index: 1, completed_event_ids: ['E1'], ordered_events: [] }
+      season_state: {
+        season: 2025,
+        next_event_index: 1,
+        completed_event_ids: ['E1'],
+        ordered_events: [
+          { event_id: 'E1', season: 2025, week: 9, tour: 'WORLD', category: 'PLATINUM', template_id: 'TEMP-1' },
+          { event_id: 'E2', season: 2025, week: 10, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-2' },
+          { event_id: 'E3', season: 2025, week: 11, tour: 'WORLD', category: 'SILVER', template_id: 'TEMP-3' }
+        ]
+      }
     })
     api.getRunStatusSummary.mockResolvedValue({
       run_id: 'run-a',
@@ -216,6 +225,7 @@ describe('RunPage', () => {
     expect(screen.getByRole('link', { name: 'Inspect season chain' })).toHaveAttribute('href', '/runs/run-a/season-chain')
     expect(screen.getByRole('link', { name: 'Inspect aggregated run activity' })).toHaveAttribute('href', '/runs/run-a/activity')
     expect(screen.getByRole('link', { name: 'Inspect ordered season calendar' })).toHaveAttribute('href', '/runs/run-a/calendar')
+    expect(screen.getByRole('link', { name: 'E2' })).toHaveAttribute('href', '/runs/run-a/calendar/E2')
     expect(screen.getByRole('link', { name: 'Inspect source metadata' })).toHaveAttribute(
       'href',
       '/runs/run-a/bootstrap-lineage'

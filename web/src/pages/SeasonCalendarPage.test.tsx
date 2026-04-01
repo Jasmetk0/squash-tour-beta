@@ -53,10 +53,11 @@ describe('SeasonCalendarPage', () => {
     expect(await screen.findByText('1/4')).toBeInTheDocument()
     const nextEventSection = screen.getByRole('heading', { name: 'Next event focus' }).closest('article')
     expect(nextEventSection).not.toBeNull()
-    expect(within(nextEventSection as HTMLElement).getByText('E1')).toBeInTheDocument()
+    const nextEventLink = within(nextEventSection as HTMLElement).getByRole('link', { name: 'E1' })
+    expect(nextEventLink).toHaveAttribute('href', '/runs/run-a/calendar/E1')
   })
 
-  it('renders completed, next, and upcoming markers plus completed detail links only when persisted', async () => {
+  it('renders completed, next, and upcoming markers with planned-event links and optional history hints', async () => {
     renderWithRoute(<SeasonCalendarPage />, '/runs/run-a/calendar')
 
     const list = await screen.findByRole('list', { name: 'Season calendar ordered list' })
@@ -66,8 +67,9 @@ describe('SeasonCalendarPage', () => {
     expect(items[1]).toHaveTextContent('Next')
     expect(items[2]).toHaveTextContent('Upcoming')
 
-    expect(within(items[0]).getByRole('link', { name: 'E2' })).toHaveAttribute('href', '/runs/run-a/events/E2')
-    expect(within(items[1]).queryByRole('link', { name: 'E1' })).not.toBeInTheDocument()
+    expect(within(items[0]).getByRole('link', { name: 'E2' })).toHaveAttribute('href', '/runs/run-a/calendar/E2')
+    expect(within(items[0]).getByRole('link', { name: 'history' })).toHaveAttribute('href', '/runs/run-a/events/E2')
+    expect(within(items[1]).getByRole('link', { name: 'E1' })).toHaveAttribute('href', '/runs/run-a/calendar/E1')
   })
 
   it('filters by week/category/text without re-sorting matching entries', async () => {

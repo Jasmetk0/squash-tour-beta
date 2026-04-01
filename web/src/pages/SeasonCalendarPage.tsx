@@ -13,24 +13,7 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
-
-type CalendarStatus = 'Completed' | 'Next' | 'Upcoming'
-
-function getCalendarStatus({
-  index,
-  nextEventIndex,
-  completedEventIds,
-  eventId
-}: {
-  index: number
-  nextEventIndex: number
-  completedEventIds: Set<string>
-  eventId: string
-}): CalendarStatus {
-  if (completedEventIds.has(eventId)) return 'Completed'
-  if (index === nextEventIndex) return 'Next'
-  return 'Upcoming'
-}
+import { getPlannedEventStatus } from './plannedEventUtils'
 
 export function SeasonCalendarPage(): JSX.Element {
   const { runId = '' } = useParams()
@@ -160,7 +143,7 @@ export function SeasonCalendarPage(): JSX.Element {
           <ol className="item-list" aria-label="Season calendar ordered list">
             {filteredEvents.map((event) => {
               const absoluteIndex = orderedEvents.indexOf(event)
-              const status = getCalendarStatus({
+              const status = getPlannedEventStatus({
                 index: absoluteIndex,
                 nextEventIndex,
                 completedEventIds,
@@ -176,12 +159,17 @@ export function SeasonCalendarPage(): JSX.Element {
                       { label: 'Status', value: status },
                       {
                         label: 'Event ID',
-                        value:
-                          status === 'Completed' && hasPersistedDetail ? (
-                            <Link to={`/runs/${runId}/events/${encodeURIComponent(event.event_id)}`}>{event.event_id}</Link>
-                          ) : (
-                            event.event_id
-                          )
+                        value: (
+                          <>
+                            <Link to={`/runs/${runId}/calendar/${encodeURIComponent(event.event_id)}`}>{event.event_id}</Link>
+                            {status === 'Completed' && hasPersistedDetail ? (
+                              <>
+                                {' '}·{' '}
+                                <Link to={`/runs/${runId}/events/${encodeURIComponent(event.event_id)}`}>history</Link>
+                              </>
+                            ) : null}
+                          </>
+                        )
                       },
                       { label: 'Season', value: event.season },
                       { label: 'Week', value: event.week },
@@ -202,7 +190,10 @@ export function SeasonCalendarPage(): JSX.Element {
         <SectionCard title="Next event focus">
           <MetadataList
             items={[
-              { label: 'Event ID', value: nextEvent.event_id },
+              {
+                label: 'Event ID',
+                value: <Link to={`/runs/${runId}/calendar/${encodeURIComponent(nextEvent.event_id)}`}>{nextEvent.event_id}</Link>
+              },
               { label: 'Season', value: nextEvent.season },
               { label: 'Week', value: nextEvent.week },
               { label: 'Tour', value: nextEvent.tour },

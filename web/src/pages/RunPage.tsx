@@ -268,6 +268,10 @@ export function RunPage(): JSX.Element {
                   value: hasLineageRelationships ? <Link to={`/runs/${runId}/season-chain`}>Inspect season chain</Link> : 'None yet'
                 },
                 {
+                  label: 'Run activity',
+                  value: <Link to={`/runs/${runId}/activity`}>Inspect aggregated run activity</Link>
+                },
+                {
                   label: 'Bootstrap / lineage',
                   value: sourceQuery.data ? <Link to={`/runs/${runId}/bootstrap-lineage`}>Inspect source metadata</Link> : 'None yet'
                 }

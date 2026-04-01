@@ -224,6 +224,9 @@ export function RunDiagnosticsPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title="Recent activity">
+        <p>
+          <Link to={`/runs/${runId}/activity`}>Open aggregated run activity feed</Link>
+        </p>
         <MetadataList
           items={[
             {
@@ -431,6 +434,9 @@ export function RunDiagnosticsPage(): JSX.Element {
           </li>
           <li>
             <Link to={`/runs/${runId}/events`}>Events</Link>
+          </li>
+          <li>
+            <Link to={`/runs/${runId}/activity`}>Activity</Link>
           </li>
           <li>
             <Link to={`/runs/${runId}/finals`}>World Tour Finals</Link>

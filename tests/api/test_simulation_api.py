@@ -386,3 +386,78 @@ def test_runs_index_endpoint_lists_runs_with_deterministic_order_and_compact_lin
         assert run_a["source_type"] == "rollover_bootstrap"
         assert run_a["parent_run_id"] == "run-z"
         assert run_a["child_run_count"] == 0
+
+
+def test_run_activity_endpoint_returns_compact_deterministic_feed(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-activity.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-activity", "seed": 8080, "season": 2027})
+        assert status == 201
+
+        status, empty = _request("GET", f"{server.base_url}/runs/run-activity/activity")
+        assert status == 200
+        assert empty == {"run_id": "run-activity", "items": []}
+
+        status, _ = _request("POST", f"{server.base_url}/runs/run-activity/simulate/full-season")
+        assert status == 200
+        status, _ = _request("GET", f"{server.base_url}/runs/run-activity/finals/qualification")
+        assert status == 200
+        status, _ = _request("POST", f"{server.base_url}/runs/run-activity/simulate/world-tour-finals")
+        assert status == 200
+        status, _ = _request("POST", f"{server.base_url}/runs/run-activity/rollover/next-season")
+        assert status == 200
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/runs/run-activity/bootstrap-next-season",
+            {"child_run_id": "run-activity-child"},
+        )
+        assert status == 200
+
+        status, payload = _request("GET", f"{server.base_url}/runs/run-activity/activity")
+        assert status == 200
+        assert list(payload.keys()) == ["run_id", "items"]
+        assert payload["run_id"] == "run-activity"
+        assert payload["items"]
+
+        kinds = {item["kind"] for item in payload["items"]}
+        assert "event" in kinds
+        assert "ranking_snapshot" in kinds
+        assert "race_snapshot" in kinds
+        assert "finals_qualification" in kinds
+        assert "finals_result" in kinds
+        assert "rollover" in kinds
+        assert "bootstrap_child" in kinds
+
+        first = payload["items"][0]
+        assert set(first.keys()) == {
+            "kind",
+            "sequence",
+            "label",
+            "season",
+            "week",
+            "event_id",
+            "snapshot_sequence",
+            "source_event_id",
+            "related_run_id",
+        }
+
+        kind_order = {
+            "event": 1,
+            "ranking_snapshot": 2,
+            "race_snapshot": 3,
+            "finals_qualification": 4,
+            "finals_result": 5,
+            "rollover": 6,
+            "bootstrap_child": 7,
+        }
+        tuples = [
+            (
+                item["season"] if item["season"] is not None else 9999,
+                item["week"] if item["week"] is not None else 99,
+                kind_order[item["kind"]],
+                item["sequence"] if item["sequence"] is not None else 999999,
+                item["event_id"] or item["source_event_id"] or item["related_run_id"] or item["label"],
+            )
+            for item in payload["items"]
+        ]
+        assert tuples == sorted(tuples)

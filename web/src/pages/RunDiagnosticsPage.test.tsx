@@ -160,8 +160,8 @@ describe('RunDiagnosticsPage', () => {
       '/runs/run-links/snapshots/race/14'
     )
     expect(
-      screen.getByRole('link', { name: 'Inspect Finals status (qualification available, result pending)' })
-    ).toHaveAttribute('href', '/runs/run-links/finals')
+      screen.getByRole('link', { name: 'Inspect Finals qualification detail (qualification available, result pending)' })
+    ).toHaveAttribute('href', '/runs/run-links/finals/qualification')
     expect(screen.getByRole('link', { name: 'Inspect latest rollover details' })).toHaveAttribute(
       'href',
       '/runs/run-links/rollover'
@@ -169,6 +169,21 @@ describe('RunDiagnosticsPage', () => {
     expect(screen.getByRole('link', { name: 'Inspect season chain (1 child run(s))' })).toHaveAttribute(
       'href',
       '/runs/run-links/season-chain'
+    )
+  })
+
+  it('uses finals result detail in diagnostics when finals result exists', async () => {
+    api.getFinalsSummary.mockResolvedValueOnce({
+      run_id: 'run-a',
+      season: 2028,
+      qualification: { qualified_players: [] },
+      result: { champion_player_id: 'P1' }
+    })
+    renderWithRoute(<RunDiagnosticsPage />, '/runs/run-links/diagnostics')
+
+    expect(await screen.findByRole('link', { name: 'Inspect Finals result detail (result available)' })).toHaveAttribute(
+      'href',
+      '/runs/run-links/finals/result'
     )
   })
 

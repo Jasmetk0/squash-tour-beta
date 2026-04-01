@@ -17,6 +17,7 @@ import type {
   RunLineageApiResponse,
   RunStatusSummary,
   RunSourceApiResponse,
+  RunsIndexResponse,
   SeasonRolloverExecutionResponse,
   SeasonRolloverSummaryApiResponse,
   RunSummary,
@@ -55,6 +56,10 @@ export function getHealth(): Promise<HealthResponse> {
 
 export function createRun(payload: CreateRunPayload): Promise<RunSummary> {
   return request('/runs', { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function listRuns(): Promise<RunsIndexResponse> {
+  return request('/runs')
 }
 
 export function getRun(runId: string): Promise<SeasonStateResponse> {

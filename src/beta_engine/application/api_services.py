@@ -58,6 +58,24 @@ class PersistedRunSummary:
 
 
 @dataclass(frozen=True)
+class RunIndexSummaryProgress:
+    next_event_index: int
+    total_events: int
+    completed_event_count: int
+
+
+@dataclass(frozen=True)
+class RunIndexSummary:
+    run_id: str
+    season: int
+    seed: int
+    progress: RunIndexSummaryProgress
+    source_type: str | None
+    parent_run_id: str | None
+    child_run_count: int
+
+
+@dataclass(frozen=True)
 class RunStatusSummaryProgress:
     next_event_index: int
     total_events: int
@@ -350,6 +368,32 @@ class SimulationApiService:
                 race_snapshots=self.repository.count_race_snapshots(run_id=run_id),
             ),
         )
+
+    def list_runs_index(self) -> list[RunIndexSummary]:
+        runs = self.repository.list_simulation_runs()
+        child_counts = self.repository.list_child_run_counts()
+        summaries: list[RunIndexSummary] = []
+        for run in runs:
+            state = self.repository.load_season_state(run_id=run.run_id)
+            if state is None:
+                continue
+            source_type = None if run.source_type == "fresh_seed" else run.source_type
+            summaries.append(
+                RunIndexSummary(
+                    run_id=run.run_id,
+                    season=run.season,
+                    seed=run.seed,
+                    progress=RunIndexSummaryProgress(
+                        next_event_index=state.next_event_index,
+                        total_events=len(state.ordered_events),
+                        completed_event_count=len(state.completed_event_ids),
+                    ),
+                    source_type=source_type,
+                    parent_run_id=run.parent_run_id,
+                    child_run_count=child_counts.get(run.run_id, 0),
+                )
+            )
+        return summaries
 
     def list_events(self, *, run_id: str) -> list[PersistedEventRecord]:
         return self.repository.list_completed_events(run_id=run_id)

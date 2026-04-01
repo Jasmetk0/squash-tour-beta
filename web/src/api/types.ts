@@ -42,6 +42,22 @@ export type RunStatusSummary = {
   }
 }
 
+export type RunsIndexResponse = {
+  runs: Array<{
+    run_id: string
+    season: number
+    seed: number
+    progress: {
+      next_event_index: number
+      total_events: number
+      completed_event_count: number
+    }
+    source_type: 'bootstrap' | 'new_run' | string | null
+    parent_run_id: string | null
+    child_run_count: number
+  }>
+}
+
 export type SeasonStateResponse = {
   run: RunSummary
   season_state: {

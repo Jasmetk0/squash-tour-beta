@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
-import { createRun, getHealth, getRun, getRunLineage, getRunSource, getRunStatusSummary } from '../api/client'
-import { CompactSummaryCard, EmptyState, MetadataList, PageIntro, SummaryPills } from '../components/RunScopedUi'
+import { createRun, getHealth, getRun, getRunLineage, getRunSource, getRunStatusSummary, listRuns } from '../api/client'
+import { CompactSummaryCard, EmptyState, MetadataList, PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
 import { SUPPORTED_CALENDAR_SEASON } from '../config'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -33,6 +33,7 @@ export function DashboardPage(): JSX.Element {
   const [createError, setCreateError] = useState<string | null>(null)
   const [openError, setOpenError] = useState<string | null>(null)
   const [resumeError, setResumeError] = useState<string | null>(null)
+  const [runsFilter, setRunsFilter] = useState('')
 
   const health = useQuery({ queryKey: ['health'], queryFn: getHealth, retry: false })
   const rememberedRunQuery = useQuery({
@@ -51,6 +52,11 @@ export function DashboardPage(): JSX.Element {
     queryKey: ['dashboard-remembered-run-lineage', lastRunId],
     queryFn: () => getRunLineage(lastRunId ?? ''),
     enabled: Boolean(lastRunId),
+    retry: false
+  })
+  const runsQuery = useQuery({
+    queryKey: ['dashboard-runs-index'],
+    queryFn: listRuns,
     retry: false
   })
 
@@ -109,6 +115,8 @@ export function DashboardPage(): JSX.Element {
           ...(rememberedRunSource ? [{ label: 'Bootstrap / Lineage', href: `/runs/${lastRunId}/bootstrap-lineage` }] : [])
         ]
       : []
+  const filteredRuns =
+    runsQuery.data?.runs.filter((run) => run.run_id.toLowerCase().includes(runsFilter.trim().toLowerCase())) ?? []
 
   return (
     <section className="panel">
@@ -310,6 +318,68 @@ export function DashboardPage(): JSX.Element {
           </button>
           {openError && <p className="error">{openError}</p>}
         </form>
+
+        <section className="panel" aria-labelledby="dashboard-runs-index-heading">
+          <h3 id="dashboard-runs-index-heading">Browse existing runs</h3>
+          <label>
+            Filter by run ID
+            <input
+              value={runsFilter}
+              onChange={(e) => setRunsFilter(e.target.value)}
+              placeholder="Search run_id"
+              aria-label="Filter runs by ID"
+            />
+          </label>
+          {runsQuery.isLoading ? <p className="status">Loading existing runs...</p> : null}
+          {runsQuery.isError ? <p className="error">Runs list unavailable: {formatApiError(runsQuery.error)}</p> : null}
+          {!runsQuery.isLoading && !runsQuery.isError && runsQuery.data?.runs.length === 0 ? (
+            <EmptyState message="No runs exist yet. Create a run to populate this browser." />
+          ) : null}
+          {!runsQuery.isLoading && !runsQuery.isError && runsQuery.data && filteredRuns.length === 0 && runsQuery.data.runs.length > 0 ? (
+            <EmptyState message="No runs match the current filter." />
+          ) : null}
+          {!runsQuery.isLoading && !runsQuery.isError && filteredRuns.length > 0 ? (
+            <div className="stack">
+              {filteredRuns.map((run) => {
+                const isRemembered = lastRunId === run.run_id
+                return (
+                  <SectionCard key={run.run_id} title={run.run_id}>
+                    {isRemembered ? <p className="status">Remembered run</p> : null}
+                    <MetadataList
+                      items={[
+                        { label: 'Season', value: run.season },
+                        { label: 'Seed', value: run.seed },
+                        { label: 'Progress', value: formatProgress(run.progress.next_event_index, run.progress.total_events) },
+                        { label: 'Completed events', value: run.progress.completed_event_count },
+                        { label: 'Source type', value: run.source_type ?? 'N/A' },
+                        { label: 'Parent run', value: run.parent_run_id ?? 'None' },
+                        { label: 'Child runs', value: run.child_run_count }
+                      ]}
+                    />
+                    <p className="status">
+                      <Link to={`/runs/${run.run_id}`}>Run Detail</Link> ·{' '}
+                      <Link to={`/runs/${run.run_id}/diagnostics`}>Diagnostics</Link> ·{' '}
+                      {run.parent_run_id || run.child_run_count > 0 ? (
+                        <>
+                          <Link to={`/runs/${run.run_id}/season-chain`}>Season Chain</Link> ·{' '}
+                        </>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void openRunById(run.run_id, 'manual')
+                        }}
+                        disabled={openingTarget !== null}
+                      >
+                        Open / continue
+                      </button>
+                    </p>
+                  </SectionCard>
+                )
+              })}
+            </div>
+          ) : null}
+        </section>
       </div>
     </section>
   )

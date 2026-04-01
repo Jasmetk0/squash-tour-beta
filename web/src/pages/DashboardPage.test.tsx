@@ -30,7 +30,8 @@ const api = vi.hoisted(() => {
     getRunStatusSummary: vi.fn(),
     getRunSource: vi.fn(),
     getRunLineage: vi.fn(),
-    getRun: vi.fn()
+    getRun: vi.fn(),
+    listRuns: vi.fn()
   }
 })
 
@@ -75,6 +76,19 @@ describe('DashboardPage', () => {
       }
     })
     api.getRun.mockResolvedValue({ run: { run_id: 'run-a' } })
+    api.listRuns.mockResolvedValue({
+      runs: [
+        {
+          run_id: 'run-a',
+          season: 2027,
+          seed: 77,
+          progress: { next_event_index: 2, total_events: 14, completed_event_count: 2 },
+          source_type: null,
+          parent_run_id: null,
+          child_run_count: 0
+        }
+      ]
+    })
     navigateMock.mockReset()
   })
 
@@ -181,15 +195,15 @@ describe('DashboardPage', () => {
     expect(await screen.findByRole('link', { name: 'Finals' })).toBeInTheDocument()
     expect(await screen.findByRole('link', { name: 'Rollover' })).toBeInTheDocument()
     expect(await within(resumePanel).findByText('Most relevant next inspections')).toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: 'Run Detail' })[0]).toHaveAttribute('href', '/runs/remembered-run')
-    expect(screen.getByRole('link', { name: 'Diagnostics' })).toHaveAttribute('href', '/runs/remembered-run/diagnostics')
-    expect(screen.getByRole('link', { name: 'Season Chain' })).toHaveAttribute('href', '/runs/remembered-run/season-chain')
-    expect(screen.getByRole('link', { name: 'Finals' })).toHaveAttribute('href', '/runs/remembered-run/finals')
-    expect(screen.getByRole('link', { name: 'Rollover' })).toHaveAttribute('href', '/runs/remembered-run/rollover')
-    expect(screen.getByRole('link', { name: 'Bootstrap / Lineage' })).toHaveAttribute('href', '/runs/remembered-run/bootstrap-lineage')
-    expect(screen.getByRole('link', { name: 'parent-run' })).toHaveAttribute('href', '/runs/parent-run')
-    expect(screen.getByRole('link', { name: 'child-run-1' })).toHaveAttribute('href', '/runs/child-run-1')
-    expect(screen.getByRole('link', { name: 'child-run-2' })).toHaveAttribute('href', '/runs/child-run-2')
+    expect(within(resumePanel).getAllByRole('link', { name: 'Run Detail' })[0]).toHaveAttribute('href', '/runs/remembered-run')
+    expect(within(resumePanel).getByRole('link', { name: 'Diagnostics' })).toHaveAttribute('href', '/runs/remembered-run/diagnostics')
+    expect(within(resumePanel).getByRole('link', { name: 'Season Chain' })).toHaveAttribute('href', '/runs/remembered-run/season-chain')
+    expect(within(resumePanel).getByRole('link', { name: 'Finals' })).toHaveAttribute('href', '/runs/remembered-run/finals')
+    expect(within(resumePanel).getByRole('link', { name: 'Rollover' })).toHaveAttribute('href', '/runs/remembered-run/rollover')
+    expect(within(resumePanel).getByRole('link', { name: 'Bootstrap / Lineage' })).toHaveAttribute('href', '/runs/remembered-run/bootstrap-lineage')
+    expect(within(resumePanel).getByRole('link', { name: 'parent-run' })).toHaveAttribute('href', '/runs/parent-run')
+    expect(within(resumePanel).getByRole('link', { name: 'child-run-1' })).toHaveAttribute('href', '/runs/child-run-1')
+    expect(within(resumePanel).getByRole('link', { name: 'child-run-2' })).toHaveAttribute('href', '/runs/child-run-2')
     await userEvent.click(screen.getByRole('button', { name: 'Resume Run' }))
 
     await waitFor(() => expect(api.getRun).toHaveBeenCalledWith('remembered-run'))
@@ -256,11 +270,85 @@ describe('DashboardPage', () => {
 
     renderWithRoute(<DashboardPage />, '/')
 
-    expect(await screen.findByRole('link', { name: 'Run Detail' })).toBeInTheDocument()
-    expect(await screen.findByRole('link', { name: 'Diagnostics' })).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Season Chain' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Finals' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Rollover' })).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Bootstrap / Lineage' })).toBeInTheDocument()
+    const resumePanel = screen.getByRole('heading', { name: 'Resume remembered run' }).closest('section') as HTMLElement
+    expect(await within(resumePanel).findByRole('link', { name: 'Run Detail' })).toBeInTheDocument()
+    expect(await within(resumePanel).findByRole('link', { name: 'Diagnostics' })).toBeInTheDocument()
+    expect(within(resumePanel).queryByRole('link', { name: 'Season Chain' })).not.toBeInTheDocument()
+    expect(within(resumePanel).queryByRole('link', { name: 'Finals' })).not.toBeInTheDocument()
+    expect(within(resumePanel).queryByRole('link', { name: 'Rollover' })).not.toBeInTheDocument()
+    expect(within(resumePanel).getByRole('link', { name: 'Bootstrap / Lineage' })).toBeInTheDocument()
+  })
+
+  it('renders runs browser in backend order and shows run links', async () => {
+    api.listRuns.mockResolvedValueOnce({
+      runs: [
+        {
+          run_id: 'run-b',
+          season: 2028,
+          seed: 42,
+          progress: { next_event_index: 6, total_events: 24, completed_event_count: 5 },
+          source_type: 'bootstrap',
+          parent_run_id: 'run-a',
+          child_run_count: 1
+        },
+        {
+          run_id: 'run-c',
+          season: 2029,
+          seed: 9,
+          progress: { next_event_index: 1, total_events: 24, completed_event_count: 0 },
+          source_type: null,
+          parent_run_id: null,
+          child_run_count: 0
+        }
+      ]
+    })
+
+    renderWithRoute(<DashboardPage />, '/')
+
+    expect(await screen.findByRole('heading', { name: 'Browse existing runs' })).toBeInTheDocument()
+    const runBTitle = await screen.findByRole('heading', { name: 'run-b' })
+    const runCTitle = await screen.findByRole('heading', { name: 'run-c' })
+    expect(runBTitle.compareDocumentPosition(runCTitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.getAllByRole('link', { name: 'Run Detail' })[0]).toHaveAttribute('href', '/runs/run-b')
+    expect(screen.getAllByRole('link', { name: 'Diagnostics' })[0]).toHaveAttribute('href', '/runs/run-b/diagnostics')
+    expect(screen.getByRole('link', { name: 'Season Chain' })).toHaveAttribute('href', '/runs/run-b/season-chain')
+  })
+
+  it('shows runs browser loading, empty, and error states', async () => {
+    api.listRuns.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(() => resolve({ runs: [] }), 10)
+        })
+    )
+    renderWithRoute(<DashboardPage />, '/')
+    expect(screen.getByText('Loading existing runs...')).toBeInTheDocument()
+    expect(await screen.findByText('No runs exist yet. Create a run to populate this browser.')).toBeInTheDocument()
+
+    api.listRuns.mockRejectedValueOnce(new api.ApiError('runs unavailable', 500))
+    renderWithRoute(<DashboardPage />, '/')
+    expect(await screen.findByText('Runs list unavailable: runs unavailable')).toBeInTheDocument()
+  })
+
+  it('opens a run from the browser and keeps existing flows working', async () => {
+    api.listRuns.mockResolvedValueOnce({
+      runs: [
+        {
+          run_id: 'run-browser',
+          season: 2027,
+          seed: 101,
+          progress: { next_event_index: 3, total_events: 18, completed_event_count: 3 },
+          source_type: null,
+          parent_run_id: null,
+          child_run_count: 0
+        }
+      ]
+    })
+    api.getRun.mockResolvedValueOnce({ run: { run_id: 'run-browser' } })
+
+    renderWithRoute(<DashboardPage />, '/')
+    await userEvent.click(await screen.findByRole('button', { name: 'Open / continue' }))
+    await waitFor(() => expect(api.getRun).toHaveBeenCalledWith('run-browser'))
+    expect(navigateMock).toHaveBeenCalledWith('/runs/run-browser')
   })
 })

@@ -7,6 +7,8 @@ import { DashboardPage } from './pages/DashboardPage'
 import { EventDetailPage } from './pages/EventDetailPage'
 import { EventsPage } from './pages/EventsPage'
 import { FinalsPage } from './pages/FinalsPage'
+import { FinalsQualificationDetailPage } from './pages/FinalsQualificationDetailPage'
+import { FinalsResultDetailPage } from './pages/FinalsResultDetailPage'
 import { RolloverPage } from './pages/RolloverPage'
 import { RolloverSeasonDetailPage } from './pages/RolloverSeasonDetailPage'
 import { RunDiagnosticsPage } from './pages/RunDiagnosticsPage'
@@ -28,6 +30,8 @@ export default function App(): JSX.Element {
         <Route path="runs/:runId/diagnostics" element={<RunDiagnosticsPage />} />
         <Route path="runs/:runId/events/:eventId" element={<EventDetailPage />} />
         <Route path="runs/:runId/finals" element={<FinalsPage />} />
+        <Route path="runs/:runId/finals/qualification" element={<FinalsQualificationDetailPage />} />
+        <Route path="runs/:runId/finals/result" element={<FinalsResultDetailPage />} />
         <Route path="runs/:runId/rollover" element={<RolloverPage />} />
         <Route path="runs/:runId/rollover/:toSeason" element={<RolloverSeasonDetailPage />} />
         <Route path="runs/:runId/bootstrap-lineage" element={<BootstrapLineagePage />} />

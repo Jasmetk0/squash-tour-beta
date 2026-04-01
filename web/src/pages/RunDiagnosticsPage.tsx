@@ -22,6 +22,7 @@ import {
   SectionCard,
   SummaryPills
 } from '../components/RunScopedUi'
+import { getFinalsInspectionRoute } from './finalsDetailRoutes'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
 function artifactAvailability({
@@ -90,6 +91,11 @@ export function RunDiagnosticsPage(): JSX.Element {
   const latestRankingSnapshot = rankingSnapshotsQuery.data?.snapshots[0]
   const latestRaceSnapshot = raceSnapshotsQuery.data?.snapshots[0]
   const hasLineageChildren = (lineageQuery.data?.lineage.children.length ?? 0) > 0
+  const finalsInspectionRoute = getFinalsInspectionRoute({
+    runId,
+    hasQualification: Boolean(finalsSummaryQuery.data?.qualification),
+    hasResult: Boolean(finalsSummaryQuery.data?.result)
+  })
 
   return (
     <section className="panel">
@@ -399,9 +405,13 @@ export function RunDiagnosticsPage(): JSX.Element {
               </Link>
             </li>
           ) : null}
-          {finalsSummaryQuery.data?.qualification && !finalsSummaryQuery.data?.result ? (
+          {finalsSummaryQuery.data?.qualification || finalsSummaryQuery.data?.result ? (
             <li>
-              <Link to={`/runs/${runId}/finals`}>Inspect Finals status (qualification available, result pending)</Link>
+              <Link to={finalsInspectionRoute}>
+                {finalsSummaryQuery.data?.result
+                  ? 'Inspect Finals result detail (result available)'
+                  : 'Inspect Finals qualification detail (qualification available, result pending)'}
+              </Link>
             </li>
           ) : null}
           {latestRolloverQuery.data?.rollover ? (
@@ -419,7 +429,7 @@ export function RunDiagnosticsPage(): JSX.Element {
           !latestRaceSnapshot &&
           !latestRolloverQuery.data?.rollover &&
           !hasLineageChildren &&
-          !(finalsSummaryQuery.data?.qualification && !finalsSummaryQuery.data?.result) ? (
+          !(finalsSummaryQuery.data?.qualification || finalsSummaryQuery.data?.result) ? (
             <li>
               <span className="status">No targeted inspection links yet. Use quick navigation below.</span>
             </li>

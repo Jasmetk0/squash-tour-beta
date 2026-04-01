@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 
 import {
   getFinalsQualification,
@@ -125,6 +125,9 @@ export function FinalsPage(): JSX.Element {
       <SectionCard title="Finals qualification">
         {qualificationQuery.data ? (
           <>
+            <p>
+              <Link to={`/runs/${runId}/finals/qualification`}>Open qualification detail</Link>
+            </p>
             <SummaryPills
               items={[
                 { label: 'As of season', value: qualificationQuery.data.source_as_of_season },
@@ -151,6 +154,9 @@ export function FinalsPage(): JSX.Element {
         {hasResultError && <p className="error">Failed to load Finals result: {formatApiError(resultQuery.error)}</p>}
         {resultQuery.data ? (
           <>
+            <p>
+              <Link to={`/runs/${runId}/finals/result`}>Open result detail</Link>
+            </p>
             <SummaryPills
               items={[
                 { label: 'Event', value: resultQuery.data.event_id },

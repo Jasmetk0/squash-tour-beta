@@ -28,6 +28,7 @@ import {
   SectionCard,
   SummaryPills
 } from '../components/RunScopedUi'
+import { getFinalsInspectionRoute } from './finalsDetailRoutes'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
 export function RunPage(): JSX.Element {
@@ -144,7 +145,16 @@ export function RunPage(): JSX.Element {
     return 'Missing'
   }
 
-  const finalsInspectionNeeded = Boolean(finalsSummaryQuery.data?.qualification && !finalsSummaryQuery.data?.result)
+  const finalsInspectionRoute = getFinalsInspectionRoute({
+    runId,
+    hasQualification: Boolean(finalsSummaryQuery.data?.qualification),
+    hasResult: Boolean(finalsSummaryQuery.data?.result)
+  })
+  const finalsInspectionLabel = finalsSummaryQuery.data?.result
+    ? 'Inspect Finals result detail'
+    : finalsSummaryQuery.data?.qualification
+      ? 'Inspect Finals qualification detail'
+      : 'Inspect Finals overview'
   const hasLineageRelationships = Boolean(
     sourceQuery.data?.source.parent_run_id || (lineageQuery.data?.lineage.children.length ?? 0) > 0
   )
@@ -257,7 +267,7 @@ export function RunPage(): JSX.Element {
                 },
                 {
                   label: 'World Tour Finals',
-                  value: finalsInspectionNeeded ? <Link to={`/runs/${runId}/finals`}>Inspect pending Finals result</Link> : 'None yet'
+                  value: finalsSummaryQuery.data ? <Link to={finalsInspectionRoute}>{finalsInspectionLabel}</Link> : 'None yet'
                 },
                 {
                   label: 'Latest rollover',

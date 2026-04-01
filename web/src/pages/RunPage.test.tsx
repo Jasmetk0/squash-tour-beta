@@ -208,13 +208,31 @@ describe('RunPage', () => {
     expect(screen.getByRole('link', { name: 'E3' })).toHaveAttribute('href', '/runs/run-a/events/E3')
     expect(screen.getByRole('link', { name: 'Seq 10' })).toHaveAttribute('href', '/runs/run-a/snapshots/ranking/10')
     expect(screen.getByRole('link', { name: 'Seq 7' })).toHaveAttribute('href', '/runs/run-a/snapshots/race/7')
-    expect(screen.getByRole('link', { name: 'Inspect pending Finals result' })).toHaveAttribute('href', '/runs/run-a/finals')
+    expect(screen.getByRole('link', { name: 'Inspect Finals qualification detail' })).toHaveAttribute(
+      'href',
+      '/runs/run-a/finals/qualification'
+    )
     expect(screen.getByRole('link', { name: 'Inspect latest rollover' })).toHaveAttribute('href', '/runs/run-a/rollover/2026')
     expect(screen.getByRole('link', { name: 'Inspect season chain' })).toHaveAttribute('href', '/runs/run-a/season-chain')
     expect(screen.getByRole('link', { name: 'Inspect aggregated run activity' })).toHaveAttribute('href', '/runs/run-a/activity')
     expect(screen.getByRole('link', { name: 'Inspect source metadata' })).toHaveAttribute(
       'href',
       '/runs/run-a/bootstrap-lineage'
+    )
+  })
+
+  it('uses finals result detail link when finals result exists', async () => {
+    api.getFinalsSummary.mockResolvedValueOnce({
+      run_id: 'run-a',
+      season: 2025,
+      qualification: { run_id: 'run-a' },
+      result: { run_id: 'run-a' }
+    })
+    renderWithRoute(<RunPage />, '/runs/run-a')
+
+    expect(await screen.findByRole('link', { name: 'Inspect Finals result detail' })).toHaveAttribute(
+      'href',
+      '/runs/run-a/finals/result'
     )
   })
 

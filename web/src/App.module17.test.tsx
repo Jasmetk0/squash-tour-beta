@@ -119,6 +119,24 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByRole('heading', { name: 'World Tour Finals' })).toBeInTheDocument()
   })
 
+  it('renders Finals qualification detail route', async () => {
+    renderAppAt('/runs/run-a/finals/qualification')
+    expect(await screen.findByRole('heading', { name: 'Finals qualification detail' })).toBeInTheDocument()
+  })
+
+  it('renders Finals result detail route', async () => {
+    api.getFinalsResult.mockResolvedValueOnce({
+      run_id: 'run-a',
+      season: 2027,
+      event_id: 'WORLD_TOUR_FINALS',
+      source_as_of_season: 2027,
+      source_as_of_week: 42,
+      result: { champion_player_id: 'P1' }
+    })
+    renderAppAt('/runs/run-a/finals/result')
+    expect(await screen.findByRole('heading', { name: 'Finals result detail' })).toBeInTheDocument()
+  })
+
   it('renders Rollover route', async () => {
     renderAppAt('/runs/run-a/rollover')
     expect(await screen.findByRole('heading', { name: 'Season Rollover' })).toBeInTheDocument()

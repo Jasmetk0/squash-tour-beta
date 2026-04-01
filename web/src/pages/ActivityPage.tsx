@@ -22,8 +22,11 @@ function activityLink(runId: string, item: RunActivityItem): JSX.Element | strin
     }
     return <Link to={`/runs/${runId}/rollover`}>Open rollover page</Link>
   }
-  if (item.kind === 'finals_qualification' || item.kind === 'finals_result') {
-    return <Link to={`/runs/${runId}/finals`}>Open finals page</Link>
+  if (item.kind === 'finals_qualification') {
+    return <Link to={`/runs/${runId}/finals/qualification`}>Open finals qualification detail</Link>
+  }
+  if (item.kind === 'finals_result') {
+    return <Link to={`/runs/${runId}/finals/result`}>Open finals result detail</Link>
   }
   if (item.kind === 'bootstrap_child' && item.related_run_id) {
     return <Link to={`/runs/${item.related_run_id}`}>Open child run</Link>

@@ -61,6 +61,11 @@ describe('FinalsPage', () => {
     expect((await screen.findAllByText(/Champion/i)).length).toBeGreaterThan(0)
     expect(await screen.findByText(/WORLD_TOUR_FINALS/i)).toBeInTheDocument()
     expect(await screen.findByText(/runner_up_player_id/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open qualification detail' })).toHaveAttribute(
+      'href',
+      '/runs/run-a/finals/qualification'
+    )
+    expect(screen.getByRole('link', { name: 'Open result detail' })).toHaveAttribute('href', '/runs/run-a/finals/result')
   })
 
   it('calls finals simulation endpoint and refetches finals data', async () => {

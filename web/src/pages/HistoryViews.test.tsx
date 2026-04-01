@@ -161,6 +161,9 @@ describe('history list ordering, detail selection, and states', () => {
 
   it('renders ranking snapshots in API order with default selected styling and click-to-update detail', async () => {
     const user = userEvent.setup()
+    api.listRaceSnapshots.mockResolvedValue({
+      snapshots: [{ snapshot_sequence: 1, snapshot_kind: 'WEEK', source_event_id: 'E2', payload: { name: 'race-1' } }]
+    })
     renderWithRoute(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
 
     const list = await screen.findByRole('list', { name: 'Ranking snapshots list' })
@@ -177,6 +180,13 @@ describe('history list ordering, detail selection, and states', () => {
       '/runs/run-a/snapshots/ranking/4'
     )
     expect(screen.getByRole('link', { name: /Open source event detail page/i })).toHaveAttribute('href', '/runs/run-a/events/E2')
+    expect(screen.getByRole('link', { name: /Open planned-event detail page/i })).toHaveAttribute('href', '/runs/run-a/calendar/E2')
+    expect(screen.getByRole('link', { name: /Open week detail page \(W9\)/i })).toHaveAttribute('href', '/runs/run-a/weeks/9')
+    expect(screen.getByRole('link', { name: /Open season calendar browser/i })).toHaveAttribute('href', '/runs/run-a/calendar')
+    expect(screen.getByRole('link', { name: /Open race snapshots for matching source_event_id/i })).toHaveAttribute(
+      'href',
+      '/runs/run-a/snapshots/race'
+    )
 
     await user.click(screen.getByRole('button', { name: /3\. WEEK/i }))
     expect(await screen.findByText(/snapshot-3/)).toBeInTheDocument()
@@ -185,6 +195,53 @@ describe('history list ordering, detail selection, and states', () => {
       'href',
       '/runs/run-a/snapshots/ranking/3'
     )
+  })
+
+  it('shows readable fallback when source_event_id is missing or has no ordered-plan match', async () => {
+    api.listRankingSnapshots.mockResolvedValue({
+      snapshots: [
+        { snapshot_sequence: 7, snapshot_kind: 'WEEK', source_event_id: null, payload: {} },
+        { snapshot_sequence: 6, snapshot_kind: 'WEEK', source_event_id: 'E-UNPLANNED', payload: {} }
+      ]
+    })
+    api.listRaceSnapshots.mockResolvedValue({ snapshots: [] })
+
+    const user = userEvent.setup()
+    renderWithRoute(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
+
+    expect(await screen.findByText('No source_event_id')).toBeInTheDocument()
+    expect(screen.getByText('Missing source_event_id')).toBeInTheDocument()
+    expect(screen.getByText('Source persisted event detail unavailable.')).toBeInTheDocument()
+    expect(screen.getByText('No ordered-plan match for source_event_id.')).toBeInTheDocument()
+    expect(screen.getByText('No source week context available.')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /6\. WEEK/i }))
+
+    expect(await screen.findByText('No ordered-plan match for source_event_id.')).toBeInTheDocument()
+    expect(screen.getByText('Not found')).toBeInTheDocument()
+  })
+
+  it('filters snapshots without reordering matching API-ordered items', async () => {
+    api.listRankingSnapshots.mockResolvedValue({
+      snapshots: [
+        { snapshot_sequence: 12, snapshot_kind: 'WEEK', source_event_id: 'E2', payload: {} },
+        { snapshot_sequence: 8, snapshot_kind: 'WEEK', source_event_id: 'E1', payload: {} },
+        { snapshot_sequence: 5, snapshot_kind: 'WEEK', source_event_id: 'E2', payload: {} }
+      ]
+    })
+    api.listRaceSnapshots.mockResolvedValue({ snapshots: [] })
+    const user = userEvent.setup()
+    renderWithRoute(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
+
+    await screen.findByRole('list', { name: 'Ranking snapshots list' })
+    await user.selectOptions(screen.getByLabelText(/Filter snapshots by week/i), '9')
+    await user.type(screen.getByLabelText(/Filter snapshots by source event/i), 'E2')
+
+    const list = screen.getByRole('list', { name: 'Ranking snapshots list' })
+    const buttons = within(list).getAllByRole('button')
+    expect(buttons).toHaveLength(2)
+    expect(buttons[0]).toHaveTextContent('12. WEEK')
+    expect(buttons[1]).toHaveTextContent('5. WEEK')
   })
 
   it('respects selectedSequence query params for ranking and race snapshots', async () => {

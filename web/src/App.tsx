@@ -19,6 +19,7 @@ import { SeasonCalendarPage } from './pages/SeasonCalendarPage'
 import { SeasonChainPage } from './pages/SeasonChainPage'
 import { SnapshotDetailPage } from './pages/SnapshotDetailPage'
 import { SnapshotsPage } from './pages/SnapshotsPage'
+import { WeekDetailPage } from './pages/WeekDetailPage'
 
 export default function App(): JSX.Element {
   return (
@@ -29,6 +30,7 @@ export default function App(): JSX.Element {
         <Route path="runs/:runId" element={<RunPage />} />
         <Route path="runs/:runId/events" element={<EventsPage />} />
         <Route path="runs/:runId/calendar" element={<SeasonCalendarPage />} />
+        <Route path="runs/:runId/weeks/:week" element={<WeekDetailPage />} />
         <Route path="runs/:runId/calendar/:eventId" element={<PlannedEventDetailPage />} />
         <Route path="runs/:runId/activity" element={<ActivityPage />} />
         <Route path="runs/:runId/diagnostics" element={<RunDiagnosticsPage />} />

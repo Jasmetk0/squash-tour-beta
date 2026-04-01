@@ -55,6 +55,7 @@ describe('PlannedEventDetailPage', () => {
     expect(screen.getAllByText('E1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Next').length).toBeGreaterThan(0)
     expect(screen.getByText('2 of 3')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open week detail' })).toHaveAttribute('href', '/runs/run-a/weeks/6')
   })
 
   it('shows readable not-found behavior for event id missing from ordered season state', async () => {

@@ -170,6 +170,23 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByRole('heading', { name: 'Season calendar' })).toBeInTheDocument()
   })
 
+  it('renders week detail route', async () => {
+    api.getRun.mockResolvedValueOnce({
+      run: { run_id: 'run-a', season: 2027, seed: 5, next_event_index: 0, total_events: 2, completed_event_ids: [] },
+      season_state: {
+        season: 2027,
+        next_event_index: 0,
+        completed_event_ids: [],
+        ordered_events: [
+          { event_id: 'E2', season: 2027, week: 9, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP' },
+          { event_id: 'E3', season: 2027, week: 10, tour: 'WORLD', category: 'SILVER', template_id: 'TEMP2' }
+        ]
+      }
+    })
+    renderAppAt('/runs/run-a/weeks/9')
+    expect(await screen.findByRole('heading', { name: 'Week detail' })).toBeInTheDocument()
+  })
+
   it('renders Bootstrap/Lineage route', async () => {
     renderAppAt('/runs/run-a/bootstrap-lineage')
     expect(await screen.findByRole('heading', { name: 'Bootstrap / Lineage' })).toBeInTheDocument()

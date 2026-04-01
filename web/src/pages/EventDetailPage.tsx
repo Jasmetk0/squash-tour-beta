@@ -178,6 +178,8 @@ export function EventDetailPage(): JSX.Element {
                 />
                 <p>
                   <Link to={`/runs/${runId}/calendar/${encodeURIComponent(eventId)}`}>Open planned-event detail page</Link>
+                  {' · '}
+                  <Link to={`/runs/${runId}/weeks/${plannedEvent.week}`}>Open week detail</Link>
                 </p>
                 <p>
                   Previous planned:{' '}

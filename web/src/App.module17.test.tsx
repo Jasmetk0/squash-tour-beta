@@ -124,6 +124,12 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByRole('heading', { name: 'Run diagnostics' })).toBeInTheDocument()
   })
 
+  it('renders runs browser route', async () => {
+    api.listRuns.mockResolvedValueOnce({ runs: [] })
+    renderAppAt('/runs')
+    expect(await screen.findByRole('heading', { name: 'Runs browser' })).toBeInTheDocument()
+  })
+
   it('renders activity route', async () => {
     api.getRunActivity.mockResolvedValue({ run_id: 'run-a', items: [] })
     renderAppAt('/runs/run-a/activity')

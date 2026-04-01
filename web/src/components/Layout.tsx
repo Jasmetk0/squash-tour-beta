@@ -1,6 +1,9 @@
 import { NavLink, Outlet, useParams } from 'react-router-dom'
 
-const baseNav = [{ to: '/', label: 'Dashboard' }]
+const baseNav = [
+  { to: '/', label: 'Dashboard' },
+  { to: '/runs', label: 'Runs' }
+]
 
 export function Layout(): JSX.Element {
   const { runId } = useParams()

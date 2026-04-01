@@ -9,6 +9,7 @@ import { renderWithRoute } from '../test/testUtils'
 const api = vi.hoisted(() => ({
   listEvents: vi.fn(),
   getEvent: vi.fn(),
+  getRun: vi.fn(),
   listRankingSnapshots: vi.fn(),
   listRaceSnapshots: vi.fn(),
   ApiError: class ApiError extends Error {
@@ -31,6 +32,18 @@ describe('history list ordering, detail selection, and states', () => {
         { event_sequence: 2, event_id: 'E2', season: 2027, week: 9, template_id: null, tournament_result: null },
         { event_sequence: 1, event_id: 'E1', season: 2027, week: 8, template_id: null, tournament_result: null }
       ]
+    })
+    api.getRun.mockResolvedValue({
+      run: { run_id: 'run-a', season: 2027, seed: 42, config_version: null, config_fingerprint: null, next_event_index: 1, total_events: 2, completed_event_ids: ['E2'] },
+      season_state: {
+        season: 2027,
+        next_event_index: 1,
+        completed_event_ids: ['E2'],
+        ordered_events: [
+          { event_id: 'E2', season: 2027, week: 9, tour: 'World Tour', category: 'Diamond', template_id: 'WT-DIAMOND' },
+          { event_id: 'E1', season: 2027, week: 8, tour: 'Elite Tour', category: 'Gold', template_id: 'ET-GOLD' }
+        ]
+      }
     })
     api.getEvent.mockImplementation(async (_runId: string, eventId: string) => ({
       event_id: eventId,
@@ -91,6 +104,59 @@ describe('history list ordering, detail selection, and states', () => {
     expect((await screen.findAllByText('E2')).length).toBeGreaterThan(0)
     expect(await screen.findByText(/payload-E2/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /2\. E2/i })).toHaveClass('is-selected')
+  })
+
+
+  it('renders week and planned-event bridge links in selected event detail', async () => {
+    renderWithRoute(<EventsPage />, '/runs/run-a/events')
+
+    expect(await screen.findByRole('link', { name: /Open week detail page \(W9\)/i })).toHaveAttribute(
+      'href',
+      '/runs/run-a/weeks/9'
+    )
+    expect(screen.getByRole('link', { name: /Open planned-event detail page/i })).toHaveAttribute(
+      'href',
+      '/runs/run-a/calendar/E2'
+    )
+    expect(screen.getByRole('link', { name: /Open season calendar browser/i })).toHaveAttribute('href', '/runs/run-a/calendar')
+  })
+
+  it('shows readable ordered-plan fallback when persisted event has no plan match', async () => {
+    api.listEvents.mockResolvedValue({
+      events: [
+        { event_sequence: 3, event_id: 'E-UNPLANNED', season: 2027, week: null, template_id: null, tournament_result: null },
+        { event_sequence: 2, event_id: 'E2', season: 2027, week: 9, template_id: null, tournament_result: null }
+      ]
+    })
+
+    renderWithRoute(<EventsPage />, '/runs/run-a/events')
+
+    expect(await screen.findByRole('button', { name: /3\. E-UNPLANNED/i })).toBeInTheDocument()
+    expect(screen.getByText('No ordered-plan match for this persisted event.')).toBeInTheDocument()
+    expect(screen.getByText('No week context available for this persisted event.')).toBeInTheDocument()
+  })
+
+  it('filters events without reordering matching API-ordered items', async () => {
+    const user = userEvent.setup()
+    api.listEvents.mockResolvedValue({
+      events: [
+        { event_sequence: 3, event_id: 'BETA-EVENT', season: 2027, week: 8, template_id: 'BETA-TEMPLATE', tournament_result: null },
+        { event_sequence: 2, event_id: 'E2', season: 2027, week: 9, template_id: null, tournament_result: null },
+        { event_sequence: 1, event_id: 'ALPHA-EVENT', season: 2027, week: 8, template_id: 'ALPHA-TEMPLATE', tournament_result: null }
+      ]
+    })
+
+    renderWithRoute(<EventsPage />, '/runs/run-a/events')
+
+    await screen.findByRole('list', { name: 'Events history list' })
+    await user.type(screen.getByLabelText(/Filter events by event or template/i), 'event')
+    await user.selectOptions(screen.getByLabelText(/Filter events by week/i), '8')
+
+    const list = screen.getByRole('list', { name: 'Events history list' })
+    const buttons = within(list).getAllByRole('button')
+    expect(buttons).toHaveLength(2)
+    expect(buttons[0]).toHaveTextContent('3. BETA-EVENT')
+    expect(buttons[1]).toHaveTextContent('1. ALPHA-EVENT')
   })
 
   it('renders ranking snapshots in API order with default selected styling and click-to-update detail', async () => {

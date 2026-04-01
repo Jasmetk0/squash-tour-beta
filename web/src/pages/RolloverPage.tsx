@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FormEvent, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 
 import {
   getLatestRollover,
@@ -122,7 +122,19 @@ export function RolloverPage(): JSX.Element {
                 { label: 'Transitioned players', value: latestQuery.data.rollover.transitioned_players }
               ]}
             />
-            <MetadataList items={[{ label: 'Run ID', value: latestQuery.data.rollover.run_id }]} />
+            <MetadataList
+              items={[
+                { label: 'Run ID', value: latestQuery.data.rollover.run_id },
+                {
+                  label: 'Inspect',
+                  value: (
+                    <Link to={`/runs/${runId}/rollover/${latestQuery.data.rollover.to_season}`}>
+                      Open rollover season detail
+                    </Link>
+                  )
+                }
+              ]}
+            />
           </>
         )}
       </SectionCard>
@@ -160,6 +172,11 @@ export function RolloverPage(): JSX.Element {
           <button type="submit">Load season data</button>
         </form>
         {selectedSeason === null && <EmptyState message="Select a season to inspect rollover payloads." />}
+        {selectedSeason !== null ? (
+          <p>
+            <Link to={`/runs/${runId}/rollover/${selectedSeason}`}>Open rollover season detail</Link>
+          </p>
+        ) : null}
       </SectionCard>
 
       {selectedSeason !== null && (

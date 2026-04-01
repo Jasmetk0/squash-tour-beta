@@ -79,6 +79,11 @@ describe('Module 17 pages through routes', () => {
     })
     api.getFinalsResult.mockRejectedValue(new Error('no result yet'))
     api.getLatestRollover.mockRejectedValue(new Error('no rollover'))
+    api.getRolloverBySeason.mockResolvedValue({
+      rollover: { run_id: 'run-a', from_season: 2027, to_season: 2028, transitioned_players: 64, metadata: {} }
+    })
+    api.getPlayerTransitions.mockResolvedValue({ run_id: 'run-a', to_season: 2028, transitions: [] })
+    api.getNextSeasonPlayers.mockResolvedValue({ run_id: 'run-a', to_season: 2028, players: [] })
     api.getRunSource.mockResolvedValue({
       source: {
         source_type: 'new_run',
@@ -117,6 +122,12 @@ describe('Module 17 pages through routes', () => {
   it('renders Rollover route', async () => {
     renderAppAt('/runs/run-a/rollover')
     expect(await screen.findByRole('heading', { name: 'Season Rollover' })).toBeInTheDocument()
+  })
+
+
+  it('renders rollover season detail route', async () => {
+    renderAppAt('/runs/run-a/rollover/2028')
+    expect(await screen.findByRole('heading', { name: 'Rollover season detail' })).toBeInTheDocument()
   })
 
   it('renders diagnostics route', async () => {

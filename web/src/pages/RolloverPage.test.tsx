@@ -70,6 +70,8 @@ describe('RolloverPage', () => {
     expect(await screen.findByText(/Target season inspection summary/i)).toBeInTheDocument()
     expect(await screen.findByText(/Transition records/i)).toBeInTheDocument()
     expect((await screen.findAllByText(/Next-season players/i)).length).toBeGreaterThan(0)
+
+    expect(screen.getAllByRole('link', { name: 'Open rollover season detail' })[0]).toHaveAttribute('href', '/runs/run-a/rollover/2028')
   })
 
   it('calls rollover endpoint and refreshes rollover queries', async () => {

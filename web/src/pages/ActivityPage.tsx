@@ -17,6 +17,9 @@ function activityLink(runId: string, item: RunActivityItem): JSX.Element | strin
     return <Link to={`/runs/${runId}/snapshots/race/${item.snapshot_sequence}`}>Open race snapshot</Link>
   }
   if (item.kind === 'rollover') {
+    if (item.season !== null) {
+      return <Link to={`/runs/${runId}/rollover/${item.season}`}>Open rollover season detail</Link>
+    }
     return <Link to={`/runs/${runId}/rollover`}>Open rollover page</Link>
   }
   if (item.kind === 'finals_qualification' || item.kind === 'finals_result') {

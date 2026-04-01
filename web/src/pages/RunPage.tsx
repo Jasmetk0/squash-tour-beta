@@ -261,7 +261,9 @@ export function RunPage(): JSX.Element {
                 },
                 {
                   label: 'Latest rollover',
-                  value: latestRolloverQuery.data ? <Link to={`/runs/${runId}/rollover`}>Inspect latest rollover</Link> : 'None yet'
+                  value: latestRolloverQuery.data ? (
+                    <Link to={`/runs/${runId}/rollover/${latestRolloverQuery.data.rollover.to_season}`}>Inspect latest rollover</Link>
+                  ) : 'None yet'
                 },
                 {
                   label: 'Season chain',

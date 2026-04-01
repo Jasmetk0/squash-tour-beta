@@ -1,9 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
-import { getEvent, listEvents } from '../api/client'
-import { CompactSummaryCard, CurrentContextStrip, EmptyState, JsonPayloadBlock, RunScopedHeader, SectionCard } from '../components/RunScopedUi'
+import { getEvent, getRun, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
+import {
+  CompactSummaryCard,
+  CurrentContextStrip,
+  EmptyState,
+  JsonPayloadBlock,
+  MetadataList,
+  RunScopedHeader,
+  SectionCard,
+  SummaryPills
+} from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
+import { getPlannedEventStatus } from './plannedEventUtils'
 
 export function EventDetailPage(): JSX.Element {
   const { runId = '', eventId = '' } = useParams()
@@ -19,10 +29,48 @@ export function EventDetailPage(): JSX.Element {
     queryFn: () => listEvents(runId),
     enabled: Boolean(runId && eventId)
   })
+  const runQuery = useQuery({
+    queryKey: ['run', runId],
+    queryFn: () => getRun(runId),
+    enabled: Boolean(runId && eventId),
+    retry: false
+  })
+  const rankingSnapshotsQuery = useQuery({
+    queryKey: ['ranking-snapshots', runId],
+    queryFn: () => listRankingSnapshots(runId),
+    enabled: Boolean(runId && eventId),
+    retry: false
+  })
+  const raceSnapshotsQuery = useQuery({
+    queryKey: ['race-snapshots', runId],
+    queryFn: () => listRaceSnapshots(runId),
+    enabled: Boolean(runId && eventId),
+    retry: false
+  })
+
   const events = eventsQuery.data?.events ?? []
   const currentEventIndex = events.findIndex((item) => item.event_id === eventId)
   const previousEvent = currentEventIndex > 0 ? events[currentEventIndex - 1] : null
   const nextEvent = currentEventIndex >= 0 && currentEventIndex < events.length - 1 ? events[currentEventIndex + 1] : null
+  const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
+  const plannedEventIndex = orderedEvents.findIndex((item) => item.event_id === eventId)
+  const plannedEvent = plannedEventIndex >= 0 ? orderedEvents[plannedEventIndex] : null
+  const previousPlannedEvent = plannedEventIndex > 0 ? orderedEvents[plannedEventIndex - 1] : null
+  const nextPlannedEvent =
+    plannedEventIndex >= 0 && plannedEventIndex < orderedEvents.length - 1 ? orderedEvents[plannedEventIndex + 1] : null
+  const completedEventIds = new Set(runQuery.data?.season_state.completed_event_ids ?? [])
+  const plannedStatus = plannedEvent
+    ? getPlannedEventStatus({
+        index: plannedEventIndex,
+        nextEventIndex: runQuery.data?.season_state.next_event_index ?? 0,
+        completedEventIds,
+        eventId: plannedEvent.event_id
+      })
+    : null
+  const relatedRankingSnapshots = (rankingSnapshotsQuery.data?.snapshots ?? []).filter(
+    (snapshot) => snapshot.source_event_id === eventId
+  )
+  const relatedRaceSnapshots = (raceSnapshotsQuery.data?.snapshots ?? []).filter((snapshot) => snapshot.source_event_id === eventId)
 
   return (
     <section className="panel">
@@ -42,7 +90,13 @@ export function EventDetailPage(): JSX.Element {
 
       <SectionCard title="Event context">
         <p>
+          <Link to={`/runs/${runId}/calendar`}>Back to Season Calendar</Link>
+          {' · '}
+          <Link to={`/runs/${runId}/calendar/${encodeURIComponent(eventId)}`}>Open planned-event detail</Link>
+          {' · '}
           <Link to={`/runs/${runId}/events`}>Back to events history</Link>
+          {' · '}
+          <Link to={`/runs/${runId}/activity`}>Open activity</Link>
         </p>
         <p>
           Previous:{' '}
@@ -87,6 +141,110 @@ export function EventDetailPage(): JSX.Element {
                   { label: 'Season', value: eventQuery.data.season ?? '—' },
                   { label: 'Week', value: eventQuery.data.week ?? '—' },
                   { label: 'Template', value: eventQuery.data.template_id ?? '—' }
+                ]}
+              />
+            )}
+          </SectionCard>
+
+          <SectionCard title="Planned-season context">
+            {runQuery.isLoading && <p className="status">Loading planned season context...</p>}
+            {runQuery.error && <p className="error">Failed to load planned season context: {formatApiError(runQuery.error)}</p>}
+            {runQuery.data && !plannedEvent && (
+              <EmptyState message={`Event ${eventId} is not present in this run's ordered season plan.`} />
+            )}
+            {plannedEvent && (
+              <>
+                <SummaryPills
+                  items={[
+                    { label: 'Planned status', value: plannedStatus ?? '—' },
+                    { label: 'Plan position', value: `${plannedEventIndex + 1} of ${orderedEvents.length}` }
+                  ]}
+                />
+                <CompactSummaryCard
+                  items={[
+                    { label: 'Season', value: plannedEvent.season },
+                    { label: 'Week', value: plannedEvent.week },
+                    { label: 'Tour', value: plannedEvent.tour },
+                    { label: 'Category', value: plannedEvent.category },
+                    { label: 'Template', value: plannedEvent.template_id }
+                  ]}
+                />
+                <MetadataList
+                  items={[
+                    { label: 'Event ID', value: plannedEvent.event_id },
+                    { label: 'Plan index', value: plannedEventIndex },
+                    { label: 'Current next_event_index', value: runQuery.data?.season_state.next_event_index ?? '—' }
+                  ]}
+                />
+                <p>
+                  <Link to={`/runs/${runId}/calendar/${encodeURIComponent(eventId)}`}>Open planned-event detail page</Link>
+                </p>
+                <p>
+                  Previous planned:{' '}
+                  {previousPlannedEvent ? (
+                    <Link to={`/runs/${runId}/calendar/${encodeURIComponent(previousPlannedEvent.event_id)}`}>
+                      {previousPlannedEvent.event_id}
+                    </Link>
+                  ) : (
+                    <span>None</span>
+                  )}{' '}
+                  · Next planned:{' '}
+                  {nextPlannedEvent ? (
+                    <Link to={`/runs/${runId}/calendar/${encodeURIComponent(nextPlannedEvent.event_id)}`}>
+                      {nextPlannedEvent.event_id}
+                    </Link>
+                  ) : (
+                    <span>None</span>
+                  )}
+                </p>
+              </>
+            )}
+          </SectionCard>
+
+          <SectionCard title="Related artifacts">
+            {rankingSnapshotsQuery.error ? (
+              <p className="error">Failed to load ranking snapshots: {formatApiError(rankingSnapshotsQuery.error)}</p>
+            ) : null}
+            {raceSnapshotsQuery.error ? (
+              <p className="error">Failed to load race snapshots: {formatApiError(raceSnapshotsQuery.error)}</p>
+            ) : null}
+            {!rankingSnapshotsQuery.error && !raceSnapshotsQuery.error && (
+              <MetadataList
+                items={[
+                  {
+                    label: 'Ranking snapshots',
+                    value:
+                      relatedRankingSnapshots.length > 0 ? (
+                        <ul className="item-list">
+                          {relatedRankingSnapshots.map((snapshot) => (
+                            <li key={`ranking-${snapshot.snapshot_sequence}`}>
+                              <Link to={`/runs/${runId}/snapshots/ranking/${snapshot.snapshot_sequence}`}>
+                                Ranking snapshot #{snapshot.snapshot_sequence}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        'None linked to this event.'
+                      )
+                  },
+                  {
+                    label: 'Race snapshots',
+                    value:
+                      relatedRaceSnapshots.length > 0 ? (
+                        <ul className="item-list">
+                          {relatedRaceSnapshots.map((snapshot) => (
+                            <li key={`race-${snapshot.snapshot_sequence}`}>
+                              <Link to={`/runs/${runId}/snapshots/race/${snapshot.snapshot_sequence}`}>
+                                Race snapshot #{snapshot.snapshot_sequence}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        'None linked to this event.'
+                      )
+                  }
                 ]}
               />
             )}

@@ -99,6 +99,7 @@ describe('SnapshotDetailPage', () => {
     expect(await screen.findByText(/ranking-10/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Open source event detail/i })).toHaveAttribute('href', '/runs/run-a/events/E3')
     expect(screen.getByRole('link', { name: /Open planned-event detail/i })).toHaveAttribute('href', '/runs/run-a/calendar/E3')
+    expect(screen.getByRole('link', { name: 'Open week detail (W2)' })).toHaveAttribute('href', '/runs/run-a/weeks/2')
     expect(screen.getByText('2027')).toBeInTheDocument()
     expect(screen.getByText('Gold')).toBeInTheDocument()
     expect(screen.getByText('Next')).toBeInTheDocument()
@@ -127,6 +128,7 @@ describe('SnapshotDetailPage', () => {
       'href',
       '/runs/run-a/calendar/UNKNOWN-EVENT'
     )
+    expect(screen.queryByRole('link', { name: /Open week detail/i })).not.toBeInTheDocument()
   })
 
   it('keeps previous/next navigation in backend order', async () => {

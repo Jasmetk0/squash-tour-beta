@@ -165,6 +165,11 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByRole('heading', { name: 'Run activity' })).toBeInTheDocument()
   })
 
+  it('renders season calendar route', async () => {
+    renderAppAt('/runs/run-a/calendar')
+    expect(await screen.findByRole('heading', { name: 'Season calendar' })).toBeInTheDocument()
+  })
+
   it('renders Bootstrap/Lineage route', async () => {
     renderAppAt('/runs/run-a/bootstrap-lineage')
     expect(await screen.findByRole('heading', { name: 'Bootstrap / Lineage' })).toBeInTheDocument()

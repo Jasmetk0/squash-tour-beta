@@ -11,6 +11,7 @@ export function Layout(): JSX.Element {
     ? [
         { to: `/runs/${runId}`, label: 'Run Detail' },
         { to: `/runs/${runId}/events`, label: 'Events' },
+        { to: `/runs/${runId}/calendar`, label: 'Season Calendar' },
         { to: `/runs/${runId}/activity`, label: 'Activity' },
         { to: `/runs/${runId}/diagnostics`, label: 'Diagnostics' },
         { to: `/runs/${runId}/finals`, label: 'World Tour Finals' },

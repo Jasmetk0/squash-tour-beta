@@ -68,7 +68,8 @@ label {
   margin-bottom: 0.75rem;
 }
 
-input {
+input,
+select {
   margin-top: 0.25rem;
   padding: 0.5rem;
   border-radius: 8px;

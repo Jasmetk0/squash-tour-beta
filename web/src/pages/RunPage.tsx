@@ -284,6 +284,10 @@ export function RunPage(): JSX.Element {
                   value: <Link to={`/runs/${runId}/activity`}>Inspect aggregated run activity</Link>
                 },
                 {
+                  label: 'Season calendar',
+                  value: <Link to={`/runs/${runId}/calendar`}>Inspect ordered season calendar</Link>
+                },
+                {
                   label: 'Bootstrap / lineage',
                   value: sourceQuery.data ? <Link to={`/runs/${runId}/bootstrap-lineage`}>Inspect source metadata</Link> : 'None yet'
                 }

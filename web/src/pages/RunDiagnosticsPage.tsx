@@ -446,6 +446,9 @@ export function RunDiagnosticsPage(): JSX.Element {
             <Link to={`/runs/${runId}/events`}>Events</Link>
           </li>
           <li>
+            <Link to={`/runs/${runId}/calendar`}>Season Calendar</Link>
+          </li>
+          <li>
             <Link to={`/runs/${runId}/activity`}>Activity</Link>
           </li>
           <li>

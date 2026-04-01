@@ -14,6 +14,7 @@ import { RolloverSeasonDetailPage } from './pages/RolloverSeasonDetailPage'
 import { RunDiagnosticsPage } from './pages/RunDiagnosticsPage'
 import { RunPage } from './pages/RunPage'
 import { RunsPage } from './pages/RunsPage'
+import { SeasonCalendarPage } from './pages/SeasonCalendarPage'
 import { SeasonChainPage } from './pages/SeasonChainPage'
 import { SnapshotDetailPage } from './pages/SnapshotDetailPage'
 import { SnapshotsPage } from './pages/SnapshotsPage'
@@ -26,6 +27,7 @@ export default function App(): JSX.Element {
         <Route path="runs" element={<RunsPage />} />
         <Route path="runs/:runId" element={<RunPage />} />
         <Route path="runs/:runId/events" element={<EventsPage />} />
+        <Route path="runs/:runId/calendar" element={<SeasonCalendarPage />} />
         <Route path="runs/:runId/activity" element={<ActivityPage />} />
         <Route path="runs/:runId/diagnostics" element={<RunDiagnosticsPage />} />
         <Route path="runs/:runId/events/:eventId" element={<EventDetailPage />} />

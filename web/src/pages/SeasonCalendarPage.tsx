@@ -13,7 +13,7 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
-import { getPlannedEventStatus } from './plannedEventUtils'
+import { getPlannedEventStatus, getWeeksInSeasonOrder } from './plannedEventUtils'
 
 export function SeasonCalendarPage(): JSX.Element {
   const { runId = '' } = useParams()
@@ -33,8 +33,7 @@ export function SeasonCalendarPage(): JSX.Element {
   const persistedEventIds = useMemo(() => new Set((eventsQuery.data?.events ?? []).map((event) => event.event_id)), [eventsQuery.data?.events])
 
   const weekOptions = useMemo(() => {
-    const weeks = Array.from(new Set(orderedEvents.map((event) => event.week)))
-    return weeks
+    return getWeeksInSeasonOrder(orderedEvents)
   }, [orderedEvents])
   const categoryOptions = useMemo(() => {
     const categories = Array.from(new Set(orderedEvents.map((event) => event.category)))
@@ -172,7 +171,7 @@ export function SeasonCalendarPage(): JSX.Element {
                         )
                       },
                       { label: 'Season', value: event.season },
-                      { label: 'Week', value: event.week },
+                      { label: 'Week', value: <Link to={`/runs/${runId}/weeks/${event.week}`}>W{event.week}</Link> },
                       { label: 'Tour', value: event.tour },
                       { label: 'Category', value: event.category },
                       { label: 'Template', value: event.template_id }

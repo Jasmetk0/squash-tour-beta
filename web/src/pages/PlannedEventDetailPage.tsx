@@ -71,6 +71,8 @@ export function PlannedEventDetailPage(): JSX.Element {
         <p>
           <Link to={`/runs/${runId}/calendar`}>Back to Season Calendar</Link>
           {' · '}
+          {plannedEvent ? <Link to={`/runs/${runId}/weeks/${plannedEvent.week}`}>Open week detail</Link> : <span>Week detail unavailable</span>}
+          {' · '}
           <Link to={`/runs/${runId}`}>Back to Run Detail</Link>
           {' · '}
           <Link to={`/runs/${runId}/events`}>Open Events history</Link>

@@ -70,6 +70,7 @@ describe('SeasonCalendarPage', () => {
     expect(within(items[0]).getByRole('link', { name: 'E2' })).toHaveAttribute('href', '/runs/run-a/calendar/E2')
     expect(within(items[0]).getByRole('link', { name: 'history' })).toHaveAttribute('href', '/runs/run-a/events/E2')
     expect(within(items[1]).getByRole('link', { name: 'E1' })).toHaveAttribute('href', '/runs/run-a/calendar/E1')
+    expect(within(items[1]).getByRole('link', { name: 'W2' })).toHaveAttribute('href', '/runs/run-a/weeks/2')
   })
 
   it('filters by week/category/text without re-sorting matching entries', async () => {

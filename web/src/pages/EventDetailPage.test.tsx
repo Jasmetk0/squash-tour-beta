@@ -105,6 +105,7 @@ describe('EventDetailPage', () => {
     expect(screen.getByRole('link', { name: 'Back to Season Calendar' })).toHaveAttribute('href', '/runs/run-a/calendar')
     expect(screen.getByRole('link', { name: 'Open planned-event detail' })).toHaveAttribute('href', '/runs/run-a/calendar/E11')
     expect(screen.getByRole('link', { name: 'Open planned-event detail page' })).toHaveAttribute('href', '/runs/run-a/calendar/E11')
+    expect(screen.getByRole('link', { name: 'Open week detail' })).toHaveAttribute('href', '/runs/run-a/weeks/4')
     expect(screen.getByRole('link', { name: 'Ranking snapshot #4' })).toHaveAttribute('href', '/runs/run-a/snapshots/ranking/4')
     expect(screen.getByRole('link', { name: 'Race snapshot #8' })).toHaveAttribute('href', '/runs/run-a/snapshots/race/8')
 

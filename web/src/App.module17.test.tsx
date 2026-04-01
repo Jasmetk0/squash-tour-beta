@@ -10,6 +10,7 @@ const api = vi.hoisted(() => ({
   createRun: vi.fn(),
   getRun: vi.fn(),
   getRunStatusSummary: vi.fn(),
+  listRuns: vi.fn(),
   listEvents: vi.fn(),
   getEvent: vi.fn(),
   listRankingSnapshots: vi.fn(),

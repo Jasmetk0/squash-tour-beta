@@ -6,7 +6,7 @@ import json
 from dataclasses import dataclass
 from typing import Literal
 
-from sqlalchemy import Engine, Select, select
+from sqlalchemy import Engine, Select, func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from beta_engine.application.season_models import RaceSnapshot, RankingSnapshot, SeasonState, TournamentSimulationResult
@@ -322,6 +322,34 @@ class SimulationPersistenceRepository:
                 source_rollover_from_season=model.source_rollover_from_season,
                 source_rollover_to_season=model.source_rollover_to_season,
             )
+
+    def list_simulation_runs(self) -> list[SimulationRunInfo]:
+        with self._session_factory() as session:
+            statement = select(SimulationRunModel).order_by(SimulationRunModel.run_id.asc())
+            return [
+                SimulationRunInfo(
+                    run_id=model.run_id,
+                    season=model.season,
+                    seed=model.seed,
+                    config_version=model.config_version,
+                    config_fingerprint=model.config_fingerprint,
+                    parent_run_id=model.parent_run_id,
+                    source_type=model.source_type,
+                    source_rollover_run_id=model.source_rollover_run_id,
+                    source_rollover_from_season=model.source_rollover_from_season,
+                    source_rollover_to_season=model.source_rollover_to_season,
+                )
+                for model in session.execute(statement).scalars().all()
+            ]
+
+    def list_child_run_counts(self) -> dict[str, int]:
+        with self._session_factory() as session:
+            statement = (
+                select(SimulationRunModel.parent_run_id, func.count(SimulationRunModel.run_id))
+                .where(SimulationRunModel.parent_run_id.is_not(None))
+                .group_by(SimulationRunModel.parent_run_id)
+            )
+            return {str(parent_run_id): int(count) for parent_run_id, count in session.execute(statement).all()}
 
     def list_child_runs(self, *, parent_run_id: str) -> list[RunLineageRecord]:
         with self._session_factory() as session:

@@ -89,6 +89,26 @@ class RunStatusSummaryResponse(BaseModel):
     history_counts: RunStatusSummaryHistoryCountsResponse
 
 
+class RunIndexSummaryProgressResponse(BaseModel):
+    next_event_index: int
+    total_events: int
+    completed_event_count: int
+
+
+class RunIndexSummaryResponse(BaseModel):
+    run_id: str
+    season: int
+    seed: int
+    progress: RunIndexSummaryProgressResponse
+    source_type: str | None = None
+    parent_run_id: str | None = None
+    child_run_count: int
+
+
+class RunIndexResponse(BaseModel):
+    runs: list[RunIndexSummaryResponse] = Field(default_factory=list)
+
+
 class SimulateResponse(BaseModel):
     mode: str
     run: RunSummaryResponse

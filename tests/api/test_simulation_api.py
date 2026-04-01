@@ -351,3 +351,38 @@ def test_run_status_summary_endpoint_returns_compact_aggregates(tmp_path) -> Non
         status, child = _request("GET", f"{server.base_url}/runs/run-status-child/status-summary")
         assert status == 200
         assert child["source"] == {"source_type": "rollover_bootstrap", "parent_run_id": "run-status"}
+
+
+def test_runs_index_endpoint_lists_runs_with_deterministic_order_and_compact_lineage_fields(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-runs-index.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-z", "seed": 9001, "season": 2027})
+        assert status == 201
+        status, _ = _request("POST", f"{server.base_url}/runs/run-z/simulate/next-week")
+        assert status == 200
+        status, _ = _request("POST", f"{server.base_url}/runs/run-z/simulate/full-season")
+        assert status == 200
+        status, _ = _request("POST", f"{server.base_url}/runs/run-z/rollover/next-season")
+        assert status == 200
+        status, _ = _request("POST", f"{server.base_url}/runs/run-z/bootstrap-next-season", {"child_run_id": "run-a"})
+        assert status == 200
+        status, _ = _request("POST", f"{server.base_url}/runs/run-z/bootstrap-next-season", {"child_run_id": "run-m"})
+        assert status == 200
+
+        status, payload = _request("GET", f"{server.base_url}/runs")
+        assert status == 200
+        assert list(payload.keys()) == ["runs"]
+        run_ids = [row["run_id"] for row in payload["runs"]]
+        assert run_ids == ["run-a", "run-m", "run-z"]
+
+        run_z = next(row for row in payload["runs"] if row["run_id"] == "run-z")
+        assert run_z["progress"]["next_event_index"] == run_z["progress"]["total_events"]
+        assert run_z["progress"]["completed_event_count"] == run_z["progress"]["total_events"]
+        assert run_z["source_type"] is None
+        assert run_z["parent_run_id"] is None
+        assert run_z["child_run_count"] == 2
+
+        run_a = next(row for row in payload["runs"] if row["run_id"] == "run-a")
+        assert run_a["source_type"] == "rollover_bootstrap"
+        assert run_a["parent_run_id"] == "run-z"
+        assert run_a["child_run_count"] == 0

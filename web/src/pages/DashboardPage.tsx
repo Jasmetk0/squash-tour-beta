@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
-import { createRun, getHealth, getRun, getRunStatusSummary } from '../api/client'
-import { CompactSummaryCard, EmptyState, PageIntro } from '../components/RunScopedUi'
+import { createRun, getHealth, getRun, getRunLineage, getRunSource, getRunStatusSummary } from '../api/client'
+import { CompactSummaryCard, EmptyState, MetadataList, PageIntro, SummaryPills } from '../components/RunScopedUi'
 import { SUPPORTED_CALENDAR_SEASON } from '../config'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -14,6 +14,10 @@ type CreateInputState = {
 }
 
 const LAST_RUN_ID_STORAGE_KEY = 'beta_engine:last_run_id'
+
+function formatProgress(nextEventIndex: number, totalEvents: number): string {
+  return `${nextEventIndex} / ${totalEvents}`
+}
 
 export function DashboardPage(): JSX.Element {
   const navigate = useNavigate()
@@ -34,6 +38,18 @@ export function DashboardPage(): JSX.Element {
   const rememberedRunQuery = useQuery({
     queryKey: ['dashboard-remembered-run', lastRunId],
     queryFn: () => getRunStatusSummary(lastRunId ?? ''),
+    enabled: Boolean(lastRunId),
+    retry: false
+  })
+  const rememberedRunSourceQuery = useQuery({
+    queryKey: ['dashboard-remembered-run-source', lastRunId],
+    queryFn: () => getRunSource(lastRunId ?? ''),
+    enabled: Boolean(lastRunId),
+    retry: false
+  })
+  const rememberedRunLineageQuery = useQuery({
+    queryKey: ['dashboard-remembered-run-lineage', lastRunId],
+    queryFn: () => getRunLineage(lastRunId ?? ''),
     enabled: Boolean(lastRunId),
     retry: false
   })
@@ -75,6 +91,25 @@ export function DashboardPage(): JSX.Element {
     await openRunById(loadRunId, 'manual')
   }
 
+  const rememberedRunSource = rememberedRunSourceQuery.data?.source
+  const rememberedRunLineage = rememberedRunLineageQuery.data?.lineage
+  const rememberedRunChildren = rememberedRunLineage?.children ?? []
+  const hasLineageSignal = Boolean(rememberedRunSource?.parent_run_id) || rememberedRunChildren.length > 0
+
+  const nextInspectionLinks =
+    lastRunId && rememberedRunQuery.data
+      ? [
+          { label: 'Run Detail', href: `/runs/${lastRunId}` },
+          { label: 'Diagnostics', href: `/runs/${lastRunId}/diagnostics` },
+          ...(hasLineageSignal ? [{ label: 'Season Chain', href: `/runs/${lastRunId}/season-chain` }] : []),
+          ...(rememberedRunQuery.data.finals.qualification_available && !rememberedRunQuery.data.finals.result_available
+            ? [{ label: 'Finals', href: `/runs/${lastRunId}/finals` }]
+            : []),
+          ...(rememberedRunQuery.data.rollover ? [{ label: 'Rollover', href: `/runs/${lastRunId}/rollover` }] : []),
+          ...(rememberedRunSource ? [{ label: 'Bootstrap / Lineage', href: `/runs/${lastRunId}/bootstrap-lineage` }] : [])
+        ]
+      : []
+
   return (
     <section className="panel">
       <PageIntro title="Dashboard" subtitle="Launch a deterministic simulation run or open an existing run from the API." />
@@ -104,16 +139,98 @@ export function DashboardPage(): JSX.Element {
               <p className="status">Remembered run ID: {lastRunId}</p>
               {rememberedRunQuery.isLoading && <p className="status">Loading remembered run summary...</p>}
               {rememberedRunQuery.data && (
-                <CompactSummaryCard
-                  items={[
-                    { label: 'Season', value: rememberedRunQuery.data.season },
-                    { label: 'Seed', value: rememberedRunQuery.data.seed },
-                    {
-                      label: 'Progress',
-                      value: `${rememberedRunQuery.data.progress.next_event_index} / ${rememberedRunQuery.data.progress.total_events}`
-                    }
-                  ]}
-                />
+                <>
+                  <CompactSummaryCard
+                    items={[
+                      { label: 'Run ID', value: rememberedRunQuery.data.run_id },
+                      { label: 'Season', value: rememberedRunQuery.data.season },
+                      { label: 'Seed', value: rememberedRunQuery.data.seed },
+                      {
+                        label: 'Progress',
+                        value: formatProgress(
+                          rememberedRunQuery.data.progress.next_event_index,
+                          rememberedRunQuery.data.progress.total_events
+                        )
+                      }
+                    ]}
+                  />
+                  <SummaryPills
+                    items={[
+                      { label: 'Completed events', value: rememberedRunQuery.data.progress.completed_event_count },
+                      { label: 'History events', value: rememberedRunQuery.data.history_counts.events },
+                      { label: 'Ranking snapshots', value: rememberedRunQuery.data.history_counts.ranking_snapshots },
+                      { label: 'Race snapshots', value: rememberedRunQuery.data.history_counts.race_snapshots },
+                      {
+                        label: 'Finals',
+                        value: rememberedRunQuery.data.finals.qualification_available
+                          ? rememberedRunQuery.data.finals.result_available
+                            ? 'Completed'
+                            : 'Ready'
+                          : 'Not qualified yet'
+                      },
+                      {
+                        label: 'Rollover',
+                        value: rememberedRunQuery.data.rollover
+                          ? `Latest: ${rememberedRunQuery.data.rollover.latest_to_season}`
+                          : 'None'
+                      }
+                    ]}
+                  />
+                  <MetadataList
+                    items={[
+                      {
+                        label: 'Source type',
+                        value: rememberedRunSource?.source_type ?? rememberedRunQuery.data.source?.source_type ?? 'N/A'
+                      },
+                      {
+                        label: 'Parent run',
+                        value: rememberedRunSource?.parent_run_id ?? rememberedRunQuery.data.source?.parent_run_id ?? 'None'
+                      },
+                      {
+                        label: 'Children',
+                        value: rememberedRunChildren.length > 0 ? rememberedRunChildren.length : rememberedRunQuery.data.lineage.child_run_count
+                      }
+                    ]}
+                  />
+                  {hasLineageSignal ? (
+                    <p className="status">
+                      Chain signal:{' '}
+                      {rememberedRunSource?.parent_run_id ? (
+                        <>
+                          Parent <Link to={`/runs/${rememberedRunSource.parent_run_id}`}>{rememberedRunSource.parent_run_id}</Link>
+                        </>
+                      ) : (
+                        'No parent'
+                      )}
+                      {rememberedRunChildren.length > 0 ? (
+                        <>
+                          {' '}
+                          · {rememberedRunChildren.length} child run{rememberedRunChildren.length === 1 ? '' : 's'}:{' '}
+                          {rememberedRunChildren.slice(0, 3).map((childRunId, index) => (
+                            <span key={childRunId}>
+                              {index > 0 ? ', ' : ''}
+                              <Link to={`/runs/${childRunId}`}>{childRunId}</Link>
+                            </span>
+                          ))}
+                          {rememberedRunChildren.length > 3 ? '…' : ''}
+                        </>
+                      ) : null}
+                    </p>
+                  ) : null}
+                  {nextInspectionLinks.length > 0 ? (
+                    <>
+                      <h4>Most relevant next inspections</h4>
+                      <p className="status">
+                        {nextInspectionLinks.map((item, index) => (
+                          <span key={item.label}>
+                            {index > 0 ? ' · ' : ''}
+                            <Link to={item.href}>{item.label}</Link>
+                          </span>
+                        ))}
+                      </p>
+                    </>
+                  ) : null}
+                </>
               )}
               {rememberedRunQuery.isError && <p className="status">Summary unavailable until this run is opened again.</p>}
               <div className="dashboard-actions-row">
@@ -139,9 +256,7 @@ export function DashboardPage(): JSX.Element {
                 </button>
               </div>
               <p className="status">
-                Quick links:{' '}
-                <Link to={`/runs/${lastRunId}`}>Run Detail</Link> · <Link to={`/runs/${lastRunId}/events`}>Events</Link> ·{' '}
-                <Link to={`/runs/${lastRunId}/finals`}>Finals</Link>
+                Quick links: <Link to={`/runs/${lastRunId}`}>Run Detail</Link> · <Link to={`/runs/${lastRunId}/events`}>Events</Link>
               </p>
             </>
           ) : (

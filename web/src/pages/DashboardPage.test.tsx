@@ -28,6 +28,8 @@ const api = vi.hoisted(() => {
     createRun: vi.fn(),
     getHealth: vi.fn(),
     getRunStatusSummary: vi.fn(),
+    getRunSource: vi.fn(),
+    getRunLineage: vi.fn(),
     getRun: vi.fn()
   }
 })
@@ -43,7 +45,34 @@ describe('DashboardPage', () => {
       run_id: 'run-a',
       season: 2027,
       seed: 77,
-      progress: { next_event_index: 2, total_events: 14, completed_event_count: 2 }
+      progress: { next_event_index: 2, total_events: 14, completed_event_count: 2 },
+      finals: { qualification_available: false, result_available: false },
+      rollover: null,
+      source: null,
+      lineage: { child_run_count: 0 },
+      history_counts: { events: 2, ranking_snapshots: 2, race_snapshots: 2 }
+    })
+    api.getRunSource.mockResolvedValue({
+      source: {
+        source_type: 'new_run',
+        parent_run_id: null,
+        source_rollover_run_id: null,
+        source_rollover_from_season: null,
+        source_rollover_to_season: null
+      }
+    })
+    api.getRunLineage.mockResolvedValue({
+      lineage: {
+        run_id: 'run-a',
+        source: {
+          source_type: 'new_run',
+          parent_run_id: null,
+          source_rollover_run_id: null,
+          source_rollover_from_season: null,
+          source_rollover_to_season: null
+        },
+        children: []
+      }
     })
     api.getRun.mockResolvedValue({ run: { run_id: 'run-a' } })
     navigateMock.mockReset()
@@ -108,7 +137,34 @@ describe('DashboardPage', () => {
       run_id: 'remembered-run',
       season: 2027,
       seed: 77,
-      progress: { next_event_index: 2, total_events: 14, completed_event_count: 2 }
+      progress: { next_event_index: 2, total_events: 14, completed_event_count: 2 },
+      finals: { qualification_available: true, result_available: false },
+      rollover: { latest_to_season: 2028, transitioned_players: 128 },
+      source: { source_type: 'bootstrap', parent_run_id: 'parent-run' },
+      lineage: { child_run_count: 2 },
+      history_counts: { events: 12, ranking_snapshots: 12, race_snapshots: 12 }
+    })
+    api.getRunSource.mockResolvedValue({
+      source: {
+        source_type: 'bootstrap',
+        parent_run_id: 'parent-run',
+        source_rollover_run_id: 'parent-run',
+        source_rollover_from_season: 2027,
+        source_rollover_to_season: 2028
+      }
+    })
+    api.getRunLineage.mockResolvedValue({
+      lineage: {
+        run_id: 'remembered-run',
+        source: {
+          source_type: 'bootstrap',
+          parent_run_id: 'parent-run',
+          source_rollover_run_id: 'parent-run',
+          source_rollover_from_season: 2027,
+          source_rollover_to_season: 2028
+        },
+        children: ['child-run-1', 'child-run-2']
+      }
     })
     api.getRun.mockResolvedValue({ run: { run_id: 'remembered-run' } })
 
@@ -119,10 +175,21 @@ describe('DashboardPage', () => {
     const resumePanel = screen.getByRole('heading', { name: 'Resume remembered run' }).closest('section') as HTMLElement
     expect(await within(resumePanel).findByText('Season')).toBeInTheDocument()
     expect(await within(resumePanel).findByText('Seed')).toBeInTheDocument()
+    expect(await within(resumePanel).findByText('Run ID')).toBeInTheDocument()
     expect(await within(resumePanel).findByText(/2\s*\/\s*14/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Run Detail' })).toHaveAttribute('href', '/runs/remembered-run')
-    expect(screen.getByRole('link', { name: 'Events' })).toHaveAttribute('href', '/runs/remembered-run/events')
+    expect(await within(resumePanel).findByText('Completed events')).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Finals' })).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Rollover' })).toBeInTheDocument()
+    expect(await within(resumePanel).findByText('Most relevant next inspections')).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Run Detail' })[0]).toHaveAttribute('href', '/runs/remembered-run')
+    expect(screen.getByRole('link', { name: 'Diagnostics' })).toHaveAttribute('href', '/runs/remembered-run/diagnostics')
+    expect(screen.getByRole('link', { name: 'Season Chain' })).toHaveAttribute('href', '/runs/remembered-run/season-chain')
     expect(screen.getByRole('link', { name: 'Finals' })).toHaveAttribute('href', '/runs/remembered-run/finals')
+    expect(screen.getByRole('link', { name: 'Rollover' })).toHaveAttribute('href', '/runs/remembered-run/rollover')
+    expect(screen.getByRole('link', { name: 'Bootstrap / Lineage' })).toHaveAttribute('href', '/runs/remembered-run/bootstrap-lineage')
+    expect(screen.getByRole('link', { name: 'parent-run' })).toHaveAttribute('href', '/runs/parent-run')
+    expect(screen.getByRole('link', { name: 'child-run-1' })).toHaveAttribute('href', '/runs/child-run-1')
+    expect(screen.getByRole('link', { name: 'child-run-2' })).toHaveAttribute('href', '/runs/child-run-2')
     await userEvent.click(screen.getByRole('button', { name: 'Resume Run' }))
 
     await waitFor(() => expect(api.getRun).toHaveBeenCalledWith('remembered-run'))
@@ -182,5 +249,18 @@ describe('DashboardPage', () => {
     renderWithRoute(<DashboardPage />, '/')
 
     expect(await screen.findByText('Summary unavailable until this run is opened again.')).toBeInTheDocument()
+  })
+
+  it('keeps next inspections compact when lineage/source are absent', async () => {
+    localStorage.setItem('beta_engine:last_run_id', 'remembered-run')
+
+    renderWithRoute(<DashboardPage />, '/')
+
+    expect(await screen.findByRole('link', { name: 'Run Detail' })).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Diagnostics' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Season Chain' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Finals' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Rollover' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Bootstrap / Lineage' })).toBeInTheDocument()
   })
 })

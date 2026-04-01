@@ -321,6 +321,9 @@ export function DashboardPage(): JSX.Element {
 
         <section className="panel" aria-labelledby="dashboard-runs-index-heading">
           <h3 id="dashboard-runs-index-heading">Browse existing runs</h3>
+          <p className="status">
+            For full browsing and filtering, use the dedicated <Link to="/runs">Runs browser</Link>.
+          </p>
           <label>
             Filter by run ID
             <input

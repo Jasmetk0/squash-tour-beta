@@ -306,6 +306,7 @@ describe('DashboardPage', () => {
     renderWithRoute(<DashboardPage />, '/')
 
     expect(await screen.findByRole('heading', { name: 'Browse existing runs' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Runs browser' })).toHaveAttribute('href', '/runs')
     const runBTitle = await screen.findByRole('heading', { name: 'run-b' })
     const runCTitle = await screen.findByRole('heading', { name: 'run-c' })
     expect(runBTitle.compareDocumentPosition(runCTitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()

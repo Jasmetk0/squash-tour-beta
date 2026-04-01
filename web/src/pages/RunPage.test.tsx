@@ -226,6 +226,8 @@ describe('RunPage', () => {
     expect(screen.getByRole('link', { name: 'Inspect aggregated run activity' })).toHaveAttribute('href', '/runs/run-a/activity')
     expect(screen.getByRole('link', { name: 'Inspect ordered season calendar' })).toHaveAttribute('href', '/runs/run-a/calendar')
     expect(screen.getByRole('link', { name: 'E2' })).toHaveAttribute('href', '/runs/run-a/calendar/E2')
+    expect(screen.getByRole('link', { name: 'W10 (from E2)' })).toHaveAttribute('href', '/runs/run-a/weeks/10')
+    expect(screen.getByRole('link', { name: 'W11' })).toHaveAttribute('href', '/runs/run-a/weeks/11')
     expect(screen.getByRole('link', { name: 'Inspect source metadata' })).toHaveAttribute(
       'href',
       '/runs/run-a/bootstrap-lineage'

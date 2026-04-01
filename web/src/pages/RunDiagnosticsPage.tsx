@@ -90,6 +90,8 @@ export function RunDiagnosticsPage(): JSX.Element {
   const latestCompletedEvent = eventsQuery.data?.events.find((event) => event.tournament_result)
   const latestRankingSnapshot = rankingSnapshotsQuery.data?.snapshots[0]
   const latestRaceSnapshot = raceSnapshotsQuery.data?.snapshots[0]
+  const nextPlannedEvent = runQuery.data?.season_state.ordered_events[runQuery.data.season_state.next_event_index] ?? null
+  const nextPlannedWeek = nextPlannedEvent?.week ?? null
   const hasLineageChildren = (lineageQuery.data?.lineage.children.length ?? 0) > 0
   const finalsInspectionRoute = getFinalsInspectionRoute({
     runId,
@@ -405,6 +407,13 @@ export function RunDiagnosticsPage(): JSX.Element {
               </Link>
             </li>
           ) : null}
+          {nextPlannedEvent && nextPlannedWeek !== null ? (
+            <li>
+              <Link to={`/runs/${runId}/weeks/${nextPlannedWeek}`}>
+                Inspect current week detail (W{nextPlannedWeek} from {nextPlannedEvent.event_id})
+              </Link>
+            </li>
+          ) : null}
           {finalsSummaryQuery.data?.qualification || finalsSummaryQuery.data?.result ? (
             <li>
               <Link to={finalsInspectionRoute}>
@@ -427,6 +436,7 @@ export function RunDiagnosticsPage(): JSX.Element {
           {!latestCompletedEvent &&
           !latestRankingSnapshot &&
           !latestRaceSnapshot &&
+          !(nextPlannedEvent && nextPlannedWeek !== null) &&
           !latestRolloverQuery.data?.rollover &&
           !hasLineageChildren &&
           !(finalsSummaryQuery.data?.qualification || finalsSummaryQuery.data?.result) ? (
@@ -447,6 +457,13 @@ export function RunDiagnosticsPage(): JSX.Element {
           </li>
           <li>
             <Link to={`/runs/${runId}/calendar`}>Season Calendar</Link>
+          </li>
+          <li>
+            {nextPlannedWeek !== null ? (
+              <Link to={`/runs/${runId}/weeks/${nextPlannedWeek}`}>Week Detail (current week)</Link>
+            ) : (
+              <span>Week Detail (current week unavailable)</span>
+            )}
           </li>
           <li>
             <Link to={`/runs/${runId}/activity`}>Activity</Link>

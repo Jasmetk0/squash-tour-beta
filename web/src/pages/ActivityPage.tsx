@@ -34,6 +34,14 @@ function activityLink(runId: string, item: RunActivityItem): JSX.Element | strin
   return 'No direct link'
 }
 
+function activityWeekDetailLink(runId: string, item: RunActivityItem): JSX.Element | string {
+  const supportsWeekInspection = item.kind === 'event' || item.kind === 'ranking_snapshot' || item.kind === 'race_snapshot'
+  if (!supportsWeekInspection || item.week === null) {
+    return '—'
+  }
+  return <Link to={`/runs/${runId}/weeks/${item.week}`}>Open week detail (W{item.week})</Link>
+}
+
 export function ActivityPage(): JSX.Element {
   const { runId = '' } = useParams()
   const activityQuery = useQuery({
@@ -69,6 +77,7 @@ export function ActivityPage(): JSX.Element {
                     { label: 'Kind', value: item.kind },
                     { label: 'Season', value: item.season ?? '—' },
                     { label: 'Week', value: item.week ?? '—' },
+                    { label: 'Week detail', value: activityWeekDetailLink(runId, item) },
                     { label: 'Sequence', value: item.sequence ?? '—' },
                     { label: 'Link', value: activityLink(runId, item) }
                   ]}

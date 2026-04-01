@@ -254,6 +254,12 @@ function SourceEventContext({
           <span>Source event detail unavailable (event not present in persisted event history).</span>
         )}{' '}
         · <Link to={`/runs/${runId}/calendar/${encodeURIComponent(sourceEventId)}`}>Open planned-event detail</Link>
+        {plannedSourceEvent ? (
+          <>
+            {' '}
+            · <Link to={`/runs/${runId}/weeks/${plannedSourceEvent.week}`}>Open week detail (W{plannedSourceEvent.week})</Link>
+          </>
+        ) : null}
       </p>
 
       {plannedSourceEvent ? (

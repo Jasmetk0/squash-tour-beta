@@ -42,6 +42,9 @@ describe('ActivityPage', () => {
     expect(screen.getByRole('link', { name: 'Open event detail' })).toHaveAttribute('href', '/runs/run-a/events/E1')
     expect(screen.getByRole('link', { name: 'Open ranking snapshot' })).toHaveAttribute('href', '/runs/run-a/snapshots/ranking/1')
     expect(screen.getByRole('link', { name: 'Open race snapshot' })).toHaveAttribute('href', '/runs/run-a/snapshots/race/1')
+    const weekDetailLinks = screen.getAllByRole('link', { name: 'Open week detail (W1)' })
+    expect(weekDetailLinks).toHaveLength(3)
+    weekDetailLinks.forEach((link) => expect(link).toHaveAttribute('href', '/runs/run-a/weeks/1'))
     expect(screen.getByRole('link', { name: 'Open finals qualification detail' })).toHaveAttribute(
       'href',
       '/runs/run-a/finals/qualification'
@@ -49,6 +52,8 @@ describe('ActivityPage', () => {
     expect(screen.getByRole('link', { name: 'Open finals result detail' })).toHaveAttribute('href', '/runs/run-a/finals/result')
     expect(screen.getByRole('link', { name: 'Open rollover season detail' })).toHaveAttribute('href', '/runs/run-a/rollover/2028')
     expect(screen.getByRole('link', { name: 'Open child run' })).toHaveAttribute('href', '/runs/run-b')
+    expect(screen.getAllByText('Week detail').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0)
   })
 
   it('renders readable empty and error states', async () => {

@@ -30,7 +30,12 @@ describe('RunDiagnosticsPage', () => {
     vi.clearAllMocks()
     api.getRun.mockResolvedValue({
       run: { run_id: 'run-a', season: 2028, seed: 11, next_event_index: 6, total_events: 24, completed_event_ids: ['E1', 'E2'] },
-      season_state: { season: 2028, next_event_index: 6, completed_event_ids: ['E1', 'E2'], ordered_events: [] }
+      season_state: {
+        season: 2028,
+        next_event_index: 6,
+        completed_event_ids: ['E1', 'E2'],
+        ordered_events: [{ event_id: 'E1', season: 2028, week: 5, tour: 'WORLD', category: 'GOLD', template_id: 'TMP-1' }]
+      }
     })
     api.getRunStatusSummary.mockResolvedValue({
       run_id: 'run-a',
@@ -143,6 +148,18 @@ describe('RunDiagnosticsPage', () => {
     api.listRaceSnapshots.mockResolvedValueOnce({
       snapshots: [{ snapshot_sequence: 14, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} }]
     })
+    api.getRun.mockResolvedValueOnce({
+      run: { run_id: 'run-links', season: 2028, seed: 11, next_event_index: 1, total_events: 24, completed_event_ids: ['E1'] },
+      season_state: {
+        season: 2028,
+        next_event_index: 1,
+        completed_event_ids: ['E1'],
+        ordered_events: [
+          { event_id: 'E1', season: 2028, week: 10, tour: 'WORLD', category: 'GOLD', template_id: 'TMP-1' },
+          { event_id: 'E2', season: 2028, week: 11, tour: 'WORLD', category: 'GOLD', template_id: 'TMP-2' }
+        ]
+      }
+    })
     renderWithRoute(<RunDiagnosticsPage />, '/runs/run-links/diagnostics')
 
     expect(await screen.findByText('Most relevant next inspection links')).toBeInTheDocument()
@@ -158,6 +175,10 @@ describe('RunDiagnosticsPage', () => {
     expect(screen.getByRole('link', { name: 'Inspect latest race snapshot (Seq 14)' })).toHaveAttribute(
       'href',
       '/runs/run-links/snapshots/race/14'
+    )
+    expect(screen.getByRole('link', { name: 'Inspect current week detail (W11 from E2)' })).toHaveAttribute(
+      'href',
+      '/runs/run-links/weeks/11'
     )
     expect(
       screen.getByRole('link', { name: 'Inspect Finals qualification detail (qualification available, result pending)' })
@@ -242,6 +263,7 @@ describe('RunDiagnosticsPage', () => {
     expect(await screen.findByRole('link', { name: 'Run Detail' })).toHaveAttribute('href', '/runs/run-a')
     expect(screen.getByRole('link', { name: 'Events' })).toHaveAttribute('href', '/runs/run-a/events')
     expect(screen.getByRole('link', { name: 'Season Calendar' })).toHaveAttribute('href', '/runs/run-a/calendar')
+    expect(screen.getByText('Week Detail (current week unavailable)')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Activity' })).toHaveAttribute('href', '/runs/run-a/activity')
     expect(screen.getByRole('link', { name: 'World Tour Finals' })).toHaveAttribute('href', '/runs/run-a/finals')
     expect(screen.getByRole('link', { name: 'Season Rollover' })).toHaveAttribute('href', '/runs/run-a/rollover')
@@ -252,5 +274,24 @@ describe('RunDiagnosticsPage', () => {
     expect(screen.getByRole('link', { name: 'Season Chain' })).toHaveAttribute('href', '/runs/run-a/season-chain')
     expect(screen.getByRole('link', { name: 'Ranking snapshots' })).toHaveAttribute('href', '/runs/run-a/snapshots/ranking')
     expect(screen.getByRole('link', { name: 'Race snapshots' })).toHaveAttribute('href', '/runs/run-a/snapshots/race')
+  })
+
+  it('includes a targeted week detail quick-navigation link when next planned week is available', async () => {
+    api.getRun.mockResolvedValueOnce({
+      run: { run_id: 'run-a', season: 2028, seed: 11, next_event_index: 0, total_events: 24, completed_event_ids: [] },
+      season_state: {
+        season: 2028,
+        next_event_index: 0,
+        completed_event_ids: [],
+        ordered_events: [{ event_id: 'E9', season: 2028, week: 8, tour: 'WORLD', category: 'GOLD', template_id: 'TMP-9' }]
+      }
+    })
+
+    renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
+
+    expect(await screen.findByRole('link', { name: 'Week Detail (current week)' })).toHaveAttribute(
+      'href',
+      '/runs/run-a/weeks/8'
+    )
   })
 })

@@ -133,6 +133,14 @@ export function RunPage(): JSX.Element {
   const latestCompletedEvent = eventsQuery.data?.events[0]
 
   const nextPlannedEvent = runQuery.data?.season_state.ordered_events[runQuery.data.season_state.next_event_index] ?? null
+  const nextPlannedWeek = nextPlannedEvent?.week ?? null
+  const followingPlannedWeek =
+    nextPlannedEvent && nextPlannedWeek !== null
+      ? (runQuery.data?.season_state.ordered_events
+          .slice(runQuery.data.season_state.next_event_index + 1)
+          .find((event) => event.week !== nextPlannedWeek)
+          ?.week ?? null)
+      : null
   const latestRankingSnapshot = rankingSnapshotsQuery.data?.snapshots[0]
   const latestRaceSnapshot = raceSnapshotsQuery.data?.snapshots[0]
 
@@ -298,6 +306,26 @@ export function RunPage(): JSX.Element {
                   ) : (
                     'None (season complete)'
                   )
+                },
+                {
+                  label: 'Inspect current week',
+                  value:
+                    nextPlannedEvent && nextPlannedWeek !== null ? (
+                      <Link to={`/runs/${runId}/weeks/${nextPlannedWeek}`}>
+                        W{nextPlannedWeek} (from {nextPlannedEvent.event_id})
+                      </Link>
+                    ) : (
+                      'None (season complete)'
+                    )
+                },
+                {
+                  label: 'Inspect following week',
+                  value:
+                    followingPlannedWeek !== null ? (
+                      <Link to={`/runs/${runId}/weeks/${followingPlannedWeek}`}>W{followingPlannedWeek}</Link>
+                    ) : (
+                      'None yet'
+                    )
                 },
                 {
                   label: 'Bootstrap / lineage',

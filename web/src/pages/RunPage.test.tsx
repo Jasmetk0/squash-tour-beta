@@ -209,7 +209,7 @@ describe('RunPage', () => {
     expect(screen.getByRole('link', { name: 'Seq 10' })).toHaveAttribute('href', '/runs/run-a/snapshots/ranking/10')
     expect(screen.getByRole('link', { name: 'Seq 7' })).toHaveAttribute('href', '/runs/run-a/snapshots/race/7')
     expect(screen.getByRole('link', { name: 'Inspect pending Finals result' })).toHaveAttribute('href', '/runs/run-a/finals')
-    expect(screen.getByRole('link', { name: 'Inspect latest rollover' })).toHaveAttribute('href', '/runs/run-a/rollover')
+    expect(screen.getByRole('link', { name: 'Inspect latest rollover' })).toHaveAttribute('href', '/runs/run-a/rollover/2026')
     expect(screen.getByRole('link', { name: 'Inspect season chain' })).toHaveAttribute('href', '/runs/run-a/season-chain')
     expect(screen.getByRole('link', { name: 'Inspect aggregated run activity' })).toHaveAttribute('href', '/runs/run-a/activity')
     expect(screen.getByRole('link', { name: 'Inspect source metadata' })).toHaveAttribute(

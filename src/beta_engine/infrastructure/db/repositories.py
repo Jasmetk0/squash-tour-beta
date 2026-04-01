@@ -666,6 +666,43 @@ class SimulationPersistenceRepository:
                 result=FinalsResult.model_validate(_from_json(model.payload_json)),
             )
 
+    def list_finals_qualifications(self, *, run_id: str) -> list[PersistedFinalsQualificationRecord]:
+        with self._session_factory() as session:
+            statement = (
+                select(FinalsQualificationModel)
+                .where(FinalsQualificationModel.run_id == run_id)
+                .order_by(FinalsQualificationModel.season.asc(), FinalsQualificationModel.id.asc())
+            )
+            return [
+                PersistedFinalsQualificationRecord(
+                    run_id=model.run_id,
+                    season=model.season,
+                    source_as_of_season=model.source_as_of_season,
+                    source_as_of_week=model.source_as_of_week,
+                    qualification=FinalsQualificationResult.model_validate(_from_json(model.payload_json)),
+                )
+                for model in session.execute(statement).scalars().all()
+            ]
+
+    def list_finals_results(self, *, run_id: str) -> list[PersistedFinalsResultRecord]:
+        with self._session_factory() as session:
+            statement = (
+                select(FinalsResultModel)
+                .where(FinalsResultModel.run_id == run_id)
+                .order_by(FinalsResultModel.season.asc(), FinalsResultModel.id.asc())
+            )
+            return [
+                PersistedFinalsResultRecord(
+                    run_id=model.run_id,
+                    season=model.season,
+                    event_id=model.event_id,
+                    source_as_of_season=model.source_as_of_season,
+                    source_as_of_week=model.source_as_of_week,
+                    result=FinalsResult.model_validate(_from_json(model.payload_json)),
+                )
+                for model in session.execute(statement).scalars().all()
+            ]
+
     def upsert_season_rollover(
         self,
         *,
@@ -779,6 +816,24 @@ class SimulationPersistenceRepository:
                 transitioned_players=model.transitioned_players,
                 metadata=_from_json(model.metadata_json),
             )
+
+    def list_season_rollovers(self, *, run_id: str) -> list[PersistedSeasonRolloverRecord]:
+        with self._session_factory() as session:
+            statement = (
+                select(SeasonRolloverModel)
+                .where(SeasonRolloverModel.run_id == run_id)
+                .order_by(SeasonRolloverModel.to_season.asc(), SeasonRolloverModel.id.asc())
+            )
+            return [
+                PersistedSeasonRolloverRecord(
+                    run_id=model.run_id,
+                    from_season=model.from_season,
+                    to_season=model.to_season,
+                    transitioned_players=model.transitioned_players,
+                    metadata=_from_json(model.metadata_json),
+                )
+                for model in session.execute(statement).scalars().all()
+            ]
 
     def list_player_transitions(self, *, run_id: str, to_season: int) -> list[PersistedPlayerTransitionRecord]:
         with self._session_factory() as session:

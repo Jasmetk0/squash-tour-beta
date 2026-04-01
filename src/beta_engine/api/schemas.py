@@ -129,6 +129,23 @@ class EventListResponse(BaseModel):
     events: list[EventRecordResponse] = Field(default_factory=list)
 
 
+class RunActivityItemResponse(BaseModel):
+    kind: str
+    sequence: int | None = None
+    label: str
+    season: int | None = None
+    week: int | None = None
+    event_id: str | None = None
+    snapshot_sequence: int | None = None
+    source_event_id: str | None = None
+    related_run_id: str | None = None
+
+
+class RunActivityResponse(BaseModel):
+    run_id: str
+    items: list[RunActivityItemResponse] = Field(default_factory=list)
+
+
 class RankingSnapshotRecordResponse(BaseModel):
     snapshot_sequence: int
     snapshot_kind: str

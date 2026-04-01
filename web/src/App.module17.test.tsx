@@ -12,6 +12,7 @@ const api = vi.hoisted(() => ({
   getRunStatusSummary: vi.fn(),
   listRuns: vi.fn(),
   listEvents: vi.fn(),
+  getRunActivity: vi.fn(),
   getEvent: vi.fn(),
   listRankingSnapshots: vi.fn(),
   listRaceSnapshots: vi.fn(),
@@ -121,6 +122,12 @@ describe('Module 17 pages through routes', () => {
   it('renders diagnostics route', async () => {
     renderAppAt('/runs/run-a/diagnostics')
     expect(await screen.findByRole('heading', { name: 'Run diagnostics' })).toBeInTheDocument()
+  })
+
+  it('renders activity route', async () => {
+    api.getRunActivity.mockResolvedValue({ run_id: 'run-a', items: [] })
+    renderAppAt('/runs/run-a/activity')
+    expect(await screen.findByRole('heading', { name: 'Run activity' })).toBeInTheDocument()
   })
 
   it('renders Bootstrap/Lineage route', async () => {

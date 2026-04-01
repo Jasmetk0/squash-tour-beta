@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 from beta_engine.application.finals_models import (
     FinalsSimulationResult,
@@ -123,6 +124,36 @@ class RunStatusSummary:
     source: RunStatusSummarySource | None
     lineage: RunStatusSummaryLineage
     history_counts: RunStatusSummaryHistoryCounts
+
+
+ActivityKind = Literal[
+    "event",
+    "ranking_snapshot",
+    "race_snapshot",
+    "finals_qualification",
+    "finals_result",
+    "rollover",
+    "bootstrap_child",
+]
+
+
+@dataclass(frozen=True)
+class RunActivityItem:
+    kind: ActivityKind
+    sequence: int | None
+    label: str
+    season: int | None = None
+    week: int | None = None
+    event_id: str | None = None
+    snapshot_sequence: int | None = None
+    source_event_id: str | None = None
+    related_run_id: str | None = None
+
+
+@dataclass(frozen=True)
+class RunActivityFeed:
+    run_id: str
+    items: list[RunActivityItem]
 
 
 @dataclass(slots=True)
@@ -416,6 +447,113 @@ class SimulationApiService:
         self, *, run_id: str, snapshot_sequence: int
     ) -> tuple[int, str, str | None, RaceSnapshot] | None:
         return self.repository.get_race_snapshot(run_id=run_id, snapshot_sequence=snapshot_sequence)
+
+    def get_run_activity_feed(self, *, run_id: str) -> RunActivityFeed:
+        self._load_run_context(run_id=run_id)
+        items: list[RunActivityItem] = []
+
+        for event in self.repository.list_completed_events(run_id=run_id):
+            items.append(
+                RunActivityItem(
+                    kind="event",
+                    sequence=event.event_sequence,
+                    label=f"Event {event.event_id}",
+                    season=event.season,
+                    week=event.week,
+                    event_id=event.event_id,
+                )
+            )
+
+        for snapshot in self.repository.list_ranking_snapshot_records(run_id=run_id):
+            items.append(
+                RunActivityItem(
+                    kind="ranking_snapshot",
+                    sequence=snapshot.snapshot_sequence,
+                    label=f"Ranking snapshot {snapshot.snapshot_sequence}",
+                    season=snapshot.as_of_season,
+                    week=snapshot.as_of_week,
+                    snapshot_sequence=snapshot.snapshot_sequence,
+                    source_event_id=snapshot.source_event_id,
+                )
+            )
+
+        for snapshot in self.repository.list_race_snapshot_records(run_id=run_id):
+            items.append(
+                RunActivityItem(
+                    kind="race_snapshot",
+                    sequence=snapshot.snapshot_sequence,
+                    label=f"Race snapshot {snapshot.snapshot_sequence}",
+                    season=snapshot.as_of_season,
+                    week=snapshot.as_of_week,
+                    snapshot_sequence=snapshot.snapshot_sequence,
+                    source_event_id=snapshot.source_event_id,
+                )
+            )
+
+        for qualification in self.repository.list_finals_qualifications(run_id=run_id):
+            items.append(
+                RunActivityItem(
+                    kind="finals_qualification",
+                    sequence=qualification.season,
+                    label=f"Finals qualification S{qualification.season}",
+                    season=qualification.source_as_of_season,
+                    week=qualification.source_as_of_week,
+                )
+            )
+
+        for result in self.repository.list_finals_results(run_id=run_id):
+            items.append(
+                RunActivityItem(
+                    kind="finals_result",
+                    sequence=result.season,
+                    label=f"Finals result S{result.season}",
+                    season=result.source_as_of_season,
+                    week=result.source_as_of_week,
+                    event_id=result.event_id,
+                )
+            )
+
+        for rollover in self.repository.list_season_rollovers(run_id=run_id):
+            items.append(
+                RunActivityItem(
+                    kind="rollover",
+                    sequence=rollover.to_season,
+                    label=f"Season rollover S{rollover.from_season}→S{rollover.to_season}",
+                    season=rollover.to_season,
+                )
+            )
+
+        for child in self.repository.list_child_runs(parent_run_id=run_id):
+            items.append(
+                RunActivityItem(
+                    kind="bootstrap_child",
+                    sequence=child.source_rollover_to_season,
+                    label=f"Bootstrapped child run {child.run_id}",
+                    season=child.source_rollover_to_season,
+                    related_run_id=child.run_id,
+                )
+            )
+
+        kind_order: dict[ActivityKind, int] = {
+            "event": 1,
+            "ranking_snapshot": 2,
+            "race_snapshot": 3,
+            "finals_qualification": 4,
+            "finals_result": 5,
+            "rollover": 6,
+            "bootstrap_child": 7,
+        }
+        ordered = sorted(
+            items,
+            key=lambda item: (
+                item.season if item.season is not None else 9999,
+                item.week if item.week is not None else 99,
+                kind_order[item.kind],
+                item.sequence if item.sequence is not None else 999999,
+                item.event_id or item.source_event_id or item.related_run_id or item.label,
+            ),
+        )
+        return RunActivityFeed(run_id=run_id, items=ordered)
 
     def _simulate_step(self, *, run_id: str, mode: str) -> SimulationStepResult:
         run_info, state = self._load_run_context(run_id=run_id)

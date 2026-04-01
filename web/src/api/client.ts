@@ -3,6 +3,7 @@ import type {
   BootstrapNextSeasonResponse,
   CreateRunPayload,
   EventListResponse,
+  RunActivityResponse,
   EventRecord,
   FinalsQualificationResponse,
   FinalsResultResponse,
@@ -88,6 +89,10 @@ export function simulateFullSeason(runId: string): Promise<SimulateResponse> {
 
 export function listEvents(runId: string): Promise<EventListResponse> {
   return request(`/runs/${encodeURIComponent(runId)}/events`)
+}
+
+export function getRunActivity(runId: string): Promise<RunActivityResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/activity`)
 }
 
 export function getEvent(runId: string, eventId: string): Promise<EventRecord> {

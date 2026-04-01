@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from beta_engine.api.deps import get_simulation_api_service
 from beta_engine.api.schemas import (
+    RunActivityResponse,
+    RunActivityItemResponse,
     EventListResponse,
     EventRecordResponse,
     FinalsQualificationResponse,
@@ -22,6 +24,18 @@ from beta_engine.api.schemas import (
 from beta_engine.application.api_services import SimulationApiService
 
 router = APIRouter(prefix="/runs/{run_id}", tags=["history"])
+
+
+@router.get("/activity", response_model=RunActivityResponse)
+def get_run_activity(run_id: str, service: SimulationApiService = Depends(get_simulation_api_service)) -> RunActivityResponse:
+    try:
+        activity = service.get_run_activity_feed(run_id=run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return RunActivityResponse(
+        run_id=activity.run_id,
+        items=[RunActivityItemResponse.model_validate(item.__dict__) for item in activity.items],
+    )
 
 
 @router.get("/events", response_model=EventListResponse)

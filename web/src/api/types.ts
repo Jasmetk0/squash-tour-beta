@@ -106,6 +106,27 @@ export type EventRecord = {
 
 export type EventListResponse = { run_id: string; events: EventRecord[] }
 
+export type RunActivityItem = {
+  kind:
+    | 'event'
+    | 'ranking_snapshot'
+    | 'race_snapshot'
+    | 'finals_qualification'
+    | 'finals_result'
+    | 'rollover'
+    | 'bootstrap_child'
+  sequence: number | null
+  label: string
+  season: number | null
+  week: number | null
+  event_id: string | null
+  snapshot_sequence: number | null
+  source_event_id: string | null
+  related_run_id: string | null
+}
+
+export type RunActivityResponse = { run_id: string; items: RunActivityItem[] }
+
 export type RankingSnapshot = {
   snapshot_sequence: number
   snapshot_kind: string

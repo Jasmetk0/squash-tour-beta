@@ -182,6 +182,21 @@ describe('Module 17 pages through routes', () => {
   })
 
 
+
+  it('renders planned event detail route', async () => {
+    api.getRun.mockResolvedValueOnce({
+      run: { run_id: 'run-a', season: 2027, seed: 5, next_event_index: 0, total_events: 1, completed_event_ids: [] },
+      season_state: {
+        season: 2027,
+        next_event_index: 0,
+        completed_event_ids: [],
+        ordered_events: [{ event_id: 'E2', season: 2027, week: 9, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP' }]
+      }
+    })
+    renderAppAt('/runs/run-a/calendar/E2')
+    expect(await screen.findByRole('heading', { name: 'Planned event detail' })).toBeInTheDocument()
+  })
+
   it('renders Event detail route', async () => {
     renderAppAt('/runs/run-a/events/E2')
     expect(await screen.findByRole('heading', { name: 'Event detail' })).toBeInTheDocument()

@@ -71,7 +71,7 @@ class RunIndexSummary:
     season: int
     seed: int
     progress: RunIndexSummaryProgress
-    source_type: str | None
+    source_type: str
     parent_run_id: str | None
     child_run_count: int
 
@@ -135,6 +135,19 @@ ActivityKind = Literal[
     "rollover",
     "bootstrap_child",
 ]
+
+_CANONICAL_SOURCE_TYPE_MAP: dict[str, str] = {
+    "fresh_seed": "fresh_seed",
+    "rollover_bootstrap": "rollover_bootstrap",
+    # Legacy values persisted by earlier versions before source-type contract hardening.
+    "new_run": "fresh_seed",
+    "bootstrap": "rollover_bootstrap",
+    "bootstrapped_rollover": "rollover_bootstrap",
+}
+
+
+def _normalize_source_type(raw_source_type: str) -> str:
+    return _CANONICAL_SOURCE_TYPE_MAP.get(raw_source_type, raw_source_type)
 
 
 @dataclass(frozen=True)
@@ -337,7 +350,7 @@ class SimulationApiService:
         return RunLineageRecord(
             run_id=lineage.run_id,
             source=RunSourceSummary(
-                source_type=lineage.source_type,
+                source_type=_normalize_source_type(lineage.source_type),
                 parent_run_id=lineage.parent_run_id,
                 source_rollover_run_id=lineage.source_rollover_run_id,
                 source_rollover_from_season=lineage.source_rollover_from_season,
@@ -351,7 +364,7 @@ class SimulationApiService:
         if lineage is None:
             raise KeyError(f"run_id {run_id} was not found")
         return RunSourceSummary(
-            source_type=lineage.source_type,
+            source_type=_normalize_source_type(lineage.source_type),
             parent_run_id=lineage.parent_run_id,
             source_rollover_run_id=lineage.source_rollover_run_id,
             source_rollover_from_season=lineage.source_rollover_from_season,
@@ -367,12 +380,12 @@ class SimulationApiService:
 
         source: RunStatusSummarySource | None = None
         if (
-            source_summary.source_type != "fresh_seed"
+            _normalize_source_type(source_summary.source_type) != "fresh_seed"
             or source_summary.parent_run_id is not None
             or source_summary.source_rollover_run_id is not None
         ):
             source = RunStatusSummarySource(
-                source_type=source_summary.source_type,
+                source_type=_normalize_source_type(source_summary.source_type),
                 parent_run_id=source_summary.parent_run_id,
             )
 
@@ -414,7 +427,7 @@ class SimulationApiService:
             state = self.repository.load_season_state(run_id=run.run_id)
             if state is None:
                 continue
-            source_type = None if run.source_type == "fresh_seed" else run.source_type
+            source_type = _normalize_source_type(run.source_type)
             summaries.append(
                 RunIndexSummary(
                     run_id=run.run_id,

@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from beta_engine.application.api_services import SimulationApiService
-from beta_engine.infrastructure.db import DatabaseSettings, create_session_factory, create_sqlite_engine
+from beta_engine.infrastructure.db import DatabaseSettings, SimulationRunInfo, create_session_factory, create_sqlite_engine
 from beta_engine.infrastructure.db.repositories import SimulationPersistenceRepository
 
 
@@ -86,3 +86,28 @@ def test_child_run_uses_rollover_player_pool_for_next_rollover(tmp_path) -> None
     assert common_player_ids
     sample_id = common_player_ids[0]
     assert observed_age_before[sample_id] == player_ages_2028[sample_id]
+
+
+def test_legacy_source_types_are_normalized_to_canonical_contract(tmp_path) -> None:
+    service = _service(tmp_path)
+    service.initialize_run(run_id="run-parent", season=2027, seed=5555, config_version=None, config_fingerprint=None)
+    service.repository.upsert_simulation_run(
+        SimulationRunInfo(
+            run_id="run-legacy",
+            season=2028,
+            seed=5555,
+            parent_run_id="run-parent",
+            source_type="bootstrap",
+        )
+    )
+    service.repository.save_season_state(run_id="run-legacy", state=service.get_season_state(run_id="run-parent"))
+
+    legacy_source = service.get_run_source(run_id="run-legacy")
+    assert legacy_source.source_type == "rollover_bootstrap"
+
+    legacy_lineage = service.get_run_lineage(run_id="run-legacy")
+    assert legacy_lineage.source.source_type == "rollover_bootstrap"
+
+    runs_index = service.list_runs_index()
+    legacy_index = next(row for row in runs_index if row.run_id == "run-legacy")
+    assert legacy_index.source_type == "rollover_bootstrap"

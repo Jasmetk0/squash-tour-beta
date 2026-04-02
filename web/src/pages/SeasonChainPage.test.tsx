@@ -35,7 +35,7 @@ describe('SeasonChainPage', () => {
       lineage: {
         run_id: 'run-a',
         source: {
-          source_type: 'bootstrap',
+          source_type: 'rollover_bootstrap',
           parent_run_id: 'run-parent',
           source_rollover_run_id: 'run-parent',
           source_rollover_from_season: 2027,
@@ -51,7 +51,7 @@ describe('SeasonChainPage', () => {
       progress: { next_event_index: 3, total_events: 20, completed_event_count: 2 },
       finals: { qualification_available: true, result_available: runId === 'run-child-2' },
       rollover: runId === 'run-a' ? { latest_to_season: 2029, transitioned_players: 64 } : null,
-      source: { source_type: runId === 'run-parent' ? 'new_run' : 'bootstrap', parent_run_id: runId === 'run-parent' ? null : 'run-parent' },
+      source: { source_type: runId === 'run-parent' ? 'fresh_seed' : 'rollover_bootstrap', parent_run_id: runId === 'run-parent' ? null : 'run-parent' },
       lineage: { child_run_count: runId === 'run-parent' ? 1 : 0 },
       history_counts: { events: 2, ranking_snapshots: 2, race_snapshots: 2 }
     }))
@@ -76,7 +76,7 @@ describe('SeasonChainPage', () => {
     expect(await screen.findByText('Parent season 2027 → current season 2028')).toBeInTheDocument()
     expect(await screen.findByText('2028 → 2029 (run-child-1); 2028 → 2030 (run-child-2)')).toBeInTheDocument()
     expect(await screen.findByText('Latest rollover to season 2029')).toBeInTheDocument()
-    expect(await screen.findByText('Rollover-derived (bootstrap)')).toBeInTheDocument()
+    expect(await screen.findByText('Rollover-derived (rollover_bootstrap)')).toBeInTheDocument()
   })
 
   it('renders relevant next inspection links from loaded chain data', async () => {
@@ -95,7 +95,7 @@ describe('SeasonChainPage', () => {
   it('renders readable empty states when parent and children are absent', async () => {
     api.getRunSource.mockResolvedValueOnce({
       source: {
-        source_type: 'new_run',
+        source_type: 'fresh_seed',
         parent_run_id: null,
         source_rollover_run_id: null,
         source_rollover_from_season: null,
@@ -106,7 +106,7 @@ describe('SeasonChainPage', () => {
       lineage: {
         run_id: 'run-a',
         source: {
-          source_type: 'new_run',
+          source_type: 'fresh_seed',
           parent_run_id: null,
           source_rollover_run_id: null,
           source_rollover_from_season: null,

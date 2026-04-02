@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -11,7 +13,7 @@ class BootstrapNextSeasonRequest(BaseModel):
 
 
 class RunSourceSummary(BaseModel):
-    source_type: str
+    source_type: Literal["fresh_seed", "rollover_bootstrap"]
     parent_run_id: str | None = None
     source_rollover_run_id: str | None = None
     source_rollover_from_season: int | None = None

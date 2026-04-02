@@ -418,7 +418,7 @@ def test_runs_index_endpoint_lists_runs_with_deterministic_order_and_compact_lin
         run_z = next(row for row in payload["runs"] if row["run_id"] == "run-z")
         assert run_z["progress"]["next_event_index"] == run_z["progress"]["total_events"]
         assert run_z["progress"]["completed_event_count"] == run_z["progress"]["total_events"]
-        assert run_z["source_type"] is None
+        assert run_z["source_type"] == "fresh_seed"
         assert run_z["parent_run_id"] is None
         assert run_z["child_run_count"] == 2
 

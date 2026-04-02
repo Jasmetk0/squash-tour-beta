@@ -3,7 +3,7 @@ import { FormEvent, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { bootstrapNextSeason, getRunLineage, getRunSource, getRunStatusSummary } from '../api/client'
-import type { RunSourceSummary, RunStatusSummary } from '../api/types'
+import type { RunStatusSummary } from '../api/types'
 import {
   ActionStatusBlock,
   CompactSummaryCard,
@@ -16,14 +16,7 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
-
-function classifyRunProvenance(source?: RunSourceSummary | null): 'new_run' | 'bootstrap-derived' | 'rollover-derived' | 'unknown' {
-  if (!source) return 'unknown'
-  if (source.source_type === 'new_run') return 'new_run'
-  if (source.source_rollover_run_id) return 'rollover-derived'
-  if (source.parent_run_id) return 'bootstrap-derived'
-  return 'unknown'
-}
+import { classifyRunProvenance, normalizeRunSourceType } from '../utils/runSourceTypes'
 
 function statusProgress(summary?: RunStatusSummary): string {
   if (!summary) return 'Unknown'
@@ -130,7 +123,7 @@ export function BootstrapLineagePage(): JSX.Element {
       <CurrentContextStrip
         items={[
           { label: 'Run', value: runId || 'unknown' },
-          { label: 'Source type', value: source?.source_type ?? lineage?.source.source_type ?? '—' },
+          { label: 'Source type', value: normalizeRunSourceType(source?.source_type ?? lineage?.source.source_type) ?? '—' },
           { label: 'Parent', value: parentRunId ?? 'None' },
           { label: 'Children', value: childRunIds.length }
         ]}
@@ -148,7 +141,10 @@ export function BootstrapLineagePage(): JSX.Element {
           <>
             <SummaryPills
               items={[
-                { label: 'Source type', value: source?.source_type ?? lineage?.source.source_type ?? 'Unknown' },
+                {
+                  label: 'Source type',
+                  value: normalizeRunSourceType(source?.source_type ?? lineage?.source.source_type) ?? 'Unknown'
+                },
                 { label: 'Classification', value: runClassification },
                 { label: 'Parent linked', value: parentRunId ? 'Yes' : 'No' },
                 {

@@ -63,7 +63,7 @@ class RunStatusSummaryRolloverResponse(BaseModel):
 
 
 class RunStatusSummarySourceResponse(BaseModel):
-    source_type: str
+    source_type: Literal["fresh_seed", "rollover_bootstrap"]
     parent_run_id: str | None = None
 
 
@@ -100,7 +100,7 @@ class RunIndexSummaryResponse(BaseModel):
     season: int
     seed: int
     progress: RunIndexSummaryProgressResponse
-    source_type: str | None = None
+    source_type: Literal["fresh_seed", "rollover_bootstrap"]
     parent_run_id: str | None = None
     child_run_count: int
 

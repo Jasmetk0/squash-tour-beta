@@ -2,7 +2,10 @@
 
 from pathlib import Path
 
-import tomllib
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python <3.11 fallback for local tooling.
+    import tomli as tomllib
 from pydantic import BaseModel, Field
 
 

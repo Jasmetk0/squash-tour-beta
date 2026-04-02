@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from fastapi import Request
 
 from beta_engine.application.api_services import SimulationApiService
+from beta_engine.application.config_validation_service import ConfigValidationService
 from beta_engine.infrastructure.config import load_settings
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
 
@@ -34,3 +35,7 @@ def get_runtime(request: Request) -> ApiRuntime:
 def get_simulation_api_service(request: Request) -> SimulationApiService:
     runtime = get_runtime(request)
     return SimulationApiService(repository=runtime.repository)
+
+
+def get_config_validation_service(_: Request) -> ConfigValidationService:
+    return ConfigValidationService()

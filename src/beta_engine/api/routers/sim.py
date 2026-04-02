@@ -13,7 +13,11 @@ def _to_run_summary(summary: PersistedRunSummary) -> RunSummaryResponse:
 
 def _run_step(*, run_id: str, mode: str, service: SimulationApiService) -> SimulateResponse:
     try:
-        if mode == "next-tournament":
+        if mode == "next-match":
+            step = service.simulate_next_match(run_id=run_id)
+        elif mode == "next-round":
+            step = service.simulate_next_round(run_id=run_id)
+        elif mode == "next-tournament":
             step = service.simulate_next_tournament(run_id=run_id)
         elif mode == "next-week":
             step = service.simulate_next_week(run_id=run_id)
@@ -33,6 +37,16 @@ def _run_step(*, run_id: str, mode: str, service: SimulationApiService) -> Simul
 @router.post("/next-tournament", response_model=SimulateResponse)
 def simulate_next_tournament(run_id: str, service: SimulationApiService = Depends(get_simulation_api_service)) -> SimulateResponse:
     return _run_step(run_id=run_id, mode="next-tournament", service=service)
+
+
+@router.post("/next-match", response_model=SimulateResponse)
+def simulate_next_match(run_id: str, service: SimulationApiService = Depends(get_simulation_api_service)) -> SimulateResponse:
+    return _run_step(run_id=run_id, mode="next-match", service=service)
+
+
+@router.post("/next-round", response_model=SimulateResponse)
+def simulate_next_round(run_id: str, service: SimulationApiService = Depends(get_simulation_api_service)) -> SimulateResponse:
+    return _run_step(run_id=run_id, mode="next-round", service=service)
 
 
 @router.post("/next-week", response_model=SimulateResponse)

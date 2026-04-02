@@ -79,6 +79,14 @@ export function simulateNextTournament(runId: string): Promise<SimulateResponse>
   return simulate<SimulateResponse>(runId, 'next-tournament')
 }
 
+export function simulateNextMatch(runId: string): Promise<SimulateResponse> {
+  return simulate<SimulateResponse>(runId, 'next-match')
+}
+
+export function simulateNextRound(runId: string): Promise<SimulateResponse> {
+  return simulate<SimulateResponse>(runId, 'next-round')
+}
+
 export function simulateNextWeek(runId: string): Promise<SimulateResponse> {
   return simulate<SimulateResponse>(runId, 'next-week')
 }

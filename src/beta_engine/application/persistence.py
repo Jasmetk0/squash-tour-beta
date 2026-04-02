@@ -21,7 +21,13 @@ class SimulationPersistenceService:
     def persist_step(self, *, run_id: str, step: SimulationStepResult) -> None:
         self.repository.save_season_state(run_id=run_id, state=step.season_state)
 
-        if step.tournament_result is not None:
+        if step.tournament_result is not None and step.season_state.active_tournament is None:
+            if (
+                step.tournament_result.ranking_snapshot is None
+                or step.tournament_result.race_snapshot is None
+                or step.tournament_result.completed_tournament_input is None
+            ):
+                raise ValueError("completed tournament persistence requires ranking/race snapshots and completed input")
             event_sequence = step.season_state.next_event_index - 1
             self.repository.save_completed_tournament_result(
                 run_id=run_id,

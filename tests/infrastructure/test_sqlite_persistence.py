@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from sqlalchemy import text
+
 from beta_engine.application.persistence import SimulationPersistenceService
 from beta_engine.application.finals_service import FinalsOrchestrationService
 from beta_engine.application.rollover_service import SeasonRolloverOrchestrationService
@@ -243,3 +245,65 @@ def test_rollover_records_are_persisted_and_reloadable(tmp_path) -> None:
     assert summary.transitioned_players == rollover.transitioned_players
     assert len(transitions) == rollover.transitioned_players
     assert len(next_players) == rollover.transitioned_players
+
+
+def test_bootstrap_schema_backfills_active_tournament_column_for_existing_db(tmp_path) -> None:
+    db_file = tmp_path / "legacy-schema.db"
+    engine = create_sqlite_engine(DatabaseSettings(url=f"sqlite:///{db_file}"))
+    session_factory = create_session_factory(engine)
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                CREATE TABLE season_state (
+                  run_id VARCHAR(128) PRIMARY KEY,
+                  season INTEGER NOT NULL,
+                  next_event_index INTEGER NOT NULL,
+                  ordered_events_json TEXT NOT NULL,
+                  completed_event_ids_json TEXT NOT NULL,
+                  ranking_snapshot_json TEXT NULL,
+                  race_snapshot_json TEXT NULL
+                )
+                """
+            )
+        )
+
+    repository = SimulationPersistenceRepository(engine=engine, session_factory=session_factory)
+    repository.bootstrap_schema()
+
+    with engine.connect() as connection:
+        columns = {
+            row[1]
+            for row in connection.execute(text("PRAGMA table_info(season_state)"))
+        }
+    assert "active_tournament_json" in columns
+
+
+def test_partial_tournament_steps_do_not_persist_completed_event_artifacts_until_completion(tmp_path) -> None:
+    orchestrator = _orchestrator(seed=9501)
+    initial_state = orchestrator.initialize_state()
+    partial = orchestrator.simulate_next_match(state=initial_state)
+
+    repository = _repository(tmp_path)
+    persistence = SimulationPersistenceService(repository=repository)
+    run = SimulationRunInfo(run_id="run-partial-persist", season=initial_state.season, seed=9501)
+    persistence.initialize_run(run=run)
+    persistence.persist_step(run_id=run.run_id, step=partial)
+
+    assert repository.list_completed_events(run_id=run.run_id) == []
+    assert repository.list_ranking_snapshot_records(run_id=run.run_id) == []
+    assert repository.list_race_snapshot_records(run_id=run.run_id) == []
+
+    current_state = partial.season_state
+    final_step = partial
+    while current_state.active_tournament is not None:
+        final_step = orchestrator.simulate_next_match(state=current_state)
+        current_state = final_step.season_state
+
+    persistence.persist_step(run_id=run.run_id, step=final_step)
+    completed_events = repository.list_completed_events(run_id=run.run_id)
+    assert len(completed_events) == 1
+    assert completed_events[0].event_id == final_step.tournament_result.event.event_id
+    assert len(repository.list_ranking_snapshot_records(run_id=run.run_id)) == 1
+    assert len(repository.list_race_snapshot_records(run_id=run.run_id)) == 1

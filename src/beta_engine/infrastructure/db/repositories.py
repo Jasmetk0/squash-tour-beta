@@ -6,7 +6,7 @@ import json
 from dataclasses import dataclass
 from typing import Literal
 
-from sqlalchemy import Engine, Select, func, select
+from sqlalchemy import Engine, Select, func, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from beta_engine.application.season_models import RaceSnapshot, RankingSnapshot, SeasonState, TournamentSimulationResult
@@ -139,6 +139,23 @@ class SimulationPersistenceRepository:
 
     def bootstrap_schema(self) -> None:
         Base.metadata.create_all(self._engine)
+        self._ensure_schema_compatibility()
+
+    def _ensure_schema_compatibility(self) -> None:
+        with self._engine.begin() as connection:
+            self._ensure_text_column(
+                connection=connection,
+                table_name="season_state",
+                column_name="active_tournament_json",
+            )
+
+    @staticmethod
+    def _ensure_text_column(*, connection, table_name: str, column_name: str) -> None:
+        result = connection.execute(text(f"PRAGMA table_info({table_name})"))
+        existing_columns = {row[1] for row in result}
+        if column_name in existing_columns:
+            return
+        connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} TEXT"))
 
     def upsert_simulation_run(self, run: SimulationRunInfo) -> None:
         with self._session_factory.begin() as session:
@@ -175,6 +192,7 @@ class SimulationPersistenceRepository:
             completed_event_ids_json = _to_json(state.completed_event_ids)
             ranking_snapshot_json = _to_json(state.ranking_snapshot.model_dump()) if state.ranking_snapshot else None
             race_snapshot_json = _to_json(state.race_snapshot.model_dump()) if state.race_snapshot else None
+            active_tournament_json = _to_json(state.active_tournament.model_dump()) if state.active_tournament else None
             if model is None:
                 session.add(
                     SeasonStateModel(
@@ -185,6 +203,7 @@ class SimulationPersistenceRepository:
                         completed_event_ids_json=completed_event_ids_json,
                         ranking_snapshot_json=ranking_snapshot_json,
                         race_snapshot_json=race_snapshot_json,
+                        active_tournament_json=active_tournament_json,
                     )
                 )
             else:
@@ -194,6 +213,7 @@ class SimulationPersistenceRepository:
                 model.completed_event_ids_json = completed_event_ids_json
                 model.ranking_snapshot_json = ranking_snapshot_json
                 model.race_snapshot_json = race_snapshot_json
+                model.active_tournament_json = active_tournament_json
 
             self._upsert_completed_inputs(session=session, run_id=run_id, completed_inputs=state.completed_tournament_inputs)
             self._upsert_completed_events(session=session, run_id=run_id, completed_event_ids=state.completed_event_ids)
@@ -205,6 +225,8 @@ class SimulationPersistenceRepository:
         event_sequence: int,
         tournament_result: TournamentSimulationResult,
     ) -> None:
+        if tournament_result.completed_tournament_input is None:
+            raise ValueError("tournament_result.completed_tournament_input is required for completed-event persistence")
         with self._session_factory.begin() as session:
             statement: Select[tuple[CompletedEventMetadataModel]] = select(CompletedEventMetadataModel).where(
                 CompletedEventMetadataModel.run_id == run_id,
@@ -279,6 +301,7 @@ class SimulationPersistenceRepository:
             completed_inputs = self._load_completed_inputs(session=session, run_id=run_id)
             ranking_snapshot = RankingSnapshot.model_validate(_from_json(model.ranking_snapshot_json)) if model.ranking_snapshot_json else None
             race_snapshot = RaceSnapshot.model_validate(_from_json(model.race_snapshot_json)) if model.race_snapshot_json else None
+            active_tournament = _from_json(model.active_tournament_json) if model.active_tournament_json else None
             return SeasonState.model_validate(
                 {
                     "season": model.season,
@@ -288,6 +311,7 @@ class SimulationPersistenceRepository:
                     "completed_tournament_inputs": [payload.model_dump() for payload in completed_inputs],
                     "ranking_snapshot": ranking_snapshot.model_dump() if ranking_snapshot else None,
                     "race_snapshot": race_snapshot.model_dump() if race_snapshot else None,
+                    "active_tournament": active_tournament,
                 }
             )
 

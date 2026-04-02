@@ -13,6 +13,8 @@ import {
   listRankingSnapshots,
   rolloverNextSeason,
   simulateFullSeason,
+  simulateNextMatch,
+  simulateNextRound,
   simulateNextTournament,
   simulateNextWeek,
   simulateWorldTourFinals
@@ -117,7 +119,9 @@ export function RunPage(): JSX.Element {
   })
 
   const simulator = useMutation({
-    mutationFn: async (mode: 'next-tournament' | 'next-week' | 'full-season') => {
+    mutationFn: async (mode: 'next-match' | 'next-round' | 'next-tournament' | 'next-week' | 'full-season') => {
+      if (mode === 'next-match') return simulateNextMatch(runId)
+      if (mode === 'next-round') return simulateNextRound(runId)
       if (mode === 'next-tournament') return simulateNextTournament(runId)
       if (mode === 'next-week') return simulateNextWeek(runId)
       return simulateFullSeason(runId)
@@ -573,6 +577,8 @@ export function RunPage(): JSX.Element {
 
           <SectionCard title="Simulation controls">
             <div className="actions">
+              <button onClick={() => simulator.mutate('next-match')}>Simulate next match</button>
+              <button onClick={() => simulator.mutate('next-round')}>Simulate next round</button>
               <button onClick={() => simulator.mutate('next-tournament')}>Simulate next tournament</button>
               <button onClick={() => simulator.mutate('next-week')}>Simulate next week</button>
               <button onClick={() => simulator.mutate('full-season')}>Simulate full season</button>

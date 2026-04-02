@@ -237,3 +237,27 @@ class RunLineageApiResponse(BaseModel):
 
 class RunSourceApiResponse(BaseModel):
     source: RunSourceSummary
+
+
+class ConfigValidationIssueResponse(BaseModel):
+    severity: Literal["warning", "error"]
+    domain: str
+    check_id: str
+    source: str
+    message: str
+    location: str | None = None
+
+
+class ConfigDomainValidationResponse(BaseModel):
+    domain: str
+    source: str
+    valid: bool
+    warnings: list[ConfigValidationIssueResponse] = Field(default_factory=list)
+    errors: list[ConfigValidationIssueResponse] = Field(default_factory=list)
+
+
+class ConfigValidationResponse(BaseModel):
+    valid: bool
+    warnings: list[ConfigValidationIssueResponse] = Field(default_factory=list)
+    errors: list[ConfigValidationIssueResponse] = Field(default_factory=list)
+    domains: list[ConfigDomainValidationResponse] = Field(default_factory=list)

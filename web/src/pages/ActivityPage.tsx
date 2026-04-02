@@ -254,7 +254,7 @@ export function ActivityPage(): JSX.Element {
             getKey={({ index, item }) => `${index}-${item.kind}-${item.sequence ?? 'none'}`}
             getLabel={({ item, index }) => `${index + 1}. ${item.label}`}
             getSubLabel={({ item }) => {
-              const segments = [item.kind]
+              const segments: string[] = [item.kind]
               if (item.season != null) segments.push(`S${item.season}`)
               if (item.week != null) segments.push(`W${item.week}`)
               if (item.event_id) segments.push(item.event_id)

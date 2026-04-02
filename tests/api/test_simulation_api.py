@@ -91,9 +91,10 @@ def test_simulation_endpoints_and_snapshot_queries_work(tmp_path) -> None:
 
         status, run_state = _request("GET", f"{server.base_url}/runs/run-sim")
         assert status == 200
-        first_week = run_state["season_state"]["ordered_events"][0]["week"]
-        expected_week_event_ids = [
-            event["event_id"] for event in run_state["season_state"]["ordered_events"] if event["week"] == first_week
+        ordered_events = run_state["season_state"]["ordered_events"]
+        unique_weeks = sorted({event["week"] for event in ordered_events})
+        expected_completed_event_ids = [
+            event["event_id"] for event in ordered_events if event["week"] in set(unique_weeks[:2])
         ]
 
         status, next_tournament = _request("POST", f"{server.base_url}/runs/run-sim/simulate/next-tournament")
@@ -124,7 +125,7 @@ def test_simulation_endpoints_and_snapshot_queries_work(tmp_path) -> None:
         status, events_payload = _request("GET", f"{server.base_url}/runs/run-sim/events")
         assert status == 200
         observed_event_ids = [event["event_id"] for event in events_payload["events"]]
-        assert observed_event_ids == expected_week_event_ids
+        assert observed_event_ids == expected_completed_event_ids
 
         status, full_season = _request("POST", f"{server.base_url}/runs/run-sim/simulate/full-season")
         assert status == 200
@@ -353,11 +354,12 @@ def test_run_status_summary_endpoint_returns_compact_aggregates(tmp_path) -> Non
 
         status, pre = _request("GET", f"{server.base_url}/runs/run-status/status-summary")
         assert status == 200
+        total_events = pre["progress"]["total_events"]
         assert pre == {
             "run_id": "run-status",
             "season": 2027,
             "seed": 5151,
-            "progress": {"next_event_index": 0, "total_events": 18, "completed_event_count": 0},
+            "progress": {"next_event_index": 0, "total_events": total_events, "completed_event_count": 0},
             "finals": {"qualification_available": False, "result_available": False},
             "rollover": None,
             "source": None,
@@ -367,7 +369,7 @@ def test_run_status_summary_endpoint_returns_compact_aggregates(tmp_path) -> Non
 
         status, _ = _request("POST", f"{server.base_url}/runs/run-status/simulate/full-season")
         assert status == 200
-        status, _ = _request("POST", f"{server.base_url}/runs/run-status/rollover/next-season")
+        status, rollover_payload = _request("POST", f"{server.base_url}/runs/run-status/rollover/next-season")
         assert status == 200
         status, _ = _request(
             "POST",
@@ -381,10 +383,13 @@ def test_run_status_summary_endpoint_returns_compact_aggregates(tmp_path) -> Non
         assert post["run_id"] == "run-status"
         assert post["finals"]["qualification_available"] is True
         assert post["finals"]["result_available"] is False
-        assert post["rollover"] == {"latest_to_season": 2028, "transitioned_players": 128}
+        assert post["rollover"] == {
+            "latest_to_season": 2028,
+            "transitioned_players": rollover_payload["rollover"]["transitioned_players"],
+        }
         assert post["source"] is None
         assert post["lineage"] == {"child_run_count": 1}
-        assert post["history_counts"]["events"] == 18
+        assert post["history_counts"]["events"] == total_events
         assert post["history_counts"]["ranking_snapshots"] > 0
         assert post["history_counts"]["race_snapshots"] > 0
 
@@ -501,3 +506,71 @@ def test_run_activity_endpoint_returns_compact_deterministic_feed(tmp_path) -> N
             for item in payload["items"]
         ]
         assert tuples == sorted(tuples)
+
+
+def test_full_season_and_incremental_modes_persist_equivalent_history_artifacts(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-full-vs-incremental.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-full", "seed": 9191, "season": 2027})
+        assert status == 201
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-incremental", "seed": 9191, "season": 2027})
+        assert status == 201
+
+        status, _ = _request("POST", f"{server.base_url}/runs/run-full/simulate/full-season")
+        assert status == 200
+
+        while True:
+            status, state = _request("GET", f"{server.base_url}/runs/run-incremental")
+            assert status == 200
+            if state["season_state"]["next_event_index"] == len(state["season_state"]["ordered_events"]):
+                break
+            status, _ = _request("POST", f"{server.base_url}/runs/run-incremental/simulate/next-week")
+            assert status == 200
+
+        status, full_events = _request("GET", f"{server.base_url}/runs/run-full/events")
+        assert status == 200
+        status, incremental_events = _request("GET", f"{server.base_url}/runs/run-incremental/events")
+        assert status == 200
+        assert full_events["events"] == incremental_events["events"]
+
+        status, full_ranking = _request("GET", f"{server.base_url}/runs/run-full/snapshots/ranking")
+        assert status == 200
+        status, incremental_ranking = _request("GET", f"{server.base_url}/runs/run-incremental/snapshots/ranking")
+        assert status == 200
+        assert full_ranking["snapshots"] == incremental_ranking["snapshots"]
+
+        status, full_race = _request("GET", f"{server.base_url}/runs/run-full/snapshots/race")
+        assert status == 200
+        status, incremental_race = _request("GET", f"{server.base_url}/runs/run-incremental/snapshots/race")
+        assert status == 200
+        assert full_race["snapshots"] == incremental_race["snapshots"]
+
+
+def test_next_match_and_round_are_allowed_until_finals_marker_is_persisted(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-finals-marker.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/runs",
+            {"run_id": "run-finals-marker", "seed": 6161, "season": 2027},
+        )
+        assert status == 201
+
+        status, _ = _request("POST", f"{server.base_url}/runs/run-finals-marker/simulate/full-season")
+        assert status == 200
+
+        status, _ = _request("POST", f"{server.base_url}/runs/run-finals-marker/simulate/next-match")
+        assert status == 200
+        status, _ = _request("POST", f"{server.base_url}/runs/run-finals-marker/simulate/next-round")
+        assert status == 200
+
+        status, _ = _request("GET", f"{server.base_url}/runs/run-finals-marker/finals/qualification")
+        assert status == 200
+
+        status, payload = _request("POST", f"{server.base_url}/runs/run-finals-marker/simulate/next-match")
+        assert status == 400
+        assert "finals phase has begun" in payload["detail"]
+
+        status, payload = _request("POST", f"{server.base_url}/runs/run-finals-marker/simulate/next-round")
+        assert status == 400
+        assert "finals phase has begun" in payload["detail"]

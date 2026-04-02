@@ -260,7 +260,7 @@ class SimulationApiService:
                 source_as_of_week=existing.source_as_of_week,
                 qualification=existing.qualification,
             )
-        return orchestrator.derive_qualification(
+        return orchestrator.derive_and_persist_qualification(
             run=run_info,
             state=state,
             players_by_id=self._load_players_by_id_for_run(run_info=run_info),

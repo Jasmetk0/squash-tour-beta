@@ -98,7 +98,7 @@ def test_finals_simulation_is_deterministic_and_idempotent(tmp_path) -> None:
     assert first.qualification.qualification.model_dump() == second.qualification.qualification.model_dump()
 
 
-def test_get_finals_qualification_is_read_only_when_not_materialized(tmp_path) -> None:
+def test_get_finals_qualification_materializes_persisted_marker(tmp_path) -> None:
     orchestrator = _orchestrator(seed=9601)
     full_season = orchestrator.simulate_full_season(state=orchestrator.initialize_state())
 
@@ -113,9 +113,10 @@ def test_get_finals_qualification_is_read_only_when_not_materialized(tmp_path) -
 
     qualification = service.get_finals_qualification(run_id=run.run_id)
     assert qualification.season == run.season
-    assert repository.get_finals_qualification(run_id=run.run_id, season=run.season) is None
+    persisted = repository.get_finals_qualification(run_id=run.run_id, season=run.season)
+    assert persisted is not None
 
     summary = service.get_finals_summary(run_id=run.run_id)
     assert summary.qualification is not None
     assert summary.result is None
-    assert repository.get_finals_qualification(run_id=run.run_id, season=run.season) is None
+    assert repository.get_finals_qualification(run_id=run.run_id, season=run.season) is not None

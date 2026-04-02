@@ -29,7 +29,7 @@ export type RunStatusSummary = {
     transitioned_players: number
   } | null
   source: {
-    source_type: string
+    source_type: RunSourceType
     parent_run_id: string | null
   } | null
   lineage: {
@@ -42,6 +42,10 @@ export type RunStatusSummary = {
   }
 }
 
+export type RunSourceType = 'fresh_seed' | 'rollover_bootstrap'
+export type LegacyRunSourceType = 'new_run' | 'bootstrap' | 'bootstrapped_rollover'
+export type RunSourceTypeLike = RunSourceType | LegacyRunSourceType | (string & {})
+
 export type RunsIndexResponse = {
   runs: Array<{
     run_id: string
@@ -52,7 +56,7 @@ export type RunsIndexResponse = {
       total_events: number
       completed_event_count: number
     }
-    source_type: 'bootstrap' | 'new_run' | string | null
+    source_type: RunSourceType
     parent_run_id: string | null
     child_run_count: number
   }>
@@ -226,7 +230,7 @@ export type BootstrapNextSeasonPayload = {
 }
 
 export type RunSourceSummary = {
-  source_type: string
+  source_type: RunSourceTypeLike
   parent_run_id: string | null
   source_rollover_run_id: string | null
   source_rollover_from_season: number | null

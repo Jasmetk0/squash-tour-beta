@@ -13,6 +13,7 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
+import { normalizeRunSourceType } from '../utils/runSourceTypes'
 
 function describeFinalsSignal(summary?: RunStatusSummary): string {
   if (!summary) return 'Unknown'
@@ -23,9 +24,10 @@ function describeFinalsSignal(summary?: RunStatusSummary): string {
 
 function describeRunOrigin(source?: RunSourceApiResponse['source'] | null): string {
   if (!source) return 'Unknown (no source metadata)'
-  if (source.source_type === 'new_run') return 'Fresh seed/bootstrap run (new_run)'
-  if (source.source_rollover_run_id || source.parent_run_id) return `Rollover-derived (${source.source_type})`
-  return `${source.source_type} (source metadata available)`
+  const sourceType = normalizeRunSourceType(source.source_type)
+  if (sourceType === 'fresh_seed') return 'Fresh seed run (fresh_seed)'
+  if (source.source_rollover_run_id || source.parent_run_id) return `Rollover-derived (${sourceType})`
+  return `${sourceType} (source metadata available)`
 }
 
 function SeasonChainRunCard({

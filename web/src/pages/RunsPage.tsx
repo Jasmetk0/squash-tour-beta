@@ -5,6 +5,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getRun, getRunStatusSummary, listRuns } from '../api/client'
 import { CompactSummaryCard, EmptyState, MetadataList, PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
+import { normalizeRunSourceType } from '../utils/runSourceTypes'
 
 const LAST_RUN_ID_STORAGE_KEY = 'beta_engine:last_run_id'
 
@@ -41,7 +42,7 @@ export function RunsPage(): JSX.Element {
         if (normalizedRunFilter && !run.run_id.toLowerCase().includes(normalizedRunFilter)) return false
         if (normalizedSeasonFilter && String(run.season) !== normalizedSeasonFilter) return false
         if (normalizedSourceFilter) {
-          const sourceType = (run.source_type ?? '').toLowerCase()
+          const sourceType = (normalizeRunSourceType(run.source_type) ?? '').toLowerCase()
           if (!sourceType.includes(normalizedSourceFilter)) return false
         }
         if (childrenFilter === 'with-children' && run.child_run_count === 0) return false
@@ -179,7 +180,7 @@ export function RunsPage(): JSX.Element {
                 items={[
                   { label: 'Run ID', value: selectedRun.run_id },
                   { label: 'Season', value: selectedRun.season },
-                  { label: 'Source type', value: selectedRun.source_type ?? 'N/A' },
+                  { label: 'Source type', value: normalizeRunSourceType(selectedRun.source_type) ?? 'N/A' },
                   { label: 'Progress', value: formatProgress(selectedRun.progress.next_event_index, selectedRun.progress.total_events) }
                 ]}
               />

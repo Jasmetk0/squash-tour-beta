@@ -131,15 +131,22 @@ export type RunActivityItem = {
 
 export type RunActivityResponse = { run_id: string; items: RunActivityItem[] }
 
-export type RankingSnapshot = {
+type SnapshotRecordBase = {
   snapshot_sequence: number
   snapshot_kind: string
   source_event_id: string | null
+}
+
+export type RankingSnapshot = SnapshotRecordBase & {
+  payload: Record<string, unknown>
+}
+
+export type RaceSnapshot = SnapshotRecordBase & {
   payload: Record<string, unknown>
 }
 
 export type RankingSnapshotListResponse = { run_id: string; snapshots: RankingSnapshot[] }
-export type RaceSnapshotListResponse = RankingSnapshotListResponse
+export type RaceSnapshotListResponse = { run_id: string; snapshots: RaceSnapshot[] }
 
 export type FinalsQualificationResponse = {
   run_id: string

@@ -11,6 +11,7 @@ import type {
   FinalsSummaryResponse,
   HealthResponse,
   RankingSnapshot,
+  RaceSnapshot,
   RaceSnapshotListResponse,
   RankingSnapshotListResponse,
   NextSeasonPlayersResponse,
@@ -119,7 +120,7 @@ export function getRankingSnapshot(runId: string, snapshotSequence: number): Pro
   return request(`/runs/${encodeURIComponent(runId)}/snapshots/ranking/${snapshotSequence}`)
 }
 
-export function getRaceSnapshot(runId: string, snapshotSequence: number): Promise<RankingSnapshot> {
+export function getRaceSnapshot(runId: string, snapshotSequence: number): Promise<RaceSnapshot> {
   return request(`/runs/${encodeURIComponent(runId)}/snapshots/race/${snapshotSequence}`)
 }
 

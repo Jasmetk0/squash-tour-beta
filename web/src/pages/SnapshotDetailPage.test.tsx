@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { SnapshotDetailPage } from './SnapshotDetailPage'
+import type { RaceSnapshot } from '../api/types'
 
 const api = vi.hoisted(() => ({
   getRankingSnapshot: vi.fn(),
@@ -132,12 +133,13 @@ describe('SnapshotDetailPage', () => {
   })
 
   it('keeps previous/next navigation in backend order', async () => {
-    api.getRaceSnapshot.mockResolvedValue({
+    const raceSnapshot: RaceSnapshot = {
       snapshot_sequence: 7,
       snapshot_kind: 'WEEK',
       source_event_id: null,
       payload: { label: 'race-7' }
-    })
+    }
+    api.getRaceSnapshot.mockResolvedValue(raceSnapshot)
     api.listRaceSnapshots.mockResolvedValue({
       snapshots: [
         { snapshot_sequence: 6, snapshot_kind: 'WEEK', source_event_id: null, payload: {} },
@@ -155,12 +157,13 @@ describe('SnapshotDetailPage', () => {
   })
 
   it('shows readable boundary behavior when no previous or next snapshot exists', async () => {
-    api.getRaceSnapshot.mockResolvedValue({
+    const raceSnapshot: RaceSnapshot = {
       snapshot_sequence: 6,
       snapshot_kind: 'WEEK',
       source_event_id: null,
       payload: { label: 'race-6' }
-    })
+    }
+    api.getRaceSnapshot.mockResolvedValue(raceSnapshot)
     api.listRaceSnapshots.mockResolvedValue({
       snapshots: [{ snapshot_sequence: 6, snapshot_kind: 'WEEK', source_event_id: null, payload: {} }]
     })

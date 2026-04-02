@@ -1,10 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FormEvent, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { bootstrapNextSeason, getRunLineage, getRunSource } from '../api/client'
+import { bootstrapNextSeason, getRunLineage, getRunSource, getRunStatusSummary } from '../api/client'
+import type { RunSourceSummary, RunStatusSummary } from '../api/types'
 import {
   ActionStatusBlock,
+  CompactSummaryCard,
   CurrentContextStrip,
   EmptyState,
   JsonPayloadBlock,
@@ -15,6 +17,28 @@ import {
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
+function classifyRunProvenance(source?: RunSourceSummary | null): 'new_run' | 'bootstrap-derived' | 'rollover-derived' | 'unknown' {
+  if (!source) return 'unknown'
+  if (source.source_type === 'new_run') return 'new_run'
+  if (source.source_rollover_run_id) return 'rollover-derived'
+  if (source.parent_run_id) return 'bootstrap-derived'
+  return 'unknown'
+}
+
+function statusProgress(summary?: RunStatusSummary): string {
+  if (!summary) return 'Unknown'
+  return `${summary.progress.next_event_index} / ${summary.progress.total_events}`
+}
+
+function LinkCluster({ runId }: { runId: string }): JSX.Element {
+  return (
+    <p>
+      <Link to={`/runs/${runId}`}>Run Detail</Link> · <Link to={`/runs/${runId}/diagnostics`}>Diagnostics</Link> ·{' '}
+      <Link to={`/runs/${runId}/season-chain`}>Season Chain</Link>
+    </p>
+  )
+}
+
 export function BootstrapLineagePage(): JSX.Element {
   const { runId = '' } = useParams()
   const queryClient = useQueryClient()
@@ -24,33 +48,44 @@ export function BootstrapLineagePage(): JSX.Element {
   const sourceQuery = useQuery({
     queryKey: ['run-source', runId],
     queryFn: () => getRunSource(runId),
-    enabled: Boolean(runId)
+    enabled: Boolean(runId),
+    retry: false
   })
 
   const lineageQuery = useQuery({
     queryKey: ['run-lineage', runId],
     queryFn: () => getRunLineage(runId),
-    enabled: Boolean(runId)
+    enabled: Boolean(runId),
+    retry: false
+  })
+
+  const currentStatusQuery = useQuery({
+    queryKey: ['run-status-summary', runId],
+    queryFn: () => getRunStatusSummary(runId),
+    enabled: Boolean(runId),
+    retry: false
   })
 
   const bootstrapMutation = useMutation({
     mutationFn: () => {
       const childSeed = childSeedInput.trim() === '' ? undefined : Number(childSeedInput)
       return bootstrapNextSeason(runId, {
-        child_run_id: childRunId,
+        child_run_id: childRunId.trim(),
         ...(childSeed !== undefined ? { child_seed: childSeed } : {})
       })
     },
     onSuccess: async () => {
+      setChildSeedInput('')
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['run', runId] }),
         queryClient.invalidateQueries({ queryKey: ['run-source', runId] }),
-        queryClient.invalidateQueries({ queryKey: ['run-lineage', runId] })
+        queryClient.invalidateQueries({ queryKey: ['run-lineage', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['run-status-summary', runId] })
       ])
     }
   })
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleBootstrapSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!childRunId.trim()) return
     bootstrapMutation.mutate()
@@ -60,90 +95,207 @@ export function BootstrapLineagePage(): JSX.Element {
   const lineage = lineageQuery.data?.lineage
   const sourceNotFound = isApiNotFound(sourceQuery.error)
   const lineageNotFound = isApiNotFound(lineageQuery.error)
+  const parentRunId = source?.parent_run_id ?? lineage?.source.parent_run_id ?? null
+  const childRunIds = lineage?.children ?? []
+
+  const [parentStatusQuery] = useQueries({
+    queries: [
+      {
+        queryKey: ['run-status-summary', parentRunId],
+        queryFn: () => getRunStatusSummary(parentRunId as string),
+        enabled: Boolean(parentRunId),
+        retry: false
+      }
+    ]
+  })
+
+  const childStatusQueries = useQueries({
+    queries: childRunIds.map((childId) => ({
+      queryKey: ['run-status-summary', childId],
+      queryFn: () => getRunStatusSummary(childId),
+      enabled: Boolean(childId),
+      retry: false
+    }))
+  })
+
+  const runClassification = classifyRunProvenance(source ?? lineage?.source)
 
   return (
     <section className="panel">
       <RunScopedHeader
         title="Bootstrap / Lineage"
         runId={runId}
-        subtitle="Review source/lineage metadata and bootstrap the next-season child run."
+        subtitle="Read-only provenance and lineage inspection for this run context."
       />
       <CurrentContextStrip
         items={[
           { label: 'Run', value: runId || 'unknown' },
-          { label: 'Parent', value: source?.parent_run_id ?? lineage?.source.parent_run_id ?? 'None' },
-          { label: 'Children', value: lineage?.children.length ?? 0 }
+          { label: 'Source type', value: source?.source_type ?? lineage?.source.source_type ?? '—' },
+          { label: 'Parent', value: parentRunId ?? 'None' },
+          { label: 'Children', value: childRunIds.length }
         ]}
       />
 
-      <SectionCard title="Run source summary">
-        {sourceQuery.isLoading && <p className="status">Loading source metadata...</p>}
+      <SectionCard title="Current run provenance summary">
+        {(sourceQuery.isLoading || lineageQuery.isLoading || currentStatusQuery.isLoading) && <p className="status">Loading provenance summary...</p>}
         {sourceNotFound && <EmptyState message="No source metadata is available for this run." />}
+        {lineageNotFound && <EmptyState message="No lineage metadata is available for this run." />}
         {sourceQuery.error && !sourceNotFound && <p className="error">Failed to load run source: {formatApiError(sourceQuery.error)}</p>}
-        {source && (
+        {lineageQuery.error && !lineageNotFound && <p className="error">Failed to load run lineage: {formatApiError(lineageQuery.error)}</p>}
+        {currentStatusQuery.error && <p className="error">Failed to load current run status: {formatApiError(currentStatusQuery.error)}</p>}
+
+        {(source || lineage || currentStatusQuery.data) && (
           <>
             <SummaryPills
               items={[
-                { label: 'Source type', value: source.source_type },
-                { label: 'Parent linked', value: source.parent_run_id ? 'Yes' : 'No' },
-                { label: 'Rollover source linked', value: source.source_rollover_run_id ? 'Yes' : 'No' }
+                { label: 'Source type', value: source?.source_type ?? lineage?.source.source_type ?? 'Unknown' },
+                { label: 'Classification', value: runClassification },
+                { label: 'Parent linked', value: parentRunId ? 'Yes' : 'No' },
+                {
+                  label: 'Rollover provenance',
+                  value: (source?.source_rollover_run_id ?? lineage?.source.source_rollover_run_id) ? 'Present' : 'None'
+                }
+              ]}
+            />
+            <CompactSummaryCard
+              items={[
+                { label: 'Run ID', value: runId },
+                { label: 'Season', value: currentStatusQuery.data?.season ?? 'Unknown' },
+                { label: 'Progress', value: statusProgress(currentStatusQuery.data) },
+                { label: 'Child runs', value: childRunIds.length }
               ]}
             />
             <MetadataList
               items={[
-                { label: 'Parent run ID', value: source.parent_run_id ?? 'None' },
-                { label: 'Rollover source run', value: source.source_rollover_run_id ?? 'None' },
-                { label: 'Rollover from season', value: source.source_rollover_from_season ?? 'None' },
-                { label: 'Rollover to season', value: source.source_rollover_to_season ?? 'None' }
+                { label: 'Parent run ID', value: parentRunId ?? 'None' },
+                { label: 'Rollover source run', value: source?.source_rollover_run_id ?? lineage?.source.source_rollover_run_id ?? 'None' },
+                {
+                  label: 'Rollover from season',
+                  value: source?.source_rollover_from_season ?? lineage?.source.source_rollover_from_season ?? 'None'
+                },
+                { label: 'Rollover to season', value: source?.source_rollover_to_season ?? lineage?.source.source_rollover_to_season ?? 'None' }
               ]}
             />
           </>
         )}
       </SectionCard>
 
-      <SectionCard title="Lineage summary and navigation">
-        {lineageQuery.isLoading && <p className="status">Loading lineage metadata...</p>}
-        {lineageNotFound && <EmptyState message="No lineage record is available for this run yet." />}
-        {lineageQuery.error && !lineageNotFound && (
-          <p className="error">Failed to load run lineage: {formatApiError(lineageQuery.error)}</p>
-        )}
-        {lineage && (
+      <SectionCard title="Current run bridge navigation">
+        <LinkCluster runId={runId} />
+      </SectionCard>
+
+      <SectionCard title="Parent run inspection">
+        {lineageQuery.isLoading && <p className="status">Loading parent run metadata...</p>}
+        {parentRunId ? (
           <>
-            <SummaryPills
+            {parentStatusQuery.isLoading && <p className="status">Loading parent status summary...</p>}
+            {parentStatusQuery.error ? <p className="error">Failed to load parent status summary: {formatApiError(parentStatusQuery.error)}</p> : null}
+            <CompactSummaryCard
               items={[
-                { label: 'Current run', value: lineage.run_id },
-                { label: 'Parent runs', value: lineage.source.parent_run_id ? 1 : 0 },
-                { label: 'Child runs', value: lineage.children.length }
+                { label: 'Run ID', value: parentRunId },
+                { label: 'Season', value: parentStatusQuery.data?.season ?? 'Unknown' },
+                { label: 'Progress', value: statusProgress(parentStatusQuery.data) },
+                { label: 'Child count', value: parentStatusQuery.data?.lineage.child_run_count ?? 'Unknown' }
               ]}
             />
-
-            <h4>Parent run</h4>
-            {lineage.source.parent_run_id ? (
-              <p>
-                <Link to={`/runs/${lineage.source.parent_run_id}`}>{lineage.source.parent_run_id}</Link>
-              </p>
-            ) : (
-              <EmptyState message="No parent run linked for this run." />
-            )}
-
-            <h4>Child runs</h4>
-            {lineage.children.length === 0 ? (
-              <EmptyState message="No child runs yet." />
-            ) : (
-              <ul className="item-list">
-                {lineage.children.map((child) => (
-                  <li key={child}>
-                    <Link to={`/runs/${child}`}>{child}</Link>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <LinkCluster runId={parentRunId} />
           </>
+        ) : (
+          <EmptyState message="No parent run linked for this run." />
         )}
+      </SectionCard>
+
+      <SectionCard title="Child runs inspection">
+        {lineageQuery.isLoading && <p className="status">Loading child runs...</p>}
+        {!lineageQuery.isLoading && childRunIds.length === 0 ? <EmptyState message="No child runs linked for this run." /> : null}
+        <ul className="item-list">
+          {childRunIds.map((childId, index) => {
+            const childStatusQuery = childStatusQueries[index]
+            return (
+              <li key={childId}>
+                <h4>{childId}</h4>
+                {childStatusQuery?.isLoading ? <p className="status">Loading child status summary...</p> : null}
+                {childStatusQuery?.error ? <p className="error">Failed to load child status summary: {formatApiError(childStatusQuery.error)}</p> : null}
+                <CompactSummaryCard
+                  items={[
+                    { label: 'Run ID', value: childId },
+                    { label: 'Season', value: childStatusQuery?.data?.season ?? 'Unknown' },
+                    { label: 'Progress', value: statusProgress(childStatusQuery?.data) },
+                    { label: 'Child count', value: childStatusQuery?.data?.lineage.child_run_count ?? 'Unknown' }
+                  ]}
+                />
+                <LinkCluster runId={childId} />
+              </li>
+            )
+          })}
+        </ul>
+      </SectionCard>
+
+      <SectionCard title="Rollover provenance">
+        {(source?.source_rollover_run_id ?? lineage?.source.source_rollover_run_id) ? (
+          <MetadataList
+            items={[
+              { label: 'Source rollover run', value: source?.source_rollover_run_id ?? lineage?.source.source_rollover_run_id ?? 'None' },
+              {
+                label: 'Source rollover season',
+                value:
+                  source?.source_rollover_to_season ?? lineage?.source.source_rollover_to_season
+                    ? `Season ${source?.source_rollover_to_season ?? lineage?.source.source_rollover_to_season}`
+                    : 'Unknown'
+              }
+            ]}
+          />
+        ) : (
+          <EmptyState message="No rollover provenance is linked for this run." />
+        )}
+
+        {(source?.source_rollover_run_id ?? lineage?.source.source_rollover_run_id) &&
+        (source?.source_rollover_to_season ?? lineage?.source.source_rollover_to_season) ? (
+          <p>
+            <Link
+              to={`/runs/${source?.source_rollover_run_id ?? lineage?.source.source_rollover_run_id}/rollover/${
+                source?.source_rollover_to_season ?? lineage?.source.source_rollover_to_season
+              }`}
+            >
+              Open source rollover detail
+            </Link>
+          </p>
+        ) : null}
+      </SectionCard>
+
+      <SectionCard title="Most relevant next inspections">
+        <MetadataList
+          items={[
+            {
+              label: 'Parent season chain',
+              value: parentRunId ? <Link to={`/runs/${parentRunId}/season-chain`}>Inspect parent season chain</Link> : 'No parent run linked'
+            },
+            {
+              label: 'First child diagnostics',
+              value: childRunIds[0] ? <Link to={`/runs/${childRunIds[0]}/diagnostics`}>Inspect first child diagnostics</Link> : 'No child run linked'
+            },
+            {
+              label: 'Source rollover',
+              value:
+                (source?.source_rollover_run_id ?? lineage?.source.source_rollover_run_id) &&
+                (source?.source_rollover_to_season ?? lineage?.source.source_rollover_to_season) ? (
+                  <Link
+                    to={`/runs/${source?.source_rollover_run_id ?? lineage?.source.source_rollover_run_id}/rollover/${
+                      source?.source_rollover_to_season ?? lineage?.source.source_rollover_to_season
+                    }`}
+                  >
+                    Inspect source rollover detail
+                  </Link>
+                ) : (
+                  'No source rollover linked'
+                )
+            }
+          ]}
+        />
       </SectionCard>
 
       <SectionCard title="Bootstrap next season child run">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleBootstrapSubmit}>
           <label>
             Child run ID
             <input
@@ -178,14 +330,17 @@ export function BootstrapLineagePage(): JSX.Element {
           }
         />
 
-        {bootstrapMutation.data && (
-          <div>
+        {bootstrapMutation.data ? (
+          <>
             <SummaryPills
               items={[
                 { label: 'Child run', value: bootstrapMutation.data.bootstrap.child_run_id },
                 { label: 'To season', value: bootstrapMutation.data.bootstrap.to_season },
                 { label: 'Transitioned players', value: bootstrapMutation.data.bootstrap.transitioned_players },
-                { label: 'Status', value: bootstrapMutation.data.bootstrap.already_bootstrapped ? 'Already bootstrapped' : 'Created' }
+                {
+                  label: 'Status',
+                  value: bootstrapMutation.data.bootstrap.already_bootstrapped ? 'Already bootstrapped' : 'Created'
+                }
               ]}
             />
             <p>
@@ -196,8 +351,8 @@ export function BootstrapLineagePage(): JSX.Element {
               payload={bootstrapMutation.data.bootstrap}
               emptyText="No bootstrap payload available."
             />
-          </div>
-        )}
+          </>
+        ) : null}
       </SectionCard>
     </section>
   )

@@ -14,7 +14,7 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import { SelectableHistoryList } from '../components/SelectableHistoryList'
-import type { RankingSnapshot } from '../api/types'
+import type { RaceSnapshot, RankingSnapshot } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
 
 type Mode = 'ranking' | 'race'
@@ -258,7 +258,7 @@ function SnapshotDetail({
   siblingMode,
   siblingMatchCount
 }: {
-  snapshot: RankingSnapshot
+  snapshot: RankingSnapshot | RaceSnapshot
   mode: Mode
   runId: string
   plannedContext?: { week: number; category: string; tour: string; templateId: string; planPosition: number }

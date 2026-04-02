@@ -9,7 +9,7 @@ import {
   listRaceSnapshots,
   listRankingSnapshots
 } from '../api/client'
-import type { RankingSnapshot, SeasonStateResponse } from '../api/types'
+import type { RaceSnapshot, RankingSnapshot, SeasonStateResponse } from '../api/types'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -190,7 +190,15 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
   )
 }
 
-function SnapshotSummary({ mode, snapshot, runId }: { mode: SnapshotMode; snapshot: RankingSnapshot; runId: string }): JSX.Element {
+function SnapshotSummary({
+  mode,
+  snapshot,
+  runId
+}: {
+  mode: SnapshotMode
+  snapshot: RankingSnapshot | RaceSnapshot
+  runId: string
+}): JSX.Element {
   return (
     <CompactSummaryCard
       items={[
@@ -219,7 +227,7 @@ function SourceEventContext({
   sourceEventId: string | null
   persistedSourceEventSequence: number | null
   plannedSourceEvent: PlannedEventContext | null
-  relatedSiblingSnapshots: RankingSnapshot[]
+  relatedSiblingSnapshots: Array<RankingSnapshot | RaceSnapshot>
   siblingMode: SnapshotMode
 }): JSX.Element {
   if (!sourceEventId) {

@@ -24,6 +24,8 @@ const api = vi.hoisted(() => ({
   listRaceSnapshots: vi.fn(),
   simulateWorldTourFinals: vi.fn(),
   rolloverNextSeason: vi.fn(),
+  simulateNextMatch: vi.fn(),
+  simulateNextRound: vi.fn(),
   simulateNextTournament: vi.fn(),
   simulateNextWeek: vi.fn(),
   simulateFullSeason: vi.fn()
@@ -132,6 +134,8 @@ describe('RunPage', () => {
         already_persisted: false
       }
     })
+    api.simulateNextMatch.mockResolvedValue({ step: { mode: 'simulate_next_match' } })
+    api.simulateNextRound.mockResolvedValue({ step: { mode: 'simulate_next_round' } })
     api.simulateNextTournament.mockResolvedValue({ step: { mode: 'simulate_next_tournament' } })
     api.simulateNextWeek.mockResolvedValue({ step: { mode: 'simulate_next_week' } })
     api.simulateFullSeason.mockResolvedValue({ step: { mode: 'simulate_full_season' } })
@@ -171,6 +175,12 @@ describe('RunPage', () => {
 
   it('calls each simulation endpoint', async () => {
     renderWithRoute(<RunPage />, '/runs/run-a')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Simulate next match' }))
+    await waitFor(() => expect(api.simulateNextMatch).toHaveBeenCalledWith('run-a'))
+
+    await userEvent.click(screen.getByRole('button', { name: 'Simulate next round' }))
+    await waitFor(() => expect(api.simulateNextRound).toHaveBeenCalledWith('run-a'))
 
     await userEvent.click(await screen.findByRole('button', { name: 'Simulate next tournament' }))
     await waitFor(() => expect(api.simulateNextTournament).toHaveBeenCalledWith('run-a'))

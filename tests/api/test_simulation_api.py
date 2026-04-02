@@ -101,6 +101,22 @@ def test_simulation_endpoints_and_snapshot_queries_work(tmp_path) -> None:
         assert next_tournament["step"]["mode"] == "simulate_next_tournament"
         assert next_tournament["run"]["next_event_index"] == 1
 
+        status, next_match = _request("POST", f"{server.base_url}/runs/run-sim/simulate/next-match")
+        assert status == 200
+        assert next_match["step"]["mode"] == "simulate_next_match"
+        assert next_match["run"]["next_event_index"] == 1
+        assert next_match["step"]["season_state"]["active_tournament"] is not None
+        assert next_match["step"]["tournament_result"]["ranking_snapshot"] is None
+        assert next_match["step"]["tournament_result"]["race_snapshot"] is None
+        assert next_match["step"]["tournament_result"]["completed_tournament_input"] is None
+
+        status, next_round = _request("POST", f"{server.base_url}/runs/run-sim/simulate/next-round")
+        assert status == 200
+        assert next_round["step"]["mode"] == "simulate_next_round"
+        assert next_round["step"]["tournament_result"]["ranking_snapshot"] is None
+        assert next_round["step"]["tournament_result"]["race_snapshot"] is None
+        assert next_round["step"]["tournament_result"]["completed_tournament_input"] is None
+
         status, next_week = _request("POST", f"{server.base_url}/runs/run-sim/simulate/next-week")
         assert status == 200
         assert next_week["step"]["mode"] == "simulate_next_week"
@@ -200,6 +216,30 @@ def test_finals_endpoint_rejects_incomplete_season(tmp_path) -> None:
         status, payload = _request("POST", f"{server.base_url}/runs/run-finals-incomplete/simulate/world-tour-finals")
         assert status == 400
         assert "completed regular season" in payload["detail"]
+
+
+def test_next_match_and_next_round_reject_after_finals_phase_begins(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-next-match-finals.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/runs",
+            {"run_id": "run-finals-locked", "seed": 3222, "season": 2027},
+        )
+        assert status == 201
+
+        status, _ = _request("POST", f"{server.base_url}/runs/run-finals-locked/simulate/full-season")
+        assert status == 200
+        status, _ = _request("GET", f"{server.base_url}/runs/run-finals-locked/finals/qualification")
+        assert status == 200
+
+        status, payload = _request("POST", f"{server.base_url}/runs/run-finals-locked/simulate/next-match")
+        assert status == 400
+        assert "finals phase has begun" in payload["detail"]
+
+        status, payload = _request("POST", f"{server.base_url}/runs/run-finals-locked/simulate/next-round")
+        assert status == 400
+        assert "finals phase has begun" in payload["detail"]
 
 
 def test_rollover_endpoints_execute_and_read_persisted_data(tmp_path) -> None:

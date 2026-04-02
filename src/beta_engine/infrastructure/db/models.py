@@ -35,6 +35,7 @@ class SeasonStateModel(Base):
     completed_event_ids_json: Mapped[str] = mapped_column(Text, nullable=False)
     ranking_snapshot_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     race_snapshot_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    active_tournament_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class CompletedEventModel(Base):

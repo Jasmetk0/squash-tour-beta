@@ -38,9 +38,17 @@ class TournamentSimulationResult(BaseModel):
     qualification_draw: GeneratedDraw
     main_draw: GeneratedDraw
     tournament_result: TournamentResult
-    ranking_snapshot: RankingSnapshot
-    race_snapshot: RaceSnapshot
-    completed_tournament_input: CompletedTournamentPointsInput
+    ranking_snapshot: RankingSnapshot | None = None
+    race_snapshot: RaceSnapshot | None = None
+    completed_tournament_input: CompletedTournamentPointsInput | None = None
+
+
+class ActiveTournamentState(BaseModel):
+    """Persisted in-progress tournament context for fine-grained simulation commands."""
+
+    event: CalendarEvent
+    full_result: TournamentSimulationResult
+    revealed_match_count: int = Field(default=0, ge=0)
 
 
 class WeeklySimulationResult(BaseModel):
@@ -63,6 +71,7 @@ class SeasonState(BaseModel):
     completed_tournament_inputs: list[CompletedTournamentPointsInput] = Field(default_factory=list)
     ranking_snapshot: RankingSnapshot | None = None
     race_snapshot: RaceSnapshot | None = None
+    active_tournament: ActiveTournamentState | None = None
 
     @property
     def has_remaining_events(self) -> bool:
@@ -81,7 +90,13 @@ class SeasonSimulationResult(BaseModel):
 class SimulationStepResult(BaseModel):
     """Generic command result wrapper with updated state."""
 
-    mode: Literal["simulate_next_tournament", "simulate_next_week", "simulate_full_season"]
+    mode: Literal[
+        "simulate_next_match",
+        "simulate_next_round",
+        "simulate_next_tournament",
+        "simulate_next_week",
+        "simulate_full_season",
+    ]
     season_state: SeasonState
     tournament_result: TournamentSimulationResult | None = None
     weekly_result: WeeklySimulationResult | None = None

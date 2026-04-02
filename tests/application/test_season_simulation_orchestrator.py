@@ -123,3 +123,81 @@ def test_ranking_and_race_snapshots_update_after_processed_events() -> None:
     assert len(second.season_state.completed_tournament_inputs) == 2
     assert second_ranking.report.model_dump() != first_ranking.report.model_dump()
     assert second_race.report.model_dump() != first_race.report.model_dump()
+
+
+def test_simulate_next_match_progresses_active_tournament_before_completing_event() -> None:
+    orchestrator = _orchestrator(seed=7501)
+    state = orchestrator.initialize_state()
+
+    first_step = orchestrator.simulate_next_match(state=state)
+
+    assert first_step.tournament_result is not None
+    assert first_step.season_state.next_event_index == 0
+    assert first_step.season_state.active_tournament is not None
+    assert first_step.season_state.active_tournament.revealed_match_count == 1
+    assert first_step.season_state.completed_event_ids == []
+    assert first_step.tournament_result.ranking_snapshot is None
+    assert first_step.tournament_result.race_snapshot is None
+    assert first_step.tournament_result.completed_tournament_input is None
+
+    current = first_step.season_state
+    while current.active_tournament is not None:
+        step = orchestrator.simulate_next_match(state=current)
+        current = step.season_state
+
+    assert current.next_event_index == 1
+    assert len(current.completed_event_ids) == 1
+
+
+def test_simulate_next_round_advances_one_round_at_a_time() -> None:
+    orchestrator = _orchestrator(seed=7601)
+    state = orchestrator.initialize_state()
+
+    first_step = orchestrator.simulate_next_round(state=state)
+    assert first_step.season_state.active_tournament is not None
+    revealed_after_first = first_step.season_state.active_tournament.revealed_match_count
+    assert first_step.tournament_result.ranking_snapshot is None
+    assert first_step.tournament_result.race_snapshot is None
+    assert first_step.tournament_result.completed_tournament_input is None
+
+    second_step = orchestrator.simulate_next_round(state=first_step.season_state)
+    assert second_step.season_state.active_tournament is not None
+    revealed_after_second = second_step.season_state.active_tournament.revealed_match_count
+    assert revealed_after_second > revealed_after_first
+
+
+def test_partial_simulation_hides_post_event_artifacts_until_completion() -> None:
+    orchestrator = _orchestrator(seed=7650)
+    state = orchestrator.initialize_state()
+
+    partial = orchestrator.simulate_next_match(state=state)
+    assert partial.tournament_result is not None
+    assert partial.tournament_result.ranking_snapshot is None
+    assert partial.tournament_result.race_snapshot is None
+    assert partial.tournament_result.completed_tournament_input is None
+
+    current = partial.season_state
+    final_step = partial
+    while current.active_tournament is not None:
+        final_step = orchestrator.simulate_next_match(state=current)
+        current = final_step.season_state
+
+    assert final_step.tournament_result is not None
+    assert final_step.tournament_result.ranking_snapshot is not None
+    assert final_step.tournament_result.race_snapshot is not None
+    assert final_step.tournament_result.completed_tournament_input is not None
+
+
+def test_match_and_round_progression_are_deterministic_for_same_seed() -> None:
+    orchestrator_a = _orchestrator(seed=7701)
+    orchestrator_b = _orchestrator(seed=7701)
+    state_a = orchestrator_a.initialize_state()
+    state_b = orchestrator_b.initialize_state()
+
+    steps_a = [orchestrator_a.simulate_next_match(state=state_a)]
+    steps_b = [orchestrator_b.simulate_next_match(state=state_b)]
+    assert steps_a[0].model_dump() == steps_b[0].model_dump()
+
+    step_a_round = orchestrator_a.simulate_next_round(state=steps_a[0].season_state)
+    step_b_round = orchestrator_b.simulate_next_round(state=steps_b[0].season_state)
+    assert step_a_round.model_dump() == step_b_round.model_dump()

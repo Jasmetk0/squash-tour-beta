@@ -214,6 +214,12 @@ class SimulationApiService:
     def simulate_next_tournament(self, *, run_id: str) -> SimulationStepResult:
         return self._simulate_step(run_id=run_id, mode="simulate_next_tournament")
 
+    def simulate_next_match(self, *, run_id: str) -> SimulationStepResult:
+        return self._simulate_step(run_id=run_id, mode="simulate_next_match")
+
+    def simulate_next_round(self, *, run_id: str) -> SimulationStepResult:
+        return self._simulate_step(run_id=run_id, mode="simulate_next_round")
+
     def simulate_next_week(self, *, run_id: str) -> SimulationStepResult:
         return self._simulate_step(run_id=run_id, mode="simulate_next_week")
 
@@ -557,9 +563,15 @@ class SimulationApiService:
 
     def _simulate_step(self, *, run_id: str, mode: str) -> SimulationStepResult:
         run_info, state = self._load_run_context(run_id=run_id)
+        if mode in {"simulate_next_match", "simulate_next_round"}:
+            self._validate_finals_phase_not_started(run_id=run_id, season=run_info.season)
 
         orchestrator = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info)
-        if mode == "simulate_next_tournament":
+        if mode == "simulate_next_match":
+            step = orchestrator.simulate_next_match(state=state)
+        elif mode == "simulate_next_round":
+            step = orchestrator.simulate_next_round(state=state)
+        elif mode == "simulate_next_tournament":
             step = orchestrator.simulate_next_tournament(state=state)
         elif mode == "simulate_next_week":
             step = orchestrator.simulate_next_week(state=state)
@@ -571,6 +583,12 @@ class SimulationApiService:
         persistence = SimulationPersistenceService(repository=self.repository)
         persistence.persist_step(run_id=run_id, step=step)
         return step
+
+    def _validate_finals_phase_not_started(self, *, run_id: str, season: int) -> None:
+        if self.repository.get_finals_result(run_id=run_id, season=season) is not None:
+            raise ValueError("cannot simulate next match/round after finals completion")
+        if self.repository.get_finals_qualification(run_id=run_id, season=season) is not None:
+            raise ValueError("cannot simulate next match/round after finals phase has begun")
 
     def _build_orchestrator(
         self,

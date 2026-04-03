@@ -11,7 +11,7 @@ import uvicorn
 from beta_engine.main import create_app
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.countries import CountryTalentModel
-from beta_engine.domain.players import PlayerGenerator
+from beta_engine.domain.players import AnnualTalentClassPlanner, PlayerGenerator
 from beta_engine.infrastructure.world_config import load_countries_config, load_player_identity_config
 
 
@@ -67,15 +67,28 @@ def _request(
         return int(exc.code), parsed
 
 
-def _generated_player_ids(seed: int, per_country: int = 24) -> list[str]:
+def _generated_player_ids(*, season: int, seed: int) -> list[str]:
+    countries = load_countries_config().countries
+    plan = AnnualTalentClassPlanner().plan(year=season, seed=seed, countries=countries)
     generator = PlayerGenerator(
         rng=DeterministicRng(seed),
         identity_config=load_player_identity_config(),
         country_talent_model=CountryTalentModel(),
     )
+    countries_by_code = {country.code: country for country in countries}
     ids: list[str] = []
-    for country in load_countries_config().countries:
-        ids.extend(generator.generate(country=country, sequence=index + 1).player_id for index in range(per_country))
+    for allocation in plan.allocations:
+        country = countries_by_code[allocation.country_code]
+        for talent in allocation.talents:
+            ids.append(
+                generator.generate_from_talent_seed(
+                    country=country,
+                    sequence=talent.sequence,
+                    talent_seed_value=talent.seed_value,
+                    quality_band=talent.quality_band,
+                    bias_profile=allocation.bias_profile,
+                ).player_id
+            )
     return ids
 
 
@@ -346,7 +359,7 @@ def test_commissioner_wildcard_assignment_endpoints_validate_and_persist(tmp_pat
 
         assigned_player_id = None
         successful_assignment_payload: dict[str, object] | None = None
-        for player_id in _generated_player_ids(seed=5151):
+        for player_id in _generated_player_ids(season=2027, seed=5151):
             status, payload = _request(
                 "POST",
                 f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcards",
@@ -361,7 +374,7 @@ def test_commissioner_wildcard_assignment_endpoints_validate_and_persist(tmp_pat
         assert successful_assignment_payload["slots"][0]["assigned_player_id"] == assigned_player_id
 
         second_assigned_player_id = None
-        for player_id in _generated_player_ids(seed=5151):
+        for player_id in _generated_player_ids(season=2027, seed=5151):
             if player_id == assigned_player_id:
                 continue
             status, payload = _request(

@@ -1,0 +1,6 @@
+code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality
+EGY,Egypt,,MENA,112000000,5,5,5,5
+ENG,England,,EUROPE,57000000,4,4,5,4
+PAK,Pakistan,,ASIA,241000000,3,3,5,3
+USA,United States,,AMERICAS,333000000,4,2,2,3
+NGA,Nigeria,,AFRICA,223000000,2,1,1,1

@@ -68,13 +68,11 @@ def test_strong_and_ambitious_players_enter_higher_level_more_often() -> None:
         name="Testland",
         region="EUROPE",
         population=1_000_000,
-        squash_popularity=0.6,
-        infrastructure_level=0.6,
-        development_pipeline_quality=0.6,
-        elite_system_strength=0.6,
-        historical_tradition=0.6,
-        travel_region="EUROPE",
-        travel_affinity={"MIDDLE_EAST": 0.7},
+        flag_asset=None,
+        squash_popularity=3,
+        wealth_support=3,
+        squash_tradition=3,
+        system_quality=3,
     )
 
     base_hidden = {
@@ -185,18 +183,16 @@ def test_travel_metadata_changes_entry_likelihood() -> None:
     high_affinity_country = Country(
         code="TRV",
         name="Travelerland",
-        region="EUROPE",
+        region="MIDDLE_EAST",
         population=1_000_000,
-        squash_popularity=0.5,
-        infrastructure_level=0.6,
-        development_pipeline_quality=0.6,
-        elite_system_strength=0.6,
-        historical_tradition=0.6,
-        travel_region="EUROPE",
-        travel_affinity={"MIDDLE_EAST": 0.9},
+        flag_asset=None,
+        squash_popularity=3,
+        wealth_support=3,
+        squash_tradition=3,
+        system_quality=3,
     )
     low_affinity_country = high_affinity_country.model_copy(
-        update={"travel_affinity": {"MIDDLE_EAST": 0.25}}
+        update={"region": "AFRICA"}
     )
 
     high_probs = []

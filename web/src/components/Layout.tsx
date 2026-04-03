@@ -2,7 +2,8 @@ import { NavLink, Outlet, useParams } from 'react-router-dom'
 
 const baseNav = [
   { to: '/', label: 'Dashboard' },
-  { to: '/runs', label: 'Runs' }
+  { to: '/runs', label: 'Runs' },
+  { to: '/world/countries', label: 'Countries Editor' }
 ]
 
 export function Layout(): JSX.Element {

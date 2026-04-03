@@ -137,12 +137,11 @@ def test_config_validation_endpoint_can_return_successful_report(tmp_path) -> No
                     "name": "England",
                     "region": "Europe",
                     "population": 1,
-                    "squash_popularity": 0.9,
-                    "infrastructure_level": 0.9,
-                    "development_pipeline_quality": 0.9,
-                    "elite_system_strength": 0.9,
-                    "historical_tradition": 0.9,
-                    "travel_region": "EU",
+                    "flag_asset": None,
+                    "squash_popularity": 5,
+                    "wealth_support": 5,
+                    "squash_tradition": 5,
+                    "system_quality": 5,
                 }
             ]
         }),

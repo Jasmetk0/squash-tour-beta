@@ -444,3 +444,27 @@ export type BootstrapNextSeasonResponse = {
     already_bootstrapped: boolean
   }
 }
+
+export type CountryRecord = {
+  code: string
+  name: string
+  flag_asset: string | null
+  region: string
+  population: number
+  wealth_support: number
+  squash_popularity: number
+  squash_tradition: number
+  system_quality: number
+}
+
+export type CountriesListResponse = {
+  countries: CountryRecord[]
+}
+
+export type CountriesMetadataResponse = {
+  dataset_status: string | null
+  country_count: number
+  source_path: string
+}
+
+export type CountryUpsertPayload = CountryRecord

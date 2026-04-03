@@ -39,7 +39,7 @@ class PlayerGenerator:
             potential_ceiling=self._clamp_int(55, 99, int(round(66 + talent_index * 30 + player_rng.uniform(-8, 8)))),
             growth_curve=player_rng.choice(self.identity_config.growth_curves),
             professionalism=self._clamp_float(country.development_pipeline_quality * 0.62 + player_rng.uniform(0.10, 0.42)),
-            ambition=self._clamp_float(country.squash_popularity * 0.50 + player_rng.uniform(0.12, 0.55)),
+            ambition=self._clamp_float(country.squash_popularity_norm * 0.50 + player_rng.uniform(0.12, 0.55)),
             travel_tolerance=self._travel_tolerance(country, player_rng),
             schedule_aggression=self._clamp_float(player_rng.uniform(0.18, 0.82)),
             injury_proneness=self._clamp_float(1.0 - (country.infrastructure_level * 0.55 + player_rng.uniform(0.12, 0.42))),

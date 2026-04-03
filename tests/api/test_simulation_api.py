@@ -289,6 +289,13 @@ def test_commissioner_wildcard_assignment_endpoints_validate_and_persist(tmp_pat
         assert status == 200
         assert wildcard_candidates_second == wildcard_candidates_first
 
+        status, wildcard_actions_empty = _request(
+            "GET",
+            f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcard-actions",
+        )
+        assert status == 200
+        assert wildcard_actions_empty == {"run_id": "run-wildcards", "event_id": selected_event_id, "actions": []}
+
         status, invalid = _request(
             "POST",
             f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcards",
@@ -334,19 +341,50 @@ def test_commissioner_wildcard_assignment_endpoints_validate_and_persist(tmp_pat
         assert successful_assignment_payload is not None
         assert successful_assignment_payload["slots"][0]["assigned_player_id"] == assigned_player_id
 
+        second_assigned_player_id = None
+        for player_id in _generated_player_ids(seed=5151):
+            if player_id == assigned_player_id:
+                continue
+            status, payload = _request(
+                "POST",
+                f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcards",
+                {"assignments": [{"slot_index": 1, "player_id": player_id}]},
+            )
+            if status == 200:
+                second_assigned_player_id = player_id
+                assert payload["slots"][0]["assigned_player_id"] == second_assigned_player_id
+                break
+        assert second_assigned_player_id is not None
+
+        status, wildcard_actions = _request(
+            "GET",
+            f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcard-actions",
+        )
+        assert status == 200
+        assert wildcard_actions["run_id"] == "run-wildcards"
+        assert wildcard_actions["event_id"] == selected_event_id
+        assert [item["action_sequence"] for item in wildcard_actions["actions"]] == [1, 2]
+        assert [item["action_kind"] for item in wildcard_actions["actions"]] == ["assign_wildcards", "assign_wildcards"]
+        assert wildcard_actions["actions"][0]["event_id"] == selected_event_id
+        assert wildcard_actions["actions"][0]["assignment_payload_summary"] == [{"slot_index": 1, "player_id": assigned_player_id}]
+        assert wildcard_actions["actions"][1]["assignment_payload_summary"] == [
+            {"slot_index": 1, "player_id": second_assigned_player_id}
+        ]
+
         status, after_assign = _request(
             "GET",
             f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcards",
         )
         assert status == 200
-        assert after_assign["slots"][0]["assigned_player_id"] == assigned_player_id
+        assert after_assign["slots"][0]["assigned_player_id"] == second_assigned_player_id
 
         status, wildcard_candidates_after_assign = _request(
             "GET",
             f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcard-candidates",
         )
         assert status == 200
-        assert assigned_player_id not in {candidate["player_id"] for candidate in wildcard_candidates_after_assign["candidates"]}
+        candidate_ids = {candidate["player_id"] for candidate in wildcard_candidates_after_assign["candidates"]}
+        assert second_assigned_player_id not in candidate_ids
 
         selected_index = next(index for index, event in enumerate(ordered_events) if event["event_id"] == selected_event_id)
         for _ in range(selected_index + 1):
@@ -356,12 +394,12 @@ def test_commissioner_wildcard_assignment_endpoints_validate_and_persist(tmp_pat
         completed_input = sim_result["step"]["tournament_result"]["acceptance_list"]["main_draw_entries"]
         wildcard_entries = [entry for entry in completed_input if entry["status"] == "WILD_CARD_PLACEHOLDER"]
         assert wildcard_entries
-        assert wildcard_entries[0]["player_id"] == assigned_player_id
+        assert wildcard_entries[0]["player_id"] == second_assigned_player_id
 
         status, rejected_after_start = _request(
             "POST",
             f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcards",
-            {"assignments": [{"slot_index": 1, "player_id": assigned_player_id}]},
+            {"assignments": [{"slot_index": 1, "player_id": second_assigned_player_id}]},
         )
         assert status == 400
         assert "completed events" in rejected_after_start["detail"]

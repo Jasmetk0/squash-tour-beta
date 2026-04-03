@@ -45,10 +45,18 @@ class ApiServer:
         self.thread.join(timeout=10)
 
 
-def _request(method: str, url: str, payload: dict[str, object] | None = None) -> tuple[int, dict[str, object]]:
+def _request(
+    method: str,
+    url: str,
+    payload: dict[str, object] | None = None,
+    *,
+    headers: dict[str, str] | None = None,
+) -> tuple[int, dict[str, object]]:
     body = None if payload is None else json.dumps(payload).encode("utf-8")
     req = request.Request(url, data=body, method=method)
     req.add_header("content-type", "application/json")
+    for key, value in (headers or {}).items():
+        req.add_header(key, value)
     try:
         with request.urlopen(req, timeout=60) as response:
             raw = response.read().decode("utf-8")
@@ -69,6 +77,17 @@ def _generated_player_ids(seed: int, per_country: int = 24) -> list[str]:
     for country in load_countries_config().countries:
         ids.extend(generator.generate(country=country, sequence=index + 1).player_id for index in range(per_country))
     return ids
+
+
+def test_preflight_options_request_succeeds_for_health_endpoint(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-cors-health.db'}"
+    with ApiServer(database_url=database_url) as server:
+        req = request.Request(f"{server.base_url}/health", method="OPTIONS")
+        req.add_header("Origin", "http://localhost:5173")
+        req.add_header("Access-Control-Request-Method", "GET")
+        with request.urlopen(req, timeout=60) as response:
+            assert response.status == 200
+            assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
 
 
 def test_run_initialization_and_state_fetch_work(tmp_path) -> None:

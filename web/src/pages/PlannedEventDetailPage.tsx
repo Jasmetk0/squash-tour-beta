@@ -3,8 +3,12 @@ import { FormEvent, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import {
+  applyEventLateReplacement,
   applyEventPreDrawWithdrawal,
   assignEventWildcards,
+  getEventLateReplacementActions,
+  getEventLateReplacementCandidates,
+  getEventLateReplacementState,
   getEventPreDrawWithdrawalActions,
   getEventPreDrawWithdrawalState,
   getEventWildcardActions,
@@ -31,6 +35,27 @@ export function PlannedEventDetailPage(): JSX.Element {
   const [slotIndexInput, setSlotIndexInput] = useState('1')
   const [selectedPlayerId, setSelectedPlayerId] = useState('')
   const [withdrawnPlayerId, setWithdrawnPlayerId] = useState('')
+  const [lateReplacementWithdrawnPlayerId, setLateReplacementWithdrawnPlayerId] = useState('')
+  const commissionerQueryKeys = [
+    ['wildcards', runId, eventId],
+    ['wildcard-candidates', runId, eventId],
+    ['wildcard-actions', runId, eventId],
+    ['pre-draw-withdrawal-state', runId, eventId],
+    ['pre-draw-withdrawal-actions', runId, eventId],
+    ['late-replacement-state', runId, eventId],
+    ['late-replacement-candidates', runId, eventId],
+    ['late-replacement-actions', runId, eventId]
+  ] as const
+
+  async function invalidateCommissionerQueries(): Promise<void> {
+    await Promise.all(
+      commissionerQueryKeys.map((queryKey) =>
+        queryClient.invalidateQueries({
+          queryKey
+        })
+      )
+    )
+  }
 
   const runQuery = useQuery({
     queryKey: ['run', runId],
@@ -74,24 +99,40 @@ export function PlannedEventDetailPage(): JSX.Element {
     enabled: Boolean(runId && eventId),
     retry: false
   })
+  const lateReplacementStateQuery = useQuery({
+    queryKey: ['late-replacement-state', runId, eventId],
+    queryFn: () => getEventLateReplacementState(runId, eventId),
+    enabled: Boolean(runId && eventId),
+    retry: false
+  })
+  const lateReplacementCandidatesQuery = useQuery({
+    queryKey: ['late-replacement-candidates', runId, eventId],
+    queryFn: () => getEventLateReplacementCandidates(runId, eventId),
+    enabled: Boolean(runId && eventId),
+    retry: false
+  })
+  const lateReplacementActionsQuery = useQuery({
+    queryKey: ['late-replacement-actions', runId, eventId],
+    queryFn: () => getEventLateReplacementActions(runId, eventId),
+    enabled: Boolean(runId && eventId),
+    retry: false
+  })
   const wildcardMutation = useMutation({
     mutationFn: (values: { slotIndex: number; playerId: string }) =>
       assignEventWildcards(runId, eventId, {
         assignments: [{ slot_index: values.slotIndex, player_id: values.playerId }]
       }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['wildcards', runId, eventId] })
-      await queryClient.invalidateQueries({ queryKey: ['wildcard-candidates', runId, eventId] })
-      await queryClient.invalidateQueries({ queryKey: ['wildcard-actions', runId, eventId] })
-    }
+    onSuccess: invalidateCommissionerQueries
   })
   const preDrawWithdrawalMutation = useMutation({
     mutationFn: (values: { withdrawnPlayerId: string }) =>
       applyEventPreDrawWithdrawal(runId, eventId, { withdrawn_player_id: values.withdrawnPlayerId }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['pre-draw-withdrawal-state', runId, eventId] })
-      await queryClient.invalidateQueries({ queryKey: ['pre-draw-withdrawal-actions', runId, eventId] })
-    }
+    onSuccess: invalidateCommissionerQueries
+  })
+  const lateReplacementMutation = useMutation({
+    mutationFn: (values: { withdrawnPlayerId: string }) =>
+      applyEventLateReplacement(runId, eventId, { withdrawn_player_id: values.withdrawnPlayerId }),
+    onSuccess: invalidateCommissionerQueries
   })
 
   const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
@@ -127,6 +168,12 @@ export function PlannedEventDetailPage(): JSX.Element {
       setWithdrawnPlayerId(firstWithdrawableId)
     }
   }, [preDrawWithdrawalStateQuery.data, withdrawnPlayerId])
+  useEffect(() => {
+    const firstWithdrawableId = lateReplacementStateQuery.data?.replaceable_main_draw_players[0]?.player_id ?? ''
+    if (!lateReplacementWithdrawnPlayerId && firstWithdrawableId) {
+      setLateReplacementWithdrawnPlayerId(firstWithdrawableId)
+    }
+  }, [lateReplacementStateQuery.data, lateReplacementWithdrawnPlayerId])
 
   function handleWildcardSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
@@ -138,6 +185,11 @@ export function PlannedEventDetailPage(): JSX.Element {
     event.preventDefault()
     if (!withdrawnPlayerId.trim()) return
     preDrawWithdrawalMutation.mutate({ withdrawnPlayerId: withdrawnPlayerId.trim() })
+  }
+  function handleLateReplacementSubmit(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault()
+    if (!lateReplacementWithdrawnPlayerId.trim()) return
+    lateReplacementMutation.mutate({ withdrawnPlayerId: lateReplacementWithdrawnPlayerId.trim() })
   }
 
   return (
@@ -248,6 +300,107 @@ export function PlannedEventDetailPage(): JSX.Element {
       ) : null}
 
       {eventsQuery.error ? <p className="error">Failed to load persisted events: {formatApiError(eventsQuery.error)}</p> : null}
+
+      {plannedEvent ? (
+        <SectionCard title="Commissioner late replacement lucky loser">
+          {lateReplacementStateQuery.isLoading ? <p className="status">Loading late-replacement state...</p> : null}
+          {lateReplacementStateQuery.error ? (
+            <p className="error">Failed to load late-replacement state: {formatApiError(lateReplacementStateQuery.error)}</p>
+          ) : null}
+          {lateReplacementStateQuery.data ? (
+            <>
+              <MetadataList
+                items={[
+                  { label: 'Action allowed', value: lateReplacementStateQuery.data.eligible ? 'Yes' : 'No' },
+                  { label: 'Eligibility note', value: lateReplacementStateQuery.data.eligibility_reason ?? 'Eligible' },
+                  { label: 'Replaceable players', value: lateReplacementStateQuery.data.replaceable_main_draw_players.length },
+                  { label: 'Remaining capacity', value: lateReplacementStateQuery.data.remaining_capacity }
+                ]}
+              />
+              {lateReplacementStateQuery.data.eligible ? (
+                <form onSubmit={handleLateReplacementSubmit}>
+                  <label>
+                    Main-draw player to withdraw
+                    <select
+                      value={lateReplacementWithdrawnPlayerId}
+                      onChange={(e) => setLateReplacementWithdrawnPlayerId(e.target.value)}
+                    >
+                      <option value="">Select player</option>
+                      {lateReplacementStateQuery.data.replaceable_main_draw_players.map((player) => (
+                        <option key={`${player.player_id}-${player.entry_id}`} value={player.player_id}>
+                          {player.player_name} ({player.player_id}) · {player.country_code}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="submit"
+                    disabled={
+                      lateReplacementMutation.isPending ||
+                      !lateReplacementWithdrawnPlayerId ||
+                      lateReplacementStateQuery.data.replaceable_main_draw_players.length === 0
+                    }
+                  >
+                    Withdraw + late-replace
+                  </button>
+                </form>
+              ) : null}
+              {lateReplacementCandidatesQuery.isLoading ? <p className="status">Loading late-replacement candidates...</p> : null}
+              {lateReplacementCandidatesQuery.error ? (
+                <p className="error">
+                  Failed to load late-replacement candidates: {formatApiError(lateReplacementCandidatesQuery.error)}
+                </p>
+              ) : null}
+              {lateReplacementCandidatesQuery.data ? (
+                lateReplacementCandidatesQuery.data.candidates.length > 0 ? (
+                  <ul>
+                    {lateReplacementCandidatesQuery.data.candidates.map((candidate) => (
+                      <li key={`${candidate.player_id}-${candidate.entry_id}`}>
+                        #{candidate.candidate_slot_index} · {candidate.player_name} ({candidate.player_id}) · {candidate.source} ·
+                        ranking {candidate.ranking_priority ?? '—'}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <EmptyState message="No late-replacement candidates are currently available for this event." />
+                )
+              ) : null}
+              {lateReplacementMutation.error ? (
+                <p className="error">Late-replacement command failed: {formatApiError(lateReplacementMutation.error)}</p>
+              ) : null}
+              {lateReplacementMutation.data ? (
+                <p className="status">
+                  Last action: withdrew {lateReplacementMutation.data.withdrawn_player_id} and late-replaced with{' '}
+                  {lateReplacementMutation.data.replacement_player_id} ({lateReplacementMutation.data.replacement_source}).
+                </p>
+              ) : null}
+            </>
+          ) : null}
+        </SectionCard>
+      ) : null}
+
+      {plannedEvent ? (
+        <SectionCard title="Late-replacement action history">
+          {lateReplacementActionsQuery.isLoading ? <p className="status">Loading late-replacement history...</p> : null}
+          {lateReplacementActionsQuery.error ? (
+            <p className="error">Failed to load late-replacement history: {formatApiError(lateReplacementActionsQuery.error)}</p>
+          ) : null}
+          {lateReplacementActionsQuery.data ? (
+            lateReplacementActionsQuery.data.actions.length > 0 ? (
+              <ol>
+                {lateReplacementActionsQuery.data.actions.map((action) => (
+                  <li key={action.action_sequence}>
+                    #{action.action_sequence} · {action.action_kind} · {action.withdrawn_player_id} → {action.replacement_player_id} (
+                    {action.replacement_source})
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <EmptyState message="No late-replacement lucky loser actions have been recorded for this event yet." />
+            )
+          ) : null}
+        </SectionCard>
+      ) : null}
 
       {plannedEvent ? (
         <SectionCard title="Commissioner pre-draw withdrawal replacement">

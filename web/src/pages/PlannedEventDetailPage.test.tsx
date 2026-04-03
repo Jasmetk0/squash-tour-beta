@@ -9,6 +9,10 @@ const api = vi.hoisted(() => ({
   getRun: vi.fn(),
   listEvents: vi.fn(),
   getEventWildcards: vi.fn(),
+  getEventLateReplacementState: vi.fn(),
+  getEventLateReplacementCandidates: vi.fn(),
+  getEventLateReplacementActions: vi.fn(),
+  applyEventLateReplacement: vi.fn(),
   getEventPreDrawWithdrawalState: vi.fn(),
   getEventPreDrawWithdrawalActions: vi.fn(),
   applyEventPreDrawWithdrawal: vi.fn(),
@@ -75,6 +79,71 @@ describe('PlannedEventDetailPage', () => {
           acceptance_status: 'DIRECT_ACCEPTANCE'
         }
       ]
+    })
+    api.getEventLateReplacementState.mockResolvedValue({
+      run_id: 'run-a',
+      event_id: 'E1',
+      eligible: true,
+      eligibility_reason: null,
+      replaceable_main_draw_players: [
+        {
+          player_id: 'P100',
+          player_name: 'Player Main',
+          country_code: 'EGY',
+          country_name: 'Egypt',
+          entry_id: 'E1:P100:MAIN',
+          acceptance_status: 'DIRECT_ACCEPTANCE'
+        }
+      ],
+      remaining_capacity: 2
+    })
+    api.getEventLateReplacementCandidates.mockResolvedValue({
+      run_id: 'run-a',
+      event_id: 'E1',
+      candidates: [
+        {
+          candidate_slot_index: 1,
+          player_id: 'P300',
+          player_name: 'Player Three',
+          country_code: 'ENG',
+          country_name: 'England',
+          source: 'qualification_waitlist',
+          source_priority: 0,
+          ranking_priority: 3,
+          entry_id: 'E1:P300:APPLICANT_QUALIFICATION'
+        }
+      ]
+    })
+    api.getEventLateReplacementActions.mockResolvedValue({
+      run_id: 'run-a',
+      event_id: 'E1',
+      actions: [
+        {
+          action_sequence: 1,
+          action_kind: 'late_replacement_lucky_loser',
+          event_id: 'E1',
+          withdrawn_player_id: 'P100',
+          replacement_player_id: 'P300',
+          replacement_source: 'qualification_waitlist',
+          withdrawn_entry_id: 'E1:P100:MAIN',
+          replacement_entry_id: 'E1:LATE_REPLACEMENT_PLACEHOLDER:1',
+          candidate_slot_index: 1,
+          notes: null
+        }
+      ]
+    })
+    api.applyEventLateReplacement.mockResolvedValue({
+      run_id: 'run-a',
+      event_id: 'E1',
+      withdrawn_player_id: 'P100',
+      replacement_player_id: 'P300',
+      replacement_source: 'qualification_waitlist',
+      withdrawn_entry_id: 'E1:P100:MAIN',
+      replacement_entry_id: 'E1:LATE_REPLACEMENT_PLACEHOLDER:1',
+      candidate_slot_index: 1,
+      eligible: true,
+      eligibility_reason: null,
+      remaining_capacity: 1
     })
     api.applyEventPreDrawWithdrawal.mockResolvedValue({
       run_id: 'run-a',
@@ -208,12 +277,28 @@ describe('PlannedEventDetailPage', () => {
     renderAt('/runs/run-a/calendar/E1')
 
     expect(await screen.findByRole('heading', { name: 'Commissioner pre-draw withdrawal replacement' })).toBeInTheDocument()
-    const playerSelect = await screen.findByLabelText('Main-draw player to withdraw')
+    const playerSelect = (await screen.findAllByLabelText('Main-draw player to withdraw'))[1]
     fireEvent.change(playerSelect, { target: { value: 'P100' } })
     fireEvent.click(screen.getByRole('button', { name: 'Withdraw + auto-replace' }))
 
     await waitFor(() =>
       expect(api.applyEventPreDrawWithdrawal).toHaveBeenCalledWith('run-a', 'E1', {
+        withdrawn_player_id: 'P100'
+      })
+    )
+  })
+
+  it('renders late-replacement controls, candidates, and submits deterministic one-step action', async () => {
+    renderAt('/runs/run-a/calendar/E1')
+
+    expect(await screen.findByRole('heading', { name: 'Commissioner late replacement lucky loser' })).toBeInTheDocument()
+    expect(await screen.findByText('#1 · Player Three (P300) · qualification_waitlist · ranking 3')).toBeInTheDocument()
+    const playerSelect = (await screen.findAllByLabelText('Main-draw player to withdraw'))[0]
+    fireEvent.change(playerSelect, { target: { value: 'P100' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Withdraw + late-replace' }))
+
+    await waitFor(() =>
+      expect(api.applyEventLateReplacement).toHaveBeenCalledWith('run-a', 'E1', {
         withdrawn_player_id: 'P100'
       })
     )
@@ -233,6 +318,11 @@ describe('PlannedEventDetailPage', () => {
         assignments: [{ slot_index: 1, player_id: 'P2' }]
       })
     )
+    await waitFor(() => {
+      expect(api.getEventPreDrawWithdrawalState.mock.calls.length).toBeGreaterThan(1)
+      expect(api.getEventLateReplacementState.mock.calls.length).toBeGreaterThan(1)
+      expect(api.getEventWildcardActions.mock.calls.length).toBeGreaterThan(1)
+    })
   })
 
   it('renders wildcard action history in append-only sequence order', async () => {
@@ -250,5 +340,49 @@ describe('PlannedEventDetailPage', () => {
     renderAt('/runs/run-a/calendar/E1')
     expect(await screen.findByRole('heading', { name: 'Pre-draw withdrawal action history' })).toBeInTheDocument()
     expect(await screen.findByText('#1 · pre_draw_withdrawal_replacement · P100 → P200 (main_draw_waitlist)')).toBeInTheDocument()
+  })
+
+  it('renders late-replacement history in append-only sequence order', async () => {
+    renderAt('/runs/run-a/calendar/E1')
+    expect(await screen.findByRole('heading', { name: 'Late-replacement action history' })).toBeInTheDocument()
+    expect(await screen.findByText('#1 · late_replacement_lucky_loser · P100 → P300 (qualification_waitlist)')).toBeInTheDocument()
+  })
+
+  it('pre-draw mutation invalidates all commissioner read surfaces', async () => {
+    renderAt('/runs/run-a/calendar/E1')
+    const playerSelect = (await screen.findAllByLabelText('Main-draw player to withdraw'))[1]
+    fireEvent.change(playerSelect, { target: { value: 'P100' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Withdraw + auto-replace' }))
+
+    await waitFor(() => expect(api.applyEventPreDrawWithdrawal).toHaveBeenCalled())
+    await waitFor(() => {
+      expect(api.getEventWildcards.mock.calls.length).toBeGreaterThan(1)
+      expect(api.getEventWildcardCandidates.mock.calls.length).toBeGreaterThan(1)
+      expect(api.getEventWildcardActions.mock.calls.length).toBeGreaterThan(1)
+      expect(api.getEventPreDrawWithdrawalState.mock.calls.length).toBeGreaterThan(1)
+      expect(api.getEventPreDrawWithdrawalActions.mock.calls.length).toBeGreaterThan(1)
+      expect(api.getEventLateReplacementState.mock.calls.length).toBeGreaterThan(1)
+      expect(api.getEventLateReplacementCandidates.mock.calls.length).toBeGreaterThan(1)
+      expect(api.getEventLateReplacementActions.mock.calls.length).toBeGreaterThan(1)
+    })
+  })
+
+  it('late-replacement mutation invalidates all commissioner read surfaces', async () => {
+    renderAt('/runs/run-a/calendar/E1')
+    const playerSelect = (await screen.findAllByLabelText('Main-draw player to withdraw'))[0]
+    fireEvent.change(playerSelect, { target: { value: 'P100' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Withdraw + late-replace' }))
+
+    await waitFor(() => expect(api.applyEventLateReplacement).toHaveBeenCalled())
+    await waitFor(() => {
+      expect(api.getEventWildcards.mock.calls.length).toBeGreaterThan(1)
+      expect(api.getEventWildcardCandidates.mock.calls.length).toBeGreaterThan(1)
+      expect(api.getEventWildcardActions.mock.calls.length).toBeGreaterThan(1)
+      expect(api.getEventPreDrawWithdrawalState.mock.calls.length).toBeGreaterThan(1)
+      expect(api.getEventPreDrawWithdrawalActions.mock.calls.length).toBeGreaterThan(1)
+      expect(api.getEventLateReplacementState.mock.calls.length).toBeGreaterThan(1)
+      expect(api.getEventLateReplacementCandidates.mock.calls.length).toBeGreaterThan(1)
+      expect(api.getEventLateReplacementActions.mock.calls.length).toBeGreaterThan(1)
+    })
   })
 })

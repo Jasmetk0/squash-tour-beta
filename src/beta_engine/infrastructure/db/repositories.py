@@ -519,6 +519,24 @@ class SimulationPersistenceRepository:
             for event_id in event_ids
         }
 
+    def get_late_replacements_for_event(self, *, run_id: str, event_id: str) -> list[dict[str, object]]:
+        return [
+            dict(action.payload)
+            for action in self.list_admin_actions(
+                run_id=run_id,
+                event_id=event_id,
+                action_kind="late_replacement_lucky_loser",
+            )
+        ]
+
+    def get_late_replacements_for_run(self, *, run_id: str) -> dict[str, list[dict[str, object]]]:
+        actions = self.list_admin_actions(run_id=run_id, action_kind="late_replacement_lucky_loser")
+        event_ids = sorted({action.event_id for action in actions})
+        return {
+            event_id: self.get_late_replacements_for_event(run_id=run_id, event_id=event_id)
+            for event_id in event_ids
+        }
+
     def list_completed_event_ids(self, *, run_id: str) -> list[str]:
         with self._session_factory() as session:
             statement = (

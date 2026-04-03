@@ -106,6 +106,9 @@ export function RunDiagnosticsPage(): JSX.Element {
         runId={runId}
         subtitle="Read-only run health, progress, and structure summary."
       />
+      <p>
+        <Link to={`/runs/${runId}/world-generation`}>Open world generation diagnostics</Link>
+      </p>
       <CurrentContextStrip
         items={[
           { label: 'Season', value: statusSummaryQuery.data?.season ?? runQuery.data?.run.season ?? '—' },

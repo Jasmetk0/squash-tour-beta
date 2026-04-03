@@ -42,6 +42,39 @@ export type RunStatusSummary = {
   }
 }
 
+export type RunTalentPlanSummary = {
+  run_id: string
+  season: number
+  seed: number
+  total_talents: number
+  dataset_status: string | null
+  config_version: string | null
+  config_fingerprint: string | null
+  countries: Array<{
+    country_code: string
+    planned_count: number
+    quality_weights: Record<string, number>
+    actual_band_counts: Record<string, number>
+    bias_profile: Record<string, number>
+  }>
+}
+
+export type GeneratedPlayerProvenance = {
+  run_id: string
+  season: number
+  player_id: string
+  country_code: string
+  talent_sequence: number
+  talent_seed_value: number
+  quality_band: string
+  is_top_band: boolean
+}
+
+export type GeneratedPlayerProvenanceListResponse = {
+  run_id: string
+  players: GeneratedPlayerProvenance[]
+}
+
 export type RunSourceType = 'fresh_seed' | 'rollover_bootstrap'
 export type LegacyRunSourceType = 'new_run' | 'bootstrap' | 'bootstrapped_rollover'
 export type RunSourceTypeLike = RunSourceType | LegacyRunSourceType | (string & {})

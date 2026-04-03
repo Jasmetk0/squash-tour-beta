@@ -127,6 +127,50 @@ def test_run_initialization_and_state_fetch_work(tmp_path) -> None:
         assert len(state_payload["season_state"]["ordered_events"]) > 0
 
 
+def test_run_world_generation_endpoints_return_persisted_plan_and_provenance(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-world-generation.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/runs",
+            {"run_id": "run-gen", "seed": 1001, "season": 2027, "config_version": "mvp", "config_fingerprint": "cfg-1"},
+        )
+        assert status == 201
+
+        status, plan_payload = _request("GET", f"{server.base_url}/runs/run-gen/world/talent-plan")
+        assert status == 200
+        assert plan_payload["run_id"] == "run-gen"
+        assert plan_payload["seed"] == 1001
+        assert plan_payload["total_talents"] > 0
+        assert plan_payload["countries"]
+        assert sum(country["planned_count"] for country in plan_payload["countries"]) == plan_payload["total_talents"]
+
+        status, players_payload = _request("GET", f"{server.base_url}/runs/run-gen/world/generated-players")
+        assert status == 200
+        assert players_payload["run_id"] == "run-gen"
+        assert players_payload["players"]
+        assert len(players_payload["players"]) == plan_payload["total_talents"]
+
+        sample = players_payload["players"][0]
+        status, player_detail = _request(
+            "GET",
+            f"{server.base_url}/runs/run-gen/world/generated-players/{sample['player_id']}",
+        )
+        assert status == 200
+        assert player_detail["player_id"] == sample["player_id"]
+        assert player_detail["quality_band"] == sample["quality_band"]
+
+        status, filtered = _request(
+            "GET",
+            f"{server.base_url}/runs/run-gen/world/generated-players?country_code={sample['country_code']}&quality_band={sample['quality_band']}&limit=5",
+        )
+        assert status == 200
+        assert len(filtered["players"]) <= 5
+        assert filtered["players"]
+        assert all(player["country_code"] == sample["country_code"] for player in filtered["players"])
+        assert all(player["quality_band"] == sample["quality_band"] for player in filtered["players"])
+
+
 def test_simulation_endpoints_and_snapshot_queries_work(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'api-sim.db'}"
     with ApiServer(database_url=database_url) as server:

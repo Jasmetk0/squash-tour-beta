@@ -185,3 +185,60 @@ class AdminActionModel(Base):
     action_sequence: Mapped[int] = mapped_column(Integer, nullable=False)
     action_kind: Mapped[str] = mapped_column(String(64), nullable=False)
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class RunTalentPlanModel(Base):
+    __tablename__ = "run_talent_plans"
+    __table_args__ = (UniqueConstraint("run_id", "season", name="uq_run_talent_plan_run_season"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    season: Mapped[int] = mapped_column(Integer, nullable=False)
+    seed: Mapped[int] = mapped_column(Integer, nullable=False)
+    total_talents: Mapped[int] = mapped_column(Integer, nullable=False)
+    dataset_status: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    config_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    config_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)
+
+
+class RunTalentCountryAllocationModel(Base):
+    __tablename__ = "run_talent_country_allocations"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "season",
+            "country_code",
+            name="uq_run_talent_country_allocation_run_season_country",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    season: Mapped[int] = mapped_column(Integer, nullable=False)
+    country_code: Mapped[str] = mapped_column(String(8), nullable=False)
+    planned_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    quality_weights_json: Mapped[str] = mapped_column(Text, nullable=False)
+    actual_band_counts_json: Mapped[str] = mapped_column(Text, nullable=False)
+    bias_profile_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class RunGeneratedPlayerProvenanceModel(Base):
+    __tablename__ = "run_generated_player_provenance"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "season",
+            "player_id",
+            name="uq_run_generated_player_provenance_run_season_player",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    season: Mapped[int] = mapped_column(Integer, nullable=False)
+    player_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    country_code: Mapped[str] = mapped_column(String(8), nullable=False)
+    talent_sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    talent_seed_value: Mapped[str] = mapped_column(String(128), nullable=False)
+    quality_band: Mapped[str] = mapped_column(String(64), nullable=False)
+    is_top_band: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

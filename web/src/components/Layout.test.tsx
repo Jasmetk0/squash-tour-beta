@@ -16,6 +16,7 @@ describe('Layout run-scoped navigation', () => {
     expect(screen.getByRole('link', { name: 'Season Calendar' })).toHaveAttribute('href', '/runs/run-a/calendar')
     expect(screen.getByRole('link', { name: 'Activity' })).toHaveAttribute('href', '/runs/run-a/activity')
     expect(screen.getByRole('link', { name: 'Diagnostics' })).toHaveAttribute('href', '/runs/run-a/diagnostics')
+    expect(screen.getByRole('link', { name: 'World Generation' })).toHaveAttribute('href', '/runs/run-a/world-generation')
     expect(screen.getByRole('link', { name: 'World Tour Finals' })).toHaveAttribute('href', '/runs/run-a/finals')
     expect(screen.getByRole('link', { name: 'Season Rollover' })).toHaveAttribute('href', '/runs/run-a/rollover')
     expect(screen.getByRole('link', { name: 'Bootstrap / Lineage' })).toHaveAttribute('href', '/runs/run-a/bootstrap-lineage')

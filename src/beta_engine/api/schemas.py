@@ -110,6 +110,41 @@ class RunIndexResponse(BaseModel):
     runs: list[RunIndexSummaryResponse] = Field(default_factory=list)
 
 
+class RunTalentPlanCountryAllocationResponse(BaseModel):
+    country_code: str
+    planned_count: int
+    quality_weights: dict[str, float]
+    actual_band_counts: dict[str, int]
+    bias_profile: dict[str, float]
+
+
+class RunTalentPlanSummaryResponse(BaseModel):
+    run_id: str
+    season: int
+    seed: int
+    total_talents: int
+    dataset_status: str | None = None
+    config_version: str | None = None
+    config_fingerprint: str | None = None
+    countries: list[RunTalentPlanCountryAllocationResponse] = Field(default_factory=list)
+
+
+class GeneratedPlayerProvenanceResponse(BaseModel):
+    run_id: str
+    season: int
+    player_id: str
+    country_code: str
+    talent_sequence: int
+    talent_seed_value: int
+    quality_band: str
+    is_top_band: bool
+
+
+class GeneratedPlayerProvenanceListResponse(BaseModel):
+    run_id: str
+    players: list[GeneratedPlayerProvenanceResponse] = Field(default_factory=list)
+
+
 class SimulateResponse(BaseModel):
     mode: str
     run: RunSummaryResponse

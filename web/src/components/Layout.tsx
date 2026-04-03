@@ -16,6 +16,7 @@ export function Layout(): JSX.Element {
         { to: `/runs/${runId}/calendar`, label: 'Season Calendar' },
         { to: `/runs/${runId}/activity`, label: 'Activity' },
         { to: `/runs/${runId}/diagnostics`, label: 'Diagnostics' },
+        { to: `/runs/${runId}/world-generation`, label: 'World Generation' },
         { to: `/runs/${runId}/finals`, label: 'World Tour Finals' },
         { to: `/runs/${runId}/rollover`, label: 'Season Rollover' },
         { to: `/runs/${runId}/bootstrap-lineage`, label: 'Bootstrap / Lineage' },

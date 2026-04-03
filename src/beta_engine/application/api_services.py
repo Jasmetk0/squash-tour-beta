@@ -31,6 +31,11 @@ from beta_engine.domain.entries import AcceptanceList, AcceptanceStatus, Tournam
 from beta_engine.domain.players import AnnualTalentClassPlanner, Player, PlayerGenerator
 from beta_engine.domain.tournaments import CalendarEvent
 from beta_engine.infrastructure.db import SimulationPersistenceRepository, SimulationRunInfo
+from beta_engine.infrastructure.db.repositories import (
+    PersistedGeneratedPlayerProvenanceRecord,
+    PersistedRunTalentCountryAllocationRecord,
+    PersistedRunTalentPlanRecord,
+)
 from beta_engine.infrastructure.entry_config import load_entry_tuning_config
 from beta_engine.infrastructure.points_config import load_points_config
 from beta_engine.infrastructure.tournament_config import load_season_calendar, load_tournament_templates_config
@@ -172,6 +177,39 @@ class RunActivityItem:
 class RunActivityFeed:
     run_id: str
     items: list[RunActivityItem]
+
+
+@dataclass(frozen=True)
+class RunTalentPlanCountryAllocation:
+    country_code: str
+    planned_count: int
+    quality_weights: dict[str, float]
+    actual_band_counts: dict[str, int]
+    bias_profile: dict[str, float]
+
+
+@dataclass(frozen=True)
+class RunTalentPlanSummary:
+    run_id: str
+    season: int
+    seed: int
+    total_talents: int
+    dataset_status: str | None
+    config_version: str | None
+    config_fingerprint: str | None
+    countries: list[RunTalentPlanCountryAllocation]
+
+
+@dataclass(frozen=True)
+class GeneratedPlayerProvenance:
+    run_id: str
+    season: int
+    player_id: str
+    country_code: str
+    talent_sequence: int
+    talent_seed_value: int
+    quality_band: str
+    is_top_band: bool
 
 
 @dataclass(frozen=True)
@@ -371,6 +409,17 @@ class SimulationApiService:
         config_version: str | None,
         config_fingerprint: str | None,
     ) -> PersistedRunSummary:
+        countries_metadata = load_countries_config()
+        countries = countries_metadata.countries
+        _, plan_record, country_records, provenance_records = self._build_fresh_players_and_provenance(
+            run_id=run_id,
+            season=season,
+            seed=seed,
+            countries=countries,
+            dataset_status=countries_metadata.dataset_status,
+            config_version=config_version,
+            config_fingerprint=config_fingerprint,
+        )
         orchestrator = self._build_orchestrator(season=season, seed=seed, run_info=None)
         state = orchestrator.initialize_state()
 
@@ -385,6 +434,9 @@ class SimulationApiService:
         persistence = SimulationPersistenceService(repository=self.repository)
         persistence.initialize_run(run=run_info)
         self.repository.save_season_state(run_id=run_id, state=state)
+        self.repository.save_run_talent_plan(plan_record)
+        self.repository.replace_run_talent_country_allocations(run_id=run_id, season=season, records=country_records)
+        self.repository.replace_generated_player_provenance(run_id=run_id, season=season, records=provenance_records)
         return self.get_run_summary(run_id=run_id)
 
     def get_run_summary(self, *, run_id: str) -> PersistedRunSummary:
@@ -409,6 +461,58 @@ class SimulationApiService:
         if state is None:
             raise KeyError(f"run_id {run_id} was not found")
         return state
+
+    def get_run_talent_plan_summary(self, *, run_id: str) -> RunTalentPlanSummary:
+        self.get_run_summary(run_id=run_id)
+        plan = self.repository.get_run_talent_plan(run_id=run_id)
+        if plan is None:
+            raise KeyError(f"run_id {run_id} has no persisted annual talent plan")
+        countries = self.repository.list_run_talent_country_allocations(run_id=run_id)
+        return RunTalentPlanSummary(
+            run_id=plan.run_id,
+            season=plan.season,
+            seed=plan.seed,
+            total_talents=plan.total_talents,
+            dataset_status=plan.dataset_status,
+            config_version=plan.config_version,
+            config_fingerprint=plan.config_fingerprint,
+            countries=[
+                RunTalentPlanCountryAllocation(
+                    country_code=country.country_code,
+                    planned_count=country.planned_count,
+                    quality_weights=country.quality_weights,
+                    actual_band_counts=country.actual_band_counts,
+                    bias_profile=country.bias_profile,
+                )
+                for country in countries
+            ],
+        )
+
+    def list_generated_player_provenance(
+        self,
+        *,
+        run_id: str,
+        country_code: str | None = None,
+        quality_band: str | None = None,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> list[GeneratedPlayerProvenance]:
+        self.get_run_summary(run_id=run_id)
+        records = self.repository.list_generated_player_provenance(
+            run_id=run_id,
+            country_code=country_code,
+            quality_band=quality_band,
+            limit=limit,
+            offset=offset,
+        )
+        return [self._to_generated_player_provenance(record) for record in records]
+
+    def get_generated_player_provenance(self, *, run_id: str, player_id: str) -> GeneratedPlayerProvenance:
+        self.get_run_summary(run_id=run_id)
+        record = self.repository.get_generated_player_provenance(run_id=run_id, player_id=player_id)
+        if record is None:
+            raise KeyError(f"player_id {player_id} has no persisted generation provenance in run_id {run_id}")
+        return self._to_generated_player_provenance(record)
 
     def get_wildcard_state(self, *, run_id: str, event_id: str) -> WildcardStateResponse:
         run_info, state = self._load_run_context(run_id=run_id)
@@ -1492,6 +1596,33 @@ class SimulationApiService:
         return run_info, state
 
     def _build_players(self, *, seed: int, season: int, countries: list[Country]) -> list[Player]:
+        players, _, _, _ = self._build_fresh_players_and_provenance(
+            run_id="ephemeral-preview",
+            season=season,
+            seed=seed,
+            countries=countries,
+            dataset_status=None,
+            config_version=None,
+            config_fingerprint=None,
+        )
+        return players
+
+    def _build_fresh_players_and_provenance(
+        self,
+        *,
+        run_id: str,
+        season: int,
+        seed: int,
+        countries: list[Country],
+        dataset_status: str | None,
+        config_version: str | None,
+        config_fingerprint: str | None,
+    ) -> tuple[
+        list[Player],
+        PersistedRunTalentPlanRecord,
+        list[PersistedRunTalentCountryAllocationRecord],
+        list[PersistedGeneratedPlayerProvenanceRecord],
+    ]:
         planner = AnnualTalentClassPlanner()
         plan = planner.plan(year=season, seed=seed, countries=countries)
         generator = PlayerGenerator(
@@ -1501,19 +1632,68 @@ class SimulationApiService:
         )
         countries_by_code = {country.code: country for country in countries}
         players: list[Player] = []
+        country_records: list[PersistedRunTalentCountryAllocationRecord] = []
+        provenance_records: list[PersistedGeneratedPlayerProvenanceRecord] = []
         for allocation in plan.allocations:
             country = countries_by_code[allocation.country_code]
+            band_counts: dict[str, int] = {}
             for talent in allocation.talents:
-                players.append(
-                    generator.generate_from_talent_seed(
-                        country=country,
-                        sequence=talent.sequence,
+                player = generator.generate_from_talent_seed(
+                    country=country,
+                    sequence=talent.sequence,
+                    talent_seed_value=talent.seed_value,
+                    quality_band=talent.quality_band,
+                    bias_profile=allocation.bias_profile,
+                )
+                players.append(player)
+                band_key = talent.quality_band.value
+                band_counts[band_key] = band_counts.get(band_key, 0) + 1
+                provenance_records.append(
+                    PersistedGeneratedPlayerProvenanceRecord(
+                        run_id=run_id,
+                        season=season,
+                        player_id=player.player_id,
+                        country_code=allocation.country_code,
+                        talent_sequence=talent.sequence,
                         talent_seed_value=talent.seed_value,
-                        quality_band=talent.quality_band,
-                        bias_profile=allocation.bias_profile,
+                        quality_band=band_key,
+                        is_top_band=band_key in {"elite_prospect", "special_prospect", "generational_talent"},
                     )
                 )
-        return players
+            country_records.append(
+                PersistedRunTalentCountryAllocationRecord(
+                    run_id=run_id,
+                    season=season,
+                    country_code=allocation.country_code,
+                    planned_count=allocation.planned_count,
+                    quality_weights={band.value: float(weight) for band, weight in allocation.quality_weights.items()},
+                    actual_band_counts=band_counts,
+                    bias_profile=allocation.bias_profile.model_dump(),
+                )
+            )
+        plan_record = PersistedRunTalentPlanRecord(
+            run_id=run_id,
+            season=season,
+            seed=seed,
+            total_talents=plan.total_talents,
+            dataset_status=dataset_status,
+            config_version=config_version,
+            config_fingerprint=config_fingerprint,
+        )
+        return players, plan_record, country_records, provenance_records
+
+    @staticmethod
+    def _to_generated_player_provenance(record: PersistedGeneratedPlayerProvenanceRecord) -> GeneratedPlayerProvenance:
+        return GeneratedPlayerProvenance(
+            run_id=record.run_id,
+            season=record.season,
+            player_id=record.player_id,
+            country_code=record.country_code,
+            talent_sequence=record.talent_sequence,
+            talent_seed_value=record.talent_seed_value,
+            quality_band=record.quality_band,
+            is_top_band=record.is_top_band,
+        )
 
     def _build_players_by_id(self, *, seed: int, season: int) -> dict[str, Player]:
         countries = load_countries_config().countries

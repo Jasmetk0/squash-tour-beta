@@ -33,10 +33,73 @@ from beta_engine.api.schemas import (
     SeasonRolloverSummaryApiResponse,
     RunLineageApiResponse,
     RunSourceApiResponse,
+    RunTalentPlanSummaryResponse,
+    GeneratedPlayerProvenanceListResponse,
+    GeneratedPlayerProvenanceResponse,
 )
-from beta_engine.application.api_services import SimulationApiService, WildcardAssignment
+from beta_engine.application.api_services import (
+    GeneratedPlayerProvenance,
+    RunTalentPlanSummary,
+    SimulationApiService,
+    WildcardAssignment,
+)
 
 router = APIRouter(prefix="/runs/{run_id}", tags=["history"])
+
+
+def _to_run_talent_plan_summary(summary: RunTalentPlanSummary) -> RunTalentPlanSummaryResponse:
+    return RunTalentPlanSummaryResponse.model_validate(summary, from_attributes=True)
+
+
+def _to_player_provenance(record: GeneratedPlayerProvenance) -> GeneratedPlayerProvenanceResponse:
+    return GeneratedPlayerProvenanceResponse.model_validate(record, from_attributes=True)
+
+
+@router.get("/world/talent-plan", response_model=RunTalentPlanSummaryResponse)
+def get_run_talent_plan(
+    run_id: str,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> RunTalentPlanSummaryResponse:
+    try:
+        summary = service.get_run_talent_plan_summary(run_id=run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return _to_run_talent_plan_summary(summary)
+
+
+@router.get("/world/generated-players", response_model=GeneratedPlayerProvenanceListResponse)
+def list_generated_players_provenance(
+    run_id: str,
+    country_code: str | None = None,
+    quality_band: str | None = None,
+    limit: int | None = None,
+    offset: int = 0,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> GeneratedPlayerProvenanceListResponse:
+    try:
+        players = service.list_generated_player_provenance(
+            run_id=run_id,
+            country_code=country_code,
+            quality_band=quality_band,
+            limit=limit,
+            offset=offset,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return GeneratedPlayerProvenanceListResponse(run_id=run_id, players=[_to_player_provenance(player) for player in players])
+
+
+@router.get("/world/generated-players/{player_id}", response_model=GeneratedPlayerProvenanceResponse)
+def get_generated_player_provenance(
+    run_id: str,
+    player_id: str,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> GeneratedPlayerProvenanceResponse:
+    try:
+        record = service.get_generated_player_provenance(run_id=run_id, player_id=player_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return _to_player_provenance(record)
 
 
 @router.get("/activity", response_model=RunActivityResponse)

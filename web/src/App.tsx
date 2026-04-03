@@ -22,6 +22,7 @@ import { SnapshotDetailPage } from './pages/SnapshotDetailPage'
 import { SnapshotsPage } from './pages/SnapshotsPage'
 import { TalentPreviewPage } from './pages/TalentPreviewPage'
 import { WeekDetailPage } from './pages/WeekDetailPage'
+import { WorldGenerationPage } from './pages/WorldGenerationPage'
 
 export default function App(): JSX.Element {
   return (
@@ -38,6 +39,7 @@ export default function App(): JSX.Element {
         <Route path="runs/:runId/calendar/:eventId" element={<PlannedEventDetailPage />} />
         <Route path="runs/:runId/activity" element={<ActivityPage />} />
         <Route path="runs/:runId/diagnostics" element={<RunDiagnosticsPage />} />
+        <Route path="runs/:runId/world-generation" element={<WorldGenerationPage />} />
         <Route path="runs/:runId/events/:eventId" element={<EventDetailPage />} />
         <Route path="runs/:runId/finals" element={<FinalsPage />} />
         <Route path="runs/:runId/finals/qualification" element={<FinalsQualificationDetailPage />} />

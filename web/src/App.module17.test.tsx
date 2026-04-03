@@ -27,6 +27,8 @@ const api = vi.hoisted(() => ({
   rolloverNextSeason: vi.fn(),
   getRunSource: vi.fn(),
   getRunLineage: vi.fn(),
+  getRunTalentPlan: vi.fn(),
+  listGeneratedPlayersProvenance: vi.fn(),
   bootstrapNextSeason: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
@@ -112,6 +114,39 @@ describe('Module 17 pages through routes', () => {
     api.listRaceSnapshots.mockResolvedValue({
       snapshots: [{ snapshot_sequence: 7, snapshot_kind: 'WEEK', source_event_id: 'E2', payload: { name: 'race-7' } }]
     })
+    api.getRunTalentPlan.mockResolvedValue({
+      run_id: 'run-a',
+      season: 2027,
+      seed: 5,
+      total_talents: 1,
+      dataset_status: 'active',
+      config_version: 'cfg',
+      config_fingerprint: 'fp',
+      countries: [
+        {
+          country_code: 'EGY',
+          planned_count: 1,
+          quality_weights: { solid_prospect: 1 },
+          actual_band_counts: { solid_prospect: 1 },
+          bias_profile: {}
+        }
+      ]
+    })
+    api.listGeneratedPlayersProvenance.mockResolvedValue({
+      run_id: 'run-a',
+      players: [
+        {
+          run_id: 'run-a',
+          season: 2027,
+          player_id: 'EGY-00001',
+          country_code: 'EGY',
+          talent_sequence: 1,
+          talent_seed_value: 1,
+          quality_band: 'solid_prospect',
+          is_top_band: false
+        }
+      ]
+    })
   })
 
   it('renders Finals route', async () => {
@@ -151,6 +186,11 @@ describe('Module 17 pages through routes', () => {
   it('renders diagnostics route', async () => {
     renderAppAt('/runs/run-a/diagnostics')
     expect(await screen.findByRole('heading', { name: 'Run diagnostics' })).toBeInTheDocument()
+  })
+
+  it('renders world generation route', async () => {
+    renderAppAt('/runs/run-a/world-generation')
+    expect(await screen.findByRole('heading', { name: 'World generation diagnostics' })).toBeInTheDocument()
   })
 
   it('renders runs browser route', async () => {

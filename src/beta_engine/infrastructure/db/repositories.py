@@ -27,6 +27,9 @@ from beta_engine.infrastructure.db.models import (
     CompletedTournamentInputModel,
     RaceSnapshotModel,
     RankingSnapshotModel,
+    RunGeneratedPlayerProvenanceModel,
+    RunTalentCountryAllocationModel,
+    RunTalentPlanModel,
     SeasonStateModel,
     SimulationRunModel,
 )
@@ -138,6 +141,40 @@ class PersistedAdminActionRecord:
     action_sequence: int
     action_kind: str
     payload: dict[str, object]
+
+
+@dataclass(frozen=True)
+class PersistedRunTalentPlanRecord:
+    run_id: str
+    season: int
+    seed: int
+    total_talents: int
+    dataset_status: str | None
+    config_version: str | None
+    config_fingerprint: str | None
+
+
+@dataclass(frozen=True)
+class PersistedRunTalentCountryAllocationRecord:
+    run_id: str
+    season: int
+    country_code: str
+    planned_count: int
+    quality_weights: dict[str, float]
+    actual_band_counts: dict[str, int]
+    bias_profile: dict[str, float]
+
+
+@dataclass(frozen=True)
+class PersistedGeneratedPlayerProvenanceRecord:
+    run_id: str
+    season: int
+    player_id: str
+    country_code: str
+    talent_sequence: int
+    talent_seed_value: int
+    quality_band: str
+    is_top_band: bool
 
 
 class SimulationPersistenceRepository:
@@ -403,6 +440,197 @@ class SimulationPersistenceRepository:
                 )
                 for model in session.execute(statement).scalars().all()
             ]
+
+    def save_run_talent_plan(self, record: PersistedRunTalentPlanRecord) -> None:
+        with self._session_factory.begin() as session:
+            statement: Select[tuple[RunTalentPlanModel]] = select(RunTalentPlanModel).where(
+                RunTalentPlanModel.run_id == record.run_id,
+                RunTalentPlanModel.season == record.season,
+            )
+            model = session.execute(statement).scalar_one_or_none()
+            if model is None:
+                session.add(
+                    RunTalentPlanModel(
+                        run_id=record.run_id,
+                        season=record.season,
+                        seed=record.seed,
+                        total_talents=record.total_talents,
+                        dataset_status=record.dataset_status,
+                        config_version=record.config_version,
+                        config_fingerprint=record.config_fingerprint,
+                    )
+                )
+                return
+            model.seed = record.seed
+            model.total_talents = record.total_talents
+            model.dataset_status = record.dataset_status
+            model.config_version = record.config_version
+            model.config_fingerprint = record.config_fingerprint
+
+    def get_run_talent_plan(self, *, run_id: str) -> PersistedRunTalentPlanRecord | None:
+        with self._session_factory() as session:
+            statement: Select[tuple[RunTalentPlanModel]] = (
+                select(RunTalentPlanModel)
+                .where(RunTalentPlanModel.run_id == run_id)
+                .order_by(RunTalentPlanModel.season.desc())
+                .limit(1)
+            )
+            model = session.execute(statement).scalar_one_or_none()
+            if model is None:
+                return None
+            return PersistedRunTalentPlanRecord(
+                run_id=model.run_id,
+                season=model.season,
+                seed=model.seed,
+                total_talents=model.total_talents,
+                dataset_status=model.dataset_status,
+                config_version=model.config_version,
+                config_fingerprint=model.config_fingerprint,
+            )
+
+    def replace_run_talent_country_allocations(
+        self,
+        *,
+        run_id: str,
+        season: int,
+        records: list[PersistedRunTalentCountryAllocationRecord],
+    ) -> None:
+        with self._session_factory.begin() as session:
+            session.query(RunTalentCountryAllocationModel).filter(
+                RunTalentCountryAllocationModel.run_id == run_id,
+                RunTalentCountryAllocationModel.season == season,
+            ).delete()
+            for record in records:
+                session.add(
+                    RunTalentCountryAllocationModel(
+                        run_id=record.run_id,
+                        season=record.season,
+                        country_code=record.country_code,
+                        planned_count=record.planned_count,
+                        quality_weights_json=_to_json(record.quality_weights),
+                        actual_band_counts_json=_to_json(record.actual_band_counts),
+                        bias_profile_json=_to_json(record.bias_profile),
+                    )
+                )
+
+    def list_run_talent_country_allocations(self, *, run_id: str) -> list[PersistedRunTalentCountryAllocationRecord]:
+        with self._session_factory() as session:
+            statement: Select[tuple[RunTalentCountryAllocationModel]] = (
+                select(RunTalentCountryAllocationModel)
+                .where(RunTalentCountryAllocationModel.run_id == run_id)
+                .order_by(
+                    RunTalentCountryAllocationModel.season.asc(),
+                    RunTalentCountryAllocationModel.country_code.asc(),
+                )
+            )
+            return [
+                PersistedRunTalentCountryAllocationRecord(
+                    run_id=model.run_id,
+                    season=model.season,
+                    country_code=model.country_code,
+                    planned_count=model.planned_count,
+                    quality_weights=_from_json(model.quality_weights_json),
+                    actual_band_counts=_from_json(model.actual_band_counts_json),
+                    bias_profile=_from_json(model.bias_profile_json),
+                )
+                for model in session.execute(statement).scalars().all()
+            ]
+
+    def replace_generated_player_provenance(
+        self,
+        *,
+        run_id: str,
+        season: int,
+        records: list[PersistedGeneratedPlayerProvenanceRecord],
+    ) -> None:
+        with self._session_factory.begin() as session:
+            session.query(RunGeneratedPlayerProvenanceModel).filter(
+                RunGeneratedPlayerProvenanceModel.run_id == run_id,
+                RunGeneratedPlayerProvenanceModel.season == season,
+            ).delete()
+            for record in records:
+                session.add(
+                    RunGeneratedPlayerProvenanceModel(
+                        run_id=record.run_id,
+                        season=record.season,
+                        player_id=record.player_id,
+                        country_code=record.country_code,
+                        talent_sequence=record.talent_sequence,
+                        talent_seed_value=str(record.talent_seed_value),
+                        quality_band=record.quality_band,
+                        is_top_band=1 if record.is_top_band else 0,
+                    )
+                )
+
+    def list_generated_player_provenance(
+        self,
+        *,
+        run_id: str,
+        country_code: str | None = None,
+        quality_band: str | None = None,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> list[PersistedGeneratedPlayerProvenanceRecord]:
+        with self._session_factory() as session:
+            statement: Select[tuple[RunGeneratedPlayerProvenanceModel]] = select(RunGeneratedPlayerProvenanceModel).where(
+                RunGeneratedPlayerProvenanceModel.run_id == run_id
+            )
+            if country_code is not None:
+                statement = statement.where(RunGeneratedPlayerProvenanceModel.country_code == country_code.upper())
+            if quality_band is not None:
+                statement = statement.where(RunGeneratedPlayerProvenanceModel.quality_band == quality_band)
+            statement = statement.order_by(
+                RunGeneratedPlayerProvenanceModel.season.asc(),
+                RunGeneratedPlayerProvenanceModel.country_code.asc(),
+                RunGeneratedPlayerProvenanceModel.talent_sequence.asc(),
+            )
+            if offset > 0:
+                statement = statement.offset(offset)
+            if limit is not None:
+                statement = statement.limit(limit)
+            return [
+                PersistedGeneratedPlayerProvenanceRecord(
+                    run_id=model.run_id,
+                    season=model.season,
+                    player_id=model.player_id,
+                    country_code=model.country_code,
+                    talent_sequence=model.talent_sequence,
+                    talent_seed_value=int(model.talent_seed_value),
+                    quality_band=model.quality_band,
+                    is_top_band=model.is_top_band > 0,
+                )
+                for model in session.execute(statement).scalars().all()
+            ]
+
+    def get_generated_player_provenance(
+        self,
+        *,
+        run_id: str,
+        player_id: str,
+    ) -> PersistedGeneratedPlayerProvenanceRecord | None:
+        with self._session_factory() as session:
+            statement: Select[tuple[RunGeneratedPlayerProvenanceModel]] = (
+                select(RunGeneratedPlayerProvenanceModel)
+                .where(
+                    RunGeneratedPlayerProvenanceModel.run_id == run_id,
+                    RunGeneratedPlayerProvenanceModel.player_id == player_id,
+                )
+                .order_by(RunGeneratedPlayerProvenanceModel.season.desc())
+                .limit(1)
+            )
+            model = session.execute(statement).scalar_one_or_none()
+            if model is None:
+                return None
+            return PersistedGeneratedPlayerProvenanceRecord(
+                run_id=model.run_id,
+                season=model.season,
+                player_id=model.player_id,
+                country_code=model.country_code,
+                talent_sequence=model.talent_sequence,
+                talent_seed_value=int(model.talent_seed_value),
+                quality_band=model.quality_band,
+                is_top_band=model.is_top_band > 0,
+            )
 
     def list_table_names(self) -> list[str]:
         with self._session_factory() as session:

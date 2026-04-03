@@ -35,9 +35,12 @@ import type {
   RunLineageApiResponse,
   RunStatusSummary,
   RunSourceApiResponse,
+  RunTalentPlanSummary,
   RunsIndexResponse,
   SeasonRolloverExecutionResponse,
   SeasonRolloverSummaryApiResponse,
+  GeneratedPlayerProvenance,
+  GeneratedPlayerProvenanceListResponse,
   RunSummary,
   SeasonStateResponse,
   SimulateResponse,
@@ -135,6 +138,27 @@ export function getRun(runId: string): Promise<SeasonStateResponse> {
 
 export function getRunStatusSummary(runId: string): Promise<RunStatusSummary> {
   return request(`/runs/${encodeURIComponent(runId)}/status-summary`)
+}
+
+export function getRunTalentPlan(runId: string): Promise<RunTalentPlanSummary> {
+  return request(`/runs/${encodeURIComponent(runId)}/world/talent-plan`)
+}
+
+export function listGeneratedPlayersProvenance(
+  runId: string,
+  params?: { country_code?: string; quality_band?: string; limit?: number; offset?: number }
+): Promise<GeneratedPlayerProvenanceListResponse> {
+  const query = new URLSearchParams()
+  if (params?.country_code) query.set('country_code', params.country_code)
+  if (params?.quality_band) query.set('quality_band', params.quality_band)
+  if (typeof params?.limit === 'number') query.set('limit', String(params.limit))
+  if (typeof params?.offset === 'number') query.set('offset', String(params.offset))
+  const suffix = query.size ? `?${query.toString()}` : ''
+  return request(`/runs/${encodeURIComponent(runId)}/world/generated-players${suffix}`)
+}
+
+export function getGeneratedPlayerProvenance(runId: string, playerId: string): Promise<GeneratedPlayerProvenance> {
+  return request(`/runs/${encodeURIComponent(runId)}/world/generated-players/${encodeURIComponent(playerId)}`)
 }
 
 function simulate<T>(runId: string, suffix: string): Promise<T> {

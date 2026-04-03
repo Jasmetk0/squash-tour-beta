@@ -28,7 +28,7 @@ from beta_engine.core import DeterministicRng, SeedScope
 from beta_engine.domain.careers import CareerProgressionEngine
 from beta_engine.domain.countries import Country, CountryTalentModel
 from beta_engine.domain.entries import AcceptanceList, AcceptanceStatus, TournamentEntry
-from beta_engine.domain.players import Player, PlayerGenerator
+from beta_engine.domain.players import AnnualTalentClassPlanner, Player, PlayerGenerator
 from beta_engine.domain.tournaments import CalendarEvent
 from beta_engine.infrastructure.db import SimulationPersistenceRepository, SimulationRunInfo
 from beta_engine.infrastructure.entry_config import load_entry_tuning_config
@@ -362,8 +362,6 @@ class SimulationApiService:
     """High-level API-facing service that keeps orchestration out of routers."""
 
     repository: SimulationPersistenceRepository
-    players_per_country: int = 24
-
     def initialize_run(
         self,
         *,
@@ -1493,20 +1491,33 @@ class SimulationApiService:
             raise KeyError(f"run_id {run_id} was not found")
         return run_info, state
 
-    def _build_players(self, *, seed: int, countries: list[Country]) -> list[Player]:
+    def _build_players(self, *, seed: int, season: int, countries: list[Country]) -> list[Player]:
+        planner = AnnualTalentClassPlanner()
+        plan = planner.plan(year=season, seed=seed, countries=countries)
         generator = PlayerGenerator(
             rng=DeterministicRng(seed),
             identity_config=load_player_identity_config(),
             country_talent_model=CountryTalentModel(),
         )
+        countries_by_code = {country.code: country for country in countries}
         players: list[Player] = []
-        for country in countries:
-            players.extend(generator.generate(country=country, sequence=index + 1) for index in range(self.players_per_country))
+        for allocation in plan.allocations:
+            country = countries_by_code[allocation.country_code]
+            for talent in allocation.talents:
+                players.append(
+                    generator.generate_from_talent_seed(
+                        country=country,
+                        sequence=talent.sequence,
+                        talent_seed_value=talent.seed_value,
+                        quality_band=talent.quality_band,
+                        bias_profile=allocation.bias_profile,
+                    )
+                )
         return players
 
-    def _build_players_by_id(self, *, seed: int) -> dict[str, Player]:
+    def _build_players_by_id(self, *, seed: int, season: int) -> dict[str, Player]:
         countries = load_countries_config().countries
-        return {player.player_id: player for player in self._build_players(seed=seed, countries=countries)}
+        return {player.player_id: player for player in self._build_players(seed=seed, season=season, countries=countries)}
 
     def _load_players_by_id_for_run(self, *, run_info: SimulationRunInfo) -> dict[str, Player]:
         countries = load_countries_config().countries
@@ -1537,7 +1548,7 @@ class SimulationApiService:
             )
             if records:
                 return [record.state.player for record in records]
-        return self._build_players(seed=seed, countries=countries)
+        return self._build_players(seed=seed, season=season, countries=countries)
 
     def _build_rollover_orchestration(self, *, seed: int, season: int) -> SeasonRolloverOrchestrationService:
         progression_engine = CareerProgressionEngine(

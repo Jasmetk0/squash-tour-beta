@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-
 from beta_engine.core import DeterministicRng, SeedScope
 from beta_engine.domain.countries import Country
 from beta_engine.domain.draws import DrawEngine
@@ -38,6 +37,7 @@ class SeasonSimulationOrchestrator:
     draw_engine: DrawEngine
     progression_engine: TournamentProgressionEngine
     wildcard_assignments_by_event: dict[str, dict[int, str]] = field(default_factory=dict)
+    pre_draw_withdrawal_replacements_by_event: dict[str, list[dict[str, object]]] = field(default_factory=dict)
 
     @classmethod
     def build(
@@ -51,6 +51,7 @@ class SeasonSimulationOrchestrator:
         entry_tuning: EntryTuningConfig,
         seed: int,
         wildcard_assignments_by_event: dict[str, dict[int, str]] | None = None,
+        pre_draw_withdrawal_replacements_by_event: dict[str, list[dict[str, object]]] | None = None,
     ) -> "SeasonSimulationOrchestrator":
         rng = DeterministicRng(seed)
         return cls(
@@ -68,6 +69,14 @@ class SeasonSimulationOrchestrator:
                 {}
                 if wildcard_assignments_by_event is None
                 else {event_id: dict(assignments) for event_id, assignments in wildcard_assignments_by_event.items()}
+            ),
+            pre_draw_withdrawal_replacements_by_event=(
+                {}
+                if pre_draw_withdrawal_replacements_by_event is None
+                else {
+                    event_id: [dict(item) for item in replacements]
+                    for event_id, replacements in pre_draw_withdrawal_replacements_by_event.items()
+                }
             ),
         )
 
@@ -253,6 +262,10 @@ class SeasonSimulationOrchestrator:
             acceptance=acceptance,
             assignments=self.wildcard_assignments_by_event.get(event.event_id, {}),
         )
+        acceptance = self._apply_pre_draw_withdrawal_replacements(
+            acceptance=acceptance,
+            replacements=self.pre_draw_withdrawal_replacements_by_event.get(event.event_id, []),
+        )
         qualification_draw = self.draw_engine.generate_qualification_draw(
             acceptance_list=acceptance,
             template=template,
@@ -320,6 +333,39 @@ class SeasonSimulationOrchestrator:
             return acceptance
 
         updated_main_entries = [updates_by_entry_id.get(entry.entry_id, entry) for entry in acceptance.main_draw_entries]
+        return acceptance.model_copy(update={"main_draw_entries": updated_main_entries})
+
+    @staticmethod
+    def _apply_pre_draw_withdrawal_replacements(
+        *,
+        acceptance: AcceptanceList,
+        replacements: list[dict[str, object]],
+    ) -> AcceptanceList:
+        if not replacements:
+            return acceptance
+
+        entries_by_id = {entry.entry_id: entry for entry in acceptance.main_draw_entries}
+        for replacement in replacements:
+            withdrawn_entry_id = replacement.get("withdrawn_entry_id")
+            replacement_entry_id = replacement.get("replacement_entry_id")
+            replacement_player_id = replacement.get("replacement_player_id")
+            replacement_source = replacement.get("replacement_source")
+            if (
+                not isinstance(withdrawn_entry_id, str)
+                or not isinstance(replacement_entry_id, str)
+                or not isinstance(replacement_player_id, str)
+                or replacement_source not in {"main_draw_waitlist", "qualification_waitlist"}
+            ):
+                continue
+            if withdrawn_entry_id not in entries_by_id or replacement_entry_id not in entries_by_id:
+                continue
+
+            entries_by_id[withdrawn_entry_id] = entries_by_id[withdrawn_entry_id].model_copy(update={"player_id": None})
+            entries_by_id[replacement_entry_id] = entries_by_id[replacement_entry_id].model_copy(
+                update={"player_id": replacement_player_id}
+            )
+
+        updated_main_entries = [entries_by_id.get(entry.entry_id, entry) for entry in acceptance.main_draw_entries]
         return acceptance.model_copy(update={"main_draw_entries": updated_main_entries})
 
     def _state_after_events(

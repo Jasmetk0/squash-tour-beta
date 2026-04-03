@@ -2,6 +2,7 @@ import type {
   BootstrapNextSeasonPayload,
   BootstrapNextSeasonResponse,
   AssignWildcardsPayload,
+  ApplyPreDrawWithdrawalPayload,
   CreateRunPayload,
   EventListResponse,
   RunActivityResponse,
@@ -17,6 +18,9 @@ import type {
   RankingSnapshotListResponse,
   NextSeasonPlayersResponse,
   PlayerTransitionsResponse,
+  PreDrawWithdrawalActionHistoryResponse,
+  PreDrawWithdrawalResultResponse,
+  PreDrawWithdrawalStateResponse,
   RunLineageApiResponse,
   RunStatusSummary,
   RunSourceApiResponse,
@@ -133,6 +137,28 @@ export function assignEventWildcards(
     method: 'POST',
     body: JSON.stringify(payload)
   })
+}
+
+export function getEventPreDrawWithdrawalState(runId: string, eventId: string): Promise<PreDrawWithdrawalStateResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/pre-draw-withdrawal`)
+}
+
+export function applyEventPreDrawWithdrawal(
+  runId: string,
+  eventId: string,
+  payload: ApplyPreDrawWithdrawalPayload
+): Promise<PreDrawWithdrawalResultResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/pre-draw-withdrawal`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}
+
+export function getEventPreDrawWithdrawalActions(
+  runId: string,
+  eventId: string
+): Promise<PreDrawWithdrawalActionHistoryResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/pre-draw-withdrawal-actions`)
 }
 
 export function listRankingSnapshots(runId: string): Promise<RankingSnapshotListResponse> {

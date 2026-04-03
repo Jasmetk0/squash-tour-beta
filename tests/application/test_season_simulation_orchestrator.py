@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from beta_engine.application import SeasonSimulationOrchestrator
 from beta_engine.core import DeterministicRng
+from beta_engine.domain.entries import AcceptanceStatus
 from beta_engine.domain.countries import Country, CountryTalentModel
 from beta_engine.domain.players import Player, PlayerGenerator
 from beta_engine.infrastructure.entry_config import load_entry_tuning_config
@@ -201,3 +202,54 @@ def test_match_and_round_progression_are_deterministic_for_same_seed() -> None:
     step_a_round = orchestrator_a.simulate_next_round(state=steps_a[0].season_state)
     step_b_round = orchestrator_b.simulate_next_round(state=steps_b[0].season_state)
     assert step_a_round.model_dump() == step_b_round.model_dump()
+
+
+def test_pre_draw_withdrawal_replacement_fold_updates_effective_main_draw_entries_deterministically() -> None:
+    baseline_orchestrator = _orchestrator(seed=7801)
+    state = baseline_orchestrator.initialize_state()
+    event = state.ordered_events[0]
+    template = baseline_orchestrator.templates_by_id[event.template_id]
+    acceptance = baseline_orchestrator.entry_engine.build_acceptance_list(
+        event=event,
+        template=template,
+        players=list(baseline_orchestrator.players_by_id.values()),
+        countries_by_code=baseline_orchestrator.countries_by_code,
+    )
+    accepted_main = [
+        entry
+        for entry in acceptance.main_draw_entries
+        if entry.status == AcceptanceStatus.DIRECT_ACCEPTANCE and entry.player_id is not None
+    ]
+    waitlist_candidate = next(
+        entry for entry in acceptance.main_draw_applicants if entry.player_id not in {item.player_id for item in accepted_main}
+    )
+    placeholder = next(entry for entry in acceptance.main_draw_entries if entry.status == AcceptanceStatus.WITHDRAWAL_PLACEHOLDER)
+    withdrawn_entry = accepted_main[0]
+
+    replacement_payload = {
+        "withdrawn_player_id": withdrawn_entry.player_id,
+        "replacement_player_id": waitlist_candidate.player_id,
+        "replacement_source": "main_draw_waitlist",
+        "withdrawn_entry_id": withdrawn_entry.entry_id,
+        "replacement_entry_id": placeholder.entry_id,
+        "notes": None,
+    }
+    with_replacement = SeasonSimulationOrchestrator.build(
+        calendar=baseline_orchestrator.calendar,
+        templates=list(baseline_orchestrator.templates_by_id.values()),
+        players=list(baseline_orchestrator.players_by_id.values()),
+        countries_by_code=baseline_orchestrator.countries_by_code,
+        points_by_ref=load_points_config(),
+        entry_tuning=load_entry_tuning_config(),
+        seed=7801,
+        pre_draw_withdrawal_replacements_by_event={event.event_id: [replacement_payload]},
+    )
+
+    first = with_replacement.simulate_next_tournament(state=state)
+    second = with_replacement.simulate_next_tournament(state=state)
+    main_entries = first.tournament_result.acceptance_list.main_draw_entries
+    replaced_entry = next(entry for entry in main_entries if entry.entry_id == placeholder.entry_id)
+    removed_entry = next(entry for entry in main_entries if entry.entry_id == withdrawn_entry.entry_id)
+    assert replaced_entry.player_id == waitlist_candidate.player_id
+    assert removed_entry.player_id is None
+    assert first.model_dump() == second.model_dump()

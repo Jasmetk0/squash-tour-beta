@@ -9,6 +9,9 @@ const api = vi.hoisted(() => ({
   getRun: vi.fn(),
   listEvents: vi.fn(),
   getEventWildcards: vi.fn(),
+  getEventPreDrawWithdrawalState: vi.fn(),
+  getEventPreDrawWithdrawalActions: vi.fn(),
+  applyEventPreDrawWithdrawal: vi.fn(),
   getEventWildcardCandidates: vi.fn(),
   getEventWildcardActions: vi.fn(),
   assignEventWildcards: vi.fn()
@@ -56,6 +59,50 @@ describe('PlannedEventDetailPage', () => {
       eligibility_reason: null,
       total_slots: 1,
       slots: [{ slot_index: 1, entry_id: 'E1:WILD_CARD_PLACEHOLDER:1', assigned_player_id: null }]
+    })
+    api.getEventPreDrawWithdrawalState.mockResolvedValue({
+      run_id: 'run-a',
+      event_id: 'E1',
+      eligible: true,
+      eligibility_reason: null,
+      withdrawable_main_draw_players: [
+        {
+          player_id: 'P100',
+          player_name: 'Player Main',
+          country_code: 'EGY',
+          country_name: 'Egypt',
+          entry_id: 'E1:P100:MAIN',
+          acceptance_status: 'DIRECT_ACCEPTANCE'
+        }
+      ]
+    })
+    api.applyEventPreDrawWithdrawal.mockResolvedValue({
+      run_id: 'run-a',
+      event_id: 'E1',
+      withdrawn_player_id: 'P100',
+      replacement_player_id: 'P200',
+      replacement_source: 'main_draw_waitlist',
+      withdrawn_entry_id: 'E1:P100:MAIN',
+      replacement_entry_id: 'E1:WITHDRAWAL_PLACEHOLDER:1',
+      eligible: true,
+      eligibility_reason: null
+    })
+    api.getEventPreDrawWithdrawalActions.mockResolvedValue({
+      run_id: 'run-a',
+      event_id: 'E1',
+      actions: [
+        {
+          action_sequence: 1,
+          action_kind: 'pre_draw_withdrawal_replacement',
+          event_id: 'E1',
+          withdrawn_player_id: 'P100',
+          replacement_player_id: 'P200',
+          replacement_source: 'main_draw_waitlist',
+          withdrawn_entry_id: 'E1:P100:MAIN',
+          replacement_entry_id: 'E1:WITHDRAWAL_PLACEHOLDER:1',
+          notes: null
+        }
+      ]
     })
     api.assignEventWildcards.mockResolvedValue({
       run_id: 'run-a',
@@ -157,6 +204,21 @@ describe('PlannedEventDetailPage', () => {
     expect(screen.getByRole('button', { name: 'Assign wildcard' })).toBeInTheDocument()
   })
 
+  it('renders pre-draw withdrawal controls and submits deterministic one-step action', async () => {
+    renderAt('/runs/run-a/calendar/E1')
+
+    expect(await screen.findByRole('heading', { name: 'Commissioner pre-draw withdrawal replacement' })).toBeInTheDocument()
+    const playerSelect = await screen.findByLabelText('Main-draw player to withdraw')
+    fireEvent.change(playerSelect, { target: { value: 'P100' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Withdraw + auto-replace' }))
+
+    await waitFor(() =>
+      expect(api.applyEventPreDrawWithdrawal).toHaveBeenCalledWith('run-a', 'E1', {
+        withdrawn_player_id: 'P100'
+      })
+    )
+  })
+
   it('assigns wildcard using selected candidate player instead of manual id typing', async () => {
     renderAt('/runs/run-a/calendar/E1')
 
@@ -182,5 +244,11 @@ describe('PlannedEventDetailPage', () => {
     expect(actionRows[0]).toHaveTextContent('#1 · assign_wildcards · slot 1 → P1')
     expect(actionRows[1]).toHaveTextContent('#2 · assign_wildcards · slot 1 → P2')
     expect(screen.getByRole('link', { name: 'Open run activity' })).toHaveAttribute('href', '/runs/run-a/activity')
+  })
+
+  it('renders pre-draw withdrawal history in append-only sequence order', async () => {
+    renderAt('/runs/run-a/calendar/E1')
+    expect(await screen.findByRole('heading', { name: 'Pre-draw withdrawal action history' })).toBeInTheDocument()
+    expect(await screen.findByText('#1 · pre_draw_withdrawal_replacement · P100 → P200 (main_draw_waitlist)')).toBeInTheDocument()
   })
 })

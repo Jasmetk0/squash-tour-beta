@@ -26,7 +26,8 @@ function makeWeekContext(item: RunActivityItem, effectiveWeek: number | null): s
     item.kind === 'event' ||
     item.kind === 'ranking_snapshot' ||
     item.kind === 'race_snapshot' ||
-    item.kind === 'admin_wildcard_assignment'
+    item.kind === 'admin_wildcard_assignment' ||
+    item.kind === 'admin_pre_draw_withdrawal_replacement'
   if (!supportsWeekInspection) {
     return 'Not meaningful for this activity kind'
   }
@@ -429,12 +430,29 @@ function activityBridgeItems(
       )
     })
   }
+  if (item.kind === 'admin_pre_draw_withdrawal_replacement' && item.event_id) {
+    links.push({
+      label: 'Pre-draw event planned detail',
+      value: (
+        <Link to={`/runs/${runId}/calendar/${encodeURIComponent(item.event_id)}`}>Open pre-draw event planned detail</Link>
+      )
+    })
+    links.push({
+      label: 'Pre-draw event persisted detail',
+      value: hasPersistedContext ? (
+        <Link to={`/runs/${runId}/events/${encodeURIComponent(item.event_id)}`}>Open pre-draw event persisted detail</Link>
+      ) : (
+        'Pre-draw event has not been persisted yet.'
+      )
+    })
+  }
 
   const supportsWeekInspection =
     item.kind === 'event' ||
     item.kind === 'ranking_snapshot' ||
     item.kind === 'race_snapshot' ||
-    item.kind === 'admin_wildcard_assignment'
+    item.kind === 'admin_wildcard_assignment' ||
+    item.kind === 'admin_pre_draw_withdrawal_replacement'
   if (supportsWeekInspection && selectedWeek != null) {
     links.push({
       label: 'Week detail',

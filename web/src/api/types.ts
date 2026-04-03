@@ -120,6 +120,7 @@ export type RunActivityItem = {
     | 'rollover'
     | 'bootstrap_child'
     | 'admin_wildcard_assignment'
+    | 'admin_pre_draw_withdrawal_replacement'
   sequence: number | null
   label: string
   season: number | null
@@ -184,6 +185,57 @@ export type AssignWildcardsPayload = {
     slot_index: number
     player_id: string
   }>
+}
+
+export type PreDrawWithdrawablePlayer = {
+  player_id: string
+  player_name: string
+  country_code: string
+  country_name: string | null
+  entry_id: string
+  acceptance_status: string
+}
+
+export type PreDrawWithdrawalStateResponse = {
+  run_id: string
+  event_id: string
+  eligible: boolean
+  eligibility_reason: string | null
+  withdrawable_main_draw_players: PreDrawWithdrawablePlayer[]
+}
+
+export type ApplyPreDrawWithdrawalPayload = {
+  withdrawn_player_id: string
+}
+
+export type PreDrawWithdrawalResultResponse = {
+  run_id: string
+  event_id: string
+  withdrawn_player_id: string
+  replacement_player_id: string
+  replacement_source: 'main_draw_waitlist' | 'qualification_waitlist'
+  withdrawn_entry_id: string
+  replacement_entry_id: string
+  eligible: boolean
+  eligibility_reason: string | null
+}
+
+export type PreDrawWithdrawalActionHistoryItem = {
+  action_sequence: number
+  action_kind: string
+  event_id: string
+  withdrawn_player_id: string
+  replacement_player_id: string
+  replacement_source: 'main_draw_waitlist' | 'qualification_waitlist'
+  withdrawn_entry_id: string
+  replacement_entry_id: string
+  notes: string | null
+}
+
+export type PreDrawWithdrawalActionHistoryResponse = {
+  run_id: string
+  event_id: string
+  actions: PreDrawWithdrawalActionHistoryItem[]
 }
 
 type SnapshotRecordBase = {

@@ -232,6 +232,35 @@ describe('ActivityPage', () => {
     expect(screen.queryByText('Not meaningful for this activity kind')).not.toBeInTheDocument()
   })
 
+  it('renders admin pre-draw replacement with planned-event bridge links', async () => {
+    api.getRunActivity.mockResolvedValueOnce({
+      run_id: 'run-a',
+      items: [
+        {
+          kind: 'admin_pre_draw_withdrawal_replacement',
+          sequence: 1,
+          label: 'Commissioner pre-draw withdrawal replacement (E1)',
+          season: 2027,
+          week: 1,
+          event_id: 'E1',
+          snapshot_sequence: null,
+          source_event_id: null,
+          related_run_id: null
+        }
+      ]
+    })
+    mockContext()
+
+    renderWithRoute(<ActivityPage />, '/runs/run-a/activity')
+
+    expect(await screen.findByRole('link', { name: 'Open pre-draw event planned detail' })).toHaveAttribute(
+      'href',
+      '/runs/run-a/calendar/E1'
+    )
+    expect(screen.getByRole('link', { name: 'Open pre-draw event persisted detail' })).toHaveAttribute('href', '/runs/run-a/events/E1')
+    expect(screen.getByRole('link', { name: 'Open week detail page (W1)' })).toHaveAttribute('href', '/runs/run-a/weeks/1')
+  })
+
   it('does not fabricate snapshot source links when context is absent', async () => {
     api.getRunActivity.mockResolvedValueOnce({
       run_id: 'run-a',

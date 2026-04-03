@@ -9,6 +9,7 @@ from fastapi import Request
 from beta_engine.application.api_services import SimulationApiService
 from beta_engine.application.config_validation_service import ConfigValidationService
 from beta_engine.application.countries_service import CountriesConfigService
+from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
 from beta_engine.infrastructure.config import load_settings
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
 
@@ -47,3 +48,7 @@ def get_countries_config_service(request: Request) -> CountriesConfigService:
     if configured_path is None:
         return CountriesConfigService()
     return CountriesConfigService(config_path=configured_path)
+
+
+def get_world_talent_preview_service(request: Request) -> WorldTalentPreviewService:
+    return WorldTalentPreviewService(countries_service=get_countries_config_service(request))

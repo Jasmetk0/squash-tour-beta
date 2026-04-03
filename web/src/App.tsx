@@ -20,6 +20,7 @@ import { SeasonCalendarPage } from './pages/SeasonCalendarPage'
 import { SeasonChainPage } from './pages/SeasonChainPage'
 import { SnapshotDetailPage } from './pages/SnapshotDetailPage'
 import { SnapshotsPage } from './pages/SnapshotsPage'
+import { TalentPreviewPage } from './pages/TalentPreviewPage'
 import { WeekDetailPage } from './pages/WeekDetailPage'
 
 export default function App(): JSX.Element {
@@ -28,6 +29,7 @@ export default function App(): JSX.Element {
       <Route path="/" element={<Layout />}>
         <Route index element={<DashboardPage />} />
         <Route path="world/countries" element={<CountriesPage />} />
+        <Route path="world/talent-preview" element={<TalentPreviewPage />} />
         <Route path="runs" element={<RunsPage />} />
         <Route path="runs/:runId" element={<RunPage />} />
         <Route path="runs/:runId/events" element={<EventsPage />} />

@@ -468,3 +468,46 @@ export type CountriesMetadataResponse = {
 }
 
 export type CountryUpsertPayload = CountryRecord
+
+export type TalentClassPreviewCountry = {
+  country_code: string
+  country_name: string
+  planned_count: number
+  quality_weights: Record<string, number>
+  actual_band_counts: Record<string, number>
+  bias_profile: Record<string, number>
+}
+
+export type TalentClassYearPreviewResponse = {
+  year: number
+  seed: number
+  dataset_status: string | null
+  country_count: number
+  source_path: string
+  total_talents: number
+  countries: TalentClassPreviewCountry[]
+}
+
+export type TalentClassSummaryCountry = {
+  country_code: string
+  country_name: string
+  total_planned_talents: number
+  average_talents_per_year: number
+  total_elite_count: number
+  total_special_count: number
+  total_generational_count: number
+  average_top_band_rate: number
+}
+
+export type TalentClassSummaryResponse = {
+  year_start: number
+  years: number
+  seed: number
+  dataset_status: string | null
+  country_count: number
+  source_path: string
+  total_talents_across_span: number
+  average_total_talents_per_year: number
+  global_band_totals: Record<string, number>
+  countries: TalentClassSummaryCountry[]
+}

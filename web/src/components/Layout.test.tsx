@@ -10,6 +10,7 @@ describe('Layout run-scoped navigation', () => {
 
     expect(await screen.findByRole('link', { name: 'Runs' })).toHaveAttribute('href', '/runs')
     expect(await screen.findByRole('link', { name: 'Countries Editor' })).toHaveAttribute('href', '/world/countries')
+    expect(await screen.findByRole('link', { name: 'Talent Preview' })).toHaveAttribute('href', '/world/talent-preview')
     expect(await screen.findByRole('link', { name: 'Run Detail' })).toHaveAttribute('href', '/runs/run-a')
     expect(screen.getByRole('link', { name: 'Events' })).toHaveAttribute('href', '/runs/run-a/events')
     expect(screen.getByRole('link', { name: 'Season Calendar' })).toHaveAttribute('href', '/runs/run-a/calendar')

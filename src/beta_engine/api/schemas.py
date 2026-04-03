@@ -498,3 +498,46 @@ class CountriesMetadataResponse(BaseModel):
 class CountriesDatasetResponse(BaseModel):
     dataset_status: str | None = None
     countries: list[CountryResponse] = Field(default_factory=list)
+
+
+class CountryTalentYearPreviewResponse(BaseModel):
+    country_code: str
+    country_name: str
+    planned_count: int
+    quality_weights: dict[str, float]
+    actual_band_counts: dict[str, int]
+    bias_profile: dict[str, float]
+
+
+class TalentClassYearPreviewResponse(BaseModel):
+    year: int
+    seed: int
+    dataset_status: str | None = None
+    country_count: int
+    source_path: str
+    total_talents: int
+    countries: list[CountryTalentYearPreviewResponse] = Field(default_factory=list)
+
+
+class CountryTalentSummaryResponse(BaseModel):
+    country_code: str
+    country_name: str
+    total_planned_talents: int
+    average_talents_per_year: float
+    total_elite_count: int
+    total_special_count: int
+    total_generational_count: int
+    average_top_band_rate: float
+
+
+class TalentClassSummaryResponse(BaseModel):
+    year_start: int
+    years: int
+    seed: int
+    dataset_status: str | None = None
+    country_count: int
+    source_path: str
+    total_talents_across_span: int
+    average_total_talents_per_year: float
+    global_band_totals: dict[str, int]
+    countries: list[CountryTalentSummaryResponse] = Field(default_factory=list)

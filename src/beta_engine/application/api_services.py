@@ -138,6 +138,7 @@ ActivityKind = Literal[
     "bootstrap_child",
     "admin_wildcard_assignment",
     "admin_pre_draw_withdrawal_replacement",
+    "admin_late_replacement_lucky_loser",
 ]
 
 _CANONICAL_SOURCE_TYPE_MAP: dict[str, str] = {
@@ -288,6 +289,72 @@ class PreDrawWithdrawalActionHistoryResponse:
     run_id: str
     event_id: str
     actions: list[PreDrawWithdrawalActionHistoryItem]
+
+
+@dataclass(frozen=True)
+class LateReplacementCandidateRecord:
+    candidate_slot_index: int
+    player_id: str
+    player_name: str
+    country_code: str
+    country_name: str | None
+    source: ReplacementSource
+    source_priority: int | None
+    ranking_priority: int | None
+    entry_id: str
+
+
+@dataclass(frozen=True)
+class LateReplacementCandidatesResponse:
+    run_id: str
+    event_id: str
+    candidates: list[LateReplacementCandidateRecord]
+
+
+@dataclass(frozen=True)
+class LateReplacementStateResponse:
+    run_id: str
+    event_id: str
+    eligible: bool
+    eligibility_reason: str | None
+    replaceable_main_draw_players: list[PreDrawWithdrawablePlayerRecord]
+    remaining_capacity: int
+
+
+@dataclass(frozen=True)
+class LateReplacementResultResponse:
+    run_id: str
+    event_id: str
+    withdrawn_player_id: str
+    replacement_player_id: str
+    replacement_source: ReplacementSource
+    withdrawn_entry_id: str
+    replacement_entry_id: str
+    candidate_slot_index: int | None
+    eligible: bool
+    eligibility_reason: str | None
+    remaining_capacity: int
+
+
+@dataclass(frozen=True)
+class LateReplacementActionHistoryItem:
+    action_sequence: int
+    action_kind: str
+    event_id: str
+    withdrawn_player_id: str
+    replacement_player_id: str
+    replacement_source: ReplacementSource
+    withdrawn_entry_id: str
+    replacement_entry_id: str
+    candidate_slot_index: int | None
+    notes: str | None
+
+
+@dataclass(frozen=True)
+class LateReplacementActionHistoryResponse:
+    run_id: str
+    event_id: str
+    actions: list[LateReplacementActionHistoryItem]
 
 
 @dataclass(slots=True)
@@ -772,6 +839,192 @@ class SimulationApiService:
             actions=items,
         )
 
+    def get_late_replacement_candidates(self, *, run_id: str, event_id: str) -> LateReplacementCandidatesResponse:
+        run_info, state = self._load_run_context(run_id=run_id)
+        event, _ = self._resolve_event_and_index(state=state, event_id=event_id)
+        acceptance = self._build_effective_acceptance_for_event(run_id=run_id, run_info=run_info, event=event)
+        orchestrator = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info)
+        countries_by_code = orchestrator.countries_by_code
+        candidates = self._ordered_late_replacement_candidates(
+            acceptance=acceptance,
+            players_by_id=orchestrator.players_by_id,
+            countries_by_code=countries_by_code,
+        )
+        return LateReplacementCandidatesResponse(run_id=run_id, event_id=event_id, candidates=candidates)
+
+    def get_late_replacement_state(self, *, run_id: str, event_id: str) -> LateReplacementStateResponse:
+        run_info, state = self._load_run_context(run_id=run_id)
+        event, _ = self._resolve_event_and_index(state=state, event_id=event_id)
+        templates_by_id = {template.template_id: template for template in load_tournament_templates_config().templates}
+        template = templates_by_id[event.template_id]
+
+        acceptance = self._build_effective_acceptance_for_event(run_id=run_id, run_info=run_info, event=event)
+        orchestrator = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info)
+        countries_by_code = orchestrator.countries_by_code
+        withdrawable_players = self._withdrawable_main_draw_players(
+            acceptance=acceptance,
+            players_by_id=orchestrator.players_by_id,
+            countries_by_code=countries_by_code,
+        )
+        candidates = self._ordered_late_replacement_candidates(
+            acceptance=acceptance,
+            players_by_id=orchestrator.players_by_id,
+            countries_by_code=countries_by_code,
+        )
+        used_spots = len(self.repository.get_late_replacements_for_event(run_id=run_id, event_id=event_id))
+        remaining_capacity = max(0, template.lucky_loser_rules.max_spots - used_spots)
+        eligible, reason = self._late_replacement_event_eligibility(
+            run_id=run_id,
+            state=state,
+            event=event,
+            has_replaceable_players=bool(withdrawable_players),
+            has_candidates=bool(candidates),
+            remaining_capacity=remaining_capacity,
+        )
+        return LateReplacementStateResponse(
+            run_id=run_id,
+            event_id=event_id,
+            eligible=eligible,
+            eligibility_reason=reason,
+            replaceable_main_draw_players=withdrawable_players,
+            remaining_capacity=remaining_capacity,
+        )
+
+    def apply_late_replacement(
+        self,
+        *,
+        run_id: str,
+        event_id: str,
+        withdrawn_player_id: str,
+        notes: str | None = None,
+    ) -> LateReplacementResultResponse:
+        run_info, state = self._load_run_context(run_id=run_id)
+        event, _ = self._resolve_event_and_index(state=state, event_id=event_id)
+        templates_by_id = {template.template_id: template for template in load_tournament_templates_config().templates}
+        template = templates_by_id[event.template_id]
+        orchestrator = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info)
+        if withdrawn_player_id not in orchestrator.players_by_id:
+            raise ValueError(f"player_id {withdrawn_player_id} was not found")
+
+        acceptance = self._build_effective_acceptance_for_event(run_id=run_id, run_info=run_info, event=event)
+        candidates = self._ordered_late_replacement_candidates(
+            acceptance=acceptance,
+            players_by_id=orchestrator.players_by_id,
+            countries_by_code=orchestrator.countries_by_code,
+        )
+        used_spots = len(self.repository.get_late_replacements_for_event(run_id=run_id, event_id=event_id))
+        remaining_capacity = max(0, template.lucky_loser_rules.max_spots - used_spots)
+        has_withdrawable = any(
+            item.player_id == withdrawn_player_id
+            for item in self._withdrawable_main_draw_players(
+                acceptance=acceptance,
+                players_by_id=orchestrator.players_by_id,
+                countries_by_code=orchestrator.countries_by_code,
+            )
+        )
+        eligible, reason = self._late_replacement_event_eligibility(
+            run_id=run_id,
+            state=state,
+            event=event,
+            has_replaceable_players=has_withdrawable,
+            has_candidates=bool(candidates),
+            remaining_capacity=remaining_capacity,
+        )
+        if not eligible:
+            raise ValueError(reason or "event is not eligible for late replacement lucky loser workflow")
+
+        withdrawn_entry = next(
+            (
+                entry
+                for entry in acceptance.main_draw_entries
+                if entry.player_id == withdrawn_player_id
+                and entry.status
+                in {
+                    AcceptanceStatus.DIRECT_ACCEPTANCE,
+                    AcceptanceStatus.WILD_CARD_PLACEHOLDER,
+                    AcceptanceStatus.WITHDRAWAL_PLACEHOLDER,
+                    AcceptanceStatus.LATE_REPLACEMENT_PLACEHOLDER,
+                }
+            ),
+            None,
+        )
+        if withdrawn_entry is None:
+            raise ValueError(f"player_id {withdrawn_player_id} is not currently entered in the main draw for event {event_id}")
+
+        replacement = candidates[0]
+        replacement_entry = self._resolve_late_replacement_destination(acceptance=acceptance, withdrawn_entry=withdrawn_entry)
+        payload = {
+            "withdrawn_player_id": withdrawn_player_id,
+            "replacement_player_id": replacement.player_id,
+            "replacement_source": replacement.source,
+            "withdrawn_entry_id": withdrawn_entry.entry_id,
+            "replacement_entry_id": replacement_entry.entry_id,
+            "candidate_slot_index": replacement.candidate_slot_index,
+            "notes": notes,
+        }
+        self.repository.append_admin_action(
+            run_id=run_id,
+            event_id=event_id,
+            action_kind="late_replacement_lucky_loser",
+            payload=payload,
+        )
+        post_state = self.get_late_replacement_state(run_id=run_id, event_id=event_id)
+        return LateReplacementResultResponse(
+            run_id=run_id,
+            event_id=event_id,
+            withdrawn_player_id=withdrawn_player_id,
+            replacement_player_id=replacement.player_id,
+            replacement_source=replacement.source,
+            withdrawn_entry_id=withdrawn_entry.entry_id,
+            replacement_entry_id=replacement_entry.entry_id,
+            candidate_slot_index=replacement.candidate_slot_index,
+            eligible=post_state.eligible,
+            eligibility_reason=post_state.eligibility_reason,
+            remaining_capacity=post_state.remaining_capacity,
+        )
+
+    def get_late_replacement_action_history(self, *, run_id: str, event_id: str) -> LateReplacementActionHistoryResponse:
+        _, state = self._load_run_context(run_id=run_id)
+        self._resolve_event_and_index(state=state, event_id=event_id)
+        items: list[LateReplacementActionHistoryItem] = []
+        for action in self.repository.list_admin_actions(
+            run_id=run_id,
+            event_id=event_id,
+            action_kind="late_replacement_lucky_loser",
+        ):
+            withdrawn_player_id = action.payload.get("withdrawn_player_id")
+            replacement_player_id = action.payload.get("replacement_player_id")
+            replacement_source = action.payload.get("replacement_source")
+            withdrawn_entry_id = action.payload.get("withdrawn_entry_id")
+            replacement_entry_id = action.payload.get("replacement_entry_id")
+            candidate_slot_index = action.payload.get("candidate_slot_index")
+            notes = action.payload.get("notes")
+            if (
+                not isinstance(withdrawn_player_id, str)
+                or not isinstance(replacement_player_id, str)
+                or replacement_source not in {"main_draw_waitlist", "qualification_waitlist"}
+                or not isinstance(withdrawn_entry_id, str)
+                or not isinstance(replacement_entry_id, str)
+                or (candidate_slot_index is not None and not isinstance(candidate_slot_index, int))
+                or (notes is not None and not isinstance(notes, str))
+            ):
+                continue
+            items.append(
+                LateReplacementActionHistoryItem(
+                    action_sequence=action.action_sequence,
+                    action_kind=action.action_kind,
+                    event_id=action.event_id,
+                    withdrawn_player_id=withdrawn_player_id,
+                    replacement_player_id=replacement_player_id,
+                    replacement_source=replacement_source,
+                    withdrawn_entry_id=withdrawn_entry_id,
+                    replacement_entry_id=replacement_entry_id,
+                    candidate_slot_index=candidate_slot_index,
+                    notes=notes,
+                )
+            )
+        return LateReplacementActionHistoryResponse(run_id=run_id, event_id=event_id, actions=items)
+
     def simulate_next_tournament(self, *, run_id: str) -> SimulationStepResult:
         return self._simulate_step(run_id=run_id, mode="simulate_next_tournament")
 
@@ -1111,6 +1364,7 @@ class SimulationApiService:
             "bootstrap_child": 7,
             "admin_wildcard_assignment": 8,
             "admin_pre_draw_withdrawal_replacement": 9,
+            "admin_late_replacement_lucky_loser": 10,
         }
         for admin_action in self.repository.list_admin_actions(run_id=run_id, action_kind="assign_wildcards"):
             items.append(
@@ -1128,6 +1382,18 @@ class SimulationApiService:
                     kind="admin_pre_draw_withdrawal_replacement",
                     sequence=admin_action.action_sequence,
                     label=f"Commissioner pre-draw withdrawal replacement ({admin_action.event_id})",
+                    season=event.season,
+                    week=event.week,
+                    event_id=admin_action.event_id,
+                )
+            )
+        for admin_action in self.repository.list_admin_actions(run_id=run_id, action_kind="late_replacement_lucky_loser"):
+            event, _ = self._resolve_event_and_index(state=state, event_id=admin_action.event_id)
+            items.append(
+                RunActivityItem(
+                    kind="admin_late_replacement_lucky_loser",
+                    sequence=admin_action.action_sequence,
+                    label=f"Commissioner late replacement lucky loser ({admin_action.event_id})",
                     season=event.season,
                     week=event.week,
                     event_id=admin_action.event_id,
@@ -1212,6 +1478,11 @@ class SimulationApiService:
                 {}
                 if run_info is None
                 else self.repository.get_pre_draw_withdrawal_replacements_for_run(run_id=run_info.run_id)
+            ),
+            late_replacements_by_event=(
+                {}
+                if run_info is None
+                else self.repository.get_late_replacements_for_run(run_id=run_info.run_id)
             ),
         )
 
@@ -1310,6 +1581,136 @@ class SimulationApiService:
             return False, "event already started and is currently active"
         return True, None
 
+    def _late_replacement_event_eligibility(
+        self,
+        *,
+        run_id: str,
+        state: SeasonState,
+        event: CalendarEvent,
+        has_replaceable_players: bool,
+        has_candidates: bool,
+        remaining_capacity: int,
+    ) -> tuple[bool, str | None]:
+        base_eligible, base_reason = self._pre_draw_withdrawal_event_eligibility(run_id=run_id, state=state, event=event)
+        if not base_eligible:
+            return False, base_reason
+        templates_by_id = {template.template_id: template for template in load_tournament_templates_config().templates}
+        template = templates_by_id[event.template_id]
+        if not template.lucky_loser_rules.enabled:
+            return False, "lucky loser rules are disabled for this event template"
+        if remaining_capacity <= 0:
+            return False, "lucky loser replacement capacity is exhausted for this event"
+        if not has_replaceable_players:
+            return False, "no replaceable main-draw players are currently entered"
+        if not has_candidates:
+            return False, "no eligible late-replacement candidates are currently available"
+        return True, None
+
+    @staticmethod
+    def _withdrawable_main_draw_players(
+        *,
+        acceptance: AcceptanceList,
+        players_by_id: dict[str, Player],
+        countries_by_code: dict[str, Country],
+    ) -> list[PreDrawWithdrawablePlayerRecord]:
+        withdrawable_entries = sorted(
+            [
+                entry
+                for entry in acceptance.main_draw_entries
+                if entry.player_id is not None
+                and entry.status
+                in {
+                    AcceptanceStatus.DIRECT_ACCEPTANCE,
+                    AcceptanceStatus.WILD_CARD_PLACEHOLDER,
+                    AcceptanceStatus.WITHDRAWAL_PLACEHOLDER,
+                    AcceptanceStatus.LATE_REPLACEMENT_PLACEHOLDER,
+                }
+            ],
+            key=lambda entry: (10_000 if entry.ranking_priority is None else entry.ranking_priority, entry.entry_id),
+        )
+        return [
+            PreDrawWithdrawablePlayerRecord(
+                player_id=entry.player_id or "",
+                player_name=players_by_id[entry.player_id].name,
+                country_code=players_by_id[entry.player_id].nationality,
+                country_name=(
+                    countries_by_code[players_by_id[entry.player_id].nationality].name
+                    if players_by_id[entry.player_id].nationality in countries_by_code
+                    else None
+                ),
+                entry_id=entry.entry_id,
+                acceptance_status=entry.status.value,
+            )
+            for entry in withdrawable_entries
+            if entry.player_id is not None and entry.player_id in players_by_id
+        ]
+
+    @staticmethod
+    def _ordered_late_replacement_candidates(
+        *,
+        acceptance: AcceptanceList,
+        players_by_id: dict[str, Player],
+        countries_by_code: dict[str, Country],
+    ) -> list[LateReplacementCandidateRecord]:
+        entered_main_player_ids = {entry.player_id for entry in acceptance.main_draw_entries if entry.player_id is not None}
+        blocked_player_ids = set(entered_main_player_ids)
+        candidate_pool: list[tuple[int, int, str, str, ReplacementSource, int | None]] = []
+        for source_order, source_label, applicants in (
+            (0, "qualification_waitlist", acceptance.qualification_applicants),
+            (1, "main_draw_waitlist", acceptance.main_draw_applicants),
+        ):
+            for applicant in applicants:
+                if applicant.player_id in blocked_player_ids:
+                    continue
+                candidate_pool.append(
+                    (
+                        source_order,
+                        10_000 if applicant.ranking_priority is None else applicant.ranking_priority,
+                        applicant.player_id,
+                        applicant.entry_id,
+                        source_label,
+                        applicant.ranking_priority,
+                    )
+                )
+
+        ordered_candidates: list[LateReplacementCandidateRecord] = []
+        for index, (_, _, player_id, entry_id, source_label, ranking_priority) in enumerate(sorted(candidate_pool), start=1):
+            player = players_by_id.get(player_id)
+            if player is None:
+                continue
+            ordered_candidates.append(
+                LateReplacementCandidateRecord(
+                    candidate_slot_index=index,
+                    player_id=player.player_id,
+                    player_name=player.name,
+                    country_code=player.nationality,
+                    country_name=(countries_by_code[player.nationality].name if player.nationality in countries_by_code else None),
+                    source=source_label,
+                    source_priority=0 if source_label == "qualification_waitlist" else 1,
+                    ranking_priority=ranking_priority,
+                    entry_id=entry_id,
+                )
+            )
+        return ordered_candidates
+
+    @staticmethod
+    def _resolve_late_replacement_destination(
+        *,
+        acceptance: AcceptanceList,
+        withdrawn_entry: TournamentEntry,
+    ) -> TournamentEntry:
+        ordered_entries = sorted(
+            acceptance.main_draw_entries,
+            key=lambda item: (10_000 if item.ranking_priority is None else item.ranking_priority, item.entry_id),
+        )
+        for entry in ordered_entries:
+            if entry.status == AcceptanceStatus.LATE_REPLACEMENT_PLACEHOLDER and entry.player_id is None:
+                return entry
+        for entry in ordered_entries:
+            if entry.status == AcceptanceStatus.WITHDRAWAL_PLACEHOLDER and entry.player_id is None:
+                return entry
+        return withdrawn_entry
+
     def _build_effective_acceptance_for_event(
         self,
         *,
@@ -1330,7 +1731,11 @@ class SimulationApiService:
             acceptance=acceptance,
             assignments=self.repository.get_wildcard_assignments_for_event(run_id=run_id, event_id=event.event_id),
         )
-        return orchestrator._apply_pre_draw_withdrawal_replacements(
+        acceptance = orchestrator._apply_pre_draw_withdrawal_replacements(
             acceptance=acceptance,
             replacements=self.repository.get_pre_draw_withdrawal_replacements_for_event(run_id=run_id, event_id=event.event_id),
+        )
+        return orchestrator._apply_late_replacements(
+            acceptance=acceptance,
+            replacements=self.repository.get_late_replacements_for_event(run_id=run_id, event_id=event.event_id),
         )

@@ -6,11 +6,16 @@ from beta_engine.api.schemas import (
     RunActivityItemResponse,
     WildcardAssignRequest,
     PreDrawWithdrawalRequest,
+    LateReplacementRequest,
     WildcardStateApiResponse,
     WildcardActionHistoryApiResponse,
     PreDrawWithdrawalStateApiResponse,
     PreDrawWithdrawalResultApiResponse,
     PreDrawWithdrawalActionHistoryApiResponse,
+    LateReplacementStateApiResponse,
+    LateReplacementCandidatesApiResponse,
+    LateReplacementResultApiResponse,
+    LateReplacementActionHistoryApiResponse,
     EventListResponse,
     EventRecordResponse,
     FinalsQualificationResponse,
@@ -189,6 +194,71 @@ def list_event_pre_draw_withdrawal_actions(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     return PreDrawWithdrawalActionHistoryApiResponse.model_validate(history, from_attributes=True)
+
+
+@router.get("/events/{event_id}/late-replacement", response_model=LateReplacementStateApiResponse)
+def get_event_late_replacement_state(
+    run_id: str,
+    event_id: str,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> LateReplacementStateApiResponse:
+    try:
+        state = service.get_late_replacement_state(run_id=run_id, event_id=event_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return LateReplacementStateApiResponse.model_validate(state, from_attributes=True)
+
+
+@router.get("/events/{event_id}/late-replacement-candidates", response_model=LateReplacementCandidatesApiResponse)
+def list_event_late_replacement_candidates(
+    run_id: str,
+    event_id: str,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> LateReplacementCandidatesApiResponse:
+    try:
+        candidates = service.get_late_replacement_candidates(run_id=run_id, event_id=event_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return LateReplacementCandidatesApiResponse.model_validate(candidates, from_attributes=True)
+
+
+@router.post("/events/{event_id}/late-replacement", response_model=LateReplacementResultApiResponse)
+def apply_event_late_replacement(
+    run_id: str,
+    event_id: str,
+    payload: LateReplacementRequest,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> LateReplacementResultApiResponse:
+    try:
+        result = service.apply_late_replacement(
+            run_id=run_id,
+            event_id=event_id,
+            withdrawn_player_id=payload.withdrawn_player_id,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return LateReplacementResultApiResponse.model_validate(result, from_attributes=True)
+
+
+@router.get("/events/{event_id}/late-replacement-actions", response_model=LateReplacementActionHistoryApiResponse)
+def list_event_late_replacement_actions(
+    run_id: str,
+    event_id: str,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> LateReplacementActionHistoryApiResponse:
+    try:
+        history = service.get_late_replacement_action_history(run_id=run_id, event_id=event_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return LateReplacementActionHistoryApiResponse.model_validate(history, from_attributes=True)
 
 
 @router.get("/snapshots/ranking", response_model=RankingSnapshotListResponse)

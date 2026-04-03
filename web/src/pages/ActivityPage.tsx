@@ -27,7 +27,8 @@ function makeWeekContext(item: RunActivityItem, effectiveWeek: number | null): s
     item.kind === 'ranking_snapshot' ||
     item.kind === 'race_snapshot' ||
     item.kind === 'admin_wildcard_assignment' ||
-    item.kind === 'admin_pre_draw_withdrawal_replacement'
+    item.kind === 'admin_pre_draw_withdrawal_replacement' ||
+    item.kind === 'admin_late_replacement_lucky_loser'
   if (!supportsWeekInspection) {
     return 'Not meaningful for this activity kind'
   }
@@ -446,13 +447,30 @@ function activityBridgeItems(
       )
     })
   }
+  if (item.kind === 'admin_late_replacement_lucky_loser' && item.event_id) {
+    links.push({
+      label: 'Late-replacement event planned detail',
+      value: (
+        <Link to={`/runs/${runId}/calendar/${encodeURIComponent(item.event_id)}`}>Open late-replacement event planned detail</Link>
+      )
+    })
+    links.push({
+      label: 'Late-replacement event persisted detail',
+      value: hasPersistedContext ? (
+        <Link to={`/runs/${runId}/events/${encodeURIComponent(item.event_id)}`}>Open late-replacement event persisted detail</Link>
+      ) : (
+        'Late-replacement event has not been persisted yet.'
+      )
+    })
+  }
 
   const supportsWeekInspection =
     item.kind === 'event' ||
     item.kind === 'ranking_snapshot' ||
     item.kind === 'race_snapshot' ||
     item.kind === 'admin_wildcard_assignment' ||
-    item.kind === 'admin_pre_draw_withdrawal_replacement'
+    item.kind === 'admin_pre_draw_withdrawal_replacement' ||
+    item.kind === 'admin_late_replacement_lucky_loser'
   if (supportsWeekInspection && selectedWeek != null) {
     links.push({
       label: 'Week detail',

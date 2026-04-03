@@ -121,6 +121,7 @@ export type RunActivityItem = {
     | 'bootstrap_child'
     | 'admin_wildcard_assignment'
     | 'admin_pre_draw_withdrawal_replacement'
+    | 'admin_late_replacement_lucky_loser'
   sequence: number | null
   label: string
   season: number | null
@@ -236,6 +237,70 @@ export type PreDrawWithdrawalActionHistoryResponse = {
   run_id: string
   event_id: string
   actions: PreDrawWithdrawalActionHistoryItem[]
+}
+
+export type LateReplacementCandidate = {
+  candidate_slot_index: number
+  player_id: string
+  player_name: string
+  country_code: string
+  country_name: string | null
+  source: 'main_draw_waitlist' | 'qualification_waitlist'
+  source_priority: number | null
+  ranking_priority: number | null
+  entry_id: string
+}
+
+export type LateReplacementCandidatesResponse = {
+  run_id: string
+  event_id: string
+  candidates: LateReplacementCandidate[]
+}
+
+export type LateReplacementStateResponse = {
+  run_id: string
+  event_id: string
+  eligible: boolean
+  eligibility_reason: string | null
+  replaceable_main_draw_players: PreDrawWithdrawablePlayer[]
+  remaining_capacity: number
+}
+
+export type ApplyLateReplacementPayload = {
+  withdrawn_player_id: string
+}
+
+export type LateReplacementResultResponse = {
+  run_id: string
+  event_id: string
+  withdrawn_player_id: string
+  replacement_player_id: string
+  replacement_source: 'main_draw_waitlist' | 'qualification_waitlist'
+  withdrawn_entry_id: string
+  replacement_entry_id: string
+  candidate_slot_index: number | null
+  eligible: boolean
+  eligibility_reason: string | null
+  remaining_capacity: number
+}
+
+export type LateReplacementActionHistoryItem = {
+  action_sequence: number
+  action_kind: string
+  event_id: string
+  withdrawn_player_id: string
+  replacement_player_id: string
+  replacement_source: 'main_draw_waitlist' | 'qualification_waitlist'
+  withdrawn_entry_id: string
+  replacement_entry_id: string
+  candidate_slot_index: number | null
+  notes: string | null
+}
+
+export type LateReplacementActionHistoryResponse = {
+  run_id: string
+  event_id: string
+  actions: LateReplacementActionHistoryItem[]
 }
 
 type SnapshotRecordBase = {

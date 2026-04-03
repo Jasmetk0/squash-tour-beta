@@ -261,6 +261,38 @@ describe('ActivityPage', () => {
     expect(screen.getByRole('link', { name: 'Open week detail page (W1)' })).toHaveAttribute('href', '/runs/run-a/weeks/1')
   })
 
+  it('renders admin late-replacement with planned-event bridge links', async () => {
+    api.getRunActivity.mockResolvedValueOnce({
+      run_id: 'run-a',
+      items: [
+        {
+          kind: 'admin_late_replacement_lucky_loser',
+          sequence: 1,
+          label: 'Commissioner late replacement lucky loser (E1)',
+          season: 2027,
+          week: 1,
+          event_id: 'E1',
+          snapshot_sequence: null,
+          source_event_id: null,
+          related_run_id: null
+        }
+      ]
+    })
+    mockContext()
+
+    renderWithRoute(<ActivityPage />, '/runs/run-a/activity')
+
+    expect(await screen.findByRole('link', { name: 'Open late-replacement event planned detail' })).toHaveAttribute(
+      'href',
+      '/runs/run-a/calendar/E1'
+    )
+    expect(screen.getByRole('link', { name: 'Open late-replacement event persisted detail' })).toHaveAttribute(
+      'href',
+      '/runs/run-a/events/E1'
+    )
+    expect(screen.getByRole('link', { name: 'Open week detail page (W1)' })).toHaveAttribute('href', '/runs/run-a/weeks/1')
+  })
+
   it('does not fabricate snapshot source links when context is absent', async () => {
     api.getRunActivity.mockResolvedValueOnce({
       run_id: 'run-a',

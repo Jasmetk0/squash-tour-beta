@@ -250,6 +250,70 @@ class PreDrawWithdrawalActionHistoryApiResponse(BaseModel):
     actions: list[PreDrawWithdrawalActionHistoryItemResponse] = Field(default_factory=list)
 
 
+class LateReplacementRequest(BaseModel):
+    withdrawn_player_id: str = Field(min_length=1)
+
+
+class LateReplacementCandidateResponse(BaseModel):
+    candidate_slot_index: int
+    player_id: str
+    player_name: str
+    country_code: str
+    country_name: str | None = None
+    source: Literal["main_draw_waitlist", "qualification_waitlist"]
+    source_priority: int | None = None
+    ranking_priority: int | None = None
+    entry_id: str
+
+
+class LateReplacementCandidatesApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    candidates: list[LateReplacementCandidateResponse] = Field(default_factory=list)
+
+
+class LateReplacementStateApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    eligible: bool
+    eligibility_reason: str | None = None
+    replaceable_main_draw_players: list[PreDrawWithdrawablePlayerResponse] = Field(default_factory=list)
+    remaining_capacity: int
+
+
+class LateReplacementResultApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    withdrawn_player_id: str
+    replacement_player_id: str
+    replacement_source: Literal["main_draw_waitlist", "qualification_waitlist"]
+    withdrawn_entry_id: str
+    replacement_entry_id: str
+    candidate_slot_index: int | None = None
+    eligible: bool
+    eligibility_reason: str | None = None
+    remaining_capacity: int
+
+
+class LateReplacementActionHistoryItemResponse(BaseModel):
+    action_sequence: int
+    action_kind: str
+    event_id: str
+    withdrawn_player_id: str
+    replacement_player_id: str
+    replacement_source: Literal["main_draw_waitlist", "qualification_waitlist"]
+    withdrawn_entry_id: str
+    replacement_entry_id: str
+    candidate_slot_index: int | None = None
+    notes: str | None = None
+
+
+class LateReplacementActionHistoryApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    actions: list[LateReplacementActionHistoryItemResponse] = Field(default_factory=list)
+
+
 class RunActivityResponse(BaseModel):
     run_id: str
     items: list[RunActivityItemResponse] = Field(default_factory=list)

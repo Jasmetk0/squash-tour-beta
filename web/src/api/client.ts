@@ -3,6 +3,7 @@ import type {
   BootstrapNextSeasonResponse,
   AssignWildcardsPayload,
   ApplyPreDrawWithdrawalPayload,
+  ApplyLateReplacementPayload,
   CreateRunPayload,
   EventListResponse,
   RunActivityResponse,
@@ -17,6 +18,10 @@ import type {
   RaceSnapshotListResponse,
   RankingSnapshotListResponse,
   NextSeasonPlayersResponse,
+  LateReplacementActionHistoryResponse,
+  LateReplacementCandidatesResponse,
+  LateReplacementResultResponse,
+  LateReplacementStateResponse,
   PlayerTransitionsResponse,
   PreDrawWithdrawalActionHistoryResponse,
   PreDrawWithdrawalResultResponse,
@@ -159,6 +164,35 @@ export function getEventPreDrawWithdrawalActions(
   eventId: string
 ): Promise<PreDrawWithdrawalActionHistoryResponse> {
   return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/pre-draw-withdrawal-actions`)
+}
+
+export function getEventLateReplacementState(runId: string, eventId: string): Promise<LateReplacementStateResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/late-replacement`)
+}
+
+export function getEventLateReplacementCandidates(
+  runId: string,
+  eventId: string
+): Promise<LateReplacementCandidatesResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/late-replacement-candidates`)
+}
+
+export function applyEventLateReplacement(
+  runId: string,
+  eventId: string,
+  payload: ApplyLateReplacementPayload
+): Promise<LateReplacementResultResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/late-replacement`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}
+
+export function getEventLateReplacementActions(
+  runId: string,
+  eventId: string
+): Promise<LateReplacementActionHistoryResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/late-replacement-actions`)
 }
 
 export function listRankingSnapshots(runId: string): Promise<RankingSnapshotListResponse> {

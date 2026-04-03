@@ -253,3 +253,68 @@ def test_pre_draw_withdrawal_replacement_fold_updates_effective_main_draw_entrie
     assert replaced_entry.player_id == waitlist_candidate.player_id
     assert removed_entry.player_id is None
     assert first.model_dump() == second.model_dump()
+
+
+def test_late_replacement_fold_applies_after_pre_draw_withdrawal_with_destination_precedence() -> None:
+    baseline_orchestrator = _orchestrator(seed=7802)
+    state = baseline_orchestrator.initialize_state()
+    event = state.ordered_events[0]
+    template = baseline_orchestrator.templates_by_id[event.template_id]
+    acceptance = baseline_orchestrator.entry_engine.build_acceptance_list(
+        event=event,
+        template=template,
+        players=list(baseline_orchestrator.players_by_id.values()),
+        countries_by_code=baseline_orchestrator.countries_by_code,
+    )
+    accepted_main = [
+        entry for entry in acceptance.main_draw_entries if entry.status == AcceptanceStatus.DIRECT_ACCEPTANCE and entry.player_id is not None
+    ]
+    pre_draw_candidate = next(entry for entry in acceptance.main_draw_applicants if entry.player_id not in {item.player_id for item in accepted_main})
+    qualification_candidate = next(
+        entry for entry in acceptance.qualification_applicants if entry.player_id not in {item.player_id for item in accepted_main}
+    )
+    pre_draw_withdrawn_entry = accepted_main[0]
+    late_withdrawn_entry = accepted_main[1]
+    withdrawal_placeholder = next(entry for entry in acceptance.main_draw_entries if entry.status == AcceptanceStatus.WITHDRAWAL_PLACEHOLDER)
+    late_placeholder = next(entry for entry in acceptance.main_draw_entries if entry.status == AcceptanceStatus.LATE_REPLACEMENT_PLACEHOLDER)
+
+    with_actions = SeasonSimulationOrchestrator.build(
+        calendar=baseline_orchestrator.calendar,
+        templates=list(baseline_orchestrator.templates_by_id.values()),
+        players=list(baseline_orchestrator.players_by_id.values()),
+        countries_by_code=baseline_orchestrator.countries_by_code,
+        points_by_ref=load_points_config(),
+        entry_tuning=load_entry_tuning_config(),
+        seed=7802,
+        pre_draw_withdrawal_replacements_by_event={
+            event.event_id: [
+                {
+                    "withdrawn_player_id": pre_draw_withdrawn_entry.player_id,
+                    "replacement_player_id": pre_draw_candidate.player_id,
+                    "replacement_source": "main_draw_waitlist",
+                    "withdrawn_entry_id": pre_draw_withdrawn_entry.entry_id,
+                    "replacement_entry_id": withdrawal_placeholder.entry_id,
+                    "notes": None,
+                }
+            ]
+        },
+        late_replacements_by_event={
+            event.event_id: [
+                {
+                    "withdrawn_player_id": late_withdrawn_entry.player_id,
+                    "replacement_player_id": qualification_candidate.player_id,
+                    "replacement_source": "qualification_waitlist",
+                    "withdrawn_entry_id": late_withdrawn_entry.entry_id,
+                    "replacement_entry_id": late_placeholder.entry_id,
+                    "candidate_slot_index": 1,
+                    "notes": None,
+                }
+            ]
+        },
+    )
+    first = with_actions.simulate_next_tournament(state=state)
+    main_entries = first.tournament_result.acceptance_list.main_draw_entries
+    assert next(entry for entry in main_entries if entry.entry_id == withdrawal_placeholder.entry_id).player_id == pre_draw_candidate.player_id
+    assert next(entry for entry in main_entries if entry.entry_id == late_placeholder.entry_id).player_id == qualification_candidate.player_id
+    assert next(entry for entry in main_entries if entry.entry_id == pre_draw_withdrawn_entry.entry_id).player_id is None
+    assert next(entry for entry in main_entries if entry.entry_id == late_withdrawn_entry.entry_id).player_id is None

@@ -173,3 +173,15 @@ class NextSeasonPlayerModel(Base):
     to_season: Mapped[int] = mapped_column(Integer, nullable=False)
     player_id: Mapped[str] = mapped_column(String(128), nullable=False)
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class AdminActionModel(Base):
+    __tablename__ = "admin_actions"
+    __table_args__ = (UniqueConstraint("run_id", "event_id", "action_sequence", name="uq_admin_actions_run_event_sequence"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    event_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    action_sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    action_kind: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)

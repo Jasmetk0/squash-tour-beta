@@ -15,6 +15,7 @@ from beta_engine.domain.finals import FinalsQualificationResult, FinalsResult
 from beta_engine.domain.rankings import CompletedTournamentPointsInput
 
 from beta_engine.infrastructure.db.models import (
+    AdminActionModel,
     Base,
     CompletedEventMetadataModel,
     FinalsQualificationModel,
@@ -128,6 +129,15 @@ class NextSeasonPlayerRecord:
     to_season: int
     player_id: str
     state: NextSeasonPlayerState
+
+
+@dataclass(frozen=True)
+class PersistedAdminActionRecord:
+    run_id: str
+    event_id: str
+    action_sequence: int
+    action_kind: str
+    payload: dict[str, object]
 
 
 class SimulationPersistenceRepository:
@@ -397,6 +407,99 @@ class SimulationPersistenceRepository:
     def list_table_names(self) -> list[str]:
         with self._session_factory() as session:
             return sorted(session.bind.dialect.get_table_names(session.connection()))
+
+    def append_admin_action(
+        self,
+        *,
+        run_id: str,
+        event_id: str,
+        action_kind: str,
+        payload: dict[str, object],
+    ) -> PersistedAdminActionRecord:
+        with self._session_factory.begin() as session:
+            max_statement = select(func.max(AdminActionModel.action_sequence)).where(
+                AdminActionModel.run_id == run_id,
+                AdminActionModel.event_id == event_id,
+            )
+            prior_max = session.execute(max_statement).scalar_one_or_none()
+            next_sequence = 1 if prior_max is None else int(prior_max) + 1
+            model = AdminActionModel(
+                run_id=run_id,
+                event_id=event_id,
+                action_sequence=next_sequence,
+                action_kind=action_kind,
+                payload_json=_to_json(payload),
+            )
+            session.add(model)
+            return PersistedAdminActionRecord(
+                run_id=run_id,
+                event_id=event_id,
+                action_sequence=next_sequence,
+                action_kind=action_kind,
+                payload=payload,
+            )
+
+    def list_admin_actions(
+        self,
+        *,
+        run_id: str,
+        event_id: str | None = None,
+        action_kind: str | None = None,
+    ) -> list[PersistedAdminActionRecord]:
+        with self._session_factory() as session:
+            statement = select(AdminActionModel).where(AdminActionModel.run_id == run_id)
+            if event_id is not None:
+                statement = statement.where(AdminActionModel.event_id == event_id)
+            if action_kind is not None:
+                statement = statement.where(AdminActionModel.action_kind == action_kind)
+            statement = statement.order_by(
+                AdminActionModel.event_id.asc(),
+                AdminActionModel.action_sequence.asc(),
+                AdminActionModel.id.asc(),
+            )
+            return [
+                PersistedAdminActionRecord(
+                    run_id=row.run_id,
+                    event_id=row.event_id,
+                    action_sequence=row.action_sequence,
+                    action_kind=row.action_kind,
+                    payload=_from_json(row.payload_json),
+                )
+                for row in session.execute(statement).scalars().all()
+            ]
+
+    def get_wildcard_assignments_for_event(self, *, run_id: str, event_id: str) -> dict[int, str]:
+        assignments: dict[int, str] = {}
+        for action in self.list_admin_actions(
+            run_id=run_id,
+            event_id=event_id,
+            action_kind="assign_wildcards",
+        ):
+            raw_assignments = action.payload.get("assignments", [])
+            if not isinstance(raw_assignments, list):
+                continue
+            for raw_assignment in raw_assignments:
+                if not isinstance(raw_assignment, dict):
+                    continue
+                raw_slot_index = raw_assignment.get("slot_index")
+                raw_player_id = raw_assignment.get("player_id")
+                if not isinstance(raw_slot_index, int) or not isinstance(raw_player_id, str):
+                    continue
+                assignments[raw_slot_index] = raw_player_id
+        return assignments
+
+    def get_wildcard_assignments_for_run(self, *, run_id: str) -> dict[str, dict[int, str]]:
+        event_ids = {
+            action.event_id
+            for action in self.list_admin_actions(
+                run_id=run_id,
+                action_kind="assign_wildcards",
+            )
+        }
+        return {
+            event_id: self.get_wildcard_assignments_for_event(run_id=run_id, event_id=event_id)
+            for event_id in sorted(event_ids)
+        }
 
     def list_completed_event_ids(self, *, run_id: str) -> list[str]:
         with self._session_factory() as session:

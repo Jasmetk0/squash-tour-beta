@@ -9,6 +9,10 @@ from urllib import error, request
 import uvicorn
 
 from beta_engine.main import create_app
+from beta_engine.core import DeterministicRng
+from beta_engine.domain.countries import CountryTalentModel
+from beta_engine.domain.players import PlayerGenerator
+from beta_engine.infrastructure.world_config import load_countries_config, load_player_identity_config
 
 
 def _free_port() -> int:
@@ -53,6 +57,18 @@ def _request(method: str, url: str, payload: dict[str, object] | None = None) ->
         raw = exc.read().decode("utf-8")
         parsed = json.loads(raw) if raw else {}
         return int(exc.code), parsed
+
+
+def _generated_player_ids(seed: int, per_country: int = 24) -> list[str]:
+    generator = PlayerGenerator(
+        rng=DeterministicRng(seed),
+        identity_config=load_player_identity_config(),
+        country_talent_model=CountryTalentModel(),
+    )
+    ids: list[str] = []
+    for country in load_countries_config().countries:
+        ids.extend(generator.generate(country=country, sequence=index + 1).player_id for index in range(per_country))
+    return ids
 
 
 def test_run_initialization_and_state_fetch_work(tmp_path) -> None:
@@ -217,6 +233,110 @@ def test_finals_endpoint_rejects_incomplete_season(tmp_path) -> None:
         status, payload = _request("POST", f"{server.base_url}/runs/run-finals-incomplete/simulate/world-tour-finals")
         assert status == 400
         assert "completed regular season" in payload["detail"]
+
+
+def test_commissioner_wildcard_assignment_endpoints_validate_and_persist(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-wildcards.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/runs",
+            {"run_id": "run-wildcards", "seed": 5151, "season": 2027},
+        )
+        assert status == 201
+
+        status, state_payload = _request("GET", f"{server.base_url}/runs/run-wildcards")
+        assert status == 200
+        ordered_events = state_payload["season_state"]["ordered_events"]
+
+        selected_event_id = None
+        for event in ordered_events:
+            status, wildcard_state = _request(
+                "GET",
+                f"{server.base_url}/runs/run-wildcards/events/{event['event_id']}/wildcards",
+            )
+            assert status == 200
+            if wildcard_state["total_slots"] > 0:
+                selected_event_id = event["event_id"]
+                break
+        assert selected_event_id is not None
+
+        status, wildcard_state = _request(
+            "GET",
+            f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcards",
+        )
+        assert status == 200
+        assert wildcard_state["eligible"] is True
+
+        status, invalid = _request(
+            "POST",
+            f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcards",
+            {"assignments": [{"slot_index": 1, "player_id": "NOT-A-PLAYER"}]},
+        )
+        assert status == 400
+        assert "was not found" in invalid["detail"]
+
+        status, over_capacity = _request(
+            "POST",
+            f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcards",
+            {"assignments": [{"slot_index": wildcard_state["total_slots"] + 1, "player_id": "EGY-00001"}]},
+        )
+        assert status == 400
+        assert "outside available wildcard slots" in over_capacity["detail"]
+
+        status, duplicate_request = _request(
+            "POST",
+            f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcards",
+            {
+                "assignments": [
+                    {"slot_index": 1, "player_id": "EGY-00001"},
+                    {"slot_index": min(2, wildcard_state["total_slots"]), "player_id": "EGY-00001"},
+                ]
+            },
+        )
+        assert status == 400
+        assert "provided more than once" in duplicate_request["detail"]
+
+        assigned_player_id = None
+        successful_assignment_payload: dict[str, object] | None = None
+        for player_id in _generated_player_ids(seed=5151):
+            status, payload = _request(
+                "POST",
+                f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcards",
+                {"assignments": [{"slot_index": 1, "player_id": player_id}]},
+            )
+            if status == 200:
+                assigned_player_id = player_id
+                successful_assignment_payload = payload
+                break
+        assert assigned_player_id is not None
+        assert successful_assignment_payload is not None
+        assert successful_assignment_payload["slots"][0]["assigned_player_id"] == assigned_player_id
+
+        status, after_assign = _request(
+            "GET",
+            f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcards",
+        )
+        assert status == 200
+        assert after_assign["slots"][0]["assigned_player_id"] == assigned_player_id
+
+        selected_index = next(index for index, event in enumerate(ordered_events) if event["event_id"] == selected_event_id)
+        for _ in range(selected_index + 1):
+            status, sim_result = _request("POST", f"{server.base_url}/runs/run-wildcards/simulate/next-tournament")
+            assert status == 200
+
+        completed_input = sim_result["step"]["tournament_result"]["acceptance_list"]["main_draw_entries"]
+        wildcard_entries = [entry for entry in completed_input if entry["status"] == "WILD_CARD_PLACEHOLDER"]
+        assert wildcard_entries
+        assert wildcard_entries[0]["player_id"] == assigned_player_id
+
+        status, rejected_after_start = _request(
+            "POST",
+            f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcards",
+            {"assignments": [{"slot_index": 1, "player_id": assigned_player_id}]},
+        )
+        assert status == 400
+        assert "completed events" in rejected_after_start["detail"]
 
 
 def test_next_match_and_next_round_reject_after_finals_phase_begins(tmp_path) -> None:

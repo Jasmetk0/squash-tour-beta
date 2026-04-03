@@ -7,7 +7,9 @@ import { PlannedEventDetailPage } from './PlannedEventDetailPage'
 
 const api = vi.hoisted(() => ({
   getRun: vi.fn(),
-  listEvents: vi.fn()
+  listEvents: vi.fn(),
+  getEventWildcards: vi.fn(),
+  assignEventWildcards: vi.fn()
 }))
 
 vi.mock('../api/client', () => api)
@@ -44,6 +46,22 @@ describe('PlannedEventDetailPage', () => {
     api.listEvents.mockResolvedValue({
       run_id: 'run-a',
       events: [{ event_sequence: 2, event_id: 'E2', season: 2029, week: 4, template_id: 'TEMP-C', tournament_result: { ok: true } }]
+    })
+    api.getEventWildcards.mockResolvedValue({
+      run_id: 'run-a',
+      event_id: 'E1',
+      eligible: true,
+      eligibility_reason: null,
+      total_slots: 1,
+      slots: [{ slot_index: 1, entry_id: 'E1:WILD_CARD_PLACEHOLDER:1', assigned_player_id: null }]
+    })
+    api.assignEventWildcards.mockResolvedValue({
+      run_id: 'run-a',
+      event_id: 'E1',
+      eligible: true,
+      eligibility_reason: null,
+      total_slots: 1,
+      slots: [{ slot_index: 1, entry_id: 'E1:WILD_CARD_PLACEHOLDER:1', assigned_player_id: 'P1' }]
     })
   })
 
@@ -84,5 +102,13 @@ describe('PlannedEventDetailPage', () => {
 
     expect(await screen.findByText(/· Next:/)).toBeInTheDocument()
     expect(screen.getAllByText('None').length).toBeGreaterThan(0)
+  })
+
+  it('renders wildcard commissioner section with slot visibility', async () => {
+    renderAt('/runs/run-a/calendar/E1')
+
+    expect(await screen.findByRole('heading', { name: 'Commissioner wildcards' })).toBeInTheDocument()
+    expect(await screen.findByText('Slot 1: Unassigned')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Assign wildcard' })).toBeInTheDocument()
   })
 })

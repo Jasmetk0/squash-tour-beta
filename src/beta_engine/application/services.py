@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from beta_engine.core import DeterministicRng, SeedScope
 from beta_engine.domain.countries import Country
 from beta_engine.domain.draws import DrawEngine
-from beta_engine.domain.entries import EntryEngine, EntryTuningConfig
+from beta_engine.domain.entries import AcceptanceList, AcceptanceStatus, EntryEngine, EntryTuningConfig, TournamentEntry
 from beta_engine.domain.players import Player
 from beta_engine.domain.rankings import CompletedTournamentPointsInput, RankingRaceEngine, RankingRaceReport
 from beta_engine.domain.tournaments import CalendarEvent, SeasonCalendar, TournamentTemplate
@@ -37,6 +37,7 @@ class SeasonSimulationOrchestrator:
     entry_engine: EntryEngine
     draw_engine: DrawEngine
     progression_engine: TournamentProgressionEngine
+    wildcard_assignments_by_event: dict[str, dict[int, str]] = field(default_factory=dict)
 
     @classmethod
     def build(
@@ -49,6 +50,7 @@ class SeasonSimulationOrchestrator:
         points_by_ref: dict[str, dict[str, int]],
         entry_tuning: EntryTuningConfig,
         seed: int,
+        wildcard_assignments_by_event: dict[str, dict[int, str]] | None = None,
     ) -> "SeasonSimulationOrchestrator":
         rng = DeterministicRng(seed)
         return cls(
@@ -61,6 +63,11 @@ class SeasonSimulationOrchestrator:
             draw_engine=DrawEngine(rng=rng.branch(SeedScope.SEASON, calendar.season, "draws")),
             progression_engine=TournamentProgressionEngine(
                 rng=rng.branch(SeedScope.SEASON, calendar.season, "tournament_progression")
+            ),
+            wildcard_assignments_by_event=(
+                {}
+                if wildcard_assignments_by_event is None
+                else {event_id: dict(assignments) for event_id, assignments in wildcard_assignments_by_event.items()}
             ),
         )
 
@@ -242,6 +249,10 @@ class SeasonSimulationOrchestrator:
             players=players,
             countries_by_code=self.countries_by_code,
         )
+        acceptance = self._apply_wildcard_assignments(
+            acceptance=acceptance,
+            assignments=self.wildcard_assignments_by_event.get(event.event_id, {}),
+        )
         qualification_draw = self.draw_engine.generate_qualification_draw(
             acceptance_list=acceptance,
             template=template,
@@ -286,6 +297,30 @@ class SeasonSimulationOrchestrator:
             completed_tournament_input=completed_input,
         )
         return result, report, completed_inputs
+
+    @staticmethod
+    def _apply_wildcard_assignments(*, acceptance: AcceptanceList, assignments: dict[int, str]) -> AcceptanceList:
+        if not assignments:
+            return acceptance
+
+        wildcard_entries = sorted(
+            [entry for entry in acceptance.main_draw_entries if entry.status == AcceptanceStatus.WILD_CARD_PLACEHOLDER],
+            key=lambda entry: (10_000 if entry.ranking_priority is None else entry.ranking_priority, entry.entry_id),
+        )
+        entries_by_slot = {slot_index: entry for slot_index, entry in enumerate(wildcard_entries, start=1)}
+
+        updates_by_entry_id: dict[str, TournamentEntry] = {}
+        for slot_index, player_id in assignments.items():
+            entry = entries_by_slot.get(slot_index)
+            if entry is None:
+                continue
+            updates_by_entry_id[entry.entry_id] = entry.model_copy(update={"player_id": player_id})
+
+        if not updates_by_entry_id:
+            return acceptance
+
+        updated_main_entries = [updates_by_entry_id.get(entry.entry_id, entry) for entry in acceptance.main_draw_entries]
+        return acceptance.model_copy(update={"main_draw_entries": updated_main_entries})
 
     def _state_after_events(
         self,

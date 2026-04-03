@@ -27,7 +27,7 @@ from beta_engine.application.services import SeasonSimulationOrchestrator
 from beta_engine.core import DeterministicRng, SeedScope
 from beta_engine.domain.careers import CareerProgressionEngine
 from beta_engine.domain.countries import Country, CountryTalentModel
-from beta_engine.domain.entries import AcceptanceStatus
+from beta_engine.domain.entries import AcceptanceList, AcceptanceStatus, TournamentEntry
 from beta_engine.domain.players import Player, PlayerGenerator
 from beta_engine.domain.tournaments import CalendarEvent
 from beta_engine.infrastructure.db import SimulationPersistenceRepository, SimulationRunInfo
@@ -137,6 +137,7 @@ ActivityKind = Literal[
     "rollover",
     "bootstrap_child",
     "admin_wildcard_assignment",
+    "admin_pre_draw_withdrawal_replacement",
 ]
 
 _CANONICAL_SOURCE_TYPE_MAP: dict[str, str] = {
@@ -232,6 +233,61 @@ class WildcardActionHistoryResponse:
     run_id: str
     event_id: str
     actions: list[WildcardActionHistoryItem]
+
+
+ReplacementSource = Literal["main_draw_waitlist", "qualification_waitlist"]
+
+
+@dataclass(frozen=True)
+class PreDrawWithdrawablePlayerRecord:
+    player_id: str
+    player_name: str
+    country_code: str
+    country_name: str | None
+    entry_id: str
+    acceptance_status: str
+
+
+@dataclass(frozen=True)
+class PreDrawWithdrawalStateResponse:
+    run_id: str
+    event_id: str
+    eligible: bool
+    eligibility_reason: str | None
+    withdrawable_main_draw_players: list[PreDrawWithdrawablePlayerRecord]
+
+
+@dataclass(frozen=True)
+class PreDrawWithdrawalResultResponse:
+    run_id: str
+    event_id: str
+    withdrawn_player_id: str
+    replacement_player_id: str
+    replacement_source: ReplacementSource
+    withdrawn_entry_id: str
+    replacement_entry_id: str
+    eligible: bool
+    eligibility_reason: str | None
+
+
+@dataclass(frozen=True)
+class PreDrawWithdrawalActionHistoryItem:
+    action_sequence: int
+    action_kind: str
+    event_id: str
+    withdrawn_player_id: str
+    replacement_player_id: str
+    replacement_source: ReplacementSource
+    withdrawn_entry_id: str
+    replacement_entry_id: str
+    notes: str | None
+
+
+@dataclass(frozen=True)
+class PreDrawWithdrawalActionHistoryResponse:
+    run_id: str
+    event_id: str
+    actions: list[PreDrawWithdrawalActionHistoryItem]
 
 
 @dataclass(slots=True)
@@ -524,6 +580,198 @@ class SimulationApiService:
             actions=actions,
         )
 
+    def get_pre_draw_withdrawal_state(self, *, run_id: str, event_id: str) -> PreDrawWithdrawalStateResponse:
+        run_info, state = self._load_run_context(run_id=run_id)
+        event, _ = self._resolve_event_and_index(state=state, event_id=event_id)
+        eligible, reason = self._pre_draw_withdrawal_event_eligibility(run_id=run_id, state=state, event=event)
+
+        acceptance = self._build_effective_acceptance_for_event(run_id=run_id, run_info=run_info, event=event)
+        withdrawable_entries = sorted(
+            [
+                entry
+                for entry in acceptance.main_draw_entries
+                if entry.player_id is not None
+                and entry.status
+                in {
+                    AcceptanceStatus.DIRECT_ACCEPTANCE,
+                    AcceptanceStatus.WILD_CARD_PLACEHOLDER,
+                    AcceptanceStatus.WITHDRAWAL_PLACEHOLDER,
+                    AcceptanceStatus.LATE_REPLACEMENT_PLACEHOLDER,
+                }
+            ],
+            key=lambda entry: (10_000 if entry.ranking_priority is None else entry.ranking_priority, entry.entry_id),
+        )
+
+        orchestrator = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info)
+        countries_by_code = orchestrator.countries_by_code
+        withdrawable_players = [
+            PreDrawWithdrawablePlayerRecord(
+                player_id=entry.player_id or "",
+                player_name=orchestrator.players_by_id[entry.player_id].name,
+                country_code=orchestrator.players_by_id[entry.player_id].nationality,
+                country_name=(
+                    countries_by_code[orchestrator.players_by_id[entry.player_id].nationality].name
+                    if orchestrator.players_by_id[entry.player_id].nationality in countries_by_code
+                    else None
+                ),
+                entry_id=entry.entry_id,
+                acceptance_status=entry.status.value,
+            )
+            for entry in withdrawable_entries
+            if entry.player_id is not None and entry.player_id in orchestrator.players_by_id
+        ]
+
+        return PreDrawWithdrawalStateResponse(
+            run_id=run_id,
+            event_id=event_id,
+            eligible=eligible,
+            eligibility_reason=reason,
+            withdrawable_main_draw_players=withdrawable_players,
+        )
+
+    def apply_pre_draw_withdrawal_replacement(
+        self,
+        *,
+        run_id: str,
+        event_id: str,
+        withdrawn_player_id: str,
+        notes: str | None = None,
+    ) -> PreDrawWithdrawalResultResponse:
+        run_info, state = self._load_run_context(run_id=run_id)
+        event, _ = self._resolve_event_and_index(state=state, event_id=event_id)
+        eligible, reason = self._pre_draw_withdrawal_event_eligibility(run_id=run_id, state=state, event=event)
+        if not eligible:
+            raise ValueError(reason or "event is not eligible for pre-draw withdrawal replacement")
+
+        orchestrator = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info)
+        if withdrawn_player_id not in orchestrator.players_by_id:
+            raise ValueError(f"player_id {withdrawn_player_id} was not found")
+
+        acceptance = self._build_effective_acceptance_for_event(run_id=run_id, run_info=run_info, event=event)
+        withdrawn_entry = next(
+            (
+                entry
+                for entry in acceptance.main_draw_entries
+                if entry.player_id == withdrawn_player_id
+                and entry.status
+                in {
+                    AcceptanceStatus.DIRECT_ACCEPTANCE,
+                    AcceptanceStatus.WILD_CARD_PLACEHOLDER,
+                    AcceptanceStatus.WITHDRAWAL_PLACEHOLDER,
+                    AcceptanceStatus.LATE_REPLACEMENT_PLACEHOLDER,
+                }
+            ),
+            None,
+        )
+        if withdrawn_entry is None:
+            raise ValueError(f"player_id {withdrawn_player_id} is not currently entered in the main draw for event {event_id}")
+
+        entered_player_ids = {
+            entry.player_id
+            for entry in [*acceptance.main_draw_entries, *acceptance.qualification_entries]
+            if entry.player_id is not None and entry.player_id != withdrawn_player_id
+        }
+        replacement_player_id: str | None = None
+        replacement_source: ReplacementSource | None = None
+        for source_label, applicants in (
+            ("main_draw_waitlist", acceptance.main_draw_applicants),
+            ("qualification_waitlist", acceptance.qualification_applicants),
+        ):
+            for applicant in applicants:
+                if applicant.player_id in entered_player_ids:
+                    continue
+                replacement_player_id = applicant.player_id
+                replacement_source = source_label
+                break
+            if replacement_player_id is not None:
+                break
+        if replacement_player_id is None or replacement_source is None:
+            raise ValueError("no eligible replacement exists in main-draw or qualification waitlist")
+
+        replacement_entry = next(
+            (
+                entry
+                for entry in sorted(
+                    acceptance.main_draw_entries,
+                    key=lambda item: (10_000 if item.ranking_priority is None else item.ranking_priority, item.entry_id),
+                )
+                if entry.status == AcceptanceStatus.WITHDRAWAL_PLACEHOLDER and entry.player_id is None
+            ),
+            withdrawn_entry,
+        )
+
+        payload = {
+            "withdrawn_player_id": withdrawn_player_id,
+            "replacement_player_id": replacement_player_id,
+            "replacement_source": replacement_source,
+            "withdrawn_entry_id": withdrawn_entry.entry_id,
+            "replacement_entry_id": replacement_entry.entry_id,
+            "notes": notes,
+        }
+        self.repository.append_admin_action(
+            run_id=run_id,
+            event_id=event_id,
+            action_kind="pre_draw_withdrawal_replacement",
+            payload=payload,
+        )
+        post_state = self.get_pre_draw_withdrawal_state(run_id=run_id, event_id=event_id)
+        return PreDrawWithdrawalResultResponse(
+            run_id=run_id,
+            event_id=event_id,
+            withdrawn_player_id=withdrawn_player_id,
+            replacement_player_id=replacement_player_id,
+            replacement_source=replacement_source,
+            withdrawn_entry_id=withdrawn_entry.entry_id,
+            replacement_entry_id=replacement_entry.entry_id,
+            eligible=post_state.eligible,
+            eligibility_reason=post_state.eligibility_reason,
+        )
+
+    def get_pre_draw_withdrawal_action_history(self, *, run_id: str, event_id: str) -> PreDrawWithdrawalActionHistoryResponse:
+        _, state = self._load_run_context(run_id=run_id)
+        self._resolve_event_and_index(state=state, event_id=event_id)
+
+        items: list[PreDrawWithdrawalActionHistoryItem] = []
+        for action in self.repository.list_admin_actions(
+            run_id=run_id,
+            event_id=event_id,
+            action_kind="pre_draw_withdrawal_replacement",
+        ):
+            withdrawn_player_id = action.payload.get("withdrawn_player_id")
+            replacement_player_id = action.payload.get("replacement_player_id")
+            replacement_source = action.payload.get("replacement_source")
+            withdrawn_entry_id = action.payload.get("withdrawn_entry_id")
+            replacement_entry_id = action.payload.get("replacement_entry_id")
+            notes = action.payload.get("notes")
+            if (
+                not isinstance(withdrawn_player_id, str)
+                or not isinstance(replacement_player_id, str)
+                or replacement_source not in {"main_draw_waitlist", "qualification_waitlist"}
+                or not isinstance(withdrawn_entry_id, str)
+                or not isinstance(replacement_entry_id, str)
+                or (notes is not None and not isinstance(notes, str))
+            ):
+                continue
+            items.append(
+                PreDrawWithdrawalActionHistoryItem(
+                    action_sequence=action.action_sequence,
+                    action_kind=action.action_kind,
+                    event_id=action.event_id,
+                    withdrawn_player_id=withdrawn_player_id,
+                    replacement_player_id=replacement_player_id,
+                    replacement_source=replacement_source,
+                    withdrawn_entry_id=withdrawn_entry_id,
+                    replacement_entry_id=replacement_entry_id,
+                    notes=notes,
+                )
+            )
+
+        return PreDrawWithdrawalActionHistoryResponse(
+            run_id=run_id,
+            event_id=event_id,
+            actions=items,
+        )
+
     def simulate_next_tournament(self, *, run_id: str) -> SimulationStepResult:
         return self._simulate_step(run_id=run_id, mode="simulate_next_tournament")
 
@@ -768,7 +1016,7 @@ class SimulationApiService:
         return self.repository.get_race_snapshot(run_id=run_id, snapshot_sequence=snapshot_sequence)
 
     def get_run_activity_feed(self, *, run_id: str) -> RunActivityFeed:
-        self._load_run_context(run_id=run_id)
+        _, state = self._load_run_context(run_id=run_id)
         items: list[RunActivityItem] = []
 
         for event in self.repository.list_completed_events(run_id=run_id):
@@ -862,6 +1110,7 @@ class SimulationApiService:
             "rollover": 6,
             "bootstrap_child": 7,
             "admin_wildcard_assignment": 8,
+            "admin_pre_draw_withdrawal_replacement": 9,
         }
         for admin_action in self.repository.list_admin_actions(run_id=run_id, action_kind="assign_wildcards"):
             items.append(
@@ -869,6 +1118,18 @@ class SimulationApiService:
                     kind="admin_wildcard_assignment",
                     sequence=admin_action.action_sequence,
                     label=f"Commissioner wildcard assignment ({admin_action.event_id})",
+                    event_id=admin_action.event_id,
+                )
+            )
+        for admin_action in self.repository.list_admin_actions(run_id=run_id, action_kind="pre_draw_withdrawal_replacement"):
+            event, _ = self._resolve_event_and_index(state=state, event_id=admin_action.event_id)
+            items.append(
+                RunActivityItem(
+                    kind="admin_pre_draw_withdrawal_replacement",
+                    sequence=admin_action.action_sequence,
+                    label=f"Commissioner pre-draw withdrawal replacement ({admin_action.event_id})",
+                    season=event.season,
+                    week=event.week,
                     event_id=admin_action.event_id,
                 )
             )
@@ -946,6 +1207,11 @@ class SimulationApiService:
                 {}
                 if run_info is None
                 else self.repository.get_wildcard_assignments_for_run(run_id=run_info.run_id)
+            ),
+            pre_draw_withdrawal_replacements_by_event=(
+                {}
+                if run_info is None
+                else self.repository.get_pre_draw_withdrawal_replacements_for_run(run_id=run_info.run_id)
             ),
         )
 
@@ -1029,3 +1295,42 @@ class SimulationApiService:
         if state.active_tournament is not None and state.active_tournament.event.event_id == event.event_id:
             return False, "cannot assign wildcards after draw/first-match simulation has started"
         return True, None
+
+    def _pre_draw_withdrawal_event_eligibility(
+        self, *, run_id: str, state: SeasonState, event: CalendarEvent
+    ) -> tuple[bool, str | None]:
+        if event.event_id in state.completed_event_ids:
+            return False, "event is already completed"
+        if self.repository.get_completed_event(run_id=run_id, event_id=event.event_id) is not None:
+            return False, "event is already persisted"
+        _, event_index = self._resolve_event_and_index(state=state, event_id=event.event_id)
+        if event_index < state.next_event_index:
+            return False, "event index is behind next_event_index and is no longer eligible"
+        if state.active_tournament is not None and state.active_tournament.event.event_id == event.event_id:
+            return False, "event already started and is currently active"
+        return True, None
+
+    def _build_effective_acceptance_for_event(
+        self,
+        *,
+        run_id: str,
+        run_info: SimulationRunInfo,
+        event: CalendarEvent,
+    ) -> AcceptanceList:
+        templates_by_id = {template.template_id: template for template in load_tournament_templates_config().templates}
+        template = templates_by_id[event.template_id]
+        orchestrator = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info)
+        acceptance = orchestrator.entry_engine.build_acceptance_list(
+            event=event,
+            template=template,
+            players=list(orchestrator.players_by_id.values()),
+            countries_by_code=orchestrator.countries_by_code,
+        )
+        acceptance = orchestrator._apply_wildcard_assignments(
+            acceptance=acceptance,
+            assignments=self.repository.get_wildcard_assignments_for_event(run_id=run_id, event_id=event.event_id),
+        )
+        return orchestrator._apply_pre_draw_withdrawal_replacements(
+            acceptance=acceptance,
+            replacements=self.repository.get_pre_draw_withdrawal_replacements_for_event(run_id=run_id, event_id=event.event_id),
+        )

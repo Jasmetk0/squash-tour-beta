@@ -5,8 +5,12 @@ from beta_engine.api.schemas import (
     RunActivityResponse,
     RunActivityItemResponse,
     WildcardAssignRequest,
+    PreDrawWithdrawalRequest,
     WildcardStateApiResponse,
     WildcardActionHistoryApiResponse,
+    PreDrawWithdrawalStateApiResponse,
+    PreDrawWithdrawalResultApiResponse,
+    PreDrawWithdrawalActionHistoryApiResponse,
     EventListResponse,
     EventRecordResponse,
     FinalsQualificationResponse,
@@ -135,6 +139,56 @@ def list_event_wildcard_actions(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     return WildcardActionHistoryApiResponse.model_validate(history, from_attributes=True)
+
+
+@router.get("/events/{event_id}/pre-draw-withdrawal", response_model=PreDrawWithdrawalStateApiResponse)
+def get_event_pre_draw_withdrawal_state(
+    run_id: str,
+    event_id: str,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> PreDrawWithdrawalStateApiResponse:
+    try:
+        state = service.get_pre_draw_withdrawal_state(run_id=run_id, event_id=event_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return PreDrawWithdrawalStateApiResponse.model_validate(state, from_attributes=True)
+
+
+@router.post("/events/{event_id}/pre-draw-withdrawal", response_model=PreDrawWithdrawalResultApiResponse)
+def apply_event_pre_draw_withdrawal(
+    run_id: str,
+    event_id: str,
+    payload: PreDrawWithdrawalRequest,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> PreDrawWithdrawalResultApiResponse:
+    try:
+        result = service.apply_pre_draw_withdrawal_replacement(
+            run_id=run_id,
+            event_id=event_id,
+            withdrawn_player_id=payload.withdrawn_player_id,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return PreDrawWithdrawalResultApiResponse.model_validate(result, from_attributes=True)
+
+
+@router.get("/events/{event_id}/pre-draw-withdrawal-actions", response_model=PreDrawWithdrawalActionHistoryApiResponse)
+def list_event_pre_draw_withdrawal_actions(
+    run_id: str,
+    event_id: str,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> PreDrawWithdrawalActionHistoryApiResponse:
+    try:
+        history = service.get_pre_draw_withdrawal_action_history(run_id=run_id, event_id=event_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return PreDrawWithdrawalActionHistoryApiResponse.model_validate(history, from_attributes=True)
 
 
 @router.get("/snapshots/ranking", response_model=RankingSnapshotListResponse)

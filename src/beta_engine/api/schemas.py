@@ -199,6 +199,57 @@ class WildcardActionHistoryApiResponse(BaseModel):
     actions: list[WildcardActionHistoryItemResponse] = Field(default_factory=list)
 
 
+class PreDrawWithdrawalRequest(BaseModel):
+    withdrawn_player_id: str = Field(min_length=1)
+
+
+class PreDrawWithdrawablePlayerResponse(BaseModel):
+    player_id: str
+    player_name: str
+    country_code: str
+    country_name: str | None = None
+    entry_id: str
+    acceptance_status: str
+
+
+class PreDrawWithdrawalStateApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    eligible: bool
+    eligibility_reason: str | None = None
+    withdrawable_main_draw_players: list[PreDrawWithdrawablePlayerResponse] = Field(default_factory=list)
+
+
+class PreDrawWithdrawalResultApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    withdrawn_player_id: str
+    replacement_player_id: str
+    replacement_source: Literal["main_draw_waitlist", "qualification_waitlist"]
+    withdrawn_entry_id: str
+    replacement_entry_id: str
+    eligible: bool
+    eligibility_reason: str | None = None
+
+
+class PreDrawWithdrawalActionHistoryItemResponse(BaseModel):
+    action_sequence: int
+    action_kind: str
+    event_id: str
+    withdrawn_player_id: str
+    replacement_player_id: str
+    replacement_source: Literal["main_draw_waitlist", "qualification_waitlist"]
+    withdrawn_entry_id: str
+    replacement_entry_id: str
+    notes: str | None = None
+
+
+class PreDrawWithdrawalActionHistoryApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    actions: list[PreDrawWithdrawalActionHistoryItemResponse] = Field(default_factory=list)
+
+
 class RunActivityResponse(BaseModel):
     run_id: str
     items: list[RunActivityItemResponse] = Field(default_factory=list)

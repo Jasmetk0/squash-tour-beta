@@ -3,7 +3,10 @@ import { FormEvent, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import {
+  applyEventPreDrawWithdrawal,
   assignEventWildcards,
+  getEventPreDrawWithdrawalActions,
+  getEventPreDrawWithdrawalState,
   getEventWildcardActions,
   getEventWildcardCandidates,
   getEventWildcards,
@@ -27,6 +30,7 @@ export function PlannedEventDetailPage(): JSX.Element {
   const queryClient = useQueryClient()
   const [slotIndexInput, setSlotIndexInput] = useState('1')
   const [selectedPlayerId, setSelectedPlayerId] = useState('')
+  const [withdrawnPlayerId, setWithdrawnPlayerId] = useState('')
 
   const runQuery = useQuery({
     queryKey: ['run', runId],
@@ -58,6 +62,18 @@ export function PlannedEventDetailPage(): JSX.Element {
     enabled: Boolean(runId && eventId),
     retry: false
   })
+  const preDrawWithdrawalStateQuery = useQuery({
+    queryKey: ['pre-draw-withdrawal-state', runId, eventId],
+    queryFn: () => getEventPreDrawWithdrawalState(runId, eventId),
+    enabled: Boolean(runId && eventId),
+    retry: false
+  })
+  const preDrawWithdrawalActionsQuery = useQuery({
+    queryKey: ['pre-draw-withdrawal-actions', runId, eventId],
+    queryFn: () => getEventPreDrawWithdrawalActions(runId, eventId),
+    enabled: Boolean(runId && eventId),
+    retry: false
+  })
   const wildcardMutation = useMutation({
     mutationFn: (values: { slotIndex: number; playerId: string }) =>
       assignEventWildcards(runId, eventId, {
@@ -67,6 +83,14 @@ export function PlannedEventDetailPage(): JSX.Element {
       await queryClient.invalidateQueries({ queryKey: ['wildcards', runId, eventId] })
       await queryClient.invalidateQueries({ queryKey: ['wildcard-candidates', runId, eventId] })
       await queryClient.invalidateQueries({ queryKey: ['wildcard-actions', runId, eventId] })
+    }
+  })
+  const preDrawWithdrawalMutation = useMutation({
+    mutationFn: (values: { withdrawnPlayerId: string }) =>
+      applyEventPreDrawWithdrawal(runId, eventId, { withdrawn_player_id: values.withdrawnPlayerId }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['pre-draw-withdrawal-state', runId, eventId] })
+      await queryClient.invalidateQueries({ queryKey: ['pre-draw-withdrawal-actions', runId, eventId] })
     }
   })
 
@@ -97,12 +121,23 @@ export function PlannedEventDetailPage(): JSX.Element {
       setSelectedPlayerId(firstCandidateId)
     }
   }, [wildcardCandidatesQuery.data, selectedPlayerId])
+  useEffect(() => {
+    const firstWithdrawableId = preDrawWithdrawalStateQuery.data?.withdrawable_main_draw_players[0]?.player_id ?? ''
+    if (!withdrawnPlayerId && firstWithdrawableId) {
+      setWithdrawnPlayerId(firstWithdrawableId)
+    }
+  }, [preDrawWithdrawalStateQuery.data, withdrawnPlayerId])
 
   function handleWildcardSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
     const slotIndex = Number(slotIndexInput)
     if (!Number.isFinite(slotIndex) || slotIndex < 1 || !selectedPlayerId.trim()) return
     wildcardMutation.mutate({ slotIndex, playerId: selectedPlayerId.trim() })
+  }
+  function handlePreDrawWithdrawalSubmit(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault()
+    if (!withdrawnPlayerId.trim()) return
+    preDrawWithdrawalMutation.mutate({ withdrawnPlayerId: withdrawnPlayerId.trim() })
   }
 
   return (
@@ -213,6 +248,88 @@ export function PlannedEventDetailPage(): JSX.Element {
       ) : null}
 
       {eventsQuery.error ? <p className="error">Failed to load persisted events: {formatApiError(eventsQuery.error)}</p> : null}
+
+      {plannedEvent ? (
+        <SectionCard title="Commissioner pre-draw withdrawal replacement">
+          {preDrawWithdrawalStateQuery.isLoading ? <p className="status">Loading pre-draw withdrawal state...</p> : null}
+          {preDrawWithdrawalStateQuery.error ? (
+            <p className="error">Failed to load pre-draw withdrawal state: {formatApiError(preDrawWithdrawalStateQuery.error)}</p>
+          ) : null}
+          {preDrawWithdrawalStateQuery.data ? (
+            <>
+              <MetadataList
+                items={[
+                  { label: 'Action allowed', value: preDrawWithdrawalStateQuery.data.eligible ? 'Yes' : 'No' },
+                  { label: 'Eligibility note', value: preDrawWithdrawalStateQuery.data.eligibility_reason ?? 'Eligible' },
+                  {
+                    label: 'Withdrawable players',
+                    value: preDrawWithdrawalStateQuery.data.withdrawable_main_draw_players.length
+                  }
+                ]}
+              />
+              {preDrawWithdrawalStateQuery.data.eligible ? (
+                <form onSubmit={handlePreDrawWithdrawalSubmit}>
+                  <label>
+                    Main-draw player to withdraw
+                    <select value={withdrawnPlayerId} onChange={(e) => setWithdrawnPlayerId(e.target.value)}>
+                      <option value="">Select player</option>
+                      {preDrawWithdrawalStateQuery.data.withdrawable_main_draw_players.map((player) => (
+                        <option key={`${player.player_id}-${player.entry_id}`} value={player.player_id}>
+                          {player.player_name} ({player.player_id}) · {player.country_code}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="submit"
+                    disabled={
+                      preDrawWithdrawalMutation.isPending ||
+                      !withdrawnPlayerId ||
+                      preDrawWithdrawalStateQuery.data.withdrawable_main_draw_players.length === 0
+                    }
+                  >
+                    Withdraw + auto-replace
+                  </button>
+                </form>
+              ) : null}
+              {preDrawWithdrawalMutation.error ? (
+                <p className="error">Pre-draw withdrawal failed: {formatApiError(preDrawWithdrawalMutation.error)}</p>
+              ) : null}
+              {preDrawWithdrawalMutation.data ? (
+                <p className="status">
+                  Last action: withdrew {preDrawWithdrawalMutation.data.withdrawn_player_id} and auto-replaced with{' '}
+                  {preDrawWithdrawalMutation.data.replacement_player_id} ({preDrawWithdrawalMutation.data.replacement_source}).
+                </p>
+              ) : null}
+            </>
+          ) : null}
+        </SectionCard>
+      ) : null}
+
+      {plannedEvent ? (
+        <SectionCard title="Pre-draw withdrawal action history">
+          {preDrawWithdrawalActionsQuery.isLoading ? <p className="status">Loading pre-draw withdrawal history...</p> : null}
+          {preDrawWithdrawalActionsQuery.error ? (
+            <p className="error">
+              Failed to load pre-draw withdrawal history: {formatApiError(preDrawWithdrawalActionsQuery.error)}
+            </p>
+          ) : null}
+          {preDrawWithdrawalActionsQuery.data ? (
+            preDrawWithdrawalActionsQuery.data.actions.length > 0 ? (
+              <ol>
+                {preDrawWithdrawalActionsQuery.data.actions.map((action) => (
+                  <li key={action.action_sequence}>
+                    #{action.action_sequence} · {action.action_kind} · {action.withdrawn_player_id} → {action.replacement_player_id} (
+                    {action.replacement_source})
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <EmptyState message="No pre-draw withdrawal replacement actions have been recorded for this event yet." />
+            )
+          ) : null}
+        </SectionCard>
+      ) : null}
 
       {plannedEvent ? (
         <SectionCard title="Commissioner wildcards">

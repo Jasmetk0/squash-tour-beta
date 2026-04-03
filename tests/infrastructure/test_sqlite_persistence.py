@@ -105,6 +105,63 @@ def test_admin_wildcard_actions_are_append_only_and_replayable(tmp_path) -> None
     assert repository.get_wildcard_assignments_for_event(run_id="run-admin", event_id="EVENT-1") == {1: "P-B", 2: "P-C"}
 
 
+def test_admin_pre_draw_withdrawal_actions_are_append_only_and_replayable(tmp_path) -> None:
+    repository = _repository(tmp_path)
+    repository.bootstrap_schema()
+
+    repository.append_admin_action(
+        run_id="run-admin",
+        event_id="EVENT-2",
+        action_kind="pre_draw_withdrawal_replacement",
+        payload={
+            "withdrawn_player_id": "P-A",
+            "replacement_player_id": "P-B",
+            "replacement_source": "main_draw_waitlist",
+            "withdrawn_entry_id": "EVENT-2:P-A:MAIN",
+            "replacement_entry_id": "EVENT-2:WITHDRAWAL_PLACEHOLDER:1",
+            "notes": None,
+        },
+    )
+    repository.append_admin_action(
+        run_id="run-admin",
+        event_id="EVENT-2",
+        action_kind="pre_draw_withdrawal_replacement",
+        payload={
+            "withdrawn_player_id": "P-C",
+            "replacement_player_id": "P-D",
+            "replacement_source": "qualification_waitlist",
+            "withdrawn_entry_id": "EVENT-2:P-C:MAIN",
+            "replacement_entry_id": "EVENT-2:P-C:MAIN",
+            "notes": None,
+        },
+    )
+
+    actions = repository.list_admin_actions(
+        run_id="run-admin",
+        event_id="EVENT-2",
+        action_kind="pre_draw_withdrawal_replacement",
+    )
+    assert [action.action_sequence for action in actions] == [1, 2]
+    assert repository.get_pre_draw_withdrawal_replacements_for_event(run_id="run-admin", event_id="EVENT-2") == [
+        {
+            "withdrawn_player_id": "P-A",
+            "replacement_player_id": "P-B",
+            "replacement_source": "main_draw_waitlist",
+            "withdrawn_entry_id": "EVENT-2:P-A:MAIN",
+            "replacement_entry_id": "EVENT-2:WITHDRAWAL_PLACEHOLDER:1",
+            "notes": None,
+        },
+        {
+            "withdrawn_player_id": "P-C",
+            "replacement_player_id": "P-D",
+            "replacement_source": "qualification_waitlist",
+            "withdrawn_entry_id": "EVENT-2:P-C:MAIN",
+            "replacement_entry_id": "EVENT-2:P-C:MAIN",
+            "notes": None,
+        },
+    ]
+
+
 def test_simulation_step_state_can_be_saved_and_reloaded(tmp_path) -> None:
     orchestrator = _orchestrator(seed=8801)
     first_step = orchestrator.simulate_next_week(state=orchestrator.initialize_state())

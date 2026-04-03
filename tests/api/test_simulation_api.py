@@ -405,6 +405,79 @@ def test_commissioner_wildcard_assignment_endpoints_validate_and_persist(tmp_pat
         assert "completed events" in rejected_after_start["detail"]
 
 
+def test_pre_draw_withdrawal_replacement_endpoints_validate_fold_and_persist(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-pre-draw.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/runs",
+            {"run_id": "run-pre-draw", "seed": 6060, "season": 2027},
+        )
+        assert status == 201
+
+        status, state_payload = _request("GET", f"{server.base_url}/runs/run-pre-draw")
+        assert status == 200
+        event_id = state_payload["season_state"]["ordered_events"][0]["event_id"]
+
+        status, initial_state = _request(
+            "GET",
+            f"{server.base_url}/runs/run-pre-draw/events/{event_id}/pre-draw-withdrawal",
+        )
+        assert status == 200
+        assert initial_state["run_id"] == "run-pre-draw"
+        assert initial_state["event_id"] == event_id
+        assert initial_state["eligible"] is True
+        assert initial_state["withdrawable_main_draw_players"]
+        withdrawn_player_id = initial_state["withdrawable_main_draw_players"][0]["player_id"]
+
+        status, invalid_player = _request(
+            "POST",
+            f"{server.base_url}/runs/run-pre-draw/events/{event_id}/pre-draw-withdrawal",
+            {"withdrawn_player_id": "NOT-A-PLAYER"},
+        )
+        assert status == 400
+        assert "was not found" in invalid_player["detail"]
+
+        status, result = _request(
+            "POST",
+            f"{server.base_url}/runs/run-pre-draw/events/{event_id}/pre-draw-withdrawal",
+            {"withdrawn_player_id": withdrawn_player_id},
+        )
+        assert status == 200
+        assert result["event_id"] == event_id
+        assert result["withdrawn_player_id"] == withdrawn_player_id
+        assert result["replacement_source"] in {"main_draw_waitlist", "qualification_waitlist"}
+        assert result["withdrawn_entry_id"]
+        assert result["replacement_entry_id"]
+
+        status, history = _request(
+            "GET",
+            f"{server.base_url}/runs/run-pre-draw/events/{event_id}/pre-draw-withdrawal-actions",
+        )
+        assert status == 200
+        assert [item["action_sequence"] for item in history["actions"]] == [1]
+        assert history["actions"][0]["action_kind"] == "pre_draw_withdrawal_replacement"
+        assert history["actions"][0]["withdrawn_player_id"] == withdrawn_player_id
+        assert history["actions"][0]["replacement_player_id"] == result["replacement_player_id"]
+        assert history["actions"][0]["notes"] is None
+
+        status, sim_result = _request("POST", f"{server.base_url}/runs/run-pre-draw/simulate/next-tournament")
+        assert status == 200
+        main_entries = sim_result["step"]["tournament_result"]["acceptance_list"]["main_draw_entries"]
+        withdrawn_entry = next(entry for entry in main_entries if entry["entry_id"] == result["withdrawn_entry_id"])
+        replacement_entry = next(entry for entry in main_entries if entry["entry_id"] == result["replacement_entry_id"])
+        assert withdrawn_entry["player_id"] is None
+        assert replacement_entry["player_id"] == result["replacement_player_id"]
+
+        status, rejected_after_completion = _request(
+            "POST",
+            f"{server.base_url}/runs/run-pre-draw/events/{event_id}/pre-draw-withdrawal",
+            {"withdrawn_player_id": withdrawn_player_id},
+        )
+        assert status == 400
+        assert "already completed" in rejected_after_completion["detail"]
+
+
 def test_next_match_and_next_round_reject_after_finals_phase_begins(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'api-next-match-finals.db'}"
     with ApiServer(database_url=database_url) as server:
@@ -657,6 +730,24 @@ def test_run_activity_endpoint_returns_compact_deterministic_feed(tmp_path) -> N
         )
         assert status == 200
         assert wildcard_state_after_assign["slots"][0]["assigned_player_id"] == wildcard_candidates["candidates"][0]["player_id"]
+        pre_draw_event_id = None
+        for event in state_payload["season_state"]["ordered_events"]:
+            status, pre_draw_state = _request(
+                "GET",
+                f"{server.base_url}/runs/run-activity/events/{event['event_id']}/pre-draw-withdrawal",
+            )
+            assert status == 200
+            if not pre_draw_state["withdrawable_main_draw_players"]:
+                continue
+            status, pre_draw_result = _request(
+                "POST",
+                f"{server.base_url}/runs/run-activity/events/{event['event_id']}/pre-draw-withdrawal",
+                {"withdrawn_player_id": pre_draw_state["withdrawable_main_draw_players"][0]["player_id"]},
+            )
+            if status == 200:
+                pre_draw_event_id = event["event_id"]
+                break
+        assert pre_draw_event_id is not None
 
         status, _ = _request("POST", f"{server.base_url}/runs/run-activity/simulate/full-season")
         assert status == 200
@@ -688,12 +779,18 @@ def test_run_activity_endpoint_returns_compact_deterministic_feed(tmp_path) -> N
         assert "rollover" in kinds
         assert "bootstrap_child" in kinds
         assert "admin_wildcard_assignment" in kinds
+        assert "admin_pre_draw_withdrawal_replacement" in kinds
 
         wildcard_items = [item for item in payload["items"] if item["kind"] == "admin_wildcard_assignment"]
         assert len(wildcard_items) == 1
         assert wildcard_items[0]["sequence"] == 1
         assert wildcard_items[0]["event_id"] == selected_event_id
         assert wildcard_items[0]["label"] == f"Commissioner wildcard assignment ({selected_event_id})"
+        pre_draw_items = [item for item in payload["items"] if item["kind"] == "admin_pre_draw_withdrawal_replacement"]
+        assert len(pre_draw_items) == 1
+        assert pre_draw_items[0]["sequence"] == 1
+        assert pre_draw_items[0]["event_id"] == pre_draw_event_id
+        assert pre_draw_items[0]["label"] == f"Commissioner pre-draw withdrawal replacement ({pre_draw_event_id})"
 
         first = payload["items"][0]
         assert set(first.keys()) == {
@@ -717,6 +814,7 @@ def test_run_activity_endpoint_returns_compact_deterministic_feed(tmp_path) -> N
             "rollover": 6,
             "bootstrap_child": 7,
             "admin_wildcard_assignment": 8,
+            "admin_pre_draw_withdrawal_replacement": 9,
         }
         tuples = [
             (

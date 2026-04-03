@@ -10,6 +10,7 @@ const api = vi.hoisted(() => ({
   listEvents: vi.fn(),
   getEventWildcards: vi.fn(),
   getEventWildcardCandidates: vi.fn(),
+  getEventWildcardActions: vi.fn(),
   assignEventWildcards: vi.fn()
 }))
 
@@ -88,6 +89,24 @@ describe('PlannedEventDetailPage', () => {
         }
       ]
     })
+    api.getEventWildcardActions.mockResolvedValue({
+      run_id: 'run-a',
+      event_id: 'E1',
+      actions: [
+        {
+          action_sequence: 1,
+          action_kind: 'assign_wildcards',
+          event_id: 'E1',
+          assignment_payload_summary: [{ slot_index: 1, player_id: 'P1' }]
+        },
+        {
+          action_sequence: 2,
+          action_kind: 'assign_wildcards',
+          event_id: 'E1',
+          assignment_payload_summary: [{ slot_index: 1, player_id: 'P2' }]
+        }
+      ]
+    })
   })
 
   it('renders planned-event detail for valid event id with status and position', async () => {
@@ -152,5 +171,16 @@ describe('PlannedEventDetailPage', () => {
         assignments: [{ slot_index: 1, player_id: 'P2' }]
       })
     )
+  })
+
+  it('renders wildcard action history in append-only sequence order', async () => {
+    renderAt('/runs/run-a/calendar/E1')
+
+    expect(await screen.findByRole('heading', { name: 'Wildcard action history' })).toBeInTheDocument()
+    const historyItems = await screen.findAllByRole('listitem')
+    const actionRows = historyItems.filter((item) => item.textContent?.includes('assign_wildcards'))
+    expect(actionRows[0]).toHaveTextContent('#1 · assign_wildcards · slot 1 → P1')
+    expect(actionRows[1]).toHaveTextContent('#2 · assign_wildcards · slot 1 → P2')
+    expect(screen.getByRole('link', { name: 'Open run activity' })).toHaveAttribute('href', '/runs/run-a/activity')
   })
 })

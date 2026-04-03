@@ -2,7 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FormEvent, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { assignEventWildcards, getEventWildcardCandidates, getEventWildcards, getRun, listEvents } from '../api/client'
+import {
+  assignEventWildcards,
+  getEventWildcardActions,
+  getEventWildcardCandidates,
+  getEventWildcards,
+  getRun,
+  listEvents
+} from '../api/client'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -45,6 +52,12 @@ export function PlannedEventDetailPage(): JSX.Element {
     enabled: Boolean(runId && eventId),
     retry: false
   })
+  const wildcardActionsQuery = useQuery({
+    queryKey: ['wildcard-actions', runId, eventId],
+    queryFn: () => getEventWildcardActions(runId, eventId),
+    enabled: Boolean(runId && eventId),
+    retry: false
+  })
   const wildcardMutation = useMutation({
     mutationFn: (values: { slotIndex: number; playerId: string }) =>
       assignEventWildcards(runId, eventId, {
@@ -53,6 +66,7 @@ export function PlannedEventDetailPage(): JSX.Element {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['wildcards', runId, eventId] })
       await queryClient.invalidateQueries({ queryKey: ['wildcard-candidates', runId, eventId] })
+      await queryClient.invalidateQueries({ queryKey: ['wildcard-actions', runId, eventId] })
     }
   })
 
@@ -281,6 +295,36 @@ export function PlannedEventDetailPage(): JSX.Element {
                 <p className="error">Wildcard assignment failed: {formatApiError(wildcardMutation.error)}</p>
               ) : null}
             </>
+          ) : null}
+        </SectionCard>
+      ) : null}
+      {plannedEvent ? (
+        <SectionCard title="Wildcard action history">
+          <p className="status">
+            Append-only event audit trail sourced from admin actions for this event.{' '}
+            <Link to={`/runs/${runId}/activity`}>Open run activity</Link>
+          </p>
+          {wildcardActionsQuery.isLoading ? <p className="status">Loading wildcard action history...</p> : null}
+          {wildcardActionsQuery.error ? (
+            <p className="error">Failed to load wildcard action history: {formatApiError(wildcardActionsQuery.error)}</p>
+          ) : null}
+          {wildcardActionsQuery.data ? (
+            wildcardActionsQuery.data.actions.length > 0 ? (
+              <ol>
+                {wildcardActionsQuery.data.actions.map((action) => (
+                  <li key={action.action_sequence}>
+                    #{action.action_sequence} · {action.action_kind} ·{' '}
+                    {action.assignment_payload_summary.length > 0
+                      ? action.assignment_payload_summary
+                          .map((assignment) => `slot ${assignment.slot_index} → ${assignment.player_id}`)
+                          .join(', ')
+                      : 'No valid assignment payload entries'}
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <EmptyState message="No wildcard commissioner actions have been recorded for this event yet." />
+            )
           ) : null}
         </SectionCard>
       ) : null}

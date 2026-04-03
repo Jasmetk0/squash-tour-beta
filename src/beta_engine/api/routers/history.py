@@ -6,6 +6,7 @@ from beta_engine.api.schemas import (
     RunActivityItemResponse,
     WildcardAssignRequest,
     WildcardStateApiResponse,
+    WildcardActionHistoryApiResponse,
     EventListResponse,
     EventRecordResponse,
     FinalsQualificationResponse,
@@ -119,6 +120,21 @@ def list_event_wildcard_candidates(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     return WildcardCandidatesApiResponse.model_validate(candidates, from_attributes=True)
+
+
+@router.get("/events/{event_id}/wildcard-actions", response_model=WildcardActionHistoryApiResponse)
+def list_event_wildcard_actions(
+    run_id: str,
+    event_id: str,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> WildcardActionHistoryApiResponse:
+    try:
+        history = service.get_wildcard_action_history(run_id=run_id, event_id=event_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return WildcardActionHistoryApiResponse.model_validate(history, from_attributes=True)
 
 
 @router.get("/snapshots/ranking", response_model=RankingSnapshotListResponse)

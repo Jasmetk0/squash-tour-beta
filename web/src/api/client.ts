@@ -27,6 +27,7 @@ import type {
   SeasonStateResponse,
   SimulateResponse,
   WildcardCandidatesResponse,
+  WildcardActionHistoryResponse,
   WildcardStateResponse
 } from './types'
 
@@ -117,6 +118,10 @@ export function getEventWildcards(runId: string, eventId: string): Promise<Wildc
 
 export function getEventWildcardCandidates(runId: string, eventId: string): Promise<WildcardCandidatesResponse> {
   return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/wildcard-candidates`)
+}
+
+export function getEventWildcardActions(runId: string, eventId: string): Promise<WildcardActionHistoryResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/wildcard-actions`)
 }
 
 export function assignEventWildcards(

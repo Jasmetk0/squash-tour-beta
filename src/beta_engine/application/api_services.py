@@ -213,6 +213,27 @@ class WildcardCandidatesResponse:
     candidates: list[WildcardCandidateRecord]
 
 
+@dataclass(frozen=True)
+class WildcardActionAssignmentSummary:
+    slot_index: int
+    player_id: str
+
+
+@dataclass(frozen=True)
+class WildcardActionHistoryItem:
+    action_sequence: int
+    action_kind: str
+    event_id: str
+    assignment_payload_summary: list[WildcardActionAssignmentSummary]
+
+
+@dataclass(frozen=True)
+class WildcardActionHistoryResponse:
+    run_id: str
+    event_id: str
+    actions: list[WildcardActionHistoryItem]
+
+
 @dataclass(slots=True)
 class SimulationApiService:
     """High-level API-facing service that keeps orchestration out of routers."""
@@ -460,6 +481,47 @@ class SimulationApiService:
             run_id=run_id,
             event_id=event_id,
             candidates=candidates,
+        )
+
+    def get_wildcard_action_history(self, *, run_id: str, event_id: str) -> WildcardActionHistoryResponse:
+        _, state = self._load_run_context(run_id=run_id)
+        self._resolve_event_and_index(state=state, event_id=event_id)
+
+        actions: list[WildcardActionHistoryItem] = []
+        for action in self.repository.list_admin_actions(
+            run_id=run_id,
+            event_id=event_id,
+            action_kind="assign_wildcards",
+        ):
+            raw_assignments = action.payload.get("assignments", [])
+            assignments: list[WildcardActionAssignmentSummary] = []
+            if isinstance(raw_assignments, list):
+                for item in raw_assignments:
+                    if not isinstance(item, dict):
+                        continue
+                    raw_slot_index = item.get("slot_index")
+                    raw_player_id = item.get("player_id")
+                    if not isinstance(raw_slot_index, int) or not isinstance(raw_player_id, str):
+                        continue
+                    assignments.append(
+                        WildcardActionAssignmentSummary(
+                            slot_index=raw_slot_index,
+                            player_id=raw_player_id,
+                        )
+                    )
+            actions.append(
+                WildcardActionHistoryItem(
+                    action_sequence=action.action_sequence,
+                    action_kind=action.action_kind,
+                    event_id=action.event_id,
+                    assignment_payload_summary=sorted(assignments, key=lambda item: item.slot_index),
+                )
+            )
+
+        return WildcardActionHistoryResponse(
+            run_id=run_id,
+            event_id=event_id,
+            actions=actions,
         )
 
     def simulate_next_tournament(self, *, run_id: str) -> SimulationStepResult:

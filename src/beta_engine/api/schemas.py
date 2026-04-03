@@ -181,6 +181,24 @@ class WildcardCandidatesApiResponse(BaseModel):
     candidates: list[WildcardCandidateResponse] = Field(default_factory=list)
 
 
+class WildcardActionAssignmentSummaryResponse(BaseModel):
+    slot_index: int
+    player_id: str
+
+
+class WildcardActionHistoryItemResponse(BaseModel):
+    action_sequence: int
+    action_kind: str
+    event_id: str
+    assignment_payload_summary: list[WildcardActionAssignmentSummaryResponse] = Field(default_factory=list)
+
+
+class WildcardActionHistoryApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    actions: list[WildcardActionHistoryItemResponse] = Field(default_factory=list)
+
+
 class RunActivityResponse(BaseModel):
     run_id: str
     items: list[RunActivityItemResponse] = Field(default_factory=list)

@@ -163,6 +163,22 @@ export type WildcardCandidatesResponse = {
   candidates: WildcardCandidate[]
 }
 
+export type WildcardActionHistoryItem = {
+  action_sequence: number
+  action_kind: string
+  event_id: string
+  assignment_payload_summary: Array<{
+    slot_index: number
+    player_id: string
+  }>
+}
+
+export type WildcardActionHistoryResponse = {
+  run_id: string
+  event_id: string
+  actions: WildcardActionHistoryItem[]
+}
+
 export type AssignWildcardsPayload = {
   assignments: Array<{
     slot_index: number

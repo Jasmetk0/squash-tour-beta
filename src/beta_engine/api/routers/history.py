@@ -4,6 +4,8 @@ from beta_engine.api.deps import get_simulation_api_service
 from beta_engine.api.schemas import (
     RunActivityResponse,
     RunActivityItemResponse,
+    WildcardAssignRequest,
+    WildcardStateApiResponse,
     EventListResponse,
     EventRecordResponse,
     FinalsQualificationResponse,
@@ -21,7 +23,7 @@ from beta_engine.api.schemas import (
     RunLineageApiResponse,
     RunSourceApiResponse,
 )
-from beta_engine.application.api_services import SimulationApiService
+from beta_engine.application.api_services import SimulationApiService, WildcardAssignment
 
 router = APIRouter(prefix="/runs/{run_id}", tags=["history"])
 
@@ -63,6 +65,44 @@ def get_completed_event(run_id: str, event_id: str, service: SimulationApiServic
     if event is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"event_id {event_id} was not found")
     return EventRecordResponse.model_validate(event.__dict__)
+
+
+@router.get("/events/{event_id}/wildcards", response_model=WildcardStateApiResponse)
+def get_event_wildcard_state(
+    run_id: str,
+    event_id: str,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> WildcardStateApiResponse:
+    try:
+        state = service.get_wildcard_state(run_id=run_id, event_id=event_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return WildcardStateApiResponse.model_validate(state, from_attributes=True)
+
+
+@router.post("/events/{event_id}/wildcards", response_model=WildcardStateApiResponse)
+def assign_event_wildcards(
+    run_id: str,
+    event_id: str,
+    payload: WildcardAssignRequest,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> WildcardStateApiResponse:
+    try:
+        state = service.assign_wildcards(
+            run_id=run_id,
+            event_id=event_id,
+            assignments=[
+                WildcardAssignment(slot_index=assignment.slot_index, player_id=assignment.player_id)
+                for assignment in payload.assignments
+            ],
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return WildcardStateApiResponse.model_validate(state, from_attributes=True)
 
 
 @router.get("/snapshots/ranking", response_model=RankingSnapshotListResponse)

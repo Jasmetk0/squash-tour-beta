@@ -67,6 +67,7 @@ def test_database_bootstrap_creates_required_tables(tmp_path) -> None:
     repository.bootstrap_schema()
 
     assert repository.list_table_names() == [
+        "admin_actions",
         "completed_event_metadata",
         "completed_events",
         "completed_tournament_inputs",
@@ -80,6 +81,28 @@ def test_database_bootstrap_creates_required_tables(tmp_path) -> None:
         "season_state",
         "simulation_runs",
     ]
+
+
+def test_admin_wildcard_actions_are_append_only_and_replayable(tmp_path) -> None:
+    repository = _repository(tmp_path)
+    repository.bootstrap_schema()
+
+    repository.append_admin_action(
+        run_id="run-admin",
+        event_id="EVENT-1",
+        action_kind="assign_wildcards",
+        payload={"assignments": [{"slot_index": 1, "player_id": "P-A"}]},
+    )
+    repository.append_admin_action(
+        run_id="run-admin",
+        event_id="EVENT-1",
+        action_kind="assign_wildcards",
+        payload={"assignments": [{"slot_index": 1, "player_id": "P-B"}, {"slot_index": 2, "player_id": "P-C"}]},
+    )
+
+    actions = repository.list_admin_actions(run_id="run-admin", event_id="EVENT-1", action_kind="assign_wildcards")
+    assert [action.action_sequence for action in actions] == [1, 2]
+    assert repository.get_wildcard_assignments_for_event(run_id="run-admin", event_id="EVENT-1") == {1: "P-B", 2: "P-C"}
 
 
 def test_simulation_step_state_can_be_saved_and_reloaded(tmp_path) -> None:

@@ -1,6 +1,7 @@
 import type {
   BootstrapNextSeasonPayload,
   BootstrapNextSeasonResponse,
+  AssignWildcardsPayload,
   CreateRunPayload,
   EventListResponse,
   RunActivityResponse,
@@ -24,7 +25,8 @@ import type {
   SeasonRolloverSummaryApiResponse,
   RunSummary,
   SeasonStateResponse,
-  SimulateResponse
+  SimulateResponse,
+  WildcardStateResponse
 } from './types'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
@@ -106,6 +108,21 @@ export function getRunActivity(runId: string): Promise<RunActivityResponse> {
 
 export function getEvent(runId: string, eventId: string): Promise<EventRecord> {
   return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}`)
+}
+
+export function getEventWildcards(runId: string, eventId: string): Promise<WildcardStateResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/wildcards`)
+}
+
+export function assignEventWildcards(
+  runId: string,
+  eventId: string,
+  payload: AssignWildcardsPayload
+): Promise<WildcardStateResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/wildcards`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
 }
 
 export function listRankingSnapshots(runId: string): Promise<RankingSnapshotListResponse> {

@@ -119,6 +119,7 @@ export type RunActivityItem = {
     | 'finals_result'
     | 'rollover'
     | 'bootstrap_child'
+    | 'admin_wildcard_assignment'
   sequence: number | null
   label: string
   season: number | null
@@ -130,6 +131,28 @@ export type RunActivityItem = {
 }
 
 export type RunActivityResponse = { run_id: string; items: RunActivityItem[] }
+
+export type WildcardSlot = {
+  slot_index: number
+  entry_id: string
+  assigned_player_id: string | null
+}
+
+export type WildcardStateResponse = {
+  run_id: string
+  event_id: string
+  eligible: boolean
+  eligibility_reason: string | null
+  total_slots: number
+  slots: WildcardSlot[]
+}
+
+export type AssignWildcardsPayload = {
+  assignments: Array<{
+    slot_index: number
+    player_id: string
+  }>
+}
 
 type SnapshotRecordBase = {
   snapshot_sequence: number

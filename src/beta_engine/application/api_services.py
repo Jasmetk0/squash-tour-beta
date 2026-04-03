@@ -27,7 +27,9 @@ from beta_engine.application.services import SeasonSimulationOrchestrator
 from beta_engine.core import DeterministicRng, SeedScope
 from beta_engine.domain.careers import CareerProgressionEngine
 from beta_engine.domain.countries import Country, CountryTalentModel
+from beta_engine.domain.entries import AcceptanceStatus
 from beta_engine.domain.players import Player, PlayerGenerator
+from beta_engine.domain.tournaments import CalendarEvent
 from beta_engine.infrastructure.db import SimulationPersistenceRepository, SimulationRunInfo
 from beta_engine.infrastructure.entry_config import load_entry_tuning_config
 from beta_engine.infrastructure.points_config import load_points_config
@@ -134,6 +136,7 @@ ActivityKind = Literal[
     "finals_result",
     "rollover",
     "bootstrap_child",
+    "admin_wildcard_assignment",
 ]
 
 _CANONICAL_SOURCE_TYPE_MAP: dict[str, str] = {
@@ -167,6 +170,29 @@ class RunActivityItem:
 class RunActivityFeed:
     run_id: str
     items: list[RunActivityItem]
+
+
+@dataclass(frozen=True)
+class WildcardAssignment:
+    slot_index: int
+    player_id: str
+
+
+@dataclass(frozen=True)
+class WildcardSlotState:
+    slot_index: int
+    entry_id: str
+    assigned_player_id: str | None
+
+
+@dataclass(frozen=True)
+class WildcardStateResponse:
+    run_id: str
+    event_id: str
+    eligible: bool
+    eligibility_reason: str | None
+    total_slots: int
+    slots: list[WildcardSlotState]
 
 
 @dataclass(slots=True)
@@ -223,6 +249,121 @@ class SimulationApiService:
         if state is None:
             raise KeyError(f"run_id {run_id} was not found")
         return state
+
+    def get_wildcard_state(self, *, run_id: str, event_id: str) -> WildcardStateResponse:
+        run_info, state = self._load_run_context(run_id=run_id)
+        event, _ = self._resolve_event_and_index(state=state, event_id=event_id)
+        templates_by_id = {template.template_id: template for template in load_tournament_templates_config().templates}
+        template = templates_by_id[event.template_id]
+        total_slots = template.wild_cards
+        assignments = self.repository.get_wildcard_assignments_for_event(run_id=run_id, event_id=event_id)
+
+        orchestrator = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info)
+        acceptance = orchestrator.entry_engine.build_acceptance_list(
+            event=event,
+            template=template,
+            players=list(orchestrator.players_by_id.values()),
+            countries_by_code=orchestrator.countries_by_code,
+        )
+        wild_card_entries = sorted(
+            [entry for entry in acceptance.main_draw_entries if entry.status == AcceptanceStatus.WILD_CARD_PLACEHOLDER],
+            key=lambda entry: (10_000 if entry.ranking_priority is None else entry.ranking_priority, entry.entry_id),
+        )
+        slots: list[WildcardSlotState] = []
+        for index, entry in enumerate(wild_card_entries, start=1):
+            slots.append(
+                WildcardSlotState(
+                    slot_index=index,
+                    entry_id=entry.entry_id,
+                    assigned_player_id=assignments.get(index),
+                )
+            )
+
+        eligible, reason = self._wildcard_event_eligibility(run_id=run_id, state=state, event=event)
+        return WildcardStateResponse(
+            run_id=run_id,
+            event_id=event_id,
+            eligible=eligible,
+            eligibility_reason=reason,
+            total_slots=total_slots,
+            slots=slots,
+        )
+
+    def assign_wildcards(
+        self,
+        *,
+        run_id: str,
+        event_id: str,
+        assignments: list[WildcardAssignment],
+    ) -> WildcardStateResponse:
+        if not assignments:
+            raise ValueError("assignments must be non-empty")
+        run_info, state = self._load_run_context(run_id=run_id)
+        event, _ = self._resolve_event_and_index(state=state, event_id=event_id)
+        eligible, reason = self._wildcard_event_eligibility(run_id=run_id, state=state, event=event)
+        if not eligible:
+            raise ValueError(reason or "event is not eligible for wildcard assignment")
+
+        templates_by_id = {template.template_id: template for template in load_tournament_templates_config().templates}
+        template = templates_by_id[event.template_id]
+        if template.wild_cards <= 0:
+            raise ValueError("event does not define wildcard slots")
+
+        seen_slots: set[int] = set()
+        seen_players: set[str] = set()
+        normalized_assignments: list[WildcardAssignment] = []
+        for assignment in assignments:
+            if assignment.slot_index < 1 or assignment.slot_index > template.wild_cards:
+                raise ValueError(f"slot_index {assignment.slot_index} is outside available wildcard slots")
+            if assignment.slot_index in seen_slots:
+                raise ValueError(f"slot_index {assignment.slot_index} was provided more than once")
+            if assignment.player_id in seen_players:
+                raise ValueError(f"player_id {assignment.player_id} was provided more than once")
+            seen_slots.add(assignment.slot_index)
+            seen_players.add(assignment.player_id)
+            normalized_assignments.append(WildcardAssignment(slot_index=assignment.slot_index, player_id=assignment.player_id))
+
+        orchestrator = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info)
+        players_by_id = orchestrator.players_by_id
+        for assignment in normalized_assignments:
+            if assignment.player_id not in players_by_id:
+                raise ValueError(f"player_id {assignment.player_id} was not found")
+
+        acceptance = orchestrator.entry_engine.build_acceptance_list(
+            event=event,
+            template=template,
+            players=list(players_by_id.values()),
+            countries_by_code=orchestrator.countries_by_code,
+        )
+        accepted_player_ids = {
+            entry.player_id
+            for entry in [*acceptance.main_draw_entries, *acceptance.qualification_entries]
+            if entry.player_id is not None
+        }
+        for assignment in normalized_assignments:
+            if assignment.player_id in accepted_player_ids:
+                raise ValueError(f"player_id {assignment.player_id} is already entered for event {event_id}")
+
+        existing_assignments = self.repository.get_wildcard_assignments_for_event(run_id=run_id, event_id=event_id)
+        inverse_existing = {player_id: slot_index for slot_index, player_id in existing_assignments.items()}
+        for assignment in normalized_assignments:
+            existing_slot = inverse_existing.get(assignment.player_id)
+            if existing_slot is not None and existing_slot != assignment.slot_index:
+                raise ValueError(f"player_id {assignment.player_id} is already assigned to wildcard slot {existing_slot}")
+
+        payload = {
+            "assignments": [
+                {"slot_index": item.slot_index, "player_id": item.player_id}
+                for item in sorted(normalized_assignments, key=lambda item: item.slot_index)
+            ]
+        }
+        self.repository.append_admin_action(
+            run_id=run_id,
+            event_id=event_id,
+            action_kind="assign_wildcards",
+            payload=payload,
+        )
+        return self.get_wildcard_state(run_id=run_id, event_id=event_id)
 
     def simulate_next_tournament(self, *, run_id: str) -> SimulationStepResult:
         return self._simulate_step(run_id=run_id, mode="simulate_next_tournament")
@@ -561,7 +702,17 @@ class SimulationApiService:
             "finals_result": 5,
             "rollover": 6,
             "bootstrap_child": 7,
+            "admin_wildcard_assignment": 8,
         }
+        for admin_action in self.repository.list_admin_actions(run_id=run_id, action_kind="assign_wildcards"):
+            items.append(
+                RunActivityItem(
+                    kind="admin_wildcard_assignment",
+                    sequence=admin_action.action_sequence,
+                    label=f"Commissioner wildcard assignment ({admin_action.event_id})",
+                    event_id=admin_action.event_id,
+                )
+            )
         ordered = sorted(
             items,
             key=lambda item: (
@@ -632,6 +783,11 @@ class SimulationApiService:
             points_by_ref=load_points_config(),
             entry_tuning=load_entry_tuning_config(),
             seed=seed,
+            wildcard_assignments_by_event=(
+                {}
+                if run_info is None
+                else self.repository.get_wildcard_assignments_for_run(run_id=run_info.run_id)
+            ),
         )
 
     def _load_run_context(self, *, run_id: str) -> tuple[SimulationRunInfo, SeasonState]:
@@ -695,3 +851,22 @@ class SimulationApiService:
             repository=self.repository,
             rollover_service=SeasonRolloverService(progression_engine=progression_engine),
         )
+
+    @staticmethod
+    def _resolve_event_and_index(*, state: SeasonState, event_id: str) -> tuple[CalendarEvent, int]:
+        for index, event in enumerate(state.ordered_events):
+            if event.event_id == event_id:
+                return event, index
+        raise ValueError(f"event_id {event_id} is not present in this run")
+
+    def _wildcard_event_eligibility(self, *, run_id: str, state: SeasonState, event: CalendarEvent) -> tuple[bool, str | None]:
+        if event.event_id in state.completed_event_ids:
+            return False, "cannot assign wildcards for completed events"
+        if self.repository.get_completed_event(run_id=run_id, event_id=event.event_id) is not None:
+            return False, "cannot assign wildcards for completed events"
+        _, event_index = self._resolve_event_and_index(state=state, event_id=event.event_id)
+        if event_index < state.next_event_index:
+            return False, "cannot assign wildcards for completed events"
+        if state.active_tournament is not None and state.active_tournament.event.event_id == event.event_id:
+            return False, "cannot assign wildcards after draw/first-match simulation has started"
+        return True, None

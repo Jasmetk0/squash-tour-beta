@@ -1,7 +1,8 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { FormEvent, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { getRun, listEvents } from '../api/client'
+import { assignEventWildcards, getEventWildcards, getRun, listEvents } from '../api/client'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -16,6 +17,9 @@ import { getPlannedEventStatus } from './plannedEventUtils'
 
 export function PlannedEventDetailPage(): JSX.Element {
   const { runId = '', eventId = '' } = useParams()
+  const queryClient = useQueryClient()
+  const [slotIndexInput, setSlotIndexInput] = useState('1')
+  const [playerIdInput, setPlayerIdInput] = useState('')
 
   const runQuery = useQuery({
     queryKey: ['run', runId],
@@ -28,6 +32,22 @@ export function PlannedEventDetailPage(): JSX.Element {
     queryFn: () => listEvents(runId),
     enabled: Boolean(runId),
     retry: false
+  })
+  const wildcardsQuery = useQuery({
+    queryKey: ['wildcards', runId, eventId],
+    queryFn: () => getEventWildcards(runId, eventId),
+    enabled: Boolean(runId && eventId),
+    retry: false
+  })
+  const wildcardMutation = useMutation({
+    mutationFn: (values: { slotIndex: number; playerId: string }) =>
+      assignEventWildcards(runId, eventId, {
+        assignments: [{ slot_index: values.slotIndex, player_id: values.playerId }]
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['wildcards', runId, eventId] })
+      setPlayerIdInput('')
+    }
   })
 
   const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
@@ -50,6 +70,13 @@ export function PlannedEventDetailPage(): JSX.Element {
     : null
 
   const hasPersistedHistory = plannedEvent ? persistedEventIds.has(plannedEvent.event_id) : false
+
+  function handleWildcardSubmit(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault()
+    const slotIndex = Number(slotIndexInput)
+    if (!Number.isFinite(slotIndex) || slotIndex < 1 || !playerIdInput.trim()) return
+    wildcardMutation.mutate({ slotIndex, playerId: playerIdInput.trim() })
+  }
 
   return (
     <section className="panel">
@@ -159,6 +186,53 @@ export function PlannedEventDetailPage(): JSX.Element {
       ) : null}
 
       {eventsQuery.error ? <p className="error">Failed to load persisted events: {formatApiError(eventsQuery.error)}</p> : null}
+
+      {plannedEvent ? (
+        <SectionCard title="Commissioner wildcards">
+          {wildcardsQuery.isLoading ? <p className="status">Loading wildcard slots...</p> : null}
+          {wildcardsQuery.error ? <p className="error">Failed to load wildcard state: {formatApiError(wildcardsQuery.error)}</p> : null}
+          {wildcardsQuery.data ? (
+            <>
+              <MetadataList
+                items={[
+                  { label: 'Wildcard slots', value: wildcardsQuery.data.total_slots },
+                  { label: 'Assignment allowed', value: wildcardsQuery.data.eligible ? 'Yes' : 'No' },
+                  { label: 'Eligibility note', value: wildcardsQuery.data.eligibility_reason ?? 'Eligible' }
+                ]}
+              />
+              {wildcardsQuery.data.slots.length > 0 ? (
+                <ul>
+                  {wildcardsQuery.data.slots.map((slot) => (
+                    <li key={slot.entry_id}>
+                      Slot {slot.slot_index}: {slot.assigned_player_id ?? 'Unassigned'}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <EmptyState message="This event has no wildcard slots configured." />
+              )}
+              {wildcardsQuery.data.eligible && wildcardsQuery.data.total_slots > 0 ? (
+                <form onSubmit={handleWildcardSubmit}>
+                  <label>
+                    Slot
+                    <input value={slotIndexInput} onChange={(e) => setSlotIndexInput(e.target.value)} />
+                  </label>
+                  <label>
+                    Player ID
+                    <input value={playerIdInput} onChange={(e) => setPlayerIdInput(e.target.value)} />
+                  </label>
+                  <button type="submit" disabled={wildcardMutation.isPending}>
+                    Assign wildcard
+                  </button>
+                </form>
+              ) : null}
+              {wildcardMutation.error ? (
+                <p className="error">Wildcard assignment failed: {formatApiError(wildcardMutation.error)}</p>
+              ) : null}
+            </>
+          ) : null}
+        </SectionCard>
+      ) : null}
     </section>
   )
 }

@@ -141,6 +141,30 @@ class RunActivityItemResponse(BaseModel):
     related_run_id: str | None = None
 
 
+class WildcardAssignmentRequest(BaseModel):
+    slot_index: int = Field(ge=1)
+    player_id: str = Field(min_length=1)
+
+
+class WildcardAssignRequest(BaseModel):
+    assignments: list[WildcardAssignmentRequest] = Field(min_length=1)
+
+
+class WildcardSlotResponse(BaseModel):
+    slot_index: int
+    entry_id: str
+    assigned_player_id: str | None = None
+
+
+class WildcardStateApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    eligible: bool
+    eligibility_reason: str | None = None
+    total_slots: int
+    slots: list[WildcardSlotResponse] = Field(default_factory=list)
+
+
 class RunActivityResponse(BaseModel):
     run_id: str
     items: list[RunActivityItemResponse] = Field(default_factory=list)

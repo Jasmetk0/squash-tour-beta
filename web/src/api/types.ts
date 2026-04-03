@@ -147,6 +147,22 @@ export type WildcardStateResponse = {
   slots: WildcardSlot[]
 }
 
+export type WildcardCandidate = {
+  player_id: string
+  player_name: string
+  country_code: string
+  country_name: string | null
+  source: 'main_draw_waitlist' | 'qualification_waitlist' | 'non_applicant_pool'
+  source_priority: number | null
+  entry_score: number | null
+}
+
+export type WildcardCandidatesResponse = {
+  run_id: string
+  event_id: string
+  candidates: WildcardCandidate[]
+}
+
 export type AssignWildcardsPayload = {
   assignments: Array<{
     slot_index: number

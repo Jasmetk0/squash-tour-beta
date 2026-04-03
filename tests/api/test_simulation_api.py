@@ -268,6 +268,27 @@ def test_commissioner_wildcard_assignment_endpoints_validate_and_persist(tmp_pat
         assert status == 200
         assert wildcard_state["eligible"] is True
 
+        status, wildcard_candidates_first = _request(
+            "GET",
+            f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcard-candidates",
+        )
+        assert status == 200
+        assert wildcard_candidates_first["run_id"] == "run-wildcards"
+        assert wildcard_candidates_first["event_id"] == selected_event_id
+        assert wildcard_candidates_first["candidates"]
+        first_candidate = wildcard_candidates_first["candidates"][0]
+        assert first_candidate["player_id"]
+        assert first_candidate["player_name"]
+        assert first_candidate["country_code"]
+        assert first_candidate["source"] in {"main_draw_waitlist", "qualification_waitlist", "non_applicant_pool"}
+
+        status, wildcard_candidates_second = _request(
+            "GET",
+            f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcard-candidates",
+        )
+        assert status == 200
+        assert wildcard_candidates_second == wildcard_candidates_first
+
         status, invalid = _request(
             "POST",
             f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcards",
@@ -319,6 +340,13 @@ def test_commissioner_wildcard_assignment_endpoints_validate_and_persist(tmp_pat
         )
         assert status == 200
         assert after_assign["slots"][0]["assigned_player_id"] == assigned_player_id
+
+        status, wildcard_candidates_after_assign = _request(
+            "GET",
+            f"{server.base_url}/runs/run-wildcards/events/{selected_event_id}/wildcard-candidates",
+        )
+        assert status == 200
+        assert assigned_player_id not in {candidate["player_id"] for candidate in wildcard_candidates_after_assign["candidates"]}
 
         selected_index = next(index for index, event in enumerate(ordered_events) if event["event_id"] == selected_event_id)
         for _ in range(selected_index + 1):

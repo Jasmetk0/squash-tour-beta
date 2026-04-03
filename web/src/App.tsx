@@ -4,6 +4,7 @@ import { Layout } from './components/Layout'
 import { BootstrapLineagePage } from './pages/BootstrapLineagePage'
 import { ActivityPage } from './pages/ActivityPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { CountriesPage } from './pages/CountriesPage'
 import { EventDetailPage } from './pages/EventDetailPage'
 import { EventsPage } from './pages/EventsPage'
 import { FinalsPage } from './pages/FinalsPage'
@@ -26,6 +27,7 @@ export default function App(): JSX.Element {
     <Routes>
       <Route path="/" element={<Layout />}>
         <Route index element={<DashboardPage />} />
+        <Route path="world/countries" element={<CountriesPage />} />
         <Route path="runs" element={<RunsPage />} />
         <Route path="runs/:runId" element={<RunPage />} />
         <Route path="runs/:runId/events" element={<EventsPage />} />

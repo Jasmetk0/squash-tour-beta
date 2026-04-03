@@ -136,6 +136,7 @@ export function DashboardPage(): JSX.Element {
             <li>Create a run with a unique run ID, seed, and season.</li>
             <li>Open any existing run using its run ID.</li>
             <li>After launch/open, continue from Run Detail and its linked views.</li>
+            <li>Manage world countries from the in-app <Link to="/world/countries">Countries Editor</Link>.</li>
           </ul>
           <p className="status">Supported season default: {SUPPORTED_CALENDAR_SEASON}.</p>
         </section>

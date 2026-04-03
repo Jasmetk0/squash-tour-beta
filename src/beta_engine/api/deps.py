@@ -8,6 +8,7 @@ from fastapi import Request
 
 from beta_engine.application.api_services import SimulationApiService
 from beta_engine.application.config_validation_service import ConfigValidationService
+from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.infrastructure.config import load_settings
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
 
@@ -39,3 +40,10 @@ def get_simulation_api_service(request: Request) -> SimulationApiService:
 
 def get_config_validation_service(_: Request) -> ConfigValidationService:
     return ConfigValidationService()
+
+
+def get_countries_config_service(request: Request) -> CountriesConfigService:
+    configured_path = getattr(request.app.state, "countries_config_path", None)
+    if configured_path is None:
+        return CountriesConfigService()
+    return CountriesConfigService(config_path=configured_path)

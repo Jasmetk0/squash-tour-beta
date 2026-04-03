@@ -9,6 +9,7 @@ describe('Layout run-scoped navigation', () => {
     renderWithRoute(<Layout />, '/runs/run-a/finals')
 
     expect(await screen.findByRole('link', { name: 'Runs' })).toHaveAttribute('href', '/runs')
+    expect(await screen.findByRole('link', { name: 'Countries Editor' })).toHaveAttribute('href', '/world/countries')
     expect(await screen.findByRole('link', { name: 'Run Detail' })).toHaveAttribute('href', '/runs/run-a')
     expect(screen.getByRole('link', { name: 'Events' })).toHaveAttribute('href', '/runs/run-a/events')
     expect(screen.getByRole('link', { name: 'Season Calendar' })).toHaveAttribute('href', '/runs/run-a/calendar')

@@ -16,11 +16,10 @@ class CountryTalentModel:
 
     def ecosystem_strength(self, country: Country) -> float:
         return (
-            country.squash_popularity * 0.20
-            + country.infrastructure_level * 0.20
-            + country.development_pipeline_quality * 0.22
-            + country.elite_system_strength * 0.22
-            + country.historical_tradition * 0.16
+            country.squash_popularity_norm * 0.23
+            + country.system_quality_norm * 0.33
+            + country.squash_tradition_norm * 0.29
+            + country.wealth_support_norm * 0.15
         )
 
     def talent_index(self, country: Country) -> float:

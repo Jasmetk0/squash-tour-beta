@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Literal
 
 from pydantic import BaseModel, Field
+from pydantic import field_validator
 
 from beta_engine.application.finals_models import FinalsSimulationResult
 from beta_engine.application.run_bootstrap_models import (
@@ -434,3 +435,66 @@ class ConfigValidationResponse(BaseModel):
     warnings: list[ConfigValidationIssueResponse] = Field(default_factory=list)
     errors: list[ConfigValidationIssueResponse] = Field(default_factory=list)
     domains: list[ConfigDomainValidationResponse] = Field(default_factory=list)
+
+
+class CountryUpsertRequest(BaseModel):
+    code: str = Field(min_length=3, max_length=3)
+    name: str = Field(min_length=1)
+    flag_asset: str | None = None
+    region: str = Field(min_length=1)
+    population: int = Field(gt=0)
+    wealth_support: int = Field(ge=1, le=5)
+    squash_popularity: int = Field(ge=1, le=5)
+    squash_tradition: int = Field(ge=1, le=5)
+    system_quality: int = Field(ge=1, le=5)
+
+    @field_validator("code")
+    @classmethod
+    def normalize_code(cls, value: str) -> str:
+        normalized = value.strip().upper()
+        if len(normalized) != 3:
+            raise ValueError("code must be exactly 3 characters")
+        return normalized
+
+    @field_validator("name", "region")
+    @classmethod
+    def non_empty_trimmed(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("must be non-empty")
+        return normalized
+
+    @field_validator("flag_asset")
+    @classmethod
+    def normalize_flag_asset(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        return normalized or None
+
+
+class CountryResponse(BaseModel):
+    code: str
+    name: str
+    flag_asset: str | None = None
+    region: str
+    population: int
+    wealth_support: int
+    squash_popularity: int
+    squash_tradition: int
+    system_quality: int
+
+
+class CountriesListResponse(BaseModel):
+    countries: list[CountryResponse] = Field(default_factory=list)
+
+
+class CountriesMetadataResponse(BaseModel):
+    dataset_status: str | None = None
+    country_count: int
+    source_path: str
+
+
+class CountriesDatasetResponse(BaseModel):
+    dataset_status: str | None = None
+    countries: list[CountryResponse] = Field(default_factory=list)

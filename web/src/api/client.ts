@@ -1,6 +1,10 @@
 import type {
   BootstrapNextSeasonPayload,
   BootstrapNextSeasonResponse,
+  CountriesListResponse,
+  CountriesMetadataResponse,
+  CountryRecord,
+  CountryUpsertPayload,
   AssignWildcardsPayload,
   ApplyPreDrawWithdrawalPayload,
   ApplyLateReplacementPayload,
@@ -62,11 +66,39 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError(body || 'Request failed', response.status)
   }
 
-  return (await response.json()) as T
+  if (response.status === 204) {
+    return undefined as T
+  }
+
+  const text = await response.text()
+  if (!text) {
+    return undefined as T
+  }
+  return JSON.parse(text) as T
 }
 
 export function getHealth(): Promise<HealthResponse> {
   return request('/health')
+}
+
+export function listCountries(): Promise<CountriesListResponse> {
+  return request('/world/countries')
+}
+
+export function getCountriesMetadata(): Promise<CountriesMetadataResponse> {
+  return request('/world/countries/metadata')
+}
+
+export function createCountry(payload: CountryUpsertPayload): Promise<CountryRecord> {
+  return request('/world/countries', { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function updateCountry(code: string, payload: CountryUpsertPayload): Promise<CountryRecord> {
+  return request(`/world/countries/${encodeURIComponent(code)}`, { method: 'PUT', body: JSON.stringify(payload) })
+}
+
+export function deleteCountry(code: string): Promise<void> {
+  return request(`/world/countries/${encodeURIComponent(code)}`, { method: 'DELETE' })
 }
 
 export function createRun(payload: CreateRunPayload): Promise<RunSummary> {

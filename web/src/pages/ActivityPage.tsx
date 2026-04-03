@@ -22,7 +22,11 @@ type IndexedActivityItem = {
 }
 
 function makeWeekContext(item: RunActivityItem, effectiveWeek: number | null): string {
-  const supportsWeekInspection = item.kind === 'event' || item.kind === 'ranking_snapshot' || item.kind === 'race_snapshot'
+  const supportsWeekInspection =
+    item.kind === 'event' ||
+    item.kind === 'ranking_snapshot' ||
+    item.kind === 'race_snapshot' ||
+    item.kind === 'admin_wildcard_assignment'
   if (!supportsWeekInspection) {
     return 'Not meaningful for this activity kind'
   }
@@ -411,7 +415,26 @@ function activityBridgeItems(
     })
   }
 
-  const supportsWeekInspection = item.kind === 'event' || item.kind === 'ranking_snapshot' || item.kind === 'race_snapshot'
+  if (item.kind === 'admin_wildcard_assignment' && item.event_id) {
+    links.push({
+      label: 'Wildcard event planned detail',
+      value: <Link to={`/runs/${runId}/calendar/${encodeURIComponent(item.event_id)}`}>Open wildcard event planned detail</Link>
+    })
+    links.push({
+      label: 'Wildcard event persisted detail',
+      value: hasPersistedContext ? (
+        <Link to={`/runs/${runId}/events/${encodeURIComponent(item.event_id)}`}>Open wildcard event persisted detail</Link>
+      ) : (
+        'Wildcard event has not been persisted yet.'
+      )
+    })
+  }
+
+  const supportsWeekInspection =
+    item.kind === 'event' ||
+    item.kind === 'ranking_snapshot' ||
+    item.kind === 'race_snapshot' ||
+    item.kind === 'admin_wildcard_assignment'
   if (supportsWeekInspection && selectedWeek != null) {
     links.push({
       label: 'Week detail',

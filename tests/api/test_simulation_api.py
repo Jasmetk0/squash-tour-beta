@@ -629,6 +629,35 @@ def test_run_activity_endpoint_returns_compact_deterministic_feed(tmp_path) -> N
         assert status == 200
         assert empty == {"run_id": "run-activity", "items": []}
 
+        status, state_payload = _request("GET", f"{server.base_url}/runs/run-activity")
+        assert status == 200
+        selected_event_id = None
+        for event in state_payload["season_state"]["ordered_events"]:
+            status, wildcard_state = _request(
+                "GET",
+                f"{server.base_url}/runs/run-activity/events/{event['event_id']}/wildcards",
+            )
+            assert status == 200
+            if wildcard_state["total_slots"] > 0:
+                selected_event_id = event["event_id"]
+                break
+        assert selected_event_id is not None
+
+        status, wildcard_candidates = _request(
+            "GET",
+            f"{server.base_url}/runs/run-activity/events/{selected_event_id}/wildcard-candidates",
+        )
+        assert status == 200
+        assert wildcard_candidates["candidates"]
+
+        status, wildcard_state_after_assign = _request(
+            "POST",
+            f"{server.base_url}/runs/run-activity/events/{selected_event_id}/wildcards",
+            {"assignments": [{"slot_index": 1, "player_id": wildcard_candidates["candidates"][0]["player_id"]}]},
+        )
+        assert status == 200
+        assert wildcard_state_after_assign["slots"][0]["assigned_player_id"] == wildcard_candidates["candidates"][0]["player_id"]
+
         status, _ = _request("POST", f"{server.base_url}/runs/run-activity/simulate/full-season")
         assert status == 200
         status, _ = _request("GET", f"{server.base_url}/runs/run-activity/finals/qualification")
@@ -658,6 +687,13 @@ def test_run_activity_endpoint_returns_compact_deterministic_feed(tmp_path) -> N
         assert "finals_result" in kinds
         assert "rollover" in kinds
         assert "bootstrap_child" in kinds
+        assert "admin_wildcard_assignment" in kinds
+
+        wildcard_items = [item for item in payload["items"] if item["kind"] == "admin_wildcard_assignment"]
+        assert len(wildcard_items) == 1
+        assert wildcard_items[0]["sequence"] == 1
+        assert wildcard_items[0]["event_id"] == selected_event_id
+        assert wildcard_items[0]["label"] == f"Commissioner wildcard assignment ({selected_event_id})"
 
         first = payload["items"][0]
         assert set(first.keys()) == {
@@ -680,6 +716,7 @@ def test_run_activity_endpoint_returns_compact_deterministic_feed(tmp_path) -> N
             "finals_result": 5,
             "rollover": 6,
             "bootstrap_child": 7,
+            "admin_wildcard_assignment": 8,
         }
         tuples = [
             (

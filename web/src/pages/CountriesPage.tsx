@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FormEvent, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import {
   ApiError,
@@ -173,6 +174,9 @@ export function CountriesPage(): JSX.Element {
         title="Countries Editor"
         subtitle="Manage country data directly in-app; changes are written to canonical runtime countries JSON."
       />
+      <p className="status">
+        Next step: validate current country tuning in <Link to="/world/talent-preview">Talent Class Preview diagnostics</Link>.
+      </p>
 
       <SectionCard title="Dataset status">
         {metadataQuery.isLoading ? <p className="status">Loading dataset metadata…</p> : null}

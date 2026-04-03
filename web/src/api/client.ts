@@ -3,6 +3,8 @@ import type {
   BootstrapNextSeasonResponse,
   CountriesListResponse,
   CountriesMetadataResponse,
+  TalentClassSummaryResponse,
+  TalentClassYearPreviewResponse,
   CountryRecord,
   CountryUpsertPayload,
   AssignWildcardsPayload,
@@ -99,6 +101,24 @@ export function updateCountry(code: string, payload: CountryUpsertPayload): Prom
 
 export function deleteCountry(code: string): Promise<void> {
   return request(`/world/countries/${encodeURIComponent(code)}`, { method: 'DELETE' })
+}
+
+export function getTalentClassPreview(params: { year: number; seed: number }): Promise<TalentClassYearPreviewResponse> {
+  const query = new URLSearchParams({ year: String(params.year), seed: String(params.seed) })
+  return request(`/world/talent-class/preview?${query.toString()}`)
+}
+
+export function getTalentClassSummary(params: {
+  year_start: number
+  years: number
+  seed: number
+}): Promise<TalentClassSummaryResponse> {
+  const query = new URLSearchParams({
+    year_start: String(params.year_start),
+    years: String(params.years),
+    seed: String(params.seed)
+  })
+  return request(`/world/talent-class/summary?${query.toString()}`)
 }
 
 export function createRun(payload: CreateRunPayload): Promise<RunSummary> {

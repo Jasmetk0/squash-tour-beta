@@ -30,6 +30,9 @@ class CountriesConfigService:
     def list_countries(self) -> list[Country]:
         return self._load().countries
 
+    def get_config(self) -> CountriesConfig:
+        return self._load()
+
     def get_country(self, code: str) -> Country | None:
         normalized = code.upper()
         return next((country for country in self._load().countries if country.code == normalized), None)

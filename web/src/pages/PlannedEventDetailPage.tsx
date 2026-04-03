@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { assignEventWildcards, getEventWildcards, getRun, listEvents } from '../api/client'
+import { assignEventWildcards, getEventWildcardCandidates, getEventWildcards, getRun, listEvents } from '../api/client'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -19,7 +19,7 @@ export function PlannedEventDetailPage(): JSX.Element {
   const { runId = '', eventId = '' } = useParams()
   const queryClient = useQueryClient()
   const [slotIndexInput, setSlotIndexInput] = useState('1')
-  const [playerIdInput, setPlayerIdInput] = useState('')
+  const [selectedPlayerId, setSelectedPlayerId] = useState('')
 
   const runQuery = useQuery({
     queryKey: ['run', runId],
@@ -39,6 +39,12 @@ export function PlannedEventDetailPage(): JSX.Element {
     enabled: Boolean(runId && eventId),
     retry: false
   })
+  const wildcardCandidatesQuery = useQuery({
+    queryKey: ['wildcard-candidates', runId, eventId],
+    queryFn: () => getEventWildcardCandidates(runId, eventId),
+    enabled: Boolean(runId && eventId),
+    retry: false
+  })
   const wildcardMutation = useMutation({
     mutationFn: (values: { slotIndex: number; playerId: string }) =>
       assignEventWildcards(runId, eventId, {
@@ -46,7 +52,7 @@ export function PlannedEventDetailPage(): JSX.Element {
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['wildcards', runId, eventId] })
-      setPlayerIdInput('')
+      await queryClient.invalidateQueries({ queryKey: ['wildcard-candidates', runId, eventId] })
     }
   })
 
@@ -71,11 +77,18 @@ export function PlannedEventDetailPage(): JSX.Element {
 
   const hasPersistedHistory = plannedEvent ? persistedEventIds.has(plannedEvent.event_id) : false
 
+  useEffect(() => {
+    const firstCandidateId = wildcardCandidatesQuery.data?.candidates[0]?.player_id ?? ''
+    if (!selectedPlayerId && firstCandidateId) {
+      setSelectedPlayerId(firstCandidateId)
+    }
+  }, [wildcardCandidatesQuery.data, selectedPlayerId])
+
   function handleWildcardSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
     const slotIndex = Number(slotIndexInput)
-    if (!Number.isFinite(slotIndex) || slotIndex < 1 || !playerIdInput.trim()) return
-    wildcardMutation.mutate({ slotIndex, playerId: playerIdInput.trim() })
+    if (!Number.isFinite(slotIndex) || slotIndex < 1 || !selectedPlayerId.trim()) return
+    wildcardMutation.mutate({ slotIndex, playerId: selectedPlayerId.trim() })
   }
 
   return (
@@ -215,16 +228,54 @@ export function PlannedEventDetailPage(): JSX.Element {
                 <form onSubmit={handleWildcardSubmit}>
                   <label>
                     Slot
-                    <input value={slotIndexInput} onChange={(e) => setSlotIndexInput(e.target.value)} />
+                    <select value={slotIndexInput} onChange={(e) => setSlotIndexInput(e.target.value)}>
+                      {wildcardsQuery.data.slots.map((slot) => (
+                        <option key={slot.slot_index} value={String(slot.slot_index)}>
+                          {slot.slot_index}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                   <label>
-                    Player ID
-                    <input value={playerIdInput} onChange={(e) => setPlayerIdInput(e.target.value)} />
+                    Candidate player
+                    <select value={selectedPlayerId} onChange={(e) => setSelectedPlayerId(e.target.value)}>
+                      <option value="">Select candidate</option>
+                      {(wildcardCandidatesQuery.data?.candidates ?? []).map((candidate) => (
+                        <option key={candidate.player_id} value={candidate.player_id}>
+                          {candidate.player_name} ({candidate.player_id}) · {candidate.country_code} ·{' '}
+                          {candidate.source === 'main_draw_waitlist'
+                            ? 'Main waitlist'
+                            : candidate.source === 'qualification_waitlist'
+                              ? 'Qualification waitlist'
+                              : 'Open pool'}
+                          {candidate.source_priority ? ` #${candidate.source_priority}` : ''}
+                        </option>
+                      ))}
+                    </select>
                   </label>
-                  <button type="submit" disabled={wildcardMutation.isPending}>
+                  <button
+                    type="submit"
+                    disabled={
+                      wildcardMutation.isPending ||
+                      !selectedPlayerId ||
+                      (wildcardCandidatesQuery.data?.candidates.length ?? 0) === 0
+                    }
+                  >
                     Assign wildcard
                   </button>
                 </form>
+              ) : null}
+              {wildcardCandidatesQuery.isLoading ? <p className="status">Loading wildcard candidates...</p> : null}
+              {wildcardCandidatesQuery.error ? (
+                <p className="error">
+                  Failed to load wildcard candidates: {formatApiError(wildcardCandidatesQuery.error)}
+                </p>
+              ) : null}
+              {wildcardsQuery.data.eligible &&
+              wildcardsQuery.data.total_slots > 0 &&
+              wildcardCandidatesQuery.data &&
+              wildcardCandidatesQuery.data.candidates.length === 0 ? (
+                <p className="status">No eligible wildcard candidates are currently available for this event.</p>
               ) : null}
               {wildcardMutation.error ? (
                 <p className="error">Wildcard assignment failed: {formatApiError(wildcardMutation.error)}</p>

@@ -11,6 +11,7 @@ from beta_engine.api.schemas import (
     FinalsQualificationResponse,
     FinalsResultResponse,
     FinalsSummaryApiResponse,
+    WildcardCandidatesApiResponse,
     NextSeasonPlayersResponse,
     PlayerTransitionsResponse,
     RaceSnapshotListResponse,
@@ -103,6 +104,21 @@ def assign_event_wildcards(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     return WildcardStateApiResponse.model_validate(state, from_attributes=True)
+
+
+@router.get("/events/{event_id}/wildcard-candidates", response_model=WildcardCandidatesApiResponse)
+def list_event_wildcard_candidates(
+    run_id: str,
+    event_id: str,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> WildcardCandidatesApiResponse:
+    try:
+        candidates = service.get_wildcard_candidates(run_id=run_id, event_id=event_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return WildcardCandidatesApiResponse.model_validate(candidates, from_attributes=True)
 
 
 @router.get("/snapshots/ranking", response_model=RankingSnapshotListResponse)

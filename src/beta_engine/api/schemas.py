@@ -165,6 +165,22 @@ class WildcardStateApiResponse(BaseModel):
     slots: list[WildcardSlotResponse] = Field(default_factory=list)
 
 
+class WildcardCandidateResponse(BaseModel):
+    player_id: str
+    player_name: str
+    country_code: str
+    country_name: str | None = None
+    source: Literal["main_draw_waitlist", "qualification_waitlist", "non_applicant_pool"]
+    source_priority: int | None = None
+    entry_score: float | None = None
+
+
+class WildcardCandidatesApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    candidates: list[WildcardCandidateResponse] = Field(default_factory=list)
+
+
 class RunActivityResponse(BaseModel):
     run_id: str
     items: list[RunActivityItemResponse] = Field(default_factory=list)

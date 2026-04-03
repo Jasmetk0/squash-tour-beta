@@ -195,6 +195,24 @@ class WildcardStateResponse:
     slots: list[WildcardSlotState]
 
 
+@dataclass(frozen=True)
+class WildcardCandidateRecord:
+    player_id: str
+    player_name: str
+    country_code: str
+    country_name: str | None
+    source: Literal["main_draw_waitlist", "qualification_waitlist", "non_applicant_pool"]
+    source_priority: int | None
+    entry_score: float | None
+
+
+@dataclass(frozen=True)
+class WildcardCandidatesResponse:
+    run_id: str
+    event_id: str
+    candidates: list[WildcardCandidateRecord]
+
+
 @dataclass(slots=True)
 class SimulationApiService:
     """High-level API-facing service that keeps orchestration out of routers."""
@@ -364,6 +382,85 @@ class SimulationApiService:
             payload=payload,
         )
         return self.get_wildcard_state(run_id=run_id, event_id=event_id)
+
+    def get_wildcard_candidates(self, *, run_id: str, event_id: str) -> WildcardCandidatesResponse:
+        run_info, state = self._load_run_context(run_id=run_id)
+        event, _ = self._resolve_event_and_index(state=state, event_id=event_id)
+        templates_by_id = {template.template_id: template for template in load_tournament_templates_config().templates}
+        template = templates_by_id[event.template_id]
+        if template.wild_cards <= 0:
+            return WildcardCandidatesResponse(run_id=run_id, event_id=event_id, candidates=[])
+
+        orchestrator = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info)
+        acceptance = orchestrator.entry_engine.build_acceptance_list(
+            event=event,
+            template=template,
+            players=list(orchestrator.players_by_id.values()),
+            countries_by_code=orchestrator.countries_by_code,
+        )
+        entered_player_ids = {
+            entry.player_id
+            for entry in [*acceptance.main_draw_entries, *acceptance.qualification_entries]
+            if entry.player_id is not None
+        }
+        assigned_player_ids = set(
+            self.repository.get_wildcard_assignments_for_event(run_id=run_id, event_id=event_id).values()
+        )
+
+        raw_candidates: list[tuple[int, int, str, str, int | None, float | None]] = []
+        for source_order, source_label, applicants in (
+            (0, "main_draw_waitlist", acceptance.main_draw_applicants),
+            (1, "qualification_waitlist", acceptance.qualification_applicants),
+        ):
+            for applicant in applicants:
+                if applicant.player_id in entered_player_ids or applicant.player_id in assigned_player_ids:
+                    continue
+                raw_candidates.append(
+                    (
+                        source_order,
+                        10_000 if applicant.ranking_priority is None else applicant.ranking_priority,
+                        applicant.player_id,
+                        source_label,
+                        applicant.ranking_priority,
+                        applicant.entry_score,
+                    )
+                )
+
+        deduplicated_candidates: dict[str, tuple[str, int | None, float | None]] = {}
+        for _, _, player_id, source_label, source_priority, entry_score in sorted(raw_candidates):
+            if player_id in deduplicated_candidates:
+                continue
+            deduplicated_candidates[player_id] = (source_label, source_priority, entry_score)
+
+        fallback_candidates = sorted(
+            [
+                player_id
+                for player_id in orchestrator.players_by_id
+                if player_id not in entered_player_ids and player_id not in assigned_player_ids and player_id not in deduplicated_candidates
+            ]
+        )
+        for player_id in fallback_candidates:
+            deduplicated_candidates[player_id] = ("non_applicant_pool", None, None)
+
+        countries_by_code = orchestrator.countries_by_code
+        candidates = [
+            WildcardCandidateRecord(
+                player_id=player.player_id,
+                player_name=player.name,
+                country_code=player.nationality,
+                country_name=(countries_by_code[player.nationality].name if player.nationality in countries_by_code else None),
+                source=source_label,
+                source_priority=source_priority,
+                entry_score=entry_score,
+            )
+            for player_id, (source_label, source_priority, entry_score) in deduplicated_candidates.items()
+            for player in [orchestrator.players_by_id[player_id]]
+        ]
+        return WildcardCandidatesResponse(
+            run_id=run_id,
+            event_id=event_id,
+            candidates=candidates,
+        )
 
     def simulate_next_tournament(self, *, run_id: str) -> SimulationStepResult:
         return self._simulate_step(run_id=run_id, mode="simulate_next_tournament")

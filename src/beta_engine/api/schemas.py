@@ -207,6 +207,68 @@ class RunPlayerDetailResponse(BaseModel):
     talent_sequence: int | None = None
 
 
+class RunNationSummaryItemResponse(BaseModel):
+    country_code: str
+    country_name: str | None = None
+    total_players: int
+    average_overall: float
+    average_age: float
+    top_band_count: int
+    manual_override_count: int
+    planner_generated_count: int
+    rollover_carried_count: int
+    top_player_id: str | None = None
+    top_player_name: str | None = None
+    top_player_overall: int | None = None
+
+
+class RunNationsSummaryResponse(BaseModel):
+    run_id: str
+    total: int
+    limit: int
+    offset: int
+    nations: list[RunNationSummaryItemResponse] = Field(default_factory=list)
+
+
+class RunNationAverageVisibleStatsResponse(BaseModel):
+    technique: float
+    movement: float
+    physical: float
+    mental: float
+
+
+class RunNationBandDistributionItemResponse(BaseModel):
+    band: str
+    count: int
+
+
+class RunNationTopPlayerItemResponse(BaseModel):
+    player_id: str
+    name: str
+    age: int
+    overall: int
+    source_type: Literal["rollover_carried", "planner_generated", "manual_override"]
+    quality_band: str | None = None
+    is_top_band: bool
+
+
+class RunNationDetailResponse(BaseModel):
+    run_id: str
+    country_code: str
+    country_name: str | None = None
+    total_players: int
+    average_overall: float
+    average_age: float
+    top_band_count: int
+    manual_override_count: int
+    planner_generated_count: int
+    rollover_carried_count: int
+    average_visible_stats: RunNationAverageVisibleStatsResponse
+    source_mix: dict[str, int]
+    band_distribution: list[RunNationBandDistributionItemResponse] = Field(default_factory=list)
+    top_players: list[RunNationTopPlayerItemResponse] = Field(default_factory=list)
+
+
 class ManualPlayerAttributeOverridesRequest(BaseModel):
     technique: int | None = Field(default=None, ge=20, le=99)
     movement: int | None = Field(default=None, ge=20, le=99)

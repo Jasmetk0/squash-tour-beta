@@ -25,6 +25,7 @@ import { TalentPreviewPage } from './pages/TalentPreviewPage'
 import { ManualPlayerOverridesPage } from './pages/ManualPlayerOverridesPage'
 import { WeekDetailPage } from './pages/WeekDetailPage'
 import { WorldGenerationPage } from './pages/WorldGenerationPage'
+import { NationsPage } from './pages/NationsPage'
 
 export default function App(): JSX.Element {
   return (
@@ -42,6 +43,7 @@ export default function App(): JSX.Element {
         <Route path="runs/:runId/calendar/:eventId" element={<PlannedEventDetailPage />} />
         <Route path="runs/:runId/activity" element={<ActivityPage />} />
         <Route path="runs/:runId/players" element={<PlayersPage />} />
+        <Route path="runs/:runId/nations" element={<NationsPage />} />
         <Route path="runs/:runId/diagnostics" element={<RunDiagnosticsPage />} />
         <Route path="runs/:runId/world-generation" element={<WorldGenerationPage />} />
         <Route path="runs/:runId/events/:eventId" element={<EventDetailPage />} />

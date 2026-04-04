@@ -38,9 +38,13 @@ from beta_engine.api.schemas import (
     GeneratedPlayerProvenanceResponse,
     RunPlayerDetailResponse,
     RunPlayersListResponse,
+    RunNationsSummaryResponse,
+    RunNationDetailResponse,
 )
 from beta_engine.application.api_services import (
     GeneratedPlayerProvenance,
+    RunNationDetail,
+    RunNationsSummaryResponse as RunNationsSummaryServiceResponse,
     RunPlayerDetail,
     RunPlayerListResponse,
     RunTalentPlanSummary,
@@ -65,6 +69,14 @@ def _to_run_players_response(response: RunPlayerListResponse) -> RunPlayersListR
 
 def _to_run_player_detail(response: RunPlayerDetail) -> RunPlayerDetailResponse:
     return RunPlayerDetailResponse.model_validate(response, from_attributes=True)
+
+
+def _to_run_nations_response(response: RunNationsSummaryServiceResponse) -> RunNationsSummaryResponse:
+    return RunNationsSummaryResponse.model_validate(response, from_attributes=True)
+
+
+def _to_run_nation_detail(response: RunNationDetail) -> RunNationDetailResponse:
+    return RunNationDetailResponse.model_validate(response, from_attributes=True)
 
 
 @router.get("/world/talent-plan", response_model=RunTalentPlanSummaryResponse)
@@ -155,6 +167,36 @@ def get_run_player_detail(
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     return _to_run_player_detail(player)
+
+
+@router.get("/nations", response_model=RunNationsSummaryResponse)
+def list_run_nations(
+    run_id: str,
+    search: str | None = None,
+    sort: str = "total_players_desc",
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> RunNationsSummaryResponse:
+    try:
+        nations = service.list_run_nations(run_id=run_id, search=search, sort=sort, limit=limit, offset=offset)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return _to_run_nations_response(nations)
+
+
+@router.get("/nations/{country_code}", response_model=RunNationDetailResponse)
+def get_run_nation_detail(
+    run_id: str,
+    country_code: str,
+    top_limit: int = Query(default=10, ge=1, le=100),
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> RunNationDetailResponse:
+    try:
+        nation = service.get_run_nation_detail(run_id=run_id, country_code=country_code, top_limit=top_limit)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return _to_run_nation_detail(nation)
 
 
 @router.get("/activity", response_model=RunActivityResponse)

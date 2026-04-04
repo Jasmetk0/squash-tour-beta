@@ -290,6 +290,74 @@ class RunPlayerDetail:
 
 
 @dataclass(frozen=True)
+class RunNationSummaryItem:
+    country_code: str
+    country_name: str | None
+    total_players: int
+    average_overall: float
+    average_age: float
+    top_band_count: int
+    manual_override_count: int
+    planner_generated_count: int
+    rollover_carried_count: int
+    top_player_id: str | None
+    top_player_name: str | None
+    top_player_overall: int | None
+
+
+@dataclass(frozen=True)
+class RunNationsSummaryResponse:
+    run_id: str
+    total: int
+    limit: int
+    offset: int
+    nations: list[RunNationSummaryItem]
+
+
+@dataclass(frozen=True)
+class RunNationAverageVisibleStats:
+    technique: float
+    movement: float
+    physical: float
+    mental: float
+
+
+@dataclass(frozen=True)
+class RunNationBandDistributionItem:
+    band: str
+    count: int
+
+
+@dataclass(frozen=True)
+class RunNationTopPlayerItem:
+    player_id: str
+    name: str
+    age: int
+    overall: int
+    source_type: Literal["rollover_carried", "planner_generated", "manual_override"]
+    quality_band: str | None
+    is_top_band: bool
+
+
+@dataclass(frozen=True)
+class RunNationDetail:
+    run_id: str
+    country_code: str
+    country_name: str | None
+    total_players: int
+    average_overall: float
+    average_age: float
+    top_band_count: int
+    manual_override_count: int
+    planner_generated_count: int
+    rollover_carried_count: int
+    average_visible_stats: RunNationAverageVisibleStats
+    source_mix: dict[str, int]
+    band_distribution: list[RunNationBandDistributionItem]
+    top_players: list[RunNationTopPlayerItem]
+
+
+@dataclass(frozen=True)
 class WildcardAssignment:
     slot_index: int
     player_id: str
@@ -642,6 +710,92 @@ class SimulationApiService:
             raise KeyError(f"player_id {player_id} was not found in run_id {run_id}")
         provenance = self.repository.get_generated_player_provenance(run_id=run_id, player_id=player_id)
         return self._to_run_player_detail(player=player, provenance=provenance)
+
+    def list_run_nations(
+        self,
+        *,
+        run_id: str,
+        search: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+        sort: str = "total_players_desc",
+    ) -> RunNationsSummaryResponse:
+        run_info = self.repository.get_simulation_run(run_id=run_id)
+        if run_info is None:
+            raise KeyError(f"run_id {run_id} was not found")
+
+        players_by_id = self._load_players_by_id_for_run(run_info=run_info)
+        provenance_by_id = {item.player_id: item for item in self.list_generated_player_provenance(run_id=run_id)}
+        country_names = {country.code: country.name for country in self.countries_service.get_config().countries}
+        rows = [self._to_run_player_list_item(players_by_id[player_id], provenance_by_id.get(player_id)) for player_id in players_by_id]
+        summaries = self._aggregate_run_nation_summaries(rows=rows, country_names=country_names)
+        filtered = self._filter_run_nations(summaries=summaries, search=search)
+        ordered = self._sort_run_nations(summaries=filtered, sort=sort)
+        page = ordered[offset : offset + limit]
+        return RunNationsSummaryResponse(run_id=run_id, total=len(filtered), limit=limit, offset=offset, nations=page)
+
+    def get_run_nation_detail(self, *, run_id: str, country_code: str, top_limit: int = 10) -> RunNationDetail:
+        run_info = self.repository.get_simulation_run(run_id=run_id)
+        if run_info is None:
+            raise KeyError(f"run_id {run_id} was not found")
+
+        normalized_country_code = country_code.strip().upper()
+        players_by_id = self._load_players_by_id_for_run(run_info=run_info)
+        provenance_by_id = {item.player_id: item for item in self.list_generated_player_provenance(run_id=run_id)}
+        country_names = {country.code: country.name for country in self.countries_service.get_config().countries}
+        rows = [self._to_run_player_list_item(players_by_id[player_id], provenance_by_id.get(player_id)) for player_id in players_by_id]
+        country_rows = [row for row in rows if row.country_code.upper() == normalized_country_code]
+        if not country_rows:
+            raise KeyError(f"country_code {normalized_country_code} was not found in run_id {run_id}")
+
+        summaries = self._aggregate_run_nation_summaries(rows=country_rows, country_names=country_names)
+        summary = summaries[0]
+        top_players = sorted(country_rows, key=lambda row: (-row.overall, row.name, row.player_id))[: max(top_limit, 1)]
+        band_counts: dict[str, int] = {}
+        for row in country_rows:
+            band = row.quality_band or "unclassified"
+            band_counts[band] = band_counts.get(band, 0) + 1
+
+        total_players = len(country_rows)
+        return RunNationDetail(
+            run_id=run_id,
+            country_code=summary.country_code,
+            country_name=summary.country_name,
+            total_players=summary.total_players,
+            average_overall=summary.average_overall,
+            average_age=summary.average_age,
+            top_band_count=summary.top_band_count,
+            manual_override_count=summary.manual_override_count,
+            planner_generated_count=summary.planner_generated_count,
+            rollover_carried_count=summary.rollover_carried_count,
+            average_visible_stats=RunNationAverageVisibleStats(
+                technique=round(sum(row.technique for row in country_rows) / total_players, 2),
+                movement=round(sum(row.movement for row in country_rows) / total_players, 2),
+                physical=round(sum(row.physical for row in country_rows) / total_players, 2),
+                mental=round(sum(row.mental for row in country_rows) / total_players, 2),
+            ),
+            source_mix={
+                "rollover_carried": summary.rollover_carried_count,
+                "planner_generated": summary.planner_generated_count,
+                "manual_override": summary.manual_override_count,
+            },
+            band_distribution=[
+                RunNationBandDistributionItem(band=band, count=count)
+                for band, count in sorted(band_counts.items(), key=lambda item: (-item[1], item[0]))
+            ],
+            top_players=[
+                RunNationTopPlayerItem(
+                    player_id=row.player_id,
+                    name=row.name,
+                    age=row.age,
+                    overall=row.overall,
+                    source_type=row.source_type,
+                    quality_band=row.quality_band,
+                    is_top_band=row.is_top_band,
+                )
+                for row in top_players
+            ],
+        )
 
     def get_wildcard_state(self, *, run_id: str, event_id: str) -> WildcardStateResponse:
         run_info, state = self._load_run_context(run_id=run_id)
@@ -2292,6 +2446,63 @@ class SimulationApiService:
         if sort == "overall_asc":
             return sorted(players, key=lambda row: (row.overall, row.name, row.player_id))
         return sorted(players, key=lambda row: (row.name.lower(), row.player_id))
+
+    @staticmethod
+    def _aggregate_run_nation_summaries(
+        *,
+        rows: list[RunPlayerListItem],
+        country_names: dict[str, str],
+    ) -> list[RunNationSummaryItem]:
+        grouped: dict[str, list[RunPlayerListItem]] = {}
+        for row in rows:
+            grouped.setdefault(row.country_code.upper(), []).append(row)
+
+        summaries: list[RunNationSummaryItem] = []
+        for country_code, country_rows in grouped.items():
+            total_players = len(country_rows)
+            top_player = sorted(country_rows, key=lambda row: (-row.overall, row.name, row.player_id))[0]
+            summaries.append(
+                RunNationSummaryItem(
+                    country_code=country_code,
+                    country_name=country_names.get(country_code),
+                    total_players=total_players,
+                    average_overall=round(sum(row.overall for row in country_rows) / total_players, 2),
+                    average_age=round(sum(row.age for row in country_rows) / total_players, 2),
+                    top_band_count=sum(1 for row in country_rows if row.is_top_band),
+                    manual_override_count=sum(1 for row in country_rows if row.source_type == "manual_override"),
+                    planner_generated_count=sum(1 for row in country_rows if row.source_type == "planner_generated"),
+                    rollover_carried_count=sum(1 for row in country_rows if row.source_type == "rollover_carried"),
+                    top_player_id=top_player.player_id,
+                    top_player_name=top_player.name,
+                    top_player_overall=top_player.overall,
+                )
+            )
+        return summaries
+
+    @staticmethod
+    def _filter_run_nations(*, summaries: list[RunNationSummaryItem], search: str | None) -> list[RunNationSummaryItem]:
+        if not search:
+            return summaries
+        needle = search.strip().lower()
+        return [
+            summary
+            for summary in summaries
+            if needle in summary.country_code.lower() or needle in (summary.country_name or "").lower()
+        ]
+
+    @staticmethod
+    def _sort_run_nations(*, summaries: list[RunNationSummaryItem], sort: str) -> list[RunNationSummaryItem]:
+        if sort == "total_players_asc":
+            return sorted(summaries, key=lambda row: (row.total_players, row.country_code))
+        if sort == "avg_overall_desc":
+            return sorted(summaries, key=lambda row: (-row.average_overall, row.country_code))
+        if sort == "avg_overall_asc":
+            return sorted(summaries, key=lambda row: (row.average_overall, row.country_code))
+        if sort == "top_band_desc":
+            return sorted(summaries, key=lambda row: (-row.top_band_count, row.country_code))
+        if sort == "top_band_asc":
+            return sorted(summaries, key=lambda row: (row.top_band_count, row.country_code))
+        return sorted(summaries, key=lambda row: (-row.total_players, row.country_code))
 
     def _to_run_player_detail(
         self,

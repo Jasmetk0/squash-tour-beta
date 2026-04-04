@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 import json
 import socket
 import threading
@@ -260,6 +261,97 @@ def test_run_players_child_run_contains_rollover_and_intake_sources(tmp_path) ->
         sources = {player["source_type"] for player in child_players["players"]}
         assert "rollover_carried" in sources
         assert "planner_generated" in sources or "manual_override" in sources
+
+
+def test_run_nations_summary_and_detail_reflect_run_player_pool(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-run-nations.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-nations", "seed": 7373, "season": 2027})
+        assert status == 201
+
+        status, players_payload = _request("GET", f"{server.base_url}/runs/run-nations/players?limit=500")
+        assert status == 200
+        players = players_payload["players"]
+        assert players
+
+        by_country = Counter(player["country_code"] for player in players)
+        by_top_band = Counter(player["country_code"] for player in players if player["is_top_band"])
+        by_source = {
+            "rollover_carried": Counter(player["country_code"] for player in players if player["source_type"] == "rollover_carried"),
+            "planner_generated": Counter(player["country_code"] for player in players if player["source_type"] == "planner_generated"),
+            "manual_override": Counter(player["country_code"] for player in players if player["source_type"] == "manual_override"),
+        }
+
+        status, nations_payload = _request(
+            "GET", f"{server.base_url}/runs/run-nations/nations?sort=total_players_desc&limit=300&offset=0"
+        )
+        assert status == 200
+        assert nations_payload["total"] == len(nations_payload["nations"])
+        assert nations_payload["nations"]
+
+        sample_nation = nations_payload["nations"][0]
+        nation_code = sample_nation["country_code"]
+        nation_players = [player for player in players if player["country_code"] == nation_code]
+        expected_avg_overall = round(sum(player["overall"] for player in nation_players) / len(nation_players), 2)
+        expected_avg_age = round(sum(player["age"] for player in nation_players) / len(nation_players), 2)
+
+        assert sample_nation["total_players"] == by_country[nation_code]
+        assert sample_nation["top_band_count"] == by_top_band[nation_code]
+        assert sample_nation["rollover_carried_count"] == by_source["rollover_carried"][nation_code]
+        assert sample_nation["planner_generated_count"] == by_source["planner_generated"][nation_code]
+        assert sample_nation["manual_override_count"] == by_source["manual_override"][nation_code]
+        assert sample_nation["average_overall"] == expected_avg_overall
+        assert sample_nation["average_age"] == expected_avg_age
+
+        expected_top = sorted(nation_players, key=lambda player: (-player["overall"], player["name"], player["player_id"]))[0]
+        assert sample_nation["top_player_id"] == expected_top["player_id"]
+        assert sample_nation["top_player_name"] == expected_top["name"]
+        assert sample_nation["top_player_overall"] == expected_top["overall"]
+
+        status, detail_payload = _request("GET", f"{server.base_url}/runs/run-nations/nations/{nation_code}?top_limit=10")
+        assert status == 200
+        assert detail_payload["country_code"] == nation_code
+        assert detail_payload["total_players"] == sample_nation["total_players"]
+        assert detail_payload["top_players"]
+        assert len(detail_payload["top_players"]) <= 10
+        assert detail_payload["top_players"][0]["player_id"] == expected_top["player_id"]
+        assert detail_payload["source_mix"]["rollover_carried"] == sample_nation["rollover_carried_count"]
+        assert detail_payload["source_mix"]["planner_generated"] == sample_nation["planner_generated_count"]
+        assert detail_payload["source_mix"]["manual_override"] == sample_nation["manual_override_count"]
+        assert sum(item["count"] for item in detail_payload["band_distribution"]) == sample_nation["total_players"]
+
+        status, _ = _request("GET", f"{server.base_url}/runs/run-nations/nations/ZZZ")
+        assert status == 404
+
+
+def test_run_nations_child_run_shows_truthful_source_mix(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-run-nations-child.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-parent", "seed": 8080, "season": 2027})
+        assert status == 201
+
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/runs/run-parent/bootstrap-next-season",
+            {"child_run_id": "run-child", "child_seed": 9090},
+        )
+        if status != 200:
+            status, _ = _request("POST", f"{server.base_url}/runs/run-parent/simulate/full-season")
+            assert status == 200
+            status, _ = _request("POST", f"{server.base_url}/runs/run-parent/rollover/next-season")
+            assert status == 200
+            status, _ = _request(
+                "POST",
+                f"{server.base_url}/runs/run-parent/bootstrap-next-season",
+                {"child_run_id": "run-child", "child_seed": 9090},
+            )
+        assert status == 200
+
+        status, nations_payload = _request("GET", f"{server.base_url}/runs/run-child/nations?limit=300")
+        assert status == 200
+        assert nations_payload["nations"]
+        assert any(item["rollover_carried_count"] > 0 for item in nations_payload["nations"])
+        assert any(item["planner_generated_count"] + item["manual_override_count"] > 0 for item in nations_payload["nations"])
 
 def test_simulation_endpoints_and_snapshot_queries_work(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'api-sim.db'}"

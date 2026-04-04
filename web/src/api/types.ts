@@ -134,6 +134,59 @@ export type RunPlayerDetail = {
   talent_sequence: number | null
 }
 
+export type RunNationSummaryItem = {
+  country_code: string
+  country_name: string | null
+  total_players: number
+  average_overall: number
+  average_age: number
+  top_band_count: number
+  manual_override_count: number
+  planner_generated_count: number
+  rollover_carried_count: number
+  top_player_id: string | null
+  top_player_name: string | null
+  top_player_overall: number | null
+}
+
+export type RunNationsSummaryResponse = {
+  run_id: string
+  total: number
+  limit: number
+  offset: number
+  nations: RunNationSummaryItem[]
+}
+
+export type RunNationDetail = {
+  run_id: string
+  country_code: string
+  country_name: string | null
+  total_players: number
+  average_overall: number
+  average_age: number
+  top_band_count: number
+  manual_override_count: number
+  planner_generated_count: number
+  rollover_carried_count: number
+  average_visible_stats: {
+    technique: number
+    movement: number
+    physical: number
+    mental: number
+  }
+  source_mix: Record<string, number>
+  band_distribution: Array<{ band: string; count: number }>
+  top_players: Array<{
+    player_id: string
+    name: string
+    age: number
+    overall: number
+    source_type: 'rollover_carried' | 'planner_generated' | 'manual_override'
+    quality_band: string | null
+    is_top_band: boolean
+  }>
+}
+
 export type RunSourceType = 'fresh_seed' | 'rollover_bootstrap'
 export type LegacyRunSourceType = 'new_run' | 'bootstrap' | 'bootstrapped_rollover'
 export type RunSourceTypeLike = RunSourceType | LegacyRunSourceType | (string & {})

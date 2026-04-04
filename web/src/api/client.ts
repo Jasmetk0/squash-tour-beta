@@ -47,6 +47,8 @@ import type {
   RunSummary,
   RunPlayerDetail,
   RunPlayersListResponse,
+  RunNationDetail,
+  RunNationsSummaryResponse,
   SeasonStateResponse,
   SimulateResponse,
   WildcardCandidatesResponse,
@@ -229,6 +231,23 @@ export function listRunPlayers(
 
 export function getRunPlayerDetail(runId: string, playerId: string): Promise<RunPlayerDetail> {
   return request(`/runs/${encodeURIComponent(runId)}/players/${encodeURIComponent(playerId)}`)
+}
+
+export function listRunNations(
+  runId: string,
+  params?: { search?: string; sort?: string; limit?: number; offset?: number }
+): Promise<RunNationsSummaryResponse> {
+  const query = new URLSearchParams()
+  if (params?.search) query.set('search', params.search)
+  if (params?.sort) query.set('sort', params.sort)
+  if (typeof params?.limit === 'number') query.set('limit', String(params.limit))
+  if (typeof params?.offset === 'number') query.set('offset', String(params.offset))
+  const suffix = query.size ? `?${query.toString()}` : ''
+  return request(`/runs/${encodeURIComponent(runId)}/nations${suffix}`)
+}
+
+export function getRunNationDetail(runId: string, countryCode: string, topLimit = 10): Promise<RunNationDetail> {
+  return request(`/runs/${encodeURIComponent(runId)}/nations/${encodeURIComponent(countryCode)}?top_limit=${topLimit}`)
 }
 
 function simulate<T>(runId: string, suffix: string): Promise<T> {

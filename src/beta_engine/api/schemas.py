@@ -116,6 +116,7 @@ class RunTalentPlanCountryAllocationResponse(BaseModel):
     quality_weights: dict[str, float]
     actual_band_counts: dict[str, int]
     bias_profile: dict[str, float]
+    dampener: dict[str, object] = Field(default_factory=dict)
 
 
 class RunTalentPlanSummaryResponse(BaseModel):
@@ -590,6 +591,7 @@ class CountryTalentYearPreviewResponse(BaseModel):
     quality_weights: dict[str, float]
     actual_band_counts: dict[str, int]
     bias_profile: dict[str, float]
+    dampener: dict[str, object] = Field(default_factory=dict)
 
 
 class TalentClassYearPreviewResponse(BaseModel):

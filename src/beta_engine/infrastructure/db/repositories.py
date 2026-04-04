@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from sqlalchemy import Engine, Select, func, select, text
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 
 from beta_engine.application.season_models import RaceSnapshot, RankingSnapshot, SeasonState, TournamentSimulationResult
@@ -163,6 +164,7 @@ class PersistedRunTalentCountryAllocationRecord:
     quality_weights: dict[str, float]
     actual_band_counts: dict[str, int]
     bias_profile: dict[str, float]
+    dampener: dict[str, object]
 
 
 @dataclass(frozen=True)
@@ -206,6 +208,11 @@ class SimulationPersistenceRepository:
                 connection=connection,
                 table_name="run_generated_player_provenance",
                 column_name="override_id",
+            )
+            self._ensure_text_column(
+                connection=connection,
+                table_name="run_talent_country_allocations",
+                column_name="dampener_json",
             )
 
     @staticmethod
@@ -522,6 +529,7 @@ class SimulationPersistenceRepository:
                         quality_weights_json=_to_json(record.quality_weights),
                         actual_band_counts_json=_to_json(record.actual_band_counts),
                         bias_profile_json=_to_json(record.bias_profile),
+                        dampener_json=_to_json(record.dampener),
                     )
                 )
 
@@ -544,6 +552,7 @@ class SimulationPersistenceRepository:
                     quality_weights=_from_json(model.quality_weights_json),
                     actual_band_counts=_from_json(model.actual_band_counts_json),
                     bias_profile=_from_json(model.bias_profile_json),
+                    dampener=_from_json(model.dampener_json or "{}"),
                 )
                 for model in session.execute(statement).scalars().all()
             ]
@@ -602,6 +611,10 @@ class SimulationPersistenceRepository:
                 statement = statement.offset(offset)
             if limit is not None:
                 statement = statement.limit(limit)
+            try:
+                models = session.execute(statement).scalars().all()
+            except OperationalError:
+                return []
             return [
                 PersistedGeneratedPlayerProvenanceRecord(
                     run_id=model.run_id,
@@ -649,6 +662,49 @@ class SimulationPersistenceRepository:
                 source_type=model.source_type or "planner_generated",
                 override_id=model.override_id,
             )
+
+    def list_generated_player_provenance_history(
+        self,
+        *,
+        season_lt: int,
+        season_gte: int | None = None,
+        country_code: str | None = None,
+        source_type: str | None = None,
+    ) -> list[PersistedGeneratedPlayerProvenanceRecord]:
+        with self._session_factory() as session:
+            statement: Select[tuple[RunGeneratedPlayerProvenanceModel]] = select(RunGeneratedPlayerProvenanceModel).where(
+                RunGeneratedPlayerProvenanceModel.season < season_lt
+            )
+            if season_gte is not None:
+                statement = statement.where(RunGeneratedPlayerProvenanceModel.season >= season_gte)
+            if country_code is not None:
+                statement = statement.where(RunGeneratedPlayerProvenanceModel.country_code == country_code.upper())
+            if source_type is not None:
+                statement = statement.where(RunGeneratedPlayerProvenanceModel.source_type == source_type)
+            statement = statement.order_by(
+                RunGeneratedPlayerProvenanceModel.season.desc(),
+                RunGeneratedPlayerProvenanceModel.country_code.asc(),
+                RunGeneratedPlayerProvenanceModel.player_id.asc(),
+            )
+            try:
+                models = session.execute(statement).scalars().all()
+            except OperationalError:
+                return []
+            return [
+                PersistedGeneratedPlayerProvenanceRecord(
+                    run_id=model.run_id,
+                    season=model.season,
+                    player_id=model.player_id,
+                    country_code=model.country_code,
+                    talent_sequence=model.talent_sequence,
+                    talent_seed_value=(int(model.talent_seed_value) if model.talent_seed_value is not None else None),
+                    quality_band=model.quality_band,
+                    is_top_band=model.is_top_band > 0,
+                    source_type=model.source_type or "planner_generated",
+                    override_id=model.override_id,
+                )
+                for model in models
+            ]
 
     def list_table_names(self) -> list[str]:
         with self._session_factory() as session:

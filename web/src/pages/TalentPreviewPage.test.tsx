@@ -58,6 +58,11 @@ describe('TalentPreviewPage', () => {
             professionalism_tendency: 0.1,
             technical_vs_physical_lean: 0.05,
             mental_sharpness_tendency: 0.02
+          },
+          dampener: {
+            active: false,
+            recent_greatness_score: 0,
+            multipliers: { generational_talent: 1, special_prospect: 1 }
           }
         }
       ]

@@ -36,6 +36,34 @@ class CountryGenerationBiasProfile(BaseModel):
     mental_sharpness_tendency: float = Field(ge=-0.3, le=0.3)
 
 
+
+
+class DampenerContributionSnapshot(BaseModel):
+    """Inspectable signal contribution used by recent-greatness dampener."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    source: str
+    season: int
+    quality_band: TalentQualityBand
+    reference_id: str | None = None
+    raw_weight: float = Field(ge=0.0)
+    decay_factor: float = Field(ge=0.0, le=1.0)
+    effective_weight: float = Field(ge=0.0)
+
+
+class CountryDampenerSnapshot(BaseModel):
+    """Country-scoped dampener diagnostics captured with annual talent plan."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    recent_greatness_score: float = Field(ge=0.0)
+    signal_count: int = Field(ge=0)
+    multipliers: dict[TalentQualityBand, float]
+    active: bool
+    contributions: list[DampenerContributionSnapshot] = Field(default_factory=list)
+
+
 class CountryTalentAllocation(BaseModel):
     """Deterministic annual talent allocation output for one country."""
 
@@ -45,6 +73,7 @@ class CountryTalentAllocation(BaseModel):
     planned_count: int = Field(ge=0)
     quality_weights: dict[TalentQualityBand, float]
     bias_profile: CountryGenerationBiasProfile
+    dampener: CountryDampenerSnapshot
     talents: list[TalentSeed]
 
 

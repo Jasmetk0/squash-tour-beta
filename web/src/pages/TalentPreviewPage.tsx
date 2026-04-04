@@ -107,6 +107,7 @@ export function TalentPreviewPage(): JSX.Element {
                   <th>Generational</th>
                   <th>Top-band weight</th>
                   <th>Bias</th>
+                  <th>Dampener</th>
                 </tr>
               </thead>
               <tbody>
@@ -126,6 +127,7 @@ export function TalentPreviewPage(): JSX.Element {
                       {item.bias_profile.technical_vs_physical_lean?.toFixed(2) ?? '0.00'} / M{' '}
                       {item.bias_profile.mental_sharpness_tendency?.toFixed(2) ?? '0.00'}
                     </td>
+                    <td>{formatDampener(item.dampener)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -235,4 +237,14 @@ function formatPercent(value: number): string {
 function formatApiError(error: unknown): string {
   if (error instanceof ApiError) return `${error.status} ${error.message}`
   return String(error)
+}
+
+function formatDampener(raw: Record<string, unknown>): string {
+  const score = Number(raw.recent_greatness_score ?? 0)
+  const active = Boolean(raw.active)
+  if (!active || score <= 0) return 'neutral'
+  const multipliers = (raw.multipliers ?? {}) as Record<string, unknown>
+  const gen = Number(multipliers.generational_talent ?? 1)
+  const special = Number(multipliers.special_prospect ?? 1)
+  return `score ${score.toFixed(2)} · gen ${gen.toFixed(2)} · special ${special.toFixed(2)}`
 }

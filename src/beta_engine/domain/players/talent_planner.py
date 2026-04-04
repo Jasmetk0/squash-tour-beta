@@ -12,8 +12,10 @@ from beta_engine.domain.players.talent_dampener import (
 )
 from beta_engine.domain.players.talent_models import (
     AnnualTalentClassPlan,
+    CountryDampenerSnapshot,
     CountryGenerationBiasProfile,
     CountryTalentAllocation,
+    DampenerContributionSnapshot,
     TalentQualityBand,
     TalentSeed,
 )
@@ -37,7 +39,7 @@ class AnnualTalentClassPlanner:
         for country in sorted(countries, key=lambda item: item.code):
             country_count = allocations_by_code[country.code]
             country_rng = root_rng.branch(SeedScope.SEASON, "country", country.code)
-            quality_weights = self._quality_weights(country=country, year=year)
+            quality_weights, dampener_snapshot = self._quality_weights(country=country, year=year)
             talents = self._build_talent_seeds(
                 country=country,
                 year=year,
@@ -51,6 +53,7 @@ class AnnualTalentClassPlanner:
                     planned_count=country_count,
                     quality_weights=quality_weights,
                     bias_profile=self._bias_profile(country),
+                    dampener=dampener_snapshot,
                     talents=talents,
                 )
             )
@@ -91,7 +94,7 @@ class AnnualTalentClassPlanner:
 
         return allocation
 
-    def _quality_weights(self, *, country: Country, year: int) -> dict[TalentQualityBand, float]:
+    def _quality_weights(self, *, country: Country, year: int) -> tuple[dict[TalentQualityBand, float], CountryDampenerSnapshot]:
         quality_score = (
             country.system_quality * 0.42
             + country.squash_tradition * 0.36
@@ -109,7 +112,7 @@ class AnnualTalentClassPlanner:
         probabilities = {
             TalentQualityBand.GENERATIONAL: self._apply_dampener(country.code, year, TalentQualityBand.GENERATIONAL, generational),
             TalentQualityBand.SPECIAL: self._apply_dampener(country.code, year, TalentQualityBand.SPECIAL, special),
-            TalentQualityBand.ELITE: elite,
+            TalentQualityBand.ELITE: self._apply_dampener(country.code, year, TalentQualityBand.ELITE, elite),
             TalentQualityBand.STRONG: strong,
         }
         used = sum(probabilities.values())
@@ -117,7 +120,27 @@ class AnnualTalentClassPlanner:
         probabilities[TalentQualityBand.SOLID] = solid
 
         total = sum(probabilities.values())
-        return {band: value / total for band, value in probabilities.items()}
+        normalized = {band: value / total for band, value in probabilities.items()}
+        diagnostics = self._dampener.diagnostics(country_code=country.code, year=year)
+        snapshot = CountryDampenerSnapshot(
+            recent_greatness_score=diagnostics.recent_greatness_score,
+            signal_count=diagnostics.signal_count,
+            multipliers=diagnostics.multipliers,
+            active=diagnostics.active,
+            contributions=[
+                DampenerContributionSnapshot(
+                    source=item.source,
+                    season=item.season,
+                    quality_band=item.quality_band,
+                    reference_id=item.reference_id,
+                    raw_weight=item.raw_weight,
+                    decay_factor=item.decay_factor,
+                    effective_weight=item.effective_weight,
+                )
+                for item in diagnostics.contributions
+            ],
+        )
+        return normalized, snapshot
 
     def _build_talent_seeds(
         self,

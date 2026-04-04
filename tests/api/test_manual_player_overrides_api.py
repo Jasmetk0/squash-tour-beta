@@ -235,3 +235,46 @@ def test_run_generation_provenance_exposes_manual_override_source(tmp_path) -> N
         manual_rows = [player for player in players_payload["players"] if player["source_type"] == "manual_override"]
         assert len(manual_rows) == 1
         assert manual_rows[0]["override_id"] == "aaa-legend-2027"
+
+
+def test_talent_plan_diagnostics_expose_exceptional_override_dampener_signal(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(
+        overrides_path,
+        {
+            "overrides": [
+                {
+                    "override_id": "aaa-legend-2026",
+                    "season": 2026,
+                    "country_code": "AAA",
+                    "player_name": "Historic Legend",
+                    "age": 19,
+                    "profile_tier": "generational",
+                    "enabled": True,
+                    "is_exceptional": True,
+                }
+            ]
+        },
+    )
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'manual-dampener-diag.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/runs",
+            {"run_id": "manual-dampener", "seed": 99, "season": 2027},
+        )
+        assert status == 201
+
+        status, plan = _request("GET", f"{server.base_url}/runs/manual-dampener/world/talent-plan")
+        assert status == 200
+        assert plan["countries"]
+        dampener = plan["countries"][0]["dampener"]
+        assert dampener["active"] is True
+        assert dampener["recent_greatness_score"] > 0
+        assert any(item["reference_id"] == "aaa-legend-2026" for item in dampener["contributions"])

@@ -144,6 +144,7 @@ def test_run_world_generation_endpoints_return_persisted_plan_and_provenance(tmp
         assert plan_payload["total_talents"] > 0
         assert plan_payload["countries"]
         assert sum(country["planned_count"] for country in plan_payload["countries"]) == plan_payload["total_talents"]
+        assert "dampener" in plan_payload["countries"][0]
 
         status, players_payload = _request("GET", f"{server.base_url}/runs/run-gen/world/generated-players")
         assert status == 200

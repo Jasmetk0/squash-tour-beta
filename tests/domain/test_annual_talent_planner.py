@@ -4,7 +4,9 @@ from beta_engine.domain.countries import Country
 from beta_engine.domain.players import (
     AnnualTalentClassPlanner,
     NeutralRecentGreatnessDampener,
+    RecentGreatnessSignal,
     TalentQualityBand,
+    WeightedRecentGreatnessDampener,
 )
 
 
@@ -138,3 +140,56 @@ def test_neutral_dampener_is_default_safe_and_neutral() -> None:
     assert dampener.quality_multiplier(country_code="DMP", year=2040, band=TalentQualityBand.GENERATIONAL) == 1.0
     assert plan.total_talents > 0
     assert plan.allocations[0].country_code == "DMP"
+    assert plan.allocations[0].dampener.active is False
+
+
+def test_weighted_dampener_lowers_top_band_odds_for_country_only() -> None:
+    country_a = _country(code="AAA", population=80_000_000, wealth_support=4, squash_popularity=4, squash_tradition=4, system_quality=4)
+    country_b = _country(code="BBB", population=80_000_000, wealth_support=4, squash_popularity=4, squash_tradition=4, system_quality=4)
+    baseline = AnnualTalentClassPlanner()
+    dampened = AnnualTalentClassPlanner(
+        dampener=WeightedRecentGreatnessDampener(
+            signals=(
+                RecentGreatnessSignal(
+                    country_code="AAA",
+                    season=2035,
+                    source="manual_override",
+                    quality_band=TalentQualityBand.GENERATIONAL,
+                    raw_weight=2.6,
+                    reference_id="aaa-legend",
+                ),
+            )
+        )
+    )
+
+    base = baseline.plan(year=2037, seed=123, countries=[country_a, country_b])
+    mod = dampened.plan(year=2037, seed=123, countries=[country_a, country_b])
+    base_by = {item.country_code: item for item in base.allocations}
+    mod_by = {item.country_code: item for item in mod.allocations}
+
+    assert mod_by["AAA"].quality_weights[TalentQualityBand.GENERATIONAL] < base_by["AAA"].quality_weights[TalentQualityBand.GENERATIONAL]
+    assert mod_by["AAA"].quality_weights[TalentQualityBand.SPECIAL] < base_by["AAA"].quality_weights[TalentQualityBand.SPECIAL]
+    assert mod_by["BBB"].quality_weights[TalentQualityBand.GENERATIONAL] == base_by["BBB"].quality_weights[TalentQualityBand.GENERATIONAL]
+
+
+def test_weighted_dampener_decays_and_has_floor() -> None:
+    dampener = WeightedRecentGreatnessDampener(
+        signals=(
+            RecentGreatnessSignal(
+                country_code="AAA",
+                season=2030,
+                source="manual_override",
+                quality_band=TalentQualityBand.GENERATIONAL,
+                raw_weight=3.2,
+                reference_id="aaa-goat",
+            ),
+        )
+    )
+
+    early = dampener.quality_multiplier(country_code="AAA", year=2031, band=TalentQualityBand.GENERATIONAL)
+    late = dampener.quality_multiplier(country_code="AAA", year=2037, band=TalentQualityBand.GENERATIONAL)
+    beyond = dampener.quality_multiplier(country_code="AAA", year=2045, band=TalentQualityBand.GENERATIONAL)
+
+    assert early < late < 1.0
+    assert early >= 0.28
+    assert beyond == 1.0

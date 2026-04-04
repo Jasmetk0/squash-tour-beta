@@ -555,6 +555,7 @@ export type TalentClassPreviewCountry = {
   quality_weights: Record<string, number>
   actual_band_counts: Record<string, number>
   bias_profile: Record<string, number>
+  dampener: Record<string, unknown>
 }
 
 export type TalentClassYearPreviewResponse = {

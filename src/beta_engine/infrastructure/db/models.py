@@ -220,6 +220,7 @@ class RunTalentCountryAllocationModel(Base):
     quality_weights_json: Mapped[str] = mapped_column(Text, nullable=False)
     actual_band_counts_json: Mapped[str] = mapped_column(Text, nullable=False)
     bias_profile_json: Mapped[str] = mapped_column(Text, nullable=False)
+    dampener_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
 
 
 class RunGeneratedPlayerProvenanceModel(Base):

@@ -2,11 +2,18 @@
 
 from beta_engine.domain.players.generation import PlayerGenerator
 from beta_engine.domain.players.models import HiddenCareerTraits, Player
-from beta_engine.domain.players.talent_dampener import NeutralRecentGreatnessDampener, RecentGreatnessDampener
+from beta_engine.domain.players.talent_dampener import (
+    NeutralRecentGreatnessDampener,
+    RecentGreatnessDampener,
+    RecentGreatnessSignal,
+    WeightedRecentGreatnessDampener,
+)
 from beta_engine.domain.players.talent_models import (
     AnnualTalentClassPlan,
+    CountryDampenerSnapshot,
     CountryGenerationBiasProfile,
     CountryTalentAllocation,
+    DampenerContributionSnapshot,
     ManualPlayerAttributeOverrides,
     ManualPlayerHiddenTraitOverrides,
     ManualPlayerOverride,
@@ -25,6 +32,8 @@ __all__ = [
     "AnnualTalentClassPlan",
     "CountryTalentAllocation",
     "CountryGenerationBiasProfile",
+    "CountryDampenerSnapshot",
+    "DampenerContributionSnapshot",
     "ManualPlayerProfileTier",
     "ManualPlayerAttributeOverrides",
     "ManualPlayerHiddenTraitOverrides",
@@ -34,4 +43,6 @@ __all__ = [
     "TalentSeed",
     "RecentGreatnessDampener",
     "NeutralRecentGreatnessDampener",
+    "RecentGreatnessSignal",
+    "WeightedRecentGreatnessDampener",
 ]

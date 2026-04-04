@@ -24,6 +24,7 @@ class CountryTalentYearPreview:
     quality_weights: dict[str, float]
     actual_band_counts: dict[str, int]
     bias_profile: dict[str, float]
+    dampener: dict[str, object]
 
 
 @dataclass(frozen=True)
@@ -90,6 +91,7 @@ class WorldTalentPreviewService:
                     quality_weights=quality_weights,
                     actual_band_counts=band_counts,
                     bias_profile=allocation.bias_profile.model_dump(),
+                    dampener=allocation.dampener.model_dump(mode="json"),
                 )
             )
 

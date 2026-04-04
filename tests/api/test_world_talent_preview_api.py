@@ -101,6 +101,8 @@ def test_single_year_preview_is_deterministic_for_same_seed_and_year(tmp_path) -
     assert status_right == 200
     assert left == right
     assert left["total_talents"] == sum(item["planned_count"] for item in left["countries"])
+    assert "dampener" in left["countries"][0]
+    assert left["countries"][0]["dampener"]["active"] is False
 
 
 def test_multi_year_summary_aggregates_counts_and_rates(tmp_path) -> None:

@@ -36,7 +36,9 @@ from beta_engine.domain.players import (
     ManualPlayerProfileTier,
     Player,
     PlayerGenerator,
+    RecentGreatnessSignal,
     TalentQualityBand,
+    WeightedRecentGreatnessDampener,
 )
 from beta_engine.domain.tournaments import CalendarEvent
 from beta_engine.infrastructure.db import SimulationPersistenceRepository, SimulationRunInfo
@@ -195,6 +197,7 @@ class RunTalentPlanCountryAllocation:
     quality_weights: dict[str, float]
     actual_band_counts: dict[str, int]
     bias_profile: dict[str, float]
+    dampener: dict[str, object]
 
 
 @dataclass(frozen=True)
@@ -496,6 +499,7 @@ class SimulationApiService:
                     quality_weights=country.quality_weights,
                     actual_band_counts=country.actual_band_counts,
                     bias_profile=country.bias_profile,
+                    dampener=country.dampener,
                 )
                 for country in countries
             ],
@@ -1636,7 +1640,7 @@ class SimulationApiService:
         list[PersistedRunTalentCountryAllocationRecord],
         list[PersistedGeneratedPlayerProvenanceRecord],
     ]:
-        planner = AnnualTalentClassPlanner()
+        planner = AnnualTalentClassPlanner(dampener=self._build_recent_greatness_dampener(season=season, include_history=run_id != "ephemeral-preview"))
         plan = planner.plan(year=season, seed=seed, countries=countries)
         generator = PlayerGenerator(
             rng=DeterministicRng(seed),
@@ -1688,6 +1692,7 @@ class SimulationApiService:
                     quality_weights={band.value: float(weight) for band, weight in allocation.quality_weights.items()},
                     actual_band_counts=band_counts,
                     bias_profile=allocation.bias_profile.model_dump(),
+                    dampener=allocation.dampener.model_dump(mode="json"),
                 )
             )
 
@@ -1750,6 +1755,83 @@ class SimulationApiService:
             config_fingerprint=config_fingerprint,
         )
         return players, plan_record, country_records, provenance_records
+
+    def _build_recent_greatness_dampener(self, *, season: int, include_history: bool) -> WeightedRecentGreatnessDampener:
+        if not include_history:
+            return WeightedRecentGreatnessDampener(signals=tuple())
+
+        signals: list[RecentGreatnessSignal] = []
+
+        for override in self.manual_overrides_service.list_overrides(enabled=True):
+            if override.season >= season:
+                continue
+            signals.append(
+                RecentGreatnessSignal(
+                    country_code=override.country_code,
+                    season=override.season,
+                    source="manual_override",
+                    quality_band=self._manual_quality_band(override),
+                    raw_weight=self._manual_override_signal_weight(override),
+                    reference_id=override.override_id,
+                )
+            )
+
+        historical = self.repository.list_generated_player_provenance_history(
+            season_lt=season,
+            season_gte=season - 8,
+            source_type="planner_generated",
+        )
+        seen: set[tuple[int, str, str, str]] = set()
+        for record in historical:
+            if record.quality_band not in {
+                TalentQualityBand.GENERATIONAL.value,
+                TalentQualityBand.SPECIAL.value,
+                TalentQualityBand.ELITE.value,
+            }:
+                continue
+            dedupe_key = (record.season, record.country_code, record.quality_band or "", record.player_id)
+            if dedupe_key in seen:
+                continue
+            seen.add(dedupe_key)
+            signals.append(
+                RecentGreatnessSignal(
+                    country_code=record.country_code,
+                    season=record.season,
+                    source="planner_generated",
+                    quality_band=TalentQualityBand(record.quality_band),
+                    raw_weight=self._planner_history_signal_weight(TalentQualityBand(record.quality_band)),
+                    reference_id=record.player_id,
+                )
+            )
+
+        return WeightedRecentGreatnessDampener(signals=tuple(sorted(signals, key=lambda item: (item.country_code, item.season, item.source, item.reference_id or ""))))
+
+    @staticmethod
+    def _manual_override_signal_weight(override: ManualPlayerOverride) -> float:
+        quality = SimulationApiService._manual_quality_band(override)
+        if override.is_exceptional and quality == TalentQualityBand.GENERATIONAL:
+            return 2.6
+        if override.is_exceptional and quality == TalentQualityBand.SPECIAL:
+            return 1.9
+        if override.is_exceptional:
+            return 1.4
+        if quality == TalentQualityBand.GENERATIONAL:
+            return 1.1
+        if quality == TalentQualityBand.SPECIAL:
+            return 0.8
+        if quality == TalentQualityBand.ELITE:
+            return 0.35
+        return 0.0
+
+    @staticmethod
+    def _planner_history_signal_weight(quality_band: TalentQualityBand) -> float:
+        if quality_band == TalentQualityBand.GENERATIONAL:
+            return 1.05
+        if quality_band == TalentQualityBand.SPECIAL:
+            return 0.55
+        if quality_band == TalentQualityBand.ELITE:
+            return 0.16
+        return 0.0
 
     @staticmethod
     def _to_generated_player_provenance(record: PersistedGeneratedPlayerProvenanceRecord) -> GeneratedPlayerProvenance:

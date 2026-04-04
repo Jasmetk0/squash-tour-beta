@@ -64,10 +64,12 @@ export type GeneratedPlayerProvenance = {
   season: number
   player_id: string
   country_code: string
-  talent_sequence: number
-  talent_seed_value: number
-  quality_band: string
+  talent_sequence: number | null
+  talent_seed_value: number | null
+  quality_band: string | null
   is_top_band: boolean
+  source_type: 'planner_generated' | 'manual_override'
+  override_id: string | null
 }
 
 export type GeneratedPlayerProvenanceListResponse = {
@@ -501,6 +503,50 @@ export type CountriesMetadataResponse = {
 }
 
 export type CountryUpsertPayload = CountryRecord
+
+export type ManualPlayerAttributeOverrides = {
+  technique?: number | null
+  movement?: number | null
+  physical?: number | null
+  mental?: number | null
+  consistency?: number | null
+  clutch?: number | null
+  recovery?: number | null
+}
+
+export type ManualPlayerHiddenTraitOverrides = {
+  potential_ceiling?: number | null
+  growth_curve?: string | null
+  professionalism?: number | null
+  ambition?: number | null
+  travel_tolerance?: number | null
+  schedule_aggression?: number | null
+  injury_proneness?: number | null
+  resilience?: number | null
+}
+
+export type ManualPlayerOverrideRecord = {
+  override_id: string
+  season: number
+  country_code: string
+  player_name: string
+  player_slug?: string | null
+  player_id?: string | null
+  age: number
+  profile_tier: 'strong' | 'elite' | 'special' | 'generational'
+  quality_band_override?: string | null
+  attribute_overrides?: ManualPlayerAttributeOverrides | null
+  hidden_trait_overrides?: ManualPlayerHiddenTraitOverrides | null
+  is_exceptional: boolean
+  enabled: boolean
+  notes?: string | null
+}
+
+export type ManualPlayerOverridesListResponse = {
+  overrides: ManualPlayerOverrideRecord[]
+}
+
+export type ManualPlayerOverrideUpsertPayload = ManualPlayerOverrideRecord
 
 export type TalentClassPreviewCountry = {
   country_code: string

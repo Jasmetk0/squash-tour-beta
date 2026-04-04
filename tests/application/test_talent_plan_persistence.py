@@ -34,6 +34,7 @@ def test_initialize_run_persists_talent_plan_and_provenance(tmp_path) -> None:
     assert len(provenance) == plan.total_talents
     assert {row.player_id for row in provenance}
     assert all(row.run_id == "run-a" for row in provenance)
+    assert all(row.source_type == "planner_generated" for row in provenance)
 
 
 def test_same_seed_and_config_produces_identical_persisted_plan_and_provenance(tmp_path) -> None:

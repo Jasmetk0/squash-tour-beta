@@ -134,15 +134,63 @@ class GeneratedPlayerProvenanceResponse(BaseModel):
     season: int
     player_id: str
     country_code: str
-    talent_sequence: int
-    talent_seed_value: int
-    quality_band: str
+    talent_sequence: int | None = None
+    talent_seed_value: int | None = None
+    quality_band: str | None = None
     is_top_band: bool
+    source_type: Literal["planner_generated", "manual_override"]
+    override_id: str | None = None
 
 
 class GeneratedPlayerProvenanceListResponse(BaseModel):
     run_id: str
     players: list[GeneratedPlayerProvenanceResponse] = Field(default_factory=list)
+
+
+class ManualPlayerAttributeOverridesRequest(BaseModel):
+    technique: int | None = Field(default=None, ge=20, le=99)
+    movement: int | None = Field(default=None, ge=20, le=99)
+    physical: int | None = Field(default=None, ge=20, le=99)
+    mental: int | None = Field(default=None, ge=20, le=99)
+    consistency: int | None = Field(default=None, ge=20, le=99)
+    clutch: int | None = Field(default=None, ge=20, le=99)
+    recovery: int | None = Field(default=None, ge=20, le=99)
+
+
+class ManualPlayerHiddenTraitOverridesRequest(BaseModel):
+    potential_ceiling: int | None = Field(default=None, ge=55, le=99)
+    growth_curve: str | None = None
+    professionalism: float | None = Field(default=None, ge=0.0, le=1.0)
+    ambition: float | None = Field(default=None, ge=0.0, le=1.0)
+    travel_tolerance: float | None = Field(default=None, ge=0.0, le=1.0)
+    schedule_aggression: float | None = Field(default=None, ge=0.0, le=1.0)
+    injury_proneness: float | None = Field(default=None, ge=0.0, le=1.0)
+    resilience: float | None = Field(default=None, ge=0.0, le=1.0)
+
+
+class ManualPlayerOverrideRequest(BaseModel):
+    override_id: str = Field(min_length=1, max_length=128)
+    season: int = Field(ge=1900)
+    country_code: str = Field(min_length=3, max_length=3)
+    player_name: str = Field(min_length=1, max_length=128)
+    player_slug: str | None = Field(default=None, min_length=1, max_length=64)
+    player_id: str | None = Field(default=None, min_length=1, max_length=128)
+    age: int = Field(ge=15, le=45)
+    profile_tier: Literal["strong", "elite", "special", "generational"]
+    quality_band_override: str | None = None
+    attribute_overrides: ManualPlayerAttributeOverridesRequest | None = None
+    hidden_trait_overrides: ManualPlayerHiddenTraitOverridesRequest | None = None
+    is_exceptional: bool = False
+    enabled: bool = True
+    notes: str | None = Field(default=None, max_length=512)
+
+
+class ManualPlayerOverrideResponse(ManualPlayerOverrideRequest):
+    pass
+
+
+class ManualPlayerOverridesListResponse(BaseModel):
+    overrides: list[ManualPlayerOverrideResponse] = Field(default_factory=list)
 
 
 class SimulateResponse(BaseModel):

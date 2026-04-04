@@ -125,6 +125,8 @@ export function WorldGenerationPage(): JSX.Element {
               <tr>
                 <th>Player ID</th>
                 <th>Country</th>
+                <th>Source</th>
+                <th>Override ID</th>
                 <th>Band</th>
                 <th>Sequence</th>
                 <th>Talent seed</th>
@@ -136,6 +138,8 @@ export function WorldGenerationPage(): JSX.Element {
                 <tr key={player.player_id}>
                   <td>{player.player_id}</td>
                   <td>{player.country_code}</td>
+                  <td>{player.source_type}</td>
+                  <td>{player.override_id ?? '—'}</td>
                   <td>{player.quality_band}</td>
                   <td>{player.talent_sequence}</td>
                   <td>{player.talent_seed_value}</td>

@@ -12,7 +12,12 @@ DEV_ALLOWED_ORIGINS = [
 ]
 
 
-def create_app(*, database_url: str | None = None, countries_config_path: str | None = None) -> FastAPI:
+def create_app(
+    *,
+    database_url: str | None = None,
+    countries_config_path: str | None = None,
+    manual_player_overrides_config_path: str | None = None,
+) -> FastAPI:
     app = FastAPI(title="Squash Tour Beta Engine", version="0.1.0")
     app.add_middleware(
         CORSMiddleware,
@@ -24,6 +29,8 @@ def create_app(*, database_url: str | None = None, countries_config_path: str | 
     app.state.runtime = build_runtime(database_url=database_url)
     if countries_config_path is not None:
         app.state.countries_config_path = countries_config_path
+    if manual_player_overrides_config_path is not None:
+        app.state.manual_player_overrides_config_path = manual_player_overrides_config_path
     app.include_router(api_router)
     return app
 

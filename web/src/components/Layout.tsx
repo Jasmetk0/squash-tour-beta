@@ -4,7 +4,8 @@ const baseNav = [
   { to: '/', label: 'Dashboard' },
   { to: '/runs', label: 'Runs' },
   { to: '/world/countries', label: 'Countries Editor' },
-  { to: '/world/talent-preview', label: 'Talent Preview' }
+  { to: '/world/talent-preview', label: 'Talent Preview' },
+  { to: '/world/manual-player-overrides', label: 'Manual Player Overrides' }
 ]
 
 export function Layout(): JSX.Element {

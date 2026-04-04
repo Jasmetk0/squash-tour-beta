@@ -50,7 +50,9 @@ describe('WorldGenerationPage', () => {
           talent_sequence: 1,
           talent_seed_value: 123,
           quality_band: 'elite_prospect',
-          is_top_band: true
+          is_top_band: true,
+          source_type: 'planner_generated',
+          override_id: null
         }
       ]
     })

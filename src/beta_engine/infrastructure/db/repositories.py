@@ -171,10 +171,12 @@ class PersistedGeneratedPlayerProvenanceRecord:
     season: int
     player_id: str
     country_code: str
-    talent_sequence: int
-    talent_seed_value: int
-    quality_band: str
+    talent_sequence: int | None
+    talent_seed_value: int | None
+    quality_band: str | None
     is_top_band: bool
+    source_type: str
+    override_id: str | None
 
 
 class SimulationPersistenceRepository:
@@ -194,6 +196,16 @@ class SimulationPersistenceRepository:
                 connection=connection,
                 table_name="season_state",
                 column_name="active_tournament_json",
+            )
+            self._ensure_text_column(
+                connection=connection,
+                table_name="run_generated_player_provenance",
+                column_name="source_type",
+            )
+            self._ensure_text_column(
+                connection=connection,
+                table_name="run_generated_player_provenance",
+                column_name="override_id",
             )
 
     @staticmethod
@@ -556,9 +568,11 @@ class SimulationPersistenceRepository:
                         player_id=record.player_id,
                         country_code=record.country_code,
                         talent_sequence=record.talent_sequence,
-                        talent_seed_value=str(record.talent_seed_value),
+                        talent_seed_value=(str(record.talent_seed_value) if record.talent_seed_value is not None else None),
                         quality_band=record.quality_band,
                         is_top_band=1 if record.is_top_band else 0,
+                        source_type=record.source_type,
+                        override_id=record.override_id,
                     )
                 )
 
@@ -595,9 +609,11 @@ class SimulationPersistenceRepository:
                     player_id=model.player_id,
                     country_code=model.country_code,
                     talent_sequence=model.talent_sequence,
-                    talent_seed_value=int(model.talent_seed_value),
+                    talent_seed_value=(int(model.talent_seed_value) if model.talent_seed_value is not None else None),
                     quality_band=model.quality_band,
                     is_top_band=model.is_top_band > 0,
+                    source_type=model.source_type or "planner_generated",
+                    override_id=model.override_id,
                 )
                 for model in session.execute(statement).scalars().all()
             ]
@@ -627,9 +643,11 @@ class SimulationPersistenceRepository:
                 player_id=model.player_id,
                 country_code=model.country_code,
                 talent_sequence=model.talent_sequence,
-                talent_seed_value=int(model.talent_seed_value),
+                talent_seed_value=(int(model.talent_seed_value) if model.talent_seed_value is not None else None),
                 quality_band=model.quality_band,
                 is_top_band=model.is_top_band > 0,
+                source_type=model.source_type or "planner_generated",
+                override_id=model.override_id,
             )
 
     def list_table_names(self) -> list[str]:

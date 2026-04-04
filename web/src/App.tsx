@@ -21,6 +21,7 @@ import { SeasonChainPage } from './pages/SeasonChainPage'
 import { SnapshotDetailPage } from './pages/SnapshotDetailPage'
 import { SnapshotsPage } from './pages/SnapshotsPage'
 import { TalentPreviewPage } from './pages/TalentPreviewPage'
+import { ManualPlayerOverridesPage } from './pages/ManualPlayerOverridesPage'
 import { WeekDetailPage } from './pages/WeekDetailPage'
 import { WorldGenerationPage } from './pages/WorldGenerationPage'
 
@@ -31,6 +32,7 @@ export default function App(): JSX.Element {
         <Route index element={<DashboardPage />} />
         <Route path="world/countries" element={<CountriesPage />} />
         <Route path="world/talent-preview" element={<TalentPreviewPage />} />
+        <Route path="world/manual-player-overrides" element={<ManualPlayerOverridesPage />} />
         <Route path="runs" element={<RunsPage />} />
         <Route path="runs/:runId" element={<RunPage />} />
         <Route path="runs/:runId/events" element={<EventsPage />} />

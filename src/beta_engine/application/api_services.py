@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 from beta_engine.application.finals_models import (
@@ -12,6 +12,8 @@ from beta_engine.application.finals_models import (
     PersistedFinalsResult,
 )
 from beta_engine.application.finals_service import FinalsOrchestrationService
+from beta_engine.application.countries_service import CountriesConfigService
+from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.application.persistence import SimulationPersistenceService
 from beta_engine.application.run_bootstrap_models import BootstrapNextSeasonResponse, RunLineageRecord, RunSourceSummary
 from beta_engine.application.run_bootstrap_service import NextSeasonRunBootstrapService
@@ -28,7 +30,14 @@ from beta_engine.core import DeterministicRng, SeedScope
 from beta_engine.domain.careers import CareerProgressionEngine
 from beta_engine.domain.countries import Country, CountryTalentModel
 from beta_engine.domain.entries import AcceptanceList, AcceptanceStatus, TournamentEntry
-from beta_engine.domain.players import AnnualTalentClassPlanner, Player, PlayerGenerator
+from beta_engine.domain.players import (
+    AnnualTalentClassPlanner,
+    ManualPlayerOverride,
+    ManualPlayerProfileTier,
+    Player,
+    PlayerGenerator,
+    TalentQualityBand,
+)
 from beta_engine.domain.tournaments import CalendarEvent
 from beta_engine.infrastructure.db import SimulationPersistenceRepository, SimulationRunInfo
 from beta_engine.infrastructure.db.repositories import (
@@ -39,7 +48,7 @@ from beta_engine.infrastructure.db.repositories import (
 from beta_engine.infrastructure.entry_config import load_entry_tuning_config
 from beta_engine.infrastructure.points_config import load_points_config
 from beta_engine.infrastructure.tournament_config import load_season_calendar, load_tournament_templates_config
-from beta_engine.infrastructure.world_config import load_countries_config, load_player_identity_config
+from beta_engine.infrastructure.world_config import load_player_identity_config
 from beta_engine.application.careers import SeasonRolloverService
 
 
@@ -206,10 +215,12 @@ class GeneratedPlayerProvenance:
     season: int
     player_id: str
     country_code: str
-    talent_sequence: int
-    talent_seed_value: int
-    quality_band: str
+    talent_sequence: int | None
+    talent_seed_value: int | None
+    quality_band: str | None
     is_top_band: bool
+    source_type: Literal["planner_generated", "manual_override"]
+    override_id: str | None
 
 
 @dataclass(frozen=True)
@@ -400,6 +411,8 @@ class SimulationApiService:
     """High-level API-facing service that keeps orchestration out of routers."""
 
     repository: SimulationPersistenceRepository
+    manual_overrides_service: ManualPlayerOverridesService = field(default_factory=ManualPlayerOverridesService)
+    countries_service: CountriesConfigService = field(default_factory=CountriesConfigService)
     def initialize_run(
         self,
         *,
@@ -409,7 +422,7 @@ class SimulationApiService:
         config_version: str | None,
         config_fingerprint: str | None,
     ) -> PersistedRunSummary:
-        countries_metadata = load_countries_config()
+        countries_metadata = self.countries_service.get_config()
         countries = countries_metadata.countries
         _, plan_record, country_records, provenance_records = self._build_fresh_players_and_provenance(
             run_id=run_id,
@@ -1553,7 +1566,7 @@ class SimulationApiService:
         calendar = load_season_calendar(season=season)
 
         templates = load_tournament_templates_config().templates
-        countries = load_countries_config().countries
+        countries = self.countries_service.get_config().countries
         countries_by_code = {country.code: country for country in countries}
         players = self._build_players_for_run(
             run_info=run_info,
@@ -1631,6 +1644,10 @@ class SimulationApiService:
             country_talent_model=CountryTalentModel(),
         )
         countries_by_code = {country.code: country for country in countries}
+        bias_profiles_by_country = {allocation.country_code: allocation.bias_profile for allocation in plan.allocations}
+        planner_sequence_by_country = {
+            allocation.country_code: max((talent.sequence for talent in allocation.talents), default=0) for allocation in plan.allocations
+        }
         players: list[Player] = []
         country_records: list[PersistedRunTalentCountryAllocationRecord] = []
         provenance_records: list[PersistedGeneratedPlayerProvenanceRecord] = []
@@ -1658,6 +1675,8 @@ class SimulationApiService:
                         talent_seed_value=talent.seed_value,
                         quality_band=band_key,
                         is_top_band=band_key in {"elite_prospect", "special_prospect", "generational_talent"},
+                        source_type="planner_generated",
+                        override_id=None,
                     )
                 )
             country_records.append(
@@ -1669,6 +1688,56 @@ class SimulationApiService:
                     quality_weights={band.value: float(weight) for band, weight in allocation.quality_weights.items()},
                     actual_band_counts=band_counts,
                     bias_profile=allocation.bias_profile.model_dump(),
+                )
+            )
+
+        active_manual_overrides = self.manual_overrides_service.list_overrides(season=season, enabled=True)
+        for index, override in enumerate(active_manual_overrides, start=1):
+            country = countries_by_code.get(override.country_code)
+            if country is None:
+                raise ValueError(
+                    "manual override "
+                    f"'{override.override_id}' references unknown country_code '{override.country_code}'"
+                )
+            planner_sequence_by_country[override.country_code] = planner_sequence_by_country.get(override.country_code, 0) + 1
+            manual_sequence = planner_sequence_by_country[override.country_code]
+            quality_band = self._manual_quality_band(override)
+            seed_value = DeterministicRng(seed).derive(
+                SeedScope.SEASON,
+                "manual_override_player",
+                season,
+                override.override_id,
+                index,
+            ).value
+            base_player = generator.generate_from_talent_seed(
+                country=country,
+                sequence=manual_sequence,
+                talent_seed_value=seed_value,
+                quality_band=quality_band,
+                bias_profile=bias_profiles_by_country.get(override.country_code),
+            )
+            player = self._apply_manual_override_to_player(
+                base_player=base_player,
+                override=override,
+                season=season,
+            )
+            players.append(player)
+            provenance_records.append(
+                PersistedGeneratedPlayerProvenanceRecord(
+                    run_id=run_id,
+                    season=season,
+                    player_id=player.player_id,
+                    country_code=override.country_code,
+                    talent_sequence=None,
+                    talent_seed_value=seed_value,
+                    quality_band=quality_band.value,
+                    is_top_band=quality_band in {
+                        TalentQualityBand.ELITE,
+                        TalentQualityBand.SPECIAL,
+                        TalentQualityBand.GENERATIONAL,
+                    },
+                    source_type="manual_override",
+                    override_id=override.override_id,
                 )
             )
         plan_record = PersistedRunTalentPlanRecord(
@@ -1693,14 +1762,53 @@ class SimulationApiService:
             talent_seed_value=record.talent_seed_value,
             quality_band=record.quality_band,
             is_top_band=record.is_top_band,
+            source_type=record.source_type,
+            override_id=record.override_id,
         )
 
+    @staticmethod
+    def _manual_quality_band(override: ManualPlayerOverride) -> TalentQualityBand:
+        if override.quality_band_override is not None:
+            return override.quality_band_override
+        mapping = {
+            ManualPlayerProfileTier.STRONG: TalentQualityBand.STRONG,
+            ManualPlayerProfileTier.ELITE: TalentQualityBand.ELITE,
+            ManualPlayerProfileTier.SPECIAL: TalentQualityBand.SPECIAL,
+            ManualPlayerProfileTier.GENERATIONAL: TalentQualityBand.GENERATIONAL,
+        }
+        return mapping[override.profile_tier]
+
+    @staticmethod
+    def _apply_manual_override_to_player(*, base_player: Player, override: ManualPlayerOverride, season: int) -> Player:
+        player_id = override.player_id or f"MAN-{season}-{override.country_code}-{override.override_id}".upper()
+        player = base_player.model_copy(
+            update={
+                "player_id": player_id,
+                "name": override.player_name,
+                "age": override.age,
+            }
+        )
+        if override.attribute_overrides is not None:
+            data = {k: v for k, v in override.attribute_overrides.model_dump().items() if v is not None}
+            if data:
+                player = player.model_copy(update=data)
+
+        if override.hidden_trait_overrides is not None:
+            hidden_updates = {k: v for k, v in override.hidden_trait_overrides.model_dump().items() if v is not None}
+            if hidden_updates:
+                player = player.model_copy(
+                    update={
+                        "hidden_career_traits": player.hidden_career_traits.model_copy(update=hidden_updates),
+                    }
+                )
+        return player
+
     def _build_players_by_id(self, *, seed: int, season: int) -> dict[str, Player]:
-        countries = load_countries_config().countries
+        countries = self.countries_service.get_config().countries
         return {player.player_id: player for player in self._build_players(seed=seed, season=season, countries=countries)}
 
     def _load_players_by_id_for_run(self, *, run_info: SimulationRunInfo) -> dict[str, Player]:
-        countries = load_countries_config().countries
+        countries = self.countries_service.get_config().countries
         players = self._build_players_for_run(
             run_info=run_info,
             season=run_info.season,

@@ -9,6 +9,7 @@ from fastapi import Request
 from beta_engine.application.api_services import SimulationApiService
 from beta_engine.application.config_validation_service import ConfigValidationService
 from beta_engine.application.countries_service import CountriesConfigService
+from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
 from beta_engine.infrastructure.config import load_settings
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
@@ -36,7 +37,11 @@ def get_runtime(request: Request) -> ApiRuntime:
 
 def get_simulation_api_service(request: Request) -> SimulationApiService:
     runtime = get_runtime(request)
-    return SimulationApiService(repository=runtime.repository)
+    return SimulationApiService(
+        repository=runtime.repository,
+        manual_overrides_service=get_manual_player_overrides_service(request),
+        countries_service=get_countries_config_service(request),
+    )
 
 
 def get_config_validation_service(_: Request) -> ConfigValidationService:
@@ -52,3 +57,10 @@ def get_countries_config_service(request: Request) -> CountriesConfigService:
 
 def get_world_talent_preview_service(request: Request) -> WorldTalentPreviewService:
     return WorldTalentPreviewService(countries_service=get_countries_config_service(request))
+
+
+def get_manual_player_overrides_service(request: Request) -> ManualPlayerOverridesService:
+    configured_path = getattr(request.app.state, "manual_player_overrides_config_path", None)
+    if configured_path is None:
+        return ManualPlayerOverridesService()
+    return ManualPlayerOverridesService(config_path=configured_path)

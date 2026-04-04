@@ -3,6 +3,9 @@ import type {
   BootstrapNextSeasonResponse,
   CountriesListResponse,
   CountriesMetadataResponse,
+  ManualPlayerOverrideRecord,
+  ManualPlayerOverridesListResponse,
+  ManualPlayerOverrideUpsertPayload,
   TalentClassSummaryResponse,
   TalentClassYearPreviewResponse,
   CountryRecord,
@@ -122,6 +125,41 @@ export function getTalentClassSummary(params: {
     seed: String(params.seed)
   })
   return request(`/world/talent-class/summary?${query.toString()}`)
+}
+
+export function listManualPlayerOverrides(params?: {
+  season?: number
+  country_code?: string
+  enabled?: boolean
+}): Promise<ManualPlayerOverridesListResponse> {
+  const query = new URLSearchParams()
+  if (typeof params?.season === 'number') query.set('season', String(params.season))
+  if (params?.country_code) query.set('country_code', params.country_code)
+  if (typeof params?.enabled === 'boolean') query.set('enabled', String(params.enabled))
+  const suffix = query.size ? `?${query.toString()}` : ''
+  return request(`/world/manual-player-overrides${suffix}`)
+}
+
+export function getManualPlayerOverride(overrideId: string): Promise<ManualPlayerOverrideRecord> {
+  return request(`/world/manual-player-overrides/${encodeURIComponent(overrideId)}`)
+}
+
+export function createManualPlayerOverride(payload: ManualPlayerOverrideUpsertPayload): Promise<ManualPlayerOverrideRecord> {
+  return request('/world/manual-player-overrides', { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function updateManualPlayerOverride(
+  overrideId: string,
+  payload: ManualPlayerOverrideUpsertPayload
+): Promise<ManualPlayerOverrideRecord> {
+  return request(`/world/manual-player-overrides/${encodeURIComponent(overrideId)}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  })
+}
+
+export function deleteManualPlayerOverride(overrideId: string): Promise<void> {
+  return request(`/world/manual-player-overrides/${encodeURIComponent(overrideId)}`, { method: 'DELETE' })
 }
 
 export function createRun(payload: CreateRunPayload): Promise<RunSummary> {

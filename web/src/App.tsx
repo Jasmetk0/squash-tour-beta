@@ -16,6 +16,7 @@ import { RunDiagnosticsPage } from './pages/RunDiagnosticsPage'
 import { RunPage } from './pages/RunPage'
 import { RunsPage } from './pages/RunsPage'
 import { PlannedEventDetailPage } from './pages/PlannedEventDetailPage'
+import { PlayersPage } from './pages/PlayersPage'
 import { SeasonCalendarPage } from './pages/SeasonCalendarPage'
 import { SeasonChainPage } from './pages/SeasonChainPage'
 import { SnapshotDetailPage } from './pages/SnapshotDetailPage'
@@ -40,6 +41,7 @@ export default function App(): JSX.Element {
         <Route path="runs/:runId/weeks/:week" element={<WeekDetailPage />} />
         <Route path="runs/:runId/calendar/:eventId" element={<PlannedEventDetailPage />} />
         <Route path="runs/:runId/activity" element={<ActivityPage />} />
+        <Route path="runs/:runId/players" element={<PlayersPage />} />
         <Route path="runs/:runId/diagnostics" element={<RunDiagnosticsPage />} />
         <Route path="runs/:runId/world-generation" element={<WorldGenerationPage />} />
         <Route path="runs/:runId/events/:eventId" element={<EventDetailPage />} />

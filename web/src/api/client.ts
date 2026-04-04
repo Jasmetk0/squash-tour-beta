@@ -45,6 +45,8 @@ import type {
   GeneratedPlayerProvenance,
   GeneratedPlayerProvenanceListResponse,
   RunSummary,
+  RunPlayerDetail,
+  RunPlayersListResponse,
   SeasonStateResponse,
   SimulateResponse,
   WildcardCandidatesResponse,
@@ -197,6 +199,36 @@ export function listGeneratedPlayersProvenance(
 
 export function getGeneratedPlayerProvenance(runId: string, playerId: string): Promise<GeneratedPlayerProvenance> {
   return request(`/runs/${encodeURIComponent(runId)}/world/generated-players/${encodeURIComponent(playerId)}`)
+}
+
+export function listRunPlayers(
+  runId: string,
+  params?: {
+    country_code?: string
+    source_type?: string
+    min_age?: number
+    max_age?: number
+    search?: string
+    limit?: number
+    offset?: number
+    sort?: string
+  }
+): Promise<RunPlayersListResponse> {
+  const query = new URLSearchParams()
+  if (params?.country_code) query.set('country_code', params.country_code)
+  if (params?.source_type) query.set('source_type', params.source_type)
+  if (typeof params?.min_age === 'number') query.set('min_age', String(params.min_age))
+  if (typeof params?.max_age === 'number') query.set('max_age', String(params.max_age))
+  if (params?.search) query.set('search', params.search)
+  if (typeof params?.limit === 'number') query.set('limit', String(params.limit))
+  if (typeof params?.offset === 'number') query.set('offset', String(params.offset))
+  if (params?.sort) query.set('sort', params.sort)
+  const suffix = query.size ? `?${query.toString()}` : ''
+  return request(`/runs/${encodeURIComponent(runId)}/players${suffix}`)
+}
+
+export function getRunPlayerDetail(runId: string, playerId: string): Promise<RunPlayerDetail> {
+  return request(`/runs/${encodeURIComponent(runId)}/players/${encodeURIComponent(playerId)}`)
 }
 
 function simulate<T>(runId: string, suffix: string): Promise<T> {

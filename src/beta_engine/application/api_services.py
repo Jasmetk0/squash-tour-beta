@@ -227,6 +227,69 @@ class GeneratedPlayerProvenance:
 
 
 @dataclass(frozen=True)
+class RunPlayerListItem:
+    player_id: str
+    name: str
+    country_code: str
+    age: int
+    source_type: Literal["rollover_carried", "planner_generated", "manual_override"]
+    override_id: str | None
+    quality_band: str | None
+    is_top_band: bool
+    technique: int
+    movement: int
+    physical: int
+    mental: int
+    overall: int
+
+
+@dataclass(frozen=True)
+class RunPlayerListResponse:
+    run_id: str
+    total: int
+    limit: int
+    offset: int
+    players: list[RunPlayerListItem]
+
+
+@dataclass(frozen=True)
+class RunPlayerHiddenTraitSummary:
+    potential_ceiling: int
+    growth_curve: str
+    professionalism: float
+    ambition: float
+    travel_tolerance: float
+    schedule_aggression: float
+    injury_proneness: float
+    resilience: float
+
+
+@dataclass(frozen=True)
+class RunPlayerDetail:
+    player_id: str
+    name: str
+    country_code: str
+    age: int
+    play_style: str
+    archetype: str
+    technique: int
+    movement: int
+    physical: int
+    mental: int
+    consistency: int
+    clutch: int
+    recovery: int
+    overall: int
+    hidden_traits: RunPlayerHiddenTraitSummary
+    source_type: Literal["rollover_carried", "planner_generated", "manual_override"]
+    quality_band: str | None
+    is_top_band: bool
+    override_id: str | None
+    talent_seed_value: int | None
+    talent_sequence: int | None
+
+
+@dataclass(frozen=True)
 class WildcardAssignment:
     slot_index: int
     player_id: str
@@ -530,6 +593,55 @@ class SimulationApiService:
         if record is None:
             raise KeyError(f"player_id {player_id} has no persisted generation provenance in run_id {run_id}")
         return self._to_generated_player_provenance(record)
+
+    def list_run_players(
+        self,
+        *,
+        run_id: str,
+        country_code: str | None = None,
+        source_type: str | None = None,
+        min_age: int | None = None,
+        max_age: int | None = None,
+        search: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+        sort: str = "name_asc",
+    ) -> RunPlayerListResponse:
+        run_info = self.repository.get_simulation_run(run_id=run_id)
+        if run_info is None:
+            raise KeyError(f"run_id {run_id} was not found")
+
+        players_by_id = self._load_players_by_id_for_run(run_info=run_info)
+        provenance_by_id = {item.player_id: item for item in self.list_generated_player_provenance(run_id=run_id)}
+        rows = [self._to_run_player_list_item(players_by_id[player_id], provenance_by_id.get(player_id)) for player_id in players_by_id]
+        filtered = self._filter_run_players(
+            players=rows,
+            country_code=country_code,
+            source_type=source_type,
+            min_age=min_age,
+            max_age=max_age,
+            search=search,
+        )
+        ordered = self._sort_run_players(players=filtered, sort=sort)
+        page = ordered[offset : offset + limit]
+        return RunPlayerListResponse(
+            run_id=run_id,
+            total=len(filtered),
+            limit=limit,
+            offset=offset,
+            players=page,
+        )
+
+    def get_run_player_detail(self, *, run_id: str, player_id: str) -> RunPlayerDetail:
+        run_info = self.repository.get_simulation_run(run_id=run_id)
+        if run_info is None:
+            raise KeyError(f"run_id {run_id} was not found")
+        players_by_id = self._load_players_by_id_for_run(run_info=run_info)
+        player = players_by_id.get(player_id)
+        if player is None:
+            raise KeyError(f"player_id {player_id} was not found in run_id {run_id}")
+        provenance = self.repository.get_generated_player_provenance(run_id=run_id, player_id=player_id)
+        return self._to_run_player_detail(player=player, provenance=provenance)
 
     def get_wildcard_state(self, *, run_id: str, event_id: str) -> WildcardStateResponse:
         run_info, state = self._load_run_context(run_id=run_id)
@@ -2102,6 +2214,123 @@ class SimulationApiService:
         if not sequence_part.isdigit():
             return country_code, None
         return country_code, int(sequence_part)
+
+    def _to_run_player_list_item(
+        self,
+        player: Player,
+        provenance: PersistedGeneratedPlayerProvenanceRecord | None,
+    ) -> RunPlayerListItem:
+        return RunPlayerListItem(
+            player_id=player.player_id,
+            name=player.name,
+            country_code=player.nationality,
+            age=player.age,
+            source_type=self._provenance_source_type(provenance),
+            override_id=provenance.override_id if provenance else None,
+            quality_band=provenance.quality_band if provenance else None,
+            is_top_band=provenance.is_top_band if provenance else False,
+            technique=player.technique,
+            movement=player.movement,
+            physical=player.physical,
+            mental=player.mental,
+            overall=self._player_overall(player),
+        )
+
+    @staticmethod
+    def _provenance_source_type(
+        provenance: PersistedGeneratedPlayerProvenanceRecord | None,
+    ) -> Literal["rollover_carried", "planner_generated", "manual_override"]:
+        if provenance is None:
+            return "rollover_carried"
+        source_type = _normalize_source_type(provenance.source_type)
+        if source_type not in {"rollover_carried", "planner_generated", "manual_override"}:
+            return "rollover_carried"
+        return source_type
+
+    @staticmethod
+    def _player_overall(player: Player) -> int:
+        return round((player.technique + player.movement + player.physical + player.mental) / 4)
+
+    @staticmethod
+    def _filter_run_players(
+        *,
+        players: list[RunPlayerListItem],
+        country_code: str | None,
+        source_type: str | None,
+        min_age: int | None,
+        max_age: int | None,
+        search: str | None,
+    ) -> list[RunPlayerListItem]:
+        filtered = players
+        if country_code:
+            normalized_country = country_code.strip().upper()
+            filtered = [row for row in filtered if row.country_code.upper() == normalized_country]
+        if source_type:
+            normalized_source = source_type.strip().lower()
+            filtered = [row for row in filtered if row.source_type == normalized_source]
+        if min_age is not None:
+            filtered = [row for row in filtered if row.age >= min_age]
+        if max_age is not None:
+            filtered = [row for row in filtered if row.age <= max_age]
+        if search:
+            needle = search.strip().lower()
+            filtered = [
+                row
+                for row in filtered
+                if needle in row.player_id.lower() or needle in row.name.lower()
+            ]
+        return filtered
+
+    @staticmethod
+    def _sort_run_players(*, players: list[RunPlayerListItem], sort: str) -> list[RunPlayerListItem]:
+        if sort == "age_desc":
+            return sorted(players, key=lambda row: (-row.age, row.name, row.player_id))
+        if sort == "age_asc":
+            return sorted(players, key=lambda row: (row.age, row.name, row.player_id))
+        if sort == "overall_desc":
+            return sorted(players, key=lambda row: (-row.overall, row.name, row.player_id))
+        if sort == "overall_asc":
+            return sorted(players, key=lambda row: (row.overall, row.name, row.player_id))
+        return sorted(players, key=lambda row: (row.name.lower(), row.player_id))
+
+    def _to_run_player_detail(
+        self,
+        *,
+        player: Player,
+        provenance: PersistedGeneratedPlayerProvenanceRecord | None,
+    ) -> RunPlayerDetail:
+        return RunPlayerDetail(
+            player_id=player.player_id,
+            name=player.name,
+            country_code=player.nationality,
+            age=player.age,
+            play_style=player.play_style,
+            archetype=player.archetype,
+            technique=player.technique,
+            movement=player.movement,
+            physical=player.physical,
+            mental=player.mental,
+            consistency=player.consistency,
+            clutch=player.clutch,
+            recovery=player.recovery,
+            overall=self._player_overall(player),
+            hidden_traits=RunPlayerHiddenTraitSummary(
+                potential_ceiling=player.hidden_career_traits.potential_ceiling,
+                growth_curve=player.hidden_career_traits.growth_curve,
+                professionalism=player.hidden_career_traits.professionalism,
+                ambition=player.hidden_career_traits.ambition,
+                travel_tolerance=player.hidden_career_traits.travel_tolerance,
+                schedule_aggression=player.hidden_career_traits.schedule_aggression,
+                injury_proneness=player.hidden_career_traits.injury_proneness,
+                resilience=player.hidden_career_traits.resilience,
+            ),
+            source_type=self._provenance_source_type(provenance),
+            quality_band=provenance.quality_band if provenance else None,
+            is_top_band=provenance.is_top_band if provenance else False,
+            override_id=provenance.override_id if provenance else None,
+            talent_seed_value=provenance.talent_seed_value if provenance else None,
+            talent_sequence=provenance.talent_sequence if provenance else None,
+        )
 
     def _build_rollover_orchestration(self, *, seed: int, season: int) -> SeasonRolloverOrchestrationService:
         progression_engine = CareerProgressionEngine(

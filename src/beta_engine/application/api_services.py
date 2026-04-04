@@ -27,7 +27,7 @@ from beta_engine.application.rollover_service import SeasonRolloverOrchestration
 from beta_engine.application.season_models import RaceSnapshot, RankingSnapshot, SeasonState, SimulationStepResult
 from beta_engine.application.services import SeasonSimulationOrchestrator
 from beta_engine.core import DeterministicRng, SeedScope
-from beta_engine.domain.careers import CareerProgressionEngine
+from beta_engine.domain.careers import CareerProgressionEngine, NextSeasonPlayerState
 from beta_engine.domain.countries import Country, CountryTalentModel
 from beta_engine.domain.entries import AcceptanceList, AcceptanceStatus, TournamentEntry
 from beta_engine.domain.players import (
@@ -222,7 +222,7 @@ class GeneratedPlayerProvenance:
     talent_seed_value: int | None
     quality_band: str | None
     is_top_band: bool
-    source_type: Literal["planner_generated", "manual_override"]
+    source_type: Literal["rollover_carried", "planner_generated", "manual_override"]
     override_id: str | None
 
 
@@ -1257,7 +1257,50 @@ class SimulationApiService:
         if response.already_bootstrapped:
             return response
 
-        orchestrator = self._build_orchestrator(season=response.to_season, seed=effective_seed, run_info=None, parent_run_id=run_id)
+        countries_metadata = self.countries_service.get_config()
+        countries = countries_metadata.countries
+        parent_next_season_players = self.repository.list_next_season_players(
+            run_id=run_id,
+            to_season=response.to_season,
+        )
+        carried_player_states = [record.state for record in parent_next_season_players]
+        (
+            child_player_states,
+            child_plan_record,
+            child_country_records,
+            child_provenance_records,
+        ) = self._build_bootstrapped_players_and_provenance(
+            run_id=child_run_id,
+            season=response.to_season,
+            seed=effective_seed,
+            countries=countries,
+            carried_player_states=carried_player_states,
+            dataset_status=countries_metadata.dataset_status,
+            config_version=parent_run.config_version,
+            config_fingerprint=parent_run.config_fingerprint,
+        )
+        self.repository.save_run_talent_plan(child_plan_record)
+        self.repository.replace_run_talent_country_allocations(
+            run_id=child_run_id,
+            season=response.to_season,
+            records=child_country_records,
+        )
+        self.repository.replace_generated_player_provenance(
+            run_id=child_run_id,
+            season=response.to_season,
+            records=child_provenance_records,
+        )
+        self.repository.replace_next_season_players(
+            run_id=child_run_id,
+            from_season=response.from_season,
+            to_season=response.to_season,
+            next_player_states=child_player_states,
+        )
+
+        child_run_info = self.repository.get_simulation_run(run_id=child_run_id)
+        if child_run_info is None:
+            raise KeyError(f"run_id {child_run_id} was not found")
+        orchestrator = self._build_orchestrator(season=response.to_season, seed=effective_seed, run_info=child_run_info)
         state = orchestrator.initialize_state()
         self.repository.save_season_state(run_id=child_run_id, state=state)
         return response
@@ -1640,6 +1683,36 @@ class SimulationApiService:
         list[PersistedRunTalentCountryAllocationRecord],
         list[PersistedGeneratedPlayerProvenanceRecord],
     ]:
+        return self._build_intake_players_and_provenance(
+            run_id=run_id,
+            season=season,
+            seed=seed,
+            countries=countries,
+            dataset_status=dataset_status,
+            config_version=config_version,
+            config_fingerprint=config_fingerprint,
+            existing_player_ids=None,
+            sequence_floor_by_country=None,
+        )
+
+    def _build_intake_players_and_provenance(
+        self,
+        *,
+        run_id: str,
+        season: int,
+        seed: int,
+        countries: list[Country],
+        dataset_status: str | None,
+        config_version: str | None,
+        config_fingerprint: str | None,
+        existing_player_ids: set[str] | None,
+        sequence_floor_by_country: dict[str, int] | None,
+    ) -> tuple[
+        list[Player],
+        PersistedRunTalentPlanRecord,
+        list[PersistedRunTalentCountryAllocationRecord],
+        list[PersistedGeneratedPlayerProvenanceRecord],
+    ]:
         planner = AnnualTalentClassPlanner(dampener=self._build_recent_greatness_dampener(season=season, include_history=run_id != "ephemeral-preview"))
         plan = planner.plan(year=season, seed=seed, countries=countries)
         generator = PlayerGenerator(
@@ -1648,24 +1721,37 @@ class SimulationApiService:
             country_talent_model=CountryTalentModel(),
         )
         countries_by_code = {country.code: country for country in countries}
+        reserved_player_ids = set() if existing_player_ids is None else set(existing_player_ids)
+        floor_by_country = {} if sequence_floor_by_country is None else dict(sequence_floor_by_country)
         bias_profiles_by_country = {allocation.country_code: allocation.bias_profile for allocation in plan.allocations}
         planner_sequence_by_country = {
-            allocation.country_code: max((talent.sequence for talent in allocation.talents), default=0) for allocation in plan.allocations
+            allocation.country_code: max(
+                max((talent.sequence for talent in allocation.talents), default=0),
+                floor_by_country.get(allocation.country_code, 0),
+            )
+            for allocation in plan.allocations
         }
         players: list[Player] = []
         country_records: list[PersistedRunTalentCountryAllocationRecord] = []
         provenance_records: list[PersistedGeneratedPlayerProvenanceRecord] = []
         for allocation in plan.allocations:
             country = countries_by_code[allocation.country_code]
+            next_sequence = floor_by_country.get(allocation.country_code, 0)
             band_counts: dict[str, int] = {}
             for talent in allocation.talents:
+                next_sequence += 1
                 player = generator.generate_from_talent_seed(
                     country=country,
-                    sequence=talent.sequence,
+                    sequence=next_sequence,
                     talent_seed_value=talent.seed_value,
                     quality_band=talent.quality_band,
                     bias_profile=allocation.bias_profile,
                 )
+                if player.player_id in reserved_player_ids:
+                    raise ValueError(
+                        f"intake player_id collision for run_id {run_id} season {season}: {player.player_id}"
+                    )
+                reserved_player_ids.add(player.player_id)
                 players.append(player)
                 band_key = talent.quality_band.value
                 band_counts[band_key] = band_counts.get(band_key, 0) + 1
@@ -1675,7 +1761,7 @@ class SimulationApiService:
                         season=season,
                         player_id=player.player_id,
                         country_code=allocation.country_code,
-                        talent_sequence=talent.sequence,
+                        talent_sequence=next_sequence,
                         talent_seed_value=talent.seed_value,
                         quality_band=band_key,
                         is_top_band=band_key in {"elite_prospect", "special_prospect", "generational_talent"},
@@ -1726,6 +1812,11 @@ class SimulationApiService:
                 override=override,
                 season=season,
             )
+            if player.player_id in reserved_player_ids:
+                raise ValueError(
+                    f"manual override player_id collision for run_id {run_id} season {season}: {player.player_id}"
+                )
+            reserved_player_ids.add(player.player_id)
             players.append(player)
             provenance_records.append(
                 PersistedGeneratedPlayerProvenanceRecord(
@@ -1755,6 +1846,79 @@ class SimulationApiService:
             config_fingerprint=config_fingerprint,
         )
         return players, plan_record, country_records, provenance_records
+
+    def _build_bootstrapped_players_and_provenance(
+        self,
+        *,
+        run_id: str,
+        season: int,
+        seed: int,
+        countries: list[Country],
+        carried_player_states: list[NextSeasonPlayerState],
+        dataset_status: str | None,
+        config_version: str | None,
+        config_fingerprint: str | None,
+    ) -> tuple[
+        list[NextSeasonPlayerState],
+        PersistedRunTalentPlanRecord,
+        list[PersistedRunTalentCountryAllocationRecord],
+        list[PersistedGeneratedPlayerProvenanceRecord],
+    ]:
+        carried_players_by_id = {state.player.player_id: state for state in carried_player_states}
+        sequence_floor_by_country: dict[str, int] = {}
+        for state in carried_player_states:
+            country_code, sequence = self._parse_player_sequence(state.player.player_id)
+            if country_code is None or sequence is None:
+                continue
+            sequence_floor_by_country[country_code] = max(sequence_floor_by_country.get(country_code, 0), sequence)
+
+        intake_players, plan_record, country_records, intake_provenance = self._build_intake_players_and_provenance(
+            run_id=run_id,
+            season=season,
+            seed=seed,
+            countries=countries,
+            dataset_status=dataset_status,
+            config_version=config_version,
+            config_fingerprint=config_fingerprint,
+            existing_player_ids=set(carried_players_by_id),
+            sequence_floor_by_country=sequence_floor_by_country,
+        )
+
+        merged_player_states = list(carried_player_states)
+        for player in intake_players:
+            if player.player_id in carried_players_by_id:
+                raise ValueError(f"bootstrapped intake collision for run_id {run_id}: {player.player_id}")
+            merged_player_states.append(
+                NextSeasonPlayerState(
+                    player=player,
+                    readiness=1.0,
+                    carryover_fatigue=0.0,
+                )
+            )
+
+        carried_provenance: list[PersistedGeneratedPlayerProvenanceRecord] = [
+            PersistedGeneratedPlayerProvenanceRecord(
+                run_id=run_id,
+                season=season,
+                player_id=state.player.player_id,
+                country_code=state.player.nationality,
+                talent_sequence=None,
+                talent_seed_value=None,
+                quality_band=None,
+                is_top_band=False,
+                source_type="rollover_carried",
+                override_id=None,
+            )
+            for state in carried_player_states
+        ]
+        provenance_records = sorted(
+            [*carried_provenance, *intake_provenance],
+            key=lambda record: (record.country_code, record.source_type, record.player_id),
+        )
+
+        if len({state.player.player_id for state in merged_player_states}) != len(merged_player_states):
+            raise ValueError(f"bootstrapped player pool contains duplicate player_id values for run_id {run_id}")
+        return merged_player_states, plan_record, country_records, provenance_records
 
     def _build_recent_greatness_dampener(self, *, season: int, include_history: bool) -> WeightedRecentGreatnessDampener:
         if not include_history:
@@ -1908,6 +2072,14 @@ class SimulationApiService:
         countries: list[Country],
         parent_run_id: str | None = None,
     ) -> list[Player]:
+        if run_info is not None:
+            own_records = self.repository.list_next_season_players(
+                run_id=run_info.run_id,
+                to_season=season,
+            )
+            if own_records:
+                return [record.state.player for record in own_records]
+
         source_rollover_run_id = run_info.source_rollover_run_id if run_info is not None else parent_run_id
         source_rollover_to_season = run_info.source_rollover_to_season if run_info is not None else season
 
@@ -1919,6 +2091,17 @@ class SimulationApiService:
             if records:
                 return [record.state.player for record in records]
         return self._build_players(seed=seed, season=season, countries=countries)
+
+    @staticmethod
+    def _parse_player_sequence(player_id: str) -> tuple[str | None, int | None]:
+        parts = player_id.split("-")
+        if len(parts) < 2:
+            return None, None
+        country_code = parts[0].upper()
+        sequence_part = parts[1]
+        if not sequence_part.isdigit():
+            return country_code, None
+        return country_code, int(sequence_part)
 
     def _build_rollover_orchestration(self, *, seed: int, season: int) -> SeasonRolloverOrchestrationService:
         progression_engine = CareerProgressionEngine(

@@ -1342,6 +1342,30 @@ class SimulationPersistenceRepository:
                 for row in session.execute(statement).scalars().all()
             ]
 
+    def replace_next_season_players(
+        self,
+        *,
+        run_id: str,
+        from_season: int,
+        to_season: int,
+        next_player_states: list[NextSeasonPlayerState],
+    ) -> None:
+        with self._session_factory.begin() as session:
+            session.query(NextSeasonPlayerModel).filter(
+                NextSeasonPlayerModel.run_id == run_id,
+                NextSeasonPlayerModel.to_season == to_season,
+            ).delete()
+            for next_state in next_player_states:
+                session.add(
+                    NextSeasonPlayerModel(
+                        run_id=run_id,
+                        from_season=from_season,
+                        to_season=to_season,
+                        player_id=next_state.player.player_id,
+                        payload_json=_to_json(next_state.model_dump()),
+                    )
+                )
+
     @staticmethod
     def _upsert_completed_events(
         *,

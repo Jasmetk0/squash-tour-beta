@@ -148,6 +148,65 @@ class GeneratedPlayerProvenanceListResponse(BaseModel):
     players: list[GeneratedPlayerProvenanceResponse] = Field(default_factory=list)
 
 
+class RunPlayerListItemResponse(BaseModel):
+    player_id: str
+    name: str
+    country_code: str
+    age: int
+    source_type: Literal["rollover_carried", "planner_generated", "manual_override"]
+    override_id: str | None = None
+    quality_band: str | None = None
+    is_top_band: bool
+    technique: int
+    movement: int
+    physical: int
+    mental: int
+    overall: int
+
+
+class RunPlayersListResponse(BaseModel):
+    run_id: str
+    total: int
+    limit: int
+    offset: int
+    players: list[RunPlayerListItemResponse] = Field(default_factory=list)
+
+
+class RunPlayerHiddenTraitSummaryResponse(BaseModel):
+    potential_ceiling: int
+    growth_curve: str
+    professionalism: float
+    ambition: float
+    travel_tolerance: float
+    schedule_aggression: float
+    injury_proneness: float
+    resilience: float
+
+
+class RunPlayerDetailResponse(BaseModel):
+    player_id: str
+    name: str
+    country_code: str
+    age: int
+    play_style: str
+    archetype: str
+    technique: int
+    movement: int
+    physical: int
+    mental: int
+    consistency: int
+    clutch: int
+    recovery: int
+    overall: int
+    hidden_traits: RunPlayerHiddenTraitSummaryResponse
+    source_type: Literal["rollover_carried", "planner_generated", "manual_override"]
+    quality_band: str | None = None
+    is_top_band: bool
+    override_id: str | None = None
+    talent_seed_value: int | None = None
+    talent_sequence: int | None = None
+
+
 class ManualPlayerAttributeOverridesRequest(BaseModel):
     technique: int | None = Field(default=None, ge=20, le=99)
     movement: int | None = Field(default=None, ge=20, le=99)

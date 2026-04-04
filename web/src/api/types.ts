@@ -77,6 +77,63 @@ export type GeneratedPlayerProvenanceListResponse = {
   players: GeneratedPlayerProvenance[]
 }
 
+export type RunPlayerListItem = {
+  player_id: string
+  name: string
+  country_code: string
+  age: number
+  source_type: 'rollover_carried' | 'planner_generated' | 'manual_override'
+  override_id: string | null
+  quality_band: string | null
+  is_top_band: boolean
+  technique: number
+  movement: number
+  physical: number
+  mental: number
+  overall: number
+}
+
+export type RunPlayersListResponse = {
+  run_id: string
+  total: number
+  limit: number
+  offset: number
+  players: RunPlayerListItem[]
+}
+
+export type RunPlayerDetail = {
+  player_id: string
+  name: string
+  country_code: string
+  age: number
+  play_style: string
+  archetype: string
+  technique: number
+  movement: number
+  physical: number
+  mental: number
+  consistency: number
+  clutch: number
+  recovery: number
+  overall: number
+  hidden_traits: {
+    potential_ceiling: number
+    growth_curve: string
+    professionalism: number
+    ambition: number
+    travel_tolerance: number
+    schedule_aggression: number
+    injury_proneness: number
+    resilience: number
+  }
+  source_type: 'rollover_carried' | 'planner_generated' | 'manual_override'
+  quality_band: string | null
+  is_top_band: boolean
+  override_id: string | null
+  talent_seed_value: number | null
+  talent_sequence: number | null
+}
+
 export type RunSourceType = 'fresh_seed' | 'rollover_bootstrap'
 export type LegacyRunSourceType = 'new_run' | 'bootstrap' | 'bootstrapped_rollover'
 export type RunSourceTypeLike = RunSourceType | LegacyRunSourceType | (string & {})

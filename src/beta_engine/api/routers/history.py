@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from beta_engine.api.deps import get_simulation_api_service
 from beta_engine.api.schemas import (
@@ -36,9 +36,13 @@ from beta_engine.api.schemas import (
     RunTalentPlanSummaryResponse,
     GeneratedPlayerProvenanceListResponse,
     GeneratedPlayerProvenanceResponse,
+    RunPlayerDetailResponse,
+    RunPlayersListResponse,
 )
 from beta_engine.application.api_services import (
     GeneratedPlayerProvenance,
+    RunPlayerDetail,
+    RunPlayerListResponse,
     RunTalentPlanSummary,
     SimulationApiService,
     WildcardAssignment,
@@ -53,6 +57,14 @@ def _to_run_talent_plan_summary(summary: RunTalentPlanSummary) -> RunTalentPlanS
 
 def _to_player_provenance(record: GeneratedPlayerProvenance) -> GeneratedPlayerProvenanceResponse:
     return GeneratedPlayerProvenanceResponse.model_validate(record, from_attributes=True)
+
+
+def _to_run_players_response(response: RunPlayerListResponse) -> RunPlayersListResponse:
+    return RunPlayersListResponse.model_validate(response, from_attributes=True)
+
+
+def _to_run_player_detail(response: RunPlayerDetail) -> RunPlayerDetailResponse:
+    return RunPlayerDetailResponse.model_validate(response, from_attributes=True)
 
 
 @router.get("/world/talent-plan", response_model=RunTalentPlanSummaryResponse)
@@ -100,6 +112,49 @@ def get_generated_player_provenance(
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     return _to_player_provenance(record)
+
+
+@router.get("/players", response_model=RunPlayersListResponse)
+def list_run_players(
+    run_id: str,
+    country_code: str | None = None,
+    source_type: str | None = None,
+    min_age: int | None = Query(default=None, ge=15, le=60),
+    max_age: int | None = Query(default=None, ge=15, le=60),
+    search: str | None = None,
+    limit: int = Query(default=50, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    sort: str = "name_asc",
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> RunPlayersListResponse:
+    try:
+        players = service.list_run_players(
+            run_id=run_id,
+            country_code=country_code,
+            source_type=source_type,
+            min_age=min_age,
+            max_age=max_age,
+            search=search,
+            limit=limit,
+            offset=offset,
+            sort=sort,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return _to_run_players_response(players)
+
+
+@router.get("/players/{player_id}", response_model=RunPlayerDetailResponse)
+def get_run_player_detail(
+    run_id: str,
+    player_id: str,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> RunPlayerDetailResponse:
+    try:
+        player = service.get_run_player_detail(run_id=run_id, player_id=player_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return _to_run_player_detail(player)
 
 
 @router.get("/activity", response_model=RunActivityResponse)

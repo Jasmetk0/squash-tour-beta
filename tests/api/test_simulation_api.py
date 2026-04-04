@@ -172,6 +172,95 @@ def test_run_world_generation_endpoints_return_persisted_plan_and_provenance(tmp
         assert all(player["quality_band"] == sample["quality_band"] for player in filtered["players"])
 
 
+def test_run_players_explorer_endpoints_support_filters_and_detail(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-run-players.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/runs",
+            {"run_id": "run-players", "seed": 4242, "season": 2027},
+        )
+        assert status == 201
+
+        status, payload = _request("GET", f"{server.base_url}/runs/run-players/players?limit=30&offset=0")
+        assert status == 200
+        assert payload["run_id"] == "run-players"
+        assert payload["total"] >= len(payload["players"]) > 0
+        assert payload["limit"] == 30
+        assert payload["offset"] == 0
+
+        sample = payload["players"][0]
+        status, country_filtered = _request(
+            "GET",
+            f"{server.base_url}/runs/run-players/players?country_code={sample['country_code']}",
+        )
+        assert status == 200
+        assert country_filtered["players"]
+        assert all(player["country_code"] == sample["country_code"] for player in country_filtered["players"])
+
+        status, source_filtered = _request(
+            "GET",
+            f"{server.base_url}/runs/run-players/players?source_type={sample['source_type']}",
+        )
+        assert status == 200
+        assert source_filtered["players"]
+        assert all(player["source_type"] == sample["source_type"] for player in source_filtered["players"])
+
+        status, searched = _request(
+            "GET",
+            f"{server.base_url}/runs/run-players/players?search={sample['player_id']}",
+        )
+        assert status == 200
+        assert any(player["player_id"] == sample["player_id"] for player in searched["players"])
+
+        status, detail = _request(
+            "GET",
+            f"{server.base_url}/runs/run-players/players/{sample['player_id']}",
+        )
+        assert status == 200
+        assert detail["player_id"] == sample["player_id"]
+        assert detail["source_type"] == sample["source_type"]
+        assert detail["quality_band"] == sample["quality_band"]
+        assert "hidden_traits" in detail
+
+        status, _ = _request("GET", f"{server.base_url}/runs/run-players/players/not-real-player")
+        assert status == 404
+
+
+def test_run_players_child_run_contains_rollover_and_intake_sources(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-run-players-child.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/runs",
+            {"run_id": "run-parent", "seed": 5252, "season": 2027},
+        )
+        assert status == 201
+
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/runs/run-parent/bootstrap-next-season",
+            {"child_run_id": "run-child", "child_seed": 6262},
+        )
+        if status != 200:
+            status, _ = _request("POST", f"{server.base_url}/runs/run-parent/simulate/full-season")
+            assert status == 200
+            status, _ = _request("POST", f"{server.base_url}/runs/run-parent/rollover/next-season")
+            assert status == 200
+            status, _ = _request(
+                "POST",
+                f"{server.base_url}/runs/run-parent/bootstrap-next-season",
+                {"child_run_id": "run-child", "child_seed": 6262},
+            )
+        assert status == 200
+
+        status, child_players = _request("GET", f"{server.base_url}/runs/run-child/players?limit=500")
+        assert status == 200
+        assert child_players["players"]
+        sources = {player["source_type"] for player in child_players["players"]}
+        assert "rollover_carried" in sources
+        assert "planner_generated" in sources or "manual_override" in sources
+
 def test_simulation_endpoints_and_snapshot_queries_work(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'api-sim.db'}"
     with ApiServer(database_url=database_url) as server:

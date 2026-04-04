@@ -139,7 +139,7 @@ class GeneratedPlayerProvenanceResponse(BaseModel):
     talent_seed_value: int | None = None
     quality_band: str | None = None
     is_top_band: bool
-    source_type: Literal["planner_generated", "manual_override"]
+    source_type: Literal["rollover_carried", "planner_generated", "manual_override"]
     override_id: str | None = None
 
 

@@ -68,7 +68,7 @@ export type GeneratedPlayerProvenance = {
   talent_seed_value: number | null
   quality_band: string | null
   is_top_band: boolean
-  source_type: 'planner_generated' | 'manual_override'
+  source_type: 'rollover_carried' | 'planner_generated' | 'manual_override'
   override_id: string | null
 }
 

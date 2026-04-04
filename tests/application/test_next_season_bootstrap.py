@@ -48,6 +48,14 @@ def test_bootstrap_next_season_creates_child_run_with_lineage_and_simulation(tmp
     assert step.mode == "simulate_next_week"
     assert step.season_state.season == 2028
 
+    child_plan = service.get_run_talent_plan_summary(run_id="run-child")
+    assert child_plan.season == 2028
+    assert child_plan.total_talents > 0
+
+    child_provenance = service.list_generated_player_provenance(run_id="run-child")
+    assert any(row.source_type == "rollover_carried" for row in child_provenance)
+    assert any(row.source_type == "planner_generated" for row in child_provenance)
+
 
 def test_bootstrap_next_season_is_idempotent_and_rejects_conflicting_child_seed(tmp_path) -> None:
     service = _service(tmp_path)
@@ -86,6 +94,29 @@ def test_child_run_uses_rollover_player_pool_for_next_rollover(tmp_path) -> None
     assert common_player_ids
     sample_id = common_player_ids[0]
     assert observed_age_before[sample_id] == player_ages_2028[sample_id]
+
+
+def test_bootstrap_child_player_pool_merges_carried_and_intake_without_duplicates(tmp_path) -> None:
+    service = _service(tmp_path)
+    service.initialize_run(run_id="run-parent", season=2027, seed=5656, config_version=None, config_fingerprint=None)
+    service.simulate_full_season(run_id="run-parent")
+    service.rollover_to_next_season(run_id="run-parent")
+
+    carried = service.list_next_season_players(run_id="run-parent", to_season=2028)
+    carried_ids = {record.player_id for record in carried}
+    assert carried_ids
+
+    service.bootstrap_next_season_run(run_id="run-parent", child_run_id="run-child")
+
+    child_provenance = service.list_generated_player_provenance(run_id="run-child")
+    child_run_info = service.repository.get_simulation_run(run_id="run-child")
+    assert child_run_info is not None
+    child_players = service._load_players_by_id_for_run(run_info=child_run_info)
+
+    assert carried_ids.issubset(set(child_players))
+    assert len(child_players) > len(carried_ids)
+    assert len(child_players) == len(set(child_players))
+    assert {row.source_type for row in child_provenance} >= {"rollover_carried", "planner_generated"}
 
 
 def test_legacy_source_types_are_normalized_to_canonical_contract(tmp_path) -> None:

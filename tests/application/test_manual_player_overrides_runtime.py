@@ -151,3 +151,31 @@ def test_invalid_enabled_override_country_fails_run_initialization_loudly(tmp_pa
         assert "ZZZ" in message
     else:
         raise AssertionError("run initialization should fail for enabled manual override with unknown country")
+
+
+def test_target_season_manual_override_applies_in_bootstrapped_child_run(tmp_path) -> None:
+    service = _service(
+        tmp_path,
+        {
+            "overrides": [
+                {
+                    "override_id": "future-star",
+                    "season": 2028,
+                    "country_code": "EGY",
+                    "player_name": "Future Star",
+                    "age": 18,
+                    "profile_tier": "special",
+                    "enabled": True,
+                }
+            ]
+        },
+    )
+    service.initialize_run(run_id="parent", season=2027, seed=1234, config_version=None, config_fingerprint=None)
+    service.simulate_full_season(run_id="parent")
+    service.rollover_to_next_season(run_id="parent")
+    service.bootstrap_next_season_run(run_id="parent", child_run_id="child", child_seed=1234)
+
+    provenance = service.list_generated_player_provenance(run_id="child")
+    manual_rows = [row for row in provenance if row.source_type == "manual_override"]
+    assert manual_rows
+    assert manual_rows[0].override_id == "future-star"

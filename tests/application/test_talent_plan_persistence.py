@@ -55,7 +55,7 @@ def test_same_seed_and_config_produces_identical_persisted_plan_and_provenance(t
     assert normalized_left == normalized_right
 
 
-def test_bootstrap_run_does_not_claim_fresh_generation_provenance(tmp_path) -> None:
+def test_bootstrap_run_persists_intake_plan_and_truthful_provenance(tmp_path) -> None:
     service = _service(tmp_path)
 
     service.initialize_run(run_id="parent", season=2028, seed=101, config_version=None, config_fingerprint=None)
@@ -63,12 +63,12 @@ def test_bootstrap_run_does_not_claim_fresh_generation_provenance(tmp_path) -> N
     service.rollover_to_next_season(run_id="parent")
     service.bootstrap_next_season_run(run_id="parent", child_run_id="child", child_seed=202)
 
-    try:
-        service.get_run_talent_plan_summary(run_id="child")
-    except KeyError:
-        pass
-    else:
-        raise AssertionError("bootstrapped child run should not have fresh annual talent plan persisted")
+    child_plan = service.get_run_talent_plan_summary(run_id="child")
+    assert child_plan.run_id == "child"
+    assert child_plan.season == 2029
+    assert child_plan.total_talents > 0
 
     child_provenance = service.list_generated_player_provenance(run_id="child")
-    assert child_provenance == []
+    assert child_provenance
+    assert any(row.source_type == "rollover_carried" for row in child_provenance)
+    assert any(row.source_type == "planner_generated" for row in child_provenance)

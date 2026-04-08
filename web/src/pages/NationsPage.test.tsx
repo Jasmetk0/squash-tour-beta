@@ -67,6 +67,7 @@ describe('NationsPage', () => {
       average_visible_stats: { technique: 80.1, movement: 79.1, physical: 76.1, mental: 78.1 },
       source_mix: { rollover_carried: 1, planner_generated: 3, manual_override: 1 },
       band_distribution: [{ band: 'top', count: 2 }],
+      origin_band_distribution: [{ band: 'elite_talent', count: 2 }],
       top_players: [
         {
           player_id: 'EGY-0001',
@@ -105,6 +106,7 @@ describe('NationsPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /EGY — Egypt/ }))
     expect(await screen.findByText(/Source mix: carryover 1 \| intake 3 \| manual 1/)).toBeInTheDocument()
+    expect(await screen.findByText(/Origin band distribution/)).toBeInTheDocument()
     expect(await screen.findByText('Ali (EGY-0001)')).toBeInTheDocument()
 
     ;(api.listRunNations as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('boom'))

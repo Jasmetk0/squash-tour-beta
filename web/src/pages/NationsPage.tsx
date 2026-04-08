@@ -129,6 +129,15 @@ export function NationsPage(): JSX.Element {
                 </li>
               ))}
             </ul>
+            <h4>Origin band distribution</h4>
+            <ul>
+              {detailQuery.data.origin_band_distribution.length === 0 ? <li>—</li> : null}
+              {detailQuery.data.origin_band_distribution.map((item) => (
+                <li key={item.band}>
+                  {item.band}: {item.count}
+                </li>
+              ))}
+            </ul>
             <h4>Top players</h4>
             <table>
               <thead>

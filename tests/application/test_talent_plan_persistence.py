@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from beta_engine.application.api_services import SimulationApiService
 from beta_engine.infrastructure.db import DatabaseSettings, create_session_factory, create_sqlite_engine
-from beta_engine.infrastructure.db.repositories import SimulationPersistenceRepository
+from beta_engine.infrastructure.db.repositories import PersistedGeneratedPlayerProvenanceRecord, SimulationPersistenceRepository
 
 
 def _service(tmp_path) -> SimulationApiService:
@@ -35,6 +35,9 @@ def test_initialize_run_persists_talent_plan_and_provenance(tmp_path) -> None:
     assert {row.player_id for row in provenance}
     assert all(row.run_id == "run-a" for row in provenance)
     assert all(row.source_type == "planner_generated" for row in provenance)
+    assert all(row.origin_source_type == "planner_generated" for row in provenance)
+    assert all(row.origin_quality_band == row.quality_band for row in provenance)
+    assert all(row.origin_season == 2028 for row in provenance)
 
 
 def test_same_seed_and_config_produces_identical_persisted_plan_and_provenance(tmp_path) -> None:
@@ -72,3 +75,39 @@ def test_bootstrap_run_persists_intake_plan_and_truthful_provenance(tmp_path) ->
     assert child_provenance
     assert any(row.source_type == "rollover_carried" for row in child_provenance)
     assert any(row.source_type == "planner_generated" for row in child_provenance)
+    carried = [row for row in child_provenance if row.source_type == "rollover_carried"]
+    assert carried
+    assert all(row.origin_source_type in {"planner_generated", "manual_override"} for row in carried if row.origin_source_type is not None)
+
+
+def test_missing_origin_pedigree_data_is_returned_as_nulls(tmp_path) -> None:
+    service = _service(tmp_path)
+    service.initialize_run(run_id="run-legacy", season=2028, seed=42, config_version=None, config_fingerprint=None)
+    sample = service.list_generated_player_provenance(run_id="run-legacy")[0]
+    service.repository.replace_generated_player_provenance(
+        run_id="run-legacy",
+        season=2028,
+        records=[
+            PersistedGeneratedPlayerProvenanceRecord(
+                run_id="run-legacy",
+                season=2028,
+                player_id=sample.player_id,
+                country_code=sample.country_code,
+                talent_sequence=sample.talent_sequence,
+                talent_seed_value=sample.talent_seed_value,
+                quality_band=sample.quality_band,
+                is_top_band=sample.is_top_band,
+                source_type=sample.source_type,
+                override_id=sample.override_id,
+                origin_source_type=None,
+                origin_quality_band=None,
+                origin_override_id=None,
+                origin_season=None,
+            )
+        ],
+    )
+    record = service.get_generated_player_provenance(run_id="run-legacy", player_id=sample.player_id)
+    assert record.origin_source_type is None
+    assert record.origin_quality_band is None
+    assert record.origin_override_id is None
+    assert record.origin_season is None

@@ -7,11 +7,13 @@ import {
   getRun,
   getRunLineage,
   getRunStatusSummary,
+  getRunWorldStatus,
   getRunSource,
   listEvents,
   listRaceSnapshots,
   listRankingSnapshots,
   rolloverNextSeason,
+  rebuildRunWorld,
   simulateFullSeason,
   simulateNextMatch,
   simulateNextRound,
@@ -53,7 +55,8 @@ export function RunPage(): JSX.Element {
       queryClient.invalidateQueries({ queryKey: ['rollover-transitions', runId] }),
       queryClient.invalidateQueries({ queryKey: ['rollover-next-season-players', runId] }),
       queryClient.invalidateQueries({ queryKey: ['run-source', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['run-lineage', runId] })
+      queryClient.invalidateQueries({ queryKey: ['run-lineage', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['run-world-status', runId] })
     ])
   }
 
@@ -85,6 +88,12 @@ export function RunPage(): JSX.Element {
   const lineageQuery = useQuery({
     queryKey: ['run-lineage', runId],
     queryFn: () => getRunLineage(runId),
+    enabled: Boolean(runId),
+    retry: false
+  })
+  const worldStatusQuery = useQuery({
+    queryKey: ['run-world-status', runId],
+    queryFn: () => getRunWorldStatus(runId),
     enabled: Boolean(runId),
     retry: false
   })
@@ -126,6 +135,12 @@ export function RunPage(): JSX.Element {
       if (mode === 'next-week') return simulateNextWeek(runId)
       return simulateFullSeason(runId)
     },
+    onSuccess: async () => {
+      await invalidateRunDetailQueries()
+    }
+  })
+  const rebuildWorldMutation = useMutation({
+    mutationFn: () => rebuildRunWorld(runId),
     onSuccess: async () => {
       await invalidateRunDetailQueries()
     }
@@ -500,6 +515,53 @@ export function RunPage(): JSX.Element {
               {' · '}
               <Link to={`/runs/${runId}/season-chain`}>View season chain</Link>
             </p>
+          </SectionCard>
+
+          <SectionCard title="World data staleness and rebuild">
+            {worldStatusQuery.isLoading && <p className="status">Loading world status...</p>}
+            {worldStatusQuery.error && (
+              <p className="error">Failed to load world status: {formatApiError(worldStatusQuery.error)}</p>
+            )}
+            {worldStatusQuery.data && (
+              <>
+                <MetadataList
+                  items={[
+                    { label: 'Status', value: worldStatusQuery.data.is_stale ? 'Stale' : 'Fresh' },
+                    { label: 'Rebuild supported', value: worldStatusQuery.data.rebuild_supported ? 'Yes' : 'No' },
+                    { label: 'Source type', value: worldStatusQuery.data.source_type },
+                    {
+                      label: 'Stored fingerprint',
+                      value: worldStatusQuery.data.stored_world_generation_fingerprint ?? 'None'
+                    },
+                    { label: 'Current fingerprint', value: worldStatusQuery.data.current_world_generation_fingerprint },
+                    { label: 'Message', value: worldStatusQuery.data.message }
+                  ]}
+                />
+                {worldStatusQuery.data.rebuild_supported ? (
+                  <div className="actions">
+                    <button onClick={() => rebuildWorldMutation.mutate()} disabled={rebuildWorldMutation.isPending}>
+                      {rebuildWorldMutation.isPending
+                        ? 'Rebuilding...'
+                        : 'Rebuild Run from Current World Data'}
+                    </button>
+                  </div>
+                ) : null}
+              </>
+            )}
+            <ActionStatusBlock
+              isLoading={rebuildWorldMutation.isPending}
+              loadingText="Rebuilding run world artifacts..."
+              errorText={
+                rebuildWorldMutation.error
+                  ? `Rebuild failed: ${formatApiError(rebuildWorldMutation.error)}`
+                  : undefined
+              }
+              successText={
+                rebuildWorldMutation.data
+                  ? `Run rebuilt. New fingerprint: ${rebuildWorldMutation.data.current_world_generation_fingerprint}.`
+                  : undefined
+              }
+            />
           </SectionCard>
 
           <SectionCard title="Recent history previews">

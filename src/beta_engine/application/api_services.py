@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -144,6 +146,17 @@ class RunStatusSummary:
     history_counts: RunStatusSummaryHistoryCounts
 
 
+@dataclass(frozen=True)
+class RunWorldStatus:
+    run_id: str
+    source_type: str
+    stored_world_generation_fingerprint: str | None
+    current_world_generation_fingerprint: str
+    is_stale: bool
+    rebuild_supported: bool
+    message: str
+
+
 ActivityKind = Literal[
     "event",
     "ranking_snapshot",
@@ -224,6 +237,10 @@ class GeneratedPlayerProvenance:
     is_top_band: bool
     source_type: Literal["rollover_carried", "planner_generated", "manual_override"]
     override_id: str | None
+    origin_source_type: Literal["planner_generated", "manual_override"] | None
+    origin_quality_band: str | None
+    origin_override_id: str | None
+    origin_season: int | None
 
 
 @dataclass(frozen=True)
@@ -236,6 +253,10 @@ class RunPlayerListItem:
     override_id: str | None
     quality_band: str | None
     is_top_band: bool
+    origin_source_type: Literal["planner_generated", "manual_override"] | None
+    origin_quality_band: str | None
+    origin_override_id: str | None
+    origin_season: int | None
     technique: int
     movement: int
     physical: int
@@ -285,6 +306,10 @@ class RunPlayerDetail:
     quality_band: str | None
     is_top_band: bool
     override_id: str | None
+    origin_source_type: Literal["planner_generated", "manual_override"] | None
+    origin_quality_band: str | None
+    origin_override_id: str | None
+    origin_season: int | None
     talent_seed_value: int | None
     talent_sequence: int | None
 
@@ -354,6 +379,7 @@ class RunNationDetail:
     average_visible_stats: RunNationAverageVisibleStats
     source_mix: dict[str, int]
     band_distribution: list[RunNationBandDistributionItem]
+    origin_band_distribution: list[RunNationBandDistributionItem]
     top_players: list[RunNationTopPlayerItem]
 
 
@@ -556,6 +582,7 @@ class SimulationApiService:
         config_version: str | None,
         config_fingerprint: str | None,
     ) -> PersistedRunSummary:
+        world_generation_fingerprint = self._current_world_generation_fingerprint()
         countries_metadata = self.countries_service.get_config()
         countries = countries_metadata.countries
         _, plan_record, country_records, provenance_records = self._build_fresh_players_and_provenance(
@@ -576,6 +603,7 @@ class SimulationApiService:
             seed=seed,
             config_version=config_version,
             config_fingerprint=config_fingerprint,
+            world_generation_fingerprint=world_generation_fingerprint,
             source_type="fresh_seed",
         )
         persistence = SimulationPersistenceService(repository=self.repository)
@@ -752,9 +780,12 @@ class SimulationApiService:
         summary = summaries[0]
         top_players = sorted(country_rows, key=lambda row: (-row.overall, row.name, row.player_id))[: max(top_limit, 1)]
         band_counts: dict[str, int] = {}
+        origin_band_counts: dict[str, int] = {}
         for row in country_rows:
             band = row.quality_band or "unclassified"
             band_counts[band] = band_counts.get(band, 0) + 1
+            if row.origin_quality_band is not None:
+                origin_band_counts[row.origin_quality_band] = origin_band_counts.get(row.origin_quality_band, 0) + 1
 
         total_players = len(country_rows)
         return RunNationDetail(
@@ -782,6 +813,10 @@ class SimulationApiService:
             band_distribution=[
                 RunNationBandDistributionItem(band=band, count=count)
                 for band, count in sorted(band_counts.items(), key=lambda item: (-item[1], item[0]))
+            ],
+            origin_band_distribution=[
+                RunNationBandDistributionItem(band=band, count=count)
+                for band, count in sorted(origin_band_counts.items(), key=lambda item: (-item[1], item[0]))
             ],
             top_players=[
                 RunNationTopPlayerItem(
@@ -1515,10 +1550,12 @@ class SimulationApiService:
         parent_run, _ = self._load_run_context(run_id=run_id)
         effective_seed = parent_run.seed if child_seed is None else child_seed
         bootstrap_service = NextSeasonRunBootstrapService(repository=self.repository)
+        world_generation_fingerprint = self._current_world_generation_fingerprint()
         response = bootstrap_service.bootstrap_from_rollover(
             parent_run=parent_run,
             child_run_id=child_run_id,
             child_seed=effective_seed,
+            world_generation_fingerprint=world_generation_fingerprint,
         )
         if response.already_bootstrapped:
             return response
@@ -1537,6 +1574,7 @@ class SimulationApiService:
             child_provenance_records,
         ) = self._build_bootstrapped_players_and_provenance(
             run_id=child_run_id,
+            parent_run_id=run_id,
             season=response.to_season,
             seed=effective_seed,
             countries=countries,
@@ -1647,6 +1685,82 @@ class SimulationApiService:
                 race_snapshots=self.repository.count_race_snapshots(run_id=run_id),
             ),
         )
+
+    def get_run_world_status(self, *, run_id: str) -> RunWorldStatus:
+        run_info, state = self._load_run_context(run_id=run_id)
+        current_fingerprint = self._current_world_generation_fingerprint()
+        stored_fingerprint = run_info.world_generation_fingerprint
+        is_stale = stored_fingerprint != current_fingerprint
+        rebuild_supported, reason = self._evaluate_rebuild_support(run_info=run_info, state=state)
+        if rebuild_supported and is_stale:
+            message = "Run world inputs are stale; rebuild is available for this pristine fresh-seed run."
+        elif rebuild_supported:
+            message = "Run world inputs are fresh; rebuild is available for this pristine fresh-seed run."
+        else:
+            message = reason
+        return RunWorldStatus(
+            run_id=run_id,
+            source_type=_normalize_source_type(run_info.source_type),
+            stored_world_generation_fingerprint=stored_fingerprint,
+            current_world_generation_fingerprint=current_fingerprint,
+            is_stale=is_stale,
+            rebuild_supported=rebuild_supported,
+            message=message,
+        )
+
+    def rebuild_run_world(self, *, run_id: str) -> RunWorldStatus:
+        run_info, state = self._load_run_context(run_id=run_id)
+        rebuild_supported, reason = self._evaluate_rebuild_support(run_info=run_info, state=state)
+        if not rebuild_supported:
+            raise ValueError(reason)
+
+        world_generation_fingerprint = self._current_world_generation_fingerprint()
+        countries_metadata = self.countries_service.get_config()
+        countries = countries_metadata.countries
+        _, plan_record, country_records, provenance_records = self._build_fresh_players_and_provenance(
+            run_id=run_id,
+            season=run_info.season,
+            seed=run_info.seed,
+            countries=countries,
+            dataset_status=countries_metadata.dataset_status,
+            config_version=run_info.config_version,
+            config_fingerprint=run_info.config_fingerprint,
+        )
+        orchestrator = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info)
+        rebuilt_state = orchestrator.initialize_state()
+        self.repository.save_season_state(run_id=run_id, state=rebuilt_state)
+        self.repository.save_run_talent_plan(plan_record)
+        self.repository.replace_run_talent_country_allocations(run_id=run_id, season=run_info.season, records=country_records)
+        self.repository.replace_generated_player_provenance(run_id=run_id, season=run_info.season, records=provenance_records)
+        self.repository.upsert_simulation_run(
+            SimulationRunInfo(
+                run_id=run_info.run_id,
+                season=run_info.season,
+                seed=run_info.seed,
+                config_version=run_info.config_version,
+                config_fingerprint=run_info.config_fingerprint,
+                world_generation_fingerprint=world_generation_fingerprint,
+                parent_run_id=run_info.parent_run_id,
+                source_type=run_info.source_type,
+                source_rollover_run_id=run_info.source_rollover_run_id,
+                source_rollover_from_season=run_info.source_rollover_from_season,
+                source_rollover_to_season=run_info.source_rollover_to_season,
+            )
+        )
+        return self.get_run_world_status(run_id=run_id)
+
+    def _evaluate_rebuild_support(
+        self,
+        *,
+        run_info: SimulationRunInfo,
+        state: SeasonState,
+    ) -> tuple[bool, str]:
+        source_type = _normalize_source_type(run_info.source_type)
+        if source_type != "fresh_seed":
+            return False, "Rebuild is not supported for bootstrap/child runs in this MVP."
+        if state.next_event_index != 0 or state.completed_event_ids or state.active_tournament is not None:
+            return False, "Rebuild is not allowed after simulation progress."
+        return True, "Rebuild supported."
 
     def list_runs_index(self) -> list[RunIndexSummary]:
         runs = self.repository.list_simulation_runs()
@@ -2033,6 +2147,10 @@ class SimulationApiService:
                         is_top_band=band_key in {"elite_prospect", "special_prospect", "generational_talent"},
                         source_type="planner_generated",
                         override_id=None,
+                        origin_source_type="planner_generated",
+                        origin_quality_band=band_key,
+                        origin_override_id=None,
+                        origin_season=season,
                     )
                 )
             country_records.append(
@@ -2100,6 +2218,10 @@ class SimulationApiService:
                     },
                     source_type="manual_override",
                     override_id=override.override_id,
+                    origin_source_type="manual_override",
+                    origin_quality_band=quality_band.value,
+                    origin_override_id=override.override_id,
+                    origin_season=season,
                 )
             )
         plan_record = PersistedRunTalentPlanRecord(
@@ -2117,6 +2239,7 @@ class SimulationApiService:
         self,
         *,
         run_id: str,
+        parent_run_id: str,
         season: int,
         seed: int,
         countries: list[Country],
@@ -2162,18 +2285,15 @@ class SimulationApiService:
                 )
             )
 
+        parent_provenance_by_player_id = {
+            record.player_id: record for record in self.repository.list_generated_player_provenance(run_id=parent_run_id)
+        }
         carried_provenance: list[PersistedGeneratedPlayerProvenanceRecord] = [
-            PersistedGeneratedPlayerProvenanceRecord(
+            self._build_carried_provenance_record(
                 run_id=run_id,
                 season=season,
-                player_id=state.player.player_id,
-                country_code=state.player.nationality,
-                talent_sequence=None,
-                talent_seed_value=None,
-                quality_band=None,
-                is_top_band=False,
-                source_type="rollover_carried",
-                override_id=None,
+                player_state=state,
+                prior_provenance=parent_provenance_by_player_id.get(state.player.player_id),
             )
             for state in carried_player_states
         ]
@@ -2236,6 +2356,25 @@ class SimulationApiService:
 
         return WeightedRecentGreatnessDampener(signals=tuple(sorted(signals, key=lambda item: (item.country_code, item.season, item.source, item.reference_id or ""))))
 
+    def _current_world_generation_fingerprint(self) -> str:
+        payload = self._world_generation_fingerprint_payload()
+        serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+    def _world_generation_fingerprint_payload(self) -> dict[str, object]:
+        countries = sorted(
+            (country.model_dump(mode="json") for country in self.countries_service.get_config().countries),
+            key=lambda item: str(item["code"]),
+        )
+        overrides = sorted(
+            (override.model_dump(mode="json") for override in self.manual_overrides_service.list_overrides()),
+            key=lambda item: (int(item["season"]), str(item["country_code"]), str(item["override_id"])),
+        )
+        return {
+            "countries": countries,
+            "manual_player_overrides": overrides,
+        }
+
     @staticmethod
     def _manual_override_signal_weight(override: ManualPlayerOverride) -> float:
         quality = SimulationApiService._manual_quality_band(override)
@@ -2276,6 +2415,51 @@ class SimulationApiService:
             is_top_band=record.is_top_band,
             source_type=record.source_type,
             override_id=record.override_id,
+            origin_source_type=SimulationApiService._normalize_origin_source_type(record.origin_source_type),
+            origin_quality_band=record.origin_quality_band,
+            origin_override_id=record.origin_override_id,
+            origin_season=record.origin_season,
+        )
+
+    def _build_carried_provenance_record(
+        self,
+        *,
+        run_id: str,
+        season: int,
+        player_state: NextSeasonPlayerState,
+        prior_provenance: PersistedGeneratedPlayerProvenanceRecord | None,
+    ) -> PersistedGeneratedPlayerProvenanceRecord:
+        return PersistedGeneratedPlayerProvenanceRecord(
+            run_id=run_id,
+            season=season,
+            player_id=player_state.player.player_id,
+            country_code=player_state.player.nationality,
+            talent_sequence=None,
+            talent_seed_value=None,
+            quality_band=None,
+            is_top_band=False,
+            source_type="rollover_carried",
+            override_id=None,
+            origin_source_type=(
+                self._normalize_origin_source_type(prior_provenance.origin_source_type)
+                if prior_provenance is not None and prior_provenance.origin_source_type is not None
+                else self._normalize_origin_source_type(prior_provenance.source_type) if prior_provenance is not None else None
+            ),
+            origin_quality_band=(
+                prior_provenance.origin_quality_band
+                if prior_provenance is not None and prior_provenance.origin_quality_band is not None
+                else prior_provenance.quality_band if prior_provenance is not None else None
+            ),
+            origin_override_id=(
+                prior_provenance.origin_override_id
+                if prior_provenance is not None and prior_provenance.origin_override_id is not None
+                else prior_provenance.override_id if prior_provenance is not None else None
+            ),
+            origin_season=(
+                prior_provenance.origin_season
+                if prior_provenance is not None and prior_provenance.origin_season is not None
+                else prior_provenance.season if prior_provenance is not None else None
+            ),
         )
 
     @staticmethod
@@ -2383,6 +2567,10 @@ class SimulationApiService:
             override_id=provenance.override_id if provenance else None,
             quality_band=provenance.quality_band if provenance else None,
             is_top_band=provenance.is_top_band if provenance else False,
+            origin_source_type=self._normalize_origin_source_type(provenance.origin_source_type) if provenance else None,
+            origin_quality_band=provenance.origin_quality_band if provenance else None,
+            origin_override_id=provenance.origin_override_id if provenance else None,
+            origin_season=provenance.origin_season if provenance else None,
             technique=player.technique,
             movement=player.movement,
             physical=player.physical,
@@ -2399,6 +2587,17 @@ class SimulationApiService:
         source_type = _normalize_source_type(provenance.source_type)
         if source_type not in {"rollover_carried", "planner_generated", "manual_override"}:
             return "rollover_carried"
+        return source_type
+
+    @staticmethod
+    def _normalize_origin_source_type(
+        raw_source_type: str | None,
+    ) -> Literal["planner_generated", "manual_override"] | None:
+        if raw_source_type is None:
+            return None
+        source_type = _normalize_source_type(raw_source_type)
+        if source_type not in {"planner_generated", "manual_override"}:
+            return None
         return source_type
 
     @staticmethod
@@ -2539,6 +2738,10 @@ class SimulationApiService:
             quality_band=provenance.quality_band if provenance else None,
             is_top_band=provenance.is_top_band if provenance else False,
             override_id=provenance.override_id if provenance else None,
+            origin_source_type=self._normalize_origin_source_type(provenance.origin_source_type) if provenance else None,
+            origin_quality_band=provenance.origin_quality_band if provenance else None,
+            origin_override_id=provenance.origin_override_id if provenance else None,
+            origin_season=provenance.origin_season if provenance else None,
             talent_seed_value=provenance.talent_seed_value if provenance else None,
             talent_sequence=provenance.talent_sequence if provenance else None,
         )

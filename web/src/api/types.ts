@@ -42,6 +42,16 @@ export type RunStatusSummary = {
   }
 }
 
+export type RunWorldStatus = {
+  run_id: string
+  source_type: 'fresh_seed' | 'rollover_bootstrap'
+  stored_world_generation_fingerprint: string | null
+  current_world_generation_fingerprint: string
+  is_stale: boolean
+  rebuild_supported: boolean
+  message: string
+}
+
 export type RunTalentPlanSummary = {
   run_id: string
   season: number
@@ -70,6 +80,10 @@ export type GeneratedPlayerProvenance = {
   is_top_band: boolean
   source_type: 'rollover_carried' | 'planner_generated' | 'manual_override'
   override_id: string | null
+  origin_source_type: 'planner_generated' | 'manual_override' | null
+  origin_quality_band: string | null
+  origin_override_id: string | null
+  origin_season: number | null
 }
 
 export type GeneratedPlayerProvenanceListResponse = {
@@ -86,6 +100,10 @@ export type RunPlayerListItem = {
   override_id: string | null
   quality_band: string | null
   is_top_band: boolean
+  origin_source_type: 'planner_generated' | 'manual_override' | null
+  origin_quality_band: string | null
+  origin_override_id: string | null
+  origin_season: number | null
   technique: number
   movement: number
   physical: number
@@ -130,6 +148,10 @@ export type RunPlayerDetail = {
   quality_band: string | null
   is_top_band: boolean
   override_id: string | null
+  origin_source_type: 'planner_generated' | 'manual_override' | null
+  origin_quality_band: string | null
+  origin_override_id: string | null
+  origin_season: number | null
   talent_seed_value: number | null
   talent_sequence: number | null
 }
@@ -176,6 +198,7 @@ export type RunNationDetail = {
   }
   source_mix: Record<string, number>
   band_distribution: Array<{ band: string; count: number }>
+  origin_band_distribution: Array<{ band: string; count: number }>
   top_players: Array<{
     player_id: string
     name: string

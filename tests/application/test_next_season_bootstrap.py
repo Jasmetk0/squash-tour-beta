@@ -119,6 +119,38 @@ def test_bootstrap_child_player_pool_merges_carried_and_intake_without_duplicate
     assert {row.source_type for row in child_provenance} >= {"rollover_carried", "planner_generated"}
 
 
+def test_carried_players_preserve_origin_pedigree_across_bootstrap_rollovers(tmp_path) -> None:
+    service = _service(tmp_path)
+    service.initialize_run(run_id="run-parent", season=2027, seed=6767, config_version=None, config_fingerprint=None)
+    service.simulate_full_season(run_id="run-parent")
+    service.rollover_to_next_season(run_id="run-parent")
+    service.bootstrap_next_season_run(run_id="run-parent", child_run_id="run-child")
+
+    parent_provenance = {row.player_id: row for row in service.list_generated_player_provenance(run_id="run-parent")}
+    child_provenance = service.list_generated_player_provenance(run_id="run-child")
+    carried = [row for row in child_provenance if row.source_type == "rollover_carried"]
+    assert carried
+
+    sample = carried[0]
+    parent = parent_provenance[sample.player_id]
+    assert sample.source_type == "rollover_carried"
+    assert sample.origin_source_type == parent.origin_source_type
+    assert sample.origin_quality_band == parent.origin_quality_band
+    assert sample.origin_override_id == parent.origin_override_id
+    assert sample.origin_season == parent.origin_season
+
+    service.simulate_full_season(run_id="run-child")
+    service.rollover_to_next_season(run_id="run-child")
+    service.bootstrap_next_season_run(run_id="run-child", child_run_id="run-grandchild")
+    grandchild_provenance = {row.player_id: row for row in service.list_generated_player_provenance(run_id="run-grandchild")}
+    grandchild = grandchild_provenance[sample.player_id]
+    assert grandchild.source_type == "rollover_carried"
+    assert grandchild.origin_source_type == sample.origin_source_type
+    assert grandchild.origin_quality_band == sample.origin_quality_band
+    assert grandchild.origin_override_id == sample.origin_override_id
+    assert grandchild.origin_season == sample.origin_season
+
+
 def test_legacy_source_types_are_normalized_to_canonical_contract(tmp_path) -> None:
     service = _service(tmp_path)
     service.initialize_run(run_id="run-parent", season=2027, seed=5555, config_version=None, config_fingerprint=None)

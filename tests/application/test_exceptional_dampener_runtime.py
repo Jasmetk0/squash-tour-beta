@@ -243,6 +243,10 @@ def test_fresh_run_dampener_uses_persisted_provenance_history_and_exposes_manual
                 is_top_band=True,
                 source_type="planner_generated",
                 override_id=None,
+                origin_source_type="planner_generated",
+                origin_quality_band=TalentQualityBand.GENERATIONAL.value,
+                origin_override_id=None,
+                origin_season=2031,
             )
         ],
     )

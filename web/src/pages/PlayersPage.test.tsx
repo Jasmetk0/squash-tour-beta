@@ -30,6 +30,10 @@ describe('PlayersPage', () => {
           override_id: null,
           quality_band: 'elite_talent',
           is_top_band: true,
+          origin_source_type: 'planner_generated',
+          origin_quality_band: 'elite_talent',
+          origin_override_id: null,
+          origin_season: 2027,
           technique: 70,
           movement: 68,
           physical: 66,
@@ -45,6 +49,10 @@ describe('PlayersPage', () => {
           override_id: null,
           quality_band: null,
           is_top_band: false,
+          origin_source_type: null,
+          origin_quality_band: null,
+          origin_override_id: null,
+          origin_season: null,
           technique: 72,
           movement: 71,
           physical: 70,
@@ -73,6 +81,10 @@ describe('PlayersPage', () => {
       quality_band: 'elite_talent',
       is_top_band: true,
       override_id: null,
+      origin_source_type: 'planner_generated',
+      origin_quality_band: 'elite_talent',
+      origin_override_id: null,
+      origin_season: 2027,
       talent_seed_value: 101,
       talent_sequence: 1
     })
@@ -112,6 +124,7 @@ describe('PlayersPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'EGY-0001' }))
     await waitFor(() => expect(api.getRunPlayerDetail).toHaveBeenCalledWith('run-a', 'EGY-0001'))
     expect(await screen.findByText(/Source: planner_generated/)).toBeInTheDocument()
+    expect(await screen.findByText(/Origin source: planner_generated/)).toBeInTheDocument()
   })
 
   it('shows list error state', async () => {

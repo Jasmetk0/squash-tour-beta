@@ -139,6 +139,10 @@ export function PlayersPage(): JSX.Element {
               {detailQuery.data.is_top_band ? 'yes' : 'no'} | Override: {detailQuery.data.override_id ?? '—'}
             </p>
             <p>
+              Origin source: {detailQuery.data.origin_source_type ?? '—'} | Origin band: {detailQuery.data.origin_quality_band ?? '—'} |
+              Origin season: {detailQuery.data.origin_season ?? '—'} | Origin override: {detailQuery.data.origin_override_id ?? '—'}
+            </p>
+            <p>
               Style: {detailQuery.data.play_style} / {detailQuery.data.archetype}
             </p>
             <pre className="json-block">{JSON.stringify(detailQuery.data, null, 2)}</pre>

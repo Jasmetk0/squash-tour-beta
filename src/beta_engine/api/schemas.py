@@ -728,6 +728,31 @@ class CountriesDatasetResponse(BaseModel):
     countries: list[CountryResponse] = Field(default_factory=list)
 
 
+class CountriesImportRequest(BaseModel):
+    csv_text: str = Field(min_length=1)
+    dry_run: bool = False
+
+
+class CountriesImportErrorResponse(BaseModel):
+    row_number: int | None = None
+    field: str | None = None
+    message: str
+
+
+class CountriesImportSummaryResponse(BaseModel):
+    total_records: int
+    new_records: int
+    updated_records: int
+    unchanged_records: int
+
+
+class CountriesImportResponse(BaseModel):
+    ok: bool
+    dry_run: bool
+    summary: CountriesImportSummaryResponse
+    errors: list[CountriesImportErrorResponse] = Field(default_factory=list)
+
+
 class CountryTalentYearPreviewResponse(BaseModel):
     country_code: str
     country_name: str

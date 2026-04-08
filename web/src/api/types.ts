@@ -637,6 +637,31 @@ export type CountriesMetadataResponse = {
 
 export type CountryUpsertPayload = CountryRecord
 
+export type CountriesImportPayload = {
+  csv_text: string
+  dry_run: boolean
+}
+
+export type CountriesImportError = {
+  row_number: number | null
+  field: string | null
+  message: string
+}
+
+export type CountriesImportSummary = {
+  total_records: number
+  new_records: number
+  updated_records: number
+  unchanged_records: number
+}
+
+export type CountriesImportResponse = {
+  ok: boolean
+  dry_run: boolean
+  summary: CountriesImportSummary
+  errors: CountriesImportError[]
+}
+
 export type ManualPlayerAttributeOverrides = {
   technique?: number | null
   movement?: number | null

@@ -154,6 +154,9 @@ def test_run_world_generation_endpoints_return_persisted_plan_and_provenance(tmp
         assert len(players_payload["players"]) == plan_payload["total_talents"]
 
         sample = players_payload["players"][0]
+        assert sample["origin_source_type"] == "planner_generated"
+        assert sample["origin_quality_band"] == sample["quality_band"]
+        assert sample["origin_season"] == sample["season"]
         status, player_detail = _request(
             "GET",
             f"{server.base_url}/runs/run-gen/world/generated-players/{sample['player_id']}",
@@ -161,6 +164,7 @@ def test_run_world_generation_endpoints_return_persisted_plan_and_provenance(tmp
         assert status == 200
         assert player_detail["player_id"] == sample["player_id"]
         assert player_detail["quality_band"] == sample["quality_band"]
+        assert player_detail["origin_source_type"] == sample["origin_source_type"]
 
         status, filtered = _request(
             "GET",
@@ -222,6 +226,10 @@ def test_run_players_explorer_endpoints_support_filters_and_detail(tmp_path) -> 
         assert detail["player_id"] == sample["player_id"]
         assert detail["source_type"] == sample["source_type"]
         assert detail["quality_band"] == sample["quality_band"]
+        assert "origin_source_type" in detail
+        assert "origin_quality_band" in detail
+        assert "origin_override_id" in detail
+        assert "origin_season" in detail
         assert "hidden_traits" in detail
 
         status, _ = _request("GET", f"{server.base_url}/runs/run-players/players/not-real-player")
@@ -261,6 +269,78 @@ def test_run_players_child_run_contains_rollover_and_intake_sources(tmp_path) ->
         sources = {player["source_type"] for player in child_players["players"]}
         assert "rollover_carried" in sources
         assert "planner_generated" in sources or "manual_override" in sources
+        carried = next(player for player in child_players["players"] if player["source_type"] == "rollover_carried")
+        assert carried["origin_source_type"] in {"planner_generated", "manual_override", None}
+
+
+def test_run_world_status_and_rebuild_endpoints(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-run-world-status.db'}"
+    override_id = f"api-world-stale-{tmp_path.name}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-world", "seed": 5151, "season": 2027})
+        assert status == 201
+
+        status, world_status = _request("GET", f"{server.base_url}/runs/run-world/world-status")
+        assert status == 200
+        assert world_status["is_stale"] is False
+        assert world_status["rebuild_supported"] is True
+        assert world_status["stored_world_generation_fingerprint"] == world_status["current_world_generation_fingerprint"]
+
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/world/manual-player-overrides",
+            {
+                "override_id": override_id,
+                "season": 2027,
+                "country_code": "EGY",
+                "player_name": "API World Stale",
+                "age": 18,
+                "profile_tier": "elite",
+                "enabled": True,
+            },
+        )
+        assert status == 201
+
+        status, stale_status = _request("GET", f"{server.base_url}/runs/run-world/world-status")
+        assert status == 200
+        assert stale_status["is_stale"] is True
+
+        status, rebuilt = _request("POST", f"{server.base_url}/runs/run-world/rebuild-world")
+        assert status == 200
+        assert rebuilt["is_stale"] is False
+        assert rebuilt["stored_world_generation_fingerprint"] == rebuilt["current_world_generation_fingerprint"]
+        _request("DELETE", f"{server.base_url}/world/manual-player-overrides/{override_id}")
+
+
+def test_run_world_rebuild_rejects_progressed_and_child_runs(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-run-world-rebuild-guards.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-progressed", "seed": 6161, "season": 2027})
+        assert status == 201
+        status, _ = _request("POST", f"{server.base_url}/runs/run-progressed/simulate/next-week")
+        assert status == 200
+        status, denied = _request("POST", f"{server.base_url}/runs/run-progressed/rebuild-world")
+        assert status == 400
+        assert "not allowed after simulation progress" in denied["detail"]
+
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-parent", "seed": 6262, "season": 2027})
+        assert status == 201
+        status, _ = _request("POST", f"{server.base_url}/runs/run-parent/simulate/full-season")
+        assert status == 200
+        status, _ = _request("POST", f"{server.base_url}/runs/run-parent/rollover/next-season")
+        assert status == 200
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/runs/run-parent/bootstrap-next-season",
+            {"child_run_id": "run-child", "child_seed": 6262},
+        )
+        assert status == 200
+        status, child_status = _request("GET", f"{server.base_url}/runs/run-child/world-status")
+        assert status == 200
+        assert child_status["rebuild_supported"] is False
+        status, denied_child = _request("POST", f"{server.base_url}/runs/run-child/rebuild-world")
+        assert status == 400
+        assert "not supported for bootstrap/child runs" in denied_child["detail"]
 
 
 def test_run_nations_summary_and_detail_reflect_run_player_pool(tmp_path) -> None:
@@ -319,6 +399,7 @@ def test_run_nations_summary_and_detail_reflect_run_player_pool(tmp_path) -> Non
         assert detail_payload["source_mix"]["planner_generated"] == sample_nation["planner_generated_count"]
         assert detail_payload["source_mix"]["manual_override"] == sample_nation["manual_override_count"]
         assert sum(item["count"] for item in detail_payload["band_distribution"]) == sample_nation["total_players"]
+        assert "origin_band_distribution" in detail_payload
 
         status, _ = _request("GET", f"{server.base_url}/runs/run-nations/nations/ZZZ")
         assert status == 404

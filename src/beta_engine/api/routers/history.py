@@ -40,6 +40,7 @@ from beta_engine.api.schemas import (
     RunPlayersListResponse,
     RunNationsSummaryResponse,
     RunNationDetailResponse,
+    RunWorldStatusResponse,
 )
 from beta_engine.application.api_services import (
     GeneratedPlayerProvenance,
@@ -48,6 +49,7 @@ from beta_engine.application.api_services import (
     RunPlayerDetail,
     RunPlayerListResponse,
     RunTalentPlanSummary,
+    RunWorldStatus,
     SimulationApiService,
     WildcardAssignment,
 )
@@ -77,6 +79,10 @@ def _to_run_nations_response(response: RunNationsSummaryServiceResponse) -> RunN
 
 def _to_run_nation_detail(response: RunNationDetail) -> RunNationDetailResponse:
     return RunNationDetailResponse.model_validate(response, from_attributes=True)
+
+
+def _to_run_world_status(response: RunWorldStatus) -> RunWorldStatusResponse:
+    return RunWorldStatusResponse.model_validate(response, from_attributes=True)
 
 
 @router.get("/world/talent-plan", response_model=RunTalentPlanSummaryResponse)
@@ -124,6 +130,32 @@ def get_generated_player_provenance(
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     return _to_player_provenance(record)
+
+
+@router.get("/world-status", response_model=RunWorldStatusResponse)
+def get_run_world_status(
+    run_id: str,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> RunWorldStatusResponse:
+    try:
+        status_payload = service.get_run_world_status(run_id=run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return _to_run_world_status(status_payload)
+
+
+@router.post("/rebuild-world", response_model=RunWorldStatusResponse)
+def rebuild_run_world(
+    run_id: str,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> RunWorldStatusResponse:
+    try:
+        status_payload = service.rebuild_run_world(run_id=run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return _to_run_world_status(status_payload)
 
 
 @router.get("/players", response_model=RunPlayersListResponse)

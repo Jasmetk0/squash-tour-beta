@@ -19,11 +19,13 @@ const api = vi.hoisted(() => ({
   getLatestRollover: vi.fn(),
   getRunSource: vi.fn(),
   getRunLineage: vi.fn(),
+  getRunWorldStatus: vi.fn(),
   listEvents: vi.fn(),
   listRankingSnapshots: vi.fn(),
   listRaceSnapshots: vi.fn(),
   simulateWorldTourFinals: vi.fn(),
   rolloverNextSeason: vi.fn(),
+  rebuildRunWorld: vi.fn(),
   simulateNextMatch: vi.fn(),
   simulateNextRound: vi.fn(),
   simulateNextTournament: vi.fn(),
@@ -91,6 +93,15 @@ describe('RunPage', () => {
         children: ['run-child-1', 'run-child-2']
       }
     })
+    api.getRunWorldStatus.mockResolvedValue({
+      run_id: 'run-a',
+      source_type: 'fresh_seed',
+      stored_world_generation_fingerprint: 'fp-a',
+      current_world_generation_fingerprint: 'fp-a',
+      is_stale: false,
+      rebuild_supported: true,
+      message: 'Run world inputs are fresh; rebuild is available for this pristine fresh-seed run.'
+    })
     api.listEvents.mockResolvedValue({
       events: [
         { event_sequence: 3, event_id: 'E3', season: 2025, week: 11, template_id: null, tournament_result: null },
@@ -133,6 +144,15 @@ describe('RunPage', () => {
         metadata: {},
         already_persisted: false
       }
+    })
+    api.rebuildRunWorld.mockResolvedValue({
+      run_id: 'run-a',
+      source_type: 'fresh_seed',
+      stored_world_generation_fingerprint: 'fp-a',
+      current_world_generation_fingerprint: 'fp-a',
+      is_stale: false,
+      rebuild_supported: true,
+      message: 'Run rebuilt.'
     })
     api.simulateNextMatch.mockResolvedValue({ step: { mode: 'simulate_next_match' } })
     api.simulateNextRound.mockResolvedValue({ step: { mode: 'simulate_next_round' } })
@@ -190,6 +210,29 @@ describe('RunPage', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Simulate full season' }))
     await waitFor(() => expect(api.simulateFullSeason).toHaveBeenCalledWith('run-a'))
+  })
+
+  it('renders world status and supports rebuild action', async () => {
+    renderWithRoute(<RunPage />, '/runs/run-a')
+    expect(await screen.findByText('World data staleness and rebuild')).toBeInTheDocument()
+    expect(screen.getByText('Fresh')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Rebuild Run from Current World Data' }))
+    await waitFor(() => expect(api.rebuildRunWorld).toHaveBeenCalledWith('run-a'))
+  })
+
+  it('hides rebuild action when unsupported and renders stale label', async () => {
+    api.getRunWorldStatus.mockResolvedValueOnce({
+      run_id: 'run-a',
+      source_type: 'rollover_bootstrap',
+      stored_world_generation_fingerprint: 'fp-old',
+      current_world_generation_fingerprint: 'fp-new',
+      is_stale: true,
+      rebuild_supported: false,
+      message: 'Rebuild is not supported for bootstrap/child runs in this MVP.'
+    })
+    renderWithRoute(<RunPage />, '/runs/run-a')
+    expect(await screen.findByText('Stale')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Rebuild Run from Current World Data' })).not.toBeInTheDocument()
   })
 
   it('renders navigation links for finals, rollover, bootstrap lineage, and season chain', async () => {

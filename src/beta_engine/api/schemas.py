@@ -110,6 +110,16 @@ class RunIndexResponse(BaseModel):
     runs: list[RunIndexSummaryResponse] = Field(default_factory=list)
 
 
+class RunWorldStatusResponse(BaseModel):
+    run_id: str
+    source_type: Literal["fresh_seed", "rollover_bootstrap"]
+    stored_world_generation_fingerprint: str | None = None
+    current_world_generation_fingerprint: str
+    is_stale: bool
+    rebuild_supported: bool
+    message: str
+
+
 class RunTalentPlanCountryAllocationResponse(BaseModel):
     country_code: str
     planned_count: int
@@ -141,6 +151,10 @@ class GeneratedPlayerProvenanceResponse(BaseModel):
     is_top_band: bool
     source_type: Literal["rollover_carried", "planner_generated", "manual_override"]
     override_id: str | None = None
+    origin_source_type: Literal["planner_generated", "manual_override"] | None = None
+    origin_quality_band: str | None = None
+    origin_override_id: str | None = None
+    origin_season: int | None = None
 
 
 class GeneratedPlayerProvenanceListResponse(BaseModel):
@@ -157,6 +171,10 @@ class RunPlayerListItemResponse(BaseModel):
     override_id: str | None = None
     quality_band: str | None = None
     is_top_band: bool
+    origin_source_type: Literal["planner_generated", "manual_override"] | None = None
+    origin_quality_band: str | None = None
+    origin_override_id: str | None = None
+    origin_season: int | None = None
     technique: int
     movement: int
     physical: int
@@ -203,6 +221,10 @@ class RunPlayerDetailResponse(BaseModel):
     quality_band: str | None = None
     is_top_band: bool
     override_id: str | None = None
+    origin_source_type: Literal["planner_generated", "manual_override"] | None = None
+    origin_quality_band: str | None = None
+    origin_override_id: str | None = None
+    origin_season: int | None = None
     talent_seed_value: int | None = None
     talent_sequence: int | None = None
 
@@ -266,6 +288,7 @@ class RunNationDetailResponse(BaseModel):
     average_visible_stats: RunNationAverageVisibleStatsResponse
     source_mix: dict[str, int]
     band_distribution: list[RunNationBandDistributionItemResponse] = Field(default_factory=list)
+    origin_band_distribution: list[RunNationBandDistributionItemResponse] = Field(default_factory=list)
     top_players: list[RunNationTopPlayerItemResponse] = Field(default_factory=list)
 
 

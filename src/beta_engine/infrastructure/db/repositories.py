@@ -53,6 +53,7 @@ class SimulationRunInfo:
     seed: int
     config_version: str | None = None
     config_fingerprint: str | None = None
+    world_generation_fingerprint: str | None = None
     parent_run_id: str | None = None
     source_type: str = "fresh_seed"
     source_rollover_run_id: str | None = None
@@ -179,6 +180,10 @@ class PersistedGeneratedPlayerProvenanceRecord:
     is_top_band: bool
     source_type: str
     override_id: str | None
+    origin_source_type: str | None
+    origin_quality_band: str | None
+    origin_override_id: str | None
+    origin_season: int | None
 
 
 class SimulationPersistenceRepository:
@@ -194,34 +199,68 @@ class SimulationPersistenceRepository:
 
     def _ensure_schema_compatibility(self) -> None:
         with self._engine.begin() as connection:
-            self._ensure_text_column(
+            self._ensure_column(
                 connection=connection,
                 table_name="season_state",
                 column_name="active_tournament_json",
+                column_type="TEXT",
             )
-            self._ensure_text_column(
+            self._ensure_column(
                 connection=connection,
                 table_name="run_generated_player_provenance",
                 column_name="source_type",
+                column_type="TEXT",
             )
-            self._ensure_text_column(
+            self._ensure_column(
                 connection=connection,
                 table_name="run_generated_player_provenance",
                 column_name="override_id",
+                column_type="TEXT",
             )
-            self._ensure_text_column(
+            self._ensure_column(
+                connection=connection,
+                table_name="run_generated_player_provenance",
+                column_name="origin_source_type",
+                column_type="TEXT",
+            )
+            self._ensure_column(
+                connection=connection,
+                table_name="run_generated_player_provenance",
+                column_name="origin_quality_band",
+                column_type="TEXT",
+            )
+            self._ensure_column(
+                connection=connection,
+                table_name="run_generated_player_provenance",
+                column_name="origin_override_id",
+                column_type="TEXT",
+            )
+            self._ensure_column(
+                connection=connection,
+                table_name="run_generated_player_provenance",
+                column_name="origin_season",
+                column_type="INTEGER",
+            )
+            self._ensure_column(
                 connection=connection,
                 table_name="run_talent_country_allocations",
                 column_name="dampener_json",
+                column_type="TEXT",
+            )
+            self._ensure_column(
+                connection=connection,
+                table_name="simulation_runs",
+                column_name="world_generation_fingerprint",
+                column_type="TEXT",
             )
 
     @staticmethod
-    def _ensure_text_column(*, connection, table_name: str, column_name: str) -> None:
+    def _ensure_column(*, connection, table_name: str, column_name: str, column_type: str) -> None:
         result = connection.execute(text(f"PRAGMA table_info({table_name})"))
         existing_columns = {row[1] for row in result}
         if column_name in existing_columns:
             return
-        connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} TEXT"))
+        connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}"))
 
     def upsert_simulation_run(self, run: SimulationRunInfo) -> None:
         with self._session_factory.begin() as session:
@@ -233,6 +272,7 @@ class SimulationPersistenceRepository:
                     seed=run.seed,
                     config_version=run.config_version,
                     config_fingerprint=run.config_fingerprint,
+                    world_generation_fingerprint=run.world_generation_fingerprint,
                     parent_run_id=run.parent_run_id,
                     source_type=run.source_type,
                     source_rollover_run_id=run.source_rollover_run_id,
@@ -245,6 +285,7 @@ class SimulationPersistenceRepository:
             model.seed = run.seed
             model.config_version = run.config_version
             model.config_fingerprint = run.config_fingerprint
+            model.world_generation_fingerprint = run.world_generation_fingerprint
             model.parent_run_id = run.parent_run_id
             model.source_type = run.source_type
             model.source_rollover_run_id = run.source_rollover_run_id
@@ -392,6 +433,7 @@ class SimulationPersistenceRepository:
                 seed=model.seed,
                 config_version=model.config_version,
                 config_fingerprint=model.config_fingerprint,
+                world_generation_fingerprint=model.world_generation_fingerprint,
                 parent_run_id=model.parent_run_id,
                 source_type=model.source_type,
                 source_rollover_run_id=model.source_rollover_run_id,
@@ -423,6 +465,7 @@ class SimulationPersistenceRepository:
                     seed=model.seed,
                     config_version=model.config_version,
                     config_fingerprint=model.config_fingerprint,
+                    world_generation_fingerprint=model.world_generation_fingerprint,
                     parent_run_id=model.parent_run_id,
                     source_type=model.source_type,
                     source_rollover_run_id=model.source_rollover_run_id,
@@ -582,6 +625,10 @@ class SimulationPersistenceRepository:
                         is_top_band=1 if record.is_top_band else 0,
                         source_type=record.source_type,
                         override_id=record.override_id,
+                        origin_source_type=record.origin_source_type,
+                        origin_quality_band=record.origin_quality_band,
+                        origin_override_id=record.origin_override_id,
+                        origin_season=record.origin_season,
                     )
                 )
 
@@ -627,8 +674,12 @@ class SimulationPersistenceRepository:
                     is_top_band=model.is_top_band > 0,
                     source_type=model.source_type or "planner_generated",
                     override_id=model.override_id,
+                    origin_source_type=model.origin_source_type,
+                    origin_quality_band=model.origin_quality_band,
+                    origin_override_id=model.origin_override_id,
+                    origin_season=model.origin_season,
                 )
-                for model in session.execute(statement).scalars().all()
+                for model in models
             ]
 
     def get_generated_player_provenance(
@@ -661,6 +712,10 @@ class SimulationPersistenceRepository:
                 is_top_band=model.is_top_band > 0,
                 source_type=model.source_type or "planner_generated",
                 override_id=model.override_id,
+                origin_source_type=model.origin_source_type,
+                origin_quality_band=model.origin_quality_band,
+                origin_override_id=model.origin_override_id,
+                origin_season=model.origin_season,
             )
 
     def list_generated_player_provenance_history(
@@ -702,6 +757,10 @@ class SimulationPersistenceRepository:
                     is_top_band=model.is_top_band > 0,
                     source_type=model.source_type or "planner_generated",
                     override_id=model.override_id,
+                    origin_source_type=model.origin_source_type,
+                    origin_quality_band=model.origin_quality_band,
+                    origin_override_id=model.origin_override_id,
+                    origin_season=model.origin_season,
                 )
                 for model in models
             ]

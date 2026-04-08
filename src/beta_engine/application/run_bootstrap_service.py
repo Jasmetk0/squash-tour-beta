@@ -18,6 +18,7 @@ class NextSeasonRunBootstrapService:
         parent_run: SimulationRunInfo,
         child_run_id: str,
         child_seed: int,
+        world_generation_fingerprint: str,
     ) -> BootstrapNextSeasonResponse:
         rollover = self.repository.get_season_rollover(run_id=parent_run.run_id, to_season=parent_run.season + 1)
         if rollover is None:
@@ -38,6 +39,7 @@ class NextSeasonRunBootstrapService:
             seed=child_seed,
             config_version=parent_run.config_version,
             config_fingerprint=parent_run.config_fingerprint,
+            world_generation_fingerprint=world_generation_fingerprint,
             parent_run_id=parent_run.run_id,
             source_type="rollover_bootstrap",
             source_rollover_run_id=parent_run.run_id,
@@ -46,7 +48,7 @@ class NextSeasonRunBootstrapService:
         )
 
         if existing_child is not None:
-            if existing_child != expected_run:
+            if not self._same_bootstrap_metadata(existing=existing_child, expected=expected_run):
                 raise ValueError(
                     f"run_id {child_run_id} already exists with conflicting bootstrap metadata"
                 )
@@ -76,4 +78,19 @@ class NextSeasonRunBootstrapService:
             source_rollover_run_id=rollover.run_id,
             source_rollover_to_season=rollover.to_season,
             already_bootstrapped=False,
+        )
+
+    @staticmethod
+    def _same_bootstrap_metadata(*, existing: SimulationRunInfo, expected: SimulationRunInfo) -> bool:
+        return (
+            existing.run_id == expected.run_id
+            and existing.season == expected.season
+            and existing.seed == expected.seed
+            and existing.config_version == expected.config_version
+            and existing.config_fingerprint == expected.config_fingerprint
+            and existing.parent_run_id == expected.parent_run_id
+            and existing.source_type == expected.source_type
+            and existing.source_rollover_run_id == expected.source_rollover_run_id
+            and existing.source_rollover_from_season == expected.source_rollover_from_season
+            and existing.source_rollover_to_season == expected.source_rollover_to_season
         )

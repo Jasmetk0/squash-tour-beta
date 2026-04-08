@@ -37,6 +37,7 @@ import type {
   PreDrawWithdrawalStateResponse,
   RunLineageApiResponse,
   RunStatusSummary,
+  RunWorldStatus,
   RunSourceApiResponse,
   RunTalentPlanSummary,
   RunsIndexResponse,
@@ -180,6 +181,14 @@ export function getRun(runId: string): Promise<SeasonStateResponse> {
 
 export function getRunStatusSummary(runId: string): Promise<RunStatusSummary> {
   return request(`/runs/${encodeURIComponent(runId)}/status-summary`)
+}
+
+export function getRunWorldStatus(runId: string): Promise<RunWorldStatus> {
+  return request(`/runs/${encodeURIComponent(runId)}/world-status`)
+}
+
+export function rebuildRunWorld(runId: string): Promise<RunWorldStatus> {
+  return request(`/runs/${encodeURIComponent(runId)}/rebuild-world`, { method: 'POST' })
 }
 
 export function getRunTalentPlan(runId: string): Promise<RunTalentPlanSummary> {

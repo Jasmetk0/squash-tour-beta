@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import Response
 
 from beta_engine.api.deps import get_countries_config_service
 from beta_engine.api.schemas import (
     CountriesDatasetResponse,
+    CountriesImportRequest,
+    CountriesImportResponse,
+    CountriesImportSummaryResponse,
     CountriesListResponse,
     CountriesMetadataResponse,
     CountryResponse,
@@ -29,6 +33,42 @@ def list_countries(service: CountriesConfigService = Depends(get_countries_confi
 @router.get("/metadata", response_model=CountriesMetadataResponse)
 def get_countries_metadata(service: CountriesConfigService = Depends(get_countries_config_service)) -> CountriesMetadataResponse:
     return CountriesMetadataResponse.model_validate(service.get_metadata().__dict__)
+
+
+@router.get("/export", response_class=Response)
+def export_countries_csv(service: CountriesConfigService = Depends(get_countries_config_service)) -> Response:
+    csv_text = service.export_countries_csv()
+    return Response(
+        content=csv_text,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="countries-export.csv"'},
+    )
+
+
+@router.post("/import", response_model=CountriesImportResponse)
+def import_countries_csv(
+    payload: CountriesImportRequest,
+    service: CountriesConfigService = Depends(get_countries_config_service),
+) -> CountriesImportResponse:
+    result = service.import_countries_csv(csv_text=payload.csv_text, dry_run=payload.dry_run)
+    return CountriesImportResponse(
+        ok=result.ok,
+        dry_run=result.dry_run,
+        summary=CountriesImportSummaryResponse(
+            total_records=result.summary.total_records,
+            new_records=result.summary.new_records,
+            updated_records=result.summary.updated_records,
+            unchanged_records=result.summary.unchanged_records,
+        ),
+        errors=[
+            {
+                "row_number": item.row_number,
+                "field": item.field,
+                "message": item.message,
+            }
+            for item in result.errors
+        ],
+    )
 
 
 @router.get("/{code}", response_model=CountryResponse)

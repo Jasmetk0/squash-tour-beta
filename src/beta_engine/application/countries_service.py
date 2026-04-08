@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import csv
+import io
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from pydantic import ValidationError
+
 from beta_engine.domain.countries import CountriesConfig, Country
-from beta_engine.infrastructure.world_config import load_countries_config
+from beta_engine.infrastructure.world_config import COUNTRY_TABULAR_FIELDS, load_countries_config
 
 
 @dataclass(frozen=True)
@@ -15,6 +20,29 @@ class CountriesDatasetMetadata:
     dataset_status: str | None
     country_count: int
     source_path: str
+
+
+@dataclass(frozen=True)
+class CountriesImportError:
+    row_number: int | None
+    field: str | None
+    message: str
+
+
+@dataclass(frozen=True)
+class CountriesImportSummary:
+    total_records: int
+    new_records: int
+    updated_records: int
+    unchanged_records: int
+
+
+@dataclass(frozen=True)
+class CountriesImportResult:
+    ok: bool
+    dry_run: bool
+    summary: CountriesImportSummary
+    errors: list[CountriesImportError]
 
 
 @dataclass(slots=True)
@@ -44,6 +72,141 @@ class CountriesConfigService:
             country_count=len(config.countries),
             source_path=str(self.config_path),
         )
+
+    def export_countries_csv(self) -> str:
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=COUNTRY_TABULAR_FIELDS)
+        writer.writeheader()
+        for country in sorted(self._load().countries, key=lambda item: item.code):
+            writer.writerow(
+                {
+                    "code": country.code,
+                    "name": country.name,
+                    "flag_asset": country.flag_asset or "",
+                    "region": country.region,
+                    "population": country.population,
+                    "wealth_support": country.wealth_support,
+                    "squash_popularity": country.squash_popularity,
+                    "squash_tradition": country.squash_tradition,
+                    "system_quality": country.system_quality,
+                }
+            )
+        return output.getvalue()
+
+    def import_countries_csv(self, *, csv_text: str, dry_run: bool) -> CountriesImportResult:
+        errors: list[CountriesImportError] = []
+        current = self._load()
+        current_by_code = {country.code: country for country in current.countries}
+
+        try:
+            reader = csv.DictReader(io.StringIO(csv_text))
+        except csv.Error as exc:
+            return CountriesImportResult(
+                ok=False,
+                dry_run=dry_run,
+                summary=CountriesImportSummary(total_records=0, new_records=0, updated_records=0, unchanged_records=0),
+                errors=[CountriesImportError(row_number=None, field=None, message=f"dataset is not parseable CSV: {exc}")],
+            )
+
+        fields = reader.fieldnames or []
+        missing = [field for field in COUNTRY_TABULAR_FIELDS if field not in fields]
+        if missing:
+            return CountriesImportResult(
+                ok=False,
+                dry_run=dry_run,
+                summary=CountriesImportSummary(total_records=0, new_records=0, updated_records=0, unchanged_records=0),
+                errors=[
+                    CountriesImportError(
+                        row_number=None,
+                        field=None,
+                        message=f"countries csv is missing required columns: {', '.join(missing)}",
+                    )
+                ],
+            )
+
+        parsed_countries: list[Country] = []
+        seen_codes: set[str] = set()
+        for index, row in enumerate(reader, start=2):
+            code = (row.get("code") or "").strip().upper()
+            if not code:
+                errors.append(CountriesImportError(row_number=index, field="code", message="code is required"))
+                continue
+            if not re.fullmatch(r"[A-Z]{3}", code):
+                errors.append(
+                    CountriesImportError(row_number=index, field="code", message="code must be exactly 3 uppercase letters")
+                )
+            if code in seen_codes:
+                errors.append(CountriesImportError(row_number=index, field="code", message=f"duplicate code '{code}' in import"))
+                continue
+            seen_codes.add(code)
+
+            payload: dict[str, object] = {
+                "code": code,
+                "name": (row.get("name") or "").strip(),
+                "flag_asset": ((row.get("flag_asset") or "").strip() or None),
+                "region": (row.get("region") or "").strip(),
+            }
+            for int_field in (
+                "population",
+                "wealth_support",
+                "squash_popularity",
+                "squash_tradition",
+                "system_quality",
+            ):
+                raw = (row.get(int_field) or "").strip()
+                if not raw:
+                    errors.append(CountriesImportError(row_number=index, field=int_field, message=f"{int_field} is required"))
+                    continue
+                try:
+                    payload[int_field] = int(raw)
+                except ValueError:
+                    errors.append(CountriesImportError(row_number=index, field=int_field, message=f"{int_field} must be an integer"))
+
+            if any(err.row_number == index for err in errors):
+                continue
+
+            try:
+                parsed_countries.append(Country.model_validate(payload))
+            except ValidationError as exc:
+                for issue in exc.errors():
+                    field = str(issue.get("loc", [""])[0]) if issue.get("loc") else None
+                    errors.append(CountriesImportError(row_number=index, field=field, message=str(issue.get("msg", "invalid value"))))
+
+        if not parsed_countries and not errors:
+            errors.append(CountriesImportError(row_number=None, field=None, message="dataset contains no records"))
+
+        if errors:
+            return CountriesImportResult(
+                ok=False,
+                dry_run=dry_run,
+                summary=CountriesImportSummary(total_records=len(parsed_countries), new_records=0, updated_records=0, unchanged_records=0),
+                errors=errors,
+            )
+
+        new_records = 0
+        updated_records = 0
+        unchanged_records = 0
+        for country in parsed_countries:
+            existing = current_by_code.get(country.code)
+            if existing is None:
+                new_records += 1
+            elif existing.model_dump(mode="json") == country.model_dump(mode="json"):
+                unchanged_records += 1
+            else:
+                updated_records += 1
+
+        summary = CountriesImportSummary(
+            total_records=len(parsed_countries),
+            new_records=new_records,
+            updated_records=updated_records,
+            unchanged_records=unchanged_records,
+        )
+        if dry_run:
+            return CountriesImportResult(ok=True, dry_run=True, summary=summary, errors=[])
+
+        replacement = CountriesConfig(dataset_status=current.dataset_status, countries=parsed_countries)
+        self._save(replacement)
+        return CountriesImportResult(ok=True, dry_run=False, summary=summary, errors=[])
 
     def create_country(self, payload: Country) -> Country:
         config = self._load()

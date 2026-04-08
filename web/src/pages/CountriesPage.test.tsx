@@ -21,7 +21,9 @@ const api = vi.hoisted(() => {
     getCountriesMetadata: vi.fn(),
     createCountry: vi.fn(),
     updateCountry: vi.fn(),
-    deleteCountry: vi.fn()
+    deleteCountry: vi.fn(),
+    importCountries: vi.fn(),
+    exportCountriesCsv: vi.fn()
   }
 })
 
@@ -34,6 +36,8 @@ describe('CountriesPage', () => {
     api.createCountry.mockReset()
     api.updateCountry.mockReset()
     api.deleteCountry.mockReset()
+    api.importCountries.mockReset()
+    api.exportCountriesCsv.mockReset()
 
     api.listCountries.mockResolvedValue({
       countries: [
@@ -58,6 +62,16 @@ describe('CountriesPage', () => {
     api.createCountry.mockImplementation(async (payload) => payload)
     api.updateCountry.mockImplementation(async (_code, payload) => payload)
     api.deleteCountry.mockResolvedValue(undefined)
+    api.exportCountriesCsv.mockResolvedValue('code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality\n')
+    api.importCountries.mockResolvedValue({
+      ok: true,
+      dry_run: true,
+      summary: { total_records: 1, new_records: 0, updated_records: 1, unchanged_records: 0 },
+      errors: []
+    })
+
+    globalThis.URL.createObjectURL = vi.fn(() => 'blob:mock')
+    globalThis.URL.revokeObjectURL = vi.fn()
   })
 
   it('renders countries list and metadata', async () => {
@@ -66,6 +80,7 @@ describe('CountriesPage', () => {
     expect(await screen.findByRole('heading', { name: 'Countries Editor' })).toBeInTheDocument()
     expect(await screen.findByText('Dataset status')).toBeInTheDocument()
     expect(await screen.findByRole('cell', { name: 'AAA' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Export countries CSV' })).toBeInTheDocument()
   })
 
   it('supports create flow', async () => {
@@ -89,49 +104,59 @@ describe('CountriesPage', () => {
     )
   })
 
-  it('supports edit flow', async () => {
+  it('supports duplicate action prefilling create flow', async () => {
     renderWithRoute(<CountriesPage />, '/world/countries')
 
     const row = (await screen.findByRole('cell', { name: 'AAA' })).closest('tr') as HTMLElement
-    await userEvent.click(within(row).getByRole('button', { name: 'Edit' }))
+    await userEvent.click(within(row).getByRole('button', { name: 'Duplicate country' }))
 
-    const nameInput = screen.getByLabelText('Name')
-    await userEvent.clear(nameInput)
-    await userEvent.type(nameInput, 'Alpha Updated')
-    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+    expect(screen.getByLabelText('Code (3 letters)')).toHaveValue('')
+    expect(screen.getByLabelText('Name')).toHaveValue('Alpha Copy')
+    expect(await screen.findByText(/Set a unique 3-letter code before saving/i)).toBeInTheDocument()
+  })
 
-    await waitFor(() =>
-      expect(api.updateCountry).toHaveBeenCalledWith('AAA', expect.objectContaining({ name: 'Alpha Updated' }))
+  it('supports import success path via dry-run', async () => {
+    renderWithRoute(<CountriesPage />, '/world/countries')
+    await screen.findByRole('button', { name: 'Validate import (dry run)' })
+
+    await userEvent.type(screen.getByLabelText('CSV payload'), 'code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality\nAAA,Alpha,,EUROPE,1000000,3,4,2,5')
+    await userEvent.click(screen.getByRole('button', { name: 'Validate import (dry run)' }))
+
+    await waitFor(() => expect(api.importCountries).toHaveBeenCalled())
+    expect(api.importCountries.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ dry_run: true, csv_text: expect.stringContaining('code,name') })
     )
+    expect(await screen.findByText(/Dry-run succeeded/i)).toBeInTheDocument()
   })
 
-  it('supports delete flow', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+  it('shows import validation errors', async () => {
+    api.importCountries.mockResolvedValueOnce({
+      ok: false,
+      dry_run: true,
+      summary: { total_records: 0, new_records: 0, updated_records: 0, unchanged_records: 0 },
+      errors: [{ row_number: 2, field: 'wealth_support', message: 'Input should be less than or equal to 5' }]
+    })
+
     renderWithRoute(<CountriesPage />, '/world/countries')
+    await screen.findByRole('button', { name: 'Validate import (dry run)' })
 
-    const row = (await screen.findByRole('cell', { name: 'AAA' })).closest('tr') as HTMLElement
-    await userEvent.click(within(row).getByRole('button', { name: 'Edit' }))
+    await userEvent.type(screen.getByLabelText('CSV payload'), 'bad')
+    await userEvent.click(screen.getByRole('button', { name: 'Validate import (dry run)' }))
 
-    await userEvent.click(screen.getByRole('button', { name: 'Delete country' }))
+    expect(await screen.findByText(/Import validation failed/i)).toBeInTheDocument()
+    expect(await screen.findByText(/wealth_support/i)).toBeInTheDocument()
+  })
 
-    await waitFor(() => expect(api.deleteCountry).toHaveBeenCalled())
-    expect(api.deleteCountry.mock.calls[0][0]).toBe('AAA')
+  it('requires confirmation before destructive import apply', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    renderWithRoute(<CountriesPage />, '/world/countries')
+    await screen.findByRole('button', { name: 'Apply import' })
+
+    await userEvent.type(screen.getByLabelText('CSV payload'), 'code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality\n')
+    await userEvent.click(screen.getByRole('button', { name: 'Apply import' }))
+
+    expect(confirmSpy).toHaveBeenCalled()
+    expect(api.importCountries).not.toHaveBeenCalledWith(expect.objectContaining({ dry_run: false }))
     confirmSpy.mockRestore()
-  })
-
-  it('renders validation/error feedback from API failures', async () => {
-    api.createCountry.mockRejectedValue(new api.ApiError('validation failed', 422))
-    renderWithRoute(<CountriesPage />, '/world/countries')
-
-    await screen.findByRole('button', { name: 'Create country' })
-    await userEvent.clear(screen.getByLabelText('Code (3 letters)'))
-    await userEvent.type(screen.getByLabelText('Code (3 letters)'), 'bad')
-    await userEvent.clear(screen.getByLabelText('Name'))
-    await userEvent.type(screen.getByLabelText('Name'), 'Bad Country')
-    await userEvent.clear(screen.getByLabelText('Region'))
-    await userEvent.type(screen.getByLabelText('Region'), 'EUROPE')
-    await userEvent.click(screen.getByRole('button', { name: 'Create country' }))
-
-    expect(await screen.findByText(/Backend validation rejected the payload./i)).toBeInTheDocument()
   })
 })

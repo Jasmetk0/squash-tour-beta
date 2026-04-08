@@ -74,6 +74,15 @@ def _request(method: str, url: str, payload: dict[str, object] | None = None) ->
         return int(exc.code), parsed
 
 
+def _request_raw(method: str, url: str) -> tuple[int, str]:
+    req = request.Request(url, method=method)
+    try:
+        with request.urlopen(req, timeout=60) as response:
+            return response.status, response.read().decode("utf-8")
+    except error.HTTPError as exc:
+        return int(exc.code), exc.read().decode("utf-8")
+
+
 def _write_fixture(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(COUNTRIES_FIXTURE, indent=2) + "\n", encoding="utf-8")
@@ -197,3 +206,94 @@ def test_delete_country(tmp_path) -> None:
         status, payload = _request("GET", f"{server.base_url}/world/countries")
         assert status == 200
         assert payload["countries"] == []
+
+
+def test_export_countries_csv(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    _write_fixture(countries_path)
+
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'countries-export.db'}", countries_config_path=str(countries_path)) as server:
+        status, body = _request_raw("GET", f"{server.base_url}/world/countries/export")
+        assert status == 200
+        assert "code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality" in body
+        assert "AAA,Alpha" in body
+
+
+def test_import_countries_csv_replaces_dataset(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    _write_fixture(countries_path)
+    csv_text = (
+        "code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality\n"
+        "BBB,Beta,,ASIA,2000000,4,3,2,4\n"
+    )
+
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'countries-import.db'}", countries_config_path=str(countries_path)) as server:
+        status, payload = _request(
+            "POST",
+            f"{server.base_url}/world/countries/import",
+            {"csv_text": csv_text, "dry_run": False},
+        )
+        assert status == 200
+        assert payload["ok"] is True
+        assert payload["summary"]["total_records"] == 1
+
+    persisted = json.loads(countries_path.read_text(encoding="utf-8"))
+    assert [country["code"] for country in persisted["countries"]] == ["BBB"]
+
+
+def test_import_rejects_duplicate_code_and_does_not_partially_write(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    _write_fixture(countries_path)
+    before = countries_path.read_text(encoding="utf-8")
+    csv_text = (
+        "code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality\n"
+        "BBB,Beta,,ASIA,2000000,4,3,2,4\n"
+        "BBB,Beta Again,,ASIA,2100000,4,3,2,4\n"
+    )
+
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'countries-import-dup.db'}", countries_config_path=str(countries_path)) as server:
+        status, payload = _request(
+            "POST",
+            f"{server.base_url}/world/countries/import",
+            {"csv_text": csv_text, "dry_run": False},
+        )
+        assert status == 200
+        assert payload["ok"] is False
+        assert "duplicate code 'BBB'" in payload["errors"][0]["message"]
+
+    assert countries_path.read_text(encoding="utf-8") == before
+
+
+def test_import_rejects_invalid_factor_range(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    _write_fixture(countries_path)
+    csv_text = (
+        "code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality\n"
+        "BBB,Beta,,ASIA,2000000,9,3,2,4\n"
+    )
+
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'countries-import-factors.db'}", countries_config_path=str(countries_path)) as server:
+        status, payload = _request(
+            "POST",
+            f"{server.base_url}/world/countries/import",
+            {"csv_text": csv_text, "dry_run": False},
+        )
+        assert status == 200
+        assert payload["ok"] is False
+        assert payload["errors"][0]["field"] == "wealth_support"
+
+
+def test_import_rejects_malformed_payload(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    _write_fixture(countries_path)
+    malformed = "code,name\nAAA,Alpha\n"
+
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'countries-import-malformed.db'}", countries_config_path=str(countries_path)) as server:
+        status, payload = _request(
+            "POST",
+            f"{server.base_url}/world/countries/import",
+            {"csv_text": malformed, "dry_run": False},
+        )
+        assert status == 200
+        assert payload["ok"] is False
+        assert "missing required columns" in payload["errors"][0]["message"]

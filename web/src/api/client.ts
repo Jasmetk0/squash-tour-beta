@@ -2,6 +2,8 @@ import type {
   BootstrapNextSeasonPayload,
   BootstrapNextSeasonResponse,
   CountriesListResponse,
+  CountriesImportPayload,
+  CountriesImportResponse,
   CountriesMetadataResponse,
   ManualPlayerOverrideRecord,
   ManualPlayerOverridesListResponse,
@@ -112,6 +114,19 @@ export function updateCountry(code: string, payload: CountryUpsertPayload): Prom
 
 export function deleteCountry(code: string): Promise<void> {
   return request(`/world/countries/${encodeURIComponent(code)}`, { method: 'DELETE' })
+}
+
+export async function exportCountriesCsv(): Promise<string> {
+  const response = await fetch(`${API_BASE}/world/countries/export`)
+  if (!response.ok) {
+    const body = await response.text()
+    throw new ApiError(body || 'Request failed', response.status)
+  }
+  return response.text()
+}
+
+export function importCountries(payload: CountriesImportPayload): Promise<CountriesImportResponse> {
+  return request('/world/countries/import', { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function getTalentClassPreview(params: { year: number; seed: number }): Promise<TalentClassYearPreviewResponse> {

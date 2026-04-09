@@ -10,6 +10,7 @@ from beta_engine.application.api_services import SimulationApiService
 from beta_engine.application.config_validation_service import ConfigValidationService
 from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
+from beta_engine.application.world_package_service import WorldPackageService
 from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
 from beta_engine.infrastructure.config import load_settings
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
@@ -64,3 +65,10 @@ def get_manual_player_overrides_service(request: Request) -> ManualPlayerOverrid
     if configured_path is None:
         return ManualPlayerOverridesService()
     return ManualPlayerOverridesService(config_path=configured_path)
+
+
+def get_world_package_service(request: Request) -> WorldPackageService:
+    return WorldPackageService(
+        countries_service=get_countries_config_service(request),
+        manual_overrides_service=get_manual_player_overrides_service(request),
+    )

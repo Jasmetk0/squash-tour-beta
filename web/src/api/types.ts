@@ -775,3 +775,29 @@ export type TalentClassSummaryResponse = {
   global_band_totals: Record<string, number>
   countries: TalentClassSummaryCountry[]
 }
+
+
+export type WorldPackageImportPayload = {
+  package_text: string
+  dry_run: boolean
+}
+
+export type WorldPackageImportError = {
+  field: string | null
+  message: string
+}
+
+export type WorldPackageImportSummary = {
+  total_records: number
+  new_records: number
+  updated_records: number
+  unchanged_records: number
+}
+
+export type WorldPackageImportResponse = {
+  ok: boolean
+  dry_run: boolean
+  countries_summary: WorldPackageImportSummary
+  manual_overrides_summary: WorldPackageImportSummary
+  errors: WorldPackageImportError[]
+}

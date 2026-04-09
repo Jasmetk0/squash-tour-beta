@@ -363,6 +363,32 @@ class ManualPlayerOverridesImportResponse(BaseModel):
     errors: list[ManualPlayerOverridesImportErrorResponse] = Field(default_factory=list)
 
 
+
+
+class WorldPackageImportRequest(BaseModel):
+    package_text: str = Field(min_length=1)
+    dry_run: bool = False
+
+
+class WorldPackageImportErrorResponse(BaseModel):
+    field: str | None = None
+    message: str
+
+
+class WorldPackageImportSummaryResponse(BaseModel):
+    total_records: int
+    new_records: int
+    updated_records: int
+    unchanged_records: int
+
+
+class WorldPackageImportResponse(BaseModel):
+    ok: bool
+    dry_run: bool
+    countries_summary: WorldPackageImportSummaryResponse
+    manual_overrides_summary: WorldPackageImportSummaryResponse
+    errors: list[WorldPackageImportErrorResponse] = Field(default_factory=list)
+
 class SimulateResponse(BaseModel):
     mode: str
     run: RunSummaryResponse

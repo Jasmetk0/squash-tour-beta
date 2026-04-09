@@ -58,7 +58,9 @@ import type {
   SimulateResponse,
   WildcardCandidatesResponse,
   WildcardActionHistoryResponse,
-  WildcardStateResponse
+  WildcardStateResponse,
+  WorldPackageImportPayload,
+  WorldPackageImportResponse
 } from './types'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
@@ -197,6 +199,20 @@ export function importManualPlayerOverrides(
   payload: ManualPlayerOverridesImportPayload
 ): Promise<ManualPlayerOverridesImportResponse> {
   return request('/world/manual-player-overrides/import', { method: 'POST', body: JSON.stringify(payload) })
+}
+
+
+export async function exportWorldPackageJson(): Promise<string> {
+  const response = await fetch(`${API_BASE}/world/package/export`)
+  if (!response.ok) {
+    const body = await response.text()
+    throw new ApiError(body || 'Request failed', response.status)
+  }
+  return response.text()
+}
+
+export function importWorldPackage(payload: WorldPackageImportPayload): Promise<WorldPackageImportResponse> {
+  return request('/world/package/import', { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function createRun(payload: CreateRunPayload): Promise<RunSummary> {

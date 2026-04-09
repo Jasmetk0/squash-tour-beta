@@ -24,6 +24,10 @@ from beta_engine.application.player_career_query_service import (
     PlayerCareerHistory as PlayerCareerHistoryReadModel,
     PlayerCareerQueryService,
 )
+from beta_engine.application.player_tournament_results_query_service import (
+    PlayerTournamentResultsTimeline as PlayerTournamentResultsTimelineReadModel,
+    PlayerTournamentResultsQueryService,
+)
 from beta_engine.application.persistence import SimulationPersistenceService
 from beta_engine.application.run_bootstrap_models import BootstrapNextSeasonResponse, RunLineageRecord, RunSourceSummary
 from beta_engine.application.run_bootstrap_service import NextSeasonRunBootstrapService
@@ -374,6 +378,33 @@ class PlayerCareerPerformanceResponse:
     player_name: str | None
     country_code: str | None
     entries: list[PlayerCareerSeasonPerformanceEntry]
+
+
+
+@dataclass(frozen=True)
+class PlayerTournamentResultEntry:
+    run_id: str
+    season: int
+    week: int | None
+    event_sequence: int
+    event_id: str
+    event_name: str | None
+    event_category: str | None
+    template_id: str | None
+    finish: str | None
+    is_title: bool
+    wins: int
+    losses: int
+    ranking_points_awarded: int | None
+
+
+@dataclass(frozen=True)
+class PlayerTournamentResultsTimelineResponse:
+    requested_run_id: str
+    player_id: str
+    player_name: str | None
+    country_code: str | None
+    entries: list[PlayerTournamentResultEntry]
 
 @dataclass(frozen=True)
 class RunNationSummaryItem:
@@ -815,6 +846,16 @@ class SimulationApiService:
         )
         result = query.get_player_career_performance(run_id=run_id, player_id=player_id)
         return self._to_player_career_performance_response(result)
+
+    def get_player_tournament_results_timeline(
+        self, *, run_id: str, player_id: str
+    ) -> PlayerTournamentResultsTimelineResponse:
+        query = PlayerTournamentResultsQueryService(
+            repository=self.repository,
+            load_players_for_run=lambda run_info: self._load_players_by_id_for_run(run_info=run_info),
+        )
+        result = query.get_player_tournament_results_timeline(run_id=run_id, player_id=player_id)
+        return self._to_player_tournament_results_timeline_response(result)
 
     def list_run_nations(
         self,
@@ -2873,6 +2914,35 @@ class SimulationApiService:
                     quarterfinals=entry.quarterfinals,
                     wins=entry.wins,
                     losses=entry.losses,
+                )
+                for entry in result.entries
+            ],
+        )
+
+    @staticmethod
+    def _to_player_tournament_results_timeline_response(
+        result: PlayerTournamentResultsTimelineReadModel,
+    ) -> PlayerTournamentResultsTimelineResponse:
+        return PlayerTournamentResultsTimelineResponse(
+            requested_run_id=result.requested_run_id,
+            player_id=result.player_id,
+            player_name=result.player_name,
+            country_code=result.country_code,
+            entries=[
+                PlayerTournamentResultEntry(
+                    run_id=entry.run_id,
+                    season=entry.season,
+                    week=entry.week,
+                    event_sequence=entry.event_sequence,
+                    event_id=entry.event_id,
+                    event_name=entry.event_name,
+                    event_category=entry.event_category,
+                    template_id=entry.template_id,
+                    finish=entry.finish,
+                    is_title=entry.is_title,
+                    wins=entry.wins,
+                    losses=entry.losses,
+                    ranking_points_awarded=entry.ranking_points_awarded,
                 )
                 for entry in result.entries
             ],

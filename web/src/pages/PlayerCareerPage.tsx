@@ -1,7 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
-import { getRunPlayerCareerHistory, getRunPlayerCareerPerformance } from '../api/client'
+import {
+  getRunPlayerCareerHistory,
+  getRunPlayerCareerPerformance,
+  getRunPlayerTournamentResults
+} from '../api/client'
 import { CurrentContextStrip, PageIntro, SectionCard } from '../components/RunScopedUi'
 
 function displayMetric(value: number | null | undefined): string | number {
@@ -20,6 +24,12 @@ export function PlayerCareerPage(): JSX.Element {
   const performanceQuery = useQuery({
     queryKey: ['player-career-performance', runId, playerId],
     queryFn: () => getRunPlayerCareerPerformance(runId, playerId),
+    enabled: Boolean(runId && playerId)
+  })
+
+  const tournamentResultsQuery = useQuery({
+    queryKey: ['player-career-results', runId, playerId],
+    queryFn: () => getRunPlayerTournamentResults(runId, playerId),
     enabled: Boolean(runId && playerId)
   })
 
@@ -145,6 +155,49 @@ export function PlayerCareerPage(): JSX.Element {
             </table>
           ) : (
             <p className="status">No season performance entries are available for this player yet.</p>
+          )
+        ) : null}
+      </SectionCard>
+
+      <SectionCard title="Tournament results timeline">
+        {tournamentResultsQuery.isLoading ? <p className="status">Loading tournament results timeline…</p> : null}
+        {tournamentResultsQuery.error ? (
+          <p className="error">Failed to load tournament results timeline: {String(tournamentResultsQuery.error)}</p>
+        ) : null}
+        {tournamentResultsQuery.data ? (
+          tournamentResultsQuery.data.entries.length > 0 ? (
+            <table>
+              <thead>
+                <tr>
+                  <th>Season</th>
+                  <th>Week</th>
+                  <th>Run</th>
+                  <th>Event</th>
+                  <th>Category</th>
+                  <th>Finish</th>
+                  <th>Wins</th>
+                  <th>Losses</th>
+                  <th>Points</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tournamentResultsQuery.data.entries.map((entry) => (
+                  <tr key={`result-${entry.run_id}-${entry.event_id}-${entry.event_sequence}`}>
+                    <td>{entry.season}</td>
+                    <td>{displayMetric(entry.week)}</td>
+                    <td>{entry.run_id}</td>
+                    <td>{entry.event_name ?? entry.event_id}</td>
+                    <td>{entry.event_category ?? '—'}</td>
+                    <td>{entry.finish ?? '—'}{entry.is_title ? ' 🏆' : ''}</td>
+                    <td>{entry.wins}</td>
+                    <td>{entry.losses}</td>
+                    <td>{displayMetric(entry.ranking_points_awarded)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="status">No tournament results are available for this player yet.</p>
           )
         ) : null}
       </SectionCard>

@@ -7,7 +7,8 @@ import { renderWithRoute } from '../test/testUtils'
 
 const api = vi.hoisted(() => ({
   listRunPlayers: vi.fn(),
-  getRunPlayerDetail: vi.fn()
+  getRunPlayerDetail: vi.fn(),
+  getRunPlayerCareerHistory: vi.fn()
 }))
 
 vi.mock('../api/client', () => api)
@@ -125,6 +126,10 @@ describe('PlayersPage', () => {
     await waitFor(() => expect(api.getRunPlayerDetail).toHaveBeenCalledWith('run-a', 'EGY-0001'))
     expect(await screen.findByText(/Source: planner_generated/)).toBeInTheDocument()
     expect(await screen.findByText(/Origin source: planner_generated/)).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'View career history' })).toHaveAttribute(
+      'href',
+      '/runs/run-a/players/EGY-0001/career'
+    )
   })
 
   it('shows list error state', async () => {

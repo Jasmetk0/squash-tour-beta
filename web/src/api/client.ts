@@ -51,6 +51,7 @@ import type {
   GeneratedPlayerProvenanceListResponse,
   RunSummary,
   RunPlayerDetail,
+  PlayerCareerHistoryResponse,
   RunPlayersListResponse,
   RunNationDetail,
   RunNationsSummaryResponse,
@@ -288,6 +289,10 @@ export function listRunPlayers(
 
 export function getRunPlayerDetail(runId: string, playerId: string): Promise<RunPlayerDetail> {
   return request(`/runs/${encodeURIComponent(runId)}/players/${encodeURIComponent(playerId)}`)
+}
+
+export function getRunPlayerCareerHistory(runId: string, playerId: string): Promise<PlayerCareerHistoryResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/players/${encodeURIComponent(playerId)}/career`)
 }
 
 export function listRunNations(

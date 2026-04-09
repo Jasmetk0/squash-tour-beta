@@ -156,6 +156,32 @@ export type RunPlayerDetail = {
   talent_sequence: number | null
 }
 
+export type PlayerCareerHistoryEntry = {
+  run_id: string
+  season: number
+  age: number
+  overall: number
+  technique: number
+  movement: number
+  physical: number
+  mental: number
+  source_type: 'rollover_carried' | 'planner_generated' | 'manual_override' | null
+  quality_band: string | null
+  is_top_band: boolean | null
+  origin_source_type: 'planner_generated' | 'manual_override' | null
+  origin_quality_band: string | null
+  origin_override_id: string | null
+  origin_season: number | null
+}
+
+export type PlayerCareerHistoryResponse = {
+  requested_run_id: string
+  player_id: string
+  player_name: string | null
+  country_code: string | null
+  entries: PlayerCareerHistoryEntry[]
+}
+
 export type RunNationSummaryItem = {
   country_code: string
   country_name: string | null

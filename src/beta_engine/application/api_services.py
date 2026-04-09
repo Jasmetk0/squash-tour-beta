@@ -16,6 +16,10 @@ from beta_engine.application.finals_models import (
 from beta_engine.application.finals_service import FinalsOrchestrationService
 from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
+from beta_engine.application.player_career_query_service import (
+    PlayerCareerHistory as PlayerCareerHistoryReadModel,
+    PlayerCareerQueryService,
+)
 from beta_engine.application.persistence import SimulationPersistenceService
 from beta_engine.application.run_bootstrap_models import BootstrapNextSeasonResponse, RunLineageRecord, RunSourceSummary
 from beta_engine.application.run_bootstrap_service import NextSeasonRunBootstrapService
@@ -312,6 +316,34 @@ class RunPlayerDetail:
     origin_season: int | None
     talent_seed_value: int | None
     talent_sequence: int | None
+
+
+@dataclass(frozen=True)
+class PlayerCareerHistoryEntry:
+    run_id: str
+    season: int
+    age: int
+    overall: int
+    technique: int
+    movement: int
+    physical: int
+    mental: int
+    source_type: Literal["rollover_carried", "planner_generated", "manual_override"] | None
+    quality_band: str | None
+    is_top_band: bool | None
+    origin_source_type: Literal["planner_generated", "manual_override"] | None
+    origin_quality_band: str | None
+    origin_override_id: str | None
+    origin_season: int | None
+
+
+@dataclass(frozen=True)
+class PlayerCareerHistoryResponse:
+    requested_run_id: str
+    player_id: str
+    player_name: str | None
+    country_code: str | None
+    entries: list[PlayerCareerHistoryEntry]
 
 
 @dataclass(frozen=True)
@@ -738,6 +770,14 @@ class SimulationApiService:
             raise KeyError(f"player_id {player_id} was not found in run_id {run_id}")
         provenance = self.repository.get_generated_player_provenance(run_id=run_id, player_id=player_id)
         return self._to_run_player_detail(player=player, provenance=provenance)
+
+    def get_player_career_history(self, *, run_id: str, player_id: str) -> PlayerCareerHistoryResponse:
+        query = PlayerCareerQueryService(
+            repository=self.repository,
+            load_players_for_run=lambda run_info: self._load_players_by_id_for_run(run_info=run_info),
+        )
+        result = query.get_player_career_history(run_id=run_id, player_id=player_id)
+        return self._to_player_career_history_response(result)
 
     def list_run_nations(
         self,
@@ -2744,6 +2784,35 @@ class SimulationApiService:
             origin_season=provenance.origin_season if provenance else None,
             talent_seed_value=provenance.talent_seed_value if provenance else None,
             talent_sequence=provenance.talent_sequence if provenance else None,
+        )
+
+    @staticmethod
+    def _to_player_career_history_response(result: PlayerCareerHistoryReadModel) -> PlayerCareerHistoryResponse:
+        return PlayerCareerHistoryResponse(
+            requested_run_id=result.requested_run_id,
+            player_id=result.player_id,
+            player_name=result.player_name,
+            country_code=result.country_code,
+            entries=[
+                PlayerCareerHistoryEntry(
+                    run_id=entry.run_id,
+                    season=entry.season,
+                    age=entry.age,
+                    overall=entry.overall,
+                    technique=entry.technique,
+                    movement=entry.movement,
+                    physical=entry.physical,
+                    mental=entry.mental,
+                    source_type=entry.source_type,
+                    quality_band=entry.quality_band,
+                    is_top_band=entry.is_top_band,
+                    origin_source_type=entry.origin_source_type,
+                    origin_quality_band=entry.origin_quality_band,
+                    origin_override_id=entry.origin_override_id,
+                    origin_season=entry.origin_season,
+                )
+                for entry in result.entries
+            ],
         )
 
     def _build_rollover_orchestration(self, *, seed: int, season: int) -> SeasonRolloverOrchestrationService:

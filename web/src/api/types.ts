@@ -204,6 +204,30 @@ export type PlayerCareerPerformanceResponse = {
   entries: PlayerCareerSeasonPerformanceEntry[]
 }
 
+export type PlayerTournamentResultEntry = {
+  run_id: string
+  season: number
+  week: number | null
+  event_sequence: number
+  event_id: string
+  event_name: string | null
+  event_category: string | null
+  template_id: string | null
+  finish: string | null
+  is_title: boolean
+  wins: number
+  losses: number
+  ranking_points_awarded: number | null
+}
+
+export type PlayerTournamentResultsTimelineResponse = {
+  requested_run_id: string
+  player_id: string
+  player_name: string | null
+  country_code: string | null
+  entries: PlayerTournamentResultEntry[]
+}
+
 export type RunNationSummaryItem = {
   country_code: string
   country_name: string | null

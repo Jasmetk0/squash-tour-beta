@@ -39,6 +39,7 @@ from beta_engine.api.schemas import (
     RunPlayerDetailResponse,
     PlayerCareerHistoryResponse,
     PlayerCareerPerformanceResponse,
+    PlayerTournamentResultsTimelineResponse,
     RunPlayersListResponse,
     RunNationsSummaryResponse,
     RunNationDetailResponse,
@@ -51,6 +52,7 @@ from beta_engine.application.api_services import (
     RunPlayerDetail,
     PlayerCareerHistoryResponse as PlayerCareerHistoryServiceResponse,
     PlayerCareerPerformanceResponse as PlayerCareerPerformanceServiceResponse,
+    PlayerTournamentResultsTimelineResponse as PlayerTournamentResultsTimelineServiceResponse,
     RunPlayerListResponse,
     RunTalentPlanSummary,
     RunWorldStatus,
@@ -83,6 +85,12 @@ def _to_player_career_history_response(response: PlayerCareerHistoryServiceRespo
 
 def _to_player_career_performance_response(response: PlayerCareerPerformanceServiceResponse) -> PlayerCareerPerformanceResponse:
     return PlayerCareerPerformanceResponse.model_validate(response, from_attributes=True)
+
+
+def _to_player_tournament_results_timeline_response(
+    response: PlayerTournamentResultsTimelineServiceResponse,
+) -> PlayerTournamentResultsTimelineResponse:
+    return PlayerTournamentResultsTimelineResponse.model_validate(response, from_attributes=True)
 
 
 def _to_run_nations_response(response: RunNationsSummaryServiceResponse) -> RunNationsSummaryResponse:
@@ -237,6 +245,19 @@ def get_run_player_career_performance(
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     return _to_player_career_performance_response(performance)
+
+
+@router.get("/players/{player_id}/career/results", response_model=PlayerTournamentResultsTimelineResponse)
+def get_run_player_tournament_results_timeline(
+    run_id: str,
+    player_id: str,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> PlayerTournamentResultsTimelineResponse:
+    try:
+        timeline = service.get_player_tournament_results_timeline(run_id=run_id, player_id=player_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return _to_player_tournament_results_timeline_response(timeline)
 
 
 @router.get("/nations", response_model=RunNationsSummaryResponse)

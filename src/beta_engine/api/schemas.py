@@ -277,6 +277,30 @@ class PlayerCareerPerformanceResponse(BaseModel):
     entries: list[PlayerCareerSeasonPerformanceEntryResponse] = Field(default_factory=list)
 
 
+class PlayerTournamentResultEntryResponse(BaseModel):
+    run_id: str
+    season: int
+    week: int | None = None
+    event_sequence: int
+    event_id: str
+    event_name: str | None = None
+    event_category: str | None = None
+    template_id: str | None = None
+    finish: str | None = None
+    is_title: bool
+    wins: int
+    losses: int
+    ranking_points_awarded: int | None = None
+
+
+class PlayerTournamentResultsTimelineResponse(BaseModel):
+    requested_run_id: str
+    player_id: str
+    player_name: str | None = None
+    country_code: str | None = None
+    entries: list[PlayerTournamentResultEntryResponse] = Field(default_factory=list)
+
+
 class RunNationSummaryItemResponse(BaseModel):
     country_code: str
     country_name: str | None = None

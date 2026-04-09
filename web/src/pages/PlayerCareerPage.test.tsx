@@ -7,7 +7,8 @@ import { PlayerCareerPage } from './PlayerCareerPage'
 import { render } from '@testing-library/react'
 
 const api = vi.hoisted(() => ({
-  getRunPlayerCareerHistory: vi.fn()
+  getRunPlayerCareerHistory: vi.fn(),
+  getRunPlayerCareerPerformance: vi.fn()
 }))
 
 vi.mock('../api/client', () => api)
@@ -26,7 +27,7 @@ function renderCareerRoute(route: string): ReturnType<typeof render> {
 }
 
 describe('PlayerCareerPage', () => {
-  it('renders career timeline and trend summary', async () => {
+  it('renders career timeline and season performance table', async () => {
     api.getRunPlayerCareerHistory.mockResolvedValue({
       requested_run_id: 'run-child',
       player_id: 'EGY-0001',
@@ -70,19 +71,58 @@ describe('PlayerCareerPage', () => {
       ]
     })
 
+    api.getRunPlayerCareerPerformance.mockResolvedValue({
+      requested_run_id: 'run-child',
+      player_id: 'EGY-0001',
+      player_name: 'Ali A',
+      country_code: 'EGY',
+      entries: [
+        {
+          run_id: 'run-parent',
+          season: 2027,
+          ranking_position: 10,
+          race_position: 9,
+          tournaments_played: 5,
+          titles: 1,
+          finals: 1,
+          semifinals: 2,
+          quarterfinals: 3,
+          wins: 12,
+          losses: 4
+        },
+        {
+          run_id: 'run-child',
+          season: 2028,
+          ranking_position: null,
+          race_position: null,
+          tournaments_played: 0,
+          titles: 0,
+          finals: 0,
+          semifinals: 0,
+          quarterfinals: 0,
+          wins: 0,
+          losses: 0
+        }
+      ]
+    })
+
     renderCareerRoute('/runs/run-child/players/EGY-0001/career')
 
     expect(await screen.findByRole('heading', { name: 'Player Career History' })).toBeInTheDocument()
     expect(await screen.findByText(/Ali A/)).toBeInTheDocument()
     expect(await screen.findByText(/Seasons tracked: 2/)).toBeInTheDocument()
     expect(await screen.findByText(/Overall delta: \+3/)).toBeInTheDocument()
-    expect(await screen.findByText('run-parent')).toBeInTheDocument()
+    expect((await screen.findAllByText('run-parent')).length).toBeGreaterThan(0)
     expect((await screen.findAllByText('run-child')).length).toBeGreaterThan(0)
+    expect(await screen.findByRole('columnheader', { name: 'Tournaments' })).toBeInTheDocument()
+    expect((await screen.findAllByText('—')).length).toBeGreaterThan(0)
   })
 
   it('shows loading and error states', async () => {
     api.getRunPlayerCareerHistory.mockRejectedValueOnce(new Error('boom'))
+    api.getRunPlayerCareerPerformance.mockRejectedValueOnce(new Error('perf-boom'))
     renderCareerRoute('/runs/run-child/players/EGY-0001/career')
     expect(await screen.findByText(/Failed to load career history/)).toBeInTheDocument()
+    expect(await screen.findByText(/Failed to load season performance/)).toBeInTheDocument()
   })
 })

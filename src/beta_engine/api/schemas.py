@@ -255,6 +255,28 @@ class PlayerCareerHistoryResponse(BaseModel):
     entries: list[PlayerCareerHistoryEntryResponse] = Field(default_factory=list)
 
 
+class PlayerCareerSeasonPerformanceEntryResponse(BaseModel):
+    run_id: str
+    season: int
+    ranking_position: int | None = None
+    race_position: int | None = None
+    tournaments_played: int
+    titles: int
+    finals: int
+    semifinals: int
+    quarterfinals: int
+    wins: int
+    losses: int
+
+
+class PlayerCareerPerformanceResponse(BaseModel):
+    requested_run_id: str
+    player_id: str
+    player_name: str | None = None
+    country_code: str | None = None
+    entries: list[PlayerCareerSeasonPerformanceEntryResponse] = Field(default_factory=list)
+
+
 class RunNationSummaryItemResponse(BaseModel):
     country_code: str
     country_name: str | None = None

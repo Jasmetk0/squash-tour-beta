@@ -16,6 +16,10 @@ from beta_engine.application.finals_models import (
 from beta_engine.application.finals_service import FinalsOrchestrationService
 from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
+from beta_engine.application.player_career_performance_query_service import (
+    PlayerCareerPerformance as PlayerCareerPerformanceReadModel,
+    PlayerCareerPerformanceQueryService,
+)
 from beta_engine.application.player_career_query_service import (
     PlayerCareerHistory as PlayerCareerHistoryReadModel,
     PlayerCareerQueryService,
@@ -345,6 +349,31 @@ class PlayerCareerHistoryResponse:
     country_code: str | None
     entries: list[PlayerCareerHistoryEntry]
 
+
+
+
+@dataclass(frozen=True)
+class PlayerCareerSeasonPerformanceEntry:
+    run_id: str
+    season: int
+    ranking_position: int | None
+    race_position: int | None
+    tournaments_played: int
+    titles: int
+    finals: int
+    semifinals: int
+    quarterfinals: int
+    wins: int
+    losses: int
+
+
+@dataclass(frozen=True)
+class PlayerCareerPerformanceResponse:
+    requested_run_id: str
+    player_id: str
+    player_name: str | None
+    country_code: str | None
+    entries: list[PlayerCareerSeasonPerformanceEntry]
 
 @dataclass(frozen=True)
 class RunNationSummaryItem:
@@ -778,6 +807,14 @@ class SimulationApiService:
         )
         result = query.get_player_career_history(run_id=run_id, player_id=player_id)
         return self._to_player_career_history_response(result)
+
+    def get_player_career_performance(self, *, run_id: str, player_id: str) -> PlayerCareerPerformanceResponse:
+        query = PlayerCareerPerformanceQueryService(
+            repository=self.repository,
+            load_players_for_run=lambda run_info: self._load_players_by_id_for_run(run_info=run_info),
+        )
+        result = query.get_player_career_performance(run_id=run_id, player_id=player_id)
+        return self._to_player_career_performance_response(result)
 
     def list_run_nations(
         self,
@@ -2810,6 +2847,32 @@ class SimulationApiService:
                     origin_quality_band=entry.origin_quality_band,
                     origin_override_id=entry.origin_override_id,
                     origin_season=entry.origin_season,
+                )
+                for entry in result.entries
+            ],
+        )
+
+
+    @staticmethod
+    def _to_player_career_performance_response(result: PlayerCareerPerformanceReadModel) -> PlayerCareerPerformanceResponse:
+        return PlayerCareerPerformanceResponse(
+            requested_run_id=result.requested_run_id,
+            player_id=result.player_id,
+            player_name=result.player_name,
+            country_code=result.country_code,
+            entries=[
+                PlayerCareerSeasonPerformanceEntry(
+                    run_id=entry.run_id,
+                    season=entry.season,
+                    ranking_position=entry.ranking_position,
+                    race_position=entry.race_position,
+                    tournaments_played=entry.tournaments_played,
+                    titles=entry.titles,
+                    finals=entry.finals,
+                    semifinals=entry.semifinals,
+                    quarterfinals=entry.quarterfinals,
+                    wins=entry.wins,
+                    losses=entry.losses,
                 )
                 for entry in result.entries
             ],

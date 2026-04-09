@@ -38,6 +38,7 @@ from beta_engine.api.schemas import (
     GeneratedPlayerProvenanceResponse,
     RunPlayerDetailResponse,
     PlayerCareerHistoryResponse,
+    PlayerCareerPerformanceResponse,
     RunPlayersListResponse,
     RunNationsSummaryResponse,
     RunNationDetailResponse,
@@ -49,6 +50,7 @@ from beta_engine.application.api_services import (
     RunNationsSummaryResponse as RunNationsSummaryServiceResponse,
     RunPlayerDetail,
     PlayerCareerHistoryResponse as PlayerCareerHistoryServiceResponse,
+    PlayerCareerPerformanceResponse as PlayerCareerPerformanceServiceResponse,
     RunPlayerListResponse,
     RunTalentPlanSummary,
     RunWorldStatus,
@@ -77,6 +79,10 @@ def _to_run_player_detail(response: RunPlayerDetail) -> RunPlayerDetailResponse:
 
 def _to_player_career_history_response(response: PlayerCareerHistoryServiceResponse) -> PlayerCareerHistoryResponse:
     return PlayerCareerHistoryResponse.model_validate(response, from_attributes=True)
+
+
+def _to_player_career_performance_response(response: PlayerCareerPerformanceServiceResponse) -> PlayerCareerPerformanceResponse:
+    return PlayerCareerPerformanceResponse.model_validate(response, from_attributes=True)
 
 
 def _to_run_nations_response(response: RunNationsSummaryServiceResponse) -> RunNationsSummaryResponse:
@@ -218,6 +224,19 @@ def get_run_player_career_history(
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     return _to_player_career_history_response(history)
+
+
+@router.get("/players/{player_id}/career/performance", response_model=PlayerCareerPerformanceResponse)
+def get_run_player_career_performance(
+    run_id: str,
+    player_id: str,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> PlayerCareerPerformanceResponse:
+    try:
+        performance = service.get_player_career_performance(run_id=run_id, player_id=player_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return _to_player_career_performance_response(performance)
 
 
 @router.get("/nations", response_model=RunNationsSummaryResponse)

@@ -182,6 +182,28 @@ export type PlayerCareerHistoryResponse = {
   entries: PlayerCareerHistoryEntry[]
 }
 
+export type PlayerCareerSeasonPerformanceEntry = {
+  run_id: string
+  season: number
+  ranking_position: number | null
+  race_position: number | null
+  tournaments_played: number
+  titles: number
+  finals: number
+  semifinals: number
+  quarterfinals: number
+  wins: number
+  losses: number
+}
+
+export type PlayerCareerPerformanceResponse = {
+  requested_run_id: string
+  player_id: string
+  player_name: string | null
+  country_code: string | null
+  entries: PlayerCareerSeasonPerformanceEntry[]
+}
+
 export type RunNationSummaryItem = {
   country_code: string
   country_name: string | null

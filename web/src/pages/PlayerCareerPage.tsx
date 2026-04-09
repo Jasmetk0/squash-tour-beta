@@ -1,8 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
-import { getRunPlayerCareerHistory } from '../api/client'
+import { getRunPlayerCareerHistory, getRunPlayerCareerPerformance } from '../api/client'
 import { CurrentContextStrip, PageIntro, SectionCard } from '../components/RunScopedUi'
+
+function displayMetric(value: number | null | undefined): string | number {
+  return value ?? '—'
+}
 
 export function PlayerCareerPage(): JSX.Element {
   const { runId = '', playerId = '' } = useParams()
@@ -10,6 +14,12 @@ export function PlayerCareerPage(): JSX.Element {
   const query = useQuery({
     queryKey: ['player-career-history', runId, playerId],
     queryFn: () => getRunPlayerCareerHistory(runId, playerId),
+    enabled: Boolean(runId && playerId)
+  })
+
+  const performanceQuery = useQuery({
+    queryKey: ['player-career-performance', runId, playerId],
+    queryFn: () => getRunPlayerCareerPerformance(runId, playerId),
     enabled: Boolean(runId && playerId)
   })
 
@@ -91,6 +101,51 @@ export function PlayerCareerPage(): JSX.Element {
               ))}
             </tbody>
           </table>
+        ) : null}
+      </SectionCard>
+
+      <SectionCard title="Season performance">
+        {performanceQuery.isLoading ? <p className="status">Loading season performance…</p> : null}
+        {performanceQuery.error ? <p className="error">Failed to load season performance: {String(performanceQuery.error)}</p> : null}
+        {performanceQuery.data ? (
+          performanceQuery.data.entries.length > 0 ? (
+            <table>
+              <thead>
+                <tr>
+                  <th>Season</th>
+                  <th>Run</th>
+                  <th>Ranking</th>
+                  <th>Race</th>
+                  <th>Tournaments</th>
+                  <th>Titles</th>
+                  <th>Finals</th>
+                  <th>SF</th>
+                  <th>QF</th>
+                  <th>Wins</th>
+                  <th>Losses</th>
+                </tr>
+              </thead>
+              <tbody>
+                {performanceQuery.data.entries.map((entry) => (
+                  <tr key={`performance-${entry.run_id}-${entry.season}`}>
+                    <td>{entry.season}</td>
+                    <td>{entry.run_id}</td>
+                    <td>{displayMetric(entry.ranking_position)}</td>
+                    <td>{displayMetric(entry.race_position)}</td>
+                    <td>{entry.tournaments_played}</td>
+                    <td>{entry.titles}</td>
+                    <td>{entry.finals}</td>
+                    <td>{entry.semifinals}</td>
+                    <td>{entry.quarterfinals}</td>
+                    <td>{entry.wins}</td>
+                    <td>{entry.losses}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="status">No season performance entries are available for this player yet.</p>
+          )
         ) : null}
       </SectionCard>
     </section>

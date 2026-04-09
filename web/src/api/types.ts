@@ -704,6 +704,32 @@ export type ManualPlayerOverridesListResponse = {
   overrides: ManualPlayerOverrideRecord[]
 }
 
+
+export type ManualPlayerOverridesImportPayload = {
+  csv_text: string
+  dry_run: boolean
+}
+
+export type ManualPlayerOverridesImportError = {
+  row_number: number | null
+  field: string | null
+  message: string
+}
+
+export type ManualPlayerOverridesImportSummary = {
+  total_records: number
+  new_records: number
+  updated_records: number
+  unchanged_records: number
+}
+
+export type ManualPlayerOverridesImportResponse = {
+  ok: boolean
+  dry_run: boolean
+  summary: ManualPlayerOverridesImportSummary
+  errors: ManualPlayerOverridesImportError[]
+}
+
 export type ManualPlayerOverrideUpsertPayload = ManualPlayerOverrideRecord
 
 export type TalentClassPreviewCountry = {

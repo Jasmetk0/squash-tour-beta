@@ -338,6 +338,31 @@ class ManualPlayerOverridesListResponse(BaseModel):
     overrides: list[ManualPlayerOverrideResponse] = Field(default_factory=list)
 
 
+class ManualPlayerOverridesImportRequest(BaseModel):
+    csv_text: str = Field(min_length=1)
+    dry_run: bool = False
+
+
+class ManualPlayerOverridesImportErrorResponse(BaseModel):
+    row_number: int | None = None
+    field: str | None = None
+    message: str
+
+
+class ManualPlayerOverridesImportSummaryResponse(BaseModel):
+    total_records: int
+    new_records: int
+    updated_records: int
+    unchanged_records: int
+
+
+class ManualPlayerOverridesImportResponse(BaseModel):
+    ok: bool
+    dry_run: bool
+    summary: ManualPlayerOverridesImportSummaryResponse
+    errors: list[ManualPlayerOverridesImportErrorResponse] = Field(default_factory=list)
+
+
 class SimulateResponse(BaseModel):
     mode: str
     run: RunSummaryResponse

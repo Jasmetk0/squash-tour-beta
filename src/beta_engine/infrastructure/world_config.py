@@ -22,6 +22,37 @@ class PlayerIdentityConfig(BaseModel):
     growth_curves: list[str] = Field(min_length=1)
 
 
+
+MANUAL_PLAYER_OVERRIDE_TABULAR_FIELDS = (
+    "override_id",
+    "season",
+    "country_code",
+    "player_name",
+    "player_slug",
+    "player_id",
+    "age",
+    "profile_tier",
+    "quality_band_override",
+    "is_exceptional",
+    "enabled",
+    "notes",
+    "attribute_technique",
+    "attribute_movement",
+    "attribute_physical",
+    "attribute_mental",
+    "attribute_consistency",
+    "attribute_clutch",
+    "attribute_recovery",
+    "trait_potential_ceiling",
+    "trait_growth_curve",
+    "trait_professionalism",
+    "trait_ambition",
+    "trait_travel_tolerance",
+    "trait_schedule_aggression",
+    "trait_injury_proneness",
+    "trait_resilience",
+)
+
 COUNTRY_TABULAR_FIELDS = (
     "code",
     "name",

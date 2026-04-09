@@ -8,6 +8,8 @@ import type {
   ManualPlayerOverrideRecord,
   ManualPlayerOverridesListResponse,
   ManualPlayerOverrideUpsertPayload,
+  ManualPlayerOverridesImportPayload,
+  ManualPlayerOverridesImportResponse,
   TalentClassSummaryResponse,
   TalentClassYearPreviewResponse,
   CountryRecord,
@@ -180,6 +182,21 @@ export function updateManualPlayerOverride(
 
 export function deleteManualPlayerOverride(overrideId: string): Promise<void> {
   return request(`/world/manual-player-overrides/${encodeURIComponent(overrideId)}`, { method: 'DELETE' })
+}
+
+export async function exportManualPlayerOverridesCsv(): Promise<string> {
+  const response = await fetch(`${API_BASE}/world/manual-player-overrides/export`)
+  if (!response.ok) {
+    const body = await response.text()
+    throw new ApiError(body || 'Request failed', response.status)
+  }
+  return response.text()
+}
+
+export function importManualPlayerOverrides(
+  payload: ManualPlayerOverridesImportPayload
+): Promise<ManualPlayerOverridesImportResponse> {
+  return request('/world/manual-player-overrides/import', { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function createRun(payload: CreateRunPayload): Promise<RunSummary> {

@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 
 from beta_engine.api.deps import get_countries_config_service, get_manual_player_overrides_service
 from beta_engine.api.schemas import (
     ManualPlayerOverrideRequest,
     ManualPlayerOverrideResponse,
+    ManualPlayerOverridesImportRequest,
+    ManualPlayerOverridesImportResponse,
+    ManualPlayerOverridesImportSummaryResponse,
     ManualPlayerOverridesListResponse,
 )
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
@@ -34,6 +38,46 @@ def list_manual_player_overrides(
     overrides = service.list_overrides(season=season, country_code=country_code, enabled=enabled)
     return ManualPlayerOverridesListResponse(
         overrides=[ManualPlayerOverrideResponse.model_validate(item.model_dump(mode="json")) for item in overrides]
+    )
+
+
+@router.get("/export", response_class=Response)
+def export_manual_player_overrides_csv(
+    service: ManualPlayerOverridesService = Depends(get_manual_player_overrides_service),
+) -> Response:
+    csv_text = service.export_overrides_csv()
+    return Response(
+        content=csv_text,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="manual-player-overrides-export.csv"'},
+    )
+
+
+@router.post("/import", response_model=ManualPlayerOverridesImportResponse)
+def import_manual_player_overrides_csv(
+    payload: ManualPlayerOverridesImportRequest,
+    service: ManualPlayerOverridesService = Depends(get_manual_player_overrides_service),
+    countries_service: CountriesConfigService = Depends(get_countries_config_service),
+) -> ManualPlayerOverridesImportResponse:
+    known_countries = {country.code for country in countries_service.list_countries()}
+    result = service.import_overrides_csv(csv_text=payload.csv_text, dry_run=payload.dry_run, countries=known_countries)
+    return ManualPlayerOverridesImportResponse(
+        ok=result.ok,
+        dry_run=result.dry_run,
+        summary=ManualPlayerOverridesImportSummaryResponse(
+            total_records=result.summary.total_records,
+            new_records=result.summary.new_records,
+            updated_records=result.summary.updated_records,
+            unchanged_records=result.summary.unchanged_records,
+        ),
+        errors=[
+            {
+                "row_number": item.row_number,
+                "field": item.field,
+                "message": item.message,
+            }
+            for item in result.errors
+        ],
     )
 
 

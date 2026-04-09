@@ -278,3 +278,159 @@ def test_talent_plan_diagnostics_expose_exceptional_override_dampener_signal(tmp
         assert dampener["active"] is True
         assert dampener["recent_greatness_score"] > 0
         assert any(item["reference_id"] == "aaa-legend-2026" for item in dampener["contributions"])
+
+
+def test_manual_overrides_export_import_and_dry_run_flow(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(
+        overrides_path,
+        {
+            "overrides": [
+                {
+                    "override_id": "aaa-legend-2027",
+                    "season": 2027,
+                    "country_code": "AAA",
+                    "player_name": "Legend",
+                    "age": 19,
+                    "profile_tier": "generational",
+                    "enabled": True,
+                    "is_exceptional": True,
+                }
+            ]
+        },
+    )
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'manual-overrides-import-export.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        req = request.Request(f"{server.base_url}/world/manual-player-overrides/export", method="GET")
+        with request.urlopen(req, timeout=60) as response:
+            assert response.status == 200
+            csv_payload = response.read().decode("utf-8")
+        assert "override_id,season,country_code,player_name" in csv_payload
+        assert "aaa-legend-2027" in csv_payload
+
+        import_payload = {
+            "csv_text": csv_payload.replace("Legend", "Legend Updated").replace("true,true", "false,true"),
+            "dry_run": True,
+        }
+        status, preview = _request("POST", f"{server.base_url}/world/manual-player-overrides/import", import_payload)
+        assert status == 200
+        assert preview["ok"] is True
+        assert preview["dry_run"] is True
+        assert preview["summary"]["updated_records"] == 1
+
+        status, listing = _request("GET", f"{server.base_url}/world/manual-player-overrides")
+        assert status == 200
+        assert listing["overrides"][0]["player_name"] == "Legend"
+
+        import_payload["dry_run"] = False
+        status, applied = _request("POST", f"{server.base_url}/world/manual-player-overrides/import", import_payload)
+        assert status == 200
+        assert applied["ok"] is True
+        assert applied["dry_run"] is False
+
+        status, listing = _request("GET", f"{server.base_url}/world/manual-player-overrides")
+        assert status == 200
+        assert listing["overrides"][0]["player_name"] == "Legend Updated"
+        assert listing["overrides"][0]["is_exceptional"] is False
+
+
+def test_manual_overrides_import_validation_and_no_partial_writes(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(
+        overrides_path,
+        {
+            "overrides": [
+                {
+                    "override_id": "aaa-manual-keep",
+                    "season": 2027,
+                    "country_code": "AAA",
+                    "player_name": "Keep",
+                    "age": 18,
+                    "profile_tier": "elite",
+                    "enabled": True,
+                    "is_exceptional": False,
+                }
+            ]
+        },
+    )
+
+    bad_csv = """override_id,season,country_code,player_name,player_slug,player_id,age,profile_tier,quality_band_override,is_exceptional,enabled,notes,attribute_technique,attribute_movement,attribute_physical,attribute_mental,attribute_consistency,attribute_clutch,attribute_recovery,trait_potential_ceiling,trait_growth_curve,trait_professionalism,trait_ambition,trait_travel_tolerance,trait_schedule_aggression,trait_injury_proneness,trait_resilience
+bad-1,2027,ZZZ,Unknown Country,,,18,elite,,true,true,,90,,,,,,,,,0.2,0.2,0.2,0.2,0.2,0.2
+bad-1,2027,AAA,Duplicate ID,,,18,elite,,true,true,,90,,,,,,,,,0.2,0.2,0.2,0.2,0.2,0.2
+bad-3,2027,AAA,Bad Tier,,,18,invalid_tier,,true,true,,90,,,,,,,,,0.2,0.2,0.2,0.2,0.2,0.2
+bad-4,2027,AAA,Bad Range,,,18,elite,,true,true,,120,,,,,,,,,1.2,0.2,0.2,0.2,0.2,0.2
+"""
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'manual-overrides-validation.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, result = _request(
+            "POST",
+            f"{server.base_url}/world/manual-player-overrides/import",
+            {"csv_text": bad_csv, "dry_run": False},
+        )
+        assert status == 200
+        assert result["ok"] is False
+        assert result["errors"]
+        messages = [item["message"] for item in result["errors"]]
+        assert any("does not exist in countries dataset" in message for message in messages)
+        assert any("duplicate override_id" in message for message in messages)
+        assert any("Input should be 'strong', 'elite', 'special' or 'generational'" in message for message in messages)
+        assert any("less than or equal to 99" in message for message in messages)
+        assert any("less than or equal to 1" in message for message in messages)
+
+        status, listing = _request("GET", f"{server.base_url}/world/manual-player-overrides")
+        assert status == 200
+        assert [item["override_id"] for item in listing["overrides"]] == ["aaa-manual-keep"]
+
+
+def test_manual_overrides_import_rejects_malformed_payload(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, {"overrides": []})
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'manual-overrides-bad-payload.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, response = _request(
+            "POST",
+            f"{server.base_url}/world/manual-player-overrides/import",
+            {"dry_run": True},
+        )
+        assert status == 422
+        assert response["detail"]
+
+
+def test_manual_overrides_import_rejects_unparseable_csv(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, {"overrides": []})
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'manual-overrides-bad-csv.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, result = _request(
+            "POST",
+            f"{server.base_url}/world/manual-player-overrides/import",
+            {"csv_text": 'override_id,season\n"oops', "dry_run": True},
+        )
+        assert status == 200
+        assert result["ok"] is False
+        assert result["errors"]
+        assert "parseable CSV" in result["errors"][0]["message"]

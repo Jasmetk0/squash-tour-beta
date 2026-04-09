@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 
 import { getRunPlayerDetail, listRunPlayers } from '../api/client'
 import { CurrentContextStrip, PageIntro, SectionCard } from '../components/RunScopedUi'
@@ -144,6 +144,9 @@ export function PlayersPage(): JSX.Element {
             </p>
             <p>
               Style: {detailQuery.data.play_style} / {detailQuery.data.archetype}
+            </p>
+            <p>
+              <Link to={`/runs/${runId}/players/${detailQuery.data.player_id}/career`}>View career history</Link>
             </p>
             <pre className="json-block">{JSON.stringify(detailQuery.data, null, 2)}</pre>
           </>

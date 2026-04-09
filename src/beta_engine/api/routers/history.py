@@ -37,6 +37,7 @@ from beta_engine.api.schemas import (
     GeneratedPlayerProvenanceListResponse,
     GeneratedPlayerProvenanceResponse,
     RunPlayerDetailResponse,
+    PlayerCareerHistoryResponse,
     RunPlayersListResponse,
     RunNationsSummaryResponse,
     RunNationDetailResponse,
@@ -47,6 +48,7 @@ from beta_engine.application.api_services import (
     RunNationDetail,
     RunNationsSummaryResponse as RunNationsSummaryServiceResponse,
     RunPlayerDetail,
+    PlayerCareerHistoryResponse as PlayerCareerHistoryServiceResponse,
     RunPlayerListResponse,
     RunTalentPlanSummary,
     RunWorldStatus,
@@ -71,6 +73,10 @@ def _to_run_players_response(response: RunPlayerListResponse) -> RunPlayersListR
 
 def _to_run_player_detail(response: RunPlayerDetail) -> RunPlayerDetailResponse:
     return RunPlayerDetailResponse.model_validate(response, from_attributes=True)
+
+
+def _to_player_career_history_response(response: PlayerCareerHistoryServiceResponse) -> PlayerCareerHistoryResponse:
+    return PlayerCareerHistoryResponse.model_validate(response, from_attributes=True)
 
 
 def _to_run_nations_response(response: RunNationsSummaryServiceResponse) -> RunNationsSummaryResponse:
@@ -199,6 +205,19 @@ def get_run_player_detail(
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     return _to_run_player_detail(player)
+
+
+@router.get("/players/{player_id}/career", response_model=PlayerCareerHistoryResponse)
+def get_run_player_career_history(
+    run_id: str,
+    player_id: str,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> PlayerCareerHistoryResponse:
+    try:
+        history = service.get_player_career_history(run_id=run_id, player_id=player_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return _to_player_career_history_response(history)
 
 
 @router.get("/nations", response_model=RunNationsSummaryResponse)

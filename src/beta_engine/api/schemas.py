@@ -229,6 +229,32 @@ class RunPlayerDetailResponse(BaseModel):
     talent_sequence: int | None = None
 
 
+class PlayerCareerHistoryEntryResponse(BaseModel):
+    run_id: str
+    season: int
+    age: int
+    overall: int
+    technique: int
+    movement: int
+    physical: int
+    mental: int
+    source_type: Literal["rollover_carried", "planner_generated", "manual_override"] | None = None
+    quality_band: str | None = None
+    is_top_band: bool | None = None
+    origin_source_type: Literal["planner_generated", "manual_override"] | None = None
+    origin_quality_band: str | None = None
+    origin_override_id: str | None = None
+    origin_season: int | None = None
+
+
+class PlayerCareerHistoryResponse(BaseModel):
+    requested_run_id: str
+    player_id: str
+    player_name: str | None = None
+    country_code: str | None = None
+    entries: list[PlayerCareerHistoryEntryResponse] = Field(default_factory=list)
+
+
 class RunNationSummaryItemResponse(BaseModel):
     country_code: str
     country_name: str | None = None

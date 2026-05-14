@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 CountrySimFactor = Literal[1, 2, 3, 4, 5]
 
@@ -24,6 +24,20 @@ class Country(BaseModel):
     squash_popularity: CountrySimFactor
     squash_tradition: CountrySimFactor
     system_quality: CountrySimFactor
+    competition_density: float | None = Field(default=None, ge=1.0, le=5.0)
+    federation_quality: float | None = Field(default=None, ge=1.0, le=5.0)
+    court_count: int | None = Field(default=None, ge=0)
+    style_dna: dict[str, float] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def apply_phase_two_defaults(self) -> Self:
+        """Keep old country configs valid while exposing Phase 2 world-editor fields."""
+
+        if self.competition_density is None:
+            self.competition_density = 3.0
+        if self.federation_quality is None:
+            self.federation_quality = float(self.system_quality)
+        return self
 
     @staticmethod
     def _normalize_factor(value: int) -> float:

@@ -21,7 +21,11 @@ def test_export_and_import_roundtrip(tmp_path) -> None:
       "wealth_support": 3,
       "squash_popularity": 4,
       "squash_tradition": 2,
-      "system_quality": 5
+      "system_quality": 5,
+      "competition_density": 4.5,
+      "federation_quality": 4.0,
+      "court_count": 120,
+      "style_dna": {"front_court": 0.2}
     }
   ]
 }
@@ -39,6 +43,10 @@ def test_export_and_import_roundtrip(tmp_path) -> None:
     assert imported.countries[0].code == "AAA"
     loaded = load_countries_config(output_json)
     assert loaded.countries[0].system_quality == 5
+    assert loaded.countries[0].competition_density == 4.5
+    assert loaded.countries[0].federation_quality == 4.0
+    assert loaded.countries[0].court_count == 120
+    assert loaded.countries[0].style_dna == {}
 
 
 def test_import_rejects_missing_columns(tmp_path) -> None:

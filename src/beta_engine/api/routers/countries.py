@@ -85,7 +85,7 @@ def create_country(
     service: CountriesConfigService = Depends(get_countries_config_service),
 ) -> CountryResponse:
     try:
-        created = service.create_country(Country.model_validate(payload.model_dump()))
+        created = service.create_country(Country.model_validate(payload.model_dump(exclude_none=True)))
         return _to_country_response(created)
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
@@ -98,7 +98,7 @@ def update_country(
     service: CountriesConfigService = Depends(get_countries_config_service),
 ) -> CountryResponse:
     try:
-        updated = service.update_country(code, Country.model_validate(payload.model_dump()))
+        updated = service.update_country(code, Country.model_validate(payload.model_dump(exclude_none=True)))
         return _to_country_response(updated)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -124,7 +124,7 @@ def replace_dataset(
             CountriesConfig.model_validate(
                 {
                     "dataset_status": payload.dataset_status,
-                    "countries": [item.model_dump() for item in payload.countries],
+                    "countries": [item.model_dump(exclude_none=True) for item in payload.countries],
                 }
             )
         )

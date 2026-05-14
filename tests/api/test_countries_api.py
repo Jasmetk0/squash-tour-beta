@@ -95,6 +95,10 @@ def test_list_countries_endpoint(tmp_path) -> None:
         status, payload = _request("GET", f"{server.base_url}/world/countries")
         assert status == 200
         assert payload["countries"][0]["code"] == "AAA"
+        assert payload["countries"][0]["competition_density"] == 3.0
+        assert payload["countries"][0]["federation_quality"] == 5.0
+        assert payload["countries"][0]["court_count"] is None
+        assert payload["countries"][0]["style_dna"] == {}
         status, meta = _request("GET", f"{server.base_url}/world/countries/metadata")
         assert status == 200
         assert meta["dataset_status"] == "temporary_seed_demo"
@@ -118,13 +122,25 @@ def test_create_country_and_persist_write_back(tmp_path) -> None:
                 "squash_popularity": 2,
                 "squash_tradition": 2,
                 "system_quality": 2,
+                "competition_density": 4.5,
+                "federation_quality": 4.0,
+                "court_count": 80,
+                "style_dna": {"attrition": 0.25},
             },
         )
         assert status == 201
         assert created["code"] == "BBB"
+        assert created["competition_density"] == 4.5
+        assert created["federation_quality"] == 4.0
+        assert created["court_count"] == 80
+        assert created["style_dna"] == {"attrition": 0.25}
 
     persisted = json.loads(countries_path.read_text(encoding="utf-8"))
-    assert any(country["code"] == "BBB" for country in persisted["countries"])
+    beta = next(country for country in persisted["countries"] if country["code"] == "BBB")
+    assert beta["competition_density"] == 4.5
+    assert beta["federation_quality"] == 4.0
+    assert beta["court_count"] == 80
+    assert beta["style_dna"] == {"attrition": 0.25}
 
 
 def test_reject_duplicate_country_code(tmp_path) -> None:
@@ -216,6 +232,7 @@ def test_export_countries_csv(tmp_path) -> None:
         status, body = _request_raw("GET", f"{server.base_url}/world/countries/export")
         assert status == 200
         assert "code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality" in body
+        assert "competition_density,federation_quality,court_count" in body
         assert "AAA,Alpha" in body
 
 
@@ -223,8 +240,8 @@ def test_import_countries_csv_replaces_dataset(tmp_path) -> None:
     countries_path = tmp_path / "countries.json"
     _write_fixture(countries_path)
     csv_text = (
-        "code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality\n"
-        "BBB,Beta,,ASIA,2000000,4,3,2,4\n"
+        "code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality,competition_density,federation_quality,court_count\n"
+        "BBB,Beta,,ASIA,2000000,4,3,2,4,4.5,4,200\n"
     )
 
     with ApiServer(database_url=f"sqlite:///{tmp_path / 'countries-import.db'}", countries_config_path=str(countries_path)) as server:
@@ -239,6 +256,9 @@ def test_import_countries_csv_replaces_dataset(tmp_path) -> None:
 
     persisted = json.loads(countries_path.read_text(encoding="utf-8"))
     assert [country["code"] for country in persisted["countries"]] == ["BBB"]
+    assert persisted["countries"][0]["competition_density"] == 4.5
+    assert persisted["countries"][0]["federation_quality"] == 4.0
+    assert persisted["countries"][0]["court_count"] == 200
 
 
 def test_import_rejects_duplicate_code_and_does_not_partially_write(tmp_path) -> None:
@@ -246,8 +266,8 @@ def test_import_rejects_duplicate_code_and_does_not_partially_write(tmp_path) ->
     _write_fixture(countries_path)
     before = countries_path.read_text(encoding="utf-8")
     csv_text = (
-        "code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality\n"
-        "BBB,Beta,,ASIA,2000000,4,3,2,4\n"
+        "code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality,competition_density,federation_quality,court_count\n"
+        "BBB,Beta,,ASIA,2000000,4,3,2,4,4.5,4,200\n"
         "BBB,Beta Again,,ASIA,2100000,4,3,2,4\n"
     )
 

@@ -695,6 +695,10 @@ export type CountryRecord = {
   squash_popularity: number
   squash_tradition: number
   system_quality: number
+  competition_density: number
+  federation_quality: number
+  court_count: number | null
+  style_dna: Record<string, number>
 }
 
 export type CountriesListResponse = {

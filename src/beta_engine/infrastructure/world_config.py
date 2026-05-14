@@ -65,6 +65,14 @@ COUNTRY_TABULAR_FIELDS = (
     "system_quality",
 )
 
+COUNTRY_OPTIONAL_TABULAR_FIELDS = (
+    "competition_density",
+    "federation_quality",
+    "court_count",
+)
+
+COUNTRY_EXPORT_TABULAR_FIELDS = (*COUNTRY_TABULAR_FIELDS, *COUNTRY_OPTIONAL_TABULAR_FIELDS)
+
 
 def _load_json(path: str | Path) -> dict:
     with Path(path).open("r", encoding="utf-8") as fh:
@@ -107,7 +115,7 @@ def export_countries_to_csv(
     target.parent.mkdir(parents=True, exist_ok=True)
 
     with target.open("w", encoding="utf-8", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=COUNTRY_TABULAR_FIELDS)
+        writer = csv.DictWriter(fh, fieldnames=COUNTRY_EXPORT_TABULAR_FIELDS)
         writer.writeheader()
         for country in countries_config.countries:
             writer.writerow(
@@ -121,6 +129,9 @@ def export_countries_to_csv(
                     "squash_popularity": country.squash_popularity,
                     "squash_tradition": country.squash_tradition,
                     "system_quality": country.system_quality,
+                    "competition_density": country.competition_density,
+                    "federation_quality": country.federation_quality,
+                    "court_count": country.court_count if country.court_count is not None else "",
                 }
             )
     return target
@@ -142,19 +153,25 @@ def import_countries_from_csv(
 
         countries: list[dict[str, object]] = []
         for row in reader:
-            countries.append(
-                {
-                    "code": row["code"],
-                    "name": row["name"],
-                    "flag_asset": row["flag_asset"] or None,
-                    "region": row["region"],
-                    "population": int(row["population"]),
-                    "wealth_support": int(row["wealth_support"]),
-                    "squash_popularity": int(row["squash_popularity"]),
-                    "squash_tradition": int(row["squash_tradition"]),
-                    "system_quality": int(row["system_quality"]),
-                }
-            )
+            country_payload: dict[str, object] = {
+                "code": row["code"],
+                "name": row["name"],
+                "flag_asset": row["flag_asset"] or None,
+                "region": row["region"],
+                "population": int(row["population"]),
+                "wealth_support": int(row["wealth_support"]),
+                "squash_popularity": int(row["squash_popularity"]),
+                "squash_tradition": int(row["squash_tradition"]),
+                "system_quality": int(row["system_quality"]),
+            }
+            for optional_float_field in ("competition_density", "federation_quality"):
+                raw_optional = (row.get(optional_float_field) or "").strip()
+                if raw_optional:
+                    country_payload[optional_float_field] = float(raw_optional)
+            raw_court_count = (row.get("court_count") or "").strip()
+            if raw_court_count:
+                country_payload["court_count"] = int(raw_court_count)
+            countries.append(country_payload)
 
     countries_config = CountriesConfig.model_validate({"countries": countries})
     _write_json(json_path, countries_config.model_dump(mode="json"))

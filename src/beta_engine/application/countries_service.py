@@ -12,7 +12,7 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from beta_engine.domain.countries import CountriesConfig, Country
-from beta_engine.infrastructure.world_config import COUNTRY_TABULAR_FIELDS, load_countries_config
+from beta_engine.infrastructure.world_config import COUNTRY_EXPORT_TABULAR_FIELDS, COUNTRY_TABULAR_FIELDS, load_countries_config
 
 
 @dataclass(frozen=True)
@@ -75,7 +75,7 @@ class CountriesConfigService:
 
     def export_countries_csv(self) -> str:
         output = io.StringIO()
-        writer = csv.DictWriter(output, fieldnames=COUNTRY_TABULAR_FIELDS)
+        writer = csv.DictWriter(output, fieldnames=COUNTRY_EXPORT_TABULAR_FIELDS)
         writer.writeheader()
         for country in sorted(self._load().countries, key=lambda item: item.code):
             writer.writerow(
@@ -89,6 +89,9 @@ class CountriesConfigService:
                     "squash_popularity": country.squash_popularity,
                     "squash_tradition": country.squash_tradition,
                     "system_quality": country.system_quality,
+                    "competition_density": country.competition_density,
+                    "federation_quality": country.federation_quality,
+                    "court_count": country.court_count if country.court_count is not None else "",
                 }
             )
         return output.getvalue()
@@ -161,6 +164,21 @@ class CountriesConfigService:
                     payload[int_field] = int(raw)
                 except ValueError:
                     errors.append(CountriesImportError(row_number=index, field=int_field, message=f"{int_field} must be an integer"))
+
+            for float_field in ("competition_density", "federation_quality"):
+                raw = (row.get(float_field) or "").strip()
+                if raw:
+                    try:
+                        payload[float_field] = float(raw)
+                    except ValueError:
+                        errors.append(CountriesImportError(row_number=index, field=float_field, message=f"{float_field} must be numeric"))
+
+            raw_court_count = (row.get("court_count") or "").strip()
+            if raw_court_count:
+                try:
+                    payload["court_count"] = int(raw_court_count)
+                except ValueError:
+                    errors.append(CountriesImportError(row_number=index, field="court_count", message="court_count must be an integer"))
 
             if any(err.row_number == index for err in errors):
                 continue

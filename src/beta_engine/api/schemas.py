@@ -798,6 +798,10 @@ class CountryUpsertRequest(BaseModel):
     squash_popularity: int = Field(ge=1, le=5)
     squash_tradition: int = Field(ge=1, le=5)
     system_quality: int = Field(ge=1, le=5)
+    competition_density: float | None = Field(default=None, ge=1.0, le=5.0)
+    federation_quality: float | None = Field(default=None, ge=1.0, le=5.0)
+    court_count: int | None = Field(default=None, ge=0)
+    style_dna: dict[str, float] = Field(default_factory=dict)
 
     @field_validator("code")
     @classmethod
@@ -834,6 +838,10 @@ class CountryResponse(BaseModel):
     squash_popularity: int
     squash_tradition: int
     system_quality: int
+    competition_density: float
+    federation_quality: float
+    court_count: int | None = None
+    style_dna: dict[str, float] = Field(default_factory=dict)
 
 
 class CountriesListResponse(BaseModel):

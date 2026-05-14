@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -50,7 +50,11 @@ describe('CountriesPage', () => {
           wealth_support: 3,
           squash_popularity: 4,
           squash_tradition: 2,
-          system_quality: 5
+          system_quality: 5,
+          competition_density: 4.5,
+          federation_quality: 4,
+          court_count: 120,
+          style_dna: { attrition: 0.2 }
         }
       ]
     })
@@ -62,7 +66,9 @@ describe('CountriesPage', () => {
     api.createCountry.mockImplementation(async (payload) => payload)
     api.updateCountry.mockImplementation(async (_code, payload) => payload)
     api.deleteCountry.mockResolvedValue(undefined)
-    api.exportCountriesCsv.mockResolvedValue('code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality\n')
+    api.exportCountriesCsv.mockResolvedValue(
+      'code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality,competition_density,federation_quality,court_count\n'
+    )
     api.importCountries.mockResolvedValue({
       ok: true,
       dry_run: true,
@@ -81,6 +87,8 @@ describe('CountriesPage', () => {
     expect(await screen.findByText('Dataset status')).toBeInTheDocument()
     expect(await screen.findByRole('cell', { name: 'AAA' })).toBeInTheDocument()
     expect(await screen.findByRole('button', { name: 'Export countries CSV' })).toBeInTheDocument()
+    expect(await screen.findByRole('cell', { name: '4.5' })).toBeInTheDocument()
+    expect(await screen.findByText(/Population is not the only talent driver/i)).toBeInTheDocument()
   })
 
   it('supports create flow', async () => {
@@ -95,12 +103,28 @@ describe('CountriesPage', () => {
     await userEvent.type(screen.getByLabelText('Region'), 'ASIA')
     await userEvent.clear(screen.getByLabelText('Population'))
     await userEvent.type(screen.getByLabelText('Population'), '2500000')
+    await userEvent.clear(screen.getByLabelText('Competition density (1..5)'))
+    await userEvent.type(screen.getByLabelText('Competition density (1..5)'), '4.2')
+    await userEvent.clear(screen.getByLabelText('Federation quality (1..5)'))
+    await userEvent.type(screen.getByLabelText('Federation quality (1..5)'), '4')
+    await userEvent.clear(screen.getByLabelText('Court count (optional)'))
+    await userEvent.type(screen.getByLabelText('Court count (optional)'), '90')
+    fireEvent.change(screen.getByLabelText('Style DNA (JSON numeric modifiers)'), { target: { value: '{"front_court":0.3}' } })
 
     await userEvent.click(screen.getByRole('button', { name: 'Create country' }))
 
     await waitFor(() => expect(api.createCountry).toHaveBeenCalled())
     expect(api.createCountry.mock.calls[0][0]).toEqual(
-      expect.objectContaining({ code: 'BBB', name: 'Beta', region: 'ASIA', population: 2500000 })
+      expect.objectContaining({
+        code: 'BBB',
+        name: 'Beta',
+        region: 'ASIA',
+        population: 2500000,
+        competition_density: 4.2,
+        federation_quality: 4,
+        court_count: 90,
+        style_dna: { front_court: 0.3 }
+      })
     )
   })
 
@@ -112,6 +136,7 @@ describe('CountriesPage', () => {
 
     expect(screen.getByLabelText('Code (3 letters)')).toHaveValue('')
     expect(screen.getByLabelText('Name')).toHaveValue('Alpha Copy')
+    expect(screen.getByLabelText('Court count (optional)')).toHaveValue(120)
     expect(await screen.findByText(/Set a unique 3-letter code before saving/i)).toBeInTheDocument()
   })
 

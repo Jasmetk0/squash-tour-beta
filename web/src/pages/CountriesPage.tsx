@@ -27,11 +27,30 @@ const EMPTY_FORM: FormState = {
   wealth_support: 3,
   squash_popularity: 3,
   squash_tradition: 3,
-  system_quality: 3
+  system_quality: 3,
+  competition_density: 3,
+  federation_quality: 3,
+  court_count: null,
+  style_dna: {}
 }
 
 function normalizeCode(value: string): string {
   return value.toUpperCase().slice(0, 3)
+}
+
+function formatStyleDna(styleDna: Record<string, number>): string {
+  return JSON.stringify(styleDna ?? {}, null, 2)
+}
+
+function countryToForm(country: CountryRecord): FormState {
+  return {
+    ...country,
+    flag_asset: country.flag_asset ?? '',
+    competition_density: country.competition_density ?? 3,
+    federation_quality: country.federation_quality ?? country.system_quality,
+    court_count: country.court_count ?? null,
+    style_dna: country.style_dna ?? {}
+  }
 }
 
 export function CountriesPage(): JSX.Element {
@@ -39,6 +58,7 @@ export function CountriesPage(): JSX.Element {
   const [mode, setMode] = useState<Mode>('create')
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
+  const [styleDnaText, setStyleDnaText] = useState('{}')
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -69,7 +89,8 @@ export function CountriesPage(): JSX.Element {
       setSubmitError(null)
       setSelectedCode(created.code)
       setMode('edit')
-      setForm({ ...created, flag_asset: created.flag_asset ?? '' })
+      setForm(countryToForm(created))
+      setStyleDnaText(formatStyleDna(created.style_dna ?? {}))
       await refetchAll()
     },
     onError: (error) => {
@@ -84,7 +105,8 @@ export function CountriesPage(): JSX.Element {
       setSubmitSuccess(`Country ${updated.code} updated.`)
       setSubmitError(null)
       setSelectedCode(updated.code)
-      setForm({ ...updated, flag_asset: updated.flag_asset ?? '' })
+      setForm(countryToForm(updated))
+      setStyleDnaText(formatStyleDna(updated.style_dna ?? {}))
       await refetchAll()
     },
     onError: (error) => {
@@ -102,6 +124,7 @@ export function CountriesPage(): JSX.Element {
       setSelectedCode(null)
       setMode('create')
       setForm(EMPTY_FORM)
+      setStyleDnaText('{}')
       await refetchAll()
     },
     onError: (error) => {
@@ -151,7 +174,8 @@ export function CountriesPage(): JSX.Element {
   const onSelect = (country: CountryRecord) => {
     setMode('edit')
     setSelectedCode(country.code)
-    setForm({ ...country, flag_asset: country.flag_asset ?? '' })
+    setForm(countryToForm(country))
+    setStyleDnaText(formatStyleDna(country.style_dna ?? {}))
     setSubmitError(null)
     setSubmitSuccess(null)
     setDeleteError(null)
@@ -161,11 +185,11 @@ export function CountriesPage(): JSX.Element {
     setMode('create')
     setSelectedCode(null)
     setForm({
-      ...country,
+      ...countryToForm(country),
       code: '',
-      name: `${country.name} Copy`,
-      flag_asset: country.flag_asset ?? ''
+      name: `${country.name} Copy`
     })
+    setStyleDnaText(formatStyleDna(country.style_dna ?? {}))
     setSubmitError(null)
     setSubmitSuccess('Country duplicated into create form. Set a unique 3-letter code before saving.')
   }
@@ -174,6 +198,7 @@ export function CountriesPage(): JSX.Element {
     setMode('create')
     setSelectedCode(null)
     setForm(EMPTY_FORM)
+    setStyleDnaText('{}')
     setSubmitError(null)
     setSubmitSuccess(null)
     setDeleteError(null)
@@ -183,12 +208,34 @@ export function CountriesPage(): JSX.Element {
     event.preventDefault()
     setSubmitError(null)
     setSubmitSuccess(null)
+
+    let parsedStyleDna: Record<string, number>
+    try {
+      const parsed = JSON.parse(styleDnaText || '{}') as unknown
+      if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') {
+        throw new Error('Style DNA must be a JSON object.')
+      }
+      parsedStyleDna = Object.fromEntries(
+        Object.entries(parsed as Record<string, unknown>).map(([key, value]) => {
+          if (typeof value !== 'number' || Number.isNaN(value)) {
+            throw new Error('Style DNA values must be numeric.')
+          }
+          return [key, value]
+        })
+      )
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Style DNA must be valid JSON.')
+      return
+    }
+
     const payload: CountryUpsertPayload = {
       ...form,
       code: normalizeCode(form.code),
       name: form.name.trim(),
       region: form.region.trim(),
-      flag_asset: form.flag_asset?.trim() ? form.flag_asset.trim() : null
+      flag_asset: form.flag_asset?.trim() ? form.flag_asset.trim() : null,
+      court_count: form.court_count === null ? null : Number(form.court_count),
+      style_dna: parsedStyleDna
     }
 
     if (mode === 'create') {
@@ -245,10 +292,14 @@ export function CountriesPage(): JSX.Element {
     <section className="panel">
       <PageIntro
         title="Countries Editor"
-        subtitle="Manage country data directly in-app; changes are written to canonical runtime countries JSON."
+        subtitle="Manage country data that drives deterministic world and talent-generation inputs."
       />
       <p className="status">
-        Next step: validate current country tuning in <Link to="/world/talent-preview">Talent Class Preview diagnostics</Link>.
+        Population is not the only talent driver: small squash nations can produce elite players when culture, system quality,
+        competition density, and federation support are strong. Country momentum / era modifiers are planned, but not implemented here.
+      </p>
+      <p className="status">
+        Next step: validate current country tuning in <Link to="/admin/world/talent-preview">Talent Class Preview diagnostics</Link>.
       </p>
 
       <SectionCard title="Dataset status">
@@ -351,6 +402,9 @@ export function CountriesPage(): JSX.Element {
                   <th>Popularity</th>
                   <th>Tradition</th>
                   <th>System</th>
+                  <th>Competition</th>
+                  <th>Federation</th>
+                  <th>Courts</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -365,6 +419,9 @@ export function CountriesPage(): JSX.Element {
                     <td>{country.squash_popularity}</td>
                     <td>{country.squash_tradition}</td>
                     <td>{country.system_quality}</td>
+                    <td>{country.competition_density ?? 3}</td>
+                    <td>{country.federation_quality ?? country.system_quality}</td>
+                    <td>{country.court_count?.toLocaleString() ?? '—'}</td>
                     <td>
                       <button type="button" onClick={() => onSelect(country)} disabled={busy}>
                         Edit
@@ -465,7 +522,55 @@ export function CountriesPage(): JSX.Element {
                   required
                 />
               </label>
+              <label>
+                Competition density (1..5)
+                <input
+                  type="number"
+                  min={1}
+                  max={5}
+                  step={0.1}
+                  value={form.competition_density}
+                  onChange={(event) => setForm((current) => ({ ...current, competition_density: Number(event.target.value) }))}
+                  required
+                />
+              </label>
+              <label>
+                Federation quality (1..5)
+                <input
+                  type="number"
+                  min={1}
+                  max={5}
+                  step={0.1}
+                  value={form.federation_quality}
+                  onChange={(event) => setForm((current) => ({ ...current, federation_quality: Number(event.target.value) }))}
+                  required
+                />
+              </label>
+              <label>
+                Court count (optional)
+                <input
+                  type="number"
+                  min={0}
+                  value={form.court_count ?? ''}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, court_count: event.target.value ? Number(event.target.value) : null }))
+                  }
+                />
+              </label>
             </div>
+
+            <label>
+              Style DNA (JSON numeric modifiers)
+              <textarea
+                rows={5}
+                value={styleDnaText}
+                onChange={(event) => setStyleDnaText(event.target.value)}
+                placeholder='{"attrition": 0.2, "front_court": 0.1}'
+              />
+            </label>
+            <p className="status">
+              Style DNA is preserved by JSON APIs and world packages, but CSV import/export intentionally leaves it in JSON-only workflows for now.
+            </p>
 
             <div className="dashboard-actions-row">
               <button type="submit" disabled={busy}>

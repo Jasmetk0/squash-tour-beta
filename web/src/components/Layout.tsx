@@ -1,4 +1,7 @@
-import { NavLink, Outlet, useLocation, useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, NavLink, Outlet, useLocation, useParams } from 'react-router-dom'
+
+import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewer/activeRun'
 
 type NavItem = {
   to: string
@@ -79,7 +82,22 @@ export function Layout(): JSX.Element {
   const runId = readRunId(location.pathname, paramRunId)
   const modeLabel = mode === 'admin' ? 'Admin / Engine Mode' : mode === 'viewer' ? 'Viewer / MSA Website Mode' : 'Mode selection'
   const modeNav = mode === 'admin' ? adminNav : mode === 'viewer' ? viewerNav : []
+  const [viewerActiveRunId, setViewerActiveRunId] = useState(() => readViewerActiveRunId())
   const runNav = runId && mode !== 'landing' ? runNavFor(mode, runId) : []
+  const viewerActiveRunNav = mode === 'viewer' && viewerActiveRunId && runNav.length === 0 ? runNavFor('viewer', viewerActiveRunId) : []
+
+  useEffect(() => {
+    function handleViewerActiveRunChange(): void {
+      setViewerActiveRunId(readViewerActiveRunId())
+    }
+
+    window.addEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, handleViewerActiveRunChange)
+    window.addEventListener('storage', handleViewerActiveRunChange)
+    return () => {
+      window.removeEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, handleViewerActiveRunChange)
+      window.removeEventListener('storage', handleViewerActiveRunChange)
+    }
+  }, [])
 
   return (
     <div className={`app-shell app-shell--${mode}`}>
@@ -114,6 +132,28 @@ export function Layout(): JSX.Element {
             </NavLink>
           ))}
         </nav>
+      ) : null}
+      {mode === 'viewer' ? (
+        viewerActiveRunId ? (
+          <section className="viewer-active-run-bar" aria-label="Viewer active run">
+            <p className="status">
+              Viewing run: <strong>{viewerActiveRunId}</strong>
+            </p>
+            {viewerActiveRunNav.length > 0 ? (
+              <nav className="run-nav" aria-label="Viewer active run quick links">
+                {viewerActiveRunNav.map((item) => (
+                  <NavLink key={item.to} to={item.to} className={({ isActive }) => (isActive ? 'active' : '')}>
+                    {item.label}
+                  </NavLink>
+                ))}
+              </nav>
+            ) : null}
+          </section>
+        ) : (
+          <p className="status">
+            No Viewer run selected. <Link to="/viewer">Select a run</Link>.
+          </p>
+        )
       ) : null}
       {runId ? <p className="status">Current run context: {runId}</p> : null}
       <main>

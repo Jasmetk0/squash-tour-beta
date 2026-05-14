@@ -53,6 +53,27 @@ function renderAppAt(route: string): void {
 }
 
 describe('Module 17 pages through routes', () => {
+
+  it('renders the Phase 1 landing page at root', async () => {
+    renderAppAt('/')
+    expect(await screen.findByText('Choose how you want to use the deterministic FAX squash world.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Browse the generated squash world/i })).toHaveAttribute('href', '/viewer')
+    expect(screen.getByRole('link', { name: /Build, validate, and simulate the world/i })).toHaveAttribute('href', '/admin')
+  })
+
+  it('renders the Admin Engine dashboard route', async () => {
+    renderAppAt('/admin')
+    expect(await screen.findByRole('heading', { name: 'Admin Engine Dashboard' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Simulate' })).toHaveAttribute('href', '/admin/simulate')
+    expect(screen.getByRole('link', { name: 'Tournament Templates' })).toHaveAttribute('href', '/admin/tournament-templates')
+  })
+
+  it('renders the Viewer MSA home route', async () => {
+    renderAppAt('/viewer')
+    expect(await screen.findByRole('heading', { name: 'MSA Website Home' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Records' })).toHaveAttribute('href', '/viewer/records')
+  })
+
   beforeEach(() => {
     api.getEvent.mockResolvedValue({ event_sequence: 2, event_id: 'E2', season: 2027, week: 9, template_id: null, tournament_result: {} })
     api.getRun.mockResolvedValue({

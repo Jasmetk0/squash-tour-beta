@@ -12,6 +12,10 @@ export function renderWithRoute(ui: JSX.Element, route: string): ReturnType<type
           <Route path="/" element={ui} />
           <Route path="/runs/:runId" element={ui} />
           <Route path="/runs/:runId/*" element={ui} />
+          <Route path="/admin/runs/:runId" element={ui} />
+          <Route path="/admin/runs/:runId/*" element={ui} />
+          <Route path="/viewer/runs/:runId" element={ui} />
+          <Route path="/viewer/runs/:runId/*" element={ui} />
           <Route path="*" element={ui} />
         </Routes>
       </MemoryRouter>

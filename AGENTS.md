@@ -4,16 +4,19 @@
 Build a deterministic, data-driven **men’s professional squash career simulator** for World Tour + Elite Tour with realistic tournament flow, rankings, race, careers, and historical memory.
 
 ## Source-of-truth rules
-1. **`Beta_Engine.docx` is constitutional source-of-truth.** If notes conflict, constitution wins.
-2. **`PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` is the implementation blueprint** derived from the constitution.
-3. Preserve all non-negotiables unless a clearly versioned constitution revision is approved.
-4. Document assumptions in each task output.
+1. **`PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` is the current active implementation/product blueprint** for coding and product work.
+2. **`Beta_Engine.docx` is an older constitutional reference/background document.** Use it for context, not as the deciding implementation source.
+3. If `Beta_Engine.docx` conflicts with `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`, the markdown technical plan wins for current implementation work.
+4. `README.md` remains a short project overview; `ROADMAP.md` remains a milestone summary.
+5. Preserve all non-negotiables unless a clearly versioned plan/constitution revision is approved.
+6. Document assumptions in each task output.
 
 ## Architecture principles (non-negotiable)
 - Deterministic modular monolith (Python domain core, not microservices).
 - Separate bounded contexts: players, tournaments, matches, rankings/race, health/injuries, history, commissioner.
 - Keep domain logic pure and testable; isolate I/O in infrastructure layer.
 - UI is a client of the engine; UI convenience must not drive core architecture.
+- Admin/Engine Mode and Viewer/MSA Website Mode must remain conceptually separated.
 - History/snapshots are product features, not optional logs.
 
 ## Determinism rules (non-negotiable)
@@ -36,7 +39,7 @@ Build a deterministic, data-driven **men’s professional squash career simulato
 - Persist `config_version`/fingerprint with snapshots for reproducibility.
 
 ## UI rules
-- Required operation modes: sim next match, round, tournament, week, full season.
+- Required simulation command levels: sim next match, round, tournament, week, full season.
 - Provide commissioner/admin controls and read dashboards (tour, players, rankings, race, history).
 - UI should call application/API commands; no hidden client-side simulation logic.
 
@@ -46,7 +49,7 @@ Build a deterministic, data-driven **men’s professional squash career simulato
 - Core outcomes remain rule-based, deterministic, testable.
 
 ## Testing expectations
-- Every change must include deterministic tests for touched logic.
+- Every logic change must include deterministic tests for touched logic.
 - Minimum checks per slice: replay test (same seed => same output), contract test (API/command behavior), snapshot integrity check.
 - Add regression tests for edge tournament states (withdrawal, LL, retirement) when touched.
 - Reject changes that increase realism but reduce determinism/observability.

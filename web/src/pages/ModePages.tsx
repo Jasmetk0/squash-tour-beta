@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { TournamentTemplatesPage } from './TournamentTemplatesPage'
 
 import { ViewerRunSelector } from '../components/ViewerRunSelector'
 import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewer/activeRun'
@@ -186,19 +187,9 @@ export function AdminWorldPage(): JSX.Element {
 }
 
 export function AdminTournamentTemplatesPage(): JSX.Element {
-  return (
-    <section className="panel">
-      <div className="page-intro">
-        <h2>Tournament Templates</h2>
-        <p className="subtitle">
-          Tournament Template editor will define reusable categories such as World Championship, Diamond, Emerald, Platinum, Gold,
-          Silver, Bronze, Elite, Challenger, Future.
-        </p>
-      </div>
-      <p className="status">Placeholder only for Phase 1 navigation. No template editor logic is implemented in this task.</p>
-    </section>
-  )
+  return <TournamentTemplatesPage />
 }
+
 
 export function AdminSeasonsPage(): JSX.Element {
   return (

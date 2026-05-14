@@ -10,6 +10,7 @@ from beta_engine.application.api_services import SimulationApiService
 from beta_engine.application.config_validation_service import ConfigValidationService
 from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
+from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.application.world_package_service import WorldPackageService
 from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
 from beta_engine.infrastructure.config import load_settings
@@ -54,6 +55,19 @@ def get_countries_config_service(request: Request) -> CountriesConfigService:
     if configured_path is None:
         return CountriesConfigService()
     return CountriesConfigService(config_path=configured_path)
+
+
+def get_tournament_templates_config_service(request: Request) -> TournamentTemplatesConfigService:
+    configured_path = getattr(request.app.state, "tournament_templates_config_path", None)
+    calendar_dir = getattr(request.app.state, "calendar_config_dir", None)
+    if configured_path is None and calendar_dir is None:
+        return TournamentTemplatesConfigService()
+    kwargs = {}
+    if configured_path is not None:
+        kwargs["config_path"] = configured_path
+    if calendar_dir is not None:
+        kwargs["calendar_dir"] = calendar_dir
+    return TournamentTemplatesConfigService(**kwargs)
 
 
 def get_world_talent_preview_service(request: Request) -> WorldTalentPreviewService:

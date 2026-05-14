@@ -926,3 +926,92 @@ class TalentClassSummaryResponse(BaseModel):
     average_total_talents_per_year: float
     global_band_totals: dict[str, int]
     countries: list[CountryTalentSummaryResponse] = Field(default_factory=list)
+
+
+class LuckyLoserRulesResponse(BaseModel):
+    enabled: bool = True
+    max_spots: int = Field(ge=0)
+    replacement_window: str = "pre_main_draw_round_1"
+
+
+class TournamentPointDistributionResponse(BaseModel):
+    winner: int = Field(ge=0)
+    finalist: int = Field(ge=0)
+    semifinalist: int = Field(ge=0)
+    quarterfinalist: int = Field(ge=0)
+    round_of_16: int = Field(default=0, ge=0)
+    round_of_32: int = Field(default=0, ge=0)
+
+
+class TournamentTemplateUpsertRequest(BaseModel):
+    template_id: str = Field(min_length=3)
+    tour_level: Literal["WORLD_TOUR", "ELITE_TOUR"]
+    category: str = Field(min_length=1)
+    event_name: str = Field(min_length=1)
+    region: str = Field(min_length=1)
+    host_country: str = Field(min_length=3, max_length=3)
+    main_draw_size: int = Field(gt=0)
+    qualification_draw_size: int = Field(ge=0)
+    seeds_count: int = Field(ge=0)
+    qualifier_spots: int = Field(ge=0)
+    wild_cards: int = Field(ge=0)
+    byes: int = Field(ge=0)
+    lucky_loser_rules: LuckyLoserRulesResponse
+    point_distribution_ref: str | None = None
+    point_distribution: TournamentPointDistributionResponse | None = None
+    event_duration_days: int = Field(gt=0)
+    qualification_duration_days: int = Field(ge=0)
+    preferred_week_type: str | None = None
+    seasonal_grouping: str | None = None
+
+    @field_validator("template_id", "category", "event_name", "region")
+    @classmethod
+    def non_empty_trimmed_template_text(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("must be non-empty")
+        return normalized
+
+    @field_validator("host_country")
+    @classmethod
+    def normalize_host_country(cls, value: str) -> str:
+        normalized = value.strip().upper()
+        if len(normalized) != 3:
+            raise ValueError("host_country must be exactly 3 characters")
+        return normalized
+
+
+class TournamentTemplateResponse(TournamentTemplateUpsertRequest):
+    pass
+
+
+class TournamentTemplatesListResponse(BaseModel):
+    templates: list[TournamentTemplateResponse] = Field(default_factory=list)
+
+
+class TournamentTemplatesMetadataResponse(BaseModel):
+    template_count: int
+    source_path: str
+    referenced_by_calendar: bool
+    referenced_template_ids: list[str] = Field(default_factory=list)
+
+
+class TournamentTemplatesDatasetResponse(BaseModel):
+    templates: list[TournamentTemplateResponse] = Field(default_factory=list)
+
+
+class TournamentTemplatesImportRequest(BaseModel):
+    dataset: dict[str, object]
+    dry_run: bool = False
+
+
+class TournamentTemplatesValidationIssueResponse(BaseModel):
+    field: str | None = None
+    message: str
+
+
+class TournamentTemplatesImportResponse(BaseModel):
+    ok: bool
+    dry_run: bool
+    template_count: int
+    errors: list[TournamentTemplatesValidationIssueResponse] = Field(default_factory=list)

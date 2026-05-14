@@ -17,6 +17,8 @@ def create_app(
     database_url: str | None = None,
     countries_config_path: str | None = None,
     manual_player_overrides_config_path: str | None = None,
+    tournament_templates_config_path: str | None = None,
+    calendar_config_dir: str | None = None,
 ) -> FastAPI:
     app = FastAPI(title="Squash Tour Beta Engine", version="0.1.0")
     app.add_middleware(
@@ -31,6 +33,10 @@ def create_app(
         app.state.countries_config_path = countries_config_path
     if manual_player_overrides_config_path is not None:
         app.state.manual_player_overrides_config_path = manual_player_overrides_config_path
+    if tournament_templates_config_path is not None:
+        app.state.tournament_templates_config_path = tournament_templates_config_path
+    if calendar_config_dir is not None:
+        app.state.calendar_config_dir = calendar_config_dir
     app.include_router(api_router)
     return app
 

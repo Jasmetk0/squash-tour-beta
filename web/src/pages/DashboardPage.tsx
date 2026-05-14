@@ -68,7 +68,7 @@ export function DashboardPage(): JSX.Element {
       const run = await createRun(createInput)
       localStorage.setItem(LAST_RUN_ID_STORAGE_KEY, run.run_id)
       setLastRunId(run.run_id)
-      navigate(`/runs/${run.run_id}`)
+      navigate(`/admin/runs/${run.run_id}`)
     } catch (err) {
       setCreateError(`Could not create run: ${formatApiError(err)}`)
     } finally {
@@ -84,7 +84,7 @@ export function DashboardPage(): JSX.Element {
       const run = await getRun(runId)
       localStorage.setItem(LAST_RUN_ID_STORAGE_KEY, run.run.run_id)
       setLastRunId(run.run.run_id)
-      navigate(`/runs/${run.run.run_id}`)
+      navigate(`/admin/runs/${run.run.run_id}`)
     } catch (err) {
       setError(`Could not open run: ${formatApiError(err)}`)
     } finally {
@@ -105,14 +105,14 @@ export function DashboardPage(): JSX.Element {
   const nextInspectionLinks =
     lastRunId && rememberedRunQuery.data
       ? [
-          { label: 'Run Detail', href: `/runs/${lastRunId}` },
-          { label: 'Diagnostics', href: `/runs/${lastRunId}/diagnostics` },
-          ...(hasLineageSignal ? [{ label: 'Season Chain', href: `/runs/${lastRunId}/season-chain` }] : []),
+          { label: 'Run Detail', href: `/admin/runs/${lastRunId}` },
+          { label: 'Diagnostics', href: `/admin/runs/${lastRunId}/diagnostics` },
+          ...(hasLineageSignal ? [{ label: 'Season Chain', href: `/admin/runs/${lastRunId}/season-chain` }] : []),
           ...(rememberedRunQuery.data.finals.qualification_available && !rememberedRunQuery.data.finals.result_available
-            ? [{ label: 'Finals', href: `/runs/${lastRunId}/finals` }]
+            ? [{ label: 'Finals', href: `/admin/runs/${lastRunId}/finals` }]
             : []),
-          ...(rememberedRunQuery.data.rollover ? [{ label: 'Rollover', href: `/runs/${lastRunId}/rollover` }] : []),
-          ...(rememberedRunSource ? [{ label: 'Bootstrap / Lineage', href: `/runs/${lastRunId}/bootstrap-lineage` }] : [])
+          ...(rememberedRunQuery.data.rollover ? [{ label: 'Rollover', href: `/admin/runs/${lastRunId}/rollover` }] : []),
+          ...(rememberedRunSource ? [{ label: 'Bootstrap / Lineage', href: `/admin/runs/${lastRunId}/bootstrap-lineage` }] : [])
         ]
       : []
   const filteredRuns =
@@ -136,7 +136,7 @@ export function DashboardPage(): JSX.Element {
             <li>Create a run with a unique run ID, seed, and season.</li>
             <li>Open any existing run using its run ID.</li>
             <li>After launch/open, continue from Run Detail and its linked views.</li>
-            <li>Manage world countries from the in-app <Link to="/world/countries">Countries Editor</Link>.</li>
+            <li>Manage world countries from the in-app <Link to="/admin/world/countries">Countries Editor</Link>.</li>
           </ul>
           <p className="status">Supported season default: {SUPPORTED_CALENDAR_SEASON}.</p>
         </section>
@@ -206,7 +206,7 @@ export function DashboardPage(): JSX.Element {
                       Chain signal:{' '}
                       {rememberedRunSource?.parent_run_id ? (
                         <>
-                          Parent <Link to={`/runs/${rememberedRunSource.parent_run_id}`}>{rememberedRunSource.parent_run_id}</Link>
+                          Parent <Link to={`/admin/runs/${rememberedRunSource.parent_run_id}`}>{rememberedRunSource.parent_run_id}</Link>
                         </>
                       ) : (
                         'No parent'
@@ -218,7 +218,7 @@ export function DashboardPage(): JSX.Element {
                           {rememberedRunChildren.slice(0, 3).map((childRunId, index) => (
                             <span key={childRunId}>
                               {index > 0 ? ', ' : ''}
-                              <Link to={`/runs/${childRunId}`}>{childRunId}</Link>
+                              <Link to={`/admin/runs/${childRunId}`}>{childRunId}</Link>
                             </span>
                           ))}
                           {rememberedRunChildren.length > 3 ? '…' : ''}
@@ -265,7 +265,7 @@ export function DashboardPage(): JSX.Element {
                 </button>
               </div>
               <p className="status">
-                Quick links: <Link to={`/runs/${lastRunId}`}>Run Detail</Link> · <Link to={`/runs/${lastRunId}/events`}>Events</Link>
+                Quick links: <Link to={`/admin/runs/${lastRunId}`}>Run Detail</Link> · <Link to={`/admin/runs/${lastRunId}/events`}>Events</Link>
               </p>
             </>
           ) : (
@@ -323,7 +323,7 @@ export function DashboardPage(): JSX.Element {
         <section className="panel" aria-labelledby="dashboard-runs-index-heading">
           <h3 id="dashboard-runs-index-heading">Browse existing runs</h3>
           <p className="status">
-            For full browsing and filtering, use the dedicated <Link to="/runs">Runs browser</Link>.
+            For full browsing and filtering, use the dedicated <Link to="/admin/runs">Runs browser</Link>.
           </p>
           <label>
             Filter by run ID
@@ -361,11 +361,11 @@ export function DashboardPage(): JSX.Element {
                       ]}
                     />
                     <p className="status">
-                      <Link to={`/runs/${run.run_id}`}>Run Detail</Link> ·{' '}
-                      <Link to={`/runs/${run.run_id}/diagnostics`}>Diagnostics</Link> ·{' '}
+                      <Link to={`/admin/runs/${run.run_id}`}>Run Detail</Link> ·{' '}
+                      <Link to={`/admin/runs/${run.run_id}/diagnostics`}>Diagnostics</Link> ·{' '}
                       {run.parent_run_id || run.child_run_count > 0 ? (
                         <>
-                          <Link to={`/runs/${run.run_id}/season-chain`}>Season Chain</Link> ·{' '}
+                          <Link to={`/admin/runs/${run.run_id}/season-chain`}>Season Chain</Link> ·{' '}
                         </>
                       ) : null}
                       <button

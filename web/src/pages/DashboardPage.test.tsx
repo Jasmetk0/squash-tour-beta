@@ -124,7 +124,7 @@ describe('DashboardPage', () => {
         season: SUPPORTED_CALENDAR_SEASON
       })
     )
-    expect(navigateMock).toHaveBeenCalledWith('/runs/run-a')
+    expect(navigateMock).toHaveBeenCalledWith('/admin/runs/run-a')
   })
 
   it('opens an existing run and navigates using the same route pattern', async () => {
@@ -134,7 +134,7 @@ describe('DashboardPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Open and continue' }))
 
     await waitFor(() => expect(api.getRun).toHaveBeenCalledWith('run-b'))
-    expect(navigateMock).toHaveBeenCalledWith('/runs/run-a')
+    expect(navigateMock).toHaveBeenCalledWith('/admin/runs/run-a')
   })
 
   it('shows empty resume state when no remembered run exists', async () => {
@@ -195,19 +195,19 @@ describe('DashboardPage', () => {
     expect(await screen.findByRole('link', { name: 'Finals' })).toBeInTheDocument()
     expect(await screen.findByRole('link', { name: 'Rollover' })).toBeInTheDocument()
     expect(await within(resumePanel).findByText('Most relevant next inspections')).toBeInTheDocument()
-    expect(within(resumePanel).getAllByRole('link', { name: 'Run Detail' })[0]).toHaveAttribute('href', '/runs/remembered-run')
-    expect(within(resumePanel).getByRole('link', { name: 'Diagnostics' })).toHaveAttribute('href', '/runs/remembered-run/diagnostics')
-    expect(within(resumePanel).getByRole('link', { name: 'Season Chain' })).toHaveAttribute('href', '/runs/remembered-run/season-chain')
-    expect(within(resumePanel).getByRole('link', { name: 'Finals' })).toHaveAttribute('href', '/runs/remembered-run/finals')
-    expect(within(resumePanel).getByRole('link', { name: 'Rollover' })).toHaveAttribute('href', '/runs/remembered-run/rollover')
-    expect(within(resumePanel).getByRole('link', { name: 'Bootstrap / Lineage' })).toHaveAttribute('href', '/runs/remembered-run/bootstrap-lineage')
-    expect(within(resumePanel).getByRole('link', { name: 'parent-run' })).toHaveAttribute('href', '/runs/parent-run')
-    expect(within(resumePanel).getByRole('link', { name: 'child-run-1' })).toHaveAttribute('href', '/runs/child-run-1')
-    expect(within(resumePanel).getByRole('link', { name: 'child-run-2' })).toHaveAttribute('href', '/runs/child-run-2')
+    expect(within(resumePanel).getAllByRole('link', { name: 'Run Detail' })[0]).toHaveAttribute('href', '/admin/runs/remembered-run')
+    expect(within(resumePanel).getByRole('link', { name: 'Diagnostics' })).toHaveAttribute('href', '/admin/runs/remembered-run/diagnostics')
+    expect(within(resumePanel).getByRole('link', { name: 'Season Chain' })).toHaveAttribute('href', '/admin/runs/remembered-run/season-chain')
+    expect(within(resumePanel).getByRole('link', { name: 'Finals' })).toHaveAttribute('href', '/admin/runs/remembered-run/finals')
+    expect(within(resumePanel).getByRole('link', { name: 'Rollover' })).toHaveAttribute('href', '/admin/runs/remembered-run/rollover')
+    expect(within(resumePanel).getByRole('link', { name: 'Bootstrap / Lineage' })).toHaveAttribute('href', '/admin/runs/remembered-run/bootstrap-lineage')
+    expect(within(resumePanel).getByRole('link', { name: 'parent-run' })).toHaveAttribute('href', '/admin/runs/parent-run')
+    expect(within(resumePanel).getByRole('link', { name: 'child-run-1' })).toHaveAttribute('href', '/admin/runs/child-run-1')
+    expect(within(resumePanel).getByRole('link', { name: 'child-run-2' })).toHaveAttribute('href', '/admin/runs/child-run-2')
     await userEvent.click(screen.getByRole('button', { name: 'Resume Run' }))
 
     await waitFor(() => expect(api.getRun).toHaveBeenCalledWith('remembered-run'))
-    expect(navigateMock).toHaveBeenCalledWith('/runs/remembered-run')
+    expect(navigateMock).toHaveBeenCalledWith('/admin/runs/remembered-run')
   })
 
   it('shows readable resume error if remembered run cannot be opened', async () => {
@@ -306,13 +306,13 @@ describe('DashboardPage', () => {
     renderWithRoute(<DashboardPage />, '/')
 
     expect(await screen.findByRole('heading', { name: 'Browse existing runs' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Runs browser' })).toHaveAttribute('href', '/runs')
+    expect(screen.getByRole('link', { name: 'Runs browser' })).toHaveAttribute('href', '/admin/runs')
     const runBTitle = await screen.findByRole('heading', { name: 'run-b' })
     const runCTitle = await screen.findByRole('heading', { name: 'run-c' })
     expect(runBTitle.compareDocumentPosition(runCTitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(screen.getAllByRole('link', { name: 'Run Detail' })[0]).toHaveAttribute('href', '/runs/run-b')
-    expect(screen.getAllByRole('link', { name: 'Diagnostics' })[0]).toHaveAttribute('href', '/runs/run-b/diagnostics')
-    expect(screen.getByRole('link', { name: 'Season Chain' })).toHaveAttribute('href', '/runs/run-b/season-chain')
+    expect(screen.getAllByRole('link', { name: 'Run Detail' })[0]).toHaveAttribute('href', '/admin/runs/run-b')
+    expect(screen.getAllByRole('link', { name: 'Diagnostics' })[0]).toHaveAttribute('href', '/admin/runs/run-b/diagnostics')
+    expect(screen.getByRole('link', { name: 'Season Chain' })).toHaveAttribute('href', '/admin/runs/run-b/season-chain')
   })
 
   it('shows runs browser loading, empty, and error states', async () => {
@@ -350,6 +350,6 @@ describe('DashboardPage', () => {
     renderWithRoute(<DashboardPage />, '/')
     await userEvent.click(await screen.findByRole('button', { name: 'Open / continue' }))
     await waitFor(() => expect(api.getRun).toHaveBeenCalledWith('run-browser'))
-    expect(navigateMock).toHaveBeenCalledWith('/runs/run-browser')
+    expect(navigateMock).toHaveBeenCalledWith('/admin/runs/run-browser')
   })
 })

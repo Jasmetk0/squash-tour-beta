@@ -290,3 +290,134 @@ button {
   font-size: 0.82rem;
   color: #0f172a;
 }
+
+.app-header {
+  align-items: flex-start;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+}
+
+.app-header h1 {
+  margin: 0;
+}
+
+.mode-switcher {
+  background: #e2e8f0;
+  border-radius: 999px;
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+}
+
+.mode-switcher a,
+.mode-card,
+.mode-choice,
+.viewer-home .actions a {
+  text-decoration: none;
+}
+
+.mode-switcher a {
+  border-radius: 999px;
+  color: #334155;
+  font-weight: 700;
+  padding: 0.45rem 0.8rem;
+}
+
+.mode-switcher a.active {
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.16);
+}
+
+.primary-nav {
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.35rem;
+}
+
+.run-nav {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.65rem;
+}
+
+.app-shell--admin nav a.active {
+  background: #1e40af;
+}
+
+.app-shell--viewer nav a.active {
+  background: #047857;
+}
+
+.mode-choice-grid,
+.mode-card-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.mode-choice,
+.mode-card {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  color: #0f172a;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 1rem;
+}
+
+.mode-choice:hover,
+.mode-card:hover {
+  border-color: #64748b;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 0.08);
+}
+
+.mode-choice strong,
+.mode-card strong {
+  font-size: 1.05rem;
+}
+
+.mode-choice span,
+.mode-card span {
+  color: #475569;
+}
+
+.mode-choice .eyebrow {
+  color: #334155;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mode-choice--viewer {
+  border-top: 4px solid #047857;
+}
+
+.mode-choice--admin {
+  border-top: 4px solid #1e40af;
+}
+
+.landing-panel {
+  padding: 1.25rem;
+}
+
+@media (max-width: 720px) {
+  .app-header {
+    flex-direction: column;
+  }
+
+  .mode-switcher {
+    width: 100%;
+  }
+
+  .mode-switcher a {
+    flex: 1;
+    text-align: center;
+  }
+}

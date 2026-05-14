@@ -82,7 +82,7 @@ describe('RunsPage', () => {
   })
 
   it('renders /runs route shell and runs list from GET /runs', async () => {
-    renderWithRoute(<RunsPage />, '/runs')
+    renderWithRoute(<RunsPage />, '/admin/runs')
 
     expect(await screen.findByRole('heading', { name: 'Runs browser' })).toBeInTheDocument()
     expect(api.listRuns).toHaveBeenCalledTimes(1)
@@ -91,7 +91,7 @@ describe('RunsPage', () => {
   })
 
   it('preserves backend order exactly as returned', async () => {
-    renderWithRoute(<RunsPage />, '/runs')
+    renderWithRoute(<RunsPage />, '/admin/runs')
 
     const runButtons = await screen.findAllByRole('button', { name: /run-/i })
     expect(runButtons[0]).toHaveTextContent('run-3')
@@ -100,7 +100,7 @@ describe('RunsPage', () => {
   })
 
   it('filters without re-sorting matches', async () => {
-    renderWithRoute(<RunsPage />, '/runs')
+    renderWithRoute(<RunsPage />, '/admin/runs')
 
     await screen.findByRole('button', { name: 'Selected run-3' })
     await userEvent.type(screen.getByLabelText('Filter by run ID'), 'run-')
@@ -118,19 +118,19 @@ describe('RunsPage', () => {
   })
 
   it('renders selected run detail from selection and status-summary with bridge links', async () => {
-    renderWithRoute(<RunsPage />, '/runs?selected=run-1')
+    renderWithRoute(<RunsPage />, '/admin/runs?selected=run-1')
 
     await screen.findByText('Run ID')
     expect(api.getRunStatusSummary).toHaveBeenCalledWith('run-1')
-    expect(screen.getByRole('link', { name: 'Run Detail' })).toHaveAttribute('href', '/runs/run-1')
-    expect(screen.getByRole('link', { name: 'Diagnostics' })).toHaveAttribute('href', '/runs/run-1/diagnostics')
-    expect(screen.getByRole('link', { name: 'Activity' })).toHaveAttribute('href', '/runs/run-1/activity')
-    expect(screen.getByRole('link', { name: 'Season Calendar' })).toHaveAttribute('href', '/runs/run-1/calendar')
+    expect(screen.getByRole('link', { name: 'Run Detail' })).toHaveAttribute('href', '/admin/runs/run-1')
+    expect(screen.getByRole('link', { name: 'Diagnostics' })).toHaveAttribute('href', '/admin/runs/run-1/diagnostics')
+    expect(screen.getByRole('link', { name: 'Activity' })).toHaveAttribute('href', '/admin/runs/run-1/activity')
+    expect(screen.getByRole('link', { name: 'Season Calendar' })).toHaveAttribute('href', '/admin/runs/run-1/calendar')
   })
 
   it('shows remembered-run marker and keeps open/continue behavior', async () => {
     localStorage.setItem('beta_engine:last_run_id', 'run-3')
-    renderWithRoute(<RunsPage />, '/runs')
+    renderWithRoute(<RunsPage />, '/admin/runs')
 
     const selectedPanel = (await screen.findByRole('heading', { name: 'Selected run detail' })).closest('article') as HTMLElement
     expect(within(selectedPanel).getByText('Remembered run')).toBeInTheDocument()
@@ -139,11 +139,11 @@ describe('RunsPage', () => {
 
     await waitFor(() => expect(api.getRun).toHaveBeenCalledWith('run-3'))
     expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run-3')
-    expect(navigateMock).toHaveBeenCalledWith('/runs/run-3')
+    expect(navigateMock).toHaveBeenCalledWith('/admin/runs/run-3')
   })
 
   it('supports has-children filter and renders no-match state', async () => {
-    renderWithRoute(<RunsPage />, '/runs')
+    renderWithRoute(<RunsPage />, '/admin/runs')
 
     await screen.findByRole('button', { name: 'Selected run-3' })
     await userEvent.selectOptions(screen.getByLabelText('Child runs'), 'with-children')

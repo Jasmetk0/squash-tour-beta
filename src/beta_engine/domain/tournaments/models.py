@@ -62,6 +62,8 @@ class TournamentTemplate(BaseModel):
             raise ValueError("seeds_count cannot exceed main_draw_size")
         if self.qualifier_spots > self.main_draw_size:
             raise ValueError("qualifier_spots cannot exceed main_draw_size")
+        if self.wild_cards > self.main_draw_size:
+            raise ValueError("wild_cards cannot exceed main_draw_size")
         if self.byes > self.main_draw_size:
             raise ValueError("byes cannot exceed main_draw_size")
         return self

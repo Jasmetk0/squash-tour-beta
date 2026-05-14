@@ -877,3 +877,74 @@ export type WorldPackageImportResponse = {
   manual_overrides_summary: WorldPackageImportSummary
   errors: WorldPackageImportError[]
 }
+
+export type LuckyLoserRules = {
+  enabled: boolean
+  max_spots: number
+  replacement_window: string
+}
+
+export type TournamentPointDistribution = {
+  winner: number
+  finalist: number
+  semifinalist: number
+  quarterfinalist: number
+  round_of_16: number
+  round_of_32: number
+}
+
+export type TournamentTemplateRecord = {
+  template_id: string
+  tour_level: 'WORLD_TOUR' | 'ELITE_TOUR'
+  category: string
+  event_name: string
+  region: string
+  host_country: string
+  main_draw_size: number
+  qualification_draw_size: number
+  seeds_count: number
+  qualifier_spots: number
+  wild_cards: number
+  byes: number
+  lucky_loser_rules: LuckyLoserRules
+  point_distribution_ref: string | null
+  point_distribution: TournamentPointDistribution | null
+  event_duration_days: number
+  qualification_duration_days: number
+  preferred_week_type: string | null
+  seasonal_grouping: string | null
+}
+
+export type TournamentTemplatesListResponse = {
+  templates: TournamentTemplateRecord[]
+}
+
+export type TournamentTemplatesMetadataResponse = {
+  template_count: number
+  source_path: string
+  referenced_by_calendar: boolean
+  referenced_template_ids: string[]
+}
+
+export type TournamentTemplatesDatasetResponse = {
+  templates: TournamentTemplateRecord[]
+}
+
+export type TournamentTemplateUpsertPayload = TournamentTemplateRecord
+
+export type TournamentTemplatesImportPayload = {
+  dataset: TournamentTemplatesDatasetResponse
+  dry_run: boolean
+}
+
+export type TournamentTemplatesValidationIssue = {
+  field: string | null
+  message: string
+}
+
+export type TournamentTemplatesImportResponse = {
+  ok: boolean
+  dry_run: boolean
+  template_count: number
+  errors: TournamentTemplatesValidationIssue[]
+}

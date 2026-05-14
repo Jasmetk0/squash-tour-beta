@@ -63,7 +63,14 @@ import type {
   WildcardActionHistoryResponse,
   WildcardStateResponse,
   WorldPackageImportPayload,
-  WorldPackageImportResponse
+  WorldPackageImportResponse,
+  TournamentTemplatesDatasetResponse,
+  TournamentTemplatesImportPayload,
+  TournamentTemplatesImportResponse,
+  TournamentTemplatesListResponse,
+  TournamentTemplatesMetadataResponse,
+  TournamentTemplateRecord,
+  TournamentTemplateUpsertPayload
 } from './types'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
@@ -134,6 +141,39 @@ export async function exportCountriesCsv(): Promise<string> {
 
 export function importCountries(payload: CountriesImportPayload): Promise<CountriesImportResponse> {
   return request('/world/countries/import', { method: 'POST', body: JSON.stringify(payload) })
+}
+
+
+export function listTournamentTemplates(): Promise<TournamentTemplatesListResponse> {
+  return request('/world/tournament-templates')
+}
+
+export function getTournamentTemplatesMetadata(): Promise<TournamentTemplatesMetadataResponse> {
+  return request('/world/tournament-templates/metadata')
+}
+
+export function getTournamentTemplate(templateId: string): Promise<TournamentTemplateRecord> {
+  return request(`/world/tournament-templates/${encodeURIComponent(templateId)}`)
+}
+
+export function createTournamentTemplate(payload: TournamentTemplateUpsertPayload): Promise<TournamentTemplateRecord> {
+  return request('/world/tournament-templates', { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function updateTournamentTemplate(templateId: string, payload: TournamentTemplateUpsertPayload): Promise<TournamentTemplateRecord> {
+  return request(`/world/tournament-templates/${encodeURIComponent(templateId)}`, { method: 'PUT', body: JSON.stringify(payload) })
+}
+
+export function deleteTournamentTemplate(templateId: string): Promise<void> {
+  return request(`/world/tournament-templates/${encodeURIComponent(templateId)}`, { method: 'DELETE' })
+}
+
+export function exportTournamentTemplates(): Promise<TournamentTemplatesDatasetResponse> {
+  return request('/world/tournament-templates/export')
+}
+
+export function importTournamentTemplates(payload: TournamentTemplatesImportPayload): Promise<TournamentTemplatesImportResponse> {
+  return request('/world/tournament-templates/import', { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function getTalentClassPreview(params: { year: number; seed: number }): Promise<TalentClassYearPreviewResponse> {

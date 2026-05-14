@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-const LAST_RUN_ID_STORAGE_KEY = 'beta_engine:last_run_id'
+import { ViewerRunSelector } from '../components/ViewerRunSelector'
+import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewer/activeRun'
 
 type LinkCard = {
   title: string
@@ -8,9 +10,23 @@ type LinkCard = {
   to: string
 }
 
-function useRememberedRunId(): string | null {
-  if (typeof window === 'undefined') return null
-  return window.localStorage.getItem(LAST_RUN_ID_STORAGE_KEY)
+function useViewerActiveRunId(): string | null {
+  const [activeRunId, setActiveRunId] = useState(() => readViewerActiveRunId())
+
+  useEffect(() => {
+    function handleActiveRunChange(): void {
+      setActiveRunId(readViewerActiveRunId())
+    }
+
+    window.addEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, handleActiveRunChange)
+    window.addEventListener('storage', handleActiveRunChange)
+    return () => {
+      window.removeEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, handleActiveRunChange)
+      window.removeEventListener('storage', handleActiveRunChange)
+    }
+  }, [])
+
+  return activeRunId
 }
 
 function LinkCardGrid({ cards }: { cards: LinkCard[] }): JSX.Element {
@@ -26,20 +42,39 @@ function LinkCardGrid({ cards }: { cards: LinkCard[] }): JSX.Element {
   )
 }
 
-function RunScopedSuggestion({ mode, page }: { mode: 'admin' | 'viewer'; page: string }): JSX.Element {
-  const lastRunId = useRememberedRunId()
+function ViewerRunScopedSuggestion({ page }: { page: string }): JSX.Element {
+  const activeRunId = useViewerActiveRunId()
+  if (!activeRunId) {
+    return (
+      <div className="empty-state">
+        <p className="status">Select a Viewer run first.</p>
+        <p>Viewer pages need an explicit generated world/run before they can show run-scoped data.</p>
+        <ViewerRunSelector />
+      </div>
+    )
+  }
+
+  return (
+    <p className="status">
+      Viewing run: <strong>{activeRunId}</strong>. Open{' '}
+      <Link to={`/viewer/runs/${activeRunId}/${page}`}>{page}</Link>.
+    </p>
+  )
+}
+
+function AdminRunScopedSuggestion({ page }: { page: string }): JSX.Element {
+  const lastRunId = typeof window === 'undefined' ? null : window.localStorage.getItem('beta_engine:last_run_id')
   if (!lastRunId) {
     return (
       <p className="status">
-        Open a run from <Link to={mode === 'admin' ? '/admin/runs' : '/admin/runs'}>Runs</Link> to view run-scoped data.
+        Open a run from <Link to="/admin/runs">Runs</Link> to view run-scoped data.
       </p>
     )
   }
 
   return (
     <p className="status">
-      Last opened run:{' '}
-      <Link to={`/${mode}/runs/${lastRunId}/${page}`}>{lastRunId}</Link>
+      Last opened run: <Link to={`/admin/runs/${lastRunId}/${page}`}>{lastRunId}</Link>
     </p>
   )
 }
@@ -90,37 +125,40 @@ export function AdminHomePage(): JSX.Element {
 }
 
 export function ViewerHomePage(): JSX.Element {
-  const lastRunId = useRememberedRunId()
+  const activeRunId = useViewerActiveRunId()
+  const cards = activeRunId
+    ? [
+        { title: 'Rankings', description: 'Official ranking snapshot browsing.', to: `/viewer/runs/${activeRunId}/rankings` },
+        { title: 'Race', description: 'Seasonal race standings for Finals qualification.', to: `/viewer/runs/${activeRunId}/race` },
+        { title: 'Tournaments', description: 'Tournament and finals result browsing.', to: `/viewer/runs/${activeRunId}/tournaments` },
+        { title: 'Calendar', description: 'Season calendar and planned-event browsing.', to: `/viewer/runs/${activeRunId}/calendar` },
+        { title: 'Players', description: 'Player index and career pages.', to: `/viewer/runs/${activeRunId}/players` },
+        { title: 'Countries', description: 'Read-only nation profiles and player pipelines.', to: `/viewer/runs/${activeRunId}/countries` },
+        { title: 'History', description: 'Activity, archives, weeks, and historical snapshots.', to: `/viewer/runs/${activeRunId}/history` },
+        { title: 'Finals', description: 'World Tour Finals qualification and result views.', to: `/viewer/runs/${activeRunId}/finals` }
+      ]
+    : []
+
   return (
     <section className="panel viewer-home">
       <div className="page-intro">
         <h2>MSA Website Home</h2>
         <p className="subtitle">Public-style generated FAX squash world view for browsing and analysis.</p>
       </div>
-      {lastRunId ? (
+      <p>
+        Viewer / MSA Website Mode is the read-only public site for a generated squash world. Select the run/world first, then browse
+        rankings, tournaments, players, countries, history, and Finals pages as run-scoped website sections.
+      </p>
+      <ViewerRunSelector />
+      {activeRunId ? (
         <section className="panel nested-panel">
-          <h3>Latest run shortcut</h3>
-          <p className="status">Continue browsing run {lastRunId} through read-only viewer sections.</p>
-          <div className="actions">
-            <Link to={`/viewer/runs/${lastRunId}/rankings`}>Rankings</Link>
-            <Link to={`/viewer/runs/${lastRunId}/tournaments`}>Tournaments</Link>
-            <Link to={`/viewer/runs/${lastRunId}/players`}>Players</Link>
-            <Link to={`/viewer/runs/${lastRunId}/history`}>History</Link>
-          </div>
+          <h3>Browse selected world</h3>
+          <p className="status">Viewing run: {activeRunId}</p>
+          <LinkCardGrid cards={cards} />
         </section>
       ) : (
-        <p className="status">No recently opened run found. Open or create a run from Admin Mode to browse generated results.</p>
+        <p className="status">Select a Viewer run first to enable run-scoped MSA website links.</p>
       )}
-      <LinkCardGrid
-        cards={[
-          { title: 'Rankings', description: 'Official ranking and race snapshot browsing.', to: '/viewer/rankings' },
-          { title: 'Tournaments', description: 'Tournament and finals result browsing.', to: '/viewer/tournaments' },
-          { title: 'Players', description: 'Player index and career pages.', to: '/viewer/players' },
-          { title: 'Countries', description: 'Read-only nation profiles and player pipelines.', to: '/viewer/countries' },
-          { title: 'History', description: 'Activity, archives, weeks, and historical snapshots.', to: '/viewer/history' },
-          { title: 'Records', description: 'Future records and GOAT-style statistics.', to: '/viewer/records' }
-        ]}
-      />
     </section>
   )
 }
@@ -221,7 +259,7 @@ export function AdminDiagnosticsPage(): JSX.Element {
         <h2>Diagnostics</h2>
         <p className="subtitle">Diagnostics are run-scoped today; open a run to inspect status, history counts, lineage, and replay artifacts.</p>
       </div>
-      <RunScopedSuggestion mode="admin" page="diagnostics" />
+      <AdminRunScopedSuggestion page="diagnostics" />
     </section>
   )
 }
@@ -245,7 +283,7 @@ export function ViewerRankingsPage(): JSX.Element {
         <h2>Rankings</h2>
         <p className="subtitle">Read-oriented official ranking and race snapshot browsing.</p>
       </div>
-      <RunScopedSuggestion mode="viewer" page="rankings" />
+      <ViewerRunScopedSuggestion page="rankings" />
     </section>
   )
 }
@@ -257,7 +295,7 @@ export function ViewerTournamentsPage(): JSX.Element {
         <h2>Tournaments</h2>
         <p className="subtitle">Read-oriented tournament, calendar, and finals browsing.</p>
       </div>
-      <RunScopedSuggestion mode="viewer" page="tournaments" />
+      <ViewerRunScopedSuggestion page="tournaments" />
     </section>
   )
 }
@@ -269,7 +307,7 @@ export function ViewerPlayersPage(): JSX.Element {
         <h2>Players</h2>
         <p className="subtitle">Read-oriented player index and career browsing.</p>
       </div>
-      <RunScopedSuggestion mode="viewer" page="players" />
+      <ViewerRunScopedSuggestion page="players" />
     </section>
   )
 }
@@ -281,7 +319,7 @@ export function ViewerCountriesPage(): JSX.Element {
         <h2>Countries</h2>
         <p className="subtitle">Read-oriented nation profiles and country-level player views.</p>
       </div>
-      <RunScopedSuggestion mode="viewer" page="countries" />
+      <ViewerRunScopedSuggestion page="countries" />
     </section>
   )
 }
@@ -293,7 +331,7 @@ export function ViewerHistoryPage(): JSX.Element {
         <h2>History</h2>
         <p className="subtitle">Read-oriented activity, archives, event history, and snapshots.</p>
       </div>
-      <RunScopedSuggestion mode="viewer" page="history" />
+      <ViewerRunScopedSuggestion page="history" />
     </section>
   )
 }

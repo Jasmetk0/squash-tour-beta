@@ -1,10 +1,13 @@
 import { screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import { Layout } from './Layout'
 import { renderWithRoute } from '../test/testUtils'
 
 describe('Layout mode navigation', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
   it('shows Admin / Engine mode navigation and run-scoped admin links', async () => {
     renderWithRoute(<Layout />, '/admin/runs/run-a/finals')
 
@@ -40,4 +43,28 @@ describe('Layout mode navigation', () => {
     expect(screen.getAllByRole('link', { name: 'History' })[0]).toHaveAttribute('href', '/viewer/history')
     expect(screen.getAllByRole('link', { name: 'History' })[1]).toHaveAttribute('href', '/viewer/runs/run-a/history')
   })
+
+  it('shows the active Viewer run indicator and quick links on Viewer top-level routes', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'viewer-run-a')
+
+    renderWithRoute(<Layout />, '/viewer')
+
+    expect(await screen.findByText('Viewer / MSA Website Mode')).toBeInTheDocument()
+    expect(screen.getByLabelText('Viewer active run')).toHaveTextContent('Viewing run: viewer-run-a')
+    expect(screen.getByRole('navigation', { name: 'Viewer active run quick links' })).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Rankings' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-a/rankings')).toBe(true)
+    expect(screen.getAllByRole('link', { name: 'Tournaments' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-a/tournaments')).toBe(true)
+    expect(screen.getAllByRole('link', { name: 'Players' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-a/players')).toBe(true)
+    expect(screen.getAllByRole('link', { name: 'Countries' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-a/countries')).toBe(true)
+    expect(screen.getAllByRole('link', { name: 'History' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-a/history')).toBe(true)
+  })
+
+  it('shows no selected Viewer run message on Viewer top-level routes', async () => {
+    renderWithRoute(<Layout />, '/viewer')
+
+    expect(await screen.findByText('Viewer / MSA Website Mode')).toBeInTheDocument()
+    expect(screen.getByText(/No Viewer run selected/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Select a run' })).toHaveAttribute('href', '/viewer')
+  })
+
 })

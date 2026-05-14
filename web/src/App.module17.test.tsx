@@ -53,6 +53,11 @@ function renderAppAt(route: string): void {
 }
 
 describe('Module 17 pages through routes', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.clearAllMocks()
+    api.listRuns.mockResolvedValue({ runs: [] })
+  })
 
   it('renders the Phase 1 landing page at root', async () => {
     renderAppAt('/')
@@ -68,10 +73,37 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByRole('link', { name: 'Tournament Templates' })).toHaveAttribute('href', '/admin/tournament-templates')
   })
 
-  it('renders the Viewer MSA home route', async () => {
+  it('renders the Viewer MSA home route with no active run empty state', async () => {
+    localStorage.removeItem('beta_engine:viewer_active_run_id')
+    api.listRuns.mockResolvedValueOnce({ runs: [] })
     renderAppAt('/viewer')
     expect(await screen.findByRole('heading', { name: 'MSA Website Home' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Records' })).toHaveAttribute('href', '/viewer/records')
+    expect(screen.getByText('Select a Viewer run first to enable run-scoped MSA website links.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Rankings' })).toHaveAttribute('href', '/viewer/rankings')
+    expect(screen.queryByRole('link', { name: 'Players' })).toHaveAttribute('href', '/viewer/players')
+    expect(screen.queryByRole('link', { name: 'Countries' })).toHaveAttribute('href', '/viewer/countries')
+    expect(screen.queryByRole('link', { name: 'History' })).toHaveAttribute('href', '/viewer/history')
+    expect(screen.queryByRole('link', { name: 'Finals' })).not.toBeInTheDocument()
+  })
+
+  it('renders the Viewer MSA home route with active run links', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'viewer-run-1')
+    api.listRuns.mockResolvedValueOnce({ runs: [] })
+    renderAppAt('/viewer')
+    expect(await screen.findByRole('heading', { name: 'MSA Website Home' })).toBeInTheDocument()
+    expect(screen.getAllByText(/viewer-run-1/)[0]).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Rankings' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-1/rankings')).toBe(true)
+    expect(screen.getAllByRole('link', { name: 'Tournaments' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-1/tournaments')).toBe(true)
+    expect(screen.getAllByRole('link', { name: 'Players' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-1/players')).toBe(true)
+    expect(screen.getAllByRole('link', { name: 'Countries' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-1/countries')).toBe(true)
+    expect(screen.getAllByRole('link', { name: 'History' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-1/history')).toBe(true)
+  })
+
+  it('renders top-level Viewer rankings with active run link', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'viewer-run-2')
+    renderAppAt('/viewer/rankings')
+    expect(await screen.findByRole('heading', { name: 'Rankings' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'rankings' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2/rankings')
   })
 
   beforeEach(() => {

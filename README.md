@@ -7,6 +7,8 @@ Beta_Engine is a deterministic, data-driven simulator of a **fictional men’s p
 - A configurable sandbox for tuning calendar structure, tournament templates, points, and balance.
 - A commissioner-operable world with auditable manual interventions.
 
+Beta_Engine has two intended app modes: **Admin / Engine Mode** for editing, validating, regenerating, and simulating the world, and **Viewer / MSA Website Mode** for browsing the generated squash history like a public association website. The detailed active blueprint is `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`; `Beta_Engine.docx` remains an older background/constitution reference.
+
 ## What the MVP includes
 - Country-driven talent generation pipeline.
 - Editable World Tour + Elite Tour calendar.
@@ -22,7 +24,7 @@ Beta_Engine is a deterministic, data-driven simulator of a **fictional men’s p
 - **Backend:** Python 3.12, FastAPI, Pydantic
 - **Domain architecture:** deterministic modular monolith
 - **Persistence:** SQLite (WAL), SQLAlchemy
-- **Config:** YAML + JSON Schema validation
+- **Config:** JSON/TOML today, with schema/business-rule validation expected for editable world data
 - **Frontend:** React + TypeScript + Vite (+ TanStack Query, Tailwind planned)
 - **Quality/tooling:** Pytest, Ruff, Black, mypy, pre-commit
 

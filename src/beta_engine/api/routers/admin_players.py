@@ -3,9 +3,14 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from beta_engine.api.deps import get_initial_player_pool_service
-from beta_engine.api.schemas import InitialPoolGenerateRequest, InitialPoolRegenerateRequest
+from beta_engine.api.schemas import (
+    CustomInitialPoolPlayerCreateRequest,
+    InitialPoolGenerateRequest,
+    InitialPoolPlayerUpdateRequest,
+    InitialPoolRegenerateRequest,
+)
 from beta_engine.application.initial_player_pool_service import InitialPlayerPoolService
-from beta_engine.domain.players.initial_pool import InitialPoolGeneratedPlayer, InitialPoolResult
+from beta_engine.domain.players.initial_pool import InitialPoolAuditList, InitialPoolGeneratedPlayer, InitialPoolResult
 
 router = APIRouter(prefix="/admin/players", tags=["admin-players"])
 
@@ -50,6 +55,40 @@ def regenerate_initial_pool_unlocked(
         )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/custom", response_model=InitialPoolGeneratedPlayer)
+def create_custom_player(
+    payload: CustomInitialPoolPlayerCreateRequest,
+    service: InitialPlayerPoolService = Depends(get_initial_player_pool_service),
+) -> InitialPoolGeneratedPlayer:
+    try:
+        return service.create_custom_player(payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.patch("/{player_id}", response_model=InitialPoolGeneratedPlayer)
+def update_player(
+    player_id: str,
+    payload: InitialPoolPlayerUpdateRequest,
+    service: InitialPlayerPoolService = Depends(get_initial_player_pool_service),
+) -> InitialPoolGeneratedPlayer:
+    try:
+        return service.update_player(player_id=player_id, payload=payload)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.get("/audit", response_model=InitialPoolAuditList)
+def get_audit_events(
+    season: str | None = None,
+    player_id: str | None = None,
+    service: InitialPlayerPoolService = Depends(get_initial_player_pool_service),
+) -> InitialPoolAuditList:
+    return service.get_audit_events(season=season, player_id=player_id)
 
 
 @router.post("/{player_id}/lock", response_model=InitialPoolGeneratedPlayer)

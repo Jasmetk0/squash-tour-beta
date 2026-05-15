@@ -1046,3 +1046,32 @@ export type InitialPoolRegeneratePayload = InitialPoolGeneratePayload & {
   country_code?: string
   region?: string
 }
+
+
+export type CustomInitialPoolPlayerCreatePayload = Omit<InitialPoolPlayer, 'age_at_generation' | 'current_age_years' | 'locked' | 'generation_source' | 'manual_override' | 'generation_seed' | 'generation_fingerprint' | 'created_for_season'> & {
+  player_id?: string
+  nationality?: string | null
+  created_for_season?: string
+  reason?: string
+}
+
+export type InitialPoolPlayerUpdatePayload = Partial<Pick<InitialPoolPlayer, 'name' | 'nationality' | 'birth_year' | 'birth_year_week' | 'current_ability' | 'potential_ability' | 'potential_tier' | 'career_stage' | 'play_style' | 'archetype' | 'attributes' | 'hidden_career_traits'>> & {
+  reason?: string
+}
+
+export type InitialPoolAuditEvent = {
+  audit_id: string
+  timestamp_utc: string | null
+  actor: string
+  action: 'create_custom_player' | 'update_player' | 'lock_player' | 'unlock_player' | 'regenerate_unlocked' | 'generate_pool'
+  player_id: string | null
+  season: string
+  reason: string | null
+  changed_fields: string[]
+  before_fingerprint: string | null
+  after_fingerprint: string | null
+}
+
+export type InitialPoolAuditResponse = {
+  audit_events: InitialPoolAuditEvent[]
+}

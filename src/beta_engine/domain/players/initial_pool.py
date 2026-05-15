@@ -17,6 +17,7 @@ from beta_engine.infrastructure.world_config import PlayerIdentityConfig
 CareerStage = Literal["junior", "developing", "breakthrough", "prime", "veteran", "late_career"]
 PotentialTier = Literal["S", "A", "B", "C", "D"]
 GenerationSource = Literal["initial_pool", "annual_intake", "manual", "imported"]
+InitialPoolAuditAction = Literal["create_custom_player", "update_player", "lock_player", "unlock_player", "regenerate_unlocked", "generate_pool"]
 
 DEFAULT_ARCHETYPES = (
     "all_court",
@@ -68,6 +69,108 @@ class GeneratedPlayerAttributes(BaseModel):
     recovery: int = Field(ge=1, le=99)
 
 
+class InitialPoolAuditEvent(BaseModel):
+    """Compact audit record for intentional Admin initial-pool mutations."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    audit_id: str
+    timestamp_utc: str | None = None
+    actor: str = "admin"
+    action: InitialPoolAuditAction
+    player_id: str | None = None
+    season: str
+    reason: str | None = None
+    changed_fields: list[str] = Field(default_factory=list)
+    before_fingerprint: str | None = None
+    after_fingerprint: str | None = None
+
+
+class InitialPoolAuditList(BaseModel):
+    audit_events: list[InitialPoolAuditEvent] = Field(default_factory=list)
+
+
+class CustomInitialPoolPlayerCreate(BaseModel):
+    """Validated command payload for manual initial-pool player creation."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    player_id: str | None = None
+    name: str = Field(min_length=1, max_length=120)
+    country_code: str = Field(min_length=3, max_length=3)
+    nationality: str | None = Field(default=None, min_length=3, max_length=3)
+    birth_year: int = Field(ge=1900, le=2100)
+    birth_year_week: int = Field(ge=1, le=52)
+    current_ability: int = Field(ge=1, le=99)
+    potential_ability: int = Field(ge=1, le=99)
+    potential_tier: PotentialTier
+    career_stage: CareerStage
+    play_style: str = Field(min_length=1, max_length=80)
+    archetype: str = Field(min_length=1, max_length=80)
+    attributes: GeneratedPlayerAttributes
+    hidden_career_traits: HiddenCareerTraits
+    created_for_season: str = "2000/2001"
+    reason: str | None = Field(default=None, max_length=500)
+    actor: str = Field(default="admin", min_length=1, max_length=80)
+
+    @field_validator("country_code", "nationality")
+    @classmethod
+    def normalize_country_code(cls, value: str | None) -> str | None:
+        return value.strip().upper() if value is not None else None
+
+    @field_validator("player_id", "name", "play_style", "archetype", "reason", "actor")
+    @classmethod
+    def trim_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        trimmed = value.strip()
+        return trimmed or None
+
+    @model_validator(mode="after")
+    def validate_custom_player(self) -> "CustomInitialPoolPlayerCreate":
+        if self.current_ability > self.potential_ability + 4:
+            raise ValueError("current_ability may not exceed potential_ability by more than 4")
+        if self.hidden_career_traits.potential_ceiling < self.potential_ability:
+            raise ValueError("potential_ceiling must be at least potential_ability")
+        if self.nationality is None:
+            self.nationality = self.country_code
+        return self
+
+
+class InitialPoolPlayerUpdate(BaseModel):
+    """Safe partial update payload for Admin initial-pool edits."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    nationality: str | None = Field(default=None, min_length=3, max_length=3)
+    birth_year: int | None = Field(default=None, ge=1900, le=2100)
+    birth_year_week: int | None = Field(default=None, ge=1, le=52)
+    current_ability: int | None = Field(default=None, ge=1, le=99)
+    potential_ability: int | None = Field(default=None, ge=1, le=99)
+    potential_tier: PotentialTier | None = None
+    career_stage: CareerStage | None = None
+    play_style: str | None = Field(default=None, min_length=1, max_length=80)
+    archetype: str | None = Field(default=None, min_length=1, max_length=80)
+    attributes: GeneratedPlayerAttributes | None = None
+    hidden_career_traits: HiddenCareerTraits | None = None
+    reason: str | None = Field(default=None, max_length=500)
+    actor: str = Field(default="admin", min_length=1, max_length=80)
+
+    @field_validator("nationality")
+    @classmethod
+    def normalize_country_code(cls, value: str | None) -> str | None:
+        return value.strip().upper() if value is not None else None
+
+    @field_validator("name", "play_style", "archetype", "reason", "actor")
+    @classmethod
+    def trim_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        trimmed = value.strip()
+        return trimmed or None
+
+
 class InitialPoolGeneratedPlayer(BaseModel):
     """Canonical DTO for inspectable pre-season initial-pool generation."""
 
@@ -100,6 +203,8 @@ class InitialPoolGeneratedPlayer(BaseModel):
     def validate_pool_player(self) -> "InitialPoolGeneratedPlayer":
         if self.current_ability > self.potential_ability + 4:
             raise ValueError("current_ability may not exceed potential_ability by more than 4")
+        if self.hidden_career_traits.potential_ceiling < self.potential_ability:
+            raise ValueError("potential_ceiling must be at least potential_ability")
         if self.nationality is None:
             self.nationality = self.country_code
         return self
@@ -143,6 +248,16 @@ class InitialPoolResult(BaseModel):
 
 class InitialPoolRegistry(BaseModel):
     players: list[InitialPoolGeneratedPlayer] = Field(default_factory=list)
+    audit_events: list[InitialPoolAuditEvent] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    @classmethod
+    def load_legacy_registry(cls, value: object) -> object:
+        if isinstance(value, list):
+            return {"players": value, "audit_events": []}
+        if isinstance(value, dict) and "audit_events" not in value:
+            return {**value, "audit_events": []}
+        return value
 
 
 @dataclass(slots=True)

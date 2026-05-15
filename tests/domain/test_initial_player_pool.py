@@ -85,3 +85,114 @@ def test_locked_player_is_preserved_when_regenerating_unlocked_by_country_and_re
         region=next(c.region for c in countries if c.code == locked.country_code),
     )
     assert next(player for player in region_regen.players if player.player_id == locked.player_id) == locked
+
+import json
+
+import pytest
+
+from beta_engine.application.countries_service import CountriesConfigService
+from beta_engine.application.initial_player_pool_service import InitialPlayerPoolService
+from beta_engine.domain.players.initial_pool import (
+    CustomInitialPoolPlayerCreate,
+    GeneratedPlayerAttributes,
+    HiddenCareerTraits,
+    InitialPoolPlayerUpdate,
+    InitialPoolRegistry,
+)
+
+
+def service_with_countries(tmp_path, countries):
+    countries_path = tmp_path / "countries.json"
+    countries_path.write_text(json.dumps({"countries": [country.model_dump(mode="json") for country in countries]}), encoding="utf-8")
+    return InitialPlayerPoolService(countries_service=CountriesConfigService(config_path=countries_path), config_path=tmp_path / "pool.json")
+
+
+def custom_payload(**overrides):
+    data = {
+        "player_id": "CUST-2000-AAA-TEST-PLAYER",
+        "name": "Test Player",
+        "country_code": "AAA",
+        "birth_year": 1976,
+        "birth_year_week": 10,
+        "current_ability": 80,
+        "potential_ability": 88,
+        "potential_tier": "A",
+        "career_stage": "prime",
+        "play_style": "balanced",
+        "archetype": "all_court",
+        "attributes": {"technique": 80, "movement": 80, "physical": 80, "mental": 80, "consistency": 80, "clutch": 80, "recovery": 80},
+        "hidden_career_traits": {
+            "potential_ceiling": 88,
+            "growth_curve": "steady",
+            "professionalism": 0.8,
+            "ambition": 0.7,
+            "travel_tolerance": 0.6,
+            "schedule_aggression": 0.5,
+            "injury_proneness": 0.2,
+            "resilience": 0.7,
+        },
+        "reason": "story anchor",
+    }
+    data.update(overrides)
+    return CustomInitialPoolPlayerCreate.model_validate(data)
+
+
+def test_create_custom_player_is_locked_manual_and_rejects_duplicates_and_invalid_attributes(tmp_path) -> None:
+    svc = service_with_countries(tmp_path, [country("AAA", population=2_000_000, system=5, popularity=5, tradition=5)])
+
+    created = svc.create_custom_player(custom_payload())
+
+    assert created.locked is True
+    assert created.manual_override is True
+    assert created.generation_source == "manual"
+    assert created.generation_seed == 0
+    assert created.generation_fingerprint != "pending"
+    assert svc.get_audit_events(player_id=created.player_id).audit_events[0].action == "create_custom_player"
+
+    with pytest.raises(ValueError, match="already exists"):
+        svc.create_custom_player(custom_payload())
+    with pytest.raises(ValueError):
+        CustomInitialPoolPlayerCreate.model_validate(custom_payload().model_dump(mode="json") | {"attributes": {"technique": 100}})
+
+
+def test_update_player_auto_locks_manual_override_and_audits_changed_fields(tmp_path) -> None:
+    svc = service_with_countries(tmp_path, [country("AAA", population=2_000_000, system=5, popularity=5, tradition=5)])
+    generated = svc.generate_pool(season="2000/2001", seed=12, target_pool_size=4, dry_run=False).players[0]
+
+    updated = svc.update_player(player_id=generated.player_id, payload=InitialPoolPlayerUpdate(name="Edited Player", current_ability=70, reason="curated"))
+
+    assert updated.name == "Edited Player"
+    assert updated.current_ability == 70
+    assert updated.locked is True
+    assert updated.manual_override is True
+    event = svc.get_audit_events(player_id=generated.player_id).audit_events[-1]
+    assert event.action == "update_player"
+    assert {"name", "current_ability", "locked", "manual_override"}.issubset(set(event.changed_fields))
+    assert event.before_fingerprint == generated.generation_fingerprint
+    assert event.after_fingerprint == updated.generation_fingerprint
+
+
+def test_audit_dry_run_and_lock_unlock_persistence_and_legacy_registry(tmp_path) -> None:
+    svc = service_with_countries(tmp_path, [country("AAA", population=2_000_000, system=5, popularity=5, tradition=5)])
+    svc.generate_pool(season="2000/2001", seed=12, target_pool_size=4, dry_run=True)
+    assert svc.get_audit_events().audit_events == []
+
+    result = svc.generate_pool(season="2000/2001", seed=12, target_pool_size=4, dry_run=False)
+    player = result.players[0]
+    svc.set_lock(player_id=player.player_id, locked=True)
+    svc.set_lock(player_id=player.player_id, locked=False)
+    actions = [event.action for event in svc.get_audit_events().audit_events]
+    assert actions == ["generate_pool", "lock_player", "unlock_player"]
+
+    legacy = InitialPoolRegistry.model_validate({"players": [player.model_dump(mode="json")]})
+    assert legacy.players[0].player_id == player.player_id
+    assert legacy.audit_events == []
+
+
+def test_custom_locked_player_survives_regenerate_unlocked(tmp_path) -> None:
+    svc = service_with_countries(tmp_path, [country("AAA", population=2_000_000, system=5, popularity=5, tradition=5)])
+    custom = svc.create_custom_player(custom_payload(player_id="CUST-2000-AAA-SURVIVOR"))
+
+    regenerated = svc.regenerate_unlocked(season="2000/2001", seed=99, target_pool_size=5, country_code=None, region=None, dry_run=False)
+
+    assert next(player for player in regenerated.players if player.player_id == custom.player_id) == custom

@@ -10,7 +10,10 @@ const api = vi.hoisted(() => ({
   generateInitialPlayerPool: vi.fn(),
   regenerateInitialPlayerPool: vi.fn(),
   lockInitialPoolPlayer: vi.fn(),
-  unlockInitialPoolPlayer: vi.fn()
+  unlockInitialPoolPlayer: vi.fn(),
+  createCustomInitialPoolPlayer: vi.fn(),
+  updateInitialPoolPlayer: vi.fn(),
+  getInitialPoolAuditEvents: vi.fn()
 }))
 
 vi.mock('../api/client', () => api)
@@ -63,13 +66,16 @@ describe('AdminPlayersPage', () => {
     api.generateInitialPlayerPool.mockResolvedValue(response)
     api.regenerateInitialPlayerPool.mockResolvedValue(response)
     api.lockInitialPoolPlayer.mockResolvedValue({ ...player, locked: true })
+    api.createCustomInitialPoolPlayer.mockResolvedValue({ ...player, player_id: 'CUST-2000-AAA-API', locked: true, manual_override: true, generation_source: 'manual' })
+    api.updateInitialPoolPlayer.mockResolvedValue({ ...player, name: 'Edited Player', locked: true, manual_override: true })
+    api.getInitialPoolAuditEvents.mockResolvedValue({ audit_events: [{ audit_id: 'AUD-1', timestamp_utc: null, actor: 'admin', action: 'create_custom_player', player_id: player.player_id, season: '2000/2001', reason: 'test', changed_fields: ['player'], before_fingerprint: null, after_fingerprint: 'fp2' }] })
   })
 
   it('renders initial pool controls, summary, table, detail, and wires API actions', async () => {
     renderWithRoute(<AdminPlayersPage />, '/admin/players')
 
     expect(await screen.findByRole('heading', { name: 'Players / Initial Pool' })).toBeInTheDocument()
-    expect(screen.getByText(/Locked players are preserved by regeneration/)).toBeInTheDocument()
+    expect(screen.getByText(/regeneration-safe/)).toBeInTheDocument()
     expect(screen.getByLabelText('Season')).toHaveValue('2000/2001')
     expect(screen.getByLabelText('Seed')).toHaveValue(12345)
 
@@ -85,5 +91,13 @@ describe('AdminPlayersPage', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Lock' }))
     expect(api.lockInitialPoolPlayer).toHaveBeenCalledWith('P-2000-AAA-0001')
+
+    await userEvent.type(screen.getAllByLabelText('Name')[0], 'Custom Star')
+    await userEvent.click(screen.getByRole('button', { name: 'Create custom player' }))
+    expect(api.createCustomInitialPoolPlayer).toHaveBeenCalledWith(expect.objectContaining({ name: expect.stringContaining('Custom Star'), created_for_season: '2000/2001' }))
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save player edits' }))
+    expect(api.updateInitialPoolPlayer).toHaveBeenCalledWith('P-2000-AAA-0001', expect.objectContaining({ name: 'Adam Ahmed AA01' }))
+    expect(screen.getByText(/create_custom_player/)).toBeInTheDocument()
   })
 })

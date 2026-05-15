@@ -130,3 +130,104 @@ def test_simulate_next_completes_first_pending_and_is_replay_deterministic(tmp_p
     a_completed = next(match for match in a.qualification_matches + a.main_draw_matches if match.status == "completed")
     b_completed = next(match for match in b.qualification_matches + b.main_draw_matches if match.status == "completed")
     assert a_completed.model_dump() == b_completed.model_dump()
+
+from beta_engine.application.season_match_service import ProgressionCommandRequest, SimulateRoundRequest
+
+
+def test_process_byes_refresh_and_status_are_idempotent(tmp_path: Path) -> None:
+    service, event_id = make_match_service(tmp_path / "progression-byes")
+    service.generate_match_package(event_id=event_id, request=MatchPackageGenerateRequest(seed=101, dry_run=False))
+    registry = service._load_registry()
+    package = registry.matches_by_event_id[event_id]
+    bye = next(match for match in package.qualification_matches if match.status == "bye_auto_advance_pending")
+    target = next(match for match in package.qualification_matches if match.match_id == bye.winner_to_match_id)
+    bye.top_player_id = "P001"
+    bye.top_player_name = "Player One"
+    bye.top_country_code = "EGY"
+    target.bottom_player_id = "P002"
+    target.bottom_player_name = "Player Two"
+    target.bottom_country_code = "ENG"
+    service._save_registry(registry)
+
+    result = service.process_byes(event_id=event_id, request=ProgressionCommandRequest(seed=202))
+    completed = next(match for match in result.match_package.qualification_matches if match.match_id == bye.match_id)
+    downstream = next(match for match in result.match_package.qualification_matches if match.match_id == target.match_id)
+
+    assert completed.status == "completed"
+    assert completed.winner_player_id == "P001"
+    assert completed.scoreline == "BYE"
+    assert completed.result_notes == "automatic BYE advance"
+    assert downstream.top_player_id == "P001"
+    assert downstream.bottom_player_id == "P002"
+    assert downstream.status == "pending"
+
+    again = service.process_byes(event_id=event_id, request=ProgressionCommandRequest(seed=202))
+    assert completed.model_dump() == next(match for match in again.match_package.qualification_matches if match.match_id == bye.match_id).model_dump()
+    assert not again.changed_match_ids
+
+
+def test_promote_qualifiers_is_idempotent_and_refreshes_main_placeholder(tmp_path: Path) -> None:
+    service, event_id = make_match_service(tmp_path / "progression-promote")
+    service.generate_match_package(event_id=event_id, request=MatchPackageGenerateRequest(seed=101, dry_run=False))
+    draw_registry = service.draw_service._load_registry()
+    draw_package = draw_registry.draws_by_event_id[event_id]
+    draw_package.main_draw.qualifier_placeholders = draw_package.main_draw.qualifier_placeholders[:1]
+    service.draw_service._save_registry(draw_registry)
+    registry = service._load_registry()
+    package = registry.matches_by_event_id[event_id]
+    final = max(package.qualification_matches, key=lambda match: match.round_number)
+    final.top_player_id = "P003"
+    final.top_player_name = "Qualifier One"
+    final.top_country_code = "EGY"
+    final.bottom_player_id = "P004"
+    final.bottom_player_name = "Qualifier Two"
+    final.bottom_country_code = "ENG"
+    final.winner_player_id = "P003"
+    final.loser_player_id = "P004"
+    final.status = "completed"
+    final.scoreline = "11-5, 11-5, 11-5"
+    service._save_registry(registry)
+
+    result = service.promote_qualifiers(event_id=event_id, request=ProgressionCommandRequest(seed=303))
+    main_match = next(match for match in result.match_package.main_draw_matches if match.top_player_id == "P003" or match.bottom_player_id == "P003")
+
+    assert result.promoted_player_ids == ["P003"]
+    assert result.progression_status.qualification_winners_promoted is True
+    assert main_match.status == "pending"
+    assert "qualifier promoted" in (main_match.result_notes or "")
+
+    again = service.promote_qualifiers(event_id=event_id, request=ProgressionCommandRequest(seed=303))
+    assert again.promoted_player_ids == []
+    assert not again.validation_errors
+
+    registry = service._load_registry()
+    package = registry.matches_by_event_id[event_id]
+    conflict = next(match for match in package.main_draw_matches if match.match_id == main_match.match_id)
+    if conflict.top_player_id == "P003":
+        conflict.top_player_id = "P999"
+    else:
+        conflict.bottom_player_id = "P999"
+    package.metadata.qualification_winners_promoted = False
+    service._save_registry(registry)
+    conflicted = service.promote_qualifiers(event_id=event_id, request=ProgressionCommandRequest(seed=303))
+    assert any(issue.code == "qualifier_placeholder_conflict" for issue in conflicted.validation_errors)
+
+
+def test_simulate_round_deterministic_propagates_and_preserves_points(tmp_path: Path) -> None:
+    service_a, event_id_a = make_match_service(tmp_path / "round-a")
+    service_b, event_id_b = make_match_service(tmp_path / "round-b")
+    service_a.generate_match_package(event_id=event_id_a, request=MatchPackageGenerateRequest(seed=101, dry_run=False))
+    service_b.generate_match_package(event_id=event_id_b, request=MatchPackageGenerateRequest(seed=101, dry_run=False))
+    before = {p.player_id: (p.ranking_points, p.race_points) for p in service_a.active_players_service.get_active_players(season="2000/2001").players}
+
+    request = SimulateRoundRequest(seed=404, draw_type="main", round_number=1)
+    result_a = service_a.simulate_round(event_id=event_id_a, request=request)
+    result_b = service_b.simulate_round(event_id=event_id_b, request=request)
+
+    completed_a = [match for match in result_a.match_package.main_draw_matches if match.round_number == 1 and match.status == "completed"]
+    completed_b = [match for match in result_b.match_package.main_draw_matches if match.round_number == 1 and match.status == "completed"]
+    assert completed_a
+    assert [match.model_dump() for match in completed_a] == [match.model_dump() for match in completed_b]
+    assert all(match.winner_player_id for match in completed_a)
+    after = {p.player_id: (p.ranking_points, p.race_points) for p in service_a.active_players_service.get_active_players(season="2000/2001").players}
+    assert after == before

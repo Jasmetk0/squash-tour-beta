@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
-import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getSeasonActivePlayers, getSeasonCalendar, simulateEventMatch, simulateNextEventMatch } from '../api/client'
-import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonMatchRecord } from '../api/types'
+import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch } from '../api/client'
+import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonMatchRecord, TournamentProgressionStatus } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -38,6 +38,10 @@ export function AdminSeasonsPage(): JSX.Element {
   const [matchOverwriteExisting, setMatchOverwriteExisting] = useState(false)
   const [selectedMatchId, setSelectedMatchId] = useState('')
   const [matchResult, setMatchResult] = useState<SeasonEventMatchPackageResult | null>(null)
+  const [progressionResult, setProgressionResult] = useState<ProgressionCommandResult | null>(null)
+  const [progressionSeed, setProgressionSeed] = useState(12345)
+  const [progressionDrawType, setProgressionDrawType] = useState<'qualification' | 'main'>('qualification')
+  const [progressionRoundNumber, setProgressionRoundNumber] = useState(1)
   const playersQuery = useQuery({ queryKey: ['season-active-players', season], queryFn: () => getSeasonActivePlayers(season), retry: false })
   const calendarQuery = useQuery({ queryKey: ['season-calendar', season], queryFn: () => getSeasonCalendar(season), retry: false })
 
@@ -145,6 +149,7 @@ export function AdminSeasonsPage(): JSX.Element {
   const persistedEntryQuery = useQuery({ queryKey: ['event-entry-list', effectiveEventId], queryFn: () => getEventEntryList(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
   const persistedDrawQuery = useQuery({ queryKey: ['event-draw-package', effectiveEventId], queryFn: () => getEventDrawPackage(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
   const persistedMatchQuery = useQuery({ queryKey: ['event-match-package', effectiveEventId], queryFn: () => getEventMatchPackage(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
+  const progressionStatusQuery = useQuery({ queryKey: ['event-progression-status', effectiveEventId], queryFn: () => getEventProgressionStatus(effectiveEventId), enabled: Boolean(effectiveEventId && (matchResult?.match_package_exists || persistedMatchQuery.data?.match_package_exists)), retry: false })
   const displayedEntryResult = entryResult ?? persistedEntryQuery.data ?? null
   const displayedEntryList = displayedEntryResult?.entry_list ?? null
   const displayedEntrySummary = displayedEntryResult?.summary ?? displayedEntryList?.summary ?? null
@@ -163,6 +168,31 @@ export function AdminSeasonsPage(): JSX.Element {
   const matchWarnings = displayedMatchResult?.validation_warnings ?? displayedMatchPackage?.validation_warnings ?? []
   const matchErrors = displayedMatchResult?.validation_errors ?? displayedMatchPackage?.validation_errors ?? []
   const displayedMatches = displayedMatchPackage ? [...displayedMatchPackage.qualification_matches, ...displayedMatchPackage.main_draw_matches] : []
+  const displayedProgressionStatus: TournamentProgressionStatus | null = progressionResult?.progression_status ?? progressionStatusQuery.data ?? null
+  const progressionWarnings = progressionResult?.validation_warnings ?? displayedProgressionStatus?.warnings ?? []
+  const progressionErrors = progressionResult?.validation_errors ?? displayedProgressionStatus?.errors ?? []
+
+  const onProgressionSuccess = (result: ProgressionCommandResult) => {
+    setProgressionResult(result)
+    setMatchResult({
+      match_package: result.match_package,
+      summary: result.match_package.summary,
+      metadata: result.match_package.metadata,
+      validation_warnings: result.match_package.validation_warnings,
+      validation_errors: result.match_package.validation_errors,
+      match_package_exists: true
+    })
+    if (effectiveEventId) {
+      void queryClient.invalidateQueries({ queryKey: ['event-match-package', effectiveEventId] })
+      void queryClient.invalidateQueries({ queryKey: ['event-progression-status', effectiveEventId] })
+    }
+  }
+
+  const refreshProgressionMutation = useMutation({ mutationFn: () => refreshEventProgression(effectiveEventId, { seed: progressionSeed }), onSuccess: onProgressionSuccess })
+  const processByesMutation = useMutation({ mutationFn: () => processEventByes(effectiveEventId, { seed: progressionSeed }), onSuccess: onProgressionSuccess })
+  const promoteQualifiersMutation = useMutation({ mutationFn: () => promoteEventQualifiers(effectiveEventId, { seed: progressionSeed }), onSuccess: onProgressionSuccess })
+  const simulateRoundMutation = useMutation({ mutationFn: () => simulateEventRound(effectiveEventId, { seed: progressionSeed, draw_type: progressionDrawType, round_number: progressionRoundNumber }), onSuccess: onProgressionSuccess })
+  const simulateDrawMutation = useMutation({ mutationFn: () => simulateEventDraw(effectiveEventId, { seed: progressionSeed, draw_type: progressionDrawType }), onSuccess: onProgressionSuccess })
 
   return (
     <section className="panel">
@@ -278,7 +308,7 @@ export function AdminSeasonsPage(): JSX.Element {
         <p className="status">Entry generation selects players for a planned calendar event from active season players. It does not create draws or simulate matches yet.</p>
         {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
         <div className="grid">
-          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
           <label>Entry seed<input type="number" value={entrySeed} onChange={(event) => setEntrySeed(Number(event.target.value))} /></label>
           <label>Max alternates<input type="number" value={maxAlternates} onChange={(event) => setMaxAlternates(Number(event.target.value))} /></label>
           <label><input type="checkbox" checked={entryDryRun} onChange={(event) => setEntryDryRun(event.target.checked)} /> Dry run default</label>
@@ -322,7 +352,7 @@ export function AdminSeasonsPage(): JSX.Element {
         {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
         {eventOptions.length && !selectedEventHasPersistedEntryList ? <p className="status">Persist an entry list first.</p> : null}
         <div className="grid">
-          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
           <label>Draw seed<input type="number" value={drawSeed} onChange={(event) => setDrawSeed(Number(event.target.value))} /></label>
           <label><input type="checkbox" checked={drawDryRun} onChange={(event) => setDrawDryRun(event.target.checked)} /> Dry run default</label>
           <label><input type="checkbox" checked={drawOverwriteExisting} onChange={(event) => setDrawOverwriteExisting(event.target.checked)} /> Overwrite existing draw package</label>
@@ -365,22 +395,37 @@ export function AdminSeasonsPage(): JSX.Element {
         {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
         {eventOptions.length && !selectedEventHasPersistedDrawPackage ? <p className="status">Persist a draw package first.</p> : null}
         <div className="grid">
-          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
           <label>Match seed<input type="number" value={matchSeed} onChange={(event) => setMatchSeed(Number(event.target.value))} /></label>
           <label><input type="checkbox" checked={matchDryRun} onChange={(event) => setMatchDryRun(event.target.checked)} /> Dry run default</label>
           <label><input type="checkbox" checked={matchOverwriteExisting} onChange={(event) => setMatchOverwriteExisting(event.target.checked)} /> Overwrite existing match package</label>
           <label>Selected match<select value={selectedMatchId} onChange={(event) => setSelectedMatchId(event.target.value)} disabled={!displayedMatches.length}><option value="">Choose a match</option>{displayedMatches.map((match) => <option key={match.match_id} value={match.match_id}>{match.status}: {match.match_id}</option>)}</select></label>
+          <label>Progression seed<input type="number" value={progressionSeed} onChange={(event) => setProgressionSeed(Number(event.target.value))} /></label>
+          <label>Progression draw<select value={progressionDrawType} onChange={(event) => setProgressionDrawType(event.target.value as 'qualification' | 'main')}><option value="qualification">Qualification</option><option value="main">Main draw</option></select></label>
+          <label>Round number<input type="number" min={1} value={progressionRoundNumber} onChange={(event) => setProgressionRoundNumber(Number(event.target.value))} /></label>
         </div>
         <div className="button-row">
           <button type="button" onClick={() => { setMatchDryRun(true); matchMutation.mutate(false) }} disabled={!effectiveEventId || !selectedEventHasPersistedDrawPackage || matchMutation.isPending}>Preview match package</button>
           <button type="button" onClick={() => { setMatchDryRun(false); matchMutation.mutate(true) }} disabled={!effectiveEventId || !selectedEventHasPersistedDrawPackage || matchMutation.isPending}>Persist match package</button>
           <button type="button" onClick={() => simulateNextMutation.mutate()} disabled={!effectiveEventId || !displayedMatchResult?.match_package_exists || simulateNextMutation.isPending}>Simulate next pending match</button>
           <button type="button" onClick={() => simulateSelectedMutation.mutate()} disabled={!effectiveEventId || !selectedMatchId || !displayedMatchResult?.match_package_exists || simulateSelectedMutation.isPending}>Simulate selected match</button>
+          <button type="button" onClick={() => refreshProgressionMutation.mutate()} disabled={!effectiveEventId || !displayedMatchResult?.match_package_exists || refreshProgressionMutation.isPending}>Refresh progression</button>
+          <button type="button" onClick={() => processByesMutation.mutate()} disabled={!effectiveEventId || !displayedMatchResult?.match_package_exists || processByesMutation.isPending}>Process BYEs</button>
+          <button type="button" onClick={() => promoteQualifiersMutation.mutate()} disabled={!effectiveEventId || !displayedMatchResult?.match_package_exists || promoteQualifiersMutation.isPending}>Promote qualifiers</button>
+          <button type="button" onClick={() => simulateRoundMutation.mutate()} disabled={!effectiveEventId || !displayedMatchResult?.match_package_exists || simulateRoundMutation.isPending}>Simulate round</button>
+          <button type="button" onClick={() => simulateDrawMutation.mutate()} disabled={!effectiveEventId || !displayedMatchResult?.match_package_exists || simulateDrawMutation.isPending}>Simulate draw</button>
         </div>
+        <p className="status">Progression commands update match states and propagate winners. They do not update ranking/race yet.</p>
         {matchMutation.isError ? <p role="alert" className="error">{formatApiError(matchMutation.error)}</p> : null}
         {simulateNextMutation.isError ? <p role="alert" className="error">{formatApiError(simulateNextMutation.error)}</p> : null}
         {simulateSelectedMutation.isError ? <p role="alert" className="error">{formatApiError(simulateSelectedMutation.error)}</p> : null}
         {persistedMatchQuery.isError ? <p role="alert" className="error">{formatApiError(persistedMatchQuery.error)}</p> : null}
+        {progressionStatusQuery.isError ? <p role="alert" className="error">{formatApiError(progressionStatusQuery.error)}</p> : null}
+        {refreshProgressionMutation.isError ? <p role="alert" className="error">{formatApiError(refreshProgressionMutation.error)}</p> : null}
+        {processByesMutation.isError ? <p role="alert" className="error">{formatApiError(processByesMutation.error)}</p> : null}
+        {promoteQualifiersMutation.isError ? <p role="alert" className="error">{formatApiError(promoteQualifiersMutation.error)}</p> : null}
+        {simulateRoundMutation.isError ? <p role="alert" className="error">{formatApiError(simulateRoundMutation.error)}</p> : null}
+        {simulateDrawMutation.isError ? <p role="alert" className="error">{formatApiError(simulateDrawMutation.error)}</p> : null}
         <SummaryPills items={[
           { label: 'Total matches', value: displayedMatchSummary?.total_matches ?? 0 },
           { label: 'Qualification matches', value: displayedMatchSummary?.qualification_matches ?? 0 },
@@ -391,6 +436,8 @@ export function AdminSeasonsPage(): JSX.Element {
           { label: 'BYE auto-advances', value: displayedMatchSummary?.bye_auto_advances ?? 0 },
           { label: 'Validation warnings/errors', value: `${displayedMatchSummary?.validation_warning_count ?? matchWarnings.length}/${displayedMatchSummary?.validation_error_count ?? matchErrors.length}` }
         ]} />
+        {displayedProgressionStatus ? <ProgressionStatusPanel status={displayedProgressionStatus} warnings={progressionWarnings} errors={progressionErrors} /> : <p className="status">No persisted progression status yet. Persist a match package to enable progression commands.</p>}
+        {progressionResult ? <p className="status">Last progression action: {progressionResult.action}; changed matches: {progressionResult.changed_match_ids.length}; promoted players: {progressionResult.promoted_player_ids.join(', ') || '—'}.</p> : null}
         {displayedMatchResult?.metadata ? <MetadataList items={[
           { label: 'Build fingerprint', value: displayedMatchResult.metadata.build_fingerprint },
           { label: 'Draw package fingerprint', value: displayedMatchResult.metadata.draw_package_fingerprint },
@@ -466,6 +513,26 @@ function DrawMatchesTable({ title, bracket }: { title: string; bracket: DrawBrac
   </div>
 }
 
+
+function ProgressionStatusPanel({ status, warnings, errors }: { status: TournamentProgressionStatus; warnings: MatchValidationIssue[]; errors: MatchValidationIssue[] }): JSX.Element {
+  return <div>
+    <h4>Progression status</h4>
+    <SummaryPills items={[
+      { label: 'Event status', value: status.event_status },
+      { label: 'Qualification', value: status.qualification_status },
+      { label: 'Main draw', value: status.main_draw_status },
+      { label: 'Pending', value: status.pending_matches },
+      { label: 'Blocked', value: status.blocked_matches },
+      { label: 'Completed', value: status.completed_matches },
+      { label: 'BYEs pending', value: status.bye_auto_advances_pending },
+      { label: 'Qual winners ready', value: status.qualification_winners_ready ? 'yes' : 'no' },
+      { label: 'Qual winners promoted', value: status.qualification_winners_promoted ? 'yes' : 'no' },
+      { label: 'Champion', value: status.champion_name ?? status.champion_player_id ?? '—' },
+      { label: 'Finalist', value: status.finalist_name ?? status.finalist_player_id ?? '—' }
+    ]} />
+    <MatchValidationPanel warnings={warnings} errors={errors} />
+  </div>
+}
 
 function MatchValidationPanel({ warnings, errors }: { warnings: MatchValidationIssue[]; errors: MatchValidationIssue[] }): JSX.Element {
   return <div>

@@ -7,7 +7,9 @@ import { renderWithRoute } from '../test/testUtils'
 
 const api = vi.hoisted(() => ({
   getSeasonActivePlayers: vi.fn(),
-  bootstrapSeasonFromInitialPool: vi.fn()
+  bootstrapSeasonFromInitialPool: vi.fn(),
+  getSeasonCalendar: vi.fn(),
+  buildSeasonCalendar: vi.fn()
 }))
 
 vi.mock('../api/client', () => api)
@@ -80,20 +82,72 @@ const empty = {
   warnings: []
 }
 
+const calendarEvent = {
+  event_id: 'EVT-2000-W01-wt_a',
+  season: '2000/2001',
+  season_week: 1,
+  calendar_year: 2000,
+  year_week: 35,
+  template_id: 'wt_a',
+  event_name: 'World A',
+  category: 'PLATINUM',
+  tour_level: 'WORLD_TOUR',
+  host_country: 'ENG',
+  host_city: null,
+  region: 'EUROPE',
+  duration_in_season_weeks: 1,
+  start_season_week: 1,
+  end_season_week: 1,
+  status: 'planned',
+  main_draw_size: 32,
+  qualification_draw_size: 16,
+  seeds_count: 8,
+  qualifier_spots: 4,
+  wild_cards: 2,
+  byes: 0,
+  point_distribution_ref: 'world',
+  point_distribution: null,
+  prize_money: 100000,
+  prestige: 9,
+  event_level_overrides: {},
+  source_template_fingerprint: 'template-fp',
+  template_snapshot_fingerprint: 'template-fp',
+  calendar_fingerprint: 'calendar-fp',
+  template_snapshot: { template_id: 'wt_a' }
+}
+
+const emptyCalendar = {
+  calendar: null,
+  summary: { event_count: 0, season_weeks_used: 0, first_event_week: null, last_event_week: null, world_tour_events: 0, elite_tour_events: 0, validation_warning_count: 0, validation_error_count: 0, persisted: false, calendar_exists: false },
+  metadata: null,
+  validation_warnings: [],
+  validation_errors: []
+}
+
+const calendarResponse = {
+  calendar: { season: '2000/2001', events: [calendarEvent], metadata: null, validation_warnings: [{ severity: 'warning', code: 'ranking_race_not_integrated', message: 'ranking/race integration not implemented yet', event_id: null, field: null }], validation_errors: [] },
+  summary: { event_count: 1, season_weeks_used: 1, first_event_week: 1, last_event_week: 1, world_tour_events: 1, elite_tour_events: 0, validation_warning_count: 1, validation_error_count: 0, persisted: false, calendar_exists: false },
+  metadata: { season: '2000/2001', season_start_calendar_year: 2000, season_start_year_week: 35, total_season_weeks: 61, event_count: 1, build_seed: 12345, build_fingerprint: 'calendar-fp', source_template_count: 1, persistence_path: null, dry_run: true, overwrite_existing: false },
+  validation_warnings: [{ severity: 'warning', code: 'ranking_race_not_integrated', message: 'ranking/race integration not implemented yet', event_id: null, field: null }],
+  validation_errors: [{ severity: 'error', code: 'example_error', message: 'example error', event_id: null, field: null }]
+}
+
 describe('AdminSeasonsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     api.getSeasonActivePlayers.mockResolvedValue(empty)
     api.bootstrapSeasonFromInitialPool.mockResolvedValue(response)
+    api.getSeasonCalendar.mockResolvedValue(emptyCalendar)
+    api.buildSeasonCalendar.mockResolvedValue(calendarResponse)
   })
 
   it('renders bootstrap controls and previews with dry_run true', async () => {
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
 
     expect(await screen.findByRole('heading', { name: 'Seasons / Bootstrap' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Target season')).toHaveValue('2000/2001')
+    expect(screen.getAllByLabelText('Target season')[0]).toHaveValue('2000/2001')
     expect(screen.getByLabelText('Source initial pool season')).toHaveValue('2000/2001')
-    expect(screen.getByLabelText('Seed')).toHaveValue(12345)
+    expect(screen.getAllByLabelText('Seed')[0]).toHaveValue(12345)
 
     await userEvent.click(screen.getByRole('button', { name: 'Preview bootstrap' }))
     expect(api.bootstrapSeasonFromInitialPool).toHaveBeenCalledWith('2000/2001', expect.objectContaining({ dry_run: true, seed: 12345 }))
@@ -110,5 +164,26 @@ describe('AdminSeasonsPage', () => {
     expect(within(table).getByText('Adam Ahmed AA01')).toBeInTheDocument()
     expect(within(table).getByText('fresh')).toBeInTheDocument()
     expect(within(table).getAllByText('0').length).toBeGreaterThan(0)
+  })
+
+  it('renders calendar builder controls and previews calendar', async () => {
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findByRole('heading', { name: 'Season Calendar Builder' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Preview calendar' })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Preview calendar' }))
+    expect(api.buildSeasonCalendar).toHaveBeenCalledWith('2000/2001', expect.objectContaining({ dry_run: true, seed: 12345 }))
+    const table = await screen.findByRole('table', { name: 'Season calendar events table' })
+    expect(within(table).getByText('World A')).toBeInTheDocument()
+    expect(screen.getByText('ranking_race_not_integrated: ranking/race integration not implemented yet')).toBeInTheDocument()
+    expect(screen.getByText('example_error: example error')).toBeInTheDocument()
+  })
+
+  it('persists calendar with dry_run false', async () => {
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Persist calendar' }))
+    expect(api.buildSeasonCalendar).toHaveBeenCalledWith('2000/2001', expect.objectContaining({ dry_run: false }))
   })
 })

@@ -12,6 +12,7 @@ from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.initial_player_pool_service import InitialPlayerPoolService
 from beta_engine.application.season_player_bootstrap_service import InitialPoolSeasonBootstrapService
 from beta_engine.application.season_calendar_service import SeasonCalendarService
+from beta_engine.application.season_entry_list_service import SeasonEntryListService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.application.world_package_service import WorldPackageService
@@ -106,6 +107,21 @@ def get_season_calendar_service(request: Request) -> SeasonCalendarService:
     if configured_path is not None:
         kwargs["calendar_registry_path"] = configured_path
     return SeasonCalendarService(**kwargs)
+
+
+def get_season_entry_list_service(request: Request) -> SeasonEntryListService:
+    configured_path = getattr(request.app.state, "season_entry_lists_registry_path", None)
+    entry_tuning_path = getattr(request.app.state, "entry_tuning_config_path", None)
+    kwargs = {
+        "active_players_service": get_initial_pool_season_bootstrap_service(request),
+        "calendar_service": get_season_calendar_service(request),
+        "countries_service": get_countries_config_service(request),
+    }
+    if configured_path is not None:
+        kwargs["entry_lists_path"] = configured_path
+    if entry_tuning_path is not None:
+        kwargs["entry_tuning_path"] = entry_tuning_path
+    return SeasonEntryListService(**kwargs)
 
 
 def get_world_package_service(request: Request) -> WorldPackageService:

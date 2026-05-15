@@ -1249,3 +1249,100 @@ export type SeasonCalendarBuildResponse = {
   validation_warnings: SeasonCalendarValidationIssue[]
   validation_errors: SeasonCalendarValidationIssue[]
 }
+
+export type EntryListValidationIssue = {
+  severity: 'warning' | 'error'
+  code: string
+  message: string
+  event_id: string | null
+  player_id: string | null
+  field: string | null
+}
+
+export type SeasonEventEntry = {
+  entry_id: string
+  player_id: string
+  name: string
+  country_code: string
+  ranking_points: number
+  race_points: number
+  current_ability: number
+  potential_ability: number
+  entry_probability: number
+  entry_score: number
+  quality_score: number
+  travel_score: number | null
+  decision: 'accepted_main_draw' | 'accepted_qualification' | 'alternate' | 'rejected' | 'not_entered'
+  acceptance_status: string
+  ranking_priority: number
+  seed_candidate_rank: number | null
+  source_player_fingerprint: string
+  bootstrap_fingerprint: string
+  generated_fingerprint: string
+  reason: string | null
+  decision_notes: string | null
+}
+
+export type SeasonEventEntryListSummary = {
+  total_active_players: number
+  considered_players: number
+  entered_players: number
+  main_draw_acceptances: number
+  qualification_acceptances: number
+  alternates: number
+  rejected_or_not_entered: number
+  countries_represented: number
+  average_entry_probability: number
+  average_quality_score: number
+  validation_warning_count: number
+  validation_error_count: number
+}
+
+export type SeasonEventEntryListMetadata = {
+  event_id: string
+  season: string
+  seed: number
+  dry_run: boolean
+  persisted: boolean
+  build_fingerprint: string
+  active_players_fingerprint: string
+  calendar_event_fingerprint: string
+  ranking_basis: string
+  persistence_path: string | null
+}
+
+export type SeasonEventEntryList = {
+  event_id: string
+  season: string
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  template_id: string
+  generated_from_calendar_fingerprint: string
+  generated_from_active_players_fingerprint: string
+  seed: number
+  dry_run: boolean
+  persisted: boolean
+  entries: SeasonEventEntry[]
+  summary: SeasonEventEntryListSummary
+  metadata: SeasonEventEntryListMetadata
+  validation_warnings: EntryListValidationIssue[]
+  validation_errors: EntryListValidationIssue[]
+}
+
+export type EntryListGeneratePayload = {
+  seed: number
+  dry_run: boolean
+  overwrite_existing: boolean
+  max_alternates: number
+  include_not_entered: boolean
+}
+
+export type SeasonEventEntryListResult = {
+  entry_list: SeasonEventEntryList | null
+  summary: SeasonEventEntryListSummary
+  metadata: SeasonEventEntryListMetadata | null
+  validation_warnings: EntryListValidationIssue[]
+  validation_errors: EntryListValidationIssue[]
+  entry_list_exists: boolean
+}

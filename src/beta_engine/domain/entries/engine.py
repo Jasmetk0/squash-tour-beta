@@ -282,7 +282,7 @@ class EntryEngine:
         affinity = country.travel_affinity.get(event.region)
         if affinity is not None:
             return min(1.0, max(0.0, affinity))
-        if country.travel_region == event.region:
+        if country.effective_travel_region == event.region:
             return 0.72
         return 0.45
 

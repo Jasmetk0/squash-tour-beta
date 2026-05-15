@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 CountrySimFactor = Literal[1, 2, 3, 4, 5]
 
@@ -39,9 +39,21 @@ class Country(BaseModel):
             self.competition_density = 3.0
         if self.federation_quality is None:
             self.federation_quality = float(self.system_quality)
-        if self.travel_region is None:
-            self.travel_region = self.region
         return self
+
+    @field_validator("travel_region", mode="before")
+    @classmethod
+    def normalize_travel_region(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        return normalized or None
+
+    @property
+    def effective_travel_region(self) -> str:
+        """Region used by travel/entry calculations when no explicit override is authored."""
+
+        return self.travel_region or self.region
 
     @staticmethod
     def _normalize_factor(value: int) -> float:

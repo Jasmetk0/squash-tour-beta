@@ -41,3 +41,24 @@ def test_country_accepts_phase_two_optional_fields() -> None:
     assert country.federation_quality == 4.0
     assert country.court_count == 120
     assert country.style_dna == {"front_court": 0.2, "attrition": -0.1}
+
+
+def test_country_effective_travel_region_defaults_to_region_and_tracks_region_copy() -> None:
+    country = Country.model_validate(_base_country_payload())
+
+    assert country.travel_region is None
+    assert country.effective_travel_region == "EUROPE"
+
+    copied = country.model_copy(update={"region": "MIDDLE_EAST"})
+
+    assert copied.travel_region is None
+    assert copied.effective_travel_region == "MIDDLE_EAST"
+
+
+def test_country_explicit_travel_region_overrides_region_and_blank_normalizes_to_default() -> None:
+    explicit = Country.model_validate({**_base_country_payload(), "region": "AFRICA", "travel_region": "MIDDLE_EAST"})
+    blank = Country.model_validate({**_base_country_payload(), "region": "AFRICA", "travel_region": "   "})
+
+    assert explicit.effective_travel_region == "MIDDLE_EAST"
+    assert blank.travel_region is None
+    assert blank.effective_travel_region == "AFRICA"

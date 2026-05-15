@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
-import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, getSeasonActivePlayers, getSeasonCalendar } from '../api/client'
-import type { SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent } from '../api/types'
+import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventEntryList, getEventEntryList, getSeasonActivePlayers, getSeasonCalendar } from '../api/client'
+import type { EntryListValidationIssue, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventEntry, SeasonEventEntryListResult } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -22,6 +22,13 @@ export function AdminSeasonsPage(): JSX.Element {
   const [includeInactiveTemplates, setIncludeInactiveTemplates] = useState(false)
   const [maxEvents, setMaxEvents] = useState('')
   const [calendarBuildResult, setCalendarBuildResult] = useState<SeasonCalendarBuildResponse | null>(null)
+  const [selectedEventId, setSelectedEventId] = useState('')
+  const [entrySeed, setEntrySeed] = useState(12345)
+  const [entryOverwriteExisting, setEntryOverwriteExisting] = useState(false)
+  const [entryDryRun, setEntryDryRun] = useState(true)
+  const [maxAlternates, setMaxAlternates] = useState(16)
+  const [includeNotEntered, setIncludeNotEntered] = useState(false)
+  const [entryResult, setEntryResult] = useState<SeasonEventEntryListResult | null>(null)
   const playersQuery = useQuery({ queryKey: ['season-active-players', season], queryFn: () => getSeasonActivePlayers(season), retry: false })
   const calendarQuery = useQuery({ queryKey: ['season-calendar', season], queryFn: () => getSeasonCalendar(season), retry: false })
 
@@ -53,6 +60,22 @@ export function AdminSeasonsPage(): JSX.Element {
     }
   })
 
+  const entryMutation = useMutation({
+    mutationFn: (persist: boolean) => generateEventEntryList(effectiveEventId, {
+      seed: entrySeed,
+      dry_run: !persist,
+      overwrite_existing: entryOverwriteExisting,
+      max_alternates: maxAlternates,
+      include_not_entered: includeNotEntered
+    }),
+    onSuccess: (result) => {
+      setEntryResult(result)
+      if (!result.metadata?.dry_run && effectiveEventId) {
+        void queryClient.invalidateQueries({ queryKey: ['event-entry-list', effectiveEventId] })
+      }
+    }
+  })
+
   const displayedPlayers = preview?.players.length ? preview.players : playersQuery.data?.players ?? []
   const displayedSummary = preview?.summary ?? playersQuery.data?.summary
   const displayedWarnings = preview?.warnings ?? playersQuery.data?.warnings ?? []
@@ -64,6 +87,14 @@ export function AdminSeasonsPage(): JSX.Element {
   const displayedCalendarSummary = calendarBuildResult?.summary ?? calendarQuery.data?.summary
   const validationWarnings = calendarBuildResult?.validation_warnings ?? displayedCalendar?.validation_warnings ?? []
   const validationErrors = calendarBuildResult?.validation_errors ?? displayedCalendar?.validation_errors ?? []
+  const eventOptions = displayedCalendar?.events ?? []
+  const effectiveEventId = selectedEventId || eventOptions[0]?.event_id || ''
+  const persistedEntryQuery = useQuery({ queryKey: ['event-entry-list', effectiveEventId], queryFn: () => getEventEntryList(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
+  const displayedEntryResult = entryResult ?? persistedEntryQuery.data ?? null
+  const displayedEntryList = displayedEntryResult?.entry_list ?? null
+  const displayedEntrySummary = displayedEntryResult?.summary ?? displayedEntryList?.summary ?? null
+  const entryWarnings = displayedEntryResult?.validation_warnings ?? displayedEntryList?.validation_warnings ?? []
+  const entryErrors = displayedEntryResult?.validation_errors ?? displayedEntryList?.validation_errors ?? []
 
   return (
     <section className="panel">
@@ -174,6 +205,50 @@ export function AdminSeasonsPage(): JSX.Element {
         {!displayedCalendar?.events.length ? <p className="status">No season calendar exists yet. Preview or persist a first-season calendar.</p> : null}
       </SectionCard>
 
+
+      <SectionCard title="Event Entries">
+        <p className="status">Entry generation selects players for a planned calendar event from active season players. It does not create draws or simulate matches yet.</p>
+        {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
+        <div className="grid">
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null) }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
+          <label>Entry seed<input type="number" value={entrySeed} onChange={(event) => setEntrySeed(Number(event.target.value))} /></label>
+          <label>Max alternates<input type="number" value={maxAlternates} onChange={(event) => setMaxAlternates(Number(event.target.value))} /></label>
+          <label><input type="checkbox" checked={entryDryRun} onChange={(event) => setEntryDryRun(event.target.checked)} /> Dry run default</label>
+          <label><input type="checkbox" checked={entryOverwriteExisting} onChange={(event) => setEntryOverwriteExisting(event.target.checked)} /> Overwrite existing entry list</label>
+          <label><input type="checkbox" checked={includeNotEntered} onChange={(event) => setIncludeNotEntered(event.target.checked)} /> Include not-entered/rejected players</label>
+        </div>
+        <div className="button-row">
+          <button type="button" onClick={() => { setEntryDryRun(true); entryMutation.mutate(false) }} disabled={!effectiveEventId || entryMutation.isPending}>Preview entries</button>
+          <button type="button" onClick={() => { setEntryDryRun(false); entryMutation.mutate(true) }} disabled={!effectiveEventId || entryMutation.isPending}>Persist entries</button>
+        </div>
+        {entryMutation.isError ? <p role="alert" className="error">{formatApiError(entryMutation.error)}</p> : null}
+        {persistedEntryQuery.isError ? <p role="alert" className="error">{formatApiError(persistedEntryQuery.error)}</p> : null}
+        <SummaryPills items={[
+          { label: 'Total active players', value: displayedEntrySummary?.total_active_players ?? 0 },
+          { label: 'Considered players', value: displayedEntrySummary?.considered_players ?? 0 },
+          { label: 'Entered players', value: displayedEntrySummary?.entered_players ?? 0 },
+          { label: 'Main draw acceptances', value: displayedEntrySummary?.main_draw_acceptances ?? 0 },
+          { label: 'Qualification acceptances', value: displayedEntrySummary?.qualification_acceptances ?? 0 },
+          { label: 'Alternates', value: displayedEntrySummary?.alternates ?? 0 },
+          { label: 'Countries represented', value: displayedEntrySummary?.countries_represented ?? 0 },
+          { label: 'Validation warnings/errors', value: `${displayedEntrySummary?.validation_warning_count ?? entryWarnings.length}/${displayedEntrySummary?.validation_error_count ?? entryErrors.length}` }
+        ]} />
+        {displayedEntryResult?.metadata ? <MetadataList items={[
+          { label: 'Build fingerprint', value: displayedEntryResult.metadata.build_fingerprint },
+          { label: 'Active players fingerprint', value: displayedEntryResult.metadata.active_players_fingerprint },
+          { label: 'Calendar event fingerprint', value: displayedEntryResult.metadata.calendar_event_fingerprint },
+          { label: 'Ranking basis', value: displayedEntryResult.metadata.ranking_basis }
+        ]} /> : null}
+        <EntryValidationPanel warnings={entryWarnings} errors={entryErrors} />
+        <div className="table-wrap">
+          <table aria-label="Event entries table">
+            <thead><tr><th>Decision/status</th><th>Rank priority</th><th>player_id</th><th>Name</th><th>Country</th><th>Current</th><th>Ranking points</th><th>Entry probability</th><th>Entry score</th><th>Quality score</th><th>Travel score</th><th>Notes</th></tr></thead>
+            <tbody>{displayedEntryList?.entries.map((entry) => <EntryRow key={entry.entry_id} entry={entry} />)}</tbody>
+          </table>
+        </div>
+        {!displayedEntryList?.entries.length ? <p className="status">No entry list is displayed yet. Preview or persist entries for a persisted event.</p> : null}
+      </SectionCard>
+
       <SectionCard title="Active season players">
         {playersQuery.isError ? <p role="alert" className="error">{formatApiError(playersQuery.error)}</p> : null}
         <div className="table-wrap">
@@ -194,4 +269,15 @@ function CalendarEventRow({ event }: { event: SeasonCalendarEvent }): JSX.Elemen
 
 function PlayerRow({ player }: { player: SeasonActivePlayer }): JSX.Element {
   return <tr><td>{player.player_id}</td><td>{player.name}</td><td>{player.country_code}</td><td>{player.age_years_at_season_start}</td><td>{player.current_ability}</td><td>{player.potential_ability}</td><td>{player.potential_tier}</td><td>{player.career_stage}</td><td>{player.source_generation}</td><td>{player.manual_override ? 'yes' : 'no'}</td><td>{player.locked_from_initial_pool ? 'yes' : 'no'}</td><td>{player.ranking_points}</td><td>{player.race_points}</td><td>{player.health_status}</td><td>{player.active_status}</td></tr>
+}
+
+function EntryValidationPanel({ warnings, errors }: { warnings: EntryListValidationIssue[]; errors: EntryListValidationIssue[] }): JSX.Element {
+  return <div>
+    {errors.length ? <><h4>Entry errors</h4><ul>{errors.map((issue) => <li key={`entry-error-${issue.code}-${issue.player_id ?? issue.event_id ?? 'list'}`}>{issue.code}: {issue.message}</li>)}</ul></> : <p className="status">No entry validation errors.</p>}
+    {warnings.length ? <><h4>Entry warnings</h4><ul>{warnings.map((issue) => <li key={`entry-warning-${issue.code}-${issue.player_id ?? issue.event_id ?? 'list'}`}>{issue.code}: {issue.message}</li>)}</ul></> : <p className="status">No entry validation warnings.</p>}
+  </div>
+}
+
+function EntryRow({ entry }: { entry: SeasonEventEntry }): JSX.Element {
+  return <tr><td>{entry.decision}</td><td>{entry.ranking_priority}</td><td>{entry.player_id}</td><td>{entry.name}</td><td>{entry.country_code}</td><td>{entry.current_ability}</td><td>{entry.ranking_points}</td><td>{entry.entry_probability}</td><td>{entry.entry_score}</td><td>{entry.quality_score}</td><td>{entry.travel_score ?? '—'}</td><td>{entry.decision_notes ?? entry.reason}</td></tr>
 }

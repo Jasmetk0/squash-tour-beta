@@ -9,7 +9,9 @@ const api = vi.hoisted(() => ({
   getSeasonActivePlayers: vi.fn(),
   bootstrapSeasonFromInitialPool: vi.fn(),
   getSeasonCalendar: vi.fn(),
-  buildSeasonCalendar: vi.fn()
+  buildSeasonCalendar: vi.fn(),
+  getEventEntryList: vi.fn(),
+  generateEventEntryList: vi.fn()
 }))
 
 vi.mock('../api/client', () => api)
@@ -124,6 +126,32 @@ const emptyCalendar = {
   validation_errors: []
 }
 
+
+const emptyEntryResult = {
+  entry_list: null,
+  summary: { total_active_players: 0, considered_players: 0, entered_players: 0, main_draw_acceptances: 0, qualification_acceptances: 0, alternates: 0, rejected_or_not_entered: 0, countries_represented: 0, average_entry_probability: 0, average_quality_score: 0, validation_warning_count: 0, validation_error_count: 0 },
+  metadata: null,
+  validation_warnings: [],
+  validation_errors: [],
+  entry_list_exists: false
+}
+
+const entryResult = {
+  entry_list: {
+    event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', season_week: 1, calendar_year: 2000, year_week: 35, template_id: 'wt_a', generated_from_calendar_fingerprint: 'calendar-fp', generated_from_active_players_fingerprint: 'active-fp', seed: 12345, dry_run: true, persisted: false,
+    entries: [{ entry_id: 'entry-1', player_id: 'P-2000-AAA-0001', name: 'Adam Ahmed AA01', country_code: 'AAA', ranking_points: 0, race_points: 0, current_ability: 78, potential_ability: 88, entry_probability: 0.75, entry_score: 1.2, quality_score: 0.8, travel_score: 1, decision: 'accepted_main_draw', acceptance_status: 'accepted_main_draw', ranking_priority: 1, seed_candidate_rank: 1, source_player_fingerprint: 'source-fp', bootstrap_fingerprint: 'player-boot-fp', generated_fingerprint: 'entry-fp', reason: 'direct main draw acceptance', decision_notes: 'EntryEngine target=MAIN' }],
+    summary: { total_active_players: 1, considered_players: 1, entered_players: 1, main_draw_acceptances: 1, qualification_acceptances: 0, alternates: 0, rejected_or_not_entered: 0, countries_represented: 1, average_entry_probability: 0.75, average_quality_score: 0.8, validation_warning_count: 1, validation_error_count: 1 },
+    metadata: { event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', seed: 12345, dry_run: true, persisted: false, build_fingerprint: 'entry-build-fp', active_players_fingerprint: 'active-fp', calendar_event_fingerprint: 'calendar-fp', ranking_basis: 'current zero-points bootstrap', persistence_path: null },
+    validation_warnings: [{ severity: 'warning', code: 'entry_warn', message: 'entry warning', event_id: 'EVT-2000-W01-wt_a', player_id: null, field: null }],
+    validation_errors: [{ severity: 'error', code: 'entry_error', message: 'entry error', event_id: 'EVT-2000-W01-wt_a', player_id: 'P-2000-AAA-0001', field: 'season_week' }]
+  },
+  summary: { total_active_players: 1, considered_players: 1, entered_players: 1, main_draw_acceptances: 1, qualification_acceptances: 0, alternates: 0, rejected_or_not_entered: 0, countries_represented: 1, average_entry_probability: 0.75, average_quality_score: 0.8, validation_warning_count: 1, validation_error_count: 1 },
+  metadata: { event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', seed: 12345, dry_run: true, persisted: false, build_fingerprint: 'entry-build-fp', active_players_fingerprint: 'active-fp', calendar_event_fingerprint: 'calendar-fp', ranking_basis: 'current zero-points bootstrap', persistence_path: null },
+  validation_warnings: [{ severity: 'warning', code: 'entry_warn', message: 'entry warning', event_id: 'EVT-2000-W01-wt_a', player_id: null, field: null }],
+  validation_errors: [{ severity: 'error', code: 'entry_error', message: 'entry error', event_id: 'EVT-2000-W01-wt_a', player_id: 'P-2000-AAA-0001', field: 'season_week' }],
+  entry_list_exists: false
+}
+
 const calendarResponse = {
   calendar: { season: '2000/2001', events: [calendarEvent], metadata: null, validation_warnings: [{ severity: 'warning', code: 'ranking_race_not_integrated', message: 'ranking/race integration not implemented yet', event_id: null, field: null }], validation_errors: [] },
   summary: { event_count: 1, season_weeks_used: 1, first_event_week: 1, last_event_week: 1, world_tour_events: 1, elite_tour_events: 0, validation_warning_count: 1, validation_error_count: 0, persisted: false, calendar_exists: false },
@@ -139,6 +167,8 @@ describe('AdminSeasonsPage', () => {
     api.bootstrapSeasonFromInitialPool.mockResolvedValue(response)
     api.getSeasonCalendar.mockResolvedValue(emptyCalendar)
     api.buildSeasonCalendar.mockResolvedValue(calendarResponse)
+    api.getEventEntryList.mockResolvedValue(emptyEntryResult)
+    api.generateEventEntryList.mockResolvedValue(entryResult)
   })
 
   it('renders bootstrap controls and previews with dry_run true', async () => {
@@ -186,4 +216,30 @@ describe('AdminSeasonsPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Persist calendar' }))
     expect(api.buildSeasonCalendar).toHaveBeenCalledWith('2000/2001', expect.objectContaining({ dry_run: false }))
   })
+
+  it('renders Event Entries section and previews entries', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findByRole('heading', { name: 'Event Entries' })).toBeInTheDocument()
+    expect(screen.getByText('Entry generation selects players for a planned calendar event from active season players. It does not create draws or simulate matches yet.')).toBeInTheDocument()
+    expect(await screen.findAllByText(/World A/)).not.toHaveLength(0)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Preview entries' }))
+    expect(api.generateEventEntryList).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: true, seed: 12345 }))
+    const table = await screen.findByRole('table', { name: 'Event entries table' })
+    expect(within(table).getByText('accepted_main_draw')).toBeInTheDocument()
+    expect(within(table).getByText('Adam Ahmed AA01')).toBeInTheDocument()
+    expect(screen.getByText('entry_error: entry error')).toBeInTheDocument()
+    expect(screen.getByText('entry_warn: entry warning')).toBeInTheDocument()
+  })
+
+  it('persists entries with dry_run false', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Persist entries' }))
+    expect(api.generateEventEntryList).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false }))
+  })
+
 })

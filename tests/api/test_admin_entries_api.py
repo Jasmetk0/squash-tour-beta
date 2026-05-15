@@ -9,8 +9,41 @@ from urllib.error import HTTPError
 
 import uvicorn
 
+from beta_engine.application.season_player_bootstrap_service import SeasonActivePlayer, SeasonActivePlayersRegistry
+from beta_engine.domain.players.initial_pool import GeneratedPlayerAttributes
+from beta_engine.domain.players.models import HiddenCareerTraits
 from beta_engine.main import create_app
-from tests.application.test_season_entry_list_service import write_active, write_countries, write_templates
+
+
+def write_countries(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"countries": [
+        {"code": "AAA", "name": "Alpha", "region": "EUROPE", "population": 5_000_000, "wealth_support": 5, "squash_popularity": 5, "squash_tradition": 5, "system_quality": 5, "travel_region": "EUROPE"},
+        {"code": "BBB", "name": "Beta", "region": "ASIA", "population": 5_000_000, "wealth_support": 5, "squash_popularity": 5, "squash_tradition": 5, "system_quality": 5, "travel_region": "ASIA"},
+    ]}), encoding="utf-8")
+
+
+def write_templates(path: Path, *, main_draw_size: int = 8) -> None:
+    path.write_text(json.dumps({"templates": [{
+        "template_id": "wt_a", "tour_level": "WORLD_TOUR", "category": "PLATINUM", "event_name": "World A", "region": "EUROPE", "host_country": "AAA", "main_draw_size": main_draw_size, "qualification_draw_size": 4, "seeds_count": 4, "qualifier_spots": 2, "wild_cards": 1, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 100000, "prestige": 9, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 1, "active": True
+    }]}), encoding="utf-8")
+
+
+def active_player(index: int, country: str = "AAA", ability: int = 88) -> SeasonActivePlayer:
+    return SeasonActivePlayer(
+        player_id=f"P{index:03d}", name=f"Player {index:03d}", country_code=country, nationality=country,
+        birth_year=1975, birth_year_week=1, age_years_at_season_start=25, age_weeks_at_season_start=1300,
+        current_ability=ability, potential_ability=max(ability, 90), potential_tier="A", career_stage="prime", play_style="balanced", archetype="all_court",
+        attributes=GeneratedPlayerAttributes(technique=ability, movement=ability, physical=ability, mental=ability, consistency=ability, clutch=ability, recovery=ability),
+        hidden_career_traits=HiddenCareerTraits(potential_ceiling=max(ability, 90), growth_curve="steady", professionalism=0.9, ambition=0.9, travel_tolerance=0.9, schedule_aggression=0.9, injury_proneness=0.1, resilience=0.9),
+        season="2000/2001", source_pool_player_id=f"P{index:03d}", source_generation_fingerprint=f"src-{index}", source_generation="initial_pool", manual_override=False, locked_from_initial_pool=True, bootstrap_fingerprint=f"boot-{index}", bootstrap_seed=1, bootstrap_id="BOOT-test"
+    )
+
+
+def write_active(path: Path, count: int = 20) -> None:
+    players = [active_player(i, "AAA" if i % 2 else "BBB", 90 - (i % 10)) for i in range(1, count + 1)]
+    registry = SeasonActivePlayersRegistry(players_by_season={"2000/2001": players}, bootstrap_metadata_by_season={})
+    path.write_text(json.dumps(registry.model_dump(mode="json")), encoding="utf-8")
 
 
 def call(method: str, url: str, payload: dict | None = None) -> tuple[int, dict]:

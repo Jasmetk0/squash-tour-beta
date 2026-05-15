@@ -1330,6 +1330,142 @@ export type SeasonEventEntryList = {
   validation_errors: EntryListValidationIssue[]
 }
 
+
+export type DrawValidationIssue = {
+  severity: 'warning' | 'error'
+  code: string
+  message: string
+  event_id: string | null
+  player_id: string | null
+  field: string | null
+}
+
+export type DrawMatchRecord = {
+  match_id: string
+  round_number: number
+  bracket_position: number
+  top_slot_id: string
+  bottom_slot_id: string
+  top_source: string
+  bottom_source: string
+  winner_to_match_id: string | null
+  status: 'pending' | 'bye_pending' | 'completed_placeholder'
+}
+
+export type DrawRound = {
+  round_number: number
+  round_name: string
+  match_count: number
+  matches: DrawMatchRecord[]
+}
+
+export type DrawSlotRecord = {
+  slot_id: string
+  bracket_position: number
+  player_id: string | null
+  player_name: string | null
+  country_code: string | null
+  entry_decision: 'accepted_main_draw' | 'accepted_qualification' | 'qualifier_placeholder' | 'bye' | 'wild_card_reserved'
+  seed_number: number | null
+  source_entry_id: string | null
+  source_entry_fingerprint: string | null
+  is_bye: boolean
+  is_qualifier_placeholder: boolean
+}
+
+export type DrawSeedRecord = {
+  seed_number: number
+  player_id: string
+  player_name: string
+  ranking_priority: number
+  placement_position: number
+}
+
+export type DrawByeRecord = {
+  slot_id: string
+  bracket_position: number
+}
+
+export type QualifierPlaceholderRecord = {
+  placeholder_id: string
+  slot_id: string
+  bracket_position: number
+  qualifier_index: number
+}
+
+export type DrawBracket = {
+  draw_id: string
+  draw_type: 'qualification' | 'main'
+  draw_size: number
+  round_count: number
+  rounds: DrawRound[]
+  slots: DrawSlotRecord[]
+  seeds: DrawSeedRecord[]
+  byes: DrawByeRecord[]
+  qualifier_placeholders: QualifierPlaceholderRecord[]
+  generated_fingerprint: string
+}
+
+export type DrawPackageSummary = {
+  event_id: string | null
+  main_draw_size: number
+  qualification_draw_size: number
+  main_draw_players: number
+  qualification_draw_players: number
+  qualifier_placeholders: number
+  byes: number
+  seeds: number
+  validation_warning_count: number
+  validation_error_count: number
+}
+
+export type DrawPackageMetadata = {
+  event_id: string
+  season: string
+  seed: number
+  dry_run: boolean
+  persisted: boolean
+  build_fingerprint: string
+  entry_list_fingerprint: string
+  calendar_event_fingerprint: string
+  draw_engine_version: string | null
+  persistence_path: string | null
+  ranking_basis: string
+}
+
+export type SeasonEventDrawPackage = {
+  event_id: string
+  season: string
+  template_id: string
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  seed: number
+  dry_run: boolean
+  persisted: boolean
+  qualification_draw: DrawBracket | null
+  main_draw: DrawBracket
+  summary: DrawPackageSummary
+  metadata: DrawPackageMetadata
+  validation_warnings: DrawValidationIssue[]
+  validation_errors: DrawValidationIssue[]
+}
+
+export type DrawGeneratePayload = {
+  seed: number
+  dry_run: boolean
+  overwrite_existing: boolean
+}
+
+export type SeasonEventDrawPackageResult = {
+  draw_package: SeasonEventDrawPackage | null
+  summary: DrawPackageSummary
+  metadata: DrawPackageMetadata | null
+  validation_warnings: DrawValidationIssue[]
+  validation_errors: DrawValidationIssue[]
+  draw_package_exists: boolean
+}
+
 export type EntryListGeneratePayload = {
   seed: number
   dry_run: boolean

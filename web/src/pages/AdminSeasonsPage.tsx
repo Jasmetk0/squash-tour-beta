@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
-import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventEntryList, getEventEntryList, getSeasonActivePlayers, getSeasonCalendar } from '../api/client'
-import type { EntryListValidationIssue, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventEntry, SeasonEventEntryListResult } from '../api/types'
+import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, getEventDrawPackage, getEventEntryList, getSeasonActivePlayers, getSeasonCalendar } from '../api/client'
+import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -29,6 +29,10 @@ export function AdminSeasonsPage(): JSX.Element {
   const [maxAlternates, setMaxAlternates] = useState(16)
   const [includeNotEntered, setIncludeNotEntered] = useState(false)
   const [entryResult, setEntryResult] = useState<SeasonEventEntryListResult | null>(null)
+  const [drawSeed, setDrawSeed] = useState(12345)
+  const [drawDryRun, setDrawDryRun] = useState(true)
+  const [drawOverwriteExisting, setDrawOverwriteExisting] = useState(false)
+  const [drawResult, setDrawResult] = useState<SeasonEventDrawPackageResult | null>(null)
   const playersQuery = useQuery({ queryKey: ['season-active-players', season], queryFn: () => getSeasonActivePlayers(season), retry: false })
   const calendarQuery = useQuery({ queryKey: ['season-calendar', season], queryFn: () => getSeasonCalendar(season), retry: false })
 
@@ -76,6 +80,20 @@ export function AdminSeasonsPage(): JSX.Element {
     }
   })
 
+  const drawMutation = useMutation({
+    mutationFn: (persist: boolean) => generateEventDrawPackage(effectiveEventId, {
+      seed: drawSeed,
+      dry_run: !persist,
+      overwrite_existing: drawOverwriteExisting
+    }),
+    onSuccess: (result) => {
+      setDrawResult(result)
+      if (!result.metadata?.dry_run && effectiveEventId) {
+        void queryClient.invalidateQueries({ queryKey: ['event-draw-package', effectiveEventId] })
+      }
+    }
+  })
+
   const displayedPlayers = preview?.players.length ? preview.players : playersQuery.data?.players ?? []
   const displayedSummary = preview?.summary ?? playersQuery.data?.summary
   const displayedWarnings = preview?.warnings ?? playersQuery.data?.warnings ?? []
@@ -90,11 +108,18 @@ export function AdminSeasonsPage(): JSX.Element {
   const eventOptions = displayedCalendar?.events ?? []
   const effectiveEventId = selectedEventId || eventOptions[0]?.event_id || ''
   const persistedEntryQuery = useQuery({ queryKey: ['event-entry-list', effectiveEventId], queryFn: () => getEventEntryList(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
+  const persistedDrawQuery = useQuery({ queryKey: ['event-draw-package', effectiveEventId], queryFn: () => getEventDrawPackage(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
   const displayedEntryResult = entryResult ?? persistedEntryQuery.data ?? null
   const displayedEntryList = displayedEntryResult?.entry_list ?? null
   const displayedEntrySummary = displayedEntryResult?.summary ?? displayedEntryList?.summary ?? null
   const entryWarnings = displayedEntryResult?.validation_warnings ?? displayedEntryList?.validation_warnings ?? []
   const entryErrors = displayedEntryResult?.validation_errors ?? displayedEntryList?.validation_errors ?? []
+  const displayedDrawResult = drawResult ?? persistedDrawQuery.data ?? null
+  const displayedDrawPackage = displayedDrawResult?.draw_package ?? null
+  const displayedDrawSummary = displayedDrawResult?.summary ?? displayedDrawPackage?.summary ?? null
+  const drawWarnings = displayedDrawResult?.validation_warnings ?? displayedDrawPackage?.validation_warnings ?? []
+  const drawErrors = displayedDrawResult?.validation_errors ?? displayedDrawPackage?.validation_errors ?? []
+  const selectedEventHasPersistedEntryList = Boolean(displayedEntryResult?.entry_list_exists || displayedEntryList)
 
   return (
     <section className="panel">
@@ -210,7 +235,7 @@ export function AdminSeasonsPage(): JSX.Element {
         <p className="status">Entry generation selects players for a planned calendar event from active season players. It does not create draws or simulate matches yet.</p>
         {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
         <div className="grid">
-          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null) }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null) }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
           <label>Entry seed<input type="number" value={entrySeed} onChange={(event) => setEntrySeed(Number(event.target.value))} /></label>
           <label>Max alternates<input type="number" value={maxAlternates} onChange={(event) => setMaxAlternates(Number(event.target.value))} /></label>
           <label><input type="checkbox" checked={entryDryRun} onChange={(event) => setEntryDryRun(event.target.checked)} /> Dry run default</label>
@@ -249,6 +274,49 @@ export function AdminSeasonsPage(): JSX.Element {
         {!displayedEntryList?.entries.length ? <p className="status">No entry list is displayed yet. Preview or persist entries for a persisted event.</p> : null}
       </SectionCard>
 
+      <SectionCard title="Event Draws">
+        <p className="status">Draw generation creates bracket slots from persisted entry lists. It does not simulate matches or update rankings yet.</p>
+        {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
+        {eventOptions.length && !selectedEventHasPersistedEntryList ? <p className="status">Persist an entry list first.</p> : null}
+        <div className="grid">
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null) }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
+          <label>Draw seed<input type="number" value={drawSeed} onChange={(event) => setDrawSeed(Number(event.target.value))} /></label>
+          <label><input type="checkbox" checked={drawDryRun} onChange={(event) => setDrawDryRun(event.target.checked)} /> Dry run default</label>
+          <label><input type="checkbox" checked={drawOverwriteExisting} onChange={(event) => setDrawOverwriteExisting(event.target.checked)} /> Overwrite existing draw package</label>
+        </div>
+        <div className="button-row">
+          <button type="button" onClick={() => { setDrawDryRun(true); drawMutation.mutate(false) }} disabled={!effectiveEventId || !selectedEventHasPersistedEntryList || drawMutation.isPending}>Preview draw</button>
+          <button type="button" onClick={() => { setDrawDryRun(false); drawMutation.mutate(true) }} disabled={!effectiveEventId || !selectedEventHasPersistedEntryList || drawMutation.isPending}>Persist draw</button>
+        </div>
+        {drawMutation.isError ? <p role="alert" className="error">{formatApiError(drawMutation.error)}</p> : null}
+        {persistedDrawQuery.isError ? <p role="alert" className="error">{formatApiError(persistedDrawQuery.error)}</p> : null}
+        <SummaryPills items={[
+          { label: 'Main draw size', value: displayedDrawSummary?.main_draw_size ?? 0 },
+          { label: 'Qualification draw size', value: displayedDrawSummary?.qualification_draw_size ?? 0 },
+          { label: 'Main draw players', value: displayedDrawSummary?.main_draw_players ?? 0 },
+          { label: 'Qualification players', value: displayedDrawSummary?.qualification_draw_players ?? 0 },
+          { label: 'Qualifier placeholders', value: displayedDrawSummary?.qualifier_placeholders ?? 0 },
+          { label: 'BYEs', value: displayedDrawSummary?.byes ?? 0 },
+          { label: 'Seeds', value: displayedDrawSummary?.seeds ?? 0 },
+          { label: 'Validation warnings/errors', value: `${displayedDrawSummary?.validation_warning_count ?? drawWarnings.length}/${displayedDrawSummary?.validation_error_count ?? drawErrors.length}` }
+        ]} />
+        {displayedDrawResult?.metadata ? <MetadataList items={[
+          { label: 'Build fingerprint', value: displayedDrawResult.metadata.build_fingerprint },
+          { label: 'Entry list fingerprint', value: displayedDrawResult.metadata.entry_list_fingerprint },
+          { label: 'Calendar event fingerprint', value: displayedDrawResult.metadata.calendar_event_fingerprint },
+          { label: 'Draw engine', value: displayedDrawResult.metadata.draw_engine_version ?? '—' },
+          { label: 'Ranking basis', value: displayedDrawResult.metadata.ranking_basis }
+        ]} /> : null}
+        <DrawValidationPanel warnings={drawWarnings} errors={drawErrors} />
+        {displayedDrawPackage ? <>
+          <DrawSlotsTable title="Main draw table" bracket={displayedDrawPackage.main_draw} />
+          {displayedDrawPackage.qualification_draw ? <DrawSlotsTable title="Qualification draw table" bracket={displayedDrawPackage.qualification_draw} /> : <p className="status">No qualification draw for this event.</p>}
+          <DrawMatchesTable title="Main draw match preview" bracket={displayedDrawPackage.main_draw} />
+          {displayedDrawPackage.qualification_draw ? <DrawMatchesTable title="Qualification draw match preview" bracket={displayedDrawPackage.qualification_draw} /> : null}
+        </> : <p className="status">No draw package is displayed yet. Preview or persist a draw for a persisted event entry list.</p>}
+      </SectionCard>
+
+
       <SectionCard title="Active season players">
         {playersQuery.isError ? <p role="alert" className="error">{formatApiError(playersQuery.error)}</p> : null}
         <div className="table-wrap">
@@ -280,4 +348,34 @@ function EntryValidationPanel({ warnings, errors }: { warnings: EntryListValidat
 
 function EntryRow({ entry }: { entry: SeasonEventEntry }): JSX.Element {
   return <tr><td>{entry.decision}</td><td>{entry.ranking_priority}</td><td>{entry.player_id}</td><td>{entry.name}</td><td>{entry.country_code}</td><td>{entry.current_ability}</td><td>{entry.ranking_points}</td><td>{entry.entry_probability}</td><td>{entry.entry_score}</td><td>{entry.quality_score}</td><td>{entry.travel_score ?? '—'}</td><td>{entry.decision_notes ?? entry.reason}</td></tr>
+}
+
+function DrawValidationPanel({ warnings, errors }: { warnings: DrawValidationIssue[]; errors: DrawValidationIssue[] }): JSX.Element {
+  return <div>
+    {errors.length ? <><h4>Draw errors</h4><ul>{errors.map((issue) => <li key={`draw-error-${issue.code}-${issue.player_id ?? issue.event_id ?? issue.field ?? 'list'}`}>{issue.code}: {issue.message}</li>)}</ul></> : <p className="status">No draw validation errors.</p>}
+    {warnings.length ? <><h4>Draw warnings</h4><ul>{warnings.map((issue) => <li key={`draw-warning-${issue.code}-${issue.player_id ?? issue.event_id ?? issue.field ?? 'list'}`}>{issue.code}: {issue.message}</li>)}</ul></> : <p className="status">No draw validation warnings.</p>}
+  </div>
+}
+
+function DrawSlotsTable({ title, bracket }: { title: string; bracket: DrawBracket }): JSX.Element {
+  return <div className="table-wrap">
+    <table aria-label={title}>
+      <thead><tr><th>Position</th><th>Seed</th><th>Slot</th><th>player_id</th><th>Name</th><th>Country</th><th>Source decision</th></tr></thead>
+      <tbody>{bracket.slots.map((slot) => <DrawSlotRow key={slot.slot_id} slot={slot} />)}</tbody>
+    </table>
+  </div>
+}
+
+function DrawSlotRow({ slot }: { slot: DrawSlotRecord }): JSX.Element {
+  const slotLabel = slot.is_bye ? 'BYE' : slot.is_qualifier_placeholder ? `Q placeholder` : slot.entry_decision === 'wild_card_reserved' ? 'Wildcard reserved' : slot.player_name ?? '—'
+  return <tr><td>{slot.bracket_position}</td><td>{slot.seed_number ?? '—'}</td><td>{slotLabel}</td><td>{slot.player_id ?? '—'}</td><td>{slot.player_name ?? '—'}</td><td>{slot.country_code ?? '—'}</td><td>{slot.entry_decision}</td></tr>
+}
+
+function DrawMatchesTable({ title, bracket }: { title: string; bracket: DrawBracket }): JSX.Element {
+  return <div className="table-wrap">
+    <table aria-label={title}>
+      <thead><tr><th>Round</th><th>match_id</th><th>Top slot</th><th>Bottom slot</th><th>winner_to</th><th>Status</th></tr></thead>
+      <tbody>{bracket.rounds.flatMap((round) => round.matches.map((match) => <tr key={match.match_id}><td>{round.round_name}</td><td>{match.match_id}</td><td>{match.top_slot_id}</td><td>{match.bottom_slot_id}</td><td>{match.winner_to_match_id ?? '—'}</td><td>{match.status}</td></tr>))}</tbody>
+    </table>
+  </div>
 }

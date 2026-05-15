@@ -80,6 +80,8 @@ import type {
   TournamentTemplateUpsertPayload,
   SeasonActivePlayersResponse,
   SeasonBootstrapPayload,
+  SeasonCalendarBuildPayload,
+  SeasonCalendarBuildResponse,
   SeasonBootstrapResponse
 } from './types'
 
@@ -127,6 +129,14 @@ export function getSeasonActivePlayers(season = '2000/2001'): Promise<SeasonActi
 
 export function bootstrapSeasonFromInitialPool(season: string, payload: SeasonBootstrapPayload): Promise<SeasonBootstrapResponse> {
   return request(`/admin/seasons/${encodeURIComponent(season)}/bootstrap-from-initial-pool`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function getSeasonCalendar(season: string): Promise<SeasonCalendarBuildResponse> {
+  return request(`/admin/seasons/${encodeURIComponent(season)}/calendar`)
+}
+
+export function buildSeasonCalendar(season: string, payload: SeasonCalendarBuildPayload): Promise<SeasonCalendarBuildResponse> {
+  return request(`/admin/seasons/${encodeURIComponent(season)}/calendar/build`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function generateInitialPlayerPool(payload: InitialPoolGeneratePayload): Promise<InitialPoolResponse> {

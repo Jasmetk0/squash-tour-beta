@@ -26,6 +26,9 @@
 - Add Year Week / calendar positioning.
 - Support season templates and season-specific overrides.
 - Detect overlaps and impossible calendars.
+- Foundation added: Season Week + Year Week calendar model with deterministic 61-week mapping.
+- Foundation added: first-season calendar builder can preview and persist planned events from editable tournament templates.
+- Remaining limitations: entry generation is not connected, draw generation is not connected, match simulation is not connected, ranking/race are not updated from calendar events yet, and final season scheduling realism is not implemented.
 
 ## Phase 5 — Player Generation Control
 - Add initial player pool generation for the first season.
@@ -35,7 +38,7 @@
 - Foundation added: Admin Players can preview/persist a deterministic 2000/2001 initial pool, inspect generated attributes/traits, and lock/regenerate unlocked players.
 - Foundation added: custom player creation, safe selected-player editing, and compact audit metadata for create/update/lock/unlock/generate/regenerate initial-pool operations.
 - Foundation added: curated initial pools can be previewed and persisted into first-season active-player records for 2000/2001 bootstrap, preserving IDs, manual provenance, lock provenance, source fingerprints, and zero starting ranking/race points.
-- Remaining limitations: initial ranking seeding, season calendar builder, tournament entry/draw flow connection to active players, progression/regression, retirement, Viewer player profile depth, and final database-backed historical career persistence are not implemented yet.
+- Remaining limitations: initial ranking seeding, tournament entry/draw flow connection to active players, progression/regression, retirement, Viewer player profile depth, and final database-backed historical career persistence are not implemented yet.
 
 ## Phase 6 — End-of-Season Lifecycle
 - Add annual 15-year-old talent intake.

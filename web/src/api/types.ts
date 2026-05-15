@@ -1154,3 +1154,98 @@ export type SeasonBootstrapResponse = {
   metadata: SeasonBootstrapMetadata
   warnings: string[]
 }
+
+export type SeasonCalendarValidationIssue = {
+  severity: 'warning' | 'error'
+  code: string
+  message: string
+  event_id: string | null
+  field: string | null
+}
+
+export type SeasonCalendarMetadata = {
+  season: string
+  season_start_calendar_year: number
+  season_start_year_week: number
+  total_season_weeks: number
+  event_count: number
+  build_seed: number | null
+  build_fingerprint: string | null
+  source_template_count: number
+  persistence_path: string | null
+  dry_run: boolean
+  overwrite_existing: boolean
+}
+
+export type SeasonCalendarEvent = {
+  event_id: string
+  season: string
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  template_id: string
+  event_name: string
+  category: string
+  tour_level: 'WORLD_TOUR' | 'ELITE_TOUR' | null
+  host_country: string
+  host_city: string | null
+  region: string
+  duration_in_season_weeks: number
+  start_season_week: number | null
+  end_season_week: number | null
+  status: 'planned' | 'active' | 'completed' | 'cancelled' | 'scheduled'
+  main_draw_size: number
+  qualification_draw_size: number
+  seeds_count: number
+  qualifier_spots: number
+  wild_cards: number
+  byes: number
+  point_distribution_ref: string | null
+  point_distribution: Record<string, number> | null
+  prize_money: number
+  prestige: number
+  event_level_overrides: Record<string, unknown>
+  source_template_fingerprint: string | null
+  template_snapshot_fingerprint: string | null
+  calendar_fingerprint: string | null
+  template_snapshot: Record<string, unknown>
+}
+
+export type SeasonCalendar = {
+  season: string
+  events: SeasonCalendarEvent[]
+  metadata: SeasonCalendarMetadata | null
+  validation_warnings: SeasonCalendarValidationIssue[]
+  validation_errors: SeasonCalendarValidationIssue[]
+}
+
+export type SeasonCalendarBuildSummary = {
+  event_count: number
+  season_weeks_used: number
+  first_event_week: number | null
+  last_event_week: number | null
+  world_tour_events: number
+  elite_tour_events: number
+  validation_warning_count: number
+  validation_error_count: number
+  persisted: boolean
+  calendar_exists: boolean
+}
+
+export type SeasonCalendarBuildPayload = {
+  seed: number
+  dry_run: boolean
+  overwrite_existing: boolean
+  season_start_calendar_year: number
+  season_start_year_week: number
+  include_inactive_templates: boolean
+  max_events?: number | null
+}
+
+export type SeasonCalendarBuildResponse = {
+  calendar: SeasonCalendar | null
+  summary: SeasonCalendarBuildSummary
+  metadata: SeasonCalendarMetadata | null
+  validation_warnings: SeasonCalendarValidationIssue[]
+  validation_errors: SeasonCalendarValidationIssue[]
+}

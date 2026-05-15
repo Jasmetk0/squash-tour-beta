@@ -32,6 +32,7 @@
 - Add preview/edit/lock/regenerate workflows.
 - Support regeneration by country, region, and full unlocked pool.
 - Add birth_year and birth_year_week design support.
+- Foundation added: Admin Players can preview/persist a deterministic 2000/2001 initial pool, inspect generated attributes/traits, and lock/regenerate unlocked players. Full manual editing, annual intake, progression/regression, retirements, and Viewer player profiles remain follow-up work.
 
 ## Phase 6 — End-of-Season Lifecycle
 - Add annual 15-year-old talent intake.

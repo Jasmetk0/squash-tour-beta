@@ -1026,3 +1026,24 @@ class TournamentTemplatesImportResponse(BaseModel):
     dry_run: bool
     template_count: int
     errors: list[TournamentTemplatesValidationIssueResponse] = Field(default_factory=list)
+
+
+class InitialPoolGenerateRequest(BaseModel):
+    season: str = Field(default="2000/2001", min_length=4, max_length=16)
+    seed: int
+    target_pool_size: int | None = Field(default=128, ge=1, le=2000)
+    dry_run: bool = True
+
+
+class InitialPoolRegenerateRequest(BaseModel):
+    season: str = Field(default="2000/2001", min_length=4, max_length=16)
+    seed: int
+    target_pool_size: int | None = Field(default=None, ge=1, le=2000)
+    country_code: str | None = Field(default=None, min_length=3, max_length=3)
+    region: str | None = None
+    dry_run: bool = True
+
+    @field_validator("country_code")
+    @classmethod
+    def normalize_country_code(cls, value: str | None) -> str | None:
+        return value.upper() if value else value

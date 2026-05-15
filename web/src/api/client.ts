@@ -77,7 +77,10 @@ import type {
   TournamentTemplatesListResponse,
   TournamentTemplatesMetadataResponse,
   TournamentTemplateRecord,
-  TournamentTemplateUpsertPayload
+  TournamentTemplateUpsertPayload,
+  SeasonActivePlayersResponse,
+  SeasonBootstrapPayload,
+  SeasonBootstrapResponse
 } from './types'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
@@ -116,6 +119,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function getInitialPlayerPool(season = '2000/2001'): Promise<InitialPoolResponse> {
   return request(`/admin/players/initial-pool?season=${encodeURIComponent(season)}`)
+}
+
+export function getSeasonActivePlayers(season = '2000/2001'): Promise<SeasonActivePlayersResponse> {
+  return request(`/admin/seasons/${encodeURIComponent(season)}/players`)
+}
+
+export function bootstrapSeasonFromInitialPool(season: string, payload: SeasonBootstrapPayload): Promise<SeasonBootstrapResponse> {
+  return request(`/admin/seasons/${encodeURIComponent(season)}/bootstrap-from-initial-pool`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function generateInitialPlayerPool(payload: InitialPoolGeneratePayload): Promise<InitialPoolResponse> {

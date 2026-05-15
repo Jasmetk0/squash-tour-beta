@@ -18,6 +18,12 @@ const api = vi.hoisted(() => ({
   generateEventMatchPackage: vi.fn(),
   simulateNextEventMatch: vi.fn(),
   simulateEventMatch: vi.fn(),
+  getEventProgressionStatus: vi.fn(),
+  processEventByes: vi.fn(),
+  refreshEventProgression: vi.fn(),
+  promoteEventQualifiers: vi.fn(),
+  simulateEventRound: vi.fn(),
+  simulateEventDraw: vi.fn(),
   ApiError: class ApiError extends Error { status = 400 }
 }))
 
@@ -216,12 +222,12 @@ const matchResult = {
   match_package: {
     event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', template_id: 'wt_a', season_week: 1, calendar_year: 2000, year_week: 35, seed: 12345, dry_run: true, persisted: false, qualification_matches: [], main_draw_matches: [matchRecord],
     summary: { event_id: 'EVT-2000-W01-wt_a', total_matches: 1, qualification_matches: 0, main_draw_matches: 1, pending_matches: 1, completed_matches: 0, blocked_matches: 0, bye_auto_advances: 0, validation_warning_count: 1, validation_error_count: 1 },
-    metadata: { event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', seed: 12345, dry_run: true, persisted: false, build_fingerprint: 'match-build-fp', draw_package_fingerprint: 'draw-build-fp', active_players_fingerprint: 'active-fp', match_engine_version: 'match_engine_v1', persistence_path: null, ranking_updates_implemented: false },
+    metadata: { event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', seed: 12345, dry_run: true, persisted: false, build_fingerprint: 'match-build-fp', draw_package_fingerprint: 'draw-build-fp', active_players_fingerprint: 'active-fp', match_engine_version: 'match_engine_v1', persistence_path: null, ranking_updates_implemented: false, qualification_winners_promoted: false },
     validation_warnings: [{ severity: 'warning', code: 'match_warn', message: 'match warning', event_id: 'EVT-2000-W01-wt_a', match_id: 'm1', player_id: null, field: null }],
     validation_errors: [{ severity: 'error', code: 'match_error', message: 'match error', event_id: 'EVT-2000-W01-wt_a', match_id: 'm1', player_id: null, field: null }]
   },
   summary: { event_id: 'EVT-2000-W01-wt_a', total_matches: 1, qualification_matches: 0, main_draw_matches: 1, pending_matches: 1, completed_matches: 0, blocked_matches: 0, bye_auto_advances: 0, validation_warning_count: 1, validation_error_count: 1 },
-  metadata: { event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', seed: 12345, dry_run: true, persisted: false, build_fingerprint: 'match-build-fp', draw_package_fingerprint: 'draw-build-fp', active_players_fingerprint: 'active-fp', match_engine_version: 'match_engine_v1', persistence_path: null, ranking_updates_implemented: false },
+  metadata: { event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', seed: 12345, dry_run: true, persisted: false, build_fingerprint: 'match-build-fp', draw_package_fingerprint: 'draw-build-fp', active_players_fingerprint: 'active-fp', match_engine_version: 'match_engine_v1', persistence_path: null, ranking_updates_implemented: false, qualification_winners_promoted: false },
   validation_warnings: [{ severity: 'warning', code: 'match_warn', message: 'match warning', event_id: 'EVT-2000-W01-wt_a', match_id: 'm1', player_id: null, field: null }],
   validation_errors: [{ severity: 'error', code: 'match_error', message: 'match error', event_id: 'EVT-2000-W01-wt_a', match_id: 'm1', player_id: null, field: null }],
   match_package_exists: false
@@ -232,6 +238,38 @@ const simulatedMatchResult = {
   match_package: { ...matchResult.match_package, main_draw_matches: [completedMatchRecord], summary: { ...matchResult.match_package.summary, pending_matches: 0, completed_matches: 1 } },
   summary: { ...matchResult.summary, pending_matches: 0, completed_matches: 1 },
   match_package_exists: true
+}
+
+const progressionStatus = {
+  event_id: 'EVT-2000-W01-wt_a',
+  season: '2000/2001',
+  qualification_status: 'not_applicable',
+  main_draw_status: 'in_progress',
+  event_status: 'in_progress',
+  qualification_winners_ready: false,
+  qualification_winners_promoted: false,
+  pending_matches: 1,
+  blocked_matches: 0,
+  completed_matches: 0,
+  bye_auto_advances_pending: 0,
+  champion_player_id: 'P-2000-AAA-0001',
+  champion_name: 'Adam Ahmed AA01',
+  finalist_player_id: 'P-2000-BBB-0002',
+  finalist_name: 'Ben Beta BB02',
+  warnings: [{ severity: 'warning', code: 'progression_warn', message: 'progression warning', event_id: 'EVT-2000-W01-wt_a', match_id: null, player_id: null, field: null }],
+  errors: []
+}
+
+const progressionResult = {
+  event_id: 'EVT-2000-W01-wt_a',
+  action: 'simulate_round',
+  match_package: simulatedMatchResult.match_package,
+  progression_status: { ...progressionStatus, completed_matches: 1, pending_matches: 0 },
+  changed_match_ids: ['m1'],
+  promoted_player_ids: ['P-2000-AAA-0001'],
+  validation_warnings: [{ severity: 'warning', code: 'progression_warn', message: 'progression warning', event_id: 'EVT-2000-W01-wt_a', match_id: null, player_id: null, field: null }],
+  validation_errors: [],
+  metadata: { build_fingerprint: 'match-build-fp' }
 }
 
 const calendarResponse = {
@@ -257,6 +295,12 @@ describe('AdminSeasonsPage', () => {
     api.generateEventMatchPackage.mockResolvedValue(matchResult)
     api.simulateNextEventMatch.mockResolvedValue(simulatedMatchResult)
     api.simulateEventMatch.mockResolvedValue(simulatedMatchResult)
+    api.getEventProgressionStatus.mockResolvedValue(progressionStatus)
+    api.processEventByes.mockResolvedValue({ ...progressionResult, action: 'process_byes' })
+    api.refreshEventProgression.mockResolvedValue({ ...progressionResult, action: 'advance_completed' })
+    api.promoteEventQualifiers.mockResolvedValue({ ...progressionResult, action: 'promote_qualifiers' })
+    api.simulateEventRound.mockResolvedValue(progressionResult)
+    api.simulateEventDraw.mockResolvedValue({ ...progressionResult, action: 'simulate_draw' })
   })
 
   it('renders bootstrap controls and previews with dry_run true', async () => {
@@ -386,6 +430,33 @@ describe('AdminSeasonsPage', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Persist match package' }))
     expect(api.generateEventMatchPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false }))
+  })
+
+  it('renders progression status and calls progression command APIs', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
+    api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
+    api.getEventMatchPackage.mockResolvedValue({ ...matchResult, match_package_exists: true })
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findByRole('heading', { name: 'Progression status' })).toBeInTheDocument()
+    expect(screen.getByText('Progression commands update match states and propagate winners. They do not update ranking/race yet.')).toBeInTheDocument()
+    expect(screen.getAllByText('Adam Ahmed AA01').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Ben Beta BB02').length).toBeGreaterThan(0)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Refresh progression' }))
+    expect(api.refreshEventProgression).toHaveBeenCalledWith('EVT-2000-W01-wt_a', { seed: 12345 })
+    await userEvent.click(screen.getByRole('button', { name: 'Process BYEs' }))
+    expect(api.processEventByes).toHaveBeenCalledWith('EVT-2000-W01-wt_a', { seed: 12345 })
+    await userEvent.click(screen.getByRole('button', { name: 'Promote qualifiers' }))
+    expect(api.promoteEventQualifiers).toHaveBeenCalledWith('EVT-2000-W01-wt_a', { seed: 12345 })
+    await userEvent.selectOptions(screen.getByLabelText('Progression draw'), 'main')
+    await userEvent.clear(screen.getByLabelText('Round number'))
+    await userEvent.type(screen.getByLabelText('Round number'), '2')
+    await userEvent.click(screen.getByRole('button', { name: 'Simulate round' }))
+    expect(api.simulateEventRound).toHaveBeenCalledWith('EVT-2000-W01-wt_a', { seed: 12345, draw_type: 'main', round_number: 2 })
+    expect(await screen.findByText(/Last progression action: simulate_round/)).toBeInTheDocument()
+    expect(screen.getByText('progression_warn: progression warning')).toBeInTheDocument()
   })
 
   it('simulates next and selected match through API', async () => {

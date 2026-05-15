@@ -1545,6 +1545,7 @@ export type MatchPackageMetadata = {
   match_engine_version: string | null
   persistence_path: string | null
   ranking_updates_implemented: boolean
+  qualification_winners_promoted: boolean
 }
 
 export type SeasonEventMatchPackage = {
@@ -1573,6 +1574,53 @@ export type MatchGeneratePayload = {
 
 export type MatchSimulatePayload = {
   seed: number
+}
+
+export type TournamentProgressionStatus = {
+  event_id: string
+  season: string
+  qualification_status: 'not_started' | 'in_progress' | 'completed' | 'not_applicable'
+  main_draw_status: 'not_started' | 'in_progress' | 'completed' | 'not_applicable'
+  event_status: 'not_started' | 'in_progress' | 'completed' | 'blocked'
+  qualification_winners_ready: boolean
+  qualification_winners_promoted: boolean
+  pending_matches: number
+  blocked_matches: number
+  completed_matches: number
+  bye_auto_advances_pending: number
+  champion_player_id: string | null
+  champion_name: string | null
+  finalist_player_id: string | null
+  finalist_name: string | null
+  warnings: MatchValidationIssue[]
+  errors: MatchValidationIssue[]
+}
+
+export type ProgressionCommandPayload = {
+  seed: number
+}
+
+export type SimulateRoundPayload = {
+  seed: number
+  draw_type: 'qualification' | 'main'
+  round_number: number
+}
+
+export type SimulateDrawPayload = {
+  seed: number
+  draw_type: 'qualification' | 'main'
+}
+
+export type ProgressionCommandResult = {
+  event_id: string
+  action: 'process_byes' | 'refresh_status' | 'simulate_round' | 'simulate_draw' | 'promote_qualifiers' | 'advance_completed'
+  match_package: SeasonEventMatchPackage
+  progression_status: TournamentProgressionStatus
+  changed_match_ids: string[]
+  promoted_player_ids: string[]
+  validation_warnings: MatchValidationIssue[]
+  validation_errors: MatchValidationIssue[]
+  metadata: Record<string, unknown>
 }
 
 export type SeasonEventMatchPackageResult = {

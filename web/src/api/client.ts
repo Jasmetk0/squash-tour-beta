@@ -87,6 +87,11 @@ import type {
   DrawGeneratePayload,
   MatchGeneratePayload,
   MatchSimulatePayload,
+  ProgressionCommandPayload,
+  ProgressionCommandResult,
+  SimulateDrawPayload,
+  SimulateRoundPayload,
+  TournamentProgressionStatus,
   SeasonEventDrawPackageResult,
   SeasonEventMatchPackageResult,
   SeasonEventEntryListResult
@@ -176,6 +181,30 @@ export function simulateNextEventMatch(eventId: string, payload: MatchSimulatePa
 
 export function simulateEventMatch(eventId: string, matchId: string, payload: MatchSimulatePayload): Promise<SeasonEventMatchPackageResult> {
   return request(`/admin/matches/${encodeURIComponent(eventId)}/simulate/${encodeURIComponent(matchId)}`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function getEventProgressionStatus(eventId: string): Promise<TournamentProgressionStatus> {
+  return request(`/admin/matches/${encodeURIComponent(eventId)}/progression`)
+}
+
+export function processEventByes(eventId: string, payload: ProgressionCommandPayload): Promise<ProgressionCommandResult> {
+  return request(`/admin/matches/${encodeURIComponent(eventId)}/process-byes`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function refreshEventProgression(eventId: string, payload: ProgressionCommandPayload): Promise<ProgressionCommandResult> {
+  return request(`/admin/matches/${encodeURIComponent(eventId)}/refresh-progression`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function promoteEventQualifiers(eventId: string, payload: ProgressionCommandPayload): Promise<ProgressionCommandResult> {
+  return request(`/admin/matches/${encodeURIComponent(eventId)}/promote-qualifiers`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function simulateEventRound(eventId: string, payload: SimulateRoundPayload): Promise<ProgressionCommandResult> {
+  return request(`/admin/matches/${encodeURIComponent(eventId)}/simulate-round`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function simulateEventDraw(eventId: string, payload: SimulateDrawPayload): Promise<ProgressionCommandResult> {
+  return request(`/admin/matches/${encodeURIComponent(eventId)}/simulate-draw`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function generateInitialPlayerPool(payload: InitialPoolGeneratePayload): Promise<InitialPoolResponse> {

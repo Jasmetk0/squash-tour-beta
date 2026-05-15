@@ -91,3 +91,43 @@ def test_simulate_next(tmp_path: Path) -> None:
         status, after_next = call("POST", f"{server.base_url}/admin/matches/{event_id}/simulate-next", {"seed": 444})
         assert status == 200
         assert after_next["summary"]["completed_matches"] == 1
+
+
+def test_progression_endpoints_status_process_byes_promote_refresh_and_round(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        event_id = server.persist_draw_package()
+        call("POST", f"{server.base_url}/admin/matches/{event_id}/generate", {"seed": 333, "dry_run": False, "overwrite_existing": False})
+
+        status, progression = call("GET", f"{server.base_url}/admin/matches/{event_id}/progression")
+        assert status == 200
+        assert progression["event_id"] == event_id
+        assert progression["main_draw_status"] in {"not_started", "in_progress", "completed"}
+
+        status, byes = call("POST", f"{server.base_url}/admin/matches/{event_id}/process-byes", {"seed": 444})
+        assert status == 200
+        assert byes["action"] == "process_byes"
+        assert byes["progression_status"]["event_id"] == event_id
+
+        status, refreshed = call("POST", f"{server.base_url}/admin/matches/{event_id}/refresh-progression", {"seed": 444})
+        assert status == 200
+        assert refreshed["action"] == "advance_completed"
+
+        status, promoted = call("POST", f"{server.base_url}/admin/matches/{event_id}/promote-qualifiers", {"seed": 444})
+        assert status == 200
+        assert promoted["action"] == "promote_qualifiers"
+
+        status, round_result = call("POST", f"{server.base_url}/admin/matches/{event_id}/simulate-round", {"seed": 444, "draw_type": "main", "round_number": 1})
+        assert status == 200
+        assert round_result["action"] == "simulate_round"
+        assert round_result["match_package"]["summary"]["completed_matches"] >= 1
+
+
+def test_progression_missing_match_package_errors(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        try:
+            call("GET", f"{server.base_url}/admin/matches/EVT-missing/progression")
+        except HTTPError as exc:
+            assert exc.code == 400
+            assert "No persisted match package" in exc.read().decode()
+        else:
+            raise AssertionError("missing match package should fail progression status")

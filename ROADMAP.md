@@ -31,7 +31,8 @@
 - Foundation added: Admin Seasons can preview and persist deterministic entry lists for persisted season calendar events from persisted active season players, including main draw acceptances, qualification acceptances, alternates, validation issues, and provenance fingerprints.
 - Foundation added: Admin Seasons can preview and persist deterministic qualification/main draw packages from persisted event entry lists, including seeds, BYEs, qualifier placeholders, validation issues, and provenance fingerprints.
 - Foundation added: Admin Seasons can preview/persist deterministic match packages from persisted draw packages and simulate selected or next pending matches with file-backed result storage and provenance fingerprints.
-- Remaining limitations: ranking/race updates are not connected, full tournament progression is not complete, qualification winner promotion may be partial, withdrawals/lucky losers are not connected, and final database-backed history persistence is not implemented.
+- Foundation added: conservative persisted tournament progression commands can process BYEs, refresh/advance completed propagation, promote completed qualification winners into main-draw qualifier placeholders, and simulate explicit rounds/draws from the match package.
+- Remaining limitations: ranking/race updates and official points awarding are not connected, withdrawals/lucky losers are not connected, advanced schedule-of-play is not implemented, Viewer tournament pages are not complete, and final database-backed history persistence is not implemented.
 
 ## Phase 5 — Player Generation Control
 - Add initial player pool generation for the first season.

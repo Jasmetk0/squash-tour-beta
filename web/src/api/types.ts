@@ -1466,6 +1466,124 @@ export type SeasonEventDrawPackageResult = {
   draw_package_exists: boolean
 }
 
+
+export type MatchValidationIssue = {
+  severity: 'warning' | 'error'
+  code: string
+  message: string
+  event_id: string | null
+  match_id: string | null
+  player_id: string | null
+  field: string | null
+}
+
+export type MatchSimulationResult = {
+  match_id: string
+  winner_player_id: string
+  loser_player_id: string
+  scoreline: string
+  games: Array<Record<string, unknown>>
+  points_summary: Record<string, unknown>
+  retired: boolean
+  walkover: boolean
+  simulation_fingerprint: string
+  seed: number
+}
+
+export type SeasonMatchRecord = {
+  match_id: string
+  event_id: string
+  draw_type: 'qualification' | 'main'
+  round_number: number
+  round_name: string
+  bracket_position: number
+  top_slot_id: string
+  bottom_slot_id: string
+  top_source: string
+  bottom_source: string
+  top_player_id: string | null
+  bottom_player_id: string | null
+  top_player_name: string | null
+  bottom_player_name: string | null
+  top_country_code: string | null
+  bottom_country_code: string | null
+  status: 'pending' | 'blocked_waiting_for_sources' | 'bye_auto_advance_pending' | 'completed' | 'walkover_placeholder'
+  winner_player_id: string | null
+  loser_player_id: string | null
+  scoreline: string | null
+  simulated_result: MatchSimulationResult | null
+  winner_to_match_id: string | null
+  source_draw_fingerprint: string
+  generated_fingerprint: string
+  result_fingerprint: string | null
+  simulation_seed: number | null
+  result_notes: string | null
+}
+
+export type MatchPackageSummary = {
+  event_id: string | null
+  total_matches: number
+  qualification_matches: number
+  main_draw_matches: number
+  pending_matches: number
+  completed_matches: number
+  blocked_matches: number
+  bye_auto_advances: number
+  validation_warning_count: number
+  validation_error_count: number
+}
+
+export type MatchPackageMetadata = {
+  event_id: string
+  season: string
+  seed: number
+  dry_run: boolean
+  persisted: boolean
+  build_fingerprint: string
+  draw_package_fingerprint: string
+  active_players_fingerprint: string
+  match_engine_version: string | null
+  persistence_path: string | null
+  ranking_updates_implemented: boolean
+}
+
+export type SeasonEventMatchPackage = {
+  event_id: string
+  season: string
+  template_id: string
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  seed: number
+  dry_run: boolean
+  persisted: boolean
+  qualification_matches: SeasonMatchRecord[]
+  main_draw_matches: SeasonMatchRecord[]
+  summary: MatchPackageSummary
+  metadata: MatchPackageMetadata
+  validation_warnings: MatchValidationIssue[]
+  validation_errors: MatchValidationIssue[]
+}
+
+export type MatchGeneratePayload = {
+  seed: number
+  dry_run: boolean
+  overwrite_existing: boolean
+}
+
+export type MatchSimulatePayload = {
+  seed: number
+}
+
+export type SeasonEventMatchPackageResult = {
+  match_package: SeasonEventMatchPackage | null
+  summary: MatchPackageSummary
+  metadata: MatchPackageMetadata | null
+  validation_warnings: MatchValidationIssue[]
+  validation_errors: MatchValidationIssue[]
+  match_package_exists: boolean
+}
+
 export type EntryListGeneratePayload = {
   seed: number
   dry_run: boolean

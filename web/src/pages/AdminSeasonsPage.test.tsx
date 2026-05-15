@@ -14,6 +14,10 @@ const api = vi.hoisted(() => ({
   generateEventEntryList: vi.fn(),
   getEventDrawPackage: vi.fn(),
   generateEventDrawPackage: vi.fn(),
+  getEventMatchPackage: vi.fn(),
+  generateEventMatchPackage: vi.fn(),
+  simulateNextEventMatch: vi.fn(),
+  simulateEventMatch: vi.fn(),
   ApiError: class ApiError extends Error { status = 400 }
 }))
 
@@ -182,6 +186,54 @@ const drawResult = {
   draw_package_exists: false
 }
 
+
+const emptyMatchResult = {
+  match_package: null,
+  summary: { event_id: null, total_matches: 0, qualification_matches: 0, main_draw_matches: 0, pending_matches: 0, completed_matches: 0, blocked_matches: 0, bye_auto_advances: 0, validation_warning_count: 0, validation_error_count: 0 },
+  metadata: null,
+  validation_warnings: [],
+  validation_errors: [],
+  match_package_exists: false
+}
+
+const matchRecord = {
+  match_id: 'm1', event_id: 'EVT-2000-W01-wt_a', draw_type: 'main', round_number: 1, round_name: 'Round 1', bracket_position: 1, top_slot_id: 'ms1', bottom_slot_id: 'ms2', top_source: 'SLOT:1', bottom_source: 'SLOT:2', top_player_id: 'P-2000-AAA-0001', bottom_player_id: 'P-2000-BBB-0002', top_player_name: 'Adam Ahmed AA01', bottom_player_name: 'Ben Beta BB02', top_country_code: 'AAA', bottom_country_code: 'BBB', status: 'pending', winner_player_id: null, loser_player_id: null, scoreline: null, simulated_result: null, winner_to_match_id: 'm3', source_draw_fingerprint: 'draw-fp', generated_fingerprint: 'match-fp', result_fingerprint: null, simulation_seed: null, result_notes: null
+}
+
+const completedMatchRecord = {
+  ...matchRecord,
+  status: 'completed',
+  winner_player_id: 'P-2000-AAA-0001',
+  loser_player_id: 'P-2000-BBB-0002',
+  scoreline: '11-7, 11-8, 11-9',
+  result_fingerprint: 'result-fp',
+  simulation_seed: 999,
+  result_notes: 'ranking/race updates not implemented',
+  simulated_result: { match_id: 'm1', winner_player_id: 'P-2000-AAA-0001', loser_player_id: 'P-2000-BBB-0002', scoreline: '11-7, 11-8, 11-9', games: [], points_summary: {}, retired: false, walkover: false, simulation_fingerprint: 'result-fp', seed: 999 }
+}
+
+const matchResult = {
+  match_package: {
+    event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', template_id: 'wt_a', season_week: 1, calendar_year: 2000, year_week: 35, seed: 12345, dry_run: true, persisted: false, qualification_matches: [], main_draw_matches: [matchRecord],
+    summary: { event_id: 'EVT-2000-W01-wt_a', total_matches: 1, qualification_matches: 0, main_draw_matches: 1, pending_matches: 1, completed_matches: 0, blocked_matches: 0, bye_auto_advances: 0, validation_warning_count: 1, validation_error_count: 1 },
+    metadata: { event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', seed: 12345, dry_run: true, persisted: false, build_fingerprint: 'match-build-fp', draw_package_fingerprint: 'draw-build-fp', active_players_fingerprint: 'active-fp', match_engine_version: 'match_engine_v1', persistence_path: null, ranking_updates_implemented: false },
+    validation_warnings: [{ severity: 'warning', code: 'match_warn', message: 'match warning', event_id: 'EVT-2000-W01-wt_a', match_id: 'm1', player_id: null, field: null }],
+    validation_errors: [{ severity: 'error', code: 'match_error', message: 'match error', event_id: 'EVT-2000-W01-wt_a', match_id: 'm1', player_id: null, field: null }]
+  },
+  summary: { event_id: 'EVT-2000-W01-wt_a', total_matches: 1, qualification_matches: 0, main_draw_matches: 1, pending_matches: 1, completed_matches: 0, blocked_matches: 0, bye_auto_advances: 0, validation_warning_count: 1, validation_error_count: 1 },
+  metadata: { event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', seed: 12345, dry_run: true, persisted: false, build_fingerprint: 'match-build-fp', draw_package_fingerprint: 'draw-build-fp', active_players_fingerprint: 'active-fp', match_engine_version: 'match_engine_v1', persistence_path: null, ranking_updates_implemented: false },
+  validation_warnings: [{ severity: 'warning', code: 'match_warn', message: 'match warning', event_id: 'EVT-2000-W01-wt_a', match_id: 'm1', player_id: null, field: null }],
+  validation_errors: [{ severity: 'error', code: 'match_error', message: 'match error', event_id: 'EVT-2000-W01-wt_a', match_id: 'm1', player_id: null, field: null }],
+  match_package_exists: false
+}
+
+const simulatedMatchResult = {
+  ...matchResult,
+  match_package: { ...matchResult.match_package, main_draw_matches: [completedMatchRecord], summary: { ...matchResult.match_package.summary, pending_matches: 0, completed_matches: 1 } },
+  summary: { ...matchResult.summary, pending_matches: 0, completed_matches: 1 },
+  match_package_exists: true
+}
+
 const calendarResponse = {
   calendar: { season: '2000/2001', events: [calendarEvent], metadata: null, validation_warnings: [{ severity: 'warning', code: 'ranking_race_not_integrated', message: 'ranking/race integration not implemented yet', event_id: null, field: null }], validation_errors: [] },
   summary: { event_count: 1, season_weeks_used: 1, first_event_week: 1, last_event_week: 1, world_tour_events: 1, elite_tour_events: 0, validation_warning_count: 1, validation_error_count: 0, persisted: false, calendar_exists: false },
@@ -201,6 +253,10 @@ describe('AdminSeasonsPage', () => {
     api.generateEventEntryList.mockResolvedValue(entryResult)
     api.getEventDrawPackage.mockResolvedValue(emptyDrawResult)
     api.generateEventDrawPackage.mockResolvedValue(drawResult)
+    api.getEventMatchPackage.mockResolvedValue(emptyMatchResult)
+    api.generateEventMatchPackage.mockResolvedValue(matchResult)
+    api.simulateNextEventMatch.mockResolvedValue(simulatedMatchResult)
+    api.simulateEventMatch.mockResolvedValue(simulatedMatchResult)
   })
 
   it('renders bootstrap controls and previews with dry_run true', async () => {
@@ -301,6 +357,51 @@ describe('AdminSeasonsPage', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Persist draw' }))
     expect(api.generateEventDrawPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false }))
+  })
+
+
+  it('renders Event Matches section and previews match package', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
+    api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findByRole('heading', { name: 'Event Matches' })).toBeInTheDocument()
+    expect(screen.getByText('Match generation creates match records from persisted draw packages. Simulation stores results but does not update rankings/race yet.')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Preview match package' }))
+    expect(api.generateEventMatchPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: true, seed: 12345 }))
+    const table = await screen.findByRole('table', { name: 'Event matches table' })
+    expect(within(table).getByText('Adam Ahmed AA01')).toBeInTheDocument()
+    expect(within(table).getByText('Ben Beta BB02')).toBeInTheDocument()
+    expect(screen.getByText('match_error: match error')).toBeInTheDocument()
+    expect(screen.getByText('match_warn: match warning')).toBeInTheDocument()
+  })
+
+  it('persists match package with dry_run false', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
+    api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Persist match package' }))
+    expect(api.generateEventMatchPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false }))
+  })
+
+  it('simulates next and selected match through API', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
+    api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
+    api.getEventMatchPackage.mockResolvedValue({ ...matchResult, match_package_exists: true })
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Simulate next pending match' }))
+    expect(api.simulateNextEventMatch).toHaveBeenCalledWith('EVT-2000-W01-wt_a', { seed: 12345 })
+    expect(await screen.findByText('11-7, 11-8, 11-9')).toBeInTheDocument()
+
+    await userEvent.selectOptions(screen.getByLabelText('Selected match'), 'm1')
+    await userEvent.click(screen.getByRole('button', { name: 'Simulate selected match' }))
+    expect(api.simulateEventMatch).toHaveBeenCalledWith('EVT-2000-W01-wt_a', 'm1', { seed: 12345 })
   })
 
 })

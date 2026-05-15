@@ -51,6 +51,13 @@ class TournamentTemplate(BaseModel):
     qualification_duration_days: int = Field(ge=0)
     preferred_week_type: str | None = None
     seasonal_grouping: str | None = None
+    prize_money: int = Field(default=0, ge=0)
+    prestige: float = Field(default=0.0, ge=0)
+    duration_in_season_weeks: int = Field(default=1, ge=1)
+    host_requirements: dict[str, object] = Field(default_factory=dict)
+    category_specific_rules: dict[str, object] = Field(default_factory=dict)
+    notes: str | None = None
+    active: bool = True
 
     @model_validator(mode="after")
     def validate_point_distribution_source(self) -> "TournamentTemplate":

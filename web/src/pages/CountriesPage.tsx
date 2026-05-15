@@ -31,6 +31,8 @@ const EMPTY_FORM: FormState = {
   competition_density: 3,
   federation_quality: 3,
   court_count: null,
+  travel_region: '',
+  notes: '',
   style_dna: {}
 }
 
@@ -49,6 +51,8 @@ function countryToForm(country: CountryRecord): FormState {
     competition_density: country.competition_density ?? 3,
     federation_quality: country.federation_quality ?? country.system_quality,
     court_count: country.court_count ?? null,
+    travel_region: country.travel_region ?? country.region,
+    notes: country.notes ?? '',
     style_dna: country.style_dna ?? {}
   }
 }
@@ -235,6 +239,8 @@ export function CountriesPage(): JSX.Element {
       region: form.region.trim(),
       flag_asset: form.flag_asset?.trim() ? form.flag_asset.trim() : null,
       court_count: form.court_count === null ? null : Number(form.court_count),
+      travel_region: form.travel_region?.trim() || form.region.trim(),
+      notes: form.notes?.trim() || null,
       style_dna: parsedStyleDna
     }
 
@@ -405,6 +411,7 @@ export function CountriesPage(): JSX.Element {
                   <th>Competition</th>
                   <th>Federation</th>
                   <th>Courts</th>
+                  <th>Travel</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -422,6 +429,7 @@ export function CountriesPage(): JSX.Element {
                     <td>{country.competition_density ?? 3}</td>
                     <td>{country.federation_quality ?? country.system_quality}</td>
                     <td>{country.court_count?.toLocaleString() ?? '—'}</td>
+                    <td>{country.travel_region ?? country.region}</td>
                     <td>
                       <button type="button" onClick={() => onSelect(country)} disabled={busy}>
                         Edit
@@ -557,7 +565,25 @@ export function CountriesPage(): JSX.Element {
                   }
                 />
               </label>
+              <label>
+                Travel region
+                <input
+                  value={form.travel_region ?? ''}
+                  onChange={(event) => setForm((current) => ({ ...current, travel_region: event.target.value }))}
+                  placeholder="Defaults to region"
+                />
+              </label>
             </div>
+
+            <label>
+              Notes
+              <textarea
+                rows={3}
+                value={form.notes ?? ''}
+                onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
+                placeholder="Authoring notes; does not drive simulation logic."
+              />
+            </label>
 
             <label>
               Style DNA (JSON numeric modifiers)
@@ -569,8 +595,16 @@ export function CountriesPage(): JSX.Element {
               />
             </label>
             <p className="status">
-              Style DNA is preserved by JSON APIs and world packages, but CSV import/export intentionally leaves it in JSON-only workflows for now.
+              Style DNA, travel region, and notes are authored inputs. Talent output preview, country momentum / era modifiers, and historical strength remain explicit future sections.
             </p>
+            <div className="empty-state">
+              <strong>Generated talent outputs</strong>
+              <p>Not implemented yet. Use Talent Class Preview for deterministic diagnostics from current inputs.</p>
+              <strong>Country momentum / era modifiers</strong>
+              <p>Not implemented yet. Future versions will store season-ranged modifiers as data.</p>
+              <strong>Historical strength</strong>
+              <p>Not implemented yet. Historical strength should be derived from snapshots and archives, not hand-edited here.</p>
+            </div>
 
             <div className="dashboard-actions-row">
               <button type="submit" disabled={busy}>

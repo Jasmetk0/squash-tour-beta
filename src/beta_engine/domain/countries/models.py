@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 CountrySimFactor = Literal[1, 2, 3, 4, 5]
 
@@ -27,6 +27,8 @@ class Country(BaseModel):
     competition_density: float | None = Field(default=None, ge=1.0, le=5.0)
     federation_quality: float | None = Field(default=None, ge=1.0, le=5.0)
     court_count: int | None = Field(default=None, ge=0)
+    travel_region: str | None = None
+    notes: str | None = None
     style_dna: dict[str, float] = Field(default_factory=dict)
 
     @model_validator(mode="after")
@@ -38,6 +40,20 @@ class Country(BaseModel):
         if self.federation_quality is None:
             self.federation_quality = float(self.system_quality)
         return self
+
+    @field_validator("travel_region", mode="before")
+    @classmethod
+    def normalize_travel_region(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        return normalized or None
+
+    @property
+    def effective_travel_region(self) -> str:
+        """Region used by travel/entry calculations when no explicit override is authored."""
+
+        return self.travel_region or self.region
 
     @staticmethod
     def _normalize_factor(value: int) -> float:
@@ -75,10 +91,6 @@ class Country(BaseModel):
     @property
     def historical_tradition(self) -> float:
         return self.squash_tradition_norm
-
-    @property
-    def travel_region(self) -> str:
-        return self.region
 
     @property
     def travel_affinity(self) -> dict[str, float]:

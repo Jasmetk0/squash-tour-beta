@@ -92,6 +92,8 @@ class CountriesConfigService:
                     "competition_density": country.competition_density,
                     "federation_quality": country.federation_quality,
                     "court_count": country.court_count if country.court_count is not None else "",
+                    "travel_region": country.travel_region or "",
+                    "notes": country.notes or "",
                 }
             )
         return output.getvalue()
@@ -179,6 +181,13 @@ class CountriesConfigService:
                     payload["court_count"] = int(raw_court_count)
                 except ValueError:
                     errors.append(CountriesImportError(row_number=index, field="court_count", message="court_count must be an integer"))
+
+            travel_region = (row.get("travel_region") or "").strip()
+            if travel_region:
+                payload["travel_region"] = travel_region
+            notes = (row.get("notes") or "").strip()
+            if notes:
+                payload["notes"] = notes
 
             if any(err.row_number == index for err in errors):
                 continue

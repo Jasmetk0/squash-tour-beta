@@ -69,6 +69,8 @@ COUNTRY_OPTIONAL_TABULAR_FIELDS = (
     "competition_density",
     "federation_quality",
     "court_count",
+    "travel_region",
+    "notes",
 )
 
 COUNTRY_EXPORT_TABULAR_FIELDS = (*COUNTRY_TABULAR_FIELDS, *COUNTRY_OPTIONAL_TABULAR_FIELDS)
@@ -132,6 +134,8 @@ def export_countries_to_csv(
                     "competition_density": country.competition_density,
                     "federation_quality": country.federation_quality,
                     "court_count": country.court_count if country.court_count is not None else "",
+                    "travel_region": country.travel_region or "",
+                    "notes": country.notes or "",
                 }
             )
     return target
@@ -171,6 +175,12 @@ def import_countries_from_csv(
             raw_court_count = (row.get("court_count") or "").strip()
             if raw_court_count:
                 country_payload["court_count"] = int(raw_court_count)
+            travel_region = (row.get("travel_region") or "").strip()
+            if travel_region:
+                country_payload["travel_region"] = travel_region
+            notes = (row.get("notes") or "").strip()
+            if notes:
+                country_payload["notes"] = notes
             countries.append(country_payload)
 
     countries_config = CountriesConfig.model_validate({"countries": countries})

@@ -47,7 +47,14 @@ const EMPTY_FORM: FormState = {
   event_duration_days: 6,
   qualification_duration_days: 2,
   preferred_week_type: '',
-  seasonal_grouping: ''
+  seasonal_grouping: '',
+  prize_money: 0,
+  prestige: 0,
+  duration_in_season_weeks: 1,
+  host_requirements: {},
+  category_specific_rules: {},
+  notes: '',
+  active: true
 }
 
 function formatApiError(error: unknown): string {
@@ -66,7 +73,14 @@ function templateToForm(template: TournamentTemplateRecord): FormState {
     point_distribution_ref: template.point_distribution_ref ?? '',
     point_distribution: template.point_distribution ?? null,
     preferred_week_type: template.preferred_week_type ?? '',
-    seasonal_grouping: template.seasonal_grouping ?? ''
+    seasonal_grouping: template.seasonal_grouping ?? '',
+    prize_money: template.prize_money ?? 0,
+    prestige: template.prestige ?? 0,
+    duration_in_season_weeks: template.duration_in_season_weeks ?? 1,
+    host_requirements: template.host_requirements ?? {},
+    category_specific_rules: template.category_specific_rules ?? {},
+    notes: template.notes ?? '',
+    active: template.active ?? true
   }
 }
 
@@ -81,6 +95,8 @@ export function TournamentTemplatesPage(): JSX.Element {
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [luckyLoserText, setLuckyLoserText] = useState(formatJson(EMPTY_FORM.lucky_loser_rules))
   const [pointsText, setPointsText] = useState('null')
+  const [hostRequirementsText, setHostRequirementsText] = useState('{}')
+  const [categoryRulesText, setCategoryRulesText] = useState('{}')
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -114,6 +130,8 @@ export function TournamentTemplatesPage(): JSX.Element {
       setForm(templateToForm(created))
       setLuckyLoserText(formatJson(created.lucky_loser_rules))
       setPointsText(formatJson(created.point_distribution))
+      setHostRequirementsText(formatJson(created.host_requirements ?? {}))
+      setCategoryRulesText(formatJson(created.category_specific_rules ?? {}))
       await refetchAll()
     },
     onError: (error) => {
@@ -131,6 +149,8 @@ export function TournamentTemplatesPage(): JSX.Element {
       setForm(templateToForm(updated))
       setLuckyLoserText(formatJson(updated.lucky_loser_rules))
       setPointsText(formatJson(updated.point_distribution))
+      setHostRequirementsText(formatJson(updated.host_requirements ?? {}))
+      setCategoryRulesText(formatJson(updated.category_specific_rules ?? {}))
       await refetchAll()
     },
     onError: (error) => {
@@ -195,6 +215,8 @@ export function TournamentTemplatesPage(): JSX.Element {
     setForm(EMPTY_FORM)
     setLuckyLoserText(formatJson(EMPTY_FORM.lucky_loser_rules))
     setPointsText('null')
+    setHostRequirementsText('{}')
+    setCategoryRulesText('{}')
     setSubmitError(null)
     setDeleteError(null)
   }
@@ -205,6 +227,8 @@ export function TournamentTemplatesPage(): JSX.Element {
     setForm(templateToForm(template))
     setLuckyLoserText(formatJson(template.lucky_loser_rules))
     setPointsText(formatJson(template.point_distribution))
+    setHostRequirementsText(formatJson(template.host_requirements ?? {}))
+    setCategoryRulesText(formatJson(template.category_specific_rules ?? {}))
     setSubmitError(null)
     setSubmitSuccess(null)
     setDeleteError(null)
@@ -220,6 +244,8 @@ export function TournamentTemplatesPage(): JSX.Element {
     })
     setLuckyLoserText(formatJson(template.lucky_loser_rules))
     setPointsText(formatJson(template.point_distribution))
+    setHostRequirementsText(formatJson(template.host_requirements ?? {}))
+    setCategoryRulesText(formatJson(template.category_specific_rules ?? {}))
     setSubmitError(null)
     setSubmitSuccess('Template duplicated into create form. Set a unique template_id before saving.')
   }
@@ -227,6 +253,8 @@ export function TournamentTemplatesPage(): JSX.Element {
   const buildPayload = (): TournamentTemplateUpsertPayload | null => {
     let luckyLoserRules: LuckyLoserRules
     let pointDistribution: TournamentPointDistribution | null
+    let hostRequirements: Record<string, unknown>
+    let categoryRules: Record<string, unknown>
     try {
       const parsed = JSON.parse(luckyLoserText || '{}') as unknown
       if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') throw new Error('Lucky loser rules must be a JSON object.')
@@ -241,6 +269,23 @@ export function TournamentTemplatesPage(): JSX.Element {
       pointDistribution = parsed as TournamentPointDistribution | null
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Inline points must be valid JSON.')
+      return null
+    }
+
+    try {
+      const parsed = JSON.parse(hostRequirementsText || '{}') as unknown
+      if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') throw new Error('Host requirements must be a JSON object.')
+      hostRequirements = parsed as Record<string, unknown>
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Host requirements must be valid JSON.')
+      return null
+    }
+    try {
+      const parsed = JSON.parse(categoryRulesText || '{}') as unknown
+      if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') throw new Error('Category-specific rules must be a JSON object.')
+      categoryRules = parsed as Record<string, unknown>
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Category-specific rules must be valid JSON.')
       return null
     }
 
@@ -269,7 +314,14 @@ export function TournamentTemplatesPage(): JSX.Element {
       event_duration_days: Number(form.event_duration_days),
       qualification_duration_days: Number(form.qualification_duration_days),
       preferred_week_type: form.preferred_week_type?.trim() || null,
-      seasonal_grouping: form.seasonal_grouping?.trim() || null
+      seasonal_grouping: form.seasonal_grouping?.trim() || null,
+      prize_money: Number(form.prize_money),
+      prestige: Number(form.prestige),
+      duration_in_season_weeks: Number(form.duration_in_season_weeks),
+      host_requirements: hostRequirements,
+      category_specific_rules: categoryRules,
+      notes: form.notes?.trim() || null,
+      active: Boolean(form.active)
     }
   }
 
@@ -362,6 +414,10 @@ export function TournamentTemplatesPage(): JSX.Element {
                   <th>Category</th>
                   <th>Main</th>
                   <th>Qual</th>
+                  <th>Prize</th>
+                  <th>Prestige</th>
+                  <th>Weeks</th>
+                  <th>Active</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -373,6 +429,10 @@ export function TournamentTemplatesPage(): JSX.Element {
                     <td>{template.category}</td>
                     <td>{template.main_draw_size}</td>
                     <td>{template.qualification_draw_size}</td>
+                    <td>{(template.prize_money ?? 0).toLocaleString()}</td>
+                    <td>{template.prestige ?? 0}</td>
+                    <td>{template.duration_in_season_weeks ?? 1}</td>
+                    <td>{template.active ?? true ? 'Yes' : 'No'}</td>
                     <td className="actions-cell">
                       <button type="button" onClick={() => onSelect(template)}>Edit</button>
                       <button type="button" onClick={() => onDuplicate(template)}>Duplicate</button>
@@ -457,6 +517,33 @@ export function TournamentTemplatesPage(): JSX.Element {
             <label>
               Seasonal grouping (optional)
               <input value={form.seasonal_grouping ?? ''} onChange={(event) => setText('seasonal_grouping', event.target.value)} />
+            </label>
+            <label>
+              Prize money
+              <input type="number" min="0" value={form.prize_money} onChange={(event) => setNumber('prize_money', event.target.value)} />
+            </label>
+            <label>
+              Prestige
+              <input type="number" min="0" step="0.1" value={form.prestige} onChange={(event) => setNumber('prestige', event.target.value)} />
+            </label>
+            <label>
+              Duration in season weeks
+              <input type="number" min="1" value={form.duration_in_season_weeks} onChange={(event) => setNumber('duration_in_season_weeks', event.target.value)} />
+            </label>
+            <label className="inline-checkbox">
+              <input type="checkbox" checked={form.active} onChange={(event) => setForm((current) => ({ ...current, active: event.target.checked }))} /> Active/enabled
+            </label>
+            <label className="full-width">
+              Notes
+              <textarea rows={3} value={form.notes ?? ''} onChange={(event) => setText('notes', event.target.value)} />
+            </label>
+            <label className="full-width">
+              Host requirements (JSON)
+              <textarea rows={5} value={hostRequirementsText} onChange={(event) => setHostRequirementsText(event.target.value)} />
+            </label>
+            <label className="full-width">
+              Category-specific rules (JSON)
+              <textarea rows={5} value={categoryRulesText} onChange={(event) => setCategoryRulesText(event.target.value)} />
             </label>
             <label className="full-width">
               Lucky loser rules (JSON)

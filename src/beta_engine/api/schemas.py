@@ -22,6 +22,7 @@ from beta_engine.application.rollover_models import (
 )
 from beta_engine.application.season_models import RaceSnapshot, RankingSnapshot, SeasonState, SimulationStepResult
 from beta_engine.domain.finals import FinalsQualificationResult, FinalsResult
+from beta_engine.domain.players.initial_pool import CustomInitialPoolPlayerCreate, InitialPoolPlayerUpdate
 
 
 class HealthResponse(BaseModel):
@@ -1027,6 +1028,15 @@ class TournamentTemplatesImportResponse(BaseModel):
     template_count: int
     errors: list[TournamentTemplatesValidationIssueResponse] = Field(default_factory=list)
 
+
+
+
+class CustomInitialPoolPlayerCreateRequest(CustomInitialPoolPlayerCreate):
+    pass
+
+
+class InitialPoolPlayerUpdateRequest(InitialPoolPlayerUpdate):
+    pass
 
 class InitialPoolGenerateRequest(BaseModel):
     season: str = Field(default="2000/2001", min_length=4, max_length=16)

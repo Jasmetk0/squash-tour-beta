@@ -28,6 +28,9 @@ import type {
   HealthResponse,
   InitialPoolGeneratePayload,
   InitialPoolRegeneratePayload,
+  CustomInitialPoolPlayerCreatePayload,
+  InitialPoolPlayerUpdatePayload,
+  InitialPoolAuditResponse,
   InitialPoolPlayer,
   InitialPoolResponse,
   RankingSnapshot,
@@ -121,6 +124,23 @@ export function generateInitialPlayerPool(payload: InitialPoolGeneratePayload): 
 
 export function regenerateInitialPlayerPool(payload: InitialPoolRegeneratePayload): Promise<InitialPoolResponse> {
   return request('/admin/players/initial-pool/regenerate-unlocked', { method: 'POST', body: JSON.stringify(payload) })
+}
+
+
+export function createCustomInitialPoolPlayer(payload: CustomInitialPoolPlayerCreatePayload): Promise<InitialPoolPlayer> {
+  return request('/admin/players/custom', { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function updateInitialPoolPlayer(playerId: string, payload: InitialPoolPlayerUpdatePayload): Promise<InitialPoolPlayer> {
+  return request(`/admin/players/${encodeURIComponent(playerId)}`, { method: 'PATCH', body: JSON.stringify(payload) })
+}
+
+export function getInitialPoolAuditEvents(params: { season?: string; playerId?: string } = {}): Promise<InitialPoolAuditResponse> {
+  const query = new URLSearchParams()
+  if (params.season) query.set('season', params.season)
+  if (params.playerId) query.set('player_id', params.playerId)
+  const suffix = query.toString() ? `?${query.toString()}` : ''
+  return request(`/admin/players/audit${suffix}`)
 }
 
 export function lockInitialPoolPlayer(playerId: string): Promise<InitialPoolPlayer> {

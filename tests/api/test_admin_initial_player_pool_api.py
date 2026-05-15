@@ -80,3 +80,51 @@ def test_generate_preview_dry_run_and_lock_workflow(tmp_path) -> None:
 
         _, regenerated = call("POST", f"{server.base_url}/admin/players/initial-pool/regenerate-unlocked", {"season": "2000/2001", "seed": 8, "country_code": locked["country_code"], "dry_run": False})
         assert next(player for player in regenerated["players"] if player["player_id"] == player_id) == locked
+
+
+def custom_api_payload(player_id="CUST-2000-AAA-API") -> dict:
+    return {
+        "player_id": player_id,
+        "name": "API Player",
+        "country_code": "AAA",
+        "birth_year": 1977,
+        "birth_year_week": 8,
+        "current_ability": 77,
+        "potential_ability": 86,
+        "potential_tier": "A",
+        "career_stage": "prime",
+        "play_style": "balanced",
+        "archetype": "all_court",
+        "attributes": {"technique": 77, "movement": 76, "physical": 75, "mental": 78, "consistency": 77, "clutch": 76, "recovery": 75},
+        "hidden_career_traits": {"potential_ceiling": 86, "growth_curve": "steady", "professionalism": 0.8, "ambition": 0.7, "travel_tolerance": 0.6, "schedule_aggression": 0.5, "injury_proneness": 0.2, "resilience": 0.7},
+        "reason": "api test",
+    }
+
+
+def test_custom_update_and_audit_api_workflow(tmp_path) -> None:
+    with Server(tmp_path) as server:
+        status, created = call("POST", f"{server.base_url}/admin/players/custom", custom_api_payload())
+        assert status == 200
+        assert created["locked"] is True
+        assert created["manual_override"] is True
+        assert created["generation_source"] == "manual"
+
+        status, updated = call("PATCH", f"{server.base_url}/admin/players/{created['player_id']}", {"name": "Edited API Player", "current_ability": 79, "reason": "safe edit"})
+        assert status == 200
+        assert updated["name"] == "Edited API Player"
+        assert updated["locked"] is True
+        assert updated["manual_override"] is True
+
+        _, audit = call("GET", f"{server.base_url}/admin/players/audit?player_id={created['player_id']}")
+        assert [event["action"] for event in audit["audit_events"]] == ["create_custom_player", "update_player"]
+        assert "current_ability" in audit["audit_events"][-1]["changed_fields"]
+
+        _, regenerated = call("POST", f"{server.base_url}/admin/players/initial-pool/regenerate-unlocked", {"season": "2000/2001", "seed": 17, "target_pool_size": 6, "dry_run": False})
+        assert next(player for player in regenerated["players"] if player["player_id"] == created["player_id"])["name"] == "Edited API Player"
+
+        try:
+            call("POST", f"{server.base_url}/admin/players/custom", custom_api_payload())
+        except Exception as exc:  # urllib raises HTTPError for non-2xx responses.
+            assert getattr(exc, "code", None) == 400
+        else:
+            raise AssertionError("duplicate custom player_id should fail")

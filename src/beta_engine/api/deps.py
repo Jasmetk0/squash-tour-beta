@@ -10,6 +10,7 @@ from beta_engine.application.api_services import SimulationApiService
 from beta_engine.application.config_validation_service import ConfigValidationService
 from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.initial_player_pool_service import InitialPlayerPoolService
+from beta_engine.application.season_player_bootstrap_service import InitialPoolSeasonBootstrapService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.application.world_package_service import WorldPackageService
@@ -88,6 +89,14 @@ def get_initial_player_pool_service(request: Request) -> InitialPlayerPoolServic
     if configured_path is not None:
         kwargs["config_path"] = configured_path
     return InitialPlayerPoolService(**kwargs)
+
+
+def get_initial_pool_season_bootstrap_service(request: Request) -> InitialPoolSeasonBootstrapService:
+    configured_path = getattr(request.app.state, "season_active_players_config_path", None)
+    kwargs = {"initial_pool_service": get_initial_player_pool_service(request)}
+    if configured_path is not None:
+        kwargs["active_players_path"] = configured_path
+    return InitialPoolSeasonBootstrapService(**kwargs)
 
 
 def get_world_package_service(request: Request) -> WorldPackageService:

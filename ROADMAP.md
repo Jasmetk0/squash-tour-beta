@@ -34,7 +34,8 @@
 - Add birth_year and birth_year_week design support.
 - Foundation added: Admin Players can preview/persist a deterministic 2000/2001 initial pool, inspect generated attributes/traits, and lock/regenerate unlocked players.
 - Foundation added: custom player creation, safe selected-player editing, and compact audit metadata for create/update/lock/unlock/generate/regenerate initial-pool operations.
-- Remaining limitations: full annual intake, progression/regression, retirement, Viewer player profiles, and final database-backed historical career persistence are not implemented yet.
+- Foundation added: curated initial pools can be previewed and persisted into first-season active-player records for 2000/2001 bootstrap, preserving IDs, manual provenance, lock provenance, source fingerprints, and zero starting ranking/race points.
+- Remaining limitations: initial ranking seeding, season calendar builder, tournament entry/draw flow connection to active players, progression/regression, retirement, Viewer player profile depth, and final database-backed historical career persistence are not implemented yet.
 
 ## Phase 6 — End-of-Season Lifecycle
 - Add annual 15-year-old talent intake.

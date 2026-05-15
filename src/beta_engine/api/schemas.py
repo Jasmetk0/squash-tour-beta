@@ -29,6 +29,21 @@ class HealthResponse(BaseModel):
     status: Literal["ok"]
 
 
+class SeasonBootstrapRequest(BaseModel):
+    source_season: str = Field(default="2000/2001", min_length=4, max_length=32)
+    seed: int = 12345
+    dry_run: bool = True
+    overwrite_existing: bool = False
+
+    @field_validator("source_season")
+    @classmethod
+    def trim_source_season(cls, value: str) -> str:
+        trimmed = value.strip()
+        if not trimmed:
+            raise ValueError("source_season is required")
+        return trimmed
+
+
 class CreateRunRequest(BaseModel):
     run_id: str = Field(min_length=1, max_length=128)
     seed: int

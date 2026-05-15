@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { AdminPlayersPage as InitialPoolAdminPlayersPage } from './AdminPlayersPage'
+import { AdminSeasonsPage as SeasonBootstrapAdminSeasonsPage } from './AdminSeasonsPage'
 import { TournamentTemplatesPage } from './TournamentTemplatesPage'
 import { getCountriesMetadata, getTournamentTemplatesMetadata, listRuns } from '../api/client'
 
@@ -223,19 +224,9 @@ export function AdminTournamentTemplatesPage(): JSX.Element {
 
 
 export function AdminSeasonsPage(): JSX.Element {
-  return (
-    <section className="panel">
-      <div className="page-intro">
-        <h2>Seasons</h2>
-        <p className="subtitle">Season editor will manage 61 Season Weeks plus Year Week/calendar positioning.</p>
-      </div>
-      <p className="status">Placeholder only for Phase 1 navigation. Season Week / Year Week logic is intentionally not implemented.</p>
-      <p>
-        Existing run calendars remain available from <Link to="/admin/runs">Runs</Link> after opening a run.
-      </p>
-    </section>
-  )
+  return <SeasonBootstrapAdminSeasonsPage />
 }
+
 
 export function AdminPlayersPage(): JSX.Element {
   return <InitialPoolAdminPlayersPage />

@@ -1075,3 +1075,82 @@ export type InitialPoolAuditEvent = {
 export type InitialPoolAuditResponse = {
   audit_events: InitialPoolAuditEvent[]
 }
+
+export type SeasonActivePlayer = {
+  player_id: string
+  name: string
+  country_code: string
+  nationality: string
+  birth_year: number
+  birth_year_week: number
+  age_years_at_season_start: number
+  age_weeks_at_season_start: number
+  current_ability: number
+  potential_ability: number
+  potential_tier: 'S' | 'A' | 'B' | 'C' | 'D'
+  career_stage: string
+  play_style: string
+  archetype: string
+  attributes: InitialPoolAttributes
+  hidden_career_traits: InitialPoolHiddenTraits
+  health_status: string
+  active_status: string
+  ranking_points: number
+  race_points: number
+  protected_ranking_points: number
+  season: string
+  source_pool_player_id: string
+  source_generation_fingerprint: string
+  source_generation: 'initial_pool' | 'manual' | 'imported'
+  manual_override: boolean
+  locked_from_initial_pool: boolean
+  bootstrap_fingerprint: string
+  bootstrap_seed: number
+  bootstrap_id: string
+}
+
+export type SeasonBootstrapSummary = {
+  total_active_players: number
+  countries_represented: number
+  manual_players: number
+  generated_players: number
+  locked_from_initial_pool: number
+  average_current_ability: number
+  average_potential_ability: number
+  by_potential_tier: Record<string, number>
+}
+
+export type SeasonBootstrapMetadata = {
+  season: string
+  source_season: string
+  bootstrap_seed: number
+  dry_run: boolean
+  overwrite_existing: boolean
+  source_initial_pool_fingerprint: string
+  bootstrap_id: string
+  bootstrap_fingerprint: string
+  player_count: number
+  persistence_path: string | null
+  ranking_seeding_implemented: boolean
+}
+
+export type SeasonActivePlayersResponse = {
+  players: SeasonActivePlayer[]
+  summary: SeasonBootstrapSummary
+  metadata: SeasonBootstrapMetadata | null
+  warnings: string[]
+}
+
+export type SeasonBootstrapPayload = {
+  source_season?: string
+  seed: number
+  dry_run: boolean
+  overwrite_existing: boolean
+}
+
+export type SeasonBootstrapResponse = {
+  players: SeasonActivePlayer[]
+  summary: SeasonBootstrapSummary
+  metadata: SeasonBootstrapMetadata
+  warnings: string[]
+}

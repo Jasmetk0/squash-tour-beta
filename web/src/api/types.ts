@@ -698,6 +698,8 @@ export type CountryRecord = {
   competition_density: number
   federation_quality: number
   court_count: number | null
+  travel_region: string | null
+  notes: string | null
   style_dna: Record<string, number>
 }
 
@@ -913,6 +915,13 @@ export type TournamentTemplateRecord = {
   qualification_duration_days: number
   preferred_week_type: string | null
   seasonal_grouping: string | null
+  prize_money: number
+  prestige: number
+  duration_in_season_weeks: number
+  host_requirements: Record<string, unknown>
+  category_specific_rules: Record<string, unknown>
+  notes: string | null
+  active: boolean
 }
 
 export type TournamentTemplatesListResponse = {

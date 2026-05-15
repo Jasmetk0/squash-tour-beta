@@ -27,6 +27,8 @@ class Country(BaseModel):
     competition_density: float | None = Field(default=None, ge=1.0, le=5.0)
     federation_quality: float | None = Field(default=None, ge=1.0, le=5.0)
     court_count: int | None = Field(default=None, ge=0)
+    travel_region: str | None = None
+    notes: str | None = None
     style_dna: dict[str, float] = Field(default_factory=dict)
 
     @model_validator(mode="after")
@@ -37,6 +39,8 @@ class Country(BaseModel):
             self.competition_density = 3.0
         if self.federation_quality is None:
             self.federation_quality = float(self.system_quality)
+        if self.travel_region is None:
+            self.travel_region = self.region
         return self
 
     @staticmethod
@@ -75,10 +79,6 @@ class Country(BaseModel):
     @property
     def historical_tradition(self) -> float:
         return self.squash_tradition_norm
-
-    @property
-    def travel_region(self) -> str:
-        return self.region
 
     @property
     def travel_affinity(self) -> dict[str, float]:

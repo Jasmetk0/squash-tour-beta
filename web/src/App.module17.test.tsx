@@ -11,6 +11,8 @@ const api = vi.hoisted(() => ({
   getRun: vi.fn(),
   getRunStatusSummary: vi.fn(),
   listRuns: vi.fn(),
+  getCountriesMetadata: vi.fn(),
+  getTournamentTemplatesMetadata: vi.fn(),
   listEvents: vi.fn(),
   getRunActivity: vi.fn(),
   getEvent: vi.fn(),
@@ -57,6 +59,8 @@ describe('Module 17 pages through routes', () => {
     localStorage.clear()
     vi.clearAllMocks()
     api.listRuns.mockResolvedValue({ runs: [] })
+    api.getCountriesMetadata.mockResolvedValue({ dataset_status: 'temporary_seed_demo', country_count: 0, source_path: 'config/world/countries.json' })
+    api.getTournamentTemplatesMetadata.mockResolvedValue({ template_count: 0, source_path: 'config/tournament_templates/mvp_templates.json', referenced_by_calendar: false, referenced_template_ids: [] })
   })
 
   it('renders the Phase 1 landing page at root', async () => {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { AdminPlayersPage as InitialPoolAdminPlayersPage } from './AdminPlayersPage'
 import { TournamentTemplatesPage } from './TournamentTemplatesPage'
 import { getCountriesMetadata, getTournamentTemplatesMetadata, listRuns } from '../api/client'
 
@@ -237,22 +238,9 @@ export function AdminSeasonsPage(): JSX.Element {
 }
 
 export function AdminPlayersPage(): JSX.Element {
-  return (
-    <section className="panel">
-      <div className="page-intro">
-        <h2>Admin Players</h2>
-        <p className="subtitle">Future workspace for player generation, edit, lock, and regeneration workflows.</p>
-      </div>
-      <LinkCardGrid
-        cards={[
-          { title: 'Talent Preview', description: 'Preview generated player pools before simulation.', to: '/admin/world/talent-preview' },
-          { title: 'Manual Player Overrides', description: 'Manage explicit player override records.', to: '/admin/world/manual-player-overrides' },
-          { title: 'Run World Generation', description: 'Inspect generated player provenance inside a selected run.', to: '/admin/runs' }
-        ]}
-      />
-    </section>
-  )
+  return <InitialPoolAdminPlayersPage />
 }
+
 
 export function AdminSimulatePage(): JSX.Element {
   return (

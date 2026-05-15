@@ -9,6 +9,7 @@ from fastapi import Request
 from beta_engine.application.api_services import SimulationApiService
 from beta_engine.application.config_validation_service import ConfigValidationService
 from beta_engine.application.countries_service import CountriesConfigService
+from beta_engine.application.initial_player_pool_service import InitialPlayerPoolService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.application.world_package_service import WorldPackageService
@@ -79,6 +80,14 @@ def get_manual_player_overrides_service(request: Request) -> ManualPlayerOverrid
     if configured_path is None:
         return ManualPlayerOverridesService()
     return ManualPlayerOverridesService(config_path=configured_path)
+
+
+def get_initial_player_pool_service(request: Request) -> InitialPlayerPoolService:
+    configured_path = getattr(request.app.state, "initial_player_pool_config_path", None)
+    kwargs = {"countries_service": get_countries_config_service(request)}
+    if configured_path is not None:
+        kwargs["config_path"] = configured_path
+    return InitialPlayerPoolService(**kwargs)
 
 
 def get_world_package_service(request: Request) -> WorldPackageService:

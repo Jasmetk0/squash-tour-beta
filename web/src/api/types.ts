@@ -957,3 +957,92 @@ export type TournamentTemplatesImportResponse = {
   template_count: number
   errors: TournamentTemplatesValidationIssue[]
 }
+
+export type InitialPoolAttributes = {
+  technique: number
+  movement: number
+  physical: number
+  mental: number
+  consistency: number
+  clutch: number
+  recovery: number
+}
+
+export type InitialPoolHiddenTraits = {
+  potential_ceiling: number
+  growth_curve: string
+  professionalism: number
+  ambition: number
+  travel_tolerance: number
+  schedule_aggression: number
+  injury_proneness: number
+  resilience: number
+}
+
+export type InitialPoolPlayer = {
+  player_id: string
+  name: string
+  country_code: string
+  nationality: string | null
+  birth_year: number
+  birth_year_week: number
+  age_at_generation: number
+  current_age_years: number
+  current_ability: number
+  potential_ability: number
+  potential_tier: 'S' | 'A' | 'B' | 'C' | 'D'
+  career_stage: string
+  play_style: string
+  archetype: string
+  attributes: InitialPoolAttributes
+  hidden_career_traits: InitialPoolHiddenTraits
+  locked: boolean
+  generation_source: string
+  manual_override: boolean
+  generation_seed: number
+  generation_fingerprint: string
+  created_for_season: string
+}
+
+export type InitialPoolSummary = {
+  total_players: number
+  locked_players: number
+  unlocked_players: number
+  countries_represented: number
+  average_current_ability: number
+  average_potential_ability: number
+  by_country: Record<string, number>
+  by_career_stage: Record<string, number>
+  by_potential_tier: Record<string, number>
+}
+
+export type InitialPoolMetadata = {
+  season: string
+  seed: number
+  target_pool_size: number
+  country_code: string | null
+  region: string | null
+  dry_run: boolean
+  generated_count: number
+  preserved_locked_count: number
+  changed_count: number
+  generation_fingerprint: string
+}
+
+export type InitialPoolResponse = {
+  players: InitialPoolPlayer[]
+  summary: InitialPoolSummary
+  metadata: InitialPoolMetadata
+}
+
+export type InitialPoolGeneratePayload = {
+  season: string
+  seed: number
+  target_pool_size?: number
+  dry_run: boolean
+}
+
+export type InitialPoolRegeneratePayload = InitialPoolGeneratePayload & {
+  country_code?: string
+  region?: string
+}

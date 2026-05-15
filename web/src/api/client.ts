@@ -26,6 +26,10 @@ import type {
   FinalsSimulationResponse,
   FinalsSummaryResponse,
   HealthResponse,
+  InitialPoolGeneratePayload,
+  InitialPoolRegeneratePayload,
+  InitialPoolPlayer,
+  InitialPoolResponse,
   RankingSnapshot,
   RaceSnapshot,
   RaceSnapshotListResponse,
@@ -104,6 +108,27 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     return undefined as T
   }
   return JSON.parse(text) as T
+}
+
+
+export function getInitialPlayerPool(season = '2000/2001'): Promise<InitialPoolResponse> {
+  return request(`/admin/players/initial-pool?season=${encodeURIComponent(season)}`)
+}
+
+export function generateInitialPlayerPool(payload: InitialPoolGeneratePayload): Promise<InitialPoolResponse> {
+  return request('/admin/players/initial-pool/generate', { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function regenerateInitialPlayerPool(payload: InitialPoolRegeneratePayload): Promise<InitialPoolResponse> {
+  return request('/admin/players/initial-pool/regenerate-unlocked', { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function lockInitialPoolPlayer(playerId: string): Promise<InitialPoolPlayer> {
+  return request(`/admin/players/${encodeURIComponent(playerId)}/lock`, { method: 'POST' })
+}
+
+export function unlockInitialPoolPlayer(playerId: string): Promise<InitialPoolPlayer> {
+  return request(`/admin/players/${encodeURIComponent(playerId)}/unlock`, { method: 'POST' })
 }
 
 export function getHealth(): Promise<HealthResponse> {

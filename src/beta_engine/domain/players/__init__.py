@@ -2,6 +2,15 @@
 
 from beta_engine.domain.players.generation import PlayerGenerator
 from beta_engine.domain.players.models import HiddenCareerTraits, Player
+from beta_engine.domain.players.initial_pool import (
+    GeneratedPlayerAttributes,
+    InitialPlayerPoolGenerator,
+    InitialPoolGeneratedPlayer,
+    InitialPoolMetadata,
+    InitialPoolRegistry,
+    InitialPoolResult,
+    InitialPoolSummary,
+)
 from beta_engine.domain.players.talent_dampener import (
     NeutralRecentGreatnessDampener,
     RecentGreatnessDampener,
@@ -28,6 +37,13 @@ __all__ = [
     "HiddenCareerTraits",
     "Player",
     "PlayerGenerator",
+    "GeneratedPlayerAttributes",
+    "InitialPlayerPoolGenerator",
+    "InitialPoolGeneratedPlayer",
+    "InitialPoolMetadata",
+    "InitialPoolRegistry",
+    "InitialPoolResult",
+    "InitialPoolSummary",
     "AnnualTalentClassPlanner",
     "AnnualTalentClassPlan",
     "CountryTalentAllocation",

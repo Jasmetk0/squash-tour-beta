@@ -24,6 +24,7 @@ def create_app(
     season_calendar_registry_path: str | None = None,
     season_entry_lists_registry_path: str | None = None,
     season_draws_registry_path: str | None = None,
+    season_matches_registry_path: str | None = None,
     entry_tuning_config_path: str | None = None,
 ) -> FastAPI:
     app = FastAPI(title="Squash Tour Beta Engine", version="0.1.0")
@@ -55,6 +56,8 @@ def create_app(
         app.state.season_draws_registry_path = season_draws_registry_path
     if entry_tuning_config_path is not None:
         app.state.entry_tuning_config_path = entry_tuning_config_path
+    if season_matches_registry_path is not None:
+        app.state.season_matches_registry_path = season_matches_registry_path
     app.include_router(api_router)
     return app
 

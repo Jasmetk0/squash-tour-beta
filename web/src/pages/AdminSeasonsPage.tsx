@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
-import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, getEventDrawPackage, getEventEntryList, getSeasonActivePlayers, getSeasonCalendar } from '../api/client'
-import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult } from '../api/types'
+import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getSeasonActivePlayers, getSeasonCalendar, simulateEventMatch, simulateNextEventMatch } from '../api/client'
+import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonMatchRecord } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -33,6 +33,11 @@ export function AdminSeasonsPage(): JSX.Element {
   const [drawDryRun, setDrawDryRun] = useState(true)
   const [drawOverwriteExisting, setDrawOverwriteExisting] = useState(false)
   const [drawResult, setDrawResult] = useState<SeasonEventDrawPackageResult | null>(null)
+  const [matchSeed, setMatchSeed] = useState(12345)
+  const [matchDryRun, setMatchDryRun] = useState(true)
+  const [matchOverwriteExisting, setMatchOverwriteExisting] = useState(false)
+  const [selectedMatchId, setSelectedMatchId] = useState('')
+  const [matchResult, setMatchResult] = useState<SeasonEventMatchPackageResult | null>(null)
   const playersQuery = useQuery({ queryKey: ['season-active-players', season], queryFn: () => getSeasonActivePlayers(season), retry: false })
   const calendarQuery = useQuery({ queryKey: ['season-calendar', season], queryFn: () => getSeasonCalendar(season), retry: false })
 
@@ -94,6 +99,36 @@ export function AdminSeasonsPage(): JSX.Element {
     }
   })
 
+  const matchMutation = useMutation({
+    mutationFn: (persist: boolean) => generateEventMatchPackage(effectiveEventId, {
+      seed: matchSeed,
+      dry_run: !persist,
+      overwrite_existing: matchOverwriteExisting
+    }),
+    onSuccess: (result) => {
+      setMatchResult(result)
+      if (!result.metadata?.dry_run && effectiveEventId) {
+        void queryClient.invalidateQueries({ queryKey: ['event-match-package', effectiveEventId] })
+      }
+    }
+  })
+
+  const simulateNextMutation = useMutation({
+    mutationFn: () => simulateNextEventMatch(effectiveEventId, { seed: matchSeed }),
+    onSuccess: (result) => {
+      setMatchResult(result)
+      if (effectiveEventId) void queryClient.invalidateQueries({ queryKey: ['event-match-package', effectiveEventId] })
+    }
+  })
+
+  const simulateSelectedMutation = useMutation({
+    mutationFn: () => simulateEventMatch(effectiveEventId, selectedMatchId, { seed: matchSeed }),
+    onSuccess: (result) => {
+      setMatchResult(result)
+      if (effectiveEventId) void queryClient.invalidateQueries({ queryKey: ['event-match-package', effectiveEventId] })
+    }
+  })
+
   const displayedPlayers = preview?.players.length ? preview.players : playersQuery.data?.players ?? []
   const displayedSummary = preview?.summary ?? playersQuery.data?.summary
   const displayedWarnings = preview?.warnings ?? playersQuery.data?.warnings ?? []
@@ -109,6 +144,7 @@ export function AdminSeasonsPage(): JSX.Element {
   const effectiveEventId = selectedEventId || eventOptions[0]?.event_id || ''
   const persistedEntryQuery = useQuery({ queryKey: ['event-entry-list', effectiveEventId], queryFn: () => getEventEntryList(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
   const persistedDrawQuery = useQuery({ queryKey: ['event-draw-package', effectiveEventId], queryFn: () => getEventDrawPackage(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
+  const persistedMatchQuery = useQuery({ queryKey: ['event-match-package', effectiveEventId], queryFn: () => getEventMatchPackage(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
   const displayedEntryResult = entryResult ?? persistedEntryQuery.data ?? null
   const displayedEntryList = displayedEntryResult?.entry_list ?? null
   const displayedEntrySummary = displayedEntryResult?.summary ?? displayedEntryList?.summary ?? null
@@ -120,6 +156,13 @@ export function AdminSeasonsPage(): JSX.Element {
   const drawWarnings = displayedDrawResult?.validation_warnings ?? displayedDrawPackage?.validation_warnings ?? []
   const drawErrors = displayedDrawResult?.validation_errors ?? displayedDrawPackage?.validation_errors ?? []
   const selectedEventHasPersistedEntryList = Boolean(displayedEntryResult?.entry_list_exists || displayedEntryList)
+  const selectedEventHasPersistedDrawPackage = Boolean(displayedDrawResult?.draw_package_exists || displayedDrawPackage)
+  const displayedMatchResult = matchResult ?? persistedMatchQuery.data ?? null
+  const displayedMatchPackage = displayedMatchResult?.match_package ?? null
+  const displayedMatchSummary = displayedMatchResult?.summary ?? displayedMatchPackage?.summary ?? null
+  const matchWarnings = displayedMatchResult?.validation_warnings ?? displayedMatchPackage?.validation_warnings ?? []
+  const matchErrors = displayedMatchResult?.validation_errors ?? displayedMatchPackage?.validation_errors ?? []
+  const displayedMatches = displayedMatchPackage ? [...displayedMatchPackage.qualification_matches, ...displayedMatchPackage.main_draw_matches] : []
 
   return (
     <section className="panel">
@@ -235,7 +278,7 @@ export function AdminSeasonsPage(): JSX.Element {
         <p className="status">Entry generation selects players for a planned calendar event from active season players. It does not create draws or simulate matches yet.</p>
         {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
         <div className="grid">
-          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null) }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
           <label>Entry seed<input type="number" value={entrySeed} onChange={(event) => setEntrySeed(Number(event.target.value))} /></label>
           <label>Max alternates<input type="number" value={maxAlternates} onChange={(event) => setMaxAlternates(Number(event.target.value))} /></label>
           <label><input type="checkbox" checked={entryDryRun} onChange={(event) => setEntryDryRun(event.target.checked)} /> Dry run default</label>
@@ -279,7 +322,7 @@ export function AdminSeasonsPage(): JSX.Element {
         {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
         {eventOptions.length && !selectedEventHasPersistedEntryList ? <p className="status">Persist an entry list first.</p> : null}
         <div className="grid">
-          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null) }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
           <label>Draw seed<input type="number" value={drawSeed} onChange={(event) => setDrawSeed(Number(event.target.value))} /></label>
           <label><input type="checkbox" checked={drawDryRun} onChange={(event) => setDrawDryRun(event.target.checked)} /> Dry run default</label>
           <label><input type="checkbox" checked={drawOverwriteExisting} onChange={(event) => setDrawOverwriteExisting(event.target.checked)} /> Overwrite existing draw package</label>
@@ -314,6 +357,49 @@ export function AdminSeasonsPage(): JSX.Element {
           <DrawMatchesTable title="Main draw match preview" bracket={displayedDrawPackage.main_draw} />
           {displayedDrawPackage.qualification_draw ? <DrawMatchesTable title="Qualification draw match preview" bracket={displayedDrawPackage.qualification_draw} /> : null}
         </> : <p className="status">No draw package is displayed yet. Preview or persist a draw for a persisted event entry list.</p>}
+      </SectionCard>
+
+
+      <SectionCard title="Event Matches">
+        <p className="status">Match generation creates match records from persisted draw packages. Simulation stores results but does not update rankings/race yet.</p>
+        {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
+        {eventOptions.length && !selectedEventHasPersistedDrawPackage ? <p className="status">Persist a draw package first.</p> : null}
+        <div className="grid">
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
+          <label>Match seed<input type="number" value={matchSeed} onChange={(event) => setMatchSeed(Number(event.target.value))} /></label>
+          <label><input type="checkbox" checked={matchDryRun} onChange={(event) => setMatchDryRun(event.target.checked)} /> Dry run default</label>
+          <label><input type="checkbox" checked={matchOverwriteExisting} onChange={(event) => setMatchOverwriteExisting(event.target.checked)} /> Overwrite existing match package</label>
+          <label>Selected match<select value={selectedMatchId} onChange={(event) => setSelectedMatchId(event.target.value)} disabled={!displayedMatches.length}><option value="">Choose a match</option>{displayedMatches.map((match) => <option key={match.match_id} value={match.match_id}>{match.status}: {match.match_id}</option>)}</select></label>
+        </div>
+        <div className="button-row">
+          <button type="button" onClick={() => { setMatchDryRun(true); matchMutation.mutate(false) }} disabled={!effectiveEventId || !selectedEventHasPersistedDrawPackage || matchMutation.isPending}>Preview match package</button>
+          <button type="button" onClick={() => { setMatchDryRun(false); matchMutation.mutate(true) }} disabled={!effectiveEventId || !selectedEventHasPersistedDrawPackage || matchMutation.isPending}>Persist match package</button>
+          <button type="button" onClick={() => simulateNextMutation.mutate()} disabled={!effectiveEventId || !displayedMatchResult?.match_package_exists || simulateNextMutation.isPending}>Simulate next pending match</button>
+          <button type="button" onClick={() => simulateSelectedMutation.mutate()} disabled={!effectiveEventId || !selectedMatchId || !displayedMatchResult?.match_package_exists || simulateSelectedMutation.isPending}>Simulate selected match</button>
+        </div>
+        {matchMutation.isError ? <p role="alert" className="error">{formatApiError(matchMutation.error)}</p> : null}
+        {simulateNextMutation.isError ? <p role="alert" className="error">{formatApiError(simulateNextMutation.error)}</p> : null}
+        {simulateSelectedMutation.isError ? <p role="alert" className="error">{formatApiError(simulateSelectedMutation.error)}</p> : null}
+        {persistedMatchQuery.isError ? <p role="alert" className="error">{formatApiError(persistedMatchQuery.error)}</p> : null}
+        <SummaryPills items={[
+          { label: 'Total matches', value: displayedMatchSummary?.total_matches ?? 0 },
+          { label: 'Qualification matches', value: displayedMatchSummary?.qualification_matches ?? 0 },
+          { label: 'Main draw matches', value: displayedMatchSummary?.main_draw_matches ?? 0 },
+          { label: 'Pending matches', value: displayedMatchSummary?.pending_matches ?? 0 },
+          { label: 'Completed matches', value: displayedMatchSummary?.completed_matches ?? 0 },
+          { label: 'Blocked matches', value: displayedMatchSummary?.blocked_matches ?? 0 },
+          { label: 'BYE auto-advances', value: displayedMatchSummary?.bye_auto_advances ?? 0 },
+          { label: 'Validation warnings/errors', value: `${displayedMatchSummary?.validation_warning_count ?? matchWarnings.length}/${displayedMatchSummary?.validation_error_count ?? matchErrors.length}` }
+        ]} />
+        {displayedMatchResult?.metadata ? <MetadataList items={[
+          { label: 'Build fingerprint', value: displayedMatchResult.metadata.build_fingerprint },
+          { label: 'Draw package fingerprint', value: displayedMatchResult.metadata.draw_package_fingerprint },
+          { label: 'Active players fingerprint', value: displayedMatchResult.metadata.active_players_fingerprint },
+          { label: 'Match engine', value: displayedMatchResult.metadata.match_engine_version ?? '—' },
+          { label: 'Ranking updates', value: displayedMatchResult.metadata.ranking_updates_implemented ? 'Implemented' : 'Not implemented yet' }
+        ]} /> : null}
+        <MatchValidationPanel warnings={matchWarnings} errors={matchErrors} />
+        {displayedMatchPackage ? <MatchRecordsTable matches={displayedMatches} /> : <p className="status">No match package is displayed yet. Preview or persist matches for a persisted draw package.</p>}
       </SectionCard>
 
 
@@ -376,6 +462,23 @@ function DrawMatchesTable({ title, bracket }: { title: string; bracket: DrawBrac
     <table aria-label={title}>
       <thead><tr><th>Round</th><th>match_id</th><th>Top slot</th><th>Bottom slot</th><th>winner_to</th><th>Status</th></tr></thead>
       <tbody>{bracket.rounds.flatMap((round) => round.matches.map((match) => <tr key={match.match_id}><td>{round.round_name}</td><td>{match.match_id}</td><td>{match.top_slot_id}</td><td>{match.bottom_slot_id}</td><td>{match.winner_to_match_id ?? '—'}</td><td>{match.status}</td></tr>))}</tbody>
+    </table>
+  </div>
+}
+
+
+function MatchValidationPanel({ warnings, errors }: { warnings: MatchValidationIssue[]; errors: MatchValidationIssue[] }): JSX.Element {
+  return <div>
+    {errors.length ? <><h4>Match errors</h4><ul>{errors.map((issue) => <li key={`match-error-${issue.code}-${issue.match_id ?? issue.player_id ?? issue.event_id ?? 'list'}`}>{issue.code}: {issue.message}</li>)}</ul></> : <p className="status">No match validation errors.</p>}
+    {warnings.length ? <><h4>Match warnings</h4><ul>{warnings.map((issue) => <li key={`match-warning-${issue.code}-${issue.match_id ?? issue.player_id ?? issue.event_id ?? 'list'}`}>{issue.code}: {issue.message}</li>)}</ul></> : <p className="status">No match validation warnings.</p>}
+  </div>
+}
+
+function MatchRecordsTable({ matches }: { matches: SeasonMatchRecord[] }): JSX.Element {
+  return <div className="table-wrap">
+    <table aria-label="Event matches table">
+      <thead><tr><th>Status</th><th>Draw type</th><th>Round</th><th>Position</th><th>match_id</th><th>Top player</th><th>Bottom player</th><th>Winner</th><th>Scoreline</th><th>winner_to</th><th>Notes</th></tr></thead>
+      <tbody>{matches.map((match) => <tr key={match.match_id}><td>{match.status}</td><td>{match.draw_type}</td><td>{match.round_name}</td><td>{match.bracket_position}</td><td>{match.match_id}</td><td>{match.top_player_name ?? match.top_player_id ?? match.top_source}</td><td>{match.bottom_player_name ?? match.bottom_player_id ?? match.bottom_source}</td><td>{match.winner_player_id ?? '—'}</td><td>{match.scoreline ?? '—'}</td><td>{match.winner_to_match_id ?? '—'}</td><td>{match.result_notes ?? '—'}</td></tr>)}</tbody>
     </table>
   </div>
 }

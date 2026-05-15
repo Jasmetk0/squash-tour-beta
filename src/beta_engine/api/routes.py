@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from beta_engine.api.routers.admin_draws import router as admin_draws_router
 from beta_engine.api.routers.admin_entries import router as admin_entries_router
+from beta_engine.api.routers.admin_matches import router as admin_matches_router
 from beta_engine.api.routers.admin_players import router as admin_players_router
 from beta_engine.api.routers.admin_seasons import router as admin_seasons_router
 from beta_engine.api.routers.config import router as config_router
@@ -23,6 +24,7 @@ router.include_router(config_router)
 router.include_router(admin_players_router)
 router.include_router(admin_entries_router)
 router.include_router(admin_draws_router)
+router.include_router(admin_matches_router)
 router.include_router(admin_seasons_router)
 router.include_router(countries_router)
 router.include_router(tournament_templates_router)

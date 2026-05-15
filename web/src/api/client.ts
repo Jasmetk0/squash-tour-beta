@@ -85,7 +85,10 @@ import type {
   SeasonBootstrapResponse,
   EntryListGeneratePayload,
   DrawGeneratePayload,
+  MatchGeneratePayload,
+  MatchSimulatePayload,
   SeasonEventDrawPackageResult,
+  SeasonEventMatchPackageResult,
   SeasonEventEntryListResult
 } from './types'
 
@@ -157,6 +160,22 @@ export function getEventDrawPackage(eventId: string): Promise<SeasonEventDrawPac
 
 export function generateEventDrawPackage(eventId: string, payload: DrawGeneratePayload): Promise<SeasonEventDrawPackageResult> {
   return request(`/admin/draws/${encodeURIComponent(eventId)}/generate`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function getEventMatchPackage(eventId: string): Promise<SeasonEventMatchPackageResult> {
+  return request(`/admin/matches/${encodeURIComponent(eventId)}`)
+}
+
+export function generateEventMatchPackage(eventId: string, payload: MatchGeneratePayload): Promise<SeasonEventMatchPackageResult> {
+  return request(`/admin/matches/${encodeURIComponent(eventId)}/generate`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function simulateNextEventMatch(eventId: string, payload: MatchSimulatePayload): Promise<SeasonEventMatchPackageResult> {
+  return request(`/admin/matches/${encodeURIComponent(eventId)}/simulate-next`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function simulateEventMatch(eventId: string, matchId: string, payload: MatchSimulatePayload): Promise<SeasonEventMatchPackageResult> {
+  return request(`/admin/matches/${encodeURIComponent(eventId)}/simulate/${encodeURIComponent(matchId)}`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function generateInitialPlayerPool(payload: InitialPoolGeneratePayload): Promise<InitialPoolResponse> {

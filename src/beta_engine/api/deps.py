@@ -14,6 +14,7 @@ from beta_engine.application.season_player_bootstrap_service import InitialPoolS
 from beta_engine.application.season_calendar_service import SeasonCalendarService
 from beta_engine.application.season_entry_list_service import SeasonEntryListService
 from beta_engine.application.season_draw_service import SeasonDrawService
+from beta_engine.application.season_match_service import SeasonMatchService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.application.world_package_service import WorldPackageService
@@ -141,3 +142,14 @@ def get_world_package_service(request: Request) -> WorldPackageService:
         countries_service=get_countries_config_service(request),
         manual_overrides_service=get_manual_player_overrides_service(request),
     )
+
+
+def get_season_match_service(request: Request) -> SeasonMatchService:
+    configured_path = getattr(request.app.state, "season_matches_registry_path", None)
+    kwargs = {
+        "draw_service": get_season_draw_service(request),
+        "active_players_service": get_initial_pool_season_bootstrap_service(request),
+    }
+    if configured_path is not None:
+        kwargs["matches_path"] = configured_path
+    return SeasonMatchService(**kwargs)

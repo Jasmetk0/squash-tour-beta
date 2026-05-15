@@ -84,6 +84,8 @@ import type {
   SeasonCalendarBuildResponse,
   SeasonBootstrapResponse,
   EntryListGeneratePayload,
+  DrawGeneratePayload,
+  SeasonEventDrawPackageResult,
   SeasonEventEntryListResult
 } from './types'
 
@@ -147,6 +149,14 @@ export function getEventEntryList(eventId: string): Promise<SeasonEventEntryList
 
 export function generateEventEntryList(eventId: string, payload: EntryListGeneratePayload): Promise<SeasonEventEntryListResult> {
   return request(`/admin/entries/${encodeURIComponent(eventId)}/generate`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function getEventDrawPackage(eventId: string): Promise<SeasonEventDrawPackageResult> {
+  return request(`/admin/draws/${encodeURIComponent(eventId)}`)
+}
+
+export function generateEventDrawPackage(eventId: string, payload: DrawGeneratePayload): Promise<SeasonEventDrawPackageResult> {
+  return request(`/admin/draws/${encodeURIComponent(eventId)}/generate`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function generateInitialPlayerPool(payload: InitialPoolGeneratePayload): Promise<InitialPoolResponse> {

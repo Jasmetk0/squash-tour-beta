@@ -11,7 +11,10 @@ const api = vi.hoisted(() => ({
   getSeasonCalendar: vi.fn(),
   buildSeasonCalendar: vi.fn(),
   getEventEntryList: vi.fn(),
-  generateEventEntryList: vi.fn()
+  generateEventEntryList: vi.fn(),
+  getEventDrawPackage: vi.fn(),
+  generateEventDrawPackage: vi.fn(),
+  ApiError: class ApiError extends Error { status = 400 }
 }))
 
 vi.mock('../api/client', () => api)
@@ -152,6 +155,33 @@ const entryResult = {
   entry_list_exists: false
 }
 
+
+const emptyDrawResult = {
+  draw_package: null,
+  summary: { event_id: null, main_draw_size: 0, qualification_draw_size: 0, main_draw_players: 0, qualification_draw_players: 0, qualifier_placeholders: 0, byes: 0, seeds: 0, validation_warning_count: 0, validation_error_count: 0 },
+  metadata: null,
+  validation_warnings: [],
+  validation_errors: [],
+  draw_package_exists: false
+}
+
+const drawResult = {
+  draw_package: {
+    event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', template_id: 'wt_a', season_week: 1, calendar_year: 2000, year_week: 35, seed: 12345, dry_run: true, persisted: false,
+    qualification_draw: { draw_id: 'EVT-2000-W01-wt_a:qualification', draw_type: 'qualification', draw_size: 2, round_count: 1, generated_fingerprint: 'qual-fp', seeds: [], byes: [], qualifier_placeholders: [], rounds: [{ round_number: 1, round_name: 'Round 1', match_count: 1, matches: [{ match_id: 'qm1', round_number: 1, bracket_position: 1, top_slot_id: 'qs1', bottom_slot_id: 'qs2', top_source: 'SLOT:1', bottom_source: 'SLOT:2', winner_to_match_id: null, status: 'pending' }] }], slots: [{ slot_id: 'qs1', bracket_position: 1, player_id: 'P-2000-BBB-0002', player_name: 'Ben Beta BB02', country_code: 'BBB', entry_decision: 'accepted_qualification', seed_number: null, source_entry_id: 'entry-q1', source_entry_fingerprint: 'entry-q-fp', is_bye: false, is_qualifier_placeholder: false }, { slot_id: 'qs2', bracket_position: 2, player_id: null, player_name: null, country_code: null, entry_decision: 'bye', seed_number: null, source_entry_id: null, source_entry_fingerprint: null, is_bye: true, is_qualifier_placeholder: false }] },
+    main_draw: { draw_id: 'EVT-2000-W01-wt_a:main', draw_type: 'main', draw_size: 4, round_count: 2, generated_fingerprint: 'main-fp', seeds: [{ seed_number: 1, player_id: 'P-2000-AAA-0001', player_name: 'Adam Ahmed AA01', ranking_priority: 1, placement_position: 1 }], byes: [{ slot_id: 'ms4', bracket_position: 4 }], qualifier_placeholders: [{ placeholder_id: 'Q1', slot_id: 'ms2', bracket_position: 2, qualifier_index: 1 }], rounds: [{ round_number: 1, round_name: 'Round 1', match_count: 2, matches: [{ match_id: 'm1', round_number: 1, bracket_position: 1, top_slot_id: 'ms1', bottom_slot_id: 'ms2', top_source: 'SLOT:1', bottom_source: 'SLOT:2', winner_to_match_id: 'R2-N1', status: 'pending' }, { match_id: 'm2', round_number: 1, bracket_position: 2, top_slot_id: 'ms3', bottom_slot_id: 'ms4', top_source: 'SLOT:3', bottom_source: 'SLOT:4', winner_to_match_id: 'R2-N1', status: 'bye_pending' }] }], slots: [{ slot_id: 'ms1', bracket_position: 1, player_id: 'P-2000-AAA-0001', player_name: 'Adam Ahmed AA01', country_code: 'AAA', entry_decision: 'accepted_main_draw', seed_number: 1, source_entry_id: 'entry-1', source_entry_fingerprint: 'entry-fp', is_bye: false, is_qualifier_placeholder: false }, { slot_id: 'ms2', bracket_position: 2, player_id: null, player_name: null, country_code: null, entry_decision: 'qualifier_placeholder', seed_number: null, source_entry_id: 'q-placeholder', source_entry_fingerprint: 'q-fp', is_bye: false, is_qualifier_placeholder: true }, { slot_id: 'ms3', bracket_position: 3, player_id: null, player_name: null, country_code: null, entry_decision: 'wild_card_reserved', seed_number: null, source_entry_id: 'wc-placeholder', source_entry_fingerprint: 'wc-fp', is_bye: false, is_qualifier_placeholder: false }, { slot_id: 'ms4', bracket_position: 4, player_id: null, player_name: null, country_code: null, entry_decision: 'bye', seed_number: null, source_entry_id: null, source_entry_fingerprint: null, is_bye: true, is_qualifier_placeholder: false }] },
+    summary: { event_id: 'EVT-2000-W01-wt_a', main_draw_size: 4, qualification_draw_size: 2, main_draw_players: 1, qualification_draw_players: 1, qualifier_placeholders: 1, byes: 2, seeds: 1, validation_warning_count: 1, validation_error_count: 1 },
+    metadata: { event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', seed: 12345, dry_run: true, persisted: false, build_fingerprint: 'draw-build-fp', entry_list_fingerprint: 'entry-build-fp', calendar_event_fingerprint: 'calendar-fp', draw_engine_version: 'draw_engine_v1', persistence_path: null, ranking_basis: 'current zero-points bootstrap' },
+    validation_warnings: [{ severity: 'warning', code: 'draw_warn', message: 'draw warning', event_id: 'EVT-2000-W01-wt_a', player_id: null, field: null }],
+    validation_errors: [{ severity: 'error', code: 'draw_error', message: 'draw error', event_id: 'EVT-2000-W01-wt_a', player_id: null, field: null }]
+  },
+  summary: { event_id: 'EVT-2000-W01-wt_a', main_draw_size: 4, qualification_draw_size: 2, main_draw_players: 1, qualification_draw_players: 1, qualifier_placeholders: 1, byes: 2, seeds: 1, validation_warning_count: 1, validation_error_count: 1 },
+  metadata: { event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', seed: 12345, dry_run: true, persisted: false, build_fingerprint: 'draw-build-fp', entry_list_fingerprint: 'entry-build-fp', calendar_event_fingerprint: 'calendar-fp', draw_engine_version: 'draw_engine_v1', persistence_path: null, ranking_basis: 'current zero-points bootstrap' },
+  validation_warnings: [{ severity: 'warning', code: 'draw_warn', message: 'draw warning', event_id: 'EVT-2000-W01-wt_a', player_id: null, field: null }],
+  validation_errors: [{ severity: 'error', code: 'draw_error', message: 'draw error', event_id: 'EVT-2000-W01-wt_a', player_id: null, field: null }],
+  draw_package_exists: false
+}
+
 const calendarResponse = {
   calendar: { season: '2000/2001', events: [calendarEvent], metadata: null, validation_warnings: [{ severity: 'warning', code: 'ranking_race_not_integrated', message: 'ranking/race integration not implemented yet', event_id: null, field: null }], validation_errors: [] },
   summary: { event_count: 1, season_weeks_used: 1, first_event_week: 1, last_event_week: 1, world_tour_events: 1, elite_tour_events: 0, validation_warning_count: 1, validation_error_count: 0, persisted: false, calendar_exists: false },
@@ -169,6 +199,8 @@ describe('AdminSeasonsPage', () => {
     api.buildSeasonCalendar.mockResolvedValue(calendarResponse)
     api.getEventEntryList.mockResolvedValue(emptyEntryResult)
     api.generateEventEntryList.mockResolvedValue(entryResult)
+    api.getEventDrawPackage.mockResolvedValue(emptyDrawResult)
+    api.generateEventDrawPackage.mockResolvedValue(drawResult)
   })
 
   it('renders bootstrap controls and previews with dry_run true', async () => {
@@ -240,6 +272,35 @@ describe('AdminSeasonsPage', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Persist entries' }))
     expect(api.generateEventEntryList).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false }))
+  })
+
+
+  it('renders Event Draws section and previews draws', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findByRole('heading', { name: 'Event Draws' })).toBeInTheDocument()
+    expect(screen.getByText('Draw generation creates bracket slots from persisted entry lists. It does not simulate matches or update rankings yet.')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Preview draw' }))
+    expect(api.generateEventDrawPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: true, seed: 12345 }))
+    const mainTable = await screen.findByRole('table', { name: 'Main draw table' })
+    expect(within(mainTable).getAllByText('Adam Ahmed AA01').length).toBeGreaterThan(0)
+    expect(within(mainTable).getByText('Q placeholder')).toBeInTheDocument()
+    const qualTable = await screen.findByRole('table', { name: 'Qualification draw table' })
+    expect(within(qualTable).getAllByText('Ben Beta BB02').length).toBeGreaterThan(0)
+    expect(screen.getByText('draw_error: draw error')).toBeInTheDocument()
+    expect(screen.getByText('draw_warn: draw warning')).toBeInTheDocument()
+  })
+
+  it('persists draws with dry_run false', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Persist draw' }))
+    expect(api.generateEventDrawPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false }))
   })
 
 })

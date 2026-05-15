@@ -29,7 +29,8 @@
 - Foundation added: Season Week + Year Week calendar model with deterministic 61-week mapping.
 - Foundation added: first-season calendar builder can preview and persist planned events from editable tournament templates.
 - Foundation added: Admin Seasons can preview and persist deterministic entry lists for persisted season calendar events from persisted active season players, including main draw acceptances, qualification acceptances, alternates, validation issues, and provenance fingerprints.
-- Remaining limitations: draw generation is not connected to persisted entry lists, match simulation is not connected, ranking/race are not updated from calendar events yet, wildcards/withdrawals/lucky losers are not fully implemented in the UI, and final season scheduling realism is not implemented.
+- Foundation added: Admin Seasons can preview and persist deterministic qualification/main draw packages from persisted event entry lists, including seeds, BYEs, qualifier placeholders, validation issues, and provenance fingerprints.
+- Remaining limitations: match simulation is not connected, tournament progression is not connected, ranking/race updates are not connected, wildcards/withdrawals/lucky losers are not fully connected, and final season scheduling realism is not implemented.
 
 ## Phase 5 — Player Generation Control
 - Add initial player pool generation for the first season.

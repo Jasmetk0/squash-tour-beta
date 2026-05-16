@@ -16,6 +16,7 @@ from beta_engine.application.season_entry_list_service import SeasonEntryListSer
 from beta_engine.application.season_draw_service import SeasonDrawService
 from beta_engine.application.season_match_service import SeasonMatchService
 from beta_engine.application.season_event_results_service import SeasonEventResultsService
+from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.application.world_package_service import WorldPackageService
@@ -166,3 +167,19 @@ def get_season_event_results_service(request: Request) -> SeasonEventResultsServ
     if configured_path is not None:
         kwargs["results_path"] = configured_path
     return SeasonEventResultsService(**kwargs)
+
+
+def get_season_point_awards_service(request: Request) -> SeasonPointAwardsService:
+    configured_path = getattr(request.app.state, "season_point_awards_registry_path", None)
+    points_config_path = getattr(request.app.state, "points_config_path", None)
+    kwargs = {
+        "result_service": get_season_event_results_service(request),
+        "active_players_service": get_initial_pool_season_bootstrap_service(request),
+        "calendar_service": get_season_calendar_service(request),
+        "template_service": get_tournament_templates_config_service(request),
+    }
+    if configured_path is not None:
+        kwargs["awards_path"] = configured_path
+    if points_config_path is not None:
+        kwargs["points_config_path"] = points_config_path
+    return SeasonPointAwardsService(**kwargs)

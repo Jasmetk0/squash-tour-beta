@@ -9,6 +9,8 @@ const api = vi.hoisted(() => ({
   getSeasonActivePlayers: vi.fn(),
   getAdminRankingTable: vi.fn(),
   getViewerRankingTable: vi.fn(),
+  getAdminPointBreakdown: vi.fn(),
+  getViewerPointBreakdown: vi.fn(),
   bootstrapSeasonFromInitialPool: vi.fn(),
   getSeasonCalendar: vi.fn(),
   buildSeasonCalendar: vi.fn(),
@@ -649,11 +651,11 @@ describe('AdminSeasonsPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Ranking / Race Tables' })).toBeInTheDocument()
     expect(screen.getByText('This table is derived from active season player points. Rolling 61-week ranking, best-N selection, weekly snapshots, and movement are not implemented yet.')).toBeInTheDocument()
-    await userEvent.selectOptions(screen.getByLabelText('Table type'), 'race')
+    await userEvent.selectOptions(screen.getAllByLabelText('Table type')[0], 'race')
     await userEvent.clear(screen.getByLabelText('Top N'))
     await userEvent.type(screen.getByLabelText('Top N'), '50')
-    await userEvent.type(screen.getByLabelText('Country filter'), 'aaa')
-    await userEvent.type(screen.getByLabelText('Search'), 'Adam')
+    await userEvent.type(screen.getAllByLabelText('Country filter')[0], 'aaa')
+    await userEvent.type(screen.getAllByLabelText('Search')[0], 'Adam')
     await userEvent.clear(screen.getByLabelText('Min points'))
     await userEvent.type(screen.getByLabelText('Min points'), '10')
     await userEvent.click(screen.getByLabelText(/Include zero points/i))
@@ -662,6 +664,6 @@ describe('AdminSeasonsPage', () => {
     expect(api.getAdminRankingTable).toHaveBeenLastCalledWith('2000/2001', expect.objectContaining({ table_type: 'race', limit: 50, country_code: 'AAA', search: 'Adam', include_zero_points: false, min_points: 10 }))
     const table = await screen.findByRole('table', { name: 'Ranking race table' })
     expect(within(table).getByText('Adam Ahmed AA01')).toBeInTheDocument()
-    expect(screen.getByText('Best-N ranking selection not implemented.')).toBeInTheDocument()
+    expect(screen.getAllByText('Best-N ranking selection not implemented.').length).toBeGreaterThan(0)
   })
 })

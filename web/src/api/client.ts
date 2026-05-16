@@ -94,6 +94,8 @@ import type {
   TournamentProgressionStatus,
   SeasonEventDrawPackageResult,
   SeasonEventMatchPackageResult,
+  SeasonEventResultPackageResult,
+  EventResultExtractPayload,
   SeasonEventEntryListResult
 } from './types'
 
@@ -205,6 +207,14 @@ export function simulateEventRound(eventId: string, payload: SimulateRoundPayloa
 
 export function simulateEventDraw(eventId: string, payload: SimulateDrawPayload): Promise<ProgressionCommandResult> {
   return request(`/admin/matches/${encodeURIComponent(eventId)}/simulate-draw`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function getEventResultPackage(eventId: string): Promise<SeasonEventResultPackageResult> {
+  return request(`/admin/results/${encodeURIComponent(eventId)}`)
+}
+
+export function extractEventResultPackage(eventId: string, payload: EventResultExtractPayload): Promise<SeasonEventResultPackageResult> {
+  return request(`/admin/results/${encodeURIComponent(eventId)}/extract`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function generateInitialPlayerPool(payload: InitialPoolGeneratePayload): Promise<InitialPoolResponse> {

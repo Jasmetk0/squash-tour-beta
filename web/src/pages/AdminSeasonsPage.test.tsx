@@ -24,6 +24,8 @@ const api = vi.hoisted(() => ({
   promoteEventQualifiers: vi.fn(),
   simulateEventRound: vi.fn(),
   simulateEventDraw: vi.fn(),
+  getEventResultPackage: vi.fn(),
+  extractEventResultPackage: vi.fn(),
   ApiError: class ApiError extends Error { status = 400 }
 }))
 
@@ -240,6 +242,41 @@ const simulatedMatchResult = {
   match_package_exists: true
 }
 
+
+const emptyEventResult = {
+  result_package: null,
+  summary: null,
+  metadata: null,
+  validation_warnings: [],
+  validation_errors: [],
+  result_package_exists: false
+}
+
+const eventResult = {
+  result_package: {
+    event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', template_id: 'wt_a', season_week: 1, calendar_year: 2000, year_week: 35, event_name: 'World A', category: 'PLATINUM', tour_level: 'WORLD_TOUR', host_country: 'ENG', seed: 12345, dry_run: true, persisted: false, completion_status: 'complete',
+    champion: { player_id: 'P-2000-AAA-0001', player_name: 'Adam Ahmed AA01', country_code: 'AAA', seed_number: 1, entry_decision: 'accepted_main_draw', qualifier: false, wildcard: false, ranking_priority: 1 },
+    finalist: { player_id: 'P-2000-BBB-0002', player_name: 'Ben Beta BB02', country_code: 'BBB', seed_number: null, entry_decision: 'accepted_qualification', qualifier: true, wildcard: false, ranking_priority: null },
+    semifinalists: [{ player_id: 'P-2000-CCC-0003', player_name: 'Carl Cairo CC03', country_code: 'CCC', seed_number: null, entry_decision: 'accepted_main_draw', qualifier: false, wildcard: false, ranking_priority: null }],
+    quarterfinalists: [],
+    qualification_winners: [{ player_id: 'P-2000-BBB-0002', player_name: 'Ben Beta BB02', country_code: 'BBB', seed_number: null, entry_decision: 'accepted_qualification', qualifier: true, wildcard: false, ranking_priority: null }],
+    player_results: [
+      { player_id: 'P-2000-AAA-0001', player_name: 'Adam Ahmed AA01', country_code: 'AAA', draw_type: 'main', entry_decision: 'accepted_main_draw', seed_number: 1, qualifier: false, reached_stage: 'champion', final_round_number: 2, eliminated_by_player_id: null, eliminated_by_player_name: null, last_match_id: 'm3', wins: 2, losses: 0, walkovers_received: 0, byes_received: 0, retired_or_walkover_loss: false, points_awarded: 0, race_points_awarded: 0, prize_money_awarded: 0 },
+      { player_id: 'P-2000-BBB-0002', player_name: 'Ben Beta BB02', country_code: 'BBB', draw_type: 'both', entry_decision: 'accepted_qualification', seed_number: null, qualifier: true, reached_stage: 'finalist', final_round_number: 2, eliminated_by_player_id: 'P-2000-AAA-0001', eliminated_by_player_name: 'Adam Ahmed AA01', last_match_id: 'm3', wins: 2, losses: 1, walkovers_received: 0, byes_received: 0, retired_or_walkover_loss: false, points_awarded: 0, race_points_awarded: 0, prize_money_awarded: 0 }
+    ],
+    match_result_refs: [{ match_id: 'm3', draw_type: 'main', round_number: 2, round_name: 'Final', bracket_position: 1, winner_player_id: 'P-2000-AAA-0001', loser_player_id: 'P-2000-BBB-0002', scoreline: '11-7, 11-8, 11-9', result_fingerprint: 'result-fp' }],
+    summary: { event_id: 'EVT-2000-W01-wt_a', completion_status: 'complete', player_count: 2, main_draw_player_count: 2, qualification_player_count: 1, completed_matches: 3, incomplete_matches: 0, champion_player_id: 'P-2000-AAA-0001', finalist_player_id: 'P-2000-BBB-0002', qualification_winner_count: 1, ranking_points_awarded_total: 0, race_points_awarded_total: 0, validation_warning_count: 1, validation_error_count: 1 },
+    metadata: { event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', seed: 12345, dry_run: true, persisted: false, build_fingerprint: 'result-build-fp', match_package_fingerprint: 'match-build-fp', draw_package_fingerprint: 'draw-build-fp', calendar_event_fingerprint: 'calendar-fp', ranking_updates_implemented: false, points_awarding_implemented: false, persistence_path: null },
+    validation_warnings: [{ severity: 'warning', code: 'result_warn', message: 'result warning', event_id: 'EVT-2000-W01-wt_a', match_id: null, player_id: null, field: null }],
+    validation_errors: [{ severity: 'error', code: 'result_error', message: 'result error', event_id: 'EVT-2000-W01-wt_a', match_id: null, player_id: 'P-2000-BBB-0002', field: null }]
+  },
+  summary: { event_id: 'EVT-2000-W01-wt_a', completion_status: 'complete', player_count: 2, main_draw_player_count: 2, qualification_player_count: 1, completed_matches: 3, incomplete_matches: 0, champion_player_id: 'P-2000-AAA-0001', finalist_player_id: 'P-2000-BBB-0002', qualification_winner_count: 1, ranking_points_awarded_total: 0, race_points_awarded_total: 0, validation_warning_count: 1, validation_error_count: 1 },
+  metadata: { event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', seed: 12345, dry_run: true, persisted: false, build_fingerprint: 'result-build-fp', match_package_fingerprint: 'match-build-fp', draw_package_fingerprint: 'draw-build-fp', calendar_event_fingerprint: 'calendar-fp', ranking_updates_implemented: false, points_awarding_implemented: false, persistence_path: null },
+  validation_warnings: [{ severity: 'warning', code: 'result_warn', message: 'result warning', event_id: 'EVT-2000-W01-wt_a', match_id: null, player_id: null, field: null }],
+  validation_errors: [{ severity: 'error', code: 'result_error', message: 'result error', event_id: 'EVT-2000-W01-wt_a', match_id: null, player_id: 'P-2000-BBB-0002', field: null }],
+  result_package_exists: false
+}
+
 const progressionStatus = {
   event_id: 'EVT-2000-W01-wt_a',
   season: '2000/2001',
@@ -301,6 +338,8 @@ describe('AdminSeasonsPage', () => {
     api.promoteEventQualifiers.mockResolvedValue({ ...progressionResult, action: 'promote_qualifiers' })
     api.simulateEventRound.mockResolvedValue(progressionResult)
     api.simulateEventDraw.mockResolvedValue({ ...progressionResult, action: 'simulate_draw' })
+    api.getEventResultPackage.mockResolvedValue(emptyEventResult)
+    api.extractEventResultPackage.mockResolvedValue(eventResult)
   })
 
   it('renders bootstrap controls and previews with dry_run true', async () => {
@@ -473,6 +512,39 @@ describe('AdminSeasonsPage', () => {
     await userEvent.selectOptions(screen.getByLabelText('Selected match'), 'm1')
     await userEvent.click(screen.getByRole('button', { name: 'Simulate selected match' }))
     expect(api.simulateEventMatch).toHaveBeenCalledWith('EVT-2000-W01-wt_a', 'm1', { seed: 12345 })
+  })
+
+
+  it('renders Event Results section and previews extracted result package', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
+    api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
+    api.getEventMatchPackage.mockResolvedValue({ ...simulatedMatchResult, match_package_exists: true })
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findByRole('heading', { name: 'Event Results' })).toBeInTheDocument()
+    expect(screen.getByText('Result extraction summarizes completed tournament outcomes. It does not award ranking/race points yet.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Preview results' }))
+    expect(api.extractEventResultPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: true, seed: 12345 }))
+    const topTable = await screen.findByRole('table', { name: 'Event result top finishers table' })
+    expect(within(topTable).getByText('Champion')).toBeInTheDocument()
+    expect(within(topTable).getByText('Adam Ahmed AA01')).toBeInTheDocument()
+    const fullTable = await screen.findByRole('table', { name: 'Event full player results table' })
+    expect(within(fullTable).getByText('champion')).toBeInTheDocument()
+    expect(within(fullTable).getByText('finalist')).toBeInTheDocument()
+    expect(screen.getByText('result_error: result error')).toBeInTheDocument()
+    expect(screen.getByText('result_warn: result warning')).toBeInTheDocument()
+  })
+
+  it('persists extracted results with dry_run false', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
+    api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
+    api.getEventMatchPackage.mockResolvedValue({ ...simulatedMatchResult, match_package_exists: true })
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Persist results' }))
+    expect(api.extractEventResultPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false }))
   })
 
 })

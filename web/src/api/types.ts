@@ -1156,6 +1156,114 @@ export type RankingTableResponse = {
   validation_errors: string[]
 }
 
+
+export type PointBreakdownTableType = 'ranking' | 'race' | 'both'
+
+export type PlayerPointBreakdownQueryParams = {
+  player_id?: string
+  search?: string
+  country_code?: string
+  applied_only?: boolean
+  table_type?: PointBreakdownTableType
+  limit?: number
+  include_zero_point_awards?: boolean
+}
+
+export type PlayerPointBreakdownEntry = {
+  event_id: string
+  season: string
+  season_week: number | null
+  calendar_year: number | null
+  year_week: number | null
+  event_name: string | null
+  category: string | null
+  tour_level: string | null
+  template_id: string | null
+  host_country: string | null
+  reached_stage: string
+  qualifier: boolean
+  seed_number: number | null
+  ranking_points_awarded: number
+  race_points_awarded: number
+  applied: boolean
+  point_distribution_source: string | null
+  source_result_fingerprint: string
+  source_player_result_fingerprint: string
+  award_fingerprint: string
+  award_package_fingerprint: string
+  result_package_fingerprint: string | null
+}
+
+export type PlayerPointBreakdownConsistency = {
+  ranking_points_match_active_player: boolean
+  race_points_match_active_player: boolean
+  ranking_points_delta: number
+  race_points_delta: number
+}
+
+export type PlayerPointBreakdown = {
+  player_id: string
+  player_name: string
+  country_code: string
+  nationality: string | null
+  season: string
+  current_ranking_points: number
+  current_race_points: number
+  breakdown_ranking_points_total: number
+  breakdown_race_points_total: number
+  applied_ranking_points_total: number
+  applied_race_points_total: number
+  unapplied_ranking_points_total: number
+  unapplied_race_points_total: number
+  applied_event_count: number
+  total_event_count: number
+  consistency: PlayerPointBreakdownConsistency
+  entries: PlayerPointBreakdownEntry[]
+}
+
+export type PlayerPointBreakdownSummaryRow = {
+  player_id: string
+  player_name: string
+  country_code: string
+  ranking_points: number
+  race_points: number
+  breakdown_ranking_points_total: number
+  breakdown_race_points_total: number
+  applied_event_count: number
+  total_event_count: number
+  consistency_ok: boolean
+  top_result_stage: string | null
+  top_result_event_id: string | null
+}
+
+export type PlayerPointBreakdownMetadata = {
+  season: string
+  source: 'season_point_awards'
+  active_players_fingerprint: string
+  point_awards_fingerprint: string
+  generated_fingerprint: string
+  applied_only: boolean
+  table_type: PointBreakdownTableType
+  filters: {
+    player_id: string | null
+    search: string | null
+    country_code: string | null
+    include_zero_point_awards: boolean
+  }
+  limit: number | null
+  rolling_ranking_implemented: boolean
+  best_n_implemented: boolean
+  movement_implemented: boolean
+}
+
+export type PlayerPointBreakdownResponse = {
+  breakdown: PlayerPointBreakdown | null
+  summary_rows: PlayerPointBreakdownSummaryRow[]
+  metadata: PlayerPointBreakdownMetadata
+  validation_warnings: string[]
+  validation_errors: string[]
+}
+
 export type SeasonActivePlayer = {
   player_id: string
   name: string

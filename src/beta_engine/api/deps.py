@@ -17,6 +17,7 @@ from beta_engine.application.season_draw_service import SeasonDrawService
 from beta_engine.application.season_match_service import SeasonMatchService
 from beta_engine.application.season_event_results_service import SeasonEventResultsService
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
+from beta_engine.application.season_point_breakdown_service import SeasonPointBreakdownService
 from beta_engine.application.season_ranking_table_service import SeasonRankingTableService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
@@ -188,3 +189,11 @@ def get_season_point_awards_service(request: Request) -> SeasonPointAwardsServic
 
 def get_season_ranking_table_service(request: Request) -> SeasonRankingTableService:
     return SeasonRankingTableService(active_players_service=get_initial_pool_season_bootstrap_service(request))
+
+
+def get_season_point_breakdown_service(request: Request) -> SeasonPointBreakdownService:
+    return SeasonPointBreakdownService(
+        point_awards_service=get_season_point_awards_service(request),
+        active_players_service=get_initial_pool_season_bootstrap_service(request),
+        calendar_service=get_season_calendar_service(request),
+    )

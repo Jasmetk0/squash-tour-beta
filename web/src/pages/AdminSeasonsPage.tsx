@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch } from '../api/client'
 import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
+import { AdminRankingTablesSection } from './RankingTables'
 import { formatApiError } from '../utils/apiErrors'
 
 export function AdminSeasonsPage(): JSX.Element {
@@ -607,6 +608,8 @@ export function AdminSeasonsPage(): JSX.Element {
         {displayedPointAwardPackage ? <PointAwardsTable awards={displayedPointAwardPackage.awards} /> : <p className="status">No point award package is displayed yet. Preview or persist awards after event results are persisted.</p>}
         {pointApplyResult ? <UpdatedPointsTable updates={pointApplyResult.updated_players} /> : null}
       </SectionCard>
+
+      <AdminRankingTablesSection />
 
 
       <SectionCard title="Active season players">

@@ -1076,6 +1076,86 @@ export type InitialPoolAuditResponse = {
   audit_events: InitialPoolAuditEvent[]
 }
 
+
+export type RankingTableType = 'ranking' | 'race'
+
+export type RankingTableQueryParams = {
+  table_type?: RankingTableType
+  limit?: number
+  country_code?: string
+  search?: string
+  include_zero_points?: boolean
+  min_points?: number
+}
+
+export type RankingTableRow = {
+  rank: number
+  dense_rank: number
+  ordinal_position: number
+  player_id: string
+  player_name: string
+  country_code: string
+  nationality: string
+  age_years_at_season_start: number
+  career_stage: string
+  current_ability: number
+  potential_ability: number
+  potential_tier: string
+  archetype: string
+  play_style: string
+  ranking_points: number
+  race_points: number
+  table_points: number
+  manual_override: boolean
+  source_generation: string
+  locked_from_initial_pool: boolean
+  movement: null
+  previous_rank: null
+  events_counted: null
+  player_fingerprint: string | null
+}
+
+export type RankingTableSummary = {
+  season: string
+  table_type: RankingTableType
+  player_count: number
+  total_source_players: number
+  ranked_player_count: number
+  zero_point_players: number
+  countries_represented: number
+  leader_player_id: string | null
+  leader_points: number | null
+  generated_from_active_players_fingerprint: string
+  rolling_ranking_implemented: boolean
+  best_n_implemented: boolean
+  movement_implemented: boolean
+}
+
+export type RankingTableMetadata = {
+  season: string
+  table_type: RankingTableType
+  source: 'season_active_players'
+  active_players_fingerprint: string
+  generated_fingerprint: string
+  ranking_basis: string
+  filters: {
+    country_code: string | null
+    search: string | null
+    include_zero_points: boolean
+    min_points: number | null
+  }
+  limit: number | null
+  warnings: string[]
+}
+
+export type RankingTableResponse = {
+  rows: RankingTableRow[]
+  summary: RankingTableSummary
+  metadata: RankingTableMetadata
+  validation_warnings: string[]
+  validation_errors: string[]
+}
+
 export type SeasonActivePlayer = {
   player_id: string
   name: string

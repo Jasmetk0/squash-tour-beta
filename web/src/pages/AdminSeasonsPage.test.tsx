@@ -7,6 +7,8 @@ import { renderWithRoute } from '../test/testUtils'
 
 const api = vi.hoisted(() => ({
   getSeasonActivePlayers: vi.fn(),
+  getAdminRankingTable: vi.fn(),
+  getViewerRankingTable: vi.fn(),
   bootstrapSeasonFromInitialPool: vi.fn(),
   getSeasonCalendar: vi.fn(),
   buildSeasonCalendar: vi.fn(),
@@ -359,10 +361,20 @@ const pointApplyResult = {
 
 const emptyPointAwardsResult = { award_package: null, summary: null, metadata: null, validation_warnings: [], validation_errors: [], award_package_exists: false, applied: false }
 
+const rankingTableResponse = {
+  rows: [{ rank: 1, dense_rank: 1, ordinal_position: 1, player_id: 'P-2000-AAA-0001', player_name: 'Adam Ahmed AA01', country_code: 'AAA', nationality: 'AAA', age_years_at_season_start: 24, career_stage: 'prime', current_ability: 78, potential_ability: 88, potential_tier: 'A', archetype: 'all_court', play_style: 'balanced', ranking_points: 1000, race_points: 900, table_points: 1000, manual_override: false, source_generation: 'initial_pool', locked_from_initial_pool: true, movement: null, previous_rank: null, events_counted: null, player_fingerprint: 'source-fp' }],
+  summary: { season: '2000/2001', table_type: 'ranking', player_count: 1, total_source_players: 1, ranked_player_count: 1, zero_point_players: 0, countries_represented: 1, leader_player_id: 'P-2000-AAA-0001', leader_points: 1000, generated_from_active_players_fingerprint: 'active-fp', rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false },
+  metadata: { season: '2000/2001', table_type: 'ranking', source: 'season_active_players', active_players_fingerprint: 'active-fp', generated_fingerprint: 'ranking-fp', ranking_basis: 'current active season player ranking_points', filters: { country_code: null, search: null, include_zero_points: true, min_points: null }, limit: 100, warnings: ['Rolling 61-week ranking not implemented.'] },
+  validation_warnings: ['Rolling 61-week ranking not implemented.', 'Best-N ranking selection not implemented.'],
+  validation_errors: []
+}
+
 describe('AdminSeasonsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     api.getSeasonActivePlayers.mockResolvedValue(empty)
+    api.getAdminRankingTable.mockResolvedValue(rankingTableResponse)
+    api.getViewerRankingTable.mockResolvedValue(rankingTableResponse)
     api.bootstrapSeasonFromInitialPool.mockResolvedValue(response)
     api.getSeasonCalendar.mockResolvedValue(emptyCalendar)
     api.buildSeasonCalendar.mockResolvedValue(calendarResponse)
@@ -631,4 +643,25 @@ describe('AdminSeasonsPage', () => {
     expect(within(updatesTable).getAllByText('1000').length).toBeGreaterThan(0)
   })
 
+
+  it('renders Ranking Race Tables section and loads table params', async () => {
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findByRole('heading', { name: 'Ranking / Race Tables' })).toBeInTheDocument()
+    expect(screen.getByText('This table is derived from active season player points. Rolling 61-week ranking, best-N selection, weekly snapshots, and movement are not implemented yet.')).toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByLabelText('Table type'), 'race')
+    await userEvent.clear(screen.getByLabelText('Top N'))
+    await userEvent.type(screen.getByLabelText('Top N'), '50')
+    await userEvent.type(screen.getByLabelText('Country filter'), 'aaa')
+    await userEvent.type(screen.getByLabelText('Search'), 'Adam')
+    await userEvent.clear(screen.getByLabelText('Min points'))
+    await userEvent.type(screen.getByLabelText('Min points'), '10')
+    await userEvent.click(screen.getByLabelText(/Include zero points/i))
+    await userEvent.click(screen.getByRole('button', { name: 'Load table' }))
+
+    expect(api.getAdminRankingTable).toHaveBeenLastCalledWith('2000/2001', expect.objectContaining({ table_type: 'race', limit: 50, country_code: 'AAA', search: 'Adam', include_zero_points: false, min_points: 10 }))
+    const table = await screen.findByRole('table', { name: 'Ranking race table' })
+    expect(within(table).getByText('Adam Ahmed AA01')).toBeInTheDocument()
+    expect(screen.getByText('Best-N ranking selection not implemented.')).toBeInTheDocument()
+  })
 })

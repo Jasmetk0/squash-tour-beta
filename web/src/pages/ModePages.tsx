@@ -7,6 +7,7 @@ import { TournamentTemplatesPage } from './TournamentTemplatesPage'
 import { getCountriesMetadata, getTournamentTemplatesMetadata, listRuns } from '../api/client'
 
 import { ViewerRunSelector } from '../components/ViewerRunSelector'
+import { ViewerRankingsReadOnlyPage } from './RankingTables'
 import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewer/activeRun'
 
 type LinkCard = {
@@ -279,15 +280,7 @@ export function AdminSettingsPage(): JSX.Element {
 }
 
 export function ViewerRankingsPage(): JSX.Element {
-  return (
-    <section className="panel">
-      <div className="page-intro">
-        <h2>Rankings</h2>
-        <p className="subtitle">Read-oriented official ranking and race snapshot browsing.</p>
-      </div>
-      <ViewerRunScopedSuggestion page="rankings" />
-    </section>
-  )
+  return <ViewerRankingsReadOnlyPage />
 }
 
 export function ViewerTournamentsPage(): JSX.Element {

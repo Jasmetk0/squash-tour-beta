@@ -99,6 +99,8 @@ import type {
   PointAwardGeneratePayload,
   PointAwardApplyPayload,
   PointAwardApplyResult,
+  RankingTableQueryParams,
+  RankingTableResponse,
   EventResultExtractPayload,
   SeasonEventEntryListResult
 } from './types'
@@ -143,6 +145,26 @@ export function getInitialPlayerPool(season = '2000/2001'): Promise<InitialPoolR
 
 export function getSeasonActivePlayers(season = '2000/2001'): Promise<SeasonActivePlayersResponse> {
   return request(`/admin/seasons/${encodeURIComponent(season)}/players`)
+}
+
+
+function rankingTableQuery(params: RankingTableQueryParams = {}): string {
+  const query = new URLSearchParams()
+  if (params.table_type) query.set('table_type', params.table_type)
+  if (typeof params.limit === 'number') query.set('limit', String(params.limit))
+  if (params.country_code) query.set('country_code', params.country_code)
+  if (params.search) query.set('search', params.search)
+  if (typeof params.include_zero_points === 'boolean') query.set('include_zero_points', String(params.include_zero_points))
+  if (typeof params.min_points === 'number') query.set('min_points', String(params.min_points))
+  return query.size ? `?${query.toString()}` : ''
+}
+
+export function getAdminRankingTable(season = '2000/2001', params: RankingTableQueryParams = {}): Promise<RankingTableResponse> {
+  return request(`/admin/rankings/${encodeURIComponent(season)}${rankingTableQuery(params)}`)
+}
+
+export function getViewerRankingTable(season = '2000/2001', params: RankingTableQueryParams = {}): Promise<RankingTableResponse> {
+  return request(`/viewer/rankings/${encodeURIComponent(season)}${rankingTableQuery(params)}`)
 }
 
 export function bootstrapSeasonFromInitialPool(season: string, payload: SeasonBootstrapPayload): Promise<SeasonBootstrapResponse> {

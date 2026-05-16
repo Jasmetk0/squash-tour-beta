@@ -14,6 +14,7 @@ from beta_engine.api.routers.countries import router as countries_router
 from beta_engine.api.routers.health import router as health_router
 from beta_engine.api.routers.history import router as history_router
 from beta_engine.api.routers.runs import router as runs_router
+from beta_engine.api.routers.rankings import router as rankings_router
 from beta_engine.api.routers.sim import router as sim_router
 from beta_engine.api.routers.tournament_templates import router as tournament_templates_router
 from beta_engine.api.routers.world_talent_preview import router as world_talent_preview_router
@@ -33,6 +34,7 @@ router.include_router(admin_seasons_router)
 router.include_router(countries_router)
 router.include_router(tournament_templates_router)
 router.include_router(runs_router)
+router.include_router(rankings_router)
 router.include_router(sim_router)
 router.include_router(history_router)
 router.include_router(world_talent_preview_router)

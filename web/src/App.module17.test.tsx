@@ -32,6 +32,8 @@ const api = vi.hoisted(() => ({
   getRunTalentPlan: vi.fn(),
   listGeneratedPlayersProvenance: vi.fn(),
   bootstrapNextSeason: vi.fn(),
+  getViewerRankingTable: vi.fn(),
+  getAdminRankingTable: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
     constructor(message: string, status: number) {
@@ -61,6 +63,7 @@ describe('Module 17 pages through routes', () => {
     api.listRuns.mockResolvedValue({ runs: [] })
     api.getCountriesMetadata.mockResolvedValue({ dataset_status: 'temporary_seed_demo', country_count: 0, source_path: 'config/world/countries.json' })
     api.getTournamentTemplatesMetadata.mockResolvedValue({ template_count: 0, source_path: 'config/tournament_templates/mvp_templates.json', referenced_by_calendar: false, referenced_template_ids: [] })
+    api.getViewerRankingTable.mockResolvedValue({ rows: [], summary: { season: '2000/2001', table_type: 'ranking', player_count: 0, total_source_players: 0, ranked_player_count: 0, zero_point_players: 0, countries_represented: 0, leader_player_id: null, leader_points: null, generated_from_active_players_fingerprint: 'active-fp', rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false }, metadata: { season: '2000/2001', table_type: 'ranking', source: 'season_active_players', active_players_fingerprint: 'active-fp', generated_fingerprint: 'generated-fp', ranking_basis: 'current active season player ranking_points', filters: { country_code: null, search: null, include_zero_points: true, min_points: null }, limit: 100, warnings: [] }, validation_warnings: ['Rolling 61-week ranking not implemented.'], validation_errors: [] })
   })
 
   it('renders the Phase 1 landing page at root', async () => {
@@ -106,8 +109,8 @@ describe('Module 17 pages through routes', () => {
   it('renders top-level Viewer rankings with active run link', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'viewer-run-2')
     renderAppAt('/viewer/rankings')
-    expect(await screen.findByRole('heading', { name: 'Rankings' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'rankings' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2/rankings')
+    expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Rankings' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-2/rankings')).toBe(true)
   })
 
   beforeEach(() => {

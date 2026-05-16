@@ -17,6 +17,7 @@ from beta_engine.application.season_draw_service import SeasonDrawService
 from beta_engine.application.season_match_service import SeasonMatchService
 from beta_engine.application.season_event_results_service import SeasonEventResultsService
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
+from beta_engine.application.season_ranking_table_service import SeasonRankingTableService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.application.world_package_service import WorldPackageService
@@ -183,3 +184,7 @@ def get_season_point_awards_service(request: Request) -> SeasonPointAwardsServic
     if points_config_path is not None:
         kwargs["points_config_path"] = points_config_path
     return SeasonPointAwardsService(**kwargs)
+
+
+def get_season_ranking_table_service(request: Request) -> SeasonRankingTableService:
+    return SeasonRankingTableService(active_players_service=get_initial_pool_season_bootstrap_service(request))

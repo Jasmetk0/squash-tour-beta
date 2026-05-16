@@ -1632,6 +1632,131 @@ export type SeasonEventMatchPackageResult = {
   match_package_exists: boolean
 }
 
+
+
+export type EventResultValidationIssue = MatchValidationIssue
+
+export type PlayerResultSummary = {
+  player_id: string
+  player_name: string | null
+  country_code: string | null
+  seed_number: number | null
+  entry_decision: string | null
+  qualifier: boolean
+  wildcard: boolean
+  ranking_priority: number | null
+}
+
+export type PlayerEventResult = {
+  player_id: string
+  player_name: string | null
+  country_code: string | null
+  draw_type: 'qualification' | 'main' | 'both'
+  entry_decision: string | null
+  seed_number: number | null
+  qualifier: boolean
+  reached_stage: 'champion' | 'finalist' | 'semifinal' | 'quarterfinal' | 'round_of_16' | 'round_of_32' | 'round_of_64' | 'round_of_128' | 'qualification_winner' | 'qualification_final' | 'qualification_semifinal' | 'qualification_round' | 'main_draw_participant' | 'unknown'
+  final_round_number: number | null
+  eliminated_by_player_id: string | null
+  eliminated_by_player_name: string | null
+  last_match_id: string | null
+  wins: number
+  losses: number
+  walkovers_received: number
+  byes_received: number
+  retired_or_walkover_loss: boolean
+  points_awarded: number
+  race_points_awarded: number
+  prize_money_awarded: number
+}
+
+export type MatchResultRef = {
+  match_id: string
+  draw_type: 'qualification' | 'main'
+  round_number: number
+  round_name: string
+  bracket_position: number
+  winner_player_id: string | null
+  loser_player_id: string | null
+  scoreline: string | null
+  result_fingerprint: string | null
+}
+
+export type EventResultSummary = {
+  event_id: string
+  completion_status: 'incomplete' | 'complete' | 'blocked'
+  player_count: number
+  main_draw_player_count: number
+  qualification_player_count: number
+  completed_matches: number
+  incomplete_matches: number
+  champion_player_id: string | null
+  finalist_player_id: string | null
+  qualification_winner_count: number
+  ranking_points_awarded_total: number
+  race_points_awarded_total: number
+  validation_warning_count: number
+  validation_error_count: number
+}
+
+export type EventResultMetadata = {
+  event_id: string
+  season: string
+  seed: number
+  dry_run: boolean
+  persisted: boolean
+  build_fingerprint: string
+  match_package_fingerprint: string | null
+  draw_package_fingerprint: string | null
+  calendar_event_fingerprint: string | null
+  ranking_updates_implemented: boolean
+  points_awarding_implemented: boolean
+  persistence_path: string | null
+}
+
+export type SeasonEventResultPackage = {
+  event_id: string
+  season: string
+  template_id: string
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  event_name: string | null
+  category: string | null
+  tour_level: string | null
+  host_country: string | null
+  seed: number
+  dry_run: boolean
+  persisted: boolean
+  completion_status: 'incomplete' | 'complete' | 'blocked'
+  champion: PlayerResultSummary | null
+  finalist: PlayerResultSummary | null
+  semifinalists: PlayerResultSummary[]
+  quarterfinalists: PlayerResultSummary[]
+  qualification_winners: PlayerResultSummary[]
+  player_results: PlayerEventResult[]
+  match_result_refs: MatchResultRef[]
+  summary: EventResultSummary
+  metadata: EventResultMetadata
+  validation_warnings: EventResultValidationIssue[]
+  validation_errors: EventResultValidationIssue[]
+}
+
+export type EventResultExtractPayload = {
+  seed: number
+  dry_run: boolean
+  overwrite_existing: boolean
+}
+
+export type SeasonEventResultPackageResult = {
+  result_package: SeasonEventResultPackage | null
+  summary: EventResultSummary | null
+  metadata: EventResultMetadata | null
+  validation_warnings: EventResultValidationIssue[]
+  validation_errors: EventResultValidationIssue[]
+  result_package_exists: boolean
+}
+
 export type EntryListGeneratePayload = {
   seed: number
   dry_run: boolean

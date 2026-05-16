@@ -15,6 +15,7 @@ from beta_engine.application.season_calendar_service import SeasonCalendarServic
 from beta_engine.application.season_entry_list_service import SeasonEntryListService
 from beta_engine.application.season_draw_service import SeasonDrawService
 from beta_engine.application.season_match_service import SeasonMatchService
+from beta_engine.application.season_event_results_service import SeasonEventResultsService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.application.world_package_service import WorldPackageService
@@ -153,3 +154,15 @@ def get_season_match_service(request: Request) -> SeasonMatchService:
     if configured_path is not None:
         kwargs["matches_path"] = configured_path
     return SeasonMatchService(**kwargs)
+
+
+def get_season_event_results_service(request: Request) -> SeasonEventResultsService:
+    configured_path = getattr(request.app.state, "season_event_results_registry_path", None)
+    kwargs = {
+        "match_service": get_season_match_service(request),
+        "draw_service": get_season_draw_service(request),
+        "calendar_service": get_season_calendar_service(request),
+    }
+    if configured_path is not None:
+        kwargs["results_path"] = configured_path
+    return SeasonEventResultsService(**kwargs)

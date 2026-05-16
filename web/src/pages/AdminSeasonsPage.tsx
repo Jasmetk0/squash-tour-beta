@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
-import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch } from '../api/client'
-import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonMatchRecord, TournamentProgressionStatus } from '../api/types'
+import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch } from '../api/client'
+import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -42,6 +42,10 @@ export function AdminSeasonsPage(): JSX.Element {
   const [progressionSeed, setProgressionSeed] = useState(12345)
   const [progressionDrawType, setProgressionDrawType] = useState<'qualification' | 'main'>('qualification')
   const [progressionRoundNumber, setProgressionRoundNumber] = useState(1)
+  const [resultSeed, setResultSeed] = useState(12345)
+  const [resultDryRun, setResultDryRun] = useState(true)
+  const [resultOverwriteExisting, setResultOverwriteExisting] = useState(false)
+  const [eventResult, setEventResult] = useState<SeasonEventResultPackageResult | null>(null)
   const playersQuery = useQuery({ queryKey: ['season-active-players', season], queryFn: () => getSeasonActivePlayers(season), retry: false })
   const calendarQuery = useQuery({ queryKey: ['season-calendar', season], queryFn: () => getSeasonCalendar(season), retry: false })
 
@@ -150,6 +154,7 @@ export function AdminSeasonsPage(): JSX.Element {
   const persistedDrawQuery = useQuery({ queryKey: ['event-draw-package', effectiveEventId], queryFn: () => getEventDrawPackage(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
   const persistedMatchQuery = useQuery({ queryKey: ['event-match-package', effectiveEventId], queryFn: () => getEventMatchPackage(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
   const progressionStatusQuery = useQuery({ queryKey: ['event-progression-status', effectiveEventId], queryFn: () => getEventProgressionStatus(effectiveEventId), enabled: Boolean(effectiveEventId && (matchResult?.match_package_exists || persistedMatchQuery.data?.match_package_exists)), retry: false })
+  const persistedResultQuery = useQuery({ queryKey: ['event-result-package', effectiveEventId], queryFn: () => getEventResultPackage(effectiveEventId), enabled: Boolean(effectiveEventId && (matchResult?.match_package_exists || persistedMatchQuery.data?.match_package_exists)), retry: false })
   const displayedEntryResult = entryResult ?? persistedEntryQuery.data ?? null
   const displayedEntryList = displayedEntryResult?.entry_list ?? null
   const displayedEntrySummary = displayedEntryResult?.summary ?? displayedEntryList?.summary ?? null
@@ -171,6 +176,27 @@ export function AdminSeasonsPage(): JSX.Element {
   const displayedProgressionStatus: TournamentProgressionStatus | null = progressionResult?.progression_status ?? progressionStatusQuery.data ?? null
   const progressionWarnings = progressionResult?.validation_warnings ?? displayedProgressionStatus?.warnings ?? []
   const progressionErrors = progressionResult?.validation_errors ?? displayedProgressionStatus?.errors ?? []
+  const selectedEventHasPersistedMatchPackage = Boolean(displayedMatchResult?.match_package_exists || displayedMatchPackage)
+  const displayedEventResult = eventResult ?? persistedResultQuery.data ?? null
+  const displayedResultPackage = displayedEventResult?.result_package ?? null
+  const displayedResultSummary = displayedEventResult?.summary ?? displayedResultPackage?.summary ?? null
+  const resultWarnings = displayedEventResult?.validation_warnings ?? displayedResultPackage?.validation_warnings ?? []
+  const resultErrors = displayedEventResult?.validation_errors ?? displayedResultPackage?.validation_errors ?? []
+
+
+  const resultMutation = useMutation({
+    mutationFn: (persist: boolean) => extractEventResultPackage(effectiveEventId, {
+      seed: resultSeed,
+      dry_run: !persist,
+      overwrite_existing: resultOverwriteExisting
+    }),
+    onSuccess: (result) => {
+      setEventResult(result)
+      if (!result.metadata?.dry_run && effectiveEventId) {
+        void queryClient.invalidateQueries({ queryKey: ['event-result-package', effectiveEventId] })
+      }
+    }
+  })
 
   const onProgressionSuccess = (result: ProgressionCommandResult) => {
     setProgressionResult(result)
@@ -185,6 +211,7 @@ export function AdminSeasonsPage(): JSX.Element {
     if (effectiveEventId) {
       void queryClient.invalidateQueries({ queryKey: ['event-match-package', effectiveEventId] })
       void queryClient.invalidateQueries({ queryKey: ['event-progression-status', effectiveEventId] })
+      void queryClient.invalidateQueries({ queryKey: ['event-result-package', effectiveEventId] })
     }
   }
 
@@ -308,7 +335,7 @@ export function AdminSeasonsPage(): JSX.Element {
         <p className="status">Entry generation selects players for a planned calendar event from active season players. It does not create draws or simulate matches yet.</p>
         {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
         <div className="grid">
-          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setEventResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
           <label>Entry seed<input type="number" value={entrySeed} onChange={(event) => setEntrySeed(Number(event.target.value))} /></label>
           <label>Max alternates<input type="number" value={maxAlternates} onChange={(event) => setMaxAlternates(Number(event.target.value))} /></label>
           <label><input type="checkbox" checked={entryDryRun} onChange={(event) => setEntryDryRun(event.target.checked)} /> Dry run default</label>
@@ -352,7 +379,7 @@ export function AdminSeasonsPage(): JSX.Element {
         {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
         {eventOptions.length && !selectedEventHasPersistedEntryList ? <p className="status">Persist an entry list first.</p> : null}
         <div className="grid">
-          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setEventResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
           <label>Draw seed<input type="number" value={drawSeed} onChange={(event) => setDrawSeed(Number(event.target.value))} /></label>
           <label><input type="checkbox" checked={drawDryRun} onChange={(event) => setDrawDryRun(event.target.checked)} /> Dry run default</label>
           <label><input type="checkbox" checked={drawOverwriteExisting} onChange={(event) => setDrawOverwriteExisting(event.target.checked)} /> Overwrite existing draw package</label>
@@ -395,7 +422,7 @@ export function AdminSeasonsPage(): JSX.Element {
         {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
         {eventOptions.length && !selectedEventHasPersistedDrawPackage ? <p className="status">Persist a draw package first.</p> : null}
         <div className="grid">
-          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setEventResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
           <label>Match seed<input type="number" value={matchSeed} onChange={(event) => setMatchSeed(Number(event.target.value))} /></label>
           <label><input type="checkbox" checked={matchDryRun} onChange={(event) => setMatchDryRun(event.target.checked)} /> Dry run default</label>
           <label><input type="checkbox" checked={matchOverwriteExisting} onChange={(event) => setMatchOverwriteExisting(event.target.checked)} /> Overwrite existing match package</label>
@@ -447,6 +474,50 @@ export function AdminSeasonsPage(): JSX.Element {
         ]} /> : null}
         <MatchValidationPanel warnings={matchWarnings} errors={matchErrors} />
         {displayedMatchPackage ? <MatchRecordsTable matches={displayedMatches} /> : <p className="status">No match package is displayed yet. Preview or persist matches for a persisted draw package.</p>}
+      </SectionCard>
+
+
+      <SectionCard title="Event Results">
+        <p className="status">Result extraction summarizes completed tournament outcomes. It does not award ranking/race points yet.</p>
+        {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
+        {eventOptions.length && !selectedEventHasPersistedMatchPackage ? <p className="status">Persist and progress a match package first.</p> : null}
+        <div className="grid">
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setEventResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
+          <label>Result seed<input type="number" value={resultSeed} onChange={(event) => setResultSeed(Number(event.target.value))} /></label>
+          <label><input type="checkbox" checked={resultDryRun} onChange={(event) => setResultDryRun(event.target.checked)} /> Dry run default</label>
+          <label><input type="checkbox" checked={resultOverwriteExisting} onChange={(event) => setResultOverwriteExisting(event.target.checked)} /> Overwrite existing result package</label>
+        </div>
+        <div className="button-row">
+          <button type="button" onClick={() => { setResultDryRun(true); resultMutation.mutate(false) }} disabled={!effectiveEventId || !selectedEventHasPersistedMatchPackage || resultMutation.isPending}>Preview results</button>
+          <button type="button" onClick={() => { setResultDryRun(false); resultMutation.mutate(true) }} disabled={!effectiveEventId || !selectedEventHasPersistedMatchPackage || resultMutation.isPending}>Persist results</button>
+        </div>
+        {resultMutation.isError ? <p role="alert" className="error">{formatApiError(resultMutation.error)}</p> : null}
+        {persistedResultQuery.isError ? <p role="alert" className="error">{formatApiError(persistedResultQuery.error)}</p> : null}
+        <SummaryPills items={[
+          { label: 'Completion status', value: displayedResultSummary?.completion_status ?? '—' },
+          { label: 'Champion', value: displayedResultPackage?.champion?.player_name ?? displayedResultSummary?.champion_player_id ?? '—' },
+          { label: 'Finalist', value: displayedResultPackage?.finalist?.player_name ?? displayedResultSummary?.finalist_player_id ?? '—' },
+          { label: 'Players', value: displayedResultSummary?.player_count ?? 0 },
+          { label: 'Completed matches', value: displayedResultSummary?.completed_matches ?? 0 },
+          { label: 'Incomplete matches', value: displayedResultSummary?.incomplete_matches ?? 0 },
+          { label: 'Qualification winners', value: displayedResultSummary?.qualification_winner_count ?? 0 },
+          { label: 'Validation warnings/errors', value: `${displayedResultSummary?.validation_warning_count ?? resultWarnings.length}/${displayedResultSummary?.validation_error_count ?? resultErrors.length}` },
+          { label: 'Points awarded', value: displayedResultSummary?.ranking_points_awarded_total ?? 0 }
+        ]} />
+        {displayedEventResult?.metadata ? <MetadataList items={[
+          { label: 'Build fingerprint', value: displayedEventResult.metadata.build_fingerprint },
+          { label: 'Match package fingerprint', value: displayedEventResult.metadata.match_package_fingerprint ?? '—' },
+          { label: 'Draw package fingerprint', value: displayedEventResult.metadata.draw_package_fingerprint ?? '—' },
+          { label: 'Calendar event fingerprint', value: displayedEventResult.metadata.calendar_event_fingerprint ?? '—' },
+          { label: 'Ranking updates', value: displayedEventResult.metadata.ranking_updates_implemented ? 'Implemented' : 'Not implemented yet' },
+          { label: 'Points awarding', value: displayedEventResult.metadata.points_awarding_implemented ? 'Implemented' : 'Not implemented yet' }
+        ]} /> : null}
+        <ResultValidationPanel warnings={resultWarnings} errors={resultErrors} />
+        {displayedResultPackage ? <>
+          <TopFinishersTable champion={displayedResultPackage.champion} finalist={displayedResultPackage.finalist} semifinalists={displayedResultPackage.semifinalists} quarterfinalists={displayedResultPackage.quarterfinalists} />
+          <QualificationWinnersTable winners={displayedResultPackage.qualification_winners} playerResults={displayedResultPackage.player_results} />
+          <PlayerResultsTable results={displayedResultPackage.player_results} />
+        </> : <p className="status">No result package is displayed yet. Preview or persist results after progressing matches.</p>}
       </SectionCard>
 
 
@@ -547,5 +618,49 @@ function MatchRecordsTable({ matches }: { matches: SeasonMatchRecord[] }): JSX.E
       <thead><tr><th>Status</th><th>Draw type</th><th>Round</th><th>Position</th><th>match_id</th><th>Top player</th><th>Bottom player</th><th>Winner</th><th>Scoreline</th><th>winner_to</th><th>Notes</th></tr></thead>
       <tbody>{matches.map((match) => <tr key={match.match_id}><td>{match.status}</td><td>{match.draw_type}</td><td>{match.round_name}</td><td>{match.bracket_position}</td><td>{match.match_id}</td><td>{match.top_player_name ?? match.top_player_id ?? match.top_source}</td><td>{match.bottom_player_name ?? match.bottom_player_id ?? match.bottom_source}</td><td>{match.winner_player_id ?? '—'}</td><td>{match.scoreline ?? '—'}</td><td>{match.winner_to_match_id ?? '—'}</td><td>{match.result_notes ?? '—'}</td></tr>)}</tbody>
     </table>
+  </div>
+}
+
+function ResultValidationPanel({ warnings, errors }: { warnings: EventResultValidationIssue[]; errors: EventResultValidationIssue[] }): JSX.Element {
+  return <div>
+    {errors.length ? <><h4>Result errors</h4><ul>{errors.map((issue) => <li key={`result-error-${issue.code}-${issue.match_id ?? issue.player_id ?? issue.event_id ?? 'list'}`}>{issue.code}: {issue.message}</li>)}</ul></> : <p className="status">No result validation errors.</p>}
+    {warnings.length ? <><h4>Result warnings</h4><ul>{warnings.map((issue) => <li key={`result-warning-${issue.code}-${issue.match_id ?? issue.player_id ?? issue.event_id ?? 'list'}`}>{issue.code}: {issue.message}</li>)}</ul></> : <p className="status">No result validation warnings.</p>}
+  </div>
+}
+
+function TopFinishersTable({ champion, finalist, semifinalists, quarterfinalists }: { champion: PlayerResultSummary | null; finalist: PlayerResultSummary | null; semifinalists: PlayerResultSummary[]; quarterfinalists: PlayerResultSummary[] }): JSX.Element {
+  const rows = [
+    ...(champion ? [{ label: 'Champion', player: champion }] : []),
+    ...(finalist ? [{ label: 'Finalist', player: finalist }] : []),
+    ...semifinalists.map((player) => ({ label: 'Semifinalist', player })),
+    ...quarterfinalists.map((player) => ({ label: 'Quarterfinalist', player })),
+  ]
+  return <div className="table-wrap">
+    <table aria-label="Event result top finishers table">
+      <thead><tr><th>Finish</th><th>Player</th><th>Country</th><th>Seed</th><th>Qualifier</th></tr></thead>
+      <tbody>{rows.map(({ label, player }) => <tr key={`${label}-${player.player_id}`}><td>{label}</td><td>{player.player_name ?? player.player_id}</td><td>{player.country_code ?? '—'}</td><td>{player.seed_number ?? '—'}</td><td>{player.qualifier ? 'yes' : 'no'}</td></tr>)}</tbody>
+    </table>
+    {!rows.length ? <p className="status">No completed podium/top finisher results yet.</p> : null}
+  </div>
+}
+
+function QualificationWinnersTable({ winners, playerResults }: { winners: PlayerResultSummary[]; playerResults: PlayerEventResult[] }): JSX.Element {
+  const byPlayer = new Map(playerResults.map((result) => [result.player_id, result]))
+  return <div className="table-wrap">
+    <table aria-label="Event result qualification winners table">
+      <thead><tr><th>Player</th><th>Country</th><th>Later stage</th></tr></thead>
+      <tbody>{winners.map((winner) => <tr key={winner.player_id}><td>{winner.player_name ?? winner.player_id}</td><td>{winner.country_code ?? '—'}</td><td>{byPlayer.get(winner.player_id)?.reached_stage ?? 'qualification_winner'}</td></tr>)}</tbody>
+    </table>
+    {!winners.length ? <p className="status">No qualification winners extracted yet.</p> : null}
+  </div>
+}
+
+function PlayerResultsTable({ results }: { results: PlayerEventResult[] }): JSX.Element {
+  return <div className="table-wrap">
+    <table aria-label="Event full player results table">
+      <thead><tr><th>Player</th><th>Country</th><th>Qualifier</th><th>Seed</th><th>Reached stage</th><th>Wins</th><th>Losses</th><th>Eliminated by</th><th>Last match</th><th>Ranking points awarded</th><th>Race points awarded</th></tr></thead>
+      <tbody>{results.map((result) => <tr key={result.player_id}><td>{result.player_name ?? result.player_id}</td><td>{result.country_code ?? '—'}</td><td>{result.qualifier ? 'yes' : 'no'}</td><td>{result.seed_number ?? '—'}</td><td>{result.reached_stage}</td><td>{result.wins}</td><td>{result.losses}</td><td>{result.eliminated_by_player_name ?? result.eliminated_by_player_id ?? '—'}</td><td>{result.last_match_id ?? '—'}</td><td>{result.points_awarded}</td><td>{result.race_points_awarded}</td></tr>)}</tbody>
+    </table>
+    {!results.length ? <p className="status">No player results extracted yet.</p> : null}
   </div>
 }

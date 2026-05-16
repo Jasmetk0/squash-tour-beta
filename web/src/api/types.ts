@@ -1773,3 +1773,115 @@ export type SeasonEventEntryListResult = {
   validation_errors: EntryListValidationIssue[]
   entry_list_exists: boolean
 }
+
+export type PointAwardValidationIssue = MatchValidationIssue
+
+export type PlayerPointAward = {
+  player_id: string
+  player_name: string | null
+  country_code: string | null
+  reached_stage: PlayerEventResult['reached_stage']
+  qualifier: boolean
+  seed_number: number | null
+  ranking_points_awarded: number
+  race_points_awarded: number
+  previous_ranking_points: number | null
+  previous_race_points: number | null
+  projected_ranking_points: number | null
+  projected_race_points: number | null
+  source_result_fingerprint: string
+  source_player_result_fingerprint: string
+  award_fingerprint: string
+}
+
+export type PointAwardSummary = {
+  event_id: string
+  player_count: number
+  awarded_player_count: number
+  total_ranking_points: number
+  total_race_points: number
+  champion_player_id: string | null
+  champion_points: number
+  finalist_player_id: string | null
+  finalist_points: number
+  applied: boolean
+  validation_warning_count: number
+  validation_error_count: number
+}
+
+export type PointAwardMetadata = {
+  event_id: string
+  season: string
+  seed: number
+  dry_run: boolean
+  persisted: boolean
+  applied: boolean
+  build_fingerprint: string
+  result_package_fingerprint: string
+  point_distribution_fingerprint: string
+  point_distribution_source: string
+  ranking_updates_implemented: boolean
+  rolling_ranking_implemented: boolean
+  best_n_implemented: boolean
+  persistence_path: string | null
+}
+
+export type EventPointAwardPackage = {
+  event_id: string
+  season: string
+  template_id: string
+  event_name: string | null
+  category: string | null
+  tour_level: string | null
+  seed: number
+  dry_run: boolean
+  persisted: boolean
+  applied: boolean
+  awards: PlayerPointAward[]
+  summary: PointAwardSummary
+  metadata: PointAwardMetadata
+  validation_warnings: PointAwardValidationIssue[]
+  validation_errors: PointAwardValidationIssue[]
+}
+
+export type PointAwardGeneratePayload = {
+  seed: number
+  dry_run: boolean
+  overwrite_existing: boolean
+}
+
+export type PointAwardApplyPayload = {
+  seed: number
+  allow_reapply: boolean
+}
+
+export type EventPointAwardPackageResult = {
+  award_package: EventPointAwardPackage | null
+  summary: PointAwardSummary | null
+  metadata: PointAwardMetadata | null
+  validation_warnings: PointAwardValidationIssue[]
+  validation_errors: PointAwardValidationIssue[]
+  award_package_exists: boolean
+  applied: boolean
+}
+
+export type UpdatedPlayerPoints = {
+  player_id: string
+  player_name: string | null
+  previous_ranking_points: number
+  previous_race_points: number
+  new_ranking_points: number
+  new_race_points: number
+  delta_ranking_points: number
+  delta_race_points: number
+}
+
+export type PointAwardApplyResult = {
+  event_id: string
+  applied: boolean
+  award_package: EventPointAwardPackage | null
+  updated_players: UpdatedPlayerPoints[]
+  validation_warnings: PointAwardValidationIssue[]
+  validation_errors: PointAwardValidationIssue[]
+  metadata: PointAwardMetadata | null
+}

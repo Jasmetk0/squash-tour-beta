@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -26,6 +26,9 @@ const api = vi.hoisted(() => ({
   simulateEventDraw: vi.fn(),
   getEventResultPackage: vi.fn(),
   extractEventResultPackage: vi.fn(),
+  getEventPointAwards: vi.fn(),
+  generateEventPointAwards: vi.fn(),
+  applyEventPointAwards: vi.fn(),
   ApiError: class ApiError extends Error { status = 400 }
 }))
 
@@ -317,6 +320,45 @@ const calendarResponse = {
   validation_errors: [{ severity: 'error', code: 'example_error', message: 'example error', event_id: null, field: null }]
 }
 
+const pointAwardsResult = {
+  award_package: {
+    event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', template_id: 'wt_a', event_name: 'World A', category: 'PLATINUM', tour_level: 'WORLD_TOUR', seed: 12345, dry_run: true, persisted: false, applied: false,
+    awards: [
+      { player_id: 'P-2000-AAA-0001', player_name: 'Adam Ahmed AA01', country_code: 'AAA', reached_stage: 'champion', qualifier: false, seed_number: 1, ranking_points_awarded: 1000, race_points_awarded: 1000, previous_ranking_points: 0, previous_race_points: 0, projected_ranking_points: 1000, projected_race_points: 1000, source_result_fingerprint: 'result-build-fp', source_player_result_fingerprint: 'player-result-fp-a', award_fingerprint: 'award-fp-a' },
+      { player_id: 'P-2000-BBB-0002', player_name: 'Ben Beta BB02', country_code: 'BBB', reached_stage: 'finalist', qualifier: true, seed_number: null, ranking_points_awarded: 650, race_points_awarded: 650, previous_ranking_points: 0, previous_race_points: 0, projected_ranking_points: 650, projected_race_points: 650, source_result_fingerprint: 'result-build-fp', source_player_result_fingerprint: 'player-result-fp-b', award_fingerprint: 'award-fp-b' }
+    ],
+    summary: { event_id: 'EVT-2000-W01-wt_a', player_count: 2, awarded_player_count: 2, total_ranking_points: 1650, total_race_points: 1650, champion_player_id: 'P-2000-AAA-0001', champion_points: 1000, finalist_player_id: 'P-2000-BBB-0002', finalist_points: 650, applied: false, validation_warning_count: 1, validation_error_count: 1 },
+    metadata: { event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', seed: 12345, dry_run: true, persisted: false, applied: false, build_fingerprint: 'points-build-fp', result_package_fingerprint: 'result-build-fp', point_distribution_fingerprint: 'dist-fp', point_distribution_source: 'fallback.default_stage_points', ranking_updates_implemented: true, rolling_ranking_implemented: false, best_n_implemented: false, persistence_path: null },
+    validation_warnings: [{ severity: 'warning', code: 'point_warn', message: 'point warning', event_id: 'EVT-2000-W01-wt_a', match_id: null, player_id: null, field: null }],
+    validation_errors: [{ severity: 'error', code: 'point_error', message: 'point error', event_id: 'EVT-2000-W01-wt_a', match_id: null, player_id: 'P-2000-BBB-0002', field: null }]
+  },
+  summary: { event_id: 'EVT-2000-W01-wt_a', player_count: 2, awarded_player_count: 2, total_ranking_points: 1650, total_race_points: 1650, champion_player_id: 'P-2000-AAA-0001', champion_points: 1000, finalist_player_id: 'P-2000-BBB-0002', finalist_points: 650, applied: false, validation_warning_count: 1, validation_error_count: 1 },
+  metadata: { event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', seed: 12345, dry_run: true, persisted: false, applied: false, build_fingerprint: 'points-build-fp', result_package_fingerprint: 'result-build-fp', point_distribution_fingerprint: 'dist-fp', point_distribution_source: 'fallback.default_stage_points', ranking_updates_implemented: true, rolling_ranking_implemented: false, best_n_implemented: false, persistence_path: null },
+  validation_warnings: [{ severity: 'warning', code: 'point_warn', message: 'point warning', event_id: 'EVT-2000-W01-wt_a', match_id: null, player_id: null, field: null }],
+  validation_errors: [{ severity: 'error', code: 'point_error', message: 'point error', event_id: 'EVT-2000-W01-wt_a', match_id: null, player_id: 'P-2000-BBB-0002', field: null }],
+  award_package_exists: false,
+  applied: false
+}
+
+const persistedPointAwardsResult = {
+  ...pointAwardsResult,
+  award_package: { ...pointAwardsResult.award_package, dry_run: false, persisted: true, metadata: { ...pointAwardsResult.award_package.metadata, dry_run: false, persisted: true } },
+  metadata: { ...pointAwardsResult.metadata, dry_run: false, persisted: true },
+  award_package_exists: true
+}
+
+const pointApplyResult = {
+  event_id: 'EVT-2000-W01-wt_a',
+  applied: true,
+  award_package: { ...persistedPointAwardsResult.award_package, applied: true, summary: { ...persistedPointAwardsResult.award_package.summary, applied: true }, metadata: { ...persistedPointAwardsResult.award_package.metadata, applied: true } },
+  updated_players: [{ player_id: 'P-2000-AAA-0001', player_name: 'Adam Ahmed AA01', previous_ranking_points: 0, previous_race_points: 0, new_ranking_points: 1000, new_race_points: 1000, delta_ranking_points: 1000, delta_race_points: 1000 }],
+  validation_warnings: [],
+  validation_errors: [],
+  metadata: { ...persistedPointAwardsResult.metadata, applied: true }
+}
+
+const emptyPointAwardsResult = { award_package: null, summary: null, metadata: null, validation_warnings: [], validation_errors: [], award_package_exists: false, applied: false }
+
 describe('AdminSeasonsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -340,6 +382,9 @@ describe('AdminSeasonsPage', () => {
     api.simulateEventDraw.mockResolvedValue({ ...progressionResult, action: 'simulate_draw' })
     api.getEventResultPackage.mockResolvedValue(emptyEventResult)
     api.extractEventResultPackage.mockResolvedValue(eventResult)
+    api.getEventPointAwards.mockResolvedValue(emptyPointAwardsResult)
+    api.generateEventPointAwards.mockResolvedValue(pointAwardsResult)
+    api.applyEventPointAwards.mockResolvedValue(pointApplyResult)
   })
 
   it('renders bootstrap controls and previews with dry_run true', async () => {
@@ -523,7 +568,7 @@ describe('AdminSeasonsPage', () => {
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
 
     expect(await screen.findByRole('heading', { name: 'Event Results' })).toBeInTheDocument()
-    expect(screen.getByText('Result extraction summarizes completed tournament outcomes. It does not award ranking/race points yet.')).toBeInTheDocument()
+    expect(screen.getByText('Result extraction summarizes completed tournament outcomes. Point awards are generated and applied explicitly in the Ranking / Race Points section.')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Preview results' }))
     expect(api.extractEventResultPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: true, seed: 12345 }))
     const topTable = await screen.findByRole('table', { name: 'Event result top finishers table' })
@@ -545,6 +590,45 @@ describe('AdminSeasonsPage', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Persist results' }))
     expect(api.extractEventResultPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false }))
+  })
+
+
+  it('renders Event Points section and previews awards with dry_run true', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
+    api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
+    api.getEventMatchPackage.mockResolvedValue({ ...simulatedMatchResult, match_package_exists: true })
+    api.getEventResultPackage.mockResolvedValue({ ...eventResult, result_package_exists: true })
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findByRole('heading', { name: 'Ranking / Race Points' })).toBeInTheDocument()
+    expect(screen.getByText('Point awarding uses persisted event results. Applying points mutates active season player ranking/race points. Rolling 61-week ranking and best-N logic are not implemented yet.')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Preview point awards' })).toBeEnabled())
+    await userEvent.click(screen.getByRole('button', { name: 'Preview point awards' }))
+    expect(api.generateEventPointAwards).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: true, seed: 12345 }))
+    const awardsTable = await screen.findByRole('table', { name: 'Event point awards table' })
+    expect(within(awardsTable).getByText('champion')).toBeInTheDocument()
+    expect(within(awardsTable).getAllByText('1000').length).toBeGreaterThan(0)
+    expect(screen.getByText('point_error: point error')).toBeInTheDocument()
+    expect(screen.getByText('point_warn: point warning')).toBeInTheDocument()
+  })
+
+  it('persists point awards and applies points through API', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
+    api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
+    api.getEventMatchPackage.mockResolvedValue({ ...simulatedMatchResult, match_package_exists: true })
+    api.getEventResultPackage.mockResolvedValue({ ...eventResult, result_package_exists: true })
+    api.generateEventPointAwards.mockResolvedValue(persistedPointAwardsResult)
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Persist point awards' })).toBeEnabled())
+    await userEvent.click(screen.getByRole('button', { name: 'Persist point awards' }))
+    expect(api.generateEventPointAwards).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Apply points to active players' }))
+    expect(api.applyEventPointAwards).toHaveBeenCalledWith('EVT-2000-W01-wt_a', { seed: 12345, allow_reapply: false })
+    const updatesTable = await screen.findByRole('table', { name: 'Applied point updates table' })
+    expect(within(updatesTable).getAllByText('1000').length).toBeGreaterThan(0)
   })
 
 })

@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
-import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch } from '../api/client'
-import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue } from '../api/types'
+import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch } from '../api/client'
+import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -46,6 +46,11 @@ export function AdminSeasonsPage(): JSX.Element {
   const [resultDryRun, setResultDryRun] = useState(true)
   const [resultOverwriteExisting, setResultOverwriteExisting] = useState(false)
   const [eventResult, setEventResult] = useState<SeasonEventResultPackageResult | null>(null)
+  const [pointSeed, setPointSeed] = useState(12345)
+  const [pointDryRun, setPointDryRun] = useState(true)
+  const [pointOverwriteExisting, setPointOverwriteExisting] = useState(false)
+  const [pointAwardsResult, setPointAwardsResult] = useState<EventPointAwardPackageResult | null>(null)
+  const [pointApplyResult, setPointApplyResult] = useState<PointAwardApplyResult | null>(null)
   const playersQuery = useQuery({ queryKey: ['season-active-players', season], queryFn: () => getSeasonActivePlayers(season), retry: false })
   const calendarQuery = useQuery({ queryKey: ['season-calendar', season], queryFn: () => getSeasonCalendar(season), retry: false })
 
@@ -155,6 +160,7 @@ export function AdminSeasonsPage(): JSX.Element {
   const persistedMatchQuery = useQuery({ queryKey: ['event-match-package', effectiveEventId], queryFn: () => getEventMatchPackage(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
   const progressionStatusQuery = useQuery({ queryKey: ['event-progression-status', effectiveEventId], queryFn: () => getEventProgressionStatus(effectiveEventId), enabled: Boolean(effectiveEventId && (matchResult?.match_package_exists || persistedMatchQuery.data?.match_package_exists)), retry: false })
   const persistedResultQuery = useQuery({ queryKey: ['event-result-package', effectiveEventId], queryFn: () => getEventResultPackage(effectiveEventId), enabled: Boolean(effectiveEventId && (matchResult?.match_package_exists || persistedMatchQuery.data?.match_package_exists)), retry: false })
+  const persistedPointAwardsQuery = useQuery({ queryKey: ['event-point-awards', effectiveEventId], queryFn: () => getEventPointAwards(effectiveEventId), enabled: Boolean(effectiveEventId && (eventResult?.result_package_exists || persistedResultQuery.data?.result_package_exists)), retry: false })
   const displayedEntryResult = entryResult ?? persistedEntryQuery.data ?? null
   const displayedEntryList = displayedEntryResult?.entry_list ?? null
   const displayedEntrySummary = displayedEntryResult?.summary ?? displayedEntryList?.summary ?? null
@@ -182,6 +188,12 @@ export function AdminSeasonsPage(): JSX.Element {
   const displayedResultSummary = displayedEventResult?.summary ?? displayedResultPackage?.summary ?? null
   const resultWarnings = displayedEventResult?.validation_warnings ?? displayedResultPackage?.validation_warnings ?? []
   const resultErrors = displayedEventResult?.validation_errors ?? displayedResultPackage?.validation_errors ?? []
+  const selectedEventHasPersistedResultPackage = Boolean(displayedEventResult?.result_package_exists || displayedResultPackage?.persisted || persistedResultQuery.data?.result_package_exists)
+  const displayedPointAwardsResult = pointAwardsResult ?? persistedPointAwardsQuery.data ?? null
+  const displayedPointAwardPackage = displayedPointAwardsResult?.award_package ?? null
+  const displayedPointSummary = displayedPointAwardsResult?.summary ?? displayedPointAwardPackage?.summary ?? null
+  const pointWarnings = displayedPointAwardsResult?.validation_warnings ?? displayedPointAwardPackage?.validation_warnings ?? []
+  const pointErrors = displayedPointAwardsResult?.validation_errors ?? displayedPointAwardPackage?.validation_errors ?? []
 
 
   const resultMutation = useMutation({
@@ -194,6 +206,41 @@ export function AdminSeasonsPage(): JSX.Element {
       setEventResult(result)
       if (!result.metadata?.dry_run && effectiveEventId) {
         void queryClient.invalidateQueries({ queryKey: ['event-result-package', effectiveEventId] })
+        void queryClient.invalidateQueries({ queryKey: ['event-point-awards', effectiveEventId] })
+      }
+    }
+  })
+
+  const pointGenerateMutation = useMutation({
+    mutationFn: (persist: boolean) => generateEventPointAwards(effectiveEventId, {
+      seed: pointSeed,
+      dry_run: !persist,
+      overwrite_existing: pointOverwriteExisting
+    }),
+    onSuccess: (result) => {
+      setPointAwardsResult(result)
+      if (!result.metadata?.dry_run && effectiveEventId) {
+        void queryClient.invalidateQueries({ queryKey: ['event-point-awards', effectiveEventId] })
+      }
+    }
+  })
+
+  const pointApplyMutation = useMutation({
+    mutationFn: () => applyEventPointAwards(effectiveEventId, { seed: pointSeed, allow_reapply: false }),
+    onSuccess: (result) => {
+      setPointApplyResult(result)
+      setPointAwardsResult({
+        award_package: result.award_package,
+        summary: result.award_package?.summary ?? null,
+        metadata: result.metadata,
+        validation_warnings: result.validation_warnings,
+        validation_errors: result.validation_errors,
+        award_package_exists: Boolean(result.award_package),
+        applied: result.applied
+      })
+      if (effectiveEventId) {
+        void queryClient.invalidateQueries({ queryKey: ['event-point-awards', effectiveEventId] })
+        void queryClient.invalidateQueries({ queryKey: ['season-active-players', season] })
       }
     }
   })
@@ -335,7 +382,7 @@ export function AdminSeasonsPage(): JSX.Element {
         <p className="status">Entry generation selects players for a planned calendar event from active season players. It does not create draws or simulate matches yet.</p>
         {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
         <div className="grid">
-          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setEventResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setEventResult(null); setPointAwardsResult(null); setPointApplyResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
           <label>Entry seed<input type="number" value={entrySeed} onChange={(event) => setEntrySeed(Number(event.target.value))} /></label>
           <label>Max alternates<input type="number" value={maxAlternates} onChange={(event) => setMaxAlternates(Number(event.target.value))} /></label>
           <label><input type="checkbox" checked={entryDryRun} onChange={(event) => setEntryDryRun(event.target.checked)} /> Dry run default</label>
@@ -379,7 +426,7 @@ export function AdminSeasonsPage(): JSX.Element {
         {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
         {eventOptions.length && !selectedEventHasPersistedEntryList ? <p className="status">Persist an entry list first.</p> : null}
         <div className="grid">
-          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setEventResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setEventResult(null); setPointAwardsResult(null); setPointApplyResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
           <label>Draw seed<input type="number" value={drawSeed} onChange={(event) => setDrawSeed(Number(event.target.value))} /></label>
           <label><input type="checkbox" checked={drawDryRun} onChange={(event) => setDrawDryRun(event.target.checked)} /> Dry run default</label>
           <label><input type="checkbox" checked={drawOverwriteExisting} onChange={(event) => setDrawOverwriteExisting(event.target.checked)} /> Overwrite existing draw package</label>
@@ -422,7 +469,7 @@ export function AdminSeasonsPage(): JSX.Element {
         {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
         {eventOptions.length && !selectedEventHasPersistedDrawPackage ? <p className="status">Persist a draw package first.</p> : null}
         <div className="grid">
-          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setEventResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setEventResult(null); setPointAwardsResult(null); setPointApplyResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
           <label>Match seed<input type="number" value={matchSeed} onChange={(event) => setMatchSeed(Number(event.target.value))} /></label>
           <label><input type="checkbox" checked={matchDryRun} onChange={(event) => setMatchDryRun(event.target.checked)} /> Dry run default</label>
           <label><input type="checkbox" checked={matchOverwriteExisting} onChange={(event) => setMatchOverwriteExisting(event.target.checked)} /> Overwrite existing match package</label>
@@ -478,11 +525,11 @@ export function AdminSeasonsPage(): JSX.Element {
 
 
       <SectionCard title="Event Results">
-        <p className="status">Result extraction summarizes completed tournament outcomes. It does not award ranking/race points yet.</p>
+        <p className="status">Result extraction summarizes completed tournament outcomes. Point awards are generated and applied explicitly in the Ranking / Race Points section.</p>
         {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
         {eventOptions.length && !selectedEventHasPersistedMatchPackage ? <p className="status">Persist and progress a match package first.</p> : null}
         <div className="grid">
-          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setEventResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setEventResult(null); setPointAwardsResult(null); setPointApplyResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
           <label>Result seed<input type="number" value={resultSeed} onChange={(event) => setResultSeed(Number(event.target.value))} /></label>
           <label><input type="checkbox" checked={resultDryRun} onChange={(event) => setResultDryRun(event.target.checked)} /> Dry run default</label>
           <label><input type="checkbox" checked={resultOverwriteExisting} onChange={(event) => setResultOverwriteExisting(event.target.checked)} /> Overwrite existing result package</label>
@@ -518,6 +565,47 @@ export function AdminSeasonsPage(): JSX.Element {
           <QualificationWinnersTable winners={displayedResultPackage.qualification_winners} playerResults={displayedResultPackage.player_results} />
           <PlayerResultsTable results={displayedResultPackage.player_results} />
         </> : <p className="status">No result package is displayed yet. Preview or persist results after progressing matches.</p>}
+      </SectionCard>
+
+
+      <SectionCard title="Ranking / Race Points">
+        <p className="status">Point awarding uses persisted event results. Applying points mutates active season player ranking/race points. Rolling 61-week ranking and best-N logic are not implemented yet.</p>
+        {!selectedEventHasPersistedResultPackage ? <p className="status">Persist event results first.</p> : null}
+        <div className="grid">
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setPointAwardsResult(null); setPointApplyResult(null) }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
+          <label>Point seed<input type="number" value={pointSeed} onChange={(event) => setPointSeed(Number(event.target.value))} /></label>
+          <label><input type="checkbox" checked={pointDryRun} onChange={(event) => setPointDryRun(event.target.checked)} /> Dry run default</label>
+          <label><input type="checkbox" checked={pointOverwriteExisting} onChange={(event) => setPointOverwriteExisting(event.target.checked)} /> Overwrite existing point awards</label>
+        </div>
+        <div className="button-row">
+          <button type="button" onClick={() => { setPointDryRun(true); pointGenerateMutation.mutate(false) }} disabled={!effectiveEventId || !selectedEventHasPersistedResultPackage || pointGenerateMutation.isPending}>Preview point awards</button>
+          <button type="button" onClick={() => { setPointDryRun(false); pointGenerateMutation.mutate(true) }} disabled={!effectiveEventId || !selectedEventHasPersistedResultPackage || pointGenerateMutation.isPending}>Persist point awards</button>
+          <button type="button" onClick={() => pointApplyMutation.mutate()} disabled={!effectiveEventId || !displayedPointAwardPackage?.persisted || displayedPointAwardPackage.applied || pointApplyMutation.isPending}>Apply points to active players</button>
+        </div>
+        {pointGenerateMutation.isError ? <p role="alert" className="error">{formatApiError(pointGenerateMutation.error)}</p> : null}
+        {pointApplyMutation.isError ? <p role="alert" className="error">{formatApiError(pointApplyMutation.error)}</p> : null}
+        {persistedPointAwardsQuery.isError ? <p role="alert" className="error">{formatApiError(persistedPointAwardsQuery.error)}</p> : null}
+        <SummaryPills items={[
+          { label: 'Players', value: displayedPointSummary?.player_count ?? 0 },
+          { label: 'Awarded players', value: displayedPointSummary?.awarded_player_count ?? 0 },
+          { label: 'Ranking points', value: displayedPointSummary?.total_ranking_points ?? 0 },
+          { label: 'Race points', value: displayedPointSummary?.total_race_points ?? 0 },
+          { label: 'Champion points', value: displayedPointSummary?.champion_points ?? 0 },
+          { label: 'Finalist points', value: displayedPointSummary?.finalist_points ?? 0 },
+          { label: 'Applied', value: displayedPointSummary?.applied ? 'yes' : 'no' },
+          { label: 'Validation warnings/errors', value: `${displayedPointSummary?.validation_warning_count ?? pointWarnings.length}/${displayedPointSummary?.validation_error_count ?? pointErrors.length}` }
+        ]} />
+        {displayedPointAwardsResult?.metadata ? <MetadataList items={[
+          { label: 'Build fingerprint', value: displayedPointAwardsResult.metadata.build_fingerprint },
+          { label: 'Result package fingerprint', value: displayedPointAwardsResult.metadata.result_package_fingerprint },
+          { label: 'Distribution fingerprint', value: displayedPointAwardsResult.metadata.point_distribution_fingerprint },
+          { label: 'Distribution source', value: displayedPointAwardsResult.metadata.point_distribution_source },
+          { label: 'Rolling ranking', value: displayedPointAwardsResult.metadata.rolling_ranking_implemented ? 'Implemented' : 'Not implemented yet' },
+          { label: 'Best-N', value: displayedPointAwardsResult.metadata.best_n_implemented ? 'Implemented' : 'Not implemented yet' }
+        ]} /> : null}
+        <PointValidationPanel warnings={pointWarnings} errors={pointErrors} />
+        {displayedPointAwardPackage ? <PointAwardsTable awards={displayedPointAwardPackage.awards} /> : <p className="status">No point award package is displayed yet. Preview or persist awards after event results are persisted.</p>}
+        {pointApplyResult ? <UpdatedPointsTable updates={pointApplyResult.updated_players} /> : null}
       </SectionCard>
 
 
@@ -662,5 +750,33 @@ function PlayerResultsTable({ results }: { results: PlayerEventResult[] }): JSX.
       <tbody>{results.map((result) => <tr key={result.player_id}><td>{result.player_name ?? result.player_id}</td><td>{result.country_code ?? '—'}</td><td>{result.qualifier ? 'yes' : 'no'}</td><td>{result.seed_number ?? '—'}</td><td>{result.reached_stage}</td><td>{result.wins}</td><td>{result.losses}</td><td>{result.eliminated_by_player_name ?? result.eliminated_by_player_id ?? '—'}</td><td>{result.last_match_id ?? '—'}</td><td>{result.points_awarded}</td><td>{result.race_points_awarded}</td></tr>)}</tbody>
     </table>
     {!results.length ? <p className="status">No player results extracted yet.</p> : null}
+  </div>
+}
+
+function PointValidationPanel({ warnings, errors }: { warnings: PointAwardValidationIssue[]; errors: PointAwardValidationIssue[] }): JSX.Element {
+  return <div>
+    {errors.length ? <><h4>Point award errors</h4><ul>{errors.map((issue) => <li key={`point-error-${issue.code}-${issue.player_id ?? issue.event_id ?? issue.field ?? 'list'}`}>{issue.code}: {issue.message}</li>)}</ul></> : <p className="status">No point award validation errors.</p>}
+    {warnings.length ? <><h4>Point award warnings</h4><ul>{warnings.map((issue) => <li key={`point-warning-${issue.code}-${issue.player_id ?? issue.event_id ?? issue.field ?? 'list'}`}>{issue.code}: {issue.message}</li>)}</ul></> : <p className="status">No point award validation warnings.</p>}
+  </div>
+}
+
+function PointAwardsTable({ awards }: { awards: PlayerPointAward[] }): JSX.Element {
+  return <div className="table-wrap">
+    <table aria-label="Event point awards table">
+      <thead><tr><th>Player</th><th>Country</th><th>Reached stage</th><th>Qualifier</th><th>Previous ranking</th><th>Ranking awarded</th><th>Projected ranking</th><th>Previous race</th><th>Race awarded</th><th>Projected race</th></tr></thead>
+      <tbody>{awards.map((award) => <tr key={award.player_id}><td>{award.player_name ?? award.player_id}</td><td>{award.country_code ?? '—'}</td><td>{award.reached_stage}</td><td>{award.qualifier ? 'yes' : 'no'}</td><td>{award.previous_ranking_points ?? '—'}</td><td>{award.ranking_points_awarded}</td><td>{award.projected_ranking_points ?? '—'}</td><td>{award.previous_race_points ?? '—'}</td><td>{award.race_points_awarded}</td><td>{award.projected_race_points ?? '—'}</td></tr>)}</tbody>
+    </table>
+    {!awards.length ? <p className="status">No player point awards in this package.</p> : null}
+  </div>
+}
+
+function UpdatedPointsTable({ updates }: { updates: UpdatedPlayerPoints[] }): JSX.Element {
+  return <div className="table-wrap">
+    <h4>Applied point updates</h4>
+    <table aria-label="Applied point updates table">
+      <thead><tr><th>Player</th><th>Previous ranking</th><th>Delta ranking</th><th>New ranking</th><th>Previous race</th><th>Delta race</th><th>New race</th></tr></thead>
+      <tbody>{updates.map((update) => <tr key={update.player_id}><td>{update.player_name ?? update.player_id}</td><td>{update.previous_ranking_points}</td><td>{update.delta_ranking_points}</td><td>{update.new_ranking_points}</td><td>{update.previous_race_points}</td><td>{update.delta_race_points}</td><td>{update.new_race_points}</td></tr>)}</tbody>
+    </table>
+    {!updates.length ? <p className="status">No active-player point updates were returned.</p> : null}
   </div>
 }

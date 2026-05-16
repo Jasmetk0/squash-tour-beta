@@ -95,6 +95,10 @@ import type {
   SeasonEventDrawPackageResult,
   SeasonEventMatchPackageResult,
   SeasonEventResultPackageResult,
+  EventPointAwardPackageResult,
+  PointAwardGeneratePayload,
+  PointAwardApplyPayload,
+  PointAwardApplyResult,
   EventResultExtractPayload,
   SeasonEventEntryListResult
 } from './types'
@@ -215,6 +219,18 @@ export function getEventResultPackage(eventId: string): Promise<SeasonEventResul
 
 export function extractEventResultPackage(eventId: string, payload: EventResultExtractPayload): Promise<SeasonEventResultPackageResult> {
   return request(`/admin/results/${encodeURIComponent(eventId)}/extract`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function getEventPointAwards(eventId: string): Promise<EventPointAwardPackageResult> {
+  return request(`/admin/points/${encodeURIComponent(eventId)}`)
+}
+
+export function generateEventPointAwards(eventId: string, payload: PointAwardGeneratePayload): Promise<EventPointAwardPackageResult> {
+  return request(`/admin/points/${encodeURIComponent(eventId)}/generate`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function applyEventPointAwards(eventId: string, payload: PointAwardApplyPayload): Promise<PointAwardApplyResult> {
+  return request(`/admin/points/${encodeURIComponent(eventId)}/apply`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function generateInitialPlayerPool(payload: InitialPoolGeneratePayload): Promise<InitialPoolResponse> {

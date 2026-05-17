@@ -17,6 +17,7 @@ from beta_engine.application.season_draw_service import SeasonDrawService
 from beta_engine.application.season_match_service import SeasonMatchService
 from beta_engine.application.season_event_results_service import SeasonEventResultsService
 from beta_engine.application.season_event_lifecycle_service import SeasonEventLifecycleService
+from beta_engine.application.season_event_simulation_service import SeasonEventSimulationService
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
 from beta_engine.application.season_point_breakdown_service import SeasonPointBreakdownService
 from beta_engine.application.season_ranking_table_service import SeasonRankingTableService
@@ -208,6 +209,18 @@ def get_season_ranking_snapshot_service(request: Request) -> SeasonRankingSnapsh
 def get_season_event_lifecycle_service(request: Request) -> SeasonEventLifecycleService:
     return SeasonEventLifecycleService(
         calendar_service=get_season_calendar_service(request),
+        entry_list_service=get_season_entry_list_service(request),
+        draw_service=get_season_draw_service(request),
+        match_service=get_season_match_service(request),
+        result_service=get_season_event_results_service(request),
+        point_awards_service=get_season_point_awards_service(request),
+        ranking_snapshot_service=get_season_ranking_snapshot_service(request),
+    )
+
+
+def get_season_event_simulation_service(request: Request) -> SeasonEventSimulationService:
+    return SeasonEventSimulationService(
+        lifecycle_service=get_season_event_lifecycle_service(request),
         entry_list_service=get_season_entry_list_service(request),
         draw_service=get_season_draw_service(request),
         match_service=get_season_match_service(request),

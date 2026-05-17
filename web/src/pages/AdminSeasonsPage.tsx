@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
-import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, getSeasonLifecycle, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch } from '../api/client'
-import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints, SeasonLifecycleResponse, EventLifecycleStatus } from '../api/types'
+import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, getSeasonLifecycle, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch, simulateOneEvent } from '../api/client'
+import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
 import { AdminRankingTablesSection } from './RankingTables'
 import { formatApiError } from '../utils/apiErrors'
@@ -55,6 +55,17 @@ export function AdminSeasonsPage(): JSX.Element {
   const [lifecycleEventFilter, setLifecycleEventFilter] = useState('')
   const [lifecycleStageFilter, setLifecycleStageFilter] = useState('')
   const [selectedLifecycleEventId, setSelectedLifecycleEventId] = useState('')
+  const [simulateEventId, setSimulateEventId] = useState('')
+  const [simulateSeed, setSimulateSeed] = useState(12345)
+  const [simulateDryRun, setSimulateDryRun] = useState(true)
+  const [simulateOverwriteExisting, setSimulateOverwriteExisting] = useState(false)
+  const [simulateApplyPoints, setSimulateApplyPoints] = useState(false)
+  const [simulatePublishSnapshot, setSimulatePublishSnapshot] = useState(false)
+  const [simulateMaxSteps, setSimulateMaxSteps] = useState(20)
+  const [simulateMaxAlternates, setSimulateMaxAlternates] = useState(16)
+  const [simulateIncludeNotEntered, setSimulateIncludeNotEntered] = useState(false)
+  const [simulateDrawType, setSimulateDrawType] = useState<SimulateOneEventDrawType>('qualification_then_main')
+  const [simulateReport, setSimulateReport] = useState<SimulateOneEventReport | null>(null)
   const playersQuery = useQuery({ queryKey: ['season-active-players', season], queryFn: () => getSeasonActivePlayers(season), retry: false })
   const calendarQuery = useQuery({ queryKey: ['season-calendar', season], queryFn: () => getSeasonCalendar(season), retry: false })
   const lifecycleQuery = useQuery<SeasonLifecycleResponse>({ queryKey: ['season-lifecycle', season], queryFn: () => getSeasonLifecycle(season), enabled: false, retry: false })
@@ -168,6 +179,7 @@ export function AdminSeasonsPage(): JSX.Element {
   })
   const lifecycleStages = Array.from(new Set(lifecycleEvents.map((event) => event.current_stage))).sort()
   const selectedLifecycleEvent = lifecycleEvents.find((event) => event.event_id === selectedLifecycleEventId) ?? displayedLifecycleEvents[0] ?? null
+  const simulateTargetEventId = simulateEventId || selectedLifecycleEvent?.event_id || selectedEventId || eventOptions[0]?.event_id || ''
   const effectiveEventId = selectedEventId || eventOptions[0]?.event_id || ''
   const persistedEntryQuery = useQuery({ queryKey: ['event-entry-list', effectiveEventId], queryFn: () => getEventEntryList(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
   const persistedDrawQuery = useQuery({ queryKey: ['event-draw-package', effectiveEventId], queryFn: () => getEventDrawPackage(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
@@ -281,6 +293,35 @@ export function AdminSeasonsPage(): JSX.Element {
   const promoteQualifiersMutation = useMutation({ mutationFn: () => promoteEventQualifiers(effectiveEventId, { seed: progressionSeed }), onSuccess: onProgressionSuccess })
   const simulateRoundMutation = useMutation({ mutationFn: () => simulateEventRound(effectiveEventId, { seed: progressionSeed, draw_type: progressionDrawType, round_number: progressionRoundNumber }), onSuccess: onProgressionSuccess })
   const simulateDrawMutation = useMutation({ mutationFn: () => simulateEventDraw(effectiveEventId, { seed: progressionSeed, draw_type: progressionDrawType }), onSuccess: onProgressionSuccess })
+
+  const simulateOneEventMutation = useMutation({
+    mutationFn: (dryRunOverride: boolean) => simulateOneEvent(simulateTargetEventId, {
+      seed: simulateSeed,
+      dry_run: dryRunOverride,
+      overwrite_existing: simulateOverwriteExisting,
+      max_steps: simulateMaxSteps,
+      stop_after_stage: null,
+      apply_points: simulateApplyPoints,
+      publish_snapshot: simulatePublishSnapshot,
+      allow_incomplete_results: false,
+      allow_blocked: false,
+      include_not_entered: simulateIncludeNotEntered,
+      max_alternates: simulateMaxAlternates,
+      simulate_draw_type: simulateDrawType
+    }),
+    onSuccess: (result) => {
+      setSimulateReport(result.report)
+      if (!result.report?.dry_run) {
+        void queryClient.invalidateQueries({ queryKey: ['season-lifecycle', season] })
+        void queryClient.invalidateQueries({ queryKey: ['event-entry-list', simulateTargetEventId] })
+        void queryClient.invalidateQueries({ queryKey: ['event-draw-package', simulateTargetEventId] })
+        void queryClient.invalidateQueries({ queryKey: ['event-match-package', simulateTargetEventId] })
+        void queryClient.invalidateQueries({ queryKey: ['event-result-package', simulateTargetEventId] })
+        void queryClient.invalidateQueries({ queryKey: ['event-point-awards', simulateTargetEventId] })
+        void queryClient.invalidateQueries({ queryKey: ['season-active-players', season] })
+      }
+    }
+  })
 
   return (
     <section className="panel">
@@ -424,6 +465,30 @@ export function AdminSeasonsPage(): JSX.Element {
         </div>
         {lifecycleQuery.data && !displayedLifecycleEvents.length ? <p className="status">No lifecycle events match the current filters.</p> : null}
         {selectedLifecycleEvent ? <EventLifecycleDetail event={selectedLifecycleEvent} /> : <p className="status">Load lifecycle to inspect persisted artifact status for each calendar event.</p>}
+      </SectionCard>
+
+      <SectionCard title="Simulate One Event">
+        <p className="status">This command orchestrates existing backend services for one event. It does not simulate a full week or full season. Applying points and publishing snapshots are opt-in.</p>
+        <div className="grid">
+          <label>Simulation event_id<input value={simulateTargetEventId} onChange={(event) => setSimulateEventId(event.target.value)} placeholder="event_id" /></label>
+          <label>Simulation seed<input type="number" value={simulateSeed} onChange={(event) => setSimulateSeed(Number(event.target.value))} /></label>
+          <label>Max steps<input type="number" value={simulateMaxSteps} onChange={(event) => setSimulateMaxSteps(Number(event.target.value))} /></label>
+          <label>Max alternates<input type="number" value={simulateMaxAlternates} onChange={(event) => setSimulateMaxAlternates(Number(event.target.value))} /></label>
+          <label>Simulate draw type<select value={simulateDrawType} onChange={(event) => setSimulateDrawType(event.target.value as SimulateOneEventDrawType)}><option value="qualification_then_main">qualification_then_main</option><option value="qualification">qualification</option><option value="main">main</option></select></label>
+          <label><input type="checkbox" checked={simulateDryRun} onChange={(event) => setSimulateDryRun(event.target.checked)} /> Dry run default</label>
+          <label><input type="checkbox" checked={simulateOverwriteExisting} onChange={(event) => setSimulateOverwriteExisting(event.target.checked)} /> Overwrite existing artifacts</label>
+          <label><input type="checkbox" checked={simulateApplyPoints} onChange={(event) => setSimulateApplyPoints(event.target.checked)} /> Apply points</label>
+          <label><input type="checkbox" checked={simulatePublishSnapshot} onChange={(event) => setSimulatePublishSnapshot(event.target.checked)} /> Publish ranking snapshot</label>
+          <label><input type="checkbox" checked={simulateIncludeNotEntered} onChange={(event) => setSimulateIncludeNotEntered(event.target.checked)} /> Include not-entered players</label>
+        </div>
+        <div className="button-row">
+          <button type="button" onClick={() => { setSimulateDryRun(true); simulateOneEventMutation.mutate(true) }} disabled={!simulateTargetEventId || simulateOneEventMutation.isPending}>Preview event simulation</button>
+          <button type="button" onClick={() => { setSimulateDryRun(false); simulateOneEventMutation.mutate(false) }} disabled={!simulateTargetEventId || simulateOneEventMutation.isPending}>Run event simulation</button>
+        </div>
+        {simulateOneEventMutation.isError ? <p role="alert" className="error">{formatApiError(simulateOneEventMutation.error)}</p> : null}
+        {simulateOneEventMutation.data?.validation_errors.map((error) => <p key={error} role="alert" className="error">{error}</p>)}
+        {simulateOneEventMutation.data?.validation_warnings.map((warning) => <p key={warning} className="status">{warning}</p>)}
+        {simulateReport ? <SimulateOneEventReportPanel report={simulateReport} /> : <p className="status">Preview or run the one-event orchestration command to see a step-by-step report.</p>}
       </SectionCard>
 
 
@@ -749,6 +814,34 @@ function MatchValidationPanel({ warnings, errors }: { warnings: MatchValidationI
     {errors.length ? <><h4>Match errors</h4><ul>{errors.map((issue) => <li key={`match-error-${issue.code}-${issue.match_id ?? issue.player_id ?? issue.event_id ?? 'list'}`}>{issue.code}: {issue.message}</li>)}</ul></> : <p className="status">No match validation errors.</p>}
     {warnings.length ? <><h4>Match warnings</h4><ul>{warnings.map((issue) => <li key={`match-warning-${issue.code}-${issue.match_id ?? issue.player_id ?? issue.event_id ?? 'list'}`}>{issue.code}: {issue.message}</li>)}</ul></> : <p className="status">No match validation warnings.</p>}
   </div>
+}
+
+function SimulateOneEventReportPanel({ report }: { report: SimulateOneEventReport }): JSX.Element {
+  const changed = Object.entries(report.changed_artifacts).filter(([, value]) => value).map(([key]) => key).join(', ') || 'none'
+  return <div>
+    <h4>Simulation report</h4>
+    <SummaryPills items={[
+      { label: 'Initial stage', value: report.initial_lifecycle?.current_stage ?? '—' },
+      { label: 'Final stage', value: report.final_lifecycle?.current_stage ?? '—' },
+      { label: 'Completed', value: report.completed ? 'yes' : 'no' },
+      { label: 'Blocked', value: report.blocked ? 'yes' : 'no' },
+      { label: 'Changed artifacts', value: changed },
+      { label: 'Final next action', value: report.final_lifecycle?.next_recommended_action ?? '—' }
+    ]} />
+    {report.validation_errors.length ? <><h4>Simulation errors</h4><ul>{report.validation_errors.map((error) => <li key={error} className="error">{error}</li>)}</ul></> : null}
+    {report.validation_warnings.length ? <><h4>Simulation warnings</h4><ul>{report.validation_warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></> : null}
+    <div className="table-wrap">
+      <table aria-label="Simulate one event steps table">
+        <thead><tr><th>Step</th><th>Status</th><th>Detail</th><th>Before</th><th>After</th><th>Changed IDs</th><th>Fingerprint</th><th>Warnings</th><th>Errors</th></tr></thead>
+        <tbody>{report.steps.map((step, index) => <tr key={`${step.step}-${index}`}><td>{step.step}</td><td>{step.status}</td><td>{step.action_detail}</td><td>{boolMark(step.artifact_exists_before)}</td><td>{boolMark(step.artifact_exists_after)}</td><td>{step.changed_ids.join(', ') || '—'}</td><td>{step.fingerprint ? step.fingerprint.slice(0, 12) : '—'}</td><td>{step.warnings.join('; ') || '—'}</td><td>{step.errors.join('; ') || '—'}</td></tr>)}</tbody>
+      </table>
+    </div>
+  </div>
+}
+
+function boolMark(value: boolean | null): string {
+  if (value === null) return '—'
+  return value ? 'yes' : 'no'
 }
 
 function artifactMark(artifact: { exists: boolean; validation_error_count: number; validation_warning_count: number }): string {

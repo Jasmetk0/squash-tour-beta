@@ -35,6 +35,7 @@ const api = vi.hoisted(() => ({
   getEventPointAwards: vi.fn(),
   generateEventPointAwards: vi.fn(),
   applyEventPointAwards: vi.fn(),
+  simulateOneEvent: vi.fn(),
   ApiError: class ApiError extends Error { status = 400 }
 }))
 
@@ -348,6 +349,27 @@ const lifecycleResponse = {
   validation_errors: []
 }
 
+const simulateOneEventResult = {
+  report: {
+    event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', season_week: 1, calendar_year: 2000, year_week: 37, event_name: 'World A', seed: 12345, dry_run: true, requested_apply_points: false, requested_publish_snapshot: false,
+    initial_lifecycle: lifecycleResponse.events[0],
+    final_lifecycle: { ...lifecycleResponse.events[0], current_stage: 'points_generated', next_recommended_action: 'apply_point_awards', is_blocked: false, block_reasons: [] },
+    steps: [
+      { step: 'preflight_lifecycle', status: 'succeeded', action_detail: 'Initial lifecycle stage is planned.', artifact_exists_before: null, artifact_exists_after: null, changed_ids: [], fingerprint: 'lifecycle-fp', warnings: [], errors: [] },
+      { step: 'generate_entries', status: 'planned', action_detail: 'Dry-run plan only; no mutating service was called.', artifact_exists_before: false, artifact_exists_after: false, changed_ids: [], fingerprint: null, warnings: ['sim warning'], errors: [] },
+      { step: 'generate_point_awards', status: 'succeeded', action_detail: 'Generated event point awards.', artifact_exists_before: false, artifact_exists_after: true, changed_ids: ['EVT-2000-W01-wt_a'], fingerprint: 'points-fingerprint-abcdef', warnings: [], errors: ['sim error'] }
+    ],
+    changed_artifacts: { entries: true, draw: true, matches: true, results: true, point_awards: true, active_player_points: false, ranking_snapshot: false },
+    completed: true,
+    blocked: false,
+    validation_warnings: ['report warning'],
+    validation_errors: ['report error'],
+    metadata: { build_fingerprint: 'sim-fp', read_only: false, lifecycle_preflight_fingerprint: 'lifecycle-fp', final_lifecycle_fingerprint: 'final-fp' }
+  },
+  validation_warnings: ['top warning'],
+  validation_errors: []
+}
+
 const pointAwardsResult = {
   award_package: {
     event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', template_id: 'wt_a', event_name: 'World A', category: 'PLATINUM', tour_level: 'WORLD_TOUR', seed: 12345, dry_run: true, persisted: false, applied: false,
@@ -424,6 +446,7 @@ describe('AdminSeasonsPage', () => {
     api.getEventPointAwards.mockResolvedValue(emptyPointAwardsResult)
     api.generateEventPointAwards.mockResolvedValue(pointAwardsResult)
     api.applyEventPointAwards.mockResolvedValue(pointApplyResult)
+    api.simulateOneEvent.mockResolvedValue(simulateOneEventResult)
   })
 
   it('renders bootstrap controls and previews with dry_run true', async () => {
@@ -488,6 +511,35 @@ describe('AdminSeasonsPage', () => {
     expect(screen.getByText('entries artifact has 1 validation error(s)')).toBeInTheDocument()
   })
 
+
+
+  it('renders Simulate One Event panel and previews through API', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findByRole('heading', { name: 'Simulate One Event' })).toBeInTheDocument()
+    expect(screen.getByText('This command orchestrates existing backend services for one event. It does not simulate a full week or full season. Applying points and publishing snapshots are opt-in.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Preview event simulation' }))
+    expect(api.simulateOneEvent).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: true, apply_points: false, publish_snapshot: false, simulate_draw_type: 'qualification_then_main' }))
+    const table = await screen.findByRole('table', { name: 'Simulate one event steps table' })
+    expect(within(table).getByText('generate_entries')).toBeInTheDocument()
+    expect(within(table).getByText('planned')).toBeInTheDocument()
+    expect(screen.getByText('report warning')).toBeInTheDocument()
+    expect(screen.getByText('report error')).toBeInTheDocument()
+    expect(within(table).getByText('sim warning')).toBeInTheDocument()
+    expect(within(table).getByText('sim error')).toBeInTheDocument()
+  })
+
+  it('runs Simulate One Event with dry_run false and opt-in flags', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    await userEvent.click(await screen.findByLabelText('Apply points'))
+    await userEvent.click(screen.getByLabelText('Publish ranking snapshot'))
+    await userEvent.selectOptions(screen.getByLabelText('Simulate draw type'), 'main')
+    await userEvent.click(screen.getByRole('button', { name: 'Run event simulation' }))
+    expect(api.simulateOneEvent).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false, apply_points: true, publish_snapshot: true, simulate_draw_type: 'main' }))
+  })
 
   it('renders Event Entries section and previews entries', async () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)

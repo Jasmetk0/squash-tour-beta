@@ -1587,6 +1587,83 @@ export type EventLifecycleResponse = {
   validation_errors: string[]
 }
 
+
+export type SimulateOneEventStepName = 'preflight_lifecycle' | 'generate_entries' | 'generate_draw' | 'generate_matches' | 'process_byes' | 'simulate_draw' | 'refresh_progression' | 'extract_results' | 'generate_point_awards' | 'apply_point_awards' | 'publish_ranking_snapshot' | 'final_lifecycle'
+
+export type SimulateOneEventStepStatusValue = 'skipped' | 'planned' | 'succeeded' | 'failed' | 'blocked'
+
+export type SimulateOneEventDrawType = 'qualification_then_main' | 'qualification' | 'main'
+
+export type SimulateOneEventRequest = {
+  seed: number
+  dry_run: boolean
+  overwrite_existing: boolean
+  max_steps: number
+  stop_after_stage?: EventLifecycleStage | null
+  apply_points: boolean
+  publish_snapshot: boolean
+  allow_incomplete_results?: boolean
+  allow_blocked?: boolean
+  include_not_entered: boolean
+  max_alternates: number
+  simulate_draw_type: SimulateOneEventDrawType
+}
+
+export type SimulateOneEventStepStatus = {
+  step: SimulateOneEventStepName
+  status: SimulateOneEventStepStatusValue
+  action_detail: string
+  artifact_exists_before: boolean | null
+  artifact_exists_after: boolean | null
+  changed_ids: string[]
+  fingerprint: string | null
+  warnings: string[]
+  errors: string[]
+}
+
+export type SimulateOneEventChangedArtifacts = {
+  entries: boolean
+  draw: boolean
+  matches: boolean
+  results: boolean
+  point_awards: boolean
+  active_player_points: boolean
+  ranking_snapshot: boolean
+}
+
+export type SimulateOneEventReport = {
+  event_id: string
+  season: string
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  event_name: string
+  seed: number
+  dry_run: boolean
+  requested_apply_points: boolean
+  requested_publish_snapshot: boolean
+  initial_lifecycle: EventLifecycleStatus | null
+  final_lifecycle: EventLifecycleStatus | null
+  steps: SimulateOneEventStepStatus[]
+  changed_artifacts: SimulateOneEventChangedArtifacts
+  completed: boolean
+  blocked: boolean
+  validation_warnings: string[]
+  validation_errors: string[]
+  metadata: {
+    build_fingerprint: string
+    read_only: boolean
+    lifecycle_preflight_fingerprint: string | null
+    final_lifecycle_fingerprint: string | null
+  }
+}
+
+export type SimulateOneEventResult = {
+  report: SimulateOneEventReport | null
+  validation_warnings: string[]
+  validation_errors: string[]
+}
+
 export type SeasonCalendarBuildPayload = {
   seed: number
   dry_run: boolean

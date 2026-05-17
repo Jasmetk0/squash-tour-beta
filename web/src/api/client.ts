@@ -103,6 +103,8 @@ import type {
   PlayerPointBreakdownResponse,
   RankingTableQueryParams,
   RankingTableResponse,
+  WeeklyRankingSnapshotGeneratePayload,
+  WeeklyRankingSnapshotResult,
   EventResultExtractPayload,
   SeasonEventEntryListResult
 } from './types'
@@ -169,6 +171,17 @@ export function getViewerRankingTable(season = '2000/2001', params: RankingTable
   return request(`/viewer/rankings/${encodeURIComponent(season)}${rankingTableQuery(params)}`)
 }
 
+export function getAdminRankingSnapshot(season = '2000/2001', seasonWeek = 1): Promise<WeeklyRankingSnapshotResult> {
+  return request(`/admin/ranking-snapshots/${encodeURIComponent(season)}?season_week=${seasonWeek}`)
+}
+
+export function generateAdminRankingSnapshot(season = '2000/2001', seasonWeek = 1, payload: WeeklyRankingSnapshotGeneratePayload = {}): Promise<WeeklyRankingSnapshotResult> {
+  return request(`/admin/ranking-snapshots/${encodeURIComponent(season)}/generate?season_week=${seasonWeek}`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function getViewerRankingSnapshot(season = '2000/2001', seasonWeek = 1): Promise<WeeklyRankingSnapshotResult> {
+  return request(`/viewer/ranking-snapshots/${encodeURIComponent(season)}?season_week=${seasonWeek}`)
+}
 
 function pointBreakdownQuery(params: PlayerPointBreakdownQueryParams = {}): string {
   const query = new URLSearchParams()

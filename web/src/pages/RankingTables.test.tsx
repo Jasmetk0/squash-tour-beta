@@ -10,6 +10,9 @@ const api = vi.hoisted(() => ({
   getViewerRankingTable: vi.fn(),
   getAdminPointBreakdown: vi.fn(),
   getViewerPointBreakdown: vi.fn(),
+  getAdminRankingSnapshot: vi.fn(),
+  generateAdminRankingSnapshot: vi.fn(),
+  getViewerRankingSnapshot: vi.fn(),
   ApiError: class ApiError extends Error { status = 400 }
 }))
 
@@ -22,6 +25,22 @@ const rankingResponse = {
   validation_warnings: ['Rolling 61-week ranking not implemented.', 'Best-N ranking selection not implemented.'],
   validation_errors: []
 }
+
+
+const snapshotResult = {
+  snapshot_exists: true,
+  snapshot: {
+    season: '2000/2001', season_week: 2, calendar_year: 2000, year_week: 36, seed: 12345, dry_run: false, persisted: true,
+    ranking_table: { table_type: 'ranking', rows: [{ ...rankingResponse.rows[0], previous_rank: 2, movement: 1, movement_label: 'up' }], summary: { season: '2000/2001', season_week: 2, table_type: 'ranking', player_count: 1, ranked_player_count: 1, zero_point_players: 0, countries_represented: 1, leader_player_id: 'P-1', leader_points: 1400, previous_snapshot_key: '2000/2001:1', new_entries_count: 0, moved_up_count: 1, moved_down_count: 0, unchanged_count: 0, rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: true }, metadata: {} },
+    race_table: { table_type: 'race', rows: [{ ...rankingResponse.rows[0], previous_rank: 1, movement: 0, movement_label: 'same' }], summary: { season: '2000/2001', season_week: 2, table_type: 'race', player_count: 1, ranked_player_count: 1, zero_point_players: 0, countries_represented: 1, leader_player_id: 'P-1', leader_points: 1200, previous_snapshot_key: '2000/2001:1', new_entries_count: 0, moved_up_count: 0, moved_down_count: 0, unchanged_count: 1, rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: true }, metadata: {} },
+    summary: {},
+    metadata: { season: '2000/2001', season_week: 2, calendar_year: 2000, year_week: 36, source: 'active_season_players', active_players_fingerprint: 'active-fp', point_awards_fingerprint: 'awards-fp', ranking_table_fingerprint: 'rank-fp', race_table_fingerprint: 'race-fp', snapshot_fingerprint: 'snapshot-fingerprint-abcdef', previous_snapshot_fingerprint: 'previous-fingerprint', dry_run: false, persisted: true, generated_seed: 12345, persistence_path: 'config/world/season_ranking_snapshots.json', publication_basis: 'current active season player ranking_points/race_points', rolling_ranking_implemented: false, best_n_implemented: false },
+    validation_warnings: ['Snapshot is based on current active season player totals, not rolling expiry.'], validation_errors: []
+  },
+  summary: null, metadata: null, validation_warnings: [], validation_errors: []
+}
+
+const emptySnapshotResult = { snapshot: null, snapshot_exists: false, summary: null, metadata: null, validation_warnings: ['No published snapshot for this week.'], validation_errors: [] }
 
 const summaryBreakdownResponse = {
   breakdown: null,
@@ -46,13 +65,16 @@ describe('Viewer rankings read model page', () => {
     api.getAdminRankingTable.mockResolvedValue(rankingResponse)
     api.getViewerPointBreakdown.mockResolvedValue(summaryBreakdownResponse)
     api.getAdminPointBreakdown.mockResolvedValue(playerBreakdownResponse)
+    api.getAdminRankingSnapshot.mockResolvedValue(snapshotResult)
+    api.generateAdminRankingSnapshot.mockResolvedValue(snapshotResult)
+    api.getViewerRankingSnapshot.mockResolvedValue(snapshotResult)
   })
 
   it('renders read-only MSA rankings table and filters', async () => {
     renderWithRoute(<ViewerRankingsReadOnlyPage />, '/viewer/rankings')
 
     expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
-    expect(screen.getByText('Current ranking table from active season points. Historical weekly ranking snapshots are not available yet.')).toBeInTheDocument()
+    expect(screen.getByText('Current ranking table from active season points. Historical weekly ranking snapshots are read-only publications below.')).toBeInTheDocument()
     expect(screen.getAllByLabelText('Season')[0]).toHaveValue('2000/2001')
     expect(screen.getByLabelText('Table type')).toBeInTheDocument()
     expect(screen.getByLabelText('Country filter')).toBeInTheDocument()
@@ -103,4 +125,36 @@ describe('Viewer rankings read model page', () => {
     expect(within(table).getByText('champion')).toBeInTheDocument()
     expect(within(table).getByText('abcdef123456')).toBeInTheDocument()
   })
+
+  it('admin weekly ranking snapshots preview persist and load through API', async () => {
+    renderWithRoute(<AdminRankingTablesSection />, '/admin/seasons')
+
+    expect(screen.getByText('Weekly Ranking Snapshots')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Preview snapshot' }))
+    expect(api.generateAdminRankingSnapshot).toHaveBeenLastCalledWith('2000/2001', 1, expect.objectContaining({ dry_run: true, seed: 12345 }))
+
+    await userEvent.click(screen.getByRole('button', { name: 'Persist snapshot' }))
+    expect(api.generateAdminRankingSnapshot).toHaveBeenLastCalledWith('2000/2001', 1, expect.objectContaining({ dry_run: false }))
+
+    await userEvent.click(screen.getByRole('button', { name: 'Load persisted snapshot' }))
+    expect(api.getAdminRankingSnapshot).toHaveBeenCalledWith('2000/2001', 1)
+    const table = await screen.findByRole('table', { name: 'Ranking snapshot table' })
+    expect(within(table).getByText('Adam Ahmed')).toBeInTheDocument()
+    expect(within(table).getByText('+1')).toBeInTheDocument()
+    expect(screen.getByText('Snapshot is based on current active season player totals, not rolling expiry.')).toBeInTheDocument()
+  })
+
+  it('viewer weekly snapshot panel loads read-only persisted snapshot or empty state', async () => {
+    api.getViewerRankingSnapshot.mockResolvedValueOnce(emptySnapshotResult).mockResolvedValueOnce(snapshotResult)
+    renderWithRoute(<ViewerRankingsReadOnlyPage />, '/viewer/rankings')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Load weekly snapshot' }))
+    expect(api.getViewerRankingSnapshot).toHaveBeenCalledWith('2000/2001', 1)
+    expect(await screen.findByText('No published snapshot for this week.')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Load weekly snapshot' }))
+    const table = await screen.findByRole('table', { name: 'Race snapshot table' })
+    expect(within(table).getByText('0')).toBeInTheDocument()
+  })
+
 })

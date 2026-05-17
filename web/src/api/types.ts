@@ -1156,6 +1156,92 @@ export type RankingTableResponse = {
   validation_errors: string[]
 }
 
+export type RankingSnapshotRow = Omit<RankingTableRow, 'movement' | 'previous_rank' | 'events_counted'> & {
+  previous_rank: number | null
+  movement: number | null
+  movement_label: 'new' | 'up' | 'down' | 'same' | 'none'
+}
+
+export type RankingSnapshotSummary = {
+  season: string
+  season_week: number
+  table_type: RankingTableType
+  player_count: number
+  ranked_player_count: number
+  zero_point_players: number
+  countries_represented: number
+  leader_player_id: string | null
+  leader_points: number | null
+  previous_snapshot_key: string | null
+  new_entries_count: number
+  moved_up_count: number
+  moved_down_count: number
+  unchanged_count: number
+  rolling_ranking_implemented: boolean
+  best_n_implemented: boolean
+  movement_implemented: boolean
+}
+
+export type RankingSnapshotMetadata = {
+  season: string
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  source: 'active_season_players'
+  active_players_fingerprint: string
+  point_awards_fingerprint: string | null
+  ranking_table_fingerprint: string
+  race_table_fingerprint: string
+  snapshot_fingerprint: string
+  previous_snapshot_fingerprint: string | null
+  dry_run: boolean
+  persisted: boolean
+  generated_seed: number
+  persistence_path: string | null
+  publication_basis: string
+  rolling_ranking_implemented: boolean
+  best_n_implemented: boolean
+}
+
+export type RankingSnapshotTable = {
+  table_type: RankingTableType
+  rows: RankingSnapshotRow[]
+  summary: RankingSnapshotSummary
+  metadata: RankingSnapshotMetadata
+}
+
+export type WeeklyRankingSnapshot = {
+  season: string
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  seed: number
+  dry_run: boolean
+  persisted: boolean
+  ranking_table: RankingSnapshotTable
+  race_table: RankingSnapshotTable
+  summary: { ranking: RankingSnapshotSummary; race: RankingSnapshotSummary }
+  metadata: RankingSnapshotMetadata
+  validation_warnings: string[]
+  validation_errors: string[]
+}
+
+export type WeeklyRankingSnapshotResult = {
+  snapshot: WeeklyRankingSnapshot | null
+  snapshot_exists: boolean
+  summary: { ranking: RankingSnapshotSummary; race: RankingSnapshotSummary } | null
+  metadata: RankingSnapshotMetadata | null
+  validation_warnings: string[]
+  validation_errors: string[]
+}
+
+export type WeeklyRankingSnapshotGeneratePayload = {
+  seed?: number
+  dry_run?: boolean
+  overwrite_existing?: boolean
+  include_zero_points?: boolean
+  limit?: number | null
+}
 
 export type PointBreakdownTableType = 'ranking' | 'race' | 'both'
 

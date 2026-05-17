@@ -19,6 +19,7 @@ from beta_engine.application.season_event_results_service import SeasonEventResu
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
 from beta_engine.application.season_point_breakdown_service import SeasonPointBreakdownService
 from beta_engine.application.season_ranking_table_service import SeasonRankingTableService
+from beta_engine.application.season_ranking_snapshot_service import SeasonRankingSnapshotService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.application.world_package_service import WorldPackageService
@@ -189,6 +190,18 @@ def get_season_point_awards_service(request: Request) -> SeasonPointAwardsServic
 
 def get_season_ranking_table_service(request: Request) -> SeasonRankingTableService:
     return SeasonRankingTableService(active_players_service=get_initial_pool_season_bootstrap_service(request))
+
+
+def get_season_ranking_snapshot_service(request: Request) -> SeasonRankingSnapshotService:
+    configured_path = getattr(request.app.state, "season_ranking_snapshots_registry_path", None)
+    kwargs = {
+        "ranking_table_service": get_season_ranking_table_service(request),
+        "calendar_service": get_season_calendar_service(request),
+        "point_awards_service": get_season_point_awards_service(request),
+    }
+    if configured_path is not None:
+        kwargs["snapshots_path"] = configured_path
+    return SeasonRankingSnapshotService(**kwargs)
 
 
 def get_season_point_breakdown_service(request: Request) -> SeasonPointBreakdownService:

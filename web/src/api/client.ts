@@ -106,7 +106,9 @@ import type {
   WeeklyRankingSnapshotGeneratePayload,
   WeeklyRankingSnapshotResult,
   EventResultExtractPayload,
-  SeasonEventEntryListResult
+  SeasonEventEntryListResult,
+  SeasonLifecycleResponse,
+  EventLifecycleResponse
 } from './types'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
@@ -209,6 +211,14 @@ export function bootstrapSeasonFromInitialPool(season: string, payload: SeasonBo
 
 export function getSeasonCalendar(season: string): Promise<SeasonCalendarBuildResponse> {
   return request(`/admin/seasons/${encodeURIComponent(season)}/calendar`)
+}
+
+export function getSeasonLifecycle(season: string): Promise<SeasonLifecycleResponse> {
+  return request(`/admin/lifecycle/${encodeURIComponent(season)}`)
+}
+
+export function getEventLifecycle(eventId: string): Promise<EventLifecycleResponse> {
+  return request(`/admin/lifecycle/event/${encodeURIComponent(eventId)}`)
 }
 
 export function buildSeasonCalendar(season: string, payload: SeasonCalendarBuildPayload): Promise<SeasonCalendarBuildResponse> {

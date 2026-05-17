@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
-import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch } from '../api/client'
-import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints } from '../api/types'
+import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, getSeasonLifecycle, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch } from '../api/client'
+import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints, SeasonLifecycleResponse, EventLifecycleStatus } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
 import { AdminRankingTablesSection } from './RankingTables'
 import { formatApiError } from '../utils/apiErrors'
@@ -52,8 +52,12 @@ export function AdminSeasonsPage(): JSX.Element {
   const [pointOverwriteExisting, setPointOverwriteExisting] = useState(false)
   const [pointAwardsResult, setPointAwardsResult] = useState<EventPointAwardPackageResult | null>(null)
   const [pointApplyResult, setPointApplyResult] = useState<PointAwardApplyResult | null>(null)
+  const [lifecycleEventFilter, setLifecycleEventFilter] = useState('')
+  const [lifecycleStageFilter, setLifecycleStageFilter] = useState('')
+  const [selectedLifecycleEventId, setSelectedLifecycleEventId] = useState('')
   const playersQuery = useQuery({ queryKey: ['season-active-players', season], queryFn: () => getSeasonActivePlayers(season), retry: false })
   const calendarQuery = useQuery({ queryKey: ['season-calendar', season], queryFn: () => getSeasonCalendar(season), retry: false })
+  const lifecycleQuery = useQuery<SeasonLifecycleResponse>({ queryKey: ['season-lifecycle', season], queryFn: () => getSeasonLifecycle(season), enabled: false, retry: false })
 
   const bootstrapMutation = useMutation({
     mutationFn: (persist: boolean) => bootstrapSeasonFromInitialPool(season, { source_season: sourceSeason, seed, dry_run: !persist, overwrite_existing: overwriteExisting }),
@@ -155,6 +159,15 @@ export function AdminSeasonsPage(): JSX.Element {
   const validationWarnings = calendarBuildResult?.validation_warnings ?? displayedCalendar?.validation_warnings ?? []
   const validationErrors = calendarBuildResult?.validation_errors ?? displayedCalendar?.validation_errors ?? []
   const eventOptions = displayedCalendar?.events ?? []
+  const lifecycleEvents = lifecycleQuery.data?.events ?? []
+  const displayedLifecycleEvents = lifecycleEvents.filter((event) => {
+    const eventFilter = lifecycleEventFilter.trim().toLowerCase()
+    const matchesEvent = !eventFilter || event.event_id.toLowerCase().includes(eventFilter) || event.event_name.toLowerCase().includes(eventFilter)
+    const matchesStage = !lifecycleStageFilter || event.current_stage === lifecycleStageFilter
+    return matchesEvent && matchesStage
+  })
+  const lifecycleStages = Array.from(new Set(lifecycleEvents.map((event) => event.current_stage))).sort()
+  const selectedLifecycleEvent = lifecycleEvents.find((event) => event.event_id === selectedLifecycleEventId) ?? displayedLifecycleEvents[0] ?? null
   const effectiveEventId = selectedEventId || eventOptions[0]?.event_id || ''
   const persistedEntryQuery = useQuery({ queryKey: ['event-entry-list', effectiveEventId], queryFn: () => getEventEntryList(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
   const persistedDrawQuery = useQuery({ queryKey: ['event-draw-package', effectiveEventId], queryFn: () => getEventDrawPackage(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
@@ -376,6 +389,41 @@ export function AdminSeasonsPage(): JSX.Element {
           </table>
         </div>
         {!displayedCalendar?.events.length ? <p className="status">No season calendar exists yet. Preview or persist a first-season calendar.</p> : null}
+      </SectionCard>
+
+
+      <SectionCard title="Event Lifecycle">
+        <p className="status">Lifecycle is a read-only status derived from persisted event artifacts. It does not generate entries, simulate matches, apply points, or publish rankings.</p>
+        <div className="grid">
+          <label>Lifecycle event filter<input value={lifecycleEventFilter} onChange={(event) => setLifecycleEventFilter(event.target.value)} placeholder="event_id or name" /></label>
+          <label>Lifecycle stage filter<select value={lifecycleStageFilter} onChange={(event) => setLifecycleStageFilter(event.target.value)}><option value="">All stages</option>{lifecycleStages.map((stage) => <option key={stage} value={stage}>{stage}</option>)}</select></label>
+        </div>
+        <div className="button-row">
+          <button type="button" onClick={() => void lifecycleQuery.refetch()} disabled={lifecycleQuery.isFetching}>Load lifecycle</button>
+        </div>
+        {lifecycleQuery.isError ? <p role="alert" className="error">{formatApiError(lifecycleQuery.error)}</p> : null}
+        {lifecycleQuery.data?.validation_errors.map((error) => <p key={error} role="alert" className="error">{error}</p>)}
+        <SummaryPills items={[
+          { label: 'Events', value: lifecycleQuery.data?.summary.event_count ?? 0 },
+          { label: 'Planned', value: lifecycleQuery.data?.summary.planned_count ?? 0 },
+          { label: 'Entries generated', value: lifecycleQuery.data?.summary.entries_generated_count ?? 0 },
+          { label: 'Draws generated', value: lifecycleQuery.data?.summary.draw_generated_count ?? 0 },
+          { label: 'Matches generated', value: lifecycleQuery.data?.summary.matches_generated_count ?? 0 },
+          { label: 'In progress', value: lifecycleQuery.data?.summary.in_progress_count ?? 0 },
+          { label: 'Completed', value: lifecycleQuery.data?.summary.completed_count ?? 0 },
+          { label: 'Results extracted', value: lifecycleQuery.data?.summary.results_extracted_count ?? 0 },
+          { label: 'Points applied', value: lifecycleQuery.data?.summary.points_applied_count ?? 0 },
+          { label: 'Snapshots published', value: lifecycleQuery.data?.summary.ranking_snapshot_published_count ?? 0 },
+          { label: 'Blocked', value: lifecycleQuery.data?.summary.blocked_count ?? 0 }
+        ]} />
+        <div className="table-wrap">
+          <table aria-label="Event lifecycle table">
+            <thead><tr><th>Season week</th><th>Year week</th><th>Event</th><th>Category</th><th>Tour</th><th>Stage</th><th>Next action</th><th>Blocked</th><th>Entries</th><th>Draw</th><th>Matches</th><th>Results</th><th>Points</th><th>Snapshot</th></tr></thead>
+            <tbody>{displayedLifecycleEvents.map((event) => <EventLifecycleRow key={event.event_id} event={event} selected={selectedLifecycleEvent?.event_id === event.event_id} onSelect={() => setSelectedLifecycleEventId(event.event_id)} />)}</tbody>
+          </table>
+        </div>
+        {lifecycleQuery.data && !displayedLifecycleEvents.length ? <p className="status">No lifecycle events match the current filters.</p> : null}
+        {selectedLifecycleEvent ? <EventLifecycleDetail event={selectedLifecycleEvent} /> : <p className="status">Load lifecycle to inspect persisted artifact status for each calendar event.</p>}
       </SectionCard>
 
 
@@ -700,6 +748,60 @@ function MatchValidationPanel({ warnings, errors }: { warnings: MatchValidationI
   return <div>
     {errors.length ? <><h4>Match errors</h4><ul>{errors.map((issue) => <li key={`match-error-${issue.code}-${issue.match_id ?? issue.player_id ?? issue.event_id ?? 'list'}`}>{issue.code}: {issue.message}</li>)}</ul></> : <p className="status">No match validation errors.</p>}
     {warnings.length ? <><h4>Match warnings</h4><ul>{warnings.map((issue) => <li key={`match-warning-${issue.code}-${issue.match_id ?? issue.player_id ?? issue.event_id ?? 'list'}`}>{issue.code}: {issue.message}</li>)}</ul></> : <p className="status">No match validation warnings.</p>}
+  </div>
+}
+
+function artifactMark(artifact: { exists: boolean; validation_error_count: number; validation_warning_count: number }): string {
+  if (!artifact.exists) return 'missing'
+  if (artifact.validation_error_count > 0) return `error (${artifact.validation_error_count})`
+  if (artifact.validation_warning_count > 0) return `ok/warn (${artifact.validation_warning_count})`
+  return 'ok'
+}
+
+function shortFingerprint(value: string | null): string {
+  return value ? value.slice(0, 12) : '—'
+}
+
+function EventLifecycleRow({ event, selected, onSelect }: { event: EventLifecycleStatus; selected: boolean; onSelect: () => void }): JSX.Element {
+  return <tr onClick={onSelect} aria-selected={selected}>
+    <td>{event.season_week}</td>
+    <td>{event.calendar_year ?? '—'} / {event.year_week ?? '—'}</td>
+    <td><button type="button" onClick={onSelect}>{event.event_name}</button><br /><span className="muted">{event.event_id}</span></td>
+    <td>{event.category}</td>
+    <td>{event.tour_level ?? '—'}</td>
+    <td><strong>{event.current_stage}</strong></td>
+    <td>{event.next_recommended_action}</td>
+    <td>{event.is_blocked ? 'blocked' : 'clear'}</td>
+    <td>{artifactMark(event.entries)}</td>
+    <td>{artifactMark(event.draw)}</td>
+    <td>{artifactMark(event.matches)}</td>
+    <td>{artifactMark(event.results)}</td>
+    <td>{event.points_applied ? 'applied' : artifactMark(event.point_awards)}</td>
+    <td>{artifactMark(event.ranking_snapshot)}</td>
+  </tr>
+}
+
+function EventLifecycleDetail({ event }: { event: EventLifecycleStatus }): JSX.Element {
+  const fingerprints = [
+    ['Entries', event.entries.fingerprint],
+    ['Draw', event.draw.fingerprint],
+    ['Matches', event.matches.fingerprint],
+    ['Results', event.results.fingerprint],
+    ['Point awards', event.point_awards.fingerprint],
+    ['Ranking snapshot', event.ranking_snapshot.fingerprint]
+  ]
+  return <div>
+    <h4>Selected lifecycle detail</h4>
+    <MetadataList items={[
+      { label: 'Event', value: `${event.event_name} (${event.event_id})` },
+      { label: 'Stage', value: event.current_stage },
+      { label: 'Next action', value: event.next_recommended_action },
+      { label: 'Blocked', value: event.is_blocked ? 'yes' : 'no' },
+      { label: 'Points applied', value: event.points_applied ? 'yes' : 'no' },
+      ...fingerprints.map(([label, value]) => ({ label: `${label} fingerprint`, value: shortFingerprint(value) }))
+    ]} />
+    {event.block_reasons.length ? <><h5>Block reasons</h5><ul>{event.block_reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul></> : <p className="status">No lifecycle blockers detected for this event.</p>}
+    {event.validation_warnings.length ? <><h5>Lifecycle warnings</h5><ul>{event.validation_warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></> : null}
   </div>
 }
 

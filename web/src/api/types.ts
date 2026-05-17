@@ -1703,6 +1703,91 @@ export type SimulateOneEventResult = {
   validation_errors: string[]
 }
 
+
+export type SimulateSeasonWeekPreflightRequest = {
+  season: string
+  season_week: number
+  seed: number
+  apply_points: boolean
+  publish_snapshot: boolean
+  overwrite_existing: boolean
+  include_not_entered: boolean
+  max_alternates: number
+  simulate_draw_type: SimulateOneEventDrawType
+  max_steps_per_event: number
+  stop_after_stage?: EventLifecycleStage | null
+  allow_blocked: boolean
+  allow_incomplete_results: boolean
+  event_id_filter: string[]
+  include_completed_events: boolean
+}
+
+export type SeasonWeekEventPreflight = {
+  event_id: string
+  event_name: string
+  season: string
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  category: string
+  tour_level: string | null
+  host_country: string
+  lifecycle_stage_before: string | null
+  next_recommended_action_before: string | null
+  one_event_report: SimulateOneEventReport
+  blocked: boolean
+  can_continue: boolean
+  stop_reason: string | null
+  planned_step_count: number
+  planned_mutates_active_players: boolean
+  planned_mutates_ranking_snapshot: boolean
+  warnings: string[]
+  errors: string[]
+}
+
+export type SeasonWeekPreflightSummary = {
+  season: string
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  event_count: number
+  planned_event_count: number
+  completed_event_count: number
+  blocked_event_count: number
+  can_run_week: boolean
+  would_apply_points: boolean
+  would_publish_snapshot: boolean
+  snapshot_already_exists: boolean
+  week_has_multiple_events: boolean
+  total_planned_steps: number
+  total_planned_player_mutations: number
+  total_planned_snapshot_mutations: number
+  first_blocked_event_id: string | null
+  stop_reason: string | null
+  next_safe_action: string | null
+}
+
+export type SeasonWeekPreflightMetadata = {
+  season: string
+  season_week: number
+  source: 'calendar_events_plus_one_event_dry_run_reports'
+  calendar_fingerprint: string | null
+  generated_fingerprint: string
+  read_only: boolean
+}
+
+export type SimulateSeasonWeekPreflightResult = {
+  season: string
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  events: SeasonWeekEventPreflight[]
+  summary: SeasonWeekPreflightSummary
+  metadata: SeasonWeekPreflightMetadata
+  validation_warnings: string[]
+  validation_errors: string[]
+}
+
 export type SeasonCalendarBuildPayload = {
   seed: number
   dry_run: boolean

@@ -108,7 +108,9 @@ import type {
   EventResultExtractPayload,
   SeasonEventEntryListResult,
   SeasonLifecycleResponse,
-  EventLifecycleResponse
+  EventLifecycleResponse,
+  SimulateOneEventRequest,
+  SimulateOneEventResult
 } from './types'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
@@ -219,6 +221,10 @@ export function getSeasonLifecycle(season: string): Promise<SeasonLifecycleRespo
 
 export function getEventLifecycle(eventId: string): Promise<EventLifecycleResponse> {
   return request(`/admin/lifecycle/event/${encodeURIComponent(eventId)}`)
+}
+
+export function simulateOneEvent(eventId: string, payload: SimulateOneEventRequest): Promise<SimulateOneEventResult> {
+  return request(`/admin/events/${encodeURIComponent(eventId)}/simulate`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function buildSeasonCalendar(season: string, payload: SeasonCalendarBuildPayload): Promise<SeasonCalendarBuildResponse> {

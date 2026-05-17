@@ -10,7 +10,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from beta_engine.application.season_calendar_service import SeasonCalendarService, TOTAL_SEASON_WEEKS
+from beta_engine.application.season_calendar_service import SeasonCalendarService
+from beta_engine.domain.calendar import DEFAULT_SEASON_START_YEAR_WEEK, TOTAL_SEASON_WEEKS, season_week_to_calendar_position
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
 from beta_engine.application.season_ranking_table_service import RankingTableResponse, RankingTableRow, RankingTableType, SeasonRankingTableService
 
@@ -186,9 +187,9 @@ class SeasonRankingSnapshotService:
         previous_key, previous = self._previous_snapshot(registry, season=season, season_week=season_week)
         if previous is None:
             warnings.append("No previous snapshot exists for this season before the requested week.")
-        calendar_year, year_week = self._calendar_position(season=season, season_week=season_week)
-        if calendar_year is None or year_week is None:
-            warnings.append("Calendar year/week could not be resolved from a persisted calendar.")
+        calendar_year, year_week, calendar_warning = self._calendar_position(season=season, season_week=season_week)
+        if calendar_warning:
+            warnings.append(calendar_warning)
         point_awards_fingerprint = self._point_awards_fingerprint(season)
         if point_awards_fingerprint is None:
             warnings.append("Point awards fingerprint unavailable.")
@@ -293,15 +294,21 @@ class SeasonRankingSnapshotService:
         _, key, snapshot = max(candidates, key=lambda item: item[0])
         return key, snapshot
 
-    def _calendar_position(self, *, season: str, season_week: int) -> tuple[int | None, int | None]:
-        if self.calendar_service is None:
-            return None, None
-        result = self.calendar_service.get_calendar(season=season)
-        events = result.calendar.events if result.calendar else []
-        exact = next((event for event in events if event.season_week == season_week), None)
-        if exact:
-            return exact.calendar_year, exact.year_week
-        return None, None
+    def _calendar_position(self, *, season: str, season_week: int) -> tuple[int | None, int | None, str | None]:
+        season_start_year_week = DEFAULT_SEASON_START_YEAR_WEEK
+        if self.calendar_service is not None:
+            result = self.calendar_service.get_calendar(season=season)
+            if result.metadata is not None:
+                season_start_year_week = result.metadata.season_start_year_week
+        try:
+            position = season_week_to_calendar_position(
+                season=season,
+                season_week=season_week,
+                season_start_year_week=season_start_year_week,
+            )
+        except ValueError as exc:
+            return None, None, f"Calendar year/week mapping failed: {exc}"
+        return position.calendar_year, position.year_week, None
 
     def _point_awards_fingerprint(self, season: str) -> str | None:
         if self.point_awards_service is None:

@@ -213,7 +213,7 @@ class SeasonCalendarBuildRequest(BaseModel):
     dry_run: bool = True
     overwrite_existing: bool = False
     season_start_calendar_year: int = Field(default=2000, ge=1900, le=2100)
-    season_start_year_week: int = Field(default=35, ge=1, le=53)
+    season_start_year_week: int = Field(default=37, ge=1, le=52)
     include_inactive_templates: bool = False
     max_events: int | None = Field(default=None, ge=1, le=1000)
 

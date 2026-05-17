@@ -32,6 +32,11 @@ def test_dry_run_snapshot_does_not_persist(tmp_path: Path) -> None:
 
     assert result.snapshot is not None
     assert result.snapshot.persisted is False
+    assert result.snapshot.calendar_year == 2000
+    assert result.snapshot.year_week == 37
+    assert result.snapshot.metadata.calendar_year == 2000
+    assert result.snapshot.metadata.year_week == 37
+    assert "Calendar year/week could not be resolved from a persisted calendar." not in result.validation_warnings
     assert result.snapshot.ranking_table.rows[0].player_id == "P-A"
     assert result.snapshot.race_table.rows[0].player_id == "P-B"
     assert not (tmp_path / "season_ranking_snapshots.json").exists()
@@ -68,7 +73,10 @@ def test_movement_independent_for_ranking_and_race(tmp_path: Path) -> None:
     bootstrap._save_registry(registry)
     active_before_snapshot_generation = json.loads(bootstrap.active_players_path.read_text(encoding="utf-8"))
 
-    result = service.generate_snapshot(season="2000/2001", season_week=2, request=WeeklyRankingSnapshotGenerateRequest(dry_run=True))
+    result = service.generate_snapshot(season="2000/2001", season_week=17, request=WeeklyRankingSnapshotGenerateRequest(dry_run=True))
+    assert result.snapshot.calendar_year == 2001
+    assert result.snapshot.year_week == 1
+    assert "Calendar year/week could not be resolved from a persisted calendar." not in result.validation_warnings
     ranking_by_id = {row.player_id: row for row in result.snapshot.ranking_table.rows}
     race_by_id = {row.player_id: row for row in result.snapshot.race_table.rows}
     assert ranking_by_id["P-B"].movement > 0

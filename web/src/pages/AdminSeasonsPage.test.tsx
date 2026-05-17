@@ -111,7 +111,7 @@ const calendarEvent = {
   season: '2000/2001',
   season_week: 1,
   calendar_year: 2000,
-  year_week: 35,
+  year_week: 37,
   template_id: 'wt_a',
   event_name: 'World A',
   category: 'PLATINUM',
@@ -160,7 +160,7 @@ const emptyEntryResult = {
 
 const entryResult = {
   entry_list: {
-    event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', season_week: 1, calendar_year: 2000, year_week: 35, template_id: 'wt_a', generated_from_calendar_fingerprint: 'calendar-fp', generated_from_active_players_fingerprint: 'active-fp', seed: 12345, dry_run: true, persisted: false,
+    event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', season_week: 1, calendar_year: 2000, year_week: 37, template_id: 'wt_a', generated_from_calendar_fingerprint: 'calendar-fp', generated_from_active_players_fingerprint: 'active-fp', seed: 12345, dry_run: true, persisted: false,
     entries: [{ entry_id: 'entry-1', player_id: 'P-2000-AAA-0001', name: 'Adam Ahmed AA01', country_code: 'AAA', ranking_points: 0, race_points: 0, current_ability: 78, potential_ability: 88, entry_probability: 0.75, entry_score: 1.2, quality_score: 0.8, travel_score: 1, decision: 'accepted_main_draw', acceptance_status: 'accepted_main_draw', ranking_priority: 1, seed_candidate_rank: 1, source_player_fingerprint: 'source-fp', bootstrap_fingerprint: 'player-boot-fp', generated_fingerprint: 'entry-fp', reason: 'direct main draw acceptance', decision_notes: 'EntryEngine target=MAIN' }],
     summary: { total_active_players: 1, considered_players: 1, entered_players: 1, main_draw_acceptances: 1, qualification_acceptances: 0, alternates: 0, rejected_or_not_entered: 0, countries_represented: 1, average_entry_probability: 0.75, average_quality_score: 0.8, validation_warning_count: 1, validation_error_count: 1 },
     metadata: { event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', seed: 12345, dry_run: true, persisted: false, build_fingerprint: 'entry-build-fp', active_players_fingerprint: 'active-fp', calendar_event_fingerprint: 'calendar-fp', ranking_basis: 'current zero-points bootstrap', persistence_path: null },
@@ -186,7 +186,7 @@ const emptyDrawResult = {
 
 const drawResult = {
   draw_package: {
-    event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', template_id: 'wt_a', season_week: 1, calendar_year: 2000, year_week: 35, seed: 12345, dry_run: true, persisted: false,
+    event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', template_id: 'wt_a', season_week: 1, calendar_year: 2000, year_week: 37, seed: 12345, dry_run: true, persisted: false,
     qualification_draw: { draw_id: 'EVT-2000-W01-wt_a:qualification', draw_type: 'qualification', draw_size: 2, round_count: 1, generated_fingerprint: 'qual-fp', seeds: [], byes: [], qualifier_placeholders: [], rounds: [{ round_number: 1, round_name: 'Round 1', match_count: 1, matches: [{ match_id: 'qm1', round_number: 1, bracket_position: 1, top_slot_id: 'qs1', bottom_slot_id: 'qs2', top_source: 'SLOT:1', bottom_source: 'SLOT:2', winner_to_match_id: null, status: 'pending' }] }], slots: [{ slot_id: 'qs1', bracket_position: 1, player_id: 'P-2000-BBB-0002', player_name: 'Ben Beta BB02', country_code: 'BBB', entry_decision: 'accepted_qualification', seed_number: null, source_entry_id: 'entry-q1', source_entry_fingerprint: 'entry-q-fp', is_bye: false, is_qualifier_placeholder: false }, { slot_id: 'qs2', bracket_position: 2, player_id: null, player_name: null, country_code: null, entry_decision: 'bye', seed_number: null, source_entry_id: null, source_entry_fingerprint: null, is_bye: true, is_qualifier_placeholder: false }] },
     main_draw: { draw_id: 'EVT-2000-W01-wt_a:main', draw_type: 'main', draw_size: 4, round_count: 2, generated_fingerprint: 'main-fp', seeds: [{ seed_number: 1, player_id: 'P-2000-AAA-0001', player_name: 'Adam Ahmed AA01', ranking_priority: 1, placement_position: 1 }], byes: [{ slot_id: 'ms4', bracket_position: 4 }], qualifier_placeholders: [{ placeholder_id: 'Q1', slot_id: 'ms2', bracket_position: 2, qualifier_index: 1 }], rounds: [{ round_number: 1, round_name: 'Round 1', match_count: 2, matches: [{ match_id: 'm1', round_number: 1, bracket_position: 1, top_slot_id: 'ms1', bottom_slot_id: 'ms2', top_source: 'SLOT:1', bottom_source: 'SLOT:2', winner_to_match_id: 'R2-N1', status: 'pending' }, { match_id: 'm2', round_number: 1, bracket_position: 2, top_slot_id: 'ms3', bottom_slot_id: 'ms4', top_source: 'SLOT:3', bottom_source: 'SLOT:4', winner_to_match_id: 'R2-N1', status: 'bye_pending' }] }], slots: [{ slot_id: 'ms1', bracket_position: 1, player_id: 'P-2000-AAA-0001', player_name: 'Adam Ahmed AA01', country_code: 'AAA', entry_decision: 'accepted_main_draw', seed_number: 1, source_entry_id: 'entry-1', source_entry_fingerprint: 'entry-fp', is_bye: false, is_qualifier_placeholder: false }, { slot_id: 'ms2', bracket_position: 2, player_id: null, player_name: null, country_code: null, entry_decision: 'qualifier_placeholder', seed_number: null, source_entry_id: 'q-placeholder', source_entry_fingerprint: 'q-fp', is_bye: false, is_qualifier_placeholder: true }, { slot_id: 'ms3', bracket_position: 3, player_id: null, player_name: null, country_code: null, entry_decision: 'wild_card_reserved', seed_number: null, source_entry_id: 'wc-placeholder', source_entry_fingerprint: 'wc-fp', is_bye: false, is_qualifier_placeholder: false }, { slot_id: 'ms4', bracket_position: 4, player_id: null, player_name: null, country_code: null, entry_decision: 'bye', seed_number: null, source_entry_id: null, source_entry_fingerprint: null, is_bye: true, is_qualifier_placeholder: false }] },
     summary: { event_id: 'EVT-2000-W01-wt_a', main_draw_size: 4, qualification_draw_size: 2, main_draw_players: 1, qualification_draw_players: 1, qualifier_placeholders: 1, byes: 2, seeds: 1, validation_warning_count: 1, validation_error_count: 1 },
@@ -229,7 +229,7 @@ const completedMatchRecord = {
 
 const matchResult = {
   match_package: {
-    event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', template_id: 'wt_a', season_week: 1, calendar_year: 2000, year_week: 35, seed: 12345, dry_run: true, persisted: false, qualification_matches: [], main_draw_matches: [matchRecord],
+    event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', template_id: 'wt_a', season_week: 1, calendar_year: 2000, year_week: 37, seed: 12345, dry_run: true, persisted: false, qualification_matches: [], main_draw_matches: [matchRecord],
     summary: { event_id: 'EVT-2000-W01-wt_a', total_matches: 1, qualification_matches: 0, main_draw_matches: 1, pending_matches: 1, completed_matches: 0, blocked_matches: 0, bye_auto_advances: 0, validation_warning_count: 1, validation_error_count: 1 },
     metadata: { event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', seed: 12345, dry_run: true, persisted: false, build_fingerprint: 'match-build-fp', draw_package_fingerprint: 'draw-build-fp', active_players_fingerprint: 'active-fp', match_engine_version: 'match_engine_v1', persistence_path: null, ranking_updates_implemented: false, qualification_winners_promoted: false },
     validation_warnings: [{ severity: 'warning', code: 'match_warn', message: 'match warning', event_id: 'EVT-2000-W01-wt_a', match_id: 'm1', player_id: null, field: null }],
@@ -261,7 +261,7 @@ const emptyEventResult = {
 
 const eventResult = {
   result_package: {
-    event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', template_id: 'wt_a', season_week: 1, calendar_year: 2000, year_week: 35, event_name: 'World A', category: 'PLATINUM', tour_level: 'WORLD_TOUR', host_country: 'ENG', seed: 12345, dry_run: true, persisted: false, completion_status: 'complete',
+    event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', template_id: 'wt_a', season_week: 1, calendar_year: 2000, year_week: 37, event_name: 'World A', category: 'PLATINUM', tour_level: 'WORLD_TOUR', host_country: 'ENG', seed: 12345, dry_run: true, persisted: false, completion_status: 'complete',
     champion: { player_id: 'P-2000-AAA-0001', player_name: 'Adam Ahmed AA01', country_code: 'AAA', seed_number: 1, entry_decision: 'accepted_main_draw', qualifier: false, wildcard: false, ranking_priority: 1 },
     finalist: { player_id: 'P-2000-BBB-0002', player_name: 'Ben Beta BB02', country_code: 'BBB', seed_number: null, entry_decision: 'accepted_qualification', qualifier: true, wildcard: false, ranking_priority: null },
     semifinalists: [{ player_id: 'P-2000-CCC-0003', player_name: 'Carl Cairo CC03', country_code: 'CCC', seed_number: null, entry_decision: 'accepted_main_draw', qualifier: false, wildcard: false, ranking_priority: null }],
@@ -319,7 +319,7 @@ const progressionResult = {
 const calendarResponse = {
   calendar: { season: '2000/2001', events: [calendarEvent], metadata: null, validation_warnings: [{ severity: 'warning', code: 'ranking_race_not_integrated', message: 'ranking/race integration not implemented yet', event_id: null, field: null }], validation_errors: [] },
   summary: { event_count: 1, season_weeks_used: 1, first_event_week: 1, last_event_week: 1, world_tour_events: 1, elite_tour_events: 0, validation_warning_count: 1, validation_error_count: 0, persisted: false, calendar_exists: false },
-  metadata: { season: '2000/2001', season_start_calendar_year: 2000, season_start_year_week: 35, total_season_weeks: 61, event_count: 1, build_seed: 12345, build_fingerprint: 'calendar-fp', source_template_count: 1, persistence_path: null, dry_run: true, overwrite_existing: false },
+  metadata: { season: '2000/2001', season_start_calendar_year: 2000, season_start_year_week: 37, total_season_weeks: 61, event_count: 1, build_seed: 12345, build_fingerprint: 'calendar-fp', source_template_count: 1, persistence_path: null, dry_run: true, overwrite_existing: false },
   validation_warnings: [{ severity: 'warning', code: 'ranking_race_not_integrated', message: 'ranking/race integration not implemented yet', event_id: null, field: null }],
   validation_errors: [{ severity: 'error', code: 'example_error', message: 'example error', event_id: null, field: null }]
 }

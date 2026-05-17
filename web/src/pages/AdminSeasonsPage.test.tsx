@@ -13,6 +13,8 @@ const api = vi.hoisted(() => ({
   getViewerPointBreakdown: vi.fn(),
   bootstrapSeasonFromInitialPool: vi.fn(),
   getSeasonCalendar: vi.fn(),
+  getSeasonLifecycle: vi.fn(),
+  getEventLifecycle: vi.fn(),
   buildSeasonCalendar: vi.fn(),
   getEventEntryList: vi.fn(),
   generateEventEntryList: vi.fn(),
@@ -324,6 +326,28 @@ const calendarResponse = {
   validation_errors: [{ severity: 'error', code: 'example_error', message: 'example error', event_id: null, field: null }]
 }
 
+
+const lifecycleResponse = {
+  season: '2000/2001',
+  events: [{
+    event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', season_week: 1, calendar_year: 2000, year_week: 37, event_name: 'World A', category: 'PLATINUM', tour_level: 'WORLD_TOUR', host_country: 'ENG', template_id: 'wt_a',
+    current_stage: 'entries_generated', next_recommended_action: 'generate_draw', is_blocked: true, block_reasons: ['entries artifact has 1 validation error(s)'],
+    entries: { exists: true, persisted: true, fingerprint: 'entry-build-fingerprint', validation_error_count: 1, validation_warning_count: 0, summary: {} },
+    draw: { exists: false, persisted: false, fingerprint: null, validation_error_count: 0, validation_warning_count: 0, summary: null },
+    matches: { exists: false, persisted: false, fingerprint: null, validation_error_count: 0, validation_warning_count: 0, summary: null },
+    progression_status: null,
+    results: { exists: false, persisted: false, fingerprint: null, validation_error_count: 0, validation_warning_count: 0, summary: null },
+    point_awards: { exists: false, persisted: false, fingerprint: null, validation_error_count: 0, validation_warning_count: 0, summary: null },
+    points_applied: false,
+    ranking_snapshot: { exists: false, persisted: false, fingerprint: null, validation_error_count: 0, validation_warning_count: 0, summary: null },
+    validation_warnings: [], validation_errors: ['entries artifact has 1 validation error(s)']
+  }],
+  summary: { season: '2000/2001', event_count: 1, planned_count: 0, entries_generated_count: 1, draw_generated_count: 0, matches_generated_count: 0, in_progress_count: 0, completed_count: 0, results_extracted_count: 0, points_generated_count: 0, points_applied_count: 0, ranking_snapshot_published_count: 0, blocked_count: 1 },
+  metadata: { season: '2000/2001', source: 'persisted_artifact_registries', calendar_fingerprint: 'calendar-fp', generated_fingerprint: 'lifecycle-fp', read_only: true },
+  validation_warnings: [],
+  validation_errors: []
+}
+
 const pointAwardsResult = {
   award_package: {
     event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', template_id: 'wt_a', event_name: 'World A', category: 'PLATINUM', tour_level: 'WORLD_TOUR', seed: 12345, dry_run: true, persisted: false, applied: false,
@@ -380,6 +404,7 @@ describe('AdminSeasonsPage', () => {
     api.bootstrapSeasonFromInitialPool.mockResolvedValue(response)
     api.getSeasonCalendar.mockResolvedValue(emptyCalendar)
     api.buildSeasonCalendar.mockResolvedValue(calendarResponse)
+    api.getSeasonLifecycle.mockResolvedValue(lifecycleResponse)
     api.getEventEntryList.mockResolvedValue(emptyEntryResult)
     api.generateEventEntryList.mockResolvedValue(entryResult)
     api.getEventDrawPackage.mockResolvedValue(emptyDrawResult)
@@ -446,6 +471,23 @@ describe('AdminSeasonsPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Persist calendar' }))
     expect(api.buildSeasonCalendar).toHaveBeenCalledWith('2000/2001', expect.objectContaining({ dry_run: false }))
   })
+
+  it('renders Event Lifecycle section and loads read-only lifecycle status', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findByRole('heading', { name: 'Event Lifecycle' })).toBeInTheDocument()
+    expect(screen.getByText('Lifecycle is a read-only status derived from persisted event artifacts. It does not generate entries, simulate matches, apply points, or publish rankings.')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Load lifecycle' }))
+    expect(api.getSeasonLifecycle).toHaveBeenCalledWith('2000/2001')
+    const table = await screen.findByRole('table', { name: 'Event lifecycle table' })
+    expect(within(table).getByText('entries_generated')).toBeInTheDocument()
+    expect(within(table).getByText('generate_draw')).toBeInTheDocument()
+    expect(within(table).getByText('blocked')).toBeInTheDocument()
+    expect(screen.getByText('entries artifact has 1 validation error(s)')).toBeInTheDocument()
+  })
+
 
   it('renders Event Entries section and previews entries', async () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)

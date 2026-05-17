@@ -1506,6 +1506,87 @@ export type SeasonCalendarBuildSummary = {
   calendar_exists: boolean
 }
 
+
+export type EventLifecycleStage = 'missing_calendar' | 'planned' | 'entries_generated' | 'draw_generated' | 'matches_generated' | 'in_progress' | 'completed' | 'results_extracted' | 'points_generated' | 'points_applied' | 'ranking_snapshot_published'
+
+export type EventLifecycleNextAction = 'build_calendar' | 'generate_entries' | 'generate_draw' | 'generate_matches' | 'process_byes_or_simulate_matches' | 'extract_results' | 'generate_point_awards' | 'apply_point_awards' | 'publish_ranking_snapshot' | 'complete' | 'resolve_blocker'
+
+export type EventArtifactStatus = {
+  exists: boolean
+  persisted: boolean
+  fingerprint: string | null
+  validation_error_count: number
+  validation_warning_count: number
+  summary: Record<string, unknown> | null
+}
+
+export type LifecycleMetadata = {
+  season: string
+  source: 'persisted_artifact_registries'
+  calendar_fingerprint: string | null
+  generated_fingerprint: string
+  read_only: boolean
+}
+
+export type EventLifecycleStatus = {
+  event_id: string
+  season: string
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  event_name: string
+  category: string
+  tour_level: string | null
+  host_country: string
+  template_id: string
+  current_stage: EventLifecycleStage
+  next_recommended_action: EventLifecycleNextAction
+  is_blocked: boolean
+  block_reasons: string[]
+  entries: EventArtifactStatus
+  draw: EventArtifactStatus
+  matches: EventArtifactStatus
+  progression_status: Record<string, unknown> | null
+  results: EventArtifactStatus
+  point_awards: EventArtifactStatus
+  points_applied: boolean
+  ranking_snapshot: EventArtifactStatus
+  validation_warnings: string[]
+  validation_errors: string[]
+}
+
+export type SeasonLifecycleSummary = {
+  season: string
+  event_count: number
+  planned_count: number
+  entries_generated_count: number
+  draw_generated_count: number
+  matches_generated_count: number
+  in_progress_count: number
+  completed_count: number
+  results_extracted_count: number
+  points_generated_count: number
+  points_applied_count: number
+  ranking_snapshot_published_count: number
+  blocked_count: number
+}
+
+export type SeasonLifecycleResponse = {
+  season: string
+  events: EventLifecycleStatus[]
+  summary: SeasonLifecycleSummary
+  metadata: LifecycleMetadata
+  validation_warnings: string[]
+  validation_errors: string[]
+}
+
+export type EventLifecycleResponse = {
+  event: EventLifecycleStatus | null
+  metadata: LifecycleMetadata
+  validation_warnings: string[]
+  validation_errors: string[]
+}
+
 export type SeasonCalendarBuildPayload = {
   seed: number
   dry_run: boolean

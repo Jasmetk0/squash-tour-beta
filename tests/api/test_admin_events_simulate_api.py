@@ -10,6 +10,9 @@ def test_post_dry_run_simulate_planned_event(tmp_path):
     assert status == 200
     assert body['report']['event_id'] == event_id
     assert body['report']['dry_run'] is True
+    assert body['report']['plan_summary']['stop_reason'] == 'dry_run_plan_only'
+    assert body['report']['artifact_state_before']['entries_exists'] is False
+    assert body['report']['artifact_state_after'] == body['report']['artifact_state_before']
     assert any(step['step'] == 'generate_entries' and step['status'] == 'planned' for step in body['report']['steps'])
 
 
@@ -22,6 +25,8 @@ def test_post_execute_one_event_generates_artifacts_or_reports_blocker(tmp_path)
     assert any(step['step'] == 'generate_entries' and step['status'] == 'succeeded' for step in body['report']['steps'])
     assert any(step['step'] == 'generate_draw' and step['status'] == 'succeeded' for step in body['report']['steps'])
     assert any(step['step'] == 'generate_matches' and step['status'] == 'succeeded' for step in body['report']['steps'])
+    assert body['report']['lifecycle_stage_after'] == body['report']['final_lifecycle']['current_stage']
+    assert body['report']['plan_summary']['stop_reason'] in {'event_not_complete', 'points_not_applied', None}
 
 
 def test_post_with_apply_points_publish_snapshot_validation(tmp_path):
@@ -31,6 +36,7 @@ def test_post_with_apply_points_publish_snapshot_validation(tmp_path):
     assert status == 200
     assert body['validation_errors']
     assert 'requires apply_points=true' in body['validation_errors'][0]
+    assert body['report']['plan_summary']['stop_reason'] == 'publish_snapshot_requires_apply_points'
 
 
 def test_unknown_event_error(tmp_path):
@@ -50,4 +56,6 @@ def test_blocked_event_behavior(tmp_path):
         status, body = call('POST', f'{server.base_url}/admin/events/{event_id}/simulate', {'seed': 5, 'dry_run': False})
     assert status == 200
     assert body['report']['blocked'] is True
+    assert body['report']['can_continue'] is False
+    assert body['report']['plan_summary']['stop_reason']
     assert body['validation_errors']

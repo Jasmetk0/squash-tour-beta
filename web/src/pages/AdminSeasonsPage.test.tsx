@@ -355,11 +355,21 @@ const simulateOneEventResult = {
     initial_lifecycle: lifecycleResponse.events[0],
     final_lifecycle: { ...lifecycleResponse.events[0], current_stage: 'points_generated', next_recommended_action: 'apply_point_awards', is_blocked: false, block_reasons: [] },
     steps: [
-      { step: 'preflight_lifecycle', status: 'succeeded', action_detail: 'Initial lifecycle stage is planned.', artifact_exists_before: null, artifact_exists_after: null, changed_ids: [], fingerprint: 'lifecycle-fp', warnings: [], errors: [] },
-      { step: 'generate_entries', status: 'planned', action_detail: 'Dry-run plan only; no mutating service was called.', artifact_exists_before: false, artifact_exists_after: false, changed_ids: [], fingerprint: null, warnings: ['sim warning'], errors: [] },
-      { step: 'generate_point_awards', status: 'succeeded', action_detail: 'Generated event point awards.', artifact_exists_before: false, artifact_exists_after: true, changed_ids: ['EVT-2000-W01-wt_a'], fingerprint: 'points-fingerprint-abcdef', warnings: [], errors: ['sim error'] }
+      { step: 'preflight_lifecycle', status: 'succeeded', action_detail: 'Initial lifecycle stage is planned.', artifact_exists_before: null, artifact_exists_after: null, changed_ids: [], fingerprint: 'lifecycle-fp', warnings: [], errors: [], lifecycle_stage_before_step: 'planned', lifecycle_stage_after_step: 'planned', stop_reason: null, service_called: 'SeasonEventLifecycleService.get_event_lifecycle', request_seed: null, mutates_active_players: false, mutates_ranking_snapshot: false },
+      { step: 'generate_entries', status: 'planned', action_detail: 'Dry-run plan only; no mutating service was called.', artifact_exists_before: false, artifact_exists_after: false, changed_ids: [], fingerprint: null, warnings: ['sim warning'], errors: [], lifecycle_stage_before_step: 'planned', lifecycle_stage_after_step: 'planned', stop_reason: null, service_called: null, request_seed: 555, mutates_active_players: false, mutates_ranking_snapshot: false },
+      { step: 'generate_point_awards', status: 'succeeded', action_detail: 'Generated event point awards.', artifact_exists_before: false, artifact_exists_after: true, changed_ids: ['EVT-2000-W01-wt_a'], fingerprint: 'points-fingerprint-abcdef', warnings: [], errors: ['sim error'], lifecycle_stage_before_step: 'results_extracted', lifecycle_stage_after_step: 'points_generated', stop_reason: null, service_called: 'SeasonPointAwardsService.generate_event_point_awards', request_seed: 777, mutates_active_players: false, mutates_ranking_snapshot: false }
     ],
     changed_artifacts: { entries: true, draw: true, matches: true, results: true, point_awards: true, active_player_points: false, ranking_snapshot: false },
+    plan_summary: { planned_step_count: 1, executed_step_count: 1, skipped_step_count: 0, succeeded_step_count: 1, failed_step_count: 0, blocked_step_count: 0, first_failed_step: null, stop_reason: 'dry_run_plan_only', next_safe_action: 'run_event_simulation' },
+    artifact_state_before: { entries_exists: false, draw_exists: false, matches_exists: false, results_exists: false, point_awards_exists: false, points_applied: false, ranking_snapshot_exists: false },
+    artifact_state_after: { entries_exists: true, draw_exists: true, matches_exists: true, results_exists: true, point_awards_exists: true, points_applied: false, ranking_snapshot_exists: false },
+    lifecycle_stage_before: 'planned',
+    lifecycle_stage_after: 'points_generated',
+    lifecycle_next_action_after: 'apply_point_awards',
+    can_continue: true,
+    safe_to_rerun: true,
+    would_duplicate_points: false,
+    would_overwrite_existing: false,
     completed: true,
     blocked: false,
     validation_warnings: ['report warning'],
@@ -521,9 +531,17 @@ describe('AdminSeasonsPage', () => {
     expect(screen.getByText('This command orchestrates existing backend services for one event. It does not simulate a full week or full season. Applying points and publishing snapshots are opt-in.')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Preview event simulation' }))
     expect(api.simulateOneEvent).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: true, apply_points: false, publish_snapshot: false, simulate_draw_type: 'qualification_then_main' }))
+    expect(screen.getByText('Point application mutates active season players. Snapshot publication mutates weekly ranking snapshot registry. Dry-run is plan-only.')).toBeInTheDocument()
+    expect(screen.getAllByText('Stop reason').length).toBeGreaterThan(0)
+    expect(screen.getByText('dry_run_plan_only')).toBeInTheDocument()
+    expect(screen.getByText('Safe to rerun')).toBeInTheDocument()
+    const artifactTable = await screen.findByRole('table', { name: 'Simulate one event artifact state table' })
+    expect(within(artifactTable).getByText('Point awards')).toBeInTheDocument()
     const table = await screen.findByRole('table', { name: 'Simulate one event steps table' })
     expect(within(table).getByText('generate_entries')).toBeInTheDocument()
     expect(within(table).getByText('planned')).toBeInTheDocument()
+    expect(within(table).getByText('SeasonPointAwardsService.generate_event_point_awards')).toBeInTheDocument()
+    expect(within(table).getByText('777')).toBeInTheDocument()
     expect(screen.getByText('report warning')).toBeInTheDocument()
     expect(screen.getByText('report error')).toBeInTheDocument()
     expect(within(table).getByText('sim warning')).toBeInTheDocument()
@@ -539,6 +557,7 @@ describe('AdminSeasonsPage', () => {
     await userEvent.selectOptions(screen.getByLabelText('Simulate draw type'), 'main')
     await userEvent.click(screen.getByRole('button', { name: 'Run event simulation' }))
     expect(api.simulateOneEvent).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false, apply_points: true, publish_snapshot: true, simulate_draw_type: 'main' }))
+    expect(await screen.findByText('points_generated')).toBeInTheDocument()
   })
 
   it('renders Event Entries section and previews entries', async () => {

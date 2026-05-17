@@ -1619,6 +1619,35 @@ export type SimulateOneEventStepStatus = {
   fingerprint: string | null
   warnings: string[]
   errors: string[]
+  lifecycle_stage_before_step: string | null
+  lifecycle_stage_after_step: string | null
+  stop_reason: string | null
+  service_called: string | null
+  request_seed: number | null
+  mutates_active_players: boolean
+  mutates_ranking_snapshot: boolean
+}
+
+export type SimulateOneEventPlanSummary = {
+  planned_step_count: number
+  executed_step_count: number
+  skipped_step_count: number
+  succeeded_step_count: number
+  failed_step_count: number
+  blocked_step_count: number
+  first_failed_step: string | null
+  stop_reason: string | null
+  next_safe_action: string | null
+}
+
+export type SimulateOneEventArtifactState = {
+  entries_exists: boolean
+  draw_exists: boolean
+  matches_exists: boolean
+  results_exists: boolean
+  point_awards_exists: boolean
+  points_applied: boolean
+  ranking_snapshot_exists: boolean
 }
 
 export type SimulateOneEventChangedArtifacts = {
@@ -1646,6 +1675,16 @@ export type SimulateOneEventReport = {
   final_lifecycle: EventLifecycleStatus | null
   steps: SimulateOneEventStepStatus[]
   changed_artifacts: SimulateOneEventChangedArtifacts
+  plan_summary: SimulateOneEventPlanSummary
+  artifact_state_before: SimulateOneEventArtifactState
+  artifact_state_after: SimulateOneEventArtifactState
+  lifecycle_stage_before: string | null
+  lifecycle_stage_after: string | null
+  lifecycle_next_action_after: string | null
+  can_continue: boolean
+  safe_to_rerun: boolean
+  would_duplicate_points: boolean
+  would_overwrite_existing: boolean
   completed: boolean
   blocked: boolean
   validation_warnings: string[]

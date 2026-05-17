@@ -817,23 +817,56 @@ function MatchValidationPanel({ warnings, errors }: { warnings: MatchValidationI
 }
 
 function SimulateOneEventReportPanel({ report }: { report: SimulateOneEventReport }): JSX.Element {
-  const changed = Object.entries(report.changed_artifacts).filter(([, value]) => value).map(([key]) => key).join(', ') || 'none'
+  const changedEntries = Object.entries(report.changed_artifacts).filter(([, value]) => value).map(([key]) => key)
+  const changed = changedEntries.join(', ') || 'none'
+  const artifactRows: Array<[string, boolean, boolean]> = [
+    ['Entries', report.artifact_state_before.entries_exists, report.artifact_state_after.entries_exists],
+    ['Draw', report.artifact_state_before.draw_exists, report.artifact_state_after.draw_exists],
+    ['Matches', report.artifact_state_before.matches_exists, report.artifact_state_after.matches_exists],
+    ['Results', report.artifact_state_before.results_exists, report.artifact_state_after.results_exists],
+    ['Point awards', report.artifact_state_before.point_awards_exists, report.artifact_state_after.point_awards_exists],
+    ['Points applied', report.artifact_state_before.points_applied, report.artifact_state_after.points_applied],
+    ['Ranking snapshot', report.artifact_state_before.ranking_snapshot_exists, report.artifact_state_after.ranking_snapshot_exists]
+  ]
   return <div>
     <h4>Simulation report</h4>
+    <p className="status">Point application mutates active season players. Snapshot publication mutates weekly ranking snapshot registry. Dry-run is plan-only.</p>
     <SummaryPills items={[
-      { label: 'Initial stage', value: report.initial_lifecycle?.current_stage ?? '—' },
-      { label: 'Final stage', value: report.final_lifecycle?.current_stage ?? '—' },
+      { label: 'Initial stage', value: report.lifecycle_stage_before ?? report.initial_lifecycle?.current_stage ?? '—' },
+      { label: 'Final stage', value: report.lifecycle_stage_after ?? report.final_lifecycle?.current_stage ?? '—' },
+      { label: 'Stop reason', value: report.plan_summary.stop_reason ?? '—' },
+      { label: 'Next safe action', value: report.plan_summary.next_safe_action ?? '—' },
+      { label: 'Safe to rerun', value: report.safe_to_rerun ? 'yes' : 'no' },
+      { label: 'Can continue', value: report.can_continue ? 'yes' : 'no' },
+      { label: 'Changed artifact count', value: changedEntries.length },
       { label: 'Completed', value: report.completed ? 'yes' : 'no' },
       { label: 'Blocked', value: report.blocked ? 'yes' : 'no' },
       { label: 'Changed artifacts', value: changed },
-      { label: 'Final next action', value: report.final_lifecycle?.next_recommended_action ?? '—' }
+      { label: 'Would duplicate points', value: report.would_duplicate_points ? 'yes' : 'no' },
+      { label: 'Would overwrite existing', value: report.would_overwrite_existing ? 'yes' : 'no' }
     ]} />
+    <SummaryPills items={[
+      { label: 'Planned steps', value: report.plan_summary.planned_step_count },
+      { label: 'Executed steps', value: report.plan_summary.executed_step_count },
+      { label: 'Skipped steps', value: report.plan_summary.skipped_step_count },
+      { label: 'Succeeded steps', value: report.plan_summary.succeeded_step_count },
+      { label: 'Failed steps', value: report.plan_summary.failed_step_count },
+      { label: 'Blocked steps', value: report.plan_summary.blocked_step_count },
+      { label: 'First failed step', value: report.plan_summary.first_failed_step ?? '—' },
+      { label: 'Final next action', value: report.lifecycle_next_action_after ?? report.final_lifecycle?.next_recommended_action ?? '—' }
+    ]} />
+    <div className="table-wrap">
+      <table aria-label="Simulate one event artifact state table">
+        <thead><tr><th>Artifact</th><th>Before</th><th>After</th><th>Changed</th></tr></thead>
+        <tbody>{artifactRows.map(([label, before, after]) => <tr key={label}><td>{label}</td><td>{boolMark(before)}</td><td>{boolMark(after)}</td><td>{before !== after ? 'yes' : 'no'}</td></tr>)}</tbody>
+      </table>
+    </div>
     {report.validation_errors.length ? <><h4>Simulation errors</h4><ul>{report.validation_errors.map((error) => <li key={error} className="error">{error}</li>)}</ul></> : null}
     {report.validation_warnings.length ? <><h4>Simulation warnings</h4><ul>{report.validation_warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></> : null}
     <div className="table-wrap">
       <table aria-label="Simulate one event steps table">
-        <thead><tr><th>Step</th><th>Status</th><th>Detail</th><th>Before</th><th>After</th><th>Changed IDs</th><th>Fingerprint</th><th>Warnings</th><th>Errors</th></tr></thead>
-        <tbody>{report.steps.map((step, index) => <tr key={`${step.step}-${index}`}><td>{step.step}</td><td>{step.status}</td><td>{step.action_detail}</td><td>{boolMark(step.artifact_exists_before)}</td><td>{boolMark(step.artifact_exists_after)}</td><td>{step.changed_ids.join(', ') || '—'}</td><td>{step.fingerprint ? step.fingerprint.slice(0, 12) : '—'}</td><td>{step.warnings.join('; ') || '—'}</td><td>{step.errors.join('; ') || '—'}</td></tr>)}</tbody>
+        <thead><tr><th>Step</th><th>Status</th><th>Detail</th><th>Lifecycle before → after</th><th>Service called</th><th>Seed</th><th>Mutates players</th><th>Mutates snapshot</th><th>Stop reason</th><th>Before</th><th>After</th><th>Changed IDs</th><th>Fingerprint</th><th>Warnings</th><th>Errors</th></tr></thead>
+        <tbody>{report.steps.map((step, index) => <tr key={`${step.step}-${index}`}><td>{step.step}</td><td>{step.status}</td><td>{step.action_detail}</td><td>{step.lifecycle_stage_before_step ?? '—'} → {step.lifecycle_stage_after_step ?? '—'}</td><td>{step.service_called ?? '—'}</td><td>{step.request_seed ?? '—'}</td><td>{step.mutates_active_players ? 'yes' : 'no'}</td><td>{step.mutates_ranking_snapshot ? 'yes' : 'no'}</td><td>{step.stop_reason ?? '—'}</td><td>{boolMark(step.artifact_exists_before)}</td><td>{boolMark(step.artifact_exists_after)}</td><td>{step.changed_ids.join(', ') || '—'}</td><td>{step.fingerprint ? step.fingerprint.slice(0, 12) : '—'}</td><td>{step.warnings.join('; ') || '—'}</td><td>{step.errors.join('; ') || '—'}</td></tr>)}</tbody>
       </table>
     </div>
   </div>

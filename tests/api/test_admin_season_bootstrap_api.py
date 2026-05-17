@@ -46,6 +46,7 @@ class Server:
             countries_config_path=str(countries_path),
             initial_player_pool_config_path=str(tmp_path / "pool.json"),
             season_active_players_config_path=str(tmp_path / "season_active_players.json"),
+            season_ranking_snapshots_registry_path=str(tmp_path / "season_ranking_snapshots.json"),
         )
         self.server = uvicorn.Server(uvicorn.Config(app=app, host="127.0.0.1", port=self.port, log_level="error"))
         self.thread = threading.Thread(target=self.server.run, daemon=True)

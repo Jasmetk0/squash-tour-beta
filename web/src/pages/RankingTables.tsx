@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
-import { getAdminPointBreakdown, getAdminRankingTable, getViewerPointBreakdown, getViewerRankingTable } from '../api/client'
-import type { PlayerPointBreakdownEntry, PlayerPointBreakdownQueryParams, PlayerPointBreakdownResponse, PlayerPointBreakdownSummaryRow, PointBreakdownTableType, RankingTableQueryParams, RankingTableResponse, RankingTableRow, RankingTableType } from '../api/types'
+import { generateAdminRankingSnapshot, getAdminPointBreakdown, getAdminRankingSnapshot, getAdminRankingTable, getViewerPointBreakdown, getViewerRankingSnapshot, getViewerRankingTable } from '../api/client'
+import type { PlayerPointBreakdownEntry, PlayerPointBreakdownQueryParams, PlayerPointBreakdownResponse, PlayerPointBreakdownSummaryRow, PointBreakdownTableType, RankingSnapshotRow, WeeklyRankingSnapshotResult, RankingTableQueryParams, RankingTableResponse, RankingTableRow, RankingTableType } from '../api/types'
 import { MetadataList, SectionCard, SummaryPills } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -41,6 +41,7 @@ export function AdminRankingTablesSection(): JSX.Element {
   return <>
     <RankingTablePanel mode="admin" title="Ranking / Race Tables" />
     <PointBreakdownPanel mode="admin" title="Player Point Breakdown" />
+    <WeeklyRankingSnapshotPanel mode="admin" />
   </>
 }
 
@@ -52,6 +53,7 @@ export function ViewerRankingsReadOnlyPage(): JSX.Element {
         <p className="subtitle">Read-only ranking and race tables from active season points.</p>
       </div>
       <RankingTablePanel mode="viewer" title="Current Tables" />
+      <WeeklyRankingSnapshotPanel mode="viewer" />
       <PointBreakdownPanel mode="viewer" title="Point Breakdown" />
     </section>
   )
@@ -75,7 +77,7 @@ function RankingTablePanel({ mode, title }: { mode: 'admin' | 'viewer'; title: s
       <p className="status">
         {isAdmin
           ? 'This table is derived from active season player points. Rolling 61-week ranking, best-N selection, weekly snapshots, and movement are not implemented yet.'
-          : 'Current ranking table from active season points. Historical weekly ranking snapshots are not available yet.'}
+          : 'Current ranking table from active season points. Historical weekly ranking snapshots are read-only publications below.'}
       </p>
       <div className="grid">
         <label>Season<input value={controls.season} onChange={(event) => setControls((current) => ({ ...current, season: event.target.value }))} /></label>
@@ -251,5 +253,131 @@ function PointBreakdownSummaryRowsTable({ rows }: { rows: PlayerPointBreakdownSu
       <tbody>{rows.map((row) => <tr key={row.player_id}><td>{row.player_name}</td><td>{row.country_code}</td><td>{row.ranking_points}</td><td>{row.race_points}</td><td>{row.breakdown_ranking_points_total}</td><td>{row.breakdown_race_points_total}</td><td>{row.applied_event_count}/{row.total_event_count}</td><td>{row.consistency_ok ? 'ok' : 'mismatch'}</td></tr>)}</tbody>
     </table>
     {!rows.length ? <p className="status">No players match the selected point breakdown filters.</p> : null}
+  </div>
+}
+
+type SnapshotControlsState = {
+  season: string
+  seasonWeek: string
+  seed: string
+  dryRun: boolean
+  overwriteExisting: boolean
+  includeZeroPoints: boolean
+  limit: string
+}
+
+const defaultSnapshotControls: SnapshotControlsState = {
+  season: '2000/2001',
+  seasonWeek: '1',
+  seed: '12345',
+  dryRun: true,
+  overwriteExisting: false,
+  includeZeroPoints: true,
+  limit: '100'
+}
+
+function WeeklyRankingSnapshotPanel({ mode }: { mode: 'admin' | 'viewer' }): JSX.Element {
+  const isAdmin = mode === 'admin'
+  const [controls, setControls] = useState<SnapshotControlsState>(defaultSnapshotControls)
+  const [result, setResult] = useState<WeeklyRankingSnapshotResult | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const seasonWeek = Number(controls.seasonWeek || 1)
+  const loadSnapshot = async () => {
+    setLoading(true); setError(null)
+    try {
+      const response = isAdmin ? await getAdminRankingSnapshot(controls.season, seasonWeek) : await getViewerRankingSnapshot(controls.season, seasonWeek)
+      setResult(response)
+    } catch (caught) {
+      setError(formatApiError(caught))
+    } finally {
+      setLoading(false)
+    }
+  }
+  const generateSnapshot = async (persist: boolean) => {
+    setLoading(true); setError(null)
+    try {
+      const response = await generateAdminRankingSnapshot(controls.season, seasonWeek, {
+        seed: Number(controls.seed || 12345),
+        dry_run: !persist,
+        overwrite_existing: controls.overwriteExisting,
+        include_zero_points: controls.includeZeroPoints,
+        limit: controls.limit.trim() ? Number(controls.limit) : null
+      })
+      setResult(response)
+    } catch (caught) {
+      setError(formatApiError(caught))
+    } finally {
+      setLoading(false)
+    }
+  }
+  const snapshot = result?.snapshot ?? null
+  return <SectionCard title="Weekly Ranking Snapshots">
+    <p className="status">Snapshots publish the current active-player ranking/race tables for a season week. Rolling 61-week expiry and best-N selection are not implemented yet.</p>
+    <div className="grid">
+      <label>Snapshot season<input value={controls.season} onChange={(event) => setControls((current) => ({ ...current, season: event.target.value }))} /></label>
+      <label>Season week<input type="number" min="1" max="61" value={controls.seasonWeek} onChange={(event) => setControls((current) => ({ ...current, seasonWeek: event.target.value }))} /></label>
+      {isAdmin ? <label>Seed<input type="number" value={controls.seed} onChange={(event) => setControls((current) => ({ ...current, seed: event.target.value }))} /></label> : null}
+      {isAdmin ? <label>Limit<input type="number" min="1" value={controls.limit} onChange={(event) => setControls((current) => ({ ...current, limit: event.target.value }))} /></label> : null}
+      {isAdmin ? <label><input type="checkbox" checked={controls.dryRun} onChange={(event) => setControls((current) => ({ ...current, dryRun: event.target.checked }))} /> Dry-run default</label> : null}
+      {isAdmin ? <label><input type="checkbox" checked={controls.overwriteExisting} onChange={(event) => setControls((current) => ({ ...current, overwriteExisting: event.target.checked }))} /> Overwrite existing</label> : null}
+      {isAdmin ? <label><input type="checkbox" checked={controls.includeZeroPoints} onChange={(event) => setControls((current) => ({ ...current, includeZeroPoints: event.target.checked }))} /> Include zero-point players</label> : null}
+    </div>
+    <div className="button-row">
+      {isAdmin ? <button type="button" onClick={() => generateSnapshot(false)} disabled={loading}>Preview snapshot</button> : null}
+      {isAdmin ? <button type="button" onClick={() => generateSnapshot(true)} disabled={loading}>Persist snapshot</button> : null}
+      <button type="button" onClick={loadSnapshot} disabled={loading}>{isAdmin ? 'Load persisted snapshot' : 'Load weekly snapshot'}</button>
+    </div>
+    {error ? <p role="alert" className="error">{error}</p> : null}
+    {result && !snapshot ? <p className="status">No published snapshot for this week.</p> : null}
+    {result && snapshot ? <SnapshotContent result={result} /> : null}
+  </SectionCard>
+}
+
+function SnapshotContent({ result }: { result: WeeklyRankingSnapshotResult }): JSX.Element {
+  const snapshot = result.snapshot
+  if (!snapshot) return <p className="status">No published snapshot for this week.</p>
+  const rankingLeader = snapshot.ranking_table.rows.find((row) => row.player_id === snapshot.ranking_table.summary.leader_player_id)
+  const raceLeader = snapshot.race_table.rows.find((row) => row.player_id === snapshot.race_table.summary.leader_player_id)
+  return <>
+    <SummaryPills items={[
+      { label: 'Snapshot exists', value: result.snapshot_exists ? 'Yes' : 'No' },
+      { label: 'Ranking leader', value: rankingLeader?.player_name ?? snapshot.ranking_table.summary.leader_player_id ?? '—' },
+      { label: 'Race leader', value: raceLeader?.player_name ?? snapshot.race_table.summary.leader_player_id ?? '—' },
+      { label: 'Ranking players', value: snapshot.ranking_table.summary.player_count },
+      { label: 'Race players', value: snapshot.race_table.summary.player_count },
+      { label: 'New entries', value: snapshot.ranking_table.summary.new_entries_count },
+      { label: 'Moved up', value: snapshot.ranking_table.summary.moved_up_count },
+      { label: 'Moved down', value: snapshot.ranking_table.summary.moved_down_count },
+      { label: 'Unchanged', value: snapshot.ranking_table.summary.unchanged_count },
+      { label: 'Rolling ranking', value: snapshot.metadata.rolling_ranking_implemented ? 'Implemented' : 'Not implemented' },
+      { label: 'Best-N', value: snapshot.metadata.best_n_implemented ? 'Implemented' : 'Not implemented' }
+    ]} />
+    <MetadataList items={[
+      { label: 'Publication basis', value: snapshot.metadata.publication_basis },
+      { label: 'Snapshot fingerprint', value: shortFingerprint(snapshot.metadata.snapshot_fingerprint) },
+      { label: 'Previous fingerprint', value: shortFingerprint(snapshot.metadata.previous_snapshot_fingerprint) },
+      { label: 'Calendar week', value: snapshot.calendar_year && snapshot.year_week ? `${snapshot.calendar_year}/W${snapshot.year_week}` : '—' }
+    ]} />
+    {[...snapshot.validation_warnings, ...result.validation_warnings].length ? <ul>{[...snapshot.validation_warnings, ...result.validation_warnings].map((warning, index) => <li key={`${warning}-${index}`}>{warning}</li>)}</ul> : null}
+    {[...snapshot.validation_errors, ...result.validation_errors].length ? <ul>{[...snapshot.validation_errors, ...result.validation_errors].map((errorText, index) => <li className="error" key={`${errorText}-${index}`}>{errorText}</li>)}</ul> : null}
+    <SnapshotRowsTable title="Ranking snapshot table" rows={snapshot.ranking_table.rows} primary="ranking" />
+    <SnapshotRowsTable title="Race snapshot table" rows={snapshot.race_table.rows} primary="race" />
+  </>
+}
+
+function formatMovement(row: RankingSnapshotRow): string {
+  if (row.movement_label === 'none') return '—'
+  if (row.movement === null) return row.movement_label
+  return row.movement > 0 ? `+${row.movement}` : String(row.movement)
+}
+
+function SnapshotRowsTable({ title, rows, primary }: { title: string; rows: RankingSnapshotRow[]; primary: 'ranking' | 'race' }): JSX.Element {
+  return <div className="table-wrap">
+    <table aria-label={title}>
+      <thead><tr><th>Rank</th><th>Previous rank</th><th>Movement</th><th>Player</th><th>Country</th><th>{primary === 'ranking' ? 'Ranking points' : 'Race points'}</th><th>{primary === 'ranking' ? 'Race points' : 'Ranking points'}</th></tr></thead>
+      <tbody>{rows.map((row) => <tr key={row.player_id}><td>{row.rank}</td><td>{row.previous_rank ?? '—'}</td><td>{formatMovement(row)}</td><td>{row.player_name}</td><td>{row.country_code}</td><td>{primary === 'ranking' ? row.ranking_points : row.race_points}</td><td>{primary === 'ranking' ? row.race_points : row.ranking_points}</td></tr>)}</tbody>
+    </table>
+    {!rows.length ? <p className="status">No snapshot rows available.</p> : null}
   </div>
 }

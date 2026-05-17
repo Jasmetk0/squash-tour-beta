@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 TOTAL_SEASON_WEEKS = 61
 DEFAULT_SEASON_START_YEAR_WEEK = 37
-DEFAULT_WEEKS_PER_CALENDAR_YEAR = 52
+DEFAULT_WEEKS_PER_CALENDAR_YEAR = 61
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,9 +41,9 @@ def parse_season_start_year(season: str) -> int:
 
 def _validate_mapping_inputs(*, season_week: int | None = None, season_start_year_week: int, weeks_per_calendar_year: int) -> None:
     if weeks_per_calendar_year != DEFAULT_WEEKS_PER_CALENDAR_YEAR:
-        raise ValueError("weeks_per_calendar_year must be 52 for the current FAX calendar mapping")
+        raise ValueError("weeks_per_calendar_year must be 61 for the current FAX calendar mapping")
     if not 1 <= season_start_year_week <= weeks_per_calendar_year:
-        raise ValueError("season_start_year_week must be between 1 and 52")
+        raise ValueError("season_start_year_week must be between 1 and 61")
     if season_week is not None and not 1 <= season_week <= TOTAL_SEASON_WEEKS:
         raise ValueError("season_week must be between 1 and 61")
 
@@ -83,7 +83,7 @@ def calendar_position_to_season_week(
         weeks_per_calendar_year=weeks_per_calendar_year,
     )
     if not 1 <= year_week <= weeks_per_calendar_year:
-        raise ValueError("year_week must be between 1 and 52")
+        raise ValueError("year_week must be between 1 and 61")
     calendar_offset = (calendar_year - season_start_year) * weeks_per_calendar_year + year_week
     season_week = calendar_offset - season_start_year_week + 1
     if 1 <= season_week <= TOTAL_SEASON_WEEKS:

@@ -77,7 +77,9 @@ The engine must also support calendar positioning.
 
 Use:
 - calendar_year
-- year_week = 1..52/53
+- year_week = 1..61
+
+Official FAX mapping: one calendar year has 61 Year Weeks, each season has 61 Season Weeks, and Season Week 1 starts at Year Week 37 by default.
 
 A tournament/event can therefore have:
 - season = "2000/2001"

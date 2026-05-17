@@ -31,9 +31,9 @@ def service(tmp_path: Path) -> SeasonCalendarService:
 
 def test_season_week_mapping_default_and_rollover() -> None:
     assert map_season_week_to_calendar_week(season="2000/2001", season_week=1, season_start_calendar_year=2000) == (2000, 37)
-    assert map_season_week_to_calendar_week(season="2000/2001", season_week=16, season_start_calendar_year=2000) == (2000, 52)
-    assert map_season_week_to_calendar_week(season="2000/2001", season_week=17, season_start_calendar_year=2000) == (2001, 1)
-    assert season_week_to_calendar_position("2000/2001", 61).year_week == 45
+    assert map_season_week_to_calendar_week(season="2000/2001", season_week=25, season_start_calendar_year=2000) == (2000, 61)
+    assert map_season_week_to_calendar_week(season="2000/2001", season_week=26, season_start_calendar_year=2000) == (2001, 1)
+    assert season_week_to_calendar_position("2000/2001", 61).year_week == 36
     with pytest.raises(ValueError, match="season_week"):
         map_season_week_to_calendar_week(season="2000/2001", season_week=62)
 
@@ -59,6 +59,26 @@ def test_calendar_build_default_maps_first_event_to_year_week_37(tmp_path: Path)
     assert event.season_week == 1
     assert event.calendar_year == 2000
     assert event.year_week == 37
+
+
+def test_calendar_build_rollover_uses_61_week_fax_year(tmp_path: Path) -> None:
+    svc = service(tmp_path)
+    template = svc.template_service.get_config().templates[0]
+    templates = [template.model_copy(update={"template_id": f"wt_{week:02d}", "event_name": f"World {week:02d}"}) for week in range(1, 62)]
+
+    events = svc._build_events(
+        season="2000/2001",
+        templates=templates,
+        seed=0,
+        season_start_calendar_year=2000,
+        season_start_year_week=37,
+    )
+    events_by_week = {event.season_week: event for event in events}
+
+    assert events_by_week[25].calendar_year == 2000
+    assert events_by_week[25].year_week == 61
+    assert events_by_week[26].calendar_year == 2001
+    assert events_by_week[26].year_week == 1
 
 
 def test_persist_calendar_and_overwrite_safety(tmp_path: Path) -> None:

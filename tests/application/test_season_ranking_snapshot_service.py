@@ -73,10 +73,16 @@ def test_movement_independent_for_ranking_and_race(tmp_path: Path) -> None:
     bootstrap._save_registry(registry)
     active_before_snapshot_generation = json.loads(bootstrap.active_players_path.read_text(encoding="utf-8"))
 
-    result = service.generate_snapshot(season="2000/2001", season_week=17, request=WeeklyRankingSnapshotGenerateRequest(dry_run=True))
+    result = service.generate_snapshot(season="2000/2001", season_week=26, request=WeeklyRankingSnapshotGenerateRequest(dry_run=True))
     assert result.snapshot.calendar_year == 2001
     assert result.snapshot.year_week == 1
     assert "Calendar year/week could not be resolved from a persisted calendar." not in result.validation_warnings
+
+    final_week = service.generate_snapshot(season="2000/2001", season_week=61, request=WeeklyRankingSnapshotGenerateRequest(dry_run=True))
+    assert final_week.snapshot.calendar_year == 2001
+    assert final_week.snapshot.year_week == 36
+    assert "Calendar year/week could not be resolved from a persisted calendar." not in final_week.validation_warnings
+
     ranking_by_id = {row.player_id: row for row in result.snapshot.ranking_table.rows}
     race_by_id = {row.player_id: row for row in result.snapshot.race_table.rows}
     assert ranking_by_id["P-B"].movement > 0

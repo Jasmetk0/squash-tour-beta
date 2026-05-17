@@ -151,7 +151,7 @@ class SeasonEventMatchPackage(BaseModel):
     template_id: str
     season_week: int = Field(ge=1, le=61)
     calendar_year: int | None = Field(default=None, ge=1900, le=2100)
-    year_week: int | None = Field(default=None, ge=1, le=53)
+    year_week: int | None = Field(default=None, ge=1, le=61)
     seed: int
     dry_run: bool
     persisted: bool

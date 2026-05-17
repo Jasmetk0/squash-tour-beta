@@ -169,8 +169,8 @@ class SeasonCalendarService:
                     errors.append(self._issue("error", f"{field}_exceeds_main_draw", f"{field} cannot exceed main_draw_size", event_id=event.event_id, field=field))
             if event.calendar_year is None:
                 errors.append(self._issue("error", "calendar_year_missing", "calendar_year is required", event_id=event.event_id, field="calendar_year"))
-            if event.year_week is None or not 1 <= event.year_week <= 52:
-                errors.append(self._issue("error", "year_week_out_of_range", "year_week must be between 1 and 52", event_id=event.event_id, field="year_week"))
+            if event.year_week is None or not 1 <= event.year_week <= 61:
+                errors.append(self._issue("error", "year_week_out_of_range", "year_week must be between 1 and 61", event_id=event.event_id, field="year_week"))
             if event.end_season_week and event.end_season_week > TOTAL_SEASON_WEEKS:
                 warnings.append(self._issue("warning", "duration_overlaps_season_end", "event duration overlaps season end", event_id=event.event_id, field="duration_in_season_weeks"))
         for week, count in sorted(counts_by_week.items()):

@@ -98,7 +98,7 @@ class SeasonCalendarMetadata(BaseModel):
 
     season: str
     season_start_calendar_year: int = Field(ge=1900, le=2100)
-    season_start_year_week: int = Field(ge=1, le=53)
+    season_start_year_week: int = Field(ge=1, le=61)
     total_season_weeks: int = 61
     event_count: int = Field(default=0, ge=0)
     build_seed: int | None = None
@@ -123,7 +123,7 @@ class CalendarEvent(BaseModel):
     season: str | int
     season_week: int = Field(ge=1, le=61, validation_alias=AliasChoices("season_week", "week"))
     calendar_year: int | None = Field(default=None, ge=1900, le=2100)
-    year_week: int | None = Field(default=None, ge=1, le=53)
+    year_week: int | None = Field(default=None, ge=1, le=61)
     template_id: str = Field(min_length=3)
     event_name: str = ""
     category: str = ""
@@ -213,7 +213,7 @@ class SeasonCalendarBuildRequest(BaseModel):
     dry_run: bool = True
     overwrite_existing: bool = False
     season_start_calendar_year: int = Field(default=2000, ge=1900, le=2100)
-    season_start_year_week: int = Field(default=37, ge=1, le=52)
+    season_start_year_week: int = Field(default=37, ge=1, le=61)
     include_inactive_templates: bool = False
     max_events: int | None = Field(default=None, ge=1, le=1000)
 

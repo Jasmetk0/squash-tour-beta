@@ -27,7 +27,7 @@
 - Support season templates and season-specific overrides.
 - Detect overlaps and impossible calendars.
 - Foundation added: Season Week + Year Week calendar model with deterministic 61-week mapping.
-- Official FAX season mapping: Season Week 1 starts at Year Week 37 by default. Season Week and Year Week are separate concepts: Season Week is simulation order; Year Week is calendar position.
+- Official FAX mapping: one calendar year has 61 Year Weeks, each season has 61 Season Weeks, and Season Week 1 starts at Year Week 37 by default. Season Week and Year Week are separate concepts: Season Week is simulation order; Year Week is calendar position within the 61-week calendar year.
 - Foundation added: first-season calendar builder can preview and persist planned events from editable tournament templates.
 - Foundation added: Admin Seasons can preview and persist deterministic entry lists for persisted season calendar events from persisted active season players, including main draw acceptances, qualification acceptances, alternates, validation issues, and provenance fingerprints.
 - Foundation added: Admin Seasons can preview and persist deterministic qualification/main draw packages from persisted event entry lists, including seeds, BYEs, qualifier placeholders, validation issues, and provenance fingerprints.

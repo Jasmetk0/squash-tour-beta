@@ -35,6 +35,28 @@ SimulateOneEventStepResultStatus = Literal["skipped", "planned", "succeeded", "f
 SimulateDrawType = Literal["qualification_then_main", "qualification", "main"]
 
 
+class SimulateOneEventPlanSummary(BaseModel):
+    planned_step_count: int = 0
+    executed_step_count: int = 0
+    skipped_step_count: int = 0
+    succeeded_step_count: int = 0
+    failed_step_count: int = 0
+    blocked_step_count: int = 0
+    first_failed_step: str | None = None
+    stop_reason: str | None = None
+    next_safe_action: str | None = None
+
+
+class SimulateOneEventArtifactState(BaseModel):
+    entries_exists: bool = False
+    draw_exists: bool = False
+    matches_exists: bool = False
+    results_exists: bool = False
+    point_awards_exists: bool = False
+    points_applied: bool = False
+    ranking_snapshot_exists: bool = False
+
+
 class SimulateOneEventRequest(BaseModel):
     seed: int = 12345
     dry_run: bool = True
@@ -60,6 +82,13 @@ class SimulateOneEventStepStatus(BaseModel):
     fingerprint: str | None = None
     warnings: list[str] = Field(default_factory=list)
     errors: list[str] = Field(default_factory=list)
+    lifecycle_stage_before_step: str | None = None
+    lifecycle_stage_after_step: str | None = None
+    stop_reason: str | None = None
+    service_called: str | None = None
+    request_seed: int | None = None
+    mutates_active_players: bool = False
+    mutates_ranking_snapshot: bool = False
 
 
 class ChangedArtifacts(BaseModel):
@@ -94,6 +123,16 @@ class SimulateOneEventReport(BaseModel):
     final_lifecycle: EventLifecycleStatus | None = None
     steps: list[SimulateOneEventStepStatus] = Field(default_factory=list)
     changed_artifacts: ChangedArtifacts = Field(default_factory=ChangedArtifacts)
+    plan_summary: SimulateOneEventPlanSummary = Field(default_factory=SimulateOneEventPlanSummary)
+    artifact_state_before: SimulateOneEventArtifactState = Field(default_factory=SimulateOneEventArtifactState)
+    artifact_state_after: SimulateOneEventArtifactState = Field(default_factory=SimulateOneEventArtifactState)
+    lifecycle_stage_before: str | None = None
+    lifecycle_stage_after: str | None = None
+    lifecycle_next_action_after: str | None = None
+    can_continue: bool = True
+    safe_to_rerun: bool = True
+    would_duplicate_points: bool = False
+    would_overwrite_existing: bool = False
     completed: bool = False
     blocked: bool = False
     validation_warnings: list[str] = Field(default_factory=list)
@@ -122,8 +161,10 @@ class SeasonEventSimulationService:
     def simulate_one_event(self, *, event_id: str, request: SimulateOneEventRequest) -> SimulateOneEventResult:
         validation_errors: list[str] = []
         validation_warnings: list[str] = []
+        stop_reason: str | None = None
         if request.publish_snapshot and not request.apply_points:
             validation_errors.append("publish_snapshot=true requires apply_points=true for one-event orchestration.")
+            stop_reason = "publish_snapshot_requires_apply_points"
 
         preflight = self.lifecycle_service.get_event_lifecycle(event_id=event_id)
         if preflight.event is None:
@@ -131,44 +172,86 @@ class SeasonEventSimulationService:
             return SimulateOneEventResult(report=None, validation_warnings=preflight.validation_warnings, validation_errors=self._dedupe(errors))
 
         event = preflight.event
-        steps = [SimulateOneEventStepStatus(
+        artifact_before = self._artifact_state(event)
+        steps = [self._decorate_step(SimulateOneEventStepStatus(
             step="preflight_lifecycle",
             status="succeeded",
             action_detail=f"Initial lifecycle stage is {event.current_stage}; next action is {event.next_recommended_action}.",
             fingerprint=preflight.metadata.generated_fingerprint,
             warnings=list(event.validation_warnings),
             errors=list(event.validation_errors),
-        )]
+            lifecycle_stage_before_step=event.current_stage,
+            lifecycle_stage_after_step=event.current_stage,
+            service_called="SeasonEventLifecycleService.get_event_lifecycle",
+        ))]
         report = self._report(event=event, request=request, preflight_fingerprint=preflight.metadata.generated_fingerprint, steps=steps)
         steps = report.steps
+        report.artifact_state_before = artifact_before
+        report.artifact_state_after = artifact_before
+        report.lifecycle_stage_before = event.current_stage
+        report.lifecycle_stage_after = event.current_stage
+        report.lifecycle_next_action_after = event.next_recommended_action
+        report.would_overwrite_existing = request.overwrite_existing and self._any_artifact_exists(artifact_before)
+        report.would_duplicate_points = request.apply_points and event.points_applied
         report.validation_warnings.extend(validation_warnings)
         report.validation_errors.extend(validation_errors)
 
+        planned = self._planned_steps(event, request)
+        report.plan_summary.planned_step_count = len(planned)
+
         if validation_errors:
             report.blocked = True
-            return SimulateOneEventResult(report=report, validation_warnings=validation_warnings, validation_errors=validation_errors)
+            report.can_continue = False
+            steps.append(self._decorate_step(SimulateOneEventStepStatus(
+                step="final_lifecycle",
+                status="blocked",
+                action_detail=validation_errors[0],
+                fingerprint=preflight.metadata.generated_fingerprint,
+                errors=validation_errors,
+                lifecycle_stage_before_step=event.current_stage,
+                lifecycle_stage_after_step=event.current_stage,
+                stop_reason=stop_reason,
+            )))
+            return self._finish(report, stop_reason or "validation_error")
         if event.is_blocked and not request.allow_blocked:
             msg = "Lifecycle preflight is blocked; resolve blocker or set allow_blocked=true."
             report.validation_errors.append(msg)
             report.blocked = True
-            steps.append(SimulateOneEventStepStatus(step="final_lifecycle", status="blocked", action_detail=msg, fingerprint=preflight.metadata.generated_fingerprint, errors=event.block_reasons or [msg]))
-            return SimulateOneEventResult(report=report, validation_warnings=report.validation_warnings, validation_errors=report.validation_errors)
+            report.can_continue = False
+            steps.append(self._decorate_step(SimulateOneEventStepStatus(step="final_lifecycle", status="blocked", action_detail=msg, fingerprint=preflight.metadata.generated_fingerprint, errors=event.block_reasons or [msg], lifecycle_stage_before_step=event.current_stage, lifecycle_stage_after_step=event.current_stage, stop_reason="lifecycle_blocked")))
+            return self._finish(report, "lifecycle_blocked")
         if event.current_stage == "ranking_snapshot_published":
             report.completed = True
             report.final_lifecycle = event
-            steps.append(SimulateOneEventStepStatus(step="final_lifecycle", status="succeeded", action_detail="Event lifecycle is already ranking_snapshot_published; no work required.", fingerprint=preflight.metadata.generated_fingerprint))
-            report.metadata.build_fingerprint = self._fingerprint(report.model_dump(mode="json", exclude={"metadata": {"build_fingerprint"}}))
-            return SimulateOneEventResult(report=report)
+            steps.append(self._decorate_step(SimulateOneEventStepStatus(step="final_lifecycle", status="succeeded", action_detail="Event lifecycle is already ranking_snapshot_published; no work required.", fingerprint=preflight.metadata.generated_fingerprint, lifecycle_stage_before_step=event.current_stage, lifecycle_stage_after_step=event.current_stage, stop_reason="already_complete")))
+            return self._finish(report, "already_complete")
+        if not planned:
+            steps.append(self._decorate_step(SimulateOneEventStepStatus(step="final_lifecycle", status="skipped", action_detail="No orchestration steps are needed for the current request and lifecycle state.", fingerprint=preflight.metadata.generated_fingerprint, lifecycle_stage_before_step=event.current_stage, lifecycle_stage_after_step=event.current_stage, stop_reason="no_steps_needed")))
+            return self._finish(report, "no_steps_needed")
 
-        planned = self._planned_steps(event, request)
         if request.dry_run:
-            for step in planned[: request.max_steps]:
-                steps.append(SimulateOneEventStepStatus(step=step, status="planned", action_detail="Dry-run plan only; no mutating service was called.", artifact_exists_before=self._exists_for_step(event, step), artifact_exists_after=self._exists_for_step(event, step)))
-            report.final_lifecycle = event
-            steps.append(SimulateOneEventStepStatus(step="final_lifecycle", status="planned", action_detail="Dry run plan only; final lifecycle equals initial lifecycle.", fingerprint=preflight.metadata.generated_fingerprint))
-            report.metadata.final_lifecycle_fingerprint = preflight.metadata.generated_fingerprint
-            report.metadata.build_fingerprint = self._fingerprint(report.model_dump(mode="json", exclude={"metadata": {"build_fingerprint"}}))
-            return SimulateOneEventResult(report=report)
+            capped = planned[: request.max_steps]
+            for step in capped:
+                reason = self._dry_run_detail(step, event, request)
+                steps.append(self._decorate_step(SimulateOneEventStepStatus(
+                    step=step,
+                    status="planned",
+                    action_detail=reason,
+                    artifact_exists_before=self._exists_for_step(event, step),
+                    artifact_exists_after=self._exists_for_step(event, step),
+                    lifecycle_stage_before_step=event.current_stage,
+                    lifecycle_stage_after_step=event.current_stage,
+                    request_seed=self._derive_seed(request.seed, event_id, step),
+                )))
+            if len(planned) > len(capped):
+                stop_reason = "max_steps_reached"
+                report.validation_warnings.append(f"Dry-run plan was capped at max_steps={request.max_steps}.")
+            else:
+                stop_reason = "dry_run_plan_only"
+            if not request.apply_points:
+                report.validation_warnings.append("apply_points=false means this command will stop after point awards are generated; next safe action is apply_point_awards.")
+            steps.append(self._decorate_step(SimulateOneEventStepStatus(step="final_lifecycle", status="planned", action_detail="Dry run plan only; final lifecycle equals initial lifecycle.", fingerprint=preflight.metadata.generated_fingerprint, lifecycle_stage_before_step=event.current_stage, lifecycle_stage_after_step=event.current_stage, stop_reason=stop_reason)))
+            return self._finish(report, stop_reason)
 
         executed = 0
         current = event
@@ -176,38 +259,66 @@ class SeasonEventSimulationService:
             if executed >= request.max_steps:
                 warning = f"Stopped after max_steps={request.max_steps}."
                 report.validation_warnings.append(warning)
+                stop_reason = "max_steps_reached"
+                steps.append(self._decorate_step(SimulateOneEventStepStatus(step="final_lifecycle", status="blocked", action_detail=warning, lifecycle_stage_before_step=current.current_stage, lifecycle_stage_after_step=current.current_stage, stop_reason=stop_reason)))
                 break
             if self._should_stop(current, request):
+                stop_reason = "stop_after_stage_reached"
+                steps.append(self._decorate_step(SimulateOneEventStepStatus(step="final_lifecycle", status="skipped", action_detail=f"Requested stop_after_stage={request.stop_after_stage} reached before {step_name}.", lifecycle_stage_before_step=current.current_stage, lifecycle_stage_after_step=current.current_stage, stop_reason=stop_reason)))
                 break
+            before_stage = current.current_stage
             step = self._execute_step(event_id=event_id, step=step_name, request=request, lifecycle=current)
-            steps.append(step)
+            step.lifecycle_stage_before_step = before_stage
+            if step.request_seed is None:
+                step.request_seed = self._derive_seed(request.seed, event_id, step_name)
+            if step.service_called is None and step.status != "skipped":
+                step.service_called = self._service_name(step_name)
+            steps.append(self._decorate_step(step))
             executed += 1
             self._mark_changed(report.changed_artifacts, step_name, step)
             if step.status in {"failed", "blocked"} or step.errors:
                 report.blocked = True
+                report.can_continue = False
                 report.validation_errors.extend(step.errors)
+                stop_reason = step.stop_reason or ("step_blocked" if step.status == "blocked" else "step_failed")
+                step.stop_reason = stop_reason
                 break
             refreshed = self.lifecycle_service.get_event_lifecycle(event_id=event_id)
             if refreshed.event is not None:
                 current = refreshed.event
+                step.lifecycle_stage_after_step = current.current_stage
                 if current.is_blocked and not request.allow_blocked:
                     msg = "Lifecycle became blocked after step execution."
                     report.blocked = True
+                    report.can_continue = False
                     report.validation_errors.append(msg)
-                    steps.append(SimulateOneEventStepStatus(step="final_lifecycle", status="blocked", action_detail=msg, fingerprint=refreshed.metadata.generated_fingerprint, errors=current.block_reasons or [msg]))
+                    stop_reason = "lifecycle_blocked"
+                    steps.append(self._decorate_step(SimulateOneEventStepStatus(step="final_lifecycle", status="blocked", action_detail=msg, fingerprint=refreshed.metadata.generated_fingerprint, errors=current.block_reasons or [msg], lifecycle_stage_before_step=current.current_stage, lifecycle_stage_after_step=current.current_stage, stop_reason=stop_reason)))
                     report.final_lifecycle = current
                     report.metadata.final_lifecycle_fingerprint = refreshed.metadata.generated_fingerprint
-                    report.metadata.build_fingerprint = self._fingerprint(report.model_dump(mode="json", exclude={"metadata": {"build_fingerprint"}}))
-                    return SimulateOneEventResult(report=report, validation_warnings=report.validation_warnings, validation_errors=report.validation_errors)
+                    return self._finish(report, stop_reason)
 
         final = self.lifecycle_service.get_event_lifecycle(event_id=event_id)
         report.final_lifecycle = final.event
         report.metadata.final_lifecycle_fingerprint = final.metadata.generated_fingerprint
+        final_stage = final.event.current_stage if final.event else "unknown"
+        if stop_reason is None:
+            if report.blocked:
+                stop_reason = "step_blocked"
+            elif request.stop_after_stage and final.event and final.event.current_stage == request.stop_after_stage:
+                stop_reason = "stop_after_stage_reached"
+            elif final.event and final.event.current_stage == "points_generated" and not request.apply_points:
+                stop_reason = "points_not_applied"
+            elif final.event and final.event.current_stage == "points_applied" and not request.publish_snapshot:
+                stop_reason = "already_complete" if artifact_before.points_applied else "points_applied"
+            elif final.event and final.event.current_stage == "ranking_snapshot_published":
+                stop_reason = "already_complete"
+            if stop_reason is None:
+                stop_reason = "no_steps_needed" if executed == 0 else None
         final_status: SimulateOneEventStepResultStatus = "blocked" if report.blocked else "succeeded"
-        steps.append(SimulateOneEventStepStatus(step="final_lifecycle", status=final_status, action_detail=f"Final lifecycle stage is {final.event.current_stage if final.event else 'unknown'}.", fingerprint=final.metadata.generated_fingerprint, warnings=final.validation_warnings, errors=final.validation_errors))
+        steps.append(self._decorate_step(SimulateOneEventStepStatus(step="final_lifecycle", status=final_status, action_detail=f"Final lifecycle stage is {final_stage}.", fingerprint=final.metadata.generated_fingerprint, warnings=final.validation_warnings, errors=final.validation_errors, lifecycle_stage_before_step=final_stage, lifecycle_stage_after_step=final_stage, stop_reason=stop_reason)))
         report.completed = bool(final.event and final.event.current_stage in {"points_generated", "points_applied", "ranking_snapshot_published"} and not report.blocked)
-        report.metadata.build_fingerprint = self._fingerprint(report.model_dump(mode="json", exclude={"metadata": {"build_fingerprint"}}))
-        return SimulateOneEventResult(report=report, validation_warnings=report.validation_warnings, validation_errors=report.validation_errors)
+        return self._finish(report, stop_reason)
 
     def _execute_step(self, *, event_id: str, step: SimulateOneEventStep, request: SimulateOneEventRequest, lifecycle: EventLifecycleStatus) -> SimulateOneEventStepStatus:
         before = self._exists_for_step(lifecycle, step)
@@ -255,7 +366,7 @@ class SeasonEventSimulationService:
                     return self._skipped(step, "Event results already exist; overwrite_existing=false.", before)
                 status = lifecycle.progression_status or {}
                 if status.get("event_status") != "completed" and not request.allow_incomplete_results:
-                    return SimulateOneEventStepStatus(step=step, status="blocked", action_detail="Event is not complete; allow_incomplete_results=false.", artifact_exists_before=before, artifact_exists_after=before, errors=["Event is not complete; results were not extracted."])
+                    return SimulateOneEventStepStatus(step=step, status="blocked", action_detail="Event is not complete; allow_incomplete_results=false.", artifact_exists_before=before, artifact_exists_after=before, errors=["Event is not complete; results were not extracted."], stop_reason="event_not_complete")
                 result = self.result_service.extract_event_result(event_id=event_id, request=EventResultExtractRequest(seed=seed, dry_run=False, overwrite_existing=request.overwrite_existing))
                 return self._service_step(step, "Extracted event results.", before, result.metadata.build_fingerprint if result.metadata else None, [event_id], result.validation_warnings, result.validation_errors)
             if step == "generate_point_awards":
@@ -276,13 +387,13 @@ class SeasonEventSimulationService:
                 if not lifecycle.points_applied:
                     refreshed = self.lifecycle_service.get_event_lifecycle(event_id=event_id).event
                     if not refreshed or not refreshed.points_applied:
-                        return SimulateOneEventStepStatus(step=step, status="blocked", action_detail="Points must be applied before publishing a ranking snapshot.", artifact_exists_before=before, artifact_exists_after=before, errors=["Points must be applied before publishing snapshot."])
+                        return SimulateOneEventStepStatus(step=step, status="blocked", action_detail="Points must be applied before publishing a ranking snapshot.", artifact_exists_before=before, artifact_exists_after=before, errors=["Points must be applied before publishing snapshot."], stop_reason="points_not_applied")
                     lifecycle = refreshed
                 result = self.ranking_snapshot_service.generate_snapshot(season=lifecycle.season, season_week=lifecycle.season_week, request=WeeklyRankingSnapshotGenerateRequest(seed=seed, dry_run=False, overwrite_existing=request.overwrite_existing))
                 status = "failed" if result.validation_errors else "succeeded"
                 return SimulateOneEventStepStatus(step=step, status=status, action_detail="Published weekly ranking/race snapshot.", artifact_exists_before=before, artifact_exists_after=not result.validation_errors, changed_ids=[f"{lifecycle.season}:{lifecycle.season_week}"], fingerprint=result.metadata.snapshot_fingerprint if result.metadata else None, warnings=result.validation_warnings, errors=result.validation_errors)
         except ValueError as exc:
-            return SimulateOneEventStepStatus(step=step, status="failed", action_detail="Step failed in underlying service.", artifact_exists_before=before, artifact_exists_after=before, errors=[str(exc)])
+            return SimulateOneEventStepStatus(step=step, status="failed", action_detail="Step failed in underlying service.", artifact_exists_before=before, artifact_exists_after=before, errors=[str(exc)], stop_reason="validation_error")
         return self._skipped(step, "No implementation for step in this slice.", before)
 
     def _planned_steps(self, event: EventLifecycleStatus, request: SimulateOneEventRequest) -> list[SimulateOneEventStep]:
@@ -331,6 +442,118 @@ class SeasonEventSimulationService:
             "apply_point_awards": lifecycle.points_applied,
             "publish_ranking_snapshot": lifecycle.ranking_snapshot.exists,
         }.get(step)
+
+    def _finish(self, report: SimulateOneEventReport, stop_reason: str | None) -> SimulateOneEventResult:
+        final_event = report.final_lifecycle or report.initial_lifecycle
+        if final_event is not None:
+            report.artifact_state_after = self._artifact_state(final_event)
+            report.lifecycle_stage_after = final_event.current_stage
+            report.lifecycle_next_action_after = final_event.next_recommended_action
+        report.changed_artifacts = self._derive_changed_artifacts(report.artifact_state_before, report.artifact_state_after, report.changed_artifacts)
+        applied_this_run = any(step.step == "apply_point_awards" and step.status == "succeeded" and step.changed_ids for step in report.steps)
+        report.safe_to_rerun = not (applied_this_run and report.requested_apply_points)
+        report.would_duplicate_points = report.would_duplicate_points or any(
+            step.step == "apply_point_awards" and step.status == "skipped" and step.artifact_exists_before and report.requested_apply_points
+            for step in report.steps
+        )
+        report.can_continue = not report.blocked and stop_reason not in {"validation_error", "lifecycle_blocked", "step_blocked", "step_failed", "publish_snapshot_requires_apply_points", "event_not_complete", "max_steps_reached"}
+        report.plan_summary = self._plan_summary(report.steps, stop_reason, report.lifecycle_next_action_after)
+        report.metadata.build_fingerprint = self._fingerprint(report.model_dump(mode="json", exclude={"metadata": {"build_fingerprint"}}))
+        return SimulateOneEventResult(report=report, validation_warnings=report.validation_warnings, validation_errors=report.validation_errors)
+
+    @staticmethod
+    def _plan_summary(steps: list[SimulateOneEventStepStatus], stop_reason: str | None, next_action: str | None) -> SimulateOneEventPlanSummary:
+        executable = [step for step in steps if step.step not in {"preflight_lifecycle", "final_lifecycle"}]
+        first_failed = next((step.step for step in steps if step.status in {"failed", "blocked"}), None)
+        return SimulateOneEventPlanSummary(
+            planned_step_count=sum(1 for step in executable if step.status == "planned"),
+            executed_step_count=sum(1 for step in executable if step.status in {"succeeded", "failed", "blocked", "skipped"}),
+            skipped_step_count=sum(1 for step in executable if step.status == "skipped"),
+            succeeded_step_count=sum(1 for step in executable if step.status == "succeeded"),
+            failed_step_count=sum(1 for step in executable if step.status == "failed"),
+            blocked_step_count=sum(1 for step in executable if step.status == "blocked") + sum(1 for step in steps if step.step == "final_lifecycle" and step.status == "blocked"),
+            first_failed_step=first_failed,
+            stop_reason=stop_reason,
+            next_safe_action=SeasonEventSimulationService._next_safe_action(stop_reason, next_action),
+        )
+
+    @staticmethod
+    def _next_safe_action(stop_reason: str | None, lifecycle_next_action: str | None) -> str | None:
+        if stop_reason in {"validation_error", "lifecycle_blocked", "step_failed", "step_blocked", "event_not_complete", "publish_snapshot_requires_apply_points"}:
+            return "resolve_blocker"
+        if stop_reason == "points_not_applied":
+            return "apply_point_awards"
+        if stop_reason == "dry_run_plan_only":
+            return "run_event_simulation"
+        if stop_reason == "already_complete":
+            return "review_completed_event"
+        return lifecycle_next_action
+
+    @staticmethod
+    def _artifact_state(event: EventLifecycleStatus) -> SimulateOneEventArtifactState:
+        return SimulateOneEventArtifactState(
+            entries_exists=event.entries.exists,
+            draw_exists=event.draw.exists,
+            matches_exists=event.matches.exists,
+            results_exists=event.results.exists,
+            point_awards_exists=event.point_awards.exists,
+            points_applied=event.points_applied,
+            ranking_snapshot_exists=event.ranking_snapshot.exists,
+        )
+
+    @staticmethod
+    def _any_artifact_exists(state: SimulateOneEventArtifactState) -> bool:
+        return any(state.model_dump(mode="json").values())
+
+    @staticmethod
+    def _derive_changed_artifacts(before: SimulateOneEventArtifactState, after: SimulateOneEventArtifactState, changed: ChangedArtifacts) -> ChangedArtifacts:
+        return ChangedArtifacts(
+            entries=changed.entries or before.entries_exists != after.entries_exists,
+            draw=changed.draw or before.draw_exists != after.draw_exists,
+            matches=changed.matches or before.matches_exists != after.matches_exists,
+            results=changed.results or before.results_exists != after.results_exists,
+            point_awards=changed.point_awards or before.point_awards_exists != after.point_awards_exists,
+            active_player_points=changed.active_player_points or before.points_applied != after.points_applied,
+            ranking_snapshot=changed.ranking_snapshot or before.ranking_snapshot_exists != after.ranking_snapshot_exists,
+        )
+
+    @staticmethod
+    def _decorate_step(step: SimulateOneEventStepStatus) -> SimulateOneEventStepStatus:
+        step.mutates_active_players = step.mutates_active_players or step.step == "apply_point_awards"
+        step.mutates_ranking_snapshot = step.mutates_ranking_snapshot or step.step == "publish_ranking_snapshot"
+        if step.status == "failed" and step.stop_reason is None:
+            step.stop_reason = "step_failed"
+        if step.status == "blocked" and step.stop_reason is None:
+            step.stop_reason = "step_blocked"
+        return step
+
+    @staticmethod
+    def _service_name(step: SimulateOneEventStep) -> str | None:
+        return {
+            "preflight_lifecycle": "SeasonEventLifecycleService.get_event_lifecycle",
+            "generate_entries": "SeasonEntryListService.generate_entry_list",
+            "generate_draw": "SeasonDrawService.generate_draw_package",
+            "generate_matches": "SeasonMatchService.generate_match_package",
+            "process_byes": "SeasonMatchService.process_byes",
+            "simulate_draw": "SeasonMatchService.simulate_draw",
+            "refresh_progression": "SeasonMatchService.refresh_progression",
+            "extract_results": "SeasonEventResultsService.extract_event_result",
+            "generate_point_awards": "SeasonPointAwardsService.generate_event_point_awards",
+            "apply_point_awards": "SeasonPointAwardsService.apply_event_point_awards",
+            "publish_ranking_snapshot": "SeasonRankingSnapshotService.generate_snapshot",
+            "final_lifecycle": "SeasonEventLifecycleService.get_event_lifecycle",
+        }.get(step)
+
+    @staticmethod
+    def _dry_run_detail(step: SimulateOneEventStep, event: EventLifecycleStatus, request: SimulateOneEventRequest) -> str:
+        existing = SeasonEventSimulationService._exists_for_step(event, step)
+        if existing and not request.overwrite_existing:
+            return "Dry-run plan only; artifact exists and overwrite_existing=false, so an execute run would skip this step."
+        if step == "apply_point_awards":
+            return "Dry-run plan only; would apply point awards to active season players if not already applied."
+        if step == "publish_ranking_snapshot":
+            return "Dry-run plan only; would publish the weekly ranking/race snapshot after points are applied."
+        return "Dry-run plan only; no mutating service was called."
 
     @staticmethod
     def _service_step(step: SimulateOneEventStep, detail: str, before: bool | None, fingerprint: str | None, changed_ids: list[str], warnings: list[Any], errors: list[Any], *, status: SimulateOneEventStepResultStatus = "succeeded") -> SimulateOneEventStepStatus:

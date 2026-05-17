@@ -2441,3 +2441,66 @@ export type PointAwardApplyResult = {
   validation_errors: PointAwardValidationIssue[]
   metadata: PointAwardMetadata | null
 }
+
+export type RunSeasonWeekRequest = SimulateSeasonWeekPreflightRequest & {
+  allow_unsafe_run: boolean
+}
+
+export type SeasonWeekRunEventResult = {
+  event_id: string
+  event_name: string
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  run_order: number
+  preflight_stop_reason: string | null
+  initial_stage: string | null
+  final_stage: string | null
+  event_report: SimulateOneEventReport
+  succeeded: boolean
+  blocked: boolean
+  changed_artifacts: SimulateOneEventChangedArtifacts
+  warnings: string[]
+  errors: string[]
+}
+
+export type SeasonWeekRunSummary = {
+  season: string
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  event_count: number
+  attempted_event_count: number
+  succeeded_event_count: number
+  blocked_event_count: number
+  failed_event_count: number
+  points_applied_event_count: number
+  snapshot_published: boolean
+  snapshot_skipped: boolean
+  snapshot_already_existed: boolean
+  can_run_preflight: boolean
+  run_started: boolean
+  run_completed: boolean
+  stopped_early: boolean
+  first_failed_event_id: string | null
+  stop_reason: string | null
+  next_safe_action: string | null
+}
+
+export type SeasonWeekRunMetadata = {
+  season: string
+  season_week: number
+  source: 'week_preflight_plus_one_event_execution_reports'
+  preflight_fingerprint: string
+  final_fingerprint: string
+  read_only: boolean
+}
+
+export type RunSeasonWeekResult = {
+  preflight: SimulateSeasonWeekPreflightResult
+  events: SeasonWeekRunEventResult[]
+  summary: SeasonWeekRunSummary
+  metadata: SeasonWeekRunMetadata
+  validation_warnings: string[]
+  validation_errors: string[]
+}

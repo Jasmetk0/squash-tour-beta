@@ -112,7 +112,9 @@ import type {
   SimulateOneEventRequest,
   SimulateOneEventResult,
   SimulateSeasonWeekPreflightRequest,
-  SimulateSeasonWeekPreflightResult
+  SimulateSeasonWeekPreflightResult,
+  RunSeasonWeekRequest,
+  RunSeasonWeekResult
 } from './types'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
@@ -231,6 +233,10 @@ export function simulateOneEvent(eventId: string, payload: SimulateOneEventReque
 
 export function preflightSeasonWeek(payload: SimulateSeasonWeekPreflightRequest): Promise<SimulateSeasonWeekPreflightResult> {
   return request(`/admin/weeks/preflight`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function runSeasonWeek(payload: RunSeasonWeekRequest): Promise<RunSeasonWeekResult> {
+  return request(`/admin/weeks/run`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function buildSeasonCalendar(season: string, payload: SeasonCalendarBuildPayload): Promise<SeasonCalendarBuildResponse> {

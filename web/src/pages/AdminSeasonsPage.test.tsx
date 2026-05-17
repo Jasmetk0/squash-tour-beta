@@ -36,6 +36,7 @@ const api = vi.hoisted(() => ({
   generateEventPointAwards: vi.fn(),
   applyEventPointAwards: vi.fn(),
   simulateOneEvent: vi.fn(),
+  preflightSeasonWeek: vi.fn(),
   ApiError: class ApiError extends Error { status = 400 }
 }))
 
@@ -380,6 +381,46 @@ const simulateOneEventResult = {
   validation_errors: []
 }
 
+
+const weekPreflightResult = {
+  season: '2000/2001',
+  season_week: 1,
+  calendar_year: 2000,
+  year_week: 37,
+  events: [{
+    event_id: 'EVT-2000-W01-wt_a',
+    event_name: 'World A',
+    season: '2000/2001',
+    season_week: 1,
+    calendar_year: 2000,
+    year_week: 37,
+    category: 'PLATINUM',
+    tour_level: 'WORLD_TOUR',
+    host_country: 'ENG',
+    lifecycle_stage_before: 'planned',
+    next_recommended_action_before: 'generate_entries',
+    one_event_report: simulateOneEventResult.report,
+    blocked: false,
+    can_continue: true,
+    stop_reason: 'dry_run_plan_only',
+    planned_step_count: 1,
+    planned_mutates_active_players: false,
+    planned_mutates_ranking_snapshot: false,
+    warnings: ['event warning'],
+    errors: []
+  }],
+  summary: {
+    season: '2000/2001', season_week: 1, calendar_year: 2000, year_week: 37,
+    event_count: 1, planned_event_count: 1, completed_event_count: 0, blocked_event_count: 0,
+    can_run_week: true, would_apply_points: false, would_publish_snapshot: false, snapshot_already_exists: false,
+    week_has_multiple_events: false, total_planned_steps: 1, total_planned_player_mutations: 0, total_planned_snapshot_mutations: 0,
+    first_blocked_event_id: null, stop_reason: null, next_safe_action: 'run_week_simulation'
+  },
+  metadata: { season: '2000/2001', season_week: 1, source: 'calendar_events_plus_one_event_dry_run_reports', calendar_fingerprint: 'calendar-fp', generated_fingerprint: 'week-fp', read_only: true },
+  validation_warnings: ['Week preflight is read-only; no entries, draws, matches, points, or ranking snapshots are mutated.'],
+  validation_errors: []
+}
+
 const pointAwardsResult = {
   award_package: {
     event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', template_id: 'wt_a', event_name: 'World A', category: 'PLATINUM', tour_level: 'WORLD_TOUR', seed: 12345, dry_run: true, persisted: false, applied: false,
@@ -457,6 +498,7 @@ describe('AdminSeasonsPage', () => {
     api.generateEventPointAwards.mockResolvedValue(pointAwardsResult)
     api.applyEventPointAwards.mockResolvedValue(pointApplyResult)
     api.simulateOneEvent.mockResolvedValue(simulateOneEventResult)
+    api.preflightSeasonWeek.mockResolvedValue(weekPreflightResult)
   })
 
   it('renders bootstrap controls and previews with dry_run true', async () => {
@@ -558,6 +600,25 @@ describe('AdminSeasonsPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Run event simulation' }))
     expect(api.simulateOneEvent).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false, apply_points: true, publish_snapshot: true, simulate_draw_type: 'main' }))
     expect(await screen.findByText('points_generated')).toBeInTheDocument()
+  })
+
+
+  it('renders week preflight panel and previews through API', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findByRole('heading', { name: 'Simulate One Season Week — Preflight' })).toBeInTheDocument()
+    expect(screen.getByText('This is preflight only. It calls one-event dry-run planning for each event and does not mutate entries, draws, matches, points, or snapshots.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Preview week simulation' }))
+    expect(api.preflightSeasonWeek).toHaveBeenCalledWith(expect.objectContaining({ season: '2000/2001', season_week: 1, seed: 12345, apply_points: false, publish_snapshot: false, event_id_filter: [] }))
+    expect(await screen.findByText('Week preflight summary')).toBeInTheDocument()
+    expect(screen.getByText('Can run week')).toBeInTheDocument()
+    expect(screen.getByText('Snapshot already exists')).toBeInTheDocument()
+    const table = await screen.findByRole('table', { name: 'Season week preflight events table' })
+    expect(within(table).getByText('World A')).toBeInTheDocument()
+    expect(within(table).getByText('generate_entries')).toBeInTheDocument()
+    expect(screen.getByText('Selected event dry-run detail')).toBeInTheDocument()
+    expect(screen.getAllByText('dry_run_plan_only').length).toBeGreaterThan(0)
   })
 
   it('renders Event Entries section and previews entries', async () => {

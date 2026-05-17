@@ -8,6 +8,7 @@ from beta_engine.api.routers.admin_events import router as admin_events_router
 from beta_engine.api.routers.admin_lifecycle import router as admin_lifecycle_router
 from beta_engine.api.routers.admin_matches import router as admin_matches_router
 from beta_engine.api.routers.admin_results import router as admin_results_router
+from beta_engine.api.routers.admin_weeks import router as admin_weeks_router
 from beta_engine.api.routers.admin_players import router as admin_players_router
 from beta_engine.api.routers.admin_points import router as admin_points_router
 from beta_engine.api.routers.admin_seasons import router as admin_seasons_router
@@ -36,6 +37,7 @@ router.include_router(admin_lifecycle_router)
 router.include_router(admin_draws_router)
 router.include_router(admin_matches_router)
 router.include_router(admin_results_router)
+router.include_router(admin_weeks_router)
 router.include_router(admin_seasons_router)
 router.include_router(countries_router)
 router.include_router(tournament_templates_router)

@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
-import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, getSeasonLifecycle, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch, simulateOneEvent } from '../api/client'
-import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType } from '../api/types'
+import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, getSeasonLifecycle, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch, simulateOneEvent, preflightSeasonWeek } from '../api/client'
+import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
 import { AdminRankingTablesSection } from './RankingTables'
 import { formatApiError } from '../utils/apiErrors'
@@ -66,6 +66,21 @@ export function AdminSeasonsPage(): JSX.Element {
   const [simulateIncludeNotEntered, setSimulateIncludeNotEntered] = useState(false)
   const [simulateDrawType, setSimulateDrawType] = useState<SimulateOneEventDrawType>('qualification_then_main')
   const [simulateReport, setSimulateReport] = useState<SimulateOneEventReport | null>(null)
+  const [weekPreflightSeason, setWeekPreflightSeason] = useState(season)
+  const [weekPreflightWeek, setWeekPreflightWeek] = useState(1)
+  const [weekPreflightSeed, setWeekPreflightSeed] = useState(12345)
+  const [weekPreflightApplyPoints, setWeekPreflightApplyPoints] = useState(false)
+  const [weekPreflightPublishSnapshot, setWeekPreflightPublishSnapshot] = useState(false)
+  const [weekPreflightOverwriteExisting, setWeekPreflightOverwriteExisting] = useState(false)
+  const [weekPreflightIncludeCompleted, setWeekPreflightIncludeCompleted] = useState(true)
+  const [weekPreflightAllowBlocked, setWeekPreflightAllowBlocked] = useState(false)
+  const [weekPreflightAllowIncomplete, setWeekPreflightAllowIncomplete] = useState(false)
+  const [weekPreflightMaxSteps, setWeekPreflightMaxSteps] = useState(20)
+  const [weekPreflightMaxAlternates, setWeekPreflightMaxAlternates] = useState(16)
+  const [weekPreflightDrawType, setWeekPreflightDrawType] = useState<SimulateOneEventDrawType>('qualification_then_main')
+  const [weekPreflightEventFilter, setWeekPreflightEventFilter] = useState('')
+  const [weekPreflightResult, setWeekPreflightResult] = useState<SimulateSeasonWeekPreflightResult | null>(null)
+  const [selectedWeekPreflightEventId, setSelectedWeekPreflightEventId] = useState('')
   const playersQuery = useQuery({ queryKey: ['season-active-players', season], queryFn: () => getSeasonActivePlayers(season), retry: false })
   const calendarQuery = useQuery({ queryKey: ['season-calendar', season], queryFn: () => getSeasonCalendar(season), retry: false })
   const lifecycleQuery = useQuery<SeasonLifecycleResponse>({ queryKey: ['season-lifecycle', season], queryFn: () => getSeasonLifecycle(season), enabled: false, retry: false })
@@ -294,6 +309,30 @@ export function AdminSeasonsPage(): JSX.Element {
   const simulateRoundMutation = useMutation({ mutationFn: () => simulateEventRound(effectiveEventId, { seed: progressionSeed, draw_type: progressionDrawType, round_number: progressionRoundNumber }), onSuccess: onProgressionSuccess })
   const simulateDrawMutation = useMutation({ mutationFn: () => simulateEventDraw(effectiveEventId, { seed: progressionSeed, draw_type: progressionDrawType }), onSuccess: onProgressionSuccess })
 
+  const weekPreflightMutation = useMutation({
+    mutationFn: () => preflightSeasonWeek({
+      season: weekPreflightSeason || season,
+      season_week: weekPreflightWeek,
+      seed: weekPreflightSeed,
+      apply_points: weekPreflightApplyPoints,
+      publish_snapshot: weekPreflightPublishSnapshot,
+      overwrite_existing: weekPreflightOverwriteExisting,
+      include_not_entered: false,
+      max_alternates: weekPreflightMaxAlternates,
+      simulate_draw_type: weekPreflightDrawType,
+      max_steps_per_event: weekPreflightMaxSteps,
+      stop_after_stage: null,
+      allow_blocked: weekPreflightAllowBlocked,
+      allow_incomplete_results: weekPreflightAllowIncomplete,
+      event_id_filter: weekPreflightEventFilter.split(',').map((item) => item.trim()).filter(Boolean),
+      include_completed_events: weekPreflightIncludeCompleted
+    }),
+    onSuccess: (result) => {
+      setWeekPreflightResult(result)
+      setSelectedWeekPreflightEventId(result.events[0]?.event_id ?? '')
+    }
+  })
+
   const simulateOneEventMutation = useMutation({
     mutationFn: (dryRunOverride: boolean) => simulateOneEvent(simulateTargetEventId, {
       seed: simulateSeed,
@@ -489,6 +528,30 @@ export function AdminSeasonsPage(): JSX.Element {
         {simulateOneEventMutation.data?.validation_errors.map((error) => <p key={error} role="alert" className="error">{error}</p>)}
         {simulateOneEventMutation.data?.validation_warnings.map((warning) => <p key={warning} className="status">{warning}</p>)}
         {simulateReport ? <SimulateOneEventReportPanel report={simulateReport} /> : <p className="status">Preview or run the one-event orchestration command to see a step-by-step report.</p>}
+      </SectionCard>
+
+      <SectionCard title="Simulate One Season Week — Preflight">
+        <p className="status">This is preflight only. It calls one-event dry-run planning for each event and does not mutate entries, draws, matches, points, or snapshots.</p>
+        <div className="grid">
+          <label>Season<input value={weekPreflightSeason} onChange={(event) => setWeekPreflightSeason(event.target.value)} /></label>
+          <label>Season week<input type="number" min={1} max={61} value={weekPreflightWeek} onChange={(event) => setWeekPreflightWeek(Number(event.target.value))} /></label>
+          <label>Seed<input type="number" value={weekPreflightSeed} onChange={(event) => setWeekPreflightSeed(Number(event.target.value))} /></label>
+          <label>Max steps per event<input type="number" value={weekPreflightMaxSteps} onChange={(event) => setWeekPreflightMaxSteps(Number(event.target.value))} /></label>
+          <label>Week max alternates<input type="number" value={weekPreflightMaxAlternates} onChange={(event) => setWeekPreflightMaxAlternates(Number(event.target.value))} /></label>
+          <label>Week simulate draw type<select value={weekPreflightDrawType} onChange={(event) => setWeekPreflightDrawType(event.target.value as SimulateOneEventDrawType)}><option value="qualification_then_main">qualification_then_main</option><option value="qualification">qualification</option><option value="main">main</option></select></label>
+          <label>Event ID filter<input value={weekPreflightEventFilter} onChange={(event) => setWeekPreflightEventFilter(event.target.value)} placeholder="event_id,event_id" /></label>
+          <label><input type="checkbox" checked={weekPreflightApplyPoints} onChange={(event) => setWeekPreflightApplyPoints(event.target.checked)} /> Week apply points</label>
+          <label><input type="checkbox" checked={weekPreflightPublishSnapshot} onChange={(event) => setWeekPreflightPublishSnapshot(event.target.checked)} /> Week publish snapshot</label>
+          <label><input type="checkbox" checked={weekPreflightOverwriteExisting} onChange={(event) => setWeekPreflightOverwriteExisting(event.target.checked)} /> Week overwrite existing</label>
+          <label><input type="checkbox" checked={weekPreflightIncludeCompleted} onChange={(event) => setWeekPreflightIncludeCompleted(event.target.checked)} /> Include completed events</label>
+          <label><input type="checkbox" checked={weekPreflightAllowBlocked} onChange={(event) => setWeekPreflightAllowBlocked(event.target.checked)} /> Allow blocked</label>
+          <label><input type="checkbox" checked={weekPreflightAllowIncomplete} onChange={(event) => setWeekPreflightAllowIncomplete(event.target.checked)} /> Allow incomplete results</label>
+        </div>
+        <div className="button-row">
+          <button type="button" onClick={() => weekPreflightMutation.mutate()} disabled={weekPreflightMutation.isPending}>Preview week simulation</button>
+        </div>
+        {weekPreflightMutation.isError ? <p role="alert" className="error">{formatApiError(weekPreflightMutation.error)}</p> : null}
+        {weekPreflightResult ? <SeasonWeekPreflightPanel result={weekPreflightResult} selectedEventId={selectedWeekPreflightEventId} onSelectEvent={setSelectedWeekPreflightEventId} /> : <p className="status">Preview a season week to inspect backend-produced dry-run plans for persisted calendar events.</p>}
       </SectionCard>
 
 
@@ -814,6 +877,57 @@ function MatchValidationPanel({ warnings, errors }: { warnings: MatchValidationI
     {errors.length ? <><h4>Match errors</h4><ul>{errors.map((issue) => <li key={`match-error-${issue.code}-${issue.match_id ?? issue.player_id ?? issue.event_id ?? 'list'}`}>{issue.code}: {issue.message}</li>)}</ul></> : <p className="status">No match validation errors.</p>}
     {warnings.length ? <><h4>Match warnings</h4><ul>{warnings.map((issue) => <li key={`match-warning-${issue.code}-${issue.match_id ?? issue.player_id ?? issue.event_id ?? 'list'}`}>{issue.code}: {issue.message}</li>)}</ul></> : <p className="status">No match validation warnings.</p>}
   </div>
+}
+
+
+function SeasonWeekPreflightPanel({ result, selectedEventId, onSelectEvent }: { result: SimulateSeasonWeekPreflightResult; selectedEventId: string; onSelectEvent: (eventId: string) => void }): JSX.Element {
+  const selected = result.events.find((event) => event.event_id === selectedEventId) ?? result.events[0] ?? null
+  return <div>
+    <h4>Week preflight summary</h4>
+    {result.validation_errors.map((error) => <p key={error} role="alert" className="error">{error}</p>)}
+    {result.validation_warnings.map((warning) => <p key={warning} className="status">{warning}</p>)}
+    <SummaryPills items={[
+      { label: 'Event count', value: result.summary.event_count },
+      { label: 'Blocked events', value: result.summary.blocked_event_count },
+      { label: 'Can run week', value: result.summary.can_run_week ? 'yes' : 'no' },
+      { label: 'Would apply points', value: result.summary.would_apply_points ? 'yes' : 'no' },
+      { label: 'Would publish snapshot', value: result.summary.would_publish_snapshot ? 'yes' : 'no' },
+      { label: 'Snapshot already exists', value: result.summary.snapshot_already_exists ? 'yes' : 'no' },
+      { label: 'Total planned steps', value: result.summary.total_planned_steps },
+      { label: 'Stop reason', value: result.summary.stop_reason ?? '—' },
+      { label: 'Next safe action', value: result.summary.next_safe_action ?? '—' }
+    ]} />
+    <MetadataList items={[
+      { label: 'Season week / year week', value: `${result.season_week} / ${result.calendar_year ?? '—'}-${result.year_week ?? '—'}` },
+      { label: 'Read only', value: result.metadata.read_only ? 'yes' : 'no' },
+      { label: 'Source', value: result.metadata.source },
+      { label: 'Generated fingerprint', value: shortFingerprint(result.metadata.generated_fingerprint) }
+    ]} />
+    <div className="table-wrap">
+      <table aria-label="Season week preflight events table">
+        <thead><tr><th>Season/year week</th><th>Event</th><th>Category/tour</th><th>Lifecycle before</th><th>Next action before</th><th>Stop reason</th><th>Planned steps</th><th>Blocked</th><th>Can continue</th><th>Planned player mutation</th><th>Planned snapshot mutation</th></tr></thead>
+        <tbody>{result.events.map((event) => <SeasonWeekPreflightEventRow key={event.event_id} event={event} selected={selected?.event_id === event.event_id} onSelect={() => onSelectEvent(event.event_id)} />)}</tbody>
+      </table>
+    </div>
+    {!result.events.length ? <p className="status">No persisted calendar events are included in this week preflight.</p> : null}
+    {selected ? <div><h4>Selected event dry-run detail</h4><SimulateOneEventReportPanel report={selected.one_event_report} /></div> : null}
+  </div>
+}
+
+function SeasonWeekPreflightEventRow({ event, selected, onSelect }: { event: SeasonWeekEventPreflight; selected: boolean; onSelect: () => void }): JSX.Element {
+  return <tr aria-selected={selected} onClick={onSelect}>
+    <td>{event.season_week} / {event.calendar_year ?? '—'}-{event.year_week ?? '—'}</td>
+    <td><button type="button" onClick={onSelect}>{event.event_name}</button><br /><span className="muted">{event.event_id}</span></td>
+    <td>{event.category} / {event.tour_level ?? '—'}</td>
+    <td>{event.lifecycle_stage_before ?? '—'}</td>
+    <td>{event.next_recommended_action_before ?? '—'}</td>
+    <td>{event.stop_reason ?? '—'}</td>
+    <td>{event.planned_step_count}</td>
+    <td>{event.blocked ? 'yes' : 'no'}</td>
+    <td>{event.can_continue ? 'yes' : 'no'}</td>
+    <td>{event.planned_mutates_active_players ? 'yes' : 'no'}</td>
+    <td>{event.planned_mutates_ranking_snapshot ? 'yes' : 'no'}</td>
+  </tr>
 }
 
 function SimulateOneEventReportPanel({ report }: { report: SimulateOneEventReport }): JSX.Element {

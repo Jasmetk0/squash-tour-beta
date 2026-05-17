@@ -37,6 +37,7 @@ const api = vi.hoisted(() => ({
   applyEventPointAwards: vi.fn(),
   simulateOneEvent: vi.fn(),
   preflightSeasonWeek: vi.fn(),
+  runSeasonWeek: vi.fn(),
   ApiError: class ApiError extends Error { status = 400 }
 }))
 
@@ -421,6 +422,40 @@ const weekPreflightResult = {
   validation_errors: []
 }
 
+const weekRunResult = {
+  preflight: weekPreflightResult,
+  events: [{
+    event_id: 'EVT-2000-W01-wt_a',
+    event_name: 'World A',
+    season_week: 1,
+    calendar_year: 2000,
+    year_week: 37,
+    run_order: 1,
+    preflight_stop_reason: null,
+    initial_stage: 'planned',
+    final_stage: 'points_generated',
+    event_report: simulateOneEventResult.report,
+    succeeded: true,
+    blocked: false,
+    changed_artifacts: simulateOneEventResult.report.changed_artifacts,
+    warnings: ['run event warning'],
+    errors: []
+  }],
+  summary: {
+    season: '2000/2001', season_week: 1, calendar_year: 2000, year_week: 37, event_count: 1, attempted_event_count: 1, succeeded_event_count: 1, blocked_event_count: 0, failed_event_count: 0, points_applied_event_count: 0, snapshot_published: false, snapshot_skipped: false, snapshot_already_existed: false, can_run_preflight: true, run_started: true, run_completed: true, stopped_early: false, first_failed_event_id: null, stop_reason: null, next_safe_action: 'rerun_week_with_apply_points_when_ready'
+  },
+  metadata: { season: '2000/2001', season_week: 1, source: 'week_preflight_plus_one_event_execution_reports', preflight_fingerprint: 'week-fp', final_fingerprint: 'run-fp', read_only: false },
+  validation_warnings: ['Week execution is mutating and no rollback is implemented; partial week runs must be inspected and rerun manually after resolving blockers.'],
+  validation_errors: []
+}
+
+const unsafeWeekRunResult = {
+  ...weekRunResult,
+  events: [],
+  summary: { ...weekRunResult.summary, attempted_event_count: 0, succeeded_event_count: 0, run_started: false, run_completed: false, stop_reason: 'preflight_not_safe', next_safe_action: 'resolve_preflight_blocker' },
+  validation_errors: ['publish_snapshot=true requires apply_points=true for week preflight.']
+}
+
 const pointAwardsResult = {
   award_package: {
     event_id: 'EVT-2000-W01-wt_a', season: '2000/2001', template_id: 'wt_a', event_name: 'World A', category: 'PLATINUM', tour_level: 'WORLD_TOUR', seed: 12345, dry_run: true, persisted: false, applied: false,
@@ -499,6 +534,7 @@ describe('AdminSeasonsPage', () => {
     api.applyEventPointAwards.mockResolvedValue(pointApplyResult)
     api.simulateOneEvent.mockResolvedValue(simulateOneEventResult)
     api.preflightSeasonWeek.mockResolvedValue(weekPreflightResult)
+    api.runSeasonWeek.mockResolvedValue(weekRunResult)
   })
 
   it('renders bootstrap controls and previews with dry_run true', async () => {
@@ -619,6 +655,32 @@ describe('AdminSeasonsPage', () => {
     expect(within(table).getByText('generate_entries')).toBeInTheDocument()
     expect(screen.getByText('Selected event dry-run detail')).toBeInTheDocument()
     expect(screen.getAllByText('dry_run_plan_only').length).toBeGreaterThan(0)
+  })
+
+  it('renders Run One Season Week panel and runs through API', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findByRole('heading', { name: 'Run One Season Week' })).toBeInTheDocument()
+    expect(screen.getByText('This is mutating. It may create entries, draws, matches, results, point awards, apply points, and publish one weekly snapshot. No rollback is implemented.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Run week simulation' }))
+    expect(api.runSeasonWeek).toHaveBeenCalledWith(expect.objectContaining({ season: '2000/2001', season_week: 1, seed: 12345, apply_points: false, publish_snapshot: false, allow_unsafe_run: false }))
+    expect(await screen.findByText('Week run summary')).toBeInTheDocument()
+    expect(screen.getByText('Run started')).toBeInTheDocument()
+    expect(screen.getByText('Attempted events')).toBeInTheDocument()
+    const table = await screen.findByRole('table', { name: 'Season week run events table' })
+    expect(within(table).getByText('World A')).toBeInTheDocument()
+    expect(screen.getByText('Preflight used for run')).toBeInTheDocument()
+  })
+
+  it('renders no-run state for unsafe week run response', async () => {
+    api.runSeasonWeek.mockResolvedValue(unsafeWeekRunResult)
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Run week simulation' }))
+    expect(await screen.findByText('Preflight blocked execution, so no mutating event command was started.')).toBeInTheDocument()
+    expect(screen.getByText('preflight_not_safe')).toBeInTheDocument()
+    expect(screen.getByText('No event execution reports were produced.')).toBeInTheDocument()
   })
 
   it('renders Event Entries section and previews entries', async () => {

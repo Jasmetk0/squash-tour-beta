@@ -89,7 +89,7 @@ class SeasonEventEntryList(BaseModel):
     season: str
     season_week: int = Field(ge=1, le=61)
     calendar_year: int | None = Field(default=None, ge=1900, le=2100)
-    year_week: int | None = Field(default=None, ge=1, le=53)
+    year_week: int | None = Field(default=None, ge=1, le=61)
     template_id: str
     generated_from_calendar_fingerprint: str
     generated_from_active_players_fingerprint: str

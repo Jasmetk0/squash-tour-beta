@@ -99,7 +99,7 @@ class Server:
         self.thread.join(timeout=10)
 
     def persist_calendar(self) -> str:
-        _, body = call("POST", f"{self.base_url}/admin/seasons/2000%2F2001/calendar/build", {"seed": 1, "dry_run": False, "overwrite_existing": False, "season_start_calendar_year": 2000, "season_start_year_week": 35, "include_inactive_templates": False, "max_events": 1})
+        _, body = call("POST", f"{self.base_url}/admin/seasons/2000%2F2001/calendar/build", {"seed": 1, "dry_run": False, "overwrite_existing": False, "season_start_calendar_year": 2000, "season_start_year_week": 37, "include_inactive_templates": False, "max_events": 1})
         return body["calendar"]["events"][0]["event_id"]
 
 

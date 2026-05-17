@@ -11,6 +11,12 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
+from beta_engine.domain.calendar import (
+    DEFAULT_SEASON_START_YEAR_WEEK,
+    TOTAL_SEASON_WEEKS,
+    parse_season_start_year,
+    season_week_to_calendar_position,
+)
 from beta_engine.domain.tournaments.models import (
     SeasonCalendar,
     SeasonCalendarBuildRequest,
@@ -22,8 +28,6 @@ from beta_engine.domain.tournaments.models import (
     TournamentTemplate,
 )
 
-TOTAL_SEASON_WEEKS = 61
-
 
 class SeasonCalendarRegistry(BaseModel):
     calendars_by_season: dict[str, SeasonCalendar] = Field(default_factory=dict)
@@ -34,23 +38,17 @@ def map_season_week_to_calendar_week(
     season: str,
     season_week: int,
     season_start_calendar_year: int = 2000,
-    season_start_year_week: int = 35,
+    season_start_year_week: int = DEFAULT_SEASON_START_YEAR_WEEK,
 ) -> tuple[int, int]:
-    """Map internal season week to deterministic calendar year/week positioning."""
+    """Compatibility wrapper around the centralized FAX season-week mapping."""
 
-    if not 1 <= season_week <= TOTAL_SEASON_WEEKS:
-        raise ValueError("season_week must be between 1 and 61")
-    if not 1900 <= season_start_calendar_year <= 2100:
-        raise ValueError("season_start_calendar_year must be between 1900 and 2100")
-    if not 1 <= season_start_year_week <= 53:
-        raise ValueError("season_start_year_week must be between 1 and 53")
-
-    year = season_start_calendar_year
-    week = season_start_year_week + season_week - 1
-    while week > 52:
-        week -= 52
-        year += 1
-    return year, week
+    _ = season_start_calendar_year  # Kept for API compatibility; season label is the source of calendar year.
+    position = season_week_to_calendar_position(
+        season=season,
+        season_week=season_week,
+        season_start_year_week=season_start_year_week,
+    )
+    return position.calendar_year, position.year_week
 
 
 @dataclass(slots=True)
@@ -171,8 +169,8 @@ class SeasonCalendarService:
                     errors.append(self._issue("error", f"{field}_exceeds_main_draw", f"{field} cannot exceed main_draw_size", event_id=event.event_id, field=field))
             if event.calendar_year is None:
                 errors.append(self._issue("error", "calendar_year_missing", "calendar_year is required", event_id=event.event_id, field="calendar_year"))
-            if event.year_week is None or not 1 <= event.year_week <= 53:
-                errors.append(self._issue("error", "year_week_out_of_range", "year_week must be between 1 and 53", event_id=event.event_id, field="year_week"))
+            if event.year_week is None or not 1 <= event.year_week <= 61:
+                errors.append(self._issue("error", "year_week_out_of_range", "year_week must be between 1 and 61", event_id=event.event_id, field="year_week"))
             if event.end_season_week and event.end_season_week > TOTAL_SEASON_WEEKS:
                 warnings.append(self._issue("warning", "duration_overlaps_season_end", "event duration overlaps season end", event_id=event.event_id, field="duration_in_season_weeks"))
         for week, count in sorted(counts_by_week.items()):
@@ -215,12 +213,12 @@ class SeasonCalendarService:
             duration = max(1, template.duration_in_season_weeks)
             if season_week + duration - 1 > TOTAL_SEASON_WEEKS:
                 season_week = max(1, TOTAL_SEASON_WEEKS - duration + 1)
-            calendar_year, year_week = map_season_week_to_calendar_week(
+            position = season_week_to_calendar_position(
                 season=season,
                 season_week=season_week,
-                season_start_calendar_year=season_start_calendar_year,
                 season_start_year_week=season_start_year_week,
             )
+            calendar_year, year_week = position.calendar_year, position.year_week
             template_payload = self._template_payload(template)
             template_fingerprint = self._fingerprint(template_payload)
             event_id = f"EVT-{season_start_year}-W{season_week:02d}-{template.template_id}"
@@ -304,8 +302,8 @@ class SeasonCalendarService:
     @staticmethod
     def _season_start_year(season: str, *, fallback: int) -> int:
         try:
-            return int(str(season).split("/", maxsplit=1)[0])
-        except (TypeError, ValueError):
+            return parse_season_start_year(season)
+        except ValueError:
             return fallback
 
     @staticmethod

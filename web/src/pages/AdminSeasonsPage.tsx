@@ -17,7 +17,7 @@ export function AdminSeasonsPage(): JSX.Element {
   const [preview, setPreview] = useState<SeasonBootstrapResponse | null>(null)
   const [calendarSeed, setCalendarSeed] = useState(12345)
   const [seasonStartCalendarYear, setSeasonStartCalendarYear] = useState(2000)
-  const [seasonStartYearWeek, setSeasonStartYearWeek] = useState(35)
+  const [seasonStartYearWeek, setSeasonStartYearWeek] = useState(37)
   const [calendarDryRun, setCalendarDryRun] = useState(true)
   const [calendarOverwriteExisting, setCalendarOverwriteExisting] = useState(false)
   const [includeInactiveTemplates, setIncludeInactiveTemplates] = useState(false)

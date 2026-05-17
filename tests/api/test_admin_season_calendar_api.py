@@ -76,7 +76,7 @@ def test_get_empty_calendar_state(tmp_path: Path) -> None:
 
 def test_post_dry_run_and_persist_calendar(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
-        payload = {"seed": 12345, "dry_run": True, "overwrite_existing": False, "season_start_calendar_year": 2000, "season_start_year_week": 35, "include_inactive_templates": False, "max_events": None}
+        payload = {"seed": 12345, "dry_run": True, "overwrite_existing": False, "season_start_calendar_year": 2000, "season_start_year_week": 37, "include_inactive_templates": False, "max_events": None}
         status, preview = call("POST", f"{server.base_url}/admin/seasons/2000%2F2001/calendar/build", payload)
         assert status == 200
         assert preview["summary"]["event_count"] == 2
@@ -95,7 +95,7 @@ def test_post_dry_run_and_persist_calendar(tmp_path: Path) -> None:
 
 def test_calendar_overwrite_safety(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
-        payload = {"seed": 1, "dry_run": False, "overwrite_existing": False, "season_start_calendar_year": 2000, "season_start_year_week": 35, "include_inactive_templates": False, "max_events": None}
+        payload = {"seed": 1, "dry_run": False, "overwrite_existing": False, "season_start_calendar_year": 2000, "season_start_year_week": 37, "include_inactive_templates": False, "max_events": None}
         call("POST", f"{server.base_url}/admin/seasons/2000%2F2001/calendar/build", payload)
         try:
             call("POST", f"{server.base_url}/admin/seasons/2000%2F2001/calendar/build", payload)

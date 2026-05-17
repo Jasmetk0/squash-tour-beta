@@ -127,7 +127,7 @@ def test_one_event_per_week_overlap_rejects_persistence(tmp_path: Path) -> None:
     registry = svc.calendar_service._load_registry()
     event = registry.calendars_by_season["2000/2001"].events[0]
     second = event.model_copy(update={"event_id": "EVT-2000-W01-wt_b", "template_id": "wt_b"})
-    registry.calendars_by_season["2000/2001"] = SeasonCalendar(season="2000/2001", events=[event, second], metadata=SeasonCalendarMetadata(season="2000/2001", season_start_calendar_year=2000, season_start_year_week=35))
+    registry.calendars_by_season["2000/2001"] = SeasonCalendar(season="2000/2001", events=[event, second], metadata=SeasonCalendarMetadata(season="2000/2001", season_start_calendar_year=2000, season_start_year_week=37))
     svc.calendar_service._save_registry(registry)
     svc.generate_entry_list(event_id=event.event_id, request=EntryListGenerateRequest(seed=123, dry_run=False))
     preview = svc.generate_entry_list(event_id=second.event_id, request=EntryListGenerateRequest(seed=123, dry_run=True))

@@ -119,7 +119,7 @@ class SeasonEventResultPackage(BaseModel):
     template_id: str
     season_week: int = Field(ge=1, le=61)
     calendar_year: int | None = Field(default=None, ge=1900, le=2100)
-    year_week: int | None = Field(default=None, ge=1, le=53)
+    year_week: int | None = Field(default=None, ge=1, le=61)
     event_name: str | None = None
     category: str | None = None
     tour_level: str | None = None

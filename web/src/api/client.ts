@@ -118,7 +118,9 @@ import type {
   SeasonWeekRecoveryRequest,
   SeasonWeekRecoveryResult,
   SeasonReadinessRequest,
-  SeasonReadinessResult
+  SeasonReadinessResult,
+  SeasonRangePreflightRequest,
+  SeasonRangePreflightResult
 } from './types'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
@@ -249,6 +251,10 @@ export function recoverSeasonWeek(payload: SeasonWeekRecoveryRequest): Promise<S
 
 export function getSeasonReadiness(payload: SeasonReadinessRequest): Promise<SeasonReadinessResult> {
   return request(`/admin/seasons/readiness`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function preflightSeasonRange(payload: SeasonRangePreflightRequest): Promise<SeasonRangePreflightResult> {
+  return request(`/admin/seasons/range-preflight`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function buildSeasonCalendar(season: string, payload: SeasonCalendarBuildPayload): Promise<SeasonCalendarBuildResponse> {

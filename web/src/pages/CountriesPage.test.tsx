@@ -55,6 +55,21 @@ describe('CountriesPage', () => {
           federation_quality: 4,
           court_count: 120,
           style_dna: { attrition: 0.2 }
+        },
+        {
+          code: 'BBB',
+          name: 'Beta',
+          flag_asset: null,
+          region: 'ASIA',
+          population: 4_000_000,
+          wealth_support: 2,
+          squash_popularity: 3,
+          squash_tradition: 3,
+          system_quality: 4,
+          competition_density: 3,
+          federation_quality: 3,
+          court_count: 90,
+          style_dna: {}
         }
       ]
     })
@@ -192,4 +207,24 @@ describe('CountriesPage', () => {
     expect(api.importCountries).not.toHaveBeenCalledWith(expect.objectContaining({ dry_run: false }))
     confirmSpy.mockRestore()
   })
+
+  it('sorts by population when header is clicked and toggles direction on second click', async () => {
+    renderWithRoute(<CountriesPage />, '/world/countries')
+
+    await screen.findByRole('cell', { name: 'AAA' })
+    const getCodeOrder = () =>
+      screen
+        .getAllByRole('row')
+        .slice(1)
+        .map((row) => within(row).getByText(/^[A-Z]{3}$/).textContent)
+
+    expect(getCodeOrder()).toEqual(['AAA', 'BBB'])
+
+    await userEvent.click(screen.getByRole('button', { name: /Population/i }))
+    expect(getCodeOrder()).toEqual(['BBB', 'AAA'])
+
+    await userEvent.click(screen.getByRole('button', { name: /Population/i }))
+    expect(getCodeOrder()).toEqual(['AAA', 'BBB'])
+  })
+
 })

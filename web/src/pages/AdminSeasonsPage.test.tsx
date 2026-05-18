@@ -598,6 +598,13 @@ const rankingTableResponse = {
   validation_errors: []
 }
 
+async function expandAdminSection(name: RegExp | string): Promise<void> {
+  const sectionButton = await screen.findByRole('button', { name })
+  if (sectionButton.getAttribute('aria-expanded') !== 'true') {
+    await userEvent.click(sectionButton)
+  }
+}
+
 describe('AdminSeasonsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -634,6 +641,40 @@ describe('AdminSeasonsPage', () => {
     api.getSeasonReadiness.mockResolvedValue(seasonReadinessResult)
   })
 
+
+  it('renders workflow banner and open primary workflow sections', async () => {
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findByLabelText('Recommended Phase 1 workflow')).toBeInTheDocument()
+    expect(screen.getByText('Range 1–61 is effectively a full season run, but safer and more inspectable.')).toBeInTheDocument()
+    expect(screen.getByText('Mutating commands are explicitly marked.')).toBeInTheDocument()
+    expect(screen.getByText('No rollback is implemented.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Season Control Overview/i })).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('button', { name: /Primary Workflow/i })).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('heading', { name: 'Season Calendar Builder' })).toBeInTheDocument()
+  })
+
+  it('renders advanced sections collapsed and keeps manual controls accessible after expansion', async () => {
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findByRole('button', { name: /Manual Artifact Tools \/ Advanced/i })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('button', { name: /Event-Level Tools/i })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('button', { name: /Rankings \/ Snapshots/i })).toHaveAttribute('aria-expanded', 'false')
+
+    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
+    expect(screen.getByRole('heading', { name: 'Event Entries' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Preview entries' })).toBeInTheDocument()
+  })
+
+  it('shows read-only and mutating badges on workflow warnings', async () => {
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findAllByText('READ-ONLY')).not.toHaveLength(0)
+    expect(screen.getByText(/Range preflight is read-only/)).toBeInTheDocument()
+    expect(screen.getAllByText('MUTATING').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/No rollback is implemented/).length).toBeGreaterThan(0)
+  })
+
   it('renders bootstrap controls and previews with dry_run true', async () => {
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
 
@@ -649,6 +690,7 @@ describe('AdminSeasonsPage', () => {
 
   it('persists with dry_run false and renders active player table', async () => {
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Rankings \/ Snapshots/i)
 
     await userEvent.click(await screen.findByRole('button', { name: 'Persist bootstrap' }))
     expect(api.bootstrapSeasonFromInitialPool).toHaveBeenCalledWith('2000/2001', expect.objectContaining({ dry_run: false }))
@@ -683,6 +725,7 @@ describe('AdminSeasonsPage', () => {
   it('renders Event Lifecycle section and loads read-only lifecycle status', async () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Event-Level Tools/i)
 
     expect(await screen.findByRole('heading', { name: 'Event Lifecycle' })).toBeInTheDocument()
     expect(screen.getByText('Lifecycle is a read-only status derived from persisted event artifacts. It does not generate entries, simulate matches, apply points, or publish rankings.')).toBeInTheDocument()
@@ -701,6 +744,7 @@ describe('AdminSeasonsPage', () => {
   it('renders Simulate One Event panel and previews through API', async () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Event-Level Tools/i)
 
     expect(await screen.findByRole('heading', { name: 'Simulate One Event' })).toBeInTheDocument()
     expect(screen.getByText('This command orchestrates existing backend services for one event. It does not simulate a full week or full season. Applying points and publishing snapshots are opt-in.')).toBeInTheDocument()
@@ -726,6 +770,7 @@ describe('AdminSeasonsPage', () => {
   it('runs Simulate One Event with dry_run false and opt-in flags', async () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Event-Level Tools/i)
 
     await userEvent.click(await screen.findByLabelText('Apply points'))
     await userEvent.click(screen.getByLabelText('Publish ranking snapshot'))
@@ -819,6 +864,7 @@ describe('AdminSeasonsPage', () => {
   it('renders week preflight panel and previews through API', async () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Event-Level Tools/i)
 
     expect(await screen.findByRole('heading', { name: 'Simulate One Season Week — Preflight' })).toBeInTheDocument()
     expect(screen.getByText('This is preflight only. It calls one-event dry-run planning for each event and does not mutate entries, draws, matches, points, or snapshots.')).toBeInTheDocument()
@@ -838,6 +884,7 @@ describe('AdminSeasonsPage', () => {
   it('renders recovery panel, calls API, and displays backend recommendations', async () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Event-Level Tools/i)
 
     expect(await screen.findByRole('heading', { name: 'Week Run Recovery / Diagnostics' })).toBeInTheDocument()
     expect(screen.getByText('Recovery diagnostics are read-only. No rollback, deletion, reversal, or overwrite is performed.')).toBeInTheDocument()
@@ -857,6 +904,7 @@ describe('AdminSeasonsPage', () => {
   it('renders Run One Season Week panel and runs through API', async () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Event-Level Tools/i)
 
     expect(await screen.findByRole('heading', { name: 'Run One Season Week' })).toBeInTheDocument()
     expect(screen.getByText('This is mutating. It may create entries, draws, matches, results, point awards, apply points, and publish one weekly snapshot. No rollback is implemented.')).toBeInTheDocument()
@@ -873,6 +921,7 @@ describe('AdminSeasonsPage', () => {
   it('renders no-run state for unsafe week run response', async () => {
     api.runSeasonWeek.mockResolvedValue(unsafeWeekRunResult)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Event-Level Tools/i)
 
     await userEvent.click(await screen.findByRole('button', { name: 'Run week simulation' }))
     expect(await screen.findByText('Preflight blocked execution, so no mutating event command was started.')).toBeInTheDocument()
@@ -883,6 +932,7 @@ describe('AdminSeasonsPage', () => {
   it('renders Event Entries section and previews entries', async () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
 
     expect(await screen.findByRole('heading', { name: 'Event Entries' })).toBeInTheDocument()
     expect(screen.getByText('Entry generation selects players for a planned calendar event from active season players. It does not create draws or simulate matches yet.')).toBeInTheDocument()
@@ -900,6 +950,7 @@ describe('AdminSeasonsPage', () => {
   it('persists entries with dry_run false', async () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
 
     await userEvent.click(await screen.findByRole('button', { name: 'Persist entries' }))
     expect(api.generateEventEntryList).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false }))
@@ -910,6 +961,7 @@ describe('AdminSeasonsPage', () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)
     api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
 
     expect(await screen.findByRole('heading', { name: 'Event Draws' })).toBeInTheDocument()
     expect(screen.getByText('Draw generation creates bracket slots from persisted entry lists. It does not simulate matches or update rankings yet.')).toBeInTheDocument()
@@ -929,6 +981,7 @@ describe('AdminSeasonsPage', () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)
     api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
 
     await userEvent.click(await screen.findByRole('button', { name: 'Persist draw' }))
     expect(api.generateEventDrawPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false }))
@@ -940,6 +993,7 @@ describe('AdminSeasonsPage', () => {
     api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
     api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
 
     expect(await screen.findByRole('heading', { name: 'Event Matches' })).toBeInTheDocument()
     expect(screen.getByText('Match generation creates match records from persisted draw packages. Simulation stores results but does not update rankings/race yet.')).toBeInTheDocument()
@@ -958,6 +1012,7 @@ describe('AdminSeasonsPage', () => {
     api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
     api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
 
     await userEvent.click(await screen.findByRole('button', { name: 'Persist match package' }))
     expect(api.generateEventMatchPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false }))
@@ -969,6 +1024,7 @@ describe('AdminSeasonsPage', () => {
     api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
     api.getEventMatchPackage.mockResolvedValue({ ...matchResult, match_package_exists: true })
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
 
     expect(await screen.findByRole('heading', { name: 'Progression status' })).toBeInTheDocument()
     expect(screen.getByText('Progression commands update match states and propagate winners. They do not update ranking/race yet.')).toBeInTheDocument()
@@ -996,6 +1052,7 @@ describe('AdminSeasonsPage', () => {
     api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
     api.getEventMatchPackage.mockResolvedValue({ ...matchResult, match_package_exists: true })
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
 
     await userEvent.click(await screen.findByRole('button', { name: 'Simulate next pending match' }))
     expect(api.simulateNextEventMatch).toHaveBeenCalledWith('EVT-2000-W01-wt_a', { seed: 12345 })
@@ -1013,6 +1070,7 @@ describe('AdminSeasonsPage', () => {
     api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
     api.getEventMatchPackage.mockResolvedValue({ ...simulatedMatchResult, match_package_exists: true })
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
 
     expect(await screen.findByRole('heading', { name: 'Event Results' })).toBeInTheDocument()
     expect(screen.getByText('Result extraction summarizes completed tournament outcomes. Point awards are generated and applied explicitly in the Ranking / Race Points section.')).toBeInTheDocument()
@@ -1034,6 +1092,7 @@ describe('AdminSeasonsPage', () => {
     api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
     api.getEventMatchPackage.mockResolvedValue({ ...simulatedMatchResult, match_package_exists: true })
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
 
     await userEvent.click(await screen.findByRole('button', { name: 'Persist results' }))
     expect(api.extractEventResultPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false }))
@@ -1047,6 +1106,7 @@ describe('AdminSeasonsPage', () => {
     api.getEventMatchPackage.mockResolvedValue({ ...simulatedMatchResult, match_package_exists: true })
     api.getEventResultPackage.mockResolvedValue({ ...eventResult, result_package_exists: true })
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
 
     expect(await screen.findByRole('heading', { name: 'Ranking / Race Points' })).toBeInTheDocument()
     expect(screen.getByText('Point awarding uses persisted event results. Applying points mutates active season player ranking/race points. Rolling 61-week ranking and best-N logic are not implemented yet.')).toBeInTheDocument()
@@ -1068,6 +1128,7 @@ describe('AdminSeasonsPage', () => {
     api.getEventResultPackage.mockResolvedValue({ ...eventResult, result_package_exists: true })
     api.generateEventPointAwards.mockResolvedValue(persistedPointAwardsResult)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
 
     await waitFor(() => expect(screen.getByRole('button', { name: 'Persist point awards' })).toBeEnabled())
     await userEvent.click(screen.getByRole('button', { name: 'Persist point awards' }))
@@ -1081,6 +1142,7 @@ describe('AdminSeasonsPage', () => {
 
   it('renders Ranking Race Tables section and loads table params', async () => {
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Rankings \/ Snapshots/i)
 
     expect(await screen.findByRole('heading', { name: 'Ranking / Race Tables' })).toBeInTheDocument()
     expect(screen.getByText('This table is derived from active season player points. Rolling 61-week ranking, best-N selection, weekly snapshots, and movement are not implemented yet.')).toBeInTheDocument()

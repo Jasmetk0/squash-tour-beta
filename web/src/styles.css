@@ -2,7 +2,7 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   color: #0f172a;
-  background: #f8fafc;
+  background: #f3f6fb;
 }
 
 body {
@@ -11,7 +11,7 @@ body {
 
 .app-shell {
   margin: 0 auto;
-  max-width: 1000px;
+  max-width: 1180px;
   padding: 1rem;
 }
 
@@ -38,9 +38,11 @@ nav a.active {
 .panel {
   background: #fff;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #d9e2ee;
+  box-shadow: 0 6px 18px rgb(15 23 42 / 0.05);
   padding: 1rem;
   margin-bottom: 1rem;
+  min-width: 0;
 }
 
 .page-intro {
@@ -588,4 +590,48 @@ button {
     align-items: flex-start;
     flex-direction: column;
   }
+}
+
+
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.table-scroll table {
+  min-width: 920px;
+  margin: 0;
+}
+
+.actions-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.actions-inline button {
+  white-space: nowrap;
+}
+
+.countries-page .grid {
+  align-items: start;
+}
+
+.countries-page .panel {
+  overflow: hidden;
+}
+
+.countries-page textarea {
+  max-width: 100%;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
 }

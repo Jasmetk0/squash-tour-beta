@@ -295,7 +295,7 @@ export function CountriesPage(): JSX.Element {
     exportMutation.isPending
 
   return (
-    <section className="panel">
+    <section className="panel countries-page">
       <PageIntro
         title="Countries Editor"
         subtitle="Manage country data that drives deterministic world and talent-generation inputs."
@@ -397,7 +397,7 @@ export function CountriesPage(): JSX.Element {
             <EmptyState message="No countries configured. Use the form to create the first country." />
           ) : null}
           {!countriesQuery.isLoading && !countriesQuery.isError && sortedCountries.length > 0 ? (
-            <table aria-label="Countries table">
+            <div className="table-scroll"><table aria-label="Countries table">
               <thead>
                 <tr>
                   <th>Code</th>
@@ -431,17 +431,19 @@ export function CountriesPage(): JSX.Element {
                     <td>{country.court_count?.toLocaleString() ?? '—'}</td>
                     <td>{country.travel_region ?? country.region}</td>
                     <td>
-                      <button type="button" onClick={() => onSelect(country)} disabled={busy}>
-                        Edit
-                      </button>{' '}
-                      <button type="button" onClick={() => onDuplicate(country)} disabled={busy}>
-                        Duplicate country
-                      </button>
+                      <div className="actions-inline">
+                        <button type="button" onClick={() => onSelect(country)} disabled={busy}>
+                          Edit
+                        </button>
+                        <button type="button" onClick={() => onDuplicate(country)} disabled={busy}>
+                          Duplicate country
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           ) : null}
         </SectionCard>
 

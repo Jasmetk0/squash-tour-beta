@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
-import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, getSeasonLifecycle, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch, simulateOneEvent, preflightSeasonWeek, runSeasonWeek } from '../api/client'
-import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight, RunSeasonWeekResult, SeasonWeekRunEventResult } from '../api/types'
+import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, getSeasonLifecycle, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch, simulateOneEvent, preflightSeasonWeek, recoverSeasonWeek, runSeasonWeek } from '../api/client'
+import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight, RunSeasonWeekResult, SeasonWeekRunEventResult, SeasonWeekRecoveryResult, SeasonWeekRecoveryEvent, SeasonWeekRecoveryRerunFlags } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
 import { AdminRankingTablesSection } from './RankingTables'
 import { formatApiError } from '../utils/apiErrors'
@@ -83,6 +83,7 @@ export function AdminSeasonsPage(): JSX.Element {
   const [selectedWeekPreflightEventId, setSelectedWeekPreflightEventId] = useState('')
   const [weekRunAllowUnsafe, setWeekRunAllowUnsafe] = useState(false)
   const [weekRunResult, setWeekRunResult] = useState<RunSeasonWeekResult | null>(null)
+  const [weekRecoveryResult, setWeekRecoveryResult] = useState<SeasonWeekRecoveryResult | null>(null)
   const playersQuery = useQuery({ queryKey: ['season-active-players', season], queryFn: () => getSeasonActivePlayers(season), retry: false })
   const calendarQuery = useQuery({ queryKey: ['season-calendar', season], queryFn: () => getSeasonCalendar(season), retry: false })
   const lifecycleQuery = useQuery<SeasonLifecycleResponse>({ queryKey: ['season-lifecycle', season], queryFn: () => getSeasonLifecycle(season), enabled: false, retry: false })
@@ -337,6 +338,18 @@ export function AdminSeasonsPage(): JSX.Element {
 
 
 
+  const weekRecoveryMutation = useMutation({
+    mutationFn: () => recoverSeasonWeek({
+      season: weekPreflightSeason || season,
+      season_week: weekPreflightWeek,
+      event_id_filter: weekPreflightEventFilter.split(',').map((item) => item.trim()).filter(Boolean),
+      include_completed_events: weekPreflightIncludeCompleted
+    }),
+    onSuccess: (result) => {
+      setWeekRecoveryResult(result)
+    }
+  })
+
   const weekRunMutation = useMutation({
     mutationFn: () => runSeasonWeek({
       season: weekPreflightSeason || season,
@@ -586,6 +599,18 @@ export function AdminSeasonsPage(): JSX.Element {
         </div>
         {weekPreflightMutation.isError ? <p role="alert" className="error">{formatApiError(weekPreflightMutation.error)}</p> : null}
         {weekPreflightResult ? <SeasonWeekPreflightPanel result={weekPreflightResult} selectedEventId={selectedWeekPreflightEventId} onSelectEvent={setSelectedWeekPreflightEventId} /> : <p className="status">Preview a season week to inspect backend-produced dry-run plans for persisted calendar events.</p>}
+      </SectionCard>
+
+
+
+      <SectionCard title="Week Run Recovery / Diagnostics">
+        <p className="status">Recovery diagnostics are read-only. No rollback, deletion, reversal, or overwrite is performed.</p>
+        <p className="status">Uses the season, season week, event ID filter, and include completed controls from week preflight above. The backend computes recovery state and recommendations.</p>
+        <div className="button-row">
+          <button type="button" onClick={() => weekRecoveryMutation.mutate()} disabled={weekRecoveryMutation.isPending}>Inspect week recovery</button>
+        </div>
+        {weekRecoveryMutation.isError ? <p role="alert" className="error">{formatApiError(weekRecoveryMutation.error)}</p> : null}
+        {weekRecoveryResult ? <SeasonWeekRecoveryPanel result={weekRecoveryResult} /> : <p className="status">Inspect a partially run or completed week to see persisted artifacts, point application status, snapshot status, and safe next actions.</p>}
       </SectionCard>
 
       <SectionCard title="Run One Season Week">
@@ -977,6 +1002,75 @@ function SeasonWeekPreflightEventRow({ event, selected, onSelect }: { event: Sea
   </tr>
 }
 
+
+
+function SeasonWeekRecoveryPanel({ result }: { result: SeasonWeekRecoveryResult }): JSX.Element {
+  const flags = result.summary.recommended_week_rerun_flags
+  return <div>
+    <h4>Week recovery summary</h4>
+    {result.validation_errors.map((error) => <p key={error} role="alert" className="error">{error}</p>)}
+    {result.validation_warnings.map((warning) => <p key={warning} className="status">{warning}</p>)}
+    <SummaryPills items={[
+      { label: 'Week complete', value: result.summary.week_complete ? 'yes' : 'no' },
+      { label: 'Week partial', value: result.summary.week_partial ? 'yes' : 'no' },
+      { label: 'Blocked', value: result.summary.week_blocked ? 'yes' : 'no' },
+      { label: 'Snapshot exists', value: result.summary.snapshot_exists ? 'yes' : 'no' },
+      { label: 'Ready for point application', value: result.summary.ready_for_point_application ? 'yes' : 'no' },
+      { label: 'Ready for snapshot publication', value: result.summary.ready_for_snapshot_publication ? 'yes' : 'no' },
+      { label: 'Duplicate points risk count', value: result.summary.duplicate_points_risk_count },
+      { label: 'Overwrite risk count', value: result.summary.overwrite_risk_count },
+      { label: 'Rollback available', value: result.summary.rollback_available ? 'yes' : 'false' },
+      { label: 'Next safe action', value: result.summary.next_safe_action ?? '—' }
+    ]} />
+    <h4>Recommended week rerun flags</h4>
+    <RecoveryFlagsPills flags={flags} />
+    <MetadataList items={[
+      { label: 'Season week / year week', value: `${result.season_week} / ${result.summary.calendar_year ?? '—'}-${result.summary.year_week ?? '—'}` },
+      { label: 'Event count', value: result.summary.event_count },
+      { label: 'Completed / partial / blocked', value: `${result.summary.completed_event_count} / ${result.summary.partial_event_count} / ${result.summary.blocked_event_count}` },
+      { label: 'Points generated / applied', value: `${result.summary.points_generated_count} / ${result.summary.points_applied_count}` },
+      { label: 'Manual attention count', value: result.summary.manual_attention_count },
+      { label: 'Read only', value: result.metadata.read_only ? 'yes' : 'no' },
+      { label: 'Source', value: result.metadata.source },
+      { label: 'Generated fingerprint', value: shortFingerprint(result.metadata.generated_fingerprint) }
+    ]} />
+    <div className="table-wrap">
+      <table aria-label="Week recovery events table">
+        <thead><tr><th>Event</th><th>Stage</th><th>Entries</th><th>Draw</th><th>Matches</th><th>Results</th><th>Points</th><th>Applied</th><th>Snapshot</th><th>Safe to rerun</th><th>Duplicate points risk</th><th>Recommended action</th><th>Manual attention</th></tr></thead>
+        <tbody>{result.events.map((event) => <SeasonWeekRecoveryEventRow key={event.event_id} event={event} />)}</tbody>
+      </table>
+    </div>
+    {!result.events.length ? <p className="status">No persisted calendar events are included in this recovery report.</p> : null}
+  </div>
+}
+
+function RecoveryFlagsPills({ flags }: { flags: SeasonWeekRecoveryRerunFlags }): JSX.Element {
+  return <SummaryPills items={[
+    { label: 'overwrite_existing', value: flags.overwrite_existing ? 'true' : 'false' },
+    { label: 'apply_points', value: flags.apply_points ? 'true' : 'false' },
+    { label: 'publish_snapshot', value: flags.publish_snapshot ? 'true' : 'false' },
+    { label: 'allow_blocked', value: flags.allow_blocked ? 'true' : 'false' },
+    { label: 'allow_incomplete_results', value: flags.allow_incomplete_results ? 'true' : 'false' }
+  ]} />
+}
+
+function SeasonWeekRecoveryEventRow({ event }: { event: SeasonWeekRecoveryEvent }): JSX.Element {
+  return <tr>
+    <td>{event.event_name}<br /><span className="muted">{event.event_id}</span></td>
+    <td>{event.current_stage}</td>
+    <td>{boolMark(event.entries_exists)}</td>
+    <td>{boolMark(event.draw_exists)}</td>
+    <td>{boolMark(event.matches_exists)}</td>
+    <td>{boolMark(event.results_exists)}</td>
+    <td>{boolMark(event.point_awards_exists)}</td>
+    <td>{boolMark(event.points_applied)}</td>
+    <td>{boolMark(event.ranking_snapshot_exists)}</td>
+    <td>{event.safe_to_rerun_event ? 'yes' : 'no'}</td>
+    <td>{event.duplicate_points_risk ? 'yes' : 'no'}</td>
+    <td>{event.recommended_event_action}</td>
+    <td>{event.needs_manual_attention ? 'yes' : 'no'}</td>
+  </tr>
+}
 
 function SeasonWeekRunPanel({ result }: { result: RunSeasonWeekResult }): JSX.Element {
   return <div>

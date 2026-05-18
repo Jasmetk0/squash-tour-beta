@@ -2442,6 +2442,98 @@ export type PointAwardApplyResult = {
   metadata: PointAwardMetadata | null
 }
 
+
+export type SeasonWeekRecoveryRequest = {
+  season: string
+  season_week: number
+  event_id_filter: string[]
+  include_completed_events: boolean
+}
+
+export type SeasonWeekRecoveryRerunFlags = {
+  overwrite_existing: boolean
+  apply_points: boolean
+  publish_snapshot: boolean
+  allow_blocked: boolean
+  allow_incomplete_results: boolean
+}
+
+export type SeasonWeekRecoveryEventAction = 'generate_entries' | 'generate_draw' | 'generate_matches' | 'simulate_matches' | 'extract_results' | 'generate_point_awards' | 'apply_point_awards' | 'publish_week_snapshot' | 'rerun_event_safe' | 'resolve_blocker' | 'complete'
+
+export type SeasonWeekRecoveryEvent = {
+  event_id: string
+  event_name: string
+  season: string
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  category: string
+  tour_level: string | null
+  host_country: string
+  current_stage: string
+  next_recommended_action: string
+  is_blocked: boolean
+  block_reasons: string[]
+  entries_exists: boolean
+  draw_exists: boolean
+  matches_exists: boolean
+  results_exists: boolean
+  point_awards_exists: boolean
+  points_applied: boolean
+  ranking_snapshot_exists: boolean
+  safe_to_rerun_event: boolean
+  duplicate_points_risk: boolean
+  overwrite_risk: boolean
+  needs_manual_attention: boolean
+  recommended_event_action: SeasonWeekRecoveryEventAction
+  recommended_rerun_flags: SeasonWeekRecoveryRerunFlags
+  warnings: string[]
+  errors: string[]
+}
+
+export type SeasonWeekRecoverySummary = {
+  season: string
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  event_count: number
+  completed_event_count: number
+  partial_event_count: number
+  blocked_event_count: number
+  points_generated_count: number
+  points_applied_count: number
+  snapshot_exists: boolean
+  week_complete: boolean
+  week_partial: boolean
+  week_blocked: boolean
+  ready_for_point_application: boolean
+  ready_for_snapshot_publication: boolean
+  duplicate_points_risk_count: number
+  overwrite_risk_count: number
+  manual_attention_count: number
+  next_safe_action: 'resolve_blockers' | 'rerun_week_without_overwrite' | 'rerun_week_with_apply_points' | 'publish_week_snapshot' | 'review_completed_week' | 'build_calendar' | 'no_events' | null
+  recommended_week_rerun_flags: SeasonWeekRecoveryRerunFlags
+  rollback_available: boolean
+}
+
+export type SeasonWeekRecoveryMetadata = {
+  season: string
+  season_week: number
+  source: 'persisted_artifact_recovery_read_model'
+  generated_fingerprint: string
+  read_only: boolean
+}
+
+export type SeasonWeekRecoveryResult = {
+  season: string
+  season_week: number
+  events: SeasonWeekRecoveryEvent[]
+  summary: SeasonWeekRecoverySummary
+  metadata: SeasonWeekRecoveryMetadata
+  validation_warnings: string[]
+  validation_errors: string[]
+}
+
 export type RunSeasonWeekRequest = SimulateSeasonWeekPreflightRequest & {
   allow_unsafe_run: boolean
 }

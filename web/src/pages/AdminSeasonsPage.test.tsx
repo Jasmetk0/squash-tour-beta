@@ -38,6 +38,7 @@ const api = vi.hoisted(() => ({
   simulateOneEvent: vi.fn(),
   preflightSeasonWeek: vi.fn(),
   runSeasonWeek: vi.fn(),
+  recoverSeasonWeek: vi.fn(),
   ApiError: class ApiError extends Error { status = 400 }
 }))
 
@@ -449,6 +450,56 @@ const weekRunResult = {
   validation_errors: []
 }
 
+
+const weekRecoveryResult = {
+  season: '2000/2001',
+  season_week: 1,
+  events: [{
+    event_id: 'EVT-2000-W01-wt_a',
+    event_name: 'World A',
+    season: '2000/2001',
+    season_week: 1,
+    calendar_year: 2000,
+    year_week: 37,
+    category: 'PLATINUM',
+    tour_level: 'WORLD_TOUR',
+    host_country: 'ENG',
+    current_stage: 'points_generated',
+    next_recommended_action: 'apply_point_awards',
+    is_blocked: false,
+    block_reasons: [],
+    entries_exists: true,
+    draw_exists: true,
+    matches_exists: true,
+    results_exists: true,
+    point_awards_exists: true,
+    points_applied: false,
+    ranking_snapshot_exists: false,
+    safe_to_rerun_event: true,
+    duplicate_points_risk: false,
+    overwrite_risk: true,
+    needs_manual_attention: false,
+    recommended_event_action: 'apply_point_awards',
+    recommended_rerun_flags: { overwrite_existing: false, apply_points: true, publish_snapshot: false, allow_blocked: false, allow_incomplete_results: false },
+    warnings: ['Existing persisted artifacts are present; recovery recommends overwrite_existing=false.'],
+    errors: []
+  }],
+  summary: {
+    season: '2000/2001', season_week: 1, calendar_year: 2000, year_week: 37,
+    event_count: 1, completed_event_count: 0, partial_event_count: 1, blocked_event_count: 0,
+    points_generated_count: 1, points_applied_count: 0, snapshot_exists: false,
+    week_complete: false, week_partial: true, week_blocked: false,
+    ready_for_point_application: true, ready_for_snapshot_publication: false,
+    duplicate_points_risk_count: 0, overwrite_risk_count: 1, manual_attention_count: 0,
+    next_safe_action: 'rerun_week_with_apply_points',
+    recommended_week_rerun_flags: { overwrite_existing: false, apply_points: true, publish_snapshot: false, allow_blocked: false, allow_incomplete_results: false },
+    rollback_available: false
+  },
+  metadata: { season: '2000/2001', season_week: 1, source: 'persisted_artifact_recovery_read_model', generated_fingerprint: 'recovery-fp', read_only: true },
+  validation_warnings: ['Recovery diagnostics are read-only. No rollback, deletion, reversal, or overwrite is performed.'],
+  validation_errors: []
+}
+
 const unsafeWeekRunResult = {
   ...weekRunResult,
   events: [],
@@ -535,6 +586,7 @@ describe('AdminSeasonsPage', () => {
     api.simulateOneEvent.mockResolvedValue(simulateOneEventResult)
     api.preflightSeasonWeek.mockResolvedValue(weekPreflightResult)
     api.runSeasonWeek.mockResolvedValue(weekRunResult)
+    api.recoverSeasonWeek.mockResolvedValue(weekRecoveryResult)
   })
 
   it('renders bootstrap controls and previews with dry_run true', async () => {
@@ -655,6 +707,26 @@ describe('AdminSeasonsPage', () => {
     expect(within(table).getByText('generate_entries')).toBeInTheDocument()
     expect(screen.getByText('Selected event dry-run detail')).toBeInTheDocument()
     expect(screen.getAllByText('dry_run_plan_only').length).toBeGreaterThan(0)
+  })
+
+
+  it('renders recovery panel, calls API, and displays backend recommendations', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findByRole('heading', { name: 'Week Run Recovery / Diagnostics' })).toBeInTheDocument()
+    expect(screen.getByText('Recovery diagnostics are read-only. No rollback, deletion, reversal, or overwrite is performed.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Inspect week recovery' }))
+    expect(api.recoverSeasonWeek).toHaveBeenCalledWith({ season: '2000/2001', season_week: 1, event_id_filter: [], include_completed_events: true })
+    expect(await screen.findByText('Week recovery summary')).toBeInTheDocument()
+    expect(screen.getByText('Week complete')).toBeInTheDocument()
+    expect(screen.getByText('Ready for point application')).toBeInTheDocument()
+    expect(screen.getByText('Recommended week rerun flags')).toBeInTheDocument()
+    expect(screen.getByText('apply_points')).toBeInTheDocument()
+    const table = await screen.findByRole('table', { name: 'Week recovery events table' })
+    expect(within(table).getByText('World A')).toBeInTheDocument()
+    expect(within(table).getByText('points_generated')).toBeInTheDocument()
+    expect(within(table).getByText('apply_point_awards')).toBeInTheDocument()
   })
 
   it('renders Run One Season Week panel and runs through API', async () => {

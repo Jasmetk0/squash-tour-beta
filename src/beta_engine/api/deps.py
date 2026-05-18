@@ -20,6 +20,7 @@ from beta_engine.application.season_event_lifecycle_service import SeasonEventLi
 from beta_engine.application.season_event_simulation_service import SeasonEventSimulationService
 from beta_engine.application.season_week_simulation_preflight_service import SeasonWeekSimulationPreflightService
 from beta_engine.application.season_week_simulation_execution_service import SeasonWeekSimulationExecutionService
+from beta_engine.application.season_week_recovery_service import SeasonWeekRecoveryService
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
 from beta_engine.application.season_point_breakdown_service import SeasonPointBreakdownService
 from beta_engine.application.season_ranking_table_service import SeasonRankingTableService
@@ -245,6 +246,14 @@ def get_season_week_simulation_execution_service(request: Request) -> SeasonWeek
     return SeasonWeekSimulationExecutionService(
         preflight_service=get_season_week_simulation_preflight_service(request),
         event_simulation_service=get_season_event_simulation_service(request),
+        lifecycle_service=get_season_event_lifecycle_service(request),
+        ranking_snapshot_service=get_season_ranking_snapshot_service(request),
+    )
+
+
+def get_season_week_recovery_service(request: Request) -> SeasonWeekRecoveryService:
+    return SeasonWeekRecoveryService(
+        preflight_service=get_season_week_simulation_preflight_service(request),
         lifecycle_service=get_season_event_lifecycle_service(request),
         ranking_snapshot_service=get_season_ranking_snapshot_service(request),
     )

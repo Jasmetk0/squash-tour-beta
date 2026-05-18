@@ -40,6 +40,7 @@ const api = vi.hoisted(() => ({
   runSeasonWeek: vi.fn(),
   recoverSeasonWeek: vi.fn(),
   getSeasonReadiness: vi.fn(),
+  preflightSeasonRange: vi.fn(),
   ApiError: class ApiError extends Error { status = 400 }
 }))
 
@@ -514,6 +515,21 @@ const seasonReadinessResult = {
   validation_errors: []
 }
 
+
+const seasonRangePreflightResult = {
+  season: '2000/2001',
+  start_week: 1,
+  end_week: 2,
+  weeks: [
+    { season: '2000/2001', season_week: 1, calendar_year: 2000, year_week: 37, status: 'planned', event_count: 1, has_events: true, week_complete: false, week_blocked: false, week_partial: false, ready_for_point_application: false, ready_for_snapshot_publication: false, snapshot_exists: false, next_safe_action: 'run_week', recommended_week_rerun_flags: { overwrite_existing: false, apply_points: true, publish_snapshot: true, allow_blocked: false, allow_incomplete_results: false }, range_action: 'run_week', would_mutate_if_executed: true, would_apply_points_if_executed: true, would_publish_snapshot_if_executed: true, warnings: [], errors: [] },
+    { season: '2000/2001', season_week: 2, calendar_year: 2000, year_week: 38, status: 'complete', event_count: 1, has_events: true, week_complete: true, week_blocked: false, week_partial: false, ready_for_point_application: false, ready_for_snapshot_publication: false, snapshot_exists: true, next_safe_action: 'review_completed_season', recommended_week_rerun_flags: { overwrite_existing: false, apply_points: false, publish_snapshot: false, allow_blocked: false, allow_incomplete_results: false }, range_action: 'skip_complete', would_mutate_if_executed: false, would_apply_points_if_executed: false, would_publish_snapshot_if_executed: false, warnings: ['range warning'], errors: [] }
+  ],
+  summary: { season: '2000/2001', start_week: 1, end_week: 2, total_weeks_in_range: 2, empty_weeks: 0, completed_weeks: 1, runnable_weeks: 1, point_application_weeks: 0, snapshot_publication_weeks: 0, blocked_weeks: 0, recoverable_weeks: 0, skipped_weeks: 1, first_unsafe_week: null, first_blocked_week: null, first_runnable_week: 1, range_safe_to_run: true, would_apply_points: true, would_publish_snapshots: true, next_safe_action: 'run_range', recommended_run_flags: { overwrite_existing: false, apply_points: true, publish_snapshot: true, allow_blocked: false, allow_incomplete_results: false }, mutation_warning: 'Range preflight is read-only. It plans a future range run but does not run weeks, apply points, or publish snapshots.' },
+  metadata: { season: '2000/2001', source: 'season_readiness_range_preflight', season_readiness_fingerprint: 'season-readiness-fp', generated_fingerprint: 'range-preflight-fp', read_only: true },
+  validation_warnings: ['Range preflight is read-only. It plans a future range run but does not run weeks, apply points, or publish snapshots.'],
+  validation_errors: []
+}
+
 const unsafeWeekRunResult = {
   ...weekRunResult,
   events: [],
@@ -730,6 +746,33 @@ describe('AdminSeasonsPage', () => {
     expect(screen.getByText('Selected week detail')).toBeInTheDocument()
     expect(screen.getAllByText('EVT-2000-W01-wt_a').length).toBeGreaterThan(0)
     expect(screen.getByText('readiness warning')).toBeInTheDocument()
+  })
+
+
+  it('renders Season Range Preflight, calls API, displays summary, flags, warning, and week actions', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    api.preflightSeasonRange.mockResolvedValue(seasonRangePreflightResult)
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findByRole('heading', { name: 'Season Range Preflight' })).toBeInTheDocument()
+    expect(screen.getByText('Range preflight is read-only. It plans a future range run but does not run weeks, apply points, or publish snapshots.')).toBeInTheDocument()
+    await userEvent.clear(screen.getByLabelText('Start week'))
+    await userEvent.type(screen.getByLabelText('Start week'), '1')
+    await userEvent.clear(screen.getByLabelText('End week'))
+    await userEvent.type(screen.getByLabelText('End week'), '2')
+    await userEvent.clear(screen.getByLabelText('Range event ID filter'))
+    await userEvent.type(screen.getByLabelText('Range event ID filter'), 'EVT-2000-W01-wt_a')
+    await userEvent.click(screen.getByRole('button', { name: 'Preview range' }))
+
+    expect(api.preflightSeasonRange).toHaveBeenCalledWith({ season: '2000/2001', start_week: 1, end_week: 2, apply_points: true, publish_snapshot: true, include_empty_weeks: true, include_completed_weeks: true, stop_on_blocked: true, event_id_filter: ['EVT-2000-W01-wt_a'] })
+    expect(await screen.findByText('Season range preflight summary')).toBeInTheDocument()
+    expect(screen.getByText('Range safe to run')).toBeInTheDocument()
+    expect(screen.getByText('Recommended future run flags')).toBeInTheDocument()
+    expect(screen.getByText('allow_incomplete_results')).toBeInTheDocument()
+    const table = await screen.findByRole('table', { name: 'Season range preflight weeks table' })
+    expect(within(table).getByText('run_week')).toBeInTheDocument()
+    expect(within(table).getByText('skip_complete')).toBeInTheDocument()
+    expect(within(table).getByText('range warning')).toBeInTheDocument()
   })
 
   it('renders week preflight panel and previews through API', async () => {

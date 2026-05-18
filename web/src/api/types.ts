@@ -2612,6 +2612,89 @@ export type SeasonReadinessResult = {
   validation_errors: string[]
 }
 
+
+export type SeasonRangePreflightRequest = {
+  season: string
+  start_week: number
+  end_week: number
+  include_empty_weeks: boolean
+  include_completed_weeks: boolean
+  event_id_filter: string[]
+  apply_points: boolean
+  publish_snapshot: boolean
+  stop_on_blocked: boolean
+}
+
+export type SeasonRangeAction = 'skip_empty' | 'skip_complete' | 'run_week' | 'apply_points' | 'publish_snapshot' | 'blocked' | 'recover_week'
+export type SeasonRangeNextSafeAction = 'run_range' | 'resolve_blockers' | 'apply_points' | 'publish_snapshots' | 'recover_week' | 'nothing_to_run' | 'adjust_range' | 'build_calendar'
+
+export type SeasonRangePreflightWeek = {
+  season: string
+  season_week: number
+  calendar_year: number
+  year_week: number
+  status: SeasonWeekReadinessStatus
+  event_count: number
+  has_events: boolean
+  week_complete: boolean
+  week_blocked: boolean
+  week_partial: boolean
+  ready_for_point_application: boolean
+  ready_for_snapshot_publication: boolean
+  snapshot_exists: boolean
+  next_safe_action: SeasonReadinessNextSafeAction
+  recommended_week_rerun_flags: SeasonWeekRecoveryRerunFlags
+  range_action: SeasonRangeAction
+  would_mutate_if_executed: boolean
+  would_apply_points_if_executed: boolean
+  would_publish_snapshot_if_executed: boolean
+  warnings: string[]
+  errors: string[]
+}
+
+export type SeasonRangePreflightSummary = {
+  season: string
+  start_week: number
+  end_week: number
+  total_weeks_in_range: number
+  empty_weeks: number
+  completed_weeks: number
+  runnable_weeks: number
+  point_application_weeks: number
+  snapshot_publication_weeks: number
+  blocked_weeks: number
+  recoverable_weeks: number
+  skipped_weeks: number
+  first_unsafe_week: number | null
+  first_blocked_week: number | null
+  first_runnable_week: number | null
+  range_safe_to_run: boolean
+  would_apply_points: boolean
+  would_publish_snapshots: boolean
+  next_safe_action: SeasonRangeNextSafeAction
+  recommended_run_flags: SeasonWeekRecoveryRerunFlags
+  mutation_warning: string
+}
+
+export type SeasonRangePreflightMetadata = {
+  season: string
+  source: 'season_readiness_range_preflight'
+  season_readiness_fingerprint: string | null
+  generated_fingerprint: string
+  read_only: boolean
+}
+
+export type SeasonRangePreflightResult = {
+  season: string
+  start_week: number
+  end_week: number
+  weeks: SeasonRangePreflightWeek[]
+  summary: SeasonRangePreflightSummary
+  metadata: SeasonRangePreflightMetadata
+  validation_warnings: string[]
+  validation_errors: string[]
+}
+
 export type RunSeasonWeekRequest = SimulateSeasonWeekPreflightRequest & {
   allow_unsafe_run: boolean
 }

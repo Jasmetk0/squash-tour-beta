@@ -2695,6 +2695,81 @@ export type SeasonRangePreflightResult = {
   validation_errors: string[]
 }
 
+
+export type RunSeasonRangeRequest = SeasonRangePreflightRequest & {
+  seed: number
+  overwrite_existing: boolean
+  allow_unsafe_run: boolean
+  allow_blocked: boolean
+  allow_incomplete_results: boolean
+  include_not_entered: boolean
+  max_alternates: number
+  max_steps_per_event: number
+  simulate_draw_type: SimulateOneEventDrawType
+  stop_after_week: number | null
+  max_weeks_to_run: number | null
+}
+
+export type SeasonRangeRunNextSafeAction = 'inspect_range_preflight' | 'resolve_blockers' | 'inspect_recovery' | 'rerun_range' | 'inspect_season_readiness' | 'review_completed_range'
+
+export type SeasonRangeRunWeekResult = {
+  season_week: number
+  calendar_year: number
+  year_week: number
+  status_before: string
+  range_action: string
+  run_order: number | null
+  skipped: boolean
+  skip_reason: string | null
+  week_run_result: RunSeasonWeekResult | null
+  succeeded: boolean
+  blocked: boolean
+  failed: boolean
+  warnings: string[]
+  errors: string[]
+}
+
+export type SeasonRangeRunSummary = {
+  season: string
+  start_week: number
+  end_week: number
+  attempted_week_count: number
+  skipped_empty_week_count: number
+  skipped_complete_week_count: number
+  executed_week_count: number
+  succeeded_week_count: number
+  blocked_week_count: number
+  failed_week_count: number
+  point_application_week_count: number
+  snapshot_publication_week_count: number
+  run_started: boolean
+  run_completed: boolean
+  stopped_early: boolean
+  first_failed_week: number | null
+  first_blocked_week: number | null
+  stop_reason: string | null
+  next_safe_action: SeasonRangeRunNextSafeAction
+  no_rollback_warning: string
+  range_safe_to_run_preflight: boolean
+}
+
+export type SeasonRangeRunMetadata = {
+  season: string
+  source: 'range_preflight_plus_week_execution_reports'
+  range_preflight_fingerprint: string
+  final_fingerprint: string
+  read_only: boolean
+}
+
+export type RunSeasonRangeResult = {
+  preflight: SeasonRangePreflightResult
+  weeks: SeasonRangeRunWeekResult[]
+  summary: SeasonRangeRunSummary
+  metadata: SeasonRangeRunMetadata
+  validation_warnings: string[]
+  validation_errors: string[]
+}
+
 export type RunSeasonWeekRequest = SimulateSeasonWeekPreflightRequest & {
   allow_unsafe_run: boolean
 }

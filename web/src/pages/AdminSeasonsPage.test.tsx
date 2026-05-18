@@ -41,6 +41,7 @@ const api = vi.hoisted(() => ({
   recoverSeasonWeek: vi.fn(),
   getSeasonReadiness: vi.fn(),
   preflightSeasonRange: vi.fn(),
+  runSeasonRange: vi.fn(),
   ApiError: class ApiError extends Error { status = 400 }
 }))
 
@@ -530,6 +531,19 @@ const seasonRangePreflightResult = {
   validation_errors: []
 }
 
+
+const seasonRangeRunResult = {
+  preflight: seasonRangePreflightResult,
+  weeks: [
+    { season_week: 1, calendar_year: 2000, year_week: 37, status_before: 'planned', range_action: 'run_week', run_order: 1, skipped: false, skip_reason: null, week_run_result: weekRunResult, succeeded: true, blocked: false, failed: false, warnings: [], errors: [] },
+    { season_week: 2, calendar_year: 2000, year_week: 38, status_before: 'complete', range_action: 'skip_complete', run_order: null, skipped: true, skip_reason: 'completed_week', week_run_result: null, succeeded: true, blocked: false, failed: false, warnings: ['range warning'], errors: [] }
+  ],
+  summary: { season: '2000/2001', start_week: 1, end_week: 2, attempted_week_count: 2, skipped_empty_week_count: 0, skipped_complete_week_count: 1, executed_week_count: 1, succeeded_week_count: 1, blocked_week_count: 0, failed_week_count: 0, point_application_week_count: 1, snapshot_publication_week_count: 1, run_started: true, run_completed: true, stopped_early: false, first_failed_week: null, first_blocked_week: null, stop_reason: null, next_safe_action: 'review_completed_range', no_rollback_warning: 'Range execution is mutating and no rollback is implemented; earlier successful weeks remain persisted if a later week blocks or fails.', range_safe_to_run_preflight: true },
+  metadata: { season: '2000/2001', source: 'range_preflight_plus_week_execution_reports', range_preflight_fingerprint: 'range-preflight-fp', final_fingerprint: 'range-run-fp', read_only: false },
+  validation_warnings: ['Range execution is mutating and no rollback is implemented; earlier successful weeks remain persisted if a later week blocks or fails.'],
+  validation_errors: []
+}
+
 const unsafeWeekRunResult = {
   ...weekRunResult,
   events: [],
@@ -752,6 +766,7 @@ describe('AdminSeasonsPage', () => {
   it('renders Season Range Preflight, calls API, displays summary, flags, warning, and week actions', async () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)
     api.preflightSeasonRange.mockResolvedValue(seasonRangePreflightResult)
+    api.runSeasonRange.mockResolvedValue(seasonRangeRunResult)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
 
     expect(await screen.findByRole('heading', { name: 'Season Range Preflight' })).toBeInTheDocument()
@@ -773,6 +788,32 @@ describe('AdminSeasonsPage', () => {
     expect(within(table).getByText('run_week')).toBeInTheDocument()
     expect(within(table).getByText('skip_complete')).toBeInTheDocument()
     expect(within(table).getByText('range warning')).toBeInTheDocument()
+  })
+
+
+  it('renders Run Season Range, calls API, warns, and displays summary and week table', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    api.runSeasonRange.mockResolvedValue(seasonRangeRunResult)
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findByRole('heading', { name: 'Run Season Range' })).toBeInTheDocument()
+    expect(screen.getByText('This is mutating. It may run multiple weeks, apply points, and publish weekly snapshots. No rollback is implemented.')).toBeInTheDocument()
+    await userEvent.clear(screen.getByLabelText('Run start week'))
+    await userEvent.type(screen.getByLabelText('Run start week'), '1')
+    await userEvent.clear(screen.getByLabelText('Run end week'))
+    await userEvent.type(screen.getByLabelText('Run end week'), '2')
+    await userEvent.clear(screen.getByLabelText('Run event ID filter'))
+    await userEvent.type(screen.getByLabelText('Run event ID filter'), 'EVT-2000-W01-wt_a')
+    await userEvent.click(screen.getByRole('button', { name: 'Run range' }))
+
+    expect(api.runSeasonRange).toHaveBeenCalledWith(expect.objectContaining({ season: '2000/2001', start_week: 1, end_week: 2, seed: 12345, apply_points: true, publish_snapshot: true, allow_unsafe_run: false, event_id_filter: ['EVT-2000-W01-wt_a'] }))
+    expect(await screen.findByText('Season range run summary')).toBeInTheDocument()
+    expect(screen.getByText('Executed weeks')).toBeInTheDocument()
+    expect(screen.getByText('Skipped complete')).toBeInTheDocument()
+    expect(screen.getByText('Next safe action')).toBeInTheDocument()
+    const table = await screen.findByRole('table', { name: 'Season range run weeks table' })
+    expect(within(table).getByText('run_week')).toBeInTheDocument()
+    expect(within(table).getByText('completed_week')).toBeInTheDocument()
   })
 
   it('renders week preflight panel and previews through API', async () => {

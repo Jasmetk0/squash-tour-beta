@@ -15,7 +15,20 @@ import type { CountriesImportResponse, CountryRecord, CountryUpsertPayload } fro
 import { EmptyState, SummaryPills } from '../components/RunScopedUi'
 
 type Mode = 'create' | 'edit'
-type SortMode = 'name' | 'population' | 'region' | 'code'
+type SortKey =
+  | 'code'
+  | 'name'
+  | 'region'
+  | 'population'
+  | 'wealth_support'
+  | 'squash_popularity'
+  | 'squash_tradition'
+  | 'system_quality'
+  | 'competition_density'
+  | 'federation_quality'
+  | 'court_count'
+  | 'travel_region'
+type SortDirection = 'asc' | 'desc'
 type FormState = CountryUpsertPayload
 
 const EMPTY_FORM: FormState = {
@@ -75,7 +88,8 @@ export function CountriesPage(): JSX.Element {
   const [showImportPanel, setShowImportPanel] = useState(false)
   const [searchText, setSearchText] = useState('')
   const [regionFilter, setRegionFilter] = useState('all')
-  const [sortMode, setSortMode] = useState<SortMode>('name')
+  const [sortKey, setSortKey] = useState<SortKey>('name')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [styleDnaText, setStyleDnaText] = useState('{}')
@@ -118,12 +132,80 @@ export function CountriesPage(): JSX.Element {
         )
       })
       .sort((left, right) => {
-        if (sortMode === 'population') return right.population - left.population
-        if (sortMode === 'region') return left.region.localeCompare(right.region) || left.name.localeCompare(right.name)
-        if (sortMode === 'code') return left.code.localeCompare(right.code)
-        return left.name.localeCompare(right.name)
+        const compareText = (leftValue: string, rightValue: string) => leftValue.localeCompare(rightValue)
+        const compareNumber = (leftValue: number, rightValue: number) => leftValue - rightValue
+
+        let result = 0
+        switch (sortKey) {
+          case 'code':
+            result = compareText(left.code, right.code)
+            break
+          case 'name':
+            result = compareText(left.name, right.name)
+            break
+          case 'region':
+            result = compareText(left.region, right.region) || compareText(left.name, right.name)
+            break
+          case 'population':
+            result = compareNumber(left.population, right.population)
+            break
+          case 'wealth_support':
+            result = compareNumber(left.wealth_support, right.wealth_support)
+            break
+          case 'squash_popularity':
+            result = compareNumber(left.squash_popularity, right.squash_popularity)
+            break
+          case 'squash_tradition':
+            result = compareNumber(left.squash_tradition, right.squash_tradition)
+            break
+          case 'system_quality':
+            result = compareNumber(left.system_quality, right.system_quality)
+            break
+          case 'competition_density':
+            result = compareNumber(left.competition_density ?? 0, right.competition_density ?? 0)
+            break
+          case 'federation_quality':
+            result = compareNumber(left.federation_quality ?? left.system_quality, right.federation_quality ?? right.system_quality)
+            break
+          case 'court_count':
+            if (left.court_count == null && right.court_count == null) {
+              result = 0
+            } else if (left.court_count == null) {
+              result = 1
+            } else if (right.court_count == null) {
+              result = -1
+            } else {
+              result = compareNumber(left.court_count, right.court_count)
+            }
+            break
+          case 'travel_region':
+            result = compareText(left.travel_region ?? left.region, right.travel_region ?? right.region)
+            break
+        }
+
+        if (result === 0) {
+          result = compareText(left.name, right.name)
+        }
+
+        return sortDirection === 'asc' ? result : -result
       })
-  }, [countries, regionFilter, searchText, sortMode])
+  }, [countries, regionFilter, searchText, sortDirection, sortKey])
+
+
+  const onSortHeaderClick = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+
+    setSortKey(key)
+    setSortDirection(key === 'population' ? 'desc' : 'asc')
+  }
+
+  const getSortIndicator = (key: SortKey) => {
+    if (sortKey !== key) return '↕'
+    return sortDirection === 'asc' ? '↑' : '↓'
+  }
 
   const refetchAll = async () => {
     await Promise.all([
@@ -392,11 +474,20 @@ export function CountriesPage(): JSX.Element {
 
           <label>
             Sort
-            <select value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)}>
-              <option value="name">Name A-Z</option>
-              <option value="population">Population ↓</option>
-              <option value="region">Region</option>
-              <option value="code">Code</option>
+            <select
+              value={`${sortKey}:${sortDirection}`}
+              onChange={(event) => {
+                const [nextKey, nextDirection] = event.target.value.split(':') as [SortKey, SortDirection]
+                setSortKey(nextKey)
+                setSortDirection(nextDirection)
+              }}
+            >
+              <option value="name:asc">Name A-Z</option>
+              <option value="name:desc">Name Z-A</option>
+              <option value="population:desc">Population high-low</option>
+              <option value="population:asc">Population low-high</option>
+              <option value="region:asc">Region A-Z</option>
+              <option value="code:asc">Code A-Z</option>
             </select>
           </label>
         </div>
@@ -483,18 +574,18 @@ export function CountriesPage(): JSX.Element {
           <table aria-label="Countries table">
             <thead>
               <tr>
-                <th>Code</th>
-                <th>Name</th>
-                <th>Region</th>
-                <th>Population</th>
-                <th>Wealth</th>
-                <th>Popularity</th>
-                <th>Tradition</th>
-                <th>System</th>
-                <th>Competition</th>
-                <th>Federation</th>
-                <th>Courts</th>
-                <th>Travel</th>
+                <th><button type="button" className={`sort-header-button ${sortKey === 'code' ? 'sort-header-button-active' : ''}`} onClick={() => onSortHeaderClick('code')}>Code <span aria-hidden="true">{getSortIndicator('code')}</span></button></th>
+                <th><button type="button" className={`sort-header-button ${sortKey === 'name' ? 'sort-header-button-active' : ''}`} onClick={() => onSortHeaderClick('name')}>Name <span aria-hidden="true">{getSortIndicator('name')}</span></button></th>
+                <th><button type="button" className={`sort-header-button ${sortKey === 'region' ? 'sort-header-button-active' : ''}`} onClick={() => onSortHeaderClick('region')}>Region <span aria-hidden="true">{getSortIndicator('region')}</span></button></th>
+                <th><button type="button" className={`sort-header-button ${sortKey === 'population' ? 'sort-header-button-active' : ''}`} onClick={() => onSortHeaderClick('population')}>Population <span aria-hidden="true">{getSortIndicator('population')}</span></button></th>
+                <th><button type="button" className={`sort-header-button ${sortKey === 'wealth_support' ? 'sort-header-button-active' : ''}`} onClick={() => onSortHeaderClick('wealth_support')}>Wealth <span aria-hidden="true">{getSortIndicator('wealth_support')}</span></button></th>
+                <th><button type="button" className={`sort-header-button ${sortKey === 'squash_popularity' ? 'sort-header-button-active' : ''}`} onClick={() => onSortHeaderClick('squash_popularity')}>Popularity <span aria-hidden="true">{getSortIndicator('squash_popularity')}</span></button></th>
+                <th><button type="button" className={`sort-header-button ${sortKey === 'squash_tradition' ? 'sort-header-button-active' : ''}`} onClick={() => onSortHeaderClick('squash_tradition')}>Tradition <span aria-hidden="true">{getSortIndicator('squash_tradition')}</span></button></th>
+                <th><button type="button" className={`sort-header-button ${sortKey === 'system_quality' ? 'sort-header-button-active' : ''}`} onClick={() => onSortHeaderClick('system_quality')}>System <span aria-hidden="true">{getSortIndicator('system_quality')}</span></button></th>
+                <th><button type="button" className={`sort-header-button ${sortKey === 'competition_density' ? 'sort-header-button-active' : ''}`} onClick={() => onSortHeaderClick('competition_density')}>Competition <span aria-hidden="true">{getSortIndicator('competition_density')}</span></button></th>
+                <th><button type="button" className={`sort-header-button ${sortKey === 'federation_quality' ? 'sort-header-button-active' : ''}`} onClick={() => onSortHeaderClick('federation_quality')}>Federation <span aria-hidden="true">{getSortIndicator('federation_quality')}</span></button></th>
+                <th><button type="button" className={`sort-header-button ${sortKey === 'court_count' ? 'sort-header-button-active' : ''}`} onClick={() => onSortHeaderClick('court_count')}>Courts <span aria-hidden="true">{getSortIndicator('court_count')}</span></button></th>
+                <th><button type="button" className={`sort-header-button ${sortKey === 'travel_region' ? 'sort-header-button-active' : ''}`} onClick={() => onSortHeaderClick('travel_region')}>Travel <span aria-hidden="true">{getSortIndicator('travel_region')}</span></button></th>
                 <th>Actions</th>
               </tr>
             </thead>

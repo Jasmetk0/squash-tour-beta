@@ -86,21 +86,23 @@ describe('CountriesPage', () => {
     expect(await screen.findByRole('heading', { name: 'Countries Editor' })).toBeInTheDocument()
     expect(await screen.findByText('Dataset status')).toBeInTheDocument()
     expect(await screen.findByRole('cell', { name: 'AAA' })).toBeInTheDocument()
-    expect(await screen.findByRole('button', { name: 'Export countries CSV' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Export CSV' })).toBeInTheDocument()
     expect(await screen.findByRole('cell', { name: '4.5' })).toBeInTheDocument()
-    expect(await screen.findByText(/Population is not the only talent driver/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Current saves affect future generation workflows/i)).toBeInTheDocument()
   })
 
   it('supports create flow', async () => {
     renderWithRoute(<CountriesPage />, '/world/countries')
 
-    await screen.findByRole('button', { name: 'Create country' })
+    await screen.findByRole('button', { name: '+ Create Country' })
+    await userEvent.click(screen.getByRole('button', { name: '+ Create Country' }))
     await userEvent.clear(screen.getByLabelText('Code (3 letters)'))
     await userEvent.type(screen.getByLabelText('Code (3 letters)'), 'bbb')
     await userEvent.clear(screen.getByLabelText('Name'))
     await userEvent.type(screen.getByLabelText('Name'), 'Beta')
-    await userEvent.clear(screen.getByLabelText('Region'))
-    await userEvent.type(screen.getByLabelText('Region'), 'ASIA')
+    const regionInputs = screen.getAllByLabelText('Region')
+    await userEvent.clear(regionInputs[1])
+    await userEvent.type(regionInputs[1], 'ASIA')
     await userEvent.clear(screen.getByLabelText('Population'))
     await userEvent.type(screen.getByLabelText('Population'), '2500000')
     await userEvent.clear(screen.getByLabelText('Competition density (1..5)'))
@@ -111,7 +113,7 @@ describe('CountriesPage', () => {
     await userEvent.type(screen.getByLabelText('Court count (optional)'), '90')
     fireEvent.change(screen.getByLabelText('Style DNA (JSON numeric modifiers)'), { target: { value: '{"front_court":0.3}' } })
 
-    await userEvent.click(screen.getByRole('button', { name: 'Create country' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Create Country' }))
 
     await waitFor(() => expect(api.createCountry).toHaveBeenCalled())
     expect(api.createCountry.mock.calls[0][0]).toEqual(
@@ -132,7 +134,7 @@ describe('CountriesPage', () => {
     renderWithRoute(<CountriesPage />, '/world/countries')
 
     const row = (await screen.findByRole('cell', { name: 'AAA' })).closest('tr') as HTMLElement
-    await userEvent.click(within(row).getByRole('button', { name: 'Duplicate country' }))
+    await userEvent.click(within(row).getByRole('button', { name: 'Copy' }))
 
     expect(screen.getByLabelText('Code (3 letters)')).toHaveValue('')
     expect(screen.getByLabelText('Name')).toHaveValue('Alpha Copy')
@@ -142,6 +144,8 @@ describe('CountriesPage', () => {
 
   it('supports import success path via dry-run', async () => {
     renderWithRoute(<CountriesPage />, '/world/countries')
+    await screen.findByRole('button', { name: 'Import / Export' })
+    await userEvent.click(screen.getByRole('button', { name: 'Import / Export' }))
     await screen.findByRole('button', { name: 'Validate import (dry run)' })
 
     await userEvent.type(screen.getByLabelText('CSV payload'), 'code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality\nAAA,Alpha,,EUROPE,1000000,3,4,2,5')
@@ -163,6 +167,8 @@ describe('CountriesPage', () => {
     })
 
     renderWithRoute(<CountriesPage />, '/world/countries')
+    await screen.findByRole('button', { name: 'Import / Export' })
+    await userEvent.click(screen.getByRole('button', { name: 'Import / Export' }))
     await screen.findByRole('button', { name: 'Validate import (dry run)' })
 
     await userEvent.type(screen.getByLabelText('CSV payload'), 'bad')
@@ -175,6 +181,8 @@ describe('CountriesPage', () => {
   it('requires confirmation before destructive import apply', async () => {
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
     renderWithRoute(<CountriesPage />, '/world/countries')
+    await screen.findByRole('button', { name: 'Import / Export' })
+    await userEvent.click(screen.getByRole('button', { name: 'Import / Export' }))
     await screen.findByRole('button', { name: 'Apply import' })
 
     await userEvent.type(screen.getByLabelText('CSV payload'), 'code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality\n')

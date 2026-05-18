@@ -23,6 +23,7 @@ from beta_engine.application.season_week_simulation_execution_service import Sea
 from beta_engine.application.season_week_recovery_service import SeasonWeekRecoveryService
 from beta_engine.application.season_readiness_service import SeasonReadinessService
 from beta_engine.application.season_range_preflight_service import SeasonRangePreflightService
+from beta_engine.application.season_range_execution_service import SeasonRangeExecutionService
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
 from beta_engine.application.season_point_breakdown_service import SeasonPointBreakdownService
 from beta_engine.application.season_ranking_table_service import SeasonRankingTableService
@@ -270,6 +271,13 @@ def get_season_readiness_service(request: Request) -> SeasonReadinessService:
 
 def get_season_range_preflight_service(request: Request) -> SeasonRangePreflightService:
     return SeasonRangePreflightService(readiness_service=get_season_readiness_service(request))
+
+
+def get_season_range_execution_service(request: Request) -> SeasonRangeExecutionService:
+    return SeasonRangeExecutionService(
+        preflight_service=get_season_range_preflight_service(request),
+        week_execution_service=get_season_week_simulation_execution_service(request),
+    )
 
 
 def get_season_point_breakdown_service(request: Request) -> SeasonPointBreakdownService:

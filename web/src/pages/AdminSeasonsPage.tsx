@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
-import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, getSeasonLifecycle, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch, simulateOneEvent, preflightSeasonWeek, recoverSeasonWeek, runSeasonWeek, getSeasonReadiness, preflightSeasonRange } from '../api/client'
-import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight, RunSeasonWeekResult, SeasonWeekRunEventResult, SeasonWeekRecoveryResult, SeasonWeekRecoveryEvent, SeasonWeekRecoveryRerunFlags, SeasonReadinessResult, SeasonWeekReadinessRow, SeasonRangePreflightResult, SeasonRangePreflightWeek } from '../api/types'
+import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, getSeasonLifecycle, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch, simulateOneEvent, preflightSeasonWeek, recoverSeasonWeek, runSeasonWeek, getSeasonReadiness, preflightSeasonRange, runSeasonRange } from '../api/client'
+import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight, RunSeasonWeekResult, SeasonWeekRunEventResult, SeasonWeekRecoveryResult, SeasonWeekRecoveryEvent, SeasonWeekRecoveryRerunFlags, SeasonReadinessResult, SeasonWeekReadinessRow, SeasonRangePreflightResult, SeasonRangePreflightWeek, RunSeasonRangeResult, SeasonRangeRunWeekResult } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
 import { AdminRankingTablesSection } from './RankingTables'
 import { formatApiError } from '../utils/apiErrors'
@@ -100,6 +100,25 @@ export function AdminSeasonsPage(): JSX.Element {
   const [rangePreflightStopOnBlocked, setRangePreflightStopOnBlocked] = useState(true)
   const [rangePreflightEventFilter, setRangePreflightEventFilter] = useState('')
   const [rangePreflightResult, setRangePreflightResult] = useState<SeasonRangePreflightResult | null>(null)
+  const [rangeRunSeason, setRangeRunSeason] = useState(season)
+  const [rangeRunStartWeek, setRangeRunStartWeek] = useState(1)
+  const [rangeRunEndWeek, setRangeRunEndWeek] = useState(10)
+  const [rangeRunSeed, setRangeRunSeed] = useState(12345)
+  const [rangeRunApplyPoints, setRangeRunApplyPoints] = useState(true)
+  const [rangeRunPublishSnapshot, setRangeRunPublishSnapshot] = useState(true)
+  const [rangeRunOverwriteExisting, setRangeRunOverwriteExisting] = useState(false)
+  const [rangeRunStopOnBlocked, setRangeRunStopOnBlocked] = useState(true)
+  const [rangeRunAllowUnsafe, setRangeRunAllowUnsafe] = useState(false)
+  const [rangeRunAllowBlocked, setRangeRunAllowBlocked] = useState(false)
+  const [rangeRunAllowIncomplete, setRangeRunAllowIncomplete] = useState(false)
+  const [rangeRunIncludeNotEntered, setRangeRunIncludeNotEntered] = useState(false)
+  const [rangeRunMaxAlternates, setRangeRunMaxAlternates] = useState(16)
+  const [rangeRunMaxSteps, setRangeRunMaxSteps] = useState(20)
+  const [rangeRunMaxWeeks, setRangeRunMaxWeeks] = useState('')
+  const [rangeRunStopAfterWeek, setRangeRunStopAfterWeek] = useState('')
+  const [rangeRunDrawType, setRangeRunDrawType] = useState<SimulateOneEventDrawType>('qualification_then_main')
+  const [rangeRunEventFilter, setRangeRunEventFilter] = useState('')
+  const [rangeRunResult, setRangeRunResult] = useState<RunSeasonRangeResult | null>(null)
   const playersQuery = useQuery({ queryKey: ['season-active-players', season], queryFn: () => getSeasonActivePlayers(season), retry: false })
   const calendarQuery = useQuery({ queryKey: ['season-calendar', season], queryFn: () => getSeasonCalendar(season), retry: false })
   const lifecycleQuery = useQuery<SeasonLifecycleResponse>({ queryKey: ['season-lifecycle', season], queryFn: () => getSeasonLifecycle(season), enabled: false, retry: false })
@@ -356,6 +375,36 @@ export function AdminSeasonsPage(): JSX.Element {
     }),
     onSuccess: (result) => {
       setRangePreflightResult(result)
+    }
+  })
+
+  const rangeRunMutation = useMutation({
+    mutationFn: () => runSeasonRange({
+      season: rangeRunSeason || season,
+      start_week: rangeRunStartWeek,
+      end_week: rangeRunEndWeek,
+      seed: rangeRunSeed,
+      apply_points: rangeRunApplyPoints,
+      publish_snapshot: rangeRunPublishSnapshot,
+      overwrite_existing: rangeRunOverwriteExisting,
+      include_empty_weeks: true,
+      include_completed_weeks: true,
+      stop_on_blocked: rangeRunStopOnBlocked,
+      allow_unsafe_run: rangeRunAllowUnsafe,
+      allow_blocked: rangeRunAllowBlocked,
+      allow_incomplete_results: rangeRunAllowIncomplete,
+      include_not_entered: rangeRunIncludeNotEntered,
+      max_alternates: rangeRunMaxAlternates,
+      max_steps_per_event: rangeRunMaxSteps,
+      simulate_draw_type: rangeRunDrawType,
+      stop_after_week: rangeRunStopAfterWeek.trim() ? Number(rangeRunStopAfterWeek) : null,
+      max_weeks_to_run: rangeRunMaxWeeks.trim() ? Number(rangeRunMaxWeeks) : null,
+      event_id_filter: rangeRunEventFilter.split(',').map((item) => item.trim()).filter(Boolean)
+    }),
+    onSuccess: (result) => {
+      setRangeRunResult(result)
+      void queryClient.invalidateQueries({ queryKey: ['season-calendar', season] })
+      void queryClient.invalidateQueries({ queryKey: ['season-active-players', season] })
     }
   })
 
@@ -658,6 +707,33 @@ export function AdminSeasonsPage(): JSX.Element {
         <button type="button" onClick={() => rangePreflightMutation.mutate()} disabled={rangePreflightMutation.isPending}>Preview range</button>
         {rangePreflightMutation.isError ? <p role="alert" className="error">{formatApiError(rangePreflightMutation.error)}</p> : null}
         {rangePreflightResult ? <SeasonRangePreflightPanel result={rangePreflightResult} /> : <p className="status">Preview a season-week range to see backend-computed skip/run/recovery planning before any future mutating range command exists.</p>}
+      </SectionCard>
+
+      <SectionCard title="Run Season Range">
+        <p className="status">This is mutating. It may run multiple weeks, apply points, and publish weekly snapshots. No rollback is implemented.</p>
+        <div className="form-grid">
+          <label>Run range season<input value={rangeRunSeason} onChange={(event) => setRangeRunSeason(event.target.value)} placeholder="2000/2001" /></label>
+          <label>Run start week<input type="number" min={1} max={61} value={rangeRunStartWeek} onChange={(event) => setRangeRunStartWeek(Number(event.target.value))} /></label>
+          <label>Run end week<input type="number" min={1} max={61} value={rangeRunEndWeek} onChange={(event) => setRangeRunEndWeek(Number(event.target.value))} /></label>
+          <label>Run seed<input type="number" value={rangeRunSeed} onChange={(event) => setRangeRunSeed(Number(event.target.value))} /></label>
+          <label>Run event ID filter<input value={rangeRunEventFilter} onChange={(event) => setRangeRunEventFilter(event.target.value)} placeholder="event_id,event_id" /></label>
+          <label>Run max alternates<input type="number" value={rangeRunMaxAlternates} onChange={(event) => setRangeRunMaxAlternates(Number(event.target.value))} /></label>
+          <label>Run max steps per event<input type="number" value={rangeRunMaxSteps} onChange={(event) => setRangeRunMaxSteps(Number(event.target.value))} /></label>
+          <label>Max weeks to run<input type="number" min={1} max={61} value={rangeRunMaxWeeks} onChange={(event) => setRangeRunMaxWeeks(event.target.value)} placeholder="optional" /></label>
+          <label>Stop after week<input type="number" min={1} max={61} value={rangeRunStopAfterWeek} onChange={(event) => setRangeRunStopAfterWeek(event.target.value)} placeholder="optional" /></label>
+          <label>Run simulate draw type<select value={rangeRunDrawType} onChange={(event) => setRangeRunDrawType(event.target.value as SimulateOneEventDrawType)}><option value="qualification_then_main">qualification_then_main</option><option value="qualification">qualification</option><option value="main">main</option></select></label>
+          <label><input type="checkbox" checked={rangeRunApplyPoints} onChange={(event) => setRangeRunApplyPoints(event.target.checked)} /> Run apply points</label>
+          <label><input type="checkbox" checked={rangeRunPublishSnapshot} onChange={(event) => setRangeRunPublishSnapshot(event.target.checked)} /> Run publish snapshot</label>
+          <label><input type="checkbox" checked={rangeRunOverwriteExisting} onChange={(event) => setRangeRunOverwriteExisting(event.target.checked)} /> Run overwrite existing</label>
+          <label><input type="checkbox" checked={rangeRunStopOnBlocked} onChange={(event) => setRangeRunStopOnBlocked(event.target.checked)} /> Run stop on blocked</label>
+          <label><input type="checkbox" checked={rangeRunAllowUnsafe} onChange={(event) => setRangeRunAllowUnsafe(event.target.checked)} /> Allow unsafe run</label>
+          <label><input type="checkbox" checked={rangeRunAllowBlocked} onChange={(event) => setRangeRunAllowBlocked(event.target.checked)} /> Run allow blocked</label>
+          <label><input type="checkbox" checked={rangeRunAllowIncomplete} onChange={(event) => setRangeRunAllowIncomplete(event.target.checked)} /> Run allow incomplete results</label>
+          <label><input type="checkbox" checked={rangeRunIncludeNotEntered} onChange={(event) => setRangeRunIncludeNotEntered(event.target.checked)} /> Run include not entered</label>
+        </div>
+        <button type="button" onClick={() => rangeRunMutation.mutate()} disabled={rangeRunMutation.isPending}>Run range</button>
+        {rangeRunMutation.isError ? <p role="alert" className="error">{formatApiError(rangeRunMutation.error)}</p> : null}
+        {rangeRunResult ? <SeasonRangeRunPanel result={rangeRunResult} /> : <p className="status">Run a guarded mutating season-week range after backend range preflight passes.</p>}
       </SectionCard>
 
       <SectionCard title="Simulate One Season Week — Preflight">
@@ -1035,6 +1111,58 @@ function MatchValidationPanel({ warnings, errors }: { warnings: MatchValidationI
 }
 
 
+
+function SeasonRangeRunPanel({ result }: { result: RunSeasonRangeResult }): JSX.Element {
+  return <div>
+    <h4>Season range run summary</h4>
+    {result.validation_errors.map((error) => <p key={error} role="alert" className="error">{error}</p>)}
+    {result.validation_warnings.map((warning) => <p key={warning} className="status">{warning}</p>)}
+    <SummaryPills items={[
+      { label: 'Run started', value: boolMark(result.summary.run_started) },
+      { label: 'Run completed', value: boolMark(result.summary.run_completed) },
+      { label: 'Executed weeks', value: result.summary.executed_week_count },
+      { label: 'Skipped empty', value: result.summary.skipped_empty_week_count },
+      { label: 'Skipped complete', value: result.summary.skipped_complete_week_count },
+      { label: 'Succeeded weeks', value: result.summary.succeeded_week_count },
+      { label: 'Blocked/failed weeks', value: `${result.summary.blocked_week_count}/${result.summary.failed_week_count}` },
+      { label: 'Point application weeks', value: result.summary.point_application_week_count },
+      { label: 'Snapshot publication weeks', value: result.summary.snapshot_publication_week_count },
+      { label: 'Stopped early', value: boolMark(result.summary.stopped_early) },
+      { label: 'Stop reason', value: result.summary.stop_reason ?? '—' },
+      { label: 'Next safe action', value: result.summary.next_safe_action }
+    ]} />
+    <p className="status">{result.summary.no_rollback_warning}</p>
+    <MetadataList items={[
+      { label: 'Preflight fingerprint', value: shortFingerprint(result.metadata.range_preflight_fingerprint) },
+      { label: 'Final fingerprint', value: shortFingerprint(result.metadata.final_fingerprint) },
+      { label: 'range_safe_to_run_preflight', value: result.summary.range_safe_to_run_preflight ? 'yes' : 'no' },
+      { label: 'Source', value: result.metadata.source }
+    ]} />
+    <div className="table-wrap">
+      <table aria-label="Season range run weeks table">
+        <thead><tr><th>Run order</th><th>Season week</th><th>Year week</th><th>Status before</th><th>Range action</th><th>Skipped</th><th>Skip reason</th><th>Succeeded</th><th>Blocked</th><th>Failed</th><th>Warning/error count</th></tr></thead>
+        <tbody>{result.weeks.map((week) => <SeasonRangeRunRowView key={week.season_week} week={week} />)}</tbody>
+      </table>
+    </div>
+    {!result.weeks.length ? <p className="status">No week rows were executed or skipped because the range preflight prevented mutation.</p> : null}
+  </div>
+}
+
+function SeasonRangeRunRowView({ week }: { week: SeasonRangeRunWeekResult }): JSX.Element {
+  return <tr>
+    <td>{week.run_order ?? '—'}</td>
+    <td>{week.season_week}</td>
+    <td>{week.calendar_year}/W{week.year_week}</td>
+    <td>{week.status_before}</td>
+    <td>{week.range_action}</td>
+    <td>{boolMark(week.skipped)}</td>
+    <td>{week.skip_reason ?? '—'}</td>
+    <td>{boolMark(week.succeeded)}</td>
+    <td>{boolMark(week.blocked)}</td>
+    <td>{boolMark(week.failed)}</td>
+    <td>{week.warnings.length}/{week.errors.length}</td>
+  </tr>
+}
 
 function SeasonRangePreflightPanel({ result }: { result: SeasonRangePreflightResult }): JSX.Element {
   const flags = result.summary.recommended_run_flags

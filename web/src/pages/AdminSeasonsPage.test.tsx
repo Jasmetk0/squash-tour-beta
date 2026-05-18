@@ -39,6 +39,7 @@ const api = vi.hoisted(() => ({
   preflightSeasonWeek: vi.fn(),
   runSeasonWeek: vi.fn(),
   recoverSeasonWeek: vi.fn(),
+  getSeasonReadiness: vi.fn(),
   ApiError: class ApiError extends Error { status = 400 }
 }))
 
@@ -500,6 +501,19 @@ const weekRecoveryResult = {
   validation_errors: []
 }
 
+
+const seasonReadinessResult = {
+  season: '2000/2001',
+  weeks: [
+    { season: '2000/2001', season_week: 1, calendar_year: 2000, year_week: 37, event_count: 1, has_events: true, status: 'ready_for_point_application', week_complete: false, week_partial: true, week_blocked: false, ready_for_point_application: true, ready_for_snapshot_publication: false, snapshot_exists: false, completed_event_count: 0, partial_event_count: 1, blocked_event_count: 0, points_generated_count: 1, points_applied_count: 0, duplicate_points_risk_count: 0, overwrite_risk_count: 1, manual_attention_count: 0, next_safe_action: 'apply_points', recommended_week_rerun_flags: { overwrite_existing: false, apply_points: true, publish_snapshot: false, allow_blocked: false, allow_incomplete_results: false }, representative_event_ids: ['EVT-2000-W01-wt_a'], warnings: ['readiness warning'], errors: [], recovery_fingerprint: 'recovery-fp' },
+    { season: '2000/2001', season_week: 2, calendar_year: 2000, year_week: 38, event_count: 0, has_events: false, status: 'empty', week_complete: false, week_partial: false, week_blocked: false, ready_for_point_application: false, ready_for_snapshot_publication: false, snapshot_exists: false, completed_event_count: 0, partial_event_count: 0, blocked_event_count: 0, points_generated_count: 0, points_applied_count: 0, duplicate_points_risk_count: 0, overwrite_risk_count: 0, manual_attention_count: 0, next_safe_action: 'no_events', recommended_week_rerun_flags: { overwrite_existing: false, apply_points: false, publish_snapshot: false, allow_blocked: false, allow_incomplete_results: false }, representative_event_ids: [], warnings: [], errors: [], recovery_fingerprint: 'empty-fp' }
+  ],
+  summary: { season: '2000/2001', total_weeks: 61, weeks_with_events: 1, empty_weeks: 60, complete_weeks: 0, partial_weeks: 0, blocked_weeks: 0, ready_for_point_application_weeks: 1, ready_for_snapshot_publication_weeks: 0, weeks_missing_snapshot_after_points: 0, total_events: 1, total_blocked_events: 0, total_manual_attention_count: 0, first_incomplete_week: 1, first_blocked_week: null, next_week_to_run: 1, season_ready_to_continue: true, season_complete: false, next_safe_action: 'apply_points' },
+  metadata: { season: '2000/2001', source: 'season_week_recovery_aggregation', generated_fingerprint: 'season-readiness-fp', read_only: true },
+  validation_warnings: ['Season readiness is read-only. It aggregates week recovery reports and does not run events, apply points, or publish snapshots.'],
+  validation_errors: []
+}
+
 const unsafeWeekRunResult = {
   ...weekRunResult,
   events: [],
@@ -587,6 +601,7 @@ describe('AdminSeasonsPage', () => {
     api.preflightSeasonWeek.mockResolvedValue(weekPreflightResult)
     api.runSeasonWeek.mockResolvedValue(weekRunResult)
     api.recoverSeasonWeek.mockResolvedValue(weekRecoveryResult)
+    api.getSeasonReadiness.mockResolvedValue(seasonReadinessResult)
   })
 
   it('renders bootstrap controls and previews with dry_run true', async () => {
@@ -691,6 +706,32 @@ describe('AdminSeasonsPage', () => {
   })
 
 
+
+  it('renders Season Simulation Readiness, calls API, displays summary and table, and sends filters', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+
+    expect(await screen.findByRole('heading', { name: 'Season Simulation Readiness' })).toBeInTheDocument()
+    expect(screen.getByText('Season readiness is read-only. It aggregates week recovery reports and does not run events, apply points, or publish snapshots.')).toBeInTheDocument()
+    await userEvent.clear(screen.getByLabelText('Readiness event ID filter'))
+    await userEvent.type(screen.getByLabelText('Readiness event ID filter'), 'EVT-2000-W01-wt_a')
+    await userEvent.click(screen.getByLabelText('Include empty weeks'))
+    await userEvent.click(screen.getByLabelText('Include completed weeks'))
+    await userEvent.click(screen.getByRole('button', { name: 'Inspect season readiness' }))
+
+    expect(api.getSeasonReadiness).toHaveBeenCalledWith({ season: '2000/2001', include_empty_weeks: false, include_completed_weeks: false, event_id_filter: ['EVT-2000-W01-wt_a'] })
+    expect(await screen.findByText('Season readiness summary')).toBeInTheDocument()
+    expect(screen.getByText('Total weeks')).toBeInTheDocument()
+    expect(screen.getByText('Next week to run')).toBeInTheDocument()
+    expect(screen.getAllByText('apply_points').length).toBeGreaterThan(0)
+    const table = await screen.findByRole('table', { name: 'Season readiness weeks table' })
+    expect(within(table).getByText('ready_for_point_application')).toBeInTheDocument()
+    expect(within(table).getByText('1/0')).toBeInTheDocument()
+    expect(screen.getByText('Selected week detail')).toBeInTheDocument()
+    expect(screen.getAllByText('EVT-2000-W01-wt_a').length).toBeGreaterThan(0)
+    expect(screen.getByText('readiness warning')).toBeInTheDocument()
+  })
+
   it('renders week preflight panel and previews through API', async () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
@@ -722,7 +763,7 @@ describe('AdminSeasonsPage', () => {
     expect(screen.getByText('Week complete')).toBeInTheDocument()
     expect(screen.getByText('Ready for point application')).toBeInTheDocument()
     expect(screen.getByText('Recommended week rerun flags')).toBeInTheDocument()
-    expect(screen.getByText('apply_points')).toBeInTheDocument()
+    expect(screen.getAllByText('apply_points').length).toBeGreaterThan(0)
     const table = await screen.findByRole('table', { name: 'Week recovery events table' })
     expect(within(table).getByText('World A')).toBeInTheDocument()
     expect(within(table).getByText('points_generated')).toBeInTheDocument()

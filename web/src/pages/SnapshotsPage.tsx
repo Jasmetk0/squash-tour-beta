@@ -19,6 +19,8 @@ import { formatApiError } from '../utils/apiErrors'
 
 type Mode = 'ranking' | 'race'
 
+const MISSING_SOURCE_EVENT_ID_FALLBACK = 'Missing source_event_id'
+
 export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
   const { runId = '' } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -287,7 +289,7 @@ function SnapshotDetail({
       />
       <SummaryPills
         items={[
-          { label: 'Source event context', value: sourceEventId ? 'Present' : 'Missing source_event_id' },
+          { label: 'Source event context', value: sourceEventId ? 'Present' : MISSING_SOURCE_EVENT_ID_FALLBACK },
           { label: `${siblingMode} siblings`, value: siblingMatchCount > 0 ? siblingMatchCount : 'None for this source event' }
         ]}
       />

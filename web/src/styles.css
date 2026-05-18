@@ -448,3 +448,144 @@ button {
   color: #172033;
   font-size: 1rem;
 }
+
+.admin-workflow-banner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.9fr);
+  gap: 1rem;
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: #eff6ff;
+}
+
+.admin-workflow-banner h3 {
+  margin: 0 0 0.4rem;
+}
+
+.admin-workflow-banner ol,
+.admin-workflow-banner__notes {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.admin-workflow-banner__notes {
+  color: #334155;
+}
+
+.admin-workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-workflow-grid h3 {
+  margin: 0 0 0.25rem;
+}
+
+.admin-section {
+  margin: 1rem 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.admin-section--primary {
+  border-color: #93c5fd;
+}
+
+.admin-section--advanced {
+  border-color: #cbd5e1;
+}
+
+.admin-section--readonly {
+  border-color: #bae6fd;
+}
+
+.admin-section--danger {
+  border-color: #fecaca;
+}
+
+.admin-section__header {
+  width: 100%;
+  border-radius: 0;
+  background: #f8fafc;
+  color: #0f172a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  text-align: left;
+  padding: 0.85rem 1rem;
+}
+
+.admin-section__header:hover {
+  background: #eff6ff;
+}
+
+.admin-section__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.admin-section__title {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.admin-section__subtitle {
+  color: #475569;
+  font-size: 0.88rem;
+  font-weight: 400;
+}
+
+.admin-section__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.admin-section__badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid #93c5fd;
+  background: #dbeafe;
+  color: #1e3a8a;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 0.12rem 0.45rem;
+  vertical-align: middle;
+}
+
+.admin-section__badge--danger {
+  border-color: #fca5a5;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.admin-section__chevron {
+  color: #334155;
+  font-weight: 700;
+}
+
+.admin-section__body {
+  padding: 0 1rem 1rem;
+}
+
+@media (max-width: 700px) {
+  .admin-workflow-banner {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-section__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

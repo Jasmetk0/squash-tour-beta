@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { type ReactNode, useId, useMemo, useState } from 'react'
 
 import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, getSeasonLifecycle, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch, simulateOneEvent, preflightSeasonWeek, recoverSeasonWeek, runSeasonWeek, getSeasonReadiness, preflightSeasonRange, runSeasonRange } from '../api/client'
 import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight, RunSeasonWeekResult, SeasonWeekRunEventResult, SeasonWeekRecoveryResult, SeasonWeekRecoveryEvent, SeasonWeekRecoveryRerunFlags, SeasonReadinessResult, SeasonWeekReadinessRow, SeasonRangePreflightResult, SeasonRangePreflightWeek, RunSeasonRangeResult, SeasonRangeRunWeekResult } from '../api/types'
@@ -510,6 +510,20 @@ export function AdminSeasonsPage(): JSX.Element {
       <PageIntro title="Seasons / Bootstrap" subtitle="Convert the curated initial pool into deterministic first-season active player records." />
       <p className="status">Bootstrap converts the curated initial pool into active first-season players. It does not simulate tournaments yet.</p>
 
+      <WorkflowBanner />
+
+      <AdminSection title="Season Control Overview" subtitle="Bootstrap active players and orient the shared season cockpit controls before using mutating commands." defaultOpen variant="primary">
+        <div className="admin-workflow-grid" aria-label="Season week and year week explanation">
+          <div>
+            <h3>Active season</h3>
+            <p className="status">This page currently targets <strong>{season}</strong>. Most tools intentionally keep their own season/week inputs so commands remain explicit and auditable.</p>
+          </div>
+          <div>
+            <h3>Season Week vs Year Week</h3>
+            <p className="status">Season Week is the 1–61 simulation index. Year Week is the calendar-positioning index used for historical timing.</p>
+          </div>
+        </div>
+
       <SectionCard title="Bootstrap controls">
         <div className="grid">
           <label>Target season<input value={season} onChange={(event) => setSeason(event.target.value)} /></label>
@@ -557,6 +571,9 @@ export function AdminSeasonsPage(): JSX.Element {
         {displayedWarnings.length ? <ul>{displayedWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul> : <p className="status">No bootstrap warnings.</p>}
       </SectionCard>
 
+      </AdminSection>
+
+      <AdminSection title="Primary Workflow" subtitle="Main season-level controls for calendar setup, readiness inspection, range preview, and guarded range execution." defaultOpen variant="primary">
       <SectionCard title="Season Calendar Builder">
         <p className="status">Calendar builder creates planned season events from editable tournament templates. It does not generate entries, draws, matches, or ranking changes yet.</p>
         <div className="grid">
@@ -616,7 +633,7 @@ export function AdminSeasonsPage(): JSX.Element {
 
 
       <SectionCard title="Season Simulation Readiness">
-        <p className="status">Season readiness is read-only. It aggregates week recovery reports and does not run events, apply points, or publish snapshots.</p>
+        <p className="status"><StatusBadge label="READ-ONLY" /> Season readiness is read-only. It aggregates week recovery reports and does not run events, apply points, or publish snapshots.</p>
         <div className="grid">
           <label>Readiness season<input value={readinessSeason} onChange={(event) => setReadinessSeason(event.target.value)} placeholder="2000/2001" /></label>
           <label>Readiness event ID filter<input value={readinessEventFilter} onChange={(event) => setReadinessEventFilter(event.target.value)} placeholder="event_id,event_id" /></label>
@@ -631,8 +648,56 @@ export function AdminSeasonsPage(): JSX.Element {
       </SectionCard>
 
 
+      <SectionCard title="Season Range Preflight">
+        <p className="status"><StatusBadge label="READ-ONLY" /> Range preflight is read-only. It plans a future range run but does not run weeks, apply points, or publish snapshots.</p>
+        <div className="form-grid">
+          <label>Range season<input value={rangePreflightSeason} onChange={(event) => setRangePreflightSeason(event.target.value)} placeholder="2000/2001" /></label>
+          <label>Start week<input type="number" min={1} max={61} value={rangePreflightStartWeek} onChange={(event) => setRangePreflightStartWeek(Number(event.target.value))} /></label>
+          <label>End week<input type="number" min={1} max={61} value={rangePreflightEndWeek} onChange={(event) => setRangePreflightEndWeek(Number(event.target.value))} /></label>
+          <label>Range event ID filter<input value={rangePreflightEventFilter} onChange={(event) => setRangePreflightEventFilter(event.target.value)} placeholder="event_id,event_id" /></label>
+          <label><input type="checkbox" checked={rangePreflightApplyPoints} onChange={(event) => setRangePreflightApplyPoints(event.target.checked)} /> Range apply points</label>
+          <label><input type="checkbox" checked={rangePreflightPublishSnapshot} onChange={(event) => setRangePreflightPublishSnapshot(event.target.checked)} /> Range publish snapshot</label>
+          <label><input type="checkbox" checked={rangePreflightIncludeEmptyWeeks} onChange={(event) => setRangePreflightIncludeEmptyWeeks(event.target.checked)} /> Range include empty weeks</label>
+          <label><input type="checkbox" checked={rangePreflightIncludeCompletedWeeks} onChange={(event) => setRangePreflightIncludeCompletedWeeks(event.target.checked)} /> Range include completed weeks</label>
+          <label><input type="checkbox" checked={rangePreflightStopOnBlocked} onChange={(event) => setRangePreflightStopOnBlocked(event.target.checked)} /> Range stop on blocked</label>
+        </div>
+        <button type="button" onClick={() => rangePreflightMutation.mutate()} disabled={rangePreflightMutation.isPending}>Preview range</button>
+        {rangePreflightMutation.isError ? <p role="alert" className="error">{formatApiError(rangePreflightMutation.error)}</p> : null}
+        {rangePreflightResult ? <SeasonRangePreflightPanel result={rangePreflightResult} /> : <p className="status">Preview a season-week range to see backend-computed skip/run/recovery planning before any future mutating range command exists.</p>}
+      </SectionCard>
+
+      <SectionCard title="Run Season Range">
+        <p className="status"><StatusBadge label="MUTATING" variant="danger" /> This is mutating. It may run multiple weeks, apply points, and publish weekly snapshots. No rollback is implemented.</p>
+        <div className="form-grid">
+          <label>Run range season<input value={rangeRunSeason} onChange={(event) => setRangeRunSeason(event.target.value)} placeholder="2000/2001" /></label>
+          <label>Run start week<input type="number" min={1} max={61} value={rangeRunStartWeek} onChange={(event) => setRangeRunStartWeek(Number(event.target.value))} /></label>
+          <label>Run end week<input type="number" min={1} max={61} value={rangeRunEndWeek} onChange={(event) => setRangeRunEndWeek(Number(event.target.value))} /></label>
+          <label>Run seed<input type="number" value={rangeRunSeed} onChange={(event) => setRangeRunSeed(Number(event.target.value))} /></label>
+          <label>Run event ID filter<input value={rangeRunEventFilter} onChange={(event) => setRangeRunEventFilter(event.target.value)} placeholder="event_id,event_id" /></label>
+          <label>Run max alternates<input type="number" value={rangeRunMaxAlternates} onChange={(event) => setRangeRunMaxAlternates(Number(event.target.value))} /></label>
+          <label>Run max steps per event<input type="number" value={rangeRunMaxSteps} onChange={(event) => setRangeRunMaxSteps(Number(event.target.value))} /></label>
+          <label>Max weeks to run<input type="number" min={1} max={61} value={rangeRunMaxWeeks} onChange={(event) => setRangeRunMaxWeeks(event.target.value)} placeholder="optional" /></label>
+          <label>Stop after week<input type="number" min={1} max={61} value={rangeRunStopAfterWeek} onChange={(event) => setRangeRunStopAfterWeek(event.target.value)} placeholder="optional" /></label>
+          <label>Run simulate draw type<select value={rangeRunDrawType} onChange={(event) => setRangeRunDrawType(event.target.value as SimulateOneEventDrawType)}><option value="qualification_then_main">qualification_then_main</option><option value="qualification">qualification</option><option value="main">main</option></select></label>
+          <label><input type="checkbox" checked={rangeRunApplyPoints} onChange={(event) => setRangeRunApplyPoints(event.target.checked)} /> Run apply points</label>
+          <label><input type="checkbox" checked={rangeRunPublishSnapshot} onChange={(event) => setRangeRunPublishSnapshot(event.target.checked)} /> Run publish snapshot</label>
+          <label><input type="checkbox" checked={rangeRunOverwriteExisting} onChange={(event) => setRangeRunOverwriteExisting(event.target.checked)} /> Run overwrite existing</label>
+          <label><input type="checkbox" checked={rangeRunStopOnBlocked} onChange={(event) => setRangeRunStopOnBlocked(event.target.checked)} /> Run stop on blocked</label>
+          <label><input type="checkbox" checked={rangeRunAllowUnsafe} onChange={(event) => setRangeRunAllowUnsafe(event.target.checked)} /> Allow unsafe run</label>
+          <label><input type="checkbox" checked={rangeRunAllowBlocked} onChange={(event) => setRangeRunAllowBlocked(event.target.checked)} /> Run allow blocked</label>
+          <label><input type="checkbox" checked={rangeRunAllowIncomplete} onChange={(event) => setRangeRunAllowIncomplete(event.target.checked)} /> Run allow incomplete results</label>
+          <label><input type="checkbox" checked={rangeRunIncludeNotEntered} onChange={(event) => setRangeRunIncludeNotEntered(event.target.checked)} /> Run include not entered</label>
+        </div>
+        <button type="button" onClick={() => rangeRunMutation.mutate()} disabled={rangeRunMutation.isPending}>Run range</button>
+        {rangeRunMutation.isError ? <p role="alert" className="error">{formatApiError(rangeRunMutation.error)}</p> : null}
+        {rangeRunResult ? <SeasonRangeRunPanel result={rangeRunResult} /> : <p className="status">Run a guarded mutating season-week range after backend range preflight passes.</p>}
+      </SectionCard>
+
+      </AdminSection>
+
+      <AdminSection title="Event-Level Tools" subtitle="Event and week orchestration tools. Open when you need one-event or one-week controls instead of range execution." variant="advanced" badges={["ADVANCED"]}>
       <SectionCard title="Event Lifecycle">
-        <p className="status">Lifecycle is a read-only status derived from persisted event artifacts. It does not generate entries, simulate matches, apply points, or publish rankings.</p>
+        <p className="status"><StatusBadge label="READ-ONLY" /> Lifecycle is a read-only status derived from persisted event artifacts. It does not generate entries, simulate matches, apply points, or publish rankings.</p>
         <div className="grid">
           <label>Lifecycle event filter<input value={lifecycleEventFilter} onChange={(event) => setLifecycleEventFilter(event.target.value)} placeholder="event_id or name" /></label>
           <label>Lifecycle stage filter<select value={lifecycleStageFilter} onChange={(event) => setLifecycleStageFilter(event.target.value)}><option value="">All stages</option>{lifecycleStages.map((stage) => <option key={stage} value={stage}>{stage}</option>)}</select></label>
@@ -666,7 +731,7 @@ export function AdminSeasonsPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title="Simulate One Event">
-        <p className="status">This command orchestrates existing backend services for one event. It does not simulate a full week or full season. Applying points and publishing snapshots are opt-in.</p>
+        <p className="status"><StatusBadge label="MUTATING" variant="danger" /> This command orchestrates existing backend services for one event. It does not simulate a full week or full season. Applying points and publishing snapshots are opt-in.</p>
         <div className="grid">
           <label>Simulation event_id<input value={simulateTargetEventId} onChange={(event) => setSimulateEventId(event.target.value)} placeholder="event_id" /></label>
           <label>Simulation seed<input type="number" value={simulateSeed} onChange={(event) => setSimulateSeed(Number(event.target.value))} /></label>
@@ -690,51 +755,6 @@ export function AdminSeasonsPage(): JSX.Element {
       </SectionCard>
 
 
-
-      <SectionCard title="Season Range Preflight">
-        <p className="status">Range preflight is read-only. It plans a future range run but does not run weeks, apply points, or publish snapshots.</p>
-        <div className="form-grid">
-          <label>Range season<input value={rangePreflightSeason} onChange={(event) => setRangePreflightSeason(event.target.value)} placeholder="2000/2001" /></label>
-          <label>Start week<input type="number" min={1} max={61} value={rangePreflightStartWeek} onChange={(event) => setRangePreflightStartWeek(Number(event.target.value))} /></label>
-          <label>End week<input type="number" min={1} max={61} value={rangePreflightEndWeek} onChange={(event) => setRangePreflightEndWeek(Number(event.target.value))} /></label>
-          <label>Range event ID filter<input value={rangePreflightEventFilter} onChange={(event) => setRangePreflightEventFilter(event.target.value)} placeholder="event_id,event_id" /></label>
-          <label><input type="checkbox" checked={rangePreflightApplyPoints} onChange={(event) => setRangePreflightApplyPoints(event.target.checked)} /> Range apply points</label>
-          <label><input type="checkbox" checked={rangePreflightPublishSnapshot} onChange={(event) => setRangePreflightPublishSnapshot(event.target.checked)} /> Range publish snapshot</label>
-          <label><input type="checkbox" checked={rangePreflightIncludeEmptyWeeks} onChange={(event) => setRangePreflightIncludeEmptyWeeks(event.target.checked)} /> Range include empty weeks</label>
-          <label><input type="checkbox" checked={rangePreflightIncludeCompletedWeeks} onChange={(event) => setRangePreflightIncludeCompletedWeeks(event.target.checked)} /> Range include completed weeks</label>
-          <label><input type="checkbox" checked={rangePreflightStopOnBlocked} onChange={(event) => setRangePreflightStopOnBlocked(event.target.checked)} /> Range stop on blocked</label>
-        </div>
-        <button type="button" onClick={() => rangePreflightMutation.mutate()} disabled={rangePreflightMutation.isPending}>Preview range</button>
-        {rangePreflightMutation.isError ? <p role="alert" className="error">{formatApiError(rangePreflightMutation.error)}</p> : null}
-        {rangePreflightResult ? <SeasonRangePreflightPanel result={rangePreflightResult} /> : <p className="status">Preview a season-week range to see backend-computed skip/run/recovery planning before any future mutating range command exists.</p>}
-      </SectionCard>
-
-      <SectionCard title="Run Season Range">
-        <p className="status">This is mutating. It may run multiple weeks, apply points, and publish weekly snapshots. No rollback is implemented.</p>
-        <div className="form-grid">
-          <label>Run range season<input value={rangeRunSeason} onChange={(event) => setRangeRunSeason(event.target.value)} placeholder="2000/2001" /></label>
-          <label>Run start week<input type="number" min={1} max={61} value={rangeRunStartWeek} onChange={(event) => setRangeRunStartWeek(Number(event.target.value))} /></label>
-          <label>Run end week<input type="number" min={1} max={61} value={rangeRunEndWeek} onChange={(event) => setRangeRunEndWeek(Number(event.target.value))} /></label>
-          <label>Run seed<input type="number" value={rangeRunSeed} onChange={(event) => setRangeRunSeed(Number(event.target.value))} /></label>
-          <label>Run event ID filter<input value={rangeRunEventFilter} onChange={(event) => setRangeRunEventFilter(event.target.value)} placeholder="event_id,event_id" /></label>
-          <label>Run max alternates<input type="number" value={rangeRunMaxAlternates} onChange={(event) => setRangeRunMaxAlternates(Number(event.target.value))} /></label>
-          <label>Run max steps per event<input type="number" value={rangeRunMaxSteps} onChange={(event) => setRangeRunMaxSteps(Number(event.target.value))} /></label>
-          <label>Max weeks to run<input type="number" min={1} max={61} value={rangeRunMaxWeeks} onChange={(event) => setRangeRunMaxWeeks(event.target.value)} placeholder="optional" /></label>
-          <label>Stop after week<input type="number" min={1} max={61} value={rangeRunStopAfterWeek} onChange={(event) => setRangeRunStopAfterWeek(event.target.value)} placeholder="optional" /></label>
-          <label>Run simulate draw type<select value={rangeRunDrawType} onChange={(event) => setRangeRunDrawType(event.target.value as SimulateOneEventDrawType)}><option value="qualification_then_main">qualification_then_main</option><option value="qualification">qualification</option><option value="main">main</option></select></label>
-          <label><input type="checkbox" checked={rangeRunApplyPoints} onChange={(event) => setRangeRunApplyPoints(event.target.checked)} /> Run apply points</label>
-          <label><input type="checkbox" checked={rangeRunPublishSnapshot} onChange={(event) => setRangeRunPublishSnapshot(event.target.checked)} /> Run publish snapshot</label>
-          <label><input type="checkbox" checked={rangeRunOverwriteExisting} onChange={(event) => setRangeRunOverwriteExisting(event.target.checked)} /> Run overwrite existing</label>
-          <label><input type="checkbox" checked={rangeRunStopOnBlocked} onChange={(event) => setRangeRunStopOnBlocked(event.target.checked)} /> Run stop on blocked</label>
-          <label><input type="checkbox" checked={rangeRunAllowUnsafe} onChange={(event) => setRangeRunAllowUnsafe(event.target.checked)} /> Allow unsafe run</label>
-          <label><input type="checkbox" checked={rangeRunAllowBlocked} onChange={(event) => setRangeRunAllowBlocked(event.target.checked)} /> Run allow blocked</label>
-          <label><input type="checkbox" checked={rangeRunAllowIncomplete} onChange={(event) => setRangeRunAllowIncomplete(event.target.checked)} /> Run allow incomplete results</label>
-          <label><input type="checkbox" checked={rangeRunIncludeNotEntered} onChange={(event) => setRangeRunIncludeNotEntered(event.target.checked)} /> Run include not entered</label>
-        </div>
-        <button type="button" onClick={() => rangeRunMutation.mutate()} disabled={rangeRunMutation.isPending}>Run range</button>
-        {rangeRunMutation.isError ? <p role="alert" className="error">{formatApiError(rangeRunMutation.error)}</p> : null}
-        {rangeRunResult ? <SeasonRangeRunPanel result={rangeRunResult} /> : <p className="status">Run a guarded mutating season-week range after backend range preflight passes.</p>}
-      </SectionCard>
 
       <SectionCard title="Simulate One Season Week — Preflight">
         <p className="status">This is preflight only. It calls one-event dry-run planning for each event and does not mutate entries, draws, matches, points, or snapshots.</p>
@@ -763,7 +783,7 @@ export function AdminSeasonsPage(): JSX.Element {
 
 
       <SectionCard title="Week Run Recovery / Diagnostics">
-        <p className="status">Recovery diagnostics are read-only. No rollback, deletion, reversal, or overwrite is performed.</p>
+        <p className="status"><StatusBadge label="READ-ONLY" /> Recovery diagnostics are read-only. No rollback, deletion, reversal, or overwrite is performed.</p>
         <p className="status">Uses the season, season week, event ID filter, and include completed controls from week preflight above. The backend computes recovery state and recommendations.</p>
         <div className="button-row">
           <button type="button" onClick={() => weekRecoveryMutation.mutate()} disabled={weekRecoveryMutation.isPending}>Inspect week recovery</button>
@@ -773,7 +793,7 @@ export function AdminSeasonsPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title="Run One Season Week">
-        <p className="status">This is mutating. It may create entries, draws, matches, results, point awards, apply points, and publish one weekly snapshot. No rollback is implemented.</p>
+        <p className="status"><StatusBadge label="MUTATING" variant="danger" /> This is mutating. It may create entries, draws, matches, results, point awards, apply points, and publish one weekly snapshot. No rollback is implemented.</p>
         <p className="status">Run controls mirror the week preflight controls above. The backend runs preflight first, then executes selected events in deterministic order.</p>
         <div className="grid">
           <label><input type="checkbox" checked={weekRunAllowUnsafe} onChange={(event) => setWeekRunAllowUnsafe(event.target.checked)} /> Allow unsafe run after blocked preflight</label>
@@ -786,6 +806,9 @@ export function AdminSeasonsPage(): JSX.Element {
       </SectionCard>
 
 
+      </AdminSection>
+
+      <AdminSection title="Manual Artifact Tools / Advanced" subtitle="Low-level artifact generation and manual progression controls remain available for focused debugging." variant="advanced" badges={["ADVANCED"]}>
       <SectionCard title="Event Entries">
         <p className="status">Entry generation selects players for a planned calendar event from active season players. It does not create draws or simulate matches yet.</p>
         {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
@@ -977,7 +1000,7 @@ export function AdminSeasonsPage(): JSX.Element {
 
 
       <SectionCard title="Ranking / Race Points">
-        <p className="status">Point awarding uses persisted event results. Applying points mutates active season player ranking/race points. Rolling 61-week ranking and best-N logic are not implemented yet.</p>
+        <p className="status"><StatusBadge label="MUTATING" variant="danger" /> Point awarding uses persisted event results. Applying points mutates active season player ranking/race points. Rolling 61-week ranking and best-N logic are not implemented yet.</p>
         {!selectedEventHasPersistedResultPackage ? <p className="status">Persist event results first.</p> : null}
         <div className="grid">
           <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setPointAwardsResult(null); setPointApplyResult(null) }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
@@ -1016,6 +1039,9 @@ export function AdminSeasonsPage(): JSX.Element {
         {pointApplyResult ? <UpdatedPointsTable updates={pointApplyResult.updated_players} /> : null}
       </SectionCard>
 
+      </AdminSection>
+
+      <AdminSection title="Rankings / Snapshots" subtitle="Read ranking and race tables, point breakdowns, weekly snapshots, and active player point state." variant="readonly" badges={["READ-ONLY"]}>
       <AdminRankingTablesSection />
 
 
@@ -1029,8 +1055,76 @@ export function AdminSeasonsPage(): JSX.Element {
         </div>
         {!displayedPlayers.length ? <p className="status">No active season players yet. Persist an initial pool, then preview or persist bootstrap.</p> : null}
       </SectionCard>
+      </AdminSection>
+
+      <AdminSection title="Debug / Raw Diagnostics" subtitle="Collapsed by default; validation details and fingerprints are shown inside the workflow panels above when reports are loaded." variant="advanced" badges={["DEBUG"]}>
+        <p className="status">No backend behavior changed in this UI cleanup. Existing report warnings, errors, fingerprints, and raw-ish diagnostics remain in their original tool panels after you run or load those tools.</p>
+      </AdminSection>
     </section>
   )
+}
+
+type AdminSectionVariant = 'primary' | 'advanced' | 'danger' | 'readonly'
+
+type AdminSectionProps = {
+  title: string
+  subtitle?: string
+  defaultOpen?: boolean
+  variant?: AdminSectionVariant
+  badges?: string[]
+  children: ReactNode
+}
+
+function WorkflowBanner(): JSX.Element {
+  return (
+    <aside className="admin-workflow-banner" aria-label="Recommended Phase 1 workflow">
+      <div>
+        <h3>Recommended Phase 1 workflow</h3>
+        <ol>
+          <li>Bootstrap active players.</li>
+          <li>Build/persist season calendar.</li>
+          <li>Inspect season readiness.</li>
+          <li>Preview range.</li>
+          <li>Run range.</li>
+          <li>Inspect recovery/readiness.</li>
+          <li>Review rankings/snapshots.</li>
+        </ol>
+      </div>
+      <ul className="admin-workflow-banner__notes">
+        <li>Range 1–61 is effectively a full season run, but safer and more inspectable.</li>
+        <li>Mutating commands are explicitly marked.</li>
+        <li>No rollback is implemented.</li>
+      </ul>
+    </aside>
+  )
+}
+
+function AdminSection({ title, subtitle, defaultOpen = false, variant = 'primary', badges = [], children }: AdminSectionProps): JSX.Element {
+  const [open, setOpen] = useState(defaultOpen)
+  const sectionId = useId()
+  const computedBadges = badges.length ? badges : variant === 'advanced' ? ['ADVANCED'] : variant === 'danger' ? ['MUTATING'] : variant === 'readonly' ? ['READ-ONLY'] : []
+
+  return (
+    <section className={`admin-section admin-section--${variant}`}>
+      <button type="button" className="admin-section__header" aria-expanded={open} aria-controls={sectionId} onClick={() => setOpen((current) => !current)}>
+        <span className="admin-section__heading">
+          <span className="admin-section__title">{title}</span>
+          {subtitle ? <span className="admin-section__subtitle">{subtitle}</span> : null}
+        </span>
+        <span className="admin-section__meta">
+          {computedBadges.map((badge) => <StatusBadge key={badge} label={badge} variant={badge === 'MUTATING' ? 'danger' : undefined} />)}
+          <span aria-hidden="true" className="admin-section__chevron">{open ? '▾' : '▸'}</span>
+        </span>
+      </button>
+      <div id={sectionId} className="admin-section__body" hidden={!open}>
+        {children}
+      </div>
+    </section>
+  )
+}
+
+function StatusBadge({ label, variant }: { label: string; variant?: 'danger' }): JSX.Element {
+  return <span className={`admin-section__badge${variant === 'danger' ? ' admin-section__badge--danger' : ''}`}>{label}</span>
 }
 
 function CalendarEventRow({ event }: { event: SeasonCalendarEvent }): JSX.Element {

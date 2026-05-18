@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from beta_engine.api.deps import get_initial_pool_season_bootstrap_service, get_season_calendar_service
+from beta_engine.api.deps import get_initial_pool_season_bootstrap_service, get_season_calendar_service, get_season_readiness_service
 from beta_engine.api.schemas import SeasonBootstrapRequest
 from beta_engine.application.season_player_bootstrap_service import (
     InitialPoolSeasonBootstrapService,
@@ -10,9 +10,18 @@ from beta_engine.application.season_player_bootstrap_service import (
     SeasonBootstrapResult,
 )
 from beta_engine.application.season_calendar_service import SeasonCalendarService
+from beta_engine.application.season_readiness_service import SeasonReadinessRequest, SeasonReadinessResult, SeasonReadinessService
 from beta_engine.domain.tournaments import SeasonCalendarBuildRequest, SeasonCalendarBuildResult
 
 router = APIRouter(prefix="/admin/seasons", tags=["admin-seasons"])
+
+
+@router.post("/readiness", response_model=SeasonReadinessResult)
+def inspect_season_readiness(
+    payload: SeasonReadinessRequest,
+    service: SeasonReadinessService = Depends(get_season_readiness_service),
+) -> SeasonReadinessResult:
+    return service.inspect_season(payload)
 
 
 @router.get("/{season:path}/players", response_model=SeasonActivePlayersResponse)

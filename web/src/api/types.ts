@@ -2534,6 +2534,84 @@ export type SeasonWeekRecoveryResult = {
   validation_errors: string[]
 }
 
+export type SeasonReadinessRequest = {
+  season: string
+  include_empty_weeks: boolean
+  include_completed_weeks: boolean
+  event_id_filter: string[]
+}
+
+export type SeasonWeekReadinessStatus = 'empty' | 'planned' | 'partial' | 'blocked' | 'ready_for_point_application' | 'ready_for_snapshot_publication' | 'complete'
+export type SeasonReadinessNextSafeAction = 'build_calendar' | 'run_week' | 'recover_week' | 'apply_points' | 'publish_snapshot' | 'resolve_blockers' | 'review_completed_season' | 'no_events'
+
+export type SeasonWeekReadinessRow = {
+  season: string
+  season_week: number
+  calendar_year: number
+  year_week: number
+  event_count: number
+  has_events: boolean
+  status: SeasonWeekReadinessStatus
+  week_complete: boolean
+  week_partial: boolean
+  week_blocked: boolean
+  ready_for_point_application: boolean
+  ready_for_snapshot_publication: boolean
+  snapshot_exists: boolean
+  completed_event_count: number
+  partial_event_count: number
+  blocked_event_count: number
+  points_generated_count: number
+  points_applied_count: number
+  duplicate_points_risk_count: number
+  overwrite_risk_count: number
+  manual_attention_count: number
+  next_safe_action: SeasonReadinessNextSafeAction
+  recommended_week_rerun_flags: SeasonWeekRecoveryRerunFlags
+  representative_event_ids: string[]
+  warnings: string[]
+  errors: string[]
+  recovery_fingerprint: string | null
+}
+
+export type SeasonReadinessSummary = {
+  season: string
+  total_weeks: number
+  weeks_with_events: number
+  empty_weeks: number
+  complete_weeks: number
+  partial_weeks: number
+  blocked_weeks: number
+  ready_for_point_application_weeks: number
+  ready_for_snapshot_publication_weeks: number
+  weeks_missing_snapshot_after_points: number
+  total_events: number
+  total_blocked_events: number
+  total_manual_attention_count: number
+  first_incomplete_week: number | null
+  first_blocked_week: number | null
+  next_week_to_run: number | null
+  season_ready_to_continue: boolean
+  season_complete: boolean
+  next_safe_action: SeasonReadinessNextSafeAction
+}
+
+export type SeasonReadinessMetadata = {
+  season: string
+  source: 'season_week_recovery_aggregation'
+  generated_fingerprint: string
+  read_only: boolean
+}
+
+export type SeasonReadinessResult = {
+  season: string
+  weeks: SeasonWeekReadinessRow[]
+  summary: SeasonReadinessSummary
+  metadata: SeasonReadinessMetadata
+  validation_warnings: string[]
+  validation_errors: string[]
+}
+
 export type RunSeasonWeekRequest = SimulateSeasonWeekPreflightRequest & {
   allow_unsafe_run: boolean
 }

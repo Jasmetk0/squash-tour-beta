@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
-import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, getSeasonLifecycle, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch, simulateOneEvent, preflightSeasonWeek, recoverSeasonWeek, runSeasonWeek } from '../api/client'
-import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight, RunSeasonWeekResult, SeasonWeekRunEventResult, SeasonWeekRecoveryResult, SeasonWeekRecoveryEvent, SeasonWeekRecoveryRerunFlags } from '../api/types'
+import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, getSeasonLifecycle, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch, simulateOneEvent, preflightSeasonWeek, recoverSeasonWeek, runSeasonWeek, getSeasonReadiness } from '../api/client'
+import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight, RunSeasonWeekResult, SeasonWeekRunEventResult, SeasonWeekRecoveryResult, SeasonWeekRecoveryEvent, SeasonWeekRecoveryRerunFlags, SeasonReadinessResult, SeasonWeekReadinessRow } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
 import { AdminRankingTablesSection } from './RankingTables'
 import { formatApiError } from '../utils/apiErrors'
@@ -84,6 +84,12 @@ export function AdminSeasonsPage(): JSX.Element {
   const [weekRunAllowUnsafe, setWeekRunAllowUnsafe] = useState(false)
   const [weekRunResult, setWeekRunResult] = useState<RunSeasonWeekResult | null>(null)
   const [weekRecoveryResult, setWeekRecoveryResult] = useState<SeasonWeekRecoveryResult | null>(null)
+  const [readinessSeason, setReadinessSeason] = useState(season)
+  const [readinessIncludeEmptyWeeks, setReadinessIncludeEmptyWeeks] = useState(true)
+  const [readinessIncludeCompletedWeeks, setReadinessIncludeCompletedWeeks] = useState(true)
+  const [readinessEventFilter, setReadinessEventFilter] = useState('')
+  const [seasonReadinessResult, setSeasonReadinessResult] = useState<SeasonReadinessResult | null>(null)
+  const [selectedReadinessWeek, setSelectedReadinessWeek] = useState<number | null>(null)
   const playersQuery = useQuery({ queryKey: ['season-active-players', season], queryFn: () => getSeasonActivePlayers(season), retry: false })
   const calendarQuery = useQuery({ queryKey: ['season-calendar', season], queryFn: () => getSeasonCalendar(season), retry: false })
   const lifecycleQuery = useQuery<SeasonLifecycleResponse>({ queryKey: ['season-lifecycle', season], queryFn: () => getSeasonLifecycle(season), enabled: false, retry: false })
@@ -312,6 +318,19 @@ export function AdminSeasonsPage(): JSX.Element {
   const simulateRoundMutation = useMutation({ mutationFn: () => simulateEventRound(effectiveEventId, { seed: progressionSeed, draw_type: progressionDrawType, round_number: progressionRoundNumber }), onSuccess: onProgressionSuccess })
   const simulateDrawMutation = useMutation({ mutationFn: () => simulateEventDraw(effectiveEventId, { seed: progressionSeed, draw_type: progressionDrawType }), onSuccess: onProgressionSuccess })
 
+  const seasonReadinessMutation = useMutation({
+    mutationFn: () => getSeasonReadiness({
+      season: readinessSeason || season,
+      include_empty_weeks: readinessIncludeEmptyWeeks,
+      include_completed_weeks: readinessIncludeCompletedWeeks,
+      event_id_filter: readinessEventFilter.split(',').map((item) => item.trim()).filter(Boolean)
+    }),
+    onSuccess: (result) => {
+      setSeasonReadinessResult(result)
+      setSelectedReadinessWeek(result.weeks[0]?.season_week ?? null)
+    }
+  })
+
   const weekPreflightMutation = useMutation({
     mutationFn: () => preflightSeasonWeek({
       season: weekPreflightSeason || season,
@@ -516,6 +535,22 @@ export function AdminSeasonsPage(): JSX.Element {
           </table>
         </div>
         {!displayedCalendar?.events.length ? <p className="status">No season calendar exists yet. Preview or persist a first-season calendar.</p> : null}
+      </SectionCard>
+
+
+      <SectionCard title="Season Simulation Readiness">
+        <p className="status">Season readiness is read-only. It aggregates week recovery reports and does not run events, apply points, or publish snapshots.</p>
+        <div className="grid">
+          <label>Readiness season<input value={readinessSeason} onChange={(event) => setReadinessSeason(event.target.value)} placeholder="2000/2001" /></label>
+          <label>Readiness event ID filter<input value={readinessEventFilter} onChange={(event) => setReadinessEventFilter(event.target.value)} placeholder="event_id,event_id" /></label>
+          <label><input type="checkbox" checked={readinessIncludeEmptyWeeks} onChange={(event) => setReadinessIncludeEmptyWeeks(event.target.checked)} /> Include empty weeks</label>
+          <label><input type="checkbox" checked={readinessIncludeCompletedWeeks} onChange={(event) => setReadinessIncludeCompletedWeeks(event.target.checked)} /> Include completed weeks</label>
+        </div>
+        <div className="button-row">
+          <button type="button" onClick={() => seasonReadinessMutation.mutate()} disabled={seasonReadinessMutation.isPending}>Inspect season readiness</button>
+        </div>
+        {seasonReadinessMutation.isError ? <p role="alert" className="error">{formatApiError(seasonReadinessMutation.error)}</p> : null}
+        {seasonReadinessResult ? <SeasonReadinessPanel result={seasonReadinessResult} selectedWeek={selectedReadinessWeek} onSelectWeek={setSelectedReadinessWeek} /> : <p className="status">Inspect a season to see backend-computed readiness for all 61 season weeks.</p>}
       </SectionCard>
 
 
@@ -951,6 +986,70 @@ function MatchValidationPanel({ warnings, errors }: { warnings: MatchValidationI
   </div>
 }
 
+
+function SeasonReadinessPanel({ result, selectedWeek, onSelectWeek }: { result: SeasonReadinessResult; selectedWeek: number | null; onSelectWeek: (week: number) => void }): JSX.Element {
+  const selected = result.weeks.find((week) => week.season_week === selectedWeek) ?? result.weeks[0] ?? null
+  return <div>
+    <h4>Season readiness summary</h4>
+    {result.validation_errors.map((error) => <p key={error} role="alert" className="error">{error}</p>)}
+    {result.validation_warnings.map((warning) => <p key={warning} className="status">{warning}</p>)}
+    <SummaryPills items={[
+      { label: 'Total weeks', value: result.summary.total_weeks },
+      { label: 'Weeks with events', value: result.summary.weeks_with_events },
+      { label: 'Empty weeks', value: result.summary.empty_weeks },
+      { label: 'Complete weeks', value: result.summary.complete_weeks },
+      { label: 'Partial weeks', value: result.summary.partial_weeks },
+      { label: 'Blocked weeks', value: result.summary.blocked_weeks },
+      { label: 'Ready for point application', value: result.summary.ready_for_point_application_weeks },
+      { label: 'Ready for snapshot publication', value: result.summary.ready_for_snapshot_publication_weeks },
+      { label: 'Missing snapshots after points', value: result.summary.weeks_missing_snapshot_after_points },
+      { label: 'First incomplete week', value: result.summary.first_incomplete_week ?? '—' },
+      { label: 'First blocked week', value: result.summary.first_blocked_week ?? '—' },
+      { label: 'Next week to run', value: result.summary.next_week_to_run ?? '—' },
+      { label: 'Season complete', value: result.summary.season_complete ? 'yes' : 'no' },
+      { label: 'Next safe action', value: result.summary.next_safe_action }
+    ]} />
+    <MetadataList items={[
+      { label: 'Source', value: result.metadata.source },
+      { label: 'Read only', value: result.metadata.read_only ? 'yes' : 'no' },
+      { label: 'Generated fingerprint', value: shortFingerprint(result.metadata.generated_fingerprint) }
+    ]} />
+    <div className="table-wrap">
+      <table aria-label="Season readiness weeks table">
+        <thead><tr><th>Season week</th><th>Year week</th><th>Event count</th><th>Status</th><th>Snapshot exists</th><th>Completed events</th><th>Partial events</th><th>Blocked events</th><th>Points generated/applied</th><th>Next safe action</th><th>Recommended flags</th></tr></thead>
+        <tbody>{result.weeks.map((week) => <SeasonReadinessRowView key={week.season_week} row={week} selected={week.season_week === selected?.season_week} onSelect={() => onSelectWeek(week.season_week)} />)}</tbody>
+      </table>
+    </div>
+    {!result.weeks.length ? <p className="status">No readiness rows match the selected output filters.</p> : null}
+    {selected ? <div>
+      <h4>Selected week detail</h4>
+      <SummaryPills items={[
+        { label: 'Selected season week', value: selected.season_week },
+        { label: 'Representative event IDs', value: selected.representative_event_ids.join(', ') || '—' },
+        { label: 'Recovery fingerprint', value: shortFingerprint(selected.recovery_fingerprint) }
+      ]} />
+      {selected.errors.length ? <><h5>Errors</h5><ul>{selected.errors.map((error) => <li key={error}>{error}</li>)}</ul></> : <p className="status">No selected-week errors.</p>}
+      {selected.warnings.length ? <><h5>Warnings</h5><ul>{selected.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></> : <p className="status">No selected-week warnings.</p>}
+    </div> : null}
+  </div>
+}
+
+function SeasonReadinessRowView({ row, selected, onSelect }: { row: SeasonWeekReadinessRow; selected: boolean; onSelect: () => void }): JSX.Element {
+  const flags = Object.entries(row.recommended_week_rerun_flags).filter(([, value]) => value).map(([key]) => key).join(', ') || 'none'
+  return <tr aria-selected={selected}>
+    <td><button type="button" onClick={onSelect}>{row.season_week}</button></td>
+    <td>{row.calendar_year}/W{row.year_week}</td>
+    <td>{row.event_count}</td>
+    <td>{row.status}</td>
+    <td>{boolMark(row.snapshot_exists)}</td>
+    <td>{row.completed_event_count}</td>
+    <td>{row.partial_event_count}</td>
+    <td>{row.blocked_event_count}</td>
+    <td>{row.points_generated_count}/{row.points_applied_count}</td>
+    <td>{row.next_safe_action}</td>
+    <td>{flags}</td>
+  </tr>
+}
 
 function SeasonWeekPreflightPanel({ result, selectedEventId, onSelectEvent }: { result: SimulateSeasonWeekPreflightResult; selectedEventId: string; onSelectEvent: (eventId: string) => void }): JSX.Element {
   const selected = result.events.find((event) => event.event_id === selectedEventId) ?? result.events[0] ?? null

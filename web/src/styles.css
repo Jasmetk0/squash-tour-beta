@@ -635,3 +635,96 @@ textarea:focus-visible {
   outline: 3px solid #93c5fd;
   outline-offset: 2px;
 }
+
+.countries-editor-shell {
+  position: relative;
+  width: min(100%, 1400px);
+  margin: 0 auto;
+}
+
+.countries-editor-header h2,
+.countries-table-card h3 {
+  margin: 0 0 0.4rem;
+}
+
+.countries-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.countries-toolbar__left,
+.countries-toolbar__right {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.countries-toolbar__left label {
+  margin-bottom: 0;
+  min-width: 180px;
+}
+
+.countries-import-panel textarea {
+  min-height: 160px;
+}
+
+.country-code-badge,
+.region-badge {
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.country-code-badge { background: #e0e7ff; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.region-badge { background: #e2e8f0; }
+.cell-number { text-align: right; }
+.country-row-selected { background: #eff6ff; }
+.table-scroll th { position: sticky; top: 0; background: #f8fafc; }
+.table-scroll tbody tr:hover { background: #f8fafc; }
+
+.button-secondary { background: #334155; }
+.button-ghost { background: #e2e8f0; color: #0f172a; }
+.button-danger { background: #b91c1c; }
+
+.country-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(15 23 42 / 0.35);
+  z-index: 30;
+  border-radius: 0;
+}
+
+.country-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: min(520px, 100%);
+  overflow-y: auto;
+  z-index: 31;
+  border-radius: 0;
+  margin: 0;
+}
+
+.country-drawer-header,
+.country-drawer-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.country-drawer-footer { margin-top: 1rem; }
+
+@media (max-width: 900px) {
+  .countries-toolbar__left label { min-width: 140px; }
+}
+
+.button-ghost:hover { background: #cbd5e1; }
+.button-danger:hover { background: #991b1b; }
+.country-row-selected:hover { background: #e6f0ff; }
+.country-drawer-section h4 { margin: 0.25rem 0 0.6rem; color: #1e293b; }
+.country-drawer-section { margin-bottom: 0.9rem; }

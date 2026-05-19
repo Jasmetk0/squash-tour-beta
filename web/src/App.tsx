@@ -46,6 +46,7 @@ import { WeekDetailPage } from './pages/WeekDetailPage'
 import { WorldGenerationPage } from './pages/WorldGenerationPage'
 import { NationsPage } from './pages/NationsPage'
 import { WorldPackagePage } from './pages/WorldPackagePage'
+import { CountryMomentumPage } from './pages/CountryMomentumPage'
 
 function LegacyRunRedirect(): JSX.Element {
   const { runId = '', '*': suffix = '' } = useParams()
@@ -67,6 +68,7 @@ export default function App(): JSX.Element {
         <Route path="admin/world" element={<AdminWorldPage />} />
         <Route path="admin/world/countries" element={<CountriesPage />} />
         <Route path="admin/world/talent-preview" element={<TalentPreviewPage />} />
+        <Route path="admin/world/country-momentum" element={<CountryMomentumPage />} />
         <Route path="admin/world/manual-player-overrides" element={<ManualPlayerOverridesPage />} />
         <Route path="admin/world/package" element={<WorldPackagePage />} />
         <Route path="admin/tournament-templates" element={<AdminTournamentTemplatesPage />} />

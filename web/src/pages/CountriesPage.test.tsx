@@ -103,6 +103,7 @@ describe('CountriesPage', () => {
     expect(await screen.findByRole('cell', { name: 'AAA' })).toBeInTheDocument()
     expect(await screen.findByRole('button', { name: 'Export CSV' })).toBeInTheDocument()
     expect(await screen.findByRole('cell', { name: '4.5' })).toBeInTheDocument()
+    expect((await screen.findAllByRole('link', { name: 'Open' }))[0]).toHaveAttribute('href', '/admin/world/countries/AAA')
     expect(await screen.findByText(/Current saves affect future generation workflows/i)).toBeInTheDocument()
   })
 

@@ -11,6 +11,7 @@ const api = vi.hoisted(() => ({
   getRun: vi.fn(),
   getRunStatusSummary: vi.fn(),
   listRuns: vi.fn(),
+  listCountries: vi.fn(),
   getCountriesMetadata: vi.fn(),
   getTournamentTemplatesMetadata: vi.fn(),
   listEvents: vi.fn(),
@@ -61,6 +62,27 @@ describe('Module 17 pages through routes', () => {
     localStorage.clear()
     vi.clearAllMocks()
     api.listRuns.mockResolvedValue({ runs: [] })
+    api.listCountries.mockResolvedValue({
+      countries: [
+        {
+          code: 'EGY',
+          name: 'Egypt',
+          region: 'MENA',
+          population: 100000000,
+          wealth_support: 5,
+          squash_popularity: 5,
+          squash_tradition: 5,
+          system_quality: 5,
+          competition_density: 5,
+          federation_quality: 5,
+          court_count: 5000,
+          travel_region: 'MENA',
+          notes: null,
+          style_dna: { attacking: 0.8 },
+          flag_asset: null
+        }
+      ]
+    })
     api.getCountriesMetadata.mockResolvedValue({ dataset_status: 'temporary_seed_demo', country_count: 0, source_path: 'config/world/countries.json' })
     api.getTournamentTemplatesMetadata.mockResolvedValue({ template_count: 0, source_path: 'config/tournament_templates/mvp_templates.json', referenced_by_calendar: false, referenced_template_ids: [] })
     api.getViewerRankingTable.mockResolvedValue({ rows: [], summary: { season: '2000/2001', table_type: 'ranking', player_count: 0, total_source_players: 0, ranked_player_count: 0, zero_point_players: 0, countries_represented: 0, leader_player_id: null, leader_points: null, generated_from_active_players_fingerprint: 'active-fp', rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false }, metadata: { season: '2000/2001', table_type: 'ranking', source: 'season_active_players', active_players_fingerprint: 'active-fp', generated_fingerprint: 'generated-fp', ranking_basis: 'current active season player ranking_points', filters: { country_code: null, search: null, include_zero_points: true, min_points: null }, limit: 100, warnings: [] }, validation_warnings: ['Rolling 61-week ranking not implemented.'], validation_errors: [] })
@@ -78,6 +100,21 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByRole('heading', { name: 'Admin Engine Dashboard' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Simulate' })).toHaveAttribute('href', '/admin/simulate')
     expect(screen.getByRole('link', { name: 'Tour & Seasons' })).toHaveAttribute('href', '/admin/tour-seasons')
+  })
+
+  it('renders world hub cards for Countries and Talent Preview', async () => {
+    renderAppAt('/admin/world')
+    expect(await screen.findByRole('heading', { name: 'World' })).toBeInTheDocument()
+    expect(screen.getByText('Manage country inputs and expected talent output used by the FAX squash simulation engine.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Countries Edit country inputs/i })).toHaveAttribute('href', '/admin/world/countries')
+    expect(screen.getByRole('link', { name: /Talent Preview Preview expected Elite Talents/i })).toHaveAttribute('href', '/admin/world/talent-preview')
+    expect(screen.queryByRole('link', { name: 'Country Momentum' })).not.toBeInTheDocument()
+  })
+
+  it('renders country detail route for existing country code', async () => {
+    renderAppAt('/admin/world/countries/EGY')
+    expect(await screen.findByRole('heading', { name: 'Egypt' })).toBeInTheDocument()
+    expect(screen.getByText(/Country profile for EGY/i)).toBeInTheDocument()
   })
 
   it('renders the Viewer MSA home route with no active run empty state', async () => {

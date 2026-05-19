@@ -102,6 +102,32 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByRole('link', { name: 'Tour & Seasons' })).toHaveAttribute('href', '/admin/tour-seasons')
   })
 
+  it('renders Tour & Seasons hub and shell routes while keeping operational routes available', async () => {
+    renderAppAt('/admin/tour-seasons')
+    expect(await screen.findByRole('heading', { name: 'Tour & Seasons' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Categories/ })).toHaveAttribute('href', '/admin/tour-seasons/categories')
+    expect(screen.getByRole('link', { name: /Tournaments/ })).toHaveAttribute('href', '/admin/tour-seasons/tournaments')
+    expect(screen.getByRole('link', { name: /Season Templates/ })).toHaveAttribute('href', '/admin/tour-seasons/season-templates')
+    expect(screen.getByRole('link', { name: /Seasons Concrete 61-week season calendars/ })).toHaveAttribute('href', '/admin/seasons')
+    expect(screen.getByRole('link', { name: /Calendar Compare \/ Apply/ })).toHaveAttribute('href', '/admin/tour-seasons/compare')
+    expect(screen.getByRole('link', { name: /Calendar Validation/ })).toHaveAttribute('href', '/admin/tour-seasons/validation')
+
+    renderAppAt('/admin/tour-seasons/categories')
+    expect(await screen.findByRole('heading', { name: 'Categories' })).toBeInTheDocument()
+
+    renderAppAt('/admin/tour-seasons/tournaments')
+    expect(await screen.findByRole('heading', { name: 'Tournaments' })).toBeInTheDocument()
+
+    renderAppAt('/admin/tour-seasons/season-templates')
+    expect(await screen.findByRole('heading', { name: 'Season Templates' })).toBeInTheDocument()
+
+    renderAppAt('/admin/tour-seasons/compare')
+    expect(await screen.findByRole('heading', { name: 'Calendar Compare / Apply' })).toBeInTheDocument()
+
+    renderAppAt('/admin/tour-seasons/validation')
+    expect(await screen.findByRole('heading', { name: 'Calendar Validation' })).toBeInTheDocument()
+  })
+
 
   it('renders Players hub route with Talent Intake and Player Database links', async () => {
     renderAppAt('/admin/players')

@@ -20,6 +20,11 @@ import {
   AdminSettingsPage,
   AdminSimulatePage,
   AdminTourSeasonsPage,
+  AdminTourSeasonsCategoriesPage,
+  AdminTourSeasonsComparePage,
+  AdminTourSeasonsSeasonTemplatesPage,
+  AdminTourSeasonsTournamentsPage,
+  AdminTourSeasonsValidationPage,
   AdminTournamentTemplatesPage,
   AdminWorldPage,
   LandingPage,
@@ -77,6 +82,11 @@ export default function App(): JSX.Element {
         <Route path="admin/world/manual-player-overrides" element={<ManualPlayerOverridesPage />} />
         <Route path="admin/world/package" element={<WorldPackagePage />} />
         <Route path="admin/tour-seasons" element={<AdminTourSeasonsPage />} />
+        <Route path="admin/tour-seasons/categories" element={<AdminTourSeasonsCategoriesPage />} />
+        <Route path="admin/tour-seasons/tournaments" element={<AdminTourSeasonsTournamentsPage />} />
+        <Route path="admin/tour-seasons/season-templates" element={<AdminTourSeasonsSeasonTemplatesPage />} />
+        <Route path="admin/tour-seasons/compare" element={<AdminTourSeasonsComparePage />} />
+        <Route path="admin/tour-seasons/validation" element={<AdminTourSeasonsValidationPage />} />
         <Route path="admin/tournament-templates" element={<AdminTournamentTemplatesPage />} />
         <Route path="admin/seasons" element={<AdminSeasonsPage />} />
         <Route path="admin/players" element={<AdminPlayersPage />} />

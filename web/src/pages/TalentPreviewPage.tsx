@@ -5,14 +5,19 @@ import { Link } from 'react-router-dom'
 import { ApiError, getTalentClassPreview, getTalentClassSummary } from '../api/client'
 import type { TalentClassPreviewCountry, TalentClassSummaryCountry } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
+import {
+  TALENT_PREVIEW_DEFAULT_SEED,
+  TALENT_PREVIEW_DEFAULT_YEAR_START,
+  TALENT_PREVIEW_DEFAULT_YEARS
+} from '../config/talentPreviewDefaults'
 
 type SingleYearSort = 'planned_desc' | 'elite_desc' | 'country_asc'
 type SummarySort = 'total_desc' | 'top_rate_desc' | 'country_asc'
 
 export function TalentPreviewPage(): JSX.Element {
-  const [seed, setSeed] = useState(123)
-  const [year, setYear] = useState(2030)
-  const [spanYears, setSpanYears] = useState(10)
+  const [seed, setSeed] = useState(TALENT_PREVIEW_DEFAULT_SEED)
+  const [year, setYear] = useState(TALENT_PREVIEW_DEFAULT_YEAR_START)
+  const [spanYears, setSpanYears] = useState(TALENT_PREVIEW_DEFAULT_YEARS)
   const [countryFilter, setCountryFilter] = useState('')
   const [singleSort, setSingleSort] = useState<SingleYearSort>('planned_desc')
   const [summarySort, setSummarySort] = useState<SummarySort>('total_desc')

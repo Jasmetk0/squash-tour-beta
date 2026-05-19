@@ -120,6 +120,8 @@ describe('TalentPreviewPage', () => {
     expect(forecastTable).toBeInTheDocument()
     expect(within(forecastTable).getByRole('cell', { name: '90' })).toBeInTheDocument()
     expect(within(forecastTable).getByRole('cell', { name: '300' })).toBeInTheDocument()
+    expect(api.getTalentClassPreview).toHaveBeenCalledWith({ year: 2030, seed: 123 })
+    expect(api.getTalentClassSummary).toHaveBeenCalledWith({ year_start: 2030, years: 10, seed: 123 })
   })
 
   it('shows loading and error states', async () => {

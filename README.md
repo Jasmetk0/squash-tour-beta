@@ -32,3 +32,8 @@ Beta_Engine has two intended app modes: **Admin / Engine Mode** for editing, val
 - Determinism is mandatory: same state + config + seed + command => same result.
 - World content is config/data-driven; avoid hardcoded tour content.
 - AI is assistant-only (explanations/analysis), not outcome authority.
+
+## Product direction status
+- Current implementation is operational but mid-transition toward a workflow-first admin UX.
+- Target long-term admin architecture is documented in `docs/ENGINE_UX_SPEC.md` (current state, planned target, phased plan, and gap analysis).
+- This document remains high-level; roadmap and UX specification hold detailed planning.

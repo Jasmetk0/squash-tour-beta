@@ -101,6 +101,14 @@ def test_single_year_preview_is_deterministic_for_same_seed_and_year(tmp_path) -
     assert status_right == 200
     assert left == right
     assert left["total_talents"] == sum(item["planned_count"] for item in left["countries"])
+    preview_country = left["countries"][0]
+    assert preview_country["elite_talents"] == (
+        preview_country["actual_band_counts"]["elite_prospect"]
+        + preview_country["actual_band_counts"]["special_prospect"]
+        + preview_country["actual_band_counts"]["generational_talent"]
+    )
+    assert preview_country["tour_talents"] == preview_country["actual_band_counts"]["strong_prospect"]
+    assert preview_country["pro_depth"] == preview_country["actual_band_counts"]["solid_prospect"]
     assert "dampener" in left["countries"][0]
     assert left["countries"][0]["dampener"]["active"] is False
 
@@ -118,6 +126,18 @@ def test_multi_year_summary_aggregates_counts_and_rates(tmp_path) -> None:
     assert payload["average_total_talents_per_year"] > 0
     assert payload["total_talents_across_span"] == sum(item["total_planned_talents"] for item in payload["countries"])
     assert sum(payload["global_band_totals"].values()) == payload["total_talents_across_span"]
+    assert payload["global_elite_talents"] == (
+        payload["global_band_totals"]["elite_prospect"]
+        + payload["global_band_totals"]["special_prospect"]
+        + payload["global_band_totals"]["generational_talent"]
+    )
+    assert payload["global_tour_talents"] == payload["global_band_totals"]["strong_prospect"]
+    assert payload["global_pro_depth"] == payload["global_band_totals"]["solid_prospect"]
+    country = payload["countries"][0]
+    assert country["total_elite_talents"] == (
+        country["total_elite_count"] + country["total_special_count"] + country["total_generational_count"]
+    )
+    assert country["average_elite_talents_per_year"] == round(country["total_elite_talents"] / payload["years"], 4)
 
 
 def test_preview_reflects_current_countries_config(tmp_path) -> None:

@@ -910,6 +910,9 @@ class CountryTalentYearPreviewResponse(BaseModel):
     planned_count: int
     quality_weights: dict[str, float]
     actual_band_counts: dict[str, int]
+    elite_talents: int
+    tour_talents: int
+    pro_depth: int
     bias_profile: dict[str, float]
     dampener: dict[str, object] = Field(default_factory=dict)
 
@@ -932,6 +935,12 @@ class CountryTalentSummaryResponse(BaseModel):
     total_elite_count: int
     total_special_count: int
     total_generational_count: int
+    total_elite_talents: int
+    total_tour_talents: int
+    total_pro_depth: int
+    average_elite_talents_per_year: float
+    average_tour_talents_per_year: float
+    average_pro_depth_per_year: float
     average_top_band_rate: float
 
 
@@ -945,6 +954,9 @@ class TalentClassSummaryResponse(BaseModel):
     total_talents_across_span: int
     average_total_talents_per_year: float
     global_band_totals: dict[str, int]
+    global_elite_talents: int
+    global_tour_talents: int
+    global_pro_depth: int
     countries: list[CountryTalentSummaryResponse] = Field(default_factory=list)
 
 

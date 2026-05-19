@@ -16,6 +16,7 @@ export function renderWithRoute(ui: JSX.Element, route: string): ReturnType<type
           <Route path="/admin/runs/:runId/*" element={ui} />
           <Route path="/viewer/runs/:runId" element={ui} />
           <Route path="/viewer/runs/:runId/*" element={ui} />
+          <Route path="/admin/world/countries/:countryCode" element={ui} />
           <Route path="*" element={ui} />
         </Routes>
       </MemoryRouter>

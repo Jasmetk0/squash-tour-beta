@@ -118,6 +118,30 @@ describe('Module 17 pages through routes', () => {
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
   })
 
+
+  it('renders Diagnostics control center overview with run guidance and category sections', async () => {
+    localStorage.setItem('beta_engine:last_run_id', 'run-a')
+    renderAppAt('/admin/diagnostics')
+
+    expect(await screen.findByRole('heading', { name: 'Diagnostics' })).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Control center for world balance, calendar validation, run health, invalidated data, narrative locks, and audit warnings.'
+      )
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Operational diagnostics currently remain run-scoped in Run Diagnostics/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open Runs' })).toHaveAttribute('href', '/admin/runs')
+    expect(screen.getByRole('link', { name: /Open last run diagnostics/i })).toHaveAttribute('href', '/admin/runs/run-a/diagnostics')
+
+    expect(screen.getByRole('heading', { name: 'World Balance' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Calendar Validation' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Run Health' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Invalidated Data' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Narrative Locks' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Audit / Warnings' })).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.queryByText(/warning count|error count|total issues/i)).not.toBeInTheDocument()
+  })
   it('renders Tour & Seasons hub and shell routes while keeping operational routes available', async () => {
     renderAppAt('/admin/tour-seasons')
     expect(await screen.findByRole('heading', { name: 'Tour & Seasons' })).toBeInTheDocument()

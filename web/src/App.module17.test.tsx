@@ -36,6 +36,7 @@ const api = vi.hoisted(() => ({
   getViewerRankingTable: vi.fn(),
   getAdminRankingTable: vi.fn(),
   getTalentClassSummary: vi.fn(),
+  getSeasonRegistry: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
     constructor(message: string, status: number) {
@@ -88,6 +89,14 @@ describe('Module 17 pages through routes', () => {
     api.getTournamentTemplatesMetadata.mockResolvedValue({ template_count: 0, source_path: 'config/tournament_templates/mvp_templates.json', referenced_by_calendar: false, referenced_template_ids: [] })
     api.getViewerRankingTable.mockResolvedValue({ rows: [], summary: { season: '2000/2001', table_type: 'ranking', player_count: 0, total_source_players: 0, ranked_player_count: 0, zero_point_players: 0, countries_represented: 0, leader_player_id: null, leader_points: null, generated_from_active_players_fingerprint: 'active-fp', rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false }, metadata: { season: '2000/2001', table_type: 'ranking', source: 'season_active_players', active_players_fingerprint: 'active-fp', generated_fingerprint: 'generated-fp', ranking_basis: 'current active season player ranking_points', filters: { country_code: null, search: null, include_zero_points: true, min_points: null }, limit: 100, warnings: [] }, validation_warnings: ['Rolling 61-week ranking not implemented.'], validation_errors: [] })
     api.getTalentClassSummary.mockResolvedValue({ year_start: 2030, years: 10, seed: 123, dataset_status: 'temporary_seed_demo', country_count: 0, source_path: 'config/world/countries.json', total_talents_across_span: 0, average_total_talents_per_year: 0, global_band_totals: {}, global_elite_talents: 0, global_tour_talents: 0, global_pro_depth: 0, countries: [] })
+    api.getSeasonRegistry.mockResolvedValue({
+      start_season: '2000/01',
+      end_season: '2039/40',
+      season_count: 40,
+      week_count: 61,
+      season_week_1_year_week: 37,
+      seasons: Array.from({ length: 40 }, (_, index) => ({ season_start_year: 2000 + index, label: `${2000 + index}/${String((2001 + index) % 100).padStart(2, '0')}`, season_index: index, week_count: 61, season_week_start: 1, season_week_end: 61, year_week_start: 37, year_week_end: 36, status: 'registry_only' }))
+    })
   })
 
   it('renders the Phase 1 landing page at root', async () => {
@@ -162,6 +171,10 @@ describe('Module 17 pages through routes', () => {
 
     renderAppAt('/admin/tour-seasons/season-templates')
     expect(await screen.findByRole('heading', { name: 'Season Templates' })).toBeInTheDocument()
+    expect(await screen.findByText(/2000\/01–2039\/40/)).toBeInTheDocument()
+    expect(screen.getByText(/40 seasons/)).toBeInTheDocument()
+    expect(screen.getByText(/61 weeks per season/)).toBeInTheDocument()
+    expect(screen.getByText(/SW1 = YW37/)).toBeInTheDocument()
 
     renderAppAt('/admin/tour-seasons/compare')
     expect(await screen.findByRole('heading', { name: 'Calendar Compare / Apply' })).toBeInTheDocument()

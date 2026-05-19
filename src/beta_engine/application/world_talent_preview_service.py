@@ -23,6 +23,9 @@ class CountryTalentYearPreview:
     planned_count: int
     quality_weights: dict[str, float]
     actual_band_counts: dict[str, int]
+    elite_talents: int
+    tour_talents: int
+    pro_depth: int
     bias_profile: dict[str, float]
     dampener: dict[str, object]
 
@@ -47,6 +50,12 @@ class CountryTalentSpanSummary:
     total_elite_count: int
     total_special_count: int
     total_generational_count: int
+    total_elite_talents: int
+    total_tour_talents: int
+    total_pro_depth: int
+    average_elite_talents_per_year: float
+    average_tour_talents_per_year: float
+    average_pro_depth_per_year: float
     average_top_band_rate: float
 
 
@@ -61,6 +70,9 @@ class TalentClassSummaryPreview:
     total_talents_across_span: int
     average_total_talents_per_year: float
     global_band_totals: dict[str, int]
+    global_elite_talents: int
+    global_tour_talents: int
+    global_pro_depth: int
     countries: list[CountryTalentSpanSummary]
 
 
@@ -84,12 +96,21 @@ class WorldTalentPreviewService:
             quality_weights = _empty_band_weights()
             quality_weights.update({band.value: weight for band, weight in allocation.quality_weights.items()})
             country_previews.append(
+                # Temporary aggregate bridge mapping until the final potential-tier model lands:
+                # Elite ~= L through S-, Tour ~= A+ through B+, Pro Depth ~= B through C-ish.
                 CountryTalentYearPreview(
                     country_code=allocation.country_code,
                     country_name=country_names.get(allocation.country_code, allocation.country_code),
                     planned_count=allocation.planned_count,
                     quality_weights=quality_weights,
                     actual_band_counts=band_counts,
+                    elite_talents=(
+                        band_counts[TalentQualityBand.ELITE.value]
+                        + band_counts[TalentQualityBand.SPECIAL.value]
+                        + band_counts[TalentQualityBand.GENERATIONAL.value]
+                    ),
+                    tour_talents=band_counts[TalentQualityBand.STRONG.value],
+                    pro_depth=band_counts[TalentQualityBand.SOLID.value],
                     bias_profile=allocation.bias_profile.model_dump(),
                     dampener=allocation.dampener.model_dump(mode="json"),
                 )
@@ -143,6 +164,12 @@ class WorldTalentPreviewService:
                     total_elite_count=bands[TalentQualityBand.ELITE.value],
                     total_special_count=bands[TalentQualityBand.SPECIAL.value],
                     total_generational_count=bands[TalentQualityBand.GENERATIONAL.value],
+                    total_elite_talents=top_band_total,
+                    total_tour_talents=bands[TalentQualityBand.STRONG.value],
+                    total_pro_depth=bands[TalentQualityBand.SOLID.value],
+                    average_elite_talents_per_year=round(top_band_total / years, 4),
+                    average_tour_talents_per_year=round(bands[TalentQualityBand.STRONG.value] / years, 4),
+                    average_pro_depth_per_year=round(bands[TalentQualityBand.SOLID.value] / years, 4),
                     average_top_band_rate=round(top_band_total / planned_total, 6) if planned_total > 0 else 0.0,
                 )
             )
@@ -157,5 +184,12 @@ class WorldTalentPreviewService:
             total_talents_across_span=total_talents,
             average_total_talents_per_year=round(total_talents / years, 4),
             global_band_totals=global_band_totals,
+            global_elite_talents=(
+                global_band_totals[TalentQualityBand.ELITE.value]
+                + global_band_totals[TalentQualityBand.SPECIAL.value]
+                + global_band_totals[TalentQualityBand.GENERATIONAL.value]
+            ),
+            global_tour_talents=global_band_totals[TalentQualityBand.STRONG.value],
+            global_pro_depth=global_band_totals[TalentQualityBand.SOLID.value],
             countries=countries_summary,
         )

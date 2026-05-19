@@ -73,9 +73,9 @@ export function TalentPreviewPage(): JSX.Element {
         {summaryQuery.data ? (
           <SummaryPills
             items={[
-              { label: 'Elite Talents', value: 'Aggregate calculation planned; existing backend currently returns technical preview fields.' },
-              { label: 'Tour Talents', value: 'Aggregate calculation planned; existing backend currently returns technical preview fields.' },
-              { label: 'Pro Depth', value: 'Aggregate calculation planned; existing backend currently returns technical preview fields.' },
+              { label: 'Elite Talents', value: summaryQuery.data.global_elite_talents },
+              { label: 'Tour Talents', value: summaryQuery.data.global_tour_talents },
+              { label: 'Pro Depth', value: summaryQuery.data.global_pro_depth },
               { label: 'Countries evaluated', value: summaryQuery.data.country_count },
               { label: 'Dataset status', value: summaryQuery.data.dataset_status ?? 'unset' },
               { label: 'Preview span', value: `${summaryQuery.data.years} years from ${summaryQuery.data.year_start}` }
@@ -123,12 +123,12 @@ export function TalentPreviewPage(): JSX.Element {
                         <strong>{item.country_name}</strong> ({item.country_code}){' '}
                         <Link to={`/admin/world/countries/${encodeURIComponent(item.country_code)}`}>Open Country</Link>
                       </td>
-                      <td>{item.total_elite_count}</td>
-                      <td>Planned — backend aggregate pending</td>
-                      <td>Planned — backend aggregate pending</td>
+                      <td>{item.total_elite_talents}</td>
+                      <td>{item.total_tour_talents}</td>
+                      <td>{item.total_pro_depth}</td>
                       <td>{formatPercent(item.average_top_band_rate)}</td>
                       <td>{technical ? formatPercent(topBandWeight(technical)) : 'N/A'}</td>
-                      <td>Top-band rate and planned totals are available; aggregate category splits are planned.</td>
+                      <td>Aggregate split uses current technical bands for this phase.</td>
                       <td>{item.total_generational_count > 0 ? '⭐ Generational signal present' : 'Expected mode forecast'}</td>
                     </tr>
                   )
@@ -150,6 +150,10 @@ export function TalentPreviewPage(): JSX.Element {
           <strong>Pro Depth:</strong> Broader professional/development/national high-level depth, roughly B through C-ish.
         </p>
         <p className="status">Exact tier mappings may be refined later.</p>
+        <p className="status">
+          Aggregate mapping currently uses existing technical bands: Elite = elite/special/generational, Tour = strong, Pro Depth = solid.
+          Final potential-tier mapping will replace this later.
+        </p>
       </SectionCard>
 
       <SectionCard title="Advanced technical preview">

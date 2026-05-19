@@ -816,6 +816,9 @@ export type TalentClassPreviewCountry = {
   planned_count: number
   quality_weights: Record<string, number>
   actual_band_counts: Record<string, number>
+  elite_talents: number
+  tour_talents: number
+  pro_depth: number
   bias_profile: Record<string, number>
   dampener: Record<string, unknown>
 }
@@ -838,6 +841,12 @@ export type TalentClassSummaryCountry = {
   total_elite_count: number
   total_special_count: number
   total_generational_count: number
+  total_elite_talents: number
+  total_tour_talents: number
+  total_pro_depth: number
+  average_elite_talents_per_year: number
+  average_tour_talents_per_year: number
+  average_pro_depth_per_year: number
   average_top_band_rate: number
 }
 
@@ -851,6 +860,9 @@ export type TalentClassSummaryResponse = {
   total_talents_across_span: number
   average_total_talents_per_year: number
   global_band_totals: Record<string, number>
+  global_elite_talents: number
+  global_tour_talents: number
+  global_pro_depth: number
   countries: TalentClassSummaryCountry[]
 }
 

@@ -1,4 +1,5 @@
 import { screen, waitFor } from '@testing-library/react'
+import { within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -54,6 +55,9 @@ describe('TalentPreviewPage', () => {
             special_prospect: 0,
             generational_talent: 0
           },
+          elite_talents: 2,
+          tour_talents: 10,
+          pro_depth: 30,
           bias_profile: {
             professionalism_tendency: 0.1,
             technical_vs_physical_lean: 0.05,
@@ -92,9 +96,18 @@ describe('TalentPreviewPage', () => {
           total_elite_count: 25,
           total_special_count: 4,
           total_generational_count: 1,
+          total_elite_talents: 30,
+          total_tour_talents: 90,
+          total_pro_depth: 300,
+          average_elite_talents_per_year: 3,
+          average_tour_talents_per_year: 9,
+          average_pro_depth_per_year: 30,
           average_top_band_rate: 0.071428
         }
-      ]
+      ],
+      global_elite_talents: 30,
+      global_tour_talents: 90,
+      global_pro_depth: 300
     })
   })
 
@@ -103,7 +116,10 @@ describe('TalentPreviewPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Talent Preview' })).toBeInTheDocument()
     expect((await screen.findAllByRole('cell', { name: 'AAA' })).length).toBeGreaterThan(0)
-    expect(await screen.findByRole('table', { name: 'Country forecast table' })).toBeInTheDocument()
+    const forecastTable = await screen.findByRole('table', { name: 'Country forecast table' })
+    expect(forecastTable).toBeInTheDocument()
+    expect(within(forecastTable).getByRole('cell', { name: '90' })).toBeInTheDocument()
+    expect(within(forecastTable).getByRole('cell', { name: '300' })).toBeInTheDocument()
   })
 
   it('shows loading and error states', async () => {

@@ -1,7 +1,10 @@
 import { type ReactNode } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
+import { getSeasonRegistry } from '../api/client'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
+import { formatApiError } from '../utils/apiErrors'
 
 function TourSeasonsShellPage({
   title,
@@ -63,6 +66,8 @@ export function AdminTourSeasonsTournamentsPage(): JSX.Element {
 }
 
 export function AdminTourSeasonsSeasonTemplatesPage(): JSX.Element {
+  const registryQuery = useQuery({ queryKey: ['season-registry'], queryFn: getSeasonRegistry, retry: false })
+  const registry = registryQuery.data
   return (
     <TourSeasonsShellPage title="Season Templates" subtitle="Reusable calendar plans that can be copied into concrete seasons.">
       <p>
@@ -72,6 +77,31 @@ export function AdminTourSeasonsSeasonTemplatesPage(): JSX.Element {
       <p>
         Current operational calendar tooling remains in <Link to="/admin/seasons">Seasons</Link>.
       </p>
+      <SectionCard title="Season Registry (Read-only foundation)">
+        {registryQuery.isLoading ? <p className="status">Loading season registry...</p> : null}
+        {registryQuery.error ? <p className="error">Failed to load season registry: {formatApiError(registryQuery.error)}</p> : null}
+        {registry ? (
+          <>
+            <p>
+              Season range {registry.start_season}–{registry.end_season} · {registry.season_count} seasons · {registry.week_count} weeks per season · SW1 = YW{registry.season_week_1_year_week}
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th>Season</th><th>Index</th><th>Weeks</th><th>SW1 Year Week</th><th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {registry.seasons.map((entry) => (
+                  <tr key={entry.label}>
+                    <td>{entry.label}</td><td>{entry.season_index}</td><td>{entry.week_count}</td><td>{entry.year_week_start}</td><td>{entry.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        ) : null}
+      </SectionCard>
     </TourSeasonsShellPage>
   )
 }

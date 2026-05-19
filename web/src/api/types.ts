@@ -1,5 +1,26 @@
 export type HealthResponse = { status: 'ok' }
 
+export type SeasonRegistryEntry = {
+  season_start_year: number
+  label: string
+  season_index: number
+  week_count: number
+  season_week_start: number
+  season_week_end: number
+  year_week_start: number
+  year_week_end: number
+  status: string
+}
+
+export type SeasonRegistryResponse = {
+  start_season: string
+  end_season: string
+  season_count: number
+  week_count: number
+  season_week_1_year_week: number
+  seasons: SeasonRegistryEntry[]
+}
+
 export type RunSummary = {
   run_id: string
   season: number

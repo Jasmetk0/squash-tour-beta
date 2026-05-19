@@ -202,17 +202,26 @@ export function AdminWorldPage(): JSX.Element {
     <section className="panel">
       <div className="page-intro">
         <h2>World</h2>
-        <p className="subtitle">Admin World is the authored input workspace for country parameters, talent setup, manual overrides, package import/export, and world generation diagnostics.</p>
+        <p className="subtitle">Manage country inputs, talent expectations, and era modifiers used by the FAX squash simulation engine.</p>
       </div>
       <LinkCardGrid
         cards={[
-          { title: 'Countries Editor', description: 'Edit country configuration: population, culture, system quality, competition density, federation quality, courts, and style DNA.', to: '/admin/world/countries' },
-          { title: 'Talent Preview', description: 'Preview deterministic talent distribution from current world inputs before creating or rebuilding runs.', to: '/admin/world/talent-preview' },
-          { title: 'Manual Player Overrides', description: 'Explicit player override tools for commissioner workflows.', to: '/admin/world/manual-player-overrides' },
-          { title: 'World Package', description: 'Import and export authored world configuration packages.', to: '/admin/world/package' },
-          { title: 'Future: Country Momentum / Era Modifiers', description: 'Placeholder only: time-based country strength changes are planned but not implemented in Phase 2.', to: '/admin/world/countries' },
-          { title: 'Future: Style DNA / Court Count Balancing', description: 'Style DNA and court count can be authored now; deeper balancing remains future deterministic tuning.', to: '/admin/world/countries' },
-          { title: 'Run World Generation', description: 'Inspect generated world provenance inside a selected run.', to: '/admin/runs' }
+          {
+            title: 'Countries Editor',
+            description:
+              'Edit country inputs: population, region, culture, system quality, competition density, federation quality, courts, travel region, style DNA and notes.',
+            to: '/admin/world/countries'
+          },
+          {
+            title: 'Talent Preview',
+            description: 'Preview expected talent output by country before generating or rebuilding runs.',
+            to: '/admin/world/talent-preview'
+          },
+          {
+            title: 'Country Momentum',
+            description: 'Manage country-era modifiers, booms, declines and golden generations over time.',
+            to: '/admin/world/country-momentum'
+          }
         ]}
       />
     </section>

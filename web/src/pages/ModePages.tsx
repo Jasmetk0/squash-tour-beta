@@ -145,13 +145,12 @@ export function AdminHomePage(): JSX.Element {
       <p className="status">Dashboard cards use available backend metadata where present and explicit placeholders where backend status is not exposed yet.</p>
       <LinkCardGrid
         cards={[
-          { title: 'World', description: 'Country configuration, talent setup, overrides, and world package tools.', to: '/admin/world' },
-          { title: 'Tournament Templates', description: 'Reusable category/template definitions stored as editable data.', to: '/admin/tournament-templates' },
-          { title: 'Seasons', description: 'Season and calendar planning workspace.', to: '/admin/seasons' },
-          { title: 'Players', description: 'Generation, override, and future lock/regeneration controls.', to: '/admin/players' },
-          { title: 'Simulate', description: 'Open run controls for next match, round, tournament, week, or full season.', to: '/admin/simulate' },
-          { title: 'Runs', description: 'Create, resume, inspect, and operate simulation runs.', to: '/admin/runs' },
-          { title: 'Diagnostics', description: 'Run/world status, validation, and replay inspection tools.', to: '/admin/diagnostics' }
+          { title: 'World', description: 'Countries, Talent Preview, and world model inputs.', to: '/admin/world' },
+          { title: 'Players', description: 'Player database, future Talent Intake, custom players, locks, and audits.', to: '/admin/players' },
+          { title: 'Tour & Seasons', description: 'Categories, tournaments, season templates, concrete calendars, and validation. Includes existing Tournament Templates and Seasons pages.', to: '/admin/tour-seasons' },
+          { title: 'Runs', description: 'Master Run and sandbox run management.', to: '/admin/runs' },
+          { title: 'Simulate', description: 'Simulation launcher for match, round, tournament, week, season, and full timeline.', to: '/admin/simulate' },
+          { title: 'Diagnostics', description: 'World balance, calendar validation, run health, invalidated data, and future narrative locks.', to: '/admin/diagnostics' }
         ]}
       />
     </section>
@@ -207,7 +206,7 @@ export function AdminWorldPage(): JSX.Element {
       <LinkCardGrid
         cards={[
           {
-            title: 'Countries Editor',
+            title: 'Countries',
             description:
               'Edit country inputs: population, region, culture, system quality, competition density, federation quality, courts, travel region, style DNA and notes.',
             to: '/admin/world/countries'
@@ -217,10 +216,46 @@ export function AdminWorldPage(): JSX.Element {
             description: 'Preview expected talent output by country before generating or rebuilding runs.',
             to: '/admin/world/talent-preview'
           },
+        ]}
+      />
+    </section>
+  )
+}
+
+
+export function AdminTourSeasonsPage(): JSX.Element {
+  return (
+    <section className="panel">
+      <div className="page-intro">
+        <h2>Tour & Seasons</h2>
+        <p className="subtitle">Manage categories, recurring tournaments, season templates, concrete season calendars, and validation workflows.</p>
+      </div>
+      <LinkCardGrid
+        cards={[
           {
-            title: 'Country Momentum',
-            description: 'Manage country-era modifiers, booms, declines and golden generations over time.',
-            to: '/admin/world/country-momentum'
+            title: 'Tournament Templates / Categories',
+            description: 'Existing tournament/category tooling. Long-term this becomes Categories + Tournaments.',
+            to: '/admin/tournament-templates'
+          },
+          {
+            title: 'Seasons',
+            description: 'Existing season command center and calendar workflows.',
+            to: '/admin/seasons'
+          },
+          {
+            title: 'Season Templates (Planned)',
+            description: 'Planned reusable calendar templates for seasons.',
+            to: '/admin/seasons'
+          },
+          {
+            title: 'Calendar Compare / Apply (Planned)',
+            description: 'Planned tool for comparing a season against a template or another season.',
+            to: '/admin/seasons'
+          },
+          {
+            title: 'Calendar Validation (Planned)',
+            description: 'Planned validation hub for week blocks, qualification/main draw footprints, and mandatory events.',
+            to: '/admin/diagnostics'
           }
         ]}
       />
@@ -248,14 +283,15 @@ export function AdminSimulatePage(): JSX.Element {
     <section className="panel">
       <div className="page-intro">
         <h2>Simulate</h2>
-        <p className="subtitle">Simulation commands remain on each run detail page so they operate against an explicit run context.</p>
+        <p className="subtitle">Transitional simulation launcher: controls are aligning here, while full operational commands remain run-scoped in Run Detail.</p>
       </div>
       <ul className="dashboard-help-list">
         <li>Next match</li>
         <li>Next round</li>
         <li>Next tournament</li>
         <li>Next week</li>
-        <li>Full season</li>
+        <li>Rest of season</li>
+        <li>Full timeline</li>
       </ul>
       <p>
         Open a run from <Link to="/admin/runs">Runs</Link>, then use Run Detail to execute deterministic simulation commands.
@@ -269,8 +305,18 @@ export function AdminDiagnosticsPage(): JSX.Element {
     <section className="panel">
       <div className="page-intro">
         <h2>Diagnostics</h2>
-        <p className="subtitle">Diagnostics are run-scoped today; open a run to inspect status, history counts, lineage, and replay artifacts.</p>
+        <p className="subtitle">Transitional diagnostics control center: existing run diagnostics remain operational while cross-module diagnostics are consolidated here.</p>
       </div>
+      <LinkCardGrid
+        cards={[
+          { title: 'World Balance', description: 'Planned diagnostics for world-level balance across countries, talent, and eras.', to: '/admin/world/talent-preview' },
+          { title: 'Calendar Validation', description: 'Planned calendar validation checks for week blocks and tournament footprints.', to: '/admin/seasons' },
+          { title: 'Run Health', description: 'Existing run diagnostics surface for status, history counts, and lineage artifacts.', to: '/admin/runs' },
+          { title: 'Invalidated Data', description: 'Planned invalidation tracking for downstream views after simulation or overrides.', to: '/admin/runs' },
+          { title: 'Narrative Locks', description: 'Planned narrative lock diagnostics and conflict checks.', to: '/admin/runs' },
+          { title: 'Audit / Warnings', description: 'Planned audit feed; current operational diagnostics are available per run.', to: '/admin/runs' }
+        ]}
+      />
       <AdminRunScopedSuggestion page="diagnostics" />
     </section>
   )

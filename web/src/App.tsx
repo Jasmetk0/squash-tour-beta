@@ -17,6 +17,7 @@ import {
   AdminSeasonsPage,
   AdminSettingsPage,
   AdminSimulatePage,
+  AdminTourSeasonsPage,
   AdminTournamentTemplatesPage,
   AdminWorldPage,
   LandingPage,
@@ -71,6 +72,7 @@ export default function App(): JSX.Element {
         <Route path="admin/world/country-momentum" element={<CountryMomentumPage />} />
         <Route path="admin/world/manual-player-overrides" element={<ManualPlayerOverridesPage />} />
         <Route path="admin/world/package" element={<WorldPackagePage />} />
+        <Route path="admin/tour-seasons" element={<AdminTourSeasonsPage />} />
         <Route path="admin/tournament-templates" element={<AdminTournamentTemplatesPage />} />
         <Route path="admin/seasons" element={<AdminSeasonsPage />} />
         <Route path="admin/players" element={<AdminPlayersPage />} />

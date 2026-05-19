@@ -11,11 +11,10 @@ type NavItem = {
 const adminNav: NavItem[] = [
   { to: '/admin', label: 'Dashboard' },
   { to: '/admin/world', label: 'World' },
-  { to: '/admin/tournament-templates', label: 'Tournament Templates' },
-  { to: '/admin/seasons', label: 'Seasons' },
   { to: '/admin/players', label: 'Players' },
-  { to: '/admin/simulate', label: 'Simulate' },
+  { to: '/admin/tour-seasons', label: 'Tour & Seasons' },
   { to: '/admin/runs', label: 'Runs' },
+  { to: '/admin/simulate', label: 'Simulate' },
   { to: '/admin/diagnostics', label: 'Diagnostics' },
   { to: '/admin/settings', label: 'Settings' }
 ]

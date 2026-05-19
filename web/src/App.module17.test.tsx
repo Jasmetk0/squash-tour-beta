@@ -35,6 +35,7 @@ const api = vi.hoisted(() => ({
   bootstrapNextSeason: vi.fn(),
   getViewerRankingTable: vi.fn(),
   getAdminRankingTable: vi.fn(),
+  getTalentClassSummary: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
     constructor(message: string, status: number) {
@@ -86,6 +87,7 @@ describe('Module 17 pages through routes', () => {
     api.getCountriesMetadata.mockResolvedValue({ dataset_status: 'temporary_seed_demo', country_count: 0, source_path: 'config/world/countries.json' })
     api.getTournamentTemplatesMetadata.mockResolvedValue({ template_count: 0, source_path: 'config/tournament_templates/mvp_templates.json', referenced_by_calendar: false, referenced_template_ids: [] })
     api.getViewerRankingTable.mockResolvedValue({ rows: [], summary: { season: '2000/2001', table_type: 'ranking', player_count: 0, total_source_players: 0, ranked_player_count: 0, zero_point_players: 0, countries_represented: 0, leader_player_id: null, leader_points: null, generated_from_active_players_fingerprint: 'active-fp', rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false }, metadata: { season: '2000/2001', table_type: 'ranking', source: 'season_active_players', active_players_fingerprint: 'active-fp', generated_fingerprint: 'generated-fp', ranking_basis: 'current active season player ranking_points', filters: { country_code: null, search: null, include_zero_points: true, min_points: null }, limit: 100, warnings: [] }, validation_warnings: ['Rolling 61-week ranking not implemented.'], validation_errors: [] })
+    api.getTalentClassSummary.mockResolvedValue({ year_start: 2030, years: 10, seed: 123, dataset_status: 'temporary_seed_demo', country_count: 0, source_path: 'config/world/countries.json', total_talents_across_span: 0, average_total_talents_per_year: 0, global_band_totals: {}, global_elite_talents: 0, global_tour_talents: 0, global_pro_depth: 0, countries: [] })
   })
 
   it('renders the Phase 1 landing page at root', async () => {
@@ -195,8 +197,8 @@ describe('Module 17 pages through routes', () => {
 
   it('renders country detail route for existing country code', async () => {
     renderAppAt('/admin/world/countries/EGY')
-    expect(await screen.findByRole('heading', { name: 'Egypt' })).toBeInTheDocument()
-    expect(screen.getByText(/Country profile for EGY/i)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Egypt (EGY)' })).toBeInTheDocument()
+    expect(screen.getByText(/Country profile and authored model inputs/i)).toBeInTheDocument()
   })
 
   it('renders the Viewer MSA home route with no active run empty state', async () => {

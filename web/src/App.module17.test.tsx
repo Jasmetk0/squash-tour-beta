@@ -102,6 +102,22 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByRole('link', { name: 'Tour & Seasons' })).toHaveAttribute('href', '/admin/tour-seasons')
   })
 
+  it('renders Simulate launcher overview concepts without fake results table', async () => {
+    renderAppAt('/admin/simulate')
+    expect(await screen.findByRole('heading', { name: 'Simulate' })).toBeInTheDocument()
+    expect(screen.getByText('Simulation launcher for match, round, tournament, week, season, and full timeline workflows.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open Runs' })).toHaveAttribute('href', '/admin/runs')
+    expect(screen.getByRole('link', { name: /Match/ })).toHaveAttribute('href', '/admin/runs#match')
+    expect(screen.getByRole('link', { name: /Round/ })).toHaveAttribute('href', '/admin/runs#round')
+    expect(screen.getByRole('link', { name: /Tournament/ })).toHaveAttribute('href', '/admin/runs#tournament')
+    expect(screen.getByRole('link', { name: /^Week/ })).toHaveAttribute('href', '/admin/runs#week')
+    expect(screen.getByRole('link', { name: /Season Simulate rest of season/ })).toHaveAttribute('href', '/admin/runs#season')
+    expect(screen.getByRole('link', { name: /Full Timeline/ })).toHaveAttribute('href', '/admin/runs#timeline')
+    expect(screen.getByText(/Next Tournament/)).toBeInTheDocument()
+    expect(screen.getByText(/Next Week/)).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+  })
+
   it('renders Tour & Seasons hub and shell routes while keeping operational routes available', async () => {
     renderAppAt('/admin/tour-seasons')
     expect(await screen.findByRole('heading', { name: 'Tour & Seasons' })).toBeInTheDocument()

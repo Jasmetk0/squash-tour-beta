@@ -12,19 +12,12 @@ import { FinalsPage } from './pages/FinalsPage'
 import { FinalsQualificationDetailPage } from './pages/FinalsQualificationDetailPage'
 import { FinalsResultDetailPage } from './pages/FinalsResultDetailPage'
 import {
-  AdminDiagnosticsPage,
   AdminHomePage,
   AdminPlayersDatabasePage,
   AdminPlayersPage,
   AdminSeasonsPage,
   AdminSettingsPage,
-  AdminSimulatePage,
   AdminTourSeasonsPage,
-  AdminTourSeasonsCategoriesPage,
-  AdminTourSeasonsComparePage,
-  AdminTourSeasonsSeasonTemplatesPage,
-  AdminTourSeasonsTournamentsPage,
-  AdminTourSeasonsValidationPage,
   AdminTournamentTemplatesPage,
   AdminWorldPage,
   LandingPage,
@@ -36,6 +29,9 @@ import {
   ViewerRecordsPage,
   ViewerTournamentsPage
 } from './pages/ModePages'
+import { AdminTourSeasonsCategoriesPage, AdminTourSeasonsComparePage, AdminTourSeasonsSeasonTemplatesPage, AdminTourSeasonsTournamentsPage, AdminTourSeasonsValidationPage } from './pages/TourSeasonsShellPages'
+import { AdminSimulatePage } from './pages/AdminSimulatePage'
+import { AdminDiagnosticsPage } from './pages/AdminDiagnosticsPage'
 import { RolloverPage } from './pages/RolloverPage'
 import { RolloverSeasonDetailPage } from './pages/RolloverSeasonDetailPage'
 import { RunDiagnosticsPage } from './pages/RunDiagnosticsPage'

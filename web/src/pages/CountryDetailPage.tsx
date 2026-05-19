@@ -2,10 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
 import { getTalentClassSummary, listCountries } from '../api/client'
-
-const TALENT_PREVIEW_DEFAULT_YEAR_START = 2030
-const TALENT_PREVIEW_DEFAULT_YEARS = 10
-const TALENT_PREVIEW_DEFAULT_SEED = 123
+import {
+  TALENT_PREVIEW_DEFAULT_SEED,
+  TALENT_PREVIEW_DEFAULT_YEAR_START,
+  TALENT_PREVIEW_DEFAULT_YEARS
+} from '../config/talentPreviewDefaults'
 
 function formatNumber(value: number | null | undefined): string {
   if (value == null) return '—'
@@ -89,7 +90,7 @@ export function CountryDetailPage(): JSX.Element {
       <div className="dashboard-actions-row">
         <Link className="button-secondary" to="/admin/world/countries">Back to Countries list</Link>
         <Link className="button-link" to="/admin/world/talent-preview">Open Talent Preview</Link>
-        <Link className="button-link" to="/admin/world/countries">Edit in Countries list/editor</Link>
+        <Link className="button-link" to={`/admin/world/countries?edit=${encodeURIComponent(country.code)}`}>Edit in Countries list/editor</Link>
       </div>
       <p className="status">Current editing is handled in the Countries list drawer editor.</p>
 

@@ -83,6 +83,10 @@ describe('CountryDetailPage', () => {
     expect(screen.getByText('attacking')).toBeInTheDocument()
     expect(await screen.findByText('Elite Talents')).toBeInTheDocument()
     expect(await screen.findByText('25')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Edit in Countries list/editor' })).toHaveAttribute(
+      'href',
+      '/admin/world/countries?edit=EGY'
+    )
     expect(screen.queryByRole('heading', { name: 'Inputs' })).not.toBeInTheDocument()
   })
 

@@ -107,6 +107,22 @@ describe('CountriesPage', () => {
     expect(await screen.findByText(/Current saves affect future generation workflows/i)).toBeInTheDocument()
   })
 
+  it('auto-opens edit drawer from query param when country exists', async () => {
+    renderWithRoute(<CountriesPage />, '/admin/world/countries?edit=AAA')
+
+    expect(await screen.findByRole('heading', { name: 'Countries Editor' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Edit Country: AAA' })).toBeInTheDocument()
+    expect(await screen.findByRole('cell', { name: 'AAA' })).toBeInTheDocument()
+  })
+
+  it('shows warning when query param country code is missing', async () => {
+    renderWithRoute(<CountriesPage />, '/admin/world/countries?edit=ZZZ')
+
+    expect(await screen.findByRole('heading', { name: 'Countries Editor' })).toBeInTheDocument()
+    expect(await screen.findByText('Could not auto-open editor for ZZZ because the country was not found.')).toBeInTheDocument()
+    expect(await screen.findByRole('cell', { name: 'AAA' })).toBeInTheDocument()
+  })
+
   it('supports create flow', async () => {
     renderWithRoute(<CountriesPage />, '/world/countries')
 

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ChangeEvent, FormEvent, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import {
   ApiError,
@@ -82,6 +82,7 @@ function countryToForm(country: CountryRecord): FormState {
 
 export function CountriesPage(): JSX.Element {
   const queryClient = useQueryClient()
+  const [searchParams] = useSearchParams()
 
   const [mode, setMode] = useState<Mode>('create')
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
@@ -102,11 +103,14 @@ export function CountriesPage(): JSX.Element {
   const [importResult, setImportResult] = useState<CountriesImportResponse | null>(null)
   const [importError, setImportError] = useState<string | null>(null)
   const [importFileName, setImportFileName] = useState<string | null>(null)
+  const [autoOpenError, setAutoOpenError] = useState<string | null>(null)
+  const lastAutoOpenAttemptRef = useRef<string | null>(null)
 
   const countriesQuery = useQuery({ queryKey: ['countries-list'], queryFn: listCountries, retry: false })
   const metadataQuery = useQuery({ queryKey: ['countries-metadata'], queryFn: getCountriesMetadata, retry: false })
 
   const countries = countriesQuery.data?.countries ?? []
+  const editParam = searchParams.get('edit')?.trim() ?? ''
 
   const regionOptions = useMemo(
     () => ['all', ...new Set(countries.map((country) => country.region).filter(Boolean).sort((a, b) => a.localeCompare(b)))],
@@ -191,6 +195,31 @@ export function CountriesPage(): JSX.Element {
         return sortDirection === 'asc' ? result : -result
       })
   }, [countries, regionFilter, searchText, sortDirection, sortKey])
+
+  useEffect(() => {
+    if (!countriesQuery.data) return
+    if (!editParam) return
+
+    const normalizedEditCode = editParam.toUpperCase()
+    if (lastAutoOpenAttemptRef.current === normalizedEditCode) return
+
+    lastAutoOpenAttemptRef.current = normalizedEditCode
+
+    const target = countries.find((country) => country.code.toUpperCase() === normalizedEditCode)
+    if (!target) {
+      setAutoOpenError(`Could not auto-open editor for ${normalizedEditCode} because the country was not found.`)
+      return
+    }
+
+    setAutoOpenError(null)
+    setMode('edit')
+    setSelectedCode(target.code)
+    setForm(countryToForm(target))
+    setStyleDnaText(formatStyleDna(target.style_dna ?? {}))
+    setDrawerOpen(true)
+    setSubmitError(null)
+    setDeleteError(null)
+  }, [countries, countriesQuery.data, editParam])
 
 
   const onSortHeaderClick = (key: SortKey) => {
@@ -446,6 +475,7 @@ export function CountriesPage(): JSX.Element {
         />
         <p className="status">Current saves affect future generation workflows.</p>
         {metadataQuery.isError ? <p className="error">Metadata unavailable: {formatApiError(metadataQuery.error)}</p> : null}
+        {autoOpenError ? <p className="error">{autoOpenError}</p> : null}
       </header>
 
       <section className="countries-toolbar panel">
@@ -858,9 +888,9 @@ export function CountriesPage(): JSX.Element {
               </div>
             </form>
 
-            {submitSuccess ? <p className="status">{submitSuccess}</p> : null}
-            {submitError ? <p className="error">{submitError}</p> : null}
-            {deleteError ? <p className="error">{deleteError}</p> : null}
+        {submitSuccess ? <p className="status">{submitSuccess}</p> : null}
+        {submitError ? <p className="error">{submitError}</p> : null}
+        {deleteError ? <p className="error">{deleteError}</p> : null}
           </aside>
         </>
       ) : null}

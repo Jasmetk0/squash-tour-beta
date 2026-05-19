@@ -77,7 +77,7 @@ describe('Module 17 pages through routes', () => {
     renderAppAt('/admin')
     expect(await screen.findByRole('heading', { name: 'Admin Engine Dashboard' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Simulate' })).toHaveAttribute('href', '/admin/simulate')
-    expect(screen.getByRole('link', { name: 'Tournament Templates' })).toHaveAttribute('href', '/admin/tournament-templates')
+    expect(screen.getByRole('link', { name: 'Tour & Seasons' })).toHaveAttribute('href', '/admin/tour-seasons')
   })
 
   it('renders the Viewer MSA home route with no active run empty state', async () => {

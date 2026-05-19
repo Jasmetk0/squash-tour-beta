@@ -15,7 +15,7 @@ describe('Layout mode navigation', () => {
     expect(screen.getByRole('link', { name: 'Viewer / MSA' })).toHaveAttribute('href', '/viewer')
     expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', '/admin')
     expect(screen.getByRole('link', { name: 'World' })).toHaveAttribute('href', '/admin/world')
-    expect(screen.getByRole('link', { name: 'Tournament Templates' })).toHaveAttribute('href', '/admin/tournament-templates')
+    expect(screen.getByRole('link', { name: 'Tour & Seasons' })).toHaveAttribute('href', '/admin/tour-seasons')
     expect(screen.getByRole('link', { name: 'Simulate' })).toHaveAttribute('href', '/admin/simulate')
     expect(screen.getByRole('link', { name: 'Runs' })).toHaveAttribute('href', '/admin/runs')
     expect(screen.getByRole('link', { name: 'Run Detail' })).toHaveAttribute('href', '/admin/runs/run-a')

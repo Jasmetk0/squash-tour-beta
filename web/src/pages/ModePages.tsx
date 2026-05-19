@@ -201,19 +201,18 @@ export function AdminWorldPage(): JSX.Element {
     <section className="panel">
       <div className="page-intro">
         <h2>World</h2>
-        <p className="subtitle">Manage country inputs, talent expectations, and era modifiers used by the FAX squash simulation engine.</p>
+        <p className="subtitle">Manage country inputs and expected talent output used by the FAX squash simulation engine.</p>
       </div>
       <LinkCardGrid
         cards={[
           {
             title: 'Countries',
-            description:
-              'Edit country inputs: population, region, culture, system quality, competition density, federation quality, courts, travel region, style DNA and notes.',
+            description: 'Edit country inputs, country model data, style DNA, and future country profiles.',
             to: '/admin/world/countries'
           },
           {
             title: 'Talent Preview',
-            description: 'Preview expected talent output by country before generating or rebuilding runs.',
+            description: 'Preview expected Elite Talents, Tour Talents, and Pro Depth by country before generating player intakes.',
             to: '/admin/world/talent-preview'
           },
         ]}

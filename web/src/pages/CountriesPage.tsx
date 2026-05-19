@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChangeEvent, FormEvent, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import {
   ApiError,
@@ -612,6 +613,9 @@ export function CountriesPage(): JSX.Element {
                   <td>{country.travel_region ?? country.region}</td>
                   <td>
                     <div className="actions-inline">
+                      <Link className="button-link" to={`/admin/world/countries/${country.code}`}>
+                        Open
+                      </Link>
                       <button type="button" className="button-ghost" onClick={() => onSelect(country)} disabled={busy}>
                         Edit
                       </button>

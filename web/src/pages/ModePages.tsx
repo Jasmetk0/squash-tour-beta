@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { AdminPlayersPage as InitialPoolAdminPlayersPage } from './AdminPlayersPage'
+import { AdminPlayersHubPage } from './AdminPlayersHubPage'
 import { AdminSeasonsPage as SeasonBootstrapAdminSeasonsPage } from './AdminSeasonsPage'
 import { TournamentTemplatesPage } from './TournamentTemplatesPage'
 import { getCountriesMetadata, getTournamentTemplatesMetadata, listRuns } from '../api/client'
@@ -273,6 +274,10 @@ export function AdminSeasonsPage(): JSX.Element {
 
 
 export function AdminPlayersPage(): JSX.Element {
+  return <AdminPlayersHubPage />
+}
+
+export function AdminPlayersDatabasePage(): JSX.Element {
   return <InitialPoolAdminPlayersPage />
 }
 

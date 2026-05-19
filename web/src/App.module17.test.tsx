@@ -102,6 +102,22 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByRole('link', { name: 'Tour & Seasons' })).toHaveAttribute('href', '/admin/tour-seasons')
   })
 
+
+  it('renders Players hub route with Talent Intake and Player Database links', async () => {
+    renderAppAt('/admin/players')
+    expect(await screen.findByRole('heading', { name: 'Players' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Player Database/i })).toHaveAttribute('href', '/admin/players/database')
+    expect(screen.getByRole('link', { name: /Talent Intake/i })).toHaveAttribute('href', '/admin/players/intake')
+  })
+
+  it('renders Talent Intake shell route with workflow steps and no fake table data', async () => {
+    renderAppAt('/admin/players/intake')
+    expect(await screen.findByRole('heading', { name: 'Talent Intake' })).toBeInTheDocument()
+    expect(screen.getByText('Select Season')).toBeInTheDocument()
+    expect(screen.getByText('Generate Preview')).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+  })
+
   it('renders world hub cards for Countries and Talent Preview', async () => {
     renderAppAt('/admin/world')
     expect(await screen.findByRole('heading', { name: 'World' })).toBeInTheDocument()

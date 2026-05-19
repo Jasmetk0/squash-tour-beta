@@ -14,6 +14,7 @@ import { FinalsResultDetailPage } from './pages/FinalsResultDetailPage'
 import {
   AdminDiagnosticsPage,
   AdminHomePage,
+  AdminPlayersDatabasePage,
   AdminPlayersPage,
   AdminSeasonsPage,
   AdminSettingsPage,
@@ -43,6 +44,7 @@ import { SeasonChainPage } from './pages/SeasonChainPage'
 import { SnapshotDetailPage } from './pages/SnapshotDetailPage'
 import { SnapshotsPage } from './pages/SnapshotsPage'
 import { TalentPreviewPage } from './pages/TalentPreviewPage'
+import { TalentIntakePage } from './pages/TalentIntakePage'
 import { ManualPlayerOverridesPage } from './pages/ManualPlayerOverridesPage'
 import { WeekDetailPage } from './pages/WeekDetailPage'
 import { WorldGenerationPage } from './pages/WorldGenerationPage'
@@ -78,6 +80,8 @@ export default function App(): JSX.Element {
         <Route path="admin/tournament-templates" element={<AdminTournamentTemplatesPage />} />
         <Route path="admin/seasons" element={<AdminSeasonsPage />} />
         <Route path="admin/players" element={<AdminPlayersPage />} />
+        <Route path="admin/players/database" element={<AdminPlayersDatabasePage />} />
+        <Route path="admin/players/intake" element={<TalentIntakePage />} />
         <Route path="admin/simulate" element={<AdminSimulatePage />} />
         <Route path="admin/runs/new" element={<DashboardPage />} />
         <Route path="admin/runs" element={<RunsPage />} />

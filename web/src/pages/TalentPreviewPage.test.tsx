@@ -101,9 +101,9 @@ describe('TalentPreviewPage', () => {
   it('renders and loads single-year + multi-year data', async () => {
     renderWithRoute(<TalentPreviewPage />, '/world/talent-preview')
 
-    expect(await screen.findByRole('heading', { name: 'Talent Class Preview' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Talent Preview' })).toBeInTheDocument()
     expect((await screen.findAllByRole('cell', { name: 'AAA' })).length).toBeGreaterThan(0)
-    expect(await screen.findByRole('table', { name: 'Talent preview multi-year summary table' })).toBeInTheDocument()
+    expect(await screen.findByRole('table', { name: 'Country forecast table' })).toBeInTheDocument()
   })
 
   it('shows loading and error states', async () => {
@@ -111,13 +111,21 @@ describe('TalentPreviewPage', () => {
     api.getTalentClassSummary.mockRejectedValueOnce(new api.ApiError('summary failed', 500))
     renderWithRoute(<TalentPreviewPage />, '/world/talent-preview')
 
-    expect(await screen.findByText(/Preview unavailable:/i)).toBeInTheDocument()
-    expect(await screen.findByText(/Summary unavailable:/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Technical preview unavailable:/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Forecast unavailable:/i)).toBeInTheDocument()
+  })
+
+
+  it('shows expected mode definitions and country detail link', async () => {
+    renderWithRoute(<TalentPreviewPage />, '/world/talent-preview')
+    expect(await screen.findByText(/Talent Preview does not create players./i)).toBeInTheDocument()
+    expect(await screen.findByText(/Elite Talents:/i)).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Open Country' })).toHaveAttribute('href', '/admin/world/countries/AAA')
   })
 
   it('reacts to changed inputs', async () => {
     renderWithRoute(<TalentPreviewPage />, '/world/talent-preview')
-    await screen.findByRole('heading', { name: 'Talent Class Preview' })
+    await screen.findByRole('heading', { name: 'Talent Preview' })
 
     await userEvent.clear(screen.getByLabelText('Preview year'))
     await userEvent.type(screen.getByLabelText('Preview year'), '2040')

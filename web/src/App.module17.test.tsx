@@ -722,7 +722,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText((content) => content.includes('Event count: 11'))).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'World A' })).toBeInTheDocument()
     expect(screen.getByText('Showing first 10 events only. Full calendar tooling remains in Seasons.')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /build|edit|apply/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /build|edit|apply|generate|simulate/i })).not.toBeInTheDocument()
   })
 
   it('renders concrete season calendar preview no-calendar state', async () => {
@@ -735,5 +735,14 @@ describe('Module 17 pages through routes', () => {
     })
     renderAppAt('/admin/seasons/detail/2000%2F01')
     expect(await screen.findByText('No calendar exists yet for this season.')).toBeInTheDocument()
+  })
+
+
+  it('renders concrete season calendar preview invalid-label state without calendar fetch', async () => {
+    renderAppAt('/admin/seasons/detail/not-a-season')
+    expect(await screen.findByRole('heading', { name: 'Calendar preview (read-only)' })).toBeInTheDocument()
+    expect(screen.getByText('Calendar preview unavailable for invalid season label.')).toBeInTheDocument()
+    expect(api.getSeasonCalendar).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', { name: /build|edit|apply|generate|simulate/i })).not.toBeInTheDocument()
   })
 })

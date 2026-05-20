@@ -196,14 +196,17 @@ export function AdminTourSeasonsValidationPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title="Backend validation issue preview">
-        <p>Secondary preview only. Frontend-derived checks remain primary until backend validation becomes authoritative.</p>
-        <ValidationIssueList
-          title="Backend"
-          issues={backendPreviewIssues}
-          emptyMessage="No backend issues returned in preview."
-          filter={severityFilter}
-          planned
-        />
+        <details>
+          <summary>Show backend issue preview</summary>
+          <p>Secondary preview only. Frontend-derived checks remain primary until backend validation becomes authoritative.</p>
+          <ValidationIssueList
+            title="Backend"
+            issues={backendPreviewIssues}
+            emptyMessage="No backend issues returned in preview."
+            filter={severityFilter}
+            planned
+          />
+        </details>
       </SectionCard>
 
       <SectionCard title="Registry checks">

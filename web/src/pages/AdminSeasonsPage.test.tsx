@@ -670,10 +670,13 @@ describe('AdminSeasonsPage', () => {
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons?season=2000%2F01')
     expect(await screen.findByRole('heading', { name: 'Selected Season Workspace' })).toBeInTheDocument()
     await waitFor(() => expect(api.getSeasonRegistry).toHaveBeenCalled())
-    expect(screen.getByText('Compact label')).toBeInTheDocument()
-    expect(screen.getByText('2000/01')).toBeInTheDocument()
-    expect(screen.getAllByText('2000/2001').length).toBeGreaterThan(0)
-    expect(screen.getByText(/Registry status/)).toBeInTheDocument()
+    expect(screen.getByText(/Compact label/)).toBeInTheDocument()
+    expect(screen.getByText((content) => content.includes('Compact label: 2000/01'))).toBeInTheDocument()
+    expect(screen.getByText((content) => content.includes('Legacy label: 2000/2001'))).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Registry Metadata' })).toBeInTheDocument()
+    expect(screen.getByText((content) => content.includes('Start year: 2000'))).toBeInTheDocument()
+    expect(screen.getByText((content) => content.includes('Season week range: SW1–SW61'))).toBeInTheDocument()
+    expect(screen.getByText('Operational Read-only Preview')).toBeInTheDocument()
     expect(screen.getByText('Ranking snapshot W1')).toBeInTheDocument()
     expect(screen.getByText('Point breakdowns')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open Calendar Validation' })).toHaveAttribute('href', '/admin/tour-seasons/validation')
@@ -689,8 +692,34 @@ describe('AdminSeasonsPage', () => {
   it('shows invalid selected season warning without crashing', async () => {
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons?season=bad-label')
     expect(await screen.findByText('Selected season label is invalid.')).toBeInTheDocument()
-    expect(screen.getByText('Raw label: bad-label')).toBeInTheDocument()
+    expect(screen.getByText(/Raw label/)).toBeInTheDocument()
+    expect(screen.getByText((content) => content.includes('Raw label: bad-label'))).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Registry Metadata' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /build from template/i })).not.toBeInTheDocument()
+  })
+
+  it('shows valid-but-missing-registry warning without fake metadata', async () => {
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons?season=1999%2F00')
+    expect(await screen.findByRole('heading', { name: 'Selected Season Workspace' })).toBeInTheDocument()
+    expect(screen.getByText((content) => content.includes('Compact label: 1999/00'))).toBeInTheDocument()
+    expect(screen.getByText((content) => content.includes('Legacy label: 1999/2000'))).toBeInTheDocument()
+    expect(screen.getByText('This season label is valid but not present in the fixed registry.')).toBeInTheDocument()
+    expect(screen.getByText((content) => content.includes('Unavailable (valid label not in fixed registry)'))).toBeInTheDocument()
+    expect(screen.queryByText('registry_only')).not.toBeInTheDocument()
+  })
+
+  it('does not show mutation-style actions inside selected season workspace', async () => {
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons?season=2000%2F01')
+    const workspaceHeading = await screen.findByRole('heading', { name: 'Selected Season Workspace' })
+    const workspace = workspaceHeading.closest('article')
+    expect(workspace).not.toBeNull()
+    if (!workspace) return
+    const workspaceScope = within(workspace)
+    expect(workspaceScope.queryByRole('button', { name: /build/i })).not.toBeInTheDocument()
+    expect(workspaceScope.queryByRole('button', { name: /generate/i })).not.toBeInTheDocument()
+    expect(workspaceScope.queryByRole('button', { name: /bootstrap/i })).not.toBeInTheDocument()
+    expect(workspaceScope.queryByRole('button', { name: /apply/i })).not.toBeInTheDocument()
+    expect(workspaceScope.queryByRole('button', { name: /simulate/i })).not.toBeInTheDocument()
   })
 
   it('renders advanced sections collapsed and keeps manual controls accessible after expansion', async () => {

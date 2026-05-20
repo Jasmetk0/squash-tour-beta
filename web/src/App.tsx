@@ -29,7 +29,8 @@ import {
   ViewerRecordsPage,
   ViewerTournamentsPage
 } from './pages/ModePages'
-import { AdminTourSeasonsComparePage, AdminTourSeasonsValidationPage } from './pages/TourSeasonsShellPages'
+import { AdminTourSeasonsComparePage } from './pages/TourSeasonsShellPages'
+import { AdminTourSeasonsValidationPage } from './pages/CalendarValidationPage'
 import { AdminTourSeasonsCategoriesPage } from './pages/CategoriesPage'
 import { AdminTourSeasonsCategoryDetailPage } from './pages/CategoryDetailPage'
 import { AdminTourSeasonsTournamentsPage } from './pages/TournamentsPage'

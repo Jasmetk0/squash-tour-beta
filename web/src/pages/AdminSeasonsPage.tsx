@@ -1,17 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, useId, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
-import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, getSeasonLifecycle, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch, simulateOneEvent, preflightSeasonWeek, recoverSeasonWeek, runSeasonWeek, getSeasonReadiness, preflightSeasonRange, runSeasonRange } from '../api/client'
+import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, getSeasonLifecycle, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch, simulateOneEvent, preflightSeasonWeek, recoverSeasonWeek, runSeasonWeek, getSeasonReadiness, preflightSeasonRange, runSeasonRange, getSeasonRegistry, getAdminRankingTable } from '../api/client'
 import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight, RunSeasonWeekResult, SeasonWeekRunEventResult, SeasonWeekRecoveryResult, SeasonWeekRecoveryEvent, SeasonWeekRecoveryRerunFlags, SeasonReadinessResult, SeasonWeekReadinessRow, SeasonRangePreflightResult, SeasonRangePreflightWeek, RunSeasonRangeResult, SeasonRangeRunWeekResult } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
 import { AdminRankingTablesSection } from './RankingTables'
 import { formatApiError } from '../utils/apiErrors'
+import { safeToCompactSeasonLabel, safeToLongSeasonLabel } from '../utils/seasonLabels'
 
 export function AdminSeasonsPage(): JSX.Element {
   const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
   const selectedRegistrySeason = searchParams.get('season')?.trim() || null
+  const selectedCompactSeason = selectedRegistrySeason ? safeToCompactSeasonLabel(selectedRegistrySeason) : null
+  const selectedLongSeason = selectedRegistrySeason ? safeToLongSeasonLabel(selectedRegistrySeason) : null
+  const selectedSeasonIsValid = selectedRegistrySeason ? Boolean(selectedCompactSeason) : false
   const [season, setSeason] = useState('2000/2001')
   const [sourceSeason, setSourceSeason] = useState('2000/2001')
   const [seed, setSeed] = useState(12345)
@@ -125,6 +129,10 @@ export function AdminSeasonsPage(): JSX.Element {
   const playersQuery = useQuery({ queryKey: ['season-active-players', season], queryFn: () => getSeasonActivePlayers(season), retry: false })
   const calendarQuery = useQuery({ queryKey: ['season-calendar', season], queryFn: () => getSeasonCalendar(season), retry: false })
   const lifecycleQuery = useQuery<SeasonLifecycleResponse>({ queryKey: ['season-lifecycle', season], queryFn: () => getSeasonLifecycle(season), enabled: false, retry: false })
+  const selectedSeasonRegistryQuery = useQuery({ queryKey: ['selected-season-registry'], queryFn: getSeasonRegistry, enabled: selectedSeasonIsValid, retry: false })
+  const selectedSeasonPlayersQuery = useQuery({ queryKey: ['selected-season-players', selectedCompactSeason], queryFn: () => getSeasonActivePlayers(selectedCompactSeason ?? ''), enabled: selectedSeasonIsValid, retry: false })
+  const selectedSeasonCalendarQuery = useQuery({ queryKey: ['selected-season-calendar', selectedCompactSeason], queryFn: () => getSeasonCalendar(selectedCompactSeason ?? ''), enabled: selectedSeasonIsValid, retry: false })
+  const selectedSeasonRankingQuery = useQuery({ queryKey: ['selected-season-ranking', selectedCompactSeason], queryFn: () => getAdminRankingTable(selectedCompactSeason ?? '', { limit: 5 }), enabled: selectedSeasonIsValid, retry: false })
 
   const bootstrapMutation = useMutation({
     mutationFn: (persist: boolean) => bootstrapSeasonFromInitialPool(season, { source_season: sourceSeason, seed, dry_run: !persist, overwrite_existing: overwriteExisting }),
@@ -215,6 +223,9 @@ export function AdminSeasonsPage(): JSX.Element {
   })
 
   const displayedPlayers = preview?.players.length ? preview.players : playersQuery.data?.players ?? []
+  const selectedRegistryEntry = selectedCompactSeason
+    ? (selectedSeasonRegistryQuery.data?.seasons ?? []).find((entry) => entry.label === selectedCompactSeason) ?? null
+    : null
   const displayedSummary = preview?.summary ?? playersQuery.data?.summary
   const displayedWarnings = preview?.warnings ?? playersQuery.data?.warnings ?? []
   const metadata = preview?.metadata ?? playersQuery.data?.metadata ?? null
@@ -512,7 +523,48 @@ export function AdminSeasonsPage(): JSX.Element {
     <section className="panel">
       <PageIntro title="Seasons / Bootstrap" subtitle="Convert the curated initial pool into deterministic first-season active player records." />
       <p className="status">Bootstrap converts the curated initial pool into active first-season players. It does not simulate tournaments yet.</p>
-      {selectedRegistrySeason ? <p className="status">Selected registry season: {selectedRegistrySeason}</p> : null}
+      {selectedRegistrySeason ? (
+        <SectionCard title="Selected Season Workspace">
+          {!selectedSeasonIsValid ? (
+            <>
+              <p className="error">Selected season label is invalid.</p>
+              <p className="status">Raw label: {selectedRegistrySeason}</p>
+            </>
+          ) : (
+            <>
+              <SummaryPills items={[
+                { label: 'Compact label', value: selectedCompactSeason ?? 'Unavailable' },
+                { label: 'Legacy label', value: selectedLongSeason ?? 'Unavailable' },
+                { label: 'Registry status', value: selectedRegistryEntry?.status ?? 'Valid label; not in fixed registry' },
+                { label: 'Start year', value: selectedRegistryEntry?.season_start_year ?? 'Unknown' },
+                { label: 'Season index', value: selectedRegistryEntry?.season_index ?? 'Unknown' },
+                { label: 'Week count', value: selectedRegistryEntry?.week_count ?? 'Unknown' },
+                { label: 'Season week range', value: selectedRegistryEntry ? `SW${selectedRegistryEntry.season_week_start}–SW${selectedRegistryEntry.season_week_end}` : 'Unknown' },
+                { label: 'Year week range', value: selectedRegistryEntry ? `YW${selectedRegistryEntry.year_week_start}–YW${selectedRegistryEntry.year_week_end}` : 'Unknown' },
+                { label: 'SW1 year week', value: selectedSeasonRegistryQuery.data?.season_week_1_year_week ?? 'Unknown' }
+              ]} />
+              {!selectedRegistryEntry ? <p className="status">This season label is valid but not present in the fixed registry.</p> : null}
+              <h3>Operational status preview</h3>
+              <SummaryPills items={[
+                { label: 'Active players', value: selectedSeasonPlayersQuery.data ? `Loaded (${selectedSeasonPlayersQuery.data.summary.total_active_players})` : `Unavailable${selectedSeasonPlayersQuery.error ? ` (${formatApiError(selectedSeasonPlayersQuery.error)})` : ''}` },
+                { label: 'Calendar', value: selectedSeasonCalendarQuery.data?.summary ? `Loaded (${selectedSeasonCalendarQuery.data.summary.event_count})` : `Unavailable${selectedSeasonCalendarQuery.error ? ` (${formatApiError(selectedSeasonCalendarQuery.error)})` : ''}` },
+                { label: 'Ranking table', value: selectedSeasonRankingQuery.data ? `Loaded (${selectedSeasonRankingQuery.data.rows.length})` : `Unavailable${selectedSeasonRankingQuery.error ? ` (${formatApiError(selectedSeasonRankingQuery.error)})` : ''}` }
+              ]} />
+              <h3>Selected season navigation</h3>
+              <ul className="dashboard-help-list">
+                <li><Link to="/admin/tour-seasons/season-registry">Back to Season Registry</Link></li>
+                <li><Link to="/admin/tour-seasons/season-registry">Open Season Registry</Link></li>
+                <li><Link to="/admin/tour-seasons/validation">Open Calendar Validation</Link></li>
+                <li><Link to="/admin/tour-seasons/compare">Open Calendar Compare / Apply</Link></li>
+                <li>Concrete season detail page — planned.</li>
+                <li>Season editor — planned.</li>
+                <li>Build from template — planned.</li>
+                <li>Compare/apply — planned.</li>
+              </ul>
+            </>
+          )}
+        </SectionCard>
+      ) : null}
 
       <WorkflowBanner />
 

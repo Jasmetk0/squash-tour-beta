@@ -20,7 +20,8 @@ export function AdminSeasonDetailPage(): JSX.Element {
         subtitle="Read-only season profile and operational status preview."
       />
 
-      <SectionCard title="Read-only concrete season profile">
+      <section id="season-profile">
+        <SectionCard title="Read-only concrete season profile">
         <p>This page does not create, build, simulate, or edit the season.</p>
         <p>Concrete season editor is planned.</p>
         <p>Build from template is planned.</p>
@@ -31,9 +32,37 @@ export function AdminSeasonDetailPage(): JSX.Element {
           ...(compactLabel ? [{ label: 'Compact label', value: compactLabel }] : []),
           ...(legacyLabel ? [{ label: 'Legacy label', value: legacyLabel }] : [])
         ]} />
+        </SectionCard>
+      </section>
+
+      <SectionCard title="Season detail sections">
+        <DetailList items={[
+          <a key="profile" href="#season-profile">Profile / route labels</a>,
+          <a key="workspace" href="#selected-season-workspace">Selected season workspace</a>,
+          <a key="calendar" href="#calendar-preview">Calendar preview</a>,
+          <a key="ranking" href="#ranking-points-preview">Ranking &amp; points preview</a>,
+          <a key="navigation" href="#season-navigation">Navigation</a>
+        ]} emptyLabel="No sections." />
       </SectionCard>
 
-      <SectionCard title="Navigation">
+      <section id="selected-season-workspace">
+        <SelectedSeasonWorkspace selectedSeasonRaw={seasonLabel} />
+      </section>
+
+      <section id="calendar-preview">
+        <SectionCard title="Calendar preview (read-only)">
+          <SeasonCalendarPreview seasonLabelRaw={seasonLabel} />
+        </SectionCard>
+      </section>
+
+      <section id="ranking-points-preview">
+        <SectionCard title="Ranking & points preview (read-only)">
+          <SeasonRankingPointsPreview seasonLabelRaw={seasonLabel} />
+        </SectionCard>
+      </section>
+
+      <section id="season-navigation">
+        <SectionCard title="Navigation">
         <DetailList items={[
           <Link key="tour-seasons" to="/admin/tour-seasons">Tour &amp; Seasons</Link>,
           <Link key="season-registry" to="/admin/tour-seasons/season-registry">Season Registry</Link>,
@@ -49,22 +78,14 @@ export function AdminSeasonDetailPage(): JSX.Element {
         </SectionCard>
       ) : null}
 
+      </section>
+
       <SectionCard title="Related links">
         <p><Link to="/admin/seasons">Back to Seasons</Link></p>
         <p><Link to="/admin/tour-seasons/season-registry">Open Season Registry</Link></p>
         <p><Link to="/admin/tour-seasons/validation">Open Calendar Validation</Link></p>
         <p><Link to="/admin/tour-seasons/compare">Open Calendar Compare / Apply</Link></p>
       </SectionCard>
-
-      <SectionCard title="Calendar preview (read-only)">
-        <SeasonCalendarPreview seasonLabelRaw={seasonLabel} />
-      </SectionCard>
-
-      <SectionCard title="Ranking & points preview (read-only)">
-        <SeasonRankingPointsPreview seasonLabelRaw={seasonLabel} />
-      </SectionCard>
-
-      <SelectedSeasonWorkspace selectedSeasonRaw={seasonLabel} />
     </section>
   )
 }

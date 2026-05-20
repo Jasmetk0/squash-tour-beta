@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
-import { getCategories, getSeasonRegistry, getSeasonTemplates, getTournaments } from '../api/client'
+import { getCategories, getSeasonRegistry, getSeasonTemplates, getTourSeasonsValidation, getTournaments } from '../api/client'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -14,6 +14,7 @@ export function AdminTourSeasonsValidationPage(): JSX.Element {
   const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: getCategories, retry: false })
   const tournamentsQuery = useQuery({ queryKey: ['tournaments'], queryFn: getTournaments, retry: false })
   const templatesQuery = useQuery({ queryKey: ['season-templates'], queryFn: getSeasonTemplates, retry: false })
+  const backendValidationQuery = useQuery({ queryKey: ['tour-seasons-validation'], queryFn: getTourSeasonsValidation, retry: false })
 
   const registry = registryQuery.data
   const categories = categoriesQuery.data?.categories ?? []
@@ -117,6 +118,33 @@ export function AdminTourSeasonsValidationPage(): JSX.Element {
             )
           })}
         </div>
+      </SectionCard>
+
+      <SectionCard title="Backend validation foundation">
+        {backendValidationQuery.isLoading ? (
+          <p>Loading backend validation foundation…</p>
+        ) : backendValidationQuery.error ? (
+          <p>Backend validation foundation unavailable: {formatApiError(backendValidationQuery.error)}</p>
+        ) : backendValidationQuery.data ? (
+          <>
+            <ul className="dashboard-help-list">
+              <li>Status: {backendValidationQuery.data.status}</li>
+              <li>Total checks: {backendValidationQuery.data.summary.total_checks}</li>
+              <li>Warnings: {backendValidationQuery.data.summary.warning_count}</li>
+              <li>Info: {backendValidationQuery.data.summary.info_count}</li>
+              <li>OK: {backendValidationQuery.data.summary.ok_count}</li>
+              <li>Sections returned: {backendValidationQuery.data.sections.length}</li>
+            </ul>
+            <p>Backend validation is currently a read-only foundation. Frontend-derived checks remain visible below until backend validation becomes the authoritative source.</p>
+            <p>Comparison only; both systems are read-only.</p>
+            <ul className="dashboard-help-list">
+              <li>Frontend-derived total checks: {counts.total}</li>
+              <li>Backend total checks: {backendValidationQuery.data.summary.total_checks}</li>
+            </ul>
+          </>
+        ) : (
+          <p>Backend validation foundation unavailable: empty response.</p>
+        )}
       </SectionCard>
 
       <SectionCard title="Registry checks">

@@ -232,11 +232,15 @@ describe('Module 17 pages through routes', () => {
     renderAppAt('/admin/tour-seasons/season-registry')
     expect(await screen.findByRole('heading', { level: 2, name: 'Season Registry' })).toBeInTheDocument()
     expect(screen.getByText(/fixed 2000\/01–2039\/40 MSA season model\./)).toBeInTheDocument()
-    expect(await screen.findByRole('cell', { name: '2000/01' })).toBeInTheDocument()
+    const seasonLink = await screen.findByRole('link', { name: '2000/01' })
+    expect(seasonLink).toHaveAttribute('href', '/admin/seasons?season=2000%2F01')
     expect(screen.getByRole('cell', { name: '2039/40' })).toBeInTheDocument()
     expect(screen.getByText(/SW1 → YW37/)).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Season' })).toBeInTheDocument()
-    expect(screen.getByRole('cell', { name: '2000/01' })).toBeInTheDocument()
+    expect(screen.getByText('Season links open existing Seasons tooling with the selected season in the URL. Direct season editing/detail workflow is planned.')).toBeInTheDocument()
+
+    renderAppAt('/admin/seasons?season=2000%2F01')
+    expect(await screen.findByText('Selected registry season: 2000/01')).toBeInTheDocument()
 
     renderAppAt('/admin/tour-seasons/compare')
     expect(await screen.findByRole('heading', { name: 'Calendar Compare / Apply' })).toBeInTheDocument()

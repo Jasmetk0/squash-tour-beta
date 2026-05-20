@@ -40,6 +40,7 @@ const api = vi.hoisted(() => ({
   getSeasonTemplates: vi.fn(),
   getCategories: vi.fn(),
   getTournaments: vi.fn(),
+  getTourSeasonsValidation: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
     constructor(message: string, status: number) {
@@ -109,6 +110,27 @@ describe('Module 17 pages through routes', () => {
       tournaments: [{ tournament_id: 'world-tour-gold', name: 'World Tour Gold', status: 'read_only_foundation', source: 'derived_preview:tournament_templates', source_template_ids: ['wt_gold_24'], template_count: 1, categories: ['GOLD'], tour_levels: ['WORLD_TOUR'], host_countries: ['ENG'], regions: ['EUROPE'], default_category: null, default_host_country: 'ENG', default_region: 'EUROPE', default_duration_weeks: 1, has_qualification: true, notes: [] }],
       source_path: 'config/tournament_templates/mvp_templates.json',
       status: 'read_only_foundation'
+    })
+    api.getTourSeasonsValidation.mockResolvedValue({
+      status: 'read_only_foundation',
+      summary: {
+        total_checks: 8,
+        warning_count: 2,
+        info_count: 3,
+        ok_count: 3,
+        registry_loaded: true,
+        category_count: 1,
+        tournament_count: 1,
+        season_template_count: 1,
+        season_template_slot_count: 1
+      },
+      sections: [
+        { section_id: 'registry', title: 'Registry', issues: [] },
+        { section_id: 'category', title: 'Category', issues: [] },
+        { section_id: 'tournament', title: 'Tournament', issues: [] },
+        { section_id: 'season_template', title: 'Season Template', issues: [] }
+      ],
+      planned_future: ['Backend validation engine.']
     })
     api.getSeasonTemplates.mockResolvedValue({
       templates: [{ template_id: 'default_msa_template_preview', name: 'Default MSA Template Preview', description: 'Read-only derived preview built from current tournament templates config.', season_count_supported: 40, week_count: 61, slot_count: 1, source: 'derived_preview:tournament_templates', status: 'read_only_foundation', slots: [{ slot_id: 'slot-01-wt_gold_24', season_week_start: 1, season_week_end: 1, duration_weeks: 1, tournament_name: 'World Tour Gold', category: 'GOLD', host_country: 'ENG', region: 'EUROPE', has_qualification: true, qualifying_week_start: 1, main_draw_week_start: 1, source_template_id: 'wt_gold_24', notes: null }] }],
@@ -228,8 +250,19 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByText(/Season Template Slots \(total\): 1/)).toBeInTheDocument()
     expect(await screen.findByText('Total checks: 7')).toBeInTheDocument()
     expect(await screen.findByText('Warnings: 1')).toBeInTheDocument()
-    expect(await screen.findByText('Info: 3')).toBeInTheDocument()
-    expect(await screen.findByText('OK: 3')).toBeInTheDocument()
+    expect((await screen.findAllByText('Info: 3')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('OK: 3')).length).toBeGreaterThan(0)
+    expect(await screen.findByRole('heading', { name: 'Backend validation foundation' })).toBeInTheDocument()
+    expect(screen.getAllByText('Status: read_only_foundation').length).toBeGreaterThan(0)
+    expect(screen.getByText('Total checks: 8')).toBeInTheDocument()
+    expect(screen.getByText('Warnings: 2')).toBeInTheDocument()
+    expect(screen.getAllByText('Info: 3').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('OK: 3').length).toBeGreaterThan(0)
+    expect(screen.getByText('Sections returned: 4')).toBeInTheDocument()
+    expect(screen.getByText('Frontend-derived total checks: 7')).toBeInTheDocument()
+    expect(screen.getByText('Backend total checks: 8')).toBeInTheDocument()
+    expect(screen.getByText('Comparison only; both systems are read-only.')).toBeInTheDocument()
+    expect(screen.getByText(/Frontend-derived checks remain visible below until backend validation becomes the authoritative source\./)).toBeInTheDocument()
     expect(await screen.findByRole('button', { name: 'All' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Warnings' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Info' })).toBeInTheDocument()

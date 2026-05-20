@@ -39,6 +39,7 @@ const api = vi.hoisted(() => ({
   getSeasonRegistry: vi.fn(),
   getSeasonTemplates: vi.fn(),
   getCategories: vi.fn(),
+  getTournaments: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
     constructor(message: string, status: number) {
@@ -101,6 +102,11 @@ describe('Module 17 pages through routes', () => {
     })
     api.getCategories.mockResolvedValue({
       categories: [{ category_id: 'gold', name: 'GOLD', status: 'read_only_foundation', source: 'derived_preview:tournament_templates', template_count: 1, valid_from_season: null, valid_to_season: null, tour_level: 'WORLD_TOUR', prestige_rank: null, mandatory: null, main_draw_size: 24, qualification_draw_size: 16, direct_entries: 18, qualifiers: 4, wildcards: 2, lucky_losers: 2, seeds_count: 8, points_by_round: null, prize_money_total: null, match_format: null, qualifying_weeks_count: 1, main_draw_weeks_count: null, schedule_footprint_weeks: 1, source_template_ids: ['wt_gold_24'], notes: [] }],
+      source_path: 'config/tournament_templates/mvp_templates.json',
+      status: 'read_only_foundation'
+    })
+    api.getTournaments.mockResolvedValue({
+      tournaments: [{ tournament_id: 'world-tour-gold', name: 'World Tour Gold', status: 'read_only_foundation', source: 'derived_preview:tournament_templates', source_template_ids: ['wt_gold_24'], template_count: 1, categories: ['GOLD'], tour_levels: ['WORLD_TOUR'], host_countries: ['ENG'], regions: ['EUROPE'], default_category: 'GOLD', default_host_country: 'ENG', default_region: 'EUROPE', default_duration_weeks: 1, has_qualification: true, notes: [] }],
       source_path: 'config/tournament_templates/mvp_templates.json',
       status: 'read_only_foundation'
     })
@@ -180,16 +186,21 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByRole('heading', { name: 'Categories' })).toBeInTheDocument()
     expect(screen.getAllByText(/Read-only foundation\./).length).toBeGreaterThan(0)
     expect(await screen.findByText(/GOLD \(gold\)/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open Tournament Templates' })).toHaveAttribute('href', '/admin/tournament-templates')
-    expect(screen.getByRole('link', { name: 'Open Season Templates' })).toHaveAttribute('href', '/admin/tour-seasons/season-templates')
+    expect(screen.getAllByRole('link', { name: 'Open Tournament Templates' })[0]).toHaveAttribute('href', '/admin/tournament-templates')
+    expect(screen.getAllByRole('link', { name: 'Open Season Templates' })[0]).toHaveAttribute('href', '/admin/tour-seasons/season-templates')
 
     renderAppAt('/admin/tour-seasons/tournaments')
     expect(await screen.findByRole('heading', { name: 'Tournaments' })).toBeInTheDocument()
+    expect(screen.getByText(/Read-only tournament master records derived from current tournament template config\./)).toBeInTheDocument()
+    expect(await screen.findByText(/World Tour Gold \(world-tour-gold\)/)).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Open Tournament Templates' })[0]).toHaveAttribute('href', '/admin/tournament-templates')
+    expect(screen.getByRole('link', { name: 'Open Categories' })).toHaveAttribute('href', '/admin/tour-seasons/categories')
+    expect(screen.getAllByRole('link', { name: 'Open Season Templates' })[0]).toHaveAttribute('href', '/admin/tour-seasons/season-templates')
 
     renderAppAt('/admin/tour-seasons/season-templates')
     expect(await screen.findByRole('heading', { name: 'Season Templates' })).toBeInTheDocument()
     expect(screen.getAllByText(/Read-only foundation\./).length).toBeGreaterThan(0)
-    expect(await screen.findByText(/Source path: config\/tournament_templates\/mvp_templates\.json/)).toBeInTheDocument()
+    expect((await screen.findAllByText(/Source path: config\/tournament_templates\/mvp_templates\.json/)).length).toBeGreaterThan(0)
     expect(screen.getByText('Default MSA Template Preview')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open Season Registry' })).toHaveAttribute('href', '/admin/tour-seasons/season-registry')
     expect(screen.getByRole('link', { name: 'Open Seasons' })).toHaveAttribute('href', '/admin/seasons')

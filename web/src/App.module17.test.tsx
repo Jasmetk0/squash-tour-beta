@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -226,8 +226,26 @@ describe('Module 17 pages through routes', () => {
     expect((await screen.findAllByText('Tournaments: 1')).length).toBeGreaterThan(0)
     expect(await screen.findByText('Season Templates: 1')).toBeInTheDocument()
     expect(await screen.findByText(/Season Template Slots \(total\): 1/)).toBeInTheDocument()
+    expect(await screen.findByText('Total checks: 7')).toBeInTheDocument()
+    expect(await screen.findByText('Warnings: 1')).toBeInTheDocument()
+    expect(await screen.findByText('Info: 3')).toBeInTheDocument()
+    expect(await screen.findByText('OK: 3')).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'All' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Warnings' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Info' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'OK' })).toBeInTheDocument()
     expect(await screen.findByText(/\[Warning\] Category/)).toBeInTheDocument()
     expect(await screen.findByText(/\[Info\] Tournament/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Warnings' }))
+    expect(screen.getByText(/\[Warning\] Category/)).toBeInTheDocument()
+    expect(screen.queryByText(/\[Info\] Tournament/)).not.toBeInTheDocument()
+    expect(screen.getAllByText('No checks match the current filter.').length).toBeGreaterThan(0)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Info' }))
+    expect(screen.getByText(/\[Info\] Tournament/)).toBeInTheDocument()
+    expect(screen.queryByText(/\[Warning\] Category/)).not.toBeInTheDocument()
+
     expect(screen.getAllByRole('link', { name: /GOLD \(gold\)/ })[0]).toHaveAttribute('href', '/admin/tour-seasons/categories/gold')
     expect(screen.getAllByRole('link', { name: /World Tour Gold \(world-tour-gold\)/ })[0]).toHaveAttribute('href', '/admin/tour-seasons/tournaments/world-tour-gold')
     expect(screen.queryByRole('button', { name: /apply|save|update|delete|create/i })).not.toBeInTheDocument()

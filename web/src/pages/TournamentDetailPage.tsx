@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
 import { getTournaments } from '../api/client'
+import { DetailFieldGrid, DetailList } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -35,22 +36,22 @@ export function AdminTourSeasonsTournamentDetailPage(): JSX.Element {
       {tournament ? (
         <>
           <SectionCard title="Header summary">
-            <ul className="dashboard-help-list">
-              <li>Name: {tournament.name}</li>
-              <li>Tournament ID: {tournament.tournament_id}</li>
-              <li>Status: {tournament.status}</li>
-              <li>Source: {tournament.source}</li>
-            </ul>
+            <DetailFieldGrid fields={[
+              { label: 'Name', value: tournament.name },
+              { label: 'Tournament ID', value: tournament.tournament_id },
+              { label: 'Status', value: tournament.status },
+              { label: 'Source', value: tournament.source }
+            ]} />
           </SectionCard>
 
           <SectionCard title="Identity">
-            <ul className="dashboard-help-list">
-              <li>name: {tournament.name}</li>
-              <li>tournament_id: {tournament.tournament_id}</li>
-              <li>template_count: {tournament.template_count}</li>
-              <li>source_template_ids: {formatList(tournament.source_template_ids)}</li>
-              <li>status: {tournament.status}</li>
-            </ul>
+            <DetailFieldGrid fields={[
+              { label: 'name', value: tournament.name },
+              { label: 'tournament_id', value: tournament.tournament_id },
+              { label: 'template_count', value: tournament.template_count },
+              { label: 'source_template_ids', value: formatList(tournament.source_template_ids) },
+              { label: 'status', value: tournament.status }
+            ]} />
           </SectionCard>
 
           <SectionCard title="Classification">
@@ -76,13 +77,7 @@ export function AdminTourSeasonsTournamentDetailPage(): JSX.Element {
           </SectionCard>
 
           <SectionCard title="Notes">
-            {tournament.notes.length > 0 ? (
-              <ul className="dashboard-help-list">
-                {tournament.notes.map((note) => <li key={note}>{note}</li>)}
-              </ul>
-            ) : (
-              <p>No notes.</p>
-            )}
+            <DetailList items={tournament.notes} emptyLabel="No notes." />
           </SectionCard>
 
           <SectionCard title="Planned future model">

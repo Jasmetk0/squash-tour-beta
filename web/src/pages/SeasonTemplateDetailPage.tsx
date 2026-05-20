@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
 import { getSeasonTemplates } from '../api/client'
+import { DetailFieldGrid } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -27,24 +28,24 @@ export function AdminTourSeasonsSeasonTemplateDetailPage(): JSX.Element {
       {template ? (
         <>
           <SectionCard title="Header summary">
-            <ul className="dashboard-help-list">
-              <li>Name: {template.name}</li>
-              <li>Template ID: {template.template_id}</li>
-              <li>Status: {template.status}</li>
-              <li>Source: {template.source}</li>
-            </ul>
+            <DetailFieldGrid fields={[
+              { label: 'Name', value: template.name },
+              { label: 'Template ID', value: template.template_id },
+              { label: 'Status', value: template.status },
+              { label: 'Source', value: template.source }
+            ]} />
           </SectionCard>
 
           <SectionCard title="Identity">
-            <ul className="dashboard-help-list">
-              <li>template_id: {template.template_id}</li>
-              <li>name: {template.name}</li>
-              <li>description: {template.description}</li>
-              <li>season_count_supported: {template.season_count_supported ?? '—'}</li>
-              <li>week_count: {template.week_count}</li>
-              <li>slot_count: {template.slot_count}</li>
-              <li>status: {template.status}</li>
-            </ul>
+            <DetailFieldGrid fields={[
+              { label: 'template_id', value: template.template_id },
+              { label: 'name', value: template.name },
+              { label: 'description', value: template.description },
+              { label: 'season_count_supported', value: template.season_count_supported ?? '—' },
+              { label: 'week_count', value: template.week_count },
+              { label: 'slot_count', value: template.slot_count },
+              { label: 'status', value: template.status }
+            ]} />
           </SectionCard>
 
           <SectionCard title="Source">

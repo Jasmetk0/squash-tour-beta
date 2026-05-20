@@ -231,6 +231,11 @@ export function AdminTourSeasonsPage(): JSX.Element {
             to: '/admin/tour-seasons/season-templates'
           },
           {
+            title: 'Season Registry',
+            description: 'Read-only fixed registry for seasons 2000/01 through 2039/40, 61 weeks per season, SW1 = YW37.',
+            to: '/admin/tour-seasons/season-registry'
+          },
+          {
             title: 'Seasons',
             description: 'Concrete 61-week season calendars from 2000/01 through 2039/40.',
             to: '/admin/seasons'

@@ -29,7 +29,7 @@ import {
   ViewerRecordsPage,
   ViewerTournamentsPage
 } from './pages/ModePages'
-import { AdminTourSeasonsCategoriesPage, AdminTourSeasonsComparePage, AdminTourSeasonsSeasonTemplatesPage, AdminTourSeasonsTournamentsPage, AdminTourSeasonsValidationPage } from './pages/TourSeasonsShellPages'
+import { AdminTourSeasonsCategoriesPage, AdminTourSeasonsComparePage, AdminTourSeasonsSeasonRegistryPage, AdminTourSeasonsSeasonTemplatesPage, AdminTourSeasonsTournamentsPage, AdminTourSeasonsValidationPage } from './pages/TourSeasonsShellPages'
 import { AdminSimulatePage } from './pages/AdminSimulatePage'
 import { AdminDiagnosticsPage } from './pages/AdminDiagnosticsPage'
 import { RolloverPage } from './pages/RolloverPage'
@@ -81,6 +81,7 @@ export default function App(): JSX.Element {
         <Route path="admin/tour-seasons/categories" element={<AdminTourSeasonsCategoriesPage />} />
         <Route path="admin/tour-seasons/tournaments" element={<AdminTourSeasonsTournamentsPage />} />
         <Route path="admin/tour-seasons/season-templates" element={<AdminTourSeasonsSeasonTemplatesPage />} />
+        <Route path="admin/tour-seasons/season-registry" element={<AdminTourSeasonsSeasonRegistryPage />} />
         <Route path="admin/tour-seasons/compare" element={<AdminTourSeasonsComparePage />} />
         <Route path="admin/tour-seasons/validation" element={<AdminTourSeasonsValidationPage />} />
         <Route path="admin/tournament-templates" element={<AdminTournamentTemplatesPage />} />

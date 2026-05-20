@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import { DetailFieldGrid, DetailList } from '../components/DetailUi'
 import { SeasonCalendarPreview } from './SeasonCalendarPreview'
+import { SeasonRankingPointsPreview } from './SeasonRankingPointsPreview'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import { safeToCompactSeasonLabel, safeToLongSeasonLabel } from '../utils/seasonLabels'
 import { SelectedSeasonWorkspace } from './SelectedSeasonWorkspace'
@@ -57,6 +58,10 @@ export function AdminSeasonDetailPage(): JSX.Element {
 
       <SectionCard title="Calendar preview (read-only)">
         <SeasonCalendarPreview seasonLabelRaw={seasonLabel} />
+      </SectionCard>
+
+      <SectionCard title="Ranking & points preview (read-only)">
+        <SeasonRankingPointsPreview seasonLabelRaw={seasonLabel} />
       </SectionCard>
 
       <SelectedSeasonWorkspace selectedSeasonRaw={seasonLabel} />

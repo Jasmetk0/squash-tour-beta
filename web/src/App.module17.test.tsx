@@ -251,6 +251,11 @@ describe('Module 17 pages through routes', () => {
     renderAppAt('/admin/seasons/detail/2000%2F01')
     expect((await screen.findAllByRole('heading', { level: 2, name: 'Concrete Season' })).length).toBeGreaterThan(0)
     expect(screen.getByRole('heading', { name: 'Read-only concrete season profile' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Season detail sections' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Profile / route labels' })).toHaveAttribute('href', '#season-profile')
+    expect(screen.getByRole('link', { name: 'Selected season workspace' })).toHaveAttribute('href', '#selected-season-workspace')
+    expect(screen.getByRole('link', { name: 'Calendar preview' })).toHaveAttribute('href', '#calendar-preview')
+    expect(screen.getByRole('link', { name: 'Ranking & points preview' })).toHaveAttribute('href', '#ranking-points-preview')
     expect(await screen.findByRole('heading', { name: 'Selected Season Workspace' })).toBeInTheDocument()
     expect(screen.getByText('This page does not create, build, simulate, or edit the season.')).toBeInTheDocument()
     expect(screen.getAllByText('2000/01').length).toBeGreaterThan(0)
@@ -675,15 +680,16 @@ describe('Module 17 pages through routes', () => {
   })
 
   it('renders concrete season calendar preview with read-only event summary and first 10 note', async () => {
-    api.getAdminRankingTable.mockResolvedValueOnce({
+    api.getAdminRankingTable.mockResolvedValue({
       rows: [{ rank: 1, dense_rank: 1, ordinal_position: 1, player_id: 'P-1', player_name: 'Ali Ace', country_code: 'EGY', nationality: 'Egypt', age_years_at_season_start: 24, career_stage: 'prime', current_ability: 90, potential_ability: 94, potential_tier: 'S', archetype: 'all_court', play_style: 'attacking', ranking_points: 1200, race_points: 400, table_points: 1200, manual_override: false, source_generation: 'initial_pool', locked_from_initial_pool: true, movement: null, previous_rank: null, events_counted: null, player_fingerprint: null }],
       summary: { season: '2000/2001', table_type: 'ranking', player_count: 1, total_source_players: 1, ranked_player_count: 1, zero_point_players: 0, countries_represented: 1, leader_player_id: 'P-1', leader_points: 1200, generated_from_active_players_fingerprint: 'active-fp', rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false },
       metadata: { season: '2000/2001', table_type: 'ranking', source: 'season_active_players', active_players_fingerprint: 'active-fp', generated_fingerprint: 'generated-fp', ranking_basis: 'current active season player ranking_points', filters: { country_code: null, search: null, include_zero_points: true, min_points: null }, limit: 10, warnings: [] },
       validation_warnings: [], validation_errors: []
     })
-    api.getAdminRankingSnapshot.mockResolvedValueOnce({ snapshot: null, snapshot_exists: true, summary: { ranking: { season: '2000/2001', season_week: 1, table_type: 'ranking', player_count: 1, ranked_player_count: 1, zero_point_players: 0, countries_represented: 1, leader_player_id: 'P-1', leader_points: 1200, previous_snapshot_key: null, new_entries_count: 1, moved_up_count: 0, moved_down_count: 0, unchanged_count: 0, rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false }, race: { season: '2000/2001', season_week: 1, table_type: 'race', player_count: 1, ranked_player_count: 1, zero_point_players: 0, countries_represented: 1, leader_player_id: 'P-1', leader_points: 400, previous_snapshot_key: null, new_entries_count: 1, moved_up_count: 0, moved_down_count: 0, unchanged_count: 0, rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false } }, metadata: { season: '2000/2001', season_week: 1, calendar_year: 2000, year_week: 37, source: 'active_season_players', active_players_fingerprint: 'active-fp', point_awards_fingerprint: null, ranking_table_fingerprint: 'r-fp', race_table_fingerprint: 'rc-fp', snapshot_fingerprint: 's-fp', previous_snapshot_fingerprint: null, dry_run: true, persisted: false, generated_seed: 1, persistence_path: null, publication_basis: 'preview', rolling_ranking_implemented: false, best_n_implemented: false }, validation_warnings: [], validation_errors: [] })
-    api.getAdminPointBreakdown.mockResolvedValueOnce({ breakdown: null, summary_rows: [{ player_id: 'P-1', player_name: 'Ali Ace', country_code: 'EGY', ranking_points: 1200, race_points: 400, breakdown_ranking_points_total: 1200, breakdown_race_points_total: 400, applied_event_count: 3, total_event_count: 3, consistency_ok: true, top_result_stage: 'Winner', top_result_event_id: 'EVT-1' }], metadata: { season: '2000/2001', source: 'season_point_awards', active_players_fingerprint: 'active-fp', point_awards_fingerprint: 'awards-fp', generated_fingerprint: 'generated-fp', applied_only: true, table_type: 'both', filters: { player_id: null, search: null, country_code: null, include_zero_point_awards: false }, limit: 10, rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false }, validation_warnings: [], validation_errors: [] })
-    api.getSeasonCalendar.mockResolvedValueOnce({
+    api.getAdminRankingSnapshot.mockResolvedValue({ snapshot: null, snapshot_exists: true, summary: { ranking: { season: '2000/2001', season_week: 1, table_type: 'ranking', player_count: 1, ranked_player_count: 1, zero_point_players: 0, countries_represented: 1, leader_player_id: 'P-1', leader_points: 1200, previous_snapshot_key: null, new_entries_count: 1, moved_up_count: 0, moved_down_count: 0, unchanged_count: 0, rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false }, race: { season: '2000/2001', season_week: 1, table_type: 'race', player_count: 1, ranked_player_count: 1, zero_point_players: 0, countries_represented: 1, leader_player_id: 'P-1', leader_points: 400, previous_snapshot_key: null, new_entries_count: 1, moved_up_count: 0, moved_down_count: 0, unchanged_count: 0, rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false } }, metadata: { season: '2000/2001', season_week: 1, calendar_year: 2000, year_week: 37, source: 'active_season_players', active_players_fingerprint: 'active-fp', point_awards_fingerprint: null, ranking_table_fingerprint: 'r-fp', race_table_fingerprint: 'rc-fp', snapshot_fingerprint: 's-fp', previous_snapshot_fingerprint: null, dry_run: true, persisted: false, generated_seed: 1, persistence_path: null, publication_basis: 'preview', rolling_ranking_implemented: false, best_n_implemented: false }, validation_warnings: [], validation_errors: [] })
+    api.getAdminPointBreakdown.mockResolvedValue({ breakdown: null, summary_rows: [{ player_id: 'P-1', player_name: 'Ali Ace', country_code: 'EGY', ranking_points: 1200, race_points: 400, breakdown_ranking_points_total: 1200, breakdown_race_points_total: 400, applied_event_count: 3, total_event_count: 3, consistency_ok: true, top_result_stage: 'Winner', top_result_event_id: 'EVT-1' }], metadata: { season: '2000/2001', source: 'season_point_awards', active_players_fingerprint: 'active-fp', point_awards_fingerprint: 'awards-fp', generated_fingerprint: 'generated-fp', applied_only: true, table_type: 'both', filters: { player_id: null, search: null, country_code: null, include_zero_point_awards: false }, limit: 10, rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false }, validation_warnings: [], validation_errors: [] })
+    api.getSeasonCalendar
+      .mockResolvedValueOnce({
       calendar: {
         season: '2000/2001',
         events: Array.from({ length: 11 }, (_, index) => ({
@@ -728,6 +734,51 @@ describe('Module 17 pages through routes', () => {
       validation_warnings: [{ severity: 'warning', code: 'calendar_warn', message: 'warn', event_id: null, field: null }],
       validation_errors: []
     })
+      .mockResolvedValueOnce({
+        calendar: {
+          season: '2000/2001',
+          events: Array.from({ length: 11 }, (_, index) => ({
+            event_id: `E-${index + 1}`,
+            season: '2000/2001',
+            season_week: index + 1,
+            calendar_year: 2000,
+            year_week: 37 + index,
+            template_id: `wt_${index + 1}`,
+            event_name: index === 0 ? 'World A' : `Event ${index + 1}`,
+            category: index % 2 === 0 ? 'PLATINUM' : 'GOLD',
+            tour_level: 'WORLD_TOUR',
+            host_country: index % 2 === 0 ? 'ENG' : 'USA',
+            host_city: null,
+            region: index % 2 === 0 ? 'EUROPE' : 'NORTH_AMERICA',
+            duration_in_season_weeks: 1,
+            start_season_week: index + 1,
+            end_season_week: index + 1,
+            status: 'planned',
+            main_draw_size: 32,
+            qualification_draw_size: 16,
+            seeds_count: 8,
+            qualifier_spots: 4,
+            wild_cards: 2,
+            byes: 0,
+            point_distribution_ref: null,
+            point_distribution: null,
+            prize_money: 100000,
+            prestige: 8,
+            event_level_overrides: {},
+            source_template_fingerprint: null,
+            template_snapshot_fingerprint: null,
+            calendar_fingerprint: null,
+            template_snapshot: {}
+          })),
+          metadata: null,
+          validation_warnings: [{ severity: 'warning', code: 'calendar_warn', message: 'warn', event_id: null, field: null }],
+          validation_errors: []
+        },
+        summary: { event_count: 11, season_weeks_used: 11, first_event_week: 1, last_event_week: 11, world_tour_events: 11, elite_tour_events: 0, validation_warning_count: 1, validation_error_count: 0, persisted: true, calendar_exists: true },
+        metadata: null,
+        validation_warnings: [{ severity: 'warning', code: 'calendar_warn', message: 'warn', event_id: null, field: null }],
+        validation_errors: []
+      })
     renderAppAt('/admin/seasons/detail/2000%2F01')
     expect(await screen.findByRole('heading', { name: 'Calendar preview (read-only)' })).toBeInTheDocument()
     expect(await screen.findByText('Calendar loaded.')).toBeInTheDocument()
@@ -744,13 +795,21 @@ describe('Module 17 pages through routes', () => {
   })
 
   it('renders concrete season calendar preview no-calendar state', async () => {
-    api.getSeasonCalendar.mockResolvedValueOnce({
+    api.getSeasonCalendar
+      .mockResolvedValueOnce({
       calendar: null,
       summary: { event_count: 0, season_weeks_used: 0, first_event_week: null, last_event_week: null, world_tour_events: 0, elite_tour_events: 0, validation_warning_count: 0, validation_error_count: 0, persisted: false, calendar_exists: false },
       metadata: null,
       validation_warnings: [],
       validation_errors: []
     })
+      .mockResolvedValueOnce({
+        calendar: null,
+        summary: { event_count: 0, season_weeks_used: 0, first_event_week: null, last_event_week: null, world_tour_events: 0, elite_tour_events: 0, validation_warning_count: 0, validation_error_count: 0, persisted: false, calendar_exists: false },
+        metadata: null,
+        validation_warnings: [],
+        validation_errors: []
+      })
     renderAppAt('/admin/seasons/detail/2000%2F01')
     expect(await screen.findByText('No calendar exists yet for this season.')).toBeInTheDocument()
   })

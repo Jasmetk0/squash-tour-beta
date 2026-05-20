@@ -32,7 +32,7 @@ export function AdminTourSeasonsCategoriesPage(): JSX.Element {
             <tbody>
               {payload.categories.map((category) => (
                 <tr key={category.category_id}>
-                  <td>{category.name} ({category.category_id})</td><td>{category.template_count}</td><td>{category.main_draw_size ?? '—'}</td><td>{category.qualification_draw_size ?? '—'}</td><td>{category.schedule_footprint_weeks ?? '—'}</td><td>{category.mandatory === null ? '—' : category.mandatory ? 'Yes' : 'No'}</td><td>{category.source_template_ids.join(', ')}</td><td>{category.status}</td>
+                  <td><Link to={`/admin/tour-seasons/categories/${category.category_id}`}>{category.name} ({category.category_id})</Link></td><td>{category.template_count}</td><td>{category.main_draw_size ?? '—'}</td><td>{category.qualification_draw_size ?? '—'}</td><td>{category.schedule_footprint_weeks ?? '—'}</td><td>{category.mandatory === null ? '—' : category.mandatory ? 'Yes' : 'No'}</td><td>{category.source_template_ids.join(', ')}</td><td>{category.status}</td>
                 </tr>
               ))}
             </tbody>

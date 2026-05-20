@@ -84,6 +84,31 @@ export type CategoriesResponse = {
   status: 'read_only_foundation'
 }
 
+export type TournamentMasterSummary = {
+  tournament_id: string
+  name: string
+  status: 'read_only_foundation'
+  source: string
+  source_template_ids: string[]
+  template_count: number
+  categories: string[]
+  tour_levels: string[]
+  host_countries: string[]
+  regions: string[]
+  default_category: string | null
+  default_host_country: string | null
+  default_region: string | null
+  default_duration_weeks: number | null
+  has_qualification: boolean | null
+  notes: string[]
+}
+
+export type TournamentMastersResponse = {
+  tournaments: TournamentMasterSummary[]
+  source_path: string | null
+  status: 'read_only_foundation'
+}
+
 export type SeasonTemplatesResponse = {
   templates: SeasonTemplateSummary[]
   source_path: string | null

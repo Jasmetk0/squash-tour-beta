@@ -31,6 +31,7 @@ from beta_engine.application.season_ranking_table_service import SeasonRankingTa
 from beta_engine.application.season_ranking_snapshot_service import SeasonRankingSnapshotService
 from beta_engine.application.season_registry_service import SeasonRegistryService
 from beta_engine.application.season_template_service import SeasonTemplateService
+from beta_engine.application.tournament_master_service import TournamentMasterService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.application.world_package_service import WorldPackageService
@@ -133,6 +134,10 @@ def get_season_calendar_service(request: Request) -> SeasonCalendarService:
 
 def get_season_template_service(request: Request) -> SeasonTemplateService:
     return SeasonTemplateService(template_service=get_tournament_templates_config_service(request))
+
+
+def get_tournament_master_service(request: Request) -> TournamentMasterService:
+    return TournamentMasterService(template_service=get_tournament_templates_config_service(request))
 
 
 def get_season_entry_list_service(request: Request) -> SeasonEntryListService:

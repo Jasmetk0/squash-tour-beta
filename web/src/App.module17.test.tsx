@@ -192,10 +192,11 @@ describe('Module 17 pages through routes', () => {
     renderAppAt('/admin/tour-seasons/tournaments')
     expect(await screen.findByRole('heading', { name: 'Tournaments' })).toBeInTheDocument()
     expect(screen.getByText(/Read-only tournament master records derived from current tournament template config\./)).toBeInTheDocument()
-    expect(await screen.findByText(/World Tour Gold \(world-tour-gold\)/)).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: /World Tour Gold \(world-tour-gold\)/ })).toHaveAttribute('href', '/admin/tour-seasons/tournaments/world-tour-gold')
     expect(screen.getAllByRole('link', { name: 'Open Tournament Templates' })[0]).toHaveAttribute('href', '/admin/tournament-templates')
     expect(screen.getByRole('link', { name: 'Open Categories' })).toHaveAttribute('href', '/admin/tour-seasons/categories')
     expect(screen.getAllByRole('link', { name: 'Open Season Templates' })[0]).toHaveAttribute('href', '/admin/tour-seasons/season-templates')
+
 
     renderAppAt('/admin/tour-seasons/season-templates')
     expect(await screen.findByRole('heading', { name: 'Season Templates' })).toBeInTheDocument()
@@ -221,6 +222,23 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByRole('heading', { name: 'Calendar Validation' })).toBeInTheDocument()
   })
 
+
+
+  it('renders tournament master detail route and not-found route', async () => {
+    renderAppAt('/admin/tour-seasons/tournaments/world-tour-gold')
+    expect(await screen.findByRole('heading', { name: 'Tournament Master' })).toBeInTheDocument()
+    expect(await screen.findByText(/tournament_id: world-tour-gold/)).toBeInTheDocument()
+    expect(screen.getAllByText(/read_only_foundation/).length).toBeGreaterThan(0)
+    expect(screen.getByText('Tournament master editor — planned.')).toBeInTheDocument()
+    expect(screen.getByText('Tournament editions — planned.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Back to Tournaments' })).toHaveAttribute('href', '/admin/tour-seasons/tournaments')
+    expect(screen.getByRole('link', { name: 'Open Tournament Templates' })).toHaveAttribute('href', '/admin/tournament-templates')
+    expect(screen.getByRole('link', { name: 'Open Categories' })).toHaveAttribute('href', '/admin/tour-seasons/categories')
+    expect(screen.getByRole('link', { name: 'Open Season Templates' })).toHaveAttribute('href', '/admin/tour-seasons/season-templates')
+
+    renderAppAt('/admin/tour-seasons/tournaments/unknown-id')
+    expect(await screen.findByText('Tournament master not found.')).toBeInTheDocument()
+  })
 
   it('renders Players hub route with Talent Intake and Player Database links', async () => {
     renderAppAt('/admin/players')

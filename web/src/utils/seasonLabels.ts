@@ -39,3 +39,23 @@ export function toLongSeasonLabel(label: string): string {
   const startYear = Number(compact.split('/')[0])
   return `${startYear}/${startYear + 1}`
 }
+
+export function safeToCompactSeasonLabel(label: string): string | null {
+  try {
+    return toCompactSeasonLabel(label)
+  } catch {
+    return null
+  }
+}
+
+export function safeToLongSeasonLabel(label: string): string | null {
+  try {
+    return toLongSeasonLabel(label)
+  } catch {
+    return null
+  }
+}
+
+export function isValidSeasonLabel(label: string): boolean {
+  return safeToCompactSeasonLabel(label) !== null
+}

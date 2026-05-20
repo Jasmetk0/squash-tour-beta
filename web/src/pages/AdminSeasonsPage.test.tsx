@@ -7,6 +7,7 @@ import { renderWithRoute } from '../test/testUtils'
 
 const api = vi.hoisted(() => ({
   getSeasonActivePlayers: vi.fn(),
+  getSeasonRegistry: vi.fn(),
   getAdminRankingTable: vi.fn(),
   getViewerRankingTable: vi.fn(),
   getAdminPointBreakdown: vi.fn(),
@@ -609,6 +610,14 @@ describe('AdminSeasonsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     api.getSeasonActivePlayers.mockResolvedValue(empty)
+    api.getSeasonRegistry.mockResolvedValue({
+      start_season: '2000/01',
+      end_season: '2039/40',
+      season_count: 40,
+      week_count: 61,
+      season_week_1_year_week: 37,
+      seasons: [{ label: '2000/01', season_start_year: 2000, season_index: 0, week_count: 61, season_week_start: 1, season_week_end: 61, year_week_start: 37, year_week_end: 36, status: 'registry_only' }]
+    })
     api.getAdminRankingTable.mockResolvedValue(rankingTableResponse)
     api.getViewerRankingTable.mockResolvedValue(rankingTableResponse)
     api.bootstrapSeasonFromInitialPool.mockResolvedValue(response)
@@ -652,6 +661,24 @@ describe('AdminSeasonsPage', () => {
     expect(screen.getByRole('button', { name: /Season Control Overview/i })).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByRole('button', { name: /Primary Workflow/i })).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByRole('heading', { name: 'Season Calendar Builder' })).toBeInTheDocument()
+  })
+
+  it('renders selected season workspace for valid season labels', async () => {
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons?season=2000%2F01')
+    expect(await screen.findByRole('heading', { name: 'Selected Season Workspace' })).toBeInTheDocument()
+    await waitFor(() => expect(api.getSeasonRegistry).toHaveBeenCalled())
+    expect(screen.getByText('Compact label')).toBeInTheDocument()
+    expect(screen.getByText('2000/01')).toBeInTheDocument()
+    expect(screen.getAllByText('2000/2001').length).toBeGreaterThan(0)
+    expect(screen.getByText(/Registry status/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open Calendar Validation' })).toHaveAttribute('href', '/admin/tour-seasons/validation')
+  })
+
+  it('shows invalid selected season warning without crashing', async () => {
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons?season=bad-label')
+    expect(await screen.findByText('Selected season label is invalid.')).toBeInTheDocument()
+    expect(screen.getByText('Raw label: bad-label')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /build from template/i })).not.toBeInTheDocument()
   })
 
   it('renders advanced sections collapsed and keeps manual controls accessible after expansion', async () => {

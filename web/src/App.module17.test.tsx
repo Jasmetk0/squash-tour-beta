@@ -37,6 +37,8 @@ const api = vi.hoisted(() => ({
   getAdminRankingTable: vi.fn(),
   getTalentClassSummary: vi.fn(),
   getSeasonRegistry: vi.fn(),
+  getSeasonActivePlayers: vi.fn(),
+  getSeasonCalendar: vi.fn(),
   getSeasonTemplates: vi.fn(),
   getCategories: vi.fn(),
   getTournaments: vi.fn(),
@@ -92,6 +94,7 @@ describe('Module 17 pages through routes', () => {
     api.getCountriesMetadata.mockResolvedValue({ dataset_status: 'temporary_seed_demo', country_count: 0, source_path: 'config/world/countries.json' })
     api.getTournamentTemplatesMetadata.mockResolvedValue({ template_count: 0, source_path: 'config/tournament_templates/mvp_templates.json', referenced_by_calendar: false, referenced_template_ids: [] })
     api.getViewerRankingTable.mockResolvedValue({ rows: [], summary: { season: '2000/2001', table_type: 'ranking', player_count: 0, total_source_players: 0, ranked_player_count: 0, zero_point_players: 0, countries_represented: 0, leader_player_id: null, leader_points: null, generated_from_active_players_fingerprint: 'active-fp', rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false }, metadata: { season: '2000/2001', table_type: 'ranking', source: 'season_active_players', active_players_fingerprint: 'active-fp', generated_fingerprint: 'generated-fp', ranking_basis: 'current active season player ranking_points', filters: { country_code: null, search: null, include_zero_points: true, min_points: null }, limit: 100, warnings: [] }, validation_warnings: ['Rolling 61-week ranking not implemented.'], validation_errors: [] })
+    api.getAdminRankingTable.mockResolvedValue({ rows: [], summary: { season: '2000/2001', table_type: 'ranking', player_count: 0, total_source_players: 0, ranked_player_count: 0, zero_point_players: 0, countries_represented: 0, leader_player_id: null, leader_points: null, generated_from_active_players_fingerprint: 'active-fp', rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false }, metadata: { season: '2000/2001', table_type: 'ranking', source: 'season_active_players', active_players_fingerprint: 'active-fp', generated_fingerprint: 'generated-fp', ranking_basis: 'current active season player ranking_points', filters: { country_code: null, search: null, include_zero_points: true, min_points: null }, limit: 100, warnings: [] }, validation_warnings: [], validation_errors: [] })
     api.getTalentClassSummary.mockResolvedValue({ year_start: 2030, years: 10, seed: 123, dataset_status: 'temporary_seed_demo', country_count: 0, source_path: 'config/world/countries.json', total_talents_across_span: 0, average_total_talents_per_year: 0, global_band_totals: {}, global_elite_talents: 0, global_tour_talents: 0, global_pro_depth: 0, countries: [] })
     api.getSeasonRegistry.mockResolvedValue({
       start_season: '2000/01',
@@ -101,6 +104,8 @@ describe('Module 17 pages through routes', () => {
       season_week_1_year_week: 37,
       seasons: Array.from({ length: 40 }, (_, index) => ({ season_start_year: 2000 + index, label: `${2000 + index}/${String((2001 + index) % 100).padStart(2, '0')}`, season_index: index, week_count: 61, season_week_start: 1, season_week_end: 61, year_week_start: 37, year_week_end: 36, status: 'registry_only' }))
     })
+    api.getSeasonActivePlayers.mockResolvedValue({ players: [], summary: { total_active_players: 0 }, metadata: null, warnings: [] })
+    api.getSeasonCalendar.mockResolvedValue({ calendar: null, summary: { event_count: 0 }, metadata: null, validation_warnings: [], validation_errors: [] })
     api.getCategories.mockResolvedValue({
       categories: [{ category_id: 'gold', name: 'GOLD', status: 'read_only_foundation', source: 'derived_preview:tournament_templates', template_count: 1, valid_from_season: null, valid_to_season: null, tour_level: 'WORLD_TOUR', prestige_rank: null, mandatory: null, main_draw_size: null, qualification_draw_size: 16, direct_entries: 18, qualifiers: 4, wildcards: 2, lucky_losers: 2, seeds_count: 8, points_by_round: null, prize_money_total: null, match_format: null, qualifying_weeks_count: 1, main_draw_weeks_count: null, schedule_footprint_weeks: 1, source_template_ids: ['wt_gold_24'], notes: ['Mixed draw sizes across source templates.'] }],
       source_path: 'config/tournament_templates/mvp_templates.json',
@@ -240,7 +245,8 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Season links open existing Seasons tooling with the selected season in the URL. Direct season editing/detail workflow is planned.')).toBeInTheDocument()
 
     renderAppAt('/admin/seasons?season=2000%2F01')
-    expect(await screen.findByText('Selected registry season: 2000/01')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Selected Season Workspace' })).toBeInTheDocument()
+    expect(screen.getAllByText('2000/01').length).toBeGreaterThan(0)
 
     renderAppAt('/admin/tour-seasons/compare')
     expect(await screen.findByRole('heading', { name: 'Calendar Compare / Apply' })).toBeInTheDocument()

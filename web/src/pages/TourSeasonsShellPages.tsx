@@ -1,10 +1,15 @@
-import { type ReactNode } from 'react'
+import { type ReactNode, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
 import { getCategories, getSeasonRegistry, getSeasonTemplates, getTournaments } from '../api/client'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
+
+
+type ValidationSeverity = 'OK' | 'Info' | 'Warning'
+type ValidationFilter = 'All' | ValidationSeverity
+
 
 function TourSeasonsShellPage({
   title,
@@ -15,6 +20,8 @@ function TourSeasonsShellPage({
   subtitle: string
   children: ReactNode
 }): JSX.Element {
+
+
   return (
     <section className="panel">
       <PageIntro title={title} subtitle={subtitle} />
@@ -34,6 +41,8 @@ function TourSeasonsShellPage({
 }
 
 export function AdminTourSeasonsComparePage(): JSX.Element {
+
+
   return (
     <TourSeasonsShellPage title="Calendar Compare / Apply" subtitle="Compare a current season with a template or another season.">
       <p>Planned statuses: Same, Modified, Missing from current, Only in current, and Conflict.</p>
@@ -56,8 +65,9 @@ export function AdminTourSeasonsValidationPage(): JSX.Element {
   const tournaments = tournamentsQuery.data?.tournaments ?? []
   const templates = templatesQuery.data?.templates ?? []
   const slotCountTotal = templates.reduce((total, template) => total + template.slots.length, 0)
+  const [severityFilter, setSeverityFilter] = useState<ValidationFilter>('All')
 
-  const registryChecks = registry
+  const registryChecks: { severity: ValidationSeverity; message: string }[] = registry
     ? [
         { severity: registry.season_count === 40 ? 'OK' : 'Warning', message: `season_count is ${registry.season_count} (expected 40).` },
         { severity: registry.week_count === 61 ? 'OK' : 'Warning', message: `week_count is ${registry.week_count} (expected 61).` },
@@ -109,6 +119,23 @@ export function AdminTourSeasonsValidationPage(): JSX.Element {
     return issues
   })
 
+
+  const allChecks = useMemo(() => [...registryChecks, ...categoryIssues, ...tournamentIssues, ...seasonTemplateIssues], [registryChecks, categoryIssues, tournamentIssues, seasonTemplateIssues])
+  const counts = useMemo(() => ({
+    total: allChecks.length,
+    warning: allChecks.filter((issue) => issue.severity === 'Warning').length,
+    info: allChecks.filter((issue) => issue.severity === 'Info').length,
+    ok: allChecks.filter((issue) => issue.severity === 'OK').length
+  }), [allChecks])
+
+  const filterBySeverity = <T extends { severity: ValidationSeverity }>(items: T[]): T[] =>
+    severityFilter === 'All' ? items : items.filter((item) => item.severity === severityFilter)
+
+  const filteredRegistryChecks = filterBySeverity(registryChecks)
+  const filteredCategoryIssues = filterBySeverity(categoryIssues)
+  const filteredTournamentIssues = filterBySeverity(tournamentIssues)
+  const filteredSeasonTemplateIssues = filterBySeverity(seasonTemplateIssues)
+
   return (
     <section className="panel">
       <PageIntro title="Calendar Validation" subtitle="Read-only validation overview for Tour & Seasons foundation data." />
@@ -119,23 +146,39 @@ export function AdminTourSeasonsValidationPage(): JSX.Element {
           <li>Tournaments: {tournamentsQuery.isLoading ? 'Loading…' : tournamentsQuery.error ? `Error: ${formatApiError(tournamentsQuery.error)}` : tournaments.length}</li>
           <li>Season Templates: {templatesQuery.isLoading ? 'Loading…' : templatesQuery.error ? `Error: ${formatApiError(templatesQuery.error)}` : templates.length}</li>
           <li>Season Template Slots (total): {templatesQuery.error ? '—' : slotCountTotal}</li>
+          <li>Total checks: {counts.total}</li>
+          <li>Warnings: {counts.warning}</li>
+          <li>Info: {counts.info}</li>
+          <li>OK: {counts.ok}</li>
         </ul>
+        <p>Severity filter:</p>
+        <div role="group" aria-label="Validation severity filters">
+          {(['All', 'Warnings', 'Info', 'OK'] as const).map((option) => {
+            const mapped = option === 'Warnings' ? 'Warning' : option
+            const isActive = severityFilter === mapped
+            return (
+              <button key={option} type="button" onClick={() => setSeverityFilter(mapped)} aria-pressed={isActive}>
+                {option}
+              </button>
+            )
+          })}
+        </div>
       </SectionCard>
 
       <SectionCard title="Registry checks">
-        {registryChecks.length === 0 ? <p>No issues detected from current read-only checks.</p> : <ul className="dashboard-help-list">{registryChecks.map((check, index) => <li key={`registry-check-${index}`}>[{check.severity}] Registry — <Link to="/admin/tour-seasons/season-registry">Season Registry</Link>: {check.message}</li>)}</ul>}
+        {registryChecks.length === 0 ? <p>No issues detected from current read-only checks.</p> : filteredRegistryChecks.length === 0 ? <p>No checks match the current filter.</p> : <ul className="dashboard-help-list">{filteredRegistryChecks.map((check, index) => <li key={`registry-check-${index}`}>[{check.severity}] Registry — <Link to="/admin/tour-seasons/season-registry">Season Registry</Link>: {check.message}</li>)}</ul>}
       </SectionCard>
 
       <SectionCard title="Category checks">
-        {categoryIssues.length === 0 ? <p>No issues detected from current read-only checks.</p> : <ul className="dashboard-help-list">{categoryIssues.map((issue, index) => <li key={`category-issue-${index}`}>[{issue.severity}] Category — <Link to={`/admin/tour-seasons/categories/${issue.id}`}>{issue.name} ({issue.id})</Link>: {issue.message}</li>)}</ul>}
+        {categoryIssues.length === 0 ? <p>No issues detected from current read-only checks.</p> : filteredCategoryIssues.length === 0 ? <p>No checks match the current filter.</p> : <ul className="dashboard-help-list">{filteredCategoryIssues.map((issue, index) => <li key={`category-issue-${index}`}>[{issue.severity}] Category — <Link to={`/admin/tour-seasons/categories/${issue.id}`}>{issue.name} ({issue.id})</Link>: {issue.message}</li>)}</ul>}
       </SectionCard>
 
       <SectionCard title="Tournament checks">
-        {tournamentIssues.length === 0 ? <p>No issues detected from current read-only checks.</p> : <ul className="dashboard-help-list">{tournamentIssues.map((issue, index) => <li key={`tournament-issue-${index}`}>[{issue.severity}] Tournament — <Link to={`/admin/tour-seasons/tournaments/${issue.id}`}>{issue.name} ({issue.id})</Link>: {issue.message}</li>)}</ul>}
+        {tournamentIssues.length === 0 ? <p>No issues detected from current read-only checks.</p> : filteredTournamentIssues.length === 0 ? <p>No checks match the current filter.</p> : <ul className="dashboard-help-list">{filteredTournamentIssues.map((issue, index) => <li key={`tournament-issue-${index}`}>[{issue.severity}] Tournament — <Link to={`/admin/tour-seasons/tournaments/${issue.id}`}>{issue.name} ({issue.id})</Link>: {issue.message}</li>)}</ul>}
       </SectionCard>
 
       <SectionCard title="Season Template checks">
-        {seasonTemplateIssues.length === 0 ? <p>No issues detected from current read-only checks.</p> : <ul className="dashboard-help-list">{seasonTemplateIssues.map((issue, index) => <li key={`template-issue-${index}`}>[{issue.severity}] Season Template — <Link to={`/admin/tour-seasons/season-templates/${issue.id}`}>{issue.name} ({issue.id})</Link>: {issue.message}</li>)}</ul>}
+        {seasonTemplateIssues.length === 0 ? <p>No issues detected from current read-only checks.</p> : filteredSeasonTemplateIssues.length === 0 ? <p>No checks match the current filter.</p> : <ul className="dashboard-help-list">{filteredSeasonTemplateIssues.map((issue, index) => <li key={`template-issue-${index}`}>[{issue.severity}] Season Template — <Link to={`/admin/tour-seasons/season-templates/${issue.id}`}>{issue.name} ({issue.id})</Link>: {issue.message}</li>)}</ul>}
       </SectionCard>
 
       <SectionCard title="Planned future validation">

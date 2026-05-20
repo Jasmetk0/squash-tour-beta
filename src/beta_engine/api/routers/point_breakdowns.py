@@ -5,6 +5,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from beta_engine.api.deps import get_season_point_breakdown_service
+from beta_engine.api.season_label_params import normalize_season_for_legacy_services
 from beta_engine.application.season_point_breakdown_service import PlayerPointBreakdownResponse, SeasonPointBreakdownService
 
 router = APIRouter(tags=["point-breakdowns"])
@@ -23,9 +24,10 @@ def _get_breakdown(
     include_zero_point_awards: bool,
     service: SeasonPointBreakdownService,
 ) -> PlayerPointBreakdownResponse:
+    normalized_season = normalize_season_for_legacy_services(season)
     try:
         return service.get_player_point_breakdown(
-            season=season,
+            season=normalized_season,
             player_id=player_id,
             search=search,
             country_code=country_code,

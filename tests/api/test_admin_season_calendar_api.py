@@ -74,6 +74,26 @@ def test_get_empty_calendar_state(tmp_path: Path) -> None:
         assert body["summary"]["calendar_exists"] is False
 
 
+def test_get_calendar_accepts_long_and_compact_labels_equivalently(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {"seed": 5, "dry_run": False, "overwrite_existing": False, "season_start_calendar_year": 2000, "season_start_year_week": 37, "include_inactive_templates": False, "max_events": None}
+        call("POST", f"{server.base_url}/admin/seasons/2000%2F2001/calendar/build", payload)
+        _, long_body = call("GET", f"{server.base_url}/admin/seasons/2000%2F2001/calendar")
+        _, compact_body = call("GET", f"{server.base_url}/admin/seasons/2000%2F01/calendar")
+        assert compact_body == long_body
+
+
+def test_get_calendar_invalid_season_label_returns_400(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        for label in ("2000%2F03", "not-a-season"):
+            try:
+                call("GET", f"{server.base_url}/admin/seasons/{label}/calendar")
+            except HTTPError as exc:
+                assert exc.code == 400
+            else:
+                raise AssertionError(f"invalid season label {label} should fail")
+
+
 def test_post_dry_run_and_persist_calendar(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         payload = {"seed": 12345, "dry_run": True, "overwrite_existing": False, "season_start_calendar_year": 2000, "season_start_year_week": 37, "include_inactive_templates": False, "max_events": None}

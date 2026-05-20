@@ -37,6 +37,26 @@ def test_get_viewer_point_breakdown_summary_rows(tmp_path: Path) -> None:
         assert {row["country_code"] for row in body["summary_rows"]} == {"EGY"}
 
 
+def test_point_breakdown_accepts_long_and_compact_labels_equivalently(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        _persist_awards(server, apply=True)
+        _, long_body = call("GET", f"{server.base_url}/admin/point-breakdowns/2000%2F2001?player_id=P1")
+        _, compact_body = call("GET", f"{server.base_url}/admin/point-breakdowns/2000%2F01?player_id=P1")
+        assert compact_body == long_body
+
+
+def test_point_breakdown_invalid_season_label_returns_400(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        _persist_awards(server, apply=True)
+        for label in ("2000%2F03", "not-a-season"):
+            try:
+                call("GET", f"{server.base_url}/viewer/point-breakdowns/{label}")
+            except HTTPError as exc:
+                assert exc.code == 400
+            else:
+                raise AssertionError(f"invalid season label {label} should fail")
+
+
 def test_player_id_param_works(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         _persist_awards(server, apply=True)

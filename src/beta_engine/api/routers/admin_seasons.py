@@ -80,7 +80,7 @@ def get_season_calendar(
     season: str,
     service: SeasonCalendarService = Depends(get_season_calendar_service),
 ) -> SeasonCalendarBuildResult:
-    return service.get_calendar(season=season)
+    return service.get_calendar(season=normalize_season_for_legacy_services(season))
 
 
 @router.post("/{season:path}/calendar/build", response_model=SeasonCalendarBuildResult)

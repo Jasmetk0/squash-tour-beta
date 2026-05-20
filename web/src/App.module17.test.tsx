@@ -101,12 +101,12 @@ describe('Module 17 pages through routes', () => {
       seasons: Array.from({ length: 40 }, (_, index) => ({ season_start_year: 2000 + index, label: `${2000 + index}/${String((2001 + index) % 100).padStart(2, '0')}`, season_index: index, week_count: 61, season_week_start: 1, season_week_end: 61, year_week_start: 37, year_week_end: 36, status: 'registry_only' }))
     })
     api.getCategories.mockResolvedValue({
-      categories: [{ category_id: 'gold', name: 'GOLD', status: 'read_only_foundation', source: 'derived_preview:tournament_templates', template_count: 1, valid_from_season: null, valid_to_season: null, tour_level: 'WORLD_TOUR', prestige_rank: null, mandatory: null, main_draw_size: 24, qualification_draw_size: 16, direct_entries: 18, qualifiers: 4, wildcards: 2, lucky_losers: 2, seeds_count: 8, points_by_round: null, prize_money_total: null, match_format: null, qualifying_weeks_count: 1, main_draw_weeks_count: null, schedule_footprint_weeks: 1, source_template_ids: ['wt_gold_24'], notes: [] }],
+      categories: [{ category_id: 'gold', name: 'GOLD', status: 'read_only_foundation', source: 'derived_preview:tournament_templates', template_count: 1, valid_from_season: null, valid_to_season: null, tour_level: 'WORLD_TOUR', prestige_rank: null, mandatory: null, main_draw_size: null, qualification_draw_size: 16, direct_entries: 18, qualifiers: 4, wildcards: 2, lucky_losers: 2, seeds_count: 8, points_by_round: null, prize_money_total: null, match_format: null, qualifying_weeks_count: 1, main_draw_weeks_count: null, schedule_footprint_weeks: 1, source_template_ids: ['wt_gold_24'], notes: ['Mixed draw sizes across source templates.'] }],
       source_path: 'config/tournament_templates/mvp_templates.json',
       status: 'read_only_foundation'
     })
     api.getTournaments.mockResolvedValue({
-      tournaments: [{ tournament_id: 'world-tour-gold', name: 'World Tour Gold', status: 'read_only_foundation', source: 'derived_preview:tournament_templates', source_template_ids: ['wt_gold_24'], template_count: 1, categories: ['GOLD'], tour_levels: ['WORLD_TOUR'], host_countries: ['ENG'], regions: ['EUROPE'], default_category: 'GOLD', default_host_country: 'ENG', default_region: 'EUROPE', default_duration_weeks: 1, has_qualification: true, notes: [] }],
+      tournaments: [{ tournament_id: 'world-tour-gold', name: 'World Tour Gold', status: 'read_only_foundation', source: 'derived_preview:tournament_templates', source_template_ids: ['wt_gold_24'], template_count: 1, categories: ['GOLD'], tour_levels: ['WORLD_TOUR'], host_countries: ['ENG'], regions: ['EUROPE'], default_category: null, default_host_country: 'ENG', default_region: 'EUROPE', default_duration_weeks: 1, has_qualification: true, notes: [] }],
       source_path: 'config/tournament_templates/mvp_templates.json',
       status: 'read_only_foundation'
     })
@@ -221,6 +221,16 @@ describe('Module 17 pages through routes', () => {
 
     renderAppAt('/admin/tour-seasons/validation')
     expect(await screen.findByRole('heading', { name: 'Calendar Validation' })).toBeInTheDocument()
+    expect(screen.getByText('Read-only validation overview for Tour & Seasons foundation data.')).toBeInTheDocument()
+    expect(await screen.findByText('Categories: 1')).toBeInTheDocument()
+    expect((await screen.findAllByText('Tournaments: 1')).length).toBeGreaterThan(0)
+    expect(await screen.findByText('Season Templates: 1')).toBeInTheDocument()
+    expect(await screen.findByText(/Season Template Slots \(total\): 1/)).toBeInTheDocument()
+    expect(await screen.findByText(/\[Warning\] Category/)).toBeInTheDocument()
+    expect(await screen.findByText(/\[Info\] Tournament/)).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: /GOLD \(gold\)/ })[0]).toHaveAttribute('href', '/admin/tour-seasons/categories/gold')
+    expect(screen.getAllByRole('link', { name: /World Tour Gold \(world-tour-gold\)/ })[0]).toHaveAttribute('href', '/admin/tour-seasons/tournaments/world-tour-gold')
+    expect(screen.queryByRole('button', { name: /apply|save|update|delete|create/i })).not.toBeInTheDocument()
   })
 
 

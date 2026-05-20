@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom'
 import { DetailFieldGrid, DetailList } from '../components/DetailUi'
 import { SeasonCalendarPreview } from './SeasonCalendarPreview'
 import { SeasonRankingPointsPreview } from './SeasonRankingPointsPreview'
+import { SeasonHealthPreview } from './SeasonHealthPreview'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import { safeToCompactSeasonLabel, safeToLongSeasonLabel } from '../utils/seasonLabels'
 import { SelectedSeasonWorkspace } from './SelectedSeasonWorkspace'
@@ -41,6 +42,7 @@ export function AdminSeasonDetailPage(): JSX.Element {
           <a key="workspace" href="#selected-season-workspace">Selected season workspace</a>,
           <a key="calendar" href="#calendar-preview">Calendar preview</a>,
           <a key="ranking" href="#ranking-points-preview">Ranking &amp; points preview</a>,
+          <a key="health" href="#season-health-preview">Season health preview</a>,
           <a key="navigation" href="#season-navigation">Navigation</a>
         ]} emptyLabel="No sections." />
       </SectionCard>
@@ -58,6 +60,12 @@ export function AdminSeasonDetailPage(): JSX.Element {
       <section id="ranking-points-preview">
         <SectionCard title="Ranking & points preview (read-only)">
           <SeasonRankingPointsPreview seasonLabelRaw={seasonLabel} />
+        </SectionCard>
+      </section>
+
+      <section id="season-health-preview">
+        <SectionCard title="Season Health / Readiness Preview">
+          <SeasonHealthPreview seasonLabelRaw={seasonLabel} />
         </SectionCard>
       </section>
 

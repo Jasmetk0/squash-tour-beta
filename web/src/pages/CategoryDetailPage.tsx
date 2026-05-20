@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
 import { getCategories } from '../api/client'
+import { DetailFieldGrid, DetailList } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -32,22 +33,22 @@ export function AdminTourSeasonsCategoryDetailPage(): JSX.Element {
       {category ? (
         <>
           <SectionCard title="Header summary">
-            <ul className="dashboard-help-list">
-              <li>Name: {category.name}</li>
-              <li>Category ID: {category.category_id}</li>
-              <li>Status: {category.status}</li>
-              <li>Source: {category.source}</li>
-            </ul>
+            <DetailFieldGrid fields={[
+              { label: 'Name', value: category.name },
+              { label: 'Category ID', value: category.category_id },
+              { label: 'Status', value: category.status },
+              { label: 'Source', value: category.source }
+            ]} />
           </SectionCard>
 
           <SectionCard title="Identity">
-            <ul className="dashboard-help-list">
-              <li>category_id: {category.category_id}</li>
-              <li>name: {category.name}</li>
-              <li>template_count: {category.template_count}</li>
-              <li>source_template_ids: {formatList(category.source_template_ids)}</li>
-              <li>status: {category.status}</li>
-            </ul>
+            <DetailFieldGrid fields={[
+              { label: 'category_id', value: category.category_id },
+              { label: 'name', value: category.name },
+              { label: 'template_count', value: category.template_count },
+              { label: 'source_template_ids', value: formatList(category.source_template_ids) },
+              { label: 'status', value: category.status }
+            ]} />
           </SectionCard>
 
           <SectionCard title="Validity / versioning">
@@ -109,13 +110,7 @@ export function AdminTourSeasonsCategoryDetailPage(): JSX.Element {
           </SectionCard>
 
           <SectionCard title="Notes">
-            {category.notes.length > 0 ? (
-              <ul className="dashboard-help-list">
-                {category.notes.map((note) => <li key={note}>{note}</li>)}
-              </ul>
-            ) : (
-              <p>No notes.</p>
-            )}
+            <DetailList items={category.notes} emptyLabel="No notes." />
           </SectionCard>
 
           <SectionCard title="Planned future model">

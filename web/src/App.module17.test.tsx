@@ -37,6 +37,7 @@ const api = vi.hoisted(() => ({
   getAdminRankingTable: vi.fn(),
   getTalentClassSummary: vi.fn(),
   getSeasonRegistry: vi.fn(),
+  getSeasonTemplates: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
     constructor(message: string, status: number) {
@@ -96,6 +97,11 @@ describe('Module 17 pages through routes', () => {
       week_count: 61,
       season_week_1_year_week: 37,
       seasons: Array.from({ length: 40 }, (_, index) => ({ season_start_year: 2000 + index, label: `${2000 + index}/${String((2001 + index) % 100).padStart(2, '0')}`, season_index: index, week_count: 61, season_week_start: 1, season_week_end: 61, year_week_start: 37, year_week_end: 36, status: 'registry_only' }))
+    })
+    api.getSeasonTemplates.mockResolvedValue({
+      templates: [{ template_id: 'default_msa_template_preview', name: 'Default MSA Template Preview', description: 'Read-only derived preview built from current tournament templates config.', season_count_supported: 40, week_count: 61, slot_count: 1, source: 'derived_preview:tournament_templates', status: 'read_only_foundation', slots: [{ slot_id: 'slot-01-wt_gold_24', season_week_start: 1, season_week_end: 1, duration_weeks: 1, tournament_name: 'World Tour Gold', category: 'GOLD', host_country: 'ENG', region: 'EUROPE', has_qualification: true, qualifying_week_start: 1, main_draw_week_start: 1, source_template_id: 'wt_gold_24', notes: null }] }],
+      source_path: 'config/tournament_templates/mvp_templates.json',
+      status: 'read_only_foundation'
     })
   })
 
@@ -172,8 +178,11 @@ describe('Module 17 pages through routes', () => {
 
     renderAppAt('/admin/tour-seasons/season-templates')
     expect(await screen.findByRole('heading', { name: 'Season Templates' })).toBeInTheDocument()
-    expect(screen.getByText(/Season Registry has moved to its own read-only page\./)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Season Registry' })).toHaveAttribute('href', '/admin/tour-seasons/season-registry')
+    expect(screen.getByText(/Read-only foundation\./)).toBeInTheDocument()
+    expect(await screen.findByText(/Source path: config\/tournament_templates\/mvp_templates\.json/)).toBeInTheDocument()
+    expect(screen.getByText('Default MSA Template Preview')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open Season Registry' })).toHaveAttribute('href', '/admin/tour-seasons/season-registry')
+    expect(screen.getByRole('link', { name: 'Open Seasons' })).toHaveAttribute('href', '/admin/seasons')
 
     renderAppAt('/admin/tour-seasons/season-registry')
     expect(await screen.findByRole('heading', { level: 2, name: 'Season Registry' })).toBeInTheDocument()

@@ -123,7 +123,8 @@ import type {
   SeasonRangePreflightResult,
   RunSeasonRangeRequest,
   RunSeasonRangeResult,
-  SeasonRegistryResponse
+  SeasonRegistryResponse,
+  SeasonTemplatesResponse
 } from './types'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
@@ -170,6 +171,10 @@ export function getSeasonActivePlayers(season = '2000/2001'): Promise<SeasonActi
 
 export function getSeasonRegistry(): Promise<SeasonRegistryResponse> {
   return request('/admin/seasons/registry')
+}
+
+export function getSeasonTemplates(): Promise<SeasonTemplatesResponse> {
+  return request('/admin/seasons/templates')
 }
 
 

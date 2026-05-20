@@ -29,6 +29,7 @@ from beta_engine.application.season_point_breakdown_service import SeasonPointBr
 from beta_engine.application.season_ranking_table_service import SeasonRankingTableService
 from beta_engine.application.season_ranking_snapshot_service import SeasonRankingSnapshotService
 from beta_engine.application.season_registry_service import SeasonRegistryService
+from beta_engine.application.season_template_service import SeasonTemplateService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.application.world_package_service import WorldPackageService
@@ -123,6 +124,10 @@ def get_season_calendar_service(request: Request) -> SeasonCalendarService:
     if configured_path is not None:
         kwargs["calendar_registry_path"] = configured_path
     return SeasonCalendarService(**kwargs)
+
+
+def get_season_template_service(request: Request) -> SeasonTemplateService:
+    return SeasonTemplateService(template_service=get_tournament_templates_config_service(request))
 
 
 def get_season_entry_list_service(request: Request) -> SeasonEntryListService:

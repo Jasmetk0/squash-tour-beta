@@ -21,6 +21,40 @@ export type SeasonRegistryResponse = {
   seasons: SeasonRegistryEntry[]
 }
 
+export type SeasonTemplateSlot = {
+  slot_id: string
+  season_week_start: number
+  season_week_end: number
+  duration_weeks: number
+  tournament_name: string
+  category: string
+  host_country: string | null
+  region: string | null
+  has_qualification: boolean
+  qualifying_week_start: number | null
+  main_draw_week_start: number | null
+  source_template_id: string | null
+  notes: string | null
+}
+
+export type SeasonTemplateSummary = {
+  template_id: string
+  name: string
+  description: string
+  season_count_supported: number | null
+  week_count: number
+  slot_count: number
+  source: string
+  status: string
+  slots: SeasonTemplateSlot[]
+}
+
+export type SeasonTemplatesResponse = {
+  templates: SeasonTemplateSummary[]
+  source_path: string | null
+  status: string
+}
+
 export type RunSummary = {
   run_id: string
   season: number

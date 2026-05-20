@@ -95,7 +95,7 @@ export function SelectedSeasonWorkspace({ selectedSeasonRaw }: Props): JSX.Eleme
               <Link key="open-registry" to="/admin/tour-seasons/season-registry">Open Season Registry</Link>,
               <Link key="open-validation" to="/admin/tour-seasons/validation">Open Calendar Validation</Link>,
               <Link key="open-compare" to="/admin/tour-seasons/compare">Open Calendar Compare / Apply</Link>,
-              'Concrete season detail page — planned.',
+              ...(selectedCompactSeason ? [<Link key="open-concrete-detail" to={`/admin/seasons/detail/${encodeURIComponent(selectedCompactSeason)}`}>Open concrete season detail</Link>] : []),
               'Season editor — planned.',
               'Build from template — planned.',
               'Compare/apply — planned.'

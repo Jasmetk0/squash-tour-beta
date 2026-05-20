@@ -680,6 +680,7 @@ describe('AdminSeasonsPage', () => {
     expect(screen.getByText('Ranking snapshot W1')).toBeInTheDocument()
     expect(screen.getByText('Point breakdowns')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open Calendar Validation' })).toHaveAttribute('href', '/admin/tour-seasons/validation')
+    expect(screen.getByRole('link', { name: 'Open concrete season detail' })).toHaveAttribute('href', '/admin/seasons/detail/2000%2F01')
     const workspace = screen.getByRole('heading', { name: 'Selected Season Workspace' }).closest('article')
     expect(workspace).not.toBeNull()
     if (workspace) {

@@ -185,7 +185,7 @@ describe('Module 17 pages through routes', () => {
     renderAppAt('/admin/tour-seasons/categories')
     expect(await screen.findByRole('heading', { name: 'Categories' })).toBeInTheDocument()
     expect(screen.getAllByText(/Read-only foundation\./).length).toBeGreaterThan(0)
-    expect(await screen.findByText(/GOLD \(gold\)/)).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: /GOLD \(gold\)/ })).toHaveAttribute('href', '/admin/tour-seasons/categories/gold')
     expect(screen.getAllByRole('link', { name: 'Open Tournament Templates' })[0]).toHaveAttribute('href', '/admin/tournament-templates')
     expect(screen.getAllByRole('link', { name: 'Open Season Templates' })[0]).toHaveAttribute('href', '/admin/tour-seasons/season-templates')
 
@@ -223,6 +223,26 @@ describe('Module 17 pages through routes', () => {
   })
 
 
+
+
+
+  it('renders category detail route and not-found route', async () => {
+    renderAppAt('/admin/tour-seasons/categories/gold')
+    expect(await screen.findByRole('heading', { name: 'Category' })).toBeInTheDocument()
+    expect(await screen.findByText(/Name: GOLD/)).toBeInTheDocument()
+    expect(screen.getByText(/category_id: gold/)).toBeInTheDocument()
+    expect(screen.getAllByText(/read_only_foundation/).length).toBeGreaterThan(0)
+    expect(screen.getByText(/main_draw_size:/)).toBeInTheDocument()
+    expect(screen.getByText('Category editor — planned.')).toBeInTheDocument()
+    expect(screen.getByText('Category versioning by season range — planned.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Back to Categories' })).toHaveAttribute('href', '/admin/tour-seasons/categories')
+    expect(screen.getByRole('link', { name: 'Open Tournament Templates' })).toHaveAttribute('href', '/admin/tournament-templates')
+    expect(screen.getByRole('link', { name: 'Open Tournaments' })).toHaveAttribute('href', '/admin/tour-seasons/tournaments')
+    expect(screen.getByRole('link', { name: 'Open Season Templates' })).toHaveAttribute('href', '/admin/tour-seasons/season-templates')
+
+    renderAppAt('/admin/tour-seasons/categories/unknown-id')
+    expect(await screen.findByText('Category not found.')).toBeInTheDocument()
+  })
 
   it('renders tournament master detail route and not-found route', async () => {
     renderAppAt('/admin/tour-seasons/tournaments/world-tour-gold')

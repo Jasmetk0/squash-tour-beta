@@ -669,4 +669,71 @@ describe('Module 17 pages through routes', () => {
     renderAppAt('/runs/run-a/snapshots/race/7')
     expect(await screen.findByRole('heading', { name: 'Race snapshot detail' })).toBeInTheDocument()
   })
+
+  it('renders concrete season calendar preview with read-only event summary and first 10 note', async () => {
+    api.getSeasonCalendar.mockResolvedValueOnce({
+      calendar: {
+        season: '2000/2001',
+        events: Array.from({ length: 11 }, (_, index) => ({
+          event_id: `EVT-2000-W${String(index + 1).padStart(2, '0')}-wt`,
+          season: '2000/2001',
+          season_week: index + 1,
+          calendar_year: 2000,
+          year_week: 36 + index + 1,
+          template_id: `wt_${index + 1}`,
+          event_name: index === 0 ? 'World A' : `Event ${index + 1}`,
+          category: index % 2 === 0 ? 'PLATINUM' : 'GOLD',
+          tour_level: 'WORLD_TOUR',
+          host_country: index % 2 === 0 ? 'ENG' : 'USA',
+          host_city: null,
+          region: index % 2 === 0 ? 'EUROPE' : 'NORTH_AMERICA',
+          duration_in_season_weeks: 1,
+          start_season_week: index + 1,
+          end_season_week: index + 1,
+          status: 'planned',
+          main_draw_size: 32,
+          qualification_draw_size: 16,
+          seeds_count: 8,
+          qualifier_spots: 4,
+          wild_cards: 2,
+          byes: 0,
+          point_distribution_ref: null,
+          point_distribution: null,
+          prize_money: 100000,
+          prestige: 8,
+          event_level_overrides: {},
+          source_template_fingerprint: null,
+          template_snapshot_fingerprint: null,
+          calendar_fingerprint: null,
+          template_snapshot: {}
+        })),
+        metadata: null,
+        validation_warnings: [{ severity: 'warning', code: 'calendar_warn', message: 'warn', event_id: null, field: null }],
+        validation_errors: []
+      },
+      summary: { event_count: 11, season_weeks_used: 11, first_event_week: 1, last_event_week: 11, world_tour_events: 11, elite_tour_events: 0, validation_warning_count: 1, validation_error_count: 0, persisted: true, calendar_exists: true },
+      metadata: null,
+      validation_warnings: [{ severity: 'warning', code: 'calendar_warn', message: 'warn', event_id: null, field: null }],
+      validation_errors: []
+    })
+    renderAppAt('/admin/seasons/detail/2000%2F01')
+    expect(await screen.findByRole('heading', { name: 'Calendar preview (read-only)' })).toBeInTheDocument()
+    expect(await screen.findByText('Calendar loaded.')).toBeInTheDocument()
+    expect(screen.getByText((content) => content.includes('Event count: 11'))).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'World A' })).toBeInTheDocument()
+    expect(screen.getByText('Showing first 10 events only. Full calendar tooling remains in Seasons.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /build|edit|apply/i })).not.toBeInTheDocument()
+  })
+
+  it('renders concrete season calendar preview no-calendar state', async () => {
+    api.getSeasonCalendar.mockResolvedValueOnce({
+      calendar: null,
+      summary: { event_count: 0, season_weeks_used: 0, first_event_week: null, last_event_week: null, world_tour_events: 0, elite_tour_events: 0, validation_warning_count: 0, validation_error_count: 0, persisted: false, calendar_exists: false },
+      metadata: null,
+      validation_warnings: [],
+      validation_errors: []
+    })
+    renderAppAt('/admin/seasons/detail/2000%2F01')
+    expect(await screen.findByText('No calendar exists yet for this season.')).toBeInTheDocument()
+  })
 })

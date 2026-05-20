@@ -8,6 +8,7 @@ from fastapi import Request
 
 from beta_engine.application.api_services import SimulationApiService
 from beta_engine.application.config_validation_service import ConfigValidationService
+from beta_engine.application.category_service import CategoryService
 from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.initial_player_pool_service import InitialPlayerPoolService
 from beta_engine.application.season_player_bootstrap_service import InitialPoolSeasonBootstrapService
@@ -89,6 +90,10 @@ def get_tournament_templates_config_service(request: Request) -> TournamentTempl
     if calendar_dir is not None:
         kwargs["calendar_dir"] = calendar_dir
     return TournamentTemplatesConfigService(**kwargs)
+
+
+def get_category_service(request: Request) -> CategoryService:
+    return CategoryService(template_service=get_tournament_templates_config_service(request))
 
 
 def get_world_talent_preview_service(request: Request) -> WorldTalentPreviewService:

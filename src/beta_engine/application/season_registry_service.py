@@ -4,6 +4,8 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel, Field
 
+from beta_engine.domain.calendar.season_labels import season_label_from_start_year
+
 TOTAL_REGISTRY_SEASONS = 40
 REGISTRY_START_YEAR = 2000
 REGISTRY_END_YEAR = REGISTRY_START_YEAR + TOTAL_REGISTRY_SEASONS - 1
@@ -83,4 +85,4 @@ class SeasonRegistryService:
 
 
 def _season_label(start_year: int) -> str:
-    return f"{start_year}/{(start_year + 1) % 100:02d}"
+    return season_label_from_start_year(start_year)

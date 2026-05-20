@@ -35,6 +35,8 @@ const api = vi.hoisted(() => ({
   bootstrapNextSeason: vi.fn(),
   getViewerRankingTable: vi.fn(),
   getAdminRankingTable: vi.fn(),
+  getAdminRankingSnapshot: vi.fn(),
+  getAdminPointBreakdown: vi.fn(),
   getTalentClassSummary: vi.fn(),
   getSeasonRegistry: vi.fn(),
   getSeasonActivePlayers: vi.fn(),
@@ -95,6 +97,8 @@ describe('Module 17 pages through routes', () => {
     api.getTournamentTemplatesMetadata.mockResolvedValue({ template_count: 0, source_path: 'config/tournament_templates/mvp_templates.json', referenced_by_calendar: false, referenced_template_ids: [] })
     api.getViewerRankingTable.mockResolvedValue({ rows: [], summary: { season: '2000/2001', table_type: 'ranking', player_count: 0, total_source_players: 0, ranked_player_count: 0, zero_point_players: 0, countries_represented: 0, leader_player_id: null, leader_points: null, generated_from_active_players_fingerprint: 'active-fp', rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false }, metadata: { season: '2000/2001', table_type: 'ranking', source: 'season_active_players', active_players_fingerprint: 'active-fp', generated_fingerprint: 'generated-fp', ranking_basis: 'current active season player ranking_points', filters: { country_code: null, search: null, include_zero_points: true, min_points: null }, limit: 100, warnings: [] }, validation_warnings: ['Rolling 61-week ranking not implemented.'], validation_errors: [] })
     api.getAdminRankingTable.mockResolvedValue({ rows: [], summary: { season: '2000/2001', table_type: 'ranking', player_count: 0, total_source_players: 0, ranked_player_count: 0, zero_point_players: 0, countries_represented: 0, leader_player_id: null, leader_points: null, generated_from_active_players_fingerprint: 'active-fp', rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false }, metadata: { season: '2000/2001', table_type: 'ranking', source: 'season_active_players', active_players_fingerprint: 'active-fp', generated_fingerprint: 'generated-fp', ranking_basis: 'current active season player ranking_points', filters: { country_code: null, search: null, include_zero_points: true, min_points: null }, limit: 100, warnings: [] }, validation_warnings: [], validation_errors: [] })
+    api.getAdminRankingSnapshot.mockResolvedValue({ snapshot: null, snapshot_exists: false, summary: null, metadata: null, validation_warnings: [], validation_errors: [] })
+    api.getAdminPointBreakdown.mockResolvedValue({ breakdown: null, summary_rows: [], metadata: { season: '2000/2001', source: 'season_point_awards', active_players_fingerprint: 'active-fp', point_awards_fingerprint: 'awards-fp', generated_fingerprint: 'generated-fp', applied_only: true, table_type: 'both', filters: { player_id: null, search: null, country_code: null, include_zero_point_awards: false }, limit: 10, rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false }, validation_warnings: [], validation_errors: [] })
     api.getTalentClassSummary.mockResolvedValue({ year_start: 2030, years: 10, seed: 123, dataset_status: 'temporary_seed_demo', country_count: 0, source_path: 'config/world/countries.json', total_talents_across_span: 0, average_total_talents_per_year: 0, global_band_totals: {}, global_elite_talents: 0, global_tour_talents: 0, global_pro_depth: 0, countries: [] })
     api.getSeasonRegistry.mockResolvedValue({
       start_season: '2000/01',
@@ -671,6 +675,14 @@ describe('Module 17 pages through routes', () => {
   })
 
   it('renders concrete season calendar preview with read-only event summary and first 10 note', async () => {
+    api.getAdminRankingTable.mockResolvedValueOnce({
+      rows: [{ rank: 1, dense_rank: 1, ordinal_position: 1, player_id: 'P-1', player_name: 'Ali Ace', country_code: 'EGY', nationality: 'Egypt', age_years_at_season_start: 24, career_stage: 'prime', current_ability: 90, potential_ability: 94, potential_tier: 'S', archetype: 'all_court', play_style: 'attacking', ranking_points: 1200, race_points: 400, table_points: 1200, manual_override: false, source_generation: 'initial_pool', locked_from_initial_pool: true, movement: null, previous_rank: null, events_counted: null, player_fingerprint: null }],
+      summary: { season: '2000/2001', table_type: 'ranking', player_count: 1, total_source_players: 1, ranked_player_count: 1, zero_point_players: 0, countries_represented: 1, leader_player_id: 'P-1', leader_points: 1200, generated_from_active_players_fingerprint: 'active-fp', rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false },
+      metadata: { season: '2000/2001', table_type: 'ranking', source: 'season_active_players', active_players_fingerprint: 'active-fp', generated_fingerprint: 'generated-fp', ranking_basis: 'current active season player ranking_points', filters: { country_code: null, search: null, include_zero_points: true, min_points: null }, limit: 10, warnings: [] },
+      validation_warnings: [], validation_errors: []
+    })
+    api.getAdminRankingSnapshot.mockResolvedValueOnce({ snapshot: null, snapshot_exists: true, summary: { ranking: { season: '2000/2001', season_week: 1, table_type: 'ranking', player_count: 1, ranked_player_count: 1, zero_point_players: 0, countries_represented: 1, leader_player_id: 'P-1', leader_points: 1200, previous_snapshot_key: null, new_entries_count: 1, moved_up_count: 0, moved_down_count: 0, unchanged_count: 0, rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false }, race: { season: '2000/2001', season_week: 1, table_type: 'race', player_count: 1, ranked_player_count: 1, zero_point_players: 0, countries_represented: 1, leader_player_id: 'P-1', leader_points: 400, previous_snapshot_key: null, new_entries_count: 1, moved_up_count: 0, moved_down_count: 0, unchanged_count: 0, rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false } }, metadata: { season: '2000/2001', season_week: 1, calendar_year: 2000, year_week: 37, source: 'active_season_players', active_players_fingerprint: 'active-fp', point_awards_fingerprint: null, ranking_table_fingerprint: 'r-fp', race_table_fingerprint: 'rc-fp', snapshot_fingerprint: 's-fp', previous_snapshot_fingerprint: null, dry_run: true, persisted: false, generated_seed: 1, persistence_path: null, publication_basis: 'preview', rolling_ranking_implemented: false, best_n_implemented: false }, validation_warnings: [], validation_errors: [] })
+    api.getAdminPointBreakdown.mockResolvedValueOnce({ breakdown: null, summary_rows: [{ player_id: 'P-1', player_name: 'Ali Ace', country_code: 'EGY', ranking_points: 1200, race_points: 400, breakdown_ranking_points_total: 1200, breakdown_race_points_total: 400, applied_event_count: 3, total_event_count: 3, consistency_ok: true, top_result_stage: 'Winner', top_result_event_id: 'EVT-1' }], metadata: { season: '2000/2001', source: 'season_point_awards', active_players_fingerprint: 'active-fp', point_awards_fingerprint: 'awards-fp', generated_fingerprint: 'generated-fp', applied_only: true, table_type: 'both', filters: { player_id: null, search: null, country_code: null, include_zero_point_awards: false }, limit: 10, rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false }, validation_warnings: [], validation_errors: [] })
     api.getSeasonCalendar.mockResolvedValueOnce({
       calendar: {
         season: '2000/2001',
@@ -721,8 +733,14 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByText('Calendar loaded.')).toBeInTheDocument()
     expect(screen.getByText((content) => content.includes('Event count: 11'))).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'World A' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Ranking & points preview (read-only)' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Ranking & points preview' })).toBeInTheDocument()
+    expect(screen.getByText((content) => content.includes('Player count: 1'))).toBeInTheDocument()
+    expect(screen.getAllByRole('cell', { name: 'Ali Ace (P-1)' }).length).toBeGreaterThan(0)
+    expect(screen.getByRole('heading', { name: 'Ranking snapshot W1' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Point breakdown (Top 10, applied only, non-zero)' })).toBeInTheDocument()
     expect(screen.getByText('Showing first 10 events only. Full calendar tooling remains in Seasons.')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /build|edit|apply|generate|simulate/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /build|edit|apply|generate|simulate|recalculate/i })).not.toBeInTheDocument()
   })
 
   it('renders concrete season calendar preview no-calendar state', async () => {
@@ -743,6 +761,10 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByRole('heading', { name: 'Calendar preview (read-only)' })).toBeInTheDocument()
     expect(screen.getByText('Calendar preview unavailable for invalid season label.')).toBeInTheDocument()
     expect(api.getSeasonCalendar).not.toHaveBeenCalled()
+    expect(screen.getByText('Ranking & points preview unavailable for invalid season label.')).toBeInTheDocument()
+    expect(api.getAdminRankingTable).not.toHaveBeenCalled()
+    expect(api.getAdminRankingSnapshot).not.toHaveBeenCalled()
+    expect(api.getAdminPointBreakdown).not.toHaveBeenCalled()
     expect(screen.queryByRole('button', { name: /build|edit|apply|generate|simulate/i })).not.toBeInTheDocument()
   })
 })

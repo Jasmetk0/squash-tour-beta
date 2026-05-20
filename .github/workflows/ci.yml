@@ -16,8 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Fast CI routes work by changed paths to shorten feedback loops.
-      # Full validation remains available in the separate "Full Test Suite" workflow.
+      # Fast CI is intentionally a broad smoke subset for faster PR feedback, not full coverage.
+      # The separate "Full Test Suite" workflow remains the complete validation safety net.
       - name: Detect changed areas
         id: filter
         uses: dorny/paths-filter@v3
@@ -39,7 +39,7 @@ jobs:
               - '**/*.md'
 
   backend-tests:
-    name: Backend tests (targeted)
+    name: Backend tests (broad smoke subset)
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
@@ -51,14 +51,15 @@ jobs:
           cache: 'pip'
       - name: Install backend dependencies
         run: pip install -e '.[dev]'
-      - name: Run targeted backend tests
+      - name: Run broad backend subset
         run: |
           pytest \
-            tests/application/test_season_registry_service.py \
-            tests/api/test_admin_season_registry_api.py
+            tests/api \
+            tests/application \
+            tests/domain
 
   frontend-checks:
-    name: Frontend build + critical tests
+    name: Frontend build + broad critical tests
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
@@ -74,8 +75,17 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - name: Install web dependencies
         run: npm ci
-      - name: Run critical frontend tests
-        run: npm run test -- App.module17.test.tsx Layout.test.tsx
+      - name: Run broad critical frontend tests
+        run: |
+          npm run test -- \
+            src/App.module17.test.tsx \
+            src/components/Layout.test.tsx \
+            src/pages/CountriesPage.test.tsx \
+            src/pages/CountryDetailPage.test.tsx \
+            src/pages/TalentPreviewPage.test.tsx \
+            src/pages/AdminSeasonsPage.test.tsx \
+            src/pages/TournamentTemplatesPage.test.tsx \
+            src/pages/RunPage.test.tsx
       - name: Run web build
         run: npm run build
 

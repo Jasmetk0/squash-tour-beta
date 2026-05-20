@@ -29,7 +29,10 @@ import {
   ViewerRecordsPage,
   ViewerTournamentsPage
 } from './pages/ModePages'
-import { AdminTourSeasonsCategoriesPage, AdminTourSeasonsComparePage, AdminTourSeasonsSeasonTemplatesPage, AdminTourSeasonsTournamentsPage, AdminTourSeasonsValidationPage } from './pages/TourSeasonsShellPages'
+import { AdminTourSeasonsComparePage, AdminTourSeasonsValidationPage } from './pages/TourSeasonsShellPages'
+import { AdminTourSeasonsCategoriesPage } from './pages/CategoriesPage'
+import { AdminTourSeasonsTournamentsPage } from './pages/TournamentsPage'
+import { AdminTourSeasonsSeasonTemplatesPage } from './pages/SeasonTemplatesPage'
 import { AdminTourSeasonsSeasonRegistryPage } from './pages/SeasonRegistryPage'
 import { AdminSimulatePage } from './pages/AdminSimulatePage'
 import { AdminDiagnosticsPage } from './pages/AdminDiagnosticsPage'

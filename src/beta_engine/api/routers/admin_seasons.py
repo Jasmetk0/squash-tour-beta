@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from beta_engine.api.deps import get_initial_pool_season_bootstrap_service, get_season_calendar_service, get_season_range_execution_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service
+from beta_engine.api.deps import get_initial_pool_season_bootstrap_service, get_season_calendar_service, get_season_range_execution_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service, get_season_template_service
 from beta_engine.api.schemas import SeasonBootstrapRequest
 from beta_engine.application.season_player_bootstrap_service import (
     InitialPoolSeasonBootstrapService,
@@ -14,6 +14,7 @@ from beta_engine.application.season_readiness_service import SeasonReadinessRequ
 from beta_engine.application.season_range_preflight_service import SeasonRangePreflightRequest, SeasonRangePreflightResult, SeasonRangePreflightService
 from beta_engine.application.season_range_execution_service import RunSeasonRangeRequest, RunSeasonRangeResult, SeasonRangeExecutionService
 from beta_engine.application.season_registry_service import SeasonRegistryResponse, SeasonRegistryService
+from beta_engine.application.season_template_service import SeasonTemplatesResponse, SeasonTemplateService
 from beta_engine.api.season_label_params import normalize_season_for_legacy_services
 from beta_engine.domain.tournaments import SeasonCalendarBuildRequest, SeasonCalendarBuildResult
 
@@ -23,6 +24,11 @@ router = APIRouter(prefix="/admin/seasons", tags=["admin-seasons"])
 @router.get("/registry", response_model=SeasonRegistryResponse)
 def get_season_registry(service: SeasonRegistryService = Depends(get_season_registry_service)) -> SeasonRegistryResponse:
     return service.build_registry()
+
+
+@router.get("/templates", response_model=SeasonTemplatesResponse)
+def get_season_templates(service: SeasonTemplateService = Depends(get_season_template_service)) -> SeasonTemplatesResponse:
+    return service.list_templates()
 
 
 @router.post("/readiness", response_model=SeasonReadinessResult)

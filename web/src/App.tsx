@@ -35,6 +35,7 @@ import { AdminTourSeasonsCategoryDetailPage } from './pages/CategoryDetailPage'
 import { AdminTourSeasonsTournamentsPage } from './pages/TournamentsPage'
 import { AdminTourSeasonsTournamentDetailPage } from './pages/TournamentDetailPage'
 import { AdminTourSeasonsSeasonTemplatesPage } from './pages/SeasonTemplatesPage'
+import { AdminTourSeasonsSeasonTemplateDetailPage } from './pages/SeasonTemplateDetailPage'
 import { AdminTourSeasonsSeasonRegistryPage } from './pages/SeasonRegistryPage'
 import { AdminSimulatePage } from './pages/AdminSimulatePage'
 import { AdminDiagnosticsPage } from './pages/AdminDiagnosticsPage'
@@ -83,15 +84,16 @@ export default function App(): JSX.Element {
         <Route path="admin/world/country-momentum" element={<CountryMomentumPage />} />
         <Route path="admin/world/manual-player-overrides" element={<ManualPlayerOverridesPage />} />
         <Route path="admin/world/package" element={<WorldPackagePage />} />
-        <Route path="admin/tour-seasons" element={<AdminTourSeasonsPage />} />
         <Route path="admin/tour-seasons/categories" element={<AdminTourSeasonsCategoriesPage />} />
         <Route path="admin/tour-seasons/categories/:categoryId" element={<AdminTourSeasonsCategoryDetailPage />} />
         <Route path="admin/tour-seasons/tournaments" element={<AdminTourSeasonsTournamentsPage />} />
         <Route path="admin/tour-seasons/tournaments/:tournamentId" element={<AdminTourSeasonsTournamentDetailPage />} />
         <Route path="admin/tour-seasons/season-templates" element={<AdminTourSeasonsSeasonTemplatesPage />} />
+        <Route path="admin/tour-seasons/season-templates/:templateId" element={<AdminTourSeasonsSeasonTemplateDetailPage />} />
         <Route path="admin/tour-seasons/season-registry" element={<AdminTourSeasonsSeasonRegistryPage />} />
         <Route path="admin/tour-seasons/compare" element={<AdminTourSeasonsComparePage />} />
         <Route path="admin/tour-seasons/validation" element={<AdminTourSeasonsValidationPage />} />
+        <Route path="admin/tour-seasons" element={<AdminTourSeasonsPage />} />
         <Route path="admin/tournament-templates" element={<AdminTournamentTemplatesPage />} />
         <Route path="admin/seasons" element={<AdminSeasonsPage />} />
         <Route path="admin/players" element={<AdminPlayersPage />} />

@@ -202,9 +202,10 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByRole('heading', { name: 'Season Templates' })).toBeInTheDocument()
     expect(screen.getAllByText(/Read-only foundation\./).length).toBeGreaterThan(0)
     expect((await screen.findAllByText(/Source path: config\/tournament_templates\/mvp_templates\.json/)).length).toBeGreaterThan(0)
-    expect(screen.getByText('Default MSA Template Preview')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Default MSA Template Preview \(default_msa_template_preview\)/ })).toHaveAttribute('href', '/admin/tour-seasons/season-templates/default_msa_template_preview')
     expect(screen.getByRole('link', { name: 'Open Season Registry' })).toHaveAttribute('href', '/admin/tour-seasons/season-registry')
     expect(screen.getByRole('link', { name: 'Open Seasons' })).toHaveAttribute('href', '/admin/seasons')
+
 
     renderAppAt('/admin/tour-seasons/season-registry')
     expect(await screen.findByRole('heading', { level: 2, name: 'Season Registry' })).toBeInTheDocument()
@@ -258,6 +259,25 @@ describe('Module 17 pages through routes', () => {
 
     renderAppAt('/admin/tour-seasons/tournaments/unknown-id')
     expect(await screen.findByText('Tournament master not found.')).toBeInTheDocument()
+  })
+
+
+  it('renders season template detail route and not-found route', async () => {
+    renderAppAt('/admin/tour-seasons/season-templates/default_msa_template_preview')
+    expect(await screen.findByRole('heading', { name: 'Season Template' })).toBeInTheDocument()
+    expect((await screen.findAllByText(/Default MSA Template Preview/)).length).toBeGreaterThan(0)
+    expect(await screen.findByText('Template ID: default_msa_template_preview')).toBeInTheDocument()
+    expect(screen.getAllByText(/read_only_foundation/).length).toBeGreaterThan(0)
+    expect(screen.getByText('Season template editor — planned.')).toBeInTheDocument()
+    expect(screen.getByText('Copy/apply to concrete season — planned.')).toBeInTheDocument()
+    expect(screen.getByText('Compare/apply workflows — planned.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Back to Season Templates' })).toHaveAttribute('href', '/admin/tour-seasons/season-templates')
+    expect(screen.getByRole('link', { name: 'Open Tournaments' })).toHaveAttribute('href', '/admin/tour-seasons/tournaments')
+    expect(screen.getByRole('link', { name: 'Open Categories' })).toHaveAttribute('href', '/admin/tour-seasons/categories')
+    expect(screen.getByRole('link', { name: 'Open Seasons' })).toHaveAttribute('href', '/admin/seasons')
+
+    renderAppAt('/admin/tour-seasons/season-templates/unknown-id')
+    expect(await screen.findByText('Season template not found.')).toBeInTheDocument()
   })
 
   it('renders Players hub route with Talent Intake and Player Database links', async () => {

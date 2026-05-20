@@ -240,6 +240,17 @@ describe('Module 17 pages through routes', () => {
 
     renderAppAt('/admin/tour-seasons/compare')
     expect(await screen.findByRole('heading', { name: 'Calendar Compare / Apply' })).toBeInTheDocument()
+    expect(screen.getByText(/Read-only comparison foundation for templates, registry seasons, and future concrete season calendars\./)).toBeInTheDocument()
+    expect(await screen.findByText('Registry range')).toBeInTheDocument()
+    expect(await screen.findByText('2000/01–2039/40')).toBeInTheDocument()
+    expect(screen.getByText('Registry season count')).toBeInTheDocument()
+    expect(screen.getByText('Registry week count')).toBeInTheDocument()
+    expect(screen.getByText('Season templates count')).toBeInTheDocument()
+    expect(screen.getByText('Default MSA Template Preview')).toBeInTheDocument()
+    expect(screen.getByText('Planned statuses: Same, Modified, Missing from current, Only in current, and Conflict.')).toBeInTheDocument()
+    expect(screen.getByText('Planned actions: Apply to this season, Replace current, Keep current, Ignore, and Open editor.')).toBeInTheDocument()
+    expect(screen.getByText('These actions are planned and not enabled.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /apply|replace|keep current|ignore|open editor|save|update|delete|create/i })).not.toBeInTheDocument()
 
     renderAppAt('/admin/tour-seasons/validation')
     expect(await screen.findByRole('heading', { name: 'Calendar Validation' })).toBeInTheDocument()

@@ -690,3 +690,9 @@ Operational approach:
 - Keep Admin and Viewer responsibilities conceptually separate.
 - Preserve historical traceability and auditability after manual interventions.
 - Do not represent planned features as implemented before delivery.
+
+
+## Season Label Transition Note
+- Canonical season label for the season registry is compact `YYYY/YY`.
+- Legacy flows may still display or use long labels `YYYY/YYYY`.
+- API boundaries should accept both compact and long formats during migration.

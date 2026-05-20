@@ -10,6 +10,7 @@ const api = vi.hoisted(() => ({
   getSeasonRegistry: vi.fn(),
   getAdminRankingTable: vi.fn(),
   getViewerRankingTable: vi.fn(),
+  getAdminRankingSnapshot: vi.fn(),
   getAdminPointBreakdown: vi.fn(),
   getViewerPointBreakdown: vi.fn(),
   bootstrapSeasonFromInitialPool: vi.fn(),
@@ -620,6 +621,8 @@ describe('AdminSeasonsPage', () => {
     })
     api.getAdminRankingTable.mockResolvedValue(rankingTableResponse)
     api.getViewerRankingTable.mockResolvedValue(rankingTableResponse)
+    api.getAdminRankingSnapshot.mockResolvedValue({ snapshot: null, snapshot_exists: false, summary: { ranking: { table_type: 'ranking', row_count: 0, include_zero_points: true, generated_at: '2000-01-01T00:00:00Z' }, race: { table_type: 'race', row_count: 0, include_zero_points: true, generated_at: '2000-01-01T00:00:00Z' } }, metadata: null, validation_warnings: [], validation_errors: [] })
+    api.getAdminPointBreakdown.mockResolvedValue({ breakdown: null, summary_rows: [{ player_id: 'P-1' }], metadata: { season: '2000/01' }, validation_warnings: [], validation_errors: [] })
     api.bootstrapSeasonFromInitialPool.mockResolvedValue(response)
     api.getSeasonCalendar.mockResolvedValue(emptyCalendar)
     api.buildSeasonCalendar.mockResolvedValue(calendarResponse)
@@ -671,7 +674,16 @@ describe('AdminSeasonsPage', () => {
     expect(screen.getByText('2000/01')).toBeInTheDocument()
     expect(screen.getAllByText('2000/2001').length).toBeGreaterThan(0)
     expect(screen.getByText(/Registry status/)).toBeInTheDocument()
+    expect(screen.getByText('Ranking snapshot W1')).toBeInTheDocument()
+    expect(screen.getByText('Point breakdowns')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open Calendar Validation' })).toHaveAttribute('href', '/admin/tour-seasons/validation')
+    const workspace = screen.getByRole('heading', { name: 'Selected Season Workspace' }).closest('article')
+    expect(workspace).not.toBeNull()
+    if (workspace) {
+      expect(within(workspace).queryByRole('button', { name: /persist/i })).not.toBeInTheDocument()
+      expect(within(workspace).queryByRole('button', { name: /preview/i })).not.toBeInTheDocument()
+      expect(within(workspace).queryByRole('button', { name: /apply/i })).not.toBeInTheDocument()
+    }
   })
 
   it('shows invalid selected season warning without crashing', async () => {

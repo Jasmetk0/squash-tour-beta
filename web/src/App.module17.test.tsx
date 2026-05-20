@@ -126,7 +126,7 @@ describe('Module 17 pages through routes', () => {
       },
       sections: [
         { section_id: 'registry', title: 'Registry', issues: [] },
-        { section_id: 'category', title: 'Category', issues: [] },
+        { section_id: 'category', title: 'Category', issues: [{ issue_id: 'category-gold-notes', severity: 'warning', area: 'category', item_id: 'gold', item_name: 'GOLD', message: 'Notes present in backend validation.', link_hint: '/admin/tour-seasons/categories/gold' }] },
         { section_id: 'tournament', title: 'Tournament', issues: [] },
         { section_id: 'season_template', title: 'Season Template', issues: [] }
       ],
@@ -262,6 +262,9 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Frontend-derived total checks: 7')).toBeInTheDocument()
     expect(screen.getByText('Backend total checks: 8')).toBeInTheDocument()
     expect(screen.getByText('Comparison only; both systems are read-only.')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Backend validation issue preview' })).toBeInTheDocument()
+    expect(screen.getByText('Secondary preview only. Frontend-derived checks remain primary until backend validation becomes authoritative.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Notes present in backend validation.' })).toHaveAttribute('href', '/admin/tour-seasons/categories/gold')
     expect(screen.getByText(/Frontend-derived checks remain visible below until backend validation becomes the authoritative source\./)).toBeInTheDocument()
     expect(await screen.findByRole('button', { name: 'All' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Warnings' })).toBeInTheDocument()

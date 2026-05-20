@@ -14,9 +14,18 @@ from beta_engine.application.season_readiness_service import SeasonReadinessRequ
 from beta_engine.application.season_range_preflight_service import SeasonRangePreflightRequest, SeasonRangePreflightResult, SeasonRangePreflightService
 from beta_engine.application.season_range_execution_service import RunSeasonRangeRequest, RunSeasonRangeResult, SeasonRangeExecutionService
 from beta_engine.application.season_registry_service import SeasonRegistryResponse, SeasonRegistryService
+from beta_engine.domain.calendar.season_labels import normalize_season_label, to_long_season_label
 from beta_engine.domain.tournaments import SeasonCalendarBuildRequest, SeasonCalendarBuildResult
 
 router = APIRouter(prefix="/admin/seasons", tags=["admin-seasons"])
+
+
+def _normalize_for_legacy_services(season: str) -> str:
+    """Accept compact and legacy long season labels at API boundary."""
+    try:
+        return to_long_season_label(normalize_season_label(season))
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
 @router.get("/registry", response_model=SeasonRegistryResponse)
@@ -53,7 +62,7 @@ def get_season_active_players(
     season: str,
     service: InitialPoolSeasonBootstrapService = Depends(get_initial_pool_season_bootstrap_service),
 ) -> SeasonActivePlayersResponse:
-    return service.get_active_players(season=season)
+    return service.get_active_players(season=_normalize_for_legacy_services(season))
 
 
 @router.post("/{season:path}/bootstrap-from-initial-pool", response_model=SeasonBootstrapResult)

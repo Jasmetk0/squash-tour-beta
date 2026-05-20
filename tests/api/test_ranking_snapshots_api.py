@@ -59,3 +59,12 @@ def test_overwrite_safety_and_invalid_missing_errors(tmp_path: Path) -> None:
             assert "No active season players" in exc.read().decode()
         else:
             raise AssertionError("missing active players should fail")
+
+
+def test_ranking_snapshots_accept_compact_labels(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        status_long, long_body = call("GET", f"{server.base_url}/admin/ranking-snapshots/2000%2F2001?season_week=1")
+        status_compact, compact_body = call("GET", f"{server.base_url}/admin/ranking-snapshots/2000%2F01?season_week=1")
+        assert status_long == 200
+        assert status_compact == 200
+        assert long_body == compact_body

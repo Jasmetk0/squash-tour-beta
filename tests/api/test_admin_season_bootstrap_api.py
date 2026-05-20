@@ -75,6 +75,26 @@ def test_get_season_players_empty_state(tmp_path) -> None:
         assert body["summary"]["total_active_players"] == 0
 
 
+
+
+def test_get_season_players_accepts_compact_and_long_labels(tmp_path) -> None:
+    with Server(tmp_path) as server:
+        status_long, body_long = call("GET", f"{server.base_url}/admin/seasons/2000%2F2001/players")
+        status_compact, body_compact = call("GET", f"{server.base_url}/admin/seasons/2000%2F01/players")
+        assert status_long == 200
+        assert status_compact == 200
+        assert body_long == body_compact
+
+
+def test_get_season_players_rejects_invalid_label(tmp_path) -> None:
+    with Server(tmp_path) as server:
+        for label in ("2000%2F03", "not-a-season"):
+            try:
+                call("GET", f"{server.base_url}/admin/seasons/{label}/players")
+            except HTTPError as exc:
+                assert exc.code == 400
+            else:
+                raise AssertionError("invalid season labels should return 400")
 def test_post_bootstrap_dry_run_and_persist(tmp_path) -> None:
     with Server(tmp_path) as server:
         call("POST", f"{server.base_url}/admin/players/initial-pool/generate", {"season": "2000/2001", "seed": 7, "target_pool_size": 6, "dry_run": False})

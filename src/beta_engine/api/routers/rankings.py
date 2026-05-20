@@ -6,9 +6,18 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from beta_engine.api.deps import get_season_ranking_table_service
 from beta_engine.application.season_ranking_table_service import RankingTableResponse, SeasonRankingTableService
+from beta_engine.domain.calendar.season_labels import normalize_season_label, to_long_season_label
 
 router = APIRouter(tags=["rankings"])
 RankingTableType = Literal["ranking", "race"]
+
+
+def _normalize_for_legacy_services(season: str) -> str:
+    """Accept compact and legacy long season labels at API boundary."""
+    try:
+        return to_long_season_label(normalize_season_label(season))
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
 def _get_table(
@@ -22,9 +31,10 @@ def _get_table(
     min_points: int | None,
     service: SeasonRankingTableService,
 ) -> RankingTableResponse:
+    normalized_season = _normalize_for_legacy_services(season)
     try:
         return service.get_table(
-            season=season,
+            season=normalized_season,
             table_type=table_type,
             limit=limit,
             country_code=country_code,

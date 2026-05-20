@@ -64,6 +64,7 @@ export function AdminTourSeasonsSeasonRegistryPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title="Registry table">
+        <p className="status">Season links open existing Seasons tooling with the selected season in the URL. Direct season editing/detail workflow is planned.</p>
         {registry ? (
           registry.seasons.length ? (
             <table>
@@ -82,7 +83,7 @@ export function AdminTourSeasonsSeasonRegistryPage(): JSX.Element {
               <tbody>
                 {registry.seasons.map((entry) => (
                   <tr key={entry.label}>
-                    <td>{entry.label}</td>
+                    <td><Link to={`/admin/seasons?season=${encodeURIComponent(entry.label)}`}>{entry.label}</Link></td>
                     <td>{entry.season_index}</td>
                     <td>{entry.season_start_year}</td>
                     <td>{entry.week_count}</td>

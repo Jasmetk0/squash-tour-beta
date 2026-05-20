@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, useId, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, getSeasonLifecycle, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch, simulateOneEvent, preflightSeasonWeek, recoverSeasonWeek, runSeasonWeek, getSeasonReadiness, preflightSeasonRange, runSeasonRange } from '../api/client'
 import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight, RunSeasonWeekResult, SeasonWeekRunEventResult, SeasonWeekRecoveryResult, SeasonWeekRecoveryEvent, SeasonWeekRecoveryRerunFlags, SeasonReadinessResult, SeasonWeekReadinessRow, SeasonRangePreflightResult, SeasonRangePreflightWeek, RunSeasonRangeResult, SeasonRangeRunWeekResult } from '../api/types'
@@ -9,6 +10,8 @@ import { formatApiError } from '../utils/apiErrors'
 
 export function AdminSeasonsPage(): JSX.Element {
   const queryClient = useQueryClient()
+  const [searchParams] = useSearchParams()
+  const selectedRegistrySeason = searchParams.get('season')?.trim() || null
   const [season, setSeason] = useState('2000/2001')
   const [sourceSeason, setSourceSeason] = useState('2000/2001')
   const [seed, setSeed] = useState(12345)
@@ -509,6 +512,7 @@ export function AdminSeasonsPage(): JSX.Element {
     <section className="panel">
       <PageIntro title="Seasons / Bootstrap" subtitle="Convert the curated initial pool into deterministic first-season active player records." />
       <p className="status">Bootstrap converts the curated initial pool into active first-season players. It does not simulate tournaments yet.</p>
+      {selectedRegistrySeason ? <p className="status">Selected registry season: {selectedRegistrySeason}</p> : null}
 
       <WorkflowBanner />
 

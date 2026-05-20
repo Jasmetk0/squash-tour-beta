@@ -126,7 +126,8 @@ import type {
   SeasonRegistryResponse,
   SeasonTemplatesResponse,
   CategoriesResponse,
-  TournamentMastersResponse
+  TournamentMastersResponse,
+  TourSeasonsValidationResponse
 } from './types'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
@@ -185,6 +186,10 @@ export function getCategories(): Promise<CategoriesResponse> {
 
 export function getTournaments(): Promise<TournamentMastersResponse> {
   return request('/admin/tournaments')
+}
+
+export function getTourSeasonsValidation(): Promise<TourSeasonsValidationResponse> {
+  return request('/admin/tour-seasons/validation')
 }
 
 

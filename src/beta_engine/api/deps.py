@@ -32,6 +32,7 @@ from beta_engine.application.season_ranking_snapshot_service import SeasonRankin
 from beta_engine.application.season_registry_service import SeasonRegistryService
 from beta_engine.application.season_template_service import SeasonTemplateService
 from beta_engine.application.tournament_master_service import TournamentMasterService
+from beta_engine.application.tour_seasons_validation_service import TourSeasonsValidationService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.application.world_package_service import WorldPackageService
@@ -306,3 +307,12 @@ def get_season_point_breakdown_service(request: Request) -> SeasonPointBreakdown
 
 def get_season_registry_service(_: Request) -> SeasonRegistryService:
     return SeasonRegistryService()
+
+
+def get_tour_seasons_validation_service(request: Request) -> TourSeasonsValidationService:
+    return TourSeasonsValidationService(
+        registry_service=SeasonRegistryService(),
+        category_service=get_category_service(request),
+        tournament_service=get_tournament_master_service(request),
+        season_template_service=get_season_template_service(request),
+    )

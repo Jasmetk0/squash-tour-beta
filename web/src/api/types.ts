@@ -103,6 +103,44 @@ export type TournamentMasterSummary = {
   notes: string[]
 }
 
+
+export type TourSeasonsValidationSeverity = 'ok' | 'info' | 'warning'
+
+export type TourSeasonsValidationIssue = {
+  issue_id: string
+  severity: TourSeasonsValidationSeverity
+  area: string
+  item_id: string | null
+  item_name: string | null
+  message: string
+  link_hint: string | null
+}
+
+export type TourSeasonsValidationSection = {
+  section_id: string
+  title: string
+  issues: TourSeasonsValidationIssue[]
+}
+
+export type TourSeasonsValidationSummary = {
+  total_checks: number
+  warning_count: number
+  info_count: number
+  ok_count: number
+  registry_loaded: boolean
+  category_count: number
+  tournament_count: number
+  season_template_count: number
+  season_template_slot_count: number
+}
+
+export type TourSeasonsValidationResponse = {
+  status: 'read_only_foundation'
+  summary: TourSeasonsValidationSummary
+  sections: TourSeasonsValidationSection[]
+  planned_future: string[]
+}
+
 export type TournamentMastersResponse = {
   tournaments: TournamentMasterSummary[]
   source_path: string | null

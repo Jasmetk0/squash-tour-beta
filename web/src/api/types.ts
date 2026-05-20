@@ -49,6 +49,41 @@ export type SeasonTemplateSummary = {
   slots: SeasonTemplateSlot[]
 }
 
+
+export type CategorySummary = {
+  category_id: string
+  name: string
+  status: 'read_only_foundation'
+  source: string
+  template_count: number
+  valid_from_season: string | null
+  valid_to_season: string | null
+  tour_level: string | null
+  prestige_rank: number | null
+  mandatory: boolean | null
+  main_draw_size: number | null
+  qualification_draw_size: number | null
+  direct_entries: number | null
+  qualifiers: number | null
+  wildcards: number | null
+  lucky_losers: number | null
+  seeds_count: number | null
+  points_by_round: Record<string, number> | null
+  prize_money_total: number | null
+  match_format: string | null
+  qualifying_weeks_count: number | null
+  main_draw_weeks_count: number | null
+  schedule_footprint_weeks: number | null
+  source_template_ids: string[]
+  notes: string[]
+}
+
+export type CategoriesResponse = {
+  categories: CategorySummary[]
+  source_path: string | null
+  status: 'read_only_foundation'
+}
+
 export type SeasonTemplatesResponse = {
   templates: SeasonTemplateSummary[]
   source_path: string | null

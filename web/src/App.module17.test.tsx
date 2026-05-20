@@ -38,6 +38,7 @@ const api = vi.hoisted(() => ({
   getTalentClassSummary: vi.fn(),
   getSeasonRegistry: vi.fn(),
   getSeasonTemplates: vi.fn(),
+  getCategories: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
     constructor(message: string, status: number) {
@@ -97,6 +98,11 @@ describe('Module 17 pages through routes', () => {
       week_count: 61,
       season_week_1_year_week: 37,
       seasons: Array.from({ length: 40 }, (_, index) => ({ season_start_year: 2000 + index, label: `${2000 + index}/${String((2001 + index) % 100).padStart(2, '0')}`, season_index: index, week_count: 61, season_week_start: 1, season_week_end: 61, year_week_start: 37, year_week_end: 36, status: 'registry_only' }))
+    })
+    api.getCategories.mockResolvedValue({
+      categories: [{ category_id: 'gold', name: 'GOLD', status: 'read_only_foundation', source: 'derived_preview:tournament_templates', template_count: 1, valid_from_season: null, valid_to_season: null, tour_level: 'WORLD_TOUR', prestige_rank: null, mandatory: null, main_draw_size: 24, qualification_draw_size: 16, direct_entries: 18, qualifiers: 4, wildcards: 2, lucky_losers: 2, seeds_count: 8, points_by_round: null, prize_money_total: null, match_format: null, qualifying_weeks_count: 1, main_draw_weeks_count: null, schedule_footprint_weeks: 1, source_template_ids: ['wt_gold_24'], notes: [] }],
+      source_path: 'config/tournament_templates/mvp_templates.json',
+      status: 'read_only_foundation'
     })
     api.getSeasonTemplates.mockResolvedValue({
       templates: [{ template_id: 'default_msa_template_preview', name: 'Default MSA Template Preview', description: 'Read-only derived preview built from current tournament templates config.', season_count_supported: 40, week_count: 61, slot_count: 1, source: 'derived_preview:tournament_templates', status: 'read_only_foundation', slots: [{ slot_id: 'slot-01-wt_gold_24', season_week_start: 1, season_week_end: 1, duration_weeks: 1, tournament_name: 'World Tour Gold', category: 'GOLD', host_country: 'ENG', region: 'EUROPE', has_qualification: true, qualifying_week_start: 1, main_draw_week_start: 1, source_template_id: 'wt_gold_24', notes: null }] }],
@@ -172,13 +178,17 @@ describe('Module 17 pages through routes', () => {
 
     renderAppAt('/admin/tour-seasons/categories')
     expect(await screen.findByRole('heading', { name: 'Categories' })).toBeInTheDocument()
+    expect(screen.getAllByText(/Read-only foundation\./).length).toBeGreaterThan(0)
+    expect(await screen.findByText(/GOLD \(gold\)/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open Tournament Templates' })).toHaveAttribute('href', '/admin/tournament-templates')
+    expect(screen.getByRole('link', { name: 'Open Season Templates' })).toHaveAttribute('href', '/admin/tour-seasons/season-templates')
 
     renderAppAt('/admin/tour-seasons/tournaments')
     expect(await screen.findByRole('heading', { name: 'Tournaments' })).toBeInTheDocument()
 
     renderAppAt('/admin/tour-seasons/season-templates')
     expect(await screen.findByRole('heading', { name: 'Season Templates' })).toBeInTheDocument()
-    expect(screen.getByText(/Read-only foundation\./)).toBeInTheDocument()
+    expect(screen.getAllByText(/Read-only foundation\./).length).toBeGreaterThan(0)
     expect(await screen.findByText(/Source path: config\/tournament_templates\/mvp_templates\.json/)).toBeInTheDocument()
     expect(screen.getByText('Default MSA Template Preview')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open Season Registry' })).toHaveAttribute('href', '/admin/tour-seasons/season-registry')

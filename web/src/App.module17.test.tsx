@@ -494,6 +494,9 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Authoritative read-only backend preflight result. This endpoint does not build, merge, overwrite, or apply anything.')).toBeInTheDocument()
     expect((await screen.findAllByText('can_build')).length).toBeGreaterThan(0)
     expect(screen.getByText('Backend preflight request payload')).toBeInTheDocument()
+    expect(screen.getByText('Policy preview interpretation')).toBeInTheDocument()
+    expect(screen.getByText('No overwrite/merge policy is selected for this read-only preflight.')).toBeInTheDocument()
+    expect(screen.getByText('Policy preview never enables build actions in this phase.')).toBeInTheDocument()
     expect(screen.getByText('Blocking validation errors are present.')).toBeInTheDocument()
     expect(screen.getByText('Status: Blocked in this phase')).toBeInTheDocument()
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
@@ -504,6 +507,107 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText(/"mutation_permitted": false/)).toBeInTheDocument()
     expect(screen.getByText('Even when backend preflight succeeds, build actions remain unavailable in this phase.')).toBeInTheDocument()
     expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith({ target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, requested_by: 'local-admin-preview' })
+    api.postSeasonBuilderPreflight.mockImplementation(async (payload) => {
+      const requestedPolicy = payload.overwrite_policy
+      if (requestedPolicy === 'merge_preview') {
+        return {
+          can_build: false,
+          target_season_label: '2000/2001',
+          source_type: 'season_template',
+          source_template_id: 'default_msa_template_preview',
+          target_calendar_exists: true,
+          target_event_count: 1,
+          source_resolved: true,
+          source_summary: { template_name: 'Default MSA Template Preview', slot_count: 1, week_count: 61 },
+          authoritative_diff_summary: {
+            status: 'read_only_preflight',
+            can_build: false,
+            target_calendar_exists: true,
+            target_event_count: 1,
+            source_type: 'season_template',
+            source_resolved: true,
+            source_slot_count: 1,
+            source_week_count: 1,
+            target_week_count: 1,
+            week_count_compatible: true,
+            source_range: { first_week: 1, last_week: 1 },
+            target_range: { first_week: 1, last_week: 1 },
+            structural_comparison: { planned_source_slots: 1, existing_target_events: 1, target_is_empty: false, requires_overwrite_or_merge_policy: false },
+            blocking_reasons: [],
+            advisory_notes: ['Merge policy preview selected. Future implementation must still perform event-level backend diff before any merge command.'],
+            placeholder: 'Event-level additions/replacements/conflicts remain planned for a future phase.'
+          },
+          validation_warnings: [],
+          validation_errors: [],
+          audit_preview: { action: 'season_builder_preflight', read_only: true, mutation_permitted: false, overwrite_policy: 'merge_preview' }
+        }
+      }
+      if (requestedPolicy === 'overwrite_preview') {
+        return {
+          can_build: false,
+          target_season_label: '2000/2001',
+          source_type: 'season_template',
+          source_template_id: 'default_msa_template_preview',
+          target_calendar_exists: true,
+          target_event_count: 1,
+          source_resolved: true,
+          source_summary: { template_name: 'Default MSA Template Preview', slot_count: 1, week_count: 61 },
+          authoritative_diff_summary: {
+            status: 'read_only_preflight',
+            can_build: false,
+            target_calendar_exists: true,
+            target_event_count: 1,
+            source_type: 'season_template',
+            source_resolved: true,
+            source_slot_count: 1,
+            source_week_count: 1,
+            target_week_count: 1,
+            week_count_compatible: true,
+            source_range: { first_week: 1, last_week: 1 },
+            target_range: { first_week: 1, last_week: 1 },
+            structural_comparison: { planned_source_slots: 1, existing_target_events: 1, target_is_empty: false, requires_overwrite_or_merge_policy: false },
+            blocking_reasons: [],
+            advisory_notes: ['Overwrite policy preview selected. Future implementation must require explicit audited confirmation before any overwrite command.'],
+            placeholder: 'Event-level additions/replacements/conflicts remain planned for a future phase.'
+          },
+          validation_warnings: [],
+          validation_errors: [],
+          audit_preview: { action: 'season_builder_preflight', read_only: true, mutation_permitted: false, overwrite_policy: 'overwrite_preview' }
+        }
+      }
+      return {
+        can_build: false,
+        target_season_label: '2000/2001',
+        source_type: 'season_template',
+        source_template_id: 'default_msa_template_preview',
+        target_calendar_exists: true,
+        target_event_count: 1,
+        source_resolved: true,
+        source_summary: { template_name: 'Default MSA Template Preview', slot_count: 1, week_count: 61 },
+        authoritative_diff_summary: {
+          status: 'read_only_preflight',
+          can_build: false,
+          target_calendar_exists: true,
+          target_event_count: 1,
+          source_type: 'season_template',
+          source_resolved: true,
+          source_slot_count: 1,
+          source_week_count: 1,
+          target_week_count: 1,
+          week_count_compatible: true,
+          source_range: { first_week: 1, last_week: 1 },
+          target_range: { first_week: 1, last_week: 1 },
+          structural_comparison: { planned_source_slots: 1, existing_target_events: 1, target_is_empty: false, requires_overwrite_or_merge_policy: true },
+          blocking_reasons: ['Explicit overwrite/merge policy is required before any future build when a target calendar already exists.'],
+          advisory_notes: [],
+          placeholder: 'Event-level additions/replacements/conflicts remain planned for a future phase.'
+        },
+        validation_warnings: [],
+        validation_errors: ['Explicit overwrite/merge policy is required before any future build when a target calendar already exists.'],
+        audit_preview: { action: 'season_builder_preflight', read_only: true, mutation_permitted: false }
+      }
+    })
+
     fireEvent.change(screen.getByLabelText('Future policy preview'), { target: { value: 'merge_preview' } })
     await waitFor(() => {
       expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith(expect.objectContaining({
@@ -513,6 +617,22 @@ describe('Module 17 pages through routes', () => {
       }))
     })
     expect((screen.getByLabelText('Future policy preview') as HTMLSelectElement).value).toBe('merge_preview')
+    expect(await screen.findByText(/Merge policy preview is selected\./)).toBeInTheDocument()
+    expect(screen.getByText('Backend advisory notes returned for this policy/source combination.')).toBeInTheDocument()
+    expect(screen.getByText('Merge policy preview selected. Future implementation must still perform event-level backend diff before any merge command.')).toBeInTheDocument()
+    expect(screen.getByText('No backend blocking reasons returned.')).toBeInTheDocument()
+    expect(screen.getAllByText('false').length).toBeGreaterThan(0)
+
+    fireEvent.change(screen.getByLabelText('Future policy preview'), { target: { value: 'overwrite_preview' } })
+    await waitFor(() => {
+      expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith(expect.objectContaining({
+        target_season_label: '2000/01',
+        overwrite_policy: 'overwrite_preview',
+        requested_by: 'local-admin-preview'
+      }))
+    })
+    expect(await screen.findByText(/Overwrite policy preview is selected\./)).toBeInTheDocument()
+    expect(screen.getByText('Overwrite policy preview selected. Future implementation must require explicit audited confirmation before any overwrite command.')).toBeInTheDocument()
     expect(api.getSeasonCalendar).toHaveBeenCalledTimes(1)
     expect(screen.getByText('Future audited command flow')).toBeInTheDocument()
     expect(screen.getByText('None of these commands are implemented on this page.')).toBeInTheDocument()
@@ -581,6 +701,9 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Authoritative read-only backend preflight result. This endpoint does not build, merge, overwrite, or apply anything.')).toBeInTheDocument()
     expect((await screen.findAllByText('can_build')).length).toBeGreaterThan(0)
     expect(screen.getByText('Backend preflight request payload')).toBeInTheDocument()
+    expect(screen.getByText('Policy preview interpretation')).toBeInTheDocument()
+    expect(screen.getByText('No overwrite/merge policy is selected for this read-only preflight.')).toBeInTheDocument()
+    expect(screen.getByText('Policy preview never enables build actions in this phase.')).toBeInTheDocument()
     expect(screen.getByText('No validation warnings returned.')).toBeInTheDocument()
     expect(screen.getByText('No validation errors returned.')).toBeInTheDocument()
     expect(screen.getByText('Status: Blocked in this phase')).toBeInTheDocument()

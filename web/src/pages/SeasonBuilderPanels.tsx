@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-import type { SeasonRegistryEntry, SeasonTemplateSummary, TourSeasonsValidationResponse } from '../api/types'
+import type { SeasonCalendarBuildResponse, SeasonRegistryEntry, SeasonTemplateSummary, TourSeasonsValidationResponse } from '../api/types'
 import { safeToLongSeasonLabel } from '../utils/seasonLabels'
 
 export type SourceType = 'season_template' | 'blank_calendar_planned' | 'another_season_planned' | 'custom_slot_planned'
@@ -107,7 +107,8 @@ export function buildDiffPreviewItems(
   selectedTargetSeason: SeasonRegistryEntry | null,
   selectedSourceType: SourceType,
   selectedTemplate: SeasonTemplateSummary | null,
-  selectedTemplatePreview: TemplatePreview | null
+  selectedTemplatePreview: TemplatePreview | null,
+  targetCalendarExists: boolean | null
 ): DiffPreviewItem[] {
   const items: DiffPreviewItem[] = [
     selectedTargetSeason
@@ -161,6 +162,18 @@ export function buildDiffPreviewItems(
   }
 
   items.push(
+    targetCalendarExists === true
+      ? {
+          area: 'Existing target calendar',
+          status: 'Warning',
+          message: 'Existing calendar detected; future build workflow must require explicit overwrite/merge choice.'
+        }
+      : targetCalendarExists === false
+        ? { area: 'Existing target calendar', status: 'OK', message: 'No existing calendar detected from read-only preview.' }
+        : { area: 'Existing target calendar', status: 'Info', message: 'Existing calendar state unavailable from read-only preview.' }
+  )
+
+  items.push(
     { area: 'Existing calendar conflict detection', status: 'Planned', message: 'Planned; no concrete season calendar conflict diff is performed on this page.' },
     { area: 'Missing/extra slot comparison', status: 'Planned', message: 'Planned; missing/extra slot compare is not implemented on this page.' },
     { area: 'Category mismatch comparison', status: 'Planned', message: 'Planned; category-level diff checks are not implemented on this page.' },
@@ -169,6 +182,56 @@ export function buildDiffPreviewItems(
   )
 
   return items
+}
+
+type TargetCalendarStatusPanelProps = {
+  selectedTargetSeasonLabel: string
+  query: {
+    isLoading: boolean
+    error: unknown
+    data: SeasonCalendarBuildResponse | undefined
+  }
+}
+
+export function TargetCalendarStatusPanel({ selectedTargetSeasonLabel, query }: TargetCalendarStatusPanelProps): JSX.Element {
+  const { isLoading, error, data } = query
+  const calendar = data?.calendar
+  const summary = data?.summary
+  const validationWarningsCount = data?.validation_warnings.length ?? 0
+  const validationErrorsCount = data?.validation_errors.length ?? 0
+
+  return (
+    <>
+      <p>Read-only inspection of the currently selected target season calendar.</p>
+      {!selectedTargetSeasonLabel ? <p className="status">Select a target season to inspect existing calendar state.</p> : null}
+      {selectedTargetSeasonLabel && isLoading ? <p className="status">Loading target calendar preview…</p> : null}
+      {selectedTargetSeasonLabel && error ? <p className="error">Target calendar preview unavailable.</p> : null}
+      {selectedTargetSeasonLabel && !isLoading && !error ? (
+        calendar ? (
+          <ul className="dashboard-help-list">
+            <li>Calendar exists: Yes</li>
+            <li>Persisted: {summary?.persisted === undefined ? '—' : summary.persisted ? 'Yes' : 'No'}</li>
+            <li>Event count: {summary?.event_count ?? 0}</li>
+            <li>First event week: {summary?.first_event_week ?? '—'}</li>
+            <li>Last event week: {summary?.last_event_week ?? '—'}</li>
+            <li>Validation warnings count: {validationWarningsCount}</li>
+            <li>Validation errors count: {validationErrorsCount}</li>
+          </ul>
+        ) : (
+          <ul className="dashboard-help-list">
+            <li>Calendar exists: No</li>
+            <li>Persisted: —</li>
+            <li>Event count: {summary?.event_count ?? 0}</li>
+            <li>First event week: {summary?.first_event_week ?? '—'}</li>
+            <li>Last event week: {summary?.last_event_week ?? '—'}</li>
+            <li>Validation warnings count: {validationWarningsCount}</li>
+            <li>Validation errors count: {validationErrorsCount}</li>
+          </ul>
+        )
+      ) : null}
+      {selectedTargetSeasonLabel && !isLoading && !error && !calendar ? <p>No existing calendar found for selected target season.</p> : null}
+    </>
+  )
 }
 
 type BuilderSelectionPanelProps = {

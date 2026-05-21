@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { getSeasonRegistry, getSeasonTemplates, getTourSeasonsValidation } from '../api/client'
 import { DetailList } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
+import type { SeasonRegistryEntry, SeasonTemplateSummary, TourSeasonsValidationResponse } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
 
 
@@ -16,6 +17,152 @@ const SOURCE_TYPE_OPTIONS: Array<{ value: SourceType; label: string }> = [
   { value: 'another_season_planned', label: 'Another season (planned)' },
   { value: 'custom_slot_planned', label: 'Custom slot (planned)' }
 ]
+
+type BuilderSelectionPanelProps = {
+  selectedTargetSeasonLabel: string
+  setSelectedTargetSeasonLabel: (value: string) => void
+  selectedSourceType: SourceType
+  setSelectedSourceType: (value: SourceType) => void
+  selectedTemplateId: string
+  setSelectedTemplateId: (value: string) => void
+  seasons: SeasonRegistryEntry[]
+  templates: SeasonTemplateSummary[]
+}
+
+function BuilderSelectionPanel(props: BuilderSelectionPanelProps): JSX.Element {
+  const {
+    selectedTargetSeasonLabel,
+    setSelectedTargetSeasonLabel,
+    selectedSourceType,
+    setSelectedSourceType,
+    selectedTemplateId,
+    setSelectedTemplateId,
+    seasons,
+    templates
+  } = props
+  return (
+    <>
+      <div className="dashboard-grid">
+        <label>
+          Target season
+          <select aria-label="Target season select" value={selectedTargetSeasonLabel} onChange={(event) => setSelectedTargetSeasonLabel(event.target.value)}>
+            {seasons.map((season) => <option key={season.label} value={season.label}>{season.label}</option>)}
+          </select>
+        </label>
+        <label>
+          Source type
+          <select aria-label="Source type select" value={selectedSourceType} onChange={(event) => setSelectedSourceType(event.target.value as SourceType)}>
+            {SOURCE_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+        </label>
+        <label>
+          Season template
+          <select
+            aria-label="Season template select"
+            value={selectedTemplateId}
+            disabled={selectedSourceType !== 'season_template' || !templates.length}
+            onChange={(event) => setSelectedTemplateId(event.target.value)}
+          >
+            {templates.map((template) => <option key={template.template_id} value={template.template_id}>{template.name}</option>)}
+          </select>
+        </label>
+      </div>
+      {selectedSourceType !== 'season_template' ? <p>This source type is planned and not executable yet.</p> : null}
+    </>
+  )
+}
+
+type TemplatePreview = {
+  slotsWithinSw61: boolean
+  qualificationSlotsCount: number
+  earliestSlot: number | null
+  latestSlot: number | null
+}
+
+type SelectionPreviewPanelProps = {
+  selectedTargetSeason: SeasonRegistryEntry | null
+  selectedSourceType: SourceType
+  selectedTemplate: SeasonTemplateSummary | null
+  selectedTemplatePreview: TemplatePreview | null
+}
+
+function SelectionPreviewPanel({ selectedTargetSeason, selectedSourceType, selectedTemplate, selectedTemplatePreview }: SelectionPreviewPanelProps): JSX.Element {
+  return (
+    <>
+      {selectedTargetSeason ? (
+        <ul className="dashboard-help-list">
+          <li>Target compact label: {selectedTargetSeason.label}</li>
+          <li>Target start year: {selectedTargetSeason.season_start_year}</li>
+          <li>Target registry status: {selectedTargetSeason.status}</li>
+          <li>Target week count: {selectedTargetSeason.week_count}</li>
+        </ul>
+      ) : <p>No target season available for preview.</p>}
+
+      {selectedSourceType === 'season_template' ? (
+        selectedTemplate && selectedTemplatePreview ? (
+          <ul className="dashboard-help-list">
+            <li>Template name: {selectedTemplate.name}</li>
+            <li>Template ID: {selectedTemplate.template_id}</li>
+            <li>Slot count: {selectedTemplate.slot_count}</li>
+            <li>Week count: {selectedTemplate.week_count}</li>
+            <li>Status: {selectedTemplate.status}</li>
+            <li>Slots within SW1–SW61: {selectedTemplatePreview.slotsWithinSw61 ? 'OK' : 'Warning'}</li>
+            <li>Qualification slots count: {selectedTemplatePreview.qualificationSlotsCount}</li>
+            <li>Earliest slot: {selectedTemplatePreview.earliestSlot === null ? '—' : `SW${selectedTemplatePreview.earliestSlot}`}</li>
+            <li>Latest slot: {selectedTemplatePreview.latestSlot === null ? '—' : `SW${selectedTemplatePreview.latestSlot}`}</li>
+            <li><Link to={`/admin/tour-seasons/season-templates/${selectedTemplate.template_id}`}>Open template detail</Link></li>
+          </ul>
+        ) : <p>No season template available for preview.</p>
+      ) : <p>Preview only. This source type has no executable workflow yet.</p>}
+    </>
+  )
+}
+
+function FutureAuditedCommandFlowPanel(): JSX.Element {
+  return (
+    <>
+      <ol>
+        <li>Select target season.</li>
+        <li>Select source.</li>
+        <li>Review preflight diff.</li>
+        <li>Submit explicit audited backend command.</li>
+        <li>Reopen/validate resulting concrete season calendar.</li>
+      </ol>
+      <p>None of these commands are implemented on this page.</p>
+    </>
+  )
+}
+
+type ReadOnlyPreflightChecklistPanelProps = {
+  registryLoaded: boolean
+  hasTemplates: boolean
+  allTemplatesWeek61: boolean
+  slotsWithinRange: boolean
+  validationQueryData: TourSeasonsValidationResponse | undefined
+  validationQueryError: unknown
+}
+
+function ReadOnlyPreflightChecklistPanel({
+  registryLoaded,
+  hasTemplates,
+  allTemplatesWeek61,
+  slotsWithinRange,
+  validationQueryData,
+  validationQueryError
+}: ReadOnlyPreflightChecklistPanelProps): JSX.Element {
+  return (
+    <>
+      <p>Read-only preflight preview. Not an authoritative build gate.</p>
+      <ul className="dashboard-help-list">
+        <li><strong>Severity: {registryLoaded ? 'OK' : 'Warning'}</strong> — Registry loaded</li>
+        <li><strong>Severity: {hasTemplates ? 'OK' : 'Warning'}</strong> — At least one season template available</li>
+        <li><strong>Severity: {hasTemplates && allTemplatesWeek61 ? 'OK' : 'Info'}</strong> — Template week_count is 61</li>
+        <li><strong>Severity: {hasTemplates && slotsWithinRange ? 'OK' : 'Info'}</strong> — Template slots are within SW1–SW61</li>
+        <li><strong>Severity: {validationQueryData ? 'Info' : validationQueryError ? 'Warning' : 'Info'}</strong> — Backend validation foundation available</li>
+      </ul>
+    </>
+  )
+}
 
 
 export function AdminSeasonBuilderPage(): JSX.Element {
@@ -121,74 +268,6 @@ export function AdminSeasonBuilderPage(): JSX.Element {
 
 
 
-      <SectionCard title="Read-only builder selection">
-        <div className="dashboard-grid">
-          <label>
-            Target season
-            <select aria-label="Target season select" value={selectedTargetSeasonLabel} onChange={(event) => setSelectedTargetSeasonLabel(event.target.value)}>
-              {(registry?.seasons ?? []).map((season) => <option key={season.label} value={season.label}>{season.label}</option>)}
-            </select>
-          </label>
-          <label>
-            Source type
-            <select aria-label="Source type select" value={selectedSourceType} onChange={(event) => setSelectedSourceType(event.target.value as SourceType)}>
-              {SOURCE_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
-          </label>
-          <label>
-            Season template
-            <select
-              aria-label="Season template select"
-              value={selectedTemplateId}
-              disabled={selectedSourceType !== 'season_template' || !templates.length}
-              onChange={(event) => setSelectedTemplateId(event.target.value)}
-            >
-              {templates.map((template) => <option key={template.template_id} value={template.template_id}>{template.name}</option>)}
-            </select>
-          </label>
-        </div>
-        {selectedSourceType !== 'season_template' ? <p>This source type is planned and not executable yet.</p> : null}
-      </SectionCard>
-
-      <SectionCard title="Selection preview">
-        {selectedTargetSeason ? (
-          <ul className="dashboard-help-list">
-            <li>Target compact label: {selectedTargetSeason.label}</li>
-            <li>Target start year: {selectedTargetSeason.season_start_year}</li>
-            <li>Target registry status: {selectedTargetSeason.status}</li>
-            <li>Target week count: {selectedTargetSeason.week_count}</li>
-          </ul>
-        ) : <p>No target season available for preview.</p>}
-
-        {selectedSourceType === 'season_template' ? (
-          selectedTemplate && selectedTemplatePreview ? (
-            <ul className="dashboard-help-list">
-              <li>Template name: {selectedTemplate.name}</li>
-              <li>Template ID: {selectedTemplate.template_id}</li>
-              <li>Slot count: {selectedTemplate.slot_count}</li>
-              <li>Week count: {selectedTemplate.week_count}</li>
-              <li>Status: {selectedTemplate.status}</li>
-              <li>Slots within SW1–SW61: {selectedTemplatePreview.slotsWithinSw61 ? 'OK' : 'Warning'}</li>
-              <li>Qualification slots count: {selectedTemplatePreview.qualificationSlotsCount}</li>
-              <li>Earliest slot: {selectedTemplatePreview.earliestSlot === null ? '—' : `SW${selectedTemplatePreview.earliestSlot}`}</li>
-              <li>Latest slot: {selectedTemplatePreview.latestSlot === null ? '—' : `SW${selectedTemplatePreview.latestSlot}`}</li>
-              <li><Link to={`/admin/tour-seasons/season-templates/${selectedTemplate.template_id}`}>Open template detail</Link></li>
-            </ul>
-          ) : <p>No season template available for preview.</p>
-        ) : <p>Preview only. This source type has no executable workflow yet.</p>}
-      </SectionCard>
-
-      <SectionCard title="Future audited command flow">
-        <ol>
-          <li>Select target season.</li>
-          <li>Select source.</li>
-          <li>Review preflight diff.</li>
-          <li>Submit explicit audited backend command.</li>
-          <li>Reopen/validate resulting concrete season calendar.</li>
-        </ol>
-        <p>None of these commands are implemented on this page.</p>
-      </SectionCard>
-
       <SectionCard title="Planned source types">
         <ul className="dashboard-help-list">
           <li>Blank calendar</li>
@@ -199,15 +278,41 @@ export function AdminSeasonBuilderPage(): JSX.Element {
         </ul>
       </SectionCard>
 
+      <SectionCard title="Read-only builder selection">
+        <BuilderSelectionPanel
+          selectedTargetSeasonLabel={selectedTargetSeasonLabel}
+          setSelectedTargetSeasonLabel={setSelectedTargetSeasonLabel}
+          selectedSourceType={selectedSourceType}
+          setSelectedSourceType={setSelectedSourceType}
+          selectedTemplateId={selectedTemplateId}
+          setSelectedTemplateId={setSelectedTemplateId}
+          seasons={registry?.seasons ?? []}
+          templates={templates}
+        />
+      </SectionCard>
+
+      <SectionCard title="Selection preview">
+        <SelectionPreviewPanel
+          selectedTargetSeason={selectedTargetSeason}
+          selectedSourceType={selectedSourceType}
+          selectedTemplate={selectedTemplate}
+          selectedTemplatePreview={selectedTemplatePreview}
+        />
+      </SectionCard>
+
+      <SectionCard title="Future audited command flow">
+        <FutureAuditedCommandFlowPanel />
+      </SectionCard>
+
       <SectionCard title="Read-only preflight checklist">
-        <p>Read-only preflight preview. Not an authoritative build gate.</p>
-        <ul className="dashboard-help-list">
-          <li><strong>Severity: {registry ? 'OK' : 'Warning'}</strong> — Registry loaded</li>
-          <li><strong>Severity: {hasTemplates ? 'OK' : 'Warning'}</strong> — At least one season template available</li>
-          <li><strong>Severity: {hasTemplates && allTemplatesWeek61 ? 'OK' : 'Info'}</strong> — Template week_count is 61</li>
-          <li><strong>Severity: {hasTemplates && slotsWithinRange ? 'OK' : 'Info'}</strong> — Template slots are within SW1–SW61</li>
-          <li><strong>Severity: {validationQuery.data ? 'Info' : validationQuery.error ? 'Warning' : 'Info'}</strong> — Backend validation foundation available</li>
-        </ul>
+        <ReadOnlyPreflightChecklistPanel
+          registryLoaded={Boolean(registry)}
+          hasTemplates={hasTemplates}
+          allTemplatesWeek61={allTemplatesWeek61}
+          slotsWithinRange={slotsWithinRange}
+          validationQueryData={validationQuery.data}
+          validationQueryError={validationQuery.error}
+        />
       </SectionCard>
 
       <SectionCard title="Navigation">

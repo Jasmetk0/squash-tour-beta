@@ -67,6 +67,14 @@ export type FutureBuildCommandContractItem = {
   reason: string
 }
 
+export type FutureCommandReadinessStatus = 'OK' | 'Missing' | 'Blocked' | 'Info'
+
+export type FutureCommandReadinessItem = {
+  area: string
+  status: FutureCommandReadinessStatus
+  message: string
+}
+
 type BuildSourceTargetDiffDetailItemsArgs = {
   selectedTargetSeason: SeasonRegistryEntry | null
   selectedSourceType: SourceType
@@ -1190,6 +1198,90 @@ export function FutureBuildCommandContractPanel({ items, currentPreflightPayload
         </tbody>
       </table>
       <p>Future build implementation must require a reviewed backend preflight, explicit audit metadata, and a separate audited command.</p>
+    </>
+  )
+}
+
+type BuildFutureCommandReadinessItemsArgs = {
+  currentPreflightPayload?: SeasonBuilderPreflightRequest
+  currentPreflightResult?: SeasonBuilderPreflightResponse
+}
+
+export function buildFutureCommandReadinessItems({
+  currentPreflightPayload,
+  currentPreflightResult
+}: BuildFutureCommandReadinessItemsArgs): FutureCommandReadinessItem[] {
+  const validationErrorCount = currentPreflightResult?.validation_errors.length
+  const validationWarningCount = currentPreflightResult?.validation_warnings.length
+  const sourceType = currentPreflightPayload?.source_type
+  const sourceTemplateId = currentPreflightPayload?.source_template_id
+
+  return [
+    currentPreflightPayload?.target_season_label
+      ? { area: 'Target season', status: 'OK', message: `Selected target season: ${currentPreflightPayload.target_season_label}.` }
+      : { area: 'Target season', status: 'Missing', message: 'Target season is not selected yet.' },
+    sourceType
+      ? sourceType !== 'season_template' || Boolean(sourceTemplateId)
+        ? { area: 'Source reference', status: 'OK', message: sourceType === 'season_template' ? `Season template source selected: ${sourceTemplateId}.` : `Planned source selected: ${sourceType}.` }
+        : { area: 'Source reference', status: 'Missing', message: 'Season template source is selected but source_template_id is missing.' }
+      : { area: 'Source reference', status: 'Missing', message: 'Source type is not selected yet.' },
+    currentPreflightPayload?.overwrite_policy
+      ? { area: 'Policy input', status: 'OK', message: `Overwrite/merge policy selected: ${currentPreflightPayload.overwrite_policy}.` }
+      : { area: 'Policy input', status: 'Info', message: 'No overwrite/merge policy selected; acceptable for empty target preview but existing calendars require explicit future policy.' },
+    currentPreflightResult?.preflight_fingerprint
+      ? { area: 'Preflight fingerprint', status: 'OK', message: 'Backend preflight fingerprint is available.' }
+      : { area: 'Preflight fingerprint', status: 'Missing', message: 'Backend preflight fingerprint is not available yet.' },
+    currentPreflightResult?.reviewed_diff_id
+      ? { area: 'Reviewed diff identity', status: 'OK', message: 'Reviewed diff identity is available.' }
+      : { area: 'Reviewed diff identity', status: 'Missing', message: 'Reviewed diff identity is not available yet.' },
+    currentPreflightResult
+      ? currentPreflightResult.source_resolved
+        ? { area: 'Source resolved', status: 'OK', message: 'Source resolved is true.' }
+        : { area: 'Source resolved', status: 'Blocked', message: 'Source resolved is false.' }
+      : { area: 'Source resolved', status: 'Missing', message: 'Source resolution is unavailable until preflight result is returned.' },
+    typeof validationErrorCount === 'number'
+      ? validationErrorCount === 0
+        ? { area: 'Validation errors', status: 'OK', message: `Validation errors count: ${validationErrorCount}.` }
+        : { area: 'Validation errors', status: 'Blocked', message: `Validation errors count: ${validationErrorCount}.` }
+      : { area: 'Validation errors', status: 'Missing', message: 'Validation errors count is unavailable until preflight result is returned.' },
+    typeof validationWarningCount === 'number'
+      ? validationWarningCount === 0
+        ? { area: 'Validation warnings', status: 'OK', message: `Validation warnings count: ${validationWarningCount}.` }
+        : { area: 'Validation warnings', status: 'Info', message: `Validation warnings count: ${validationWarningCount}.` }
+      : { area: 'Validation warnings', status: 'Missing', message: 'Validation warnings count is unavailable until preflight result is returned.' },
+    { area: 'Mutation permission', status: 'Blocked', message: 'mutation_permitted is false; this page cannot mutate calendars.' },
+    currentPreflightResult
+      ? currentPreflightResult.can_build === false
+        ? { area: 'can_build flag', status: 'Blocked', message: 'can_build is false; future command remains unavailable.' }
+        : { area: 'can_build flag', status: 'Info', message: `can_build is ${String(currentPreflightResult.can_build)}.` }
+      : { area: 'can_build flag', status: 'Missing', message: 'can_build is unavailable until preflight result is returned.' },
+    { area: 'Command implementation', status: 'Blocked', message: 'No build command exists on this page.' }
+  ]
+}
+
+export function FutureCommandReadinessChecklistPanel({ items }: { items: FutureCommandReadinessItem[] }): JSX.Element {
+  return (
+    <>
+      <p>Read-only checklist. This summarizes future command prerequisites but does not enable any command.</p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Area</th>
+            <th scope="col">Status</th>
+            <th scope="col">Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr key={`${item.area}:${item.status}`}>
+              <td>{item.area}</td>
+              <td>{item.status}</td>
+              <td>{item.message}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p>Readiness remains blocked until a separate audited backend command is implemented.</p>
     </>
   )
 }

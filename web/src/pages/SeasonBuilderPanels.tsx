@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-import type { SeasonBuilderPreflightResponse, SeasonCalendarBuildResponse, SeasonRegistryEntry, SeasonTemplateSummary, TourSeasonsValidationResponse } from '../api/types'
+import type { SeasonBuilderPreflightRequest, SeasonBuilderPreflightResponse, SeasonCalendarBuildResponse, SeasonRegistryEntry, SeasonTemplateSummary, TourSeasonsValidationResponse } from '../api/types'
 import { safeToLongSeasonLabel } from '../utils/seasonLabels'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -842,6 +842,7 @@ export function SourceTargetDiffDetailPanel({ items }: { items: SourceTargetDiff
 
 type BackendPreflightResultPanelProps = {
   queryEnabled: boolean
+  requestPayload: SeasonBuilderPreflightRequest
   query: {
     isLoading: boolean
     error: unknown
@@ -849,7 +850,7 @@ type BackendPreflightResultPanelProps = {
   }
 }
 
-export function BackendPreflightResultPanel({ queryEnabled, query }: BackendPreflightResultPanelProps): JSX.Element {
+export function BackendPreflightResultPanel({ queryEnabled, requestPayload, query }: BackendPreflightResultPanelProps): JSX.Element {
   if (!queryEnabled) {
     return (
       <>
@@ -882,9 +883,17 @@ export function BackendPreflightResultPanel({ queryEnabled, query }: BackendPref
   const data = query.data
   if (!data) return <p>Backend preflight is waiting for target season and executable source selection.</p>
 
+  const auditPreview = data.audit_preview ?? {}
+  const diffSummary = data.authoritative_diff_summary ?? {}
+
   return (
     <>
       <p>Authoritative read-only backend preflight result. This endpoint does not build, merge, overwrite, or apply anything.</p>
+      <h4>Status: Blocked in this phase</h4>
+      <p>Backend preflight completed, but build actions remain disabled because can_build is false.</p>
+      {data.validation_errors.length > 0 ? <p>Blocking validation errors are present.</p> : null}
+      {data.validation_warnings.length > 0 ? <p>Advisory validation warnings are present.</p> : null}
+      {auditPreview.mutation_permitted === false ? <p>Mutation permitted: false</p> : null}
       <table>
         <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
         <tbody>
@@ -899,12 +908,47 @@ export function BackendPreflightResultPanel({ queryEnabled, query }: BackendPref
           <tr><td>validation_errors count</td><td>{data.validation_errors.length}</td></tr>
         </tbody>
       </table>
-      {!data.can_build ? <p><strong>can_build is false in this phase.</strong></p> : null}
-      {data.validation_warnings.length ? <><h4>Validation warnings</h4><ul>{data.validation_warnings.map((w)=><li key={w}>{w}</li>)}</ul></> : null}
-      {data.validation_errors.length ? <><h4>Validation errors</h4><ul>{data.validation_errors.map((e)=><li key={e}>{e}</li>)}</ul></> : null}
+      <h4>Backend preflight request payload</h4>
+      <p>This is the exact read-only payload sent to the backend preflight endpoint.</p>
+      <table>
+        <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+        <tbody>
+          <tr><td>target_season_label</td><td>{requestPayload.target_season_label}</td></tr>
+          <tr><td>source_type</td><td>{requestPayload.source_type}</td></tr>
+          <tr><td>source_template_id</td><td>{requestPayload.source_template_id ?? '—'}</td></tr>
+          <tr><td>overwrite_policy</td><td>{requestPayload.overwrite_policy ?? '—'}</td></tr>
+          <tr><td>requested_by</td><td>{requestPayload.requested_by ?? '—'}</td></tr>
+        </tbody>
+      </table>
+      <h4>Validation warnings</h4>
+      {data.validation_warnings.length ? <ul>{data.validation_warnings.map((w)=><li key={w}>{w}</li>)}</ul> : <p>No validation warnings returned.</p>}
+      <h4>Validation errors</h4>
+      {data.validation_errors.length ? <ul>{data.validation_errors.map((e)=><li key={e}>{e}</li>)}</ul> : <p>No validation errors returned.</p>}
       <h4>Authoritative diff summary</h4>
+      <table>
+        <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+        <tbody>
+          <tr><td>status</td><td>{String(diffSummary.status ?? '—')}</td></tr>
+          <tr><td>target_calendar_exists</td><td>{String(diffSummary.target_calendar_exists ?? '—')}</td></tr>
+          <tr><td>target_event_count</td><td>{String(diffSummary.target_event_count ?? '—')}</td></tr>
+          <tr><td>placeholder</td><td>{String(diffSummary.placeholder ?? '—')}</td></tr>
+        </tbody>
+      </table>
       <pre>{JSON.stringify(data.authoritative_diff_summary, null, 2)}</pre>
       <h4>Audit preview</h4>
+      <table>
+        <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+        <tbody>
+          <tr><td>action</td><td>{String(auditPreview.action ?? '—')}</td></tr>
+          <tr><td>requested_by</td><td>{String(auditPreview.requested_by ?? '—')}</td></tr>
+          <tr><td>target_season_label</td><td>{String(auditPreview.target_season_label ?? '—')}</td></tr>
+          <tr><td>source_type</td><td>{String(auditPreview.source_type ?? '—')}</td></tr>
+          <tr><td>source_template_id</td><td>{String(auditPreview.source_template_id ?? '—')}</td></tr>
+          <tr><td>overwrite_policy</td><td>{String(auditPreview.overwrite_policy ?? '—')}</td></tr>
+          <tr><td>read_only</td><td>{String(auditPreview.read_only ?? '—')}</td></tr>
+          <tr><td>mutation_permitted</td><td>{String(auditPreview.mutation_permitted ?? '—')}</td></tr>
+        </tbody>
+      </table>
       <pre>{JSON.stringify(data.audit_preview, null, 2)}</pre>
       <p>Even when backend preflight succeeds, build actions remain unavailable in this phase.</p>
     </>

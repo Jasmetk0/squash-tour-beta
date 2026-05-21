@@ -24,6 +24,7 @@ import {
   TemplateValidationSummaryPanel
 } from './SeasonBuilderPanels'
 import type { SourceType } from './SeasonBuilderPanels'
+import type { SeasonBuilderPreflightRequest } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
 
 
@@ -100,7 +101,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
   )
   const backendPreflightContractItems = useMemo(() => buildBackendPreflightContractItems(), [])
 
-  const backendPreflightPayload = useMemo(() => ({
+  const backendPreflightPayload = useMemo<SeasonBuilderPreflightRequest>(() => ({
     target_season_label: selectedTargetSeasonLabel,
     source_type: selectedSourceType,
     source_template_id: selectedSourceType === 'season_template' ? selectedTemplateId || null : null,
@@ -238,6 +239,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
       <SectionCard title="Backend preflight result">
         <BackendPreflightResultPanel
           queryEnabled={backendPreflightEnabled}
+          requestPayload={backendPreflightPayload}
           query={{ isLoading: backendPreflightQuery.isLoading, error: backendPreflightQuery.error, data: backendPreflightQuery.data }}
         />
       </SectionCard>

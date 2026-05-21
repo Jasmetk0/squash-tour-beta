@@ -54,6 +54,12 @@ export type SourceTargetDiffItem = {
   message: string
 }
 
+export type BackendPreflightContractItem = {
+  area: string
+  required: string
+  reason: string
+}
+
 type BuildSourceTargetDiffDetailItemsArgs = {
   selectedTargetSeason: SeasonRegistryEntry | null
   selectedSourceType: SourceType
@@ -260,6 +266,61 @@ export function buildSourceTargetPreflightSummaryItems({
   items.push({ area: 'Next safe step', status: 'Info', message: 'Review read-only diff and backend validation before any future command.' })
 
   return items
+}
+
+export function buildBackendPreflightContractItems(): BackendPreflightContractItem[] {
+  return [
+    {
+      area: 'Request target season',
+      required: 'target_season_label',
+      reason: 'Backend must know the concrete season that would be inspected before any future build command.'
+    },
+    {
+      area: 'Request source type',
+      required: 'source_type',
+      reason: 'Backend must distinguish season template, copied season, blank calendar, and custom-slot workflows.'
+    },
+    {
+      area: 'Request source reference',
+      required: 'source_template_id or future source identifier',
+      reason: 'Backend must resolve the selected source deterministically before comparing it to the target.'
+    },
+    {
+      area: 'Existing calendar policy',
+      required: 'overwrite_policy',
+      reason: 'Existing target calendars must never be overwritten silently.'
+    },
+    {
+      area: 'Audit identity',
+      required: 'requested_by / admin actor',
+      reason: 'Future preflight/build workflows must be attributable and reviewable.'
+    },
+    {
+      area: 'Determinism metadata',
+      required: 'seed / version / template hash',
+      reason: 'Future build output must be reproducible and comparable.'
+    },
+    {
+      area: 'Response blocking status',
+      required: 'can_build: false until authoritative validation passes',
+      reason: 'UI must never infer build readiness from local-only checks.'
+    },
+    {
+      area: 'Response diff summary',
+      required: 'authoritative_diff_summary',
+      reason: 'Backend must provide event-level conflicts, additions, replacements, and validation errors.'
+    },
+    {
+      area: 'Response warnings/errors',
+      required: 'validation_warnings and validation_errors',
+      reason: 'Backend must separate advisory warnings from blocking errors.'
+    },
+    {
+      area: 'Response audit preview',
+      required: 'audit_preview',
+      reason: 'Admin must see what would be recorded before any future mutation command.'
+    }
+  ]
 }
 
 export function buildOverwriteMergePolicyItems(targetCalendarExists: boolean | null): BuildPolicyItem[] {
@@ -774,6 +835,33 @@ export function SourceTargetDiffDetailPanel({ items }: { items: SourceTargetDiff
         </tbody>
       </table>
       <p>No diff, build, merge, overwrite, or apply command is executed from this page.</p>
+    </>
+  )
+}
+
+export function BackendPreflightContractPreviewPanel({ items }: { items: BackendPreflightContractItem[] }): JSX.Element {
+  return (
+    <>
+      <p>Read-only design preview. No backend preflight endpoint is called from this page.</p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Area</th>
+            <th scope="col">Required future field</th>
+            <th scope="col">Reason</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr key={`${item.area}:${item.required}`}>
+              <td>{item.area}</td>
+              <td>{item.required}</td>
+              <td>{item.reason}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p>Future implementation must add an authoritative backend preflight before any build, merge, overwrite, or apply command can exist.</p>
     </>
   )
 }

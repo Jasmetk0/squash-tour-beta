@@ -8,7 +8,9 @@ import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import {
   buildSourceTargetPreflightSummaryItems,
   buildSourceTargetDiffDetailItems,
+  buildBackendPreflightContractItems,
   buildDiffPreviewItems,
+  BackendPreflightContractPreviewPanel,
   BuildPolicyPreviewPanel,
   BuilderSelectionPanel,
   DiffPreviewSkeletonPanel,
@@ -95,6 +97,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     }),
     [selectedTargetSeason, selectedSourceType, selectedTemplate, selectedTemplatePreview, targetCalendarQuery.data, targetCalendarExists]
   )
+  const backendPreflightContractItems = useMemo(() => buildBackendPreflightContractItems(), [])
 
   return (
     <section className="panel">
@@ -207,6 +210,10 @@ export function AdminSeasonBuilderPage(): JSX.Element {
 
       <SectionCard title="Read-only source/target diff detail">
         <SourceTargetDiffDetailPanel items={sourceTargetDiffDetailItems} />
+      </SectionCard>
+
+      <SectionCard title="Backend preflight contract preview">
+        <BackendPreflightContractPreviewPanel items={backendPreflightContractItems} />
       </SectionCard>
 
       {selectedSourceType === 'season_template' ? (

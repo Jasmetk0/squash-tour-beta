@@ -354,6 +354,19 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Overwrite / merge policy preview')).toBeInTheDocument()
     expect(screen.getByText('Source vs target preflight summary')).toBeInTheDocument()
     expect(screen.getByText('Read-only source/target diff detail')).toBeInTheDocument()
+    expect(screen.getByText('Backend preflight contract preview')).toBeInTheDocument()
+    expect(screen.getByText('Read-only design preview. No backend preflight endpoint is called from this page.')).toBeInTheDocument()
+    expect(screen.getByText('target_season_label')).toBeInTheDocument()
+    expect(screen.getByText('source_type')).toBeInTheDocument()
+    expect(screen.getByText('source_template_id or future source identifier')).toBeInTheDocument()
+    expect(screen.getByText('overwrite_policy')).toBeInTheDocument()
+    expect(screen.getByText('requested_by / admin actor')).toBeInTheDocument()
+    expect(screen.getByText('seed / version / template hash')).toBeInTheDocument()
+    expect(screen.getByText('can_build: false until authoritative validation passes')).toBeInTheDocument()
+    expect(screen.getByText('authoritative_diff_summary')).toBeInTheDocument()
+    expect(screen.getByText('validation_warnings and validation_errors')).toBeInTheDocument()
+    expect(screen.getByText('audit_preview')).toBeInTheDocument()
+    expect(screen.getByText('Future implementation must add an authoritative backend preflight before any build, merge, overwrite, or apply command can exist.')).toBeInTheDocument()
     expect(screen.getByText('Read-only local summary. This is not an authoritative backend preflight and does not enable build actions.')).toBeInTheDocument()
     expect(screen.getByText('Local structural diff preview only. This is not an authoritative backend diff and does not enable apply actions.')).toBeInTheDocument()
     expect(screen.getByText('Read-only policy preview. No overwrite, merge, or build action is available on this page.')).toBeInTheDocument()
@@ -407,11 +420,15 @@ describe('Module 17 pages through routes', () => {
     expect(screen.queryByText('Selected template slot preview')).not.toBeInTheDocument()
     expect(screen.queryByText('Selected template validation summary')).not.toBeInTheDocument()
     expect(screen.queryByText('Local read-only validation derived from the selected template payload. Not an authoritative build gate.')).not.toBeInTheDocument()
+    expect(screen.getByText('Backend preflight contract preview')).toBeInTheDocument()
+    expect(screen.getByText('Read-only design preview. No backend preflight endpoint is called from this page.')).toBeInTheDocument()
+    expect(screen.getByText('Future implementation must add an authoritative backend preflight before any build, merge, overwrite, or apply command can exist.')).toBeInTheDocument()
+    expect(api.getSeasonCalendar).toHaveBeenCalledTimes(1)
     expect(screen.getByText('Future audited command flow')).toBeInTheDocument()
     expect(screen.getByText('None of these commands are implemented on this page.')).toBeInTheDocument()
     expect(screen.getByText('Read-only preflight checklist')).toBeInTheDocument()
     expect(screen.getByText('Read-only preflight preview. Not an authoritative build gate.')).toBeInTheDocument()
-    const forbiddenMutationActions = ['Build', 'Create', 'Apply', 'Generate', 'Simulate', 'Run', 'Save', 'Update', 'Delete', 'Bootstrap', 'Merge', 'Overwrite']
+    const forbiddenMutationActions = ['Build', 'Create', 'Apply', 'Generate', 'Simulate', 'Run', 'Save', 'Update', 'Delete', 'Bootstrap', 'Merge', 'Overwrite', 'Preflight']
     for (const action of forbiddenMutationActions) {
       expect(screen.queryByRole('button', { name: new RegExp(`^${action}$`, 'i') })).not.toBeInTheDocument()
     }
@@ -435,6 +452,9 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Overwrite / merge policy preview')).toBeInTheDocument()
     expect(screen.getByText('Source vs target preflight summary')).toBeInTheDocument()
     expect(screen.getByText('Read-only source/target diff detail')).toBeInTheDocument()
+    expect(screen.getByText('Backend preflight contract preview')).toBeInTheDocument()
+    expect(screen.getByText('Read-only design preview. No backend preflight endpoint is called from this page.')).toBeInTheDocument()
+    expect(screen.getByText('Future implementation must add an authoritative backend preflight before any build, merge, overwrite, or apply command can exist.')).toBeInTheDocument()
     expect(screen.getAllByText('No existing calendar detected.').length).toBeGreaterThan(0)
     expect(screen.getByText('Silent overwrite must never be allowed.')).toBeInTheDocument()
     expect(screen.getByText('Merge policy is not needed for an empty target, but future command still requires audit.')).toBeInTheDocument()
@@ -445,7 +465,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Empty target has no existing concrete events to compare locally, but future backend validation is still required.')).toBeInTheDocument()
     expect(screen.getByText('No diff, build, merge, overwrite, or apply command is executed from this page.')).toBeInTheDocument()
 
-    const forbiddenMutationActions = ['Build', 'Create', 'Apply', 'Generate', 'Simulate', 'Run', 'Save', 'Update', 'Delete', 'Bootstrap', 'Merge', 'Overwrite']
+    const forbiddenMutationActions = ['Build', 'Create', 'Apply', 'Generate', 'Simulate', 'Run', 'Save', 'Update', 'Delete', 'Bootstrap', 'Merge', 'Overwrite', 'Preflight']
     for (const action of forbiddenMutationActions) {
       expect(screen.queryByRole('button', { name: new RegExp(`^${action}$`, 'i') })).not.toBeInTheDocument()
     }

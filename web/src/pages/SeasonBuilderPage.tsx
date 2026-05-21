@@ -11,7 +11,8 @@ import {
   DiffPreviewSkeletonPanel,
   FutureAuditedCommandFlowPanel,
   ReadOnlyPreflightChecklistPanel,
-  SelectionPreviewPanel
+  SelectionPreviewPanel,
+  TemplateValidationSummaryPanel
 } from './SeasonBuilderPanels'
 import type { SourceType } from './SeasonBuilderPanels'
 import { formatApiError } from '../utils/apiErrors'
@@ -156,6 +157,12 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           selectedTemplatePreview={selectedTemplatePreview}
         />
       </SectionCard>
+
+      {selectedSourceType === 'season_template' ? (
+        <SectionCard title="Selected template validation summary">
+          <TemplateValidationSummaryPanel selectedTemplate={selectedTemplate} />
+        </SectionCard>
+      ) : null}
 
       <SectionCard title="Read-only diff preview skeleton">
         <DiffPreviewSkeletonPanel items={diffPreviewItems} />

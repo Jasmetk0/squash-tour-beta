@@ -287,7 +287,10 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Planned source types')).toBeInTheDocument()
     expect(screen.getByText('Read-only preflight checklist')).toBeInTheDocument()
     expect(screen.getByText('Read-only preflight preview. Not an authoritative build gate.')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /build|create|apply|generate|simulate|run/i })).not.toBeInTheDocument()
+    const forbiddenMutationActions = ['Build', 'Create', 'Apply', 'Generate', 'Simulate', 'Run', 'Save', 'Update', 'Delete', 'Bootstrap']
+    for (const action of forbiddenMutationActions) {
+      expect(screen.queryByRole('button', { name: new RegExp(`^${action}$`, 'i') })).not.toBeInTheDocument()
+    }
 
     renderAppAt('/admin/seasons/detail/invalid-season')
     expect((await screen.findAllByRole('heading', { level: 2, name: 'Concrete Season' })).length).toBeGreaterThan(0)

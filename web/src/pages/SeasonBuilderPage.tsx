@@ -14,6 +14,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
   const registry = registryQuery.data
   const templates = templatesQuery.data?.templates ?? []
   const seasonExamples = registry?.seasons.slice(0, 5) ?? []
+  const hasTemplates = templates.length > 0
   const slotsWithinRange = templates.every((template) => template.slots.every((slot) => slot.season_week_start >= 1 && slot.season_week_end <= 61))
   const allTemplatesWeek61 = templates.every((template) => template.week_count === 61)
 
@@ -90,11 +91,11 @@ export function AdminSeasonBuilderPage(): JSX.Element {
       <SectionCard title="Read-only preflight checklist">
         <p>Read-only preflight preview. Not an authoritative build gate.</p>
         <ul className="dashboard-help-list">
-          <li>[{registry ? 'OK' : 'Warning'}] Registry loaded</li>
-          <li>[{templates.length > 0 ? 'OK' : 'Warning'}] At least one season template available</li>
-          <li>[{templates.length && allTemplatesWeek61 ? 'OK' : 'Info'}] Template week_count is 61</li>
-          <li>[{templates.length && slotsWithinRange ? 'OK' : 'Info'}] Template slots are within SW1–SW61</li>
-          <li>[{validationQuery.data ? 'Info' : validationQuery.error ? 'Warning' : 'Info'}] Backend validation foundation available</li>
+          <li><strong>Severity: {registry ? 'OK' : 'Warning'}</strong> — Registry loaded</li>
+          <li><strong>Severity: {hasTemplates ? 'OK' : 'Warning'}</strong> — At least one season template available</li>
+          <li><strong>Severity: {hasTemplates && allTemplatesWeek61 ? 'OK' : 'Info'}</strong> — Template week_count is 61</li>
+          <li><strong>Severity: {hasTemplates && slotsWithinRange ? 'OK' : 'Info'}</strong> — Template slots are within SW1–SW61</li>
+          <li><strong>Severity: {validationQuery.data ? 'Info' : validationQuery.error ? 'Warning' : 'Info'}</strong> — Backend validation foundation available</li>
         </ul>
       </SectionCard>
 

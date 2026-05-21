@@ -36,6 +36,93 @@ export type BuildPolicyItem = {
   message: string
 }
 
+export type PreflightSummaryStatus = 'OK' | 'Info' | 'Warning' | 'Blocked'
+
+export type PreflightSummaryItem = {
+  area: string
+  status: PreflightSummaryStatus
+  message: string
+}
+
+type BuildSourceTargetPreflightSummaryItemsArgs = {
+  selectedTargetSeason: SeasonRegistryEntry | null
+  selectedSourceType: SourceType
+  selectedTemplate: SeasonTemplateSummary | null
+  selectedTemplatePreview: TemplatePreview | null
+  targetCalendarExists: boolean | null
+}
+
+export function buildSourceTargetPreflightSummaryItems({
+  selectedTargetSeason,
+  selectedSourceType,
+  selectedTemplate,
+  selectedTemplatePreview,
+  targetCalendarExists
+}: BuildSourceTargetPreflightSummaryItemsArgs): PreflightSummaryItem[] {
+  const items: PreflightSummaryItem[] = [
+    selectedTargetSeason
+      ? { area: 'Target selection', status: 'OK', message: 'Target season selected.' }
+      : { area: 'Target selection', status: 'Warning', message: 'Target season is not selected.' }
+  ]
+
+  items.push(
+    targetCalendarExists === true
+      ? { area: 'Target calendar state', status: 'Warning', message: 'Existing calendar detected.' }
+      : targetCalendarExists === false
+        ? { area: 'Target calendar state', status: 'OK', message: 'No existing calendar detected.' }
+        : { area: 'Target calendar state', status: 'Info', message: 'Target calendar state is unknown/unavailable/loading.' }
+  )
+
+  const plannedSourceTypeSelected = selectedSourceType !== 'season_template'
+  items.push(
+    plannedSourceTypeSelected
+      ? { area: 'Source type', status: 'Blocked', message: 'Planned source type selected; this source type is not executable yet.' }
+      : { area: 'Source type', status: 'OK', message: 'Season template source selected.' }
+  )
+
+  if (plannedSourceTypeSelected) {
+    items.push({ area: 'Source template', status: 'Blocked', message: 'Source template selection is not executable for planned source types yet.' })
+  } else {
+    items.push(
+      selectedTemplate
+        ? { area: 'Source template', status: 'OK', message: 'Template selected for preview.' }
+        : { area: 'Source template', status: 'Warning', message: 'Template is required for season template source preview.' }
+    )
+  }
+
+  if (selectedTargetSeason && selectedTemplate) {
+    items.push(
+      selectedTargetSeason.week_count === selectedTemplate.week_count
+        ? { area: 'Week count compatibility', status: 'OK', message: 'Target and template week_count match.' }
+        : { area: 'Week count compatibility', status: 'Warning', message: `Target week_count (${selectedTargetSeason.week_count}) does not match template week_count (${selectedTemplate.week_count}).` }
+    )
+  } else {
+    items.push({ area: 'Week count compatibility', status: 'Info', message: 'Week count compatibility cannot be determined from current local data.' })
+  }
+
+  if (selectedTemplatePreview) {
+    items.push(
+      selectedTemplatePreview.slotsWithinSw61
+        ? { area: 'Slot range', status: 'OK', message: 'Template preview indicates slots are within SW1–SW61.' }
+        : { area: 'Slot range', status: 'Warning', message: 'Template preview indicates one or more slots are outside SW1–SW61.' }
+    )
+  } else {
+    items.push({ area: 'Slot range', status: 'Info', message: 'Slot range status is unavailable from current local data.' })
+  }
+
+  items.push(
+    targetCalendarExists === true
+      ? { area: 'Overwrite/merge policy', status: 'Blocked', message: 'Existing target calendar requires explicit audited overwrite/merge choice before any future build.' }
+      : targetCalendarExists === false
+        ? { area: 'Overwrite/merge policy', status: 'OK', message: 'Empty target calendar detected; future creation would still require an explicit audited backend command.' }
+        : { area: 'Overwrite/merge policy', status: 'Info', message: 'Target calendar state is unavailable, so no safe future build policy can be finalized.' }
+  )
+
+  items.push({ area: 'Next safe step', status: 'Info', message: 'Review read-only diff and backend validation before any future command.' })
+
+  return items
+}
+
 export function buildOverwriteMergePolicyItems(targetCalendarExists: boolean | null): BuildPolicyItem[] {
   const targetCalendarStateItem: BuildPolicyItem =
     targetCalendarExists === true
@@ -293,6 +380,33 @@ export function BuildPolicyPreviewPanel({ targetCalendarExists }: BuildPolicyPre
         </tbody>
       </table>
       <p>Future implementation must require an explicit audited backend command before modifying any season calendar.</p>
+    </>
+  )
+}
+
+export function SourceTargetPreflightSummaryPanel({ items }: { items: PreflightSummaryItem[] }): JSX.Element {
+  return (
+    <>
+      <p>Read-only local summary. This is not an authoritative backend preflight and does not enable build actions.</p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Area</th>
+            <th scope="col">Status</th>
+            <th scope="col">Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr key={`${item.area}:${item.message}`}>
+              <td>{item.area}</td>
+              <td>{item.status}</td>
+              <td>{item.message}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p>No build, overwrite, merge, or apply command is available from this page.</p>
     </>
   )
 }

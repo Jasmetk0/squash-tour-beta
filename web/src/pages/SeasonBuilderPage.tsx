@@ -6,6 +6,7 @@ import { getSeasonCalendar, getSeasonRegistry, getSeasonTemplates, getTourSeason
 import { DetailList } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import {
+  buildSourceTargetPreflightSummaryItems,
   buildDiffPreviewItems,
   BuildPolicyPreviewPanel,
   BuilderSelectionPanel,
@@ -13,6 +14,7 @@ import {
   FutureAuditedCommandFlowPanel,
   ReadOnlyPreflightChecklistPanel,
   SelectionPreviewPanel,
+  SourceTargetPreflightSummaryPanel,
   TargetCalendarStatusPanel,
   TemplateValidationSummaryPanel
 } from './SeasonBuilderPanels'
@@ -74,6 +76,10 @@ export function AdminSeasonBuilderPage(): JSX.Element {
 
   const diffPreviewItems = useMemo(
     () => buildDiffPreviewItems(selectedTargetSeason, selectedSourceType, selectedTemplate, selectedTemplatePreview, targetCalendarExists),
+    [selectedTargetSeason, selectedSourceType, selectedTemplate, selectedTemplatePreview, targetCalendarExists]
+  )
+  const sourceTargetPreflightSummaryItems = useMemo(
+    () => buildSourceTargetPreflightSummaryItems({ selectedTargetSeason, selectedSourceType, selectedTemplate, selectedTemplatePreview, targetCalendarExists }),
     [selectedTargetSeason, selectedSourceType, selectedTemplate, selectedTemplatePreview, targetCalendarExists]
   )
 
@@ -180,6 +186,10 @@ export function AdminSeasonBuilderPage(): JSX.Element {
 
       <SectionCard title="Overwrite / merge policy preview">
         <BuildPolicyPreviewPanel targetCalendarExists={targetCalendarExists} />
+      </SectionCard>
+
+      <SectionCard title="Source vs target preflight summary">
+        <SourceTargetPreflightSummaryPanel items={sourceTargetPreflightSummaryItems} />
       </SectionCard>
 
       {selectedSourceType === 'season_template' ? (

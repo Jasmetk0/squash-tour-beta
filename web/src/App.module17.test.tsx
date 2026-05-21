@@ -167,6 +167,17 @@ describe('Module 17 pages through routes', () => {
       source_summary: { template_name: 'Default MSA Template Preview', slot_count: 1, week_count: 61 },
       authoritative_diff_summary: {
         status: 'read_only_preflight',
+        can_build: false,
+        target_calendar_exists: true,
+        target_event_count: 1,
+        source_type: 'season_template',
+        source_resolved: true,
+        source_slot_count: 1,
+        source_week_count: 1,
+        target_week_count: 1,
+        week_count_compatible: true,
+        source_range: { first_week: 1, last_week: 1 },
+        target_range: { first_week: 1, last_week: 1 },
         structural_comparison: { planned_source_slots: 1, existing_target_events: 1, target_is_empty: false, requires_overwrite_or_merge_policy: true },
         blocking_reasons: ['Explicit overwrite/merge policy is required before any future build when a target calendar already exists.'],
         advisory_notes: [],
@@ -394,17 +405,25 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('This is the exact read-only payload sent to the backend preflight endpoint.')).toBeInTheDocument()
     expect(screen.getByText('Status: Blocked in this phase')).toBeInTheDocument()
     expect(screen.getByText('Backend preflight completed, but build actions remain disabled because can_build is false.')).toBeInTheDocument()
-    expect(screen.getByText(/structural_comparison/)).toBeInTheDocument()
-    expect(screen.getByText(/blocking_reasons/)).toBeInTheDocument()
-    expect(screen.getByText(/advisory_notes/)).toBeInTheDocument()
+    expect(screen.getByText('Authoritative diff status')).toBeInTheDocument()
+    expect(screen.getByText('Source vs target structural summary')).toBeInTheDocument()
+    expect(screen.getByText('Source and target ranges')).toBeInTheDocument()
+    expect(screen.getByText('Structural comparison')).toBeInTheDocument()
+    expect(screen.getByText('Blocking reasons')).toBeInTheDocument()
+    expect(screen.getByText('Advisory notes')).toBeInTheDocument()
+    expect(screen.getByText('Raw authoritative diff summary JSON')).toBeInTheDocument()
+    expect(screen.getByText('requires_overwrite_or_merge_policy')).toBeInTheDocument()
+    expect(screen.getByText('planned_source_slots')).toBeInTheDocument()
+    expect(screen.getByText('existing_target_events')).toBeInTheDocument()
     expect(screen.getByText('Blocking validation errors are present.')).toBeInTheDocument()
+    expect(screen.getByText('No backend advisory notes returned.')).toBeInTheDocument()
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
     expect(screen.getAllByText('target_season_label').length).toBeGreaterThan(0)
     expect(screen.getAllByText('source_type').length).toBeGreaterThan(0)
     expect(screen.getAllByText('source_template_id').length).toBeGreaterThan(0)
     expect(screen.getAllByText('overwrite_policy').length).toBeGreaterThan(0)
     expect(screen.getAllByText('requested_by').length).toBeGreaterThan(0)
-    expect(screen.getByText('Explicit overwrite/merge policy is required before any future build when a target calendar already exists.')).toBeInTheDocument()
+    expect(screen.getAllByText('Explicit overwrite/merge policy is required before any future build when a target calendar already exists.').length).toBeGreaterThan(0)
     expect(screen.getAllByText('action').length).toBeGreaterThan(0)
     expect(screen.getAllByText('read_only').length).toBeGreaterThan(0)
     expect(screen.getAllByText('mutation_permitted').length).toBeGreaterThan(0)
@@ -439,7 +458,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('GOLD')).toBeInTheDocument()
     expect(screen.getByText('ENG')).toBeInTheDocument()
     expect(screen.getByText('EUROPE')).toBeInTheDocument()
-    expect(screen.getByText('Yes')).toBeInTheDocument()
+    expect(screen.getAllByText('Yes').length).toBeGreaterThan(0)
     expect(screen.getByText('Showing first 10 slots only. Full template detail remains available on the Season Template detail page.')).toBeInTheDocument()
     expect(screen.getByText('Read-only diff preview skeleton')).toBeInTheDocument()
     expect(screen.getByText('This is a structural preview of future compare/apply checks. It does not inspect or modify an existing concrete season calendar.')).toBeInTheDocument()
@@ -465,7 +484,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Read-only design preview. No backend preflight endpoint is called from this page.')).toBeInTheDocument()
     expect(screen.getByText('Backend preflight result')).toBeInTheDocument()
     expect(screen.getByText('Authoritative read-only backend preflight result. This endpoint does not build, merge, overwrite, or apply anything.')).toBeInTheDocument()
-    expect(await screen.findByText('can_build')).toBeInTheDocument()
+    expect((await screen.findAllByText('can_build')).length).toBeGreaterThan(0)
     expect(screen.getByText('Backend preflight request payload')).toBeInTheDocument()
     expect(screen.getByText('Blocking validation errors are present.')).toBeInTheDocument()
     expect(screen.getByText('Status: Blocked in this phase')).toBeInTheDocument()
@@ -505,7 +524,24 @@ describe('Module 17 pages through routes', () => {
       target_event_count: 0,
       source_resolved: true,
       source_summary: { template_name: 'Default MSA Template Preview', slot_count: 1, week_count: 61 },
-      authoritative_diff_summary: { status: 'read_only_preflight' },
+      authoritative_diff_summary: {
+        status: 'read_only_preflight',
+        can_build: false,
+        target_calendar_exists: false,
+        target_event_count: 0,
+        source_type: 'season_template',
+        source_resolved: true,
+        source_slot_count: 1,
+        source_week_count: 1,
+        target_week_count: null,
+        week_count_compatible: null,
+        source_range: { first_week: 1, last_week: 1 },
+        target_range: { first_week: null, last_week: null },
+        structural_comparison: { planned_source_slots: 1, existing_target_events: 0, target_is_empty: true, requires_overwrite_or_merge_policy: false },
+        blocking_reasons: [],
+        advisory_notes: [],
+        placeholder: 'Event-level additions/replacements/conflicts remain planned for a future phase.'
+      },
       validation_warnings: [],
       validation_errors: [],
       audit_preview: { action: 'season_builder_preflight', read_only: true, mutation_permitted: false }
@@ -524,7 +560,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Read-only design preview. No backend preflight endpoint is called from this page.')).toBeInTheDocument()
     expect(screen.getByText('Backend preflight result')).toBeInTheDocument()
     expect(screen.getByText('Authoritative read-only backend preflight result. This endpoint does not build, merge, overwrite, or apply anything.')).toBeInTheDocument()
-    expect(await screen.findByText('can_build')).toBeInTheDocument()
+    expect((await screen.findAllByText('can_build')).length).toBeGreaterThan(0)
     expect(screen.getByText('Backend preflight request payload')).toBeInTheDocument()
     expect(screen.getByText('No validation warnings returned.')).toBeInTheDocument()
     expect(screen.getByText('No validation errors returned.')).toBeInTheDocument()
@@ -533,6 +569,13 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('false').length).toBeGreaterThan(0)
     expect(screen.getAllByText('target_calendar_exists').length).toBeGreaterThan(0)
     expect(screen.getAllByText('target_event_count').length).toBeGreaterThan(0)
+    expect(screen.getByText('Authoritative diff status')).toBeInTheDocument()
+    expect(screen.getByText('Source vs target structural summary')).toBeInTheDocument()
+    expect(screen.getByText('Blocking reasons')).toBeInTheDocument()
+    expect(screen.getByText('Advisory notes')).toBeInTheDocument()
+    expect(screen.getByText('Raw authoritative diff summary JSON')).toBeInTheDocument()
+    expect(screen.getByText('No backend blocking reasons returned.')).toBeInTheDocument()
+    expect(screen.getByText('No backend advisory notes returned.')).toBeInTheDocument()
     expect(screen.getByText('validation_errors count')).toBeInTheDocument()
     expect(screen.getAllByText('0').length).toBeGreaterThan(0)
     expect(screen.getByText(/"read_only": true/)).toBeInTheDocument()

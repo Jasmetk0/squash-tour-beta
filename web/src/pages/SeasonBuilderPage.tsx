@@ -7,6 +7,7 @@ import { DetailList } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import type { SeasonRegistryEntry, SeasonTemplateSummary, TourSeasonsValidationResponse } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
+import { safeToLongSeasonLabel } from '../utils/seasonLabels'
 
 
 type SourceType = 'season_template' | 'blank_calendar_planned' | 'another_season_planned' | 'custom_slot_planned'
@@ -87,14 +88,22 @@ type SelectionPreviewPanelProps = {
 }
 
 function SelectionPreviewPanel({ selectedTargetSeason, selectedSourceType, selectedTemplate, selectedTemplatePreview }: SelectionPreviewPanelProps): JSX.Element {
+  const targetLegacyLabel = selectedTargetSeason ? safeToLongSeasonLabel(selectedTargetSeason.label) : null
   return (
     <>
       {selectedTargetSeason ? (
         <ul className="dashboard-help-list">
           <li>Target compact label: {selectedTargetSeason.label}</li>
+          {targetLegacyLabel ? <li>Target legacy label: {targetLegacyLabel}</li> : null}
           <li>Target start year: {selectedTargetSeason.season_start_year}</li>
+          <li>Target season index: {selectedTargetSeason.season_index}</li>
           <li>Target registry status: {selectedTargetSeason.status}</li>
           <li>Target week count: {selectedTargetSeason.week_count}</li>
+          <li>Target season week range: SW{selectedTargetSeason.season_week_start}–SW{selectedTargetSeason.season_week_end}</li>
+          <li>Target year week range: YW{selectedTargetSeason.year_week_start}–YW{selectedTargetSeason.year_week_end}</li>
+          <li><Link to={`/admin/seasons/detail/${encodeURIComponent(selectedTargetSeason.label)}`}>Open target season detail</Link></li>
+          <li><Link to={`/admin/seasons?season=${encodeURIComponent(selectedTargetSeason.label)}`}>Open selected season in Seasons workspace</Link></li>
+          <li><Link to="/admin/tour-seasons/season-registry">Open Season Registry</Link></li>
         </ul>
       ) : <p>No target season available for preview.</p>}
 

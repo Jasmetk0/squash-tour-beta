@@ -234,7 +234,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText(/Read-only foundation\./).length).toBeGreaterThan(0)
     expect((await screen.findAllByText(/Source path: config\/tournament_templates\/mvp_templates\.json/)).length).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: /Default MSA Template Preview \(default_msa_template_preview\)/ })).toHaveAttribute('href', '/admin/tour-seasons/season-templates/default_msa_template_preview')
-    expect(screen.getByRole('link', { name: 'Open Season Registry' })).toHaveAttribute('href', '/admin/tour-seasons/season-registry')
+    expect(screen.getAllByRole('link', { name: 'Open Season Registry' }).some((link) => link.getAttribute('href') === '/admin/tour-seasons/season-registry')).toBe(true)
     expect(screen.getByRole('link', { name: 'Open Seasons' })).toHaveAttribute('href', '/admin/seasons')
 
 
@@ -292,6 +292,14 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByRole('option', { name: 'Another season (planned)' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Custom slot (planned)' })).toBeInTheDocument()
     expect(screen.getByText('Selection preview')).toBeInTheDocument()
+    expect(screen.getByText('Target compact label: 2000/01')).toBeInTheDocument()
+    expect(screen.getByText('Target legacy label: 2000/2001')).toBeInTheDocument()
+    expect(screen.getByText('Target season index: 0')).toBeInTheDocument()
+    expect(screen.getByText('Target season week range: SW1–SW61')).toBeInTheDocument()
+    expect(screen.getByText('Target year week range: YW37–YW36')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open target season detail' })).toHaveAttribute('href', '/admin/seasons/detail/2000%2F01')
+    expect(screen.getByRole('link', { name: 'Open selected season in Seasons workspace' })).toHaveAttribute('href', '/admin/seasons?season=2000%2F01')
+    expect(screen.getAllByRole('link', { name: 'Open Season Registry' }).some((link) => link.getAttribute('href') === '/admin/tour-seasons/season-registry')).toBe(true)
     expect(screen.getByText('Template name: Default MSA Template Preview')).toBeInTheDocument()
     expect(screen.getAllByText('Slot count: 1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Week count: 61').length).toBeGreaterThan(0)

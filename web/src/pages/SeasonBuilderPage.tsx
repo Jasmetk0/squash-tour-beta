@@ -7,6 +7,7 @@ import { DetailList } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import {
   buildDiffPreviewItems,
+  BuildPolicyPreviewPanel,
   BuilderSelectionPanel,
   DiffPreviewSkeletonPanel,
   FutureAuditedCommandFlowPanel,
@@ -175,6 +176,10 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           selectedTargetSeasonLabel={selectedTargetSeasonLabel}
           query={{ isLoading: targetCalendarQuery.isLoading, error: targetCalendarQuery.error, data: targetCalendarQuery.data }}
         />
+      </SectionCard>
+
+      <SectionCard title="Overwrite / merge policy preview">
+        <BuildPolicyPreviewPanel targetCalendarExists={targetCalendarExists} />
       </SectionCard>
 
       {selectedSourceType === 'season_template' ? (

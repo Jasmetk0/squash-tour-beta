@@ -28,6 +28,37 @@ export type TemplateValidationItem = {
   message: string
 }
 
+export type BuildPolicyStatus = 'OK' | 'Info' | 'Warning' | 'BlockedUntilExplicitChoice'
+
+export type BuildPolicyItem = {
+  area: string
+  status: BuildPolicyStatus
+  message: string
+}
+
+export function buildOverwriteMergePolicyItems(targetCalendarExists: boolean | null): BuildPolicyItem[] {
+  const targetCalendarStateItem: BuildPolicyItem =
+    targetCalendarExists === true
+      ? { area: 'Target calendar state', status: 'Warning', message: 'Existing calendar detected.' }
+      : targetCalendarExists === false
+        ? { area: 'Target calendar state', status: 'OK', message: 'No existing calendar detected.' }
+        : { area: 'Target calendar state', status: 'Info', message: 'Existing calendar state is unknown/unavailable.' }
+
+  const mergePolicyItem: BuildPolicyItem =
+    targetCalendarExists === true
+      ? { area: 'Merge policy', status: 'BlockedUntilExplicitChoice', message: 'Merge/replace choice must be explicit and audited before any future command.' }
+      : targetCalendarExists === false
+        ? { area: 'Merge policy', status: 'Info', message: 'Merge policy is not needed for an empty target, but future command still requires audit.' }
+        : { area: 'Merge policy', status: 'Info', message: 'Policy cannot be resolved until calendar state is known.' }
+
+  return [
+    targetCalendarStateItem,
+    { area: 'Silent overwrite policy', status: 'BlockedUntilExplicitChoice', message: 'Silent overwrite must never be allowed.' },
+    mergePolicyItem,
+    { area: 'Audit policy', status: 'Info', message: 'Future build command must be explicit, audited, and reviewable.' }
+  ]
+}
+
 export function buildTemplateValidationItems(template: SeasonTemplateSummary | null): TemplateValidationItem[] {
   if (!template) {
     return [{ area: 'Template selected', status: 'Warning', message: 'No template selected.' }]
@@ -230,6 +261,38 @@ export function TargetCalendarStatusPanel({ selectedTargetSeasonLabel, query }: 
         )
       ) : null}
       {selectedTargetSeasonLabel && !isLoading && !error && !calendar ? <p>No existing calendar found for selected target season.</p> : null}
+    </>
+  )
+}
+
+type BuildPolicyPreviewPanelProps = {
+  targetCalendarExists: boolean | null
+}
+
+export function BuildPolicyPreviewPanel({ targetCalendarExists }: BuildPolicyPreviewPanelProps): JSX.Element {
+  const items = buildOverwriteMergePolicyItems(targetCalendarExists)
+  return (
+    <>
+      <p>Read-only policy preview. No overwrite, merge, or build action is available on this page.</p>
+      <table className="table">
+        <thead>
+          <tr>
+            <th>Area</th>
+            <th>Status</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr key={item.area}>
+              <td>{item.area}</td>
+              <td>{item.status}</td>
+              <td>{item.message}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p>Future implementation must require an explicit audited backend command before modifying any season calendar.</p>
     </>
   )
 }

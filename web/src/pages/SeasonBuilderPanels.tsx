@@ -885,6 +885,39 @@ export function BackendPreflightResultPanel({ queryEnabled, requestPayload, quer
 
   const auditPreview = data.audit_preview ?? {}
   const diffSummary = data.authoritative_diff_summary ?? {}
+  const stringifyUnknown = (value: unknown): string => {
+    if (value === null || value === undefined) return '—'
+    if (typeof value === 'string') return value
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+    try {
+      return JSON.stringify(value)
+    } catch {
+      return String(value)
+    }
+  }
+  const getRecordValue = (record: Record<string, unknown>, key: string): unknown => record[key]
+  const formatNullableBoolean = (value: unknown): string => {
+    if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+    return '—'
+  }
+  const formatRangeFromRecord = (value: unknown): { firstWeek: string; lastWeek: string } => {
+    if (!value || typeof value !== 'object') return { firstWeek: '—', lastWeek: '—' }
+    const rangeRecord = value as Record<string, unknown>
+    return {
+      firstWeek: stringifyUnknown(rangeRecord.first_week),
+      lastWeek: stringifyUnknown(rangeRecord.last_week)
+    }
+  }
+  const sourceRange = formatRangeFromRecord(getRecordValue(diffSummary, 'source_range'))
+  const targetRange = formatRangeFromRecord(getRecordValue(diffSummary, 'target_range'))
+  const structuralComparisonRaw = getRecordValue(diffSummary, 'structural_comparison')
+  const structuralComparison = structuralComparisonRaw && typeof structuralComparisonRaw === 'object'
+    ? structuralComparisonRaw as Record<string, unknown>
+    : null
+  const blockingReasonsRaw = getRecordValue(diffSummary, 'blocking_reasons')
+  const blockingReasons = Array.isArray(blockingReasonsRaw) ? blockingReasonsRaw : []
+  const advisoryNotesRaw = getRecordValue(diffSummary, 'advisory_notes')
+  const advisoryNotes = Array.isArray(advisoryNotesRaw) ? advisoryNotesRaw : []
 
   return (
     <>
@@ -925,15 +958,59 @@ export function BackendPreflightResultPanel({ queryEnabled, requestPayload, quer
       <h4>Validation errors</h4>
       {data.validation_errors.length ? <ul>{data.validation_errors.map((e)=><li key={e}>{e}</li>)}</ul> : <p>No validation errors returned.</p>}
       <h4>Authoritative diff summary</h4>
+      <h5>Authoritative diff status</h5>
       <table>
         <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
         <tbody>
-          <tr><td>status</td><td>{String(diffSummary.status ?? '—')}</td></tr>
-          <tr><td>target_calendar_exists</td><td>{String(diffSummary.target_calendar_exists ?? '—')}</td></tr>
-          <tr><td>target_event_count</td><td>{String(diffSummary.target_event_count ?? '—')}</td></tr>
-          <tr><td>placeholder</td><td>{String(diffSummary.placeholder ?? '—')}</td></tr>
+          <tr><td>status</td><td>{stringifyUnknown(getRecordValue(diffSummary, 'status'))}</td></tr>
+          <tr><td>can_build</td><td>{formatNullableBoolean(getRecordValue(diffSummary, 'can_build'))}</td></tr>
+          <tr><td>source_type</td><td>{stringifyUnknown(getRecordValue(diffSummary, 'source_type'))}</td></tr>
+          <tr><td>source_resolved</td><td>{formatNullableBoolean(getRecordValue(diffSummary, 'source_resolved'))}</td></tr>
+          <tr><td>week_count_compatible</td><td>{formatNullableBoolean(getRecordValue(diffSummary, 'week_count_compatible'))}</td></tr>
         </tbody>
       </table>
+      <h5>Source vs target structural summary</h5>
+      <table>
+        <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+        <tbody>
+          <tr><td>source_slot_count</td><td>{stringifyUnknown(getRecordValue(diffSummary, 'source_slot_count'))}</td></tr>
+          <tr><td>source_week_count</td><td>{stringifyUnknown(getRecordValue(diffSummary, 'source_week_count'))}</td></tr>
+          <tr><td>target_week_count</td><td>{stringifyUnknown(getRecordValue(diffSummary, 'target_week_count'))}</td></tr>
+          <tr><td>target_calendar_exists</td><td>{formatNullableBoolean(getRecordValue(diffSummary, 'target_calendar_exists'))}</td></tr>
+          <tr><td>target_event_count</td><td>{stringifyUnknown(getRecordValue(diffSummary, 'target_event_count'))}</td></tr>
+        </tbody>
+      </table>
+      <h5>Source and target ranges</h5>
+      <table>
+        <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+        <tbody>
+          <tr><td>source_range first_week</td><td>{sourceRange.firstWeek}</td></tr>
+          <tr><td>source_range last_week</td><td>{sourceRange.lastWeek}</td></tr>
+          <tr><td>target_range first_week</td><td>{targetRange.firstWeek}</td></tr>
+          <tr><td>target_range last_week</td><td>{targetRange.lastWeek}</td></tr>
+        </tbody>
+      </table>
+      <h5>Structural comparison</h5>
+      {structuralComparison ? (
+        <table>
+          <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+          <tbody>
+            <tr><td>planned_source_slots</td><td>{stringifyUnknown(getRecordValue(structuralComparison, 'planned_source_slots'))}</td></tr>
+            <tr><td>existing_target_events</td><td>{stringifyUnknown(getRecordValue(structuralComparison, 'existing_target_events'))}</td></tr>
+            <tr><td>target_is_empty</td><td>{formatNullableBoolean(getRecordValue(structuralComparison, 'target_is_empty'))}</td></tr>
+            <tr><td>requires_overwrite_or_merge_policy</td><td>{formatNullableBoolean(getRecordValue(structuralComparison, 'requires_overwrite_or_merge_policy'))}</td></tr>
+          </tbody>
+        </table>
+      ) : <p>No structural comparison returned.</p>}
+      <h5>Blocking reasons</h5>
+      {blockingReasons.length > 0
+        ? <ul>{blockingReasons.map((reason, idx) => <li key={`blocking-${idx}`}>{stringifyUnknown(reason)}</li>)}</ul>
+        : <p>No backend blocking reasons returned.</p>}
+      <h5>Advisory notes</h5>
+      {advisoryNotes.length > 0
+        ? <ul>{advisoryNotes.map((note, idx) => <li key={`advisory-${idx}`}>{stringifyUnknown(note)}</li>)}</ul>
+        : <p>No backend advisory notes returned.</p>}
+      <h5>Raw authoritative diff summary JSON</h5>
       <pre>{JSON.stringify(data.authoritative_diff_summary, null, 2)}</pre>
       <h4>Audit preview</h4>
       <table>

@@ -108,6 +108,7 @@ def preflight_season_builder(
     calendar_service: SeasonCalendarService = Depends(get_season_calendar_service),
     template_service: SeasonTemplateService = Depends(get_season_template_service),
 ) -> SeasonBuilderPreflightResponse:
+    supported_overwrite_policies = {"merge_preview", "overwrite_preview"}
     warnings: list[str] = []
     errors: list[str] = []
     source_resolved = False
@@ -132,8 +133,25 @@ def preflight_season_builder(
             target_first_week = min(target_weeks)
             target_last_week = max(target_weeks)
             target_week_count = len(set(target_weeks))
+        if payload.overwrite_policy is not None and payload.overwrite_policy not in supported_overwrite_policies:
+            errors.append(
+                f"Unsupported overwrite_policy '{payload.overwrite_policy}'. Supported values are merge_preview and overwrite_preview."
+            )
+
         if target_calendar_exists and not payload.overwrite_policy:
             errors.append("Explicit overwrite/merge policy is required before any future build when a target calendar already exists.")
+        elif target_calendar_exists and payload.overwrite_policy == "merge_preview":
+            warnings.append(
+                "Merge policy preview selected. Future implementation must still perform event-level backend diff before any merge command."
+            )
+        elif target_calendar_exists and payload.overwrite_policy == "overwrite_preview":
+            warnings.append(
+                "Overwrite policy preview selected. Future implementation must require explicit audited confirmation before any overwrite command."
+            )
+        elif not target_calendar_exists and payload.overwrite_policy in supported_overwrite_policies:
+            warnings.append(
+                "Policy preview selected for an empty target calendar; future build would still require audit."
+            )
 
     source_summary: dict[str, object] = {"source_type": payload.source_type}
     source_slot_count: int | None = None

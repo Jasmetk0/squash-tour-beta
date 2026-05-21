@@ -2997,3 +2997,27 @@ export type RunSeasonWeekResult = {
   validation_warnings: string[]
   validation_errors: string[]
 }
+
+
+export type SeasonBuilderPreflightRequest = {
+  target_season_label: string
+  source_type: string
+  source_template_id?: string | null
+  overwrite_policy?: string | null
+  requested_by?: string | null
+}
+
+export type SeasonBuilderPreflightResponse = {
+  can_build: boolean
+  target_season_label: string
+  source_type: string
+  source_template_id: string | null
+  target_calendar_exists: boolean | null
+  target_event_count: number | null
+  source_resolved: boolean
+  source_summary: Record<string, unknown>
+  authoritative_diff_summary: Record<string, unknown>
+  validation_warnings: string[]
+  validation_errors: string[]
+  audit_preview: Record<string, unknown>
+}

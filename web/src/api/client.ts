@@ -125,6 +125,8 @@ import type {
   RunSeasonRangeResult,
   SeasonRegistryResponse,
   SeasonTemplatesResponse,
+  SeasonBuilderPreflightRequest,
+  SeasonBuilderPreflightResponse,
   CategoriesResponse,
   TournamentMastersResponse,
   TourSeasonsValidationResponse
@@ -178,6 +180,10 @@ export function getSeasonRegistry(): Promise<SeasonRegistryResponse> {
 
 export function getSeasonTemplates(): Promise<SeasonTemplatesResponse> {
   return request('/admin/seasons/templates')
+}
+
+export function postSeasonBuilderPreflight(payload: SeasonBuilderPreflightRequest): Promise<SeasonBuilderPreflightResponse> {
+  return request('/admin/seasons/builder/preflight', { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function getCategories(): Promise<CategoriesResponse> {

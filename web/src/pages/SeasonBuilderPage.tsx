@@ -173,6 +173,110 @@ function SelectionPreviewPanel({ selectedTargetSeason, selectedSourceType, selec
   )
 }
 
+
+type DiffPreviewStatus = 'OK' | 'Info' | 'Warning' | 'Planned'
+
+type DiffPreviewItem = {
+  area: string
+  status: DiffPreviewStatus
+  message: string
+}
+
+function buildDiffPreviewItems(
+  selectedTargetSeason: SeasonRegistryEntry | null,
+  selectedSourceType: SourceType,
+  selectedTemplate: SeasonTemplateSummary | null,
+  selectedTemplatePreview: TemplatePreview | null
+): DiffPreviewItem[] {
+  const items: DiffPreviewItem[] = [
+    selectedTargetSeason
+      ? { area: 'Target season', status: 'OK', message: 'Target season selected.' }
+      : { area: 'Target season', status: 'Warning', message: 'No target season selected.' }
+  ]
+
+  if (selectedSourceType === 'season_template') {
+    items.push({ area: 'Source type', status: 'OK', message: 'Season template source selected.' })
+    items.push(
+      selectedTemplate
+        ? { area: 'Source template', status: 'OK', message: 'Template selected.' }
+        : { area: 'Source template', status: 'Warning', message: 'No template selected.' }
+    )
+
+    if (selectedTargetSeason && selectedTemplate) {
+      items.push(
+        selectedTemplate.week_count === selectedTargetSeason.week_count
+          ? { area: 'Template week count', status: 'OK', message: 'Template week count matches target season week count.' }
+          : { area: 'Template week count', status: 'Warning', message: `Template week count (${selectedTemplate.week_count}) does not match target season week count (${selectedTargetSeason.week_count}).` }
+      )
+    } else {
+      items.push({ area: 'Template week count', status: 'Info', message: 'Template or target season week count data is not fully available.' })
+    }
+
+    if (selectedTemplate) {
+      items.push(
+        selectedTemplate.slot_count > 0
+          ? { area: 'Template slots', status: 'OK', message: 'Template has at least one slot.' }
+          : { area: 'Template slots', status: 'Warning', message: 'Template has no slots.' }
+      )
+    } else {
+      items.push({ area: 'Template slots', status: 'Info', message: 'Template slot data is not available.' })
+    }
+
+    if (selectedTemplatePreview) {
+      items.push(
+        selectedTemplatePreview.slotsWithinSw61
+          ? { area: 'Slot week range', status: 'OK', message: 'Template slots are within SW1–SW61.' }
+          : { area: 'Slot week range', status: 'Warning', message: 'Template has one or more slots outside SW1–SW61.' }
+      )
+    } else {
+      items.push({ area: 'Slot week range', status: 'Info', message: 'Slot week range data is not available.' })
+    }
+  } else {
+    items.push({ area: 'Source type', status: 'Planned', message: 'Source type is planned and not executable yet.' })
+    items.push({ area: 'Source template', status: 'Planned', message: 'Source template selection is not active for this planned source type.' })
+    items.push({ area: 'Template week count', status: 'Planned', message: 'Template week count comparison is pending an executable source workflow.' })
+    items.push({ area: 'Template slots', status: 'Planned', message: 'Template slot checks are pending an executable source workflow.' })
+    items.push({ area: 'Slot week range', status: 'Planned', message: 'Slot week range checks are pending an executable source workflow.' })
+  }
+
+  items.push(
+    { area: 'Existing calendar conflict detection', status: 'Planned', message: 'Planned; no concrete season calendar conflict diff is performed on this page.' },
+    { area: 'Missing/extra slot comparison', status: 'Planned', message: 'Planned; missing/extra slot compare is not implemented on this page.' },
+    { area: 'Category mismatch comparison', status: 'Planned', message: 'Planned; category-level diff checks are not implemented on this page.' },
+    { area: 'Host/region travel conflict checks', status: 'Planned', message: 'Planned; host/region travel conflict checks are not implemented on this page.' },
+    { area: 'Apply/replace action plan', status: 'Planned', message: 'Planned; apply/replace actions are intentionally not executable from this page.' }
+  )
+
+  return items
+}
+
+function DiffPreviewSkeletonPanel({ items }: { items: DiffPreviewItem[] }): JSX.Element {
+  return (
+    <>
+      <p>This is a structural preview of future compare/apply checks. It does not inspect or modify an existing concrete season calendar.</p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Area</th>
+            <th scope="col">Status</th>
+            <th scope="col">Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr key={`${item.area}:${item.message}`}>
+              <td>{item.area}</td>
+              <td>{item.status}</td>
+              <td>{item.message}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p>No diff/apply command is executed from this page.</p>
+    </>
+  )
+}
+
 function FutureAuditedCommandFlowPanel(): JSX.Element {
   return (
     <>
@@ -260,6 +364,11 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     const latestSlot = allWeekEnds.length ? Math.max(...allWeekEnds) : null
     return { slotsWithinSw61, qualificationSlotsCount, earliestSlot, latestSlot }
   }, [selectedTemplate])
+
+  const diffPreviewItems = useMemo(
+    () => buildDiffPreviewItems(selectedTargetSeason, selectedSourceType, selectedTemplate, selectedTemplatePreview),
+    [selectedTargetSeason, selectedSourceType, selectedTemplate, selectedTemplatePreview]
+  )
 
   return (
     <section className="panel">
@@ -353,6 +462,10 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           selectedTemplate={selectedTemplate}
           selectedTemplatePreview={selectedTemplatePreview}
         />
+      </SectionCard>
+
+      <SectionCard title="Read-only diff preview skeleton">
+        <DiffPreviewSkeletonPanel items={diffPreviewItems} />
       </SectionCard>
 
       <SectionCard title="Future audited command flow">

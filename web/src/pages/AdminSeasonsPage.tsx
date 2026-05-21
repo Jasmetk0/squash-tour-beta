@@ -513,6 +513,7 @@ export function AdminSeasonsPage(): JSX.Element {
     <section className="panel">
       <PageIntro title="Seasons / Bootstrap" subtitle="Convert the curated initial pool into deterministic first-season active player records." />
       <p className="status">Bootstrap converts the curated initial pool into active first-season players. It does not simulate tournaments yet.</p>
+      <p className="status"><Link to="/admin/seasons/build">Open Season Builder</Link> for read-only preflight foundation and planned workflow overview.</p>
       <SelectedSeasonWorkspace selectedSeasonRaw={selectedRegistrySeason} />
 
       <WorkflowBanner />

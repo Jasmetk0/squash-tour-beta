@@ -75,6 +75,7 @@ export function AdminSeasonDetailPage(): JSX.Element {
           <Link key="tour-seasons" to="/admin/tour-seasons">Tour &amp; Seasons</Link>,
           <Link key="season-registry" to="/admin/tour-seasons/season-registry">Season Registry</Link>,
           <Link key="seasons" to="/admin/seasons">Seasons</Link>,
+          <Link key="season-builder" to="/admin/seasons/build">Season Builder</Link>,
           <Link key="validation" to="/admin/tour-seasons/validation">Calendar Validation</Link>,
           <Link key="compare-apply" to="/admin/tour-seasons/compare">Calendar Compare / Apply</Link>
         ]} emptyLabel="No links." />
@@ -93,6 +94,7 @@ export function AdminSeasonDetailPage(): JSX.Element {
         <p><Link to="/admin/tour-seasons/season-registry">Open Season Registry</Link></p>
         <p><Link to="/admin/tour-seasons/validation">Open Calendar Validation</Link></p>
         <p><Link to="/admin/tour-seasons/compare">Open Calendar Compare / Apply</Link></p>
+        <p><Link to="/admin/seasons/build">Open Season Builder</Link></p>
       </SectionCard>
     </section>
   )

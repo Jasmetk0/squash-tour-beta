@@ -1230,4 +1230,10 @@ describe('AdminSeasonsPage', () => {
     expect(within(table).getByText('Adam Ahmed AA01')).toBeInTheDocument()
     expect(screen.getAllByText('Best-N ranking selection not implemented.').length).toBeGreaterThan(0)
   })
+
+  it('shows safe navigation link to read-only Season Builder foundation', async () => {
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    const link = await screen.findByRole('link', { name: 'Open Season Builder' })
+    expect(link).toHaveAttribute('href', '/admin/seasons/build')
+  })
 })

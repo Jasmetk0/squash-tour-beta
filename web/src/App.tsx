@@ -61,6 +61,7 @@ import { NationsPage } from './pages/NationsPage'
 import { WorldPackagePage } from './pages/WorldPackagePage'
 import { CountryMomentumPage } from './pages/CountryMomentumPage'
 import { AdminSeasonDetailPage } from './pages/SeasonDetailPage'
+import { AdminSeasonBuilderPage } from './pages/SeasonBuilderPage'
 
 function LegacyRunRedirect(): JSX.Element {
   const { runId = '', '*': suffix = '' } = useParams()
@@ -98,6 +99,7 @@ export default function App(): JSX.Element {
         <Route path="admin/tour-seasons" element={<AdminTourSeasonsPage />} />
         <Route path="admin/tournament-templates" element={<AdminTournamentTemplatesPage />} />
         <Route path="admin/seasons" element={<AdminSeasonsPage />} />
+        <Route path="admin/seasons/build" element={<AdminSeasonBuilderPage />} />
         <Route path="admin/seasons/detail/:seasonLabel" element={<AdminSeasonDetailPage />} />
         <Route path="admin/players" element={<AdminPlayersPage />} />
         <Route path="admin/players/database" element={<AdminPlayersDatabasePage />} />

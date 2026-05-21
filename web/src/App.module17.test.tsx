@@ -109,7 +109,16 @@ describe('Module 17 pages through routes', () => {
       seasons: Array.from({ length: 40 }, (_, index) => ({ season_start_year: 2000 + index, label: `${2000 + index}/${String((2001 + index) % 100).padStart(2, '0')}`, season_index: index, week_count: 61, season_week_start: 1, season_week_end: 61, year_week_start: 37, year_week_end: 36, status: 'registry_only' }))
     })
     api.getSeasonActivePlayers.mockResolvedValue({ players: [], summary: { total_active_players: 0 }, metadata: null, warnings: [] })
-    api.getSeasonCalendar.mockResolvedValue({ calendar: null, summary: { event_count: 0 }, metadata: null, validation_warnings: [], validation_errors: [] })
+    api.getSeasonCalendar.mockResolvedValue({
+      calendar: {
+        season: '2000/01',
+        events: [{ event_id: 'event-1', season_week: 1, event_name: 'World Tour Gold', category: 'GOLD', host_country: 'ENG', region: 'EUROPE', status: 'scheduled' }]
+      },
+      summary: { event_count: 1, persisted: true, first_event_week: 1, last_event_week: 1 },
+      metadata: null,
+      validation_warnings: ['Read-only warning'],
+      validation_errors: ['Read-only error']
+    })
     api.getCategories.mockResolvedValue({
       categories: [{ category_id: 'gold', name: 'GOLD', status: 'read_only_foundation', source: 'derived_preview:tournament_templates', template_count: 1, valid_from_season: null, valid_to_season: null, tour_level: 'WORLD_TOUR', prestige_rank: null, mandatory: null, main_draw_size: null, qualification_draw_size: 16, direct_entries: 18, qualifiers: 4, wildcards: 2, lucky_losers: 2, seeds_count: 8, points_by_round: null, prize_money_total: null, match_format: null, qualifying_weeks_count: 1, main_draw_weeks_count: null, schedule_footprint_weeks: 1, source_template_ids: ['wt_gold_24'], notes: ['Mixed draw sizes across source templates.'] }],
       source_path: 'config/tournament_templates/mvp_templates.json',
@@ -341,6 +350,12 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('Week count: 61').length).toBeGreaterThan(0)
     expect(screen.getByText('Selected template slot preview')).toBeInTheDocument()
     expect(screen.getByText('Selected template validation summary')).toBeInTheDocument()
+    expect(screen.getByText('Target existing calendar preview')).toBeInTheDocument()
+    expect(screen.getByText('Read-only inspection of the currently selected target season calendar.')).toBeInTheDocument()
+    expect(await screen.findByText(/Calendar exists/i)).toBeInTheDocument()
+    expect(screen.getByText(/Event count/i)).toBeInTheDocument()
+    expect(screen.getByText(/Validation warnings count/i)).toBeInTheDocument()
+    expect(screen.getByText(/Validation errors count/i)).toBeInTheDocument()
     expect(screen.getByText('Local read-only validation derived from the selected template payload. Not an authoritative build gate.')).toBeInTheDocument()
     expect(screen.getAllByText('Template selected').length).toBeGreaterThan(0)
     expect(screen.getByText('Slot count')).toBeInTheDocument()
@@ -360,6 +375,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Season template source selected.')).toBeInTheDocument()
     expect(screen.getAllByText('Template selected.').length).toBeGreaterThan(0)
     expect(screen.getByText('Template week count matches target season week count.')).toBeInTheDocument()
+    expect(screen.getByText('Existing calendar detected; future build workflow must require explicit overwrite/merge choice.')).toBeInTheDocument()
     expect(screen.getByText('Planned; no concrete season calendar conflict diff is performed on this page.')).toBeInTheDocument()
     expect(screen.getByText('Planned; apply/replace actions are intentionally not executable from this page.')).toBeInTheDocument()
     expect(screen.getByText('No diff/apply command is executed from this page.')).toBeInTheDocument()

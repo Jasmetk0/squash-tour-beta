@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
-import { getSeasonRegistry, getSeasonTemplates, getTourSeasonsValidation } from '../api/client'
+import { getSeasonCalendar, getSeasonRegistry, getSeasonTemplates, getTourSeasonsValidation } from '../api/client'
 import { DetailList } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import {
@@ -12,6 +12,7 @@ import {
   FutureAuditedCommandFlowPanel,
   ReadOnlyPreflightChecklistPanel,
   SelectionPreviewPanel,
+  TargetCalendarStatusPanel,
   TemplateValidationSummaryPanel
 } from './SeasonBuilderPanels'
 import type { SourceType } from './SeasonBuilderPanels'
@@ -29,6 +30,12 @@ export function AdminSeasonBuilderPage(): JSX.Element {
   const [selectedTargetSeasonLabel, setSelectedTargetSeasonLabel] = useState('')
   const [selectedSourceType, setSelectedSourceType] = useState<SourceType>('season_template')
   const [selectedTemplateId, setSelectedTemplateId] = useState('')
+  const targetCalendarQuery = useQuery({
+    queryKey: ['season-builder-target-calendar', selectedTargetSeasonLabel],
+    queryFn: () => getSeasonCalendar(selectedTargetSeasonLabel),
+    enabled: Boolean(selectedTargetSeasonLabel),
+    retry: false
+  })
   const hasTemplates = templates.length > 0
   const slotsWithinRange = templates.every((template) => template.slots.every((slot) => slot.season_week_start >= 1 && slot.season_week_end <= 61))
   const allTemplatesWeek61 = templates.every((template) => template.week_count === 61)
@@ -47,6 +54,11 @@ export function AdminSeasonBuilderPage(): JSX.Element {
 
   const selectedTargetSeason = registry?.seasons.find((season) => season.label === selectedTargetSeasonLabel) ?? null
   const selectedTemplate = templates.find((template) => template.template_id === selectedTemplateId) ?? null
+  const targetCalendarExists = targetCalendarQuery.error
+    ? null
+    : targetCalendarQuery.data
+      ? Boolean(targetCalendarQuery.data.calendar)
+      : null
 
   const selectedTemplatePreview = useMemo(() => {
     if (!selectedTemplate) return null
@@ -60,8 +72,8 @@ export function AdminSeasonBuilderPage(): JSX.Element {
   }, [selectedTemplate])
 
   const diffPreviewItems = useMemo(
-    () => buildDiffPreviewItems(selectedTargetSeason, selectedSourceType, selectedTemplate, selectedTemplatePreview),
-    [selectedTargetSeason, selectedSourceType, selectedTemplate, selectedTemplatePreview]
+    () => buildDiffPreviewItems(selectedTargetSeason, selectedSourceType, selectedTemplate, selectedTemplatePreview, targetCalendarExists),
+    [selectedTargetSeason, selectedSourceType, selectedTemplate, selectedTemplatePreview, targetCalendarExists]
   )
 
   return (
@@ -155,6 +167,13 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           selectedSourceType={selectedSourceType}
           selectedTemplate={selectedTemplate}
           selectedTemplatePreview={selectedTemplatePreview}
+        />
+      </SectionCard>
+
+      <SectionCard title="Target existing calendar preview">
+        <TargetCalendarStatusPanel
+          selectedTargetSeasonLabel={selectedTargetSeasonLabel}
+          query={{ isLoading: targetCalendarQuery.isLoading, error: targetCalendarQuery.error, data: targetCalendarQuery.data }}
         />
       </SectionCard>
 

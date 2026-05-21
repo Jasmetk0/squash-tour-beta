@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
-import { getSeasonCalendar, getSeasonRegistry, getSeasonTemplates, getTourSeasonsValidation } from '../api/client'
+import { getSeasonCalendar, getSeasonRegistry, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderPreflight } from '../api/client'
 import { DetailList } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import {
@@ -12,6 +12,7 @@ import {
   buildDiffPreviewItems,
   BackendPreflightContractPreviewPanel,
   BuildPolicyPreviewPanel,
+  BackendPreflightResultPanel,
   BuilderSelectionPanel,
   DiffPreviewSkeletonPanel,
   FutureAuditedCommandFlowPanel,
@@ -98,6 +99,24 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     [selectedTargetSeason, selectedSourceType, selectedTemplate, selectedTemplatePreview, targetCalendarQuery.data, targetCalendarExists]
   )
   const backendPreflightContractItems = useMemo(() => buildBackendPreflightContractItems(), [])
+
+  const backendPreflightPayload = useMemo(() => ({
+    target_season_label: selectedTargetSeasonLabel,
+    source_type: selectedSourceType,
+    source_template_id: selectedSourceType === 'season_template' ? selectedTemplateId || null : null,
+    overwrite_policy: null,
+    requested_by: 'local-admin-preview'
+  }), [selectedTargetSeasonLabel, selectedSourceType, selectedTemplateId])
+
+  const backendPreflightEnabled = Boolean(selectedTargetSeasonLabel)
+    && (selectedSourceType !== 'season_template' || Boolean(selectedTemplateId))
+
+  const backendPreflightQuery = useQuery({
+    queryKey: ['season-builder-backend-preflight', selectedTargetSeasonLabel, selectedSourceType, selectedTemplateId],
+    queryFn: () => postSeasonBuilderPreflight(backendPreflightPayload),
+    enabled: backendPreflightEnabled,
+    retry: false
+  })
 
   return (
     <section className="panel">
@@ -214,6 +233,13 @@ export function AdminSeasonBuilderPage(): JSX.Element {
 
       <SectionCard title="Backend preflight contract preview">
         <BackendPreflightContractPreviewPanel items={backendPreflightContractItems} />
+      </SectionCard>
+
+      <SectionCard title="Backend preflight result">
+        <BackendPreflightResultPanel
+          queryEnabled={backendPreflightEnabled}
+          query={{ isLoading: backendPreflightQuery.isLoading, error: backendPreflightQuery.error, data: backendPreflightQuery.data }}
+        />
       </SectionCard>
 
       {selectedSourceType === 'season_template' ? (

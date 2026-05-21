@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 
-import type { SeasonCalendarBuildResponse, SeasonRegistryEntry, SeasonTemplateSummary, TourSeasonsValidationResponse } from '../api/types'
+import type { SeasonBuilderPreflightResponse, SeasonCalendarBuildResponse, SeasonRegistryEntry, SeasonTemplateSummary, TourSeasonsValidationResponse } from '../api/types'
 import { safeToLongSeasonLabel } from '../utils/seasonLabels'
+import { formatApiError } from '../utils/apiErrors'
 
 export type SourceType = 'season_template' | 'blank_calendar_planned' | 'another_season_planned' | 'custom_slot_planned'
 
@@ -835,6 +836,77 @@ export function SourceTargetDiffDetailPanel({ items }: { items: SourceTargetDiff
         </tbody>
       </table>
       <p>No diff, build, merge, overwrite, or apply command is executed from this page.</p>
+    </>
+  )
+}
+
+type BackendPreflightResultPanelProps = {
+  queryEnabled: boolean
+  query: {
+    isLoading: boolean
+    error: unknown
+    data: SeasonBuilderPreflightResponse | undefined
+  }
+}
+
+export function BackendPreflightResultPanel({ queryEnabled, query }: BackendPreflightResultPanelProps): JSX.Element {
+  if (!queryEnabled) {
+    return (
+      <>
+        <p>Authoritative read-only backend preflight result. This endpoint does not build, merge, overwrite, or apply anything.</p>
+        <p>Backend preflight is waiting for target season and executable source selection.</p>
+        <p>Even when backend preflight succeeds, build actions remain unavailable in this phase.</p>
+      </>
+    )
+  }
+
+  if (query.isLoading) {
+    return (
+      <>
+        <p>Authoritative read-only backend preflight result. This endpoint does not build, merge, overwrite, or apply anything.</p>
+        <p>Loading backend preflight…</p>
+      </>
+    )
+  }
+
+  if (query.error) {
+    return (
+      <>
+        <p>Authoritative read-only backend preflight result. This endpoint does not build, merge, overwrite, or apply anything.</p>
+        <p className="error">Backend preflight failed: {formatApiError(query.error)}</p>
+        <p>Even when backend preflight succeeds, build actions remain unavailable in this phase.</p>
+      </>
+    )
+  }
+
+  const data = query.data
+  if (!data) return <p>Backend preflight is waiting for target season and executable source selection.</p>
+
+  return (
+    <>
+      <p>Authoritative read-only backend preflight result. This endpoint does not build, merge, overwrite, or apply anything.</p>
+      <table>
+        <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+        <tbody>
+          <tr><td>can_build</td><td><strong>{String(data.can_build)}</strong></td></tr>
+          <tr><td>target_season_label</td><td>{data.target_season_label}</td></tr>
+          <tr><td>source_type</td><td>{data.source_type}</td></tr>
+          <tr><td>source_template_id</td><td>{data.source_template_id ?? '—'}</td></tr>
+          <tr><td>target_calendar_exists</td><td>{String(data.target_calendar_exists)}</td></tr>
+          <tr><td>target_event_count</td><td>{String(data.target_event_count)}</td></tr>
+          <tr><td>source_resolved</td><td>{String(data.source_resolved)}</td></tr>
+          <tr><td>validation_warnings count</td><td>{data.validation_warnings.length}</td></tr>
+          <tr><td>validation_errors count</td><td>{data.validation_errors.length}</td></tr>
+        </tbody>
+      </table>
+      {!data.can_build ? <p><strong>can_build is false in this phase.</strong></p> : null}
+      {data.validation_warnings.length ? <><h4>Validation warnings</h4><ul>{data.validation_warnings.map((w)=><li key={w}>{w}</li>)}</ul></> : null}
+      {data.validation_errors.length ? <><h4>Validation errors</h4><ul>{data.validation_errors.map((e)=><li key={e}>{e}</li>)}</ul></> : null}
+      <h4>Authoritative diff summary</h4>
+      <pre>{JSON.stringify(data.authoritative_diff_summary, null, 2)}</pre>
+      <h4>Audit preview</h4>
+      <pre>{JSON.stringify(data.audit_preview, null, 2)}</pre>
+      <p>Even when backend preflight succeeds, build actions remain unavailable in this phase.</p>
     </>
   )
 }

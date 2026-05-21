@@ -233,6 +233,29 @@ class SeasonCalendarBuildSummary(BaseModel):
     calendar_exists: bool = False
 
 
+
+
+class SeasonBuilderPreflightRequest(BaseModel):
+    target_season_label: str = Field(min_length=1, max_length=32)
+    source_type: str = Field(min_length=1, max_length=64)
+    source_template_id: str | None = Field(default=None, min_length=1, max_length=128)
+    overwrite_policy: str | None = Field(default=None, min_length=1, max_length=64)
+    requested_by: str | None = Field(default=None, min_length=1, max_length=128)
+
+
+class SeasonBuilderPreflightResponse(BaseModel):
+    can_build: bool = False
+    target_season_label: str
+    source_type: str
+    source_template_id: str | None = None
+    target_calendar_exists: bool | None = None
+    target_event_count: int | None = None
+    source_resolved: bool = False
+    source_summary: dict[str, Any] = Field(default_factory=dict)
+    authoritative_diff_summary: dict[str, Any] = Field(default_factory=dict)
+    validation_warnings: list[str] = Field(default_factory=list)
+    validation_errors: list[str] = Field(default_factory=list)
+    audit_preview: dict[str, Any] = Field(default_factory=dict)
 class SeasonCalendarBuildResult(BaseModel):
     """Calendar build/read response returned by Admin Seasons endpoints."""
 

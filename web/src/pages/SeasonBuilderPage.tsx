@@ -10,6 +10,7 @@ import {
   buildSourceTargetDiffDetailItems,
   buildBackendPreflightContractItems,
   buildFutureBuildCommandContractItems,
+  buildFutureCommandReadinessItems,
   buildDiffPreviewItems,
   BackendPreflightContractPreviewPanel,
   BuildPolicyPreviewPanel,
@@ -18,6 +19,7 @@ import {
   BuilderSelectionPanel,
   DiffPreviewSkeletonPanel,
   FutureBuildCommandContractPanel,
+  FutureCommandReadinessChecklistPanel,
   FutureAuditedCommandFlowPanel,
   ReadOnlyPreflightChecklistPanel,
   SelectionPreviewPanel,
@@ -123,6 +125,13 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     enabled: backendPreflightEnabled,
     retry: false
   })
+  const futureCommandReadinessItems = useMemo(
+    () => buildFutureCommandReadinessItems({
+      currentPreflightPayload: backendPreflightPayload,
+      currentPreflightResult: backendPreflightQuery.data
+    }),
+    [backendPreflightPayload, backendPreflightQuery.data]
+  )
 
   return (
     <section className="panel">
@@ -263,6 +272,10 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           currentPreflightPayload={backendPreflightPayload}
           currentPreflightResult={backendPreflightQuery.data}
         />
+      </SectionCard>
+
+      <SectionCard title="Future command readiness checklist">
+        <FutureCommandReadinessChecklistPanel items={futureCommandReadinessItems} />
       </SectionCard>
 
       {selectedSourceType === 'season_template' ? (

@@ -19,6 +19,76 @@ export type TemplatePreview = {
   latestSlot: number | null
 }
 
+
+export type TemplateValidationStatus = 'OK' | 'Info' | 'Warning'
+
+export type TemplateValidationItem = {
+  area: string
+  status: TemplateValidationStatus
+  message: string
+}
+
+export function buildTemplateValidationItems(template: SeasonTemplateSummary | null): TemplateValidationItem[] {
+  if (!template) {
+    return [{ area: 'Template selected', status: 'Warning', message: 'No template selected.' }]
+  }
+
+  const items: TemplateValidationItem[] = [{ area: 'Template selected', status: 'OK', message: 'Template selected.' }]
+
+  const slots = template.slots
+  if (!slots.length) {
+    items.push({ area: 'Slot count', status: 'Warning', message: 'Template has no slots.' })
+  } else if (template.slot_count !== slots.length) {
+    items.push({ area: 'Slot count', status: 'Warning', message: `Template slot_count (${template.slot_count}) differs from payload slots length (${slots.length}).` })
+  } else if (template.slot_count > 0) {
+    items.push({ area: 'Slot count', status: 'OK', message: 'Template slot count and payload slot list are aligned.' })
+  } else {
+    items.push({ area: 'Slot count', status: 'Warning', message: 'Template has no slots.' })
+  }
+
+  const slotIdCounts = new Map<string, number>()
+  for (const slot of slots) {
+    slotIdCounts.set(slot.slot_id, (slotIdCounts.get(slot.slot_id) ?? 0) + 1)
+  }
+  const duplicateSlotIds = [...slotIdCounts.entries()].filter(([, count]) => count > 1).map(([slotId]) => slotId)
+  items.push(
+    duplicateSlotIds.length
+      ? { area: 'Duplicate slot IDs', status: 'Warning', message: `Duplicate slot IDs detected: ${duplicateSlotIds.join(', ')}` }
+      : { area: 'Duplicate slot IDs', status: 'OK', message: 'No duplicate slot IDs detected.' }
+  )
+
+  const outOfRangeCount = slots.filter((slot) => slot.season_week_start < 1 || slot.season_week_start > 61 || slot.season_week_end < 1 || slot.season_week_end > 61).length
+  const endBeforeStartCount = slots.filter((slot) => slot.season_week_end < slot.season_week_start).length
+  if (outOfRangeCount > 0) {
+    items.push({ area: 'Week ranges', status: 'Warning', message: `${outOfRangeCount} slot(s) have week values outside SW1–SW61.` })
+  }
+  if (endBeforeStartCount > 0) {
+    items.push({ area: 'Week ranges', status: 'Warning', message: `${endBeforeStartCount} slot(s) have season_week_end before season_week_start.` })
+  }
+  if (!outOfRangeCount && !endBeforeStartCount) {
+    items.push({ area: 'Week ranges', status: 'OK', message: 'All slot week ranges are within SW1–SW61 and have valid start/end order.' })
+  }
+
+  let missingIdentityFieldCount = 0
+  for (const slot of slots) {
+    if (!slot.tournament_name?.trim()) missingIdentityFieldCount += 1
+    if (!slot.category?.trim()) missingIdentityFieldCount += 1
+    if (!slot.host_country?.trim()) missingIdentityFieldCount += 1
+    if (!slot.region?.trim()) missingIdentityFieldCount += 1
+    if (!slot.source_template_id?.trim()) missingIdentityFieldCount += 1
+  }
+  items.push(
+    missingIdentityFieldCount > 0
+      ? { area: 'Missing key fields', status: 'Warning', message: `Missing required slot identity fields: ${missingIdentityFieldCount}` }
+      : { area: 'Missing key fields', status: 'OK', message: 'Required slot identity fields are populated.' }
+  )
+
+  const qualificationSlotsCount = slots.filter((slot) => slot.has_qualification).length
+  items.push({ area: 'Qualification slots', status: 'Info', message: `Qualification slots: ${qualificationSlotsCount}` })
+
+  return items
+}
+
 export type DiffPreviewStatus = 'OK' | 'Info' | 'Warning' | 'Planned'
 
 export type DiffPreviewItem = {
@@ -238,6 +308,35 @@ export function SelectionPreviewPanel({ selectedTargetSeason, selectedSourceType
           </>
         ) : <p>No season template available for preview.</p>
       ) : <p>Preview only. This source type has no executable workflow yet.</p>}
+    </>
+  )
+}
+
+
+export function TemplateValidationSummaryPanel({ selectedTemplate }: { selectedTemplate: SeasonTemplateSummary | null }): JSX.Element {
+  const items = buildTemplateValidationItems(selectedTemplate)
+
+  return (
+    <>
+      <p>Local read-only validation derived from the selected template payload. Not an authoritative build gate.</p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Area</th>
+            <th scope="col">Status</th>
+            <th scope="col">Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr key={`${item.area}:${item.message}`}>
+              <td>{item.area}</td>
+              <td>{item.status}</td>
+              <td>{item.message}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </>
   )
 }

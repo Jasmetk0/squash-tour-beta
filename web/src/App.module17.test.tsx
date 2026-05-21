@@ -403,6 +403,33 @@ describe('Module 17 pages through routes', () => {
     }
   })
 
+  it('renders Season Builder no-calendar overwrite policy branch', async () => {
+    api.getSeasonCalendar.mockResolvedValueOnce({
+      calendar: null,
+      summary: { event_count: 0, persisted: false, first_event_week: null, last_event_week: null },
+      metadata: null,
+      validation_warnings: [],
+      validation_errors: []
+    })
+
+    renderAppAt('/admin/seasons/build')
+
+    expect(await screen.findByRole('heading', { name: 'Season Builder' })).toBeInTheDocument()
+    expect(screen.getByText('Target existing calendar preview')).toBeInTheDocument()
+    expect(await screen.findByText('Calendar exists: No')).toBeInTheDocument()
+    expect(screen.getByText('No existing calendar found for selected target season.')).toBeInTheDocument()
+    expect(screen.getByText('Overwrite / merge policy preview')).toBeInTheDocument()
+    expect(screen.getByText('No existing calendar detected.')).toBeInTheDocument()
+    expect(screen.getByText('Silent overwrite must never be allowed.')).toBeInTheDocument()
+    expect(screen.getByText('Merge policy is not needed for an empty target, but future command still requires audit.')).toBeInTheDocument()
+    expect(screen.getByText('Future build command must be explicit, audited, and reviewable.')).toBeInTheDocument()
+
+    const forbiddenMutationActions = ['Build', 'Create', 'Apply', 'Generate', 'Simulate', 'Run', 'Save', 'Update', 'Delete', 'Bootstrap']
+    for (const action of forbiddenMutationActions) {
+      expect(screen.queryByRole('button', { name: new RegExp(`^${action}$`, 'i') })).not.toBeInTheDocument()
+    }
+  })
+
   it('renders Concrete Season detail dashboard routes', async () => {
     renderAppAt('/admin/seasons/detail/2000%2F01')
     expect((await screen.findAllByRole('heading', { level: 2, name: 'Concrete Season' })).length).toBeGreaterThan(0)

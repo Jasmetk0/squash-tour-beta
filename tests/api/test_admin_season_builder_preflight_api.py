@@ -65,7 +65,7 @@ class Server:
 
 def test_builder_preflight_valid_template_read_only(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
-        payload = {"target_season_label": "2000/2001", "source_type": "season_template", "source_template_id": "default_msa_template_preview", "overwrite_policy": "merge", "requested_by": "qa"}
+        payload = {"target_season_label": "2000/2001", "source_type": "season_template", "source_template_id": "default_msa_template_preview", "overwrite_policy": "merge_preview", "requested_by": "qa"}
         status, body = call("POST", f"{server.base_url}/admin/seasons/builder/preflight", payload)
         assert status == 200
         assert body["can_build"] is False
@@ -92,6 +92,55 @@ def test_builder_preflight_existing_calendar_requires_policy(tmp_path: Path) -> 
         diff = body["authoritative_diff_summary"]
         assert diff["structural_comparison"]["requires_overwrite_or_merge_policy"] is True
         assert any("overwrite/merge policy" in message for message in diff["blocking_reasons"])
+
+
+def test_builder_preflight_existing_calendar_merge_preview_policy(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        build_payload = {"seed": 1, "dry_run": False, "overwrite_existing": False, "season_start_calendar_year": 2000, "season_start_year_week": 37, "include_inactive_templates": False, "max_events": None}
+        call("POST", f"{server.base_url}/admin/seasons/2000%2F2001/calendar/build", build_payload)
+        payload = {"target_season_label": "2000/2001", "source_type": "season_template", "source_template_id": "default_msa_template_preview", "overwrite_policy": "merge_preview"}
+        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/preflight", payload)
+        assert body["can_build"] is False
+        assert not any("overwrite/merge policy" in message for message in body["validation_errors"])
+        assert any("Merge policy preview selected" in note for note in body["authoritative_diff_summary"]["advisory_notes"])
+        assert body["authoritative_diff_summary"]["structural_comparison"]["requires_overwrite_or_merge_policy"] is False
+
+
+def test_builder_preflight_existing_calendar_overwrite_preview_policy(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        build_payload = {"seed": 1, "dry_run": False, "overwrite_existing": False, "season_start_calendar_year": 2000, "season_start_year_week": 37, "include_inactive_templates": False, "max_events": None}
+        call("POST", f"{server.base_url}/admin/seasons/2000%2F2001/calendar/build", build_payload)
+        payload = {"target_season_label": "2000/2001", "source_type": "season_template", "source_template_id": "default_msa_template_preview", "overwrite_policy": "overwrite_preview"}
+        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/preflight", payload)
+        assert body["can_build"] is False
+        assert not any("overwrite/merge policy" in message for message in body["validation_errors"])
+        assert any("Overwrite policy preview selected" in note for note in body["authoritative_diff_summary"]["advisory_notes"])
+        assert body["authoritative_diff_summary"]["structural_comparison"]["requires_overwrite_or_merge_policy"] is False
+
+
+def test_builder_preflight_unsupported_overwrite_policy(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/preflight", {"target_season_label": "2000/2001", "source_type": "season_template", "source_template_id": "default_msa_template_preview", "overwrite_policy": "merge"})
+        assert any("Unsupported overwrite_policy 'merge'" in message for message in body["validation_errors"])
+        assert any("Unsupported overwrite_policy 'merge'" in message for message in body["authoritative_diff_summary"]["blocking_reasons"])
+        assert body["can_build"] is False
+
+
+def test_builder_preflight_no_calendar_missing_policy_is_allowed(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/preflight", {"target_season_label": "2000/2001", "source_type": "season_template", "source_template_id": "default_msa_template_preview"})
+        assert not any("overwrite/merge policy" in message for message in body["validation_errors"])
+
+
+def test_builder_preflight_no_calendar_policy_preview_advisory(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        for policy in ("merge_preview", "overwrite_preview"):
+            _, body = call("POST", f"{server.base_url}/admin/seasons/builder/preflight", {"target_season_label": "2000/2001", "source_type": "season_template", "source_template_id": "default_msa_template_preview", "overwrite_policy": policy})
+            assert not any("overwrite/merge policy" in message for message in body["validation_errors"])
+            assert any(
+                "Policy preview selected for an empty target calendar; future build would still require audit." in note
+                for note in body["authoritative_diff_summary"]["advisory_notes"]
+            )
 
 
 def test_builder_preflight_planned_source_type(tmp_path: Path) -> None:

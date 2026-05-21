@@ -989,6 +989,8 @@ export function BackendPreflightResultPanel({ queryEnabled, requestPayload, quer
           <tr><td>target_season_label</td><td>{data.target_season_label}</td></tr>
           <tr><td>source_type</td><td>{data.source_type}</td></tr>
           <tr><td>source_template_id</td><td>{data.source_template_id ?? '—'}</td></tr>
+          <tr><td>preflight_fingerprint</td><td>{data.preflight_fingerprint ?? 'Unavailable'}</td></tr>
+          <tr><td>reviewed_diff_id</td><td>{data.reviewed_diff_id ?? 'Unavailable'}</td></tr>
           <tr><td>target_calendar_exists</td><td>{String(data.target_calendar_exists)}</td></tr>
           <tr><td>target_event_count</td><td>{String(data.target_event_count)}</td></tr>
           <tr><td>source_resolved</td><td>{String(data.source_resolved)}</td></tr>
@@ -1178,6 +1180,8 @@ export function FutureBuildCommandContractPanel({ items, currentPreflightPayload
           <tr><td>source_type</td><td>{currentPreflightPayload?.source_type ?? 'Unavailable'}</td></tr>
           <tr><td>source_template_id</td><td>{currentPreflightPayload?.source_template_id ?? 'Unavailable'}</td></tr>
           <tr><td>overwrite_policy</td><td>{currentPreflightPayload?.overwrite_policy ?? 'Unavailable'}</td></tr>
+          <tr><td>preflight_fingerprint</td><td>{currentPreflightResult?.preflight_fingerprint ?? 'Unavailable'}</td></tr>
+          <tr><td>reviewed_diff_id</td><td>{currentPreflightResult?.reviewed_diff_id ?? 'Unavailable'}</td></tr>
           <tr><td>can_build</td><td>{currentPreflightResult ? String(currentPreflightResult.can_build) : 'Unavailable'}</td></tr>
           <tr><td>source_resolved</td><td>{currentPreflightResult ? String(currentPreflightResult.source_resolved) : 'Unavailable'}</td></tr>
           <tr><td>validation_errors count</td><td>{currentPreflightResult ? String(currentPreflightResult.validation_errors.length) : 'Unavailable'}</td></tr>

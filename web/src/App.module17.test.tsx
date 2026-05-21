@@ -161,6 +161,8 @@ describe('Module 17 pages through routes', () => {
       target_season_label: '2000/2001',
       source_type: 'season_template',
       source_template_id: 'default_msa_template_preview',
+      preflight_fingerprint: 'pf_test_existing',
+      reviewed_diff_id: 'rd_test_existing',
       target_calendar_exists: true,
       target_event_count: 1,
       source_resolved: true,
@@ -503,7 +505,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('source_type').length).toBeGreaterThan(0)
     expect(screen.getAllByText('source_template_id or future source identifier').length).toBeGreaterThan(0)
     expect(screen.getAllByText('overwrite_policy').length).toBeGreaterThan(0)
-    expect(screen.getByText('preflight_fingerprint')).toBeInTheDocument()
+    expect(screen.getAllByText('preflight_fingerprint').length).toBeGreaterThan(0)
     expect(screen.getAllByText('requested_by / admin actor').length).toBeGreaterThan(0)
     expect(screen.getByText('audit_reason')).toBeInTheDocument()
     expect(screen.getByText('seed / template_version / config_hash')).toBeInTheDocument()
@@ -511,6 +513,8 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('reviewed_diff_id or dry_run_result_id')).toBeInTheDocument()
     expect(screen.getByText('mutation_scope')).toBeInTheDocument()
     expect(screen.getByText('Current preflight signals')).toBeInTheDocument()
+    expect(screen.getAllByText('preflight_fingerprint').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('reviewed_diff_id').length).toBeGreaterThan(0)
     expect(screen.getAllByText('can_build').length).toBeGreaterThan(0)
     expect(screen.getAllByText('source_resolved').length).toBeGreaterThan(0)
     expect(screen.getAllByText('validation_errors count').length).toBeGreaterThan(0)
@@ -526,6 +530,8 @@ describe('Module 17 pages through routes', () => {
           target_season_label: '2000/2001',
           source_type: 'season_template',
           source_template_id: 'default_msa_template_preview',
+          preflight_fingerprint: 'pf_test_merge',
+          reviewed_diff_id: 'rd_test_merge',
           target_calendar_exists: true,
           target_event_count: 1,
           source_resolved: true,
@@ -559,6 +565,8 @@ describe('Module 17 pages through routes', () => {
           target_season_label: '2000/2001',
           source_type: 'season_template',
           source_template_id: 'default_msa_template_preview',
+          preflight_fingerprint: 'pf_test_overwrite',
+          reviewed_diff_id: 'rd_test_overwrite',
           target_calendar_exists: true,
           target_event_count: 1,
           source_resolved: true,
@@ -591,6 +599,8 @@ describe('Module 17 pages through routes', () => {
         target_season_label: '2000/2001',
         source_type: 'season_template',
         source_template_id: 'default_msa_template_preview',
+        preflight_fingerprint: 'pf_test_existing',
+        reviewed_diff_id: 'rd_test_existing',
         target_calendar_exists: true,
         target_event_count: 1,
         source_resolved: true,
@@ -629,6 +639,8 @@ describe('Module 17 pages through routes', () => {
     })
     expect((screen.getByLabelText('Future policy preview') as HTMLSelectElement).value).toBe('merge_preview')
     expect(await screen.findByText(/Merge policy preview is selected\./)).toBeInTheDocument()
+    expect(screen.getAllByText('pf_test_merge').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('rd_test_merge').length).toBeGreaterThan(0)
     expect(screen.getByText('Backend advisory notes returned for this policy/source combination.')).toBeInTheDocument()
     expect(screen.getByText('Merge policy preview selected. Future implementation must still perform event-level backend diff before any merge command.')).toBeInTheDocument()
     expect(screen.getByText('No backend blocking reasons returned.')).toBeInTheDocument()
@@ -643,6 +655,8 @@ describe('Module 17 pages through routes', () => {
       }))
     })
     expect(await screen.findByText(/Overwrite policy preview is selected\./)).toBeInTheDocument()
+    expect(screen.getAllByText('pf_test_overwrite').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('rd_test_overwrite').length).toBeGreaterThan(0)
     expect(screen.getByText('Overwrite policy preview selected. Future implementation must require explicit audited confirmation before any overwrite command.')).toBeInTheDocument()
     expect(api.getSeasonCalendar).toHaveBeenCalledTimes(1)
     expect(screen.getByText('Future audited command flow')).toBeInTheDocument()
@@ -668,6 +682,8 @@ describe('Module 17 pages through routes', () => {
       target_season_label: '2000/2001',
       source_type: 'season_template',
       source_template_id: 'default_msa_template_preview',
+      preflight_fingerprint: 'pf_test_empty',
+      reviewed_diff_id: 'rd_test_empty',
       target_calendar_exists: false,
       target_event_count: 0,
       source_resolved: true,
@@ -732,6 +748,8 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Future build command contract preview')).toBeInTheDocument()
     expect(screen.getByText('Read-only contract preview. No build command exists on this page.')).toBeInTheDocument()
     expect(screen.getByText('Current preflight signals')).toBeInTheDocument()
+    expect(screen.getAllByText('preflight_fingerprint').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('reviewed_diff_id').length).toBeGreaterThan(0)
     expect(screen.getByText('Future build implementation must require a reviewed backend preflight, explicit audit metadata, and a separate audited command.')).toBeInTheDocument()
     expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith({ target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, requested_by: 'local-admin-preview' })
     expect(screen.getAllByText('No existing calendar detected.').length).toBeGreaterThan(0)

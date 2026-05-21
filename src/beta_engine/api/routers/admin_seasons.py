@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import hashlib
+import json
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from beta_engine.api.deps import get_initial_pool_season_bootstrap_service, get_season_calendar_service, get_season_range_execution_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service, get_season_template_service
@@ -217,6 +220,26 @@ def preflight_season_builder(
         "placeholder": "Event-level additions/replacements/conflicts remain planned for a future phase.",
     }
 
+    fingerprint_payload = {
+        "target_season_label": normalized_target,
+        "source_type": payload.source_type,
+        "source_template_id": payload.source_template_id,
+        "overwrite_policy": payload.overwrite_policy,
+        "target_calendar_exists": target_calendar_exists,
+        "target_event_count": target_event_count,
+        "source_resolved": source_resolved,
+        "source_summary": source_summary,
+        "authoritative_diff_summary": authoritative_diff_summary,
+        "validation_warnings": warnings,
+        "validation_errors": errors,
+    }
+    canonical_payload = json.dumps(fingerprint_payload, sort_keys=True, separators=(",", ":"))
+    preflight_fingerprint = f"pf_{hashlib.sha256(canonical_payload.encode('utf-8')).hexdigest()[:16]}"
+    reviewed_seed = f"reviewed_diff:{canonical_payload}"
+    reviewed_diff_id = f"rd_{hashlib.sha256(reviewed_seed.encode('utf-8')).hexdigest()[:16]}"
+    authoritative_diff_summary["preflight_fingerprint"] = preflight_fingerprint
+    authoritative_diff_summary["reviewed_diff_id"] = reviewed_diff_id
+
     audit_preview = {
         "action": "season_builder_preflight",
         "requested_by": payload.requested_by,
@@ -226,6 +249,8 @@ def preflight_season_builder(
         "overwrite_policy": payload.overwrite_policy,
         "read_only": True,
         "mutation_permitted": False,
+        "preflight_fingerprint": preflight_fingerprint,
+        "reviewed_diff_id": reviewed_diff_id,
     }
 
     return SeasonBuilderPreflightResponse(
@@ -233,6 +258,8 @@ def preflight_season_builder(
         target_season_label=normalized_target,
         source_type=payload.source_type,
         source_template_id=payload.source_template_id,
+        preflight_fingerprint=preflight_fingerprint,
+        reviewed_diff_id=reviewed_diff_id,
         target_calendar_exists=target_calendar_exists,
         target_event_count=target_event_count,
         source_resolved=source_resolved,

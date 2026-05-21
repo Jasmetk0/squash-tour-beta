@@ -9,6 +9,7 @@ import {
   buildSourceTargetPreflightSummaryItems,
   buildSourceTargetDiffDetailItems,
   buildBackendPreflightContractItems,
+  buildFutureBuildCommandContractItems,
   buildDiffPreviewItems,
   BackendPreflightContractPreviewPanel,
   BuildPolicyPreviewPanel,
@@ -16,6 +17,7 @@ import {
   BackendPreflightResultPanel,
   BuilderSelectionPanel,
   DiffPreviewSkeletonPanel,
+  FutureBuildCommandContractPanel,
   FutureAuditedCommandFlowPanel,
   ReadOnlyPreflightChecklistPanel,
   SelectionPreviewPanel,
@@ -102,6 +104,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     [selectedTargetSeason, selectedSourceType, selectedTemplate, selectedTemplatePreview, targetCalendarQuery.data, targetCalendarExists]
   )
   const backendPreflightContractItems = useMemo(() => buildBackendPreflightContractItems(), [])
+  const futureBuildCommandContractItems = useMemo(() => buildFutureBuildCommandContractItems(), [])
 
   const backendPreflightPayload = useMemo<SeasonBuilderPreflightRequest>(() => ({
     target_season_label: selectedTargetSeasonLabel,
@@ -251,6 +254,14 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           queryEnabled={backendPreflightEnabled}
           requestPayload={backendPreflightPayload}
           query={{ isLoading: backendPreflightQuery.isLoading, error: backendPreflightQuery.error, data: backendPreflightQuery.data }}
+        />
+      </SectionCard>
+
+      <SectionCard title="Future build command contract preview">
+        <FutureBuildCommandContractPanel
+          items={futureBuildCommandContractItems}
+          currentPreflightPayload={backendPreflightPayload}
+          currentPreflightResult={backendPreflightQuery.data}
         />
       </SectionCard>
 

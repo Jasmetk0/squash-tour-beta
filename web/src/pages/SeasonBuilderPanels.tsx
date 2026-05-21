@@ -61,6 +61,12 @@ export type BackendPreflightContractItem = {
   reason: string
 }
 
+export type FutureBuildCommandContractItem = {
+  area: string
+  required: string
+  reason: string
+}
+
 type BuildSourceTargetDiffDetailItemsArgs = {
   selectedTargetSeason: SeasonRegistryEntry | null
   selectedSourceType: SourceType
@@ -1112,6 +1118,74 @@ export function BackendPreflightContractPreviewPanel({ items }: { items: Backend
         </tbody>
       </table>
       <p>Future implementation must add an authoritative backend preflight before any build, merge, overwrite, or apply command can exist.</p>
+    </>
+  )
+}
+
+export function buildFutureBuildCommandContractItems(): FutureBuildCommandContractItem[] {
+  return [
+    { area: 'Target season', required: 'target_season_label', reason: 'Build command must identify one concrete target season.' },
+    { area: 'Source type', required: 'source_type', reason: 'Build command must distinguish template/copy/blank/custom workflows.' },
+    { area: 'Source reference', required: 'source_template_id or future source identifier', reason: 'Build command must resolve its source deterministically.' },
+    { area: 'Policy', required: 'overwrite_policy', reason: 'Existing calendars must never be changed without explicit merge/overwrite intent.' },
+    { area: 'Backend preflight fingerprint', required: 'preflight_fingerprint', reason: 'Future build command must prove it is based on a reviewed backend preflight result.' },
+    { area: 'Audit actor', required: 'requested_by / admin actor', reason: 'Every future mutation must be attributable.' },
+    { area: 'Audit reason', required: 'audit_reason', reason: 'Admin must explain why a build/merge/overwrite is being performed.' },
+    { area: 'Determinism', required: 'seed / template_version / config_hash', reason: 'Future build output must be reproducible.' },
+    { area: 'Confirmation phrase', required: 'explicit_confirmation', reason: 'Dangerous operations must require explicit confirmation, especially overwrite.' },
+    { area: 'Dry-run result reference', required: 'reviewed_diff_id or dry_run_result_id', reason: 'Build command must reference an already reviewed authoritative diff.' },
+    { area: 'Mutation scope', required: 'mutation_scope', reason: 'Future implementation must distinguish create-only, merge, overwrite, and repair scopes.' }
+  ]
+}
+
+type FutureBuildCommandContractPanelProps = {
+  items: FutureBuildCommandContractItem[]
+  currentPreflightPayload?: SeasonBuilderPreflightRequest
+  currentPreflightResult?: SeasonBuilderPreflightResponse
+}
+
+export function FutureBuildCommandContractPanel({ items, currentPreflightPayload, currentPreflightResult }: FutureBuildCommandContractPanelProps): JSX.Element {
+  const auditPreview = currentPreflightResult?.audit_preview as Record<string, unknown> | undefined
+  const mutationPermittedValue = typeof auditPreview?.mutation_permitted === 'boolean'
+    ? String(auditPreview.mutation_permitted)
+    : 'Unavailable'
+  return (
+    <>
+      <p>Read-only contract preview. No build command exists on this page.</p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Area</th>
+            <th scope="col">Required future field</th>
+            <th scope="col">Reason</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr key={`${item.area}:${item.required}`}>
+              <td>{item.area}</td>
+              <td>{item.required}</td>
+              <td>{item.reason}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <h4>Current preflight signals</h4>
+      <table>
+        <thead><tr><th scope="col">Signal</th><th scope="col">Value</th></tr></thead>
+        <tbody>
+          <tr><td>target_season_label</td><td>{currentPreflightPayload?.target_season_label ?? 'Unavailable'}</td></tr>
+          <tr><td>source_type</td><td>{currentPreflightPayload?.source_type ?? 'Unavailable'}</td></tr>
+          <tr><td>source_template_id</td><td>{currentPreflightPayload?.source_template_id ?? 'Unavailable'}</td></tr>
+          <tr><td>overwrite_policy</td><td>{currentPreflightPayload?.overwrite_policy ?? 'Unavailable'}</td></tr>
+          <tr><td>can_build</td><td>{currentPreflightResult ? String(currentPreflightResult.can_build) : 'Unavailable'}</td></tr>
+          <tr><td>source_resolved</td><td>{currentPreflightResult ? String(currentPreflightResult.source_resolved) : 'Unavailable'}</td></tr>
+          <tr><td>validation_errors count</td><td>{currentPreflightResult ? String(currentPreflightResult.validation_errors.length) : 'Unavailable'}</td></tr>
+          <tr><td>validation_warnings count</td><td>{currentPreflightResult ? String(currentPreflightResult.validation_warnings.length) : 'Unavailable'}</td></tr>
+          <tr><td>mutation_permitted</td><td>{mutationPermittedValue}</td></tr>
+        </tbody>
+      </table>
+      <p>Future build implementation must require a reviewed backend preflight, explicit audit metadata, and a separate audited command.</p>
     </>
   )
 }

@@ -248,6 +248,8 @@ class SeasonBuilderPreflightResponse(BaseModel):
     target_season_label: str
     source_type: str
     source_template_id: str | None = None
+    preflight_fingerprint: str
+    reviewed_diff_id: str
     target_calendar_exists: bool | None = None
     target_event_count: int | None = None
     source_resolved: bool = False

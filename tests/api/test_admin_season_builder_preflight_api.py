@@ -69,6 +69,8 @@ def test_builder_preflight_valid_template_read_only(tmp_path: Path) -> None:
         status, body = call("POST", f"{server.base_url}/admin/seasons/builder/preflight", payload)
         assert status == 200
         assert body["can_build"] is False
+        assert body["preflight_fingerprint"].startswith("pf_")
+        assert body["reviewed_diff_id"].startswith("rd_")
         assert body["source_resolved"] is True
         diff = body["authoritative_diff_summary"]
         assert diff["status"] == "read_only_preflight"
@@ -79,6 +81,10 @@ def test_builder_preflight_valid_template_read_only(tmp_path: Path) -> None:
         assert "structural_comparison" in diff
         assert "blocking_reasons" in diff
         assert "advisory_notes" in diff
+        assert diff["preflight_fingerprint"] == body["preflight_fingerprint"]
+        assert diff["reviewed_diff_id"] == body["reviewed_diff_id"]
+        assert body["audit_preview"]["preflight_fingerprint"] == body["preflight_fingerprint"]
+        assert body["audit_preview"]["reviewed_diff_id"] == body["reviewed_diff_id"]
         assert "Event-level additions/replacements/conflicts remain planned for a future phase." in diff["placeholder"]
 
 
@@ -164,3 +170,23 @@ def test_builder_preflight_invalid_target_label(tmp_path: Path) -> None:
         _, body = call("POST", f"{server.base_url}/admin/seasons/builder/preflight", {"target_season_label": "invalid", "source_type": "season_template", "source_template_id": "default_msa_template_preview"})
         assert any("Invalid target season label" in message for message in body["validation_errors"])
         assert any("Invalid target season label" in message for message in body["authoritative_diff_summary"]["blocking_reasons"])
+
+
+def test_builder_preflight_fingerprint_is_stable_and_policy_sensitive(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {"target_season_label": "2000/2001", "source_type": "season_template", "source_template_id": "default_msa_template_preview", "requested_by": "qa"}
+        _, first = call("POST", f"{server.base_url}/admin/seasons/builder/preflight", payload)
+        _, second = call("POST", f"{server.base_url}/admin/seasons/builder/preflight", payload)
+        assert first["preflight_fingerprint"] == second["preflight_fingerprint"]
+        assert first["reviewed_diff_id"] == second["reviewed_diff_id"]
+        assert first["authoritative_diff_summary"]["preflight_fingerprint"] == first["preflight_fingerprint"]
+        assert first["authoritative_diff_summary"]["reviewed_diff_id"] == first["reviewed_diff_id"]
+        assert first["audit_preview"]["preflight_fingerprint"] == first["preflight_fingerprint"]
+        assert first["audit_preview"]["reviewed_diff_id"] == first["reviewed_diff_id"]
+        assert first["can_build"] is False
+
+        merge_payload = {**payload, "overwrite_policy": "merge_preview"}
+        _, merge = call("POST", f"{server.base_url}/admin/seasons/builder/preflight", merge_payload)
+        assert merge["preflight_fingerprint"] != first["preflight_fingerprint"]
+        assert merge["reviewed_diff_id"] != first["reviewed_diff_id"]
+        assert merge["can_build"] is False

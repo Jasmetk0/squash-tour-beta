@@ -3012,6 +3012,8 @@ export type SeasonBuilderPreflightResponse = {
   target_season_label: string
   source_type: string
   source_template_id: string | null
+  preflight_fingerprint: string
+  reviewed_diff_id: string
   target_calendar_exists: boolean | null
   target_event_count: number | null
   source_resolved: boolean

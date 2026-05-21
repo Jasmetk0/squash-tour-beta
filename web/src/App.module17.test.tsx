@@ -353,7 +353,9 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Target existing calendar preview')).toBeInTheDocument()
     expect(screen.getByText('Overwrite / merge policy preview')).toBeInTheDocument()
     expect(screen.getByText('Source vs target preflight summary')).toBeInTheDocument()
+    expect(screen.getByText('Read-only source/target diff detail')).toBeInTheDocument()
     expect(screen.getByText('Read-only local summary. This is not an authoritative backend preflight and does not enable build actions.')).toBeInTheDocument()
+    expect(screen.getByText('Local structural diff preview only. This is not an authoritative backend diff and does not enable apply actions.')).toBeInTheDocument()
     expect(screen.getByText('Read-only policy preview. No overwrite, merge, or build action is available on this page.')).toBeInTheDocument()
     expect(screen.getByText('Read-only inspection of the currently selected target season calendar.')).toBeInTheDocument()
     expect(await screen.findByText(/Calendar exists/i)).toBeInTheDocument()
@@ -364,8 +366,12 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Existing target calendar requires explicit audited overwrite/merge choice before any future build.')).toBeInTheDocument()
     expect(screen.getByText('Review read-only diff and backend validation before any future command.')).toBeInTheDocument()
     expect(screen.getByText('No build, overwrite, merge, or apply command is available from this page.')).toBeInTheDocument()
+    expect(screen.getByText('Existing target calendar requires future authoritative backend diff before any overwrite/merge command.')).toBeInTheDocument()
+    expect(screen.getByText('Local diff detail is advisory only and must not replace authoritative backend validation.')).toBeInTheDocument()
+    expect(screen.getByText('No diff, build, merge, overwrite, or apply command is executed from this page.')).toBeInTheDocument()
+    expect(screen.getByText('Target and template week counts match.')).toBeInTheDocument()
     expect(screen.getByText('Future implementation must require an explicit audited backend command before modifying any season calendar.')).toBeInTheDocument()
-    expect(screen.getByText(/Event count/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/Event count/i).length).toBeGreaterThan(0)
     expect(screen.getByText(/Validation warnings count/i)).toBeInTheDocument()
     expect(screen.getByText(/Validation errors count/i)).toBeInTheDocument()
     expect(screen.getByText('Local read-only validation derived from the selected template payload. Not an authoritative build gate.')).toBeInTheDocument()
@@ -396,6 +402,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Preview only. This source type has no executable workflow yet.')).toBeInTheDocument()
     expect(screen.getByText('Source type is planned and not executable yet.')).toBeInTheDocument()
     expect(screen.getByText('Planned source type selected; this source type is not executable yet.')).toBeInTheDocument()
+    expect(screen.getByText('Planned source type cannot produce a concrete diff yet.')).toBeInTheDocument()
     expect(screen.getByText('Source template selection is not executable for planned source types yet.')).toBeInTheDocument()
     expect(screen.queryByText('Selected template slot preview')).not.toBeInTheDocument()
     expect(screen.queryByText('Selected template validation summary')).not.toBeInTheDocument()
@@ -404,7 +411,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('None of these commands are implemented on this page.')).toBeInTheDocument()
     expect(screen.getByText('Read-only preflight checklist')).toBeInTheDocument()
     expect(screen.getByText('Read-only preflight preview. Not an authoritative build gate.')).toBeInTheDocument()
-    const forbiddenMutationActions = ['Build', 'Create', 'Apply', 'Generate', 'Simulate', 'Run', 'Save', 'Update', 'Delete', 'Bootstrap']
+    const forbiddenMutationActions = ['Build', 'Create', 'Apply', 'Generate', 'Simulate', 'Run', 'Save', 'Update', 'Delete', 'Bootstrap', 'Merge', 'Overwrite']
     for (const action of forbiddenMutationActions) {
       expect(screen.queryByRole('button', { name: new RegExp(`^${action}$`, 'i') })).not.toBeInTheDocument()
     }
@@ -427,6 +434,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('No existing calendar found for selected target season.')).toBeInTheDocument()
     expect(screen.getByText('Overwrite / merge policy preview')).toBeInTheDocument()
     expect(screen.getByText('Source vs target preflight summary')).toBeInTheDocument()
+    expect(screen.getByText('Read-only source/target diff detail')).toBeInTheDocument()
     expect(screen.getAllByText('No existing calendar detected.').length).toBeGreaterThan(0)
     expect(screen.getByText('Silent overwrite must never be allowed.')).toBeInTheDocument()
     expect(screen.getByText('Merge policy is not needed for an empty target, but future command still requires audit.')).toBeInTheDocument()
@@ -434,8 +442,10 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Empty target calendar detected; future creation would still require an explicit audited backend command.')).toBeInTheDocument()
     expect(screen.getByText('Review read-only diff and backend validation before any future command.')).toBeInTheDocument()
     expect(screen.getByText('No build, overwrite, merge, or apply command is available from this page.')).toBeInTheDocument()
+    expect(screen.getByText('Empty target has no existing concrete events to compare locally, but future backend validation is still required.')).toBeInTheDocument()
+    expect(screen.getByText('No diff, build, merge, overwrite, or apply command is executed from this page.')).toBeInTheDocument()
 
-    const forbiddenMutationActions = ['Build', 'Create', 'Apply', 'Generate', 'Simulate', 'Run', 'Save', 'Update', 'Delete', 'Bootstrap']
+    const forbiddenMutationActions = ['Build', 'Create', 'Apply', 'Generate', 'Simulate', 'Run', 'Save', 'Update', 'Delete', 'Bootstrap', 'Merge', 'Overwrite']
     for (const action of forbiddenMutationActions) {
       expect(screen.queryByRole('button', { name: new RegExp(`^${action}$`, 'i') })).not.toBeInTheDocument()
     }

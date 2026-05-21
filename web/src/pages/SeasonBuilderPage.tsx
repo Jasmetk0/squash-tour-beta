@@ -12,6 +12,7 @@ import {
   buildDiffPreviewItems,
   BackendPreflightContractPreviewPanel,
   BuildPolicyPreviewPanel,
+  OverwriteMergePolicySelectorPanel,
   BackendPreflightResultPanel,
   BuilderSelectionPanel,
   DiffPreviewSkeletonPanel,
@@ -39,6 +40,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
   const [selectedTargetSeasonLabel, setSelectedTargetSeasonLabel] = useState('')
   const [selectedSourceType, setSelectedSourceType] = useState<SourceType>('season_template')
   const [selectedTemplateId, setSelectedTemplateId] = useState('')
+  const [selectedOverwritePolicy, setSelectedOverwritePolicy] = useState<'none' | 'merge_preview' | 'overwrite_preview'>('none')
   const targetCalendarQuery = useQuery({
     queryKey: ['season-builder-target-calendar', selectedTargetSeasonLabel],
     queryFn: () => getSeasonCalendar(selectedTargetSeasonLabel),
@@ -105,15 +107,15 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     target_season_label: selectedTargetSeasonLabel,
     source_type: selectedSourceType,
     source_template_id: selectedSourceType === 'season_template' ? selectedTemplateId || null : null,
-    overwrite_policy: null,
+    overwrite_policy: selectedOverwritePolicy === 'none' ? null : selectedOverwritePolicy,
     requested_by: 'local-admin-preview'
-  }), [selectedTargetSeasonLabel, selectedSourceType, selectedTemplateId])
+  }), [selectedTargetSeasonLabel, selectedSourceType, selectedTemplateId, selectedOverwritePolicy])
 
   const backendPreflightEnabled = Boolean(selectedTargetSeasonLabel)
     && (selectedSourceType !== 'season_template' || Boolean(selectedTemplateId))
 
   const backendPreflightQuery = useQuery({
-    queryKey: ['season-builder-backend-preflight', selectedTargetSeasonLabel, selectedSourceType, selectedTemplateId],
+    queryKey: ['season-builder-backend-preflight', selectedTargetSeasonLabel, selectedSourceType, selectedTemplateId, selectedOverwritePolicy],
     queryFn: () => postSeasonBuilderPreflight(backendPreflightPayload),
     enabled: backendPreflightEnabled,
     retry: false
@@ -222,6 +224,14 @@ export function AdminSeasonBuilderPage(): JSX.Element {
 
       <SectionCard title="Overwrite / merge policy preview">
         <BuildPolicyPreviewPanel targetCalendarExists={targetCalendarExists} />
+      </SectionCard>
+
+      <SectionCard title="Overwrite / merge policy selection for preflight">
+        <OverwriteMergePolicySelectorPanel
+          selectedOverwritePolicy={selectedOverwritePolicy}
+          setSelectedOverwritePolicy={setSelectedOverwritePolicy}
+          targetCalendarExists={targetCalendarExists}
+        />
       </SectionCard>
 
       <SectionCard title="Source vs target preflight summary">

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -384,14 +384,22 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Selected template validation summary')).toBeInTheDocument()
     expect(screen.getByText('Target existing calendar preview')).toBeInTheDocument()
     expect(screen.getByText('Overwrite / merge policy preview')).toBeInTheDocument()
+    expect(screen.getByText('Overwrite / merge policy selection for preflight')).toBeInTheDocument()
+    expect(screen.getByText('Read-only preflight input. This selector only changes the backend preflight payload and does not execute merge or overwrite.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Future policy preview')).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'No policy selected' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Merge policy preview' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Overwrite policy preview' })).toBeInTheDocument()
+    expect(await screen.findByText('Existing target calendar detected. Backend preflight will require an explicit future policy before any future build can be considered.')).toBeInTheDocument()
+    expect(screen.getByText('Changing this selector re-runs read-only backend preflight only. It does not mutate any calendar.')).toBeInTheDocument()
     expect(screen.getByText('Source vs target preflight summary')).toBeInTheDocument()
     expect(screen.getByText('Read-only source/target diff detail')).toBeInTheDocument()
     expect(screen.getByText('Backend preflight contract preview')).toBeInTheDocument()
     expect(screen.getByText('Read-only design preview. No backend preflight endpoint is called from this page.')).toBeInTheDocument()
-    expect(screen.getByText('target_season_label')).toBeInTheDocument()
-    expect(screen.getByText('source_type')).toBeInTheDocument()
+    expect(screen.getAllByText('target_season_label').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('source_type').length).toBeGreaterThan(0)
     expect(screen.getByText('source_template_id or future source identifier')).toBeInTheDocument()
-    expect(screen.getByText('overwrite_policy')).toBeInTheDocument()
+    expect(screen.getAllByText('overwrite_policy').length).toBeGreaterThan(0)
     expect(screen.getByText('requested_by / admin actor')).toBeInTheDocument()
     expect(screen.getByText('seed / version / template hash')).toBeInTheDocument()
     expect(screen.getByText('can_build: false until authoritative validation passes')).toBeInTheDocument()
@@ -496,6 +504,15 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText(/"mutation_permitted": false/)).toBeInTheDocument()
     expect(screen.getByText('Even when backend preflight succeeds, build actions remain unavailable in this phase.')).toBeInTheDocument()
     expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith({ target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, requested_by: 'local-admin-preview' })
+    fireEvent.change(screen.getByLabelText('Future policy preview'), { target: { value: 'merge_preview' } })
+    await waitFor(() => {
+      expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith(expect.objectContaining({
+        target_season_label: '2000/01',
+        overwrite_policy: 'merge_preview',
+        requested_by: 'local-admin-preview'
+      }))
+    })
+    expect((screen.getByLabelText('Future policy preview') as HTMLSelectElement).value).toBe('merge_preview')
     expect(api.getSeasonCalendar).toHaveBeenCalledTimes(1)
     expect(screen.getByText('Future audited command flow')).toBeInTheDocument()
     expect(screen.getByText('None of these commands are implemented on this page.')).toBeInTheDocument()
@@ -554,6 +571,8 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByText('Calendar exists: No')).toBeInTheDocument()
     expect(screen.getByText('No existing calendar found for selected target season.')).toBeInTheDocument()
     expect(screen.getByText('Overwrite / merge policy preview')).toBeInTheDocument()
+    expect(screen.getByText('Overwrite / merge policy selection for preflight')).toBeInTheDocument()
+    expect(screen.getByText('No existing target calendar detected. Policy selection is optional for this read-only preview.')).toBeInTheDocument()
     expect(screen.getByText('Source vs target preflight summary')).toBeInTheDocument()
     expect(screen.getByText('Read-only source/target diff detail')).toBeInTheDocument()
     expect(screen.getByText('Backend preflight contract preview')).toBeInTheDocument()

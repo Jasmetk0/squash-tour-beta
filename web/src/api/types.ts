@@ -3023,3 +3023,33 @@ export type SeasonBuilderPreflightResponse = {
   validation_errors: string[]
   audit_preview: Record<string, unknown>
 }
+
+export type SeasonBuilderDryRunBuildRequest = {
+  target_season_label: string
+  source_type: string
+  source_template_id?: string | null
+  overwrite_policy?: string | null
+  preflight_fingerprint: string
+  reviewed_diff_id: string
+  requested_by?: string | null
+  audit_reason?: string | null
+  explicit_confirmation?: string | null
+  mutation_scope?: string | null
+}
+
+export type SeasonBuilderDryRunBuildResponse = {
+  command: string
+  enabled: boolean
+  can_execute: boolean
+  can_mutate: boolean
+  target_season_label: string
+  source_type: string
+  source_template_id: string | null
+  overwrite_policy: string | null
+  preflight_fingerprint: string
+  reviewed_diff_id: string
+  validation_errors: string[]
+  validation_warnings: string[]
+  audit_preview: Record<string, unknown>
+  message: string
+}

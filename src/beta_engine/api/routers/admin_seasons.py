@@ -20,7 +20,7 @@ from beta_engine.application.season_registry_service import SeasonRegistryRespon
 from beta_engine.application.season_template_service import SeasonTemplatesResponse, SeasonTemplateService
 from beta_engine.domain.calendar.season_labels import normalize_season_label, to_long_season_label
 from beta_engine.api.season_label_params import normalize_season_for_legacy_services
-from beta_engine.domain.tournaments import SeasonBuilderPreflightRequest, SeasonBuilderPreflightResponse, SeasonCalendarBuildRequest, SeasonCalendarBuildResult
+from beta_engine.domain.tournaments import SeasonBuilderDryRunBuildRequest, SeasonBuilderDryRunBuildResponse, SeasonBuilderPreflightRequest, SeasonBuilderPreflightResponse, SeasonCalendarBuildRequest, SeasonCalendarBuildResult
 
 router = APIRouter(prefix="/admin/seasons", tags=["admin-seasons"])
 
@@ -268,4 +268,63 @@ def preflight_season_builder(
         validation_warnings=warnings,
         validation_errors=errors,
         audit_preview=audit_preview,
+    )
+
+
+@router.post("/builder/dry-run-build", response_model=SeasonBuilderDryRunBuildResponse)
+def post_season_builder_dry_run_build_contract(
+    payload: SeasonBuilderDryRunBuildRequest,
+) -> SeasonBuilderDryRunBuildResponse:
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    if not payload.preflight_fingerprint.strip():
+        errors.append(
+            "preflight_fingerprint is required for any future dry-run build command."
+        )
+    if not payload.reviewed_diff_id.strip():
+        errors.append("reviewed_diff_id is required for any future dry-run build command.")
+    if payload.audit_reason is None or not payload.audit_reason.strip():
+        warnings.append(
+            "audit_reason will be required before execution is enabled in a future phase."
+        )
+    if payload.explicit_confirmation is None or not payload.explicit_confirmation.strip():
+        warnings.append(
+            "explicit_confirmation will be required before execution is enabled in a future phase."
+        )
+    if payload.mutation_scope is None or not payload.mutation_scope.strip():
+        warnings.append(
+            "mutation_scope will be required before execution is enabled in a future phase."
+        )
+
+    return SeasonBuilderDryRunBuildResponse(
+        enabled=False,
+        can_execute=False,
+        can_mutate=False,
+        target_season_label=payload.target_season_label,
+        source_type=payload.source_type,
+        source_template_id=payload.source_template_id,
+        overwrite_policy=payload.overwrite_policy,
+        preflight_fingerprint=payload.preflight_fingerprint,
+        reviewed_diff_id=payload.reviewed_diff_id,
+        validation_errors=errors,
+        validation_warnings=warnings,
+        audit_preview={
+            "action": "season_builder_dry_run_build",
+            "read_only": True,
+            "mutation_permitted": False,
+            "execution_enabled": False,
+            "target_season_label": payload.target_season_label,
+            "source_type": payload.source_type,
+            "source_template_id": payload.source_template_id,
+            "overwrite_policy": payload.overwrite_policy,
+            "preflight_fingerprint": payload.preflight_fingerprint,
+            "reviewed_diff_id": payload.reviewed_diff_id,
+            "requested_by": payload.requested_by,
+            "audit_reason": payload.audit_reason,
+            "explicit_confirmation_present": bool(
+                payload.explicit_confirmation and payload.explicit_confirmation.strip()
+            ),
+            "mutation_scope": payload.mutation_scope,
+        },
     )

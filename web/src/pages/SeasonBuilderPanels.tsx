@@ -960,6 +960,13 @@ export function BackendPreflightResultPanel({ queryEnabled, requestPayload, quer
   const blockingReasons = Array.isArray(blockingReasonsRaw) ? blockingReasonsRaw : []
   const advisoryNotesRaw = getRecordValue(diffSummary, 'advisory_notes')
   const advisoryNotes = Array.isArray(advisoryNotesRaw) ? advisoryNotesRaw : []
+  const policyPreviewInterpretation = requestPayload.overwrite_policy === null
+    ? 'No overwrite/merge policy is selected for this read-only preflight.'
+    : requestPayload.overwrite_policy === 'merge_preview'
+      ? 'Merge policy preview is selected. This only changes backend preflight analysis and does not execute a merge.'
+      : requestPayload.overwrite_policy === 'overwrite_preview'
+        ? 'Overwrite policy preview is selected. This only changes backend preflight analysis and does not execute an overwrite.'
+        : 'Unsupported policy value is being previewed by the backend preflight.'
 
   return (
     <>
@@ -995,6 +1002,9 @@ export function BackendPreflightResultPanel({ queryEnabled, requestPayload, quer
           <tr><td>requested_by</td><td>{requestPayload.requested_by ?? '—'}</td></tr>
         </tbody>
       </table>
+      <h4>Policy preview interpretation</h4>
+      <p>{policyPreviewInterpretation}</p>
+      <p>Policy preview never enables build actions in this phase.</p>
       <h4>Validation warnings</h4>
       {data.validation_warnings.length ? <ul>{data.validation_warnings.map((w)=><li key={w}>{w}</li>)}</ul> : <p>No validation warnings returned.</p>}
       <h4>Validation errors</h4>
@@ -1050,7 +1060,12 @@ export function BackendPreflightResultPanel({ queryEnabled, requestPayload, quer
         : <p>No backend blocking reasons returned.</p>}
       <h5>Advisory notes</h5>
       {advisoryNotes.length > 0
-        ? <ul>{advisoryNotes.map((note, idx) => <li key={`advisory-${idx}`}>{stringifyUnknown(note)}</li>)}</ul>
+        ? (
+          <>
+            <p>Backend advisory notes returned for this policy/source combination.</p>
+            <ul>{advisoryNotes.map((note, idx) => <li key={`advisory-${idx}`}>{stringifyUnknown(note)}</li>)}</ul>
+          </>
+        )
         : <p>No backend advisory notes returned.</p>}
       <h5>Raw authoritative diff summary JSON</h5>
       <pre>{JSON.stringify(data.authoritative_diff_summary, null, 2)}</pre>

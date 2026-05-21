@@ -585,6 +585,48 @@ export function BuildPolicyPreviewPanel({ targetCalendarExists }: BuildPolicyPre
   )
 }
 
+type OverwritePolicySelection = 'none' | 'merge_preview' | 'overwrite_preview'
+
+type OverwriteMergePolicySelectorPanelProps = {
+  selectedOverwritePolicy: OverwritePolicySelection
+  setSelectedOverwritePolicy: (value: OverwritePolicySelection) => void
+  targetCalendarExists: boolean | null
+}
+
+export function OverwriteMergePolicySelectorPanel({
+  selectedOverwritePolicy,
+  setSelectedOverwritePolicy,
+  targetCalendarExists
+}: OverwriteMergePolicySelectorPanelProps): JSX.Element {
+  return (
+    <>
+      <p>Read-only preflight input. This selector only changes the backend preflight payload and does not execute merge or overwrite.</p>
+      <label>
+        Future policy preview
+        <select
+          aria-label="Future policy preview"
+          value={selectedOverwritePolicy}
+          onChange={(event) => setSelectedOverwritePolicy(event.target.value as OverwritePolicySelection)}
+        >
+          <option value="none">No policy selected</option>
+          <option value="merge_preview">Merge policy preview</option>
+          <option value="overwrite_preview">Overwrite policy preview</option>
+        </select>
+      </label>
+      {targetCalendarExists === true ? (
+        <p>Existing target calendar detected. Backend preflight will require an explicit future policy before any future build can be considered.</p>
+      ) : null}
+      {targetCalendarExists === false ? (
+        <p>No existing target calendar detected. Policy selection is optional for this read-only preview.</p>
+      ) : null}
+      {targetCalendarExists === null ? (
+        <p>Target calendar state is unknown, so this selector is only an advisory preview input.</p>
+      ) : null}
+      <p>Changing this selector re-runs read-only backend preflight only. It does not mutate any calendar.</p>
+    </>
+  )
+}
+
 export function SourceTargetPreflightSummaryPanel({ items }: { items: PreflightSummaryItem[] }): JSX.Element {
   return (
     <>

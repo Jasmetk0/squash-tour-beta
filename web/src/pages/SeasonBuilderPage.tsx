@@ -7,6 +7,7 @@ import { DetailList } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import {
   buildSourceTargetPreflightSummaryItems,
+  buildSourceTargetDiffDetailItems,
   buildDiffPreviewItems,
   BuildPolicyPreviewPanel,
   BuilderSelectionPanel,
@@ -15,6 +16,7 @@ import {
   ReadOnlyPreflightChecklistPanel,
   SelectionPreviewPanel,
   SourceTargetPreflightSummaryPanel,
+  SourceTargetDiffDetailPanel,
   TargetCalendarStatusPanel,
   TemplateValidationSummaryPanel
 } from './SeasonBuilderPanels'
@@ -81,6 +83,17 @@ export function AdminSeasonBuilderPage(): JSX.Element {
   const sourceTargetPreflightSummaryItems = useMemo(
     () => buildSourceTargetPreflightSummaryItems({ selectedTargetSeason, selectedSourceType, selectedTemplate, selectedTemplatePreview, targetCalendarExists }),
     [selectedTargetSeason, selectedSourceType, selectedTemplate, selectedTemplatePreview, targetCalendarExists]
+  )
+  const sourceTargetDiffDetailItems = useMemo(
+    () => buildSourceTargetDiffDetailItems({
+      selectedTargetSeason,
+      selectedSourceType,
+      selectedTemplate,
+      selectedTemplatePreview,
+      targetCalendarData: targetCalendarQuery.data,
+      targetCalendarExists
+    }),
+    [selectedTargetSeason, selectedSourceType, selectedTemplate, selectedTemplatePreview, targetCalendarQuery.data, targetCalendarExists]
   )
 
   return (
@@ -190,6 +203,10 @@ export function AdminSeasonBuilderPage(): JSX.Element {
 
       <SectionCard title="Source vs target preflight summary">
         <SourceTargetPreflightSummaryPanel items={sourceTargetPreflightSummaryItems} />
+      </SectionCard>
+
+      <SectionCard title="Read-only source/target diff detail">
+        <SourceTargetDiffDetailPanel items={sourceTargetDiffDetailItems} />
       </SectionCard>
 
       {selectedSourceType === 'season_template' ? (

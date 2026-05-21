@@ -44,6 +44,145 @@ export type PreflightSummaryItem = {
   message: string
 }
 
+export type SourceTargetDiffStatus = 'OK' | 'Info' | 'Warning' | 'Blocked'
+
+export type SourceTargetDiffItem = {
+  area: string
+  status: SourceTargetDiffStatus
+  source: string
+  target: string
+  message: string
+}
+
+type BuildSourceTargetDiffDetailItemsArgs = {
+  selectedTargetSeason: SeasonRegistryEntry | null
+  selectedSourceType: SourceType
+  selectedTemplate: SeasonTemplateSummary | null
+  selectedTemplatePreview: TemplatePreview | null
+  targetCalendarData: SeasonCalendarBuildResponse | undefined
+  targetCalendarExists: boolean | null
+}
+
+export function buildSourceTargetDiffDetailItems({
+  selectedTargetSeason,
+  selectedSourceType,
+  selectedTemplate,
+  selectedTemplatePreview,
+  targetCalendarData,
+  targetCalendarExists
+}: BuildSourceTargetDiffDetailItemsArgs): SourceTargetDiffItem[] {
+  const sourceTypeLabel = SOURCE_TYPE_OPTIONS.find((option) => option.value === selectedSourceType)?.label ?? selectedSourceType
+  const targetSeasonLabel = selectedTargetSeason?.label ?? 'No target selected'
+  const templateSlotCount = selectedTemplate ? (selectedTemplate.slot_count ?? selectedTemplate.slots.length) : null
+  const targetSummary = targetCalendarData?.summary
+  const sourceRange = selectedTemplatePreview?.earliestSlot !== null && selectedTemplatePreview?.earliestSlot !== undefined &&
+    selectedTemplatePreview?.latestSlot !== null && selectedTemplatePreview?.latestSlot !== undefined
+    ? `SW${selectedTemplatePreview.earliestSlot}–SW${selectedTemplatePreview.latestSlot}`
+    : 'Unknown'
+  const targetRange = targetSummary?.first_event_week !== null && targetSummary?.first_event_week !== undefined &&
+    targetSummary?.last_event_week !== null && targetSummary?.last_event_week !== undefined
+    ? `SW${targetSummary.first_event_week}–SW${targetSummary.last_event_week}`
+    : 'Unknown'
+
+  const items: SourceTargetDiffItem[] = [
+    selectedSourceType === 'season_template'
+      ? {
+          area: 'Source executability',
+          status: 'OK',
+          source: sourceTypeLabel,
+          target: targetSeasonLabel,
+          message: 'Season template source can be inspected locally.'
+        }
+      : {
+          area: 'Source executability',
+          status: 'Blocked',
+          source: sourceTypeLabel,
+          target: targetSeasonLabel,
+          message: 'Planned source type cannot produce a concrete diff yet.'
+        }
+  ]
+
+  const sourceWeekCount = selectedTemplate?.week_count
+  const targetWeekCount = selectedTargetSeason?.week_count
+  items.push(
+    sourceWeekCount !== undefined && targetWeekCount !== undefined
+      ? sourceWeekCount === targetWeekCount
+        ? {
+            area: 'Week count',
+            status: 'OK',
+            source: String(sourceWeekCount),
+            target: String(targetWeekCount),
+            message: 'Target and template week counts match.'
+          }
+        : {
+            area: 'Week count',
+            status: 'Warning',
+            source: String(sourceWeekCount),
+            target: String(targetWeekCount),
+            message: 'Target and template week counts differ.'
+          }
+      : {
+          area: 'Week count',
+          status: 'Info',
+          source: sourceWeekCount === undefined ? 'Unknown' : String(sourceWeekCount),
+          target: targetWeekCount === undefined ? 'Unknown' : String(targetWeekCount),
+          message: 'Week count comparison is unavailable from current local data.'
+        }
+  )
+
+  items.push({
+    area: 'Template slot count vs target event count',
+    status: 'Info',
+    source: templateSlotCount === null ? 'Unknown' : String(templateSlotCount),
+    target: targetSummary?.event_count === undefined ? 'Unknown' : String(targetSummary.event_count),
+    message: 'Slot count and existing event count are structural indicators only; they are not a final diff.'
+  })
+
+  items.push({
+    area: 'Source slot range vs target event range',
+    status: sourceRange !== 'Unknown' && targetRange !== 'Unknown' ? 'OK' : 'Info',
+    source: sourceRange,
+    target: targetRange,
+    message: 'Range comparison is structural only and does not represent a concrete event-by-event diff.'
+  })
+
+  items.push(
+    targetCalendarExists === true
+      ? {
+          area: 'Calendar conflict state',
+          status: 'Warning',
+          source: 'Selected source',
+          target: 'Existing target calendar',
+          message: 'Existing target calendar requires future authoritative backend diff before any overwrite/merge command.'
+        }
+      : targetCalendarExists === false
+        ? {
+            area: 'Calendar conflict state',
+            status: 'OK',
+            source: 'Selected source',
+            target: 'Empty target calendar',
+            message: 'Empty target has no existing concrete events to compare locally, but future backend validation is still required.'
+          }
+        : {
+            area: 'Calendar conflict state',
+            status: 'Info',
+            source: 'Selected source',
+            target: 'Unavailable target state',
+            message: 'Target calendar state is unavailable, so conflict state cannot be determined.'
+          }
+  )
+
+  items.push({
+    area: 'Validation authority',
+    status: 'Info',
+    source: 'Local UI',
+    target: 'Backend preflight',
+    message: 'Local diff detail is advisory only and must not replace authoritative backend validation.'
+  })
+
+  return items
+}
+
 type BuildSourceTargetPreflightSummaryItemsArgs = {
   selectedTargetSeason: SeasonRegistryEntry | null
   selectedSourceType: SourceType
@@ -604,6 +743,37 @@ export function DiffPreviewSkeletonPanel({ items }: { items: DiffPreviewItem[] }
         </tbody>
       </table>
       <p>No diff/apply command is executed from this page.</p>
+    </>
+  )
+}
+
+export function SourceTargetDiffDetailPanel({ items }: { items: SourceTargetDiffItem[] }): JSX.Element {
+  return (
+    <>
+      <p>Local structural diff preview only. This is not an authoritative backend diff and does not enable apply actions.</p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Area</th>
+            <th scope="col">Status</th>
+            <th scope="col">Source</th>
+            <th scope="col">Target</th>
+            <th scope="col">Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr key={`${item.area}:${item.message}`}>
+              <td>{item.area}</td>
+              <td>{item.status}</td>
+              <td>{item.source}</td>
+              <td>{item.target}</td>
+              <td>{item.message}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p>No diff, build, merge, overwrite, or apply command is executed from this page.</p>
     </>
   )
 }

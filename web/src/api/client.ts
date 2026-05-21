@@ -127,6 +127,8 @@ import type {
   SeasonTemplatesResponse,
   SeasonBuilderPreflightRequest,
   SeasonBuilderPreflightResponse,
+  SeasonBuilderDryRunBuildRequest,
+  SeasonBuilderDryRunBuildResponse,
   CategoriesResponse,
   TournamentMastersResponse,
   TourSeasonsValidationResponse
@@ -184,6 +186,10 @@ export function getSeasonTemplates(): Promise<SeasonTemplatesResponse> {
 
 export function postSeasonBuilderPreflight(payload: SeasonBuilderPreflightRequest): Promise<SeasonBuilderPreflightResponse> {
   return request('/admin/seasons/builder/preflight', { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function postSeasonBuilderDryRunBuild(payload: SeasonBuilderDryRunBuildRequest): Promise<SeasonBuilderDryRunBuildResponse> {
+  return request('/admin/seasons/builder/dry-run-build', { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function getCategories(): Promise<CategoriesResponse> {

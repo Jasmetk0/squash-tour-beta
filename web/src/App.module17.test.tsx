@@ -165,7 +165,13 @@ describe('Module 17 pages through routes', () => {
       target_event_count: 1,
       source_resolved: true,
       source_summary: { template_name: 'Default MSA Template Preview', slot_count: 1, week_count: 61 },
-      authoritative_diff_summary: { status: 'read_only_preflight', placeholder: 'Authoritative event-level diff is planned in a future phase.' },
+      authoritative_diff_summary: {
+        status: 'read_only_preflight',
+        structural_comparison: { planned_source_slots: 1, existing_target_events: 1, target_is_empty: false, requires_overwrite_or_merge_policy: true },
+        blocking_reasons: ['Explicit overwrite/merge policy is required before any future build when a target calendar already exists.'],
+        advisory_notes: [],
+        placeholder: 'Event-level additions/replacements/conflicts remain planned for a future phase.'
+      },
       validation_warnings: [],
       validation_errors: ['Explicit overwrite/merge policy is required before any future build when a target calendar already exists.'],
       audit_preview: { action: 'season_builder_preflight', read_only: true, mutation_permitted: false }
@@ -388,6 +394,9 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('This is the exact read-only payload sent to the backend preflight endpoint.')).toBeInTheDocument()
     expect(screen.getByText('Status: Blocked in this phase')).toBeInTheDocument()
     expect(screen.getByText('Backend preflight completed, but build actions remain disabled because can_build is false.')).toBeInTheDocument()
+    expect(screen.getByText(/structural_comparison/)).toBeInTheDocument()
+    expect(screen.getByText(/blocking_reasons/)).toBeInTheDocument()
+    expect(screen.getByText(/advisory_notes/)).toBeInTheDocument()
     expect(screen.getByText('Blocking validation errors are present.')).toBeInTheDocument()
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
     expect(screen.getAllByText('target_season_label').length).toBeGreaterThan(0)

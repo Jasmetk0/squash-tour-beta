@@ -70,6 +70,16 @@ def test_builder_preflight_valid_template_read_only(tmp_path: Path) -> None:
         assert status == 200
         assert body["can_build"] is False
         assert body["source_resolved"] is True
+        diff = body["authoritative_diff_summary"]
+        assert diff["status"] == "read_only_preflight"
+        assert diff["can_build"] is False
+        assert diff["source_resolved"] is True
+        assert diff["source_slot_count"] is not None
+        assert diff["source_week_count"] is not None
+        assert "structural_comparison" in diff
+        assert "blocking_reasons" in diff
+        assert "advisory_notes" in diff
+        assert "Event-level additions/replacements/conflicts remain planned for a future phase." in diff["placeholder"]
 
 
 def test_builder_preflight_existing_calendar_requires_policy(tmp_path: Path) -> None:
@@ -79,21 +89,29 @@ def test_builder_preflight_existing_calendar_requires_policy(tmp_path: Path) -> 
         payload = {"target_season_label": "2000/2001", "source_type": "season_template", "source_template_id": "default_msa_template_preview"}
         _, body = call("POST", f"{server.base_url}/admin/seasons/builder/preflight", payload)
         assert any("overwrite/merge policy" in message for message in body["validation_errors"])
+        diff = body["authoritative_diff_summary"]
+        assert diff["structural_comparison"]["requires_overwrite_or_merge_policy"] is True
+        assert any("overwrite/merge policy" in message for message in diff["blocking_reasons"])
 
 
 def test_builder_preflight_planned_source_type(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         _, body = call("POST", f"{server.base_url}/admin/seasons/builder/preflight", {"target_season_label": "2000/2001", "source_type": "blank_calendar_planned"})
         assert body["source_resolved"] is False
+        diff = body["authoritative_diff_summary"]
+        assert diff["source_resolved"] is False
+        assert any("planned" in note.lower() for note in diff["advisory_notes"])
 
 
 def test_builder_preflight_missing_template_reference(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         _, body = call("POST", f"{server.base_url}/admin/seasons/builder/preflight", {"target_season_label": "2000/2001", "source_type": "season_template", "source_template_id": "does_not_exist"})
         assert any("was not found" in message for message in body["validation_errors"])
+        assert any("was not found" in message for message in body["authoritative_diff_summary"]["blocking_reasons"])
 
 
 def test_builder_preflight_invalid_target_label(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         _, body = call("POST", f"{server.base_url}/admin/seasons/builder/preflight", {"target_season_label": "invalid", "source_type": "season_template", "source_template_id": "default_msa_template_preview"})
         assert any("Invalid target season label" in message for message in body["validation_errors"])
+        assert any("Invalid target season label" in message for message in body["authoritative_diff_summary"]["blocking_reasons"])

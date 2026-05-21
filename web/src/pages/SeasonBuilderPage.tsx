@@ -80,6 +80,13 @@ type TemplatePreview = {
   latestSlot: number | null
 }
 
+
+function renderPreviewValue(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return '—'
+  if (typeof value === 'string' && value.trim() === '') return '—'
+  return String(value)
+}
+
 type SelectionPreviewPanelProps = {
   selectedTargetSeason: SeasonRegistryEntry | null
   selectedSourceType: SourceType
@@ -109,18 +116,57 @@ function SelectionPreviewPanel({ selectedTargetSeason, selectedSourceType, selec
 
       {selectedSourceType === 'season_template' ? (
         selectedTemplate && selectedTemplatePreview ? (
-          <ul className="dashboard-help-list">
-            <li>Template name: {selectedTemplate.name}</li>
-            <li>Template ID: {selectedTemplate.template_id}</li>
-            <li>Slot count: {selectedTemplate.slot_count}</li>
-            <li>Week count: {selectedTemplate.week_count}</li>
-            <li>Status: {selectedTemplate.status}</li>
-            <li>Slots within SW1–SW61: {selectedTemplatePreview.slotsWithinSw61 ? 'OK' : 'Warning'}</li>
-            <li>Qualification slots count: {selectedTemplatePreview.qualificationSlotsCount}</li>
-            <li>Earliest slot: {selectedTemplatePreview.earliestSlot === null ? '—' : `SW${selectedTemplatePreview.earliestSlot}`}</li>
-            <li>Latest slot: {selectedTemplatePreview.latestSlot === null ? '—' : `SW${selectedTemplatePreview.latestSlot}`}</li>
-            <li><Link to={`/admin/tour-seasons/season-templates/${selectedTemplate.template_id}`}>Open template detail</Link></li>
-          </ul>
+          <>
+            <ul className="dashboard-help-list">
+              <li>Template name: {selectedTemplate.name}</li>
+              <li>Template ID: {selectedTemplate.template_id}</li>
+              <li>Slot count: {selectedTemplate.slot_count}</li>
+              <li>Week count: {selectedTemplate.week_count}</li>
+              <li>Status: {selectedTemplate.status}</li>
+              <li>Slots within SW1–SW61: {selectedTemplatePreview.slotsWithinSw61 ? 'OK' : 'Warning'}</li>
+              <li>Qualification slots count: {selectedTemplatePreview.qualificationSlotsCount}</li>
+              <li>Earliest slot: {selectedTemplatePreview.earliestSlot === null ? '—' : `SW${selectedTemplatePreview.earliestSlot}`}</li>
+              <li>Latest slot: {selectedTemplatePreview.latestSlot === null ? '—' : `SW${selectedTemplatePreview.latestSlot}`}</li>
+              <li><Link to={`/admin/tour-seasons/season-templates/${selectedTemplate.template_id}`}>Open template detail</Link></li>
+            </ul>
+            <h4>Selected template slot preview</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Slot</th>
+                  <th scope="col">Week block</th>
+                  <th scope="col">Tournament</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Host</th>
+                  <th scope="col">Region</th>
+                  <th scope="col">Qualification</th>
+                  <th scope="col">Source template</th>
+                  <th scope="col">Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedTemplate.slots.slice(0, 10).map((slot) => {
+                  const weekBlock = slot.season_week_start === slot.season_week_end
+                    ? `SW${slot.season_week_start}`
+                    : `SW${slot.season_week_start}–SW${slot.season_week_end}`
+                  return (
+                    <tr key={slot.slot_id}>
+                      <td>{renderPreviewValue(slot.slot_id)}</td>
+                      <td>{weekBlock}</td>
+                      <td>{renderPreviewValue(slot.tournament_name)}</td>
+                      <td>{renderPreviewValue(slot.category)}</td>
+                      <td>{renderPreviewValue(slot.host_country)}</td>
+                      <td>{renderPreviewValue(slot.region)}</td>
+                      <td>{slot.has_qualification ? 'Yes' : 'No'}</td>
+                      <td>{renderPreviewValue(slot.source_template_id)}</td>
+                      <td>{renderPreviewValue(slot.notes)}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+            <p>Showing first 10 slots only. Full template detail remains available on the Season Template detail page.</p>
+          </>
         ) : <p>No season template available for preview.</p>
       ) : <p>Preview only. This source type has no executable workflow yet.</p>}
     </>

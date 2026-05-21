@@ -45,6 +45,7 @@ const api = vi.hoisted(() => ({
   getCategories: vi.fn(),
   getTournaments: vi.fn(),
   getTourSeasonsValidation: vi.fn(),
+  postSeasonBuilderPreflight: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
     constructor(message: string, status: number) {
@@ -154,6 +155,20 @@ describe('Module 17 pages through routes', () => {
       templates: [{ template_id: 'default_msa_template_preview', name: 'Default MSA Template Preview', description: 'Read-only derived preview built from current tournament templates config.', season_count_supported: 40, week_count: 61, slot_count: 1, source: 'derived_preview:tournament_templates', status: 'read_only_foundation', slots: [{ slot_id: 'slot-01-wt_gold_24', season_week_start: 1, season_week_end: 1, duration_weeks: 1, tournament_name: 'World Tour Gold', category: 'GOLD', host_country: 'ENG', region: 'EUROPE', has_qualification: true, qualifying_week_start: 1, main_draw_week_start: 1, source_template_id: 'wt_gold_24', notes: null }] }],
       source_path: 'config/tournament_templates/mvp_templates.json',
       status: 'read_only_foundation'
+    })
+    api.postSeasonBuilderPreflight.mockResolvedValue({
+      can_build: false,
+      target_season_label: '2000/2001',
+      source_type: 'season_template',
+      source_template_id: 'default_msa_template_preview',
+      target_calendar_exists: true,
+      target_event_count: 1,
+      source_resolved: true,
+      source_summary: { template_name: 'Default MSA Template Preview', slot_count: 1, week_count: 61 },
+      authoritative_diff_summary: { status: 'read_only_preflight', placeholder: 'Authoritative event-level diff is planned in a future phase.' },
+      validation_warnings: [],
+      validation_errors: ['Explicit overwrite/merge policy is required before any future build when a target calendar already exists.'],
+      audit_preview: { action: 'season_builder_preflight', read_only: true, mutation_permitted: false }
     })
   })
 
@@ -367,6 +382,8 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('validation_warnings and validation_errors')).toBeInTheDocument()
     expect(screen.getByText('audit_preview')).toBeInTheDocument()
     expect(screen.getByText('Future implementation must add an authoritative backend preflight before any build, merge, overwrite, or apply command can exist.')).toBeInTheDocument()
+    expect(screen.getByText('Backend preflight result')).toBeInTheDocument()
+    expect(await screen.findByText('Even when backend preflight succeeds, build actions remain unavailable in this phase.')).toBeInTheDocument()
     expect(screen.getByText('Read-only local summary. This is not an authoritative backend preflight and does not enable build actions.')).toBeInTheDocument()
     expect(screen.getByText('Local structural diff preview only. This is not an authoritative backend diff and does not enable apply actions.')).toBeInTheDocument()
     expect(screen.getByText('Read-only policy preview. No overwrite, merge, or build action is available on this page.')).toBeInTheDocument()
@@ -422,7 +439,16 @@ describe('Module 17 pages through routes', () => {
     expect(screen.queryByText('Local read-only validation derived from the selected template payload. Not an authoritative build gate.')).not.toBeInTheDocument()
     expect(screen.getByText('Backend preflight contract preview')).toBeInTheDocument()
     expect(screen.getByText('Read-only design preview. No backend preflight endpoint is called from this page.')).toBeInTheDocument()
-    expect(screen.getByText('Future implementation must add an authoritative backend preflight before any build, merge, overwrite, or apply command can exist.')).toBeInTheDocument()
+    expect(screen.getByText('Backend preflight result')).toBeInTheDocument()
+    expect(screen.getByText('Authoritative read-only backend preflight result. This endpoint does not build, merge, overwrite, or apply anything.')).toBeInTheDocument()
+    expect(await screen.findByText('can_build')).toBeInTheDocument()
+    expect(screen.getAllByText('false').length).toBeGreaterThan(0)
+    expect(screen.getByText('target_calendar_exists')).toBeInTheDocument()
+    expect(screen.getByText('0')).toBeInTheDocument()
+    expect(screen.getByText(/"read_only": true/)).toBeInTheDocument()
+    expect(screen.getByText(/"mutation_permitted": false/)).toBeInTheDocument()
+    expect(screen.getByText('Even when backend preflight succeeds, build actions remain unavailable in this phase.')).toBeInTheDocument()
+    expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith({ target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, requested_by: 'local-admin-preview' })
     expect(api.getSeasonCalendar).toHaveBeenCalledTimes(1)
     expect(screen.getByText('Future audited command flow')).toBeInTheDocument()
     expect(screen.getByText('None of these commands are implemented on this page.')).toBeInTheDocument()
@@ -442,6 +468,20 @@ describe('Module 17 pages through routes', () => {
       validation_warnings: [],
       validation_errors: []
     })
+    api.postSeasonBuilderPreflight.mockResolvedValueOnce({
+      can_build: false,
+      target_season_label: '2000/2001',
+      source_type: 'season_template',
+      source_template_id: 'default_msa_template_preview',
+      target_calendar_exists: false,
+      target_event_count: 0,
+      source_resolved: true,
+      source_summary: { template_name: 'Default MSA Template Preview', slot_count: 1, week_count: 61 },
+      authoritative_diff_summary: { status: 'read_only_preflight' },
+      validation_warnings: [],
+      validation_errors: [],
+      audit_preview: { action: 'season_builder_preflight', read_only: true, mutation_permitted: false }
+    })
 
     renderAppAt('/admin/seasons/build')
 
@@ -454,7 +494,18 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Read-only source/target diff detail')).toBeInTheDocument()
     expect(screen.getByText('Backend preflight contract preview')).toBeInTheDocument()
     expect(screen.getByText('Read-only design preview. No backend preflight endpoint is called from this page.')).toBeInTheDocument()
-    expect(screen.getByText('Future implementation must add an authoritative backend preflight before any build, merge, overwrite, or apply command can exist.')).toBeInTheDocument()
+    expect(screen.getByText('Backend preflight result')).toBeInTheDocument()
+    expect(screen.getByText('Authoritative read-only backend preflight result. This endpoint does not build, merge, overwrite, or apply anything.')).toBeInTheDocument()
+    expect(await screen.findByText('can_build')).toBeInTheDocument()
+    expect(screen.getAllByText('false').length).toBeGreaterThan(0)
+    expect(screen.getByText('target_calendar_exists')).toBeInTheDocument()
+    expect(screen.getByText('target_event_count')).toBeInTheDocument()
+    expect(screen.getByText('validation_errors count')).toBeInTheDocument()
+    expect(screen.getAllByText('0').length).toBeGreaterThan(0)
+    expect(screen.getByText(/"read_only": true/)).toBeInTheDocument()
+    expect(screen.getByText(/"mutation_permitted": false/)).toBeInTheDocument()
+    expect(screen.getByText('Even when backend preflight succeeds, build actions remain unavailable in this phase.')).toBeInTheDocument()
+    expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith({ target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, requested_by: 'local-admin-preview' })
     expect(screen.getAllByText('No existing calendar detected.').length).toBeGreaterThan(0)
     expect(screen.getByText('Silent overwrite must never be allowed.')).toBeInTheDocument()
     expect(screen.getByText('Merge policy is not needed for an empty target, but future command still requires audit.')).toBeInTheDocument()

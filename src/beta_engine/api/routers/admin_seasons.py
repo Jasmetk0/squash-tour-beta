@@ -113,6 +113,9 @@ def preflight_season_builder(
     source_resolved = False
     target_calendar_exists: bool | None = None
     target_event_count: int | None = None
+    target_first_week: int | None = None
+    target_last_week: int | None = None
+    target_week_count: int | None = None
     normalized_target: str = payload.target_season_label
 
     try:
@@ -124,10 +127,20 @@ def preflight_season_builder(
         calendar_result = calendar_service.get_calendar(season=normalized_target)
         target_calendar_exists = calendar_result.calendar is not None
         target_event_count = len(calendar_result.calendar.events) if calendar_result.calendar else 0
+        if calendar_result.calendar and calendar_result.calendar.events:
+            target_weeks = [event.season_week for event in calendar_result.calendar.events]
+            target_first_week = min(target_weeks)
+            target_last_week = max(target_weeks)
+            target_week_count = len(set(target_weeks))
         if target_calendar_exists and not payload.overwrite_policy:
             errors.append("Explicit overwrite/merge policy is required before any future build when a target calendar already exists.")
 
     source_summary: dict[str, object] = {"source_type": payload.source_type}
+    source_slot_count: int | None = None
+    source_week_count: int | None = None
+    source_first_week: int | None = None
+    source_last_week: int | None = None
+    source_week_span: set[int] = set()
     if payload.source_type != "season_template":
         warnings.append(f"Source type '{payload.source_type}' is planned and not executable yet in this phase.")
     else:
@@ -140,13 +153,50 @@ def preflight_season_builder(
                 errors.append(f"season_template source '{payload.source_template_id}' was not found.")
             else:
                 source_resolved = True
+                source_slot_count = len(selected.slots)
+                if selected.slots:
+                    source_first_week = min(slot.season_week_start for slot in selected.slots)
+                    source_last_week = max(slot.season_week_end for slot in selected.slots)
+                    for slot in selected.slots:
+                        source_week_span.update(range(slot.season_week_start, slot.season_week_end + 1))
+                    source_week_count = len(source_week_span)
+                else:
+                    source_week_count = 0
                 source_summary.update({"template_name": selected.name, "slot_count": selected.slot_count, "week_count": selected.week_count})
+
+    week_count_compatible: bool | None = None
+    if source_week_count is not None and target_week_count is not None:
+        week_count_compatible = source_week_count == target_week_count
+
+    blocking_reasons = list(errors)
+    advisory_notes = list(warnings)
+    if payload.source_type != "season_template":
+        advisory_notes.append("Concrete slot-level source summary is only available for source_type='season_template' in this phase.")
+
+    requires_overwrite_or_merge_policy = bool(target_calendar_exists and not payload.overwrite_policy)
 
     authoritative_diff_summary = {
         "status": "read_only_preflight",
+        "can_build": False,
         "target_calendar_exists": target_calendar_exists,
         "target_event_count": target_event_count,
-        "placeholder": "Authoritative event-level diff is planned in a future phase.",
+        "source_type": payload.source_type,
+        "source_resolved": source_resolved,
+        "source_slot_count": source_slot_count,
+        "source_week_count": source_week_count,
+        "target_week_count": target_week_count,
+        "week_count_compatible": week_count_compatible,
+        "source_range": {"first_week": source_first_week, "last_week": source_last_week},
+        "target_range": {"first_week": target_first_week, "last_week": target_last_week},
+        "structural_comparison": {
+            "planned_source_slots": source_slot_count,
+            "existing_target_events": target_event_count,
+            "target_is_empty": (target_event_count == 0) if target_event_count is not None else None,
+            "requires_overwrite_or_merge_policy": requires_overwrite_or_merge_policy,
+        },
+        "blocking_reasons": blocking_reasons,
+        "advisory_notes": advisory_notes,
+        "placeholder": "Event-level additions/replacements/conflicts remain planned for a future phase.",
     }
 
     audit_preview = {

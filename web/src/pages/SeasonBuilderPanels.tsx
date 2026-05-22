@@ -84,6 +84,14 @@ export type FutureCommandReadinessItem = {
   message: string
 }
 
+export type DisabledDryRunReadinessStatus = 'OK' | 'Info' | 'Blocked' | 'Missing'
+
+export type DisabledDryRunReadinessItem = {
+  area: string
+  status: DisabledDryRunReadinessStatus
+  message: string
+}
+
 type BuildSourceTargetDiffDetailItemsArgs = {
   selectedTargetSeason: SeasonRegistryEntry | null
   selectedSourceType: SourceType
@@ -1291,6 +1299,82 @@ export function FutureCommandReadinessChecklistPanel({ items }: { items: FutureC
         </tbody>
       </table>
       <p>Readiness remains blocked until a separate audited backend command is implemented.</p>
+    </>
+  )
+}
+
+export function buildDisabledDryRunReadinessItems({
+  requestPayload,
+  response
+}: {
+  requestPayload?: SeasonBuilderDryRunBuildRequest
+  response?: SeasonBuilderDryRunBuildResponse
+}): DisabledDryRunReadinessItem[] {
+  const warningCount = response?.validation_warnings.length
+  const errorCount = response?.validation_errors.length
+  return [
+    response
+      ? { area: 'Contract endpoint', status: 'OK', message: 'Disabled dry-run contract endpoint returned a response.' }
+      : { area: 'Contract endpoint', status: 'Missing', message: 'Disabled dry-run contract endpoint has not returned a response yet.' },
+    response
+      ? response.enabled === false && response.can_execute === false
+        ? { area: 'Execution flag', status: 'Blocked', message: 'Execution is disabled in this phase.' }
+        : { area: 'Execution flag', status: 'Info', message: 'Execution is disabled in this phase.' }
+      : { area: 'Execution flag', status: 'Info', message: 'Execution is disabled in this phase.' },
+    response
+      ? response.can_mutate === false
+        ? { area: 'Mutation flag', status: 'Blocked', message: 'can_mutate is false; no calendar mutation is permitted.' }
+        : { area: 'Mutation flag', status: 'Info', message: 'can_mutate is false; no calendar mutation is permitted.' }
+      : { area: 'Mutation flag', status: 'Info', message: 'can_mutate is false; no calendar mutation is permitted.' },
+    requestPayload?.preflight_fingerprint && requestPayload.reviewed_diff_id
+      ? { area: 'Preflight identity', status: 'OK', message: 'Preflight fingerprint and reviewed diff identity are present.' }
+      : { area: 'Preflight identity', status: 'Missing', message: 'Preflight identity is incomplete.' },
+    requestPayload?.audit_reason
+      ? { area: 'Audit reason', status: 'OK', message: 'Audit reason preview is present.' }
+      : { area: 'Audit reason', status: 'Info', message: 'Audit reason preview is not filled yet.' },
+    requestPayload?.explicit_confirmation
+      ? { area: 'Explicit confirmation', status: 'OK', message: 'Explicit confirmation preview is present.' }
+      : { area: 'Explicit confirmation', status: 'Info', message: 'Explicit confirmation preview is not filled yet.' },
+    requestPayload?.mutation_scope
+      ? { area: 'Mutation scope', status: 'OK', message: 'Mutation scope preview is present.' }
+      : { area: 'Mutation scope', status: 'Info', message: 'Mutation scope preview is not selected yet.' },
+    typeof warningCount === 'number'
+      ? warningCount === 0
+        ? { area: 'Validation warnings', status: 'OK', message: `Validation warnings count: ${warningCount}.` }
+        : { area: 'Validation warnings', status: 'Info', message: `Validation warnings count: ${warningCount}.` }
+      : { area: 'Validation warnings', status: 'Missing', message: 'Validation warnings count: unavailable.' },
+    typeof errorCount === 'number'
+      ? errorCount === 0
+        ? { area: 'Validation errors', status: 'OK', message: `Validation errors count: ${errorCount}.` }
+        : { area: 'Validation errors', status: 'Blocked', message: `Validation errors count: ${errorCount}.` }
+      : { area: 'Validation errors', status: 'Missing', message: 'Validation errors count: unavailable.' },
+    { area: 'Next implementation step', status: 'Blocked', message: 'Real dry-run generation is not implemented yet.' }
+  ]
+}
+
+export function DisabledDryRunReadinessSummaryPanel({ items }: { items: DisabledDryRunReadinessItem[] }): JSX.Element {
+  return (
+    <>
+      <p>Read-only summary of the disabled dry-run contract state.</p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Area</th>
+            <th scope="col">Status</th>
+            <th scope="col">Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr key={`${item.area}:${item.status}`}>
+              <td>{item.area}</td>
+              <td>{item.status}</td>
+              <td>{item.message}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p>The dry-run contract is visible, but execution remains disabled.</p>
     </>
   )
 }

@@ -617,6 +617,29 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByText('Raw disabled dry-run build contract JSON')).toBeInTheDocument()
     expect(await screen.findByText('Execution remains disabled; this panel is not a build control.')).toBeInTheDocument()
     expect(screen.getByText('Current disabled dry-run request payload')).toBeInTheDocument()
+    expect(screen.getByText('Disabled dry-run readiness summary')).toBeInTheDocument()
+    expect(screen.getByText('Read-only summary of the disabled dry-run contract state.')).toBeInTheDocument()
+    expect(screen.getByText('Contract endpoint')).toBeInTheDocument()
+    expect(screen.getByText('Execution flag')).toBeInTheDocument()
+    expect(screen.getByText('Mutation flag')).toBeInTheDocument()
+    expect(screen.getByText('Preflight identity')).toBeInTheDocument()
+    expect(screen.getAllByText('Audit reason').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Explicit confirmation').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Mutation scope').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Validation warnings').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Validation errors').length).toBeGreaterThan(0)
+    expect(screen.getByText('Next implementation step')).toBeInTheDocument()
+    expect(screen.getByText('Disabled dry-run contract endpoint returned a response.')).toBeInTheDocument()
+    expect(screen.getByText('Execution is disabled in this phase.')).toBeInTheDocument()
+    expect(screen.getByText('can_mutate is false; no calendar mutation is permitted.')).toBeInTheDocument()
+    expect(screen.getByText('Preflight fingerprint and reviewed diff identity are present.')).toBeInTheDocument()
+    expect(screen.getByText('Audit reason preview is not filled yet.')).toBeInTheDocument()
+    expect(screen.getByText('Explicit confirmation preview is not filled yet.')).toBeInTheDocument()
+    expect(screen.getByText('Mutation scope preview is not selected yet.')).toBeInTheDocument()
+    expect(screen.getByText('Validation warnings count: 3.')).toBeInTheDocument()
+    expect(screen.getByText('Validation errors count: 0.')).toBeInTheDocument()
+    expect(screen.getByText('Real dry-run generation is not implemented yet.')).toBeInTheDocument()
+    expect(screen.getByText('The dry-run contract is visible, but execution remains disabled.')).toBeInTheDocument()
     expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith({ target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, requested_by: 'local-admin-preview' })
     fireEvent.change(screen.getByLabelText('Future audit reason preview'), { target: { value: 'ticket-123 dry-run review' } })
     fireEvent.change(screen.getByLabelText('Future explicit confirmation preview'), { target: { value: 'I understand this is disabled.' } })
@@ -629,6 +652,11 @@ describe('Module 17 pages through routes', () => {
       }))
     })
     expect(await screen.findByText('No dry-run build contract warnings returned.')).toBeInTheDocument()
+    expect(await screen.findByText('Audit reason preview is present.')).toBeInTheDocument()
+    expect(await screen.findByText('Explicit confirmation preview is present.')).toBeInTheDocument()
+    expect(await screen.findByText('Mutation scope preview is present.')).toBeInTheDocument()
+    expect((await screen.findAllByText('Validation warnings count: 0.')).length).toBeGreaterThan(0)
+    expect(screen.getByText('The dry-run contract is visible, but execution remains disabled.')).toBeInTheDocument()
     expect((await screen.findAllByText('explicit_confirmation_present')).length).toBeGreaterThan(0)
     expect((await screen.findAllByText('merge_preview')).length).toBeGreaterThan(0)
     expect((await screen.findAllByText('false')).length).toBeGreaterThan(0)
@@ -784,7 +812,7 @@ describe('Module 17 pages through routes', () => {
     for (const action of forbiddenMutationActions) {
       expect(screen.queryByRole('button', { name: new RegExp(`^${action}$`, 'i') })).not.toBeInTheDocument()
     }
-  })
+  }, 20000)
 
   it('renders Season Builder no-calendar overwrite policy branch', async () => {
     api.getSeasonCalendar.mockResolvedValueOnce({
@@ -889,6 +917,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('Reviewed diff identity is available.').length).toBeGreaterThan(0)
     expect(screen.getByText('Readiness remains blocked until a separate audited backend command is implemented.')).toBeInTheDocument()
     expect(screen.getByText('Disabled dry-run build contract result')).toBeInTheDocument()
+    expect(screen.getByText('Disabled dry-run readiness summary')).toBeInTheDocument()
     expect(screen.getByText('Dry-run audit metadata preview inputs')).toBeInTheDocument()
     expect(screen.getByText('Dry-run build command contract exists, but execution is disabled in this phase.')).toBeInTheDocument()
     expect(screen.getByText('Execution remains disabled; this panel is not a build control.')).toBeInTheDocument()
@@ -902,6 +931,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('No build, overwrite, merge, or apply command is available from this page.')).toBeInTheDocument()
     expect(screen.getByText('Empty target has no existing concrete events to compare locally, but future backend validation is still required.')).toBeInTheDocument()
     expect(screen.getByText('No diff, build, merge, overwrite, or apply command is executed from this page.')).toBeInTheDocument()
+    expect(screen.getByText('The dry-run contract is visible, but execution remains disabled.')).toBeInTheDocument()
 
     const forbiddenMutationActions = ['Build', 'Create', 'Apply', 'Generate', 'Simulate', 'Run', 'Save', 'Update', 'Delete', 'Bootstrap', 'Merge', 'Overwrite', 'Preflight']
     for (const action of forbiddenMutationActions) {

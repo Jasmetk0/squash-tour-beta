@@ -11,6 +11,7 @@ import {
   buildBackendPreflightContractItems,
   buildFutureBuildCommandContractItems,
   buildFutureCommandReadinessItems,
+  buildDisabledDryRunReadinessItems,
   buildDiffPreviewItems,
   BackendPreflightContractPreviewPanel,
   BuildPolicyPreviewPanel,
@@ -23,6 +24,7 @@ import {
   DryRunAuditMetadataPreviewPanel,
   FutureAuditedCommandFlowPanel,
   DisabledDryRunBuildContractPanel,
+  DisabledDryRunReadinessSummaryPanel,
   ReadOnlyPreflightChecklistPanel,
   SelectionPreviewPanel,
   SourceTargetPreflightSummaryPanel,
@@ -171,6 +173,10 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     enabled: disabledDryRunBuildQueryEnabled,
     retry: false
   })
+  const disabledDryRunReadinessItems = useMemo(
+    () => buildDisabledDryRunReadinessItems({ requestPayload: disabledDryRunBuildPayload, response: disabledDryRunBuildQuery.data }),
+    [disabledDryRunBuildPayload, disabledDryRunBuildQuery.data]
+  )
 
   return (
     <section className="panel">
@@ -334,6 +340,10 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           requestPayload={disabledDryRunBuildPayload}
           query={{ isLoading: disabledDryRunBuildQuery.isLoading, error: disabledDryRunBuildQuery.error, data: disabledDryRunBuildQuery.data }}
         />
+      </SectionCard>
+
+      <SectionCard title="Disabled dry-run readiness summary">
+        <DisabledDryRunReadinessSummaryPanel items={disabledDryRunReadinessItems} />
       </SectionCard>
 
       {selectedSourceType === 'season_template' ? (

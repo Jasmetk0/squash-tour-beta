@@ -2065,6 +2065,14 @@ type PostApplyCalendarVerificationPanelProps = {
   targetCalendarExistsAfterApply: boolean
 }
 
+type PostApplyAuditStatusPanelProps = {
+  applyMutationResult: SeasonBuilderApplyCreateOnlyCommandResponse | undefined
+  requestedBy: string
+  auditReason: string
+  explicitConfirmation: string
+  mutationScope: string
+}
+
 export function PostApplyCalendarVerificationPanel({
   targetCalendarData,
   targetCalendarLoading,
@@ -2122,6 +2130,46 @@ export function PostApplyCalendarVerificationPanel({
         <tr><td>target validation errors count</td><td>{typeof targetSummary?.validation_error_count === 'number' ? String(targetSummary.validation_error_count) : '—'}</td></tr>
         <tr><td>readiness can_execute_apply</td><td>{readinessData ? String(readinessData.can_execute_apply) : '—'}</td></tr>
         <tr><td>readiness would_create_calendar</td><td>{readinessData ? String(readinessData.would_create_calendar) : '—'}</td></tr>
+      </tbody></table>
+    </>
+  )
+}
+
+export function PostApplyAuditStatusPanel({
+  applyMutationResult,
+  requestedBy,
+  auditReason,
+  explicitConfirmation,
+  mutationScope
+}: PostApplyAuditStatusPanelProps): JSX.Element {
+  const applyResultExists = Boolean(applyMutationResult)
+  const auditPreview = applyMutationResult?.audit_preview ?? {}
+  const dryRunIdentity = applyMutationResult?.dry_run_identity ?? {}
+  const createdCalendarIdentity = applyMutationResult?.created_calendar_identity ?? {}
+  const applyGateSummary = applyMutationResult?.apply_gate_summary ?? {}
+  const auditPersisted = auditPreview.audit_persisted
+  const explicitConfirmationPresent = explicitConfirmation.trim().length > 0
+
+  return (
+    <>
+      <p>Read-only post-apply audit/status summary panel.</p>
+      {!applyResultExists ? <p>No create-only apply audit/status result yet.</p> : null}
+      {auditPersisted === true ? <p>Audit persistence reported by backend.</p> : <p>Audit persistence is not confirmed by this response.</p>}
+      {explicitConfirmationPresent ? <p>Explicit confirmation was provided.</p> : <p>Explicit confirmation is not present in this UI summary.</p>}
+      <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+        <tr><td>apply result exists</td><td>{applyResultExists ? 'yes' : 'no'}</td></tr>
+        <tr><td>applied</td><td>{applyMutationResult ? String(applyMutationResult.applied) : '—'}</td></tr>
+        <tr><td>requested_by</td><td>{requestedBy || '—'}</td></tr>
+        <tr><td>audit_reason</td><td>{auditReason || '—'}</td></tr>
+        <tr><td>explicit_confirmation present</td><td>{explicitConfirmationPresent ? 'yes' : 'no'}</td></tr>
+        <tr><td>mutation_scope</td><td>{mutationScope || '—'}</td></tr>
+        <tr><td>audit_preview.audit_persisted</td><td>{String(auditPreview.audit_persisted ?? '—')}</td></tr>
+        <tr><td>audit_preview.audit_persistence_status</td><td>{String(auditPreview.audit_persistence_status ?? '—')}</td></tr>
+        <tr><td>dry_run_identity.identity_matches</td><td>{String(dryRunIdentity.identity_matches ?? '—')}</td></tr>
+        <tr><td>created_calendar_identity.applied_event_count</td><td>{String(createdCalendarIdentity.applied_event_count ?? '—')}</td></tr>
+        <tr><td>apply_gate_summary.service_insert_succeeded</td><td>{String(applyGateSummary.service_insert_succeeded ?? '—')}</td></tr>
+        <tr><td>validation_errors count</td><td>{applyMutationResult ? String(applyMutationResult.validation_errors.length) : '—'}</td></tr>
+        <tr><td>validation_warnings count</td><td>{applyMutationResult ? String(applyMutationResult.validation_warnings.length) : '—'}</td></tr>
       </tbody></table>
     </>
   )

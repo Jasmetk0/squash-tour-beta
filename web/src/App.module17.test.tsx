@@ -755,11 +755,11 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('overwrite_policy').length).toBeGreaterThan(0)
     expect(screen.getAllByText('preflight_fingerprint').length).toBeGreaterThan(0)
     expect(screen.getAllByText('requested_by / admin actor').length).toBeGreaterThan(0)
-    expect(screen.getByText('audit_reason')).toBeInTheDocument()
+    expect(screen.getAllByText('audit_reason').length).toBeGreaterThan(0)
     expect(screen.getByText('seed / template_version / config_hash')).toBeInTheDocument()
     expect(screen.getByText('explicit_confirmation')).toBeInTheDocument()
     expect(screen.getByText('reviewed_diff_id or dry_run_result_id')).toBeInTheDocument()
-    expect(screen.getByText('mutation_scope')).toBeInTheDocument()
+    expect(screen.getAllByText('mutation_scope').length).toBeGreaterThan(0)
     expect(screen.getByText('Current preflight signals')).toBeInTheDocument()
     expect(screen.getAllByText('preflight_fingerprint').length).toBeGreaterThan(0)
     expect(screen.getAllByText('reviewed_diff_id').length).toBeGreaterThan(0)
@@ -951,11 +951,11 @@ describe('Module 17 pages through routes', () => {
       validation_warnings: [],
       created_calendar_summary: { calendar_exists: true, season: '2000/01', event_count: 1 },
       created_event_preview: [],
-      created_calendar_identity: {},
-      apply_gate_summary: {},
+      created_calendar_identity: { applied_event_count: 1 },
+      apply_gate_summary: { service_insert_succeeded: true },
       applied_event_count: 1,
-      dry_run_identity: {},
-      audit_preview: { audit_persisted: false },
+      dry_run_identity: { identity_matches: true },
+      audit_preview: { audit_persisted: false, audit_persistence_status: 'not_implemented' },
       message: 'Create-only apply executed successfully.'
     })
     fireEvent.click(executeCreateOnlyButton)
@@ -979,6 +979,21 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Create-only apply executed successfully.')).toBeInTheDocument()
     expect(screen.getByText('Create-only apply reported success. Verify the refreshed target calendar below.')).toBeInTheDocument()
     expect(await screen.findByText('Post-apply calendar verification passed.')).toBeInTheDocument()
+    expect(screen.getByText('Post-apply audit/status summary')).toBeInTheDocument()
+    expect(screen.getByText('Audit persistence is not confirmed by this response.')).toBeInTheDocument()
+    expect(screen.getByText('Explicit confirmation was provided.')).toBeInTheDocument()
+    expect(screen.getAllByText('requested_by').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('audit_reason').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('explicit_confirmation present').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('mutation_scope').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('audit_preview.audit_persistence_status').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('apply_gate_summary.service_insert_succeeded').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('dry_run_identity.identity_matches').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('created_calendar_identity.applied_event_count').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('local-admin-preview').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('create-only calendar command').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('create_only').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('yes').length).toBeGreaterThan(0)
     expect(screen.getByText('Create-only command should now be unavailable for this target.')).toBeInTheDocument()
     expect(screen.getByText('Target calendar now exists. Create-only apply is locked out for this target.')).toBeInTheDocument()
     expect(screen.getByText('Use a future audited merge/overwrite workflow if changes are needed.')).toBeInTheDocument()
@@ -988,8 +1003,8 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('target calendar exists')).toBeInTheDocument()
     expect(screen.getByText('applyMutationResult.applied_event_count')).toBeInTheDocument()
     expect(screen.getByText('target calendar event count')).toBeInTheDocument()
-    expect(screen.getByText('applied')).toBeInTheDocument()
-    expect(screen.getByText('applied_event_count')).toBeInTheDocument()
+    expect(screen.getAllByText('applied').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('applied_event_count').length).toBeGreaterThan(0)
     expect((await screen.findAllByText('season_builder_apply_command')).length).toBeGreaterThan(0)
     expect(await screen.findByText('Apply audit trail contract preview')).toBeInTheDocument()
     expect(await screen.findByText('Apply safety gate contract preview')).toBeInTheDocument()

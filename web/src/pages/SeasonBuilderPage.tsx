@@ -29,6 +29,7 @@ import {
   ApplyCommandReadinessSummaryPanel,
   CreateOnlyApplyReadinessPanel,
   CreateOnlyApplyDangerZonePreviewPanel,
+  PostApplyCalendarVerificationPanel,
   DisabledDryRunReadinessSummaryPanel,
   ReadOnlyPreflightChecklistPanel,
   SelectionPreviewPanel,
@@ -511,6 +512,15 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           onConfirmCreateOnlyApply={handleConfirmCreateOnlyApply}
           applyMutationStatus={createOnlyApplyMutation.status}
           applyMutationError={createOnlyApplyMutation.error}
+          applyMutationResult={createOnlyApplyMutation.data}
+        />
+      </SectionCard>
+      <SectionCard title="Post-apply calendar verification">
+        <PostApplyCalendarVerificationPanel
+          targetCalendarData={targetCalendarQuery.data}
+          targetCalendarLoading={targetCalendarQuery.isLoading}
+          targetCalendarError={targetCalendarQuery.error}
+          readinessData={createOnlyApplyReadinessQuery.data}
           applyMutationResult={createOnlyApplyMutation.data}
         />
       </SectionCard>

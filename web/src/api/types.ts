@@ -3093,6 +3093,23 @@ export type SeasonBuilderApplyCommandContractResponse = {
   message: string
 }
 
+export type SeasonBuilderApplyCreateOnlyReadinessResponse = {
+  command: string
+  enabled: boolean
+  can_execute_apply: boolean
+  can_mutate: boolean
+  would_create_calendar: boolean
+  service_insert_applicable: boolean
+  target_season_label: string
+  validation_errors: string[]
+  validation_warnings: string[]
+  apply_gate_summary: Record<string, unknown>
+  dry_run_identity: Record<string, unknown>
+  candidate_summary: Record<string, unknown>
+  audit_preview: Record<string, unknown>
+  message: string
+}
+
 export type DryRunValidationSummary = {
   status: 'clean' | 'warnings' | 'blocking'
   blocking_count: number

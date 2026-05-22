@@ -48,6 +48,7 @@ const api = vi.hoisted(() => ({
   postSeasonBuilderPreflight: vi.fn(),
   postSeasonBuilderDryRunBuild: vi.fn(),
   postSeasonBuilderApplyCommandContract: vi.fn(),
+  postSeasonBuilderApplyCreateOnlyReadiness: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
     constructor(message: string, status: number) {
@@ -855,7 +856,16 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByText('Raw disabled dry-run build contract JSON')).toBeInTheDocument()
     expect(await screen.findByText('Execution remains disabled; this panel is not a build control.')).toBeInTheDocument()
     expect(screen.getByText('Disabled apply command contract result')).toBeInTheDocument()
+    expect(screen.getByText('Create-only apply readiness')).toBeInTheDocument()
     expect(screen.getByText('Read-only disabled apply command contract check. This does not build, merge, overwrite, or apply anything.')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(api.postSeasonBuilderApplyCreateOnlyReadiness).toHaveBeenCalledWith(expect.objectContaining({
+        preflight_fingerprint: 'pf_test_existing',
+        reviewed_diff_id: 'rd_test_existing',
+        dry_run_result_fingerprint: 'drf_test_existing',
+        dry_run_result_id: 'drr_test_existing'
+      }))
+    })
     await waitFor(() => {
       expect(api.postSeasonBuilderApplyCommandContract).toHaveBeenCalledWith(expect.objectContaining({
         preflight_fingerprint: 'pf_test_existing',

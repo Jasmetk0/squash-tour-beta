@@ -1295,6 +1295,63 @@ export function FutureCommandReadinessChecklistPanel({ items }: { items: FutureC
   )
 }
 
+type DryRunAuditMetadataPreviewPanelProps = {
+  auditReason: string
+  setAuditReason: (value: string) => void
+  explicitConfirmation: string
+  setExplicitConfirmation: (value: string) => void
+  mutationScope: string
+  setMutationScope: (value: string) => void
+}
+
+export function DryRunAuditMetadataPreviewPanel({
+  auditReason,
+  setAuditReason,
+  explicitConfirmation,
+  setExplicitConfirmation,
+  mutationScope,
+  setMutationScope
+}: DryRunAuditMetadataPreviewPanelProps): JSX.Element {
+  return (
+    <>
+      <p>Read-only preview inputs. These fields only change the disabled dry-run contract payload.</p>
+      <p>
+        <label htmlFor="dry-run-audit-reason-preview">Future audit reason preview</label><br />
+        <textarea
+          id="dry-run-audit-reason-preview"
+          value={auditReason}
+          onChange={(event) => setAuditReason(event.target.value)}
+          rows={3}
+        />
+      </p>
+      <p>
+        <label htmlFor="dry-run-explicit-confirmation-preview">Future explicit confirmation preview</label><br />
+        <input
+          id="dry-run-explicit-confirmation-preview"
+          value={explicitConfirmation}
+          onChange={(event) => setExplicitConfirmation(event.target.value)}
+        />
+      </p>
+      <p>
+        <label htmlFor="dry-run-mutation-scope-preview">Future mutation scope preview</label><br />
+        <select
+          id="dry-run-mutation-scope-preview"
+          value={mutationScope}
+          onChange={(event) => setMutationScope(event.target.value)}
+        >
+          <option value="">No mutation scope selected</option>
+          <option value="create_only_preview">Create-only preview</option>
+          <option value="merge_preview">Merge preview</option>
+          <option value="overwrite_preview">Overwrite preview</option>
+          <option value="repair_preview">Repair preview</option>
+        </select>
+      </p>
+      <p>These values are not submitted as a command and do not enable execution.</p>
+      <p>Changing these fields only re-runs the disabled dry-run contract check.</p>
+    </>
+  )
+}
+
 type DisabledDryRunBuildContractPanelProps = {
   queryEnabled: boolean
   requestPayload: SeasonBuilderDryRunBuildRequest
@@ -1357,6 +1414,15 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
               <tr><td>audit_reason</td><td>{formatValue(auditPreview.audit_reason)}</td></tr>
               <tr><td>explicit_confirmation_present</td><td>{formatValue(auditPreview.explicit_confirmation_present)}</td></tr>
               <tr><td>mutation_scope</td><td>{formatValue(auditPreview.mutation_scope)}</td></tr>
+            </tbody>
+          </table>
+          <h4>Current disabled dry-run request payload</h4>
+          <table>
+            <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+            <tbody>
+              <tr><td>audit_reason</td><td>{formatValue(requestPayload.audit_reason)}</td></tr>
+              <tr><td>explicit_confirmation</td><td>{formatValue(requestPayload.explicit_confirmation)}</td></tr>
+              <tr><td>mutation_scope</td><td>{formatValue(requestPayload.mutation_scope)}</td></tr>
             </tbody>
           </table>
           <h4>Raw disabled dry-run build contract JSON</h4>

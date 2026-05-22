@@ -190,40 +190,47 @@ describe('Module 17 pages through routes', () => {
       validation_errors: ['Explicit overwrite/merge policy is required before any future build when a target calendar already exists.'],
       audit_preview: { action: 'season_builder_preflight', read_only: true, mutation_permitted: false }
     })
-    api.postSeasonBuilderDryRunBuild.mockResolvedValue({
-      command: 'season_builder_dry_run_build',
-      enabled: false,
-      can_execute: false,
-      can_mutate: false,
-      target_season_label: '2000/01',
-      source_type: 'season_template',
-      source_template_id: 'default_msa_template_preview',
-      overwrite_policy: null,
-      preflight_fingerprint: 'pf_test_existing',
-      reviewed_diff_id: 'rd_test_existing',
-      validation_errors: [],
-      validation_warnings: [
-        'audit_reason will be required before execution is enabled in a future phase.',
-        'explicit_confirmation will be required before execution is enabled in a future phase.',
-        'mutation_scope will be required before execution is enabled in a future phase.'
-      ],
-      audit_preview: {
-        action: 'season_builder_dry_run_build',
-        read_only: true,
-        mutation_permitted: false,
-        execution_enabled: false,
+    api.postSeasonBuilderDryRunBuild.mockImplementation(async (payload) => {
+      const hasAllMetadata = payload.audit_reason === 'ticket-123 dry-run review'
+        && payload.explicit_confirmation === 'I understand this is disabled.'
+        && payload.mutation_scope === 'merge_preview'
+      return {
+        command: 'season_builder_dry_run_build',
+        enabled: false,
+        can_execute: false,
+        can_mutate: false,
         target_season_label: '2000/01',
         source_type: 'season_template',
         source_template_id: 'default_msa_template_preview',
-        overwrite_policy: null,
-        preflight_fingerprint: 'pf_test_existing',
-        reviewed_diff_id: 'rd_test_existing',
-        requested_by: 'local-admin-preview',
-        audit_reason: null,
-        explicit_confirmation_present: false,
-        mutation_scope: null
-      },
-      message: 'Dry-run build command contract exists, but execution is disabled in this phase.'
+        overwrite_policy: payload.overwrite_policy ?? null,
+        preflight_fingerprint: payload.preflight_fingerprint,
+        reviewed_diff_id: payload.reviewed_diff_id,
+        validation_errors: [],
+        validation_warnings: hasAllMetadata
+          ? []
+          : [
+              'audit_reason will be required before execution is enabled in a future phase.',
+              'explicit_confirmation will be required before execution is enabled in a future phase.',
+              'mutation_scope will be required before execution is enabled in a future phase.'
+            ],
+        audit_preview: {
+          action: 'season_builder_dry_run_build',
+          read_only: true,
+          mutation_permitted: false,
+          execution_enabled: false,
+          target_season_label: '2000/01',
+          source_type: 'season_template',
+          source_template_id: 'default_msa_template_preview',
+          overwrite_policy: payload.overwrite_policy ?? null,
+          preflight_fingerprint: payload.preflight_fingerprint,
+          reviewed_diff_id: payload.reviewed_diff_id,
+          requested_by: 'local-admin-preview',
+          audit_reason: hasAllMetadata ? 'ticket-123 dry-run review' : payload.audit_reason,
+          explicit_confirmation_present: hasAllMetadata ? true : Boolean(payload.explicit_confirmation),
+          mutation_scope: hasAllMetadata ? 'merge_preview' : payload.mutation_scope
+        },
+        message: 'Dry-run build command contract exists, but execution is disabled in this phase.'
+      }
     })
   })
 
@@ -579,6 +586,13 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText(/can_build is false; future command remains unavailable\.|can_build is unavailable until preflight result is returned\./)).toBeInTheDocument()
     expect(screen.getByText('No build command exists on this page.')).toBeInTheDocument()
     expect(screen.getByText('Readiness remains blocked until a separate audited backend command is implemented.')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run audit metadata preview inputs')).toBeInTheDocument()
+    expect(screen.getByText('Read-only preview inputs. These fields only change the disabled dry-run contract payload.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Future audit reason preview')).toBeInTheDocument()
+    expect(screen.getByLabelText('Future explicit confirmation preview')).toBeInTheDocument()
+    expect(screen.getByLabelText('Future mutation scope preview')).toBeInTheDocument()
+    expect(screen.getByText('These values are not submitted as a command and do not enable execution.')).toBeInTheDocument()
+    expect(screen.getByText('Changing these fields only re-runs the disabled dry-run contract check.')).toBeInTheDocument()
     expect(screen.getByText('Disabled dry-run build contract result')).toBeInTheDocument()
     expect(screen.getByText('Read-only disabled command contract check. This does not build, merge, overwrite, or apply anything.')).toBeInTheDocument()
     expect(screen.getAllByText('preflight_fingerprint').length).toBeGreaterThan(0)
@@ -602,7 +616,22 @@ describe('Module 17 pages through routes', () => {
     expect((await screen.findAllByText('explicit_confirmation_present')).length).toBeGreaterThan(0)
     expect(await screen.findByText('Raw disabled dry-run build contract JSON')).toBeInTheDocument()
     expect(await screen.findByText('Execution remains disabled; this panel is not a build control.')).toBeInTheDocument()
+    expect(screen.getByText('Current disabled dry-run request payload')).toBeInTheDocument()
     expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith({ target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, requested_by: 'local-admin-preview' })
+    fireEvent.change(screen.getByLabelText('Future audit reason preview'), { target: { value: 'ticket-123 dry-run review' } })
+    fireEvent.change(screen.getByLabelText('Future explicit confirmation preview'), { target: { value: 'I understand this is disabled.' } })
+    fireEvent.change(screen.getByLabelText('Future mutation scope preview'), { target: { value: 'merge_preview' } })
+    await waitFor(() => {
+      expect(api.postSeasonBuilderDryRunBuild).toHaveBeenCalledWith(expect.objectContaining({
+        audit_reason: 'ticket-123 dry-run review',
+        explicit_confirmation: 'I understand this is disabled.',
+        mutation_scope: 'merge_preview'
+      }))
+    })
+    expect(await screen.findByText('No dry-run build contract warnings returned.')).toBeInTheDocument()
+    expect((await screen.findAllByText('explicit_confirmation_present')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('merge_preview')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('false')).length).toBeGreaterThan(0)
     api.postSeasonBuilderPreflight.mockImplementation(async (payload) => {
       const requestedPolicy = payload.overwrite_policy
       if (requestedPolicy === 'merge_preview') {
@@ -860,6 +889,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('Reviewed diff identity is available.').length).toBeGreaterThan(0)
     expect(screen.getByText('Readiness remains blocked until a separate audited backend command is implemented.')).toBeInTheDocument()
     expect(screen.getByText('Disabled dry-run build contract result')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run audit metadata preview inputs')).toBeInTheDocument()
     expect(screen.getByText('Dry-run build command contract exists, but execution is disabled in this phase.')).toBeInTheDocument()
     expect(screen.getByText('Execution remains disabled; this panel is not a build control.')).toBeInTheDocument()
     expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith({ target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, requested_by: 'local-admin-preview' })

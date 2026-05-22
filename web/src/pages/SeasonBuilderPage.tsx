@@ -255,7 +255,6 @@ export function AdminSeasonBuilderPage(): JSX.Element {
   const hasRequiredApplyIdentities = Boolean(
     disabledApplyCommandContractPayload.target_season_label
     && disabledApplyCommandContractPayload.source_type
-    && disabledApplyCommandContractPayload.source_template_id
     && disabledApplyCommandContractPayload.preflight_fingerprint
     && disabledApplyCommandContractPayload.reviewed_diff_id
     && disabledApplyCommandContractPayload.dry_run_result_fingerprint

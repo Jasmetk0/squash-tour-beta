@@ -2052,6 +2052,76 @@ type CreateOnlyApplyDangerZonePreviewPanelProps = {
   applyMutationResult: SeasonBuilderApplyCreateOnlyCommandResponse | undefined
 }
 
+type PostApplyCalendarVerificationPanelProps = {
+  targetCalendarData: SeasonCalendarBuildResponse | undefined
+  targetCalendarLoading: boolean
+  targetCalendarFetching: boolean
+  targetCalendarError: unknown
+  readinessData: SeasonBuilderApplyCreateOnlyReadinessResponse | undefined
+  readinessFetching: boolean
+  applyMutationResult: SeasonBuilderApplyCreateOnlyCommandResponse | undefined
+}
+
+export function PostApplyCalendarVerificationPanel({
+  targetCalendarData,
+  targetCalendarLoading,
+  targetCalendarFetching,
+  targetCalendarError,
+  readinessData,
+  readinessFetching,
+  applyMutationResult
+}: PostApplyCalendarVerificationPanelProps): JSX.Element {
+  const applyResultExists = Boolean(applyMutationResult)
+  const applyWasSuccessful = applyMutationResult?.applied === true
+  const targetCalendarExists = Boolean(targetCalendarData?.calendar)
+  const targetSummary = targetCalendarData?.summary
+  const targetEventCount = targetSummary?.event_count
+  const appliedEventCount = applyMutationResult?.applied_event_count
+  const targetCountMatchesApplied = applyWasSuccessful
+    && typeof targetEventCount === 'number'
+    && typeof appliedEventCount === 'number'
+    && targetEventCount === appliedEventCount
+  const targetCalendarRefreshPending = targetCalendarLoading || targetCalendarFetching
+  const readinessRefreshPending = readinessFetching
+
+  return (
+    <>
+      <p>Read-only post-apply verification panel using refreshed target calendar and readiness data.</p>
+      {!applyResultExists ? <p>No create-only apply result to verify yet.</p> : null}
+      {applyResultExists && !applyWasSuccessful ? (
+        <p>Create-only apply did not report applied=true; calendar verification is informational only.</p>
+      ) : null}
+      {applyWasSuccessful ? <p>Create-only apply reported success. Verify the refreshed target calendar below.</p> : null}
+      {applyWasSuccessful && targetCalendarRefreshPending ? <p>Post-apply verification pending refreshed target calendar data.</p> : null}
+      {applyWasSuccessful && !targetCalendarRefreshPending && targetCalendarExists && targetCountMatchesApplied ? <p>Post-apply calendar verification passed.</p> : null}
+      {applyWasSuccessful && !targetCalendarRefreshPending && targetCalendarExists && !targetCountMatchesApplied ? (
+        <p className="error">Post-apply calendar event count does not match apply response.</p>
+      ) : null}
+      {applyWasSuccessful && !targetCalendarRefreshPending && !targetCalendarExists ? (
+        <p className="error">Apply reported success, but target calendar is not visible in refreshed data yet.</p>
+      ) : null}
+      {targetCalendarError ? <p className="error">Target calendar refresh error: {formatApiError(targetCalendarError)}</p> : null}
+      {applyWasSuccessful && !readinessRefreshPending && readinessData && (readinessData.can_execute_apply === false || readinessData.would_create_calendar === false) ? (
+        <p>Refreshed readiness now reports non-create-only state, which is expected after a successful create-only apply.</p>
+      ) : null}
+      <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+        <tr><td>apply result exists</td><td>{applyResultExists ? 'yes' : 'no'}</td></tr>
+        <tr><td>applyMutationResult.applied</td><td>{applyMutationResult ? String(applyMutationResult.applied) : '—'}</td></tr>
+        <tr><td>applyMutationResult.applied_event_count</td><td>{applyMutationResult ? String(applyMutationResult.applied_event_count) : '—'}</td></tr>
+        <tr><td>applyMutationResult.target_season_label</td><td>{applyMutationResult?.target_season_label ?? '—'}</td></tr>
+        <tr><td>target calendar exists</td><td>{targetCalendarData ? (targetCalendarExists ? 'yes' : 'no') : '—'}</td></tr>
+        <tr><td>target calendar event count</td><td>{typeof targetEventCount === 'number' ? String(targetEventCount) : '—'}</td></tr>
+        <tr><td>target first event week</td><td>{targetSummary?.first_event_week ?? '—'}</td></tr>
+        <tr><td>target last event week</td><td>{targetSummary?.last_event_week ?? '—'}</td></tr>
+        <tr><td>target validation warnings count</td><td>{typeof targetSummary?.validation_warning_count === 'number' ? String(targetSummary.validation_warning_count) : '—'}</td></tr>
+        <tr><td>target validation errors count</td><td>{typeof targetSummary?.validation_error_count === 'number' ? String(targetSummary.validation_error_count) : '—'}</td></tr>
+        <tr><td>readiness can_execute_apply</td><td>{readinessData ? String(readinessData.can_execute_apply) : '—'}</td></tr>
+        <tr><td>readiness would_create_calendar</td><td>{readinessData ? String(readinessData.would_create_calendar) : '—'}</td></tr>
+      </tbody></table>
+    </>
+  )
+}
+
 export function CreateOnlyApplyDangerZonePreviewPanel({
   readinessData,
   selectedTargetSeasonLabel,

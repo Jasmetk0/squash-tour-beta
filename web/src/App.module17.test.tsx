@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
+import { PostApplyCalendarVerificationPanel } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -686,7 +687,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Local structural diff preview only. This is not an authoritative backend diff and does not enable apply actions.')).toBeInTheDocument()
     expect(screen.getByText('Read-only policy preview. No overwrite, merge, or build action is available on this page.')).toBeInTheDocument()
     expect(screen.getByText('Read-only inspection of the currently selected target season calendar.')).toBeInTheDocument()
-    expect(await screen.findByText(/Calendar exists/i)).toBeInTheDocument()
+    expect(await screen.findByText('Calendar exists: Yes')).toBeInTheDocument()
     expect(screen.getAllByText('Existing calendar detected.').length).toBeGreaterThan(0)
     expect(screen.getByText('Silent overwrite must never be allowed.')).toBeInTheDocument()
     expect(screen.getByText('Merge/replace choice must be explicit and audited before any future command.')).toBeInTheDocument()
@@ -975,6 +976,11 @@ describe('Module 17 pages through routes', () => {
     }))
     expect(await screen.findByText('Create-only apply result')).toBeInTheDocument()
     expect(screen.getByText('Create-only apply executed successfully.')).toBeInTheDocument()
+    expect(screen.getByText('Create-only apply reported success. Verify the refreshed target calendar below.')).toBeInTheDocument()
+    expect(await screen.findByText('Post-apply calendar verification passed.')).toBeInTheDocument()
+    expect(screen.getByText('target calendar exists')).toBeInTheDocument()
+    expect(screen.getByText('applyMutationResult.applied_event_count')).toBeInTheDocument()
+    expect(screen.getByText('target calendar event count')).toBeInTheDocument()
     expect(screen.getByText('applied')).toBeInTheDocument()
     expect(screen.getByText('applied_event_count')).toBeInTheDocument()
     expect((await screen.findAllByText('season_builder_apply_command')).length).toBeGreaterThan(0)
@@ -2087,5 +2093,67 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByText('Create-only apply response (not applied)')).toBeInTheDocument()
     expect(screen.getByText('Command response did not report applied=true.')).toBeInTheDocument()
     expect(screen.queryByText('Create-only calendar apply reported success.')).not.toBeInTheDocument()
+    expect(screen.getByText('Create-only apply did not report applied=true; calendar verification is informational only.')).toBeInTheDocument()
+    expect(screen.queryByText('Post-apply calendar verification passed.')).not.toBeInTheDocument()
+  })
+
+  it('keeps post-apply verification pending while refreshed data is fetching', () => {
+    const applyResult = {
+      command: 'season_builder_apply_create_only',
+      enabled: true,
+      can_execute: true,
+      can_mutate: true,
+      applied: true,
+      target_season_label: '2000/01',
+      validation_errors: [],
+      validation_warnings: [],
+      created_calendar_summary: { calendar_exists: true, season: '2000/01', event_count: 1 },
+      created_event_preview: [],
+      created_calendar_identity: {},
+      apply_gate_summary: {},
+      applied_event_count: 1,
+      dry_run_identity: {},
+      audit_preview: { audit_persisted: false },
+      message: 'Create-only apply executed successfully.'
+    }
+
+    const { rerender } = render(
+      <PostApplyCalendarVerificationPanel
+        targetCalendarData={{
+          calendar: { season: '2000/01', source_template_id: null, generated_at: '2026-05-22T00:00:00Z', generated_by: 'test', events: [] } as any,
+          summary: { event_count: 1, season_weeks_used: 1, first_event_week: 1, last_event_week: 1, world_tour_events: 1, elite_tour_events: 0, validation_warning_count: 0, validation_error_count: 0, persisted: true, calendar_exists: true },
+          metadata: null,
+          validation_warnings: [],
+          validation_errors: []
+        }}
+        targetCalendarLoading={false}
+        targetCalendarFetching={true}
+        targetCalendarError={null}
+        readinessData={undefined}
+        readinessFetching={false}
+        applyMutationResult={applyResult}
+      />
+    )
+    expect(screen.getByText('Post-apply verification pending refreshed target calendar data.')).toBeInTheDocument()
+    expect(screen.queryByText('Post-apply calendar verification passed.')).not.toBeInTheDocument()
+
+    rerender(
+      <PostApplyCalendarVerificationPanel
+        targetCalendarData={{
+          calendar: { season: '2000/01', source_template_id: null, generated_at: '2026-05-22T00:00:00Z', generated_by: 'test', events: [] } as any,
+          summary: { event_count: 1, season_weeks_used: 1, first_event_week: 1, last_event_week: 1, world_tour_events: 1, elite_tour_events: 0, validation_warning_count: 0, validation_error_count: 0, persisted: true, calendar_exists: true },
+          metadata: null,
+          validation_warnings: [],
+          validation_errors: []
+        }}
+        targetCalendarLoading={false}
+        targetCalendarFetching={false}
+        targetCalendarError={null}
+        readinessData={undefined}
+        readinessFetching={false}
+        applyMutationResult={applyResult}
+      />
+    )
+    expect(screen.getByText('Post-apply calendar verification passed.')).toBeInTheDocument()
   })
 })

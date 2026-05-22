@@ -116,10 +116,24 @@ def test_apply_create_only_success(tmp_path: Path) -> None:
         assert body["can_execute"] is True
         assert body["can_mutate"] is True
         assert body["applied_event_count"] > 0
+        assert body["created_calendar_summary"]["season"] == "2035/2036"
         assert body["created_calendar_summary"]["event_count"] == body["applied_event_count"]
+        assert 0 < len(body["created_event_preview"]) <= 3
+        assert body["created_calendar_identity"]["dry_run_result_fingerprint"] == payload["dry_run_result_fingerprint"]
+        assert body["created_calendar_identity"]["dry_run_result_id"] == payload["dry_run_result_id"]
+        assert body["apply_gate_summary"]["service_insert_succeeded"] is True
+        assert body["audit_preview"]["audit_persisted"] is False
         _, calendar = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar")
         assert calendar["summary"]["event_count"] == body["applied_event_count"]
         first_event = calendar["calendar"]["events"][0]
+        assert body["created_event_preview"][0]["event_id"] == first_event["event_id"]
+        assert body["created_event_preview"][0]["event_name"] == first_event["event_name"]
+        assert body["created_event_preview"][0]["season_week"] == first_event["season_week"]
+        assert body["created_event_preview"][0]["end_season_week"] == first_event["end_season_week"]
+        assert body["created_event_preview"][0]["category"] == first_event["category"]
+        assert body["created_event_preview"][0]["tour_level"] == first_event["tour_level"]
+        assert body["created_event_preview"][0]["host_country"] == first_event["host_country"]
+        assert body["created_event_preview"][0]["main_draw_size"] == first_event["main_draw_size"]
         assert first_event["event_name"] == first_candidate["event_name"]
         assert first_event["category"] == first_candidate["category"]
         assert first_event["host_country"] == first_candidate["host_country"]
@@ -144,6 +158,8 @@ def test_apply_create_only_reject_existing_calendar(tmp_path: Path) -> None:
         status, body = call("POST", f"{server.base_url}/admin/seasons/builder/apply-create-only-command", payload)
         assert status == 409
         assert body["applied"] is False
+        assert body["apply_gate_summary"]["service_insert_succeeded"] is False
+        assert body["audit_preview"]["audit_persisted"] is False
         _, after = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar")
         assert len(after["calendar"]["events"]) == len(before["calendar"]["events"])
 

@@ -2230,6 +2230,7 @@ type PostApplyAuditStatusPanelProps = {
 }
 type ApplyResponseValidationPreviewPanelProps = {
   applyMutationResult: SeasonBuilderApplyCreateOnlyCommandResponse | undefined
+  issueCodeRegistryData?: SeasonCalendarValidationIssueCodeRegistryResponse
 }
 
 type ValidationIssueCodeRegistryPanelProps = {
@@ -2383,7 +2384,8 @@ export function PostApplyAuditStatusPanel({
 }
 
 export function ApplyResponseValidationPreviewPanel({
-  applyMutationResult
+  applyMutationResult,
+  issueCodeRegistryData
 }: ApplyResponseValidationPreviewPanelProps): JSX.Element {
   if (!applyMutationResult) return <p>No create-only apply validation preview yet.</p>
   const preview = applyMutationResult.created_calendar_validation_preview
@@ -2410,6 +2412,12 @@ export function ApplyResponseValidationPreviewPanel({
   const issueCodesValue = Array.isArray(preview.issue_codes_first_10)
     ? preview.issue_codes_first_10.map(String).join(', ')
     : 'n/a'
+  const previewIssueCodes = Array.isArray(preview.issue_codes_first_10)
+    ? preview.issue_codes_first_10.map(String)
+    : null
+  const issueMetadataByCode = new Map(
+    (issueCodeRegistryData?.codes ?? []).map((registryCode) => [registryCode.code, registryCode] as const)
+  )
 
   return (
     <>
@@ -2432,6 +2440,28 @@ export function ApplyResponseValidationPreviewPanel({
       <p>Host countries count: {hostCountriesShape.count}</p>
       <p>Host countries values: {hostCountriesShape.values}</p>
       <p>Issue codes (first 10): {issueCodesValue}</p>
+      {previewIssueCodes ? (
+        <>
+          <h5>Apply-response issue code metadata</h5>
+          <table>
+            <thead><tr><th>code</th><th>registry title</th><th>registry severity</th><th>registry field</th><th>registry description</th></tr></thead>
+            <tbody>
+              {previewIssueCodes.map((issueCode) => {
+                const metadata = issueMetadataByCode.get(issueCode)
+                return (
+                  <tr key={issueCode}>
+                    <td>{issueCode}</td>
+                    <td>{metadata?.title ?? 'Unknown issue code'}</td>
+                    <td>{metadata?.severity ?? 'n/a'}</td>
+                    <td>{metadata?.field ?? 'n/a'}</td>
+                    <td>{metadata?.description ?? 'No registry metadata available for this issue code.'}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </>
+      ) : null}
       <p>Message: {readText('message')}</p>
     </>
   )

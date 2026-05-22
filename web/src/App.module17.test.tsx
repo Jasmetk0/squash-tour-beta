@@ -228,7 +228,8 @@ describe('Module 17 pages through routes', () => {
           audit_reason: hasAllMetadata ? 'ticket-123 dry-run review' : payload.audit_reason,
           explicit_confirmation_present: hasAllMetadata ? true : Boolean(payload.explicit_confirmation),
           mutation_scope: hasAllMetadata ? 'merge_preview' : payload.mutation_scope,
-          generation_design_preview_available: true
+          generation_design_preview_available: true,
+          candidate_event_contract_preview_available: true
         },
         generation_design_preview: {
           status: 'design_preview_only',
@@ -248,6 +249,15 @@ describe('Module 17 pages through routes', () => {
           required_future_inputs: ['preflight_fingerprint', 'reviewed_diff_id', 'audit_reason', 'explicit_confirmation', 'mutation_scope'],
           planned_output_sections: ['candidate_events', 'structural_summary', 'conflict_summary', 'validation_errors', 'validation_warnings', 'audit_preview'],
           blocked_reason: 'Dry-run generation is not implemented in this phase.'
+        },
+        candidate_event_contract_preview: {
+          status: 'contract_preview_only',
+          will_generate_candidates: false,
+          candidate_count: 0,
+          event_shape: { candidate_id: 'string', source_slot_id: 'string', season_week_start: 'int', event_name: 'string', candidate_status: 'planned | conflict | invalid', validation_errors: 'string[]', validation_warnings: 'string[]' },
+          structural_summary_shape: { candidate_count: 'int', additions_count: 'int', conflict_count: 'int', invalid_count: 'int' },
+          conflict_summary_shape: { week_conflicts: 'array', slot_conflicts: 'array', policy_conflicts: 'array', validation_conflicts: 'array' },
+          blocked_reason: 'Candidate event generation is not implemented in this phase.'
         },
         message: 'Dry-run build command contract exists, but execution is disabled in this phase.'
       }
@@ -644,6 +654,21 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByText('candidate_events')).toBeInTheDocument()
     expect(await screen.findByText('conflict_summary')).toBeInTheDocument()
     expect((await screen.findAllByText('audit_preview')).length).toBeGreaterThan(0)
+    expect(await screen.findByText('Candidate event contract preview')).toBeInTheDocument()
+    expect(await screen.findByText('contract_preview_only')).toBeInTheDocument()
+    expect(await screen.findByText('will_generate_candidates')).toBeInTheDocument()
+    expect((await screen.findAllByText('candidate_count')).length).toBeGreaterThan(0)
+    expect(await screen.findByText('Candidate event generation is not implemented in this phase.')).toBeInTheDocument()
+    expect(await screen.findByText('Candidate event shape')).toBeInTheDocument()
+    expect(await screen.findByText('source_slot_id')).toBeInTheDocument()
+    expect(await screen.findByText('season_week_start')).toBeInTheDocument()
+    expect(await screen.findByText('candidate_status')).toBeInTheDocument()
+    expect(await screen.findByText('Structural summary shape')).toBeInTheDocument()
+    expect(await screen.findByText('additions_count')).toBeInTheDocument()
+    expect(await screen.findByText('conflict_count')).toBeInTheDocument()
+    expect(await screen.findByText('Conflict summary shape')).toBeInTheDocument()
+    expect(await screen.findByText('week_conflicts')).toBeInTheDocument()
+    expect(await screen.findByText('policy_conflicts')).toBeInTheDocument()
     expect((await screen.findAllByText('explicit_confirmation_present')).length).toBeGreaterThan(0)
     expect(await screen.findByText('Raw disabled dry-run build contract JSON')).toBeInTheDocument()
     expect(await screen.findByText('Execution remains disabled; this panel is not a build control.')).toBeInTheDocument()
@@ -899,7 +924,7 @@ describe('Module 17 pages through routes', () => {
       reviewed_diff_id: 'rd_test_empty',
       validation_errors: [],
       validation_warnings: [],
-      audit_preview: { action: 'season_builder_dry_run_build', read_only: true, mutation_permitted: false, execution_enabled: false, explicit_confirmation_present: false, generation_design_preview_available: true },
+      audit_preview: { action: 'season_builder_dry_run_build', read_only: true, mutation_permitted: false, execution_enabled: false, explicit_confirmation_present: false, generation_design_preview_available: true, candidate_event_contract_preview_available: true },
       generation_design_preview: {
         status: 'design_preview_only',
         execution_enabled: false,
@@ -910,6 +935,15 @@ describe('Module 17 pages through routes', () => {
         required_future_inputs: ['preflight_fingerprint', 'reviewed_diff_id', 'audit_reason', 'explicit_confirmation', 'mutation_scope'],
         planned_output_sections: ['candidate_events', 'conflict_summary', 'audit_preview'],
         blocked_reason: 'Dry-run generation is not implemented in this phase.'
+      },
+      candidate_event_contract_preview: {
+        status: 'contract_preview_only',
+        will_generate_candidates: false,
+        candidate_count: 0,
+        event_shape: { source_slot_id: 'string', season_week_start: 'int', candidate_status: 'planned | conflict | invalid' },
+        structural_summary_shape: { additions_count: 'int', conflict_count: 'int', invalid_count: 'int', candidate_count: 'int' },
+        conflict_summary_shape: { week_conflicts: 'array', slot_conflicts: 'array', policy_conflicts: 'array', validation_conflicts: 'array' },
+        blocked_reason: 'Candidate event generation is not implemented in this phase.'
       },
       message: 'Dry-run build command contract exists, but execution is disabled in this phase.'
     })
@@ -964,6 +998,8 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Dry-run build command contract exists, but execution is disabled in this phase.')).toBeInTheDocument()
     expect(screen.getByText('Future dry-run generation design preview')).toBeInTheDocument()
     expect(screen.getByText('Dry-run generation is not implemented in this phase.')).toBeInTheDocument()
+    expect(screen.getByText('Candidate event contract preview')).toBeInTheDocument()
+    expect(screen.getByText('Candidate event generation is not implemented in this phase.')).toBeInTheDocument()
     expect(screen.getByText('Execution remains disabled; this panel is not a build control.')).toBeInTheDocument()
     expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith({ target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, requested_by: 'local-admin-preview' })
     expect(screen.getAllByText('No existing calendar detected.').length).toBeGreaterThan(0)

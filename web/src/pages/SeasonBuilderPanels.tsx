@@ -1450,9 +1450,14 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
   const formatValue = (value: unknown): string => (value === null || value === undefined ? '—' : String(value))
   const auditPreview = query.data?.audit_preview ?? {}
   const generationDesignPreview = query.data?.generation_design_preview
+  const candidateEventContractPreview = query.data?.candidate_event_contract_preview
   const generationDesignPreviewRecord = generationDesignPreview && typeof generationDesignPreview === 'object'
     ? generationDesignPreview as Record<string, unknown>
     : null
+  const candidateEventContractPreviewRecord = candidateEventContractPreview && typeof candidateEventContractPreview === 'object'
+    ? candidateEventContractPreview as Record<string, unknown>
+    : null
+  const shapeRecord = (value: unknown): Record<string, unknown> | null => value && typeof value === 'object' ? value as Record<string, unknown> : null
   const previewList = (value: unknown): unknown[] => Array.isArray(value) ? value : []
 
   return (
@@ -1533,6 +1538,41 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
               )}
             </>
           ) : <p>Future dry-run generation design preview is unavailable.</p>}
+          <h4>Candidate event contract preview</h4>
+          {candidateEventContractPreviewRecord ? (
+            <>
+              <table>
+                <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+                <tbody>
+                  <tr><td>status</td><td>{formatValue(candidateEventContractPreviewRecord.status)}</td></tr>
+                  <tr><td>will_generate_candidates</td><td>{formatValue(candidateEventContractPreviewRecord.will_generate_candidates)}</td></tr>
+                  <tr><td>candidate_count</td><td>{formatValue(candidateEventContractPreviewRecord.candidate_count)}</td></tr>
+                  <tr><td>blocked_reason</td><td>{formatValue(candidateEventContractPreviewRecord.blocked_reason)}</td></tr>
+                </tbody>
+              </table>
+              <h5>Candidate event shape</h5>
+              {shapeRecord(candidateEventContractPreviewRecord.event_shape) ? (
+                <table>
+                  <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+                  <tbody>{Object.entries(shapeRecord(candidateEventContractPreviewRecord.event_shape) ?? {}).map(([key, value]) => <tr key={`event-shape-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>)}</tbody>
+                </table>
+              ) : <p>Candidate event shape is unavailable.</p>}
+              <h5>Structural summary shape</h5>
+              {shapeRecord(candidateEventContractPreviewRecord.structural_summary_shape) ? (
+                <table>
+                  <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+                  <tbody>{Object.entries(shapeRecord(candidateEventContractPreviewRecord.structural_summary_shape) ?? {}).map(([key, value]) => <tr key={`structural-shape-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>)}</tbody>
+                </table>
+              ) : <p>Structural summary shape is unavailable.</p>}
+              <h5>Conflict summary shape</h5>
+              {shapeRecord(candidateEventContractPreviewRecord.conflict_summary_shape) ? (
+                <table>
+                  <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+                  <tbody>{Object.entries(shapeRecord(candidateEventContractPreviewRecord.conflict_summary_shape) ?? {}).map(([key, value]) => <tr key={`conflict-shape-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>)}</tbody>
+                </table>
+              ) : <p>Conflict summary shape is unavailable.</p>}
+            </>
+          ) : <p>Candidate event contract preview is unavailable.</p>}
           <h4>Current disabled dry-run request payload</h4>
           <table>
             <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>

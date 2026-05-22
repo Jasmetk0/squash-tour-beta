@@ -30,6 +30,7 @@ import {
   CreateOnlyApplyReadinessPanel,
   CreateOnlyApplyDangerZonePreviewPanel,
   PostApplyCalendarVerificationPanel,
+  PostApplyAuditStatusPanel,
   DisabledDryRunReadinessSummaryPanel,
   ReadOnlyPreflightChecklistPanel,
   SelectionPreviewPanel,
@@ -536,6 +537,15 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           readinessFetching={createOnlyApplyReadinessQuery.isFetching}
           applyMutationResult={createOnlyApplyMutation.data}
           targetCalendarExistsAfterApply={targetCalendarExistsAfterApply}
+        />
+      </SectionCard>
+      <SectionCard title="Post-apply audit/status summary">
+        <PostApplyAuditStatusPanel
+          applyMutationResult={createOnlyApplyMutation.data}
+          requestedBy={disabledApplyCommandContractPayload.requested_by ?? 'local-admin-preview'}
+          auditReason={disabledApplyCommandContractPayload.audit_reason ?? 'create-only calendar command'}
+          explicitConfirmation={dangerZoneConfirmationText}
+          mutationScope={dangerZoneMutationScope}
         />
       </SectionCard>
 

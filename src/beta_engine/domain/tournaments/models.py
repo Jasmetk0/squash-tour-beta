@@ -331,6 +331,38 @@ class SeasonBuilderApplyCommandContractResponse(BaseModel):
     message: str = "Apply command contract exists, but execution is disabled in this phase."
 
 
+
+
+class SeasonBuilderApplyCreateOnlyCommandRequest(BaseModel):
+    target_season_label: str = Field(min_length=1, max_length=32)
+    source_type: str = Field(min_length=1, max_length=64)
+    source_template_id: str | None = Field(default=None, min_length=1, max_length=128)
+    overwrite_policy: str | None = Field(default=None, min_length=1, max_length=64)
+    preflight_fingerprint: str
+    reviewed_diff_id: str
+    dry_run_result_fingerprint: str
+    dry_run_result_id: str
+    requested_by: str
+    audit_reason: str
+    explicit_confirmation: str
+    mutation_scope: str
+
+
+class SeasonBuilderApplyCreateOnlyCommandResponse(BaseModel):
+    command: str = "season_builder_apply_create_only"
+    enabled: bool = False
+    can_execute: bool = False
+    can_mutate: bool = False
+    applied: bool = False
+    target_season_label: str
+    validation_errors: list[str] = Field(default_factory=list)
+    validation_warnings: list[str] = Field(default_factory=list)
+    created_calendar_summary: dict[str, Any] = Field(default_factory=dict)
+    applied_event_count: int = 0
+    dry_run_identity: dict[str, Any] = Field(default_factory=dict)
+    audit_preview: dict[str, Any] = Field(default_factory=dict)
+    message: str
+
 class SeasonCalendarBuildResult(BaseModel):
     """Calendar build/read response returned by Admin Seasons endpoints."""
 

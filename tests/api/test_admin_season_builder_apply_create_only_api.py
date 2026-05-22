@@ -164,6 +164,30 @@ def test_apply_create_only_reject_existing_calendar(tmp_path: Path) -> None:
         assert len(after["calendar"]["events"]) == len(before["calendar"]["events"])
 
 
+def test_apply_create_only_reject_non_template_source_type(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = identity_payload(server)
+        payload.pop("_first_candidate")
+        payload["source_type"] = "calendar_clone"
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/apply-create-only-command", payload)
+        assert status == 400
+        assert body["applied"] is False
+        _, cal = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar")
+        assert cal["calendar"] is None
+
+
+def test_apply_create_only_reject_missing_source_template_id(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = identity_payload(server)
+        payload.pop("_first_candidate")
+        payload["source_template_id"] = None
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/apply-create-only-command", payload)
+        assert status == 400
+        assert body["applied"] is False
+        _, cal = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar")
+        assert cal["calendar"] is None
+
+
 def test_apply_create_only_reject_wrong_mutation_scopes(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         for idx, scope in enumerate(("merge_preview", "overwrite_preview", "repair_preview", "create_only_preview", "merge", "overwrite", "repair"), start=1):

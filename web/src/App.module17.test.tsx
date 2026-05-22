@@ -963,6 +963,7 @@ describe('Module 17 pages through routes', () => {
       target_season_label: '2000/01',
       source_type: 'season_template',
       source_template_id: 'default_msa_template_preview',
+      overwrite_policy: null,
       preflight_fingerprint: 'pf_test_existing',
       reviewed_diff_id: 'rd_test_existing',
       dry_run_result_fingerprint: 'drf_test_existing',

@@ -872,7 +872,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Disabled dry-run contract endpoint returned a response.')).toBeInTheDocument()
     expect(screen.getByText('Execution is disabled in this phase.')).toBeInTheDocument()
     expect(screen.getAllByText('can_mutate is false; no calendar mutation is permitted.').length).toBeGreaterThan(0)
-    expect(screen.getByText('Preflight fingerprint and reviewed diff identity are present.')).toBeInTheDocument()
+    expect(screen.getAllByText('Preflight fingerprint and reviewed diff identity are present.').length).toBeGreaterThan(0)
     expect(screen.getByText('Audit reason preview is not filled yet.')).toBeInTheDocument()
     expect(screen.getByText('Explicit confirmation preview is not filled yet.')).toBeInTheDocument()
     expect(screen.getByText('Mutation scope preview is not selected yet.')).toBeInTheDocument()

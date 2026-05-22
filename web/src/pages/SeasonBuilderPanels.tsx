@@ -2077,6 +2077,26 @@ type TargetCalendarValidationPanelProps = {
   }
 }
 
+function parseValidationCount(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+  return null
+}
+
+export function describeValidationStatus(status: unknown, errorCount?: unknown, warningCount?: unknown): string {
+  const parsedErrorCount = parseValidationCount(errorCount)
+  const parsedWarningCount = parseValidationCount(warningCount)
+  if (parsedErrorCount !== null && parsedErrorCount > 0) return 'Validation has blocking errors.'
+  if (status === 'errors') return 'Validation has blocking errors.'
+  if (parsedWarningCount !== null && parsedWarningCount > 0) return 'Validation has warnings but no blocking errors.'
+  if (status === 'warnings') return 'Validation has warnings but no blocking errors.'
+  if (status === 'clean') return 'Validation is clean.'
+  return 'Validation status is unavailable.'
+}
+
 export function TargetCalendarValidationPanel({ queryEnabled, query }: TargetCalendarValidationPanelProps): JSX.Element {
   if (!queryEnabled) return <p>Select a target season to view read-only calendar validation.</p>
   if (query.isLoading) return <p>Loading target calendar validation…</p>
@@ -2099,6 +2119,7 @@ export function TargetCalendarValidationPanel({ queryEnabled, query }: TargetCal
     <p>Read-only: {String(read_only)}</p>
     <p>Calendar exists: {String(calendar_exists)}</p>
     <p>Validation status: {validation_summary.status}</p>
+    <p>Target validation interpretation: {describeValidationStatus(validation_summary.status, validation_summary.error_count, validation_summary.warning_count)}</p>
     <p>Error count: {validation_summary.error_count}</p>
     <p>Warning count: {validation_summary.warning_count}</p>
     <p>Info count: {validation_summary.info_count}</p>
@@ -2279,6 +2300,7 @@ export function ApplyResponseValidationPreviewPanel({
       <p>This preview comes from the create-only apply response. The separate target calendar validation panel may refetch the latest persisted state.</p>
       <p>Read-only apply-response validation preview. No mutation path is available in this panel.</p>
       <p>Validation status: {readText('validation_status')}</p>
+      <p>Apply response validation interpretation: {describeValidationStatus(preview.validation_status, preview.error_count, preview.warning_count)}</p>
       <p>Calendar exists: {readText('calendar_exists')}</p>
       <p>Read-only: {readText('read_only')}</p>
       <p>Event count: {readText('event_count')}</p>
@@ -2349,6 +2371,9 @@ export function ApplyResponseVsTargetValidationComparisonPanel({
     { field: 'host_countries.count', apply: readPreviewShapeCount('host_countries'), target: readShapeCount(targetSummary.host_countries) }
   ]
   const allMatch = rows.every((row) => row.apply === row.target)
+  const severityMatch = rows
+    .filter((row) => ['validation_status', 'error_count', 'warning_count'].includes(row.field))
+    .every((row) => row.apply === row.target)
 
   return (
     <>
@@ -2357,6 +2382,10 @@ export function ApplyResponseVsTargetValidationComparisonPanel({
         {allMatch
           ? 'Apply-response validation preview matches refetched target validation.'
           : 'Apply-response validation preview differs from refetched target validation.'}
+      </p>
+      <p>{severityMatch
+        ? 'Both validation sources report the same validation severity.'
+        : 'Validation severity differs between apply response and refetched target validation.'}
       </p>
       <table>
         <thead><tr><th scope="col">Field</th><th scope="col">Apply response preview</th><th scope="col">Refetched target validation</th><th scope="col">Match</th></tr></thead>

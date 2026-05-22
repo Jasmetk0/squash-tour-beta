@@ -43,6 +43,7 @@ const api = vi.hoisted(() => ({
   getSeasonActivePlayers: vi.fn(),
   getSeasonCalendar: vi.fn(),
   getSeasonTemplates: vi.fn(),
+  getSeasonCalendarValidation: vi.fn(),
   getCategories: vi.fn(),
   getTournaments: vi.fn(),
   getTourSeasonsValidation: vi.fn(),
@@ -115,6 +116,14 @@ describe('Module 17 pages through routes', () => {
       seasons: Array.from({ length: 40 }, (_, index) => ({ season_start_year: 2000 + index, label: `${2000 + index}/${String((2001 + index) % 100).padStart(2, '0')}`, season_index: index, week_count: 61, season_week_start: 1, season_week_end: 61, year_week_start: 37, year_week_end: 36, status: 'registry_only' }))
     })
     api.getSeasonActivePlayers.mockResolvedValue({ players: [], summary: { total_active_players: 0 }, metadata: null, warnings: [] })
+    api.getSeasonCalendarValidation.mockResolvedValue({
+      season: '2000/01',
+      calendar_exists: true,
+      validation_summary: { status: 'warnings', error_count: 0, warning_count: 1, info_count: 1, event_count: 1, first_season_week: 1, last_season_week: 1, categories: { count: 1, values: ['GOLD'] }, tour_levels: { count: 1, values: ['WORLD_TOUR'] }, host_countries: { count: 1, values: ['ENG'] } },
+      issues: [{ severity: 'warning', code: 'calendar_validation_demo_warning', message: 'Calendar validation warning preview.', event_id: 'event-1', field: 'category', context: {} }],
+      read_only: true,
+      message: 'Read-only validation response.'
+    })
     api.getSeasonCalendar.mockResolvedValue({
       calendar: {
         season: '2000/01',
@@ -928,10 +937,10 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('service_insert_applicable').length).toBeGreaterThan(0)
     expect(screen.getAllByText('false').length).toBeGreaterThan(0)
     expect(screen.getByText('Candidate count: 1')).toBeInTheDocument()
-    expect(screen.getByText('Categories count: 1')).toBeInTheDocument()
-    expect(screen.getByText('Categories values: GOLD')).toBeInTheDocument()
-    expect(screen.getByText('Tour levels count: 1')).toBeInTheDocument()
-    expect(screen.getByText('Tour levels values: WORLD_TOUR')).toBeInTheDocument()
+    expect(screen.getAllByText('Categories count: 1').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Categories values: GOLD').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Tour levels count: 1').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Tour levels values: WORLD_TOUR').length).toBeGreaterThan(0)
     expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Source type select'), { target: { value: 'season_template' } })
     fireEvent.change(confirmationInput, { target: { value: 'I understand this will create a new season calendar.' } })
@@ -991,6 +1000,27 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Create-only apply executed successfully.')).toBeInTheDocument()
     expect(screen.getByText('Create-only apply reported success. Verify the refreshed target calendar below.')).toBeInTheDocument()
     expect(await screen.findByText('Post-apply calendar verification passed.')).toBeInTheDocument()
+    await waitFor(() => expect(api.getSeasonCalendarValidation).toHaveBeenCalledWith('2000/01'))
+    expect(screen.getByText('Target calendar validation')).toBeInTheDocument()
+    expect(screen.getByText('Read-only persisted target calendar validation. No mutation path is available in this panel.')).toBeInTheDocument()
+    expect(screen.getByText('Read-only: true')).toBeInTheDocument()
+    expect(screen.getByText('Calendar exists: true')).toBeInTheDocument()
+    expect(screen.getByText('Validation status: warnings')).toBeInTheDocument()
+    expect(screen.getByText('Error count: 0')).toBeInTheDocument()
+    expect(screen.getByText('Warning count: 1')).toBeInTheDocument()
+    expect(screen.getAllByText('Event count: 1').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('First season week: 1').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Last season week: 1').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Categories count: 1').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Categories values: GOLD').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Tour levels count: 1').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Tour levels values: WORLD_TOUR').length).toBeGreaterThan(0)
+    expect(screen.getByText('Host countries count: 1')).toBeInTheDocument()
+    expect(screen.getByText('Host countries values: ENG')).toBeInTheDocument()
+    expect(screen.getByText('calendar_validation_demo_warning')).toBeInTheDocument()
+    expect(screen.getByText('Calendar validation warning preview.')).toBeInTheDocument()
+    expect(screen.getAllByText('event-1').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('category').length).toBeGreaterThan(0)
     expect(screen.getByText('Post-apply audit/status summary')).toBeInTheDocument()
     expect(screen.getByText('Audit persistence is not confirmed by this response.')).toBeInTheDocument()
     expect(screen.getByText('Explicit confirmation was provided.')).toBeInTheDocument()

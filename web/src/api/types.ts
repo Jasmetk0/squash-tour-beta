@@ -147,6 +147,7 @@ export type TournamentMastersResponse = {
   status: 'read_only_foundation'
 }
 
+
 export type SeasonTemplatesResponse = {
   templates: SeasonTemplateSummary[]
   source_path: string | null
@@ -1595,11 +1596,34 @@ export type SeasonBootstrapResponse = {
 }
 
 export type SeasonCalendarValidationIssue = {
-  severity: 'warning' | 'error'
+  severity: 'error' | 'warning' | 'info'
   code: string
   message: string
-  event_id: string | null
-  field: string | null
+  event_id?: string | null
+  field?: string | null
+  context?: Record<string, unknown>
+}
+
+export type SeasonCalendarValidationSummary = {
+  status: 'clean' | 'warnings' | 'errors'
+  error_count: number
+  warning_count: number
+  info_count: number
+  event_count: number
+  first_season_week?: number | null
+  last_season_week?: number | null
+  categories: Record<string, unknown>
+  tour_levels: Record<string, unknown>
+  host_countries: Record<string, unknown>
+}
+
+export type SeasonCalendarValidationResponse = {
+  season: string
+  calendar_exists: boolean
+  validation_summary: SeasonCalendarValidationSummary
+  issues: SeasonCalendarValidationIssue[]
+  read_only: boolean
+  message: string
 }
 
 export type SeasonCalendarMetadata = {

@@ -2055,16 +2055,20 @@ type CreateOnlyApplyDangerZonePreviewPanelProps = {
 type PostApplyCalendarVerificationPanelProps = {
   targetCalendarData: SeasonCalendarBuildResponse | undefined
   targetCalendarLoading: boolean
+  targetCalendarFetching: boolean
   targetCalendarError: unknown
   readinessData: SeasonBuilderApplyCreateOnlyReadinessResponse | undefined
+  readinessFetching: boolean
   applyMutationResult: SeasonBuilderApplyCreateOnlyCommandResponse | undefined
 }
 
 export function PostApplyCalendarVerificationPanel({
   targetCalendarData,
   targetCalendarLoading,
+  targetCalendarFetching,
   targetCalendarError,
   readinessData,
+  readinessFetching,
   applyMutationResult
 }: PostApplyCalendarVerificationPanelProps): JSX.Element {
   const applyResultExists = Boolean(applyMutationResult)
@@ -2077,6 +2081,8 @@ export function PostApplyCalendarVerificationPanel({
     && typeof targetEventCount === 'number'
     && typeof appliedEventCount === 'number'
     && targetEventCount === appliedEventCount
+  const targetCalendarRefreshPending = targetCalendarLoading || targetCalendarFetching
+  const readinessRefreshPending = readinessFetching
 
   return (
     <>
@@ -2086,16 +2092,16 @@ export function PostApplyCalendarVerificationPanel({
         <p>Create-only apply did not report applied=true; calendar verification is informational only.</p>
       ) : null}
       {applyWasSuccessful ? <p>Create-only apply reported success. Verify the refreshed target calendar below.</p> : null}
-      {applyWasSuccessful && targetCalendarLoading ? <p>Post-apply verification pending refreshed target calendar data.</p> : null}
-      {applyWasSuccessful && !targetCalendarLoading && targetCalendarExists && targetCountMatchesApplied ? <p>Post-apply calendar verification passed.</p> : null}
-      {applyWasSuccessful && !targetCalendarLoading && targetCalendarExists && !targetCountMatchesApplied ? (
+      {applyWasSuccessful && targetCalendarRefreshPending ? <p>Post-apply verification pending refreshed target calendar data.</p> : null}
+      {applyWasSuccessful && !targetCalendarRefreshPending && targetCalendarExists && targetCountMatchesApplied ? <p>Post-apply calendar verification passed.</p> : null}
+      {applyWasSuccessful && !targetCalendarRefreshPending && targetCalendarExists && !targetCountMatchesApplied ? (
         <p className="error">Post-apply calendar event count does not match apply response.</p>
       ) : null}
-      {applyWasSuccessful && !targetCalendarLoading && !targetCalendarExists ? (
+      {applyWasSuccessful && !targetCalendarRefreshPending && !targetCalendarExists ? (
         <p className="error">Apply reported success, but target calendar is not visible in refreshed data yet.</p>
       ) : null}
       {targetCalendarError ? <p className="error">Target calendar refresh error: {formatApiError(targetCalendarError)}</p> : null}
-      {applyWasSuccessful && readinessData && (readinessData.can_execute_apply === false || readinessData.would_create_calendar === false) ? (
+      {applyWasSuccessful && !readinessRefreshPending && readinessData && (readinessData.can_execute_apply === false || readinessData.would_create_calendar === false) ? (
         <p>Refreshed readiness now reports non-create-only state, which is expected after a successful create-only apply.</p>
       ) : null}
       <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>

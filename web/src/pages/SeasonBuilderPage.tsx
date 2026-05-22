@@ -519,8 +519,10 @@ export function AdminSeasonBuilderPage(): JSX.Element {
         <PostApplyCalendarVerificationPanel
           targetCalendarData={targetCalendarQuery.data}
           targetCalendarLoading={targetCalendarQuery.isLoading}
+          targetCalendarFetching={targetCalendarQuery.isFetching}
           targetCalendarError={targetCalendarQuery.error}
           readinessData={createOnlyApplyReadinessQuery.data}
+          readinessFetching={createOnlyApplyReadinessQuery.isFetching}
           applyMutationResult={createOnlyApplyMutation.data}
         />
       </SectionCard>

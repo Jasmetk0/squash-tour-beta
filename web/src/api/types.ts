@@ -3059,6 +3059,38 @@ export type SeasonBuilderDryRunBuildResponse = {
   message: string
 }
 
+export type SeasonBuilderApplyCommandContractRequest = {
+  target_season_label: string
+  source_type: string
+  source_template_id?: string | null
+  overwrite_policy?: string | null
+  preflight_fingerprint: string
+  reviewed_diff_id: string
+  dry_run_result_fingerprint: string
+  dry_run_result_id: string
+  requested_by?: string | null
+  audit_reason?: string | null
+  explicit_confirmation?: string | null
+  mutation_scope?: string | null
+}
+
+export type SeasonBuilderApplyCommandContractResponse = {
+  command: string
+  enabled: boolean
+  can_execute: boolean
+  can_mutate: boolean
+  target_season_label: string
+  source_type: string
+  source_template_id: string | null
+  overwrite_policy: string | null
+  validation_errors: string[]
+  validation_warnings: string[]
+  audit_preview: Record<string, unknown>
+  required_identity: Record<string, unknown>
+  required_audit_metadata: Record<string, unknown>
+  message: string
+}
+
 export type DryRunValidationSummary = {
   status: 'clean' | 'warnings' | 'blocking'
   blocking_count: number

@@ -295,6 +295,40 @@ class SeasonBuilderDryRunBuildResponse(BaseModel):
     message: str = (
         "Dry-run build command contract exists, but execution is disabled in this phase."
     )
+
+
+class SeasonBuilderApplyCommandContractRequest(BaseModel):
+    target_season_label: str = Field(min_length=1, max_length=32)
+    source_type: str = Field(min_length=1, max_length=64)
+    source_template_id: str | None = Field(default=None, min_length=1, max_length=128)
+    overwrite_policy: str | None = Field(default=None, min_length=1, max_length=64)
+    preflight_fingerprint: str
+    reviewed_diff_id: str
+    dry_run_result_fingerprint: str
+    dry_run_result_id: str
+    requested_by: str | None = Field(default=None, min_length=1, max_length=128)
+    audit_reason: str | None = None
+    explicit_confirmation: str | None = None
+    mutation_scope: str | None = None
+
+
+class SeasonBuilderApplyCommandContractResponse(BaseModel):
+    command: str = "season_builder_apply_command"
+    enabled: bool = False
+    can_execute: bool = False
+    can_mutate: bool = False
+    target_season_label: str
+    source_type: str
+    source_template_id: str | None = None
+    overwrite_policy: str | None = None
+    validation_errors: list[str] = Field(default_factory=list)
+    validation_warnings: list[str] = Field(default_factory=list)
+    audit_preview: dict[str, Any] = Field(default_factory=dict)
+    required_identity: dict[str, Any] = Field(default_factory=dict)
+    required_audit_metadata: dict[str, Any] = Field(default_factory=dict)
+    message: str = "Apply command contract exists, but execution is disabled in this phase."
+
+
 class SeasonCalendarBuildResult(BaseModel):
     """Calendar build/read response returned by Admin Seasons endpoints."""
 

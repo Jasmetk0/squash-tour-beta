@@ -129,6 +129,8 @@ import type {
   SeasonBuilderPreflightResponse,
   SeasonBuilderDryRunBuildRequest,
   SeasonBuilderDryRunBuildResponse,
+  SeasonBuilderApplyCommandContractRequest,
+  SeasonBuilderApplyCommandContractResponse,
   CategoriesResponse,
   TournamentMastersResponse,
   TourSeasonsValidationResponse
@@ -190,6 +192,12 @@ export function postSeasonBuilderPreflight(payload: SeasonBuilderPreflightReques
 
 export function postSeasonBuilderDryRunBuild(payload: SeasonBuilderDryRunBuildRequest): Promise<SeasonBuilderDryRunBuildResponse> {
   return request('/admin/seasons/builder/dry-run-build', { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function postSeasonBuilderApplyCommandContract(
+  payload: SeasonBuilderApplyCommandContractRequest
+): Promise<SeasonBuilderApplyCommandContractResponse> {
+  return request('/admin/seasons/builder/apply-command-contract', { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function getCategories(): Promise<CategoriesResponse> {

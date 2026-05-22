@@ -188,3 +188,70 @@ def test_validation_endpoint_invalid_persisted_calendar_flags_errors(tmp_path: P
         issue_codes = {issue["code"] for issue in body["issues"]}
         assert "season_week_after_end_week" in issue_codes
         assert "main_draw_size_invalid" in issue_codes
+
+
+def test_validation_endpoint_malformed_registry_json_returns_structured_error(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        registry_path = tmp_path / "season_calendars.json"
+        registry_path.write_text('{"calendars_by_season": {"2038/2039":', encoding="utf-8")
+
+        status, body = call("GET", f"{server.base_url}/admin/seasons/2038%2F2039/calendar/validation")
+        assert status == 200
+        assert body["calendar_exists"] is False
+        assert body["read_only"] is True
+        assert body["validation_summary"]["status"] == "errors"
+        assert body["validation_summary"]["error_count"] >= 1
+        issue = next(issue for issue in body["issues"] if issue["code"] == "calendar_registry_parse_error")
+        assert issue["context"]["exception_type"] == "JSONDecodeError"
+        assert "2038/2039" not in issue["message"]
+        assert "calendars_by_season" not in issue["message"]
+        assert "calendars_by_season" not in json.dumps(issue["context"])
+
+
+def test_validation_endpoint_model_invalid_registry_returns_structured_error(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        registry_path = tmp_path / "season_calendars.json"
+        duplicate_event = {
+            "event_id": "EVT-DUPLICATE-1",
+            "season": "2038/2039",
+            "season_week": 20,
+            "calendar_year": 2038,
+            "year_week": 20,
+            "template_id": "default_msa_template_preview",
+            "event_name": "Broken Event",
+            "category": "PLATINUM",
+            "tour_level": "WORLD_TOUR",
+            "host_country": "ENG",
+            "region": "EUROPE",
+            "duration_in_season_weeks": 1,
+            "start_season_week": 20,
+            "end_season_week": 20,
+            "status": "planned",
+            "main_draw_size": 32,
+            "qualification_draw_size": 16,
+            "seeds_count": 8,
+            "qualifier_spots": 4,
+            "wild_cards": 2,
+            "byes": 0,
+            "point_distribution_ref": "world",
+            "prize_money": 100000,
+            "prestige": 9,
+        }
+        registry_path.write_text(json.dumps({
+            "calendars_by_season": {
+                "2038/2039": {
+                    "season": "2038/2039",
+                    "events": [duplicate_event, dict(duplicate_event)],
+                }
+            }
+        }), encoding="utf-8")
+
+        status, body = call("GET", f"{server.base_url}/admin/seasons/2038%2F2039/calendar/validation")
+        assert status == 200
+        assert body["read_only"] is True
+        assert body["validation_summary"]["status"] == "errors"
+        issue = next(issue for issue in body["issues"] if issue["code"] == "calendar_registry_model_error")
+        assert issue["context"]["exception_type"] == "ValidationError"
+        assert "EVT-DUPLICATE-1" not in issue["message"]
+        assert "Duplicate event_id" not in issue["message"]
+        assert "EVT-DUPLICATE-1" not in json.dumps(issue["context"])

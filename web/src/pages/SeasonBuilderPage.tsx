@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
-import { getSeasonCalendar, getSeasonRegistry, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderApplyCommandContract, postSeasonBuilderApplyCreateOnlyCommand, postSeasonBuilderApplyCreateOnlyReadiness, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight } from '../api/client'
+import { getSeasonCalendar, getSeasonCalendarValidation, getSeasonRegistry, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderApplyCommandContract, postSeasonBuilderApplyCreateOnlyCommand, postSeasonBuilderApplyCreateOnlyReadiness, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight } from '../api/client'
 import { DetailList } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import {
@@ -31,6 +31,7 @@ import {
   CreateOnlyApplyGuardSummaryPanel,
   CreateOnlyApplyDangerZonePreviewPanel,
   PostApplyCalendarVerificationPanel,
+  TargetCalendarValidationPanel,
   PostApplyAuditStatusPanel,
   DisabledDryRunReadinessSummaryPanel,
   ReadOnlyPreflightChecklistPanel,
@@ -66,10 +67,17 @@ export function AdminSeasonBuilderPage(): JSX.Element {
   const [dryRunMutationScope, setDryRunMutationScope] = useState('')
   const [dangerZoneConfirmationText, setDangerZoneConfirmationText] = useState('')
   const [dangerZoneMutationScope, setDangerZoneMutationScope] = useState('')
+  const targetCalendarQueryEnabled = Boolean(selectedTargetSeasonLabel)
   const targetCalendarQuery = useQuery({
     queryKey: ['season-builder-target-calendar', selectedTargetSeasonLabel],
     queryFn: () => getSeasonCalendar(selectedTargetSeasonLabel),
-    enabled: Boolean(selectedTargetSeasonLabel),
+    enabled: targetCalendarQueryEnabled,
+    retry: false
+  })
+  const targetCalendarValidationQuery = useQuery({
+    queryKey: ['season-builder-target-calendar-validation', selectedTargetSeasonLabel],
+    queryFn: () => getSeasonCalendarValidation(selectedTargetSeasonLabel),
+    enabled: targetCalendarQueryEnabled,
     retry: false
   })
   const hasTemplates = templates.length > 0
@@ -272,13 +280,16 @@ export function AdminSeasonBuilderPage(): JSX.Element {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['season-builder-target-calendar', selectedTargetSeasonLabel] }),
         queryClient.invalidateQueries({ queryKey: ['season-builder-apply-create-only-readiness'] }),
-        queryClient.invalidateQueries({ queryKey: ['season-registry'] })
+        queryClient.invalidateQueries({ queryKey: ['season-builder-target-calendar-validation', selectedTargetSeasonLabel] }),
+        queryClient.invalidateQueries({ queryKey: ['season-registry'] }),
+        queryClient.invalidateQueries({ queryKey: ['season-builder-target-calendar-validation', selectedTargetSeasonLabel] })
       ])
     },
     onError: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['season-builder-target-calendar', selectedTargetSeasonLabel] }),
-        queryClient.invalidateQueries({ queryKey: ['season-builder-apply-create-only-readiness'] })
+        queryClient.invalidateQueries({ queryKey: ['season-builder-apply-create-only-readiness'] }),
+        queryClient.invalidateQueries({ queryKey: ['season-builder-target-calendar-validation', selectedTargetSeasonLabel] })
       ])
     }
   })
@@ -620,6 +631,17 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           readinessFetching={createOnlyApplyReadinessQuery.isFetching}
           applyMutationResult={createOnlyApplyMutation.data}
           targetCalendarExistsAfterApply={targetCalendarExistsAfterApply}
+        />
+      </SectionCard>
+      <SectionCard title="Target calendar validation">
+        <TargetCalendarValidationPanel
+          queryEnabled={targetCalendarQueryEnabled}
+          query={{
+            isLoading: targetCalendarValidationQuery.isLoading,
+            isFetching: targetCalendarValidationQuery.isFetching,
+            error: targetCalendarValidationQuery.error,
+            data: targetCalendarValidationQuery.data
+          }}
         />
       </SectionCard>
       <SectionCard title="Post-apply audit/status summary">

@@ -136,7 +136,8 @@ import type {
   SeasonBuilderApplyCreateOnlyReadinessResponse,
   CategoriesResponse,
   TournamentMastersResponse,
-  TourSeasonsValidationResponse
+  TourSeasonsValidationResponse,
+  SeasonCalendarValidationResponse
 } from './types'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
@@ -286,6 +287,10 @@ export function bootstrapSeasonFromInitialPool(season: string, payload: SeasonBo
 
 export function getSeasonCalendar(season: string): Promise<SeasonCalendarBuildResponse> {
   return request(`/admin/seasons/${encodeURIComponent(season)}/calendar`)
+}
+
+export function getSeasonCalendarValidation(season: string): Promise<SeasonCalendarValidationResponse> {
+  return request(`/admin/seasons/${encodeURIComponent(season)}/calendar/validation`)
 }
 
 export function getSeasonLifecycle(season: string): Promise<SeasonLifecycleResponse> {

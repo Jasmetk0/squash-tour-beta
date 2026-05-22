@@ -10,6 +10,7 @@ import type {
   SeasonBuilderPreflightRequest,
   SeasonBuilderPreflightResponse,
   SeasonCalendarBuildResponse,
+  SeasonCalendarValidationResponse,
   SeasonRegistryEntry,
   SeasonTemplateSummary,
   TourSeasonsValidationResponse
@@ -2063,6 +2064,55 @@ type CreateOnlyApplyGuardSummaryPanelProps = {
   items: CreateOnlyApplyGuardSummaryItem[]
   canSubmitCreateOnlyApply: boolean
   createOnlyBlockedReason: string | null
+}
+
+
+type TargetCalendarValidationPanelProps = {
+  queryEnabled: boolean
+  query: {
+    isLoading: boolean
+    isFetching: boolean
+    error: unknown
+    data: SeasonCalendarValidationResponse | undefined
+  }
+}
+
+export function TargetCalendarValidationPanel({ queryEnabled, query }: TargetCalendarValidationPanelProps): JSX.Element {
+  if (!queryEnabled) return <p>Select a target season to view read-only calendar validation.</p>
+  if (query.isLoading) return <p>Loading target calendar validation…</p>
+  if (query.error) return <p>Unable to load target calendar validation: {formatApiError(query.error)}</p>
+  if (!query.data) return <p>No validation data returned.</p>
+  const { calendar_exists, validation_summary, issues, read_only, message } = query.data
+  const topIssues = issues.slice(0, 10)
+  const hidden = Math.max(issues.length - topIssues.length, 0)
+  const renderShape = (label: string, value: Record<string, unknown>) => {
+    const count = typeof value.count === 'number' ? value.count : null
+    const vals = Array.isArray(value.values) ? value.values.join(', ') : null
+    return <>
+      <p>{label} count: {count ?? 'n/a'}</p>
+      <p>{label} values: {vals ?? 'n/a'}</p>
+    </>
+  }
+  return <>
+    <p>Read-only persisted target calendar validation. No mutation path is available in this panel.</p>
+    <p>{message}</p>
+    <p>Read-only: {String(read_only)}</p>
+    <p>Calendar exists: {String(calendar_exists)}</p>
+    <p>Validation status: {validation_summary.status}</p>
+    <p>Error count: {validation_summary.error_count}</p>
+    <p>Warning count: {validation_summary.warning_count}</p>
+    <p>Info count: {validation_summary.info_count}</p>
+    <p>Event count: {validation_summary.event_count}</p>
+    <p>First season week: {validation_summary.first_season_week ?? 'n/a'}</p>
+    <p>Last season week: {validation_summary.last_season_week ?? 'n/a'}</p>
+    {renderShape('Categories', validation_summary.categories)}
+    {renderShape('Tour levels', validation_summary.tour_levels)}
+    {renderShape('Host countries', validation_summary.host_countries)}
+    <table><thead><tr><th>Severity</th><th>Code</th><th>Event</th><th>Field</th><th>Message</th></tr></thead>
+    <tbody>{topIssues.map((issue, i) => <tr key={`${issue.code}-${i}`}><td>{issue.severity}</td><td>{issue.code}</td><td>{issue.event_id ?? '-'}</td><td>{issue.field ?? '-'}</td><td>{issue.message}</td></tr>)}</tbody></table>
+    {hidden > 0 ? <p>{hidden} additional issues hidden.</p> : null}
+    {query.isFetching ? <p>Refreshing validation…</p> : null}
+  </>
 }
 
 type PostApplyCalendarVerificationPanelProps = {

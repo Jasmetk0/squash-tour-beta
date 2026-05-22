@@ -2312,31 +2312,41 @@ export function ApplyResponseVsTargetValidationComparisonPanel({
   if (targetValidationError) return <p>Unable to compare validation sources because target validation failed: {formatApiError(targetValidationError)}</p>
   if (!targetValidationData) return <p>Comparison pending refreshed target validation data.</p>
 
-  const readPreviewValue = (key: string): string => {
-    const value = preview[key]
-    return value === undefined || value === null ? 'n/a' : String(value)
+  const normalizeComparableValue = (value: unknown): string => {
+    if (value === null || value === undefined) return 'n/a'
+    if (typeof value === 'boolean') return value ? 'true' : 'false'
+    if (typeof value === 'number' || typeof value === 'string') return String(value)
+    if (typeof value === 'object') {
+      try {
+        return JSON.stringify(value)
+      } catch {
+        return 'n/a'
+      }
+    }
+    return 'n/a'
   }
-  const readPreviewShapeCount = (key: string): string => {
-    const value = preview[key]
+  const readPreviewValue = (key: string): string => normalizeComparableValue(preview[key])
+  const readShapeCount = (value: unknown): string => {
     if (!value || typeof value !== 'object') return 'n/a'
     const recordValue = value as Record<string, unknown>
     return typeof recordValue.count === 'number' ? String(recordValue.count) : 'n/a'
   }
+  const readPreviewShapeCount = (key: string): string => readShapeCount(preview[key])
 
   const targetSummary = targetValidationData.validation_summary
   const rows = [
-    { field: 'validation_status', apply: readPreviewValue('validation_status'), target: String(targetSummary.status) },
-    { field: 'calendar_exists', apply: readPreviewValue('calendar_exists'), target: String(targetValidationData.calendar_exists) },
-    { field: 'read_only', apply: readPreviewValue('read_only'), target: String(targetValidationData.read_only) },
-    { field: 'event_count', apply: readPreviewValue('event_count'), target: String(targetSummary.event_count) },
-    { field: 'error_count', apply: readPreviewValue('error_count'), target: String(targetSummary.error_count) },
-    { field: 'warning_count', apply: readPreviewValue('warning_count'), target: String(targetSummary.warning_count) },
-    { field: 'info_count', apply: readPreviewValue('info_count'), target: String(targetSummary.info_count) },
-    { field: 'first_season_week', apply: readPreviewValue('first_season_week'), target: targetSummary.first_season_week === null ? 'n/a' : String(targetSummary.first_season_week) },
-    { field: 'last_season_week', apply: readPreviewValue('last_season_week'), target: targetSummary.last_season_week === null ? 'n/a' : String(targetSummary.last_season_week) },
-    { field: 'categories.count', apply: readPreviewShapeCount('categories'), target: String(targetSummary.categories.count) },
-    { field: 'tour_levels.count', apply: readPreviewShapeCount('tour_levels'), target: String(targetSummary.tour_levels.count) },
-    { field: 'host_countries.count', apply: readPreviewShapeCount('host_countries'), target: String(targetSummary.host_countries.count) }
+    { field: 'validation_status', apply: readPreviewValue('validation_status'), target: normalizeComparableValue(targetSummary.status) },
+    { field: 'calendar_exists', apply: readPreviewValue('calendar_exists'), target: normalizeComparableValue(targetValidationData.calendar_exists) },
+    { field: 'read_only', apply: readPreviewValue('read_only'), target: normalizeComparableValue(targetValidationData.read_only) },
+    { field: 'event_count', apply: readPreviewValue('event_count'), target: normalizeComparableValue(targetSummary.event_count) },
+    { field: 'error_count', apply: readPreviewValue('error_count'), target: normalizeComparableValue(targetSummary.error_count) },
+    { field: 'warning_count', apply: readPreviewValue('warning_count'), target: normalizeComparableValue(targetSummary.warning_count) },
+    { field: 'info_count', apply: readPreviewValue('info_count'), target: normalizeComparableValue(targetSummary.info_count) },
+    { field: 'first_season_week', apply: readPreviewValue('first_season_week'), target: normalizeComparableValue(targetSummary.first_season_week) },
+    { field: 'last_season_week', apply: readPreviewValue('last_season_week'), target: normalizeComparableValue(targetSummary.last_season_week) },
+    { field: 'categories.count', apply: readPreviewShapeCount('categories'), target: readShapeCount(targetSummary.categories) },
+    { field: 'tour_levels.count', apply: readPreviewShapeCount('tour_levels'), target: readShapeCount(targetSummary.tour_levels) },
+    { field: 'host_countries.count', apply: readPreviewShapeCount('host_countries'), target: readShapeCount(targetSummary.host_countries) }
   ]
   const allMatch = rows.every((row) => row.apply === row.target)
 

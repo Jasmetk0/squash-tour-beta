@@ -1048,7 +1048,9 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('error_count').length).toBeGreaterThan(0)
     expect(screen.getAllByText('warning_count').length).toBeGreaterThan(0)
     expect(screen.getAllByText('info_count').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('yes').length).toBeGreaterThan(0)
+    const validationStatusComparisonRow = screen.getByText('validation_status').closest('tr')
+    expect(validationStatusComparisonRow).not.toBeNull()
+    expect(validationStatusComparisonRow).toHaveTextContent('yes')
     expect(screen.getByText('calendar_validation_demo_warning')).toBeInTheDocument()
     expect(screen.getByText('Calendar validation warning preview.')).toBeInTheDocument()
     expect(screen.getAllByText('event-1').length).toBeGreaterThan(0)
@@ -2347,5 +2349,125 @@ describe('ApplyResponseVsTargetValidationComparisonPanel', () => {
     const eventCountRow = screen.getByText('event_count').closest('tr')
     expect(eventCountRow).not.toBeNull()
     expect(eventCountRow).toHaveTextContent('no')
+  })
+
+
+  it('normalizes missing and malformed optional validation fields to n/a without rendering undefined', () => {
+    render(
+      <MemoryRouter>
+        <ApplyResponseVsTargetValidationComparisonPanel
+          applyMutationResult={{
+            command: 'season_builder_apply_create_only',
+            enabled: true,
+            can_execute: true,
+            can_mutate: true,
+            applied: true,
+            target_season_label: '2000/01',
+            validation_errors: [],
+            validation_warnings: [],
+            created_calendar_summary: { calendar_exists: true, season: '2000/01', event_count: 0 },
+            created_event_preview: [],
+            created_calendar_identity: { applied_event_count: 0 },
+            created_calendar_validation_preview: {
+              validation_status: 'clean',
+              calendar_exists: true,
+              read_only: true,
+              event_count: 0,
+              error_count: 0,
+              warning_count: 0,
+              info_count: 0
+            },
+            apply_gate_summary: { service_insert_succeeded: true },
+            applied_event_count: 0,
+            dry_run_identity: { identity_matches: true },
+            audit_preview: { audit_persisted: false, audit_persistence_status: 'not_implemented' },
+            message: 'ok'
+          }}
+          targetValidationData={{
+            season: '2000/01',
+            calendar_exists: true,
+            validation_summary: {
+              status: 'clean',
+              error_count: 0,
+              warning_count: 0,
+              info_count: 0,
+              event_count: 0,
+              first_season_week: undefined,
+              last_season_week: undefined,
+              categories: undefined,
+              tour_levels: {} as any,
+              host_countries: null as any
+            } as any,
+            issues: [],
+            read_only: true,
+            message: 'Read-only validation response.'
+          }}
+          targetValidationFetching={false}
+          targetValidationError={null}
+        />
+      </MemoryRouter>
+    )
+
+    expect(screen.queryByText('undefined')).not.toBeInTheDocument()
+    const firstWeekRow = screen.getByText('first_season_week').closest('tr')
+    expect(firstWeekRow).not.toBeNull()
+    expect(firstWeekRow).toHaveTextContent('n/a')
+    expect(firstWeekRow).toHaveTextContent('yes')
+
+    const categoriesCountRow = screen.getByText('categories.count').closest('tr')
+    expect(categoriesCountRow).not.toBeNull()
+    expect(categoriesCountRow).toHaveTextContent('n/a')
+    expect(categoriesCountRow).toHaveTextContent('yes')
+  })
+
+  it('shows no match when shape count is missing on one side', () => {
+    render(
+      <MemoryRouter>
+        <ApplyResponseVsTargetValidationComparisonPanel
+          applyMutationResult={{
+            command: 'season_builder_apply_create_only',
+            enabled: true,
+            can_execute: true,
+            can_mutate: true,
+            applied: true,
+            target_season_label: '2000/01',
+            validation_errors: [],
+            validation_warnings: [],
+            created_calendar_summary: { calendar_exists: true, season: '2000/01', event_count: 1 },
+            created_event_preview: [],
+            created_calendar_identity: { applied_event_count: 1 },
+            created_calendar_validation_preview: {
+              validation_status: 'clean',
+              calendar_exists: true,
+              read_only: true,
+              event_count: 1,
+              error_count: 0,
+              warning_count: 0,
+              info_count: 0,
+              categories: { count: 1 }
+            },
+            apply_gate_summary: { service_insert_succeeded: true },
+            applied_event_count: 1,
+            dry_run_identity: { identity_matches: true },
+            audit_preview: { audit_persisted: false, audit_persistence_status: 'not_implemented' },
+            message: 'ok'
+          }}
+          targetValidationData={{
+            season: '2000/01',
+            calendar_exists: true,
+            validation_summary: { status: 'clean', error_count: 0, warning_count: 0, info_count: 0, event_count: 1, first_season_week: null, last_season_week: null, categories: {} as any, tour_levels: { count: 0, values: [] }, host_countries: { count: 0, values: [] } },
+            issues: [],
+            read_only: true,
+            message: 'Read-only validation response.'
+          }}
+          targetValidationFetching={false}
+          targetValidationError={null}
+        />
+      </MemoryRouter>
+    )
+
+    const categoriesCountRow = screen.getByText('categories.count').closest('tr')
+    expect(categoriesCountRow).not.toBeNull()
+    expect(categoriesCountRow).toHaveTextContent('no')
   })
 })

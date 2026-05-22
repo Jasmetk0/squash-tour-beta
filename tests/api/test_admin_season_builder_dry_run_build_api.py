@@ -88,6 +88,7 @@ def test_builder_dry_run_build_minimal_contract(tmp_path: Path) -> None:
         assert body["audit_preview"]["execution_enabled"] is False
         assert body["audit_preview"]["generation_design_preview_available"] is True
         assert body["audit_preview"]["candidate_event_contract_preview_available"] is True
+        assert body["audit_preview"]["conflict_contract_preview_available"] is True
         design = body["generation_design_preview"]
         assert design["status"] == "design_preview_only"
         assert design["execution_enabled"] is False
@@ -128,6 +129,30 @@ def test_builder_dry_run_build_minimal_contract(tmp_path: Path) -> None:
         assert "policy_conflicts" in conflict_shape
         assert "validation_conflicts" in conflict_shape
         assert candidate_preview["blocked_reason"] == "Candidate event generation is not implemented in this phase."
+        conflict_contract_preview = body["conflict_contract_preview"]
+        assert conflict_contract_preview["status"] == "contract_preview_only"
+        assert conflict_contract_preview["will_compute_conflicts"] is False
+        assert conflict_contract_preview["conflict_count"] == 0
+        week_conflict_shape = conflict_contract_preview["week_conflict_shape"]
+        assert "conflict_id" in week_conflict_shape
+        assert "conflict_type" in week_conflict_shape
+        assert "season_week" in week_conflict_shape
+        assert "candidate_id" in week_conflict_shape
+        assert "existing_event_id" in week_conflict_shape
+        assert "severity" in week_conflict_shape
+        slot_conflict_shape = conflict_contract_preview["slot_conflict_shape"]
+        assert "source_slot_id" in slot_conflict_shape
+        assert "candidate_id" in slot_conflict_shape
+        assert "severity" in slot_conflict_shape
+        policy_conflict_shape = conflict_contract_preview["policy_conflict_shape"]
+        assert "policy" in policy_conflict_shape
+        assert "message" in policy_conflict_shape
+        assert "severity" in policy_conflict_shape
+        validation_conflict_shape = conflict_contract_preview["validation_conflict_shape"]
+        assert "field" in validation_conflict_shape
+        assert "message" in validation_conflict_shape
+        assert "severity" in validation_conflict_shape
+        assert conflict_contract_preview["blocked_reason"] == "Conflict computation is not implemented in this phase."
 
 
 def test_builder_dry_run_build_missing_fingerprint(tmp_path: Path) -> None:
@@ -173,6 +198,8 @@ def test_builder_dry_run_build_full_future_metadata(tmp_path: Path) -> None:
         assert body["can_mutate"] is False
         assert body["generation_design_preview"]["status"] == "design_preview_only"
         assert body["candidate_event_contract_preview"]["candidate_count"] == 0
+        assert "conflict_contract_preview" in body
+        assert body["conflict_contract_preview"]["conflict_count"] == 0
         assert "audit_reason will be required before execution is enabled in a future phase." not in body["validation_warnings"]
         assert "explicit_confirmation will be required before execution is enabled in a future phase." not in body["validation_warnings"]
         assert "mutation_scope will be required before execution is enabled in a future phase." not in body["validation_warnings"]

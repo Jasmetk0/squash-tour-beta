@@ -2050,6 +2050,8 @@ type CreateOnlyApplyDangerZonePreviewPanelProps = {
   applyMutationStatus: 'idle' | 'pending' | 'success' | 'error'
   applyMutationError: unknown
   applyMutationResult: SeasonBuilderApplyCreateOnlyCommandResponse | undefined
+  targetCalendarExistsAfterApply: boolean
+  createOnlyBlockedReason: string | null
 }
 
 type PostApplyCalendarVerificationPanelProps = {
@@ -2060,6 +2062,7 @@ type PostApplyCalendarVerificationPanelProps = {
   readinessData: SeasonBuilderApplyCreateOnlyReadinessResponse | undefined
   readinessFetching: boolean
   applyMutationResult: SeasonBuilderApplyCreateOnlyCommandResponse | undefined
+  targetCalendarExistsAfterApply: boolean
 }
 
 export function PostApplyCalendarVerificationPanel({
@@ -2069,7 +2072,8 @@ export function PostApplyCalendarVerificationPanel({
   targetCalendarError,
   readinessData,
   readinessFetching,
-  applyMutationResult
+  applyMutationResult,
+  targetCalendarExistsAfterApply
 }: PostApplyCalendarVerificationPanelProps): JSX.Element {
   const applyResultExists = Boolean(applyMutationResult)
   const applyWasSuccessful = applyMutationResult?.applied === true
@@ -2094,6 +2098,7 @@ export function PostApplyCalendarVerificationPanel({
       {applyWasSuccessful ? <p>Create-only apply reported success. Verify the refreshed target calendar below.</p> : null}
       {applyWasSuccessful && targetCalendarRefreshPending ? <p>Post-apply verification pending refreshed target calendar data.</p> : null}
       {applyWasSuccessful && !targetCalendarRefreshPending && targetCalendarExists && targetCountMatchesApplied ? <p>Post-apply calendar verification passed.</p> : null}
+      {applyWasSuccessful && targetCalendarExistsAfterApply ? <p>Create-only command should now be unavailable for this target.</p> : null}
       {applyWasSuccessful && !targetCalendarRefreshPending && targetCalendarExists && !targetCountMatchesApplied ? (
         <p className="error">Post-apply calendar event count does not match apply response.</p>
       ) : null}
@@ -2134,7 +2139,9 @@ export function CreateOnlyApplyDangerZonePreviewPanel({
   onConfirmCreateOnlyApply,
   applyMutationStatus,
   applyMutationError,
-  applyMutationResult
+  applyMutationResult,
+  targetCalendarExistsAfterApply,
+  createOnlyBlockedReason
 }: CreateOnlyApplyDangerZonePreviewPanelProps): JSX.Element {
   const isBackendReadyForCreateOnly = readinessData?.can_execute_apply === true
     && readinessData?.would_create_calendar === true
@@ -2181,6 +2188,12 @@ export function CreateOnlyApplyDangerZonePreviewPanel({
       {futureSubmitEligibilityPreview
         ? <p>All visible preview conditions are satisfied.</p>
         : <p>Create-only apply is not fully armed yet.</p>}
+      {targetCalendarExistsAfterApply || createOnlyBlockedReason ? (
+        <>
+          <p>{createOnlyBlockedReason ?? 'Target calendar now exists. Create-only apply is locked out for this target.'}</p>
+          <p>Use a future audited merge/overwrite workflow if changes are needed.</p>
+        </>
+      ) : null}
       <p>
         <button type="button" onClick={onConfirmCreateOnlyApply} disabled={!canSubmitCreateOnlyApply}>
           Execute create-only season calendar command

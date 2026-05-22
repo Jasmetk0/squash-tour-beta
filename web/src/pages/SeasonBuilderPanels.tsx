@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
 
 import type {
+  SeasonBuilderApplyCommandContractRequest,
+  SeasonBuilderApplyCommandContractResponse,
   SeasonBuilderDryRunBuildRequest,
   SeasonBuilderDryRunBuildResponse,
   SeasonBuilderPreflightRequest,
@@ -1764,6 +1766,91 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
         </>
       ) : null}
       <p>Execution remains disabled; this panel is not a build control.</p>
+      <pre>{JSON.stringify(requestPayload, null, 2)}</pre>
+    </>
+  )
+}
+
+type DisabledApplyCommandContractPanelProps = {
+  queryEnabled: boolean
+  requestPayload: SeasonBuilderApplyCommandContractRequest
+  query: {
+    isLoading: boolean
+    error: unknown
+    data: SeasonBuilderApplyCommandContractResponse | undefined
+  }
+}
+
+export function DisabledApplyCommandContractPanel({ queryEnabled, requestPayload, query }: DisabledApplyCommandContractPanelProps): JSX.Element {
+  const formatValue = (value: unknown): string => (value === null || value === undefined ? '—' : String(value))
+  const requiredIdentity = query.data?.required_identity ?? {}
+  const requiredAuditMetadata = query.data?.required_audit_metadata ?? {}
+  const auditPreview = query.data?.audit_preview ?? {}
+  return (
+    <>
+      <p>Read-only disabled apply command contract check. This does not build, merge, overwrite, or apply anything.</p>
+      {!queryEnabled ? <p>Apply command contract check is waiting for preflight and dry-run result identities.</p> : null}
+      {queryEnabled && query.isLoading ? <p>Loading disabled apply command contract…</p> : null}
+      {queryEnabled && query.error ? <p className="error">Disabled apply command contract check failed: {formatApiError(query.error)}</p> : null}
+      {queryEnabled && query.data ? (
+        <>
+          <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+            <tr><td>command</td><td>{query.data.command}</td></tr>
+            <tr><td>enabled</td><td>{String(query.data.enabled)}</td></tr>
+            <tr><td>can_execute</td><td>{String(query.data.can_execute)}</td></tr>
+            <tr><td>can_mutate</td><td>{String(query.data.can_mutate)}</td></tr>
+            <tr><td>target_season_label</td><td>{query.data.target_season_label}</td></tr>
+            <tr><td>source_type</td><td>{query.data.source_type}</td></tr>
+            <tr><td>source_template_id</td><td>{query.data.source_template_id ?? '—'}</td></tr>
+            <tr><td>overwrite_policy</td><td>{query.data.overwrite_policy ?? '—'}</td></tr>
+            <tr><td>validation_errors count</td><td>{query.data.validation_errors.length}</td></tr>
+            <tr><td>validation_warnings count</td><td>{query.data.validation_warnings.length}</td></tr>
+            <tr><td>message</td><td>{query.data.message}</td></tr>
+          </tbody></table>
+          <h4>Required identity</h4>
+          <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+            <tr><td>preflight_fingerprint</td><td>{formatValue(requiredIdentity.preflight_fingerprint)}</td></tr>
+            <tr><td>reviewed_diff_id</td><td>{formatValue(requiredIdentity.reviewed_diff_id)}</td></tr>
+            <tr><td>dry_run_result_fingerprint</td><td>{formatValue(requiredIdentity.dry_run_result_fingerprint)}</td></tr>
+            <tr><td>dry_run_result_id</td><td>{formatValue(requiredIdentity.dry_run_result_id)}</td></tr>
+            <tr><td>all_identity_fields_present</td><td>{formatValue(requiredIdentity.all_identity_fields_present)}</td></tr>
+          </tbody></table>
+          <h4>Required audit metadata</h4>
+          <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+            <tr><td>requested_by</td><td>{formatValue(requiredAuditMetadata.requested_by)}</td></tr>
+            <tr><td>audit_reason_present</td><td>{formatValue(requiredAuditMetadata.audit_reason_present)}</td></tr>
+            <tr><td>explicit_confirmation_present</td><td>{formatValue(requiredAuditMetadata.explicit_confirmation_present)}</td></tr>
+            <tr><td>mutation_scope</td><td>{formatValue(requiredAuditMetadata.mutation_scope)}</td></tr>
+            <tr><td>all_audit_metadata_present</td><td>{formatValue(requiredAuditMetadata.all_audit_metadata_present)}</td></tr>
+          </tbody></table>
+          <h4>Validation warnings</h4>
+          {query.data.validation_warnings.length === 0 ? <p>No apply command contract warnings returned.</p> : <ul>{query.data.validation_warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}
+          <h4>Validation errors</h4>
+          {query.data.validation_errors.length === 0 ? <p>No apply command contract errors returned.</p> : <ul>{query.data.validation_errors.map((error) => <li key={error}>{error}</li>)}</ul>}
+          <h4>Audit preview</h4>
+          <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+            <tr><td>action</td><td>{formatValue(auditPreview.action)}</td></tr>
+            <tr><td>read_only</td><td>{formatValue(auditPreview.read_only)}</td></tr>
+            <tr><td>mutation_permitted</td><td>{formatValue(auditPreview.mutation_permitted)}</td></tr>
+            <tr><td>execution_enabled</td><td>{formatValue(auditPreview.execution_enabled)}</td></tr>
+            <tr><td>target_season_label</td><td>{formatValue(auditPreview.target_season_label)}</td></tr>
+            <tr><td>source_type</td><td>{formatValue(auditPreview.source_type)}</td></tr>
+            <tr><td>source_template_id</td><td>{formatValue(auditPreview.source_template_id)}</td></tr>
+            <tr><td>overwrite_policy</td><td>{formatValue(auditPreview.overwrite_policy)}</td></tr>
+            <tr><td>preflight_fingerprint</td><td>{formatValue(auditPreview.preflight_fingerprint)}</td></tr>
+            <tr><td>reviewed_diff_id</td><td>{formatValue(auditPreview.reviewed_diff_id)}</td></tr>
+            <tr><td>dry_run_result_fingerprint</td><td>{formatValue(auditPreview.dry_run_result_fingerprint)}</td></tr>
+            <tr><td>dry_run_result_id</td><td>{formatValue(auditPreview.dry_run_result_id)}</td></tr>
+            <tr><td>requested_by</td><td>{formatValue(auditPreview.requested_by)}</td></tr>
+            <tr><td>audit_reason</td><td>{formatValue(auditPreview.audit_reason)}</td></tr>
+            <tr><td>explicit_confirmation_present</td><td>{formatValue(auditPreview.explicit_confirmation_present)}</td></tr>
+            <tr><td>mutation_scope</td><td>{formatValue(auditPreview.mutation_scope)}</td></tr>
+          </tbody></table>
+          <h4>Raw disabled apply command contract JSON</h4>
+          <pre>{JSON.stringify(query.data, null, 2)}</pre>
+        </>
+      ) : null}
+      <p>Execution remains disabled; this panel is not an apply control.</p>
       <pre>{JSON.stringify(requestPayload, null, 2)}</pre>
     </>
   )

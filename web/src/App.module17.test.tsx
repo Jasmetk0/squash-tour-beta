@@ -1037,7 +1037,9 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('Warning count: 1').length).toBeGreaterThan(0)
     expect(screen.getByText('Apply response validation interpretation: Validation has warnings but no blocking errors.')).toBeInTheDocument()
     expect(screen.getByText('Issue codes (first 10): calendar_validation_demo_warning')).toBeInTheDocument()
+    expect(screen.getByText('Apply-response issue code count: 1')).toBeInTheDocument()
     expect(screen.getByText('Apply-response issue code metadata')).toBeInTheDocument()
+    expect(screen.getByText('Metadata below documents only the issue codes returned in this apply response.')).toBeInTheDocument()
     const applyResponseMetadataRow = screen.getAllByText('calendar_validation_demo_warning')
       .map((element) => element.closest('tr'))
       .find((row) => row?.textContent?.includes('Demo warning used by frontend route test.'))
@@ -1060,6 +1062,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Warning issues: 1')).toBeInTheDocument()
     expect(screen.getByText('Info issues: 0')).toBeInTheDocument()
     expect(screen.getByText('Unknown-severity issues: 0')).toBeInTheDocument()
+    expect(screen.getByText('Issue rows below are enriched from the registry when metadata is available.')).toBeInTheDocument()
     expect(screen.getByText('Warning issue codes: calendar_validation_demo_warning')).toBeInTheDocument()
     expect(screen.getByText('Error issue codes: none')).toBeInTheDocument()
     expect(screen.getAllByText('Event count: 1').length).toBeGreaterThan(0)
@@ -1074,6 +1077,7 @@ describe('Module 17 pages through routes', () => {
     expect(api.getSeasonCalendarValidationIssueCodes).toHaveBeenCalled()
     expect(screen.getByText('Validation issue code registry')).toBeInTheDocument()
     expect(screen.getByText('Read-only validation issue code registry. These codes document validation output meanings.')).toBeInTheDocument()
+    expect(screen.getByText('This registry is the full reference list; individual validation panels show only codes present in their result.')).toBeInTheDocument()
     expect(screen.getByText('Code count: 4')).toBeInTheDocument()
     expect(screen.getByText('Error code count: 1')).toBeInTheDocument()
     expect(screen.getByText('Warning code count: 2')).toBeInTheDocument()
@@ -2519,6 +2523,22 @@ describe('Validation severity interpretation panels', () => {
     expect(screen.getByText('unknown_apply_code')).toBeInTheDocument()
     expect(screen.getByText('Unknown issue code')).toBeInTheDocument()
     expect(screen.getByText('No registry metadata available for this issue code.')).toBeInTheDocument()
+  })
+
+  it('shows compact empty issue-code metadata state when apply response issue code list is empty', () => {
+    render(
+      <ApplyResponseValidationPreviewPanel
+        applyMutationResult={{
+          created_calendar_validation_preview: {
+            issue_codes_first_10: []
+          }
+        } as never}
+      />
+    )
+    expect(screen.getByText('Issue codes (first 10):')).toBeInTheDocument()
+    expect(screen.getByText('Apply-response issue code count: 0')).toBeInTheDocument()
+    expect(screen.getByText('No apply-response issue codes to enrich.')).toBeInTheDocument()
+    expect(screen.queryByText('unknown/code')).not.toBeInTheDocument()
   })
 })
 

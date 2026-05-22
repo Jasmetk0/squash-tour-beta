@@ -2191,6 +2191,7 @@ export function TargetCalendarValidationPanel({ queryEnabled, issueCodeRegistryD
     <p>Warning issue codes: {issueCodesBySeverity.warning.length > 0 ? issueCodesBySeverity.warning.join(', ') : 'none'}</p>
     <p>Info issue codes: {issueCodesBySeverity.info.length > 0 ? issueCodesBySeverity.info.join(', ') : 'none'}</p>
     <p>Unknown issue codes: {issueCodesBySeverity.unknown.length > 0 ? issueCodesBySeverity.unknown.join(', ') : 'none'}</p>
+    <p>Issue rows below are enriched from the registry when metadata is available.</p>
     <table><thead><tr><th>Severity</th><th>Code</th><th>Registry title</th><th>Event</th><th>Field</th><th>Message</th><th>Registry description</th></tr></thead>
     <tbody>{topIssues.map((issue, i) => {
       const issueCode = normalizeIssueCode(issue.code)
@@ -2254,6 +2255,7 @@ export function ValidationIssueCodeRegistryPanel({ query }: ValidationIssueCodeR
 
   return <>
     <p>Read-only validation issue code registry. These codes document validation output meanings.</p>
+    <p>This registry is the full reference list; individual validation panels show only codes present in their result.</p>
     {query.isFetching ? <p>Refreshing issue code registry…</p> : null}
     <p>Read-only: {String(read_only)}</p>
     <p>Code count: {code_count}</p>
@@ -2440,26 +2442,30 @@ export function ApplyResponseValidationPreviewPanel({
       <p>Host countries count: {hostCountriesShape.count}</p>
       <p>Host countries values: {hostCountriesShape.values}</p>
       <p>Issue codes (first 10): {issueCodesValue}</p>
+      {previewIssueCodes ? <p>Apply-response issue code count: {previewIssueCodes.length}</p> : null}
       {previewIssueCodes ? (
         <>
           <h5>Apply-response issue code metadata</h5>
-          <table>
-            <thead><tr><th>code</th><th>registry title</th><th>registry severity</th><th>registry field</th><th>registry description</th></tr></thead>
-            <tbody>
-              {previewIssueCodes.map((issueCode) => {
-                const metadata = issueMetadataByCode.get(issueCode)
-                return (
-                  <tr key={issueCode}>
-                    <td>{issueCode}</td>
-                    <td>{metadata?.title ?? 'Unknown issue code'}</td>
-                    <td>{metadata?.severity ?? 'n/a'}</td>
-                    <td>{metadata?.field ?? 'n/a'}</td>
-                    <td>{metadata?.description ?? 'No registry metadata available for this issue code.'}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+          <p>Metadata below documents only the issue codes returned in this apply response.</p>
+          {previewIssueCodes.length > 0 ? (
+            <table>
+              <thead><tr><th>code</th><th>registry title</th><th>registry severity</th><th>registry field</th><th>registry description</th></tr></thead>
+              <tbody>
+                {previewIssueCodes.map((issueCode) => {
+                  const metadata = issueMetadataByCode.get(issueCode)
+                  return (
+                    <tr key={issueCode}>
+                      <td>{issueCode}</td>
+                      <td>{metadata?.title ?? 'Unknown issue code'}</td>
+                      <td>{metadata?.severity ?? 'n/a'}</td>
+                      <td>{metadata?.field ?? 'n/a'}</td>
+                      <td>{metadata?.description ?? 'No registry metadata available for this issue code.'}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          ) : <p>No apply-response issue codes to enrich.</p>}
         </>
       ) : null}
       <p>Message: {readText('message')}</p>

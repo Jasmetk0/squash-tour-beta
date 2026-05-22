@@ -274,6 +274,7 @@ def preflight_season_builder(
 @router.post("/builder/dry-run-build", response_model=SeasonBuilderDryRunBuildResponse)
 def post_season_builder_dry_run_build_contract(
     payload: SeasonBuilderDryRunBuildRequest,
+    template_service: SeasonTemplateService = Depends(get_season_template_service),
 ) -> SeasonBuilderDryRunBuildResponse:
     errors: list[str] = []
     warnings: list[str] = []
@@ -438,6 +439,80 @@ def post_season_builder_dry_run_build_contract(
         },
         "blocked_reason": "Dry-run result generation is not implemented in this phase.",
     }
+    candidate_events: list[dict[str, object | None]] = []
+    dry_run_status = "read_only_generated"
+    if payload.source_type != "season_template":
+        warnings.append("Read-only candidate generation currently supports season_template sources only.")
+        dry_run_status = "unsupported_source_type"
+    elif not payload.source_template_id:
+        errors.append("source_template_id could not be resolved for read-only dry-run candidate generation.")
+        dry_run_status = "blocked_unresolved_source"
+    else:
+        templates_response = template_service.list_templates()
+        selected = next((template for template in templates_response.templates if template.template_id == payload.source_template_id), None)
+        if selected is None:
+            errors.append("source_template_id could not be resolved for read-only dry-run candidate generation.")
+            dry_run_status = "blocked_unresolved_source"
+        else:
+            for index, slot in enumerate(selected.slots, start=1):
+                source_slot_id = slot.slot_id or f"slot_{index}"
+                week_start = slot.season_week_start
+                week_end = slot.season_week_end
+                duration = (week_end - week_start + 1) if isinstance(week_start, int) and isinstance(week_end, int) else None
+                candidate_events.append(
+                    {
+                        "candidate_id": f"cand_{payload.source_template_id}_{source_slot_id}",
+                        "source_slot_id": source_slot_id,
+                        "season_week_start": week_start,
+                        "season_week_end": week_end,
+                        "event_name": slot.tournament_name,
+                        "tour_level": None,
+                        "category": slot.category,
+                        "host_country": slot.host_country,
+                        "region": slot.region,
+                        "main_draw_size": None,
+                        "qualification_draw_size": None,
+                        "point_distribution_ref": None,
+                        "prize_money": None,
+                        "prestige": None,
+                        "duration_in_season_weeks": duration,
+                        "source_template_id": payload.source_template_id,
+                        "source_type": payload.source_type,
+                        "candidate_status": "planned",
+                        "validation_errors": [],
+                        "validation_warnings": [],
+                    }
+                )
+
+    dry_run_result_preview = {
+        "status": dry_run_status,
+        "execution_enabled": False,
+        "mutation_permitted": False,
+        "candidate_events": candidate_events,
+        "structural_summary": {
+            "candidate_count": len(candidate_events),
+            "target_event_count": None,
+            "additions_count": len(candidate_events),
+            "replacement_count": 0,
+            "conflict_count": 0,
+            "invalid_count": len([candidate for candidate in candidate_events if candidate["validation_errors"]]),
+        },
+        "conflict_summary": {
+            "week_conflicts": [],
+            "slot_conflicts": [],
+            "policy_conflicts": [],
+            "validation_conflicts": [],
+        },
+        "result_metadata": {
+            "preflight_fingerprint": payload.preflight_fingerprint,
+            "reviewed_diff_id": payload.reviewed_diff_id,
+            "source_type": payload.source_type,
+            "source_template_id": payload.source_template_id,
+            "overwrite_policy": payload.overwrite_policy,
+            "read_only": True,
+            "mutation_permitted": False,
+        },
+    }
 
     return SeasonBuilderDryRunBuildResponse(
         enabled=False,
@@ -472,9 +547,11 @@ def post_season_builder_dry_run_build_contract(
             "candidate_event_contract_preview_available": True,
             "conflict_contract_preview_available": True,
             "dry_run_result_contract_preview_available": True,
+            "dry_run_result_preview_available": True,
         },
         generation_design_preview=generation_design_preview,
         candidate_event_contract_preview=candidate_event_contract_preview,
         conflict_contract_preview=conflict_contract_preview,
         dry_run_result_contract_preview=dry_run_result_contract_preview,
+        dry_run_result_preview=dry_run_result_preview,
     )

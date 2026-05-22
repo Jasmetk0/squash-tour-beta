@@ -90,6 +90,7 @@ def test_builder_dry_run_build_minimal_contract(tmp_path: Path) -> None:
         assert body["audit_preview"]["candidate_event_contract_preview_available"] is True
         assert body["audit_preview"]["conflict_contract_preview_available"] is True
         assert body["audit_preview"]["dry_run_result_contract_preview_available"] is True
+        assert body["audit_preview"]["dry_run_result_preview_available"] is True
         design = body["generation_design_preview"]
         assert design["status"] == "design_preview_only"
         assert design["execution_enabled"] is False
@@ -169,6 +170,7 @@ def test_builder_dry_run_build_minimal_contract(tmp_path: Path) -> None:
         assert dry_run_result_preview["result_metadata"]["read_only"] is True
         assert dry_run_result_preview["result_metadata"]["mutation_permitted"] is False
         assert dry_run_result_preview["blocked_reason"] == "Dry-run result generation is not implemented in this phase."
+        assert body["dry_run_result_preview"]["status"] == "read_only_generated"
 
 
 def test_builder_dry_run_build_missing_fingerprint(tmp_path: Path) -> None:
@@ -239,3 +241,73 @@ def test_builder_dry_run_build_does_not_create_calendar(tmp_path: Path) -> None:
         _, calendar_body = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar")
         assert calendar_body["calendar"] is None
         assert calendar_body["summary"]["calendar_exists"] is False
+
+
+def test_builder_dry_run_build_generates_read_only_candidates_from_template(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2035/2036",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": "merge_preview",
+            "preflight_fingerprint": "pf_live",
+            "reviewed_diff_id": "rd_live",
+            "requested_by": "qa",
+        }
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        assert status == 200
+        assert body["can_mutate"] is False
+        assert body["can_execute"] is False
+        assert body["dry_run_result_preview"]["status"] == "read_only_generated"
+        candidates = body["dry_run_result_preview"]["candidate_events"]
+        assert len(candidates) > 0
+        assert body["dry_run_result_preview"]["structural_summary"]["candidate_count"] == len(candidates)
+        assert body["dry_run_result_preview"]["structural_summary"]["additions_count"] == len(candidates)
+        assert body["dry_run_result_preview"]["conflict_summary"]["week_conflicts"] == []
+        assert body["dry_run_result_preview"]["conflict_summary"]["slot_conflicts"] == []
+        first = candidates[0]
+        assert "candidate_id" in first
+        assert "source_slot_id" in first
+        assert "season_week_start" in first
+        assert "season_week_end" in first
+        assert "event_name" in first
+        assert first["source_template_id"] == "default_msa_template_preview"
+        assert first["source_type"] == "season_template"
+        assert first["candidate_status"] == "planned"
+        assert first["validation_errors"] == []
+        assert first["validation_warnings"] == []
+        assert body["audit_preview"]["dry_run_result_preview_available"] is True
+        _, calendar_body = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar")
+        assert calendar_body["calendar"] is None
+        assert calendar_body["summary"]["calendar_exists"] is False
+
+
+def test_builder_dry_run_build_unknown_template_returns_unresolved_source(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2035/2036",
+            "source_type": "season_template",
+            "source_template_id": "unknown_template",
+            "preflight_fingerprint": "pf_live",
+            "reviewed_diff_id": "rd_live",
+        }
+        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        assert "source_template_id could not be resolved for read-only dry-run candidate generation." in body["validation_errors"]
+        assert body["dry_run_result_preview"]["status"] == "blocked_unresolved_source"
+        assert body["dry_run_result_preview"]["candidate_events"] == []
+        assert body["can_mutate"] is False
+
+
+def test_builder_dry_run_build_non_template_source_is_unsupported_for_generation(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2035/2036",
+            "source_type": "calendar_snapshot",
+            "preflight_fingerprint": "pf_live",
+            "reviewed_diff_id": "rd_live",
+        }
+        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        assert "Read-only candidate generation currently supports season_template sources only." in body["validation_warnings"]
+        assert body["dry_run_result_preview"]["status"] == "unsupported_source_type"
+        assert body["dry_run_result_preview"]["candidate_events"] == []
+        assert body["can_mutate"] is False

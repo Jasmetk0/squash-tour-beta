@@ -291,6 +291,7 @@ class SeasonBuilderDryRunBuildResponse(BaseModel):
     candidate_event_contract_preview: dict[str, Any] = Field(default_factory=dict)
     conflict_contract_preview: dict[str, Any] = Field(default_factory=dict)
     dry_run_result_contract_preview: dict[str, Any] = Field(default_factory=dict)
+    dry_run_result_preview: dict[str, Any] = Field(default_factory=dict)
     message: str = (
         "Dry-run build command contract exists, but execution is disabled in this phase."
     )

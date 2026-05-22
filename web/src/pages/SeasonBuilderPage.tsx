@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
-import { getSeasonCalendar, getSeasonRegistry, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderApplyCommandContract, postSeasonBuilderApplyCreateOnlyReadiness, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight } from '../api/client'
+import { getSeasonCalendar, getSeasonRegistry, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderApplyCommandContract, postSeasonBuilderApplyCreateOnlyCommand, postSeasonBuilderApplyCreateOnlyReadiness, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight } from '../api/client'
 import { DetailList } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import {
@@ -38,11 +38,14 @@ import {
   TemplateValidationSummaryPanel
 } from './SeasonBuilderPanels'
 import type { SourceType } from './SeasonBuilderPanels'
-import type { SeasonBuilderApplyCommandContractRequest, SeasonBuilderDryRunBuildRequest, SeasonBuilderPreflightRequest } from '../api/types'
+import type { SeasonBuilderApplyCommandContractRequest, SeasonBuilderApplyCreateOnlyCommandRequest, SeasonBuilderDryRunBuildRequest, SeasonBuilderPreflightRequest } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
 
 
 export function AdminSeasonBuilderPage(): JSX.Element {
+
+  const queryClient = useQueryClient()
+  const REQUIRED_CONFIRMATION_PHRASE = 'I understand this will create a new season calendar.'
   const registryQuery = useQuery({ queryKey: ['season-registry'], queryFn: getSeasonRegistry, retry: false })
   const templatesQuery = useQuery({ queryKey: ['season-templates'], queryFn: getSeasonTemplates, retry: false })
   const validationQuery = useQuery({ queryKey: ['tour-seasons-validation'], queryFn: getTourSeasonsValidation, retry: false })
@@ -249,6 +252,59 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     retry: false
   })
 
+  const hasRequiredApplyIdentities = Boolean(
+    disabledApplyCommandContractPayload.target_season_label
+    && disabledApplyCommandContractPayload.source_type
+    && disabledApplyCommandContractPayload.source_template_id
+    && disabledApplyCommandContractPayload.preflight_fingerprint
+    && disabledApplyCommandContractPayload.reviewed_diff_id
+    && disabledApplyCommandContractPayload.dry_run_result_fingerprint
+    && disabledApplyCommandContractPayload.dry_run_result_id
+  )
+
+  const createOnlyApplyMutation = useMutation({
+    mutationFn: (payload: SeasonBuilderApplyCreateOnlyCommandRequest) => postSeasonBuilderApplyCreateOnlyCommand(payload),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['season-builder-target-calendar', selectedTargetSeasonLabel] }),
+        queryClient.invalidateQueries({ queryKey: ['season-builder-apply-create-only-readiness'] }),
+        queryClient.invalidateQueries({ queryKey: ['season-registry'] })
+      ])
+    }
+  })
+
+
+  const readinessValidationClear = (createOnlyApplyReadinessQuery.data?.validation_errors?.length ?? 0) === 0
+  const canSubmitCreateOnlyApply = createOnlyApplyReadinessQuery.data?.can_execute_apply === true
+    && createOnlyApplyReadinessQuery.data?.would_create_calendar === true
+    && createOnlyApplyReadinessQuery.data?.can_mutate === false
+    && createOnlyApplyReadinessQuery.data?.service_insert_applicable === false
+    && dangerZoneConfirmationText.trim() === REQUIRED_CONFIRMATION_PHRASE
+    && dangerZoneMutationScope.trim() === 'create_only'
+    && hasRequiredApplyIdentities
+    && readinessValidationClear
+    && !createOnlyApplyMutation.isPending
+
+  const handleConfirmCreateOnlyApply = (): void => {
+    if (!canSubmitCreateOnlyApply) return
+    const payload: SeasonBuilderApplyCreateOnlyCommandRequest = {
+      target_season_label: disabledApplyCommandContractPayload.target_season_label,
+      source_type: disabledApplyCommandContractPayload.source_type,
+      source_template_id: disabledApplyCommandContractPayload.source_template_id,
+      overwrite_policy: disabledApplyCommandContractPayload.overwrite_policy,
+      preflight_fingerprint: disabledApplyCommandContractPayload.preflight_fingerprint,
+      reviewed_diff_id: disabledApplyCommandContractPayload.reviewed_diff_id,
+      dry_run_result_fingerprint: disabledApplyCommandContractPayload.dry_run_result_fingerprint,
+      dry_run_result_id: disabledApplyCommandContractPayload.dry_run_result_id,
+      requested_by: disabledApplyCommandContractPayload.requested_by ?? 'local-admin-preview',
+      audit_reason: disabledApplyCommandContractPayload.audit_reason ?? 'create-only calendar command',
+      explicit_confirmation: dangerZoneConfirmationText.trim(),
+      mutation_scope: dangerZoneMutationScope.trim()
+    }
+    createOnlyApplyMutation.mutate(payload)
+  }
+
+
   const applyCommandReadinessItems = useMemo(
     () => buildApplyCommandReadinessItems({
       dryRunResponse: disabledDryRunBuildQuery.data,
@@ -439,11 +495,16 @@ export function AdminSeasonBuilderPage(): JSX.Element {
         <CreateOnlyApplyDangerZonePreviewPanel
           readinessData={createOnlyApplyReadinessQuery.data}
           selectedTargetSeasonLabel={selectedTargetSeasonLabel}
-          requiredConfirmationPhrase="I understand this will create a new season calendar."
+          requiredConfirmationPhrase={REQUIRED_CONFIRMATION_PHRASE}
           confirmationText={dangerZoneConfirmationText}
           setConfirmationText={setDangerZoneConfirmationText}
           mutationScopePreview={dangerZoneMutationScope}
           setMutationScopePreview={setDangerZoneMutationScope}
+          canSubmitCreateOnlyApply={canSubmitCreateOnlyApply}
+          onConfirmCreateOnlyApply={handleConfirmCreateOnlyApply}
+          applyMutationStatus={createOnlyApplyMutation.status}
+          applyMutationError={createOnlyApplyMutation.error}
+          applyMutationResult={createOnlyApplyMutation.data}
         />
       </SectionCard>
 

@@ -502,11 +502,14 @@ def post_season_builder_dry_run_build_contract(
             errors.append("source_template_id could not be resolved for read-only dry-run candidate generation.")
             dry_run_status = "blocked_unresolved_source"
         else:
+            templates_config = template_service.template_service.get_config()
+            templates_by_id = {template.template_id: template for template in templates_config.templates}
             for index, slot in enumerate(selected.slots, start=1):
                 source_slot_id = slot.slot_id or f"slot_{index}"
                 week_start = slot.season_week_start
                 week_end = slot.season_week_end
                 duration = (week_end - week_start + 1) if isinstance(week_start, int) and isinstance(week_end, int) else None
+                source_template = templates_by_id.get(slot.source_template_id or "")
                 candidate_events.append(
                     {
                         "candidate_id": f"cand_{payload.source_template_id}_{source_slot_id}",
@@ -514,17 +517,18 @@ def post_season_builder_dry_run_build_contract(
                         "season_week_start": week_start,
                         "season_week_end": week_end,
                         "event_name": slot.tournament_name,
-                        "tour_level": None,
+                        "tour_level": source_template.tour_level if source_template else None,
                         "category": slot.category,
                         "host_country": slot.host_country,
                         "region": slot.region,
-                        "main_draw_size": None,
-                        "qualification_draw_size": None,
-                        "point_distribution_ref": None,
-                        "prize_money": None,
-                        "prestige": None,
+                        "main_draw_size": source_template.main_draw_size if source_template else None,
+                        "qualification_draw_size": source_template.qualification_draw_size if source_template else None,
+                        "point_distribution_ref": source_template.point_distribution_ref if source_template else None,
+                        "prize_money": source_template.prize_money if source_template else None,
+                        "prestige": source_template.prestige if source_template else None,
                         "duration_in_season_weeks": duration,
                         "source_template_id": payload.source_template_id,
+                        "source_template_ref": slot.source_template_id,
                         "source_type": payload.source_type,
                         "candidate_status": "planned",
                         "comparison_classification": "addition",
@@ -989,16 +993,35 @@ def post_season_builder_apply_create_only_command(
         week = int(candidate.get("season_week_start") or 1)
         persisted_events.append(SeasonCalendarEvent(
             event_id=f"EVT-{normalized_target.replace('/', '-')}-W{week:02d}-{idx:03d}",
-            season=normalized_target, season_week=week, calendar_year=None, year_week=week,
-            template_id=str(candidate.get("source_template_id") or payload.source_template_id),
-            event_name=str(candidate.get("event_name") or ""), category=str(candidate.get("category") or ""),
-            host_country=str(candidate.get("host_country") or "UNK")[:3].upper(), region=str(candidate.get("region") or "UNKNOWN"),
+            season=normalized_target,
+            season_week=week,
+            calendar_year=None,
+            year_week=week,
+            template_id=str(candidate.get("source_template_ref") or candidate.get("source_template_id") or payload.source_template_id),
+            event_name=str(candidate.get("event_name") or ""),
+            category=str(candidate.get("category") or ""),
+            tour_level=candidate.get("tour_level"),
+            host_country=str(candidate.get("host_country") or "UNK")[:3].upper(),
+            region=str(candidate.get("region") or "UNKNOWN"),
             duration_in_season_weeks=int(candidate.get("duration_in_season_weeks") or 1),
-            end_season_week=int(candidate.get("season_week_end") or week), main_draw_size=1,
+            end_season_week=int(candidate.get("season_week_end") or week),
+            main_draw_size=max(1, int(candidate.get("main_draw_size") or 1)),
+            qualification_draw_size=int(candidate.get("qualification_draw_size") or 0),
+            point_distribution_ref=candidate.get("point_distribution_ref"),
+            prize_money=int(candidate.get("prize_money") or 0),
+            prestige=float(candidate.get("prestige") or 0.0),
+            event_level_overrides={"source_slot_id": str(candidate.get("source_slot_id") or "")},
         ))
 
     created = SeasonCalendar(season=normalized_target, events=persisted_events)
     registry = calendar_service._load_registry()
+    if normalized_target in registry.calendars_by_season:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=SeasonBuilderApplyCreateOnlyCommandResponse(
+            enabled=True, can_execute=False, can_mutate=False, applied=False, target_season_label=normalized_target,
+            validation_errors=["Target season calendar already exists; create-only apply cannot modify existing calendars."],
+            validation_warnings=warnings, dry_run_identity=dry_run_identity, audit_preview=audit_preview,
+            message="Create-only apply rejected; no mutation performed.",
+        ).model_dump())
     next_calendars = dict(registry.calendars_by_season)
     next_calendars[normalized_target] = created
     calendar_service._save_registry(type(registry)(calendars_by_season=next_calendars))

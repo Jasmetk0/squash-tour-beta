@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { PostApplyCalendarVerificationPanel } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, PostApplyCalendarVerificationPanel } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -1010,14 +1010,23 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Create-only apply executed successfully.')).toBeInTheDocument()
     expect(screen.getByText('Create-only apply reported success. Verify the refreshed target calendar below.')).toBeInTheDocument()
     expect(await screen.findByText('Post-apply calendar verification passed.')).toBeInTheDocument()
+    expect(screen.getByText('Apply response validation preview')).toBeInTheDocument()
+    expect(screen.getByText('This preview comes from the create-only apply response. The separate target calendar validation panel may refetch the latest persisted state.')).toBeInTheDocument()
+    expect(screen.getAllByText('Validation status: warnings').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Calendar exists: true').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Read-only: true').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Event count: 1').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Error count: 0').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Warning count: 1').length).toBeGreaterThan(0)
+    expect(screen.getByText('Issue codes (first 10): calendar_validation_demo_warning')).toBeInTheDocument()
     await waitFor(() => expect(api.getSeasonCalendarValidation).toHaveBeenCalledWith('2000/01'))
     expect(screen.getByText('Target calendar validation')).toBeInTheDocument()
     expect(screen.getByText('Read-only persisted target calendar validation. No mutation path is available in this panel.')).toBeInTheDocument()
-    expect(screen.getByText('Read-only: true')).toBeInTheDocument()
-    expect(screen.getByText('Calendar exists: true')).toBeInTheDocument()
-    expect(screen.getByText('Validation status: warnings')).toBeInTheDocument()
-    expect(screen.getByText('Error count: 0')).toBeInTheDocument()
-    expect(screen.getByText('Warning count: 1')).toBeInTheDocument()
+    expect(screen.getAllByText('Read-only: true').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Calendar exists: true').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Validation status: warnings').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Error count: 0').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Warning count: 1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Event count: 1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('First season week: 1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Last season week: 1').length).toBeGreaterThan(0)
@@ -2180,6 +2189,36 @@ describe('Module 17 pages through routes', () => {
     expect(screen.queryByText('Create-only calendar apply reported success.')).not.toBeInTheDocument()
     expect(screen.queryByText('Create-only apply did not report applied=true; calendar verification is informational only.')).not.toBeInTheDocument()
     expect(screen.queryByText('Post-apply calendar verification passed.')).not.toBeInTheDocument()
+    expect(screen.getByText('No create-only apply validation preview yet.')).toBeInTheDocument()
+    expect(screen.queryByText('Issue codes (first 10): calendar_validation_demo_warning')).not.toBeInTheDocument()
+  })
+
+  it('shows empty apply-response validation preview message for non-applied response payload', () => {
+    render(
+      <ApplyResponseValidationPreviewPanel
+        applyMutationResult={{
+          command: 'season_builder_apply_create_only',
+          enabled: true,
+          can_execute: true,
+          can_mutate: true,
+          applied: false,
+          target_season_label: '2000/01',
+          validation_errors: [],
+          validation_warnings: [],
+          created_calendar_summary: {},
+          created_event_preview: [],
+          created_calendar_identity: {},
+          created_calendar_validation_preview: {},
+          apply_gate_summary: {},
+          applied_event_count: 0,
+          dry_run_identity: {},
+          audit_preview: {},
+          message: 'Command completed without applying.'
+        }}
+      />
+    )
+    expect(screen.getByText('No created-calendar validation preview was returned with this apply response.')).toBeInTheDocument()
+    expect(screen.queryByText('Validation status: warnings')).not.toBeInTheDocument()
   })
 
   it('keeps post-apply verification pending while refreshed data is fetching', () => {

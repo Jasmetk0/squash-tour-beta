@@ -771,6 +771,69 @@ def post_season_builder_dry_run_build_contract(
         dry_run_result_preview_result_metadata["dry_run_result_fingerprint"] = dry_run_result_fingerprint
         dry_run_result_preview_result_metadata["dry_run_result_id"] = dry_run_result_id
 
+    validation_summary_status = str(validation_summary.get("status") or "unknown").strip()
+    has_preflight_fingerprint = bool(payload.preflight_fingerprint and payload.preflight_fingerprint.strip())
+    has_reviewed_diff_id = bool(payload.reviewed_diff_id and payload.reviewed_diff_id.strip())
+    has_dry_run_result_fingerprint = isinstance(dry_run_result_fingerprint, str) and dry_run_result_fingerprint.startswith("drf_")
+    has_dry_run_result_id = isinstance(dry_run_result_id, str) and dry_run_result_id.startswith("drr_")
+    plan_available = bool(plan_readiness.get("read_only_plan_available"))
+
+    identity_items: list[dict[str, str]] = [
+        {
+            "area": "preflight_fingerprint",
+            "status": "OK" if has_preflight_fingerprint else "Missing",
+            "message": "Preflight fingerprint is present." if has_preflight_fingerprint else "Preflight fingerprint is missing.",
+        },
+        {
+            "area": "reviewed_diff_id",
+            "status": "OK" if has_reviewed_diff_id else "Missing",
+            "message": "Reviewed diff id is present." if has_reviewed_diff_id else "Reviewed diff id is missing.",
+        },
+        {
+            "area": "dry_run_result_fingerprint",
+            "status": "OK" if has_dry_run_result_fingerprint else "Missing",
+            "message": "Dry-run result fingerprint is present." if has_dry_run_result_fingerprint else "Dry-run result fingerprint is missing or invalid.",
+        },
+        {
+            "area": "dry_run_result_id",
+            "status": "OK" if has_dry_run_result_id else "Missing",
+            "message": "Dry-run result id is present." if has_dry_run_result_id else "Dry-run result id is missing or invalid.",
+        },
+        {
+            "area": "validation_summary",
+            "status": "Blocked" if validation_summary_status == "blocking" else ("Info" if validation_summary_status == "warnings" else "OK"),
+            "message": f"Validation summary status is '{validation_summary_status}'.",
+        },
+        {
+            "area": "plan_readiness",
+            "status": "OK" if plan_available else "Blocked",
+            "message": "Read-only plan is available." if plan_available else "Read-only plan is not available.",
+        },
+        {
+            "area": "mutation_state",
+            "status": "Blocked",
+            "message": "Mutation remains disabled; this checklist is reference-only.",
+        },
+    ]
+
+    missing_identity = not all(
+        [has_preflight_fingerprint, has_reviewed_diff_id, has_dry_run_result_fingerprint, has_dry_run_result_id]
+    )
+    blocked_reference = validation_summary_status == "blocking" or not plan_available
+    identity_status = "missing_identity" if missing_identity else ("blocked_reference" if blocked_reference else "ready_reference")
+    dry_run_result_preview["identity_readiness"] = {
+        "status": identity_status,
+        "items": identity_items,
+        "future_command_reference": {
+            "preflight_fingerprint": payload.preflight_fingerprint,
+            "reviewed_diff_id": payload.reviewed_diff_id,
+            "dry_run_result_fingerprint": dry_run_result_fingerprint,
+            "dry_run_result_id": dry_run_result_id,
+            "can_reference_future_command": identity_status == "ready_reference",
+            "mutation_still_disabled": True,
+        },
+    }
+
     return SeasonBuilderDryRunBuildResponse(
         enabled=False,
         can_execute=False,

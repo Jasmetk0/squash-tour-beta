@@ -292,6 +292,7 @@ describe('Module 17 pages through routes', () => {
         result_metadata: { preflight_fingerprint: payload.preflight_fingerprint, reviewed_diff_id: payload.reviewed_diff_id, source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: payload.overwrite_policy ?? null, target_calendar_exists: true, target_event_count: 1, comparison_performed: true, read_only: true, mutation_permitted: false, dry_run_result_fingerprint: 'drf_test_existing', dry_run_result_id: 'drr_test_existing' },
         validation_summary: { status: 'blocking', blocking_count: 1, warning_count: 3, info_count: 0, blocking_reasons: ['Existing target calendar requires explicit merge/overwrite policy before future mutation.'], warning_reasons: ['audit_reason will be required before execution is enabled in a future phase.', 'explicit_confirmation will be required before execution is enabled in a future phase.', 'mutation_scope will be required before execution is enabled in a future phase.'], info_messages: [], candidate_status_counts: { planned: 0, replacement: 0, conflict: 1, invalid: 0 }, conflict_type_counts: { week_conflicts: 0, slot_conflicts: 0, policy_conflicts: 1, validation_conflicts: 0 } },
         plan_readiness: { read_only_plan_available: true, has_blocking_issues: true, has_warnings: true, mutation_still_disabled: true, next_required_step: 'Review dry-run summary; execution remains disabled.' },
+        identity_readiness: { status: 'blocked_reference', items: [{ area: 'validation_summary', status: 'Blocked', message: "Validation summary status is 'blocking'." }, { area: 'mutation_state', status: 'Blocked', message: 'Mutation remains disabled; this checklist is reference-only.' }], future_command_reference: { preflight_fingerprint: payload.preflight_fingerprint, reviewed_diff_id: payload.reviewed_diff_id, dry_run_result_fingerprint: 'drf_test_existing', dry_run_result_id: 'drr_test_existing', can_reference_future_command: false, mutation_still_disabled: true } },
         dry_run_result_fingerprint: 'drf_test_existing',
         dry_run_result_id: 'drr_test_existing'
       },
@@ -743,6 +744,12 @@ describe('Module 17 pages through routes', () => {
     expect((await screen.findAllByText('dry_run_result_id')).length).toBeGreaterThan(0)
     expect(screen.getAllByText('drf_test_existing').length).toBeGreaterThan(0)
     expect(screen.getAllByText('drr_test_existing').length).toBeGreaterThan(0)
+    expect(screen.getByText('Dry-run identity readiness')).toBeInTheDocument()
+    expect(screen.getByText('Future command reference')).toBeInTheDocument()
+    expect(screen.getByText('blocked_reference')).toBeInTheDocument()
+    expect(screen.getByText('can_reference_future_command')).toBeInTheDocument()
+    expect(screen.getAllByText('mutation_still_disabled').length).toBeGreaterThan(0)
+    expect(screen.getByText('Mutation remains disabled; this checklist is reference-only.')).toBeInTheDocument()
     expect((await screen.findAllByText('explicit_confirmation_present')).length).toBeGreaterThan(0)
     expect((await screen.findAllByText('conflict_contract_preview_available')).length).toBeGreaterThan(0)
     expect(await screen.findByText('Raw disabled dry-run build contract JSON')).toBeInTheDocument()
@@ -1049,7 +1056,8 @@ describe('Module 17 pages through routes', () => {
         conflict_summary: { week_conflicts: [], slot_conflicts: [], policy_conflicts: [], validation_conflicts: [] },
         result_metadata: { preflight_fingerprint: 'pf_test_empty', reviewed_diff_id: 'rd_test_empty', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, target_calendar_exists: false, target_event_count: 0, comparison_performed: true, read_only: true, mutation_permitted: false, dry_run_result_fingerprint: 'drf_test_empty', dry_run_result_id: 'drr_test_empty' },
         validation_summary: { status: 'clean', blocking_count: 0, warning_count: 0, info_count: 0, blocking_reasons: [], warning_reasons: [], info_messages: [], candidate_status_counts: { planned: 0, replacement: 0, conflict: 0, invalid: 0 }, conflict_type_counts: { week_conflicts: 0, slot_conflicts: 0, policy_conflicts: 0, validation_conflicts: 0 } },
-        plan_readiness: { read_only_plan_available: true, has_blocking_issues: false, has_warnings: false, mutation_still_disabled: true, next_required_step: 'Review dry-run summary; execution remains disabled.' }
+        plan_readiness: { read_only_plan_available: true, has_blocking_issues: false, has_warnings: false, mutation_still_disabled: true, next_required_step: 'Review dry-run summary; execution remains disabled.' },
+        identity_readiness: { status: 'ready_reference', items: [{ area: 'preflight_fingerprint', status: 'OK', message: 'Preflight fingerprint is present.' }], future_command_reference: { preflight_fingerprint: 'pf_test_empty', reviewed_diff_id: 'rd_test_empty', dry_run_result_fingerprint: 'drf_test_empty', dry_run_result_id: 'drr_test_empty', can_reference_future_command: true, mutation_still_disabled: true } }
       },
       message: 'Dry-run build command contract exists, but execution is disabled in this phase.'
     })
@@ -1083,6 +1091,11 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Raw authoritative diff summary JSON')).toBeInTheDocument()
     expect(screen.getByText('No backend blocking reasons returned.')).toBeInTheDocument()
     expect(screen.getByText('No backend advisory notes returned.')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run identity readiness')).toBeInTheDocument()
+    expect(screen.getByText('ready_reference')).toBeInTheDocument()
+    expect(screen.getByText('can_reference_future_command')).toBeInTheDocument()
+    expect(screen.getAllByText('drf_test_empty').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('drr_test_empty').length).toBeGreaterThan(0)
     expect(screen.getAllByText('validation_errors count').length).toBeGreaterThan(0)
     expect(screen.getAllByText('0').length).toBeGreaterThan(0)
     expect(screen.getAllByText(/\"read_only\": true/).length).toBeGreaterThan(0)
@@ -1111,7 +1124,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Warning reasons')).toBeInTheDocument()
     expect(screen.getByText('Plan readiness')).toBeInTheDocument()
     expect(screen.getByText('Review dry-run summary; execution remains disabled.')).toBeInTheDocument()
-    expect(screen.getByText('mutation_still_disabled')).toBeInTheDocument()
+    expect(screen.getAllByText('mutation_still_disabled').length).toBeGreaterThan(0)
     expect(screen.getByText('No dry-run warning reasons returned.')).toBeInTheDocument()
     expect(screen.getByText('Dry-run generation is not implemented in this phase.')).toBeInTheDocument()
     expect(screen.getByText('Candidate event contract preview')).toBeInTheDocument()

@@ -643,6 +643,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
       <SectionCard title="Apply response validation preview">
         <ApplyResponseValidationPreviewPanel
           applyMutationResult={createOnlyApplyMutation.data}
+          issueCodeRegistryData={issueCodeRegistryQuery.data}
         />
       </SectionCard>
       <SectionCard title="Target calendar validation">

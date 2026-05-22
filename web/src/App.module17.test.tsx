@@ -1037,6 +1037,15 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('Warning count: 1').length).toBeGreaterThan(0)
     expect(screen.getByText('Apply response validation interpretation: Validation has warnings but no blocking errors.')).toBeInTheDocument()
     expect(screen.getByText('Issue codes (first 10): calendar_validation_demo_warning')).toBeInTheDocument()
+    expect(screen.getByText('Apply-response issue code metadata')).toBeInTheDocument()
+    const applyResponseMetadataRow = screen.getAllByText('calendar_validation_demo_warning')
+      .map((element) => element.closest('tr'))
+      .find((row) => row?.textContent?.includes('Demo warning used by frontend route test.'))
+    expect(applyResponseMetadataRow).not.toBeNull()
+    expect(applyResponseMetadataRow).toHaveTextContent('Calendar validation demo warning')
+    expect(applyResponseMetadataRow).toHaveTextContent('warning')
+    expect(applyResponseMetadataRow).toHaveTextContent('category')
+    expect(applyResponseMetadataRow).toHaveTextContent('Demo warning used by frontend route test.')
     await waitFor(() => expect(api.getSeasonCalendarValidation).toHaveBeenCalledWith('2000/01'))
     expect(screen.getByText('Target calendar validation')).toBeInTheDocument()
     expect(screen.getByText('Read-only persisted target calendar validation. No mutation path is available in this panel.')).toBeInTheDocument()
@@ -2479,6 +2488,37 @@ describe('Validation severity interpretation panels', () => {
       />
     )
     expect(screen.getByText('Apply response validation interpretation: Validation status is unavailable.')).toBeInTheDocument()
+  })
+
+  it('shows unknown apply-response issue code fallback when metadata is unavailable', () => {
+    render(
+      <ApplyResponseValidationPreviewPanel
+        applyMutationResult={{
+          created_calendar_validation_preview: {
+            issue_codes_first_10: ['unknown_apply_code']
+          }
+        } as never}
+        issueCodeRegistryData={{
+          read_only: true,
+          code_count: 1,
+          message: 'registry',
+          codes: [
+            {
+              code: 'known_code',
+              severity: 'warning',
+              title: 'Known code',
+              description: 'Known code description.',
+              field: null,
+              read_only: true
+            }
+          ]
+        }}
+      />
+    )
+    expect(screen.getByText('Apply-response issue code metadata')).toBeInTheDocument()
+    expect(screen.getByText('unknown_apply_code')).toBeInTheDocument()
+    expect(screen.getByText('Unknown issue code')).toBeInTheDocument()
+    expect(screen.getByText('No registry metadata available for this issue code.')).toBeInTheDocument()
   })
 })
 

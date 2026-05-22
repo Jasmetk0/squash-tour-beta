@@ -103,6 +103,12 @@ export type ApplyCommandReadinessItem = {
   status: ApplyCommandReadinessStatus
   message: string
 }
+export type CreateOnlyApplyGuardSummaryItem = {
+  key: string
+  label: string
+  passed: boolean
+  detail?: string
+}
 
 type BuildSourceTargetDiffDetailItemsArgs = {
   selectedTargetSeason: SeasonRegistryEntry | null
@@ -2053,6 +2059,11 @@ type CreateOnlyApplyDangerZonePreviewPanelProps = {
   targetCalendarExistsAfterApply: boolean
   createOnlyBlockedReason: string | null
 }
+type CreateOnlyApplyGuardSummaryPanelProps = {
+  items: CreateOnlyApplyGuardSummaryItem[]
+  canSubmitCreateOnlyApply: boolean
+  createOnlyBlockedReason: string | null
+}
 
 type PostApplyCalendarVerificationPanelProps = {
   targetCalendarData: SeasonCalendarBuildResponse | undefined
@@ -2268,6 +2279,32 @@ export function CreateOnlyApplyDangerZonePreviewPanel({
           </tbody></table>
         </>
       ) : null}
+    </>
+  )
+}
+
+export function CreateOnlyApplyGuardSummaryPanel({
+  items,
+  canSubmitCreateOnlyApply,
+  createOnlyBlockedReason
+}: CreateOnlyApplyGuardSummaryPanelProps): JSX.Element {
+  return (
+    <>
+      <p>Read-only create-only apply guard summary checklist.</p>
+      {canSubmitCreateOnlyApply
+        ? <p>Create-only command is currently enabled by all guards.</p>
+        : <p>Create-only command is currently blocked by one or more guards.</p>}
+      {createOnlyBlockedReason ? <p>{createOnlyBlockedReason}</p> : null}
+      <table><thead><tr><th scope="col">Guard key</th><th scope="col">Guard</th><th scope="col">Passed</th><th scope="col">Detail</th></tr></thead><tbody>
+        {items.map((item) => (
+          <tr key={item.key}>
+            <td>{item.key}</td>
+            <td>{item.label}</td>
+            <td>{item.passed ? 'yes' : 'no'}</td>
+            <td>{item.detail ?? '—'}</td>
+          </tr>
+        ))}
+      </tbody></table>
     </>
   )
 }

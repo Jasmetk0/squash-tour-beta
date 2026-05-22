@@ -583,23 +583,25 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Read-only disabled command contract check. This does not build, merge, overwrite, or apply anything.')).toBeInTheDocument()
     expect(screen.getAllByText('preflight_fingerprint').length).toBeGreaterThan(0)
     expect(screen.getAllByText('reviewed_diff_id').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('pf_test_existing').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('rd_test_existing').length).toBeGreaterThan(0)
-    expect(screen.getByText('Dry-run build command contract exists, but execution is disabled in this phase.')).toBeInTheDocument()
-    expect(screen.getByText('audit_reason will be required before execution is enabled in a future phase.')).toBeInTheDocument()
-    expect(screen.getByText('explicit_confirmation will be required before execution is enabled in a future phase.')).toBeInTheDocument()
-    expect(screen.getByText('mutation_scope will be required before execution is enabled in a future phase.')).toBeInTheDocument()
-    expect(screen.getAllByText('execution_enabled').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('explicit_confirmation_present').length).toBeGreaterThan(0)
-    expect(screen.getByText('Raw disabled dry-run build contract JSON')).toBeInTheDocument()
-    expect(screen.getByText('Execution remains disabled; this panel is not a build control.')).toBeInTheDocument()
-    expect(api.postSeasonBuilderDryRunBuild).toHaveBeenCalledWith(expect.objectContaining({
-      preflight_fingerprint: 'pf_test_existing',
-      reviewed_diff_id: 'rd_test_existing',
-      audit_reason: null,
-      explicit_confirmation: null,
-      mutation_scope: null
-    }))
+    await waitFor(() => {
+      expect(api.postSeasonBuilderDryRunBuild).toHaveBeenCalledWith(expect.objectContaining({
+        preflight_fingerprint: 'pf_test_existing',
+        reviewed_diff_id: 'rd_test_existing',
+        audit_reason: null,
+        explicit_confirmation: null,
+        mutation_scope: null
+      }))
+    })
+    expect((await screen.findAllByText('pf_test_existing')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('rd_test_existing')).length).toBeGreaterThan(0)
+    expect(await screen.findByText('Dry-run build command contract exists, but execution is disabled in this phase.')).toBeInTheDocument()
+    expect(await screen.findByText('audit_reason will be required before execution is enabled in a future phase.')).toBeInTheDocument()
+    expect(await screen.findByText('explicit_confirmation will be required before execution is enabled in a future phase.')).toBeInTheDocument()
+    expect(await screen.findByText('mutation_scope will be required before execution is enabled in a future phase.')).toBeInTheDocument()
+    expect((await screen.findAllByText('execution_enabled')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('explicit_confirmation_present')).length).toBeGreaterThan(0)
+    expect(await screen.findByText('Raw disabled dry-run build contract JSON')).toBeInTheDocument()
+    expect(await screen.findByText('Execution remains disabled; this panel is not a build control.')).toBeInTheDocument()
     expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith({ target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, requested_by: 'local-admin-preview' })
     api.postSeasonBuilderPreflight.mockImplementation(async (payload) => {
       const requestedPolicy = payload.overwrite_policy
@@ -718,8 +720,6 @@ describe('Module 17 pages through routes', () => {
     })
     expect((screen.getByLabelText('Future policy preview') as HTMLSelectElement).value).toBe('merge_preview')
     expect(await screen.findByText(/Merge policy preview is selected\./)).toBeInTheDocument()
-    expect(screen.getAllByText('pf_test_merge').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('rd_test_merge').length).toBeGreaterThan(0)
     await waitFor(() => {
       expect(api.postSeasonBuilderDryRunBuild).toHaveBeenCalledWith(expect.objectContaining({
         preflight_fingerprint: 'pf_test_merge',
@@ -727,6 +727,8 @@ describe('Module 17 pages through routes', () => {
         overwrite_policy: 'merge_preview'
       }))
     })
+    expect((await screen.findAllByText('pf_test_merge')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('rd_test_merge')).length).toBeGreaterThan(0)
     expect(screen.getByText('Backend advisory notes returned for this policy/source combination.')).toBeInTheDocument()
     expect(screen.getByText('Merge policy preview selected. Future implementation must still perform event-level backend diff before any merge command.')).toBeInTheDocument()
     expect(screen.getByText('No backend blocking reasons returned.')).toBeInTheDocument()

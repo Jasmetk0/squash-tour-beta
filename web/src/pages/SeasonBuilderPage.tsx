@@ -28,6 +28,7 @@ import {
   DisabledApplyCommandContractPanel,
   ApplyCommandReadinessSummaryPanel,
   CreateOnlyApplyReadinessPanel,
+  CreateOnlyApplyDangerZonePreviewPanel,
   DisabledDryRunReadinessSummaryPanel,
   ReadOnlyPreflightChecklistPanel,
   SelectionPreviewPanel,
@@ -430,6 +431,13 @@ export function AdminSeasonBuilderPage(): JSX.Element {
         <CreateOnlyApplyReadinessPanel
           queryEnabled={createOnlyApplyReadinessEnabled}
           query={{ isLoading: createOnlyApplyReadinessQuery.isLoading, error: createOnlyApplyReadinessQuery.error, data: createOnlyApplyReadinessQuery.data }}
+        />
+      </SectionCard>
+      <SectionCard title="Create-only apply danger-zone preview (disabled)">
+        <CreateOnlyApplyDangerZonePreviewPanel
+          readinessData={createOnlyApplyReadinessQuery.data}
+          selectedTargetSeasonLabel={selectedTargetSeasonLabel}
+          requiredConfirmationPhrase="I understand this will create a new season calendar."
         />
       </SectionCard>
 

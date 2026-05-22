@@ -2036,6 +2036,38 @@ type CreateOnlyApplyReadinessPanelProps = {
   }
 }
 
+type CreateOnlyApplyDangerZonePreviewPanelProps = {
+  readinessData: SeasonBuilderApplyCreateOnlyReadinessResponse | undefined
+  selectedTargetSeasonLabel: string
+  requiredConfirmationPhrase: string
+}
+
+export function CreateOnlyApplyDangerZonePreviewPanel({
+  readinessData,
+  selectedTargetSeasonLabel,
+  requiredConfirmationPhrase
+}: CreateOnlyApplyDangerZonePreviewPanelProps): JSX.Element {
+  const isBackendReadyForCreateOnly = readinessData?.can_execute_apply === true
+    && readinessData?.would_create_calendar === true
+    && readinessData?.can_mutate === false
+    && readinessData?.service_insert_applicable === false
+  return (
+    <>
+      <p>Danger-zone preview for future create-only apply. This section is display-only and disabled in this phase.</p>
+      <table><thead><tr><th scope="col">Requirement</th><th scope="col">Preview status</th></tr></thead><tbody>
+        <tr><td>Backend readiness satisfied</td><td>{isBackendReadyForCreateOnly ? 'yes' : 'no'}</td></tr>
+        <tr><td>Target season</td><td>{readinessData?.target_season_label ?? (selectedTargetSeasonLabel || '—')}</td></tr>
+        <tr><td>Required confirmation phrase</td><td>{requiredConfirmationPhrase}</td></tr>
+        <tr><td>Required mutation scope</td><td>create_only</td></tr>
+        <tr><td>Real apply endpoint status</td><td>not called from UI</td></tr>
+        <tr><td>Execution status</td><td>disabled in this UI phase</td></tr>
+        <tr><td>Audit persistence</td><td>not implemented / preview only</td></tr>
+      </tbody></table>
+      <p>No submit control is available in this danger-zone preview.</p>
+    </>
+  )
+}
+
 export function CreateOnlyApplyReadinessPanel({ queryEnabled, query }: CreateOnlyApplyReadinessPanelProps): JSX.Element {
   const formatValue = (value: unknown): string => {
     if (value === null || value === undefined) return '—'

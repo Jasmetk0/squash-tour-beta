@@ -3119,7 +3119,7 @@ export type SeasonBuilderApplyCreateOnlyCommandResponse = {
   validation_errors: string[]
   validation_warnings: string[]
   created_calendar_summary: Record<string, unknown>
-  created_event_preview: Record<string, unknown>
+  created_event_preview: Array<Record<string, unknown>>
   created_calendar_identity: Record<string, unknown>
   apply_gate_summary: Record<string, unknown>
   applied_event_count: number

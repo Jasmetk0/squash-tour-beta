@@ -282,6 +282,14 @@ export function AdminSeasonBuilderPage(): JSX.Element {
 
 
   const readinessValidationClear = (createOnlyApplyReadinessQuery.data?.validation_errors?.length ?? 0) === 0
+  const targetCalendarExistsStable = Boolean(targetCalendarQuery.data?.calendar) && !targetCalendarQuery.isFetching
+  const targetCalendarExistsAfterApply = createOnlyApplyMutation.data?.applied === true
+    && targetCalendarExistsStable
+  const createOnlyBlockedByExistingTarget = targetCalendarExistsStable || targetCalendarExistsAfterApply
+  const createOnlyBlockedReason = createOnlyBlockedByExistingTarget
+    ? 'Target calendar now exists. Create-only apply is locked out for this target.'
+    : null
+
   const canSubmitCreateOnlyApply = createOnlyApplyReadinessQuery.data?.can_execute_apply === true
     && createOnlyApplyReadinessQuery.data?.would_create_calendar === true
     && createOnlyApplyReadinessQuery.data?.can_mutate === false
@@ -290,6 +298,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     && dangerZoneMutationScope.trim() === 'create_only'
     && hasRequiredApplyIdentities
     && readinessValidationClear
+    && !createOnlyBlockedByExistingTarget
     && !createOnlyApplyMutation.isPending
 
   const handleConfirmCreateOnlyApply = (): void => {
@@ -513,6 +522,8 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           applyMutationStatus={createOnlyApplyMutation.status}
           applyMutationError={createOnlyApplyMutation.error}
           applyMutationResult={createOnlyApplyMutation.data}
+          targetCalendarExistsAfterApply={targetCalendarExistsAfterApply}
+          createOnlyBlockedReason={createOnlyBlockedReason}
         />
       </SectionCard>
       <SectionCard title="Post-apply calendar verification">
@@ -524,6 +535,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           readinessData={createOnlyApplyReadinessQuery.data}
           readinessFetching={createOnlyApplyReadinessQuery.isFetching}
           applyMutationResult={createOnlyApplyMutation.data}
+          targetCalendarExistsAfterApply={targetCalendarExistsAfterApply}
         />
       </SectionCard>
 

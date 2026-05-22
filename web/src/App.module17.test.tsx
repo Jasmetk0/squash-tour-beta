@@ -601,6 +601,13 @@ describe('Module 17 pages through routes', () => {
   })
 
   it('renders Season Builder read-only source selection preview', async () => {
+    api.getSeasonCalendar.mockResolvedValueOnce({
+      calendar: null,
+      summary: { event_count: 0, season_weeks_used: 0, first_event_week: null, last_event_week: null, world_tour_events: 0, elite_tour_events: 0, validation_warning_count: 0, validation_error_count: 0, persisted: false, calendar_exists: false },
+      metadata: null,
+      validation_warnings: [],
+      validation_errors: []
+    })
     renderAppAt('/admin/seasons/build')
     expect(await screen.findByRole('heading', { name: 'Season Builder' })).toBeInTheDocument()
     expect(screen.getByText('Read-only preflight foundation for future season creation workflows.')).toBeInTheDocument()
@@ -636,7 +643,6 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByRole('option', { name: 'No policy selected' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Merge policy preview' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Overwrite policy preview' })).toBeInTheDocument()
-    expect(await screen.findByText('Existing target calendar detected. Backend preflight will require an explicit future policy before any future build can be considered.')).toBeInTheDocument()
     expect(screen.getByText('Changing this selector re-runs read-only backend preflight only. It does not mutate any calendar.')).toBeInTheDocument()
     expect(screen.getByText('Source vs target preflight summary')).toBeInTheDocument()
     expect(screen.getByText('Read-only source/target diff detail')).toBeInTheDocument()
@@ -687,15 +693,11 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Local structural diff preview only. This is not an authoritative backend diff and does not enable apply actions.')).toBeInTheDocument()
     expect(screen.getByText('Read-only policy preview. No overwrite, merge, or build action is available on this page.')).toBeInTheDocument()
     expect(screen.getByText('Read-only inspection of the currently selected target season calendar.')).toBeInTheDocument()
-    expect(await screen.findByText('Calendar exists: Yes')).toBeInTheDocument()
-    expect(screen.getAllByText('Existing calendar detected.').length).toBeGreaterThan(0)
+    expect(await screen.findByText('Calendar exists: No')).toBeInTheDocument()
     expect(screen.getByText('Silent overwrite must never be allowed.')).toBeInTheDocument()
-    expect(screen.getByText('Merge/replace choice must be explicit and audited before any future command.')).toBeInTheDocument()
     expect(screen.getByText('Future build command must be explicit, audited, and reviewable.')).toBeInTheDocument()
-    expect(screen.getByText('Existing target calendar requires explicit audited overwrite/merge choice before any future build.')).toBeInTheDocument()
     expect(screen.getByText('Review read-only diff and backend validation before any future command.')).toBeInTheDocument()
     expect(screen.getByText('No build, overwrite, merge, or apply command is available from this page.')).toBeInTheDocument()
-    expect(screen.getByText('Existing target calendar requires future authoritative backend diff before any overwrite/merge command.')).toBeInTheDocument()
     expect(screen.getByText('Local diff detail is advisory only and must not replace authoritative backend validation.')).toBeInTheDocument()
     expect(screen.getByText('No diff, build, merge, overwrite, or apply command is executed from this page.')).toBeInTheDocument()
     expect(screen.getByText('Target and template week counts match.')).toBeInTheDocument()
@@ -722,7 +724,6 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('Season template source selected.').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Template selected.').length).toBeGreaterThan(0)
     expect(screen.getByText('Template week count matches target season week count.')).toBeInTheDocument()
-    expect(screen.getByText('Existing calendar detected; future build workflow must require explicit overwrite/merge choice.')).toBeInTheDocument()
     expect(screen.getByText('Planned; no concrete season calendar conflict diff is performed on this page.')).toBeInTheDocument()
     expect(screen.getByText('Planned; apply/replace actions are intentionally not executable from this page.')).toBeInTheDocument()
     expect(screen.getByText('No diff/apply command is executed from this page.')).toBeInTheDocument()
@@ -978,6 +979,12 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Create-only apply executed successfully.')).toBeInTheDocument()
     expect(screen.getByText('Create-only apply reported success. Verify the refreshed target calendar below.')).toBeInTheDocument()
     expect(await screen.findByText('Post-apply calendar verification passed.')).toBeInTheDocument()
+    expect(screen.getByText('Create-only command should now be unavailable for this target.')).toBeInTheDocument()
+    expect(screen.getByText('Target calendar now exists. Create-only apply is locked out for this target.')).toBeInTheDocument()
+    expect(screen.getByText('Use a future audited merge/overwrite workflow if changes are needed.')).toBeInTheDocument()
+    await waitFor(() => expect(executeCreateOnlyButton).toBeDisabled())
+    fireEvent.click(executeCreateOnlyButton)
+    await waitFor(() => expect(api.postSeasonBuilderApplyCreateOnlyCommand).toHaveBeenCalledTimes(1))
     expect(screen.getByText('target calendar exists')).toBeInTheDocument()
     expect(screen.getByText('applyMutationResult.applied_event_count')).toBeInTheDocument()
     expect(screen.getByText('target calendar event count')).toBeInTheDocument()
@@ -2046,6 +2053,13 @@ describe('Module 17 pages through routes', () => {
   })
 
   it('shows guarded create-only apply rejection and non-applied response safely', async () => {
+    api.getSeasonCalendar.mockResolvedValueOnce({
+      calendar: null,
+      summary: { event_count: 0, season_weeks_used: 0, first_event_week: null, last_event_week: null, world_tour_events: 0, elite_tour_events: 0, validation_warning_count: 0, validation_error_count: 0, persisted: false, calendar_exists: false },
+      metadata: null,
+      validation_warnings: [],
+      validation_errors: []
+    })
     renderAppAt('/admin/seasons/build')
     const confirmationInput = await screen.findByLabelText('Future confirmation phrase preview')
     const mutationScopeInput = screen.getByLabelText('Future create-only mutation scope preview')
@@ -2089,11 +2103,11 @@ describe('Module 17 pages through routes', () => {
       message: 'Command completed without applying.'
     })
     fireEvent.click(executeCreateOnlyButton)
-    await waitFor(() => expect(api.postSeasonBuilderApplyCreateOnlyCommand).toHaveBeenCalledTimes(2))
-    expect(await screen.findByText('Create-only apply response (not applied)')).toBeInTheDocument()
-    expect(screen.getByText('Command response did not report applied=true.')).toBeInTheDocument()
+    await waitFor(() => expect(api.postSeasonBuilderApplyCreateOnlyCommand).toHaveBeenCalledTimes(1))
+    expect(screen.getByText('Target calendar now exists. Create-only apply is locked out for this target.')).toBeInTheDocument()
+    expect(screen.queryByText('Command response did not report applied=true.')).not.toBeInTheDocument()
     expect(screen.queryByText('Create-only calendar apply reported success.')).not.toBeInTheDocument()
-    expect(screen.getByText('Create-only apply did not report applied=true; calendar verification is informational only.')).toBeInTheDocument()
+    expect(screen.queryByText('Create-only apply did not report applied=true; calendar verification is informational only.')).not.toBeInTheDocument()
     expect(screen.queryByText('Post-apply calendar verification passed.')).not.toBeInTheDocument()
   })
 
@@ -2132,6 +2146,7 @@ describe('Module 17 pages through routes', () => {
         readinessData={undefined}
         readinessFetching={false}
         applyMutationResult={applyResult}
+        targetCalendarExistsAfterApply={false}
       />
     )
     expect(screen.getByText('Post-apply verification pending refreshed target calendar data.')).toBeInTheDocument()
@@ -2152,6 +2167,7 @@ describe('Module 17 pages through routes', () => {
         readinessData={undefined}
         readinessFetching={false}
         applyMutationResult={applyResult}
+        targetCalendarExistsAfterApply={true}
       />
     )
     expect(screen.getByText('Post-apply calendar verification passed.')).toBeInTheDocument()

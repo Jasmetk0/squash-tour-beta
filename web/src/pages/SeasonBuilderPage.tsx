@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
-import { getSeasonCalendar, getSeasonRegistry, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderApplyCommandContract, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight } from '../api/client'
+import { getSeasonCalendar, getSeasonRegistry, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderApplyCommandContract, postSeasonBuilderApplyCreateOnlyReadiness, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight } from '../api/client'
 import { DetailList } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import {
@@ -27,6 +27,7 @@ import {
   DisabledDryRunBuildContractPanel,
   DisabledApplyCommandContractPanel,
   ApplyCommandReadinessSummaryPanel,
+  CreateOnlyApplyReadinessPanel,
   DisabledDryRunReadinessSummaryPanel,
   ReadOnlyPreflightChecklistPanel,
   SelectionPreviewPanel,
@@ -224,6 +225,27 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     enabled: disabledApplyCommandContractEnabled,
     retry: false
   })
+  const createOnlyApplyReadinessEnabled = disabledApplyCommandContractEnabled
+  const createOnlyApplyReadinessQuery = useQuery({
+    queryKey: [
+      'season-builder-apply-create-only-readiness',
+      selectedTargetSeasonLabel,
+      selectedSourceType,
+      selectedTemplateId,
+      selectedOverwritePolicy,
+      backendPreflightQuery.data?.preflight_fingerprint,
+      backendPreflightQuery.data?.reviewed_diff_id,
+      dryRunResultFingerprint,
+      dryRunResultId,
+      dryRunAuditReason,
+      dryRunExplicitConfirmation,
+      dryRunMutationScope
+    ],
+    queryFn: () => postSeasonBuilderApplyCreateOnlyReadiness(disabledApplyCommandContractPayload),
+    enabled: createOnlyApplyReadinessEnabled,
+    retry: false
+  })
+
   const applyCommandReadinessItems = useMemo(
     () => buildApplyCommandReadinessItems({
       dryRunResponse: disabledDryRunBuildQuery.data,
@@ -403,6 +425,14 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           query={{ isLoading: disabledApplyCommandContractQuery.isLoading, error: disabledApplyCommandContractQuery.error, data: disabledApplyCommandContractQuery.data }}
         />
       </SectionCard>
+
+      <SectionCard title="Create-only apply readiness">
+        <CreateOnlyApplyReadinessPanel
+          queryEnabled={createOnlyApplyReadinessEnabled}
+          query={{ isLoading: createOnlyApplyReadinessQuery.isLoading, error: createOnlyApplyReadinessQuery.error, data: createOnlyApplyReadinessQuery.data }}
+        />
+      </SectionCard>
+
       <SectionCard title="Apply command readiness summary">
         <ApplyCommandReadinessSummaryPanel items={applyCommandReadinessItems} />
       </SectionCard>

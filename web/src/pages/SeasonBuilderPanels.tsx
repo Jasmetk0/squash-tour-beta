@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import type {
   SeasonBuilderApplyCommandContractRequest,
   SeasonBuilderApplyCommandContractResponse,
+  SeasonBuilderApplyCreateOnlyReadinessResponse,
   SeasonBuilderDryRunBuildRequest,
   SeasonBuilderDryRunBuildResponse,
   SeasonBuilderPreflightRequest,
@@ -2022,6 +2023,62 @@ export function DisabledApplyCommandContractPanel({ queryEnabled, requestPayload
       ) : null}
       <p>Execution remains disabled; this panel is not an apply control.</p>
       <pre>{JSON.stringify(requestPayload, null, 2)}</pre>
+    </>
+  )
+}
+
+type CreateOnlyApplyReadinessPanelProps = {
+  queryEnabled: boolean
+  query: {
+    isLoading: boolean
+    error: unknown
+    data: SeasonBuilderApplyCreateOnlyReadinessResponse | undefined
+  }
+}
+
+export function CreateOnlyApplyReadinessPanel({ queryEnabled, query }: CreateOnlyApplyReadinessPanelProps): JSX.Element {
+  const formatValue = (value: unknown): string => (value === null || value === undefined ? '—' : String(value))
+  const shapeRecord = (value: unknown): Record<string, unknown> | null => value && typeof value === 'object' ? value as Record<string, unknown> : null
+  const previewList = (value: unknown): unknown[] => Array.isArray(value) ? value : []
+  const candidateSummary = shapeRecord(query.data?.candidate_summary)
+  const applyGateSummary = shapeRecord(query.data?.apply_gate_summary)
+  const auditPreview = shapeRecord(query.data?.audit_preview)
+
+  return (
+    <>
+      <p>Read-only create-only apply readiness check. This panel does not execute apply or create a calendar.</p>
+      {!queryEnabled ? <p>Create-only apply readiness is waiting for required identities.</p> : null}
+      {queryEnabled && query.isLoading ? <p>Loading create-only apply readiness…</p> : null}
+      {queryEnabled && query.error ? <p className="error">Create-only apply readiness check failed: {formatApiError(query.error)}</p> : null}
+      {queryEnabled && query.data ? (
+        <>
+          <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+            <tr><td>enabled</td><td>{String(query.data.enabled)}</td></tr>
+            <tr><td>can_execute_apply</td><td>{String(query.data.can_execute_apply)}</td></tr>
+            <tr><td>can_mutate</td><td>{String(query.data.can_mutate)}</td></tr>
+            <tr><td>would_create_calendar</td><td>{String(query.data.would_create_calendar)}</td></tr>
+            <tr><td>service_insert_applicable</td><td>{String(query.data.service_insert_applicable)}</td></tr>
+            <tr><td>target_season_label</td><td>{query.data.target_season_label}</td></tr>
+            <tr><td>message</td><td>{query.data.message}</td></tr>
+          </tbody></table>
+          {!query.data.can_mutate ? <p>This panel is read-only because can_mutate is false.</p> : null}
+          {query.data.would_create_calendar ? <p>Backend readiness says create-only apply would be allowed, but no calendar is created from this panel.</p> : null}
+          <h4>Apply gate checklist</h4>
+          {applyGateSummary ? <table><thead><tr><th scope="col">gate</th><th scope="col">value</th></tr></thead><tbody>{Object.entries(applyGateSummary).map(([key, value]) => <tr key={`create-only-gate-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>)}</tbody></table> : <p>Apply gate summary is unavailable.</p>}
+          <h4>Candidate summary</h4>
+          {candidateSummary ? <table><thead><tr><th scope="col">field</th><th scope="col">value</th></tr></thead><tbody>{Object.entries(candidateSummary).map(([key, value]) => <tr key={`create-only-candidate-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>)}</tbody></table> : <p>Candidate summary is unavailable.</p>}
+          <p>Candidate count: {formatValue(candidateSummary?.candidate_count)}</p>
+          <p>First season week: {formatValue(candidateSummary?.first_season_week)}</p>
+          <p>Last season week: {formatValue(candidateSummary?.last_season_week)}</p>
+          <p>Categories: {previewList(candidateSummary?.categories).length ? previewList(candidateSummary?.categories).map((v) => formatValue(v)).join(', ') : '—'}</p>
+          <p>Tour levels: {previewList(candidateSummary?.tour_levels).length ? previewList(candidateSummary?.tour_levels).map((v) => formatValue(v)).join(', ') : '—'}</p>
+          <p>Audit persisted: {formatValue(auditPreview?.audit_persisted)}</p>
+          <h4>Validation warnings</h4>
+          {query.data.validation_warnings.length === 0 ? <p>No create-only readiness warnings returned.</p> : <ul>{query.data.validation_warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}
+          <h4>Validation errors</h4>
+          {query.data.validation_errors.length === 0 ? <p>No create-only readiness errors returned.</p> : <ul>{query.data.validation_errors.map((error) => <li key={error}>{error}</li>)}</ul>}
+        </>
+      ) : null}
     </>
   )
 }

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
-import { getSeasonCalendar, getSeasonCalendarValidation, getSeasonRegistry, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderApplyCommandContract, postSeasonBuilderApplyCreateOnlyCommand, postSeasonBuilderApplyCreateOnlyReadiness, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight } from '../api/client'
+import { getSeasonCalendar, getSeasonCalendarValidation, getSeasonCalendarValidationIssueCodes, getSeasonRegistry, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderApplyCommandContract, postSeasonBuilderApplyCreateOnlyCommand, postSeasonBuilderApplyCreateOnlyReadiness, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight } from '../api/client'
 import { DetailList } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import {
@@ -33,6 +33,7 @@ import {
   PostApplyCalendarVerificationPanel,
   ApplyResponseValidationPreviewPanel,
   TargetCalendarValidationPanel,
+  ValidationIssueCodeRegistryPanel,
   ApplyResponseVsTargetValidationComparisonPanel,
   PostApplyAuditStatusPanel,
   DisabledDryRunReadinessSummaryPanel,
@@ -80,6 +81,11 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     queryKey: ['season-builder-target-calendar-validation', selectedTargetSeasonLabel],
     queryFn: () => getSeasonCalendarValidation(selectedTargetSeasonLabel),
     enabled: targetCalendarQueryEnabled,
+    retry: false
+  })
+  const issueCodeRegistryQuery = useQuery({
+    queryKey: ['season-calendar-validation-issue-codes'],
+    queryFn: getSeasonCalendarValidationIssueCodes,
     retry: false
   })
   const hasTemplates = templates.length > 0
@@ -647,6 +653,16 @@ export function AdminSeasonBuilderPage(): JSX.Element {
             isFetching: targetCalendarValidationQuery.isFetching,
             error: targetCalendarValidationQuery.error,
             data: targetCalendarValidationQuery.data
+          }}
+        />
+      </SectionCard>
+      <SectionCard title="Validation issue code registry">
+        <ValidationIssueCodeRegistryPanel
+          query={{
+            isLoading: issueCodeRegistryQuery.isLoading,
+            isFetching: issueCodeRegistryQuery.isFetching,
+            error: issueCodeRegistryQuery.error,
+            data: issueCodeRegistryQuery.data
           }}
         />
       </SectionCard>

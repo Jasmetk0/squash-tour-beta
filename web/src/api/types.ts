@@ -1626,6 +1626,22 @@ export type SeasonCalendarValidationResponse = {
   message: string
 }
 
+export type SeasonCalendarValidationIssueCodeMetadata = {
+  code: string
+  severity: 'error' | 'warning' | 'info'
+  title: string
+  description: string
+  field?: string | null
+  read_only: boolean
+}
+
+export type SeasonCalendarValidationIssueCodeRegistryResponse = {
+  codes: SeasonCalendarValidationIssueCodeMetadata[]
+  code_count: number
+  read_only: boolean
+  message: string
+}
+
 export type SeasonCalendarMetadata = {
   season: string
   season_start_calendar_year: number

@@ -11,6 +11,7 @@ import type {
   SeasonBuilderPreflightResponse,
   SeasonCalendarBuildResponse,
   SeasonCalendarValidationResponse,
+  SeasonCalendarValidationIssueCodeRegistryResponse,
   SeasonRegistryEntry,
   SeasonTemplateSummary,
   TourSeasonsValidationResponse
@@ -2214,6 +2215,48 @@ type PostApplyAuditStatusPanelProps = {
 type ApplyResponseValidationPreviewPanelProps = {
   applyMutationResult: SeasonBuilderApplyCreateOnlyCommandResponse | undefined
 }
+
+type ValidationIssueCodeRegistryPanelProps = {
+  query: {
+    isLoading: boolean
+    isFetching: boolean
+    error: unknown
+    data: SeasonCalendarValidationIssueCodeRegistryResponse | undefined
+  }
+}
+
+export function ValidationIssueCodeRegistryPanel({ query }: ValidationIssueCodeRegistryPanelProps): JSX.Element {
+  if (query.isLoading) return <p>Loading validation issue code registry…</p>
+  if (query.error) return <p>Unable to load validation issue code registry: {formatApiError(query.error)}</p>
+  if (!query.data) return <p>No validation issue code registry data returned.</p>
+
+  const { codes, code_count, read_only, message } = query.data
+  const errorCount = codes.filter((code) => code.severity === 'error').length
+  const warningCount = codes.filter((code) => code.severity === 'warning').length
+  const infoCount = codes.filter((code) => code.severity === 'info').length
+
+  return <>
+    <p>Read-only validation issue code registry. These codes document validation output meanings.</p>
+    {query.isFetching ? <p>Refreshing issue code registry…</p> : null}
+    <p>Read-only: {String(read_only)}</p>
+    <p>Code count: {code_count}</p>
+    <p>{message}</p>
+    <h5>Issue code severity summary</h5>
+    <p>Error code count: {errorCount}</p>
+    <p>Warning code count: {warningCount}</p>
+    <p>Info code count: {infoCount}</p>
+    <h5>Issue code registry table</h5>
+    {codes.length === 0 ? <p>No issue codes returned.</p> : (
+      <table>
+        <thead><tr><th>code</th><th>severity</th><th>title</th><th>field</th><th>description</th></tr></thead>
+        <tbody>
+          {codes.map((item) => <tr key={item.code}><td>{item.code}</td><td>{item.severity}</td><td>{item.title}</td><td>{item.field ?? 'n/a'}</td><td>{item.description}</td></tr>)}
+        </tbody>
+      </table>
+    )}
+  </>
+}
+
 type ApplyResponseVsTargetValidationComparisonPanelProps = {
   applyMutationResult: SeasonBuilderApplyCreateOnlyCommandResponse | undefined
   targetValidationData: SeasonCalendarValidationResponse | undefined

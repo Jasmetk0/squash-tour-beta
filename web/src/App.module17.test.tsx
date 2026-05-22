@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, TargetCalendarValidationPanel } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, TargetCalendarValidationPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -44,6 +44,7 @@ const api = vi.hoisted(() => ({
   getSeasonCalendar: vi.fn(),
   getSeasonTemplates: vi.fn(),
   getSeasonCalendarValidation: vi.fn(),
+  getSeasonCalendarValidationIssueCodes: vi.fn(),
   getCategories: vi.fn(),
   getTournaments: vi.fn(),
   getTourSeasonsValidation: vi.fn(),
@@ -116,6 +117,16 @@ describe('Module 17 pages through routes', () => {
       seasons: Array.from({ length: 40 }, (_, index) => ({ season_start_year: 2000 + index, label: `${2000 + index}/${String((2001 + index) % 100).padStart(2, '0')}`, season_index: index, week_count: 61, season_week_start: 1, season_week_end: 61, year_week_start: 37, year_week_end: 36, status: 'registry_only' }))
     })
     api.getSeasonActivePlayers.mockResolvedValue({ players: [], summary: { total_active_players: 0 }, metadata: null, warnings: [] })
+    api.getSeasonCalendarValidationIssueCodes.mockResolvedValue({
+      read_only: true,
+      code_count: 3,
+      message: 'Stable read-only season calendar validation issue code registry.',
+      codes: [
+        { code: 'calendar_missing', severity: 'warning', title: 'Calendar missing', description: 'No persisted season calendar exists for the requested season.', field: null, read_only: true },
+        { code: 'main_draw_size_invalid', severity: 'error', title: 'Invalid main draw size', description: 'main_draw_size must be greater than 0.', field: 'main_draw_size', read_only: true },
+        { code: 'event_count', severity: 'info', title: 'Event count summary', description: 'Computed informational event count metric.', field: null, read_only: true }
+      ]
+    })
     api.getSeasonCalendarValidation.mockResolvedValue({
       season: '2000/01',
       calendar_exists: true,
@@ -1050,6 +1061,18 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('Tour levels values: WORLD_TOUR').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Host countries count: 1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Host countries values: ENG').length).toBeGreaterThan(0)
+    expect(api.getSeasonCalendarValidationIssueCodes).toHaveBeenCalled()
+    expect(screen.getByText('Validation issue code registry')).toBeInTheDocument()
+    expect(screen.getByText('Read-only validation issue code registry. These codes document validation output meanings.')).toBeInTheDocument()
+    expect(screen.getByText('Code count: 3')).toBeInTheDocument()
+    expect(screen.getByText('Error code count: 1')).toBeInTheDocument()
+    expect(screen.getByText('Warning code count: 1')).toBeInTheDocument()
+    expect(screen.getByText('Info code count: 1')).toBeInTheDocument()
+    expect(screen.getByText('calendar_missing')).toBeInTheDocument()
+    expect(screen.getByText('main_draw_size_invalid')).toBeInTheDocument()
+    expect(screen.getAllByText('event_count').length).toBeGreaterThan(0)
+    expect(screen.getByText('Invalid main draw size')).toBeInTheDocument()
+    expect(screen.getByText('main_draw_size')).toBeInTheDocument()
     expect(screen.getByText('Apply response vs target validation comparison')).toBeInTheDocument()
     expect(await screen.findByText('Apply-response validation preview matches refetched target validation.')).toBeInTheDocument()
     expect(screen.getByText('Both validation sources report the same validation severity.')).toBeInTheDocument()
@@ -2404,6 +2427,24 @@ describe('Validation severity interpretation panels', () => {
       />
     )
     expect(screen.getByText('Apply response validation interpretation: Validation status is unavailable.')).toBeInTheDocument()
+  })
+})
+
+
+describe('ValidationIssueCodeRegistryPanel', () => {
+  it('shows loading state', () => {
+    render(<ValidationIssueCodeRegistryPanel query={{ isLoading: true, isFetching: false, error: null, data: undefined }} />)
+    expect(screen.getByText('Loading validation issue code registry…')).toBeInTheDocument()
+  })
+
+  it('shows error state', () => {
+    render(<ValidationIssueCodeRegistryPanel query={{ isLoading: false, isFetching: false, error: new Error('boom'), data: undefined }} />)
+    expect(screen.getByText(/Unable to load validation issue code registry:/)).toBeInTheDocument()
+  })
+
+  it('shows empty registry state', () => {
+    render(<ValidationIssueCodeRegistryPanel query={{ isLoading: false, isFetching: false, error: null, data: { read_only: true, code_count: 0, message: 'empty', codes: [] } }} />)
+    expect(screen.getByText('No issue codes returned.')).toBeInTheDocument()
   })
 })
 

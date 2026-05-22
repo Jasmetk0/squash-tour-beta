@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, TargetCalendarValidationPanel } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -1023,6 +1023,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('Event count: 1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Error count: 0').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Warning count: 1').length).toBeGreaterThan(0)
+    expect(screen.getByText('Apply response validation interpretation: Validation has warnings but no blocking errors.')).toBeInTheDocument()
     expect(screen.getByText('Issue codes (first 10): calendar_validation_demo_warning')).toBeInTheDocument()
     await waitFor(() => expect(api.getSeasonCalendarValidation).toHaveBeenCalledWith('2000/01'))
     expect(screen.getByText('Target calendar validation')).toBeInTheDocument()
@@ -1032,6 +1033,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('Validation status: warnings').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Error count: 0').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Warning count: 1').length).toBeGreaterThan(0)
+    expect(screen.getByText('Target validation interpretation: Validation has warnings but no blocking errors.')).toBeInTheDocument()
     expect(screen.getAllByText('Event count: 1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('First season week: 1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Last season week: 1').length).toBeGreaterThan(0)
@@ -1043,6 +1045,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('Host countries values: ENG').length).toBeGreaterThan(0)
     expect(screen.getByText('Apply response vs target validation comparison')).toBeInTheDocument()
     expect(await screen.findByText('Apply-response validation preview matches refetched target validation.')).toBeInTheDocument()
+    expect(screen.getByText('Both validation sources report the same validation severity.')).toBeInTheDocument()
     expect(screen.getAllByText('validation_status').length).toBeGreaterThan(0)
     expect(screen.getAllByText('event_count').length).toBeGreaterThan(0)
     expect(screen.getAllByText('error_count').length).toBeGreaterThan(0)
@@ -2297,6 +2300,69 @@ describe('Module 17 pages through routes', () => {
       />
     )
     expect(screen.getByText('Post-apply calendar verification passed.')).toBeInTheDocument()
+  })
+})
+
+describe('Validation severity interpretation panels', () => {
+  it('shows clean interpretation for clean status with zero counts', () => {
+    render(
+      <TargetCalendarValidationPanel
+        queryEnabled
+        query={{
+          isLoading: false,
+          isFetching: false,
+          error: null,
+          data: {
+            season: '2000/01',
+            calendar_exists: true,
+            validation_summary: {
+              status: 'clean',
+              error_count: 0,
+              warning_count: 0,
+              info_count: 0,
+              event_count: 0,
+              first_season_week: null,
+              last_season_week: null,
+              categories: { count: 0, values: [] },
+              tour_levels: { count: 0, values: [] },
+              host_countries: { count: 0, values: [] }
+            },
+            issues: [],
+            read_only: true,
+            message: 'ok'
+          }
+        }}
+      />
+    )
+    expect(screen.getByText('Target validation interpretation: Validation is clean.')).toBeInTheDocument()
+  })
+
+  it('shows blocking-errors interpretation when apply preview has errors', () => {
+    render(
+      <ApplyResponseValidationPreviewPanel
+        applyMutationResult={{
+          created_calendar_validation_preview: {
+            validation_status: 'errors',
+            error_count: 1,
+            warning_count: 0
+          }
+        } as never}
+      />
+    )
+    expect(screen.getByText('Apply response validation interpretation: Validation has blocking errors.')).toBeInTheDocument()
+  })
+
+  it('shows unavailable interpretation for malformed apply preview status/counts', () => {
+    render(
+      <ApplyResponseValidationPreviewPanel
+        applyMutationResult={{
+          created_calendar_validation_preview: {
+            validation_status: 'mystery'
+          }
+        } as never}
+      />
+    )
+    expect(screen.getByText('Apply response validation interpretation: Validation status is unavailable.')).toBeInTheDocument()
   })
 })
 

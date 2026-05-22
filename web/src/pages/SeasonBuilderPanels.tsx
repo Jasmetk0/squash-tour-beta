@@ -1452,6 +1452,7 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
   const generationDesignPreview = query.data?.generation_design_preview
   const candidateEventContractPreview = query.data?.candidate_event_contract_preview
   const conflictContractPreview = query.data?.conflict_contract_preview
+  const dryRunResultContractPreview = query.data?.dry_run_result_contract_preview
   const generationDesignPreviewRecord = generationDesignPreview && typeof generationDesignPreview === 'object'
     ? generationDesignPreview as Record<string, unknown>
     : null
@@ -1460,6 +1461,9 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
     : null
   const conflictContractPreviewRecord = conflictContractPreview && typeof conflictContractPreview === 'object'
     ? conflictContractPreview as Record<string, unknown>
+    : null
+  const dryRunResultContractPreviewRecord = dryRunResultContractPreview && typeof dryRunResultContractPreview === 'object'
+    ? dryRunResultContractPreview as Record<string, unknown>
     : null
   const shapeRecord = (value: unknown): Record<string, unknown> | null => value && typeof value === 'object' ? value as Record<string, unknown> : null
   const previewList = (value: unknown): unknown[] => Array.isArray(value) ? value : []
@@ -1515,6 +1519,7 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
               <tr><td>generation_design_preview_available</td><td>{formatValue(auditPreview.generation_design_preview_available)}</td></tr>
               <tr><td>candidate_event_contract_preview_available</td><td>{formatValue(auditPreview.candidate_event_contract_preview_available)}</td></tr>
               <tr><td>conflict_contract_preview_available</td><td>{formatValue(auditPreview.conflict_contract_preview_available)}</td></tr>
+              <tr><td>dry_run_result_contract_preview_available</td><td>{formatValue(auditPreview.dry_run_result_contract_preview_available)}</td></tr>
             </tbody>
           </table>
           <h4>Future dry-run generation design preview</h4>
@@ -1602,6 +1607,34 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
               {shapeRecord(conflictContractPreviewRecord.validation_conflict_shape) ? <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>{Object.entries(shapeRecord(conflictContractPreviewRecord.validation_conflict_shape) ?? {}).map(([key, value]) => <tr key={`validation-conflict-shape-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>)}</tbody></table> : <p>Validation conflict shape is unavailable.</p>}
             </>
           ) : <p>Conflict contract preview is unavailable.</p>}
+          <h4>Dry-run result contract preview</h4>
+          {dryRunResultContractPreviewRecord ? (
+            <>
+              <table>
+                <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+                <tbody>
+                  <tr><td>status</td><td>{formatValue(dryRunResultContractPreviewRecord.status)}</td></tr>
+                  <tr><td>will_return_real_result</td><td>{formatValue(dryRunResultContractPreviewRecord.will_return_real_result)}</td></tr>
+                  <tr><td>blocked_reason</td><td>{formatValue(dryRunResultContractPreviewRecord.blocked_reason)}</td></tr>
+                </tbody>
+              </table>
+              <h5>Structural summary preview</h5>
+              {shapeRecord(dryRunResultContractPreviewRecord.structural_summary) ? <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>{Object.entries(shapeRecord(dryRunResultContractPreviewRecord.structural_summary) ?? {}).map(([key, value]) => <tr key={`dry-run-structural-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>)}</tbody></table> : <p>Structural summary preview is unavailable.</p>}
+              <h5>Conflict summary preview</h5>
+              {shapeRecord(dryRunResultContractPreviewRecord.conflict_summary) ? (
+                <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+                  <tr><td>week_conflicts count</td><td>{previewList(shapeRecord(dryRunResultContractPreviewRecord.conflict_summary)?.week_conflicts).length}</td></tr>
+                  <tr><td>slot_conflicts count</td><td>{previewList(shapeRecord(dryRunResultContractPreviewRecord.conflict_summary)?.slot_conflicts).length}</td></tr>
+                  <tr><td>policy_conflicts count</td><td>{previewList(shapeRecord(dryRunResultContractPreviewRecord.conflict_summary)?.policy_conflicts).length}</td></tr>
+                  <tr><td>validation_conflicts count</td><td>{previewList(shapeRecord(dryRunResultContractPreviewRecord.conflict_summary)?.validation_conflicts).length}</td></tr>
+                </tbody></table>
+              ) : <p>Conflict summary preview is unavailable.</p>}
+              <h5>Result metadata preview</h5>
+              {shapeRecord(dryRunResultContractPreviewRecord.result_metadata) ? <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>{Object.entries(shapeRecord(dryRunResultContractPreviewRecord.result_metadata) ?? {}).map(([key, value]) => <tr key={`dry-run-result-meta-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>)}</tbody></table> : <p>Result metadata preview is unavailable.</p>}
+              <h5>Candidate events preview</h5>
+              {previewList(dryRunResultContractPreviewRecord.candidate_events).length === 0 ? <p>No candidate events returned in this contract-only phase.</p> : <p>{previewList(dryRunResultContractPreviewRecord.candidate_events).length} candidate events included in preview.</p>}
+            </>
+          ) : <p>Dry-run result contract preview is unavailable.</p>}
           <h4>Current disabled dry-run request payload</h4>
           <table>
             <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>

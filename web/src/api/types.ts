@@ -3054,5 +3054,6 @@ export type SeasonBuilderDryRunBuildResponse = {
   generation_design_preview: Record<string, unknown>
   candidate_event_contract_preview: Record<string, unknown>
   conflict_contract_preview: Record<string, unknown>
+  dry_run_result_contract_preview: Record<string, unknown>
   message: string
 }

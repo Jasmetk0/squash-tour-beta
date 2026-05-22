@@ -411,6 +411,33 @@ def post_season_builder_dry_run_build_contract(
         },
         "blocked_reason": "Conflict computation is not implemented in this phase.",
     }
+    dry_run_result_contract_preview = {
+        "status": "contract_preview_only",
+        "will_return_real_result": False,
+        "candidate_events": [],
+        "structural_summary": {
+            "candidate_count": 0,
+            "target_event_count": None,
+            "additions_count": 0,
+            "replacement_count": 0,
+            "conflict_count": 0,
+            "invalid_count": 0,
+        },
+        "conflict_summary": {
+            "week_conflicts": [],
+            "slot_conflicts": [],
+            "policy_conflicts": [],
+            "validation_conflicts": [],
+        },
+        "result_metadata": {
+            "preflight_fingerprint": payload.preflight_fingerprint,
+            "reviewed_diff_id": payload.reviewed_diff_id,
+            "execution_enabled": False,
+            "read_only": True,
+            "mutation_permitted": False,
+        },
+        "blocked_reason": "Dry-run result generation is not implemented in this phase.",
+    }
 
     return SeasonBuilderDryRunBuildResponse(
         enabled=False,
@@ -444,8 +471,10 @@ def post_season_builder_dry_run_build_contract(
             "generation_design_preview_available": True,
             "candidate_event_contract_preview_available": True,
             "conflict_contract_preview_available": True,
+            "dry_run_result_contract_preview_available": True,
         },
         generation_design_preview=generation_design_preview,
         candidate_event_contract_preview=candidate_event_contract_preview,
         conflict_contract_preview=conflict_contract_preview,
+        dry_run_result_contract_preview=dry_run_result_contract_preview,
     )

@@ -89,6 +89,7 @@ def test_builder_dry_run_build_minimal_contract(tmp_path: Path) -> None:
         assert body["audit_preview"]["generation_design_preview_available"] is True
         assert body["audit_preview"]["candidate_event_contract_preview_available"] is True
         assert body["audit_preview"]["conflict_contract_preview_available"] is True
+        assert body["audit_preview"]["dry_run_result_contract_preview_available"] is True
         design = body["generation_design_preview"]
         assert design["status"] == "design_preview_only"
         assert design["execution_enabled"] is False
@@ -153,6 +154,21 @@ def test_builder_dry_run_build_minimal_contract(tmp_path: Path) -> None:
         assert "message" in validation_conflict_shape
         assert "severity" in validation_conflict_shape
         assert conflict_contract_preview["blocked_reason"] == "Conflict computation is not implemented in this phase."
+        dry_run_result_preview = body["dry_run_result_contract_preview"]
+        assert dry_run_result_preview["status"] == "contract_preview_only"
+        assert dry_run_result_preview["will_return_real_result"] is False
+        assert dry_run_result_preview["candidate_events"] == []
+        assert dry_run_result_preview["structural_summary"]["candidate_count"] == 0
+        assert dry_run_result_preview["structural_summary"]["additions_count"] == 0
+        assert dry_run_result_preview["structural_summary"]["conflict_count"] == 0
+        assert dry_run_result_preview["conflict_summary"]["week_conflicts"] == []
+        assert dry_run_result_preview["conflict_summary"]["policy_conflicts"] == []
+        assert dry_run_result_preview["result_metadata"]["preflight_fingerprint"] == payload["preflight_fingerprint"]
+        assert dry_run_result_preview["result_metadata"]["reviewed_diff_id"] == payload["reviewed_diff_id"]
+        assert dry_run_result_preview["result_metadata"]["execution_enabled"] is False
+        assert dry_run_result_preview["result_metadata"]["read_only"] is True
+        assert dry_run_result_preview["result_metadata"]["mutation_permitted"] is False
+        assert dry_run_result_preview["blocked_reason"] == "Dry-run result generation is not implemented in this phase."
 
 
 def test_builder_dry_run_build_missing_fingerprint(tmp_path: Path) -> None:
@@ -200,6 +216,8 @@ def test_builder_dry_run_build_full_future_metadata(tmp_path: Path) -> None:
         assert body["candidate_event_contract_preview"]["candidate_count"] == 0
         assert "conflict_contract_preview" in body
         assert body["conflict_contract_preview"]["conflict_count"] == 0
+        assert "dry_run_result_contract_preview" in body
+        assert body["dry_run_result_contract_preview"]["candidate_events"] == []
         assert "audit_reason will be required before execution is enabled in a future phase." not in body["validation_warnings"]
         assert "explicit_confirmation will be required before execution is enabled in a future phase." not in body["validation_warnings"]
         assert "mutation_scope will be required before execution is enabled in a future phase." not in body["validation_warnings"]

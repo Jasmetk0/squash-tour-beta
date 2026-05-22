@@ -230,7 +230,8 @@ describe('Module 17 pages through routes', () => {
           mutation_scope: hasAllMetadata ? 'merge_preview' : payload.mutation_scope,
           generation_design_preview_available: true,
           candidate_event_contract_preview_available: true,
-          conflict_contract_preview_available: true
+          conflict_contract_preview_available: true,
+          dry_run_result_contract_preview_available: true
         },
         generation_design_preview: {
           status: 'design_preview_only',
@@ -269,6 +270,15 @@ describe('Module 17 pages through routes', () => {
         policy_conflict_shape: { conflict_id: 'string', conflict_type: 'policy_violation', policy: 'merge_preview | overwrite_preview | create_only_preview | repair_preview', candidate_id: 'string | null', message: 'string', severity: 'info | warning | blocking' },
         validation_conflict_shape: { conflict_id: 'string', conflict_type: 'validation_error', field: 'string', candidate_id: 'string | null', message: 'string', severity: 'warning | blocking' },
         blocked_reason: 'Conflict computation is not implemented in this phase.'
+      },
+      dry_run_result_contract_preview: {
+        status: 'contract_preview_only',
+        will_return_real_result: false,
+        candidate_events: [],
+        structural_summary: { candidate_count: 0, target_event_count: null, additions_count: 0, replacement_count: 0, conflict_count: 0, invalid_count: 0 },
+        conflict_summary: { week_conflicts: [], slot_conflicts: [], policy_conflicts: [], validation_conflicts: [] },
+        result_metadata: { preflight_fingerprint: payload.preflight_fingerprint, reviewed_diff_id: payload.reviewed_diff_id, execution_enabled: false, read_only: true, mutation_permitted: false },
+        blocked_reason: 'Dry-run result generation is not implemented in this phase.'
       },
         message: 'Dry-run build command contract exists, but execution is disabled in this phase.'
       }
@@ -675,11 +685,27 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByText('season_week_start')).toBeInTheDocument()
     expect(await screen.findByText('candidate_status')).toBeInTheDocument()
     expect(await screen.findByText('Structural summary shape')).toBeInTheDocument()
-    expect(await screen.findByText('additions_count')).toBeInTheDocument()
+    expect((await screen.findAllByText('additions_count')).length).toBeGreaterThan(0)
     expect((await screen.findAllByText('conflict_count')).length).toBeGreaterThan(0)
     expect(await screen.findByText('Conflict summary shape')).toBeInTheDocument()
     expect(await screen.findByText('week_conflicts')).toBeInTheDocument()
     expect(await screen.findByText('policy_conflicts')).toBeInTheDocument()
+    expect(await screen.findByText('Dry-run result contract preview')).toBeInTheDocument()
+    expect(await screen.findByText('will_return_real_result')).toBeInTheDocument()
+    expect(await screen.findByText('Dry-run result generation is not implemented in this phase.')).toBeInTheDocument()
+    expect(await screen.findByText('Structural summary preview')).toBeInTheDocument()
+    expect((await screen.findAllByText('additions_count')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('replacement_count')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('invalid_count')).length).toBeGreaterThan(0)
+    expect(await screen.findByText('Conflict summary preview')).toBeInTheDocument()
+    expect(await screen.findByText('week_conflicts count')).toBeInTheDocument()
+    expect(await screen.findByText('policy_conflicts count')).toBeInTheDocument()
+    expect(await screen.findByText('Result metadata preview')).toBeInTheDocument()
+    expect((await screen.findAllByText('execution_enabled')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('mutation_permitted')).length).toBeGreaterThan(0)
+    expect(await screen.findByText('Candidate events preview')).toBeInTheDocument()
+    expect(await screen.findByText('No candidate events returned in this contract-only phase.')).toBeInTheDocument()
+    expect((await screen.findAllByText('dry_run_result_contract_preview_available')).length).toBeGreaterThan(0)
     expect((await screen.findAllByText('explicit_confirmation_present')).length).toBeGreaterThan(0)
     expect((await screen.findAllByText('conflict_contract_preview_available')).length).toBeGreaterThan(0)
     expect(await screen.findByText('Raw disabled dry-run build contract JSON')).toBeInTheDocument()
@@ -937,7 +963,7 @@ describe('Module 17 pages through routes', () => {
       reviewed_diff_id: 'rd_test_empty',
       validation_errors: [],
       validation_warnings: [],
-      audit_preview: { action: 'season_builder_dry_run_build', read_only: true, mutation_permitted: false, execution_enabled: false, explicit_confirmation_present: false, generation_design_preview_available: true, candidate_event_contract_preview_available: true , conflict_contract_preview_available: true },
+      audit_preview: { action: 'season_builder_dry_run_build', read_only: true, mutation_permitted: false, execution_enabled: false, explicit_confirmation_present: false, generation_design_preview_available: true, candidate_event_contract_preview_available: true , conflict_contract_preview_available: true, dry_run_result_contract_preview_available: true },
       generation_design_preview: {
         status: 'design_preview_only',
         execution_enabled: false,
@@ -967,6 +993,15 @@ describe('Module 17 pages through routes', () => {
         policy_conflict_shape: { conflict_id: 'string', conflict_type: 'policy_violation', policy: 'merge_preview | overwrite_preview | create_only_preview | repair_preview', candidate_id: 'string | null', message: 'string', severity: 'info | warning | blocking' },
         validation_conflict_shape: { conflict_id: 'string', conflict_type: 'validation_error', field: 'string', candidate_id: 'string | null', message: 'string', severity: 'warning | blocking' },
         blocked_reason: 'Conflict computation is not implemented in this phase.'
+      },
+      dry_run_result_contract_preview: {
+        status: 'contract_preview_only',
+        will_return_real_result: false,
+        candidate_events: [],
+        structural_summary: { candidate_count: 0, target_event_count: null, additions_count: 0, replacement_count: 0, conflict_count: 0, invalid_count: 0 },
+        conflict_summary: { week_conflicts: [], slot_conflicts: [], policy_conflicts: [], validation_conflicts: [] },
+        result_metadata: { preflight_fingerprint: 'pf_test_empty', reviewed_diff_id: 'rd_test_empty', execution_enabled: false, read_only: true, mutation_permitted: false },
+        blocked_reason: 'Dry-run result generation is not implemented in this phase.'
       },
       message: 'Dry-run build command contract exists, but execution is disabled in this phase.'
     })
@@ -1039,6 +1074,9 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Validation conflict shape')).toBeInTheDocument()
     expect(screen.getByText('validation_error')).toBeInTheDocument()
     expect(screen.getAllByText('conflict_contract_preview_available').length).toBeGreaterThan(0)
+    expect(screen.getByText('Dry-run result contract preview')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run result generation is not implemented in this phase.')).toBeInTheDocument()
+    expect(screen.getByText('No candidate events returned in this contract-only phase.')).toBeInTheDocument()
     expect(screen.getByText('Execution remains disabled; this panel is not a build control.')).toBeInTheDocument()
     expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith({ target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, requested_by: 'local-admin-preview' })
     expect(screen.getAllByText('No existing calendar detected.').length).toBeGreaterThan(0)

@@ -124,6 +124,11 @@ def test_builder_dry_run_build_minimal_contract(tmp_path: Path) -> None:
         assert "season_week_start" in event_shape
         assert "event_name" in event_shape
         assert "candidate_status" in event_shape
+        assert "comparison_classification" in event_shape
+        assert "comparison_reason" in event_shape
+        assert "matched_existing_event_id" in event_shape
+        assert "matched_existing_event_name" in event_shape
+        assert "matched_existing_event_week" in event_shape
         assert "validation_errors" in event_shape
         assert "validation_warnings" in event_shape
         structural_shape = candidate_preview["structural_summary_shape"]
@@ -284,8 +289,19 @@ def test_builder_dry_run_build_generates_read_only_candidates_from_template(tmp_
         assert first["source_template_id"] == "default_msa_template_preview"
         assert first["source_type"] == "season_template"
         assert first["candidate_status"] == "planned"
+        assert first["comparison_classification"] == "addition"
+        assert "would be an addition" in first["comparison_reason"]
+        assert first["matched_existing_event_id"] is None
+        assert first["matched_existing_event_name"] is None
+        assert first["matched_existing_event_week"] is None
         assert first["validation_errors"] == []
         assert first["validation_warnings"] == []
+        for candidate in candidates:
+            assert candidate["comparison_classification"] == "addition"
+            assert "would be an addition" in candidate["comparison_reason"]
+            assert candidate["matched_existing_event_id"] is None
+            assert candidate["matched_existing_event_name"] is None
+            assert candidate["matched_existing_event_week"] is None
         assert body["audit_preview"]["dry_run_result_preview_available"] is True
         _, calendar_body = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar")
         assert calendar_body["calendar"] is None
@@ -346,6 +362,17 @@ def test_builder_dry_run_build_existing_target_calendar_comparison(tmp_path: Pat
         assert body["dry_run_result_preview"]["structural_summary"]["conflict_count"] >= len(policy_conflicts)
         statuses = {candidate["candidate_status"] for candidate in body["dry_run_result_preview"]["candidate_events"]}
         assert statuses.issubset({"planned", "conflict", "invalid"})
+        classifications = [candidate["comparison_classification"] for candidate in body["dry_run_result_preview"]["candidate_events"]]
+        assert set(classifications).issubset({"addition", "replacement", "conflict", "invalid"})
+        for candidate in body["dry_run_result_preview"]["candidate_events"]:
+            assert isinstance(candidate["comparison_reason"], str)
+            assert candidate["comparison_reason"].strip()
+            assert "matched_existing_event_id" in candidate
+        replacement_candidates = [candidate for candidate in body["dry_run_result_preview"]["candidate_events"] if candidate["comparison_classification"] == "replacement"]
+        for candidate in replacement_candidates:
+            assert candidate["matched_existing_event_id"] is not None
+            assert candidate["matched_existing_event_name"] is not None
+            assert candidate["matched_existing_event_week"] is not None
 
 
 def test_builder_dry_run_build_empty_target_calendar_comparison(tmp_path: Path) -> None:

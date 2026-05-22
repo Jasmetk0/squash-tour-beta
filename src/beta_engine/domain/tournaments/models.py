@@ -366,6 +366,23 @@ class SeasonBuilderApplyCreateOnlyCommandResponse(BaseModel):
     audit_preview: dict[str, Any] = Field(default_factory=dict)
     message: str
 
+
+class SeasonBuilderApplyCreateOnlyReadinessResponse(BaseModel):
+    command: str = "season_builder_apply_create_only_readiness"
+    enabled: bool = True
+    can_execute_apply: bool = False
+    can_mutate: bool = False
+    would_create_calendar: bool = False
+    service_insert_applicable: bool = False
+    target_season_label: str
+    validation_errors: list[str] = Field(default_factory=list)
+    validation_warnings: list[str] = Field(default_factory=list)
+    apply_gate_summary: dict[str, Any] = Field(default_factory=dict)
+    dry_run_identity: dict[str, Any] = Field(default_factory=dict)
+    candidate_summary: dict[str, Any] = Field(default_factory=dict)
+    audit_preview: dict[str, Any] = Field(default_factory=dict)
+    message: str
+
 class SeasonCalendarBuildResult(BaseModel):
     """Calendar build/read response returned by Admin Seasons endpoints."""
 

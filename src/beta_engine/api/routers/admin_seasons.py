@@ -25,6 +25,7 @@ from beta_engine.domain.tournaments import (
     SeasonBuilderApplyCommandContractResponse,
     SeasonBuilderApplyCreateOnlyCommandRequest,
     SeasonBuilderApplyCreateOnlyCommandResponse,
+    SeasonBuilderApplyCreateOnlyReadinessResponse,
     SeasonBuilderDryRunBuildRequest,
     SeasonBuilderDryRunBuildResponse,
     SeasonBuilderPreflightRequest,
@@ -1120,6 +1121,166 @@ def post_season_builder_apply_create_only_command(
         apply_gate_summary=apply_gate_summary,
         applied_event_count=len(persisted_events), dry_run_identity=dry_run_identity, audit_preview=audit_preview,
         message="Create-only apply executed successfully.",
+    )
+
+
+@router.post("/builder/apply-create-only-readiness", response_model=SeasonBuilderApplyCreateOnlyReadinessResponse)
+def post_season_builder_apply_create_only_readiness(
+    payload: SeasonBuilderApplyCreateOnlyCommandRequest,
+    template_service: SeasonTemplateService = Depends(get_season_template_service),
+    calendar_service: SeasonCalendarService = Depends(get_season_calendar_service),
+) -> SeasonBuilderApplyCreateOnlyReadinessResponse:
+    errors: list[str] = []
+    warnings: list[str] = []
+    apply_gate_summary: dict[str, bool] = {
+        "source_type_valid": False,
+        "target_absent_before_apply": False,
+        "identity_fields_present": False,
+        "audit_metadata_present": False,
+        "explicit_confirmation_valid": False,
+        "mutation_scope_valid": False,
+        "dry_run_identity_matched": False,
+        "dry_run_validation_clean": False,
+        "candidate_events_non_empty": False,
+        "service_insert_applicable": False,
+    }
+    normalized_target = payload.target_season_label
+    try:
+        normalized_target = to_long_season_label(normalize_season_label(payload.target_season_label))
+    except ValueError as exc:
+        errors.append(f"Invalid target season label '{payload.target_season_label}': {exc}")
+
+    if payload.source_type != "season_template":
+        errors.append("source_type must be 'season_template'.")
+    else:
+        apply_gate_summary["source_type_valid"] = True
+    if not payload.source_template_id:
+        errors.append("source_template_id is required when source_type is 'season_template'.")
+
+    if payload.mutation_scope != "create_only":
+        errors.append("mutation_scope must be exactly 'create_only' for this command.")
+    else:
+        apply_gate_summary["mutation_scope_valid"] = True
+    if payload.overwrite_policy not in (None, "create_only"):
+        errors.append("overwrite_policy must be null or 'create_only' for create-only apply.")
+    if payload.explicit_confirmation != "I understand this will create a new season calendar.":
+        errors.append("explicit_confirmation must exactly match the required confirmation text.")
+    else:
+        apply_gate_summary["explicit_confirmation_valid"] = True
+
+    if not payload.preflight_fingerprint.strip():
+        errors.append("preflight_fingerprint is required.")
+    if not payload.reviewed_diff_id.strip():
+        errors.append("reviewed_diff_id is required.")
+    if not payload.dry_run_result_fingerprint.strip():
+        errors.append("dry_run_result_fingerprint is required.")
+    if not payload.dry_run_result_id.strip():
+        errors.append("dry_run_result_id is required.")
+    if not payload.requested_by.strip():
+        errors.append("requested_by is required.")
+    if not payload.audit_reason.strip():
+        errors.append("audit_reason is required.")
+    if payload.requested_by.strip() and payload.audit_reason.strip():
+        apply_gate_summary["audit_metadata_present"] = True
+    if (
+        payload.preflight_fingerprint.strip()
+        and payload.reviewed_diff_id.strip()
+        and payload.dry_run_result_fingerprint.strip()
+        and payload.dry_run_result_id.strip()
+    ):
+        apply_gate_summary["identity_fields_present"] = True
+
+    calendar_result = calendar_service.get_calendar(season=normalized_target) if not errors else None
+    if calendar_result and calendar_result.calendar is not None:
+        errors.append("Target season calendar already exists; create-only apply cannot modify existing calendars.")
+    elif calendar_result and calendar_result.calendar is None:
+        apply_gate_summary["target_absent_before_apply"] = True
+
+    dry_run_identity: dict[str, object] = {}
+    candidate_events: list[dict[str, object]] = []
+    if not errors:
+        dry_run_response = post_season_builder_dry_run_build_contract(
+            SeasonBuilderDryRunBuildRequest(
+                target_season_label=normalized_target,
+                source_type=payload.source_type,
+                source_template_id=payload.source_template_id,
+                overwrite_policy=payload.overwrite_policy,
+                preflight_fingerprint=payload.preflight_fingerprint,
+                reviewed_diff_id=payload.reviewed_diff_id,
+                requested_by=payload.requested_by,
+                audit_reason=payload.audit_reason,
+                explicit_confirmation=payload.explicit_confirmation,
+                mutation_scope=payload.mutation_scope,
+            ),
+            template_service=template_service,
+            calendar_service=calendar_service,
+        )
+        dry_run_preview = dry_run_response.dry_run_result_preview
+        recomputed_fingerprint = str(dry_run_preview.get("dry_run_result_fingerprint") or "")
+        recomputed_id = str(dry_run_preview.get("dry_run_result_id") or "")
+        dry_run_identity = {
+            "preflight_fingerprint": payload.preflight_fingerprint,
+            "reviewed_diff_id": payload.reviewed_diff_id,
+            "requested_dry_run_result_fingerprint": payload.dry_run_result_fingerprint,
+            "requested_dry_run_result_id": payload.dry_run_result_id,
+            "recomputed_dry_run_result_fingerprint": recomputed_fingerprint,
+            "recomputed_dry_run_result_id": recomputed_id,
+            "identity_matches": recomputed_fingerprint == payload.dry_run_result_fingerprint and recomputed_id == payload.dry_run_result_id,
+        }
+        if recomputed_fingerprint != payload.dry_run_result_fingerprint or recomputed_id != payload.dry_run_result_id:
+            errors.append("Dry-run identity mismatch: recomputed result fingerprint/id does not match request.")
+        else:
+            apply_gate_summary["dry_run_identity_matched"] = True
+        validation_status = str((dry_run_preview.get("validation_summary") or {}).get("status") or "")
+        if validation_status != "clean":
+            errors.append("Recomputed dry-run validation summary must be 'clean'.")
+        else:
+            apply_gate_summary["dry_run_validation_clean"] = True
+        candidate_events = list(dry_run_preview.get("candidate_events") or [])
+        if not candidate_events:
+            errors.append("Recomputed dry-run candidate_events must be non-empty.")
+        else:
+            apply_gate_summary["candidate_events_non_empty"] = True
+
+    candidate_weeks = [int(c.get("season_week_start") or 1) for c in candidate_events]
+    categories = sorted({str(c.get("category")) for c in candidate_events if c.get("category")})
+    tour_levels = sorted({str(c.get("tour_level")) for c in candidate_events if c.get("tour_level") is not None})
+    candidate_summary = {
+        "candidate_count": len(candidate_events),
+        "first_season_week": min(candidate_weeks) if candidate_weeks else None,
+        "last_season_week": max(candidate_weeks) if candidate_weeks else None,
+        "categories": {"count": len(categories), "values": categories},
+        "tour_levels": {"count": len(tour_levels), "values": tour_levels},
+        "first_candidate_preview": candidate_events[:3],
+    }
+    can_execute_apply = not errors
+    would_create_calendar = can_execute_apply and apply_gate_summary["target_absent_before_apply"]
+    audit_preview = {
+        "action": "season_builder_apply_create_only_readiness",
+        "requested_by": payload.requested_by,
+        "audit_reason": payload.audit_reason,
+        "mutation_scope": payload.mutation_scope,
+        "read_only": True,
+        "can_mutate": False,
+        "explicit_confirmation_present": bool(payload.explicit_confirmation.strip()),
+        "dry_run_result_fingerprint": payload.dry_run_result_fingerprint,
+        "dry_run_result_id": payload.dry_run_result_id,
+        "audit_persisted": False,
+        "audit_persistence_status": "not_implemented",
+    }
+    return SeasonBuilderApplyCreateOnlyReadinessResponse(
+        can_execute_apply=can_execute_apply,
+        can_mutate=False,
+        would_create_calendar=would_create_calendar,
+        service_insert_applicable=False,
+        target_season_label=normalized_target,
+        validation_errors=errors,
+        validation_warnings=warnings,
+        apply_gate_summary=apply_gate_summary,
+        dry_run_identity=dry_run_identity,
+        candidate_summary=candidate_summary,
+        audit_preview=audit_preview,
+        message="Create-only apply readiness evaluated; no mutation performed.",
     )
 @router.post("/builder/apply-command-contract", response_model=SeasonBuilderApplyCommandContractResponse)
 def post_season_builder_apply_command_contract(

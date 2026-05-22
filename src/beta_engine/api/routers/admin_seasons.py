@@ -371,6 +371,47 @@ def post_season_builder_dry_run_build_contract(
         "blocked_reason": "Candidate event generation is not implemented in this phase.",
     }
 
+    conflict_contract_preview = {
+        "status": "contract_preview_only",
+        "will_compute_conflicts": False,
+        "conflict_count": 0,
+        "week_conflict_shape": {
+            "conflict_id": "string",
+            "conflict_type": "week_overlap",
+            "season_week": "int",
+            "candidate_id": "string",
+            "existing_event_id": "string | null",
+            "message": "string",
+            "severity": "info | warning | blocking",
+        },
+        "slot_conflict_shape": {
+            "conflict_id": "string",
+            "conflict_type": "slot_collision",
+            "source_slot_id": "string",
+            "candidate_id": "string",
+            "existing_event_id": "string | null",
+            "message": "string",
+            "severity": "info | warning | blocking",
+        },
+        "policy_conflict_shape": {
+            "conflict_id": "string",
+            "conflict_type": "policy_violation",
+            "policy": "merge_preview | overwrite_preview | create_only_preview | repair_preview",
+            "candidate_id": "string | null",
+            "message": "string",
+            "severity": "info | warning | blocking",
+        },
+        "validation_conflict_shape": {
+            "conflict_id": "string",
+            "conflict_type": "validation_error",
+            "field": "string",
+            "candidate_id": "string | null",
+            "message": "string",
+            "severity": "warning | blocking",
+        },
+        "blocked_reason": "Conflict computation is not implemented in this phase.",
+    }
+
     return SeasonBuilderDryRunBuildResponse(
         enabled=False,
         can_execute=False,
@@ -402,7 +443,9 @@ def post_season_builder_dry_run_build_contract(
             "mutation_scope": payload.mutation_scope,
             "generation_design_preview_available": True,
             "candidate_event_contract_preview_available": True,
+            "conflict_contract_preview_available": True,
         },
         generation_design_preview=generation_design_preview,
         candidate_event_contract_preview=candidate_event_contract_preview,
+        conflict_contract_preview=conflict_contract_preview,
     )

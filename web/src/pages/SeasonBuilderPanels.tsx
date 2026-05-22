@@ -1451,11 +1451,15 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
   const auditPreview = query.data?.audit_preview ?? {}
   const generationDesignPreview = query.data?.generation_design_preview
   const candidateEventContractPreview = query.data?.candidate_event_contract_preview
+  const conflictContractPreview = query.data?.conflict_contract_preview
   const generationDesignPreviewRecord = generationDesignPreview && typeof generationDesignPreview === 'object'
     ? generationDesignPreview as Record<string, unknown>
     : null
   const candidateEventContractPreviewRecord = candidateEventContractPreview && typeof candidateEventContractPreview === 'object'
     ? candidateEventContractPreview as Record<string, unknown>
+    : null
+  const conflictContractPreviewRecord = conflictContractPreview && typeof conflictContractPreview === 'object'
+    ? conflictContractPreview as Record<string, unknown>
     : null
   const shapeRecord = (value: unknown): Record<string, unknown> | null => value && typeof value === 'object' ? value as Record<string, unknown> : null
   const previewList = (value: unknown): unknown[] => Array.isArray(value) ? value : []
@@ -1508,6 +1512,9 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
               <tr><td>audit_reason</td><td>{formatValue(auditPreview.audit_reason)}</td></tr>
               <tr><td>explicit_confirmation_present</td><td>{formatValue(auditPreview.explicit_confirmation_present)}</td></tr>
               <tr><td>mutation_scope</td><td>{formatValue(auditPreview.mutation_scope)}</td></tr>
+              <tr><td>generation_design_preview_available</td><td>{formatValue(auditPreview.generation_design_preview_available)}</td></tr>
+              <tr><td>candidate_event_contract_preview_available</td><td>{formatValue(auditPreview.candidate_event_contract_preview_available)}</td></tr>
+              <tr><td>conflict_contract_preview_available</td><td>{formatValue(auditPreview.conflict_contract_preview_available)}</td></tr>
             </tbody>
           </table>
           <h4>Future dry-run generation design preview</h4>
@@ -1573,6 +1580,28 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
               ) : <p>Conflict summary shape is unavailable.</p>}
             </>
           ) : <p>Candidate event contract preview is unavailable.</p>}
+          <h4>Conflict contract preview</h4>
+          {conflictContractPreviewRecord ? (
+            <>
+              <table>
+                <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+                <tbody>
+                  <tr><td>status</td><td>{formatValue(conflictContractPreviewRecord.status)}</td></tr>
+                  <tr><td>will_compute_conflicts</td><td>{formatValue(conflictContractPreviewRecord.will_compute_conflicts)}</td></tr>
+                  <tr><td>conflict_count</td><td>{formatValue(conflictContractPreviewRecord.conflict_count)}</td></tr>
+                  <tr><td>blocked_reason</td><td>{formatValue(conflictContractPreviewRecord.blocked_reason)}</td></tr>
+                </tbody>
+              </table>
+              <h5>Week conflict shape</h5>
+              {shapeRecord(conflictContractPreviewRecord.week_conflict_shape) ? <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>{Object.entries(shapeRecord(conflictContractPreviewRecord.week_conflict_shape) ?? {}).map(([key, value]) => <tr key={`week-conflict-shape-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>)}</tbody></table> : <p>Week conflict shape is unavailable.</p>}
+              <h5>Slot conflict shape</h5>
+              {shapeRecord(conflictContractPreviewRecord.slot_conflict_shape) ? <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>{Object.entries(shapeRecord(conflictContractPreviewRecord.slot_conflict_shape) ?? {}).map(([key, value]) => <tr key={`slot-conflict-shape-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>)}</tbody></table> : <p>Slot conflict shape is unavailable.</p>}
+              <h5>Policy conflict shape</h5>
+              {shapeRecord(conflictContractPreviewRecord.policy_conflict_shape) ? <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>{Object.entries(shapeRecord(conflictContractPreviewRecord.policy_conflict_shape) ?? {}).map(([key, value]) => <tr key={`policy-conflict-shape-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>)}</tbody></table> : <p>Policy conflict shape is unavailable.</p>}
+              <h5>Validation conflict shape</h5>
+              {shapeRecord(conflictContractPreviewRecord.validation_conflict_shape) ? <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>{Object.entries(shapeRecord(conflictContractPreviewRecord.validation_conflict_shape) ?? {}).map(([key, value]) => <tr key={`validation-conflict-shape-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>)}</tbody></table> : <p>Validation conflict shape is unavailable.</p>}
+            </>
+          ) : <p>Conflict contract preview is unavailable.</p>}
           <h4>Current disabled dry-run request payload</h4>
           <table>
             <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>

@@ -1512,6 +1512,9 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
               <tr><td>audit_reason</td><td>{formatValue(auditPreview.audit_reason)}</td></tr>
               <tr><td>explicit_confirmation_present</td><td>{formatValue(auditPreview.explicit_confirmation_present)}</td></tr>
               <tr><td>mutation_scope</td><td>{formatValue(auditPreview.mutation_scope)}</td></tr>
+              <tr><td>generation_design_preview_available</td><td>{formatValue(auditPreview.generation_design_preview_available)}</td></tr>
+              <tr><td>candidate_event_contract_preview_available</td><td>{formatValue(auditPreview.candidate_event_contract_preview_available)}</td></tr>
+              <tr><td>conflict_contract_preview_available</td><td>{formatValue(auditPreview.conflict_contract_preview_available)}</td></tr>
             </tbody>
           </table>
           <h4>Future dry-run generation design preview</h4>

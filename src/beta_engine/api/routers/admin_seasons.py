@@ -275,6 +275,7 @@ def preflight_season_builder(
 def post_season_builder_dry_run_build_contract(
     payload: SeasonBuilderDryRunBuildRequest,
     template_service: SeasonTemplateService = Depends(get_season_template_service),
+    calendar_service: SeasonCalendarService = Depends(get_season_calendar_service),
 ) -> SeasonBuilderDryRunBuildResponse:
     errors: list[str] = []
     warnings: list[str] = []
@@ -440,6 +441,20 @@ def post_season_builder_dry_run_build_contract(
         "blocked_reason": "Dry-run result generation is not implemented in this phase.",
     }
     candidate_events: list[dict[str, object | None]] = []
+    normalized_target = payload.target_season_label
+    target_calendar_exists = False
+    target_events: list[object] = []
+    target_event_count = 0
+    try:
+        normalized_target = to_long_season_label(normalize_season_label(payload.target_season_label))
+        calendar_result = calendar_service.get_calendar(season=normalized_target)
+        if calendar_result.calendar is not None:
+            target_calendar_exists = True
+            target_events = list(calendar_result.calendar.events)
+            target_event_count = len(target_events)
+    except ValueError as exc:
+        errors.append(f"Invalid target season label '{payload.target_season_label}': {exc}")
+
     dry_run_status = "read_only_generated"
     if payload.source_type != "season_template":
         warnings.append("Read-only candidate generation currently supports season_template sources only.")
@@ -484,6 +499,104 @@ def post_season_builder_dry_run_build_contract(
                     }
                 )
 
+    week_conflicts: list[dict[str, object | None]] = []
+    slot_conflicts: list[dict[str, object | None]] = []
+    policy_conflicts: list[dict[str, object | None]] = []
+    validation_conflicts: list[dict[str, object | None]] = []
+    candidate_ids_with_conflicts: set[str] = set()
+    replacement_count = 0
+    additions_count = 0
+    for candidate in candidate_events:
+        candidate_id = str(candidate["candidate_id"])
+        candidate_week = candidate.get("season_week_start")
+        candidate_name = (candidate.get("event_name") or "").strip().lower()
+        candidate_slot = candidate.get("source_slot_id")
+        matched_existing = None
+        week_overlap_existing = None
+        slot_overlap_existing = None
+        for existing_event in target_events:
+            existing_name = (existing_event.event_name or "").strip().lower()
+            existing_slot = None
+            event_metadata = getattr(existing_event, "metadata", None)
+            if isinstance(event_metadata, dict):
+                existing_slot = event_metadata.get("source_slot_id")
+            same_week = existing_event.season_week == candidate_week
+            if same_week and existing_name == candidate_name:
+                matched_existing = existing_event
+                break
+            if candidate_slot and existing_slot and candidate_slot == existing_slot:
+                matched_existing = existing_event
+                break
+            if same_week and week_overlap_existing is None:
+                week_overlap_existing = existing_event
+            if candidate_slot and existing_slot and candidate_slot == existing_slot and slot_overlap_existing is None:
+                slot_overlap_existing = existing_event
+        if matched_existing is not None:
+            replacement_count += 1
+        else:
+            additions_count += 1
+        if week_overlap_existing is not None and (week_overlap_existing.event_name or "").strip().lower() != candidate_name:
+            candidate_ids_with_conflicts.add(candidate_id)
+            week_conflicts.append(
+                {
+                    "conflict_id": f"week_overlap_{candidate_id}_{week_overlap_existing.event_id}",
+                    "conflict_type": "week_overlap",
+                    "season_week": candidate_week,
+                    "candidate_id": candidate_id,
+                    "existing_event_id": week_overlap_existing.event_id,
+                    "message": f"Candidate week {candidate_week} overlaps existing event '{week_overlap_existing.event_name}'.",
+                    "severity": "warning",
+                }
+            )
+        if slot_overlap_existing is not None and (slot_overlap_existing.event_name or "").strip().lower() != candidate_name:
+            candidate_ids_with_conflicts.add(candidate_id)
+            slot_conflicts.append(
+                {
+                    "conflict_id": f"slot_collision_{candidate_id}_{slot_overlap_existing.event_id}",
+                    "conflict_type": "slot_collision",
+                    "source_slot_id": candidate_slot,
+                    "candidate_id": candidate_id,
+                    "existing_event_id": slot_overlap_existing.event_id,
+                    "message": f"Candidate source slot '{candidate_slot}' differs from existing event '{slot_overlap_existing.event_name}'.",
+                    "severity": "warning",
+                }
+            )
+        validation_errors = candidate.get("validation_errors") or []
+        if isinstance(validation_errors, list) and validation_errors:
+            for index, validation_error in enumerate(validation_errors, start=1):
+                validation_conflicts.append(
+                    {
+                        "conflict_id": f"validation_{candidate_id}_{index}",
+                        "conflict_type": "validation_error",
+                        "field": "candidate",
+                        "candidate_id": candidate_id,
+                        "message": str(validation_error),
+                        "severity": "blocking",
+                    }
+                )
+
+    if target_calendar_exists and payload.overwrite_policy is None:
+        policy_conflicts.append(
+            {
+                "conflict_id": "policy_violation_missing_overwrite_policy",
+                "conflict_type": "policy_violation",
+                "policy": None,
+                "candidate_id": None,
+                "message": "Existing target calendar requires explicit merge/overwrite policy before future mutation.",
+                "severity": "blocking",
+            }
+        )
+
+    for candidate in candidate_events:
+        candidate_id = str(candidate["candidate_id"])
+        validation_errors = candidate.get("validation_errors") or []
+        if isinstance(validation_errors, list) and validation_errors:
+            candidate["candidate_status"] = "invalid"
+        elif candidate_id in candidate_ids_with_conflicts:
+            candidate["candidate_status"] = "conflict"
+        else:
+            candidate["candidate_status"] = "planned"
+
     dry_run_result_preview = {
         "status": dry_run_status,
         "execution_enabled": False,
@@ -491,17 +604,17 @@ def post_season_builder_dry_run_build_contract(
         "candidate_events": candidate_events,
         "structural_summary": {
             "candidate_count": len(candidate_events),
-            "target_event_count": None,
-            "additions_count": len(candidate_events),
-            "replacement_count": 0,
-            "conflict_count": 0,
+            "target_event_count": target_event_count,
+            "additions_count": additions_count,
+            "replacement_count": replacement_count,
+            "conflict_count": len(week_conflicts) + len(slot_conflicts) + len(policy_conflicts) + len(validation_conflicts),
             "invalid_count": len([candidate for candidate in candidate_events if candidate["validation_errors"]]),
         },
         "conflict_summary": {
-            "week_conflicts": [],
-            "slot_conflicts": [],
-            "policy_conflicts": [],
-            "validation_conflicts": [],
+            "week_conflicts": week_conflicts,
+            "slot_conflicts": slot_conflicts,
+            "policy_conflicts": policy_conflicts,
+            "validation_conflicts": validation_conflicts,
         },
         "result_metadata": {
             "preflight_fingerprint": payload.preflight_fingerprint,
@@ -509,6 +622,9 @@ def post_season_builder_dry_run_build_contract(
             "source_type": payload.source_type,
             "source_template_id": payload.source_template_id,
             "overwrite_policy": payload.overwrite_policy,
+            "target_calendar_exists": target_calendar_exists,
+            "target_event_count": target_event_count,
+            "comparison_performed": dry_run_status == "read_only_generated",
             "read_only": True,
             "mutation_permitted": False,
         },
@@ -518,7 +634,7 @@ def post_season_builder_dry_run_build_contract(
         enabled=False,
         can_execute=False,
         can_mutate=False,
-        target_season_label=payload.target_season_label,
+        target_season_label=normalized_target,
         source_type=payload.source_type,
         source_template_id=payload.source_template_id,
         overwrite_policy=payload.overwrite_policy,
@@ -531,7 +647,7 @@ def post_season_builder_dry_run_build_contract(
             "read_only": True,
             "mutation_permitted": False,
             "execution_enabled": False,
-            "target_season_label": payload.target_season_label,
+            "target_season_label": normalized_target,
             "source_type": payload.source_type,
             "source_template_id": payload.source_template_id,
             "overwrite_policy": payload.overwrite_policy,

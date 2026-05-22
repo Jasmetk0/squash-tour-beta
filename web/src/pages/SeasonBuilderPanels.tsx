@@ -1650,6 +1650,35 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
               </tbody></table>
               <h5>Structural summary</h5>
               {shapeRecord(dryRunResultPreviewRecord.structural_summary) ? <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>{Object.entries(shapeRecord(dryRunResultPreviewRecord.structural_summary) ?? {}).map(([key, value]) => <tr key={`dry-run-result-struct-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>)}</tbody></table> : <p>Structural summary is unavailable.</p>}
+              <h5>Result metadata</h5>
+              {shapeRecord(dryRunResultPreviewRecord.result_metadata) ? (
+                <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+                  <tr><td>target_calendar_exists</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.result_metadata)?.target_calendar_exists)}</td></tr>
+                  <tr><td>target_event_count</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.result_metadata)?.target_event_count)}</td></tr>
+                  <tr><td>comparison_performed</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.result_metadata)?.comparison_performed)}</td></tr>
+                </tbody></table>
+              ) : <p>Result metadata is unavailable.</p>}
+              <h5>Read-only comparison conflicts</h5>
+              {shapeRecord(dryRunResultPreviewRecord.conflict_summary) ? (
+                <>
+                  <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+                    <tr><td>week_conflicts count</td><td>{previewList(shapeRecord(dryRunResultPreviewRecord.conflict_summary)?.week_conflicts).length}</td></tr>
+                    <tr><td>slot_conflicts count</td><td>{previewList(shapeRecord(dryRunResultPreviewRecord.conflict_summary)?.slot_conflicts).length}</td></tr>
+                    <tr><td>policy_conflicts count</td><td>{previewList(shapeRecord(dryRunResultPreviewRecord.conflict_summary)?.policy_conflicts).length}</td></tr>
+                    <tr><td>validation_conflicts count</td><td>{previewList(shapeRecord(dryRunResultPreviewRecord.conflict_summary)?.validation_conflicts).length}</td></tr>
+                  </tbody></table>
+                  {previewList(shapeRecord(dryRunResultPreviewRecord.conflict_summary)?.policy_conflicts).length > 0 ? (
+                    <ul>
+                      {previewList(shapeRecord(dryRunResultPreviewRecord.conflict_summary)?.policy_conflicts).map((conflict, idx) => {
+                        const row = shapeRecord(conflict)
+                        return <li key={`policy-conflict-${idx}`}>{formatValue(row?.severity)}: {formatValue(row?.message)}</li>
+                      })}
+                    </ul>
+                  ) : (
+                    <p>No read-only comparison conflicts returned.</p>
+                  )}
+                </>
+              ) : <p>Read-only comparison conflicts are unavailable.</p>}
               <h5>Candidate events</h5>
               {previewList(dryRunResultPreviewRecord.candidate_events).length === 0 ? <p>No read-only candidate events generated.</p> : (
                 <table><thead><tr><th scope="col">candidate_id</th><th scope="col">source_slot_id</th><th scope="col">season_week_start</th><th scope="col">season_week_end</th><th scope="col">event_name</th><th scope="col">tour_level</th><th scope="col">category</th><th scope="col">host_country</th><th scope="col">candidate_status</th></tr></thead><tbody>{previewList(dryRunResultPreviewRecord.candidate_events).slice(0, 5).map((candidate, idx) => { const row = shapeRecord(candidate); return <tr key={`dry-run-result-candidate-${idx}`}><td>{formatValue(row?.candidate_id)}</td><td>{formatValue(row?.source_slot_id)}</td><td>{formatValue(row?.season_week_start)}</td><td>{formatValue(row?.season_week_end)}</td><td>{formatValue(row?.event_name)}</td><td>{formatValue(row?.tour_level)}</td><td>{formatValue(row?.category)}</td><td>{formatValue(row?.host_country)}</td><td>{formatValue(row?.candidate_status)}</td></tr> })}</tbody></table>

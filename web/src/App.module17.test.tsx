@@ -285,10 +285,10 @@ describe('Module 17 pages through routes', () => {
         status: 'read_only_generated',
         execution_enabled: false,
         mutation_permitted: false,
-        candidate_events: [{ candidate_id: 'cand_default_msa_template_preview_slot-01-wt_gold_24', source_slot_id: 'slot-01-wt_gold_24', season_week_start: 1, season_week_end: 1, event_name: 'World Tour Gold', tour_level: null, category: 'GOLD', host_country: 'ENG', candidate_status: 'planned', validation_errors: [], validation_warnings: [] }],
-        structural_summary: { candidate_count: 1, target_event_count: null, additions_count: 1, replacement_count: 0, conflict_count: 0, invalid_count: 0 },
-        conflict_summary: { week_conflicts: [], slot_conflicts: [], policy_conflicts: [], validation_conflicts: [] },
-        result_metadata: { preflight_fingerprint: payload.preflight_fingerprint, reviewed_diff_id: payload.reviewed_diff_id, source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: payload.overwrite_policy ?? null, read_only: true, mutation_permitted: false }
+        candidate_events: [{ candidate_id: 'cand_default_msa_template_preview_slot-01-wt_gold_24', source_slot_id: 'slot-01-wt_gold_24', season_week_start: 1, season_week_end: 1, event_name: 'World Tour Gold', tour_level: null, category: 'GOLD', host_country: 'ENG', candidate_status: 'conflict', validation_errors: [], validation_warnings: [] }],
+        structural_summary: { candidate_count: 1, target_event_count: 1, additions_count: 0, replacement_count: 1, conflict_count: 1, invalid_count: 0 },
+        conflict_summary: { week_conflicts: [], slot_conflicts: [], policy_conflicts: [{ conflict_id: 'policy_violation_missing_overwrite_policy', conflict_type: 'policy_violation', policy: null, candidate_id: null, message: 'Existing target calendar requires explicit merge/overwrite policy before future mutation.', severity: 'blocking' }], validation_conflicts: [] },
+        result_metadata: { preflight_fingerprint: payload.preflight_fingerprint, reviewed_diff_id: payload.reviewed_diff_id, source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: payload.overwrite_policy ?? null, target_calendar_exists: true, target_event_count: 1, comparison_performed: true, read_only: true, mutation_permitted: false }
       },
         message: 'Dry-run build command contract exists, but execution is disabled in this phase.'
       }
@@ -702,6 +702,11 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByText('policy_conflicts')).toBeInTheDocument()
     expect(await screen.findByText('Dry-run result contract preview')).toBeInTheDocument()
     expect(await screen.findByText('Read-only generated dry-run result preview')).toBeInTheDocument()
+    expect(await screen.findByText('Read-only comparison conflicts')).toBeInTheDocument()
+    expect((await screen.findAllByText('policy_conflicts count')).length).toBeGreaterThan(0)
+    expect(await screen.findByText('comparison_performed')).toBeInTheDocument()
+    expect((await screen.findAllByText('target_calendar_exists')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('target_event_count')).length).toBeGreaterThan(0)
     expect(screen.getByText('read_only_generated')).toBeInTheDocument()
     expect(screen.getByText('Read-only generated candidates are not persisted.')).toBeInTheDocument()
     expect(screen.getAllByText('candidate_id').length).toBeGreaterThan(0)
@@ -715,8 +720,8 @@ describe('Module 17 pages through routes', () => {
     expect((await screen.findAllByText('replacement_count')).length).toBeGreaterThan(0)
     expect((await screen.findAllByText('invalid_count')).length).toBeGreaterThan(0)
     expect(await screen.findByText('Conflict summary preview')).toBeInTheDocument()
-    expect(await screen.findByText('week_conflicts count')).toBeInTheDocument()
-    expect(await screen.findByText('policy_conflicts count')).toBeInTheDocument()
+    expect((await screen.findAllByText('week_conflicts count')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('policy_conflicts count')).length).toBeGreaterThan(0)
     expect(await screen.findByText('Result metadata preview')).toBeInTheDocument()
     expect((await screen.findAllByText('execution_enabled')).length).toBeGreaterThan(0)
     expect((await screen.findAllByText('mutation_permitted')).length).toBeGreaterThan(0)
@@ -1026,9 +1031,9 @@ describe('Module 17 pages through routes', () => {
         execution_enabled: false,
         mutation_permitted: false,
         candidate_events: [],
-        structural_summary: { candidate_count: 0, target_event_count: null, additions_count: 0, replacement_count: 0, conflict_count: 0, invalid_count: 0 },
+        structural_summary: { candidate_count: 0, target_event_count: 0, additions_count: 0, replacement_count: 0, conflict_count: 0, invalid_count: 0 },
         conflict_summary: { week_conflicts: [], slot_conflicts: [], policy_conflicts: [], validation_conflicts: [] },
-        result_metadata: { preflight_fingerprint: 'pf_test_empty', reviewed_diff_id: 'rd_test_empty', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, read_only: true, mutation_permitted: false }
+        result_metadata: { preflight_fingerprint: 'pf_test_empty', reviewed_diff_id: 'rd_test_empty', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, target_calendar_exists: false, target_event_count: 0, comparison_performed: true, read_only: true, mutation_permitted: false }
       },
       message: 'Dry-run build command contract exists, but execution is disabled in this phase.'
     })
@@ -1104,6 +1109,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Dry-run result contract preview')).toBeInTheDocument()
     expect(screen.getByText('Read-only generated dry-run result preview')).toBeInTheDocument()
     expect(screen.getByText('Read-only generated candidates are not persisted.')).toBeInTheDocument()
+    expect(screen.getByText('No read-only comparison conflicts returned.')).toBeInTheDocument()
     expect(screen.getByText('Dry-run result generation is not implemented in this phase.')).toBeInTheDocument()
     expect(screen.getByText('No candidate events returned in this contract-only phase.')).toBeInTheDocument()
     expect(screen.getByText('Execution remains disabled; this panel is not a build control.')).toBeInTheDocument()

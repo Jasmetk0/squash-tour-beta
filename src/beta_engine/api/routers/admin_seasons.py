@@ -34,6 +34,7 @@ from beta_engine.domain.tournaments import (
     SeasonCalendarBuildResult,
     SeasonCalendar,
     SeasonCalendarEvent,
+    SeasonCalendarValidationResponse,
 )
 
 router = APIRouter(prefix="/admin/seasons", tags=["admin-seasons"])
@@ -102,6 +103,15 @@ def bootstrap_season_from_initial_pool(
         )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.get("/{season:path}/calendar/validation", response_model=SeasonCalendarValidationResponse)
+def get_season_calendar_validation(
+    season: str,
+    service: SeasonCalendarService = Depends(get_season_calendar_service),
+) -> SeasonCalendarValidationResponse:
+    normalized = normalize_season_for_legacy_services(season)
+    return service.validate_persisted_calendar(season=normalized)
 
 
 @router.get("/{season:path}/calendar", response_model=SeasonCalendarBuildResult)

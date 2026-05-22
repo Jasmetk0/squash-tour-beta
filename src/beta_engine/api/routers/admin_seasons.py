@@ -23,12 +23,16 @@ from beta_engine.api.season_label_params import normalize_season_for_legacy_serv
 from beta_engine.domain.tournaments import (
     SeasonBuilderApplyCommandContractRequest,
     SeasonBuilderApplyCommandContractResponse,
+    SeasonBuilderApplyCreateOnlyCommandRequest,
+    SeasonBuilderApplyCreateOnlyCommandResponse,
     SeasonBuilderDryRunBuildRequest,
     SeasonBuilderDryRunBuildResponse,
     SeasonBuilderPreflightRequest,
     SeasonBuilderPreflightResponse,
     SeasonCalendarBuildRequest,
     SeasonCalendarBuildResult,
+    SeasonCalendar,
+    SeasonCalendarEvent,
 )
 
 router = APIRouter(prefix="/admin/seasons", tags=["admin-seasons"])
@@ -498,11 +502,14 @@ def post_season_builder_dry_run_build_contract(
             errors.append("source_template_id could not be resolved for read-only dry-run candidate generation.")
             dry_run_status = "blocked_unresolved_source"
         else:
+            templates_config = template_service.template_service.get_config()
+            templates_by_id = {template.template_id: template for template in templates_config.templates}
             for index, slot in enumerate(selected.slots, start=1):
                 source_slot_id = slot.slot_id or f"slot_{index}"
                 week_start = slot.season_week_start
                 week_end = slot.season_week_end
                 duration = (week_end - week_start + 1) if isinstance(week_start, int) and isinstance(week_end, int) else None
+                source_template = templates_by_id.get(slot.source_template_id or "")
                 candidate_events.append(
                     {
                         "candidate_id": f"cand_{payload.source_template_id}_{source_slot_id}",
@@ -510,17 +517,18 @@ def post_season_builder_dry_run_build_contract(
                         "season_week_start": week_start,
                         "season_week_end": week_end,
                         "event_name": slot.tournament_name,
-                        "tour_level": None,
+                        "tour_level": source_template.tour_level if source_template else None,
                         "category": slot.category,
                         "host_country": slot.host_country,
                         "region": slot.region,
-                        "main_draw_size": None,
-                        "qualification_draw_size": None,
-                        "point_distribution_ref": None,
-                        "prize_money": None,
-                        "prestige": None,
+                        "main_draw_size": source_template.main_draw_size if source_template else None,
+                        "qualification_draw_size": source_template.qualification_draw_size if source_template else None,
+                        "point_distribution_ref": source_template.point_distribution_ref if source_template else None,
+                        "prize_money": source_template.prize_money if source_template else None,
+                        "prestige": source_template.prestige if source_template else None,
                         "duration_in_season_weeks": duration,
                         "source_template_id": payload.source_template_id,
+                        "source_template_ref": slot.source_template_id,
                         "source_type": payload.source_type,
                         "candidate_status": "planned",
                         "comparison_classification": "addition",
@@ -887,6 +895,143 @@ def post_season_builder_dry_run_build_contract(
     )
 
 
+
+
+@router.post("/builder/apply-create-only-command", response_model=SeasonBuilderApplyCreateOnlyCommandResponse)
+def post_season_builder_apply_create_only_command(
+    payload: SeasonBuilderApplyCreateOnlyCommandRequest,
+    template_service: SeasonTemplateService = Depends(get_season_template_service),
+    calendar_service: SeasonCalendarService = Depends(get_season_calendar_service),
+) -> SeasonBuilderApplyCreateOnlyCommandResponse:
+    errors: list[str] = []
+    warnings: list[str] = []
+    normalized_target = payload.target_season_label
+    try:
+        normalized_target = to_long_season_label(normalize_season_label(payload.target_season_label))
+    except ValueError as exc:
+        errors.append(f"Invalid target season label '{payload.target_season_label}': {exc}")
+
+    if payload.source_type != "season_template":
+        errors.append("source_type must be 'season_template'.")
+    if not payload.source_template_id:
+        errors.append("source_template_id is required when source_type is 'season_template'.")
+
+    if payload.mutation_scope != "create_only":
+        errors.append("mutation_scope must be exactly 'create_only' for this command.")
+    if payload.overwrite_policy not in (None, "create_only"):
+        errors.append("overwrite_policy must be null or 'create_only' for create-only apply.")
+    if payload.explicit_confirmation != "I understand this will create a new season calendar.":
+        errors.append("explicit_confirmation must exactly match the required confirmation text.")
+
+    if not payload.preflight_fingerprint.strip():
+        errors.append("preflight_fingerprint is required.")
+    if not payload.reviewed_diff_id.strip():
+        errors.append("reviewed_diff_id is required.")
+    if not payload.dry_run_result_fingerprint.strip():
+        errors.append("dry_run_result_fingerprint is required.")
+    if not payload.dry_run_result_id.strip():
+        errors.append("dry_run_result_id is required.")
+    if not payload.requested_by.strip():
+        errors.append("requested_by is required.")
+    if not payload.audit_reason.strip():
+        errors.append("audit_reason is required.")
+
+    calendar_result = calendar_service.get_calendar(season=normalized_target) if not errors else None
+    if calendar_result and calendar_result.calendar is not None:
+        errors.append("Target season calendar already exists; create-only apply cannot modify existing calendars.")
+
+    dry_run_identity: dict[str, object] = {}
+    candidate_events: list[dict[str, object]] = []
+    if not errors:
+        dry_run_response = post_season_builder_dry_run_build_contract(
+            SeasonBuilderDryRunBuildRequest(
+                target_season_label=normalized_target,
+                source_type=payload.source_type,
+                source_template_id=payload.source_template_id,
+                overwrite_policy=payload.overwrite_policy,
+                preflight_fingerprint=payload.preflight_fingerprint,
+                reviewed_diff_id=payload.reviewed_diff_id,
+                requested_by=payload.requested_by,
+                audit_reason=payload.audit_reason,
+                explicit_confirmation=payload.explicit_confirmation,
+                mutation_scope=payload.mutation_scope,
+            ),
+            template_service=template_service,
+            calendar_service=calendar_service,
+        )
+        dry_run_preview = dry_run_response.dry_run_result_preview
+        recomputed_fingerprint = str(dry_run_preview.get("dry_run_result_fingerprint") or "")
+        recomputed_id = str(dry_run_preview.get("dry_run_result_id") or "")
+        dry_run_identity = {
+            "preflight_fingerprint": payload.preflight_fingerprint,
+            "reviewed_diff_id": payload.reviewed_diff_id,
+            "requested_dry_run_result_fingerprint": payload.dry_run_result_fingerprint,
+            "requested_dry_run_result_id": payload.dry_run_result_id,
+            "recomputed_dry_run_result_fingerprint": recomputed_fingerprint,
+            "recomputed_dry_run_result_id": recomputed_id,
+            "identity_matches": recomputed_fingerprint == payload.dry_run_result_fingerprint and recomputed_id == payload.dry_run_result_id,
+        }
+        if recomputed_fingerprint != payload.dry_run_result_fingerprint or recomputed_id != payload.dry_run_result_id:
+            errors.append("Dry-run identity mismatch: recomputed result fingerprint/id does not match request.")
+        validation_status = str((dry_run_preview.get("validation_summary") or {}).get("status") or "")
+        if validation_status != "clean":
+            errors.append("Recomputed dry-run validation summary must be 'clean'.")
+        candidate_events = list(dry_run_preview.get("candidate_events") or [])
+        if not candidate_events:
+            errors.append("Recomputed dry-run candidate_events must be non-empty.")
+
+    audit_preview = {"action": "season_builder_apply_create_only", "requested_by": payload.requested_by, "audit_reason": payload.audit_reason, "mutation_scope": payload.mutation_scope, "read_only": False}
+    if errors:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT if any("already exists" in e for e in errors) else status.HTTP_400_BAD_REQUEST, detail=SeasonBuilderApplyCreateOnlyCommandResponse(
+            enabled=True, can_execute=False, can_mutate=False, applied=False, target_season_label=normalized_target,
+            validation_errors=errors, validation_warnings=warnings, dry_run_identity=dry_run_identity, audit_preview=audit_preview,
+            message="Create-only apply rejected; no mutation performed.",
+        ).model_dump())
+
+    persisted_events = []
+    for idx, candidate in enumerate(candidate_events, start=1):
+        week = int(candidate.get("season_week_start") or 1)
+        persisted_events.append(SeasonCalendarEvent(
+            event_id=f"EVT-{normalized_target.replace('/', '-')}-W{week:02d}-{idx:03d}",
+            season=normalized_target,
+            season_week=week,
+            calendar_year=None,
+            year_week=week,
+            template_id=str(candidate.get("source_template_ref") or candidate.get("source_template_id") or payload.source_template_id),
+            event_name=str(candidate.get("event_name") or ""),
+            category=str(candidate.get("category") or ""),
+            tour_level=candidate.get("tour_level"),
+            host_country=str(candidate.get("host_country") or "UNK")[:3].upper(),
+            region=str(candidate.get("region") or "UNKNOWN"),
+            duration_in_season_weeks=int(candidate.get("duration_in_season_weeks") or 1),
+            end_season_week=int(candidate.get("season_week_end") or week),
+            main_draw_size=max(1, int(candidate.get("main_draw_size") or 1)),
+            qualification_draw_size=int(candidate.get("qualification_draw_size") or 0),
+            point_distribution_ref=candidate.get("point_distribution_ref"),
+            prize_money=int(candidate.get("prize_money") or 0),
+            prestige=float(candidate.get("prestige") or 0.0),
+            event_level_overrides={"source_slot_id": str(candidate.get("source_slot_id") or "")},
+        ))
+
+    created = SeasonCalendar(season=normalized_target, events=persisted_events)
+    registry = calendar_service._load_registry()
+    if normalized_target in registry.calendars_by_season:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=SeasonBuilderApplyCreateOnlyCommandResponse(
+            enabled=True, can_execute=False, can_mutate=False, applied=False, target_season_label=normalized_target,
+            validation_errors=["Target season calendar already exists; create-only apply cannot modify existing calendars."],
+            validation_warnings=warnings, dry_run_identity=dry_run_identity, audit_preview=audit_preview,
+            message="Create-only apply rejected; no mutation performed.",
+        ).model_dump())
+    next_calendars = dict(registry.calendars_by_season)
+    next_calendars[normalized_target] = created
+    calendar_service._save_registry(type(registry)(calendars_by_season=next_calendars))
+
+    return SeasonBuilderApplyCreateOnlyCommandResponse(
+        enabled=True, can_execute=True, can_mutate=True, applied=True, target_season_label=normalized_target,
+        created_calendar_summary={"event_count": len(persisted_events), "calendar_exists": True},
+        applied_event_count=len(persisted_events), dry_run_identity=dry_run_identity, audit_preview=audit_preview,
+        message="Create-only apply executed successfully.",
+    )
 @router.post("/builder/apply-command-contract", response_model=SeasonBuilderApplyCommandContractResponse)
 def post_season_builder_apply_command_contract(
     payload: SeasonBuilderApplyCommandContractRequest,

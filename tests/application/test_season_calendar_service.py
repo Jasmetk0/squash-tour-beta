@@ -5,7 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from beta_engine.application.season_calendar_service import SeasonCalendarService, map_season_week_to_calendar_week
+from beta_engine.application.season_calendar_service import (
+    SeasonCalendarAlreadyExistsError,
+    SeasonCalendarService,
+    map_season_week_to_calendar_week,
+)
 from beta_engine.domain.calendar import season_week_to_calendar_position
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.domain.tournaments import SeasonCalendarBuildRequest, SeasonCalendarEvent
@@ -116,3 +120,40 @@ def test_validation_detects_duplicates_and_draw_constraints(tmp_path: Path) -> N
     assert any(issue.code == "duplicate_event_id" for issue in errors)
     assert any(issue.code == "seeds_count_exceeds_main_draw" for issue in errors)
     assert any(issue.code == "no_elite_tour_events" for issue in warnings)
+
+
+def test_create_calendar_if_absent_creates_when_missing(tmp_path: Path) -> None:
+    svc = service(tmp_path)
+    build = svc.build_calendar(season="2035/2036", request=SeasonCalendarBuildRequest(seed=1, dry_run=True))
+    assert build.calendar is not None
+    created = svc.create_calendar_if_absent(season="2035/2036", calendar=build.calendar)
+    assert created.season == "2035/2036"
+    loaded = svc.get_calendar(season="2035/2036")
+    assert loaded.calendar is not None
+    assert len(loaded.calendar.events) == len(build.calendar.events)
+
+
+def test_create_calendar_if_absent_rejects_existing_without_overwrite(tmp_path: Path) -> None:
+    svc = service(tmp_path)
+    first = svc.build_calendar(season="2036/2037", request=SeasonCalendarBuildRequest(seed=2, dry_run=True))
+    second = svc.build_calendar(season="2036/2037", request=SeasonCalendarBuildRequest(seed=3, dry_run=True))
+    assert first.calendar is not None and second.calendar is not None
+    svc.create_calendar_if_absent(season="2036/2037", calendar=first.calendar)
+    with pytest.raises(SeasonCalendarAlreadyExistsError, match="already exists"):
+        svc.create_calendar_if_absent(season="2036/2037", calendar=second.calendar)
+
+
+def test_create_calendar_if_absent_does_not_overwrite_existing_calendar(tmp_path: Path) -> None:
+    svc = service(tmp_path)
+    first = svc.build_calendar(season="2037/2038", request=SeasonCalendarBuildRequest(seed=7, dry_run=True))
+    second = svc.build_calendar(season="2037/2038", request=SeasonCalendarBuildRequest(seed=9, dry_run=True))
+    assert first.calendar is not None and second.calendar is not None
+    first_event_id = first.calendar.events[0].event_id
+    second_event_id = second.calendar.events[0].event_id
+    assert first_event_id != second_event_id
+    svc.create_calendar_if_absent(season="2037/2038", calendar=first.calendar)
+    with pytest.raises(SeasonCalendarAlreadyExistsError):
+        svc.create_calendar_if_absent(season="2037/2038", calendar=second.calendar)
+    loaded = svc.get_calendar(season="2037/2038")
+    assert loaded.calendar is not None
+    assert loaded.calendar.events[0].event_id == first_event_id

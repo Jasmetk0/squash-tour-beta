@@ -12,7 +12,7 @@ from beta_engine.application.season_player_bootstrap_service import (
     SeasonActivePlayersResponse,
     SeasonBootstrapResult,
 )
-from beta_engine.application.season_calendar_service import SeasonCalendarService
+from beta_engine.application.season_calendar_service import SeasonCalendarAlreadyExistsError, SeasonCalendarService
 from beta_engine.application.season_readiness_service import SeasonReadinessRequest, SeasonReadinessResult, SeasonReadinessService
 from beta_engine.application.season_range_preflight_service import SeasonRangePreflightRequest, SeasonRangePreflightResult, SeasonRangePreflightService
 from beta_engine.application.season_range_execution_service import RunSeasonRangeRequest, RunSeasonRangeResult, SeasonRangeExecutionService
@@ -1014,17 +1014,15 @@ def post_season_builder_apply_create_only_command(
         ))
 
     created = SeasonCalendar(season=normalized_target, events=persisted_events)
-    registry = calendar_service._load_registry()
-    if normalized_target in registry.calendars_by_season:
+    try:
+        calendar_service.create_calendar_if_absent(season=normalized_target, calendar=created)
+    except SeasonCalendarAlreadyExistsError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=SeasonBuilderApplyCreateOnlyCommandResponse(
             enabled=True, can_execute=False, can_mutate=False, applied=False, target_season_label=normalized_target,
             validation_errors=["Target season calendar already exists; create-only apply cannot modify existing calendars."],
             validation_warnings=warnings, dry_run_identity=dry_run_identity, audit_preview=audit_preview,
             message="Create-only apply rejected; no mutation performed.",
         ).model_dump())
-    next_calendars = dict(registry.calendars_by_season)
-    next_calendars[normalized_target] = created
-    calendar_service._save_registry(type(registry)(calendars_by_season=next_calendars))
 
     return SeasonBuilderApplyCreateOnlyCommandResponse(
         enabled=True, can_execute=True, can_mutate=True, applied=True, target_season_label=normalized_target,

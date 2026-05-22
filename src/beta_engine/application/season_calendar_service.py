@@ -33,6 +33,10 @@ class SeasonCalendarRegistry(BaseModel):
     calendars_by_season: dict[str, SeasonCalendar] = Field(default_factory=dict)
 
 
+class SeasonCalendarAlreadyExistsError(ValueError):
+    """Raised when attempting create-only insertion for an existing season calendar."""
+
+
 def map_season_week_to_calendar_week(
     *,
     season: str,
@@ -81,6 +85,18 @@ class SeasonCalendarService:
             validation_warnings=calendar.validation_warnings,
             validation_errors=calendar.validation_errors,
         )
+
+    def create_calendar_if_absent(self, *, season: str, calendar: SeasonCalendar) -> SeasonCalendar:
+        """Persist a season calendar only when the target season key does not yet exist."""
+        registry = self._load_registry()
+        if season in registry.calendars_by_season:
+            raise SeasonCalendarAlreadyExistsError(
+                f"Season calendar already exists for season '{season}'."
+            )
+        next_calendars = dict(registry.calendars_by_season)
+        next_calendars[season] = calendar
+        self._save_registry(SeasonCalendarRegistry(calendars_by_season=next_calendars))
+        return calendar
 
     def build_calendar(self, *, season: str, request: SeasonCalendarBuildRequest) -> SeasonCalendarBuildResult:
         registry = self._load_registry()

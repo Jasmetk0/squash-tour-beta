@@ -227,7 +227,27 @@ describe('Module 17 pages through routes', () => {
           requested_by: 'local-admin-preview',
           audit_reason: hasAllMetadata ? 'ticket-123 dry-run review' : payload.audit_reason,
           explicit_confirmation_present: hasAllMetadata ? true : Boolean(payload.explicit_confirmation),
-          mutation_scope: hasAllMetadata ? 'merge_preview' : payload.mutation_scope
+          mutation_scope: hasAllMetadata ? 'merge_preview' : payload.mutation_scope,
+          generation_design_preview_available: true
+        },
+        generation_design_preview: {
+          status: 'design_preview_only',
+          execution_enabled: false,
+          will_generate_events: false,
+          will_persist_calendar: false,
+          will_mutate_existing_calendar: false,
+          planned_steps: [
+            'Validate reviewed preflight identity.',
+            'Resolve target season.',
+            'Resolve source template or future source.',
+            'Compute source event candidates.',
+            'Compare candidates with target calendar.',
+            'Return additions/replacements/conflicts without persistence.',
+            'Require separate audited command before any mutation.'
+          ],
+          required_future_inputs: ['preflight_fingerprint', 'reviewed_diff_id', 'audit_reason', 'explicit_confirmation', 'mutation_scope'],
+          planned_output_sections: ['candidate_events', 'structural_summary', 'conflict_summary', 'validation_errors', 'validation_warnings', 'audit_preview'],
+          blocked_reason: 'Dry-run generation is not implemented in this phase.'
         },
         message: 'Dry-run build command contract exists, but execution is disabled in this phase.'
       }
@@ -613,6 +633,17 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByText('explicit_confirmation will be required before execution is enabled in a future phase.')).toBeInTheDocument()
     expect(await screen.findByText('mutation_scope will be required before execution is enabled in a future phase.')).toBeInTheDocument()
     expect((await screen.findAllByText('execution_enabled')).length).toBeGreaterThan(0)
+    expect(await screen.findByText('Future dry-run generation design preview')).toBeInTheDocument()
+    expect(await screen.findByText('design_preview_only')).toBeInTheDocument()
+    expect(await screen.findByText('will_generate_events')).toBeInTheDocument()
+    expect(await screen.findByText('will_persist_calendar')).toBeInTheDocument()
+    expect(await screen.findByText('will_mutate_existing_calendar')).toBeInTheDocument()
+    expect(await screen.findByText('Dry-run generation is not implemented in this phase.')).toBeInTheDocument()
+    expect(await screen.findByText('Validate reviewed preflight identity.')).toBeInTheDocument()
+    expect(await screen.findByText('Return additions/replacements/conflicts without persistence.')).toBeInTheDocument()
+    expect(await screen.findByText('candidate_events')).toBeInTheDocument()
+    expect(await screen.findByText('conflict_summary')).toBeInTheDocument()
+    expect((await screen.findAllByText('audit_preview')).length).toBeGreaterThan(0)
     expect((await screen.findAllByText('explicit_confirmation_present')).length).toBeGreaterThan(0)
     expect(await screen.findByText('Raw disabled dry-run build contract JSON')).toBeInTheDocument()
     expect(await screen.findByText('Execution remains disabled; this panel is not a build control.')).toBeInTheDocument()
@@ -868,7 +899,18 @@ describe('Module 17 pages through routes', () => {
       reviewed_diff_id: 'rd_test_empty',
       validation_errors: [],
       validation_warnings: [],
-      audit_preview: { action: 'season_builder_dry_run_build', read_only: true, mutation_permitted: false, execution_enabled: false, explicit_confirmation_present: false },
+      audit_preview: { action: 'season_builder_dry_run_build', read_only: true, mutation_permitted: false, execution_enabled: false, explicit_confirmation_present: false, generation_design_preview_available: true },
+      generation_design_preview: {
+        status: 'design_preview_only',
+        execution_enabled: false,
+        will_generate_events: false,
+        will_persist_calendar: false,
+        will_mutate_existing_calendar: false,
+        planned_steps: ['Validate reviewed preflight identity.', 'Return additions/replacements/conflicts without persistence.'],
+        required_future_inputs: ['preflight_fingerprint', 'reviewed_diff_id', 'audit_reason', 'explicit_confirmation', 'mutation_scope'],
+        planned_output_sections: ['candidate_events', 'conflict_summary', 'audit_preview'],
+        blocked_reason: 'Dry-run generation is not implemented in this phase.'
+      },
       message: 'Dry-run build command contract exists, but execution is disabled in this phase.'
     })
 
@@ -920,6 +962,8 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Disabled dry-run readiness summary')).toBeInTheDocument()
     expect(screen.getByText('Dry-run audit metadata preview inputs')).toBeInTheDocument()
     expect(screen.getByText('Dry-run build command contract exists, but execution is disabled in this phase.')).toBeInTheDocument()
+    expect(screen.getByText('Future dry-run generation design preview')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run generation is not implemented in this phase.')).toBeInTheDocument()
     expect(screen.getByText('Execution remains disabled; this panel is not a build control.')).toBeInTheDocument()
     expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith({ target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, requested_by: 'local-admin-preview' })
     expect(screen.getAllByText('No existing calendar detected.').length).toBeGreaterThan(0)

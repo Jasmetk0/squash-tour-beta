@@ -86,6 +86,24 @@ def test_builder_dry_run_build_minimal_contract(tmp_path: Path) -> None:
         assert body["audit_preview"]["read_only"] is True
         assert body["audit_preview"]["mutation_permitted"] is False
         assert body["audit_preview"]["execution_enabled"] is False
+        assert body["audit_preview"]["generation_design_preview_available"] is True
+        design = body["generation_design_preview"]
+        assert design["status"] == "design_preview_only"
+        assert design["execution_enabled"] is False
+        assert design["will_generate_events"] is False
+        assert design["will_persist_calendar"] is False
+        assert design["will_mutate_existing_calendar"] is False
+        assert "Validate reviewed preflight identity." in design["planned_steps"]
+        assert "Return additions/replacements/conflicts without persistence." in design["planned_steps"]
+        assert "preflight_fingerprint" in design["required_future_inputs"]
+        assert "reviewed_diff_id" in design["required_future_inputs"]
+        assert "audit_reason" in design["required_future_inputs"]
+        assert "explicit_confirmation" in design["required_future_inputs"]
+        assert "mutation_scope" in design["required_future_inputs"]
+        assert "candidate_events" in design["planned_output_sections"]
+        assert "conflict_summary" in design["planned_output_sections"]
+        assert "audit_preview" in design["planned_output_sections"]
+        assert design["blocked_reason"] == "Dry-run generation is not implemented in this phase."
 
 
 def test_builder_dry_run_build_missing_fingerprint(tmp_path: Path) -> None:
@@ -129,6 +147,7 @@ def test_builder_dry_run_build_full_future_metadata(tmp_path: Path) -> None:
         _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
         assert body["can_execute"] is False
         assert body["can_mutate"] is False
+        assert body["generation_design_preview"]["status"] == "design_preview_only"
         assert "audit_reason will be required before execution is enabled in a future phase." not in body["validation_warnings"]
         assert "explicit_confirmation will be required before execution is enabled in a future phase." not in body["validation_warnings"]
         assert "mutation_scope will be required before execution is enabled in a future phase." not in body["validation_warnings"]

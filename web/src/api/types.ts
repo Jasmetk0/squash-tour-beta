@@ -3051,5 +3051,6 @@ export type SeasonBuilderDryRunBuildResponse = {
   validation_errors: string[]
   validation_warnings: string[]
   audit_preview: Record<string, unknown>
+  generation_design_preview: Record<string, unknown>
   message: string
 }

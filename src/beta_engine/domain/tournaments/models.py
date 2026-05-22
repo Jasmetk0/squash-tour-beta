@@ -287,6 +287,7 @@ class SeasonBuilderDryRunBuildResponse(BaseModel):
     validation_errors: list[str] = Field(default_factory=list)
     validation_warnings: list[str] = Field(default_factory=list)
     audit_preview: dict[str, Any] = Field(default_factory=dict)
+    generation_design_preview: dict[str, Any] = Field(default_factory=dict)
     message: str = (
         "Dry-run build command contract exists, but execution is disabled in this phase."
     )

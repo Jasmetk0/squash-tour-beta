@@ -296,6 +296,38 @@ def post_season_builder_dry_run_build_contract(
         warnings.append(
             "mutation_scope will be required before execution is enabled in a future phase."
         )
+    generation_design_preview = {
+        "status": "design_preview_only",
+        "execution_enabled": False,
+        "will_generate_events": False,
+        "will_persist_calendar": False,
+        "will_mutate_existing_calendar": False,
+        "planned_steps": [
+            "Validate reviewed preflight identity.",
+            "Resolve target season.",
+            "Resolve source template or future source.",
+            "Compute source event candidates.",
+            "Compare candidates with target calendar.",
+            "Return additions/replacements/conflicts without persistence.",
+            "Require separate audited command before any mutation.",
+        ],
+        "required_future_inputs": [
+            "preflight_fingerprint",
+            "reviewed_diff_id",
+            "audit_reason",
+            "explicit_confirmation",
+            "mutation_scope",
+        ],
+        "planned_output_sections": [
+            "candidate_events",
+            "structural_summary",
+            "conflict_summary",
+            "validation_errors",
+            "validation_warnings",
+            "audit_preview",
+        ],
+        "blocked_reason": "Dry-run generation is not implemented in this phase.",
+    }
 
     return SeasonBuilderDryRunBuildResponse(
         enabled=False,
@@ -326,5 +358,7 @@ def post_season_builder_dry_run_build_contract(
                 payload.explicit_confirmation and payload.explicit_confirmation.strip()
             ),
             "mutation_scope": payload.mutation_scope,
+            "generation_design_preview_available": True,
         },
+        generation_design_preview=generation_design_preview,
     )

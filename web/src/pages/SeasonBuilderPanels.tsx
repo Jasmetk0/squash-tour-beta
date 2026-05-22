@@ -1449,6 +1449,11 @@ type DisabledDryRunBuildContractPanelProps = {
 export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload, query }: DisabledDryRunBuildContractPanelProps): JSX.Element {
   const formatValue = (value: unknown): string => (value === null || value === undefined ? '—' : String(value))
   const auditPreview = query.data?.audit_preview ?? {}
+  const generationDesignPreview = query.data?.generation_design_preview
+  const generationDesignPreviewRecord = generationDesignPreview && typeof generationDesignPreview === 'object'
+    ? generationDesignPreview as Record<string, unknown>
+    : null
+  const previewList = (value: unknown): unknown[] => Array.isArray(value) ? value : []
 
   return (
     <>
@@ -1500,6 +1505,34 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
               <tr><td>mutation_scope</td><td>{formatValue(auditPreview.mutation_scope)}</td></tr>
             </tbody>
           </table>
+          <h4>Future dry-run generation design preview</h4>
+          {generationDesignPreviewRecord ? (
+            <>
+              <table>
+                <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+                <tbody>
+                  <tr><td>status</td><td>{formatValue(generationDesignPreviewRecord.status)}</td></tr>
+                  <tr><td>execution_enabled</td><td>{formatValue(generationDesignPreviewRecord.execution_enabled)}</td></tr>
+                  <tr><td>will_generate_events</td><td>{formatValue(generationDesignPreviewRecord.will_generate_events)}</td></tr>
+                  <tr><td>will_persist_calendar</td><td>{formatValue(generationDesignPreviewRecord.will_persist_calendar)}</td></tr>
+                  <tr><td>will_mutate_existing_calendar</td><td>{formatValue(generationDesignPreviewRecord.will_mutate_existing_calendar)}</td></tr>
+                  <tr><td>blocked_reason</td><td>{formatValue(generationDesignPreviewRecord.blocked_reason)}</td></tr>
+                </tbody>
+              </table>
+              <h5>Planned steps</h5>
+              {previewList(generationDesignPreviewRecord.planned_steps).length === 0 ? <p>No planned steps returned.</p> : (
+                <ul>{previewList(generationDesignPreviewRecord.planned_steps).map((step, idx) => <li key={`planned-step-${idx}`}>{formatValue(step)}</li>)}</ul>
+              )}
+              <h5>Required future inputs</h5>
+              {previewList(generationDesignPreviewRecord.required_future_inputs).length === 0 ? <p>No required future inputs returned.</p> : (
+                <ul>{previewList(generationDesignPreviewRecord.required_future_inputs).map((input, idx) => <li key={`required-input-${idx}`}>{formatValue(input)}</li>)}</ul>
+              )}
+              <h5>Planned output sections</h5>
+              {previewList(generationDesignPreviewRecord.planned_output_sections).length === 0 ? <p>No planned output sections returned.</p> : (
+                <ul>{previewList(generationDesignPreviewRecord.planned_output_sections).map((section, idx) => <li key={`planned-output-${idx}`}>{formatValue(section)}</li>)}</ul>
+              )}
+            </>
+          ) : <p>Future dry-run generation design preview is unavailable.</p>}
           <h4>Current disabled dry-run request payload</h4>
           <table>
             <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>

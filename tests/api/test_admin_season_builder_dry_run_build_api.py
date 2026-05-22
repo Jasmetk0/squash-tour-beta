@@ -303,6 +303,10 @@ def test_builder_dry_run_build_generates_read_only_candidates_from_template(tmp_
             assert candidate["matched_existing_event_name"] is None
             assert candidate["matched_existing_event_week"] is None
         assert body["audit_preview"]["dry_run_result_preview_available"] is True
+        validation_summary = body["dry_run_result_preview"]["validation_summary"]
+        assert validation_summary["status"] == "warnings"
+        assert validation_summary["blocking_count"] == 0
+        assert len(validation_summary["warning_reasons"]) >= 3
         _, calendar_body = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar")
         assert calendar_body["calendar"] is None
         assert calendar_body["summary"]["calendar_exists"] is False
@@ -320,6 +324,9 @@ def test_builder_dry_run_build_unknown_template_returns_unresolved_source(tmp_pa
         _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
         assert "source_template_id could not be resolved for read-only dry-run candidate generation." in body["validation_errors"]
         assert body["dry_run_result_preview"]["status"] == "blocked_unresolved_source"
+        assert body["dry_run_result_preview"]["validation_summary"]["status"] == "blocking"
+        assert "source_template_id could not be resolved for read-only dry-run candidate generation." in body["dry_run_result_preview"]["validation_summary"]["blocking_reasons"]
+        assert body["dry_run_result_preview"]["plan_readiness"]["read_only_plan_available"] is False
         assert body["dry_run_result_preview"]["candidate_events"] == []
         assert body["can_mutate"] is False
 
@@ -359,6 +366,11 @@ def test_builder_dry_run_build_existing_target_calendar_comparison(tmp_path: Pat
         assert body["dry_run_result_preview"]["structural_summary"]["target_event_count"] == metadata["target_event_count"]
         policy_conflicts = body["dry_run_result_preview"]["conflict_summary"]["policy_conflicts"]
         assert any("Existing target calendar requires explicit merge/overwrite policy before future mutation." in item["message"] for item in policy_conflicts)
+        validation_summary = body["dry_run_result_preview"]["validation_summary"]
+        assert validation_summary["status"] == "blocking"
+        assert "Existing target calendar requires explicit merge/overwrite policy before future mutation." in validation_summary["blocking_reasons"]
+        assert validation_summary["conflict_type_counts"]["policy_conflicts"] > 0
+        assert body["dry_run_result_preview"]["plan_readiness"]["has_blocking_issues"] is True
         assert body["dry_run_result_preview"]["structural_summary"]["conflict_count"] >= len(policy_conflicts)
         statuses = {candidate["candidate_status"] for candidate in body["dry_run_result_preview"]["candidate_events"]}
         assert statuses.issubset({"planned", "conflict", "invalid"})
@@ -396,6 +408,48 @@ def test_builder_dry_run_build_empty_target_calendar_comparison(tmp_path: Path) 
         assert body["can_mutate"] is False
         _, calendar_body = call("GET", f"{server.base_url}/admin/seasons/2038%2F2039/calendar")
         assert calendar_body["calendar"] is None
+
+
+def test_builder_dry_run_build_validation_summary_clean_when_metadata_is_present(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2038/2039",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": "merge_preview",
+            "preflight_fingerprint": "pf_clean",
+            "reviewed_diff_id": "rd_clean",
+            "requested_by": "qa",
+            "audit_reason": "phase-8d-clean-check",
+            "explicit_confirmation": "confirmed",
+            "mutation_scope": "none",
+        }
+        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        summary = body["dry_run_result_preview"]["validation_summary"]
+        assert summary["status"] == "clean"
+        assert summary["blocking_count"] == 0
+        assert summary["warning_count"] == 0
+        assert summary["candidate_status_counts"]["planned"] == body["dry_run_result_preview"]["structural_summary"]["candidate_count"]
+        readiness = body["dry_run_result_preview"]["plan_readiness"]
+        assert readiness["read_only_plan_available"] is True
+        assert readiness["mutation_still_disabled"] is True
+
+
+def test_builder_dry_run_build_missing_audit_metadata_adds_warning_reasons(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2038/2039",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "preflight_fingerprint": "pf_warn",
+            "reviewed_diff_id": "rd_warn",
+        }
+        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        summary = body["dry_run_result_preview"]["validation_summary"]
+        assert summary["status"] in {"warnings", "blocking"}
+        assert any("audit_reason will be required before execution is enabled in a future phase." in reason for reason in summary["warning_reasons"])
+        assert any("explicit_confirmation will be required before execution is enabled in a future phase." in reason for reason in summary["warning_reasons"])
+        assert any("mutation_scope will be required before execution is enabled in a future phase." in reason for reason in summary["warning_reasons"])
 
 
 def test_builder_dry_run_build_existing_target_with_merge_preview_has_no_policy_conflict(tmp_path: Path) -> None:

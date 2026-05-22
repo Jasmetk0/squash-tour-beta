@@ -2097,6 +2097,52 @@ export function describeValidationStatus(status: unknown, errorCount?: unknown, 
   return 'Validation status is unavailable.'
 }
 
+type IssueSeverityGroupCounts = {
+  error: number
+  warning: number
+  info: number
+  unknown: number
+}
+
+type IssueSeverityCodeGroups = {
+  error: string[]
+  warning: string[]
+  info: string[]
+  unknown: string[]
+}
+
+function normalizeIssueSeverity(severity: unknown): keyof IssueSeverityGroupCounts {
+  if (severity === 'error' || severity === 'warning' || severity === 'info') return severity
+  return 'unknown'
+}
+
+function normalizeIssueCode(code: unknown): string {
+  if (typeof code === 'string' && code.trim().length > 0) return code
+  return '(missing_code)'
+}
+
+function groupIssueCountsBySeverity(issues: SeasonCalendarValidationResponse['issues']): IssueSeverityGroupCounts {
+  return issues.reduce<IssueSeverityGroupCounts>((counts, issue) => {
+    const severity = normalizeIssueSeverity(issue?.severity)
+    counts[severity] += 1
+    return counts
+  }, { error: 0, warning: 0, info: 0, unknown: 0 })
+}
+
+function groupIssueCodesBySeverity(issues: SeasonCalendarValidationResponse['issues']): IssueSeverityCodeGroups {
+  const grouped = issues.reduce<Record<keyof IssueSeverityCodeGroups, Set<string>>>((acc, issue) => {
+    const severity = normalizeIssueSeverity(issue?.severity)
+    acc[severity].add(normalizeIssueCode(issue?.code))
+    return acc
+  }, { error: new Set(), warning: new Set(), info: new Set(), unknown: new Set() })
+  return {
+    error: Array.from(grouped.error),
+    warning: Array.from(grouped.warning),
+    info: Array.from(grouped.info),
+    unknown: Array.from(grouped.unknown)
+  }
+}
+
 export function TargetCalendarValidationPanel({ queryEnabled, query }: TargetCalendarValidationPanelProps): JSX.Element {
   if (!queryEnabled) return <p>Select a target season to view read-only calendar validation.</p>
   if (query.isLoading) return <p>Loading target calendar validation…</p>
@@ -2105,6 +2151,8 @@ export function TargetCalendarValidationPanel({ queryEnabled, query }: TargetCal
   const { calendar_exists, validation_summary, issues, read_only, message } = query.data
   const topIssues = issues.slice(0, 10)
   const hidden = Math.max(issues.length - topIssues.length, 0)
+  const issueSeverityCounts = groupIssueCountsBySeverity(issues)
+  const issueCodesBySeverity = groupIssueCodesBySeverity(issues)
   const renderShape = (label: string, value: Record<string, unknown>) => {
     const count = typeof value.count === 'number' ? value.count : null
     const vals = Array.isArray(value.values) ? value.values.join(', ') : null
@@ -2129,6 +2177,15 @@ export function TargetCalendarValidationPanel({ queryEnabled, query }: TargetCal
     {renderShape('Categories', validation_summary.categories)}
     {renderShape('Tour levels', validation_summary.tour_levels)}
     {renderShape('Host countries', validation_summary.host_countries)}
+    <h5>Validation issue severity summary</h5>
+    <p>Error issues: {issueSeverityCounts.error}</p>
+    <p>Warning issues: {issueSeverityCounts.warning}</p>
+    <p>Info issues: {issueSeverityCounts.info}</p>
+    <p>Unknown-severity issues: {issueSeverityCounts.unknown}</p>
+    <p>Error issue codes: {issueCodesBySeverity.error.length > 0 ? issueCodesBySeverity.error.join(', ') : 'none'}</p>
+    <p>Warning issue codes: {issueCodesBySeverity.warning.length > 0 ? issueCodesBySeverity.warning.join(', ') : 'none'}</p>
+    <p>Info issue codes: {issueCodesBySeverity.info.length > 0 ? issueCodesBySeverity.info.join(', ') : 'none'}</p>
+    <p>Unknown issue codes: {issueCodesBySeverity.unknown.length > 0 ? issueCodesBySeverity.unknown.join(', ') : 'none'}</p>
     <table><thead><tr><th>Severity</th><th>Code</th><th>Event</th><th>Field</th><th>Message</th></tr></thead>
     <tbody>{topIssues.map((issue, i) => <tr key={`${issue.code}-${i}`}><td>{issue.severity}</td><td>{issue.code}</td><td>{issue.event_id ?? '-'}</td><td>{issue.field ?? '-'}</td><td>{issue.message}</td></tr>)}</tbody></table>
     {hidden > 0 ? <p>{hidden} additional issues hidden.</p> : null}

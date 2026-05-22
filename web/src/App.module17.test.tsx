@@ -1034,6 +1034,13 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('Error count: 0').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Warning count: 1').length).toBeGreaterThan(0)
     expect(screen.getByText('Target validation interpretation: Validation has warnings but no blocking errors.')).toBeInTheDocument()
+    expect(screen.getByText('Validation issue severity summary')).toBeInTheDocument()
+    expect(screen.getByText('Error issues: 0')).toBeInTheDocument()
+    expect(screen.getByText('Warning issues: 1')).toBeInTheDocument()
+    expect(screen.getByText('Info issues: 0')).toBeInTheDocument()
+    expect(screen.getByText('Unknown-severity issues: 0')).toBeInTheDocument()
+    expect(screen.getByText('Warning issue codes: calendar_validation_demo_warning')).toBeInTheDocument()
+    expect(screen.getByText('Error issue codes: none')).toBeInTheDocument()
     expect(screen.getAllByText('Event count: 1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('First season week: 1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Last season week: 1').length).toBeGreaterThan(0)
@@ -2335,6 +2342,40 @@ describe('Validation severity interpretation panels', () => {
       />
     )
     expect(screen.getByText('Target validation interpretation: Validation is clean.')).toBeInTheDocument()
+  })
+
+  it('groups malformed severity into unknown issue summary with missing code fallback', () => {
+    render(
+      <TargetCalendarValidationPanel
+        queryEnabled
+        query={{
+          isLoading: false,
+          isFetching: false,
+          error: null,
+          data: {
+            season: '2000/01',
+            calendar_exists: true,
+            validation_summary: {
+              status: 'warnings',
+              error_count: 0,
+              warning_count: 0,
+              info_count: 0,
+              event_count: 1,
+              first_season_week: 1,
+              last_season_week: 1,
+              categories: { count: 0, values: [] },
+              tour_levels: { count: 0, values: [] },
+              host_countries: { count: 0, values: [] }
+            },
+            issues: [{ severity: 'mystery' as never, code: '', message: 'Bad issue shape' } as never],
+            read_only: true,
+            message: 'ok'
+          }
+        }}
+      />
+    )
+    expect(screen.getByText('Unknown-severity issues: 1')).toBeInTheDocument()
+    expect(screen.getByText('Unknown issue codes: (missing_code)')).toBeInTheDocument()
   })
 
   it('shows blocking-errors interpretation when apply preview has errors', () => {

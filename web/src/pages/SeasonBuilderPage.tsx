@@ -281,8 +281,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
         queryClient.invalidateQueries({ queryKey: ['season-builder-target-calendar', selectedTargetSeasonLabel] }),
         queryClient.invalidateQueries({ queryKey: ['season-builder-apply-create-only-readiness'] }),
         queryClient.invalidateQueries({ queryKey: ['season-builder-target-calendar-validation', selectedTargetSeasonLabel] }),
-        queryClient.invalidateQueries({ queryKey: ['season-registry'] }),
-        queryClient.invalidateQueries({ queryKey: ['season-builder-target-calendar-validation', selectedTargetSeasonLabel] })
+        queryClient.invalidateQueries({ queryKey: ['season-registry'] })
       ])
     },
     onError: async () => {

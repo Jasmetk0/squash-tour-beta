@@ -328,6 +328,48 @@ def post_season_builder_dry_run_build_contract(
         ],
         "blocked_reason": "Dry-run generation is not implemented in this phase.",
     }
+    candidate_event_contract_preview = {
+        "status": "contract_preview_only",
+        "will_generate_candidates": False,
+        "candidate_count": 0,
+        "event_shape": {
+            "candidate_id": "string",
+            "source_slot_id": "string",
+            "season_week_start": "int",
+            "season_week_end": "int",
+            "event_name": "string",
+            "tour_level": "string",
+            "category": "string",
+            "host_country": "string",
+            "region": "string",
+            "main_draw_size": "int",
+            "qualification_draw_size": "int",
+            "point_distribution_ref": "string",
+            "prize_money": "int",
+            "prestige": "int",
+            "duration_in_season_weeks": "int",
+            "source_template_id": "string | null",
+            "source_type": "string",
+            "candidate_status": "planned | conflict | invalid",
+            "validation_errors": "string[]",
+            "validation_warnings": "string[]",
+        },
+        "structural_summary_shape": {
+            "candidate_count": "int",
+            "target_event_count": "int | null",
+            "additions_count": "int",
+            "replacement_count": "int",
+            "conflict_count": "int",
+            "invalid_count": "int",
+        },
+        "conflict_summary_shape": {
+            "week_conflicts": "array",
+            "slot_conflicts": "array",
+            "policy_conflicts": "array",
+            "validation_conflicts": "array",
+        },
+        "blocked_reason": "Candidate event generation is not implemented in this phase.",
+    }
 
     return SeasonBuilderDryRunBuildResponse(
         enabled=False,
@@ -359,6 +401,8 @@ def post_season_builder_dry_run_build_contract(
             ),
             "mutation_scope": payload.mutation_scope,
             "generation_design_preview_available": True,
+            "candidate_event_contract_preview_available": True,
         },
         generation_design_preview=generation_design_preview,
+        candidate_event_contract_preview=candidate_event_contract_preview,
     )

@@ -87,6 +87,7 @@ def test_builder_dry_run_build_minimal_contract(tmp_path: Path) -> None:
         assert body["audit_preview"]["mutation_permitted"] is False
         assert body["audit_preview"]["execution_enabled"] is False
         assert body["audit_preview"]["generation_design_preview_available"] is True
+        assert body["audit_preview"]["candidate_event_contract_preview_available"] is True
         design = body["generation_design_preview"]
         assert design["status"] == "design_preview_only"
         assert design["execution_enabled"] is False
@@ -104,6 +105,29 @@ def test_builder_dry_run_build_minimal_contract(tmp_path: Path) -> None:
         assert "conflict_summary" in design["planned_output_sections"]
         assert "audit_preview" in design["planned_output_sections"]
         assert design["blocked_reason"] == "Dry-run generation is not implemented in this phase."
+        candidate_preview = body["candidate_event_contract_preview"]
+        assert candidate_preview["status"] == "contract_preview_only"
+        assert candidate_preview["will_generate_candidates"] is False
+        assert candidate_preview["candidate_count"] == 0
+        event_shape = candidate_preview["event_shape"]
+        assert "candidate_id" in event_shape
+        assert "source_slot_id" in event_shape
+        assert "season_week_start" in event_shape
+        assert "event_name" in event_shape
+        assert "candidate_status" in event_shape
+        assert "validation_errors" in event_shape
+        assert "validation_warnings" in event_shape
+        structural_shape = candidate_preview["structural_summary_shape"]
+        assert "candidate_count" in structural_shape
+        assert "additions_count" in structural_shape
+        assert "conflict_count" in structural_shape
+        assert "invalid_count" in structural_shape
+        conflict_shape = candidate_preview["conflict_summary_shape"]
+        assert "week_conflicts" in conflict_shape
+        assert "slot_conflicts" in conflict_shape
+        assert "policy_conflicts" in conflict_shape
+        assert "validation_conflicts" in conflict_shape
+        assert candidate_preview["blocked_reason"] == "Candidate event generation is not implemented in this phase."
 
 
 def test_builder_dry_run_build_missing_fingerprint(tmp_path: Path) -> None:
@@ -148,6 +172,7 @@ def test_builder_dry_run_build_full_future_metadata(tmp_path: Path) -> None:
         assert body["can_execute"] is False
         assert body["can_mutate"] is False
         assert body["generation_design_preview"]["status"] == "design_preview_only"
+        assert body["candidate_event_contract_preview"]["candidate_count"] == 0
         assert "audit_reason will be required before execution is enabled in a future phase." not in body["validation_warnings"]
         assert "explicit_confirmation will be required before execution is enabled in a future phase." not in body["validation_warnings"]
         assert "mutation_scope will be required before execution is enabled in a future phase." not in body["validation_warnings"]

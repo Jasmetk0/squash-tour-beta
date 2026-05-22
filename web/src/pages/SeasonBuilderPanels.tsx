@@ -1715,6 +1715,34 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
                   <tr><td>next_required_step</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.plan_readiness)?.next_required_step)}</td></tr>
                 </tbody></table>
               ) : <p>Plan readiness is unavailable.</p>}
+              <h5>Dry-run identity readiness</h5>
+              {shapeRecord(dryRunResultPreviewRecord.identity_readiness) ? (
+                <>
+                  <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+                    <tr><td>status</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.status)}</td></tr>
+                  </tbody></table>
+                  <h6>Future command reference</h6>
+                  {shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.future_command_reference) ? (
+                    <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+                      <tr><td>preflight_fingerprint</td><td>{formatValue(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.future_command_reference)?.preflight_fingerprint)}</td></tr>
+                      <tr><td>reviewed_diff_id</td><td>{formatValue(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.future_command_reference)?.reviewed_diff_id)}</td></tr>
+                      <tr><td>dry_run_result_fingerprint</td><td>{formatValue(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.future_command_reference)?.dry_run_result_fingerprint)}</td></tr>
+                      <tr><td>dry_run_result_id</td><td>{formatValue(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.future_command_reference)?.dry_run_result_id)}</td></tr>
+                      <tr><td>can_reference_future_command</td><td>{formatValue(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.future_command_reference)?.can_reference_future_command)}</td></tr>
+                      <tr><td>mutation_still_disabled</td><td>{formatValue(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.future_command_reference)?.mutation_still_disabled)}</td></tr>
+                    </tbody></table>
+                  ) : <p>Future command reference is unavailable.</p>}
+                  <h6>Checklist items</h6>
+                  {previewList(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.items).length > 0 ? (
+                    <table><thead><tr><th scope="col">Area</th><th scope="col">Status</th><th scope="col">Message</th></tr></thead><tbody>
+                      {previewList(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.items).map((item, idx) => {
+                        const row = shapeRecord(item)
+                        return <tr key={`identity-readiness-item-${idx}`}><td>{formatValue(row?.area)}</td><td>{formatValue(row?.status)}</td><td>{formatValue(row?.message)}</td></tr>
+                      })}
+                    </tbody></table>
+                  ) : <p>Identity readiness checklist items are unavailable.</p>}
+                </>
+              ) : <p>Dry-run identity readiness is unavailable.</p>}
               <h5>Candidate events</h5>
               {previewList(dryRunResultPreviewRecord.candidate_events).length === 0 ? <p>No read-only candidate events generated.</p> : (
                 <table><thead><tr><th scope="col">candidate_id</th><th scope="col">source_slot_id</th><th scope="col">season_week_start</th><th scope="col">season_week_end</th><th scope="col">event_name</th><th scope="col">tour_level</th><th scope="col">category</th><th scope="col">host_country</th><th scope="col">candidate_status</th><th scope="col">comparison_classification</th><th scope="col">comparison_reason</th><th scope="col">matched_existing_event_id</th></tr></thead><tbody>{previewList(dryRunResultPreviewRecord.candidate_events).slice(0, 5).map((candidate, idx) => { const row = shapeRecord(candidate); return <tr key={`dry-run-result-candidate-${idx}`}><td>{formatValue(row?.candidate_id)}</td><td>{formatValue(row?.source_slot_id)}</td><td>{formatValue(row?.season_week_start)}</td><td>{formatValue(row?.season_week_end)}</td><td>{formatValue(row?.event_name)}</td><td>{formatValue(row?.tour_level)}</td><td>{formatValue(row?.category)}</td><td>{formatValue(row?.host_country)}</td><td>{formatValue(row?.candidate_status)}</td><td>{formatValue(row?.comparison_classification)}</td><td>{formatValue(row?.comparison_reason)}</td><td>{formatValue(row?.matched_existing_event_id)}</td></tr> })}</tbody></table>

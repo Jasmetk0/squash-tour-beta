@@ -327,6 +327,8 @@ def test_builder_dry_run_build_unknown_template_returns_unresolved_source(tmp_pa
         assert body["dry_run_result_preview"]["validation_summary"]["status"] == "blocking"
         assert "source_template_id could not be resolved for read-only dry-run candidate generation." in body["dry_run_result_preview"]["validation_summary"]["blocking_reasons"]
         assert body["dry_run_result_preview"]["plan_readiness"]["read_only_plan_available"] is False
+        assert body["dry_run_result_preview"]["identity_readiness"]["status"] == "blocked_reference"
+        assert body["dry_run_result_preview"]["identity_readiness"]["future_command_reference"]["can_reference_future_command"] is False
         assert body["dry_run_result_preview"]["candidate_events"] == []
         assert body["can_mutate"] is False
 
@@ -433,6 +435,15 @@ def test_builder_dry_run_build_validation_summary_clean_when_metadata_is_present
         readiness = body["dry_run_result_preview"]["plan_readiness"]
         assert readiness["read_only_plan_available"] is True
         assert readiness["mutation_still_disabled"] is True
+        identity_readiness = body["dry_run_result_preview"]["identity_readiness"]
+        assert identity_readiness["status"] == "ready_reference"
+        future_reference = identity_readiness["future_command_reference"]
+        assert future_reference["preflight_fingerprint"] == "pf_clean"
+        assert future_reference["reviewed_diff_id"] == "rd_clean"
+        assert future_reference["dry_run_result_fingerprint"].startswith("drf_")
+        assert future_reference["dry_run_result_id"].startswith("drr_")
+        assert future_reference["can_reference_future_command"] is True
+        assert future_reference["mutation_still_disabled"] is True
 
 
 def test_builder_dry_run_build_missing_audit_metadata_adds_warning_reasons(tmp_path: Path) -> None:
@@ -450,6 +461,48 @@ def test_builder_dry_run_build_missing_audit_metadata_adds_warning_reasons(tmp_p
         assert any("audit_reason will be required before execution is enabled in a future phase." in reason for reason in summary["warning_reasons"])
         assert any("explicit_confirmation will be required before execution is enabled in a future phase." in reason for reason in summary["warning_reasons"])
         assert any("mutation_scope will be required before execution is enabled in a future phase." in reason for reason in summary["warning_reasons"])
+
+
+def test_builder_dry_run_build_identity_readiness_blocked_for_existing_target_without_policy(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        create_calendar(server, "2004%2F2005")
+        payload = {
+            "target_season_label": "2004/2005",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "preflight_fingerprint": "pf_blocked",
+            "reviewed_diff_id": "rd_blocked",
+        }
+        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        identity_readiness = body["dry_run_result_preview"]["identity_readiness"]
+        assert identity_readiness["status"] == "blocked_reference"
+        assert identity_readiness["future_command_reference"]["can_reference_future_command"] is False
+        validation_item = next(item for item in identity_readiness["items"] if item["area"] == "validation_summary")
+        assert validation_item["status"] == "Blocked"
+        assert "blocking" in validation_item["message"].lower()
+
+
+def test_builder_dry_run_build_identity_readiness_missing_identity(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2038/2039",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": "merge_preview",
+            "preflight_fingerprint": "",
+            "reviewed_diff_id": "",
+            "audit_reason": "phase-8f-missing-id",
+            "explicit_confirmation": "confirmed",
+            "mutation_scope": "none",
+        }
+        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        identity_readiness = body["dry_run_result_preview"]["identity_readiness"]
+        assert identity_readiness["status"] == "missing_identity"
+        assert identity_readiness["future_command_reference"]["can_reference_future_command"] is False
+        preflight_item = next(item for item in identity_readiness["items"] if item["area"] == "preflight_fingerprint")
+        reviewed_item = next(item for item in identity_readiness["items"] if item["area"] == "reviewed_diff_id")
+        assert preflight_item["status"] == "Missing"
+        assert reviewed_item["status"] == "Missing"
 
 
 def test_builder_dry_run_build_existing_target_with_merge_preview_has_no_policy_conflict(tmp_path: Path) -> None:

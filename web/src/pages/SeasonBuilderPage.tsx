@@ -20,6 +20,7 @@ import {
   DiffPreviewSkeletonPanel,
   FutureBuildCommandContractPanel,
   FutureCommandReadinessChecklistPanel,
+  DryRunAuditMetadataPreviewPanel,
   FutureAuditedCommandFlowPanel,
   DisabledDryRunBuildContractPanel,
   ReadOnlyPreflightChecklistPanel,
@@ -46,6 +47,9 @@ export function AdminSeasonBuilderPage(): JSX.Element {
   const [selectedSourceType, setSelectedSourceType] = useState<SourceType>('season_template')
   const [selectedTemplateId, setSelectedTemplateId] = useState('')
   const [selectedOverwritePolicy, setSelectedOverwritePolicy] = useState<'none' | 'merge_preview' | 'overwrite_preview'>('none')
+  const [dryRunAuditReason, setDryRunAuditReason] = useState('')
+  const [dryRunExplicitConfirmation, setDryRunExplicitConfirmation] = useState('')
+  const [dryRunMutationScope, setDryRunMutationScope] = useState('')
   const targetCalendarQuery = useQuery({
     queryKey: ['season-builder-target-calendar', selectedTargetSeasonLabel],
     queryFn: () => getSeasonCalendar(selectedTargetSeasonLabel),
@@ -141,10 +145,10 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     preflight_fingerprint: backendPreflightQuery.data?.preflight_fingerprint ?? '',
     reviewed_diff_id: backendPreflightQuery.data?.reviewed_diff_id ?? '',
     requested_by: backendPreflightPayload.requested_by,
-    audit_reason: null,
-    explicit_confirmation: null,
-    mutation_scope: null
-  }), [backendPreflightPayload, backendPreflightQuery.data?.preflight_fingerprint, backendPreflightQuery.data?.reviewed_diff_id])
+    audit_reason: dryRunAuditReason.trim() || null,
+    explicit_confirmation: dryRunExplicitConfirmation.trim() || null,
+    mutation_scope: dryRunMutationScope || null
+  }), [backendPreflightPayload, backendPreflightQuery.data?.preflight_fingerprint, backendPreflightQuery.data?.reviewed_diff_id, dryRunAuditReason, dryRunExplicitConfirmation, dryRunMutationScope])
 
   const disabledDryRunBuildQueryEnabled = backendPreflightEnabled
     && Boolean(backendPreflightQuery.data?.preflight_fingerprint)
@@ -158,7 +162,10 @@ export function AdminSeasonBuilderPage(): JSX.Element {
       selectedTemplateId,
       selectedOverwritePolicy,
       backendPreflightQuery.data?.preflight_fingerprint,
-      backendPreflightQuery.data?.reviewed_diff_id
+      backendPreflightQuery.data?.reviewed_diff_id,
+      dryRunAuditReason,
+      dryRunExplicitConfirmation,
+      dryRunMutationScope
     ],
     queryFn: () => postSeasonBuilderDryRunBuild(disabledDryRunBuildPayload),
     enabled: disabledDryRunBuildQueryEnabled,
@@ -308,6 +315,17 @@ export function AdminSeasonBuilderPage(): JSX.Element {
 
       <SectionCard title="Future command readiness checklist">
         <FutureCommandReadinessChecklistPanel items={futureCommandReadinessItems} />
+      </SectionCard>
+
+      <SectionCard title="Dry-run audit metadata preview inputs">
+        <DryRunAuditMetadataPreviewPanel
+          auditReason={dryRunAuditReason}
+          setAuditReason={setDryRunAuditReason}
+          explicitConfirmation={dryRunExplicitConfirmation}
+          setExplicitConfirmation={setDryRunExplicitConfirmation}
+          mutationScope={dryRunMutationScope}
+          setMutationScope={setDryRunMutationScope}
+        />
       </SectionCard>
 
       <SectionCard title="Disabled dry-run build contract result">

@@ -3093,6 +3093,40 @@ export type SeasonBuilderApplyCommandContractResponse = {
   message: string
 }
 
+
+export type SeasonBuilderApplyCreateOnlyCommandRequest = {
+  target_season_label: string
+  source_type: string
+  source_template_id?: string | null
+  overwrite_policy?: string | null
+  preflight_fingerprint: string
+  reviewed_diff_id: string
+  dry_run_result_fingerprint: string
+  dry_run_result_id: string
+  requested_by: string
+  audit_reason: string
+  explicit_confirmation: string
+  mutation_scope: string
+}
+
+export type SeasonBuilderApplyCreateOnlyCommandResponse = {
+  command: string
+  enabled: boolean
+  can_execute: boolean
+  can_mutate: boolean
+  applied: boolean
+  target_season_label: string
+  validation_errors: string[]
+  validation_warnings: string[]
+  created_calendar_summary: Record<string, unknown>
+  created_event_preview: Record<string, unknown>
+  created_calendar_identity: Record<string, unknown>
+  apply_gate_summary: Record<string, unknown>
+  applied_event_count: number
+  dry_run_identity: Record<string, unknown>
+  audit_preview: Record<string, unknown>
+  message: string
+}
 export type SeasonBuilderApplyCreateOnlyReadinessResponse = {
   command: string
   enabled: boolean

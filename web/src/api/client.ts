@@ -131,6 +131,8 @@ import type {
   SeasonBuilderDryRunBuildResponse,
   SeasonBuilderApplyCommandContractRequest,
   SeasonBuilderApplyCommandContractResponse,
+  SeasonBuilderApplyCreateOnlyCommandRequest,
+  SeasonBuilderApplyCreateOnlyCommandResponse,
   SeasonBuilderApplyCreateOnlyReadinessResponse,
   CategoriesResponse,
   TournamentMastersResponse,
@@ -199,6 +201,13 @@ export function postSeasonBuilderApplyCommandContract(
   payload: SeasonBuilderApplyCommandContractRequest
 ): Promise<SeasonBuilderApplyCommandContractResponse> {
   return request('/admin/seasons/builder/apply-command-contract', { method: 'POST', body: JSON.stringify(payload) })
+}
+
+
+export function postSeasonBuilderApplyCreateOnlyCommand(
+  payload: SeasonBuilderApplyCreateOnlyCommandRequest
+): Promise<SeasonBuilderApplyCreateOnlyCommandResponse> {
+  return request('/admin/seasons/builder/apply-create-only-command', { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function postSeasonBuilderApplyCreateOnlyReadiness(

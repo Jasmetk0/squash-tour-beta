@@ -383,6 +383,43 @@ class SeasonBuilderApplyCreateOnlyReadinessResponse(BaseModel):
     audit_preview: dict[str, Any] = Field(default_factory=dict)
     message: str
 
+
+
+class SeasonCalendarValidationIssueV2(BaseModel):
+    """Detailed validation issue emitted by post-create calendar checks."""
+
+    severity: Literal["error", "warning", "info"]
+    code: str
+    message: str
+    event_id: str | None = None
+    field: str | None = None
+    context: dict[str, Any] = Field(default_factory=dict)
+
+
+class SeasonCalendarValidationSummary(BaseModel):
+    """Aggregated read-only validation summary for a persisted season calendar."""
+
+    status: Literal["clean", "warnings", "errors"] = "clean"
+    error_count: int = Field(default=0, ge=0)
+    warning_count: int = Field(default=0, ge=0)
+    info_count: int = Field(default=0, ge=0)
+    event_count: int = Field(default=0, ge=0)
+    first_season_week: int | None = None
+    last_season_week: int | None = None
+    categories: dict[str, Any] = Field(default_factory=dict)
+    tour_levels: dict[str, Any] = Field(default_factory=dict)
+    host_countries: dict[str, Any] = Field(default_factory=dict)
+
+
+class SeasonCalendarValidationResponse(BaseModel):
+    """Response payload for read-only persisted season calendar validation."""
+
+    season: str
+    calendar_exists: bool = False
+    validation_summary: SeasonCalendarValidationSummary
+    issues: list[SeasonCalendarValidationIssueV2] = Field(default_factory=list)
+    read_only: bool = True
+    message: str
 class SeasonCalendarBuildResult(BaseModel):
     """Calendar build/read response returned by Admin Seasons endpoints."""
 

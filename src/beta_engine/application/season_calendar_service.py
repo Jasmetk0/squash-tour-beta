@@ -25,6 +25,9 @@ from beta_engine.domain.tournaments.models import (
     SeasonCalendarEvent,
     SeasonCalendarMetadata,
     SeasonCalendarValidationIssue,
+    SeasonCalendarValidationIssueV2,
+    SeasonCalendarValidationResponse,
+    SeasonCalendarValidationSummary,
     TournamentTemplate,
 )
 
@@ -151,6 +154,147 @@ class SeasonCalendarService:
             self._save_registry(SeasonCalendarRegistry(calendars_by_season=next_calendars))
         summary = self._summary(calendar, persisted=not request.dry_run, calendar_exists=existing or not request.dry_run)
         return SeasonCalendarBuildResult(calendar=calendar, summary=summary, metadata=metadata, validation_warnings=warnings, validation_errors=errors)
+
+
+
+    def validate_persisted_calendar(self, *, season: str) -> SeasonCalendarValidationResponse:
+        """Read-only validation for an already persisted season calendar."""
+
+        result = self.get_calendar(season=season)
+        if result.calendar is None:
+            issues = [
+                SeasonCalendarValidationIssueV2(
+                    severity="warning",
+                    code="calendar_missing",
+                    message=f"No season calendar exists for season '{season}'.",
+                )
+            ]
+            summary = SeasonCalendarValidationSummary(
+                status="warnings",
+                warning_count=1,
+                event_count=0,
+                categories={"count": 0, "values": []},
+                tour_levels={"count": 0, "values": []},
+                host_countries={"count": 0, "values": []},
+            )
+            return SeasonCalendarValidationResponse(
+                season=season,
+                calendar_exists=False,
+                validation_summary=summary,
+                issues=issues,
+                read_only=True,
+                message="No persisted season calendar was found to validate.",
+            )
+
+        calendar = result.calendar
+        issues: list[SeasonCalendarValidationIssueV2] = []
+        seen_event_ids: set[str] = set()
+        duplicate_signature_counts: dict[tuple[int | None, str, str], int] = {}
+        categories: dict[str, int] = {}
+        tour_levels: dict[str, int] = {}
+        host_countries: dict[str, int] = {}
+        weeks: list[int] = []
+
+        def add_issue(severity: str, code: str, message: str, *, event_id: str | None = None, field: str | None = None, context: dict[str, Any] | None = None) -> None:
+            issues.append(SeasonCalendarValidationIssueV2(severity=severity, code=code, message=message, event_id=event_id, field=field, context=context or {}))
+
+        if not calendar.events:
+            add_issue("warning", "event_count_zero", "Calendar contains zero events.")
+
+        for event in calendar.events:
+            if not event.event_id.strip():
+                add_issue("error", "event_id_missing", "event_id is required.", field="event_id")
+            elif event.event_id in seen_event_ids:
+                add_issue("error", "duplicate_event_id", f"Duplicate event_id '{event.event_id}'.", event_id=event.event_id, field="event_id")
+            else:
+                seen_event_ids.add(event.event_id)
+
+            if not event.event_name.strip():
+                add_issue("error", "event_name_missing", "event_name is required.", event_id=event.event_id, field="event_name")
+            if not event.category.strip():
+                add_issue("error", "category_missing", "category is required.", event_id=event.event_id, field="category")
+            if event.tour_level is None:
+                add_issue("error", "tour_level_missing", "tour_level is required.", event_id=event.event_id, field="tour_level")
+            elif event.tour_level not in {"WORLD_TOUR", "ELITE_TOUR"}:
+                add_issue("warning", "tour_level_unknown", f"tour_level '{event.tour_level}' is outside known set.", event_id=event.event_id, field="tour_level")
+
+            if not (1 <= event.season_week <= TOTAL_SEASON_WEEKS):
+                add_issue("error", "season_week_out_of_range", "season_week must be between 1 and 61.", event_id=event.event_id, field="season_week")
+            if event.end_season_week is None or not (1 <= event.end_season_week <= TOTAL_SEASON_WEEKS):
+                add_issue("error", "end_season_week_out_of_range", "end_season_week must be between 1 and 61.", event_id=event.event_id, field="end_season_week")
+            if event.end_season_week is not None and event.season_week > event.end_season_week:
+                add_issue("error", "season_week_after_end_week", "season_week cannot be after end_season_week.", event_id=event.event_id, field="season_week")
+
+            if event.duration_in_season_weeks <= 0:
+                add_issue("error", "duration_invalid", "duration_in_season_weeks must be greater than 0.", event_id=event.event_id, field="duration_in_season_weeks")
+            elif event.duration_in_season_weeks > 3:
+                add_issue("warning", "duration_unusually_long", "duration_in_season_weeks is unusually long (>3).", event_id=event.event_id, field="duration_in_season_weeks")
+            if event.end_season_week is not None and event.season_week >= 1 and event.end_season_week - event.season_week >= 3:
+                add_issue("warning", "event_spans_many_weeks", "Event spans many season weeks.", event_id=event.event_id, field="end_season_week")
+
+            if event.main_draw_size <= 0:
+                add_issue("error", "main_draw_size_invalid", "main_draw_size must be greater than 0.", event_id=event.event_id, field="main_draw_size")
+            if event.qualification_draw_size < 0:
+                add_issue("error", "qualification_draw_size_invalid", "qualification_draw_size cannot be negative.", event_id=event.event_id, field="qualification_draw_size")
+            if event.prize_money < 0:
+                add_issue("error", "prize_money_negative", "prize_money cannot be negative.", event_id=event.event_id, field="prize_money")
+            if event.prestige < 0:
+                add_issue("error", "prestige_negative", "prestige cannot be negative.", event_id=event.event_id, field="prestige")
+
+            signature = (event.season_week, event.category.strip().upper(), event.event_name.strip().upper())
+            duplicate_signature_counts[signature] = duplicate_signature_counts.get(signature, 0) + 1
+
+            category_key = event.category.strip() or ""
+            if category_key:
+                categories[category_key] = categories.get(category_key, 0) + 1
+            tour_key = str(event.tour_level) if event.tour_level else ""
+            if tour_key:
+                tour_levels[tour_key] = tour_levels.get(tour_key, 0) + 1
+            country_key = event.host_country.strip() if event.host_country else ""
+            if country_key:
+                host_countries[country_key] = host_countries.get(country_key, 0) + 1
+            weeks.append(event.season_week)
+
+        for (week, category, name), count in sorted(duplicate_signature_counts.items()):
+            if count > 1:
+                add_issue("warning", "duplicate_week_category_event_name", "Multiple events share the same season_week + category + event_name.", field="season_week", context={"season_week": week, "category": category, "event_name": name, "count": count})
+
+        event_count = len(calendar.events)
+        first_week = min(weeks) if weeks else None
+        last_week = max(weeks) if weeks else None
+
+        world_tour_events = sum(1 for event in calendar.events if event.tour_level == "WORLD_TOUR")
+        qualification_events = sum(1 for event in calendar.events if event.qualification_draw_size > 0)
+        add_issue("info", "event_count", f"Calendar has {event_count} events.", context={"event_count": event_count})
+        add_issue("info", "first_last_weeks", "Computed first/last season week.", context={"first_season_week": first_week, "last_season_week": last_week})
+        add_issue("info", "world_tour_events", "Computed World Tour event count.", context={"world_tour_events": world_tour_events})
+        add_issue("info", "qualification_events", "Computed qualification event count.", context={"qualification_events": qualification_events})
+
+        error_count = sum(1 for issue in issues if issue.severity == "error")
+        warning_count = sum(1 for issue in issues if issue.severity == "warning")
+        info_count = sum(1 for issue in issues if issue.severity == "info")
+        status = "errors" if error_count > 0 else ("warnings" if warning_count > 0 else "clean")
+
+        summary = SeasonCalendarValidationSummary(
+            status=status,
+            error_count=error_count,
+            warning_count=warning_count,
+            info_count=info_count,
+            event_count=event_count,
+            first_season_week=first_week,
+            last_season_week=last_week,
+            categories={"count": len(categories), "values": sorted(categories), "counts": dict(sorted(categories.items()))},
+            tour_levels={"count": len(tour_levels), "values": sorted(tour_levels), "counts": dict(sorted(tour_levels.items())), "world_tour_events": world_tour_events},
+            host_countries={"count": len(host_countries), "values": sorted(host_countries), "counts": dict(sorted(host_countries.items())), "qualification_events": qualification_events},
+        )
+        return SeasonCalendarValidationResponse(
+            season=season,
+            calendar_exists=True,
+            validation_summary=summary,
+            issues=issues,
+            read_only=True,
+            message="Persisted season calendar validation completed.",
+        )
 
     def validate_calendar_events(
         self,

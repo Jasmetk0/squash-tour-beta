@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.domain.calendar import (
@@ -160,7 +160,20 @@ class SeasonCalendarService:
     def validate_persisted_calendar(self, *, season: str) -> SeasonCalendarValidationResponse:
         """Read-only validation for an already persisted season calendar."""
 
-        result = self.get_calendar(season=season)
+        try:
+            result = self.get_calendar(season=season)
+        except json.JSONDecodeError as exc:
+            return self._registry_load_error_response(
+                season=season,
+                code="calendar_registry_parse_error",
+                exception_type=type(exc).__name__,
+            )
+        except ValidationError as exc:
+            return self._registry_load_error_response(
+                season=season,
+                code="calendar_registry_model_error",
+                exception_type=type(exc).__name__,
+            )
         if result.calendar is None:
             issues = [
                 SeasonCalendarValidationIssueV2(
@@ -350,6 +363,30 @@ class SeasonCalendarService:
             warnings.append(self._issue("warning", "inactive_templates_skipped", f"{skipped_inactive_count} inactive template(s) skipped"))
         warnings.append(self._issue("warning", "ranking_race_not_integrated", "ranking/race integration not implemented yet"))
         return warnings, errors
+
+    def _registry_load_error_response(self, *, season: str, code: str, exception_type: str) -> SeasonCalendarValidationResponse:
+        issue = SeasonCalendarValidationIssueV2(
+            severity="error",
+            code=code,
+            message="Persisted season calendar registry could not be parsed for validation.",
+            context={"exception_type": exception_type},
+        )
+        summary = SeasonCalendarValidationSummary(
+            status="errors",
+            error_count=1,
+            event_count=0,
+            categories={"count": 0, "values": []},
+            tour_levels={"count": 0, "values": []},
+            host_countries={"count": 0, "values": []},
+        )
+        return SeasonCalendarValidationResponse(
+            season=season,
+            calendar_exists=False,
+            validation_summary=summary,
+            issues=[issue],
+            read_only=True,
+            message="Persisted season calendar registry could not be parsed for validation.",
+        )
 
     def _build_events(
         self,

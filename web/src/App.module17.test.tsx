@@ -49,6 +49,7 @@ const api = vi.hoisted(() => ({
   postSeasonBuilderDryRunBuild: vi.fn(),
   postSeasonBuilderApplyCommandContract: vi.fn(),
   postSeasonBuilderApplyCreateOnlyReadiness: vi.fn(),
+  postSeasonBuilderApplyCreateOnlyCommand: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
     constructor(message: string, status: number) {
@@ -906,7 +907,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Tour levels count: 1')).toBeInTheDocument()
     expect(screen.getByText('Tour levels values: WORLD_TOUR')).toBeInTheDocument()
     expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
-    expect((api as { postSeasonBuilderApplyCreateOnlyCommand?: unknown }).postSeasonBuilderApplyCreateOnlyCommand).toBeUndefined()
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
     await waitFor(() => {
       expect(api.postSeasonBuilderApplyCreateOnlyReadiness).toHaveBeenCalledWith(expect.objectContaining({
         target_season_label: '2000/01',

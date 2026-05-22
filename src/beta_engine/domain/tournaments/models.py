@@ -360,6 +360,7 @@ class SeasonBuilderApplyCreateOnlyCommandResponse(BaseModel):
     created_calendar_summary: dict[str, Any] = Field(default_factory=dict)
     created_event_preview: list[dict[str, Any]] = Field(default_factory=list)
     created_calendar_identity: dict[str, Any] = Field(default_factory=dict)
+    created_calendar_validation_preview: dict[str, Any] = Field(default_factory=dict)
     apply_gate_summary: dict[str, Any] = Field(default_factory=dict)
     applied_event_count: int = 0
     dry_run_identity: dict[str, Any] = Field(default_factory=dict)

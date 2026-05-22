@@ -1114,6 +1114,25 @@ def post_season_builder_apply_create_only_command(
         "applied_event_count": len(persisted_events),
         "created_calendar_event_ids_fingerprint": f"evt_{event_ids_fingerprint[:16]}",
     }
+    persisted_validation = calendar_service.validate_persisted_calendar(season=normalized_target)
+    validation_summary = persisted_validation.validation_summary
+    issue_codes_first_10 = [issue.code for issue in persisted_validation.issues[:10]]
+    created_calendar_validation_preview = {
+        "validation_status": validation_summary.status,
+        "error_count": validation_summary.error_count,
+        "warning_count": validation_summary.warning_count,
+        "info_count": validation_summary.info_count,
+        "event_count": validation_summary.event_count,
+        "calendar_exists": persisted_validation.calendar_exists,
+        "read_only": persisted_validation.read_only,
+        "first_season_week": validation_summary.first_season_week,
+        "last_season_week": validation_summary.last_season_week,
+        "categories": validation_summary.categories,
+        "tour_levels": validation_summary.tour_levels,
+        "host_countries": validation_summary.host_countries,
+        "issue_codes_first_10": issue_codes_first_10,
+        "message": persisted_validation.message,
+    }
 
     return SeasonBuilderApplyCreateOnlyCommandResponse(
         enabled=True, can_execute=True, can_mutate=True, applied=True, target_season_label=normalized_target,
@@ -1128,6 +1147,7 @@ def post_season_builder_apply_create_only_command(
         },
         created_event_preview=created_event_preview,
         created_calendar_identity=created_calendar_identity,
+        created_calendar_validation_preview=created_calendar_validation_preview,
         apply_gate_summary=apply_gate_summary,
         applied_event_count=len(persisted_events), dry_run_identity=dry_run_identity, audit_preview=audit_preview,
         message="Create-only apply executed successfully.",

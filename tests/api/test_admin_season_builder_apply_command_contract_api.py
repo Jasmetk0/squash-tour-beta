@@ -91,6 +91,7 @@ def test_apply_command_contract_minimal_identity_request(tmp_path: Path) -> None
         assert "mutation_scope will be required before apply execution is enabled in a future phase." in body["validation_warnings"]
         assert body["audit_preview"]["mutation_permitted"] is False
         assert body["audit_preview"]["audit_trail_contract_preview_available"] is True
+        assert body["audit_preview"]["safety_gate_contract_preview_available"] is True
         assert body["audit_trail_contract_preview"]["status"] == "contract_preview_only"
         assert body["audit_trail_contract_preview"]["will_persist_audit"] is False
         assert body["audit_trail_contract_preview"]["audit_event_type"] == "season_builder_apply_command"
@@ -107,6 +108,22 @@ def test_apply_command_contract_minimal_identity_request(tmp_path: Path) -> None
         ):
             assert key in audit_record_shape
         assert body["audit_trail_contract_preview"]["blocked_reason"] == "Audit trail persistence is not implemented in this phase."
+        safety_gate_preview = body["safety_gate_contract_preview"]
+        assert safety_gate_preview["status"] == "contract_preview_only"
+        assert safety_gate_preview["will_execute_apply"] is False
+        assert safety_gate_preview["will_mutate_calendar"] is False
+        assert safety_gate_preview["gate_result"] == "blocked_disabled_phase"
+        gate_map = {gate["gate"]: gate for gate in safety_gate_preview["required_gates"]}
+        assert set(gate_map) >= {"identity", "audit_metadata", "execution_enabled", "mutation_permission", "audit_trail"}
+        assert gate_map["identity"]["currently_satisfied"] is True
+        assert gate_map["audit_metadata"]["currently_satisfied"] is False
+        assert gate_map["execution_enabled"]["currently_satisfied"] is False
+        assert gate_map["mutation_permission"]["currently_satisfied"] is False
+        assert gate_map["audit_trail"]["currently_satisfied"] is False
+        assert set(safety_gate_preview["future_allowed_mutation_scopes"]) >= {
+            "create_only_preview", "merge_preview", "overwrite_preview", "repair_preview"
+        }
+        assert safety_gate_preview["blocked_reason"] == "Final apply safety gate is contract-only and disabled in this phase."
         assert body["message"] == MESSAGE
 
 
@@ -126,6 +143,9 @@ def test_apply_command_contract_missing_identity_fields(tmp_path: Path) -> None:
         assert "dry_run_result_fingerprint is required before any future apply command." in body["validation_errors"]
         assert "dry_run_result_id is required before any future apply command." in body["validation_errors"]
         assert body["required_identity"]["all_identity_fields_present"] is False
+        safety_gate_preview = body["safety_gate_contract_preview"]
+        gate_map = {gate["gate"]: gate for gate in safety_gate_preview["required_gates"]}
+        assert gate_map["identity"]["currently_satisfied"] is False
         assert body["can_execute"] is False
         assert body["can_mutate"] is False
 
@@ -153,6 +173,11 @@ def test_apply_command_contract_full_metadata_present(tmp_path: Path) -> None:
         assert body["required_audit_metadata"]["all_audit_metadata_present"] is True
         assert body["audit_preview"]["explicit_confirmation_present"] is True
         assert "audit_trail_contract_preview" in body
+        gate_map = {gate["gate"]: gate for gate in body["safety_gate_contract_preview"]["required_gates"]}
+        assert gate_map["audit_metadata"]["currently_satisfied"] is True
+        assert gate_map["execution_enabled"]["currently_satisfied"] is False
+        assert gate_map["mutation_permission"]["currently_satisfied"] is False
+        assert gate_map["audit_trail"]["currently_satisfied"] is False
         assert body["can_execute"] is False
         assert body["can_mutate"] is False
 

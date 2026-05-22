@@ -951,6 +951,7 @@ def post_season_builder_apply_command_contract(
         "explicit_confirmation_present": has_explicit_confirmation,
         "mutation_scope": payload.mutation_scope,
         "audit_trail_contract_preview_available": True,
+        "safety_gate_contract_preview_available": True,
     }
     audit_trail_contract_preview = {
         "status": "contract_preview_only",
@@ -990,6 +991,51 @@ def post_season_builder_apply_command_contract(
         },
         "blocked_reason": "Audit trail persistence is not implemented in this phase.",
     }
+    safety_gate_contract_preview = {
+        "status": "contract_preview_only",
+        "will_execute_apply": False,
+        "will_mutate_calendar": False,
+        "gate_result": "blocked_disabled_phase",
+        "required_gates": [
+            {
+                "gate": "identity",
+                "required": True,
+                "currently_satisfied": required_identity["all_identity_fields_present"],
+                "message": "Preflight, reviewed diff, and dry-run result identities must be present.",
+            },
+            {
+                "gate": "audit_metadata",
+                "required": True,
+                "currently_satisfied": required_audit_metadata["all_audit_metadata_present"],
+                "message": "Audit reason, explicit confirmation, and mutation scope must be present.",
+            },
+            {
+                "gate": "execution_enabled",
+                "required": True,
+                "currently_satisfied": False,
+                "message": "Execution is disabled in this phase.",
+            },
+            {
+                "gate": "mutation_permission",
+                "required": True,
+                "currently_satisfied": False,
+                "message": "Mutation permission is disabled in this phase.",
+            },
+            {
+                "gate": "audit_trail",
+                "required": True,
+                "currently_satisfied": False,
+                "message": "Audit trail persistence is not implemented in this phase.",
+            },
+        ],
+        "future_allowed_mutation_scopes": [
+            "create_only_preview",
+            "merge_preview",
+            "overwrite_preview",
+            "repair_preview",
+        ],
+        "blocked_reason": "Final apply safety gate is contract-only and disabled in this phase.",
+    }
     return SeasonBuilderApplyCommandContractResponse(
         enabled=False,
         can_execute=False,
@@ -1002,6 +1048,7 @@ def post_season_builder_apply_command_contract(
         validation_warnings=warnings,
         audit_preview=audit_preview,
         audit_trail_contract_preview=audit_trail_contract_preview,
+        safety_gate_contract_preview=safety_gate_contract_preview,
         required_identity=required_identity,
         required_audit_metadata=required_audit_metadata,
     )

@@ -1886,8 +1886,12 @@ export function DisabledApplyCommandContractPanel({ queryEnabled, requestPayload
   const requiredAuditMetadata = query.data?.required_audit_metadata ?? {}
   const auditPreview = query.data?.audit_preview ?? {}
   const auditTrailContractPreview = query.data?.audit_trail_contract_preview
+  const safetyGateContractPreview = query.data?.safety_gate_contract_preview
   const auditTrailContractPreviewRecord = auditTrailContractPreview && typeof auditTrailContractPreview === 'object'
     ? auditTrailContractPreview as Record<string, unknown>
+    : null
+  const safetyGateContractPreviewRecord = safetyGateContractPreview && typeof safetyGateContractPreview === 'object'
+    ? safetyGateContractPreview as Record<string, unknown>
     : null
   const previewList = (value: unknown): unknown[] => Array.isArray(value) ? value : []
   const shapeRecord = (value: unknown): Record<string, unknown> | null => value && typeof value === 'object' ? value as Record<string, unknown> : null
@@ -1951,6 +1955,7 @@ export function DisabledApplyCommandContractPanel({ queryEnabled, requestPayload
             <tr><td>explicit_confirmation_present</td><td>{formatValue(auditPreview.explicit_confirmation_present)}</td></tr>
             <tr><td>mutation_scope</td><td>{formatValue(auditPreview.mutation_scope)}</td></tr>
             <tr><td>audit_trail_contract_preview_available</td><td>{formatValue(auditPreview.audit_trail_contract_preview_available)}</td></tr>
+            <tr><td>safety_gate_contract_preview_available</td><td>{formatValue(auditPreview.safety_gate_contract_preview_available)}</td></tr>
           </tbody></table>
           <h4>Apply audit trail contract preview</h4>
           {auditTrailContractPreviewRecord ? (
@@ -1979,6 +1984,38 @@ export function DisabledApplyCommandContractPanel({ queryEnabled, requestPayload
               ) : <p>Audit record shape is unavailable.</p>}
             </>
           ) : <p>Apply audit trail contract preview is unavailable.</p>}
+          <h4>Apply safety gate contract preview</h4>
+          {safetyGateContractPreviewRecord ? (
+            <>
+              <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+                <tr><td>status</td><td>{formatValue(safetyGateContractPreviewRecord.status)}</td></tr>
+                <tr><td>will_execute_apply</td><td>{formatValue(safetyGateContractPreviewRecord.will_execute_apply)}</td></tr>
+                <tr><td>will_mutate_calendar</td><td>{formatValue(safetyGateContractPreviewRecord.will_mutate_calendar)}</td></tr>
+                <tr><td>gate_result</td><td>{formatValue(safetyGateContractPreviewRecord.gate_result)}</td></tr>
+                <tr><td>blocked_reason</td><td>{formatValue(safetyGateContractPreviewRecord.blocked_reason)}</td></tr>
+              </tbody></table>
+              <h5>Required gates</h5>
+              {previewList(safetyGateContractPreviewRecord.required_gates).length === 0 ? <p>No required gates returned.</p> : (
+                <table><thead><tr><th scope="col">gate</th><th scope="col">required</th><th scope="col">currently_satisfied</th><th scope="col">message</th></tr></thead><tbody>
+                  {previewList(safetyGateContractPreviewRecord.required_gates).map((gate, idx) => {
+                    const gateRecord = shapeRecord(gate)
+                    return (
+                      <tr key={`apply-safety-gate-${idx}`}>
+                        <td>{formatValue(gateRecord?.gate)}</td>
+                        <td>{formatValue(gateRecord?.required)}</td>
+                        <td>{formatValue(gateRecord?.currently_satisfied)}</td>
+                        <td>{formatValue(gateRecord?.message)}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody></table>
+              )}
+              <h5>Future allowed mutation scopes</h5>
+              {previewList(safetyGateContractPreviewRecord.future_allowed_mutation_scopes).length === 0 ? <p>No future allowed mutation scopes returned.</p> : (
+                <ul>{previewList(safetyGateContractPreviewRecord.future_allowed_mutation_scopes).map((value, idx) => <li key={`apply-safety-scope-${idx}`}>{formatValue(value)}</li>)}</ul>
+              )}
+            </>
+          ) : <p>Apply safety gate contract preview is unavailable.</p>}
           <h4>Raw disabled apply command contract JSON</h4>
           <pre>{JSON.stringify(query.data, null, 2)}</pre>
         </>

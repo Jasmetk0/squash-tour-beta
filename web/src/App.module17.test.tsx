@@ -336,7 +336,8 @@ describe('Module 17 pages through routes', () => {
           audit_reason: payload.audit_reason,
           explicit_confirmation_present: Boolean(payload.explicit_confirmation),
           mutation_scope: payload.mutation_scope,
-          audit_trail_contract_preview_available: true
+          audit_trail_contract_preview_available: true,
+          safety_gate_contract_preview_available: true
         },
         audit_trail_contract_preview: {
           status: 'contract_preview_only',
@@ -365,6 +366,21 @@ describe('Module 17 pages through routes', () => {
             result: 'disabled | executed | rejected'
           },
           blocked_reason: 'Audit trail persistence is not implemented in this phase.'
+        },
+        safety_gate_contract_preview: {
+          status: 'contract_preview_only',
+          will_execute_apply: false,
+          will_mutate_calendar: false,
+          gate_result: 'blocked_disabled_phase',
+          required_gates: [
+            { gate: 'identity', required: true, currently_satisfied: true, message: 'Preflight, reviewed diff, and dry-run result identities must be present.' },
+            { gate: 'audit_metadata', required: true, currently_satisfied: hasAllMetadata, message: 'Audit reason, explicit confirmation, and mutation scope must be present.' },
+            { gate: 'execution_enabled', required: true, currently_satisfied: false, message: 'Execution is disabled in this phase.' },
+            { gate: 'mutation_permission', required: true, currently_satisfied: false, message: 'Mutation permission is disabled in this phase.' },
+            { gate: 'audit_trail', required: true, currently_satisfied: false, message: 'Audit trail persistence is not implemented in this phase.' }
+          ],
+          future_allowed_mutation_scopes: ['create_only_preview', 'merge_preview', 'overwrite_preview', 'repair_preview'],
+          blocked_reason: 'Final apply safety gate is contract-only and disabled in this phase.'
         },
         required_identity: {
           preflight_fingerprint: payload.preflight_fingerprint,
@@ -853,9 +869,24 @@ describe('Module 17 pages through routes', () => {
     })
     expect((await screen.findAllByText('season_builder_apply_command')).length).toBeGreaterThan(0)
     expect(await screen.findByText('Apply audit trail contract preview')).toBeInTheDocument()
+    expect(await screen.findByText('Apply safety gate contract preview')).toBeInTheDocument()
+    expect(await screen.findByText('blocked_disabled_phase')).toBeInTheDocument()
+    expect((await screen.findAllByText('will_execute_apply')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('will_mutate_calendar')).length).toBeGreaterThan(0)
+    expect(await screen.findByText('Final apply safety gate is contract-only and disabled in this phase.')).toBeInTheDocument()
+    expect(await screen.findByText('Required gates')).toBeInTheDocument()
+    expect((await screen.findAllByText('identity')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('audit_metadata')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('execution_enabled')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('mutation_permission')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('audit_trail')).length).toBeGreaterThan(0)
+    expect(await screen.findByText('Future allowed mutation scopes')).toBeInTheDocument()
+    expect((await screen.findAllByText('create_only_preview')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('overwrite_preview')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('safety_gate_contract_preview_available')).length).toBeGreaterThan(0)
     expect((await screen.findAllByText('contract_preview_only')).length).toBeGreaterThan(0)
     expect(await screen.findByText('will_persist_audit')).toBeInTheDocument()
-    expect(await screen.findByText('Audit trail persistence is not implemented in this phase.')).toBeInTheDocument()
+    expect((await screen.findAllByText('Audit trail persistence is not implemented in this phase.')).length).toBeGreaterThan(0)
     expect(await screen.findByText('Required identity fields')).toBeInTheDocument()
     expect(await screen.findByText('Required actor fields')).toBeInTheDocument()
     expect(await screen.findByText('Audit record shape')).toBeInTheDocument()
@@ -910,7 +941,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('Validation errors').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Next implementation step').length).toBeGreaterThan(0)
     expect(screen.getByText('Disabled dry-run contract endpoint returned a response.')).toBeInTheDocument()
-    expect(screen.getByText('Execution is disabled in this phase.')).toBeInTheDocument()
+    expect(screen.getAllByText('Execution is disabled in this phase.').length).toBeGreaterThan(0)
     expect(screen.getAllByText('can_mutate is false; no calendar mutation is permitted.').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Preflight fingerprint and reviewed diff identity are present.').length).toBeGreaterThan(0)
     expect(screen.getByText('Audit reason preview is not filled yet.')).toBeInTheDocument()
@@ -1225,7 +1256,7 @@ describe('Module 17 pages through routes', () => {
       overwrite_policy: null,
       validation_errors: [],
       validation_warnings: [],
-      audit_preview: { action: 'season_builder_apply_command', read_only: true, mutation_permitted: false, execution_enabled: false, audit_trail_contract_preview_available: true },
+      audit_preview: { action: 'season_builder_apply_command', read_only: true, mutation_permitted: false, execution_enabled: false, audit_trail_contract_preview_available: true, safety_gate_contract_preview_available: true },
       audit_trail_contract_preview: {
         status: 'contract_preview_only',
         will_persist_audit: false,
@@ -1234,6 +1265,21 @@ describe('Module 17 pages through routes', () => {
         required_actor_fields: ['requested_by', 'audit_reason', 'explicit_confirmation', 'mutation_scope'],
         audit_record_shape: { audit_id: 'string', timestamp_utc: 'datetime', explicit_confirmation_present: 'bool', result: 'disabled | executed | rejected' },
         blocked_reason: 'Audit trail persistence is not implemented in this phase.'
+      },
+      safety_gate_contract_preview: {
+        status: 'contract_preview_only',
+        will_execute_apply: false,
+        will_mutate_calendar: false,
+        gate_result: 'blocked_disabled_phase',
+        required_gates: [
+          { gate: 'identity', required: true, currently_satisfied: true, message: 'Preflight, reviewed diff, and dry-run result identities must be present.' },
+          { gate: 'audit_metadata', required: true, currently_satisfied: false, message: 'Audit reason, explicit confirmation, and mutation scope must be present.' },
+          { gate: 'execution_enabled', required: true, currently_satisfied: false, message: 'Execution is disabled in this phase.' },
+          { gate: 'mutation_permission', required: true, currently_satisfied: false, message: 'Mutation permission is disabled in this phase.' },
+          { gate: 'audit_trail', required: true, currently_satisfied: false, message: 'Audit trail persistence is not implemented in this phase.' }
+        ],
+        future_allowed_mutation_scopes: ['create_only_preview', 'merge_preview', 'overwrite_preview', 'repair_preview'],
+        blocked_reason: 'Final apply safety gate is contract-only and disabled in this phase.'
       },
       required_identity: { preflight_fingerprint: 'pf_test_empty', reviewed_diff_id: 'rd_test_empty', dry_run_result_fingerprint: 'drf_test_empty', dry_run_result_id: 'drr_test_empty', all_identity_fields_present: true },
       required_audit_metadata: { requested_by: 'local-admin-preview', audit_reason_present: false, explicit_confirmation_present: false, mutation_scope: null, all_audit_metadata_present: false },

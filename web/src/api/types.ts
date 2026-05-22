@@ -3087,6 +3087,7 @@ export type SeasonBuilderApplyCommandContractResponse = {
   validation_warnings: string[]
   audit_preview: Record<string, unknown>
   audit_trail_contract_preview: Record<string, unknown>
+  safety_gate_contract_preview: Record<string, unknown>
   required_identity: Record<string, unknown>
   required_audit_metadata: Record<string, unknown>
   message: string

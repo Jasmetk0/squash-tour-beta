@@ -31,6 +31,7 @@ import {
   CreateOnlyApplyGuardSummaryPanel,
   CreateOnlyApplyDangerZonePreviewPanel,
   PostApplyCalendarVerificationPanel,
+  ApplyResponseValidationPreviewPanel,
   TargetCalendarValidationPanel,
   PostApplyAuditStatusPanel,
   DisabledDryRunReadinessSummaryPanel,
@@ -630,6 +631,11 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           readinessFetching={createOnlyApplyReadinessQuery.isFetching}
           applyMutationResult={createOnlyApplyMutation.data}
           targetCalendarExistsAfterApply={targetCalendarExistsAfterApply}
+        />
+      </SectionCard>
+      <SectionCard title="Apply response validation preview">
+        <ApplyResponseValidationPreviewPanel
+          applyMutationResult={createOnlyApplyMutation.data}
         />
       </SectionCard>
       <SectionCard title="Target calendar validation">

@@ -2133,6 +2133,9 @@ type PostApplyAuditStatusPanelProps = {
   explicitConfirmation: string
   mutationScope: string
 }
+type ApplyResponseValidationPreviewPanelProps = {
+  applyMutationResult: SeasonBuilderApplyCreateOnlyCommandResponse | undefined
+}
 
 export function PostApplyCalendarVerificationPanel({
   targetCalendarData,
@@ -2232,6 +2235,60 @@ export function PostApplyAuditStatusPanel({
         <tr><td>audit_status.validation_errors_count</td><td>{applyMutationResult ? String(applyMutationResult.validation_errors.length) : '—'}</td></tr>
         <tr><td>audit_status.validation_warnings_count</td><td>{applyMutationResult ? String(applyMutationResult.validation_warnings.length) : '—'}</td></tr>
       </tbody></table>
+    </>
+  )
+}
+
+export function ApplyResponseValidationPreviewPanel({
+  applyMutationResult
+}: ApplyResponseValidationPreviewPanelProps): JSX.Element {
+  if (!applyMutationResult) return <p>No create-only apply validation preview yet.</p>
+  const preview = applyMutationResult.created_calendar_validation_preview
+  const previewEntries = Object.keys(preview)
+  if (previewEntries.length === 0) {
+    return <p>No created-calendar validation preview was returned with this apply response.</p>
+  }
+
+  const readText = (key: string): string => {
+    const value = preview[key]
+    return value === undefined || value === null ? 'n/a' : String(value)
+  }
+  const readCountValuesShape = (key: string): { count: string; values: string } => {
+    const value = preview[key]
+    if (!value || typeof value !== 'object') return { count: 'n/a', values: 'n/a' }
+    const recordValue = value as Record<string, unknown>
+    const count = typeof recordValue.count === 'number' ? String(recordValue.count) : 'n/a'
+    const values = Array.isArray(recordValue.values) ? recordValue.values.map(String).join(', ') : 'n/a'
+    return { count, values }
+  }
+  const categoriesShape = readCountValuesShape('categories')
+  const tourLevelsShape = readCountValuesShape('tour_levels')
+  const hostCountriesShape = readCountValuesShape('host_countries')
+  const issueCodesValue = Array.isArray(preview.issue_codes_first_10)
+    ? preview.issue_codes_first_10.map(String).join(', ')
+    : 'n/a'
+
+  return (
+    <>
+      <p>This preview comes from the create-only apply response. The separate target calendar validation panel may refetch the latest persisted state.</p>
+      <p>Read-only apply-response validation preview. No mutation path is available in this panel.</p>
+      <p>Validation status: {readText('validation_status')}</p>
+      <p>Calendar exists: {readText('calendar_exists')}</p>
+      <p>Read-only: {readText('read_only')}</p>
+      <p>Event count: {readText('event_count')}</p>
+      <p>Error count: {readText('error_count')}</p>
+      <p>Warning count: {readText('warning_count')}</p>
+      <p>Info count: {readText('info_count')}</p>
+      <p>First season week: {readText('first_season_week')}</p>
+      <p>Last season week: {readText('last_season_week')}</p>
+      <p>Categories count: {categoriesShape.count}</p>
+      <p>Categories values: {categoriesShape.values}</p>
+      <p>Tour levels count: {tourLevelsShape.count}</p>
+      <p>Tour levels values: {tourLevelsShape.values}</p>
+      <p>Host countries count: {hostCountriesShape.count}</p>
+      <p>Host countries values: {hostCountriesShape.values}</p>
+      <p>Issue codes (first 10): {issueCodesValue}</p>
+      <p>Message: {readText('message')}</p>
     </>
   )
 }

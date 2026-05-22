@@ -353,6 +353,11 @@ def post_season_builder_dry_run_build_contract(
             "source_template_id": "string | null",
             "source_type": "string",
             "candidate_status": "planned | conflict | invalid",
+            "comparison_classification": "addition | replacement | conflict | invalid",
+            "comparison_reason": "string",
+            "matched_existing_event_id": "string | null",
+            "matched_existing_event_name": "string | null",
+            "matched_existing_event_week": "int | null",
             "validation_errors": "string[]",
             "validation_warnings": "string[]",
         },
@@ -494,6 +499,11 @@ def post_season_builder_dry_run_build_contract(
                         "source_template_id": payload.source_template_id,
                         "source_type": payload.source_type,
                         "candidate_status": "planned",
+                        "comparison_classification": "addition",
+                        "comparison_reason": "Candidate does not match an existing target event and would be an addition in a future dry-run plan.",
+                        "matched_existing_event_id": None,
+                        "matched_existing_event_name": None,
+                        "matched_existing_event_week": None,
                         "validation_errors": [],
                         "validation_warnings": [],
                     }
@@ -512,6 +522,7 @@ def post_season_builder_dry_run_build_contract(
         candidate_name = (candidate.get("event_name") or "").strip().lower()
         candidate_slot = candidate.get("source_slot_id")
         matched_existing = None
+        match_reason = None
         week_overlap_existing = None
         slot_overlap_existing = None
         for existing_event in target_events:
@@ -523,9 +534,11 @@ def post_season_builder_dry_run_build_contract(
             same_week = existing_event.season_week == candidate_week
             if same_week and existing_name == candidate_name:
                 matched_existing = existing_event
+                match_reason = "same_week_event_name"
                 break
             if candidate_slot and existing_slot and candidate_slot == existing_slot:
                 matched_existing = existing_event
+                match_reason = "source_slot_metadata"
                 break
             if same_week and week_overlap_existing is None:
                 week_overlap_existing = existing_event
@@ -533,8 +546,16 @@ def post_season_builder_dry_run_build_contract(
                 slot_overlap_existing = existing_event
         if matched_existing is not None:
             replacement_count += 1
+            candidate["matched_existing_event_id"] = matched_existing.event_id
+            candidate["matched_existing_event_name"] = matched_existing.event_name
+            candidate["matched_existing_event_week"] = matched_existing.season_week
+            candidate["_match_reason"] = match_reason
         else:
             additions_count += 1
+            candidate["matched_existing_event_id"] = None
+            candidate["matched_existing_event_name"] = None
+            candidate["matched_existing_event_week"] = None
+            candidate["_match_reason"] = None
         if week_overlap_existing is not None and (week_overlap_existing.event_name or "").strip().lower() != candidate_name:
             candidate_ids_with_conflicts.add(candidate_id)
             week_conflicts.append(
@@ -592,10 +613,23 @@ def post_season_builder_dry_run_build_contract(
         validation_errors = candidate.get("validation_errors") or []
         if isinstance(validation_errors, list) and validation_errors:
             candidate["candidate_status"] = "invalid"
+            candidate["comparison_classification"] = "invalid"
+            candidate["comparison_reason"] = "Candidate has validation errors."
         elif candidate_id in candidate_ids_with_conflicts:
             candidate["candidate_status"] = "conflict"
+            candidate["comparison_classification"] = "conflict"
+            candidate["comparison_reason"] = "Candidate has read-only comparison conflicts."
+        elif candidate.get("matched_existing_event_id") is not None:
+            candidate["comparison_classification"] = "replacement"
+            if candidate.get("_match_reason") == "source_slot_metadata":
+                candidate["comparison_reason"] = "Candidate matches existing event by source slot metadata."
+            else:
+                candidate["comparison_reason"] = "Candidate matches existing event by same week and event name."
         else:
             candidate["candidate_status"] = "planned"
+            candidate["comparison_classification"] = "addition"
+            candidate["comparison_reason"] = "Candidate does not match an existing target event and would be an addition in a future dry-run plan."
+        candidate.pop("_match_reason", None)
 
     dry_run_result_preview = {
         "status": dry_run_status,

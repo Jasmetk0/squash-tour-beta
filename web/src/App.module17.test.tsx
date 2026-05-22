@@ -257,7 +257,7 @@ describe('Module 17 pages through routes', () => {
           status: 'contract_preview_only',
           will_generate_candidates: false,
           candidate_count: 0,
-          event_shape: { candidate_id: 'string', source_slot_id: 'string', season_week_start: 'int', event_name: 'string', candidate_status: 'planned | conflict | invalid', validation_errors: 'string[]', validation_warnings: 'string[]' },
+          event_shape: { candidate_id: 'string', source_slot_id: 'string', season_week_start: 'int', event_name: 'string', candidate_status: 'planned | conflict | invalid', comparison_classification: 'addition | replacement | conflict | invalid', comparison_reason: 'string', matched_existing_event_id: 'string | null', matched_existing_event_name: 'string | null', matched_existing_event_week: 'int | null', validation_errors: 'string[]', validation_warnings: 'string[]' },
           structural_summary_shape: { candidate_count: 'int', additions_count: 'int', conflict_count: 'int', invalid_count: 'int' },
           conflict_summary_shape: { week_conflicts: 'array', slot_conflicts: 'array', policy_conflicts: 'array', validation_conflicts: 'array' },
           blocked_reason: 'Candidate event generation is not implemented in this phase.'
@@ -285,7 +285,7 @@ describe('Module 17 pages through routes', () => {
         status: 'read_only_generated',
         execution_enabled: false,
         mutation_permitted: false,
-        candidate_events: [{ candidate_id: 'cand_default_msa_template_preview_slot-01-wt_gold_24', source_slot_id: 'slot-01-wt_gold_24', season_week_start: 1, season_week_end: 1, event_name: 'World Tour Gold', tour_level: null, category: 'GOLD', host_country: 'ENG', candidate_status: 'conflict', validation_errors: [], validation_warnings: [] }],
+        candidate_events: [{ candidate_id: 'cand_default_msa_template_preview_slot-01-wt_gold_24', source_slot_id: 'slot-01-wt_gold_24', season_week_start: 1, season_week_end: 1, event_name: 'World Tour Gold', tour_level: null, category: 'GOLD', host_country: 'ENG', candidate_status: 'conflict', comparison_classification: 'conflict', comparison_reason: 'Candidate has read-only comparison conflicts.', matched_existing_event_id: 'event_2000_gold_01', matched_existing_event_name: 'World Tour Gold', matched_existing_event_week: 1, validation_errors: [], validation_warnings: [] }],
         structural_summary: { candidate_count: 1, target_event_count: 1, additions_count: 0, replacement_count: 1, conflict_count: 1, invalid_count: 0 },
         conflict_summary: { week_conflicts: [], slot_conflicts: [], policy_conflicts: [{ conflict_id: 'policy_violation_missing_overwrite_policy', conflict_type: 'policy_violation', policy: null, candidate_id: null, message: 'Existing target calendar requires explicit merge/overwrite policy before future mutation.', severity: 'blocking' }], validation_conflicts: [] },
         result_metadata: { preflight_fingerprint: payload.preflight_fingerprint, reviewed_diff_id: payload.reviewed_diff_id, source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: payload.overwrite_policy ?? null, target_calendar_exists: true, target_event_count: 1, comparison_performed: true, read_only: true, mutation_permitted: false }
@@ -713,6 +713,10 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('source_slot_id').length).toBeGreaterThan(0)
     expect(screen.getAllByText('event_name').length).toBeGreaterThan(0)
     expect(screen.getAllByText('candidate_status').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('comparison_classification').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('comparison_reason').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('matched_existing_event_id').length).toBeGreaterThan(0)
+    expect(screen.getByText('Candidate has read-only comparison conflicts.')).toBeInTheDocument()
     expect(await screen.findByText('will_return_real_result')).toBeInTheDocument()
     expect(await screen.findByText('Dry-run result generation is not implemented in this phase.')).toBeInTheDocument()
     expect(await screen.findByText('Structural summary preview')).toBeInTheDocument()

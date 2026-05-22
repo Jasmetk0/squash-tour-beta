@@ -950,6 +950,45 @@ def post_season_builder_apply_command_contract(
         "audit_reason": payload.audit_reason,
         "explicit_confirmation_present": has_explicit_confirmation,
         "mutation_scope": payload.mutation_scope,
+        "audit_trail_contract_preview_available": True,
+    }
+    audit_trail_contract_preview = {
+        "status": "contract_preview_only",
+        "will_persist_audit": False,
+        "audit_event_type": "season_builder_apply_command",
+        "required_identity_fields": [
+            "preflight_fingerprint",
+            "reviewed_diff_id",
+            "dry_run_result_fingerprint",
+            "dry_run_result_id",
+        ],
+        "required_actor_fields": [
+            "requested_by",
+            "audit_reason",
+            "explicit_confirmation",
+            "mutation_scope",
+        ],
+        "audit_record_shape": {
+            "audit_id": "string",
+            "timestamp_utc": "datetime",
+            "action": "season_builder_apply_command",
+            "target_season_label": "string",
+            "source_type": "string",
+            "source_template_id": "string | null",
+            "overwrite_policy": "string | null",
+            "preflight_fingerprint": "string",
+            "reviewed_diff_id": "string",
+            "dry_run_result_fingerprint": "string",
+            "dry_run_result_id": "string",
+            "requested_by": "string | null",
+            "audit_reason": "string | null",
+            "explicit_confirmation_present": "bool",
+            "mutation_scope": "string | null",
+            "execution_enabled": "bool",
+            "mutation_permitted": "bool",
+            "result": "disabled | executed | rejected",
+        },
+        "blocked_reason": "Audit trail persistence is not implemented in this phase.",
     }
     return SeasonBuilderApplyCommandContractResponse(
         enabled=False,
@@ -962,6 +1001,7 @@ def post_season_builder_apply_command_contract(
         validation_errors=errors,
         validation_warnings=warnings,
         audit_preview=audit_preview,
+        audit_trail_contract_preview=audit_trail_contract_preview,
         required_identity=required_identity,
         required_audit_metadata=required_audit_metadata,
     )

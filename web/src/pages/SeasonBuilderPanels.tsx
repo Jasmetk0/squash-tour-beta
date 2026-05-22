@@ -1453,6 +1453,7 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
   const candidateEventContractPreview = query.data?.candidate_event_contract_preview
   const conflictContractPreview = query.data?.conflict_contract_preview
   const dryRunResultContractPreview = query.data?.dry_run_result_contract_preview
+  const dryRunResultPreview = query.data?.dry_run_result_preview
   const generationDesignPreviewRecord = generationDesignPreview && typeof generationDesignPreview === 'object'
     ? generationDesignPreview as Record<string, unknown>
     : null
@@ -1464,6 +1465,9 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
     : null
   const dryRunResultContractPreviewRecord = dryRunResultContractPreview && typeof dryRunResultContractPreview === 'object'
     ? dryRunResultContractPreview as Record<string, unknown>
+    : null
+  const dryRunResultPreviewRecord = dryRunResultPreview && typeof dryRunResultPreview === 'object'
+    ? dryRunResultPreview as Record<string, unknown>
     : null
   const shapeRecord = (value: unknown): Record<string, unknown> | null => value && typeof value === 'object' ? value as Record<string, unknown> : null
   const previewList = (value: unknown): unknown[] => Array.isArray(value) ? value : []
@@ -1520,6 +1524,7 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
               <tr><td>candidate_event_contract_preview_available</td><td>{formatValue(auditPreview.candidate_event_contract_preview_available)}</td></tr>
               <tr><td>conflict_contract_preview_available</td><td>{formatValue(auditPreview.conflict_contract_preview_available)}</td></tr>
               <tr><td>dry_run_result_contract_preview_available</td><td>{formatValue(auditPreview.dry_run_result_contract_preview_available)}</td></tr>
+              <tr><td>dry_run_result_preview_available</td><td>{formatValue(auditPreview.dry_run_result_preview_available)}</td></tr>
             </tbody>
           </table>
           <h4>Future dry-run generation design preview</h4>
@@ -1635,6 +1640,23 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
               {previewList(dryRunResultContractPreviewRecord.candidate_events).length === 0 ? <p>No candidate events returned in this contract-only phase.</p> : <p>{previewList(dryRunResultContractPreviewRecord.candidate_events).length} candidate events included in preview.</p>}
             </>
           ) : <p>Dry-run result contract preview is unavailable.</p>}
+          <h4>Read-only generated dry-run result preview</h4>
+          {dryRunResultPreviewRecord ? (
+            <>
+              <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+                <tr><td>status</td><td>{formatValue(dryRunResultPreviewRecord.status)}</td></tr>
+                <tr><td>execution_enabled</td><td>{formatValue(dryRunResultPreviewRecord.execution_enabled)}</td></tr>
+                <tr><td>mutation_permitted</td><td>{formatValue(dryRunResultPreviewRecord.mutation_permitted)}</td></tr>
+              </tbody></table>
+              <h5>Structural summary</h5>
+              {shapeRecord(dryRunResultPreviewRecord.structural_summary) ? <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>{Object.entries(shapeRecord(dryRunResultPreviewRecord.structural_summary) ?? {}).map(([key, value]) => <tr key={`dry-run-result-struct-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>)}</tbody></table> : <p>Structural summary is unavailable.</p>}
+              <h5>Candidate events</h5>
+              {previewList(dryRunResultPreviewRecord.candidate_events).length === 0 ? <p>No read-only candidate events generated.</p> : (
+                <table><thead><tr><th scope="col">candidate_id</th><th scope="col">source_slot_id</th><th scope="col">season_week_start</th><th scope="col">season_week_end</th><th scope="col">event_name</th><th scope="col">tour_level</th><th scope="col">category</th><th scope="col">host_country</th><th scope="col">candidate_status</th></tr></thead><tbody>{previewList(dryRunResultPreviewRecord.candidate_events).slice(0, 5).map((candidate, idx) => { const row = shapeRecord(candidate); return <tr key={`dry-run-result-candidate-${idx}`}><td>{formatValue(row?.candidate_id)}</td><td>{formatValue(row?.source_slot_id)}</td><td>{formatValue(row?.season_week_start)}</td><td>{formatValue(row?.season_week_end)}</td><td>{formatValue(row?.event_name)}</td><td>{formatValue(row?.tour_level)}</td><td>{formatValue(row?.category)}</td><td>{formatValue(row?.host_country)}</td><td>{formatValue(row?.candidate_status)}</td></tr> })}</tbody></table>
+              )}
+              <p>Read-only generated candidates are not persisted.</p>
+            </>
+          ) : <p>Read-only generated dry-run result preview is unavailable.</p>}
           <h4>Current disabled dry-run request payload</h4>
           <table>
             <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>

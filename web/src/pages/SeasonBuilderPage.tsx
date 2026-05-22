@@ -564,6 +564,20 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           query={{ isLoading: disabledApplyCommandContractQuery.isLoading, error: disabledApplyCommandContractQuery.error, data: disabledApplyCommandContractQuery.data }}
         />
       </SectionCard>
+      <SectionCard title="Create-only apply workflow guide">
+        <p>Follow this create-only sequence before executing the guarded command:</p>
+        <ol>
+          <li>Review backend readiness and candidate summary.</li>
+          <li>Review guard summary.</li>
+          <li>Enter exact confirmation phrase and create_only scope.</li>
+          <li>Execute the guarded create-only command only if all guards pass.</li>
+          <li>Verify refreshed target calendar and post-apply lockout.</li>
+          <li>Review audit/status summary.</li>
+        </ol>
+        <p>This workflow can only create a missing calendar.</p>
+        <p>It cannot merge or overwrite an existing calendar.</p>
+        <p>Merge/overwrite remain future audited workflows.</p>
+      </SectionCard>
 
       <SectionCard title="Create-only apply readiness">
         <CreateOnlyApplyReadinessPanel

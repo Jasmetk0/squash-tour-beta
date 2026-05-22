@@ -121,6 +121,13 @@ def test_apply_create_only_success(tmp_path: Path) -> None:
         assert 0 < len(body["created_event_preview"]) <= 3
         assert body["created_calendar_identity"]["dry_run_result_fingerprint"] == payload["dry_run_result_fingerprint"]
         assert body["created_calendar_identity"]["dry_run_result_id"] == payload["dry_run_result_id"]
+        assert "created_calendar_validation_preview" in body
+        assert body["created_calendar_validation_preview"]["calendar_exists"] is True
+        assert body["created_calendar_validation_preview"]["read_only"] is True
+        assert body["created_calendar_validation_preview"]["event_count"] == body["applied_event_count"]
+        assert body["created_calendar_validation_preview"]["error_count"] == 0
+        assert body["created_calendar_validation_preview"]["validation_status"] in ("clean", "warnings")
+        assert "issue_codes_first_10" in body["created_calendar_validation_preview"]
         assert body["apply_gate_summary"]["service_insert_succeeded"] is True
         assert body["audit_preview"]["audit_persisted"] is False
         _, calendar = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar")
@@ -158,6 +165,7 @@ def test_apply_create_only_reject_existing_calendar(tmp_path: Path) -> None:
         status, body = call("POST", f"{server.base_url}/admin/seasons/builder/apply-create-only-command", payload)
         assert status == 409
         assert body["applied"] is False
+        assert body["created_calendar_validation_preview"] == {}
         assert body["apply_gate_summary"]["service_insert_succeeded"] is False
         assert body["audit_preview"]["audit_persisted"] is False
         _, after = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar")
@@ -172,6 +180,7 @@ def test_apply_create_only_reject_non_template_source_type(tmp_path: Path) -> No
         status, body = call("POST", f"{server.base_url}/admin/seasons/builder/apply-create-only-command", payload)
         assert status == 400
         assert body["applied"] is False
+        assert body["created_calendar_validation_preview"] == {}
         _, cal = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar")
         assert cal["calendar"] is None
 
@@ -184,6 +193,7 @@ def test_apply_create_only_reject_missing_source_template_id(tmp_path: Path) -> 
         status, body = call("POST", f"{server.base_url}/admin/seasons/builder/apply-create-only-command", payload)
         assert status == 400
         assert body["applied"] is False
+        assert body["created_calendar_validation_preview"] == {}
         _, cal = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar")
         assert cal["calendar"] is None
 
@@ -197,6 +207,7 @@ def test_apply_create_only_reject_wrong_mutation_scopes(tmp_path: Path) -> None:
             status, body = call("POST", f"{server.base_url}/admin/seasons/builder/apply-create-only-command", payload)
             assert status == 400
             assert body["applied"] is False
+            assert body["created_calendar_validation_preview"] == {}
             season_path = parse.quote(payload["target_season_label"], safe="")
             _, cal = call("GET", f"{server.base_url}/admin/seasons/{season_path}/calendar")
             assert cal["calendar"] is None
@@ -212,6 +223,7 @@ def test_apply_create_only_reject_missing_audit_metadata(tmp_path: Path) -> None
             status, body = call("POST", f"{server.base_url}/admin/seasons/builder/apply-create-only-command", payload)
             assert status == 400
             assert body["applied"] is False
+            assert body["created_calendar_validation_preview"] == {}
             season_path = parse.quote(payload["target_season_label"], safe="")
             _, cal = call("GET", f"{server.base_url}/admin/seasons/{season_path}/calendar")
             assert cal["calendar"] is None
@@ -225,6 +237,7 @@ def test_apply_create_only_reject_wrong_confirmation(tmp_path: Path) -> None:
         status, body = call("POST", f"{server.base_url}/admin/seasons/builder/apply-create-only-command", payload)
         assert status == 400
         assert body["applied"] is False
+        assert body["created_calendar_validation_preview"] == {}
         _, cal = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar")
         assert cal["calendar"] is None
 
@@ -237,6 +250,7 @@ def test_apply_create_only_reject_stale_identity(tmp_path: Path) -> None:
         status, body = call("POST", f"{server.base_url}/admin/seasons/builder/apply-create-only-command", payload)
         assert status == 400
         assert body["applied"] is False
+        assert body["created_calendar_validation_preview"] == {}
         _, cal = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar")
         assert cal["calendar"] is None
 

@@ -254,7 +254,8 @@ export function AdminSeasonBuilderPage(): JSX.Element {
 
   const hasRequiredApplyIdentities = Boolean(
     disabledApplyCommandContractPayload.target_season_label
-    && disabledApplyCommandContractPayload.source_type
+    && disabledApplyCommandContractPayload.source_type === 'season_template'
+    && disabledApplyCommandContractPayload.source_template_id
     && disabledApplyCommandContractPayload.preflight_fingerprint
     && disabledApplyCommandContractPayload.reviewed_diff_id
     && disabledApplyCommandContractPayload.dry_run_result_fingerprint
@@ -490,7 +491,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           query={{ isLoading: createOnlyApplyReadinessQuery.isLoading, error: createOnlyApplyReadinessQuery.error, data: createOnlyApplyReadinessQuery.data }}
         />
       </SectionCard>
-      <SectionCard title="Create-only apply danger-zone preview (disabled)">
+      <SectionCard title="Create-only apply danger-zone command">
         <CreateOnlyApplyDangerZonePreviewPanel
           readinessData={createOnlyApplyReadinessQuery.data}
           selectedTargetSeasonLabel={selectedTargetSeasonLabel}

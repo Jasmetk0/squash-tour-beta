@@ -163,8 +163,8 @@ describe('Module 17 pages through routes', () => {
     api.postSeasonBuilderPreflight.mockResolvedValue({
       can_build: false,
       target_season_label: '2000/2001',
-      source_type: 'blank_calendar_planned',
-      source_template_id: null,
+      source_type: 'season_template',
+      source_template_id: 'default_msa_template_preview',
       preflight_fingerprint: 'pf_test_existing',
       reviewed_diff_id: 'rd_test_existing',
       target_calendar_exists: true,
@@ -889,7 +889,7 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByText('Execution remains disabled; this panel is not a build control.')).toBeInTheDocument()
     expect(screen.getByText('Disabled apply command contract result')).toBeInTheDocument()
     expect(screen.getByText('Create-only apply readiness')).toBeInTheDocument()
-    expect(screen.getByText('Create-only apply danger-zone preview (disabled)')).toBeInTheDocument()
+    expect(screen.getByText('Create-only apply danger-zone command')).toBeInTheDocument()
     expect(screen.getByText('Read-only disabled apply command contract check. This does not build, merge, overwrite, or apply anything.')).toBeInTheDocument()
     expect(screen.getByText('Read-only create-only apply readiness check. This panel does not execute apply or create a calendar.')).toBeInTheDocument()
     expect(screen.getByText('Danger-zone guarded create-only apply command. This command can only create a missing calendar. It cannot merge or overwrite.')).toBeInTheDocument()
@@ -920,6 +920,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Tour levels count: 1')).toBeInTheDocument()
     expect(screen.getByText('Tour levels values: WORLD_TOUR')).toBeInTheDocument()
     expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Source type select'), { target: { value: 'season_template' } })
     fireEvent.change(confirmationInput, { target: { value: 'I understand this will create a new season calendar.' } })
     fireEvent.change(mutationScopeInput, { target: { value: 'create_only' } })
     expect(screen.getByText('All visible preview conditions are satisfied.')).toBeInTheDocument()
@@ -960,8 +961,8 @@ describe('Module 17 pages through routes', () => {
     await waitFor(() => expect(api.postSeasonBuilderApplyCreateOnlyCommand).toHaveBeenCalledTimes(1))
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).toHaveBeenCalledWith(expect.objectContaining({
       target_season_label: '2000/01',
-      source_type: 'blank_calendar_planned',
-      source_template_id: null,
+      source_type: 'season_template',
+      source_template_id: 'default_msa_template_preview',
       preflight_fingerprint: 'pf_test_existing',
       reviewed_diff_id: 'rd_test_existing',
       dry_run_result_fingerprint: 'drf_test_existing',

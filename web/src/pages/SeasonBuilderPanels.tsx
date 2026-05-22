@@ -2056,6 +2056,10 @@ export function CreateOnlyApplyReadinessPanel({ queryEnabled, query }: CreateOnl
   const tourLevelsSummary = readStringArraySummary(candidateSummary?.tour_levels)
   const applyGateSummary = shapeRecord(query.data?.apply_gate_summary)
   const auditPreview = shapeRecord(query.data?.audit_preview)
+  const isBackendReadyForCreateOnly = query.data?.can_execute_apply === true
+    && query.data?.would_create_calendar === true
+    && query.data?.can_mutate === false
+    && query.data?.service_insert_applicable === false
 
   return (
     <>
@@ -2075,7 +2079,17 @@ export function CreateOnlyApplyReadinessPanel({ queryEnabled, query }: CreateOnl
             <tr><td>message</td><td>{query.data.message}</td></tr>
           </tbody></table>
           {!query.data.can_mutate ? <p>This panel is read-only because can_mutate is false.</p> : null}
-          {query.data.would_create_calendar ? <p>Backend readiness says create-only apply would be allowed, but no calendar is created from this panel.</p> : null}
+          {isBackendReadyForCreateOnly
+            ? <p>Backend readiness says create-only apply is ready, but this panel is still read-only. No calendar is created from this UI.</p>
+            : <p>Create-only apply is not ready according to backend readiness.</p>}
+          <h4>Safety checklist</h4>
+          <table><thead><tr><th scope="col">Check</th><th scope="col">Value</th></tr></thead><tbody>
+            <tr><td>Real apply endpoint called from UI</td><td>no</td></tr>
+            <tr><td>Mutation hook installed</td><td>no</td></tr>
+            <tr><td>Calendar created by this panel</td><td>no</td></tr>
+            <tr><td>Backend readiness satisfied</td><td>{isBackendReadyForCreateOnly ? 'yes' : 'no'}</td></tr>
+            <tr><td>Audit persisted</td><td>no</td></tr>
+          </tbody></table>
           <h4>Apply gate checklist</h4>
           {applyGateSummary ? <table><thead><tr><th scope="col">gate</th><th scope="col">value</th></tr></thead><tbody>{Object.entries(applyGateSummary).map(([key, value]) => <tr key={`create-only-gate-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>)}</tbody></table> : <p>Apply gate summary is unavailable.</p>}
           <h4>Candidate summary</h4>

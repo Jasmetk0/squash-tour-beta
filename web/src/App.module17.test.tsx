@@ -403,9 +403,9 @@ describe('Module 17 pages through routes', () => {
     api.postSeasonBuilderApplyCreateOnlyReadiness.mockImplementation(async (payload) => ({
       command: 'season_builder_apply_create_only_readiness',
       enabled: false,
-      can_execute_apply: false,
+      can_execute_apply: true,
       can_mutate: false,
-      would_create_calendar: false,
+      would_create_calendar: true,
       service_insert_applicable: false,
       target_season_label: '2000/01',
       source_type: payload.source_type,
@@ -890,6 +890,13 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Create-only apply readiness')).toBeInTheDocument()
     expect(screen.getByText('Read-only disabled apply command contract check. This does not build, merge, overwrite, or apply anything.')).toBeInTheDocument()
     expect(screen.getByText('Read-only create-only apply readiness check. This panel does not execute apply or create a calendar.')).toBeInTheDocument()
+    expect(screen.getByText('Backend readiness says create-only apply is ready, but this panel is still read-only. No calendar is created from this UI.')).toBeInTheDocument()
+    expect(screen.getByText('Safety checklist')).toBeInTheDocument()
+    expect(screen.getByText('Real apply endpoint called from UI')).toBeInTheDocument()
+    expect(screen.getByText('Mutation hook installed')).toBeInTheDocument()
+    expect(screen.getByText('Calendar created by this panel')).toBeInTheDocument()
+    expect(screen.getByText('Backend readiness satisfied')).toBeInTheDocument()
+    expect(screen.getByText('Audit persisted')).toBeInTheDocument()
     expect(screen.getAllByText('can_mutate').length).toBeGreaterThan(0)
     expect(screen.getAllByText('service_insert_applicable').length).toBeGreaterThan(0)
     expect(screen.getAllByText('false').length).toBeGreaterThan(0)
@@ -899,6 +906,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Tour levels count: 1')).toBeInTheDocument()
     expect(screen.getByText('Tour levels values: WORLD_TOUR')).toBeInTheDocument()
     expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
+    expect((api as { postSeasonBuilderApplyCreateOnlyCommand?: unknown }).postSeasonBuilderApplyCreateOnlyCommand).toBeUndefined()
     await waitFor(() => {
       expect(api.postSeasonBuilderApplyCreateOnlyReadiness).toHaveBeenCalledWith(expect.objectContaining({
         target_season_label: '2000/01',

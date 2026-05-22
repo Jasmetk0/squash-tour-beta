@@ -35,6 +35,7 @@ from beta_engine.domain.tournaments import (
     SeasonCalendar,
     SeasonCalendarEvent,
     SeasonCalendarValidationResponse,
+    SeasonCalendarValidationIssueCodeRegistryResponse,
 )
 
 router = APIRouter(prefix="/admin/seasons", tags=["admin-seasons"])
@@ -77,6 +78,16 @@ def preflight_season_range(
     service: SeasonRangePreflightService = Depends(get_season_range_preflight_service),
 ) -> SeasonRangePreflightResult:
     return service.preflight_range(payload)
+
+
+@router.get(
+    "/calendar/validation/issue-codes",
+    response_model=SeasonCalendarValidationIssueCodeRegistryResponse,
+)
+def get_season_calendar_validation_issue_codes(
+    service: SeasonCalendarService = Depends(get_season_calendar_service),
+) -> SeasonCalendarValidationIssueCodeRegistryResponse:
+    return service.list_validation_issue_codes()
 
 
 @router.get("/{season:path}/players", response_model=SeasonActivePlayersResponse)

@@ -113,6 +113,33 @@ def test_validation_endpoint_missing_calendar(tmp_path: Path) -> None:
         assert any(issue["code"] == "calendar_missing" for issue in body["issues"])
 
 
+def test_validation_issue_code_registry_endpoint(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        status, body = call("GET", f"{server.base_url}/admin/seasons/calendar/validation/issue-codes")
+        assert status == 200
+        assert body["read_only"] is True
+        assert body["code_count"] > 0
+
+        codes = body["codes"]
+        code_values = [item["code"] for item in codes]
+        assert "calendar_missing" in code_values
+        assert "calendar_registry_parse_error" in code_values
+        assert "main_draw_size_invalid" in code_values
+        assert len(code_values) == len(set(code_values))
+        for item in codes:
+            assert item["severity"] in {"error", "warning", "info"}
+            assert item["title"]
+            assert item["description"]
+
+
+def test_validation_issue_code_registry_route_does_not_conflict_with_season_validation(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        status, body = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar/validation")
+        assert status == 200
+        assert body["calendar_exists"] is False
+        assert any(issue["code"] == "calendar_missing" for issue in body["issues"])
+
+
 def test_validation_endpoint_for_created_calendar(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         create_only_apply(server)

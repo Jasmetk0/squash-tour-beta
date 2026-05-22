@@ -25,10 +25,40 @@ from beta_engine.domain.tournaments.models import (
     SeasonCalendarEvent,
     SeasonCalendarMetadata,
     SeasonCalendarValidationIssue,
+    SeasonCalendarValidationIssueCodeMetadata,
+    SeasonCalendarValidationIssueCodeRegistryResponse,
     SeasonCalendarValidationIssueV2,
     SeasonCalendarValidationResponse,
     SeasonCalendarValidationSummary,
     TournamentTemplate,
+)
+
+SEASON_CALENDAR_VALIDATION_ISSUE_CODES: tuple[SeasonCalendarValidationIssueCodeMetadata, ...] = (
+    SeasonCalendarValidationIssueCodeMetadata(code="calendar_missing", severity="warning", title="Calendar missing", description="No persisted season calendar exists for the requested season."),
+    SeasonCalendarValidationIssueCodeMetadata(code="event_count_zero", severity="warning", title="No events in calendar", description="Persisted calendar exists but contains zero events."),
+    SeasonCalendarValidationIssueCodeMetadata(code="event_id_missing", severity="error", title="Missing event ID", description="An event is missing event_id.", field="event_id"),
+    SeasonCalendarValidationIssueCodeMetadata(code="duplicate_event_id", severity="error", title="Duplicate event ID", description="Two or more events share the same event_id.", field="event_id"),
+    SeasonCalendarValidationIssueCodeMetadata(code="event_name_missing", severity="error", title="Missing event name", description="An event is missing event_name.", field="event_name"),
+    SeasonCalendarValidationIssueCodeMetadata(code="category_missing", severity="error", title="Missing category", description="An event is missing category.", field="category"),
+    SeasonCalendarValidationIssueCodeMetadata(code="tour_level_missing", severity="error", title="Missing tour level", description="An event is missing tour_level.", field="tour_level"),
+    SeasonCalendarValidationIssueCodeMetadata(code="tour_level_unknown", severity="warning", title="Unknown tour level", description="tour_level is outside the known WORLD_TOUR/ELITE_TOUR set.", field="tour_level"),
+    SeasonCalendarValidationIssueCodeMetadata(code="season_week_out_of_range", severity="error", title="Season week out of range", description="season_week is outside the 1..61 season window.", field="season_week"),
+    SeasonCalendarValidationIssueCodeMetadata(code="end_season_week_out_of_range", severity="error", title="End season week out of range", description="end_season_week is outside the 1..61 season window.", field="end_season_week"),
+    SeasonCalendarValidationIssueCodeMetadata(code="season_week_after_end_week", severity="error", title="Start week after end week", description="season_week is greater than end_season_week.", field="season_week"),
+    SeasonCalendarValidationIssueCodeMetadata(code="duration_invalid", severity="error", title="Invalid duration", description="duration_in_season_weeks must be greater than 0.", field="duration_in_season_weeks"),
+    SeasonCalendarValidationIssueCodeMetadata(code="duration_unusually_long", severity="warning", title="Unusually long duration", description="duration_in_season_weeks is unusually long (>3).", field="duration_in_season_weeks"),
+    SeasonCalendarValidationIssueCodeMetadata(code="event_spans_many_weeks", severity="warning", title="Event spans many weeks", description="Event span between start and end season weeks is unusually large.", field="end_season_week"),
+    SeasonCalendarValidationIssueCodeMetadata(code="main_draw_size_invalid", severity="error", title="Invalid main draw size", description="main_draw_size must be greater than 0.", field="main_draw_size"),
+    SeasonCalendarValidationIssueCodeMetadata(code="qualification_draw_size_invalid", severity="error", title="Invalid qualification draw size", description="qualification_draw_size cannot be negative.", field="qualification_draw_size"),
+    SeasonCalendarValidationIssueCodeMetadata(code="prize_money_negative", severity="error", title="Negative prize money", description="prize_money cannot be negative.", field="prize_money"),
+    SeasonCalendarValidationIssueCodeMetadata(code="prestige_negative", severity="error", title="Negative prestige", description="prestige cannot be negative.", field="prestige"),
+    SeasonCalendarValidationIssueCodeMetadata(code="duplicate_week_category_event_name", severity="warning", title="Duplicate week/category/name", description="Multiple events share season_week + category + event_name.", field="season_week"),
+    SeasonCalendarValidationIssueCodeMetadata(code="event_count", severity="info", title="Event count summary", description="Computed informational event count metric."),
+    SeasonCalendarValidationIssueCodeMetadata(code="first_last_weeks", severity="info", title="Season week span summary", description="Computed informational first/last season week metric."),
+    SeasonCalendarValidationIssueCodeMetadata(code="world_tour_events", severity="info", title="World Tour count summary", description="Computed informational World Tour event count metric."),
+    SeasonCalendarValidationIssueCodeMetadata(code="qualification_events", severity="info", title="Qualification event count summary", description="Computed informational qualification event count metric."),
+    SeasonCalendarValidationIssueCodeMetadata(code="calendar_registry_parse_error", severity="error", title="Calendar registry parse error", description="Persisted season calendar registry JSON could not be parsed."),
+    SeasonCalendarValidationIssueCodeMetadata(code="calendar_registry_model_error", severity="error", title="Calendar registry model error", description="Persisted season calendar registry failed model validation."),
 )
 
 
@@ -68,6 +98,15 @@ class SeasonCalendarService:
     def __post_init__(self) -> None:
         if not isinstance(self.calendar_registry_path, Path):
             self.calendar_registry_path = Path(self.calendar_registry_path)
+
+    def list_validation_issue_codes(self) -> SeasonCalendarValidationIssueCodeRegistryResponse:
+        codes = sorted(SEASON_CALENDAR_VALIDATION_ISSUE_CODES, key=lambda item: item.code)
+        return SeasonCalendarValidationIssueCodeRegistryResponse(
+            codes=codes,
+            code_count=len(codes),
+            read_only=True,
+            message="Stable read-only season calendar validation issue code registry.",
+        )
 
     def get_calendar(self, *, season: str) -> SeasonCalendarBuildResult:
         registry = self._load_registry()

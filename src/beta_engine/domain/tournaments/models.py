@@ -397,6 +397,26 @@ class SeasonCalendarValidationIssueV2(BaseModel):
     context: dict[str, Any] = Field(default_factory=dict)
 
 
+class SeasonCalendarValidationIssueCodeMetadata(BaseModel):
+    """Stable metadata describing a validation issue code."""
+
+    code: str
+    severity: Literal["error", "warning", "info"]
+    title: str
+    description: str
+    field: str | None = None
+    read_only: bool = True
+
+
+class SeasonCalendarValidationIssueCodeRegistryResponse(BaseModel):
+    """Read-only registry response for stable validation issue code documentation."""
+
+    codes: list[SeasonCalendarValidationIssueCodeMetadata] = Field(default_factory=list)
+    code_count: int = Field(default=0, ge=0)
+    read_only: bool = True
+    message: str
+
+
 class SeasonCalendarValidationSummary(BaseModel):
     """Aggregated read-only validation summary for a persisted season calendar."""
 
@@ -421,6 +441,8 @@ class SeasonCalendarValidationResponse(BaseModel):
     issues: list[SeasonCalendarValidationIssueV2] = Field(default_factory=list)
     read_only: bool = True
     message: str
+
+
 class SeasonCalendarBuildResult(BaseModel):
     """Calendar build/read response returned by Admin Seasons endpoints."""
 

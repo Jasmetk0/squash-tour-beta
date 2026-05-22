@@ -467,3 +467,85 @@ def test_builder_dry_run_build_existing_target_with_merge_preview_has_no_policy_
         assert body["can_mutate"] is False
         assert body["dry_run_result_preview"]["result_metadata"]["target_calendar_exists"] is True
         assert body["dry_run_result_preview"]["conflict_summary"]["policy_conflicts"] == []
+
+
+def test_builder_dry_run_build_result_identity_is_stable_for_identical_state(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2038/2039",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": "merge_preview",
+            "preflight_fingerprint": "pf_stable",
+            "reviewed_diff_id": "rd_stable",
+            "requested_by": "qa",
+            "audit_reason": "ticket-stable",
+            "explicit_confirmation": "confirmed-stable",
+            "mutation_scope": "merge_preview",
+        }
+        _, first = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        _, second = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        first_fp = first["dry_run_result_preview"]["dry_run_result_fingerprint"]
+        second_fp = second["dry_run_result_preview"]["dry_run_result_fingerprint"]
+        first_id = first["dry_run_result_preview"]["dry_run_result_id"]
+        second_id = second["dry_run_result_preview"]["dry_run_result_id"]
+        assert first_fp == second_fp
+        assert first_id == second_id
+        assert first_fp.startswith("drf_")
+        assert first_id.startswith("drr_")
+        assert first["dry_run_result_preview"]["result_metadata"]["dry_run_result_fingerprint"] == first_fp
+        assert first["dry_run_result_preview"]["result_metadata"]["dry_run_result_id"] == first_id
+        assert second["dry_run_result_preview"]["result_metadata"]["dry_run_result_fingerprint"] == second_fp
+        assert second["dry_run_result_preview"]["result_metadata"]["dry_run_result_id"] == second_id
+        assert first["audit_preview"]["dry_run_result_identity_available"] is True
+        assert second["audit_preview"]["dry_run_result_identity_available"] is True
+
+
+def test_builder_dry_run_build_result_identity_changes_with_overwrite_policy(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        create_calendar(server, "2006%2F2007")
+        base_payload = {
+            "target_season_label": "2006/2007",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "preflight_fingerprint": "pf_policy",
+            "reviewed_diff_id": "rd_policy",
+            "requested_by": "qa",
+            "audit_reason": "ticket-policy",
+            "explicit_confirmation": "confirmed-policy",
+            "mutation_scope": "merge_preview",
+        }
+        _, no_policy = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", {**base_payload, "overwrite_policy": None})
+        _, merge_policy = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", {**base_payload, "overwrite_policy": "merge_preview"})
+        assert no_policy["dry_run_result_preview"]["dry_run_result_fingerprint"] != merge_policy["dry_run_result_preview"]["dry_run_result_fingerprint"]
+        assert no_policy["dry_run_result_preview"]["dry_run_result_id"] != merge_policy["dry_run_result_preview"]["dry_run_result_id"]
+
+
+def test_builder_dry_run_build_result_identity_excludes_audit_metadata(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        base_payload = {
+            "target_season_label": "2037/2038",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": "merge_preview",
+            "preflight_fingerprint": "pf_audit",
+            "reviewed_diff_id": "rd_audit",
+        }
+        _, first = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", {
+            **base_payload,
+            "requested_by": "qa-a",
+            "audit_reason": "ticket-a",
+            "explicit_confirmation": "confirmed-a",
+            "mutation_scope": "merge_preview",
+        })
+        _, second = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", {
+            **base_payload,
+            "requested_by": "qa-b",
+            "audit_reason": "ticket-b",
+            "explicit_confirmation": "confirmed-b",
+            "mutation_scope": "merge_preview",
+        })
+        assert first["dry_run_result_preview"]["validation_summary"]["status"] == "clean"
+        assert second["dry_run_result_preview"]["validation_summary"]["status"] == "clean"
+        assert first["dry_run_result_preview"]["dry_run_result_fingerprint"] == second["dry_run_result_preview"]["dry_run_result_fingerprint"]
+        assert first["dry_run_result_preview"]["dry_run_result_id"] == second["dry_run_result_preview"]["dry_run_result_id"]

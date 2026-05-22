@@ -232,7 +232,8 @@ describe('Module 17 pages through routes', () => {
           candidate_event_contract_preview_available: true,
           conflict_contract_preview_available: true,
           dry_run_result_contract_preview_available: true,
-          dry_run_result_preview_available: true
+          dry_run_result_preview_available: true,
+          dry_run_result_identity_available: true
         },
         generation_design_preview: {
           status: 'design_preview_only',
@@ -288,9 +289,11 @@ describe('Module 17 pages through routes', () => {
         candidate_events: [{ candidate_id: 'cand_default_msa_template_preview_slot-01-wt_gold_24', source_slot_id: 'slot-01-wt_gold_24', season_week_start: 1, season_week_end: 1, event_name: 'World Tour Gold', tour_level: null, category: 'GOLD', host_country: 'ENG', candidate_status: 'conflict', comparison_classification: 'conflict', comparison_reason: 'Candidate has read-only comparison conflicts.', matched_existing_event_id: 'event_2000_gold_01', matched_existing_event_name: 'World Tour Gold', matched_existing_event_week: 1, validation_errors: [], validation_warnings: [] }],
         structural_summary: { candidate_count: 1, target_event_count: 1, additions_count: 0, replacement_count: 1, conflict_count: 1, invalid_count: 0 },
         conflict_summary: { week_conflicts: [], slot_conflicts: [], policy_conflicts: [{ conflict_id: 'policy_violation_missing_overwrite_policy', conflict_type: 'policy_violation', policy: null, candidate_id: null, message: 'Existing target calendar requires explicit merge/overwrite policy before future mutation.', severity: 'blocking' }], validation_conflicts: [] },
-        result_metadata: { preflight_fingerprint: payload.preflight_fingerprint, reviewed_diff_id: payload.reviewed_diff_id, source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: payload.overwrite_policy ?? null, target_calendar_exists: true, target_event_count: 1, comparison_performed: true, read_only: true, mutation_permitted: false },
+        result_metadata: { preflight_fingerprint: payload.preflight_fingerprint, reviewed_diff_id: payload.reviewed_diff_id, source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: payload.overwrite_policy ?? null, target_calendar_exists: true, target_event_count: 1, comparison_performed: true, read_only: true, mutation_permitted: false, dry_run_result_fingerprint: 'drf_test_existing', dry_run_result_id: 'drr_test_existing' },
         validation_summary: { status: 'blocking', blocking_count: 1, warning_count: 3, info_count: 0, blocking_reasons: ['Existing target calendar requires explicit merge/overwrite policy before future mutation.'], warning_reasons: ['audit_reason will be required before execution is enabled in a future phase.', 'explicit_confirmation will be required before execution is enabled in a future phase.', 'mutation_scope will be required before execution is enabled in a future phase.'], info_messages: [], candidate_status_counts: { planned: 0, replacement: 0, conflict: 1, invalid: 0 }, conflict_type_counts: { week_conflicts: 0, slot_conflicts: 0, policy_conflicts: 1, validation_conflicts: 0 } },
-        plan_readiness: { read_only_plan_available: true, has_blocking_issues: true, has_warnings: true, mutation_still_disabled: true, next_required_step: 'Review dry-run summary; execution remains disabled.' }
+        plan_readiness: { read_only_plan_available: true, has_blocking_issues: true, has_warnings: true, mutation_still_disabled: true, next_required_step: 'Review dry-run summary; execution remains disabled.' },
+        dry_run_result_fingerprint: 'drf_test_existing',
+        dry_run_result_id: 'drr_test_existing'
       },
         message: 'Dry-run build command contract exists, but execution is disabled in this phase.'
       }
@@ -735,6 +738,11 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByText('No candidate events returned in this contract-only phase.')).toBeInTheDocument()
     expect((await screen.findAllByText('dry_run_result_contract_preview_available')).length).toBeGreaterThan(0)
     expect((await screen.findAllByText('dry_run_result_preview_available')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('dry_run_result_identity_available')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('dry_run_result_fingerprint')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('dry_run_result_id')).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('drf_test_existing').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('drr_test_existing').length).toBeGreaterThan(0)
     expect((await screen.findAllByText('explicit_confirmation_present')).length).toBeGreaterThan(0)
     expect((await screen.findAllByText('conflict_contract_preview_available')).length).toBeGreaterThan(0)
     expect(await screen.findByText('Raw disabled dry-run build contract JSON')).toBeInTheDocument()
@@ -992,7 +1000,7 @@ describe('Module 17 pages through routes', () => {
       reviewed_diff_id: 'rd_test_empty',
       validation_errors: [],
       validation_warnings: [],
-      audit_preview: { action: 'season_builder_dry_run_build', read_only: true, mutation_permitted: false, execution_enabled: false, explicit_confirmation_present: false, generation_design_preview_available: true, candidate_event_contract_preview_available: true , conflict_contract_preview_available: true, dry_run_result_contract_preview_available: true, dry_run_result_preview_available: true },
+      audit_preview: { action: 'season_builder_dry_run_build', read_only: true, mutation_permitted: false, execution_enabled: false, explicit_confirmation_present: false, generation_design_preview_available: true, candidate_event_contract_preview_available: true , conflict_contract_preview_available: true, dry_run_result_contract_preview_available: true, dry_run_result_preview_available: true, dry_run_result_identity_available: true },
       generation_design_preview: {
         status: 'design_preview_only',
         execution_enabled: false,
@@ -1039,7 +1047,7 @@ describe('Module 17 pages through routes', () => {
         candidate_events: [],
         structural_summary: { candidate_count: 0, target_event_count: 0, additions_count: 0, replacement_count: 0, conflict_count: 0, invalid_count: 0 },
         conflict_summary: { week_conflicts: [], slot_conflicts: [], policy_conflicts: [], validation_conflicts: [] },
-        result_metadata: { preflight_fingerprint: 'pf_test_empty', reviewed_diff_id: 'rd_test_empty', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, target_calendar_exists: false, target_event_count: 0, comparison_performed: true, read_only: true, mutation_permitted: false },
+        result_metadata: { preflight_fingerprint: 'pf_test_empty', reviewed_diff_id: 'rd_test_empty', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, target_calendar_exists: false, target_event_count: 0, comparison_performed: true, read_only: true, mutation_permitted: false, dry_run_result_fingerprint: 'drf_test_empty', dry_run_result_id: 'drr_test_empty' },
         validation_summary: { status: 'clean', blocking_count: 0, warning_count: 0, info_count: 0, blocking_reasons: [], warning_reasons: [], info_messages: [], candidate_status_counts: { planned: 0, replacement: 0, conflict: 0, invalid: 0 }, conflict_type_counts: { week_conflicts: 0, slot_conflicts: 0, policy_conflicts: 0, validation_conflicts: 0 } },
         plan_readiness: { read_only_plan_available: true, has_blocking_issues: false, has_warnings: false, mutation_still_disabled: true, next_required_step: 'Review dry-run summary; execution remains disabled.' }
       },

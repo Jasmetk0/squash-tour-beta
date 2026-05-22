@@ -57,6 +57,8 @@ export function AdminSeasonBuilderPage(): JSX.Element {
   const [dryRunAuditReason, setDryRunAuditReason] = useState('')
   const [dryRunExplicitConfirmation, setDryRunExplicitConfirmation] = useState('')
   const [dryRunMutationScope, setDryRunMutationScope] = useState('')
+  const [dangerZoneConfirmationText, setDangerZoneConfirmationText] = useState('')
+  const [dangerZoneMutationScope, setDangerZoneMutationScope] = useState('')
   const targetCalendarQuery = useQuery({
     queryKey: ['season-builder-target-calendar', selectedTargetSeasonLabel],
     queryFn: () => getSeasonCalendar(selectedTargetSeasonLabel),
@@ -438,6 +440,10 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           readinessData={createOnlyApplyReadinessQuery.data}
           selectedTargetSeasonLabel={selectedTargetSeasonLabel}
           requiredConfirmationPhrase="I understand this will create a new season calendar."
+          confirmationText={dangerZoneConfirmationText}
+          setConfirmationText={setDangerZoneConfirmationText}
+          mutationScopePreview={dangerZoneMutationScope}
+          setMutationScopePreview={setDangerZoneMutationScope}
         />
       </SectionCard>
 

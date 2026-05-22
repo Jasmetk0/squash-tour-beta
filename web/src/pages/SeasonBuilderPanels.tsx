@@ -2040,30 +2040,67 @@ type CreateOnlyApplyDangerZonePreviewPanelProps = {
   readinessData: SeasonBuilderApplyCreateOnlyReadinessResponse | undefined
   selectedTargetSeasonLabel: string
   requiredConfirmationPhrase: string
+  confirmationText: string
+  setConfirmationText: (value: string) => void
+  mutationScopePreview: string
+  setMutationScopePreview: (value: string) => void
 }
 
 export function CreateOnlyApplyDangerZonePreviewPanel({
   readinessData,
   selectedTargetSeasonLabel,
-  requiredConfirmationPhrase
+  requiredConfirmationPhrase,
+  confirmationText,
+  setConfirmationText,
+  mutationScopePreview,
+  setMutationScopePreview
 }: CreateOnlyApplyDangerZonePreviewPanelProps): JSX.Element {
   const isBackendReadyForCreateOnly = readinessData?.can_execute_apply === true
     && readinessData?.would_create_calendar === true
     && readinessData?.can_mutate === false
     && readinessData?.service_insert_applicable === false
+  const confirmationPhraseMatches = confirmationText.trim() === requiredConfirmationPhrase
+  const mutationScopeMatches = mutationScopePreview.trim() === 'create_only'
+  const futureSubmitEligibilityPreview = isBackendReadyForCreateOnly && confirmationPhraseMatches && mutationScopeMatches
   return (
     <>
       <p>Danger-zone preview for future create-only apply. This section is display-only and disabled in this phase.</p>
+      <p>
+        <label htmlFor="create-only-confirmation-preview">Future confirmation phrase preview</label><br />
+        <textarea
+          id="create-only-confirmation-preview"
+          value={confirmationText}
+          onChange={(event) => setConfirmationText(event.target.value)}
+          placeholder={requiredConfirmationPhrase}
+          rows={2}
+        />
+      </p>
+      <p>
+        <label htmlFor="create-only-mutation-scope-preview">Future create-only mutation scope preview</label><br />
+        <input
+          id="create-only-mutation-scope-preview"
+          type="text"
+          value={mutationScopePreview}
+          onChange={(event) => setMutationScopePreview(event.target.value)}
+          placeholder="create_only"
+        />
+      </p>
       <table><thead><tr><th scope="col">Requirement</th><th scope="col">Preview status</th></tr></thead><tbody>
         <tr><td>Backend readiness satisfied</td><td>{isBackendReadyForCreateOnly ? 'yes' : 'no'}</td></tr>
         <tr><td>Target season</td><td>{readinessData?.target_season_label ?? (selectedTargetSeasonLabel || '—')}</td></tr>
         <tr><td>Required confirmation phrase</td><td>{requiredConfirmationPhrase}</td></tr>
         <tr><td>Required mutation scope</td><td>create_only</td></tr>
+        <tr><td>Confirmation phrase matches required phrase</td><td>{confirmationPhraseMatches ? 'yes' : 'no'}</td></tr>
+        <tr><td>Mutation scope equals create_only</td><td>{mutationScopeMatches ? 'yes' : 'no'}</td></tr>
+        <tr><td>Future submit eligibility preview</td><td>{futureSubmitEligibilityPreview ? 'yes' : 'no'}</td></tr>
         <tr><td>Real apply endpoint status</td><td>not called from UI</td></tr>
         <tr><td>Execution status</td><td>disabled in this UI phase</td></tr>
         <tr><td>Audit persistence</td><td>not implemented / preview only</td></tr>
       </tbody></table>
-      <p>No submit control is available in this danger-zone preview.</p>
+      {futureSubmitEligibilityPreview
+        ? <p>All visible preview conditions are satisfied, but execution is still unavailable in this UI phase.</p>
+        : <p>Future create-only apply is not fully armed in this preview.</p>}
+      <p>Future submit remains unavailable in this phase.</p>
     </>
   )
 }

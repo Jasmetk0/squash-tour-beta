@@ -14,7 +14,7 @@ from beta_engine.main import create_app
 def write_templates(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps({"templates": [
-        {"template_id": "wt_a", "tour_level": "WORLD_TOUR", "category": "PLATINUM", "event_name": "World A", "region": "EUROPE", "host_country": "ENG", "main_draw_size": 32, "qualification_draw_size": 16, "seeds_count": 8, "qualifier_spots": 4, "wild_cards": 2, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 100000, "prestige": 9, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 1, "active": True}
+        {"template_id": "default_msa_template_preview", "tour_level": "WORLD_TOUR", "category": "PLATINUM", "event_name": "World A", "region": "EUROPE", "host_country": "ENG", "main_draw_size": 32, "qualification_draw_size": 16, "seeds_count": 8, "qualifier_spots": 4, "wild_cards": 2, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 100000, "prestige": 9, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 1, "active": True}
     ]}), encoding="utf-8")
 
 
@@ -116,18 +116,75 @@ def test_validation_endpoint_missing_calendar(tmp_path: Path) -> None:
 def test_validation_endpoint_for_created_calendar(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         create_only_apply(server)
+        calendar_status, calendar_body = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar")
+        assert calendar_status == 200
+        assert calendar_body["calendar"] is not None
+        events = calendar_body["calendar"]["events"]
+        assert len(events) > 0
+        first_event = events[0]
+        assert first_event["template_id"] == "default_msa_template_preview"
+
         status, body = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar/validation")
         assert status == 200
         assert body["calendar_exists"] is True
         assert body["read_only"] is True
-        assert body["validation_summary"]["event_count"] > 0
+        assert body["validation_summary"]["event_count"] == len(events)
         assert body["validation_summary"]["error_count"] == 0
+        assert not any(issue["severity"] == "error" for issue in body["issues"])
         assert body["validation_summary"]["status"] in {"clean", "warnings"}
-        assert "categories" in body["validation_summary"]
-        assert "tour_levels" in body["validation_summary"]
+        assert body["validation_summary"]["categories"]["values"]
+        assert body["validation_summary"]["tour_levels"]["values"]
 
 
 def test_validation_endpoint_invalid_season_label(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         status, _body = call("GET", f"{server.base_url}/admin/seasons/not-a-season/calendar/validation")
         assert status == 400
+
+
+def test_validation_endpoint_invalid_persisted_calendar_flags_errors(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        registry_path = tmp_path / "season_calendars.json"
+        registry_path.write_text(json.dumps({
+            "calendars_by_season": {
+                "2038/2039": {
+                    "season": "2038/2039",
+                    "events": [
+                        {
+                            "event_id": "EVT-2038-W01-default_msa_template_preview",
+                            "season": "2038/2039",
+                            "season_week": 20,
+                            "calendar_year": 2038,
+                            "year_week": 20,
+                            "template_id": "default_msa_template_preview",
+                            "event_name": "Broken Event",
+                            "category": "PLATINUM",
+                            "tour_level": "WORLD_TOUR",
+                            "host_country": "ENG",
+                            "region": "EUROPE",
+                            "duration_in_season_weeks": 1,
+                            "start_season_week": 20,
+                            "end_season_week": 19,
+                            "status": "planned",
+                            "main_draw_size": 0,
+                            "qualification_draw_size": 0,
+                            "seeds_count": 0,
+                            "qualifier_spots": 0,
+                            "wild_cards": 0,
+                            "byes": 0,
+                            "point_distribution_ref": "world",
+                            "prize_money": 0,
+                            "prestige": 0,
+                        }
+                    ]
+                }
+            }
+        }), encoding="utf-8")
+
+        status, body = call("GET", f"{server.base_url}/admin/seasons/2038%2F2039/calendar/validation")
+        assert status == 200
+        assert body["calendar_exists"] is True
+        assert body["validation_summary"]["status"] == "errors"
+        issue_codes = {issue["code"] for issue in body["issues"]}
+        assert "season_week_after_end_week" in issue_codes
+        assert "main_draw_size_invalid" in issue_codes

@@ -400,6 +400,37 @@ describe('Module 17 pages through routes', () => {
         message: 'Apply command contract exists, but execution is disabled in this phase.'
       }
     })
+    api.postSeasonBuilderApplyCreateOnlyReadiness.mockImplementation(async (payload) => ({
+      command: 'season_builder_apply_create_only_readiness',
+      enabled: false,
+      can_execute_apply: false,
+      can_mutate: false,
+      would_create_calendar: false,
+      service_insert_applicable: false,
+      target_season_label: '2000/01',
+      source_type: payload.source_type,
+      source_template_id: payload.source_template_id,
+      overwrite_policy: payload.overwrite_policy,
+      preflight_fingerprint: payload.preflight_fingerprint,
+      reviewed_diff_id: payload.reviewed_diff_id,
+      dry_run_result_fingerprint: payload.dry_run_result_fingerprint,
+      dry_run_result_id: payload.dry_run_result_id,
+      apply_gate_summary: {
+        identity_ready: true,
+        policy_ready: false
+      },
+      candidate_summary: {
+        candidate_count: 1,
+        first_season_week: 1,
+        last_season_week: 1,
+        categories: { count: 1, values: ['GOLD'] },
+        tour_levels: { count: 1, values: ['WORLD_TOUR'] }
+      },
+      audit_preview: { audit_persisted: false, read_only: true },
+      validation_warnings: [],
+      validation_errors: [],
+      message: 'Create-only apply readiness is query-only in this phase.'
+    }))
   })
 
   it('renders the Phase 1 landing page at root', async () => {
@@ -858,8 +889,22 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Disabled apply command contract result')).toBeInTheDocument()
     expect(screen.getByText('Create-only apply readiness')).toBeInTheDocument()
     expect(screen.getByText('Read-only disabled apply command contract check. This does not build, merge, overwrite, or apply anything.')).toBeInTheDocument()
+    expect(screen.getByText('Read-only create-only apply readiness check. This panel does not execute apply or create a calendar.')).toBeInTheDocument()
+    expect(screen.getAllByText('can_mutate').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('service_insert_applicable').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('false').length).toBeGreaterThan(0)
+    expect(screen.getByText('Candidate count: 1')).toBeInTheDocument()
+    expect(screen.getByText('Categories count: 1')).toBeInTheDocument()
+    expect(screen.getByText('Categories values: GOLD')).toBeInTheDocument()
+    expect(screen.getByText('Tour levels count: 1')).toBeInTheDocument()
+    expect(screen.getByText('Tour levels values: WORLD_TOUR')).toBeInTheDocument()
+    expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
     await waitFor(() => {
       expect(api.postSeasonBuilderApplyCreateOnlyReadiness).toHaveBeenCalledWith(expect.objectContaining({
+        target_season_label: '2000/01',
+        source_type: 'season_template',
+        source_template_id: 'default_msa_template_preview',
+        requested_by: 'local-admin-preview',
         preflight_fingerprint: 'pf_test_existing',
         reviewed_diff_id: 'rd_test_existing',
         dry_run_result_fingerprint: 'drf_test_existing',

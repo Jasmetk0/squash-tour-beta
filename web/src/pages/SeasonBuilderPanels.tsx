@@ -94,6 +94,14 @@ export type DisabledDryRunReadinessItem = {
   message: string
 }
 
+export type ApplyCommandReadinessStatus = 'OK' | 'Info' | 'Blocked' | 'Missing'
+
+export type ApplyCommandReadinessItem = {
+  area: string
+  status: ApplyCommandReadinessStatus
+  message: string
+}
+
 type BuildSourceTargetDiffDetailItemsArgs = {
   selectedTargetSeason: SeasonRegistryEntry | null
   selectedSourceType: SourceType
@@ -1377,6 +1385,97 @@ export function DisabledDryRunReadinessSummaryPanel({ items }: { items: Disabled
         </tbody>
       </table>
       <p>The dry-run contract is visible, but execution remains disabled.</p>
+    </>
+  )
+}
+
+export function buildApplyCommandReadinessItems({
+  dryRunResponse,
+  applyContractResponse,
+  applyRequestPayload
+}: {
+  dryRunResponse?: SeasonBuilderDryRunBuildResponse
+  applyContractResponse?: SeasonBuilderApplyCommandContractResponse
+  applyRequestPayload?: SeasonBuilderApplyCommandContractRequest
+}): ApplyCommandReadinessItem[] {
+  const identityReadinessStatusValue = ((dryRunResponse?.dry_run_result_preview as Record<string, unknown> | undefined)?.identity_readiness as Record<string, unknown> | undefined)?.status
+  const identityReadinessStatus = typeof identityReadinessStatusValue === 'string' ? identityReadinessStatusValue : undefined
+  const validationErrorCount = applyContractResponse?.validation_errors.length
+  const validationWarningCount = applyContractResponse?.validation_warnings.length
+  return [
+    applyContractResponse
+      ? { area: 'Apply contract endpoint', status: 'OK', message: 'Disabled apply command contract endpoint returned a response.' }
+      : { area: 'Apply contract endpoint', status: 'Missing', message: 'Disabled apply command contract endpoint has not returned a response yet.' },
+    applyContractResponse
+      ? applyContractResponse.enabled === false && applyContractResponse.can_execute === false
+        ? { area: 'Execution flag', status: 'Blocked', message: 'Apply execution is disabled in this phase.' }
+        : { area: 'Execution flag', status: 'Info', message: 'Apply execution is disabled in this phase.' }
+      : { area: 'Execution flag', status: 'Info', message: 'Apply execution is disabled in this phase.' },
+    applyContractResponse
+      ? applyContractResponse.can_mutate === false
+        ? { area: 'Mutation flag', status: 'Blocked', message: 'can_mutate is false; no calendar mutation is permitted.' }
+        : { area: 'Mutation flag', status: 'Info', message: 'can_mutate is false; no calendar mutation is permitted.' }
+      : { area: 'Mutation flag', status: 'Info', message: 'can_mutate is false; no calendar mutation is permitted.' },
+    applyRequestPayload?.preflight_fingerprint && applyRequestPayload.reviewed_diff_id
+      ? { area: 'Preflight identity', status: 'OK', message: 'Preflight fingerprint and reviewed diff identity are present.' }
+      : { area: 'Preflight identity', status: 'Missing', message: 'Preflight identity is incomplete.' },
+    applyRequestPayload?.dry_run_result_fingerprint && applyRequestPayload.dry_run_result_id
+      ? { area: 'Dry-run result identity', status: 'OK', message: 'Dry-run result fingerprint and id are present.' }
+      : { area: 'Dry-run result identity', status: 'Missing', message: 'Dry-run result identity is incomplete.' },
+    applyContractResponse
+      ? applyContractResponse.required_identity.all_identity_fields_present === true
+        ? { area: 'Required identity contract', status: 'OK', message: 'Apply contract reports all identity fields present.' }
+        : { area: 'Required identity contract', status: 'Missing', message: 'Apply contract reports missing identity fields.' }
+      : { area: 'Required identity contract', status: 'Info', message: 'Apply contract reports missing identity fields.' },
+    applyContractResponse
+      ? applyContractResponse.required_audit_metadata.all_audit_metadata_present === true
+        ? { area: 'Required audit metadata', status: 'OK', message: 'Apply contract reports all audit metadata present.' }
+        : { area: 'Required audit metadata', status: 'Info', message: 'Apply audit metadata is not complete yet.' }
+      : { area: 'Required audit metadata', status: 'Info', message: 'Apply audit metadata is not complete yet.' },
+    identityReadinessStatus === 'ready_reference'
+      ? { area: 'Dry-run identity readiness', status: 'OK', message: `Dry-run identity readiness status: ${identityReadinessStatus}.` }
+      : identityReadinessStatus === 'blocked_reference'
+        ? { area: 'Dry-run identity readiness', status: 'Blocked', message: `Dry-run identity readiness status: ${identityReadinessStatus}.` }
+        : identityReadinessStatus === 'missing_identity'
+          ? { area: 'Dry-run identity readiness', status: 'Missing', message: `Dry-run identity readiness status: ${identityReadinessStatus}.` }
+          : { area: 'Dry-run identity readiness', status: 'Info', message: `Dry-run identity readiness status: ${identityReadinessStatus ?? 'unavailable'}.` },
+    typeof validationErrorCount === 'number'
+      ? validationErrorCount === 0
+        ? { area: 'Validation errors', status: 'OK', message: `Apply validation errors count: ${validationErrorCount}.` }
+        : { area: 'Validation errors', status: 'Blocked', message: `Apply validation errors count: ${validationErrorCount}.` }
+      : { area: 'Validation errors', status: 'Missing', message: 'Apply validation errors count: unavailable.' },
+    typeof validationWarningCount === 'number'
+      ? validationWarningCount === 0
+        ? { area: 'Validation warnings', status: 'OK', message: `Apply validation warnings count: ${validationWarningCount}.` }
+        : { area: 'Validation warnings', status: 'Info', message: `Apply validation warnings count: ${validationWarningCount}.` }
+      : { area: 'Validation warnings', status: 'Missing', message: 'Apply validation warnings count: unavailable.' },
+    { area: 'Next implementation step', status: 'Blocked', message: 'Real apply execution is not implemented yet.' }
+  ]
+}
+
+export function ApplyCommandReadinessSummaryPanel({ items }: { items: ApplyCommandReadinessItem[] }): JSX.Element {
+  return (
+    <>
+      <p>Read-only summary of the disabled apply command contract state.</p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Area</th>
+            <th scope="col">Status</th>
+            <th scope="col">Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr key={`${item.area}:${item.status}`}>
+              <td>{item.area}</td>
+              <td>{item.status}</td>
+              <td>{item.message}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p>The apply command contract is visible, but execution remains disabled.</p>
     </>
   )
 }

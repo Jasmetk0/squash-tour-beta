@@ -12,6 +12,7 @@ import {
   buildFutureBuildCommandContractItems,
   buildFutureCommandReadinessItems,
   buildDisabledDryRunReadinessItems,
+  buildApplyCommandReadinessItems,
   buildDiffPreviewItems,
   BackendPreflightContractPreviewPanel,
   BuildPolicyPreviewPanel,
@@ -25,6 +26,7 @@ import {
   FutureAuditedCommandFlowPanel,
   DisabledDryRunBuildContractPanel,
   DisabledApplyCommandContractPanel,
+  ApplyCommandReadinessSummaryPanel,
   DisabledDryRunReadinessSummaryPanel,
   ReadOnlyPreflightChecklistPanel,
   SelectionPreviewPanel,
@@ -222,6 +224,14 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     enabled: disabledApplyCommandContractEnabled,
     retry: false
   })
+  const applyCommandReadinessItems = useMemo(
+    () => buildApplyCommandReadinessItems({
+      dryRunResponse: disabledDryRunBuildQuery.data,
+      applyContractResponse: disabledApplyCommandContractQuery.data,
+      applyRequestPayload: disabledApplyCommandContractPayload
+    }),
+    [disabledDryRunBuildQuery.data, disabledApplyCommandContractQuery.data, disabledApplyCommandContractPayload]
+  )
 
   return (
     <section className="panel">
@@ -392,6 +402,9 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           requestPayload={disabledApplyCommandContractPayload}
           query={{ isLoading: disabledApplyCommandContractQuery.isLoading, error: disabledApplyCommandContractQuery.error, data: disabledApplyCommandContractQuery.data }}
         />
+      </SectionCard>
+      <SectionCard title="Apply command readiness summary">
+        <ApplyCommandReadinessSummaryPanel items={applyCommandReadinessItems} />
       </SectionCard>
 
       <SectionCard title="Disabled dry-run readiness summary">

@@ -66,6 +66,12 @@ class Server:
         self.thread.join(timeout=10)
 
 
+def create_calendar(server: Server, season: str) -> None:
+    payload = {"dry_run": False, "overwrite_existing": True}
+    status, _ = call("POST", f"{server.base_url}/admin/seasons/{season}/calendar/build", payload)
+    assert status == 200
+
+
 def test_builder_dry_run_build_minimal_contract(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         payload = {
@@ -263,8 +269,12 @@ def test_builder_dry_run_build_generates_read_only_candidates_from_template(tmp_
         assert len(candidates) > 0
         assert body["dry_run_result_preview"]["structural_summary"]["candidate_count"] == len(candidates)
         assert body["dry_run_result_preview"]["structural_summary"]["additions_count"] == len(candidates)
+        assert body["dry_run_result_preview"]["result_metadata"]["target_calendar_exists"] is False
+        assert body["dry_run_result_preview"]["result_metadata"]["target_event_count"] == 0
+        assert body["dry_run_result_preview"]["result_metadata"]["comparison_performed"] is True
         assert body["dry_run_result_preview"]["conflict_summary"]["week_conflicts"] == []
         assert body["dry_run_result_preview"]["conflict_summary"]["slot_conflicts"] == []
+        assert body["dry_run_result_preview"]["conflict_summary"]["policy_conflicts"] == []
         first = candidates[0]
         assert "candidate_id" in first
         assert "source_slot_id" in first
@@ -311,3 +321,68 @@ def test_builder_dry_run_build_non_template_source_is_unsupported_for_generation
         assert body["dry_run_result_preview"]["status"] == "unsupported_source_type"
         assert body["dry_run_result_preview"]["candidate_events"] == []
         assert body["can_mutate"] is False
+
+
+def test_builder_dry_run_build_existing_target_calendar_comparison(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        create_calendar(server, "2002%2F2003")
+        payload = {
+            "target_season_label": "2002/2003",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": None,
+            "preflight_fingerprint": "pf_existing",
+            "reviewed_diff_id": "rd_existing",
+        }
+        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        assert body["can_mutate"] is False
+        metadata = body["dry_run_result_preview"]["result_metadata"]
+        assert metadata["target_calendar_exists"] is True
+        assert metadata["target_event_count"] > 0
+        assert metadata["comparison_performed"] is True
+        assert body["dry_run_result_preview"]["structural_summary"]["target_event_count"] == metadata["target_event_count"]
+        policy_conflicts = body["dry_run_result_preview"]["conflict_summary"]["policy_conflicts"]
+        assert any("Existing target calendar requires explicit merge/overwrite policy before future mutation." in item["message"] for item in policy_conflicts)
+        assert body["dry_run_result_preview"]["structural_summary"]["conflict_count"] >= len(policy_conflicts)
+        statuses = {candidate["candidate_status"] for candidate in body["dry_run_result_preview"]["candidate_events"]}
+        assert statuses.issubset({"planned", "conflict", "invalid"})
+
+
+def test_builder_dry_run_build_empty_target_calendar_comparison(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2038/2039",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": None,
+            "preflight_fingerprint": "pf_empty_comp",
+            "reviewed_diff_id": "rd_empty_comp",
+        }
+        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        metadata = body["dry_run_result_preview"]["result_metadata"]
+        assert metadata["target_calendar_exists"] is False
+        assert metadata["target_event_count"] == 0
+        assert metadata["comparison_performed"] is True
+        assert body["dry_run_result_preview"]["conflict_summary"]["policy_conflicts"] == []
+        summary = body["dry_run_result_preview"]["structural_summary"]
+        assert summary["additions_count"] == summary["candidate_count"]
+        assert body["can_mutate"] is False
+        _, calendar_body = call("GET", f"{server.base_url}/admin/seasons/2038%2F2039/calendar")
+        assert calendar_body["calendar"] is None
+
+
+def test_builder_dry_run_build_existing_target_with_merge_preview_has_no_policy_conflict(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        create_calendar(server, "2004%2F2005")
+        payload = {
+            "target_season_label": "2004/2005",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": "merge_preview",
+            "preflight_fingerprint": "pf_merge",
+            "reviewed_diff_id": "rd_merge",
+        }
+        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        assert body["can_mutate"] is False
+        assert body["dry_run_result_preview"]["result_metadata"]["target_calendar_exists"] is True
+        assert body["dry_run_result_preview"]["conflict_summary"]["policy_conflicts"] == []

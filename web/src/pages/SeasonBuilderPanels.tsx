@@ -2129,18 +2129,18 @@ export function PostApplyCalendarVerificationPanel({
         <p>Refreshed readiness now reports non-create-only state, which is expected after a successful create-only apply.</p>
       ) : null}
       <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
-        <tr><td>apply result exists</td><td>{applyResultExists ? 'yes' : 'no'}</td></tr>
-        <tr><td>applyMutationResult.applied</td><td>{applyMutationResult ? String(applyMutationResult.applied) : '—'}</td></tr>
+        <tr><td>verification.apply_result_exists</td><td>{applyResultExists ? 'yes' : 'no'}</td></tr>
+        <tr><td>verification.apply_result_applied</td><td>{applyMutationResult ? String(applyMutationResult.applied) : '—'}</td></tr>
         <tr><td>applyMutationResult.applied_event_count</td><td>{applyMutationResult ? String(applyMutationResult.applied_event_count) : '—'}</td></tr>
         <tr><td>applyMutationResult.target_season_label</td><td>{applyMutationResult?.target_season_label ?? '—'}</td></tr>
-        <tr><td>target calendar exists</td><td>{targetCalendarData ? (targetCalendarExists ? 'yes' : 'no') : '—'}</td></tr>
-        <tr><td>target calendar event count</td><td>{typeof targetEventCount === 'number' ? String(targetEventCount) : '—'}</td></tr>
+        <tr><td>verification.target_calendar_exists</td><td>{targetCalendarData ? (targetCalendarExists ? 'yes' : 'no') : '—'}</td></tr>
+        <tr><td>verification.target_calendar_event_count</td><td>{typeof targetEventCount === 'number' ? String(targetEventCount) : '—'}</td></tr>
         <tr><td>target first event week</td><td>{targetSummary?.first_event_week ?? '—'}</td></tr>
         <tr><td>target last event week</td><td>{targetSummary?.last_event_week ?? '—'}</td></tr>
         <tr><td>target validation warnings count</td><td>{typeof targetSummary?.validation_warning_count === 'number' ? String(targetSummary.validation_warning_count) : '—'}</td></tr>
         <tr><td>target validation errors count</td><td>{typeof targetSummary?.validation_error_count === 'number' ? String(targetSummary.validation_error_count) : '—'}</td></tr>
-        <tr><td>readiness can_execute_apply</td><td>{readinessData ? String(readinessData.can_execute_apply) : '—'}</td></tr>
-        <tr><td>readiness would_create_calendar</td><td>{readinessData ? String(readinessData.would_create_calendar) : '—'}</td></tr>
+        <tr><td>verification.readiness_can_execute_apply</td><td>{readinessData ? String(readinessData.can_execute_apply) : '—'}</td></tr>
+        <tr><td>verification.readiness_would_create_calendar</td><td>{readinessData ? String(readinessData.would_create_calendar) : '—'}</td></tr>
       </tbody></table>
     </>
   )
@@ -2168,19 +2168,19 @@ export function PostApplyAuditStatusPanel({
       {auditPersisted === true ? <p>Audit persistence reported by backend.</p> : <p>Audit persistence is not confirmed by this response.</p>}
       {explicitConfirmationPresent ? <p>Explicit confirmation was provided.</p> : <p>Explicit confirmation is not present in this UI summary.</p>}
       <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
-        <tr><td>apply result exists</td><td>{applyResultExists ? 'yes' : 'no'}</td></tr>
-        <tr><td>applied</td><td>{applyMutationResult ? String(applyMutationResult.applied) : '—'}</td></tr>
-        <tr><td>requested_by</td><td>{requestedBy || '—'}</td></tr>
-        <tr><td>audit_reason</td><td>{auditReason || '—'}</td></tr>
+        <tr><td>audit_status.apply_result_exists</td><td>{applyResultExists ? 'yes' : 'no'}</td></tr>
+        <tr><td>audit_status.apply_result_applied</td><td>{applyMutationResult ? String(applyMutationResult.applied) : '—'}</td></tr>
+        <tr><td>audit_status.requested_by</td><td>{requestedBy || '—'}</td></tr>
+        <tr><td>audit_status.audit_reason</td><td>{auditReason || '—'}</td></tr>
         <tr><td>explicit_confirmation present</td><td>{explicitConfirmationPresent ? 'yes' : 'no'}</td></tr>
-        <tr><td>mutation_scope</td><td>{mutationScope || '—'}</td></tr>
+        <tr><td>audit_status.mutation_scope</td><td>{mutationScope || '—'}</td></tr>
         <tr><td>audit_preview.audit_persisted</td><td>{String(auditPreview.audit_persisted ?? '—')}</td></tr>
         <tr><td>audit_preview.audit_persistence_status</td><td>{String(auditPreview.audit_persistence_status ?? '—')}</td></tr>
         <tr><td>dry_run_identity.identity_matches</td><td>{String(dryRunIdentity.identity_matches ?? '—')}</td></tr>
         <tr><td>created_calendar_identity.applied_event_count</td><td>{String(createdCalendarIdentity.applied_event_count ?? '—')}</td></tr>
         <tr><td>apply_gate_summary.service_insert_succeeded</td><td>{String(applyGateSummary.service_insert_succeeded ?? '—')}</td></tr>
-        <tr><td>validation_errors count</td><td>{applyMutationResult ? String(applyMutationResult.validation_errors.length) : '—'}</td></tr>
-        <tr><td>validation_warnings count</td><td>{applyMutationResult ? String(applyMutationResult.validation_warnings.length) : '—'}</td></tr>
+        <tr><td>audit_status.validation_errors_count</td><td>{applyMutationResult ? String(applyMutationResult.validation_errors.length) : '—'}</td></tr>
+        <tr><td>audit_status.validation_warnings_count</td><td>{applyMutationResult ? String(applyMutationResult.validation_warnings.length) : '—'}</td></tr>
       </tbody></table>
     </>
   )
@@ -2236,13 +2236,13 @@ export function CreateOnlyApplyDangerZonePreviewPanel({
       </p>
       <table><thead><tr><th scope="col">Requirement</th><th scope="col">Preview status</th></tr></thead><tbody>
         <tr><td>Backend readiness satisfied</td><td>{isBackendReadyForCreateOnly ? 'yes' : 'no'}</td></tr>
-        <tr><td>Target season</td><td>{readinessData?.target_season_label ?? (selectedTargetSeasonLabel || '—')}</td></tr>
+        <tr><td>Danger-zone target season</td><td>{readinessData?.target_season_label ?? (selectedTargetSeasonLabel || '—')}</td></tr>
         <tr><td>Required confirmation phrase</td><td>{requiredConfirmationPhrase}</td></tr>
-        <tr><td>Required mutation scope</td><td>create_only</td></tr>
+        <tr><td>Danger-zone required mutation scope</td><td>create_only</td></tr>
         <tr><td>Confirmation phrase matches required phrase</td><td>{confirmationPhraseMatches ? 'yes' : 'no'}</td></tr>
         <tr><td>Mutation scope equals create_only</td><td>{mutationScopeMatches ? 'yes' : 'no'}</td></tr>
         <tr><td>Future submit eligibility preview</td><td>{futureSubmitEligibilityPreview ? 'yes' : 'no'}</td></tr>
-        <tr><td>Guarded command enabled</td><td>{canSubmitCreateOnlyApply ? 'yes' : 'no'}</td></tr>
+        <tr><td>Danger-zone guarded command enabled</td><td>{canSubmitCreateOnlyApply ? 'yes' : 'no'}</td></tr>
       </tbody></table>
       {futureSubmitEligibilityPreview
         ? <p>All visible preview conditions are satisfied.</p>
@@ -2295,7 +2295,7 @@ export function CreateOnlyApplyGuardSummaryPanel({
         ? <p>Create-only command is currently enabled by all guards.</p>
         : <p>Create-only command is currently blocked by one or more guards.</p>}
       {createOnlyBlockedReason ? <p>{createOnlyBlockedReason}</p> : null}
-      <table><thead><tr><th scope="col">Guard key</th><th scope="col">Guard</th><th scope="col">Passed</th><th scope="col">Detail</th></tr></thead><tbody>
+      <table><thead><tr><th scope="col">Create-only guard key</th><th scope="col">Create-only guard</th><th scope="col">Create-only guard passed</th><th scope="col">Create-only guard detail</th></tr></thead><tbody>
         {items.map((item) => (
           <tr key={item.key}>
             <td>{item.key}</td>

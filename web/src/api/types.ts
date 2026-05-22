@@ -3058,3 +3058,25 @@ export type SeasonBuilderDryRunBuildResponse = {
   dry_run_result_preview: Record<string, unknown>
   message: string
 }
+
+export type DryRunValidationSummary = {
+  status: 'clean' | 'warnings' | 'blocking'
+  blocking_count: number
+  warning_count: number
+  info_count: number
+  blocking_reasons: string[]
+  warning_reasons: string[]
+  info_messages: string[]
+  candidate_status_counts: {
+    planned: number
+    replacement: number
+    conflict: number
+    invalid: number
+  }
+  conflict_type_counts: {
+    week_conflicts: number
+    slot_conflicts: number
+    policy_conflicts: number
+    validation_conflicts: number
+  }
+}

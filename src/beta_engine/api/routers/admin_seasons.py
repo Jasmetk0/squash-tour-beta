@@ -277,6 +277,16 @@ def post_season_builder_dry_run_build_contract(
     template_service: SeasonTemplateService = Depends(get_season_template_service),
     calendar_service: SeasonCalendarService = Depends(get_season_calendar_service),
 ) -> SeasonBuilderDryRunBuildResponse:
+    def _dedupe_keep_order(values: list[str]) -> list[str]:
+        seen: set[str] = set()
+        deduped: list[str] = []
+        for value in values:
+            normalized = value.strip()
+            if not normalized or normalized in seen:
+                continue
+            seen.add(normalized)
+            deduped.append(normalized)
+        return deduped
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -663,6 +673,76 @@ def post_season_builder_dry_run_build_contract(
             "mutation_permitted": False,
         },
     }
+    blocking_count = 0
+    warning_count = 0
+    info_count = 0
+    blocking_reasons: list[str] = []
+    warning_reasons: list[str] = []
+    info_messages: list[str] = []
+    for conflict_group in (week_conflicts, slot_conflicts, policy_conflicts, validation_conflicts):
+        for conflict in conflict_group:
+            severity = str(conflict.get("severity") or "").strip().lower()
+            message = str(conflict.get("message") or "").strip()
+            if severity == "blocking":
+                blocking_count += 1
+                if message:
+                    blocking_reasons.append(message)
+            elif severity == "warning":
+                warning_count += 1
+                if message:
+                    warning_reasons.append(message)
+            elif severity == "info":
+                info_count += 1
+                if message:
+                    info_messages.append(message)
+
+    blocking_reasons.extend(errors)
+    warning_reasons.extend(warnings)
+    blocking_reasons = _dedupe_keep_order(blocking_reasons)
+    warning_reasons = _dedupe_keep_order(warning_reasons)
+    info_messages = _dedupe_keep_order(info_messages)
+
+    candidate_status_counts = {"planned": 0, "replacement": 0, "conflict": 0, "invalid": 0}
+    for candidate in candidate_events:
+        status_value = str(candidate.get("candidate_status") or "").strip().lower()
+        classification = str(candidate.get("comparison_classification") or "").strip().lower()
+        effective_status = "replacement" if classification == "replacement" else status_value
+        if effective_status in candidate_status_counts:
+            candidate_status_counts[effective_status] += 1
+
+    conflict_type_counts = {
+        "week_conflicts": len(week_conflicts),
+        "slot_conflicts": len(slot_conflicts),
+        "policy_conflicts": len(policy_conflicts),
+        "validation_conflicts": len(validation_conflicts),
+    }
+    if blocking_count > 0 or len(errors) > 0:
+        validation_status = "blocking"
+    elif warning_count > 0 or len(warnings) > 0:
+        validation_status = "warnings"
+    else:
+        validation_status = "clean"
+
+    validation_summary = {
+        "status": validation_status,
+        "blocking_count": blocking_count,
+        "warning_count": warning_count,
+        "info_count": info_count,
+        "blocking_reasons": blocking_reasons,
+        "warning_reasons": warning_reasons,
+        "info_messages": info_messages,
+        "candidate_status_counts": candidate_status_counts,
+        "conflict_type_counts": conflict_type_counts,
+    }
+    plan_readiness = {
+        "read_only_plan_available": dry_run_status == "read_only_generated",
+        "has_blocking_issues": validation_status == "blocking",
+        "has_warnings": validation_status == "warnings" or warning_count > 0,
+        "mutation_still_disabled": True,
+        "next_required_step": "Review dry-run summary; execution remains disabled.",
+    }
+    dry_run_result_preview["validation_summary"] = validation_summary
+    dry_run_result_preview["plan_readiness"] = plan_readiness
 
     return SeasonBuilderDryRunBuildResponse(
         enabled=False,

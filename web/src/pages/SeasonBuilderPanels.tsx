@@ -1679,6 +1679,37 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
                   )}
                 </>
               ) : <p>Read-only comparison conflicts are unavailable.</p>}
+              <h5>Dry-run validation summary</h5>
+              {shapeRecord(dryRunResultPreviewRecord.validation_summary) ? (
+                <>
+                  <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+                    <tr><td>status</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.validation_summary)?.status)}</td></tr>
+                    <tr><td>blocking_count</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.validation_summary)?.blocking_count)}</td></tr>
+                    <tr><td>warning_count</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.validation_summary)?.warning_count)}</td></tr>
+                    <tr><td>info_count</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.validation_summary)?.info_count)}</td></tr>
+                  </tbody></table>
+                  <h6>Candidate status counts</h6>
+                  {shapeRecord(shapeRecord(dryRunResultPreviewRecord.validation_summary)?.candidate_status_counts) ? <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>{Object.entries(shapeRecord(shapeRecord(dryRunResultPreviewRecord.validation_summary)?.candidate_status_counts) ?? {}).map(([key, value]) => <tr key={`candidate-status-count-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>)}</tbody></table> : <p>Candidate status counts are unavailable.</p>}
+                  <h6>Conflict type counts</h6>
+                  {shapeRecord(shapeRecord(dryRunResultPreviewRecord.validation_summary)?.conflict_type_counts) ? <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>{Object.entries(shapeRecord(shapeRecord(dryRunResultPreviewRecord.validation_summary)?.conflict_type_counts) ?? {}).map(([key, value]) => <tr key={`conflict-type-count-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>)}</tbody></table> : <p>Conflict type counts are unavailable.</p>}
+                  <h6>Blocking reasons</h6>
+                  {previewList(shapeRecord(dryRunResultPreviewRecord.validation_summary)?.blocking_reasons).length === 0 ? <p>No dry-run blocking reasons returned.</p> : <ul>{previewList(shapeRecord(dryRunResultPreviewRecord.validation_summary)?.blocking_reasons).map((reason, idx) => <li key={`dry-run-blocking-reason-${idx}`}>{formatValue(reason)}</li>)}</ul>}
+                  <h6>Warning reasons</h6>
+                  {previewList(shapeRecord(dryRunResultPreviewRecord.validation_summary)?.warning_reasons).length === 0 ? <p>No dry-run warning reasons returned.</p> : <ul>{previewList(shapeRecord(dryRunResultPreviewRecord.validation_summary)?.warning_reasons).map((reason, idx) => <li key={`dry-run-warning-reason-${idx}`}>{formatValue(reason)}</li>)}</ul>}
+                  <h6>Info messages</h6>
+                  {previewList(shapeRecord(dryRunResultPreviewRecord.validation_summary)?.info_messages).length === 0 ? <p>No dry-run info messages returned.</p> : <ul>{previewList(shapeRecord(dryRunResultPreviewRecord.validation_summary)?.info_messages).map((message, idx) => <li key={`dry-run-info-message-${idx}`}>{formatValue(message)}</li>)}</ul>}
+                </>
+              ) : <p>Dry-run validation summary is unavailable.</p>}
+              <h5>Plan readiness</h5>
+              {shapeRecord(dryRunResultPreviewRecord.plan_readiness) ? (
+                <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+                  <tr><td>read_only_plan_available</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.plan_readiness)?.read_only_plan_available)}</td></tr>
+                  <tr><td>has_blocking_issues</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.plan_readiness)?.has_blocking_issues)}</td></tr>
+                  <tr><td>has_warnings</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.plan_readiness)?.has_warnings)}</td></tr>
+                  <tr><td>mutation_still_disabled</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.plan_readiness)?.mutation_still_disabled)}</td></tr>
+                  <tr><td>next_required_step</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.plan_readiness)?.next_required_step)}</td></tr>
+                </tbody></table>
+              ) : <p>Plan readiness is unavailable.</p>}
               <h5>Candidate events</h5>
               {previewList(dryRunResultPreviewRecord.candidate_events).length === 0 ? <p>No read-only candidate events generated.</p> : (
                 <table><thead><tr><th scope="col">candidate_id</th><th scope="col">source_slot_id</th><th scope="col">season_week_start</th><th scope="col">season_week_end</th><th scope="col">event_name</th><th scope="col">tour_level</th><th scope="col">category</th><th scope="col">host_country</th><th scope="col">candidate_status</th><th scope="col">comparison_classification</th><th scope="col">comparison_reason</th><th scope="col">matched_existing_event_id</th></tr></thead><tbody>{previewList(dryRunResultPreviewRecord.candidate_events).slice(0, 5).map((candidate, idx) => { const row = shapeRecord(candidate); return <tr key={`dry-run-result-candidate-${idx}`}><td>{formatValue(row?.candidate_id)}</td><td>{formatValue(row?.source_slot_id)}</td><td>{formatValue(row?.season_week_start)}</td><td>{formatValue(row?.season_week_end)}</td><td>{formatValue(row?.event_name)}</td><td>{formatValue(row?.tour_level)}</td><td>{formatValue(row?.category)}</td><td>{formatValue(row?.host_country)}</td><td>{formatValue(row?.candidate_status)}</td><td>{formatValue(row?.comparison_classification)}</td><td>{formatValue(row?.comparison_reason)}</td><td>{formatValue(row?.matched_existing_event_id)}</td></tr> })}</tbody></table>

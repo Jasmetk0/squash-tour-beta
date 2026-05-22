@@ -296,6 +296,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     const payload: SeasonBuilderApplyCreateOnlyCommandRequest = {
       target_season_label: disabledApplyCommandContractPayload.target_season_label,
       source_type: disabledApplyCommandContractPayload.source_type,
+      // Backend create-only apply contract currently supports season_template sources only.
       source_template_id: disabledApplyCommandContractPayload.source_template_id,
       overwrite_policy: disabledApplyCommandContractPayload.overwrite_policy,
       preflight_fingerprint: disabledApplyCommandContractPayload.preflight_fingerprint,

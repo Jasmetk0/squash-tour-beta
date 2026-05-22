@@ -648,6 +648,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
       <SectionCard title="Target calendar validation">
         <TargetCalendarValidationPanel
           queryEnabled={targetCalendarQueryEnabled}
+          issueCodeRegistryData={issueCodeRegistryQuery.data}
           query={{
             isLoading: targetCalendarValidationQuery.isLoading,
             isFetching: targetCalendarValidationQuery.isFetching,

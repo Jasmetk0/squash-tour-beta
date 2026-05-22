@@ -2073,6 +2073,7 @@ export function CreateOnlyApplyDangerZonePreviewPanel({
   const confirmationPhraseMatches = confirmationText.trim() === requiredConfirmationPhrase
   const mutationScopeMatches = mutationScopePreview.trim() === 'create_only'
   const futureSubmitEligibilityPreview = isBackendReadyForCreateOnly && confirmationPhraseMatches && mutationScopeMatches
+  const applyWasSuccessful = applyMutationResult?.applied === true
   return (
     <>
       <p>Danger-zone guarded create-only apply command. This command can only create a missing calendar. It cannot merge or overwrite.</p>
@@ -2116,10 +2117,17 @@ export function CreateOnlyApplyDangerZonePreviewPanel({
         </button>
       </p>
       {applyMutationStatus === 'pending' ? <p>Submitting guarded create-only command…</p> : null}
-      {applyMutationStatus === 'error' ? <p className="error">Create-only command failed: {formatApiError(applyMutationError)}</p> : null}
+      {applyMutationStatus === 'error' ? (
+        <div className="error">
+          <p>Create-only command was rejected or failed; no success result is recorded in this panel.</p>
+          <p>Create-only command failed: {formatApiError(applyMutationError)}</p>
+        </div>
+      ) : null}
       {applyMutationResult ? (
         <>
-          <h4>Create-only apply result</h4>
+          <h4>{applyWasSuccessful ? 'Create-only apply result' : 'Create-only apply response (not applied)'}</h4>
+          {!applyWasSuccessful ? <p className="error">Command response did not report applied=true.</p> : null}
+          {applyWasSuccessful ? <p>Create-only calendar apply reported success.</p> : null}
           <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
             <tr><td>applied</td><td>{String(applyMutationResult.applied)}</td></tr>
             <tr><td>applied_event_count</td><td>{String(applyMutationResult.applied_event_count)}</td></tr>

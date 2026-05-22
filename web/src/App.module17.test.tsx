@@ -2037,4 +2037,54 @@ describe('Module 17 pages through routes', () => {
     expect(api.getAdminPointBreakdown).not.toHaveBeenCalled()
     expect(screen.queryByRole('button', { name: /build|edit|apply|generate|simulate/i })).not.toBeInTheDocument()
   })
+
+  it('shows guarded create-only apply rejection and non-applied response safely', async () => {
+    renderAppAt('/admin/seasons/build')
+    const confirmationInput = await screen.findByLabelText('Future confirmation phrase preview')
+    const mutationScopeInput = screen.getByLabelText('Future create-only mutation scope preview')
+    const executeCreateOnlyButton = screen.getByRole('button', { name: 'Execute create-only season calendar command' })
+    await waitFor(() => expect(api.postSeasonBuilderApplyCreateOnlyReadiness).toHaveBeenCalled())
+    fireEvent.change(confirmationInput, { target: { value: 'I understand this will create a new season calendar.' } })
+    fireEvent.change(mutationScopeInput, { target: { value: 'create_only' } })
+    await waitFor(() => expect(executeCreateOnlyButton).toBeEnabled())
+    const readinessCallsBeforeClick = api.postSeasonBuilderApplyCreateOnlyReadiness.mock.calls.length
+
+    api.postSeasonBuilderApplyCreateOnlyCommand.mockRejectedValueOnce(
+      new api.ApiError(JSON.stringify({
+        detail: 'Create-only rejected.',
+        validation_errors: ['Target calendar already exists for season 2000/01.']
+      }), 409)
+    )
+    fireEvent.click(executeCreateOnlyButton)
+    await waitFor(() => expect(api.postSeasonBuilderApplyCreateOnlyCommand).toHaveBeenCalledTimes(1))
+    expect(await screen.findByText('Create-only command was rejected or failed; no success result is recorded in this panel.')).toBeInTheDocument()
+    expect(screen.getByText(/Create-only command failed:/)).toBeInTheDocument()
+    expect(screen.queryByText('Create-only apply result')).not.toBeInTheDocument()
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).toHaveBeenCalledTimes(1)
+    expect(api.postSeasonBuilderApplyCreateOnlyReadiness.mock.calls.length).toBeGreaterThanOrEqual(readinessCallsBeforeClick)
+
+    api.postSeasonBuilderApplyCreateOnlyCommand.mockResolvedValueOnce({
+      command: 'season_builder_apply_create_only',
+      enabled: true,
+      can_execute: true,
+      can_mutate: true,
+      applied: false,
+      target_season_label: '2000/01',
+      validation_errors: [],
+      validation_warnings: ['Not applied in this response.'],
+      created_calendar_summary: { calendar_exists: false, season: '2000/01', event_count: 0 },
+      created_event_preview: [],
+      created_calendar_identity: {},
+      apply_gate_summary: {},
+      applied_event_count: 0,
+      dry_run_identity: {},
+      audit_preview: { audit_persisted: false },
+      message: 'Command completed without applying.'
+    })
+    fireEvent.click(executeCreateOnlyButton)
+    await waitFor(() => expect(api.postSeasonBuilderApplyCreateOnlyCommand).toHaveBeenCalledTimes(2))
+    expect(await screen.findByText('Create-only apply response (not applied)')).toBeInTheDocument()
+    expect(screen.getByText('Command response did not report applied=true.')).toBeInTheDocument()
+    expect(screen.queryByText('Create-only calendar apply reported success.')).not.toBeInTheDocument()
+  })
 })

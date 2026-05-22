@@ -28,6 +28,7 @@ import {
   DisabledApplyCommandContractPanel,
   ApplyCommandReadinessSummaryPanel,
   CreateOnlyApplyReadinessPanel,
+  CreateOnlyApplyGuardSummaryPanel,
   CreateOnlyApplyDangerZonePreviewPanel,
   PostApplyCalendarVerificationPanel,
   PostApplyAuditStatusPanel,
@@ -40,6 +41,7 @@ import {
   TemplateValidationSummaryPanel
 } from './SeasonBuilderPanels'
 import type { SourceType } from './SeasonBuilderPanels'
+import type { CreateOnlyApplyGuardSummaryItem } from './SeasonBuilderPanels'
 import type { SeasonBuilderApplyCommandContractRequest, SeasonBuilderApplyCreateOnlyCommandRequest, SeasonBuilderDryRunBuildRequest, SeasonBuilderPreflightRequest } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -301,6 +303,66 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     && readinessValidationClear
     && !createOnlyBlockedByExistingTarget
     && !createOnlyApplyMutation.isPending
+  const createOnlyApplyGuardSummaryItems = useMemo<CreateOnlyApplyGuardSummaryItem[]>(() => [
+    {
+      key: 'backend_readiness_can_execute',
+      label: 'Backend readiness allows execution',
+      passed: createOnlyApplyReadinessQuery.data?.can_execute_apply === true
+    },
+    {
+      key: 'backend_would_create_calendar',
+      label: 'Backend would create calendar',
+      passed: createOnlyApplyReadinessQuery.data?.would_create_calendar === true
+    },
+    {
+      key: 'backend_endpoint_read_only_readiness',
+      label: 'Readiness endpoint remains non-mutating',
+      passed: createOnlyApplyReadinessQuery.data?.can_mutate === false && createOnlyApplyReadinessQuery.data?.service_insert_applicable === false
+    },
+    {
+      key: 'confirmation_phrase',
+      label: 'Exact confirmation phrase entered',
+      passed: dangerZoneConfirmationText.trim() === REQUIRED_CONFIRMATION_PHRASE,
+      detail: dangerZoneConfirmationText.trim() === REQUIRED_CONFIRMATION_PHRASE ? undefined : `Expected: ${REQUIRED_CONFIRMATION_PHRASE}`
+    },
+    {
+      key: 'mutation_scope',
+      label: 'Mutation scope is create_only',
+      passed: dangerZoneMutationScope.trim() === 'create_only',
+      detail: dangerZoneMutationScope.trim() === 'create_only' ? undefined : 'Enter create_only to satisfy this guard.'
+    },
+    {
+      key: 'required_identities',
+      label: 'Required identity fields are present',
+      passed: hasRequiredApplyIdentities
+    },
+    {
+      key: 'readiness_validation_clear',
+      label: 'Readiness validation has no errors',
+      passed: readinessValidationClear,
+      detail: readinessValidationClear ? undefined : `validation_errors count: ${createOnlyApplyReadinessQuery.data?.validation_errors?.length ?? 0}`
+    },
+    {
+      key: 'target_calendar_absent',
+      label: 'Target calendar is absent/still eligible for create-only',
+      passed: !createOnlyBlockedByExistingTarget,
+      detail: createOnlyBlockedByExistingTarget ? 'Target calendar exists or was just created by a successful apply.' : undefined
+    },
+    {
+      key: 'not_pending',
+      label: 'No create-only command is currently pending',
+      passed: !createOnlyApplyMutation.isPending
+    }
+  ], [
+    createOnlyApplyReadinessQuery.data,
+    dangerZoneConfirmationText,
+    REQUIRED_CONFIRMATION_PHRASE,
+    dangerZoneMutationScope,
+    hasRequiredApplyIdentities,
+    readinessValidationClear,
+    createOnlyBlockedByExistingTarget,
+    createOnlyApplyMutation.isPending
+  ])
 
   const handleConfirmCreateOnlyApply = (): void => {
     if (!canSubmitCreateOnlyApply) return
@@ -507,6 +569,13 @@ export function AdminSeasonBuilderPage(): JSX.Element {
         <CreateOnlyApplyReadinessPanel
           queryEnabled={createOnlyApplyReadinessEnabled}
           query={{ isLoading: createOnlyApplyReadinessQuery.isLoading, error: createOnlyApplyReadinessQuery.error, data: createOnlyApplyReadinessQuery.data }}
+        />
+      </SectionCard>
+      <SectionCard title="Create-only apply guard summary">
+        <CreateOnlyApplyGuardSummaryPanel
+          items={createOnlyApplyGuardSummaryItems}
+          canSubmitCreateOnlyApply={canSubmitCreateOnlyApply}
+          createOnlyBlockedReason={createOnlyBlockedReason}
         />
       </SectionCard>
       <SectionCard title="Create-only apply danger-zone command">

@@ -33,6 +33,7 @@ import {
   PostApplyCalendarVerificationPanel,
   ApplyResponseValidationPreviewPanel,
   TargetCalendarValidationPanel,
+  ApplyResponseVsTargetValidationComparisonPanel,
   PostApplyAuditStatusPanel,
   DisabledDryRunReadinessSummaryPanel,
   ReadOnlyPreflightChecklistPanel,
@@ -647,6 +648,14 @@ export function AdminSeasonBuilderPage(): JSX.Element {
             error: targetCalendarValidationQuery.error,
             data: targetCalendarValidationQuery.data
           }}
+        />
+      </SectionCard>
+      <SectionCard title="Apply response vs target validation comparison">
+        <ApplyResponseVsTargetValidationComparisonPanel
+          applyMutationResult={createOnlyApplyMutation.data}
+          targetValidationData={targetCalendarValidationQuery.data}
+          targetValidationFetching={targetCalendarValidationQuery.isFetching}
+          targetValidationError={targetCalendarValidationQuery.error}
         />
       </SectionCard>
       <SectionCard title="Post-apply audit/status summary">

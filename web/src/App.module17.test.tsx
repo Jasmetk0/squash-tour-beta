@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, PostApplyCalendarVerificationPanel } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -981,6 +981,11 @@ describe('Module 17 pages through routes', () => {
         event_count: 1,
         calendar_exists: true,
         read_only: true,
+        first_season_week: 1,
+        last_season_week: 1,
+        categories: { count: 1, values: ['GOLD'] },
+        tour_levels: { count: 1, values: ['WORLD_TOUR'] },
+        host_countries: { count: 1, values: ['ENG'] },
         issue_codes_first_10: ['calendar_validation_demo_warning']
       },
       apply_gate_summary: { service_insert_succeeded: true },
@@ -1034,8 +1039,16 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('Categories values: GOLD').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Tour levels count: 1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Tour levels values: WORLD_TOUR').length).toBeGreaterThan(0)
-    expect(screen.getByText('Host countries count: 1')).toBeInTheDocument()
-    expect(screen.getByText('Host countries values: ENG')).toBeInTheDocument()
+    expect(screen.getAllByText('Host countries count: 1').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Host countries values: ENG').length).toBeGreaterThan(0)
+    expect(screen.getByText('Apply response vs target validation comparison')).toBeInTheDocument()
+    expect(await screen.findByText('Apply-response validation preview matches refetched target validation.')).toBeInTheDocument()
+    expect(screen.getAllByText('validation_status').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('event_count').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('error_count').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('warning_count').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('info_count').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('yes').length).toBeGreaterThan(0)
     expect(screen.getByText('calendar_validation_demo_warning')).toBeInTheDocument()
     expect(screen.getByText('Calendar validation warning preview.')).toBeInTheDocument()
     expect(screen.getAllByText('event-1').length).toBeGreaterThan(0)
@@ -2282,5 +2295,57 @@ describe('Module 17 pages through routes', () => {
       />
     )
     expect(screen.getByText('Post-apply calendar verification passed.')).toBeInTheDocument()
+  })
+})
+
+describe('ApplyResponseVsTargetValidationComparisonPanel', () => {
+  it('shows mismatch details when apply preview and refetched target validation differ', () => {
+    render(
+      <MemoryRouter>
+        <ApplyResponseVsTargetValidationComparisonPanel
+          applyMutationResult={{
+            command: 'season_builder_apply_create_only',
+            enabled: true,
+            can_execute: true,
+            can_mutate: true,
+            applied: true,
+            target_season_label: '2000/01',
+            validation_errors: [],
+            validation_warnings: [],
+            created_calendar_summary: { calendar_exists: true, season: '2000/01', event_count: 2 },
+            created_event_preview: [],
+            created_calendar_identity: { applied_event_count: 2 },
+            created_calendar_validation_preview: {
+              validation_status: 'warnings',
+              calendar_exists: true,
+              read_only: true,
+              event_count: 2,
+              error_count: 0,
+              warning_count: 1,
+              info_count: 1
+            },
+            apply_gate_summary: { service_insert_succeeded: true },
+            applied_event_count: 2,
+            dry_run_identity: { identity_matches: true },
+            audit_preview: { audit_persisted: false, audit_persistence_status: 'not_implemented' },
+            message: 'ok'
+          }}
+          targetValidationData={{
+            season: '2000/01',
+            calendar_exists: true,
+            validation_summary: { status: 'warnings', error_count: 0, warning_count: 1, info_count: 1, event_count: 1, first_season_week: 1, last_season_week: 1, categories: { count: 1, values: ['GOLD'] }, tour_levels: { count: 1, values: ['WORLD_TOUR'] }, host_countries: { count: 1, values: ['ENG'] } },
+            issues: [],
+            read_only: true,
+            message: 'Read-only validation response.'
+          }}
+          targetValidationFetching={false}
+          targetValidationError={null}
+        />
+      </MemoryRouter>
+    )
+    expect(screen.getByText('Apply-response validation preview differs from refetched target validation.')).toBeInTheDocument()
+    const eventCountRow = screen.getByText('event_count').closest('tr')
+    expect(eventCountRow).not.toBeNull()
+    expect(eventCountRow).toHaveTextContent('no')
   })
 })

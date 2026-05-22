@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import type {
   SeasonBuilderApplyCommandContractRequest,
   SeasonBuilderApplyCommandContractResponse,
+  SeasonBuilderApplyCreateOnlyCommandResponse,
   SeasonBuilderApplyCreateOnlyReadinessResponse,
   SeasonBuilderDryRunBuildRequest,
   SeasonBuilderDryRunBuildResponse,
@@ -2044,6 +2045,11 @@ type CreateOnlyApplyDangerZonePreviewPanelProps = {
   setConfirmationText: (value: string) => void
   mutationScopePreview: string
   setMutationScopePreview: (value: string) => void
+  canSubmitCreateOnlyApply: boolean
+  onConfirmCreateOnlyApply: () => void
+  applyMutationStatus: 'idle' | 'pending' | 'success' | 'error'
+  applyMutationError: unknown
+  applyMutationResult: SeasonBuilderApplyCreateOnlyCommandResponse | undefined
 }
 
 export function CreateOnlyApplyDangerZonePreviewPanel({
@@ -2053,7 +2059,12 @@ export function CreateOnlyApplyDangerZonePreviewPanel({
   confirmationText,
   setConfirmationText,
   mutationScopePreview,
-  setMutationScopePreview
+  setMutationScopePreview,
+  canSubmitCreateOnlyApply,
+  onConfirmCreateOnlyApply,
+  applyMutationStatus,
+  applyMutationError,
+  applyMutationResult
 }: CreateOnlyApplyDangerZonePreviewPanelProps): JSX.Element {
   const isBackendReadyForCreateOnly = readinessData?.can_execute_apply === true
     && readinessData?.would_create_calendar === true
@@ -2064,7 +2075,8 @@ export function CreateOnlyApplyDangerZonePreviewPanel({
   const futureSubmitEligibilityPreview = isBackendReadyForCreateOnly && confirmationPhraseMatches && mutationScopeMatches
   return (
     <>
-      <p>Danger-zone preview for future create-only apply. This section is display-only and disabled in this phase.</p>
+      <p>Danger-zone guarded create-only apply command. This command can only create a missing calendar. It cannot merge or overwrite.</p>
+      <p>A successful command will create persistent season calendar data.</p>
       <p>
         <label htmlFor="create-only-confirmation-preview">Future confirmation phrase preview</label><br />
         <textarea
@@ -2093,14 +2105,30 @@ export function CreateOnlyApplyDangerZonePreviewPanel({
         <tr><td>Confirmation phrase matches required phrase</td><td>{confirmationPhraseMatches ? 'yes' : 'no'}</td></tr>
         <tr><td>Mutation scope equals create_only</td><td>{mutationScopeMatches ? 'yes' : 'no'}</td></tr>
         <tr><td>Future submit eligibility preview</td><td>{futureSubmitEligibilityPreview ? 'yes' : 'no'}</td></tr>
-        <tr><td>Real apply endpoint status</td><td>not called from UI</td></tr>
-        <tr><td>Execution status</td><td>disabled in this UI phase</td></tr>
-        <tr><td>Audit persistence</td><td>not implemented / preview only</td></tr>
+        <tr><td>Guarded command enabled</td><td>{canSubmitCreateOnlyApply ? 'yes' : 'no'}</td></tr>
       </tbody></table>
       {futureSubmitEligibilityPreview
-        ? <p>All visible preview conditions are satisfied, but execution is still unavailable in this UI phase.</p>
-        : <p>Future create-only apply is not fully armed in this preview.</p>}
-      <p>Future submit remains unavailable in this phase.</p>
+        ? <p>All visible preview conditions are satisfied.</p>
+        : <p>Create-only apply is not fully armed yet.</p>}
+      <p>
+        <button type="button" onClick={onConfirmCreateOnlyApply} disabled={!canSubmitCreateOnlyApply}>
+          Execute create-only season calendar command
+        </button>
+      </p>
+      {applyMutationStatus === 'pending' ? <p>Submitting guarded create-only command…</p> : null}
+      {applyMutationStatus === 'error' ? <p className="error">Create-only command failed: {formatApiError(applyMutationError)}</p> : null}
+      {applyMutationResult ? (
+        <>
+          <h4>Create-only apply result</h4>
+          <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+            <tr><td>applied</td><td>{String(applyMutationResult.applied)}</td></tr>
+            <tr><td>applied_event_count</td><td>{String(applyMutationResult.applied_event_count)}</td></tr>
+            <tr><td>target_season_label</td><td>{applyMutationResult.target_season_label}</td></tr>
+            <tr><td>created_calendar_summary.event_count</td><td>{String(applyMutationResult.created_calendar_summary?.event_count ?? '—')}</td></tr>
+            <tr><td>message</td><td>{applyMutationResult.message}</td></tr>
+          </tbody></table>
+        </>
+      ) : null}
     </>
   )
 }

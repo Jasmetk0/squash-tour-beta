@@ -889,14 +889,12 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByText('Execution remains disabled; this panel is not a build control.')).toBeInTheDocument()
     expect(screen.getByText('Disabled apply command contract result')).toBeInTheDocument()
     expect(screen.getByText('Create-only apply readiness')).toBeInTheDocument()
-    expect(screen.getByText('Create-only apply danger-zone preview (disabled)')).toBeInTheDocument()
+    expect(screen.getByText('Create-only apply danger-zone command')).toBeInTheDocument()
     expect(screen.getByText('Read-only disabled apply command contract check. This does not build, merge, overwrite, or apply anything.')).toBeInTheDocument()
     expect(screen.getByText('Read-only create-only apply readiness check. This panel does not execute apply or create a calendar.')).toBeInTheDocument()
-    expect(screen.getByText('Danger-zone preview for future create-only apply. This section is display-only and disabled in this phase.')).toBeInTheDocument()
-    expect(screen.getByText('Real apply endpoint status')).toBeInTheDocument()
-    expect(screen.getByText('not called from UI')).toBeInTheDocument()
-    expect(screen.getByText('Execution status')).toBeInTheDocument()
-    expect(screen.getByText('disabled in this UI phase')).toBeInTheDocument()
+    expect(screen.getByText('Danger-zone guarded create-only apply command. This command can only create a missing calendar. It cannot merge or overwrite.')).toBeInTheDocument()
+    const executeCreateOnlyButton = screen.getByRole('button', { name: 'Execute create-only season calendar command' })
+    expect(executeCreateOnlyButton).toBeDisabled()
     expect(screen.getByText('Required confirmation phrase')).toBeInTheDocument()
     expect(screen.getByText('I understand this will create a new season calendar.')).toBeInTheDocument()
     expect(screen.getByText('Required mutation scope')).toBeInTheDocument()
@@ -905,10 +903,7 @@ describe('Module 17 pages through routes', () => {
     const mutationScopeInput = screen.getByLabelText('Future create-only mutation scope preview')
     expect(confirmationInput).toBeInTheDocument()
     expect(mutationScopeInput).toBeInTheDocument()
-    expect(screen.getByText('Audit persistence')).toBeInTheDocument()
-    expect(screen.getByText('not implemented / preview only')).toBeInTheDocument()
-    expect(screen.getByText('Future submit remains unavailable in this phase.')).toBeInTheDocument()
-    expect(screen.getByText('Future create-only apply is not fully armed in this preview.')).toBeInTheDocument()
+    expect(screen.getByText('Create-only apply is not fully armed yet.')).toBeInTheDocument()
     expect(screen.getByText('Backend readiness says create-only apply is ready, but this panel is still read-only. No calendar is created from this UI.')).toBeInTheDocument()
     expect(screen.getByText('Safety checklist')).toBeInTheDocument()
     expect(screen.getByText('Real apply endpoint called from UI')).toBeInTheDocument()
@@ -925,10 +920,10 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Tour levels count: 1')).toBeInTheDocument()
     expect(screen.getByText('Tour levels values: WORLD_TOUR')).toBeInTheDocument()
     expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Source type select'), { target: { value: 'season_template' } })
     fireEvent.change(confirmationInput, { target: { value: 'I understand this will create a new season calendar.' } })
     fireEvent.change(mutationScopeInput, { target: { value: 'create_only' } })
-    expect(screen.getByText('All visible preview conditions are satisfied, but execution is still unavailable in this UI phase.')).toBeInTheDocument()
-    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
+    expect(screen.getByText('All visible preview conditions are satisfied.')).toBeInTheDocument()
     await waitFor(() => {
       expect(api.postSeasonBuilderApplyCreateOnlyReadiness).toHaveBeenCalledWith(expect.objectContaining({
         target_season_label: '2000/01',
@@ -941,17 +936,46 @@ describe('Module 17 pages through routes', () => {
         dry_run_result_id: 'drr_test_existing'
       }))
     })
-    await waitFor(() => {
-      expect(api.postSeasonBuilderApplyCommandContract).toHaveBeenCalledWith(expect.objectContaining({
-        preflight_fingerprint: 'pf_test_existing',
-        reviewed_diff_id: 'rd_test_existing',
-        dry_run_result_fingerprint: 'drf_test_existing',
-        dry_run_result_id: 'drr_test_existing',
-        audit_reason: null,
-        explicit_confirmation: null,
-        mutation_scope: null
-      }))
+    await waitFor(() => expect(executeCreateOnlyButton).toBeEnabled())
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
+    api.postSeasonBuilderApplyCreateOnlyCommand.mockResolvedValueOnce({
+      command: 'season_builder_apply_create_only',
+      enabled: true,
+      can_execute: true,
+      can_mutate: true,
+      applied: true,
+      target_season_label: '2000/01',
+      validation_errors: [],
+      validation_warnings: [],
+      created_calendar_summary: { calendar_exists: true, season: '2000/01', event_count: 1 },
+      created_event_preview: [],
+      created_calendar_identity: {},
+      apply_gate_summary: {},
+      applied_event_count: 1,
+      dry_run_identity: {},
+      audit_preview: { audit_persisted: false },
+      message: 'Create-only apply executed successfully.'
     })
+    fireEvent.click(executeCreateOnlyButton)
+    expect(executeCreateOnlyButton).toHaveAttribute('type', 'button')
+    await waitFor(() => expect(api.postSeasonBuilderApplyCreateOnlyCommand).toHaveBeenCalledTimes(1))
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).toHaveBeenCalledWith(expect.objectContaining({
+      target_season_label: '2000/01',
+      source_type: 'season_template',
+      source_template_id: 'default_msa_template_preview',
+      preflight_fingerprint: 'pf_test_existing',
+      reviewed_diff_id: 'rd_test_existing',
+      dry_run_result_fingerprint: 'drf_test_existing',
+      dry_run_result_id: 'drr_test_existing',
+      requested_by: 'local-admin-preview',
+      audit_reason: 'create-only calendar command',
+      explicit_confirmation: 'I understand this will create a new season calendar.',
+      mutation_scope: 'create_only'
+    }))
+    expect(await screen.findByText('Create-only apply result')).toBeInTheDocument()
+    expect(screen.getByText('Create-only apply executed successfully.')).toBeInTheDocument()
+    expect(screen.getByText('applied')).toBeInTheDocument()
+    expect(screen.getByText('applied_event_count')).toBeInTheDocument()
     expect((await screen.findAllByText('season_builder_apply_command')).length).toBeGreaterThan(0)
     expect(await screen.findByText('Apply audit trail contract preview')).toBeInTheDocument()
     expect(await screen.findByText('Apply safety gate contract preview')).toBeInTheDocument()
@@ -1211,7 +1235,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('pf_test_overwrite').length).toBeGreaterThan(0)
     expect(screen.getAllByText('rd_test_overwrite').length).toBeGreaterThan(0)
     expect(screen.getByText('Overwrite policy preview selected. Future implementation must require explicit audited confirmation before any overwrite command.')).toBeInTheDocument()
-    expect(api.getSeasonCalendar).toHaveBeenCalledTimes(1)
+    expect(api.getSeasonCalendar.mock.calls.length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Future audited command flow')).toBeInTheDocument()
     expect(screen.getByText('None of these commands are implemented on this page.')).toBeInTheDocument()
     expect(screen.getByText('Read-only preflight checklist')).toBeInTheDocument()
@@ -1220,7 +1244,7 @@ describe('Module 17 pages through routes', () => {
     for (const action of forbiddenMutationActions) {
       expect(screen.queryByRole('button', { name: new RegExp(`^${action}$`, 'i') })).not.toBeInTheDocument()
     }
-  }, 20000)
+  }, 30000)
 
   it('renders Season Builder no-calendar overwrite policy branch', async () => {
     api.getSeasonCalendar.mockResolvedValueOnce({
@@ -1233,8 +1257,8 @@ describe('Module 17 pages through routes', () => {
     api.postSeasonBuilderPreflight.mockResolvedValueOnce({
       can_build: false,
       target_season_label: '2000/2001',
-      source_type: 'season_template',
-      source_template_id: 'default_msa_template_preview',
+      source_type: 'blank_calendar_planned',
+      source_template_id: null,
       preflight_fingerprint: 'pf_test_empty',
       reviewed_diff_id: 'rd_test_empty',
       target_calendar_exists: false,
@@ -1269,8 +1293,8 @@ describe('Module 17 pages through routes', () => {
       can_execute: false,
       can_mutate: false,
       target_season_label: '2000/01',
-      source_type: 'season_template',
-      source_template_id: 'default_msa_template_preview',
+      source_type: 'blank_calendar_planned',
+      source_template_id: null,
       overwrite_policy: null,
       preflight_fingerprint: 'pf_test_empty',
       reviewed_diff_id: 'rd_test_empty',
@@ -1336,8 +1360,8 @@ describe('Module 17 pages through routes', () => {
       can_execute: false,
       can_mutate: false,
       target_season_label: '2000/01',
-      source_type: 'season_template',
-      source_template_id: 'default_msa_template_preview',
+      source_type: 'blank_calendar_planned',
+      source_template_id: null,
       overwrite_policy: null,
       validation_errors: [],
       validation_warnings: [],

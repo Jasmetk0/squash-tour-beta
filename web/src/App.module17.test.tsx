@@ -701,7 +701,7 @@ describe('Module 17 pages through routes', () => {
     expect((await screen.findAllByText('conflict_count')).length).toBeGreaterThan(0)
     expect(await screen.findByText('Conflict summary shape')).toBeInTheDocument()
     expect((await screen.findAllByText('week_conflicts')).length).toBeGreaterThan(0)
-    expect(await screen.findByText('policy_conflicts')).toBeInTheDocument()
+    expect((await screen.findAllByText('policy_conflicts')).length).toBeGreaterThan(0)
     expect(await screen.findByText('Dry-run result contract preview')).toBeInTheDocument()
     expect(await screen.findByText('Read-only generated dry-run result preview')).toBeInTheDocument()
     expect(await screen.findByText('Read-only comparison conflicts')).toBeInTheDocument()

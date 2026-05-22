@@ -119,12 +119,13 @@ describe('Module 17 pages through routes', () => {
     api.getSeasonActivePlayers.mockResolvedValue({ players: [], summary: { total_active_players: 0 }, metadata: null, warnings: [] })
     api.getSeasonCalendarValidationIssueCodes.mockResolvedValue({
       read_only: true,
-      code_count: 3,
+      code_count: 4,
       message: 'Stable read-only season calendar validation issue code registry.',
       codes: [
         { code: 'calendar_missing', severity: 'warning', title: 'Calendar missing', description: 'No persisted season calendar exists for the requested season.', field: null, read_only: true },
         { code: 'main_draw_size_invalid', severity: 'error', title: 'Invalid main draw size', description: 'main_draw_size must be greater than 0.', field: 'main_draw_size', read_only: true },
-        { code: 'event_count', severity: 'info', title: 'Event count summary', description: 'Computed informational event count metric.', field: null, read_only: true }
+        { code: 'event_count', severity: 'info', title: 'Event count summary', description: 'Computed informational event count metric.', field: null, read_only: true },
+        { code: 'calendar_validation_demo_warning', severity: 'warning', title: 'Calendar validation demo warning', description: 'Demo warning used by frontend route test.', field: 'category', read_only: true }
       ]
     })
     api.getSeasonCalendarValidation.mockResolvedValue({
@@ -1064,9 +1065,9 @@ describe('Module 17 pages through routes', () => {
     expect(api.getSeasonCalendarValidationIssueCodes).toHaveBeenCalled()
     expect(screen.getByText('Validation issue code registry')).toBeInTheDocument()
     expect(screen.getByText('Read-only validation issue code registry. These codes document validation output meanings.')).toBeInTheDocument()
-    expect(screen.getByText('Code count: 3')).toBeInTheDocument()
+    expect(screen.getByText('Code count: 4')).toBeInTheDocument()
     expect(screen.getByText('Error code count: 1')).toBeInTheDocument()
-    expect(screen.getByText('Warning code count: 1')).toBeInTheDocument()
+    expect(screen.getByText('Warning code count: 2')).toBeInTheDocument()
     expect(screen.getByText('Info code count: 1')).toBeInTheDocument()
     expect(screen.getByText('calendar_missing')).toBeInTheDocument()
     expect(screen.getByText('main_draw_size_invalid')).toBeInTheDocument()
@@ -1084,7 +1085,9 @@ describe('Module 17 pages through routes', () => {
     const validationStatusComparisonRow = screen.getByText('validation_status').closest('tr')
     expect(validationStatusComparisonRow).not.toBeNull()
     expect(validationStatusComparisonRow).toHaveTextContent('yes')
-    expect(screen.getByText('calendar_validation_demo_warning')).toBeInTheDocument()
+    expect(screen.getAllByText('calendar_validation_demo_warning').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Calendar validation demo warning').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Demo warning used by frontend route test.').length).toBeGreaterThan(0)
     expect(screen.getByText('Calendar validation warning preview.')).toBeInTheDocument()
     expect(screen.getAllByText('event-1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('category').length).toBeGreaterThan(0)
@@ -2399,6 +2402,55 @@ describe('Validation severity interpretation panels', () => {
     )
     expect(screen.getByText('Unknown-severity issues: 1')).toBeInTheDocument()
     expect(screen.getByText('Unknown issue codes: (missing_code)')).toBeInTheDocument()
+  })
+
+  it('shows unknown registry metadata fallback when issue code is missing from registry', () => {
+    render(
+      <TargetCalendarValidationPanel
+        queryEnabled
+        issueCodeRegistryData={{
+          read_only: true,
+          code_count: 1,
+          message: 'registry',
+          codes: [
+            {
+              code: 'known_code',
+              severity: 'warning',
+              title: 'Known code',
+              description: 'Known code description.',
+              field: null,
+              read_only: true
+            }
+          ]
+        }}
+        query={{
+          isLoading: false,
+          isFetching: false,
+          error: null,
+          data: {
+            season: '2000/01',
+            calendar_exists: true,
+            validation_summary: {
+              status: 'warnings',
+              error_count: 0,
+              warning_count: 1,
+              info_count: 0,
+              event_count: 1,
+              first_season_week: 1,
+              last_season_week: 1,
+              categories: { count: 0, values: [] },
+              tour_levels: { count: 0, values: [] },
+              host_countries: { count: 0, values: [] }
+            },
+            issues: [{ severity: 'warning', code: 'unknown_code', message: 'Unknown code issue.', event_id: 'event-1', field: 'category', context: {} }],
+            read_only: true,
+            message: 'ok'
+          }
+        }}
+      />
+    )
+    expect(screen.getByText('Unknown issue code')).toBeInTheDocument()
+    expect(screen.getByText('No registry metadata available for this issue code.')).toBeInTheDocument()
   })
 
   it('shows blocking-errors interpretation when apply preview has errors', () => {

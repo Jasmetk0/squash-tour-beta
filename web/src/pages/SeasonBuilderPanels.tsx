@@ -2070,6 +2070,7 @@ type CreateOnlyApplyGuardSummaryPanelProps = {
 
 type TargetCalendarValidationPanelProps = {
   queryEnabled: boolean
+  issueCodeRegistryData?: SeasonCalendarValidationIssueCodeRegistryResponse
   query: {
     isLoading: boolean
     isFetching: boolean
@@ -2144,7 +2145,7 @@ function groupIssueCodesBySeverity(issues: SeasonCalendarValidationResponse['iss
   }
 }
 
-export function TargetCalendarValidationPanel({ queryEnabled, query }: TargetCalendarValidationPanelProps): JSX.Element {
+export function TargetCalendarValidationPanel({ queryEnabled, issueCodeRegistryData, query }: TargetCalendarValidationPanelProps): JSX.Element {
   if (!queryEnabled) return <p>Select a target season to view read-only calendar validation.</p>
   if (query.isLoading) return <p>Loading target calendar validation…</p>
   if (query.error) return <p>Unable to load target calendar validation: {formatApiError(query.error)}</p>
@@ -2154,6 +2155,9 @@ export function TargetCalendarValidationPanel({ queryEnabled, query }: TargetCal
   const hidden = Math.max(issues.length - topIssues.length, 0)
   const issueSeverityCounts = groupIssueCountsBySeverity(issues)
   const issueCodesBySeverity = groupIssueCodesBySeverity(issues)
+  const issueMetadataByCode = new Map(
+    (issueCodeRegistryData?.codes ?? []).map((registryCode) => [registryCode.code, registryCode] as const)
+  )
   const renderShape = (label: string, value: Record<string, unknown>) => {
     const count = typeof value.count === 'number' ? value.count : null
     const vals = Array.isArray(value.values) ? value.values.join(', ') : null
@@ -2187,8 +2191,20 @@ export function TargetCalendarValidationPanel({ queryEnabled, query }: TargetCal
     <p>Warning issue codes: {issueCodesBySeverity.warning.length > 0 ? issueCodesBySeverity.warning.join(', ') : 'none'}</p>
     <p>Info issue codes: {issueCodesBySeverity.info.length > 0 ? issueCodesBySeverity.info.join(', ') : 'none'}</p>
     <p>Unknown issue codes: {issueCodesBySeverity.unknown.length > 0 ? issueCodesBySeverity.unknown.join(', ') : 'none'}</p>
-    <table><thead><tr><th>Severity</th><th>Code</th><th>Event</th><th>Field</th><th>Message</th></tr></thead>
-    <tbody>{topIssues.map((issue, i) => <tr key={`${issue.code}-${i}`}><td>{issue.severity}</td><td>{issue.code}</td><td>{issue.event_id ?? '-'}</td><td>{issue.field ?? '-'}</td><td>{issue.message}</td></tr>)}</tbody></table>
+    <table><thead><tr><th>Severity</th><th>Code</th><th>Registry title</th><th>Event</th><th>Field</th><th>Message</th><th>Registry description</th></tr></thead>
+    <tbody>{topIssues.map((issue, i) => {
+      const issueCode = normalizeIssueCode(issue.code)
+      const metadata = issueMetadataByCode.get(issueCode)
+      return <tr key={`${issue.code}-${i}`}>
+        <td>{issue.severity}</td>
+        <td>{issue.code}</td>
+        <td>{metadata?.title ?? 'Unknown issue code'}</td>
+        <td>{issue.event_id ?? '-'}</td>
+        <td>{issue.field ?? '-'}</td>
+        <td>{issue.message}</td>
+        <td>{metadata?.description ?? 'No registry metadata available for this issue code.'}</td>
+      </tr>
+    })}</tbody></table>
     {hidden > 0 ? <p>{hidden} additional issues hidden.</p> : null}
     {query.isFetching ? <p>Refreshing validation…</p> : null}
   </>

@@ -25,6 +25,11 @@ from beta_engine.domain.tournaments import SeasonBuilderDryRunBuildRequest, Seas
 router = APIRouter(prefix="/admin/seasons", tags=["admin-seasons"])
 
 
+def _build_deterministic_digest(payload: dict[str, object]) -> str:
+    canonical_payload = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(canonical_payload.encode("utf-8")).hexdigest()
+
+
 @router.get("/registry", response_model=SeasonRegistryResponse)
 def get_season_registry(service: SeasonRegistryService = Depends(get_season_registry_service)) -> SeasonRegistryResponse:
     return service.build_registry()
@@ -234,7 +239,7 @@ def preflight_season_builder(
         "validation_errors": errors,
     }
     canonical_payload = json.dumps(fingerprint_payload, sort_keys=True, separators=(",", ":"))
-    preflight_fingerprint = f"pf_{hashlib.sha256(canonical_payload.encode('utf-8')).hexdigest()[:16]}"
+    preflight_fingerprint = f"pf_{_build_deterministic_digest(fingerprint_payload)[:16]}"
     reviewed_seed = f"reviewed_diff:{canonical_payload}"
     reviewed_diff_id = f"rd_{hashlib.sha256(reviewed_seed.encode('utf-8')).hexdigest()[:16]}"
     authoritative_diff_summary["preflight_fingerprint"] = preflight_fingerprint
@@ -743,6 +748,28 @@ def post_season_builder_dry_run_build_contract(
     }
     dry_run_result_preview["validation_summary"] = validation_summary
     dry_run_result_preview["plan_readiness"] = plan_readiness
+    dry_run_identity_payload = {
+        "target_season_label": normalized_target,
+        "source_type": payload.source_type,
+        "source_template_id": payload.source_template_id,
+        "overwrite_policy": payload.overwrite_policy,
+        "preflight_fingerprint": payload.preflight_fingerprint,
+        "reviewed_diff_id": payload.reviewed_diff_id,
+        "candidate_events": candidate_events,
+        "structural_summary": dry_run_result_preview["structural_summary"],
+        "conflict_summary": dry_run_result_preview["conflict_summary"],
+        "validation_summary": dry_run_result_preview["validation_summary"],
+        "plan_readiness": dry_run_result_preview["plan_readiness"],
+        "result_metadata": dry_run_result_preview["result_metadata"],
+    }
+    dry_run_result_fingerprint = f"drf_{_build_deterministic_digest({'kind': 'dry_run_result_fingerprint', 'payload': dry_run_identity_payload})[:16]}"
+    dry_run_result_id = f"drr_{_build_deterministic_digest({'kind': 'dry_run_result_id', 'payload': dry_run_identity_payload})[:16]}"
+    dry_run_result_preview["dry_run_result_fingerprint"] = dry_run_result_fingerprint
+    dry_run_result_preview["dry_run_result_id"] = dry_run_result_id
+    dry_run_result_preview_result_metadata = dry_run_result_preview.get("result_metadata")
+    if isinstance(dry_run_result_preview_result_metadata, dict):
+        dry_run_result_preview_result_metadata["dry_run_result_fingerprint"] = dry_run_result_fingerprint
+        dry_run_result_preview_result_metadata["dry_run_result_id"] = dry_run_result_id
 
     return SeasonBuilderDryRunBuildResponse(
         enabled=False,
@@ -778,6 +805,7 @@ def post_season_builder_dry_run_build_contract(
             "conflict_contract_preview_available": True,
             "dry_run_result_contract_preview_available": True,
             "dry_run_result_preview_available": True,
+            "dry_run_result_identity_available": True,
         },
         generation_design_preview=generation_design_preview,
         candidate_event_contract_preview=candidate_event_contract_preview,

@@ -1525,6 +1525,7 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
               <tr><td>conflict_contract_preview_available</td><td>{formatValue(auditPreview.conflict_contract_preview_available)}</td></tr>
               <tr><td>dry_run_result_contract_preview_available</td><td>{formatValue(auditPreview.dry_run_result_contract_preview_available)}</td></tr>
               <tr><td>dry_run_result_preview_available</td><td>{formatValue(auditPreview.dry_run_result_preview_available)}</td></tr>
+              <tr><td>dry_run_result_identity_available</td><td>{formatValue(auditPreview.dry_run_result_identity_available)}</td></tr>
             </tbody>
           </table>
           <h4>Future dry-run generation design preview</h4>
@@ -1647,6 +1648,8 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
                 <tr><td>status</td><td>{formatValue(dryRunResultPreviewRecord.status)}</td></tr>
                 <tr><td>execution_enabled</td><td>{formatValue(dryRunResultPreviewRecord.execution_enabled)}</td></tr>
                 <tr><td>mutation_permitted</td><td>{formatValue(dryRunResultPreviewRecord.mutation_permitted)}</td></tr>
+                <tr><td>dry_run_result_fingerprint</td><td>{formatValue(dryRunResultPreviewRecord.dry_run_result_fingerprint)}</td></tr>
+                <tr><td>dry_run_result_id</td><td>{formatValue(dryRunResultPreviewRecord.dry_run_result_id)}</td></tr>
               </tbody></table>
               <h5>Structural summary</h5>
               {shapeRecord(dryRunResultPreviewRecord.structural_summary) ? <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>{Object.entries(shapeRecord(dryRunResultPreviewRecord.structural_summary) ?? {}).map(([key, value]) => <tr key={`dry-run-result-struct-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>)}</tbody></table> : <p>Structural summary is unavailable.</p>}
@@ -1656,6 +1659,8 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
                   <tr><td>target_calendar_exists</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.result_metadata)?.target_calendar_exists)}</td></tr>
                   <tr><td>target_event_count</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.result_metadata)?.target_event_count)}</td></tr>
                   <tr><td>comparison_performed</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.result_metadata)?.comparison_performed)}</td></tr>
+                  <tr><td>dry_run_result_fingerprint</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.result_metadata)?.dry_run_result_fingerprint)}</td></tr>
+                  <tr><td>dry_run_result_id</td><td>{formatValue(shapeRecord(dryRunResultPreviewRecord.result_metadata)?.dry_run_result_id)}</td></tr>
                 </tbody></table>
               ) : <p>Result metadata is unavailable.</p>}
               <h5>Read-only comparison conflicts</h5>

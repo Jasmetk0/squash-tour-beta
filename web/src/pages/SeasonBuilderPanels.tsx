@@ -2037,10 +2037,23 @@ type CreateOnlyApplyReadinessPanelProps = {
 }
 
 export function CreateOnlyApplyReadinessPanel({ queryEnabled, query }: CreateOnlyApplyReadinessPanelProps): JSX.Element {
-  const formatValue = (value: unknown): string => (value === null || value === undefined ? '—' : String(value))
+  const formatValue = (value: unknown): string => {
+    if (value === null || value === undefined) return '—'
+    if (typeof value === 'object') return JSON.stringify(value)
+    return String(value)
+  }
   const shapeRecord = (value: unknown): Record<string, unknown> | null => value && typeof value === 'object' ? value as Record<string, unknown> : null
   const previewList = (value: unknown): unknown[] => Array.isArray(value) ? value : []
+  const readStringArraySummary = (value: unknown): { count: number | null; values: string[] } => {
+    const record = shapeRecord(value)
+    if (!record) return { count: null, values: [] }
+    const count = typeof record.count === 'number' ? record.count : null
+    const values = Array.isArray(record.values) ? record.values.filter((item): item is string => typeof item === 'string') : []
+    return { count, values }
+  }
   const candidateSummary = shapeRecord(query.data?.candidate_summary)
+  const categoriesSummary = readStringArraySummary(candidateSummary?.categories)
+  const tourLevelsSummary = readStringArraySummary(candidateSummary?.tour_levels)
   const applyGateSummary = shapeRecord(query.data?.apply_gate_summary)
   const auditPreview = shapeRecord(query.data?.audit_preview)
 
@@ -2070,8 +2083,10 @@ export function CreateOnlyApplyReadinessPanel({ queryEnabled, query }: CreateOnl
           <p>Candidate count: {formatValue(candidateSummary?.candidate_count)}</p>
           <p>First season week: {formatValue(candidateSummary?.first_season_week)}</p>
           <p>Last season week: {formatValue(candidateSummary?.last_season_week)}</p>
-          <p>Categories: {previewList(candidateSummary?.categories).length ? previewList(candidateSummary?.categories).map((v) => formatValue(v)).join(', ') : '—'}</p>
-          <p>Tour levels: {previewList(candidateSummary?.tour_levels).length ? previewList(candidateSummary?.tour_levels).map((v) => formatValue(v)).join(', ') : '—'}</p>
+          <p>Categories count: {categoriesSummary.count ?? '—'}</p>
+          <p>Categories values: {categoriesSummary.values.length ? categoriesSummary.values.join(', ') : '—'}</p>
+          <p>Tour levels count: {tourLevelsSummary.count ?? '—'}</p>
+          <p>Tour levels values: {tourLevelsSummary.values.length ? tourLevelsSummary.values.join(', ') : '—'}</p>
           <p>Audit persisted: {formatValue(auditPreview?.audit_persisted)}</p>
           <h4>Validation warnings</h4>
           {query.data.validation_warnings.length === 0 ? <p>No create-only readiness warnings returned.</p> : <ul>{query.data.validation_warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}

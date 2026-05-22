@@ -335,7 +335,36 @@ describe('Module 17 pages through routes', () => {
           requested_by: 'local-admin-preview',
           audit_reason: payload.audit_reason,
           explicit_confirmation_present: Boolean(payload.explicit_confirmation),
-          mutation_scope: payload.mutation_scope
+          mutation_scope: payload.mutation_scope,
+          audit_trail_contract_preview_available: true
+        },
+        audit_trail_contract_preview: {
+          status: 'contract_preview_only',
+          will_persist_audit: false,
+          audit_event_type: 'season_builder_apply_command',
+          required_identity_fields: ['preflight_fingerprint', 'reviewed_diff_id', 'dry_run_result_fingerprint', 'dry_run_result_id'],
+          required_actor_fields: ['requested_by', 'audit_reason', 'explicit_confirmation', 'mutation_scope'],
+          audit_record_shape: {
+            audit_id: 'string',
+            timestamp_utc: 'datetime',
+            action: 'season_builder_apply_command',
+            target_season_label: 'string',
+            source_type: 'string',
+            source_template_id: 'string | null',
+            overwrite_policy: 'string | null',
+            preflight_fingerprint: 'string',
+            reviewed_diff_id: 'string',
+            dry_run_result_fingerprint: 'string',
+            dry_run_result_id: 'string',
+            requested_by: 'string | null',
+            audit_reason: 'string | null',
+            explicit_confirmation_present: 'bool',
+            mutation_scope: 'string | null',
+            execution_enabled: 'bool',
+            mutation_permitted: 'bool',
+            result: 'disabled | executed | rejected'
+          },
+          blocked_reason: 'Audit trail persistence is not implemented in this phase.'
         },
         required_identity: {
           preflight_fingerprint: payload.preflight_fingerprint,
@@ -823,6 +852,17 @@ describe('Module 17 pages through routes', () => {
       }))
     })
     expect((await screen.findAllByText('season_builder_apply_command')).length).toBeGreaterThan(0)
+    expect(await screen.findByText('Apply audit trail contract preview')).toBeInTheDocument()
+    expect((await screen.findAllByText('contract_preview_only')).length).toBeGreaterThan(0)
+    expect(await screen.findByText('will_persist_audit')).toBeInTheDocument()
+    expect(await screen.findByText('Audit trail persistence is not implemented in this phase.')).toBeInTheDocument()
+    expect(await screen.findByText('Required identity fields')).toBeInTheDocument()
+    expect(await screen.findByText('Required actor fields')).toBeInTheDocument()
+    expect(await screen.findByText('Audit record shape')).toBeInTheDocument()
+    expect((await screen.findAllByText('audit_id')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('timestamp_utc')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('explicit_confirmation_present')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('audit_trail_contract_preview_available')).length).toBeGreaterThan(0)
     expect((await screen.findAllByText('all_identity_fields_present')).length).toBeGreaterThan(0)
     expect((await screen.findAllByText('all_audit_metadata_present')).length).toBeGreaterThan(0)
     expect((await screen.findAllByText('audit_reason will be required before apply execution is enabled in a future phase.')).length).toBeGreaterThan(0)
@@ -1174,6 +1214,31 @@ describe('Module 17 pages through routes', () => {
       },
       message: 'Dry-run build command contract exists, but execution is disabled in this phase.'
     })
+    api.postSeasonBuilderApplyCommandContract.mockResolvedValueOnce({
+      command: 'season_builder_apply_command',
+      enabled: false,
+      can_execute: false,
+      can_mutate: false,
+      target_season_label: '2000/01',
+      source_type: 'season_template',
+      source_template_id: 'default_msa_template_preview',
+      overwrite_policy: null,
+      validation_errors: [],
+      validation_warnings: [],
+      audit_preview: { action: 'season_builder_apply_command', read_only: true, mutation_permitted: false, execution_enabled: false, audit_trail_contract_preview_available: true },
+      audit_trail_contract_preview: {
+        status: 'contract_preview_only',
+        will_persist_audit: false,
+        audit_event_type: 'season_builder_apply_command',
+        required_identity_fields: ['preflight_fingerprint', 'reviewed_diff_id', 'dry_run_result_fingerprint', 'dry_run_result_id'],
+        required_actor_fields: ['requested_by', 'audit_reason', 'explicit_confirmation', 'mutation_scope'],
+        audit_record_shape: { audit_id: 'string', timestamp_utc: 'datetime', explicit_confirmation_present: 'bool', result: 'disabled | executed | rejected' },
+        blocked_reason: 'Audit trail persistence is not implemented in this phase.'
+      },
+      required_identity: { preflight_fingerprint: 'pf_test_empty', reviewed_diff_id: 'rd_test_empty', dry_run_result_fingerprint: 'drf_test_empty', dry_run_result_id: 'drr_test_empty', all_identity_fields_present: true },
+      required_audit_metadata: { requested_by: 'local-admin-preview', audit_reason_present: false, explicit_confirmation_present: false, mutation_scope: null, all_audit_metadata_present: false },
+      message: 'Apply command contract exists, but execution is disabled in this phase.'
+    })
 
     renderAppAt('/admin/seasons/build')
 
@@ -1266,6 +1331,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('No candidate events returned in this contract-only phase.')).toBeInTheDocument()
     expect(screen.getByText('Execution remains disabled; this panel is not a build control.')).toBeInTheDocument()
     expect(screen.getByText('Disabled apply command contract result')).toBeInTheDocument()
+    expect(screen.getByText(/Apply command contract check is waiting for preflight and dry-run result identities\.|Apply audit trail contract preview/)).toBeInTheDocument()
     expect(screen.getByText('Apply command readiness summary')).toBeInTheDocument()
     expect(screen.getAllByText('drf_test_empty').length).toBeGreaterThan(0)
     expect(screen.getAllByText('drr_test_empty').length).toBeGreaterThan(0)

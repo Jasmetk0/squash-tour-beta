@@ -90,6 +90,23 @@ def test_apply_command_contract_minimal_identity_request(tmp_path: Path) -> None
         assert "explicit_confirmation will be required before apply execution is enabled in a future phase." in body["validation_warnings"]
         assert "mutation_scope will be required before apply execution is enabled in a future phase." in body["validation_warnings"]
         assert body["audit_preview"]["mutation_permitted"] is False
+        assert body["audit_preview"]["audit_trail_contract_preview_available"] is True
+        assert body["audit_trail_contract_preview"]["status"] == "contract_preview_only"
+        assert body["audit_trail_contract_preview"]["will_persist_audit"] is False
+        assert body["audit_trail_contract_preview"]["audit_event_type"] == "season_builder_apply_command"
+        assert set(body["audit_trail_contract_preview"]["required_identity_fields"]) >= {
+            "preflight_fingerprint", "reviewed_diff_id", "dry_run_result_fingerprint", "dry_run_result_id"
+        }
+        assert set(body["audit_trail_contract_preview"]["required_actor_fields"]) >= {
+            "requested_by", "audit_reason", "explicit_confirmation", "mutation_scope"
+        }
+        audit_record_shape = body["audit_trail_contract_preview"]["audit_record_shape"]
+        for key in (
+            "audit_id", "timestamp_utc", "action", "target_season_label", "dry_run_result_fingerprint",
+            "dry_run_result_id", "explicit_confirmation_present", "result"
+        ):
+            assert key in audit_record_shape
+        assert body["audit_trail_contract_preview"]["blocked_reason"] == "Audit trail persistence is not implemented in this phase."
         assert body["message"] == MESSAGE
 
 
@@ -135,6 +152,7 @@ def test_apply_command_contract_full_metadata_present(tmp_path: Path) -> None:
         assert "mutation_scope will be required before apply execution is enabled in a future phase." not in body["validation_warnings"]
         assert body["required_audit_metadata"]["all_audit_metadata_present"] is True
         assert body["audit_preview"]["explicit_confirmation_present"] is True
+        assert "audit_trail_contract_preview" in body
         assert body["can_execute"] is False
         assert body["can_mutate"] is False
 

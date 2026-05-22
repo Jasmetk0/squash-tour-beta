@@ -1885,6 +1885,12 @@ export function DisabledApplyCommandContractPanel({ queryEnabled, requestPayload
   const requiredIdentity = query.data?.required_identity ?? {}
   const requiredAuditMetadata = query.data?.required_audit_metadata ?? {}
   const auditPreview = query.data?.audit_preview ?? {}
+  const auditTrailContractPreview = query.data?.audit_trail_contract_preview
+  const auditTrailContractPreviewRecord = auditTrailContractPreview && typeof auditTrailContractPreview === 'object'
+    ? auditTrailContractPreview as Record<string, unknown>
+    : null
+  const previewList = (value: unknown): unknown[] => Array.isArray(value) ? value : []
+  const shapeRecord = (value: unknown): Record<string, unknown> | null => value && typeof value === 'object' ? value as Record<string, unknown> : null
   return (
     <>
       <p>Read-only disabled apply command contract check. This does not build, merge, overwrite, or apply anything.</p>
@@ -1944,7 +1950,35 @@ export function DisabledApplyCommandContractPanel({ queryEnabled, requestPayload
             <tr><td>audit_reason</td><td>{formatValue(auditPreview.audit_reason)}</td></tr>
             <tr><td>explicit_confirmation_present</td><td>{formatValue(auditPreview.explicit_confirmation_present)}</td></tr>
             <tr><td>mutation_scope</td><td>{formatValue(auditPreview.mutation_scope)}</td></tr>
+            <tr><td>audit_trail_contract_preview_available</td><td>{formatValue(auditPreview.audit_trail_contract_preview_available)}</td></tr>
           </tbody></table>
+          <h4>Apply audit trail contract preview</h4>
+          {auditTrailContractPreviewRecord ? (
+            <>
+              <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+                <tr><td>status</td><td>{formatValue(auditTrailContractPreviewRecord.status)}</td></tr>
+                <tr><td>will_persist_audit</td><td>{formatValue(auditTrailContractPreviewRecord.will_persist_audit)}</td></tr>
+                <tr><td>audit_event_type</td><td>{formatValue(auditTrailContractPreviewRecord.audit_event_type)}</td></tr>
+                <tr><td>blocked_reason</td><td>{formatValue(auditTrailContractPreviewRecord.blocked_reason)}</td></tr>
+              </tbody></table>
+              <h5>Required identity fields</h5>
+              {previewList(auditTrailContractPreviewRecord.required_identity_fields).length === 0 ? <p>No required identity fields returned.</p> : (
+                <ul>{previewList(auditTrailContractPreviewRecord.required_identity_fields).map((value, idx) => <li key={`apply-audit-identity-${idx}`}>{formatValue(value)}</li>)}</ul>
+              )}
+              <h5>Required actor fields</h5>
+              {previewList(auditTrailContractPreviewRecord.required_actor_fields).length === 0 ? <p>No required actor fields returned.</p> : (
+                <ul>{previewList(auditTrailContractPreviewRecord.required_actor_fields).map((value, idx) => <li key={`apply-audit-actor-${idx}`}>{formatValue(value)}</li>)}</ul>
+              )}
+              <h5>Audit record shape</h5>
+              {shapeRecord(auditTrailContractPreviewRecord.audit_record_shape) ? (
+                <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+                  {Object.entries(shapeRecord(auditTrailContractPreviewRecord.audit_record_shape) ?? {}).map(([key, value]) => (
+                    <tr key={`apply-audit-record-shape-${key}`}><td>{key}</td><td>{formatValue(value)}</td></tr>
+                  ))}
+                </tbody></table>
+              ) : <p>Audit record shape is unavailable.</p>}
+            </>
+          ) : <p>Apply audit trail contract preview is unavailable.</p>}
           <h4>Raw disabled apply command contract JSON</h4>
           <pre>{JSON.stringify(query.data, null, 2)}</pre>
         </>

@@ -324,6 +324,7 @@ class SeasonBuilderApplyCommandContractResponse(BaseModel):
     validation_errors: list[str] = Field(default_factory=list)
     validation_warnings: list[str] = Field(default_factory=list)
     audit_preview: dict[str, Any] = Field(default_factory=dict)
+    audit_trail_contract_preview: dict[str, Any] = Field(default_factory=dict)
     required_identity: dict[str, Any] = Field(default_factory=dict)
     required_audit_metadata: dict[str, Any] = Field(default_factory=dict)
     message: str = "Apply command contract exists, but execution is disabled in this phase."

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
-import { getSeasonCalendar, getSeasonRegistry, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight } from '../api/client'
+import { getSeasonCalendar, getSeasonRegistry, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderApplyCommandContract, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight } from '../api/client'
 import { DetailList } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import {
@@ -24,6 +24,7 @@ import {
   DryRunAuditMetadataPreviewPanel,
   FutureAuditedCommandFlowPanel,
   DisabledDryRunBuildContractPanel,
+  DisabledApplyCommandContractPanel,
   DisabledDryRunReadinessSummaryPanel,
   ReadOnlyPreflightChecklistPanel,
   SelectionPreviewPanel,
@@ -33,7 +34,7 @@ import {
   TemplateValidationSummaryPanel
 } from './SeasonBuilderPanels'
 import type { SourceType } from './SeasonBuilderPanels'
-import type { SeasonBuilderDryRunBuildRequest, SeasonBuilderPreflightRequest } from '../api/types'
+import type { SeasonBuilderApplyCommandContractRequest, SeasonBuilderDryRunBuildRequest, SeasonBuilderPreflightRequest } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
 
 
@@ -177,6 +178,50 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     () => buildDisabledDryRunReadinessItems({ requestPayload: disabledDryRunBuildPayload, response: disabledDryRunBuildQuery.data }),
     [disabledDryRunBuildPayload, disabledDryRunBuildQuery.data]
   )
+  const dryRunResultFingerprint = typeof disabledDryRunBuildQuery.data?.dry_run_result_preview?.dry_run_result_fingerprint === 'string'
+    ? disabledDryRunBuildQuery.data?.dry_run_result_preview?.dry_run_result_fingerprint
+    : ''
+  const dryRunResultId = typeof disabledDryRunBuildQuery.data?.dry_run_result_preview?.dry_run_result_id === 'string'
+    ? disabledDryRunBuildQuery.data?.dry_run_result_preview?.dry_run_result_id
+    : ''
+  const disabledApplyCommandContractPayload = useMemo<SeasonBuilderApplyCommandContractRequest>(() => ({
+    target_season_label: backendPreflightPayload.target_season_label,
+    source_type: backendPreflightPayload.source_type,
+    source_template_id: backendPreflightPayload.source_template_id,
+    overwrite_policy: backendPreflightPayload.overwrite_policy,
+    preflight_fingerprint: backendPreflightQuery.data?.preflight_fingerprint ?? '',
+    reviewed_diff_id: backendPreflightQuery.data?.reviewed_diff_id ?? '',
+    dry_run_result_fingerprint: dryRunResultFingerprint,
+    dry_run_result_id: dryRunResultId,
+    requested_by: backendPreflightPayload.requested_by,
+    audit_reason: dryRunAuditReason.trim() || null,
+    explicit_confirmation: dryRunExplicitConfirmation.trim() || null,
+    mutation_scope: dryRunMutationScope || null
+  }), [backendPreflightPayload, backendPreflightQuery.data?.preflight_fingerprint, backendPreflightQuery.data?.reviewed_diff_id, dryRunResultFingerprint, dryRunResultId, dryRunAuditReason, dryRunExplicitConfirmation, dryRunMutationScope])
+  const disabledApplyCommandContractEnabled = backendPreflightEnabled
+    && Boolean(backendPreflightQuery.data?.preflight_fingerprint)
+    && Boolean(backendPreflightQuery.data?.reviewed_diff_id)
+    && Boolean(dryRunResultFingerprint)
+    && Boolean(dryRunResultId)
+  const disabledApplyCommandContractQuery = useQuery({
+    queryKey: [
+      'season-builder-apply-command-contract',
+      selectedTargetSeasonLabel,
+      selectedSourceType,
+      selectedTemplateId,
+      selectedOverwritePolicy,
+      backendPreflightQuery.data?.preflight_fingerprint,
+      backendPreflightQuery.data?.reviewed_diff_id,
+      dryRunResultFingerprint,
+      dryRunResultId,
+      dryRunAuditReason,
+      dryRunExplicitConfirmation,
+      dryRunMutationScope
+    ],
+    queryFn: () => postSeasonBuilderApplyCommandContract(disabledApplyCommandContractPayload),
+    enabled: disabledApplyCommandContractEnabled,
+    retry: false
+  })
 
   return (
     <section className="panel">
@@ -339,6 +384,13 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           queryEnabled={disabledDryRunBuildQueryEnabled}
           requestPayload={disabledDryRunBuildPayload}
           query={{ isLoading: disabledDryRunBuildQuery.isLoading, error: disabledDryRunBuildQuery.error, data: disabledDryRunBuildQuery.data }}
+        />
+      </SectionCard>
+      <SectionCard title="Disabled apply command contract result">
+        <DisabledApplyCommandContractPanel
+          queryEnabled={disabledApplyCommandContractEnabled}
+          requestPayload={disabledApplyCommandContractPayload}
+          query={{ isLoading: disabledApplyCommandContractQuery.isLoading, error: disabledApplyCommandContractQuery.error, data: disabledApplyCommandContractQuery.data }}
         />
       </SectionCard>
 

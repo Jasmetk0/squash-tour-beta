@@ -47,6 +47,7 @@ const api = vi.hoisted(() => ({
   getTourSeasonsValidation: vi.fn(),
   postSeasonBuilderPreflight: vi.fn(),
   postSeasonBuilderDryRunBuild: vi.fn(),
+  postSeasonBuilderApplyCommandContract: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
     constructor(message: string, status: number) {
@@ -297,6 +298,60 @@ describe('Module 17 pages through routes', () => {
         dry_run_result_id: 'drr_test_existing'
       },
         message: 'Dry-run build command contract exists, but execution is disabled in this phase.'
+      }
+    })
+    api.postSeasonBuilderApplyCommandContract.mockImplementation(async (payload) => {
+      const hasAllMetadata = payload.audit_reason === 'ticket-123 dry-run review'
+        && payload.explicit_confirmation === 'I understand this is disabled.'
+        && payload.mutation_scope === 'merge_preview'
+      return {
+        command: 'season_builder_apply_command',
+        enabled: false,
+        can_execute: false,
+        can_mutate: false,
+        target_season_label: '2000/01',
+        source_type: 'season_template',
+        source_template_id: 'default_msa_template_preview',
+        overwrite_policy: payload.overwrite_policy ?? null,
+        validation_errors: [],
+        validation_warnings: hasAllMetadata ? [] : [
+          'audit_reason will be required before apply execution is enabled in a future phase.',
+          'explicit_confirmation will be required before apply execution is enabled in a future phase.',
+          'mutation_scope will be required before apply execution is enabled in a future phase.'
+        ],
+        audit_preview: {
+          action: 'season_builder_apply_command',
+          read_only: true,
+          mutation_permitted: false,
+          execution_enabled: false,
+          target_season_label: '2000/01',
+          source_type: 'season_template',
+          source_template_id: 'default_msa_template_preview',
+          overwrite_policy: payload.overwrite_policy ?? null,
+          preflight_fingerprint: payload.preflight_fingerprint,
+          reviewed_diff_id: payload.reviewed_diff_id,
+          dry_run_result_fingerprint: payload.dry_run_result_fingerprint,
+          dry_run_result_id: payload.dry_run_result_id,
+          requested_by: 'local-admin-preview',
+          audit_reason: payload.audit_reason,
+          explicit_confirmation_present: Boolean(payload.explicit_confirmation),
+          mutation_scope: payload.mutation_scope
+        },
+        required_identity: {
+          preflight_fingerprint: payload.preflight_fingerprint,
+          reviewed_diff_id: payload.reviewed_diff_id,
+          dry_run_result_fingerprint: payload.dry_run_result_fingerprint,
+          dry_run_result_id: payload.dry_run_result_id,
+          all_identity_fields_present: true
+        },
+        required_audit_metadata: {
+          requested_by: 'local-admin-preview',
+          audit_reason_present: Boolean(payload.audit_reason),
+          explicit_confirmation_present: Boolean(payload.explicit_confirmation),
+          mutation_scope: payload.mutation_scope,
+          all_audit_metadata_present: hasAllMetadata
+        },
+        message: 'Apply command contract exists, but execution is disabled in this phase.'
       }
     })
   })
@@ -754,6 +809,28 @@ describe('Module 17 pages through routes', () => {
     expect((await screen.findAllByText('conflict_contract_preview_available')).length).toBeGreaterThan(0)
     expect(await screen.findByText('Raw disabled dry-run build contract JSON')).toBeInTheDocument()
     expect(await screen.findByText('Execution remains disabled; this panel is not a build control.')).toBeInTheDocument()
+    expect(screen.getByText('Disabled apply command contract result')).toBeInTheDocument()
+    expect(screen.getByText('Read-only disabled apply command contract check. This does not build, merge, overwrite, or apply anything.')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(api.postSeasonBuilderApplyCommandContract).toHaveBeenCalledWith(expect.objectContaining({
+        preflight_fingerprint: 'pf_test_existing',
+        reviewed_diff_id: 'rd_test_existing',
+        dry_run_result_fingerprint: 'drf_test_existing',
+        dry_run_result_id: 'drr_test_existing',
+        audit_reason: null,
+        explicit_confirmation: null,
+        mutation_scope: null
+      }))
+    })
+    expect((await screen.findAllByText('season_builder_apply_command')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('all_identity_fields_present')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('all_audit_metadata_present')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('audit_reason will be required before apply execution is enabled in a future phase.')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('explicit_confirmation will be required before apply execution is enabled in a future phase.')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('mutation_scope will be required before apply execution is enabled in a future phase.')).length).toBeGreaterThan(0)
+    expect(await screen.findByText('Raw disabled apply command contract JSON')).toBeInTheDocument()
+    expect((await screen.findAllByText('Apply command contract exists, but execution is disabled in this phase.')).length).toBeGreaterThan(0)
+    expect(screen.getByText('Execution remains disabled; this panel is not an apply control.')).toBeInTheDocument()
     expect(screen.getByText('Current disabled dry-run request payload')).toBeInTheDocument()
     expect(screen.getByText('Disabled dry-run readiness summary')).toBeInTheDocument()
     expect(screen.getByText('Read-only summary of the disabled dry-run contract state.')).toBeInTheDocument()
@@ -789,7 +866,15 @@ describe('Module 17 pages through routes', () => {
         mutation_scope: 'merge_preview'
       }))
     })
+    await waitFor(() => {
+      expect(api.postSeasonBuilderApplyCommandContract).toHaveBeenCalledWith(expect.objectContaining({
+        audit_reason: 'ticket-123 dry-run review',
+        explicit_confirmation: 'I understand this is disabled.',
+        mutation_scope: 'merge_preview'
+      }))
+    })
     expect(await screen.findByText('No dry-run build contract warnings returned.')).toBeInTheDocument()
+    expect(await screen.findByText('No apply command contract warnings returned.')).toBeInTheDocument()
     expect(await screen.findByText('Audit reason preview is present.')).toBeInTheDocument()
     expect(await screen.findByText('Explicit confirmation preview is present.')).toBeInTheDocument()
     expect(await screen.findByText('Mutation scope preview is present.')).toBeInTheDocument()
@@ -1152,6 +1237,10 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Dry-run result generation is not implemented in this phase.')).toBeInTheDocument()
     expect(screen.getByText('No candidate events returned in this contract-only phase.')).toBeInTheDocument()
     expect(screen.getByText('Execution remains disabled; this panel is not a build control.')).toBeInTheDocument()
+    expect(screen.getByText('Disabled apply command contract result')).toBeInTheDocument()
+    expect(screen.getAllByText('drf_test_empty').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('drr_test_empty').length).toBeGreaterThan(0)
+    expect(screen.getByText('Execution remains disabled; this panel is not an apply control.')).toBeInTheDocument()
     expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith({ target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, requested_by: 'local-admin-preview' })
     expect(screen.getAllByText('No existing calendar detected.').length).toBeGreaterThan(0)
     expect(screen.getByText('Silent overwrite must never be allowed.')).toBeInTheDocument()

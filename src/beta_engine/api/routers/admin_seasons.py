@@ -20,7 +20,16 @@ from beta_engine.application.season_registry_service import SeasonRegistryRespon
 from beta_engine.application.season_template_service import SeasonTemplatesResponse, SeasonTemplateService
 from beta_engine.domain.calendar.season_labels import normalize_season_label, to_long_season_label
 from beta_engine.api.season_label_params import normalize_season_for_legacy_services
-from beta_engine.domain.tournaments import SeasonBuilderDryRunBuildRequest, SeasonBuilderDryRunBuildResponse, SeasonBuilderPreflightRequest, SeasonBuilderPreflightResponse, SeasonCalendarBuildRequest, SeasonCalendarBuildResult
+from beta_engine.domain.tournaments import (
+    SeasonBuilderApplyCommandContractRequest,
+    SeasonBuilderApplyCommandContractResponse,
+    SeasonBuilderDryRunBuildRequest,
+    SeasonBuilderDryRunBuildResponse,
+    SeasonBuilderPreflightRequest,
+    SeasonBuilderPreflightResponse,
+    SeasonCalendarBuildRequest,
+    SeasonCalendarBuildResult,
+)
 
 router = APIRouter(prefix="/admin/seasons", tags=["admin-seasons"])
 
@@ -875,4 +884,84 @@ def post_season_builder_dry_run_build_contract(
         conflict_contract_preview=conflict_contract_preview,
         dry_run_result_contract_preview=dry_run_result_contract_preview,
         dry_run_result_preview=dry_run_result_preview,
+    )
+
+
+@router.post("/builder/apply-command-contract", response_model=SeasonBuilderApplyCommandContractResponse)
+def post_season_builder_apply_command_contract(
+    payload: SeasonBuilderApplyCommandContractRequest,
+) -> SeasonBuilderApplyCommandContractResponse:
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    if not payload.preflight_fingerprint.strip():
+        errors.append("preflight_fingerprint is required before any future apply command.")
+    if not payload.reviewed_diff_id.strip():
+        errors.append("reviewed_diff_id is required before any future apply command.")
+    if not payload.dry_run_result_fingerprint.strip():
+        errors.append("dry_run_result_fingerprint is required before any future apply command.")
+    if not payload.dry_run_result_id.strip():
+        errors.append("dry_run_result_id is required before any future apply command.")
+
+    has_audit_reason = bool(payload.audit_reason and payload.audit_reason.strip())
+    has_explicit_confirmation = bool(payload.explicit_confirmation and payload.explicit_confirmation.strip())
+    has_mutation_scope = bool(payload.mutation_scope and payload.mutation_scope.strip())
+    if not has_audit_reason:
+        warnings.append("audit_reason will be required before apply execution is enabled in a future phase.")
+    if not has_explicit_confirmation:
+        warnings.append("explicit_confirmation will be required before apply execution is enabled in a future phase.")
+    if not has_mutation_scope:
+        warnings.append("mutation_scope will be required before apply execution is enabled in a future phase.")
+
+    normalized_target = payload.target_season_label
+    try:
+        normalized_target = to_long_season_label(normalize_season_label(payload.target_season_label))
+    except ValueError:
+        normalized_target = payload.target_season_label
+
+    required_identity = {
+        "preflight_fingerprint": payload.preflight_fingerprint,
+        "reviewed_diff_id": payload.reviewed_diff_id,
+        "dry_run_result_fingerprint": payload.dry_run_result_fingerprint,
+        "dry_run_result_id": payload.dry_run_result_id,
+        "all_identity_fields_present": len(errors) == 0,
+    }
+    required_audit_metadata = {
+        "requested_by": payload.requested_by,
+        "audit_reason_present": has_audit_reason,
+        "explicit_confirmation_present": has_explicit_confirmation,
+        "mutation_scope": payload.mutation_scope,
+        "all_audit_metadata_present": has_audit_reason and has_explicit_confirmation and has_mutation_scope,
+    }
+    audit_preview = {
+        "action": "season_builder_apply_command",
+        "read_only": True,
+        "mutation_permitted": False,
+        "execution_enabled": False,
+        "target_season_label": normalized_target,
+        "source_type": payload.source_type,
+        "source_template_id": payload.source_template_id,
+        "overwrite_policy": payload.overwrite_policy,
+        "preflight_fingerprint": payload.preflight_fingerprint,
+        "reviewed_diff_id": payload.reviewed_diff_id,
+        "dry_run_result_fingerprint": payload.dry_run_result_fingerprint,
+        "dry_run_result_id": payload.dry_run_result_id,
+        "requested_by": payload.requested_by,
+        "audit_reason": payload.audit_reason,
+        "explicit_confirmation_present": has_explicit_confirmation,
+        "mutation_scope": payload.mutation_scope,
+    }
+    return SeasonBuilderApplyCommandContractResponse(
+        enabled=False,
+        can_execute=False,
+        can_mutate=False,
+        target_season_label=normalized_target,
+        source_type=payload.source_type,
+        source_template_id=payload.source_template_id,
+        overwrite_policy=payload.overwrite_policy,
+        validation_errors=errors,
+        validation_warnings=warnings,
+        audit_preview=audit_preview,
+        required_identity=required_identity,
+        required_audit_metadata=required_audit_metadata,
     )

@@ -89,6 +89,23 @@ def assert_preview_matches_endpoint(preview: dict, endpoint_validation: dict) ->
     assert preview["read_only"] is True
 
 
+
+
+def assert_conflict_preview_matches_endpoint(preview: dict, endpoint_conflicts: dict) -> None:
+    assert preview["template_id"] == endpoint_conflicts["template_id"]
+    assert preview["template_exists"] == endpoint_conflicts["template_exists"]
+    assert preview["status"] == endpoint_conflicts["summary"]["status"]
+    assert preview["warning_count"] == endpoint_conflicts["summary"]["warning_count"]
+    assert preview["info_count"] == endpoint_conflicts["summary"]["info_count"]
+    assert preview["conflict_count"] == endpoint_conflicts["summary"]["conflict_count"]
+    assert set(preview["conflict_codes"]) == {item["code"] for item in endpoint_conflicts["conflicts"]}
+    assert set(preview["warning_codes"]) == {item["code"] for item in endpoint_conflicts["conflicts"] if item["severity"] == "warning"}
+    assert set(preview["info_codes"]) == {item["code"] for item in endpoint_conflicts["conflicts"] if item["severity"] == "info"}
+    assert preview["busiest_week"] == endpoint_conflicts["summary"]["busiest_week"]
+    assert preview["busiest_week_slot_count"] == endpoint_conflicts["summary"]["busiest_week_slot_count"]
+    assert preview["read_only"] is True
+
+
 def test_default_template_no_blocking_template_slot_errors(tmp_path: Path) -> None:
     templates = [{"template_id": "default_msa_template_preview", "tour_level": "WORLD_TOUR", "category": "PLATINUM", "event_name": "World A", "region": "EUROPE", "host_country": "ENG", "main_draw_size": 32, "qualification_draw_size": 16, "seeds_count": 8, "qualifier_spots": 4, "wild_cards": 2, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 100000, "prestige": 9, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 1, "active": True}]
     with Server(tmp_path, templates) as server:
@@ -251,6 +268,7 @@ def test_preflight_planned_source_type_has_no_template_slot_preview(tmp_path: Pa
         })
         assert status == 200
         assert body["template_slot_validation_preview"] is None
+        assert body["template_slot_conflict_preview"] is None
 
 
 def test_template_slot_validation_consistent_between_endpoint_preflight_and_dry_run_warnings(tmp_path: Path) -> None:
@@ -258,6 +276,8 @@ def test_template_slot_validation_consistent_between_endpoint_preflight_and_dry_
     templates = [dict(base, template_id="default_msa_template_preview" if i == 0 else f"dup_{i}", event_name=f"Same Event {i}", duration_in_season_weeks=5) for i in range(5)]
     with Server(tmp_path, templates) as server:
         status, endpoint_validation = call("GET", f"{server.base_url}/admin/seasons/templates/default_msa_template_preview/slot-validation")
+        assert status == 200
+        status, endpoint_conflicts = call("GET", f"{server.base_url}/admin/seasons/templates/default_msa_template_preview/slot-conflicts")
         assert status == 200
         status, preflight = _preflight(server)
         assert status == 200
@@ -271,8 +291,12 @@ def test_template_slot_validation_consistent_between_endpoint_preflight_and_dry_
         assert status == 200
         assert preflight["template_slot_validation_preview"] is not None
         assert dry_run["template_slot_validation_preview"] is not None
+        assert preflight["template_slot_conflict_preview"] is not None
+        assert dry_run["template_slot_conflict_preview"] is not None
         assert_preview_matches_endpoint(preflight["template_slot_validation_preview"], endpoint_validation)
         assert_preview_matches_endpoint(dry_run["template_slot_validation_preview"], endpoint_validation)
+        assert_conflict_preview_matches_endpoint(preflight["template_slot_conflict_preview"], endpoint_conflicts)
+        assert_conflict_preview_matches_endpoint(dry_run["template_slot_conflict_preview"], endpoint_conflicts)
         assert any("[template_slot_" in item for item in preflight["validation_warnings"])
         assert any("[template_slot_" in item for item in dry_run["validation_warnings"])
 
@@ -283,6 +307,8 @@ def test_template_slot_validation_consistent_between_endpoint_preflight_and_dry_
         status, endpoint_validation = call("GET", f"{server.base_url}/admin/seasons/templates/default_msa_template_preview/slot-validation")
         assert status == 200
         assert endpoint_validation["summary"]["error_count"] == 0
+        status, endpoint_conflicts = call("GET", f"{server.base_url}/admin/seasons/templates/default_msa_template_preview/slot-conflicts")
+        assert status == 200
         status, preflight = _preflight(server)
         assert status == 200
         status, dry_run = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", {
@@ -295,5 +321,9 @@ def test_template_slot_validation_consistent_between_endpoint_preflight_and_dry_
         assert status == 200
         assert preflight["template_slot_validation_preview"] is not None
         assert dry_run["template_slot_validation_preview"] is not None
+        assert preflight["template_slot_conflict_preview"] is not None
+        assert dry_run["template_slot_conflict_preview"] is not None
         assert_preview_matches_endpoint(preflight["template_slot_validation_preview"], endpoint_validation)
         assert_preview_matches_endpoint(dry_run["template_slot_validation_preview"], endpoint_validation)
+        assert_conflict_preview_matches_endpoint(preflight["template_slot_conflict_preview"], endpoint_conflicts)
+        assert_conflict_preview_matches_endpoint(dry_run["template_slot_conflict_preview"], endpoint_conflicts)

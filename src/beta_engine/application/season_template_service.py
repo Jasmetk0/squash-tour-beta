@@ -8,7 +8,10 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
-from beta_engine.domain.tournaments import SeasonTemplateSlotValidationPreview
+from beta_engine.domain.tournaments import (
+    SeasonTemplateSlotConflictPreview,
+    SeasonTemplateSlotValidationPreview,
+)
 
 
 class SeasonTemplateSlot(BaseModel):
@@ -316,6 +319,31 @@ class SeasonTemplateService:
             issue_codes=issue_summary.issue_codes,
             error_codes=issue_summary.error_codes,
             warning_codes=issue_summary.warning_codes,
+            read_only=True,
+        )
+
+    def build_slot_conflict_preview(
+        self,
+        report: SeasonTemplateSlotConflictReportResponse,
+    ) -> SeasonTemplateSlotConflictPreview | None:
+        if not report.template_exists:
+            return None
+        return SeasonTemplateSlotConflictPreview(
+            template_id=report.template_id,
+            template_exists=report.template_exists,
+            status=report.summary.status,
+            warning_count=report.summary.warning_count,
+            info_count=report.summary.info_count,
+            conflict_count=report.summary.conflict_count,
+            conflict_codes=sorted({conflict.code for conflict in report.conflicts}),
+            warning_codes=sorted(
+                {conflict.code for conflict in report.conflicts if conflict.severity == "warning"}
+            ),
+            info_codes=sorted(
+                {conflict.code for conflict in report.conflicts if conflict.severity == "info"}
+            ),
+            busiest_week=report.summary.busiest_week,
+            busiest_week_slot_count=report.summary.busiest_week_slot_count,
             read_only=True,
         )
 

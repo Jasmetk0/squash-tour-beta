@@ -246,6 +246,22 @@ class SeasonTemplateSlotValidationPreview(BaseModel):
     read_only: bool = True
 
 
+
+
+class SeasonTemplateSlotConflictPreview(BaseModel):
+    template_id: str | None = None
+    template_exists: bool | None = None
+    status: Literal["clean", "warnings", "info"] | None = None
+    warning_count: int = Field(default=0, ge=0)
+    info_count: int = Field(default=0, ge=0)
+    conflict_count: int = Field(default=0, ge=0)
+    conflict_codes: list[str] = Field(default_factory=list)
+    warning_codes: list[str] = Field(default_factory=list)
+    info_codes: list[str] = Field(default_factory=list)
+    busiest_week: int | None = None
+    busiest_week_slot_count: int | None = None
+    read_only: bool = True
+
 class SeasonBuilderPreflightRequest(BaseModel):
     target_season_label: str = Field(min_length=1, max_length=32)
     source_type: str = Field(min_length=1, max_length=64)
@@ -267,6 +283,7 @@ class SeasonBuilderPreflightResponse(BaseModel):
     source_summary: dict[str, Any] = Field(default_factory=dict)
     authoritative_diff_summary: dict[str, Any] = Field(default_factory=dict)
     template_slot_validation_preview: SeasonTemplateSlotValidationPreview | None = None
+    template_slot_conflict_preview: SeasonTemplateSlotConflictPreview | None = None
     validation_warnings: list[str] = Field(default_factory=list)
     validation_errors: list[str] = Field(default_factory=list)
     audit_preview: dict[str, Any] = Field(default_factory=dict)
@@ -297,6 +314,7 @@ class SeasonBuilderDryRunBuildResponse(BaseModel):
     preflight_fingerprint: str
     reviewed_diff_id: str
     template_slot_validation_preview: SeasonTemplateSlotValidationPreview | None = None
+    template_slot_conflict_preview: SeasonTemplateSlotConflictPreview | None = None
     validation_errors: list[str] = Field(default_factory=list)
     validation_warnings: list[str] = Field(default_factory=list)
     audit_preview: dict[str, Any] = Field(default_factory=dict)

@@ -979,6 +979,35 @@ export function extractBracketedIssueCodes(messages: string[]): string[] {
   return extracted
 }
 
+export function readTemplateSlotPreviewIssueCodes(preview: unknown): string[] {
+  if (!preview || typeof preview !== 'object') return []
+  const issueCodes = (preview as { issue_codes?: unknown }).issue_codes
+  if (!Array.isArray(issueCodes) || issueCodes.length === 0) return []
+  const seen = new Set<string>()
+  const codes: string[] = []
+  for (const rawCode of issueCodes) {
+    const normalizedCode = String(rawCode).trim()
+    if (!normalizedCode || seen.has(normalizedCode)) continue
+    seen.add(normalizedCode)
+    codes.push(normalizedCode)
+  }
+  return codes
+}
+
+export function hasUsableTemplateSlotPreview(preview: unknown): boolean {
+  return readTemplateSlotPreviewIssueCodes(preview).length > 0
+}
+
+function readTemplateSlotPreviewSummaryField(preview: unknown, field: 'status' | 'issue_count'): string {
+  if (!preview || typeof preview !== 'object') return 'n/a'
+  const value = (preview as Record<string, unknown>)[field]
+  if (field === 'status') {
+    const normalized = typeof value === 'string' ? value.trim().toLowerCase() : ''
+    return normalized === 'warnings' || normalized === 'errors' || normalized === 'clean' ? normalized : 'n/a'
+  }
+  return typeof value === 'number' && Number.isFinite(value) ? String(value) : 'n/a'
+}
+
 type TemplateSlotValidationPreflightConsistencyPanelProps = {
   slotValidationData?: SeasonTemplateSlotValidationResponse
   preflightResult?: SeasonBuilderPreflightResponse
@@ -995,11 +1024,15 @@ export function TemplateSlotValidationPreflightConsistencyPanel({
   }
 
   const structuredCodes = Array.from(new Set(slotValidationData.issues.map((issue) => issue.code)))
+  const preflightPreviewCodes = readTemplateSlotPreviewIssueCodes(preflightResult?.template_slot_validation_preview)
+  const preflightUsesStructuredPreview = hasUsableTemplateSlotPreview(preflightResult?.template_slot_validation_preview)
   const preflightCodes = preflightResult
-    ? extractBracketedIssueCodes([...preflightResult.validation_warnings, ...preflightResult.validation_errors])
+    ? (preflightUsesStructuredPreview ? preflightPreviewCodes : extractBracketedIssueCodes([...preflightResult.validation_warnings, ...preflightResult.validation_errors]))
     : []
+  const dryRunPreviewCodes = readTemplateSlotPreviewIssueCodes(dryRunResult?.template_slot_validation_preview)
+  const dryRunUsesStructuredPreview = hasUsableTemplateSlotPreview(dryRunResult?.template_slot_validation_preview)
   const dryRunCodes = dryRunResult
-    ? extractBracketedIssueCodes([...dryRunResult.validation_warnings, ...dryRunResult.validation_errors])
+    ? (dryRunUsesStructuredPreview ? dryRunPreviewCodes : extractBracketedIssueCodes([...dryRunResult.validation_warnings, ...dryRunResult.validation_errors]))
     : []
 
   const preflightMissingCodes = structuredCodes.filter((code) => !preflightCodes.includes(code))
@@ -1011,6 +1044,9 @@ export function TemplateSlotValidationPreflightConsistencyPanel({
       <h4>Structured template slot issue codes</h4>
       {structuredCodes.length > 0 ? <ul>{structuredCodes.map((code) => <li key={`structured:${code}`}>{code}</li>)}</ul> : <p>No structured template slot issue codes returned.</p>}
       <h4>Preflight diagnostics issue codes</h4>
+      {preflightResult ? <p>Preflight diagnostics issue codes source: {preflightUsesStructuredPreview ? 'structured preview' : 'bracketed validation messages'}</p> : null}
+      {preflightResult ? <p>Preflight template slot preview status: {readTemplateSlotPreviewSummaryField(preflightResult.template_slot_validation_preview, 'status')}</p> : null}
+      {preflightResult ? <p>Preflight template slot preview issue count: {readTemplateSlotPreviewSummaryField(preflightResult.template_slot_validation_preview, 'issue_count')}</p> : null}
       {preflightResult ? (
         preflightCodes.length > 0 ? <ul>{preflightCodes.map((code) => <li key={`preflight:${code}`}>{code}</li>)}</ul> : <p>No preflight issue codes extracted from diagnostics.</p>
       ) : <p>No builder preflight result to compare yet.</p>}
@@ -1022,6 +1058,9 @@ export function TemplateSlotValidationPreflightConsistencyPanel({
       ) : null}
 
       <h4>Dry-run diagnostics issue codes</h4>
+      {dryRunResult ? <p>Dry-run diagnostics issue codes source: {dryRunUsesStructuredPreview ? 'structured preview' : 'bracketed validation messages'}</p> : null}
+      {dryRunResult ? <p>Dry-run template slot preview status: {readTemplateSlotPreviewSummaryField(dryRunResult.template_slot_validation_preview, 'status')}</p> : null}
+      {dryRunResult ? <p>Dry-run template slot preview issue count: {readTemplateSlotPreviewSummaryField(dryRunResult.template_slot_validation_preview, 'issue_count')}</p> : null}
       {dryRunResult ? (
         dryRunCodes.length > 0 ? <ul>{dryRunCodes.map((code) => <li key={`dry-run:${code}`}>{code}</li>)}</ul> : <p>No dry-run issue codes extracted from diagnostics.</p>
       ) : <p>No dry-run result to compare yet.</p>}

@@ -705,7 +705,6 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Template slot count: 5')).toBeInTheDocument()
     expect(screen.getByText('Template slot week count: 5')).toBeInTheDocument()
     expect(screen.getAllByText('template_slot_duration_long').length).toBeGreaterThan(1)
-    expect(screen.getByText('All structured template slot issue codes are represented in preflight diagnostics.')).toBeInTheDocument()
     expect(screen.getByText('Template slot duration long (duration_in_season_weeks)')).toBeInTheDocument()
     expect(screen.getByText('Template slot duration is unusually long.')).toBeInTheDocument()
     expect(screen.getByText('slot-01-default_msa_template_preview')).toBeInTheDocument()
@@ -2648,7 +2647,7 @@ describe('SeasonTemplateSlotValidationPanel issue code registry fallback', () =>
 })
 
 describe('TemplateSlotValidationPreflightConsistencyPanel', () => {
-  it('shows preflight mismatch when structured issue codes are missing from diagnostics', () => {
+  it('prefers structured preflight preview issue codes when available', () => {
     render(
       <TemplateSlotValidationPreflightConsistencyPanel
         slotValidationData={{
@@ -2674,14 +2673,95 @@ describe('TemplateSlotValidationPreflightConsistencyPanel', () => {
           source_resolved: true,
           source_summary: {},
           authoritative_diff_summary: {},
+          template_slot_validation_preview: {
+            template_id: 'default_msa_template_preview',
+            template_exists: true,
+            status: 'warnings',
+            error_count: 0,
+            warning_count: 1,
+            issue_count: 1,
+            issue_codes: ['template_slot_duration_long'],
+            error_codes: [],
+            warning_codes: ['template_slot_duration_long'],
+            read_only: true
+          },
           validation_warnings: ['[template_slot_duration_long] [slot=slot-01] Template slot duration 5 weeks is unusually long (>3).'],
           validation_errors: [],
           audit_preview: {}
         }}
       />
     )
+    expect(screen.getByText('Preflight diagnostics issue codes source: structured preview')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot preview status: warnings')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot preview issue count: 1')).toBeInTheDocument()
     expect(screen.getByText('Some structured template slot issue codes are missing from preflight diagnostics.')).toBeInTheDocument()
     expect(screen.getAllByText('template_slot_week_overloaded').length).toBeGreaterThan(0)
+    expect(screen.getByText('No dry-run result to compare yet.')).toBeInTheDocument()
+  })
+
+  it('falls back to bracketed preflight diagnostics when preview is missing', () => {
+    render(
+      <TemplateSlotValidationPreflightConsistencyPanel
+        slotValidationData={{
+          template_id: 'default_msa_template_preview',
+          template_exists: true,
+          read_only: true,
+          message: 'ok',
+          summary: { status: 'warnings', error_count: 0, warning_count: 1, issue_count: 1, slot_count: 1 },
+          issues: [{ severity: 'warning', code: 'template_slot_duration_long', message: 'Duration long', slot_id: 'slot-01' }]
+        }}
+        preflightResult={{
+          can_build: false,
+          target_season_label: '2000/2001',
+          source_type: 'season_template',
+          source_template_id: 'default_msa_template_preview',
+          preflight_fingerprint: 'pf',
+          reviewed_diff_id: 'rd',
+          target_calendar_exists: true,
+          target_event_count: 1,
+          source_resolved: true,
+          source_summary: {},
+          authoritative_diff_summary: {},
+          validation_warnings: ['[template_slot_duration_long] warning'],
+          validation_errors: [],
+          audit_preview: {}
+        }}
+      />
+    )
+    expect(screen.getByText('Preflight diagnostics issue codes source: bracketed validation messages')).toBeInTheDocument()
+  })
+
+  it('falls back to bracketed preflight diagnostics when preview is malformed', () => {
+    render(
+      <TemplateSlotValidationPreflightConsistencyPanel
+        slotValidationData={{
+          template_id: 'default_msa_template_preview',
+          template_exists: true,
+          read_only: true,
+          message: 'ok',
+          summary: { status: 'warnings', error_count: 0, warning_count: 1, issue_count: 1, slot_count: 1 },
+          issues: [{ severity: 'warning', code: 'template_slot_duration_long', message: 'Duration long', slot_id: 'slot-01' }]
+        }}
+        preflightResult={{
+          can_build: false,
+          target_season_label: '2000/2001',
+          source_type: 'season_template',
+          source_template_id: 'default_msa_template_preview',
+          preflight_fingerprint: 'pf',
+          reviewed_diff_id: 'rd',
+          target_calendar_exists: true,
+          target_event_count: 1,
+          source_resolved: true,
+          source_summary: {},
+          authoritative_diff_summary: {},
+          template_slot_validation_preview: { issue_codes: 'bad' } as any,
+          validation_warnings: ['[template_slot_duration_long] warning'],
+          validation_errors: [],
+          audit_preview: {}
+        }}
+      />
+    )
+    expect(screen.getByText('Preflight diagnostics issue codes source: bracketed validation messages')).toBeInTheDocument()
   })
 })
 

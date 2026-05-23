@@ -88,6 +88,35 @@ def test_database_bootstrap_creates_required_tables(tmp_path) -> None:
     ]
 
 
+
+
+def test_database_bootstrap_ignores_benign_already_exists_operational_error_and_runs_compatibility(
+    tmp_path, monkeypatch
+) -> None:
+    repository = _repository(tmp_path)
+    repository.bootstrap_schema()
+
+    compatibility_called = {"value": False}
+
+    def _raise_benign(*_args, **_kwargs) -> None:
+        raise OperationalError(
+            statement="CREATE TABLE season_state",
+            params={},
+            orig=RuntimeError("table season_state already exists"),
+        )
+
+    def _record_compatibility() -> None:
+        compatibility_called["value"] = True
+
+    monkeypatch.setattr("beta_engine.infrastructure.db.repositories.Base.metadata.create_all", _raise_benign)
+    monkeypatch.setattr(repository, "_ensure_schema_compatibility", _record_compatibility)
+
+    repository.bootstrap_schema()
+
+    assert compatibility_called["value"] is True
+    assert "season_state" in repository.list_table_names()
+
+
 def test_database_bootstrap_reraises_non_benign_operational_error(tmp_path, monkeypatch) -> None:
     repository = _repository(tmp_path)
 

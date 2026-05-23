@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import inspect
 
 from beta_engine.main import create_app
 
@@ -35,11 +34,10 @@ def test_create_app_builds_runtime_on_startup_with_passed_database_url(monkeypat
 
     assert not hasattr(app.state, "runtime")
 
-    assert len(app.router.on_startup) >= 1
-    startup_hook = app.router.on_startup[0]
-    result = startup_hook()
-    if inspect.isawaitable(result):
-        asyncio.run(result)
+    async def _run_lifespan_startup() -> None:
+        async with app.router.lifespan_context(app):
+            assert app.state.runtime is sentinel_runtime
+
+    asyncio.run(_run_lifespan_startup())
 
     assert build_calls == ["sqlite:///custom.db"]
-    assert app.state.runtime is sentinel_runtime

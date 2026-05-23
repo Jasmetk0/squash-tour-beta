@@ -43,6 +43,7 @@ const api = vi.hoisted(() => ({
   getSeasonActivePlayers: vi.fn(),
   getSeasonCalendar: vi.fn(),
   getSeasonTemplates: vi.fn(),
+  getSeasonTemplateSlotValidation: vi.fn(),
   getSeasonCalendarValidation: vi.fn(),
   getSeasonCalendarValidationIssueCodes: vi.fn(),
   getCategories: vi.fn(),
@@ -181,6 +182,30 @@ describe('Module 17 pages through routes', () => {
       templates: [{ template_id: 'default_msa_template_preview', name: 'Default MSA Template Preview', description: 'Read-only derived preview built from current tournament templates config.', season_count_supported: 40, week_count: 61, slot_count: 1, source: 'derived_preview:tournament_templates', status: 'read_only_foundation', slots: [{ slot_id: 'slot-01-wt_gold_24', season_week_start: 1, season_week_end: 1, duration_weeks: 1, tournament_name: 'World Tour Gold', category: 'GOLD', host_country: 'ENG', region: 'EUROPE', has_qualification: true, qualifying_week_start: 1, main_draw_week_start: 1, source_template_id: 'wt_gold_24', notes: null }] }],
       source_path: 'config/tournament_templates/mvp_templates.json',
       status: 'read_only_foundation'
+    })
+    api.getSeasonTemplateSlotValidation.mockResolvedValue({
+      template_id: 'default_msa_template_preview',
+      template_exists: true,
+      read_only: true,
+      message: 'Template slot validation completed.',
+      summary: {
+        status: 'warnings',
+        error_count: 0,
+        warning_count: 1,
+        issue_count: 1,
+        slot_count: 5,
+        week_count: 5,
+        first_week: 1,
+        last_week: 5
+      },
+      issues: [
+        {
+          severity: 'warning',
+          code: 'template_slot_duration_long',
+          message: 'Template slot duration 5 weeks is unusually long (>3).',
+          slot_id: 'slot-01-default_msa_template_preview'
+        }
+      ]
     })
     api.postSeasonBuilderPreflight.mockResolvedValue({
       can_build: false,
@@ -656,6 +681,18 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('Week count: 61').length).toBeGreaterThan(0)
     expect(screen.getByText('Selected template slot preview')).toBeInTheDocument()
     expect(screen.getByText('Selected template validation summary')).toBeInTheDocument()
+    expect(screen.getByText('Selected template slot validation')).toBeInTheDocument()
+    expect(await screen.findByText(/Read-only selected template slot validation\./)).toBeInTheDocument()
+    expect(screen.getByText(/Template slot validation has warnings but no blocking errors\./)).toBeInTheDocument()
+    expect(screen.getByText(/Template slot validation status: warnings/)).toBeInTheDocument()
+    expect(screen.getByText('Template slot validation errors: 0')).toBeInTheDocument()
+    expect(screen.getByText('Template slot validation warnings: 1')).toBeInTheDocument()
+    expect(screen.getByText('Template slot count: 5')).toBeInTheDocument()
+    expect(screen.getByText('Template slot week count: 5')).toBeInTheDocument()
+    expect(screen.getByText('template_slot_duration_long')).toBeInTheDocument()
+    expect(screen.getByText('slot-01-default_msa_template_preview')).toBeInTheDocument()
+    expect(screen.getByText('Template slot duration 5 weeks is unusually long (>3).')).toBeInTheDocument()
+    expect(api.getSeasonTemplateSlotValidation).toHaveBeenCalledWith('default_msa_template_preview')
     expect(screen.getByText('Target existing calendar preview')).toBeInTheDocument()
     expect(screen.getByText('Overwrite / merge policy preview')).toBeInTheDocument()
     expect(screen.getByText('Overwrite / merge policy selection for preflight')).toBeInTheDocument()

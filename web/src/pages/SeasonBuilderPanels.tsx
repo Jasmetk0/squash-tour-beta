@@ -980,12 +980,19 @@ export function extractBracketedIssueCodes(messages: string[]): string[] {
 }
 
 export function readTemplateSlotPreviewIssueCodes(preview: unknown): string[] {
+  return readTemplateSlotPreviewCodeArrayField(preview, 'issue_codes')
+}
+
+function readTemplateSlotPreviewCodeArrayField(
+  preview: unknown,
+  field: 'issue_codes' | 'error_codes' | 'warning_codes'
+): string[] {
   if (!preview || typeof preview !== 'object') return []
-  const issueCodes = (preview as { issue_codes?: unknown }).issue_codes
-  if (!Array.isArray(issueCodes) || issueCodes.length === 0) return []
+  const rawCodes = (preview as Record<string, unknown>)[field]
+  if (!Array.isArray(rawCodes) || rawCodes.length === 0) return []
   const seen = new Set<string>()
   const codes: string[] = []
-  for (const rawCode of issueCodes) {
+  for (const rawCode of rawCodes) {
     const normalizedCode = String(rawCode).trim()
     if (!normalizedCode || seen.has(normalizedCode)) continue
     seen.add(normalizedCode)
@@ -1015,14 +1022,8 @@ function normalizePreviewScalar(preview: unknown, field: string): string {
   return 'n/a'
 }
 
-function normalizePreviewCodes(preview: unknown, field: string): string {
-  if (!preview || typeof preview !== 'object') return 'none'
-  const raw = (preview as Record<string, unknown>)[field]
-  if (!Array.isArray(raw) || raw.length === 0) return 'none'
-  const normalized = raw
-    .filter((value) => value !== null && value !== undefined)
-    .map((value) => String(value).trim())
-    .filter((value) => value.length > 0)
+function normalizeTemplateSlotPreviewCodes(preview: unknown, field: 'issue_codes' | 'error_codes' | 'warning_codes'): string {
+  const normalized = readTemplateSlotPreviewCodeArrayField(preview, field)
   return normalized.length > 0 ? normalized.join(', ') : 'none'
 }
 
@@ -1052,21 +1053,15 @@ export function TemplateSlotValidationPreviewSummaryPanel({ titlePrefix, preview
       <p>{titlePrefix} template slot validation error count: {normalizePreviewScalar(preview, 'error_count')}</p>
       <p>{titlePrefix} template slot validation warning count: {normalizePreviewScalar(preview, 'warning_count')}</p>
       <p>{titlePrefix} template slot validation issue count: {normalizePreviewScalar(preview, 'issue_count')}</p>
-      <p>{titlePrefix} template slot validation issue codes: {normalizePreviewCodes(preview, 'issue_codes')}</p>
-      <p>{titlePrefix} template slot validation error codes: {normalizePreviewCodes(preview, 'error_codes')}</p>
-      <p>{titlePrefix} template slot validation warning codes: {normalizePreviewCodes(preview, 'warning_codes')}</p>
+      <p>{titlePrefix} template slot validation issue codes: {normalizeTemplateSlotPreviewCodes(preview, 'issue_codes')}</p>
+      <p>{titlePrefix} template slot validation error codes: {normalizeTemplateSlotPreviewCodes(preview, 'error_codes')}</p>
+      <p>{titlePrefix} template slot validation warning codes: {normalizeTemplateSlotPreviewCodes(preview, 'warning_codes')}</p>
     </>
   )
 }
 
 function readTemplateSlotPreviewSummaryField(preview: unknown, field: 'status' | 'issue_count'): string {
-  if (!preview || typeof preview !== 'object') return 'n/a'
-  const value = (preview as Record<string, unknown>)[field]
-  if (field === 'status') {
-    const normalized = typeof value === 'string' ? value.trim().toLowerCase() : ''
-    return normalized === 'warnings' || normalized === 'errors' || normalized === 'clean' ? normalized : 'n/a'
-  }
-  return typeof value === 'number' && Number.isFinite(value) ? String(value) : 'n/a'
+  return normalizePreviewScalar(preview, field)
 }
 
 type TemplateSlotValidationPreflightConsistencyPanelProps = {

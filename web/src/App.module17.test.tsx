@@ -2827,6 +2827,59 @@ describe('TemplateSlotValidationPreviewSummaryPanel', () => {
     expect(screen.getByText('Preflight template slot validation warning codes: none')).toBeInTheDocument()
     expect(screen.getByText('Preflight template slot validation read-only: n/a')).toBeInTheDocument()
   })
+
+  it('dedupes and normalizes issue code arrays consistently for summary and consistency source selection', () => {
+    render(
+      <>
+        <TemplateSlotValidationPreviewSummaryPanel
+          titlePrefix="Preflight"
+          preview={{
+            template_id: 'default_msa_template_preview',
+            template_exists: true,
+            status: 'warnings',
+            error_count: 0,
+            warning_count: 1,
+            issue_count: 1,
+            issue_codes: ['template_slot_duration_long', ' ', 'template_slot_duration_long', 123],
+            error_codes: [],
+            warning_codes: ['template_slot_duration_long'],
+            read_only: true
+          }}
+        />
+        <TemplateSlotValidationPreflightConsistencyPanel
+          slotValidationData={{
+            template_id: 'default_msa_template_preview',
+            template_exists: true,
+            read_only: true,
+            message: 'ok',
+            summary: { status: 'warnings', error_count: 0, warning_count: 1, issue_count: 1, slot_count: 1 },
+            issues: [{ severity: 'warning', code: 'template_slot_duration_long', message: 'Duration long', slot_id: 'slot-01' }]
+          }}
+          preflightResult={{
+            can_build: false,
+            target_season_label: '2000/2001',
+            source_type: 'season_template',
+            source_template_id: 'default_msa_template_preview',
+            preflight_fingerprint: 'pf',
+            reviewed_diff_id: 'rd',
+            target_calendar_exists: true,
+            target_event_count: 1,
+            source_resolved: true,
+            source_summary: {},
+            authoritative_diff_summary: {},
+            template_slot_validation_preview: {
+              issue_codes: ['template_slot_duration_long', ' ', 'template_slot_duration_long', 123]
+            },
+            validation_warnings: ['[template_slot_duration_long] warning'],
+            validation_errors: [],
+            audit_preview: {}
+          }}
+        />
+      </>
+    )
+    expect(screen.getByText('Preflight template slot validation issue codes: template_slot_duration_long, 123')).toBeInTheDocument()
+    expect(screen.getByText('Preflight diagnostics issue codes source: structured preview')).toBeInTheDocument()
+  })
 })
 
 describe('ApplyResponseVsTargetValidationComparisonPanel', () => {

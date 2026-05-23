@@ -174,3 +174,15 @@ def test_slot_validation_issue_codes_route_does_not_conflict_with_template_valid
         assert status == 200
         assert validation["template_id"] == "default_msa_template_preview"
         assert validation["template_exists"] is True
+
+
+def test_preflight_planned_source_type_has_no_template_slot_preview(tmp_path: Path) -> None:
+    templates = [{"template_id": "default_msa_template_preview", "tour_level": "WORLD_TOUR", "category": "PLATINUM", "event_name": "World A", "region": "EUROPE", "host_country": "ENG", "main_draw_size": 32, "qualification_draw_size": 16, "seeds_count": 8, "qualifier_spots": 4, "wild_cards": 2, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 100000, "prestige": 9, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 1, "active": True}]
+    with Server(tmp_path, templates) as server:
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/preflight", {
+            "target_season_label": "2035/2036",
+            "source_type": "planned",
+        })
+        assert status == 200
+        assert body["template_slot_validation_preview"] is None
+

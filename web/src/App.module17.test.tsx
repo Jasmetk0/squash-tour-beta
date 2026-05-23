@@ -2840,7 +2840,7 @@ describe('TemplateSlotValidationPreviewSummaryPanel', () => {
             error_count: 0,
             warning_count: 1,
             issue_count: 1,
-            issue_codes: ['template_slot_duration_long', ' ', 'template_slot_duration_long', 123],
+            issue_codes: ['template_slot_duration_long', ' ', 'template_slot_duration_long', '123'],
             error_codes: [],
             warning_codes: ['template_slot_duration_long'],
             read_only: true
@@ -2868,7 +2868,7 @@ describe('TemplateSlotValidationPreviewSummaryPanel', () => {
             source_summary: {},
             authoritative_diff_summary: {},
             template_slot_validation_preview: {
-              issue_codes: ['template_slot_duration_long', ' ', 'template_slot_duration_long', 123]
+              issue_codes: ['template_slot_duration_long', ' ', 'template_slot_duration_long', '123']
             },
             validation_warnings: ['[template_slot_duration_long] warning'],
             validation_errors: [],

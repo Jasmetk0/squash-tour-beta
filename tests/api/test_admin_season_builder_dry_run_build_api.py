@@ -72,6 +72,21 @@ def create_calendar(server: Server, season: str) -> None:
     assert status == 200
 
 
+def assert_conflict_preview_is_null(body: dict) -> None:
+    assert body["template_slot_conflict_preview"] is None
+
+
+def assert_conflict_preview_is_present(body: dict, template_id: str) -> None:
+    preview = body["template_slot_conflict_preview"]
+    assert preview is not None
+    assert preview["read_only"] is True
+    assert preview["template_id"] == template_id
+    assert preview["template_exists"] is True
+    assert isinstance(preview["conflict_count"], int)
+    assert preview["conflict_count"] >= 0
+    assert isinstance(preview["conflict_codes"], list)
+
+
 def test_builder_dry_run_build_minimal_contract(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         payload = {
@@ -614,3 +629,83 @@ def test_builder_dry_run_build_result_identity_excludes_audit_metadata(tmp_path:
         assert second["dry_run_result_preview"]["validation_summary"]["status"] == "clean"
         assert first["dry_run_result_preview"]["dry_run_result_fingerprint"] == second["dry_run_result_preview"]["dry_run_result_fingerprint"]
         assert first["dry_run_result_preview"]["dry_run_result_id"] == second["dry_run_result_preview"]["dry_run_result_id"]
+
+def test_builder_preflight_resolved_template_includes_conflict_preview(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2036/2037",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+        }
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/preflight", payload)
+        assert status == 200
+        assert_conflict_preview_is_present(body, "default_msa_template_preview")
+
+
+def test_builder_preflight_planned_source_has_null_conflict_preview(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2036/2037",
+            "source_type": "blank_calendar_planned",
+        }
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/preflight", payload)
+        assert status == 200
+        assert_conflict_preview_is_null(body)
+        assert "Source type 'blank_calendar_planned' is planned and not executable yet in this phase." in body["validation_warnings"]
+
+
+def test_builder_dry_run_resolved_template_includes_conflict_preview(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2036/2037",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "preflight_fingerprint": "pf_resolved",
+            "reviewed_diff_id": "rd_resolved",
+        }
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        assert status == 200
+        assert body["can_mutate"] is False
+        assert_conflict_preview_is_present(body, "default_msa_template_preview")
+
+
+def test_builder_dry_run_unavailable_preview_paths_return_null_preview(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        missing_source_payload = {
+            "target_season_label": "2036/2037",
+            "source_type": "season_template",
+            "preflight_fingerprint": "pf_missing",
+            "reviewed_diff_id": "rd_missing",
+        }
+        unknown_source_payload = {
+            "target_season_label": "2036/2037",
+            "source_type": "season_template",
+            "source_template_id": "unknown_template",
+            "preflight_fingerprint": "pf_unknown",
+            "reviewed_diff_id": "rd_unknown",
+        }
+        non_template_payload = {
+            "target_season_label": "2036/2037",
+            "source_type": "calendar_snapshot",
+            "preflight_fingerprint": "pf_non_template",
+            "reviewed_diff_id": "rd_non_template",
+        }
+
+        status_missing, body_missing = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", missing_source_payload)
+        status_unknown, body_unknown = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", unknown_source_payload)
+        status_non_template, body_non_template = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", non_template_payload)
+
+        assert status_missing == 200
+        assert body_missing["can_mutate"] is False
+        assert body_missing["dry_run_result_preview"]["status"] == "blocked_unresolved_source"
+        assert_conflict_preview_is_null(body_missing)
+
+        assert status_unknown == 200
+        assert body_unknown["can_mutate"] is False
+        assert body_unknown["dry_run_result_preview"]["status"] == "blocked_unresolved_source"
+        assert_conflict_preview_is_null(body_unknown)
+
+        assert status_non_template == 200
+        assert body_non_template["can_mutate"] is False
+        assert body_non_template["dry_run_result_preview"]["status"] == "unsupported_source_type"
+        assert_conflict_preview_is_null(body_non_template)

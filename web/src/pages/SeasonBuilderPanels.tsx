@@ -1302,9 +1302,9 @@ function normalizeConflictCodesDisplay(value: unknown): string {
   return codes.length ? codes.join(', ') : 'none'
 }
 
-export function readDryRunTemplateConflictSummary(dryRunResultPreview: unknown): DryRunTemplateConflictSummaryDisplay | null {
-  if (!dryRunResultPreview || typeof dryRunResultPreview !== 'object') return null
-  const summary = (dryRunResultPreview as Record<string, unknown>).template_conflict_summary
+function readTemplateConflictSummary(summaryContainer: unknown): DryRunTemplateConflictSummaryDisplay | null {
+  if (!summaryContainer || typeof summaryContainer !== 'object') return null
+  const summary = (summaryContainer as Record<string, unknown>).template_conflict_summary
   if (!summary || typeof summary !== 'object') return null
   const summaryRecord = summary as Record<string, unknown>
 
@@ -1322,6 +1322,38 @@ export function readDryRunTemplateConflictSummary(dryRunResultPreview: unknown):
     source: normalizeNonEmptyStringDisplay(summaryRecord.source),
     message: normalizeNonEmptyStringDisplay(summaryRecord.message)
   }
+}
+
+export function readDryRunTemplateConflictSummary(dryRunResultPreview: unknown): DryRunTemplateConflictSummaryDisplay | null {
+  return readTemplateConflictSummary(dryRunResultPreview)
+}
+
+export function readPreflightTemplateConflictSummary(authoritativeDiffSummary: unknown): DryRunTemplateConflictSummaryDisplay | null {
+  return readTemplateConflictSummary(authoritativeDiffSummary)
+}
+
+
+export function PreflightTemplateConflictSummaryPanel({ authoritativeDiffSummary }: { authoritativeDiffSummary?: unknown }): JSX.Element {
+  const summary = readPreflightTemplateConflictSummary(authoritativeDiffSummary)
+  if (!summary) return <p>Preflight template conflict summary is not available.</p>
+
+  return (
+    <>
+      <p>Preflight template conflict summary</p>
+      <p>Preflight template conflict diagnostics available: {summary.available}</p>
+      <p>Preflight template conflict diagnostics read-only: {summary.readOnly}</p>
+      <p>Preflight template conflict diagnostics non-blocking: {summary.nonBlocking}</p>
+      <p>Preflight template conflict status: {summary.status}</p>
+      <p>Preflight template conflict warning count: {summary.warningCount}</p>
+      <p>Preflight template conflict info count: {summary.infoCount}</p>
+      <p>Preflight template conflict conflict count: {summary.conflictCount}</p>
+      <p>Preflight template conflict conflict codes: {summary.conflictCodes}</p>
+      <p>Preflight template conflict busiest week: {summary.busiestWeek}</p>
+      <p>Preflight template conflict busiest week slot count: {summary.busiestWeekSlotCount}</p>
+      <p>Preflight template conflict source: {summary.source}</p>
+      <p>Preflight template conflict message: {summary.message}</p>
+    </>
+  )
 }
 
 export function DryRunTemplateConflictSummaryPanel({ dryRunResultPreview }: { dryRunResultPreview?: unknown }): JSX.Element {

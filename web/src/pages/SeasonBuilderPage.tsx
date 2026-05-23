@@ -48,6 +48,7 @@ import {
   TemplateSlotValidationPreviewSummaryPanel,
   TemplateSlotConflictPreviewSummaryPanel,
   DryRunTemplateConflictSummaryPanel,
+  PreflightTemplateConflictSummaryPanel,
   TemplateSlotConflictCodeRegistryPanel,
   TemplateSlotValidationPreflightConsistencyPanel,
   TemplateSlotConflictPreflightConsistencyPanel
@@ -585,6 +586,11 @@ export function AdminSeasonBuilderPage(): JSX.Element {
         <TemplateSlotConflictPreviewSummaryPanel
           titlePrefix="Preflight"
           preview={backendPreflightQuery.data?.template_slot_conflict_preview}
+        />
+      </SectionCard>
+      <SectionCard title="Preflight template conflict summary">
+        <PreflightTemplateConflictSummaryPanel
+          authoritativeDiffSummary={backendPreflightQuery.data?.authoritative_diff_summary}
         />
       </SectionCard>
 

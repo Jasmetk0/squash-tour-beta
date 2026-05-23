@@ -1433,6 +1433,57 @@ export function extractConflictCodesFromReport(report: SeasonTemplateSlotConflic
   return codes
 }
 
+type TemplateConflictDiagnosticsOverviewPanelProps = {
+  selectedConflictReport?: SeasonTemplateSlotConflictReportResponse
+  preflightResult?: SeasonBuilderPreflightResponse
+  dryRunResult?: SeasonBuilderDryRunBuildResponse
+}
+
+export function TemplateConflictDiagnosticsOverviewPanel({
+  selectedConflictReport,
+  preflightResult,
+  dryRunResult
+}: TemplateConflictDiagnosticsOverviewPanelProps): JSX.Element {
+  const selectedAvailable = Boolean(selectedConflictReport)
+  const selectedStatus = selectedConflictReport?.summary?.status ?? 'n/a'
+  const selectedConflictCount = typeof selectedConflictReport?.summary?.conflict_count === 'number'
+    ? String(selectedConflictReport.summary.conflict_count)
+    : 'n/a'
+
+  const preflightPreview = preflightResult?.template_slot_conflict_preview
+  const preflightPreviewAvailable = Boolean(preflightPreview)
+  const preflightSummary = readPreflightTemplateConflictSummary(preflightResult?.authoritative_diff_summary)
+  const preflightSummaryAvailable = Boolean(preflightSummary)
+  const preflightStatus = preflightSummary?.status ?? readTemplateSlotConflictPreviewSummaryField(preflightPreview, 'status')
+  const preflightConflictCount = preflightSummary?.conflictCount ?? readTemplateSlotConflictPreviewSummaryField(preflightPreview, 'conflict_count')
+
+  const dryRunPreview = dryRunResult?.template_slot_conflict_preview
+  const dryRunPreviewAvailable = Boolean(dryRunPreview)
+  const dryRunSummary = readDryRunTemplateConflictSummary(dryRunResult?.dry_run_result_preview)
+  const dryRunSummaryAvailable = Boolean(dryRunSummary)
+  const dryRunStatus = dryRunSummary?.status ?? readTemplateSlotConflictPreviewSummaryField(dryRunPreview, 'status')
+  const dryRunConflictCount = dryRunSummary?.conflictCount ?? readTemplateSlotConflictPreviewSummaryField(dryRunPreview, 'conflict_count')
+
+  return (
+    <>
+      <p>Read-only template conflict diagnostics overview.</p>
+      <p>Selected conflict report: {selectedAvailable ? 'available' : 'unavailable'}</p>
+      <p>Selected conflict status: {selectedAvailable ? selectedStatus : 'n/a'}</p>
+      <p>Selected conflict count: {selectedAvailable ? selectedConflictCount : 'n/a'}</p>
+      <p>Preflight conflict preview: {preflightPreviewAvailable ? 'available' : 'unavailable'}</p>
+      <p>Preflight conflict summary: {preflightSummaryAvailable ? 'available' : 'unavailable'}</p>
+      <p>Preflight conflict status: {preflightResult ? preflightStatus : 'n/a'}</p>
+      <p>Preflight conflict count: {preflightResult ? preflightConflictCount : 'n/a'}</p>
+      <p>Dry-run conflict preview: {dryRunPreviewAvailable ? 'available' : 'unavailable'}</p>
+      <p>Dry-run conflict summary: {dryRunSummaryAvailable ? 'available' : 'unavailable'}</p>
+      <p>Dry-run conflict status: {dryRunResult ? dryRunStatus : 'n/a'}</p>
+      <p>Dry-run conflict count: {dryRunResult ? dryRunConflictCount : 'n/a'}</p>
+      <p>Conflict diagnostics mutation behavior: unavailable</p>
+      <p>Conflict diagnostics blocking behavior: non-blocking</p>
+    </>
+  )
+}
+
 type TemplateSlotValidationPreflightConsistencyPanelProps = {
   slotValidationData?: SeasonTemplateSlotValidationResponse
   preflightResult?: SeasonBuilderPreflightResponse

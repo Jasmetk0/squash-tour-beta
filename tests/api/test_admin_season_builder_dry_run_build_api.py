@@ -74,6 +74,21 @@ def create_calendar(server: Server, season: str) -> None:
 
 def assert_conflict_preview_is_null(body: dict) -> None:
     assert body["template_slot_conflict_preview"] is None
+    dry_run_preview = body.get("dry_run_result_preview")
+    if not isinstance(dry_run_preview, dict):
+        return
+    summary = dry_run_preview["template_conflict_summary"]
+    assert summary["available"] is False
+    assert summary["read_only"] is True
+    assert summary["non_blocking"] is True
+    assert summary["status"] is None
+    assert summary["warning_count"] == 0
+    assert summary["info_count"] == 0
+    assert summary["conflict_count"] == 0
+    assert summary["conflict_codes"] == []
+    assert summary["busiest_week"] is None
+    assert summary["busiest_week_slot_count"] is None
+    assert summary["source"] == "template_slot_conflict_preview"
 
 
 def assert_conflict_preview_is_present(body: dict, template_id: str) -> None:
@@ -85,6 +100,21 @@ def assert_conflict_preview_is_present(body: dict, template_id: str) -> None:
     assert isinstance(preview["conflict_count"], int)
     assert preview["conflict_count"] >= 0
     assert isinstance(preview["conflict_codes"], list)
+    dry_run_preview = body.get("dry_run_result_preview")
+    if not isinstance(dry_run_preview, dict):
+        return
+    summary = dry_run_preview["template_conflict_summary"]
+    assert summary["available"] is True
+    assert summary["read_only"] is True
+    assert summary["non_blocking"] is True
+    assert summary["status"] == preview["status"]
+    assert summary["warning_count"] == preview["warning_count"]
+    assert summary["info_count"] == preview["info_count"]
+    assert summary["conflict_count"] == preview["conflict_count"]
+    assert summary["conflict_codes"] == preview["conflict_codes"]
+    assert summary["busiest_week"] == preview["busiest_week"]
+    assert summary["busiest_week_slot_count"] == preview["busiest_week_slot_count"]
+    assert summary["source"] == "template_slot_conflict_preview"
 
 
 def test_builder_dry_run_build_minimal_contract(tmp_path: Path) -> None:

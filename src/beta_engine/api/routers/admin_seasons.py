@@ -792,6 +792,24 @@ def post_season_builder_dry_run_build_contract(
             "read_only": True,
             "mutation_permitted": False,
         },
+        "template_conflict_summary": {
+            "available": template_slot_conflict_preview is not None,
+            "read_only": True,
+            "non_blocking": True,
+            "status": template_slot_conflict_preview.status if template_slot_conflict_preview else None,
+            "warning_count": template_slot_conflict_preview.warning_count if template_slot_conflict_preview else 0,
+            "info_count": template_slot_conflict_preview.info_count if template_slot_conflict_preview else 0,
+            "conflict_count": template_slot_conflict_preview.conflict_count if template_slot_conflict_preview else 0,
+            "conflict_codes": list(template_slot_conflict_preview.conflict_codes) if template_slot_conflict_preview else [],
+            "busiest_week": template_slot_conflict_preview.busiest_week if template_slot_conflict_preview else None,
+            "busiest_week_slot_count": template_slot_conflict_preview.busiest_week_slot_count if template_slot_conflict_preview else None,
+            "source": "template_slot_conflict_preview",
+            "message": (
+                "Template slot conflict diagnostics are available as read-only non-blocking preview."
+                if template_slot_conflict_preview
+                else "Template slot conflict diagnostics are unavailable for this dry-run source."
+            ),
+        },
     }
     blocking_count = 0
     warning_count = 0
@@ -876,6 +894,7 @@ def post_season_builder_dry_run_build_contract(
         "validation_summary": dry_run_result_preview["validation_summary"],
         "plan_readiness": dry_run_result_preview["plan_readiness"],
         "result_metadata": dry_run_result_preview["result_metadata"],
+        "template_conflict_summary": dry_run_result_preview["template_conflict_summary"],
     }
     dry_run_result_fingerprint = f"drf_{_build_deterministic_digest({'kind': 'dry_run_result_fingerprint', 'payload': dry_run_identity_payload})[:16]}"
     dry_run_result_id = f"drr_{_build_deterministic_digest({'kind': 'dry_run_result_id', 'payload': dry_run_identity_payload})[:16]}"

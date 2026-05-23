@@ -65,3 +65,23 @@ def test_build_slot_validation_preview_returns_none_when_template_missing(tmp_pa
         template_exists=False,
     )
     assert preview is None
+
+
+def test_build_slot_validation_preview_prefers_errors_for_mixed_issues(tmp_path):
+    config_path = tmp_path / "templates.json"
+    config_path.write_text('{"templates":[]}', encoding="utf-8")
+    service = SeasonTemplateService(template_service=TournamentTemplatesConfigService(config_path=config_path))
+    issues = [
+        SeasonTemplateValidationIssue(severity="warning", code="template_slot_duration_long", message="w", slot_id="s1"),
+        SeasonTemplateValidationIssue(severity="error", code="template_slot_category_missing", message="e", slot_id="s1"),
+    ]
+    preview = service.build_slot_validation_preview(
+        issues=issues,
+        template_id="default_msa_template_preview",
+        template_exists=True,
+    )
+    assert preview is not None
+    assert preview.status == "errors"
+    assert preview.error_count == 1
+    assert preview.warning_count == 1
+    assert preview.issue_count == 2

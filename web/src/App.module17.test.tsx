@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotValidationPreflightConsistencyPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -829,6 +829,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Read-only design preview. No backend preflight endpoint is called from this page.')).toBeInTheDocument()
     expect(screen.getByText('Backend preflight result')).toBeInTheDocument()
     expect(screen.getByText('Authoritative read-only backend preflight result. This endpoint does not build, merge, overwrite, or apply anything.')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot validation preview')).toBeInTheDocument()
     expect(screen.getByText('Future build command contract preview')).toBeInTheDocument()
     expect((await screen.findAllByText('can_build')).length).toBeGreaterThan(0)
     expect(screen.getAllByText('mutation_permitted').length).toBeGreaterThan(0)
@@ -1666,6 +1667,8 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('Reviewed diff identity is available.').length).toBeGreaterThan(0)
     expect(screen.getByText('Readiness remains blocked until a separate audited backend command is implemented.')).toBeInTheDocument()
     expect(screen.getByText('Disabled dry-run build contract result')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot validation preview')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot validation preview is not available.')).toBeInTheDocument()
     expect(screen.getByText('Disabled dry-run readiness summary')).toBeInTheDocument()
     expect(screen.getByText('Dry-run audit metadata preview inputs')).toBeInTheDocument()
     expect(screen.getByText('Dry-run build command contract exists, but execution is disabled in this phase.')).toBeInTheDocument()
@@ -2771,6 +2774,58 @@ describe('TemplateSlotValidationPreflightConsistencyPanel', () => {
       />
     )
     expect(screen.getByText('Preflight diagnostics issue codes source: bracketed validation messages')).toBeInTheDocument()
+  })
+})
+
+describe('TemplateSlotValidationPreviewSummaryPanel', () => {
+  it('shows unavailable message when preview is missing', () => {
+    render(<TemplateSlotValidationPreviewSummaryPanel titlePrefix="Preflight" preview={undefined} />)
+    expect(screen.getByText('Preflight template slot validation preview is not available.')).toBeInTheDocument()
+  })
+
+  it('shows normalized rows for valid preview', () => {
+    render(
+      <TemplateSlotValidationPreviewSummaryPanel
+        titlePrefix="Dry-run"
+        preview={{
+          template_id: 'default_msa_template_preview',
+          template_exists: true,
+          status: 'warnings',
+          error_count: 0,
+          warning_count: 1,
+          issue_count: 1,
+          issue_codes: ['template_slot_duration_long'],
+          error_codes: [],
+          warning_codes: ['template_slot_duration_long'],
+          read_only: true
+        }}
+      />
+    )
+    expect(screen.getByText('Dry-run template slot validation preview')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot validation template ID: default_msa_template_preview')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot validation template exists: true')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot validation read-only: true')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot validation status: warnings')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot validation issue count: 1')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot validation issue codes: template_slot_duration_long')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot validation warning codes: template_slot_duration_long')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot validation error codes: none')).toBeInTheDocument()
+  })
+
+  it('handles malformed fields safely', () => {
+    render(
+      <TemplateSlotValidationPreviewSummaryPanel
+        titlePrefix="Preflight"
+        preview={{ template_id: '', template_exists: null, status: 42, error_count: NaN, issue_codes: 'bad', error_codes: [null, ''], warning_codes: [], read_only: 'yes' }}
+      />
+    )
+    expect(screen.getByText('Preflight template slot validation template ID: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot validation template exists: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot validation status: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot validation error count: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot validation issue codes: none')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot validation warning codes: none')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot validation read-only: n/a')).toBeInTheDocument()
   })
 })
 

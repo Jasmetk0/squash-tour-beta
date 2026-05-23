@@ -181,6 +181,40 @@ export type SeasonTemplateSlotValidationResponse = {
   message: string
 }
 
+
+export type SeasonTemplateSlotConflict = {
+  severity: 'warning' | 'info'
+  code: string
+  message: string
+  season_week?: number | null
+  slot_ids?: string[]
+  categories?: string[]
+  tour_levels?: string[]
+  host_countries?: string[]
+  read_only?: boolean
+}
+
+export type SeasonTemplateSlotConflictSummary = {
+  status: 'clean' | 'warnings' | 'info'
+  warning_count: number
+  info_count: number
+  conflict_count: number
+  slot_count: number
+  occupied_week_count: number
+  busiest_week?: number | null
+  busiest_week_slot_count?: number | null
+  read_only?: boolean
+}
+
+export type SeasonTemplateSlotConflictReportResponse = {
+  template_id: string
+  template_exists: boolean
+  read_only: boolean
+  summary: SeasonTemplateSlotConflictSummary
+  conflicts: SeasonTemplateSlotConflict[]
+  message: string
+}
+
 export type SeasonTemplateSlotValidationIssueCodeMetadata = {
   code: string
   severity: 'warning' | 'error'

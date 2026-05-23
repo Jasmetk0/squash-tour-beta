@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -45,6 +45,7 @@ const api = vi.hoisted(() => ({
   getSeasonTemplates: vi.fn(),
   getSeasonTemplateSlotValidation: vi.fn(),
   getSeasonTemplateSlotValidationIssueCodes: vi.fn(),
+  getSeasonTemplateSlotConflicts: vi.fn(),
   getSeasonCalendarValidation: vi.fn(),
   getSeasonCalendarValidationIssueCodes: vi.fn(),
   getCategories: vi.fn(),
@@ -207,6 +208,14 @@ describe('Module 17 pages through routes', () => {
           slot_id: 'slot-01-default_msa_template_preview'
         }
       ]
+    })
+    api.getSeasonTemplateSlotConflicts.mockResolvedValue({
+      template_id: 'default_msa_template_preview',
+      template_exists: true,
+      read_only: true,
+      message: 'Template slot conflict analysis completed.',
+      summary: { status: 'warnings', warning_count: 1, info_count: 2, conflict_count: 3, slot_count: 5, occupied_week_count: 5, busiest_week: 5, busiest_week_slot_count: 4, read_only: true },
+      conflicts: [{ severity: 'warning', code: 'template_conflict_week_overloaded', message: 'Season week 5 has 4 template slots.', season_week: 5, slot_ids: ['slot-01-default_msa_template_preview'], categories: ['PLATINUM'], tour_levels: ['WORLD_TOUR'], host_countries: ['ENG'], read_only: true }]
     })
     api.getSeasonTemplateSlotValidationIssueCodes.mockResolvedValue({
       read_only: true,
@@ -717,6 +726,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Selected template slot preview')).toBeInTheDocument()
     expect(screen.getByText('Selected template validation summary')).toBeInTheDocument()
     expect(screen.getByText('Selected template slot validation')).toBeInTheDocument()
+    expect(screen.getByText('Selected template slot conflict analysis')).toBeInTheDocument()
     expect(screen.getByText('Template slot validation vs builder diagnostics consistency')).toBeInTheDocument()
     expect(await screen.findByText('Read-only consistency check between structured template slot validation and builder diagnostics.')).toBeInTheDocument()
     expect(await screen.findByText('Preflight diagnostics issue codes source: structured preview')).toBeInTheDocument()
@@ -734,10 +744,20 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('template_slot_duration_long').length).toBeGreaterThan(1)
     expect(screen.getByText('Template slot duration long (duration_in_season_weeks)')).toBeInTheDocument()
     expect(screen.getByText('Template slot duration is unusually long.')).toBeInTheDocument()
-    expect(screen.getByText('slot-01-default_msa_template_preview')).toBeInTheDocument()
+    expect(screen.getAllByText('slot-01-default_msa_template_preview').length).toBeGreaterThan(0)
     expect(screen.getByText('Template slot duration 5 weeks is unusually long (>3).')).toBeInTheDocument()
     expect(api.getSeasonTemplateSlotValidation).toHaveBeenCalledWith('default_msa_template_preview')
     expect(api.getSeasonTemplateSlotValidationIssueCodes).toHaveBeenCalled()
+    expect(api.getSeasonTemplateSlotConflicts).toHaveBeenCalledWith('default_msa_template_preview')
+    expect(screen.getByText('Read-only selected template slot conflict analysis. No mutation path is available in this panel.')).toBeInTheDocument()
+    expect(screen.getByText('Template slot conflict analysis has schedule warnings.')).toBeInTheDocument()
+    expect(screen.getByText('Selected template slot conflict status: warnings')).toBeInTheDocument()
+    expect(screen.getByText('Selected template slot conflict warning count: 1')).toBeInTheDocument()
+    expect(screen.getByText('Selected template slot conflict info count: 2')).toBeInTheDocument()
+    expect(screen.getByText('Selected template slot conflict conflict count: 3')).toBeInTheDocument()
+    expect(screen.getByText('template_conflict_week_overloaded')).toBeInTheDocument()
+    expect(screen.getByText('Season week 5 has 4 template slots.')).toBeInTheDocument()
+    expect(screen.getAllByText('slot-01-default_msa_template_preview').length).toBeGreaterThan(0)
     expect(screen.getByText('Target existing calendar preview')).toBeInTheDocument()
     expect(screen.getByText('Overwrite / merge policy preview')).toBeInTheDocument()
     expect(screen.getByText('Overwrite / merge policy selection for preflight')).toBeInTheDocument()
@@ -1722,7 +1742,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Conflict computation is not implemented in this phase.')).toBeInTheDocument()
     expect(screen.getByText('Week conflict shape')).toBeInTheDocument()
     expect(screen.getByText('week_overlap')).toBeInTheDocument()
-    expect(screen.getByText('season_week')).toBeInTheDocument()
+    expect(screen.getAllByText('season_week').length).toBeGreaterThan(0)
     expect(screen.getAllByText('existing_event_id').length).toBeGreaterThan(0)
     expect(screen.getByText('Slot conflict shape')).toBeInTheDocument()
     expect(screen.getByText('slot_collision')).toBeInTheDocument()
@@ -3143,5 +3163,22 @@ describe('TemplateSlotConflictPreviewSummaryPanel', () => {
     expect(screen.getByText('Preflight template slot conflict warning codes: none')).toBeInTheDocument()
     expect(screen.getByText('Preflight template slot conflict busiest week: n/a')).toBeInTheDocument()
     expect(screen.getByText('Preflight template slot conflict busiest week slot count: n/a')).toBeInTheDocument()
+  })
+})
+
+
+describe('SeasonTemplateSlotConflictPanel', () => {
+  it('renders clean/info/missing/no-conflicts/hidden-count states', () => {
+    const { rerender } = render(<SeasonTemplateSlotConflictPanel queryEnabled={true} query={{ isLoading: false, isFetching: false, error: null, data: { template_id: 't', template_exists: true, read_only: true, message: 'm', summary: { status: 'clean', warning_count: 0, info_count: 0, conflict_count: 0, slot_count: 1, occupied_week_count: 1 }, conflicts: [] } }} />)
+    expect(screen.getByText('Template slot conflict analysis is clean.')).toBeInTheDocument()
+    expect(screen.getByText('No template slot conflicts reported.')).toBeInTheDocument()
+
+    rerender(<SeasonTemplateSlotConflictPanel queryEnabled={true} query={{ isLoading: false, isFetching: false, error: null, data: { template_id: 't', template_exists: false, read_only: true, message: 'missing', summary: { status: 'info', warning_count: 0, info_count: 1, conflict_count: 0, slot_count: 0, occupied_week_count: 0 }, conflicts: [] } }} />)
+    expect(screen.getByText('Template slot conflict analysis has informational findings only.')).toBeInTheDocument()
+    expect(screen.getByText('Selected template slot conflict template_exists: false')).toBeInTheDocument()
+
+    const conflicts = Array.from({ length: 11 }, (_, i) => ({ severity: 'info' as const, code: `c_${i}`, message: `m_${i}` }))
+    rerender(<SeasonTemplateSlotConflictPanel queryEnabled={true} query={{ isLoading: false, isFetching: false, error: null, data: { template_id: 't', template_exists: true, read_only: true, message: 'many', summary: { status: 'info', warning_count: 0, info_count: 11, conflict_count: 11, slot_count: 11, occupied_week_count: 11 }, conflicts } }} />)
+    expect(screen.getByText('1 additional template slot conflicts hidden.')).toBeInTheDocument()
   })
 })

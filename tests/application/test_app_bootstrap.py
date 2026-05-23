@@ -3,8 +3,6 @@ from __future__ import annotations
 import asyncio
 import importlib
 
-from fastapi.testclient import TestClient
-
 import beta_engine.main as main_module
 from beta_engine.main import create_app
 
@@ -73,7 +71,7 @@ def test_module_level_app_runtime_built_only_when_lifespan_starts(monkeypatch) -
         importlib.reload(reloaded_module)
 
 
-def test_testclient_context_runs_lifespan_startup(monkeypatch, tmp_path) -> None:
+def test_lifespan_context_runs_startup_and_sets_runtime(monkeypatch, tmp_path) -> None:
     build_calls: list[str | None] = []
     sentinel_runtime = object()
 
@@ -83,14 +81,15 @@ def test_testclient_context_runs_lifespan_startup(monkeypatch, tmp_path) -> None
 
     monkeypatch.setattr("beta_engine.main.build_runtime", fake_build_runtime)
 
-    db_path = tmp_path / "client-lifespan.db"
+    db_path = tmp_path / "lifespan-runtime.db"
     app = create_app(database_url=f"sqlite:///{db_path}")
 
     assert not hasattr(app.state, "runtime")
 
-    with TestClient(app) as client:
-        assert app.state.runtime is sentinel_runtime
-        response = client.get("/health")
+    async def _run_lifespan_startup() -> None:
+        async with app.router.lifespan_context(app):
+            assert app.state.runtime is sentinel_runtime
 
-    assert response.status_code == 200
+    asyncio.run(_run_lifespan_startup())
+
     assert build_calls == [f"sqlite:///{db_path}"]

@@ -20,3 +20,15 @@ def test_validate_template_slots_reports_structured_errors(tmp_path):
     assert "template_slot_category_missing" in codes
     assert "template_slot_start_after_end" in codes
     assert "template_slot_duration_invalid" in codes
+
+
+def test_validate_template_by_id_reports_structured_summary_errors(tmp_path):
+    config_path = tmp_path / "templates.json"
+    config_path.write_text('{"templates":[{"template_id":"tmp1","tour_level":"WORLD_TOUR","category":"PLATINUM","event_name":"A","region":"EUROPE","host_country":"ENG","main_draw_size":32,"qualification_draw_size":16,"seeds_count":8,"qualifier_spots":4,"wild_cards":2,"byes":0,"lucky_loser_rules":{"enabled":true,"max_spots":2,"replacement_window":"pre_main_draw_round_1"},"point_distribution_ref":"world","prize_money":1000,"prestige":1,"event_duration_days":6,"qualification_duration_days":2,"duration_in_season_weeks":1,"active":true}]}', encoding='utf-8')
+    service = SeasonTemplateService(template_service=TournamentTemplatesConfigService(config_path=config_path))
+    response = service.validate_template_by_id("not_real")
+    assert response.template_exists is False
+    assert response.read_only is True
+    assert response.summary.status == "errors"
+    assert response.summary.error_count == 1
+    assert any(issue.code == "template_not_found" for issue in response.issues)

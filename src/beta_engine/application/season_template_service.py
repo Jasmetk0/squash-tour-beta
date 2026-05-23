@@ -51,6 +51,26 @@ class SeasonTemplateValidationIssue(BaseModel):
     slot_id: str | None = None
 
 
+class SeasonTemplateSlotValidationSummary(BaseModel):
+    status: Literal["clean", "warnings", "errors"]
+    error_count: int = Field(ge=0)
+    warning_count: int = Field(ge=0)
+    issue_count: int = Field(ge=0)
+    slot_count: int = Field(ge=0)
+    week_count: int | None = Field(default=None, ge=0, le=61)
+    first_week: int | None = Field(default=None, ge=1, le=61)
+    last_week: int | None = Field(default=None, ge=1, le=61)
+
+
+class SeasonTemplateSlotValidationResponse(BaseModel):
+    template_id: str
+    template_exists: bool
+    read_only: bool = True
+    summary: SeasonTemplateSlotValidationSummary
+    issues: list[SeasonTemplateValidationIssue] = Field(default_factory=list)
+    message: str
+
+
 @dataclass(slots=True)
 class SeasonTemplateService:
     template_service: TournamentTemplatesConfigService
@@ -174,3 +194,64 @@ class SeasonTemplateService:
             issues.append(SeasonTemplateValidationIssue(severity="warning", code="template_slot_final_weeks_empty", message="Template has no events in final 4 season weeks.", slot_id=None))
 
         return issues
+
+    def validate_template_by_id(self, template_id: str) -> SeasonTemplateSlotValidationResponse:
+        templates_response = self.list_templates()
+        selected = next((template for template in templates_response.templates if template.template_id == template_id), None)
+        if selected is None:
+            issues = [
+                SeasonTemplateValidationIssue(
+                    severity="error",
+                    code="template_not_found",
+                    message=f"Season template '{template_id}' was not found.",
+                    slot_id=None,
+                )
+            ]
+            return SeasonTemplateSlotValidationResponse(
+                template_id=template_id,
+                template_exists=False,
+                summary=SeasonTemplateSlotValidationSummary(
+                    status="errors",
+                    error_count=1,
+                    warning_count=0,
+                    issue_count=1,
+                    slot_count=0,
+                    week_count=0,
+                    first_week=None,
+                    last_week=None,
+                ),
+                issues=issues,
+                message="Template not found.",
+            )
+
+        issues = self.validate_template_slots(selected)
+        error_count = sum(1 for issue in issues if issue.severity == "error")
+        warning_count = sum(1 for issue in issues if issue.severity == "warning")
+        status: Literal["clean", "warnings", "errors"] = "clean"
+        if error_count > 0:
+            status = "errors"
+        elif warning_count > 0:
+            status = "warnings"
+
+        occupied_weeks: set[int] = set()
+        for slot in selected.slots:
+            occupied_weeks.update(range(slot.season_week_start, slot.season_week_end + 1))
+
+        first_week = min((slot.season_week_start for slot in selected.slots), default=None)
+        last_week = max((slot.season_week_end for slot in selected.slots), default=None)
+        return SeasonTemplateSlotValidationResponse(
+            template_id=template_id,
+            template_exists=True,
+            summary=SeasonTemplateSlotValidationSummary(
+                status=status,
+                error_count=error_count,
+                warning_count=warning_count,
+                issue_count=len(issues),
+                slot_count=len(selected.slots),
+                week_count=len(occupied_weeks),
+                first_week=first_week,
+                last_week=last_week,
+            ),
+            issues=issues,
+            message="Template slot validation completed.",
+        )

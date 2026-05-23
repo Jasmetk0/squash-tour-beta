@@ -13,6 +13,7 @@ import type {
   SeasonCalendarValidationResponse,
   SeasonCalendarValidationIssueCodeRegistryResponse,
   SeasonRegistryEntry,
+  SeasonTemplateSlotValidationIssueCodeRegistryResponse,
   SeasonTemplateSlotValidationResponse,
   SeasonTemplateSummary,
   TourSeasonsValidationResponse
@@ -884,9 +885,10 @@ type SeasonTemplateSlotValidationPanelProps = {
     error: unknown
     data?: SeasonTemplateSlotValidationResponse
   }
+  issueCodeRegistryData?: SeasonTemplateSlotValidationIssueCodeRegistryResponse
 }
 
-export function SeasonTemplateSlotValidationPanel({ queryEnabled, query }: SeasonTemplateSlotValidationPanelProps): JSX.Element {
+export function SeasonTemplateSlotValidationPanel({ queryEnabled, query, issueCodeRegistryData }: SeasonTemplateSlotValidationPanelProps): JSX.Element {
   if (!queryEnabled) {
     return <p>Select a template to view read-only slot validation.</p>
   }
@@ -908,6 +910,7 @@ export function SeasonTemplateSlotValidationPanel({ queryEnabled, query }: Seaso
       : 'Template slot validation is clean.'
   const visibleIssues = data.issues.slice(0, 10)
   const hiddenCount = Math.max(0, data.issues.length - visibleIssues.length)
+  const metadataByCode = new Map((issueCodeRegistryData?.codes ?? []).map((item) => [item.code, item]))
 
   return (
     <>
@@ -933,19 +936,28 @@ export function SeasonTemplateSlotValidationPanel({ queryEnabled, query }: Seaso
           <tr>
             <th scope="col">Severity</th>
             <th scope="col">Code</th>
+            <th scope="col">Registry title</th>
             <th scope="col">Slot ID</th>
             <th scope="col">Message</th>
+            <th scope="col">Registry description</th>
           </tr>
         </thead>
         <tbody>
-          {visibleIssues.map((issue) => (
-            <tr key={`${issue.code}:${issue.slot_id ?? 'none'}:${issue.message}`}>
-              <td>{issue.severity}</td>
-              <td>{issue.code}</td>
-              <td>{issue.slot_id ?? '—'}</td>
-              <td>{issue.message}</td>
-            </tr>
-          ))}
+          {visibleIssues.map((issue) => {
+            const metadata = metadataByCode.get(issue.code)
+            const registryTitle = metadata?.title ?? 'Unknown template slot issue code'
+            const registryDescription = metadata?.description ?? 'No registry metadata available for this template slot issue code.'
+            return (
+              <tr key={`${issue.code}:${issue.slot_id ?? 'none'}:${issue.message}`}>
+                <td>{issue.severity}</td>
+                <td>{issue.code}</td>
+                <td>{metadata?.field ? `${registryTitle} (${metadata.field})` : registryTitle}</td>
+                <td>{issue.slot_id ?? '—'}</td>
+                <td>{issue.message}</td>
+                <td>{registryDescription}</td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
       {hiddenCount > 0 ? <p>{hiddenCount} additional issue(s) hidden. Showing first 10 only.</p> : null}

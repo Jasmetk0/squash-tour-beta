@@ -181,6 +181,22 @@ export type SeasonTemplateSlotValidationResponse = {
   message: string
 }
 
+export type SeasonTemplateSlotValidationIssueCodeMetadata = {
+  code: string
+  severity: 'warning' | 'error'
+  title: string
+  description: string
+  field?: string | null
+  read_only: boolean
+}
+
+export type SeasonTemplateSlotValidationIssueCodeRegistryResponse = {
+  codes: SeasonTemplateSlotValidationIssueCodeMetadata[]
+  code_count: number
+  read_only: boolean
+  message: string
+}
+
 export type RunSummary = {
   run_id: string
   season: number

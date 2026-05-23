@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
-import { getSeasonCalendar, getSeasonCalendarValidation, getSeasonCalendarValidationIssueCodes, getSeasonRegistry, getSeasonTemplateSlotValidation, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderApplyCommandContract, postSeasonBuilderApplyCreateOnlyCommand, postSeasonBuilderApplyCreateOnlyReadiness, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight } from '../api/client'
+import { getSeasonCalendar, getSeasonCalendarValidation, getSeasonCalendarValidationIssueCodes, getSeasonRegistry, getSeasonTemplateSlotValidation, getSeasonTemplateSlotValidationIssueCodes, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderApplyCommandContract, postSeasonBuilderApplyCreateOnlyCommand, postSeasonBuilderApplyCreateOnlyReadiness, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight } from '../api/client'
 import { DetailList } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import {
@@ -94,6 +94,11 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     queryKey: ['season-template-slot-validation', selectedTemplateId],
     queryFn: () => getSeasonTemplateSlotValidation(selectedTemplateId),
     enabled: templateSlotValidationQueryEnabled,
+    retry: false
+  })
+  const templateSlotIssueCodesQuery = useQuery({
+    queryKey: ['season-template-slot-validation-issue-codes'],
+    queryFn: getSeasonTemplateSlotValidationIssueCodes,
     retry: false
   })
   const hasTemplates = templates.length > 0
@@ -717,6 +722,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
               error: templateSlotValidationQuery.error,
               data: templateSlotValidationQuery.data
             }}
+            issueCodeRegistryData={templateSlotIssueCodesQuery.data}
           />
         </SectionCard>
       ) : null}

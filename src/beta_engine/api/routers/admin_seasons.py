@@ -20,6 +20,7 @@ from beta_engine.application.season_registry_service import SeasonRegistryRespon
 from beta_engine.application.season_template_service import (
     SeasonTemplatesResponse,
     SeasonTemplateService,
+    SeasonTemplateSlotValidationIssueCodeRegistryResponse,
     SeasonTemplateSlotValidationResponse,
     SeasonTemplateValidationIssue,
 )
@@ -63,6 +64,15 @@ def get_season_registry(service: SeasonRegistryService = Depends(get_season_regi
 @router.get("/templates", response_model=SeasonTemplatesResponse)
 def get_season_templates(service: SeasonTemplateService = Depends(get_season_template_service)) -> SeasonTemplatesResponse:
     return service.list_templates()
+
+@router.get(
+    "/templates/slot-validation/issue-codes",
+    response_model=SeasonTemplateSlotValidationIssueCodeRegistryResponse,
+)
+def get_template_slot_validation_issue_codes(
+    service: SeasonTemplateService = Depends(get_season_template_service),
+) -> SeasonTemplateSlotValidationIssueCodeRegistryResponse:
+    return service.list_slot_validation_issue_codes()
 
 
 @router.get("/templates/{template_id}/slot-validation", response_model=SeasonTemplateSlotValidationResponse)

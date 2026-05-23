@@ -70,6 +70,41 @@ class SeasonTemplateSlotValidationResponse(BaseModel):
     issues: list[SeasonTemplateValidationIssue] = Field(default_factory=list)
     message: str
 
+class SeasonTemplateSlotValidationIssueCodeMetadata(BaseModel):
+    code: str
+    severity: Literal["warning", "error"]
+    title: str
+    description: str
+    field: str | None = None
+    read_only: bool = True
+
+
+class SeasonTemplateSlotValidationIssueCodeRegistryResponse(BaseModel):
+    codes: list[SeasonTemplateSlotValidationIssueCodeMetadata] = Field(default_factory=list)
+    code_count: int = Field(ge=0)
+    read_only: bool = True
+    message: str
+
+
+SEASON_TEMPLATE_SLOT_VALIDATION_ISSUE_CODES = (
+    SeasonTemplateSlotValidationIssueCodeMetadata(code="template_not_found", severity="error", title="Template not found", description="Requested season template ID was not found in read-only template previews.", field="template_id"),
+    SeasonTemplateSlotValidationIssueCodeMetadata(code="template_slot_event_name_missing", severity="error", title="Template slot event name missing", description="Template slot is missing event_name or tournament_name.", field="event_name"),
+    SeasonTemplateSlotValidationIssueCodeMetadata(code="template_slot_category_missing", severity="error", title="Template slot category missing", description="Template slot is missing a category value.", field="category"),
+    SeasonTemplateSlotValidationIssueCodeMetadata(code="template_slot_tour_level_missing", severity="error", title="Template slot tour level missing", description="Source template tour_level is missing for this slot.", field="tour_level"),
+    SeasonTemplateSlotValidationIssueCodeMetadata(code="template_slot_week_out_of_range", severity="error", title="Template slot week out of range", description="Template slot week value is outside SW1-SW61 bounds.", field="season_week_start"),
+    SeasonTemplateSlotValidationIssueCodeMetadata(code="template_slot_start_after_end", severity="error", title="Template slot start after end", description="Template slot season_week_start is greater than season_week_end.", field="season_week_start"),
+    SeasonTemplateSlotValidationIssueCodeMetadata(code="template_slot_duration_invalid", severity="error", title="Template slot duration invalid", description="Template slot duration_in_season_weeks must be greater than 0.", field="duration_in_season_weeks"),
+    SeasonTemplateSlotValidationIssueCodeMetadata(code="template_slot_main_draw_size_invalid", severity="error", title="Template slot main draw size invalid", description="Source template main_draw_size must be greater than 0.", field="main_draw_size"),
+    SeasonTemplateSlotValidationIssueCodeMetadata(code="template_slot_qualification_draw_size_invalid", severity="error", title="Template slot qualification draw size invalid", description="Source template qualification_draw_size cannot be negative.", field="qualification_draw_size"),
+    SeasonTemplateSlotValidationIssueCodeMetadata(code="template_slot_duration_long", severity="warning", title="Template slot duration long", description="Template slot duration is unusually long.", field="duration_in_season_weeks"),
+    SeasonTemplateSlotValidationIssueCodeMetadata(code="template_slot_duplicate_week_category_event_name", severity="warning", title="Template slot duplicate week/category/event", description="Multiple slots share the same start week, category, and event name.", field=None),
+    SeasonTemplateSlotValidationIssueCodeMetadata(code="template_slot_week_overloaded", severity="warning", title="Template slot week overloaded", description="A season week contains more than four template slots.", field="season_week_start"),
+    SeasonTemplateSlotValidationIssueCodeMetadata(code="template_slot_category_tour_level_week_overloaded", severity="warning", title="Template slot category/tour-level week overloaded", description="A week contains multiple slots for the same category and tour level.", field="season_week_start"),
+    SeasonTemplateSlotValidationIssueCodeMetadata(code="template_slot_world_tour_missing", severity="warning", title="Template slot world tour missing", description="Default MSA preview has no WORLD_TOUR slots.", field="tour_level"),
+    SeasonTemplateSlotValidationIssueCodeMetadata(code="template_slot_early_weeks_empty", severity="warning", title="Template slot early weeks empty", description="Template has no events in the first four season weeks.", field="season_week_start"),
+    SeasonTemplateSlotValidationIssueCodeMetadata(code="template_slot_final_weeks_empty", severity="warning", title="Template slot final weeks empty", description="Template has no events in the final four season weeks.", field="season_week_end"),
+)
+
 
 @dataclass(slots=True)
 class SeasonTemplateService:
@@ -117,6 +152,14 @@ class SeasonTemplateService:
             templates=[summary],
             source_path=source_path,
             status="read_only_foundation",
+        )
+
+    def list_slot_validation_issue_codes(self) -> SeasonTemplateSlotValidationIssueCodeRegistryResponse:
+        codes = sorted(SEASON_TEMPLATE_SLOT_VALIDATION_ISSUE_CODES, key=lambda item: item.code)
+        return SeasonTemplateSlotValidationIssueCodeRegistryResponse(
+            codes=list(codes),
+            code_count=len(codes),
+            message="Stable read-only season template slot validation issue code registry.",
         )
 
     def validate_template_slots(self, template: SeasonTemplateSummary) -> list[SeasonTemplateValidationIssue]:

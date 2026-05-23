@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, TargetCalendarValidationPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -44,6 +44,7 @@ const api = vi.hoisted(() => ({
   getSeasonCalendar: vi.fn(),
   getSeasonTemplates: vi.fn(),
   getSeasonTemplateSlotValidation: vi.fn(),
+  getSeasonTemplateSlotValidationIssueCodes: vi.fn(),
   getSeasonCalendarValidation: vi.fn(),
   getSeasonCalendarValidationIssueCodes: vi.fn(),
   getCategories: vi.fn(),
@@ -205,6 +206,15 @@ describe('Module 17 pages through routes', () => {
           message: 'Template slot duration 5 weeks is unusually long (>3).',
           slot_id: 'slot-01-default_msa_template_preview'
         }
+      ]
+    })
+    api.getSeasonTemplateSlotValidationIssueCodes.mockResolvedValue({
+      read_only: true,
+      code_count: 2,
+      message: 'Stable read-only season template slot validation issue code registry.',
+      codes: [
+        { code: 'template_slot_duration_long', severity: 'warning', title: 'Template slot duration long', description: 'Template slot duration is unusually long.', field: 'duration_in_season_weeks', read_only: true },
+        { code: 'template_slot_start_after_end', severity: 'error', title: 'Template slot start after end', description: 'Template slot season_week_start is greater than season_week_end.', field: 'season_week_start', read_only: true }
       ]
     })
     api.postSeasonBuilderPreflight.mockResolvedValue({
@@ -690,9 +700,12 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Template slot count: 5')).toBeInTheDocument()
     expect(screen.getByText('Template slot week count: 5')).toBeInTheDocument()
     expect(screen.getByText('template_slot_duration_long')).toBeInTheDocument()
+    expect(screen.getByText('Template slot duration long (duration_in_season_weeks)')).toBeInTheDocument()
+    expect(screen.getByText('Template slot duration is unusually long.')).toBeInTheDocument()
     expect(screen.getByText('slot-01-default_msa_template_preview')).toBeInTheDocument()
     expect(screen.getByText('Template slot duration 5 weeks is unusually long (>3).')).toBeInTheDocument()
     expect(api.getSeasonTemplateSlotValidation).toHaveBeenCalledWith('default_msa_template_preview')
+    expect(api.getSeasonTemplateSlotValidationIssueCodes).toHaveBeenCalled()
     expect(screen.getByText('Target existing calendar preview')).toBeInTheDocument()
     expect(screen.getByText('Overwrite / merge policy preview')).toBeInTheDocument()
     expect(screen.getByText('Overwrite / merge policy selection for preflight')).toBeInTheDocument()
@@ -2594,6 +2607,37 @@ describe('ValidationIssueCodeRegistryPanel', () => {
   it('shows empty registry state', () => {
     render(<ValidationIssueCodeRegistryPanel query={{ isLoading: false, isFetching: false, error: null, data: { read_only: true, code_count: 0, message: 'empty', codes: [] } }} />)
     expect(screen.getByText('No issue codes returned.')).toBeInTheDocument()
+  })
+})
+
+describe('SeasonTemplateSlotValidationPanel issue code registry fallback', () => {
+  it('shows fallback metadata for unknown issue codes', () => {
+    render(
+      <SeasonTemplateSlotValidationPanel
+        queryEnabled
+        query={{
+          isLoading: false,
+          isFetching: false,
+          error: null,
+          data: {
+            template_id: 'default_msa_template_preview',
+            template_exists: true,
+            read_only: true,
+            message: 'Template slot validation completed.',
+            summary: { status: 'warnings', error_count: 0, warning_count: 1, issue_count: 1, slot_count: 1, week_count: 1, first_week: 1, last_week: 1 },
+            issues: [{ severity: 'warning', code: 'unknown_template_slot_code', slot_id: 'slot-01', message: 'Unknown code warning.' }]
+          }
+        }}
+        issueCodeRegistryData={{
+          read_only: true,
+          code_count: 1,
+          message: 'registry',
+          codes: [{ code: 'template_slot_duration_long', severity: 'warning', title: 'Template slot duration long', description: 'Template slot duration is unusually long.', field: 'duration_in_season_weeks', read_only: true }]
+        }}
+      />
+    )
+    expect(screen.getByText('Unknown template slot issue code')).toBeInTheDocument()
+    expect(screen.getByText('No registry metadata available for this template slot issue code.')).toBeInTheDocument()
   })
 })
 

@@ -111,3 +111,30 @@ def test_slot_validation_missing_template_returns_structured_diagnostic(tmp_path
         assert validation["summary"]["status"] == "errors"
         issue_codes = {issue["code"] for issue in validation["issues"]}
         assert "template_not_found" in issue_codes
+
+
+def test_slot_validation_issue_code_registry_endpoint(tmp_path: Path) -> None:
+    templates = [{"template_id": "default_msa_template_preview", "tour_level": "WORLD_TOUR", "category": "PLATINUM", "event_name": "World A", "region": "EUROPE", "host_country": "ENG", "main_draw_size": 32, "qualification_draw_size": 16, "seeds_count": 8, "qualifier_spots": 4, "wild_cards": 2, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 100000, "prestige": 9, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 1, "active": True}]
+    with Server(tmp_path, templates) as server:
+        status, body = call("GET", f"{server.base_url}/admin/seasons/templates/slot-validation/issue-codes")
+        assert status == 200
+        assert body["read_only"] is True
+        assert body["code_count"] > 0
+        codes = [item["code"] for item in body["codes"]]
+        assert "template_not_found" in codes
+        assert "template_slot_duration_long" in codes
+        assert "template_slot_start_after_end" in codes
+        assert len(codes) == len(set(codes))
+        for item in body["codes"]:
+            assert item["severity"] in ("warning", "error")
+            assert item["title"]
+            assert item["description"]
+
+
+def test_slot_validation_issue_codes_route_does_not_conflict_with_template_validation(tmp_path: Path) -> None:
+    templates = [{"template_id": "default_msa_template_preview", "tour_level": "WORLD_TOUR", "category": "PLATINUM", "event_name": "World A", "region": "EUROPE", "host_country": "ENG", "main_draw_size": 32, "qualification_draw_size": 16, "seeds_count": 8, "qualifier_spots": 4, "wild_cards": 2, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 100000, "prestige": 9, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 1, "active": True}]
+    with Server(tmp_path, templates) as server:
+        status, validation = call("GET", f"{server.base_url}/admin/seasons/templates/default_msa_template_preview/slot-validation")
+        assert status == 200
+        assert validation["template_id"] == "default_msa_template_preview"
+        assert validation["template_exists"] is True

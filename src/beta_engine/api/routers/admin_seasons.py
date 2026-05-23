@@ -38,6 +38,7 @@ from beta_engine.domain.tournaments import (
     SeasonBuilderDryRunBuildResponse,
     SeasonBuilderPreflightRequest,
     SeasonBuilderPreflightResponse,
+    SeasonTemplateSlotConflictPreview,
     SeasonTemplateSlotValidationPreview,
     SeasonCalendarBuildRequest,
     SeasonCalendarBuildResult,
@@ -211,6 +212,7 @@ def preflight_season_builder(
     target_week_count: int | None = None
     normalized_target: str = payload.target_season_label
     template_slot_validation_preview: SeasonTemplateSlotValidationPreview | None = None
+    template_slot_conflict_preview: SeasonTemplateSlotConflictPreview | None = None
 
     try:
         normalized_target = to_long_season_label(normalize_season_label(payload.target_season_label))
@@ -270,6 +272,8 @@ def preflight_season_builder(
                     template_id=selected.template_id,
                     template_exists=True,
                 )
+                conflict_report = template_service.analyze_template_slot_conflicts(selected.template_id)
+                template_slot_conflict_preview = template_service.build_slot_conflict_preview(conflict_report)
                 warnings.extend([_format_template_issue(i) for i in template_issues if i.severity == "warning"])
                 errors.extend([_format_template_issue(i) for i in template_issues if i.severity == "error"])
                 source_slot_count = len(selected.slots)
@@ -364,6 +368,7 @@ def preflight_season_builder(
         source_summary=source_summary,
         authoritative_diff_summary=authoritative_diff_summary,
         template_slot_validation_preview=template_slot_validation_preview,
+        template_slot_conflict_preview=template_slot_conflict_preview,
         validation_warnings=warnings,
         validation_errors=errors,
         audit_preview=audit_preview,
@@ -590,6 +595,8 @@ def post_season_builder_dry_run_build_contract(
                 template_id=selected.template_id,
                 template_exists=True,
             )
+            conflict_report = template_service.analyze_template_slot_conflicts(selected.template_id)
+            template_slot_conflict_preview = template_service.build_slot_conflict_preview(conflict_report)
             warnings.extend([_format_template_issue(i) for i in template_issues if i.severity == "warning"])
             errors.extend([_format_template_issue(i) for i in template_issues if i.severity == "error"])
             templates_config = template_service.template_service.get_config()
@@ -952,6 +959,7 @@ def post_season_builder_dry_run_build_contract(
         preflight_fingerprint=payload.preflight_fingerprint,
         reviewed_diff_id=payload.reviewed_diff_id,
         template_slot_validation_preview=template_slot_validation_preview,
+        template_slot_conflict_preview=template_slot_conflict_preview,
         validation_errors=errors,
         validation_warnings=warnings,
         audit_preview={

@@ -3095,6 +3095,23 @@ export type SeasonTemplateSlotValidationPreview = {
   read_only?: boolean
 }
 
+
+
+export type SeasonTemplateSlotConflictPreview = {
+  template_id?: string | null
+  template_exists?: boolean | null
+  status?: 'clean' | 'warnings' | 'info' | null
+  warning_count?: number
+  info_count?: number
+  conflict_count?: number
+  conflict_codes?: string[]
+  warning_codes?: string[]
+  info_codes?: string[]
+  busiest_week?: number | null
+  busiest_week_slot_count?: number | null
+  read_only?: boolean
+}
+
 export type SeasonBuilderPreflightRequest = {
   target_season_label: string
   source_type: string
@@ -3116,6 +3133,7 @@ export type SeasonBuilderPreflightResponse = {
   source_summary: Record<string, unknown>
   authoritative_diff_summary: Record<string, unknown>
   template_slot_validation_preview?: SeasonTemplateSlotValidationPreview | null
+  template_slot_conflict_preview?: SeasonTemplateSlotConflictPreview | null
   validation_warnings: string[]
   validation_errors: string[]
   audit_preview: Record<string, unknown>
@@ -3146,6 +3164,7 @@ export type SeasonBuilderDryRunBuildResponse = {
   preflight_fingerprint: string
   reviewed_diff_id: string
   template_slot_validation_preview?: SeasonTemplateSlotValidationPreview | null
+  template_slot_conflict_preview?: SeasonTemplateSlotConflictPreview | null
   validation_errors: string[]
   validation_warnings: string[]
   audit_preview: Record<string, unknown>

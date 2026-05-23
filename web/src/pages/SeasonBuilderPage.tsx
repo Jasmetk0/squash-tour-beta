@@ -50,6 +50,7 @@ import {
   DryRunTemplateConflictSummaryPanel,
   PreflightTemplateConflictSummaryPanel,
   TemplateSlotConflictCodeRegistryPanel,
+  TemplateConflictDiagnosticsOverviewPanel,
   TemplateSlotValidationPreflightConsistencyPanel,
   TemplateSlotConflictPreflightConsistencyPanel
 } from './SeasonBuilderPanels'
@@ -790,6 +791,15 @@ export function AdminSeasonBuilderPage(): JSX.Element {
               data: templateSlotConflictQuery.data
             }}
             conflictCodeRegistryData={templateSlotConflictCodesQuery.data}
+          />
+        </SectionCard>
+      ) : null}
+      {selectedSourceType === 'season_template' ? (
+        <SectionCard title="Template conflict diagnostics overview">
+          <TemplateConflictDiagnosticsOverviewPanel
+            selectedConflictReport={templateSlotConflictQuery.data}
+            preflightResult={backendPreflightQuery.data}
+            dryRunResult={disabledDryRunBuildQuery.data}
           />
         </SectionCard>
       ) : null}

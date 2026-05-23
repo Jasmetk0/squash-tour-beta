@@ -72,6 +72,23 @@ def _preflight(server: Server):
     })
 
 
+def assert_preview_matches_endpoint(preview: dict, endpoint_validation: dict) -> None:
+    assert preview["template_id"] == endpoint_validation["template_id"]
+    assert preview["template_exists"] == endpoint_validation["template_exists"]
+    assert preview["status"] == endpoint_validation["summary"]["status"]
+    assert preview["error_count"] == endpoint_validation["summary"]["error_count"]
+    assert preview["warning_count"] == endpoint_validation["summary"]["warning_count"]
+    assert preview["issue_count"] == endpoint_validation["summary"]["issue_count"]
+    assert set(preview["issue_codes"]) == {issue["code"] for issue in endpoint_validation["issues"]}
+    assert set(preview["error_codes"]) == {
+        issue["code"] for issue in endpoint_validation["issues"] if issue["severity"] == "error"
+    }
+    assert set(preview["warning_codes"]) == {
+        issue["code"] for issue in endpoint_validation["issues"] if issue["severity"] == "warning"
+    }
+    assert preview["read_only"] is True
+
+
 def test_default_template_no_blocking_template_slot_errors(tmp_path: Path) -> None:
     templates = [{"template_id": "default_msa_template_preview", "tour_level": "WORLD_TOUR", "category": "PLATINUM", "event_name": "World A", "region": "EUROPE", "host_country": "ENG", "main_draw_size": 32, "qualification_draw_size": 16, "seeds_count": 8, "qualifier_spots": 4, "wild_cards": 2, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 100000, "prestige": 9, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 1, "active": True}]
     with Server(tmp_path, templates) as server:
@@ -186,3 +203,48 @@ def test_preflight_planned_source_type_has_no_template_slot_preview(tmp_path: Pa
         assert status == 200
         assert body["template_slot_validation_preview"] is None
 
+
+def test_template_slot_validation_consistent_between_endpoint_preflight_and_dry_run_warnings(tmp_path: Path) -> None:
+    base = {"tour_level": "WORLD_TOUR", "category": "PLATINUM", "region": "EUROPE", "host_country": "ENG", "main_draw_size": 32, "qualification_draw_size": 16, "seeds_count": 8, "qualifier_spots": 4, "wild_cards": 2, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 100000, "prestige": 9, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 1, "active": True}
+    templates = [dict(base, template_id="default_msa_template_preview" if i == 0 else f"dup_{i}", event_name=f"Same Event {i}", duration_in_season_weeks=5) for i in range(5)]
+    with Server(tmp_path, templates) as server:
+        status, endpoint_validation = call("GET", f"{server.base_url}/admin/seasons/templates/default_msa_template_preview/slot-validation")
+        assert status == 200
+        status, preflight = _preflight(server)
+        assert status == 200
+        status, dry_run = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", {
+            "target_season_label": "2035/2036",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "preflight_fingerprint": "pf_test",
+            "reviewed_diff_id": "rd_test",
+        })
+        assert status == 200
+        assert preflight["template_slot_validation_preview"] is not None
+        assert dry_run["template_slot_validation_preview"] is not None
+        assert_preview_matches_endpoint(preflight["template_slot_validation_preview"], endpoint_validation)
+        assert_preview_matches_endpoint(dry_run["template_slot_validation_preview"], endpoint_validation)
+        assert any("[template_slot_" in item for item in preflight["validation_warnings"])
+        assert any("[template_slot_" in item for item in dry_run["validation_warnings"])
+
+
+def test_template_slot_validation_consistent_between_endpoint_preflight_and_dry_run_clean_default(tmp_path: Path) -> None:
+    templates = [{"template_id": "default_msa_template_preview", "tour_level": "WORLD_TOUR", "category": "PLATINUM", "event_name": "World A", "region": "EUROPE", "host_country": "ENG", "main_draw_size": 32, "qualification_draw_size": 16, "seeds_count": 8, "qualifier_spots": 4, "wild_cards": 2, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 100000, "prestige": 9, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 1, "active": True}]
+    with Server(tmp_path, templates) as server:
+        status, endpoint_validation = call("GET", f"{server.base_url}/admin/seasons/templates/default_msa_template_preview/slot-validation")
+        assert status == 200
+        assert endpoint_validation["summary"]["error_count"] == 0
+        status, preflight = _preflight(server)
+        assert status == 200
+        status, dry_run = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", {
+            "target_season_label": "2035/2036",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "preflight_fingerprint": "pf_test",
+            "reviewed_diff_id": "rd_test",
+        })
+        assert status == 200
+        assert preflight["template_slot_validation_preview"] is not None
+        assert dry_run["template_slot_validation_preview"] is not None
+        assert_preview_matches_endpoint(preflight["template_slot_validation_preview"], endpoint_validation)
+        assert_preview_matches_endpoint(dry_run["template_slot_validation_preview"], endpoint_validation)

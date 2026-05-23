@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -751,6 +751,13 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Selected template slot conflict analysis')).toBeInTheDocument()
     expect(screen.getByText('Template slot validation vs builder diagnostics consistency')).toBeInTheDocument()
     expect(await screen.findByText('Read-only consistency check between structured template slot validation and builder diagnostics.')).toBeInTheDocument()
+    expect(screen.getByText('Template slot conflict vs builder diagnostics consistency')).toBeInTheDocument()
+    expect(screen.getByText('Read-only consistency check between selected template slot conflict report and builder conflict previews.')).toBeInTheDocument()
+    expect(screen.getByText('Structured template slot conflict codes: template_conflict_week_overloaded')).toBeInTheDocument()
+    expect(screen.getByText('All structured template slot conflict codes are represented in preflight preview.')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict preview status: warnings')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict preview conflict count: 3')).toBeInTheDocument()
+    expect(screen.getAllByText('No dry-run result to compare yet.').length).toBeGreaterThan(0)
     expect(await screen.findByText('Preflight diagnostics issue codes source: structured preview')).toBeInTheDocument()
     expect(screen.getByText('Preflight template slot preview status: warnings')).toBeInTheDocument()
     expect(screen.getByText('Preflight template slot preview issue count: 1')).toBeInTheDocument()
@@ -1721,7 +1728,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('No backend blocking reasons returned.')).toBeInTheDocument()
     expect(screen.getByText('No backend advisory notes returned.')).toBeInTheDocument()
     expect(screen.getAllByText('Dry-run identity readiness').length).toBeGreaterThan(0)
-    expect(screen.getByText('ready_reference')).toBeInTheDocument()
+    expect(screen.getAllByText('ready_reference').length).toBeGreaterThan(0)
     expect(screen.getByText('can_reference_future_command')).toBeInTheDocument()
     expect(screen.getAllByText('drf_test_empty').length).toBeGreaterThan(0)
     expect(screen.getAllByText('drr_test_empty').length).toBeGreaterThan(0)
@@ -2850,6 +2857,36 @@ describe('TemplateSlotValidationPreflightConsistencyPanel', () => {
       />
     )
     expect(screen.getByText('Preflight diagnostics issue codes source: bracketed validation messages')).toBeInTheDocument()
+  })
+})
+
+describe('TemplateSlotConflictPreflightConsistencyPanel', () => {
+  it('shows no selected report state', () => {
+    render(<TemplateSlotConflictPreflightConsistencyPanel />)
+    expect(screen.getByText('No structured template slot conflict data to compare yet.')).toBeInTheDocument()
+  })
+
+  it('shows no preflight and no dry-run result messages', () => {
+    render(<TemplateSlotConflictPreflightConsistencyPanel slotConflictData={{ template_id: 't', template_exists: true, read_only: true, message: 'ok', summary: { status: 'warnings', warning_count: 0, info_count: 0, conflict_count: 1, slot_count: 1, occupied_week_count: 1, busiest_week: 1, busiest_week_slot_count: 1, read_only: true }, conflicts: [{ severity: 'warning', code: 'template_conflict_week_overloaded', message: 'm', season_week: 1, slot_ids: ['s1'], categories: [], tour_levels: [], host_countries: [], read_only: true }] }} />)
+    expect(screen.getByText('No preflight result to compare yet.')).toBeInTheDocument()
+    expect(screen.getByText('No dry-run result to compare yet.')).toBeInTheDocument()
+  })
+
+  it('shows all codes represented when preflight preview matches', () => {
+    render(<TemplateSlotConflictPreflightConsistencyPanel slotConflictData={{ template_id: 't', template_exists: true, read_only: true, message: 'ok', summary: { status: 'warnings', warning_count: 0, info_count: 0, conflict_count: 1, slot_count: 1, occupied_week_count: 1, busiest_week: 1, busiest_week_slot_count: 1, read_only: true }, conflicts: [{ severity: 'warning', code: 'template_conflict_week_overloaded', message: 'm', season_week: 1, slot_ids: ['s1'], categories: [], tour_levels: [], host_countries: [], read_only: true }] }} preflightResult={{ can_build: false, target_season_label: '2000/2001', source_type: 'season_template', source_template_id: 't', preflight_fingerprint: 'pf', reviewed_diff_id: 'rd', target_calendar_exists: false, target_event_count: 0, source_resolved: true, source_summary: {}, authoritative_diff_summary: {}, template_slot_conflict_preview: { status: 'warnings', conflict_count: 3, conflict_codes: ['template_conflict_week_overloaded'] }, validation_warnings: [], validation_errors: [], audit_preview: {} }} />)
+    expect(screen.getByText('All structured template slot conflict codes are represented in preflight preview.')).toBeInTheDocument()
+  })
+
+  it('shows missing structured preflight code message', () => {
+    render(<TemplateSlotConflictPreflightConsistencyPanel slotConflictData={{ template_id: 't', template_exists: true, read_only: true, message: 'ok', summary: { status: 'warnings', warning_count: 0, info_count: 0, conflict_count: 1, slot_count: 1, occupied_week_count: 1, busiest_week: 1, busiest_week_slot_count: 1, read_only: true }, conflicts: [{ severity: 'warning', code: 'template_conflict_week_overloaded', message: 'm', season_week: 1, slot_ids: ['s1'], categories: [], tour_levels: [], host_countries: [], read_only: true }] }} preflightResult={{ can_build: false, target_season_label: '2000/2001', source_type: 'season_template', source_template_id: 't', preflight_fingerprint: 'pf', reviewed_diff_id: 'rd', target_calendar_exists: false, target_event_count: 0, source_resolved: true, source_summary: {}, authoritative_diff_summary: {}, template_slot_conflict_preview: { status: 'warnings', conflict_count: 0, conflict_codes: ['another_code'] }, validation_warnings: [], validation_errors: [], audit_preview: {} }} />)
+    expect(screen.getByText('Preflight conflict preview is missing structured conflict codes: template_conflict_week_overloaded')).toBeInTheDocument()
+  })
+
+  it('handles malformed preview safely', () => {
+    render(<TemplateSlotConflictPreflightConsistencyPanel slotConflictData={{ template_id: 't', template_exists: true, read_only: true, message: 'ok', summary: { status: 'warnings', warning_count: 0, info_count: 0, conflict_count: 1, slot_count: 1, occupied_week_count: 1, busiest_week: 1, busiest_week_slot_count: 1, read_only: true }, conflicts: [{ severity: 'warning', code: 'template_conflict_week_overloaded', message: 'm', season_week: 1, slot_ids: ['s1'], categories: [], tour_levels: [], host_countries: [], read_only: true }] }} preflightResult={{ can_build: false, target_season_label: '2000/2001', source_type: 'season_template', source_template_id: 't', preflight_fingerprint: 'pf', reviewed_diff_id: 'rd', target_calendar_exists: false, target_event_count: 0, source_resolved: true, source_summary: {}, authoritative_diff_summary: {}, template_slot_conflict_preview: {} as any, validation_warnings: [], validation_errors: [], audit_preview: {} }} dryRunResult={{ command: 'season_builder_dry_run_build', enabled: false, can_execute: false, can_mutate: false, target_season_label: '2000/2001', source_type: 'season_template', source_template_id: 't', overwrite_policy: null, preflight_fingerprint: 'pf', reviewed_diff_id: 'rd', validation_warnings: [], validation_errors: [], audit_preview: {}, generation_design_preview: {}, candidate_event_contract_preview: {}, conflict_contract_preview: {}, dry_run_result_contract_preview: {}, dry_run_result_preview: {}, message: 'dry run disabled', template_slot_conflict_preview: { status: 42, conflict_count: NaN, conflict_codes: 'bad' } as any }} />)
+    expect(screen.getByText('Preflight template slot conflict preview status: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot conflict preview status: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot conflict preview conflict count: n/a')).toBeInTheDocument()
   })
 })
 

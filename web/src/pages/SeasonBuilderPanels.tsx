@@ -1258,6 +1258,49 @@ function readTemplateSlotPreviewSummaryField(preview: SeasonTemplateSlotValidati
   return normalizePreviewScalar(preview, field)
 }
 
+export function readTemplateSlotConflictPreviewCodes(preview: SeasonTemplateSlotConflictPreview | null | undefined | unknown): string[] {
+  if (!preview || typeof preview !== 'object') return []
+  const rawCodes = (preview as Record<string, unknown>).conflict_codes
+  if (!Array.isArray(rawCodes) || rawCodes.length === 0) return []
+  const seen = new Set<string>()
+  const normalizedCodes: string[] = []
+  for (const rawCode of rawCodes) {
+    if (typeof rawCode !== 'string') continue
+    const normalizedCode = rawCode.trim()
+    if (!normalizedCode || seen.has(normalizedCode)) continue
+    seen.add(normalizedCode)
+    normalizedCodes.push(normalizedCode)
+  }
+  return normalizedCodes
+}
+
+export function readTemplateSlotConflictPreviewSummaryField(
+  preview: SeasonTemplateSlotConflictPreview | null | undefined,
+  field: 'status' | 'conflict_count'
+): string {
+  if (!preview || typeof preview !== 'object') return 'n/a'
+  const value = (preview as Record<string, unknown>)[field]
+  if (field === 'status') {
+    if (typeof value !== 'string') return 'n/a'
+    const normalizedStatus = value.trim().toLowerCase()
+    return normalizedStatus === 'clean' || normalizedStatus === 'warnings' || normalizedStatus === 'info' ? normalizedStatus : 'n/a'
+  }
+  return typeof value === 'number' && Number.isFinite(value) ? String(value) : 'n/a'
+}
+
+export function extractConflictCodesFromReport(report: SeasonTemplateSlotConflictReportResponse | null | undefined): string[] {
+  if (!report) return []
+  const seen = new Set<string>()
+  const codes: string[] = []
+  for (const conflict of report.conflicts) {
+    const code = conflict.code.trim()
+    if (!code || seen.has(code)) continue
+    seen.add(code)
+    codes.push(code)
+  }
+  return codes
+}
+
 type TemplateSlotValidationPreflightConsistencyPanelProps = {
   slotValidationData?: SeasonTemplateSlotValidationResponse
   preflightResult?: SeasonBuilderPreflightResponse
@@ -1320,6 +1363,61 @@ export function TemplateSlotValidationPreflightConsistencyPanel({
           {dryRunMissingCodes.length > 0 ? <ul>{dryRunMissingCodes.map((code) => <li key={`dry-run-missing:${code}`}>{code}</li>)}</ul> : null}
         </>
       ) : null}
+    </>
+  )
+}
+
+type TemplateSlotConflictPreflightConsistencyPanelProps = {
+  slotConflictData?: SeasonTemplateSlotConflictReportResponse
+  preflightResult?: SeasonBuilderPreflightResponse
+  dryRunResult?: SeasonBuilderDryRunBuildResponse
+}
+
+export function TemplateSlotConflictPreflightConsistencyPanel({
+  slotConflictData,
+  preflightResult,
+  dryRunResult
+}: TemplateSlotConflictPreflightConsistencyPanelProps): JSX.Element {
+  if (!slotConflictData) {
+    return <p>No structured template slot conflict data to compare yet.</p>
+  }
+  const structuredCodes = extractConflictCodesFromReport(slotConflictData)
+  const preflightPreview = preflightResult?.template_slot_conflict_preview
+  const preflightCodes = readTemplateSlotConflictPreviewCodes(preflightPreview)
+  const dryRunPreview = dryRunResult?.template_slot_conflict_preview
+  const dryRunCodes = readTemplateSlotConflictPreviewCodes(dryRunPreview)
+  const preflightMissingCodes = structuredCodes.filter((code) => !preflightCodes.includes(code))
+  const dryRunMissingCodes = structuredCodes.filter((code) => !dryRunCodes.includes(code))
+
+  return (
+    <>
+      <p>Read-only consistency check between selected template slot conflict report and builder conflict previews.</p>
+      <p>Structured template slot conflict codes: {structuredCodes.length > 0 ? structuredCodes.join(', ') : 'none'}</p>
+      <p>Preflight conflict preview codes: {preflightCodes.length > 0 ? preflightCodes.join(', ') : 'none'}</p>
+      {preflightResult ? (
+        preflightPreview ? (
+          <p>{preflightMissingCodes.length === 0 ? 'All structured template slot conflict codes are represented in preflight preview.' : `Preflight conflict preview is missing structured conflict codes: ${preflightMissingCodes.join(', ')}`}</p>
+        ) : (
+          <p>Preflight conflict preview is not available.</p>
+        )
+      ) : (
+        <p>No preflight result to compare yet.</p>
+      )}
+      {preflightResult ? <p>Preflight template slot conflict preview status: {readTemplateSlotConflictPreviewSummaryField(preflightPreview, 'status')}</p> : null}
+      {preflightResult ? <p>Preflight template slot conflict preview conflict count: {readTemplateSlotConflictPreviewSummaryField(preflightPreview, 'conflict_count')}</p> : null}
+
+      <p>Dry-run conflict preview codes: {dryRunCodes.length > 0 ? dryRunCodes.join(', ') : 'none'}</p>
+      {dryRunResult ? (
+        dryRunPreview ? (
+          <p>{dryRunMissingCodes.length === 0 ? 'All structured template slot conflict codes are represented in dry-run preview.' : `Dry-run conflict preview is missing structured conflict codes: ${dryRunMissingCodes.join(', ')}`}</p>
+        ) : (
+          <p>Dry-run conflict preview is not available.</p>
+        )
+      ) : (
+        <p>No dry-run result to compare yet.</p>
+      )}
+      {dryRunResult ? <p>Dry-run template slot conflict preview status: {readTemplateSlotConflictPreviewSummaryField(dryRunPreview, 'status')}</p> : null}
+      {dryRunResult ? <p>Dry-run template slot conflict preview conflict count: {readTemplateSlotConflictPreviewSummaryField(dryRunPreview, 'conflict_count')}</p> : null}
     </>
   )
 }

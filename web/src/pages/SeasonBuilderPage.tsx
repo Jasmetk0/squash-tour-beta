@@ -48,7 +48,8 @@ import {
   TemplateSlotValidationPreviewSummaryPanel,
   TemplateSlotConflictPreviewSummaryPanel,
   TemplateSlotConflictCodeRegistryPanel,
-  TemplateSlotValidationPreflightConsistencyPanel
+  TemplateSlotValidationPreflightConsistencyPanel,
+  TemplateSlotConflictPreflightConsistencyPanel
 } from './SeasonBuilderPanels'
 import type { SourceType } from './SeasonBuilderPanels'
 import type { CreateOnlyApplyGuardSummaryItem } from './SeasonBuilderPanels'
@@ -793,6 +794,15 @@ export function AdminSeasonBuilderPage(): JSX.Element {
         <SectionCard title="Template slot validation vs builder diagnostics consistency">
           <TemplateSlotValidationPreflightConsistencyPanel
             slotValidationData={templateSlotValidationQuery.data}
+            preflightResult={backendPreflightQuery.data}
+            dryRunResult={disabledDryRunBuildQuery.data}
+          />
+        </SectionCard>
+      ) : null}
+      {selectedSourceType === 'season_template' ? (
+        <SectionCard title="Template slot conflict vs builder diagnostics consistency">
+          <TemplateSlotConflictPreflightConsistencyPanel
+            slotConflictData={templateSlotConflictQuery.data}
             preflightResult={backendPreflightQuery.data}
             dryRunResult={disabledDryRunBuildQuery.data}
           />

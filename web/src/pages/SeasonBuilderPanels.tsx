@@ -965,6 +965,76 @@ export function SeasonTemplateSlotValidationPanel({ queryEnabled, query, issueCo
   )
 }
 
+export function extractBracketedIssueCodes(messages: string[]): string[] {
+  const seen = new Set<string>()
+  const extracted: string[] = []
+  for (const message of messages) {
+    const match = message.match(/^\[([a-z0-9_]+)\]/)
+    if (!match) continue
+    const code = match[1]
+    if (seen.has(code)) continue
+    seen.add(code)
+    extracted.push(code)
+  }
+  return extracted
+}
+
+type TemplateSlotValidationPreflightConsistencyPanelProps = {
+  slotValidationData?: SeasonTemplateSlotValidationResponse
+  preflightResult?: SeasonBuilderPreflightResponse
+  dryRunResult?: SeasonBuilderDryRunBuildResponse
+}
+
+export function TemplateSlotValidationPreflightConsistencyPanel({
+  slotValidationData,
+  preflightResult,
+  dryRunResult
+}: TemplateSlotValidationPreflightConsistencyPanelProps): JSX.Element {
+  if (!slotValidationData) {
+    return <p>No structured template slot validation data to compare yet.</p>
+  }
+
+  const structuredCodes = Array.from(new Set(slotValidationData.issues.map((issue) => issue.code)))
+  const preflightCodes = preflightResult
+    ? extractBracketedIssueCodes([...preflightResult.validation_warnings, ...preflightResult.validation_errors])
+    : []
+  const dryRunCodes = dryRunResult
+    ? extractBracketedIssueCodes([...dryRunResult.validation_warnings, ...dryRunResult.validation_errors])
+    : []
+
+  const preflightMissingCodes = structuredCodes.filter((code) => !preflightCodes.includes(code))
+  const dryRunMissingCodes = structuredCodes.filter((code) => !dryRunCodes.includes(code))
+
+  return (
+    <>
+      <p>Read-only consistency check between structured template slot validation and builder diagnostics.</p>
+      <h4>Structured template slot issue codes</h4>
+      {structuredCodes.length > 0 ? <ul>{structuredCodes.map((code) => <li key={`structured:${code}`}>{code}</li>)}</ul> : <p>No structured template slot issue codes returned.</p>}
+      <h4>Preflight diagnostics issue codes</h4>
+      {preflightResult ? (
+        preflightCodes.length > 0 ? <ul>{preflightCodes.map((code) => <li key={`preflight:${code}`}>{code}</li>)}</ul> : <p>No preflight issue codes extracted from diagnostics.</p>
+      ) : <p>No builder preflight result to compare yet.</p>}
+      {preflightResult ? (
+        <>
+          <p>{preflightMissingCodes.length === 0 ? 'All structured template slot issue codes are represented in preflight diagnostics.' : 'Some structured template slot issue codes are missing from preflight diagnostics.'}</p>
+          {preflightMissingCodes.length > 0 ? <ul>{preflightMissingCodes.map((code) => <li key={`preflight-missing:${code}`}>{code}</li>)}</ul> : null}
+        </>
+      ) : null}
+
+      <h4>Dry-run diagnostics issue codes</h4>
+      {dryRunResult ? (
+        dryRunCodes.length > 0 ? <ul>{dryRunCodes.map((code) => <li key={`dry-run:${code}`}>{code}</li>)}</ul> : <p>No dry-run issue codes extracted from diagnostics.</p>
+      ) : <p>No dry-run result to compare yet.</p>}
+      {dryRunResult ? (
+        <>
+          <p>{dryRunMissingCodes.length === 0 ? 'All structured template slot issue codes are represented in dry-run diagnostics.' : 'Some structured template slot issue codes are missing from dry-run diagnostics.'}</p>
+          {dryRunMissingCodes.length > 0 ? <ul>{dryRunMissingCodes.map((code) => <li key={`dry-run-missing:${code}`}>{code}</li>)}</ul> : null}
+        </>
+      ) : null}
+    </>
+  )
+}
+
 export function DiffPreviewSkeletonPanel({ items }: { items: DiffPreviewItem[] }): JSX.Element {
   return (
     <>

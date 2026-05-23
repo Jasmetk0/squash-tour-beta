@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotValidationPreflightConsistencyPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -246,8 +246,10 @@ describe('Module 17 pages through routes', () => {
         advisory_notes: [],
         placeholder: 'Event-level additions/replacements/conflicts remain planned for a future phase.'
       },
-      validation_warnings: [],
-      validation_errors: ['Explicit overwrite/merge policy is required before any future build when a target calendar already exists.'],
+      validation_warnings: [
+        '[template_slot_duration_long] [slot=slot-01-default_msa_template_preview] Template slot duration 5 weeks is unusually long (>3).'
+      ],
+      validation_errors: [],
       audit_preview: { action: 'season_builder_preflight', read_only: true, mutation_permitted: false }
     })
     api.postSeasonBuilderDryRunBuild.mockImplementation(async (payload) => {
@@ -692,6 +694,8 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Selected template slot preview')).toBeInTheDocument()
     expect(screen.getByText('Selected template validation summary')).toBeInTheDocument()
     expect(screen.getByText('Selected template slot validation')).toBeInTheDocument()
+    expect(screen.getByText('Template slot validation vs builder diagnostics consistency')).toBeInTheDocument()
+    expect(await screen.findByText('Read-only consistency check between structured template slot validation and builder diagnostics.')).toBeInTheDocument()
     expect(await screen.findByText(/Read-only selected template slot validation\./)).toBeInTheDocument()
     expect(screen.getByText(/Template slot validation has warnings but no blocking errors\./)).toBeInTheDocument()
     expect(screen.getByText(/Template slot validation status: warnings/)).toBeInTheDocument()
@@ -699,7 +703,8 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Template slot validation warnings: 1')).toBeInTheDocument()
     expect(screen.getByText('Template slot count: 5')).toBeInTheDocument()
     expect(screen.getByText('Template slot week count: 5')).toBeInTheDocument()
-    expect(screen.getByText('template_slot_duration_long')).toBeInTheDocument()
+    expect(screen.getAllByText('template_slot_duration_long').length).toBeGreaterThan(1)
+    expect(screen.getByText('All structured template slot issue codes are represented in preflight diagnostics.')).toBeInTheDocument()
     expect(screen.getByText('Template slot duration long (duration_in_season_weeks)')).toBeInTheDocument()
     expect(screen.getByText('Template slot duration is unusually long.')).toBeInTheDocument()
     expect(screen.getByText('slot-01-default_msa_template_preview')).toBeInTheDocument()
@@ -728,7 +733,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('can_build: false until authoritative validation passes')).toBeInTheDocument()
     expect(screen.getByText('authoritative_diff_summary')).toBeInTheDocument()
     expect(screen.getByText('validation_warnings and validation_errors')).toBeInTheDocument()
-    expect(screen.getByText('audit_preview')).toBeInTheDocument()
+    expect(screen.getAllByText('audit_preview').length).toBeGreaterThan(0)
     expect(screen.getByText('Future implementation must add an authoritative backend preflight before any build, merge, overwrite, or apply command can exist.')).toBeInTheDocument()
     expect(screen.getByText('Backend preflight result')).toBeInTheDocument()
     expect(await screen.findByText('Even when backend preflight succeeds, build actions remain unavailable in this phase.')).toBeInTheDocument()
@@ -736,7 +741,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('No overwrite/merge policy is selected for this read-only preflight.')).toBeInTheDocument()
     expect(screen.getByText('Policy preview never enables build actions in this phase.')).toBeInTheDocument()
     expect(screen.getByText('Status: Blocked in this phase')).toBeInTheDocument()
-    expect(screen.getByText('Blocking validation errors are present.')).toBeInTheDocument()
+    expect(screen.getByText('Advisory validation warnings are present.')).toBeInTheDocument()
     expect(screen.getByText('This is the exact read-only payload sent to the backend preflight endpoint.')).toBeInTheDocument()
     expect(screen.getByText('Backend preflight completed, but build actions remain disabled because can_build is false.')).toBeInTheDocument()
     expect(screen.getByText('Authoritative diff status')).toBeInTheDocument()
@@ -1264,7 +1269,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Explicit confirmation preview is not filled yet.')).toBeInTheDocument()
     expect(screen.getByText('Mutation scope preview is not selected yet.')).toBeInTheDocument()
     expect(screen.getByText('Validation warnings count: 3.')).toBeInTheDocument()
-    expect(screen.getByText('Validation errors count: 0.')).toBeInTheDocument()
+    expect(screen.getAllByText('Validation errors count: 0.').length).toBeGreaterThan(0)
     expect(screen.getByText('Real dry-run generation is not implemented yet.')).toBeInTheDocument()
     expect(screen.getByText('The dry-run contract is visible, but execution remains disabled.')).toBeInTheDocument()
     expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith({ target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, requested_by: 'local-admin-preview' })
@@ -2638,6 +2643,44 @@ describe('SeasonTemplateSlotValidationPanel issue code registry fallback', () =>
     )
     expect(screen.getByText('Unknown template slot issue code')).toBeInTheDocument()
     expect(screen.getByText('No registry metadata available for this template slot issue code.')).toBeInTheDocument()
+  })
+})
+
+describe('TemplateSlotValidationPreflightConsistencyPanel', () => {
+  it('shows preflight mismatch when structured issue codes are missing from diagnostics', () => {
+    render(
+      <TemplateSlotValidationPreflightConsistencyPanel
+        slotValidationData={{
+          template_id: 'default_msa_template_preview',
+          template_exists: true,
+          read_only: true,
+          message: 'ok',
+          summary: { status: 'warnings', error_count: 0, warning_count: 2, issue_count: 2, slot_count: 2, week_count: 3, first_week: 1, last_week: 3 },
+          issues: [
+            { severity: 'warning', code: 'template_slot_duration_long', message: 'Duration long', slot_id: 'slot-01' },
+            { severity: 'warning', code: 'template_slot_week_overloaded', message: 'Week overloaded', slot_id: 'slot-02' }
+          ]
+        }}
+        preflightResult={{
+          can_build: false,
+          target_season_label: '2000/2001',
+          source_type: 'season_template',
+          source_template_id: 'default_msa_template_preview',
+          preflight_fingerprint: 'pf',
+          reviewed_diff_id: 'rd',
+          target_calendar_exists: true,
+          target_event_count: 1,
+          source_resolved: true,
+          source_summary: {},
+          authoritative_diff_summary: {},
+          validation_warnings: ['[template_slot_duration_long] [slot=slot-01] Template slot duration 5 weeks is unusually long (>3).'],
+          validation_errors: [],
+          audit_preview: {}
+        }}
+      />
+    )
+    expect(screen.getByText('Some structured template slot issue codes are missing from preflight diagnostics.')).toBeInTheDocument()
+    expect(screen.getAllByText('template_slot_week_overloaded').length).toBeGreaterThan(0)
   })
 })
 

@@ -2816,7 +2816,7 @@ describe('TemplateSlotValidationPreviewSummaryPanel', () => {
     render(
       <TemplateSlotValidationPreviewSummaryPanel
         titlePrefix="Preflight"
-        preview={{ template_id: '', template_exists: null, status: 42, error_count: NaN, issue_codes: 'bad', error_codes: [null, ''], warning_codes: [], read_only: 'yes' }}
+        preview={{ template_id: '', template_exists: null, status: 42, error_count: NaN, issue_codes: 'bad', error_codes: [null, ''], warning_codes: [], read_only: 'yes' } as any}
       />
     )
     expect(screen.getByText('Preflight template slot validation template ID: n/a')).toBeInTheDocument()

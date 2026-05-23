@@ -14,6 +14,7 @@ import type {
   SeasonCalendarValidationIssueCodeRegistryResponse,
   SeasonRegistryEntry,
   SeasonTemplateSlotValidationIssueCodeRegistryResponse,
+  SeasonTemplateSlotValidationPreview,
   SeasonTemplateSlotValidationResponse,
   SeasonTemplateSummary,
   TourSeasonsValidationResponse
@@ -979,7 +980,7 @@ export function extractBracketedIssueCodes(messages: string[]): string[] {
   return extracted
 }
 
-export function readTemplateSlotPreviewIssueCodes(preview: unknown): string[] {
+export function readTemplateSlotPreviewIssueCodes(preview: SeasonTemplateSlotValidationPreview | null | undefined | unknown): string[] {
   return readTemplateSlotPreviewCodeArrayField(preview, 'issue_codes')
 }
 
@@ -1001,7 +1002,7 @@ function readTemplateSlotPreviewCodeArrayField(
   return codes
 }
 
-export function hasUsableTemplateSlotPreview(preview: unknown): boolean {
+export function hasUsableTemplateSlotPreview(preview: SeasonTemplateSlotValidationPreview | null | undefined): boolean {
   return readTemplateSlotPreviewIssueCodes(preview).length > 0
 }
 
@@ -1032,7 +1033,13 @@ function hasTemplateSlotValidationPreview(preview: unknown): boolean {
   return Object.keys(preview as Record<string, unknown>).length > 0
 }
 
-export function TemplateSlotValidationPreviewSummaryPanel({ titlePrefix, preview }: { titlePrefix: string; preview: unknown }): JSX.Element {
+export function TemplateSlotValidationPreviewSummaryPanel({
+  titlePrefix,
+  preview
+}: {
+  titlePrefix: string
+  preview?: SeasonTemplateSlotValidationPreview | null
+}): JSX.Element {
   if (!hasTemplateSlotValidationPreview(preview)) {
     return <p>{titlePrefix} template slot validation preview is not available.</p>
   }
@@ -1060,7 +1067,7 @@ export function TemplateSlotValidationPreviewSummaryPanel({ titlePrefix, preview
   )
 }
 
-function readTemplateSlotPreviewSummaryField(preview: unknown, field: 'status' | 'issue_count'): string {
+function readTemplateSlotPreviewSummaryField(preview: SeasonTemplateSlotValidationPreview | null | undefined, field: 'status' | 'issue_count'): string {
   return normalizePreviewScalar(preview, field)
 }
 

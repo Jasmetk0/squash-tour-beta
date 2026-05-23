@@ -17,7 +17,12 @@ from beta_engine.application.season_readiness_service import SeasonReadinessRequ
 from beta_engine.application.season_range_preflight_service import SeasonRangePreflightRequest, SeasonRangePreflightResult, SeasonRangePreflightService
 from beta_engine.application.season_range_execution_service import RunSeasonRangeRequest, RunSeasonRangeResult, SeasonRangeExecutionService
 from beta_engine.application.season_registry_service import SeasonRegistryResponse, SeasonRegistryService
-from beta_engine.application.season_template_service import SeasonTemplatesResponse, SeasonTemplateService, SeasonTemplateValidationIssue
+from beta_engine.application.season_template_service import (
+    SeasonTemplatesResponse,
+    SeasonTemplateService,
+    SeasonTemplateSlotValidationResponse,
+    SeasonTemplateValidationIssue,
+)
 from beta_engine.domain.calendar.season_labels import normalize_season_label, to_long_season_label
 from beta_engine.api.season_label_params import normalize_season_for_legacy_services
 from beta_engine.domain.tournaments import (
@@ -58,6 +63,14 @@ def get_season_registry(service: SeasonRegistryService = Depends(get_season_regi
 @router.get("/templates", response_model=SeasonTemplatesResponse)
 def get_season_templates(service: SeasonTemplateService = Depends(get_season_template_service)) -> SeasonTemplatesResponse:
     return service.list_templates()
+
+
+@router.get("/templates/{template_id}/slot-validation", response_model=SeasonTemplateSlotValidationResponse)
+def get_template_slot_validation(
+    template_id: str,
+    service: SeasonTemplateService = Depends(get_season_template_service),
+) -> SeasonTemplateSlotValidationResponse:
+    return service.validate_template_by_id(template_id=template_id)
 
 
 @router.post("/readiness", response_model=SeasonReadinessResult)

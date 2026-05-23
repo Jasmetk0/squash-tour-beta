@@ -15,6 +15,7 @@ import type {
   SeasonRegistryEntry,
   SeasonTemplateSlotValidationIssueCodeRegistryResponse,
   SeasonTemplateSlotConflictPreview,
+  SeasonTemplateSlotConflictReportResponse,
   SeasonTemplateSlotValidationPreview,
   SeasonTemplateSlotValidationResponse,
   SeasonTemplateSummary,
@@ -963,6 +964,73 @@ export function SeasonTemplateSlotValidationPanel({ queryEnabled, query, issueCo
         </tbody>
       </table>
       {hiddenCount > 0 ? <p>{hiddenCount} additional issue(s) hidden. Showing first 10 only.</p> : null}
+    </>
+  )
+}
+
+
+type SeasonTemplateSlotConflictPanelProps = {
+  queryEnabled: boolean
+  query: {
+    isLoading: boolean
+    isFetching: boolean
+    error: unknown
+    data?: SeasonTemplateSlotConflictReportResponse
+  }
+}
+
+export function SeasonTemplateSlotConflictPanel({ queryEnabled, query }: SeasonTemplateSlotConflictPanelProps): JSX.Element {
+  if (!queryEnabled) return <p>Select a template to view read-only slot conflict analysis.</p>
+  if (query.isLoading) return <p>Loading selected template slot conflict analysis…</p>
+  if (query.error) return <p>{formatApiError(query.error)}</p>
+  if (!query.data) return <p>No selected template slot conflict report is available.</p>
+
+  const { data } = query
+  const interpretation = data.summary.status === 'warnings'
+    ? 'Template slot conflict analysis has schedule warnings.'
+    : data.summary.status === 'info'
+      ? 'Template slot conflict analysis has informational findings only.'
+      : 'Template slot conflict analysis is clean.'
+  const visibleConflicts = data.conflicts.slice(0, 10)
+  const hiddenCount = Math.max(0, data.conflicts.length - visibleConflicts.length)
+
+  return (
+    <>
+      <p>Read-only selected template slot conflict analysis. No mutation path is available in this panel.</p>
+      {query.isFetching ? <p>Refreshing selected template slot conflict analysis…</p> : null}
+      <ul className="dashboard-help-list">
+        <li>Selected template slot conflict template_id: {data.template_id}</li>
+        <li>Selected template slot conflict template_exists: {String(data.template_exists)}</li>
+        <li>Selected template slot conflict read_only: {String(data.read_only)}</li>
+        <li>Selected template slot conflict message: {data.message}</li>
+        <li>{interpretation}</li>
+        <li>Selected template slot conflict status: {data.summary.status}</li>
+        <li>Selected template slot conflict warning count: {data.summary.warning_count}</li>
+        <li>Selected template slot conflict info count: {data.summary.info_count}</li>
+        <li>Selected template slot conflict conflict count: {data.summary.conflict_count}</li>
+        <li>Selected template slot conflict slot count: {data.summary.slot_count}</li>
+        <li>Selected template slot conflict occupied week count: {data.summary.occupied_week_count}</li>
+        <li>Selected template slot conflict busiest week: {data.summary.busiest_week ?? '—'}</li>
+        <li>Selected template slot conflict busiest week slot count: {data.summary.busiest_week_slot_count ?? '—'}</li>
+      </ul>
+      {visibleConflicts.length === 0 ? <p>No template slot conflicts reported.</p> : (
+        <table>
+          <thead><tr><th>severity</th><th>code</th><th>season_week</th><th>slot_ids</th><th>categories</th><th>tour_levels</th><th>host_countries</th><th>message</th></tr></thead>
+          <tbody>
+            {visibleConflicts.map((conflict, index) => (
+              <tr key={`${conflict.code}:${conflict.season_week ?? 'none'}:${index}`}>
+                <td>{conflict.severity}</td><td>{conflict.code}</td><td>{conflict.season_week ?? '—'}</td>
+                <td>{conflict.slot_ids?.length ? conflict.slot_ids.join(', ') : '—'}</td>
+                <td>{conflict.categories?.length ? conflict.categories.join(', ') : '—'}</td>
+                <td>{conflict.tour_levels?.length ? conflict.tour_levels.join(', ') : '—'}</td>
+                <td>{conflict.host_countries?.length ? conflict.host_countries.join(', ') : '—'}</td>
+                <td>{conflict.message}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {hiddenCount > 0 ? <p>{hiddenCount} additional template slot conflicts hidden.</p> : null}
     </>
   )
 }

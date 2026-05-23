@@ -39,7 +39,10 @@ def create_app(
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    app.state.runtime = build_runtime(database_url=database_url)
+    @app.on_event("startup")
+    def _startup_runtime() -> None:
+        app.state.runtime = build_runtime(database_url=database_url)
+
     if countries_config_path is not None:
         app.state.countries_config_path = countries_config_path
     if manual_player_overrides_config_path is not None:

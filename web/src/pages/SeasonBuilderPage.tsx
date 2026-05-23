@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
-import { getSeasonCalendar, getSeasonCalendarValidation, getSeasonCalendarValidationIssueCodes, getSeasonRegistry, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderApplyCommandContract, postSeasonBuilderApplyCreateOnlyCommand, postSeasonBuilderApplyCreateOnlyReadiness, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight } from '../api/client'
+import { getSeasonCalendar, getSeasonCalendarValidation, getSeasonCalendarValidationIssueCodes, getSeasonRegistry, getSeasonTemplateSlotValidation, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderApplyCommandContract, postSeasonBuilderApplyCreateOnlyCommand, postSeasonBuilderApplyCreateOnlyReadiness, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight } from '../api/client'
 import { DetailList } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import {
@@ -42,7 +42,8 @@ import {
   SourceTargetPreflightSummaryPanel,
   SourceTargetDiffDetailPanel,
   TargetCalendarStatusPanel,
-  TemplateValidationSummaryPanel
+  TemplateValidationSummaryPanel,
+  SeasonTemplateSlotValidationPanel
 } from './SeasonBuilderPanels'
 import type { SourceType } from './SeasonBuilderPanels'
 import type { CreateOnlyApplyGuardSummaryItem } from './SeasonBuilderPanels'
@@ -86,6 +87,13 @@ export function AdminSeasonBuilderPage(): JSX.Element {
   const issueCodeRegistryQuery = useQuery({
     queryKey: ['season-calendar-validation-issue-codes'],
     queryFn: getSeasonCalendarValidationIssueCodes,
+    retry: false
+  })
+  const templateSlotValidationQueryEnabled = Boolean(selectedTemplateId)
+  const templateSlotValidationQuery = useQuery({
+    queryKey: ['season-template-slot-validation', selectedTemplateId],
+    queryFn: () => getSeasonTemplateSlotValidation(selectedTemplateId),
+    enabled: templateSlotValidationQueryEnabled,
     retry: false
   })
   const hasTemplates = templates.length > 0
@@ -697,6 +705,19 @@ export function AdminSeasonBuilderPage(): JSX.Element {
       {selectedSourceType === 'season_template' ? (
         <SectionCard title="Selected template validation summary">
           <TemplateValidationSummaryPanel selectedTemplate={selectedTemplate} />
+        </SectionCard>
+      ) : null}
+      {selectedSourceType === 'season_template' ? (
+        <SectionCard title="Selected template slot validation">
+          <SeasonTemplateSlotValidationPanel
+            queryEnabled={templateSlotValidationQueryEnabled}
+            query={{
+              isLoading: templateSlotValidationQuery.isLoading,
+              isFetching: templateSlotValidationQuery.isFetching,
+              error: templateSlotValidationQuery.error,
+              data: templateSlotValidationQuery.data
+            }}
+          />
         </SectionCard>
       ) : null}
 

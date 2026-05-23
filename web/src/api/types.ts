@@ -154,6 +154,33 @@ export type SeasonTemplatesResponse = {
   status: string
 }
 
+export type SeasonTemplateValidationIssue = {
+  severity: 'warning' | 'error'
+  code: string
+  message: string
+  slot_id?: string | null
+}
+
+export type SeasonTemplateSlotValidationSummary = {
+  status: 'clean' | 'warnings' | 'errors'
+  error_count: number
+  warning_count: number
+  issue_count: number
+  slot_count: number
+  week_count?: number | null
+  first_week?: number | null
+  last_week?: number | null
+}
+
+export type SeasonTemplateSlotValidationResponse = {
+  template_id: string
+  template_exists: boolean
+  read_only: boolean
+  summary: SeasonTemplateSlotValidationSummary
+  issues: SeasonTemplateValidationIssue[]
+  message: string
+}
+
 export type RunSummary = {
   run_id: string
   season: number

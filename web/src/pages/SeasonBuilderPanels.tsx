@@ -13,6 +13,7 @@ import type {
   SeasonCalendarValidationResponse,
   SeasonCalendarValidationIssueCodeRegistryResponse,
   SeasonRegistryEntry,
+  SeasonTemplateSlotValidationResponse,
   SeasonTemplateSummary,
   TourSeasonsValidationResponse
 } from '../api/types'
@@ -871,6 +872,83 @@ export function TemplateValidationSummaryPanel({ selectedTemplate }: { selectedT
           ))}
         </tbody>
       </table>
+    </>
+  )
+}
+
+type SeasonTemplateSlotValidationPanelProps = {
+  queryEnabled: boolean
+  query: {
+    isLoading: boolean
+    isFetching: boolean
+    error: unknown
+    data?: SeasonTemplateSlotValidationResponse
+  }
+}
+
+export function SeasonTemplateSlotValidationPanel({ queryEnabled, query }: SeasonTemplateSlotValidationPanelProps): JSX.Element {
+  if (!queryEnabled) {
+    return <p>Select a template to view read-only slot validation.</p>
+  }
+  if (query.isLoading) {
+    return <p>Loading selected template slot validation…</p>
+  }
+  if (query.error) {
+    return <p>Template slot validation request failed: {formatApiError(query.error)}</p>
+  }
+  if (!query.data) {
+    return <p>No template slot validation data returned.</p>
+  }
+
+  const { data } = query
+  const interpretation = data.summary.status === 'errors'
+    ? 'Template slot validation has blocking errors.'
+    : data.summary.status === 'warnings'
+      ? 'Template slot validation has warnings but no blocking errors.'
+      : 'Template slot validation is clean.'
+  const visibleIssues = data.issues.slice(0, 10)
+  const hiddenCount = Math.max(0, data.issues.length - visibleIssues.length)
+
+  return (
+    <>
+      <p>Read-only selected template slot validation. No mutation path is available in this panel.</p>
+      {query.isFetching ? <p>Refreshing template slot validation…</p> : null}
+      <ul className="dashboard-help-list">
+        <li>Template slot validation template_id: {data.template_id}</li>
+        <li>Template slot validation template_exists: {String(data.template_exists)}</li>
+        <li>Template slot validation read_only: {String(data.read_only)}</li>
+        <li>Template slot validation message: {data.message}</li>
+        <li>{interpretation}</li>
+        <li>Template slot validation status: {data.summary.status}</li>
+        <li>Template slot validation errors: {data.summary.error_count}</li>
+        <li>Template slot validation warnings: {data.summary.warning_count}</li>
+        <li>Template slot validation issue count: {data.summary.issue_count}</li>
+        <li>Template slot count: {data.summary.slot_count}</li>
+        <li>Template slot week count: {data.summary.week_count ?? '—'}</li>
+        <li>Template slot first week: {data.summary.first_week ?? '—'}</li>
+        <li>Template slot last week: {data.summary.last_week ?? '—'}</li>
+      </ul>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Severity</th>
+            <th scope="col">Code</th>
+            <th scope="col">Slot ID</th>
+            <th scope="col">Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          {visibleIssues.map((issue) => (
+            <tr key={`${issue.code}:${issue.slot_id ?? 'none'}:${issue.message}`}>
+              <td>{issue.severity}</td>
+              <td>{issue.code}</td>
+              <td>{issue.slot_id ?? '—'}</td>
+              <td>{issue.message}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {hiddenCount > 0 ? <p>{hiddenCount} additional issue(s) hidden. Showing first 10 only.</p> : null}
     </>
   )
 }

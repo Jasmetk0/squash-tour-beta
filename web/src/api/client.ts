@@ -125,6 +125,7 @@ import type {
   RunSeasonRangeResult,
   SeasonRegistryResponse,
   SeasonTemplatesResponse,
+  SeasonTemplateSlotValidationResponse,
   SeasonBuilderPreflightRequest,
   SeasonBuilderPreflightResponse,
   SeasonBuilderDryRunBuildRequest,
@@ -189,6 +190,10 @@ export function getSeasonRegistry(): Promise<SeasonRegistryResponse> {
 
 export function getSeasonTemplates(): Promise<SeasonTemplatesResponse> {
   return request('/admin/seasons/templates')
+}
+
+export function getSeasonTemplateSlotValidation(templateId: string): Promise<SeasonTemplateSlotValidationResponse> {
+  return request(`/admin/seasons/templates/${encodeURIComponent(templateId)}/slot-validation`)
 }
 
 export function postSeasonBuilderPreflight(payload: SeasonBuilderPreflightRequest): Promise<SeasonBuilderPreflightResponse> {

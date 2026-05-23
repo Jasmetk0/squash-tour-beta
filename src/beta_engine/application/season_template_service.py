@@ -71,6 +71,17 @@ class SeasonTemplateSlotValidationResponse(BaseModel):
     issues: list[SeasonTemplateValidationIssue] = Field(default_factory=list)
     message: str
 
+@dataclass(slots=True)
+class _TemplateValidationIssueSummary:
+    status: Literal["clean", "warnings", "errors"]
+    error_count: int
+    warning_count: int
+    issue_count: int
+    issue_codes: list[str]
+    error_codes: list[str]
+    warning_codes: list[str]
+
+
 class SeasonTemplateSlotValidationIssueCodeMetadata(BaseModel):
     code: str
     severity: Literal["warning", "error"]
@@ -163,6 +174,27 @@ class SeasonTemplateService:
             message="Stable read-only season template slot validation issue code registry.",
         )
 
+
+    def _summarize_template_validation_issues(
+        self,
+        issues: list[SeasonTemplateValidationIssue],
+    ) -> _TemplateValidationIssueSummary:
+        error_count = sum(1 for issue in issues if issue.severity == "error")
+        warning_count = sum(1 for issue in issues if issue.severity == "warning")
+        error_codes = sorted({issue.code for issue in issues if issue.severity == "error"})
+        warning_codes = sorted({issue.code for issue in issues if issue.severity == "warning"})
+        issue_codes = sorted({issue.code for issue in issues})
+        status: Literal["clean", "warnings", "errors"] = "errors" if (error_count > 0 or error_codes) else ("warnings" if warning_count > 0 else "clean")
+        return _TemplateValidationIssueSummary(
+            status=status,
+            error_count=error_count,
+            warning_count=warning_count,
+            issue_count=len(issues),
+            issue_codes=issue_codes,
+            error_codes=error_codes,
+            warning_codes=warning_codes,
+        )
+
     def build_slot_validation_preview(
         self,
         issues: list[SeasonTemplateValidationIssue],
@@ -171,20 +203,17 @@ class SeasonTemplateService:
     ) -> SeasonTemplateSlotValidationPreview | None:
         if not template_exists:
             return None
-        error_codes = sorted({issue.code for issue in issues if issue.severity == "error"})
-        warning_codes = sorted({issue.code for issue in issues if issue.severity == "warning"})
-        issue_codes = sorted({issue.code for issue in issues})
-        status: Literal["clean", "warnings", "errors"] = "errors" if error_codes else ("warnings" if warning_codes else "clean")
+        issue_summary = self._summarize_template_validation_issues(issues)
         return SeasonTemplateSlotValidationPreview(
             template_id=template_id,
             template_exists=template_exists,
-            status=status,
-            error_count=len([issue for issue in issues if issue.severity == "error"]),
-            warning_count=len([issue for issue in issues if issue.severity == "warning"]),
-            issue_count=len(issues),
-            issue_codes=issue_codes,
-            error_codes=error_codes,
-            warning_codes=warning_codes,
+            status=issue_summary.status,
+            error_count=issue_summary.error_count,
+            warning_count=issue_summary.warning_count,
+            issue_count=issue_summary.issue_count,
+            issue_codes=issue_summary.issue_codes,
+            error_codes=issue_summary.error_codes,
+            warning_codes=issue_summary.warning_codes,
             read_only=True,
         )
 
@@ -294,13 +323,7 @@ class SeasonTemplateService:
             )
 
         issues = self.validate_template_slots(selected)
-        error_count = sum(1 for issue in issues if issue.severity == "error")
-        warning_count = sum(1 for issue in issues if issue.severity == "warning")
-        status: Literal["clean", "warnings", "errors"] = "clean"
-        if error_count > 0:
-            status = "errors"
-        elif warning_count > 0:
-            status = "warnings"
+        issue_summary = self._summarize_template_validation_issues(issues)
 
         occupied_weeks: set[int] = set()
         for slot in selected.slots:
@@ -312,10 +335,10 @@ class SeasonTemplateService:
             template_id=template_id,
             template_exists=True,
             summary=SeasonTemplateSlotValidationSummary(
-                status=status,
-                error_count=error_count,
-                warning_count=warning_count,
-                issue_count=len(issues),
+                status=issue_summary.status,
+                error_count=issue_summary.error_count,
+                warning_count=issue_summary.warning_count,
+                issue_count=issue_summary.issue_count,
                 slot_count=len(selected.slots),
                 week_count=len(occupied_weeks),
                 first_week=first_week,

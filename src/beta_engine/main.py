@@ -1,5 +1,7 @@
 """FastAPI application entrypoint for the beta engine."""
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -31,7 +33,12 @@ def create_app(
     points_config_path: str | None = None,
     entry_tuning_config_path: str | None = None,
 ) -> FastAPI:
-    app = FastAPI(title="Squash Tour Beta Engine", version="0.1.0")
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        app.state.runtime = build_runtime(database_url=database_url)
+        yield
+
+    app = FastAPI(title="Squash Tour Beta Engine", version="0.1.0", lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=DEV_ALLOWED_ORIGINS,
@@ -39,10 +46,6 @@ def create_app(
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    @app.on_event("startup")
-    def _startup_runtime() -> None:
-        app.state.runtime = build_runtime(database_url=database_url)
-
     if countries_config_path is not None:
         app.state.countries_config_path = countries_config_path
     if manual_player_overrides_config_path is not None:

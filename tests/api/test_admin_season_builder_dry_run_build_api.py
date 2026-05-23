@@ -74,6 +74,15 @@ def create_calendar(server: Server, season: str) -> None:
 
 def assert_conflict_preview_is_null(body: dict) -> None:
     assert body["template_slot_conflict_preview"] is None
+    overview = body["template_conflict_diagnostics_overview"]
+    assert overview is not None
+    assert overview["read_only"] is True
+    assert overview["non_blocking"] is True
+    assert overview["mutation_behavior"] == "unavailable"
+    assert overview["blocking_behavior"] == "non_blocking"
+    assert overview["selected_report_available"] is False
+    assert overview["selected_status"] is None
+    assert overview["selected_conflict_count"] == 0
     authoritative = body.get("authoritative_diff_summary")
     if isinstance(authoritative, dict):
         summary = authoritative["template_conflict_summary"]
@@ -88,6 +97,14 @@ def assert_conflict_preview_is_null(body: dict) -> None:
         assert summary["busiest_week"] is None
         assert summary["busiest_week_slot_count"] is None
         assert summary["source"] == "template_slot_conflict_preview"
+        assert overview["preflight_preview_available"] is False
+        assert overview["preflight_summary_available"] is True
+        assert overview["preflight_status"] is None
+        assert overview["preflight_conflict_count"] == 0
+        assert overview["dry_run_preview_available"] is False
+        assert overview["dry_run_summary_available"] is False
+        assert overview["dry_run_status"] is None
+        assert overview["dry_run_conflict_count"] == 0
     dry_run_preview = body.get("dry_run_result_preview")
     if not isinstance(dry_run_preview, dict):
         return
@@ -103,10 +120,24 @@ def assert_conflict_preview_is_null(body: dict) -> None:
     assert summary["busiest_week"] is None
     assert summary["busiest_week_slot_count"] is None
     assert summary["source"] == "template_slot_conflict_preview"
+    assert overview["preflight_preview_available"] is False
+    assert overview["preflight_summary_available"] is False
+    assert overview["preflight_status"] is None
+    assert overview["preflight_conflict_count"] == 0
+    assert overview["dry_run_preview_available"] is False
+    assert overview["dry_run_summary_available"] is True
+    assert overview["dry_run_status"] is None
+    assert overview["dry_run_conflict_count"] == 0
 
 
 def assert_conflict_preview_is_present(body: dict, template_id: str) -> None:
     preview = body["template_slot_conflict_preview"]
+    overview = body["template_conflict_diagnostics_overview"]
+    assert overview is not None
+    assert overview["read_only"] is True
+    assert overview["non_blocking"] is True
+    assert overview["mutation_behavior"] == "unavailable"
+    assert overview["blocking_behavior"] == "non_blocking"
     assert preview is not None
     assert preview["read_only"] is True
     assert preview["template_id"] == template_id
@@ -128,6 +159,11 @@ def assert_conflict_preview_is_present(body: dict, template_id: str) -> None:
         assert summary["busiest_week"] == preview["busiest_week"]
         assert summary["busiest_week_slot_count"] == preview["busiest_week_slot_count"]
         assert summary["source"] == "template_slot_conflict_preview"
+        assert overview["preflight_preview_available"] is True
+        assert overview["preflight_summary_available"] is True
+        assert overview["preflight_status"] == preview["status"]
+        assert overview["preflight_conflict_count"] == preview["conflict_count"]
+        assert overview["dry_run_preview_available"] is False
     dry_run_preview = body.get("dry_run_result_preview")
     if not isinstance(dry_run_preview, dict):
         return
@@ -143,6 +179,11 @@ def assert_conflict_preview_is_present(body: dict, template_id: str) -> None:
     assert summary["busiest_week"] == preview["busiest_week"]
     assert summary["busiest_week_slot_count"] == preview["busiest_week_slot_count"]
     assert summary["source"] == "template_slot_conflict_preview"
+    assert overview["preflight_preview_available"] is False
+    assert overview["dry_run_preview_available"] is True
+    assert overview["dry_run_summary_available"] is True
+    assert overview["dry_run_status"] == preview["status"]
+    assert overview["dry_run_conflict_count"] == preview["conflict_count"]
 
 
 def test_builder_dry_run_build_minimal_contract(tmp_path: Path) -> None:

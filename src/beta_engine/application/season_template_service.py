@@ -8,6 +8,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
+from beta_engine.domain.tournaments import SeasonTemplateSlotValidationPreview
 
 
 class SeasonTemplateSlot(BaseModel):
@@ -160,6 +161,31 @@ class SeasonTemplateService:
             codes=list(codes),
             code_count=len(codes),
             message="Stable read-only season template slot validation issue code registry.",
+        )
+
+    def build_slot_validation_preview(
+        self,
+        issues: list[SeasonTemplateValidationIssue],
+        template_id: str,
+        template_exists: bool = True,
+    ) -> SeasonTemplateSlotValidationPreview | None:
+        if not template_exists:
+            return None
+        error_codes = sorted({issue.code for issue in issues if issue.severity == "error"})
+        warning_codes = sorted({issue.code for issue in issues if issue.severity == "warning"})
+        issue_codes = sorted({issue.code for issue in issues})
+        status: Literal["clean", "warnings", "errors"] = "errors" if error_codes else ("warnings" if warning_codes else "clean")
+        return SeasonTemplateSlotValidationPreview(
+            template_id=template_id,
+            template_exists=template_exists,
+            status=status,
+            error_count=len([issue for issue in issues if issue.severity == "error"]),
+            warning_count=len([issue for issue in issues if issue.severity == "warning"]),
+            issue_count=len(issues),
+            issue_codes=issue_codes,
+            error_codes=error_codes,
+            warning_codes=warning_codes,
+            read_only=True,
         )
 
     def validate_template_slots(self, template: SeasonTemplateSummary) -> list[SeasonTemplateValidationIssue]:

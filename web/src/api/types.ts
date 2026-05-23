@@ -3188,6 +3188,22 @@ export type SeasonBuilderPreflightResponse = {
   audit_preview: Record<string, unknown>
 }
 
+
+export type DryRunTemplateConflictSummaryPreview = {
+  available?: boolean
+  read_only?: boolean
+  non_blocking?: boolean
+  status?: 'clean' | 'warnings' | 'info' | null
+  warning_count?: number
+  info_count?: number
+  conflict_count?: number
+  conflict_codes?: string[]
+  busiest_week?: number | null
+  busiest_week_slot_count?: number | null
+  source?: string
+  message?: string
+}
+
 export type SeasonBuilderDryRunBuildRequest = {
   target_season_label: string
   source_type: string
@@ -3221,7 +3237,7 @@ export type SeasonBuilderDryRunBuildResponse = {
   candidate_event_contract_preview: Record<string, unknown>
   conflict_contract_preview: Record<string, unknown>
   dry_run_result_contract_preview: Record<string, unknown>
-  dry_run_result_preview: Record<string, unknown>
+  dry_run_result_preview: Record<string, unknown> & { template_conflict_summary?: DryRunTemplateConflictSummaryPreview | null }
   message: string
 }
 

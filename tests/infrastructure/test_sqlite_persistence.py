@@ -86,6 +86,27 @@ def test_database_bootstrap_creates_required_tables(tmp_path) -> None:
     ]
 
 
+def test_database_bootstrap_is_idempotent_for_existing_sqlite_schema(tmp_path) -> None:
+    db_file = tmp_path / "sim_state.db"
+    engine = create_sqlite_engine(DatabaseSettings(url=f"sqlite:///{db_file}"))
+    repository = SimulationPersistenceRepository(engine=engine, session_factory=create_session_factory(engine))
+
+    repository.bootstrap_schema()
+    repository.bootstrap_schema()
+
+    second_engine = create_sqlite_engine(DatabaseSettings(url=f"sqlite:///{db_file}"))
+    second_repository = SimulationPersistenceRepository(
+        engine=second_engine,
+        session_factory=create_session_factory(second_engine),
+    )
+    second_repository.bootstrap_schema()
+
+    assert "season_state" in repository.list_table_names()
+    with second_engine.begin() as connection:
+        columns = [row[1] for row in connection.execute(text("PRAGMA table_info('season_state')")).all()]
+    assert "active_tournament_json" in columns
+
+
 def test_admin_wildcard_actions_are_append_only_and_replayable(tmp_path) -> None:
     repository = _repository(tmp_path)
     repository.bootstrap_schema()

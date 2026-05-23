@@ -36,6 +36,7 @@ from beta_engine.domain.tournaments import (
     SeasonBuilderDryRunBuildResponse,
     SeasonBuilderPreflightRequest,
     SeasonBuilderPreflightResponse,
+    SeasonTemplateSlotValidationPreview,
     SeasonCalendarBuildRequest,
     SeasonCalendarBuildResult,
     SeasonCalendar,
@@ -61,25 +62,25 @@ def _build_template_slot_validation_preview(
     issues: list[SeasonTemplateValidationIssue],
     template_id: str,
     template_exists: bool = True,
-) -> dict[str, object]:
+) -> SeasonTemplateSlotValidationPreview | None:
     if not template_exists:
-        return {}
+        return None
     error_codes = sorted({issue.code for issue in issues if issue.severity == "error"})
     warning_codes = sorted({issue.code for issue in issues if issue.severity == "warning"})
     issue_codes = sorted({issue.code for issue in issues})
     status = "errors" if error_codes else ("warnings" if warning_codes else "clean")
-    return {
-        "template_id": template_id,
-        "template_exists": template_exists,
-        "status": status,
-        "error_count": len([issue for issue in issues if issue.severity == "error"]),
-        "warning_count": len([issue for issue in issues if issue.severity == "warning"]),
-        "issue_count": len(issues),
-        "issue_codes": issue_codes,
-        "error_codes": error_codes,
-        "warning_codes": warning_codes,
-        "read_only": True,
-    }
+    return SeasonTemplateSlotValidationPreview(
+        template_id=template_id,
+        template_exists=template_exists,
+        status=status,
+        error_count=len([issue for issue in issues if issue.severity == "error"]),
+        warning_count=len([issue for issue in issues if issue.severity == "warning"]),
+        issue_count=len(issues),
+        issue_codes=issue_codes,
+        error_codes=error_codes,
+        warning_codes=warning_codes,
+        read_only=True,
+    )
 
 @router.get("/registry", response_model=SeasonRegistryResponse)
 def get_season_registry(service: SeasonRegistryService = Depends(get_season_registry_service)) -> SeasonRegistryResponse:
@@ -213,7 +214,7 @@ def preflight_season_builder(
     target_last_week: int | None = None
     target_week_count: int | None = None
     normalized_target: str = payload.target_season_label
-    template_slot_validation_preview: dict[str, object] = {}
+    template_slot_validation_preview: SeasonTemplateSlotValidationPreview | None = None
 
     try:
         normalized_target = to_long_season_label(normalize_season_label(payload.target_season_label))
@@ -391,7 +392,7 @@ def post_season_builder_dry_run_build_contract(
         return deduped
     errors: list[str] = []
     warnings: list[str] = []
-    template_slot_validation_preview: dict[str, object] = {}
+    template_slot_validation_preview: SeasonTemplateSlotValidationPreview | None = None
 
     if not payload.preflight_fingerprint.strip():
         errors.append(

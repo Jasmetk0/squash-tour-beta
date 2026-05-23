@@ -233,6 +233,17 @@ class SeasonCalendarBuildSummary(BaseModel):
     calendar_exists: bool = False
 
 
+class SeasonTemplateSlotValidationPreview(BaseModel):
+    template_id: str | None = None
+    template_exists: bool | None = None
+    status: Literal["clean", "warnings", "errors"] | None = None
+    error_count: int = Field(default=0, ge=0)
+    warning_count: int = Field(default=0, ge=0)
+    issue_count: int = Field(default=0, ge=0)
+    issue_codes: list[str] = Field(default_factory=list)
+    error_codes: list[str] = Field(default_factory=list)
+    warning_codes: list[str] = Field(default_factory=list)
+    read_only: bool = True
 
 
 class SeasonBuilderPreflightRequest(BaseModel):
@@ -255,7 +266,7 @@ class SeasonBuilderPreflightResponse(BaseModel):
     source_resolved: bool = False
     source_summary: dict[str, Any] = Field(default_factory=dict)
     authoritative_diff_summary: dict[str, Any] = Field(default_factory=dict)
-    template_slot_validation_preview: dict[str, Any] = Field(default_factory=dict)
+    template_slot_validation_preview: SeasonTemplateSlotValidationPreview | None = None
     validation_warnings: list[str] = Field(default_factory=list)
     validation_errors: list[str] = Field(default_factory=list)
     audit_preview: dict[str, Any] = Field(default_factory=dict)
@@ -285,7 +296,7 @@ class SeasonBuilderDryRunBuildResponse(BaseModel):
     overwrite_policy: str | None = None
     preflight_fingerprint: str
     reviewed_diff_id: str
-    template_slot_validation_preview: dict[str, Any] = Field(default_factory=dict)
+    template_slot_validation_preview: SeasonTemplateSlotValidationPreview | None = None
     validation_errors: list[str] = Field(default_factory=list)
     validation_warnings: list[str] = Field(default_factory=list)
     audit_preview: dict[str, Any] = Field(default_factory=dict)

@@ -259,6 +259,25 @@ def test_slot_conflict_codes_route_does_not_conflict_with_template_conflicts_rou
         assert conflicts["template_id"] == "default_msa_template_preview"
 
 
+def test_slot_conflicts_report_codes_are_covered_by_conflict_code_registry(tmp_path: Path) -> None:
+    base = {"tour_level": "WORLD_TOUR", "region": "EUROPE", "main_draw_size": 32, "qualification_draw_size": 16, "seeds_count": 8, "qualifier_spots": 4, "wild_cards": 2, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 100000, "prestige": 9, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 5, "active": True}
+    templates = [
+        dict(base, template_id="default_msa_template_preview", category="PLATINUM", event_name="World A", host_country="ENG"),
+        dict(base, template_id="tmp_b", category="DIAMOND", event_name="World B", host_country="ENG"),
+        dict(base, template_id="tmp_c", category="PLATINUM", event_name="World C", host_country="ENG"),
+    ]
+    with Server(tmp_path, templates) as server:
+        status_report, report = call("GET", f"{server.base_url}/admin/seasons/templates/default_msa_template_preview/slot-conflicts")
+        assert status_report == 200
+        status_registry, registry = call("GET", f"{server.base_url}/admin/seasons/templates/slot-conflicts/codes")
+        assert status_registry == 200
+        assert registry["read_only"] is True
+        registry_by_code = {item["code"]: item for item in registry["codes"]}
+        for conflict in report["conflicts"]:
+            assert conflict["code"] in registry_by_code
+            assert conflict["severity"] == registry_by_code[conflict["code"]]["severity"]
+
+
 def test_preflight_planned_source_type_has_no_template_slot_preview(tmp_path: Path) -> None:
     templates = [{"template_id": "default_msa_template_preview", "tour_level": "WORLD_TOUR", "category": "PLATINUM", "event_name": "World A", "region": "EUROPE", "host_country": "ENG", "main_draw_size": 32, "qualification_draw_size": 16, "seeds_count": 8, "qualifier_spots": 4, "wild_cards": 2, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 100000, "prestige": 9, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 1, "active": True}]
     with Server(tmp_path, templates) as server:

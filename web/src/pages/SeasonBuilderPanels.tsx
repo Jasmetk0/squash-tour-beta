@@ -41,6 +41,11 @@ export type TemplatePreview = {
   latestSlot: number | null
 }
 
+function formatOptionalList(values?: string[]): string {
+  if (!values || values.length === 0) return '—'
+  return values.join(', ')
+}
+
 
 export type TemplateValidationStatus = 'OK' | 'Info' | 'Warning'
 
@@ -1018,7 +1023,7 @@ export function SeasonTemplateSlotConflictPanel({ queryEnabled, query, conflictC
       </ul>
       {visibleConflicts.length === 0 ? <p>No template slot conflicts reported.</p> : (
         <table>
-          <thead><tr><th>severity</th><th>code</th><th>title</th><th>season_week</th><th>slot_ids</th><th>categories</th><th>tour_levels</th><th>host_countries</th><th>message</th><th>description</th></tr></thead>
+          <thead><tr><th>severity</th><th>code</th><th>registry title</th><th>season week</th><th>slot IDs</th><th>categories</th><th>tour levels</th><th>host countries</th><th>description</th><th>registry description</th></tr></thead>
           <tbody>
             {visibleConflicts.map((conflict, index) => {
               const metadata = metadataByCode.get(conflict.code)
@@ -1026,10 +1031,10 @@ export function SeasonTemplateSlotConflictPanel({ queryEnabled, query, conflictC
               const registryDescription = metadata?.description ?? 'No registry metadata available for this template slot conflict code.'
               return <tr key={`${conflict.code}:${conflict.season_week ?? 'none'}:${index}`}>
                 <td>{conflict.severity}</td><td>{conflict.code}</td><td>{registryTitle}</td><td>{conflict.season_week ?? '—'}</td>
-                <td>{conflict.slot_ids?.length ? conflict.slot_ids.join(', ') : '—'}</td>
-                <td>{conflict.categories?.length ? conflict.categories.join(', ') : '—'}</td>
-                <td>{conflict.tour_levels?.length ? conflict.tour_levels.join(', ') : '—'}</td>
-                <td>{conflict.host_countries?.length ? conflict.host_countries.join(', ') : '—'}</td>
+                <td>{formatOptionalList(conflict.slot_ids)}</td>
+                <td>{formatOptionalList(conflict.categories)}</td>
+                <td>{formatOptionalList(conflict.tour_levels)}</td>
+                <td>{formatOptionalList(conflict.host_countries)}</td>
                 <td>{conflict.message}</td>
                 <td>{registryDescription}</td>
               </tr>

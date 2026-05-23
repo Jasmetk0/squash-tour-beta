@@ -170,3 +170,55 @@ def test_list_slot_conflict_codes_registry_has_expected_unique_codes(tmp_path):
     }
     assert expected.issubset(set(codes))
     assert len(codes) == len(set(codes))
+
+
+def test_conflict_report_codes_are_covered_by_registry_with_matching_severity(tmp_path):
+    import json
+
+    config_path = tmp_path / "templates.json"
+    base = {
+        "tour_level": "WORLD_TOUR",
+        "region": "EUROPE",
+        "main_draw_size": 32,
+        "qualification_draw_size": 16,
+        "seeds_count": 8,
+        "qualifier_spots": 4,
+        "wild_cards": 2,
+        "byes": 0,
+        "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"},
+        "point_distribution_ref": "world",
+        "prize_money": 1000,
+        "prestige": 1,
+        "event_duration_days": 6,
+        "qualification_duration_days": 2,
+        "duration_in_season_weeks": 5,
+        "active": True,
+    }
+    templates = [
+        dict(base, template_id="default_msa_template_preview", category="PLATINUM", event_name="E0", host_country="ENG"),
+        dict(base, template_id="tmp_1", category="DIAMOND", event_name="E1", host_country="ENG"),
+        dict(base, template_id="tmp_2", category="PLATINUM", event_name="E2", host_country="ENG"),
+        dict(base, template_id="tmp_3", category="DIAMOND", event_name="E3", host_country="ENG"),
+        dict(base, template_id="tmp_4", category="PLATINUM", event_name="E4", host_country="ENG"),
+    ]
+    config_path.write_text(json.dumps({"templates": templates}), encoding="utf-8")
+    service = SeasonTemplateService(template_service=TournamentTemplatesConfigService(config_path=config_path))
+
+    report = service.analyze_template_slot_conflicts("default_msa_template_preview")
+    emitted_codes = {conflict.code for conflict in report.conflicts}
+    assert {
+        "template_conflict_week_overloaded",
+        "template_conflict_premium_overlap",
+        "template_conflict_host_country_cluster",
+        "template_conflict_long_continuous_cluster",
+        "template_conflict_final_dead_zone",
+    }.issubset(emitted_codes)
+
+    registry = service.list_slot_conflict_codes()
+    registry_codes = [item.code for item in registry.codes]
+    assert len(registry_codes) == len(set(registry_codes))
+    registry_by_code = {item.code: item for item in registry.codes}
+
+    for conflict in report.conflicts:
+        assert conflict.code in registry_by_code
+        assert conflict.severity == registry_by_code[conflict.code].severity

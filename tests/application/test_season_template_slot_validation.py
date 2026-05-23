@@ -1,4 +1,4 @@
-from beta_engine.application.season_template_service import SeasonTemplateService, SeasonTemplateSlot, SeasonTemplateSummary
+from beta_engine.application.season_template_service import SeasonTemplateService, SeasonTemplateSlot, SeasonTemplateSummary, SeasonTemplateValidationIssue
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 
 
@@ -32,3 +32,36 @@ def test_validate_template_by_id_reports_structured_summary_errors(tmp_path):
     assert response.summary.status == "errors"
     assert response.summary.error_count == 1
     assert any(issue.code == "template_not_found" for issue in response.issues)
+
+
+def test_build_slot_validation_preview_uses_unique_codes_but_occurrence_counts(tmp_path):
+    config_path = tmp_path / "templates.json"
+    config_path.write_text('{"templates":[]}', encoding="utf-8")
+    service = SeasonTemplateService(template_service=TournamentTemplatesConfigService(config_path=config_path))
+    issues = [
+        SeasonTemplateValidationIssue(severity="warning", code="template_slot_duration_long", message="w1", slot_id="s1"),
+        SeasonTemplateValidationIssue(severity="warning", code="template_slot_duration_long", message="w2", slot_id="s2"),
+    ]
+    preview = service.build_slot_validation_preview(
+        issues=issues,
+        template_id="default_msa_template_preview",
+        template_exists=True,
+    )
+    assert preview is not None
+    assert preview.status == "warnings"
+    assert preview.warning_count == 2
+    assert preview.issue_count == 2
+    assert preview.warning_codes == ["template_slot_duration_long"]
+    assert preview.issue_codes == ["template_slot_duration_long"]
+
+
+def test_build_slot_validation_preview_returns_none_when_template_missing(tmp_path):
+    config_path = tmp_path / "templates.json"
+    config_path.write_text('{"templates":[]}', encoding="utf-8")
+    service = SeasonTemplateService(template_service=TournamentTemplatesConfigService(config_path=config_path))
+    preview = service.build_slot_validation_preview(
+        issues=[],
+        template_id="not_real",
+        template_exists=False,
+    )
+    assert preview is None

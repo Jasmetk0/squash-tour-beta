@@ -58,30 +58,6 @@ def _format_template_issue(issue: SeasonTemplateValidationIssue) -> str:
     return f"[{issue.code}]{slot} {issue.message}"
 
 
-def _build_template_slot_validation_preview(
-    issues: list[SeasonTemplateValidationIssue],
-    template_id: str,
-    template_exists: bool = True,
-) -> SeasonTemplateSlotValidationPreview | None:
-    if not template_exists:
-        return None
-    error_codes = sorted({issue.code for issue in issues if issue.severity == "error"})
-    warning_codes = sorted({issue.code for issue in issues if issue.severity == "warning"})
-    issue_codes = sorted({issue.code for issue in issues})
-    status = "errors" if error_codes else ("warnings" if warning_codes else "clean")
-    return SeasonTemplateSlotValidationPreview(
-        template_id=template_id,
-        template_exists=template_exists,
-        status=status,
-        error_count=len([issue for issue in issues if issue.severity == "error"]),
-        warning_count=len([issue for issue in issues if issue.severity == "warning"]),
-        issue_count=len(issues),
-        issue_codes=issue_codes,
-        error_codes=error_codes,
-        warning_codes=warning_codes,
-        read_only=True,
-    )
-
 @router.get("/registry", response_model=SeasonRegistryResponse)
 def get_season_registry(service: SeasonRegistryService = Depends(get_season_registry_service)) -> SeasonRegistryResponse:
     return service.build_registry()
@@ -269,7 +245,7 @@ def preflight_season_builder(
             else:
                 source_resolved = True
                 template_issues = template_service.validate_template_slots(selected)
-                template_slot_validation_preview = _build_template_slot_validation_preview(
+                template_slot_validation_preview = template_service.build_slot_validation_preview(
                     issues=template_issues,
                     template_id=selected.template_id,
                     template_exists=True,
@@ -589,7 +565,7 @@ def post_season_builder_dry_run_build_contract(
             dry_run_status = "blocked_unresolved_source"
         else:
             template_issues = template_service.validate_template_slots(selected)
-            template_slot_validation_preview = _build_template_slot_validation_preview(
+            template_slot_validation_preview = template_service.build_slot_validation_preview(
                 issues=template_issues,
                 template_id=selected.template_id,
                 template_exists=True,

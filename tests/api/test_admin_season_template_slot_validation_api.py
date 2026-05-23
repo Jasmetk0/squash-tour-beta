@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import threading
 import time
+from uuid import uuid4
 from pathlib import Path
 from urllib import error, request
 
@@ -41,7 +42,7 @@ class Server:
         self.base_url = f"http://127.0.0.1:{self.port}"
         template_path = tmp_path / "templates.json"
         write_templates(template_path, templates)
-        app = create_app(database_url=f"sqlite:///{tmp_path / 'api.db'}", tournament_templates_config_path=str(template_path), season_calendar_registry_path=str(tmp_path / "season_calendars.json"))
+        app = create_app(database_url=f"sqlite:///{tmp_path / f'api-{uuid4().hex}.db'}", tournament_templates_config_path=str(template_path), season_calendar_registry_path=str(tmp_path / "season_calendars.json"))
         self.server = uvicorn.Server(uvicorn.Config(app=app, host="127.0.0.1", port=self.port, log_level="error"))
         self.thread = threading.Thread(target=self.server.run, daemon=True)
 
@@ -59,6 +60,8 @@ class Server:
     def __exit__(self, exc_type, exc, tb) -> None:
         self.server.should_exit = True
         self.thread.join(timeout=10)
+        if self.thread.is_alive():
+            raise RuntimeError("server did not shut down")
 
 
 def _preflight(server: Server):

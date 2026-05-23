@@ -194,7 +194,11 @@ class SimulationPersistenceRepository:
         self._session_factory = session_factory
 
     def bootstrap_schema(self) -> None:
-        Base.metadata.create_all(self._engine)
+        try:
+            Base.metadata.create_all(self._engine)
+        except OperationalError as exc:
+            if "already exists" not in str(exc).lower():
+                raise
         self._ensure_schema_compatibility()
 
     def _ensure_schema_compatibility(self) -> None:

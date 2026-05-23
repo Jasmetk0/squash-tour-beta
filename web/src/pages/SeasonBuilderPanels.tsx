@@ -1332,50 +1332,57 @@ export function readPreflightTemplateConflictSummary(authoritativeDiffSummary: u
   return readTemplateConflictSummary(authoritativeDiffSummary)
 }
 
+type TemplateConflictSummaryPanelProps = {
+  labelPrefix: 'Preflight' | 'Dry-run'
+  unavailableText: string
+  summary: DryRunTemplateConflictSummaryDisplay | null
+}
 
-export function PreflightTemplateConflictSummaryPanel({ authoritativeDiffSummary }: { authoritativeDiffSummary?: unknown }): JSX.Element {
-  const summary = readPreflightTemplateConflictSummary(authoritativeDiffSummary)
-  if (!summary) return <p>Preflight template conflict summary is not available.</p>
+function TemplateConflictSummaryPanel({
+  labelPrefix,
+  unavailableText,
+  summary
+}: TemplateConflictSummaryPanelProps): JSX.Element {
+  if (!summary) return <p>{unavailableText}</p>
 
   return (
     <>
-      <p>Preflight template conflict summary</p>
-      <p>Preflight template conflict diagnostics available: {summary.available}</p>
-      <p>Preflight template conflict diagnostics read-only: {summary.readOnly}</p>
-      <p>Preflight template conflict diagnostics non-blocking: {summary.nonBlocking}</p>
-      <p>Preflight template conflict status: {summary.status}</p>
-      <p>Preflight template conflict warning count: {summary.warningCount}</p>
-      <p>Preflight template conflict info count: {summary.infoCount}</p>
-      <p>Preflight template conflict conflict count: {summary.conflictCount}</p>
-      <p>Preflight template conflict conflict codes: {summary.conflictCodes}</p>
-      <p>Preflight template conflict busiest week: {summary.busiestWeek}</p>
-      <p>Preflight template conflict busiest week slot count: {summary.busiestWeekSlotCount}</p>
-      <p>Preflight template conflict source: {summary.source}</p>
-      <p>Preflight template conflict message: {summary.message}</p>
+      <p>{labelPrefix} template conflict summary</p>
+      <p>{labelPrefix} template conflict diagnostics available: {summary.available}</p>
+      <p>{labelPrefix} template conflict diagnostics read-only: {summary.readOnly}</p>
+      <p>{labelPrefix} template conflict diagnostics non-blocking: {summary.nonBlocking}</p>
+      <p>{labelPrefix} template conflict status: {summary.status}</p>
+      <p>{labelPrefix} template conflict warning count: {summary.warningCount}</p>
+      <p>{labelPrefix} template conflict info count: {summary.infoCount}</p>
+      <p>{labelPrefix} template conflict conflict count: {summary.conflictCount}</p>
+      <p>{labelPrefix} template conflict conflict codes: {summary.conflictCodes}</p>
+      <p>{labelPrefix} template conflict busiest week: {summary.busiestWeek}</p>
+      <p>{labelPrefix} template conflict busiest week slot count: {summary.busiestWeekSlotCount}</p>
+      <p>{labelPrefix} template conflict source: {summary.source}</p>
+      <p>{labelPrefix} template conflict message: {summary.message}</p>
     </>
+  )
+}
+
+export function PreflightTemplateConflictSummaryPanel({ authoritativeDiffSummary }: { authoritativeDiffSummary?: unknown }): JSX.Element {
+  const summary = readPreflightTemplateConflictSummary(authoritativeDiffSummary)
+  return (
+    <TemplateConflictSummaryPanel
+      labelPrefix="Preflight"
+      unavailableText="Preflight template conflict summary is not available."
+      summary={summary}
+    />
   )
 }
 
 export function DryRunTemplateConflictSummaryPanel({ dryRunResultPreview }: { dryRunResultPreview?: unknown }): JSX.Element {
   const summary = readDryRunTemplateConflictSummary(dryRunResultPreview)
-  if (!summary) return <p>Dry-run template conflict summary is not available.</p>
-
   return (
-    <>
-      <p>Dry-run template conflict summary</p>
-      <p>Dry-run template conflict diagnostics available: {summary.available}</p>
-      <p>Dry-run template conflict diagnostics read-only: {summary.readOnly}</p>
-      <p>Dry-run template conflict diagnostics non-blocking: {summary.nonBlocking}</p>
-      <p>Dry-run template conflict status: {summary.status}</p>
-      <p>Dry-run template conflict warning count: {summary.warningCount}</p>
-      <p>Dry-run template conflict info count: {summary.infoCount}</p>
-      <p>Dry-run template conflict conflict count: {summary.conflictCount}</p>
-      <p>Dry-run template conflict conflict codes: {summary.conflictCodes}</p>
-      <p>Dry-run template conflict busiest week: {summary.busiestWeek}</p>
-      <p>Dry-run template conflict busiest week slot count: {summary.busiestWeekSlotCount}</p>
-      <p>Dry-run template conflict source: {summary.source}</p>
-      <p>Dry-run template conflict message: {summary.message}</p>
-    </>
+    <TemplateConflictSummaryPanel
+      labelPrefix="Dry-run"
+      unavailableText="Dry-run template conflict summary is not available."
+      summary={summary}
+    />
   )
 }
 

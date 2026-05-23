@@ -667,6 +667,10 @@ describe('Module 17 pages through routes', () => {
       validation_warnings: [],
       validation_errors: []
     })
+    api.postSeasonBuilderDryRunBuild.mockImplementationOnce(async (payload) => {
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      return await api.postSeasonBuilderDryRunBuild(payload)
+    })
     renderAppAt('/admin/seasons/build')
     expect(await screen.findByRole('heading', { name: 'Season Builder' })).toBeInTheDocument()
     expect(screen.getByText('Read-only preflight foundation for future season creation workflows.')).toBeInTheDocument()
@@ -697,6 +701,11 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Selected template slot validation')).toBeInTheDocument()
     expect(screen.getByText('Template slot validation vs builder diagnostics consistency')).toBeInTheDocument()
     expect(await screen.findByText('Read-only consistency check between structured template slot validation and builder diagnostics.')).toBeInTheDocument()
+    expect(await screen.findByText('Preflight diagnostics issue codes source: structured preview')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot preview status: warnings')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot preview issue count: 1')).toBeInTheDocument()
+    expect(screen.getByText('All structured template slot issue codes are represented in preflight diagnostics.')).toBeInTheDocument()
+    expect(screen.getByText('No dry-run result to compare yet.')).toBeInTheDocument()
     expect(await screen.findByText(/Read-only selected template slot validation\./)).toBeInTheDocument()
     expect(screen.getByText(/Template slot validation has warnings but no blocking errors\./)).toBeInTheDocument()
     expect(screen.getByText(/Template slot validation status: warnings/)).toBeInTheDocument()

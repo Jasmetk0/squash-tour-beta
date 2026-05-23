@@ -262,6 +262,24 @@ class SeasonTemplateSlotConflictPreview(BaseModel):
     busiest_week_slot_count: int | None = None
     read_only: bool = True
 
+
+class SeasonTemplateConflictDiagnosticsOverview(BaseModel):
+    selected_report_available: bool = False
+    selected_status: str | None = None
+    selected_conflict_count: int = 0
+    preflight_preview_available: bool = False
+    preflight_summary_available: bool = False
+    preflight_status: str | None = None
+    preflight_conflict_count: int = 0
+    dry_run_preview_available: bool = False
+    dry_run_summary_available: bool = False
+    dry_run_status: str | None = None
+    dry_run_conflict_count: int = 0
+    mutation_behavior: str = "unavailable"
+    blocking_behavior: str = "non_blocking"
+    read_only: bool = True
+    non_blocking: bool = True
+
 class SeasonBuilderPreflightRequest(BaseModel):
     target_season_label: str = Field(min_length=1, max_length=32)
     source_type: str = Field(min_length=1, max_length=64)
@@ -284,6 +302,7 @@ class SeasonBuilderPreflightResponse(BaseModel):
     authoritative_diff_summary: dict[str, Any] = Field(default_factory=dict)
     template_slot_validation_preview: SeasonTemplateSlotValidationPreview | None = None
     template_slot_conflict_preview: SeasonTemplateSlotConflictPreview | None = None
+    template_conflict_diagnostics_overview: SeasonTemplateConflictDiagnosticsOverview | None = None
     validation_warnings: list[str] = Field(default_factory=list)
     validation_errors: list[str] = Field(default_factory=list)
     audit_preview: dict[str, Any] = Field(default_factory=dict)
@@ -315,6 +334,7 @@ class SeasonBuilderDryRunBuildResponse(BaseModel):
     reviewed_diff_id: str
     template_slot_validation_preview: SeasonTemplateSlotValidationPreview | None = None
     template_slot_conflict_preview: SeasonTemplateSlotConflictPreview | None = None
+    template_conflict_diagnostics_overview: SeasonTemplateConflictDiagnosticsOverview | None = None
     validation_errors: list[str] = Field(default_factory=list)
     validation_warnings: list[str] = Field(default_factory=list)
     audit_preview: dict[str, Any] = Field(default_factory=dict)

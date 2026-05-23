@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
-import { getSeasonCalendar, getSeasonCalendarValidation, getSeasonCalendarValidationIssueCodes, getSeasonRegistry, getSeasonTemplateSlotConflicts, getSeasonTemplateSlotValidation, getSeasonTemplateSlotValidationIssueCodes, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderApplyCommandContract, postSeasonBuilderApplyCreateOnlyCommand, postSeasonBuilderApplyCreateOnlyReadiness, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight } from '../api/client'
+import { getSeasonCalendar, getSeasonCalendarValidation, getSeasonCalendarValidationIssueCodes, getSeasonRegistry, getSeasonTemplateSlotConflictCodes, getSeasonTemplateSlotConflicts, getSeasonTemplateSlotValidation, getSeasonTemplateSlotValidationIssueCodes, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderApplyCommandContract, postSeasonBuilderApplyCreateOnlyCommand, postSeasonBuilderApplyCreateOnlyReadiness, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight } from '../api/client'
 import { DetailList } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import {
@@ -47,6 +47,7 @@ import {
   SeasonTemplateSlotConflictPanel,
   TemplateSlotValidationPreviewSummaryPanel,
   TemplateSlotConflictPreviewSummaryPanel,
+  TemplateSlotConflictCodeRegistryPanel,
   TemplateSlotValidationPreflightConsistencyPanel
 } from './SeasonBuilderPanels'
 import type { SourceType } from './SeasonBuilderPanels'
@@ -109,6 +110,11 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     queryKey: ['season-template-slot-conflicts', selectedTemplateId],
     queryFn: () => getSeasonTemplateSlotConflicts(selectedTemplateId),
     enabled: templateSlotValidationQueryEnabled,
+    retry: false
+  })
+  const templateSlotConflictCodesQuery = useQuery({
+    queryKey: ['season-template-slot-conflict-codes'],
+    queryFn: getSeasonTemplateSlotConflictCodes,
     retry: false
   })
   const hasTemplates = templates.length > 0
@@ -770,6 +776,16 @@ export function AdminSeasonBuilderPage(): JSX.Element {
               error: templateSlotConflictQuery.error,
               data: templateSlotConflictQuery.data
             }}
+            conflictCodeRegistryData={templateSlotConflictCodesQuery.data}
+          />
+        </SectionCard>
+      ) : null}
+      {selectedSourceType === 'season_template' ? (
+        <SectionCard title="Template slot conflict code registry">
+          <TemplateSlotConflictCodeRegistryPanel
+            data={templateSlotConflictCodesQuery.data}
+            isLoading={templateSlotConflictCodesQuery.isLoading}
+            error={templateSlotConflictCodesQuery.error}
           />
         </SectionCard>
       ) : null}

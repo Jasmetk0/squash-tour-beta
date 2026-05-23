@@ -14,6 +14,7 @@ import type {
   SeasonCalendarValidationIssueCodeRegistryResponse,
   SeasonRegistryEntry,
   SeasonTemplateSlotValidationIssueCodeRegistryResponse,
+  SeasonTemplateSlotConflictCodeRegistryResponse,
   SeasonTemplateSlotConflictPreview,
   SeasonTemplateSlotConflictReportResponse,
   SeasonTemplateSlotValidationPreview,
@@ -971,6 +972,7 @@ export function SeasonTemplateSlotValidationPanel({ queryEnabled, query, issueCo
 
 type SeasonTemplateSlotConflictPanelProps = {
   queryEnabled: boolean
+  conflictCodeRegistryData?: SeasonTemplateSlotConflictCodeRegistryResponse
   query: {
     isLoading: boolean
     isFetching: boolean
@@ -979,7 +981,7 @@ type SeasonTemplateSlotConflictPanelProps = {
   }
 }
 
-export function SeasonTemplateSlotConflictPanel({ queryEnabled, query }: SeasonTemplateSlotConflictPanelProps): JSX.Element {
+export function SeasonTemplateSlotConflictPanel({ queryEnabled, query, conflictCodeRegistryData }: SeasonTemplateSlotConflictPanelProps): JSX.Element {
   if (!queryEnabled) return <p>Select a template to view read-only slot conflict analysis.</p>
   if (query.isLoading) return <p>Loading selected template slot conflict analysis…</p>
   if (query.error) return <p>{formatApiError(query.error)}</p>
@@ -993,6 +995,7 @@ export function SeasonTemplateSlotConflictPanel({ queryEnabled, query }: SeasonT
       : 'Template slot conflict analysis is clean.'
   const visibleConflicts = data.conflicts.slice(0, 10)
   const hiddenCount = Math.max(0, data.conflicts.length - visibleConflicts.length)
+  const metadataByCode = new Map((conflictCodeRegistryData?.codes ?? []).map((metadata) => [metadata.code, metadata]))
 
   return (
     <>
@@ -1015,24 +1018,51 @@ export function SeasonTemplateSlotConflictPanel({ queryEnabled, query }: SeasonT
       </ul>
       {visibleConflicts.length === 0 ? <p>No template slot conflicts reported.</p> : (
         <table>
-          <thead><tr><th>severity</th><th>code</th><th>season_week</th><th>slot_ids</th><th>categories</th><th>tour_levels</th><th>host_countries</th><th>message</th></tr></thead>
+          <thead><tr><th>severity</th><th>code</th><th>title</th><th>season_week</th><th>slot_ids</th><th>categories</th><th>tour_levels</th><th>host_countries</th><th>message</th><th>description</th></tr></thead>
           <tbody>
-            {visibleConflicts.map((conflict, index) => (
-              <tr key={`${conflict.code}:${conflict.season_week ?? 'none'}:${index}`}>
-                <td>{conflict.severity}</td><td>{conflict.code}</td><td>{conflict.season_week ?? '—'}</td>
+            {visibleConflicts.map((conflict, index) => {
+              const metadata = metadataByCode.get(conflict.code)
+              const registryTitle = metadata?.title ?? 'Unknown template slot conflict code'
+              const registryDescription = metadata?.description ?? 'No registry metadata available for this template slot conflict code.'
+              return <tr key={`${conflict.code}:${conflict.season_week ?? 'none'}:${index}`}>
+                <td>{conflict.severity}</td><td>{conflict.code}</td><td>{registryTitle}</td><td>{conflict.season_week ?? '—'}</td>
                 <td>{conflict.slot_ids?.length ? conflict.slot_ids.join(', ') : '—'}</td>
                 <td>{conflict.categories?.length ? conflict.categories.join(', ') : '—'}</td>
                 <td>{conflict.tour_levels?.length ? conflict.tour_levels.join(', ') : '—'}</td>
                 <td>{conflict.host_countries?.length ? conflict.host_countries.join(', ') : '—'}</td>
                 <td>{conflict.message}</td>
+                <td>{registryDescription}</td>
               </tr>
-            ))}
+            })}
           </tbody>
         </table>
       )}
       {hiddenCount > 0 ? <p>{hiddenCount} additional template slot conflicts hidden.</p> : null}
     </>
   )
+}
+
+type TemplateSlotConflictCodeRegistryPanelProps = {
+  data?: SeasonTemplateSlotConflictCodeRegistryResponse
+  isLoading: boolean
+  error: unknown
+}
+
+export function TemplateSlotConflictCodeRegistryPanel({ data, isLoading, error }: TemplateSlotConflictCodeRegistryPanelProps): JSX.Element {
+  if (isLoading) return <p>Loading template slot conflict code registry…</p>
+  if (error) return <p>{formatApiError(error)}</p>
+  if (!data) return <p>No template slot conflict code registry is available.</p>
+  return <>
+    <p>Read-only template slot conflict code registry.</p>
+    <p>Template slot conflict code count: {data.code_count}</p>
+    <p>Template slot conflict registry message: {data.message}</p>
+    {data.codes.length === 0 ? <p>No template slot conflict codes registered.</p> : (
+      <table>
+        <thead><tr><th>severity</th><th>code</th><th>title</th><th>description</th></tr></thead>
+        <tbody>{data.codes.map((item) => <tr key={item.code}><td>{item.severity}</td><td>{item.code}</td><td>{item.title}</td><td>{item.description}</td></tr>)}</tbody>
+      </table>
+    )}
+  </>
 }
 
 export function extractBracketedIssueCodes(messages: string[]): string[] {

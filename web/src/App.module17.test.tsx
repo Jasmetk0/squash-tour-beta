@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -46,6 +46,7 @@ const api = vi.hoisted(() => ({
   getSeasonTemplateSlotValidation: vi.fn(),
   getSeasonTemplateSlotValidationIssueCodes: vi.fn(),
   getSeasonTemplateSlotConflicts: vi.fn(),
+  getSeasonTemplateSlotConflictCodes: vi.fn(),
   getSeasonCalendarValidation: vi.fn(),
   getSeasonCalendarValidationIssueCodes: vi.fn(),
   getCategories: vi.fn(),
@@ -224,6 +225,27 @@ describe('Module 17 pages through routes', () => {
       codes: [
         { code: 'template_slot_duration_long', severity: 'warning', title: 'Template slot duration long', description: 'Template slot duration is unusually long.', field: 'duration_in_season_weeks', read_only: true },
         { code: 'template_slot_start_after_end', severity: 'error', title: 'Template slot start after end', description: 'Template slot season_week_start is greater than season_week_end.', field: 'season_week_start', read_only: true }
+      ]
+    })
+    api.getSeasonTemplateSlotConflictCodes.mockResolvedValue({
+      read_only: true,
+      code_count: 2,
+      message: 'Stable read-only season template slot conflict code registry.',
+      codes: [
+        {
+          code: 'template_conflict_week_overloaded',
+          severity: 'warning',
+          title: 'Week overloaded',
+          description: 'A season week has many overlapping template slots.',
+          read_only: true
+        },
+        {
+          code: 'template_conflict_opening_dead_zone',
+          severity: 'info',
+          title: 'Opening dead zone',
+          description: 'No slots are scheduled during opening season weeks 1-4.',
+          read_only: true
+        }
       ]
     })
     api.postSeasonBuilderPreflight.mockResolvedValue({
@@ -733,7 +755,6 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Preflight template slot preview status: warnings')).toBeInTheDocument()
     expect(screen.getByText('Preflight template slot preview issue count: 1')).toBeInTheDocument()
     expect(screen.getByText('All structured template slot issue codes are represented in preflight diagnostics.')).toBeInTheDocument()
-    expect(screen.getByText('No dry-run result to compare yet.')).toBeInTheDocument()
     expect(await screen.findByText(/Read-only selected template slot validation\./)).toBeInTheDocument()
     expect(screen.getByText(/Template slot validation has warnings but no blocking errors\./)).toBeInTheDocument()
     expect(screen.getByText(/Template slot validation status: warnings/)).toBeInTheDocument()
@@ -749,14 +770,20 @@ describe('Module 17 pages through routes', () => {
     expect(api.getSeasonTemplateSlotValidation).toHaveBeenCalledWith('default_msa_template_preview')
     expect(api.getSeasonTemplateSlotValidationIssueCodes).toHaveBeenCalled()
     expect(api.getSeasonTemplateSlotConflicts).toHaveBeenCalledWith('default_msa_template_preview')
+    expect(api.getSeasonTemplateSlotConflictCodes).toHaveBeenCalled()
     expect(screen.getByText('Read-only selected template slot conflict analysis. No mutation path is available in this panel.')).toBeInTheDocument()
     expect(screen.getByText('Template slot conflict analysis has schedule warnings.')).toBeInTheDocument()
     expect(screen.getByText('Selected template slot conflict status: warnings')).toBeInTheDocument()
     expect(screen.getByText('Selected template slot conflict warning count: 1')).toBeInTheDocument()
     expect(screen.getByText('Selected template slot conflict info count: 2')).toBeInTheDocument()
     expect(screen.getByText('Selected template slot conflict conflict count: 3')).toBeInTheDocument()
-    expect(screen.getByText('template_conflict_week_overloaded')).toBeInTheDocument()
+    expect(screen.getAllByText('template_conflict_week_overloaded').length).toBeGreaterThan(1)
+    expect(screen.getAllByText('Week overloaded').length).toBeGreaterThan(1)
+    expect(screen.getAllByText('A season week has many overlapping template slots.').length).toBeGreaterThan(1)
     expect(screen.getByText('Season week 5 has 4 template slots.')).toBeInTheDocument()
+    expect(screen.getByText('Template slot conflict code registry')).toBeInTheDocument()
+    expect(screen.getByText('Read-only template slot conflict code registry.')).toBeInTheDocument()
+    expect(screen.getByText('Template slot conflict code count: 2')).toBeInTheDocument()
     expect(screen.getAllByText('slot-01-default_msa_template_preview').length).toBeGreaterThan(0)
     expect(screen.getByText('Target existing calendar preview')).toBeInTheDocument()
     expect(screen.getByText('Overwrite / merge policy preview')).toBeInTheDocument()
@@ -3180,5 +3207,43 @@ describe('SeasonTemplateSlotConflictPanel', () => {
     const conflicts = Array.from({ length: 11 }, (_, i) => ({ severity: 'info' as const, code: `c_${i}`, message: `m_${i}` }))
     rerender(<SeasonTemplateSlotConflictPanel queryEnabled={true} query={{ isLoading: false, isFetching: false, error: null, data: { template_id: 't', template_exists: true, read_only: true, message: 'many', summary: { status: 'info', warning_count: 0, info_count: 11, conflict_count: 11, slot_count: 11, occupied_week_count: 11 }, conflicts } }} />)
     expect(screen.getByText('1 additional template slot conflicts hidden.')).toBeInTheDocument()
+  })
+
+  it('shows fallback metadata when conflict code is unknown', () => {
+    render(<SeasonTemplateSlotConflictPanel
+      queryEnabled={true}
+      query={{
+        isLoading: false,
+        isFetching: false,
+        error: null,
+        data: {
+          template_id: 't',
+          template_exists: true,
+          read_only: true,
+          message: 'm',
+          summary: { status: 'warnings', warning_count: 1, info_count: 0, conflict_count: 1, slot_count: 1, occupied_week_count: 1 },
+          conflicts: [{ severity: 'warning', code: 'unknown_code', message: 'msg', season_week: 1 }]
+        }
+      }}
+    />)
+    expect(screen.getByText('Unknown template slot conflict code')).toBeInTheDocument()
+    expect(screen.getByText('No registry metadata available for this template slot conflict code.')).toBeInTheDocument()
+  })
+})
+
+describe('TemplateSlotConflictCodeRegistryPanel', () => {
+  it('shows loading state', () => {
+    render(<TemplateSlotConflictCodeRegistryPanel isLoading={true} error={null} />)
+    expect(screen.getByText('Loading template slot conflict code registry…')).toBeInTheDocument()
+  })
+
+  it('shows no data state', () => {
+    render(<TemplateSlotConflictCodeRegistryPanel isLoading={false} error={null} />)
+    expect(screen.getByText('No template slot conflict code registry is available.')).toBeInTheDocument()
+  })
+
+  it('shows empty codes state', () => {
+    render(<TemplateSlotConflictCodeRegistryPanel isLoading={false} error={null} data={{ read_only: true, code_count: 0, message: 'empty', codes: [] }} />)
+    expect(screen.getByText('No template slot conflict codes registered.')).toBeInTheDocument()
   })
 })

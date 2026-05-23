@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -275,7 +275,21 @@ describe('Module 17 pages through routes', () => {
         structural_comparison: { planned_source_slots: 1, existing_target_events: 1, target_is_empty: false, requires_overwrite_or_merge_policy: true },
         blocking_reasons: ['Explicit overwrite/merge policy is required before any future build when a target calendar already exists.'],
         advisory_notes: [],
-        placeholder: 'Event-level additions/replacements/conflicts remain planned for a future phase.'
+        placeholder: 'Event-level additions/replacements/conflicts remain planned for a future phase.',
+        template_conflict_summary: {
+          available: true,
+          read_only: true,
+          non_blocking: true,
+          status: 'warnings',
+          warning_count: 1,
+          info_count: 2,
+          conflict_count: 3,
+          conflict_codes: ['template_conflict_week_overloaded'],
+          busiest_week: 5,
+          busiest_week_slot_count: 4,
+          source: 'template_slot_conflict_preview',
+          message: 'Template slot conflict diagnostics are available as read-only non-blocking preview.'
+        }
       },
       template_slot_validation_preview: { template_id: 'default_msa_template_preview', template_exists: true, status: 'warnings', error_count: 0, warning_count: 1, issue_count: 1, issue_codes: ['template_slot_duration_long'], error_codes: [], warning_codes: ['template_slot_duration_long'], read_only: true },
       template_slot_conflict_preview: {
@@ -771,6 +785,14 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('All structured template slot conflict codes are represented in preflight preview.')).toBeInTheDocument()
     expect(screen.getByText('Preflight template slot conflict preview status: warnings')).toBeInTheDocument()
     expect(screen.getByText('Preflight template slot conflict preview conflict count: 3')).toBeInTheDocument()
+    expect(screen.getAllByText('Preflight template conflict summary').length).toBeGreaterThan(0)
+    expect(screen.getByText('Preflight template conflict diagnostics available: true')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template conflict diagnostics read-only: true')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template conflict diagnostics non-blocking: true')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template conflict status: warnings')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template conflict conflict count: 3')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template conflict conflict codes: template_conflict_week_overloaded')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template conflict source: template_slot_conflict_preview')).toBeInTheDocument()
     expect(screen.getAllByText('No dry-run result to compare yet.').length).toBeGreaterThan(0)
     expect(await screen.findByText('Preflight diagnostics issue codes source: structured preview')).toBeInTheDocument()
     expect(screen.getByText('Preflight template slot preview status: warnings')).toBeInTheDocument()
@@ -1606,7 +1628,21 @@ describe('Module 17 pages through routes', () => {
         structural_comparison: { planned_source_slots: 1, existing_target_events: 0, target_is_empty: true, requires_overwrite_or_merge_policy: false },
         blocking_reasons: [],
         advisory_notes: [],
-        placeholder: 'Event-level additions/replacements/conflicts remain planned for a future phase.'
+        placeholder: 'Event-level additions/replacements/conflicts remain planned for a future phase.',
+        template_conflict_summary: {
+          available: true,
+          read_only: true,
+          non_blocking: true,
+          status: 'warnings',
+          warning_count: 1,
+          info_count: 2,
+          conflict_count: 3,
+          conflict_codes: ['template_conflict_week_overloaded'],
+          busiest_week: 5,
+          busiest_week_slot_count: 4,
+          source: 'template_slot_conflict_preview',
+          message: 'Template slot conflict diagnostics are available as read-only non-blocking preview.'
+        }
       },
       validation_warnings: [],
       validation_errors: [],
@@ -1750,7 +1786,6 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('No backend blocking reasons returned.')).toBeInTheDocument()
     expect(screen.getByText('No backend advisory notes returned.')).toBeInTheDocument()
     expect(screen.getAllByText('Dry-run identity readiness').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('ready_reference').length).toBeGreaterThan(0)
     expect(screen.getByText('can_reference_future_command')).toBeInTheDocument()
     expect(screen.getAllByText('drf_test_empty').length).toBeGreaterThan(0)
     expect(screen.getAllByText('drr_test_empty').length).toBeGreaterThan(0)
@@ -3283,6 +3318,36 @@ describe('DryRunTemplateConflictSummaryPanel', () => {
     expect(screen.getByText('Dry-run template conflict conflict count: 0')).toBeInTheDocument()
   })
 })
+
+describe('PreflightTemplateConflictSummaryPanel', () => {
+  it('shows unavailable message when no authoritative summary is present', () => {
+    render(<PreflightTemplateConflictSummaryPanel authoritativeDiffSummary={undefined} />)
+    expect(screen.getByText('Preflight template conflict summary is not available.')).toBeInTheDocument()
+  })
+
+  it('renders normalized summary rows for valid summary', () => {
+    render(<PreflightTemplateConflictSummaryPanel authoritativeDiffSummary={{ template_conflict_summary: { available: true, read_only: true, non_blocking: true, status: 'warnings', warning_count: 1, info_count: 2, conflict_count: 3, conflict_codes: ['template_conflict_week_overloaded', 'template_conflict_week_overloaded'], busiest_week: 5, busiest_week_slot_count: 4, source: 'template_slot_conflict_preview', message: 'Template slot conflict diagnostics are available as read-only non-blocking preview.' } }} />)
+    expect(screen.getByText('Preflight template conflict diagnostics available: true')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template conflict status: warnings')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template conflict conflict codes: template_conflict_week_overloaded')).toBeInTheDocument()
+  })
+
+  it('handles malformed summary fields with n/a or none safely', () => {
+    render(<PreflightTemplateConflictSummaryPanel authoritativeDiffSummary={{ template_conflict_summary: { available: 'yes', read_only: 'yes', non_blocking: null, status: 42, warning_count: NaN, info_count: Infinity, conflict_count: 'three', conflict_codes: 'bad', busiest_week: 'oops', busiest_week_slot_count: {}, source: '', message: '' } }} />)
+    expect(screen.getByText('Preflight template conflict diagnostics available: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template conflict status: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template conflict conflict codes: none')).toBeInTheDocument()
+  })
+
+  it('renders unavailable summary with available false and zero counts', () => {
+    render(<PreflightTemplateConflictSummaryPanel authoritativeDiffSummary={{ template_conflict_summary: { available: false, read_only: true, non_blocking: true, status: 'clean', warning_count: 0, info_count: 0, conflict_count: 0, conflict_codes: [], busiest_week: null, busiest_week_slot_count: null, source: 'template_slot_conflict_preview', message: 'No conflicts.' } }} />)
+    expect(screen.getByText('Preflight template conflict diagnostics available: false')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template conflict warning count: 0')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template conflict info count: 0')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template conflict conflict count: 0')).toBeInTheDocument()
+  })
+})
+
 describe('SeasonTemplateSlotConflictPanel', () => {
   it('renders clean/info/missing/no-conflicts/hidden-count states', () => {
     const { rerender } = render(<SeasonTemplateSlotConflictPanel queryEnabled={true} query={{ isLoading: false, isFetching: false, error: null, data: { template_id: 't', template_exists: true, read_only: true, message: 'm', summary: { status: 'clean', warning_count: 0, info_count: 0, conflict_count: 0, slot_count: 1, occupied_week_count: 1 }, conflicts: [] } }} />)

@@ -18,10 +18,11 @@ from beta_engine.application.season_range_preflight_service import SeasonRangePr
 from beta_engine.application.season_range_execution_service import RunSeasonRangeRequest, RunSeasonRangeResult, SeasonRangeExecutionService
 from beta_engine.application.season_registry_service import SeasonRegistryResponse, SeasonRegistryService
 from beta_engine.application.season_template_service import (
+    SeasonTemplateSlotConflictCodeRegistryResponse,
+    SeasonTemplateSlotConflictReportResponse,
     SeasonTemplatesResponse,
     SeasonTemplateService,
     SeasonTemplateSlotValidationIssueCodeRegistryResponse,
-    SeasonTemplateSlotConflictReportResponse,
     SeasonTemplateSlotValidationResponse,
     SeasonTemplateValidationIssue,
 )
@@ -84,6 +85,16 @@ def get_template_slot_validation(
     service: SeasonTemplateService = Depends(get_season_template_service),
 ) -> SeasonTemplateSlotValidationResponse:
     return service.validate_template_by_id(template_id=template_id)
+
+
+@router.get(
+    "/templates/slot-conflicts/codes",
+    response_model=SeasonTemplateSlotConflictCodeRegistryResponse,
+)
+def get_template_slot_conflict_codes(
+    service: SeasonTemplateService = Depends(get_season_template_service),
+) -> SeasonTemplateSlotConflictCodeRegistryResponse:
+    return service.list_slot_conflict_codes()
 
 
 @router.get("/templates/{template_id}/slot-conflicts", response_model=SeasonTemplateSlotConflictReportResponse)

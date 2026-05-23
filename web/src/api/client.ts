@@ -128,6 +128,7 @@ import type {
   SeasonTemplateSlotValidationResponse,
   SeasonTemplateSlotValidationIssueCodeRegistryResponse,
   SeasonTemplateSlotConflictReportResponse,
+  SeasonTemplateSlotConflictCodeRegistryResponse,
   SeasonBuilderPreflightRequest,
   SeasonBuilderPreflightResponse,
   SeasonBuilderDryRunBuildRequest,
@@ -204,6 +205,10 @@ export function getSeasonTemplateSlotValidationIssueCodes(): Promise<SeasonTempl
 
 export function getSeasonTemplateSlotConflicts(templateId: string): Promise<SeasonTemplateSlotConflictReportResponse> {
   return request(`/admin/seasons/templates/${encodeURIComponent(templateId)}/slot-conflicts`)
+}
+
+export function getSeasonTemplateSlotConflictCodes(): Promise<SeasonTemplateSlotConflictCodeRegistryResponse> {
+  return request('/admin/seasons/templates/slot-conflicts/codes')
 }
 
 export function postSeasonBuilderPreflight(payload: SeasonBuilderPreflightRequest): Promise<SeasonBuilderPreflightResponse> {

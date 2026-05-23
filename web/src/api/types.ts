@@ -215,6 +215,21 @@ export type SeasonTemplateSlotConflictReportResponse = {
   message: string
 }
 
+export type SeasonTemplateSlotConflictCodeMetadata = {
+  code: string
+  severity: 'warning' | 'info'
+  title: string
+  description: string
+  read_only: boolean
+}
+
+export type SeasonTemplateSlotConflictCodeRegistryResponse = {
+  codes: SeasonTemplateSlotConflictCodeMetadata[]
+  code_count: number
+  read_only: boolean
+  message: string
+}
+
 export type SeasonTemplateSlotValidationIssueCodeMetadata = {
   code: string
   severity: 'warning' | 'error'

@@ -4,6 +4,7 @@ import copy
 import json
 import threading
 import time
+from uuid import uuid4
 from pathlib import Path
 from urllib import error, parse, request
 
@@ -47,7 +48,7 @@ class Server:
         template_path = tmp_path / "templates.json"
         write_templates(template_path)
         app = create_app(
-            database_url=f"sqlite:///{tmp_path / 'api.db'}",
+            database_url=f"sqlite:///{tmp_path / f'api-{uuid4().hex}.db'}",
             tournament_templates_config_path=str(template_path),
             season_calendar_registry_path=str(tmp_path / "season_calendars.json"),
         )
@@ -68,6 +69,8 @@ class Server:
     def __exit__(self, exc_type, exc, tb) -> None:
         self.server.should_exit = True
         self.thread.join(timeout=10)
+        if self.thread.is_alive():
+            raise RuntimeError("server did not shut down")
 
 
 def identity_payload(server: Server, season: str = "2035/2036") -> dict:

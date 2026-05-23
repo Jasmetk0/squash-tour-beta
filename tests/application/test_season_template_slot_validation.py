@@ -36,7 +36,7 @@ def test_validate_template_by_id_reports_structured_summary_errors(tmp_path):
 
 def test_build_slot_validation_preview_uses_unique_codes_but_occurrence_counts(tmp_path):
     config_path = tmp_path / "templates.json"
-    config_path.write_text('{"templates":[]}', encoding="utf-8")
+    config_path.write_text('{"templates":[{"template_id":"tmp_seed","tour_level":"WORLD_TOUR","category":"GOLD","event_name":"Seed","region":"EUROPE","host_country":"ENG","main_draw_size":32,"qualification_draw_size":16,"seeds_count":8,"qualifier_spots":4,"wild_cards":2,"byes":0,"lucky_loser_rules":{"enabled":true,"max_spots":2,"replacement_window":"pre_main_draw_round_1"},"point_distribution_ref":"world","prize_money":1000,"prestige":1,"event_duration_days":6,"qualification_duration_days":2,"duration_in_season_weeks":1,"active":true}]}', encoding="utf-8")
     service = SeasonTemplateService(template_service=TournamentTemplatesConfigService(config_path=config_path))
     issues = [
         SeasonTemplateValidationIssue(severity="warning", code="template_slot_duration_long", message="w1", slot_id="s1"),
@@ -57,7 +57,7 @@ def test_build_slot_validation_preview_uses_unique_codes_but_occurrence_counts(t
 
 def test_build_slot_validation_preview_returns_none_when_template_missing(tmp_path):
     config_path = tmp_path / "templates.json"
-    config_path.write_text('{"templates":[]}', encoding="utf-8")
+    config_path.write_text('{"templates":[{"template_id":"tmp_seed","tour_level":"WORLD_TOUR","category":"GOLD","event_name":"Seed","region":"EUROPE","host_country":"ENG","main_draw_size":32,"qualification_draw_size":16,"seeds_count":8,"qualifier_spots":4,"wild_cards":2,"byes":0,"lucky_loser_rules":{"enabled":true,"max_spots":2,"replacement_window":"pre_main_draw_round_1"},"point_distribution_ref":"world","prize_money":1000,"prestige":1,"event_duration_days":6,"qualification_duration_days":2,"duration_in_season_weeks":1,"active":true}]}', encoding="utf-8")
     service = SeasonTemplateService(template_service=TournamentTemplatesConfigService(config_path=config_path))
     preview = service.build_slot_validation_preview(
         issues=[],
@@ -69,7 +69,7 @@ def test_build_slot_validation_preview_returns_none_when_template_missing(tmp_pa
 
 def test_build_slot_validation_preview_prefers_errors_for_mixed_issues(tmp_path):
     config_path = tmp_path / "templates.json"
-    config_path.write_text('{"templates":[]}', encoding="utf-8")
+    config_path.write_text('{"templates":[{"template_id":"tmp_seed","tour_level":"WORLD_TOUR","category":"GOLD","event_name":"Seed","region":"EUROPE","host_country":"ENG","main_draw_size":32,"qualification_draw_size":16,"seeds_count":8,"qualifier_spots":4,"wild_cards":2,"byes":0,"lucky_loser_rules":{"enabled":true,"max_spots":2,"replacement_window":"pre_main_draw_round_1"},"point_distribution_ref":"world","prize_money":1000,"prestige":1,"event_duration_days":6,"qualification_duration_days":2,"duration_in_season_weeks":1,"active":true}]}', encoding="utf-8")
     service = SeasonTemplateService(template_service=TournamentTemplatesConfigService(config_path=config_path))
     issues = [
         SeasonTemplateValidationIssue(severity="warning", code="template_slot_duration_long", message="w", slot_id="s1"),
@@ -85,3 +85,53 @@ def test_build_slot_validation_preview_prefers_errors_for_mixed_issues(tmp_path)
     assert preview.error_count == 1
     assert preview.warning_count == 1
     assert preview.issue_count == 2
+
+
+def test_analyze_template_slot_conflicts_week_overload(tmp_path):
+    import json
+
+    config_path = tmp_path / "templates.json"
+    base = {"tour_level": "WORLD_TOUR", "category": "PLATINUM", "region": "EUROPE", "host_country": "ENG", "main_draw_size": 32, "qualification_draw_size": 16, "seeds_count": 8, "qualifier_spots": 4, "wild_cards": 2, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 1000, "prestige": 1, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 10, "active": True}
+    templates = [dict(base, template_id="default_msa_template_preview" if i == 0 else f"tmp_{i}", event_name=f"E{i}") for i in range(4)]
+    config_path.write_text(json.dumps({"templates": templates}), encoding="utf-8")
+    service = SeasonTemplateService(template_service=TournamentTemplatesConfigService(config_path=config_path))
+    report = service.analyze_template_slot_conflicts("default_msa_template_preview")
+    assert report.template_exists is True
+    assert any(conflict.code == "template_conflict_week_overloaded" for conflict in report.conflicts)
+
+
+def test_analyze_template_slot_conflicts_premium_overlap(tmp_path):
+    config_path = tmp_path / "templates.json"
+    templates_json = {
+        "templates": [
+            {"template_id": "default_msa_template_preview", "tour_level": "WORLD_TOUR", "category": "PLATINUM", "event_name": "A", "region": "EUROPE", "host_country": "ENG", "main_draw_size": 32, "qualification_draw_size": 16, "seeds_count": 8, "qualifier_spots": 4, "wild_cards": 2, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 1000, "prestige": 1, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 2, "active": True},
+            {"template_id": "tmp_two", "tour_level": "WORLD_TOUR", "category": "DIAMOND", "event_name": "B", "region": "EUROPE", "host_country": "FRA", "main_draw_size": 32, "qualification_draw_size": 16, "seeds_count": 8, "qualifier_spots": 4, "wild_cards": 2, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 1000, "prestige": 1, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 2, "active": True},
+        ]
+    }
+    import json
+    config_path.write_text(json.dumps(templates_json), encoding="utf-8")
+    service = SeasonTemplateService(template_service=TournamentTemplatesConfigService(config_path=config_path))
+    report = service.analyze_template_slot_conflicts("default_msa_template_preview")
+    assert any(conflict.code == "template_conflict_premium_overlap" for conflict in report.conflicts)
+
+
+def test_analyze_template_slot_conflicts_host_country_cluster(tmp_path):
+    config_path = tmp_path / "templates.json"
+    import json
+    templates = []
+    for i in range(5):
+        templates.append({"template_id": "default_msa_template_preview" if i == 0 else f"tmp_{i}", "tour_level": "WORLD_TOUR", "category": "GOLD", "event_name": f"E{i}", "region": "EUROPE", "host_country": "ENG" if i < 3 else "FRA", "main_draw_size": 32, "qualification_draw_size": 16, "seeds_count": 8, "qualifier_spots": 4, "wild_cards": 2, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 1000, "prestige": 1, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 1, "active": True})
+    config_path.write_text(json.dumps({"templates": templates}), encoding="utf-8")
+    service = SeasonTemplateService(template_service=TournamentTemplatesConfigService(config_path=config_path))
+    report = service.analyze_template_slot_conflicts("default_msa_template_preview")
+    assert any(conflict.code == "template_conflict_host_country_cluster" for conflict in report.conflicts)
+
+
+def test_analyze_template_slot_conflicts_missing_template(tmp_path):
+    config_path = tmp_path / "templates.json"
+    config_path.write_text('{"templates":[{"template_id":"tmp_seed","tour_level":"WORLD_TOUR","category":"GOLD","event_name":"Seed","region":"EUROPE","host_country":"ENG","main_draw_size":32,"qualification_draw_size":16,"seeds_count":8,"qualifier_spots":4,"wild_cards":2,"byes":0,"lucky_loser_rules":{"enabled":true,"max_spots":2,"replacement_window":"pre_main_draw_round_1"},"point_distribution_ref":"world","prize_money":1000,"prestige":1,"event_duration_days":6,"qualification_duration_days":2,"duration_in_season_weeks":1,"active":true}]}', encoding="utf-8")
+    service = SeasonTemplateService(template_service=TournamentTemplatesConfigService(config_path=config_path))
+    report = service.analyze_template_slot_conflicts("not_real")
+    assert report.template_exists is False
+    assert report.summary.status == "warnings"
+    assert any(conflict.code == "template_conflict_template_not_found" for conflict in report.conflicts)

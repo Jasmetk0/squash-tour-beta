@@ -21,6 +21,7 @@ from beta_engine.application.season_template_service import (
     SeasonTemplatesResponse,
     SeasonTemplateService,
     SeasonTemplateSlotValidationIssueCodeRegistryResponse,
+    SeasonTemplateSlotConflictReportResponse,
     SeasonTemplateSlotValidationResponse,
     SeasonTemplateValidationIssue,
 )
@@ -83,6 +84,14 @@ def get_template_slot_validation(
     service: SeasonTemplateService = Depends(get_season_template_service),
 ) -> SeasonTemplateSlotValidationResponse:
     return service.validate_template_by_id(template_id=template_id)
+
+
+@router.get("/templates/{template_id}/slot-conflicts", response_model=SeasonTemplateSlotConflictReportResponse)
+def get_template_slot_conflicts(
+    template_id: str,
+    service: SeasonTemplateService = Depends(get_season_template_service),
+) -> SeasonTemplateSlotConflictReportResponse:
+    return service.analyze_template_slot_conflicts(template_id=template_id)
 
 
 @router.post("/readiness", response_model=SeasonReadinessResult)

@@ -71,6 +71,39 @@ class SeasonTemplateSlotValidationResponse(BaseModel):
     issues: list[SeasonTemplateValidationIssue] = Field(default_factory=list)
     message: str
 
+
+class SeasonTemplateSlotConflict(BaseModel):
+    severity: Literal["warning", "info"]
+    code: str
+    message: str
+    season_week: int | None = Field(default=None, ge=1, le=61)
+    slot_ids: list[str] = Field(default_factory=list)
+    categories: list[str] = Field(default_factory=list)
+    tour_levels: list[str] = Field(default_factory=list)
+    host_countries: list[str] = Field(default_factory=list)
+    read_only: bool = True
+
+
+class SeasonTemplateSlotConflictSummary(BaseModel):
+    status: Literal["clean", "warnings", "info"]
+    warning_count: int = Field(ge=0)
+    info_count: int = Field(ge=0)
+    conflict_count: int = Field(ge=0)
+    slot_count: int = Field(ge=0)
+    occupied_week_count: int = Field(ge=0, le=61)
+    busiest_week: int | None = Field(default=None, ge=1, le=61)
+    busiest_week_slot_count: int | None = Field(default=None, ge=0)
+    read_only: bool = True
+
+
+class SeasonTemplateSlotConflictReportResponse(BaseModel):
+    template_id: str
+    template_exists: bool
+    read_only: bool = True
+    summary: SeasonTemplateSlotConflictSummary
+    conflicts: list[SeasonTemplateSlotConflict] = Field(default_factory=list)
+    message: str
+
 @dataclass(slots=True)
 class _TemplateValidationIssueSummary:
     status: Literal["clean", "warnings", "errors"]
@@ -116,6 +149,12 @@ SEASON_TEMPLATE_SLOT_VALIDATION_ISSUE_CODES = (
     SeasonTemplateSlotValidationIssueCodeMetadata(code="template_slot_early_weeks_empty", severity="warning", title="Template slot early weeks empty", description="Template has no events in the first four season weeks.", field="season_week_start"),
     SeasonTemplateSlotValidationIssueCodeMetadata(code="template_slot_final_weeks_empty", severity="warning", title="Template slot final weeks empty", description="Template has no events in the final four season weeks.", field="season_week_end"),
 )
+
+_CONFLICT_WEEK_OVERLOAD_THRESHOLD = 4
+_CONFLICT_LONG_CLUSTER_THRESHOLD = 4
+_CONFLICT_COUNTRY_CLUSTER_COUNT = 3
+_CONFLICT_COUNTRY_CLUSTER_WINDOW = 4
+_PREMIUM_CATEGORIES = {"DIAMOND", "EMERALD", "PLATINUM", "WORLD_CHAMPIONSHIP", "WORLD_TOUR_FINALS"}
 
 
 @dataclass(slots=True)
@@ -346,4 +385,126 @@ class SeasonTemplateService:
             ),
             issues=issues,
             message="Template slot validation completed.",
+        )
+
+    def analyze_template_slot_conflicts(self, template_id: str) -> SeasonTemplateSlotConflictReportResponse:
+        templates_response = self.list_templates()
+        selected = next((template for template in templates_response.templates if template.template_id == template_id), None)
+        if selected is None:
+            conflicts = [SeasonTemplateSlotConflict(severity="warning", code="template_conflict_template_not_found", message="Template not found.")]
+            return SeasonTemplateSlotConflictReportResponse(
+                template_id=template_id,
+                template_exists=False,
+                summary=SeasonTemplateSlotConflictSummary(
+                    status="warnings",
+                    warning_count=1,
+                    info_count=0,
+                    conflict_count=1,
+                    slot_count=0,
+                    occupied_week_count=0,
+                    busiest_week=None,
+                    busiest_week_slot_count=None,
+                ),
+                conflicts=conflicts,
+                message="Template not found.",
+            )
+
+        slot_ids_by_index = [slot.slot_id or f"slot_{index}" for index, slot in enumerate(selected.slots, start=1)]
+        config = self.template_service.get_config()
+        source_by_id = {item.template_id: item for item in config.templates}
+        conflicts: list[SeasonTemplateSlotConflict] = []
+        week_to_slot_indexes: dict[int, list[int]] = {}
+        occupied_weeks: set[int] = set()
+        week_category_tour: dict[tuple[int, str, str], list[int]] = {}
+        week_premium_slot_indexes: dict[int, list[int]] = {}
+
+        for index, slot in enumerate(selected.slots):
+            source = source_by_id.get(slot.source_template_id or "")
+            tour_level = (source.tour_level if source else "") or ""
+            category = (slot.category or "").strip()
+            normalized_category = category.upper()
+            for week in range(slot.season_week_start, slot.season_week_end + 1):
+                if not (1 <= week <= 61):
+                    continue
+                occupied_weeks.add(week)
+                week_to_slot_indexes.setdefault(week, []).append(index)
+                category_key = (week, category.lower(), str(tour_level).lower())
+                week_category_tour.setdefault(category_key, []).append(index)
+                if normalized_category in _PREMIUM_CATEGORIES:
+                    week_premium_slot_indexes.setdefault(week, []).append(index)
+
+        for week in sorted(week_to_slot_indexes):
+            slot_indexes = week_to_slot_indexes[week]
+            if len(slot_indexes) >= _CONFLICT_WEEK_OVERLOAD_THRESHOLD:
+                conflicts.append(SeasonTemplateSlotConflict(severity="warning", code="template_conflict_week_overloaded", message=f"Season week {week} has {len(slot_indexes)} template slots.", season_week=week, slot_ids=sorted(slot_ids_by_index[i] for i in slot_indexes)))
+
+        for week in sorted(week_premium_slot_indexes):
+            slot_indexes = week_premium_slot_indexes[week]
+            if len(slot_indexes) > 1:
+                categories = sorted({(selected.slots[i].category or "").strip() for i in slot_indexes if (selected.slots[i].category or "").strip()})
+                tour_levels = sorted({((source_by_id.get(selected.slots[i].source_template_id or "").tour_level if source_by_id.get(selected.slots[i].source_template_id or "") else "") or "").strip() for i in slot_indexes if ((source_by_id.get(selected.slots[i].source_template_id or "").tour_level if source_by_id.get(selected.slots[i].source_template_id or "") else "") or "").strip()})
+                conflicts.append(SeasonTemplateSlotConflict(severity="warning", code="template_conflict_premium_overlap", message=f"Season week {week} has overlapping premium-category template slots.", season_week=week, slot_ids=sorted(slot_ids_by_index[i] for i in slot_indexes), categories=categories, tour_levels=tour_levels))
+
+        for (week, category, tour_level), slot_indexes in sorted(week_category_tour.items()):
+            if len(slot_indexes) >= 2 and (category or tour_level):
+                conflicts.append(SeasonTemplateSlotConflict(severity="warning", code="template_conflict_category_tour_level_overlap", message=f"Season week {week} has {len(slot_indexes)} slots for category '{category or 'unknown'}' and tour level '{tour_level or 'unknown'}'.", season_week=week, slot_ids=sorted(slot_ids_by_index[i] for i in slot_indexes), categories=sorted({(selected.slots[i].category or "").strip() for i in slot_indexes if (selected.slots[i].category or "").strip()}), tour_levels=sorted({((source_by_id.get(selected.slots[i].source_template_id or "").tour_level if source_by_id.get(selected.slots[i].source_template_id or "") else "") or "").strip() for i in slot_indexes if ((source_by_id.get(selected.slots[i].source_template_id or "").tour_level if source_by_id.get(selected.slots[i].source_template_id or "") else "") or "").strip()})))
+
+        sorted_occupied_weeks = sorted(occupied_weeks)
+        cluster_start = 0
+        while cluster_start < len(sorted_occupied_weeks):
+            cluster_end = cluster_start
+            while cluster_end + 1 < len(sorted_occupied_weeks) and sorted_occupied_weeks[cluster_end + 1] == sorted_occupied_weeks[cluster_end] + 1:
+                cluster_end += 1
+            cluster_weeks = sorted_occupied_weeks[cluster_start:cluster_end + 1]
+            if len(cluster_weeks) >= _CONFLICT_LONG_CLUSTER_THRESHOLD:
+                conflicts.append(SeasonTemplateSlotConflict(severity="info", code="template_conflict_long_continuous_cluster", message=f"Continuous occupied week cluster from {cluster_weeks[0]} to {cluster_weeks[-1]} ({len(cluster_weeks)} weeks).", season_week=cluster_weeks[0]))
+            cluster_start = cluster_end + 1
+
+        if not any(week in occupied_weeks for week in range(1, 5)):
+            conflicts.append(SeasonTemplateSlotConflict(severity="info", code="template_conflict_opening_dead_zone", message="No template slots are scheduled in season weeks 1-4.", season_week=1))
+        if not any(week in occupied_weeks for week in range(58, 62)):
+            conflicts.append(SeasonTemplateSlotConflict(severity="info", code="template_conflict_final_dead_zone", message="No template slots are scheduled in season weeks 58-61.", season_week=58))
+
+        for window_start in range(1, 61 - _CONFLICT_COUNTRY_CLUSTER_WINDOW + 2):
+            window_end = window_start + _CONFLICT_COUNTRY_CLUSTER_WINDOW - 1
+            by_country: dict[str, set[int]] = {}
+            for week in range(window_start, window_end + 1):
+                for slot_index in week_to_slot_indexes.get(week, []):
+                    country = (selected.slots[slot_index].host_country or "").strip()
+                    if country:
+                        by_country.setdefault(country, set()).add(slot_index)
+            for country, slot_indexes in sorted(by_country.items()):
+                if len(slot_indexes) >= _CONFLICT_COUNTRY_CLUSTER_COUNT:
+                    slot_ids = sorted(slot_ids_by_index[i] for i in slot_indexes)
+                    code_key = (country, tuple(slot_ids), window_start)
+                    if not any(c.code == "template_conflict_host_country_cluster" and c.host_countries == [country] and c.slot_ids == slot_ids and c.season_week == window_start for c in conflicts):
+                        conflicts.append(SeasonTemplateSlotConflict(severity="info", code="template_conflict_host_country_cluster", message=f"Host country '{country}' appears in {len(slot_ids)} slots within weeks {window_start}-{window_end}.", season_week=window_start, slot_ids=slot_ids, host_countries=[country]))
+
+        severity_order = {"warning": 0, "info": 1}
+        conflicts.sort(key=lambda item: (severity_order[item.severity], item.season_week if item.season_week is not None else 99, item.code, item.message))
+
+        warning_count = sum(1 for conflict in conflicts if conflict.severity == "warning")
+        info_count = sum(1 for conflict in conflicts if conflict.severity == "info")
+        status: Literal["clean", "warnings", "info"] = "warnings" if warning_count > 0 else ("info" if info_count > 0 else "clean")
+        busiest_week = None
+        busiest_week_slot_count = None
+        if week_to_slot_indexes:
+            busiest_week, busiest_slots = max(sorted(week_to_slot_indexes.items()), key=lambda item: (len(item[1]), -item[0]))
+            busiest_week_slot_count = len(busiest_slots)
+
+        return SeasonTemplateSlotConflictReportResponse(
+            template_id=template_id,
+            template_exists=True,
+            summary=SeasonTemplateSlotConflictSummary(
+                status=status,
+                warning_count=warning_count,
+                info_count=info_count,
+                conflict_count=len(conflicts),
+                slot_count=len(selected.slots),
+                occupied_week_count=len(occupied_weeks),
+                busiest_week=busiest_week,
+                busiest_week_slot_count=busiest_week_slot_count,
+            ),
+            conflicts=conflicts,
+            message="Template slot conflict analysis completed.",
         )

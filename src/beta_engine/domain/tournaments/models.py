@@ -255,6 +255,7 @@ class SeasonBuilderPreflightResponse(BaseModel):
     source_resolved: bool = False
     source_summary: dict[str, Any] = Field(default_factory=dict)
     authoritative_diff_summary: dict[str, Any] = Field(default_factory=dict)
+    template_slot_validation_preview: dict[str, Any] = Field(default_factory=dict)
     validation_warnings: list[str] = Field(default_factory=list)
     validation_errors: list[str] = Field(default_factory=list)
     audit_preview: dict[str, Any] = Field(default_factory=dict)
@@ -284,6 +285,7 @@ class SeasonBuilderDryRunBuildResponse(BaseModel):
     overwrite_policy: str | None = None
     preflight_fingerprint: str
     reviewed_diff_id: str
+    template_slot_validation_preview: dict[str, Any] = Field(default_factory=dict)
     validation_errors: list[str] = Field(default_factory=list)
     validation_warnings: list[str] = Field(default_factory=list)
     audit_preview: dict[str, Any] = Field(default_factory=dict)

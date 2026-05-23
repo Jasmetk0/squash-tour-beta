@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -247,6 +247,24 @@ describe('Module 17 pages through routes', () => {
         placeholder: 'Event-level additions/replacements/conflicts remain planned for a future phase.'
       },
       template_slot_validation_preview: { template_id: 'default_msa_template_preview', template_exists: true, status: 'warnings', error_count: 0, warning_count: 1, issue_count: 1, issue_codes: ['template_slot_duration_long'], error_codes: [], warning_codes: ['template_slot_duration_long'], read_only: true },
+      template_slot_conflict_preview: {
+        template_id: 'default_msa_template_preview',
+        template_exists: true,
+        status: 'warnings',
+        warning_count: 1,
+        info_count: 2,
+        conflict_count: 3,
+        conflict_codes: [
+          'template_conflict_week_overloaded',
+          'template_conflict_opening_dead_zone',
+          'template_conflict_final_dead_zone'
+        ],
+        warning_codes: ['template_conflict_week_overloaded'],
+        info_codes: ['template_conflict_opening_dead_zone', 'template_conflict_final_dead_zone'],
+        busiest_week: 5,
+        busiest_week_slot_count: 4,
+        read_only: true
+      },
       validation_warnings: [
         '[template_slot_duration_long] [slot=slot-01-default_msa_template_preview] Template slot duration 5 weeks is unusually long (>3).'
       ],
@@ -830,6 +848,15 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Backend preflight result')).toBeInTheDocument()
     expect(screen.getByText('Authoritative read-only backend preflight result. This endpoint does not build, merge, overwrite, or apply anything.')).toBeInTheDocument()
     expect(screen.getByText('Preflight template slot validation preview')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict preview')).toBeInTheDocument()
+    expect(await screen.findByText('Preflight template slot conflict status: warnings')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict warning count: 1')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict info count: 2')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict conflict count: 3')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict conflict codes: template_conflict_week_overloaded, template_conflict_opening_dead_zone, template_conflict_final_dead_zone')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict warning codes: template_conflict_week_overloaded')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict busiest week: 5')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict busiest week slot count: 4')).toBeInTheDocument()
     expect(screen.getByText('Future build command contract preview')).toBeInTheDocument()
     expect((await screen.findAllByText('can_build')).length).toBeGreaterThan(0)
     expect(screen.getAllByText('mutation_permitted').length).toBeGreaterThan(0)
@@ -843,7 +870,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('requested_by / admin actor').length).toBeGreaterThan(0)
     expect(screen.getAllByText('audit_reason').length).toBeGreaterThan(0)
     expect(screen.getByText('seed / template_version / config_hash')).toBeInTheDocument()
-    expect(screen.getByText('explicit_confirmation')).toBeInTheDocument()
+    expect(screen.getAllByText('explicit_confirmation').length).toBeGreaterThan(0)
     expect(screen.getByText('reviewed_diff_id or dry_run_result_id')).toBeInTheDocument()
     expect(screen.getAllByText('mutation_scope').length).toBeGreaterThan(0)
     expect(screen.getByText('Current preflight signals')).toBeInTheDocument()
@@ -1669,6 +1696,8 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Disabled dry-run build contract result')).toBeInTheDocument()
     expect(screen.getByText('Dry-run template slot validation preview')).toBeInTheDocument()
     expect(screen.getByText('Dry-run template slot validation preview is not available.')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot conflict preview')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot conflict preview is not available.')).toBeInTheDocument()
     expect(screen.getByText('Disabled dry-run readiness summary')).toBeInTheDocument()
     expect(screen.getByText('Dry-run audit metadata preview inputs')).toBeInTheDocument()
     expect(screen.getByText('Dry-run build command contract exists, but execution is disabled in this phase.')).toBeInTheDocument()
@@ -3051,5 +3080,68 @@ describe('ApplyResponseVsTargetValidationComparisonPanel', () => {
     const categoriesCountRow = screen.getByText('categories.count').closest('tr')
     expect(categoriesCountRow).not.toBeNull()
     expect(categoriesCountRow).toHaveTextContent('no')
+  })
+})
+
+
+describe('TemplateSlotConflictPreviewSummaryPanel', () => {
+  it('shows unavailable message when preview is missing', () => {
+    render(<TemplateSlotConflictPreviewSummaryPanel titlePrefix="Preflight" preview={undefined} />)
+    expect(screen.getByText('Preflight template slot conflict preview is not available.')).toBeInTheDocument()
+  })
+
+  it('shows normalized rows for valid preview', () => {
+    render(
+      <TemplateSlotConflictPreviewSummaryPanel
+        titlePrefix="Dry-run"
+        preview={{
+          template_id: 'default_msa_template_preview',
+          template_exists: true,
+          status: 'warnings',
+          warning_count: 1,
+          info_count: 2,
+          conflict_count: 3,
+          conflict_codes: ['template_conflict_week_overloaded', 'template_conflict_opening_dead_zone'],
+          warning_codes: ['template_conflict_week_overloaded'],
+          info_codes: ['template_conflict_opening_dead_zone'],
+          busiest_week: 5,
+          busiest_week_slot_count: 4,
+          read_only: true
+        }}
+      />
+    )
+    expect(screen.getByText('Dry-run template slot conflict preview')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot conflict template ID: default_msa_template_preview')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot conflict template exists: true')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot conflict read-only: true')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot conflict status: warnings')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot conflict warning count: 1')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot conflict info count: 2')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot conflict conflict count: 3')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot conflict conflict codes: template_conflict_week_overloaded, template_conflict_opening_dead_zone')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot conflict warning codes: template_conflict_week_overloaded')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot conflict info codes: template_conflict_opening_dead_zone')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot conflict busiest week: 5')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template slot conflict busiest week slot count: 4')).toBeInTheDocument()
+  })
+
+  it('handles malformed fields safely', () => {
+    render(
+      <TemplateSlotConflictPreviewSummaryPanel
+        titlePrefix="Preflight"
+        preview={{ template_id: '', template_exists: null, status: 42, warning_count: NaN, info_count: Infinity, conflict_count: null, conflict_codes: 'bad', warning_codes: [null, ''], info_codes: [], busiest_week: 'oops', busiest_week_slot_count: NaN, read_only: 'yes' } as any}
+      />
+    )
+    expect(screen.getByText('Preflight template slot conflict template ID: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict template exists: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict read-only: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict status: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict warning count: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict info count: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict conflict count: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict conflict codes: none')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict warning codes: none')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict busiest week: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Preflight template slot conflict busiest week slot count: n/a')).toBeInTheDocument()
   })
 })

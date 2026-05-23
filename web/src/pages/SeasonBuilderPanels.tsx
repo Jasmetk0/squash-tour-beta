@@ -14,6 +14,7 @@ import type {
   SeasonCalendarValidationIssueCodeRegistryResponse,
   SeasonRegistryEntry,
   SeasonTemplateSlotValidationIssueCodeRegistryResponse,
+  SeasonTemplateSlotConflictPreview,
   SeasonTemplateSlotValidationPreview,
   SeasonTemplateSlotValidationResponse,
   SeasonTemplateSummary,
@@ -994,7 +995,8 @@ function readTemplateSlotPreviewCodeArrayField(
   const seen = new Set<string>()
   const codes: string[] = []
   for (const rawCode of rawCodes) {
-    const normalizedCode = String(rawCode).trim()
+    if (typeof rawCode !== 'string') continue
+    const normalizedCode = rawCode.trim()
     if (!normalizedCode || seen.has(normalizedCode)) continue
     seen.add(normalizedCode)
     codes.push(normalizedCode)
@@ -1028,7 +1030,59 @@ function normalizeTemplateSlotPreviewCodes(preview: unknown, field: 'issue_codes
   return normalized.length > 0 ? normalized.join(', ') : 'none'
 }
 
+function readPreviewCodeArrayField(
+  preview: unknown,
+  field: string
+): string[] {
+  if (!preview || typeof preview !== 'object') return []
+  const rawCodes = (preview as Record<string, unknown>)[field]
+  if (!Array.isArray(rawCodes) || rawCodes.length === 0) return []
+  const seen = new Set<string>()
+  const codes: string[] = []
+  for (const rawCode of rawCodes) {
+    if (typeof rawCode !== 'string') continue
+    const normalizedCode = rawCode.trim()
+    if (!normalizedCode || seen.has(normalizedCode)) continue
+    seen.add(normalizedCode)
+    codes.push(normalizedCode)
+  }
+  return codes
+}
+
+function normalizeConflictPreviewCodes(preview: unknown, field: 'conflict_codes' | 'warning_codes' | 'info_codes'): string {
+  const normalized = readPreviewCodeArrayField(preview, field)
+  return normalized.length > 0 ? normalized.join(', ') : 'none'
+}
+
 function hasTemplateSlotValidationPreview(preview: unknown): boolean {
+  if (!preview || typeof preview !== 'object') return false
+  return Object.keys(preview as Record<string, unknown>).length > 0
+}
+
+function normalizeConflictPreviewScalar(preview: unknown, field: string): string {
+  if (!preview || typeof preview !== 'object') return 'n/a'
+  const value = (preview as Record<string, unknown>)[field]
+  if (field === 'template_exists' || field === 'read_only') {
+    return typeof value === 'boolean' ? (value ? 'true' : 'false') : 'n/a'
+  }
+  if (field === 'warning_count' || field === 'info_count' || field === 'conflict_count' || field === 'busiest_week' || field === 'busiest_week_slot_count') {
+    return typeof value === 'number' && Number.isFinite(value) ? String(value) : 'n/a'
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) return 'n/a'
+    if (field === 'status') {
+      const normalizedStatus = trimmed.toLowerCase()
+      return normalizedStatus === 'clean' || normalizedStatus === 'warnings' || normalizedStatus === 'info' ? normalizedStatus : 'n/a'
+    }
+    return trimmed
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) return field === 'status' ? 'n/a' : String(value)
+  if (typeof value === 'boolean') return value ? 'true' : 'false'
+  return 'n/a'
+}
+
+function hasTemplateSlotConflictPreview(preview: unknown): boolean {
   if (!preview || typeof preview !== 'object') return false
   return Object.keys(preview as Record<string, unknown>).length > 0
 }
@@ -1063,6 +1117,36 @@ export function TemplateSlotValidationPreviewSummaryPanel({
       <p>{titlePrefix} template slot validation issue codes: {normalizeTemplateSlotPreviewCodes(preview, 'issue_codes')}</p>
       <p>{titlePrefix} template slot validation error codes: {normalizeTemplateSlotPreviewCodes(preview, 'error_codes')}</p>
       <p>{titlePrefix} template slot validation warning codes: {normalizeTemplateSlotPreviewCodes(preview, 'warning_codes')}</p>
+    </>
+  )
+}
+
+export function TemplateSlotConflictPreviewSummaryPanel({
+  titlePrefix,
+  preview
+}: {
+  titlePrefix: string
+  preview?: SeasonTemplateSlotConflictPreview | null
+}): JSX.Element {
+  if (!hasTemplateSlotConflictPreview(preview)) {
+    return <p>{titlePrefix} template slot conflict preview is not available.</p>
+  }
+
+  return (
+    <>
+      <p>{titlePrefix} template slot conflict preview</p>
+      <p>{titlePrefix} template slot conflict template ID: {normalizeConflictPreviewScalar(preview, 'template_id')}</p>
+      <p>{titlePrefix} template slot conflict template exists: {normalizeConflictPreviewScalar(preview, 'template_exists')}</p>
+      <p>{titlePrefix} template slot conflict read-only: {normalizeConflictPreviewScalar(preview, 'read_only')}</p>
+      <p>{titlePrefix} template slot conflict status: {normalizeConflictPreviewScalar(preview, 'status')}</p>
+      <p>{titlePrefix} template slot conflict warning count: {normalizeConflictPreviewScalar(preview, 'warning_count')}</p>
+      <p>{titlePrefix} template slot conflict info count: {normalizeConflictPreviewScalar(preview, 'info_count')}</p>
+      <p>{titlePrefix} template slot conflict conflict count: {normalizeConflictPreviewScalar(preview, 'conflict_count')}</p>
+      <p>{titlePrefix} template slot conflict conflict codes: {normalizeConflictPreviewCodes(preview, 'conflict_codes')}</p>
+      <p>{titlePrefix} template slot conflict warning codes: {normalizeConflictPreviewCodes(preview, 'warning_codes')}</p>
+      <p>{titlePrefix} template slot conflict info codes: {normalizeConflictPreviewCodes(preview, 'info_codes')}</p>
+      <p>{titlePrefix} template slot conflict busiest week: {normalizeConflictPreviewScalar(preview, 'busiest_week')}</p>
+      <p>{titlePrefix} template slot conflict busiest week slot count: {normalizeConflictPreviewScalar(preview, 'busiest_week_slot_count')}</p>
     </>
   )
 }

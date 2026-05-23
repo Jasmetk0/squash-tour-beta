@@ -3102,6 +3102,7 @@ export type SeasonBuilderPreflightResponse = {
   source_resolved: boolean
   source_summary: Record<string, unknown>
   authoritative_diff_summary: Record<string, unknown>
+  template_slot_validation_preview?: Record<string, unknown>
   validation_warnings: string[]
   validation_errors: string[]
   audit_preview: Record<string, unknown>
@@ -3131,6 +3132,7 @@ export type SeasonBuilderDryRunBuildResponse = {
   overwrite_policy: string | null
   preflight_fingerprint: string
   reviewed_diff_id: string
+  template_slot_validation_preview?: Record<string, unknown>
   validation_errors: string[]
   validation_warnings: string[]
   audit_preview: Record<string, unknown>

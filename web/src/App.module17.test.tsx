@@ -246,6 +246,7 @@ describe('Module 17 pages through routes', () => {
         advisory_notes: [],
         placeholder: 'Event-level additions/replacements/conflicts remain planned for a future phase.'
       },
+      template_slot_validation_preview: { template_id: 'default_msa_template_preview', template_exists: true, status: 'warnings', error_count: 0, warning_count: 1, issue_count: 1, issue_codes: ['template_slot_duration_long'], error_codes: [], warning_codes: ['template_slot_duration_long'], read_only: true },
       validation_warnings: [
         '[template_slot_duration_long] [slot=slot-01-default_msa_template_preview] Template slot duration 5 weeks is unusually long (>3).'
       ],

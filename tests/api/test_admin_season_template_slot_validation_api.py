@@ -75,6 +75,11 @@ def test_default_template_no_blocking_template_slot_errors(tmp_path: Path) -> No
         status, body = _preflight(server)
         assert status == 200
         assert not any("[template_slot_" in err for err in body["validation_errors"])
+        preview = body["template_slot_validation_preview"]
+        assert preview["template_id"] == "default_msa_template_preview"
+        assert preview["read_only"] is True
+        assert preview["error_count"] == 0
+        assert preview["status"] in ("clean", "warnings")
         status, validation = call("GET", f"{server.base_url}/admin/seasons/templates/default_msa_template_preview/slot-validation")
         assert status == 200
         assert validation["template_exists"] is True
@@ -92,6 +97,13 @@ def test_duplicate_and_overload_warnings_surface(tmp_path: Path) -> None:
         assert status == 200
         assert any("template_slot_category_tour_level_week_overloaded" in w for w in body["validation_warnings"])
         assert any("template_slot_duration_long" in w for w in body["validation_warnings"])
+        preview = body["template_slot_validation_preview"]
+        assert preview["template_id"] == "default_msa_template_preview"
+        assert preview["read_only"] is True
+        assert preview["status"] == "warnings"
+        assert preview["warning_count"] > 0
+        assert "template_slot_duration_long" in preview["issue_codes"] or "template_slot_category_tour_level_week_overloaded" in preview["issue_codes"]
+        assert any("[template_slot_duration_long]" in item for item in body["validation_warnings"])
         status, validation = call("GET", f"{server.base_url}/admin/seasons/templates/default_msa_template_preview/slot-validation")
         assert status == 200
         assert validation["template_exists"] is True
@@ -99,6 +111,27 @@ def test_duplicate_and_overload_warnings_surface(tmp_path: Path) -> None:
         assert validation["summary"]["warning_count"] > 0
         issue_codes = {issue["code"] for issue in validation["issues"]}
         assert "template_slot_duration_long" in issue_codes or "template_slot_category_tour_level_week_overloaded" in issue_codes
+
+
+def test_dry_run_includes_template_slot_validation_preview(tmp_path: Path) -> None:
+    base = {"tour_level": "WORLD_TOUR", "category": "PLATINUM", "region": "EUROPE", "host_country": "ENG", "main_draw_size": 32, "qualification_draw_size": 16, "seeds_count": 8, "qualifier_spots": 4, "wild_cards": 2, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 100000, "prestige": 9, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 1, "active": True}
+    templates = [dict(base, template_id=f"default_msa_template_preview" if i == 0 else f"dup_{i}", event_name=f"Same Event {i}", duration_in_season_weeks=5) for i in range(5)]
+    with Server(tmp_path, templates) as server:
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", {
+            "target_season_label": "2035/2036",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "preflight_fingerprint": "pf_test",
+            "reviewed_diff_id": "rd_test",
+        })
+        assert status == 200
+        preview = body["template_slot_validation_preview"]
+        assert preview["template_id"] == "default_msa_template_preview"
+        assert preview["read_only"] is True
+        assert preview["status"] == "warnings"
+        assert preview["warning_count"] > 0
+        assert "template_slot_duration_long" in preview["issue_codes"] or "template_slot_category_tour_level_week_overloaded" in preview["issue_codes"]
+        assert any("[template_slot_duration_long]" in item for item in body["validation_warnings"])
 
 
 def test_slot_validation_missing_template_returns_structured_diagnostic(tmp_path: Path) -> None:

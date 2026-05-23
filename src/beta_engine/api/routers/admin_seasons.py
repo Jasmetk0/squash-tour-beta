@@ -394,6 +394,7 @@ def post_season_builder_dry_run_build_contract(
     errors: list[str] = []
     warnings: list[str] = []
     template_slot_validation_preview: SeasonTemplateSlotValidationPreview | None = None
+    template_slot_conflict_preview: SeasonTemplateSlotConflictPreview | None = None
 
     if not payload.preflight_fingerprint.strip():
         errors.append(

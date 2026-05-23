@@ -192,8 +192,10 @@ def test_builder_dry_run_build_missing_fingerprint(tmp_path: Path) -> None:
             "preflight_fingerprint": "",
             "reviewed_diff_id": "rd_123",
         }
-        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        assert status == 200
         assert "preflight_fingerprint is required for any future dry-run build command." in body["validation_errors"]
+        assert body["template_slot_conflict_preview"] is None
 
 
 def test_builder_dry_run_build_missing_reviewed_diff_id(tmp_path: Path) -> None:
@@ -204,8 +206,10 @@ def test_builder_dry_run_build_missing_reviewed_diff_id(tmp_path: Path) -> None:
             "preflight_fingerprint": "pf_123",
             "reviewed_diff_id": "",
         }
-        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        assert status == 200
         assert "reviewed_diff_id is required for any future dry-run build command." in body["validation_errors"]
+        assert body["template_slot_conflict_preview"] is None
 
 
 def test_builder_dry_run_build_full_future_metadata(tmp_path: Path) -> None:
@@ -246,8 +250,10 @@ def test_builder_dry_run_build_does_not_create_calendar(tmp_path: Path) -> None:
             "preflight_fingerprint": "pf_123",
             "reviewed_diff_id": "rd_123",
         }
-        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        assert status == 200
         assert body["can_mutate"] is False
+        assert body["template_slot_conflict_preview"] is None
 
         _, calendar_body = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar")
         assert calendar_body["calendar"] is None
@@ -324,6 +330,7 @@ def test_builder_dry_run_build_unknown_template_returns_unresolved_source(tmp_pa
         _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
         assert "source_template_id could not be resolved for read-only dry-run candidate generation." in body["validation_errors"]
         assert body["dry_run_result_preview"]["status"] == "blocked_unresolved_source"
+        assert body["template_slot_conflict_preview"] is None
         assert body["dry_run_result_preview"]["validation_summary"]["status"] == "blocking"
         assert "source_template_id could not be resolved for read-only dry-run candidate generation." in body["dry_run_result_preview"]["validation_summary"]["blocking_reasons"]
         assert body["dry_run_result_preview"]["plan_readiness"]["read_only_plan_available"] is False
@@ -344,6 +351,7 @@ def test_builder_dry_run_build_non_template_source_is_unsupported_for_generation
         _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
         assert "Read-only candidate generation currently supports season_template sources only." in body["validation_warnings"]
         assert body["dry_run_result_preview"]["status"] == "unsupported_source_type"
+        assert body["template_slot_conflict_preview"] is None
         assert body["dry_run_result_preview"]["candidate_events"] == []
         assert body["can_mutate"] is False
 
@@ -359,8 +367,10 @@ def test_builder_dry_run_build_existing_target_calendar_comparison(tmp_path: Pat
             "preflight_fingerprint": "pf_existing",
             "reviewed_diff_id": "rd_existing",
         }
-        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        assert status == 200
         assert body["can_mutate"] is False
+        assert body["template_slot_conflict_preview"] is not None
         metadata = body["dry_run_result_preview"]["result_metadata"]
         assert metadata["target_calendar_exists"] is True
         assert metadata["target_event_count"] > 0
@@ -516,8 +526,10 @@ def test_builder_dry_run_build_existing_target_with_merge_preview_has_no_policy_
             "preflight_fingerprint": "pf_merge",
             "reviewed_diff_id": "rd_merge",
         }
-        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        assert status == 200
         assert body["can_mutate"] is False
+        assert body["template_slot_conflict_preview"] is not None
         assert body["dry_run_result_preview"]["result_metadata"]["target_calendar_exists"] is True
         assert body["dry_run_result_preview"]["conflict_summary"]["policy_conflicts"] == []
 

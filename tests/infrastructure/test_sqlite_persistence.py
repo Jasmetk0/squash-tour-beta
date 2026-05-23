@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import pytest
 from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
 
 from beta_engine.application.persistence import SimulationPersistenceService
 from beta_engine.application.finals_service import FinalsOrchestrationService
@@ -84,6 +86,22 @@ def test_database_bootstrap_creates_required_tables(tmp_path) -> None:
         "season_state",
         "simulation_runs",
     ]
+
+
+def test_database_bootstrap_reraises_non_benign_operational_error(tmp_path, monkeypatch) -> None:
+    repository = _repository(tmp_path)
+
+    def _raise_non_benign(*_args, **_kwargs) -> None:
+        raise OperationalError(
+            statement="CREATE TABLE season_state",
+            params={},
+            orig=RuntimeError("disk I/O error"),
+        )
+
+    monkeypatch.setattr("beta_engine.infrastructure.db.repositories.Base.metadata.create_all", _raise_non_benign)
+
+    with pytest.raises(OperationalError):
+        repository.bootstrap_schema()
 
 
 def test_database_bootstrap_is_idempotent_for_existing_sqlite_schema(tmp_path) -> None:

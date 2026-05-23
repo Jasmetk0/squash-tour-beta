@@ -998,6 +998,67 @@ export function hasUsableTemplateSlotPreview(preview: unknown): boolean {
   return readTemplateSlotPreviewIssueCodes(preview).length > 0
 }
 
+function normalizePreviewScalar(preview: unknown, field: string): string {
+  if (!preview || typeof preview !== 'object') return 'n/a'
+  const value = (preview as Record<string, unknown>)[field]
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) return 'n/a'
+    if (field === 'status') {
+      const normalizedStatus = trimmed.toLowerCase()
+      return normalizedStatus === 'clean' || normalizedStatus === 'warnings' || normalizedStatus === 'errors' ? normalizedStatus : 'n/a'
+    }
+    return trimmed
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) return field === 'status' ? 'n/a' : String(value)
+  if (typeof value === 'boolean') return value ? 'true' : 'false'
+  return 'n/a'
+}
+
+function normalizePreviewCodes(preview: unknown, field: string): string {
+  if (!preview || typeof preview !== 'object') return 'none'
+  const raw = (preview as Record<string, unknown>)[field]
+  if (!Array.isArray(raw) || raw.length === 0) return 'none'
+  const normalized = raw
+    .filter((value) => value !== null && value !== undefined)
+    .map((value) => String(value).trim())
+    .filter((value) => value.length > 0)
+  return normalized.length > 0 ? normalized.join(', ') : 'none'
+}
+
+function hasTemplateSlotValidationPreview(preview: unknown): boolean {
+  if (!preview || typeof preview !== 'object') return false
+  return Object.keys(preview as Record<string, unknown>).length > 0
+}
+
+export function TemplateSlotValidationPreviewSummaryPanel({ titlePrefix, preview }: { titlePrefix: string; preview: unknown }): JSX.Element {
+  if (!hasTemplateSlotValidationPreview(preview)) {
+    return <p>{titlePrefix} template slot validation preview is not available.</p>
+  }
+
+  const readOnlyValue = (() => {
+    if (!preview || typeof preview !== 'object') return 'n/a'
+    const raw = (preview as Record<string, unknown>).read_only
+    return typeof raw === 'boolean' ? (raw ? 'true' : 'false') : 'n/a'
+  })()
+
+  return (
+    <>
+      <p>{titlePrefix} template slot validation preview</p>
+      <p>{titlePrefix} template slot validation template ID: {normalizePreviewScalar(preview, 'template_id')}</p>
+      <p>{titlePrefix} template slot validation template exists: {normalizePreviewScalar(preview, 'template_exists')}</p>
+      <p>{titlePrefix} template slot validation read-only: {readOnlyValue}</p>
+      <p>{titlePrefix} template slot validation status: {normalizePreviewScalar(preview, 'status')}</p>
+      <p>{titlePrefix} template slot validation error count: {normalizePreviewScalar(preview, 'error_count')}</p>
+      <p>{titlePrefix} template slot validation warning count: {normalizePreviewScalar(preview, 'warning_count')}</p>
+      <p>{titlePrefix} template slot validation issue count: {normalizePreviewScalar(preview, 'issue_count')}</p>
+      <p>{titlePrefix} template slot validation issue codes: {normalizePreviewCodes(preview, 'issue_codes')}</p>
+      <p>{titlePrefix} template slot validation error codes: {normalizePreviewCodes(preview, 'error_codes')}</p>
+      <p>{titlePrefix} template slot validation warning codes: {normalizePreviewCodes(preview, 'warning_codes')}</p>
+    </>
+  )
+}
+
 function readTemplateSlotPreviewSummaryField(preview: unknown, field: 'status' | 'issue_count'): string {
   if (!preview || typeof preview !== 'object') return 'n/a'
   const value = (preview as Record<string, unknown>)[field]

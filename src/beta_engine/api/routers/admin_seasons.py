@@ -17,7 +17,7 @@ from beta_engine.application.season_readiness_service import SeasonReadinessRequ
 from beta_engine.application.season_range_preflight_service import SeasonRangePreflightRequest, SeasonRangePreflightResult, SeasonRangePreflightService
 from beta_engine.application.season_range_execution_service import RunSeasonRangeRequest, RunSeasonRangeResult, SeasonRangeExecutionService
 from beta_engine.application.season_registry_service import SeasonRegistryResponse, SeasonRegistryService
-from beta_engine.application.season_template_service import SeasonTemplatesResponse, SeasonTemplateService
+from beta_engine.application.season_template_service import SeasonTemplatesResponse, SeasonTemplateService, SeasonTemplateValidationIssue
 from beta_engine.domain.calendar.season_labels import normalize_season_label, to_long_season_label
 from beta_engine.api.season_label_params import normalize_season_for_legacy_services
 from beta_engine.domain.tournaments import (
@@ -45,6 +45,10 @@ def _build_deterministic_digest(payload: dict[str, object]) -> str:
     canonical_payload = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(canonical_payload.encode("utf-8")).hexdigest()
 
+
+def _format_template_issue(issue: SeasonTemplateValidationIssue) -> str:
+    slot = f" [slot={issue.slot_id}]" if issue.slot_id else ""
+    return f"[{issue.code}]{slot} {issue.message}"
 
 @router.get("/registry", response_model=SeasonRegistryResponse)
 def get_season_registry(service: SeasonRegistryService = Depends(get_season_registry_service)) -> SeasonRegistryResponse:
@@ -214,6 +218,9 @@ def preflight_season_builder(
                 errors.append(f"season_template source '{payload.source_template_id}' was not found.")
             else:
                 source_resolved = True
+                template_issues = template_service.validate_template_slots(selected)
+                warnings.extend([_format_template_issue(i) for i in template_issues if i.severity == "warning"])
+                errors.extend([_format_template_issue(i) for i in template_issues if i.severity == "error"])
                 source_slot_count = len(selected.slots)
                 if selected.slots:
                     source_first_week = min(slot.season_week_start for slot in selected.slots)
@@ -524,6 +531,9 @@ def post_season_builder_dry_run_build_contract(
             errors.append("source_template_id could not be resolved for read-only dry-run candidate generation.")
             dry_run_status = "blocked_unresolved_source"
         else:
+            template_issues = template_service.validate_template_slots(selected)
+            warnings.extend([_format_template_issue(i) for i in template_issues if i.severity == "warning"])
+            errors.extend([_format_template_issue(i) for i in template_issues if i.severity == "error"])
             templates_config = template_service.template_service.get_config()
             templates_by_id = {template.template_id: template for template in templates_config.templates}
             for index, slot in enumerate(selected.slots, start=1):

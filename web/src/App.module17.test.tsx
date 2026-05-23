@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -406,7 +406,21 @@ describe('Module 17 pages through routes', () => {
         plan_readiness: { read_only_plan_available: true, has_blocking_issues: true, has_warnings: true, mutation_still_disabled: true, next_required_step: 'Review dry-run summary; execution remains disabled.' },
         identity_readiness: { status: 'blocked_reference', items: [{ area: 'validation_summary', status: 'Blocked', message: "Validation summary status is 'blocking'." }, { area: 'mutation_state', status: 'Blocked', message: 'Mutation remains disabled; this checklist is reference-only.' }], future_command_reference: { preflight_fingerprint: payload.preflight_fingerprint, reviewed_diff_id: payload.reviewed_diff_id, dry_run_result_fingerprint: 'drf_test_existing', dry_run_result_id: 'drr_test_existing', can_reference_future_command: false, mutation_still_disabled: true } },
         dry_run_result_fingerprint: 'drf_test_existing',
-        dry_run_result_id: 'drr_test_existing'
+        dry_run_result_id: 'drr_test_existing',
+        template_conflict_summary: {
+          available: true,
+          read_only: true,
+          non_blocking: true,
+          status: 'warnings',
+          warning_count: 1,
+          info_count: 2,
+          conflict_count: 3,
+          conflict_codes: ['template_conflict_week_overloaded'],
+          busiest_week: 5,
+          busiest_week_slot_count: 4,
+          source: 'template_slot_conflict_preview',
+          message: 'Template slot conflict diagnostics are available as read-only non-blocking preview.'
+        }
       },
         message: 'Dry-run build command contract exists, but execution is disabled in this phase.'
       }
@@ -1052,6 +1066,14 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('can_reference_future_command')).toBeInTheDocument()
     expect(screen.getAllByText('mutation_still_disabled').length).toBeGreaterThan(0)
     expect(screen.getByText('Mutation remains disabled; this checklist is reference-only.')).toBeInTheDocument()
+    expect(screen.getAllByText('Dry-run template conflict summary').length).toBeGreaterThan(0)
+    expect(screen.getByText('Dry-run template conflict diagnostics available: true')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template conflict diagnostics read-only: true')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template conflict diagnostics non-blocking: true')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template conflict status: warnings')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template conflict conflict count: 3')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template conflict conflict codes: template_conflict_week_overloaded')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template conflict source: template_slot_conflict_preview')).toBeInTheDocument()
     expect((await screen.findAllByText('explicit_confirmation_present')).length).toBeGreaterThan(0)
     expect((await screen.findAllByText('conflict_contract_preview_available')).length).toBeGreaterThan(0)
     expect(await screen.findByText('Raw disabled dry-run build contract JSON')).toBeInTheDocument()
@@ -3231,6 +3253,36 @@ describe('TemplateSlotConflictPreviewSummaryPanel', () => {
 })
 
 
+
+
+describe('DryRunTemplateConflictSummaryPanel', () => {
+  it('shows unavailable message when no dry-run preview is present', () => {
+    render(<DryRunTemplateConflictSummaryPanel dryRunResultPreview={undefined} />)
+    expect(screen.getByText('Dry-run template conflict summary is not available.')).toBeInTheDocument()
+  })
+
+  it('renders normalized summary rows for valid summary', () => {
+    render(<DryRunTemplateConflictSummaryPanel dryRunResultPreview={{ template_conflict_summary: { available: true, read_only: true, non_blocking: true, status: 'warnings', warning_count: 1, info_count: 2, conflict_count: 3, conflict_codes: ['template_conflict_week_overloaded', 'template_conflict_week_overloaded'], busiest_week: 5, busiest_week_slot_count: 4, source: 'template_slot_conflict_preview', message: 'Template slot conflict diagnostics are available as read-only non-blocking preview.' } }} />)
+    expect(screen.getByText('Dry-run template conflict diagnostics available: true')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template conflict status: warnings')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template conflict conflict codes: template_conflict_week_overloaded')).toBeInTheDocument()
+  })
+
+  it('handles malformed summary fields with n/a or none safely', () => {
+    render(<DryRunTemplateConflictSummaryPanel dryRunResultPreview={{ template_conflict_summary: { available: 'yes', read_only: 'yes', non_blocking: null, status: 42, warning_count: NaN, info_count: Infinity, conflict_count: 'three', conflict_codes: 'bad', busiest_week: 'oops', busiest_week_slot_count: {}, source: '', message: '' } }} />)
+    expect(screen.getByText('Dry-run template conflict diagnostics available: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template conflict status: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template conflict conflict codes: none')).toBeInTheDocument()
+  })
+
+  it('renders unavailable summary with available false and zero counts', () => {
+    render(<DryRunTemplateConflictSummaryPanel dryRunResultPreview={{ template_conflict_summary: { available: false, read_only: true, non_blocking: true, status: 'clean', warning_count: 0, info_count: 0, conflict_count: 0, conflict_codes: [], busiest_week: null, busiest_week_slot_count: null, source: 'template_slot_conflict_preview', message: 'No conflicts.' } }} />)
+    expect(screen.getByText('Dry-run template conflict diagnostics available: false')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template conflict warning count: 0')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template conflict info count: 0')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run template conflict conflict count: 0')).toBeInTheDocument()
+  })
+})
 describe('SeasonTemplateSlotConflictPanel', () => {
   it('renders clean/info/missing/no-conflicts/hidden-count states', () => {
     const { rerender } = render(<SeasonTemplateSlotConflictPanel queryEnabled={true} query={{ isLoading: false, isFetching: false, error: null, data: { template_id: 't', template_exists: true, read_only: true, message: 'm', summary: { status: 'clean', warning_count: 0, info_count: 0, conflict_count: 0, slot_count: 1, occupied_week_count: 1 }, conflicts: [] } }} />)

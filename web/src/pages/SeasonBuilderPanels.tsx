@@ -1254,6 +1254,99 @@ export function TemplateSlotConflictPreviewSummaryPanel({
   )
 }
 
+
+export type DryRunTemplateConflictSummaryDisplay = {
+  available: string
+  readOnly: string
+  nonBlocking: string
+  status: string
+  warningCount: string
+  infoCount: string
+  conflictCount: string
+  conflictCodes: string
+  busiestWeek: string
+  busiestWeekSlotCount: string
+  source: string
+  message: string
+}
+
+function normalizeBooleanDisplay(value: unknown): string {
+  return typeof value === 'boolean' ? (value ? 'true' : 'false') : 'n/a'
+}
+
+function normalizeFiniteNumberDisplay(value: unknown): string {
+  return typeof value === 'number' && Number.isFinite(value) ? String(value) : 'n/a'
+}
+
+function normalizeNonEmptyStringDisplay(value: unknown): string {
+  return typeof value === 'string' && value.trim() ? value.trim() : 'n/a'
+}
+
+function normalizeConflictSummaryStatus(value: unknown): string {
+  if (typeof value !== 'string') return 'n/a'
+  const normalized = value.trim().toLowerCase()
+  return normalized === 'clean' || normalized === 'warnings' || normalized === 'info' ? normalized : 'n/a'
+}
+
+function normalizeConflictCodesDisplay(value: unknown): string {
+  if (!Array.isArray(value) || value.length === 0) return 'none'
+  const seen = new Set<string>()
+  const codes: string[] = []
+  for (const rawCode of value) {
+    if (typeof rawCode !== 'string') continue
+    const code = rawCode.trim()
+    if (!code || seen.has(code)) continue
+    seen.add(code)
+    codes.push(code)
+  }
+  return codes.length ? codes.join(', ') : 'none'
+}
+
+export function readDryRunTemplateConflictSummary(dryRunResultPreview: unknown): DryRunTemplateConflictSummaryDisplay | null {
+  if (!dryRunResultPreview || typeof dryRunResultPreview !== 'object') return null
+  const summary = (dryRunResultPreview as Record<string, unknown>).template_conflict_summary
+  if (!summary || typeof summary !== 'object') return null
+  const summaryRecord = summary as Record<string, unknown>
+
+  return {
+    available: normalizeBooleanDisplay(summaryRecord.available),
+    readOnly: normalizeBooleanDisplay(summaryRecord.read_only),
+    nonBlocking: normalizeBooleanDisplay(summaryRecord.non_blocking),
+    status: normalizeConflictSummaryStatus(summaryRecord.status),
+    warningCount: normalizeFiniteNumberDisplay(summaryRecord.warning_count),
+    infoCount: normalizeFiniteNumberDisplay(summaryRecord.info_count),
+    conflictCount: normalizeFiniteNumberDisplay(summaryRecord.conflict_count),
+    conflictCodes: normalizeConflictCodesDisplay(summaryRecord.conflict_codes),
+    busiestWeek: normalizeFiniteNumberDisplay(summaryRecord.busiest_week),
+    busiestWeekSlotCount: normalizeFiniteNumberDisplay(summaryRecord.busiest_week_slot_count),
+    source: normalizeNonEmptyStringDisplay(summaryRecord.source),
+    message: normalizeNonEmptyStringDisplay(summaryRecord.message)
+  }
+}
+
+export function DryRunTemplateConflictSummaryPanel({ dryRunResultPreview }: { dryRunResultPreview?: unknown }): JSX.Element {
+  const summary = readDryRunTemplateConflictSummary(dryRunResultPreview)
+  if (!summary) return <p>Dry-run template conflict summary is not available.</p>
+
+  return (
+    <>
+      <p>Dry-run template conflict summary</p>
+      <p>Dry-run template conflict diagnostics available: {summary.available}</p>
+      <p>Dry-run template conflict diagnostics read-only: {summary.readOnly}</p>
+      <p>Dry-run template conflict diagnostics non-blocking: {summary.nonBlocking}</p>
+      <p>Dry-run template conflict status: {summary.status}</p>
+      <p>Dry-run template conflict warning count: {summary.warningCount}</p>
+      <p>Dry-run template conflict info count: {summary.infoCount}</p>
+      <p>Dry-run template conflict conflict count: {summary.conflictCount}</p>
+      <p>Dry-run template conflict conflict codes: {summary.conflictCodes}</p>
+      <p>Dry-run template conflict busiest week: {summary.busiestWeek}</p>
+      <p>Dry-run template conflict busiest week slot count: {summary.busiestWeekSlotCount}</p>
+      <p>Dry-run template conflict source: {summary.source}</p>
+      <p>Dry-run template conflict message: {summary.message}</p>
+    </>
+  )
+}
+
 function readTemplateSlotPreviewSummaryField(preview: SeasonTemplateSlotValidationPreview | null | undefined, field: 'status' | 'issue_count'): string {
   return normalizePreviewScalar(preview, field)
 }

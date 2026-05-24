@@ -30,6 +30,7 @@ from beta_engine.application.season_builder_candidate_identity import (
     build_candidate_identity_overview,
     build_candidate_identity_review_reference,
     build_candidate_identity_summary,
+    build_create_only_apply_execution_preflight_preview,
 )
 from beta_engine.application.season_builder_identity_readiness import build_dry_run_identity_readiness
 from beta_engine.application.season_template_service import (
@@ -1052,6 +1053,23 @@ def post_season_builder_future_apply_request_validation_preview(
         requested_candidate_identity_reference_type=payload.requested_candidate_identity_reference_type,
         future_apply_reference_contract=future_apply_reference_contract,
     )
+    identity_readiness = dry_run_response.dry_run_result_preview.get("identity_readiness", {})
+    target_calendar_result = calendar_service.get_calendar(season=dry_run_response.target_season_label)
+    target_absent = not target_calendar_result.summary.calendar_exists
+    create_only_scope_confirmed = (payload.overwrite_policy or "").strip().lower() in {
+        "",
+        "none",
+        "create_only",
+    }
+    audit_metadata_present = False
+    create_only_apply_execution_preflight_preview = build_create_only_apply_execution_preflight_preview(
+        future_apply_reference_contract=future_apply_reference_contract,
+        future_apply_request_validation_preview=future_apply_request_validation_preview,
+        identity_readiness=identity_readiness if isinstance(identity_readiness, dict) else {},
+        target_absent=target_absent,
+        create_only_scope_confirmed=create_only_scope_confirmed,
+        audit_metadata_present=audit_metadata_present,
+    )
     return SeasonBuilderFutureApplyRequestValidationPreviewResponse(
         enabled=False,
         can_execute=False,
@@ -1062,6 +1080,7 @@ def post_season_builder_future_apply_request_validation_preview(
         overwrite_policy=payload.overwrite_policy,
         future_apply_reference_contract=future_apply_reference_contract,
         future_apply_request_validation_preview=future_apply_request_validation_preview,
+        create_only_apply_execution_preflight_preview=create_only_apply_execution_preflight_preview,
         audit_preview={
             "action": "season_builder_future_apply_request_validation_preview",
             "read_only": True,

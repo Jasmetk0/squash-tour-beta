@@ -261,6 +261,9 @@ def assert_future_apply_validation_preview_disabled_response(body: dict) -> dict
     assert isinstance(body["future_apply_reference_contract"], dict)
     validation_preview = body["future_apply_request_validation_preview"]
     assert isinstance(validation_preview, dict)
+    create_only_apply_audit_metadata_preview = assert_create_only_apply_audit_metadata_preview_disabled(
+        body["create_only_apply_audit_metadata_preview"]
+    )
     preflight_preview = assert_create_only_apply_execution_preflight_preview_disabled(
         body["create_only_apply_execution_preflight_preview"]
     )
@@ -293,6 +296,19 @@ def assert_create_only_apply_execution_preflight_preview_disabled(preview: dict)
     assert preview["preflight_type"] == "create_only_apply_execution_preflight_preview"
     assert isinstance(preview["available"], bool)
     assert isinstance(preview["all_known_preconditions_met"], bool)
+    assert preview["execution_enabled"] is False
+    assert preview["can_execute"] is False
+    assert preview["read_only"] is True
+    assert preview["mutation_permitted"] is False
+    assert isinstance(preview["message"], str) and preview["message"]
+    return preview
+
+
+def assert_create_only_apply_audit_metadata_preview_disabled(preview: dict) -> dict:
+    assert isinstance(preview, dict)
+    assert preview["preview_type"] == "create_only_apply_audit_metadata_preview"
+    assert isinstance(preview["available"], bool)
+    assert isinstance(preview["all_required_audit_metadata_present"], bool)
     assert preview["execution_enabled"] is False
     assert preview["can_execute"] is False
     assert preview["read_only"] is True
@@ -745,6 +761,129 @@ def test_future_apply_request_validation_preview_missing_requested_values(tmp_pa
         )
         assert preflight_preview["execution_enabled"] is False
         assert preflight_preview["can_execute"] is False
+
+
+def test_future_apply_request_validation_preview_complete_audit_metadata_path(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        base_payload = {
+            "target_season_label": "2038/2039",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": "none",
+            "preflight_fingerprint": "pf_phase17b_complete_audit",
+            "reviewed_diff_id": "rd_phase17b_complete_audit",
+        }
+        _, dry_run_body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", base_payload)
+        preview = dry_run_body["dry_run_result_preview"]
+        review_ref = preview["candidate_identity_review_reference"]
+        fingerprint = preview["candidate_identity_fingerprint"]
+
+        payload = {
+            **base_payload,
+            "requested_candidate_identity_reference_id": review_ref["reference_id"],
+            "requested_candidate_identity_fingerprint": fingerprint["fingerprint"],
+            "requested_candidate_identity_reference_type": review_ref["reference_type"],
+            "requested_by": "local-admin-preview",
+            "audit_reason": "create-only calendar command",
+            "explicit_confirmation": "I understand this will create a new season calendar.",
+            "mutation_scope": "create_only",
+        }
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/future-apply-request-validation-preview", payload)
+        assert status == 200
+        audit_preview = assert_create_only_apply_audit_metadata_preview_disabled(body["create_only_apply_audit_metadata_preview"])
+        assert audit_preview["available"] is True
+        assert audit_preview["all_required_audit_metadata_present"] is True
+        validation_preview = body["future_apply_request_validation_preview"]
+        preflight_preview = assert_create_only_apply_execution_preflight_preview_disabled(
+            body["create_only_apply_execution_preflight_preview"]
+        )
+        assert validation_preview["available"] is True
+        assert preflight_preview["candidate_identity_reference_matches"] is True
+        assert preflight_preview["create_only_scope_confirmed"] is True
+        assert preflight_preview["target_absent"] is True
+        assert preflight_preview["audit_metadata_present"] is True
+        assert preflight_preview["execution_enabled"] is False
+        assert preflight_preview["can_execute"] is False
+        assert body["can_execute"] is False
+        assert body["can_mutate"] is False
+
+
+def test_future_apply_request_validation_preview_wrong_explicit_confirmation_blocks_audit_metadata(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        base_payload = {
+            "target_season_label": "2038/2039",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": "none",
+            "preflight_fingerprint": "pf_phase17b_wrong_confirmation",
+            "reviewed_diff_id": "rd_phase17b_wrong_confirmation",
+        }
+        _, dry_run_body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", base_payload)
+        preview = dry_run_body["dry_run_result_preview"]
+        review_ref = preview["candidate_identity_review_reference"]
+        fingerprint = preview["candidate_identity_fingerprint"]
+
+        payload = {
+            **base_payload,
+            "requested_candidate_identity_reference_id": review_ref["reference_id"],
+            "requested_candidate_identity_fingerprint": fingerprint["fingerprint"],
+            "requested_candidate_identity_reference_type": review_ref["reference_type"],
+            "requested_by": "local-admin-preview",
+            "audit_reason": "create-only calendar command",
+            "explicit_confirmation": "I understand this creates calendar",
+            "mutation_scope": "create_only",
+        }
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/future-apply-request-validation-preview", payload)
+        assert status == 200
+        audit_preview = assert_create_only_apply_audit_metadata_preview_disabled(body["create_only_apply_audit_metadata_preview"])
+        assert audit_preview["explicit_confirmation_present"] is True
+        assert audit_preview["explicit_confirmation_matches"] is False
+        assert audit_preview["available"] is False
+        preflight_preview = assert_create_only_apply_execution_preflight_preview_disabled(
+            body["create_only_apply_execution_preflight_preview"]
+        )
+        assert preflight_preview["audit_metadata_present"] is False
+        assert preflight_preview["all_known_preconditions_met"] is False
+        assert preflight_preview["execution_enabled"] is False
+
+
+def test_future_apply_request_validation_preview_wrong_mutation_scope_blocks_audit_metadata(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        base_payload = {
+            "target_season_label": "2038/2039",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": "none",
+            "preflight_fingerprint": "pf_phase17b_wrong_scope",
+            "reviewed_diff_id": "rd_phase17b_wrong_scope",
+        }
+        _, dry_run_body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", base_payload)
+        preview = dry_run_body["dry_run_result_preview"]
+        review_ref = preview["candidate_identity_review_reference"]
+        fingerprint = preview["candidate_identity_fingerprint"]
+
+        payload = {
+            **base_payload,
+            "requested_candidate_identity_reference_id": review_ref["reference_id"],
+            "requested_candidate_identity_fingerprint": fingerprint["fingerprint"],
+            "requested_candidate_identity_reference_type": review_ref["reference_type"],
+            "requested_by": "local-admin-preview",
+            "audit_reason": "create-only calendar command",
+            "explicit_confirmation": "I understand this will create a new season calendar.",
+            "mutation_scope": "merge_preview",
+        }
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/future-apply-request-validation-preview", payload)
+        assert status == 200
+        audit_preview = assert_create_only_apply_audit_metadata_preview_disabled(body["create_only_apply_audit_metadata_preview"])
+        assert audit_preview["mutation_scope_present"] is True
+        assert audit_preview["mutation_scope_matches"] is False
+        assert audit_preview["available"] is False
+        preflight_preview = assert_create_only_apply_execution_preflight_preview_disabled(
+            body["create_only_apply_execution_preflight_preview"]
+        )
+        assert preflight_preview["audit_metadata_present"] is False
+        assert preflight_preview["all_known_preconditions_met"] is False
+        assert preflight_preview["execution_enabled"] is False
 
 
 def test_future_apply_request_validation_preview_unsupported_source(tmp_path: Path) -> None:

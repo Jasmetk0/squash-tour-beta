@@ -57,6 +57,7 @@ const api = vi.hoisted(() => ({
   postSeasonBuilderApplyCommandContract: vi.fn(),
   postSeasonBuilderApplyCreateOnlyReadiness: vi.fn(),
   postSeasonBuilderApplyCreateOnlyCommand: vi.fn(),
+  validateFutureApplyRequestPreview: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
     constructor(message: string, status: number) {
@@ -603,6 +604,29 @@ describe('Module 17 pages through routes', () => {
       validation_errors: [],
       message: 'Create-only apply readiness is query-only in this phase.'
     }))
+    api.validateFutureApplyRequestPreview.mockResolvedValue({
+      enabled: true,
+      can_execute: false,
+      can_mutate: false,
+      target_season_label: '2000/2001',
+      source_type: 'season_template',
+      source_template_id: 'default_msa_template_preview',
+      overwrite_policy: 'none',
+      future_apply_reference_contract: { available: true, apply_execution_enabled: false, mutation_permitted: false, message: 'Reference contract preview only.' },
+      future_apply_request_validation_preview: {
+        available: true,
+        requested_candidate_identity_reference_id: 'candidate-ref-id',
+        requested_candidate_identity_fingerprint: 'candidate-fp',
+        requested_candidate_identity_reference_type: 'dry_run_candidate_identity',
+        reference_id_matches: true,
+        fingerprint_matches: true,
+        reference_type_matches: true,
+        apply_execution_enabled: false,
+        mutation_permitted: false,
+        message: 'Validation preview only.'
+      },
+      audit_preview: null
+    })
   })
 
   it('renders the Phase 1 landing page at root', async () => {
@@ -1453,7 +1477,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('Validation errors count: 0.').length).toBeGreaterThan(0)
     expect(screen.getByText('Real dry-run generation is not implemented yet.')).toBeInTheDocument()
     expect(screen.getByText('The dry-run contract is visible, but execution remains disabled.')).toBeInTheDocument()
-    expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith({ target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, requested_by: 'local-admin-preview' })
+    expect(api.postSeasonBuilderPreflight).toHaveBeenCalledWith(expect.objectContaining({ target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', requested_by: 'local-admin-preview' }))
     fireEvent.change(screen.getByLabelText('Future audit reason preview'), { target: { value: 'ticket-123 dry-run review' } })
     fireEvent.change(screen.getByLabelText('Future explicit confirmation preview'), { target: { value: 'I understand this is disabled.' } })
     fireEvent.change(screen.getByLabelText('Future mutation scope preview'), { target: { value: 'merge_preview' } })
@@ -1961,6 +1985,39 @@ describe('Module 17 pages through routes', () => {
     for (const action of forbiddenMutationActions) {
       expect(screen.queryByRole('button', { name: new RegExp(`^${action}$`, 'i') })).not.toBeInTheDocument()
     }
+  }, 45000)
+
+  it('keeps future apply request validation manual-only and preview-only', async () => {
+    renderAppAt('/admin/seasons/build')
+    expect(await screen.findByRole('heading', { name: 'Season Builder' })).toBeInTheDocument()
+
+    expect(api.validateFutureApplyRequestPreview).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Candidate identity reference ID'), { target: { value: 'candidate-ref-id' } })
+    fireEvent.change(screen.getByLabelText('Candidate identity fingerprint'), { target: { value: 'candidate-fp' } })
+    fireEvent.change(screen.getByLabelText('Candidate identity reference type'), { target: { value: 'dry_run_candidate_identity' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Validate future apply reference' }))
+
+    await waitFor(() => expect(api.validateFutureApplyRequestPreview).toHaveBeenCalledTimes(1))
+    expect(api.validateFutureApplyRequestPreview).toHaveBeenCalledWith(expect.objectContaining({
+      target_season_label: '2000/01',
+      source_type: 'season_template',
+      source_template_id: 'default_msa_template_preview',
+      overwrite_policy: null,
+      preflight_fingerprint: null,
+      reviewed_diff_id: null,
+      requested_candidate_identity_reference_id: 'candidate-ref-id',
+      requested_candidate_identity_fingerprint: 'candidate-fp',
+      requested_candidate_identity_reference_type: 'dry_run_candidate_identity'
+    }))
+    expect((await screen.findAllByText('Future apply request validation preview')).length).toBeGreaterThan(0)
+    expect(screen.getByText('Apply execution enabled: false')).toBeInTheDocument()
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
+    expect(api.postSeasonBuilderApplyCommandContract).not.toHaveBeenCalledWith(expect.objectContaining({
+      requested_candidate_identity_reference_id: 'candidate-ref-id'
+    }))
   })
 
   it('renders Concrete Season detail dashboard routes', async () => {

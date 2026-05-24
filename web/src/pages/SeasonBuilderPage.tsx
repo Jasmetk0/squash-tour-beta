@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
-import { getSeasonCalendar, getSeasonCalendarValidation, getSeasonCalendarValidationIssueCodes, getSeasonRegistry, getSeasonTemplateSlotConflictCodes, getSeasonTemplateSlotConflicts, getSeasonTemplateSlotValidation, getSeasonTemplateSlotValidationIssueCodes, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderApplyCommandContract, postSeasonBuilderApplyCreateOnlyCommand, postSeasonBuilderApplyCreateOnlyReadiness, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight } from '../api/client'
+import { getSeasonCalendar, getSeasonCalendarValidation, getSeasonCalendarValidationIssueCodes, getSeasonRegistry, getSeasonTemplateSlotConflictCodes, getSeasonTemplateSlotConflicts, getSeasonTemplateSlotValidation, getSeasonTemplateSlotValidationIssueCodes, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderApplyCommandContract, postSeasonBuilderApplyCreateOnlyCommand, postSeasonBuilderApplyCreateOnlyReadiness, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight, validateFutureApplyRequestPreview } from '../api/client'
 import { DetailList } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import {
@@ -54,6 +54,7 @@ import {
   CandidateIdentityFingerprintPanel,
   CandidateIdentityReviewReferencePanel,
   FutureApplyReferenceContractPanel,
+  FutureApplyRequestValidationPreviewPanel,
   PreflightTemplateConflictSummaryPanel,
   TemplateSlotConflictCodeRegistryPanel,
   TemplateConflictDiagnosticsOverviewPanel,
@@ -62,7 +63,7 @@ import {
 } from './SeasonBuilderPanels'
 import type { SourceType } from './SeasonBuilderPanels'
 import type { CreateOnlyApplyGuardSummaryItem } from './SeasonBuilderPanels'
-import type { SeasonBuilderApplyCommandContractRequest, SeasonBuilderApplyCreateOnlyCommandRequest, SeasonBuilderDryRunBuildRequest, SeasonBuilderPreflightRequest } from '../api/types'
+import type { SeasonBuilderApplyCommandContractRequest, SeasonBuilderApplyCreateOnlyCommandRequest, SeasonBuilderDryRunBuildRequest, SeasonBuilderFutureApplyRequestValidationPreviewResponse, SeasonBuilderPreflightRequest } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
 
 
@@ -86,6 +87,11 @@ export function AdminSeasonBuilderPage(): JSX.Element {
   const [dryRunMutationScope, setDryRunMutationScope] = useState('')
   const [dangerZoneConfirmationText, setDangerZoneConfirmationText] = useState('')
   const [dangerZoneMutationScope, setDangerZoneMutationScope] = useState('')
+  const [requestedCandidateIdentityReferenceId, setRequestedCandidateIdentityReferenceId] = useState('')
+  const [requestedCandidateIdentityFingerprint, setRequestedCandidateIdentityFingerprint] = useState('')
+  const [requestedCandidateIdentityReferenceType, setRequestedCandidateIdentityReferenceType] = useState('')
+  const [futureApplyValidationResult, setFutureApplyValidationResult] = useState<SeasonBuilderFutureApplyRequestValidationPreviewResponse | null>(null)
+  const [futureApplyValidationError, setFutureApplyValidationError] = useState<string | null>(null)
   const targetCalendarQueryEnabled = Boolean(selectedTargetSeasonLabel)
   const targetCalendarQuery = useQuery({
     queryKey: ['season-builder-target-calendar', selectedTargetSeasonLabel],
@@ -441,6 +447,27 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     createOnlyApplyMutation.mutate(payload)
   }
 
+  const handleValidateFutureApplyReference = async (): Promise<void> => {
+    try {
+      setFutureApplyValidationError(null)
+      const response = await validateFutureApplyRequestPreview({
+        target_season_label: backendPreflightPayload.target_season_label,
+        source_type: backendPreflightPayload.source_type,
+        source_template_id: backendPreflightPayload.source_template_id,
+        overwrite_policy: backendPreflightPayload.overwrite_policy,
+        preflight_fingerprint: backendPreflightQuery.data?.preflight_fingerprint ?? null,
+        reviewed_diff_id: backendPreflightQuery.data?.reviewed_diff_id ?? null,
+        requested_candidate_identity_reference_id: requestedCandidateIdentityReferenceId.trim() || null,
+        requested_candidate_identity_fingerprint: requestedCandidateIdentityFingerprint.trim() || null,
+        requested_candidate_identity_reference_type: requestedCandidateIdentityReferenceType.trim() || null
+      })
+      setFutureApplyValidationResult(response)
+    } catch (error) {
+      setFutureApplyValidationResult(null)
+      setFutureApplyValidationError(formatApiError(error))
+    }
+  }
+
 
   const applyCommandReadinessItems = useMemo(
     () => buildApplyCommandReadinessItems({
@@ -665,6 +692,25 @@ export function AdminSeasonBuilderPage(): JSX.Element {
       </SectionCard>
       <SectionCard title="Future apply reference contract">
         <FutureApplyReferenceContractPanel dryRunResultPreview={disabledDryRunBuildQuery.data?.dry_run_result_preview} />
+      </SectionCard>
+      <SectionCard title="Future apply request validation preview">
+        <p>This validation preview is read-only and cannot apply or mutate a season.</p>
+        <p>Use this manual form to validate candidate identity reference fields for a future apply request preview.</p>
+        <div className="dashboard-form">
+          <label htmlFor="future-apply-reference-id">Candidate identity reference ID</label>
+          <input id="future-apply-reference-id" value={requestedCandidateIdentityReferenceId} onChange={(event) => setRequestedCandidateIdentityReferenceId(event.target.value)} />
+          <label htmlFor="future-apply-fingerprint">Candidate identity fingerprint</label>
+          <input id="future-apply-fingerprint" value={requestedCandidateIdentityFingerprint} onChange={(event) => setRequestedCandidateIdentityFingerprint(event.target.value)} />
+          <label htmlFor="future-apply-reference-type">Candidate identity reference type</label>
+          <input id="future-apply-reference-type" value={requestedCandidateIdentityReferenceType} onChange={(event) => setRequestedCandidateIdentityReferenceType(event.target.value)} />
+          <button type="button" onClick={() => { void handleValidateFutureApplyReference() }}>Validate future apply reference</button>
+        </div>
+        {futureApplyValidationError ? <p className="error">Future apply request validation failed: {futureApplyValidationError}</p> : null}
+        {futureApplyValidationResult ? (
+          <>
+            <FutureApplyRequestValidationPreviewPanel preview={futureApplyValidationResult.future_apply_request_validation_preview} />
+          </>
+        ) : null}
       </SectionCard>
       <SectionCard title="Disabled apply command contract result">
         <DisabledApplyCommandContractPanel

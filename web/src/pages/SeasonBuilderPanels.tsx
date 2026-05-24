@@ -3966,7 +3966,9 @@ export function ReadOnlyPreflightChecklistPanel({
       </ul>
     </>
   )
-}export function FutureApplyReferenceContractPanel({ dryRunResultPreview }: { dryRunResultPreview?: unknown }): JSX.Element {
+}
+
+export function FutureApplyReferenceContractPanel({ dryRunResultPreview }: { dryRunResultPreview?: unknown }): JSX.Element {
   if (!dryRunResultPreview || typeof dryRunResultPreview !== 'object') return <p>Future apply reference contract is not available.</p>
   const previewRecord = dryRunResultPreview as Record<string, unknown>
   const contract = readFutureApplyReferenceContract(previewRecord.future_apply_reference_contract)
@@ -3974,7 +3976,18 @@ export function ReadOnlyPreflightChecklistPanel({
   return (
     <>
       <p>Future apply reference contract</p>
-      <p>Available: {contract.available}</p><p>Contract type: {contract.contractType}</p><p>Candidate identity reference type: {contract.candidateIdentityReferenceType}</p><p>Candidate identity reference ID: {contract.candidateIdentityReferenceId}</p><p>Candidate identity fingerprint: {contract.candidateIdentityFingerprint}</p><p>Candidate identity set referenceable: {contract.candidateIdentitySetReferenceable}</p><p>Main future command reference ready: {contract.mainFutureCommandReferenceReady}</p><p>Apply execution enabled: {contract.applyExecutionEnabled}</p><p>Create-only apply required: {contract.createOnlyApplyRequired}</p><p>Read-only: {contract.readOnly}</p><p>Mutation permitted: {contract.mutationPermitted}</p><p>Message: {contract.message}</p>
+      <p>Available: {contract.available}</p>
+      <p>Contract type: {contract.contractType}</p>
+      <p>Candidate identity reference type: {contract.candidateIdentityReferenceType}</p>
+      <p>Candidate identity reference ID: {contract.candidateIdentityReferenceId}</p>
+      <p>Candidate identity fingerprint: {contract.candidateIdentityFingerprint}</p>
+      <p>Candidate identity set referenceable: {contract.candidateIdentitySetReferenceable}</p>
+      <p>Main future command reference ready: {contract.mainFutureCommandReferenceReady}</p>
+      <p>Apply execution enabled: {contract.applyExecutionEnabled}</p>
+      <p>Create-only apply required: {contract.createOnlyApplyRequired}</p>
+      <p>Read-only: {contract.readOnly}</p>
+      <p>Mutation permitted: {contract.mutationPermitted}</p>
+      <p>Message: {contract.message}</p>
     </>
   )
 }
@@ -3985,7 +3998,22 @@ export function FutureApplyRequestValidationPreviewPanel({ preview }: { preview?
   return (
     <>
       <p>Future apply request validation preview</p>
-      <p>Available: {validationPreview.available}</p><p>Validation type: {validationPreview.validationType}</p><p>Requested reference ID: {validationPreview.requestedCandidateIdentityReferenceId}</p><p>Expected reference ID: {validationPreview.expectedCandidateIdentityReferenceId}</p><p>Reference ID matches: {validationPreview.referenceIdMatches}</p><p>Requested fingerprint: {validationPreview.requestedCandidateIdentityFingerprint}</p><p>Expected fingerprint: {validationPreview.expectedCandidateIdentityFingerprint}</p><p>Fingerprint matches: {validationPreview.fingerprintMatches}</p><p>Requested reference type: {validationPreview.requestedCandidateIdentityReferenceType}</p><p>Expected reference type: {validationPreview.expectedCandidateIdentityReferenceType}</p><p>Reference type matches: {validationPreview.referenceTypeMatches}</p><p>Contract referenceable: {validationPreview.contractReferenceable}</p><p>Apply execution enabled: {validationPreview.applyExecutionEnabled}</p><p>Read-only: {validationPreview.readOnly}</p><p>Mutation permitted: {validationPreview.mutationPermitted}</p><p>Message: {validationPreview.message}</p>
+      <p>Available: {validationPreview.available}</p>
+      <p>Validation type: {validationPreview.validationType}</p>
+      <p>Requested reference ID: {validationPreview.requestedCandidateIdentityReferenceId}</p>
+      <p>Expected reference ID: {validationPreview.expectedCandidateIdentityReferenceId}</p>
+      <p>Reference ID matches: {validationPreview.referenceIdMatches}</p>
+      <p>Requested fingerprint: {validationPreview.requestedCandidateIdentityFingerprint}</p>
+      <p>Expected fingerprint: {validationPreview.expectedCandidateIdentityFingerprint}</p>
+      <p>Fingerprint matches: {validationPreview.fingerprintMatches}</p>
+      <p>Requested reference type: {validationPreview.requestedCandidateIdentityReferenceType}</p>
+      <p>Expected reference type: {validationPreview.expectedCandidateIdentityReferenceType}</p>
+      <p>Reference type matches: {validationPreview.referenceTypeMatches}</p>
+      <p>Contract referenceable: {validationPreview.contractReferenceable}</p>
+      <p>Apply execution enabled: {validationPreview.applyExecutionEnabled}</p>
+      <p>Read-only: {validationPreview.readOnly}</p>
+      <p>Mutation permitted: {validationPreview.mutationPermitted}</p>
+      <p>Message: {validationPreview.message}</p>
     </>
   )
 }

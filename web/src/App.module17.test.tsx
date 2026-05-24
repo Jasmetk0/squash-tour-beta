@@ -117,7 +117,14 @@ function futureApplyValidationResponseMock(
     create_only_apply_execution_preflight_preview: {
       available: true,
       preflight_type: 'create_only_apply_execution_preflight_preview',
-      all_known_preconditions_met: true,
+      target_absent: true,
+      create_only_scope_confirmed: true,
+      audit_metadata_present: false,
+      future_apply_reference_contract_available: true,
+      future_apply_request_validation_available: true,
+      candidate_identity_reference_matches: true,
+      main_future_command_reference_ready: true,
+      all_known_preconditions_met: false,
       execution_enabled: false,
       can_execute: false,
       read_only: true,
@@ -4199,8 +4206,15 @@ describe('Future apply preview panels', () => {
 
 
   it('renders valid create-only apply execution preflight preview data', () => {
-    render(<CreateOnlyApplyExecutionPreflightPreviewPanel preview={{ available: true, all_known_preconditions_met: true, execution_enabled: false, can_execute: false, mutation_permitted: false, message: 'Create-only apply execution remains disabled in preview mode.' }} />)
-    expect(screen.getByText('All known preconditions met: true')).toBeInTheDocument()
+    render(<CreateOnlyApplyExecutionPreflightPreviewPanel preview={{ available: true, preflight_type: 'create_only_apply_execution_preflight_preview', target_absent: true, create_only_scope_confirmed: true, audit_metadata_present: false, future_apply_reference_contract_available: true, future_apply_request_validation_available: true, candidate_identity_reference_matches: true, main_future_command_reference_ready: true, all_known_preconditions_met: false, execution_enabled: false, can_execute: false, read_only: true, mutation_permitted: false, message: 'Create-only apply execution remains disabled in preview mode.' }} />)
+    expect(screen.getByText('Target absent: true')).toBeInTheDocument()
+    expect(screen.getByText('Create-only scope confirmed: true')).toBeInTheDocument()
+    expect(screen.getByText('Audit metadata present: false')).toBeInTheDocument()
+    expect(screen.getByText('Future apply reference contract available: true')).toBeInTheDocument()
+    expect(screen.getByText('Future apply request validation available: true')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity reference matches: true')).toBeInTheDocument()
+    expect(screen.getByText('Main future command reference ready: true')).toBeInTheDocument()
+    expect(screen.getByText('All known preconditions met: false')).toBeInTheDocument()
     expect(screen.getByText('Execution enabled: false')).toBeInTheDocument()
     expect(screen.getByText('Can execute: false')).toBeInTheDocument()
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
@@ -4234,6 +4248,10 @@ describe('Future apply validation UI safety', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Validate future apply reference' }))
 
     await screen.findByText('Create-only apply execution preflight preview')
+    expect(screen.getByText('Target absent: true')).toBeInTheDocument()
+    expect(screen.getByText('Create-only scope confirmed: true')).toBeInTheDocument()
+    expect(screen.getByText('Audit metadata present: false')).toBeInTheDocument()
+    expect(screen.getByText('All known preconditions met: false')).toBeInTheDocument()
     expect(screen.getByText('Execution enabled: false')).toBeInTheDocument()
     expect(screen.getByText('Can execute: false')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()

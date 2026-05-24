@@ -3224,6 +3224,31 @@ export type DryRunTemplateConflictSummaryPreview = {
   message?: string
 }
 
+export type CandidateIdentitySummary = {
+  candidate_count?: number
+  candidate_ids?: string[]
+  candidate_identity_keys?: string[]
+  duplicate_candidate_ids?: string[]
+  duplicate_candidate_identity_keys?: string[]
+  read_only?: boolean
+  mutation_permitted?: boolean
+  message?: string
+}
+
+export type CandidateIdentityContract = {
+  identity_source?: string
+  id_strategy?: string
+  key_strategy?: string
+  key_components?: string[]
+  candidate_count?: number
+  has_duplicate_candidate_ids?: boolean
+  has_duplicate_candidate_identity_keys?: boolean
+  safe_for_future_reference?: boolean
+  read_only?: boolean
+  mutation_permitted?: boolean
+  message?: string
+}
+
 export type SeasonBuilderDryRunBuildRequest = {
   target_season_label: string
   source_type: string
@@ -3258,7 +3283,11 @@ export type SeasonBuilderDryRunBuildResponse = {
   candidate_event_contract_preview: Record<string, unknown>
   conflict_contract_preview: Record<string, unknown>
   dry_run_result_contract_preview: Record<string, unknown>
-  dry_run_result_preview: Record<string, unknown> & { template_conflict_summary?: DryRunTemplateConflictSummaryPreview | null }
+  dry_run_result_preview: Record<string, unknown> & {
+    template_conflict_summary?: DryRunTemplateConflictSummaryPreview | null
+    candidate_identity_summary?: CandidateIdentitySummary | null
+    candidate_identity_contract?: CandidateIdentityContract | null
+  }
   message: string
 }
 

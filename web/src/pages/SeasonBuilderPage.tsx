@@ -48,6 +48,8 @@ import {
   TemplateSlotValidationPreviewSummaryPanel,
   TemplateSlotConflictPreviewSummaryPanel,
   DryRunTemplateConflictSummaryPanel,
+  CandidateIdentitySummaryPanel,
+  CandidateIdentityContractPanel,
   PreflightTemplateConflictSummaryPanel,
   TemplateSlotConflictCodeRegistryPanel,
   TemplateConflictDiagnosticsOverviewPanel,
@@ -641,6 +643,12 @@ export function AdminSeasonBuilderPage(): JSX.Element {
         <DryRunTemplateConflictSummaryPanel
           dryRunResultPreview={disabledDryRunBuildQuery.data?.dry_run_result_preview}
         />
+      </SectionCard>
+      <SectionCard title="Candidate identity summary">
+        <CandidateIdentitySummaryPanel dryRunResultPreview={disabledDryRunBuildQuery.data?.dry_run_result_preview} />
+      </SectionCard>
+      <SectionCard title="Candidate identity contract">
+        <CandidateIdentityContractPanel dryRunResultPreview={disabledDryRunBuildQuery.data?.dry_run_result_preview} />
       </SectionCard>
       <SectionCard title="Disabled apply command contract result">
         <DisabledApplyCommandContractPanel

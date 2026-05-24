@@ -1190,6 +1190,96 @@ function hasTemplateSlotConflictPreview(preview: unknown): boolean {
   return Object.keys(preview as Record<string, unknown>).length > 0
 }
 
+function normalizeStringArrayDisplay(value: unknown): string {
+  if (!Array.isArray(value) || value.length === 0) return 'none'
+  const seen = new Set<string>()
+  const normalized: string[] = []
+  for (const item of value) {
+    if (typeof item !== 'string') continue
+    const trimmed = item.trim()
+    if (!trimmed || seen.has(trimmed)) continue
+    seen.add(trimmed)
+    normalized.push(trimmed)
+  }
+  return normalized.length > 0 ? normalized.join(', ') : 'none'
+}
+
+export function readCandidateIdentitySummary(dryRunResultPreview: unknown): Record<string, string> | null {
+  if (!dryRunResultPreview || typeof dryRunResultPreview !== 'object') return null
+  const summary = (dryRunResultPreview as Record<string, unknown>).candidate_identity_summary
+  if (!summary || typeof summary !== 'object') return null
+  const record = summary as Record<string, unknown>
+  return {
+    candidateCount: normalizeFiniteNumberDisplay(record.candidate_count),
+    candidateIds: normalizeStringArrayDisplay(record.candidate_ids),
+    candidateIdentityKeys: normalizeStringArrayDisplay(record.candidate_identity_keys),
+    duplicateCandidateIds: normalizeStringArrayDisplay(record.duplicate_candidate_ids),
+    duplicateCandidateIdentityKeys: normalizeStringArrayDisplay(record.duplicate_candidate_identity_keys),
+    readOnly: normalizeBooleanDisplay(record.read_only),
+    mutationPermitted: normalizeBooleanDisplay(record.mutation_permitted),
+    message: normalizeNonEmptyStringDisplay(record.message)
+  }
+}
+
+export function readCandidateIdentityContract(dryRunResultPreview: unknown): Record<string, string> | null {
+  if (!dryRunResultPreview || typeof dryRunResultPreview !== 'object') return null
+  const contract = (dryRunResultPreview as Record<string, unknown>).candidate_identity_contract
+  if (!contract || typeof contract !== 'object') return null
+  const record = contract as Record<string, unknown>
+  return {
+    identitySource: normalizeNonEmptyStringDisplay(record.identity_source),
+    idStrategy: normalizeNonEmptyStringDisplay(record.id_strategy),
+    keyStrategy: normalizeNonEmptyStringDisplay(record.key_strategy),
+    keyComponents: normalizeStringArrayDisplay(record.key_components),
+    candidateCount: normalizeFiniteNumberDisplay(record.candidate_count),
+    hasDuplicateCandidateIds: normalizeBooleanDisplay(record.has_duplicate_candidate_ids),
+    hasDuplicateCandidateIdentityKeys: normalizeBooleanDisplay(record.has_duplicate_candidate_identity_keys),
+    safeForFutureReference: normalizeBooleanDisplay(record.safe_for_future_reference),
+    readOnly: normalizeBooleanDisplay(record.read_only),
+    mutationPermitted: normalizeBooleanDisplay(record.mutation_permitted),
+    message: normalizeNonEmptyStringDisplay(record.message)
+  }
+}
+
+export function CandidateIdentitySummaryPanel({ dryRunResultPreview }: { dryRunResultPreview?: unknown }): JSX.Element {
+  const summary = readCandidateIdentitySummary(dryRunResultPreview)
+  if (!summary) return <p>Candidate identity summary is not available.</p>
+  return (
+    <>
+      <p>Candidate identity summary</p>
+      <p>Candidate identity candidate count: {summary.candidateCount}</p>
+      <p>Candidate identity candidate IDs: {summary.candidateIds}</p>
+      <p>Candidate identity keys: {summary.candidateIdentityKeys}</p>
+      <p>Candidate identity duplicate candidate IDs: {summary.duplicateCandidateIds}</p>
+      <p>Candidate identity duplicate keys: {summary.duplicateCandidateIdentityKeys}</p>
+      <p>Candidate identity read-only: {summary.readOnly}</p>
+      <p>Candidate identity mutation permitted: {summary.mutationPermitted}</p>
+      <p>Candidate identity message: {summary.message}</p>
+    </>
+  )
+}
+
+export function CandidateIdentityContractPanel({ dryRunResultPreview }: { dryRunResultPreview?: unknown }): JSX.Element {
+  const contract = readCandidateIdentityContract(dryRunResultPreview)
+  if (!contract) return <p>Candidate identity contract is not available.</p>
+  return (
+    <>
+      <p>Candidate identity contract</p>
+      <p>Candidate identity source: {contract.identitySource}</p>
+      <p>Candidate identity ID strategy: {contract.idStrategy}</p>
+      <p>Candidate identity key strategy: {contract.keyStrategy}</p>
+      <p>Candidate identity key components: {contract.keyComponents}</p>
+      <p>Candidate identity contract candidate count: {contract.candidateCount}</p>
+      <p>Candidate identity has duplicate candidate IDs: {contract.hasDuplicateCandidateIds}</p>
+      <p>Candidate identity has duplicate keys: {contract.hasDuplicateCandidateIdentityKeys}</p>
+      <p>Candidate identity safe for future reference: {contract.safeForFutureReference}</p>
+      <p>Candidate identity contract read-only: {contract.readOnly}</p>
+      <p>Candidate identity contract mutation permitted: {contract.mutationPermitted}</p>
+      <p>Candidate identity contract message: {contract.message}</p>
+    </>
+  )
+}
+
 export function TemplateSlotValidationPreviewSummaryPanel({
   titlePrefix,
   preview

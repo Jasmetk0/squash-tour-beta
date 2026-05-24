@@ -2899,6 +2899,21 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
                       <tr><td>Candidate identity reference type</td><td>{formatStringOrNa(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.future_command_reference)?.candidate_identity_reference_type)}</td></tr>
                     </tbody></table>
                   ) : <p>Future command reference is unavailable.</p>}
+                  <h6>Candidate identity readiness overview</h6>
+                  {shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.candidate_identity_readiness_overview) ? (
+                    <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+                      <tr><td>available</td><td>{formatBooleanOrNa(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.candidate_identity_readiness_overview)?.available)}</td></tr>
+                      <tr><td>candidate_identity_fingerprint</td><td>{formatStringOrNa(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.candidate_identity_readiness_overview)?.candidate_identity_fingerprint)}</td></tr>
+                      <tr><td>candidate_identity_reference_id</td><td>{formatStringOrNa(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.candidate_identity_readiness_overview)?.candidate_identity_reference_id)}</td></tr>
+                      <tr><td>candidate_identity_reference_type</td><td>{formatStringOrNa(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.candidate_identity_readiness_overview)?.candidate_identity_reference_type)}</td></tr>
+                      <tr><td>can_reference_candidate_identity_set</td><td>{formatBooleanOrNa(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.candidate_identity_readiness_overview)?.can_reference_candidate_identity_set)}</td></tr>
+                      <tr><td>candidate_reference_status</td><td>{formatStringOrNa(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.candidate_identity_readiness_overview)?.candidate_reference_status)}</td></tr>
+                      <tr><td>main_future_command_reference_ready</td><td>{formatBooleanOrNa(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.candidate_identity_readiness_overview)?.main_future_command_reference_ready)}</td></tr>
+                      <tr><td>read_only</td><td>{formatBooleanOrNa(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.candidate_identity_readiness_overview)?.read_only)}</td></tr>
+                      <tr><td>mutation_permitted</td><td>{formatBooleanOrNa(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.candidate_identity_readiness_overview)?.mutation_permitted)}</td></tr>
+                      <tr><td>message</td><td>{formatStringOrNa(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.candidate_identity_readiness_overview)?.message)}</td></tr>
+                    </tbody></table>
+                  ) : <p>Candidate identity readiness overview is unavailable.</p>}
                   <h6>Checklist items</h6>
                   {previewList(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.items).length > 0 ? (
                     <table><thead><tr><th scope="col">Area</th><th scope="col">Status</th><th scope="col">Message</th></tr></thead><tbody>

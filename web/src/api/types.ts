@@ -3235,6 +3235,20 @@ export type CandidateIdentitySummary = {
   message?: string
 }
 
+export type CandidateIdentityOverview = {
+  available?: boolean
+  candidate_count?: number
+  safe_for_future_reference?: boolean
+  has_duplicate_candidate_ids?: boolean
+  has_duplicate_candidate_identity_keys?: boolean
+  identity_source?: string
+  id_strategy?: string
+  key_strategy?: string
+  read_only?: boolean
+  mutation_permitted?: boolean
+  message?: string
+}
+
 export type CandidateIdentityContract = {
   identity_source?: string
   id_strategy?: string
@@ -3287,6 +3301,7 @@ export type SeasonBuilderDryRunBuildResponse = {
     template_conflict_summary?: DryRunTemplateConflictSummaryPreview | null
     candidate_identity_summary?: CandidateIdentitySummary | null
     candidate_identity_contract?: CandidateIdentityContract | null
+    candidate_identity_overview?: CandidateIdentityOverview | null
   }
   message: string
 }

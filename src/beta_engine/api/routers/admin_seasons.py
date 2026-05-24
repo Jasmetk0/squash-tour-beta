@@ -24,6 +24,7 @@ from beta_engine.application.template_conflict_diagnostics import (
 from beta_engine.application.season_builder_candidate_identity import (
     build_candidate_identity,
     build_candidate_identity_contract,
+    build_candidate_identity_overview,
     build_candidate_identity_summary,
 )
 from beta_engine.application.season_template_service import (
@@ -798,6 +799,7 @@ def post_season_builder_dry_run_build_contract(
 
     candidate_identity_summary = build_candidate_identity_summary(candidate_events)
     candidate_identity_contract = build_candidate_identity_contract(candidate_identity_summary)
+    candidate_identity_overview = build_candidate_identity_overview(candidate_identity_summary, candidate_identity_contract)
 
     dry_run_result_preview = {
         "status": dry_run_status,
@@ -806,6 +808,7 @@ def post_season_builder_dry_run_build_contract(
         "candidate_events": candidate_events,
         "candidate_identity_summary": candidate_identity_summary,
         "candidate_identity_contract": candidate_identity_contract,
+        "candidate_identity_overview": candidate_identity_overview,
         "structural_summary": {
             "candidate_count": len(candidate_events),
             "target_event_count": target_event_count,

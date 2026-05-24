@@ -1221,6 +1221,26 @@ export function readCandidateIdentitySummary(dryRunResultPreview: unknown): Reco
   }
 }
 
+export function readCandidateIdentityOverview(dryRunResultPreview: unknown): Record<string, string> | null {
+  if (!dryRunResultPreview || typeof dryRunResultPreview !== 'object') return null
+  const overview = (dryRunResultPreview as Record<string, unknown>).candidate_identity_overview
+  if (!overview || typeof overview !== 'object') return null
+  const record = overview as Record<string, unknown>
+  return {
+    available: normalizeBooleanDisplay(record.available),
+    candidateCount: normalizeFiniteNumberDisplay(record.candidate_count),
+    safeForFutureReference: normalizeBooleanDisplay(record.safe_for_future_reference),
+    hasDuplicateCandidateIds: normalizeBooleanDisplay(record.has_duplicate_candidate_ids),
+    hasDuplicateCandidateIdentityKeys: normalizeBooleanDisplay(record.has_duplicate_candidate_identity_keys),
+    identitySource: normalizeNonEmptyStringDisplay(record.identity_source),
+    idStrategy: normalizeNonEmptyStringDisplay(record.id_strategy),
+    keyStrategy: normalizeNonEmptyStringDisplay(record.key_strategy),
+    readOnly: normalizeBooleanDisplay(record.read_only),
+    mutationPermitted: normalizeBooleanDisplay(record.mutation_permitted),
+    message: normalizeNonEmptyStringDisplay(record.message)
+  }
+}
+
 export function readCandidateIdentityContract(dryRunResultPreview: unknown): Record<string, string> | null {
   if (!dryRunResultPreview || typeof dryRunResultPreview !== 'object') return null
   const contract = (dryRunResultPreview as Record<string, unknown>).candidate_identity_contract
@@ -1239,6 +1259,27 @@ export function readCandidateIdentityContract(dryRunResultPreview: unknown): Rec
     mutationPermitted: normalizeBooleanDisplay(record.mutation_permitted),
     message: normalizeNonEmptyStringDisplay(record.message)
   }
+}
+
+export function CandidateIdentityOverviewPanel({ dryRunResultPreview }: { dryRunResultPreview?: unknown }): JSX.Element {
+  const overview = readCandidateIdentityOverview(dryRunResultPreview)
+  if (!overview) return <p>Candidate identity overview is not available.</p>
+  return (
+    <>
+      <p>Candidate identity overview</p>
+      <p>Candidate identity overview available: {overview.available}</p>
+      <p>Candidate identity overview candidate count: {overview.candidateCount}</p>
+      <p>Candidate identity overview safe for future reference: {overview.safeForFutureReference}</p>
+      <p>Candidate identity overview duplicate candidate IDs: {overview.hasDuplicateCandidateIds}</p>
+      <p>Candidate identity overview duplicate keys: {overview.hasDuplicateCandidateIdentityKeys}</p>
+      <p>Candidate identity overview source: {overview.identitySource}</p>
+      <p>Candidate identity overview ID strategy: {overview.idStrategy}</p>
+      <p>Candidate identity overview key strategy: {overview.keyStrategy}</p>
+      <p>Candidate identity overview read-only: {overview.readOnly}</p>
+      <p>Candidate identity overview mutation permitted: {overview.mutationPermitted}</p>
+      <p>Candidate identity overview message: {overview.message}</p>
+    </>
+  )
 }
 
 export function CandidateIdentitySummaryPanel({ dryRunResultPreview }: { dryRunResultPreview?: unknown }): JSX.Element {

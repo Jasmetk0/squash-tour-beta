@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentitySummaryPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityOverviewPanel, CandidateIdentitySummaryPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -1759,7 +1759,8 @@ describe('Module 17 pages through routes', () => {
         plan_readiness: { read_only_plan_available: true, has_blocking_issues: false, has_warnings: false, mutation_still_disabled: true, next_required_step: 'Review dry-run summary; execution remains disabled.' },
         identity_readiness: { status: 'ready_reference', items: [{ area: 'preflight_fingerprint', status: 'OK', message: 'Preflight fingerprint is present.' }], future_command_reference: { preflight_fingerprint: 'pf_test_empty', reviewed_diff_id: 'rd_test_empty', dry_run_result_fingerprint: 'drf_test_empty', dry_run_result_id: 'drr_test_empty', can_reference_future_command: true, mutation_still_disabled: true } },
         candidate_identity_summary: { candidate_count: 1, candidate_ids: ['cand_default_msa_template_preview_slot_01_1'], candidate_identity_keys: ['target_season=2000_01|source_type=season_template|source_template_id=default_msa_template_preview|source_slot_id=slot_01|season_week_start=1|event_name=world_tour_gold|category=gold|source_template_ref=wt_gold_24'], duplicate_candidate_ids: [], duplicate_candidate_identity_keys: [], read_only: true, mutation_permitted: false, message: 'Candidate event identities are deterministic and read-only in dry-run.' },
-        candidate_identity_contract: { identity_source: 'season_template_slot', id_strategy: 'sanitized_template_slot_week', key_strategy: 'pipe_joined_sanitized_components', key_components: ['target_season', 'source_type', 'source_template_id', 'source_slot_id', 'season_week_start', 'event_name', 'category', 'source_template_ref'], candidate_count: 1, has_duplicate_candidate_ids: false, has_duplicate_candidate_identity_keys: false, safe_for_future_reference: true, read_only: true, mutation_permitted: false, message: 'Candidate identities are stable and safe for future reference.' }
+        candidate_identity_contract: { identity_source: 'season_template_slot', id_strategy: 'sanitized_template_slot_week', key_strategy: 'pipe_joined_sanitized_components', key_components: ['target_season', 'source_type', 'source_template_id', 'source_slot_id', 'season_week_start', 'event_name', 'category', 'source_template_ref'], candidate_count: 1, has_duplicate_candidate_ids: false, has_duplicate_candidate_identity_keys: false, safe_for_future_reference: true, read_only: true, mutation_permitted: false, message: 'Candidate identities are stable and safe for future reference.' },
+        candidate_identity_overview: { available: true, candidate_count: 1, safe_for_future_reference: true, has_duplicate_candidate_ids: false, has_duplicate_candidate_identity_keys: false, identity_source: 'season_template_slot', id_strategy: 'sanitized_template_slot_week', key_strategy: 'pipe_joined_sanitized_components', read_only: true, mutation_permitted: false, message: 'Candidate identity overview: safe for future reference.' }
       },
       message: 'Dry-run build command contract exists, but execution is disabled in this phase.'
     })
@@ -3583,6 +3584,33 @@ describe('TemplateSlotConflictCodeRegistryPanel', () => {
 })
 
 describe('Candidate identity panels', () => {
+
+  it('handles missing overview safely', () => {
+    render(<CandidateIdentityOverviewPanel dryRunResultPreview={undefined} />)
+    expect(screen.getByText('Candidate identity overview is not available.')).toBeInTheDocument()
+  })
+
+  it('handles malformed overview safely', () => {
+    render(<CandidateIdentityOverviewPanel dryRunResultPreview={{ candidate_identity_overview: { available: 'yes', candidate_count: NaN, safe_for_future_reference: null, has_duplicate_candidate_ids: 'x', has_duplicate_candidate_identity_keys: undefined, identity_source: '', id_strategy: '  ', key_strategy: 9, read_only: 'true', mutation_permitted: 1, message: '' } }} />)
+    expect(screen.getByText('Candidate identity overview available: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity overview candidate count: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity overview source: n/a')).toBeInTheDocument()
+  })
+
+  it('shows valid overview rows', () => {
+    render(<CandidateIdentityOverviewPanel dryRunResultPreview={{ candidate_identity_overview: { available: true, candidate_count: 1, safe_for_future_reference: true, has_duplicate_candidate_ids: false, has_duplicate_candidate_identity_keys: false, identity_source: 'season_template_slot', id_strategy: 'sanitized_template_slot_week', key_strategy: 'pipe_joined_sanitized_components', read_only: true, mutation_permitted: false, message: 'Candidate identity overview: safe for future reference.' } }} />)
+    expect(screen.getByText('Candidate identity overview available: true')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity overview candidate count: 1')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity overview mutation permitted: false')).toBeInTheDocument()
+  })
+
+  it('shows unsafe duplicate overview state', () => {
+    render(<CandidateIdentityOverviewPanel dryRunResultPreview={{ candidate_identity_overview: { available: true, safe_for_future_reference: false, has_duplicate_candidate_ids: true, has_duplicate_candidate_identity_keys: true } }} />)
+    expect(screen.getByText('Candidate identity overview safe for future reference: false')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity overview duplicate candidate IDs: true')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity overview duplicate keys: true')).toBeInTheDocument()
+  })
+
   it('handles missing summary safely', () => {
     render(<CandidateIdentitySummaryPanel dryRunResultPreview={undefined} />)
     expect(screen.getByText('Candidate identity summary is not available.')).toBeInTheDocument()

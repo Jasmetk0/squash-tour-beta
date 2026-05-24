@@ -48,6 +48,7 @@ import {
   TemplateSlotValidationPreviewSummaryPanel,
   TemplateSlotConflictPreviewSummaryPanel,
   DryRunTemplateConflictSummaryPanel,
+  CandidateIdentityOverviewPanel,
   CandidateIdentitySummaryPanel,
   CandidateIdentityContractPanel,
   PreflightTemplateConflictSummaryPanel,
@@ -645,6 +646,8 @@ export function AdminSeasonBuilderPage(): JSX.Element {
         />
       </SectionCard>
       <SectionCard title="Candidate identity summary">
+        <CandidateIdentityOverviewPanel dryRunResultPreview={disabledDryRunBuildQuery.data?.dry_run_result_preview} />
+
         <CandidateIdentitySummaryPanel dryRunResultPreview={disabledDryRunBuildQuery.data?.dry_run_result_preview} />
       </SectionCard>
       <SectionCard title="Candidate identity contract">

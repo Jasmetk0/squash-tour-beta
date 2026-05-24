@@ -137,6 +137,17 @@ def assert_candidate_identity_contract(contract: dict, summary: dict) -> None:
     assert isinstance(contract["message"], str) and contract["message"]
 
 
+
+
+def assert_candidate_identity_overview(overview: dict, summary: dict, contract: dict) -> None:
+    assert overview is not None
+    assert overview["candidate_count"] == summary["candidate_count"]
+    assert overview["safe_for_future_reference"] == contract["safe_for_future_reference"]
+    assert overview["has_duplicate_candidate_ids"] == contract["has_duplicate_candidate_ids"]
+    assert overview["has_duplicate_candidate_identity_keys"] == contract["has_duplicate_candidate_identity_keys"]
+    assert overview["read_only"] is True
+    assert overview["mutation_permitted"] is False
+
 def test_candidate_identity_api_resolved_parity(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         payload = {
@@ -164,6 +175,8 @@ def test_candidate_identity_api_resolved_parity(tmp_path: Path) -> None:
         contract = preview["candidate_identity_contract"]
         assert_candidate_identity_summary_contract(summary, candidate_events)
         assert_candidate_identity_contract(contract, summary)
+        overview = preview["candidate_identity_overview"]
+        assert_candidate_identity_overview(overview, summary, contract)
         if not summary["duplicate_candidate_ids"] and not summary["duplicate_candidate_identity_keys"]:
             assert contract["safe_for_future_reference"] is True
 
@@ -212,8 +225,15 @@ def test_candidate_identity_api_unresolved_source_contract_invariants(tmp_path: 
         contract = preview["candidate_identity_contract"]
         assert_candidate_identity_summary_contract(summary, preview["candidate_events"])
         assert_candidate_identity_contract(contract, summary)
+        overview = preview["candidate_identity_overview"]
+        assert_candidate_identity_overview(overview, summary, contract)
         assert contract["safe_for_future_reference"] is False
         assert "no candidates" in str(contract["message"]).lower()
+        overview = preview["candidate_identity_overview"]
+        assert_candidate_identity_overview(overview, summary, contract)
+        assert overview["available"] is False
+        assert overview["safe_for_future_reference"] is False
+        assert "no candidates" in str(overview["message"]).lower()
 
 
 def test_candidate_identity_api_unsupported_source_contract_invariants(tmp_path: Path) -> None:
@@ -234,5 +254,12 @@ def test_candidate_identity_api_unsupported_source_contract_invariants(tmp_path:
         contract = preview["candidate_identity_contract"]
         assert_candidate_identity_summary_contract(summary, preview["candidate_events"])
         assert_candidate_identity_contract(contract, summary)
+        overview = preview["candidate_identity_overview"]
+        assert_candidate_identity_overview(overview, summary, contract)
         assert contract["safe_for_future_reference"] is False
         assert "no candidates" in str(contract["message"]).lower()
+        overview = preview["candidate_identity_overview"]
+        assert_candidate_identity_overview(overview, summary, contract)
+        assert overview["available"] is False
+        assert overview["safe_for_future_reference"] is False
+        assert "no candidates" in str(overview["message"]).lower()

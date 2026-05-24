@@ -127,3 +127,65 @@ def build_candidate_identity_contract(candidate_identity_summary: dict[str, obje
         "mutation_permitted": False,
         "message": message,
     }
+
+
+def build_candidate_identity_overview(
+    candidate_identity_summary: dict[str, object],
+    candidate_identity_contract: dict[str, object],
+) -> dict[str, object]:
+    """Build compact read-only overview derived from summary + contract."""
+    raw_summary_count = candidate_identity_summary.get("candidate_count")
+    raw_contract_count = candidate_identity_contract.get("candidate_count")
+    candidate_count = 0
+    if isinstance(raw_summary_count, int) and raw_summary_count >= 0:
+        candidate_count = raw_summary_count
+    elif isinstance(raw_contract_count, int) and raw_contract_count >= 0:
+        candidate_count = raw_contract_count
+
+    available = candidate_count > 0
+    safe_for_future_reference = (
+        candidate_identity_contract.get("safe_for_future_reference")
+        if isinstance(candidate_identity_contract.get("safe_for_future_reference"), bool)
+        else False
+    )
+    has_duplicate_candidate_ids = (
+        candidate_identity_contract.get("has_duplicate_candidate_ids")
+        if isinstance(candidate_identity_contract.get("has_duplicate_candidate_ids"), bool)
+        else False
+    )
+    has_duplicate_candidate_identity_keys = (
+        candidate_identity_contract.get("has_duplicate_candidate_identity_keys")
+        if isinstance(candidate_identity_contract.get("has_duplicate_candidate_identity_keys"), bool)
+        else False
+    )
+
+    identity_source = candidate_identity_contract.get("identity_source")
+    id_strategy = candidate_identity_contract.get("id_strategy")
+    key_strategy = candidate_identity_contract.get("key_strategy")
+    normalized_identity_source = identity_source.strip() if isinstance(identity_source, str) and identity_source.strip() else "n/a"
+    normalized_id_strategy = id_strategy.strip() if isinstance(id_strategy, str) and id_strategy.strip() else "n/a"
+    normalized_key_strategy = key_strategy.strip() if isinstance(key_strategy, str) and key_strategy.strip() else "n/a"
+
+    has_duplicates = has_duplicate_candidate_ids or has_duplicate_candidate_identity_keys
+    if safe_for_future_reference:
+        message = "Candidate identity overview: safe for future reference."
+    elif available and has_duplicates:
+        message = "Candidate identity overview: candidates generated but duplicate identities require review."
+    elif available:
+        message = "Candidate identity overview: candidates generated but not safe for future reference."
+    else:
+        message = "Candidate identity overview: no candidates generated."
+
+    return {
+        "available": available,
+        "candidate_count": candidate_count,
+        "safe_for_future_reference": safe_for_future_reference,
+        "has_duplicate_candidate_ids": has_duplicate_candidate_ids,
+        "has_duplicate_candidate_identity_keys": has_duplicate_candidate_identity_keys,
+        "identity_source": normalized_identity_source,
+        "id_strategy": normalized_id_strategy,
+        "key_strategy": normalized_key_strategy,
+        "read_only": True,
+        "mutation_permitted": False,
+        "message": message,
+    }

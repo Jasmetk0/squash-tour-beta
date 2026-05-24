@@ -3428,6 +3428,13 @@ describe('TemplateConflictDiagnosticsOverviewPanel', () => {
     expect(screen.getByText('Selected conflict count: 3')).toBeInTheDocument()
   })
 
+  it('B4) malformed selected availability falls back to report presence while keeping valid selected status/count', () => {
+    render(<TemplateConflictDiagnosticsOverviewPanel selectedConflictReport={{ template_id: 't', template_exists: true, read_only: true, message: 'ok', summary: { status: 'warnings', warning_count: 1, info_count: 0, conflict_count: 3, slot_count: 5, occupied_week_count: 5 }, conflicts: [], template_conflict_diagnostics_overview: { selected_report_available: 'bad' as any, selected_status: 'info', selected_conflict_count: 9 } }} />)
+    expect(screen.getByText('Selected conflict report: available')).toBeInTheDocument()
+    expect(screen.getByText('Selected conflict status: info')).toBeInTheDocument()
+    expect(screen.getByText('Selected conflict count: 9')).toBeInTheDocument()
+  })
+
   it('C) preflight preview and summary available', () => {
     render(<TemplateConflictDiagnosticsOverviewPanel preflightResult={{ can_build: false, target_season_label: 's', source_type: 'season_template', source_template_id: 't', preflight_fingerprint: 'pf', reviewed_diff_id: 'rd', target_calendar_exists: false, target_event_count: 0, source_resolved: true, source_summary: {}, authoritative_diff_summary: { template_conflict_summary: { available: true, read_only: true, non_blocking: true, status: 'warnings', warning_count: 1, info_count: 2, conflict_count: 3, conflict_codes: ['c1'] } }, template_slot_conflict_preview: { status: 'warnings', conflict_count: 3 }, validation_warnings: [], validation_errors: [], audit_preview: {} }} />)
     expect(screen.getByText('Preflight conflict preview: available')).toBeInTheDocument()

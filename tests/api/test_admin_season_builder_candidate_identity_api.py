@@ -225,6 +225,28 @@ def assert_candidate_identity_readiness_overview_parity(
     assert isinstance(overview["message"], str) and overview["message"]
 
 
+def assert_future_apply_reference_contract(
+    preview: dict,
+    fingerprint: dict,
+    review_reference: dict,
+    identity_readiness: dict,
+) -> dict:
+    contract = preview["future_apply_reference_contract"]
+    assert isinstance(contract, dict)
+    assert contract["contract_type"] == "future_apply_reference_contract"
+    assert contract["candidate_identity_reference_id"] == review_reference["reference_id"]
+    assert contract["candidate_identity_reference_type"] == review_reference["reference_type"]
+    assert contract["candidate_identity_fingerprint"] == fingerprint["fingerprint"]
+    assert contract["candidate_identity_set_referenceable"] == review_reference["can_reference_future_apply"]
+    assert contract["main_future_command_reference_ready"] == identity_readiness["future_command_reference"]["can_reference_future_command"]
+    assert contract["apply_execution_enabled"] is False
+    assert contract["create_only_apply_required"] is True
+    assert contract["read_only"] is True
+    assert contract["mutation_permitted"] is False
+    assert isinstance(contract["message"], str) and contract["message"]
+    return contract
+
+
 def test_candidate_identity_api_resolved_parity(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         payload = {
@@ -262,6 +284,14 @@ def test_candidate_identity_api_resolved_parity(tmp_path: Path) -> None:
         assert future_reference["can_reference_candidate_identity_set"] == review_reference["can_reference_future_apply"]
         assert future_reference["candidate_identity_reference_type"] == review_reference["reference_type"]
         assert candidate_reference_item["status"] == "OK"
+        future_apply_contract = assert_future_apply_reference_contract(
+            preview,
+            fingerprint,
+            review_reference,
+            preview["identity_readiness"],
+        )
+        assert future_apply_contract["available"] is True
+        assert future_apply_contract["candidate_identity_set_referenceable"] is True
         assert_candidate_identity_readiness_overview_parity(
             readiness_overview,
             future_reference,
@@ -341,6 +371,14 @@ def test_candidate_identity_api_unresolved_source_contract_invariants(tmp_path: 
         assert readiness_overview["can_reference_candidate_identity_set"] is False
         assert future_reference["mutation_still_disabled"] is True
         assert future_reference["can_reference_future_command"] == (preview["identity_readiness"]["status"] == "ready_reference")
+        future_apply_contract = assert_future_apply_reference_contract(
+            preview,
+            fingerprint,
+            review_reference,
+            preview["identity_readiness"],
+        )
+        assert future_apply_contract["available"] is False
+        assert future_apply_contract["candidate_identity_set_referenceable"] is False
         assert contract["safe_for_future_reference"] is False
         assert "no candidates" in str(contract["message"]).lower()
         assert overview["available"] is False
@@ -388,6 +426,14 @@ def test_candidate_identity_api_unsupported_source_contract_invariants(tmp_path:
         assert readiness_overview["can_reference_candidate_identity_set"] is False
         assert future_reference["mutation_still_disabled"] is True
         assert future_reference["can_reference_future_command"] == (preview["identity_readiness"]["status"] == "ready_reference")
+        future_apply_contract = assert_future_apply_reference_contract(
+            preview,
+            fingerprint,
+            review_reference,
+            preview["identity_readiness"],
+        )
+        assert future_apply_contract["available"] is False
+        assert future_apply_contract["candidate_identity_set_referenceable"] is False
         assert contract["safe_for_future_reference"] is False
         assert "no candidates" in str(contract["message"]).lower()
         assert overview["available"] is False

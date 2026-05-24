@@ -283,3 +283,52 @@ def build_candidate_identity_review_reference(
         "mutation_permitted": False,
         "message": message,
     }
+
+
+def build_future_apply_reference_contract(
+    *,
+    candidate_identity_fingerprint: dict,
+    candidate_identity_review_reference: dict,
+    identity_readiness: dict,
+) -> dict:
+    """Build disabled read-only contract preview for a future create-only apply flow."""
+    raw_reference_id = candidate_identity_review_reference.get("reference_id")
+    reference_id = raw_reference_id if isinstance(raw_reference_id, str) and raw_reference_id else ""
+
+    raw_reference_type = candidate_identity_review_reference.get("reference_type")
+    reference_type = raw_reference_type if isinstance(raw_reference_type, str) and raw_reference_type else "candidate_identity_set"
+
+    raw_can_reference_apply = candidate_identity_review_reference.get("can_reference_future_apply")
+    can_reference_apply = raw_can_reference_apply if isinstance(raw_can_reference_apply, bool) else False
+
+    raw_fingerprint = candidate_identity_fingerprint.get("fingerprint")
+    fingerprint = raw_fingerprint if isinstance(raw_fingerprint, str) and raw_fingerprint else ""
+
+    future_command_reference = identity_readiness.get("future_command_reference")
+    if not isinstance(future_command_reference, dict):
+        future_command_reference = {}
+    raw_main_ready = future_command_reference.get("can_reference_future_command")
+    main_future_command_reference_ready = raw_main_ready if isinstance(raw_main_ready, bool) else False
+
+    available = bool(reference_id) and can_reference_apply and bool(fingerprint)
+
+    message = (
+        "Future apply reference contract is preview-only and disabled; it is read-only and does not execute apply."
+        if available
+        else "Future apply reference contract is preview-only and disabled; reference requirements are incomplete and apply execution remains unavailable."
+    )
+
+    return {
+        "available": available,
+        "contract_type": "future_apply_reference_contract",
+        "candidate_identity_reference_type": reference_type,
+        "candidate_identity_reference_id": reference_id,
+        "candidate_identity_fingerprint": fingerprint,
+        "candidate_identity_set_referenceable": can_reference_apply,
+        "main_future_command_reference_ready": main_future_command_reference_ready,
+        "apply_execution_enabled": False,
+        "create_only_apply_required": True,
+        "read_only": True,
+        "mutation_permitted": False,
+        "message": message,
+    }

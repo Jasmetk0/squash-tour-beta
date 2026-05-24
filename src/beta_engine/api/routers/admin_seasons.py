@@ -25,6 +25,7 @@ from beta_engine.application.season_builder_candidate_identity import (
     build_candidate_identity,
     build_candidate_identity_contract,
     build_candidate_identity_fingerprint,
+    build_future_apply_reference_contract,
     build_candidate_identity_overview,
     build_candidate_identity_review_reference,
     build_candidate_identity_summary,
@@ -953,7 +954,7 @@ def post_season_builder_dry_run_build_contract(
         dry_run_result_preview_result_metadata["dry_run_result_fingerprint"] = dry_run_result_fingerprint
         dry_run_result_preview_result_metadata["dry_run_result_id"] = dry_run_result_id
 
-    dry_run_result_preview["identity_readiness"] = build_dry_run_identity_readiness(
+    identity_readiness = build_dry_run_identity_readiness(
         preflight_fingerprint=payload.preflight_fingerprint,
         reviewed_diff_id=payload.reviewed_diff_id,
         dry_run_result_fingerprint=dry_run_result_fingerprint,
@@ -962,6 +963,12 @@ def post_season_builder_dry_run_build_contract(
         plan_readiness=plan_readiness,
         candidate_identity_fingerprint=candidate_identity_fingerprint,
         candidate_identity_review_reference=candidate_identity_review_reference,
+    )
+    dry_run_result_preview["identity_readiness"] = identity_readiness
+    dry_run_result_preview["future_apply_reference_contract"] = build_future_apply_reference_contract(
+        candidate_identity_fingerprint=candidate_identity_fingerprint,
+        candidate_identity_review_reference=candidate_identity_review_reference,
+        identity_readiness=identity_readiness,
     )
 
     return SeasonBuilderDryRunBuildResponse(

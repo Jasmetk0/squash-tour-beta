@@ -71,3 +71,37 @@ def test_build_selected_template_conflict_diagnostics_overview_missing():
     assert overview.selected_report_available is False
     assert overview.selected_status is None
     assert overview.selected_conflict_count == 0
+
+
+def test_build_template_conflict_diagnostics_overview_malformed_summary_falls_back_to_preview():
+    preview = SeasonTemplateSlotConflictPreview(status="warnings", conflict_count=3)
+    overview = build_template_conflict_diagnostics_overview(
+        preflight_preview=preview,
+        preflight_summary={"status": 42, "conflict_count": "bad"},
+    )
+    assert overview.preflight_status == "warnings"
+    assert overview.preflight_conflict_count == 3
+
+
+def test_build_template_conflict_diagnostics_overview_malformed_summary_without_preview_safe_defaults():
+    overview = build_template_conflict_diagnostics_overview(
+        preflight_summary={"status": 42, "conflict_count": "bad"},
+    )
+    assert overview.preflight_status is None
+    assert overview.preflight_conflict_count == 0
+
+
+def test_build_template_conflict_diagnostics_overview_normalizes_string_and_float_counts():
+    overview = build_template_conflict_diagnostics_overview(
+        preflight_summary={"status": "warnings", "conflict_count": "3"},
+        dry_run_summary={"status": "info", "conflict_count": 4.0},
+    )
+    assert overview.preflight_conflict_count == 3
+    assert overview.dry_run_conflict_count == 4
+
+
+def test_build_template_conflict_diagnostics_overview_bool_count_does_not_coerce_to_one():
+    overview = build_template_conflict_diagnostics_overview(
+        preflight_summary={"status": "warnings", "conflict_count": True},
+    )
+    assert overview.preflight_conflict_count == 0

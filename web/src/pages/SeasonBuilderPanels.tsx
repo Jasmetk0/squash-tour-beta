@@ -1433,6 +1433,57 @@ export function extractConflictCodesFromReport(report: SeasonTemplateSlotConflic
   return codes
 }
 
+type TemplateConflictDiagnosticsOverviewDisplay = {
+  preflightPreviewAvailable: 'available' | 'unavailable' | 'n/a'
+  preflightSummaryAvailable: 'available' | 'unavailable' | 'n/a'
+  preflightStatus: 'clean' | 'warnings' | 'info' | 'n/a'
+  preflightConflictCount: string
+  dryRunPreviewAvailable: 'available' | 'unavailable' | 'n/a'
+  dryRunSummaryAvailable: 'available' | 'unavailable' | 'n/a'
+  dryRunStatus: 'clean' | 'warnings' | 'info' | 'n/a'
+  dryRunConflictCount: string
+  mutationBehavior: string
+  blockingBehavior: string
+}
+
+function toAvailableString(value: unknown): 'available' | 'unavailable' | 'n/a' {
+  if (typeof value !== 'boolean') return 'n/a'
+  return value ? 'available' : 'unavailable'
+}
+
+function toConflictStatus(value: unknown): 'clean' | 'warnings' | 'info' | 'n/a' {
+  if (typeof value !== 'string') return 'n/a'
+  const normalized = value.trim().toLowerCase()
+  return normalized === 'clean' || normalized === 'warnings' || normalized === 'info' ? normalized : 'n/a'
+}
+
+function toCountString(value: unknown): string {
+  return typeof value === 'number' && Number.isFinite(value) ? String(value) : 'n/a'
+}
+
+function toNonEmptyStringOrNa(value: unknown): string {
+  if (typeof value !== 'string') return 'n/a'
+  const normalized = value.trim()
+  return normalized.length > 0 ? normalized : 'n/a'
+}
+
+export function readTemplateConflictDiagnosticsOverview(overview: unknown): TemplateConflictDiagnosticsOverviewDisplay | null {
+  if (!overview || typeof overview !== 'object') return null
+  const record = overview as Record<string, unknown>
+  return {
+    preflightPreviewAvailable: toAvailableString(record.preflight_preview_available),
+    preflightSummaryAvailable: toAvailableString(record.preflight_summary_available),
+    preflightStatus: toConflictStatus(record.preflight_status),
+    preflightConflictCount: toCountString(record.preflight_conflict_count),
+    dryRunPreviewAvailable: toAvailableString(record.dry_run_preview_available),
+    dryRunSummaryAvailable: toAvailableString(record.dry_run_summary_available),
+    dryRunStatus: toConflictStatus(record.dry_run_status),
+    dryRunConflictCount: toCountString(record.dry_run_conflict_count),
+    mutationBehavior: toNonEmptyStringOrNa(record.mutation_behavior),
+    blockingBehavior: toNonEmptyStringOrNa(record.blocking_behavior)
+  }
+}
+
 type TemplateConflictDiagnosticsOverviewPanelProps = {
   selectedConflictReport?: SeasonTemplateSlotConflictReportResponse
   preflightResult?: SeasonBuilderPreflightResponse
@@ -1451,18 +1502,43 @@ export function TemplateConflictDiagnosticsOverviewPanel({
     : 'n/a'
 
   const preflightPreview = preflightResult?.template_slot_conflict_preview
-  const preflightPreviewAvailable = Boolean(preflightPreview)
   const preflightSummary = readPreflightTemplateConflictSummary(preflightResult?.authoritative_diff_summary)
-  const preflightSummaryAvailable = Boolean(preflightSummary)
-  const preflightStatus = preflightSummary?.status ?? readTemplateSlotConflictPreviewSummaryField(preflightPreview, 'status')
-  const preflightConflictCount = preflightSummary?.conflictCount ?? readTemplateSlotConflictPreviewSummaryField(preflightPreview, 'conflict_count')
+  const preflightOverview = readTemplateConflictDiagnosticsOverview(preflightResult?.template_conflict_diagnostics_overview)
+  const preflightPreviewAvailable = preflightOverview && preflightOverview.preflightPreviewAvailable !== 'n/a'
+    ? preflightOverview.preflightPreviewAvailable
+    : (preflightResult ? (preflightPreview ? 'available' : 'unavailable') : 'unavailable')
+  const preflightSummaryAvailable = preflightOverview && preflightOverview.preflightSummaryAvailable !== 'n/a'
+    ? preflightOverview.preflightSummaryAvailable
+    : (preflightResult ? (preflightSummary ? 'available' : 'unavailable') : 'unavailable')
+  const preflightStatus = preflightOverview && preflightOverview.preflightStatus !== 'n/a'
+    ? preflightOverview.preflightStatus
+    : (preflightSummary?.status ?? readTemplateSlotConflictPreviewSummaryField(preflightPreview, 'status'))
+  const preflightConflictCount = preflightOverview && preflightOverview.preflightConflictCount !== 'n/a'
+    ? preflightOverview.preflightConflictCount
+    : (preflightSummary?.conflictCount ?? readTemplateSlotConflictPreviewSummaryField(preflightPreview, 'conflict_count'))
 
   const dryRunPreview = dryRunResult?.template_slot_conflict_preview
-  const dryRunPreviewAvailable = Boolean(dryRunPreview)
   const dryRunSummary = readDryRunTemplateConflictSummary(dryRunResult?.dry_run_result_preview)
-  const dryRunSummaryAvailable = Boolean(dryRunSummary)
-  const dryRunStatus = dryRunSummary?.status ?? readTemplateSlotConflictPreviewSummaryField(dryRunPreview, 'status')
-  const dryRunConflictCount = dryRunSummary?.conflictCount ?? readTemplateSlotConflictPreviewSummaryField(dryRunPreview, 'conflict_count')
+  const dryRunOverview = readTemplateConflictDiagnosticsOverview(dryRunResult?.template_conflict_diagnostics_overview)
+  const dryRunPreviewAvailable = dryRunOverview && dryRunOverview.dryRunPreviewAvailable !== 'n/a'
+    ? dryRunOverview.dryRunPreviewAvailable
+    : (dryRunResult ? (dryRunPreview ? 'available' : 'unavailable') : 'unavailable')
+  const dryRunSummaryAvailable = dryRunOverview && dryRunOverview.dryRunSummaryAvailable !== 'n/a'
+    ? dryRunOverview.dryRunSummaryAvailable
+    : (dryRunResult ? (dryRunSummary ? 'available' : 'unavailable') : 'unavailable')
+  const dryRunStatus = dryRunOverview && dryRunOverview.dryRunStatus !== 'n/a'
+    ? dryRunOverview.dryRunStatus
+    : (dryRunSummary?.status ?? readTemplateSlotConflictPreviewSummaryField(dryRunPreview, 'status'))
+  const dryRunConflictCount = dryRunOverview && dryRunOverview.dryRunConflictCount !== 'n/a'
+    ? dryRunOverview.dryRunConflictCount
+    : (dryRunSummary?.conflictCount ?? readTemplateSlotConflictPreviewSummaryField(dryRunPreview, 'conflict_count'))
+  const mutationBehavior = dryRunOverview && dryRunOverview.mutationBehavior !== 'n/a'
+    ? dryRunOverview.mutationBehavior
+    : (preflightOverview && preflightOverview.mutationBehavior !== 'n/a' ? preflightOverview.mutationBehavior : 'unavailable')
+  const blockingBehaviorRaw = dryRunOverview && dryRunOverview.blockingBehavior !== 'n/a'
+    ? dryRunOverview.blockingBehavior
+    : (preflightOverview && preflightOverview.blockingBehavior !== 'n/a' ? preflightOverview.blockingBehavior : 'non_blocking')
+  const blockingBehavior = blockingBehaviorRaw.split('_').join('-')
 
   return (
     <>
@@ -1470,16 +1546,16 @@ export function TemplateConflictDiagnosticsOverviewPanel({
       <p>Selected conflict report: {selectedAvailable ? 'available' : 'unavailable'}</p>
       <p>Selected conflict status: {selectedAvailable ? selectedStatus : 'n/a'}</p>
       <p>Selected conflict count: {selectedAvailable ? selectedConflictCount : 'n/a'}</p>
-      <p>Preflight conflict preview: {preflightPreviewAvailable ? 'available' : 'unavailable'}</p>
-      <p>Preflight conflict summary: {preflightSummaryAvailable ? 'available' : 'unavailable'}</p>
+      <p>Preflight conflict preview: {preflightPreviewAvailable}</p>
+      <p>Preflight conflict summary: {preflightSummaryAvailable}</p>
       <p>Preflight conflict status: {preflightResult ? preflightStatus : 'n/a'}</p>
       <p>Preflight conflict count: {preflightResult ? preflightConflictCount : 'n/a'}</p>
-      <p>Dry-run conflict preview: {dryRunPreviewAvailable ? 'available' : 'unavailable'}</p>
-      <p>Dry-run conflict summary: {dryRunSummaryAvailable ? 'available' : 'unavailable'}</p>
+      <p>Dry-run conflict preview: {dryRunPreviewAvailable}</p>
+      <p>Dry-run conflict summary: {dryRunSummaryAvailable}</p>
       <p>Dry-run conflict status: {dryRunResult ? dryRunStatus : 'n/a'}</p>
       <p>Dry-run conflict count: {dryRunResult ? dryRunConflictCount : 'n/a'}</p>
-      <p>Conflict diagnostics mutation behavior: unavailable</p>
-      <p>Conflict diagnostics blocking behavior: non-blocking</p>
+      <p>Conflict diagnostics mutation behavior: {mutationBehavior}</p>
+      <p>Conflict diagnostics blocking behavior: {blockingBehavior}</p>
     </>
   )
 }

@@ -140,7 +140,7 @@ function futureApplyValidationResponseMock(
       explicit_confirmation_matches: true,
       mutation_scope_present: true,
       mutation_scope_matches: true,
-      required_confirmation_phrase: 'I UNDERSTAND THIS IS CREATE ONLY',
+      required_confirmation_phrase: 'I understand this will create a new season calendar.',
       required_mutation_scope: 'create_only',
       all_required_audit_metadata_present: true,
       execution_enabled: false,
@@ -1265,6 +1265,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Danger-zone guarded command enabled')).toBeInTheDocument()
     expect(screen.getByText('Required confirmation phrase')).toBeInTheDocument()
     expect(screen.getByText('I understand this will create a new season calendar.')).toBeInTheDocument()
+    expect(screen.getByText('Required confirmation phrase: I understand this will create a new season calendar.')).toBeInTheDocument()
     expect(screen.getByText('Danger-zone required mutation scope')).toBeInTheDocument()
     expect(screen.getByText('create_only')).toBeInTheDocument()
     const confirmationInput = screen.getByLabelText('Future confirmation phrase preview')
@@ -2088,7 +2089,7 @@ describe('Module 17 pages through routes', () => {
     expect((screen.getByLabelText('Candidate identity reference type') as HTMLInputElement).value).toBe('dry_run_candidate_identity')
     fireEvent.change(screen.getByLabelText('Requested by'), { target: { value: 'qa-admin' } })
     fireEvent.change(screen.getByLabelText('Audit reason'), { target: { value: 'phase-17d validation check' } })
-    fireEvent.change(screen.getByLabelText('Explicit confirmation'), { target: { value: 'I UNDERSTAND THIS IS CREATE ONLY' } })
+    fireEvent.change(screen.getByLabelText('Explicit confirmation'), { target: { value: 'I understand this will create a new season calendar.' } })
     fireEvent.change(screen.getByLabelText('Mutation scope'), { target: { value: 'create_only' } })
     expect(api.validateFutureApplyRequestPreview).not.toHaveBeenCalled()
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
@@ -2108,7 +2109,7 @@ describe('Module 17 pages through routes', () => {
       requested_candidate_identity_reference_type: 'dry_run_candidate_identity',
       requested_by: 'qa-admin',
       audit_reason: 'phase-17d validation check',
-      explicit_confirmation: 'I UNDERSTAND THIS IS CREATE ONLY',
+      explicit_confirmation: 'I understand this will create a new season calendar.',
       mutation_scope: 'create_only'
     }))
     expect((await screen.findAllByText('Future apply request validation preview')).length).toBeGreaterThan(0)
@@ -4272,7 +4273,7 @@ describe('Future apply preview panels', () => {
   })
 
   it('renders valid create-only apply audit metadata preview data', () => {
-    render(<CreateOnlyApplyAuditMetadataPreviewPanel preview={{ available: true, preview_type: 'create_only_apply_audit_metadata_preview', requested_by_present: true, audit_reason_present: true, explicit_confirmation_present: true, explicit_confirmation_matches: true, mutation_scope_present: true, mutation_scope_matches: true, required_confirmation_phrase: 'I UNDERSTAND THIS IS CREATE ONLY', required_mutation_scope: 'create_only', all_required_audit_metadata_present: true, execution_enabled: false, can_execute: false, read_only: true, mutation_permitted: false, message: 'Create-only apply audit metadata preview is read-only.' }} />)
+    render(<CreateOnlyApplyAuditMetadataPreviewPanel preview={{ available: true, preview_type: 'create_only_apply_audit_metadata_preview', requested_by_present: true, audit_reason_present: true, explicit_confirmation_present: true, explicit_confirmation_matches: true, mutation_scope_present: true, mutation_scope_matches: true, required_confirmation_phrase: 'I understand this will create a new season calendar.', required_mutation_scope: 'create_only', all_required_audit_metadata_present: true, execution_enabled: false, can_execute: false, read_only: true, mutation_permitted: false, message: 'Create-only apply audit metadata preview is read-only.' }} />)
     expect(screen.getByText('Available: true')).toBeInTheDocument()
     expect(screen.getByText('Requested by present: true')).toBeInTheDocument()
     expect(screen.getByText('Audit reason present: true')).toBeInTheDocument()

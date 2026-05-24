@@ -26,7 +26,7 @@ describe('validateFutureApplyRequestPreview', () => {
       requested_candidate_identity_reference_type: 'future_apply_reference_contract',
       requested_by: 'local-admin-preview',
       audit_reason: 'manual validation preview',
-      explicit_confirmation: 'I UNDERSTAND THIS IS CREATE ONLY',
+      explicit_confirmation: 'I understand this will create a new season calendar.',
       mutation_scope: 'create_only'
     }
     const responseBody: SeasonBuilderFutureApplyRequestValidationPreviewResponse = {
@@ -62,7 +62,7 @@ describe('validateFutureApplyRequestPreview', () => {
         explicit_confirmation_matches: true,
         mutation_scope_present: true,
         mutation_scope_matches: true,
-        required_confirmation_phrase: 'I UNDERSTAND THIS IS CREATE ONLY',
+        required_confirmation_phrase: 'I understand this will create a new season calendar.',
         required_mutation_scope: 'create_only',
         all_required_audit_metadata_present: true,
         execution_enabled: false,
@@ -95,7 +95,7 @@ describe('validateFutureApplyRequestPreview', () => {
     const sentPayload = JSON.parse(String((init as RequestInit).body))
     expect(sentPayload.requested_by).toBe('local-admin-preview')
     expect(sentPayload.audit_reason).toBe('manual validation preview')
-    expect(sentPayload.explicit_confirmation).toBe('I UNDERSTAND THIS IS CREATE ONLY')
+    expect(sentPayload.explicit_confirmation).toBe('I understand this will create a new season calendar.')
     expect(sentPayload.mutation_scope).toBe('create_only')
     expect(result).toEqual(responseBody)
   })

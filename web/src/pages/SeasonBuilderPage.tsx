@@ -766,6 +766,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           <input id="future-apply-audit-reason" value={futureApplyAuditReason} onChange={(event) => setFutureApplyAuditReason(event.target.value)} />
           <label htmlFor="future-apply-explicit-confirmation">Explicit confirmation</label>
           <input id="future-apply-explicit-confirmation" value={futureApplyExplicitConfirmation} onChange={(event) => setFutureApplyExplicitConfirmation(event.target.value)} />
+          <p>Required confirmation phrase: {REQUIRED_CONFIRMATION_PHRASE}</p>
           <label htmlFor="future-apply-mutation-scope">Mutation scope</label>
           <input id="future-apply-mutation-scope" value={futureApplyMutationScope} onChange={(event) => setFutureApplyMutationScope(event.target.value)} />
           <button

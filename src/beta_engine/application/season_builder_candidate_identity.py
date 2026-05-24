@@ -1,3 +1,11 @@
+"""Deterministic candidate identity helpers for Season Builder dry-run previews.
+
+This module builds read-only candidate identity metadata used for dry-run diagnostics.
+It does not mutate state, create/apply events, or decide whether apply/build commands are
+allowed. ``safe_for_future_reference`` only indicates candidate IDs/keys are non-empty and
+free of duplicates; it is not mutation permission.
+"""
+
 from __future__ import annotations
 
 import re
@@ -5,6 +13,7 @@ from collections import Counter
 
 
 def sanitize_candidate_identity_part(value: object | None) -> str:
+    """Normalize a value into a stable low-risk identity segment."""
     raw = str(value or "")
     normalized = raw.strip().lower()
     if not normalized:
@@ -24,6 +33,7 @@ def build_candidate_identity(
     category: str | None,
     source_template_ref: str | None,
 ) -> tuple[str, str]:
+    """Build deterministic candidate_id and candidate_identity_key values."""
     candidate_id = "_".join(
         [
             "cand",
@@ -48,6 +58,7 @@ def build_candidate_identity(
 
 
 def build_candidate_identity_summary(candidate_events: list[dict[str, object]]) -> dict[str, object]:
+    """Summarize candidate IDs/keys and duplicate diagnostics for dry-run output."""
     candidate_ids = [str(candidate.get("candidate_id") or "") for candidate in candidate_events]
     candidate_identity_keys = [str(candidate.get("candidate_identity_key") or "") for candidate in candidate_events]
 
@@ -71,6 +82,7 @@ def build_candidate_identity_summary(candidate_events: list[dict[str, object]]) 
 
 
 def build_candidate_identity_contract(candidate_identity_summary: dict[str, object]) -> dict[str, object]:
+    """Describe identity readiness for reference, never mutation permission."""
     raw_candidate_count = candidate_identity_summary.get("candidate_count")
     candidate_count = raw_candidate_count if isinstance(raw_candidate_count, int) and raw_candidate_count >= 0 else 0
 

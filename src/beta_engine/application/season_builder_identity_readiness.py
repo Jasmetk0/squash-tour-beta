@@ -15,6 +15,34 @@ availability).
 from __future__ import annotations
 
 
+def _build_candidate_identity_readiness_overview(
+    *,
+    candidate_identity_fingerprint: str | None,
+    candidate_identity_reference_id: str | None,
+    candidate_identity_reference_type: str | None,
+    can_reference_candidate_identity_set: bool,
+    candidate_reference_status: str,
+    main_future_command_reference_ready: bool,
+) -> dict[str, object]:
+    available = bool(candidate_identity_reference_id and candidate_identity_reference_id.strip())
+    return {
+        "available": available,
+        "candidate_identity_fingerprint": candidate_identity_fingerprint,
+        "candidate_identity_reference_id": candidate_identity_reference_id,
+        "candidate_identity_reference_type": candidate_identity_reference_type,
+        "can_reference_candidate_identity_set": can_reference_candidate_identity_set,
+        "candidate_reference_status": candidate_reference_status,
+        "main_future_command_reference_ready": main_future_command_reference_ready,
+        "read_only": True,
+        "mutation_permitted": False,
+        "message": (
+            "Candidate identity readiness is referenceable."
+            if can_reference_candidate_identity_set
+            else "Candidate identity readiness is not referenceable yet."
+        ),
+    }
+
+
 def build_dry_run_identity_readiness(
     *,
     preflight_fingerprint: str | None,
@@ -123,6 +151,19 @@ def build_dry_run_identity_readiness(
     blocked_reference = validation_summary_status == "blocking" or not plan_available
     identity_status = "missing_identity" if missing_identity else ("blocked_reference" if blocked_reference else "ready_reference")
 
+    main_future_command_reference_ready = identity_status == "ready_reference"
+    candidate_reference_status = next(
+        item["status"] for item in identity_items if item["area"] == "candidate_identity_review_reference"
+    )
+    candidate_identity_readiness_overview = _build_candidate_identity_readiness_overview(
+        candidate_identity_fingerprint=candidate_identity_fingerprint_value,
+        candidate_identity_reference_id=candidate_identity_reference_id,
+        candidate_identity_reference_type=candidate_identity_reference_type,
+        can_reference_candidate_identity_set=can_reference_candidate_identity_set,
+        candidate_reference_status=candidate_reference_status,
+        main_future_command_reference_ready=main_future_command_reference_ready,
+    )
+
     return {
         "status": identity_status,
         "items": identity_items,
@@ -131,11 +172,12 @@ def build_dry_run_identity_readiness(
             "reviewed_diff_id": reviewed_diff_id,
             "dry_run_result_fingerprint": dry_run_result_fingerprint,
             "dry_run_result_id": dry_run_result_id,
-            "can_reference_future_command": identity_status == "ready_reference",
+            "can_reference_future_command": main_future_command_reference_ready,
             "mutation_still_disabled": True,
             "candidate_identity_fingerprint": candidate_identity_fingerprint_value,
             "candidate_identity_reference_id": candidate_identity_reference_id,
             "can_reference_candidate_identity_set": can_reference_candidate_identity_set,
             "candidate_identity_reference_type": candidate_identity_reference_type,
         },
+        "candidate_identity_readiness_overview": candidate_identity_readiness_overview,
     }

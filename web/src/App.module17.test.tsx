@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, DisabledDryRunBuildContractPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, DisabledDryRunBuildContractPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel, readCandidateIdentityReadinessOverview } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -3865,7 +3865,7 @@ describe('Candidate identity panels', () => {
                 read_only: 'true',
                 mutation_permitted: undefined,
                 message: ''
-              },
+              } as unknown as Record<string, unknown>,
               items: []
             }
           },
@@ -3874,5 +3874,69 @@ describe('Candidate identity panels', () => {
       }}
     />)
     expect(screen.getAllByText('n/a').length).toBeGreaterThan(0)
+  })
+
+  it('readCandidateIdentityReadinessOverview returns null for missing identity readiness', () => {
+    expect(readCandidateIdentityReadinessOverview(undefined)).toBeNull()
+  })
+
+  it('readCandidateIdentityReadinessOverview returns null for missing overview', () => {
+    expect(readCandidateIdentityReadinessOverview({ status: 'ready_reference' })).toBeNull()
+  })
+
+  it('readCandidateIdentityReadinessOverview normalizes valid overview', () => {
+    expect(readCandidateIdentityReadinessOverview({
+      candidate_identity_readiness_overview: {
+        available: true,
+        candidate_identity_fingerprint: 'abc123fingerprint',
+        candidate_identity_reference_id: 'abc123fingerprint',
+        candidate_identity_reference_type: 'candidate_identity_set',
+        can_reference_candidate_identity_set: true,
+        candidate_reference_status: 'OK',
+        main_future_command_reference_ready: true,
+        read_only: true,
+        mutation_permitted: false,
+        message: 'Candidate identity readiness is referenceable.'
+      }
+    })).toEqual({
+      available: 'true',
+      candidateIdentityFingerprint: 'abc123fingerprint',
+      candidateIdentityReferenceId: 'abc123fingerprint',
+      candidateIdentityReferenceType: 'candidate_identity_set',
+      canReferenceCandidateIdentitySet: 'true',
+      candidateReferenceStatus: 'OK',
+      mainFutureCommandReferenceReady: 'true',
+      readOnly: 'true',
+      mutationPermitted: 'false',
+      message: 'Candidate identity readiness is referenceable.'
+    })
+  })
+
+  it('readCandidateIdentityReadinessOverview normalizes malformed overview to n/a', () => {
+    expect(readCandidateIdentityReadinessOverview({
+      candidate_identity_readiness_overview: {
+        available: 'yes',
+        candidate_identity_fingerprint: '  ',
+        candidate_identity_reference_id: 33,
+        candidate_identity_reference_type: null,
+        can_reference_candidate_identity_set: 'yes',
+        candidate_reference_status: 42,
+        main_future_command_reference_ready: 1,
+        read_only: 'true',
+        mutation_permitted: undefined,
+        message: ''
+      }
+    })).toEqual({
+      available: 'n/a',
+      candidateIdentityFingerprint: 'n/a',
+      candidateIdentityReferenceId: 'n/a',
+      candidateIdentityReferenceType: 'n/a',
+      canReferenceCandidateIdentitySet: 'n/a',
+      candidateReferenceStatus: 'n/a',
+      mainFutureCommandReferenceReady: 'n/a',
+      readOnly: 'n/a',
+      mutationPermitted: 'n/a',
+      message: 'n/a'
+    })
   })
 })

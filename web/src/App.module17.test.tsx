@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityOverviewPanel, CandidateIdentitySummaryPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -1760,7 +1760,9 @@ describe('Module 17 pages through routes', () => {
         identity_readiness: { status: 'ready_reference', items: [{ area: 'preflight_fingerprint', status: 'OK', message: 'Preflight fingerprint is present.' }], future_command_reference: { preflight_fingerprint: 'pf_test_empty', reviewed_diff_id: 'rd_test_empty', dry_run_result_fingerprint: 'drf_test_empty', dry_run_result_id: 'drr_test_empty', can_reference_future_command: true, mutation_still_disabled: true } },
         candidate_identity_summary: { candidate_count: 1, candidate_ids: ['cand_default_msa_template_preview_slot_01_1'], candidate_identity_keys: ['target_season=2000_01|source_type=season_template|source_template_id=default_msa_template_preview|source_slot_id=slot_01|season_week_start=1|event_name=world_tour_gold|category=gold|source_template_ref=wt_gold_24'], duplicate_candidate_ids: [], duplicate_candidate_identity_keys: [], read_only: true, mutation_permitted: false, message: 'Candidate event identities are deterministic and read-only in dry-run.' },
         candidate_identity_contract: { identity_source: 'season_template_slot', id_strategy: 'sanitized_template_slot_week', key_strategy: 'pipe_joined_sanitized_components', key_components: ['target_season', 'source_type', 'source_template_id', 'source_slot_id', 'season_week_start', 'event_name', 'category', 'source_template_ref'], candidate_count: 1, has_duplicate_candidate_ids: false, has_duplicate_candidate_identity_keys: false, safe_for_future_reference: true, read_only: true, mutation_permitted: false, message: 'Candidate identities are stable and safe for future reference.' },
-        candidate_identity_overview: { available: true, candidate_count: 1, safe_for_future_reference: true, has_duplicate_candidate_ids: false, has_duplicate_candidate_identity_keys: false, identity_source: 'season_template_slot', id_strategy: 'sanitized_template_slot_week', key_strategy: 'pipe_joined_sanitized_components', read_only: true, mutation_permitted: false, message: 'Candidate identity overview: safe for future reference.' }
+        candidate_identity_overview: { available: true, candidate_count: 1, safe_for_future_reference: true, has_duplicate_candidate_ids: false, has_duplicate_candidate_identity_keys: false, identity_source: 'season_template_slot', id_strategy: 'sanitized_template_slot_week', key_strategy: 'pipe_joined_sanitized_components', read_only: true, mutation_permitted: false, message: 'Candidate identity overview: safe for future reference.' },
+        candidate_identity_fingerprint: { fingerprint: 'abc123fingerprint', fingerprint_algorithm: 'sha256', fingerprint_payload_version: 1, candidate_count: 1, candidate_ids: ['cand_default_msa_template_preview_slot_01_1'], candidate_identity_keys: ['target_season=2000_01|source_type=season_template'], safe_for_future_reference: true, target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', read_only: true, mutation_permitted: false, message: 'Candidate identity fingerprint is deterministic and read-only.' },
+        candidate_identity_review_reference: { reference_type: 'candidate_identity_set', reference_id: 'abc123fingerprint', fingerprint_algorithm: 'sha256', fingerprint_payload_version: 1, candidate_count: 1, safe_for_future_reference: true, can_reference_future_apply: true, read_only: true, mutation_permitted: false, message: 'Candidate identity set can be referenced by a future audited apply flow.' }
       },
       message: 'Dry-run build command contract exists, but execution is disabled in this phase.'
     })
@@ -1867,6 +1869,17 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Candidate identity key strategy: pipe_joined_sanitized_components')).toBeInTheDocument()
     expect(screen.getByText('Candidate identity safe for future reference: true')).toBeInTheDocument()
     expect(screen.getByText('Candidate identity contract mutation permitted: false')).toBeInTheDocument()
+    expect(screen.getAllByText('Candidate identity fingerprint').length).toBeGreaterThan(0)
+    expect(screen.getByText('Candidate identity fingerprint value: abc123fingerprint')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity fingerprint algorithm: sha256')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity fingerprint candidate count: 1')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity fingerprint safe for future reference: true')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity fingerprint mutation permitted: false')).toBeInTheDocument()
+    expect(screen.getAllByText('Candidate identity review reference').length).toBeGreaterThan(0)
+    expect(screen.getByText('Candidate identity review reference type: candidate_identity_set')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity review reference ID: abc123fingerprint')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity review reference can reference future apply: true')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity review reference mutation permitted: false')).toBeInTheDocument()
     expect(screen.getByText('Dry-run template slot validation preview')).toBeInTheDocument()
     expect(screen.getByText('Dry-run template slot validation preview is not available.')).toBeInTheDocument()
     expect(screen.getByText('Dry-run template slot conflict preview')).toBeInTheDocument()
@@ -3658,5 +3671,50 @@ describe('Candidate identity panels', () => {
     expect(screen.getByText('Candidate identity has duplicate candidate IDs: true')).toBeInTheDocument()
     expect(screen.getByText('Candidate identity has duplicate keys: true')).toBeInTheDocument()
     expect(screen.getByText('Candidate identity safe for future reference: false')).toBeInTheDocument()
+  })
+
+  it('handles missing fingerprint safely', () => {
+    render(<CandidateIdentityFingerprintPanel dryRunResultPreview={undefined} />)
+    expect(screen.getByText('Candidate identity fingerprint is not available.')).toBeInTheDocument()
+  })
+
+  it('handles malformed fingerprint safely', () => {
+    render(<CandidateIdentityFingerprintPanel dryRunResultPreview={{ candidate_identity_fingerprint: { fingerprint: '  ', fingerprint_algorithm: 4, fingerprint_payload_version: NaN, candidate_count: Infinity, candidate_ids: 'bad', candidate_identity_keys: [null], safe_for_future_reference: 'yes', target_season_label: '', source_type: null, source_template_id: ' ', read_only: 1, mutation_permitted: undefined, message: '' } }} />)
+    expect(screen.getByText('Candidate identity fingerprint value: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity fingerprint payload version: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity fingerprint candidate IDs: none')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity fingerprint safe for future reference: n/a')).toBeInTheDocument()
+  })
+
+  it('shows valid fingerprint rows', () => {
+    render(<CandidateIdentityFingerprintPanel dryRunResultPreview={{ candidate_identity_fingerprint: { fingerprint: 'abc123fingerprint', fingerprint_algorithm: 'sha256', fingerprint_payload_version: 1, candidate_count: 1, candidate_ids: ['cand_default_msa_template_preview_slot_01_1'], candidate_identity_keys: ['target_season=2000_01|source_type=season_template'], safe_for_future_reference: true, target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', read_only: true, mutation_permitted: false, message: 'Candidate identity fingerprint is deterministic and read-only.' } }} />)
+    expect(screen.getByText('Candidate identity fingerprint value: abc123fingerprint')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity fingerprint algorithm: sha256')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity fingerprint candidate count: 1')).toBeInTheDocument()
+  })
+
+  it('handles missing review reference safely', () => {
+    render(<CandidateIdentityReviewReferencePanel dryRunResultPreview={undefined} />)
+    expect(screen.getByText('Candidate identity review reference is not available.')).toBeInTheDocument()
+  })
+
+  it('handles malformed review reference safely', () => {
+    render(<CandidateIdentityReviewReferencePanel dryRunResultPreview={{ candidate_identity_review_reference: { reference_type: '', reference_id: 3, fingerprint_algorithm: null, fingerprint_payload_version: NaN, candidate_count: Infinity, safe_for_future_reference: 'yes', can_reference_future_apply: 'no', read_only: 'true', mutation_permitted: 0, message: '' } }} />)
+    expect(screen.getByText('Candidate identity review reference type: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity review reference payload version: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity review reference can reference future apply: n/a')).toBeInTheDocument()
+  })
+
+  it('shows valid review reference rows', () => {
+    render(<CandidateIdentityReviewReferencePanel dryRunResultPreview={{ candidate_identity_review_reference: { reference_type: 'candidate_identity_set', reference_id: 'abc123fingerprint', fingerprint_algorithm: 'sha256', fingerprint_payload_version: 1, candidate_count: 1, safe_for_future_reference: true, can_reference_future_apply: true, read_only: true, mutation_permitted: false, message: 'Candidate identity set can be referenced by a future audited apply flow.' } }} />)
+    expect(screen.getByText('Candidate identity review reference type: candidate_identity_set')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity review reference ID: abc123fingerprint')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity review reference can reference future apply: true')).toBeInTheDocument()
+  })
+
+  it('shows unsafe review reference state', () => {
+    render(<CandidateIdentityReviewReferencePanel dryRunResultPreview={{ candidate_identity_review_reference: { safe_for_future_reference: false, can_reference_future_apply: false } }} />)
+    expect(screen.getByText('Candidate identity review reference safe for future reference: false')).toBeInTheDocument()
+    expect(screen.getByText('Candidate identity review reference can reference future apply: false')).toBeInTheDocument()
   })
 })

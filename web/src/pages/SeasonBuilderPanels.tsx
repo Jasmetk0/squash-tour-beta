@@ -1261,6 +1261,47 @@ export function readCandidateIdentityContract(dryRunResultPreview: unknown): Rec
   }
 }
 
+export function readCandidateIdentityFingerprint(dryRunResultPreview: unknown): Record<string, string> | null {
+  if (!dryRunResultPreview || typeof dryRunResultPreview !== 'object') return null
+  const fingerprint = (dryRunResultPreview as Record<string, unknown>).candidate_identity_fingerprint
+  if (!fingerprint || typeof fingerprint !== 'object') return null
+  const record = fingerprint as Record<string, unknown>
+  return {
+    fingerprint: normalizeNonEmptyStringDisplay(record.fingerprint),
+    fingerprintAlgorithm: normalizeNonEmptyStringDisplay(record.fingerprint_algorithm),
+    fingerprintPayloadVersion: normalizeFiniteNumberDisplay(record.fingerprint_payload_version),
+    candidateCount: normalizeFiniteNumberDisplay(record.candidate_count),
+    candidateIds: normalizeStringArrayDisplay(record.candidate_ids),
+    candidateIdentityKeys: normalizeStringArrayDisplay(record.candidate_identity_keys),
+    safeForFutureReference: normalizeBooleanDisplay(record.safe_for_future_reference),
+    targetSeasonLabel: normalizeNonEmptyStringDisplay(record.target_season_label),
+    sourceType: normalizeNonEmptyStringDisplay(record.source_type),
+    sourceTemplateId: normalizeNonEmptyStringDisplay(record.source_template_id),
+    readOnly: normalizeBooleanDisplay(record.read_only),
+    mutationPermitted: normalizeBooleanDisplay(record.mutation_permitted),
+    message: normalizeNonEmptyStringDisplay(record.message)
+  }
+}
+
+export function readCandidateIdentityReviewReference(dryRunResultPreview: unknown): Record<string, string> | null {
+  if (!dryRunResultPreview || typeof dryRunResultPreview !== 'object') return null
+  const reviewReference = (dryRunResultPreview as Record<string, unknown>).candidate_identity_review_reference
+  if (!reviewReference || typeof reviewReference !== 'object') return null
+  const record = reviewReference as Record<string, unknown>
+  return {
+    referenceType: normalizeNonEmptyStringDisplay(record.reference_type),
+    referenceId: normalizeNonEmptyStringDisplay(record.reference_id),
+    fingerprintAlgorithm: normalizeNonEmptyStringDisplay(record.fingerprint_algorithm),
+    fingerprintPayloadVersion: normalizeFiniteNumberDisplay(record.fingerprint_payload_version),
+    candidateCount: normalizeFiniteNumberDisplay(record.candidate_count),
+    safeForFutureReference: normalizeBooleanDisplay(record.safe_for_future_reference),
+    canReferenceFutureApply: normalizeBooleanDisplay(record.can_reference_future_apply),
+    readOnly: normalizeBooleanDisplay(record.read_only),
+    mutationPermitted: normalizeBooleanDisplay(record.mutation_permitted),
+    message: normalizeNonEmptyStringDisplay(record.message)
+  }
+}
+
 export function CandidateIdentityOverviewPanel({ dryRunResultPreview }: { dryRunResultPreview?: unknown }): JSX.Element {
   const overview = readCandidateIdentityOverview(dryRunResultPreview)
   if (!overview) return <p>Candidate identity overview is not available.</p>
@@ -1317,6 +1358,49 @@ export function CandidateIdentityContractPanel({ dryRunResultPreview }: { dryRun
       <p>Candidate identity contract read-only: {contract.readOnly}</p>
       <p>Candidate identity contract mutation permitted: {contract.mutationPermitted}</p>
       <p>Candidate identity contract message: {contract.message}</p>
+    </>
+  )
+}
+
+export function CandidateIdentityFingerprintPanel({ dryRunResultPreview }: { dryRunResultPreview?: unknown }): JSX.Element {
+  const fingerprint = readCandidateIdentityFingerprint(dryRunResultPreview)
+  if (!fingerprint) return <p>Candidate identity fingerprint is not available.</p>
+  return (
+    <>
+      <p>Candidate identity fingerprint</p>
+      <p>Candidate identity fingerprint value: {fingerprint.fingerprint}</p>
+      <p>Candidate identity fingerprint algorithm: {fingerprint.fingerprintAlgorithm}</p>
+      <p>Candidate identity fingerprint payload version: {fingerprint.fingerprintPayloadVersion}</p>
+      <p>Candidate identity fingerprint candidate count: {fingerprint.candidateCount}</p>
+      <p>Candidate identity fingerprint candidate IDs: {fingerprint.candidateIds}</p>
+      <p>Candidate identity fingerprint keys: {fingerprint.candidateIdentityKeys}</p>
+      <p>Candidate identity fingerprint safe for future reference: {fingerprint.safeForFutureReference}</p>
+      <p>Candidate identity fingerprint target season: {fingerprint.targetSeasonLabel}</p>
+      <p>Candidate identity fingerprint source type: {fingerprint.sourceType}</p>
+      <p>Candidate identity fingerprint source template ID: {fingerprint.sourceTemplateId}</p>
+      <p>Candidate identity fingerprint read-only: {fingerprint.readOnly}</p>
+      <p>Candidate identity fingerprint mutation permitted: {fingerprint.mutationPermitted}</p>
+      <p>Candidate identity fingerprint message: {fingerprint.message}</p>
+    </>
+  )
+}
+
+export function CandidateIdentityReviewReferencePanel({ dryRunResultPreview }: { dryRunResultPreview?: unknown }): JSX.Element {
+  const reviewReference = readCandidateIdentityReviewReference(dryRunResultPreview)
+  if (!reviewReference) return <p>Candidate identity review reference is not available.</p>
+  return (
+    <>
+      <p>Candidate identity review reference</p>
+      <p>Candidate identity review reference type: {reviewReference.referenceType}</p>
+      <p>Candidate identity review reference ID: {reviewReference.referenceId}</p>
+      <p>Candidate identity review reference algorithm: {reviewReference.fingerprintAlgorithm}</p>
+      <p>Candidate identity review reference payload version: {reviewReference.fingerprintPayloadVersion}</p>
+      <p>Candidate identity review reference candidate count: {reviewReference.candidateCount}</p>
+      <p>Candidate identity review reference safe for future reference: {reviewReference.safeForFutureReference}</p>
+      <p>Candidate identity review reference can reference future apply: {reviewReference.canReferenceFutureApply}</p>
+      <p>Candidate identity review reference read-only: {reviewReference.readOnly}</p>
+      <p>Candidate identity review reference mutation permitted: {reviewReference.mutationPermitted}</p>
+      <p>Candidate identity review reference message: {reviewReference.message}</p>
     </>
   )
 }

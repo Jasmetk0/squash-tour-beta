@@ -3373,6 +3373,10 @@ export type SeasonBuilderFutureApplyRequestValidationPreviewRequest = {
   requested_candidate_identity_reference_id?: string | null
   requested_candidate_identity_fingerprint?: string | null
   requested_candidate_identity_reference_type?: string | null
+  requested_by?: string | null
+  audit_reason?: string | null
+  explicit_confirmation?: string | null
+  mutation_scope?: string | null
 }
 
 export type SeasonBuilderFutureApplyRequestValidationPreviewResponse = {

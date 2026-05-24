@@ -626,13 +626,6 @@ def test_future_apply_request_validation_preview_unsupported_source(tmp_path: Pa
         assert preflight_preview["future_apply_request_validation_available"] is False
         assert preflight_preview["all_known_preconditions_met"] is False
         assert preflight_preview["execution_enabled"] is False
-        preflight_preview = assert_create_only_apply_execution_preflight_preview_disabled(
-            body["create_only_apply_execution_preflight_preview"]
-        )
-        assert preflight_preview["future_apply_reference_contract_available"] is False
-        assert preflight_preview["future_apply_request_validation_available"] is False
-        assert preflight_preview["all_known_preconditions_met"] is False
-        assert preflight_preview["execution_enabled"] is False
 
 
 def test_future_apply_request_validation_preview_unresolved_source_template(tmp_path: Path) -> None:

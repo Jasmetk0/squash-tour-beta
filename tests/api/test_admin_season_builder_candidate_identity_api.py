@@ -7,6 +7,7 @@ from pathlib import Path
 from urllib import request
 
 import uvicorn
+import pytest
 
 from beta_engine.main import create_app
 
@@ -271,6 +272,22 @@ def assert_future_apply_validation_preview_disabled_response(body: dict) -> dict
     return validation_preview
 
 
+
+
+def assert_create_only_preflight_context_fields(
+    preview: dict,
+    *,
+    target_absent: bool,
+    create_only_scope_confirmed: bool,
+    audit_metadata_present: bool,
+) -> None:
+    assert preview["target_absent"] is target_absent
+    assert preview["create_only_scope_confirmed"] is create_only_scope_confirmed
+    assert preview["audit_metadata_present"] is audit_metadata_present
+    assert preview["execution_enabled"] is False
+    assert preview["can_execute"] is False
+    assert preview["mutation_permitted"] is False
+
 def assert_create_only_apply_execution_preflight_preview_disabled(preview: dict) -> dict:
     assert isinstance(preview, dict)
     assert preview["preflight_type"] == "create_only_apply_execution_preflight_preview"
@@ -530,8 +547,134 @@ def test_future_apply_request_validation_preview_matching_resolved_request(tmp_p
             == body["future_apply_reference_contract"]["available"]
         )
         assert preflight_preview["candidate_identity_reference_matches"] is True
+        assert preflight_preview["audit_metadata_present"] is False
+        assert preflight_preview["create_only_scope_confirmed"] is False
+        assert preflight_preview["all_known_preconditions_met"] is False
         assert preflight_preview["execution_enabled"] is False
         assert preflight_preview["can_execute"] is False
+
+
+@pytest.mark.parametrize("overwrite_policy", [None, "none", "create_only"])
+def test_future_apply_request_validation_preview_create_only_scope_confirmed_safe_policies(
+    tmp_path: Path,
+    overwrite_policy: str | None,
+) -> None:
+    with Server(tmp_path) as server:
+        base_payload = {
+            "target_season_label": "2035/2036",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "preflight_fingerprint": f"pf_phase16e_safe_{overwrite_policy or 'omitted'}",
+            "reviewed_diff_id": f"rd_phase16e_safe_{overwrite_policy or 'omitted'}",
+        }
+        if overwrite_policy is not None:
+            base_payload["overwrite_policy"] = overwrite_policy
+        _, dry_run_body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", base_payload)
+        preview = dry_run_body["dry_run_result_preview"]
+        review_ref = preview["candidate_identity_review_reference"]
+        fingerprint = preview["candidate_identity_fingerprint"]
+        payload = {
+            **base_payload,
+            "requested_candidate_identity_reference_id": review_ref["reference_id"],
+            "requested_candidate_identity_fingerprint": fingerprint["fingerprint"],
+            "requested_candidate_identity_reference_type": review_ref["reference_type"],
+        }
+        status, body = call(
+            "POST",
+            f"{server.base_url}/admin/seasons/builder/future-apply-request-validation-preview",
+            payload,
+        )
+        assert status == 200
+        preflight_preview = assert_create_only_apply_execution_preflight_preview_disabled(
+            body["create_only_apply_execution_preflight_preview"]
+        )
+        assert_create_only_preflight_context_fields(
+            preflight_preview,
+            target_absent=True,
+            create_only_scope_confirmed=True,
+            audit_metadata_present=False,
+        )
+        assert preflight_preview["all_known_preconditions_met"] is False
+
+
+@pytest.mark.parametrize("overwrite_policy", ["merge_preview", "overwrite_preview"])
+def test_future_apply_request_validation_preview_create_only_scope_blocked_non_create_only_policies(
+    tmp_path: Path,
+    overwrite_policy: str,
+) -> None:
+    with Server(tmp_path) as server:
+        base_payload = {
+            "target_season_label": "2035/2036",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": overwrite_policy,
+            "preflight_fingerprint": f"pf_phase16e_blocked_{overwrite_policy}",
+            "reviewed_diff_id": f"rd_phase16e_blocked_{overwrite_policy}",
+        }
+        _, dry_run_body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", base_payload)
+        preview = dry_run_body["dry_run_result_preview"]
+        review_ref = preview["candidate_identity_review_reference"]
+        fingerprint = preview["candidate_identity_fingerprint"]
+        payload = {
+            **base_payload,
+            "requested_candidate_identity_reference_id": review_ref["reference_id"],
+            "requested_candidate_identity_fingerprint": fingerprint["fingerprint"],
+            "requested_candidate_identity_reference_type": review_ref["reference_type"],
+        }
+        status, body = call(
+            "POST",
+            f"{server.base_url}/admin/seasons/builder/future-apply-request-validation-preview",
+            payload,
+        )
+        assert status == 200
+        preflight_preview = assert_create_only_apply_execution_preflight_preview_disabled(
+            body["create_only_apply_execution_preflight_preview"]
+        )
+        assert_create_only_preflight_context_fields(
+            preflight_preview,
+            target_absent=True,
+            create_only_scope_confirmed=False,
+            audit_metadata_present=False,
+        )
+        assert preflight_preview["all_known_preconditions_met"] is False
+
+
+def test_future_apply_request_validation_preview_preflight_target_absent_true_for_missing_registry_calendar(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        base_payload = {
+            "target_season_label": "2037/2038",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": "none",
+            "preflight_fingerprint": "pf_phase16e_target_absent",
+            "reviewed_diff_id": "rd_phase16e_target_absent",
+        }
+        _, dry_run_body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", base_payload)
+        preview = dry_run_body["dry_run_result_preview"]
+        review_ref = preview["candidate_identity_review_reference"]
+        fingerprint = preview["candidate_identity_fingerprint"]
+        payload = {
+            **base_payload,
+            "requested_candidate_identity_reference_id": review_ref["reference_id"],
+            "requested_candidate_identity_fingerprint": fingerprint["fingerprint"],
+            "requested_candidate_identity_reference_type": review_ref["reference_type"],
+        }
+        status, body = call(
+            "POST",
+            f"{server.base_url}/admin/seasons/builder/future-apply-request-validation-preview",
+            payload,
+        )
+        assert status == 200
+        preflight_preview = assert_create_only_apply_execution_preflight_preview_disabled(
+            body["create_only_apply_execution_preflight_preview"]
+        )
+        assert_create_only_preflight_context_fields(
+            preflight_preview,
+            target_absent=True,
+            create_only_scope_confirmed=True,
+            audit_metadata_present=False,
+        )
+        assert preflight_preview["all_known_preconditions_met"] is False
 
 
 def test_future_apply_request_validation_preview_mismatched_resolved_request(tmp_path: Path) -> None:

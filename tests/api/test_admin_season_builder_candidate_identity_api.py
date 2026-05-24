@@ -439,3 +439,111 @@ def test_candidate_identity_api_unsupported_source_contract_invariants(tmp_path:
         assert overview["available"] is False
         assert overview["safe_for_future_reference"] is False
         assert "no candidates" in str(overview["message"]).lower()
+
+
+def test_future_apply_request_validation_preview_matching_resolved_request(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        base_payload = {
+            "target_season_label": "2035/2036",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": "merge_preview",
+            "preflight_fingerprint": "pf_phase15c_match",
+            "reviewed_diff_id": "rd_phase15c_match",
+        }
+        _, dry_run_body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", base_payload)
+        preview = dry_run_body["dry_run_result_preview"]
+        contract = preview["future_apply_reference_contract"]
+        review_ref = preview["candidate_identity_review_reference"]
+        fingerprint = preview["candidate_identity_fingerprint"]
+
+        payload = {
+            **base_payload,
+            "requested_candidate_identity_reference_id": review_ref["reference_id"],
+            "requested_candidate_identity_fingerprint": fingerprint["fingerprint"],
+            "requested_candidate_identity_reference_type": review_ref["reference_type"],
+        }
+        status, body = call(
+            "POST",
+            f"{server.base_url}/admin/seasons/builder/future-apply-request-validation-preview",
+            payload,
+        )
+        assert status == 200
+        assert body["enabled"] is False
+        assert body["can_execute"] is False
+        assert body["can_mutate"] is False
+        assert body["future_apply_reference_contract"] == contract
+        assert body["audit_preview"]["read_only"] is True
+        assert body["audit_preview"]["mutation_permitted"] is False
+        assert body["audit_preview"]["execution_enabled"] is False
+        validation_preview = body["future_apply_request_validation_preview"]
+        assert validation_preview["available"] is True
+        assert validation_preview["reference_id_matches"] is True
+        assert validation_preview["fingerprint_matches"] is True
+        assert validation_preview["reference_type_matches"] is True
+        assert validation_preview["apply_execution_enabled"] is False
+        assert validation_preview["read_only"] is True
+        assert validation_preview["mutation_permitted"] is False
+
+
+def test_future_apply_request_validation_preview_mismatched_resolved_request(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2035/2036",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": "merge_preview",
+            "preflight_fingerprint": "pf_phase15c_mismatch",
+            "reviewed_diff_id": "rd_phase15c_mismatch",
+            "requested_candidate_identity_reference_id": "wrong_ref",
+            "requested_candidate_identity_fingerprint": "wrong_fp",
+            "requested_candidate_identity_reference_type": "wrong_type",
+        }
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/future-apply-request-validation-preview", payload)
+        assert status == 200
+        assert body["can_execute"] is False
+        assert body["can_mutate"] is False
+        validation_preview = body["future_apply_request_validation_preview"]
+        assert validation_preview["available"] is False
+        assert validation_preview["reference_id_matches"] is False
+        assert validation_preview["fingerprint_matches"] is False
+        assert validation_preview["reference_type_matches"] is False
+
+
+def test_future_apply_request_validation_preview_missing_requested_values(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2035/2036",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": "merge_preview",
+            "preflight_fingerprint": "pf_phase15c_missing",
+            "reviewed_diff_id": "rd_phase15c_missing",
+        }
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/future-apply-request-validation-preview", payload)
+        assert status == 200
+        validation_preview = body["future_apply_request_validation_preview"]
+        assert validation_preview["requested_candidate_identity_reference_id"] == ""
+        assert validation_preview["requested_candidate_identity_fingerprint"] == ""
+        assert validation_preview["requested_candidate_identity_reference_type"] == ""
+        assert validation_preview["available"] is False
+        assert validation_preview["reference_id_matches"] is False
+        assert validation_preview["fingerprint_matches"] is False
+        assert validation_preview["reference_type_matches"] is False
+
+
+def test_future_apply_request_validation_preview_unsupported_source(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2035/2036",
+            "source_type": "blank_calendar_planned",
+            "preflight_fingerprint": "pf_phase15c_unsupported",
+            "reviewed_diff_id": "rd_phase15c_unsupported",
+        }
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/future-apply-request-validation-preview", payload)
+        assert status == 200
+        contract = body["future_apply_reference_contract"]
+        validation_preview = body["future_apply_request_validation_preview"]
+        assert contract["available"] is False
+        assert validation_preview["available"] is False
+        assert validation_preview["contract_referenceable"] is False

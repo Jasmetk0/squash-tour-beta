@@ -26,6 +26,7 @@ from beta_engine.application.season_builder_candidate_identity import (
     build_candidate_identity_contract,
     build_candidate_identity_fingerprint,
     build_future_apply_reference_contract,
+    build_future_apply_request_validation_preview,
     build_candidate_identity_overview,
     build_candidate_identity_review_reference,
     build_candidate_identity_summary,
@@ -50,6 +51,8 @@ from beta_engine.domain.tournaments import (
     SeasonBuilderApplyCreateOnlyReadinessResponse,
     SeasonBuilderDryRunBuildRequest,
     SeasonBuilderDryRunBuildResponse,
+    SeasonBuilderFutureApplyRequestValidationPreviewRequest,
+    SeasonBuilderFutureApplyRequestValidationPreviewResponse,
     SeasonBuilderPreflightRequest,
     SeasonBuilderPreflightResponse,
     SeasonTemplateSlotConflictPreview,
@@ -1015,6 +1018,56 @@ def post_season_builder_dry_run_build_contract(
         conflict_contract_preview=conflict_contract_preview,
         dry_run_result_contract_preview=dry_run_result_contract_preview,
         dry_run_result_preview=dry_run_result_preview,
+    )
+
+
+@router.post(
+    "/builder/future-apply-request-validation-preview",
+    response_model=SeasonBuilderFutureApplyRequestValidationPreviewResponse,
+)
+def post_season_builder_future_apply_request_validation_preview(
+    payload: SeasonBuilderFutureApplyRequestValidationPreviewRequest,
+    calendar_service: SeasonCalendarService = Depends(get_season_calendar_service),
+    template_service: SeasonTemplateService = Depends(get_season_template_service),
+) -> SeasonBuilderFutureApplyRequestValidationPreviewResponse:
+    dry_run_response = post_season_builder_dry_run_build_contract(
+        SeasonBuilderDryRunBuildRequest(
+            target_season_label=payload.target_season_label,
+            source_type=payload.source_type,
+            source_template_id=payload.source_template_id,
+            overwrite_policy=payload.overwrite_policy,
+            preflight_fingerprint=payload.preflight_fingerprint or "",
+            reviewed_diff_id=payload.reviewed_diff_id or "",
+        ),
+        calendar_service=calendar_service,
+        template_service=template_service,
+    )
+    future_apply_reference_contract = dry_run_response.dry_run_result_preview.get(
+        "future_apply_reference_contract",
+        {},
+    )
+    future_apply_request_validation_preview = build_future_apply_request_validation_preview(
+        requested_candidate_identity_reference_id=payload.requested_candidate_identity_reference_id,
+        requested_candidate_identity_fingerprint=payload.requested_candidate_identity_fingerprint,
+        requested_candidate_identity_reference_type=payload.requested_candidate_identity_reference_type,
+        future_apply_reference_contract=future_apply_reference_contract,
+    )
+    return SeasonBuilderFutureApplyRequestValidationPreviewResponse(
+        enabled=False,
+        can_execute=False,
+        can_mutate=False,
+        target_season_label=dry_run_response.target_season_label,
+        source_type=payload.source_type,
+        source_template_id=payload.source_template_id,
+        overwrite_policy=payload.overwrite_policy,
+        future_apply_reference_contract=future_apply_reference_contract,
+        future_apply_request_validation_preview=future_apply_request_validation_preview,
+        audit_preview={
+            "action": "season_builder_future_apply_request_validation_preview",
+            "read_only": True,
+            "mutation_permitted": False,
+            "execution_enabled": False,
+        },
     )
 
 

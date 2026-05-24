@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.domain.tournaments import (
+    SeasonTemplateConflictDiagnosticsOverview,
     SeasonTemplateSlotConflictPreview,
     SeasonTemplateSlotValidationPreview,
 )
@@ -105,6 +106,7 @@ class SeasonTemplateSlotConflictReportResponse(BaseModel):
     read_only: bool = True
     summary: SeasonTemplateSlotConflictSummary
     conflicts: list[SeasonTemplateSlotConflict] = Field(default_factory=list)
+    template_conflict_diagnostics_overview: SeasonTemplateConflictDiagnosticsOverview | None = None
     message: str
 
 class SeasonTemplateSlotConflictCodeMetadata(BaseModel):
@@ -497,6 +499,15 @@ class SeasonTemplateService:
                     busiest_week_slot_count=None,
                 ),
                 conflicts=conflicts,
+                template_conflict_diagnostics_overview=SeasonTemplateConflictDiagnosticsOverview(
+                    selected_report_available=False,
+                    selected_status=None,
+                    selected_conflict_count=0,
+                    mutation_behavior="unavailable",
+                    blocking_behavior="non_blocking",
+                    read_only=True,
+                    non_blocking=True,
+                ),
                 message="Template not found.",
             )
 
@@ -592,5 +603,14 @@ class SeasonTemplateService:
                 busiest_week_slot_count=busiest_week_slot_count,
             ),
             conflicts=conflicts,
+            template_conflict_diagnostics_overview=SeasonTemplateConflictDiagnosticsOverview(
+                selected_report_available=True,
+                selected_status=status,
+                selected_conflict_count=len(conflicts),
+                mutation_behavior="unavailable",
+                blocking_behavior="non_blocking",
+                read_only=True,
+                non_blocking=True,
+            ),
             message="Template slot conflict analysis completed.",
         )

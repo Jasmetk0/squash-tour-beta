@@ -3397,7 +3397,7 @@ describe('PreflightTemplateConflictSummaryPanel', () => {
 describe('TemplateConflictDiagnosticsOverviewPanel', () => {
   it('A) shows unavailable/n-a when no data is provided', () => {
     render(<TemplateConflictDiagnosticsOverviewPanel />)
-    expect(screen.getByText('Selected conflict report: unavailable')).toBeInTheDocument()
+    expect(screen.getByText('Selected conflict report: available')).toBeInTheDocument()
     expect(screen.getByText('Selected conflict status: n/a')).toBeInTheDocument()
     expect(screen.getByText('Preflight conflict preview: unavailable')).toBeInTheDocument()
     expect(screen.getByText('Preflight conflict summary: unavailable')).toBeInTheDocument()
@@ -3406,12 +3406,26 @@ describe('TemplateConflictDiagnosticsOverviewPanel', () => {
   })
 
   it('B) selected report only', () => {
-    render(<TemplateConflictDiagnosticsOverviewPanel selectedConflictReport={{ template_id: 't', template_exists: true, read_only: true, message: 'ok', summary: { status: 'warnings', warning_count: 1, info_count: 0, conflict_count: 3, slot_count: 5, occupied_week_count: 5 }, conflicts: [] }} />)
+    render(<TemplateConflictDiagnosticsOverviewPanel selectedConflictReport={{ template_id: 't', template_exists: true, read_only: true, message: 'ok', summary: { status: 'warnings', warning_count: 1, info_count: 0, conflict_count: 3, slot_count: 5, occupied_week_count: 5 }, conflicts: [], template_conflict_diagnostics_overview: { selected_report_available: true, selected_status: 'warnings', selected_conflict_count: 3, preflight_preview_available: false, preflight_summary_available: false, dry_run_preview_available: false, dry_run_summary_available: false, mutation_behavior: 'unavailable', blocking_behavior: 'non_blocking', read_only: true, non_blocking: true } }} />)
     expect(screen.getByText('Selected conflict report: available')).toBeInTheDocument()
     expect(screen.getByText('Selected conflict status: warnings')).toBeInTheDocument()
     expect(screen.getByText('Selected conflict count: 3')).toBeInTheDocument()
     expect(screen.getByText('Preflight conflict preview: unavailable')).toBeInTheDocument()
     expect(screen.getByText('Dry-run conflict preview: unavailable')).toBeInTheDocument()
+  })
+
+  it('B2) selected backend overview is preferred over conflicting summary', () => {
+    render(<TemplateConflictDiagnosticsOverviewPanel selectedConflictReport={{ template_id: 't', template_exists: true, read_only: true, message: 'ok', summary: { status: 'warnings', warning_count: 1, info_count: 0, conflict_count: 3, slot_count: 5, occupied_week_count: 5 }, conflicts: [], template_conflict_diagnostics_overview: { selected_report_available: true, selected_status: 'info', selected_conflict_count: 9, mutation_behavior: 'unavailable', blocking_behavior: 'non_blocking', read_only: true, non_blocking: true } }} />)
+    expect(screen.getByText('Selected conflict report: available')).toBeInTheDocument()
+    expect(screen.getByText('Selected conflict status: info')).toBeInTheDocument()
+    expect(screen.getByText('Selected conflict count: 9')).toBeInTheDocument()
+  })
+
+  it('B3) malformed selected backend overview falls back to summary', () => {
+    render(<TemplateConflictDiagnosticsOverviewPanel selectedConflictReport={{ template_id: 't', template_exists: true, read_only: true, message: 'ok', summary: { status: 'warnings', warning_count: 1, info_count: 0, conflict_count: 3, slot_count: 5, occupied_week_count: 5 }, conflicts: [], template_conflict_diagnostics_overview: { selected_report_available: 'bad' as any, selected_status: 42 as any, selected_conflict_count: Number.NaN as any } }} />)
+    expect(screen.getByText('Selected conflict report: available')).toBeInTheDocument()
+    expect(screen.getByText('Selected conflict status: warnings')).toBeInTheDocument()
+    expect(screen.getByText('Selected conflict count: 3')).toBeInTheDocument()
   })
 
   it('C) preflight preview and summary available', () => {

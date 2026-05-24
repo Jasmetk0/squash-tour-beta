@@ -212,6 +212,7 @@ export type SeasonTemplateSlotConflictReportResponse = {
   read_only: boolean
   summary: SeasonTemplateSlotConflictSummary
   conflicts: SeasonTemplateSlotConflict[]
+  template_conflict_diagnostics_overview?: SeasonTemplateConflictDiagnosticsOverview | null
   message: string
 }
 

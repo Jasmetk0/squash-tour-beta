@@ -32,6 +32,7 @@ from beta_engine.application.season_builder_candidate_identity import (
     build_candidate_identity_summary,
     build_create_only_apply_audit_metadata_preview,
     build_create_only_apply_execution_preflight_preview,
+    build_disabled_execution_contract_summary,
 )
 from beta_engine.application.season_builder_identity_readiness import build_dry_run_identity_readiness
 from beta_engine.application.season_template_service import (
@@ -1084,6 +1085,12 @@ def post_season_builder_future_apply_request_validation_preview(
         create_only_scope_confirmed=create_only_scope_confirmed,
         audit_metadata_present=audit_metadata_present,
     )
+    disabled_execution_contract_summary = build_disabled_execution_contract_summary(
+        future_apply_reference_contract=future_apply_reference_contract,
+        future_apply_request_validation_preview=future_apply_request_validation_preview,
+        create_only_apply_audit_metadata_preview=create_only_apply_audit_metadata_preview,
+        create_only_apply_execution_preflight_preview=create_only_apply_execution_preflight_preview,
+    )
     return SeasonBuilderFutureApplyRequestValidationPreviewResponse(
         enabled=False,
         can_execute=False,
@@ -1096,6 +1103,7 @@ def post_season_builder_future_apply_request_validation_preview(
         future_apply_request_validation_preview=future_apply_request_validation_preview,
         create_only_apply_audit_metadata_preview=create_only_apply_audit_metadata_preview,
         create_only_apply_execution_preflight_preview=create_only_apply_execution_preflight_preview,
+        disabled_execution_contract_summary=disabled_execution_contract_summary,
         audit_preview={
             "action": "season_builder_future_apply_request_validation_preview",
             "read_only": True,

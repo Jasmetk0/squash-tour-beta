@@ -6,6 +6,7 @@ from beta_engine.application.season_builder_candidate_identity import (
     build_candidate_identity_review_reference,
     build_future_apply_request_validation_preview,
     build_future_apply_reference_contract,
+    build_create_only_apply_execution_preflight_preview,
     build_candidate_identity_summary,
     sanitize_candidate_identity_part,
 )
@@ -582,3 +583,111 @@ def test_future_apply_request_validation_preview_malformed_contract_values() -> 
     assert preview["expected_candidate_identity_reference_type"] == ""
     assert preview["contract_referenceable"] is False
     assert preview["available"] is False
+
+
+def test_create_only_apply_execution_preflight_preview_all_preconditions_true() -> None:
+    preview = build_create_only_apply_execution_preflight_preview(
+        future_apply_reference_contract={"available": True},
+        future_apply_request_validation_preview={
+            "available": True,
+            "reference_id_matches": True,
+            "fingerprint_matches": True,
+            "reference_type_matches": True,
+        },
+        identity_readiness={"future_command_reference": {"can_reference_future_command": True}},
+        target_absent=True,
+        create_only_scope_confirmed=True,
+        audit_metadata_present=True,
+    )
+    assert preview["available"] is True
+    assert preview["all_known_preconditions_met"] is True
+    assert preview["execution_enabled"] is False
+    assert preview["can_execute"] is False
+    assert preview["read_only"] is True
+    assert preview["mutation_permitted"] is False
+    message = str(preview["message"]).lower()
+    assert "disabled" in message
+    assert "preview" in message
+    assert "does not execute apply" in message
+
+
+def test_create_only_apply_execution_preflight_preview_missing_target_absent() -> None:
+    preview = build_create_only_apply_execution_preflight_preview(
+        future_apply_reference_contract={"available": True},
+        future_apply_request_validation_preview={
+            "available": True,
+            "reference_id_matches": True,
+            "fingerprint_matches": True,
+            "reference_type_matches": True,
+        },
+        identity_readiness={"future_command_reference": {"can_reference_future_command": True}},
+        target_absent=False,
+        create_only_scope_confirmed=True,
+        audit_metadata_present=True,
+    )
+    assert preview["available"] is False
+    assert preview["all_known_preconditions_met"] is False
+    assert preview["execution_enabled"] is False
+    assert preview["can_execute"] is False
+
+
+def test_create_only_apply_execution_preflight_preview_validation_unavailable() -> None:
+    preview = build_create_only_apply_execution_preflight_preview(
+        future_apply_reference_contract={"available": True},
+        future_apply_request_validation_preview={
+            "available": False,
+            "reference_id_matches": True,
+            "fingerprint_matches": True,
+            "reference_type_matches": True,
+        },
+        identity_readiness={"future_command_reference": {"can_reference_future_command": True}},
+        target_absent=True,
+        create_only_scope_confirmed=True,
+        audit_metadata_present=True,
+    )
+    assert preview["available"] is False
+    assert preview["all_known_preconditions_met"] is False
+
+
+def test_create_only_apply_execution_preflight_preview_incomplete_identity_match_flags() -> None:
+    preview = build_create_only_apply_execution_preflight_preview(
+        future_apply_reference_contract={"available": True},
+        future_apply_request_validation_preview={
+            "available": True,
+            "reference_id_matches": True,
+            "fingerprint_matches": False,
+            "reference_type_matches": True,
+        },
+        identity_readiness={"future_command_reference": {"can_reference_future_command": True}},
+        target_absent=True,
+        create_only_scope_confirmed=True,
+        audit_metadata_present=True,
+    )
+    assert preview["candidate_identity_reference_matches"] is False
+    assert preview["all_known_preconditions_met"] is False
+
+
+def test_create_only_apply_execution_preflight_preview_malformed_inputs_default_safely() -> None:
+    preview = build_create_only_apply_execution_preflight_preview(
+        future_apply_reference_contract={"available": "yes"},
+        future_apply_request_validation_preview={
+            "available": "yes",
+            "reference_id_matches": 1,
+            "fingerprint_matches": object(),
+            "reference_type_matches": None,
+        },
+        identity_readiness={"future_command_reference": {"can_reference_future_command": "true"}},
+        target_absent="yes",
+        create_only_scope_confirmed=1,
+        audit_metadata_present=None,
+    )
+    assert preview["target_absent"] is False
+    assert preview["create_only_scope_confirmed"] is False
+    assert preview["audit_metadata_present"] is False
+    assert preview["future_apply_reference_contract_available"] is False
+    assert preview["future_apply_request_validation_available"] is False
+    assert preview["candidate_identity_reference_matches"] is False
+    assert preview["main_future_command_reference_ready"] is False
+    assert preview["available"] is False
+    assert preview["execution_enabled"] is False
+    assert preview["mutation_permitted"] is False

@@ -500,3 +500,74 @@ def build_create_only_apply_execution_preflight_preview(
         "mutation_permitted": False,
         "message": message,
     }
+
+
+def build_create_only_apply_audit_metadata_preview(
+    *,
+    requested_by: str | None,
+    audit_reason: str | None,
+    explicit_confirmation: str | None,
+    mutation_scope: str | None,
+    required_confirmation_phrase: str,
+    required_mutation_scope: str = "create_only",
+) -> dict:
+    """Build read-only preview metadata for future create-only apply audit requirements.
+
+    Safety invariant:
+    - This helper is preview/readiness metadata only.
+    - It never executes apply and never mutates any state.
+    - ``available=True`` only indicates required audit metadata is present/matching.
+    - ``execution_enabled`` and ``can_execute`` must remain ``False``.
+    """
+    normalized_requested_by = requested_by.strip() if isinstance(requested_by, str) else ""
+    normalized_audit_reason = audit_reason.strip() if isinstance(audit_reason, str) else ""
+    normalized_explicit_confirmation = (
+        explicit_confirmation.strip() if isinstance(explicit_confirmation, str) else ""
+    )
+    normalized_mutation_scope = mutation_scope.strip() if isinstance(mutation_scope, str) else ""
+
+    requested_by_present = bool(normalized_requested_by)
+    audit_reason_present = bool(normalized_audit_reason)
+    explicit_confirmation_present = bool(normalized_explicit_confirmation)
+    explicit_confirmation_matches = (
+        explicit_confirmation_present
+        and normalized_explicit_confirmation == required_confirmation_phrase
+    )
+    mutation_scope_present = bool(normalized_mutation_scope)
+    mutation_scope_matches = (
+        mutation_scope_present
+        and normalized_mutation_scope == required_mutation_scope
+    )
+
+    all_required_audit_metadata_present = all(
+        [
+            requested_by_present,
+            audit_reason_present,
+            explicit_confirmation_present,
+            explicit_confirmation_matches,
+            mutation_scope_present,
+            mutation_scope_matches,
+        ]
+    )
+
+    return {
+        "available": all_required_audit_metadata_present,
+        "preview_type": "create_only_apply_audit_metadata_preview",
+        "requested_by_present": requested_by_present,
+        "audit_reason_present": audit_reason_present,
+        "explicit_confirmation_present": explicit_confirmation_present,
+        "explicit_confirmation_matches": explicit_confirmation_matches,
+        "mutation_scope_present": mutation_scope_present,
+        "mutation_scope_matches": mutation_scope_matches,
+        "required_confirmation_phrase": required_confirmation_phrase,
+        "required_mutation_scope": required_mutation_scope,
+        "all_required_audit_metadata_present": all_required_audit_metadata_present,
+        "execution_enabled": False,
+        "can_execute": False,
+        "read_only": True,
+        "mutation_permitted": False,
+        "message": (
+            "Create-only apply audit metadata preview is read-only and disabled; "
+            "it does not execute apply or mutate any state."
+        ),
+    }

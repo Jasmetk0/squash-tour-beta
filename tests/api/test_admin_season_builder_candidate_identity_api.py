@@ -594,7 +594,11 @@ def test_future_apply_request_validation_preview_create_only_scope_confirmed_saf
             create_only_scope_confirmed=True,
             audit_metadata_present=False,
         )
+        assert preflight_preview["future_apply_request_validation_available"] is True
+        assert preflight_preview["audit_metadata_present"] is False
         assert preflight_preview["all_known_preconditions_met"] is False
+        assert preflight_preview["execution_enabled"] is False
+        assert preflight_preview["can_execute"] is False
 
 
 @pytest.mark.parametrize("overwrite_policy", ["merge_preview", "overwrite_preview"])

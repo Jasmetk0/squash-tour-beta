@@ -1,0 +1,238 @@
+from __future__ import annotations
+
+import json
+import threading
+import time
+from pathlib import Path
+from urllib import request
+
+import uvicorn
+
+from beta_engine.main import create_app
+
+
+def write_templates(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "templates": [
+                    {
+                        "template_id": "default_msa_template_preview",
+                        "tour_level": "WORLD_TOUR",
+                        "category": "PLATINUM",
+                        "event_name": "World A",
+                        "region": "EUROPE",
+                        "host_country": "ENG",
+                        "main_draw_size": 32,
+                        "qualification_draw_size": 16,
+                        "seeds_count": 8,
+                        "qualifier_spots": 4,
+                        "wild_cards": 2,
+                        "byes": 0,
+                        "lucky_loser_rules": {
+                            "enabled": True,
+                            "max_spots": 2,
+                            "replacement_window": "pre_main_draw_round_1",
+                        },
+                        "point_distribution_ref": "world",
+                        "prize_money": 100000,
+                        "prestige": 9,
+                        "event_duration_days": 6,
+                        "qualification_duration_days": 2,
+                        "duration_in_season_weeks": 1,
+                        "active": True,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def call(method: str, url: str, payload: dict | None = None) -> tuple[int, dict]:
+    req = request.Request(url, data=None if payload is None else json.dumps(payload).encode(), method=method)
+    req.add_header("content-type", "application/json")
+    with request.urlopen(req, timeout=60) as response:
+        raw = response.read().decode()
+        return response.status, json.loads(raw) if raw else {}
+
+
+def free_port() -> int:
+    import socket
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        return int(s.getsockname()[1])
+
+
+class Server:
+    def __init__(self, tmp_path: Path) -> None:
+        self.port = free_port()
+        self.base_url = f"http://127.0.0.1:{self.port}"
+        template_path = tmp_path / "templates.json"
+        write_templates(template_path)
+        app = create_app(
+            database_url=f"sqlite:///{tmp_path / 'api.db'}",
+            tournament_templates_config_path=str(template_path),
+            season_calendar_registry_path=str(tmp_path / "season_calendars.json"),
+        )
+        self.server = uvicorn.Server(uvicorn.Config(app=app, host="127.0.0.1", port=self.port, log_level="error"))
+        self.thread = threading.Thread(target=self.server.run, daemon=True)
+
+    def __enter__(self):
+        self.thread.start()
+        deadline = time.time() + 10
+        while time.time() < deadline:
+            try:
+                call("GET", f"{self.base_url}/health")
+                return self
+            except OSError:
+                time.sleep(0.05)
+        raise RuntimeError("server did not start")
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        self.server.should_exit = True
+        self.thread.join(timeout=10)
+
+
+def assert_candidate_identity_summary_contract(summary: dict, candidate_events: list[dict]) -> None:
+    assert summary is not None
+    assert summary["candidate_count"] == len(candidate_events)
+    assert summary["candidate_ids"] == [candidate["candidate_id"] for candidate in candidate_events]
+    assert summary["candidate_identity_keys"] == [candidate["candidate_identity_key"] for candidate in candidate_events]
+    assert isinstance(summary["duplicate_candidate_ids"], list)
+    assert isinstance(summary["duplicate_candidate_identity_keys"], list)
+    assert summary["read_only"] is True
+    assert summary["mutation_permitted"] is False
+    assert isinstance(summary["message"], str) and summary["message"]
+
+
+def assert_candidate_identity_contract(contract: dict, summary: dict) -> None:
+    assert contract is not None
+    assert contract["identity_source"] == "season_template_slot"
+    assert contract["id_strategy"] == "sanitized_template_slot_week"
+    assert contract["key_strategy"] == "pipe_joined_sanitized_components"
+    assert contract["key_components"] == [
+        "target_season",
+        "source_type",
+        "source_template_id",
+        "source_slot_id",
+        "season_week_start",
+        "event_name",
+        "category",
+        "source_template_ref",
+    ]
+    assert contract["candidate_count"] == summary["candidate_count"]
+    assert contract["has_duplicate_candidate_ids"] == bool(summary["duplicate_candidate_ids"])
+    assert contract["has_duplicate_candidate_identity_keys"] == bool(summary["duplicate_candidate_identity_keys"])
+    expected_safe = (
+        summary["candidate_count"] > 0
+        and not summary["duplicate_candidate_ids"]
+        and not summary["duplicate_candidate_identity_keys"]
+    )
+    assert contract["safe_for_future_reference"] == expected_safe
+    assert contract["read_only"] is True
+    assert contract["mutation_permitted"] is False
+    assert isinstance(contract["message"], str) and contract["message"]
+
+
+def test_candidate_identity_api_resolved_parity(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2035/2036",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": "merge_preview",
+            "preflight_fingerprint": "pf_phase14e_resolved",
+            "reviewed_diff_id": "rd_phase14e_resolved",
+        }
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        assert status == 200
+        preview = body["dry_run_result_preview"]
+        candidate_events = preview["candidate_events"]
+        assert len(candidate_events) > 0
+
+        for candidate in candidate_events:
+            assert isinstance(candidate["candidate_id"], str) and candidate["candidate_id"]
+            assert isinstance(candidate["candidate_identity_key"], str) and candidate["candidate_identity_key"]
+            assert candidate["identity_source"] == "season_template_slot"
+            assert candidate["read_only"] is True
+            assert candidate["mutation_permitted"] is False
+
+        summary = preview["candidate_identity_summary"]
+        contract = preview["candidate_identity_contract"]
+        assert_candidate_identity_summary_contract(summary, candidate_events)
+        assert_candidate_identity_contract(contract, summary)
+        if not summary["duplicate_candidate_ids"] and not summary["duplicate_candidate_identity_keys"]:
+            assert contract["safe_for_future_reference"] is True
+
+
+def test_candidate_identity_api_is_deterministic_for_repeated_dry_runs(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2035/2036",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": "merge_preview",
+            "preflight_fingerprint": "pf_phase14e_deterministic",
+            "reviewed_diff_id": "rd_phase14e_deterministic",
+        }
+        status_first, body_first = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        status_second, body_second = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        assert status_first == 200
+        assert status_second == 200
+
+        first_preview = body_first["dry_run_result_preview"]
+        second_preview = body_second["dry_run_result_preview"]
+        first_candidates = first_preview["candidate_events"]
+        second_candidates = second_preview["candidate_events"]
+
+        assert [c["candidate_id"] for c in first_candidates] == [c["candidate_id"] for c in second_candidates]
+        assert [c["candidate_identity_key"] for c in first_candidates] == [c["candidate_identity_key"] for c in second_candidates]
+        assert first_preview["candidate_identity_summary"] == second_preview["candidate_identity_summary"]
+        assert first_preview["candidate_identity_contract"] == second_preview["candidate_identity_contract"]
+
+
+def test_candidate_identity_api_unresolved_source_contract_invariants(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2035/2036",
+            "source_type": "season_template",
+            "source_template_id": "unknown_template",
+            "preflight_fingerprint": "pf_phase14e_unresolved",
+            "reviewed_diff_id": "rd_phase14e_unresolved",
+        }
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        assert status == 200
+
+        preview = body["dry_run_result_preview"]
+        assert preview["candidate_events"] == []
+        summary = preview["candidate_identity_summary"]
+        contract = preview["candidate_identity_contract"]
+        assert_candidate_identity_summary_contract(summary, preview["candidate_events"])
+        assert_candidate_identity_contract(contract, summary)
+        assert contract["safe_for_future_reference"] is False
+        assert "no candidates" in str(contract["message"]).lower()
+
+
+def test_candidate_identity_api_unsupported_source_contract_invariants(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2035/2036",
+            "source_type": "blank_calendar_planned",
+            "preflight_fingerprint": "pf_phase14e_unsupported",
+            "reviewed_diff_id": "rd_phase14e_unsupported",
+        }
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        assert status == 200
+
+        preview = body["dry_run_result_preview"]
+        assert preview["status"] == "unsupported_source_type"
+        assert preview["candidate_events"] == []
+        summary = preview["candidate_identity_summary"]
+        contract = preview["candidate_identity_contract"]
+        assert_candidate_identity_summary_contract(summary, preview["candidate_events"])
+        assert_candidate_identity_contract(contract, summary)
+        assert contract["safe_for_future_reference"] is False
+        assert "no candidates" in str(contract["message"]).lower()

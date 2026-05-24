@@ -24,6 +24,30 @@ def test_ready_reference_with_candidate_identity_ok() -> None:
     assert candidate_item["status"] == "OK"
 
 
+
+
+def test_candidate_identity_ok_does_not_override_blocked_main_reference() -> None:
+    readiness = build_dry_run_identity_readiness(
+        preflight_fingerprint="pf_ok",
+        reviewed_diff_id="rd_ok",
+        dry_run_result_fingerprint="drf_abc123",
+        dry_run_result_id="drr_abc123",
+        validation_summary={"status": "blocking"},
+        plan_readiness={"read_only_plan_available": True},
+        candidate_identity_fingerprint={"fingerprint": "cidf_ok"},
+        candidate_identity_review_reference={"can_reference_future_apply": True},
+    )
+    assert readiness["status"] == "blocked_reference"
+    future = readiness["future_command_reference"]
+    assert future["can_reference_future_command"] is False
+    assert future["can_reference_candidate_identity_set"] is True
+    assert future["mutation_still_disabled"] is True
+    candidate_item = next(item for item in readiness["items"] if item["area"] == "candidate_identity_review_reference")
+    assert candidate_item["status"] == "OK"
+    mutation_item = next(item for item in readiness["items"] if item["area"] == "mutation_state")
+    assert mutation_item["status"] == "Blocked"
+
+
 def test_blocked_reference_when_validation_blocking() -> None:
     readiness = build_dry_run_identity_readiness(
         preflight_fingerprint="pf_ok",
@@ -55,7 +79,7 @@ def test_missing_identity_when_primary_identity_missing() -> None:
     assert readiness["status"] == "missing_identity"
 
 
-def test_candidate_identity_blocked_but_reference_ready() -> None:
+def test_candidate_identity_blocked_does_not_block_main_reference() -> None:
     readiness = build_dry_run_identity_readiness(
         preflight_fingerprint="pf_ok",
         reviewed_diff_id="rd_ok",
@@ -72,6 +96,9 @@ def test_candidate_identity_blocked_but_reference_ready() -> None:
     assert future["can_reference_candidate_identity_set"] is False
     candidate_item = next(item for item in readiness["items"] if item["area"] == "candidate_identity_review_reference")
     assert candidate_item["status"] == "BLOCKED"
+    assert future["mutation_still_disabled"] is True
+    mutation_item = next(item for item in readiness["items"] if item["area"] == "mutation_state")
+    assert mutation_item["status"] == "Blocked"
 
 
 def test_malformed_candidate_identity_values_default_safely() -> None:

@@ -1,5 +1,6 @@
 from beta_engine.application.season_builder_candidate_identity import (
     build_candidate_identity,
+    build_candidate_identity_contract,
     build_candidate_identity_summary,
     sanitize_candidate_identity_part,
 )
@@ -105,3 +106,46 @@ def test_build_candidate_identity_summary_detects_duplicates_once_sorted() -> No
     )
     assert summary["duplicate_candidate_ids"] == ["cand_a", "cand_b"]
     assert summary["duplicate_candidate_identity_keys"] == ["key_a", "key_z"]
+
+
+def test_build_candidate_identity_contract_safe_when_non_empty_without_duplicates() -> None:
+    summary = {
+        "candidate_count": 2,
+        "duplicate_candidate_ids": [],
+        "duplicate_candidate_identity_keys": [],
+    }
+    contract = build_candidate_identity_contract(summary)
+    assert contract["safe_for_future_reference"] is True
+    assert contract["has_duplicate_candidate_ids"] is False
+    assert contract["has_duplicate_candidate_identity_keys"] is False
+    assert contract["key_components"] == [
+        "target_season",
+        "source_type",
+        "source_template_id",
+        "source_slot_id",
+        "season_week_start",
+        "event_name",
+        "category",
+        "source_template_ref",
+    ]
+    assert contract["read_only"] is True
+    assert contract["mutation_permitted"] is False
+
+
+def test_build_candidate_identity_contract_unsafe_when_duplicates_exist() -> None:
+    summary = {
+        "candidate_count": 2,
+        "duplicate_candidate_ids": ["cand_a"],
+        "duplicate_candidate_identity_keys": [],
+    }
+    contract = build_candidate_identity_contract(summary)
+    assert contract["safe_for_future_reference"] is False
+    assert contract["has_duplicate_candidate_ids"] is True
+    assert "duplicates" in str(contract["message"]).lower()
+
+
+def test_build_candidate_identity_contract_unsafe_when_no_candidates() -> None:
+    summary = build_candidate_identity_summary([])
+    contract = build_candidate_identity_contract(summary)
+    assert contract["safe_for_future_reference"] is False
+    assert "no candidates" in str(contract["message"]).lower()

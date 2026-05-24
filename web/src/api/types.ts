@@ -3292,6 +3292,30 @@ export type CandidateIdentityReviewReference = {
   message?: string
 }
 
+export type CandidateIdentityReadinessOverview = {
+  available?: boolean
+  candidate_identity_fingerprint?: string | null
+  candidate_identity_reference_id?: string | null
+  candidate_identity_reference_type?: string | null
+  can_reference_candidate_identity_set?: boolean
+  candidate_reference_status?: string
+  main_future_command_reference_ready?: boolean
+  read_only?: boolean
+  mutation_permitted?: boolean
+  message?: string
+}
+
+export type DryRunIdentityReadiness = {
+  status?: string
+  items?: Array<{
+    area?: string
+    status?: string
+    message?: string
+  }>
+  future_command_reference?: Record<string, unknown>
+  candidate_identity_readiness_overview?: CandidateIdentityReadinessOverview | null
+}
+
 export type SeasonBuilderDryRunBuildRequest = {
   target_season_label: string
   source_type: string
@@ -3327,6 +3351,7 @@ export type SeasonBuilderDryRunBuildResponse = {
   conflict_contract_preview: Record<string, unknown>
   dry_run_result_contract_preview: Record<string, unknown>
   dry_run_result_preview: Record<string, unknown> & {
+    identity_readiness?: DryRunIdentityReadiness | null
     template_conflict_summary?: DryRunTemplateConflictSummaryPreview | null
     candidate_identity_summary?: CandidateIdentitySummary | null
     candidate_identity_contract?: CandidateIdentityContract | null

@@ -80,6 +80,49 @@ function renderAppAt(route: string): void {
   )
 }
 
+function futureApplyValidationResponseMock(
+  overrides: Partial<Record<string, unknown>> = {}
+): Record<string, unknown> {
+  return {
+    enabled: false,
+    can_execute: false,
+    can_mutate: false,
+    target_season_label: '2000/2001',
+    source_type: 'season_template',
+    source_template_id: 'default_msa_template_preview',
+    overwrite_policy: 'none',
+    future_apply_reference_contract: {
+      available: true,
+      contract_type: 'future_apply_reference_contract',
+      apply_execution_enabled: false,
+      mutation_permitted: false,
+      read_only: true,
+      message: 'Reference contract preview only.'
+    },
+    future_apply_request_validation_preview: {
+      available: true,
+      validation_type: 'future_apply_request_validation_preview',
+      requested_candidate_identity_reference_id: 'candidate-ref-id',
+      requested_candidate_identity_fingerprint: 'candidate-fp',
+      requested_candidate_identity_reference_type: 'dry_run_candidate_identity',
+      reference_id_matches: true,
+      fingerprint_matches: true,
+      reference_type_matches: true,
+      contract_referenceable: true,
+      apply_execution_enabled: false,
+      read_only: true,
+      mutation_permitted: false,
+      message: 'Validation preview only.'
+    },
+    audit_preview: {
+      read_only: true,
+      mutation_permitted: false,
+      execution_enabled: false
+    },
+    ...overrides
+  }
+}
+
 describe('Module 17 pages through routes', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -604,29 +647,25 @@ describe('Module 17 pages through routes', () => {
       validation_errors: [],
       message: 'Create-only apply readiness is query-only in this phase.'
     }))
-    api.validateFutureApplyRequestPreview.mockResolvedValue({
-      enabled: false,
-      can_execute: false,
-      can_mutate: false,
-      target_season_label: '2000/2001',
-      source_type: 'season_template',
-      source_template_id: 'default_msa_template_preview',
-      overwrite_policy: 'none',
-      future_apply_reference_contract: { available: true, apply_execution_enabled: false, mutation_permitted: false, message: 'Reference contract preview only.' },
-      future_apply_request_validation_preview: {
-        available: true,
-        requested_candidate_identity_reference_id: 'abc123fingerprint',
-        requested_candidate_identity_fingerprint: 'abc123fingerprint',
-        requested_candidate_identity_reference_type: 'candidate_identity_set',
-        reference_id_matches: true,
-        fingerprint_matches: true,
-        reference_type_matches: true,
-        apply_execution_enabled: false,
-        mutation_permitted: false,
-        message: 'Validation preview only.'
-      },
-      audit_preview: null
-    })
+    api.validateFutureApplyRequestPreview.mockResolvedValue(
+      futureApplyValidationResponseMock({
+        future_apply_request_validation_preview: {
+          available: true,
+          validation_type: 'future_apply_request_validation_preview',
+          requested_candidate_identity_reference_id: 'abc123fingerprint',
+          requested_candidate_identity_fingerprint: 'abc123fingerprint',
+          requested_candidate_identity_reference_type: 'candidate_identity_set',
+          reference_id_matches: true,
+          fingerprint_matches: true,
+          reference_type_matches: true,
+          contract_referenceable: true,
+          apply_execution_enabled: false,
+          read_only: true,
+          mutation_permitted: false,
+          message: 'Validation preview only.'
+        }
+      })
+    )
   })
 
   it('renders the Phase 1 landing page at root', async () => {
@@ -2043,18 +2082,7 @@ describe('Module 17 pages through routes', () => {
   })
 
   it('clears future apply validation result when builder context changes without auto-revalidating', async () => {
-    api.validateFutureApplyRequestPreview.mockResolvedValueOnce({
-      valid: true,
-      preflight_fingerprint_matches: true,
-      reviewed_diff_id_matches: true,
-      dry_run_result_fingerprint_matches: true,
-      dry_run_result_id_matches: true,
-      requested_candidate_identity_matches: true,
-      apply_execution_enabled: false,
-      message: 'Future apply request is valid for preview.',
-      checked_at: '2026-01-01T00:00:00Z',
-      future_apply_reference_contract: { reference_required: true, read_only_preview: true, apply_execution_enabled: false }
-    })
+    api.validateFutureApplyRequestPreview.mockResolvedValueOnce(futureApplyValidationResponseMock())
     renderAppAt('/admin/seasons/build')
     expect(await screen.findByRole('heading', { name: 'Season Builder' })).toBeInTheDocument()
 

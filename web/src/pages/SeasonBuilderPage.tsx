@@ -258,6 +258,30 @@ export function AdminSeasonBuilderPage(): JSX.Element {
   const dryRunResultId = typeof disabledDryRunBuildQuery.data?.dry_run_result_preview?.dry_run_result_id === 'string'
     ? disabledDryRunBuildQuery.data?.dry_run_result_preview?.dry_run_result_id
     : ''
+  const futureApplyValidationContextKey = useMemo(() => JSON.stringify({
+    target_season_label: backendPreflightPayload.target_season_label,
+    source_type: backendPreflightPayload.source_type,
+    source_template_id: backendPreflightPayload.source_template_id,
+    overwrite_policy: backendPreflightPayload.overwrite_policy,
+    preflight_fingerprint: backendPreflightQuery.data?.preflight_fingerprint ?? null,
+    reviewed_diff_id: backendPreflightQuery.data?.reviewed_diff_id ?? null,
+    dry_run_result_fingerprint: dryRunResultFingerprint || null,
+    dry_run_result_id: dryRunResultId || null
+  }), [
+    backendPreflightPayload.target_season_label,
+    backendPreflightPayload.source_type,
+    backendPreflightPayload.source_template_id,
+    backendPreflightPayload.overwrite_policy,
+    backendPreflightQuery.data?.preflight_fingerprint,
+    backendPreflightQuery.data?.reviewed_diff_id,
+    dryRunResultFingerprint,
+    dryRunResultId
+  ])
+
+  useEffect(() => {
+    setFutureApplyValidationResult(null)
+    setFutureApplyValidationError(null)
+  }, [futureApplyValidationContextKey])
   const dryRunCandidateIdentityReviewReference = disabledDryRunBuildQuery.data?.dry_run_result_preview?.candidate_identity_review_reference
   const dryRunCandidateIdentityFingerprint = disabledDryRunBuildQuery.data?.dry_run_result_preview?.candidate_identity_fingerprint
   const dryRunCandidateIdentityReferenceId = typeof dryRunCandidateIdentityReviewReference?.reference_id === 'string' && dryRunCandidateIdentityReviewReference.reference_id.trim().length > 0

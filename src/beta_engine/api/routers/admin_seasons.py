@@ -24,7 +24,9 @@ from beta_engine.application.template_conflict_diagnostics import (
 from beta_engine.application.season_builder_candidate_identity import (
     build_candidate_identity,
     build_candidate_identity_contract,
+    build_candidate_identity_fingerprint,
     build_candidate_identity_overview,
+    build_candidate_identity_review_reference,
     build_candidate_identity_summary,
 )
 from beta_engine.application.season_template_service import (
@@ -800,6 +802,14 @@ def post_season_builder_dry_run_build_contract(
     candidate_identity_summary = build_candidate_identity_summary(candidate_events)
     candidate_identity_contract = build_candidate_identity_contract(candidate_identity_summary)
     candidate_identity_overview = build_candidate_identity_overview(candidate_identity_summary, candidate_identity_contract)
+    candidate_identity_fingerprint = build_candidate_identity_fingerprint(
+        target_season_label=payload.target_season_label,
+        source_type=payload.source_type,
+        source_template_id=payload.source_template_id,
+        candidate_identity_summary=candidate_identity_summary,
+        candidate_identity_contract=candidate_identity_contract,
+    )
+    candidate_identity_review_reference = build_candidate_identity_review_reference(candidate_identity_fingerprint)
 
     dry_run_result_preview = {
         "status": dry_run_status,
@@ -809,6 +819,8 @@ def post_season_builder_dry_run_build_contract(
         "candidate_identity_summary": candidate_identity_summary,
         "candidate_identity_contract": candidate_identity_contract,
         "candidate_identity_overview": candidate_identity_overview,
+        "candidate_identity_fingerprint": candidate_identity_fingerprint,
+        "candidate_identity_review_reference": candidate_identity_review_reference,
         "structural_summary": {
             "candidate_count": len(candidate_events),
             "target_event_count": target_event_count,

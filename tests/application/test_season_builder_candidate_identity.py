@@ -1,7 +1,9 @@
 from beta_engine.application.season_builder_candidate_identity import (
     build_candidate_identity,
     build_candidate_identity_contract,
+    build_candidate_identity_fingerprint,
     build_candidate_identity_overview,
+    build_candidate_identity_review_reference,
     build_candidate_identity_summary,
     sanitize_candidate_identity_part,
 )
@@ -261,3 +263,123 @@ def test_build_candidate_identity_overview_malformed_values_defaults_safely() ->
     assert overview["identity_source"] == "n/a"
     assert overview["id_strategy"] == "n/a"
     assert overview["key_strategy"] == "n/a"
+
+
+def test_build_candidate_identity_fingerprint_is_deterministic() -> None:
+    summary = {
+        "candidate_count": 2,
+        "candidate_ids": ["cand_a", "cand_b"],
+        "candidate_identity_keys": ["k_a", "k_b"],
+    }
+    contract = {"safe_for_future_reference": True}
+
+    first = build_candidate_identity_fingerprint(
+        target_season_label="2035/2036",
+        source_type="season_template",
+        source_template_id="default_msa_template_preview",
+        candidate_identity_summary=summary,
+        candidate_identity_contract=contract,
+    )
+    second = build_candidate_identity_fingerprint(
+        target_season_label="2035/2036",
+        source_type="season_template",
+        source_template_id="default_msa_template_preview",
+        candidate_identity_summary=summary,
+        candidate_identity_contract=contract,
+    )
+
+    assert first == second
+    assert isinstance(first["fingerprint"], str) and first["fingerprint"]
+
+
+def test_build_candidate_identity_fingerprint_changes_with_identity_set() -> None:
+    contract = {"safe_for_future_reference": True}
+    base = build_candidate_identity_fingerprint(
+        target_season_label="2035/2036",
+        source_type="season_template",
+        source_template_id="default",
+        candidate_identity_summary={
+            "candidate_count": 1,
+            "candidate_ids": ["cand_a"],
+            "candidate_identity_keys": ["k_a"],
+        },
+        candidate_identity_contract=contract,
+    )
+    changed_ids = build_candidate_identity_fingerprint(
+        target_season_label="2035/2036",
+        source_type="season_template",
+        source_template_id="default",
+        candidate_identity_summary={
+            "candidate_count": 1,
+            "candidate_ids": ["cand_b"],
+            "candidate_identity_keys": ["k_a"],
+        },
+        candidate_identity_contract=contract,
+    )
+    changed_keys = build_candidate_identity_fingerprint(
+        target_season_label="2035/2036",
+        source_type="season_template",
+        source_template_id="default",
+        candidate_identity_summary={
+            "candidate_count": 1,
+            "candidate_ids": ["cand_a"],
+            "candidate_identity_keys": ["k_b"],
+        },
+        candidate_identity_contract=contract,
+    )
+
+    assert base["fingerprint"] != changed_ids["fingerprint"]
+    assert base["fingerprint"] != changed_keys["fingerprint"]
+
+
+def test_build_candidate_identity_fingerprint_handles_malformed_summary_safely() -> None:
+    fingerprint = build_candidate_identity_fingerprint(
+        target_season_label="2035/2036",
+        source_type="season_template",
+        source_template_id="default",
+        candidate_identity_summary={
+            "candidate_count": "bad",
+            "candidate_ids": ["cand_a", 1],
+            "candidate_identity_keys": "bad",
+        },
+        candidate_identity_contract={"safe_for_future_reference": "bad"},
+    )
+
+    assert fingerprint["candidate_ids"] == []
+    assert fingerprint["candidate_identity_keys"] == []
+    assert fingerprint["candidate_count"] == 0
+    assert fingerprint["safe_for_future_reference"] is False
+
+
+def test_build_candidate_identity_review_reference_can_reference_when_safe_and_non_empty() -> None:
+    review_reference = build_candidate_identity_review_reference(
+        {
+            "fingerprint": "abc123",
+            "candidate_count": 3,
+            "safe_for_future_reference": True,
+        }
+    )
+
+    assert review_reference["reference_id"] == "abc123"
+    assert review_reference["can_reference_future_apply"] is True
+    assert review_reference["mutation_permitted"] is False
+
+
+def test_build_candidate_identity_review_reference_cannot_reference_when_empty_or_unsafe() -> None:
+    no_candidates = build_candidate_identity_review_reference(
+        {
+            "fingerprint": "abc123",
+            "candidate_count": 0,
+            "safe_for_future_reference": True,
+        }
+    )
+    unsafe = build_candidate_identity_review_reference(
+        {
+            "fingerprint": "abc123",
+            "candidate_count": 2,
+            "safe_for_future_reference": False,
+        }
+    )
+
+    assert no_candidates["can_reference_future_apply"] is False
+    assert unsafe["can_reference_future_apply"] is False

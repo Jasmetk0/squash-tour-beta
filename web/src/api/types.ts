@@ -3292,6 +3292,53 @@ export type CandidateIdentityReviewReference = {
   message?: string
 }
 
+export type FutureApplyReferenceContract = {
+  available?: boolean | null
+  contract_type?: string | null
+  candidate_identity_reference_type?: string | null
+  candidate_identity_reference_id?: string | null
+  candidate_identity_fingerprint?: string | null
+  candidate_identity_set_referenceable?: boolean | null
+  main_future_command_reference_ready?: boolean | null
+  apply_execution_enabled?: boolean | null
+  create_only_apply_required?: boolean | null
+  read_only?: boolean | null
+  mutation_permitted?: boolean | null
+  message?: string | null
+}
+
+export type FutureApplyRequestValidationPreview = {
+  available?: boolean | null
+  validation_type?: string | null
+  requested_candidate_identity_reference_id?: string | null
+  requested_candidate_identity_fingerprint?: string | null
+  requested_candidate_identity_reference_type?: string | null
+  expected_candidate_identity_reference_id?: string | null
+  expected_candidate_identity_fingerprint?: string | null
+  expected_candidate_identity_reference_type?: string | null
+  reference_id_matches?: boolean | null
+  fingerprint_matches?: boolean | null
+  reference_type_matches?: boolean | null
+  contract_referenceable?: boolean | null
+  apply_execution_enabled?: boolean | null
+  read_only?: boolean | null
+  mutation_permitted?: boolean | null
+  message?: string | null
+}
+
+export type SeasonBuilderFutureApplyRequestValidationPreviewResponse = {
+  enabled: boolean
+  can_execute: boolean
+  can_mutate: boolean
+  target_season_label: string
+  source_type: string
+  source_template_id?: string | null
+  overwrite_policy?: string | null
+  future_apply_reference_contract?: FutureApplyReferenceContract | null
+  future_apply_request_validation_preview?: FutureApplyRequestValidationPreview | null
+  audit_preview?: Record<string, unknown> | null
+}
+
 export type CandidateIdentityReadinessOverview = {
   available?: boolean
   candidate_identity_fingerprint?: string | null
@@ -3358,6 +3405,7 @@ export type SeasonBuilderDryRunBuildResponse = {
     candidate_identity_overview?: CandidateIdentityOverview | null
     candidate_identity_fingerprint?: CandidateIdentityFingerprint | null
     candidate_identity_review_reference?: CandidateIdentityReviewReference | null
+    future_apply_reference_contract?: FutureApplyReferenceContract | null
   }
   message: string
 }

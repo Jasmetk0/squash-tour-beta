@@ -1302,6 +1302,82 @@ export function readCandidateIdentityReviewReference(dryRunResultPreview: unknow
   }
 }
 
+export type NormalizedFutureApplyReferenceContract = {
+  available: string
+  contractType: string
+  candidateIdentityReferenceType: string
+  candidateIdentityReferenceId: string
+  candidateIdentityFingerprint: string
+  candidateIdentitySetReferenceable: string
+  mainFutureCommandReferenceReady: string
+  applyExecutionEnabled: string
+  createOnlyApplyRequired: string
+  readOnly: string
+  mutationPermitted: string
+  message: string
+}
+
+export type NormalizedFutureApplyRequestValidationPreview = {
+  available: string
+  validationType: string
+  requestedCandidateIdentityReferenceId: string
+  requestedCandidateIdentityFingerprint: string
+  requestedCandidateIdentityReferenceType: string
+  expectedCandidateIdentityReferenceId: string
+  expectedCandidateIdentityFingerprint: string
+  expectedCandidateIdentityReferenceType: string
+  referenceIdMatches: string
+  fingerprintMatches: string
+  referenceTypeMatches: string
+  contractReferenceable: string
+  applyExecutionEnabled: string
+  readOnly: string
+  mutationPermitted: string
+  message: string
+}
+
+export function readFutureApplyReferenceContract(value: unknown): NormalizedFutureApplyReferenceContract | null {
+  if (!value || typeof value !== 'object') return null
+  const record = value as Record<string, unknown>
+  return {
+    available: normalizeBooleanDisplay(record.available),
+    contractType: normalizeNonEmptyStringDisplay(record.contract_type),
+    candidateIdentityReferenceType: normalizeNonEmptyStringDisplay(record.candidate_identity_reference_type),
+    candidateIdentityReferenceId: normalizeNonEmptyStringDisplay(record.candidate_identity_reference_id),
+    candidateIdentityFingerprint: normalizeNonEmptyStringDisplay(record.candidate_identity_fingerprint),
+    candidateIdentitySetReferenceable: normalizeBooleanDisplay(record.candidate_identity_set_referenceable),
+    mainFutureCommandReferenceReady: normalizeBooleanDisplay(record.main_future_command_reference_ready),
+    applyExecutionEnabled: normalizeBooleanDisplay(record.apply_execution_enabled),
+    createOnlyApplyRequired: normalizeBooleanDisplay(record.create_only_apply_required),
+    readOnly: normalizeBooleanDisplay(record.read_only),
+    mutationPermitted: normalizeBooleanDisplay(record.mutation_permitted),
+    message: normalizeNonEmptyStringDisplay(record.message) === 'n/a' ? 'No message provided.' : normalizeNonEmptyStringDisplay(record.message)
+  }
+}
+
+export function readFutureApplyRequestValidationPreview(value: unknown): NormalizedFutureApplyRequestValidationPreview | null {
+  if (!value || typeof value !== 'object') return null
+  const record = value as Record<string, unknown>
+  return {
+    available: normalizeBooleanDisplay(record.available),
+    validationType: normalizeNonEmptyStringDisplay(record.validation_type),
+    requestedCandidateIdentityReferenceId: normalizeNonEmptyStringDisplay(record.requested_candidate_identity_reference_id),
+    requestedCandidateIdentityFingerprint: normalizeNonEmptyStringDisplay(record.requested_candidate_identity_fingerprint),
+    requestedCandidateIdentityReferenceType: normalizeNonEmptyStringDisplay(record.requested_candidate_identity_reference_type),
+    expectedCandidateIdentityReferenceId: normalizeNonEmptyStringDisplay(record.expected_candidate_identity_reference_id),
+    expectedCandidateIdentityFingerprint: normalizeNonEmptyStringDisplay(record.expected_candidate_identity_fingerprint),
+    expectedCandidateIdentityReferenceType: normalizeNonEmptyStringDisplay(record.expected_candidate_identity_reference_type),
+    referenceIdMatches: normalizeBooleanDisplay(record.reference_id_matches),
+    fingerprintMatches: normalizeBooleanDisplay(record.fingerprint_matches),
+    referenceTypeMatches: normalizeBooleanDisplay(record.reference_type_matches),
+    contractReferenceable: normalizeBooleanDisplay(record.contract_referenceable),
+    applyExecutionEnabled: normalizeBooleanDisplay(record.apply_execution_enabled),
+    readOnly: normalizeBooleanDisplay(record.read_only),
+    mutationPermitted: normalizeBooleanDisplay(record.mutation_permitted),
+    message: normalizeNonEmptyStringDisplay(record.message) === 'n/a' ? 'No message provided.' : normalizeNonEmptyStringDisplay(record.message)
+  }
+}
+
 export function readCandidateIdentityReadinessOverview(identityReadiness: unknown): Record<string, string> | null {
   if (!identityReadiness || typeof identityReadiness !== 'object') return null
   const overview = (identityReadiness as Record<string, unknown>).candidate_identity_readiness_overview
@@ -3890,4 +3966,28 @@ export function ReadOnlyPreflightChecklistPanel({
       </ul>
     </>
   )
+}export function FutureApplyReferenceContractPanel({ dryRunResultPreview }: { dryRunResultPreview?: unknown }): JSX.Element {
+  if (!dryRunResultPreview || typeof dryRunResultPreview !== 'object') return <p>Future apply reference contract is not available.</p>
+  const previewRecord = dryRunResultPreview as Record<string, unknown>
+  const contract = readFutureApplyReferenceContract(previewRecord.future_apply_reference_contract)
+  if (!contract) return <p>Future apply reference contract is not available.</p>
+  return (
+    <>
+      <p>Future apply reference contract</p>
+      <p>Available: {contract.available}</p><p>Contract type: {contract.contractType}</p><p>Candidate identity reference type: {contract.candidateIdentityReferenceType}</p><p>Candidate identity reference ID: {contract.candidateIdentityReferenceId}</p><p>Candidate identity fingerprint: {contract.candidateIdentityFingerprint}</p><p>Candidate identity set referenceable: {contract.candidateIdentitySetReferenceable}</p><p>Main future command reference ready: {contract.mainFutureCommandReferenceReady}</p><p>Apply execution enabled: {contract.applyExecutionEnabled}</p><p>Create-only apply required: {contract.createOnlyApplyRequired}</p><p>Read-only: {contract.readOnly}</p><p>Mutation permitted: {contract.mutationPermitted}</p><p>Message: {contract.message}</p>
+    </>
+  )
 }
+
+export function FutureApplyRequestValidationPreviewPanel({ preview }: { preview?: unknown }): JSX.Element {
+  const validationPreview = readFutureApplyRequestValidationPreview(preview)
+  if (!validationPreview) return <p>Future apply request validation preview is not available.</p>
+  return (
+    <>
+      <p>Future apply request validation preview</p>
+      <p>Available: {validationPreview.available}</p><p>Validation type: {validationPreview.validationType}</p><p>Requested reference ID: {validationPreview.requestedCandidateIdentityReferenceId}</p><p>Expected reference ID: {validationPreview.expectedCandidateIdentityReferenceId}</p><p>Reference ID matches: {validationPreview.referenceIdMatches}</p><p>Requested fingerprint: {validationPreview.requestedCandidateIdentityFingerprint}</p><p>Expected fingerprint: {validationPreview.expectedCandidateIdentityFingerprint}</p><p>Fingerprint matches: {validationPreview.fingerprintMatches}</p><p>Requested reference type: {validationPreview.requestedCandidateIdentityReferenceType}</p><p>Expected reference type: {validationPreview.expectedCandidateIdentityReferenceType}</p><p>Reference type matches: {validationPreview.referenceTypeMatches}</p><p>Contract referenceable: {validationPreview.contractReferenceable}</p><p>Apply execution enabled: {validationPreview.applyExecutionEnabled}</p><p>Read-only: {validationPreview.readOnly}</p><p>Mutation permitted: {validationPreview.mutationPermitted}</p><p>Message: {validationPreview.message}</p>
+    </>
+  )
+}
+
+

@@ -958,6 +958,29 @@ def post_season_builder_dry_run_build_contract(
     has_dry_run_result_fingerprint = isinstance(dry_run_result_fingerprint, str) and dry_run_result_fingerprint.startswith("drf_")
     has_dry_run_result_id = isinstance(dry_run_result_id, str) and dry_run_result_id.startswith("drr_")
     plan_available = bool(plan_readiness.get("read_only_plan_available"))
+    candidate_identity_fingerprint_value = (
+        candidate_identity_fingerprint.get("fingerprint")
+        if isinstance(candidate_identity_fingerprint.get("fingerprint"), str)
+        and candidate_identity_fingerprint.get("fingerprint").strip()
+        else None
+    )
+    candidate_identity_reference_id = (
+        candidate_identity_review_reference.get("reference_id")
+        if isinstance(candidate_identity_review_reference.get("reference_id"), str)
+        and candidate_identity_review_reference.get("reference_id").strip()
+        else None
+    )
+    can_reference_candidate_identity_set = (
+        candidate_identity_review_reference.get("can_reference_future_apply")
+        if isinstance(candidate_identity_review_reference.get("can_reference_future_apply"), bool)
+        else False
+    )
+    candidate_identity_reference_type = (
+        candidate_identity_review_reference.get("reference_type")
+        if isinstance(candidate_identity_review_reference.get("reference_type"), str)
+        and candidate_identity_review_reference.get("reference_type").strip()
+        else None
+    )
 
     identity_items: list[dict[str, str]] = [
         {
@@ -995,6 +1018,15 @@ def post_season_builder_dry_run_build_contract(
             "status": "Blocked",
             "message": "Mutation remains disabled; this checklist is reference-only.",
         },
+        {
+            "area": "candidate_identity_review_reference",
+            "status": "OK" if can_reference_candidate_identity_set else "BLOCKED",
+            "message": (
+                "Candidate identity set can be referenced by a future audited apply flow."
+                if can_reference_candidate_identity_set
+                else "Candidate identity set cannot be referenced by a future apply flow yet."
+            ),
+        },
     ]
 
     missing_identity = not all(
@@ -1012,6 +1044,10 @@ def post_season_builder_dry_run_build_contract(
             "dry_run_result_id": dry_run_result_id,
             "can_reference_future_command": identity_status == "ready_reference",
             "mutation_still_disabled": True,
+            "candidate_identity_fingerprint": candidate_identity_fingerprint_value,
+            "candidate_identity_reference_id": candidate_identity_reference_id,
+            "can_reference_candidate_identity_set": can_reference_candidate_identity_set,
+            "candidate_identity_reference_type": candidate_identity_reference_type,
         },
     }
 

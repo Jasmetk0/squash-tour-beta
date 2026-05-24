@@ -1,6 +1,7 @@
 from beta_engine.application.season_builder_candidate_identity import (
     build_candidate_identity,
     build_candidate_identity_contract,
+    build_candidate_identity_overview,
     build_candidate_identity_summary,
     sanitize_candidate_identity_part,
 )
@@ -192,3 +193,71 @@ def test_build_candidate_identity_contract_message_branches_are_stable() -> None
     assert "safe for future reference" in str(safe_contract["message"]).lower()
     assert "duplicates" in str(duplicate_contract["message"]).lower()
     assert "no candidates" in str(no_candidates_contract["message"]).lower()
+
+
+def test_build_candidate_identity_overview_safe() -> None:
+    summary = {"candidate_count": 2}
+    contract = {
+        "candidate_count": 2,
+        "safe_for_future_reference": True,
+        "has_duplicate_candidate_ids": False,
+        "has_duplicate_candidate_identity_keys": False,
+        "identity_source": "season_template_slot",
+        "id_strategy": "sanitized_template_slot_week",
+        "key_strategy": "pipe_joined_sanitized_components",
+    }
+    overview = build_candidate_identity_overview(summary, contract)
+    assert overview["available"] is True
+    assert overview["safe_for_future_reference"] is True
+    assert overview["candidate_count"] == 2
+    assert overview["mutation_permitted"] is False
+
+
+def test_build_candidate_identity_overview_duplicate_unsafe() -> None:
+    overview = build_candidate_identity_overview(
+        {"candidate_count": 1},
+        {
+            "candidate_count": 1,
+            "safe_for_future_reference": False,
+            "has_duplicate_candidate_ids": True,
+            "has_duplicate_candidate_identity_keys": False,
+            "identity_source": "season_template_slot",
+            "id_strategy": "sanitized_template_slot_week",
+            "key_strategy": "pipe_joined_sanitized_components",
+        },
+    )
+    assert overview["available"] is True
+    assert overview["safe_for_future_reference"] is False
+    assert overview["has_duplicate_candidate_ids"] is True
+    assert "duplicate" in str(overview["message"]).lower()
+
+
+def test_build_candidate_identity_overview_no_candidates() -> None:
+    overview = build_candidate_identity_overview({"candidate_count": 0}, {"candidate_count": 0})
+    assert overview["available"] is False
+    assert overview["candidate_count"] == 0
+    assert overview["safe_for_future_reference"] is False
+    assert "no candidates" in str(overview["message"]).lower()
+
+
+def test_build_candidate_identity_overview_malformed_values_defaults_safely() -> None:
+    overview = build_candidate_identity_overview(
+        {"candidate_count": "bad"},
+        {
+            "candidate_count": -1,
+            "safe_for_future_reference": "yes",
+            "has_duplicate_candidate_ids": 1,
+            "has_duplicate_candidate_identity_keys": None,
+            "identity_source": "",
+            "id_strategy": "   ",
+            "key_strategy": None,
+        },
+    )
+    assert overview["available"] is False
+    assert overview["candidate_count"] == 0
+    assert overview["safe_for_future_reference"] is False
+    assert overview["has_duplicate_candidate_ids"] is False
+    assert overview["has_duplicate_candidate_identity_keys"] is False
+    assert overview["identity_source"] == "n/a"
+    assert overview["id_strategy"] == "n/a"
+    assert overview["key_strategy"] == "n/a"

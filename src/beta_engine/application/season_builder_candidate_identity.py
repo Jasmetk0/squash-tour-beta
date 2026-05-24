@@ -8,6 +8,8 @@ free of duplicates; it is not mutation permission.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from collections import Counter
 
@@ -185,6 +187,98 @@ def build_candidate_identity_overview(
         "identity_source": normalized_identity_source,
         "id_strategy": normalized_id_strategy,
         "key_strategy": normalized_key_strategy,
+        "read_only": True,
+        "mutation_permitted": False,
+        "message": message,
+    }
+
+
+def _as_string_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    if not all(isinstance(item, str) for item in value):
+        return []
+    return list(value)
+
+
+def build_candidate_identity_fingerprint(
+    *,
+    target_season_label: str | None,
+    source_type: str | None,
+    source_template_id: str | None,
+    candidate_identity_summary: dict[str, object],
+    candidate_identity_contract: dict[str, object],
+) -> dict[str, object]:
+    """Build deterministic read-only fingerprint metadata for candidate identity sets."""
+    candidate_ids = _as_string_list(candidate_identity_summary.get("candidate_ids"))
+    candidate_identity_keys = _as_string_list(candidate_identity_summary.get("candidate_identity_keys"))
+
+    raw_candidate_count = candidate_identity_summary.get("candidate_count")
+    candidate_count = raw_candidate_count if isinstance(raw_candidate_count, int) and raw_candidate_count >= 0 else len(candidate_ids)
+
+    raw_safe = candidate_identity_contract.get("safe_for_future_reference")
+    safe_for_future_reference = raw_safe if isinstance(raw_safe, bool) else False
+
+    payload_version = 1
+    payload = {
+        "candidate_count": candidate_count,
+        "candidate_ids": candidate_ids,
+        "candidate_identity_keys": candidate_identity_keys,
+        "safe_for_future_reference": safe_for_future_reference,
+        "source_template_id": source_template_id,
+        "source_type": source_type,
+        "target_season_label": target_season_label,
+        "version": payload_version,
+    }
+    canonical_payload = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    fingerprint = hashlib.sha256(canonical_payload.encode("utf-8")).hexdigest()
+
+    return {
+        "fingerprint": fingerprint,
+        "fingerprint_algorithm": "sha256",
+        "fingerprint_payload_version": payload_version,
+        "candidate_count": candidate_count,
+        "candidate_ids": candidate_ids,
+        "candidate_identity_keys": candidate_identity_keys,
+        "safe_for_future_reference": safe_for_future_reference,
+        "target_season_label": target_season_label,
+        "source_type": source_type,
+        "source_template_id": source_template_id,
+        "read_only": True,
+        "mutation_permitted": False,
+        "message": "Candidate identity fingerprint is deterministic and read-only.",
+    }
+
+
+def build_candidate_identity_review_reference(
+    candidate_identity_fingerprint: dict[str, object],
+) -> dict[str, object]:
+    """Build read-only review reference metadata from a fingerprint payload."""
+    raw_reference_id = candidate_identity_fingerprint.get("fingerprint")
+    reference_id = raw_reference_id if isinstance(raw_reference_id, str) and raw_reference_id else ""
+
+    raw_count = candidate_identity_fingerprint.get("candidate_count")
+    candidate_count = raw_count if isinstance(raw_count, int) and raw_count >= 0 else 0
+
+    raw_safe = candidate_identity_fingerprint.get("safe_for_future_reference")
+    safe_for_future_reference = raw_safe if isinstance(raw_safe, bool) else False
+
+    can_reference_future_apply = bool(reference_id) and safe_for_future_reference and candidate_count > 0
+
+    message = (
+        "Candidate identity set can be referenced by a future audited apply flow."
+        if can_reference_future_apply
+        else "Candidate identity set cannot be referenced by a future apply flow yet."
+    )
+
+    return {
+        "reference_type": "candidate_identity_set",
+        "reference_id": reference_id,
+        "fingerprint_algorithm": "sha256",
+        "fingerprint_payload_version": 1,
+        "candidate_count": candidate_count,
+        "safe_for_future_reference": safe_for_future_reference,
+        "can_reference_future_apply": can_reference_future_apply,
         "read_only": True,
         "mutation_permitted": False,
         "message": message,

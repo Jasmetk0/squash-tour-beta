@@ -148,6 +148,28 @@ def assert_candidate_identity_overview(overview: dict, summary: dict, contract: 
     assert overview["read_only"] is True
     assert overview["mutation_permitted"] is False
 
+
+
+def assert_candidate_identity_fingerprint(fingerprint: dict, summary: dict, contract: dict) -> None:
+    assert isinstance(fingerprint.get("fingerprint"), str) and fingerprint["fingerprint"]
+    assert fingerprint["fingerprint_algorithm"] == "sha256"
+    assert fingerprint["fingerprint_payload_version"] == 1
+    assert fingerprint["candidate_count"] == summary["candidate_count"]
+    assert fingerprint["candidate_ids"] == summary["candidate_ids"]
+    assert fingerprint["candidate_identity_keys"] == summary["candidate_identity_keys"]
+    assert fingerprint["safe_for_future_reference"] == contract["safe_for_future_reference"]
+    assert fingerprint["read_only"] is True
+    assert fingerprint["mutation_permitted"] is False
+
+
+def assert_candidate_identity_review_reference(review_reference: dict, fingerprint: dict) -> None:
+    assert review_reference["reference_type"] == "candidate_identity_set"
+    assert review_reference["reference_id"] == fingerprint["fingerprint"]
+    assert review_reference["candidate_count"] == fingerprint["candidate_count"]
+    assert review_reference["safe_for_future_reference"] == fingerprint["safe_for_future_reference"]
+    assert review_reference["read_only"] is True
+    assert review_reference["mutation_permitted"] is False
+
 def test_candidate_identity_api_resolved_parity(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         payload = {
@@ -177,6 +199,11 @@ def test_candidate_identity_api_resolved_parity(tmp_path: Path) -> None:
         assert_candidate_identity_contract(contract, summary)
         overview = preview["candidate_identity_overview"]
         assert_candidate_identity_overview(overview, summary, contract)
+        fingerprint = preview["candidate_identity_fingerprint"]
+        assert_candidate_identity_fingerprint(fingerprint, summary, contract)
+        review_reference = preview["candidate_identity_review_reference"]
+        assert_candidate_identity_review_reference(review_reference, fingerprint)
+        assert review_reference["can_reference_future_apply"] is True
         if not summary["duplicate_candidate_ids"] and not summary["duplicate_candidate_identity_keys"]:
             assert contract["safe_for_future_reference"] is True
 
@@ -205,6 +232,8 @@ def test_candidate_identity_api_is_deterministic_for_repeated_dry_runs(tmp_path:
         assert [c["candidate_identity_key"] for c in first_candidates] == [c["candidate_identity_key"] for c in second_candidates]
         assert first_preview["candidate_identity_summary"] == second_preview["candidate_identity_summary"]
         assert first_preview["candidate_identity_contract"] == second_preview["candidate_identity_contract"]
+        assert first_preview["candidate_identity_fingerprint"] == second_preview["candidate_identity_fingerprint"]
+        assert first_preview["candidate_identity_review_reference"] == second_preview["candidate_identity_review_reference"]
 
 
 def test_candidate_identity_api_unresolved_source_contract_invariants(tmp_path: Path) -> None:
@@ -227,6 +256,13 @@ def test_candidate_identity_api_unresolved_source_contract_invariants(tmp_path: 
         assert_candidate_identity_contract(contract, summary)
         overview = preview["candidate_identity_overview"]
         assert_candidate_identity_overview(overview, summary, contract)
+        fingerprint = preview["candidate_identity_fingerprint"]
+        assert_candidate_identity_fingerprint(fingerprint, summary, contract)
+        assert fingerprint["candidate_count"] == 0
+        assert fingerprint["safe_for_future_reference"] is False
+        review_reference = preview["candidate_identity_review_reference"]
+        assert_candidate_identity_review_reference(review_reference, fingerprint)
+        assert review_reference["can_reference_future_apply"] is False
         assert contract["safe_for_future_reference"] is False
         assert "no candidates" in str(contract["message"]).lower()
         assert overview["available"] is False
@@ -254,8 +290,29 @@ def test_candidate_identity_api_unsupported_source_contract_invariants(tmp_path:
         assert_candidate_identity_contract(contract, summary)
         overview = preview["candidate_identity_overview"]
         assert_candidate_identity_overview(overview, summary, contract)
+        fingerprint = preview["candidate_identity_fingerprint"]
+        assert_candidate_identity_fingerprint(fingerprint, summary, contract)
+        assert fingerprint["candidate_count"] == 0
+        assert fingerprint["safe_for_future_reference"] is False
+        review_reference = preview["candidate_identity_review_reference"]
+        assert_candidate_identity_review_reference(review_reference, fingerprint)
+        assert review_reference["can_reference_future_apply"] is False
         assert contract["safe_for_future_reference"] is False
         assert "no candidates" in str(contract["message"]).lower()
         assert overview["available"] is False
         assert overview["safe_for_future_reference"] is False
         assert "no candidates" in str(overview["message"]).lower()
+        fingerprint = preview["candidate_identity_fingerprint"]
+        assert_candidate_identity_fingerprint(fingerprint, summary, contract)
+        assert fingerprint["candidate_count"] == 0
+        assert fingerprint["safe_for_future_reference"] is False
+        review_reference = preview["candidate_identity_review_reference"]
+        assert_candidate_identity_review_reference(review_reference, fingerprint)
+        assert review_reference["can_reference_future_apply"] is False
+        fingerprint = preview["candidate_identity_fingerprint"]
+        assert_candidate_identity_fingerprint(fingerprint, summary, contract)
+        assert fingerprint["candidate_count"] == 0
+        assert fingerprint["safe_for_future_reference"] is False
+        review_reference = preview["candidate_identity_review_reference"]
+        assert_candidate_identity_review_reference(review_reference, fingerprint)
+        assert review_reference["can_reference_future_apply"] is False

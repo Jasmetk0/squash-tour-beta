@@ -1,4 +1,16 @@
-"""Read-only dry-run identity readiness helper for Season Builder previews."""
+"""Build read-only identity readiness metadata for Season Builder dry-run previews.
+
+This helper only assembles checklist/readiness metadata from supplied dry-run
+inputs. It does not mutate state, does not authorize apply/build execution, and
+keeps dry-run behavior read-only. Candidate identity reference fields are
+additive metadata for future audited flows only; they must not relax the main
+future command gate.
+
+`can_reference_future_command` remains derived from the primary identity
+references plus validation/plan readiness (preflight fingerprint, reviewed diff
+id, dry-run result references, validation summary, and read-only plan
+availability).
+"""
 
 from __future__ import annotations
 
@@ -14,6 +26,20 @@ def build_dry_run_identity_readiness(
     candidate_identity_fingerprint: dict[str, object],
     candidate_identity_review_reference: dict[str, object],
 ) -> dict[str, object]:
+    """Return dry-run identity readiness status, checklist items, and future references.
+
+    The returned payload contains:
+    - `status`: main identity readiness state for future command references.
+    - `items`: checklist rows describing primary readiness, mutation lock state,
+      and candidate identity review information.
+    - `future_command_reference`: copied primary/candidate reference values plus
+      the computed command-reference gate booleans.
+
+    Candidate identity fields are copied into `future_command_reference` as
+    additive, read-only metadata. In this phase, the
+    `candidate_identity_review_reference` checklist item is informational and
+    must not alter the main `can_reference_future_command` decision.
+    """
     validation_summary_status = str(validation_summary.get("status") or "unknown").strip()
     has_preflight_fingerprint = bool(preflight_fingerprint and preflight_fingerprint.strip())
     has_reviewed_diff_id = bool(reviewed_diff_id and reviewed_diff_id.strip())

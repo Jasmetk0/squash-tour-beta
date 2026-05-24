@@ -137,6 +137,39 @@ def test_selected_template_slot_conflicts_overview_contract(tmp_path: Path) -> N
         assert overview["dry_run_preview_available"] is False
 
 
+
+
+def test_selected_template_slot_conflicts_overview_normalized_summary_parity(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        status, body = call(
+            "GET",
+            f"{server.base_url}/admin/seasons/templates/default_msa_template_preview/slot-conflicts",
+        )
+        assert status == 200
+        overview = body["template_conflict_diagnostics_overview"]
+        assert_overview_common_contract(overview)
+        assert overview["selected_report_available"] is True
+        assert overview["selected_status"] in ("clean", "warnings", "info")
+        assert overview["selected_status"] == body["summary"]["status"]
+        assert isinstance(overview["selected_conflict_count"], int)
+        assert overview["selected_conflict_count"] == body["summary"]["conflict_count"]
+        assert overview["selected_conflict_count"] >= 0
+
+
+def test_selected_template_slot_conflicts_unknown_template_overview_contract(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        status, body = call(
+            "GET",
+            f"{server.base_url}/admin/seasons/templates/unknown_template/slot-conflicts",
+        )
+        assert status == 200
+        overview = body["template_conflict_diagnostics_overview"]
+        assert_overview_common_contract(overview)
+        assert overview["selected_report_available"] is False
+        assert overview["selected_status"] is None
+        assert overview["selected_conflict_count"] == 0
+        assert body["template_exists"] is False
+
 def test_builder_preflight_overview_contract(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         status, body = call(

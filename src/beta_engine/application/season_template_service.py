@@ -13,6 +13,9 @@ from beta_engine.domain.tournaments import (
     SeasonTemplateSlotConflictPreview,
     SeasonTemplateSlotValidationPreview,
 )
+from beta_engine.application.template_conflict_diagnostics import (
+    build_selected_template_conflict_diagnostics_overview,
+)
 
 
 class SeasonTemplateSlot(BaseModel):
@@ -499,14 +502,10 @@ class SeasonTemplateService:
                     busiest_week_slot_count=None,
                 ),
                 conflicts=conflicts,
-                template_conflict_diagnostics_overview=SeasonTemplateConflictDiagnosticsOverview(
-                    selected_report_available=False,
-                    selected_status=None,
-                    selected_conflict_count=0,
-                    mutation_behavior="unavailable",
-                    blocking_behavior="non_blocking",
-                    read_only=True,
-                    non_blocking=True,
+                template_conflict_diagnostics_overview=build_selected_template_conflict_diagnostics_overview(
+                    template_exists=False,
+                    status=None,
+                    conflict_count=0,
                 ),
                 message="Template not found.",
             )
@@ -603,14 +602,10 @@ class SeasonTemplateService:
                 busiest_week_slot_count=busiest_week_slot_count,
             ),
             conflicts=conflicts,
-            template_conflict_diagnostics_overview=SeasonTemplateConflictDiagnosticsOverview(
-                selected_report_available=True,
-                selected_status=status,
-                selected_conflict_count=len(conflicts),
-                mutation_behavior="unavailable",
-                blocking_behavior="non_blocking",
-                read_only=True,
-                non_blocking=True,
+            template_conflict_diagnostics_overview=build_selected_template_conflict_diagnostics_overview(
+                template_exists=True,
+                status=status,
+                conflict_count=len(conflicts),
             ),
             message="Template slot conflict analysis completed.",
         )

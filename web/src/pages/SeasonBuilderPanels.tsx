@@ -1396,6 +1396,25 @@ export type NormalizedCreateOnlyApplyExecutionPreflightPreview = {
   message: string
 }
 
+export type NormalizedCreateOnlyApplyAuditMetadataPreview = {
+  available: string
+  previewType: string
+  requestedByPresent: string
+  auditReasonPresent: string
+  explicitConfirmationPresent: string
+  explicitConfirmationMatches: string
+  mutationScopePresent: string
+  mutationScopeMatches: string
+  requiredConfirmationPhrase: string
+  requiredMutationScope: string
+  allRequiredAuditMetadataPresent: string
+  executionEnabled: string
+  canExecute: string
+  readOnly: string
+  mutationPermitted: string
+  message: string
+}
+
 export function readCreateOnlyApplyExecutionPreflightPreview(value: unknown): NormalizedCreateOnlyApplyExecutionPreflightPreview | null {
   if (!value || typeof value !== 'object') return null
   const record = value as Record<string, unknown>
@@ -1410,6 +1429,29 @@ export function readCreateOnlyApplyExecutionPreflightPreview(value: unknown): No
     candidateIdentityReferenceMatches: normalizeBooleanDisplay(record.candidate_identity_reference_matches),
     mainFutureCommandReferenceReady: normalizeBooleanDisplay(record.main_future_command_reference_ready),
     allKnownPreconditionsMet: normalizeBooleanDisplay(record.all_known_preconditions_met),
+    executionEnabled: normalizeBooleanDisplay(record.execution_enabled),
+    canExecute: normalizeBooleanDisplay(record.can_execute),
+    readOnly: normalizeBooleanDisplay(record.read_only),
+    mutationPermitted: normalizeBooleanDisplay(record.mutation_permitted),
+    message: normalizeNonEmptyStringDisplay(record.message) === 'n/a' ? 'No message provided.' : normalizeNonEmptyStringDisplay(record.message)
+  }
+}
+
+export function readCreateOnlyApplyAuditMetadataPreview(value: unknown): NormalizedCreateOnlyApplyAuditMetadataPreview | null {
+  if (!value || typeof value !== 'object') return null
+  const record = value as Record<string, unknown>
+  return {
+    available: normalizeBooleanDisplay(record.available),
+    previewType: normalizeNonEmptyStringDisplay(record.preview_type),
+    requestedByPresent: normalizeBooleanDisplay(record.requested_by_present),
+    auditReasonPresent: normalizeBooleanDisplay(record.audit_reason_present),
+    explicitConfirmationPresent: normalizeBooleanDisplay(record.explicit_confirmation_present),
+    explicitConfirmationMatches: normalizeBooleanDisplay(record.explicit_confirmation_matches),
+    mutationScopePresent: normalizeBooleanDisplay(record.mutation_scope_present),
+    mutationScopeMatches: normalizeBooleanDisplay(record.mutation_scope_matches),
+    requiredConfirmationPhrase: normalizeNonEmptyStringDisplay(record.required_confirmation_phrase),
+    requiredMutationScope: normalizeNonEmptyStringDisplay(record.required_mutation_scope),
+    allRequiredAuditMetadataPresent: normalizeBooleanDisplay(record.all_required_audit_metadata_present),
     executionEnabled: normalizeBooleanDisplay(record.execution_enabled),
     canExecute: normalizeBooleanDisplay(record.can_execute),
     readOnly: normalizeBooleanDisplay(record.read_only),
@@ -4057,6 +4099,32 @@ export function CreateOnlyApplyExecutionPreflightPreviewPanel({ preview }: { pre
   )
 }
 
+export function CreateOnlyApplyAuditMetadataPreviewPanel({ preview }: { preview?: unknown }): JSX.Element {
+  const auditPreview = readCreateOnlyApplyAuditMetadataPreview(preview)
+  if (!auditPreview) return <p>Create-only apply audit metadata preview is not available.</p>
+  return (
+    <>
+      <p>Create-only apply audit metadata preview</p>
+      <p>Available: {auditPreview.available}</p>
+      <p>Preview type: {auditPreview.previewType}</p>
+      <p>Requested by present: {auditPreview.requestedByPresent}</p>
+      <p>Audit reason present: {auditPreview.auditReasonPresent}</p>
+      <p>Explicit confirmation present: {auditPreview.explicitConfirmationPresent}</p>
+      <p>Explicit confirmation matches: {auditPreview.explicitConfirmationMatches}</p>
+      <p>Mutation scope present: {auditPreview.mutationScopePresent}</p>
+      <p>Mutation scope matches: {auditPreview.mutationScopeMatches}</p>
+      <p>Required confirmation phrase: {auditPreview.requiredConfirmationPhrase}</p>
+      <p>Required mutation scope: {auditPreview.requiredMutationScope}</p>
+      <p>All required audit metadata present: {auditPreview.allRequiredAuditMetadataPresent}</p>
+      <p>Execution enabled: {auditPreview.executionEnabled}</p>
+      <p>Can execute: {auditPreview.canExecute}</p>
+      <p>Read-only: {auditPreview.readOnly}</p>
+      <p>Mutation permitted: {auditPreview.mutationPermitted}</p>
+      <p>Message: {auditPreview.message}</p>
+    </>
+  )
+}
+
 export function FutureApplyRequestValidationPreviewPanel({ preview }: { preview?: unknown }): JSX.Element {
   const validationPreview = readFutureApplyRequestValidationPreview(preview)
   if (!validationPreview) return <p>Future apply request validation preview is not available.</p>
@@ -4082,5 +4150,4 @@ export function FutureApplyRequestValidationPreviewPanel({ preview }: { preview?
     </>
   )
 }
-
 

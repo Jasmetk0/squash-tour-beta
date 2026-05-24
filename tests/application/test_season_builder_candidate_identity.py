@@ -1,5 +1,6 @@
 from beta_engine.application.season_builder_candidate_identity import (
     build_candidate_identity,
+    build_create_only_apply_audit_metadata_preview,
     build_candidate_identity_contract,
     build_candidate_identity_fingerprint,
     build_candidate_identity_overview,
@@ -692,3 +693,115 @@ def test_create_only_apply_execution_preflight_preview_malformed_inputs_default_
     assert preview["available"] is False
     assert preview["execution_enabled"] is False
     assert preview["mutation_permitted"] is False
+
+
+def test_create_only_apply_audit_metadata_preview_complete_matching_values() -> None:
+    required_confirmation_phrase = "I ACKNOWLEDGE CREATE-ONLY APPLY IS DISABLED"
+    preview = build_create_only_apply_audit_metadata_preview(
+        requested_by="local-admin-preview",
+        audit_reason="create-only calendar command",
+        explicit_confirmation=required_confirmation_phrase,
+        mutation_scope="create_only",
+        required_confirmation_phrase=required_confirmation_phrase,
+    )
+    assert preview["available"] is True
+    assert preview["preview_type"] == "create_only_apply_audit_metadata_preview"
+    assert preview["requested_by_present"] is True
+    assert preview["audit_reason_present"] is True
+    assert preview["explicit_confirmation_present"] is True
+    assert preview["explicit_confirmation_matches"] is True
+    assert preview["mutation_scope_present"] is True
+    assert preview["mutation_scope_matches"] is True
+    assert preview["all_required_audit_metadata_present"] is True
+    assert preview["execution_enabled"] is False
+    assert preview["can_execute"] is False
+    assert preview["read_only"] is True
+    assert preview["mutation_permitted"] is False
+    message = str(preview["message"]).lower()
+    assert "preview" in message
+    assert "does not execute apply" in message
+
+
+def test_create_only_apply_audit_metadata_preview_missing_requested_by() -> None:
+    required_confirmation_phrase = "I ACKNOWLEDGE CREATE-ONLY APPLY IS DISABLED"
+    preview = build_create_only_apply_audit_metadata_preview(
+        requested_by="",
+        audit_reason="create-only calendar command",
+        explicit_confirmation=required_confirmation_phrase,
+        mutation_scope="create_only",
+        required_confirmation_phrase=required_confirmation_phrase,
+    )
+    assert preview["requested_by_present"] is False
+    assert preview["available"] is False
+    assert preview["all_required_audit_metadata_present"] is False
+    assert preview["execution_enabled"] is False
+    assert preview["can_execute"] is False
+
+
+def test_create_only_apply_audit_metadata_preview_wrong_explicit_confirmation() -> None:
+    preview = build_create_only_apply_audit_metadata_preview(
+        requested_by="local-admin-preview",
+        audit_reason="create-only calendar command",
+        explicit_confirmation="I ACKNOWLEDGE APPLY",
+        mutation_scope="create_only",
+        required_confirmation_phrase="I ACKNOWLEDGE CREATE-ONLY APPLY IS DISABLED",
+    )
+    assert preview["explicit_confirmation_present"] is True
+    assert preview["explicit_confirmation_matches"] is False
+    assert preview["available"] is False
+    assert preview["all_required_audit_metadata_present"] is False
+
+
+def test_create_only_apply_audit_metadata_preview_wrong_mutation_scope() -> None:
+    required_confirmation_phrase = "I ACKNOWLEDGE CREATE-ONLY APPLY IS DISABLED"
+    preview = build_create_only_apply_audit_metadata_preview(
+        requested_by="local-admin-preview",
+        audit_reason="create-only calendar command",
+        explicit_confirmation=required_confirmation_phrase,
+        mutation_scope="merge_preview",
+        required_confirmation_phrase=required_confirmation_phrase,
+    )
+    assert preview["mutation_scope_present"] is True
+    assert preview["mutation_scope_matches"] is False
+    assert preview["available"] is False
+    assert preview["all_required_audit_metadata_present"] is False
+
+
+def test_create_only_apply_audit_metadata_preview_whitespace_normalization() -> None:
+    required_confirmation_phrase = "I ACKNOWLEDGE CREATE-ONLY APPLY IS DISABLED"
+    preview = build_create_only_apply_audit_metadata_preview(
+        requested_by="  local-admin-preview  ",
+        audit_reason="  create-only calendar command  ",
+        explicit_confirmation=f"  {required_confirmation_phrase}  ",
+        mutation_scope="  create_only  ",
+        required_confirmation_phrase=required_confirmation_phrase,
+    )
+    assert preview["requested_by_present"] is True
+    assert preview["audit_reason_present"] is True
+    assert preview["explicit_confirmation_present"] is True
+    assert preview["explicit_confirmation_matches"] is True
+    assert preview["mutation_scope_present"] is True
+    assert preview["mutation_scope_matches"] is True
+    assert preview["all_required_audit_metadata_present"] is True
+    assert preview["available"] is True
+
+
+def test_create_only_apply_audit_metadata_preview_none_and_empty_values_are_safe() -> None:
+    required_confirmation_phrase = "I ACKNOWLEDGE CREATE-ONLY APPLY IS DISABLED"
+    preview = build_create_only_apply_audit_metadata_preview(
+        requested_by=None,
+        audit_reason="",
+        explicit_confirmation=None,
+        mutation_scope="",
+        required_confirmation_phrase=required_confirmation_phrase,
+    )
+    assert preview["requested_by_present"] is False
+    assert preview["audit_reason_present"] is False
+    assert preview["explicit_confirmation_present"] is False
+    assert preview["explicit_confirmation_matches"] is False
+    assert preview["mutation_scope_present"] is False
+    assert preview["mutation_scope_matches"] is False
+    assert preview["all_required_audit_metadata_present"] is False
+    assert preview["available"] is False
+    assert preview["execution_enabled"] is False
+    assert preview["can_execute"] is False

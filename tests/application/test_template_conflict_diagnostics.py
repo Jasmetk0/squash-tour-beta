@@ -51,10 +51,10 @@ def test_build_template_conflict_diagnostics_overview_prefers_summary_over_previ
     assert overview.preflight_conflict_count == 9
 
 
-def test_build_selected_template_conflict_diagnostics_overview_present():
+def test_build_selected_template_conflict_diagnostics_overview_normalizes_status_case_and_whitespace():
     overview = build_selected_template_conflict_diagnostics_overview(
         template_exists=True,
-        status="warnings",
+        status=" Warnings ",
         conflict_count=3,
     )
     assert overview.selected_report_available is True
@@ -62,11 +62,48 @@ def test_build_selected_template_conflict_diagnostics_overview_present():
     assert overview.selected_conflict_count == 3
 
 
+def test_build_selected_template_conflict_diagnostics_overview_rejects_invalid_status():
+    overview = build_selected_template_conflict_diagnostics_overview(
+        template_exists=True,
+        status="blocked",
+        conflict_count=3,
+    )
+    assert overview.selected_report_available is True
+    assert overview.selected_status is None
+    assert overview.selected_conflict_count == 3
+
+
+def test_build_selected_template_conflict_diagnostics_overview_normalizes_string_and_float_counts():
+    overview_from_string = build_selected_template_conflict_diagnostics_overview(
+        template_exists=True,
+        status="warnings",
+        conflict_count="3",
+    )
+    overview_from_float = build_selected_template_conflict_diagnostics_overview(
+        template_exists=True,
+        status="warnings",
+        conflict_count=3.0,
+    )
+    assert overview_from_string.selected_conflict_count == 3
+    assert overview_from_float.selected_conflict_count == 3
+
+
+def test_build_selected_template_conflict_diagnostics_overview_rejects_bool_count():
+    overview = build_selected_template_conflict_diagnostics_overview(
+        template_exists=True,
+        status="warnings",
+        conflict_count=True,
+    )
+    assert overview.selected_report_available is True
+    assert overview.selected_status == "warnings"
+    assert overview.selected_conflict_count == 0
+
+
 def test_build_selected_template_conflict_diagnostics_overview_missing():
     overview = build_selected_template_conflict_diagnostics_overview(
         template_exists=False,
         status="warnings",
-        conflict_count=1,
+        conflict_count=99,
     )
     assert overview.selected_report_available is False
     assert overview.selected_status is None

@@ -150,8 +150,8 @@ def build_template_conflict_diagnostics_overview(
 def build_selected_template_conflict_diagnostics_overview(
     *,
     template_exists: bool,
-    status: str | None,
-    conflict_count: int,
+    status: object | None,
+    conflict_count: object | None,
 ) -> SeasonTemplateConflictDiagnosticsOverview:
     if not template_exists:
         return build_template_conflict_diagnostics_overview(
@@ -159,8 +159,10 @@ def build_selected_template_conflict_diagnostics_overview(
             selected_status=None,
             selected_conflict_count=0,
         )
+    selected_status = _normalize_conflict_status(status)
+    selected_conflict_count = _normalize_non_negative_int(conflict_count)
     return build_template_conflict_diagnostics_overview(
         selected_report_available=True,
-        selected_status=status,
-        selected_conflict_count=conflict_count,
+        selected_status=selected_status,
+        selected_conflict_count=selected_conflict_count,
     )

@@ -376,6 +376,7 @@ class SeasonBuilderFutureApplyRequestValidationPreviewResponse(BaseModel):
     future_apply_request_validation_preview: dict[str, Any] = Field(default_factory=dict)
     create_only_apply_audit_metadata_preview: dict[str, Any] = Field(default_factory=dict)
     create_only_apply_execution_preflight_preview: dict[str, Any] = Field(default_factory=dict)
+    disabled_execution_contract_summary: dict[str, Any] = Field(default_factory=dict)
     audit_preview: dict[str, Any] = Field(default_factory=dict)
 
 

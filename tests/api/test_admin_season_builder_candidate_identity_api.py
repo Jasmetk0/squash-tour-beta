@@ -267,12 +267,26 @@ def assert_future_apply_validation_preview_disabled_response(body: dict) -> dict
     preflight_preview = assert_create_only_apply_execution_preflight_preview_disabled(
         body["create_only_apply_execution_preflight_preview"]
     )
+    assert_disabled_execution_contract_summary_disabled(body["disabled_execution_contract_summary"])
     assert validation_preview["apply_execution_enabled"] is False
     assert validation_preview["read_only"] is True
     assert validation_preview["mutation_permitted"] is False
     assert validation_preview["validation_type"] == "future_apply_request_validation_preview"
     assert isinstance(validation_preview["message"], str) and validation_preview["message"]
     return validation_preview
+
+
+def assert_disabled_execution_contract_summary_disabled(summary: dict) -> dict:
+    assert isinstance(summary, dict)
+    assert summary["summary_type"] == "disabled_execution_contract_summary"
+    assert isinstance(summary["available"], bool)
+    assert isinstance(summary["all_preview_layers_available"], bool)
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+    assert summary["read_only"] is True
+    assert summary["mutation_permitted"] is False
+    assert isinstance(summary["message"], str) and summary["message"]
+    return summary
 
 
 
@@ -730,6 +744,10 @@ def test_future_apply_request_validation_preview_mismatched_resolved_request(tmp
         assert preflight_preview["all_known_preconditions_met"] is False
         assert preflight_preview["execution_enabled"] is False
         assert preflight_preview["can_execute"] is False
+        summary = assert_disabled_execution_contract_summary_disabled(body["disabled_execution_contract_summary"])
+        assert summary["identity_reference_matches"] is False
+        assert summary["available"] is False
+        assert summary["execution_enabled"] is False
 
 
 def test_future_apply_request_validation_preview_missing_requested_values(tmp_path: Path) -> None:
@@ -824,6 +842,19 @@ def test_future_apply_request_validation_preview_complete_audit_metadata_can_sat
         assert preflight_preview["execution_enabled"] is False
         assert preflight_preview["can_execute"] is False
         assert preflight_preview["mutation_permitted"] is False
+        summary = assert_disabled_execution_contract_summary_disabled(body["disabled_execution_contract_summary"])
+        assert summary["future_apply_reference_contract_available"] is True
+        assert summary["future_apply_request_validation_available"] is True
+        assert summary["audit_metadata_available"] is True
+        assert summary["execution_preflight_available"] is True
+        assert summary["identity_reference_matches"] is True
+        assert summary["audit_metadata_complete"] is True
+        assert summary["all_known_preconditions_met"] is True
+        assert summary["all_preview_layers_available"] is True
+        assert summary["available"] is True
+        assert summary["execution_enabled"] is False
+        assert summary["can_execute"] is False
+        assert summary["mutation_permitted"] is False
 
 
 def test_future_apply_request_validation_preview_wrong_explicit_confirmation_blocks_audit_metadata(tmp_path: Path) -> None:
@@ -863,6 +894,11 @@ def test_future_apply_request_validation_preview_wrong_explicit_confirmation_blo
         assert preflight_preview["audit_metadata_present"] is False
         assert preflight_preview["all_known_preconditions_met"] is False
         assert preflight_preview["execution_enabled"] is False
+        summary = assert_disabled_execution_contract_summary_disabled(body["disabled_execution_contract_summary"])
+        assert summary["audit_metadata_available"] is False
+        assert summary["all_preview_layers_available"] is False
+        assert summary["available"] is False
+        assert summary["execution_enabled"] is False
 
 
 def test_future_apply_request_validation_preview_wrong_mutation_scope_blocks_audit_metadata(tmp_path: Path) -> None:
@@ -930,6 +966,11 @@ def test_future_apply_request_validation_preview_unsupported_source(tmp_path: Pa
         assert preflight_preview["future_apply_request_validation_available"] is False
         assert preflight_preview["all_known_preconditions_met"] is False
         assert preflight_preview["execution_enabled"] is False
+        summary = assert_disabled_execution_contract_summary_disabled(body["disabled_execution_contract_summary"])
+        assert summary["future_apply_reference_contract_available"] is False
+        assert summary["future_apply_request_validation_available"] is False
+        assert summary["available"] is False
+        assert summary["execution_enabled"] is False
 
 
 def test_future_apply_request_validation_preview_unresolved_source_template(tmp_path: Path) -> None:

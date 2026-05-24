@@ -4,6 +4,7 @@ from beta_engine.application.season_builder_candidate_identity import (
     build_candidate_identity_fingerprint,
     build_candidate_identity_overview,
     build_candidate_identity_review_reference,
+    build_future_apply_request_validation_preview,
     build_future_apply_reference_contract,
     build_candidate_identity_summary,
     sanitize_candidate_identity_part,
@@ -448,3 +449,115 @@ def test_future_apply_reference_contract_main_future_command_readiness_parity() 
 
     assert ready_contract["main_future_command_reference_ready"] is True
     assert blocked_contract["main_future_command_reference_ready"] is False
+
+
+def test_future_apply_request_validation_preview_matching_referenceable_contract() -> None:
+    preview = build_future_apply_request_validation_preview(
+        requested_candidate_identity_reference_id="fp_abc",
+        requested_candidate_identity_fingerprint="fp_abc",
+        requested_candidate_identity_reference_type="candidate_identity_set",
+        future_apply_reference_contract={
+            "available": True,
+            "candidate_identity_reference_id": "fp_abc",
+            "candidate_identity_fingerprint": "fp_abc",
+            "candidate_identity_reference_type": "candidate_identity_set",
+            "candidate_identity_set_referenceable": True,
+        },
+    )
+    assert preview["available"] is True
+    assert preview["reference_id_matches"] is True
+    assert preview["fingerprint_matches"] is True
+    assert preview["reference_type_matches"] is True
+    assert preview["contract_referenceable"] is True
+    assert preview["apply_execution_enabled"] is False
+    assert preview["read_only"] is True
+    assert preview["mutation_permitted"] is False
+
+
+def test_future_apply_request_validation_preview_mismatched_values() -> None:
+    preview = build_future_apply_request_validation_preview(
+        requested_candidate_identity_reference_id="wrong_id",
+        requested_candidate_identity_fingerprint="wrong_fp",
+        requested_candidate_identity_reference_type="wrong_type",
+        future_apply_reference_contract={
+            "available": True,
+            "candidate_identity_reference_id": "fp_abc",
+            "candidate_identity_fingerprint": "fp_abc",
+            "candidate_identity_reference_type": "candidate_identity_set",
+            "candidate_identity_set_referenceable": True,
+        },
+    )
+    assert preview["available"] is False
+    assert preview["reference_id_matches"] is False
+    assert preview["fingerprint_matches"] is False
+    assert preview["reference_type_matches"] is False
+    assert preview["apply_execution_enabled"] is False
+    assert preview["read_only"] is True
+    assert preview["mutation_permitted"] is False
+
+
+def test_future_apply_request_validation_preview_missing_request_values() -> None:
+    preview = build_future_apply_request_validation_preview(
+        requested_candidate_identity_reference_id=None,
+        requested_candidate_identity_fingerprint="",
+        requested_candidate_identity_reference_type=None,
+        future_apply_reference_contract={
+            "available": True,
+            "candidate_identity_reference_id": "fp_abc",
+            "candidate_identity_fingerprint": "fp_abc",
+            "candidate_identity_reference_type": "candidate_identity_set",
+            "candidate_identity_set_referenceable": True,
+        },
+    )
+    assert preview["available"] is False
+    assert preview["requested_candidate_identity_reference_id"] == ""
+    assert preview["requested_candidate_identity_fingerprint"] == ""
+    assert preview["requested_candidate_identity_reference_type"] == ""
+    assert preview["reference_id_matches"] is False
+    assert preview["fingerprint_matches"] is False
+    assert preview["reference_type_matches"] is False
+    assert preview["apply_execution_enabled"] is False
+    assert preview["read_only"] is True
+    assert preview["mutation_permitted"] is False
+
+
+def test_future_apply_request_validation_preview_matching_values_blocked_contract() -> None:
+    preview = build_future_apply_request_validation_preview(
+        requested_candidate_identity_reference_id="fp_abc",
+        requested_candidate_identity_fingerprint="fp_abc",
+        requested_candidate_identity_reference_type="candidate_identity_set",
+        future_apply_reference_contract={
+            "available": False,
+            "candidate_identity_reference_id": "fp_abc",
+            "candidate_identity_fingerprint": "fp_abc",
+            "candidate_identity_reference_type": "candidate_identity_set",
+            "candidate_identity_set_referenceable": False,
+        },
+    )
+    assert preview["reference_id_matches"] is True
+    assert preview["fingerprint_matches"] is True
+    assert preview["reference_type_matches"] is True
+    assert preview["contract_referenceable"] is False
+    assert preview["available"] is False
+    assert preview["apply_execution_enabled"] is False
+    assert preview["read_only"] is True
+    assert preview["mutation_permitted"] is False
+
+
+def test_future_apply_request_validation_preview_malformed_contract_values() -> None:
+    preview = build_future_apply_request_validation_preview(
+        requested_candidate_identity_reference_id="fp_abc",
+        requested_candidate_identity_fingerprint="fp_abc",
+        requested_candidate_identity_reference_type="candidate_identity_set",
+        future_apply_reference_contract={
+            "available": "yes",
+            "candidate_identity_reference_id": 123,
+            "candidate_identity_fingerprint": None,
+            "candidate_identity_reference_type": {},
+        },
+    )
+    assert preview["expected_candidate_identity_reference_id"] == ""
+    assert preview["expected_candidate_identity_fingerprint"] == ""
+    assert preview["expected_candidate_identity_reference_type"] == ""
+    assert preview["contract_referenceable"] is False
+    assert preview["available"] is False

@@ -138,6 +138,8 @@ import type {
   SeasonBuilderApplyCreateOnlyCommandRequest,
   SeasonBuilderApplyCreateOnlyCommandResponse,
   SeasonBuilderApplyCreateOnlyReadinessResponse,
+  SeasonBuilderFutureApplyRequestValidationPreviewRequest,
+  SeasonBuilderFutureApplyRequestValidationPreviewResponse,
   CategoriesResponse,
   TournamentMastersResponse,
   TourSeasonsValidationResponse,
@@ -236,6 +238,16 @@ export function postSeasonBuilderApplyCreateOnlyReadiness(
   payload: SeasonBuilderApplyCommandContractRequest
 ): Promise<SeasonBuilderApplyCreateOnlyReadinessResponse> {
   return request('/admin/seasons/builder/apply-create-only-readiness', { method: 'POST', body: JSON.stringify(payload) })
+}
+
+
+export async function validateFutureApplyRequestPreview(
+  payload: SeasonBuilderFutureApplyRequestValidationPreviewRequest
+): Promise<SeasonBuilderFutureApplyRequestValidationPreviewResponse> {
+  return request('/admin/seasons/builder/future-apply-request-validation-preview', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
 }
 
 export function getCategories(): Promise<CategoriesResponse> {

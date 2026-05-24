@@ -1434,6 +1434,9 @@ export function extractConflictCodesFromReport(report: SeasonTemplateSlotConflic
 }
 
 type TemplateConflictDiagnosticsOverviewDisplay = {
+  selectedReportAvailable: 'available' | 'unavailable' | 'n/a'
+  selectedStatus: 'clean' | 'warnings' | 'info' | 'n/a'
+  selectedConflictCount: string
   preflightPreviewAvailable: 'available' | 'unavailable' | 'n/a'
   preflightSummaryAvailable: 'available' | 'unavailable' | 'n/a'
   preflightStatus: 'clean' | 'warnings' | 'info' | 'n/a'
@@ -1471,6 +1474,9 @@ export function readTemplateConflictDiagnosticsOverview(overview: unknown): Temp
   if (!overview || typeof overview !== 'object') return null
   const record = overview as Record<string, unknown>
   return {
+    selectedReportAvailable: toAvailableString(record.selected_report_available),
+    selectedStatus: toConflictStatus(record.selected_status),
+    selectedConflictCount: toCountString(record.selected_conflict_count),
     preflightPreviewAvailable: toAvailableString(record.preflight_preview_available),
     preflightSummaryAvailable: toAvailableString(record.preflight_summary_available),
     preflightStatus: toConflictStatus(record.preflight_status),
@@ -1495,11 +1501,19 @@ export function TemplateConflictDiagnosticsOverviewPanel({
   preflightResult,
   dryRunResult
 }: TemplateConflictDiagnosticsOverviewPanelProps): JSX.Element {
-  const selectedAvailable = Boolean(selectedConflictReport)
-  const selectedStatus = selectedConflictReport?.summary?.status ?? 'n/a'
-  const selectedConflictCount = typeof selectedConflictReport?.summary?.conflict_count === 'number'
-    ? String(selectedConflictReport.summary.conflict_count)
-    : 'n/a'
+  const selectedOverviewRaw = selectedConflictReport?.template_conflict_diagnostics_overview
+  const selectedOverview = readTemplateConflictDiagnosticsOverview(selectedConflictReport?.template_conflict_diagnostics_overview)
+  const selectedAvailable = selectedOverview && typeof selectedOverviewRaw?.selected_report_available === 'boolean'
+    ? selectedOverview.selectedReportAvailable
+    : (selectedConflictReport ? 'available' : 'unavailable')
+  const selectedStatus = selectedOverview && selectedOverview.selectedStatus !== 'n/a'
+    ? selectedOverview.selectedStatus
+    : (selectedConflictReport?.summary?.status ?? 'n/a')
+  const selectedConflictCount = selectedOverview && selectedOverview.selectedConflictCount !== 'n/a'
+    ? selectedOverview.selectedConflictCount
+    : (typeof selectedConflictReport?.summary?.conflict_count === 'number'
+      ? String(selectedConflictReport.summary.conflict_count)
+      : 'n/a')
 
   const preflightPreview = preflightResult?.template_slot_conflict_preview
   const preflightSummary = readPreflightTemplateConflictSummary(preflightResult?.authoritative_diff_summary)

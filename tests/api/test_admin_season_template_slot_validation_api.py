@@ -219,6 +219,12 @@ def test_slot_conflicts_endpoint_returns_read_only_report(tmp_path: Path) -> Non
         assert body["template_id"] == "default_msa_template_preview"
         assert body["summary"]["slot_count"] >= 0
         assert isinstance(body["conflicts"], list)
+        overview = body["template_conflict_diagnostics_overview"]
+        assert overview["selected_report_available"] is True
+        assert overview["selected_status"] == body["summary"]["status"]
+        assert overview["selected_conflict_count"] == body["summary"]["conflict_count"]
+        assert overview["read_only"] is True
+        assert overview["non_blocking"] is True
 
 
 def test_slot_conflicts_route_does_not_conflict_with_slot_validation(tmp_path: Path) -> None:

@@ -98,6 +98,14 @@ def test_analyze_template_slot_conflicts_week_overload(tmp_path):
     report = service.analyze_template_slot_conflicts("default_msa_template_preview")
     assert report.template_exists is True
     assert any(conflict.code == "template_conflict_week_overloaded" for conflict in report.conflicts)
+    assert report.template_conflict_diagnostics_overview is not None
+    assert report.template_conflict_diagnostics_overview.selected_report_available is True
+    assert report.template_conflict_diagnostics_overview.selected_status == report.summary.status
+    assert report.template_conflict_diagnostics_overview.selected_conflict_count == report.summary.conflict_count
+    assert report.template_conflict_diagnostics_overview.mutation_behavior == "unavailable"
+    assert report.template_conflict_diagnostics_overview.blocking_behavior == "non_blocking"
+    assert report.template_conflict_diagnostics_overview.read_only is True
+    assert report.template_conflict_diagnostics_overview.non_blocking is True
 
 
 def test_analyze_template_slot_conflicts_premium_overlap(tmp_path):
@@ -135,6 +143,12 @@ def test_analyze_template_slot_conflicts_missing_template(tmp_path):
     assert report.template_exists is False
     assert report.summary.status == "warnings"
     assert any(conflict.code == "template_conflict_template_not_found" for conflict in report.conflicts)
+    assert report.template_conflict_diagnostics_overview is not None
+    assert report.template_conflict_diagnostics_overview.selected_report_available is False
+    assert report.template_conflict_diagnostics_overview.selected_status is None
+    assert report.template_conflict_diagnostics_overview.selected_conflict_count == 0
+    assert report.template_conflict_diagnostics_overview.read_only is True
+    assert report.template_conflict_diagnostics_overview.non_blocking is True
 
 
 def test_analyze_template_slot_conflicts_deterministic_warning_before_info(tmp_path):

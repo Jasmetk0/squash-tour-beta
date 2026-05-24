@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 from beta_engine.domain.tournaments import (
     SeasonTemplateConflictDiagnosticsOverview,
     SeasonTemplateSlotConflictPreview,
@@ -40,6 +42,43 @@ def build_template_conflict_summary_preview(
     }
 
 
+def _normalize_conflict_status(value: object | None) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip().lower()
+    if normalized in {"clean", "warnings", "info"}:
+        return normalized
+    return None
+
+
+def _normalize_non_negative_int(value: object | None) -> int:
+    if isinstance(value, bool):
+        return 0
+    if isinstance(value, int):
+        return value if value >= 0 else 0
+    if isinstance(value, float):
+        if math.isfinite(value) and value >= 0 and value.is_integer():
+            return int(value)
+        return 0
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped.isdigit():
+            return int(stripped)
+    return 0
+
+
+def _is_valid_non_negative_int_value(value: object | None) -> bool:
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, int):
+        return value >= 0
+    if isinstance(value, float):
+        return math.isfinite(value) and value >= 0 and value.is_integer()
+    if isinstance(value, str):
+        return value.strip().isdigit()
+    return False
+
+
 def build_template_conflict_diagnostics_overview(
     *,
     selected_report_available: bool = False,
@@ -55,19 +94,39 @@ def build_template_conflict_diagnostics_overview(
     preflight_preview_available = preflight_preview is not None
     dry_run_preview_available = dry_run_preview is not None
 
-    preflight_status = (
+    preflight_summary_status = _normalize_conflict_status(
         preflight_summary.get("status") if preflight_summary_available else None
-    ) or (preflight_preview.status if preflight_preview_available else None)
-    preflight_conflict_count = (
-        int(preflight_summary.get("conflict_count", 0)) if preflight_summary_available else 0
-    ) if preflight_summary_available else (preflight_preview.conflict_count if preflight_preview_available else 0)
+    )
+    preflight_preview_status = preflight_preview.status if preflight_preview_available else None
+    preflight_status = preflight_summary_status
+    if preflight_status is None and preflight_preview_status is not None:
+        preflight_status = preflight_preview_status
 
-    dry_run_status = (
+    preflight_summary_count_raw = preflight_summary.get("conflict_count") if preflight_summary_available else None
+    preflight_summary_conflict_count = _normalize_non_negative_int(preflight_summary_count_raw)
+    preflight_preview_conflict_count = preflight_preview.conflict_count if preflight_preview_available else 0
+    preflight_conflict_count = preflight_summary_conflict_count
+    if preflight_summary_available and not _is_valid_non_negative_int_value(preflight_summary_count_raw):
+        preflight_conflict_count = preflight_preview_conflict_count if preflight_preview_available else 0
+    elif not preflight_summary_available:
+        preflight_conflict_count = preflight_preview_conflict_count
+
+    dry_run_summary_status = _normalize_conflict_status(
         dry_run_summary.get("status") if dry_run_summary_available else None
-    ) or (dry_run_preview.status if dry_run_preview_available else None)
-    dry_run_conflict_count = (
-        int(dry_run_summary.get("conflict_count", 0)) if dry_run_summary_available else 0
-    ) if dry_run_summary_available else (dry_run_preview.conflict_count if dry_run_preview_available else 0)
+    )
+    dry_run_preview_status = dry_run_preview.status if dry_run_preview_available else None
+    dry_run_status = dry_run_summary_status
+    if dry_run_status is None and dry_run_preview_status is not None:
+        dry_run_status = dry_run_preview_status
+
+    dry_run_summary_count_raw = dry_run_summary.get("conflict_count") if dry_run_summary_available else None
+    dry_run_summary_conflict_count = _normalize_non_negative_int(dry_run_summary_count_raw)
+    dry_run_preview_conflict_count = dry_run_preview.conflict_count if dry_run_preview_available else 0
+    dry_run_conflict_count = dry_run_summary_conflict_count
+    if dry_run_summary_available and not _is_valid_non_negative_int_value(dry_run_summary_count_raw):
+        dry_run_conflict_count = dry_run_preview_conflict_count if dry_run_preview_available else 0
+    elif not dry_run_summary_available:
+        dry_run_conflict_count = dry_run_preview_conflict_count
 
     return SeasonTemplateConflictDiagnosticsOverview(
         selected_report_available=selected_report_available,

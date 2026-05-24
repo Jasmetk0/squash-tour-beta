@@ -40,6 +40,15 @@ describe('validateFutureApplyRequestPreview', () => {
         requested_candidate_identity_fingerprint: 'fp-123',
         requested_candidate_identity_reference_type: 'future_apply_reference_contract'
       },
+      create_only_apply_execution_preflight_preview: {
+        available: true,
+        preflight_type: 'create_only_apply_execution_preflight_preview',
+        execution_enabled: false,
+        can_execute: false,
+        mutation_permitted: false,
+        read_only: true,
+        message: 'Preview only.'
+      },
       audit_preview: null
     }
 
@@ -84,7 +93,16 @@ describe('validateFutureApplyRequestPreview', () => {
           overwrite_policy: null,
           future_apply_reference_contract: null,
           future_apply_request_validation_preview: null,
-          audit_preview: null
+          create_only_apply_execution_preflight_preview: {
+        available: true,
+        preflight_type: 'create_only_apply_execution_preflight_preview',
+        execution_enabled: false,
+        can_execute: false,
+        mutation_permitted: false,
+        read_only: true,
+        message: 'Preview only.'
+      },
+      audit_preview: null
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       )

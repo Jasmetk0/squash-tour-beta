@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, DisabledDryRunBuildContractPanel, FutureApplyReferenceContractPanel, FutureApplyRequestValidationPreviewPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel, readCandidateIdentityReadinessOverview, readFutureApplyReferenceContract, readFutureApplyRequestValidationPreview } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, CreateOnlyApplyExecutionPreflightPreviewPanel, DisabledDryRunBuildContractPanel, FutureApplyReferenceContractPanel, FutureApplyRequestValidationPreviewPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel, readCandidateIdentityReadinessOverview, readCreateOnlyApplyExecutionPreflightPreview, readFutureApplyReferenceContract, readFutureApplyRequestValidationPreview } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -113,6 +113,16 @@ function futureApplyValidationResponseMock(
       read_only: true,
       mutation_permitted: false,
       message: 'Validation preview only.'
+    },
+    create_only_apply_execution_preflight_preview: {
+      available: true,
+      preflight_type: 'create_only_apply_execution_preflight_preview',
+      all_known_preconditions_met: true,
+      execution_enabled: false,
+      can_execute: false,
+      read_only: true,
+      mutation_permitted: false,
+      message: 'Create-only apply execution remains disabled in preview mode.'
     },
     audit_preview: {
       read_only: true,
@@ -4187,9 +4197,46 @@ describe('Future apply preview panels', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
+
+  it('renders valid create-only apply execution preflight preview data', () => {
+    render(<CreateOnlyApplyExecutionPreflightPreviewPanel preview={{ available: true, all_known_preconditions_met: true, execution_enabled: false, can_execute: false, mutation_permitted: false, message: 'Create-only apply execution remains disabled in preview mode.' }} />)
+    expect(screen.getByText('All known preconditions met: true')).toBeInTheDocument()
+    expect(screen.getByText('Execution enabled: false')).toBeInTheDocument()
+    expect(screen.getByText('Can execute: false')).toBeInTheDocument()
+    expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
+    expect(screen.getByText('Message: Create-only apply execution remains disabled in preview mode.')).toBeInTheDocument()
+  })
+
+  it('handles missing and malformed create-only apply execution preflight preview data', () => {
+    expect(readCreateOnlyApplyExecutionPreflightPreview(undefined)).toBeNull()
+    render(<CreateOnlyApplyExecutionPreflightPreviewPanel preview={{ available: 'yes', preflight_type: '', execution_enabled: 'nope' }} />)
+    expect(screen.getByText('Available: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Preflight type: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Execution enabled: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Message: No message provided.')).toBeInTheDocument()
+  })
+
   it('renders future apply reference contract from dry run preview without apply buttons', () => {
     render(<FutureApplyReferenceContractPanel dryRunResultPreview={{ future_apply_reference_contract: { available: true, contract_type: 'future_apply_reference_contract' } }} />)
     expect(screen.getByText('Future apply reference contract')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /apply|execute/i })).not.toBeInTheDocument()
+  })
+})
+
+
+describe('Future apply validation UI safety', () => {
+  it('renders create-only preflight panel from manual validation without apply/execute buttons and no eager endpoint calls', async () => {
+    renderAppAt('/admin/seasons/build')
+    expect(api.validateFutureApplyRequestPreview).not.toHaveBeenCalled()
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Validate future apply reference' }))
+
+    await screen.findByText('Create-only apply execution preflight preview')
+    expect(screen.getByText('Execution enabled: false')).toBeInTheDocument()
+    expect(screen.getByText('Can execute: false')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
   })
 })

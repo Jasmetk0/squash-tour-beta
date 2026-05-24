@@ -1378,6 +1378,46 @@ export function readFutureApplyRequestValidationPreview(value: unknown): Normali
   }
 }
 
+export type NormalizedCreateOnlyApplyExecutionPreflightPreview = {
+  available: string
+  preflightType: string
+  targetAbsent: string
+  createOnlyScopeConfirmed: string
+  auditMetadataPresent: string
+  futureApplyReferenceContractAvailable: string
+  futureApplyRequestValidationAvailable: string
+  candidateIdentityReferenceMatches: string
+  mainFutureCommandReferenceReady: string
+  allKnownPreconditionsMet: string
+  executionEnabled: string
+  canExecute: string
+  readOnly: string
+  mutationPermitted: string
+  message: string
+}
+
+export function readCreateOnlyApplyExecutionPreflightPreview(value: unknown): NormalizedCreateOnlyApplyExecutionPreflightPreview | null {
+  if (!value || typeof value !== 'object') return null
+  const record = value as Record<string, unknown>
+  return {
+    available: normalizeBooleanDisplay(record.available),
+    preflightType: normalizeNonEmptyStringDisplay(record.preflight_type),
+    targetAbsent: normalizeBooleanDisplay(record.target_absent),
+    createOnlyScopeConfirmed: normalizeBooleanDisplay(record.create_only_scope_confirmed),
+    auditMetadataPresent: normalizeBooleanDisplay(record.audit_metadata_present),
+    futureApplyReferenceContractAvailable: normalizeBooleanDisplay(record.future_apply_reference_contract_available),
+    futureApplyRequestValidationAvailable: normalizeBooleanDisplay(record.future_apply_request_validation_available),
+    candidateIdentityReferenceMatches: normalizeBooleanDisplay(record.candidate_identity_reference_matches),
+    mainFutureCommandReferenceReady: normalizeBooleanDisplay(record.main_future_command_reference_ready),
+    allKnownPreconditionsMet: normalizeBooleanDisplay(record.all_known_preconditions_met),
+    executionEnabled: normalizeBooleanDisplay(record.execution_enabled),
+    canExecute: normalizeBooleanDisplay(record.can_execute),
+    readOnly: normalizeBooleanDisplay(record.read_only),
+    mutationPermitted: normalizeBooleanDisplay(record.mutation_permitted),
+    message: normalizeNonEmptyStringDisplay(record.message) === 'n/a' ? 'No message provided.' : normalizeNonEmptyStringDisplay(record.message)
+  }
+}
+
 export function readCandidateIdentityReadinessOverview(identityReadiness: unknown): Record<string, string> | null {
   if (!identityReadiness || typeof identityReadiness !== 'object') return null
   const overview = (identityReadiness as Record<string, unknown>).candidate_identity_readiness_overview
@@ -3988,6 +4028,31 @@ export function FutureApplyReferenceContractPanel({ dryRunResultPreview }: { dry
       <p>Read-only: {contract.readOnly}</p>
       <p>Mutation permitted: {contract.mutationPermitted}</p>
       <p>Message: {contract.message}</p>
+    </>
+  )
+}
+
+export function CreateOnlyApplyExecutionPreflightPreviewPanel({ preview }: { preview?: unknown }): JSX.Element {
+  const preflightPreview = readCreateOnlyApplyExecutionPreflightPreview(preview)
+  if (!preflightPreview) return <p>Create-only apply execution preflight preview is not available.</p>
+  return (
+    <>
+      <p>Create-only apply execution preflight preview</p>
+      <p>Available: {preflightPreview.available}</p>
+      <p>Preflight type: {preflightPreview.preflightType}</p>
+      <p>Target absent: {preflightPreview.targetAbsent}</p>
+      <p>Create-only scope confirmed: {preflightPreview.createOnlyScopeConfirmed}</p>
+      <p>Audit metadata present: {preflightPreview.auditMetadataPresent}</p>
+      <p>Future apply reference contract available: {preflightPreview.futureApplyReferenceContractAvailable}</p>
+      <p>Future apply request validation available: {preflightPreview.futureApplyRequestValidationAvailable}</p>
+      <p>Candidate identity reference matches: {preflightPreview.candidateIdentityReferenceMatches}</p>
+      <p>Main future command reference ready: {preflightPreview.mainFutureCommandReferenceReady}</p>
+      <p>All known preconditions met: {preflightPreview.allKnownPreconditionsMet}</p>
+      <p>Execution enabled: {preflightPreview.executionEnabled}</p>
+      <p>Can execute: {preflightPreview.canExecute}</p>
+      <p>Read-only: {preflightPreview.readOnly}</p>
+      <p>Mutation permitted: {preflightPreview.mutationPermitted}</p>
+      <p>Message: {preflightPreview.message}</p>
     </>
   )
 }

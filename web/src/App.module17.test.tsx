@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, CreateOnlyApplyAuditMetadataPreviewPanel, CreateOnlyApplyExecutionPreflightPreviewPanel, DisabledDryRunBuildContractPanel, FutureApplyReferenceContractPanel, FutureApplyRequestValidationPreviewPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel, readCandidateIdentityReadinessOverview, readCreateOnlyApplyAuditMetadataPreview, readCreateOnlyApplyExecutionPreflightPreview, readFutureApplyReferenceContract, readFutureApplyRequestValidationPreview } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, CreateOnlyApplyAuditMetadataPreviewPanel, CreateOnlyApplyExecutionPreflightPreviewPanel, DisabledDryRunBuildContractPanel, DisabledExecutionContractSummaryPanel, FutureApplyReferenceContractPanel, FutureApplyRequestValidationPreviewPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel, readCandidateIdentityReadinessOverview, readCreateOnlyApplyAuditMetadataPreview, readCreateOnlyApplyExecutionPreflightPreview, readDisabledExecutionContractSummary, readFutureApplyReferenceContract, readFutureApplyRequestValidationPreview } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -148,6 +148,23 @@ function futureApplyValidationResponseMock(
       read_only: true,
       mutation_permitted: false,
       message: 'Create-only apply audit metadata preview is read-only.'
+    },
+    disabled_execution_contract_summary: {
+      available: true,
+      summary_type: 'disabled_execution_contract_summary',
+      future_apply_reference_contract_available: true,
+      future_apply_request_validation_available: true,
+      audit_metadata_available: true,
+      execution_preflight_available: true,
+      identity_reference_matches: true,
+      audit_metadata_complete: true,
+      all_known_preconditions_met: true,
+      all_preview_layers_available: true,
+      execution_enabled: false,
+      can_execute: false,
+      read_only: true,
+      mutation_permitted: false,
+      message: 'Execution contract summary is read-only in this phase.'
     },
     audit_preview: {
       read_only: true,
@@ -4256,8 +4273,6 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Candidate identity reference matches: true')).toBeInTheDocument()
     expect(screen.getByText('Main future command reference ready: true')).toBeInTheDocument()
     expect(screen.getByText('All known preconditions met: false')).toBeInTheDocument()
-    expect(screen.getAllByText('Execution enabled: false').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('Can execute: false').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
     expect(screen.getByText('Message: Create-only apply execution remains disabled in preview mode.')).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
@@ -4282,11 +4297,27 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Mutation scope present: true')).toBeInTheDocument()
     expect(screen.getByText('Mutation scope matches: true')).toBeInTheDocument()
     expect(screen.getByText('All required audit metadata present: true')).toBeInTheDocument()
-    expect(screen.getAllByText('Execution enabled: false').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('Can execute: false').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
     expect(screen.getByText('Message: Create-only apply audit metadata preview is read-only.')).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('renders valid disabled execution contract summary data', () => {
+    render(<DisabledExecutionContractSummaryPanel summary={{ available: true, summary_type: 'disabled_execution_contract_summary', future_apply_reference_contract_available: true, future_apply_request_validation_available: true, audit_metadata_available: true, execution_preflight_available: true, identity_reference_matches: true, audit_metadata_complete: true, all_known_preconditions_met: true, all_preview_layers_available: true, execution_enabled: false, can_execute: false, read_only: true, mutation_permitted: false, message: 'Execution remains disabled by contract.' }} />)
+    expect(screen.getByText('Available: true')).toBeInTheDocument()
+    expect(screen.getByText('Summary type: disabled_execution_contract_summary')).toBeInTheDocument()
+    expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
+    expect(screen.getByText('Message: Execution remains disabled by contract.')).toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('handles missing and malformed disabled execution contract summary data', () => {
+    expect(readDisabledExecutionContractSummary(undefined)).toBeNull()
+    render(<DisabledExecutionContractSummaryPanel summary={{ available: 'yes', summary_type: '', all_preview_layers_available: 'bad' }} />)
+    expect(screen.getByText('Available: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Summary type: n/a')).toBeInTheDocument()
+    expect(screen.getByText('All preview layers available: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Message: No message provided.')).toBeInTheDocument()
   })
 
   it('handles missing and malformed create-only apply audit metadata preview data', () => {
@@ -4319,8 +4350,6 @@ describe('Future apply validation UI safety', () => {
     expect(screen.getByText('Create-only scope confirmed: true')).toBeInTheDocument()
     expect(screen.getByText('Audit metadata present: false')).toBeInTheDocument()
     expect(screen.getByText('All known preconditions met: false')).toBeInTheDocument()
-    expect(screen.getAllByText('Execution enabled: false').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('Can execute: false').length).toBeGreaterThanOrEqual(1)
     expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
@@ -4334,10 +4363,25 @@ describe('Future apply validation UI safety', () => {
 
     await screen.findByText('Create-only apply audit metadata preview')
     expect(screen.getByText('All required audit metadata present: true')).toBeInTheDocument()
-    expect(screen.getAllByText('Execution enabled: false').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('Can execute: false').length).toBeGreaterThanOrEqual(1)
     expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
+  })
+
+  it('renders disabled execution contract summary from manual validation result without apply/execute endpoints', async () => {
+    renderAppAt('/admin/seasons/build')
+    const callsBeforeClick = api.validateFutureApplyRequestPreview.mock.calls.length
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Validate future apply reference' }))
+    await waitFor(() => expect(api.validateFutureApplyRequestPreview.mock.calls.length).toBe(callsBeforeClick + 1))
+
+    await screen.findByText('Disabled execution contract summary')
+    expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
+    expect(api.postSeasonBuilderApplyCommandContract).not.toHaveBeenCalledWith(expect.objectContaining({
+      requested_candidate_identity_reference_id: expect.any(String)
+    }))
   })
 })

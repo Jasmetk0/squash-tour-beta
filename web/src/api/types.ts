@@ -3263,6 +3263,35 @@ export type CandidateIdentityContract = {
   message?: string
 }
 
+export type CandidateIdentityFingerprint = {
+  fingerprint?: string
+  fingerprint_algorithm?: string
+  fingerprint_payload_version?: number
+  candidate_count?: number
+  candidate_ids?: string[]
+  candidate_identity_keys?: string[]
+  safe_for_future_reference?: boolean
+  target_season_label?: string | null
+  source_type?: string | null
+  source_template_id?: string | null
+  read_only?: boolean
+  mutation_permitted?: boolean
+  message?: string
+}
+
+export type CandidateIdentityReviewReference = {
+  reference_type?: string
+  reference_id?: string
+  fingerprint_algorithm?: string
+  fingerprint_payload_version?: number
+  candidate_count?: number
+  safe_for_future_reference?: boolean
+  can_reference_future_apply?: boolean
+  read_only?: boolean
+  mutation_permitted?: boolean
+  message?: string
+}
+
 export type SeasonBuilderDryRunBuildRequest = {
   target_season_label: string
   source_type: string
@@ -3302,6 +3331,8 @@ export type SeasonBuilderDryRunBuildResponse = {
     candidate_identity_summary?: CandidateIdentitySummary | null
     candidate_identity_contract?: CandidateIdentityContract | null
     candidate_identity_overview?: CandidateIdentityOverview | null
+    candidate_identity_fingerprint?: CandidateIdentityFingerprint | null
+    candidate_identity_review_reference?: CandidateIdentityReviewReference | null
   }
   message: string
 }

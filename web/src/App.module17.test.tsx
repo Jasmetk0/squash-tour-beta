@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, CreateOnlyApplyExecutionPreflightPreviewPanel, DisabledDryRunBuildContractPanel, FutureApplyReferenceContractPanel, FutureApplyRequestValidationPreviewPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel, readCandidateIdentityReadinessOverview, readCreateOnlyApplyExecutionPreflightPreview, readFutureApplyReferenceContract, readFutureApplyRequestValidationPreview } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, CreateOnlyApplyAuditMetadataPreviewPanel, CreateOnlyApplyExecutionPreflightPreviewPanel, DisabledDryRunBuildContractPanel, FutureApplyReferenceContractPanel, FutureApplyRequestValidationPreviewPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel, readCandidateIdentityReadinessOverview, readCreateOnlyApplyAuditMetadataPreview, readCreateOnlyApplyExecutionPreflightPreview, readFutureApplyReferenceContract, readFutureApplyRequestValidationPreview } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -130,6 +130,24 @@ function futureApplyValidationResponseMock(
       read_only: true,
       mutation_permitted: false,
       message: 'Create-only apply execution remains disabled in preview mode.'
+    },
+    create_only_apply_audit_metadata_preview: {
+      available: true,
+      preview_type: 'create_only_apply_audit_metadata_preview',
+      requested_by_present: true,
+      audit_reason_present: true,
+      explicit_confirmation_present: true,
+      explicit_confirmation_matches: true,
+      mutation_scope_present: true,
+      mutation_scope_matches: true,
+      required_confirmation_phrase: 'I UNDERSTAND THIS IS CREATE ONLY',
+      required_mutation_scope: 'create_only',
+      all_required_audit_metadata_present: true,
+      execution_enabled: false,
+      can_execute: false,
+      read_only: true,
+      mutation_permitted: false,
+      message: 'Create-only apply audit metadata preview is read-only.'
     },
     audit_preview: {
       read_only: true,
@@ -4215,8 +4233,8 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Candidate identity reference matches: true')).toBeInTheDocument()
     expect(screen.getByText('Main future command reference ready: true')).toBeInTheDocument()
     expect(screen.getByText('All known preconditions met: false')).toBeInTheDocument()
-    expect(screen.getByText('Execution enabled: false')).toBeInTheDocument()
-    expect(screen.getByText('Can execute: false')).toBeInTheDocument()
+    expect(screen.getAllByText('Execution enabled: false').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Can execute: false').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
     expect(screen.getByText('Message: Create-only apply execution remains disabled in preview mode.')).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
@@ -4228,6 +4246,32 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Available: n/a')).toBeInTheDocument()
     expect(screen.getByText('Preflight type: n/a')).toBeInTheDocument()
     expect(screen.getByText('Execution enabled: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Message: No message provided.')).toBeInTheDocument()
+  })
+
+  it('renders valid create-only apply audit metadata preview data', () => {
+    render(<CreateOnlyApplyAuditMetadataPreviewPanel preview={{ available: true, preview_type: 'create_only_apply_audit_metadata_preview', requested_by_present: true, audit_reason_present: true, explicit_confirmation_present: true, explicit_confirmation_matches: true, mutation_scope_present: true, mutation_scope_matches: true, required_confirmation_phrase: 'I UNDERSTAND THIS IS CREATE ONLY', required_mutation_scope: 'create_only', all_required_audit_metadata_present: true, execution_enabled: false, can_execute: false, read_only: true, mutation_permitted: false, message: 'Create-only apply audit metadata preview is read-only.' }} />)
+    expect(screen.getByText('Available: true')).toBeInTheDocument()
+    expect(screen.getByText('Requested by present: true')).toBeInTheDocument()
+    expect(screen.getByText('Audit reason present: true')).toBeInTheDocument()
+    expect(screen.getByText('Explicit confirmation present: true')).toBeInTheDocument()
+    expect(screen.getByText('Explicit confirmation matches: true')).toBeInTheDocument()
+    expect(screen.getByText('Mutation scope present: true')).toBeInTheDocument()
+    expect(screen.getByText('Mutation scope matches: true')).toBeInTheDocument()
+    expect(screen.getByText('All required audit metadata present: true')).toBeInTheDocument()
+    expect(screen.getAllByText('Execution enabled: false').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Can execute: false').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
+    expect(screen.getByText('Message: Create-only apply audit metadata preview is read-only.')).toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('handles missing and malformed create-only apply audit metadata preview data', () => {
+    expect(readCreateOnlyApplyAuditMetadataPreview(undefined)).toBeNull()
+    render(<CreateOnlyApplyAuditMetadataPreviewPanel preview={{ available: 'yes', preview_type: '', requested_by_present: 'x' }} />)
+    expect(screen.getByText('Available: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Preview type: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Requested by present: n/a')).toBeInTheDocument()
     expect(screen.getByText('Message: No message provided.')).toBeInTheDocument()
   })
 
@@ -4252,8 +4296,23 @@ describe('Future apply validation UI safety', () => {
     expect(screen.getByText('Create-only scope confirmed: true')).toBeInTheDocument()
     expect(screen.getByText('Audit metadata present: false')).toBeInTheDocument()
     expect(screen.getByText('All known preconditions met: false')).toBeInTheDocument()
-    expect(screen.getByText('Execution enabled: false')).toBeInTheDocument()
-    expect(screen.getByText('Can execute: false')).toBeInTheDocument()
+    expect(screen.getAllByText('Execution enabled: false').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Can execute: false').length).toBeGreaterThanOrEqual(1)
+    expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
+  })
+
+  it('renders create-only audit metadata preview from manual validation result with no apply or execute button', async () => {
+    renderAppAt('/admin/seasons/build')
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Validate future apply reference' }))
+
+    await screen.findByText('Create-only apply audit metadata preview')
+    expect(screen.getByText('All required audit metadata present: true')).toBeInTheDocument()
+    expect(screen.getAllByText('Execution enabled: false').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Can execute: false').length).toBeGreaterThanOrEqual(1)
     expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()

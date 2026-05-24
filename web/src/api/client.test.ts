@@ -49,6 +49,24 @@ describe('validateFutureApplyRequestPreview', () => {
         read_only: true,
         message: 'Preview only.'
       },
+      create_only_apply_audit_metadata_preview: {
+        available: true,
+        preview_type: 'create_only_apply_audit_metadata_preview',
+        requested_by_present: true,
+        audit_reason_present: true,
+        explicit_confirmation_present: true,
+        explicit_confirmation_matches: true,
+        mutation_scope_present: true,
+        mutation_scope_matches: true,
+        required_confirmation_phrase: 'I UNDERSTAND THIS IS CREATE ONLY',
+        required_mutation_scope: 'create_only',
+        all_required_audit_metadata_present: true,
+        execution_enabled: false,
+        can_execute: false,
+        read_only: true,
+        mutation_permitted: false,
+        message: 'Preview only.'
+      },
       audit_preview: null
     }
 
@@ -102,6 +120,7 @@ describe('validateFutureApplyRequestPreview', () => {
             read_only: true,
             message: 'Preview only.'
           },
+          create_only_apply_audit_metadata_preview: null,
           audit_preview: null
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }

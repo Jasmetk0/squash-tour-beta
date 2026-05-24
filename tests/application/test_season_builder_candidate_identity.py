@@ -149,3 +149,46 @@ def test_build_candidate_identity_contract_unsafe_when_no_candidates() -> None:
     contract = build_candidate_identity_contract(summary)
     assert contract["safe_for_future_reference"] is False
     assert "no candidates" in str(contract["message"]).lower()
+
+
+def test_candidate_identity_contract_is_read_only_and_not_permission_grant() -> None:
+    summary = {
+        "candidate_count": 1,
+        "duplicate_candidate_ids": [],
+        "duplicate_candidate_identity_keys": [],
+    }
+    contract = build_candidate_identity_contract(summary)
+
+    # safe_for_future_reference means IDs can be referenced later, not that mutation is allowed.
+    assert contract["safe_for_future_reference"] is True
+    assert contract["read_only"] is True
+    assert contract["mutation_permitted"] is False
+    assert "safe for future reference" in str(contract["message"]).lower()
+
+
+def test_build_candidate_identity_contract_message_branches_are_stable() -> None:
+    safe_contract = build_candidate_identity_contract(
+        {
+            "candidate_count": 1,
+            "duplicate_candidate_ids": [],
+            "duplicate_candidate_identity_keys": [],
+        }
+    )
+    duplicate_contract = build_candidate_identity_contract(
+        {
+            "candidate_count": 2,
+            "duplicate_candidate_ids": ["cand_a"],
+            "duplicate_candidate_identity_keys": [],
+        }
+    )
+    no_candidates_contract = build_candidate_identity_contract(
+        {
+            "candidate_count": 0,
+            "duplicate_candidate_ids": [],
+            "duplicate_candidate_identity_keys": [],
+        }
+    )
+
+    assert "safe for future reference" in str(safe_contract["message"]).lower()
+    assert "duplicates" in str(duplicate_contract["message"]).lower()
+    assert "no candidates" in str(no_candidates_contract["message"]).lower()

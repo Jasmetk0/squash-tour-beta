@@ -1854,6 +1854,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('Reviewed diff identity is available.').length).toBeGreaterThan(0)
     expect(screen.getByText('Readiness remains blocked until a separate audited backend command is implemented.')).toBeInTheDocument()
     expect(screen.getByText('Disabled dry-run build contract result')).toBeInTheDocument()
+    expect(screen.getAllByText('Candidate identity overview').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Candidate identity summary').length).toBeGreaterThan(0)
     expect(screen.getByText('Candidate identity candidate count: 1')).toBeInTheDocument()
     expect(screen.getByText('Candidate identity candidate IDs: cand_default_msa_template_preview_slot_01_1')).toBeInTheDocument()

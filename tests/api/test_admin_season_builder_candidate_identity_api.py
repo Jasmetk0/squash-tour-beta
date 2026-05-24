@@ -229,8 +229,6 @@ def test_candidate_identity_api_unresolved_source_contract_invariants(tmp_path: 
         assert_candidate_identity_overview(overview, summary, contract)
         assert contract["safe_for_future_reference"] is False
         assert "no candidates" in str(contract["message"]).lower()
-        overview = preview["candidate_identity_overview"]
-        assert_candidate_identity_overview(overview, summary, contract)
         assert overview["available"] is False
         assert overview["safe_for_future_reference"] is False
         assert "no candidates" in str(overview["message"]).lower()
@@ -258,8 +256,6 @@ def test_candidate_identity_api_unsupported_source_contract_invariants(tmp_path:
         assert_candidate_identity_overview(overview, summary, contract)
         assert contract["safe_for_future_reference"] is False
         assert "no candidates" in str(contract["message"]).lower()
-        overview = preview["candidate_identity_overview"]
-        assert_candidate_identity_overview(overview, summary, contract)
         assert overview["available"] is False
         assert overview["safe_for_future_reference"] is False
         assert "no candidates" in str(overview["message"]).lower()

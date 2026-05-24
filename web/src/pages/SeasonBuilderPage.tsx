@@ -645,9 +645,10 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           dryRunResultPreview={disabledDryRunBuildQuery.data?.dry_run_result_preview}
         />
       </SectionCard>
-      <SectionCard title="Candidate identity summary">
+      <SectionCard title="Candidate identity overview">
         <CandidateIdentityOverviewPanel dryRunResultPreview={disabledDryRunBuildQuery.data?.dry_run_result_preview} />
-
+      </SectionCard>
+      <SectionCard title="Candidate identity summary">
         <CandidateIdentitySummaryPanel dryRunResultPreview={disabledDryRunBuildQuery.data?.dry_run_result_preview} />
       </SectionCard>
       <SectionCard title="Candidate identity contract">

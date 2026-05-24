@@ -763,7 +763,9 @@ def test_future_apply_request_validation_preview_missing_requested_values(tmp_pa
         assert preflight_preview["can_execute"] is False
 
 
-def test_future_apply_request_validation_preview_complete_audit_metadata_path(tmp_path: Path) -> None:
+def test_future_apply_request_validation_preview_complete_audit_metadata_can_satisfy_preconditions_but_not_execute(
+    tmp_path: Path,
+) -> None:
     with Server(tmp_path) as server:
         base_payload = {
             "target_season_label": "2038/2039",
@@ -790,22 +792,38 @@ def test_future_apply_request_validation_preview_complete_audit_metadata_path(tm
         }
         status, body = call("POST", f"{server.base_url}/admin/seasons/builder/future-apply-request-validation-preview", payload)
         assert status == 200
+        assert body["enabled"] is False
+        assert body["can_execute"] is False
+        assert body["can_mutate"] is False
         audit_preview = assert_create_only_apply_audit_metadata_preview_disabled(body["create_only_apply_audit_metadata_preview"])
         assert audit_preview["available"] is True
         assert audit_preview["all_required_audit_metadata_present"] is True
-        validation_preview = body["future_apply_request_validation_preview"]
+        assert audit_preview["execution_enabled"] is False
+        assert audit_preview["can_execute"] is False
+        assert audit_preview["mutation_permitted"] is False
+
+        validation_preview = assert_future_apply_validation_preview_disabled_response(body)
         preflight_preview = assert_create_only_apply_execution_preflight_preview_disabled(
             body["create_only_apply_execution_preflight_preview"]
         )
         assert validation_preview["available"] is True
+        assert validation_preview["reference_id_matches"] is True
+        assert validation_preview["fingerprint_matches"] is True
+        assert validation_preview["reference_type_matches"] is True
+        assert validation_preview["apply_execution_enabled"] is False
+
+        assert preflight_preview["future_apply_reference_contract_available"] is True
+        assert preflight_preview["future_apply_request_validation_available"] is True
         assert preflight_preview["candidate_identity_reference_matches"] is True
+        assert preflight_preview["main_future_command_reference_ready"] is True
         assert preflight_preview["create_only_scope_confirmed"] is True
         assert preflight_preview["target_absent"] is True
         assert preflight_preview["audit_metadata_present"] is True
+        assert preflight_preview["all_known_preconditions_met"] is True
+        assert preflight_preview["available"] is True
         assert preflight_preview["execution_enabled"] is False
         assert preflight_preview["can_execute"] is False
-        assert body["can_execute"] is False
-        assert body["can_mutate"] is False
+        assert preflight_preview["mutation_permitted"] is False
 
 
 def test_future_apply_request_validation_preview_wrong_explicit_confirmation_blocks_audit_metadata(tmp_path: Path) -> None:

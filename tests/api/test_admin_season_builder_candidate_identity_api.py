@@ -183,6 +183,24 @@ def assert_candidate_identity_fingerprint_and_review_reference(
     return fingerprint, review_reference
 
 
+def assert_identity_readiness_candidate_reference_contract(preview: dict) -> tuple[dict, dict]:
+    identity_readiness = preview["identity_readiness"]
+    future_reference = identity_readiness["future_command_reference"]
+    assert "candidate_identity_fingerprint" in future_reference
+    assert "candidate_identity_reference_id" in future_reference
+    assert "can_reference_candidate_identity_set" in future_reference
+    assert isinstance(future_reference["can_reference_candidate_identity_set"], bool)
+    assert "candidate_identity_reference_type" in future_reference
+    assert future_reference["mutation_still_disabled"] is True
+    assert isinstance(future_reference["can_reference_future_command"], bool)
+    candidate_reference_item = next(
+        item for item in identity_readiness["items"] if item["area"] == "candidate_identity_review_reference"
+    )
+    assert candidate_reference_item["status"] in {"OK", "BLOCKED"}
+    assert isinstance(candidate_reference_item["message"], str) and candidate_reference_item["message"]
+    return future_reference, candidate_reference_item
+
+
 def test_candidate_identity_api_resolved_parity(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         payload = {
@@ -214,15 +232,11 @@ def test_candidate_identity_api_resolved_parity(tmp_path: Path) -> None:
         assert_candidate_identity_overview(overview, summary, contract)
         fingerprint, review_reference = assert_candidate_identity_fingerprint_and_review_reference(preview, summary, contract)
         assert review_reference["can_reference_future_apply"] is True
-        identity_readiness = preview["identity_readiness"]
-        future_reference = identity_readiness["future_command_reference"]
+        future_reference, candidate_reference_item = assert_identity_readiness_candidate_reference_contract(preview)
         assert future_reference["candidate_identity_fingerprint"] == fingerprint["fingerprint"]
         assert future_reference["candidate_identity_reference_id"] == review_reference["reference_id"]
         assert future_reference["can_reference_candidate_identity_set"] == review_reference["can_reference_future_apply"]
-        assert future_reference["candidate_identity_reference_type"] == "candidate_identity_set"
-        candidate_reference_item = next(
-            item for item in identity_readiness["items"] if item["area"] == "candidate_identity_review_reference"
-        )
+        assert future_reference["candidate_identity_reference_type"] == review_reference["reference_type"]
         assert candidate_reference_item["status"] == "OK"
         if not summary["duplicate_candidate_ids"] and not summary["duplicate_candidate_identity_keys"]:
             assert contract["safe_for_future_reference"] is True
@@ -282,15 +296,13 @@ def test_candidate_identity_api_unresolved_source_contract_invariants(tmp_path: 
         assert fingerprint["candidate_count"] == 0
         assert fingerprint["safe_for_future_reference"] is False
         assert review_reference["can_reference_future_apply"] is False
-        identity_readiness = preview["identity_readiness"]
-        future_reference = identity_readiness["future_command_reference"]
+        future_reference, candidate_reference_item = assert_identity_readiness_candidate_reference_contract(preview)
         assert future_reference["can_reference_candidate_identity_set"] is False
         assert future_reference["candidate_identity_fingerprint"] == fingerprint["fingerprint"]
         assert future_reference["candidate_identity_reference_id"] == review_reference["reference_id"]
-        candidate_reference_item = next(
-            item for item in identity_readiness["items"] if item["area"] == "candidate_identity_review_reference"
-        )
         assert candidate_reference_item["status"] == "BLOCKED"
+        assert future_reference["mutation_still_disabled"] is True
+        assert future_reference["can_reference_future_command"] == (preview["identity_readiness"]["status"] == "ready_reference")
         assert contract["safe_for_future_reference"] is False
         assert "no candidates" in str(contract["message"]).lower()
         assert overview["available"] is False
@@ -324,15 +336,13 @@ def test_candidate_identity_api_unsupported_source_contract_invariants(tmp_path:
         assert fingerprint["candidate_count"] == 0
         assert fingerprint["safe_for_future_reference"] is False
         assert review_reference["can_reference_future_apply"] is False
-        identity_readiness = preview["identity_readiness"]
-        future_reference = identity_readiness["future_command_reference"]
+        future_reference, candidate_reference_item = assert_identity_readiness_candidate_reference_contract(preview)
         assert future_reference["can_reference_candidate_identity_set"] is False
         assert future_reference["candidate_identity_fingerprint"] == fingerprint["fingerprint"]
         assert future_reference["candidate_identity_reference_id"] == review_reference["reference_id"]
-        candidate_reference_item = next(
-            item for item in identity_readiness["items"] if item["area"] == "candidate_identity_review_reference"
-        )
         assert candidate_reference_item["status"] == "BLOCKED"
+        assert future_reference["mutation_still_disabled"] is True
+        assert future_reference["can_reference_future_command"] == (preview["identity_readiness"]["status"] == "ready_reference")
         assert contract["safe_for_future_reference"] is False
         assert "no candidates" in str(contract["message"]).lower()
         assert overview["available"] is False

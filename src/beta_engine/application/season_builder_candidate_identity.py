@@ -332,3 +332,71 @@ def build_future_apply_reference_contract(
         "mutation_permitted": False,
         "message": message,
     }
+
+
+def build_future_apply_request_validation_preview(
+    *,
+    requested_candidate_identity_reference_id: str | None,
+    requested_candidate_identity_fingerprint: str | None,
+    requested_candidate_identity_reference_type: str | None,
+    future_apply_reference_contract: dict,
+) -> dict:
+    """Build read-only validation preview for hypothetical future apply request identity matching."""
+    requested_reference_id = (
+        requested_candidate_identity_reference_id
+        if isinstance(requested_candidate_identity_reference_id, str)
+        else ""
+    )
+    requested_fingerprint = (
+        requested_candidate_identity_fingerprint
+        if isinstance(requested_candidate_identity_fingerprint, str)
+        else ""
+    )
+    requested_reference_type = (
+        requested_candidate_identity_reference_type
+        if isinstance(requested_candidate_identity_reference_type, str)
+        else ""
+    )
+
+    raw_expected_reference_id = future_apply_reference_contract.get("candidate_identity_reference_id")
+    expected_reference_id = raw_expected_reference_id if isinstance(raw_expected_reference_id, str) else ""
+    raw_expected_fingerprint = future_apply_reference_contract.get("candidate_identity_fingerprint")
+    expected_fingerprint = raw_expected_fingerprint if isinstance(raw_expected_fingerprint, str) else ""
+    raw_expected_reference_type = future_apply_reference_contract.get("candidate_identity_reference_type")
+    expected_reference_type = raw_expected_reference_type if isinstance(raw_expected_reference_type, str) else ""
+
+    reference_id_matches = bool(requested_reference_id) and requested_reference_id == expected_reference_id
+    fingerprint_matches = bool(requested_fingerprint) and requested_fingerprint == expected_fingerprint
+    reference_type_matches = bool(requested_reference_type) and requested_reference_type == expected_reference_type
+
+    raw_referenceable = future_apply_reference_contract.get("candidate_identity_set_referenceable")
+    contract_referenceable = raw_referenceable if isinstance(raw_referenceable, bool) else False
+    raw_available = future_apply_reference_contract.get("available")
+    contract_available = raw_available is True
+
+    available = (
+        contract_available
+        and reference_id_matches
+        and fingerprint_matches
+        and reference_type_matches
+        and contract_referenceable
+    )
+
+    return {
+        "available": available,
+        "validation_type": "future_apply_request_validation_preview",
+        "requested_candidate_identity_reference_id": requested_reference_id,
+        "requested_candidate_identity_fingerprint": requested_fingerprint,
+        "requested_candidate_identity_reference_type": requested_reference_type,
+        "expected_candidate_identity_reference_id": expected_reference_id,
+        "expected_candidate_identity_fingerprint": expected_fingerprint,
+        "expected_candidate_identity_reference_type": expected_reference_type,
+        "reference_id_matches": reference_id_matches,
+        "fingerprint_matches": fingerprint_matches,
+        "reference_type_matches": reference_type_matches,
+        "contract_referenceable": contract_referenceable,
+        "apply_execution_enabled": False,
+        "read_only": True,
+        "mutation_permitted": False,
+        "message": "This is a validation-only preview and does not execute apply or mutate any state.",
+    }

@@ -23,7 +23,11 @@ describe('validateFutureApplyRequestPreview', () => {
       reviewed_diff_id: 'rd-123',
       requested_candidate_identity_reference_id: 'ref-123',
       requested_candidate_identity_fingerprint: 'fp-123',
-      requested_candidate_identity_reference_type: 'future_apply_reference_contract'
+      requested_candidate_identity_reference_type: 'future_apply_reference_contract',
+      requested_by: 'local-admin-preview',
+      audit_reason: 'manual validation preview',
+      explicit_confirmation: 'I UNDERSTAND THIS IS CREATE ONLY',
+      mutation_scope: 'create_only'
     }
     const responseBody: SeasonBuilderFutureApplyRequestValidationPreviewResponse = {
       enabled: false,
@@ -87,6 +91,12 @@ describe('validateFutureApplyRequestPreview', () => {
         headers: expect.objectContaining({ 'Content-Type': 'application/json' })
       })
     )
+    const [, init] = fetchMock.mock.calls[0]
+    const sentPayload = JSON.parse(String((init as RequestInit).body))
+    expect(sentPayload.requested_by).toBe('local-admin-preview')
+    expect(sentPayload.audit_reason).toBe('manual validation preview')
+    expect(sentPayload.explicit_confirmation).toBe('I UNDERSTAND THIS IS CREATE ONLY')
+    expect(sentPayload.mutation_scope).toBe('create_only')
     expect(result).toEqual(responseBody)
   })
 

@@ -92,6 +92,10 @@ export function AdminSeasonBuilderPage(): JSX.Element {
   const [requestedCandidateIdentityReferenceId, setRequestedCandidateIdentityReferenceId] = useState('')
   const [requestedCandidateIdentityFingerprint, setRequestedCandidateIdentityFingerprint] = useState('')
   const [requestedCandidateIdentityReferenceType, setRequestedCandidateIdentityReferenceType] = useState('')
+  const [futureApplyRequestedBy, setFutureApplyRequestedBy] = useState('local-admin-preview')
+  const [futureApplyAuditReason, setFutureApplyAuditReason] = useState('')
+  const [futureApplyExplicitConfirmation, setFutureApplyExplicitConfirmation] = useState('')
+  const [futureApplyMutationScope, setFutureApplyMutationScope] = useState('create_only')
   const [futureApplyValidationResult, setFutureApplyValidationResult] = useState<SeasonBuilderFutureApplyRequestValidationPreviewResponse | null>(null)
   const [futureApplyValidationError, setFutureApplyValidationError] = useState<string | null>(null)
   const targetCalendarQueryEnabled = Boolean(selectedTargetSeasonLabel)
@@ -507,7 +511,11 @@ export function AdminSeasonBuilderPage(): JSX.Element {
         reviewed_diff_id: backendPreflightQuery.data?.reviewed_diff_id ?? null,
         requested_candidate_identity_reference_id: requestedCandidateIdentityReferenceId.trim() || null,
         requested_candidate_identity_fingerprint: requestedCandidateIdentityFingerprint.trim() || null,
-        requested_candidate_identity_reference_type: requestedCandidateIdentityReferenceType.trim() || null
+        requested_candidate_identity_reference_type: requestedCandidateIdentityReferenceType.trim() || null,
+        requested_by: futureApplyRequestedBy.trim() || null,
+        audit_reason: futureApplyAuditReason.trim() || null,
+        explicit_confirmation: futureApplyExplicitConfirmation.trim() || null,
+        mutation_scope: futureApplyMutationScope.trim() || null
       })
       setFutureApplyValidationResult(response)
     } catch (error) {
@@ -744,6 +752,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
       <SectionCard title="Future apply request validation preview">
         <p>This validation preview is read-only and cannot apply or mutate a season.</p>
         <p>Use this manual form to validate candidate identity reference fields for a future apply request preview.</p>
+        <p>Audit metadata is validated only; it does not execute apply.</p>
         <div className="dashboard-form">
           <label htmlFor="future-apply-reference-id">Candidate identity reference ID</label>
           <input id="future-apply-reference-id" value={requestedCandidateIdentityReferenceId} onChange={(event) => setRequestedCandidateIdentityReferenceId(event.target.value)} />
@@ -751,6 +760,14 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           <input id="future-apply-fingerprint" value={requestedCandidateIdentityFingerprint} onChange={(event) => setRequestedCandidateIdentityFingerprint(event.target.value)} />
           <label htmlFor="future-apply-reference-type">Candidate identity reference type</label>
           <input id="future-apply-reference-type" value={requestedCandidateIdentityReferenceType} onChange={(event) => setRequestedCandidateIdentityReferenceType(event.target.value)} />
+          <label htmlFor="future-apply-requested-by">Requested by</label>
+          <input id="future-apply-requested-by" value={futureApplyRequestedBy} onChange={(event) => setFutureApplyRequestedBy(event.target.value)} />
+          <label htmlFor="future-apply-audit-reason">Audit reason</label>
+          <input id="future-apply-audit-reason" value={futureApplyAuditReason} onChange={(event) => setFutureApplyAuditReason(event.target.value)} />
+          <label htmlFor="future-apply-explicit-confirmation">Explicit confirmation</label>
+          <input id="future-apply-explicit-confirmation" value={futureApplyExplicitConfirmation} onChange={(event) => setFutureApplyExplicitConfirmation(event.target.value)} />
+          <label htmlFor="future-apply-mutation-scope">Mutation scope</label>
+          <input id="future-apply-mutation-scope" value={futureApplyMutationScope} onChange={(event) => setFutureApplyMutationScope(event.target.value)} />
           <button
             type="button"
             onClick={handleFillFutureApplyReferenceFromDryRun}

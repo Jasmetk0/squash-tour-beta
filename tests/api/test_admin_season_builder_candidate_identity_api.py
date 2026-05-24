@@ -493,6 +493,11 @@ def test_future_apply_request_validation_preview_matching_resolved_request(tmp_p
         validation_preview = assert_future_apply_validation_preview_disabled_response(body)
         assert body["future_apply_reference_contract"] == contract
         assert validation_preview["available"] is True
+        assert body["can_execute"] is False
+        assert body["can_mutate"] is False
+        assert validation_preview["apply_execution_enabled"] is False
+        assert body["audit_preview"]["execution_enabled"] is False
+        assert body["audit_preview"]["mutation_permitted"] is False
         assert validation_preview["reference_id_matches"] is True
         assert validation_preview["fingerprint_matches"] is True
         assert validation_preview["reference_type_matches"] is True

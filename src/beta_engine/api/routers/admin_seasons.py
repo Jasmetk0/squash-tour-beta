@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -59,6 +60,48 @@ def _build_deterministic_digest(payload: dict[str, object]) -> str:
     canonical_payload = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(canonical_payload.encode("utf-8")).hexdigest()
 
+
+
+def _sanitize_identity_part(value: object | None) -> str:
+    raw = str(value or "")
+    normalized = raw.strip().lower()
+    if not normalized:
+        return "unknown"
+    return re.sub(r"[^a-z0-9]+", "_", normalized).strip("_") or "unknown"
+
+
+def _build_candidate_identity(
+    *,
+    source_template_id: str | None,
+    source_slot_id: str,
+    season_week_start: int | None,
+    target_season_label: str,
+    source_type: str,
+    event_name: str | None,
+    category: str | None,
+    source_template_ref: str | None,
+) -> tuple[str, str]:
+    candidate_id = "_".join(
+        [
+            "cand",
+            _sanitize_identity_part(source_template_id),
+            _sanitize_identity_part(source_slot_id),
+            _sanitize_identity_part(season_week_start),
+        ]
+    )
+    candidate_identity_key = "|".join(
+        [
+            f"target_season={_sanitize_identity_part(target_season_label)}",
+            f"source_type={_sanitize_identity_part(source_type)}",
+            f"source_template_id={_sanitize_identity_part(source_template_id)}",
+            f"source_slot_id={_sanitize_identity_part(source_slot_id)}",
+            f"season_week_start={_sanitize_identity_part(season_week_start)}",
+            f"event_name={_sanitize_identity_part(event_name)}",
+            f"category={_sanitize_identity_part(category)}",
+            f"source_template_ref={_sanitize_identity_part(source_template_ref)}",
+        ]
+    )
+    return candidate_id, candidate_identity_key
 
 def _format_template_issue(issue: SeasonTemplateValidationIssue) -> str:
     slot = f" [slot={issue.slot_id}]" if issue.slot_id else ""
@@ -621,10 +664,26 @@ def post_season_builder_dry_run_build_contract(
                 week_end = slot.season_week_end
                 duration = (week_end - week_start + 1) if isinstance(week_start, int) and isinstance(week_end, int) else None
                 source_template = templates_by_id.get(slot.source_template_id or "")
+                candidate_id, candidate_identity_key = _build_candidate_identity(
+                    source_template_id=payload.source_template_id,
+                    source_slot_id=source_slot_id,
+                    season_week_start=week_start,
+                    target_season_label=normalized_target,
+                    source_type=payload.source_type,
+                    event_name=slot.tournament_name,
+                    category=slot.category,
+                    source_template_ref=slot.source_template_id,
+                )
                 candidate_events.append(
                     {
-                        "candidate_id": f"cand_{payload.source_template_id}_{source_slot_id}",
+                        "candidate_id": candidate_id,
+                        "candidate_identity_key": candidate_identity_key,
                         "source_slot_id": source_slot_id,
+                        "source_template_id": payload.source_template_id,
+                        "target_season_label": normalized_target,
+                        "identity_source": "season_template_slot",
+                        "read_only": True,
+                        "mutation_permitted": False,
                         "season_week_start": week_start,
                         "season_week_end": week_end,
                         "event_name": slot.tournament_name,
@@ -638,7 +697,6 @@ def post_season_builder_dry_run_build_contract(
                         "prize_money": source_template.prize_money if source_template else None,
                         "prestige": source_template.prestige if source_template else None,
                         "duration_in_season_weeks": duration,
-                        "source_template_id": payload.source_template_id,
                         "source_template_ref": slot.source_template_id,
                         "source_type": payload.source_type,
                         "candidate_status": "planned",
@@ -779,6 +837,34 @@ def post_season_builder_dry_run_build_contract(
         "execution_enabled": False,
         "mutation_permitted": False,
         "candidate_events": candidate_events,
+        "candidate_identity_summary": {
+            "candidate_count": len(candidate_events),
+            "candidate_ids": [str(candidate.get("candidate_id") or "") for candidate in candidate_events],
+            "candidate_identity_keys": [str(candidate.get("candidate_identity_key") or "") for candidate in candidate_events],
+            "duplicate_candidate_ids": sorted(
+                [
+                    item
+                    for item in {
+                        candidate_id
+                        for candidate_id in [str(candidate.get("candidate_id") or "") for candidate in candidate_events]
+                        if [str(c.get("candidate_id") or "") for c in candidate_events].count(candidate_id) > 1 and candidate_id
+                    }
+                ]
+            ),
+            "duplicate_candidate_identity_keys": sorted(
+                [
+                    item
+                    for item in {
+                        identity_key
+                        for identity_key in [str(candidate.get("candidate_identity_key") or "") for candidate in candidate_events]
+                        if [str(c.get("candidate_identity_key") or "") for c in candidate_events].count(identity_key) > 1 and identity_key
+                    }
+                ]
+            ),
+            "read_only": True,
+            "mutation_permitted": False,
+            "message": "Candidate event identities are deterministic and read-only in dry-run.",
+        },
         "structural_summary": {
             "candidate_count": len(candidate_events),
             "target_event_count": target_event_count,

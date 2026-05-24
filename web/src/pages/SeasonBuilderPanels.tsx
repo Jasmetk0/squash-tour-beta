@@ -1415,6 +1415,24 @@ export type NormalizedCreateOnlyApplyAuditMetadataPreview = {
   message: string
 }
 
+export type NormalizedDisabledExecutionContractSummary = {
+  available: string
+  summaryType: string
+  futureApplyReferenceContractAvailable: string
+  futureApplyRequestValidationAvailable: string
+  auditMetadataAvailable: string
+  executionPreflightAvailable: string
+  identityReferenceMatches: string
+  auditMetadataComplete: string
+  allKnownPreconditionsMet: string
+  allPreviewLayersAvailable: string
+  executionEnabled: string
+  canExecute: string
+  readOnly: string
+  mutationPermitted: string
+  message: string
+}
+
 export function readCreateOnlyApplyExecutionPreflightPreview(value: unknown): NormalizedCreateOnlyApplyExecutionPreflightPreview | null {
   if (!value || typeof value !== 'object') return null
   const record = value as Record<string, unknown>
@@ -1452,6 +1470,28 @@ export function readCreateOnlyApplyAuditMetadataPreview(value: unknown): Normali
     requiredConfirmationPhrase: normalizeNonEmptyStringDisplay(record.required_confirmation_phrase),
     requiredMutationScope: normalizeNonEmptyStringDisplay(record.required_mutation_scope),
     allRequiredAuditMetadataPresent: normalizeBooleanDisplay(record.all_required_audit_metadata_present),
+    executionEnabled: normalizeBooleanDisplay(record.execution_enabled),
+    canExecute: normalizeBooleanDisplay(record.can_execute),
+    readOnly: normalizeBooleanDisplay(record.read_only),
+    mutationPermitted: normalizeBooleanDisplay(record.mutation_permitted),
+    message: normalizeNonEmptyStringDisplay(record.message) === 'n/a' ? 'No message provided.' : normalizeNonEmptyStringDisplay(record.message)
+  }
+}
+
+export function readDisabledExecutionContractSummary(value: unknown): NormalizedDisabledExecutionContractSummary | null {
+  if (!value || typeof value !== 'object') return null
+  const record = value as Record<string, unknown>
+  return {
+    available: normalizeBooleanDisplay(record.available),
+    summaryType: normalizeNonEmptyStringDisplay(record.summary_type),
+    futureApplyReferenceContractAvailable: normalizeBooleanDisplay(record.future_apply_reference_contract_available),
+    futureApplyRequestValidationAvailable: normalizeBooleanDisplay(record.future_apply_request_validation_available),
+    auditMetadataAvailable: normalizeBooleanDisplay(record.audit_metadata_available),
+    executionPreflightAvailable: normalizeBooleanDisplay(record.execution_preflight_available),
+    identityReferenceMatches: normalizeBooleanDisplay(record.identity_reference_matches),
+    auditMetadataComplete: normalizeBooleanDisplay(record.audit_metadata_complete),
+    allKnownPreconditionsMet: normalizeBooleanDisplay(record.all_known_preconditions_met),
+    allPreviewLayersAvailable: normalizeBooleanDisplay(record.all_preview_layers_available),
     executionEnabled: normalizeBooleanDisplay(record.execution_enabled),
     canExecute: normalizeBooleanDisplay(record.can_execute),
     readOnly: normalizeBooleanDisplay(record.read_only),
@@ -4125,6 +4165,31 @@ export function CreateOnlyApplyAuditMetadataPreviewPanel({ preview }: { preview?
   )
 }
 
+export function DisabledExecutionContractSummaryPanel({ summary }: { summary?: unknown }): JSX.Element {
+  const contractSummary = readDisabledExecutionContractSummary(summary)
+  if (!contractSummary) return <p>Disabled execution contract summary is not available.</p>
+  return (
+    <>
+      <p>Disabled execution contract summary</p>
+      <p>Available: {contractSummary.available}</p>
+      <p>Summary type: {contractSummary.summaryType}</p>
+      <p>Future apply reference contract available: {contractSummary.futureApplyReferenceContractAvailable}</p>
+      <p>Future apply request validation available: {contractSummary.futureApplyRequestValidationAvailable}</p>
+      <p>Audit metadata available: {contractSummary.auditMetadataAvailable}</p>
+      <p>Execution preflight available: {contractSummary.executionPreflightAvailable}</p>
+      <p>Identity reference matches: {contractSummary.identityReferenceMatches}</p>
+      <p>Audit metadata complete: {contractSummary.auditMetadataComplete}</p>
+      <p>All known preconditions met: {contractSummary.allKnownPreconditionsMet}</p>
+      <p>All preview layers available: {contractSummary.allPreviewLayersAvailable}</p>
+      <p>Execution enabled: {contractSummary.executionEnabled}</p>
+      <p>Can execute: {contractSummary.canExecute}</p>
+      <p>Read-only: {contractSummary.readOnly}</p>
+      <p>Mutation permitted: {contractSummary.mutationPermitted}</p>
+      <p>Message: {contractSummary.message}</p>
+    </>
+  )
+}
+
 export function FutureApplyRequestValidationPreviewPanel({ preview }: { preview?: unknown }): JSX.Element {
   const validationPreview = readFutureApplyRequestValidationPreview(preview)
   if (!validationPreview) return <p>Future apply request validation preview is not available.</p>
@@ -4150,4 +4215,3 @@ export function FutureApplyRequestValidationPreviewPanel({ preview }: { preview?
     </>
   )
 }
-

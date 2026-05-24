@@ -3363,6 +3363,24 @@ export type CreateOnlyApplyAuditMetadataPreview = {
   message?: string | null
 }
 
+export type DisabledExecutionContractSummary = {
+  available?: boolean | null
+  summary_type?: string | null
+  future_apply_reference_contract_available?: boolean | null
+  future_apply_request_validation_available?: boolean | null
+  audit_metadata_available?: boolean | null
+  execution_preflight_available?: boolean | null
+  identity_reference_matches?: boolean | null
+  audit_metadata_complete?: boolean | null
+  all_known_preconditions_met?: boolean | null
+  all_preview_layers_available?: boolean | null
+  execution_enabled?: boolean | null
+  can_execute?: boolean | null
+  read_only?: boolean | null
+  mutation_permitted?: boolean | null
+  message?: string | null
+}
+
 export type SeasonBuilderFutureApplyRequestValidationPreviewRequest = {
   target_season_label: string
   source_type: string
@@ -3391,6 +3409,7 @@ export type SeasonBuilderFutureApplyRequestValidationPreviewResponse = {
   future_apply_request_validation_preview?: FutureApplyRequestValidationPreview | null
   create_only_apply_execution_preflight_preview?: CreateOnlyApplyExecutionPreflightPreview | null
   create_only_apply_audit_metadata_preview?: CreateOnlyApplyAuditMetadataPreview | null
+  disabled_execution_contract_summary?: DisabledExecutionContractSummary | null
   audit_preview?: Record<string, unknown> | null
 }
 

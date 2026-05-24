@@ -71,6 +71,23 @@ describe('validateFutureApplyRequestPreview', () => {
         mutation_permitted: false,
         message: 'Preview only.'
       },
+      disabled_execution_contract_summary: {
+        available: true,
+        summary_type: 'disabled_execution_contract_summary',
+        future_apply_reference_contract_available: true,
+        future_apply_request_validation_available: true,
+        audit_metadata_available: true,
+        execution_preflight_available: true,
+        identity_reference_matches: true,
+        audit_metadata_complete: true,
+        all_known_preconditions_met: true,
+        all_preview_layers_available: true,
+        execution_enabled: false,
+        can_execute: false,
+        read_only: true,
+        mutation_permitted: false,
+        message: 'Execution remains disabled in this phase.'
+      },
       audit_preview: null
     }
 
@@ -131,6 +148,7 @@ describe('validateFutureApplyRequestPreview', () => {
             message: 'Preview only.'
           },
           create_only_apply_audit_metadata_preview: null,
+          disabled_execution_contract_summary: null,
           audit_preview: null
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }

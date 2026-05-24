@@ -247,6 +247,27 @@ def assert_future_apply_reference_contract(
     return contract
 
 
+def assert_future_apply_validation_preview_disabled_response(body: dict) -> dict:
+    assert body["enabled"] is False
+    assert body["can_execute"] is False
+    assert body["can_mutate"] is False
+    audit_preview = body["audit_preview"]
+    assert isinstance(audit_preview, dict)
+    assert audit_preview["action"] == "season_builder_future_apply_request_validation_preview"
+    assert audit_preview["read_only"] is True
+    assert audit_preview["mutation_permitted"] is False
+    assert audit_preview["execution_enabled"] is False
+    assert isinstance(body["future_apply_reference_contract"], dict)
+    validation_preview = body["future_apply_request_validation_preview"]
+    assert isinstance(validation_preview, dict)
+    assert validation_preview["apply_execution_enabled"] is False
+    assert validation_preview["read_only"] is True
+    assert validation_preview["mutation_permitted"] is False
+    assert validation_preview["validation_type"] == "future_apply_request_validation_preview"
+    assert isinstance(validation_preview["message"], str) and validation_preview["message"]
+    return validation_preview
+
+
 def test_candidate_identity_api_resolved_parity(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         payload = {
@@ -469,41 +490,36 @@ def test_future_apply_request_validation_preview_matching_resolved_request(tmp_p
             payload,
         )
         assert status == 200
-        assert body["enabled"] is False
-        assert body["can_execute"] is False
-        assert body["can_mutate"] is False
+        validation_preview = assert_future_apply_validation_preview_disabled_response(body)
         assert body["future_apply_reference_contract"] == contract
-        assert body["audit_preview"]["read_only"] is True
-        assert body["audit_preview"]["mutation_permitted"] is False
-        assert body["audit_preview"]["execution_enabled"] is False
-        validation_preview = body["future_apply_request_validation_preview"]
         assert validation_preview["available"] is True
         assert validation_preview["reference_id_matches"] is True
         assert validation_preview["fingerprint_matches"] is True
         assert validation_preview["reference_type_matches"] is True
-        assert validation_preview["apply_execution_enabled"] is False
-        assert validation_preview["read_only"] is True
-        assert validation_preview["mutation_permitted"] is False
 
 
 def test_future_apply_request_validation_preview_mismatched_resolved_request(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
-        payload = {
+        base_payload = {
             "target_season_label": "2035/2036",
             "source_type": "season_template",
             "source_template_id": "default_msa_template_preview",
             "overwrite_policy": "merge_preview",
             "preflight_fingerprint": "pf_phase15c_mismatch",
             "reviewed_diff_id": "rd_phase15c_mismatch",
+        }
+        _, dry_run_body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", base_payload)
+        dry_run_contract = dry_run_body["dry_run_result_preview"]["future_apply_reference_contract"]
+        payload = {
+            **base_payload,
             "requested_candidate_identity_reference_id": "wrong_ref",
             "requested_candidate_identity_fingerprint": "wrong_fp",
             "requested_candidate_identity_reference_type": "wrong_type",
         }
         status, body = call("POST", f"{server.base_url}/admin/seasons/builder/future-apply-request-validation-preview", payload)
         assert status == 200
-        assert body["can_execute"] is False
-        assert body["can_mutate"] is False
-        validation_preview = body["future_apply_request_validation_preview"]
+        assert body["future_apply_reference_contract"] == dry_run_contract
+        validation_preview = assert_future_apply_validation_preview_disabled_response(body)
         assert validation_preview["available"] is False
         assert validation_preview["reference_id_matches"] is False
         assert validation_preview["fingerprint_matches"] is False
@@ -512,7 +528,7 @@ def test_future_apply_request_validation_preview_mismatched_resolved_request(tmp
 
 def test_future_apply_request_validation_preview_missing_requested_values(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
-        payload = {
+        base_payload = {
             "target_season_label": "2035/2036",
             "source_type": "season_template",
             "source_template_id": "default_msa_template_preview",
@@ -520,9 +536,13 @@ def test_future_apply_request_validation_preview_missing_requested_values(tmp_pa
             "preflight_fingerprint": "pf_phase15c_missing",
             "reviewed_diff_id": "rd_phase15c_missing",
         }
+        _, dry_run_body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", base_payload)
+        dry_run_contract = dry_run_body["dry_run_result_preview"]["future_apply_reference_contract"]
+        payload = {**base_payload}
         status, body = call("POST", f"{server.base_url}/admin/seasons/builder/future-apply-request-validation-preview", payload)
         assert status == 200
-        validation_preview = body["future_apply_request_validation_preview"]
+        assert body["future_apply_reference_contract"] == dry_run_contract
+        validation_preview = assert_future_apply_validation_preview_disabled_response(body)
         assert validation_preview["requested_candidate_identity_reference_id"] == ""
         assert validation_preview["requested_candidate_identity_fingerprint"] == ""
         assert validation_preview["requested_candidate_identity_reference_type"] == ""
@@ -534,16 +554,45 @@ def test_future_apply_request_validation_preview_missing_requested_values(tmp_pa
 
 def test_future_apply_request_validation_preview_unsupported_source(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
-        payload = {
+        base_payload = {
             "target_season_label": "2035/2036",
             "source_type": "blank_calendar_planned",
             "preflight_fingerprint": "pf_phase15c_unsupported",
             "reviewed_diff_id": "rd_phase15c_unsupported",
         }
+        _, dry_run_body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", base_payload)
+        dry_run_contract = dry_run_body["dry_run_result_preview"]["future_apply_reference_contract"]
+        payload = {**base_payload}
         status, body = call("POST", f"{server.base_url}/admin/seasons/builder/future-apply-request-validation-preview", payload)
         assert status == 200
+        assert body["future_apply_reference_contract"] == dry_run_contract
+        validation_preview = assert_future_apply_validation_preview_disabled_response(body)
         contract = body["future_apply_reference_contract"]
-        validation_preview = body["future_apply_request_validation_preview"]
         assert contract["available"] is False
+        assert validation_preview["available"] is False
+        assert validation_preview["contract_referenceable"] is False
+
+
+def test_future_apply_request_validation_preview_unresolved_source_template(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2035/2036",
+            "source_type": "season_template",
+            "source_template_id": "missing_template_phase15d",
+            "overwrite_policy": "merge_preview",
+            "preflight_fingerprint": "pf_phase15d_unresolved",
+            "reviewed_diff_id": "rd_phase15d_unresolved",
+        }
+        dry_run_status, dry_run_body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        assert dry_run_status == 200
+        dry_run_preview = dry_run_body["dry_run_result_preview"]
+        assert dry_run_preview["candidate_events"] == []
+        assert dry_run_preview["candidate_identity_summary"]["candidate_count"] == 0
+        dry_run_contract = dry_run_preview["future_apply_reference_contract"]
+        assert dry_run_contract["available"] is False
+        status, body = call("POST", f"{server.base_url}/admin/seasons/builder/future-apply-request-validation-preview", payload)
+        assert status == 200
+        assert body["future_apply_reference_contract"] == dry_run_contract
+        validation_preview = assert_future_apply_validation_preview_disabled_response(body)
         assert validation_preview["available"] is False
         assert validation_preview["contract_referenceable"] is False

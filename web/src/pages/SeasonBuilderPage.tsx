@@ -708,6 +708,11 @@ export function AdminSeasonBuilderPage(): JSX.Element {
         {futureApplyValidationError ? <p className="error">Future apply request validation failed: {futureApplyValidationError}</p> : null}
         {futureApplyValidationResult ? (
           <>
+            <FutureApplyReferenceContractPanel
+              dryRunResultPreview={{
+                future_apply_reference_contract: futureApplyValidationResult.future_apply_reference_contract
+              }}
+            />
             <FutureApplyRequestValidationPreviewPanel preview={futureApplyValidationResult.future_apply_request_validation_preview} />
           </>
         ) : null}

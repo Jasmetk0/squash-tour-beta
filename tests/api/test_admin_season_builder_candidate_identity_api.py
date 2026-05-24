@@ -209,6 +209,22 @@ def assert_identity_readiness_candidate_reference_contract(preview: dict) -> tup
     return future_reference, candidate_reference_item, overview
 
 
+def assert_candidate_identity_readiness_overview_parity(
+    overview: dict,
+    future_reference: dict,
+    candidate_reference_item: dict,
+) -> None:
+    assert overview["candidate_identity_fingerprint"] == future_reference["candidate_identity_fingerprint"]
+    assert overview["candidate_identity_reference_id"] == future_reference["candidate_identity_reference_id"]
+    assert overview["candidate_identity_reference_type"] == future_reference["candidate_identity_reference_type"]
+    assert overview["can_reference_candidate_identity_set"] == future_reference["can_reference_candidate_identity_set"]
+    assert overview["candidate_reference_status"] == candidate_reference_item["status"]
+    assert overview["main_future_command_reference_ready"] == future_reference["can_reference_future_command"]
+    assert overview["read_only"] is True
+    assert overview["mutation_permitted"] is False
+    assert isinstance(overview["message"], str) and overview["message"]
+
+
 def test_candidate_identity_api_resolved_parity(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         payload = {
@@ -246,6 +262,13 @@ def test_candidate_identity_api_resolved_parity(tmp_path: Path) -> None:
         assert future_reference["can_reference_candidate_identity_set"] == review_reference["can_reference_future_apply"]
         assert future_reference["candidate_identity_reference_type"] == review_reference["reference_type"]
         assert candidate_reference_item["status"] == "OK"
+        assert_candidate_identity_readiness_overview_parity(
+            readiness_overview,
+            future_reference,
+            candidate_reference_item,
+        )
+        assert readiness_overview["candidate_reference_status"] == "OK"
+        assert readiness_overview["can_reference_candidate_identity_set"] is True
         if not summary["duplicate_candidate_ids"] and not summary["duplicate_candidate_identity_keys"]:
             assert contract["safe_for_future_reference"] is True
 
@@ -309,9 +332,13 @@ def test_candidate_identity_api_unresolved_source_contract_invariants(tmp_path: 
         assert future_reference["candidate_identity_fingerprint"] == fingerprint["fingerprint"]
         assert future_reference["candidate_identity_reference_id"] == review_reference["reference_id"]
         assert candidate_reference_item["status"] == "BLOCKED"
-        assert readiness_overview["can_reference_candidate_identity_set"] is False
+        assert_candidate_identity_readiness_overview_parity(
+            readiness_overview,
+            future_reference,
+            candidate_reference_item,
+        )
         assert readiness_overview["candidate_reference_status"] == "BLOCKED"
-        assert readiness_overview["main_future_command_reference_ready"] == future_reference["can_reference_future_command"]
+        assert readiness_overview["can_reference_candidate_identity_set"] is False
         assert future_reference["mutation_still_disabled"] is True
         assert future_reference["can_reference_future_command"] == (preview["identity_readiness"]["status"] == "ready_reference")
         assert contract["safe_for_future_reference"] is False
@@ -352,9 +379,13 @@ def test_candidate_identity_api_unsupported_source_contract_invariants(tmp_path:
         assert future_reference["candidate_identity_fingerprint"] == fingerprint["fingerprint"]
         assert future_reference["candidate_identity_reference_id"] == review_reference["reference_id"]
         assert candidate_reference_item["status"] == "BLOCKED"
-        assert readiness_overview["can_reference_candidate_identity_set"] is False
+        assert_candidate_identity_readiness_overview_parity(
+            readiness_overview,
+            future_reference,
+            candidate_reference_item,
+        )
         assert readiness_overview["candidate_reference_status"] == "BLOCKED"
-        assert readiness_overview["main_future_command_reference_ready"] == future_reference["can_reference_future_command"]
+        assert readiness_overview["can_reference_candidate_identity_set"] is False
         assert future_reference["mutation_still_disabled"] is True
         assert future_reference["can_reference_future_command"] == (preview["identity_readiness"]["status"] == "ready_reference")
         assert contract["safe_for_future_reference"] is False

@@ -615,9 +615,9 @@ describe('Module 17 pages through routes', () => {
       future_apply_reference_contract: { available: true, apply_execution_enabled: false, mutation_permitted: false, message: 'Reference contract preview only.' },
       future_apply_request_validation_preview: {
         available: true,
-        requested_candidate_identity_reference_id: 'candidate-ref-id',
-        requested_candidate_identity_fingerprint: 'candidate-fp',
-        requested_candidate_identity_reference_type: 'dry_run_candidate_identity',
+        requested_candidate_identity_reference_id: 'abc123fingerprint',
+        requested_candidate_identity_fingerprint: 'abc123fingerprint',
+        requested_candidate_identity_reference_type: 'candidate_identity_set',
         reference_id_matches: true,
         fingerprint_matches: true,
         reference_type_matches: true,
@@ -1987,7 +1987,18 @@ describe('Module 17 pages through routes', () => {
     }
   }, 45000)
 
-  it('keeps future apply request validation manual-only and preview-only', async () => {
+  it('keeps future apply request validation manual-only and preview-only with fill helper', async () => {
+    api.postSeasonBuilderDryRunBuild.mockResolvedValueOnce({
+      enabled: false,
+      dry_run_result_preview: {
+        dry_run_result_fingerprint: 'dry-run-fp-with-reference',
+        dry_run_result_id: 'dry-run-id-with-reference',
+        candidate_identity_review_reference: { reference_id: 'candidate-ref-id', reference_type: 'dry_run_candidate_identity' },
+        candidate_identity_fingerprint: { fingerprint: 'candidate-fp' }
+      },
+      validation_warnings: [],
+      validation_errors: []
+    })
     renderAppAt('/admin/seasons/build')
     expect(await screen.findByRole('heading', { name: 'Season Builder' })).toBeInTheDocument()
 
@@ -1995,9 +2006,15 @@ describe('Module 17 pages through routes', () => {
     expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
 
-    fireEvent.change(screen.getByLabelText('Candidate identity reference ID'), { target: { value: 'candidate-ref-id' } })
-    fireEvent.change(screen.getByLabelText('Candidate identity fingerprint'), { target: { value: 'candidate-fp' } })
-    fireEvent.change(screen.getByLabelText('Candidate identity reference type'), { target: { value: 'dry_run_candidate_identity' } })
+    const fillButton = await screen.findByRole('button', { name: 'Fill from dry-run reference' })
+    await waitFor(() => expect(fillButton).toBeEnabled())
+    fireEvent.click(fillButton)
+    expect((screen.getByLabelText('Candidate identity reference ID') as HTMLInputElement).value).toBe('candidate-ref-id')
+    expect((screen.getByLabelText('Candidate identity fingerprint') as HTMLInputElement).value).toBe('candidate-fp')
+    expect((screen.getByLabelText('Candidate identity reference type') as HTMLInputElement).value).toBe('dry_run_candidate_identity')
+    expect(api.validateFutureApplyRequestPreview).not.toHaveBeenCalled()
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
+
     fireEvent.click(screen.getByRole('button', { name: 'Validate future apply reference' }))
 
     await waitFor(() => expect(api.validateFutureApplyRequestPreview).toHaveBeenCalledTimes(1))
@@ -2006,8 +2023,8 @@ describe('Module 17 pages through routes', () => {
       source_type: 'season_template',
       source_template_id: 'default_msa_template_preview',
       overwrite_policy: null,
-      preflight_fingerprint: null,
-      reviewed_diff_id: null,
+      preflight_fingerprint: 'pf_test_existing',
+      reviewed_diff_id: 'rd_test_existing',
       requested_candidate_identity_reference_id: 'candidate-ref-id',
       requested_candidate_identity_fingerprint: 'candidate-fp',
       requested_candidate_identity_reference_type: 'dry_run_candidate_identity'
@@ -2017,11 +2034,31 @@ describe('Module 17 pages through routes', () => {
     expect(screen.queryByText('Apply execution enabled: true')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Fill from dry-run reference' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Validate future apply reference' })).toBeInTheDocument()
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
     expect(api.postSeasonBuilderApplyCommandContract).not.toHaveBeenCalledWith(expect.objectContaining({
-      requested_candidate_identity_reference_id: 'candidate-ref-id'
+      requested_candidate_identity_reference_id: 'abc123fingerprint'
     }))
+  })
+
+  it('disables fill helper when dry-run reference metadata is unavailable', async () => {
+    api.postSeasonBuilderDryRunBuild.mockResolvedValueOnce({
+      enabled: false,
+      dry_run_result_preview: {
+        dry_run_result_fingerprint: 'dry-run-fp-no-reference',
+        dry_run_result_id: 'dry-run-id-no-reference'
+      },
+      validation_warnings: [],
+      validation_errors: []
+    })
+    renderAppAt('/admin/seasons/build')
+    expect(await screen.findByRole('heading', { name: 'Season Builder' })).toBeInTheDocument()
+
+    const fillButton = await screen.findByRole('button', { name: 'Fill from dry-run reference' })
+    expect(fillButton).toBeDisabled()
+    expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
   })
 
   it('shows manual future apply validation errors without enabling mutation controls', async () => {

@@ -94,15 +94,15 @@ describe('validateFutureApplyRequestPreview', () => {
           future_apply_reference_contract: null,
           future_apply_request_validation_preview: null,
           create_only_apply_execution_preflight_preview: {
-        available: true,
-        preflight_type: 'create_only_apply_execution_preflight_preview',
-        execution_enabled: false,
-        can_execute: false,
-        mutation_permitted: false,
-        read_only: true,
-        message: 'Preview only.'
-      },
-      audit_preview: null
+            available: true,
+            preflight_type: 'create_only_apply_execution_preflight_preview',
+            execution_enabled: false,
+            can_execute: false,
+            mutation_permitted: false,
+            read_only: true,
+            message: 'Preview only.'
+          },
+          audit_preview: null
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       )

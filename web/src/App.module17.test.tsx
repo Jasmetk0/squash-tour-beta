@@ -4205,6 +4205,7 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Can execute: false')).toBeInTheDocument()
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
     expect(screen.getByText('Message: Create-only apply execution remains disabled in preview mode.')).toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
   it('handles missing and malformed create-only apply execution preflight preview data', () => {

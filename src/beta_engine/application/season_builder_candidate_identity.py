@@ -571,3 +571,84 @@ def build_create_only_apply_audit_metadata_preview(
             "it does not execute apply or mutate any state."
         ),
     }
+
+
+def build_disabled_execution_contract_summary(
+    *,
+    future_apply_reference_contract: dict,
+    future_apply_request_validation_preview: dict,
+    create_only_apply_audit_metadata_preview: dict,
+    create_only_apply_execution_preflight_preview: dict,
+) -> dict[str, object]:
+    """Build final disabled/read-only execution contract summary across preview layers.
+
+    This helper is intentionally non-mutating and never enables execution.
+    """
+    raw_reference_available = future_apply_reference_contract.get("available")
+    future_apply_reference_contract_available = (
+        raw_reference_available if isinstance(raw_reference_available, bool) else False
+    )
+
+    raw_validation_available = future_apply_request_validation_preview.get("available")
+    future_apply_request_validation_available = (
+        raw_validation_available if isinstance(raw_validation_available, bool) else False
+    )
+
+    raw_audit_available = create_only_apply_audit_metadata_preview.get("available")
+    audit_metadata_available = (
+        raw_audit_available if isinstance(raw_audit_available, bool) else False
+    )
+
+    raw_preflight_available = create_only_apply_execution_preflight_preview.get("available")
+    execution_preflight_available = (
+        raw_preflight_available if isinstance(raw_preflight_available, bool) else False
+    )
+
+    identity_reference_matches = all(
+        [
+            future_apply_request_validation_preview.get("reference_id_matches") is True,
+            future_apply_request_validation_preview.get("fingerprint_matches") is True,
+            future_apply_request_validation_preview.get("reference_type_matches") is True,
+        ]
+    )
+
+    raw_audit_complete = create_only_apply_audit_metadata_preview.get(
+        "all_required_audit_metadata_present"
+    )
+    audit_metadata_complete = raw_audit_complete if isinstance(raw_audit_complete, bool) else False
+
+    raw_preconditions = create_only_apply_execution_preflight_preview.get(
+        "all_known_preconditions_met"
+    )
+    all_known_preconditions_met = raw_preconditions if isinstance(raw_preconditions, bool) else False
+
+    all_preview_layers_available = all(
+        [
+            future_apply_reference_contract_available,
+            future_apply_request_validation_available,
+            audit_metadata_available,
+            execution_preflight_available,
+        ]
+    )
+    available = all_preview_layers_available
+
+    return {
+        "available": available,
+        "summary_type": "disabled_execution_contract_summary",
+        "future_apply_reference_contract_available": future_apply_reference_contract_available,
+        "future_apply_request_validation_available": future_apply_request_validation_available,
+        "audit_metadata_available": audit_metadata_available,
+        "execution_preflight_available": execution_preflight_available,
+        "identity_reference_matches": identity_reference_matches,
+        "audit_metadata_complete": audit_metadata_complete,
+        "all_known_preconditions_met": all_known_preconditions_met,
+        "all_preview_layers_available": all_preview_layers_available,
+        "execution_enabled": False,
+        "can_execute": False,
+        "read_only": True,
+        "mutation_permitted": False,
+        "message": (
+            "Disabled/read-only execution contract summary only; "
+            "does not execute apply and does not mutate state."
+        ),
+    }

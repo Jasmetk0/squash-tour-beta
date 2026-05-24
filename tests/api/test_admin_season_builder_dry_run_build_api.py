@@ -495,6 +495,7 @@ def test_builder_dry_run_candidate_identity_summary_exists(tmp_path: Path) -> No
         preview = body["dry_run_result_preview"]
         candidates = preview["candidate_events"]
         summary = preview["candidate_identity_summary"]
+        contract = preview["candidate_identity_contract"]
         assert summary["candidate_count"] == len(candidates)
         assert summary["candidate_ids"] == [c["candidate_id"] for c in candidates]
         assert summary["candidate_identity_keys"] == [c["candidate_identity_key"] for c in candidates]
@@ -502,6 +503,15 @@ def test_builder_dry_run_candidate_identity_summary_exists(tmp_path: Path) -> No
         assert isinstance(summary["duplicate_candidate_identity_keys"], list)
         assert summary["read_only"] is True
         assert summary["mutation_permitted"] is False
+        assert contract["identity_source"] == "season_template_slot"
+        assert contract["id_strategy"] == "sanitized_template_slot_week"
+        assert contract["key_strategy"] == "pipe_joined_sanitized_components"
+        assert contract["candidate_count"] == summary["candidate_count"]
+        assert contract["has_duplicate_candidate_ids"] == bool(summary["duplicate_candidate_ids"])
+        assert contract["has_duplicate_candidate_identity_keys"] == bool(summary["duplicate_candidate_identity_keys"])
+        assert contract["safe_for_future_reference"] is True
+        assert contract["read_only"] is True
+        assert contract["mutation_permitted"] is False
 
 
 def test_builder_dry_run_candidate_identity_summary_unresolved_source_empty(tmp_path: Path) -> None:
@@ -517,6 +527,7 @@ def test_builder_dry_run_candidate_identity_summary_unresolved_source_empty(tmp_
         preview = body["dry_run_result_preview"]
         assert preview["candidate_events"] == []
         summary = preview["candidate_identity_summary"]
+        contract = preview["candidate_identity_contract"]
         assert summary["candidate_count"] == 0
         assert summary["candidate_ids"] == []
         assert summary["candidate_identity_keys"] == []
@@ -524,6 +535,9 @@ def test_builder_dry_run_candidate_identity_summary_unresolved_source_empty(tmp_
         assert summary["duplicate_candidate_identity_keys"] == []
         assert summary["read_only"] is True
         assert summary["mutation_permitted"] is False
+        assert contract["candidate_count"] == 0
+        assert contract["safe_for_future_reference"] is False
+        assert "no candidates" in str(contract["message"]).lower()
 
 def test_builder_dry_run_build_unknown_template_returns_unresolved_source(tmp_path: Path) -> None:
     with Server(tmp_path) as server:

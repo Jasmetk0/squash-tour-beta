@@ -68,3 +68,50 @@ def build_candidate_identity_summary(candidate_events: list[dict[str, object]]) 
         "mutation_permitted": False,
         "message": "Candidate event identities are deterministic and read-only in dry-run.",
     }
+
+
+def build_candidate_identity_contract(candidate_identity_summary: dict[str, object]) -> dict[str, object]:
+    raw_candidate_count = candidate_identity_summary.get("candidate_count")
+    candidate_count = raw_candidate_count if isinstance(raw_candidate_count, int) and raw_candidate_count >= 0 else 0
+
+    duplicate_candidate_ids = candidate_identity_summary.get("duplicate_candidate_ids")
+    duplicate_candidate_identity_keys = candidate_identity_summary.get("duplicate_candidate_identity_keys")
+
+    has_duplicate_candidate_ids = isinstance(duplicate_candidate_ids, list) and bool(duplicate_candidate_ids)
+    has_duplicate_candidate_identity_keys = isinstance(duplicate_candidate_identity_keys, list) and bool(duplicate_candidate_identity_keys)
+
+    safe_for_future_reference = (
+        candidate_count > 0
+        and not has_duplicate_candidate_ids
+        and not has_duplicate_candidate_identity_keys
+    )
+
+    if safe_for_future_reference:
+        message = "Candidate identities are stable and safe for future reference."
+    elif has_duplicate_candidate_ids or has_duplicate_candidate_identity_keys:
+        message = "Candidate identities are deterministic but require review because duplicates were detected."
+    else:
+        message = "Candidate identities are unavailable for future reference because no candidates were generated."
+
+    return {
+        "identity_source": "season_template_slot",
+        "id_strategy": "sanitized_template_slot_week",
+        "key_strategy": "pipe_joined_sanitized_components",
+        "key_components": [
+            "target_season",
+            "source_type",
+            "source_template_id",
+            "source_slot_id",
+            "season_week_start",
+            "event_name",
+            "category",
+            "source_template_ref",
+        ],
+        "candidate_count": candidate_count,
+        "has_duplicate_candidate_ids": has_duplicate_candidate_ids,
+        "has_duplicate_candidate_identity_keys": has_duplicate_candidate_identity_keys,
+        "safe_for_future_reference": safe_for_future_reference,
+        "read_only": True,
+        "mutation_permitted": False,
+        "message": message,
+    }

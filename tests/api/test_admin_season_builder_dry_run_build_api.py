@@ -432,6 +432,99 @@ def test_builder_dry_run_build_generates_read_only_candidates_from_template(tmp_
         assert calendar_body["summary"]["calendar_exists"] is False
 
 
+
+def test_builder_dry_run_candidate_identity_fields_exist(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2035/2036",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": "merge_preview",
+            "preflight_fingerprint": "pf_identity_fields",
+            "reviewed_diff_id": "rd_identity_fields",
+        }
+        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        candidates = body["dry_run_result_preview"]["candidate_events"]
+        assert len(candidates) > 0
+        first = candidates[0]
+        assert isinstance(first["candidate_id"], str) and first["candidate_id"]
+        assert isinstance(first["candidate_identity_key"], str) and first["candidate_identity_key"]
+        assert isinstance(first["source_slot_id"], str) and first["source_slot_id"]
+        assert first["source_template_id"] == "default_msa_template_preview"
+        assert first["target_season_label"] == "2035/2036"
+        assert first["identity_source"] == "season_template_slot"
+        assert first["read_only"] is True
+        assert first["mutation_permitted"] is False
+
+
+def test_builder_dry_run_candidate_identity_is_deterministic_across_repeated_calls(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2035/2036",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": "merge_preview",
+            "preflight_fingerprint": "pf_identity_stable",
+            "reviewed_diff_id": "rd_identity_stable",
+        }
+        _, first = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        _, second = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        first_candidates = first["dry_run_result_preview"]["candidate_events"]
+        second_candidates = second["dry_run_result_preview"]["candidate_events"]
+        first_ids = [c["candidate_id"] for c in first_candidates]
+        second_ids = [c["candidate_id"] for c in second_candidates]
+        first_keys = [c["candidate_identity_key"] for c in first_candidates]
+        second_keys = [c["candidate_identity_key"] for c in second_candidates]
+        assert first_ids == second_ids
+        assert first_keys == second_keys
+        assert first_candidates[0]["candidate_id"] == second_candidates[0]["candidate_id"]
+        assert first_candidates[0]["candidate_identity_key"] == second_candidates[0]["candidate_identity_key"]
+
+
+def test_builder_dry_run_candidate_identity_summary_exists(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2035/2036",
+            "source_type": "season_template",
+            "source_template_id": "default_msa_template_preview",
+            "overwrite_policy": "merge_preview",
+            "preflight_fingerprint": "pf_identity_summary",
+            "reviewed_diff_id": "rd_identity_summary",
+        }
+        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        preview = body["dry_run_result_preview"]
+        candidates = preview["candidate_events"]
+        summary = preview["candidate_identity_summary"]
+        assert summary["candidate_count"] == len(candidates)
+        assert summary["candidate_ids"] == [c["candidate_id"] for c in candidates]
+        assert summary["candidate_identity_keys"] == [c["candidate_identity_key"] for c in candidates]
+        assert isinstance(summary["duplicate_candidate_ids"], list)
+        assert isinstance(summary["duplicate_candidate_identity_keys"], list)
+        assert summary["read_only"] is True
+        assert summary["mutation_permitted"] is False
+
+
+def test_builder_dry_run_candidate_identity_summary_unresolved_source_empty(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {
+            "target_season_label": "2035/2036",
+            "source_type": "season_template",
+            "source_template_id": "unknown_template",
+            "preflight_fingerprint": "pf_identity_empty",
+            "reviewed_diff_id": "rd_identity_empty",
+        }
+        _, body = call("POST", f"{server.base_url}/admin/seasons/builder/dry-run-build", payload)
+        preview = body["dry_run_result_preview"]
+        assert preview["candidate_events"] == []
+        summary = preview["candidate_identity_summary"]
+        assert summary["candidate_count"] == 0
+        assert summary["candidate_ids"] == []
+        assert summary["candidate_identity_keys"] == []
+        assert summary["duplicate_candidate_ids"] == []
+        assert summary["duplicate_candidate_identity_keys"] == []
+        assert summary["read_only"] is True
+        assert summary["mutation_permitted"] is False
+
 def test_builder_dry_run_build_unknown_template_returns_unresolved_source(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
         payload = {

@@ -605,7 +605,7 @@ describe('Module 17 pages through routes', () => {
       message: 'Create-only apply readiness is query-only in this phase.'
     }))
     api.validateFutureApplyRequestPreview.mockResolvedValue({
-      enabled: true,
+      enabled: false,
       can_execute: false,
       can_mutate: false,
       target_season_label: '2000/2001',
@@ -2013,11 +2013,29 @@ describe('Module 17 pages through routes', () => {
       requested_candidate_identity_reference_type: 'dry_run_candidate_identity'
     }))
     expect((await screen.findAllByText('Future apply request validation preview')).length).toBeGreaterThan(0)
-    expect(screen.getByText('Apply execution enabled: false')).toBeInTheDocument()
+    expect(screen.getAllByText('Apply execution enabled: false').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Apply execution enabled: true')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Validate future apply reference' })).toBeInTheDocument()
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
     expect(api.postSeasonBuilderApplyCommandContract).not.toHaveBeenCalledWith(expect.objectContaining({
       requested_candidate_identity_reference_id: 'candidate-ref-id'
     }))
+  })
+
+  it('shows manual future apply validation errors without enabling mutation controls', async () => {
+    api.validateFutureApplyRequestPreview.mockRejectedValueOnce(new Error('Validation endpoint unavailable'))
+    renderAppAt('/admin/seasons/build')
+    expect(await screen.findByRole('heading', { name: 'Season Builder' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Validate future apply reference' }))
+
+    expect(await screen.findByText('Future apply request validation failed: Validation endpoint unavailable')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
+    expect(api.postSeasonBuilderApplyCommandContract).not.toHaveBeenCalled()
   })
 
   it('renders Concrete Season detail dashboard routes', async () => {

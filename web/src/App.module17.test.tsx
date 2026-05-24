@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, DisabledDryRunBuildContractPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -1757,7 +1757,7 @@ describe('Module 17 pages through routes', () => {
         result_metadata: { preflight_fingerprint: 'pf_test_empty', reviewed_diff_id: 'rd_test_empty', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, target_calendar_exists: false, target_event_count: 0, comparison_performed: true, read_only: true, mutation_permitted: false, dry_run_result_fingerprint: 'drf_test_empty', dry_run_result_id: 'drr_test_empty' },
         validation_summary: { status: 'clean', blocking_count: 0, warning_count: 0, info_count: 0, blocking_reasons: [], warning_reasons: [], info_messages: [], candidate_status_counts: { planned: 0, replacement: 0, conflict: 0, invalid: 0 }, conflict_type_counts: { week_conflicts: 0, slot_conflicts: 0, policy_conflicts: 0, validation_conflicts: 0 } },
         plan_readiness: { read_only_plan_available: true, has_blocking_issues: false, has_warnings: false, mutation_still_disabled: true, next_required_step: 'Review dry-run summary; execution remains disabled.' },
-        identity_readiness: { status: 'ready_reference', items: [{ area: 'preflight_fingerprint', status: 'OK', message: 'Preflight fingerprint is present.' }], future_command_reference: { preflight_fingerprint: 'pf_test_empty', reviewed_diff_id: 'rd_test_empty', dry_run_result_fingerprint: 'drf_test_empty', dry_run_result_id: 'drr_test_empty', can_reference_future_command: true, mutation_still_disabled: true, candidate_identity_fingerprint: 'abc123fingerprint', candidate_identity_reference_id: 'abc123fingerprint', can_reference_candidate_identity_set: true, candidate_identity_reference_type: 'candidate_identity_set' } },
+        identity_readiness: { status: 'ready_reference', items: [{ area: 'preflight_fingerprint', status: 'OK', message: 'Preflight fingerprint is present.' }, { area: 'candidate_identity_review_reference', status: 'OK', message: 'Candidate identity set can be referenced by a future audited apply flow.' }], future_command_reference: { preflight_fingerprint: 'pf_test_empty', reviewed_diff_id: 'rd_test_empty', dry_run_result_fingerprint: 'drf_test_empty', dry_run_result_id: 'drr_test_empty', can_reference_future_command: true, mutation_still_disabled: true, candidate_identity_fingerprint: 'abc123fingerprint', candidate_identity_reference_id: 'abc123fingerprint', can_reference_candidate_identity_set: true, candidate_identity_reference_type: 'candidate_identity_set' } },
         candidate_identity_summary: { candidate_count: 1, candidate_ids: ['cand_default_msa_template_preview_slot_01_1'], candidate_identity_keys: ['target_season=2000_01|source_type=season_template|source_template_id=default_msa_template_preview|source_slot_id=slot_01|season_week_start=1|event_name=world_tour_gold|category=gold|source_template_ref=wt_gold_24'], duplicate_candidate_ids: [], duplicate_candidate_identity_keys: [], read_only: true, mutation_permitted: false, message: 'Candidate event identities are deterministic and read-only in dry-run.' },
         candidate_identity_contract: { identity_source: 'season_template_slot', id_strategy: 'sanitized_template_slot_week', key_strategy: 'pipe_joined_sanitized_components', key_components: ['target_season', 'source_type', 'source_template_id', 'source_slot_id', 'season_week_start', 'event_name', 'category', 'source_template_ref'], candidate_count: 1, has_duplicate_candidate_ids: false, has_duplicate_candidate_identity_keys: false, safe_for_future_reference: true, read_only: true, mutation_permitted: false, message: 'Candidate identities are stable and safe for future reference.' },
         candidate_identity_overview: { available: true, candidate_count: 1, safe_for_future_reference: true, has_duplicate_candidate_ids: false, has_duplicate_candidate_identity_keys: false, identity_source: 'season_template_slot', id_strategy: 'sanitized_template_slot_week', key_strategy: 'pipe_joined_sanitized_components', read_only: true, mutation_permitted: false, message: 'Candidate identity overview: safe for future reference.' },
@@ -1838,6 +1838,12 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('No backend advisory notes returned.')).toBeInTheDocument()
     expect(screen.getAllByText('Dry-run identity readiness').length).toBeGreaterThan(0)
     expect(screen.getByText('can_reference_future_command')).toBeInTheDocument()
+    expect(screen.getAllByText('Candidate identity fingerprint').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('abc123fingerprint').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Candidate identity reference ID').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Can reference candidate identity set').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Candidate identity reference type').length).toBeGreaterThan(0)
+    expect(screen.getByText('candidate_identity_review_reference')).toBeInTheDocument()
     expect(screen.getAllByText('drf_test_empty').length).toBeGreaterThan(0)
     expect(screen.getAllByText('drr_test_empty').length).toBeGreaterThan(0)
     expect(screen.getAllByText('validation_errors count').length).toBeGreaterThan(0)
@@ -3716,5 +3722,94 @@ describe('Candidate identity panels', () => {
     render(<CandidateIdentityReviewReferencePanel dryRunResultPreview={{ candidate_identity_review_reference: { safe_for_future_reference: false, can_reference_future_apply: false } }} />)
     expect(screen.getByText('Candidate identity review reference safe for future reference: false')).toBeInTheDocument()
     expect(screen.getByText('Candidate identity review reference can reference future apply: false')).toBeInTheDocument()
+  })
+
+  it('renders candidate identity readiness rows safely in dry-run identity readiness panel', () => {
+    render(<DisabledDryRunBuildContractPanel
+      queryEnabled={true}
+      requestPayload={{ target_season_label: '2000/01', source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: null, preflight_fingerprint: 'pf', reviewed_diff_id: 'rd', requested_by: 'test', audit_reason: '', explicit_confirmation: '', mutation_scope: '' }}
+      query={{
+        isLoading: false,
+        error: null,
+        data: {
+          command: 'season_builder_dry_run_build',
+          enabled: false,
+          can_execute: false,
+          can_mutate: false,
+          target_season_label: '2000/01',
+          source_type: 'season_template',
+          source_template_id: 'default_msa_template_preview',
+          overwrite_policy: null,
+          preflight_fingerprint: 'pf',
+          reviewed_diff_id: 'rd',
+          validation_errors: [],
+          validation_warnings: [],
+          audit_preview: {},
+          generation_design_preview: {},
+          candidate_event_contract_preview: {},
+          conflict_contract_preview: {},
+          dry_run_result_contract_preview: {},
+          dry_run_result_preview: {
+            identity_readiness: {
+              status: 'ready_reference',
+              future_command_reference: {
+                candidate_identity_fingerprint: 'abc123fingerprint',
+                candidate_identity_reference_id: 'abc123fingerprint',
+                can_reference_candidate_identity_set: true,
+                candidate_identity_reference_type: 'candidate_identity_set'
+              },
+              items: []
+            }
+          },
+          message: 'ok'
+        }
+      }}
+    />)
+    expect(screen.getByText('Candidate identity fingerprint', { selector: 'td' })).toBeInTheDocument()
+    expect(screen.getByText('candidate_identity_set')).toBeInTheDocument()
+  })
+
+  it('shows n/a for malformed candidate identity readiness row values', () => {
+    render(<DisabledDryRunBuildContractPanel
+      queryEnabled={true}
+      requestPayload={{ target_season_label: '2000/01', source_type: 'season_template', source_template_id: null, overwrite_policy: null, preflight_fingerprint: 'pf', reviewed_diff_id: 'rd', requested_by: 'test', audit_reason: '', explicit_confirmation: '', mutation_scope: '' }}
+      query={{
+        isLoading: false,
+        error: null,
+        data: {
+          command: 'season_builder_dry_run_build',
+          enabled: false,
+          can_execute: false,
+          can_mutate: false,
+          target_season_label: '2000/01',
+          source_type: 'season_template',
+          source_template_id: null,
+          overwrite_policy: null,
+          preflight_fingerprint: 'pf',
+          reviewed_diff_id: 'rd',
+          validation_errors: [],
+          validation_warnings: [],
+          audit_preview: {},
+          generation_design_preview: {},
+          candidate_event_contract_preview: {},
+          conflict_contract_preview: {},
+          dry_run_result_contract_preview: {},
+          dry_run_result_preview: {
+            identity_readiness: {
+              status: 'ready_reference',
+              future_command_reference: {
+                candidate_identity_fingerprint: '  ',
+                candidate_identity_reference_id: 33,
+                can_reference_candidate_identity_set: 'yes',
+                candidate_identity_reference_type: null
+              },
+              items: []
+            }
+          },
+          message: 'ok'
+        }
+      }}
+    />)
+    expect(screen.getAllByText('n/a').length).toBeGreaterThan(0)
   })
 })

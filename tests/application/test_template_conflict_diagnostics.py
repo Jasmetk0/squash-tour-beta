@@ -18,6 +18,14 @@ def test_build_template_conflict_summary_preview_unavailable_shape():
     assert summary["conflict_codes"] == []
 
 
+def test_build_template_conflict_summary_preview_availability_messages():
+    unavailable = build_template_conflict_summary_preview(None)
+    preview = SeasonTemplateSlotConflictPreview(status="warnings", conflict_count=1)
+    available = build_template_conflict_summary_preview(preview)
+    assert "unavailable" in unavailable["message"]
+    assert "available" in available["message"]
+
+
 def test_build_template_conflict_summary_preview_available_shape():
     preview = SeasonTemplateSlotConflictPreview(
         template_id="default_msa_template_preview",
@@ -142,3 +150,28 @@ def test_build_template_conflict_diagnostics_overview_bool_count_does_not_coerce
         preflight_summary={"status": "warnings", "conflict_count": True},
     )
     assert overview.preflight_conflict_count == 0
+
+
+def test_template_conflict_diagnostics_overview_contract_is_read_only_non_blocking():
+    # These fields are part of the safety contract: conflict diagnostics may inform admins
+    # but must not enable mutation or block/permit commands.
+    selected = build_selected_template_conflict_diagnostics_overview(
+        template_exists=True,
+        status="warnings",
+        conflict_count=2,
+    )
+    preflight_preview = SeasonTemplateSlotConflictPreview(status="warnings", conflict_count=1)
+    dry_run_preview = SeasonTemplateSlotConflictPreview(status="info", conflict_count=0)
+    combined = build_template_conflict_diagnostics_overview(
+        selected_report_available=selected.selected_report_available,
+        selected_status=selected.selected_status,
+        selected_conflict_count=selected.selected_conflict_count,
+        preflight_preview=preflight_preview,
+        preflight_summary=build_template_conflict_summary_preview(preflight_preview),
+        dry_run_preview=dry_run_preview,
+        dry_run_summary=build_template_conflict_summary_preview(dry_run_preview),
+    )
+    assert combined.read_only is True
+    assert combined.non_blocking is True
+    assert combined.mutation_behavior == "unavailable"
+    assert combined.blocking_behavior == "non_blocking"

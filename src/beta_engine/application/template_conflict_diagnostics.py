@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+"""Read-only helpers for conflict diagnostics summaries and overview contracts.
+
+These functions provide compact, non-blocking diagnostics payloads for selected,
+preflight, and dry-run surfaces. They never mutate state or decide whether
+template apply/build commands are allowed, and defensively normalize malformed
+diagnostic inputs.
+"""
+
 import math
 
 from beta_engine.domain.tournaments import (
@@ -11,6 +19,7 @@ from beta_engine.domain.tournaments import (
 def build_template_conflict_summary_preview(
     template_slot_conflict_preview: SeasonTemplateSlotConflictPreview | None,
 ) -> dict[str, object]:
+    """Build compact nested preview summary from a root preflight/dry-run preview."""
     if template_slot_conflict_preview is None:
         return {
             "available": False,
@@ -89,6 +98,7 @@ def build_template_conflict_diagnostics_overview(
     dry_run_preview: SeasonTemplateSlotConflictPreview | None = None,
     dry_run_summary: dict[str, object] | None = None,
 ) -> SeasonTemplateConflictDiagnosticsOverview:
+    """Build stable compact backend overview for selected/preflight/dry-run panels."""
     preflight_summary_available = isinstance(preflight_summary, dict)
     dry_run_summary_available = isinstance(dry_run_summary, dict)
     preflight_preview_available = preflight_preview is not None
@@ -153,6 +163,7 @@ def build_selected_template_conflict_diagnostics_overview(
     status: object | None,
     conflict_count: object | None,
 ) -> SeasonTemplateConflictDiagnosticsOverview:
+    """Build overview fields for the selected-template conflict report surface only."""
     if not template_exists:
         return build_template_conflict_diagnostics_overview(
             selected_report_available=False,

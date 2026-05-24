@@ -8,6 +8,7 @@ from beta_engine.application.season_builder_candidate_identity import (
     build_future_apply_request_validation_preview,
     build_future_apply_reference_contract,
     build_create_only_apply_execution_preflight_preview,
+    build_disabled_execution_contract_summary,
     build_candidate_identity_summary,
     sanitize_candidate_identity_part,
 )
@@ -805,3 +806,115 @@ def test_create_only_apply_audit_metadata_preview_none_and_empty_values_are_safe
     assert preview["available"] is False
     assert preview["execution_enabled"] is False
     assert preview["can_execute"] is False
+
+
+def test_disabled_execution_contract_summary_all_layers_available_and_coherent() -> None:
+    summary = build_disabled_execution_contract_summary(
+        future_apply_reference_contract={"available": True},
+        future_apply_request_validation_preview={
+            "available": True,
+            "reference_id_matches": True,
+            "fingerprint_matches": True,
+            "reference_type_matches": True,
+        },
+        create_only_apply_audit_metadata_preview={"available": True, "all_required_audit_metadata_present": True},
+        create_only_apply_execution_preflight_preview={"available": True, "all_known_preconditions_met": True},
+    )
+    assert summary["available"] is True
+    assert summary["all_preview_layers_available"] is True
+    assert summary["identity_reference_matches"] is True
+    assert summary["audit_metadata_complete"] is True
+    assert summary["all_known_preconditions_met"] is True
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+    assert summary["read_only"] is True
+    assert summary["mutation_permitted"] is False
+    message = str(summary["message"]).lower()
+    assert "disabled" in message
+    assert "read-only" in message
+    assert "does not execute apply" in message
+
+
+def test_disabled_execution_contract_summary_missing_audit_metadata() -> None:
+    summary = build_disabled_execution_contract_summary(
+        future_apply_reference_contract={"available": True},
+        future_apply_request_validation_preview={
+            "available": True,
+            "reference_id_matches": True,
+            "fingerprint_matches": True,
+            "reference_type_matches": True,
+        },
+        create_only_apply_audit_metadata_preview={"available": False, "all_required_audit_metadata_present": False},
+        create_only_apply_execution_preflight_preview={"available": True, "all_known_preconditions_met": True},
+    )
+    assert summary["audit_metadata_available"] is False
+    assert summary["audit_metadata_complete"] is False
+    assert summary["all_preview_layers_available"] is False
+    assert summary["available"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+
+
+def test_disabled_execution_contract_summary_identity_mismatch() -> None:
+    summary = build_disabled_execution_contract_summary(
+        future_apply_reference_contract={"available": True},
+        future_apply_request_validation_preview={
+            "available": False,
+            "reference_id_matches": True,
+            "fingerprint_matches": False,
+            "reference_type_matches": True,
+        },
+        create_only_apply_audit_metadata_preview={"available": True, "all_required_audit_metadata_present": True},
+        create_only_apply_execution_preflight_preview={"available": True, "all_known_preconditions_met": True},
+    )
+    assert summary["identity_reference_matches"] is False
+    assert summary["all_preview_layers_available"] is False
+    assert summary["available"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+
+
+def test_disabled_execution_contract_summary_preflight_unavailable() -> None:
+    summary = build_disabled_execution_contract_summary(
+        future_apply_reference_contract={"available": True},
+        future_apply_request_validation_preview={
+            "available": True,
+            "reference_id_matches": True,
+            "fingerprint_matches": True,
+            "reference_type_matches": True,
+        },
+        create_only_apply_audit_metadata_preview={"available": True, "all_required_audit_metadata_present": True},
+        create_only_apply_execution_preflight_preview={"available": False, "all_known_preconditions_met": False},
+    )
+    assert summary["execution_preflight_available"] is False
+    assert summary["all_known_preconditions_met"] is False
+    assert summary["all_preview_layers_available"] is False
+    assert summary["available"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+
+
+def test_disabled_execution_contract_summary_malformed_inputs_default_safely() -> None:
+    summary = build_disabled_execution_contract_summary(
+        future_apply_reference_contract={"available": "yes"},
+        future_apply_request_validation_preview={
+            "available": 1,
+            "reference_id_matches": "true",
+            "fingerprint_matches": None,
+            "reference_type_matches": [],
+        },
+        create_only_apply_audit_metadata_preview={"available": "true", "all_required_audit_metadata_present": "true"},
+        create_only_apply_execution_preflight_preview={"available": "true", "all_known_preconditions_met": "true"},
+    )
+    assert summary["future_apply_reference_contract_available"] is False
+    assert summary["future_apply_request_validation_available"] is False
+    assert summary["audit_metadata_available"] is False
+    assert summary["execution_preflight_available"] is False
+    assert summary["identity_reference_matches"] is False
+    assert summary["audit_metadata_complete"] is False
+    assert summary["all_known_preconditions_met"] is False
+    assert summary["all_preview_layers_available"] is False
+    assert summary["available"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+    assert summary["mutation_permitted"] is False

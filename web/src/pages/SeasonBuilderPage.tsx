@@ -258,6 +258,22 @@ export function AdminSeasonBuilderPage(): JSX.Element {
   const dryRunResultId = typeof disabledDryRunBuildQuery.data?.dry_run_result_preview?.dry_run_result_id === 'string'
     ? disabledDryRunBuildQuery.data?.dry_run_result_preview?.dry_run_result_id
     : ''
+  const dryRunCandidateIdentityReviewReference = disabledDryRunBuildQuery.data?.dry_run_result_preview?.candidate_identity_review_reference
+  const dryRunCandidateIdentityFingerprint = disabledDryRunBuildQuery.data?.dry_run_result_preview?.candidate_identity_fingerprint
+  const dryRunCandidateIdentityReferenceId = typeof dryRunCandidateIdentityReviewReference?.reference_id === 'string' && dryRunCandidateIdentityReviewReference.reference_id.trim().length > 0
+    ? dryRunCandidateIdentityReviewReference.reference_id
+    : ''
+  const dryRunCandidateIdentityFingerprintValue = typeof dryRunCandidateIdentityFingerprint?.fingerprint === 'string' && dryRunCandidateIdentityFingerprint.fingerprint.trim().length > 0
+    ? dryRunCandidateIdentityFingerprint.fingerprint
+    : ''
+  const dryRunCandidateIdentityReferenceType = typeof dryRunCandidateIdentityReviewReference?.reference_type === 'string' && dryRunCandidateIdentityReviewReference.reference_type.trim().length > 0
+    ? dryRunCandidateIdentityReviewReference.reference_type
+    : ''
+  const canFillFutureApplyReferenceFromDryRun = Boolean(
+    dryRunCandidateIdentityReferenceId
+    || dryRunCandidateIdentityFingerprintValue
+    || dryRunCandidateIdentityReferenceType
+  )
   const disabledApplyCommandContractPayload = useMemo<SeasonBuilderApplyCommandContractRequest>(() => ({
     target_season_label: backendPreflightPayload.target_season_label,
     source_type: backendPreflightPayload.source_type,
@@ -445,6 +461,12 @@ export function AdminSeasonBuilderPage(): JSX.Element {
       mutation_scope: dangerZoneMutationScope.trim()
     }
     createOnlyApplyMutation.mutate(payload)
+  }
+
+  const handleFillFutureApplyReferenceFromDryRun = (): void => {
+    setRequestedCandidateIdentityReferenceId(dryRunCandidateIdentityReferenceId)
+    setRequestedCandidateIdentityFingerprint(dryRunCandidateIdentityFingerprintValue)
+    setRequestedCandidateIdentityReferenceType(dryRunCandidateIdentityReferenceType)
   }
 
   const handleValidateFutureApplyReference = async (): Promise<void> => {
@@ -703,6 +725,14 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           <input id="future-apply-fingerprint" value={requestedCandidateIdentityFingerprint} onChange={(event) => setRequestedCandidateIdentityFingerprint(event.target.value)} />
           <label htmlFor="future-apply-reference-type">Candidate identity reference type</label>
           <input id="future-apply-reference-type" value={requestedCandidateIdentityReferenceType} onChange={(event) => setRequestedCandidateIdentityReferenceType(event.target.value)} />
+          <button
+            type="button"
+            onClick={handleFillFutureApplyReferenceFromDryRun}
+            disabled={!canFillFutureApplyReferenceFromDryRun}
+          >
+            Fill from dry-run reference
+          </button>
+          <p>Filling inputs does not validate or apply anything.</p>
           <button type="button" onClick={() => { void handleValidateFutureApplyReference() }}>Validate future apply reference</button>
         </div>
         {futureApplyValidationError ? <p className="error">Future apply request validation failed: {futureApplyValidationError}</p> : null}

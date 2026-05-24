@@ -2086,6 +2086,10 @@ describe('Module 17 pages through routes', () => {
     expect((screen.getByLabelText('Candidate identity reference ID') as HTMLInputElement).value).toBe('candidate-ref-id')
     expect((screen.getByLabelText('Candidate identity fingerprint') as HTMLInputElement).value).toBe('candidate-fp')
     expect((screen.getByLabelText('Candidate identity reference type') as HTMLInputElement).value).toBe('dry_run_candidate_identity')
+    fireEvent.change(screen.getByLabelText('Requested by'), { target: { value: 'qa-admin' } })
+    fireEvent.change(screen.getByLabelText('Audit reason'), { target: { value: 'phase-17d validation check' } })
+    fireEvent.change(screen.getByLabelText('Explicit confirmation'), { target: { value: 'I UNDERSTAND THIS IS CREATE ONLY' } })
+    fireEvent.change(screen.getByLabelText('Mutation scope'), { target: { value: 'create_only' } })
     expect(api.validateFutureApplyRequestPreview).not.toHaveBeenCalled()
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
 
@@ -2101,9 +2105,15 @@ describe('Module 17 pages through routes', () => {
       reviewed_diff_id: 'rd_test_existing',
       requested_candidate_identity_reference_id: 'candidate-ref-id',
       requested_candidate_identity_fingerprint: 'candidate-fp',
-      requested_candidate_identity_reference_type: 'dry_run_candidate_identity'
+      requested_candidate_identity_reference_type: 'dry_run_candidate_identity',
+      requested_by: 'qa-admin',
+      audit_reason: 'phase-17d validation check',
+      explicit_confirmation: 'I UNDERSTAND THIS IS CREATE ONLY',
+      mutation_scope: 'create_only'
     }))
     expect((await screen.findAllByText('Future apply request validation preview')).length).toBeGreaterThan(0)
+    expect(screen.getByText('Create-only apply audit metadata preview')).toBeInTheDocument()
+    expect(screen.getByText('All required audit metadata present: true')).toBeInTheDocument()
     expect(screen.getAllByText('Apply execution enabled: false').length).toBeGreaterThan(0)
     expect(screen.queryByText('Apply execution enabled: true')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
@@ -2114,6 +2124,18 @@ describe('Module 17 pages through routes', () => {
     expect(api.postSeasonBuilderApplyCommandContract).not.toHaveBeenCalledWith(expect.objectContaining({
       requested_candidate_identity_reference_id: 'abc123fingerprint'
     }))
+  })
+
+  it('does not auto-call future apply validation when audit metadata inputs change', async () => {
+    renderAppAt('/admin/seasons/build')
+    expect(await screen.findByRole('heading', { name: 'Season Builder' })).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Requested by'), { target: { value: 'auditor' } })
+    fireEvent.change(screen.getByLabelText('Audit reason'), { target: { value: 'manual preview only' } })
+    fireEvent.change(screen.getByLabelText('Explicit confirmation'), { target: { value: 'preview phrase' } })
+    fireEvent.change(screen.getByLabelText('Mutation scope'), { target: { value: 'create_only' } })
+
+    expect(api.validateFutureApplyRequestPreview).not.toHaveBeenCalled()
   })
 
   it('clears future apply validation result when builder context changes without auto-revalidating', async () => {

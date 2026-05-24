@@ -358,6 +358,10 @@ class SeasonBuilderFutureApplyRequestValidationPreviewRequest(BaseModel):
     requested_candidate_identity_reference_id: str | None = None
     requested_candidate_identity_fingerprint: str | None = None
     requested_candidate_identity_reference_type: str | None = None
+    requested_by: str | None = Field(default=None, min_length=1, max_length=128)
+    audit_reason: str | None = None
+    explicit_confirmation: str | None = None
+    mutation_scope: str | None = None
 
 
 class SeasonBuilderFutureApplyRequestValidationPreviewResponse(BaseModel):
@@ -370,6 +374,7 @@ class SeasonBuilderFutureApplyRequestValidationPreviewResponse(BaseModel):
     overwrite_policy: str | None = None
     future_apply_reference_contract: dict[str, Any] = Field(default_factory=dict)
     future_apply_request_validation_preview: dict[str, Any] = Field(default_factory=dict)
+    create_only_apply_audit_metadata_preview: dict[str, Any] = Field(default_factory=dict)
     create_only_apply_execution_preflight_preview: dict[str, Any] = Field(default_factory=dict)
     audit_preview: dict[str, Any] = Field(default_factory=dict)
 

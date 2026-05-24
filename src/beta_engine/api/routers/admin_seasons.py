@@ -30,6 +30,7 @@ from beta_engine.application.season_builder_candidate_identity import (
     build_candidate_identity_overview,
     build_candidate_identity_review_reference,
     build_candidate_identity_summary,
+    build_create_only_apply_audit_metadata_preview,
     build_create_only_apply_execution_preflight_preview,
 )
 from beta_engine.application.season_builder_identity_readiness import build_dry_run_identity_readiness
@@ -67,6 +68,9 @@ from beta_engine.domain.tournaments import (
 )
 
 router = APIRouter(prefix="/admin/seasons", tags=["admin-seasons"])
+
+
+REQUIRED_CREATE_ONLY_APPLY_CONFIRMATION_PHRASE = "I understand this will create a new season calendar."
 
 
 def _build_deterministic_digest(payload: dict[str, object]) -> str:
@@ -1061,7 +1065,17 @@ def post_season_builder_future_apply_request_validation_preview(
         "none",
         "create_only",
     }
-    audit_metadata_present = False
+    create_only_apply_audit_metadata_preview = build_create_only_apply_audit_metadata_preview(
+        requested_by=payload.requested_by,
+        audit_reason=payload.audit_reason,
+        explicit_confirmation=payload.explicit_confirmation,
+        mutation_scope=payload.mutation_scope,
+        required_confirmation_phrase=REQUIRED_CREATE_ONLY_APPLY_CONFIRMATION_PHRASE,
+        required_mutation_scope="create_only",
+    )
+    audit_metadata_present = (
+        create_only_apply_audit_metadata_preview.get("all_required_audit_metadata_present") is True
+    )
     create_only_apply_execution_preflight_preview = build_create_only_apply_execution_preflight_preview(
         future_apply_reference_contract=future_apply_reference_contract,
         future_apply_request_validation_preview=future_apply_request_validation_preview,
@@ -1080,6 +1094,7 @@ def post_season_builder_future_apply_request_validation_preview(
         overwrite_policy=payload.overwrite_policy,
         future_apply_reference_contract=future_apply_reference_contract,
         future_apply_request_validation_preview=future_apply_request_validation_preview,
+        create_only_apply_audit_metadata_preview=create_only_apply_audit_metadata_preview,
         create_only_apply_execution_preflight_preview=create_only_apply_execution_preflight_preview,
         audit_preview={
             "action": "season_builder_future_apply_request_validation_preview",

@@ -585,7 +585,7 @@ def test_future_apply_request_validation_preview_malformed_contract_values() -> 
     assert preview["available"] is False
 
 
-def test_create_only_apply_execution_preflight_preview_all_preconditions_true() -> None:
+def test_create_only_apply_execution_preflight_available_does_not_authorize_execution() -> None:
     preview = build_create_only_apply_execution_preflight_preview(
         future_apply_reference_contract={"available": True},
         future_apply_request_validation_preview={
@@ -609,6 +609,7 @@ def test_create_only_apply_execution_preflight_preview_all_preconditions_true() 
     assert "disabled" in message
     assert "preview" in message
     assert "does not execute apply" in message
+    assert "permit mutation" in message
 
 
 def test_create_only_apply_execution_preflight_preview_missing_target_absent() -> None:

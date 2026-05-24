@@ -435,7 +435,10 @@ def build_create_only_apply_execution_preflight_preview(
     Safety invariant:
     - This helper is preflight/readiness metadata only.
     - It never executes apply and never mutates any state.
-    - Even when all known preconditions are met, execution remains disabled in this phase.
+    - ``all_known_preconditions_met=True`` is not execution authorization.
+    - ``available=True`` is not execution authorization.
+    - ``execution_enabled`` and ``can_execute`` must remain ``False`` in this phase.
+    - ``mutation_permitted`` must remain ``False`` in this phase.
     """
 
     normalized_target_absent = target_absent if isinstance(target_absent, bool) else False

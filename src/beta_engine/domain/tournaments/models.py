@@ -370,6 +370,7 @@ class SeasonBuilderFutureApplyRequestValidationPreviewResponse(BaseModel):
     overwrite_policy: str | None = None
     future_apply_reference_contract: dict[str, Any] = Field(default_factory=dict)
     future_apply_request_validation_preview: dict[str, Any] = Field(default_factory=dict)
+    create_only_apply_execution_preflight_preview: dict[str, Any] = Field(default_factory=dict)
     audit_preview: dict[str, Any] = Field(default_factory=dict)
 
 

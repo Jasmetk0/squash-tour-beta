@@ -260,12 +260,28 @@ def assert_future_apply_validation_preview_disabled_response(body: dict) -> dict
     assert isinstance(body["future_apply_reference_contract"], dict)
     validation_preview = body["future_apply_request_validation_preview"]
     assert isinstance(validation_preview, dict)
+    preflight_preview = assert_create_only_apply_execution_preflight_preview_disabled(
+        body["create_only_apply_execution_preflight_preview"]
+    )
     assert validation_preview["apply_execution_enabled"] is False
     assert validation_preview["read_only"] is True
     assert validation_preview["mutation_permitted"] is False
     assert validation_preview["validation_type"] == "future_apply_request_validation_preview"
     assert isinstance(validation_preview["message"], str) and validation_preview["message"]
     return validation_preview
+
+
+def assert_create_only_apply_execution_preflight_preview_disabled(preview: dict) -> dict:
+    assert isinstance(preview, dict)
+    assert preview["preflight_type"] == "create_only_apply_execution_preflight_preview"
+    assert isinstance(preview["available"], bool)
+    assert isinstance(preview["all_known_preconditions_met"], bool)
+    assert preview["execution_enabled"] is False
+    assert preview["can_execute"] is False
+    assert preview["read_only"] is True
+    assert preview["mutation_permitted"] is False
+    assert isinstance(preview["message"], str) and preview["message"]
+    return preview
 
 
 def test_candidate_identity_api_resolved_parity(tmp_path: Path) -> None:
@@ -501,6 +517,21 @@ def test_future_apply_request_validation_preview_matching_resolved_request(tmp_p
         assert validation_preview["reference_id_matches"] is True
         assert validation_preview["fingerprint_matches"] is True
         assert validation_preview["reference_type_matches"] is True
+        preflight_preview = assert_create_only_apply_execution_preflight_preview_disabled(
+            body["create_only_apply_execution_preflight_preview"]
+        )
+        assert validation_preview["available"] is True
+        assert (
+            preflight_preview["future_apply_request_validation_available"]
+            == validation_preview["available"]
+        )
+        assert (
+            preflight_preview["future_apply_reference_contract_available"]
+            == body["future_apply_reference_contract"]["available"]
+        )
+        assert preflight_preview["candidate_identity_reference_matches"] is True
+        assert preflight_preview["execution_enabled"] is False
+        assert preflight_preview["can_execute"] is False
 
 
 def test_future_apply_request_validation_preview_mismatched_resolved_request(tmp_path: Path) -> None:
@@ -529,6 +560,13 @@ def test_future_apply_request_validation_preview_mismatched_resolved_request(tmp
         assert validation_preview["reference_id_matches"] is False
         assert validation_preview["fingerprint_matches"] is False
         assert validation_preview["reference_type_matches"] is False
+        preflight_preview = assert_create_only_apply_execution_preflight_preview_disabled(
+            body["create_only_apply_execution_preflight_preview"]
+        )
+        assert preflight_preview["candidate_identity_reference_matches"] is False
+        assert preflight_preview["all_known_preconditions_met"] is False
+        assert preflight_preview["execution_enabled"] is False
+        assert preflight_preview["can_execute"] is False
 
 
 def test_future_apply_request_validation_preview_missing_requested_values(tmp_path: Path) -> None:
@@ -555,6 +593,11 @@ def test_future_apply_request_validation_preview_missing_requested_values(tmp_pa
         assert validation_preview["reference_id_matches"] is False
         assert validation_preview["fingerprint_matches"] is False
         assert validation_preview["reference_type_matches"] is False
+        preflight_preview = assert_create_only_apply_execution_preflight_preview_disabled(
+            body["create_only_apply_execution_preflight_preview"]
+        )
+        assert preflight_preview["execution_enabled"] is False
+        assert preflight_preview["can_execute"] is False
 
 
 def test_future_apply_request_validation_preview_unsupported_source(tmp_path: Path) -> None:
@@ -576,6 +619,20 @@ def test_future_apply_request_validation_preview_unsupported_source(tmp_path: Pa
         assert contract["available"] is False
         assert validation_preview["available"] is False
         assert validation_preview["contract_referenceable"] is False
+        preflight_preview = assert_create_only_apply_execution_preflight_preview_disabled(
+            body["create_only_apply_execution_preflight_preview"]
+        )
+        assert preflight_preview["future_apply_reference_contract_available"] is False
+        assert preflight_preview["future_apply_request_validation_available"] is False
+        assert preflight_preview["all_known_preconditions_met"] is False
+        assert preflight_preview["execution_enabled"] is False
+        preflight_preview = assert_create_only_apply_execution_preflight_preview_disabled(
+            body["create_only_apply_execution_preflight_preview"]
+        )
+        assert preflight_preview["future_apply_reference_contract_available"] is False
+        assert preflight_preview["future_apply_request_validation_available"] is False
+        assert preflight_preview["all_known_preconditions_met"] is False
+        assert preflight_preview["execution_enabled"] is False
 
 
 def test_future_apply_request_validation_preview_unresolved_source_template(tmp_path: Path) -> None:

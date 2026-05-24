@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, DisabledDryRunBuildContractPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel, readCandidateIdentityReadinessOverview } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, DisabledDryRunBuildContractPanel, FutureApplyReferenceContractPanel, FutureApplyRequestValidationPreviewPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel, readCandidateIdentityReadinessOverview, readFutureApplyReferenceContract, readFutureApplyRequestValidationPreview } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -3938,5 +3938,51 @@ describe('Candidate identity panels', () => {
       mutationPermitted: 'n/a',
       message: 'n/a'
     })
+  })
+})
+
+
+describe('Future apply preview panels', () => {
+  it('renders valid future apply reference contract data', () => {
+    render(<FutureApplyReferenceContractPanel dryRunResultPreview={{ future_apply_reference_contract: { available: true, apply_execution_enabled: false, mutation_permitted: false, message: 'Reference contract preview only.' } }} />)
+    expect(screen.getByText('Available: true')).toBeInTheDocument()
+    expect(screen.getByText('Apply execution enabled: false')).toBeInTheDocument()
+    expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
+    expect(screen.getByText('Message: Reference contract preview only.')).toBeInTheDocument()
+  })
+
+  it('handles missing and malformed future apply reference contract data', () => {
+    expect(readFutureApplyReferenceContract(undefined)).toBeNull()
+    render(<FutureApplyReferenceContractPanel dryRunResultPreview={{ future_apply_reference_contract: { available: 'yes', contract_type: '', mutation_permitted: 0, message: '' } }} />)
+    expect(screen.getByText('Available: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Contract type: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Mutation permitted: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Message: No message provided.')).toBeInTheDocument()
+  })
+
+  it('renders valid future apply request validation preview data', () => {
+    render(<FutureApplyRequestValidationPreviewPanel preview={{ available: true, reference_id_matches: true, fingerprint_matches: true, reference_type_matches: true, apply_execution_enabled: false, mutation_permitted: false, message: 'Validation preview only.' }} />)
+    expect(screen.getByText('Available: true')).toBeInTheDocument()
+    expect(screen.getByText('Reference ID matches: true')).toBeInTheDocument()
+    expect(screen.getByText('Fingerprint matches: true')).toBeInTheDocument()
+    expect(screen.getByText('Reference type matches: true')).toBeInTheDocument()
+    expect(screen.getByText('Apply execution enabled: false')).toBeInTheDocument()
+    expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
+    expect(screen.getByText('Message: Validation preview only.')).toBeInTheDocument()
+  })
+
+  it('handles missing and malformed future apply request validation preview data', () => {
+    expect(readFutureApplyRequestValidationPreview(undefined)).toBeNull()
+    render(<FutureApplyRequestValidationPreviewPanel preview={{ available: 'yes', requested_candidate_identity_reference_id: '', reference_id_matches: 'x', message: '' }} />)
+    expect(screen.getByText('Available: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Requested reference ID: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Reference ID matches: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Message: No message provided.')).toBeInTheDocument()
+  })
+
+  it('renders future apply reference contract from dry run preview without apply buttons', () => {
+    render(<FutureApplyReferenceContractPanel dryRunResultPreview={{ future_apply_reference_contract: { available: true, contract_type: 'future_apply_reference_contract' } }} />)
+    expect(screen.getByText('Future apply reference contract')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /apply|execute/i })).not.toBeInTheDocument()
   })
 })

@@ -2042,6 +2042,38 @@ describe('Module 17 pages through routes', () => {
     }))
   })
 
+  it('clears future apply validation result when builder context changes without auto-revalidating', async () => {
+    api.validateFutureApplyRequestPreview.mockResolvedValueOnce({
+      valid: true,
+      preflight_fingerprint_matches: true,
+      reviewed_diff_id_matches: true,
+      dry_run_result_fingerprint_matches: true,
+      dry_run_result_id_matches: true,
+      requested_candidate_identity_matches: true,
+      apply_execution_enabled: false,
+      message: 'Future apply request is valid for preview.',
+      checked_at: '2026-01-01T00:00:00Z',
+      future_apply_reference_contract: { reference_required: true, read_only_preview: true, apply_execution_enabled: false }
+    })
+    renderAppAt('/admin/seasons/build')
+    expect(await screen.findByRole('heading', { name: 'Season Builder' })).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Candidate identity reference ID'), { target: { value: 'candidate-ref-id' } })
+    fireEvent.change(screen.getByLabelText('Candidate identity fingerprint'), { target: { value: 'candidate-fp' } })
+    fireEvent.change(screen.getByLabelText('Candidate identity reference type'), { target: { value: 'dry_run_candidate_identity' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Validate future apply reference' }))
+    await waitFor(() => expect(api.validateFutureApplyRequestPreview).toHaveBeenCalledTimes(1))
+    fireEvent.change(screen.getByLabelText('Future policy preview'), { target: { value: 'merge_preview' } })
+
+    await waitFor(() => {
+      expect(screen.queryByText('Validation preview only.')).not.toBeInTheDocument()
+    })
+    expect(api.validateFutureApplyRequestPreview).toHaveBeenCalledTimes(1)
+    expect((screen.getByLabelText('Candidate identity reference ID') as HTMLInputElement).value).toBe('candidate-ref-id')
+    expect((screen.getByLabelText('Candidate identity fingerprint') as HTMLInputElement).value).toBe('candidate-fp')
+    expect((screen.getByLabelText('Candidate identity reference type') as HTMLInputElement).value).toBe('dry_run_candidate_identity')
+  })
+
   it('disables fill helper when dry-run reference metadata is unavailable', async () => {
     api.postSeasonBuilderDryRunBuild.mockResolvedValueOnce({
       enabled: false,
@@ -2073,6 +2105,26 @@ describe('Module 17 pages through routes', () => {
     expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
     expect(api.postSeasonBuilderApplyCommandContract).not.toHaveBeenCalled()
+  })
+
+  it('clears future apply validation errors when builder context changes without auto-revalidating', async () => {
+    api.validateFutureApplyRequestPreview.mockRejectedValueOnce(new Error('Validation endpoint unavailable'))
+    renderAppAt('/admin/seasons/build')
+    expect(await screen.findByRole('heading', { name: 'Season Builder' })).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Candidate identity reference ID'), { target: { value: 'candidate-ref-id' } })
+    fireEvent.change(screen.getByLabelText('Candidate identity fingerprint'), { target: { value: 'candidate-fp' } })
+    fireEvent.change(screen.getByLabelText('Candidate identity reference type'), { target: { value: 'dry_run_candidate_identity' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Validate future apply reference' }))
+    await waitFor(() => expect(api.validateFutureApplyRequestPreview).toHaveBeenCalledTimes(1))
+    fireEvent.change(screen.getByLabelText('Future policy preview'), { target: { value: 'merge_preview' } })
+    await waitFor(() => {
+      expect(screen.queryByText('Future apply request validation failed: Validation endpoint unavailable')).not.toBeInTheDocument()
+    })
+    expect(api.validateFutureApplyRequestPreview).toHaveBeenCalledTimes(1)
+    expect((screen.getByLabelText('Candidate identity reference ID') as HTMLInputElement).value).toBe('candidate-ref-id')
+    expect((screen.getByLabelText('Candidate identity fingerprint') as HTMLInputElement).value).toBe('candidate-fp')
+    expect((screen.getByLabelText('Candidate identity reference type') as HTMLInputElement).value).toBe('dry_run_candidate_identity')
   })
 
   it('renders Concrete Season detail dashboard routes', async () => {

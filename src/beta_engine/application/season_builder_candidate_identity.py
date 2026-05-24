@@ -419,3 +419,81 @@ def build_future_apply_request_validation_preview(
         "mutation_permitted": False,
         "message": "This is a validation-only preview and does not execute apply or mutate any state.",
     }
+
+
+def build_create_only_apply_execution_preflight_preview(
+    *,
+    future_apply_reference_contract: dict,
+    future_apply_request_validation_preview: dict,
+    identity_readiness: dict,
+    target_absent: bool,
+    create_only_scope_confirmed: bool,
+    audit_metadata_present: bool,
+) -> dict:
+    """Build a disabled, read-only create-only apply execution preflight preview.
+
+    Safety invariant:
+    - This helper is preflight/readiness metadata only.
+    - It never executes apply and never mutates any state.
+    - Even when all known preconditions are met, execution remains disabled in this phase.
+    """
+
+    normalized_target_absent = target_absent if isinstance(target_absent, bool) else False
+    normalized_create_only_scope_confirmed = (
+        create_only_scope_confirmed if isinstance(create_only_scope_confirmed, bool) else False
+    )
+    normalized_audit_metadata_present = audit_metadata_present if isinstance(audit_metadata_present, bool) else False
+
+    raw_contract_available = future_apply_reference_contract.get("available")
+    future_apply_reference_contract_available = raw_contract_available if isinstance(raw_contract_available, bool) else False
+
+    raw_validation_available = future_apply_request_validation_preview.get("available")
+    future_apply_request_validation_available = raw_validation_available if isinstance(raw_validation_available, bool) else False
+
+    reference_id_matches = future_apply_request_validation_preview.get("reference_id_matches") is True
+    fingerprint_matches = future_apply_request_validation_preview.get("fingerprint_matches") is True
+    reference_type_matches = future_apply_request_validation_preview.get("reference_type_matches") is True
+    candidate_identity_reference_matches = (
+        reference_id_matches and fingerprint_matches and reference_type_matches
+    )
+
+    future_command_reference = identity_readiness.get("future_command_reference")
+    if not isinstance(future_command_reference, dict):
+        future_command_reference = {}
+    raw_main_ready = future_command_reference.get("can_reference_future_command")
+    main_future_command_reference_ready = raw_main_ready if isinstance(raw_main_ready, bool) else False
+
+    all_known_preconditions_met = all(
+        [
+            normalized_target_absent,
+            normalized_create_only_scope_confirmed,
+            normalized_audit_metadata_present,
+            future_apply_reference_contract_available,
+            future_apply_request_validation_available,
+            candidate_identity_reference_matches,
+            main_future_command_reference_ready,
+        ]
+    )
+
+    message = (
+        "Create-only apply execution preflight preview is disabled and read-only; "
+        "it does not execute apply or permit mutation, even when preconditions are met."
+    )
+
+    return {
+        "available": all_known_preconditions_met,
+        "preflight_type": "create_only_apply_execution_preflight_preview",
+        "target_absent": normalized_target_absent,
+        "create_only_scope_confirmed": normalized_create_only_scope_confirmed,
+        "audit_metadata_present": normalized_audit_metadata_present,
+        "future_apply_reference_contract_available": future_apply_reference_contract_available,
+        "future_apply_request_validation_available": future_apply_request_validation_available,
+        "candidate_identity_reference_matches": candidate_identity_reference_matches,
+        "main_future_command_reference_ready": main_future_command_reference_ready,
+        "all_known_preconditions_met": all_known_preconditions_met,
+        "execution_enabled": False,
+        "can_execute": False,
+        "read_only": True,
+        "mutation_permitted": False,
+        "message": message,
+    }

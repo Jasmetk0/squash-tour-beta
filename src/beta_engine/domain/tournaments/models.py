@@ -348,6 +348,31 @@ class SeasonBuilderDryRunBuildResponse(BaseModel):
     )
 
 
+class SeasonBuilderFutureApplyRequestValidationPreviewRequest(BaseModel):
+    target_season_label: str = Field(min_length=1, max_length=32)
+    source_type: str = Field(min_length=1, max_length=64)
+    source_template_id: str | None = Field(default=None, min_length=1, max_length=128)
+    overwrite_policy: str | None = Field(default=None, min_length=1, max_length=64)
+    preflight_fingerprint: str | None = None
+    reviewed_diff_id: str | None = None
+    requested_candidate_identity_reference_id: str | None = None
+    requested_candidate_identity_fingerprint: str | None = None
+    requested_candidate_identity_reference_type: str | None = None
+
+
+class SeasonBuilderFutureApplyRequestValidationPreviewResponse(BaseModel):
+    enabled: bool = False
+    can_execute: bool = False
+    can_mutate: bool = False
+    target_season_label: str
+    source_type: str
+    source_template_id: str | None = None
+    overwrite_policy: str | None = None
+    future_apply_reference_contract: dict[str, Any] = Field(default_factory=dict)
+    future_apply_request_validation_preview: dict[str, Any] = Field(default_factory=dict)
+    audit_preview: dict[str, Any] = Field(default_factory=dict)
+
+
 class SeasonBuilderApplyCommandContractRequest(BaseModel):
     target_season_label: str = Field(min_length=1, max_length=32)
     source_type: str = Field(min_length=1, max_length=64)

@@ -474,6 +474,27 @@ def test_future_apply_request_validation_preview_matching_referenceable_contract
     assert preview["mutation_permitted"] is False
 
 
+def test_future_apply_request_validation_available_does_not_enable_apply_execution() -> None:
+    preview = build_future_apply_request_validation_preview(
+        requested_candidate_identity_reference_id="fp_abc",
+        requested_candidate_identity_fingerprint="fp_abc",
+        requested_candidate_identity_reference_type="candidate_identity_set",
+        future_apply_reference_contract={
+            "available": True,
+            "candidate_identity_reference_id": "fp_abc",
+            "candidate_identity_fingerprint": "fp_abc",
+            "candidate_identity_reference_type": "candidate_identity_set",
+            "candidate_identity_set_referenceable": True,
+        },
+    )
+    assert preview["available"] is True
+    assert preview["apply_execution_enabled"] is False
+    assert preview["read_only"] is True
+    assert preview["mutation_permitted"] is False
+    assert "validation-only" in str(preview["message"]).lower()
+    assert "does not execute apply" in str(preview["message"]).lower()
+
+
 def test_future_apply_request_validation_preview_mismatched_values() -> None:
     preview = build_future_apply_request_validation_preview(
         requested_candidate_identity_reference_id="wrong_id",

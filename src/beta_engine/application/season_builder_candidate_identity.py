@@ -291,7 +291,16 @@ def build_future_apply_reference_contract(
     candidate_identity_review_reference: dict,
     identity_readiness: dict,
 ) -> dict:
-    """Build disabled read-only contract preview for a future create-only apply flow."""
+    """Build a preview/readiness contract for future-apply identity references.
+
+    Safety invariant:
+    - This helper is documentation/preview metadata only.
+    - It never executes an apply command.
+    - It never grants mutation permission.
+    - ``available=True`` only means the identity reference values are present and
+      structurally referenceable for a *future* command pathway.
+    - ``apply_execution_enabled`` must remain ``False`` in this phase.
+    """
     raw_reference_id = candidate_identity_review_reference.get("reference_id")
     reference_id = raw_reference_id if isinstance(raw_reference_id, str) and raw_reference_id else ""
 
@@ -341,7 +350,17 @@ def build_future_apply_request_validation_preview(
     requested_candidate_identity_reference_type: str | None,
     future_apply_reference_contract: dict,
 ) -> dict:
-    """Build read-only validation preview for hypothetical future apply request identity matching."""
+    """Build a read-only identity-match preview for a hypothetical future apply request.
+
+    Safety invariant:
+    - This is validation/readiness preview only.
+    - It never executes apply and never mutates state.
+    - It never grants mutation permission.
+    - ``available=True`` only means the requested identity values match the expected
+      reference contract and are structurally valid/referenceable.
+    - ``available=True`` does not imply apply is enabled; ``apply_execution_enabled``
+      must remain ``False``.
+    """
     requested_reference_id = (
         requested_candidate_identity_reference_id
         if isinstance(requested_candidate_identity_reference_id, str)

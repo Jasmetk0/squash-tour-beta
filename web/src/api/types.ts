@@ -230,6 +230,24 @@ export type SeasonTemplateSlotConflictCodeRegistryResponse = {
   message: string
 }
 
+export type SeasonTemplateConflictDiagnosticsOverview = {
+  selected_report_available?: boolean
+  selected_status?: string | null
+  selected_conflict_count?: number
+  preflight_preview_available?: boolean
+  preflight_summary_available?: boolean
+  preflight_status?: string | null
+  preflight_conflict_count?: number
+  dry_run_preview_available?: boolean
+  dry_run_summary_available?: boolean
+  dry_run_status?: string | null
+  dry_run_conflict_count?: number
+  mutation_behavior?: string
+  blocking_behavior?: string
+  read_only?: boolean
+  non_blocking?: boolean
+}
+
 export type SeasonTemplateSlotValidationIssueCodeMetadata = {
   code: string
   severity: 'warning' | 'error'
@@ -3183,6 +3201,7 @@ export type SeasonBuilderPreflightResponse = {
   authoritative_diff_summary: Record<string, unknown>
   template_slot_validation_preview?: SeasonTemplateSlotValidationPreview | null
   template_slot_conflict_preview?: SeasonTemplateSlotConflictPreview | null
+  template_conflict_diagnostics_overview?: SeasonTemplateConflictDiagnosticsOverview | null
   validation_warnings: string[]
   validation_errors: string[]
   audit_preview: Record<string, unknown>
@@ -3230,6 +3249,7 @@ export type SeasonBuilderDryRunBuildResponse = {
   reviewed_diff_id: string
   template_slot_validation_preview?: SeasonTemplateSlotValidationPreview | null
   template_slot_conflict_preview?: SeasonTemplateSlotConflictPreview | null
+  template_conflict_diagnostics_overview?: SeasonTemplateConflictDiagnosticsOverview | null
   validation_errors: string[]
   validation_warnings: string[]
   audit_preview: Record<string, unknown>

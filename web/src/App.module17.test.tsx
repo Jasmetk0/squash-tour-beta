@@ -310,6 +310,23 @@ describe('Module 17 pages through routes', () => {
         busiest_week_slot_count: 4,
         read_only: true
       },
+      template_conflict_diagnostics_overview: {
+        selected_report_available: false,
+        selected_status: null,
+        selected_conflict_count: 0,
+        preflight_preview_available: true,
+        preflight_summary_available: true,
+        preflight_status: 'warnings',
+        preflight_conflict_count: 3,
+        dry_run_preview_available: false,
+        dry_run_summary_available: false,
+        dry_run_status: null,
+        dry_run_conflict_count: 0,
+        mutation_behavior: 'unavailable',
+        blocking_behavior: 'non_blocking',
+        read_only: true,
+        non_blocking: true
+      },
       validation_warnings: [
         '[template_slot_duration_long] [slot=slot-01-default_msa_template_preview] Template slot duration 5 weeks is unusually long (>3).'
       ],
@@ -435,6 +452,23 @@ describe('Module 17 pages through routes', () => {
           source: 'template_slot_conflict_preview',
           message: 'Template slot conflict diagnostics are available as read-only non-blocking preview.'
         }
+      },
+      template_conflict_diagnostics_overview: {
+        selected_report_available: false,
+        selected_status: null,
+        selected_conflict_count: 0,
+        preflight_preview_available: true,
+        preflight_summary_available: true,
+        preflight_status: 'warnings',
+        preflight_conflict_count: 3,
+        dry_run_preview_available: true,
+        dry_run_summary_available: true,
+        dry_run_status: 'warnings',
+        dry_run_conflict_count: 3,
+        mutation_behavior: 'unavailable',
+        blocking_behavior: 'non_blocking',
+        read_only: true,
+        non_blocking: true
       },
         message: 'Dry-run build command contract exists, but execution is disabled in this phase.'
       }
@@ -834,7 +868,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Preflight conflict summary: available')).toBeInTheDocument()
     expect(screen.getByText('Preflight conflict status: warnings')).toBeInTheDocument()
     expect(screen.getByText('Preflight conflict count: 3')).toBeInTheDocument()
-    expect(screen.getByText('Dry-run conflict preview: unavailable')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run conflict preview: available')).toBeInTheDocument()
     expect(screen.getByText('Conflict diagnostics mutation behavior: unavailable')).toBeInTheDocument()
     expect(screen.getByText('Conflict diagnostics blocking behavior: non-blocking')).toBeInTheDocument()
     expect(screen.getByText('Read-only template slot conflict code registry.')).toBeInTheDocument()
@@ -3402,6 +3436,24 @@ describe('TemplateConflictDiagnosticsOverviewPanel', () => {
     expect(screen.getByText('Preflight conflict count: n/a')).toBeInTheDocument()
     expect(screen.getByText('Dry-run conflict status: n/a')).toBeInTheDocument()
     expect(screen.getByText('Dry-run conflict count: n/a')).toBeInTheDocument()
+  })
+
+  it('F) backend preflight overview is preferred over conflicting derived values', () => {
+    render(<TemplateConflictDiagnosticsOverviewPanel preflightResult={{ can_build: false, target_season_label: 's', source_type: 'season_template', source_template_id: 't', preflight_fingerprint: 'pf', reviewed_diff_id: 'rd', target_calendar_exists: false, target_event_count: 0, source_resolved: true, source_summary: {}, authoritative_diff_summary: { template_conflict_summary: { status: 'warnings', conflict_count: 3 } }, template_slot_conflict_preview: { status: 'warnings', conflict_count: 3 }, template_conflict_diagnostics_overview: { preflight_preview_available: true, preflight_summary_available: true, preflight_status: 'info', preflight_conflict_count: 9, mutation_behavior: 'unavailable', blocking_behavior: 'non_blocking' }, validation_warnings: [], validation_errors: [], audit_preview: {} }} />)
+    expect(screen.getByText('Preflight conflict status: info')).toBeInTheDocument()
+    expect(screen.getByText('Preflight conflict count: 9')).toBeInTheDocument()
+  })
+
+  it('G) backend dry-run overview is preferred over conflicting derived values', () => {
+    render(<TemplateConflictDiagnosticsOverviewPanel dryRunResult={{ command: 'season_builder_dry_run_build', enabled: false, can_execute: false, can_mutate: false, target_season_label: 's', source_type: 'season_template', source_template_id: 't', overwrite_policy: null, preflight_fingerprint: 'pf', reviewed_diff_id: 'rd', validation_warnings: [], validation_errors: [], audit_preview: {}, generation_design_preview: {}, candidate_event_contract_preview: {}, conflict_contract_preview: {}, dry_run_result_contract_preview: {}, dry_run_result_preview: { template_conflict_summary: { status: 'warnings', conflict_count: 3 } }, template_conflict_diagnostics_overview: { dry_run_preview_available: true, dry_run_summary_available: true, dry_run_status: 'info', dry_run_conflict_count: 9, mutation_behavior: 'unavailable', blocking_behavior: 'non_blocking' }, message: 'dry run disabled', template_slot_conflict_preview: { status: 'warnings', conflict_count: 3 } }} />)
+    expect(screen.getByText('Dry-run conflict status: info')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run conflict count: 9')).toBeInTheDocument()
+  })
+
+  it('H) malformed backend overview falls back to derived preview/summary', () => {
+    render(<TemplateConflictDiagnosticsOverviewPanel preflightResult={{ can_build: false, target_season_label: 's', source_type: 'season_template', source_template_id: 't', preflight_fingerprint: 'pf', reviewed_diff_id: 'rd', target_calendar_exists: false, target_event_count: 0, source_resolved: true, source_summary: {}, authoritative_diff_summary: { template_conflict_summary: { status: 'warnings', conflict_count: 3 } }, template_slot_conflict_preview: { status: 'warnings', conflict_count: 3 }, template_conflict_diagnostics_overview: { preflight_status: 42 as any, preflight_conflict_count: Number.NaN as any }, validation_warnings: [], validation_errors: [], audit_preview: {} }} />)
+    expect(screen.getByText('Preflight conflict status: warnings')).toBeInTheDocument()
+    expect(screen.getByText('Preflight conflict count: 3')).toBeInTheDocument()
   })
 })
 

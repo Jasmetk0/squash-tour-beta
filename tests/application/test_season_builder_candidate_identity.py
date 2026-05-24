@@ -4,6 +4,7 @@ from beta_engine.application.season_builder_candidate_identity import (
     build_candidate_identity_fingerprint,
     build_candidate_identity_overview,
     build_candidate_identity_review_reference,
+    build_future_apply_reference_contract,
     build_candidate_identity_summary,
     sanitize_candidate_identity_part,
 )
@@ -383,3 +384,67 @@ def test_build_candidate_identity_review_reference_cannot_reference_when_empty_o
 
     assert no_candidates["can_reference_future_apply"] is False
     assert unsafe["can_reference_future_apply"] is False
+
+
+def test_future_apply_reference_contract_resolved_referenceable_case() -> None:
+    contract = build_future_apply_reference_contract(
+        candidate_identity_fingerprint={"fingerprint": "fp_abc"},
+        candidate_identity_review_reference={
+            "reference_type": "candidate_identity_set",
+            "reference_id": "fp_abc",
+            "can_reference_future_apply": True,
+        },
+        identity_readiness={"future_command_reference": {"can_reference_future_command": True}},
+    )
+    assert contract["available"] is True
+    assert contract["candidate_identity_set_referenceable"] is True
+    assert contract["main_future_command_reference_ready"] is True
+    assert contract["apply_execution_enabled"] is False
+    assert contract["create_only_apply_required"] is True
+    assert contract["read_only"] is True
+    assert contract["mutation_permitted"] is False
+    assert isinstance(contract["message"], str) and contract["message"]
+
+
+def test_future_apply_reference_contract_blocked_non_referenceable_case() -> None:
+    contract = build_future_apply_reference_contract(
+        candidate_identity_fingerprint={"fingerprint": ""},
+        candidate_identity_review_reference={
+            "reference_type": "candidate_identity_set",
+            "reference_id": "",
+            "can_reference_future_apply": False,
+        },
+        identity_readiness={"future_command_reference": {"can_reference_future_command": False}},
+    )
+    assert contract["available"] is False
+    assert contract["candidate_identity_set_referenceable"] is False
+    assert contract["main_future_command_reference_ready"] is False
+    assert contract["apply_execution_enabled"] is False
+    assert contract["create_only_apply_required"] is True
+    assert contract["read_only"] is True
+    assert contract["mutation_permitted"] is False
+    assert isinstance(contract["message"], str) and contract["message"]
+
+
+def test_future_apply_reference_contract_main_future_command_readiness_parity() -> None:
+    ready_contract = build_future_apply_reference_contract(
+        candidate_identity_fingerprint={"fingerprint": "fp_ready"},
+        candidate_identity_review_reference={
+            "reference_type": "candidate_identity_set",
+            "reference_id": "fp_ready",
+            "can_reference_future_apply": True,
+        },
+        identity_readiness={"future_command_reference": {"can_reference_future_command": True}},
+    )
+    blocked_contract = build_future_apply_reference_contract(
+        candidate_identity_fingerprint={"fingerprint": "fp_blocked"},
+        candidate_identity_review_reference={
+            "reference_type": "candidate_identity_set",
+            "reference_id": "fp_blocked",
+            "can_reference_future_apply": True,
+        },
+        identity_readiness={"future_command_reference": {"can_reference_future_command": False}},
+    )
+
+    assert ready_contract["main_future_command_reference_ready"] is True
+    assert blocked_contract["main_future_command_reference_ready"] is False

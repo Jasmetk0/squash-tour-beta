@@ -3326,6 +3326,18 @@ export type FutureApplyRequestValidationPreview = {
   message?: string | null
 }
 
+export type SeasonBuilderFutureApplyRequestValidationPreviewRequest = {
+  target_season_label: string
+  source_type: string
+  source_template_id?: string | null
+  overwrite_policy?: string | null
+  preflight_fingerprint?: string | null
+  reviewed_diff_id?: string | null
+  requested_candidate_identity_reference_id?: string | null
+  requested_candidate_identity_fingerprint?: string | null
+  requested_candidate_identity_reference_type?: string | null
+}
+
 export type SeasonBuilderFutureApplyRequestValidationPreviewResponse = {
   enabled: boolean
   can_execute: boolean

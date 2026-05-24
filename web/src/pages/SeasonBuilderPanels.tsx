@@ -2605,6 +2605,12 @@ type DisabledDryRunBuildContractPanelProps = {
 
 export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload, query }: DisabledDryRunBuildContractPanelProps): JSX.Element {
   const formatValue = (value: unknown): string => (value === null || value === undefined ? '—' : String(value))
+  const formatStringOrNa = (value: unknown): string => {
+    if (typeof value !== 'string') return 'n/a'
+    const trimmed = value.trim()
+    return trimmed.length > 0 ? trimmed : 'n/a'
+  }
+  const formatBooleanOrNa = (value: unknown): string => typeof value === 'boolean' ? String(value) : 'n/a'
   const auditPreview = query.data?.audit_preview ?? {}
   const generationDesignPreview = query.data?.generation_design_preview
   const candidateEventContractPreview = query.data?.candidate_event_contract_preview
@@ -2887,6 +2893,10 @@ export function DisabledDryRunBuildContractPanel({ queryEnabled, requestPayload,
                       <tr><td>dry_run_result_id</td><td>{formatValue(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.future_command_reference)?.dry_run_result_id)}</td></tr>
                       <tr><td>can_reference_future_command</td><td>{formatValue(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.future_command_reference)?.can_reference_future_command)}</td></tr>
                       <tr><td>mutation_still_disabled</td><td>{formatValue(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.future_command_reference)?.mutation_still_disabled)}</td></tr>
+                      <tr><td>Candidate identity fingerprint</td><td>{formatStringOrNa(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.future_command_reference)?.candidate_identity_fingerprint)}</td></tr>
+                      <tr><td>Candidate identity reference ID</td><td>{formatStringOrNa(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.future_command_reference)?.candidate_identity_reference_id)}</td></tr>
+                      <tr><td>Can reference candidate identity set</td><td>{formatBooleanOrNa(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.future_command_reference)?.can_reference_candidate_identity_set)}</td></tr>
+                      <tr><td>Candidate identity reference type</td><td>{formatStringOrNa(shapeRecord(shapeRecord(dryRunResultPreviewRecord.identity_readiness)?.future_command_reference)?.candidate_identity_reference_type)}</td></tr>
                     </tbody></table>
                   ) : <p>Future command reference is unavailable.</p>}
                   <h6>Checklist items</h6>

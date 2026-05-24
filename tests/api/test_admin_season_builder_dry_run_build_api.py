@@ -675,6 +675,10 @@ def test_builder_dry_run_build_validation_summary_clean_when_metadata_is_present
         assert future_reference["dry_run_result_id"].startswith("drr_")
         assert future_reference["can_reference_future_command"] is True
         assert future_reference["mutation_still_disabled"] is True
+        assert "candidate_identity_fingerprint" in future_reference
+        assert "candidate_identity_reference_id" in future_reference
+        assert "can_reference_candidate_identity_set" in future_reference
+        assert "candidate_identity_reference_type" in future_reference
 
 
 def test_builder_dry_run_build_missing_audit_metadata_adds_warning_reasons(tmp_path: Path) -> None:

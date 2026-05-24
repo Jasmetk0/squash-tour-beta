@@ -3980,6 +3980,21 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Message: No message provided.')).toBeInTheDocument()
   })
 
+
+  it('keeps future apply request validation preview display-only with apply execution disabled', () => {
+    render(<FutureApplyRequestValidationPreviewPanel preview={{ available: true, apply_execution_enabled: false, mutation_permitted: false, message: 'Validation preview only.' }} />)
+    expect(screen.getByText('Apply execution enabled: false')).toBeInTheDocument()
+    expect(screen.queryByText('Apply execution enabled: true')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('keeps future apply reference contract display-only with apply execution disabled', () => {
+    render(<FutureApplyReferenceContractPanel dryRunResultPreview={{ future_apply_reference_contract: { available: true, apply_execution_enabled: false, mutation_permitted: false, message: 'Reference contract preview only.' } }} />)
+    expect(screen.getByText('Apply execution enabled: false')).toBeInTheDocument()
+    expect(screen.queryByText('Apply execution enabled: true')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+
   it('renders future apply reference contract from dry run preview without apply buttons', () => {
     render(<FutureApplyReferenceContractPanel dryRunResultPreview={{ future_apply_reference_contract: { available: true, contract_type: 'future_apply_reference_contract' } }} />)
     expect(screen.getByText('Future apply reference contract')).toBeInTheDocument()

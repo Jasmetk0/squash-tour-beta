@@ -268,6 +268,9 @@ def assert_future_apply_validation_preview_disabled_response(body: dict) -> dict
         body["create_only_apply_execution_preflight_preview"]
     )
     assert_disabled_execution_contract_summary_disabled(body["disabled_execution_contract_summary"])
+    assert_final_guarded_apply_readiness_checklist_disabled(
+        body["final_guarded_apply_readiness_checklist"]
+    )
     assert validation_preview["apply_execution_enabled"] is False
     assert validation_preview["read_only"] is True
     assert validation_preview["mutation_permitted"] is False
@@ -275,6 +278,20 @@ def assert_future_apply_validation_preview_disabled_response(body: dict) -> dict
     assert isinstance(validation_preview["message"], str) and validation_preview["message"]
     return validation_preview
 
+
+
+
+def assert_final_guarded_apply_readiness_checklist_disabled(checklist: dict) -> dict:
+    assert isinstance(checklist, dict)
+    assert checklist["checklist_type"] == "final_guarded_apply_readiness_checklist"
+    assert isinstance(checklist["available"], bool)
+    assert isinstance(checklist["all_readiness_checks_passed"], bool)
+    assert checklist["execution_enabled"] is False
+    assert checklist["can_execute"] is False
+    assert checklist["read_only"] is True
+    assert checklist["mutation_permitted"] is False
+    assert isinstance(checklist["message"], str) and checklist["message"]
+    return checklist
 
 def assert_disabled_execution_contract_summary_disabled(summary: dict) -> dict:
     assert isinstance(summary, dict)
@@ -581,6 +598,12 @@ def test_future_apply_request_validation_preview_matching_resolved_request(tmp_p
         assert preflight_preview["create_only_scope_confirmed"] is False
         assert preflight_preview["all_known_preconditions_met"] is False
         assert preflight_preview["execution_enabled"] is False
+        checklist = assert_final_guarded_apply_readiness_checklist_disabled(
+            body["final_guarded_apply_readiness_checklist"]
+        )
+        assert checklist["available"] is False
+        assert (checklist["summary_available"] is False) or (checklist["all_readiness_checks_passed"] is False)
+        assert checklist["execution_enabled"] is False
         assert preflight_preview["can_execute"] is False
 
 
@@ -748,6 +771,12 @@ def test_future_apply_request_validation_preview_mismatched_resolved_request(tmp
         assert summary["identity_reference_matches"] is False
         assert summary["available"] is False
         assert summary["execution_enabled"] is False
+        checklist = assert_final_guarded_apply_readiness_checklist_disabled(
+            body["final_guarded_apply_readiness_checklist"]
+        )
+        assert checklist["available"] is False
+        assert (checklist["summary_available"] is False) or (checklist["all_readiness_checks_passed"] is False)
+        assert checklist["execution_enabled"] is False
 
 
 def test_future_apply_request_validation_preview_missing_requested_values(tmp_path: Path) -> None:
@@ -859,6 +888,22 @@ def test_future_apply_request_validation_preview_complete_audit_metadata_can_sat
         assert "disabled" in summary_message
         assert "does not execute apply" in summary_message
         assert "does not mutate" in summary_message
+        checklist = assert_final_guarded_apply_readiness_checklist_disabled(
+            body["final_guarded_apply_readiness_checklist"]
+        )
+        assert checklist["endpoint_disabled"] is True
+        assert checklist["endpoint_execution_disabled"] is True
+        assert checklist["endpoint_mutation_disabled"] is True
+        assert checklist["summary_available"] is True
+        assert checklist["summary_all_preview_layers_available"] is True
+        assert checklist["summary_all_known_preconditions_met"] is True
+        assert checklist["summary_execution_disabled"] is True
+        assert checklist["summary_mutation_disabled"] is True
+        assert checklist["all_readiness_checks_passed"] is True
+        assert checklist["available"] is True
+        assert checklist["execution_enabled"] is False
+        assert checklist["can_execute"] is False
+        assert checklist["mutation_permitted"] is False
 
 
 def test_future_apply_request_validation_preview_wrong_explicit_confirmation_blocks_audit_metadata(tmp_path: Path) -> None:
@@ -975,6 +1020,12 @@ def test_future_apply_request_validation_preview_unsupported_source(tmp_path: Pa
         assert summary["future_apply_request_validation_available"] is False
         assert summary["available"] is False
         assert summary["execution_enabled"] is False
+        checklist = assert_final_guarded_apply_readiness_checklist_disabled(
+            body["final_guarded_apply_readiness_checklist"]
+        )
+        assert checklist["summary_available"] is False
+        assert checklist["available"] is False
+        assert checklist["execution_enabled"] is False
 
 
 def test_future_apply_request_validation_preview_unresolved_source_template(tmp_path: Path) -> None:

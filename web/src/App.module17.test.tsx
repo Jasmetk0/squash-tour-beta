@@ -4273,6 +4273,8 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Candidate identity reference matches: true')).toBeInTheDocument()
     expect(screen.getByText('Main future command reference ready: true')).toBeInTheDocument()
     expect(screen.getByText('All known preconditions met: false')).toBeInTheDocument()
+    expect(screen.getByText('Execution enabled: false')).toBeInTheDocument()
+    expect(screen.getByText('Can execute: false')).toBeInTheDocument()
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
     expect(screen.getByText('Message: Create-only apply execution remains disabled in preview mode.')).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
@@ -4297,6 +4299,8 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Mutation scope present: true')).toBeInTheDocument()
     expect(screen.getByText('Mutation scope matches: true')).toBeInTheDocument()
     expect(screen.getByText('All required audit metadata present: true')).toBeInTheDocument()
+    expect(screen.getByText('Execution enabled: false')).toBeInTheDocument()
+    expect(screen.getByText('Can execute: false')).toBeInTheDocument()
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
     expect(screen.getByText('Message: Create-only apply audit metadata preview is read-only.')).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
@@ -4306,6 +4310,17 @@ describe('Future apply preview panels', () => {
     render(<DisabledExecutionContractSummaryPanel summary={{ available: true, summary_type: 'disabled_execution_contract_summary', future_apply_reference_contract_available: true, future_apply_request_validation_available: true, audit_metadata_available: true, execution_preflight_available: true, identity_reference_matches: true, audit_metadata_complete: true, all_known_preconditions_met: true, all_preview_layers_available: true, execution_enabled: false, can_execute: false, read_only: true, mutation_permitted: false, message: 'Execution remains disabled by contract.' }} />)
     expect(screen.getByText('Available: true')).toBeInTheDocument()
     expect(screen.getByText('Summary type: disabled_execution_contract_summary')).toBeInTheDocument()
+    expect(screen.getByText('Future apply reference contract available: true')).toBeInTheDocument()
+    expect(screen.getByText('Future apply request validation available: true')).toBeInTheDocument()
+    expect(screen.getByText('Audit metadata available: true')).toBeInTheDocument()
+    expect(screen.getByText('Execution preflight available: true')).toBeInTheDocument()
+    expect(screen.getByText('Identity reference matches: true')).toBeInTheDocument()
+    expect(screen.getByText('Audit metadata complete: true')).toBeInTheDocument()
+    expect(screen.getByText('All known preconditions met: true')).toBeInTheDocument()
+    expect(screen.getByText('All preview layers available: true')).toBeInTheDocument()
+    expect(screen.getByText('Execution enabled: false')).toBeInTheDocument()
+    expect(screen.getByText('Can execute: false')).toBeInTheDocument()
+    expect(screen.getByText('Read-only: true')).toBeInTheDocument()
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
     expect(screen.getByText('Message: Execution remains disabled by contract.')).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
@@ -4369,6 +4384,27 @@ describe('Future apply validation UI safety', () => {
   })
 
   it('renders disabled execution contract summary from manual validation result without apply/execute endpoints', async () => {
+    api.validateFutureApplyRequestPreview.mockResolvedValue(
+      futureApplyValidationResponseMock({
+        disabled_execution_contract_summary: {
+          available: true,
+          summary_type: 'disabled_execution_contract_summary',
+          future_apply_reference_contract_available: true,
+          future_apply_request_validation_available: true,
+          audit_metadata_available: true,
+          execution_preflight_available: true,
+          identity_reference_matches: true,
+          audit_metadata_complete: true,
+          all_known_preconditions_met: true,
+          all_preview_layers_available: true,
+          execution_enabled: false,
+          can_execute: false,
+          read_only: true,
+          mutation_permitted: false,
+          message: 'Execution remains disabled by contract.'
+        }
+      })
+    )
     renderAppAt('/admin/seasons/build')
     const callsBeforeClick = api.validateFutureApplyRequestPreview.mock.calls.length
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
@@ -4377,6 +4413,9 @@ describe('Future apply validation UI safety', () => {
     await waitFor(() => expect(api.validateFutureApplyRequestPreview.mock.calls.length).toBe(callsBeforeClick + 1))
 
     await screen.findByText('Disabled execution contract summary')
+    expect(screen.queryByText('Execution enabled: true')).not.toBeInTheDocument()
+    expect(screen.queryByText('Can execute: true')).not.toBeInTheDocument()
+    expect(screen.queryByText('Mutation permitted: true')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()

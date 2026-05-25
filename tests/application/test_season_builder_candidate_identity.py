@@ -10,6 +10,7 @@ from beta_engine.application.season_builder_candidate_identity import (
     build_create_only_apply_execution_preflight_preview,
     build_disabled_execution_contract_summary,
     build_final_guarded_apply_readiness_checklist,
+    build_guarded_apply_execution_gate_specification,
     build_candidate_identity_summary,
     sanitize_candidate_identity_part,
 )
@@ -1064,3 +1065,85 @@ def test_final_guarded_apply_readiness_checklist_malformed_summary_defaults_safe
     assert checklist["can_execute"] is False
     assert checklist["read_only"] is True
     assert checklist["mutation_permitted"] is False
+
+
+def test_guarded_apply_execution_gate_specification_complete() -> None:
+    specification = build_guarded_apply_execution_gate_specification(
+        final_guarded_apply_readiness_checklist={"available": True, "all_readiness_checks_passed": True},
+        required_confirmation_phrase="I understand this will create a new season calendar.",
+        required_mutation_scope="create_only",
+        allowed_source_type="season_template",
+        allowed_overwrite_policy="none",
+    )
+    assert specification["available"] is True
+    assert specification["gate_specification_complete"] is True
+    assert specification["final_checklist_available"] is True
+    assert specification["final_readiness_checks_passed"] is True
+    assert specification["requires_target_absent"] is True
+    assert specification["requires_create_only_scope"] is True
+    assert specification["requires_audit_metadata"] is True
+    assert specification["requires_identity_reference_match"] is True
+    assert specification["requires_summary_execution_disabled"] is True
+    assert specification["requires_endpoint_disabled_before_execution"] is True
+    assert specification["execution_enabled"] is False
+    assert specification["can_execute"] is False
+    assert specification["read_only"] is True
+    assert specification["mutation_permitted"] is False
+    msg = str(specification["message"]).lower()
+    assert "disabled" in msg
+    assert "read-only" in msg
+    assert "does not execute apply" in msg
+
+
+def test_guarded_apply_execution_gate_specification_final_checklist_unavailable() -> None:
+    specification = build_guarded_apply_execution_gate_specification(
+        final_guarded_apply_readiness_checklist={"available": False, "all_readiness_checks_passed": True},
+        required_confirmation_phrase="I understand this will create a new season calendar.",
+    )
+    assert specification["final_checklist_available"] is False
+    assert specification["gate_specification_complete"] is False
+    assert specification["available"] is False
+    assert specification["execution_enabled"] is False
+    assert specification["can_execute"] is False
+    assert specification["mutation_permitted"] is False
+
+
+def test_guarded_apply_execution_gate_specification_readiness_not_passed() -> None:
+    specification = build_guarded_apply_execution_gate_specification(
+        final_guarded_apply_readiness_checklist={"available": True, "all_readiness_checks_passed": False},
+        required_confirmation_phrase="I understand this will create a new season calendar.",
+    )
+    assert specification["final_readiness_checks_passed"] is False
+    assert specification["gate_specification_complete"] is False
+    assert specification["available"] is False
+    assert specification["execution_enabled"] is False
+    assert specification["can_execute"] is False
+    assert specification["mutation_permitted"] is False
+
+
+def test_guarded_apply_execution_gate_specification_missing_confirmation_phrase() -> None:
+    specification = build_guarded_apply_execution_gate_specification(
+        final_guarded_apply_readiness_checklist={"available": True, "all_readiness_checks_passed": True},
+        required_confirmation_phrase="",
+    )
+    assert specification["required_confirmation_phrase"] == ""
+    assert specification["gate_specification_complete"] is False
+    assert specification["available"] is False
+    assert specification["execution_enabled"] is False
+    assert specification["can_execute"] is False
+    assert specification["mutation_permitted"] is False
+
+
+def test_guarded_apply_execution_gate_specification_malformed_checklist_defaults_safely() -> None:
+    specification = build_guarded_apply_execution_gate_specification(
+        final_guarded_apply_readiness_checklist={"available": "yes", "all_readiness_checks_passed": "true"},
+        required_confirmation_phrase="I understand this will create a new season calendar.",
+    )
+    assert specification["final_checklist_available"] is False
+    assert specification["final_readiness_checks_passed"] is False
+    assert specification["gate_specification_complete"] is False
+    assert specification["available"] is False
+    assert specification["execution_enabled"] is False
+    assert specification["can_execute"] is False
+    assert specification["read_only"] is True
+    assert specification["mutation_permitted"] is False

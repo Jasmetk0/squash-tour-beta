@@ -653,6 +653,84 @@ def build_final_guarded_apply_readiness_checklist(
             "does not execute apply or mutate state."
         ),
     }
+
+
+def build_guarded_apply_execution_gate_specification(
+    *,
+    final_guarded_apply_readiness_checklist: dict,
+    required_confirmation_phrase: str,
+    required_mutation_scope: str = "create_only",
+    allowed_source_type: str = "season_template",
+    allowed_overwrite_policy: str = "none",
+) -> dict[str, object]:
+    """Build a disabled/read-only future execution gate specification preview.
+
+    Safety invariant:
+    - This helper is specification/readiness metadata only.
+    - It never executes apply and never mutates any state.
+    - Even when specification completeness is satisfied, execution remains disabled.
+    """
+    raw_checklist_available = final_guarded_apply_readiness_checklist.get("available")
+    final_checklist_available = raw_checklist_available if isinstance(raw_checklist_available, bool) else False
+
+    raw_readiness_passed = final_guarded_apply_readiness_checklist.get("all_readiness_checks_passed")
+    final_readiness_checks_passed = raw_readiness_passed if isinstance(raw_readiness_passed, bool) else False
+
+    normalized_confirmation_phrase = (
+        required_confirmation_phrase
+        if isinstance(required_confirmation_phrase, str) and required_confirmation_phrase
+        else ""
+    )
+    normalized_mutation_scope = (
+        required_mutation_scope
+        if isinstance(required_mutation_scope, str) and required_mutation_scope
+        else "create_only"
+    )
+    normalized_allowed_source_type = (
+        allowed_source_type if isinstance(allowed_source_type, str) and allowed_source_type else ""
+    )
+    normalized_allowed_overwrite_policy = (
+        allowed_overwrite_policy if isinstance(allowed_overwrite_policy, str) and allowed_overwrite_policy else ""
+    )
+
+    gate_specification_complete = all(
+        [
+            final_checklist_available,
+            final_readiness_checks_passed,
+            bool(normalized_confirmation_phrase),
+            bool(normalized_mutation_scope),
+            bool(normalized_allowed_source_type),
+            bool(normalized_allowed_overwrite_policy),
+        ]
+    )
+
+    return {
+        "available": gate_specification_complete,
+        "specification_type": "guarded_apply_execution_gate_specification",
+        "final_checklist_available": final_checklist_available,
+        "final_readiness_checks_passed": final_readiness_checks_passed,
+        "requires_target_absent": True,
+        "requires_create_only_scope": True,
+        "requires_allowed_source_type": normalized_allowed_source_type,
+        "requires_allowed_overwrite_policy": normalized_allowed_overwrite_policy,
+        "requires_audit_metadata": True,
+        "required_confirmation_phrase": normalized_confirmation_phrase,
+        "required_mutation_scope": normalized_mutation_scope,
+        "requires_identity_reference_match": True,
+        "requires_summary_execution_disabled": True,
+        "requires_endpoint_disabled_before_execution": True,
+        "gate_specification_complete": gate_specification_complete,
+        "execution_enabled": False,
+        "can_execute": False,
+        "read_only": True,
+        "mutation_permitted": False,
+        "message": (
+            "Guarded apply execution gate specification is disabled/read-only metadata only; "
+            "it does not execute apply or mutate state."
+        ),
+    }
+
+
 def build_disabled_execution_contract_summary(
     *,
     future_apply_reference_contract: dict,

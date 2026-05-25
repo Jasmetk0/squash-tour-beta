@@ -582,7 +582,11 @@ def build_disabled_execution_contract_summary(
 ) -> dict[str, object]:
     """Build final disabled/read-only execution contract summary across preview layers.
 
-    This helper is intentionally non-mutating and never enables execution.
+    This helper returns preview/readiness metadata only; it is not execution authorization.
+    Even when ``available``, ``all_preview_layers_available``, and
+    ``all_known_preconditions_met`` are ``True``, execution must remain disabled:
+    ``execution_enabled``/``can_execute`` stay ``False`` and
+    ``mutation_permitted`` stays ``False``.
     """
     raw_reference_available = future_apply_reference_contract.get("available")
     future_apply_reference_contract_available = (

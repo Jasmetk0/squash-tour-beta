@@ -855,6 +855,10 @@ def test_future_apply_request_validation_preview_complete_audit_metadata_can_sat
         assert summary["execution_enabled"] is False
         assert summary["can_execute"] is False
         assert summary["mutation_permitted"] is False
+        summary_message = str(summary["message"]).lower()
+        assert "disabled" in summary_message
+        assert "does not execute apply" in summary_message
+        assert "does not mutate" in summary_message
 
 
 def test_future_apply_request_validation_preview_wrong_explicit_confirmation_blocks_audit_metadata(tmp_path: Path) -> None:

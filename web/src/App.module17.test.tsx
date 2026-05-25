@@ -4323,6 +4323,7 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Read-only: true')).toBeInTheDocument()
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
     expect(screen.getByText('Message: Execution remains disabled by contract.')).toBeInTheDocument()
+    expect(screen.getByText('Message: Execution remains disabled by contract.')).toHaveTextContent('disabled')
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 

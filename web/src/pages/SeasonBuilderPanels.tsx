@@ -1452,6 +1452,29 @@ export type NormalizedFinalGuardedApplyReadinessChecklist = {
   message: string
 }
 
+export type NormalizedGuardedApplyExecutionGateSpecification = {
+  available: string
+  specificationType: string
+  finalChecklistAvailable: string
+  finalReadinessChecksPassed: string
+  requiresTargetAbsent: string
+  requiresCreateOnlyScope: string
+  requiresAllowedSourceType: string
+  requiresAllowedOverwritePolicy: string
+  requiresAuditMetadata: string
+  requiredConfirmationPhrase: string
+  requiredMutationScope: string
+  requiresIdentityReferenceMatch: string
+  requiresSummaryExecutionDisabled: string
+  requiresEndpointDisabledBeforeExecution: string
+  gateSpecificationComplete: string
+  executionEnabled: string
+  canExecute: string
+  readOnly: string
+  mutationPermitted: string
+  message: string
+}
+
 export function readCreateOnlyApplyExecutionPreflightPreview(value: unknown): NormalizedCreateOnlyApplyExecutionPreflightPreview | null {
   if (!value || typeof value !== 'object') return null
   const record = value as Record<string, unknown>
@@ -1534,6 +1557,33 @@ export function readFinalGuardedApplyReadinessChecklist(value: unknown): Normali
     summaryExecutionDisabled: normalizeBooleanDisplay(record.summary_execution_disabled),
     summaryMutationDisabled: normalizeBooleanDisplay(record.summary_mutation_disabled),
     allReadinessChecksPassed: normalizeBooleanDisplay(record.all_readiness_checks_passed),
+    executionEnabled: normalizeBooleanDisplay(record.execution_enabled),
+    canExecute: normalizeBooleanDisplay(record.can_execute),
+    readOnly: normalizeBooleanDisplay(record.read_only),
+    mutationPermitted: normalizeBooleanDisplay(record.mutation_permitted),
+    message: normalizeNonEmptyStringDisplay(record.message) === 'n/a' ? 'No message provided.' : normalizeNonEmptyStringDisplay(record.message)
+  }
+}
+
+export function readGuardedApplyExecutionGateSpecification(value: unknown): NormalizedGuardedApplyExecutionGateSpecification | null {
+  if (!value || typeof value !== 'object') return null
+  const record = value as Record<string, unknown>
+  return {
+    available: normalizeBooleanDisplay(record.available),
+    specificationType: normalizeNonEmptyStringDisplay(record.specification_type),
+    finalChecklistAvailable: normalizeBooleanDisplay(record.final_checklist_available),
+    finalReadinessChecksPassed: normalizeBooleanDisplay(record.final_readiness_checks_passed),
+    requiresTargetAbsent: normalizeBooleanDisplay(record.requires_target_absent),
+    requiresCreateOnlyScope: normalizeBooleanDisplay(record.requires_create_only_scope),
+    requiresAllowedSourceType: normalizeNonEmptyStringDisplay(record.requires_allowed_source_type),
+    requiresAllowedOverwritePolicy: normalizeNonEmptyStringDisplay(record.requires_allowed_overwrite_policy),
+    requiresAuditMetadata: normalizeBooleanDisplay(record.requires_audit_metadata),
+    requiredConfirmationPhrase: normalizeNonEmptyStringDisplay(record.required_confirmation_phrase),
+    requiredMutationScope: normalizeNonEmptyStringDisplay(record.required_mutation_scope),
+    requiresIdentityReferenceMatch: normalizeBooleanDisplay(record.requires_identity_reference_match),
+    requiresSummaryExecutionDisabled: normalizeBooleanDisplay(record.requires_summary_execution_disabled),
+    requiresEndpointDisabledBeforeExecution: normalizeBooleanDisplay(record.requires_endpoint_disabled_before_execution),
+    gateSpecificationComplete: normalizeBooleanDisplay(record.gate_specification_complete),
     executionEnabled: normalizeBooleanDisplay(record.execution_enabled),
     canExecute: normalizeBooleanDisplay(record.can_execute),
     readOnly: normalizeBooleanDisplay(record.read_only),
@@ -4254,6 +4304,36 @@ export function FinalGuardedApplyReadinessChecklistPanel({ checklist }: { checkl
       <p>Read-only: {readinessChecklist.readOnly}</p>
       <p>Mutation permitted: {readinessChecklist.mutationPermitted}</p>
       <p>Message: {readinessChecklist.message}</p>
+    </>
+  )
+}
+
+export function GuardedApplyExecutionGateSpecificationPanel({ specification }: { specification?: unknown }): JSX.Element {
+  const gateSpecification = readGuardedApplyExecutionGateSpecification(specification)
+  if (!gateSpecification) return <p>Guarded apply execution gate specification is not available.</p>
+  return (
+    <>
+      <p>Guarded apply execution gate specification</p>
+      <p>Available: {gateSpecification.available}</p>
+      <p>Specification type: {gateSpecification.specificationType}</p>
+      <p>Final checklist available: {gateSpecification.finalChecklistAvailable}</p>
+      <p>Final readiness checks passed: {gateSpecification.finalReadinessChecksPassed}</p>
+      <p>Requires target absent: {gateSpecification.requiresTargetAbsent}</p>
+      <p>Requires create-only scope: {gateSpecification.requiresCreateOnlyScope}</p>
+      <p>Requires allowed source type: {gateSpecification.requiresAllowedSourceType}</p>
+      <p>Requires allowed overwrite policy: {gateSpecification.requiresAllowedOverwritePolicy}</p>
+      <p>Requires audit metadata: {gateSpecification.requiresAuditMetadata}</p>
+      <p>Required confirmation phrase: {gateSpecification.requiredConfirmationPhrase}</p>
+      <p>Required mutation scope: {gateSpecification.requiredMutationScope}</p>
+      <p>Requires identity reference match: {gateSpecification.requiresIdentityReferenceMatch}</p>
+      <p>Requires summary execution disabled: {gateSpecification.requiresSummaryExecutionDisabled}</p>
+      <p>Requires endpoint disabled before execution: {gateSpecification.requiresEndpointDisabledBeforeExecution}</p>
+      <p>Gate specification complete: {gateSpecification.gateSpecificationComplete}</p>
+      <p>Execution enabled: {gateSpecification.executionEnabled}</p>
+      <p>Can execute: {gateSpecification.canExecute}</p>
+      <p>Read-only: {gateSpecification.readOnly}</p>
+      <p>Mutation permitted: {gateSpecification.mutationPermitted}</p>
+      <p>Message: {gateSpecification.message}</p>
     </>
   )
 }

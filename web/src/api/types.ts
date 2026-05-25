@@ -3381,6 +3381,30 @@ export type DisabledExecutionContractSummary = {
   message?: string | null
 }
 
+
+export type GuardedApplyExecutionGateSpecification = {
+  available?: boolean | null
+  specification_type?: string | null
+  final_checklist_available?: boolean | null
+  final_readiness_checks_passed?: boolean | null
+  requires_target_absent?: boolean | null
+  requires_create_only_scope?: boolean | null
+  requires_allowed_source_type?: string | null
+  requires_allowed_overwrite_policy?: string | null
+  requires_audit_metadata?: boolean | null
+  required_confirmation_phrase?: string | null
+  required_mutation_scope?: string | null
+  requires_identity_reference_match?: boolean | null
+  requires_summary_execution_disabled?: boolean | null
+  requires_endpoint_disabled_before_execution?: boolean | null
+  gate_specification_complete?: boolean | null
+  execution_enabled?: boolean | null
+  can_execute?: boolean | null
+  read_only?: boolean | null
+  mutation_permitted?: boolean | null
+  message?: string | null
+}
+
 export type FinalGuardedApplyReadinessChecklist = {
   available?: boolean | null
   checklist_type?: string | null
@@ -3430,6 +3454,7 @@ export type SeasonBuilderFutureApplyRequestValidationPreviewResponse = {
   create_only_apply_audit_metadata_preview?: CreateOnlyApplyAuditMetadataPreview | null
   disabled_execution_contract_summary?: DisabledExecutionContractSummary | null
   final_guarded_apply_readiness_checklist?: FinalGuardedApplyReadinessChecklist | null
+  guarded_apply_execution_gate_specification?: GuardedApplyExecutionGateSpecification | null
   audit_preview?: Record<string, unknown> | null
 }
 

@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, CreateOnlyApplyAuditMetadataPreviewPanel, CreateOnlyApplyExecutionPreflightPreviewPanel, DisabledDryRunBuildContractPanel, DisabledExecutionContractSummaryPanel, FinalGuardedApplyReadinessChecklistPanel, FutureApplyReferenceContractPanel, FutureApplyRequestValidationPreviewPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel, readCandidateIdentityReadinessOverview, readCreateOnlyApplyAuditMetadataPreview, readCreateOnlyApplyExecutionPreflightPreview, readDisabledExecutionContractSummary, readFinalGuardedApplyReadinessChecklist, readFutureApplyReferenceContract, readFutureApplyRequestValidationPreview } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, CreateOnlyApplyAuditMetadataPreviewPanel, CreateOnlyApplyExecutionPreflightPreviewPanel, DisabledDryRunBuildContractPanel, DisabledExecutionContractSummaryPanel, FinalGuardedApplyReadinessChecklistPanel, GuardedApplyExecutionGateSpecificationPanel, FutureApplyReferenceContractPanel, FutureApplyRequestValidationPreviewPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel, readCandidateIdentityReadinessOverview, readCreateOnlyApplyAuditMetadataPreview, readCreateOnlyApplyExecutionPreflightPreview, readDisabledExecutionContractSummary, readFinalGuardedApplyReadinessChecklist, readFutureApplyReferenceContract, readFutureApplyRequestValidationPreview, readGuardedApplyExecutionGateSpecification } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -183,6 +183,28 @@ function futureApplyValidationResponseMock(
       read_only: true,
       mutation_permitted: false,
       message: 'Final guarded checklist confirms execution remains disabled.'
+    },
+    guarded_apply_execution_gate_specification: {
+      available: true,
+      specification_type: 'guarded_apply_execution_gate_specification',
+      final_checklist_available: true,
+      final_readiness_checks_passed: true,
+      requires_target_absent: true,
+      requires_create_only_scope: true,
+      requires_allowed_source_type: 'season_template',
+      requires_allowed_overwrite_policy: 'none',
+      requires_audit_metadata: true,
+      required_confirmation_phrase: 'I understand this will create a new season calendar.',
+      required_mutation_scope: 'create_only',
+      requires_identity_reference_match: true,
+      requires_summary_execution_disabled: true,
+      requires_endpoint_disabled_before_execution: true,
+      gate_specification_complete: true,
+      execution_enabled: false,
+      can_execute: false,
+      read_only: true,
+      mutation_permitted: false,
+      message: 'Execution gate specification is read-only in preview mode.'
     },
     audit_preview: {
       read_only: true,
@@ -4291,8 +4313,6 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Candidate identity reference matches: true')).toBeInTheDocument()
     expect(screen.getByText('Main future command reference ready: true')).toBeInTheDocument()
     expect(screen.getByText('All known preconditions met: false')).toBeInTheDocument()
-    expect(screen.getByText('Execution enabled: false')).toBeInTheDocument()
-    expect(screen.getByText('Can execute: false')).toBeInTheDocument()
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
     expect(screen.getByText('Message: Create-only apply execution remains disabled in preview mode.')).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
@@ -4317,8 +4337,6 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Mutation scope present: true')).toBeInTheDocument()
     expect(screen.getByText('Mutation scope matches: true')).toBeInTheDocument()
     expect(screen.getByText('All required audit metadata present: true')).toBeInTheDocument()
-    expect(screen.getByText('Execution enabled: false')).toBeInTheDocument()
-    expect(screen.getByText('Can execute: false')).toBeInTheDocument()
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
     expect(screen.getByText('Message: Create-only apply audit metadata preview is read-only.')).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
@@ -4336,8 +4354,6 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Audit metadata complete: true')).toBeInTheDocument()
     expect(screen.getByText('All known preconditions met: true')).toBeInTheDocument()
     expect(screen.getByText('All preview layers available: true')).toBeInTheDocument()
-    expect(screen.getByText('Execution enabled: false')).toBeInTheDocument()
-    expect(screen.getByText('Can execute: false')).toBeInTheDocument()
     expect(screen.getByText('Read-only: true')).toBeInTheDocument()
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
     expect(screen.getByText('Message: Execution remains disabled by contract.')).toBeInTheDocument()
@@ -4367,8 +4383,6 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Summary execution disabled: true')).toBeInTheDocument()
     expect(screen.getByText('Summary mutation disabled: true')).toBeInTheDocument()
     expect(screen.getByText('All readiness checks passed: true')).toBeInTheDocument()
-    expect(screen.getByText('Execution enabled: false')).toBeInTheDocument()
-    expect(screen.getByText('Can execute: false')).toBeInTheDocument()
     expect(screen.getByText('Read-only: true')).toBeInTheDocument()
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
     expect(screen.getByText('Message: Final guarded checklist confirms execution remains disabled.')).toBeInTheDocument()
@@ -4382,6 +4396,38 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Available: n/a')).toBeInTheDocument()
     expect(screen.getByText('Checklist type: n/a')).toBeInTheDocument()
     expect(screen.getByText('Endpoint disabled: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Message: No message provided.')).toBeInTheDocument()
+  })
+
+  it('renders valid guarded apply execution gate specification data', () => {
+    render(<GuardedApplyExecutionGateSpecificationPanel specification={{ available: true, specification_type: 'guarded_apply_execution_gate_specification', final_checklist_available: true, final_readiness_checks_passed: true, requires_target_absent: true, requires_create_only_scope: true, requires_allowed_source_type: 'season_template', requires_allowed_overwrite_policy: 'none', requires_audit_metadata: true, required_confirmation_phrase: 'I understand this will create a new season calendar.', required_mutation_scope: 'create_only', requires_identity_reference_match: true, requires_summary_execution_disabled: true, requires_endpoint_disabled_before_execution: true, gate_specification_complete: true, execution_enabled: false, can_execute: false, read_only: true, mutation_permitted: false, message: 'Execution gate specification is read-only in preview mode.' }} />)
+    expect(screen.getByText('Available: true')).toBeInTheDocument()
+    expect(screen.getByText('Specification type: guarded_apply_execution_gate_specification')).toBeInTheDocument()
+    expect(screen.getByText('Final checklist available: true')).toBeInTheDocument()
+    expect(screen.getByText('Final readiness checks passed: true')).toBeInTheDocument()
+    expect(screen.getByText('Requires target absent: true')).toBeInTheDocument()
+    expect(screen.getByText('Requires create-only scope: true')).toBeInTheDocument()
+    expect(screen.getByText('Requires allowed source type: season_template')).toBeInTheDocument()
+    expect(screen.getByText('Requires allowed overwrite policy: none')).toBeInTheDocument()
+    expect(screen.getByText('Requires audit metadata: true')).toBeInTheDocument()
+    expect(screen.getByText('Required confirmation phrase: I understand this will create a new season calendar.')).toBeInTheDocument()
+    expect(screen.getByText('Required mutation scope: create_only')).toBeInTheDocument()
+    expect(screen.getByText('Requires identity reference match: true')).toBeInTheDocument()
+    expect(screen.getByText('Requires summary execution disabled: true')).toBeInTheDocument()
+    expect(screen.getByText('Requires endpoint disabled before execution: true')).toBeInTheDocument()
+    expect(screen.getByText('Read-only: true')).toBeInTheDocument()
+    expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
+    expect(screen.getByText('Message: Execution gate specification is read-only in preview mode.')).toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('handles missing and malformed guarded apply execution gate specification data', () => {
+    expect(readGuardedApplyExecutionGateSpecification(undefined)).toBeNull()
+    render(<GuardedApplyExecutionGateSpecificationPanel specification={{ available: 'yes', specification_type: '', final_checklist_available: 'x', required_confirmation_phrase: '' }} />)
+    expect(screen.getByText('Available: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Specification type: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Final checklist available: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Required confirmation phrase: n/a')).toBeInTheDocument()
     expect(screen.getByText('Message: No message provided.')).toBeInTheDocument()
   })
 
@@ -4490,5 +4536,20 @@ describe('Future apply validation UI safety', () => {
     expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
     expect(api.postSeasonBuilderApplyCommandContract).not.toHaveBeenCalled()
+  })
+
+  it('renders guarded apply execution gate specification from manual validation with no apply or execute button', async () => {
+    api.validateFutureApplyRequestPreview.mockResolvedValueOnce(futureApplyValidationResponseMock())
+    renderAppAt('/admin/seasons/build')
+    const callsBeforeClick = api.validateFutureApplyRequestPreview.mock.calls.length
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
+    expect(api.postSeasonBuilderApplyCommandContract).not.toHaveBeenCalled()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Validate future apply reference' }))
+    await waitFor(() => expect(api.validateFutureApplyRequestPreview.mock.calls.length).toBe(callsBeforeClick + 1))
+    await screen.findByText('Guarded apply execution gate specification')
+    expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
   })
 })

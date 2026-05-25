@@ -106,6 +106,28 @@ describe('validateFutureApplyRequestPreview', () => {
         mutation_permitted: false,
         message: 'Final checklist is read-only in preview mode.'
       },
+      guarded_apply_execution_gate_specification: {
+        available: true,
+        specification_type: 'guarded_apply_execution_gate_specification',
+        final_checklist_available: true,
+        final_readiness_checks_passed: true,
+        requires_target_absent: true,
+        requires_create_only_scope: true,
+        requires_allowed_source_type: 'season_template',
+        requires_allowed_overwrite_policy: 'none',
+        requires_audit_metadata: true,
+        required_confirmation_phrase: 'I understand this will create a new season calendar.',
+        required_mutation_scope: 'create_only',
+        requires_identity_reference_match: true,
+        requires_summary_execution_disabled: true,
+        requires_endpoint_disabled_before_execution: true,
+        gate_specification_complete: true,
+        execution_enabled: false,
+        can_execute: false,
+        read_only: true,
+        mutation_permitted: false,
+        message: 'Execution gate specification is read-only in preview mode.'
+      },
       audit_preview: null
     }
 
@@ -168,6 +190,7 @@ describe('validateFutureApplyRequestPreview', () => {
           create_only_apply_audit_metadata_preview: null,
           disabled_execution_contract_summary: null,
           final_guarded_apply_readiness_checklist: null,
+          guarded_apply_execution_gate_specification: null,
           audit_preview: null
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }

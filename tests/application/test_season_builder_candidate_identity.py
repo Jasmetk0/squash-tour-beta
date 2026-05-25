@@ -953,6 +953,7 @@ def test_final_guarded_apply_readiness_checklist_all_checks_passed() -> None:
     assert "disabled" in msg
     assert "read-only" in msg
     assert "does not execute apply" in msg
+    assert ("does not mutate" in msg) or ("or mutate state" in msg)
 
 
 def test_final_guarded_apply_readiness_checklist_endpoint_enabled_fails() -> None:

@@ -34,6 +34,7 @@ from beta_engine.application.season_builder_candidate_identity import (
     build_create_only_apply_execution_preflight_preview,
     build_disabled_execution_contract_summary,
     build_final_guarded_apply_readiness_checklist,
+    build_guarded_apply_execution_gate_specification,
 )
 from beta_engine.application.season_builder_identity_readiness import build_dry_run_identity_readiness
 from beta_engine.application.season_template_service import (
@@ -1098,6 +1099,13 @@ def post_season_builder_future_apply_request_validation_preview(
         endpoint_can_execute=False,
         endpoint_can_mutate=False,
     )
+    guarded_apply_execution_gate_specification = build_guarded_apply_execution_gate_specification(
+        final_guarded_apply_readiness_checklist=final_guarded_apply_readiness_checklist,
+        required_confirmation_phrase=REQUIRED_CREATE_ONLY_APPLY_CONFIRMATION_PHRASE,
+        required_mutation_scope="create_only",
+        allowed_source_type="season_template",
+        allowed_overwrite_policy="none",
+    )
     return SeasonBuilderFutureApplyRequestValidationPreviewResponse(
         enabled=False,
         can_execute=False,
@@ -1112,6 +1120,7 @@ def post_season_builder_future_apply_request_validation_preview(
         create_only_apply_execution_preflight_preview=create_only_apply_execution_preflight_preview,
         disabled_execution_contract_summary=disabled_execution_contract_summary,
         final_guarded_apply_readiness_checklist=final_guarded_apply_readiness_checklist,
+        guarded_apply_execution_gate_specification=guarded_apply_execution_gate_specification,
         audit_preview={
             "action": "season_builder_future_apply_request_validation_preview",
             "read_only": True,

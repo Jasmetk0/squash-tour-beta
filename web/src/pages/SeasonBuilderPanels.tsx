@@ -1433,6 +1433,25 @@ export type NormalizedDisabledExecutionContractSummary = {
   message: string
 }
 
+export type NormalizedFinalGuardedApplyReadinessChecklist = {
+  available: string
+  checklistType: string
+  endpointDisabled: string
+  endpointExecutionDisabled: string
+  endpointMutationDisabled: string
+  summaryAvailable: string
+  summaryAllPreviewLayersAvailable: string
+  summaryAllKnownPreconditionsMet: string
+  summaryExecutionDisabled: string
+  summaryMutationDisabled: string
+  allReadinessChecksPassed: string
+  executionEnabled: string
+  canExecute: string
+  readOnly: string
+  mutationPermitted: string
+  message: string
+}
+
 export function readCreateOnlyApplyExecutionPreflightPreview(value: unknown): NormalizedCreateOnlyApplyExecutionPreflightPreview | null {
   if (!value || typeof value !== 'object') return null
   const record = value as Record<string, unknown>
@@ -1492,6 +1511,29 @@ export function readDisabledExecutionContractSummary(value: unknown): Normalized
     auditMetadataComplete: normalizeBooleanDisplay(record.audit_metadata_complete),
     allKnownPreconditionsMet: normalizeBooleanDisplay(record.all_known_preconditions_met),
     allPreviewLayersAvailable: normalizeBooleanDisplay(record.all_preview_layers_available),
+    executionEnabled: normalizeBooleanDisplay(record.execution_enabled),
+    canExecute: normalizeBooleanDisplay(record.can_execute),
+    readOnly: normalizeBooleanDisplay(record.read_only),
+    mutationPermitted: normalizeBooleanDisplay(record.mutation_permitted),
+    message: normalizeNonEmptyStringDisplay(record.message) === 'n/a' ? 'No message provided.' : normalizeNonEmptyStringDisplay(record.message)
+  }
+}
+
+export function readFinalGuardedApplyReadinessChecklist(value: unknown): NormalizedFinalGuardedApplyReadinessChecklist | null {
+  if (!value || typeof value !== 'object') return null
+  const record = value as Record<string, unknown>
+  return {
+    available: normalizeBooleanDisplay(record.available),
+    checklistType: normalizeNonEmptyStringDisplay(record.checklist_type),
+    endpointDisabled: normalizeBooleanDisplay(record.endpoint_disabled),
+    endpointExecutionDisabled: normalizeBooleanDisplay(record.endpoint_execution_disabled),
+    endpointMutationDisabled: normalizeBooleanDisplay(record.endpoint_mutation_disabled),
+    summaryAvailable: normalizeBooleanDisplay(record.summary_available),
+    summaryAllPreviewLayersAvailable: normalizeBooleanDisplay(record.summary_all_preview_layers_available),
+    summaryAllKnownPreconditionsMet: normalizeBooleanDisplay(record.summary_all_known_preconditions_met),
+    summaryExecutionDisabled: normalizeBooleanDisplay(record.summary_execution_disabled),
+    summaryMutationDisabled: normalizeBooleanDisplay(record.summary_mutation_disabled),
+    allReadinessChecksPassed: normalizeBooleanDisplay(record.all_readiness_checks_passed),
     executionEnabled: normalizeBooleanDisplay(record.execution_enabled),
     canExecute: normalizeBooleanDisplay(record.can_execute),
     readOnly: normalizeBooleanDisplay(record.read_only),
@@ -4186,6 +4228,32 @@ export function DisabledExecutionContractSummaryPanel({ summary }: { summary?: u
       <p>Read-only: {contractSummary.readOnly}</p>
       <p>Mutation permitted: {contractSummary.mutationPermitted}</p>
       <p>Message: {contractSummary.message}</p>
+    </>
+  )
+}
+
+export function FinalGuardedApplyReadinessChecklistPanel({ checklist }: { checklist?: unknown }): JSX.Element {
+  const readinessChecklist = readFinalGuardedApplyReadinessChecklist(checklist)
+  if (!readinessChecklist) return <p>Final guarded apply readiness checklist is not available.</p>
+  return (
+    <>
+      <p>Final guarded apply readiness checklist</p>
+      <p>Available: {readinessChecklist.available}</p>
+      <p>Checklist type: {readinessChecklist.checklistType}</p>
+      <p>Endpoint disabled: {readinessChecklist.endpointDisabled}</p>
+      <p>Endpoint execution disabled: {readinessChecklist.endpointExecutionDisabled}</p>
+      <p>Endpoint mutation disabled: {readinessChecklist.endpointMutationDisabled}</p>
+      <p>Summary available: {readinessChecklist.summaryAvailable}</p>
+      <p>Summary all preview layers available: {readinessChecklist.summaryAllPreviewLayersAvailable}</p>
+      <p>Summary all known preconditions met: {readinessChecklist.summaryAllKnownPreconditionsMet}</p>
+      <p>Summary execution disabled: {readinessChecklist.summaryExecutionDisabled}</p>
+      <p>Summary mutation disabled: {readinessChecklist.summaryMutationDisabled}</p>
+      <p>All readiness checks passed: {readinessChecklist.allReadinessChecksPassed}</p>
+      <p>Execution enabled: {readinessChecklist.executionEnabled}</p>
+      <p>Can execute: {readinessChecklist.canExecute}</p>
+      <p>Read-only: {readinessChecklist.readOnly}</p>
+      <p>Mutation permitted: {readinessChecklist.mutationPermitted}</p>
+      <p>Message: {readinessChecklist.message}</p>
     </>
   )
 }

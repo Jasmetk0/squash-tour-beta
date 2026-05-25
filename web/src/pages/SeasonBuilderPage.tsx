@@ -57,6 +57,7 @@ import {
   FutureApplyRequestValidationPreviewPanel,
   CreateOnlyApplyExecutionPreflightPreviewPanel,
   DisabledExecutionContractSummaryPanel,
+  FinalGuardedApplyReadinessChecklistPanel,
   CreateOnlyApplyAuditMetadataPreviewPanel,
   PreflightTemplateConflictSummaryPanel,
   TemplateSlotConflictCodeRegistryPanel,
@@ -792,6 +793,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
             <CreateOnlyApplyExecutionPreflightPreviewPanel preview={futureApplyValidationResult.create_only_apply_execution_preflight_preview} />
             <CreateOnlyApplyAuditMetadataPreviewPanel preview={futureApplyValidationResult.create_only_apply_audit_metadata_preview} />
             <DisabledExecutionContractSummaryPanel summary={futureApplyValidationResult.disabled_execution_contract_summary} />
+            <FinalGuardedApplyReadinessChecklistPanel checklist={futureApplyValidationResult.final_guarded_apply_readiness_checklist} />
           </>
         ) : null}
       </SectionCard>

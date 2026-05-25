@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, CreateOnlyApplyAuditMetadataPreviewPanel, CreateOnlyApplyExecutionPreflightPreviewPanel, DisabledDryRunBuildContractPanel, DisabledExecutionContractSummaryPanel, FutureApplyReferenceContractPanel, FutureApplyRequestValidationPreviewPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel, readCandidateIdentityReadinessOverview, readCreateOnlyApplyAuditMetadataPreview, readCreateOnlyApplyExecutionPreflightPreview, readDisabledExecutionContractSummary, readFutureApplyReferenceContract, readFutureApplyRequestValidationPreview } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, CreateOnlyApplyAuditMetadataPreviewPanel, CreateOnlyApplyExecutionPreflightPreviewPanel, DisabledDryRunBuildContractPanel, DisabledExecutionContractSummaryPanel, FinalGuardedApplyReadinessChecklistPanel, FutureApplyReferenceContractPanel, FutureApplyRequestValidationPreviewPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel, readCandidateIdentityReadinessOverview, readCreateOnlyApplyAuditMetadataPreview, readCreateOnlyApplyExecutionPreflightPreview, readDisabledExecutionContractSummary, readFinalGuardedApplyReadinessChecklist, readFutureApplyReferenceContract, readFutureApplyRequestValidationPreview } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -165,6 +165,24 @@ function futureApplyValidationResponseMock(
       read_only: true,
       mutation_permitted: false,
       message: 'Execution contract summary is read-only in this phase.'
+    },
+    final_guarded_apply_readiness_checklist: {
+      available: true,
+      checklist_type: 'final_guarded_apply_readiness_checklist',
+      endpoint_disabled: true,
+      endpoint_execution_disabled: true,
+      endpoint_mutation_disabled: true,
+      summary_available: true,
+      summary_all_preview_layers_available: true,
+      summary_all_known_preconditions_met: true,
+      summary_execution_disabled: true,
+      summary_mutation_disabled: true,
+      all_readiness_checks_passed: true,
+      execution_enabled: false,
+      can_execute: false,
+      read_only: true,
+      mutation_permitted: false,
+      message: 'Final guarded checklist confirms execution remains disabled.'
     },
     audit_preview: {
       read_only: true,
@@ -4336,6 +4354,26 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Message: No message provided.')).toBeInTheDocument()
   })
 
+  it('renders valid final guarded apply readiness checklist data', () => {
+    render(<FinalGuardedApplyReadinessChecklistPanel checklist={{ available: true, checklist_type: 'final_guarded_apply_readiness_checklist', endpoint_disabled: true, endpoint_execution_disabled: true, endpoint_mutation_disabled: true, summary_available: true, summary_all_preview_layers_available: true, summary_all_known_preconditions_met: true, summary_execution_disabled: true, summary_mutation_disabled: true, all_readiness_checks_passed: true, execution_enabled: false, can_execute: false, read_only: true, mutation_permitted: false, message: 'Final guarded checklist confirms execution remains disabled.' }} />)
+    expect(screen.getByText('Available: true')).toBeInTheDocument()
+    expect(screen.getByText('Checklist type: final_guarded_apply_readiness_checklist')).toBeInTheDocument()
+    expect(screen.getByText('Endpoint execution disabled: true')).toBeInTheDocument()
+    expect(screen.getByText('Execution enabled: false')).toBeInTheDocument()
+    expect(screen.getByText('Can execute: false')).toBeInTheDocument()
+    expect(screen.getByText('Message: Final guarded checklist confirms execution remains disabled.')).toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('handles missing and malformed final guarded apply readiness checklist data', () => {
+    expect(readFinalGuardedApplyReadinessChecklist(undefined)).toBeNull()
+    render(<FinalGuardedApplyReadinessChecklistPanel checklist={{ available: 'yes', checklist_type: '', endpoint_disabled: 'x' }} />)
+    expect(screen.getByText('Available: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Checklist type: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Endpoint disabled: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Message: No message provided.')).toBeInTheDocument()
+  })
+
   it('handles missing and malformed create-only apply audit metadata preview data', () => {
     expect(readCreateOnlyApplyAuditMetadataPreview(undefined)).toBeNull()
     render(<CreateOnlyApplyAuditMetadataPreviewPanel preview={{ available: 'yes', preview_type: '', requested_by_present: 'x' }} />)
@@ -4423,5 +4461,20 @@ describe('Future apply validation UI safety', () => {
     expect(api.postSeasonBuilderApplyCommandContract).not.toHaveBeenCalledWith(expect.objectContaining({
       requested_candidate_identity_reference_id: expect.any(String)
     }))
+  })
+
+  it('renders final guarded apply readiness checklist from manual validation result with no apply or execute button', async () => {
+    api.validateFutureApplyRequestPreview.mockResolvedValueOnce(futureApplyValidationResponseMock())
+    renderAppAt('/admin/seasons/build')
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
+    const callsBeforeClick = api.validateFutureApplyRequestPreview.mock.calls.length
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Validate future apply reference' }))
+    await waitFor(() => expect(api.validateFutureApplyRequestPreview.mock.calls.length).toBe(callsBeforeClick + 1))
+    await screen.findByText('Final guarded apply readiness checklist')
+    expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
+    expect(api.postSeasonBuilderApplyCommandContract).not.toHaveBeenCalled()
   })
 })

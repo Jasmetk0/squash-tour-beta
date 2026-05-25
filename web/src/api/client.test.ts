@@ -88,6 +88,24 @@ describe('validateFutureApplyRequestPreview', () => {
         mutation_permitted: false,
         message: 'Execution remains disabled in this phase.'
       },
+      final_guarded_apply_readiness_checklist: {
+        available: true,
+        checklist_type: 'final_guarded_apply_readiness_checklist',
+        endpoint_disabled: true,
+        endpoint_execution_disabled: true,
+        endpoint_mutation_disabled: true,
+        summary_available: true,
+        summary_all_preview_layers_available: true,
+        summary_all_known_preconditions_met: true,
+        summary_execution_disabled: true,
+        summary_mutation_disabled: true,
+        all_readiness_checks_passed: true,
+        execution_enabled: false,
+        can_execute: false,
+        read_only: true,
+        mutation_permitted: false,
+        message: 'Final checklist is read-only in preview mode.'
+      },
       audit_preview: null
     }
 
@@ -149,6 +167,7 @@ describe('validateFutureApplyRequestPreview', () => {
           },
           create_only_apply_audit_metadata_preview: null,
           disabled_execution_contract_summary: null,
+          final_guarded_apply_readiness_checklist: null,
           audit_preview: null
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }

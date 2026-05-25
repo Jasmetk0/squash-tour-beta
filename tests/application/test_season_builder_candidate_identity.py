@@ -9,6 +9,7 @@ from beta_engine.application.season_builder_candidate_identity import (
     build_future_apply_reference_contract,
     build_create_only_apply_execution_preflight_preview,
     build_disabled_execution_contract_summary,
+    build_final_guarded_apply_readiness_checklist,
     build_candidate_identity_summary,
     sanitize_candidate_identity_part,
 )
@@ -918,3 +919,147 @@ def test_disabled_execution_contract_summary_malformed_inputs_default_safely() -
     assert summary["execution_enabled"] is False
     assert summary["can_execute"] is False
     assert summary["mutation_permitted"] is False
+
+
+def test_final_guarded_apply_readiness_checklist_all_checks_passed() -> None:
+    checklist = build_final_guarded_apply_readiness_checklist(
+        disabled_execution_contract_summary={
+            "available": True,
+            "all_preview_layers_available": True,
+            "all_known_preconditions_met": True,
+            "execution_enabled": False,
+            "can_execute": False,
+            "mutation_permitted": False,
+        },
+        endpoint_enabled=False,
+        endpoint_can_execute=False,
+        endpoint_can_mutate=False,
+    )
+    assert checklist["available"] is True
+    assert checklist["all_readiness_checks_passed"] is True
+    assert checklist["endpoint_disabled"] is True
+    assert checklist["endpoint_execution_disabled"] is True
+    assert checklist["endpoint_mutation_disabled"] is True
+    assert checklist["summary_available"] is True
+    assert checklist["summary_all_preview_layers_available"] is True
+    assert checklist["summary_all_known_preconditions_met"] is True
+    assert checklist["summary_execution_disabled"] is True
+    assert checklist["summary_mutation_disabled"] is True
+    assert checklist["execution_enabled"] is False
+    assert checklist["can_execute"] is False
+    assert checklist["read_only"] is True
+    assert checklist["mutation_permitted"] is False
+    msg = str(checklist["message"]).lower()
+    assert "disabled" in msg
+    assert "read-only" in msg
+    assert "does not execute apply" in msg
+
+
+def test_final_guarded_apply_readiness_checklist_endpoint_enabled_fails() -> None:
+    checklist = build_final_guarded_apply_readiness_checklist(
+        disabled_execution_contract_summary={
+            "available": True,
+            "all_preview_layers_available": True,
+            "all_known_preconditions_met": True,
+            "execution_enabled": False,
+            "can_execute": False,
+            "mutation_permitted": False,
+        },
+        endpoint_enabled=True,
+        endpoint_can_execute=False,
+        endpoint_can_mutate=False,
+    )
+    assert checklist["endpoint_disabled"] is False
+    assert checklist["all_readiness_checks_passed"] is False
+    assert checklist["available"] is False
+    assert checklist["execution_enabled"] is False
+    assert checklist["can_execute"] is False
+
+
+def test_final_guarded_apply_readiness_checklist_endpoint_can_execute_fails() -> None:
+    checklist = build_final_guarded_apply_readiness_checklist(
+        disabled_execution_contract_summary={
+            "available": True,
+            "all_preview_layers_available": True,
+            "all_known_preconditions_met": True,
+            "execution_enabled": False,
+            "can_execute": False,
+            "mutation_permitted": False,
+        },
+        endpoint_enabled=False,
+        endpoint_can_execute=True,
+        endpoint_can_mutate=False,
+    )
+    assert checklist["endpoint_execution_disabled"] is False
+    assert checklist["all_readiness_checks_passed"] is False
+    assert checklist["available"] is False
+    assert checklist["execution_enabled"] is False
+    assert checklist["can_execute"] is False
+
+
+def test_final_guarded_apply_readiness_checklist_summary_execution_enabled_fails() -> None:
+    checklist = build_final_guarded_apply_readiness_checklist(
+        disabled_execution_contract_summary={
+            "available": True,
+            "all_preview_layers_available": True,
+            "all_known_preconditions_met": True,
+            "execution_enabled": True,
+            "can_execute": False,
+            "mutation_permitted": False,
+        },
+        endpoint_enabled=False,
+        endpoint_can_execute=False,
+        endpoint_can_mutate=False,
+    )
+    assert checklist["summary_execution_disabled"] is False
+    assert checklist["all_readiness_checks_passed"] is False
+    assert checklist["available"] is False
+    assert checklist["execution_enabled"] is False
+    assert checklist["can_execute"] is False
+
+
+def test_final_guarded_apply_readiness_checklist_summary_mutation_enabled_fails() -> None:
+    checklist = build_final_guarded_apply_readiness_checklist(
+        disabled_execution_contract_summary={
+            "available": True,
+            "all_preview_layers_available": True,
+            "all_known_preconditions_met": True,
+            "execution_enabled": False,
+            "can_execute": False,
+            "mutation_permitted": True,
+        },
+        endpoint_enabled=False,
+        endpoint_can_execute=False,
+        endpoint_can_mutate=False,
+    )
+    assert checklist["summary_mutation_disabled"] is False
+    assert checklist["all_readiness_checks_passed"] is False
+    assert checklist["available"] is False
+    assert checklist["mutation_permitted"] is False
+
+
+def test_final_guarded_apply_readiness_checklist_malformed_summary_defaults_safely() -> None:
+    checklist = build_final_guarded_apply_readiness_checklist(
+        disabled_execution_contract_summary={
+            "available": "yes",
+            "all_preview_layers_available": 1,
+            "all_known_preconditions_met": None,
+            "execution_enabled": "false",
+            "can_execute": [],
+            "mutation_permitted": "no",
+        },
+        endpoint_enabled=False,
+        endpoint_can_execute=False,
+        endpoint_can_mutate=False,
+    )
+    assert checklist["summary_available"] is False
+    assert checklist["summary_all_preview_layers_available"] is False
+    assert checklist["summary_all_known_preconditions_met"] is False
+    assert checklist["summary_execution_disabled"] is False
+    assert checklist["summary_mutation_disabled"] is False
+    assert checklist["all_readiness_checks_passed"] is False
+    assert checklist["available"] is False
+    assert checklist["execution_enabled"] is False
+    assert checklist["can_execute"] is False
+    assert checklist["read_only"] is True
+    assert checklist["mutation_permitted"] is False

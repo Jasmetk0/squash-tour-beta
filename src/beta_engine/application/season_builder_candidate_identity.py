@@ -573,6 +573,80 @@ def build_create_only_apply_audit_metadata_preview(
     }
 
 
+
+
+def build_final_guarded_apply_readiness_checklist(
+    *,
+    disabled_execution_contract_summary: dict,
+    endpoint_enabled: bool,
+    endpoint_can_execute: bool,
+    endpoint_can_mutate: bool,
+) -> dict[str, object]:
+    """Build final disabled/read-only guarded apply readiness checklist.
+
+    This helper is backend-only checklist metadata for a future guarded apply command.
+    It never executes apply and never grants mutation permission.
+    Even with all checks passed, execution remains disabled in this phase.
+    """
+    endpoint_disabled = endpoint_enabled is False
+    endpoint_execution_disabled = endpoint_can_execute is False
+    endpoint_mutation_disabled = endpoint_can_mutate is False
+
+    raw_summary_available = disabled_execution_contract_summary.get("available")
+    summary_available = raw_summary_available if isinstance(raw_summary_available, bool) else False
+
+    raw_summary_preview_layers = disabled_execution_contract_summary.get("all_preview_layers_available")
+    summary_all_preview_layers_available = (
+        raw_summary_preview_layers if isinstance(raw_summary_preview_layers, bool) else False
+    )
+
+    raw_summary_preconditions = disabled_execution_contract_summary.get("all_known_preconditions_met")
+    summary_all_known_preconditions_met = (
+        raw_summary_preconditions if isinstance(raw_summary_preconditions, bool) else False
+    )
+
+    summary_execution_disabled = all(
+        [
+            disabled_execution_contract_summary.get("execution_enabled") is False,
+            disabled_execution_contract_summary.get("can_execute") is False,
+        ]
+    )
+    summary_mutation_disabled = disabled_execution_contract_summary.get("mutation_permitted") is False
+
+    all_readiness_checks_passed = all(
+        [
+            endpoint_disabled,
+            endpoint_execution_disabled,
+            endpoint_mutation_disabled,
+            summary_available,
+            summary_all_preview_layers_available,
+            summary_all_known_preconditions_met,
+            summary_execution_disabled,
+            summary_mutation_disabled,
+        ]
+    )
+
+    return {
+        "available": all_readiness_checks_passed,
+        "checklist_type": "final_guarded_apply_readiness_checklist",
+        "endpoint_disabled": endpoint_disabled,
+        "endpoint_execution_disabled": endpoint_execution_disabled,
+        "endpoint_mutation_disabled": endpoint_mutation_disabled,
+        "summary_available": summary_available,
+        "summary_all_preview_layers_available": summary_all_preview_layers_available,
+        "summary_all_known_preconditions_met": summary_all_known_preconditions_met,
+        "summary_execution_disabled": summary_execution_disabled,
+        "summary_mutation_disabled": summary_mutation_disabled,
+        "all_readiness_checks_passed": all_readiness_checks_passed,
+        "execution_enabled": False,
+        "can_execute": False,
+        "read_only": True,
+        "mutation_permitted": False,
+        "message": (
+            "Final guarded apply readiness checklist is disabled/read-only and "
+            "does not execute apply or mutate state."
+        ),
+    }
 def build_disabled_execution_contract_summary(
     *,
     future_apply_reference_contract: dict,

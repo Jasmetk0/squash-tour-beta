@@ -271,6 +271,9 @@ def assert_future_apply_validation_preview_disabled_response(body: dict) -> dict
     assert_final_guarded_apply_readiness_checklist_disabled(
         body["final_guarded_apply_readiness_checklist"]
     )
+    assert_guarded_apply_execution_gate_specification_disabled(
+        body["guarded_apply_execution_gate_specification"]
+    )
     assert validation_preview["apply_execution_enabled"] is False
     assert validation_preview["read_only"] is True
     assert validation_preview["mutation_permitted"] is False
@@ -292,6 +295,20 @@ def assert_final_guarded_apply_readiness_checklist_disabled(checklist: dict) -> 
     assert checklist["mutation_permitted"] is False
     assert isinstance(checklist["message"], str) and checklist["message"]
     return checklist
+
+
+
+def assert_guarded_apply_execution_gate_specification_disabled(specification: dict) -> dict:
+    assert isinstance(specification, dict)
+    assert specification["specification_type"] == "guarded_apply_execution_gate_specification"
+    assert isinstance(specification["available"], bool)
+    assert isinstance(specification["gate_specification_complete"], bool)
+    assert specification["execution_enabled"] is False
+    assert specification["can_execute"] is False
+    assert specification["read_only"] is True
+    assert specification["mutation_permitted"] is False
+    assert isinstance(specification["message"], str) and specification["message"]
+    return specification
 
 def assert_disabled_execution_contract_summary_disabled(summary: dict) -> dict:
     assert isinstance(summary, dict)
@@ -605,6 +622,11 @@ def test_future_apply_request_validation_preview_matching_resolved_request(tmp_p
         assert (checklist["summary_available"] is False) or (checklist["all_readiness_checks_passed"] is False)
         assert checklist["execution_enabled"] is False
         assert preflight_preview["can_execute"] is False
+        specification = assert_guarded_apply_execution_gate_specification_disabled(
+            body["guarded_apply_execution_gate_specification"]
+        )
+        assert specification["available"] is False
+        assert (specification["final_checklist_available"] is False) or (specification["gate_specification_complete"] is False)
 
 
 @pytest.mark.parametrize("overwrite_policy", [None, "none", "create_only"])
@@ -777,6 +799,11 @@ def test_future_apply_request_validation_preview_mismatched_resolved_request(tmp
         assert checklist["available"] is False
         assert (checklist["summary_available"] is False) or (checklist["all_readiness_checks_passed"] is False)
         assert checklist["execution_enabled"] is False
+        specification = assert_guarded_apply_execution_gate_specification_disabled(
+            body["guarded_apply_execution_gate_specification"]
+        )
+        assert specification["available"] is False
+        assert (specification["final_checklist_available"] is False) or (specification["gate_specification_complete"] is False)
 
 
 def test_future_apply_request_validation_preview_missing_requested_values(tmp_path: Path) -> None:
@@ -909,6 +936,26 @@ def test_future_apply_request_validation_preview_complete_audit_metadata_can_sat
         assert "read-only" in checklist_message
         assert "does not execute apply" in checklist_message
         assert ("does not mutate" in checklist_message) or ("or mutate state" in checklist_message)
+        specification = assert_guarded_apply_execution_gate_specification_disabled(
+            body["guarded_apply_execution_gate_specification"]
+        )
+        assert specification["final_checklist_available"] is True
+        assert specification["final_readiness_checks_passed"] is True
+        assert specification["requires_target_absent"] is True
+        assert specification["requires_create_only_scope"] is True
+        assert specification["requires_allowed_source_type"] == "season_template"
+        assert specification["requires_allowed_overwrite_policy"] == "none"
+        assert specification["requires_audit_metadata"] is True
+        assert specification["required_confirmation_phrase"] == "I understand this will create a new season calendar."
+        assert specification["required_mutation_scope"] == "create_only"
+        assert specification["requires_identity_reference_match"] is True
+        assert specification["requires_summary_execution_disabled"] is True
+        assert specification["requires_endpoint_disabled_before_execution"] is True
+        assert specification["gate_specification_complete"] is True
+        assert specification["available"] is True
+        assert specification["execution_enabled"] is False
+        assert specification["can_execute"] is False
+        assert specification["mutation_permitted"] is False
 
 
 def test_future_apply_request_validation_preview_wrong_explicit_confirmation_blocks_audit_metadata(tmp_path: Path) -> None:

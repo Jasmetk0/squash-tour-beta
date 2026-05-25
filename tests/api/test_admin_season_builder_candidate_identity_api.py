@@ -904,6 +904,11 @@ def test_future_apply_request_validation_preview_complete_audit_metadata_can_sat
         assert checklist["execution_enabled"] is False
         assert checklist["can_execute"] is False
         assert checklist["mutation_permitted"] is False
+        checklist_message = str(checklist["message"]).lower()
+        assert "disabled" in checklist_message
+        assert "read-only" in checklist_message
+        assert "does not execute apply" in checklist_message
+        assert ("does not mutate" in checklist_message) or ("or mutate state" in checklist_message)
 
 
 def test_future_apply_request_validation_preview_wrong_explicit_confirmation_blocks_audit_metadata(tmp_path: Path) -> None:

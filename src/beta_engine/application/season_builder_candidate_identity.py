@@ -584,9 +584,15 @@ def build_final_guarded_apply_readiness_checklist(
 ) -> dict[str, object]:
     """Build final disabled/read-only guarded apply readiness checklist.
 
-    This helper is backend-only checklist metadata for a future guarded apply command.
-    It never executes apply and never grants mutation permission.
-    Even with all checks passed, execution remains disabled in this phase.
+    This helper returns preview/readiness metadata only for a future guarded apply
+    command; it is not execution authorization.
+    ``available=True`` and ``all_readiness_checks_passed=True`` confirm only that the
+    disabled/read-only safety contract is intact, not that apply may execute.
+    Endpoint checks (for example ``endpoint_disabled`` and
+    ``endpoint_execution_disabled``) are safety invariants, not permission signals.
+    Execution and mutation authorization remain disabled in all cases:
+    ``execution_enabled=False``, ``can_execute=False``, and
+    ``mutation_permitted=False``.
     """
     endpoint_disabled = endpoint_enabled is False
     endpoint_execution_disabled = endpoint_can_execute is False

@@ -34,6 +34,7 @@ from beta_engine.application.season_builder_candidate_identity import (
     build_create_only_apply_execution_preflight_preview,
     build_disabled_execution_contract_summary,
     build_final_guarded_apply_readiness_checklist,
+    build_future_apply_execution_boundary_contract,
     build_guarded_apply_execution_gate_specification,
 )
 from beta_engine.application.season_builder_identity_readiness import build_dry_run_identity_readiness
@@ -1106,6 +1107,12 @@ def post_season_builder_future_apply_request_validation_preview(
         allowed_source_type="season_template",
         allowed_overwrite_policy="none",
     )
+    future_apply_execution_boundary_contract = build_future_apply_execution_boundary_contract(
+        guarded_apply_execution_gate_specification=guarded_apply_execution_gate_specification,
+        actual_execution_endpoint_exists=False,
+        actual_execution_wiring_enabled=False,
+        mutation_path_enabled=False,
+    )
     return SeasonBuilderFutureApplyRequestValidationPreviewResponse(
         enabled=False,
         can_execute=False,
@@ -1121,6 +1128,7 @@ def post_season_builder_future_apply_request_validation_preview(
         disabled_execution_contract_summary=disabled_execution_contract_summary,
         final_guarded_apply_readiness_checklist=final_guarded_apply_readiness_checklist,
         guarded_apply_execution_gate_specification=guarded_apply_execution_gate_specification,
+        future_apply_execution_boundary_contract=future_apply_execution_boundary_contract,
         audit_preview={
             "action": "season_builder_future_apply_request_validation_preview",
             "read_only": True,

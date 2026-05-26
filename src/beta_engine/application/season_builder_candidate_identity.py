@@ -746,9 +746,14 @@ def build_future_apply_execution_boundary_contract(
     """Build disabled/read-only boundary metadata between preview stack and future execution.
 
     Safety invariant:
-    - This helper defines boundary metadata only.
-    - It is never execution authorization and never mutation authorization.
-    - Even when boundary checks are intact, execution remains disabled.
+    - This helper defines preview/boundary metadata only.
+    - ``available=True`` is not execution authorization.
+    - ``execution_boundary_intact=True`` is not execution authorization.
+    - ``preview_stack_only=True`` is not execution authorization.
+    - ``requires_separate_execution_phase`` / ``requires_separate_endpoint_wiring`` /
+      ``requires_separate_mutation_audit`` are requirements documentation, not permission signals.
+    - ``execution_enabled`` and ``can_execute`` must remain ``False``.
+    - ``mutation_permitted`` must remain ``False``.
     """
     raw_gate_available = guarded_apply_execution_gate_specification.get("available")
     gate_specification_available = raw_gate_available if isinstance(raw_gate_available, bool) else False

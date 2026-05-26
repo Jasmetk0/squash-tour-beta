@@ -736,6 +736,75 @@ def build_guarded_apply_execution_gate_specification(
     }
 
 
+def build_future_apply_execution_boundary_contract(
+    *,
+    guarded_apply_execution_gate_specification: dict,
+    actual_execution_endpoint_exists: bool = False,
+    actual_execution_wiring_enabled: bool = False,
+    mutation_path_enabled: bool = False,
+) -> dict[str, object]:
+    """Build disabled/read-only boundary metadata between preview stack and future execution.
+
+    Safety invariant:
+    - This helper defines boundary metadata only.
+    - It is never execution authorization and never mutation authorization.
+    - Even when boundary checks are intact, execution remains disabled.
+    """
+    raw_gate_available = guarded_apply_execution_gate_specification.get("available")
+    gate_specification_available = raw_gate_available if isinstance(raw_gate_available, bool) else False
+
+    raw_gate_complete = guarded_apply_execution_gate_specification.get("gate_specification_complete")
+    gate_specification_complete = raw_gate_complete if isinstance(raw_gate_complete, bool) else False
+
+    normalized_actual_execution_endpoint_exists = (
+        actual_execution_endpoint_exists if isinstance(actual_execution_endpoint_exists, bool) else False
+    )
+    normalized_actual_execution_wiring_enabled = (
+        actual_execution_wiring_enabled if isinstance(actual_execution_wiring_enabled, bool) else False
+    )
+    normalized_mutation_path_enabled = (
+        mutation_path_enabled if isinstance(mutation_path_enabled, bool) else False
+    )
+
+    preview_stack_only = all(
+        [
+            normalized_actual_execution_endpoint_exists is False,
+            normalized_actual_execution_wiring_enabled is False,
+            normalized_mutation_path_enabled is False,
+        ]
+    )
+    execution_boundary_intact = all(
+        [
+            preview_stack_only,
+            gate_specification_available,
+            gate_specification_complete,
+        ]
+    )
+
+    return {
+        "available": execution_boundary_intact,
+        "contract_type": "future_apply_execution_boundary_contract",
+        "gate_specification_available": gate_specification_available,
+        "gate_specification_complete": gate_specification_complete,
+        "actual_execution_endpoint_exists": normalized_actual_execution_endpoint_exists,
+        "actual_execution_wiring_enabled": normalized_actual_execution_wiring_enabled,
+        "mutation_path_enabled": normalized_mutation_path_enabled,
+        "preview_stack_only": preview_stack_only,
+        "execution_boundary_intact": execution_boundary_intact,
+        "requires_separate_execution_phase": True,
+        "requires_separate_endpoint_wiring": True,
+        "requires_separate_mutation_audit": True,
+        "execution_enabled": False,
+        "can_execute": False,
+        "read_only": True,
+        "mutation_permitted": False,
+        "message": (
+            "Future apply execution boundary contract is disabled/read-only metadata only; "
+            "it does not execute apply and does not mutate state."
+        ),
+    }
+
+
 def build_disabled_execution_contract_summary(
     *,
     future_apply_reference_contract: dict,

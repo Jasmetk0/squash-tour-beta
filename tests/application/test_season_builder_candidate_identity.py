@@ -11,6 +11,7 @@ from beta_engine.application.season_builder_candidate_identity import (
     build_disabled_execution_contract_summary,
     build_final_guarded_apply_readiness_checklist,
     build_future_apply_execution_boundary_contract,
+    build_future_apply_execution_decision_summary,
     build_guarded_apply_execution_gate_specification,
     build_candidate_identity_summary,
     sanitize_candidate_identity_part,
@@ -1260,3 +1261,111 @@ def test_future_apply_execution_boundary_contract_malformed_gate_specification_d
     assert contract["can_execute"] is False
     assert contract["read_only"] is True
     assert contract["mutation_permitted"] is False
+
+
+def test_future_apply_execution_decision_summary_may_be_considered_but_not_authorized() -> None:
+    summary = build_future_apply_execution_decision_summary(
+        future_apply_execution_boundary_contract={
+            "available": True,
+            "execution_boundary_intact": True,
+            "preview_stack_only": True,
+        },
+        manual_validation_only=True,
+        separate_execution_phase_required=True,
+        operator_review_required=True,
+    )
+    assert summary["available"] is True
+    assert summary["summary_type"] == "future_apply_execution_decision_summary"
+    assert summary["future_execution_phase_may_be_considered"] is True
+    assert summary["execution_authorized"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+    assert summary["read_only"] is True
+    assert summary["mutation_permitted"] is False
+    msg = str(summary["message"]).lower()
+    assert "disabled" in msg
+    assert "read-only" in msg
+    assert "does not execute apply" in msg
+    assert ("does not mutate" in msg) or ("mutate state" in msg)
+
+
+def test_future_apply_execution_decision_summary_boundary_contract_unavailable() -> None:
+    summary = build_future_apply_execution_decision_summary(
+        future_apply_execution_boundary_contract={
+            "available": False,
+            "execution_boundary_intact": True,
+            "preview_stack_only": True,
+        },
+    )
+    assert summary["boundary_contract_available"] is False
+    assert summary["future_execution_phase_may_be_considered"] is False
+    assert summary["available"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+    assert summary["mutation_permitted"] is False
+
+
+def test_future_apply_execution_decision_summary_boundary_not_intact() -> None:
+    summary = build_future_apply_execution_decision_summary(
+        future_apply_execution_boundary_contract={
+            "available": True,
+            "execution_boundary_intact": False,
+            "preview_stack_only": True,
+        },
+    )
+    assert summary["execution_boundary_intact"] is False
+    assert summary["future_execution_phase_may_be_considered"] is False
+    assert summary["available"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+
+
+def test_future_apply_execution_decision_summary_preview_stack_not_only_preview() -> None:
+    summary = build_future_apply_execution_decision_summary(
+        future_apply_execution_boundary_contract={
+            "available": True,
+            "execution_boundary_intact": True,
+            "preview_stack_only": False,
+        },
+    )
+    assert summary["preview_stack_only"] is False
+    assert summary["future_execution_phase_may_be_considered"] is False
+    assert summary["available"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+
+
+def test_future_apply_execution_decision_summary_manual_validation_only_false() -> None:
+    summary = build_future_apply_execution_decision_summary(
+        future_apply_execution_boundary_contract={
+            "available": True,
+            "execution_boundary_intact": True,
+            "preview_stack_only": True,
+        },
+        manual_validation_only=False,
+    )
+    assert summary["manual_validation_only"] is False
+    assert summary["future_execution_phase_may_be_considered"] is False
+    assert summary["available"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+
+
+def test_future_apply_execution_decision_summary_malformed_boundary_fields_default_safely() -> None:
+    summary = build_future_apply_execution_decision_summary(
+        future_apply_execution_boundary_contract={
+            "available": "yes",
+            "execution_boundary_intact": "true",
+            "preview_stack_only": "true",
+        },
+    )
+    assert summary["boundary_contract_available"] is False
+    assert summary["execution_boundary_intact"] is False
+    assert summary["preview_stack_only"] is False
+    assert summary["future_execution_phase_may_be_considered"] is False
+    assert summary["available"] is False
+    assert summary["execution_authorized"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+    assert summary["read_only"] is True
+    assert summary["mutation_permitted"] is False

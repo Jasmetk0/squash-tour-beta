@@ -810,6 +810,80 @@ def build_future_apply_execution_boundary_contract(
     }
 
 
+def build_future_apply_execution_decision_summary(
+    *,
+    future_apply_execution_boundary_contract: dict,
+    manual_validation_only: bool = True,
+    separate_execution_phase_required: bool = True,
+    operator_review_required: bool = True,
+) -> dict[str, object]:
+    """Build disabled/read-only decision metadata for a future separate execution phase.
+
+    Safety invariant:
+    - This helper provides decision metadata only and is never execution authorization.
+    - ``future_execution_phase_may_be_considered=True`` does not authorize execution.
+    - ``execution_authorized`` / ``execution_enabled`` / ``can_execute`` must remain ``False``.
+    - ``read_only`` must remain ``True`` and ``mutation_permitted`` must remain ``False``.
+    """
+    raw_boundary_available = future_apply_execution_boundary_contract.get("available")
+    boundary_contract_available = (
+        raw_boundary_available if isinstance(raw_boundary_available, bool) else False
+    )
+
+    raw_boundary_intact = future_apply_execution_boundary_contract.get("execution_boundary_intact")
+    execution_boundary_intact = (
+        raw_boundary_intact if isinstance(raw_boundary_intact, bool) else False
+    )
+
+    raw_preview_stack_only = future_apply_execution_boundary_contract.get("preview_stack_only")
+    preview_stack_only = raw_preview_stack_only if isinstance(raw_preview_stack_only, bool) else False
+
+    normalized_manual_validation_only = (
+        manual_validation_only if isinstance(manual_validation_only, bool) else False
+    )
+    normalized_separate_execution_phase_required = (
+        separate_execution_phase_required
+        if isinstance(separate_execution_phase_required, bool)
+        else True
+    )
+    normalized_operator_review_required = (
+        operator_review_required if isinstance(operator_review_required, bool) else True
+    )
+
+    future_execution_phase_may_be_considered = all(
+        [
+            boundary_contract_available,
+            execution_boundary_intact,
+            preview_stack_only,
+            normalized_manual_validation_only,
+            normalized_separate_execution_phase_required,
+            normalized_operator_review_required,
+        ]
+    )
+    available = future_execution_phase_may_be_considered
+
+    return {
+        "available": available,
+        "summary_type": "future_apply_execution_decision_summary",
+        "boundary_contract_available": boundary_contract_available,
+        "execution_boundary_intact": execution_boundary_intact,
+        "preview_stack_only": preview_stack_only,
+        "manual_validation_only": normalized_manual_validation_only,
+        "separate_execution_phase_required": normalized_separate_execution_phase_required,
+        "operator_review_required": normalized_operator_review_required,
+        "future_execution_phase_may_be_considered": future_execution_phase_may_be_considered,
+        "execution_authorized": False,
+        "execution_enabled": False,
+        "can_execute": False,
+        "read_only": True,
+        "mutation_permitted": False,
+        "message": (
+            "Future apply execution decision summary is disabled/read-only decision metadata only; "
+            "it does not execute apply, does not authorize execution, and does not mutate state."
+        ),
+    }
+
+
 def build_disabled_execution_contract_summary(
     *,
     future_apply_reference_contract: dict,

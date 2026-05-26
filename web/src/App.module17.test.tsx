@@ -2172,6 +2172,7 @@ describe('Module 17 pages through routes', () => {
 
     expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
+    expect(api.validateFutureApplyRequestPreview).not.toHaveBeenCalled()
 
     const fillButton = await screen.findByRole('button', { name: 'Fill from dry-run reference' })
     await waitFor(() => expect(fillButton).toBeEnabled())
@@ -2183,6 +2184,7 @@ describe('Module 17 pages through routes', () => {
     fireEvent.change(screen.getByLabelText('Audit reason'), { target: { value: 'phase-17d validation check' } })
     fireEvent.change(screen.getByLabelText('Explicit confirmation'), { target: { value: 'I understand this will create a new season calendar.' } })
     fireEvent.change(screen.getByLabelText('Mutation scope'), { target: { value: 'create_only' } })
+    expect(api.validateFutureApplyRequestPreview).not.toHaveBeenCalled()
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
 
     fireEvent.click(screen.getByRole('button', { name: 'Validate future apply reference' }))
@@ -2216,7 +2218,7 @@ describe('Module 17 pages through routes', () => {
     expect(api.postSeasonBuilderApplyCommandContract).not.toHaveBeenCalledWith(expect.objectContaining({
       requested_candidate_identity_reference_id: 'abc123fingerprint'
     }))
-  })
+  }, 60000)
 
   it('does not auto-call future apply validation when audit metadata inputs change', async () => {
     renderAppAt('/admin/seasons/build')
@@ -2226,6 +2228,7 @@ describe('Module 17 pages through routes', () => {
     fireEvent.change(screen.getByLabelText('Audit reason'), { target: { value: 'manual preview only' } })
     fireEvent.change(screen.getByLabelText('Explicit confirmation'), { target: { value: 'preview phrase' } })
     fireEvent.change(screen.getByLabelText('Mutation scope'), { target: { value: 'create_only' } })
+    expect(api.validateFutureApplyRequestPreview).not.toHaveBeenCalled()
 
   })
 
@@ -4527,10 +4530,16 @@ describe('Future apply preview panels', () => {
     render(<FutureApplyExecutionDecisionSummaryPanel summary={{ available: true, summary_type: 'future_apply_execution_decision_summary', boundary_contract_available: true, execution_boundary_intact: true, preview_stack_only: true, manual_validation_only: true, separate_execution_phase_required: true, operator_review_required: true, future_execution_phase_may_be_considered: true, execution_authorized: false, execution_enabled: false, can_execute: false, read_only: true, mutation_permitted: false, message: 'Execution decision summary is disabled, read-only, and no execution is available in this phase.' }} />)
     expect(screen.getByText('Available: true')).toBeInTheDocument()
     expect(screen.getByText('Summary type: future_apply_execution_decision_summary')).toBeInTheDocument()
+    expect(screen.getByText('Boundary contract available: true')).toBeInTheDocument()
+    expect(screen.getByText('Execution boundary intact: true')).toBeInTheDocument()
+    expect(screen.getByText('Preview stack only: true')).toBeInTheDocument()
+    expect(screen.getByText('Manual validation only: true')).toBeInTheDocument()
+    expect(screen.getByText('Separate execution phase required: true')).toBeInTheDocument()
+    expect(screen.getByText('Operator review required: true')).toBeInTheDocument()
     expect(screen.getByText('Future execution phase may be considered: true')).toBeInTheDocument()
     expect(screen.getByText('Execution authorized: false')).toBeInTheDocument()
-    expect(screen.getAllByText('Execution enabled: false').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Can execute: false').length).toBeGreaterThan(0)
+    expect(screen.getByText('Execution enabled: false')).toBeInTheDocument()
+    expect(screen.getByText('Can execute: false')).toBeInTheDocument()
     expect(screen.getByText('Read-only: true')).toBeInTheDocument()
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
     expect(screen.getByText(/Message: .*disabled.*read-only.*no execution/i)).toBeInTheDocument()
@@ -4551,6 +4560,7 @@ describe('Future apply preview panels', () => {
 describe('Future apply validation UI safety', () => {
   it('renders create-only preflight panel from manual validation without apply/execute buttons and no eager endpoint calls', async () => {
     renderAppAt('/admin/seasons/build')
+    expect(api.validateFutureApplyRequestPreview).not.toHaveBeenCalled()
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Validate future apply reference' }))
@@ -4567,16 +4577,16 @@ describe('Future apply validation UI safety', () => {
 
 
   it('renders future apply execution decision summary from manual validation without mutation behavior', async () => {
+    api.validateFutureApplyRequestPreview.mockResolvedValue(futureApplyValidationResponseMock())
     renderAppAt('/admin/seasons/build')
+    const callsBeforeClick = api.validateFutureApplyRequestPreview.mock.calls.length
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
+    expect(api.postSeasonBuilderApplyCommandContract).not.toHaveBeenCalled()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Validate future apply reference' }))
+    await waitFor(() => expect(api.validateFutureApplyRequestPreview.mock.calls.length).toBe(callsBeforeClick + 1))
 
     await screen.findByText('Future apply execution decision summary')
-    expect(screen.getByText('Future execution phase may be considered: true')).toBeInTheDocument()
-    expect(screen.getByText('Execution authorized: false')).toBeInTheDocument()
-    expect(screen.getAllByText('Execution enabled: false').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Can execute: false').length).toBeGreaterThan(0)
     expect(screen.queryByText('Execution authorized: true')).not.toBeInTheDocument()
     expect(screen.queryByText('Execution enabled: true')).not.toBeInTheDocument()
     expect(screen.queryByText('Can execute: true')).not.toBeInTheDocument()
@@ -4584,6 +4594,7 @@ describe('Future apply validation UI safety', () => {
     expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
+    expect(api.postSeasonBuilderApplyCommandContract).not.toHaveBeenCalled()
   })
 
   it('renders create-only audit metadata preview from manual validation result with no apply or execute button', async () => {

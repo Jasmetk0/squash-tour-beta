@@ -10,6 +10,7 @@ from beta_engine.application.season_builder_candidate_identity import (
     build_create_only_apply_execution_preflight_preview,
     build_disabled_execution_contract_summary,
     build_final_guarded_apply_readiness_checklist,
+    build_future_apply_execution_boundary_contract,
     build_guarded_apply_execution_gate_specification,
     build_candidate_identity_summary,
     sanitize_candidate_identity_part,
@@ -1148,3 +1149,114 @@ def test_guarded_apply_execution_gate_specification_malformed_checklist_defaults
     assert specification["can_execute"] is False
     assert specification["read_only"] is True
     assert specification["mutation_permitted"] is False
+
+
+def test_future_apply_execution_boundary_contract_intact_with_complete_gate_specification() -> None:
+    contract = build_future_apply_execution_boundary_contract(
+        guarded_apply_execution_gate_specification={
+            "available": True,
+            "gate_specification_complete": True,
+        },
+        actual_execution_endpoint_exists=False,
+        actual_execution_wiring_enabled=False,
+        mutation_path_enabled=False,
+    )
+    assert contract["available"] is True
+    assert contract["contract_type"] == "future_apply_execution_boundary_contract"
+    assert contract["gate_specification_available"] is True
+    assert contract["gate_specification_complete"] is True
+    assert contract["preview_stack_only"] is True
+    assert contract["execution_boundary_intact"] is True
+    assert contract["requires_separate_execution_phase"] is True
+    assert contract["requires_separate_endpoint_wiring"] is True
+    assert contract["requires_separate_mutation_audit"] is True
+    assert contract["execution_enabled"] is False
+    assert contract["can_execute"] is False
+    assert contract["read_only"] is True
+    assert contract["mutation_permitted"] is False
+    msg = str(contract["message"]).lower()
+    assert "disabled" in msg
+    assert "read-only" in msg
+    assert "does not execute apply" in msg
+    assert ("does not mutate" in msg) or ("mutate state" in msg)
+
+
+def test_future_apply_execution_boundary_contract_gate_specification_incomplete() -> None:
+    contract = build_future_apply_execution_boundary_contract(
+        guarded_apply_execution_gate_specification={
+            "available": True,
+            "gate_specification_complete": False,
+        },
+    )
+    assert contract["gate_specification_available"] is True
+    assert contract["gate_specification_complete"] is False
+    assert contract["execution_boundary_intact"] is False
+    assert contract["available"] is False
+    assert contract["execution_enabled"] is False
+    assert contract["can_execute"] is False
+
+
+def test_future_apply_execution_boundary_contract_fails_when_actual_execution_endpoint_exists() -> None:
+    contract = build_future_apply_execution_boundary_contract(
+        guarded_apply_execution_gate_specification={
+            "available": True,
+            "gate_specification_complete": True,
+        },
+        actual_execution_endpoint_exists=True,
+    )
+    assert contract["actual_execution_endpoint_exists"] is True
+    assert contract["preview_stack_only"] is False
+    assert contract["execution_boundary_intact"] is False
+    assert contract["available"] is False
+    assert contract["execution_enabled"] is False
+    assert contract["can_execute"] is False
+
+
+def test_future_apply_execution_boundary_contract_fails_when_actual_execution_wiring_enabled() -> None:
+    contract = build_future_apply_execution_boundary_contract(
+        guarded_apply_execution_gate_specification={
+            "available": True,
+            "gate_specification_complete": True,
+        },
+        actual_execution_wiring_enabled=True,
+    )
+    assert contract["actual_execution_wiring_enabled"] is True
+    assert contract["preview_stack_only"] is False
+    assert contract["execution_boundary_intact"] is False
+    assert contract["available"] is False
+    assert contract["execution_enabled"] is False
+    assert contract["can_execute"] is False
+
+
+def test_future_apply_execution_boundary_contract_fails_when_mutation_path_enabled() -> None:
+    contract = build_future_apply_execution_boundary_contract(
+        guarded_apply_execution_gate_specification={
+            "available": True,
+            "gate_specification_complete": True,
+        },
+        mutation_path_enabled=True,
+    )
+    assert contract["mutation_path_enabled"] is True
+    assert contract["preview_stack_only"] is False
+    assert contract["execution_boundary_intact"] is False
+    assert contract["available"] is False
+    assert contract["execution_enabled"] is False
+    assert contract["can_execute"] is False
+    assert contract["mutation_permitted"] is False
+
+
+def test_future_apply_execution_boundary_contract_malformed_gate_specification_defaults_safely() -> None:
+    contract = build_future_apply_execution_boundary_contract(
+        guarded_apply_execution_gate_specification={
+            "available": "yes",
+            "gate_specification_complete": "true",
+        },
+    )
+    assert contract["gate_specification_available"] is False
+    assert contract["gate_specification_complete"] is False
+    assert contract["execution_boundary_intact"] is False
+    assert contract["available"] is False
+    assert contract["execution_enabled"] is False
+    assert contract["can_execute"] is False
+    assert contract["read_only"] is True
+    assert contract["mutation_permitted"] is False

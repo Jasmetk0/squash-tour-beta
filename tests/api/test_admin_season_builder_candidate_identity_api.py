@@ -956,6 +956,14 @@ def test_future_apply_request_validation_preview_complete_audit_metadata_can_sat
         assert specification["execution_enabled"] is False
         assert specification["can_execute"] is False
         assert specification["mutation_permitted"] is False
+        specification_message = str(specification["message"]).lower()
+        assert "disabled" in specification_message
+        assert "read-only" in specification_message
+        assert "does not execute apply" in specification_message
+        assert ("does not mutate" in specification_message) or ("mutate state" in specification_message)
+        assert body["enabled"] is False
+        assert body["can_execute"] is False
+        assert body["can_mutate"] is False
 
 
 def test_future_apply_request_validation_preview_wrong_explicit_confirmation_blocks_audit_metadata(tmp_path: Path) -> None:

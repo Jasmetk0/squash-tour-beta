@@ -4429,7 +4429,7 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Read-only: true')).toBeInTheDocument()
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
     expect(screen.getByText('Message: Execution gate specification is read-only in preview mode.')).toBeInTheDocument()
-    expect(screen.getByText('Message: Execution gate specification is read-only in preview mode.')).toHaveTextContent(/read-only|preview/i)
+    expect(screen.getByText('Message: Execution gate specification is read-only in preview mode.')).toHaveTextContent(/read-only|preview|disabled|execution/i)
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 

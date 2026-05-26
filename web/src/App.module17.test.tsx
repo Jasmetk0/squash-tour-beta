@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, CreateOnlyApplyAuditMetadataPreviewPanel, CreateOnlyApplyExecutionPreflightPreviewPanel, DisabledDryRunBuildContractPanel, DisabledExecutionContractSummaryPanel, FinalGuardedApplyReadinessChecklistPanel, GuardedApplyExecutionGateSpecificationPanel, FutureApplyReferenceContractPanel, FutureApplyRequestValidationPreviewPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel, readCandidateIdentityReadinessOverview, readCreateOnlyApplyAuditMetadataPreview, readCreateOnlyApplyExecutionPreflightPreview, readDisabledExecutionContractSummary, readFinalGuardedApplyReadinessChecklist, readFutureApplyReferenceContract, readFutureApplyRequestValidationPreview, readGuardedApplyExecutionGateSpecification } from './pages/SeasonBuilderPanels'
+import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationComparisonPanel, CandidateIdentityContractPanel, CandidateIdentityFingerprintPanel, CandidateIdentityOverviewPanel, CandidateIdentityReviewReferencePanel, CandidateIdentitySummaryPanel, CreateOnlyApplyAuditMetadataPreviewPanel, CreateOnlyApplyExecutionPreflightPreviewPanel, DisabledDryRunBuildContractPanel, DisabledExecutionContractSummaryPanel, FinalGuardedApplyReadinessChecklistPanel, GuardedApplyExecutionGateSpecificationPanel, FutureApplyExecutionBoundaryContractPanel, FutureApplyReferenceContractPanel, FutureApplyRequestValidationPreviewPanel, PostApplyCalendarVerificationPanel, SeasonTemplateSlotConflictPanel, SeasonTemplateSlotValidationPanel, TargetCalendarValidationPanel, TemplateSlotConflictCodeRegistryPanel, TemplateSlotConflictPreflightConsistencyPanel, TemplateSlotValidationPreflightConsistencyPanel, TemplateSlotValidationPreviewSummaryPanel, TemplateSlotConflictPreviewSummaryPanel, DryRunTemplateConflictSummaryPanel, PreflightTemplateConflictSummaryPanel, TemplateConflictDiagnosticsOverviewPanel, ValidationIssueCodeRegistryPanel, readCandidateIdentityReadinessOverview, readCreateOnlyApplyAuditMetadataPreview, readCreateOnlyApplyExecutionPreflightPreview, readDisabledExecutionContractSummary, readFinalGuardedApplyReadinessChecklist, readFutureApplyExecutionBoundaryContract, readFutureApplyReferenceContract, readFutureApplyRequestValidationPreview, readGuardedApplyExecutionGateSpecification } from './pages/SeasonBuilderPanels'
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
@@ -205,6 +205,25 @@ function futureApplyValidationResponseMock(
       read_only: true,
       mutation_permitted: false,
       message: 'Execution gate specification is read-only in preview mode.'
+    },
+    future_apply_execution_boundary_contract: {
+      available: true,
+      contract_type: 'future_apply_execution_boundary_contract',
+      gate_specification_available: true,
+      gate_specification_complete: true,
+      actual_execution_endpoint_exists: false,
+      actual_execution_wiring_enabled: false,
+      mutation_path_enabled: false,
+      preview_stack_only: true,
+      execution_boundary_intact: true,
+      requires_separate_execution_phase: true,
+      requires_separate_endpoint_wiring: true,
+      requires_separate_mutation_audit: true,
+      execution_enabled: false,
+      can_execute: false,
+      read_only: true,
+      mutation_permitted: false,
+      message: 'Execution boundary contract remains read-only in preview mode.'
     },
     audit_preview: {
       read_only: true,
@@ -4457,6 +4476,38 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Future apply reference contract')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /apply|execute/i })).not.toBeInTheDocument()
   })
+
+  it('renders valid future apply execution boundary contract data', () => {
+    render(<FutureApplyExecutionBoundaryContractPanel contract={{ available: true, contract_type: 'future_apply_execution_boundary_contract', gate_specification_available: true, gate_specification_complete: true, actual_execution_endpoint_exists: false, actual_execution_wiring_enabled: false, mutation_path_enabled: false, preview_stack_only: true, execution_boundary_intact: true, requires_separate_execution_phase: true, requires_separate_endpoint_wiring: true, requires_separate_mutation_audit: true, execution_enabled: false, can_execute: false, read_only: true, mutation_permitted: false, message: 'Execution boundary contract remains read-only in preview mode.' }} />)
+    expect(screen.getByText('Available: true')).toBeInTheDocument()
+    expect(screen.getByText('Contract type: future_apply_execution_boundary_contract')).toBeInTheDocument()
+    expect(screen.getByText('Gate specification available: true')).toBeInTheDocument()
+    expect(screen.getByText('Gate specification complete: true')).toBeInTheDocument()
+    expect(screen.getByText('Actual execution endpoint exists: false')).toBeInTheDocument()
+    expect(screen.getByText('Actual execution wiring enabled: false')).toBeInTheDocument()
+    expect(screen.getByText('Mutation path enabled: false')).toBeInTheDocument()
+    expect(screen.getByText('Preview stack only: true')).toBeInTheDocument()
+    expect(screen.getByText('Execution boundary intact: true')).toBeInTheDocument()
+    expect(screen.getByText('Requires separate execution phase: true')).toBeInTheDocument()
+    expect(screen.getByText('Requires separate endpoint wiring: true')).toBeInTheDocument()
+    expect(screen.getByText('Requires separate mutation audit: true')).toBeInTheDocument()
+    expect(screen.getByText('Execution enabled: false')).toBeInTheDocument()
+    expect(screen.getByText('Can execute: false')).toBeInTheDocument()
+    expect(screen.getByText('Read-only: true')).toBeInTheDocument()
+    expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
+    expect(screen.getByText('Message: Execution boundary contract remains read-only in preview mode.')).toBeInTheDocument()
+    expect(screen.getByText('Message: Execution boundary contract remains read-only in preview mode.')).toHaveTextContent(/read-only|preview|disabled/i)
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('handles missing and malformed future apply execution boundary contract data', () => {
+    expect(readFutureApplyExecutionBoundaryContract(undefined)).toBeNull()
+    render(<FutureApplyExecutionBoundaryContractPanel contract={{ available: 'yes', contract_type: '', gate_specification_available: 'x', message: '' }} />)
+    expect(screen.getByText('Available: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Contract type: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Gate specification available: n/a')).toBeInTheDocument()
+    expect(screen.getByText('Message: No message provided.')).toBeInTheDocument()
+  })
 })
 
 
@@ -4564,6 +4615,26 @@ describe('Future apply validation UI safety', () => {
     if (gateSpecificationCompleteRow) {
       expect(gateSpecificationCompleteRow).toBeInTheDocument()
     }
+    expect(screen.queryByText('Execution enabled: true')).not.toBeInTheDocument()
+    expect(screen.queryByText('Can execute: true')).not.toBeInTheDocument()
+    expect(screen.queryByText('Mutation permitted: true')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
+    expect(api.postSeasonBuilderApplyCommandContract).not.toHaveBeenCalled()
+  })
+
+  it('renders future apply execution boundary contract from manual validation without apply/execute endpoints', async () => {
+    api.validateFutureApplyRequestPreview.mockResolvedValueOnce(futureApplyValidationResponseMock())
+    renderAppAt('/admin/seasons/build')
+    const callsBeforeClick = api.validateFutureApplyRequestPreview.mock.calls.length
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
+    expect(api.postSeasonBuilderApplyCommandContract).not.toHaveBeenCalled()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Validate future apply reference' }))
+    await waitFor(() => expect(api.validateFutureApplyRequestPreview.mock.calls.length).toBe(callsBeforeClick + 1))
+
+    await screen.findByText('Future apply execution boundary contract')
     expect(screen.queryByText('Execution enabled: true')).not.toBeInTheDocument()
     expect(screen.queryByText('Can execute: true')).not.toBeInTheDocument()
     expect(screen.queryByText('Mutation permitted: true')).not.toBeInTheDocument()

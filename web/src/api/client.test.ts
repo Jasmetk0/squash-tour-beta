@@ -128,6 +128,25 @@ describe('validateFutureApplyRequestPreview', () => {
         mutation_permitted: false,
         message: 'Execution gate specification is read-only in preview mode.'
       },
+      future_apply_execution_boundary_contract: {
+        available: true,
+        contract_type: 'future_apply_execution_boundary_contract',
+        gate_specification_available: true,
+        gate_specification_complete: true,
+        actual_execution_endpoint_exists: false,
+        actual_execution_wiring_enabled: false,
+        mutation_path_enabled: false,
+        preview_stack_only: true,
+        execution_boundary_intact: true,
+        requires_separate_execution_phase: true,
+        requires_separate_endpoint_wiring: true,
+        requires_separate_mutation_audit: true,
+        execution_enabled: false,
+        can_execute: false,
+        read_only: true,
+        mutation_permitted: false,
+        message: 'Execution boundary contract is read-only in preview mode.'
+      },
       audit_preview: null
     }
 
@@ -191,6 +210,7 @@ describe('validateFutureApplyRequestPreview', () => {
           disabled_execution_contract_summary: null,
           final_guarded_apply_readiness_checklist: null,
           guarded_apply_execution_gate_specification: null,
+          future_apply_execution_boundary_contract: null,
           audit_preview: null
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }

@@ -277,6 +277,9 @@ def assert_future_apply_validation_preview_disabled_response(body: dict) -> dict
     assert_future_apply_execution_boundary_contract_disabled(
         body["future_apply_execution_boundary_contract"]
     )
+    assert_future_apply_execution_decision_summary_disabled(
+        body["future_apply_execution_decision_summary"]
+    )
     assert validation_preview["apply_execution_enabled"] is False
     assert validation_preview["read_only"] is True
     assert validation_preview["mutation_permitted"] is False
@@ -329,6 +332,22 @@ def assert_future_apply_execution_boundary_contract_disabled(contract: dict) -> 
     assert contract["mutation_permitted"] is False
     assert isinstance(contract["message"], str) and contract["message"]
     return contract
+
+
+
+def assert_future_apply_execution_decision_summary_disabled(summary: dict) -> dict:
+    assert isinstance(summary, dict)
+    assert summary["summary_type"] == "future_apply_execution_decision_summary"
+    assert isinstance(summary["available"], bool)
+    assert isinstance(summary["future_execution_phase_may_be_considered"], bool)
+    assert summary["execution_authorized"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+    assert summary["read_only"] is True
+    assert summary["mutation_permitted"] is False
+    assert isinstance(summary["message"], str) and summary["message"]
+    return summary
+
 
 def assert_disabled_execution_contract_summary_disabled(summary: dict) -> dict:
     assert isinstance(summary, dict)
@@ -635,6 +654,13 @@ def test_future_apply_request_validation_preview_matching_resolved_request(tmp_p
         assert preflight_preview["create_only_scope_confirmed"] is False
         assert preflight_preview["all_known_preconditions_met"] is False
         assert preflight_preview["execution_enabled"] is False
+        decision_summary = assert_future_apply_execution_decision_summary_disabled(
+            body["future_apply_execution_decision_summary"]
+        )
+        assert decision_summary["future_execution_phase_may_be_considered"] is False
+        assert decision_summary["available"] is False
+        assert decision_summary["execution_authorized"] is False
+        assert decision_summary["execution_enabled"] is False
         checklist = assert_final_guarded_apply_readiness_checklist_disabled(
             body["final_guarded_apply_readiness_checklist"]
         )
@@ -651,6 +677,16 @@ def test_future_apply_request_validation_preview_matching_resolved_request(tmp_p
             body["future_apply_execution_boundary_contract"]
         )
         assert boundary_contract["gate_specification_available"] is False or boundary_contract["execution_boundary_intact"] is False
+        decision_summary = assert_future_apply_execution_decision_summary_disabled(
+            body["future_apply_execution_decision_summary"]
+        )
+        assert (decision_summary["boundary_contract_available"] is False) or (
+            decision_summary["future_execution_phase_may_be_considered"] is False
+        )
+        assert decision_summary["available"] is False
+        assert decision_summary["execution_authorized"] is False
+        assert decision_summary["execution_enabled"] is False
+
         assert boundary_contract["available"] is False
         assert boundary_contract["execution_enabled"] is False
 
@@ -829,6 +865,14 @@ def test_future_apply_request_validation_preview_mismatched_resolved_request(tmp
             body["future_apply_execution_boundary_contract"]
         )
         assert boundary_contract["gate_specification_available"] is False
+        decision_summary = assert_future_apply_execution_decision_summary_disabled(
+            body["future_apply_execution_decision_summary"]
+        )
+        assert decision_summary["boundary_contract_available"] is False
+        assert decision_summary["available"] is False
+        assert decision_summary["execution_authorized"] is False
+        assert decision_summary["execution_enabled"] is False
+
         assert boundary_contract["available"] is False
         assert boundary_contract["execution_enabled"] is False
         checklist = assert_final_guarded_apply_readiness_checklist_disabled(
@@ -948,6 +992,22 @@ def test_future_apply_request_validation_preview_complete_audit_metadata_can_sat
         assert summary["available"] is True
         assert summary["execution_enabled"] is False
         assert summary["can_execute"] is False
+        decision_summary = assert_future_apply_execution_decision_summary_disabled(
+            body["future_apply_execution_decision_summary"]
+        )
+        assert decision_summary["boundary_contract_available"] is True
+        assert decision_summary["execution_boundary_intact"] is True
+        assert decision_summary["preview_stack_only"] is True
+        assert decision_summary["manual_validation_only"] is True
+        assert decision_summary["separate_execution_phase_required"] is True
+        assert decision_summary["operator_review_required"] is True
+        assert decision_summary["future_execution_phase_may_be_considered"] is True
+        assert decision_summary["available"] is True
+        assert decision_summary["execution_authorized"] is False
+        assert decision_summary["execution_enabled"] is False
+        assert decision_summary["can_execute"] is False
+        assert decision_summary["mutation_permitted"] is False
+
         assert summary["mutation_permitted"] is False
         summary_message = str(summary["message"]).lower()
         assert "disabled" in summary_message
@@ -1128,6 +1188,13 @@ def test_future_apply_request_validation_preview_unsupported_source(tmp_path: Pa
         assert contract["available"] is False
         assert validation_preview["available"] is False
         assert validation_preview["contract_referenceable"] is False
+        decision_summary = assert_future_apply_execution_decision_summary_disabled(
+            body["future_apply_execution_decision_summary"]
+        )
+        assert decision_summary["boundary_contract_available"] is False
+        assert decision_summary["available"] is False
+        assert decision_summary["execution_authorized"] is False
+        assert decision_summary["execution_enabled"] is False
         boundary_contract = assert_future_apply_execution_boundary_contract_disabled(
             body["future_apply_execution_boundary_contract"]
         )

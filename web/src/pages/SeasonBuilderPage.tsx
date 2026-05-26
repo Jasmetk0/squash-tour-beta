@@ -55,6 +55,7 @@ import {
   CandidateIdentityReviewReferencePanel,
   FutureApplyReferenceContractPanel,
   FutureApplyRequestValidationPreviewPanel,
+  FutureApplyExecutionBoundaryContractPanel,
   CreateOnlyApplyExecutionPreflightPreviewPanel,
   DisabledExecutionContractSummaryPanel,
   FinalGuardedApplyReadinessChecklistPanel,
@@ -796,6 +797,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
             <DisabledExecutionContractSummaryPanel summary={futureApplyValidationResult.disabled_execution_contract_summary} />
             <FinalGuardedApplyReadinessChecklistPanel checklist={futureApplyValidationResult.final_guarded_apply_readiness_checklist} />
             <GuardedApplyExecutionGateSpecificationPanel specification={futureApplyValidationResult.guarded_apply_execution_gate_specification} />
+            <FutureApplyExecutionBoundaryContractPanel contract={futureApplyValidationResult.future_apply_execution_boundary_contract} />
           </>
         ) : null}
       </SectionCard>

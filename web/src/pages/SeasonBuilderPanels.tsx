@@ -1475,6 +1475,50 @@ export type NormalizedGuardedApplyExecutionGateSpecification = {
   message: string
 }
 
+export type NormalizedFutureApplyExecutionBoundaryContract = {
+  available: string
+  contractType: string
+  gateSpecificationAvailable: string
+  gateSpecificationComplete: string
+  actualExecutionEndpointExists: string
+  actualExecutionWiringEnabled: string
+  mutationPathEnabled: string
+  previewStackOnly: string
+  executionBoundaryIntact: string
+  requiresSeparateExecutionPhase: string
+  requiresSeparateEndpointWiring: string
+  requiresSeparateMutationAudit: string
+  executionEnabled: string
+  canExecute: string
+  readOnly: string
+  mutationPermitted: string
+  message: string
+}
+
+export function readFutureApplyExecutionBoundaryContract(value: unknown): NormalizedFutureApplyExecutionBoundaryContract | null {
+  if (!value || typeof value !== 'object') return null
+  const record = value as Record<string, unknown>
+  return {
+    available: normalizeBooleanDisplay(record.available),
+    contractType: normalizeNonEmptyStringDisplay(record.contract_type),
+    gateSpecificationAvailable: normalizeBooleanDisplay(record.gate_specification_available),
+    gateSpecificationComplete: normalizeBooleanDisplay(record.gate_specification_complete),
+    actualExecutionEndpointExists: normalizeBooleanDisplay(record.actual_execution_endpoint_exists),
+    actualExecutionWiringEnabled: normalizeBooleanDisplay(record.actual_execution_wiring_enabled),
+    mutationPathEnabled: normalizeBooleanDisplay(record.mutation_path_enabled),
+    previewStackOnly: normalizeBooleanDisplay(record.preview_stack_only),
+    executionBoundaryIntact: normalizeBooleanDisplay(record.execution_boundary_intact),
+    requiresSeparateExecutionPhase: normalizeBooleanDisplay(record.requires_separate_execution_phase),
+    requiresSeparateEndpointWiring: normalizeBooleanDisplay(record.requires_separate_endpoint_wiring),
+    requiresSeparateMutationAudit: normalizeBooleanDisplay(record.requires_separate_mutation_audit),
+    executionEnabled: normalizeBooleanDisplay(record.execution_enabled),
+    canExecute: normalizeBooleanDisplay(record.can_execute),
+    readOnly: normalizeBooleanDisplay(record.read_only),
+    mutationPermitted: normalizeBooleanDisplay(record.mutation_permitted),
+    message: normalizeNonEmptyStringDisplay(record.message) === 'n/a' ? 'No message provided.' : normalizeNonEmptyStringDisplay(record.message)
+  }
+}
+
 export function readCreateOnlyApplyExecutionPreflightPreview(value: unknown): NormalizedCreateOnlyApplyExecutionPreflightPreview | null {
   if (!value || typeof value !== 'object') return null
   const record = value as Record<string, unknown>
@@ -4361,5 +4405,41 @@ export function FutureApplyRequestValidationPreviewPanel({ preview }: { preview?
       <p>Mutation permitted: {validationPreview.mutationPermitted}</p>
       <p>Message: {validationPreview.message}</p>
     </>
+  )
+}
+
+export function FutureApplyExecutionBoundaryContractPanel({ contract }: { contract?: unknown }): JSX.Element {
+  const boundaryContract = readFutureApplyExecutionBoundaryContract(contract)
+
+  if (!boundaryContract) {
+    return (
+      <section style={{ marginTop: 12 }}>
+        <h3>Future apply execution boundary contract</h3>
+        <p>No future apply execution boundary contract available.</p>
+      </section>
+    )
+  }
+
+  return (
+    <section style={{ marginTop: 12 }}>
+      <h3>Future apply execution boundary contract</h3>
+      <p>Available: {boundaryContract.available}</p>
+      <p>Contract type: {boundaryContract.contractType}</p>
+      <p>Gate specification available: {boundaryContract.gateSpecificationAvailable}</p>
+      <p>Gate specification complete: {boundaryContract.gateSpecificationComplete}</p>
+      <p>Actual execution endpoint exists: {boundaryContract.actualExecutionEndpointExists}</p>
+      <p>Actual execution wiring enabled: {boundaryContract.actualExecutionWiringEnabled}</p>
+      <p>Mutation path enabled: {boundaryContract.mutationPathEnabled}</p>
+      <p>Preview stack only: {boundaryContract.previewStackOnly}</p>
+      <p>Execution boundary intact: {boundaryContract.executionBoundaryIntact}</p>
+      <p>Requires separate execution phase: {boundaryContract.requiresSeparateExecutionPhase}</p>
+      <p>Requires separate endpoint wiring: {boundaryContract.requiresSeparateEndpointWiring}</p>
+      <p>Requires separate mutation audit: {boundaryContract.requiresSeparateMutationAudit}</p>
+      <p>Execution enabled: {boundaryContract.executionEnabled}</p>
+      <p>Can execute: {boundaryContract.canExecute}</p>
+      <p>Read-only: {boundaryContract.readOnly}</p>
+      <p>Mutation permitted: {boundaryContract.mutationPermitted}</p>
+      <p>Message: {boundaryContract.message}</p>
+    </section>
   )
 }

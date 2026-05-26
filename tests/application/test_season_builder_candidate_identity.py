@@ -1093,6 +1093,7 @@ def test_guarded_apply_execution_gate_specification_complete() -> None:
     assert "disabled" in msg
     assert "read-only" in msg
     assert "does not execute apply" in msg
+    assert ("does not mutate" in msg) or ("mutate state" in msg)
 
 
 def test_guarded_apply_execution_gate_specification_final_checklist_unavailable() -> None:

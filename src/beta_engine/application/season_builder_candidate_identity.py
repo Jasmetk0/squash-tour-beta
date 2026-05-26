@@ -666,9 +666,14 @@ def build_guarded_apply_execution_gate_specification(
     """Build a disabled/read-only future execution gate specification preview.
 
     Safety invariant:
-    - This helper is specification/readiness metadata only.
+    - This helper is preview/readiness/specification metadata only.
+    - ``available=True`` is not execution authorization.
+    - ``gate_specification_complete=True`` is not execution authorization.
+    - Required confirmation phrase, mutation scope, and source/overwrite requirements
+      are requirements documentation, not permission signals.
+    - ``execution_enabled`` and ``can_execute`` must remain ``False``.
+    - ``mutation_permitted`` must remain ``False``.
     - It never executes apply and never mutates any state.
-    - Even when specification completeness is satisfied, execution remains disabled.
     """
     raw_checklist_available = final_guarded_apply_readiness_checklist.get("available")
     final_checklist_available = raw_checklist_available if isinstance(raw_checklist_available, bool) else False

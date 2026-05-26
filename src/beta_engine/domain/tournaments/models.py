@@ -379,6 +379,7 @@ class SeasonBuilderFutureApplyRequestValidationPreviewResponse(BaseModel):
     disabled_execution_contract_summary: dict[str, Any] = Field(default_factory=dict)
     final_guarded_apply_readiness_checklist: dict[str, Any] = Field(default_factory=dict)
     guarded_apply_execution_gate_specification: dict[str, Any] = Field(default_factory=dict)
+    future_apply_execution_boundary_contract: dict[str, Any] = Field(default_factory=dict)
     audit_preview: dict[str, Any] = Field(default_factory=dict)
 
 

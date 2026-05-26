@@ -274,6 +274,9 @@ def assert_future_apply_validation_preview_disabled_response(body: dict) -> dict
     assert_guarded_apply_execution_gate_specification_disabled(
         body["guarded_apply_execution_gate_specification"]
     )
+    assert_future_apply_execution_boundary_contract_disabled(
+        body["future_apply_execution_boundary_contract"]
+    )
     assert validation_preview["apply_execution_enabled"] is False
     assert validation_preview["read_only"] is True
     assert validation_preview["mutation_permitted"] is False
@@ -309,6 +312,23 @@ def assert_guarded_apply_execution_gate_specification_disabled(specification: di
     assert specification["mutation_permitted"] is False
     assert isinstance(specification["message"], str) and specification["message"]
     return specification
+
+
+def assert_future_apply_execution_boundary_contract_disabled(contract: dict) -> dict:
+    assert isinstance(contract, dict)
+    assert contract["contract_type"] == "future_apply_execution_boundary_contract"
+    assert isinstance(contract["available"], bool)
+    assert isinstance(contract["execution_boundary_intact"], bool)
+    assert isinstance(contract["preview_stack_only"], bool)
+    assert contract["requires_separate_execution_phase"] is True
+    assert contract["requires_separate_endpoint_wiring"] is True
+    assert contract["requires_separate_mutation_audit"] is True
+    assert contract["execution_enabled"] is False
+    assert contract["can_execute"] is False
+    assert contract["read_only"] is True
+    assert contract["mutation_permitted"] is False
+    assert isinstance(contract["message"], str) and contract["message"]
+    return contract
 
 def assert_disabled_execution_contract_summary_disabled(summary: dict) -> dict:
     assert isinstance(summary, dict)
@@ -627,6 +647,12 @@ def test_future_apply_request_validation_preview_matching_resolved_request(tmp_p
         )
         assert specification["available"] is False
         assert (specification["final_checklist_available"] is False) or (specification["gate_specification_complete"] is False)
+        boundary_contract = assert_future_apply_execution_boundary_contract_disabled(
+            body["future_apply_execution_boundary_contract"]
+        )
+        assert boundary_contract["gate_specification_available"] is False or boundary_contract["execution_boundary_intact"] is False
+        assert boundary_contract["available"] is False
+        assert boundary_contract["execution_enabled"] is False
 
 
 @pytest.mark.parametrize("overwrite_policy", [None, "none", "create_only"])
@@ -793,6 +819,18 @@ def test_future_apply_request_validation_preview_mismatched_resolved_request(tmp
         assert summary["identity_reference_matches"] is False
         assert summary["available"] is False
         assert summary["execution_enabled"] is False
+        boundary_contract = assert_future_apply_execution_boundary_contract_disabled(
+            body["future_apply_execution_boundary_contract"]
+        )
+        assert boundary_contract["gate_specification_available"] is False or boundary_contract["execution_boundary_intact"] is False
+        assert boundary_contract["available"] is False
+        assert boundary_contract["execution_enabled"] is False
+        boundary_contract = assert_future_apply_execution_boundary_contract_disabled(
+            body["future_apply_execution_boundary_contract"]
+        )
+        assert boundary_contract["gate_specification_available"] is False
+        assert boundary_contract["available"] is False
+        assert boundary_contract["execution_enabled"] is False
         checklist = assert_final_guarded_apply_readiness_checklist_disabled(
             body["final_guarded_apply_readiness_checklist"]
         )
@@ -956,6 +994,23 @@ def test_future_apply_request_validation_preview_complete_audit_metadata_can_sat
         assert specification["execution_enabled"] is False
         assert specification["can_execute"] is False
         assert specification["mutation_permitted"] is False
+        boundary_contract = assert_future_apply_execution_boundary_contract_disabled(
+            body["future_apply_execution_boundary_contract"]
+        )
+        assert boundary_contract["gate_specification_available"] is True
+        assert boundary_contract["gate_specification_complete"] is True
+        assert boundary_contract["actual_execution_endpoint_exists"] is False
+        assert boundary_contract["actual_execution_wiring_enabled"] is False
+        assert boundary_contract["mutation_path_enabled"] is False
+        assert boundary_contract["preview_stack_only"] is True
+        assert boundary_contract["execution_boundary_intact"] is True
+        assert boundary_contract["available"] is True
+        assert boundary_contract["requires_separate_execution_phase"] is True
+        assert boundary_contract["requires_separate_endpoint_wiring"] is True
+        assert boundary_contract["requires_separate_mutation_audit"] is True
+        assert boundary_contract["execution_enabled"] is False
+        assert boundary_contract["can_execute"] is False
+        assert boundary_contract["mutation_permitted"] is False
         specification_message = str(specification["message"]).lower()
         assert "disabled" in specification_message
         assert "read-only" in specification_message
@@ -1068,6 +1123,12 @@ def test_future_apply_request_validation_preview_unsupported_source(tmp_path: Pa
         assert contract["available"] is False
         assert validation_preview["available"] is False
         assert validation_preview["contract_referenceable"] is False
+        boundary_contract = assert_future_apply_execution_boundary_contract_disabled(
+            body["future_apply_execution_boundary_contract"]
+        )
+        assert boundary_contract["gate_specification_available"] is False
+        assert boundary_contract["available"] is False
+        assert boundary_contract["execution_enabled"] is False
         preflight_preview = assert_create_only_apply_execution_preflight_preview_disabled(
             body["create_only_apply_execution_preflight_preview"]
         )

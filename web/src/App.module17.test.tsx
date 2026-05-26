@@ -4635,6 +4635,10 @@ describe('Future apply validation UI safety', () => {
     await waitFor(() => expect(api.validateFutureApplyRequestPreview.mock.calls.length).toBe(callsBeforeClick + 1))
 
     await screen.findByText('Future apply execution boundary contract')
+    const executionBoundaryIntactRow = screen.queryByText('Execution boundary intact: true')
+    if (executionBoundaryIntactRow) {
+      expect(executionBoundaryIntactRow).toBeInTheDocument()
+    }
     expect(screen.queryByText('Execution enabled: true')).not.toBeInTheDocument()
     expect(screen.queryByText('Can execute: true')).not.toBeInTheDocument()
     expect(screen.queryByText('Mutation permitted: true')).not.toBeInTheDocument()

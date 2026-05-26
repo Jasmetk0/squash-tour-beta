@@ -1011,6 +1011,11 @@ def test_future_apply_request_validation_preview_complete_audit_metadata_can_sat
         assert boundary_contract["execution_enabled"] is False
         assert boundary_contract["can_execute"] is False
         assert boundary_contract["mutation_permitted"] is False
+        boundary_message = str(boundary_contract["message"]).lower()
+        assert "disabled" in boundary_message
+        assert "read-only" in boundary_message
+        assert "does not execute apply" in boundary_message
+        assert ("does not mutate" in boundary_message) or ("mutate state" in boundary_message)
         specification_message = str(specification["message"]).lower()
         assert "disabled" in specification_message
         assert "read-only" in specification_message

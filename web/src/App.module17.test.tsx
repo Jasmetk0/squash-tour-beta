@@ -4478,7 +4478,7 @@ describe('Future apply preview panels', () => {
   })
 
   it('renders valid future apply execution boundary contract data', () => {
-    render(<FutureApplyExecutionBoundaryContractPanel contract={{ available: true, contract_type: 'future_apply_execution_boundary_contract', gate_specification_available: true, gate_specification_complete: true, actual_execution_endpoint_exists: false, actual_execution_wiring_enabled: false, mutation_path_enabled: false, preview_stack_only: true, execution_boundary_intact: true, requires_separate_execution_phase: true, requires_separate_endpoint_wiring: true, requires_separate_mutation_audit: true, execution_enabled: false, can_execute: false, read_only: true, mutation_permitted: false, message: 'Execution boundary contract remains read-only in preview mode.' }} />)
+    render(<FutureApplyExecutionBoundaryContractPanel contract={{ available: true, contract_type: 'future_apply_execution_boundary_contract', gate_specification_available: true, gate_specification_complete: true, actual_execution_endpoint_exists: false, actual_execution_wiring_enabled: false, mutation_path_enabled: false, preview_stack_only: true, execution_boundary_intact: true, requires_separate_execution_phase: true, requires_separate_endpoint_wiring: true, requires_separate_mutation_audit: true, execution_enabled: false, can_execute: false, read_only: true, mutation_permitted: false, message: 'Execution boundary contract is disabled/read-only preview metadata only; it does not execute apply and does not mutate state.' }} />)
     expect(screen.getByText('Available: true')).toBeInTheDocument()
     expect(screen.getByText('Contract type: future_apply_execution_boundary_contract')).toBeInTheDocument()
     expect(screen.getByText('Gate specification available: true')).toBeInTheDocument()
@@ -4495,8 +4495,8 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Can execute: false')).toBeInTheDocument()
     expect(screen.getByText('Read-only: true')).toBeInTheDocument()
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
-    expect(screen.getByText('Message: Execution boundary contract remains read-only in preview mode.')).toBeInTheDocument()
-    expect(screen.getByText('Message: Execution boundary contract remains read-only in preview mode.')).toHaveTextContent(/read-only|preview|disabled/i)
+    expect(screen.getByText('Message: Execution boundary contract is disabled/read-only preview metadata only; it does not execute apply and does not mutate state.')).toBeInTheDocument()
+    expect(screen.getByText('Message: Execution boundary contract is disabled/read-only preview metadata only; it does not execute apply and does not mutate state.')).toHaveTextContent(/read-only|preview|disabled|does not execute apply/i)
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 

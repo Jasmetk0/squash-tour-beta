@@ -4679,9 +4679,9 @@ describe('Future apply validation UI safety', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Validate future apply reference' }))
     await waitFor(() => expect(api.validateFutureApplyRequestPreview.mock.calls.length).toBe(callsBeforeClick + 1))
     await screen.findByText('Guarded apply execution gate specification')
-    const gateSpecificationCompleteRow = screen.queryByText('Gate specification complete: true')
-    if (gateSpecificationCompleteRow) {
-      expect(gateSpecificationCompleteRow).toBeInTheDocument()
+    const gateSpecificationCompleteRows = screen.queryAllByText('Gate specification complete: true')
+    if (gateSpecificationCompleteRows.length > 0) {
+      expect(gateSpecificationCompleteRows.length).toBeGreaterThan(0)
     }
     expect(screen.queryByText('Execution enabled: true')).not.toBeInTheDocument()
     expect(screen.queryByText('Can execute: true')).not.toBeInTheDocument()

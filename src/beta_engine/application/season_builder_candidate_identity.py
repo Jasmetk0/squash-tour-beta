@@ -820,8 +820,11 @@ def build_future_apply_execution_decision_summary(
     """Build disabled/read-only decision metadata for a future separate execution phase.
 
     Safety invariant:
-    - This helper provides decision metadata only and is never execution authorization.
-    - ``future_execution_phase_may_be_considered=True`` does not authorize execution.
+    - This helper provides preview/decision metadata only and is never execution authorization.
+    - ``available=True`` is not execution authorization.
+    - ``future_execution_phase_may_be_considered=True`` is not execution authorization.
+    - ``manual_validation_only`` / ``separate_execution_phase_required`` /
+      ``operator_review_required`` are decision requirements, not permission signals.
     - ``execution_authorized`` / ``execution_enabled`` / ``can_execute`` must remain ``False``.
     - ``read_only`` must remain ``True`` and ``mutation_permitted`` must remain ``False``.
     """

@@ -4527,7 +4527,7 @@ describe('Future apply preview panels', () => {
   })
 
   it('renders valid future apply execution decision summary data', () => {
-    render(<FutureApplyExecutionDecisionSummaryPanel summary={{ available: true, summary_type: 'future_apply_execution_decision_summary', boundary_contract_available: true, execution_boundary_intact: true, preview_stack_only: true, manual_validation_only: true, separate_execution_phase_required: true, operator_review_required: true, future_execution_phase_may_be_considered: true, execution_authorized: false, execution_enabled: false, can_execute: false, read_only: true, mutation_permitted: false, message: 'Execution decision summary is disabled, read-only, and no execution is available in this phase.' }} />)
+    render(<FutureApplyExecutionDecisionSummaryPanel summary={{ available: true, summary_type: 'future_apply_execution_decision_summary', boundary_contract_available: true, execution_boundary_intact: true, preview_stack_only: true, manual_validation_only: true, separate_execution_phase_required: true, operator_review_required: true, future_execution_phase_may_be_considered: true, execution_authorized: false, execution_enabled: false, can_execute: false, read_only: true, mutation_permitted: false, message: 'Execution decision summary is disabled, read-only, does not execute apply, and provides no execution authorization in this phase.' }} />)
     expect(screen.getByText('Available: true')).toBeInTheDocument()
     expect(screen.getByText('Summary type: future_apply_execution_decision_summary')).toBeInTheDocument()
     expect(screen.getByText('Boundary contract available: true')).toBeInTheDocument()
@@ -4542,7 +4542,7 @@ describe('Future apply preview panels', () => {
     expect(screen.getByText('Can execute: false')).toBeInTheDocument()
     expect(screen.getByText('Read-only: true')).toBeInTheDocument()
     expect(screen.getByText('Mutation permitted: false')).toBeInTheDocument()
-    expect(screen.getByText(/Message: .*disabled.*read-only.*no execution/i)).toBeInTheDocument()
+    expect(screen.getByText(/Message: .*disabled.*read-only.*does not execute apply.*no execution authorization/i)).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 

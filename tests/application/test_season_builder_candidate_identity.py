@@ -1276,6 +1276,12 @@ def test_future_apply_execution_decision_summary_may_be_considered_but_not_autho
     )
     assert summary["available"] is True
     assert summary["summary_type"] == "future_apply_execution_decision_summary"
+    assert summary["boundary_contract_available"] is True
+    assert summary["execution_boundary_intact"] is True
+    assert summary["preview_stack_only"] is True
+    assert summary["manual_validation_only"] is True
+    assert summary["separate_execution_phase_required"] is True
+    assert summary["operator_review_required"] is True
     assert summary["future_execution_phase_may_be_considered"] is True
     assert summary["execution_authorized"] is False
     assert summary["execution_enabled"] is False
@@ -1287,6 +1293,7 @@ def test_future_apply_execution_decision_summary_may_be_considered_but_not_autho
     assert "read-only" in msg
     assert "does not execute apply" in msg
     assert ("does not mutate" in msg) or ("mutate state" in msg)
+    assert ("does not authorize" in msg) or ("no authorization" in msg)
 
 
 def test_future_apply_execution_decision_summary_boundary_contract_unavailable() -> None:

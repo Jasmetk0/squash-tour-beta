@@ -1007,6 +1007,12 @@ def test_future_apply_request_validation_preview_complete_audit_metadata_can_sat
         assert decision_summary["execution_enabled"] is False
         assert decision_summary["can_execute"] is False
         assert decision_summary["mutation_permitted"] is False
+        decision_summary_message = str(decision_summary["message"]).lower()
+        assert "disabled" in decision_summary_message
+        assert "read-only" in decision_summary_message
+        assert "does not execute apply" in decision_summary_message
+        assert ("does not mutate" in decision_summary_message) or ("mutate state" in decision_summary_message)
+        assert ("does not authorize" in decision_summary_message) or ("no authorization" in decision_summary_message)
 
         assert summary["mutation_permitted"] is False
         summary_message = str(summary["message"]).lower()

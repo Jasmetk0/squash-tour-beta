@@ -3424,6 +3424,24 @@ export type FinalGuardedApplyReadinessChecklist = {
   message?: string | null
 }
 
+export type FutureApplyExecutionDecisionSummary = {
+  available?: boolean | null
+  summary_type?: string | null
+  boundary_contract_available?: boolean | null
+  execution_boundary_intact?: boolean | null
+  preview_stack_only?: boolean | null
+  manual_validation_only?: boolean | null
+  separate_execution_phase_required?: boolean | null
+  operator_review_required?: boolean | null
+  future_execution_phase_may_be_considered?: boolean | null
+  execution_authorized?: boolean | null
+  execution_enabled?: boolean | null
+  can_execute?: boolean | null
+  read_only?: boolean | null
+  mutation_permitted?: boolean | null
+  message?: string | null
+}
+
 export type FutureApplyExecutionBoundaryContract = {
   available?: boolean | null
   contract_type?: string | null
@@ -3476,6 +3494,7 @@ export type SeasonBuilderFutureApplyRequestValidationPreviewResponse = {
   final_guarded_apply_readiness_checklist?: FinalGuardedApplyReadinessChecklist | null
   guarded_apply_execution_gate_specification?: GuardedApplyExecutionGateSpecification | null
   future_apply_execution_boundary_contract?: FutureApplyExecutionBoundaryContract | null
+  future_apply_execution_decision_summary?: FutureApplyExecutionDecisionSummary | null
   audit_preview?: Record<string, unknown> | null
 }
 

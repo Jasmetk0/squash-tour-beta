@@ -147,6 +147,23 @@ describe('validateFutureApplyRequestPreview', () => {
         mutation_permitted: false,
         message: 'Execution boundary contract is read-only in preview mode.'
       },
+      future_apply_execution_decision_summary: {
+        available: true,
+        summary_type: 'future_apply_execution_decision_summary',
+        boundary_contract_available: true,
+        execution_boundary_intact: true,
+        preview_stack_only: true,
+        manual_validation_only: true,
+        separate_execution_phase_required: true,
+        operator_review_required: true,
+        future_execution_phase_may_be_considered: true,
+        execution_authorized: false,
+        execution_enabled: false,
+        can_execute: false,
+        read_only: true,
+        mutation_permitted: false,
+        message: 'Execution is disabled and read-only; no execution occurs in preview mode.'
+      },
       audit_preview: null
     }
 
@@ -211,6 +228,7 @@ describe('validateFutureApplyRequestPreview', () => {
           final_guarded_apply_readiness_checklist: null,
           guarded_apply_execution_gate_specification: null,
           future_apply_execution_boundary_contract: null,
+          future_apply_execution_decision_summary: null,
           audit_preview: null
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }

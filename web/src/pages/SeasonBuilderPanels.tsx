@@ -1495,6 +1495,24 @@ export type NormalizedFutureApplyExecutionBoundaryContract = {
   message: string
 }
 
+export type NormalizedFutureApplyExecutionDecisionSummary = {
+  available: string
+  summaryType: string
+  boundaryContractAvailable: string
+  executionBoundaryIntact: string
+  previewStackOnly: string
+  manualValidationOnly: string
+  separateExecutionPhaseRequired: string
+  operatorReviewRequired: string
+  futureExecutionPhaseMayBeConsidered: string
+  executionAuthorized: string
+  executionEnabled: string
+  canExecute: string
+  readOnly: string
+  mutationPermitted: string
+  message: string
+}
+
 export function readFutureApplyExecutionBoundaryContract(value: unknown): NormalizedFutureApplyExecutionBoundaryContract | null {
   if (!value || typeof value !== 'object') return null
   const record = value as Record<string, unknown>
@@ -1511,6 +1529,28 @@ export function readFutureApplyExecutionBoundaryContract(value: unknown): Normal
     requiresSeparateExecutionPhase: normalizeBooleanDisplay(record.requires_separate_execution_phase),
     requiresSeparateEndpointWiring: normalizeBooleanDisplay(record.requires_separate_endpoint_wiring),
     requiresSeparateMutationAudit: normalizeBooleanDisplay(record.requires_separate_mutation_audit),
+    executionEnabled: normalizeBooleanDisplay(record.execution_enabled),
+    canExecute: normalizeBooleanDisplay(record.can_execute),
+    readOnly: normalizeBooleanDisplay(record.read_only),
+    mutationPermitted: normalizeBooleanDisplay(record.mutation_permitted),
+    message: normalizeNonEmptyStringDisplay(record.message) === 'n/a' ? 'No message provided.' : normalizeNonEmptyStringDisplay(record.message)
+  }
+}
+
+export function readFutureApplyExecutionDecisionSummary(value: unknown): NormalizedFutureApplyExecutionDecisionSummary | null {
+  if (!value || typeof value !== 'object') return null
+  const record = value as Record<string, unknown>
+  return {
+    available: normalizeBooleanDisplay(record.available),
+    summaryType: normalizeNonEmptyStringDisplay(record.summary_type),
+    boundaryContractAvailable: normalizeBooleanDisplay(record.boundary_contract_available),
+    executionBoundaryIntact: normalizeBooleanDisplay(record.execution_boundary_intact),
+    previewStackOnly: normalizeBooleanDisplay(record.preview_stack_only),
+    manualValidationOnly: normalizeBooleanDisplay(record.manual_validation_only),
+    separateExecutionPhaseRequired: normalizeBooleanDisplay(record.separate_execution_phase_required),
+    operatorReviewRequired: normalizeBooleanDisplay(record.operator_review_required),
+    futureExecutionPhaseMayBeConsidered: normalizeBooleanDisplay(record.future_execution_phase_may_be_considered),
+    executionAuthorized: normalizeBooleanDisplay(record.execution_authorized),
     executionEnabled: normalizeBooleanDisplay(record.execution_enabled),
     canExecute: normalizeBooleanDisplay(record.can_execute),
     readOnly: normalizeBooleanDisplay(record.read_only),
@@ -4404,6 +4444,31 @@ export function FutureApplyRequestValidationPreviewPanel({ preview }: { preview?
       <p>Read-only: {validationPreview.readOnly}</p>
       <p>Mutation permitted: {validationPreview.mutationPermitted}</p>
       <p>Message: {validationPreview.message}</p>
+    </>
+  )
+}
+
+export function FutureApplyExecutionDecisionSummaryPanel({ summary }: { summary?: unknown }): JSX.Element {
+  const decisionSummary = readFutureApplyExecutionDecisionSummary(summary)
+  if (!decisionSummary) return <p>Future apply execution decision summary is not available.</p>
+  return (
+    <>
+      <p>Future apply execution decision summary</p>
+      <p>Available: {decisionSummary.available}</p>
+      <p>Summary type: {decisionSummary.summaryType}</p>
+      <p>Boundary contract available: {decisionSummary.boundaryContractAvailable}</p>
+      <p>Execution boundary intact: {decisionSummary.executionBoundaryIntact}</p>
+      <p>Preview stack only: {decisionSummary.previewStackOnly}</p>
+      <p>Manual validation only: {decisionSummary.manualValidationOnly}</p>
+      <p>Separate execution phase required: {decisionSummary.separateExecutionPhaseRequired}</p>
+      <p>Operator review required: {decisionSummary.operatorReviewRequired}</p>
+      <p>Future execution phase may be considered: {decisionSummary.futureExecutionPhaseMayBeConsidered}</p>
+      <p>Execution authorized: {decisionSummary.executionAuthorized}</p>
+      <p>Execution enabled: {decisionSummary.executionEnabled}</p>
+      <p>Can execute: {decisionSummary.canExecute}</p>
+      <p>Read-only: {decisionSummary.readOnly}</p>
+      <p>Mutation permitted: {decisionSummary.mutationPermitted}</p>
+      <p>Message: {decisionSummary.message}</p>
     </>
   )
 }

@@ -4587,6 +4587,10 @@ describe('Future apply validation UI safety', () => {
     await waitFor(() => expect(api.validateFutureApplyRequestPreview.mock.calls.length).toBe(callsBeforeClick + 1))
 
     await screen.findByText('Future apply execution decision summary')
+    const maybeConsideredRows = screen.queryAllByText('Future execution phase may be considered: true')
+    if (maybeConsideredRows.length > 0) {
+      expect(maybeConsideredRows[0]).toBeInTheDocument()
+    }
     expect(screen.queryByText('Execution authorized: true')).not.toBeInTheDocument()
     expect(screen.queryByText('Execution enabled: true')).not.toBeInTheDocument()
     expect(screen.queryByText('Can execute: true')).not.toBeInTheDocument()

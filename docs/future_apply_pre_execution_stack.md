@@ -1,8 +1,8 @@
-# Future Apply Pre-Execution Stack (Phase 15–22)
+# Future Apply Pre-Execution Stack (Phase 15–23)
 
 ## Purpose and scope
 
-This document summarizes the **Phase 15 through Phase 22** future-apply stack as a **pre-execution architecture only**.
+This document summarizes the **Phase 15 through Phase 23** future-apply stack as a **pre-execution architecture only**.
 
 The stack exists to provide:
 - preview metadata,
@@ -15,7 +15,7 @@ It does **not** provide execution authorization.
 
 ### Non-negotiable safety meaning
 
-The Phase 15–22 stack:
+The Phase 15–23 stack:
 - does **not** execute apply,
 - does **not** authorize execution,
 - does **not** mutate calendars, templates, seasons, events, or state,
@@ -23,7 +23,7 @@ The Phase 15–22 stack:
 - does **not** merge, overwrite, or repair anything,
 - does **not** loosen create-only guards.
 
-Any real guarded create-only apply execution must be implemented in a **separate future phase** with separate authorization and mutation wiring.
+This preview stack remains separate from real mutation commands. A separate existing guarded create-only apply command is documented in [`docs/real_create_only_apply_hardening_plan.md`](real_create_only_apply_hardening_plan.md); that command is outside this preview stack and still requires hardening before it can be relied on.
 
 ---
 
@@ -36,7 +36,7 @@ This endpoint remains intentionally disabled for execution and mutation:
 - `can_execute=False`
 - `can_mutate=False`
 
-Operational characteristics in Phase 15–22:
+Operational characteristics in Phase 15–23:
 - manual-only,
 - read-only,
 - non-mutating,

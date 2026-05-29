@@ -84,16 +84,18 @@ def free_port() -> int:
 
 
 class Server:
-    def __init__(self, tmp_path: Path) -> None:
+    def __init__(self, tmp_path: Path, *, audit_log_path: Path | None = None) -> None:
         self.port = free_port()
         self.base_url = f"http://127.0.0.1:{self.port}"
         self.registry_path = tmp_path / "season_calendars.json"
+        self.audit_log_path = audit_log_path or tmp_path / "season_builder_apply_create_only_audit.jsonl"
         template_path = tmp_path / "templates.json"
         write_templates(template_path)
         app = create_app(
             database_url=f"sqlite:///{tmp_path / f'api-{uuid4().hex}.db'}",
             tournament_templates_config_path=str(template_path),
             season_calendar_registry_path=str(self.registry_path),
+            season_builder_apply_audit_log_path=str(self.audit_log_path),
         )
         self.server = uvicorn.Server(
             uvicorn.Config(app=app, host="127.0.0.1", port=self.port, log_level="error")
@@ -183,6 +185,24 @@ def read_persisted_calendar(server: Server, season: str) -> dict | None:
     return registry.get("calendars_by_season", {}).get(season)
 
 
+def read_audit_records(server: Server) -> list[dict]:
+    if not server.audit_log_path.exists() or server.audit_log_path.is_dir():
+        return []
+    return [json.loads(line) for line in server.audit_log_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def records_for_audit_id(server: Server, audit_record_id: str) -> list[dict]:
+    return [record for record in read_audit_records(server) if record["audit_record_id"] == audit_record_id]
+
+
+def assert_audited_response(body: dict) -> None:
+    assert body["audit_persisted"] is True
+    assert body["audit_record_id"]
+    assert body["audit_record_fingerprint"]
+    assert body["audit_preview"]["audit_record_id"] == body["audit_record_id"]
+    assert body["audit_preview"]["audit_record_fingerprint"] == body["audit_record_fingerprint"]
+
+
 def assert_command_rejected_without_application(
     status: int,
     body: dict,
@@ -242,6 +262,9 @@ def test_apply_create_only_matching_candidate_identity_fields_succeeds_and_creat
         assert body["applied"] is True
         assert body["can_mutate"] is True
         assert body["created_calendar_summary"]["calendar_exists"] is True
+        assert_audited_response(body)
+        assert body["audit_persistence_status"] == "persisted_success"
+        assert body["audit_storage_summary"]["backend"] == "append_only_jsonl"
         assert body["created_calendar_identity"]["requested_candidate_identity_reference_id"] == payload["requested_candidate_identity_reference_id"]
         assert body["created_calendar_identity"]["requested_candidate_identity_fingerprint"] == payload["requested_candidate_identity_fingerprint"]
         assert body["created_calendar_identity"]["requested_candidate_identity_reference_type"] == payload["requested_candidate_identity_reference_type"]
@@ -255,6 +278,15 @@ def test_apply_create_only_matching_candidate_identity_fields_succeeds_and_creat
         persisted = read_persisted_calendar(server, season)
         assert persisted is not None
         assert len(persisted["events"]) == body["applied_event_count"]
+        records = records_for_audit_id(server, body["audit_record_id"])
+        assert [record["audit_stage"] for record in records] == ["pre_mutation_reserved", "succeeded"]
+        success_record = records[-1]
+        assert success_record["applied"] is True
+        assert success_record["mutation_performed"] is True
+        assert success_record["applied_event_count"] == len(persisted["events"])
+        assert success_record["created_calendar_event_ids_fingerprint"]
+        assert success_record["apply_gate_summary"]["service_insert_succeeded"] is True
+        assert success_record["validation_errors"] == []
 
 
 @pytest.mark.parametrize(
@@ -296,6 +328,23 @@ def test_apply_create_only_guard_rejections_do_not_create_calendar(
         status, body = apply_create_only(server, payload)
 
         assert_command_rejected_without_application(status, body, expected_status=expected_status)
+        if expected_status != 422:
+            assert_audited_response(body)
+            records = records_for_audit_id(server, body["audit_record_id"])
+            assert len(records) == 1
+            assert records[0]["audit_stage"] == "rejected"
+            assert records[0]["applied"] is False
+            assert records[0]["mutation_performed"] is False
+            assert records[0]["apply_gate_summary"]
+            assert records[0]["validation_errors"]
+            if field == "explicit_confirmation":
+                assert records[0]["explicit_confirmation_valid"] is False
+            if field == "mutation_scope":
+                assert records[0]["apply_gate_summary"]["mutation_scope_valid"] is False
+            if field.startswith("requested_candidate_identity_") and str(value).startswith("wrong"):
+                assert records[0]["requested_candidate_identity_reference_id"]
+                assert records[0]["expected_candidate_identity_reference_id"]
+                assert records[0]["apply_gate_summary"]["candidate_identity_reference_matched"] is False
         assert_target_calendar_absent(server, season)
 
 
@@ -355,6 +404,7 @@ def test_apply_create_only_rejects_target_that_already_exists_without_modifying_
         first_status, first_body = apply_create_only(server, first_payload)
         assert first_status == 200
         assert first_body["applied"] is True
+        first_audit_id = first_body["audit_record_id"]
         before_status, before_calendar = call("GET", calendar_url(server, season))
         assert before_status == 200
         before_persisted = read_persisted_calendar(server, season)
@@ -364,6 +414,14 @@ def test_apply_create_only_rejects_target_that_already_exists_without_modifying_
         status, body = apply_create_only(server, second_payload)
 
         assert_command_rejected_without_application(status, body, expected_status=409)
+        assert_audited_response(body)
+        assert body["audit_record_id"] != first_audit_id
+        conflict_records = records_for_audit_id(server, body["audit_record_id"])
+        assert len(conflict_records) == 1
+        assert conflict_records[0]["audit_stage"] == "rejected"
+        assert conflict_records[0]["rejection_status_code"] == 409
+        assert conflict_records[0]["applied"] is False
+        assert conflict_records[0]["mutation_performed"] is False
         after_status, after_calendar = call("GET", calendar_url(server, season))
         assert after_status == 200
         assert after_calendar == before_calendar
@@ -380,6 +438,7 @@ def test_apply_create_only_rejects_identical_duplicate_request_after_success(
         first_status, first_body = apply_create_only(server, copy.deepcopy(payload))
         assert first_status == 200
         assert first_body["applied"] is True
+        first_audit_id = first_body["audit_record_id"]
         before_status, before_calendar = call("GET", calendar_url(server, season))
         assert before_status == 200
         before_persisted = read_persisted_calendar(server, season)
@@ -389,8 +448,38 @@ def test_apply_create_only_rejects_identical_duplicate_request_after_success(
         status, body = apply_create_only(server, copy.deepcopy(payload))
 
         assert_command_rejected_without_application(status, body, expected_status=409)
+        assert_audited_response(body)
+        assert body["audit_record_id"] != first_audit_id
+        duplicate_records = records_for_audit_id(server, body["audit_record_id"])
+        assert len(duplicate_records) == 1
+        assert duplicate_records[0]["audit_stage"] == "rejected"
+        assert duplicate_records[0]["applied"] is False
+        assert duplicate_records[0]["mutation_performed"] is False
         after_status, after_calendar = call("GET", calendar_url(server, season))
         assert after_status == 200
         assert len(after_calendar["calendar"]["events"]) == before_event_count
         assert after_calendar == before_calendar
         assert read_persisted_calendar(server, season) == before_persisted
+
+
+def test_apply_create_only_audit_write_failure_fails_closed_before_mutation(
+    tmp_path: Path,
+) -> None:
+    season = "2038/2039"
+    failing_audit_path = tmp_path / "audit-as-directory.jsonl"
+    failing_audit_path.mkdir()
+    with Server(tmp_path, audit_log_path=failing_audit_path) as server:
+        payload = build_valid_payload(server, season=season)
+
+        status, body = apply_create_only(server, payload)
+
+        assert status == 500
+        assert body["applied"] is False
+        assert body["can_mutate"] is False
+        assert body["audit_persisted"] is False
+        assert body["audit_persistence_status"] == "failed_closed_before_mutation"
+        assert any("Audit persistence failed" in error for error in body["validation_errors"])
+        assert read_persisted_calendar(server, season) is None
+        calendar_status, calendar = call("GET", calendar_url(server, season))
+        assert calendar_status == 200
+        assert calendar["calendar"] is None

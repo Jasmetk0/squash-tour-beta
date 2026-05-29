@@ -3840,6 +3840,8 @@ export function PostApplyAuditStatusPanel({
         <tr><td>audit_status.mutation_scope</td><td>{mutationScope || '—'}</td></tr>
         <tr><td>audit_preview.audit_persisted</td><td>{String(auditPreview.audit_persisted ?? '—')}</td></tr>
         <tr><td>audit_preview.audit_persistence_status</td><td>{String(auditPreview.audit_persistence_status ?? '—')}</td></tr>
+        <tr><td>audit_preview.audit_record_id</td><td>{String(auditPreview.audit_record_id ?? applyMutationResult?.audit_record_id ?? '—')}</td></tr>
+        <tr><td>audit_preview.audit_record_fingerprint</td><td>{String(auditPreview.audit_record_fingerprint ?? applyMutationResult?.audit_record_fingerprint ?? '—')}</td></tr>
         <tr><td>dry_run_identity.identity_matches</td><td>{String(dryRunIdentity.identity_matches ?? '—')}</td></tr>
         <tr><td>created_calendar_identity.applied_event_count</td><td>{String(createdCalendarIdentity.applied_event_count ?? '—')}</td></tr>
         <tr><td>apply_gate_summary.service_insert_succeeded</td><td>{String(applyGateSummary.service_insert_succeeded ?? '—')}</td></tr>

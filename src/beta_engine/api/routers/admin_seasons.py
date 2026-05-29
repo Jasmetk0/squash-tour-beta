@@ -1221,7 +1221,9 @@ def post_season_builder_apply_create_only_command(
         "candidate_events_non_empty": False,
         "service_insert_succeeded": False,
     }
-    request_payload_fingerprint = f"req_{deterministic_digest(payload.model_dump(mode="json"))[:24]}"
+    request_payload_fingerprint = (
+        f"req_{deterministic_digest(payload.model_dump(mode='json'))[:24]}"
+    )
     attempted_at = utc_now_iso()
     audit_record_id = build_audit_record_id(
         attempted_at=attempted_at,

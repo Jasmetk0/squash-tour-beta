@@ -66,10 +66,11 @@ import {
   TemplateSlotConflictCodeRegistryPanel,
   TemplateConflictDiagnosticsOverviewPanel,
   TemplateSlotValidationPreflightConsistencyPanel,
-  TemplateSlotConflictPreflightConsistencyPanel
+  TemplateSlotConflictPreflightConsistencyPanel,
+  SeasonBuilderStatusSummary
 } from './SeasonBuilderPanels'
 import type { SourceType } from './SeasonBuilderPanels'
-import type { CreateOnlyApplyGuardSummaryItem } from './SeasonBuilderPanels'
+import type { ApplyGuardChecklistItem, CreateOnlyApplyGuardSummaryItem, SeasonBuilderStatusSummaryItem } from './SeasonBuilderPanels'
 import type { SeasonBuilderApplyCommandContractRequest, SeasonBuilderApplyCreateOnlyCommandRequest, SeasonBuilderDryRunBuildRequest, SeasonBuilderFutureApplyRequestValidationPreviewResponse, SeasonBuilderPreflightRequest } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -494,6 +495,128 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     createOnlyApplyMutation.isPending
   ])
 
+
+  const candidateIdentityMatches = futureApplyValidationResult?.future_apply_request_validation_preview?.reference_id_matches === true
+    && futureApplyValidationResult?.future_apply_request_validation_preview?.fingerprint_matches === true
+    && futureApplyValidationResult?.future_apply_request_validation_preview?.reference_type_matches === true
+  const candidateIdentityStatus = candidateIdentityMatches
+    ? { value: 'Matched', tone: 'safe' as const }
+    : hasRequiredCandidateIdentityReferences
+      ? { value: 'Available', tone: 'neutral' as const }
+      : { value: 'Missing', tone: 'warning' as const }
+  const dryRunIdentityMatches = createOnlyApplyMutation.data?.dry_run_identity?.identity_matches === true
+  const hasDryRunIdentity = Boolean(dryRunResultFingerprint && dryRunResultId)
+  const dryRunIdentityStatus = dryRunIdentityMatches
+    ? { value: 'Matched', tone: 'safe' as const }
+    : hasDryRunIdentity
+      ? { value: 'Available', tone: 'neutral' as const }
+      : { value: 'Missing', tone: 'warning' as const }
+  const targetCalendarStatus = targetCalendarQuery.isLoading || targetCalendarQuery.isFetching
+    ? { value: 'Unknown', tone: 'neutral' as const }
+    : targetCalendarExists
+      ? { value: 'Exists', tone: 'danger' as const }
+      : selectedTargetSeasonLabel
+        ? { value: 'Absent', tone: 'safe' as const }
+        : { value: 'Unknown', tone: 'neutral' as const }
+  const realCommandStatus = createOnlyApplyMutation.data?.applied === true
+    ? { value: 'Completed', tone: 'safe' as const }
+    : createOnlyApplyMutation.data
+      ? { value: 'Rejected', tone: 'danger' as const }
+      : canSubmitCreateOnlyApply
+        ? { value: 'Armed', tone: 'danger' as const }
+        : createOnlyApplyReadinessQuery.data
+          ? { value: 'Blocked', tone: 'warning' as const }
+          : { value: 'Not ready', tone: 'neutral' as const }
+  const auditPersisted = createOnlyApplyMutation.data?.audit_persisted ?? (createOnlyApplyMutation.data?.audit_preview?.audit_persisted as boolean | undefined)
+  const auditStatus = createOnlyApplyMutation.data?.applied === true && auditPersisted === true
+    ? { value: 'Success persisted', tone: 'safe' as const }
+    : createOnlyApplyMutation.data && createOnlyApplyMutation.data.applied !== true && auditPersisted === true
+      ? { value: 'Rejected persisted', tone: 'warning' as const }
+      : createOnlyApplyMutation.data && auditPersisted !== true
+        ? { value: 'Not confirmed', tone: 'warning' as const }
+        : createOnlyApplyMutation.isError
+          ? { value: 'Failed', tone: 'danger' as const }
+          : { value: 'No attempt', tone: 'neutral' as const }
+  const statusSummaryItems = useMemo<SeasonBuilderStatusSummaryItem[]>(() => [
+    { label: 'Target season', value: selectedTargetSeasonLabel || 'Not selected', tone: selectedTargetSeasonLabel ? 'neutral' : 'warning' },
+    { label: 'Source', value: selectedTemplate?.template_id ?? selectedSourceType, tone: selectedTemplate ? 'neutral' : 'warning' },
+    { label: 'Target calendar', ...targetCalendarStatus },
+    { label: 'Preview stack', value: 'Read-only', tone: 'safe' },
+    { label: 'Real create-only command', ...realCommandStatus },
+    { label: 'Candidate identity', ...candidateIdentityStatus },
+    { label: 'Dry-run identity', ...dryRunIdentityStatus },
+    { label: 'Audit', ...auditStatus },
+    { label: 'Can execute real command', value: canSubmitCreateOnlyApply ? 'Yes' : 'No', tone: canSubmitCreateOnlyApply ? 'danger' : 'neutral' }
+  ], [
+    selectedTargetSeasonLabel,
+    selectedTemplate,
+    selectedSourceType,
+    targetCalendarStatus,
+    realCommandStatus,
+    candidateIdentityStatus,
+    dryRunIdentityStatus,
+    auditStatus,
+    canSubmitCreateOnlyApply
+  ])
+  const guardChecklistItems = useMemo<ApplyGuardChecklistItem[]>(() => [
+    {
+      label: 'Target calendar absent',
+      status: createOnlyBlockedByExistingTarget ? 'fail' : selectedTargetSeasonLabel ? 'pass' : 'missing',
+      detail: createOnlyBlockedByExistingTarget ? 'Create-only is locked out when the target exists.' : undefined
+    },
+    {
+      label: 'Backend readiness allows execution',
+      status: createOnlyApplyReadinessQuery.data?.can_execute_apply === true ? 'pass' : createOnlyApplyReadinessQuery.data ? 'fail' : 'pending'
+    },
+    {
+      label: 'Candidate identity reference available',
+      status: createOnlyCandidateIdentityReferenceId ? 'pass' : 'missing'
+    },
+    {
+      label: 'Candidate identity fingerprint available',
+      status: createOnlyCandidateIdentityFingerprint ? 'pass' : 'missing'
+    },
+    {
+      label: 'Candidate identity reference type available',
+      status: createOnlyCandidateIdentityReferenceType ? 'pass' : 'missing'
+    },
+    {
+      label: 'Dry-run identity available',
+      status: hasDryRunIdentity ? 'pass' : 'missing'
+    },
+    {
+      label: 'Audit metadata present',
+      status: (disabledApplyCommandContractPayload.requested_by && disabledApplyCommandContractPayload.audit_reason) ? 'pass' : 'missing'
+    },
+    {
+      label: 'Exact confirmation phrase entered',
+      status: dangerZoneConfirmationText.trim() === REQUIRED_CONFIRMATION_PHRASE ? 'pass' : 'missing',
+      detail: dangerZoneConfirmationText.trim() === REQUIRED_CONFIRMATION_PHRASE ? undefined : `Expected: ${REQUIRED_CONFIRMATION_PHRASE}`
+    },
+    {
+      label: 'Mutation scope is create_only',
+      status: dangerZoneMutationScope.trim() === 'create_only' ? 'pass' : 'missing'
+    },
+    {
+      label: 'No command pending',
+      status: createOnlyApplyMutation.isPending ? 'pending' : 'pass'
+    }
+  ], [
+    createOnlyBlockedByExistingTarget,
+    selectedTargetSeasonLabel,
+    createOnlyApplyReadinessQuery.data,
+    createOnlyCandidateIdentityReferenceId,
+    createOnlyCandidateIdentityFingerprint,
+    createOnlyCandidateIdentityReferenceType,
+    hasDryRunIdentity,
+    disabledApplyCommandContractPayload.requested_by,
+    disabledApplyCommandContractPayload.audit_reason,
+    dangerZoneConfirmationText,
+    REQUIRED_CONFIRMATION_PHRASE,
+    dangerZoneMutationScope,
+    createOnlyApplyMutation.isPending
+  ])
+
   const handleConfirmCreateOnlyApply = (): void => {
     if (!canSubmitCreateOnlyApply) return
     const payload: SeasonBuilderApplyCreateOnlyCommandRequest = {
@@ -560,18 +683,26 @@ export function AdminSeasonBuilderPage(): JSX.Element {
 
   return (
     <section className="panel">
-      <PageIntro title="Season Builder" subtitle="Read-only preflight foundation for future season creation workflows." />
+      <PageIntro title="Season Builder" subtitle="Build and review season calendar candidates. Most panels are read-only previews. The danger zone can execute a real create-only command that persists a missing target calendar." />
 
-      <SectionCard title="Read-only foundation notes">
+      <SectionCard title="Season Builder operating modes">
         <ul className="dashboard-help-list">
-          <li>This page does not build or modify calendars.</li>
-          <li>Build from template is planned.</li>
-          <li>Copy from another season is planned.</li>
-          <li>Blank calendar creation is planned.</li>
-          <li>Compare/apply workflow is planned.</li>
-          <li>Actual build actions will require explicit audited backend commands in a later phase.</li>
+          <li>Preview panels are read-only and non-mutating.</li>
+          <li>The danger-zone command is the only real persistent create-only mutation flow on this page.</li>
+          <li>The danger-zone command cannot merge, overwrite, or repair existing calendars.</li>
+          <li>Build from template remains guarded by explicit backend command flow; copy, blank calendar creation, merge, overwrite, and repair remain planned workflows.</li>
         </ul>
       </SectionCard>
+
+      <SectionCard title="Season Builder status summary">
+        <SeasonBuilderStatusSummary items={statusSummaryItems} />
+      </SectionCard>
+
+      <section className="season-builder-zone season-builder-zone--readonly" aria-labelledby="season-builder-readonly-preview-heading">
+        <div className="season-builder-zone__header">
+          <h2 id="season-builder-readonly-preview-heading">Read-only preview stack</h2>
+          <p>These panels validate source/target selection, preflight, dry-run, candidate identity, and future apply metadata. They do not create, modify, merge, overwrite, repair, or save calendars.</p>
+        </div>
 
       <SectionCard title="Target season candidates">
         {registryQuery.isLoading ? <p className="status">Loading season registry…</p> : null}
@@ -791,7 +922,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           <label htmlFor="future-apply-explicit-confirmation">Explicit confirmation</label>
           <input id="future-apply-explicit-confirmation" value={futureApplyExplicitConfirmation} onChange={(event) => setFutureApplyExplicitConfirmation(event.target.value)} />
           <p>Required confirmation phrase: {REQUIRED_CONFIRMATION_PHRASE}</p>
-          <label htmlFor="future-apply-mutation-scope">Mutation scope</label>
+          <label htmlFor="future-apply-mutation-scope">Future apply mutation scope</label>
           <input id="future-apply-mutation-scope" value={futureApplyMutationScope} onChange={(event) => setFutureApplyMutationScope(event.target.value)} />
           <button
             type="button"
@@ -805,7 +936,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
         </div>
         {futureApplyValidationError ? <p className="error">Future apply request validation failed: {futureApplyValidationError}</p> : null}
         {futureApplyValidationResult ? (
-          <>
+          <div className="season-builder-preview-result" aria-label="Future apply preview result block">
             <FutureApplyReferenceContractPanel
               dryRunResultPreview={{
                 future_apply_reference_contract: futureApplyValidationResult.future_apply_reference_contract
@@ -819,9 +950,17 @@ export function AdminSeasonBuilderPage(): JSX.Element {
             <GuardedApplyExecutionGateSpecificationPanel specification={futureApplyValidationResult.guarded_apply_execution_gate_specification} />
             <FutureApplyExecutionBoundaryContractPanel contract={futureApplyValidationResult.future_apply_execution_boundary_contract} />
             <FutureApplyExecutionDecisionSummaryPanel summary={futureApplyValidationResult.future_apply_execution_decision_summary} />
-          </>
+          </div>
         ) : null}
       </SectionCard>
+      </section>
+
+      <section className="season-builder-zone season-builder-zone--danger" aria-labelledby="season-builder-danger-zone-heading">
+        <div className="season-builder-zone__header">
+          <h2 id="season-builder-danger-zone-heading">Danger zone — persistent create-only calendar creation</h2>
+          <p>This command can create a new season calendar if the target is absent and all guards pass. It cannot merge, overwrite, or repair. Every schema-valid attempt is audited.</p>
+        </div>
+
       <SectionCard title="Disabled apply command contract result">
         <DisabledApplyCommandContractPanel
           queryEnabled={disabledApplyCommandContractEnabled}
@@ -873,6 +1012,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           applyMutationResult={createOnlyApplyMutation.data}
           targetCalendarExistsAfterApply={targetCalendarExistsAfterApply}
           createOnlyBlockedReason={createOnlyBlockedReason}
+          guardChecklistItems={guardChecklistItems}
         />
       </SectionCard>
       <SectionCard title="Post-apply calendar verification">
@@ -932,6 +1072,8 @@ export function AdminSeasonBuilderPage(): JSX.Element {
           mutationScope={dangerZoneMutationScope}
         />
       </SectionCard>
+
+      </section>
 
       <SectionCard title="Apply command readiness summary">
         <ApplyCommandReadinessSummaryPanel items={applyCommandReadinessItems} />

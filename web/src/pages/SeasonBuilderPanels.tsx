@@ -3510,6 +3510,32 @@ type CreateOnlyApplyReadinessPanelProps = {
   }
 }
 
+export type SeasonBuilderStatusSummaryItem = {
+  label: string
+  value: string
+  tone?: 'safe' | 'warning' | 'danger' | 'neutral'
+}
+
+type SeasonBuilderStatusSummaryProps = {
+  items: SeasonBuilderStatusSummaryItem[]
+}
+
+export type ApplyGuardChecklistItem = {
+  label: string
+  status: 'pass' | 'fail' | 'missing' | 'pending'
+  detail?: string
+}
+
+type ApplyGuardChecklistProps = {
+  items: ApplyGuardChecklistItem[]
+}
+
+type ApplyAuditResultCardProps = {
+  applyMutationResult: SeasonBuilderApplyCreateOnlyCommandResponse | undefined
+  applyMutationStatus?: 'idle' | 'pending' | 'success' | 'error'
+  applyMutationError?: unknown
+}
+
 type CreateOnlyApplyDangerZonePreviewPanelProps = {
   readinessData: SeasonBuilderApplyCreateOnlyReadinessResponse | undefined
   selectedTargetSeasonLabel: string
@@ -3525,6 +3551,7 @@ type CreateOnlyApplyDangerZonePreviewPanelProps = {
   applyMutationResult: SeasonBuilderApplyCreateOnlyCommandResponse | undefined
   targetCalendarExistsAfterApply: boolean
   createOnlyBlockedReason: string | null
+  guardChecklistItems: ApplyGuardChecklistItem[]
 }
 type CreateOnlyApplyGuardSummaryPanelProps = {
   items: CreateOnlyApplyGuardSummaryItem[]
@@ -4023,6 +4050,129 @@ export function ApplyResponseVsTargetValidationComparisonPanel({
   )
 }
 
+
+export function SeasonBuilderStatusSummary({ items }: SeasonBuilderStatusSummaryProps): JSX.Element {
+  return (
+    <div className="season-builder-status-grid">
+      {items.map((item) => (
+        <article key={item.label} className="season-builder-status-item">
+          <span>{item.label}</span>
+          <strong className={`season-builder-chip season-builder-chip--${item.tone ?? 'neutral'}`}>{item.value}</strong>
+        </article>
+      ))}
+    </div>
+  )
+}
+
+export function ApplyGuardChecklist({ items }: ApplyGuardChecklistProps): JSX.Element {
+  const statusLabel = (status: ApplyGuardChecklistItem['status']): string => {
+    if (status === 'pass') return 'Pass'
+    if (status === 'fail') return 'Blocked'
+    if (status === 'missing') return 'Missing'
+    return 'Pending'
+  }
+  const toneForStatus = (status: ApplyGuardChecklistItem['status']): 'safe' | 'warning' | 'danger' | 'neutral' => {
+    if (status === 'pass') return 'safe'
+    if (status === 'fail') return 'danger'
+    if (status === 'missing') return 'warning'
+    return 'neutral'
+  }
+
+  return (
+    <div className="season-builder-guard-checklist" aria-label="Create-only apply guard checklist">
+      {items.map((item) => (
+        <div key={item.label} className="season-builder-guard-row">
+          <span>{item.label}</span>
+          <span className={`season-builder-chip season-builder-chip--${toneForStatus(item.status)}`}>{statusLabel(item.status)}</span>
+          {item.detail ? <small>{item.detail}</small> : null}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function readRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' ? value as Record<string, unknown> : null
+}
+
+function readAuditValue(result: SeasonBuilderApplyCreateOnlyCommandResponse | undefined, key: string): unknown {
+  if (!result) return undefined
+  const direct = result[key as keyof SeasonBuilderApplyCreateOnlyCommandResponse]
+  if (direct !== undefined && direct !== null) return direct
+  const auditPreview = readRecord(result.audit_preview)
+  return auditPreview?.[key]
+}
+
+function displayAuditValue(value: unknown): string {
+  if (value === undefined || value === null || value === '') return '—'
+  if (typeof value === 'boolean') return value ? 'yes' : 'no'
+  if (typeof value === 'object') return JSON.stringify(value)
+  return String(value)
+}
+
+function basenameOnly(value: unknown): string {
+  if (typeof value !== 'string' || value.trim().length === 0) return '—'
+  const normalized = value.replace(/\\/g, '/')
+  return normalized.split('/').filter(Boolean).pop() ?? '—'
+}
+
+function readAuditStorageSummary(result: SeasonBuilderApplyCreateOnlyCommandResponse | undefined): { backend: string; filename: string } {
+  const storage = readRecord(result?.audit_storage_summary)
+  if (!storage) return { backend: '—', filename: '—' }
+  return {
+    backend: displayAuditValue(storage.backend ?? storage.storage_backend ?? storage.audit_backend),
+    filename: basenameOnly(storage.filename ?? storage.audit_filename ?? storage.path ?? storage.file_path ?? storage.audit_path)
+  }
+}
+
+function readErrorAuditDetail(error: unknown): Record<string, unknown> | null {
+  if (!(error instanceof Error)) return null
+  try {
+    const parsed = JSON.parse(error.message) as Record<string, unknown>
+    const detail = parsed.detail
+    return readRecord(detail) ?? parsed
+  } catch {
+    return null
+  }
+}
+
+export function ApplyAuditResultCard({ applyMutationResult, applyMutationStatus = 'idle', applyMutationError }: ApplyAuditResultCardProps): JSX.Element | null {
+  const errorDetail = readErrorAuditDetail(applyMutationError)
+  if (!applyMutationResult && applyMutationStatus !== 'error') return null
+
+  const applyWasSuccessful = applyMutationResult?.applied === true
+  const responseWasRejected = Boolean(applyMutationResult && !applyWasSuccessful)
+  const resultStatus = applyWasSuccessful ? 'success' : responseWasRejected ? 'rejected' : 'failed'
+  const auditPersisted = readAuditValue(applyMutationResult, 'audit_persisted') ?? errorDetail?.audit_persisted
+  const persistenceStatus = readAuditValue(applyMutationResult, 'audit_persistence_status') ?? errorDetail?.audit_persistence_status
+  const auditRecordId = readAuditValue(applyMutationResult, 'audit_record_id') ?? errorDetail?.audit_record_id
+  const auditRecordFingerprint = readAuditValue(applyMutationResult, 'audit_record_fingerprint') ?? errorDetail?.audit_record_fingerprint
+  const storage = readAuditStorageSummary(applyMutationResult)
+  const validationErrors = applyMutationResult?.validation_errors ?? []
+  const validationWarnings = applyMutationResult?.validation_warnings ?? []
+
+  return (
+    <aside className={`season-builder-audit-card season-builder-audit-card--${resultStatus}`} aria-label="Create-only apply audit result">
+      <h4>Durable audit result</h4>
+      {applyWasSuccessful ? <p><strong>Calendar created successfully.</strong></p> : <p className="error"><strong>No calendar was created.</strong></p>}
+      <p>Result status: {resultStatus}</p>
+      {applyMutationStatus === 'error' && !applyMutationResult ? <p className="error">Command failed: {formatApiError(applyMutationError)}</p> : null}
+      <table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>
+        <tr><td>Applied</td><td>{applyMutationResult ? (applyWasSuccessful ? 'yes' : 'no') : '—'}</td></tr>
+        <tr><td>Audit persisted</td><td>{displayAuditValue(auditPersisted)}</td></tr>
+        <tr><td>Persistence status</td><td>{displayAuditValue(persistenceStatus)}</td></tr>
+        <tr><td>Audit ID</td><td>{displayAuditValue(auditRecordId)}</td></tr>
+        <tr><td>Audit fingerprint</td><td>{displayAuditValue(auditRecordFingerprint)}</td></tr>
+        <tr><td>Audit backend</td><td>{storage.backend}</td></tr>
+        <tr><td>Audit filename</td><td>{storage.filename}</td></tr>
+        <tr><td>Message</td><td>{applyMutationResult?.message ?? (applyMutationStatus === 'error' ? formatApiError(applyMutationError) : '—')}</td></tr>
+        <tr><td>Validation error count</td><td>{applyMutationResult ? String(validationErrors.length) : '—'}</td></tr>
+        <tr><td>Validation warning count</td><td>{applyMutationResult ? String(validationWarnings.length) : '—'}</td></tr>
+      </tbody></table>
+    </aside>
+  )
+}
+
 export function CreateOnlyApplyDangerZonePreviewPanel({
   readinessData,
   selectedTargetSeasonLabel,
@@ -4037,7 +4187,8 @@ export function CreateOnlyApplyDangerZonePreviewPanel({
   applyMutationError,
   applyMutationResult,
   targetCalendarExistsAfterApply,
-  createOnlyBlockedReason
+  createOnlyBlockedReason,
+  guardChecklistItems
 }: CreateOnlyApplyDangerZonePreviewPanelProps): JSX.Element {
   const isBackendReadyForCreateOnly = readinessData?.can_execute_apply === true
     && readinessData?.would_create_calendar === true
@@ -4049,10 +4200,20 @@ export function CreateOnlyApplyDangerZonePreviewPanel({
   const applyWasSuccessful = applyMutationResult?.applied === true
   return (
     <>
-      <p>Danger-zone guarded create-only apply command. This command can only create a missing calendar. It cannot merge or overwrite.</p>
-      <p>A successful command will create persistent season calendar data.</p>
+      <div className="season-builder-danger-callout">
+        <p><strong>Persistent mutation.</strong> This danger-zone command can create a new season calendar only when the target is absent and all guards pass.</p>
+        <ul className="dashboard-help-list">
+          <li>Creates a new calendar only when the target is absent.</li>
+          <li>Never merges or overwrites existing calendars.</li>
+          <li>Never repairs existing calendars.</li>
+          <li>Schema-valid attempts are audited.</li>
+          <li>If the audit reservation fails, mutation is blocked.</li>
+        </ul>
+      </div>
+      <h4>Operator guard checklist</h4>
+      <ApplyGuardChecklist items={guardChecklistItems} />
       <p>
-        <label htmlFor="create-only-confirmation-preview">Future confirmation phrase preview</label><br />
+        <label htmlFor="create-only-confirmation-preview">Exact confirmation phrase</label><br />
         <textarea
           id="create-only-confirmation-preview"
           value={confirmationText}
@@ -4062,7 +4223,7 @@ export function CreateOnlyApplyDangerZonePreviewPanel({
         />
       </p>
       <p>
-        <label htmlFor="create-only-mutation-scope-preview">Future create-only mutation scope preview</label><br />
+        <label htmlFor="create-only-mutation-scope-preview">Mutation scope</label><br />
         <input
           id="create-only-mutation-scope-preview"
           type="text"
@@ -4070,6 +4231,7 @@ export function CreateOnlyApplyDangerZonePreviewPanel({
           onChange={(event) => setMutationScopePreview(event.target.value)}
           placeholder="create_only"
         />
+        <br /><small>Required value: create_only</small>
       </p>
       <table><thead><tr><th scope="col">Requirement</th><th scope="col">Preview status</th></tr></thead><tbody>
         <tr><td>Backend readiness satisfied</td><td>{isBackendReadyForCreateOnly ? 'yes' : 'no'}</td></tr>
@@ -4078,7 +4240,7 @@ export function CreateOnlyApplyDangerZonePreviewPanel({
         <tr><td>Danger-zone required mutation scope</td><td>create_only</td></tr>
         <tr><td>Confirmation phrase matches required phrase</td><td>{confirmationPhraseMatches ? 'yes' : 'no'}</td></tr>
         <tr><td>Mutation scope equals create_only</td><td>{mutationScopeMatches ? 'yes' : 'no'}</td></tr>
-        <tr><td>Future submit eligibility preview</td><td>{futureSubmitEligibilityPreview ? 'yes' : 'no'}</td></tr>
+        <tr><td>Visible guard eligibility preview</td><td>{futureSubmitEligibilityPreview ? 'yes' : 'no'}</td></tr>
         <tr><td>Danger-zone guarded command enabled</td><td>{canSubmitCreateOnlyApply ? 'yes' : 'no'}</td></tr>
       </tbody></table>
       {futureSubmitEligibilityPreview
@@ -4091,7 +4253,7 @@ export function CreateOnlyApplyDangerZonePreviewPanel({
         </>
       ) : null}
       <p>
-        <button type="button" onClick={onConfirmCreateOnlyApply} disabled={!canSubmitCreateOnlyApply}>
+        <button type="button" className="button-danger" onClick={onConfirmCreateOnlyApply} disabled={!canSubmitCreateOnlyApply}>
           Execute create-only season calendar command
         </button>
       </p>
@@ -4102,6 +4264,7 @@ export function CreateOnlyApplyDangerZonePreviewPanel({
           <p>Create-only command failed: {formatApiError(applyMutationError)}</p>
         </div>
       ) : null}
+      <ApplyAuditResultCard applyMutationResult={applyMutationResult} applyMutationStatus={applyMutationStatus} applyMutationError={applyMutationError} />
       {applyMutationResult ? (
         <>
           <h4>{applyWasSuccessful ? 'Create-only apply result' : 'Create-only apply response (not applied)'}</h4>
@@ -4190,7 +4353,7 @@ export function CreateOnlyApplyReadinessPanel({ queryEnabled, query }: CreateOnl
           </tbody></table>
           {!query.data.can_mutate ? <p>This panel is read-only because can_mutate is false.</p> : null}
           {isBackendReadyForCreateOnly
-            ? <p>Backend readiness says create-only apply is ready, but this panel is still read-only. No calendar is created from this UI.</p>
+            ? <p>Backend readiness says create-only apply is ready, but this readiness panel is read-only. Calendar creation can only happen from the separate danger-zone command.</p>
             : <p>Create-only apply is not ready according to backend readiness.</p>}
           <h4>Safety checklist</h4>
           <table><thead><tr><th scope="col">Check</th><th scope="col">Value</th></tr></thead><tbody>

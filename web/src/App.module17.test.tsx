@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -982,8 +982,10 @@ describe('Module 17 pages through routes', () => {
     })
     renderAppAt('/admin/seasons/build')
     expect(await screen.findByRole('heading', { name: 'Season Builder' })).toBeInTheDocument()
-    expect(screen.getByText('Read-only preflight foundation for future season creation workflows.')).toBeInTheDocument()
-    expect(screen.getByText('This page does not build or modify calendars.')).toBeInTheDocument()
+    expect(screen.getByText('Build and review season calendar candidates. Most panels are read-only previews. The danger zone can execute a real create-only command that persists a missing target calendar.')).toBeInTheDocument()
+    expect(screen.queryByText('This page does not build or modify calendars.')).not.toBeInTheDocument()
+    expect(screen.getByText('Preview panels are read-only and non-mutating.')).toBeInTheDocument()
+    expect(screen.getByText('The danger-zone command is the only real persistent create-only mutation flow on this page.')).toBeInTheDocument()
     expect(screen.getByText('Target season candidates')).toBeInTheDocument()
     expect((await screen.findAllByText(/Default MSA Template Preview/)).length).toBeGreaterThan(0)
     expect(screen.getByText('Planned source types')).toBeInTheDocument()
@@ -1357,23 +1359,33 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Create-only apply danger-zone command')).toBeInTheDocument()
     expect(screen.getByText('Read-only disabled apply command contract check. This does not build, merge, overwrite, or apply anything.')).toBeInTheDocument()
     expect(screen.getByText('Read-only create-only apply readiness check. This panel does not execute apply or create a calendar.')).toBeInTheDocument()
-    expect(screen.getByText('Danger-zone guarded create-only apply command. This command can only create a missing calendar. It cannot merge or overwrite.')).toBeInTheDocument()
-    const executeCreateOnlyButton = screen.getByRole('button', { name: 'Execute create-only season calendar command' })
+    expect(screen.getByRole('heading', { name: 'Danger zone — persistent create-only calendar creation' })).toBeInTheDocument()
+    expect(screen.getByText('This command can create a new season calendar if the target is absent and all guards pass. It cannot merge, overwrite, or repair. Every schema-valid attempt is audited.')).toBeInTheDocument()
+    expect(screen.getByText(/Persistent mutation\./)).toBeInTheDocument()
+    expect(screen.getByText('Creates a new calendar only when the target is absent.')).toBeInTheDocument()
+    expect(screen.getByText('Never merges or overwrites existing calendars.')).toBeInTheDocument()
+    expect(screen.getByText('Never repairs existing calendars.')).toBeInTheDocument()
+    expect(screen.getByText('Schema-valid attempts are audited.')).toBeInTheDocument()
+    expect(screen.getByText('If the audit reservation fails, mutation is blocked.')).toBeInTheDocument()
+    const dangerZoneSection = screen.getByRole('heading', { name: 'Danger zone — persistent create-only calendar creation' }).closest('section') as HTMLElement
+    const executeCreateOnlyButton = within(dangerZoneSection).getByRole('button', { name: 'Execute create-only season calendar command' })
+    expect(screen.getAllByRole('button', { name: 'Execute create-only season calendar command' })).toHaveLength(1)
     expect(executeCreateOnlyButton).toBeDisabled()
     expect(screen.getByText('Create-only command is currently blocked by one or more guards.')).toBeInTheDocument()
-    expect(screen.getByText('Exact confirmation phrase entered')).toBeInTheDocument()
+    expect(screen.getAllByText('Exact confirmation phrase entered').length).toBeGreaterThan(0)
+    expect(screen.getByText('Visible guard eligibility preview')).toBeInTheDocument()
     expect(screen.getByText('Danger-zone guarded command enabled')).toBeInTheDocument()
     expect(screen.getByText('Required confirmation phrase')).toBeInTheDocument()
     expect(screen.getByText('I understand this will create a new season calendar.')).toBeInTheDocument()
     expect(screen.getByText('Required confirmation phrase: I understand this will create a new season calendar.')).toBeInTheDocument()
     expect(screen.getByText('Danger-zone required mutation scope')).toBeInTheDocument()
     expect(screen.getByText('create_only')).toBeInTheDocument()
-    const confirmationInput = screen.getByLabelText('Future confirmation phrase preview')
-    const mutationScopeInput = screen.getByLabelText('Future create-only mutation scope preview')
+    const confirmationInput = screen.getByLabelText('Exact confirmation phrase')
+    const mutationScopeInput = screen.getByLabelText('Mutation scope')
     expect(confirmationInput).toBeInTheDocument()
     expect(mutationScopeInput).toBeInTheDocument()
     expect(screen.getByText('Create-only apply is not fully armed yet.')).toBeInTheDocument()
-    expect(screen.getByText('Backend readiness says create-only apply is ready, but this panel is still read-only. No calendar is created from this UI.')).toBeInTheDocument()
+    expect(screen.getByText('Backend readiness says create-only apply is ready, but this readiness panel is read-only. Calendar creation can only happen from the separate danger-zone command.')).toBeInTheDocument()
     expect(screen.getByText('Safety checklist')).toBeInTheDocument()
     expect(screen.getByText('Real apply endpoint called from UI')).toBeInTheDocument()
     expect(screen.getByText('Mutation hook installed')).toBeInTheDocument()
@@ -1438,7 +1450,12 @@ describe('Module 17 pages through routes', () => {
       apply_gate_summary: { service_insert_succeeded: true },
       applied_event_count: 1,
       dry_run_identity: { identity_matches: true },
-      audit_preview: { audit_persisted: false, audit_persistence_status: 'not_implemented' },
+      audit_preview: { audit_persisted: true, audit_persistence_status: 'persisted_success', audit_record_id: 'aud_create_only_test', audit_record_fingerprint: 'aud_fp_test' },
+      audit_persisted: true,
+      audit_persistence_status: 'persisted_success',
+      audit_record_id: 'aud_create_only_test',
+      audit_record_fingerprint: 'aud_fp_test',
+      audit_storage_summary: { backend: 'jsonl', filename: 'season_builder_apply_create_only_audit.jsonl' },
       message: 'Create-only apply executed successfully.'
     })
     fireEvent.click(executeCreateOnlyButton)
@@ -1462,7 +1479,7 @@ describe('Module 17 pages through routes', () => {
       mutation_scope: 'create_only'
     }))
     expect(await screen.findByText('Create-only apply result')).toBeInTheDocument()
-    expect(screen.getByText('Create-only apply executed successfully.')).toBeInTheDocument()
+    expect(screen.getAllByText('Create-only apply executed successfully.').length).toBeGreaterThan(0)
     expect(screen.getByText('Create-only apply reported success. Verify the refreshed target calendar below.')).toBeInTheDocument()
     expect(await screen.findByText('Post-apply calendar verification passed.')).toBeInTheDocument()
     expect(screen.getByText('Apply response validation preview')).toBeInTheDocument()
@@ -1543,7 +1560,13 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('event-1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('category').length).toBeGreaterThan(0)
     expect(screen.getByText('Post-apply audit/status summary')).toBeInTheDocument()
-    expect(screen.getByText('Audit persistence is not confirmed by this response.')).toBeInTheDocument()
+    expect(screen.getByText('Audit persistence reported by backend.')).toBeInTheDocument()
+    expect(screen.getAllByText('Audit ID').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('aud_create_only_test').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Audit fingerprint').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('aud_fp_test').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Persistence status').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('persisted_success').length).toBeGreaterThan(0)
     expect(screen.getByText('Explicit confirmation was provided.')).toBeInTheDocument()
     expect(screen.getAllByText('audit_status.requested_by').length).toBeGreaterThan(0)
     expect(screen.getAllByText('audit_status.audit_reason').length).toBeGreaterThan(0)
@@ -2193,7 +2216,7 @@ describe('Module 17 pages through routes', () => {
     fireEvent.change(screen.getByLabelText('Requested by'), { target: { value: 'qa-admin' } })
     fireEvent.change(screen.getByLabelText('Audit reason'), { target: { value: 'phase-17d validation check' } })
     fireEvent.change(screen.getByLabelText('Explicit confirmation'), { target: { value: 'I understand this will create a new season calendar.' } })
-    fireEvent.change(screen.getByLabelText('Mutation scope'), { target: { value: 'create_only' } })
+    fireEvent.change(screen.getByLabelText('Future apply mutation scope'), { target: { value: 'create_only' } })
     expect(api.validateFutureApplyRequestPreview).not.toHaveBeenCalled()
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
 
@@ -2220,6 +2243,9 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('All required audit metadata present: true')).toBeInTheDocument()
     expect(screen.getAllByText('Apply execution enabled: false').length).toBeGreaterThan(0)
     expect(screen.queryByText('Apply execution enabled: true')).not.toBeInTheDocument()
+    const previewResultBlock = screen.getByLabelText('Future apply preview result block')
+    expect(within(previewResultBlock).queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
+    expect(within(previewResultBlock).queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Fill from dry-run reference' })).toBeInTheDocument()
@@ -2237,7 +2263,7 @@ describe('Module 17 pages through routes', () => {
     fireEvent.change(screen.getByLabelText('Requested by'), { target: { value: 'auditor' } })
     fireEvent.change(screen.getByLabelText('Audit reason'), { target: { value: 'manual preview only' } })
     fireEvent.change(screen.getByLabelText('Explicit confirmation'), { target: { value: 'preview phrase' } })
-    fireEvent.change(screen.getByLabelText('Mutation scope'), { target: { value: 'create_only' } })
+    fireEvent.change(screen.getByLabelText('Future apply mutation scope'), { target: { value: 'create_only' } })
     expect(api.validateFutureApplyRequestPreview).not.toHaveBeenCalled()
 
   })
@@ -2278,9 +2304,10 @@ describe('Module 17 pages through routes', () => {
 
     const fillButton = await screen.findByRole('button', { name: 'Fill from dry-run reference' })
     expect(fillButton).toBeDisabled()
-    const executeCreateOnlyButton = screen.getByRole('button', { name: 'Execute create-only season calendar command' })
-    fireEvent.change(screen.getByLabelText('Future confirmation phrase preview'), { target: { value: 'I understand this will create a new season calendar.' } })
-    fireEvent.change(screen.getByLabelText('Future create-only mutation scope preview'), { target: { value: 'create_only' } })
+    const dangerZoneSection = screen.getByRole('heading', { name: 'Danger zone — persistent create-only calendar creation' }).closest('section') as HTMLElement
+    const executeCreateOnlyButton = within(dangerZoneSection).getByRole('button', { name: 'Execute create-only season calendar command' })
+    fireEvent.change(within(dangerZoneSection).getByLabelText('Exact confirmation phrase'), { target: { value: 'I understand this will create a new season calendar.' } })
+    fireEvent.change(within(dangerZoneSection).getByLabelText('Mutation scope'), { target: { value: 'create_only' } })
     await waitFor(() => expect(executeCreateOnlyButton).toBeDisabled())
     fireEvent.click(executeCreateOnlyButton)
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
@@ -2858,8 +2885,8 @@ describe('Module 17 pages through routes', () => {
       validation_errors: []
     })
     renderAppAt('/admin/seasons/build')
-    const confirmationInput = await screen.findByLabelText('Future confirmation phrase preview')
-    const mutationScopeInput = screen.getByLabelText('Future create-only mutation scope preview')
+    const confirmationInput = await screen.findByLabelText('Exact confirmation phrase')
+    const mutationScopeInput = screen.getByLabelText('Mutation scope')
     const executeCreateOnlyButton = screen.getByRole('button', { name: 'Execute create-only season calendar command' })
     await waitFor(() => expect(api.postSeasonBuilderApplyCreateOnlyReadiness).toHaveBeenCalled())
     fireEvent.change(confirmationInput, { target: { value: 'I understand this will create a new season calendar.' } })
@@ -2870,6 +2897,10 @@ describe('Module 17 pages through routes', () => {
     api.postSeasonBuilderApplyCreateOnlyCommand.mockRejectedValueOnce(
       new api.ApiError(JSON.stringify({
         detail: 'Create-only rejected.',
+        audit_persisted: true,
+        audit_persistence_status: 'persisted_rejected',
+        audit_record_id: 'aud_rejected_test',
+        audit_record_fingerprint: 'aud_rejected_fp_test',
         validation_errors: ['Target calendar already exists for season 2000/01.']
       }), 409)
     )
@@ -2877,6 +2908,10 @@ describe('Module 17 pages through routes', () => {
     await waitFor(() => expect(api.postSeasonBuilderApplyCreateOnlyCommand).toHaveBeenCalledTimes(1))
     expect(await screen.findByText('Create-only command was rejected or failed; no success result is recorded in this panel.')).toBeInTheDocument()
     expect(screen.getByText(/Create-only command failed:/)).toBeInTheDocument()
+    expect(screen.getByText('No calendar was created.')).toBeInTheDocument()
+    expect(screen.getByText('persisted_rejected')).toBeInTheDocument()
+    expect(screen.getByText('aud_rejected_test')).toBeInTheDocument()
+    expect(screen.getByText('aud_rejected_fp_test')).toBeInTheDocument()
     expect(screen.queryByText('Create-only apply result')).not.toBeInTheDocument()
     expect(api.postSeasonBuilderApplyCreateOnlyCommand).toHaveBeenCalledTimes(1)
     expect(api.postSeasonBuilderApplyCreateOnlyReadiness.mock.calls.length).toBeGreaterThanOrEqual(readinessCallsBeforeClick)
@@ -2888,7 +2923,7 @@ describe('Module 17 pages through routes', () => {
       can_mutate: true,
       applied: false,
       target_season_label: '2000/01',
-      validation_errors: [],
+      validation_errors: ['Rejected by create-only guard.'],
       validation_warnings: ['Not applied in this response.'],
       created_calendar_summary: { calendar_exists: false, season: '2000/01', event_count: 0 },
       created_event_preview: [],
@@ -2897,7 +2932,11 @@ describe('Module 17 pages through routes', () => {
       apply_gate_summary: {},
       applied_event_count: 0,
       dry_run_identity: {},
-      audit_preview: { audit_persisted: false },
+      audit_preview: { audit_persisted: true, audit_persistence_status: 'persisted_rejected', audit_record_id: 'aud_rejected_response', audit_record_fingerprint: 'aud_rejected_response_fp' },
+      audit_persisted: true,
+      audit_persistence_status: 'persisted_rejected',
+      audit_record_id: 'aud_rejected_response',
+      audit_record_fingerprint: 'aud_rejected_response_fp',
       message: 'Command completed without applying.'
     })
     fireEvent.click(executeCreateOnlyButton)

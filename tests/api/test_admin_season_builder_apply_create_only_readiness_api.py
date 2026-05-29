@@ -89,6 +89,7 @@ def identity_payload(server: Server, season: str = "2035/2036") -> dict:
         "mutation_scope": "create_only",
     })
     first_candidate = dr["dry_run_result_preview"]["candidate_events"][0]
+    future_apply_reference_contract = dr["dry_run_result_preview"]["future_apply_reference_contract"]
     return {
         "target_season_label": season,
         "source_type": "season_template",
@@ -97,6 +98,9 @@ def identity_payload(server: Server, season: str = "2035/2036") -> dict:
         "reviewed_diff_id": pf["reviewed_diff_id"],
         "dry_run_result_fingerprint": dr["dry_run_result_preview"]["dry_run_result_fingerprint"],
         "dry_run_result_id": dr["dry_run_result_preview"]["dry_run_result_id"],
+        "requested_candidate_identity_reference_id": future_apply_reference_contract["candidate_identity_reference_id"],
+        "requested_candidate_identity_fingerprint": future_apply_reference_contract["candidate_identity_fingerprint"],
+        "requested_candidate_identity_reference_type": future_apply_reference_contract["candidate_identity_reference_type"],
         "requested_by": "qa",
         "audit_reason": "phase9a",
         "explicit_confirmation": "I understand this will create a new season calendar.",

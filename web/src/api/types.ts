@@ -3613,6 +3613,9 @@ export type SeasonBuilderApplyCreateOnlyCommandRequest = {
   reviewed_diff_id: string
   dry_run_result_fingerprint: string
   dry_run_result_id: string
+  requested_candidate_identity_reference_id: string
+  requested_candidate_identity_fingerprint: string
+  requested_candidate_identity_reference_type: string
   requested_by: string
   audit_reason: string
   explicit_confirmation: string

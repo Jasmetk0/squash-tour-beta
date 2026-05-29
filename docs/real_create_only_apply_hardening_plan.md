@@ -6,7 +6,7 @@ This document describes the existing real guarded create-only apply command for 
 
 It is separate from the Phase 15-23 future-apply preview/pre-execution stack. The preview stack remains disabled, read-only, non-mutating, manual-only, and informational. This document does not authorize production use of the real command by itself; it records the current command shape, current safety guarantees, known gaps, and the hardening plan required before the command can be treated as reliable.
 
-This Phase 24A document is planning-only. It does not change runtime behavior, endpoint behavior, frontend behavior, calendar creation logic, guards, or mutation capabilities.
+This document originated in Phase 24A as planning-only documentation. Phase 24C2 has since implemented the candidate identity reference enforcement slice for the real create-only apply command; the remaining gaps below still require separate owner-approved hardening work.
 
 ## Existing real command
 
@@ -38,13 +38,13 @@ The future-apply preview/pre-execution stack is exposed through `POST /admin/sea
 
 The preview endpoint does not call the real create-only apply command. The real create-only apply command is a separate endpoint and command path.
 
-The real command currently consumes preflight and dry-run identity fields and recomputes the dry-run result before mutation. However, it does not yet consume or enforce all candidate identity reference fields produced for the Phase 15-23 stack, including:
+The real command consumes preflight and dry-run identity fields and recomputes the dry-run result before mutation. As of Phase 24C2, it also requires and enforces the candidate identity reference fields produced for the Phase 15-23 stack:
 
 - `requested_candidate_identity_reference_id`,
 - `requested_candidate_identity_fingerprint`,
 - `requested_candidate_identity_reference_type`.
 
-That missing candidate-reference alignment is a known hardening gap. The preview stack remains valid as non-mutating metadata, but the real command must not be considered fully aligned with that stack until Phase 24C or an equivalent owner-approved slice resolves this decision.
+The server recomputes expected candidate identity values from the dry-run preview's `future_apply_reference_contract` before any calendar mutation and rejects missing, unavailable, unreferenceable, or mismatched candidate identity references. The preview stack remains valid as non-mutating metadata and does not authorize execution by itself.
 
 ## Current guard summary
 
@@ -57,9 +57,12 @@ The existing real create-only command currently enforces these guards before it 
 - exact confirmation phrase is required: `I understand this will create a new season calendar.`,
 - `mutation_scope` must be exactly `create_only`,
 - preflight and dry-run identity fields must be present,
+- candidate identity reference id, fingerprint, and reference type must be present,
 - target calendar must be absent before apply,
 - dry-run output is recomputed inside the command path,
 - recomputed dry-run fingerprint and dry-run result id must match the request,
+- recomputed future apply reference contract must be available and referenceable,
+- requested candidate identity reference id, fingerprint, and reference type must match the recomputed contract,
 - recomputed dry-run validation summary must be clean,
 - recomputed candidate events must be non-empty,
 - `requested_by` and `audit_reason` must be present,
@@ -71,8 +74,8 @@ These guards are useful, but they are not the complete reliability envelope requ
 
 The current real create-only apply path has these known gaps:
 
-1. **Missing candidate identity reference enforcement**
-   - The real command does not currently accept or enforce `requested_candidate_identity_reference_id`, `requested_candidate_identity_fingerprint`, or `requested_candidate_identity_reference_type` from the Phase 15-23 preview stack.
+1. **Candidate identity reference enforcement implemented in Phase 24C2**
+   - The real command now accepts and enforces `requested_candidate_identity_reference_id`, `requested_candidate_identity_fingerprint`, and `requested_candidate_identity_reference_type` from the Phase 15-23 preview stack before mutation.
 
 2. **No durable audit trail**
    - Audit metadata is checked for presence, but command attempts and results are not yet persisted as durable audit records.
@@ -111,15 +114,15 @@ Add direct API tests for the real command proving failed guards do not mutate st
 - missing audit metadata,
 - duplicate request.
 
-### Phase 24C: Candidate identity reference alignment
+### Phase 24C: Candidate identity reference alignment — implemented in Phase 24C2
 
-Make an owner decision on whether the real command must accept and enforce:
+The owner decision was to require immediate enforcement for the real mutation endpoint. Phase 24C2 updated the real command contract to require:
 
 - `requested_candidate_identity_reference_id`,
 - `requested_candidate_identity_fingerprint`,
 - `requested_candidate_identity_reference_type`.
 
-If yes, update the real command contract to require those fields, enforce mismatch rejection, and add direct tests proving mismatches do not mutate calendars.
+The command recomputes dry-run output, derives expected candidate identity values from the recomputed `future_apply_reference_contract`, requires the contract to be available/referenceable, rejects mismatches with no mutation, and includes direct API and frontend/client coverage for the new guards.
 
 ### Phase 24D: Audit persistence design
 

@@ -1,9 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  postSeasonBuilderApplyCreateOnlyCommand,
   validateFutureApplyRequestPreview
 } from './client'
 import type {
+  SeasonBuilderApplyCreateOnlyCommandRequest,
+  SeasonBuilderApplyCreateOnlyCommandResponse,
   SeasonBuilderFutureApplyRequestValidationPreviewRequest,
   SeasonBuilderFutureApplyRequestValidationPreviewResponse
 } from './types'
@@ -242,5 +245,65 @@ describe('validateFutureApplyRequestPreview', () => {
     expect(sentPayload.requested_candidate_identity_reference_id).toBe('candidate-ref-1')
     expect(sentPayload.requested_candidate_identity_fingerprint).toBe('candidate-fp-1')
     expect(sentPayload.requested_candidate_identity_reference_type).toBe('future_apply_reference_contract')
+  })
+})
+
+
+describe('postSeasonBuilderApplyCreateOnlyCommand', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('posts required candidate identity fields unchanged to the create-only command endpoint', async () => {
+    const payload: SeasonBuilderApplyCreateOnlyCommandRequest = {
+      target_season_label: '2032/2033',
+      source_type: 'season_template',
+      source_template_id: 'default_msa_template_preview',
+      overwrite_policy: null,
+      preflight_fingerprint: 'pf-create-only',
+      reviewed_diff_id: 'rd-create-only',
+      dry_run_result_fingerprint: 'drf-create-only',
+      dry_run_result_id: 'drr-create-only',
+      requested_candidate_identity_reference_id: 'candidate-ref-create-only',
+      requested_candidate_identity_fingerprint: 'candidate-fp-create-only',
+      requested_candidate_identity_reference_type: 'candidate_identity_set',
+      requested_by: 'local-admin-preview',
+      audit_reason: 'create only command',
+      explicit_confirmation: 'I understand this will create a new season calendar.',
+      mutation_scope: 'create_only'
+    }
+    const responseBody: SeasonBuilderApplyCreateOnlyCommandResponse = {
+      command: 'season_builder_apply_create_only',
+      enabled: true,
+      can_execute: true,
+      can_mutate: true,
+      applied: true,
+      target_season_label: '2032/2033',
+      validation_errors: [],
+      validation_warnings: [],
+      created_calendar_summary: {},
+      created_event_preview: [],
+      created_calendar_identity: {},
+      created_calendar_validation_preview: {},
+      apply_gate_summary: {},
+      applied_event_count: 0,
+      dry_run_identity: {},
+      audit_preview: {},
+      message: 'Create-only apply executed successfully.'
+    }
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(responseBody), { status: 200, headers: { 'Content-Type': 'application/json' } })
+    )
+
+    const result = await postSeasonBuilderApplyCreateOnlyCommand(payload)
+
+    const [url, init] = vi.mocked(globalThis.fetch).mock.calls[0]
+    expect(url).toBe('http://127.0.0.1:8000/admin/seasons/builder/apply-create-only-command')
+    const sentPayload = JSON.parse(String((init as RequestInit).body))
+    expect(sentPayload.requested_candidate_identity_reference_id).toBe('candidate-ref-create-only')
+    expect(sentPayload.requested_candidate_identity_fingerprint).toBe('candidate-fp-create-only')
+    expect(sentPayload.requested_candidate_identity_reference_type).toBe('candidate_identity_set')
+    expect(result).toEqual(responseBody)
   })
 })

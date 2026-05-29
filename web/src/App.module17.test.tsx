@@ -94,6 +94,10 @@ function futureApplyValidationResponseMock(
     future_apply_reference_contract: {
       available: true,
       contract_type: 'future_apply_reference_contract',
+      candidate_identity_reference_id: 'candidate-ref-id',
+      candidate_identity_fingerprint: 'candidate-fp',
+      candidate_identity_reference_type: 'dry_run_candidate_identity',
+      candidate_identity_set_referenceable: true,
       apply_execution_enabled: false,
       mutation_permitted: false,
       read_only: true,
@@ -607,7 +611,10 @@ describe('Module 17 pages through routes', () => {
         result_metadata: { preflight_fingerprint: payload.preflight_fingerprint, reviewed_diff_id: payload.reviewed_diff_id, source_type: 'season_template', source_template_id: 'default_msa_template_preview', overwrite_policy: payload.overwrite_policy ?? null, target_calendar_exists: true, target_event_count: 1, comparison_performed: true, read_only: true, mutation_permitted: false, dry_run_result_fingerprint: 'drf_test_existing', dry_run_result_id: 'drr_test_existing' },
         validation_summary: { status: 'blocking', blocking_count: 1, warning_count: 3, info_count: 0, blocking_reasons: ['Existing target calendar requires explicit merge/overwrite policy before future mutation.'], warning_reasons: ['audit_reason will be required before execution is enabled in a future phase.', 'explicit_confirmation will be required before execution is enabled in a future phase.', 'mutation_scope will be required before execution is enabled in a future phase.'], info_messages: [], candidate_status_counts: { planned: 0, replacement: 0, conflict: 1, invalid: 0 }, conflict_type_counts: { week_conflicts: 0, slot_conflicts: 0, policy_conflicts: 1, validation_conflicts: 0 } },
         plan_readiness: { read_only_plan_available: true, has_blocking_issues: true, has_warnings: true, mutation_still_disabled: true, next_required_step: 'Review dry-run summary; execution remains disabled.' },
-        identity_readiness: { status: 'blocked_reference', items: [{ area: 'validation_summary', status: 'Blocked', message: "Validation summary status is 'blocking'." }, { area: 'mutation_state', status: 'Blocked', message: 'Mutation remains disabled; this checklist is reference-only.' }], future_command_reference: { preflight_fingerprint: payload.preflight_fingerprint, reviewed_diff_id: payload.reviewed_diff_id, dry_run_result_fingerprint: 'drf_test_existing', dry_run_result_id: 'drr_test_existing', can_reference_future_command: false, mutation_still_disabled: true } },
+        identity_readiness: { status: 'blocked_reference', items: [{ area: 'validation_summary', status: 'Blocked', message: "Validation summary status is 'blocking'." }, { area: 'mutation_state', status: 'Blocked', message: 'Mutation remains disabled; this checklist is reference-only.' }], future_command_reference: { preflight_fingerprint: payload.preflight_fingerprint, reviewed_diff_id: payload.reviewed_diff_id, dry_run_result_fingerprint: 'drf_test_existing', dry_run_result_id: 'drr_test_existing', can_reference_future_command: false, mutation_still_disabled: true, candidate_identity_fingerprint: 'abc123fingerprint', candidate_identity_reference_id: 'abc123fingerprint', can_reference_candidate_identity_set: true, candidate_identity_reference_type: 'candidate_identity_set' } },
+        candidate_identity_fingerprint: { fingerprint: 'abc123fingerprint', fingerprint_algorithm: 'sha256', fingerprint_payload_version: 1, candidate_count: 1, candidate_ids: ['cand_default_msa_template_preview_slot-01-wt_gold_24'], candidate_identity_keys: ['default_msa_template_preview:slot-01-wt_gold_24'], safe_for_future_reference: true, read_only: true, mutation_permitted: false, message: 'Candidate identity fingerprint is deterministic and read-only.' },
+        candidate_identity_review_reference: { reference_type: 'candidate_identity_set', reference_id: 'abc123fingerprint', fingerprint_algorithm: 'sha256', fingerprint_payload_version: 1, candidate_count: 1, safe_for_future_reference: true, can_reference_future_apply: true, read_only: true, mutation_permitted: false, message: 'Candidate identity set can be referenced by a future audited apply flow.' },
+        future_apply_reference_contract: { available: true, contract_type: 'future_apply_reference_contract', candidate_identity_reference_type: 'candidate_identity_set', candidate_identity_reference_id: 'abc123fingerprint', candidate_identity_fingerprint: 'abc123fingerprint', candidate_identity_set_referenceable: true, main_future_command_reference_ready: false, apply_execution_enabled: false, create_only_apply_required: true, read_only: true, mutation_permitted: false, message: 'Future apply reference contract is preview-only and disabled.' },
         dry_run_result_fingerprint: 'drf_test_existing',
         dry_run_result_id: 'drr_test_existing',
         template_conflict_summary: {
@@ -1446,6 +1453,9 @@ describe('Module 17 pages through routes', () => {
       reviewed_diff_id: 'rd_test_existing',
       dry_run_result_fingerprint: 'drf_test_existing',
       dry_run_result_id: 'drr_test_existing',
+      requested_candidate_identity_reference_id: 'abc123fingerprint',
+      requested_candidate_identity_fingerprint: 'abc123fingerprint',
+      requested_candidate_identity_reference_type: 'candidate_identity_set',
       requested_by: 'local-admin-preview',
       audit_reason: 'create-only calendar command',
       explicit_confirmation: 'I understand this will create a new season calendar.',
@@ -2268,6 +2278,12 @@ describe('Module 17 pages through routes', () => {
 
     const fillButton = await screen.findByRole('button', { name: 'Fill from dry-run reference' })
     expect(fillButton).toBeDisabled()
+    const executeCreateOnlyButton = screen.getByRole('button', { name: 'Execute create-only season calendar command' })
+    fireEvent.change(screen.getByLabelText('Future confirmation phrase preview'), { target: { value: 'I understand this will create a new season calendar.' } })
+    fireEvent.change(screen.getByLabelText('Future create-only mutation scope preview'), { target: { value: 'create_only' } })
+    await waitFor(() => expect(executeCreateOnlyButton).toBeDisabled())
+    fireEvent.click(executeCreateOnlyButton)
+    expect(api.postSeasonBuilderApplyCreateOnlyCommand).not.toHaveBeenCalled()
     expect(screen.queryByRole('button', { name: /^Apply$/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Execute$/i })).not.toBeInTheDocument()
   })

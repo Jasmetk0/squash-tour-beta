@@ -146,6 +146,9 @@ def build_valid_payload(server: Server, season: str = "2035/2036") -> dict:
     assert dry_run_status == 200
     dry_run_preview = dry_run["dry_run_result_preview"]
     assert dry_run_preview["candidate_events"]
+    future_apply_reference_contract = dry_run_preview["future_apply_reference_contract"]
+    assert future_apply_reference_contract["available"] is True
+    assert future_apply_reference_contract["candidate_identity_set_referenceable"] is True
     return {
         "target_season_label": season,
         "source_type": "season_template",
@@ -155,6 +158,9 @@ def build_valid_payload(server: Server, season: str = "2035/2036") -> dict:
         "reviewed_diff_id": preflight["reviewed_diff_id"],
         "dry_run_result_fingerprint": dry_run_preview["dry_run_result_fingerprint"],
         "dry_run_result_id": dry_run_preview["dry_run_result_id"],
+        "requested_candidate_identity_reference_id": future_apply_reference_contract["candidate_identity_reference_id"],
+        "requested_candidate_identity_fingerprint": future_apply_reference_contract["candidate_identity_fingerprint"],
+        "requested_candidate_identity_reference_type": future_apply_reference_contract["candidate_identity_reference_type"],
         "requested_by": "qa",
         "audit_reason": "phase24b negative apply coverage",
         "explicit_confirmation": CREATE_ONLY_CONFIRMATION,
@@ -222,6 +228,35 @@ def apply_create_only(server: Server, payload: dict) -> tuple[int, dict]:
     return call("POST", f"{server.base_url}{CREATE_ONLY_COMMAND_PATH}", payload)
 
 
+
+def test_apply_create_only_matching_candidate_identity_fields_succeeds_and_creates_calendar(
+    tmp_path: Path,
+) -> None:
+    season = "2034/2035"
+    with Server(tmp_path) as server:
+        payload = build_valid_payload(server, season=season)
+
+        status, body = apply_create_only(server, payload)
+
+        assert status == 200
+        assert body["applied"] is True
+        assert body["can_mutate"] is True
+        assert body["created_calendar_summary"]["calendar_exists"] is True
+        assert body["created_calendar_identity"]["requested_candidate_identity_reference_id"] == payload["requested_candidate_identity_reference_id"]
+        assert body["created_calendar_identity"]["requested_candidate_identity_fingerprint"] == payload["requested_candidate_identity_fingerprint"]
+        assert body["created_calendar_identity"]["requested_candidate_identity_reference_type"] == payload["requested_candidate_identity_reference_type"]
+        assert body["apply_gate_summary"]["candidate_identity_fields_present"] is True
+        assert body["apply_gate_summary"]["candidate_identity_reference_contract_available"] is True
+        assert body["apply_gate_summary"]["candidate_identity_reference_id_matched"] is True
+        assert body["apply_gate_summary"]["candidate_identity_fingerprint_matched"] is True
+        assert body["apply_gate_summary"]["candidate_identity_reference_type_matched"] is True
+        assert body["apply_gate_summary"]["candidate_identity_reference_matched"] is True
+
+        persisted = read_persisted_calendar(server, season)
+        assert persisted is not None
+        assert len(persisted["events"]) == body["applied_event_count"]
+
+
 @pytest.mark.parametrize(
     ("field", "value", "expected_status"),
     [
@@ -239,6 +274,12 @@ def apply_create_only(server: Server, payload: dict) -> tuple[int, dict]:
         pytest.param("requested_by", None, 422, id="missing-requested-by-null"),
         pytest.param("audit_reason", "", 400, id="missing-audit-reason-empty"),
         pytest.param("audit_reason", None, 422, id="missing-audit-reason-null"),
+        pytest.param("requested_candidate_identity_reference_id", "", 400, id="blank-candidate-reference-id"),
+        pytest.param("requested_candidate_identity_fingerprint", "", 400, id="blank-candidate-fingerprint"),
+        pytest.param("requested_candidate_identity_reference_type", "", 400, id="blank-candidate-reference-type"),
+        pytest.param("requested_candidate_identity_reference_id", "wrong_ref", 400, id="wrong-candidate-reference-id"),
+        pytest.param("requested_candidate_identity_fingerprint", "wrong_fp", 400, id="wrong-candidate-fingerprint"),
+        pytest.param("requested_candidate_identity_reference_type", "wrong_type", 400, id="wrong-candidate-reference-type"),
     ],
 )
 def test_apply_create_only_guard_rejections_do_not_create_calendar(
@@ -256,6 +297,53 @@ def test_apply_create_only_guard_rejections_do_not_create_calendar(
 
         assert_command_rejected_without_application(status, body, expected_status=expected_status)
         assert_target_calendar_absent(server, season)
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "requested_candidate_identity_reference_id",
+        "requested_candidate_identity_fingerprint",
+        "requested_candidate_identity_reference_type",
+    ],
+)
+def test_apply_create_only_missing_candidate_identity_fields_rejects_without_mutation(
+    tmp_path: Path,
+    field: str,
+) -> None:
+    season = "2035/2036"
+    with Server(tmp_path) as server:
+        payload = build_valid_payload(server, season=season)
+        payload.pop(field)
+
+        status, body = apply_create_only(server, payload)
+
+        assert_command_rejected_without_application(status, body, expected_status=422)
+        assert_target_calendar_absent(server, season)
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "requested_candidate_identity_reference_id",
+        "requested_candidate_identity_fingerprint",
+        "requested_candidate_identity_reference_type",
+    ],
+)
+def test_apply_create_only_null_candidate_identity_fields_rejects_without_mutation(
+    tmp_path: Path,
+    field: str,
+) -> None:
+    season = "2035/2036"
+    with Server(tmp_path) as server:
+        payload = build_valid_payload(server, season=season)
+        payload[field] = None
+
+        status, body = apply_create_only(server, payload)
+
+        assert_command_rejected_without_application(status, body, expected_status=422)
+        assert_target_calendar_absent(server, season)
+
 
 
 def test_apply_create_only_rejects_target_that_already_exists_without_modifying_it(

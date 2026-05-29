@@ -429,6 +429,24 @@ class SeasonBuilderApplyCreateOnlyCommandRequest(BaseModel):
     reviewed_diff_id: str
     dry_run_result_fingerprint: str
     dry_run_result_id: str
+    requested_candidate_identity_reference_id: str
+    requested_candidate_identity_fingerprint: str
+    requested_candidate_identity_reference_type: str
+    requested_by: str
+    audit_reason: str
+    explicit_confirmation: str
+    mutation_scope: str
+
+
+class SeasonBuilderApplyCreateOnlyReadinessRequest(BaseModel):
+    target_season_label: str = Field(min_length=1, max_length=32)
+    source_type: str = Field(min_length=1, max_length=64)
+    source_template_id: str | None = Field(default=None, min_length=1, max_length=128)
+    overwrite_policy: str | None = Field(default=None, min_length=1, max_length=64)
+    preflight_fingerprint: str
+    reviewed_diff_id: str
+    dry_run_result_fingerprint: str
+    dry_run_result_id: str
     requested_by: str
     audit_reason: str
     explicit_confirmation: str

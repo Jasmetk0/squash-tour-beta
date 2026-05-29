@@ -4240,7 +4240,7 @@ export function CreateOnlyApplyDangerZonePreviewPanel({
         <tr><td>Danger-zone required mutation scope</td><td>create_only</td></tr>
         <tr><td>Confirmation phrase matches required phrase</td><td>{confirmationPhraseMatches ? 'yes' : 'no'}</td></tr>
         <tr><td>Mutation scope equals create_only</td><td>{mutationScopeMatches ? 'yes' : 'no'}</td></tr>
-        <tr><td>Future submit eligibility preview</td><td>{futureSubmitEligibilityPreview ? 'yes' : 'no'}</td></tr>
+        <tr><td>Visible guard eligibility preview</td><td>{futureSubmitEligibilityPreview ? 'yes' : 'no'}</td></tr>
         <tr><td>Danger-zone guarded command enabled</td><td>{canSubmitCreateOnlyApply ? 'yes' : 'no'}</td></tr>
       </tbody></table>
       {futureSubmitEligibilityPreview
@@ -4353,7 +4353,7 @@ export function CreateOnlyApplyReadinessPanel({ queryEnabled, query }: CreateOnl
           </tbody></table>
           {!query.data.can_mutate ? <p>This panel is read-only because can_mutate is false.</p> : null}
           {isBackendReadyForCreateOnly
-            ? <p>Backend readiness says create-only apply is ready, but this panel is still read-only. No calendar is created from this UI.</p>
+            ? <p>Backend readiness says create-only apply is ready, but this readiness panel is read-only. Calendar creation can only happen from the separate danger-zone command.</p>
             : <p>Create-only apply is not ready according to backend readiness.</p>}
           <h4>Safety checklist</h4>
           <table><thead><tr><th scope="col">Check</th><th scope="col">Value</th></tr></thead><tbody>

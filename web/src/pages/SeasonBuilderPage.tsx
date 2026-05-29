@@ -295,6 +295,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
   }, [futureApplyValidationContextKey])
   const dryRunCandidateIdentityReviewReference = disabledDryRunBuildQuery.data?.dry_run_result_preview?.candidate_identity_review_reference
   const dryRunCandidateIdentityFingerprint = disabledDryRunBuildQuery.data?.dry_run_result_preview?.candidate_identity_fingerprint
+  const dryRunFutureApplyReferenceContract = disabledDryRunBuildQuery.data?.dry_run_result_preview?.future_apply_reference_contract
   const dryRunCandidateIdentityReferenceId = typeof dryRunCandidateIdentityReviewReference?.reference_id === 'string' && dryRunCandidateIdentityReviewReference.reference_id.trim().length > 0
     ? dryRunCandidateIdentityReviewReference.reference_id
     : ''
@@ -304,6 +305,20 @@ export function AdminSeasonBuilderPage(): JSX.Element {
   const dryRunCandidateIdentityReferenceType = typeof dryRunCandidateIdentityReviewReference?.reference_type === 'string' && dryRunCandidateIdentityReviewReference.reference_type.trim().length > 0
     ? dryRunCandidateIdentityReviewReference.reference_type
     : ''
+  const createOnlyCandidateIdentityReferenceId = typeof dryRunFutureApplyReferenceContract?.candidate_identity_reference_id === 'string' && dryRunFutureApplyReferenceContract.candidate_identity_reference_id.trim().length > 0
+    ? dryRunFutureApplyReferenceContract.candidate_identity_reference_id
+    : dryRunCandidateIdentityReferenceId
+  const createOnlyCandidateIdentityFingerprint = typeof dryRunFutureApplyReferenceContract?.candidate_identity_fingerprint === 'string' && dryRunFutureApplyReferenceContract.candidate_identity_fingerprint.trim().length > 0
+    ? dryRunFutureApplyReferenceContract.candidate_identity_fingerprint
+    : dryRunCandidateIdentityFingerprintValue
+  const createOnlyCandidateIdentityReferenceType = typeof dryRunFutureApplyReferenceContract?.candidate_identity_reference_type === 'string' && dryRunFutureApplyReferenceContract.candidate_identity_reference_type.trim().length > 0
+    ? dryRunFutureApplyReferenceContract.candidate_identity_reference_type
+    : dryRunCandidateIdentityReferenceType
+  const hasRequiredCandidateIdentityReferences = Boolean(
+    createOnlyCandidateIdentityReferenceId
+    && createOnlyCandidateIdentityFingerprint
+    && createOnlyCandidateIdentityReferenceType
+  )
   const canFillFutureApplyReferenceFromDryRun = Boolean(
     dryRunCandidateIdentityReferenceId
     || dryRunCandidateIdentityFingerprintValue
@@ -376,6 +391,7 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     && disabledApplyCommandContractPayload.reviewed_diff_id
     && disabledApplyCommandContractPayload.dry_run_result_fingerprint
     && disabledApplyCommandContractPayload.dry_run_result_id
+    && hasRequiredCandidateIdentityReferences
   )
 
   const createOnlyApplyMutation = useMutation({
@@ -490,6 +506,9 @@ export function AdminSeasonBuilderPage(): JSX.Element {
       reviewed_diff_id: disabledApplyCommandContractPayload.reviewed_diff_id,
       dry_run_result_fingerprint: disabledApplyCommandContractPayload.dry_run_result_fingerprint,
       dry_run_result_id: disabledApplyCommandContractPayload.dry_run_result_id,
+      requested_candidate_identity_reference_id: createOnlyCandidateIdentityReferenceId,
+      requested_candidate_identity_fingerprint: createOnlyCandidateIdentityFingerprint,
+      requested_candidate_identity_reference_type: createOnlyCandidateIdentityReferenceType,
       requested_by: disabledApplyCommandContractPayload.requested_by ?? 'local-admin-preview',
       audit_reason: disabledApplyCommandContractPayload.audit_reason ?? 'create-only calendar command',
       explicit_confirmation: dangerZoneConfirmationText.trim(),

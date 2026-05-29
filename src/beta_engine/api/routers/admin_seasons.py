@@ -55,6 +55,7 @@ from beta_engine.domain.tournaments import (
     SeasonBuilderApplyCommandContractResponse,
     SeasonBuilderApplyCreateOnlyCommandRequest,
     SeasonBuilderApplyCreateOnlyCommandResponse,
+    SeasonBuilderApplyCreateOnlyReadinessRequest,
     SeasonBuilderApplyCreateOnlyReadinessResponse,
     SeasonBuilderDryRunBuildRequest,
     SeasonBuilderDryRunBuildResponse,
@@ -1164,6 +1165,12 @@ def post_season_builder_apply_create_only_command(
         "explicit_confirmation_valid": False,
         "mutation_scope_valid": False,
         "dry_run_identity_matched": False,
+        "candidate_identity_fields_present": False,
+        "candidate_identity_reference_contract_available": False,
+        "candidate_identity_reference_id_matched": False,
+        "candidate_identity_fingerprint_matched": False,
+        "candidate_identity_reference_type_matched": False,
+        "candidate_identity_reference_matched": False,
         "dry_run_validation_clean": False,
         "candidate_events_non_empty": False,
         "service_insert_succeeded": False,
@@ -1200,6 +1207,21 @@ def post_season_builder_apply_create_only_command(
         errors.append("dry_run_result_fingerprint is required.")
     if not payload.dry_run_result_id.strip():
         errors.append("dry_run_result_id is required.")
+    requested_candidate_identity_reference_id = payload.requested_candidate_identity_reference_id.strip()
+    requested_candidate_identity_fingerprint = payload.requested_candidate_identity_fingerprint.strip()
+    requested_candidate_identity_reference_type = payload.requested_candidate_identity_reference_type.strip()
+    if not requested_candidate_identity_reference_id:
+        errors.append("requested_candidate_identity_reference_id is required.")
+    if not requested_candidate_identity_fingerprint:
+        errors.append("requested_candidate_identity_fingerprint is required.")
+    if not requested_candidate_identity_reference_type:
+        errors.append("requested_candidate_identity_reference_type is required.")
+    if (
+        requested_candidate_identity_reference_id
+        and requested_candidate_identity_fingerprint
+        and requested_candidate_identity_reference_type
+    ):
+        apply_gate_summary["candidate_identity_fields_present"] = True
     if not payload.requested_by.strip():
         errors.append("requested_by is required.")
     if not payload.audit_reason.strip():
@@ -1242,6 +1264,48 @@ def post_season_builder_apply_create_only_command(
         dry_run_preview = dry_run_response.dry_run_result_preview
         recomputed_fingerprint = str(dry_run_preview.get("dry_run_result_fingerprint") or "")
         recomputed_id = str(dry_run_preview.get("dry_run_result_id") or "")
+        future_apply_reference_contract = dry_run_preview.get("future_apply_reference_contract")
+        if not isinstance(future_apply_reference_contract, dict):
+            future_apply_reference_contract = {}
+        expected_candidate_identity_reference_id = str(
+            future_apply_reference_contract.get("candidate_identity_reference_id") or ""
+        )
+        expected_candidate_identity_fingerprint = str(
+            future_apply_reference_contract.get("candidate_identity_fingerprint") or ""
+        )
+        expected_candidate_identity_reference_type = str(
+            future_apply_reference_contract.get("candidate_identity_reference_type") or ""
+        )
+        candidate_identity_contract_available = future_apply_reference_contract.get("available") is True
+        candidate_identity_contract_referenceable = (
+            future_apply_reference_contract.get("candidate_identity_set_referenceable") is True
+        )
+        candidate_identity_reference_id_matches = (
+            requested_candidate_identity_reference_id == expected_candidate_identity_reference_id
+            and bool(requested_candidate_identity_reference_id)
+        )
+        candidate_identity_fingerprint_matches = (
+            requested_candidate_identity_fingerprint == expected_candidate_identity_fingerprint
+            and bool(requested_candidate_identity_fingerprint)
+        )
+        candidate_identity_reference_type_matches = (
+            requested_candidate_identity_reference_type == expected_candidate_identity_reference_type
+            and bool(requested_candidate_identity_reference_type)
+        )
+        candidate_identity_reference_matches = (
+            candidate_identity_contract_available
+            and candidate_identity_contract_referenceable
+            and candidate_identity_reference_id_matches
+            and candidate_identity_fingerprint_matches
+            and candidate_identity_reference_type_matches
+        )
+        apply_gate_summary["candidate_identity_reference_contract_available"] = (
+            candidate_identity_contract_available and candidate_identity_contract_referenceable
+        )
+        apply_gate_summary["candidate_identity_reference_id_matched"] = candidate_identity_reference_id_matches
+        apply_gate_summary["candidate_identity_fingerprint_matched"] = candidate_identity_fingerprint_matches
+        apply_gate_summary["candidate_identity_reference_type_matched"] = candidate_identity_reference_type_matches
+        apply_gate_summary["candidate_identity_reference_matched"] = candidate_identity_reference_matches
         dry_run_identity = {
             "preflight_fingerprint": payload.preflight_fingerprint,
             "reviewed_diff_id": payload.reviewed_diff_id,
@@ -1250,11 +1314,33 @@ def post_season_builder_apply_create_only_command(
             "recomputed_dry_run_result_fingerprint": recomputed_fingerprint,
             "recomputed_dry_run_result_id": recomputed_id,
             "identity_matches": recomputed_fingerprint == payload.dry_run_result_fingerprint and recomputed_id == payload.dry_run_result_id,
+            "requested_candidate_identity_reference_id": requested_candidate_identity_reference_id,
+            "requested_candidate_identity_fingerprint": requested_candidate_identity_fingerprint,
+            "requested_candidate_identity_reference_type": requested_candidate_identity_reference_type,
+            "expected_candidate_identity_reference_id": expected_candidate_identity_reference_id,
+            "expected_candidate_identity_fingerprint": expected_candidate_identity_fingerprint,
+            "expected_candidate_identity_reference_type": expected_candidate_identity_reference_type,
+            "candidate_identity_reference_contract_available": candidate_identity_contract_available,
+            "candidate_identity_set_referenceable": candidate_identity_contract_referenceable,
+            "candidate_identity_reference_id_matches": candidate_identity_reference_id_matches,
+            "candidate_identity_fingerprint_matches": candidate_identity_fingerprint_matches,
+            "candidate_identity_reference_type_matches": candidate_identity_reference_type_matches,
+            "candidate_identity_reference_matches": candidate_identity_reference_matches,
         }
         if recomputed_fingerprint != payload.dry_run_result_fingerprint or recomputed_id != payload.dry_run_result_id:
             errors.append("Dry-run identity mismatch: recomputed result fingerprint/id does not match request.")
         else:
             apply_gate_summary["dry_run_identity_matched"] = True
+        if not candidate_identity_contract_available:
+            errors.append("Candidate identity reference contract is not available for create-only apply.")
+        if not candidate_identity_contract_referenceable:
+            errors.append("Candidate identity reference contract is not referenceable for create-only apply.")
+        if not candidate_identity_reference_id_matches:
+            errors.append("Candidate identity reference id mismatch: recomputed reference id does not match request.")
+        if not candidate_identity_fingerprint_matches:
+            errors.append("Candidate identity fingerprint mismatch: recomputed fingerprint does not match request.")
+        if not candidate_identity_reference_type_matches:
+            errors.append("Candidate identity reference type mismatch: recomputed reference type does not match request.")
         validation_status = str((dry_run_preview.get("validation_summary") or {}).get("status") or "")
         if validation_status != "clean":
             errors.append("Recomputed dry-run validation summary must be 'clean'.")
@@ -1275,6 +1361,9 @@ def post_season_builder_apply_create_only_command(
         "explicit_confirmation_present": bool(payload.explicit_confirmation.strip()),
         "dry_run_result_fingerprint": payload.dry_run_result_fingerprint,
         "dry_run_result_id": payload.dry_run_result_id,
+        "requested_candidate_identity_reference_id": requested_candidate_identity_reference_id,
+        "requested_candidate_identity_fingerprint": requested_candidate_identity_fingerprint,
+        "requested_candidate_identity_reference_type": requested_candidate_identity_reference_type,
         "applied_event_count": 0,
         "audit_persisted": False,
         "audit_persistence_status": "not_implemented",
@@ -1351,6 +1440,9 @@ def post_season_builder_apply_create_only_command(
         "source_template_id": payload.source_template_id,
         "dry_run_result_fingerprint": payload.dry_run_result_fingerprint,
         "dry_run_result_id": payload.dry_run_result_id,
+        "requested_candidate_identity_reference_id": requested_candidate_identity_reference_id,
+        "requested_candidate_identity_fingerprint": requested_candidate_identity_fingerprint,
+        "requested_candidate_identity_reference_type": requested_candidate_identity_reference_type,
         "applied_event_count": len(persisted_events),
         "created_calendar_event_ids_fingerprint": f"evt_{event_ids_fingerprint[:16]}",
     }
@@ -1396,7 +1488,7 @@ def post_season_builder_apply_create_only_command(
 
 @router.post("/builder/apply-create-only-readiness", response_model=SeasonBuilderApplyCreateOnlyReadinessResponse)
 def post_season_builder_apply_create_only_readiness(
-    payload: SeasonBuilderApplyCreateOnlyCommandRequest,
+    payload: SeasonBuilderApplyCreateOnlyReadinessRequest,
     template_service: SeasonTemplateService = Depends(get_season_template_service),
     calendar_service: SeasonCalendarService = Depends(get_season_calendar_service),
 ) -> SeasonBuilderApplyCreateOnlyReadinessResponse:

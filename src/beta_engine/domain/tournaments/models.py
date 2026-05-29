@@ -470,6 +470,11 @@ class SeasonBuilderApplyCreateOnlyCommandResponse(BaseModel):
     applied_event_count: int = 0
     dry_run_identity: dict[str, Any] = Field(default_factory=dict)
     audit_preview: dict[str, Any] = Field(default_factory=dict)
+    audit_record_id: str | None = None
+    audit_persisted: bool = False
+    audit_persistence_status: str = "not_attempted"
+    audit_record_fingerprint: str | None = None
+    audit_storage_summary: dict[str, Any] = Field(default_factory=dict)
     message: str
 
 

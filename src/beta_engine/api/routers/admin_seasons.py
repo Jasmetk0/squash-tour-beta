@@ -5,7 +5,7 @@ import json
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from beta_engine.api.deps import get_initial_pool_season_bootstrap_service, get_season_calendar_service, get_season_range_execution_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service, get_season_template_service
+from beta_engine.api.deps import get_initial_pool_season_bootstrap_service, get_season_builder_apply_audit_service, get_season_calendar_service, get_season_range_execution_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service, get_season_template_service
 from beta_engine.api.schemas import SeasonBootstrapRequest
 from beta_engine.application.season_player_bootstrap_service import (
     InitialPoolSeasonBootstrapService,
@@ -13,6 +13,13 @@ from beta_engine.application.season_player_bootstrap_service import (
     SeasonBootstrapResult,
 )
 from beta_engine.application.season_calendar_service import SeasonCalendarAlreadyExistsError, SeasonCalendarService
+from beta_engine.application.season_builder_apply_audit_service import (
+    SeasonBuilderApplyAuditService,
+    SeasonBuilderApplyCreateOnlyAuditRecord,
+    build_audit_record_id,
+    deterministic_digest,
+    utc_now_iso,
+)
 from beta_engine.application.season_readiness_service import SeasonReadinessRequest, SeasonReadinessResult, SeasonReadinessService
 from beta_engine.application.season_range_preflight_service import SeasonRangePreflightRequest, SeasonRangePreflightResult, SeasonRangePreflightService
 from beta_engine.application.season_range_execution_service import RunSeasonRangeRequest, RunSeasonRangeResult, SeasonRangeExecutionService
@@ -82,6 +89,44 @@ REQUIRED_CREATE_ONLY_APPLY_CONFIRMATION_PHRASE = "I understand this will create 
 def _build_deterministic_digest(payload: dict[str, object]) -> str:
     canonical_payload = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(canonical_payload.encode("utf-8")).hexdigest()
+
+
+def _response_fingerprint(payload: dict[str, object]) -> str:
+    scrubbed = dict(payload)
+    scrubbed["audit_record_fingerprint"] = None
+    return f"resp_{deterministic_digest(scrubbed)[:24]}"
+
+
+def _audit_failure_response(
+    *,
+    target_season_label: str,
+    validation_errors: list[str],
+    validation_warnings: list[str],
+    dry_run_identity: dict[str, object] | None = None,
+    apply_gate_summary: dict[str, bool] | None = None,
+    audit_preview: dict[str, object] | None = None,
+    status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
+) -> None:
+    preview = dict(audit_preview or {})
+    preview.update({
+        "audit_persisted": False,
+        "audit_persistence_status": "failed_closed_before_mutation",
+    })
+    raise HTTPException(status_code=status_code, detail=SeasonBuilderApplyCreateOnlyCommandResponse(
+        enabled=True,
+        can_execute=False,
+        can_mutate=False,
+        applied=False,
+        target_season_label=target_season_label,
+        validation_errors=validation_errors,
+        validation_warnings=validation_warnings,
+        dry_run_identity=dry_run_identity or {},
+        audit_preview=preview,
+        apply_gate_summary=apply_gate_summary or {},
+        audit_persisted=False,
+        audit_persistence_status="failed_closed_before_mutation",
+        message="Create-only apply rejected because audit persistence failed before mutation; no mutation performed.",
+    ).model_dump())
 
 
 
@@ -1154,6 +1199,7 @@ def post_season_builder_apply_create_only_command(
     payload: SeasonBuilderApplyCreateOnlyCommandRequest,
     template_service: SeasonTemplateService = Depends(get_season_template_service),
     calendar_service: SeasonCalendarService = Depends(get_season_calendar_service),
+    audit_service: SeasonBuilderApplyAuditService = Depends(get_season_builder_apply_audit_service),
 ) -> SeasonBuilderApplyCreateOnlyCommandResponse:
     errors: list[str] = []
     warnings: list[str] = []
@@ -1175,6 +1221,14 @@ def post_season_builder_apply_create_only_command(
         "candidate_events_non_empty": False,
         "service_insert_succeeded": False,
     }
+    request_payload_fingerprint = (
+        f"req_{deterministic_digest(payload.model_dump(mode='json'))[:24]}"
+    )
+    attempted_at = utc_now_iso()
+    audit_record_id = build_audit_record_id(
+        attempted_at=attempted_at,
+        request_payload_fingerprint=request_payload_fingerprint,
+    )
     normalized_target = payload.target_season_label
     try:
         normalized_target = to_long_season_label(normalize_season_label(payload.target_season_label))
@@ -1242,6 +1296,9 @@ def post_season_builder_apply_create_only_command(
     elif calendar_result and calendar_result.calendar is None:
         apply_gate_summary["target_absent_before_apply"] = True
 
+    expected_candidate_identity_reference_id = ""
+    expected_candidate_identity_fingerprint = ""
+    expected_candidate_identity_reference_type = ""
     dry_run_identity: dict[str, object] = {}
     candidate_events: list[dict[str, object]] = []
     if not errors:
@@ -1359,22 +1416,122 @@ def post_season_builder_apply_create_only_command(
         "mutation_scope": payload.mutation_scope,
         "read_only": False,
         "explicit_confirmation_present": bool(payload.explicit_confirmation.strip()),
+        "explicit_confirmation_valid": apply_gate_summary["explicit_confirmation_valid"],
         "dry_run_result_fingerprint": payload.dry_run_result_fingerprint,
         "dry_run_result_id": payload.dry_run_result_id,
         "requested_candidate_identity_reference_id": requested_candidate_identity_reference_id,
         "requested_candidate_identity_fingerprint": requested_candidate_identity_fingerprint,
         "requested_candidate_identity_reference_type": requested_candidate_identity_reference_type,
+        "expected_candidate_identity_reference_id": expected_candidate_identity_reference_id,
+        "expected_candidate_identity_fingerprint": expected_candidate_identity_fingerprint,
+        "expected_candidate_identity_reference_type": expected_candidate_identity_reference_type,
         "applied_event_count": 0,
+        "audit_record_id": None,
+        "audit_record_fingerprint": None,
         "audit_persisted": False,
-        "audit_persistence_status": "not_implemented",
+        "audit_persistence_status": "not_attempted",
+        "audit_storage_summary": audit_service.storage_summary(),
     }
+
+    def persist_audit_record(
+        *,
+        audit_stage: str,
+        response_payload: dict[str, object],
+        applied: bool,
+        mutation_performed: bool,
+        applied_event_count: int = 0,
+        created_calendar_event_ids_fingerprint: str | None = None,
+        created_calendar_identity: dict[str, object] | None = None,
+        rejection_status_code: int | None = None,
+        rejection_reason: str | None = None,
+    ):
+        response_payload_fingerprint = _response_fingerprint(response_payload)
+        record = SeasonBuilderApplyCreateOnlyAuditRecord(
+            audit_record_id=audit_record_id,
+            attempted_at=attempted_at,
+            audit_stage=audit_stage,  # type: ignore[arg-type]
+            read_only=False,
+            target_season_label=payload.target_season_label,
+            normalized_target_season_label=normalized_target,
+            source_type=payload.source_type,
+            source_template_id=payload.source_template_id,
+            overwrite_policy=payload.overwrite_policy,
+            mutation_scope=payload.mutation_scope,
+            requested_by=payload.requested_by,
+            audit_reason=payload.audit_reason,
+            explicit_confirmation_present=bool(payload.explicit_confirmation.strip()),
+            explicit_confirmation_valid=apply_gate_summary["explicit_confirmation_valid"],
+            preflight_fingerprint=payload.preflight_fingerprint,
+            reviewed_diff_id=payload.reviewed_diff_id,
+            dry_run_result_fingerprint=payload.dry_run_result_fingerprint,
+            dry_run_result_id=payload.dry_run_result_id,
+            requested_candidate_identity_reference_id=requested_candidate_identity_reference_id,
+            requested_candidate_identity_fingerprint=requested_candidate_identity_fingerprint,
+            requested_candidate_identity_reference_type=requested_candidate_identity_reference_type,
+            expected_candidate_identity_reference_id=expected_candidate_identity_reference_id or None,
+            expected_candidate_identity_fingerprint=expected_candidate_identity_fingerprint or None,
+            expected_candidate_identity_reference_type=expected_candidate_identity_reference_type or None,
+            dry_run_identity=dry_run_identity,
+            apply_gate_summary=apply_gate_summary,
+            validation_errors=errors,
+            validation_warnings=warnings,
+            applied=applied,
+            mutation_performed=mutation_performed,
+            applied_event_count=applied_event_count,
+            created_calendar_event_ids_fingerprint=created_calendar_event_ids_fingerprint,
+            created_calendar_identity=created_calendar_identity or {},
+            rejection_status_code=rejection_status_code,
+            rejection_reason=rejection_reason,
+            request_payload_fingerprint=request_payload_fingerprint,
+            response_payload_fingerprint=response_payload_fingerprint,
+            idempotency_key=None,
+        )
+        return audit_service.append_record(record)
     if errors:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT if any("already exists" in e for e in errors) else status.HTTP_400_BAD_REQUEST, detail=SeasonBuilderApplyCreateOnlyCommandResponse(
+        rejection_status_code = status.HTTP_409_CONFLICT if any("already exists" in e for e in errors) else status.HTTP_400_BAD_REQUEST
+        response = SeasonBuilderApplyCreateOnlyCommandResponse(
             enabled=True, can_execute=False, can_mutate=False, applied=False, target_season_label=normalized_target,
             validation_errors=errors, validation_warnings=warnings, dry_run_identity=dry_run_identity, audit_preview=audit_preview,
             apply_gate_summary=apply_gate_summary,
+            audit_record_id=audit_record_id,
+            audit_persisted=False,
+            audit_persistence_status="not_attempted",
+            audit_storage_summary=audit_service.storage_summary(),
             message="Create-only apply rejected; no mutation performed.",
-        ).model_dump())
+        )
+        response_payload = response.model_dump(mode="json")
+        try:
+            write_result = persist_audit_record(
+                audit_stage="rejected",
+                response_payload=response_payload,
+                applied=False,
+                mutation_performed=False,
+                rejection_status_code=rejection_status_code,
+                rejection_reason="; ".join(errors),
+            )
+        except OSError:
+            _audit_failure_response(
+                target_season_label=normalized_target,
+                validation_errors=["Audit persistence failed before mutation; create-only apply failed closed."],
+                validation_warnings=warnings,
+                dry_run_identity=dry_run_identity,
+                apply_gate_summary=apply_gate_summary,
+                audit_preview=audit_preview,
+            )
+        audit_preview.update({
+            "audit_record_id": write_result.audit_record_id,
+            "audit_record_fingerprint": write_result.audit_record_fingerprint,
+            "audit_persisted": True,
+            "audit_persistence_status": "persisted_rejected",
+            "audit_storage_summary": write_result.audit_storage_summary,
+        })
+        response.audit_preview = audit_preview
+        response.audit_record_id = write_result.audit_record_id
+        response.audit_persisted = True
+        response.audit_persistence_status = "persisted_rejected"
+        response.audit_record_fingerprint = write_result.audit_record_fingerprint
+        response.audit_storage_summary = write_result.audit_storage_summary
+        raise HTTPException(status_code=rejection_status_code, detail=response.model_dump())
 
     persisted_events = []
     for idx, candidate in enumerate(candidate_events, start=1):
@@ -1402,17 +1559,95 @@ def post_season_builder_apply_create_only_command(
         ))
 
     created = SeasonCalendar(season=normalized_target, events=persisted_events)
+    reservation_response = SeasonBuilderApplyCreateOnlyCommandResponse(
+        enabled=True,
+        can_execute=True,
+        can_mutate=False,
+        applied=False,
+        target_season_label=normalized_target,
+        validation_errors=[],
+        validation_warnings=warnings,
+        dry_run_identity=dry_run_identity,
+        audit_preview=audit_preview,
+        apply_gate_summary=apply_gate_summary,
+        audit_record_id=audit_record_id,
+        audit_persisted=False,
+        audit_persistence_status="pre_mutation_reservation_pending",
+        audit_storage_summary=audit_service.storage_summary(),
+        message="Create-only apply audit reservation pending; no mutation performed yet.",
+    )
+    try:
+        reservation_write_result = persist_audit_record(
+            audit_stage="pre_mutation_reserved",
+            response_payload=reservation_response.model_dump(mode="json"),
+            applied=False,
+            mutation_performed=False,
+        )
+    except OSError:
+        _audit_failure_response(
+            target_season_label=normalized_target,
+            validation_errors=["Audit persistence failed before mutation; create-only apply failed closed."],
+            validation_warnings=warnings,
+            dry_run_identity=dry_run_identity,
+            apply_gate_summary=apply_gate_summary,
+            audit_preview=audit_preview,
+        )
+
+    audit_preview.update({
+        "audit_record_id": reservation_write_result.audit_record_id,
+        "audit_record_fingerprint": reservation_write_result.audit_record_fingerprint,
+        "audit_persisted": True,
+        "audit_persistence_status": "pre_mutation_reserved",
+        "audit_storage_summary": reservation_write_result.audit_storage_summary,
+    })
     try:
         calendar_service.create_calendar_if_absent(season=normalized_target, calendar=created)
         apply_gate_summary["service_insert_succeeded"] = True
     except SeasonCalendarAlreadyExistsError:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=SeasonBuilderApplyCreateOnlyCommandResponse(
+        conflict_errors = ["Target season calendar already exists; create-only apply cannot modify existing calendars."]
+        errors.extend(conflict_errors)
+        response = SeasonBuilderApplyCreateOnlyCommandResponse(
             enabled=True, can_execute=False, can_mutate=False, applied=False, target_season_label=normalized_target,
-            validation_errors=["Target season calendar already exists; create-only apply cannot modify existing calendars."],
+            validation_errors=conflict_errors,
             validation_warnings=warnings, dry_run_identity=dry_run_identity, audit_preview=audit_preview,
             apply_gate_summary=apply_gate_summary,
+            audit_record_id=audit_record_id,
+            audit_persisted=True,
+            audit_persistence_status="pre_mutation_reserved",
+            audit_record_fingerprint=reservation_write_result.audit_record_fingerprint,
+            audit_storage_summary=reservation_write_result.audit_storage_summary,
             message="Create-only apply rejected; no mutation performed.",
-        ).model_dump())
+        )
+        try:
+            write_result = persist_audit_record(
+                audit_stage="rejected",
+                response_payload=response.model_dump(mode="json"),
+                applied=False,
+                mutation_performed=False,
+                rejection_status_code=status.HTTP_409_CONFLICT,
+                rejection_reason="; ".join(conflict_errors),
+            )
+        except OSError:
+            _audit_failure_response(
+                target_season_label=normalized_target,
+                validation_errors=["Audit persistence failed before mutation; create-only apply failed closed."],
+                validation_warnings=warnings,
+                dry_run_identity=dry_run_identity,
+                apply_gate_summary=apply_gate_summary,
+                audit_preview=audit_preview,
+            )
+        audit_preview.update({
+            "audit_record_id": write_result.audit_record_id,
+            "audit_record_fingerprint": write_result.audit_record_fingerprint,
+            "audit_persisted": True,
+            "audit_persistence_status": "persisted_rejected",
+            "audit_storage_summary": write_result.audit_storage_summary,
+        })
+        response.audit_preview = audit_preview
+        response.audit_persistence_status = "persisted_rejected"
+        response.audit_record_fingerprint = write_result.audit_record_fingerprint
+        response.audit_storage_summary = write_result.audit_storage_summary
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=response.model_dump())
 
     audit_preview["applied_event_count"] = len(persisted_events)
     created_event_preview = [
@@ -1466,7 +1701,7 @@ def post_season_builder_apply_create_only_command(
         "message": persisted_validation.message,
     }
 
-    return SeasonBuilderApplyCreateOnlyCommandResponse(
+    success_response = SeasonBuilderApplyCreateOnlyCommandResponse(
         enabled=True, can_execute=True, can_mutate=True, applied=True, target_season_label=normalized_target,
         created_calendar_summary={
             "calendar_exists": True,
@@ -1482,8 +1717,61 @@ def post_season_builder_apply_create_only_command(
         created_calendar_validation_preview=created_calendar_validation_preview,
         apply_gate_summary=apply_gate_summary,
         applied_event_count=len(persisted_events), dry_run_identity=dry_run_identity, audit_preview=audit_preview,
+        audit_record_id=audit_record_id,
+        audit_persisted=True,
+        audit_persistence_status="pre_mutation_reserved",
+        audit_record_fingerprint=reservation_write_result.audit_record_fingerprint,
+        audit_storage_summary=reservation_write_result.audit_storage_summary,
         message="Create-only apply executed successfully.",
     )
+    try:
+        success_write_result = persist_audit_record(
+            audit_stage="succeeded",
+            response_payload=success_response.model_dump(mode="json"),
+            applied=True,
+            mutation_performed=True,
+            applied_event_count=len(persisted_events),
+            created_calendar_event_ids_fingerprint=created_calendar_identity["created_calendar_event_ids_fingerprint"],
+            created_calendar_identity=created_calendar_identity,
+        )
+    except OSError:
+        audit_preview.update({
+            "audit_record_id": reservation_write_result.audit_record_id,
+            "audit_record_fingerprint": reservation_write_result.audit_record_fingerprint,
+            "audit_persisted": True,
+            "audit_persistence_status": "mutation_succeeded_audit_finalize_failed",
+            "audit_storage_summary": reservation_write_result.audit_storage_summary,
+        })
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=SeasonBuilderApplyCreateOnlyCommandResponse(
+            enabled=True, can_execute=False, can_mutate=False, applied=True, target_season_label=normalized_target,
+            validation_errors=["Create-only apply created the calendar, but final audit persistence failed after the pre-mutation reservation."],
+            validation_warnings=warnings,
+            created_calendar_identity=created_calendar_identity,
+            apply_gate_summary=apply_gate_summary,
+            applied_event_count=len(persisted_events),
+            dry_run_identity=dry_run_identity,
+            audit_preview=audit_preview,
+            audit_record_id=reservation_write_result.audit_record_id,
+            audit_persisted=True,
+            audit_persistence_status="mutation_succeeded_audit_finalize_failed",
+            audit_record_fingerprint=reservation_write_result.audit_record_fingerprint,
+            audit_storage_summary=reservation_write_result.audit_storage_summary,
+            message="Create-only apply created the calendar, but final audit persistence failed after reservation.",
+        ).model_dump())
+    audit_preview.update({
+        "audit_record_id": success_write_result.audit_record_id,
+        "audit_record_fingerprint": success_write_result.audit_record_fingerprint,
+        "audit_persisted": True,
+        "audit_persistence_status": "persisted_success",
+        "audit_storage_summary": success_write_result.audit_storage_summary,
+    })
+    success_response.audit_preview = audit_preview
+    success_response.audit_record_id = success_write_result.audit_record_id
+    success_response.audit_persisted = True
+    success_response.audit_persistence_status = "persisted_success"
+    success_response.audit_record_fingerprint = success_write_result.audit_record_fingerprint
+    success_response.audit_storage_summary = success_write_result.audit_storage_summary
+    return success_response
 
 
 @router.post("/builder/apply-create-only-readiness", response_model=SeasonBuilderApplyCreateOnlyReadinessResponse)

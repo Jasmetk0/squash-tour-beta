@@ -136,7 +136,10 @@ def test_apply_create_only_success(tmp_path: Path) -> None:
         assert body["created_calendar_validation_preview"]["validation_status"] in ("clean", "warnings")
         assert "issue_codes_first_10" in body["created_calendar_validation_preview"]
         assert body["apply_gate_summary"]["service_insert_succeeded"] is True
-        assert body["audit_preview"]["audit_persisted"] is False
+        assert body["audit_preview"]["audit_persisted"] is True
+        assert body["audit_persisted"] is True
+        assert body["audit_record_id"]
+        assert body["audit_record_fingerprint"]
         _, calendar = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar")
         assert calendar["summary"]["event_count"] == body["applied_event_count"]
         first_event = calendar["calendar"]["events"][0]
@@ -174,7 +177,10 @@ def test_apply_create_only_reject_existing_calendar(tmp_path: Path) -> None:
         assert body["applied"] is False
         assert body["created_calendar_validation_preview"] == {}
         assert body["apply_gate_summary"]["service_insert_succeeded"] is False
-        assert body["audit_preview"]["audit_persisted"] is False
+        assert body["audit_preview"]["audit_persisted"] is True
+        assert body["audit_persisted"] is True
+        assert body["audit_record_id"]
+        assert body["audit_record_fingerprint"]
         _, after = call("GET", f"{server.base_url}/admin/seasons/2035%2F2036/calendar")
         assert len(after["calendar"]["events"]) == len(before["calendar"]["events"])
 

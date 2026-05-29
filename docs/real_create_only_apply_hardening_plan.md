@@ -6,7 +6,7 @@ This document describes the existing real guarded create-only apply command for 
 
 It is separate from the Phase 15-23 future-apply preview/pre-execution stack. The preview stack remains disabled, read-only, non-mutating, manual-only, and informational. This document does not authorize production use of the real command by itself; it records the current command shape, current safety guarantees, known gaps, and the hardening plan required before the command can be treated as reliable.
 
-This document originated in Phase 24A as planning-only documentation. Phase 24C2 has since implemented the candidate identity reference enforcement slice for the real create-only apply command; the remaining gaps below still require separate owner-approved hardening work.
+This document originated in Phase 24A as planning-only documentation. Phase 24C2 has since implemented the candidate identity reference enforcement slice for the real create-only apply command. Phase 24D2 has implemented durable append-only JSONL audit persistence for schema-valid real create-only apply attempts that reach the handler; the remaining gaps below still require separate owner-approved hardening work.
 
 ## Existing real command
 
@@ -77,8 +77,9 @@ The current real create-only apply path has these known gaps:
 1. **Candidate identity reference enforcement implemented in Phase 24C2**
    - The real command now accepts and enforces `requested_candidate_identity_reference_id`, `requested_candidate_identity_fingerprint`, and `requested_candidate_identity_reference_type` from the Phase 15-23 preview stack before mutation.
 
-2. **No durable audit trail**
-   - Audit metadata is checked for presence, but command attempts and results are not yet persisted as durable audit records.
+2. **Durable audit trail implemented in Phase 24D2**
+   - Schema-valid real create-only apply command attempts that reach the handler are persisted as append-only JSONL audit records before rejection responses or before/after successful mutation.
+   - FastAPI/Pydantic 422 requests that never enter the handler are intentionally not audited in Phase 24D2.
 
 3. **Weak idempotency/retry contract**
    - Duplicate/retry safety relies mostly on the target-absence guard and `create_calendar_if_absent`.
@@ -124,18 +125,26 @@ The owner decision was to require immediate enforcement for the real mutation en
 
 The command recomputes dry-run output, derives expected candidate identity values from the recomputed `future_apply_reference_contract`, requires the contract to be available/referenceable, rejects mismatches with no mutation, and includes direct API and frontend/client coverage for the new guards.
 
-### Phase 24D: Audit persistence design
+### Phase 24D: Audit persistence design — implemented in Phase 24D2
 
-Design and implement durable audit records for command attempts. At minimum, persist:
+Phase 24D2 persists durable audit records for schema-valid `POST /admin/seasons/builder/apply-create-only-command` attempts that reach the handler. The selected backend is an append-only JSONL log stored adjacent to the season calendar registry by default, with one canonical JSON object per line. Records use schema version `season_builder_apply_create_only_audit.v1` and store safe scalar fields plus fingerprints rather than full raw request/response payloads.
+
+The durable audit record includes, at minimum:
 
 - command attempt id,
 - requested_by,
 - audit_reason,
 - timestamp,
 - input identity,
+- requested and expected candidate identity references,
 - guard result,
 - mutation result,
-- rejection reason when applicable.
+- created calendar identity/event-id fingerprint on success,
+- rejection status/reason when applicable.
+
+Rejected schema-valid attempts are audited before the rejection response is returned. Successful attempts write a pre-mutation reservation before calendar insertion and a final success record after calendar insertion. If audit persistence fails before mutation, the command fails closed and does not create a calendar.
+
+Phase 24D2 deliberately does not audit FastAPI/Pydantic 422 requests that fail request-model validation before handler entry.
 
 ### Phase 24E: Idempotency/retry/concurrency design
 
@@ -156,6 +165,8 @@ Clarify the Season Builder danger-zone UX so operators understand that this is a
 - prevent confusion with the disabled preview stack,
 - explain that successful execution creates persistent calendar state,
 - show audit/idempotency status once those backend features exist.
+
+Audit persistence now exists for the backend real command as of Phase 24D2; idempotency status and danger-zone UX hardening remain future work.
 
 ## Required invariant until hardening is complete
 

@@ -3639,6 +3639,11 @@ export type SeasonBuilderApplyCreateOnlyCommandResponse = {
   applied_event_count: number
   dry_run_identity: Record<string, unknown>
   audit_preview: Record<string, unknown>
+  audit_record_id?: string | null
+  audit_persisted?: boolean
+  audit_persistence_status?: string
+  audit_record_fingerprint?: string | null
+  audit_storage_summary?: Record<string, unknown>
   message: string
 }
 export type SeasonBuilderApplyCreateOnlyReadinessResponse = {

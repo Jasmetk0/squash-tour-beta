@@ -1,19 +1,31 @@
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { Layout } from './Layout'
+import { getModeSwitcherTarget, Layout, viewerDropdowns } from './Layout'
 import { renderWithRoute } from '../test/testUtils'
+
+const dropdownExpectations: Record<string, string[]> = {
+  Rankings: ['MSA Rankings', 'Race to Finals', 'Next Gen Race', 'Elo Ranking', 'Power Rating', 'Form Ranking', 'Country Ranking', 'No.1 History'],
+  Tour: ['Season Hub', 'Season Calendar', 'Current Week', 'All Tournaments', 'Match Center', 'Tournament Categories', 'Past Champions'],
+  Players: ['Players Hub', 'All Players', 'Active Players', 'Prospects / Next Gen', 'Retired Players', 'Compare Players'],
+  Countries: ['Countries Hub', 'Country Ranking', 'All Countries', 'Hosting Nations', 'Talent Pipeline', 'Country Records'],
+  H2H: ['H2H Explorer', 'Rivalry Rankings', 'Most Played Matchups', 'Finals Rivalries', 'Player Comparison', 'Predict Matchup'],
+  Stats: ['Records', 'Title Leaders', 'Weeks at No.1', 'Streaks', 'Biggest Upsets', 'Best Seasons', 'Player Stats', 'Tournament Stats', 'Country Stats', 'Awards', 'Hall of Fame', 'Era Rankings'],
+  Predictions: ['Match Predictor', 'Match Odds', 'Tournament Odds', 'Finals Qualification', 'Season-End No.1', 'Upset Watch', 'Futures Markets']
+}
 
 describe('Layout mode navigation', () => {
   beforeEach(() => {
     localStorage.clear()
   })
-  it('shows Admin / Engine mode navigation and run-scoped admin links', async () => {
+
+  it('keeps Admin / Engine mode navigation and run-scoped admin links stable', async () => {
     renderWithRoute(<Layout />, '/admin/runs/run-a/finals')
 
     expect(await screen.findByText('Admin / Engine Mode')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Viewer / MSA' })).toHaveAttribute('href', '/viewer')
-    expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', '/admin')
+    expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', '/admin/runs/run-a/finals')
     expect(screen.getByRole('link', { name: 'World' })).toHaveAttribute('href', '/admin/world')
     expect(screen.getByRole('link', { name: 'Tour & Seasons' })).toHaveAttribute('href', '/admin/tour-seasons')
     expect(screen.getByRole('link', { name: 'Simulate' })).toHaveAttribute('href', '/admin/simulate')
@@ -28,43 +40,62 @@ describe('Layout mode navigation', () => {
     expect(screen.getByText('Current run context: run-a')).toBeInTheDocument()
   })
 
-  it('shows Viewer / MSA mode navigation and read-oriented run links', async () => {
+  it('shows one Viewer primary nav and no duplicate Viewer run nav', async () => {
     renderWithRoute(<Layout />, '/viewer/runs/run-a/rankings')
 
     expect(await screen.findByText('Viewer / MSA Website Mode')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/viewer')
-    expect(screen.getAllByRole('link', { name: 'Rankings' })[0]).toHaveAttribute('href', '/viewer/rankings')
-    expect(screen.getAllByRole('link', { name: 'Tournaments' })[0]).toHaveAttribute('href', '/viewer/tournaments')
-    expect(screen.getByRole('link', { name: 'Records' })).toHaveAttribute('href', '/viewer/records')
-    expect(screen.getByRole('navigation', { name: 'Run navigation' })).toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: 'Rankings' })[1]).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
-    expect(screen.getByRole('link', { name: 'Race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
-    expect(screen.getAllByRole('link', { name: 'Tournaments' })[1]).toHaveAttribute('href', '/viewer/runs/run-a/tournaments')
-    expect(screen.getAllByRole('link', { name: 'History' })[0]).toHaveAttribute('href', '/viewer/history')
-    expect(screen.getAllByRole('link', { name: 'History' })[1]).toHaveAttribute('href', '/viewer/runs/run-a/history')
+    expect(screen.getAllByTestId('viewer-primary-nav')).toHaveLength(1)
+    expect(screen.queryByRole('navigation', { name: 'Run navigation' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
   })
 
-  it('shows the active Viewer run indicator and quick links on Viewer top-level routes', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'viewer-run-a')
-
+  it('shows exact Viewer topbar categories and dropdown menu items', async () => {
     renderWithRoute(<Layout />, '/viewer')
 
-    expect(await screen.findByText('Viewer / MSA Website Mode')).toBeInTheDocument()
-    expect(screen.getByLabelText('Viewer active run')).toHaveTextContent('Viewing run: viewer-run-a')
-    expect(screen.getByRole('navigation', { name: 'Viewer active run quick links' })).toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: 'Rankings' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-a/rankings')).toBe(true)
-    expect(screen.getAllByRole('link', { name: 'Tournaments' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-a/tournaments')).toBe(true)
-    expect(screen.getAllByRole('link', { name: 'Players' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-a/players')).toBe(true)
-    expect(screen.getAllByRole('link', { name: 'Countries' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-a/countries')).toBe(true)
-    expect(screen.getAllByRole('link', { name: 'History' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-a/history')).toBe(true)
+    const nav = await screen.findByTestId('viewer-primary-nav')
+    expect(within(nav).getByRole('link', { name: 'MSA' })).toHaveAttribute('href', '/viewer')
+    expect(within(nav).getByRole('link', { name: 'Search' })).toHaveAttribute('href', '/viewer/search')
+
+    for (const dropdown of viewerDropdowns) {
+      expect(within(nav).getByText(dropdown.label)).toBeInTheDocument()
+      expect(dropdown.items.map((item) => item.label)).toEqual(dropdownExpectations[dropdown.label])
+      for (const item of dropdown.items) {
+        expect(within(nav).getAllByRole('link', { name: item.label }).some((link) => link.getAttribute('href') === item.to)).toBe(true)
+      }
+    }
   })
 
-  it('shows no selected Viewer run message on Viewer top-level routes', async () => {
+  it('shows and expands the Season/Week selector on click', async () => {
+    const user = userEvent.setup()
     renderWithRoute(<Layout />, '/viewer')
 
-    expect(await screen.findByText('Viewer / MSA Website Mode')).toBeInTheDocument()
-    expect(screen.getByText(/No Viewer run selected/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Select a run' })).toHaveAttribute('href', '/viewer')
+    const selector = await screen.findByRole('button', { name: 'Season 2004/05 · W10' })
+    expect(selector).toHaveAttribute('aria-expanded', 'false')
+
+    await user.click(selector)
+
+    expect(selector).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByText('Season: 2004/05')).toBeInTheDocument()
+    expect(screen.getByText('Season Week: 10 / 61')).toBeInTheDocument()
+    expect(screen.getByText('Calendar Year: 2004')).toBeInTheDocument()
+    expect(screen.getByText('Year Week: 46')).toBeInTheDocument()
+    expect(screen.getByText('Status: selected viewer context')).toBeInTheDocument()
   })
 
+  it('maps context-aware Admin/Viewer switcher routes', () => {
+    expect(getModeSwitcherTarget('/viewer')).toEqual({ viewerTarget: '/viewer', adminTarget: '/admin' })
+    expect(getModeSwitcherTarget('/admin')).toEqual({ viewerTarget: '/viewer', adminTarget: '/admin' })
+    expect(getModeSwitcherTarget('/viewer/players')).toEqual({ viewerTarget: '/viewer/players', adminTarget: '/admin/players' })
+    expect(getModeSwitcherTarget('/admin/players')).toEqual({ viewerTarget: '/viewer/players', adminTarget: '/admin/players' })
+    expect(getModeSwitcherTarget('/viewer/countries')).toEqual({ viewerTarget: '/viewer/countries', adminTarget: '/admin/world/countries' })
+    expect(getModeSwitcherTarget('/admin/world/countries')).toEqual({ viewerTarget: '/viewer/countries', adminTarget: '/admin/world/countries' })
+    expect(getModeSwitcherTarget('/viewer/tour')).toEqual({ viewerTarget: '/viewer/tour', adminTarget: '/admin/tour-seasons' })
+    expect(getModeSwitcherTarget('/admin/tour-seasons')).toEqual({ viewerTarget: '/viewer/tour', adminTarget: '/admin/tour-seasons' })
+    expect(getModeSwitcherTarget('/viewer/runs/abc/calendar')).toEqual({ viewerTarget: '/viewer/runs/abc/calendar', adminTarget: '/admin/runs/abc/calendar' })
+    expect(getModeSwitcherTarget('/admin/runs/abc/calendar')).toEqual({ viewerTarget: '/viewer/runs/abc/calendar', adminTarget: '/admin/runs/abc/calendar' })
+    expect(getModeSwitcherTarget('/viewer/runs/abc/players')).toEqual({ viewerTarget: '/viewer/runs/abc/players', adminTarget: '/admin/runs/abc/players' })
+    expect(getModeSwitcherTarget('/admin/runs/abc/players')).toEqual({ viewerTarget: '/viewer/runs/abc/players', adminTarget: '/admin/runs/abc/players' })
+    expect(getModeSwitcherTarget('/viewer/unknown')).toEqual({ viewerTarget: '/viewer/unknown', adminTarget: '/admin' })
+    expect(getModeSwitcherTarget('/admin/unknown')).toEqual({ viewerTarget: '/viewer', adminTarget: '/admin/unknown' })
+  })
 })

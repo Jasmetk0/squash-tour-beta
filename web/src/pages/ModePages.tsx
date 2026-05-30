@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { AdminPlayersPage as InitialPoolAdminPlayersPage } from './AdminPlayersPage'
@@ -8,66 +9,8 @@ import { TournamentTemplatesPage } from './TournamentTemplatesPage'
 import { getCountriesMetadata, getTournamentTemplatesMetadata, listRuns } from '../api/client'
 
 import { LinkCardGrid } from '../components/LinkCardGrid'
-import { ViewerRunSelector } from '../components/ViewerRunSelector'
-import { SectionCard } from '../components/RunScopedUi'
-import { ViewerRankingsReadOnlyPage } from './RankingTables'
-import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewer/activeRun'
-
-function useViewerActiveRunId(): string | null {
-  const [activeRunId, setActiveRunId] = useState(() => readViewerActiveRunId())
-
-  useEffect(() => {
-    function handleActiveRunChange(): void {
-      setActiveRunId(readViewerActiveRunId())
-    }
-
-    window.addEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, handleActiveRunChange)
-    window.addEventListener('storage', handleActiveRunChange)
-    return () => {
-      window.removeEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, handleActiveRunChange)
-      window.removeEventListener('storage', handleActiveRunChange)
-    }
-  }, [])
-
-  return activeRunId
-}
-
-function ViewerRunScopedSuggestion({ page }: { page: string }): JSX.Element {
-  const activeRunId = useViewerActiveRunId()
-  if (!activeRunId) {
-    return (
-      <div className="empty-state">
-        <p className="status">Select a Viewer run first.</p>
-        <p>Viewer pages need an explicit generated world/run before they can show run-scoped data.</p>
-        <ViewerRunSelector />
-      </div>
-    )
-  }
-
-  return (
-    <p className="status">
-      Viewing run: <strong>{activeRunId}</strong>. Open{' '}
-      <Link to={`/viewer/runs/${activeRunId}/${page}`}>{page}</Link>.
-    </p>
-  )
-}
-
-function AdminRunScopedSuggestion({ page }: { page: string }): JSX.Element {
-  const lastRunId = typeof window === 'undefined' ? null : window.localStorage.getItem('beta_engine:last_run_id')
-  if (!lastRunId) {
-    return (
-      <p className="status">
-        Open a run from <Link to="/admin/runs">Runs</Link> to view run-scoped data.
-      </p>
-    )
-  }
-
-  return (
-    <p className="status">
-      Last opened run: <Link to={`/admin/runs/${lastRunId}/${page}`}>{lastRunId}</Link>
-    </p>
-  )
-}
+import { ViewerJumpToWeekButton } from '../components/ViewerContextControls'
+import { useViewerContext } from '../viewer/ViewerContext'
 
 export function LandingPage(): JSX.Element {
   return (
@@ -137,45 +80,6 @@ export function AdminHomePage(): JSX.Element {
           { title: 'Diagnostics', description: 'World balance, calendar validation, run health, invalidated data, and future narrative locks.', to: '/admin/diagnostics' }
         ]}
       />
-    </section>
-  )
-}
-
-export function ViewerHomePage(): JSX.Element {
-  const activeRunId = useViewerActiveRunId()
-  const cards = activeRunId
-    ? [
-        { title: 'Rankings', description: 'Official ranking snapshot browsing.', to: `/viewer/runs/${activeRunId}/rankings` },
-        { title: 'Race', description: 'Seasonal race standings for Finals qualification.', to: `/viewer/runs/${activeRunId}/race` },
-        { title: 'Tournaments', description: 'Tournament and finals result browsing.', to: `/viewer/runs/${activeRunId}/tournaments` },
-        { title: 'Calendar', description: 'Season calendar and planned-event browsing.', to: `/viewer/runs/${activeRunId}/calendar` },
-        { title: 'Players', description: 'Player index and career pages.', to: `/viewer/runs/${activeRunId}/players` },
-        { title: 'Countries', description: 'Read-only nation profiles and player pipelines.', to: `/viewer/runs/${activeRunId}/countries` },
-        { title: 'History', description: 'Activity, archives, weeks, and historical snapshots.', to: `/viewer/runs/${activeRunId}/history` },
-        { title: 'Finals', description: 'World Tour Finals qualification and result views.', to: `/viewer/runs/${activeRunId}/finals` }
-      ]
-    : []
-
-  return (
-    <section className="panel viewer-home">
-      <div className="page-intro">
-        <h2>MSA Website Home</h2>
-        <p className="subtitle">Public-style generated FAX squash world view for browsing and analysis.</p>
-      </div>
-      <p>
-        Viewer / MSA Website Mode is the read-only public site for a generated squash world. Select the run/world first, then browse
-        rankings, tournaments, players, countries, history, and Finals pages as run-scoped website sections.
-      </p>
-      <ViewerRunSelector />
-      {activeRunId ? (
-        <section className="panel nested-panel">
-          <h3>Browse selected world</h3>
-          <p className="status">Viewing run: {activeRunId}</p>
-          <LinkCardGrid cards={cards} />
-        </section>
-      ) : (
-        <p className="status">Select a Viewer run first to enable run-scoped MSA website links.</p>
-      )}
     </section>
   )
 }
@@ -288,66 +192,123 @@ export function AdminSettingsPage(): JSX.Element {
   )
 }
 
+
+type ViewerShellPageProps = {
+  title: string
+  kicker?: string
+  description?: string
+  children?: ReactNode
+}
+
+function ViewerContextLine(): JSX.Element {
+  const context = useViewerContext()
+  return (
+    <p className="status">
+      Viewer context: Season {context.selectedSeason} · W{context.selectedWeek}. This page is read-only and uses scaffold content until the relevant backend read model is connected.
+    </p>
+  )
+}
+
+export function ViewerShellPage({ title, kicker = 'Viewer read-only scaffold', description, children }: ViewerShellPageProps): JSX.Element {
+  return (
+    <section className="panel viewer-shell-page">
+      <div className="page-intro">
+        <span className="eyebrow">{kicker}</span>
+        <h2>{title}</h2>
+        <p className="subtitle">
+          {description ?? 'This sports-facing Viewer section is a safe Phase 1A shell. Future data will connect here without adding mutating controls.'}
+        </p>
+      </div>
+      <ViewerContextLine />
+      {children ?? <p className="empty-state">No authoritative backend data is rendered for this section in Viewer Phase 1A.</p>}
+    </section>
+  )
+}
+
+export function ViewerHomePage(): JSX.Element {
+  const context = useViewerContext()
+  const cards = [
+    'Featured Tournament Hero',
+    'Other Tournaments This Week',
+    'Top 10 Rankings',
+    'Race to Finals',
+    'Featured Matches',
+    'Predictions & Upset Watch',
+    'Storylines'
+  ]
+
+  return (
+    <section className="panel viewer-home viewer-home--msa">
+      <div className="page-intro viewer-home__hero">
+        <span className="eyebrow">MSA Homepage</span>
+        <h2>MSA Squash — Season {context.selectedSeason} · W{context.selectedWeek}</h2>
+        <p className="subtitle">
+          Public-style, read-only squash tour homepage shell for the selected Viewer context. Data cards are intentionally empty until read models are connected.
+        </p>
+      </div>
+      <div className="viewer-home-grid">
+        {cards.map((title) => (
+          <article key={title} className="viewer-home-card">
+            <h3>{title}</h3>
+            <p className="status">Viewer read-only scaffold — no authoritative data is available in Phase 1A.</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 export function ViewerRankingsPage(): JSX.Element {
-  return <ViewerRankingsReadOnlyPage />
+  return <ViewerShellPage title="MSA Rankings" description="Official ranking table shell for the selected Season/Week context." />
 }
 
 export function ViewerTournamentsPage(): JSX.Element {
-  return (
-    <section className="panel">
-      <div className="page-intro">
-        <h2>Tournaments</h2>
-        <p className="subtitle">Read-oriented tournament, calendar, and finals browsing.</p>
-      </div>
-      <ViewerRunScopedSuggestion page="tournaments" />
-    </section>
-  )
+  return <ViewerShellPage title="All Tournaments" description="Tournament database shell for future read-only filtering and archives." />
 }
 
 export function ViewerPlayersPage(): JSX.Element {
-  return (
-    <section className="panel">
-      <div className="page-intro">
-        <h2>Players</h2>
-        <p className="subtitle">Read-oriented player index and career browsing.</p>
-      </div>
-      <ViewerRunScopedSuggestion page="players" />
-    </section>
-  )
+  return <ViewerShellPage title="Players Hub" description="Player spotlight and browse hub shell for the selected Viewer context." />
 }
 
 export function ViewerCountriesPage(): JSX.Element {
-  return (
-    <section className="panel">
-      <div className="page-intro">
-        <h2>Countries</h2>
-        <p className="subtitle">Read-oriented nation profiles and country-level player views.</p>
-      </div>
-      <ViewerRunScopedSuggestion page="countries" />
-    </section>
-  )
+  return <ViewerShellPage title="Countries Hub" description="Country overview shell for national rankings, hosting, pipelines, and records." />
 }
 
 export function ViewerHistoryPage(): JSX.Element {
-  return (
-    <section className="panel">
-      <div className="page-intro">
-        <h2>History</h2>
-        <p className="subtitle">Read-oriented activity, archives, event history, and snapshots.</p>
-      </div>
-      <ViewerRunScopedSuggestion page="history" />
-    </section>
-  )
+  return <ViewerShellPage title="History" description="Read-only history shell retained for run-scoped archive entry points." />
 }
 
 export function ViewerRecordsPage(): JSX.Element {
+  return <ViewerShellPage title="Records" description="Record book landing shell for statistics and historical achievements." />
+}
+
+export function ViewerTourCalendarPage(): JSX.Element {
   return (
-    <section className="panel">
-      <div className="page-intro">
-        <h2>Records</h2>
-        <p className="subtitle">Records and GOAT-style statistics will appear here later.</p>
+    <ViewerShellPage title="Season Calendar" description="Calendar shell demonstrating the reusable Jump to Week primitive without backend mutation.">
+      <div className="viewer-jump-demo" aria-label="Jump to Week demo">
+        <p className="status">Demo card for future calendar/event cards.</p>
+        <ViewerJumpToWeekButton week={24} />
       </div>
-      <p className="status">Placeholder only for Phase 1 navigation. No records logic is implemented in this task.</p>
-    </section>
+    </ViewerShellPage>
   )
+}
+
+export function ViewerCountryRankingPage(): JSX.Element {
+  return <ViewerShellPage title="Country Ranking" description="Shared Country Ranking destination used by Rankings and Countries navigation." />
+}
+
+export function ViewerPlayerComparisonPage(): JSX.Element {
+  return <ViewerShellPage title="Player Comparison" description="Shared Player Comparison destination used by Players and H2H navigation." />
+}
+
+export function ViewerMatchPredictorPage(): JSX.Element {
+  return <ViewerShellPage title="Match Predictor" description="Shared read-only predictor shell used by H2H and Predictions navigation." />
+}
+
+export function ViewerFinalsReadOnlyPage(): JSX.Element {
+  return <ViewerShellPage title="World Tour Finals" description="Read-only Finals shell. Admin simulation controls are intentionally not rendered in Viewer." />
+}
+
+export function ViewerPlannedEventReadOnlyPage(): JSX.Element {
+  return <ViewerShellPage title="Planned Event" description="Read-only planned event detail shell. Commissioner event controls are intentionally not rendered in Viewer." />
 }

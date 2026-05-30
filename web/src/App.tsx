@@ -22,11 +22,18 @@ import {
   AdminWorldPage,
   LandingPage,
   ViewerCountriesPage,
+  ViewerCountryRankingPage,
+  ViewerFinalsReadOnlyPage,
   ViewerHistoryPage,
   ViewerHomePage,
+  ViewerMatchPredictorPage,
+  ViewerPlannedEventReadOnlyPage,
+  ViewerPlayerComparisonPage,
   ViewerPlayersPage,
   ViewerRankingsPage,
   ViewerRecordsPage,
+  ViewerShellPage,
+  ViewerTourCalendarPage,
   ViewerTournamentsPage
 } from './pages/ModePages'
 import { AdminTourSeasonsComparePage } from './pages/CalendarComparePage'
@@ -135,11 +142,59 @@ export default function App(): JSX.Element {
 
         <Route path="viewer" element={<ViewerHomePage />} />
         <Route path="viewer/rankings" element={<ViewerRankingsPage />} />
+        <Route path="viewer/rankings/race" element={<ViewerShellPage title="Race to Finals" />} />
+        <Route path="viewer/rankings/next-gen" element={<ViewerShellPage title="Next Gen Race" />} />
+        <Route path="viewer/rankings/elo" element={<ViewerShellPage title="Elo Ranking" />} />
+        <Route path="viewer/rankings/power" element={<ViewerShellPage title="Power Rating" />} />
+        <Route path="viewer/rankings/form" element={<ViewerShellPage title="Form Ranking" />} />
+        <Route path="viewer/rankings/no1-history" element={<ViewerShellPage title="No.1 History" />} />
+        <Route path="viewer/tour" element={<ViewerShellPage title="Season Hub" />} />
+        <Route path="viewer/tour/calendar" element={<ViewerTourCalendarPage />} />
+        <Route path="viewer/tour/current-week" element={<ViewerShellPage title="Current Week" />} />
+        <Route path="viewer/tour/tournaments" element={<ViewerTournamentsPage />} />
+        <Route path="viewer/tour/matches" element={<ViewerShellPage title="Match Center" />} />
+        <Route path="viewer/tour/categories" element={<ViewerShellPage title="Tournament Categories" />} />
+        <Route path="viewer/tour/champions" element={<ViewerShellPage title="Past Champions" />} />
         <Route path="viewer/tournaments" element={<ViewerTournamentsPage />} />
         <Route path="viewer/players" element={<ViewerPlayersPage />} />
+        <Route path="viewer/players/all" element={<ViewerShellPage title="All Players" />} />
+        <Route path="viewer/players/active" element={<ViewerShellPage title="Active Players" />} />
+        <Route path="viewer/players/next-gen" element={<ViewerShellPage title="Prospects / Next Gen" />} />
+        <Route path="viewer/players/retired" element={<ViewerShellPage title="Retired Players" />} />
+        <Route path="viewer/players/compare" element={<ViewerPlayerComparisonPage />} />
         <Route path="viewer/countries" element={<ViewerCountriesPage />} />
-        <Route path="viewer/history" element={<ViewerHistoryPage />} />
+        <Route path="viewer/countries/ranking" element={<ViewerCountryRankingPage />} />
+        <Route path="viewer/countries/all" element={<ViewerShellPage title="All Countries" />} />
+        <Route path="viewer/countries/hosting" element={<ViewerShellPage title="Hosting Nations" />} />
+        <Route path="viewer/countries/talent-pipeline" element={<ViewerShellPage title="Talent Pipeline" />} />
+        <Route path="viewer/countries/records" element={<ViewerShellPage title="Country Records" />} />
+        <Route path="viewer/h2h" element={<ViewerShellPage title="H2H Explorer" />} />
+        <Route path="viewer/h2h/rivalries" element={<ViewerShellPage title="Rivalry Rankings" />} />
+        <Route path="viewer/h2h/most-played" element={<ViewerShellPage title="Most Played Matchups" />} />
+        <Route path="viewer/h2h/finals-rivalries" element={<ViewerShellPage title="Finals Rivalries" />} />
+        <Route path="viewer/stats" element={<ViewerRecordsPage />} />
+        <Route path="viewer/stats/title-leaders" element={<ViewerShellPage title="Title Leaders" />} />
+        <Route path="viewer/stats/no1-weeks" element={<ViewerShellPage title="Weeks at No.1" />} />
+        <Route path="viewer/stats/streaks" element={<ViewerShellPage title="Streaks" />} />
+        <Route path="viewer/stats/upsets" element={<ViewerShellPage title="Biggest Upsets" />} />
+        <Route path="viewer/stats/best-seasons" element={<ViewerShellPage title="Best Seasons" />} />
+        <Route path="viewer/stats/player-stats" element={<ViewerShellPage title="Player Stats" />} />
+        <Route path="viewer/stats/tournament-stats" element={<ViewerShellPage title="Tournament Stats" />} />
+        <Route path="viewer/stats/country-stats" element={<ViewerShellPage title="Country Stats" />} />
+        <Route path="viewer/stats/awards" element={<ViewerShellPage title="Awards" />} />
+        <Route path="viewer/stats/hall-of-fame" element={<ViewerShellPage title="Hall of Fame" />} />
+        <Route path="viewer/stats/era-rankings" element={<ViewerShellPage title="Era Rankings" />} />
         <Route path="viewer/records" element={<ViewerRecordsPage />} />
+        <Route path="viewer/predictions" element={<ViewerMatchPredictorPage />} />
+        <Route path="viewer/predictions/match-predictor" element={<ViewerMatchPredictorPage />} />
+        <Route path="viewer/predictions/match-odds" element={<ViewerShellPage title="Match Odds" />} />
+        <Route path="viewer/predictions/tournament-odds" element={<ViewerShellPage title="Tournament Odds" />} />
+        <Route path="viewer/predictions/finals-qualification" element={<ViewerShellPage title="Finals Qualification" />} />
+        <Route path="viewer/predictions/season-end-no1" element={<ViewerShellPage title="Season-End No.1" />} />
+        <Route path="viewer/predictions/upset-watch" element={<ViewerShellPage title="Upset Watch" />} />
+        <Route path="viewer/predictions/futures" element={<ViewerShellPage title="Futures Markets" />} />
+        <Route path="viewer/search" element={<ViewerShellPage title="Search" description="Global Viewer search shell for future player, tournament, country, match, and season results." />} />
+        <Route path="viewer/history" element={<ViewerHistoryPage />} />
         <Route path="viewer/runs/:runId/rankings" element={<SnapshotsPage mode="ranking" />} />
         <Route path="viewer/runs/:runId/rankings/:snapshotSequence" element={<SnapshotDetailPage mode="ranking" />} />
         <Route path="viewer/runs/:runId/race" element={<SnapshotsPage mode="race" />} />
@@ -147,13 +202,13 @@ export default function App(): JSX.Element {
         <Route path="viewer/runs/:runId/tournaments" element={<EventsPage />} />
         <Route path="viewer/runs/:runId/tournaments/:eventId" element={<EventDetailPage />} />
         <Route path="viewer/runs/:runId/calendar" element={<SeasonCalendarPage />} />
-        <Route path="viewer/runs/:runId/calendar/:eventId" element={<PlannedEventDetailPage />} />
+        <Route path="viewer/runs/:runId/calendar/:eventId" element={<ViewerPlannedEventReadOnlyPage />} />
         <Route path="viewer/runs/:runId/weeks/:week" element={<WeekDetailPage />} />
         <Route path="viewer/runs/:runId/players" element={<PlayersPage />} />
         <Route path="viewer/runs/:runId/players/:playerId/career" element={<PlayerCareerPage />} />
         <Route path="viewer/runs/:runId/countries" element={<NationsPage />} />
         <Route path="viewer/runs/:runId/history" element={<ActivityPage />} />
-        <Route path="viewer/runs/:runId/finals" element={<FinalsPage />} />
+        <Route path="viewer/runs/:runId/finals" element={<ViewerFinalsReadOnlyPage />} />
         <Route path="viewer/runs/:runId/finals/qualification" element={<FinalsQualificationDetailPage />} />
         <Route path="viewer/runs/:runId/finals/result" element={<FinalsResultDetailPage />} />
 

@@ -2479,37 +2479,34 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText(/Country profile and authored model inputs/i)).toBeInTheDocument()
   })
 
-  it('renders the Viewer MSA home route with no active run empty state', async () => {
+  it('renders the Viewer MSA home route as the MSA homepage shell', async () => {
     localStorage.removeItem('beta_engine:viewer_active_run_id')
     api.listRuns.mockResolvedValueOnce({ runs: [] })
     renderAppAt('/viewer')
-    expect(await screen.findByRole('heading', { name: 'MSA Website Home' })).toBeInTheDocument()
-    expect(screen.getByText('Select a Viewer run first to enable run-scoped MSA website links.')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Rankings' })).toHaveAttribute('href', '/viewer/rankings')
-    expect(screen.queryByRole('link', { name: 'Players' })).toHaveAttribute('href', '/viewer/players')
-    expect(screen.queryByRole('link', { name: 'Countries' })).toHaveAttribute('href', '/viewer/countries')
-    expect(screen.queryByRole('link', { name: 'History' })).toHaveAttribute('href', '/viewer/history')
-    expect(screen.queryByRole('link', { name: 'Finals' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /MSA Squash/, level: 2 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Featured Tournament Hero' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Other Tournaments This Week' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Top 10 Rankings' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Race to Finals' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Featured Matches' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Predictions & Upset Watch' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Storylines' })).toBeInTheDocument()
   })
 
-  it('renders the Viewer MSA home route with active run links', async () => {
+  it('renders the Viewer MSA home route with active run context indicator only', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'viewer-run-1')
     api.listRuns.mockResolvedValueOnce({ runs: [] })
     renderAppAt('/viewer')
-    expect(await screen.findByRole('heading', { name: 'MSA Website Home' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /MSA Squash/, level: 2 })).toBeInTheDocument()
     expect(screen.getAllByText(/viewer-run-1/)[0]).toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: 'Rankings' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-1/rankings')).toBe(true)
-    expect(screen.getAllByRole('link', { name: 'Tournaments' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-1/tournaments')).toBe(true)
-    expect(screen.getAllByRole('link', { name: 'Players' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-1/players')).toBe(true)
-    expect(screen.getAllByRole('link', { name: 'Countries' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-1/countries')).toBe(true)
-    expect(screen.getAllByRole('link', { name: 'History' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-1/history')).toBe(true)
+    expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
   })
 
-  it('renders top-level Viewer rankings with active run link', async () => {
+  it('renders top-level Viewer rankings without duplicate active run links', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'viewer-run-2')
     renderAppAt('/viewer/rankings')
     expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: 'Rankings' }).some((link) => link.getAttribute('href') === '/viewer/runs/viewer-run-2/rankings')).toBe(true)
+    expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
   })
 
   beforeEach(() => {

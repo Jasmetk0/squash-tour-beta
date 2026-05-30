@@ -83,9 +83,6 @@ Viewer MUST NOT:
 - import/render components that include mutating controls unless those controls are removed/split
 - show future knowledge beyond selected Season/Week in future phases
 
-Forbidden Viewer action labels/buttons controls are removed/split
-- show future knowledge beyond selected Season/Week in future phases
-
 Forbidden Viewer action labels/buttons:
 
 - Simulate

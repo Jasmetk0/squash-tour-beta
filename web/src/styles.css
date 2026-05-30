@@ -1061,3 +1061,44 @@ textarea:focus-visible {
     margin-top: 0.5rem;
   }
 }
+
+.viewer-active-run-panel,
+.viewer-active-run-card {
+  border: 1px solid #bfdbfe;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #eff6ff, #f8fafc);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 12px 28px rgb(15 23 42 / 6%);
+}
+
+.viewer-active-run-panel h3,
+.viewer-active-run-card h3 {
+  margin: 0.25rem 0;
+}
+
+.viewer-active-run-link-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.viewer-active-run-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #93c5fd;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1d4ed8;
+  font-weight: 800;
+  padding: 0.55rem 0.85rem;
+  text-decoration: none;
+}
+
+.viewer-active-run-link:hover,
+.viewer-active-run-link:focus-visible {
+  background: #dbeafe;
+  color: #1e3a8a;
+}

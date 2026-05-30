@@ -88,10 +88,11 @@ afterEach(() => {
 })
 
 beforeEach(() => {
+  localStorage.removeItem('beta_engine:viewer_active_run_id')
   resetApiMocks()
 })
 
-describe('Viewer Phase 1B routes and safety', () => {
+describe('Viewer Phase 1B/1C routes and safety', () => {
   it('renders premium MSA homepage scaffold sections without authoritative data', async () => {
     renderAppAt('/viewer')
 
@@ -107,7 +108,7 @@ describe('Viewer Phase 1B routes and safety', () => {
     ]) {
       expect(screen.getByRole('heading', { name: section })).toBeInTheDocument()
     }
-    expect(screen.getAllByText('No authoritative data is shown in this Phase 1B shell.')).toHaveLength(7)
+    expect(screen.getAllByText('No authoritative data is shown in this Phase 1C shell.')).toHaveLength(7)
   })
 
   it('updates local Viewer context with Jump to Week', async () => {
@@ -117,6 +118,72 @@ describe('Viewer Phase 1B routes and safety', () => {
     expect(await screen.findByRole('button', { name: 'Season 2004/05 · W10' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Jump to W24' }))
     expect(screen.getByRole('button', { name: 'Season 2004/05 · W24' })).toBeInTheDocument()
+  })
+
+  it('shows sports-facing empty states on top-level Viewer pages when no active run is selected', async () => {
+    localStorage.removeItem('beta_engine:viewer_active_run_id')
+    const emptyStateRoutes = [
+      ['/viewer/rankings', 'Select a Viewer run to view MSA Rankings.'],
+      ['/viewer/players', 'Select a Viewer run to view MSA Players.'],
+      ['/viewer/countries', 'Select a Viewer run to view MSA Countries.'],
+      ['/viewer/history', 'Select a Viewer run to view MSA History.']
+    ] as const
+
+    for (const [route, message] of emptyStateRoutes) {
+      cleanup()
+      renderAppAt(route)
+      expect(await screen.findByText(message)).toBeInTheDocument()
+      expect(screen.queryByText(/debug/i)).not.toBeInTheDocument()
+    }
+  })
+
+  it('shows active run status and run-scoped read-only links on the Viewer homepage', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    renderAppAt('/viewer')
+
+    expect(await screen.findByRole('heading', { name: 'Active run data is available' })).toBeInTheDocument()
+    expect(screen.getByText(/Using Viewer run/)).toHaveTextContent('run-a')
+    const statusPanel = screen.getByLabelText('Active Viewer run status')
+    for (const [name, href] of [
+      ['Active Run Rankings', '/viewer/runs/run-a/rankings'],
+      ['Active Run Race', '/viewer/runs/run-a/race'],
+      ['Active Run Tournaments', '/viewer/runs/run-a/tournaments'],
+      ['Active Run Calendar', '/viewer/runs/run-a/calendar'],
+      ['Active Run Players', '/viewer/runs/run-a/players'],
+      ['Active Run Countries', '/viewer/runs/run-a/countries'],
+      ['Active Run History', '/viewer/runs/run-a/history'],
+      ['Active Run Finals', '/viewer/runs/run-a/finals']
+    ] as const) {
+      expect(within(statusPanel).getByRole('link', { name })).toHaveAttribute('href', href)
+    }
+  })
+
+  it('bridges active-run top-level Viewer pages to run-scoped read-only routes', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    const bridgedRoutes = [
+      ['/viewer/rankings', 'Ranking snapshots'],
+      ['/viewer/rankings/race', 'Race snapshots'],
+      ['/viewer/tour/tournaments', 'Events history'],
+      ['/viewer/tournaments', 'Events history'],
+      ['/viewer/players', 'Run Players Explorer'],
+      ['/viewer/countries', 'Run Nations Dashboard'],
+      ['/viewer/history', 'Run activity']
+    ] as const
+
+    for (const [route, heading] of bridgedRoutes) {
+      cleanup()
+      renderAppAt(route)
+      expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument()
+      expectNoForbiddenViewerActions()
+    }
+  })
+
+  it('offers the active run calendar link while preserving the top-level calendar Jump to Week primitive', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    renderAppAt('/viewer/tour/calendar')
+
+    expect(await screen.findByRole('button', { name: 'Jump to W24' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open active run calendar' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
   })
 
   it('does not render forbidden mutating Viewer buttons or links on top-level shell pages', async () => {

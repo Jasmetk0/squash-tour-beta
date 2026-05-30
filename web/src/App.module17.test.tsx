@@ -2493,19 +2493,20 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByRole('heading', { name: 'Storylines' })).toBeInTheDocument()
   })
 
-  it('renders the Viewer MSA home route with active run context indicator only', async () => {
+  it('renders the Viewer MSA home route with active run status links without duplicate run navigation', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'viewer-run-1')
     api.listRuns.mockResolvedValueOnce({ runs: [] })
     renderAppAt('/viewer')
     expect(await screen.findByRole('heading', { name: /MSA Squash/, level: 2 })).toBeInTheDocument()
     expect(screen.getAllByText(/viewer-run-1/)[0]).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Active Run Rankings' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/rankings')
     expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
   })
 
-  it('renders top-level Viewer rankings without duplicate active run links', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'viewer-run-2')
+  it('routes top-level Viewer rankings to active run ranking snapshots without duplicate active run nav', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
     renderAppAt('/viewer/rankings')
-    expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Ranking snapshots' })).toBeInTheDocument()
     expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
   })
 

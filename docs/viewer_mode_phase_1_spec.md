@@ -1466,7 +1466,7 @@ Allowed statuses: `not_started`, `in_progress`, `done`, `blocked`, `deferred`.
 | F7 | Rankings scaffolds | Country Ranking shared page | done | Shared with Countries. | Shared route test |
 | F8 | Rankings scaffolds | No.1 History | done | Historical No.1 archive. | Page smoke test |
 | G1 | Tour scaffolds | Season Hub | done | Main season page. | Page smoke test |
-| G2 | Tour scaffolds | Season Calendar | done | `/viewer/tour/calendar` scaffold is done; run-scoped `/viewer/runs/:runId/calendar` preserves the existing real read-only calendar. | Page smoke test |
+| G2 | Tour scaffolds | Season Calendar | done | `/viewer/tour/calendar` scaffold is done; Phase 1B reconfirmed run-scoped `/viewer/runs/:runId/calendar` preserves the existing real read-only calendar. | Page smoke test |
 | G3 | Tour scaffolds | Current Week | done | Selected-week page. | Page smoke test |
 | G4 | Tour scaffolds | All Tournaments | done | Filterable tournament database. | Page smoke test |
 | G5 | Tour scaffolds | Match Center | done | Match database under Tour. | Page smoke test |
@@ -1517,24 +1517,38 @@ Allowed statuses: `not_started`, `in_progress`, `done`, `blocked`, `deferred`.
 | N2 | Read-only safety | remove Viewer commissioner controls | done | Wildcard/withdrawal/late replacement. | Forbidden actions test |
 | N3 | Read-only safety | hide raw/debug payloads from primary UI | done | Use sports-facing summaries by default. | Copy/UI test |
 | N4 | Read-only safety | split shared mutating components | done | Structural split preferred over prop/CSS. | Component/import test |
-| N5 | Read-only safety | tests for forbidden Viewer actions | done | Focus interactive elements. | Forbidden actions test |
+| N5 | Read-only safety | tests for forbidden Viewer actions | done | Phase 1B expanded checks to top-level Viewer shell buttons/links and preserved run-scoped Viewer pages. | Forbidden actions test |
 | O1 | Context-aware mode switcher | Viewer to Admin equivalents | done | Mapping in section 18. | Switcher route test |
 | O2 | Context-aware mode switcher | Admin to Viewer equivalents | done | Mapping in section 18. | Switcher route test |
 | O3 | Context-aware mode switcher | fallback behavior | done | Unknown Viewer → `/admin`; unknown Admin → `/viewer`. | Fallback test |
-| O4 | Context-aware mode switcher | route mapping tests | done | Test common routes. | Route mapping test |
+| O4 | Context-aware mode switcher | route mapping tests | done | Phase 1B reconfirmed common top-level and run-scoped calendar/player mappings. | Route mapping test |
 | P1 | Tests | Viewer one nav test | done | Verifies one primary nav. | Required |
 | P2 | Tests | dropdown items test | done | Verifies dropdown items match spec. | Required |
 | P3 | Tests | Season/Week selector test | done | Render/expand/change. | Required |
 | P4 | Tests | Jump to Week test | done | Updates local context. | Required |
 | P5 | Tests | MSA homepage sections test | done | Verifies required homepage sections. | Required |
-| P6 | Tests | no forbidden actions in Viewer test | done | Interactive action labels only. | Required |
+| P6 | Tests | no forbidden actions in Viewer test | done | Interactive action labels only; Phase 1B scopes this to buttons/links/actions. | Required |
 | P7 | Tests | shared shortcut route tests | done | Shared destinations. | Required |
 | P8 | Tests | Admin still works smoke test | done | Ensure Admin routes unaffected. | Required |
-| Q1 | Cleanup/visual polish | sports-style page headers | done | Reduce debug look. | Visual/smoke test |
+| Q1 | Cleanup/visual polish | sports-style page headers | done | Phase 1B polished copy to sports-facing read-only language and removed Phase 1A placeholder wording. | Visual/smoke test |
 | Q2 | Cleanup/visual polish | card layout | done | Responsive sports cards. | Visual/smoke test |
 | Q3 | Cleanup/visual polish | reduce debug look | done | No raw JSON primary UI. | Copy/UI test |
 | Q4 | Cleanup/visual polish | responsive topbar | done | Desktop/tablet/mobile. | Responsive test |
 | Q5 | Cleanup/visual polish | mobile dropdown behavior | done | Hover cannot be required. | Mobile interaction test |
+
+
+
+### Phase 1B Structural QA Notes
+
+Viewer Phase 1B completed a focused post-1A route preservation and shell-polish pass:
+
+- Confirmed `/viewer/runs/:runId/calendar` remains the real read-only `SeasonCalendarPage`.
+- Confirmed `/viewer/runs/:runId/tournaments`, `/viewer/runs/:runId/players`, `/viewer/runs/:runId/countries`, and `/viewer/runs/:runId/history` remain real read-only run-scoped pages instead of top-level scaffolds.
+- Confirmed `/viewer/runs/:runId/calendar/:eventId` and `/viewer/runs/:runId/finals` remain Viewer-specific read-only split pages without commissioner or simulation controls.
+- Polished top-level Viewer scaffold copy and homepage cards to use sports-facing Phase 1B language without fake authoritative data.
+- Strengthened frontend route/safety tests for preserved run-scoped pages, context-aware mode switcher mappings, and forbidden interactive Viewer action labels.
+
+These notes do not mark full Viewer Phase 1 complete; they only document the Phase 1B structural QA pass.
 
 ## 23. Testing Checklist
 

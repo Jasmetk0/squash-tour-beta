@@ -497,24 +497,124 @@ export function ViewerHomePage(): JSX.Element {
   )
 }
 
+type ViewerSnapshotLandingMode = 'ranking' | 'race'
+
+type ViewerSnapshotLandingConfig = {
+  mode: ViewerSnapshotLandingMode
+  title: string
+  description: string
+  emptyMessage: string
+  noSnapshotsMessage: string
+  countLabel: string
+  openLabel: string
+  latestLabel: string
+  runScopedPath: (runId: string) => string
+  detailPath: (runId: string, snapshotSequence: number) => string
+}
+
+function ViewerSnapshotLandingPage({ config }: { config: ViewerSnapshotLandingConfig }): JSX.Element {
+  const activeRunId = useActiveViewerRunId()
+  const snapshotsQuery = useQuery({
+    queryKey: ['viewer-top-level-snapshots', config.mode, activeRunId],
+    queryFn: () => (config.mode === 'ranking' ? listRankingSnapshots(activeRunId ?? '') : listRaceSnapshots(activeRunId ?? '')),
+    enabled: Boolean(activeRunId),
+    retry: false
+  })
+
+  if (!activeRunId) {
+    return (
+      <ViewerShellPage title={config.title} description={config.description}>
+        <p className="empty-state">{config.emptyMessage}</p>
+      </ViewerShellPage>
+    )
+  }
+
+  const snapshots = snapshotsQuery.data?.snapshots ?? []
+  const latest = latestSnapshot(snapshots)
+
+  return (
+    <ViewerShellPage title={config.title} description={config.description}>
+      <article className="viewer-active-run-card" aria-label={`${config.title} active run snapshot summary`}>
+        <span className="eyebrow">Active Viewer run</span>
+        <h3>{config.title} snapshot landing</h3>
+        <dl className="metadata-list">
+          <div>
+            <dt>Active run ID</dt>
+            <dd>{activeRunId}</dd>
+          </div>
+          <div>
+            <dt>{config.countLabel}</dt>
+            <dd>{snapshotsQuery.isLoading ? 'Loading…' : snapshots.length}</dd>
+          </div>
+          <div>
+            <dt>Latest snapshot sequence</dt>
+            <dd>{latest ? latest.snapshot_sequence : '—'}</dd>
+          </div>
+          <div>
+            <dt>Latest source event ID</dt>
+            <dd>{latest?.source_event_id ?? '—'}</dd>
+          </div>
+          <div>
+            <dt>Latest snapshot kind</dt>
+            <dd>{latest?.snapshot_kind ?? '—'}</dd>
+          </div>
+        </dl>
+
+        {snapshotsQuery.isError ? <p className="empty-state">Snapshot metadata is temporarily unavailable for this run.</p> : null}
+        {!snapshotsQuery.isLoading && !snapshotsQuery.isError && !latest ? <p className="empty-state">{config.noSnapshotsMessage}</p> : null}
+
+        <p className="viewer-active-run-actions">
+          <Link className="viewer-active-run-link" to={config.runScopedPath(activeRunId)}>
+            {config.openLabel}
+          </Link>
+          {latest ? (
+            <>
+              {' '}
+              <Link className="viewer-active-run-link" to={config.detailPath(activeRunId, latest.snapshot_sequence)}>
+                {config.latestLabel}
+              </Link>
+            </>
+          ) : null}
+        </p>
+      </article>
+    </ViewerShellPage>
+  )
+}
+
 export function ViewerRankingsPage(): JSX.Element {
   return (
-    <ViewerActiveRunBridge
-      title="MSA Rankings"
-      description="Official rankings destination for the selected Season/Week context."
-      emptyMessage="Select a Viewer run to view MSA Rankings."
-      target={(runId) => `/viewer/runs/${runId}/rankings`}
+    <ViewerSnapshotLandingPage
+      config={{
+        mode: 'ranking',
+        title: 'MSA Rankings',
+        description: 'Official rankings destination for the selected Season/Week context.',
+        emptyMessage: 'Select a Viewer run to view MSA Rankings.',
+        noSnapshotsMessage: 'No ranking snapshots are available for this run yet.',
+        countLabel: 'Ranking snapshot count',
+        openLabel: 'Open active run rankings',
+        latestLabel: 'View latest ranking snapshot',
+        runScopedPath: (runId) => `/viewer/runs/${runId}/rankings`,
+        detailPath: (runId, snapshotSequence) => `/viewer/runs/${runId}/rankings/${snapshotSequence}`
+      }}
     />
   )
 }
 
 export function ViewerRacePage(): JSX.Element {
   return (
-    <ViewerActiveRunBridge
-      title="Race to Finals"
-      description="Season-long qualification standings for the selected Viewer run."
-      emptyMessage="Select a Viewer run to view Race to Finals."
-      target={(runId) => `/viewer/runs/${runId}/race`}
+    <ViewerSnapshotLandingPage
+      config={{
+        mode: 'race',
+        title: 'Race to Finals',
+        description: 'Season-long qualification standings for the selected Viewer run.',
+        emptyMessage: 'Select a Viewer run to view Race to Finals.',
+        noSnapshotsMessage: 'No race snapshots are available for this run yet.',
+        countLabel: 'Race snapshot count',
+        openLabel: 'Open active run race',
+        latestLabel: 'View latest race snapshot',
+        runScopedPath: (runId) => `/viewer/runs/${runId}/race`,
+        detailPath: (runId, snapshotSequence) => `/viewer/runs/${runId}/race/${snapshotSequence}`
+      }}
     />
   )
 }

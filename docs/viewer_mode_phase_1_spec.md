@@ -1428,113 +1428,113 @@ Allowed statuses: `not_started`, `in_progress`, `done`, `blocked`, `deferred`.
 
 | ID | Area | Task | Status | Notes | Test needed |
 | --- | --- | --- | --- | --- | --- |
-| A1 | Viewer shell/navigation | remove duplicate Viewer run nav | not_started | Current layout has top-level nav plus run-scoped nav. | Viewer one nav test |
-| A2 | Viewer shell/navigation | create one Viewer topbar | not_started | Use exact topbar from section 4. | Topbar render test |
-| A3 | Viewer shell/navigation | add dropdowns | not_started | Dropdown items must match section 5. | Dropdown items test |
-| A4 | Viewer shell/navigation | keep MSA as no-dropdown homepage link | not_started | MSA links to `/viewer`. | MSA link test |
-| A5 | Viewer shell/navigation | sports-facing Viewer branding | not_started | Reduce Engine/debug language in Viewer. | Copy/smoke test |
-| B1 | Dropdown routing | Rankings routes | not_started | Implement rankings route group. | Route tests |
-| B2 | Dropdown routing | Tour routes | not_started | Implement tour route group. | Route tests |
-| B3 | Dropdown routing | Players routes | not_started | Implement players route group. | Route tests |
-| B4 | Dropdown routing | Countries routes | not_started | Implement countries route group. | Route tests |
-| B5 | Dropdown routing | H2H routes | not_started | Implement H2H route group. | Route tests |
-| B6 | Dropdown routing | Stats routes | not_started | Implement stats route group. | Route tests |
-| B7 | Dropdown routing | Predictions routes | not_started | Implement predictions route group. | Route tests |
-| B8 | Dropdown routing | shared shortcut routes | not_started | Country Ranking, Compare Players, Match Predictor. | Shared shortcut route tests |
-| C1 | Season/week context selector | compact selector | not_started | Display `Season 2004/05 · W10`. | Selector render test |
-| C2 | Season/week context selector | expanded hover/click panel | not_started | Must support click for mobile. | Expansion test |
-| C3 | Season/week context selector | local/global Viewer context state | not_started | Local state acceptable initially. | Context state test |
-| C4 | Season/week context selector | selected context reflected in page headings | not_started | Page headings should include selected context where useful. | Heading test |
+| A1 | Viewer shell/navigation | remove duplicate Viewer run nav | done | Current layout has top-level nav plus run-scoped nav. | Viewer one nav test |
+| A2 | Viewer shell/navigation | create one Viewer topbar | done | Use exact topbar from section 4. | Topbar render test |
+| A3 | Viewer shell/navigation | add dropdowns | done | Dropdown items must match section 5. | Dropdown items test |
+| A4 | Viewer shell/navigation | keep MSA as no-dropdown homepage link | done | MSA links to `/viewer`. | MSA link test |
+| A5 | Viewer shell/navigation | sports-facing Viewer branding | done | Reduce Engine/debug language in Viewer. | Copy/smoke test |
+| B1 | Dropdown routing | Rankings routes | done | Implement rankings route group. | Route tests |
+| B2 | Dropdown routing | Tour routes | done | Implement tour route group. | Route tests |
+| B3 | Dropdown routing | Players routes | done | Implement players route group. | Route tests |
+| B4 | Dropdown routing | Countries routes | done | Implement countries route group. | Route tests |
+| B5 | Dropdown routing | H2H routes | done | Implement H2H route group. | Route tests |
+| B6 | Dropdown routing | Stats routes | done | Implement stats route group. | Route tests |
+| B7 | Dropdown routing | Predictions routes | done | Implement predictions route group. | Route tests |
+| B8 | Dropdown routing | shared shortcut routes | done | Country Ranking, Compare Players, Match Predictor. | Shared shortcut route tests |
+| C1 | Season/week context selector | compact selector | done | Display `Season 2004/05 · W10`. | Selector render test |
+| C2 | Season/week context selector | expanded hover/click panel | done | Must support click for mobile. | Expansion test |
+| C3 | Season/week context selector | local/global Viewer context state | done | Local state acceptable initially. | Context state test |
+| C4 | Season/week context selector | selected context reflected in page headings | done | Page headings should include selected context where useful. | Heading test |
 | C5 | Season/week context selector | future no-future-knowledge rules documented | not_started | Rules documented here; enforcement later. | Future backend/data tests later |
-| D1 | Jump to Week | add concept to calendar cards | not_started | Cards show `Jump to W{week}`. | Calendar card test |
-| D2 | Jump to Week | update Viewer context on click | not_started | Updates selected season/week locally. | Jump click test |
-| D3 | Jump to Week | no backend mutation | not_started | No POST/PUT/PATCH/DELETE. | API call negative test |
-| D4 | Jump to Week | tests for local context update | not_started | Verify selector changes. | Context update test |
-| E1 | MSA homepage | Featured Tournament Hero | not_started | Full-width hero for biggest/current event. | Homepage section test |
-| E2 | MSA homepage | Other Tournaments This Week | not_started | Group/order cards by category. | Homepage section test |
-| E3 | MSA homepage | Top 10 Rankings panel | not_started | Side-by-side rankings panel. | Homepage section test |
-| E4 | MSA homepage | Race to Finals Top 10 panel | not_started | Side-by-side race panel. | Homepage section test |
-| E5 | MSA homepage | Featured Matches | not_started | Match of Week, Closest Odds, Rivalry, Upset Potential. | Homepage section test |
-| E6 | MSA homepage | Predictions & Upset Watch | not_started | Read-only cards only. | Homepage section test |
-| E7 | MSA homepage | Storylines | not_started | Sports-style narrative cards. | Homepage section test |
-| F1 | Rankings scaffolds | MSA Rankings | not_started | Official weekly ranking page. | Page smoke test |
-| F2 | Rankings scaffolds | Race to Finals | not_started | Best 11/auto qualification markers. | Page smoke test |
-| F3 | Rankings scaffolds | Next Gen Race | not_started | U23 default concept. | Page smoke test |
-| F4 | Rankings scaffolds | Elo Ranking | not_started | Scaffold until formula/API exists. | Page smoke test |
-| F5 | Rankings scaffolds | Power Rating | not_started | Viewer-facing OVR name. | Copy test |
-| F6 | Rankings scaffolds | Form Ranking | not_started | Weighted recent form scaffold. | Page smoke test |
-| F7 | Rankings scaffolds | Country Ranking shared page | not_started | Shared with Countries. | Shared route test |
-| F8 | Rankings scaffolds | No.1 History | not_started | Historical No.1 archive. | Page smoke test |
-| G1 | Tour scaffolds | Season Hub | not_started | Main season page. | Page smoke test |
-| G2 | Tour scaffolds | Season Calendar | not_started | Week 1–61 calendar. | Page smoke test |
-| G3 | Tour scaffolds | Current Week | not_started | Selected-week page. | Page smoke test |
-| G4 | Tour scaffolds | All Tournaments | not_started | Filterable tournament database. | Page smoke test |
-| G5 | Tour scaffolds | Match Center | not_started | Match database under Tour. | Page smoke test |
-| G6 | Tour scaffolds | Tournament Categories | not_started | Category explainer/scaffold. | Page smoke test |
-| G7 | Tour scaffolds | Past Champions | not_started | Champion archive. | Page smoke test |
-| H1 | Players scaffolds | Players Hub | not_started | Spotlight/news hub. | Page smoke test |
-| H2 | Players scaffolds | All Players | not_started | Filterable player database. | Page smoke test |
-| H3 | Players scaffolds | Active Players | not_started | Active in selected context. | Page smoke test |
-| H4 | Players scaffolds | Prospects / Next Gen | not_started | Young players/U23. | Page smoke test |
-| H5 | Players scaffolds | Retired Players | not_started | Historical player archive. | Page smoke test |
-| H6 | Players scaffolds | Compare Players | not_started | Career/profile comparison. | Shared route test |
-| I1 | Countries scaffolds | Countries Hub | not_started | World/national overview. | Page smoke test |
-| I2 | Countries scaffolds | Country Ranking shared page | not_started | Shared ranking page. | Shared route test |
-| I3 | Countries scaffolds | All Countries | not_started | Filterable country database. | Page smoke test |
-| I4 | Countries scaffolds | Hosting Nations | not_started | Hosting role page. | Page smoke test |
-| I5 | Countries scaffolds | Talent Pipeline | not_started | Young country strength. | Page smoke test |
-| I6 | Countries scaffolds | Country Records | not_started | National records. | Page smoke test |
-| J1 | H2H scaffolds | H2H Explorer | not_started | Select Player A/B. | Page smoke test |
-| J2 | H2H scaffolds | Rivalry Rankings | not_started | Rivalry score later. | Page smoke test |
-| J3 | H2H scaffolds | Most Played Matchups | not_started | Count-based matchups. | Page smoke test |
-| J4 | H2H scaffolds | Finals Rivalries | not_started | Finals-specific page. | Page smoke test |
-| J5 | H2H scaffolds | Player Comparison shared page | not_started | Same route as Players compare. | Shared route test |
-| J6 | H2H scaffolds | Predict Matchup shared shortcut | not_started | Same route as Match Predictor. | Shared route test |
-| K1 | Stats scaffolds | Records | not_started | General record book. | Page smoke test |
-| K2 | Stats scaffolds | Title Leaders | not_started | Title leader pages. | Page smoke test |
-| K3 | Stats scaffolds | Weeks at No.1 | not_started | No.1 weeks stats. | Page smoke test |
-| K4 | Stats scaffolds | Streaks | not_started | Streak library. | Page smoke test |
-| K5 | Stats scaffolds | Biggest Upsets | not_started | Upset library. | Page smoke test |
-| K6 | Stats scaffolds | Best Seasons | not_started | Season rankings. | Page smoke test |
-| K7 | Stats scaffolds | Player Stats | not_started | Player stats table. | Page smoke test |
-| K8 | Stats scaffolds | Tournament Stats | not_started | Tournament stats table. | Page smoke test |
-| K9 | Stats scaffolds | Country Stats | not_started | Country stats table. | Page smoke test |
-| K10 | Stats scaffolds | Awards | not_started | Awards scaffold. | Page smoke test |
-| K11 | Stats scaffolds | Hall of Fame | not_started | Hall of Fame scaffold. | Page smoke test |
-| K12 | Stats scaffolds | Era Rankings | not_started | Era ranking scaffold. | Page smoke test |
-| L1 | Predictions scaffolds | Match Predictor | not_started | Read-only predictor. | Page smoke/no mutation test |
-| L2 | Predictions scaffolds | Match Odds | not_started | Selected-week odds. | Page smoke test |
-| L3 | Predictions scaffolds | Tournament Odds | not_started | Tournament progression odds. | Page smoke test |
-| L4 | Predictions scaffolds | Finals Qualification | not_started | Finals chances. | Page smoke test |
-| L5 | Predictions scaffolds | Season-End No.1 | not_started | Season-end probability. | Page smoke test |
-| L6 | Predictions scaffolds | Upset Watch | not_started | Upset alerts. | Page smoke test |
-| L7 | Predictions scaffolds | Futures Markets | not_started | Long-term predictions. | Page smoke test |
-| M1 | Search shell | topbar search UI | not_started | Search control in topbar. | Search render test |
-| M2 | Search shell | search page | not_started | `/viewer/search`. | Route/page test |
-| M3 | Search shell | grouped result concept | not_started | Group by players/tournaments/countries/matches/seasons. | Search result test |
-| M4 | Search shell | detail navigation concept | not_started | Result opens detail page. | Navigation test |
-| N1 | Read-only safety | remove Viewer simulate buttons | not_started | Especially World Tour Finals. | Forbidden actions test |
-| N2 | Read-only safety | remove Viewer commissioner controls | not_started | Wildcard/withdrawal/late replacement. | Forbidden actions test |
-| N3 | Read-only safety | hide raw/debug payloads from primary UI | not_started | Use sports-facing summaries by default. | Copy/UI test |
-| N4 | Read-only safety | split shared mutating components | not_started | Structural split preferred over prop/CSS. | Component/import test |
-| N5 | Read-only safety | tests for forbidden Viewer actions | not_started | Focus interactive elements. | Forbidden actions test |
-| O1 | Context-aware mode switcher | Viewer to Admin equivalents | not_started | Mapping in section 18. | Switcher route test |
-| O2 | Context-aware mode switcher | Admin to Viewer equivalents | not_started | Mapping in section 18. | Switcher route test |
-| O3 | Context-aware mode switcher | fallback behavior | not_started | Unknown Viewer → `/admin`; unknown Admin → `/viewer`. | Fallback test |
-| O4 | Context-aware mode switcher | route mapping tests | not_started | Test common routes. | Route mapping test |
-| P1 | Tests | Viewer one nav test | not_started | Verifies one primary nav. | Required |
-| P2 | Tests | dropdown items test | not_started | Verifies dropdown items match spec. | Required |
-| P3 | Tests | Season/Week selector test | not_started | Render/expand/change. | Required |
-| P4 | Tests | Jump to Week test | not_started | Updates local context. | Required |
-| P5 | Tests | MSA homepage sections test | not_started | Verifies required homepage sections. | Required |
-| P6 | Tests | no forbidden actions in Viewer test | not_started | Interactive action labels only. | Required |
-| P7 | Tests | shared shortcut route tests | not_started | Shared destinations. | Required |
-| P8 | Tests | Admin still works smoke test | not_started | Ensure Admin routes unaffected. | Required |
-| Q1 | Cleanup/visual polish | sports-style page headers | not_started | Reduce debug look. | Visual/smoke test |
-| Q2 | Cleanup/visual polish | card layout | not_started | Responsive sports cards. | Visual/smoke test |
-| Q3 | Cleanup/visual polish | reduce debug look | not_started | No raw JSON primary UI. | Copy/UI test |
-| Q4 | Cleanup/visual polish | responsive topbar | not_started | Desktop/tablet/mobile. | Responsive test |
-| Q5 | Cleanup/visual polish | mobile dropdown behavior | not_started | Hover cannot be required. | Mobile interaction test |
+| D1 | Jump to Week | add concept to calendar cards | in_progress | Cards show `Jump to W{week}`. | Calendar card test |
+| D2 | Jump to Week | update Viewer context on click | done | Updates selected season/week locally. | Jump click test |
+| D3 | Jump to Week | no backend mutation | done | No POST/PUT/PATCH/DELETE. | API call negative test |
+| D4 | Jump to Week | tests for local context update | done | Verify selector changes. | Context update test |
+| E1 | MSA homepage | Featured Tournament Hero | done | Full-width hero for biggest/current event. | Homepage section test |
+| E2 | MSA homepage | Other Tournaments This Week | done | Group/order cards by category. | Homepage section test |
+| E3 | MSA homepage | Top 10 Rankings panel | done | Side-by-side rankings panel. | Homepage section test |
+| E4 | MSA homepage | Race to Finals Top 10 panel | done | Side-by-side race panel. | Homepage section test |
+| E5 | MSA homepage | Featured Matches | done | Match of Week, Closest Odds, Rivalry, Upset Potential. | Homepage section test |
+| E6 | MSA homepage | Predictions & Upset Watch | done | Read-only cards only. | Homepage section test |
+| E7 | MSA homepage | Storylines | done | Sports-style narrative cards. | Homepage section test |
+| F1 | Rankings scaffolds | MSA Rankings | done | Official weekly ranking page. | Page smoke test |
+| F2 | Rankings scaffolds | Race to Finals | done | Best 11/auto qualification markers. | Page smoke test |
+| F3 | Rankings scaffolds | Next Gen Race | done | U23 default concept. | Page smoke test |
+| F4 | Rankings scaffolds | Elo Ranking | done | Scaffold until formula/API exists. | Page smoke test |
+| F5 | Rankings scaffolds | Power Rating | done | Viewer-facing OVR name. | Copy test |
+| F6 | Rankings scaffolds | Form Ranking | done | Weighted recent form scaffold. | Page smoke test |
+| F7 | Rankings scaffolds | Country Ranking shared page | done | Shared with Countries. | Shared route test |
+| F8 | Rankings scaffolds | No.1 History | done | Historical No.1 archive. | Page smoke test |
+| G1 | Tour scaffolds | Season Hub | done | Main season page. | Page smoke test |
+| G2 | Tour scaffolds | Season Calendar | done | Week 1–61 calendar. | Page smoke test |
+| G3 | Tour scaffolds | Current Week | done | Selected-week page. | Page smoke test |
+| G4 | Tour scaffolds | All Tournaments | done | Filterable tournament database. | Page smoke test |
+| G5 | Tour scaffolds | Match Center | done | Match database under Tour. | Page smoke test |
+| G6 | Tour scaffolds | Tournament Categories | done | Category explainer/scaffold. | Page smoke test |
+| G7 | Tour scaffolds | Past Champions | done | Champion archive. | Page smoke test |
+| H1 | Players scaffolds | Players Hub | done | Spotlight/news hub. | Page smoke test |
+| H2 | Players scaffolds | All Players | done | Filterable player database. | Page smoke test |
+| H3 | Players scaffolds | Active Players | done | Active in selected context. | Page smoke test |
+| H4 | Players scaffolds | Prospects / Next Gen | done | Young players/U23. | Page smoke test |
+| H5 | Players scaffolds | Retired Players | done | Historical player archive. | Page smoke test |
+| H6 | Players scaffolds | Compare Players | done | Career/profile comparison. | Shared route test |
+| I1 | Countries scaffolds | Countries Hub | done | World/national overview. | Page smoke test |
+| I2 | Countries scaffolds | Country Ranking shared page | done | Shared ranking page. | Shared route test |
+| I3 | Countries scaffolds | All Countries | done | Filterable country database. | Page smoke test |
+| I4 | Countries scaffolds | Hosting Nations | done | Hosting role page. | Page smoke test |
+| I5 | Countries scaffolds | Talent Pipeline | done | Young country strength. | Page smoke test |
+| I6 | Countries scaffolds | Country Records | done | National records. | Page smoke test |
+| J1 | H2H scaffolds | H2H Explorer | done | Select Player A/B. | Page smoke test |
+| J2 | H2H scaffolds | Rivalry Rankings | done | Rivalry score later. | Page smoke test |
+| J3 | H2H scaffolds | Most Played Matchups | done | Count-based matchups. | Page smoke test |
+| J4 | H2H scaffolds | Finals Rivalries | done | Finals-specific page. | Page smoke test |
+| J5 | H2H scaffolds | Player Comparison shared page | done | Same route as Players compare. | Shared route test |
+| J6 | H2H scaffolds | Predict Matchup shared shortcut | done | Same route as Match Predictor. | Shared route test |
+| K1 | Stats scaffolds | Records | done | General record book. | Page smoke test |
+| K2 | Stats scaffolds | Title Leaders | done | Title leader pages. | Page smoke test |
+| K3 | Stats scaffolds | Weeks at No.1 | done | No.1 weeks stats. | Page smoke test |
+| K4 | Stats scaffolds | Streaks | done | Streak library. | Page smoke test |
+| K5 | Stats scaffolds | Biggest Upsets | done | Upset library. | Page smoke test |
+| K6 | Stats scaffolds | Best Seasons | done | Season rankings. | Page smoke test |
+| K7 | Stats scaffolds | Player Stats | done | Player stats table. | Page smoke test |
+| K8 | Stats scaffolds | Tournament Stats | done | Tournament stats table. | Page smoke test |
+| K9 | Stats scaffolds | Country Stats | done | Country stats table. | Page smoke test |
+| K10 | Stats scaffolds | Awards | done | Awards scaffold. | Page smoke test |
+| K11 | Stats scaffolds | Hall of Fame | done | Hall of Fame scaffold. | Page smoke test |
+| K12 | Stats scaffolds | Era Rankings | done | Era ranking scaffold. | Page smoke test |
+| L1 | Predictions scaffolds | Match Predictor | done | Read-only predictor. | Page smoke/no mutation test |
+| L2 | Predictions scaffolds | Match Odds | done | Selected-week odds. | Page smoke test |
+| L3 | Predictions scaffolds | Tournament Odds | done | Tournament progression odds. | Page smoke test |
+| L4 | Predictions scaffolds | Finals Qualification | done | Finals chances. | Page smoke test |
+| L5 | Predictions scaffolds | Season-End No.1 | done | Season-end probability. | Page smoke test |
+| L6 | Predictions scaffolds | Upset Watch | done | Upset alerts. | Page smoke test |
+| L7 | Predictions scaffolds | Futures Markets | done | Long-term predictions. | Page smoke test |
+| M1 | Search shell | topbar search UI | done | Search control in topbar. | Search render test |
+| M2 | Search shell | search page | done | `/viewer/search`. | Route/page test |
+| M3 | Search shell | grouped result concept | deferred | Group by players/tournaments/countries/matches/seasons. | Search result test |
+| M4 | Search shell | detail navigation concept | deferred | Result opens detail page. | Navigation test |
+| N1 | Read-only safety | remove Viewer simulate buttons | done | Especially World Tour Finals. | Forbidden actions test |
+| N2 | Read-only safety | remove Viewer commissioner controls | done | Wildcard/withdrawal/late replacement. | Forbidden actions test |
+| N3 | Read-only safety | hide raw/debug payloads from primary UI | done | Use sports-facing summaries by default. | Copy/UI test |
+| N4 | Read-only safety | split shared mutating components | done | Structural split preferred over prop/CSS. | Component/import test |
+| N5 | Read-only safety | tests for forbidden Viewer actions | done | Focus interactive elements. | Forbidden actions test |
+| O1 | Context-aware mode switcher | Viewer to Admin equivalents | done | Mapping in section 18. | Switcher route test |
+| O2 | Context-aware mode switcher | Admin to Viewer equivalents | done | Mapping in section 18. | Switcher route test |
+| O3 | Context-aware mode switcher | fallback behavior | done | Unknown Viewer → `/admin`; unknown Admin → `/viewer`. | Fallback test |
+| O4 | Context-aware mode switcher | route mapping tests | done | Test common routes. | Route mapping test |
+| P1 | Tests | Viewer one nav test | done | Verifies one primary nav. | Required |
+| P2 | Tests | dropdown items test | done | Verifies dropdown items match spec. | Required |
+| P3 | Tests | Season/Week selector test | done | Render/expand/change. | Required |
+| P4 | Tests | Jump to Week test | done | Updates local context. | Required |
+| P5 | Tests | MSA homepage sections test | done | Verifies required homepage sections. | Required |
+| P6 | Tests | no forbidden actions in Viewer test | done | Interactive action labels only. | Required |
+| P7 | Tests | shared shortcut route tests | done | Shared destinations. | Required |
+| P8 | Tests | Admin still works smoke test | done | Ensure Admin routes unaffected. | Required |
+| Q1 | Cleanup/visual polish | sports-style page headers | done | Reduce debug look. | Visual/smoke test |
+| Q2 | Cleanup/visual polish | card layout | done | Responsive sports cards. | Visual/smoke test |
+| Q3 | Cleanup/visual polish | reduce debug look | done | No raw JSON primary UI. | Copy/UI test |
+| Q4 | Cleanup/visual polish | responsive topbar | done | Desktop/tablet/mobile. | Responsive test |
+| Q5 | Cleanup/visual polish | mobile dropdown behavior | done | Hover cannot be required. | Mobile interaction test |
 
 ## 23. Testing Checklist
 

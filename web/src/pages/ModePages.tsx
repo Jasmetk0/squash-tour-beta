@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { AdminPlayersPage as InitialPoolAdminPlayersPage } from './AdminPlayersPage'
 import { AdminPlayersHubPage } from './AdminPlayersHubPage'
 import { AdminSeasonsPage as SeasonBootstrapAdminSeasonsPage } from './AdminSeasonsPage'
@@ -11,6 +11,7 @@ import { getCountriesMetadata, getTournamentTemplatesMetadata, listRuns } from '
 import { LinkCardGrid } from '../components/LinkCardGrid'
 import { ViewerJumpToWeekButton } from '../components/ViewerContextControls'
 import { useViewerContext } from '../viewer/ViewerContext'
+import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewer/activeRun'
 
 export function LandingPage(): JSX.Element {
   return (
@@ -193,6 +194,58 @@ export function AdminSettingsPage(): JSX.Element {
 }
 
 
+
+function useActiveViewerRunId(): string | null {
+  const [activeRunId, setActiveRunId] = useState(() => readViewerActiveRunId())
+
+  useEffect(() => {
+    function handleActiveRunChange(): void {
+      setActiveRunId(readViewerActiveRunId())
+    }
+
+    window.addEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, handleActiveRunChange)
+    window.addEventListener('storage', handleActiveRunChange)
+    return () => {
+      window.removeEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, handleActiveRunChange)
+      window.removeEventListener('storage', handleActiveRunChange)
+    }
+  }, [])
+
+  return activeRunId
+}
+
+type ActiveRunBridgeProps = {
+  title: string
+  emptyMessage: string
+  target: (runId: string) => string
+  description?: string
+}
+
+function ViewerActiveRunBridge({ title, emptyMessage, target, description }: ActiveRunBridgeProps): JSX.Element {
+  const activeRunId = useActiveViewerRunId()
+
+  if (activeRunId) {
+    return <Navigate to={target(activeRunId)} replace />
+  }
+
+  return (
+    <ViewerShellPage title={title} description={description}>
+      <p className="empty-state">{emptyMessage}</p>
+    </ViewerShellPage>
+  )
+}
+
+const activeRunLinks = [
+  { title: 'Active Run Rankings', href: (runId: string) => `/viewer/runs/${runId}/rankings` },
+  { title: 'Active Run Race', href: (runId: string) => `/viewer/runs/${runId}/race` },
+  { title: 'Active Run Tournaments', href: (runId: string) => `/viewer/runs/${runId}/tournaments` },
+  { title: 'Active Run Calendar', href: (runId: string) => `/viewer/runs/${runId}/calendar` },
+  { title: 'Active Run Players', href: (runId: string) => `/viewer/runs/${runId}/players` },
+  { title: 'Active Run Countries', href: (runId: string) => `/viewer/runs/${runId}/countries` },
+  { title: 'Active Run History', href: (runId: string) => `/viewer/runs/${runId}/history` },
+  { title: 'Active Run Finals', href: (runId: string) => `/viewer/runs/${runId}/finals` }
+]
+
 type ViewerShellPageProps = {
   title: string
   kicker?: string
@@ -227,6 +280,7 @@ export function ViewerShellPage({ title, kicker = 'Read-only Viewer section', de
 
 export function ViewerHomePage(): JSX.Element {
   const context = useViewerContext()
+  const activeRunId = useActiveViewerRunId()
   const cards = [
     {
       title: 'Featured Tournament Hero',
@@ -274,13 +328,33 @@ export function ViewerHomePage(): JSX.Element {
           A premium, public-style squash tour homepage for the selected Viewer context. These cards are intentionally read-only and do not show authoritative data until the connected read models are ready.
         </p>
       </div>
+      <section className="viewer-active-run-panel" aria-label="Active Viewer run status">
+        {activeRunId ? (
+          <>
+            <div>
+              <span className="eyebrow">Active Viewer run</span>
+              <h3>Active run data is available</h3>
+              <p className="status">Using Viewer run <strong>{activeRunId}</strong> for read-only run pages.</p>
+            </div>
+            <div className="viewer-active-run-link-grid">
+              {activeRunLinks.map((link) => (
+                <Link key={link.title} className="viewer-active-run-link" to={link.href(activeRunId)}>
+                  {link.title}
+                </Link>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p className="empty-state">Active run data is unavailable until a Viewer run is selected.</p>
+        )}
+      </section>
       <div className="viewer-home-grid">
         {cards.map((card) => (
           <article key={card.title} className={`viewer-home-card viewer-home-card--${card.tone}`}>
             <span className="eyebrow">Read-only scaffold</span>
             <h3>{card.title}</h3>
             <p>{card.subtitle}</p>
-            <p className="status">No authoritative data is shown in this Phase 1B shell.</p>
+            <p className="status">No authoritative data is shown in this Phase 1C shell.</p>
           </article>
         ))}
       </div>
@@ -289,23 +363,69 @@ export function ViewerHomePage(): JSX.Element {
 }
 
 export function ViewerRankingsPage(): JSX.Element {
-  return <ViewerShellPage title="MSA Rankings" description="Official rankings destination for the selected Season/Week context. Future rankings data will appear here once the read model is connected." />
+  return (
+    <ViewerActiveRunBridge
+      title="MSA Rankings"
+      description="Official rankings destination for the selected Season/Week context."
+      emptyMessage="Select a Viewer run to view MSA Rankings."
+      target={(runId) => `/viewer/runs/${runId}/rankings`}
+    />
+  )
+}
+
+export function ViewerRacePage(): JSX.Element {
+  return (
+    <ViewerActiveRunBridge
+      title="Race to Finals"
+      description="Season-long qualification standings for the selected Viewer run."
+      emptyMessage="Select a Viewer run to view Race to Finals."
+      target={(runId) => `/viewer/runs/${runId}/race`}
+    />
+  )
 }
 
 export function ViewerTournamentsPage(): JSX.Element {
-  return <ViewerShellPage title="All Tournaments" description="Tournament archive destination prepared for read-only schedules, results, and historical browsing." />
+  return (
+    <ViewerActiveRunBridge
+      title="All Tournaments"
+      description="Tournament archive destination for read-only schedules, results, and historical browsing."
+      emptyMessage="Select a Viewer run to view MSA Tournaments."
+      target={(runId) => `/viewer/runs/${runId}/tournaments`}
+    />
+  )
 }
 
 export function ViewerPlayersPage(): JSX.Element {
-  return <ViewerShellPage title="Players Hub" description="Player hub prepared for read-only spotlights, profiles, and browsing in the selected Viewer context." />
+  return (
+    <ViewerActiveRunBridge
+      title="Players Hub"
+      description="Player hub for read-only spotlights, profiles, and browsing in the selected Viewer context."
+      emptyMessage="Select a Viewer run to view MSA Players."
+      target={(runId) => `/viewer/runs/${runId}/players`}
+    />
+  )
 }
 
 export function ViewerCountriesPage(): JSX.Element {
-  return <ViewerShellPage title="Countries Hub" description="Country hub prepared for read-only national rankings, hosting stories, talent pipelines, and records." />
+  return (
+    <ViewerActiveRunBridge
+      title="Countries Hub"
+      description="Country hub for read-only national rankings, hosting stories, talent pipelines, and records."
+      emptyMessage="Select a Viewer run to view MSA Countries."
+      target={(runId) => `/viewer/runs/${runId}/countries`}
+    />
+  )
 }
 
 export function ViewerHistoryPage(): JSX.Element {
-  return <ViewerShellPage title="History" description="History destination prepared for read-only activity, archive, and storyline browsing." />
+  return (
+    <ViewerActiveRunBridge
+      title="History"
+      description="History destination for read-only activity, archive, and storyline browsing."
+      emptyMessage="Select a Viewer run to view MSA History."
+      target={(runId) => `/viewer/runs/${runId}/history`}
+    />
+  )
 }
 
 export function ViewerRecordsPage(): JSX.Element {
@@ -313,12 +433,24 @@ export function ViewerRecordsPage(): JSX.Element {
 }
 
 export function ViewerTourCalendarPage(): JSX.Element {
+  const activeRunId = useActiveViewerRunId()
+
   return (
     <ViewerShellPage title="Season Calendar" description="Season calendar destination prepared for weekly tour browsing and read-only event cards.">
       <div className="viewer-jump-demo" aria-label="Jump to Week demo">
         <p className="status">Sample calendar card for future read-only weekly event browsing.</p>
         <ViewerJumpToWeekButton week={24} />
       </div>
+      {activeRunId ? (
+        <article className="viewer-active-run-card">
+          <span className="eyebrow">Active Viewer run</span>
+          <h3>Open active run calendar</h3>
+          <p className="status">Use the real read-only calendar for Viewer run {activeRunId}.</p>
+          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/calendar`}>
+            Open active run calendar
+          </Link>
+        </article>
+      ) : null}
     </ViewerShellPage>
   )
 }

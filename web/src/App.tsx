@@ -31,6 +31,7 @@ import {
   ViewerPlayerComparisonPage,
   ViewerPlayersPage,
   ViewerRankingsPage,
+  ViewerRacePage,
   ViewerRecordsPage,
   ViewerShellPage,
   ViewerTourCalendarPage,
@@ -142,7 +143,7 @@ export default function App(): JSX.Element {
 
         <Route path="viewer" element={<ViewerHomePage />} />
         <Route path="viewer/rankings" element={<ViewerRankingsPage />} />
-        <Route path="viewer/rankings/race" element={<ViewerShellPage title="Race to Finals" />} />
+        <Route path="viewer/rankings/race" element={<ViewerRacePage />} />
         <Route path="viewer/rankings/next-gen" element={<ViewerShellPage title="Next Gen Race" />} />
         <Route path="viewer/rankings/elo" element={<ViewerShellPage title="Elo Ranking" />} />
         <Route path="viewer/rankings/power" element={<ViewerShellPage title="Power Rating" />} />

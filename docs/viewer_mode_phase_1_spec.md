@@ -1550,6 +1550,17 @@ Viewer Phase 1B completed a focused post-1A route preservation and shell-polish 
 
 These notes do not mark full Viewer Phase 1 complete; they only document the Phase 1B structural QA pass.
 
+### Phase 1C Active Run Wiring Notes
+
+Viewer Phase 1C adds active-run bridging for top-level Viewer routes without marking full Viewer Phase 1 complete:
+
+- Top-level Viewer pages now bridge to active run read-only routes where safe.
+- No active run state remains sports-facing and asks the viewer to select a Viewer run.
+- No duplicate navigation was reintroduced; active-run destinations are content CTAs, not a second nav row.
+- Full real data read models for homepage cards, statistics, predictions, Elo, Power Rating, H2H, and odds remain deferred.
+
+These notes do not mark full Viewer Phase 1 complete; they only document the Phase 1C active-run wiring slice.
+
 ## 23. Testing Checklist
 
 Frontend tests must verify:

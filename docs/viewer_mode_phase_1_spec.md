@@ -1466,7 +1466,7 @@ Allowed statuses: `not_started`, `in_progress`, `done`, `blocked`, `deferred`.
 | F7 | Rankings scaffolds | Country Ranking shared page | done | Shared with Countries. | Shared route test |
 | F8 | Rankings scaffolds | No.1 History | done | Historical No.1 archive. | Page smoke test |
 | G1 | Tour scaffolds | Season Hub | done | Main season page. | Page smoke test |
-| G2 | Tour scaffolds | Season Calendar | done | Week 1–61 calendar. | Page smoke test |
+| G2 | Tour scaffolds | Season Calendar | done | `/viewer/tour/calendar` scaffold is done; run-scoped `/viewer/runs/:runId/calendar` preserves the existing real read-only calendar. | Page smoke test |
 | G3 | Tour scaffolds | Current Week | done | Selected-week page. | Page smoke test |
 | G4 | Tour scaffolds | All Tournaments | done | Filterable tournament database. | Page smoke test |
 | G5 | Tour scaffolds | Match Center | done | Match database under Tour. | Page smoke test |

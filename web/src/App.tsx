@@ -201,7 +201,7 @@ export default function App(): JSX.Element {
         <Route path="viewer/runs/:runId/race/:snapshotSequence" element={<SnapshotDetailPage mode="race" />} />
         <Route path="viewer/runs/:runId/tournaments" element={<EventsPage />} />
         <Route path="viewer/runs/:runId/tournaments/:eventId" element={<EventDetailPage />} />
-        <Route path="viewer/runs/:runId/calendar" element={<ViewerTourCalendarPage />} />
+        <Route path="viewer/runs/:runId/calendar" element={<SeasonCalendarPage />} />
         <Route path="viewer/runs/:runId/calendar/:eventId" element={<ViewerPlannedEventReadOnlyPage />} />
         <Route path="viewer/runs/:runId/weeks/:week" element={<WeekDetailPage />} />
         <Route path="viewer/runs/:runId/players" element={<PlayersPage />} />

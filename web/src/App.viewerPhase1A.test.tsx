@@ -6,17 +6,22 @@ import { describe, expect, it, vi } from 'vitest'
 
 import App from './App'
 
+const api = vi.hoisted(() => ({
+  getCountriesMetadata: vi.fn().mockResolvedValue({ country_count: 0 }),
+  getTournamentTemplatesMetadata: vi.fn().mockResolvedValue({ template_count: 0 }),
+  listRuns: vi.fn().mockResolvedValue({ runs: [] }),
+  getViewerRankingTable: vi.fn().mockRejectedValue(new Error('not connected in test')),
+  getRun: vi.fn().mockRejectedValue(new Error('not connected in test')),
+  listEvents: vi.fn().mockResolvedValue({ run_id: 'run-a', events: [] }),
+  listRankingSnapshots: vi.fn().mockResolvedValue({ snapshots: [] }),
+  listRaceSnapshots: vi.fn().mockResolvedValue({ snapshots: [] })
+}))
+
 vi.mock('./api/client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./api/client')>()
   return {
     ...actual,
-    getCountriesMetadata: vi.fn().mockResolvedValue({ country_count: 0 }),
-    getTournamentTemplatesMetadata: vi.fn().mockResolvedValue({ template_count: 0 }),
-    listRuns: vi.fn().mockResolvedValue({ runs: [] }),
-    getViewerRankingTable: vi.fn().mockRejectedValue(new Error('not connected in test')),
-    getRun: vi.fn().mockRejectedValue(new Error('not connected in test')),
-    listRankingSnapshots: vi.fn().mockResolvedValue({ snapshots: [] }),
-    listRaceSnapshots: vi.fn().mockResolvedValue({ snapshots: [] })
+    ...api
   }
 })
 
@@ -76,6 +81,28 @@ describe('Viewer Phase 1A routes and safety', () => {
     expect(await screen.findByRole('heading', { name: 'World Tour Finals' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Simulate World Tour Finals/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Simulate World Tour Finals/i })).not.toBeInTheDocument()
+  })
+
+
+  it('preserves the real run-scoped Viewer season calendar page', async () => {
+    api.getRun.mockResolvedValue({
+      run: { run_id: 'run-a', season: 2029, seed: 7, next_event_index: 0, total_events: 1, completed_event_ids: [] },
+      season_state: {
+        season: 2029,
+        next_event_index: 0,
+        completed_event_ids: [],
+        ordered_events: [{ event_id: 'E1', season: 2029, week: 2, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-A' }]
+      }
+    })
+    api.listEvents.mockResolvedValue({ run_id: 'run-a', events: [] })
+
+    renderAppAt('/viewer/runs/run-a/calendar')
+
+    expect(await screen.findByRole('heading', { name: 'Season calendar' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Ordered season calendar' })).toBeInTheDocument()
+    expect(await screen.findByRole('list', { name: 'Season calendar ordered list' })).toHaveTextContent('E1')
+    expect(screen.queryByText('Demo card for future calendar/event cards.')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Jump to W24' })).not.toBeInTheDocument()
   })
 
   it('renders read-only Viewer planned event detail without commissioner controls', async () => {

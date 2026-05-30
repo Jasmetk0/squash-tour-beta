@@ -6,12 +6,13 @@ import { AdminPlayersPage as InitialPoolAdminPlayersPage } from './AdminPlayersP
 import { AdminPlayersHubPage } from './AdminPlayersHubPage'
 import { AdminSeasonsPage as SeasonBootstrapAdminSeasonsPage } from './AdminSeasonsPage'
 import { TournamentTemplatesPage } from './TournamentTemplatesPage'
-import { getCountriesMetadata, getTournamentTemplatesMetadata, listRuns } from '../api/client'
+import { getCountriesMetadata, getFinalsSummary, getRun, getRunActivity, getRunStatusSummary, getTournamentTemplatesMetadata, listEvents, listRaceSnapshots, listRankingSnapshots, listRuns } from '../api/client'
 
 import { LinkCardGrid } from '../components/LinkCardGrid'
 import { ViewerJumpToWeekButton } from '../components/ViewerContextControls'
 import { useViewerContext } from '../viewer/ViewerContext'
 import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewer/activeRun'
+import type { EventRecord, RankingSnapshot, RaceSnapshot, RunActivityItem, SeasonStateResponse } from '../api/types'
 
 export function LandingPage(): JSX.Element {
   return (
@@ -278,46 +279,100 @@ export function ViewerShellPage({ title, kicker = 'Read-only Viewer section', de
   )
 }
 
+type HomepageEventSummary = {
+  eventId: string
+  week: number | null
+  category: string | null
+  tour: string | null
+  templateId: string | null
+  status: 'Next scheduled event' | 'Most recent completed event'
+}
+
+function buildPlannedEventMap(runData: SeasonStateResponse | undefined): Map<string, SeasonStateResponse['season_state']['ordered_events'][number]> {
+  const map = new Map<string, SeasonStateResponse['season_state']['ordered_events'][number]>()
+  ;(runData?.season_state.ordered_events ?? []).forEach((event) => {
+    map.set(event.event_id, event)
+  })
+  return map
+}
+
+function selectHomepageEvent(runData: SeasonStateResponse | undefined, events: EventRecord[]): HomepageEventSummary | null {
+  const orderedEvents = runData?.season_state.ordered_events ?? []
+  const nextIndex = runData?.season_state.next_event_index ?? runData?.run.next_event_index ?? null
+  const plannedMap = buildPlannedEventMap(runData)
+
+  if (nextIndex != null && orderedEvents[nextIndex]) {
+    const event = orderedEvents[nextIndex]
+    return {
+      eventId: event.event_id,
+      week: event.week,
+      category: event.category,
+      tour: event.tour,
+      templateId: event.template_id,
+      status: 'Next scheduled event'
+    }
+  }
+
+  const mostRecentCompleted = [...events].sort((a, b) => b.event_sequence - a.event_sequence)[0]
+  if (mostRecentCompleted) {
+    const planned = plannedMap.get(mostRecentCompleted.event_id)
+    return {
+      eventId: mostRecentCompleted.event_id,
+      week: mostRecentCompleted.week ?? planned?.week ?? null,
+      category: planned?.category ?? null,
+      tour: planned?.tour ?? null,
+      templateId: mostRecentCompleted.template_id ?? planned?.template_id ?? null,
+      status: 'Most recent completed event'
+    }
+  }
+
+  return null
+}
+
+function latestSnapshot<T extends RankingSnapshot | RaceSnapshot>(snapshots: T[]): T | null {
+  return [...snapshots].sort((a, b) => b.snapshot_sequence - a.snapshot_sequence)[0] ?? null
+}
+
+function formatSource(sourceType: string | undefined, parentRunId: string | null | undefined): string {
+  if (!sourceType) return 'Not available yet'
+  return parentRunId ? `${sourceType} from ${parentRunId}` : sourceType
+}
+
+function formatActivityItem(item: RunActivityItem): string {
+  const parts = [item.label]
+  if (item.season != null) parts.push(`Season ${item.season}`)
+  if (item.week != null) parts.push(`W${item.week}`)
+  if (item.event_id) parts.push(item.event_id)
+  return parts.join(' · ')
+}
+
 export function ViewerHomePage(): JSX.Element {
   const context = useViewerContext()
   const activeRunId = useActiveViewerRunId()
-  const cards = [
-    {
-      title: 'Featured Tournament Hero',
-      subtitle: 'The marquee tournament spotlight is reserved for the current Viewer week once authoritative event data is available.',
-      tone: 'hero'
-    },
-    {
-      title: 'Other Tournaments This Week',
-      subtitle: 'A read-only weekly schedule lane for additional tour stops in the selected context.',
-      tone: 'standard'
-    },
-    {
-      title: 'Top 10 Rankings',
-      subtitle: 'The leading ranking table will surface here after the official Viewer rankings read model is connected.',
-      tone: 'standard'
-    },
-    {
-      title: 'Race to Finals',
-      subtitle: 'Season-long qualification standings will appear here without exposing engine controls or future knowledge.',
-      tone: 'standard'
-    },
-    {
-      title: 'Featured Matches',
-      subtitle: 'Match cards are prepared for notable fixtures, rivalry hooks, and selected-week score browsing.',
-      tone: 'standard'
-    },
-    {
-      title: 'Predictions & Upset Watch',
-      subtitle: 'Prediction surfaces remain read-only and will stay empty until deterministic analytics are available.',
-      tone: 'standard'
-    },
-    {
-      title: 'Storylines',
-      subtitle: 'Editorial-style storyline cards will summarize real simulated context when the history feed supports them.',
-      tone: 'standard'
-    }
-  ]
+  const queryEnabled = Boolean(activeRunId)
+
+  const runQuery = useQuery({ queryKey: ['viewer-home-run', activeRunId], queryFn: () => getRun(activeRunId ?? ''), enabled: queryEnabled, retry: false })
+  const statusQuery = useQuery({ queryKey: ['viewer-home-run-status', activeRunId], queryFn: () => getRunStatusSummary(activeRunId ?? ''), enabled: queryEnabled, retry: false })
+  const eventsQuery = useQuery({ queryKey: ['viewer-home-events', activeRunId], queryFn: () => listEvents(activeRunId ?? ''), enabled: queryEnabled, retry: false })
+  const rankingSnapshotsQuery = useQuery({ queryKey: ['viewer-home-ranking-snapshots', activeRunId], queryFn: () => listRankingSnapshots(activeRunId ?? ''), enabled: queryEnabled, retry: false })
+  const raceSnapshotsQuery = useQuery({ queryKey: ['viewer-home-race-snapshots', activeRunId], queryFn: () => listRaceSnapshots(activeRunId ?? ''), enabled: queryEnabled, retry: false })
+  const activityQuery = useQuery({ queryKey: ['viewer-home-activity', activeRunId], queryFn: () => getRunActivity(activeRunId ?? ''), enabled: queryEnabled, retry: false })
+  const finalsQuery = useQuery({ queryKey: ['viewer-home-finals', activeRunId], queryFn: () => getFinalsSummary(activeRunId ?? ''), enabled: queryEnabled, retry: false })
+
+  const activeQueries = [runQuery, statusQuery, eventsQuery, rankingSnapshotsQuery, raceSnapshotsQuery, activityQuery, finalsQuery]
+  const isActiveSummaryLoading = queryEnabled && activeQueries.some((query) => query.isLoading)
+  const isActiveSummaryUnavailable = queryEnabled && activeQueries.some((query) => query.isError)
+
+  const featuredEvent = useMemo(() => selectHomepageEvent(runQuery.data, eventsQuery.data?.events ?? []), [eventsQuery.data?.events, runQuery.data])
+  const nearbyEvents = useMemo(() => {
+    const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
+    if (!featuredEvent) return orderedEvents.slice(0, 3)
+    return orderedEvents.filter((event) => event.event_id !== featuredEvent.eventId && event.week === featuredEvent.week).slice(0, 3)
+  }, [featuredEvent, runQuery.data?.season_state.ordered_events])
+  const latestRankingSnapshot = latestSnapshot(rankingSnapshotsQuery.data?.snapshots ?? [])
+  const latestRaceSnapshot = latestSnapshot(raceSnapshotsQuery.data?.snapshots ?? [])
+  const activityItems = activityQuery.data?.items ?? []
+  const latestActivityItem = activityItems[0] ?? null
 
   return (
     <section className="panel viewer-home viewer-home--msa">
@@ -325,7 +380,7 @@ export function ViewerHomePage(): JSX.Element {
         <span className="eyebrow">MSA Homepage</span>
         <h2>MSA Squash — Season {context.selectedSeason} · W{context.selectedWeek}</h2>
         <p className="subtitle">
-          A premium, public-style squash tour homepage for the selected Viewer context. These cards are intentionally read-only and do not show authoritative data until the connected read models are ready.
+          A premium, public-style squash tour homepage for the selected Viewer context. These cards are read-only and show small real summaries only when existing safe run APIs provide them.
         </p>
       </div>
       <section className="viewer-active-run-panel" aria-label="Active Viewer run status">
@@ -334,7 +389,22 @@ export function ViewerHomePage(): JSX.Element {
             <div>
               <span className="eyebrow">Active Viewer run</span>
               <h3>Active run data is available</h3>
-              <p className="status">Using Viewer run <strong>{activeRunId}</strong> for read-only run pages.</p>
+              {isActiveSummaryLoading ? <p className="status">Loading current tour summary from the active Viewer run…</p> : null}
+              {isActiveSummaryUnavailable ? <p className="empty-state">Active run summary is temporarily unavailable. Try opening the run pages below for more detail.</p> : null}
+              {!isActiveSummaryLoading && !isActiveSummaryUnavailable ? (
+                <>
+                  <p className="status">Using Viewer run <strong>{activeRunId}</strong> for read-only run pages.</p>
+                  <dl className="viewer-home-summary-list" aria-label="Active run summary fields">
+                    <div><dt>Run id</dt><dd>{statusQuery.data?.run_id ?? runQuery.data?.run.run_id ?? activeRunId}</dd></div>
+                    <div><dt>Season</dt><dd>{statusQuery.data?.season ?? runQuery.data?.run.season ?? 'Not available yet'}</dd></div>
+                    <div><dt>Seed</dt><dd>{statusQuery.data?.seed ?? runQuery.data?.run.seed ?? 'Not available yet'}</dd></div>
+                    <div><dt>Progress</dt><dd>{statusQuery.data ? `${statusQuery.data.progress.completed_event_count}/${statusQuery.data.progress.total_events} events complete` : `${runQuery.data?.run.completed_event_ids.length ?? 0}/${runQuery.data?.run.total_events ?? 0} events complete`}</dd></div>
+                    <div><dt>Next event index</dt><dd>{statusQuery.data?.progress.next_event_index ?? runQuery.data?.run.next_event_index ?? 'Not available yet'}</dd></div>
+                    <div><dt>Finals</dt><dd>{statusQuery.data?.finals.result_available || finalsQuery.data?.result ? 'Result available' : statusQuery.data?.finals.qualification_available || finalsQuery.data?.qualification ? 'Qualification available' : 'Not available yet'}</dd></div>
+                    <div><dt>Lineage/source</dt><dd>{formatSource(statusQuery.data?.source?.source_type, statusQuery.data?.source?.parent_run_id)}</dd></div>
+                  </dl>
+                </>
+              ) : null}
             </div>
             <div className="viewer-active-run-link-grid">
               {activeRunLinks.map((link) => (
@@ -345,18 +415,83 @@ export function ViewerHomePage(): JSX.Element {
             </div>
           </>
         ) : (
-          <p className="empty-state">Active run data is unavailable until a Viewer run is selected.</p>
+          <p className="empty-state">Active run data is unavailable until a Viewer run is selected. No authoritative tournament, rankings, race, match, prediction, or storyline data is shown.</p>
         )}
       </section>
       <div className="viewer-home-grid">
-        {cards.map((card) => (
-          <article key={card.title} className={`viewer-home-card viewer-home-card--${card.tone}`}>
-            <span className="eyebrow">Read-only scaffold</span>
-            <h3>{card.title}</h3>
-            <p>{card.subtitle}</p>
-            <p className="status">No authoritative data is shown in this Phase 1C shell.</p>
-          </article>
-        ))}
+        <article className="viewer-home-card viewer-home-card--hero">
+          <span className="eyebrow">Featured Tournament Hero</span>
+          <h3>Featured Tournament Hero</h3>
+          {activeRunId && featuredEvent ? (
+            <>
+              <p>{featuredEvent.status}: <strong>{featuredEvent.eventId}</strong></p>
+              <p className="status">{featuredEvent.category ?? 'Category unavailable'} · {featuredEvent.tour ?? 'Tour unavailable'} · {featuredEvent.week != null ? `W${featuredEvent.week}` : 'Week unavailable'} · Template {featuredEvent.templateId ?? 'unavailable'}</p>
+              <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/calendar`}>Open active run calendar</Link>
+            </>
+          ) : (
+            <p className="empty-state">{activeRunId ? 'No current event summary available yet.' : 'Select a Viewer run to see the current event summary.'}</p>
+          )}
+        </article>
+
+        <article className="viewer-home-card viewer-home-card--standard">
+          <span className="eyebrow">Read-only schedule</span>
+          <h3>Other Tournaments This Week</h3>
+          {activeRunId && nearbyEvents.length ? (
+            <ul>
+              {nearbyEvents.map((event) => (
+                <li key={event.event_id}>{event.event_id} · {event.category} · W{event.week}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="empty-state">{activeRunId ? 'No additional same-week event summary is available yet.' : 'Active-run schedule data is unavailable until a Viewer run is selected.'}</p>
+          )}
+        </article>
+
+        <article className="viewer-home-card viewer-home-card--standard">
+          <span className="eyebrow">Read-only rankings</span>
+          <h3>Top 10 Rankings</h3>
+          {activeRunId && latestRankingSnapshot ? (
+            <p>Latest ranking snapshot #{latestRankingSnapshot.snapshot_sequence} from {latestRankingSnapshot.source_event_id ?? 'run history'} · {rankingSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
+          ) : (
+            <p className="empty-state">{activeRunId ? 'No ranking snapshot metadata is available yet.' : 'Select a Viewer run to see ranking snapshot metadata.'}</p>
+          )}
+          {activeRunId ? <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/rankings`}>Open active run rankings</Link> : null}
+        </article>
+
+        <article className="viewer-home-card viewer-home-card--standard">
+          <span className="eyebrow">Read-only race</span>
+          <h3>Race to Finals</h3>
+          {activeRunId && latestRaceSnapshot ? (
+            <p>Latest race snapshot #{latestRaceSnapshot.snapshot_sequence} from {latestRaceSnapshot.source_event_id ?? 'run history'} · {raceSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
+          ) : (
+            <p className="empty-state">{activeRunId ? 'No race snapshot metadata is available yet.' : 'Select a Viewer run to see Race snapshot metadata.'}</p>
+          )}
+          {activeRunId ? <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/race`}>Open active run race</Link> : null}
+        </article>
+
+        <article className="viewer-home-card viewer-home-card--standard">
+          <span className="eyebrow">Read-only matches</span>
+          <h3>Featured Matches</h3>
+          <p className="empty-state">Match cards need the match read model.</p>
+          {activeRunId ? <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/tournaments`}>Open active run tournaments</Link> : null}
+        </article>
+
+        <article className="viewer-home-card viewer-home-card--standard">
+          <span className="eyebrow">Read-only analytics</span>
+          <h3>Predictions &amp; Upset Watch</h3>
+          <p className="empty-state">Prediction analytics are not connected yet.</p>
+        </article>
+
+        <article className="viewer-home-card viewer-home-card--standard">
+          <span className="eyebrow">Read-only storylines</span>
+          <h3>Storylines</h3>
+          {activeRunId && latestActivityItem ? (
+            <p>{activityItems.length} activity items · Latest: {formatActivityItem(latestActivityItem)}</p>
+          ) : (
+            <p className="empty-state">{activeRunId ? 'No activity storyline summary is available yet.' : 'Select a Viewer run to see activity storyline metadata.'}</p>
+          )}
+          {activeRunId ? <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/history`}>Open active run history</Link> : null}
+        </article>
       </div>
     </section>
   )

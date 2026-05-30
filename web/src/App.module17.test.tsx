@@ -2496,6 +2496,26 @@ describe('Module 17 pages through routes', () => {
   it('renders the Viewer MSA home route with active run status links without duplicate run navigation', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'viewer-run-1')
     api.listRuns.mockResolvedValueOnce({ runs: [] })
+    api.getRun.mockResolvedValueOnce({
+      run: { run_id: 'viewer-run-1', season: 2027, seed: 5, next_event_index: 0, total_events: 0, completed_event_ids: [] },
+      season_state: { season: 2027, next_event_index: 0, completed_event_ids: [], ordered_events: [] }
+    })
+    api.getRunStatusSummary.mockResolvedValueOnce({
+      run_id: 'viewer-run-1',
+      season: 2027,
+      seed: 5,
+      progress: { next_event_index: 0, total_events: 0, completed_event_count: 0 },
+      finals: { qualification_available: false, result_available: false },
+      rollover: null,
+      source: null,
+      lineage: { child_run_count: 0 },
+      history_counts: { events: 0, ranking_snapshots: 0, race_snapshots: 0 }
+    })
+    api.listEvents.mockResolvedValueOnce({ run_id: 'viewer-run-1', events: [] })
+    api.listRankingSnapshots.mockResolvedValueOnce({ run_id: 'viewer-run-1', snapshots: [] })
+    api.listRaceSnapshots.mockResolvedValueOnce({ run_id: 'viewer-run-1', snapshots: [] })
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'viewer-run-1', items: [] })
+    api.getFinalsSummary.mockResolvedValueOnce({ run_id: 'viewer-run-1', season: 2027, qualification: null, result: null })
     renderAppAt('/viewer')
     expect(await screen.findByRole('heading', { name: /MSA Squash/, level: 2 })).toBeInTheDocument()
     expect(screen.getAllByText(/viewer-run-1/)[0]).toBeInTheDocument()

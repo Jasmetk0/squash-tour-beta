@@ -190,7 +190,7 @@ function ViewerTopbar(): JSX.Element {
       </NavLink>
       {viewerDropdowns.map((dropdown) => (
         <details key={dropdown.label} className="viewer-dropdown">
-          <summary>{dropdown.label}</summary>
+          <summary aria-haspopup="menu">{dropdown.label}</summary>
           <div className="viewer-dropdown__menu" aria-label={`${dropdown.label} menu`}>
             {dropdown.items.map((item) => (
               <NavLink key={`${dropdown.label}-${item.label}`} to={item.to} className={({ isActive }) => (isActive ? 'active' : '')}>

@@ -204,23 +204,23 @@ function ViewerContextLine(): JSX.Element {
   const context = useViewerContext()
   return (
     <p className="status">
-      Viewer context: Season {context.selectedSeason} · W{context.selectedWeek}. This page is read-only and uses scaffold content until the relevant backend read model is connected.
+      Viewer context: Season {context.selectedSeason} · W{context.selectedWeek}. This section is ready for read-only tour data once the Viewer read model is connected.
     </p>
   )
 }
 
-export function ViewerShellPage({ title, kicker = 'Viewer read-only scaffold', description, children }: ViewerShellPageProps): JSX.Element {
+export function ViewerShellPage({ title, kicker = 'Read-only Viewer section', description, children }: ViewerShellPageProps): JSX.Element {
   return (
     <section className="panel viewer-shell-page">
       <div className="page-intro">
         <span className="eyebrow">{kicker}</span>
         <h2>{title}</h2>
         <p className="subtitle">
-          {description ?? 'This sports-facing Viewer section is a safe Phase 1A shell. Future data will connect here without adding mutating controls.'}
+          {description ?? 'This Viewer section is ready for read-only data. Future tour information will appear here once the read model is connected.'}
         </p>
       </div>
       <ViewerContextLine />
-      {children ?? <p className="empty-state">No authoritative backend data is rendered for this section in Viewer Phase 1A.</p>}
+      {children ?? <p className="empty-state">No authoritative data is shown in this Phase 1B shell.</p>}
     </section>
   )
 }
@@ -228,13 +228,41 @@ export function ViewerShellPage({ title, kicker = 'Viewer read-only scaffold', d
 export function ViewerHomePage(): JSX.Element {
   const context = useViewerContext()
   const cards = [
-    'Featured Tournament Hero',
-    'Other Tournaments This Week',
-    'Top 10 Rankings',
-    'Race to Finals',
-    'Featured Matches',
-    'Predictions & Upset Watch',
-    'Storylines'
+    {
+      title: 'Featured Tournament Hero',
+      subtitle: 'The marquee tournament spotlight is reserved for the current Viewer week once authoritative event data is available.',
+      tone: 'hero'
+    },
+    {
+      title: 'Other Tournaments This Week',
+      subtitle: 'A read-only weekly schedule lane for additional tour stops in the selected context.',
+      tone: 'standard'
+    },
+    {
+      title: 'Top 10 Rankings',
+      subtitle: 'The leading ranking table will surface here after the official Viewer rankings read model is connected.',
+      tone: 'standard'
+    },
+    {
+      title: 'Race to Finals',
+      subtitle: 'Season-long qualification standings will appear here without exposing engine controls or future knowledge.',
+      tone: 'standard'
+    },
+    {
+      title: 'Featured Matches',
+      subtitle: 'Match cards are prepared for notable fixtures, rivalry hooks, and selected-week score browsing.',
+      tone: 'standard'
+    },
+    {
+      title: 'Predictions & Upset Watch',
+      subtitle: 'Prediction surfaces remain read-only and will stay empty until deterministic analytics are available.',
+      tone: 'standard'
+    },
+    {
+      title: 'Storylines',
+      subtitle: 'Editorial-style storyline cards will summarize real simulated context when the history feed supports them.',
+      tone: 'standard'
+    }
   ]
 
   return (
@@ -243,14 +271,16 @@ export function ViewerHomePage(): JSX.Element {
         <span className="eyebrow">MSA Homepage</span>
         <h2>MSA Squash — Season {context.selectedSeason} · W{context.selectedWeek}</h2>
         <p className="subtitle">
-          Public-style, read-only squash tour homepage shell for the selected Viewer context. Data cards are intentionally empty until read models are connected.
+          A premium, public-style squash tour homepage for the selected Viewer context. These cards are intentionally read-only and do not show authoritative data until the connected read models are ready.
         </p>
       </div>
       <div className="viewer-home-grid">
-        {cards.map((title) => (
-          <article key={title} className="viewer-home-card">
-            <h3>{title}</h3>
-            <p className="status">Viewer read-only scaffold — no authoritative data is available in Phase 1A.</p>
+        {cards.map((card) => (
+          <article key={card.title} className={`viewer-home-card viewer-home-card--${card.tone}`}>
+            <span className="eyebrow">Read-only scaffold</span>
+            <h3>{card.title}</h3>
+            <p>{card.subtitle}</p>
+            <p className="status">No authoritative data is shown in this Phase 1B shell.</p>
           </article>
         ))}
       </div>
@@ -259,34 +289,34 @@ export function ViewerHomePage(): JSX.Element {
 }
 
 export function ViewerRankingsPage(): JSX.Element {
-  return <ViewerShellPage title="MSA Rankings" description="Official ranking table shell for the selected Season/Week context." />
+  return <ViewerShellPage title="MSA Rankings" description="Official rankings destination for the selected Season/Week context. Future rankings data will appear here once the read model is connected." />
 }
 
 export function ViewerTournamentsPage(): JSX.Element {
-  return <ViewerShellPage title="All Tournaments" description="Tournament database shell for future read-only filtering and archives." />
+  return <ViewerShellPage title="All Tournaments" description="Tournament archive destination prepared for read-only schedules, results, and historical browsing." />
 }
 
 export function ViewerPlayersPage(): JSX.Element {
-  return <ViewerShellPage title="Players Hub" description="Player spotlight and browse hub shell for the selected Viewer context." />
+  return <ViewerShellPage title="Players Hub" description="Player hub prepared for read-only spotlights, profiles, and browsing in the selected Viewer context." />
 }
 
 export function ViewerCountriesPage(): JSX.Element {
-  return <ViewerShellPage title="Countries Hub" description="Country overview shell for national rankings, hosting, pipelines, and records." />
+  return <ViewerShellPage title="Countries Hub" description="Country hub prepared for read-only national rankings, hosting stories, talent pipelines, and records." />
 }
 
 export function ViewerHistoryPage(): JSX.Element {
-  return <ViewerShellPage title="History" description="Read-only history shell retained for run-scoped archive entry points." />
+  return <ViewerShellPage title="History" description="History destination prepared for read-only activity, archive, and storyline browsing." />
 }
 
 export function ViewerRecordsPage(): JSX.Element {
-  return <ViewerShellPage title="Records" description="Record book landing shell for statistics and historical achievements." />
+  return <ViewerShellPage title="Records" description="Record book destination prepared for statistics, milestones, and historical achievements." />
 }
 
 export function ViewerTourCalendarPage(): JSX.Element {
   return (
-    <ViewerShellPage title="Season Calendar" description="Calendar shell demonstrating the reusable Jump to Week primitive without backend mutation.">
+    <ViewerShellPage title="Season Calendar" description="Season calendar destination prepared for weekly tour browsing and read-only event cards.">
       <div className="viewer-jump-demo" aria-label="Jump to Week demo">
-        <p className="status">Demo card for future calendar/event cards.</p>
+        <p className="status">Sample calendar card for future read-only weekly event browsing.</p>
         <ViewerJumpToWeekButton week={24} />
       </div>
     </ViewerShellPage>
@@ -294,21 +324,21 @@ export function ViewerTourCalendarPage(): JSX.Element {
 }
 
 export function ViewerCountryRankingPage(): JSX.Element {
-  return <ViewerShellPage title="Country Ranking" description="Shared Country Ranking destination used by Rankings and Countries navigation." />
+  return <ViewerShellPage title="Country Ranking" description="Shared Country Ranking destination used by Rankings and Countries navigation. Future country standings will appear here once connected." />
 }
 
 export function ViewerPlayerComparisonPage(): JSX.Element {
-  return <ViewerShellPage title="Player Comparison" description="Shared Player Comparison destination used by Players and H2H navigation." />
+  return <ViewerShellPage title="Player Comparison" description="Shared Player Comparison destination used by Players and H2H navigation. Future comparison data will remain read-only." />
 }
 
 export function ViewerMatchPredictorPage(): JSX.Element {
-  return <ViewerShellPage title="Match Predictor" description="Shared read-only predictor shell used by H2H and Predictions navigation." />
+  return <ViewerShellPage title="Match Predictor" description="Shared read-only predictor destination used by H2H and Predictions navigation. No predictions are shown until deterministic analytics are connected." />
 }
 
 export function ViewerFinalsReadOnlyPage(): JSX.Element {
-  return <ViewerShellPage title="World Tour Finals" description="Read-only Finals shell. Admin simulation controls are intentionally not rendered in Viewer." />
+  return <ViewerShellPage title="World Tour Finals" description="Read-only World Tour Finals destination. Draws, qualification, and results can be surfaced here without Viewer simulation controls." />
 }
 
 export function ViewerPlannedEventReadOnlyPage(): JSX.Element {
-  return <ViewerShellPage title="Planned Event" description="Read-only planned event detail shell. Commissioner event controls are intentionally not rendered in Viewer." />
+  return <ViewerShellPage title="Planned Event" description="Read-only planned event destination. Event context can be surfaced here without commissioner controls." />
 }

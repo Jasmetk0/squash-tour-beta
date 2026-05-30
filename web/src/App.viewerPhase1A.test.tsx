@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -12,6 +12,7 @@ const api = vi.hoisted(() => ({
   listRuns: vi.fn(),
   getViewerRankingTable: vi.fn(),
   getRun: vi.fn(),
+  getRunStatusSummary: vi.fn(),
   listEvents: vi.fn(),
   getEvent: vi.fn(),
   listRankingSnapshots: vi.fn(),
@@ -48,6 +49,17 @@ function resetApiMocks(): void {
       ordered_events: [{ event_id: 'E1', season: 2029, week: 2, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-A' }]
     }
   })
+  api.getRunStatusSummary.mockResolvedValue({
+    run_id: 'run-a',
+    season: 2029,
+    seed: 7,
+    progress: { next_event_index: 0, total_events: 1, completed_event_count: 0 },
+    finals: { qualification_available: false, result_available: false },
+    rollover: null,
+    source: { source_type: 'fresh_seed', parent_run_id: null },
+    lineage: { child_run_count: 0 },
+    history_counts: { events: 0, ranking_snapshots: 0, race_snapshots: 0 }
+  })
   api.listEvents.mockResolvedValue({ run_id: 'run-a', events: [] })
   api.getEvent.mockResolvedValue({ run_id: 'run-a', event_id: 'E1', event: null })
   api.listRankingSnapshots.mockResolvedValue({ snapshots: [] })
@@ -59,7 +71,7 @@ function resetApiMocks(): void {
   api.getRunActivity.mockResolvedValue({ run_id: 'run-a', items: [] })
   api.getFinalsQualification.mockResolvedValue({ run_id: 'run-a', qualification: null })
   api.getFinalsResult.mockResolvedValue({ run_id: 'run-a', result: null })
-  api.getFinalsSummary.mockResolvedValue({ run_id: 'run-a', qualification: null, result: null })
+  api.getFinalsSummary.mockResolvedValue({ run_id: 'run-a', season: 2029, qualification: null, result: null })
 }
 
 function renderAppAt(route: string): void {
@@ -92,8 +104,8 @@ beforeEach(() => {
   resetApiMocks()
 })
 
-describe('Viewer Phase 1B/1C routes and safety', () => {
-  it('renders premium MSA homepage scaffold sections without authoritative data', async () => {
+describe('Viewer Phase 1B/1C/1D routes and safety', () => {
+  it('renders premium MSA homepage scaffold sections without active-run authoritative data', async () => {
     renderAppAt('/viewer')
 
     expect(await screen.findByRole('heading', { name: /MSA Squash/, level: 2 })).toBeInTheDocument()
@@ -108,7 +120,10 @@ describe('Viewer Phase 1B/1C routes and safety', () => {
     ]) {
       expect(screen.getByRole('heading', { name: section })).toBeInTheDocument()
     }
-    expect(screen.getAllByText('No authoritative data is shown in this Phase 1C shell.')).toHaveLength(7)
+    expect(screen.getByText(/Active run data is unavailable until a Viewer run is selected/)).toBeInTheDocument()
+    expect(screen.getByText('Prediction analytics are not connected yet.')).toBeInTheDocument()
+    expect(screen.queryByText('Paris can reclaim No.1 this week.')).not.toBeInTheDocument()
+    expect(screen.queryByText('Macky needs a semifinal to protect his Race lead.')).not.toBeInTheDocument()
   })
 
   it('updates local Viewer context with Jump to Week', async () => {
@@ -137,13 +152,48 @@ describe('Viewer Phase 1B/1C routes and safety', () => {
     }
   })
 
-  it('shows active run status and run-scoped read-only links on the Viewer homepage', async () => {
+  it('shows active run status, safe links, and small real summaries on the Viewer homepage', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    api.getRunStatusSummary.mockResolvedValue({
+      run_id: 'run-a',
+      season: 2030,
+      seed: 99,
+      progress: { next_event_index: 1, total_events: 4, completed_event_count: 1 },
+      finals: { qualification_available: true, result_available: false },
+      rollover: null,
+      source: { source_type: 'rollover_bootstrap', parent_run_id: 'run-parent' },
+      lineage: { child_run_count: 0 },
+      history_counts: { events: 1, ranking_snapshots: 2, race_snapshots: 1 }
+    })
+    api.getRun.mockResolvedValue({
+      run: { run_id: 'run-a', season: 2030, seed: 99, next_event_index: 1, total_events: 4, completed_event_ids: ['E1'] },
+      season_state: {
+        season: 2030,
+        next_event_index: 1,
+        completed_event_ids: ['E1'],
+        ordered_events: [
+          { event_id: 'E1', season: 2030, week: 2, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-A' },
+          { event_id: 'E2', season: 2030, week: 5, tour: 'WORLD', category: 'DIAMOND', template_id: 'TEMP-B' },
+          { event_id: 'E3', season: 2030, week: 5, tour: 'ELITE', category: 'BRONZE', template_id: 'TEMP-C' }
+        ]
+      }
+    })
+    api.listEvents.mockResolvedValue({ run_id: 'run-a', events: [{ event_sequence: 1, event_id: 'E1', season: 2030, week: 2, template_id: 'TEMP-A', tournament_result: {} }] })
+    api.listRankingSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [{ snapshot_sequence: 1, snapshot_kind: 'ranking', source_event_id: 'E1', payload: {} }, { snapshot_sequence: 2, snapshot_kind: 'ranking', source_event_id: 'E2', payload: {} }] })
+    api.listRaceSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [{ snapshot_sequence: 3, snapshot_kind: 'race', source_event_id: 'E2', payload: {} }] })
+    api.getRunActivity.mockResolvedValue({ run_id: 'run-a', items: [{ kind: 'event', sequence: 1, label: 'E1 completed', season: 2030, week: 2, event_id: 'E1', snapshot_sequence: null, source_event_id: null, related_run_id: null }] })
+    api.getFinalsSummary.mockResolvedValue({ run_id: 'run-a', season: 2030, qualification: { run_id: 'run-a', season: 2030, source_as_of_season: 2030, source_as_of_week: 40, qualification: {} }, result: null })
     renderAppAt('/viewer')
 
     expect(await screen.findByRole('heading', { name: 'Active run data is available' })).toBeInTheDocument()
-    expect(screen.getByText(/Using Viewer run/)).toHaveTextContent('run-a')
     const statusPanel = screen.getByLabelText('Active Viewer run status')
+    await waitFor(() => expect(statusPanel).toHaveTextContent('Using Viewer run'))
+    expect(statusPanel).toHaveTextContent('run-a')
+    expect(statusPanel).toHaveTextContent('2030')
+    expect(statusPanel).toHaveTextContent('99')
+    expect(statusPanel).toHaveTextContent('1/4 events complete')
+    expect(statusPanel).toHaveTextContent('Qualification available')
+    expect(statusPanel).toHaveTextContent('rollover_bootstrap from run-parent')
     for (const [name, href] of [
       ['Active Run Rankings', '/viewer/runs/run-a/rankings'],
       ['Active Run Race', '/viewer/runs/run-a/race'],
@@ -156,6 +206,33 @@ describe('Viewer Phase 1B/1C routes and safety', () => {
     ] as const) {
       expect(within(statusPanel).getByRole('link', { name })).toHaveAttribute('href', href)
     }
+    expect(screen.getByText(/Next scheduled event:/)).toHaveTextContent('E2')
+    expect(screen.getByText(/DIAMOND/)).toHaveTextContent('W5')
+    expect(screen.getByText(/E3 · BRONZE · W5/)).toBeInTheDocument()
+    expect(screen.getByText(/Latest ranking snapshot #2 from E2/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
+    expect(screen.getByText(/Latest race snapshot #3 from E2/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
+    expect(screen.getByText(/1 activity items · Latest: E1 completed/)).toBeInTheDocument()
+    expect(screen.getByText('Prediction analytics are not connected yet.')).toBeInTheDocument()
+  })
+
+  it('shows a sports-facing unavailable state when active-run homepage APIs fail', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    api.getRun.mockRejectedValueOnce(new Error('run unavailable'))
+    api.getRunStatusSummary.mockRejectedValueOnce(new Error('status unavailable'))
+    api.listEvents.mockRejectedValueOnce(new Error('events unavailable'))
+    api.listRankingSnapshots.mockRejectedValueOnce(new Error('ranking unavailable'))
+    api.listRaceSnapshots.mockRejectedValueOnce(new Error('race unavailable'))
+    api.getRunActivity.mockRejectedValueOnce(new Error('activity unavailable'))
+    api.getFinalsSummary.mockRejectedValueOnce(new Error('finals unavailable'))
+
+    renderAppAt('/viewer')
+
+    expect(await screen.findByText(/Active run summary is temporarily unavailable/)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Featured Tournament Hero' })).toBeInTheDocument()
+    expect(screen.getByText('No current event summary available yet.')).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
   })
 
   it('bridges active-run top-level Viewer pages to run-scoped read-only routes', async () => {

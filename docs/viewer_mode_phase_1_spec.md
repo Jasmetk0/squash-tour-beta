@@ -1699,3 +1699,11 @@ $ for f in src/beta_engine/api/routers/*.py; do echo "### $f"; rg -n "@(router)\
 Result summary: confirmed backend router files and endpoints exist for health, players, rankings, runs, seasons, simulation, snapshots, tournaments, world data, and history; also confirmed the current frontend has Admin/Viewer routes, run navigation, a Finals simulation call, and planned event commissioner-style API calls.
 
 Tests were not required or run because this is a docs-only phase and no React, backend, API client, CSS, or test files were changed.
+
+## Phase 1D Implementation Note — Active Run Homepage Summary
+
+Phase 1D improves the `/viewer` MSA homepage when `beta_engine:viewer_active_run_id` is set by reading small, real summaries from existing read-only run APIs where available. The homepage can now surface active-run status fields, event/calendar context, snapshot metadata, Finals availability, and activity-feed summary metadata without adding complex backend read models.
+
+Phase 1D intentionally does not add Elo, Power Rating, H2H, odds, prediction analytics, no-future-knowledge enforcement, or mutating Viewer controls. It does not invent fake players, fake tournament names, fake rankings, fake race tables, fake matches, or fake storylines. Full sports cards remain deferred until dedicated read models exist for those surfaces.
+
+This note does not mark full Viewer Phase 1 complete.

@@ -175,6 +175,20 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(screen.queryByText(/Paris can reclaim/i)).not.toBeInTheDocument()
   })
 
+  it('navigates an empty topbar search submit to the search shell without a query string', async () => {
+    const user = userEvent.setup()
+    renderAppAt('/viewer')
+
+    const searchInput = await screen.findByRole('textbox', { name: 'Search players, countries, tournaments' })
+    await user.click(searchInput)
+    await user.keyboard('{Enter}')
+
+    expect(await screen.findByRole('heading', { name: 'Search' })).toBeInTheDocument()
+    expect(screen.getAllByLabelText('Read-only Viewer search shell')[0]).toHaveValue('')
+    expect(screen.queryByText(/Search query:/)).not.toBeInTheDocument()
+    expect(screen.getByText('Search needs a selected Viewer run or connected global search index.')).toBeInTheDocument()
+  })
+
   it('shows sports-facing empty states on top-level Viewer pages when no active run is selected', async () => {
     localStorage.removeItem('beta_engine:viewer_active_run_id')
     const emptyStateRoutes = [

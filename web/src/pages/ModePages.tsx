@@ -6,13 +6,13 @@ import { AdminPlayersPage as InitialPoolAdminPlayersPage } from './AdminPlayersP
 import { AdminPlayersHubPage } from './AdminPlayersHubPage'
 import { AdminSeasonsPage as SeasonBootstrapAdminSeasonsPage } from './AdminSeasonsPage'
 import { TournamentTemplatesPage } from './TournamentTemplatesPage'
-import { getCountriesMetadata, getFinalsSummary, getRun, getRunActivity, getRunStatusSummary, getTournamentTemplatesMetadata, listEvents, listRaceSnapshots, listRankingSnapshots, listRuns } from '../api/client'
+import { getCountriesMetadata, getFinalsSummary, getRun, getRunActivity, getRunStatusSummary, getTournamentTemplatesMetadata, listEvents, listRaceSnapshots, listRankingSnapshots, listRunNations, listRunPlayers, listRuns } from '../api/client'
 
 import { LinkCardGrid } from '../components/LinkCardGrid'
 import { ViewerJumpToWeekButton } from '../components/ViewerContextControls'
 import { useViewerContext } from '../viewer/ViewerContext'
 import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewer/activeRun'
-import type { EventRecord, FinalsSummaryResponse, RankingSnapshot, RaceSnapshot, RunActivityItem, SeasonStateResponse } from '../api/types'
+import type { EventRecord, FinalsSummaryResponse, RankingSnapshot, RaceSnapshot, RunActivityItem, RunNationSummaryItem, RunPlayerListItem, SeasonStateResponse } from '../api/types'
 
 export function LandingPage(): JSX.Element {
   return (
@@ -810,25 +810,131 @@ export function ViewerTournamentsPage(): JSX.Element {
   )
 }
 
-export function ViewerPlayersPage(): JSX.Element {
+function renderPlayerSampleMetadata(player: RunPlayerListItem): JSX.Element {
   return (
-    <ViewerActiveRunBridge
-      title="Players Hub"
-      description="Player hub for read-only spotlights, profiles, and browsing in the selected Viewer context."
-      emptyMessage="Select a Viewer run to view MSA Players."
-      target={(runId) => `/viewer/runs/${runId}/players`}
-    />
+    <dl className="metadata-list">
+      <div><dt>Player</dt><dd>{player.name || player.player_id}</dd></div>
+      <div><dt>Player ID</dt><dd>{player.player_id}</dd></div>
+      <div><dt>Country</dt><dd>{player.country_code || '—'}</dd></div>
+      <div><dt>Age</dt><dd>{player.age ?? '—'}</dd></div>
+      <div><dt>Power Rating</dt><dd>{player.overall ?? '—'}</dd></div>
+    </dl>
+  )
+}
+
+function renderCountrySampleMetadata(nation: RunNationSummaryItem): JSX.Element {
+  return (
+    <dl className="metadata-list">
+      <div><dt>Country code</dt><dd>{nation.country_code}</dd></div>
+      <div><dt>Country name</dt><dd>{nation.country_name ?? '—'}</dd></div>
+      <div><dt>Player count</dt><dd>{nation.total_players ?? '—'}</dd></div>
+      <div><dt>Average Power Rating</dt><dd>{nation.average_overall ?? '—'}</dd></div>
+      <div><dt>Top player</dt><dd>{nation.top_player_name ?? nation.top_player_id ?? '—'}</dd></div>
+      <div><dt>Top player Power Rating</dt><dd>{nation.top_player_overall ?? '—'}</dd></div>
+    </dl>
+  )
+}
+
+export function ViewerPlayersPage(): JSX.Element {
+  const activeRunId = useActiveViewerRunId()
+  const playersQuery = useQuery({
+    queryKey: ['viewer-players-hub-run-players', activeRunId],
+    queryFn: () => listRunPlayers(activeRunId ?? '', { limit: 5, offset: 0 }),
+    enabled: Boolean(activeRunId),
+    retry: false
+  })
+
+  if (!activeRunId) {
+    return (
+      <ViewerShellPage
+        title="Players Hub"
+        description="Player hub for read-only spotlights, profiles, and browsing in the selected Viewer context."
+      >
+        <p className="empty-state">Select a Viewer run to view MSA Players.</p>
+      </ViewerShellPage>
+    )
+  }
+
+  const players = playersQuery.data?.players ?? []
+
+  return (
+    <ViewerShellPage title="Players Hub" description="Read-only top-level player hub using existing active-run player metadata.">
+      <article className="viewer-active-run-card" aria-label="Players Hub active run summary">
+        <span className="eyebrow">Active Viewer run</span>
+        <h3>Players Hub summary</h3>
+        {playersQuery.isLoading ? <p className="status">Loading active run player metadata…</p> : null}
+        {playersQuery.isError ? <p className="empty-state">Player metadata is temporarily unavailable for this run.</p> : null}
+        <dl className="metadata-list">
+          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
+          <div><dt>Total player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : playersQuery.data?.total ?? '—'}</dd></div>
+          <div><dt>Returned player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : players.length}</dd></div>
+        </dl>
+        {!playersQuery.isLoading && !playersQuery.isError && players.length === 0 ? <p className="empty-state">No player metadata is available for this run yet.</p> : null}
+        {players.length ? (
+          <div>
+            <h4>Sample players</h4>
+            <ul className="viewer-home-list" aria-label="Sample active run players">
+              {players.slice(0, 5).map((player) => (
+                <li key={player.player_id}>{renderPlayerSampleMetadata(player)}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        <p className="viewer-active-run-actions">
+          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/players`}>Open active run players</Link>
+        </p>
+      </article>
+    </ViewerShellPage>
   )
 }
 
 export function ViewerCountriesPage(): JSX.Element {
+  const activeRunId = useActiveViewerRunId()
+  const nationsQuery = useQuery({
+    queryKey: ['viewer-countries-hub-run-nations', activeRunId],
+    queryFn: () => listRunNations(activeRunId ?? '', { limit: 5, offset: 0 }),
+    enabled: Boolean(activeRunId),
+    retry: false
+  })
+
+  if (!activeRunId) {
+    return (
+      <ViewerShellPage title="Countries Hub" description="Country hub for read-only national rankings, hosting stories, talent pipelines, and records.">
+        <p className="empty-state">Select a Viewer run to view MSA Countries.</p>
+      </ViewerShellPage>
+    )
+  }
+
+  const nations = nationsQuery.data?.nations ?? []
+
   return (
-    <ViewerActiveRunBridge
-      title="Countries Hub"
-      description="Country hub for read-only national rankings, hosting stories, talent pipelines, and records."
-      emptyMessage="Select a Viewer run to view MSA Countries."
-      target={(runId) => `/viewer/runs/${runId}/countries`}
-    />
+    <ViewerShellPage title="Countries Hub" description="Read-only top-level country hub using existing active-run nation metadata.">
+      <article className="viewer-active-run-card" aria-label="Countries Hub active run summary">
+        <span className="eyebrow">Active Viewer run</span>
+        <h3>Countries Hub summary</h3>
+        {nationsQuery.isLoading ? <p className="status">Loading active run country metadata…</p> : null}
+        {nationsQuery.isError ? <p className="empty-state">Country metadata is temporarily unavailable for this run.</p> : null}
+        <dl className="metadata-list">
+          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
+          <div><dt>Total country count</dt><dd>{nationsQuery.isLoading ? 'Loading…' : nationsQuery.data?.total ?? '—'}</dd></div>
+          <div><dt>Returned country count</dt><dd>{nationsQuery.isLoading ? 'Loading…' : nations.length}</dd></div>
+        </dl>
+        {!nationsQuery.isLoading && !nationsQuery.isError && nations.length === 0 ? <p className="empty-state">No country metadata is available for this run yet.</p> : null}
+        {nations.length ? (
+          <div>
+            <h4>Sample countries</h4>
+            <ul className="viewer-home-list" aria-label="Sample active run countries">
+              {nations.slice(0, 5).map((nation) => (
+                <li key={nation.country_code}>{renderCountrySampleMetadata(nation)}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        <p className="viewer-active-run-actions">
+          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/countries`}>Open active run countries</Link>
+        </p>
+      </article>
+    </ViewerShellPage>
   )
 }
 

@@ -447,20 +447,125 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('bridges non-tour active-run top-level Viewer pages to run-scoped read-only routes', async () => {
+  it('bridges remaining non-tour active-run top-level Viewer pages to run-scoped read-only routes', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
-    const bridgedRoutes = [
-      ['/viewer/players', 'Run Players Explorer'],
-      ['/viewer/countries', 'Run Nations Dashboard'],
-      ['/viewer/history', 'Run activity']
-    ] as const
 
-    for (const [route, heading] of bridgedRoutes) {
-      cleanup()
-      renderAppAt(route)
-      expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument()
-      expectNoForbiddenViewerActions()
-    }
+    renderAppAt('/viewer/history')
+    expect(await screen.findByRole('heading', { name: 'Run activity' })).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows active-run top-level Players Hub metadata without redirecting to the run-scoped page', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    api.listRunPlayers.mockResolvedValue({
+      run_id: 'run-a',
+      total: 8,
+      limit: 5,
+      offset: 0,
+      players: [
+        {
+          player_id: 'EGY-0001',
+          name: 'Ali Farag',
+          country_code: 'EGY',
+          age: 30,
+          source_type: 'planner_generated',
+          override_id: null,
+          quality_band: 'elite_talent',
+          is_top_band: true,
+          origin_source_type: 'planner_generated',
+          origin_quality_band: 'elite_talent',
+          origin_override_id: null,
+          origin_season: 2030,
+          technique: 92,
+          movement: 91,
+          physical: 88,
+          mental: 90,
+          overall: 91
+        }
+      ]
+    })
+
+    renderAppAt('/viewer/players')
+
+    expect(await screen.findByRole('heading', { name: 'Players Hub' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Run Players Explorer' })).not.toBeInTheDocument()
+    const panel = await screen.findByLabelText('Players Hub active run summary')
+    expect(panel).toHaveTextContent('run-a')
+    expect(panel).toHaveTextContent('Total player count')
+    expect(panel).toHaveTextContent('8')
+    expect(panel).toHaveTextContent('Returned player count')
+    expect(panel).toHaveTextContent('1')
+    expect(panel).toHaveTextContent('Ali Farag')
+    expect(panel).toHaveTextContent('EGY-0001')
+    expect(panel).toHaveTextContent('EGY')
+    expect(panel).toHaveTextContent('30')
+    expect(panel).toHaveTextContent('Power Rating')
+    expect(panel).toHaveTextContent('91')
+    expect(screen.getByRole('link', { name: 'Open active run players' })).toHaveAttribute('href', '/viewer/runs/run-a/players')
+    expect(api.listRunPlayers).toHaveBeenCalledWith('run-a', { limit: 5, offset: 0 })
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows active-run top-level Countries Hub metadata without redirecting to the run-scoped page', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    api.listRunNations.mockResolvedValue({
+      run_id: 'run-a',
+      total: 4,
+      limit: 5,
+      offset: 0,
+      nations: [
+        {
+          country_code: 'EGY',
+          country_name: 'Egypt',
+          total_players: 12,
+          average_overall: 78.4,
+          average_age: 25.2,
+          top_band_count: 3,
+          manual_override_count: 1,
+          planner_generated_count: 10,
+          rollover_carried_count: 1,
+          top_player_id: 'EGY-0001',
+          top_player_name: 'Ali Farag',
+          top_player_overall: 91
+        }
+      ]
+    })
+
+    renderAppAt('/viewer/countries')
+
+    expect(await screen.findByRole('heading', { name: 'Countries Hub' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Run Nations Dashboard' })).not.toBeInTheDocument()
+    const panel = await screen.findByLabelText('Countries Hub active run summary')
+    expect(panel).toHaveTextContent('run-a')
+    expect(panel).toHaveTextContent('Total country count')
+    expect(panel).toHaveTextContent('4')
+    expect(panel).toHaveTextContent('Returned country count')
+    expect(panel).toHaveTextContent('1')
+    expect(panel).toHaveTextContent('EGY')
+    expect(panel).toHaveTextContent('Egypt')
+    expect(panel).toHaveTextContent('12')
+    expect(panel).toHaveTextContent('78.4')
+    expect(panel).toHaveTextContent('Ali Farag')
+    expect(panel).toHaveTextContent('91')
+    expect(screen.getByRole('link', { name: 'Open active run countries' })).toHaveAttribute('href', '/viewer/runs/run-a/countries')
+    expect(api.listRunNations).toHaveBeenCalledWith('run-a', { limit: 5, offset: 0 })
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows empty states on active-run top-level Players and Countries hubs without metadata', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+
+    renderAppAt('/viewer/players')
+    expect(await screen.findByText('No player metadata is available for this run yet.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open active run players' })).toHaveAttribute('href', '/viewer/runs/run-a/players')
+    expectNoForbiddenViewerActions()
+
+    cleanup()
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    renderAppAt('/viewer/countries')
+    expect(await screen.findByText('No country metadata is available for this run yet.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open active run countries' })).toHaveAttribute('href', '/viewer/runs/run-a/countries')
+    expectNoForbiddenViewerActions()
   })
 
   it('preserves the real run-scoped Viewer ranking and race snapshot pages', async () => {

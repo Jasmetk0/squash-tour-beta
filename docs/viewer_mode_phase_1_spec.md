@@ -1707,3 +1707,11 @@ Phase 1D improves the `/viewer` MSA homepage when `beta_engine:viewer_active_run
 Phase 1D intentionally does not add Elo, Power Rating, H2H, odds, prediction analytics, no-future-knowledge enforcement, or mutating Viewer controls. It does not invent fake players, fake tournament names, fake rankings, fake race tables, fake matches, or fake storylines. Full sports cards remain deferred until dedicated read models exist for those surfaces.
 
 This note does not mark full Viewer Phase 1 complete.
+
+## Phase 1E Implementation Note — Top-Level Rankings/Race Snapshot Landings
+
+Phase 1E improves `/viewer/rankings` and `/viewer/rankings/race` when `beta_engine:viewer_active_run_id` is set by using existing read-only snapshot list APIs to show active-run snapshot metadata at the top-level Viewer destinations. The pages now surface active run ID, latest snapshot sequence, latest source event ID when present, latest snapshot kind when present, and total ranking/race snapshot counts, with links into the existing run-scoped snapshot pages.
+
+Phase 1E intentionally does not add fake ranking rows, fake Race to Finals standings, Elo, Power Rating, Form Ranking, odds, H2H, predictions, mutating Viewer controls, or new backend endpoints. Full Top 10 rankings and race standings remain deferred until dedicated read models or a safe, sports-facing snapshot row display are available.
+
+This note does not mark full Viewer Phase 1 complete.

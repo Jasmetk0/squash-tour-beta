@@ -139,6 +139,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     localStorage.removeItem('beta_engine:viewer_active_run_id')
     const emptyStateRoutes = [
       ['/viewer/rankings', 'Select a Viewer run to view MSA Rankings.'],
+      ['/viewer/rankings/race', 'Select a Viewer run to view Race to Finals.'],
       ['/viewer/players', 'Select a Viewer run to view MSA Players.'],
       ['/viewer/countries', 'Select a Viewer run to view MSA Countries.'],
       ['/viewer/history', 'Select a Viewer run to view MSA History.']
@@ -235,11 +236,82 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('bridges active-run top-level Viewer pages to run-scoped read-only routes', async () => {
+  it('shows top-level rankings snapshot metadata when an active run has ranking snapshots', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    api.listRankingSnapshots.mockResolvedValue({
+      run_id: 'run-a',
+      snapshots: [
+        { snapshot_sequence: 4, snapshot_kind: 'TOURNAMENT', source_event_id: 'E1', payload: {} },
+        { snapshot_sequence: 8, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: {} }
+      ]
+    })
+
+    renderAppAt('/viewer/rankings')
+
+    expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
+    const panel = await screen.findByLabelText('MSA Rankings active run snapshot summary')
+    expect(panel).toHaveTextContent('run-a')
+    expect(panel).toHaveTextContent('Ranking snapshot count')
+    expect(panel).toHaveTextContent('2')
+    expect(panel).toHaveTextContent('Latest snapshot sequence')
+    expect(panel).toHaveTextContent('8')
+    expect(panel).toHaveTextContent('Latest source event ID')
+    expect(panel).toHaveTextContent('E3')
+    expect(panel).toHaveTextContent('Latest snapshot kind')
+    expect(panel).toHaveTextContent('WEEK')
+    expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
+    expect(screen.getByRole('link', { name: 'View latest ranking snapshot' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings/8')
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows top-level race snapshot metadata when an active run has race snapshots', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    api.listRaceSnapshots.mockResolvedValue({
+      run_id: 'run-a',
+      snapshots: [
+        { snapshot_sequence: 2, snapshot_kind: 'TOURNAMENT', source_event_id: 'E1', payload: {} },
+        { snapshot_sequence: 9, snapshot_kind: 'WEEK', source_event_id: 'E4', payload: {} }
+      ]
+    })
+
+    renderAppAt('/viewer/rankings/race')
+
+    expect(await screen.findByRole('heading', { name: 'Race to Finals' })).toBeInTheDocument()
+    const panel = await screen.findByLabelText('Race to Finals active run snapshot summary')
+    expect(panel).toHaveTextContent('run-a')
+    expect(panel).toHaveTextContent('Race snapshot count')
+    expect(panel).toHaveTextContent('2')
+    expect(panel).toHaveTextContent('Latest snapshot sequence')
+    expect(panel).toHaveTextContent('9')
+    expect(panel).toHaveTextContent('Latest source event ID')
+    expect(panel).toHaveTextContent('E4')
+    expect(panel).toHaveTextContent('Latest snapshot kind')
+    expect(panel).toHaveTextContent('WEEK')
+    expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
+    expect(screen.getByRole('link', { name: 'View latest race snapshot' })).toHaveAttribute('href', '/viewer/runs/run-a/race/9')
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows top-level rankings and race empty snapshot states for active runs without snapshots', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+
+    renderAppAt('/viewer/rankings')
+    expect(await screen.findByText('No ranking snapshots are available for this run yet.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
+    expect(screen.queryByRole('link', { name: 'View latest ranking snapshot' })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+
+    cleanup()
+    renderAppAt('/viewer/rankings/race')
+    expect(await screen.findByText('No race snapshots are available for this run yet.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
+    expect(screen.queryByRole('link', { name: 'View latest race snapshot' })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('bridges other active-run top-level Viewer pages to run-scoped read-only routes', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
     const bridgedRoutes = [
-      ['/viewer/rankings', 'Ranking snapshots'],
-      ['/viewer/rankings/race', 'Race snapshots'],
       ['/viewer/tour/tournaments', 'Events history'],
       ['/viewer/tournaments', 'Events history'],
       ['/viewer/players', 'Run Players Explorer'],
@@ -255,6 +327,19 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     }
   })
 
+  it('preserves the real run-scoped Viewer ranking and race snapshot pages', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+
+    renderAppAt('/viewer/runs/run-a/rankings')
+    expect(await screen.findByRole('heading', { name: 'Ranking snapshots' })).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+
+    cleanup()
+    renderAppAt('/viewer/runs/run-a/race')
+    expect(await screen.findByRole('heading', { name: 'Race snapshots' })).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
   it('offers the active run calendar link while preserving the top-level calendar Jump to Week primitive', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
     renderAppAt('/viewer/tour/calendar')
@@ -267,6 +352,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     const routes = [
       '/viewer',
       '/viewer/rankings',
+      '/viewer/rankings/race',
       '/viewer/tournaments',
       '/viewer/players',
       '/viewer/countries',

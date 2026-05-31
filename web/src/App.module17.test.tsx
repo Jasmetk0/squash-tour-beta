@@ -2523,10 +2523,13 @@ describe('Module 17 pages through routes', () => {
     expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
   })
 
-  it('routes top-level Viewer rankings to active run ranking snapshots without duplicate active run nav', async () => {
+  it('renders top-level Viewer rankings snapshot landing without duplicate active run nav', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
     renderAppAt('/viewer/rankings')
-    expect(await screen.findByRole('heading', { name: 'Ranking snapshots' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
+    expect(await screen.findByLabelText('MSA Rankings active run snapshot summary')).toHaveTextContent('run-a')
+    expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
+    expect(screen.getByRole('link', { name: 'View latest ranking snapshot' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings/4')
     expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
   })
 
@@ -4779,11 +4782,12 @@ describe('Future apply validation UI safety', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Validate future apply reference' }))
     await waitFor(() => expect(api.validateFutureApplyRequestPreview.mock.calls.length).toBe(callsBeforeClick + 1))
 
-    await screen.findByText('Future apply execution boundary contract')
-    const executionBoundaryIntactRow = screen.queryByText('Execution boundary intact: true')
-    if (executionBoundaryIntactRow) {
-      expect(executionBoundaryIntactRow).toBeInTheDocument()
-    }
+    const previewResultBlocks = await screen.findAllByLabelText('Future apply preview result block')
+    const latestPreviewResultBlock = previewResultBlocks[previewResultBlocks.length - 1]
+    const boundaryContractHeading = within(latestPreviewResultBlock).getByRole('heading', { name: 'Future apply execution boundary contract' })
+    const boundaryContractPanel = boundaryContractHeading.closest('section')
+    expect(boundaryContractPanel).not.toBeNull()
+    expect(within(boundaryContractPanel as HTMLElement).getByText('Execution boundary intact: true')).toHaveTextContent('Execution boundary intact: true')
     expect(screen.queryByText('Execution enabled: true')).not.toBeInTheDocument()
     expect(screen.queryByText('Can execute: true')).not.toBeInTheDocument()
     expect(screen.queryByText('Mutation permitted: true')).not.toBeInTheDocument()

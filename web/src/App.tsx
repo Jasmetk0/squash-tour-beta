@@ -35,6 +35,7 @@ import {
   ViewerRacePage,
   ViewerRecordsPage,
   ViewerShellPage,
+  ViewerStatsPage,
   ViewerSeasonHubPage,
   ViewerTourCalendarPage,
   ViewerTournamentsPage
@@ -175,7 +176,7 @@ export default function App(): JSX.Element {
         <Route path="viewer/h2h/rivalries" element={<ViewerShellPage title="Rivalry Rankings" />} />
         <Route path="viewer/h2h/most-played" element={<ViewerShellPage title="Most Played Matchups" />} />
         <Route path="viewer/h2h/finals-rivalries" element={<ViewerShellPage title="Finals Rivalries" />} />
-        <Route path="viewer/stats" element={<ViewerRecordsPage />} />
+        <Route path="viewer/stats" element={<ViewerStatsPage />} />
         <Route path="viewer/stats/title-leaders" element={<ViewerShellPage title="Title Leaders" />} />
         <Route path="viewer/stats/no1-weeks" element={<ViewerShellPage title="Weeks at No.1" />} />
         <Route path="viewer/stats/streaks" element={<ViewerShellPage title="Streaks" />} />

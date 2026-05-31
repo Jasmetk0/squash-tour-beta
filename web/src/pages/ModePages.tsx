@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { AdminPlayersPage as InitialPoolAdminPlayersPage } from './AdminPlayersPage'
 import { AdminPlayersHubPage } from './AdminPlayersHubPage'
 import { AdminSeasonsPage as SeasonBootstrapAdminSeasonsPage } from './AdminSeasonsPage'
@@ -1204,7 +1204,14 @@ function renderSearchEventLabel(event: SeasonStateResponse['season_state']['orde
 
 export function ViewerSearchPage(): JSX.Element {
   const activeRunId = useActiveViewerRunId()
-  const [query, setQuery] = useState('')
+  const [searchParams] = useSearchParams()
+  const urlQuery = searchParams.get('q') ?? ''
+  const [query, setQuery] = useState(urlQuery)
+
+  useEffect(() => {
+    setQuery(urlQuery)
+  }, [urlQuery])
+
   const playersQuery = useQuery({
     queryKey: ['viewer-search-run-players', activeRunId],
     queryFn: () => listRunPlayers(activeRunId ?? '', { limit: 5, offset: 0 }),
@@ -1227,7 +1234,20 @@ export function ViewerSearchPage(): JSX.Element {
   if (!activeRunId) {
     return (
       <ViewerShellPage title="Search" description="Read-only global Viewer search shell for future player, tournament, country, match, and season results.">
-        <ViewerEmptyState>Search needs a selected Viewer run or connected global search index.</ViewerEmptyState>
+        <article className="viewer-active-run-card" aria-label="Search query shell">
+          <span className="eyebrow">Viewer search shell</span>
+          <h3>Search query{urlQuery ? `: ${urlQuery}` : ''}</h3>
+          <label className="field-label" htmlFor="viewer-search-shell-input">Search shell</label>
+          <input
+            id="viewer-search-shell-input"
+            aria-label="Read-only Viewer search shell"
+            placeholder="Search players, countries, tournaments…"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <ViewerEmptyState>Search needs a selected Viewer run or connected global search index.</ViewerEmptyState>
+          <p className="status">Full search result sets are not shown yet; this page only reflects the local query from the URL.</p>
+        </article>
       </ViewerShellPage>
     )
   }
@@ -1240,7 +1260,7 @@ export function ViewerSearchPage(): JSX.Element {
     <ViewerShellPage title="Search" description="Conservative read-only search shell using small active-run metadata samples only.">
       <article className="viewer-active-run-card" aria-label="Search active run metadata summary">
         <span className="eyebrow">Active Viewer run</span>
-        <h3>Search</h3>
+        <h3>Search query{urlQuery ? `: ${urlQuery}` : ''}</h3>
         {playersQuery.isLoading || nationsQuery.isLoading || runQuery.isLoading ? <p className="status">Loading active run searchable metadata samples…</p> : null}
         {playersQuery.isError || nationsQuery.isError || runQuery.isError ? <ViewerEmptyState>Some active run searchable metadata is temporarily unavailable.</ViewerEmptyState> : null}
         <dl className="metadata-list">
@@ -1253,12 +1273,12 @@ export function ViewerSearchPage(): JSX.Element {
         <input
           id="viewer-search-shell-input"
           aria-label="Read-only Viewer search shell"
-          placeholder="Search players, countries, tournaments, matches, seasons…"
+          placeholder="Search players, countries, tournaments…"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
         <ViewerEmptyState>Global search index is not connected yet.</ViewerEmptyState>
-        <p className="status">This local input does not return complete results yet; it only demonstrates where future read-only search queries will be entered.</p>
+        <p className="status">Full search result sets are not shown yet; active-run lists below are real metadata samples only.</p>
         <ViewerSamplePlayersList players={players} label="Sample searchable players" />
         {nations.length ? (
           <div>

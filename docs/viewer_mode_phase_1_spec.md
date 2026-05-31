@@ -1723,3 +1723,11 @@ Phase 1F improves `/viewer/tour`, `/viewer/tour/current-week`, `/viewer/tour/tou
 Phase 1F intentionally does not add fake tournament names, fake results, fake winners, fake matches, fake odds, fake storylines, mutating Viewer controls, or new backend read models. Full tournament detail/read models and richer sports-facing tournament archive cards remain deferred.
 
 This note does not mark full Viewer Phase 1 complete.
+
+## Phase 1G Implementation Note — Top-Level Players/Countries Landings
+
+Phase 1G improves `/viewer/players` and `/viewer/countries` when `beta_engine:viewer_active_run_id` is set by using the existing read-only run-scoped player and nation list APIs. The top-level Players/Countries pages now show active run ID, total counts when returned by the existing APIs, returned response counts, small samples of real player/country metadata, and links into the existing run-scoped player and country pages.
+
+Phase 1G intentionally does not add fake players, fake rankings, fake titles, fake country standings, fake country stats, fake storylines, mutating Viewer controls, new backend endpoints, or complex new backend read models. Rich sports-facing player and country hubs remain deferred until dedicated read models exist.
+
+This note does not mark full Viewer Phase 1 complete.

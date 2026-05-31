@@ -4782,11 +4782,12 @@ describe('Future apply validation UI safety', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Validate future apply reference' }))
     await waitFor(() => expect(api.validateFutureApplyRequestPreview.mock.calls.length).toBe(callsBeforeClick + 1))
 
-    await screen.findByText('Future apply execution boundary contract')
-    const executionBoundaryIntactRow = screen.queryByText('Execution boundary intact: true')
-    if (executionBoundaryIntactRow) {
-      expect(executionBoundaryIntactRow).toBeInTheDocument()
-    }
+    const previewResultBlocks = await screen.findAllByLabelText('Future apply preview result block')
+    const latestPreviewResultBlock = previewResultBlocks[previewResultBlocks.length - 1]
+    const boundaryContractHeading = within(latestPreviewResultBlock).getByRole('heading', { name: 'Future apply execution boundary contract' })
+    const boundaryContractPanel = boundaryContractHeading.closest('section')
+    expect(boundaryContractPanel).not.toBeNull()
+    expect(within(boundaryContractPanel as HTMLElement).getByText('Execution boundary intact: true')).toHaveTextContent('Execution boundary intact: true')
     expect(screen.queryByText('Execution enabled: true')).not.toBeInTheDocument()
     expect(screen.queryByText('Can execute: true')).not.toBeInTheDocument()
     expect(screen.queryByText('Mutation permitted: true')).not.toBeInTheDocument()

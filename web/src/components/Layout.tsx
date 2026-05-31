@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, MouseEvent } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { ViewerSeasonWeekSelector } from './ViewerContextControls'
@@ -235,6 +235,17 @@ function ViewerTopbarSearch(): JSX.Element {
 function ViewerTopbar(): JSX.Element {
   const location = useLocation()
 
+  useEffect(() => {
+    const activeElement = document.activeElement
+    if (activeElement instanceof HTMLElement && activeElement.closest('.viewer-dropdown')) {
+      activeElement.blur()
+    }
+  }, [location.pathname])
+
+  function closeDropdownAfterNavigation(event: MouseEvent<HTMLAnchorElement>): void {
+    event.currentTarget.blur()
+  }
+
   return (
     <nav className="viewer-topbar" aria-label="Viewer primary navigation" data-testid="viewer-primary-nav">
       <NavLink to="/viewer" end className={({ isActive }) => (isActive ? 'active viewer-brand-link' : 'viewer-brand-link')}>
@@ -244,18 +255,20 @@ function ViewerTopbar(): JSX.Element {
         const parentActive = isViewerRouteGroupActive(location.pathname, dropdown)
         return (
           <div key={dropdown.label} className="viewer-dropdown">
-            <NavLink to={dropdown.to} className={parentActive ? 'active viewer-dropdown__label' : 'viewer-dropdown__label'}>
+            <NavLink
+              to={dropdown.to}
+              className={parentActive ? 'active viewer-dropdown__label' : 'viewer-dropdown__label'}
+              aria-haspopup="true"
+            >
               {dropdown.label}
             </NavLink>
-            <button type="button" className="viewer-dropdown__toggle" aria-label={`${dropdown.label} submenu`} aria-haspopup="menu">
-              ▾
-            </button>
             <div className="viewer-dropdown__menu" aria-label={`${dropdown.label} menu`}>
               {dropdown.items.map((item) => (
                 <Link
                   key={`${dropdown.label}-${item.label}`}
                   to={item.to}
                   className={isExactViewerActivePath(location.pathname, item.to) ? 'active' : ''}
+                  onClick={closeDropdownAfterNavigation}
                 >
                   {item.label}
                 </Link>

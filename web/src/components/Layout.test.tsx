@@ -59,7 +59,7 @@ describe('Layout mode navigation', () => {
 
     for (const dropdown of viewerDropdowns) {
       expect(within(nav).getByRole('link', { name: dropdown.label })).toHaveAttribute('href', dropdown.to)
-      expect(within(nav).getByRole('button', { name: `${dropdown.label} submenu` })).toBeInTheDocument()
+      expect(within(nav).queryByRole('button', { name: `${dropdown.label} submenu` })).not.toBeInTheDocument()
       expect(dropdown.items.map((item) => item.label)).toEqual(dropdownExpectations[dropdown.label])
       for (const item of dropdown.items) {
         expect(within(nav).getAllByRole('link', { name: item.label }).some((link) => link.getAttribute('href') === item.to)).toBe(true)
@@ -68,7 +68,7 @@ describe('Layout mode navigation', () => {
   })
 
 
-  it('marks only the exact dropdown route active while keeping the parent category active', async () => {
+  it('marks only the exact dropdown route active while keeping active state structural and neutral-style compatible', async () => {
     renderWithRoute(<Layout />, '/viewer/tour/current-week')
 
     const nav = await screen.findByTestId('viewer-primary-nav')

@@ -348,3 +348,15 @@ This repair does not mark Viewer Phase 1 complete. It records the intended QA be
 - Topbar Search is now a search input shell. Pressing Enter or using the search control opens `/viewer/search` with an optional `q` query string; no backend search endpoint or complete result set is implied.
 - Existing run-scoped Viewer pages remain available and read-only, but technical payloads still need future Viewer polish. Later work should hide raw payloads behind an explicit `Show technical payload` control instead of showing debug-style data as primary sports UI.
 - Future Viewer/Admin product work should add a Run Library / World Saves concept with multiple independent worlds, a Viewer run switcher, and Admin run creation/management. Viewer must remain read-only. This is deferred and is not implemented in this repair.
+
+## Manual QA Repair 2 note — neutral hover/focus topbar polish
+
+This repair does not mark Viewer Phase 1 complete. It records the intended QA behavior for the polished Viewer topbar:
+
+- Visible submenu arrows/caret buttons were removed from Rankings, Tour, Players, Countries, H2H, Stats, and Predictions.
+- Main category labels remain landing-page links to their category routes.
+- Category dropdowns open from desktop hover and keyboard focus/focus-within on the category area; dropdown links remain keyboard reachable.
+- On desktop, the topbar should remain one row with MSA, all category labels, the Search input, and the Season/Week selector.
+- Active nav styling is neutral and subtle; color/accent styling is reserved for hover/focus states, not permanent filled active pills.
+- Dropdowns should close after selecting a dropdown item or after navigation/route changes.
+- Mobile and genuinely narrow widths may wrap the topbar, search, and Season/Week selector for usability.

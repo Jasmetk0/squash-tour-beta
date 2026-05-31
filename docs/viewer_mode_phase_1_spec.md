@@ -1715,3 +1715,11 @@ Phase 1E improves `/viewer/rankings` and `/viewer/rankings/race` when `beta_engi
 Phase 1E intentionally does not add fake ranking rows, fake Race to Finals standings, Elo, Power Rating, Form Ranking, odds, H2H, predictions, mutating Viewer controls, or new backend endpoints. Full Top 10 rankings and race standings remain deferred until dedicated read models or a safe, sports-facing snapshot row display are available.
 
 This note does not mark full Viewer Phase 1 complete.
+
+## Phase 1F Implementation Note — Top-Level Tour/Tournaments Landings
+
+Phase 1F improves `/viewer/tour`, `/viewer/tour/current-week`, `/viewer/tour/tournaments`, `/viewer/tournaments`, and `/viewer/tour/calendar` when `beta_engine:viewer_active_run_id` is set by using existing read-only run, status-summary, event-list, Finals-summary, and ordered-calendar metadata APIs. The top-level Tour/Tournaments pages now show active run ID, season/progress, next event index, ordered event counts, selected-week event metadata, next scheduled event metadata, latest persisted event metadata, and links into the existing run-scoped calendar, tournaments, and Finals pages where appropriate.
+
+Phase 1F intentionally does not add fake tournament names, fake results, fake winners, fake matches, fake odds, fake storylines, mutating Viewer controls, or new backend read models. Full tournament detail/read models and richer sports-facing tournament archive cards remain deferred.
+
+This note does not mark full Viewer Phase 1 complete.

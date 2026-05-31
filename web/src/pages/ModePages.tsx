@@ -12,7 +12,7 @@ import { LinkCardGrid } from '../components/LinkCardGrid'
 import { ViewerJumpToWeekButton } from '../components/ViewerContextControls'
 import { useViewerContext } from '../viewer/ViewerContext'
 import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewer/activeRun'
-import type { EventRecord, RankingSnapshot, RaceSnapshot, RunActivityItem, SeasonStateResponse } from '../api/types'
+import type { EventRecord, FinalsSummaryResponse, RankingSnapshot, RaceSnapshot, RunActivityItem, SeasonStateResponse } from '../api/types'
 
 export function LandingPage(): JSX.Element {
   return (
@@ -294,6 +294,47 @@ function buildPlannedEventMap(runData: SeasonStateResponse | undefined): Map<str
     map.set(event.event_id, event)
   })
   return map
+}
+
+type OrderedSeasonEvent = SeasonStateResponse['season_state']['ordered_events'][number]
+
+function selectNextOrderedEvent(runData: SeasonStateResponse | undefined): OrderedSeasonEvent | null {
+  const orderedEvents = runData?.season_state.ordered_events ?? []
+  const nextIndex = runData?.season_state.next_event_index ?? runData?.run.next_event_index ?? null
+  return nextIndex != null ? orderedEvents[nextIndex] ?? null : null
+}
+
+function selectLatestPersistedEvent(events: EventRecord[]): EventRecord | null {
+  return [...events].sort((a, b) => b.event_sequence - a.event_sequence)[0] ?? null
+}
+
+function formatFinalsAvailability(summary: FinalsSummaryResponse | undefined): string {
+  if (!summary) return 'Loading or unavailable'
+  if (summary.result) return 'Finals result available'
+  if (summary.qualification) return 'Finals qualification available'
+  return 'Finals summary not available yet'
+}
+
+function renderOrderedEventMetadata(event: OrderedSeasonEvent): JSX.Element {
+  return (
+    <dl className="metadata-list">
+      <div><dt>Event ID</dt><dd>{event.event_id}</dd></div>
+      <div><dt>Week</dt><dd>{event.week}</dd></div>
+      <div><dt>Category</dt><dd>{event.category}</dd></div>
+      <div><dt>Tour</dt><dd>{event.tour}</dd></div>
+      <div><dt>Template ID</dt><dd>{event.template_id}</dd></div>
+    </dl>
+  )
+}
+
+function renderPersistedEventSummary(event: EventRecord | null, plannedMap: Map<string, OrderedSeasonEvent>): ReactNode {
+  if (!event) return '—'
+  const planned = plannedMap.get(event.event_id)
+  const week = event.week ?? planned?.week ?? '—'
+  const templateId = event.template_id ?? planned?.template_id ?? '—'
+  const category = planned?.category ?? '—'
+  const tour = planned?.tour ?? '—'
+  return `${event.event_id} · W${week} · ${category} · ${tour} · ${templateId}`
 }
 
 function selectHomepageEvent(runData: SeasonStateResponse | undefined, events: EventRecord[]): HomepageEventSummary | null {
@@ -619,14 +660,153 @@ export function ViewerRacePage(): JSX.Element {
   )
 }
 
-export function ViewerTournamentsPage(): JSX.Element {
+export function ViewerSeasonHubPage(): JSX.Element {
+  const activeRunId = useActiveViewerRunId()
+
+  const runQuery = useQuery({ queryKey: ['viewer-season-hub-run', activeRunId], queryFn: () => getRun(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const statusQuery = useQuery({ queryKey: ['viewer-season-hub-status', activeRunId], queryFn: () => getRunStatusSummary(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const eventsQuery = useQuery({ queryKey: ['viewer-season-hub-events', activeRunId], queryFn: () => listEvents(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const finalsQuery = useQuery({ queryKey: ['viewer-season-hub-finals', activeRunId], queryFn: () => getFinalsSummary(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+
+  if (!activeRunId) {
+    return (
+      <ViewerShellPage title="Season Hub" description="Top-level tour hub for the selected Viewer run.">
+        <p className="empty-state">Season Hub needs a selected Viewer run.</p>
+      </ViewerShellPage>
+    )
+  }
+
+  const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
+  const persistedEvents = eventsQuery.data?.events ?? []
+  const plannedMap = buildPlannedEventMap(runQuery.data)
+  const nextEvent = selectNextOrderedEvent(runQuery.data)
+  const latestPersistedEvent = selectLatestPersistedEvent(persistedEvents)
+  const progress = statusQuery.data?.progress
+  const season = statusQuery.data?.season ?? runQuery.data?.season_state.season ?? runQuery.data?.run.season ?? '—'
+  const eventCount = orderedEvents.length || runQuery.data?.run.total_events || persistedEvents.length
+
   return (
-    <ViewerActiveRunBridge
-      title="All Tournaments"
-      description="Tournament archive destination for read-only schedules, results, and historical browsing."
-      emptyMessage="Select a Viewer run to view MSA Tournaments."
-      target={(runId) => `/viewer/runs/${runId}/tournaments`}
-    />
+    <ViewerShellPage title="Season Hub" description="Read-only top-level season summary from the active Viewer run's existing calendar and event APIs.">
+      <article className="viewer-active-run-card" aria-label="Season Hub active run summary">
+        <span className="eyebrow">Active Viewer run</span>
+        <h3>Season Hub summary</h3>
+        {runQuery.isLoading || statusQuery.isLoading || eventsQuery.isLoading || finalsQuery.isLoading ? <p className="status">Loading active run tour summary…</p> : null}
+        {runQuery.isError || statusQuery.isError || eventsQuery.isError || finalsQuery.isError ? <p className="empty-state">Some active run tour metadata is temporarily unavailable.</p> : null}
+        <dl className="metadata-list">
+          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
+          <div><dt>Season</dt><dd>{season}</dd></div>
+          <div><dt>Progress</dt><dd>{progress ? `${progress.completed_event_count}/${progress.total_events} events complete` : `${runQuery.data?.run.completed_event_ids.length ?? persistedEvents.length}/${eventCount} events complete`}</dd></div>
+          <div><dt>Next event index</dt><dd>{progress?.next_event_index ?? runQuery.data?.season_state.next_event_index ?? runQuery.data?.run.next_event_index ?? '—'}</dd></div>
+          <div><dt>Event count</dt><dd>{eventCount}</dd></div>
+          <div><dt>Next scheduled event</dt><dd>{nextEvent ? `${nextEvent.event_id} · W${nextEvent.week} · ${nextEvent.category} · ${nextEvent.tour} · ${nextEvent.template_id}` : '—'}</dd></div>
+          <div><dt>Most recent persisted event</dt><dd>{renderPersistedEventSummary(latestPersistedEvent, plannedMap)}</dd></div>
+          <div><dt>Finals availability</dt><dd>{formatFinalsAvailability(finalsQuery.data)}</dd></div>
+        </dl>
+        <p className="viewer-active-run-actions">
+          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/tournaments`}>Open active run tournaments</Link>{' '}
+          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/calendar`}>Open active run calendar</Link>{' '}
+          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/finals`}>Open active run finals</Link>
+        </p>
+      </article>
+    </ViewerShellPage>
+  )
+}
+
+export function ViewerCurrentWeekPage(): JSX.Element {
+  const context = useViewerContext()
+  const activeRunId = useActiveViewerRunId()
+  const runQuery = useQuery({ queryKey: ['viewer-current-week-run', activeRunId], queryFn: () => getRun(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+
+  if (!activeRunId) {
+    return (
+      <ViewerShellPage title="Current Week" description="Selected-week tour view for the active Viewer run.">
+        <p className="empty-state">Current Week needs a selected Viewer run.</p>
+      </ViewerShellPage>
+    )
+  }
+
+  const eventsForWeek = (runQuery.data?.season_state.ordered_events ?? []).filter((event) => event.week === context.selectedWeek)
+
+  return (
+    <ViewerShellPage title="Current Week" description="Read-only selected-week event metadata from the active Viewer run calendar.">
+      <article className="viewer-active-run-card" aria-label="Current Week active run summary">
+        <span className="eyebrow">Selected Viewer week</span>
+        <h3>Season {context.selectedSeason} · W{context.selectedWeek}</h3>
+        <dl className="metadata-list">
+          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
+          <div><dt>Selected season</dt><dd>{context.selectedSeason}</dd></div>
+          <div><dt>Selected week</dt><dd>{context.selectedWeek}</dd></div>
+        </dl>
+        {runQuery.isLoading ? <p className="status">Loading selected-week events…</p> : null}
+        {runQuery.isError ? <p className="empty-state">Selected-week event metadata is temporarily unavailable.</p> : null}
+        {!runQuery.isLoading && !runQuery.isError && !eventsForWeek.length ? <p className="empty-state">No events are available for the selected Viewer week.</p> : null}
+        {eventsForWeek.length ? (
+          <ul className="viewer-home-list" aria-label="Selected week ordered events">
+            {eventsForWeek.map((event) => (
+              <li key={event.event_id}>{renderOrderedEventMetadata(event)}</li>
+            ))}
+          </ul>
+        ) : null}
+        <p className="viewer-active-run-actions">
+          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/calendar`}>Open active run calendar</Link>
+        </p>
+      </article>
+    </ViewerShellPage>
+  )
+}
+
+export function ViewerTournamentsPage(): JSX.Element {
+  const activeRunId = useActiveViewerRunId()
+  const runQuery = useQuery({ queryKey: ['viewer-tournaments-run', activeRunId], queryFn: () => getRun(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const eventsQuery = useQuery({ queryKey: ['viewer-tournaments-events', activeRunId], queryFn: () => listEvents(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+
+  if (!activeRunId) {
+    return (
+      <ViewerShellPage title="All Tournaments" description="Tournament archive destination for read-only schedules, results, and historical browsing.">
+        <p className="empty-state">Tournament archive needs a selected Viewer run.</p>
+      </ViewerShellPage>
+    )
+  }
+
+  const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
+  const persistedEvents = eventsQuery.data?.events ?? []
+  const plannedMap = buildPlannedEventMap(runQuery.data)
+  const nextEvent = selectNextOrderedEvent(runQuery.data)
+  const latestPersistedEvent = selectLatestPersistedEvent(persistedEvents)
+  const sampleEvents = orderedEvents.slice(0, 5)
+  const hasMetadata = orderedEvents.length > 0 || persistedEvents.length > 0
+
+  return (
+    <ViewerShellPage title="All Tournaments" description="Read-only top-level tournament metadata from the active Viewer run's existing calendar and event APIs.">
+      <article className="viewer-active-run-card" aria-label="All Tournaments active run summary">
+        <span className="eyebrow">Active Viewer run</span>
+        <h3>All Tournaments summary</h3>
+        {runQuery.isLoading || eventsQuery.isLoading ? <p className="status">Loading tournament metadata…</p> : null}
+        {runQuery.isError || eventsQuery.isError ? <p className="empty-state">Tournament metadata is temporarily unavailable for this run.</p> : null}
+        <dl className="metadata-list">
+          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
+          <div><dt>Total ordered calendar events</dt><dd>{runQuery.isLoading ? 'Loading…' : orderedEvents.length || '—'}</dd></div>
+          <div><dt>Persisted event count</dt><dd>{eventsQuery.isLoading ? 'Loading…' : persistedEvents.length}</dd></div>
+          <div><dt>Next scheduled event</dt><dd>{nextEvent ? `${nextEvent.event_id} · W${nextEvent.week} · ${nextEvent.category} · ${nextEvent.tour} · ${nextEvent.template_id}` : '—'}</dd></div>
+          <div><dt>Latest persisted event</dt><dd>{renderPersistedEventSummary(latestPersistedEvent, plannedMap)}</dd></div>
+        </dl>
+        {!runQuery.isLoading && !eventsQuery.isLoading && !runQuery.isError && !eventsQuery.isError && !hasMetadata ? <p className="empty-state">No tournament metadata is available for this run yet.</p> : null}
+        {sampleEvents.length ? (
+          <div>
+            <h4>Sample ordered events</h4>
+            <ul className="viewer-home-list" aria-label="Sample ordered tournament events">
+              {sampleEvents.map((event) => (
+                <li key={event.event_id}>{renderOrderedEventMetadata(event)}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        <p className="viewer-active-run-actions">
+          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/tournaments`}>Open active run tournaments</Link>{' '}
+          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/calendar`}>Open active run calendar</Link>
+        </p>
+      </article>
+    </ViewerShellPage>
   )
 }
 
@@ -669,6 +849,8 @@ export function ViewerRecordsPage(): JSX.Element {
 
 export function ViewerTourCalendarPage(): JSX.Element {
   const activeRunId = useActiveViewerRunId()
+  const runQuery = useQuery({ queryKey: ['viewer-tour-calendar-run', activeRunId], queryFn: () => getRun(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const orderedEventCount = runQuery.data?.season_state.ordered_events.length ?? runQuery.data?.run.total_events ?? null
 
   return (
     <ViewerShellPage title="Season Calendar" description="Season calendar destination prepared for weekly tour browsing and read-only event cards.">
@@ -681,11 +863,18 @@ export function ViewerTourCalendarPage(): JSX.Element {
           <span className="eyebrow">Active Viewer run</span>
           <h3>Open active run calendar</h3>
           <p className="status">Use the real read-only calendar for Viewer run {activeRunId}.</p>
+          <dl className="metadata-list">
+            <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
+            <div><dt>Ordered event count</dt><dd>{runQuery.isLoading ? 'Loading…' : orderedEventCount ?? '—'}</dd></div>
+          </dl>
+          {runQuery.isError ? <p className="empty-state">Active run calendar metadata is temporarily unavailable.</p> : null}
           <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/calendar`}>
             Open active run calendar
           </Link>
         </article>
-      ) : null}
+      ) : (
+        <p className="empty-state">Active run calendar is unavailable until a Viewer run is selected.</p>
+      )}
     </ViewerShellPage>
   )
 }

@@ -140,6 +140,10 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     const emptyStateRoutes = [
       ['/viewer/rankings', 'Select a Viewer run to view MSA Rankings.'],
       ['/viewer/rankings/race', 'Select a Viewer run to view Race to Finals.'],
+      ['/viewer/tour', 'Season Hub needs a selected Viewer run.'],
+      ['/viewer/tour/current-week', 'Current Week needs a selected Viewer run.'],
+      ['/viewer/tour/tournaments', 'Tournament archive needs a selected Viewer run.'],
+      ['/viewer/tournaments', 'Tournament archive needs a selected Viewer run.'],
       ['/viewer/players', 'Select a Viewer run to view MSA Players.'],
       ['/viewer/countries', 'Select a Viewer run to view MSA Countries.'],
       ['/viewer/history', 'Select a Viewer run to view MSA History.']
@@ -151,6 +155,12 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       expect(await screen.findByText(message)).toBeInTheDocument()
       expect(screen.queryByText(/debug/i)).not.toBeInTheDocument()
     }
+
+    cleanup()
+    renderAppAt('/viewer/tour/calendar')
+    expect(await screen.findByRole('button', { name: 'Jump to W24' })).toBeInTheDocument()
+    expect(screen.getByText('Active run calendar is unavailable until a Viewer run is selected.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open active run calendar' })).not.toBeInTheDocument()
   })
 
   it('shows active run status, safe links, and small real summaries on the Viewer homepage', async () => {
@@ -309,11 +319,137 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('bridges other active-run top-level Viewer pages to run-scoped read-only routes', async () => {
+  it('shows top-level Season Hub metadata when an active Viewer run exists', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    api.getRunStatusSummary.mockResolvedValue({
+      run_id: 'run-a',
+      season: 2030,
+      seed: 99,
+      progress: { next_event_index: 1, total_events: 4, completed_event_count: 1 },
+      finals: { qualification_available: true, result_available: false },
+      rollover: null,
+      source: { source_type: 'fresh_seed', parent_run_id: null },
+      lineage: { child_run_count: 0 },
+      history_counts: { events: 1, ranking_snapshots: 0, race_snapshots: 0 }
+    })
+    api.getRun.mockResolvedValue({
+      run: { run_id: 'run-a', season: 2030, seed: 99, next_event_index: 1, total_events: 4, completed_event_ids: ['E1'] },
+      season_state: {
+        season: 2030,
+        next_event_index: 1,
+        completed_event_ids: ['E1'],
+        ordered_events: [
+          { event_id: 'E1', season: 2030, week: 2, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-A' },
+          { event_id: 'E2', season: 2030, week: 10, tour: 'WORLD', category: 'DIAMOND', template_id: 'TEMP-B' }
+        ]
+      }
+    })
+    api.listEvents.mockResolvedValue({ run_id: 'run-a', events: [{ event_sequence: 1, event_id: 'E1', season: 2030, week: 2, template_id: 'TEMP-A', tournament_result: {} }] })
+    api.getFinalsSummary.mockResolvedValue({ run_id: 'run-a', season: 2030, qualification: { run_id: 'run-a', season: 2030, source_as_of_season: 2030, source_as_of_week: 40, qualification: {} }, result: null })
+
+    renderAppAt('/viewer/tour')
+
+    expect(await screen.findByRole('heading', { name: 'Season Hub' })).toBeInTheDocument()
+    const panel = await screen.findByLabelText('Season Hub active run summary')
+    await waitFor(() => expect(panel).toHaveTextContent('run-a'))
+    expect(panel).toHaveTextContent('2030')
+    expect(panel).toHaveTextContent('1/4 events complete')
+    expect(panel).toHaveTextContent('Next event index')
+    expect(panel).toHaveTextContent('E2 · W10 · DIAMOND · WORLD · TEMP-B')
+    expect(panel).toHaveTextContent('E1 · W2 · GOLD · WORLD · TEMP-A')
+    expect(panel).toHaveTextContent('Finals qualification available')
+    expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments')
+    expect(screen.getByRole('link', { name: 'Open active run calendar' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
+    expect(screen.getByRole('link', { name: 'Open active run finals' })).toHaveAttribute('href', '/viewer/runs/run-a/finals')
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows active-run Current Week events matching the selected Viewer week', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    api.getRun.mockResolvedValue({
+      run: { run_id: 'run-a', season: 2030, seed: 99, next_event_index: 1, total_events: 3, completed_event_ids: [] },
+      season_state: {
+        season: 2030,
+        next_event_index: 1,
+        completed_event_ids: [],
+        ordered_events: [
+          { event_id: 'E9', season: 2030, week: 9, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-9' },
+          { event_id: 'E10', season: 2030, week: 10, tour: 'ELITE', category: 'BRONZE', template_id: 'TEMP-10' }
+        ]
+      }
+    })
+
+    renderAppAt('/viewer/tour/current-week')
+
+    expect(await screen.findByRole('heading', { name: 'Current Week' })).toBeInTheDocument()
+    const panel = await screen.findByLabelText('Current Week active run summary')
+    expect(panel).toHaveTextContent('Season 2004/05 · W10')
+    expect(panel).toHaveTextContent('run-a')
+    expect(panel).toHaveTextContent('E10')
+    expect(panel).toHaveTextContent('BRONZE')
+    expect(panel).toHaveTextContent('ELITE')
+    expect(panel).toHaveTextContent('TEMP-10')
+    expect(panel).not.toHaveTextContent('E9')
+    expect(screen.getByRole('link', { name: 'Open active run calendar' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
+    expectNoForbiddenViewerActions()
+  })
+
+  it.each(['/viewer/tour/tournaments', '/viewer/tournaments'] as const)('shows top-level All Tournaments metadata on %s', async (route) => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    api.getRun.mockResolvedValue({
+      run: { run_id: 'run-a', season: 2030, seed: 99, next_event_index: 1, total_events: 6, completed_event_ids: ['E1'] },
+      season_state: {
+        season: 2030,
+        next_event_index: 1,
+        completed_event_ids: ['E1'],
+        ordered_events: [
+          { event_id: 'E1', season: 2030, week: 2, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-A' },
+          { event_id: 'E2', season: 2030, week: 10, tour: 'WORLD', category: 'DIAMOND', template_id: 'TEMP-B' },
+          { event_id: 'E3', season: 2030, week: 11, tour: 'ELITE', category: 'BRONZE', template_id: 'TEMP-C' }
+        ]
+      }
+    })
+    api.listEvents.mockResolvedValue({ run_id: 'run-a', events: [{ event_sequence: 1, event_id: 'E1', season: 2030, week: 2, template_id: 'TEMP-A', tournament_result: {} }] })
+
+    renderAppAt(route)
+
+    expect(await screen.findByRole('heading', { name: 'All Tournaments' })).toBeInTheDocument()
+    const panel = await screen.findByLabelText('All Tournaments active run summary')
+    await waitFor(() => expect(panel).toHaveTextContent('run-a'))
+    expect(panel).toHaveTextContent('Total ordered calendar events')
+    expect(panel).toHaveTextContent('3')
+    expect(panel).toHaveTextContent('Persisted event count')
+    expect(panel).toHaveTextContent('1')
+    expect(panel).toHaveTextContent('E2 · W10 · DIAMOND · WORLD · TEMP-B')
+    expect(panel).toHaveTextContent('E1 · W2 · GOLD · WORLD · TEMP-A')
+    expect(panel).toHaveTextContent('E3')
+    expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments')
+    expect(screen.getByRole('link', { name: 'Open active run calendar' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows active-run top-level tournament and current-week empty states without event metadata', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    api.getRun.mockResolvedValue({
+      run: { run_id: 'run-a', season: 2030, seed: 99, next_event_index: 0, total_events: 0, completed_event_ids: [] },
+      season_state: { season: 2030, next_event_index: 0, completed_event_ids: [], ordered_events: [] }
+    })
+    api.listEvents.mockResolvedValue({ run_id: 'run-a', events: [] })
+
+    renderAppAt('/viewer/tour/tournaments')
+    expect(await screen.findByText('No tournament metadata is available for this run yet.')).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+
+    cleanup()
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    renderAppAt('/viewer/tour/current-week')
+    expect(await screen.findByText('No events are available for the selected Viewer week.')).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('bridges non-tour active-run top-level Viewer pages to run-scoped read-only routes', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
     const bridgedRoutes = [
-      ['/viewer/tour/tournaments', 'Events history'],
-      ['/viewer/tournaments', 'Events history'],
       ['/viewer/players', 'Run Players Explorer'],
       ['/viewer/countries', 'Run Nations Dashboard'],
       ['/viewer/history', 'Run activity']

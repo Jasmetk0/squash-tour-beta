@@ -1097,8 +1097,238 @@ export function ViewerPlayerComparisonPage(): JSX.Element {
   return <ViewerShellPage title="Player Comparison" description="Shared Player Comparison destination used by Players and H2H navigation. Future comparison data will remain read-only." />
 }
 
+type ViewerH2HSubrouteKind = 'rivalries' | 'most-played' | 'finals-rivalries'
+
+function ViewerActiveRunSportsLinks({ activeRunId }: { activeRunId: string }): JSX.Element {
+  return (
+    <p className="viewer-active-run-actions">
+      <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/players`}>Open active run players</Link>{' '}
+      <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/tournaments`}>Open active run tournaments</Link>
+    </p>
+  )
+}
+
+function ViewerSamplePlayersList({ players, label }: { players: RunPlayerListItem[]; label: string }): JSX.Element | null {
+  if (!players.length) {
+    return null
+  }
+
+  return (
+    <div>
+      <h4>Sample players</h4>
+      <ul className="viewer-home-list" aria-label={label}>
+        {players.slice(0, 5).map((player) => (
+          <li key={player.player_id}>{renderPlayerSampleMetadata(player)}</li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+export function ViewerH2HPage(): JSX.Element {
+  const activeRunId = useActiveViewerRunId()
+  const playersQuery = useQuery({
+    queryKey: ['viewer-h2h-run-players', activeRunId],
+    queryFn: () => listRunPlayers(activeRunId ?? '', { limit: 5, offset: 0 }),
+    enabled: Boolean(activeRunId),
+    retry: false
+  })
+
+  if (!activeRunId) {
+    return (
+      <ViewerShellPage title="H2H Explorer" description="Read-only head-to-head explorer shell for future comparison and rivalry browsing.">
+        <p className="empty-state">H2H needs a selected Viewer run and match history read model.</p>
+      </ViewerShellPage>
+    )
+  }
+
+  const players = playersQuery.data?.players ?? []
+
+  return (
+    <ViewerShellPage title="H2H Explorer" description="Conservative H2H landing using existing active-run player metadata only.">
+      <article className="viewer-active-run-card" aria-label="H2H Explorer active run summary">
+        <span className="eyebrow">Active Viewer run</span>
+        <h3>H2H Explorer</h3>
+        {playersQuery.isLoading ? <p className="status">Loading active run player metadata…</p> : null}
+        {playersQuery.isError ? <p className="empty-state">Player metadata is temporarily unavailable for this run.</p> : null}
+        <dl className="metadata-list">
+          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
+          <div><dt>Total player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : playersQuery.data?.total ?? '—'}</dd></div>
+          <div><dt>Sample player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : players.length}</dd></div>
+        </dl>
+        {!playersQuery.isLoading && !playersQuery.isError && players.length === 0 ? <p className="empty-state">No player metadata is available for a future comparison selector yet.</p> : null}
+        <ViewerSamplePlayersList players={players} label="Sample active run players for future H2H comparison selector" />
+        <p className="empty-state">Direct H2H records need a match history read model.</p>
+        <ViewerActiveRunSportsLinks activeRunId={activeRunId} />
+      </article>
+    </ViewerShellPage>
+  )
+}
+
+export function ViewerH2HSubroutePage({ kind }: { kind: ViewerH2HSubrouteKind }): JSX.Element {
+  const activeRunId = useActiveViewerRunId()
+  const content = {
+    rivalries: {
+      title: 'Rivalry Rankings',
+      message: 'Real rivalry rankings require a match-history read model.',
+      note: 'No rivalry list is shown until direct match records are available.'
+    },
+    'most-played': {
+      title: 'Most Played Matchups',
+      message: 'Most-played matchups require a match-history read model.',
+      note: 'No matchup list is shown until completed match counts are available.'
+    },
+    'finals-rivalries': {
+      title: 'Finals Rivalries',
+      message: 'Finals rivalries require a match-history read model with final-round context.',
+      note: 'No finals rivalry list is shown until final-round match records are available.'
+    }
+  }[kind]
+
+  return (
+    <ViewerShellPage title={content.title} description="Read-only H2H scaffold that defers analytics until authoritative match history exists.">
+      <article className="viewer-active-run-card" aria-label={`${content.title} deferred state`}>
+        <span className="eyebrow">H2H analytics deferred</span>
+        <h3>{content.title}</h3>
+        <dl className="metadata-list">
+          <div><dt>Active run ID</dt><dd>{activeRunId ?? 'No Viewer run selected'}</dd></div>
+        </dl>
+        <p className="empty-state">{content.message}</p>
+        <p className="status">{content.note}</p>
+      </article>
+    </ViewerShellPage>
+  )
+}
+
 export function ViewerMatchPredictorPage(): JSX.Element {
-  return <ViewerShellPage title="Match Predictor" description="Shared read-only predictor destination used by H2H and Predictions navigation. No predictions are shown until deterministic analytics are connected." />
+  const activeRunId = useActiveViewerRunId()
+  const playersQuery = useQuery({
+    queryKey: ['viewer-match-predictor-run-players', activeRunId],
+    queryFn: () => listRunPlayers(activeRunId ?? '', { limit: 5, offset: 0 }),
+    enabled: Boolean(activeRunId),
+    retry: false
+  })
+
+  if (!activeRunId) {
+    return (
+      <ViewerShellPage title="Match Predictor" description="Shared read-only predictor destination used by H2H and Predictions navigation.">
+        <p className="empty-state">Predictions need connected active-run data and a deterministic prediction read model.</p>
+      </ViewerShellPage>
+    )
+  }
+
+  const players = playersQuery.data?.players ?? []
+
+  return (
+    <ViewerShellPage title="Match Predictor" description="Conservative predictor landing using existing active-run player metadata only.">
+      <article className="viewer-active-run-card" aria-label="Match Predictor active run summary">
+        <span className="eyebrow">Active Viewer run</span>
+        <h3>Match Predictor</h3>
+        {playersQuery.isLoading ? <p className="status">Loading active run player metadata…</p> : null}
+        {playersQuery.isError ? <p className="empty-state">Player metadata is temporarily unavailable for this run.</p> : null}
+        <dl className="metadata-list">
+          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
+          <div><dt>Total player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : playersQuery.data?.total ?? '—'}</dd></div>
+          <div><dt>Sample player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : players.length}</dd></div>
+        </dl>
+        {!playersQuery.isLoading && !playersQuery.isError && players.length === 0 ? <p className="empty-state">No player metadata is available for future predictor inputs yet.</p> : null}
+        <ViewerSamplePlayersList players={players} label="Sample active run players for future predictor inputs" />
+        <ul className="viewer-home-list" aria-label="Deferred prediction outputs">
+          <li>Win probabilities are not connected yet.</li>
+          <li>Fair odds are not connected yet.</li>
+          <li>Bookmaker margin model is not connected yet.</li>
+        </ul>
+        <ViewerActiveRunSportsLinks activeRunId={activeRunId} />
+      </article>
+    </ViewerShellPage>
+  )
+}
+
+function renderSearchEventLabel(event: SeasonStateResponse['season_state']['ordered_events'][number]): string {
+  return `${event.event_id} · W${event.week} · ${event.category} · ${event.tour}`
+}
+
+export function ViewerSearchPage(): JSX.Element {
+  const activeRunId = useActiveViewerRunId()
+  const [query, setQuery] = useState('')
+  const playersQuery = useQuery({
+    queryKey: ['viewer-search-run-players', activeRunId],
+    queryFn: () => listRunPlayers(activeRunId ?? '', { limit: 5, offset: 0 }),
+    enabled: Boolean(activeRunId),
+    retry: false
+  })
+  const nationsQuery = useQuery({
+    queryKey: ['viewer-search-run-nations', activeRunId],
+    queryFn: () => listRunNations(activeRunId ?? '', { limit: 5, offset: 0 }),
+    enabled: Boolean(activeRunId),
+    retry: false
+  })
+  const runQuery = useQuery({
+    queryKey: ['viewer-search-run-calendar', activeRunId],
+    queryFn: () => getRun(activeRunId ?? ''),
+    enabled: Boolean(activeRunId),
+    retry: false
+  })
+
+  if (!activeRunId) {
+    return (
+      <ViewerShellPage title="Search" description="Read-only global Viewer search shell for future player, tournament, country, match, and season results.">
+        <p className="empty-state">Search needs a selected Viewer run or connected global search index.</p>
+      </ViewerShellPage>
+    )
+  }
+
+  const players = playersQuery.data?.players ?? []
+  const nations = nationsQuery.data?.nations ?? []
+  const events = runQuery.data?.season_state.ordered_events.slice(0, 5) ?? []
+
+  return (
+    <ViewerShellPage title="Search" description="Conservative read-only search shell using small active-run metadata samples only.">
+      <article className="viewer-active-run-card" aria-label="Search active run metadata summary">
+        <span className="eyebrow">Active Viewer run</span>
+        <h3>Search</h3>
+        {playersQuery.isLoading || nationsQuery.isLoading || runQuery.isLoading ? <p className="status">Loading active run searchable metadata samples…</p> : null}
+        {playersQuery.isError || nationsQuery.isError || runQuery.isError ? <p className="empty-state">Some active run searchable metadata is temporarily unavailable.</p> : null}
+        <dl className="metadata-list">
+          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
+          <div><dt>Sample player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : players.length}</dd></div>
+          <div><dt>Sample country count</dt><dd>{nationsQuery.isLoading ? 'Loading…' : nations.length}</dd></div>
+          <div><dt>Sample ordered event count</dt><dd>{runQuery.isLoading ? 'Loading…' : events.length}</dd></div>
+        </dl>
+        <label className="field-label" htmlFor="viewer-search-shell-input">Search shell</label>
+        <input
+          id="viewer-search-shell-input"
+          aria-label="Read-only Viewer search shell"
+          placeholder="Search players, countries, tournaments, matches, seasons…"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+        <p className="empty-state">Global search index is not connected yet.</p>
+        <p className="status">This local input does not return complete results yet; it only demonstrates where future read-only search queries will be entered.</p>
+        <ViewerSamplePlayersList players={players} label="Sample searchable players" />
+        {nations.length ? (
+          <div>
+            <h4>Sample countries</h4>
+            <ul className="viewer-home-list" aria-label="Sample searchable countries">
+              {nations.slice(0, 5).map((nation) => (
+                <li key={nation.country_code}>{renderCountrySampleMetadata(nation)}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        {events.length ? (
+          <div>
+            <h4>Sample ordered events</h4>
+            <ul className="viewer-home-list" aria-label="Sample searchable ordered events">
+              {events.map((event) => (
+                <li key={event.event_id}>{renderSearchEventLabel(event)}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </article>
+    </ViewerShellPage>
+  )
 }
 
 export function ViewerFinalsReadOnlyPage(): JSX.Element {

@@ -1739,3 +1739,13 @@ Phase 1H improves `/viewer/history`, `/viewer/records`, and `/viewer/stats` when
 Phase 1H intentionally does not add fake records, fake statistics, fake awards, fake title leaders, fake No.1 weeks, fake streaks, fake upset records, fake best seasons, fake storylines, mutating Viewer controls, new backend endpoints, or complex new backend read models. Rich records/statistics remain deferred until dedicated records and statistics read models exist.
 
 This note does not mark full Viewer Phase 1 complete.
+
+## Phase 1I Implementation Note — Top-Level H2H, Predictions, and Search Landings
+
+Phase 1I improves `/viewer/h2h`, `/viewer/h2h/rivalries`, `/viewer/h2h/most-played`, `/viewer/h2h/finals-rivalries`, `/viewer/predictions`, `/viewer/predictions/match-predictor`, and `/viewer/search` when `beta_engine:viewer_active_run_id` is set by using existing read-only active-run metadata only. The H2H and Match Predictor landings now show active run ID, small real player samples from the existing run player list API, and links into the existing run-scoped Players and Tournaments pages. The Search landing now shows an input shell plus small real samples from existing run player, nation, and ordered-calendar metadata.
+
+Phase 1I intentionally does not add fake H2H records, fake rivalries, fake most-played matchup lists, fake finals rivalries, fake odds, fake probabilities, fake prediction outputs, fake upset alerts, fake search results, mutating Viewer controls, new backend endpoints, or complex new backend read models.
+
+Real direct H2H records, rivalry rankings, prediction analytics, odds/fair-price models, bookmaker margin models, and global search remain deferred until dedicated authoritative read models exist.
+
+This note does not mark full Viewer Phase 1 complete.

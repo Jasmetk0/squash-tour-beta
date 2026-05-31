@@ -65,6 +65,20 @@ describe('Layout mode navigation', () => {
     }
   })
 
+  it('keeps shared Viewer shortcut dropdown entries pointed at the same canonical routes', async () => {
+    renderWithRoute(<Layout />, '/viewer')
+
+    const nav = await screen.findByTestId('viewer-primary-nav')
+    expect(within(nav).getAllByRole('link', { name: 'Country Ranking' }).map((link) => link.getAttribute('href'))).toEqual([
+      '/viewer/countries/ranking',
+      '/viewer/countries/ranking'
+    ])
+    expect(within(nav).getByRole('link', { name: 'Compare Players' })).toHaveAttribute('href', '/viewer/players/compare')
+    expect(within(nav).getByRole('link', { name: 'Player Comparison' })).toHaveAttribute('href', '/viewer/players/compare')
+    expect(within(nav).getByRole('link', { name: 'Predict Matchup' })).toHaveAttribute('href', '/viewer/predictions/match-predictor')
+    expect(within(nav).getByRole('link', { name: 'Match Predictor' })).toHaveAttribute('href', '/viewer/predictions/match-predictor')
+  })
+
   it('shows and expands the Season/Week selector on click', async () => {
     const user = userEvent.setup()
     renderWithRoute(<Layout />, '/viewer')

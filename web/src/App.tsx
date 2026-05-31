@@ -22,6 +22,7 @@ import {
   AdminWorldPage,
   LandingPage,
   ViewerCountriesPage,
+  ViewerCurrentWeekPage,
   ViewerCountryRankingPage,
   ViewerFinalsReadOnlyPage,
   ViewerHistoryPage,
@@ -34,6 +35,7 @@ import {
   ViewerRacePage,
   ViewerRecordsPage,
   ViewerShellPage,
+  ViewerSeasonHubPage,
   ViewerTourCalendarPage,
   ViewerTournamentsPage
 } from './pages/ModePages'
@@ -149,9 +151,9 @@ export default function App(): JSX.Element {
         <Route path="viewer/rankings/power" element={<ViewerShellPage title="Power Rating" />} />
         <Route path="viewer/rankings/form" element={<ViewerShellPage title="Form Ranking" />} />
         <Route path="viewer/rankings/no1-history" element={<ViewerShellPage title="No.1 History" />} />
-        <Route path="viewer/tour" element={<ViewerShellPage title="Season Hub" />} />
+        <Route path="viewer/tour" element={<ViewerSeasonHubPage />} />
         <Route path="viewer/tour/calendar" element={<ViewerTourCalendarPage />} />
-        <Route path="viewer/tour/current-week" element={<ViewerShellPage title="Current Week" />} />
+        <Route path="viewer/tour/current-week" element={<ViewerCurrentWeekPage />} />
         <Route path="viewer/tour/tournaments" element={<ViewerTournamentsPage />} />
         <Route path="viewer/tour/matches" element={<ViewerShellPage title="Match Center" />} />
         <Route path="viewer/tour/categories" element={<ViewerShellPage title="Tournament Categories" />} />

@@ -1759,3 +1759,13 @@ Phase 1J also applies visual/card polish so the Viewer landing pages feel more l
 Phase 1J intentionally does not change product behavior, add backend APIs, add read models, invent fake data, add mutating controls, reintroduce duplicate Viewer run navigation, rename routes/dropdown items, or change Admin behavior.
 
 This note does not mark full Viewer Phase 1 complete.
+
+## Phase 1K Implementation Note — Final Route, Safety, and Documentation Audit
+
+Phase 1K performs a final Viewer Phase 1 route, shared-shortcut, topbar, read-only safety, active-run/no-active-run behavior, documentation, and test coverage audit after Phases 1A–1J.
+
+Phase 1K intentionally does not add product features, backend endpoints, read models, fake data, real H2H records, predictions, odds, records, search results, mutating Viewer controls, duplicate Viewer run navigation, route/dropdown renames, or Admin behavior changes.
+
+Minor route/safety/documentation mismatches found during the audit should be fixed in-place and covered by tests; otherwise the phase is limited to hardening and verification.
+
+This note does not mark full Viewer Phase 1 complete.

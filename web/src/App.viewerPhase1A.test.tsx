@@ -24,7 +24,9 @@ const api = vi.hoisted(() => ({
   getRunActivity: vi.fn(),
   getFinalsQualification: vi.fn(),
   getFinalsResult: vi.fn(),
-  getFinalsSummary: vi.fn()
+  getFinalsSummary: vi.fn(),
+  getRankingSnapshot: vi.fn(),
+  getRaceSnapshot: vi.fn()
 }))
 
 vi.mock('./api/client', async (importOriginal) => {
@@ -72,6 +74,8 @@ function resetApiMocks(): void {
   api.getFinalsQualification.mockResolvedValue({ run_id: 'run-a', qualification: null })
   api.getFinalsResult.mockResolvedValue({ run_id: 'run-a', result: null })
   api.getFinalsSummary.mockResolvedValue({ run_id: 'run-a', season: 2029, qualification: null, result: null })
+  api.getRankingSnapshot.mockResolvedValue({ snapshot_sequence: 4, snapshot_kind: 'ranking', source_event_id: 'E1', payload: {} })
+  api.getRaceSnapshot.mockResolvedValue({ snapshot_sequence: 5, snapshot_kind: 'race', source_event_id: 'E1', payload: {} })
 }
 
 function renderAppAt(route: string): void {
@@ -927,6 +931,91 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     cleanup()
     renderAppAt('/viewer/predictions/match-predictor')
     expect(await screen.findByRole('heading', { name: 'Match Predictor' })).toBeInTheDocument()
+  })
+
+  it('renders all required Viewer Phase 1K top-level and run-scoped routes without forbidden Viewer actions', async () => {
+    const requiredViewerRoutes = [
+      '/viewer',
+      '/viewer/rankings',
+      '/viewer/rankings/race',
+      '/viewer/rankings/next-gen',
+      '/viewer/rankings/elo',
+      '/viewer/rankings/power',
+      '/viewer/rankings/form',
+      '/viewer/countries/ranking',
+      '/viewer/rankings/no1-history',
+      '/viewer/tour',
+      '/viewer/tour/calendar',
+      '/viewer/tour/current-week',
+      '/viewer/tour/tournaments',
+      '/viewer/tour/matches',
+      '/viewer/tour/categories',
+      '/viewer/tour/champions',
+      '/viewer/tournaments',
+      '/viewer/players',
+      '/viewer/players/all',
+      '/viewer/players/active',
+      '/viewer/players/next-gen',
+      '/viewer/players/retired',
+      '/viewer/players/compare',
+      '/viewer/countries',
+      '/viewer/countries/all',
+      '/viewer/countries/hosting',
+      '/viewer/countries/talent-pipeline',
+      '/viewer/countries/records',
+      '/viewer/h2h',
+      '/viewer/h2h/rivalries',
+      '/viewer/h2h/most-played',
+      '/viewer/h2h/finals-rivalries',
+      '/viewer/stats',
+      '/viewer/stats/title-leaders',
+      '/viewer/stats/no1-weeks',
+      '/viewer/stats/streaks',
+      '/viewer/stats/upsets',
+      '/viewer/stats/best-seasons',
+      '/viewer/stats/player-stats',
+      '/viewer/stats/tournament-stats',
+      '/viewer/stats/country-stats',
+      '/viewer/stats/awards',
+      '/viewer/stats/hall-of-fame',
+      '/viewer/stats/era-rankings',
+      '/viewer/records',
+      '/viewer/predictions',
+      '/viewer/predictions/match-predictor',
+      '/viewer/predictions/match-odds',
+      '/viewer/predictions/tournament-odds',
+      '/viewer/predictions/finals-qualification',
+      '/viewer/predictions/season-end-no1',
+      '/viewer/predictions/upset-watch',
+      '/viewer/predictions/futures',
+      '/viewer/search',
+      '/viewer/runs/run-a/rankings',
+      '/viewer/runs/run-a/rankings/4',
+      '/viewer/runs/run-a/race',
+      '/viewer/runs/run-a/race/5',
+      '/viewer/runs/run-a/tournaments',
+      '/viewer/runs/run-a/tournaments/E1',
+      '/viewer/runs/run-a/calendar',
+      '/viewer/runs/run-a/calendar/E1',
+      '/viewer/runs/run-a/weeks/2',
+      '/viewer/runs/run-a/players',
+      '/viewer/runs/run-a/players/P1/career',
+      '/viewer/runs/run-a/countries',
+      '/viewer/runs/run-a/history',
+      '/viewer/runs/run-a/finals',
+      '/viewer/runs/run-a/finals/qualification',
+      '/viewer/runs/run-a/finals/result'
+    ]
+
+    for (const route of requiredViewerRoutes) {
+      cleanup()
+      resetApiMocks()
+      renderAppAt(route)
+      expect(await screen.findByTestId('viewer-primary-nav')).toBeInTheDocument()
+      expect(screen.getByRole('main')).not.toHaveTextContent('Choose your mode')
+      expect(screen.getByRole('button', { name: 'Season 2004/05 · W10' })).toBeInTheDocument()
+      expectNoForbiddenViewerActions()
+    }
   })
 
   it('keeps context-aware mode switcher mappings on equivalent Viewer and Admin routes', async () => {

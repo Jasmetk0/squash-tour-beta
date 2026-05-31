@@ -335,3 +335,16 @@ After manual QA, likely next implementation phases could be:
 - Match/history read model.
 - Prediction read model.
 - No-future-knowledge enforcement.
+
+## Manual QA Repair 1 note — topbar, context selector, and search
+
+This repair does not mark Viewer Phase 1 complete. It records the intended QA behavior for the repaired Viewer shell:
+
+- Main Viewer topbar category labels navigate to their landing pages: Rankings, Tour, Players, Countries, H2H, Stats, and Predictions are links, while MSA still links to `/viewer`.
+- Category dropdowns are submenu access points opened by desktop hover, keyboard focus, or the explicit submenu control; clicking the main category label is navigation, not a dropdown toggle.
+- Dropdown item active state uses exact route matching. Parent topbar categories may be active for their route group, but only the exact dropdown destination should be highlighted inside the menu.
+- The Season/Week selector keeps the compact `Season 2004/05 · W10` style, now includes local season/week controls, and persists the selected Viewer context in browser localStorage only.
+- Jump to Week updates the same local Viewer context as the Season/Week selector; it does not mutate backend state.
+- Topbar Search is now a search input shell. Pressing Enter or using the search control opens `/viewer/search` with an optional `q` query string; no backend search endpoint or complete result set is implied.
+- Existing run-scoped Viewer pages remain available and read-only, but technical payloads still need future Viewer polish. Later work should hide raw payloads behind an explicit `Show technical payload` control instead of showing debug-style data as primary sports UI.
+- Future Viewer/Admin product work should add a Run Library / World Saves concept with multiple independent worlds, a Viewer run switcher, and Admin run creation/management. Viewer must remain read-only. This is deferred and is not implemented in this repair.

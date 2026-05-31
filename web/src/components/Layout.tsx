@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useLocation, useParams } from 'react-router-dom'
+import type { FormEvent } from 'react'
+import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { ViewerSeasonWeekSelector } from './ViewerContextControls'
 import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewer/activeRun'
@@ -12,6 +13,8 @@ type NavItem = {
 
 type ViewerDropdown = {
   label: string
+  to: string
+  routePrefixes: string[]
   items: NavItem[]
 }
 
@@ -29,6 +32,8 @@ const adminNav: NavItem[] = [
 export const viewerDropdowns: ViewerDropdown[] = [
   {
     label: 'Rankings',
+    to: '/viewer/rankings',
+    routePrefixes: ['/viewer/rankings', '/viewer/countries/ranking'],
     items: [
       { to: '/viewer/rankings', label: 'MSA Rankings' },
       { to: '/viewer/rankings/race', label: 'Race to Finals' },
@@ -42,6 +47,8 @@ export const viewerDropdowns: ViewerDropdown[] = [
   },
   {
     label: 'Tour',
+    to: '/viewer/tour',
+    routePrefixes: ['/viewer/tour', '/viewer/tournaments'],
     items: [
       { to: '/viewer/tour', label: 'Season Hub' },
       { to: '/viewer/tour/calendar', label: 'Season Calendar' },
@@ -54,6 +61,8 @@ export const viewerDropdowns: ViewerDropdown[] = [
   },
   {
     label: 'Players',
+    to: '/viewer/players',
+    routePrefixes: ['/viewer/players'],
     items: [
       { to: '/viewer/players', label: 'Players Hub' },
       { to: '/viewer/players/all', label: 'All Players' },
@@ -65,6 +74,8 @@ export const viewerDropdowns: ViewerDropdown[] = [
   },
   {
     label: 'Countries',
+    to: '/viewer/countries',
+    routePrefixes: ['/viewer/countries'],
     items: [
       { to: '/viewer/countries', label: 'Countries Hub' },
       { to: '/viewer/countries/ranking', label: 'Country Ranking' },
@@ -76,6 +87,8 @@ export const viewerDropdowns: ViewerDropdown[] = [
   },
   {
     label: 'H2H',
+    to: '/viewer/h2h',
+    routePrefixes: ['/viewer/h2h'],
     items: [
       { to: '/viewer/h2h', label: 'H2H Explorer' },
       { to: '/viewer/h2h/rivalries', label: 'Rivalry Rankings' },
@@ -87,6 +100,8 @@ export const viewerDropdowns: ViewerDropdown[] = [
   },
   {
     label: 'Stats',
+    to: '/viewer/stats',
+    routePrefixes: ['/viewer/stats', '/viewer/records'],
     items: [
       { to: '/viewer/stats', label: 'Records' },
       { to: '/viewer/stats/title-leaders', label: 'Title Leaders' },
@@ -104,6 +119,8 @@ export const viewerDropdowns: ViewerDropdown[] = [
   },
   {
     label: 'Predictions',
+    to: '/viewer/predictions',
+    routePrefixes: ['/viewer/predictions'],
     items: [
       { to: '/viewer/predictions/match-predictor', label: 'Match Predictor' },
       { to: '/viewer/predictions/match-odds', label: 'Match Odds' },
@@ -182,27 +199,72 @@ function runNavFor(runId: string): NavItem[] {
   ]
 }
 
+export function isExactViewerActivePath(currentPathname: string, targetPathname: string): boolean {
+  return currentPathname.replace(/\/$/, '') === targetPathname.replace(/\/$/, '')
+}
+
+function isViewerRouteGroupActive(currentPathname: string, dropdown: ViewerDropdown): boolean {
+  return dropdown.routePrefixes.some((prefix) => currentPathname === prefix || currentPathname.startsWith(`${prefix}/`))
+}
+
+function ViewerTopbarSearch(): JSX.Element {
+  const navigate = useNavigate()
+  const [query, setQuery] = useState('')
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault()
+    const trimmed = query.trim()
+    navigate(trimmed ? `/viewer/search?q=${encodeURIComponent(trimmed)}` : '/viewer/search')
+  }
+
+  return (
+    <form className="viewer-topbar-search" role="search" aria-label="Viewer search" onSubmit={handleSubmit}>
+      <input
+        aria-label="Search players, countries, tournaments"
+        placeholder="Search players, countries, tournaments…"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+      />
+      <button type="submit" aria-label="Open Viewer search">
+        Search
+      </button>
+    </form>
+  )
+}
+
 function ViewerTopbar(): JSX.Element {
+  const location = useLocation()
+
   return (
     <nav className="viewer-topbar" aria-label="Viewer primary navigation" data-testid="viewer-primary-nav">
       <NavLink to="/viewer" end className={({ isActive }) => (isActive ? 'active viewer-brand-link' : 'viewer-brand-link')}>
         MSA
       </NavLink>
-      {viewerDropdowns.map((dropdown) => (
-        <details key={dropdown.label} className="viewer-dropdown">
-          <summary aria-haspopup="menu">{dropdown.label}</summary>
-          <div className="viewer-dropdown__menu" aria-label={`${dropdown.label} menu`}>
-            {dropdown.items.map((item) => (
-              <NavLink key={`${dropdown.label}-${item.label}`} to={item.to} className={({ isActive }) => (isActive ? 'active' : '')}>
-                {item.label}
-              </NavLink>
-            ))}
+      {viewerDropdowns.map((dropdown) => {
+        const parentActive = isViewerRouteGroupActive(location.pathname, dropdown)
+        return (
+          <div key={dropdown.label} className="viewer-dropdown">
+            <NavLink to={dropdown.to} className={parentActive ? 'active viewer-dropdown__label' : 'viewer-dropdown__label'}>
+              {dropdown.label}
+            </NavLink>
+            <button type="button" className="viewer-dropdown__toggle" aria-label={`${dropdown.label} submenu`} aria-haspopup="menu">
+              ▾
+            </button>
+            <div className="viewer-dropdown__menu" aria-label={`${dropdown.label} menu`}>
+              {dropdown.items.map((item) => (
+                <Link
+                  key={`${dropdown.label}-${item.label}`}
+                  to={item.to}
+                  className={isExactViewerActivePath(location.pathname, item.to) ? 'active' : ''}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
           </div>
-        </details>
-      ))}
-      <NavLink to="/viewer/search" className={({ isActive }) => (isActive ? 'active viewer-search-link' : 'viewer-search-link')}>
-        Search
-      </NavLink>
+        )
+      })}
+      <ViewerTopbarSearch />
       <ViewerSeasonWeekSelector />
     </nav>
   )

@@ -105,6 +105,7 @@ afterEach(() => {
 
 beforeEach(() => {
   localStorage.removeItem('beta_engine:viewer_active_run_id')
+  localStorage.removeItem('beta_engine:viewer_context')
   resetApiMocks()
 })
 
@@ -130,13 +131,48 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(screen.queryByText('Macky needs a semifinal to protect his Race lead.')).not.toBeInTheDocument()
   })
 
-  it('updates local Viewer context with Jump to Week', async () => {
+  it('updates and persists local Viewer context from the selector controls', async () => {
+    const user = userEvent.setup()
+    renderAppAt('/viewer/tour/current-week')
+
+    const selector = await screen.findByRole('button', { name: 'Season 2004/05 · W10' })
+    await user.click(selector)
+    const weekInput = screen.getByLabelText('Selected week')
+    await user.clear(weekInput)
+    await user.type(weekInput, '24')
+    await user.click(screen.getByRole('button', { name: 'Set Viewer Week' }))
+
+    expect(screen.getByRole('button', { name: 'Season 2004/05 · W24' })).toBeInTheDocument()
+    expect(localStorage.getItem('beta_engine:viewer_context')).toContain('24')
+    expect(await screen.findByText('Current Week needs a selected Viewer run.')).toBeInTheDocument()
+
+    cleanup()
+    renderAppAt('/viewer/tour/current-week')
+    expect(await screen.findByRole('button', { name: 'Season 2004/05 · W24' })).toBeInTheDocument()
+  })
+
+  it('updates local Viewer context with Jump to Week and stores the shared context', async () => {
     const user = userEvent.setup()
     renderAppAt('/viewer/tour/calendar')
 
     expect(await screen.findByRole('button', { name: 'Season 2004/05 · W10' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Jump to W24' }))
     expect(screen.getByRole('button', { name: 'Season 2004/05 · W24' })).toBeInTheDocument()
+    expect(localStorage.getItem('beta_engine:viewer_context')).toContain('24')
+  })
+
+  it('navigates the topbar search input to the query shell without fake results', async () => {
+    const user = userEvent.setup()
+    renderAppAt('/viewer')
+
+    const searchInput = await screen.findByRole('textbox', { name: 'Search players, countries, tournaments' })
+    await user.type(searchInput, 'Paris{Enter}')
+
+    expect(await screen.findByRole('heading', { name: 'Search' })).toBeInTheDocument()
+    expect(screen.getByText('Search query: Paris')).toBeInTheDocument()
+    expect(screen.getAllByLabelText('Read-only Viewer search shell')[0]).toHaveValue('Paris')
+    expect(screen.getByText('Full search result sets are not shown yet; this page only reflects the local query from the URL.')).toBeInTheDocument()
+    expect(screen.queryByText(/Paris can reclaim/i)).not.toBeInTheDocument()
   })
 
   it('shows sports-facing empty states on top-level Viewer pages when no active run is selected', async () => {
@@ -491,6 +527,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
   it('shows active-run Current Week events matching the selected Viewer week', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    localStorage.setItem('beta_engine:viewer_context', JSON.stringify({ selectedSeason: '2004/05', selectedWeek: 24 }))
     api.getRun.mockResolvedValue({
       run: { run_id: 'run-a', season: 2030, seed: 99, next_event_index: 1, total_events: 3, completed_event_ids: [] },
       season_state: {
@@ -499,7 +536,8 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
         completed_event_ids: [],
         ordered_events: [
           { event_id: 'E9', season: 2030, week: 9, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-9' },
-          { event_id: 'E10', season: 2030, week: 10, tour: 'ELITE', category: 'BRONZE', template_id: 'TEMP-10' }
+          { event_id: 'E10', season: 2030, week: 10, tour: 'ELITE', category: 'BRONZE', template_id: 'TEMP-10' },
+          { event_id: 'E24', season: 2030, week: 24, tour: 'ELITE', category: 'BRONZE', template_id: 'TEMP-24' }
         ]
       }
     })
@@ -508,13 +546,14 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     expect(await screen.findByRole('heading', { name: 'Current Week' })).toBeInTheDocument()
     const panel = await screen.findByLabelText('Current Week active run summary')
-    expect(panel).toHaveTextContent('Season 2004/05 · W10')
+    expect(panel).toHaveTextContent('Season 2004/05 · W24')
     expect(panel).toHaveTextContent('run-a')
-    expect(panel).toHaveTextContent('E10')
+    expect(panel).toHaveTextContent('E24')
     expect(panel).toHaveTextContent('BRONZE')
     expect(panel).toHaveTextContent('ELITE')
-    expect(panel).toHaveTextContent('TEMP-10')
+    expect(panel).toHaveTextContent('TEMP-24')
     expect(panel).not.toHaveTextContent('E9')
+    expect(panel).not.toHaveTextContent('E10')
     expect(screen.getByRole('link', { name: 'Open active run calendar' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
     expectNoForbiddenViewerActions()
   })

@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { getModeSwitcherTarget, Layout, viewerDropdowns } from './Layout'
+import { getModeSwitcherTarget, isExactViewerActivePath, Layout, viewerDropdowns } from './Layout'
 import { renderWithRoute } from '../test/testUtils'
 
 const dropdownExpectations: Record<string, string[]> = {
@@ -54,16 +54,35 @@ describe('Layout mode navigation', () => {
 
     const nav = await screen.findByTestId('viewer-primary-nav')
     expect(within(nav).getByRole('link', { name: 'MSA' })).toHaveAttribute('href', '/viewer')
-    expect(within(nav).getByRole('link', { name: 'Search' })).toHaveAttribute('href', '/viewer/search')
+    expect(within(nav).getByRole('search', { name: 'Viewer search' })).toBeInTheDocument()
+    expect(within(nav).getByRole('textbox', { name: 'Search players, countries, tournaments' })).toHaveAttribute('placeholder', 'Search players, countries, tournaments…')
 
     for (const dropdown of viewerDropdowns) {
-      expect(within(nav).getByText(dropdown.label)).toBeInTheDocument()
+      expect(within(nav).getByRole('link', { name: dropdown.label })).toHaveAttribute('href', dropdown.to)
+      expect(within(nav).getByRole('button', { name: `${dropdown.label} submenu` })).toBeInTheDocument()
       expect(dropdown.items.map((item) => item.label)).toEqual(dropdownExpectations[dropdown.label])
       for (const item of dropdown.items) {
         expect(within(nav).getAllByRole('link', { name: item.label }).some((link) => link.getAttribute('href') === item.to)).toBe(true)
       }
     }
   })
+
+
+  it('marks only the exact dropdown route active while keeping the parent category active', async () => {
+    renderWithRoute(<Layout />, '/viewer/tour/current-week')
+
+    const nav = await screen.findByTestId('viewer-primary-nav')
+    const tourParent = within(nav).getByRole('link', { name: 'Tour' })
+    const seasonHub = within(nav).getByRole('link', { name: 'Season Hub' })
+    const currentWeek = within(nav).getByRole('link', { name: 'Current Week' })
+
+    expect(tourParent).toHaveClass('active')
+    expect(currentWeek).toHaveClass('active')
+    expect(seasonHub).not.toHaveClass('active')
+    expect(isExactViewerActivePath('/viewer/tour/current-week', '/viewer/tour')).toBe(false)
+    expect(isExactViewerActivePath('/viewer/tour/current-week', '/viewer/tour/current-week')).toBe(true)
+  })
+
 
   it('keeps shared Viewer shortcut dropdown entries pointed at the same canonical routes', async () => {
     renderWithRoute(<Layout />, '/viewer')
@@ -89,11 +108,13 @@ describe('Layout mode navigation', () => {
     await user.click(selector)
 
     expect(selector).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByText('Season: 2004/05')).toBeInTheDocument()
+    expect(screen.getByLabelText('Selected season')).toHaveValue('2004/05')
+    expect(screen.getByLabelText('Selected week')).toHaveValue(10)
+    expect(screen.getByRole('button', { name: 'Set Viewer Week' })).toBeInTheDocument()
     expect(screen.getByText('Season Week: 10 / 61')).toBeInTheDocument()
     expect(screen.getByText('Calendar Year: 2004')).toBeInTheDocument()
     expect(screen.getByText('Year Week: 46')).toBeInTheDocument()
-    expect(screen.getByText('Status: selected viewer context')).toBeInTheDocument()
+    expect(screen.getByText(/Status: selected viewer context/)).toBeInTheDocument()
   })
 
   it('maps context-aware Admin/Viewer switcher routes', () => {

@@ -146,7 +146,9 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       ['/viewer/tournaments', 'Tournament archive needs a selected Viewer run.'],
       ['/viewer/players', 'Select a Viewer run to view MSA Players.'],
       ['/viewer/countries', 'Select a Viewer run to view MSA Countries.'],
-      ['/viewer/history', 'Select a Viewer run to view MSA History.']
+      ['/viewer/history', 'Select a Viewer run to view MSA History.'],
+      ['/viewer/records', 'Records need connected active-run data and dedicated read models before record tables can be shown.'],
+      ['/viewer/stats', 'Stats need connected active-run data and dedicated read models before leaderboards can be shown.']
     ] as const
 
     for (const [route, message] of emptyStateRoutes) {
@@ -447,11 +449,130 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('bridges remaining non-tour active-run top-level Viewer pages to run-scoped read-only routes', async () => {
+  it('shows top-level History metadata without redirecting to the run-scoped page', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    api.getRunActivity.mockResolvedValue({
+      run_id: 'run-a',
+      items: [
+        { kind: 'event', sequence: 1, label: 'E1 completed', season: 2030, week: 2, event_id: 'E1', snapshot_sequence: null, source_event_id: null, related_run_id: null },
+        { kind: 'ranking_snapshot', sequence: 2, label: 'Ranking snapshot stored', season: 2030, week: 2, event_id: null, snapshot_sequence: 4, source_event_id: 'E1', related_run_id: null }
+      ]
+    })
+    api.getRunStatusSummary.mockResolvedValue({
+      run_id: 'run-a',
+      season: 2030,
+      seed: 99,
+      progress: { next_event_index: 1, total_events: 4, completed_event_count: 1 },
+      finals: { qualification_available: false, result_available: false },
+      rollover: null,
+      source: null,
+      lineage: { child_run_count: 0 },
+      history_counts: { events: 1, ranking_snapshots: 2, race_snapshots: 1 }
+    })
+    api.listEvents.mockResolvedValue({ run_id: 'run-a', events: [{ event_sequence: 1, event_id: 'E1', season: 2030, week: 2, template_id: 'TEMP-A', tournament_result: {} }] })
+    api.listRankingSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [{ snapshot_sequence: 4, snapshot_kind: 'ranking', source_event_id: 'E1', payload: {} }, { snapshot_sequence: 3, snapshot_kind: 'ranking', source_event_id: 'E0', payload: {} }] })
+    api.listRaceSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [{ snapshot_sequence: 5, snapshot_kind: 'race', source_event_id: 'E1', payload: {} }] })
+
+    renderAppAt('/viewer/history')
+
+    expect(await screen.findByRole('heading', { name: 'History' })).toBeInTheDocument()
+    const panel = await screen.findByLabelText('History active run metadata summary')
+    expect(panel).toHaveTextContent('run-a')
+    expect(panel).toHaveTextContent('Activity item count')
+    expect(panel).toHaveTextContent('2')
+    expect(panel).toHaveTextContent('Ranking snapshot stored · Season 2030 · W2')
+    expect(panel).toHaveTextContent('Event count')
+    expect(panel).toHaveTextContent('1')
+    expect(panel).toHaveTextContent('Ranking snapshot count')
+    expect(panel).toHaveTextContent('Race snapshot count')
+    expect(screen.getByRole('link', { name: 'Open active run history' })).toHaveAttribute('href', '/viewer/runs/run-a/history')
+    expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows active-run Records and Stats metadata with deferred groups and safe links', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    api.getRunStatusSummary.mockResolvedValue({
+      run_id: 'run-a',
+      season: 2030,
+      seed: 99,
+      progress: { next_event_index: 2, total_events: 4, completed_event_count: 2 },
+      finals: { qualification_available: true, result_available: false },
+      rollover: null,
+      source: null,
+      lineage: { child_run_count: 0 },
+      history_counts: { events: 2, ranking_snapshots: 3, race_snapshots: 2 }
+    })
+    api.listEvents.mockResolvedValue({ run_id: 'run-a', events: [
+      { event_sequence: 1, event_id: 'E1', season: 2030, week: 2, template_id: 'TEMP-A', tournament_result: {} },
+      { event_sequence: 2, event_id: 'E2', season: 2030, week: 5, template_id: 'TEMP-B', tournament_result: {} }
+    ] })
+    api.listRankingSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 1, snapshot_kind: 'ranking', source_event_id: 'E1', payload: {} },
+      { snapshot_sequence: 2, snapshot_kind: 'ranking', source_event_id: 'E2', payload: {} },
+      { snapshot_sequence: 3, snapshot_kind: 'ranking', source_event_id: 'E2', payload: {} }
+    ] })
+    api.listRaceSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 4, snapshot_kind: 'race', source_event_id: 'E1', payload: {} },
+      { snapshot_sequence: 5, snapshot_kind: 'race', source_event_id: 'E2', payload: {} }
+    ] })
+    api.getFinalsSummary.mockResolvedValue({ run_id: 'run-a', season: 2030, qualification: { run_id: 'run-a', season: 2030, source_as_of_season: 2030, source_as_of_week: 40, qualification: {} }, result: null })
+
+    renderAppAt('/viewer/records')
+    expect(await screen.findByRole('heading', { name: 'Records' })).toBeInTheDocument()
+    let panel = await screen.findByLabelText('Records active run metadata summary')
+    expect(panel).toHaveTextContent('run-a')
+    expect(panel).toHaveTextContent('Completed/persisted event count')
+    expect(panel).toHaveTextContent('2')
+    expect(panel).toHaveTextContent('Ranking snapshot count')
+    expect(panel).toHaveTextContent('3')
+    expect(panel).toHaveTextContent('Race snapshot count')
+    expect(panel).toHaveTextContent('Finals qualification available')
+    expect(panel).toHaveTextContent('Title Leaders: needs dedicated records read model.')
+    expect(panel).toHaveTextContent('Weeks at No.1: needs dedicated records read model.')
+    expect(panel).toHaveTextContent('Biggest Upsets: needs match/prediction read model.')
+    expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments')
+    expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
+    expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
+    expect(screen.getByRole('link', { name: 'Open active run finals' })).toHaveAttribute('href', '/viewer/runs/run-a/finals')
+    expectNoForbiddenViewerActions()
+
+    cleanup()
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    renderAppAt('/viewer/stats')
+    expect(await screen.findByRole('heading', { name: 'Stats' })).toBeInTheDocument()
+    panel = await screen.findByLabelText('Stats active run metadata summary')
+    expect(panel).toHaveTextContent('run-a')
+    expect(panel).toHaveTextContent('Completed/persisted event count')
+    expect(panel).toHaveTextContent('2')
+    expect(panel).toHaveTextContent('Player Stats: needs dedicated player statistics read model.')
+    expect(panel).toHaveTextContent('Tournament Stats: needs dedicated tournament statistics read model.')
+    expect(panel).toHaveTextContent('Era Rankings: needs dedicated era comparison read model.')
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows active-run History Records and Stats empty metadata states without fake leaders', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
 
     renderAppAt('/viewer/history')
-    expect(await screen.findByRole('heading', { name: 'Run activity' })).toBeInTheDocument()
+    expect(await screen.findByText('No activity metadata is available for this run yet.')).toBeInTheDocument()
+    expect(within(screen.getByRole('main')).queryByText(/Most title leader/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+
+    cleanup()
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    renderAppAt('/viewer/records')
+    expect(await screen.findByText('No record or statistical leaders are shown here until dedicated read models exist.')).toBeInTheDocument()
+    expect(screen.getByRole('main')).toHaveTextContent('Title Leaders: needs dedicated records read model.')
+    expect(within(screen.getByRole('main')).queryByText('Most titles')).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+
+    cleanup()
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    renderAppAt('/viewer/stats')
+    expect(await screen.findByText('No record or statistical leaders are shown here until dedicated read models exist.')).toBeInTheDocument()
+    expect(screen.getByRole('main')).toHaveTextContent('Player Stats: needs dedicated player statistics read model.')
+    expect(within(screen.getByRole('main')).queryByText('GOAT')).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

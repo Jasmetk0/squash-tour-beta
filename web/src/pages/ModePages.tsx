@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, Navigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { AdminPlayersPage as InitialPoolAdminPlayersPage } from './AdminPlayersPage'
 import { AdminPlayersHubPage } from './AdminPlayersHubPage'
 import { AdminSeasonsPage as SeasonBootstrapAdminSeasonsPage } from './AdminSeasonsPage'
@@ -215,26 +215,6 @@ function useActiveViewerRunId(): string | null {
   return activeRunId
 }
 
-type ActiveRunBridgeProps = {
-  title: string
-  emptyMessage: string
-  target: (runId: string) => string
-  description?: string
-}
-
-function ViewerActiveRunBridge({ title, emptyMessage, target, description }: ActiveRunBridgeProps): JSX.Element {
-  const activeRunId = useActiveViewerRunId()
-
-  if (activeRunId) {
-    return <Navigate to={target(activeRunId)} replace />
-  }
-
-  return (
-    <ViewerShellPage title={title} description={description}>
-      <p className="empty-state">{emptyMessage}</p>
-    </ViewerShellPage>
-  )
-}
 
 const activeRunLinks = [
   { title: 'Active Run Rankings', href: (runId: string) => `/viewer/runs/${runId}/rankings` },
@@ -938,19 +918,143 @@ export function ViewerCountriesPage(): JSX.Element {
   )
 }
 
+function selectLatestActivityItem(items: RunActivityItem[]): RunActivityItem | null {
+  return [...items].sort((a, b) => (b.sequence ?? -1) - (a.sequence ?? -1))[0] ?? null
+}
+
 export function ViewerHistoryPage(): JSX.Element {
+  const activeRunId = useActiveViewerRunId()
+  const activityQuery = useQuery({ queryKey: ['viewer-history-activity', activeRunId], queryFn: () => getRunActivity(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const statusQuery = useQuery({ queryKey: ['viewer-history-run-status', activeRunId], queryFn: () => getRunStatusSummary(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const eventsQuery = useQuery({ queryKey: ['viewer-history-events', activeRunId], queryFn: () => listEvents(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const rankingSnapshotsQuery = useQuery({ queryKey: ['viewer-history-ranking-snapshots', activeRunId], queryFn: () => listRankingSnapshots(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const raceSnapshotsQuery = useQuery({ queryKey: ['viewer-history-race-snapshots', activeRunId], queryFn: () => listRaceSnapshots(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+
+  if (!activeRunId) {
+    return (
+      <ViewerShellPage title="History" description="History destination for read-only activity, archive, and storyline browsing.">
+        <p className="empty-state">Select a Viewer run to view MSA History.</p>
+      </ViewerShellPage>
+    )
+  }
+
+  const activityItems = activityQuery.data?.items ?? []
+  const latestActivity = selectLatestActivityItem(activityItems)
+  const eventCount = eventsQuery.data?.events.length ?? statusQuery.data?.history_counts.events ?? null
+  const rankingSnapshotCount = rankingSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.ranking_snapshots ?? null
+  const raceSnapshotCount = raceSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.race_snapshots ?? null
+  const hasAnyMetadata = activityItems.length > 0 || (eventCount ?? 0) > 0 || (rankingSnapshotCount ?? 0) > 0 || (raceSnapshotCount ?? 0) > 0
+
   return (
-    <ViewerActiveRunBridge
-      title="History"
-      description="History destination for read-only activity, archive, and storyline browsing."
-      emptyMessage="Select a Viewer run to view MSA History."
-      target={(runId) => `/viewer/runs/${runId}/history`}
-    />
+    <ViewerShellPage title="History" description="Read-only top-level history landing using existing active-run activity, event, and snapshot metadata only.">
+      <article className="viewer-active-run-card" aria-label="History active run metadata summary">
+        <span className="eyebrow">Active Viewer run</span>
+        <h3>History summary</h3>
+        {activityQuery.isLoading || statusQuery.isLoading || eventsQuery.isLoading || rankingSnapshotsQuery.isLoading || raceSnapshotsQuery.isLoading ? <p className="status">Loading active run history metadata…</p> : null}
+        {activityQuery.isError || statusQuery.isError || eventsQuery.isError || rankingSnapshotsQuery.isError || raceSnapshotsQuery.isError ? <p className="empty-state">Some active run history metadata is temporarily unavailable.</p> : null}
+        <dl className="metadata-list">
+          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
+          <div><dt>Activity item count</dt><dd>{activityQuery.isLoading ? 'Loading…' : activityItems.length}</dd></div>
+          <div><dt>Latest activity item</dt><dd>{latestActivity ? formatActivityItem(latestActivity) : '—'}</dd></div>
+          <div><dt>Event count</dt><dd>{eventsQuery.isLoading && eventCount == null ? 'Loading…' : eventCount ?? '—'}</dd></div>
+          <div><dt>Ranking snapshot count</dt><dd>{rankingSnapshotsQuery.isLoading && rankingSnapshotCount == null ? 'Loading…' : rankingSnapshotCount ?? '—'}</dd></div>
+          <div><dt>Race snapshot count</dt><dd>{raceSnapshotsQuery.isLoading && raceSnapshotCount == null ? 'Loading…' : raceSnapshotCount ?? '—'}</dd></div>
+        </dl>
+        {!activityQuery.isLoading && !statusQuery.isLoading && !eventsQuery.isLoading && !rankingSnapshotsQuery.isLoading && !raceSnapshotsQuery.isLoading && !hasAnyMetadata ? (
+          <p className="empty-state">No activity metadata is available for this run yet.</p>
+        ) : null}
+        <p className="viewer-active-run-actions">
+          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/history`}>Open active run history</Link>
+        </p>
+      </article>
+    </ViewerShellPage>
+  )
+}
+
+type ViewerRecordsLandingKind = 'records' | 'stats'
+
+const deferredRecordGroups = [
+  { title: 'Title Leaders', description: 'needs dedicated records read model.' },
+  { title: 'Weeks at No.1', description: 'needs dedicated records read model.' },
+  { title: 'Streaks', description: 'needs dedicated records read model.' },
+  { title: 'Biggest Upsets', description: 'needs match/prediction read model.' },
+  { title: 'Best Seasons', description: 'needs historical stats read model.' }
+]
+
+const deferredStatsGroups = [
+  { title: 'Player Stats', description: 'needs dedicated player statistics read model.' },
+  { title: 'Tournament Stats', description: 'needs dedicated tournament statistics read model.' },
+  { title: 'Country Stats', description: 'needs dedicated country statistics read model.' },
+  { title: 'Awards', description: 'needs dedicated awards read model.' },
+  { title: 'Hall of Fame', description: 'needs dedicated Hall of Fame read model.' },
+  { title: 'Era Rankings', description: 'needs dedicated era comparison read model.' }
+]
+
+function ViewerRecordsStatsLandingPage({ kind }: { kind: ViewerRecordsLandingKind }): JSX.Element {
+  const activeRunId = useActiveViewerRunId()
+  const statusQuery = useQuery({ queryKey: ['viewer-records-status', kind, activeRunId], queryFn: () => getRunStatusSummary(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const eventsQuery = useQuery({ queryKey: ['viewer-records-events', kind, activeRunId], queryFn: () => listEvents(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const rankingSnapshotsQuery = useQuery({ queryKey: ['viewer-records-ranking-snapshots', kind, activeRunId], queryFn: () => listRankingSnapshots(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const raceSnapshotsQuery = useQuery({ queryKey: ['viewer-records-race-snapshots', kind, activeRunId], queryFn: () => listRaceSnapshots(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const finalsQuery = useQuery({ queryKey: ['viewer-records-finals', kind, activeRunId], queryFn: () => getFinalsSummary(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+
+  const isStats = kind === 'stats'
+  const title = isStats ? 'Stats' : 'Records'
+
+  if (!activeRunId) {
+    return (
+      <ViewerShellPage title={title} description={isStats ? 'Stats library destination prepared for connected run-scoped statistical read models.' : 'Record book destination prepared for statistics, milestones, and historical achievements.'}>
+        <p className="empty-state">{isStats ? 'Stats need connected active-run data and dedicated read models before leaderboards can be shown.' : 'Records need connected active-run data and dedicated read models before record tables can be shown.'}</p>
+      </ViewerShellPage>
+    )
+  }
+
+  const eventCount = eventsQuery.data?.events.length ?? statusQuery.data?.history_counts.events ?? null
+  const rankingSnapshotCount = rankingSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.ranking_snapshots ?? null
+  const raceSnapshotCount = raceSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.race_snapshots ?? null
+  const finalsAvailability = finalsQuery.data ? formatFinalsAvailability(finalsQuery.data) : statusQuery.data?.finals.result_available ? 'Finals result available' : statusQuery.data?.finals.qualification_available ? 'Finals qualification available' : 'Finals summary not available yet'
+  const deferredGroups = isStats ? [...deferredRecordGroups, ...deferredStatsGroups] : deferredRecordGroups
+
+  return (
+    <ViewerShellPage title={title} description={isStats ? 'Conservative Stats Library landing using existing active-run metadata only.' : 'Conservative Records landing using existing active-run metadata only.'}>
+      <article className="viewer-active-run-card" aria-label={`${title} active run metadata summary`}>
+        <span className="eyebrow">Active Viewer run</span>
+        <h3>{isStats ? 'Stats Library metadata' : 'Records metadata'}</h3>
+        {statusQuery.isLoading || eventsQuery.isLoading || rankingSnapshotsQuery.isLoading || raceSnapshotsQuery.isLoading || finalsQuery.isLoading ? <p className="status">Loading active run metadata…</p> : null}
+        {statusQuery.isError || eventsQuery.isError || rankingSnapshotsQuery.isError || raceSnapshotsQuery.isError || finalsQuery.isError ? <p className="empty-state">Some active run metadata is temporarily unavailable.</p> : null}
+        <dl className="metadata-list">
+          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
+          <div><dt>Completed/persisted event count</dt><dd>{eventsQuery.isLoading && eventCount == null ? 'Loading…' : eventCount ?? '—'}</dd></div>
+          <div><dt>Ranking snapshot count</dt><dd>{rankingSnapshotsQuery.isLoading && rankingSnapshotCount == null ? 'Loading…' : rankingSnapshotCount ?? '—'}</dd></div>
+          <div><dt>Race snapshot count</dt><dd>{raceSnapshotsQuery.isLoading && raceSnapshotCount == null ? 'Loading…' : raceSnapshotCount ?? '—'}</dd></div>
+          <div><dt>Finals availability</dt><dd>{finalsQuery.isLoading ? 'Loading…' : finalsAvailability}</dd></div>
+        </dl>
+        <p className="empty-state">No record or statistical leaders are shown here until dedicated read models exist.</p>
+        <div>
+          <h4>{isStats ? 'Deferred stat groups' : 'Deferred record groups'}</h4>
+          <ul className="viewer-home-list" aria-label={isStats ? 'Deferred stat groups' : 'Deferred record groups'}>
+            {deferredGroups.map((group) => (
+              <li key={group.title}><strong>{group.title}</strong>: {group.description}</li>
+            ))}
+          </ul>
+        </div>
+        <p className="viewer-active-run-actions">
+          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/tournaments`}>Open active run tournaments</Link>{' '}
+          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/rankings`}>Open active run rankings</Link>{' '}
+          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/race`}>Open active run race</Link>{' '}
+          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/finals`}>Open active run finals</Link>
+        </p>
+      </article>
+    </ViewerShellPage>
   )
 }
 
 export function ViewerRecordsPage(): JSX.Element {
-  return <ViewerShellPage title="Records" description="Record book destination prepared for statistics, milestones, and historical achievements." />
+  return <ViewerRecordsStatsLandingPage kind="records" />
+}
+
+export function ViewerStatsPage(): JSX.Element {
+  return <ViewerRecordsStatsLandingPage kind="stats" />
 }
 
 export function ViewerTourCalendarPage(): JSX.Element {

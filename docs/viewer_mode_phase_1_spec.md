@@ -1731,3 +1731,11 @@ Phase 1G improves `/viewer/players` and `/viewer/countries` when `beta_engine:vi
 Phase 1G intentionally does not add fake players, fake rankings, fake titles, fake country standings, fake country stats, fake storylines, mutating Viewer controls, new backend endpoints, or complex new backend read models. Rich sports-facing player and country hubs remain deferred until dedicated read models exist.
 
 This note does not mark full Viewer Phase 1 complete.
+
+## Phase 1H Implementation Note — Top-Level History/Records/Stats Landings
+
+Phase 1H improves `/viewer/history`, `/viewer/records`, and `/viewer/stats` when `beta_engine:viewer_active_run_id` is set by using existing read-only run activity, run-status summary, event list, ranking snapshot list, race snapshot list, and Finals summary APIs. The top-level History page now shows active run ID, activity item count, latest activity metadata when present, event/history count metadata, ranking snapshot count, race snapshot count, and a link to the existing run-scoped History page. The top-level Records and Stats pages now show only conservative active-run metadata counts and Finals availability, plus links to existing run-scoped tournaments, rankings, race, and Finals pages.
+
+Phase 1H intentionally does not add fake records, fake statistics, fake awards, fake title leaders, fake No.1 weeks, fake streaks, fake upset records, fake best seasons, fake storylines, mutating Viewer controls, new backend endpoints, or complex new backend read models. Rich records/statistics remain deferred until dedicated records and statistics read models exist.
+
+This note does not mark full Viewer Phase 1 complete.

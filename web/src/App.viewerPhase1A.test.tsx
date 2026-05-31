@@ -148,7 +148,11 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       ['/viewer/countries', 'Select a Viewer run to view MSA Countries.'],
       ['/viewer/history', 'Select a Viewer run to view MSA History.'],
       ['/viewer/records', 'Records need connected active-run data and dedicated read models before record tables can be shown.'],
-      ['/viewer/stats', 'Stats need connected active-run data and dedicated read models before leaderboards can be shown.']
+      ['/viewer/stats', 'Stats need connected active-run data and dedicated read models before leaderboards can be shown.'],
+      ['/viewer/h2h', 'H2H needs a selected Viewer run and match history read model.'],
+      ['/viewer/predictions', 'Predictions need connected active-run data and a deterministic prediction read model.'],
+      ['/viewer/predictions/match-predictor', 'Predictions need connected active-run data and a deterministic prediction read model.'],
+      ['/viewer/search', 'Search needs a selected Viewer run or connected global search index.']
     ] as const
 
     for (const [route, message] of emptyStateRoutes) {
@@ -163,6 +167,121 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(await screen.findByRole('button', { name: 'Jump to W24' })).toBeInTheDocument()
     expect(screen.getByText('Active run calendar is unavailable until a Viewer run is selected.')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Open active run calendar' })).not.toBeInTheDocument()
+  })
+
+  it('shows conservative active-run H2H landing and subroute deferred states', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-1i-run')
+    api.listRunPlayers.mockResolvedValue({
+      run_id: 'phase-1i-run',
+      total: 8,
+      limit: 5,
+      offset: 0,
+      players: [
+        { player_id: 'P1', name: 'Player One', country_code: 'AAA', age: 24, source_type: 'planner_generated', override_id: null, quality_band: 'A', is_top_band: true, origin_source_type: 'planner_generated', origin_quality_band: 'A', origin_override_id: null, origin_season: 2030, technique: 80, movement: 81, physical: 82, mental: 83, overall: 84 },
+        { player_id: 'P2', name: 'Player Two', country_code: 'BBB', age: 26, source_type: 'planner_generated', override_id: null, quality_band: 'B', is_top_band: false, origin_source_type: 'planner_generated', origin_quality_band: 'B', origin_override_id: null, origin_season: 2030, technique: 70, movement: 71, physical: 72, mental: 73, overall: 74 }
+      ]
+    })
+
+    renderAppAt('/viewer/h2h')
+    expect(await screen.findByRole('heading', { name: 'H2H Explorer', level: 2 })).toBeInTheDocument()
+    expect(await screen.findByLabelText('H2H Explorer active run summary')).toHaveTextContent('phase-1i-run')
+    expect(screen.getByText('Player One')).toBeInTheDocument()
+    expect(screen.getByText('Direct H2H records need a match history read model.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open active run players' })).toHaveAttribute('href', '/viewer/runs/phase-1i-run/players')
+    expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/phase-1i-run/tournaments')
+    expect(screen.queryByText(/wins/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+
+    cleanup()
+    renderAppAt('/viewer/h2h/rivalries')
+    expect(await screen.findByText('Real rivalry rankings require a match-history read model.')).toBeInTheDocument()
+    expect(screen.getByText('No rivalry list is shown until direct match records are available.')).toBeInTheDocument()
+    expect(screen.getAllByText('phase-1i-run').length).toBeGreaterThan(0)
+    expect(screen.queryByText(/Top rivalry/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+
+    cleanup()
+    renderAppAt('/viewer/h2h/most-played')
+    expect(await screen.findByText('Most-played matchups require a match-history read model.')).toBeInTheDocument()
+    expect(screen.getByText('No matchup list is shown until completed match counts are available.')).toBeInTheDocument()
+    expect(screen.queryByText(/matchup record/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+
+    cleanup()
+    renderAppAt('/viewer/h2h/finals-rivalries')
+    expect(await screen.findByText('Finals rivalries require a match-history read model with final-round context.')).toBeInTheDocument()
+    expect(screen.getByText('No finals rivalry list is shown until final-round match records are available.')).toBeInTheDocument()
+    expect(screen.queryByText(/finals record/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows conservative Match Predictor landing for predictions shortcut routes', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-1i-run')
+    api.listRunPlayers.mockResolvedValue({
+      run_id: 'phase-1i-run',
+      total: 6,
+      limit: 5,
+      offset: 0,
+      players: [
+        { player_id: 'P3', name: 'Player Three', country_code: 'CCC', age: 23, source_type: 'planner_generated', override_id: null, quality_band: 'A', is_top_band: true, origin_source_type: 'planner_generated', origin_quality_band: 'A', origin_override_id: null, origin_season: 2030, technique: 82, movement: 83, physical: 84, mental: 85, overall: 86 }
+      ]
+    })
+
+    for (const route of ['/viewer/predictions', '/viewer/predictions/match-predictor']) {
+      cleanup()
+      renderAppAt(route)
+      expect(await screen.findByRole('heading', { name: 'Match Predictor', level: 2 })).toBeInTheDocument()
+      expect(await screen.findByLabelText('Match Predictor active run summary')).toHaveTextContent('phase-1i-run')
+      expect(screen.getByText('Player Three')).toBeInTheDocument()
+      expect(screen.getByText('Win probabilities are not connected yet.')).toBeInTheDocument()
+      expect(screen.getByText('Fair odds are not connected yet.')).toBeInTheDocument()
+      expect(screen.getByText('Bookmaker margin model is not connected yet.')).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Open active run players' })).toHaveAttribute('href', '/viewer/runs/phase-1i-run/players')
+      expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/phase-1i-run/tournaments')
+      expect(screen.queryByText(/%/)).not.toBeInTheDocument()
+      expectNoForbiddenViewerActions()
+    }
+  })
+
+  it('shows conservative active-run Search landing with metadata samples only', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-1i-run')
+    api.listRunPlayers.mockResolvedValue({
+      run_id: 'phase-1i-run',
+      total: 2,
+      limit: 5,
+      offset: 0,
+      players: [
+        { player_id: 'P4', name: 'Searchable Player', country_code: 'DDD', age: 28, source_type: 'planner_generated', override_id: null, quality_band: 'B', is_top_band: false, origin_source_type: 'planner_generated', origin_quality_band: 'B', origin_override_id: null, origin_season: 2030, technique: 75, movement: 76, physical: 77, mental: 78, overall: 79 }
+      ]
+    })
+    api.listRunNations.mockResolvedValue({
+      run_id: 'phase-1i-run',
+      total: 1,
+      limit: 5,
+      offset: 0,
+      nations: [{ country_code: 'DDD', country_name: 'Delta', total_players: 2, average_overall: 79, average_age: 28, top_band_count: 0, manual_override_count: 0, planner_generated_count: 2, rollover_carried_count: 0, top_player_id: 'P4', top_player_name: 'Searchable Player', top_player_overall: 79 }]
+    })
+    api.getRun.mockResolvedValue({
+      run: { run_id: 'phase-1i-run', season: 2030, seed: 7, next_event_index: 0, total_events: 1, completed_event_ids: [] },
+      season_state: {
+        season: 2030,
+        next_event_index: 0,
+        completed_event_ids: [],
+        ordered_events: [{ event_id: 'EVT-1', season: 2030, week: 12, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-1' }]
+      }
+    })
+
+    renderAppAt('/viewer/search')
+    expect(await screen.findByRole('heading', { name: 'Search', level: 2 })).toBeInTheDocument()
+    const summary = await screen.findByLabelText('Search active run metadata summary')
+    expect(summary).toHaveTextContent('phase-1i-run')
+    expect(screen.getByLabelText('Read-only Viewer search shell')).toBeInTheDocument()
+    expect(screen.getByText('Global search index is not connected yet.')).toBeInTheDocument()
+    expect(screen.getAllByText('Searchable Player').length).toBeGreaterThan(0)
+    expect(screen.getByText('Delta')).toBeInTheDocument()
+    expect(screen.getByText('EVT-1 · W12 · GOLD · WORLD')).toBeInTheDocument()
+    expect(screen.queryByText(/Complete search results/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
   })
 
   it('shows active run status, safe links, and small real summaries on the Viewer homepage', async () => {

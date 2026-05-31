@@ -25,6 +25,8 @@ import {
   ViewerCurrentWeekPage,
   ViewerCountryRankingPage,
   ViewerFinalsReadOnlyPage,
+  ViewerH2HPage,
+  ViewerH2HSubroutePage,
   ViewerHistoryPage,
   ViewerHomePage,
   ViewerMatchPredictorPage,
@@ -34,6 +36,7 @@ import {
   ViewerRankingsPage,
   ViewerRacePage,
   ViewerRecordsPage,
+  ViewerSearchPage,
   ViewerShellPage,
   ViewerStatsPage,
   ViewerSeasonHubPage,
@@ -172,10 +175,10 @@ export default function App(): JSX.Element {
         <Route path="viewer/countries/hosting" element={<ViewerShellPage title="Hosting Nations" />} />
         <Route path="viewer/countries/talent-pipeline" element={<ViewerShellPage title="Talent Pipeline" />} />
         <Route path="viewer/countries/records" element={<ViewerShellPage title="Country Records" />} />
-        <Route path="viewer/h2h" element={<ViewerShellPage title="H2H Explorer" />} />
-        <Route path="viewer/h2h/rivalries" element={<ViewerShellPage title="Rivalry Rankings" />} />
-        <Route path="viewer/h2h/most-played" element={<ViewerShellPage title="Most Played Matchups" />} />
-        <Route path="viewer/h2h/finals-rivalries" element={<ViewerShellPage title="Finals Rivalries" />} />
+        <Route path="viewer/h2h" element={<ViewerH2HPage />} />
+        <Route path="viewer/h2h/rivalries" element={<ViewerH2HSubroutePage kind="rivalries" />} />
+        <Route path="viewer/h2h/most-played" element={<ViewerH2HSubroutePage kind="most-played" />} />
+        <Route path="viewer/h2h/finals-rivalries" element={<ViewerH2HSubroutePage kind="finals-rivalries" />} />
         <Route path="viewer/stats" element={<ViewerStatsPage />} />
         <Route path="viewer/stats/title-leaders" element={<ViewerShellPage title="Title Leaders" />} />
         <Route path="viewer/stats/no1-weeks" element={<ViewerShellPage title="Weeks at No.1" />} />
@@ -197,7 +200,7 @@ export default function App(): JSX.Element {
         <Route path="viewer/predictions/season-end-no1" element={<ViewerShellPage title="Season-End No.1" />} />
         <Route path="viewer/predictions/upset-watch" element={<ViewerShellPage title="Upset Watch" />} />
         <Route path="viewer/predictions/futures" element={<ViewerShellPage title="Futures Markets" />} />
-        <Route path="viewer/search" element={<ViewerShellPage title="Search" description="Global Viewer search shell for future player, tournament, country, match, and season results." />} />
+        <Route path="viewer/search" element={<ViewerSearchPage />} />
         <Route path="viewer/history" element={<ViewerHistoryPage />} />
         <Route path="viewer/runs/:runId/rankings" element={<SnapshotsPage mode="ranking" />} />
         <Route path="viewer/runs/:runId/rankings/:snapshotSequence" element={<SnapshotDetailPage mode="ranking" />} />

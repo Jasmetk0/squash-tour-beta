@@ -1749,3 +1749,13 @@ Phase 1I intentionally does not add fake H2H records, fake rivalries, fake most-
 Real direct H2H records, rivalry rankings, prediction analytics, odds/fair-price models, bookmaker margin models, and global search remain deferred until dedicated authoritative read models exist.
 
 This note does not mark full Viewer Phase 1 complete.
+
+## Phase 1J Implementation Note — Viewer Landing UI Polish and Component Cleanup
+
+Phase 1J improves maintainability and visual consistency for the conservative top-level Viewer landings by introducing shared read-only landing UI components for active-run cards, metadata lists, active-run links, sample lists, deferred feature lists, empty/status messages, section cards, and landing grids. These components are presentational only and keep route-level data fetching and page intent in the existing Viewer page components.
+
+Phase 1J also applies visual/card polish so the Viewer landing pages feel more like a modern sports website: cleaner metadata grids, stronger active-run cards, consistent empty/loading/error states, more intentional sample/deferred-list styling, subtler borders/shadows, and responsive card/link behavior.
+
+Phase 1J intentionally does not change product behavior, add backend APIs, add read models, invent fake data, add mutating controls, reintroduce duplicate Viewer run navigation, rename routes/dropdown items, or change Admin behavior.
+
+This note does not mark full Viewer Phase 1 complete.

@@ -394,3 +394,11 @@ This note does not mark Viewer Phase 1 or full Viewer Phase 2 complete. It recor
 - Rich player/country profiles remain deferred until safe read models exist for those views.
 
 Do not use this note to mark full Viewer Phase 2 complete; this is only the Phase 2C players/countries polish slice.
+
+## Phase 2D note — run-scoped Calendar and Planned Event polish
+
+- Run-scoped Viewer calendar and planned event pages now use sports-facing, read-only layouts for the selected run.
+- Technical calendar and planned-event data is hidden behind collapsed technical sections where relevant.
+- Admin technical/calendar pages remain separate and stable for Admin workflows.
+- No fake results, draws, matches, winners, odds, or storylines were added.
+- Rich event draw and match previews remain deferred until safe read models exist.

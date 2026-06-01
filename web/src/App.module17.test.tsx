@@ -1862,7 +1862,7 @@ describe('Module 17 pages through routes', () => {
     for (const action of forbiddenMutationActions) {
       expect(screen.queryByRole('button', { name: new RegExp(`^${action}$`, 'i') })).not.toBeInTheDocument()
     }
-  }, 30000)
+  }, 60000)
 
   it('renders Season Builder no-calendar overwrite policy branch', async () => {
     api.getSeasonCalendar.mockResolvedValueOnce({

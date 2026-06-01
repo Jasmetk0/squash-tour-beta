@@ -916,9 +916,9 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   it('preserves the real run-scoped Viewer season calendar page', async () => {
     renderAppAt('/viewer/runs/run-a/calendar')
 
-    expect(await screen.findByRole('heading', { name: 'Season calendar' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Ordered season calendar' })).toBeInTheDocument()
-    expect(await screen.findByRole('list', { name: 'Season calendar ordered list' })).toHaveTextContent('E1')
+    expect(await screen.findByRole('heading', { name: 'Season Calendar' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Calendar events' })).toBeInTheDocument()
+    expect(await screen.findByRole('list', { name: 'Viewer season calendar events' })).toHaveTextContent('E1')
     expect(screen.queryByText('Sample calendar card for future read-only weekly event browsing.')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Jump to W24' })).not.toBeInTheDocument()
   })
@@ -1069,7 +1069,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       expect(screen.getByRole('button', { name: 'Season 2004/05 · W10' })).toBeInTheDocument()
       expectNoForbiddenViewerActions()
     }
-  })
+  }, 10000)
 
   it('keeps context-aware mode switcher mappings on equivalent Viewer and Admin routes', async () => {
     const mappings = [

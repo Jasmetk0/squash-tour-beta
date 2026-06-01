@@ -214,7 +214,7 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
             ]}
           />
         ) : (
-          <p className="status">Player career preview is not connected for this data shape yet.</p>
+          <p className="status">This preview is not connected for this data shape yet.</p>
         )}
       </SectionCard>
 
@@ -255,7 +255,7 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
               </tbody>
             </table>
           ) : (
-            <p className="status">Player career preview is not connected for this data shape yet.</p>
+            <p className="status">This preview is not connected for this data shape yet.</p>
           )
         ) : null}
       </SectionCard>
@@ -325,7 +325,7 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
           </table>
         ) : null}
         {performanceQuery.data && tournamentResultsQuery.data && !performanceQuery.data.entries.length && !tournamentResultsQuery.data.entries.length ? (
-          <p className="status">Player career preview is not connected for this data shape yet.</p>
+          <p className="status">This preview is not connected for this data shape yet.</p>
         ) : null}
       </SectionCard>
 
@@ -483,7 +483,7 @@ export function ViewerRunCountryDetailPage(): JSX.Element {
           </>
         ) : null}
         {!detailQuery.isLoading && !detailQuery.error && !detailQuery.data ? (
-          <p className="status">Country profile preview is not connected for this data shape yet.</p>
+          <p className="status">This preview is not connected for this data shape yet.</p>
         ) : null}
       </SectionCard>
 
@@ -517,10 +517,10 @@ export function ViewerRunCountryDetailPage(): JSX.Element {
               </tbody>
             </table>
           ) : (
-            <p className="status">No top-player preview is available for this country yet.</p>
+            <p className="status">No data is available for this run yet.</p>
           )
         ) : (
-          <p className="status">Country profile preview is not connected for this data shape yet.</p>
+          <p className="status">This preview is not connected for this data shape yet.</p>
         )}
       </SectionCard>
 

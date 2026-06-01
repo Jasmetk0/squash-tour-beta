@@ -116,7 +116,7 @@ export function ViewerRunCalendarPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title="Calendar events">
-        {runQuery.data && orderedEvents.length === 0 ? <EmptyState message="No ordered calendar events are available for this run." /> : null}
+        {runQuery.data && orderedEvents.length === 0 ? <EmptyState message="No data is available for this run yet." /> : null}
         {runQuery.data && orderedEvents.length > 0 ? (
           <ol className="item-list" aria-label="Viewer season calendar events">
             {orderedEvents.map((event, index) => {
@@ -157,11 +157,11 @@ export function ViewerRunCalendarPage(): JSX.Element {
       </SectionCard>
 
       {runQuery.data ? (
-        <SectionCard title="Technical read-only data">
+        <SectionCard title="Read-only data">
           <details>
             <summary>Show technical calendar data</summary>
             <p className="status">Read-only technical calendar data for audit/debugging. Viewer calendar pages do not mutate run state.</p>
-            <JsonPayloadBlock title="Technical calendar record" emptyText="No technical calendar data is available." payload={runQuery.data} />
+            <JsonPayloadBlock title="Technical calendar record" emptyText="No technical data is available." payload={runQuery.data} />
           </details>
         </SectionCard>
       ) : null}
@@ -265,11 +265,11 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
       </SectionCard>
 
       {plannedEvent ? (
-        <SectionCard title="Technical read-only data">
+        <SectionCard title="Read-only data">
           <details>
             <summary>Show technical planned event data</summary>
             <p className="status">Read-only technical planned-event data for audit/debugging. Viewer planned event pages do not mutate run state.</p>
-            <JsonPayloadBlock title="Technical planned event record" emptyText="No technical planned event data is available." payload={plannedEvent} />
+            <JsonPayloadBlock title="Technical planned event record" emptyText="No technical data is available." payload={plannedEvent} />
           </details>
         </SectionCard>
       ) : null}

@@ -72,7 +72,7 @@ export function ViewerRunHistoryPage(): JSX.Element {
       <SectionCard title="Activity metadata">
         {activityQuery.isLoading ? <p className="status">Loading history…</p> : null}
         {activityQuery.error ? <p className="error">Failed to load run activity: {formatApiError(activityQuery.error)}</p> : null}
-        {activityQuery.data && items.length === 0 ? <EmptyState message="No activity metadata is available for this run yet." /> : null}
+        {activityQuery.data && items.length === 0 ? <EmptyState message="No data is available for this run yet." /> : null}
         {activityQuery.data && items.length > 0 ? (
           canPreviewLatest ? (
             <>
@@ -96,18 +96,18 @@ export function ViewerRunHistoryPage(): JSX.Element {
               />
             </>
           ) : (
-            <EmptyState message="History preview is not connected for this activity shape yet." />
+            <EmptyState message="This preview is not connected for this data shape yet." />
           )
         ) : null}
       </SectionCard>
 
       {activityQuery.data ? (
-        <SectionCard title="Technical history data">
+        <SectionCard title="Read-only data">
           <TechnicalData
             summary="Show technical history data"
             title="Activity payload"
             payload={activityQuery.data}
-            emptyText="No technical history payload is available."
+            emptyText="No technical history data is available."
           />
         </SectionCard>
       ) : null}
@@ -199,7 +199,7 @@ export function ViewerRunFinalsQualificationPage(): JSX.Element {
       <SectionCard title="Qualification metadata">
         {qualificationQuery.isLoading ? <p className="status">Loading Finals qualification…</p> : null}
         {qualificationQuery.error && !notFound ? <p className="error">Failed to load Finals qualification: {formatApiError(qualificationQuery.error)}</p> : null}
-        {notFound ? <EmptyState message="No Finals qualification is available for this run yet." /> : null}
+        {notFound ? <EmptyState message="No data is available for this run yet." /> : null}
         {qualificationQuery.data ? (
           hasSafePreview ? (
             <SummaryPills
@@ -210,18 +210,18 @@ export function ViewerRunFinalsQualificationPage(): JSX.Element {
               ]}
             />
           ) : (
-            <EmptyState message="Finals qualification preview is not connected for this payload shape yet." />
+            <EmptyState message="This preview is not connected for this data shape yet." />
           )
         ) : null}
       </SectionCard>
 
       {qualificationQuery.data ? (
-        <SectionCard title="Technical finals qualification data">
+        <SectionCard title="Read-only data">
           <TechnicalData
             summary="Show technical finals qualification data"
             title="Qualification payload"
             payload={qualificationQuery.data}
-            emptyText="No technical Finals qualification payload is available."
+            emptyText="No technical Finals qualification data is available."
           />
         </SectionCard>
       ) : null}
@@ -259,7 +259,7 @@ export function ViewerRunFinalsResultPage(): JSX.Element {
       <SectionCard title="Result metadata">
         {resultQuery.isLoading ? <p className="status">Loading Finals result…</p> : null}
         {resultQuery.error && !notFound ? <p className="error">Failed to load Finals result: {formatApiError(resultQuery.error)}</p> : null}
-        {notFound ? <EmptyState message="Finals result has not been recorded for this run yet." /> : null}
+        {notFound ? <EmptyState message="No data is available for this run yet." /> : null}
         {resultQuery.data ? (
           hasSafePreview ? (
             <SummaryPills
@@ -271,18 +271,18 @@ export function ViewerRunFinalsResultPage(): JSX.Element {
               ]}
             />
           ) : (
-            <EmptyState message="Finals result preview is not connected for this payload shape yet." />
+            <EmptyState message="This preview is not connected for this data shape yet." />
           )
         ) : null}
       </SectionCard>
 
       {resultQuery.data ? (
-        <SectionCard title="Technical finals result data">
+        <SectionCard title="Read-only data">
           <TechnicalData
             summary="Show technical finals result data"
             title="Result payload"
             payload={resultQuery.data}
-            emptyText="No technical Finals result payload is available."
+            emptyText="No technical Finals result data is available."
           />
         </SectionCard>
       ) : null}

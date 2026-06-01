@@ -256,7 +256,7 @@ export function ViewerShellPage({ title, kicker = 'Read-only Viewer section', de
         </p>
       </div>
       <ViewerContextLine />
-      {children ?? <ViewerEmptyState>No authoritative data is shown in this Phase 1B shell.</ViewerEmptyState>}
+      {children ?? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>}
     </section>
   )
 }
@@ -440,7 +440,7 @@ export function ViewerHomePage(): JSX.Element {
             />
           </>
         ) : (
-          <ViewerEmptyState>Active run data is unavailable until a Viewer run is selected. No authoritative tournament, rankings, race, match, prediction, or storyline data is shown.</ViewerEmptyState>
+          <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
         )}
       </section>
       <ViewerLandingGrid>
@@ -452,7 +452,7 @@ export function ViewerHomePage(): JSX.Element {
               <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/calendar`}>Open active run calendar</Link>
             </>
           ) : (
-            <ViewerEmptyState>{activeRunId ? 'No current event summary available yet.' : 'Select a Viewer run to see the current event summary.'}</ViewerEmptyState>
+            <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           )}
         </ViewerSectionCard>
 
@@ -464,7 +464,7 @@ export function ViewerHomePage(): JSX.Element {
               ))}
             </ul>
           ) : (
-            <ViewerEmptyState>{activeRunId ? 'No additional same-week event summary is available yet.' : 'Active-run schedule data is unavailable until a Viewer run is selected.'}</ViewerEmptyState>
+            <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           )}
         </ViewerSectionCard>
 
@@ -472,7 +472,7 @@ export function ViewerHomePage(): JSX.Element {
           {activeRunId && latestRankingSnapshot ? (
             <p>Latest ranking snapshot #{latestRankingSnapshot.snapshot_sequence} from {latestRankingSnapshot.source_event_id ?? 'run history'} · {rankingSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
           ) : (
-            <ViewerEmptyState>{activeRunId ? 'No ranking snapshot metadata is available yet.' : 'Select a Viewer run to see ranking snapshot metadata.'}</ViewerEmptyState>
+            <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           )}
           {activeRunId ? <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/rankings`}>Open active run rankings</Link> : null}
         </ViewerSectionCard>
@@ -481,25 +481,25 @@ export function ViewerHomePage(): JSX.Element {
           {activeRunId && latestRaceSnapshot ? (
             <p>Latest race snapshot #{latestRaceSnapshot.snapshot_sequence} from {latestRaceSnapshot.source_event_id ?? 'run history'} · {raceSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
           ) : (
-            <ViewerEmptyState>{activeRunId ? 'No race snapshot metadata is available yet.' : 'Select a Viewer run to see Race snapshot metadata.'}</ViewerEmptyState>
+            <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           )}
           {activeRunId ? <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/race`}>Open active run race</Link> : null}
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only matches" title="Featured Matches">
-          <ViewerEmptyState>Match cards need the match read model.</ViewerEmptyState>
+          <ViewerEmptyState>This preview is not connected for this data shape yet.</ViewerEmptyState>
           {activeRunId ? <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/tournaments`}>Open active run tournaments</Link> : null}
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only analytics" title="Predictions &amp; Upset Watch">
-          <ViewerEmptyState>Prediction analytics are not connected yet.</ViewerEmptyState>
+          <ViewerEmptyState>This preview is not connected for this data shape yet.</ViewerEmptyState>
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only storylines" title="Storylines">
           {activeRunId && latestActivityItem ? (
             <p>{activityItems.length} activity items · Latest: {formatActivityItem(latestActivityItem)}</p>
           ) : (
-            <ViewerEmptyState>{activeRunId ? 'No activity storyline summary is available yet.' : 'Select a Viewer run to see activity storyline metadata.'}</ViewerEmptyState>
+            <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           )}
           {activeRunId ? <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/history`}>Open active run history</Link> : null}
         </ViewerSectionCard>
@@ -577,8 +577,8 @@ export function ViewerRankingsPage(): JSX.Element {
         mode: 'ranking',
         title: 'MSA Rankings',
         description: 'Official rankings destination for the selected Season/Week context.',
-        emptyMessage: 'Select a Viewer run to view MSA Rankings.',
-        noSnapshotsMessage: 'No ranking snapshots are available for this run yet.',
+        emptyMessage: 'No data is available for this run yet.',
+        noSnapshotsMessage: 'No data is available for this run yet.',
         countLabel: 'Ranking snapshot count',
         openLabel: 'Open active run rankings',
         latestLabel: 'View latest ranking snapshot',
@@ -596,8 +596,8 @@ export function ViewerRacePage(): JSX.Element {
         mode: 'race',
         title: 'Race to Finals',
         description: 'Season-long qualification standings for the selected Viewer run.',
-        emptyMessage: 'Select a Viewer run to view Race to Finals.',
-        noSnapshotsMessage: 'No race snapshots are available for this run yet.',
+        emptyMessage: 'No data is available for this run yet.',
+        noSnapshotsMessage: 'No data is available for this run yet.',
         countLabel: 'Race snapshot count',
         openLabel: 'Open active run race',
         latestLabel: 'View latest race snapshot',
@@ -619,7 +619,7 @@ export function ViewerSeasonHubPage(): JSX.Element {
   if (!activeRunId) {
     return (
       <ViewerShellPage title="Season Hub" description="Top-level tour hub for the selected Viewer run.">
-        <ViewerEmptyState>Season Hub needs a selected Viewer run.</ViewerEmptyState>
+        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
       </ViewerShellPage>
     )
   }
@@ -668,7 +668,7 @@ export function ViewerCurrentWeekPage(): JSX.Element {
   if (!activeRunId) {
     return (
       <ViewerShellPage title="Current Week" description="Selected-week tour view for the active Viewer run.">
-        <ViewerEmptyState>Current Week needs a selected Viewer run.</ViewerEmptyState>
+        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
       </ViewerShellPage>
     )
   }
@@ -687,7 +687,7 @@ export function ViewerCurrentWeekPage(): JSX.Element {
         </dl>
         {runQuery.isLoading ? <p className="status">Loading selected-week events…</p> : null}
         {runQuery.isError ? <ViewerEmptyState>Selected-week event metadata is temporarily unavailable.</ViewerEmptyState> : null}
-        {!runQuery.isLoading && !runQuery.isError && !eventsForWeek.length ? <ViewerEmptyState>No events are available for the selected Viewer week.</ViewerEmptyState> : null}
+        {!runQuery.isLoading && !runQuery.isError && !eventsForWeek.length ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
         {eventsForWeek.length ? (
           <ul className="viewer-home-list" aria-label="Selected week ordered events">
             {eventsForWeek.map((event) => (
@@ -711,7 +711,7 @@ export function ViewerTournamentsPage(): JSX.Element {
   if (!activeRunId) {
     return (
       <ViewerShellPage title="All Tournaments" description="Tournament archive destination for read-only schedules, results, and historical browsing.">
-        <ViewerEmptyState>Tournament archive needs a selected Viewer run.</ViewerEmptyState>
+        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
       </ViewerShellPage>
     )
   }
@@ -738,7 +738,7 @@ export function ViewerTournamentsPage(): JSX.Element {
           <div><dt>Next scheduled event</dt><dd>{nextEvent ? `${nextEvent.event_id} · W${nextEvent.week} · ${nextEvent.category} · ${nextEvent.tour} · ${nextEvent.template_id}` : '—'}</dd></div>
           <div><dt>Latest persisted event</dt><dd>{renderPersistedEventSummary(latestPersistedEvent, plannedMap)}</dd></div>
         </dl>
-        {!runQuery.isLoading && !eventsQuery.isLoading && !runQuery.isError && !eventsQuery.isError && !hasMetadata ? <ViewerEmptyState>No tournament metadata is available for this run yet.</ViewerEmptyState> : null}
+        {!runQuery.isLoading && !eventsQuery.isLoading && !runQuery.isError && !eventsQuery.isError && !hasMetadata ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
         {sampleEvents.length ? (
           <div>
             <h4>Sample ordered events</h4>
@@ -799,10 +799,10 @@ export function ViewerPlayersPage(): JSX.Element {
   if (!activeRunId) {
     return (
       <ViewerShellPage
-        title="Players Hub"
+        title="Players"
         description="Player hub for read-only spotlights, profiles, and browsing in the selected Viewer context."
       >
-        <ViewerEmptyState>Select a Viewer run to view MSA Players.</ViewerEmptyState>
+        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
       </ViewerShellPage>
     )
   }
@@ -810,10 +810,10 @@ export function ViewerPlayersPage(): JSX.Element {
   const players = playersQuery.data?.players ?? []
 
   return (
-    <ViewerShellPage title="Players Hub" description="Read-only top-level player hub using existing active-run player metadata.">
-      <article className="viewer-active-run-card" aria-label="Players Hub active run summary">
+    <ViewerShellPage title="Players" description="Read-only top-level player hub using existing active-run player metadata.">
+      <article className="viewer-active-run-card" aria-label="Players active run summary">
         <span className="eyebrow">Active Viewer run</span>
-        <h3>Players Hub summary</h3>
+        <h3>Players summary</h3>
         {playersQuery.isLoading ? <p className="status">Loading active run player metadata…</p> : null}
         {playersQuery.isError ? <ViewerEmptyState>Player metadata is temporarily unavailable for this run.</ViewerEmptyState> : null}
         <dl className="metadata-list">
@@ -821,7 +821,7 @@ export function ViewerPlayersPage(): JSX.Element {
           <div><dt>Total player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : playersQuery.data?.total ?? '—'}</dd></div>
           <div><dt>Returned player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : players.length}</dd></div>
         </dl>
-        {!playersQuery.isLoading && !playersQuery.isError && players.length === 0 ? <ViewerEmptyState>No player metadata is available for this run yet.</ViewerEmptyState> : null}
+        {!playersQuery.isLoading && !playersQuery.isError && players.length === 0 ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
         <ViewerSamplePlayersList players={players} label="Sample active run players" />
         <p className="viewer-active-run-actions">
           <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/players`}>Open active run players</Link>
@@ -842,8 +842,8 @@ export function ViewerCountriesPage(): JSX.Element {
 
   if (!activeRunId) {
     return (
-      <ViewerShellPage title="Countries Hub" description="Country hub for read-only national rankings, hosting stories, talent pipelines, and records.">
-        <ViewerEmptyState>Select a Viewer run to view MSA Countries.</ViewerEmptyState>
+      <ViewerShellPage title="Countries" description="Country hub for read-only national rankings, hosting stories, talent pipelines, and records.">
+        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
       </ViewerShellPage>
     )
   }
@@ -851,10 +851,10 @@ export function ViewerCountriesPage(): JSX.Element {
   const nations = nationsQuery.data?.nations ?? []
 
   return (
-    <ViewerShellPage title="Countries Hub" description="Read-only top-level country hub using existing active-run nation metadata.">
-      <article className="viewer-active-run-card" aria-label="Countries Hub active run summary">
+    <ViewerShellPage title="Countries" description="Read-only top-level country hub using existing active-run nation metadata.">
+      <article className="viewer-active-run-card" aria-label="Countries active run summary">
         <span className="eyebrow">Active Viewer run</span>
-        <h3>Countries Hub summary</h3>
+        <h3>Countries summary</h3>
         {nationsQuery.isLoading ? <p className="status">Loading active run country metadata…</p> : null}
         {nationsQuery.isError ? <ViewerEmptyState>Country metadata is temporarily unavailable for this run.</ViewerEmptyState> : null}
         <dl className="metadata-list">
@@ -862,7 +862,7 @@ export function ViewerCountriesPage(): JSX.Element {
           <div><dt>Total country count</dt><dd>{nationsQuery.isLoading ? 'Loading…' : nationsQuery.data?.total ?? '—'}</dd></div>
           <div><dt>Returned country count</dt><dd>{nationsQuery.isLoading ? 'Loading…' : nations.length}</dd></div>
         </dl>
-        {!nationsQuery.isLoading && !nationsQuery.isError && nations.length === 0 ? <ViewerEmptyState>No country metadata is available for this run yet.</ViewerEmptyState> : null}
+        {!nationsQuery.isLoading && !nationsQuery.isError && nations.length === 0 ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
         <ViewerSampleList
           title="Sample countries"
           label="Sample active run countries"
@@ -893,7 +893,7 @@ export function ViewerHistoryPage(): JSX.Element {
   if (!activeRunId) {
     return (
       <ViewerShellPage title="History" description="History destination for read-only activity, archive, and storyline browsing.">
-        <ViewerEmptyState>Select a Viewer run to view MSA History.</ViewerEmptyState>
+        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
       </ViewerShellPage>
     )
   }
@@ -921,7 +921,7 @@ export function ViewerHistoryPage(): JSX.Element {
           <div><dt>Race snapshot count</dt><dd>{raceSnapshotsQuery.isLoading && raceSnapshotCount == null ? 'Loading…' : raceSnapshotCount ?? '—'}</dd></div>
         </dl>
         {!activityQuery.isLoading && !statusQuery.isLoading && !eventsQuery.isLoading && !rankingSnapshotsQuery.isLoading && !raceSnapshotsQuery.isLoading && !hasAnyMetadata ? (
-          <ViewerEmptyState>No activity metadata is available for this run yet.</ViewerEmptyState>
+          <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
         ) : null}
         <p className="viewer-active-run-actions">
           <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/history`}>Open active run history</Link>
@@ -964,7 +964,7 @@ function ViewerRecordsStatsLandingPage({ kind }: { kind: ViewerRecordsLandingKin
   if (!activeRunId) {
     return (
       <ViewerShellPage title={title} description={isStats ? 'Stats library destination prepared for connected run-scoped statistical read models.' : 'Record book destination prepared for statistics, milestones, and historical achievements.'}>
-        <ViewerEmptyState>{isStats ? 'Stats need connected active-run data and dedicated read models before leaderboards can be shown.' : 'Records need connected active-run data and dedicated read models before record tables can be shown.'}</ViewerEmptyState>
+        <ViewerEmptyState>{isStats ? 'This preview is not connected for this data shape yet.' : 'This preview is not connected for this data shape yet.'}</ViewerEmptyState>
       </ViewerShellPage>
     )
   }
@@ -989,7 +989,7 @@ function ViewerRecordsStatsLandingPage({ kind }: { kind: ViewerRecordsLandingKin
           <div><dt>Race snapshot count</dt><dd>{raceSnapshotsQuery.isLoading && raceSnapshotCount == null ? 'Loading…' : raceSnapshotCount ?? '—'}</dd></div>
           <div><dt>Finals availability</dt><dd>{finalsQuery.isLoading ? 'Loading…' : finalsAvailability}</dd></div>
         </dl>
-        <ViewerEmptyState>No record or statistical leaders are shown here until dedicated read models exist.</ViewerEmptyState>
+        <ViewerEmptyState>This preview is not connected for this data shape yet.</ViewerEmptyState>
         <ViewerDeferredFeatureList
           title={isStats ? 'Deferred stat groups' : 'Deferred record groups'}
           label={isStats ? 'Deferred stat groups' : 'Deferred record groups'}
@@ -1042,7 +1042,7 @@ export function ViewerTourCalendarPage(): JSX.Element {
           </Link>
         </article>
       ) : (
-        <ViewerEmptyState>Active run calendar is unavailable until a Viewer run is selected.</ViewerEmptyState>
+        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
       )}
     </ViewerShellPage>
   )
@@ -1093,7 +1093,7 @@ export function ViewerH2HPage(): JSX.Element {
   if (!activeRunId) {
     return (
       <ViewerShellPage title="H2H Explorer" description="Read-only head-to-head explorer shell for future comparison and rivalry browsing.">
-        <ViewerEmptyState>H2H needs a selected Viewer run and match history read model.</ViewerEmptyState>
+        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
       </ViewerShellPage>
     )
   }
@@ -1112,9 +1112,9 @@ export function ViewerH2HPage(): JSX.Element {
           <div><dt>Total player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : playersQuery.data?.total ?? '—'}</dd></div>
           <div><dt>Sample player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : players.length}</dd></div>
         </dl>
-        {!playersQuery.isLoading && !playersQuery.isError && players.length === 0 ? <ViewerEmptyState>No player metadata is available for a future comparison selector yet.</ViewerEmptyState> : null}
+        {!playersQuery.isLoading && !playersQuery.isError && players.length === 0 ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
         <ViewerSamplePlayersList players={players} label="Sample active run players for future H2H comparison selector" />
-        <ViewerEmptyState>Direct H2H records need a match history read model.</ViewerEmptyState>
+        <ViewerEmptyState>This preview is not connected for this data shape yet.</ViewerEmptyState>
         <ViewerActiveRunSportsLinks activeRunId={activeRunId} />
       </article>
     </ViewerShellPage>
@@ -1126,17 +1126,17 @@ export function ViewerH2HSubroutePage({ kind }: { kind: ViewerH2HSubrouteKind })
   const content = {
     rivalries: {
       title: 'Rivalry Rankings',
-      message: 'Real rivalry rankings require a match-history read model.',
+      message: 'This preview is not connected for this data shape yet.',
       note: 'No rivalry list is shown until direct match records are available.'
     },
     'most-played': {
       title: 'Most Played Matchups',
-      message: 'Most-played matchups require a match-history read model.',
+      message: 'This preview is not connected for this data shape yet.',
       note: 'No matchup list is shown until completed match counts are available.'
     },
     'finals-rivalries': {
       title: 'Finals Rivalries',
-      message: 'Finals rivalries require a match-history read model with final-round context.',
+      message: 'This preview is not connected for this data shape yet.',
       note: 'No finals rivalry list is shown until final-round match records are available.'
     }
   }[kind]
@@ -1168,7 +1168,7 @@ export function ViewerMatchPredictorPage(): JSX.Element {
   if (!activeRunId) {
     return (
       <ViewerShellPage title="Match Predictor" description="Shared read-only predictor destination used by H2H and Predictions navigation.">
-        <ViewerEmptyState>Predictions need connected active-run data and a deterministic prediction read model.</ViewerEmptyState>
+        <ViewerEmptyState>This preview is not connected for this data shape yet.</ViewerEmptyState>
       </ViewerShellPage>
     )
   }
@@ -1187,12 +1187,12 @@ export function ViewerMatchPredictorPage(): JSX.Element {
           <div><dt>Total player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : playersQuery.data?.total ?? '—'}</dd></div>
           <div><dt>Sample player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : players.length}</dd></div>
         </dl>
-        {!playersQuery.isLoading && !playersQuery.isError && players.length === 0 ? <ViewerEmptyState>No player metadata is available for future predictor inputs yet.</ViewerEmptyState> : null}
+        {!playersQuery.isLoading && !playersQuery.isError && players.length === 0 ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
         <ViewerSamplePlayersList players={players} label="Sample active run players for future predictor inputs" />
         <ul className="viewer-home-list" aria-label="Deferred prediction outputs">
-          <li>Win probabilities are not connected yet.</li>
-          <li>Fair odds are not connected yet.</li>
-          <li>Bookmaker margin model is not connected yet.</li>
+          <li>This preview is not connected for this data shape yet.</li>
+          <li>This preview is not connected for this data shape yet.</li>
+          <li>This preview is not connected for this data shape yet.</li>
         </ul>
         <ViewerActiveRunSportsLinks activeRunId={activeRunId} />
       </article>
@@ -1247,7 +1247,7 @@ export function ViewerSearchPage(): JSX.Element {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
-          <ViewerEmptyState>Search needs a selected Viewer run or connected global search index.</ViewerEmptyState>
+          <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           <p className="status">Full search result sets are not shown yet; this page only reflects the local query from the URL.</p>
         </article>
       </ViewerShellPage>
@@ -1279,7 +1279,7 @@ export function ViewerSearchPage(): JSX.Element {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
-        <ViewerEmptyState>Global search index is not connected yet.</ViewerEmptyState>
+        <ViewerEmptyState>This preview is not connected for this data shape yet.</ViewerEmptyState>
         <p className="status">Full search result sets are not shown yet; active-run lists below are real metadata samples only.</p>
         <ViewerSamplePlayersList players={players} label="Sample searchable players" />
         {nations.length ? (

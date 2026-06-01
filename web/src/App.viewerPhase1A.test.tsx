@@ -125,8 +125,8 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     ]) {
       expect(screen.getByRole('heading', { name: section })).toBeInTheDocument()
     }
-    expect(screen.getByText(/Active run data is unavailable until a Viewer run is selected/)).toBeInTheDocument()
-    expect(screen.getByText('Prediction analytics are not connected yet.')).toBeInTheDocument()
+    expect(screen.getAllByText('No data is available for this run yet.').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('This preview is not connected for this data shape yet.').length).toBeGreaterThan(0)
     expect(screen.queryByText('Paris can reclaim No.1 this week.')).not.toBeInTheDocument()
     expect(screen.queryByText('Macky needs a semifinal to protect his Race lead.')).not.toBeInTheDocument()
   })
@@ -207,7 +207,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     expect(screen.getByRole('button', { name: 'Season 2004/05 · W24' })).toBeInTheDocument()
     expect(localStorage.getItem('beta_engine:viewer_context')).toContain('24')
-    expect(await screen.findByText('Current Week needs a selected Viewer run.')).toBeInTheDocument()
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
 
     cleanup()
     renderAppAt('/viewer/tour/current-week')
@@ -249,27 +249,27 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(await screen.findByRole('heading', { name: 'Search' })).toBeInTheDocument()
     expect(screen.getAllByLabelText('Read-only Viewer search shell')[0]).toHaveValue('')
     expect(screen.queryByText(/Search query:/)).not.toBeInTheDocument()
-    expect(screen.getByText('Search needs a selected Viewer run or connected global search index.')).toBeInTheDocument()
+    expect(screen.getAllByText('No data is available for this run yet.').length).toBeGreaterThan(0)
   })
 
   it('shows sports-facing empty states on top-level Viewer pages when no active run is selected', async () => {
     localStorage.removeItem('beta_engine:viewer_active_run_id')
     const emptyStateRoutes = [
-      ['/viewer/rankings', 'Select a Viewer run to view MSA Rankings.'],
-      ['/viewer/rankings/race', 'Select a Viewer run to view Race to Finals.'],
-      ['/viewer/tour', 'Season Hub needs a selected Viewer run.'],
-      ['/viewer/tour/current-week', 'Current Week needs a selected Viewer run.'],
-      ['/viewer/tour/tournaments', 'Tournament archive needs a selected Viewer run.'],
-      ['/viewer/tournaments', 'Tournament archive needs a selected Viewer run.'],
-      ['/viewer/players', 'Select a Viewer run to view MSA Players.'],
-      ['/viewer/countries', 'Select a Viewer run to view MSA Countries.'],
-      ['/viewer/history', 'Select a Viewer run to view MSA History.'],
-      ['/viewer/records', 'Records need connected active-run data and dedicated read models before record tables can be shown.'],
-      ['/viewer/stats', 'Stats need connected active-run data and dedicated read models before leaderboards can be shown.'],
-      ['/viewer/h2h', 'H2H needs a selected Viewer run and match history read model.'],
-      ['/viewer/predictions', 'Predictions need connected active-run data and a deterministic prediction read model.'],
-      ['/viewer/predictions/match-predictor', 'Predictions need connected active-run data and a deterministic prediction read model.'],
-      ['/viewer/search', 'Search needs a selected Viewer run or connected global search index.']
+      ['/viewer/rankings', 'No data is available for this run yet.'],
+      ['/viewer/rankings/race', 'No data is available for this run yet.'],
+      ['/viewer/tour', 'No data is available for this run yet.'],
+      ['/viewer/tour/current-week', 'No data is available for this run yet.'],
+      ['/viewer/tour/tournaments', 'No data is available for this run yet.'],
+      ['/viewer/tournaments', 'No data is available for this run yet.'],
+      ['/viewer/players', 'No data is available for this run yet.'],
+      ['/viewer/countries', 'No data is available for this run yet.'],
+      ['/viewer/history', 'No data is available for this run yet.'],
+      ['/viewer/records', 'This preview is not connected for this data shape yet.'],
+      ['/viewer/stats', 'This preview is not connected for this data shape yet.'],
+      ['/viewer/h2h', 'No data is available for this run yet.'],
+      ['/viewer/predictions', 'This preview is not connected for this data shape yet.'],
+      ['/viewer/predictions/match-predictor', 'This preview is not connected for this data shape yet.'],
+      ['/viewer/search', 'No data is available for this run yet.']
     ] as const
 
     for (const [route, message] of emptyStateRoutes) {
@@ -282,7 +282,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     cleanup()
     renderAppAt('/viewer/tour/calendar')
     expect(await screen.findByRole('button', { name: 'Jump to W24' })).toBeInTheDocument()
-    expect(screen.getByText('Active run calendar is unavailable until a Viewer run is selected.')).toBeInTheDocument()
+    expect(screen.getAllByText('No data is available for this run yet.').length).toBeGreaterThan(0)
     expect(screen.queryByRole('link', { name: 'Open active run calendar' })).not.toBeInTheDocument()
   })
 
@@ -303,7 +303,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(await screen.findByRole('heading', { name: 'H2H Explorer', level: 2 })).toBeInTheDocument()
     expect(await screen.findByLabelText('H2H Explorer active run summary')).toHaveTextContent('phase-1i-run')
     expect(screen.getByText('Player One')).toBeInTheDocument()
-    expect(screen.getByText('Direct H2H records need a match history read model.')).toBeInTheDocument()
+    expect(screen.getAllByText('This preview is not connected for this data shape yet.').length).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: 'Open active run players' })).toHaveAttribute('href', '/viewer/runs/phase-1i-run/players')
     expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/phase-1i-run/tournaments')
     expect(screen.queryByText(/wins/i)).not.toBeInTheDocument()
@@ -311,7 +311,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     cleanup()
     renderAppAt('/viewer/h2h/rivalries')
-    expect(await screen.findByText('Real rivalry rankings require a match-history read model.')).toBeInTheDocument()
+    expect((await screen.findAllByText('This preview is not connected for this data shape yet.')).length).toBeGreaterThan(0)
     expect(screen.getByText('No rivalry list is shown until direct match records are available.')).toBeInTheDocument()
     expect(screen.getAllByText('phase-1i-run').length).toBeGreaterThan(0)
     expect(screen.queryByText(/Top rivalry/i)).not.toBeInTheDocument()
@@ -319,14 +319,14 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     cleanup()
     renderAppAt('/viewer/h2h/most-played')
-    expect(await screen.findByText('Most-played matchups require a match-history read model.')).toBeInTheDocument()
+    expect((await screen.findAllByText('This preview is not connected for this data shape yet.')).length).toBeGreaterThan(0)
     expect(screen.getByText('No matchup list is shown until completed match counts are available.')).toBeInTheDocument()
     expect(screen.queryByText(/matchup record/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
 
     cleanup()
     renderAppAt('/viewer/h2h/finals-rivalries')
-    expect(await screen.findByText('Finals rivalries require a match-history read model with final-round context.')).toBeInTheDocument()
+    expect((await screen.findAllByText('This preview is not connected for this data shape yet.')).length).toBeGreaterThan(0)
     expect(screen.getByText('No finals rivalry list is shown until final-round match records are available.')).toBeInTheDocument()
     expect(screen.queryByText(/finals record/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
@@ -350,9 +350,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       expect(await screen.findByRole('heading', { name: 'Match Predictor', level: 2 })).toBeInTheDocument()
       expect(await screen.findByLabelText('Match Predictor active run summary')).toHaveTextContent('phase-1i-run')
       expect(screen.getByText('Player Three')).toBeInTheDocument()
-      expect(screen.getByText('Win probabilities are not connected yet.')).toBeInTheDocument()
-      expect(screen.getByText('Fair odds are not connected yet.')).toBeInTheDocument()
-      expect(screen.getByText('Bookmaker margin model is not connected yet.')).toBeInTheDocument()
+      expect(screen.getAllByText('This preview is not connected for this data shape yet.')).toHaveLength(3)
       expect(screen.getByRole('link', { name: 'Open active run players' })).toHaveAttribute('href', '/viewer/runs/phase-1i-run/players')
       expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/phase-1i-run/tournaments')
       expect(screen.queryByText(/%/)).not.toBeInTheDocument()
@@ -393,7 +391,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     const summary = await screen.findByLabelText('Search active run metadata summary')
     expect(summary).toHaveTextContent('phase-1i-run')
     expect(screen.getByLabelText('Read-only Viewer search shell')).toBeInTheDocument()
-    expect(screen.getByText('Global search index is not connected yet.')).toBeInTheDocument()
+    expect(screen.getAllByText('This preview is not connected for this data shape yet.').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Searchable Player').length).toBeGreaterThan(0)
     expect(screen.getByText('Delta')).toBeInTheDocument()
     expect(screen.getByText('EVT-1 · W12 · GOLD · WORLD')).toBeInTheDocument()
@@ -463,7 +461,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(screen.getByText(/Latest race snapshot #3 from E2/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
     expect(screen.getByText(/1 activity items · Latest: E1 completed/)).toBeInTheDocument()
-    expect(screen.getByText('Prediction analytics are not connected yet.')).toBeInTheDocument()
+    expect(screen.getAllByText('This preview is not connected for this data shape yet.').length).toBeGreaterThan(0)
   })
 
   it('shows a sports-facing unavailable state when active-run homepage APIs fail', async () => {
@@ -480,7 +478,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     expect(await screen.findByText(/Active run summary is temporarily unavailable/)).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Featured Tournament Hero' })).toBeInTheDocument()
-    expect(screen.getByText('No current event summary available yet.')).toBeInTheDocument()
+    expect(screen.getAllByText('No data is available for this run yet.').length).toBeGreaterThan(0)
     expectNoForbiddenViewerActions()
   })
 
@@ -544,14 +542,14 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
 
     renderAppAt('/viewer/rankings')
-    expect(await screen.findByText('No ranking snapshots are available for this run yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
     expect(screen.queryByRole('link', { name: 'View latest ranking snapshot' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
 
     cleanup()
     renderAppAt('/viewer/rankings/race')
-    expect(await screen.findByText('No race snapshots are available for this run yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
     expect(screen.queryByRole('link', { name: 'View latest race snapshot' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
@@ -678,13 +676,13 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     api.listEvents.mockResolvedValue({ run_id: 'run-a', events: [] })
 
     renderAppAt('/viewer/tour/tournaments')
-    expect(await screen.findByText('No tournament metadata is available for this run yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
     expectNoForbiddenViewerActions()
 
     cleanup()
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
     renderAppAt('/viewer/tour/current-week')
-    expect(await screen.findByText('No events are available for the selected Viewer week.')).toBeInTheDocument()
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
@@ -794,14 +792,14 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
 
     renderAppAt('/viewer/history')
-    expect(await screen.findByText('No activity metadata is available for this run yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
     expect(within(screen.getByRole('main')).queryByText(/Most title leader/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
 
     cleanup()
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
     renderAppAt('/viewer/records')
-    expect(await screen.findByText('No record or statistical leaders are shown here until dedicated read models exist.')).toBeInTheDocument()
+    expect((await screen.findAllByText('This preview is not connected for this data shape yet.')).length).toBeGreaterThan(0)
     expect(screen.getByRole('main')).toHaveTextContent('Title Leaders: needs dedicated records read model.')
     expect(within(screen.getByRole('main')).queryByText('Most titles')).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
@@ -809,13 +807,13 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     cleanup()
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
     renderAppAt('/viewer/stats')
-    expect(await screen.findByText('No record or statistical leaders are shown here until dedicated read models exist.')).toBeInTheDocument()
+    expect((await screen.findAllByText('This preview is not connected for this data shape yet.')).length).toBeGreaterThan(0)
     expect(screen.getByRole('main')).toHaveTextContent('Player Stats: needs dedicated player statistics read model.')
     expect(within(screen.getByRole('main')).queryByText('GOAT')).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
-  it('shows active-run top-level Players Hub metadata without redirecting to the run-scoped page', async () => {
+  it('shows active-run top-level Players metadata without redirecting to the run-scoped page', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
     api.listRunPlayers.mockResolvedValue({
       run_id: 'run-a',
@@ -847,9 +845,9 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     renderAppAt('/viewer/players')
 
-    expect(await screen.findByRole('heading', { name: 'Players Hub' })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Players', level: 2 })).not.toBeInTheDocument()
-    const panel = await screen.findByLabelText('Players Hub active run summary')
+    expect(await screen.findByRole('heading', { name: 'Players' })).toBeInTheDocument()
+    expect(screen.queryByText('Player filters')).not.toBeInTheDocument()
+    const panel = await screen.findByLabelText('Players active run summary')
     expect(panel).toHaveTextContent('run-a')
     expect(panel).toHaveTextContent('Total player count')
     expect(panel).toHaveTextContent('8')
@@ -866,7 +864,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('shows active-run top-level Countries Hub metadata without redirecting to the run-scoped page', async () => {
+  it('shows active-run top-level Countries metadata without redirecting to the run-scoped page', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
     api.listRunNations.mockResolvedValue({
       run_id: 'run-a',
@@ -893,9 +891,9 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     renderAppAt('/viewer/countries')
 
-    expect(await screen.findByRole('heading', { name: 'Countries Hub' })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Countries', level: 2 })).not.toBeInTheDocument()
-    const panel = await screen.findByLabelText('Countries Hub active run summary')
+    expect(await screen.findByRole('heading', { name: 'Countries' })).toBeInTheDocument()
+    expect(screen.queryByText('Country filters')).not.toBeInTheDocument()
+    const panel = await screen.findByLabelText('Countries active run summary')
     expect(panel).toHaveTextContent('run-a')
     expect(panel).toHaveTextContent('Total country count')
     expect(panel).toHaveTextContent('4')
@@ -916,14 +914,14 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
 
     renderAppAt('/viewer/players')
-    expect(await screen.findByText('No player metadata is available for this run yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open active run players' })).toHaveAttribute('href', '/viewer/runs/run-a/players')
     expectNoForbiddenViewerActions()
 
     cleanup()
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
     renderAppAt('/viewer/countries')
-    expect(await screen.findByText('No country metadata is available for this run yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open active run countries' })).toHaveAttribute('href', '/viewer/runs/run-a/countries')
     expectNoForbiddenViewerActions()
   })

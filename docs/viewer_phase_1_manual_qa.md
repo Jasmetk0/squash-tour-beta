@@ -384,3 +384,13 @@ This note does not mark Viewer Phase 1 or full Viewer Phase 2 complete. It recor
 - Admin technical/debug pages remain separate and stable; Admin event/calendar routes may continue to use technical wording and raw payload displays where appropriate.
 - No fake tournaments, fake results, fake draws, fake matches, fake winners, fake players, fake odds, or fake storylines were added.
 - Rich tournament detail, draw, match, winner, and score previews remain deferred until safe Viewer read models/payload parsers exist.
+
+## Phase 2C note — Run-scoped Players/Countries polish
+
+- Run-scoped Viewer players and countries pages now use sports-facing, read-only layouts for the selected run.
+- Technical player and country payloads are hidden behind collapsed technical sections where relevant.
+- Admin technical/debug player and country pages remain separate and stable.
+- No fake player rankings, country achievements, titles, records, storylines, or country stats were added.
+- Rich player/country profiles remain deferred until safe read models exist for those views.
+
+Do not use this note to mark full Viewer Phase 2 complete; this is only the Phase 2C players/countries polish slice.

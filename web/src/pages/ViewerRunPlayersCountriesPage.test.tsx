@@ -1,0 +1,358 @@
+import { render, screen, within } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import {
+  ViewerRunCountriesPage,
+  ViewerRunCountryDetailPage,
+  ViewerRunPlayerCareerPage,
+  ViewerRunPlayersPage
+} from './ViewerRunPlayersCountriesPage'
+
+const api = vi.hoisted(() => ({
+  listRunPlayers: vi.fn(),
+  getRunPlayerDetail: vi.fn(),
+  getRunPlayerCareerHistory: vi.fn(),
+  getRunPlayerCareerPerformance: vi.fn(),
+  getRunPlayerTournamentResults: vi.fn(),
+  listRunNations: vi.fn(),
+  getRunNationDetail: vi.fn()
+}))
+
+vi.mock('../api/client', () => api)
+
+function renderViewerRoute(route: string, element: JSX.Element, path = '/viewer/runs/:runId/*'): void {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+  render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={[route]}>
+        <Routes>
+          <Route path={path} element={element} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
+  )
+}
+
+const forbiddenLabels = [
+  'Simulate',
+  'Generate',
+  'Persist',
+  'Apply',
+  'Execute',
+  'Delete',
+  'Edit',
+  'Import',
+  'Rollover',
+  'Rebuild',
+  'Override',
+  'Save changes',
+  'Commit',
+  'Regenerate',
+  'Repair',
+  'Merge',
+  'Overwrite'
+]
+
+function expectNoForbiddenViewerActions(): void {
+  forbiddenLabels.forEach((label) => {
+    expect(screen.queryByRole('button', { name: new RegExp(label, 'i') })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: new RegExp(label, 'i') })).not.toBeInTheDocument()
+  })
+}
+
+function mockPlayerList(): void {
+  api.listRunPlayers.mockResolvedValue({
+    run_id: 'viewer-run-2c',
+    total: 2,
+    limit: 200,
+    offset: 0,
+    players: [
+      {
+        player_id: 'EGY-0001',
+        name: 'Ali A',
+        country_code: 'EGY',
+        age: 20,
+        source_type: 'planner_generated',
+        override_id: null,
+        quality_band: 'elite_talent',
+        is_top_band: true,
+        origin_source_type: 'planner_generated',
+        origin_quality_band: 'elite_talent',
+        origin_override_id: null,
+        origin_season: 2027,
+        technique: 70,
+        movement: 68,
+        physical: 66,
+        mental: 65,
+        overall: 67,
+        secret_debug_marker: 'player-list-payload-should-not-render'
+      },
+      {
+        player_id: 'ENG-0001',
+        name: 'Bob B',
+        country_code: 'ENG',
+        age: 22,
+        source_type: 'rollover_carried',
+        override_id: null,
+        quality_band: null,
+        is_top_band: false,
+        origin_source_type: null,
+        origin_quality_band: null,
+        origin_override_id: null,
+        origin_season: null,
+        technique: 72,
+        movement: 71,
+        physical: 70,
+        mental: 73,
+        overall: 72
+      }
+    ]
+  })
+}
+
+function mockPlayerDetail(): void {
+  api.getRunPlayerDetail.mockResolvedValue({
+    player_id: 'EGY-0001',
+    name: 'Ali A',
+    country_code: 'EGY',
+    age: 20,
+    play_style: 'attacking',
+    archetype: 'shotmaker',
+    technique: 70,
+    movement: 68,
+    physical: 66,
+    mental: 65,
+    consistency: 64,
+    clutch: 63,
+    recovery: 62,
+    overall: 67,
+    hidden_traits: {
+      potential_ceiling: 90,
+      growth_curve: 'late',
+      professionalism: 0.8,
+      ambition: 0.7,
+      travel_tolerance: 0.6,
+      schedule_aggression: 0.7,
+      injury_proneness: 0.2,
+      resilience: 0.8
+    },
+    source_type: 'planner_generated',
+    quality_band: 'elite_talent',
+    is_top_band: true,
+    override_id: null,
+    origin_source_type: 'planner_generated',
+    origin_quality_band: 'elite_talent',
+    origin_override_id: null,
+    origin_season: 2027,
+    talent_seed_value: 101,
+    talent_sequence: 1,
+    secret_debug_marker: 'player-detail-hidden-payload'
+  })
+  api.getRunPlayerCareerHistory.mockResolvedValue({
+    requested_run_id: 'viewer-run-2c',
+    player_id: 'EGY-0001',
+    player_name: 'Ali A',
+    country_code: 'EGY',
+    entries: [
+      {
+        run_id: 'viewer-run-2c',
+        season: 2027,
+        age: 20,
+        overall: 67,
+        technique: 70,
+        movement: 68,
+        physical: 66,
+        mental: 65,
+        source_type: 'planner_generated',
+        quality_band: 'elite_talent',
+        is_top_band: true,
+        origin_source_type: 'planner_generated',
+        origin_quality_band: 'elite_talent',
+        origin_override_id: null,
+        origin_season: 2027
+      }
+    ]
+  })
+  api.getRunPlayerCareerPerformance.mockResolvedValue({
+    requested_run_id: 'viewer-run-2c',
+    player_id: 'EGY-0001',
+    player_name: 'Ali A',
+    country_code: 'EGY',
+    entries: []
+  })
+  api.getRunPlayerTournamentResults.mockResolvedValue({
+    requested_run_id: 'viewer-run-2c',
+    player_id: 'EGY-0001',
+    player_name: 'Ali A',
+    country_code: 'EGY',
+    entries: []
+  })
+}
+
+function mockCountries(): void {
+  api.listRunNations.mockResolvedValue({
+    run_id: 'viewer-run-2c',
+    total: 2,
+    limit: 300,
+    offset: 0,
+    nations: [
+      {
+        country_code: 'EGY',
+        country_name: 'Egypt',
+        total_players: 5,
+        average_overall: 78.4,
+        average_age: 25.2,
+        top_band_count: 2,
+        manual_override_count: 1,
+        planner_generated_count: 3,
+        rollover_carried_count: 1,
+        top_player_id: 'EGY-0001',
+        top_player_name: 'Ali A',
+        top_player_overall: 91,
+        secret_debug_marker: 'country-list-payload-should-not-render'
+      }
+    ]
+  })
+}
+
+function mockCountryDetail(): void {
+  api.getRunNationDetail.mockResolvedValue({
+    run_id: 'viewer-run-2c',
+    country_code: 'EGY',
+    country_name: 'Egypt',
+    total_players: 5,
+    average_overall: 78.4,
+    average_age: 25.2,
+    top_band_count: 2,
+    manual_override_count: 1,
+    planner_generated_count: 3,
+    rollover_carried_count: 1,
+    average_visible_stats: { technique: 80.1, movement: 79.1, physical: 76.1, mental: 78.1 },
+    source_mix: { rollover_carried: 1, planner_generated: 3, manual_override: 1 },
+    band_distribution: [{ band: 'top', count: 2 }],
+    origin_band_distribution: [{ band: 'elite_talent', count: 2 }],
+    top_players: [
+      {
+        player_id: 'EGY-0001',
+        name: 'Ali A',
+        age: 24,
+        overall: 91,
+        source_type: 'planner_generated',
+        quality_band: 'top',
+        is_top_band: true
+      }
+    ],
+    secret_debug_marker: 'country-detail-hidden-payload'
+  })
+}
+
+describe('ViewerRunPlayersPage', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    mockPlayerList()
+  })
+
+  it('renders sports-facing player metadata without primary raw JSON or duplicate run nav', async () => {
+    renderViewerRoute('/viewer/runs/viewer-run-2c/players', <ViewerRunPlayersPage />, '/viewer/runs/:runId/players')
+
+    expect(await screen.findByRole('heading', { name: 'Players' })).toBeInTheDocument()
+    expect(screen.getAllByText('viewer-run-2c').length).toBeGreaterThan(0)
+    expect(await screen.findByText('Ali A')).toBeInTheDocument()
+    expect(screen.getByText('EGY-0001')).toBeInTheDocument()
+    expect(screen.getByText('EGY')).toBeInTheDocument()
+    expect(screen.getByText('elite_talent')).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: /Open player career\/profile/i })[0]).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2c/players/EGY-0001/career'
+    )
+    expect(screen.queryByText(/player-list-payload-should-not-render/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+    expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
+  })
+})
+
+describe('ViewerRunPlayerCareerPage', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    mockPlayerDetail()
+  })
+
+  it('renders sports-facing player profile and keeps technical data collapsed', async () => {
+    renderViewerRoute('/viewer/runs/viewer-run-2c/players/EGY-0001/career', <ViewerRunPlayerCareerPage />, '/viewer/runs/:runId/players/:playerId/career')
+
+    expect(await screen.findByRole('heading', { name: 'Player Profile' })).toBeInTheDocument()
+    expect(screen.getAllByText('viewer-run-2c').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('EGY-0001').length).toBeGreaterThan(0)
+    expect(await screen.findByText('Ali A')).toBeInTheDocument()
+    expect(screen.getAllByText('EGY').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('planner_generated').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('elite_talent').length).toBeGreaterThan(0)
+    expect(screen.getByRole('link', { name: /Back to players/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/players')
+    expect(screen.getByRole('link', { name: /Country page/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/countries/EGY')
+    const technicalSection = screen.getByText('Show technical player data').closest('details')
+    expect(technicalSection).not.toHaveAttribute('open')
+    expect(screen.getByText(/player-detail-hidden-payload/i)).not.toBeVisible()
+    await userEvent.click(screen.getByText('Show technical player data'))
+    expect(within(technicalSection as HTMLElement).getByText(/player-detail-hidden-payload/i)).toBeVisible()
+    expectNoForbiddenViewerActions()
+  })
+})
+
+describe('ViewerRunCountriesPage', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    mockCountries()
+  })
+
+  it('renders sports-facing country metadata without fake achievements or forbidden actions', async () => {
+    renderViewerRoute('/viewer/runs/viewer-run-2c/countries', <ViewerRunCountriesPage />, '/viewer/runs/:runId/countries')
+
+    expect(await screen.findByRole('heading', { name: 'Countries' })).toBeInTheDocument()
+    expect(screen.getAllByText('viewer-run-2c').length).toBeGreaterThan(0)
+    expect(await screen.findByText('Egypt')).toBeInTheDocument()
+    expect(screen.getByText('EGY')).toBeInTheDocument()
+    expect(screen.getByText('5')).toBeInTheDocument()
+    expect(screen.getByText('78.40')).toBeInTheDocument()
+    expect(screen.getByText(/carryover 1 · intake 3 · manual 1/i)).toBeInTheDocument()
+    expect(screen.getByText(/Ali A \(EGY-0001\)/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Open country profile/i })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2c/countries/EGY'
+    )
+    expect(screen.queryByText(/country-list-payload-should-not-render/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Team Championship/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Title/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Top 100/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+    expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
+  })
+})
+
+describe('ViewerRunCountryDetailPage', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    mockCountryDetail()
+  })
+
+  it('renders sports-facing country profile and keeps technical data collapsed', async () => {
+    renderViewerRoute('/viewer/runs/viewer-run-2c/countries/EGY', <ViewerRunCountryDetailPage />, '/viewer/runs/:runId/countries/:countryCode')
+
+    expect(await screen.findByRole('heading', { name: 'Country Profile' })).toBeInTheDocument()
+    expect(screen.getAllByText('viewer-run-2c').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('EGY').length).toBeGreaterThan(0)
+    expect(await screen.findByText('Egypt')).toBeInTheDocument()
+    expect(screen.getByText('Ali A (EGY-0001)')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Back to countries/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/countries')
+    expect(screen.getByRole('link', { name: /Player list/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/players?country=EGY')
+    const technicalSection = screen.getByText('Show technical country data').closest('details')
+    expect(technicalSection).not.toHaveAttribute('open')
+    expect(screen.getByText(/country-detail-hidden-payload/i)).not.toBeVisible()
+    await userEvent.click(screen.getByText('Show technical country data'))
+    expect(within(technicalSection as HTMLElement).getByText(/country-detail-hidden-payload/i)).toBeVisible()
+    expectNoForbiddenViewerActions()
+  })
+})

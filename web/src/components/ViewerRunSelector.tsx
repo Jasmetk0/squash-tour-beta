@@ -50,23 +50,27 @@ function useViewerRunSelection() {
     setSelectedRunId((preferredRun ?? runs[0]).run_id)
   }, [activeRunId, runs, selectedRunId])
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
-    event.preventDefault()
-    const normalizedRunId = selectedRunId.trim()
+  function applyRunSelection(runId: string): void {
+    const normalizedRunId = runId.trim()
     if (!normalizedRunId) return
-    writeViewerActiveRunId(normalizedRunId)
     window.localStorage.setItem(LAST_RUN_ID_STORAGE_KEY, normalizedRunId)
+    writeViewerActiveRunId(normalizedRunId)
     setActiveRunId(normalizedRunId)
   }
 
-  return { activeRunId, selectedRunId, setSelectedRunId, runsQuery, runs, handleSubmit }
+  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault()
+    applyRunSelection(selectedRunId)
+  }
+
+  return { activeRunId, selectedRunId, setSelectedRunId, applyRunSelection, runsQuery, runs, handleSubmit }
 }
 
 export function ViewerActiveRunCompact(): JSX.Element {
-  const { activeRunId, selectedRunId, setSelectedRunId, runsQuery, runs, handleSubmit } = useViewerRunSelection()
+  const { activeRunId, selectedRunId, setSelectedRunId, applyRunSelection, runsQuery, runs } = useViewerRunSelection()
 
   return (
-    <form className="viewer-active-run-compact" aria-label="Viewer topbar active run" onSubmit={handleSubmit}>
+    <form className="viewer-active-run-compact" aria-label="Viewer topbar active run">
       <span className="viewer-active-run-compact__status">
         Active run: <strong>{activeRunId ?? 'None'}</strong>
       </span>
@@ -75,7 +79,10 @@ export function ViewerActiveRunCompact(): JSX.Element {
         <select
           aria-label="Viewer active run"
           value={selectedRunId}
-          onChange={(event) => setSelectedRunId(event.target.value)}
+          onChange={(event) => {
+            setSelectedRunId(event.target.value)
+            applyRunSelection(event.target.value)
+          }}
           disabled={runsQuery.isLoading || runs.length === 0}
         >
           {runs.length === 0 ? <option value="">No runs available</option> : null}
@@ -86,9 +93,6 @@ export function ViewerActiveRunCompact(): JSX.Element {
           ))}
         </select>
       </label>
-      <button type="submit" disabled={!selectedRunId.trim()}>
-        Set run
-      </button>
       {runsQuery.isError ? <span className="error">Runs unavailable</span> : null}
     </form>
   )

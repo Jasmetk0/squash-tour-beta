@@ -4,7 +4,8 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { ViewerRunSelector } from './ViewerRunSelector'
+import { VIEWER_ACTIVE_RUN_CHANGED_EVENT } from '../viewer/activeRun'
+import { ViewerActiveRunCompact, ViewerRunSelector } from './ViewerRunSelector'
 
 const api = vi.hoisted(() => ({
   listRuns: vi.fn()
@@ -12,13 +13,11 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../api/client', () => api)
 
-function renderSelector(): void {
+function renderSelector(component: JSX.Element = <ViewerRunSelector />): void {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
-        <ViewerRunSelector />
-      </MemoryRouter>
+      <MemoryRouter>{component}</MemoryRouter>
     </QueryClientProvider>
   )
 }
@@ -63,6 +62,27 @@ describe('ViewerRunSelector', () => {
     expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run-b')
     expect(screen.getByText('run-b')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Open Admin Run Detail' })).not.toBeInTheDocument()
+  })
+
+  it('auto-applies the compact topbar selector without rendering a compact Set run button', async () => {
+    const user = userEvent.setup()
+    const activeRunChanged = vi.fn()
+    window.addEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, activeRunChanged)
+    renderSelector(<ViewerActiveRunCompact />)
+
+    const control = screen.getByRole('form', { name: 'Viewer topbar active run' })
+    expect(control).toHaveTextContent('Active run: None')
+    expect(screen.getByLabelText('Viewer active run')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Set run' })).not.toBeInTheDocument()
+
+    await screen.findByRole('option', { name: /run-b/i })
+    await user.selectOptions(screen.getByLabelText('Viewer active run'), 'run-b')
+
+    expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBe('run-b')
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run-b')
+    expect(activeRunChanged).toHaveBeenCalledTimes(1)
+    expect(control).toHaveTextContent('Active run: run-b')
+    window.removeEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, activeRunChanged)
   })
 
   it('shows the no-runs empty state from the read-only runs API', async () => {

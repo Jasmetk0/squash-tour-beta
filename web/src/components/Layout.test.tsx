@@ -86,12 +86,12 @@ describe('Layout mode navigation', () => {
     const control = within(nav).getByRole('form', { name: 'Viewer topbar active run' })
     expect(control).toHaveTextContent('Active run: None')
     expect(within(control).getByLabelText('Viewer active run')).toBeInTheDocument()
+    expect(within(control).queryByRole('button', { name: 'Set run' })).not.toBeInTheDocument()
     expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
     expect(within(nav).queryByRole('link', { name: 'Admin / Engine' })).not.toBeInTheDocument()
 
     await within(control).findByRole('option', { name: /run-b · S2031 · seed 11/ })
     await user.selectOptions(within(control).getByLabelText('Viewer active run'), 'run-b')
-    await user.click(within(control).getByRole('button', { name: 'Set run' }))
 
     expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBe('run-b')
     expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run-b')

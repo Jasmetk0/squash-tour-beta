@@ -424,3 +424,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Active run selection remains local Viewer context/localStorage only.
 - The homepage active run picker remains available.
 - No backend run mutation was added.
+
+## Viewer Phase 2G Repair — compact active-run auto-apply
+
+- The compact topbar active-run selector now auto-applies when a run is selected.
+- The homepage active-run picker remains explicit and keeps its `Set active run` button.
+- No backend run mutation was added.

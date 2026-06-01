@@ -158,7 +158,7 @@ describe('ViewerRunTournamentDetailPage', () => {
     expect(screen.getAllByText('Platinum').length).toBeGreaterThan(0)
     expect(screen.getAllByText('World Tour').length).toBeGreaterThan(0)
     expect(screen.getByText('WT-PLAT')).toBeInTheDocument()
-    expect(screen.getByText('Tournament detail preview is not connected for this payload shape yet.')).toBeInTheDocument()
+    expect(screen.getByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Back to tournaments/i })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-1/tournaments'

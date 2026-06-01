@@ -268,7 +268,7 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
         {snapshotsQuery.isLoading && <p className="status">Loading publications...</p>}
         {snapshotsQuery.error && <p className="error">Failed to load publications: {formatApiError(snapshotsQuery.error)}</p>}
         {!snapshotsQuery.isLoading && !snapshotsQuery.error && snapshots.length === 0 && (
-          <EmptyState message="No ranking or Race publications are available for this run yet." />
+          <EmptyState message="No data is available for this run yet." />
         )}
         {!snapshotsQuery.isLoading && !snapshotsQuery.error && snapshots.length > 0 && filteredSnapshots.length === 0 && (
           <EmptyState message="No publications match the current filters." />
@@ -493,16 +493,16 @@ export function ViewerRunSnapshotDetailPage({ mode }: { mode: ViewerSnapshotMode
 
           {snapshot ? (
             <SectionCard title="Standings preview">
-              <EmptyState message="Detailed standings preview is not connected for this payload shape yet." />
+              <EmptyState message="This preview is not connected for this data shape yet." />
             </SectionCard>
           ) : null}
 
           {snapshot ? (
-            <SectionCard title="Technical read-only data">
+            <SectionCard title="Read-only data">
               <details>
-                <summary>Show technical payload</summary>
+                <summary>Show technical snapshot data</summary>
                 <p className="status">Read-only technical snapshot data for audit/debugging. Viewer standings remain non-mutating.</p>
-                <JsonPayloadBlock title="Technical snapshot record" emptyText="No technical payload is available for this publication." payload={snapshot.payload} />
+                <JsonPayloadBlock title="Technical snapshot record" emptyText="No technical data is available for this publication." payload={snapshot.payload} />
               </details>
             </SectionCard>
           ) : null}

@@ -85,7 +85,7 @@ export function ViewerRunTournamentsPage(): JSX.Element {
         {eventsQuery.error && <p className="error">Failed to load tournaments: {formatApiError(eventsQuery.error)}</p>}
         {runQuery.error && <p className="error">Failed to load ordered calendar context: {formatApiError(runQuery.error)}</p>}
         {!eventsQuery.isLoading && !eventsQuery.error && events.length === 0 && (
-          <EmptyState message="No tournament/event history is available for this run yet." />
+          <EmptyState message="No data is available for this run yet." />
         )}
         {events.length > 0 && (
           <ul className="item-list" aria-label="Tournament event list">
@@ -237,12 +237,12 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
 
           {event ? (
             <SectionCard title="Tournament result preview">
-              <EmptyState message="Tournament detail preview is not connected for this payload shape yet." />
+              <EmptyState message="This preview is not connected for this data shape yet." />
             </SectionCard>
           ) : null}
 
           {event ? (
-            <SectionCard title="Technical read-only data">
+            <SectionCard title="Read-only data">
               <details>
                 <summary>Show technical event data</summary>
                 <p className="status">Read-only technical event/result data for audit/debugging. Viewer tournament pages do not mutate run state.</p>

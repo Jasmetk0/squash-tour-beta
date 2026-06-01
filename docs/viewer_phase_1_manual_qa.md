@@ -430,3 +430,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - The compact topbar active-run selector now auto-applies when a run is selected.
 - The homepage active-run picker remains explicit and keeps its `Set active run` button.
 - No backend run mutation was added.
+
+## Phase 2H — Viewer copy and UI consistency cleanup
+
+- Viewer copy and empty states were normalized.
+- No data logic or backend behavior changed.
+- Technical data remains collapsed.
+- No fake data was added.

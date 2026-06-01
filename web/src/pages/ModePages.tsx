@@ -11,6 +11,7 @@ import { getCountriesMetadata, getFinalsSummary, getRun, getRunActivity, getRunS
 import { LinkCardGrid } from '../components/LinkCardGrid'
 import { ViewerActiveRunCard, ViewerActiveRunLinks, ViewerDeferredFeatureList, ViewerEmptyState, ViewerLandingGrid, ViewerMetadataList, ViewerSampleList, ViewerSectionCard, ViewerStatusMessage } from '../components/viewer/ViewerLandingComponents'
 import { ViewerJumpToWeekButton } from '../components/ViewerContextControls'
+import { ViewerRunSelector } from '../components/ViewerRunSelector'
 import { useViewerContext } from '../viewer/ViewerContext'
 import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewer/activeRun'
 import type { EventRecord, FinalsSummaryResponse, RankingSnapshot, RaceSnapshot, RunActivityItem, RunNationSummaryItem, RunPlayerListItem, SeasonStateResponse } from '../api/types'
@@ -405,6 +406,7 @@ export function ViewerHomePage(): JSX.Element {
           A premium, public-style squash tour homepage for the selected Viewer context. These cards are read-only and show small real summaries only when existing safe run APIs provide them.
         </p>
       </div>
+      <ViewerRunSelector compact />
       <section className="viewer-active-run-panel" aria-label="Active Viewer run status">
         {activeRunId ? (
           <>

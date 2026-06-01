@@ -1,13 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { FormEvent, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { FormEvent, useEffect, useState } from 'react'
 
 import { listRuns } from '../api/client'
-import { formatApiError } from '../utils/apiErrors'
 import {
   LAST_RUN_ID_STORAGE_KEY,
   VIEWER_ACTIVE_RUN_STORAGE_KEY,
-  clearViewerActiveRunId,
+  VIEWER_ACTIVE_RUN_CHANGED_EVENT,
   readLastRunId,
   readViewerActiveRunId,
   writeViewerActiveRunId
@@ -19,8 +17,7 @@ type ViewerRunSelectorProps = {
 
 export function ViewerRunSelector({ compact = false }: ViewerRunSelectorProps): JSX.Element {
   const [activeRunId, setActiveRunId] = useState(() => readViewerActiveRunId())
-  const [manualRunId, setManualRunId] = useState(() => readViewerActiveRunId() ?? readLastRunId() ?? '')
-  const [selectedRunId, setSelectedRunId] = useState(() => readViewerActiveRunId() ?? readLastRunId() ?? '')
+  const [selectedRunId, setSelectedRunId] = useState(() => readViewerActiveRunId() ?? '')
 
   const runsQuery = useQuery({
     queryKey: ['viewer-run-selector-runs'],
@@ -29,69 +26,60 @@ export function ViewerRunSelector({ compact = false }: ViewerRunSelectorProps): 
   })
 
   const runs = runsQuery.data?.runs ?? []
-  const lastRunId = readLastRunId()
-  const suggestedRunId = activeRunId ? null : lastRunId
-  const effectiveInputRunId = manualRunId.trim() || selectedRunId.trim()
+
+  useEffect(() => {
+    function handleActiveRunChange(): void {
+      const nextActiveRunId = readViewerActiveRunId()
+      setActiveRunId(nextActiveRunId)
+      if (nextActiveRunId) setSelectedRunId(nextActiveRunId)
+    }
+
+    window.addEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, handleActiveRunChange)
+    window.addEventListener('storage', handleActiveRunChange)
+    return () => {
+      window.removeEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, handleActiveRunChange)
+      window.removeEventListener('storage', handleActiveRunChange)
+    }
+  }, [])
 
   useEffect(() => {
     if (runs.length === 0) return
     if (selectedRunId && runs.some((run) => run.run_id === selectedRunId)) return
-    const preferredRunId = activeRunId ?? lastRunId
+    const preferredRunId = activeRunId ?? readLastRunId()
     const preferredRun = runs.find((run) => run.run_id === preferredRunId)
     setSelectedRunId((preferredRun ?? runs[0]).run_id)
-  }, [activeRunId, lastRunId, runs, selectedRunId])
-
-  const activeRunLinks = useMemo(() => {
-    if (!activeRunId) return []
-    return [
-      { label: 'Rankings', to: `/viewer/runs/${activeRunId}/rankings` },
-      { label: 'Tournaments', to: `/viewer/runs/${activeRunId}/tournaments` },
-      { label: 'Players', to: `/viewer/runs/${activeRunId}/players` },
-      { label: 'Countries', to: `/viewer/runs/${activeRunId}/countries` },
-      { label: 'History', to: `/viewer/runs/${activeRunId}/history` }
-    ]
-  }, [activeRunId])
+  }, [activeRunId, runs, selectedRunId])
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
-    if (!effectiveInputRunId) return
-    writeViewerActiveRunId(effectiveInputRunId)
-    window.localStorage.setItem(LAST_RUN_ID_STORAGE_KEY, effectiveInputRunId)
-    setActiveRunId(effectiveInputRunId)
-    setManualRunId(effectiveInputRunId)
-    setSelectedRunId(effectiveInputRunId)
-  }
-
-  function handleClear(): void {
-    clearViewerActiveRunId()
-    setActiveRunId(null)
+    const normalizedRunId = selectedRunId.trim()
+    if (!normalizedRunId) return
+    writeViewerActiveRunId(normalizedRunId)
+    window.localStorage.setItem(LAST_RUN_ID_STORAGE_KEY, normalizedRunId)
+    setActiveRunId(normalizedRunId)
   }
 
   return (
-    <section className={compact ? 'viewer-run-selector viewer-run-selector--compact' : 'panel nested-panel viewer-run-selector'}>
+    <section className={compact ? 'viewer-run-selector viewer-run-selector--compact' : 'panel nested-panel viewer-run-selector'} aria-label="Active run picker">
       <div className="page-intro">
-        <h3>Viewer active run</h3>
-        <p className="subtitle">Choose the generated world/run that Viewer / MSA Website Mode should browse.</p>
+        <span className="eyebrow">Active run</span>
+        <h3>Active Run</h3>
+        <p className="subtitle">Select which existing run Viewer / MSA Website Mode should browse. This only changes local Viewer context.</p>
       </div>
 
       <p className="status">
-        Current selected run: <strong>{activeRunId ?? 'No Viewer run selected'}</strong>
+        Current active run id: <strong>{activeRunId ?? 'No active run selected'}</strong>
       </p>
-      {suggestedRunId ? <p className="status">Suggested from last Admin run: {suggestedRunId}</p> : null}
       <p className="metadata-note">
-        Viewer selection is stored in <code>{VIEWER_ACTIVE_RUN_STORAGE_KEY}</code>. Admin resume flows can still use{' '}
-        <code>{LAST_RUN_ID_STORAGE_KEY}</code>.
+        Viewer selection is stored locally in <code>{VIEWER_ACTIVE_RUN_STORAGE_KEY}</code>; no backend run state is changed.
       </p>
 
       <form className="stacked-form" onSubmit={handleSubmit}>
         <label>
-          Select existing run
+          Available runs
           <select
             value={selectedRunId}
-            onChange={(event) => {
-              setSelectedRunId(event.target.value)
-              setManualRunId(event.target.value)
-            }}
+            onChange={(event) => setSelectedRunId(event.target.value)}
             disabled={runsQuery.isLoading || runs.length === 0}
           >
             {runs.length === 0 ? <option value="">No runs available</option> : null}
@@ -102,36 +90,16 @@ export function ViewerRunSelector({ compact = false }: ViewerRunSelectorProps): 
             ))}
           </select>
         </label>
-        <label>
-          Or enter run ID manually
-          <input value={manualRunId} onChange={(event) => setManualRunId(event.target.value)} placeholder="run-id" />
-        </label>
         <div className="actions">
-          <button type="submit" disabled={!effectiveInputRunId}>
-            Set as Viewer Run
+          <button type="submit" disabled={!selectedRunId.trim()}>
+            Set active run
           </button>
-          <button type="button" onClick={handleClear} disabled={!activeRunId}>
-            Clear Viewer Run
-          </button>
-          {activeRunId ? <Link to={`/admin/runs/${activeRunId}`}>Open Admin Run Detail</Link> : <Link to="/admin/runs">Open Admin Runs</Link>}
         </div>
       </form>
 
       {runsQuery.isLoading ? <p className="status">Loading available runs…</p> : null}
-      {runsQuery.isError ? <p className="error">Could not load runs: {formatApiError(runsQuery.error)}</p> : null}
-      {!runsQuery.isLoading && !runsQuery.isError && runs.length === 0 ? (
-        <p className="status">No runs were returned by the API. You can still enter a run ID manually.</p>
-      ) : null}
-
-      {activeRunLinks.length > 0 ? (
-        <div className="actions" aria-label="Viewer active run quick links">
-          {activeRunLinks.map((link) => (
-            <Link key={link.to} to={link.to}>
-              {link.label}
-            </Link>
-          ))}
-        </div>
-      ) : null}
+      {runsQuery.isError ? <p className="error">Run list is unavailable.</p> : null}
+      {!runsQuery.isLoading && !runsQuery.isError && runs.length === 0 ? <p className="status">No runs are available yet.</p> : null}
     </section>
   )
 }

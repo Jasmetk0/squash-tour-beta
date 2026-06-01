@@ -66,6 +66,7 @@ import { SeasonCalendarPage } from './pages/SeasonCalendarPage'
 import { SeasonChainPage } from './pages/SeasonChainPage'
 import { SnapshotDetailPage } from './pages/SnapshotDetailPage'
 import { SnapshotsPage } from './pages/SnapshotsPage'
+import { ViewerRunSnapshotDetailPage, ViewerRunSnapshotListPage } from './pages/ViewerRunSnapshotsPage'
 import { TalentPreviewPage } from './pages/TalentPreviewPage'
 import { TalentIntakePage } from './pages/TalentIntakePage'
 import { ManualPlayerOverridesPage } from './pages/ManualPlayerOverridesPage'
@@ -202,10 +203,10 @@ export default function App(): JSX.Element {
         <Route path="viewer/predictions/futures" element={<ViewerShellPage title="Futures Markets" />} />
         <Route path="viewer/search" element={<ViewerSearchPage />} />
         <Route path="viewer/history" element={<ViewerHistoryPage />} />
-        <Route path="viewer/runs/:runId/rankings" element={<SnapshotsPage mode="ranking" />} />
-        <Route path="viewer/runs/:runId/rankings/:snapshotSequence" element={<SnapshotDetailPage mode="ranking" />} />
-        <Route path="viewer/runs/:runId/race" element={<SnapshotsPage mode="race" />} />
-        <Route path="viewer/runs/:runId/race/:snapshotSequence" element={<SnapshotDetailPage mode="race" />} />
+        <Route path="viewer/runs/:runId/rankings" element={<ViewerRunSnapshotListPage mode="ranking" />} />
+        <Route path="viewer/runs/:runId/rankings/:snapshotSequence" element={<ViewerRunSnapshotDetailPage mode="ranking" />} />
+        <Route path="viewer/runs/:runId/race" element={<ViewerRunSnapshotListPage mode="race" />} />
+        <Route path="viewer/runs/:runId/race/:snapshotSequence" element={<ViewerRunSnapshotDetailPage mode="race" />} />
         <Route path="viewer/runs/:runId/tournaments" element={<EventsPage />} />
         <Route path="viewer/runs/:runId/tournaments/:eventId" element={<EventDetailPage />} />
         <Route path="viewer/runs/:runId/calendar" element={<SeasonCalendarPage />} />

@@ -360,3 +360,15 @@ This repair does not mark Viewer Phase 1 complete. It records the intended QA be
 - Active nav styling is neutral and subtle; color/accent styling is reserved for hover/focus states, not permanent filled active pills.
 - Dropdowns should close after selecting a dropdown item or after navigation/route changes.
 - Mobile and genuinely narrow widths may wrap the topbar, search, and Season/Week selector for usability.
+
+## Viewer Phase 2A note — run-scoped rankings/race publication polish
+
+This note does not mark Viewer Phase 1 or full Viewer Phase 2 complete. It records the intended QA behavior for the Phase 2A run-scoped rankings/race polish:
+
+- Run-scoped Viewer ranking and Race pages now use sports-facing, read-only publication layouts for `/viewer/runs/:runId/rankings`, `/viewer/runs/:runId/rankings/:snapshotSequence`, `/viewer/runs/:runId/race`, and `/viewer/runs/:runId/race/:snapshotSequence`.
+- Ranking/Race list pages should show active run context, publication counts, selected publication metadata, and Viewer detail links without exposing raw JSON as primary page content.
+- Ranking/Race detail pages should show sports-facing sequence, kind, source event, week, planned category/tour/template, plan position, and safe Viewer links before any technical data.
+- Raw payloads are hidden behind collapsed `Show technical payload` sections on detail pages only. The section is read-only and exists for technical inspection without making debug payloads the primary Viewer UI.
+- Admin snapshot/debug pages remain separate and stable; Admin routes may continue to use technical wording and raw payload displays where appropriate.
+- No fake ranking rows, fake Race rows, fake players, or new ranking engine behavior were added.
+- Full ranking/Race table previews remain deferred unless the payload shape is already safely parsed by future Viewer read-model work.

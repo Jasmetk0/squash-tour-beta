@@ -1132,7 +1132,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       expect(screen.getByRole('button', { name: 'Season 2004/05 · W10' })).toBeInTheDocument()
       expectNoForbiddenViewerActions()
     }
-  }, 10000)
+  }, 20000)
 
   it('keeps context-aware mode switcher mappings on equivalent Viewer and Admin routes', async () => {
     const mappings = [

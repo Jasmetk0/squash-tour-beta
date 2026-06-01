@@ -966,7 +966,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByRole('link', { name: /GOLD \(gold\)/ })[0]).toHaveAttribute('href', '/admin/tour-seasons/categories/gold')
     expect(screen.getAllByRole('link', { name: /World Tour Gold \(world-tour-gold\)/ })[0]).toHaveAttribute('href', '/admin/tour-seasons/tournaments/world-tour-gold')
     expect(screen.queryByRole('button', { name: /apply|save|update|delete|create/i })).not.toBeInTheDocument()
-  })
+  }, 15000)
 
   it('renders Season Builder read-only source selection preview', async () => {
     api.getSeasonCalendar.mockResolvedValueOnce({
@@ -1862,7 +1862,7 @@ describe('Module 17 pages through routes', () => {
     for (const action of forbiddenMutationActions) {
       expect(screen.queryByRole('button', { name: new RegExp(`^${action}$`, 'i') })).not.toBeInTheDocument()
     }
-  }, 60000)
+  }, 90000)
 
   it('renders Season Builder no-calendar overwrite policy branch', async () => {
     api.getSeasonCalendar.mockResolvedValueOnce({

@@ -1025,6 +1025,79 @@ textarea:focus-visible {
   margin: 0.2rem 0 0.5rem;
 }
 
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viewer-active-run-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 0 1 300px;
+  min-width: 235px;
+  margin-left: 0.25rem;
+  padding-left: 0.25rem;
+  border-left: 1px solid #cbd5e1;
+}
+
+.viewer-active-run-compact__status {
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.viewer-active-run-compact__field {
+  min-width: 0;
+  flex: 1 1 120px;
+}
+
+.viewer-active-run-compact select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  font-weight: 700;
+  padding: 0.38rem 0.55rem;
+}
+
+.viewer-active-run-compact button {
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  font-weight: 700;
+  line-height: 1.1;
+  padding: 0.42rem 0.62rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.viewer-active-run-compact button:hover:not(:disabled) {
+  border-color: #60a5fa;
+  color: #1d4ed8;
+  box-shadow: 0 8px 18px rgb(37 99 235 / 14%);
+  transform: translateY(-1px);
+}
+
+.viewer-active-run-compact select:focus-visible,
+.viewer-active-run-compact button:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+
 .viewer-context-selector {
   position: relative;
   margin-left: auto;
@@ -1102,6 +1175,15 @@ textarea:focus-visible {
   .viewer-topbar {
     border-radius: 20px;
     align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .viewer-active-run-compact {
+    width: 100%;
+    min-width: 0;
+    margin-left: 0;
+    padding-left: 0;
+    border-left: 0;
     flex-wrap: wrap;
   }
 

@@ -417,3 +417,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Selection is local Viewer context/localStorage only.
 - No backend run mutation was added.
 - Future Run Library / World Saves remains deferred.
+
+## Phase 2G — Viewer topbar active run indicator
+
+- The Viewer topbar now has a compact active run control/indicator near the Season/Week selector.
+- Active run selection remains local Viewer context/localStorage only.
+- The homepage active run picker remains available.
+- No backend run mutation was added.

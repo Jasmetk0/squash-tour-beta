@@ -3,7 +3,7 @@ import type { FormEvent, MouseEvent } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { ViewerSeasonWeekSelector } from './ViewerContextControls'
-import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewer/activeRun'
+import { ViewerActiveRunCompact } from './ViewerRunSelector'
 import { ViewerContextProvider } from '../viewer/ViewerContext'
 
 type NavItem = {
@@ -278,6 +278,7 @@ function ViewerTopbar(): JSX.Element {
         )
       })}
       <ViewerTopbarSearch />
+      <ViewerActiveRunCompact />
       <ViewerSeasonWeekSelector />
     </nav>
   )
@@ -289,22 +290,8 @@ export function Layout(): JSX.Element {
   const mode = readMode(location.pathname)
   const runId = readRunId(location.pathname, paramRunId)
   const modeLabel = mode === 'admin' ? 'Admin / Engine Mode' : mode === 'viewer' ? 'Viewer / MSA Website Mode' : 'Mode selection'
-  const [viewerActiveRunId, setViewerActiveRunId] = useState(() => readViewerActiveRunId())
   const runNav = runId && mode === 'admin' ? runNavFor(runId) : []
   const { viewerTarget, adminTarget } = getModeSwitcherTarget(location.pathname)
-
-  useEffect(() => {
-    function handleViewerActiveRunChange(): void {
-      setViewerActiveRunId(readViewerActiveRunId())
-    }
-
-    window.addEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, handleViewerActiveRunChange)
-    window.addEventListener('storage', handleViewerActiveRunChange)
-    return () => {
-      window.removeEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, handleViewerActiveRunChange)
-      window.removeEventListener('storage', handleViewerActiveRunChange)
-    }
-  }, [])
 
   return (
     <ViewerContextProvider>
@@ -341,15 +328,6 @@ export function Layout(): JSX.Element {
               </NavLink>
             ))}
           </nav>
-        ) : null}
-        {mode === 'viewer' ? (
-          viewerActiveRunId ? (
-            <section className="viewer-active-run-bar" aria-label="Viewer active run">
-              <p className="status">
-                Viewing run: <strong>{viewerActiveRunId}</strong>
-              </p>
-            </section>
-          ) : null
         ) : null}
         {runId ? <p className="status">Current run context: {runId}</p> : null}
         <main>

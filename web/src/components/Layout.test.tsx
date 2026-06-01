@@ -1,9 +1,15 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getModeSwitcherTarget, isExactViewerActivePath, Layout, viewerDropdowns } from './Layout'
 import { renderWithRoute } from '../test/testUtils'
+
+const api = vi.hoisted(() => ({
+  listRuns: vi.fn()
+}))
+
+vi.mock('../api/client', () => api)
 
 const dropdownExpectations: Record<string, string[]> = {
   Rankings: ['MSA Rankings', 'Race to Finals', 'Next Gen Race', 'Elo Ranking', 'Power Rating', 'Form Ranking', 'Country Ranking', 'No.1 History'],
@@ -18,6 +24,29 @@ const dropdownExpectations: Record<string, string[]> = {
 describe('Layout mode navigation', () => {
   beforeEach(() => {
     localStorage.clear()
+    vi.clearAllMocks()
+    api.listRuns.mockResolvedValue({
+      runs: [
+        {
+          run_id: 'run-a',
+          season: 2030,
+          seed: 9,
+          progress: { next_event_index: 0, total_events: 4, completed_event_count: 0 },
+          source_type: 'fresh_seed',
+          parent_run_id: null,
+          child_run_count: 0
+        },
+        {
+          run_id: 'run-b',
+          season: 2031,
+          seed: 11,
+          progress: { next_event_index: 1, total_events: 5, completed_event_count: 1 },
+          source_type: 'fresh_seed',
+          parent_run_id: null,
+          child_run_count: 0
+        }
+      ]
+    })
   })
 
   it('keeps Admin / Engine mode navigation and run-scoped admin links stable', async () => {
@@ -47,6 +76,26 @@ describe('Layout mode navigation', () => {
     expect(screen.getAllByTestId('viewer-primary-nav')).toHaveLength(1)
     expect(screen.queryByRole('navigation', { name: 'Run navigation' })).not.toBeInTheDocument()
     expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
+  })
+
+  it('shows and updates the compact Viewer active run control in the topbar', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<Layout />, '/viewer')
+
+    const nav = await screen.findByTestId('viewer-primary-nav')
+    const control = within(nav).getByRole('form', { name: 'Viewer topbar active run' })
+    expect(control).toHaveTextContent('Active run: None')
+    expect(within(control).getByLabelText('Viewer active run')).toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
+    expect(within(nav).queryByRole('link', { name: 'Admin / Engine' })).not.toBeInTheDocument()
+
+    await within(control).findByRole('option', { name: /run-b · S2031 · seed 11/ })
+    await user.selectOptions(within(control).getByLabelText('Viewer active run'), 'run-b')
+    await user.click(within(control).getByRole('button', { name: 'Set run' }))
+
+    expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBe('run-b')
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run-b')
+    expect(control).toHaveTextContent('Active run: run-b')
   })
 
   it('shows exact Viewer topbar categories and dropdown menu items', async () => {

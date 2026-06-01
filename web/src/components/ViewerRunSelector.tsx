@@ -15,7 +15,7 @@ type ViewerRunSelectorProps = {
   compact?: boolean
 }
 
-export function ViewerRunSelector({ compact = false }: ViewerRunSelectorProps): JSX.Element {
+function useViewerRunSelection() {
   const [activeRunId, setActiveRunId] = useState(() => readViewerActiveRunId())
   const [selectedRunId, setSelectedRunId] = useState(() => readViewerActiveRunId() ?? '')
 
@@ -58,6 +58,44 @@ export function ViewerRunSelector({ compact = false }: ViewerRunSelectorProps): 
     window.localStorage.setItem(LAST_RUN_ID_STORAGE_KEY, normalizedRunId)
     setActiveRunId(normalizedRunId)
   }
+
+  return { activeRunId, selectedRunId, setSelectedRunId, runsQuery, runs, handleSubmit }
+}
+
+export function ViewerActiveRunCompact(): JSX.Element {
+  const { activeRunId, selectedRunId, setSelectedRunId, runsQuery, runs, handleSubmit } = useViewerRunSelection()
+
+  return (
+    <form className="viewer-active-run-compact" aria-label="Viewer topbar active run" onSubmit={handleSubmit}>
+      <span className="viewer-active-run-compact__status">
+        Active run: <strong>{activeRunId ?? 'None'}</strong>
+      </span>
+      <label className="viewer-active-run-compact__field">
+        <span className="sr-only">Viewer active run</span>
+        <select
+          aria-label="Viewer active run"
+          value={selectedRunId}
+          onChange={(event) => setSelectedRunId(event.target.value)}
+          disabled={runsQuery.isLoading || runs.length === 0}
+        >
+          {runs.length === 0 ? <option value="">No runs available</option> : null}
+          {runs.map((run) => (
+            <option key={run.run_id} value={run.run_id}>
+              {run.run_id} · S{run.season} · seed {run.seed}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button type="submit" disabled={!selectedRunId.trim()}>
+        Set run
+      </button>
+      {runsQuery.isError ? <span className="error">Runs unavailable</span> : null}
+    </form>
+  )
+}
+
+export function ViewerRunSelector({ compact = false }: ViewerRunSelectorProps): JSX.Element {
+  const { activeRunId, selectedRunId, setSelectedRunId, runsQuery, runs, handleSubmit } = useViewerRunSelection()
 
   return (
     <section className={compact ? 'viewer-run-selector viewer-run-selector--compact' : 'panel nested-panel viewer-run-selector'} aria-label="Active run picker">

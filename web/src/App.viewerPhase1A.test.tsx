@@ -785,7 +785,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     renderAppAt('/viewer/players')
 
     expect(await screen.findByRole('heading', { name: 'Players Hub' })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Run Players Explorer' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Players', level: 2 })).not.toBeInTheDocument()
     const panel = await screen.findByLabelText('Players Hub active run summary')
     expect(panel).toHaveTextContent('run-a')
     expect(panel).toHaveTextContent('Total player count')
@@ -831,7 +831,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     renderAppAt('/viewer/countries')
 
     expect(await screen.findByRole('heading', { name: 'Countries Hub' })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Run Nations Dashboard' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Countries', level: 2 })).not.toBeInTheDocument()
     const panel = await screen.findByLabelText('Countries Hub active run summary')
     expect(panel).toHaveTextContent('run-a')
     expect(panel).toHaveTextContent('Total country count')
@@ -934,16 +934,16 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   it('preserves the real run-scoped Viewer players page', async () => {
     renderAppAt('/viewer/runs/run-a/players')
 
-    expect(await screen.findByRole('heading', { name: 'Run Players Explorer' })).toBeInTheDocument()
-    expect(screen.getByText('Read-only player pool explorer for the selected run.')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Players', level: 2 })).toBeInTheDocument()
+    expect(screen.getByText('Read-only player pool for the selected run.')).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
   it('preserves the real run-scoped Viewer countries/nations page', async () => {
     renderAppAt('/viewer/runs/run-a/countries')
 
-    expect(await screen.findByRole('heading', { name: 'Run Nations Dashboard' })).toBeInTheDocument()
-    expect(screen.getByText('Country strength diagnostics over the current run player pool.')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Countries', level: 2 })).toBeInTheDocument()
+    expect(screen.getByText('Read-only country strength overview for the selected run.')).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

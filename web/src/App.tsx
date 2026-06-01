@@ -68,6 +68,12 @@ import { SnapshotDetailPage } from './pages/SnapshotDetailPage'
 import { SnapshotsPage } from './pages/SnapshotsPage'
 import { ViewerRunSnapshotDetailPage, ViewerRunSnapshotListPage } from './pages/ViewerRunSnapshotsPage'
 import { ViewerRunTournamentDetailPage, ViewerRunTournamentsPage } from './pages/ViewerRunTournamentsPage'
+import {
+  ViewerRunCountriesPage,
+  ViewerRunCountryDetailPage,
+  ViewerRunPlayerCareerPage,
+  ViewerRunPlayersPage
+} from './pages/ViewerRunPlayersCountriesPage'
 import { TalentPreviewPage } from './pages/TalentPreviewPage'
 import { TalentIntakePage } from './pages/TalentIntakePage'
 import { ManualPlayerOverridesPage } from './pages/ManualPlayerOverridesPage'
@@ -213,9 +219,10 @@ export default function App(): JSX.Element {
         <Route path="viewer/runs/:runId/calendar" element={<SeasonCalendarPage />} />
         <Route path="viewer/runs/:runId/calendar/:eventId" element={<ViewerPlannedEventReadOnlyPage />} />
         <Route path="viewer/runs/:runId/weeks/:week" element={<WeekDetailPage />} />
-        <Route path="viewer/runs/:runId/players" element={<PlayersPage />} />
-        <Route path="viewer/runs/:runId/players/:playerId/career" element={<PlayerCareerPage />} />
-        <Route path="viewer/runs/:runId/countries" element={<NationsPage />} />
+        <Route path="viewer/runs/:runId/players" element={<ViewerRunPlayersPage />} />
+        <Route path="viewer/runs/:runId/players/:playerId/career" element={<ViewerRunPlayerCareerPage />} />
+        <Route path="viewer/runs/:runId/countries" element={<ViewerRunCountriesPage />} />
+        <Route path="viewer/runs/:runId/countries/:countryCode" element={<ViewerRunCountryDetailPage />} />
         <Route path="viewer/runs/:runId/history" element={<ActivityPage />} />
         <Route path="viewer/runs/:runId/finals" element={<ViewerFinalsReadOnlyPage />} />
         <Route path="viewer/runs/:runId/finals/qualification" element={<FinalsQualificationDetailPage />} />

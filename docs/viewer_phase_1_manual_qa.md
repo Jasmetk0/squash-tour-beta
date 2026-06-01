@@ -372,3 +372,15 @@ This note does not mark Viewer Phase 1 or full Viewer Phase 2 complete. It recor
 - Admin snapshot/debug pages remain separate and stable; Admin routes may continue to use technical wording and raw payload displays where appropriate.
 - No fake ranking rows, fake Race rows, fake players, or new ranking engine behavior were added.
 - Full ranking/Race table previews remain deferred unless the payload shape is already safely parsed by future Viewer read-model work.
+
+## Viewer Phase 2B note — run-scoped tournaments/event polish
+
+This note does not mark Viewer Phase 1 or full Viewer Phase 2 complete. It records the intended QA behavior for the Phase 2B run-scoped tournaments/event polish:
+
+- Run-scoped Viewer tournaments/event pages now use sports-facing, read-only layouts for `/viewer/runs/:runId/tournaments` and `/viewer/runs/:runId/tournaments/:eventId`.
+- The tournaments list should show active run context, event counts, completed/persisted event counts where available, and real event metadata from existing event/calendar APIs only.
+- Tournament/event detail pages should show sports-facing run, event, season, week, category, tour, template, sequence, status/result availability, and safe Viewer links before any technical data.
+- Raw event/result payloads are hidden behind collapsed `Show technical event data` sections on detail pages only. The section is read-only and exists for technical inspection without making debug payloads the primary Viewer UI.
+- Admin technical/debug pages remain separate and stable; Admin event/calendar routes may continue to use technical wording and raw payload displays where appropriate.
+- No fake tournaments, fake results, fake draws, fake matches, fake winners, fake players, fake odds, or fake storylines were added.
+- Rich tournament detail, draw, match, winner, and score previews remain deferred until safe Viewer read models/payload parsers exist.

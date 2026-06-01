@@ -1042,8 +1042,8 @@ textarea:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  flex: 0 1 300px;
-  min-width: 235px;
+  flex: 0 1 230px;
+  min-width: 190px;
   margin-left: 0.25rem;
   padding-left: 0.25rem;
   border-left: 1px solid #cbd5e1;
@@ -1058,7 +1058,7 @@ textarea:focus-visible {
 
 .viewer-active-run-compact__field {
   min-width: 0;
-  flex: 1 1 120px;
+  flex: 1 1 105px;
 }
 
 .viewer-active-run-compact select {
@@ -1072,28 +1072,7 @@ textarea:focus-visible {
   padding: 0.38rem 0.55rem;
 }
 
-.viewer-active-run-compact button {
-  border: 1px solid #cbd5e1;
-  border-radius: 999px;
-  background: #fff;
-  color: #334155;
-  font-weight: 700;
-  line-height: 1.1;
-  padding: 0.42rem 0.62rem;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
-}
-
-.viewer-active-run-compact button:hover:not(:disabled) {
-  border-color: #60a5fa;
-  color: #1d4ed8;
-  box-shadow: 0 8px 18px rgb(37 99 235 / 14%);
-  transform: translateY(-1px);
-}
-
-.viewer-active-run-compact select:focus-visible,
-.viewer-active-run-compact button:focus-visible {
+.viewer-active-run-compact select:focus-visible {
   outline: 3px solid #93c5fd;
   outline-offset: 2px;
 }

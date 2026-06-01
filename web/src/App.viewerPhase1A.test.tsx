@@ -926,8 +926,8 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   it('preserves the real run-scoped Viewer tournaments/events page', async () => {
     renderAppAt('/viewer/runs/run-a/tournaments')
 
-    expect(await screen.findByRole('heading', { name: 'Events history' })).toBeInTheDocument()
-    expect(screen.getByText(/Browse persisted event history/)).toBeInTheDocument()
+    expect(await screen.findByText('Tournaments', { selector: 'h2' })).toBeInTheDocument()
+    expect(screen.getByText(/Read-only tournament\/event history for the selected run/)).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

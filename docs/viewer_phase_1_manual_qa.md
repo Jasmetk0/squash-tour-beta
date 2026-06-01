@@ -410,3 +410,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Admin history/finals pages remain separate from Viewer routes.
 - Viewer pages do not invent fake Finals results, qualifiers, matches, odds, or storylines.
 - Rich Finals bracket and match previews remain deferred until authoritative read models are available.
+
+## Phase 2F — Viewer Active Run Picker
+
+- Viewer now has an active run picker using existing read-only run APIs.
+- Selection is local Viewer context/localStorage only.
+- No backend run mutation was added.
+- Future Run Library / World Saves remains deferred.

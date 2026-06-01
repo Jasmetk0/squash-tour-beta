@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -56,24 +56,20 @@ describe('ViewerRunSelector', () => {
     renderSelector()
 
     await screen.findByRole('option', { name: /run-a/i })
-    await user.selectOptions(screen.getByLabelText('Select existing run'), 'run-b')
-    await user.click(screen.getByRole('button', { name: 'Set as Viewer Run' }))
+    await user.selectOptions(screen.getByLabelText('Available runs'), 'run-b')
+    await user.click(screen.getByRole('button', { name: 'Set active run' }))
 
     expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBe('run-b')
     expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run-b')
     expect(screen.getByText('run-b')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open Admin Run Detail' })).toHaveAttribute('href', '/admin/runs/run-b')
+    expect(screen.queryByRole('link', { name: 'Open Admin Run Detail' })).not.toBeInTheDocument()
   })
 
-  it('clears active viewer run from localStorage', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
-    const user = userEvent.setup()
+  it('shows the no-runs empty state from the read-only runs API', async () => {
+    api.listRuns.mockResolvedValue({ runs: [] })
     renderSelector()
 
-    expect(await screen.findByText('run-a')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Clear Viewer Run' }))
-
-    await waitFor(() => expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBeNull())
-    expect(screen.getByText('No Viewer run selected')).toBeInTheDocument()
+    expect(await screen.findByText('No runs are available yet.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Set active run' })).toBeDisabled()
   })
 })

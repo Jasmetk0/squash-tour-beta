@@ -131,6 +131,69 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(screen.queryByText('Macky needs a semifinal to protect his Race lead.')).not.toBeInTheDocument()
   })
 
+  it('renders the active run picker with available runs and no active run state', async () => {
+    api.listRuns.mockResolvedValue({
+      runs: [
+        { run_id: 'run-a', season: 2030, seed: 9, progress: { next_event_index: 0, total_events: 4, completed_event_count: 0 }, source_type: 'fresh_seed', parent_run_id: null, child_run_count: 0 },
+        { run_id: 'run-b', season: 2031, seed: 11, progress: { next_event_index: 1, total_events: 5, completed_event_count: 1 }, source_type: 'fresh_seed', parent_run_id: null, child_run_count: 0 }
+      ]
+    })
+
+    renderAppAt('/viewer')
+
+    const picker = await screen.findByLabelText('Active run picker')
+    expect(picker).toHaveTextContent('No active run selected')
+    expect(await within(picker).findByRole('option', { name: /run-a — season 2030, seed 9/ })).toBeInTheDocument()
+    expect(within(picker).getByRole('option', { name: /run-b — season 2031, seed 11/ })).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('stores selected active run locally and updates homepage active-run links', async () => {
+    const user = userEvent.setup()
+    api.listRuns.mockResolvedValue({
+      runs: [
+        { run_id: 'run-a', season: 2030, seed: 9, progress: { next_event_index: 0, total_events: 4, completed_event_count: 0 }, source_type: 'fresh_seed', parent_run_id: null, child_run_count: 0 },
+        { run_id: 'run-b', season: 2031, seed: 11, progress: { next_event_index: 1, total_events: 5, completed_event_count: 1 }, source_type: 'fresh_seed', parent_run_id: null, child_run_count: 0 }
+      ]
+    })
+
+    renderAppAt('/viewer')
+
+    const picker = await screen.findByLabelText('Active run picker')
+    await within(picker).findByRole('option', { name: /run-b — season 2031, seed 11/ })
+    await user.selectOptions(within(picker).getByLabelText('Available runs'), 'run-b')
+    await user.click(within(picker).getByRole('button', { name: 'Set active run' }))
+
+    await waitFor(() => expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBe('run-b'))
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run-b')
+    await waitFor(() => expect(within(picker).getByText('run-b')).toBeInTheDocument())
+    expect(await screen.findByRole('link', { name: 'Active Run Rankings' })).toHaveAttribute('href', '/viewer/runs/run-b/rankings')
+    expect(screen.getByRole('link', { name: 'Active Run Calendar' })).toHaveAttribute('href', '/viewer/runs/run-b/calendar')
+    expect(screen.queryAllByLabelText('Viewer active run quick links')).toHaveLength(0)
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows an empty state when the active run picker has no runs', async () => {
+    api.listRuns.mockResolvedValue({ runs: [] })
+
+    renderAppAt('/viewer')
+
+    const picker = await screen.findByLabelText('Active run picker')
+    expect(await within(picker).findByText('No runs are available yet.')).toBeInTheDocument()
+    expect(within(picker).getByRole('button', { name: 'Set active run' })).toBeDisabled()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows an unavailable state when the active run picker cannot load runs', async () => {
+    api.listRuns.mockRejectedValue(new Error('runs unavailable'))
+
+    renderAppAt('/viewer')
+
+    const picker = await screen.findByLabelText('Active run picker')
+    expect(await within(picker).findByText('Run list is unavailable.')).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
   it('updates and persists local Viewer context from the selector controls', async () => {
     const user = userEvent.setup()
     renderAppAt('/viewer/tour/current-week')

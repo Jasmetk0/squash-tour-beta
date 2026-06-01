@@ -869,12 +869,12 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
 
     renderAppAt('/viewer/runs/run-a/rankings')
-    expect(await screen.findByRole('heading', { name: 'Ranking snapshots' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
     expectNoForbiddenViewerActions()
 
     cleanup()
     renderAppAt('/viewer/runs/run-a/race')
-    expect(await screen.findByRole('heading', { name: 'Race snapshots' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Race to Finals' })).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

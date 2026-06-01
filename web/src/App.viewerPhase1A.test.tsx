@@ -950,8 +950,8 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   it('preserves the real run-scoped Viewer history/activity page', async () => {
     renderAppAt('/viewer/runs/run-a/history')
 
-    expect(await screen.findByRole('heading', { name: 'Run activity' })).toBeInTheDocument()
-    expect(screen.getByText(/Deterministic run-level feed browser/)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'History' })).toBeInTheDocument()
+    expect(screen.getByText(/Read-only run activity and season timeline/)).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

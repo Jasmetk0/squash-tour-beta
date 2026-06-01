@@ -402,3 +402,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Admin technical/calendar pages remain separate and stable for Admin workflows.
 - No fake results, draws, matches, winners, odds, or storylines were added.
 - Rich event draw and match previews remain deferred until safe read models exist.
+
+## Phase 2E — Viewer run history/finals polish
+
+- Viewer run-scoped history and World Tour Finals pages now use sports-facing, read-only layouts.
+- Technical history/finals payload data is collapsed behind technical disclosure sections.
+- Admin history/finals pages remain separate from Viewer routes.
+- Viewer pages do not invent fake Finals results, qualifiers, matches, odds, or storylines.
+- Rich Finals bracket and match previews remain deferred until authoritative read models are available.

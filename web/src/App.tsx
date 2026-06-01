@@ -24,7 +24,6 @@ import {
   ViewerCountriesPage,
   ViewerCurrentWeekPage,
   ViewerCountryRankingPage,
-  ViewerFinalsReadOnlyPage,
   ViewerH2HPage,
   ViewerH2HSubroutePage,
   ViewerHistoryPage,
@@ -78,6 +77,12 @@ import { TalentIntakePage } from './pages/TalentIntakePage'
 import { ManualPlayerOverridesPage } from './pages/ManualPlayerOverridesPage'
 import { WeekDetailPage } from './pages/WeekDetailPage'
 import { ViewerRunCalendarPage, ViewerRunPlannedEventPage, ViewerRunWeekPage } from './pages/ViewerRunCalendarPage'
+import {
+  ViewerRunFinalsPage,
+  ViewerRunFinalsQualificationPage,
+  ViewerRunFinalsResultPage,
+  ViewerRunHistoryPage
+} from './pages/ViewerRunHistoryFinalsPage'
 import { WorldGenerationPage } from './pages/WorldGenerationPage'
 import { NationsPage } from './pages/NationsPage'
 import { WorldPackagePage } from './pages/WorldPackagePage'
@@ -223,10 +228,10 @@ export default function App(): JSX.Element {
         <Route path="viewer/runs/:runId/players/:playerId/career" element={<ViewerRunPlayerCareerPage />} />
         <Route path="viewer/runs/:runId/countries" element={<ViewerRunCountriesPage />} />
         <Route path="viewer/runs/:runId/countries/:countryCode" element={<ViewerRunCountryDetailPage />} />
-        <Route path="viewer/runs/:runId/history" element={<ActivityPage />} />
-        <Route path="viewer/runs/:runId/finals" element={<ViewerFinalsReadOnlyPage />} />
-        <Route path="viewer/runs/:runId/finals/qualification" element={<FinalsQualificationDetailPage />} />
-        <Route path="viewer/runs/:runId/finals/result" element={<FinalsResultDetailPage />} />
+        <Route path="viewer/runs/:runId/history" element={<ViewerRunHistoryPage />} />
+        <Route path="viewer/runs/:runId/finals" element={<ViewerRunFinalsPage />} />
+        <Route path="viewer/runs/:runId/finals/qualification" element={<ViewerRunFinalsQualificationPage />} />
+        <Route path="viewer/runs/:runId/finals/result" element={<ViewerRunFinalsResultPage />} />
 
         <Route path="runs" element={<Navigate to="/admin/runs" replace />} />
         <Route path="runs/:runId" element={<LegacyRunRedirect />} />

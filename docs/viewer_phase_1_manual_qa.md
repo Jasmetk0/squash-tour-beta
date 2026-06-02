@@ -554,3 +554,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Champion links to Player Profile when `player_id` is available.
 - Unknown result payloads do not show fake winners/status/matches.
 - No backend/Admin behavior changed.
+
+## Phase 3R shared Viewer route helpers note
+
+- Viewer route path construction was centralized in shared helpers.
+- Existing Viewer links keep the same href behavior.
+- No backend/Admin/parser/result-preview behavior changed.

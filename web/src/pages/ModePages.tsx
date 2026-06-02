@@ -18,6 +18,16 @@ import { RacePreviewTable } from '../viewer/RacePreviewTable'
 import { RankingPreviewTable } from '../viewer/RankingPreviewTable'
 import { parseRacePreviewPayload } from '../viewer/racePayload'
 import { parseRankingPreviewPayload } from '../viewer/rankingPayload'
+import {
+  viewerCountriesPath,
+  viewerPlayersPath,
+  viewerRacePath,
+  viewerRaceSnapshotPath,
+  viewerRankingsPath,
+  viewerRankingSnapshotPath,
+  viewerSeasonCalendarPath,
+  viewerTournamentsPath
+} from '../viewer/viewerRoutes'
 import type { EventRecord, FinalsSummaryResponse, RankingSnapshot, RaceSnapshot, RunActivityItem, RunNationSummaryItem, RunPlayerListItem, SeasonStateResponse } from '../api/types'
 
 export function LandingPage(): JSX.Element {
@@ -223,12 +233,12 @@ function useActiveViewerRunId(): string | null {
 
 
 const activeRunLinks = [
-  { title: 'Active Run Rankings', href: (runId: string) => `/viewer/runs/${runId}/rankings` },
-  { title: 'Active Run Race', href: (runId: string) => `/viewer/runs/${runId}/race` },
-  { title: 'Active Run Tournaments', href: (runId: string) => `/viewer/runs/${runId}/tournaments` },
-  { title: 'Active Run Calendar', href: (runId: string) => `/viewer/runs/${runId}/calendar` },
-  { title: 'Active Run Players', href: (runId: string) => `/viewer/runs/${runId}/players` },
-  { title: 'Active Run Countries', href: (runId: string) => `/viewer/runs/${runId}/countries` },
+  { title: 'Active Run Rankings', href: (runId: string) => viewerRankingsPath(runId) },
+  { title: 'Active Run Race', href: (runId: string) => viewerRacePath(runId) },
+  { title: 'Active Run Tournaments', href: (runId: string) => viewerTournamentsPath(runId) },
+  { title: 'Active Run Calendar', href: (runId: string) => viewerSeasonCalendarPath(runId) },
+  { title: 'Active Run Players', href: (runId: string) => viewerPlayersPath(runId) },
+  { title: 'Active Run Countries', href: (runId: string) => viewerCountriesPath(runId) },
   { title: 'Active Run History', href: (runId: string) => `/viewer/runs/${runId}/history` },
   { title: 'Active Run Finals', href: (runId: string) => `/viewer/runs/${runId}/finals` }
 ]
@@ -453,7 +463,7 @@ export function ViewerHomePage(): JSX.Element {
             <>
               <p>{featuredEvent.status}: <strong>{featuredEvent.eventId}</strong></p>
               <p className="status">{featuredEvent.category ?? 'Category unavailable'} · {featuredEvent.tour ?? 'Tour unavailable'} · {featuredEvent.week != null ? `W${featuredEvent.week}` : 'Week unavailable'} · Template {featuredEvent.templateId ?? 'unavailable'}</p>
-              <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/calendar`}>Open active run schedule</Link>
+              <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(activeRunId)}>Open active run schedule</Link>
             </>
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
@@ -478,7 +488,7 @@ export function ViewerHomePage(): JSX.Element {
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           )}
-          {activeRunId ? <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/rankings`}>Open active run rankings</Link> : null}
+          {activeRunId ? <Link className="viewer-active-run-link" to={viewerRankingsPath(activeRunId)}>Open active run rankings</Link> : null}
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only race" title="Race to Finals">
@@ -487,12 +497,12 @@ export function ViewerHomePage(): JSX.Element {
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           )}
-          {activeRunId ? <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/race`}>Open active run race</Link> : null}
+          {activeRunId ? <Link className="viewer-active-run-link" to={viewerRacePath(activeRunId)}>Open active run race</Link> : null}
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only matches" title="Featured Matches">
           <ViewerEmptyState>This preview is not connected for this data shape yet.</ViewerEmptyState>
-          {activeRunId ? <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/tournaments`}>Open active run tournaments</Link> : null}
+          {activeRunId ? <Link className="viewer-active-run-link" to={viewerTournamentsPath(activeRunId)}>Open active run tournaments</Link> : null}
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only analytics" title="Predictions &amp; Upset Watch">
@@ -600,8 +610,8 @@ export function ViewerRankingsPage(): JSX.Element {
         countLabel: 'Ranking snapshot count',
         openLabel: 'Open active run rankings',
         latestLabel: 'View latest ranking snapshot',
-        runScopedPath: (runId) => `/viewer/runs/${runId}/rankings`,
-        detailPath: (runId, snapshotSequence) => `/viewer/runs/${runId}/rankings/${snapshotSequence}`
+        runScopedPath: (runId) => viewerRankingsPath(runId),
+        detailPath: (runId, snapshotSequence) => viewerRankingSnapshotPath(runId, snapshotSequence)
       }}
     />
   )
@@ -619,8 +629,8 @@ export function ViewerRacePage(): JSX.Element {
         countLabel: 'Race snapshot count',
         openLabel: 'Open active run race',
         latestLabel: 'View latest race snapshot',
-        runScopedPath: (runId) => `/viewer/runs/${runId}/race`,
-        detailPath: (runId, snapshotSequence) => `/viewer/runs/${runId}/race/${snapshotSequence}`
+        runScopedPath: (runId) => viewerRacePath(runId),
+        detailPath: (runId, snapshotSequence) => viewerRaceSnapshotPath(runId, snapshotSequence)
       }}
     />
   )
@@ -669,8 +679,8 @@ export function ViewerSeasonHubPage(): JSX.Element {
           <div><dt>Finals availability</dt><dd>{formatFinalsAvailability(finalsQuery.data)}</dd></div>
         </dl>
         <p className="viewer-active-run-actions">
-          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/tournaments`}>Open active run tournaments</Link>{' '}
-          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/calendar`}>Open active run schedule</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerTournamentsPath(activeRunId)}>Open active run tournaments</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(activeRunId)}>Open active run schedule</Link>{' '}
           <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/finals`}>Open active run finals</Link>
         </p>
       </article>
@@ -714,7 +724,7 @@ export function ViewerCurrentWeekPage(): JSX.Element {
           </ul>
         ) : null}
         <p className="viewer-active-run-actions">
-          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/calendar`}>Open active run schedule</Link>
+          <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(activeRunId)}>Open active run schedule</Link>
         </p>
       </article>
     </ViewerShellPage>
@@ -768,8 +778,8 @@ export function ViewerTournamentsPage(): JSX.Element {
           </div>
         ) : null}
         <p className="viewer-active-run-actions">
-          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/tournaments`}>Open active run tournaments</Link>{' '}
-          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/calendar`}>Open active run schedule</Link>
+          <Link className="viewer-active-run-link" to={viewerTournamentsPath(activeRunId)}>Open active run tournaments</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(activeRunId)}>Open active run schedule</Link>
         </p>
       </article>
     </ViewerShellPage>
@@ -842,7 +852,7 @@ export function ViewerPlayersPage(): JSX.Element {
         {!playersQuery.isLoading && !playersQuery.isError && players.length === 0 ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
         <ViewerSamplePlayersList players={players} label="Sample active run players" />
         <p className="viewer-active-run-actions">
-          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/players`}>Open active run players</Link>
+          <Link className="viewer-active-run-link" to={viewerPlayersPath(activeRunId)}>Open active run players</Link>
         </p>
       </article>
     </ViewerShellPage>
@@ -889,7 +899,7 @@ export function ViewerCountriesPage(): JSX.Element {
           renderItem={renderCountrySampleMetadata}
         />
         <p className="viewer-active-run-actions">
-          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/countries`}>Open active run countries</Link>
+          <Link className="viewer-active-run-link" to={viewerCountriesPath(activeRunId)}>Open active run countries</Link>
         </p>
       </article>
     </ViewerShellPage>
@@ -1015,9 +1025,9 @@ function ViewerRecordsStatsLandingPage({ kind }: { kind: ViewerRecordsLandingKin
         />
         <ViewerActiveRunLinks
           links={[
-            { label: 'Open active run tournaments', to: `/viewer/runs/${activeRunId}/tournaments` },
-            { label: 'Open active run rankings', to: `/viewer/runs/${activeRunId}/rankings` },
-            { label: 'Open active run race', to: `/viewer/runs/${activeRunId}/race` },
+            { label: 'Open active run tournaments', to: viewerTournamentsPath(activeRunId) },
+            { label: 'Open active run rankings', to: viewerRankingsPath(activeRunId) },
+            { label: 'Open active run race', to: viewerRacePath(activeRunId) },
             { label: 'Open active run finals', to: `/viewer/runs/${activeRunId}/finals` }
           ]}
         />
@@ -1055,7 +1065,7 @@ export function ViewerTourCalendarPage(): JSX.Element {
             <div><dt>Ordered event count</dt><dd>{runQuery.isLoading ? 'Loading…' : orderedEventCount ?? '—'}</dd></div>
           </dl>
           {runQuery.isError ? <ViewerEmptyState>Active run calendar metadata is temporarily unavailable.</ViewerEmptyState> : null}
-          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/calendar`}>
+          <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(activeRunId)}>
             Open active run schedule
           </Link>
         </article>
@@ -1080,8 +1090,8 @@ function ViewerActiveRunSportsLinks({ activeRunId }: { activeRunId: string }): J
   return (
     <ViewerActiveRunLinks
       links={[
-        { label: 'Open active run players', to: `/viewer/runs/${activeRunId}/players` },
-        { label: 'Open active run tournaments', to: `/viewer/runs/${activeRunId}/tournaments` }
+        { label: 'Open active run players', to: viewerPlayersPath(activeRunId) },
+        { label: 'Open active run tournaments', to: viewerTournamentsPath(activeRunId) }
       ]}
     />
   )

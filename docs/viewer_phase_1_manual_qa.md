@@ -605,3 +605,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Finals Summary calendar-back link label now matches its calendar destination.
 - Existing History/Finals href behavior remains unchanged.
 - No backend/Admin/finals-engine behavior changed.
+
+## Phase 3Z — Records/Stats landing polish note
+
+- Records/Stats landing pages now show clearer source metadata and safe links to existing run-scoped events, snapshots, and finals pages.
+- Record/stat groups remain deferred unless real read models exist.
+- No fake records, stats, awards, or Hall of Fame data were added.
+- No backend/Admin behavior changed.

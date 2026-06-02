@@ -286,8 +286,8 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       ['/viewer/players', 'No data is available for this run yet.'],
       ['/viewer/countries', 'No data is available for this run yet.'],
       ['/viewer/history', 'No data is available for this run yet.'],
-      ['/viewer/records', 'This preview is not connected for this data shape yet.'],
-      ['/viewer/stats', 'This preview is not connected for this data shape yet.'],
+      ['/viewer/records', 'No data is available for this run yet.'],
+      ['/viewer/stats', 'No data is available for this run yet.'],
       ['/viewer/h2h', 'No data is available for this run yet.'],
       ['/viewer/predictions', 'This preview is not connected for this data shape yet.'],
       ['/viewer/predictions/match-predictor', 'This preview is not connected for this data shape yet.'],
@@ -811,7 +811,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('shows active-run Records and Stats metadata with deferred groups and safe links', async () => {
+  it('shows active-run Records and Stats source metadata with deferred groups and safe links', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
     api.getRunStatusSummary.mockResolvedValue({
       run_id: 'run-a',
@@ -842,20 +842,28 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     renderAppAt('/viewer/records')
     expect(await screen.findByRole('heading', { name: 'Records' })).toBeInTheDocument()
     let panel = await screen.findByLabelText('Records active run metadata summary')
+    expect(within(panel).getByRole('heading', { name: 'Records Overview' })).toBeInTheDocument()
+    expect(within(panel).getByRole('heading', { name: 'Available source metadata' })).toBeInTheDocument()
     expect(panel).toHaveTextContent('run-a')
     expect(panel).toHaveTextContent('Completed/persisted event count')
     expect(panel).toHaveTextContent('2')
     expect(panel).toHaveTextContent('Ranking snapshot count')
     expect(panel).toHaveTextContent('3')
     expect(panel).toHaveTextContent('Race snapshot count')
-    expect(panel).toHaveTextContent('Finals qualification available')
+    expect(within(panel).getByRole('link', { name: 'E2' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments/E2')
+    expect(within(panel).getByRole('link', { name: '#3' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings/3')
+    expect(within(panel).getByRole('link', { name: '#5' })).toHaveAttribute('href', '/viewer/runs/run-a/race/5')
+    expect(within(panel).getByRole('link', { name: 'Finals qualification available' })).toHaveAttribute('href', '/viewer/runs/run-a/finals')
     expect(panel).toHaveTextContent('Title Leaders: needs dedicated records read model.')
     expect(panel).toHaveTextContent('Weeks at No.1: needs dedicated records read model.')
     expect(panel).toHaveTextContent('Biggest Upsets: needs match/prediction read model.')
+    expect(within(panel).queryByText('Most titles')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments')
     expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
     expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
     expect(screen.getByRole('link', { name: 'Open active run finals' })).toHaveAttribute('href', '/viewer/runs/run-a/finals')
+    expect(panel).not.toHaveTextContent('source_event_id')
+    expect(panel).not.toHaveTextContent('payload')
     expectNoForbiddenViewerActions()
 
     cleanup()
@@ -863,12 +871,21 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     renderAppAt('/viewer/stats')
     expect(await screen.findByRole('heading', { name: 'Stats' })).toBeInTheDocument()
     panel = await screen.findByLabelText('Stats active run metadata summary')
+    expect(within(panel).getByRole('heading', { name: 'Stats Overview' })).toBeInTheDocument()
+    expect(within(panel).getByRole('heading', { name: 'Available source metadata' })).toBeInTheDocument()
     expect(panel).toHaveTextContent('run-a')
     expect(panel).toHaveTextContent('Completed/persisted event count')
     expect(panel).toHaveTextContent('2')
+    expect(within(panel).getByRole('link', { name: 'E2' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments/E2')
+    expect(within(panel).getByRole('link', { name: '#3' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings/3')
+    expect(within(panel).getByRole('link', { name: '#5' })).toHaveAttribute('href', '/viewer/runs/run-a/race/5')
+    expect(within(panel).getByRole('link', { name: 'Finals qualification available' })).toHaveAttribute('href', '/viewer/runs/run-a/finals')
     expect(panel).toHaveTextContent('Player Stats: needs dedicated player statistics read model.')
     expect(panel).toHaveTextContent('Tournament Stats: needs dedicated tournament statistics read model.')
     expect(panel).toHaveTextContent('Era Rankings: needs dedicated era comparison read model.')
+    expect(within(panel).queryByText('GOAT')).not.toBeInTheDocument()
+    expect(panel).not.toHaveTextContent('source_event_id')
+    expect(panel).not.toHaveTextContent('payload')
     expectNoForbiddenViewerActions()
   })
 
@@ -883,7 +900,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     cleanup()
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
     renderAppAt('/viewer/records')
-    expect((await screen.findAllByText('This preview is not connected for this data shape yet.')).length).toBeGreaterThan(0)
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
     expect(screen.getByRole('main')).toHaveTextContent('Title Leaders: needs dedicated records read model.')
     expect(within(screen.getByRole('main')).queryByText('Most titles')).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
@@ -891,7 +908,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     cleanup()
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
     renderAppAt('/viewer/stats')
-    expect((await screen.findAllByText('This preview is not connected for this data shape yet.')).length).toBeGreaterThan(0)
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
     expect(screen.getByRole('main')).toHaveTextContent('Player Stats: needs dedicated player statistics read model.')
     expect(within(screen.getByRole('main')).queryByText('GOAT')).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()

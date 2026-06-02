@@ -95,7 +95,9 @@ export function ViewerRunCalendarPage(): JSX.Element {
     () => new Set(runQuery.data?.season_state.completed_event_ids ?? []),
     [runQuery.data?.season_state.completed_event_ids]
   )
-  const eventRecordIds = useMemo(() => new Set((eventsQuery.data?.events ?? []).map((event) => event.event_id)), [eventsQuery.data?.events])
+  const eventRecords = useMemo(() => eventsQuery.data?.events ?? [], [eventsQuery.data?.events])
+  const eventRecordIds = useMemo(() => new Set(eventRecords.map((event) => event.event_id)), [eventRecords])
+  const eventRecordsById = useMemo(() => new Map(eventRecords.map((event) => [event.event_id, event])), [eventRecords])
   const completedCount = completedEventIds.size
 
   return (
@@ -146,7 +148,18 @@ export function ViewerRunCalendarPage(): JSX.Element {
           <ol className="item-list" aria-label="Viewer season calendar events">
             {orderedEvents.map((event, index) => {
               const status = plannedStatus({ index, nextEventIndex, completedEventIds, eventId: event.event_id })
+              const eventRecord = eventRecordsById.get(event.event_id)
               const hasEventRecord = eventRecordIds.has(event.event_id)
+              const resultSummary = eventRecord?.tournament_result ? parseTournamentResultPayload(eventRecord.tournament_result).summary : null
+              const championValue = resultSummary ? tournamentChampionValue(resultSummary, runId) : null
+              const matchesValue = resultSummary ? tournamentMatchesValue(resultSummary) : null
+              const resultMetadataItems = resultSummary
+                ? [
+                    ...(championValue ? [{ label: 'Champion', value: championValue }] : []),
+                    ...(resultSummary.resultStatus ? [{ label: 'Result status', value: resultSummary.resultStatus }] : []),
+                    ...(matchesValue !== null ? [{ label: 'Matches', value: matchesValue }] : [])
+                  ]
+                : []
 
               return (
                 <li key={event.event_id}>
@@ -160,7 +173,8 @@ export function ViewerRunCalendarPage(): JSX.Element {
                       { label: 'Tour', value: event.tour },
                       { label: 'Category', value: event.category },
                       { label: 'Template ID', value: event.template_id },
-                      { label: 'Plan position', value: `${index + 1} of ${orderedEvents.length}` }
+                      { label: 'Plan position', value: `${index + 1} of ${orderedEvents.length}` },
+                      ...resultMetadataItems
                     ]}
                   />
                   <p>
@@ -206,7 +220,8 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
     () => new Set(runQuery.data?.season_state.completed_event_ids ?? []),
     [runQuery.data?.season_state.completed_event_ids]
   )
-  const eventRecordIds = useMemo(() => new Set((eventsQuery.data?.events ?? []).map((event) => event.event_id)), [eventsQuery.data?.events])
+  const eventRecords = useMemo(() => eventsQuery.data?.events ?? [], [eventsQuery.data?.events])
+  const eventRecordIds = useMemo(() => new Set(eventRecords.map((event) => event.event_id)), [eventRecords])
   const plannedContext = useMemo(() => buildPlannedEventContext(runQuery.data), [runQuery.data])
   const plannedEvent = plannedContext.get(eventId)
   const status = plannedEvent

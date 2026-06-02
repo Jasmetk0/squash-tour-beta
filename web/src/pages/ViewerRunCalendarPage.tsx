@@ -15,6 +15,8 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
+import { parseTournamentResultPayload } from '../viewer/tournamentResultPayload'
+import type { TournamentResultSummary } from '../viewer/tournamentResultPayload'
 
 export type ViewerPlannedEvent = SeasonStateResponse['season_state']['ordered_events'][number]
 
@@ -65,6 +67,20 @@ function snapshotDetailPath(kind: 'ranking' | 'race', runId: string, snapshotSeq
 
 function snapshotsForEventIds<T extends RankingSnapshot | RaceSnapshot>(snapshots: T[], eventIds: Set<string>): T[] {
   return snapshots.filter((snapshot) => Boolean(snapshot.source_event_id && eventIds.has(snapshot.source_event_id)))
+}
+
+function tournamentChampionValue(summary: TournamentResultSummary, runId: string): JSX.Element | string | null {
+  const champion = summary.champion
+  const label = champion?.name ?? champion?.playerId ?? champion?.country
+  if (!champion || !label) return null
+  if (!champion.playerId) return label
+
+  return <Link to={`/viewer/runs/${runId}/players/${encodeURIComponent(champion.playerId)}/career`}>{label}</Link>
+}
+
+function tournamentMatchesValue(summary: TournamentResultSummary): string | number | null {
+  if (summary.completedMatchCount !== null && summary.matchCount !== null) return `${summary.completedMatchCount} of ${summary.matchCount}`
+  return summary.matchCount ?? summary.completedMatchCount
 }
 
 export function ViewerRunCalendarPage(): JSX.Element {
@@ -366,6 +382,16 @@ export function ViewerRunWeekPage(): JSX.Element {
               const eventRecord = eventRecordsById.get(event.event_id)
               const hasEventRecord = Boolean(eventRecord)
               const hasResult = Boolean(eventRecord?.tournament_result)
+              const resultSummary = eventRecord?.tournament_result ? parseTournamentResultPayload(eventRecord.tournament_result).summary : null
+              const championValue = resultSummary ? tournamentChampionValue(resultSummary, runId) : null
+              const matchesValue = resultSummary ? tournamentMatchesValue(resultSummary) : null
+              const resultMetadataItems = resultSummary
+                ? [
+                    ...(championValue ? [{ label: 'Champion', value: championValue }] : []),
+                    ...(resultSummary.resultStatus ? [{ label: 'Result status', value: resultSummary.resultStatus }] : []),
+                    ...(matchesValue !== null ? [{ label: 'Matches', value: matchesValue }] : [])
+                  ]
+                : []
 
               return (
                 <li key={event.event_id}>
@@ -380,7 +406,8 @@ export function ViewerRunWeekPage(): JSX.Element {
                       { label: 'Template', value: event.template_id },
                       { label: 'Status', value: eventStatusLabel(status) },
                       { label: 'Persisted event record', value: hasEventRecord ? 'Yes' : 'No' },
-                      { label: 'Result availability', value: hasResult ? 'Available' : 'Not available' }
+                      { label: 'Result availability', value: hasResult ? 'Available' : 'Not available' },
+                      ...resultMetadataItems
                     ]}
                   />
                   <p>

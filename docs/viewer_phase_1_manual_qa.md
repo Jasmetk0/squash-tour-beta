@@ -566,3 +566,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Tournament result metadata rendering was centralized in a shared read-only Viewer helper.
 - Existing Season Calendar, Planned Event, Week Detail, Tournament list, and Tournament Detail result previews keep the same behavior.
 - No backend/Admin/parser behavior changed.
+
+## Viewer Phase 3T — Rankings/Race publication list polish
+
+- Run-scoped Ranking/Race publication list pages now show clearer sports-facing snapshot metadata and safe source-event links.
+- Unmatched source events remain safe fallback text.
+- No parser/backend/Admin behavior changed.

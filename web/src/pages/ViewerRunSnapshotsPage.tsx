@@ -339,35 +339,59 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
         )}
 
         {filteredSnapshots.length > 0 ? (
-          <ul className="item-list" aria-label={`${copy.pluralPublicationLabel} detail links`}>
+          <ul className="item-list" aria-label={`${copy.pluralPublicationLabel} sports metadata`}>
             {filteredSnapshots.map((snapshot) => {
-              const planned = snapshot.source_event_id ? plannedContext.get(snapshot.source_event_id) : undefined
-              const persisted = snapshot.source_event_id ? persistedEventsById.get(snapshot.source_event_id) : undefined
+              const sourceEventId = snapshot.source_event_id
+              const planned = sourceEventId ? plannedContext.get(sourceEventId) : undefined
+              const persisted = sourceEventId ? persistedEventsById.get(sourceEventId) : undefined
               const week = resolveWeek(planned, persisted)
               return (
-                <li key={`${mode}-${snapshot.snapshot_sequence}-detail-link`}>
-                  <strong>{copy.publicationLabel} #{snapshot.snapshot_sequence}</strong> · Kind {snapshot.snapshot_kind} · Source event{' '}
-                  {snapshot.source_event_id ?? '—'} · Week {week != null ? `W${week}` : '—'}
-                  {planned ? ` · ${planned.category} · ${planned.tour} · ${planned.templateId}` : ' · No ordered-plan match'} ·{' '}
-                  <Link to={detailPath(mode, runId, snapshot.snapshot_sequence)}>View {mode === 'ranking' ? 'ranking' : 'race'} publication</Link>
-                  {snapshot.source_event_id && persisted ? (
-                    <>
-                      {' '}
-                      · <Link to={viewerTournamentDetailPath(runId, snapshot.source_event_id)}>Source event</Link>
-                    </>
-                  ) : null}
-                  {snapshot.source_event_id && planned ? (
-                    <>
-                      {' '}
-                      · <Link to={viewerPlannedEventPath(runId, snapshot.source_event_id)}>Calendar event</Link>
-                    </>
-                  ) : null}
-                  {week != null ? (
-                    <>
-                      {' '}
-                      · <Link to={viewerWeekDetailPath(runId, week)}>Week</Link>
-                    </>
-                  ) : null}
+                <li key={`${mode}-${snapshot.snapshot_sequence}-publication-card`}>
+                  <article aria-label={`${copy.publicationLabel} ${snapshot.snapshot_sequence}`}>
+                    <h4>
+                      {copy.publicationLabel} #{snapshot.snapshot_sequence}
+                    </h4>
+                    <MetadataList
+                      items={[
+                        { label: 'Snapshot sequence', value: snapshot.snapshot_sequence },
+                        { label: 'Publication kind', value: snapshot.snapshot_kind },
+                        { label: 'Source event ID', value: sourceEventId ?? 'No source event recorded' },
+                        {
+                          label: 'Week',
+                          value: week != null ? <Link to={viewerWeekDetailPath(runId, week)}>W{week}</Link> : 'No ordered-plan match'
+                        },
+                        { label: 'Planned category', value: planned?.category ?? 'No ordered-plan match' },
+                        { label: 'Planned tour', value: planned?.tour ?? 'No ordered-plan match' },
+                        { label: 'Planned template', value: planned?.templateId ?? 'No ordered-plan match' },
+                        {
+                          label: 'Publication detail',
+                          value: (
+                            <Link to={detailPath(mode, runId, snapshot.snapshot_sequence)}>
+                              Open {mode === 'ranking' ? 'ranking' : 'race'} publication detail
+                            </Link>
+                          )
+                        },
+                        {
+                          label: 'Planned event',
+                          value:
+                            sourceEventId && planned ? (
+                              <Link to={viewerPlannedEventPath(runId, sourceEventId)}>Open planned event</Link>
+                            ) : (
+                              'No ordered-plan match'
+                            )
+                        },
+                        {
+                          label: 'Tournament detail',
+                          value:
+                            sourceEventId && persisted ? (
+                              <Link to={viewerTournamentDetailPath(runId, sourceEventId)}>Open tournament detail</Link>
+                            ) : (
+                              'No persisted event record'
+                            )
+                        }
+                      ]}
+                    />
+                  </article>
                 </li>
               )
             })}

@@ -148,18 +148,68 @@ describe('ViewerRunSnapshotListPage', () => {
     expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
     expect(screen.getAllByText('viewer-run-1').length).toBeGreaterThan(0)
     expect(screen.getByText('Ranking publications')).toBeInTheDocument()
-    expect(await screen.findByText('WEEKLY_PUBLICATION')).toBeInTheDocument()
-    expect(screen.getByText('EVENT-1')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
+    expect((await screen.findAllByText('WEEKLY_PUBLICATION')).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('EVENT-1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('W3').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Platinum').length).toBeGreaterThan(0)
     expect(screen.getAllByText('World Tour').length).toBeGreaterThan(0)
-    expect(screen.getByRole('link', { name: /View ranking publication/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Open ranking publication detail/i })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-1/rankings/12'
     )
+    expect(screen.getByRole('link', { name: /Open planned event/i })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/calendar/EVENT-1'
+    )
+    expect(screen.getByRole('link', { name: /Open tournament detail/i })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/tournaments/EVENT-1'
+    )
+    expect(screen.getByRole('link', { name: 'W3' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/weeks/3')
     expect(screen.queryByText(/ranking-payload-should-not-render-on-list/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
     expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
+  })
+
+
+  it('keeps snapshot rows without source or ordered-plan matches on safe fallback text without broken source links', async () => {
+    api.listRankingSnapshots.mockResolvedValue({
+      run_id: 'viewer-run-1',
+      snapshots: [
+        {
+          snapshot_sequence: 14,
+          snapshot_kind: 'WEEKLY_PUBLICATION',
+          payload: { secret_debug_marker: 'no-source-payload-should-not-render-on-list' }
+        },
+        {
+          snapshot_sequence: 15,
+          snapshot_kind: 'WEEKLY_PUBLICATION',
+          source_event_id: 'EVENT-MISSING',
+          payload: { secret_debug_marker: 'unmatched-payload-should-not-render-on-list' }
+        }
+      ]
+    })
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings')
+
+    const noSourceCard = await screen.findByRole('article', { name: 'Ranking publication 14' })
+    expect(within(noSourceCard).getByText('No source event recorded')).toBeInTheDocument()
+    expect(within(noSourceCard).getAllByText('No ordered-plan match').length).toBeGreaterThan(0)
+    expect(within(noSourceCard).queryByRole('link', { name: /Open planned event/i })).not.toBeInTheDocument()
+    expect(within(noSourceCard).queryByRole('link', { name: /Open tournament detail/i })).not.toBeInTheDocument()
+    expect(within(noSourceCard).queryByRole('link', { name: /^W\d+$/ })).not.toBeInTheDocument()
+
+    const unmatchedCard = screen.getByRole('article', { name: 'Ranking publication 15' })
+    expect(within(unmatchedCard).getByText('EVENT-MISSING')).toBeInTheDocument()
+    expect(within(unmatchedCard).getAllByText('No ordered-plan match').length).toBeGreaterThan(0)
+    expect(within(unmatchedCard).getByText('No persisted event record')).toBeInTheDocument()
+    expect(within(unmatchedCard).queryByRole('link', { name: /Open planned event/i })).not.toBeInTheDocument()
+    expect(within(unmatchedCard).queryByRole('link', { name: /Open tournament detail/i })).not.toBeInTheDocument()
+    expect(within(unmatchedCard).queryByRole('link', { name: /^W\d+$/ })).not.toBeInTheDocument()
+    expect(screen.queryByText(/no-source-payload-should-not-render-on-list/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/unmatched-payload-should-not-render-on-list/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
   })
 
   it('renders the run-scoped Race to Finals page without primary raw payload content', async () => {
@@ -180,9 +230,19 @@ describe('ViewerRunSnapshotListPage', () => {
     expect(await screen.findByRole('heading', { name: 'Race to Finals' })).toBeInTheDocument()
     expect(screen.getAllByText('viewer-run-1').length).toBeGreaterThan(0)
     expect(screen.getByText('Race publications')).toBeInTheDocument()
-    expect(await screen.findByText('RACE_WEEKLY_PUBLICATION')).toBeInTheDocument()
-    expect(screen.getByText('EVENT-1')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /View race publication/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/race/5')
+    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
+    expect((await screen.findAllByText('RACE_WEEKLY_PUBLICATION')).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('EVENT-1').length).toBeGreaterThan(0)
+    expect(screen.getByRole('link', { name: /Open race publication detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/race/5')
+    expect(screen.getByRole('link', { name: /Open planned event/i })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/calendar/EVENT-1'
+    )
+    expect(screen.getByRole('link', { name: /Open tournament detail/i })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/tournaments/EVENT-1'
+    )
+    expect(screen.getByRole('link', { name: 'W3' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/weeks/3')
     expect(screen.queryByText(/race-payload-should-not-render-on-list/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
     expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
@@ -359,7 +419,7 @@ describe('ViewerRunSnapshotDetailPage', () => {
     expect(await screen.findByRole('heading', { name: 'Race to Finals' })).toBeInTheDocument()
     expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
     expect(screen.queryByRole('table', { name: 'Top 10 race preview table' })).not.toBeInTheDocument()
-    expect(screen.getByText('EVENT-1')).toBeInTheDocument()
+    expect(screen.getAllByText('EVENT-1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('W3').length).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: /Back to race publications/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/race')
     const technicalSection = screen.getByText('Show technical payload').closest('details')

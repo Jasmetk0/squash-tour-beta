@@ -12,6 +12,14 @@ import {
   listRunPlayers
 } from '../api/client'
 import { CurrentContextStrip, MetadataList, PageIntro, SectionCard } from '../components/RunScopedUi'
+import {
+  viewerCountriesPath,
+  viewerCountryProfilePath,
+  viewerPlayerProfilePath,
+  viewerPlayersPath,
+  viewerTournamentDetailPath,
+  viewerWeekDetailPath
+} from '../viewer/viewerRoutes'
 
 const PLAYER_SOURCE_OPTIONS = ['', 'rollover_carried', 'planner_generated', 'manual_override']
 const COUNTRY_SORT_OPTIONS = ['total_players_desc', 'avg_overall_desc', 'avg_age_asc', 'country_code_asc']
@@ -24,19 +32,12 @@ function displayFixed(value: number | null | undefined): string {
   return typeof value === 'number' ? value.toFixed(2) : '—'
 }
 
-function countryProfilePath(runId: string, countryCode: string): string {
-  return `/viewer/runs/${encodeURIComponent(runId)}/countries/${encodeURIComponent(countryCode)}`
-}
-
-function playerProfilePath(runId: string, playerId: string): string {
-  return `/viewer/runs/${encodeURIComponent(runId)}/players/${encodeURIComponent(playerId)}/career`
-}
 
 function countryCodeCell(countryCode: string | null | undefined, runId: string): JSX.Element | string {
   if (!countryCode) return '—'
   if (!runId) return countryCode
 
-  return <Link to={countryProfilePath(runId, countryCode)}>{countryCode}</Link>
+  return <Link to={viewerCountryProfilePath(runId, countryCode)}>{countryCode}</Link>
 }
 
 function playerProfileCell(
@@ -47,21 +48,14 @@ function playerProfileCell(
   if (!playerId) return playerName ?? '—'
 
   const label = playerName ? `${playerName} (${playerId})` : playerId
-  return <Link to={playerProfilePath(runId, playerId)}>{label}</Link>
+  return <Link to={viewerPlayerProfilePath(runId, playerId)}>{label}</Link>
 }
 
-function tournamentDetailPath(runId: string, eventId: string): string {
-  return `/viewer/runs/${encodeURIComponent(runId)}/tournaments/${encodeURIComponent(eventId)}`
-}
-
-function weekDetailPath(runId: string, week: number): string {
-  return `/viewer/runs/${encodeURIComponent(runId)}/weeks/${week}`
-}
 
 function weekCell(runId: string, week: number | null | undefined): JSX.Element | string {
   if (typeof week !== 'number') return '—'
 
-  return <Link to={weekDetailPath(runId, week)}>W{week}</Link>
+  return <Link to={viewerWeekDetailPath(runId, week)}>W{week}</Link>
 }
 
 function tournamentEventCell(
@@ -71,7 +65,7 @@ function tournamentEventCell(
 ): JSX.Element | string {
   if (!eventId) return eventName ?? '—'
 
-  return <Link to={tournamentDetailPath(runId, eventId)}>{eventName ?? eventId}</Link>
+  return <Link to={viewerTournamentDetailPath(runId, eventId)}>{eventName ?? eventId}</Link>
 }
 
 function hasPlayerProfileShape(value: unknown): value is {
@@ -256,7 +250,7 @@ export function ViewerRunPlayersPage(): JSX.Element {
                     <td>{player.quality_band ?? '—'}</td>
                     <td>{displayMetric(player.overall)}</td>
                     <td>
-                      <Link to={`/viewer/runs/${runId}/players/${player.player_id}/career`}>Open Player Profile</Link>
+                      <Link to={viewerPlayerProfilePath(runId, player.player_id)}>Open Player Profile</Link>
                     </td>
                   </tr>
                 ))}
@@ -354,8 +348,8 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
 
           <SectionCard title="Links">
             <p>
-              <Link to={`/viewer/runs/${runId}/players`}>Back to players</Link> ·{' '}
-              <Link to={countryProfilePath(runId, playerProfile.country_code)}>Country page</Link>
+              <Link to={viewerPlayersPath(runId)}>Back to players</Link> ·{' '}
+              <Link to={viewerCountryProfilePath(runId, playerProfile.country_code)}>Country page</Link>
             </p>
           </SectionCard>
         </>
@@ -565,7 +559,7 @@ export function ViewerRunCountriesPage(): JSX.Element {
                       carryover {nation.rollover_carried_count} · intake {nation.planner_generated_count} · manual {nation.manual_override_count}
                     </td>
                     <td>
-                      <Link to={countryProfilePath(runId, nation.country_code)}>Open country profile</Link>
+                      <Link to={viewerCountryProfilePath(runId, nation.country_code)}>Open country profile</Link>
                     </td>
                   </tr>
                 ))}
@@ -680,8 +674,8 @@ export function ViewerRunCountryDetailPage(): JSX.Element {
 
           <SectionCard title="Links">
             <p>
-              <Link to={`/viewer/runs/${runId}/countries`}>Back to countries</Link> ·{' '}
-              <Link to={`/viewer/runs/${runId}/players?country=${countryProfile.country_code}`}>Player list</Link>
+              <Link to={viewerCountriesPath(runId)}>Back to countries</Link> ·{' '}
+              <Link to={`${viewerPlayersPath(runId)}?country=${encodeURIComponent(countryProfile.country_code)}`}>Player list</Link>
             </p>
           </SectionCard>
         </>

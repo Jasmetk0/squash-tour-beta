@@ -27,6 +27,16 @@ import { RacePreviewTable } from '../viewer/RacePreviewTable'
 import { RankingPreviewTable } from '../viewer/RankingPreviewTable'
 import { parseRacePreviewPayload } from '../viewer/racePayload'
 import { parseRankingPreviewPayload } from '../viewer/rankingPayload'
+import {
+  viewerPlannedEventPath,
+  viewerRacePath,
+  viewerRaceSnapshotPath,
+  viewerRankingSnapshotPath,
+  viewerRankingsPath,
+  viewerSeasonCalendarPath,
+  viewerTournamentDetailPath,
+  viewerWeekDetailPath
+} from '../viewer/viewerRoutes'
 
 type ViewerSnapshotMode = 'ranking' | 'race'
 
@@ -108,11 +118,11 @@ function resolveWeek(plannedContext?: PlannedSnapshotContext, persistedEvent?: P
 }
 
 function detailPath(mode: ViewerSnapshotMode, runId: string, sequence: number): string {
-  return `/viewer/runs/${runId}/${getSnapshotCopy(mode).listPathSegment}/${sequence}`
+  return mode === 'ranking' ? viewerRankingSnapshotPath(runId, sequence) : viewerRaceSnapshotPath(runId, sequence)
 }
 
 function listPath(mode: ViewerSnapshotMode, runId: string): string {
-  return `/viewer/runs/${runId}/${getSnapshotCopy(mode).listPathSegment}`
+  return mode === 'ranking' ? viewerRankingsPath(runId) : viewerRacePath(runId)
 }
 
 export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }): JSX.Element {
@@ -343,19 +353,19 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
                   {snapshot.source_event_id && persisted ? (
                     <>
                       {' '}
-                      · <Link to={`/viewer/runs/${runId}/tournaments/${encodeURIComponent(snapshot.source_event_id)}`}>Source event</Link>
+                      · <Link to={viewerTournamentDetailPath(runId, snapshot.source_event_id)}>Source event</Link>
                     </>
                   ) : null}
                   {snapshot.source_event_id && planned ? (
                     <>
                       {' '}
-                      · <Link to={`/viewer/runs/${runId}/calendar/${encodeURIComponent(snapshot.source_event_id)}`}>Calendar event</Link>
+                      · <Link to={viewerPlannedEventPath(runId, snapshot.source_event_id)}>Calendar event</Link>
                     </>
                   ) : null}
                   {week != null ? (
                     <>
                       {' '}
-                      · <Link to={`/viewer/runs/${runId}/weeks/${week}`}>Week</Link>
+                      · <Link to={viewerWeekDetailPath(runId, week)}>Week</Link>
                     </>
                   ) : null}
                 </li>
@@ -487,7 +497,7 @@ export function ViewerRunSnapshotDetailPage({ mode }: { mode: ViewerSnapshotMode
                     label: 'Source event detail',
                     value:
                       sourceEventId && persisted ? (
-                        <Link to={`/viewer/runs/${runId}/tournaments/${encodeURIComponent(sourceEventId)}`}>Open source event</Link>
+                        <Link to={viewerTournamentDetailPath(runId, sourceEventId)}>Open source event</Link>
                       ) : (
                         'Source event detail unavailable.'
                       )
@@ -496,16 +506,16 @@ export function ViewerRunSnapshotDetailPage({ mode }: { mode: ViewerSnapshotMode
                     label: 'Planned calendar detail',
                     value:
                       sourceEventId && planned ? (
-                        <Link to={`/viewer/runs/${runId}/calendar/${encodeURIComponent(sourceEventId)}`}>Open planned event</Link>
+                        <Link to={viewerPlannedEventPath(runId, sourceEventId)}>Open planned event</Link>
                       ) : (
                         'No ordered-plan match for source event.'
                       )
                   },
                   {
                     label: 'Week detail',
-                    value: week != null ? <Link to={`/viewer/runs/${runId}/weeks/${week}`}>Open week W{week}</Link> : 'No week context available.'
+                    value: week != null ? <Link to={viewerWeekDetailPath(runId, week)}>Open week W{week}</Link> : 'No week context available.'
                   },
-                  { label: 'Season calendar', value: <Link to={`/viewer/runs/${runId}/calendar`}>Open season calendar</Link> }
+                  { label: 'Season calendar', value: <Link to={viewerSeasonCalendarPath(runId)}>Open season calendar</Link> }
                 ]}
               />
             </SectionCard>

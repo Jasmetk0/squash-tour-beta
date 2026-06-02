@@ -16,6 +16,18 @@ import {
 } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 import { parseTournamentResultPayload } from '../viewer/tournamentResultPayload'
+import {
+  viewerPlannedEventPath,
+  viewerPlayerProfilePath,
+  viewerRacePath,
+  viewerRaceSnapshotPath,
+  viewerRankingSnapshotPath,
+  viewerRankingsPath,
+  viewerSeasonCalendarPath,
+  viewerTournamentsPath,
+  viewerTournamentDetailPath,
+  viewerWeekDetailPath
+} from '../viewer/viewerRoutes'
 import type { TournamentResultSummary } from '../viewer/tournamentResultPayload'
 
 export type ViewerPlannedEvent = SeasonStateResponse['season_state']['ordered_events'][number]
@@ -61,8 +73,7 @@ function eventIsCompleted(completedEventIds: Set<string>, eventId: string): stri
 }
 
 function snapshotDetailPath(kind: 'ranking' | 'race', runId: string, snapshotSequence: number): string {
-  const section = kind === 'ranking' ? 'rankings' : 'race'
-  return `/viewer/runs/${runId}/${section}/${snapshotSequence}`
+  return kind === 'ranking' ? viewerRankingSnapshotPath(runId, snapshotSequence) : viewerRaceSnapshotPath(runId, snapshotSequence)
 }
 
 function snapshotsForEventIds<T extends RankingSnapshot | RaceSnapshot>(snapshots: T[], eventIds: Set<string>): T[] {
@@ -75,7 +86,7 @@ function tournamentChampionValue(summary: TournamentResultSummary, runId: string
   if (!champion || !label) return null
   if (!champion.playerId) return label
 
-  return <Link to={`/viewer/runs/${runId}/players/${encodeURIComponent(champion.playerId)}/career`}>{label}</Link>
+  return <Link to={viewerPlayerProfilePath(runId, champion.playerId)}>{label}</Link>
 }
 
 function tournamentMatchesValue(summary: TournamentResultSummary): string | number | null {
@@ -178,13 +189,13 @@ export function ViewerRunCalendarPage(): JSX.Element {
                     ]}
                   />
                   <p>
-                    <Link to={`/viewer/runs/${runId}/calendar/${encodeURIComponent(event.event_id)}`}>Open planned event</Link>
+                    <Link to={viewerPlannedEventPath(runId, event.event_id)}>Open planned event</Link>
                     {' · '}
-                    <Link to={`/viewer/runs/${runId}/weeks/${event.week}`}>Open week detail</Link>
+                    <Link to={viewerWeekDetailPath(runId, event.week)}>Open week detail</Link>
                     {hasEventRecord ? (
                       <>
                         {' · '}
-                        <Link to={`/viewer/runs/${runId}/tournaments/${encodeURIComponent(event.event_id)}`}>Open tournament detail</Link>
+                        <Link to={viewerTournamentDetailPath(runId, event.event_id)}>Open tournament detail</Link>
                       </>
                     ) : null}
                   </p>
@@ -259,17 +270,17 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
 
       <SectionCard title="Planned event links">
         <p>
-          <Link to={`/viewer/runs/${runId}/calendar`}>Back to season calendar</Link>
+          <Link to={viewerSeasonCalendarPath(runId)}>Back to season calendar</Link>
           {plannedEvent ? (
             <>
               {' · '}
-              <Link to={`/viewer/runs/${runId}/weeks/${plannedEvent.week}`}>Open week detail</Link>
+              <Link to={viewerWeekDetailPath(runId, plannedEvent.week)}>Open week detail</Link>
             </>
           ) : null}
           {hasEventRecord ? (
             <>
               {' · '}
-              <Link to={`/viewer/runs/${runId}/tournaments/${encodeURIComponent(eventId)}`}>Open tournament detail</Link>
+              <Link to={viewerTournamentDetailPath(runId, eventId)}>Open tournament detail</Link>
             </>
           ) : null}
         </p>
@@ -444,11 +455,11 @@ export function ViewerRunWeekPage(): JSX.Element {
                     ]}
                   />
                   <p>
-                    <Link to={`/viewer/runs/${runId}/calendar/${encodeURIComponent(event.event_id)}`}>Open planned event</Link>
+                    <Link to={viewerPlannedEventPath(runId, event.event_id)}>Open planned event</Link>
                     {hasEventRecord ? (
                       <>
                         {' · '}
-                        <Link to={`/viewer/runs/${runId}/tournaments/${encodeURIComponent(event.event_id)}`}>Open tournament detail</Link>
+                        <Link to={viewerTournamentDetailPath(runId, event.event_id)}>Open tournament detail</Link>
                       </>
                     ) : null}
                   </p>
@@ -515,13 +526,13 @@ export function ViewerRunWeekPage(): JSX.Element {
 
       <SectionCard title="Links">
         <p>
-          <Link to={`/viewer/runs/${runId}/calendar`}>Back to season calendar</Link>
+          <Link to={viewerSeasonCalendarPath(runId)}>Back to season calendar</Link>
           {' · '}
-          <Link to={`/viewer/runs/${runId}/tournaments`}>Open tournaments</Link>
+          <Link to={viewerTournamentsPath(runId)}>Open tournaments</Link>
           {' · '}
-          <Link to={`/viewer/runs/${runId}/rankings`}>Open rankings</Link>
+          <Link to={viewerRankingsPath(runId)}>Open rankings</Link>
           {' · '}
-          <Link to={`/viewer/runs/${runId}/race`}>Open race</Link>
+          <Link to={viewerRacePath(runId)}>Open race</Link>
         </p>
       </SectionCard>
     </section>

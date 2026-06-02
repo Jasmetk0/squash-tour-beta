@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 
 import type { RankingPreviewRow } from './rankingPayload'
+import { viewerCountryProfilePath, viewerPlayerProfilePath } from './viewerRoutes'
 
 function displayValue(value: number | string | null): string {
   return value === null ? '—' : String(value)
@@ -26,14 +27,14 @@ function playerCell(row: RankingPreviewRow, runId?: string): JSX.Element | strin
   const label = playerLabel(row)
   if (!runId || !row.playerId) return label
 
-  return <Link to={`/viewer/runs/${encodeURIComponent(runId)}/players/${encodeURIComponent(row.playerId)}/career`}>{label}</Link>
+  return <Link to={viewerPlayerProfilePath(runId, row.playerId)}>{label}</Link>
 }
 
 function countryCell(row: RankingPreviewRow, runId?: string): JSX.Element | string {
   if (!row.country) return '—'
   if (!runId) return row.country
 
-  return <Link to={`/viewer/runs/${encodeURIComponent(runId)}/countries/${encodeURIComponent(row.country)}`}>{row.country}</Link>
+  return <Link to={viewerCountryProfilePath(runId, row.country)}>{row.country}</Link>
 }
 
 export function RankingPreviewTable({ rows, ariaLabel = 'Top 10 ranking preview table', runId }: RankingPreviewTableProps): JSX.Element {

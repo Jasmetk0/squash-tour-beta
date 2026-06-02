@@ -578,3 +578,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Top-level Viewer landing/hub pages now link existing sample players, countries, events, weeks, rankings, and race metadata to run-scoped detail pages when IDs are available.
 - Missing IDs remain plain text.
 - No backend/Admin/parser/result-preview behavior changed.
+
+## Viewer Phase 3V — History / Storyline links polish
+
+- Viewer History/Storyline sections now link existing activity events, weeks, and snapshot metadata to run-scoped detail pages when IDs are available.
+- Missing/unmatched IDs remain plain text.
+- No backend/Admin/parser/result-preview behavior changed.

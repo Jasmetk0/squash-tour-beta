@@ -484,7 +484,9 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
     expect(screen.getByRole('link', { name: '#3' })).toHaveAttribute('href', '/viewer/runs/run-a/race/3')
     expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
-    expect(screen.getByText(/1 activity items · Latest: E1 completed/)).toBeInTheDocument()
+    expect(screen.getByRole('main')).toHaveTextContent('1 activity items · Latest: E1 completed')
+    expect(screen.getAllByRole('link', { name: 'E1' }).some((link) => link.getAttribute('href') === '/viewer/runs/run-a/calendar/E1')).toBe(true)
+    expect(screen.getByRole('link', { name: 'Open active run history' })).toHaveAttribute('href', '/viewer/runs/run-a/history')
     expect(screen.getAllByText('This preview is not connected for this data shape yet.').length).toBeGreaterThan(0)
   })
 
@@ -735,13 +737,25 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('shows top-level History metadata without redirecting to the run-scoped page', async () => {
+  it('links top-level History activity, week, tournament, and snapshot metadata safely', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    api.getRun.mockResolvedValue({
+      run: { run_id: 'run-a', season: 2030, seed: 99, next_event_index: 1, total_events: 3, completed_event_ids: ['E1'] },
+      season_state: {
+        season: 2030,
+        next_event_index: 1,
+        completed_event_ids: ['E1'],
+        ordered_events: [
+          { event_id: 'E1', season: 2030, week: 2, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-A' },
+          { event_id: 'E2', season: 2030, week: 5, tour: 'WORLD', category: 'DIAMOND', template_id: 'TEMP-B' }
+        ]
+      }
+    })
     api.getRunActivity.mockResolvedValue({
       run_id: 'run-a',
       items: [
         { kind: 'event', sequence: 1, label: 'E1 completed', season: 2030, week: 2, event_id: 'E1', snapshot_sequence: null, source_event_id: null, related_run_id: null },
-        { kind: 'ranking_snapshot', sequence: 2, label: 'Ranking snapshot stored', season: 2030, week: 2, event_id: null, snapshot_sequence: 4, source_event_id: 'E1', related_run_id: null }
+        { kind: 'ranking_snapshot', sequence: 2, label: 'Ranking snapshot stored', season: 2030, week: 2, event_id: 'E1', snapshot_sequence: 4, source_event_id: 'E1', related_run_id: null }
       ]
     })
     api.getRunStatusSummary.mockResolvedValue({
@@ -766,13 +780,34 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(panel).toHaveTextContent('run-a')
     expect(panel).toHaveTextContent('Activity item count')
     expect(panel).toHaveTextContent('2')
-    expect(panel).toHaveTextContent('Ranking snapshot stored · Season 2030 · W2')
+    expect(panel).toHaveTextContent('Ranking snapshot stored · Season 2030')
+    expect(within(panel).getAllByRole('link', { name: 'E1' }).some((link) => link.getAttribute('href') === '/viewer/runs/run-a/calendar/E1')).toBe(true)
+    expect(within(panel).getAllByRole('link', { name: 'W2' }).some((link) => link.getAttribute('href') === '/viewer/runs/run-a/weeks/2')).toBe(true)
+    expect(within(panel).getByRole('link', { name: 'Tournament detail E1' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments/E1')
+    expect(within(panel).getByRole('link', { name: 'Ranking snapshot #4' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings/4')
+    expect(within(panel).getByRole('link', { name: '#4' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings/4')
+    expect(within(panel).getByRole('link', { name: '#5' })).toHaveAttribute('href', '/viewer/runs/run-a/race/5')
     expect(panel).toHaveTextContent('Event count')
     expect(panel).toHaveTextContent('1')
-    expect(panel).toHaveTextContent('Ranking snapshot count')
-    expect(panel).toHaveTextContent('Race snapshot count')
     expect(screen.getByRole('link', { name: 'Open active run history' })).toHaveAttribute('href', '/viewer/runs/run-a/history')
     expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('keeps unmatched History activity event IDs as plain text without broken detail links', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    api.getRunActivity.mockResolvedValue({
+      run_id: 'run-a',
+      items: [{ kind: 'event', sequence: 1, label: 'Missing event noted', season: 2030, week: 7, event_id: 'MISSING-EVENT', snapshot_sequence: null, source_event_id: null, related_run_id: null }]
+    })
+
+    renderAppAt('/viewer/history')
+
+    const panel = await screen.findByLabelText('History active run metadata summary')
+    await waitFor(() => expect(panel).toHaveTextContent('Missing event noted · Season 2030 · W7 · MISSING-EVENT'))
+    expect(within(panel).queryByRole('link', { name: 'MISSING-EVENT' })).not.toBeInTheDocument()
+    expect(within(panel).queryByRole('link', { name: 'W7' })).not.toBeInTheDocument()
+    expect(within(panel).queryByRole('link', { name: 'Tournament detail MISSING-EVENT' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

@@ -30,7 +30,8 @@ import {
   viewerRankingSnapshotPath,
   viewerSeasonCalendarPath,
   viewerWeekDetailPath,
-  viewerTournamentsPath
+  viewerTournamentsPath,
+  viewerTournamentDetailPath
 } from '../viewer/viewerRoutes'
 import type { EventRecord, FinalsSummaryResponse, RankingSnapshot, RaceSnapshot, RunActivityItem, RunNationSummaryItem, RunPlayerListItem, SeasonStateResponse } from '../api/types'
 
@@ -398,12 +399,44 @@ function formatSource(sourceType: string | undefined, parentRunId: string | null
   return parentRunId ? `${sourceType} from ${parentRunId}` : sourceType
 }
 
-function formatActivityItem(item: RunActivityItem): string {
-  const parts = [item.label]
+type ActivityLinkContext = {
+  plannedEvents: Map<string, OrderedSeasonEvent>
+  persistedEvents: Map<string, EventRecord>
+}
+
+function renderActivityItem(item: RunActivityItem, runId: string, context: ActivityLinkContext): ReactNode {
+  const eventId = item.event_id
+  const plannedEvent = eventId ? context.plannedEvents.get(eventId) : null
+  const persistedEvent = eventId ? context.persistedEvents.get(eventId) : null
+  const resolvedWeek = plannedEvent?.week ?? persistedEvent?.week ?? null
+
+  const parts: ReactNode[] = [item.label]
   if (item.season != null) parts.push(`Season ${item.season}`)
-  if (item.week != null) parts.push(`W${item.week}`)
-  if (item.event_id) parts.push(item.event_id)
-  return parts.join(' · ')
+  if (resolvedWeek != null) {
+    parts.push(renderLinkedWeek(runId, resolvedWeek))
+  } else if (item.week != null) {
+    parts.push(`W${item.week}`)
+  }
+  if (eventId) {
+    parts.push(plannedEvent ? renderLinkedEventId(runId, eventId) : eventId)
+    if (persistedEvent) {
+      parts.push(<Link to={viewerTournamentDetailPath(runId, eventId)}>Tournament detail {eventId}</Link>)
+    }
+  }
+  if (item.snapshot_sequence != null) {
+    if (item.kind === 'ranking_snapshot') {
+      parts.push(<Link to={viewerRankingSnapshotPath(runId, item.snapshot_sequence)}>Ranking snapshot #{item.snapshot_sequence}</Link>)
+    } else if (item.kind === 'race_snapshot') {
+      parts.push(<Link to={viewerRaceSnapshotPath(runId, item.snapshot_sequence)}>Race snapshot #{item.snapshot_sequence}</Link>)
+    }
+  }
+
+  return parts.map((part, index) => (
+    <span key={index}>
+      {index > 0 ? ' · ' : null}
+      {part}
+    </span>
+  ))
 }
 
 export function ViewerHomePage(): JSX.Element {
@@ -433,6 +466,10 @@ export function ViewerHomePage(): JSX.Element {
   const latestRaceSnapshot = latestSnapshot(raceSnapshotsQuery.data?.snapshots ?? [])
   const activityItems = activityQuery.data?.items ?? []
   const latestActivityItem = activityItems[0] ?? null
+  const activityLinkContext = useMemo<ActivityLinkContext>(() => ({
+    plannedEvents: buildPlannedEventMap(runQuery.data),
+    persistedEvents: new Map((eventsQuery.data?.events ?? []).map((event) => [event.event_id, event]))
+  }), [eventsQuery.data?.events, runQuery.data])
 
   return (
     <section className="panel viewer-home viewer-home--msa">
@@ -534,7 +571,7 @@ export function ViewerHomePage(): JSX.Element {
 
         <ViewerSectionCard kicker="Read-only storylines" title="Storylines">
           {activeRunId && latestActivityItem ? (
-            <p>{activityItems.length} activity items · Latest: {formatActivityItem(latestActivityItem)}</p>
+            <p>{activityItems.length} activity items · Latest: {renderActivityItem(latestActivityItem, activeRunId, activityLinkContext)}</p>
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           )}
@@ -960,6 +997,7 @@ function selectLatestActivityItem(items: RunActivityItem[]): RunActivityItem | n
 export function ViewerHistoryPage(): JSX.Element {
   const activeRunId = useActiveViewerRunId()
   const activityQuery = useQuery({ queryKey: ['viewer-history-activity', activeRunId], queryFn: () => getRunActivity(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const runQuery = useQuery({ queryKey: ['viewer-history-run', activeRunId], queryFn: () => getRun(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
   const statusQuery = useQuery({ queryKey: ['viewer-history-run-status', activeRunId], queryFn: () => getRunStatusSummary(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
   const eventsQuery = useQuery({ queryKey: ['viewer-history-events', activeRunId], queryFn: () => listEvents(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
   const rankingSnapshotsQuery = useQuery({ queryKey: ['viewer-history-ranking-snapshots', activeRunId], queryFn: () => listRankingSnapshots(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
@@ -978,6 +1016,12 @@ export function ViewerHistoryPage(): JSX.Element {
   const eventCount = eventsQuery.data?.events.length ?? statusQuery.data?.history_counts.events ?? null
   const rankingSnapshotCount = rankingSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.ranking_snapshots ?? null
   const raceSnapshotCount = raceSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.race_snapshots ?? null
+  const latestRankingSnapshot = latestSnapshot(rankingSnapshotsQuery.data?.snapshots ?? [])
+  const latestRaceSnapshot = latestSnapshot(raceSnapshotsQuery.data?.snapshots ?? [])
+  const activityLinkContext: ActivityLinkContext = {
+    plannedEvents: buildPlannedEventMap(runQuery.data),
+    persistedEvents: new Map((eventsQuery.data?.events ?? []).map((event) => [event.event_id, event]))
+  }
   const hasAnyMetadata = activityItems.length > 0 || (eventCount ?? 0) > 0 || (rankingSnapshotCount ?? 0) > 0 || (raceSnapshotCount ?? 0) > 0
 
   return (
@@ -985,17 +1029,19 @@ export function ViewerHistoryPage(): JSX.Element {
       <article className="viewer-active-run-card" aria-label="History active run metadata summary">
         <span className="eyebrow">Active Viewer run</span>
         <h3>History summary</h3>
-        {activityQuery.isLoading || statusQuery.isLoading || eventsQuery.isLoading || rankingSnapshotsQuery.isLoading || raceSnapshotsQuery.isLoading ? <p className="status">Loading active run history metadata…</p> : null}
-        {activityQuery.isError || statusQuery.isError || eventsQuery.isError || rankingSnapshotsQuery.isError || raceSnapshotsQuery.isError ? <ViewerEmptyState>Some active run history metadata is temporarily unavailable.</ViewerEmptyState> : null}
+        {activityQuery.isLoading || runQuery.isLoading || statusQuery.isLoading || eventsQuery.isLoading || rankingSnapshotsQuery.isLoading || raceSnapshotsQuery.isLoading ? <p className="status">Loading active run history metadata…</p> : null}
+        {activityQuery.isError || runQuery.isError || statusQuery.isError || eventsQuery.isError || rankingSnapshotsQuery.isError || raceSnapshotsQuery.isError ? <ViewerEmptyState>Some active run history metadata is temporarily unavailable.</ViewerEmptyState> : null}
         <dl className="metadata-list">
           <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
           <div><dt>Activity item count</dt><dd>{activityQuery.isLoading ? 'Loading…' : activityItems.length}</dd></div>
-          <div><dt>Latest activity item</dt><dd>{latestActivity ? formatActivityItem(latestActivity) : '—'}</dd></div>
+          <div><dt>Latest activity item</dt><dd>{latestActivity ? renderActivityItem(latestActivity, activeRunId, activityLinkContext) : '—'}</dd></div>
           <div><dt>Event count</dt><dd>{eventsQuery.isLoading && eventCount == null ? 'Loading…' : eventCount ?? '—'}</dd></div>
           <div><dt>Ranking snapshot count</dt><dd>{rankingSnapshotsQuery.isLoading && rankingSnapshotCount == null ? 'Loading…' : rankingSnapshotCount ?? '—'}</dd></div>
+          <div><dt>Latest ranking snapshot sequence</dt><dd>{latestRankingSnapshot ? <Link to={viewerRankingSnapshotPath(activeRunId, latestRankingSnapshot.snapshot_sequence)}>#{latestRankingSnapshot.snapshot_sequence}</Link> : '—'}</dd></div>
           <div><dt>Race snapshot count</dt><dd>{raceSnapshotsQuery.isLoading && raceSnapshotCount == null ? 'Loading…' : raceSnapshotCount ?? '—'}</dd></div>
+          <div><dt>Latest race snapshot sequence</dt><dd>{latestRaceSnapshot ? <Link to={viewerRaceSnapshotPath(activeRunId, latestRaceSnapshot.snapshot_sequence)}>#{latestRaceSnapshot.snapshot_sequence}</Link> : '—'}</dd></div>
         </dl>
-        {!activityQuery.isLoading && !statusQuery.isLoading && !eventsQuery.isLoading && !rankingSnapshotsQuery.isLoading && !raceSnapshotsQuery.isLoading && !hasAnyMetadata ? (
+        {!activityQuery.isLoading && !runQuery.isLoading && !statusQuery.isLoading && !eventsQuery.isLoading && !rankingSnapshotsQuery.isLoading && !raceSnapshotsQuery.isLoading && !hasAnyMetadata ? (
           <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
         ) : null}
         <p className="viewer-active-run-actions">

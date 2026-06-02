@@ -14,6 +14,9 @@ import {
 const api = vi.hoisted(() => ({
   listRunPlayers: vi.fn(),
   getRunPlayerDetail: vi.fn(),
+  getRunPlayerCareerHistory: vi.fn(),
+  getRunPlayerCareerPerformance: vi.fn(),
+  getRunPlayerTournamentResults: vi.fn(),
   listRunNations: vi.fn(),
   getRunNationDetail: vi.fn()
 }))
@@ -149,6 +152,99 @@ function mockPlayerDetail(): void {
     talent_sequence: 1,
     secret_debug_marker: 'player-detail-hidden-payload'
   })
+  api.getRunPlayerCareerHistory.mockResolvedValue({
+    requested_run_id: 'viewer-run-2c',
+    player_id: 'EGY-0001',
+    player_name: 'Ali A',
+    country_code: 'EGY',
+    entries: [
+      {
+        run_id: 'viewer-run-2c',
+        season: 2027,
+        age: 20,
+        overall: 67,
+        technique: 70,
+        movement: 68,
+        physical: 66,
+        mental: 65,
+        source_type: 'planner_generated',
+        quality_band: 'elite_talent',
+        is_top_band: true,
+        origin_source_type: 'planner_generated',
+        origin_quality_band: 'elite_talent',
+        origin_override_id: null,
+        origin_season: 2027
+      }
+    ]
+  })
+  api.getRunPlayerCareerPerformance.mockResolvedValue({
+    requested_run_id: 'viewer-run-2c',
+    player_id: 'EGY-0001',
+    player_name: 'Ali A',
+    country_code: 'EGY',
+    entries: [
+      {
+        run_id: 'viewer-run-2c',
+        season: 2027,
+        ranking_position: 12,
+        race_position: 8,
+        tournaments_played: 14,
+        titles: 1,
+        finals: 2,
+        semifinals: 3,
+        quarterfinals: 5,
+        wins: 28,
+        losses: 11
+      }
+    ]
+  })
+  api.getRunPlayerTournamentResults.mockResolvedValue({
+    requested_run_id: 'viewer-run-2c',
+    player_id: 'EGY-0001',
+    player_name: 'Ali A',
+    country_code: 'EGY',
+    entries: [
+      {
+        run_id: 'viewer-run-2c',
+        season: 2027,
+        week: 7,
+        event_sequence: 1,
+        event_id: 'event-cairo-2027',
+        event_name: 'Cairo Open',
+        event_category: 'gold',
+        template_id: 'gold_template',
+        finish: 'Final',
+        is_title: false,
+        wins: 4,
+        losses: 1,
+        ranking_points_awarded: 700
+      }
+    ]
+  })
+}
+
+function mockEmptyPlayerCareerData(): void {
+  api.getRunPlayerCareerHistory.mockResolvedValue({
+    requested_run_id: 'viewer-run-2c',
+    player_id: 'EGY-0001',
+    player_name: 'Ali A',
+    country_code: 'EGY',
+    entries: []
+  })
+  api.getRunPlayerCareerPerformance.mockResolvedValue({
+    requested_run_id: 'viewer-run-2c',
+    player_id: 'EGY-0001',
+    player_name: 'Ali A',
+    country_code: 'EGY',
+    entries: []
+  })
+  api.getRunPlayerTournamentResults.mockResolvedValue({
+    requested_run_id: 'viewer-run-2c',
+    player_id: 'EGY-0001',
+    player_name: 'Ali A',
+    country_code: 'EGY',
+    entries: []
+  })
 }
 
 function mockCountries(): void {
@@ -261,9 +357,13 @@ describe('ViewerRunPlayerCareerPage', () => {
     expect(screen.getByText('yes')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Back to players/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/players')
     expect(screen.getByRole('link', { name: /Country page/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/countries/EGY')
-    expect(screen.queryByText(/titles/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/ranking/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/win-loss|wins|losses|elo|tournament wins|h2h/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Season Timeline' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Tournament History' })).toBeInTheDocument()
+    expect(screen.getByText('Cairo Open')).toBeInTheDocument()
+    ;['12', '8', '14', '1', '28', '11', '7', '4', '700'].forEach((value) =>
+      expect(screen.getAllByText(value).length).toBeGreaterThan(0)
+    )
+    expect(screen.queryByText(/world champion|grand slam|career high no\. 1|h2h|elo/i)).not.toBeInTheDocument()
     const technicalSection = screen.getByText('Show technical player data').closest('details')
     expect(technicalSection).not.toHaveAttribute('open')
     expect(screen.getByText(/player-detail-hidden-payload/i)).not.toBeVisible()
@@ -272,15 +372,28 @@ describe('ViewerRunPlayerCareerPage', () => {
     expectNoForbiddenViewerActions()
   })
 
+  it('shows deferred previews when career, performance, and result entries are empty', async () => {
+    mockEmptyPlayerCareerData()
+
+    renderViewerRoute('/viewer/runs/viewer-run-2c/players/EGY-0001/career', <ViewerRunPlayerCareerPage />, '/viewer/runs/:runId/players/:playerId/career')
+
+    expect(await screen.findByRole('heading', { name: 'Player Profile' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Season Timeline' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Tournament History' })).toBeInTheDocument()
+    expect(screen.getAllByText('This preview is not connected for this data shape yet.').length).toBeGreaterThanOrEqual(2)
+    expectNoForbiddenViewerActions()
+  })
+
   it('shows deferred preview when player detail data is missing', async () => {
     api.getRunPlayerDetail.mockResolvedValue(null)
+    mockEmptyPlayerCareerData()
 
     renderViewerRoute('/viewer/runs/viewer-run-2c/players/MISSING/career', <ViewerRunPlayerCareerPage />, '/viewer/runs/:runId/players/:playerId/career')
 
     expect(await screen.findByRole('heading', { name: 'Player Profile' })).toBeInTheDocument()
-    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
+    expect((await screen.findAllByText('This preview is not connected for this data shape yet.')).length).toBeGreaterThan(0)
     expect(screen.queryByText('Ali A')).not.toBeInTheDocument()
-    expect(screen.queryByText(/titles|ranking|elo|h2h/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/world champion|grand slam|career high no\. 1|elo|h2h/i)).not.toBeInTheDocument()
     expect(screen.queryByText('Show technical player data')).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })

@@ -35,7 +35,7 @@ import {
   viewerTournamentsPath,
   viewerTournamentDetailPath
 } from '../viewer/viewerRoutes'
-import type { EventRecord, FinalsSummaryResponse, RankingSnapshot, RaceSnapshot, RunActivityItem, RunNationSummaryItem, RunPlayerListItem, SeasonStateResponse } from '../api/types'
+import type { EventRecord, FinalsSummaryResponse, RankingSnapshot, RaceSnapshot, RunActivityItem, RunNationSummaryItem, RunPlayerListItem, RunsIndexResponse, SeasonStateResponse } from '../api/types'
 
 export function LandingPage(): JSX.Element {
   return (
@@ -238,6 +238,108 @@ function useActiveViewerRunId(): string | null {
   return activeRunId
 }
 
+
+
+type ViewerRunListItem = RunsIndexResponse['runs'][number] & Record<string, unknown>
+
+type ViewerRunMetadataField = {
+  label: string
+  value: ReactNode
+}
+
+function hasSafeMetadataValue(value: unknown): boolean {
+  return value !== null && value !== undefined && value !== ''
+}
+
+function optionalRunField(run: ViewerRunListItem, key: string): unknown {
+  return run[key]
+}
+
+function viewerRunMetadataFields(run: ViewerRunListItem): ViewerRunMetadataField[] {
+  const fields: ViewerRunMetadataField[] = []
+  const progress = run.progress
+  const parentRunId = optionalRunField(run, 'parent_run_id')
+  const sourceType = optionalRunField(run, 'source_type')
+  const createdAt = optionalRunField(run, 'created_at') ?? optionalRunField(run, 'created')
+  const updatedAt = optionalRunField(run, 'updated_at') ?? optionalRunField(run, 'updated')
+
+  if (hasSafeMetadataValue(run.run_id)) fields.push({ label: 'Run id', value: run.run_id })
+  if (hasSafeMetadataValue(run.season)) fields.push({ label: 'Season', value: run.season })
+  if (hasSafeMetadataValue(run.seed)) fields.push({ label: 'Seed', value: run.seed })
+  if (hasSafeMetadataValue(progress?.next_event_index)) fields.push({ label: 'Next event index', value: progress.next_event_index })
+  if (hasSafeMetadataValue(progress?.total_events)) fields.push({ label: 'Total events', value: progress.total_events })
+  if (hasSafeMetadataValue(progress?.completed_event_count)) fields.push({ label: 'Completed event count', value: progress.completed_event_count })
+  if (hasSafeMetadataValue(sourceType)) fields.push({ label: 'Source', value: String(sourceType) })
+  if (hasSafeMetadataValue(parentRunId)) fields.push({ label: 'Parent run', value: String(parentRunId) })
+  if (hasSafeMetadataValue(createdAt)) fields.push({ label: 'Created', value: String(createdAt) })
+  if (hasSafeMetadataValue(updatedAt)) fields.push({ label: 'Updated', value: String(updatedAt) })
+
+  return fields
+}
+
+function viewerRunBrowserLinks(runId: string): Array<{ label: string; to: string }> {
+  return [
+    { label: 'Open calendar', to: viewerSeasonCalendarPath(runId) },
+    { label: 'Open rankings', to: viewerRankingsPath(runId) },
+    { label: 'Open race', to: viewerRacePath(runId) },
+    { label: 'Open tournaments', to: viewerTournamentsPath(runId) },
+    { label: 'Open players', to: viewerPlayersPath(runId) },
+    { label: 'Open countries', to: viewerCountriesPath(runId) },
+    { label: 'Open history', to: viewerHistoryPath(runId) },
+    { label: 'Open finals', to: viewerFinalsPath(runId) }
+  ]
+}
+
+export function ViewerRunBrowserPage(): JSX.Element {
+  const activeRunId = useActiveViewerRunId()
+  const runsQuery = useQuery({ queryKey: ['viewer-run-selector-runs'], queryFn: listRuns, retry: false })
+  const runs = (runsQuery.data?.runs ?? []) as ViewerRunListItem[]
+
+  return (
+    <ViewerShellPage
+      title="Run Browser"
+      kicker="Read-only Viewer runs"
+      description="Browse available generated runs and open run-scoped Viewer pages using existing run list metadata only."
+    >
+      <ViewerRunSelector />
+
+      <section className="viewer-active-run-panel" aria-label="Run Browser active run">
+        <span className="eyebrow">Active run</span>
+        <h3>Active run</h3>
+        {activeRunId ? (
+          <p className="status">Current active Viewer run id: <strong>{activeRunId}</strong></p>
+        ) : (
+          <ViewerEmptyState>No active Viewer run selected.</ViewerEmptyState>
+        )}
+      </section>
+
+      <section className="viewer-active-run-card" aria-label="Available runs">
+        <span className="eyebrow">Run Browser</span>
+        <h3>Available runs</h3>
+        {runsQuery.isLoading ? <p className="status">Loading available runs…</p> : null}
+        {runsQuery.isError ? <ViewerEmptyState>Run metadata is temporarily unavailable.</ViewerEmptyState> : null}
+        {!runsQuery.isLoading && !runsQuery.isError && runs.length === 0 ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
+        {!runsQuery.isLoading && !runsQuery.isError && runs.length > 0 ? (
+          <div className="viewer-run-browser-list">
+            {runs.map((run) => {
+              const fields = viewerRunMetadataFields(run)
+              return (
+                <article className="viewer-active-run-card" key={run.run_id} aria-label={`Run ${run.run_id}`}>
+                  <h4>{run.run_id}</h4>
+                  <ViewerMetadataList ariaLabel={`Run ${run.run_id} metadata`} items={fields} />
+                  <div className="viewer-run-browser-links" aria-label={`Run ${run.run_id} links`}>
+                    <h5>Links</h5>
+                    <ViewerActiveRunLinks layout="grid" links={viewerRunBrowserLinks(run.run_id)} />
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        ) : null}
+      </section>
+    </ViewerShellPage>
+  )
+}
 
 const activeRunLinks = [
   { title: 'Active Run Rankings', href: (runId: string) => viewerRankingsPath(runId) },

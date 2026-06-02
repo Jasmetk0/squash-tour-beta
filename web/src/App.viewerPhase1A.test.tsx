@@ -216,6 +216,109 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
   })
 
+  it('renders the Viewer Run Browser with available run metadata and safe links', async () => {
+    api.listRuns.mockResolvedValue({
+      runs: [
+        {
+          run_id: 'browser-run-a',
+          season: 2032,
+          seed: 21,
+          progress: { next_event_index: 2, total_events: 9, completed_event_count: 2 },
+          source_type: 'fresh_seed',
+          parent_run_id: null,
+          child_run_count: 0,
+          created_at: '2032-01-01T00:00:00Z',
+          updated_at: '2032-01-02T00:00:00Z',
+          payload: { hidden: 'raw payload should not render' }
+        },
+        {
+          run_id: 'browser-run-b',
+          season: 2033,
+          seed: 34,
+          progress: { next_event_index: 4, total_events: 12, completed_event_count: 4 },
+          source_type: 'rollover_bootstrap',
+          parent_run_id: 'browser-run-a',
+          child_run_count: 0
+        }
+      ]
+    })
+
+    renderAppAt('/viewer/runs')
+
+    expect(await screen.findByRole('heading', { name: 'Run Browser', level: 2 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Available runs' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Active run' })).toBeInTheDocument()
+
+    const runCard = await screen.findByLabelText('Run browser-run-a')
+    expect(runCard).toHaveTextContent('browser-run-a')
+    expect(runCard).toHaveTextContent('Season')
+    expect(runCard).toHaveTextContent('2032')
+    expect(runCard).toHaveTextContent('Seed')
+    expect(runCard).toHaveTextContent('21')
+    expect(runCard).toHaveTextContent('Next event index')
+    expect(runCard).toHaveTextContent('2')
+    expect(runCard).toHaveTextContent('Total events')
+    expect(runCard).toHaveTextContent('9')
+    expect(runCard).toHaveTextContent('Completed event count')
+    expect(runCard).toHaveTextContent('Created')
+    expect(runCard).toHaveTextContent('2032-01-01T00:00:00Z')
+    expect(runCard).toHaveTextContent('Updated')
+    expect(runCard).toHaveTextContent('2032-01-02T00:00:00Z')
+
+    expect(screen.getByLabelText('Run browser-run-b')).toHaveTextContent('Parent run')
+    expect(screen.getByLabelText('Run browser-run-b')).toHaveTextContent('browser-run-a')
+
+    const expectedLinks = [
+      ['Open calendar', '/viewer/runs/browser-run-a/calendar'],
+      ['Open rankings', '/viewer/runs/browser-run-a/rankings'],
+      ['Open race', '/viewer/runs/browser-run-a/race'],
+      ['Open tournaments', '/viewer/runs/browser-run-a/tournaments'],
+      ['Open players', '/viewer/runs/browser-run-a/players'],
+      ['Open countries', '/viewer/runs/browser-run-a/countries'],
+      ['Open history', '/viewer/runs/browser-run-a/history'],
+      ['Open finals', '/viewer/runs/browser-run-a/finals']
+    ]
+    for (const [name, href] of expectedLinks) {
+      expect(within(runCard).getByRole('link', { name })).toHaveAttribute('href', href)
+    }
+    expect(screen.queryByText('raw payload should not render')).not.toBeInTheDocument()
+    expect(screen.queryByText(/hidden/)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows active Viewer run status on the Run Browser when local storage is set', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'browser-run-active')
+    api.listRuns.mockResolvedValue({
+      runs: [
+        { run_id: 'browser-run-active', season: 2034, seed: 55, progress: { next_event_index: 1, total_events: 6, completed_event_count: 1 }, source_type: 'fresh_seed', parent_run_id: null, child_run_count: 0 }
+      ]
+    })
+
+    renderAppAt('/viewer/runs')
+
+    const activeRunPanel = await screen.findByLabelText('Run Browser active run')
+    expect(activeRunPanel).toHaveTextContent('Current active Viewer run id: browser-run-active')
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows the no-data state when the Run Browser has no runs', async () => {
+    api.listRuns.mockResolvedValue({ runs: [] })
+
+    renderAppAt('/viewer/runs')
+
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows a temporary unavailable state when the Run Browser cannot load run metadata', async () => {
+    api.listRuns.mockRejectedValue(new Error('runs unavailable'))
+
+    renderAppAt('/viewer/runs')
+
+    expect(await screen.findByText('Run metadata is temporarily unavailable.')).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
   it('updates and persists local Viewer context from the selector controls', async () => {
     const user = userEvent.setup()
     renderAppAt('/viewer/tour/current-week')

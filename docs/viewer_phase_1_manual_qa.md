@@ -642,3 +642,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - H2H and Match Predictor still use active-run player data only.
 - Prediction/H2H outputs remain deferred; no fake odds, winners, records, or match results were added.
 - No backend/Admin behavior changed.
+
+## Phase 3AE — Viewer Run Browser note
+
+- Viewer Run Browser now shows available runs and safe links to run-scoped Viewer pages using existing run list data.
+- Active Viewer run status remains client-side and uses existing selection behavior.
+- Empty/error states remain safe.
+- No backend/Admin behavior changed.

@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 import type { RankingPreviewRow } from './rankingPayload'
 
 function displayValue(value: number | string | null): string {
@@ -14,7 +16,20 @@ function movementLabel(row: RankingPreviewRow): string {
   return '—'
 }
 
-export function RankingPreviewTable({ rows, ariaLabel = 'Top 10 ranking preview table' }: { rows: RankingPreviewRow[]; ariaLabel?: string }): JSX.Element {
+type RankingPreviewTableProps = {
+  rows: RankingPreviewRow[]
+  ariaLabel?: string
+  runId?: string
+}
+
+function playerCell(row: RankingPreviewRow, runId?: string): JSX.Element | string {
+  const label = playerLabel(row)
+  if (!runId || !row.playerId) return label
+
+  return <Link to={`/viewer/runs/${encodeURIComponent(runId)}/players/${encodeURIComponent(row.playerId)}/career`}>{label}</Link>
+}
+
+export function RankingPreviewTable({ rows, ariaLabel = 'Top 10 ranking preview table', runId }: RankingPreviewTableProps): JSX.Element {
   return (
     <table aria-label={ariaLabel}>
       <thead>
@@ -31,7 +46,7 @@ export function RankingPreviewTable({ rows, ariaLabel = 'Top 10 ranking preview 
         {rows.map((row, index) => (
           <tr key={`${row.playerId ?? row.playerName ?? 'ranking-row'}-${row.rank ?? index}`}>
             <td>{displayValue(row.rank)}</td>
-            <td>{playerLabel(row)}</td>
+            <td>{playerCell(row, runId)}</td>
             <td>{displayValue(row.country)}</td>
             <td>{displayValue(row.points)}</td>
             <td>{displayValue(row.tournamentsCounted)}</td>

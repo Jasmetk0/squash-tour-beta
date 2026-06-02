@@ -231,13 +231,13 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
           {selectedRankingPreview?.rows.length ? (
             <>
               <h4>Top 10 Ranking Preview</h4>
-              <RankingPreviewTable rows={selectedRankingPreview.rows} ariaLabel="Latest selected Top 10 ranking preview table" />
+              <RankingPreviewTable rows={selectedRankingPreview.rows} ariaLabel="Latest selected Top 10 ranking preview table" runId={runId} />
             </>
           ) : null}
           {selectedRacePreview?.rows.length ? (
             <>
               <h4>Top 10 Race Preview</h4>
-              <RacePreviewTable rows={selectedRacePreview.rows} ariaLabel="Latest selected Top 10 race preview table" />
+              <RacePreviewTable rows={selectedRacePreview.rows} ariaLabel="Latest selected Top 10 race preview table" runId={runId} />
             </>
           ) : null}
           <p>
@@ -514,9 +514,9 @@ export function ViewerRunSnapshotDetailPage({ mode }: { mode: ViewerSnapshotMode
           {snapshot ? (
             <SectionCard title={rankingPreview?.rows.length ? 'Top 10 Ranking Preview' : racePreview?.rows.length ? 'Top 10 Race Preview' : 'Standings preview'}>
               {rankingPreview?.rows.length ? (
-                <RankingPreviewTable rows={rankingPreview.rows} />
+                <RankingPreviewTable rows={rankingPreview.rows} runId={runId} />
               ) : racePreview?.rows.length ? (
-                <RacePreviewTable rows={racePreview.rows} />
+                <RacePreviewTable rows={racePreview.rows} runId={runId} />
               ) : (
                 <EmptyState message="This preview is not connected for this data shape yet." />
               )}

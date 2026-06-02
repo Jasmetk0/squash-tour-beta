@@ -567,13 +567,13 @@ function ViewerSnapshotLandingPage({ config }: { config: ViewerSnapshotLandingCo
         {rankingPreview?.rows.length ? (
           <div>
             <h4>Top 10 Ranking Preview</h4>
-            <RankingPreviewTable rows={rankingPreview.rows} ariaLabel="Latest Top 10 ranking preview table" />
+            <RankingPreviewTable rows={rankingPreview.rows} ariaLabel="Latest Top 10 ranking preview table" runId={activeRunId} />
           </div>
         ) : null}
         {racePreview?.rows.length ? (
           <div>
             <h4>Top 10 Race Preview</h4>
-            <RacePreviewTable rows={racePreview.rows} ariaLabel="Latest Top 10 race preview table" />
+            <RacePreviewTable rows={racePreview.rows} ariaLabel="Latest Top 10 race preview table" runId={activeRunId} />
           </div>
         ) : null}
 

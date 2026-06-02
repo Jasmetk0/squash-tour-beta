@@ -78,6 +78,17 @@ function resetApiMocks(): void {
   api.getRaceSnapshot.mockResolvedValue({ snapshot_sequence: 5, snapshot_kind: 'race', source_event_id: 'E1', payload: {} })
 }
 
+
+function topRankingRows(count: number): Array<Record<string, unknown>> {
+  return Array.from({ length: count }, (_, index) => ({
+    position: index + 1,
+    player: { id: `P${index + 1}`, name: index === 0 ? 'Nour El Sherbini' : `Top Player ${index + 1}`, country_code: index === 0 ? 'EG' : 'US' },
+    total_points: 1000 - index,
+    events_counted: index === 0 ? 9 : 7,
+    previous_rank: index === 0 ? 2 : index + 1
+  }))
+}
+
 function renderAppAt(route: string): void {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
@@ -488,7 +499,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       run_id: 'run-a',
       snapshots: [
         { snapshot_sequence: 4, snapshot_kind: 'TOURNAMENT', source_event_id: 'E1', payload: {} },
-        { snapshot_sequence: 8, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: {} }
+        { snapshot_sequence: 8, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: { standings: { rows: topRankingRows(11) } } }
       ]
     })
 
@@ -505,6 +516,15 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(panel).toHaveTextContent('E3')
     expect(panel).toHaveTextContent('Latest snapshot kind')
     expect(panel).toHaveTextContent('WEEK')
+    expect(screen.getByRole('heading', { name: 'Top 10 Ranking Preview' })).toBeInTheDocument()
+    const table = screen.getByRole('table', { name: 'Latest Top 10 ranking preview table' })
+    expect(within(table).getByText('Nour El Sherbini')).toBeInTheDocument()
+    expect(within(table).getByText('EG')).toBeInTheDocument()
+    expect(within(table).getByText('1000')).toBeInTheDocument()
+    expect(within(table).getAllByText('9').length).toBeGreaterThan(0)
+    expect(within(table).getAllByText('Previous 2').length).toBeGreaterThan(0)
+    expect(within(table).getAllByRole('row')).toHaveLength(11)
+    expect(screen.queryByText('Top Player 11')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
     expect(screen.getByRole('link', { name: 'View latest ranking snapshot' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings/8')
     expectNoForbiddenViewerActions()

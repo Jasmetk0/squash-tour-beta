@@ -23,6 +23,8 @@ import {
 } from '../components/RunScopedUi'
 import { SelectableHistoryList } from '../components/SelectableHistoryList'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
+import { RankingPreviewTable } from '../viewer/RankingPreviewTable'
+import { parseRankingPreviewPayload } from '../viewer/rankingPayload'
 
 type ViewerSnapshotMode = 'ranking' | 'race'
 
@@ -196,6 +198,7 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
   const selectedPlanned = selected?.source_event_id ? plannedContext.get(selected.source_event_id) : undefined
   const selectedPersisted = selected?.source_event_id ? persistedEventsById.get(selected.source_event_id) : undefined
   const selectedWeek = resolveWeek(selectedPlanned, selectedPersisted)
+  const selectedRankingPreview = mode === 'ranking' && selected ? parseRankingPreviewPayload(selected.payload) : null
 
   return (
     <section className="panel">
@@ -222,6 +225,12 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
               { label: 'Planned template', value: selectedPlanned?.templateId ?? 'No ordered-plan match' }
             ]}
           />
+          {selectedRankingPreview?.rows.length ? (
+            <>
+              <h4>Top 10 Ranking Preview</h4>
+              <RankingPreviewTable rows={selectedRankingPreview.rows} ariaLabel="Latest selected Top 10 ranking preview table" />
+            </>
+          ) : null}
           <p>
             <Link to={detailPath(mode, runId, selected.snapshot_sequence)}>{copy.detailLinkLabel}</Link>
           </p>
@@ -391,6 +400,7 @@ export function ViewerRunSnapshotDetailPage({ mode }: { mode: ViewerSnapshotMode
   const planned = sourceEventId ? plannedContext.get(sourceEventId) : undefined
   const persisted = sourceEventId ? persistedEventsById.get(sourceEventId) : undefined
   const week = resolveWeek(planned, persisted)
+  const rankingPreview = mode === 'ranking' && snapshot ? parseRankingPreviewPayload(snapshot.payload) : null
 
   return (
     <section className="panel">
@@ -492,15 +502,19 @@ export function ViewerRunSnapshotDetailPage({ mode }: { mode: ViewerSnapshotMode
           ) : null}
 
           {snapshot ? (
-            <SectionCard title="Standings preview">
-              <EmptyState message="This preview is not connected for this data shape yet." />
+            <SectionCard title={rankingPreview?.rows.length ? 'Top 10 Ranking Preview' : 'Standings preview'}>
+              {rankingPreview?.rows.length ? (
+                <RankingPreviewTable rows={rankingPreview.rows} />
+              ) : (
+                <EmptyState message="This preview is not connected for this data shape yet." />
+              )}
             </SectionCard>
           ) : null}
 
           {snapshot ? (
             <SectionCard title="Read-only data">
               <details>
-                <summary>Show technical snapshot data</summary>
+                <summary>Show technical payload</summary>
                 <p className="status">Read-only technical snapshot data for audit/debugging. Viewer standings remain non-mutating.</p>
                 <JsonPayloadBlock title="Technical snapshot record" emptyText="No technical data is available for this publication." payload={snapshot.payload} />
               </details>

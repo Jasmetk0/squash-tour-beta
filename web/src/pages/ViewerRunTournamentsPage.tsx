@@ -16,15 +16,17 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
+import {
+  TournamentResultMetadataList,
+  tournamentResultMetadataItems
+} from '../viewer/TournamentResultMetadata'
 import { parseTournamentResultPayload } from '../viewer/tournamentResultPayload'
 import {
   viewerPlannedEventPath,
-  viewerPlayerProfilePath,
   viewerTournamentsPath,
   viewerTournamentDetailPath,
   viewerWeekDetailPath
 } from '../viewer/viewerRoutes'
-import type { TournamentPlayerSummary } from '../viewer/tournamentResultPayload'
 import { getPlannedEventStatus } from './plannedEventUtils'
 
 type PlannedEvent = SeasonStateResponse['season_state']['ordered_events'][number]
@@ -64,44 +66,21 @@ function displayValue(value: number | string | null | undefined): number | strin
   return value ?? '—'
 }
 
-function displayPlayer(player: TournamentPlayerSummary | null): string {
-  if (!player) return '—'
-
-  const identity = player.name ?? player.playerId ?? '—'
-  const country = player.country ? ` (${player.country})` : ''
-  return `${identity}${country}`
-}
-
-
 function displayWeekDetailLink(runId: string, week: number | null): ReactNode {
   if (week == null) return '—'
 
   return <Link to={viewerWeekDetailPath(runId, week)}>{`W${week}`}</Link>
 }
 
-function displayPlayerProfileLink(runId: string, player: TournamentPlayerSummary | null): ReactNode {
-  const label = displayPlayer(player)
-
-  if (!player?.playerId) return label
-
-  return <Link to={viewerPlayerProfilePath(runId, player.playerId)}>{label}</Link>
-}
-
 function TournamentListResultMetadata({ event, runId }: { event: EventRecord; runId: string }): JSX.Element | null {
-  const resultPreview = parseTournamentResultPayload(event.tournament_result)
-  const summary = resultPreview.summary
-
-  if (!summary) return null
-
-  const items = [
-    summary.champion ? { label: 'Champion', value: displayPlayerProfileLink(runId, summary.champion) } : null,
-    summary.resultStatus ? { label: 'Result status', value: summary.resultStatus } : null,
-    summary.matchCount !== null ? { label: 'Matches', value: summary.matchCount } : null
-  ].filter((item): item is { label: string; value: ReactNode } => item !== null)
-
-  if (items.length === 0) return null
-
-  return <MetadataList items={items} />
+  return (
+    <TournamentResultMetadataList
+      payload={event.tournament_result}
+      runId={runId}
+      matches="matchCount"
+      playerLabelMode="identityWithCountry"
+    />
+  )
 }
 
 export function ViewerRunTournamentsPage(): JSX.Element {
@@ -296,14 +275,27 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
               {resultPreview.summary ? (
                 <MetadataList
                   items={[
-                    { label: 'Champion', value: displayPlayerProfileLink(runId, resultPreview.summary.champion) },
-                    { label: 'Finalist', value: displayPlayerProfileLink(runId, resultPreview.summary.finalist) },
+                    ...tournamentResultMetadataItems(resultPreview.summary, {
+                      runId,
+                      includeFinalist: true,
+                      includeResultStatus: false,
+                      matches: false,
+                      includeEmptyValues: true,
+                      playerLabelMode: 'identityWithCountry'
+                    }),
                     { label: 'Final score', value: displayValue(resultPreview.summary.finalScore) },
                     { label: 'Match count', value: displayValue(resultPreview.summary.matchCount) },
                     { label: 'Completed matches', value: displayValue(resultPreview.summary.completedMatchCount) },
                     { label: 'Draw size', value: displayValue(resultPreview.summary.drawSize) },
                     { label: 'Round count', value: displayValue(resultPreview.summary.roundCount) },
-                    { label: 'Result status', value: resultPreview.summary.resultStatus ?? '—' }
+                    ...tournamentResultMetadataItems(resultPreview.summary, {
+                      runId,
+                      includeChampion: false,
+                      includeResultStatus: true,
+                      matches: false,
+                      includeEmptyValues: true,
+                      playerLabelMode: 'identityWithCountry'
+                    })
                   ]}
                 />
               ) : (

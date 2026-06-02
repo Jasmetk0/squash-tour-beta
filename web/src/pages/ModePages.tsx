@@ -20,12 +20,16 @@ import { parseRacePreviewPayload } from '../viewer/racePayload'
 import { parseRankingPreviewPayload } from '../viewer/rankingPayload'
 import {
   viewerCountriesPath,
+  viewerCountryProfilePath,
+  viewerPlannedEventPath,
+  viewerPlayerProfilePath,
   viewerPlayersPath,
   viewerRacePath,
   viewerRaceSnapshotPath,
   viewerRankingsPath,
   viewerRankingSnapshotPath,
   viewerSeasonCalendarPath,
+  viewerWeekDetailPath,
   viewerTournamentsPath
 } from '../viewer/viewerRoutes'
 import type { EventRecord, FinalsSummaryResponse, RankingSnapshot, RaceSnapshot, RunActivityItem, RunNationSummaryItem, RunPlayerListItem, SeasonStateResponse } from '../api/types'
@@ -311,11 +315,24 @@ function formatFinalsAvailability(summary: FinalsSummaryResponse | undefined): s
   return 'Finals summary not available yet'
 }
 
-function renderOrderedEventMetadata(event: OrderedSeasonEvent): JSX.Element {
+function renderLinkedEventId(runId: string, eventId: string | null | undefined): ReactNode {
+  if (!eventId) return '—'
+  return <Link to={viewerPlannedEventPath(runId, eventId)}>{eventId}</Link>
+}
+
+function renderLinkedWeek(runId: string, week: number | string | null | undefined): ReactNode {
+  if (week == null || week === '') return '—'
+  return <Link to={viewerWeekDetailPath(runId, week)}>W{week}</Link>
+}
+
+function renderOrderedEventMetadata(event: OrderedSeasonEvent, runId?: string): JSX.Element {
+  const eventId = runId ? renderLinkedEventId(runId, event.event_id) : event.event_id
+  const week = runId ? renderLinkedWeek(runId, event.week) : event.week
+
   return (
     <dl className="metadata-list">
-      <div><dt>Event ID</dt><dd>{event.event_id}</dd></div>
-      <div><dt>Week</dt><dd>{event.week}</dd></div>
+      <div><dt>Event ID</dt><dd>{eventId}</dd></div>
+      <div><dt>Week</dt><dd>{week}</dd></div>
       <div><dt>Category</dt><dd>{event.category}</dd></div>
       <div><dt>Tour</dt><dd>{event.tour}</dd></div>
       <div><dt>Template ID</dt><dd>{event.template_id}</dd></div>
@@ -323,14 +340,20 @@ function renderOrderedEventMetadata(event: OrderedSeasonEvent): JSX.Element {
   )
 }
 
-function renderPersistedEventSummary(event: EventRecord | null, plannedMap: Map<string, OrderedSeasonEvent>): ReactNode {
+function renderEventSummary(event: OrderedSeasonEvent, runId: string): ReactNode {
+  return <>{renderLinkedEventId(runId, event.event_id)} · {renderLinkedWeek(runId, event.week)} · {event.category} · {event.tour} · {event.template_id}</>
+}
+
+function renderPersistedEventSummary(event: EventRecord | null, plannedMap: Map<string, OrderedSeasonEvent>, runId?: string): ReactNode {
   if (!event) return '—'
   const planned = plannedMap.get(event.event_id)
-  const week = event.week ?? planned?.week ?? '—'
+  const week = event.week ?? planned?.week ?? null
   const templateId = event.template_id ?? planned?.template_id ?? '—'
   const category = planned?.category ?? '—'
   const tour = planned?.tour ?? '—'
-  return `${event.event_id} · W${week} · ${category} · ${tour} · ${templateId}`
+  const eventId = runId ? renderLinkedEventId(runId, event.event_id) : event.event_id
+  const weekValue = runId ? renderLinkedWeek(runId, week) : week != null ? `W${week}` : 'W—'
+  return <>{eventId} · {weekValue} · {category} · {tour} · {templateId}</>
 }
 
 function selectHomepageEvent(runData: SeasonStateResponse | undefined, events: EventRecord[]): HomepageEventSummary | null {
@@ -461,8 +484,8 @@ export function ViewerHomePage(): JSX.Element {
         <ViewerSectionCard kicker="Featured Tournament Hero" title="Featured Tournament Hero" variant="hero">
           {activeRunId && featuredEvent ? (
             <>
-              <p>{featuredEvent.status}: <strong>{featuredEvent.eventId}</strong></p>
-              <p className="status">{featuredEvent.category ?? 'Category unavailable'} · {featuredEvent.tour ?? 'Tour unavailable'} · {featuredEvent.week != null ? `W${featuredEvent.week}` : 'Week unavailable'} · Template {featuredEvent.templateId ?? 'unavailable'}</p>
+              <p>{featuredEvent.status}: <strong>{renderLinkedEventId(activeRunId, featuredEvent.eventId)}</strong></p>
+              <p className="status">{featuredEvent.category ?? 'Category unavailable'} · {featuredEvent.tour ?? 'Tour unavailable'} · {featuredEvent.week != null ? renderLinkedWeek(activeRunId, featuredEvent.week) : 'Week unavailable'} · Template {featuredEvent.templateId ?? 'unavailable'}</p>
               <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(activeRunId)}>Open active run schedule</Link>
             </>
           ) : (
@@ -474,7 +497,7 @@ export function ViewerHomePage(): JSX.Element {
           {activeRunId && nearbyEvents.length ? (
             <ul>
               {nearbyEvents.map((event) => (
-                <li key={event.event_id}>{event.event_id} · {event.category} · W{event.week}</li>
+                <li key={event.event_id}>{renderLinkedEventId(activeRunId, event.event_id)} · {event.category} · {renderLinkedWeek(activeRunId, event.week)}</li>
               ))}
             </ul>
           ) : (
@@ -484,7 +507,7 @@ export function ViewerHomePage(): JSX.Element {
 
         <ViewerSectionCard kicker="Read-only rankings" title="Top 10 Rankings">
           {activeRunId && latestRankingSnapshot ? (
-            <p>Latest ranking snapshot #{latestRankingSnapshot.snapshot_sequence} from {latestRankingSnapshot.source_event_id ?? 'run history'} · {rankingSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
+            <p>Latest ranking snapshot <Link to={viewerRankingSnapshotPath(activeRunId, latestRankingSnapshot.snapshot_sequence)}>#{latestRankingSnapshot.snapshot_sequence}</Link> from {latestRankingSnapshot.source_event_id ?? 'run history'} · {rankingSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           )}
@@ -493,7 +516,7 @@ export function ViewerHomePage(): JSX.Element {
 
         <ViewerSectionCard kicker="Read-only race" title="Race to Finals">
           {activeRunId && latestRaceSnapshot ? (
-            <p>Latest race snapshot #{latestRaceSnapshot.snapshot_sequence} from {latestRaceSnapshot.source_event_id ?? 'run history'} · {raceSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
+            <p>Latest race snapshot <Link to={viewerRaceSnapshotPath(activeRunId, latestRaceSnapshot.snapshot_sequence)}>#{latestRaceSnapshot.snapshot_sequence}</Link> from {latestRaceSnapshot.source_event_id ?? 'run history'} · {raceSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           )}
@@ -674,8 +697,8 @@ export function ViewerSeasonHubPage(): JSX.Element {
           <div><dt>Progress</dt><dd>{progress ? `${progress.completed_event_count}/${progress.total_events} events complete` : `${runQuery.data?.run.completed_event_ids.length ?? persistedEvents.length}/${eventCount} events complete`}</dd></div>
           <div><dt>Next event index</dt><dd>{progress?.next_event_index ?? runQuery.data?.season_state.next_event_index ?? runQuery.data?.run.next_event_index ?? '—'}</dd></div>
           <div><dt>Event count</dt><dd>{eventCount}</dd></div>
-          <div><dt>Next scheduled event</dt><dd>{nextEvent ? `${nextEvent.event_id} · W${nextEvent.week} · ${nextEvent.category} · ${nextEvent.tour} · ${nextEvent.template_id}` : '—'}</dd></div>
-          <div><dt>Most recent persisted event</dt><dd>{renderPersistedEventSummary(latestPersistedEvent, plannedMap)}</dd></div>
+          <div><dt>Next scheduled event</dt><dd>{nextEvent ? renderEventSummary(nextEvent, activeRunId) : '—'}</dd></div>
+          <div><dt>Most recent persisted event</dt><dd>{renderPersistedEventSummary(latestPersistedEvent, plannedMap, activeRunId)}</dd></div>
           <div><dt>Finals availability</dt><dd>{formatFinalsAvailability(finalsQuery.data)}</dd></div>
         </dl>
         <p className="viewer-active-run-actions">
@@ -719,7 +742,7 @@ export function ViewerCurrentWeekPage(): JSX.Element {
         {eventsForWeek.length ? (
           <ul className="viewer-home-list" aria-label="Selected week ordered events">
             {eventsForWeek.map((event) => (
-              <li key={event.event_id}>{renderOrderedEventMetadata(event)}</li>
+              <li key={event.event_id}>{renderOrderedEventMetadata(event, activeRunId)}</li>
             ))}
           </ul>
         ) : null}
@@ -763,8 +786,8 @@ export function ViewerTournamentsPage(): JSX.Element {
           <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
           <div><dt>Total ordered calendar events</dt><dd>{runQuery.isLoading ? 'Loading…' : orderedEvents.length || '—'}</dd></div>
           <div><dt>Persisted event count</dt><dd>{eventsQuery.isLoading ? 'Loading…' : persistedEvents.length}</dd></div>
-          <div><dt>Next scheduled event</dt><dd>{nextEvent ? `${nextEvent.event_id} · W${nextEvent.week} · ${nextEvent.category} · ${nextEvent.tour} · ${nextEvent.template_id}` : '—'}</dd></div>
-          <div><dt>Latest persisted event</dt><dd>{renderPersistedEventSummary(latestPersistedEvent, plannedMap)}</dd></div>
+          <div><dt>Next scheduled event</dt><dd>{nextEvent ? renderEventSummary(nextEvent, activeRunId) : '—'}</dd></div>
+          <div><dt>Latest persisted event</dt><dd>{renderPersistedEventSummary(latestPersistedEvent, plannedMap, activeRunId)}</dd></div>
         </dl>
         {!runQuery.isLoading && !eventsQuery.isLoading && !runQuery.isError && !eventsQuery.isError && !hasMetadata ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
         {sampleEvents.length ? (
@@ -772,7 +795,7 @@ export function ViewerTournamentsPage(): JSX.Element {
             <h4>Sample schedule events</h4>
             <ul className="viewer-home-list" aria-label="Sample ordered tournament events">
               {sampleEvents.map((event) => (
-                <li key={event.event_id}>{renderOrderedEventMetadata(event)}</li>
+                <li key={event.event_id}>{renderOrderedEventMetadata(event, activeRunId)}</li>
               ))}
             </ul>
           </div>
@@ -786,13 +809,27 @@ export function ViewerTournamentsPage(): JSX.Element {
   )
 }
 
-function renderPlayerSampleMetadata(player: RunPlayerListItem): JSX.Element {
+function renderLinkedPlayer(runId: string, playerId: string | null | undefined, label: ReactNode): ReactNode {
+  if (!playerId) return label || '—'
+  return <Link to={viewerPlayerProfilePath(runId, playerId)}>{label || playerId}</Link>
+}
+
+function renderLinkedCountry(runId: string, countryCode: string | null | undefined, label?: ReactNode): ReactNode {
+  if (!countryCode) return label ?? '—'
+  return <Link to={viewerCountryProfilePath(runId, countryCode)}>{label ?? countryCode}</Link>
+}
+
+function renderPlayerSampleMetadata(player: RunPlayerListItem, runId?: string): JSX.Element {
+  const playerLabel = player.name || player.player_id || '—'
+  const playerId = player.player_id || '—'
+  const country = player.country_code || '—'
+
   return (
     <ViewerMetadataList
       items={[
-        { label: 'Player', value: player.name || player.player_id },
-        { label: 'Player ID', value: player.player_id },
-        { label: 'Country', value: player.country_code || '—' },
+        { label: 'Player', value: runId ? renderLinkedPlayer(runId, player.player_id, playerLabel) : playerLabel },
+        { label: 'Player ID', value: runId ? renderLinkedPlayer(runId, player.player_id, playerId) : playerId },
+        { label: 'Country', value: runId ? renderLinkedCountry(runId, player.country_code) : country },
         { label: 'Age', value: player.age ?? '—' },
         { label: 'Power Rating', value: player.overall ?? '—' }
       ]}
@@ -800,15 +837,19 @@ function renderPlayerSampleMetadata(player: RunPlayerListItem): JSX.Element {
   )
 }
 
-function renderCountrySampleMetadata(nation: RunNationSummaryItem): JSX.Element {
+function renderCountrySampleMetadata(nation: RunNationSummaryItem, runId?: string): JSX.Element {
+  const countryCode = nation.country_code || '—'
+  const countryName = nation.country_name ?? nation.country_code ?? '—'
+  const topPlayer = nation.top_player_name ?? nation.top_player_id ?? '—'
+
   return (
     <ViewerMetadataList
       items={[
-        { label: 'Country code', value: nation.country_code },
-        { label: 'Country name', value: nation.country_name ?? '—' },
+        { label: 'Country code', value: runId ? renderLinkedCountry(runId, nation.country_code) : countryCode },
+        { label: 'Country name', value: runId ? renderLinkedCountry(runId, nation.country_code, countryName) : countryName },
         { label: 'Player count', value: nation.total_players ?? '—' },
         { label: 'Average Power Rating', value: nation.average_overall ?? '—' },
-        { label: 'Top player', value: nation.top_player_name ?? nation.top_player_id ?? '—' },
+        { label: 'Top player', value: runId ? renderLinkedPlayer(runId, nation.top_player_id, topPlayer) : topPlayer },
         { label: 'Top player Power Rating', value: nation.top_player_overall ?? '—' }
       ]}
     />
@@ -850,7 +891,13 @@ export function ViewerPlayersPage(): JSX.Element {
           <div><dt>Returned player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : players.length}</dd></div>
         </dl>
         {!playersQuery.isLoading && !playersQuery.isError && players.length === 0 ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
-        <ViewerSamplePlayersList players={players} label="Sample active run players" />
+        <ViewerSampleList
+          title="Sample players"
+          label="Sample active run players"
+          items={players}
+          getKey={(player) => player.player_id || player.name || 'unknown-player'}
+          renderItem={(player) => renderPlayerSampleMetadata(player, activeRunId)}
+        />
         <p className="viewer-active-run-actions">
           <Link className="viewer-active-run-link" to={viewerPlayersPath(activeRunId)}>Open active run players</Link>
         </p>
@@ -896,7 +943,7 @@ export function ViewerCountriesPage(): JSX.Element {
           label="Sample active run countries"
           items={nations}
           getKey={(nation) => nation.country_code}
-          renderItem={renderCountrySampleMetadata}
+          renderItem={(nation) => renderCountrySampleMetadata(nation, activeRunId)}
         />
         <p className="viewer-active-run-actions">
           <Link className="viewer-active-run-link" to={viewerCountriesPath(activeRunId)}>Open active run countries</Link>

@@ -572,3 +572,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Run-scoped Ranking/Race publication list pages now show clearer sports-facing snapshot metadata and safe source-event links.
 - Unmatched source events remain safe fallback text.
 - No parser/backend/Admin behavior changed.
+
+## Viewer Phase 3U — top-level Viewer landing links polish
+
+- Top-level Viewer landing/hub pages now link existing sample players, countries, events, weeks, rankings, and race metadata to run-scoped detail pages when IDs are available.
+- Missing IDs remain plain text.
+- No backend/Admin/parser/result-preview behavior changed.

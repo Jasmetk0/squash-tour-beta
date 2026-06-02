@@ -308,12 +308,22 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(screen.queryByRole('link', { name: 'Open active run schedule' })).not.toBeInTheDocument()
   })
 
-  it('shows conservative active-run H2H landing and subroute deferred states', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-1i-run')
+  it('shows no-data state on H2H when no active run is selected', async () => {
+    localStorage.removeItem('beta_engine:viewer_active_run_id')
+
+    renderAppAt('/viewer/h2h')
+
+    expect(await screen.findByRole('heading', { name: 'Player Comparison', level: 2 })).toBeInTheDocument()
+    expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows deferred H2H state and sample player links without player params', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ab-run')
     api.listRunPlayers.mockResolvedValue({
-      run_id: 'phase-1i-run',
-      total: 8,
-      limit: 5,
+      run_id: 'phase-3ab-run',
+      total: 2,
+      limit: 50,
       offset: 0,
       players: [
         { player_id: 'P1', name: 'Player One', country_code: 'AAA', age: 24, source_type: 'planner_generated', override_id: null, quality_band: 'A', is_top_band: true, origin_source_type: 'planner_generated', origin_quality_band: 'A', origin_override_id: null, origin_season: 2030, technique: 80, movement: 81, physical: 82, mental: 83, overall: 84 },
@@ -322,16 +332,106 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     })
 
     renderAppAt('/viewer/h2h')
-    expect(await screen.findByRole('heading', { name: 'H2H Explorer', level: 2 })).toBeInTheDocument()
-    expect(await screen.findByLabelText('H2H Explorer active run summary')).toHaveTextContent('phase-1i-run')
-    expect(screen.getByText('Player One')).toBeInTheDocument()
-    expect(screen.getAllByText('This preview is not connected for this data shape yet.').length).toBeGreaterThan(0)
-    expect(screen.getByRole('link', { name: 'Open active run players' })).toHaveAttribute('href', '/viewer/runs/phase-1i-run/players')
-    expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/phase-1i-run/tournaments')
-    expect(screen.queryByText(/wins/i)).not.toBeInTheDocument()
-    expectNoForbiddenViewerActions()
 
-    cleanup()
+    expect(await screen.findByRole('heading', { name: 'Player Comparison', level: 2 })).toBeInTheDocument()
+    expect(screen.getByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Player One' })).toHaveAttribute('href', '/viewer/runs/phase-3ab-run/players/P1/career')
+    expect(screen.getByRole('link', { name: 'P1' })).toHaveAttribute('href', '/viewer/runs/phase-3ab-run/players/P1/career')
+    expect(screen.getByRole('link', { name: 'AAA' })).toHaveAttribute('href', '/viewer/runs/phase-3ab-run/countries/AAA')
+    expect(screen.getByRole('link', { name: 'Open active run players' })).toHaveAttribute('href', '/viewer/runs/phase-3ab-run/players')
+    expect(screen.getByRole('link', { name: 'Open Viewer search' })).toHaveAttribute('href', '/viewer/search')
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows matched H2H player cards, links, and numeric differences without fake outcomes', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ab-run')
+    api.listRunPlayers.mockResolvedValue({
+      run_id: 'phase-3ab-run',
+      total: 2,
+      limit: 50,
+      offset: 0,
+      players: [
+        { player_id: 'P1', name: 'Player One', country_code: 'AAA', age: 24, source_type: 'planner_generated', override_id: null, quality_band: 'A', is_top_band: true, origin_source_type: 'planner_generated', origin_quality_band: 'A', origin_override_id: null, origin_season: 2030, technique: 80, movement: 81, physical: 82, mental: 83, overall: 84 },
+        { player_id: 'P2', name: 'Player Two', country_code: 'BBB', age: 26, source_type: 'planner_generated', override_id: null, quality_band: 'B', is_top_band: false, origin_source_type: 'planner_generated', origin_quality_band: 'B', origin_override_id: null, origin_season: 2030, technique: 70, movement: 71, physical: 72, mental: 73, overall: 74 }
+      ]
+    })
+
+    renderAppAt('/viewer/h2h?playerA=P1&playerB=P2')
+
+    expect(await screen.findByRole('heading', { name: 'Player Comparison', level: 2 })).toBeInTheDocument()
+    const playerACard = screen.getByRole('heading', { name: 'Player A' }).closest('article')
+    const playerBCard = screen.getByRole('heading', { name: 'Player B' }).closest('article')
+    await waitFor(() => expect(playerACard).toHaveTextContent('Player One'))
+    expect(playerACard).toHaveTextContent('Power Rating84')
+    expect(playerACard).toHaveTextContent('Technique80')
+    expect(playerACard).toHaveTextContent('Movement81')
+    expect(playerACard).toHaveTextContent('Physical82')
+    expect(playerACard).toHaveTextContent('Mental83')
+    expect(playerACard).toHaveTextContent('Quality bandA')
+    expect(playerBCard).toHaveTextContent('Player Two')
+    expect(screen.getByRole('link', { name: 'Player One' })).toHaveAttribute('href', '/viewer/runs/phase-3ab-run/players/P1/career')
+    expect(screen.getByRole('link', { name: 'P2' })).toHaveAttribute('href', '/viewer/runs/phase-3ab-run/players/P2/career')
+    expect(screen.getByRole('link', { name: 'AAA' })).toHaveAttribute('href', '/viewer/runs/phase-3ab-run/countries/AAA')
+    expect(screen.getByRole('link', { name: 'BBB' })).toHaveAttribute('href', '/viewer/runs/phase-3ab-run/countries/BBB')
+
+    const summary = screen.getByRole('heading', { name: 'Comparison Summary' }).closest('article')
+    expect(summary).toHaveTextContent('Power Rating difference+10')
+    expect(summary).toHaveTextContent('Technique difference+10')
+    expect(summary).toHaveTextContent('Movement difference+10')
+    expect(summary).toHaveTextContent('Physical difference+10')
+    expect(summary).toHaveTextContent('Mental difference+10')
+    expect(summary).toHaveTextContent('Age difference-2')
+    expect(screen.queryByText(/3-1 H2H|win probability|predicted winner|betting odds|rivalry history|match result/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/source_type|origin_source_type|override_id/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows safe missing state for unavailable comparison player ids', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ab-run')
+    api.listRunPlayers.mockResolvedValue({
+      run_id: 'phase-3ab-run',
+      total: 1,
+      limit: 50,
+      offset: 0,
+      players: [
+        { player_id: 'P1', name: 'Player One', country_code: 'AAA', age: 24, source_type: 'planner_generated', override_id: null, quality_band: 'A', is_top_band: true, origin_source_type: 'planner_generated', origin_quality_band: 'A', origin_override_id: null, origin_season: 2030, technique: 80, movement: 81, physical: 82, mental: 83, overall: 84 }
+      ]
+    })
+
+    renderAppAt('/viewer/h2h?playerA=P1&playerB=P404')
+
+    await waitFor(() => expect(screen.queryByText('Loading active run player metadata…')).not.toBeInTheDocument())
+    expect(screen.getAllByText('Player data is not available for this run yet.').length).toBeGreaterThan(0)
+    expect(screen.queryByText(/predicted winner|win probability|match result/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('keeps player compare route consistent with H2H comparison behavior', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ab-run')
+    api.listRunPlayers.mockResolvedValue({
+      run_id: 'phase-3ab-run',
+      total: 2,
+      limit: 50,
+      offset: 0,
+      players: [
+        { player_id: 'P1', name: 'Player One', country_code: 'AAA', age: 24, source_type: 'planner_generated', override_id: null, quality_band: 'A', is_top_band: true, origin_source_type: 'planner_generated', origin_quality_band: 'A', origin_override_id: null, origin_season: 2030, technique: 80, movement: 81, physical: 82, mental: 83, overall: 84 },
+        { player_id: 'P2', name: 'Player Two', country_code: 'BBB', age: 26, source_type: 'planner_generated', override_id: null, quality_band: 'B', is_top_band: false, origin_source_type: 'planner_generated', origin_quality_band: 'B', origin_override_id: null, origin_season: 2030, technique: 70, movement: 71, physical: 72, mental: 73, overall: 74 }
+      ]
+    })
+
+    renderAppAt('/viewer/players/compare?playerA=P1&playerB=P2')
+
+    expect(await screen.findByRole('heading', { name: 'Player Comparison', level: 2 })).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Player A' }).closest('article')).toHaveTextContent('Player One'))
+    expect(screen.getByRole('heading', { name: 'Player B' }).closest('article')).toHaveTextContent('Player Two')
+    expect(screen.getByRole('heading', { name: 'Comparison Summary' }).closest('article')).toHaveTextContent('Power Rating difference+10')
+    expect(screen.queryByText(/3-1 H2H|win probability|predicted winner|betting odds|rivalry history|match result/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('keeps H2H subroute deferred states read-only', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-1i-run')
+
     renderAppAt('/viewer/h2h/rivalries')
     expect((await screen.findAllByText('This preview is not connected for this data shape yet.')).length).toBeGreaterThan(0)
     expect(screen.getByText('No rivalry list is shown until direct match records are available.')).toBeInTheDocument()
@@ -353,6 +453,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(screen.queryByText(/finals record/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
+
 
   it('shows conservative Match Predictor landing for predictions shortcut routes', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-1i-run')

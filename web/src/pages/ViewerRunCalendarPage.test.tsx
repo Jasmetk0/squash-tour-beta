@@ -8,7 +8,9 @@ import { ViewerRunCalendarPage, ViewerRunPlannedEventPage, ViewerRunWeekPage } f
 
 const api = vi.hoisted(() => ({
   getRun: vi.fn(),
-  listEvents: vi.fn()
+  listEvents: vi.fn(),
+  listRankingSnapshots: vi.fn(),
+  listRaceSnapshots: vi.fn()
 }))
 
 vi.mock('../api/client', () => api)
@@ -65,8 +67,31 @@ function mockEvents(): void {
         week: 1,
         template_id: 'WT-PLAT',
         tournament_result: { raw_calendar_marker_should_be_hidden: true }
+      },
+      {
+        event_sequence: 2,
+        event_id: 'EVENT-NEXT',
+        season: 2028,
+        week: 2,
+        template_id: 'ET-GOLD',
+        tournament_result: { result_status: 'available' }
       }
     ]
+  })
+}
+
+
+function mockSnapshots(): void {
+  api.listRankingSnapshots.mockResolvedValue({
+    run_id: 'viewer-run-2d',
+    snapshots: [
+      { snapshot_sequence: 4, snapshot_kind: 'WEEK', source_event_id: 'EVENT-NEXT', payload: { table: 'metadata-only' } },
+      { snapshot_sequence: 5, snapshot_kind: 'WEEK', source_event_id: 'EVENT-COMPLETE', payload: {} }
+    ]
+  })
+  api.listRaceSnapshots.mockResolvedValue({
+    run_id: 'viewer-run-2d',
+    snapshots: [{ snapshot_sequence: 7, snapshot_kind: 'WEEK', source_event_id: 'EVENT-NEXT', payload: {} }]
   })
 }
 
@@ -102,6 +127,7 @@ describe('ViewerRunCalendarPage', () => {
     vi.resetAllMocks()
     mockRunMetadata()
     mockEvents()
+    mockSnapshots()
   })
 
   it('renders sports-facing run calendar metadata and Viewer route links without primary raw JSON', async () => {
@@ -129,7 +155,7 @@ describe('ViewerRunCalendarPage', () => {
       '/viewer/runs/viewer-run-2d/calendar/EVENT-NEXT'
     )
     expect(screen.getAllByRole('link', { name: /Open week detail/i })[1]).toHaveAttribute('href', '/viewer/runs/viewer-run-2d/weeks/2')
-    expect(screen.getByRole('link', { name: /Open tournament detail/i })).toHaveAttribute(
+    expect(screen.getAllByRole('link', { name: /Open tournament detail/i })[0]).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2d/tournaments/EVENT-COMPLETE'
     )
@@ -145,6 +171,7 @@ describe('ViewerRunPlannedEventPage', () => {
     vi.resetAllMocks()
     mockRunMetadata()
     mockEvents()
+    mockSnapshots()
   })
 
   it('renders sports-facing planned event detail with collapsed technical data and no commissioner controls', async () => {
@@ -184,23 +211,70 @@ describe('ViewerRunWeekPage', () => {
     vi.resetAllMocks()
     mockRunMetadata()
     mockEvents()
+    mockSnapshots()
   })
 
   it('renders sports-facing week detail with events from the selected week only', async () => {
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2')
 
-    expect(await screen.findByRole('heading', { name: 'Current Week' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Week Detail' })).toBeInTheDocument()
     expect(screen.getAllByText('viewer-run-2d').length).toBeGreaterThan(0)
+    expect(screen.getByText('Week context')).toBeInTheDocument()
+    expect(screen.getByText('Tournaments this week')).toBeInTheDocument()
+    expect(screen.getByText('Publications this week')).toBeInTheDocument()
+    expect(screen.getByText('Links')).toBeInTheDocument()
+    expect(screen.getAllByText('2').length).toBeGreaterThan(0)
     expect((await screen.findAllByText('EVENT-NEXT')).length).toBeGreaterThan(0)
     expect(screen.queryByText('EVENT-COMPLETE')).not.toBeInTheDocument()
     expect(screen.queryByText('EVENT-FUTURE')).not.toBeInTheDocument()
     expect(screen.getAllByText('W2').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Gold').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Elite Tour').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('ET-GOLD').length).toBeGreaterThan(0)
+    expect(screen.getByText('Available')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Open planned event/i })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2d/calendar/EVENT-NEXT'
     )
+    expect(screen.getByRole('link', { name: /Open tournament detail/i })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2d/tournaments/EVENT-NEXT'
+    )
+    expect(screen.getByText('Ranking publications count')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Ranking publication #4/i })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2d/rankings/4'
+    )
+    expect(screen.getByText('Race publications count')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Race publication #7/i })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2d/race/7'
+    )
+    expect(screen.queryByText(/winner/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/match/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/storyline/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows deferred publication metadata message when snapshots cannot be safely matched', async () => {
+    api.listRankingSnapshots.mockResolvedValue({
+      run_id: 'viewer-run-2d',
+      snapshots: [{ snapshot_sequence: 8, snapshot_kind: 'WEEK', source_event_id: null, payload: {} }]
+    })
+    api.listRaceSnapshots.mockResolvedValue({ run_id: 'viewer-run-2d', snapshots: [] })
+
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2')
+
+    expect(await screen.findByRole('heading', { name: 'Week Detail' })).toBeInTheDocument()
+    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows no-data state for a missing empty week', async () => {
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/12')
+
+    expect(await screen.findByRole('heading', { name: 'Week Detail' })).toBeInTheDocument()
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 })

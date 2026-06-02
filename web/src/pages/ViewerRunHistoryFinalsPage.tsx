@@ -22,6 +22,7 @@ import {
   viewerRankingsPath,
   viewerRankingSnapshotPath,
   viewerSeasonCalendarPath,
+  viewerTournamentDetailPath,
   viewerTournamentsPath
 } from '../viewer/viewerRoutes'
 
@@ -60,18 +61,39 @@ function collectArrayCountItems(payload: Record<string, unknown> | null | undefi
   return items
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value))
+}
+
 function collectPlayerIds(payload: Record<string, unknown> | null | undefined): string[] {
   const playerIds = new Set<string>()
-  Object.entries(payload ?? {}).forEach(([key, value]) => {
-    const normalizedKey = key.toLowerCase()
-    if (!normalizedKey.includes('player') || !normalizedKey.includes('id')) return
-    if (typeof value === 'string' && value) playerIds.add(value)
+
+  function visit(value: unknown, keyHint = ''): void {
+    const normalizedKey = keyHint.toLowerCase()
+    const keyLooksLikePlayerId = normalizedKey.includes('player') && normalizedKey.includes('id')
+
+    if (keyLooksLikePlayerId && (typeof value === 'string' || typeof value === 'number') && String(value)) {
+      playerIds.add(String(value))
+      return
+    }
+
     if (Array.isArray(value)) {
       value.forEach((item) => {
-        if (typeof item === 'string' && item) playerIds.add(item)
+        if (keyLooksLikePlayerId && (typeof item === 'string' || typeof item === 'number') && String(item)) {
+          playerIds.add(String(item))
+        } else {
+          visit(item, keyHint)
+        }
       })
+      return
     }
-  })
+
+    if (isRecord(value)) {
+      Object.entries(value).forEach(([childKey, childValue]) => visit(childValue, childKey))
+    }
+  }
+
+  visit(payload)
   return [...playerIds]
 }
 
@@ -93,6 +115,14 @@ function findSnapshotSequence(payload: Record<string, unknown> | null | undefine
 
 function hasPayloadData(payload: Record<string, unknown> | null | undefined): boolean {
   return Object.keys(payload ?? {}).length > 0
+}
+
+function viewerFinalsPath(runId: string): string {
+  return `/viewer/runs/${encodeURIComponent(runId)}/finals`
+}
+
+function sourceSnapshotLabel(season: number | null | undefined, week: number | null | undefined): string {
+  return typeof week === 'number' ? `${season ?? '—'} W${week}` : '—'
 }
 
 function renderPlayerLinks(runId: string, playerIds: string[]): JSX.Element | null {
@@ -123,6 +153,61 @@ function finalsSummaryItems(summary: FinalsSummaryResponse | undefined, runId: s
     { label: 'Result source snapshot', value: result?.source_as_of_week != null ? `${result.source_as_of_season} W${result.source_as_of_week}` : '—' },
     ...collectArrayCountItems(qualificationPayload).map((item) => ({ label: `Qualification ${item.label}`, value: item.value })),
     ...collectArrayCountItems(resultPayload).map((item) => ({ label: `Result ${item.label}`, value: item.value }))
+  ]
+}
+
+function qualificationPrimitiveMetadataItems(payload: Record<string, unknown> | null | undefined): Array<{ label: string; value: string | number }> {
+  const excluded = new Set([
+    'ranking_snapshot_sequence',
+    'source_ranking_snapshot_sequence',
+    'ranking_snapshot_seq',
+    'source_ranking_snapshot_seq',
+    'race_snapshot_sequence',
+    'source_race_snapshot_sequence',
+    'race_snapshot_seq',
+    'source_race_snapshot_seq'
+  ])
+  return collectPrimitivePayloadItems(payload, excluded).filter((item) => {
+    const label = item.label.toLowerCase()
+    return label.includes('cutoff') || label.includes('ranking') || label.includes('race') || label.includes('qualification')
+  })
+}
+
+function subpageQualificationMetadataItems(qualification: FinalsQualificationResponse, runId: string): Array<{ label: string; value: ReactNode }> {
+  const payload = qualification.qualification
+  const rankingSequence = findSnapshotSequence(payload, 'ranking')
+  const raceSequence = findSnapshotSequence(payload, 'race')
+  const qualifiedPlayersCount = readArrayFieldLength(payload, 'qualified_player_ids')
+  const groupCount = readArrayFieldLength(payload, 'groups')
+  const items: Array<{ label: string; value: ReactNode }> = [
+    { label: 'Active run ID', value: qualification.run_id },
+    { label: 'Season', value: qualification.season },
+    { label: 'Source season', value: qualification.source_as_of_season },
+    { label: 'Source week', value: formatWeek(qualification.source_as_of_week) },
+    { label: 'Qualification availability', value: hasPayloadData(payload) ? 'Available' : 'Unavailable' }
+  ]
+
+  if (qualifiedPlayersCount != null) items.push({ label: 'Qualified player count', value: qualifiedPlayersCount })
+  if (groupCount != null) items.push({ label: 'Group count', value: groupCount })
+  if (rankingSequence != null) items.push({ label: 'Ranking snapshot sequence', value: <Link to={viewerRankingSnapshotPath(runId, rankingSequence)}>Ranking snapshot {rankingSequence}</Link> })
+  if (raceSequence != null) items.push({ label: 'Race snapshot sequence', value: <Link to={viewerRaceSnapshotPath(runId, raceSequence)}>Race snapshot {raceSequence}</Link> })
+  items.push(...qualificationPrimitiveMetadataItems(payload))
+
+  return items
+}
+
+function subpageResultMetadataItems(result: FinalsResultResponse, runId: string): Array<{ label: string; value: ReactNode }> {
+  const payload = result.result
+  const playerIds = collectPlayerIds(payload)
+  return [
+    { label: 'Active run ID', value: result.run_id },
+    { label: 'Season', value: result.season },
+    { label: 'Source season', value: result.source_as_of_season },
+    { label: 'Source week', value: formatWeek(result.source_as_of_week) },
+    { label: 'Source event ID', value: result.event_id ? <Link to={viewerPlannedEventPath(runId, result.event_id)}>{result.event_id}</Link> : '—' },
+    ...collectArrayCountItems(payload),
+    ...collectPrimitivePayloadItems(payload),
+    ...playerIds.map((playerId) => ({ label: `Player ${playerId}`, value: <Link to={viewerPlayerProfilePath(runId, playerId)}>Player Profile</Link> }))
   ]
 }
 
@@ -157,14 +242,28 @@ function resultMetadataItems(result: FinalsResultResponse, runId: string): Array
   ]
 }
 
+function hasQualificationPreviewData(payload: Record<string, unknown> | null | undefined): boolean {
+  return hasPayloadData(payload) && (
+    collectPlayerIds(payload).length > 0 ||
+    readArrayFieldLength(payload, 'qualified_player_ids') != null ||
+    readArrayFieldLength(payload, 'groups') != null ||
+    findSnapshotSequence(payload, 'ranking') != null ||
+    findSnapshotSequence(payload, 'race') != null ||
+    qualificationPrimitiveMetadataItems(payload).length > 0
+  )
+}
+
+function hasResultPreviewData(payload: Record<string, unknown> | null | undefined): boolean {
+  return hasPayloadData(payload) && (
+    collectPlayerIds(payload).length > 0 ||
+    collectArrayCountItems(payload).length > 0 ||
+    collectPrimitivePayloadItems(payload).length > 0
+  )
+}
+
 function readArrayFieldLength(payload: Record<string, unknown> | null | undefined, key: string): number | null {
   const value = payload?.[key]
   return Array.isArray(value) ? value.length : null
-}
-
-function readStringField(payload: Record<string, unknown> | null | undefined, key: string): string | null {
-  const value = payload?.[key]
-  return typeof value === 'string' ? value : null
 }
 
 function formatWeek(week: number | null | undefined): string {
@@ -358,10 +457,10 @@ export function ViewerRunFinalsQualificationPage(): JSX.Element {
   })
 
   const notFound = isApiNotFound(qualificationQuery.error)
-  const payload = qualificationQuery.data?.qualification
-  const qualifiedPlayersCount = readArrayFieldLength(payload, 'qualified_player_ids')
-  const groupCount = readArrayFieldLength(payload, 'groups')
-  const hasSafePreview = qualifiedPlayersCount != null || groupCount != null
+  const qualification = qualificationQuery.data
+  const payload = isRecord(qualification?.qualification) ? qualification.qualification : null
+  const playerIds = collectPlayerIds(payload)
+  const hasSafePreview = Boolean(qualification && hasQualificationPreviewData(payload))
 
   return (
     <section className="panel">
@@ -369,36 +468,44 @@ export function ViewerRunFinalsQualificationPage(): JSX.Element {
       <CurrentContextStrip
         items={[
           { label: 'Active run', value: runId || 'unknown' },
-          { label: 'Source season', value: qualificationQuery.data?.source_as_of_season ?? '—' },
-          { label: 'Source week', value: qualificationQuery.data?.source_as_of_week != null ? `W${qualificationQuery.data.source_as_of_week}` : '—' }
+          { label: 'Season', value: qualification?.season ?? '—' },
+          { label: 'Source snapshot', value: qualification ? sourceSnapshotLabel(qualification.source_as_of_season, qualification.source_as_of_week) : '—' },
+          { label: 'Qualification', value: payload ? 'Available' : notFound ? 'Unavailable' : 'Loading' }
         ]}
       />
 
-      <SectionCard title="Qualification metadata">
+      <SectionCard title="Qualification Summary">
         {qualificationQuery.isLoading ? <p className="status">Loading Finals qualification…</p> : null}
         {qualificationQuery.error && !notFound ? <p className="error">Failed to load Finals qualification: {formatApiError(qualificationQuery.error)}</p> : null}
         {notFound ? <EmptyState message="No data is available for this run yet." /> : null}
-        {qualificationQuery.data ? (
+        {qualification ? (
           hasSafePreview ? (
-            <SummaryPills
-              items={[
-                { label: 'Qualified players', value: qualifiedPlayersCount ?? 'Unknown' },
-                { label: 'Groups', value: groupCount ?? 'Unknown' },
-                { label: 'Season', value: qualificationQuery.data.season ?? '—' }
-              ]}
-            />
+            <MetadataList items={subpageQualificationMetadataItems(qualification, runId)} />
           ) : (
             <EmptyState message="This preview is not connected for this data shape yet." />
           )
         ) : null}
       </SectionCard>
 
-      {qualificationQuery.data ? (
+      <SectionCard title="Qualified Players / Links">
+        {hasSafePreview && playerIds.length > 0 ? renderPlayerLinks(runId, playerIds) : <EmptyState message="This preview is not connected for this data shape yet." />}
+      </SectionCard>
+
+      <SectionCard title="Links">
+        <p className="viewer-active-run-actions">
+          <Link className="viewer-active-run-link" to={viewerFinalsPath(runId)}>Back to Finals Summary</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerRankingsPath(runId)}>Open rankings</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerRacePath(runId)}>Open race</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerTournamentsPath(runId)}>Open tournaments</Link>
+        </p>
+      </SectionCard>
+
+      {payload ? (
         <SectionCard title="Read-only data">
           <TechnicalData
             summary="Show technical finals qualification data"
             title="Technical qualification data"
-            payload={qualificationQuery.data}
+            payload={qualification}
             emptyText="No technical Finals qualification data is available."
           />
         </SectionCard>
@@ -417,10 +524,10 @@ export function ViewerRunFinalsResultPage(): JSX.Element {
   })
 
   const notFound = isApiNotFound(resultQuery.error)
-  const payload = resultQuery.data?.result
-  const championPlayerId = readStringField(payload, 'champion_player_id')
-  const runnerUpPlayerId = readStringField(payload, 'runner_up_player_id')
-  const hasSafePreview = championPlayerId != null || runnerUpPlayerId != null
+  const result = resultQuery.data
+  const payload = isRecord(result?.result) ? result.result : null
+  const playerIds = collectPlayerIds(payload)
+  const hasSafePreview = Boolean(result && hasResultPreviewData(payload))
 
   return (
     <section className="panel">
@@ -428,38 +535,55 @@ export function ViewerRunFinalsResultPage(): JSX.Element {
       <CurrentContextStrip
         items={[
           { label: 'Active run', value: runId || 'unknown' },
-          { label: 'Result', value: resultQuery.data ? 'Available' : notFound ? 'Unavailable' : 'Loading' },
-          { label: 'Source season', value: resultQuery.data?.source_as_of_season ?? '—' },
-          { label: 'Source week', value: resultQuery.data?.source_as_of_week != null ? `W${resultQuery.data.source_as_of_week}` : '—' }
+          { label: 'Season', value: result?.season ?? '—' },
+          { label: 'Source snapshot', value: result ? sourceSnapshotLabel(result.source_as_of_season, result.source_as_of_week) : '—' },
+          { label: 'Result', value: payload ? 'Available' : notFound ? 'Unavailable' : 'Loading' }
         ]}
       />
 
-      <SectionCard title="Result metadata">
+      <SectionCard title="Result Summary">
         {resultQuery.isLoading ? <p className="status">Loading Finals result…</p> : null}
         {resultQuery.error && !notFound ? <p className="error">Failed to load Finals result: {formatApiError(resultQuery.error)}</p> : null}
         {notFound ? <EmptyState message="No data is available for this run yet." /> : null}
-        {resultQuery.data ? (
+        {result ? (
           hasSafePreview ? (
-            <SummaryPills
-              items={[
-                { label: 'Event', value: resultQuery.data.event_id ?? '—' },
-                { label: 'Champion', value: championPlayerId ?? 'Unknown' },
-                { label: 'Runner-up', value: runnerUpPlayerId ?? 'Unknown' },
-                { label: 'Season', value: resultQuery.data.season ?? '—' }
-              ]}
-            />
+            <MetadataList items={subpageResultMetadataItems(result, runId)} />
           ) : (
             <EmptyState message="This preview is not connected for this data shape yet." />
           )
         ) : null}
       </SectionCard>
 
-      {resultQuery.data ? (
+      <SectionCard title="Player Links">
+        {hasSafePreview && playerIds.length > 0 ? renderPlayerLinks(runId, playerIds) : <EmptyState message="This preview is not connected for this data shape yet." />}
+      </SectionCard>
+
+      <SectionCard title="Source Links">
+        {hasSafePreview && result?.event_id ? (
+          <ul className="item-list" aria-label="Finals source event links">
+            <li><Link to={viewerPlannedEventPath(runId, result.event_id)}>Planned event {result.event_id}</Link></li>
+            <li><Link to={viewerTournamentDetailPath(runId, result.event_id)}>Tournament detail {result.event_id}</Link></li>
+          </ul>
+        ) : (
+          <EmptyState message="This preview is not connected for this data shape yet." />
+        )}
+      </SectionCard>
+
+      <SectionCard title="Links">
+        <p className="viewer-active-run-actions">
+          <Link className="viewer-active-run-link" to={viewerFinalsPath(runId)}>Back to Finals Summary</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerRankingsPath(runId)}>Open rankings</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerRacePath(runId)}>Open race</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerTournamentsPath(runId)}>Open tournaments</Link>
+        </p>
+      </SectionCard>
+
+      {payload ? (
         <SectionCard title="Read-only data">
           <TechnicalData
             summary="Show technical finals result data"
             title="Technical result data"
-            payload={resultQuery.data}
+            payload={result}
             emptyText="No technical Finals result data is available."
           />
         </SectionCard>

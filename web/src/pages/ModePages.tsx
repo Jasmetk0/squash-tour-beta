@@ -14,7 +14,9 @@ import { ViewerJumpToWeekButton } from '../components/ViewerContextControls'
 import { ViewerRunSelector } from '../components/ViewerRunSelector'
 import { useViewerContext } from '../viewer/ViewerContext'
 import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewer/activeRun'
+import { RacePreviewTable } from '../viewer/RacePreviewTable'
 import { RankingPreviewTable } from '../viewer/RankingPreviewTable'
+import { parseRacePreviewPayload } from '../viewer/racePayload'
 import { parseRankingPreviewPayload } from '../viewer/rankingPayload'
 import type { EventRecord, FinalsSummaryResponse, RankingSnapshot, RaceSnapshot, RunActivityItem, RunNationSummaryItem, RunPlayerListItem, SeasonStateResponse } from '../api/types'
 
@@ -545,6 +547,7 @@ function ViewerSnapshotLandingPage({ config }: { config: ViewerSnapshotLandingCo
   const snapshots = snapshotsQuery.data?.snapshots ?? []
   const latest = latestSnapshot(snapshots)
   const rankingPreview = config.mode === 'ranking' && latest ? parseRankingPreviewPayload(latest.payload) : null
+  const racePreview = config.mode === 'race' && latest ? parseRacePreviewPayload(latest.payload) : null
 
   return (
     <ViewerShellPage title={config.title} description={config.description}>
@@ -565,6 +568,12 @@ function ViewerSnapshotLandingPage({ config }: { config: ViewerSnapshotLandingCo
           <div>
             <h4>Top 10 Ranking Preview</h4>
             <RankingPreviewTable rows={rankingPreview.rows} ariaLabel="Latest Top 10 ranking preview table" />
+          </div>
+        ) : null}
+        {racePreview?.rows.length ? (
+          <div>
+            <h4>Top 10 Race Preview</h4>
+            <RacePreviewTable rows={racePreview.rows} ariaLabel="Latest Top 10 race preview table" />
           </div>
         ) : null}
 

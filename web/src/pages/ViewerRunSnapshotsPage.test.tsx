@@ -84,6 +84,19 @@ function rankingRows(count: number): Array<Record<string, unknown>> {
   }))
 }
 
+function raceRows(count: number): Array<Record<string, unknown>> {
+  return Array.from({ length: count }, (_, index) => ({
+    position: index + 1,
+    player_id: `R${index + 1}`,
+    player_name: index === 0 ? 'Mostafa Asal' : `Race Player ${index + 1}`,
+    country: index === 0 ? 'EGY' : 'NZL',
+    race_points: 9000 - index,
+    tournaments_counted: index === 0 ? 8 : 6,
+    qualification_status: index === 0 ? 'Qualified' : 'Chasing',
+    next_max_points_possible: index === 0 ? 1200 : 900
+  }))
+}
+
 function expectNoForbiddenViewerActions(): void {
   const forbiddenLabels = [
     'Simulate',
@@ -239,7 +252,39 @@ describe('ViewerRunSnapshotDetailPage', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('renders a sports-facing Race to Finals detail with collapsed technical payload', async () => {
+  it('renders a real Top 10 Race to Finals preview from a parseable payload', async () => {
+    api.getRaceSnapshot.mockResolvedValue({
+      snapshot_sequence: 5,
+      snapshot_kind: 'RACE_WEEKLY_PUBLICATION',
+      source_event_id: 'EVENT-1',
+      payload: { race_to_finals: { rows: raceRows(11) }, secret_debug_marker: 'race-detail-hidden-payload' }
+    })
+    api.listRaceSnapshots.mockResolvedValue({
+      run_id: 'viewer-run-1',
+      snapshots: [{ snapshot_sequence: 5, snapshot_kind: 'RACE_WEEKLY_PUBLICATION', source_event_id: 'EVENT-1', payload: {} }]
+    })
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/race/5')
+
+    expect(await screen.findByRole('heading', { name: 'Race to Finals' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Top 10 Race Preview' })).toBeInTheDocument()
+    const table = screen.getByRole('table', { name: 'Top 10 race preview table' })
+    expect(within(table).getByText('1')).toBeInTheDocument()
+    expect(within(table).getByText('Mostafa Asal')).toBeInTheDocument()
+    expect(within(table).getByText('EGY')).toBeInTheDocument()
+    expect(within(table).getByText('9000')).toBeInTheDocument()
+    expect(within(table).getAllByText('8').length).toBeGreaterThan(0)
+    expect(within(table).getByText('Qualified')).toBeInTheDocument()
+    expect(within(table).getByText('1200')).toBeInTheDocument()
+    expect(within(table).getAllByRole('row')).toHaveLength(11)
+    expect(screen.queryByText('Race Player 11')).not.toBeInTheDocument()
+    const technicalSection = screen.getByText('Show technical payload').closest('details')
+    expect(technicalSection).not.toHaveAttribute('open')
+    expect(screen.getByText(/race-detail-hidden-payload/i)).not.toBeVisible()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('renders the deferred Race to Finals preview for unknown payload shapes without crashing', async () => {
     api.getRaceSnapshot.mockResolvedValue({
       snapshot_sequence: 5,
       snapshot_kind: 'RACE_WEEKLY_PUBLICATION',
@@ -254,7 +299,8 @@ describe('ViewerRunSnapshotDetailPage', () => {
     renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/race/5')
 
     expect(await screen.findByRole('heading', { name: 'Race to Finals' })).toBeInTheDocument()
-    expect(await screen.findByText('RACE_WEEKLY_PUBLICATION')).toBeInTheDocument()
+    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Top 10 race preview table' })).not.toBeInTheDocument()
     expect(screen.getByText('EVENT-1')).toBeInTheDocument()
     expect(screen.getAllByText('W3').length).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: /Back to race publications/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/race')

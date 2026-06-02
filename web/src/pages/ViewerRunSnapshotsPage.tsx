@@ -23,7 +23,9 @@ import {
 } from '../components/RunScopedUi'
 import { SelectableHistoryList } from '../components/SelectableHistoryList'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
+import { RacePreviewTable } from '../viewer/RacePreviewTable'
 import { RankingPreviewTable } from '../viewer/RankingPreviewTable'
+import { parseRacePreviewPayload } from '../viewer/racePayload'
 import { parseRankingPreviewPayload } from '../viewer/rankingPayload'
 
 type ViewerSnapshotMode = 'ranking' | 'race'
@@ -199,6 +201,7 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
   const selectedPersisted = selected?.source_event_id ? persistedEventsById.get(selected.source_event_id) : undefined
   const selectedWeek = resolveWeek(selectedPlanned, selectedPersisted)
   const selectedRankingPreview = mode === 'ranking' && selected ? parseRankingPreviewPayload(selected.payload) : null
+  const selectedRacePreview = mode === 'race' && selected ? parseRacePreviewPayload(selected.payload) : null
 
   return (
     <section className="panel">
@@ -229,6 +232,12 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
             <>
               <h4>Top 10 Ranking Preview</h4>
               <RankingPreviewTable rows={selectedRankingPreview.rows} ariaLabel="Latest selected Top 10 ranking preview table" />
+            </>
+          ) : null}
+          {selectedRacePreview?.rows.length ? (
+            <>
+              <h4>Top 10 Race Preview</h4>
+              <RacePreviewTable rows={selectedRacePreview.rows} ariaLabel="Latest selected Top 10 race preview table" />
             </>
           ) : null}
           <p>
@@ -401,6 +410,7 @@ export function ViewerRunSnapshotDetailPage({ mode }: { mode: ViewerSnapshotMode
   const persisted = sourceEventId ? persistedEventsById.get(sourceEventId) : undefined
   const week = resolveWeek(planned, persisted)
   const rankingPreview = mode === 'ranking' && snapshot ? parseRankingPreviewPayload(snapshot.payload) : null
+  const racePreview = mode === 'race' && snapshot ? parseRacePreviewPayload(snapshot.payload) : null
 
   return (
     <section className="panel">
@@ -502,9 +512,11 @@ export function ViewerRunSnapshotDetailPage({ mode }: { mode: ViewerSnapshotMode
           ) : null}
 
           {snapshot ? (
-            <SectionCard title={rankingPreview?.rows.length ? 'Top 10 Ranking Preview' : 'Standings preview'}>
+            <SectionCard title={rankingPreview?.rows.length ? 'Top 10 Ranking Preview' : racePreview?.rows.length ? 'Top 10 Race Preview' : 'Standings preview'}>
               {rankingPreview?.rows.length ? (
                 <RankingPreviewTable rows={rankingPreview.rows} />
+              ) : racePreview?.rows.length ? (
+                <RacePreviewTable rows={racePreview.rows} />
               ) : (
                 <EmptyState message="This preview is not connected for this data shape yet." />
               )}

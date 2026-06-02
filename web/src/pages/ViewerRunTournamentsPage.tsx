@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { getEvent, getRun, listEvents } from '../api/client'
@@ -64,17 +65,29 @@ function displayPlayer(player: TournamentPlayerSummary | null): string {
   return `${identity}${country}`
 }
 
-function TournamentListResultMetadata({ event }: { event: EventRecord }): JSX.Element | null {
+function playerProfilePath(runId: string, playerId: string): string {
+  return `/viewer/runs/${runId}/players/${encodeURIComponent(playerId)}/career`
+}
+
+function displayPlayerProfileLink(runId: string, player: TournamentPlayerSummary | null): ReactNode {
+  const label = displayPlayer(player)
+
+  if (!player?.playerId) return label
+
+  return <Link to={playerProfilePath(runId, player.playerId)}>{label}</Link>
+}
+
+function TournamentListResultMetadata({ event, runId }: { event: EventRecord; runId: string }): JSX.Element | null {
   const resultPreview = parseTournamentResultPayload(event.tournament_result)
   const summary = resultPreview.summary
 
   if (!summary) return null
 
   const items = [
-    summary.champion ? { label: 'Champion', value: displayPlayer(summary.champion) } : null,
+    summary.champion ? { label: 'Champion', value: displayPlayerProfileLink(runId, summary.champion) } : null,
     summary.resultStatus ? { label: 'Result status', value: summary.resultStatus } : null,
     summary.matchCount !== null ? { label: 'Matches', value: summary.matchCount } : null
-  ].filter((item): item is { label: string; value: string | number } => item !== null)
+  ].filter((item): item is { label: string; value: ReactNode } => item !== null)
 
   if (items.length === 0) return null
 
@@ -140,7 +153,7 @@ export function ViewerRunTournamentsPage(): JSX.Element {
                       { label: 'Result availability', value: resultAvailability(event) }
                     ]}
                   />
-                  <TournamentListResultMetadata event={event} />
+                  <TournamentListResultMetadata event={event} runId={runId} />
                   <p>
                     <Link to={`/viewer/runs/${runId}/tournaments/${encodeURIComponent(event.event_id)}`}>Open tournament detail</Link>
                   </p>
@@ -273,8 +286,8 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
               {resultPreview.summary ? (
                 <MetadataList
                   items={[
-                    { label: 'Champion', value: displayPlayer(resultPreview.summary.champion) },
-                    { label: 'Finalist', value: displayPlayer(resultPreview.summary.finalist) },
+                    { label: 'Champion', value: displayPlayerProfileLink(runId, resultPreview.summary.champion) },
+                    { label: 'Finalist', value: displayPlayerProfileLink(runId, resultPreview.summary.finalist) },
                     { label: 'Final score', value: displayValue(resultPreview.summary.finalScore) },
                     { label: 'Match count', value: displayValue(resultPreview.summary.matchCount) },
                     { label: 'Completed matches', value: displayValue(resultPreview.summary.completedMatchCount) },

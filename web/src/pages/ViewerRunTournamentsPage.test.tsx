@@ -132,7 +132,10 @@ describe('ViewerRunTournamentsPage', () => {
     expect(screen.getAllByText('Platinum').length).toBeGreaterThan(0)
     expect(screen.getAllByText('World Tour').length).toBeGreaterThan(0)
     expect(within(eventOne).getByText('Champion')).toBeInTheDocument()
-    expect(within(eventOne).getByText('Ali Farag (EGY)')).toBeInTheDocument()
+    expect(within(eventOne).getByRole('link', { name: 'Ali Farag (EGY)' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/players/P-001/career'
+    )
     expect(within(eventOne).getByText('Result status')).toBeInTheDocument()
     expect(within(eventOne).getByText('completed')).toBeInTheDocument()
     expect(within(eventOne).getByText('Matches')).toBeInTheDocument()
@@ -172,6 +175,7 @@ describe('ViewerRunTournamentsPage', () => {
     expect(screen.getByText('Result publication available')).toBeInTheDocument()
     expect(screen.queryByText('Champion')).not.toBeInTheDocument()
     expect(screen.queryByText(/Fake Champion/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Fake Champion/i })).not.toBeInTheDocument()
     expect(screen.queryByText('Result status')).not.toBeInTheDocument()
     expect(screen.queryByText(/unknown-list-payload-should-not-render/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
@@ -217,8 +221,14 @@ describe('ViewerRunTournamentDetailPage', () => {
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
 
     expect(await screen.findByRole('heading', { name: 'Tournament Result Preview' })).toBeInTheDocument()
-    expect(screen.getByText('Ali Farag (EGY)')).toBeInTheDocument()
-    expect(screen.getByText('Paul Coll (NZL)')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ali Farag (EGY)' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/players/P-001/career'
+    )
+    expect(screen.getByRole('link', { name: 'Paul Coll (NZL)' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/players/P-002/career'
+    )
     expect(screen.getByText('11-8, 9-11, 11-7, 11-6')).toBeInTheDocument()
     expect(screen.getByText('31')).toBeInTheDocument()
     expect(screen.getByText('30')).toBeInTheDocument()
@@ -230,6 +240,33 @@ describe('ViewerRunTournamentDetailPage', () => {
     const technicalSection = screen.getByText('Show technical event data').closest('details')
     expect(technicalSection).not.toHaveAttribute('open')
     expect(screen.getByText(/parseable-hidden-payload/i)).not.toBeVisible()
+    expectNoForbiddenViewerActions()
+  })
+
+
+  it('keeps tournament result champion and finalist as plain text when player IDs are missing', async () => {
+    api.getEvent.mockResolvedValueOnce({
+      event_sequence: 8,
+      event_id: 'EVENT-1',
+      season: 2027,
+      week: 3,
+      template_id: 'WT-PLAT',
+      tournament_result: {
+        summary: {
+          champion: { name: 'Ali Farag', country: 'EGY' },
+          finalist: { name: 'Paul Coll', country: 'NZL' },
+          status: 'completed'
+        }
+      }
+    })
+
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
+
+    expect(await screen.findByRole('heading', { name: 'Tournament Result Preview' })).toBeInTheDocument()
+    expect(screen.getByText('Ali Farag (EGY)')).toBeInTheDocument()
+    expect(screen.getByText('Paul Coll (NZL)')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Ali Farag (EGY)' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Paul Coll (NZL)' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

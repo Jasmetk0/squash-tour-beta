@@ -486,3 +486,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Ranking and Race preview player names now link to Player Profile pages when `player_id` is available.
 - Rows without `player_id` remain plain text.
 - No parser/backend/Admin behavior changed.
+
+## Phase 3H tournament result player profile links note
+
+- Tournament result preview champion/finalist names now link to Player Profile pages when `player_id` is available.
+- Tournament list champion badges link when `player_id` is available.
+- Rows without `player_id` remain plain text.
+- No parser/backend/Admin behavior changed.

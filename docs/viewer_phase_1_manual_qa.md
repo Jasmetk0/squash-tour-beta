@@ -466,3 +466,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Unknown result payloads do not show fake winners/status.
 - Raw tournament result payloads remain hidden from the list page.
 - No backend/tournament engine changes were added.
+
+## Phase 3E player profile summary note
+
+- Viewer player profile now shows real player identity/attribute/source summary from existing data.
+- Missing/unknown detail shapes still show deferred previews.
+- Technical player data remains collapsed.
+- No fake rankings, titles, records, Elo, or career achievements were added.

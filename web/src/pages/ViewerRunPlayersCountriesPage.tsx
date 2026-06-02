@@ -24,6 +24,17 @@ function displayFixed(value: number | null | undefined): string {
   return typeof value === 'number' ? value.toFixed(2) : '—'
 }
 
+function countryProfilePath(runId: string, countryCode: string): string {
+  return `/viewer/runs/${encodeURIComponent(runId)}/countries/${encodeURIComponent(countryCode)}`
+}
+
+function countryCodeCell(countryCode: string | null | undefined, runId: string): JSX.Element | string {
+  if (!countryCode) return '—'
+  if (!runId) return countryCode
+
+  return <Link to={countryProfilePath(runId, countryCode)}>{countryCode}</Link>
+}
+
 function hasPlayerProfileShape(value: unknown): value is {
   player_id: string
   name: string
@@ -201,7 +212,7 @@ export function ViewerRunPlayersPage(): JSX.Element {
                 {playersQuery.data.players.map((player) => (
                   <tr key={player.player_id}>
                     <td>{player.name}</td>
-                    <td>{player.country_code}</td>
+                    <td>{countryCodeCell(player.country_code, runId)}</td>
                     <td>{player.age}</td>
                     <td>{player.quality_band ?? '—'}</td>
                     <td>{displayMetric(player.overall)}</td>
@@ -270,7 +281,7 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
               items={[
                 { label: 'Name', value: playerProfile.name },
                 { label: 'Player ID', value: playerProfile.player_id },
-                { label: 'Country', value: playerProfile.country_code },
+                { label: 'Country', value: countryCodeCell(playerProfile.country_code, runId) },
                 { label: 'Age', value: playerProfile.age }
               ]}
             />
@@ -305,7 +316,7 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
           <SectionCard title="Links">
             <p>
               <Link to={`/viewer/runs/${runId}/players`}>Back to players</Link> ·{' '}
-              <Link to={`/viewer/runs/${runId}/countries/${playerProfile.country_code}`}>Country page</Link>
+              <Link to={countryProfilePath(runId, playerProfile.country_code)}>Country page</Link>
             </p>
           </SectionCard>
         </>
@@ -515,7 +526,7 @@ export function ViewerRunCountriesPage(): JSX.Element {
                       carryover {nation.rollover_carried_count} · intake {nation.planner_generated_count} · manual {nation.manual_override_count}
                     </td>
                     <td>
-                      <Link to={`/viewer/runs/${runId}/countries/${nation.country_code}`}>Open country profile</Link>
+                      <Link to={countryProfilePath(runId, nation.country_code)}>Open country profile</Link>
                     </td>
                   </tr>
                 ))}

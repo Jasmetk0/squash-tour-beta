@@ -533,7 +533,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       'href',
       '/viewer/runs/run-a/players/P1/career'
     )
-    expect(within(table).getByText('EG')).toBeInTheDocument()
+    expect(within(table).getByRole('link', { name: 'EG' })).toHaveAttribute('href', '/viewer/runs/run-a/countries/EG')
     expect(within(table).getByText('1000')).toBeInTheDocument()
     expect(within(table).getAllByText('9').length).toBeGreaterThan(0)
     expect(within(table).getAllByText('Previous 2').length).toBeGreaterThan(0)
@@ -573,7 +573,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       'href',
       '/viewer/runs/run-a/players/R1/career'
     )
-    expect(within(table).getByText('NZ')).toBeInTheDocument()
+    expect(within(table).getByRole('link', { name: 'NZ' })).toHaveAttribute('href', '/viewer/runs/run-a/countries/NZ')
     expect(within(table).getByText('7000')).toBeInTheDocument()
     expect(within(table).getAllByText('8').length).toBeGreaterThan(0)
     expect(within(table).getByText('Qualified')).toBeInTheDocument()

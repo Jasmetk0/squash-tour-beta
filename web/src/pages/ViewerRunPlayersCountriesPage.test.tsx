@@ -316,7 +316,7 @@ describe('ViewerRunPlayersPage', () => {
     expect(await screen.findByRole('heading', { name: 'Players' })).toBeInTheDocument()
     expect(screen.getAllByText('viewer-run-2c').length).toBeGreaterThan(0)
     const aliRow = (await screen.findByText('Ali A')).closest('tr') as HTMLElement
-    expect(within(aliRow).getByText('EGY')).toBeInTheDocument()
+    expect(within(aliRow).getByRole('link', { name: 'EGY' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/countries/EGY')
     expect(within(aliRow).getByText('20')).toBeInTheDocument()
     expect(within(aliRow).getByText('elite_talent')).toBeInTheDocument()
     expect(within(aliRow).getByText('67')).toBeInTheDocument()
@@ -348,7 +348,7 @@ describe('ViewerRunPlayerCareerPage', () => {
     expect(screen.getAllByText('viewer-run-2c').length).toBeGreaterThan(0)
     expect(screen.getAllByText('EGY-0001').length).toBeGreaterThan(0)
     expect(await screen.findByText('Ali A')).toBeInTheDocument()
-    expect(screen.getAllByText('EGY').length).toBeGreaterThan(0)
+    expect(screen.getByRole('link', { name: 'EGY' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/countries/EGY')
     ;['20', '70', '68', '66', '65', '67', '2027'].forEach((value) =>
       expect(screen.getAllByText(value).length).toBeGreaterThan(0)
     )

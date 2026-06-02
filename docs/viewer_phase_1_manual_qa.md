@@ -493,3 +493,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Tournament list champion badges link when `player_id` is available.
 - Rows without `player_id` remain plain text.
 - No parser/backend/Admin behavior changed.
+
+## Phase 3I country profile links note
+
+- Ranking/Race preview country values now link to Country Profile pages when a country code is available.
+- Player list/profile country values now link to Country Profile pages.
+- Missing country values remain plain text.
+- No parser/backend/Admin behavior changed.

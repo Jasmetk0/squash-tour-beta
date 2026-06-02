@@ -23,6 +23,13 @@ function playerCell(row: RacePreviewRow, runId?: string): JSX.Element | string {
   return <Link to={`/viewer/runs/${encodeURIComponent(runId)}/players/${encodeURIComponent(row.playerId)}/career`}>{label}</Link>
 }
 
+function countryCell(row: RacePreviewRow, runId?: string): JSX.Element | string {
+  if (!row.country) return '—'
+  if (!runId) return row.country
+
+  return <Link to={`/viewer/runs/${encodeURIComponent(runId)}/countries/${encodeURIComponent(row.country)}`}>{row.country}</Link>
+}
+
 export function RacePreviewTable({ rows, ariaLabel = 'Top 10 race preview table', runId }: RacePreviewTableProps): JSX.Element {
   return (
     <table aria-label={ariaLabel}>
@@ -42,7 +49,7 @@ export function RacePreviewTable({ rows, ariaLabel = 'Top 10 race preview table'
           <tr key={`${row.playerId ?? row.playerName ?? 'race-row'}-${row.rank ?? index}`}>
             <td>{displayValue(row.rank)}</td>
             <td>{playerCell(row, runId)}</td>
-            <td>{displayValue(row.country)}</td>
+            <td>{countryCell(row, runId)}</td>
             <td>{displayValue(row.racePoints)}</td>
             <td>{displayValue(row.tournamentsCounted)}</td>
             <td>{displayValue(row.qualificationStatus)}</td>

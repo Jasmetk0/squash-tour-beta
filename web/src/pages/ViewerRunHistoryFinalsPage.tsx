@@ -32,20 +32,32 @@ function formatFieldLabel(key: string): string {
     .replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
 
-function isPrimitiveMetadataValue(value: unknown): value is string | number | boolean {
-  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
-}
-
 function collectPrimitivePayloadItems(payload: Record<string, unknown> | null | undefined, excludedKeys: Set<string> = new Set()): Array<{ label: string; value: string | number }> {
-  return Object.entries(payload ?? {})
-    .filter(([key, value]) => !excludedKeys.has(key) && isPrimitiveMetadataValue(value))
-    .map(([key, value]) => ({ label: formatFieldLabel(key), value: typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value }))
+  const items: Array<{ label: string; value: string | number }> = []
+
+  for (const [key, value] of Object.entries(payload ?? {})) {
+    if (excludedKeys.has(key)) continue
+
+    if (typeof value === 'string' || typeof value === 'number') {
+      items.push({ label: formatFieldLabel(key), value })
+    } else if (typeof value === 'boolean') {
+      items.push({ label: formatFieldLabel(key), value: value ? 'Yes' : 'No' })
+    }
+  }
+
+  return items
 }
 
 function collectArrayCountItems(payload: Record<string, unknown> | null | undefined): Array<{ label: string; value: number }> {
-  return Object.entries(payload ?? {})
-    .filter(([, value]) => Array.isArray(value))
-    .map(([key, value]) => ({ label: `${formatFieldLabel(key)} count`, value: value.length }))
+  const items: Array<{ label: string; value: number }> = []
+
+  for (const [key, value] of Object.entries(payload ?? {})) {
+    if (Array.isArray(value)) {
+      items.push({ label: `${formatFieldLabel(key)} count`, value: value.length })
+    }
+  }
+
+  return items
 }
 
 function collectPlayerIds(payload: Record<string, unknown> | null | undefined): string[] {

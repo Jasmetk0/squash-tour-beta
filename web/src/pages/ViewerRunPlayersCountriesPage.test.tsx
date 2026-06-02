@@ -237,13 +237,13 @@ function mockPlayerDetail(): void {
       {
         run_id: 'viewer-run-2c',
         season: 2027,
-        week: 9,
+        week: null,
         event_sequence: 3,
         event_id: null,
-        event_name: null,
-        event_category: null,
+        event_name: 'No Week Invitational',
+        event_category: 'bronze',
         template_id: null,
-        finish: null,
+        finish: 'R16',
         is_title: false,
         wins: 0,
         losses: 1,
@@ -389,18 +389,25 @@ describe('ViewerRunPlayerCareerPage', () => {
     expect(screen.getByRole('link', { name: /Country page/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/countries/EGY')
     expect(screen.getByRole('heading', { name: 'Season Timeline' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Tournament History' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'W7' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/weeks/7')
+    expect(screen.getByRole('link', { name: 'W8' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/weeks/8')
     expect(screen.getByRole('link', { name: 'Cairo Open' })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2c/tournaments/event-cairo-2027'
     )
     expect(screen.getByText('Local Showcase')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Local Showcase' })).not.toBeInTheDocument()
+    const noWeekRow = screen.getByText('No Week Invitational').closest('tr')
+    expect(noWeekRow).not.toBeNull()
+    expect(within(noWeekRow as HTMLElement).getAllByText('—').length).toBeGreaterThan(0)
+    expect(within(noWeekRow as HTMLElement).queryByRole('link', { name: /^W/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /undefined|null/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'W9' })).not.toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Finish' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Points' })).toBeInTheDocument()
     expect(screen.getByText('Final')).toBeInTheDocument()
     expect(screen.getByText('Quarterfinal')).toBeInTheDocument()
-    ;['12', '8', '14', '1', '28', '11', '7', '4', '700', '175'].forEach((value) =>
+    ;['12', '14', '1', '28', '11', '4', '700', '175', 'bronze', 'R16'].forEach((value) =>
       expect(screen.getAllByText(value).length).toBeGreaterThan(0)
     )
     expect(screen.queryByText(/world champion|grand slam|career high no\. 1|h2h|elo/i)).not.toBeInTheDocument()

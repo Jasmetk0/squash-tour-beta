@@ -512,3 +512,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Tournament list/detail week values now link to Week Detail pages when week is available.
 - Missing week values remain plain text.
 - No backend/Admin behavior changed.
+
+## Phase 3L player tournament history week detail links note
+
+- Player Profile Tournament History week values now link to Week Detail pages when week is available.
+- Entries without week remain plain text.
+- Existing event links remain unchanged.
+- No backend/Admin behavior changed.

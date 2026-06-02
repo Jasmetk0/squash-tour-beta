@@ -21,6 +21,8 @@ import { parseRankingPreviewPayload } from '../viewer/rankingPayload'
 import {
   viewerCountriesPath,
   viewerCountryProfilePath,
+  viewerFinalsPath,
+  viewerHistoryPath,
   viewerPlannedEventPath,
   viewerPlayerProfilePath,
   viewerPlayersPath,
@@ -244,8 +246,8 @@ const activeRunLinks = [
   { title: 'Active Run Calendar', href: (runId: string) => viewerSeasonCalendarPath(runId) },
   { title: 'Active Run Players', href: (runId: string) => viewerPlayersPath(runId) },
   { title: 'Active Run Countries', href: (runId: string) => viewerCountriesPath(runId) },
-  { title: 'Active Run History', href: (runId: string) => `/viewer/runs/${runId}/history` },
-  { title: 'Active Run Finals', href: (runId: string) => `/viewer/runs/${runId}/finals` }
+  { title: 'Active Run History', href: (runId: string) => viewerHistoryPath(runId) },
+  { title: 'Active Run Finals', href: (runId: string) => viewerFinalsPath(runId) }
 ]
 
 type ViewerShellPageProps = {
@@ -575,7 +577,7 @@ export function ViewerHomePage(): JSX.Element {
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           )}
-          {activeRunId ? <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/history`}>Open active run history</Link> : null}
+          {activeRunId ? <Link className="viewer-active-run-link" to={viewerHistoryPath(activeRunId)}>Open active run history</Link> : null}
         </ViewerSectionCard>
       </ViewerLandingGrid>
     </section>
@@ -741,7 +743,7 @@ export function ViewerSeasonHubPage(): JSX.Element {
         <p className="viewer-active-run-actions">
           <Link className="viewer-active-run-link" to={viewerTournamentsPath(activeRunId)}>Open active run tournaments</Link>{' '}
           <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(activeRunId)}>Open active run schedule</Link>{' '}
-          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/finals`}>Open active run finals</Link>
+          <Link className="viewer-active-run-link" to={viewerFinalsPath(activeRunId)}>Open active run finals</Link>
         </p>
       </article>
     </ViewerShellPage>
@@ -1045,7 +1047,7 @@ export function ViewerHistoryPage(): JSX.Element {
           <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
         ) : null}
         <p className="viewer-active-run-actions">
-          <Link className="viewer-active-run-link" to={`/viewer/runs/${activeRunId}/history`}>Open active run history</Link>
+          <Link className="viewer-active-run-link" to={viewerHistoryPath(activeRunId)}>Open active run history</Link>
         </p>
       </article>
     </ViewerShellPage>
@@ -1121,7 +1123,7 @@ function ViewerRecordsStatsLandingPage({ kind }: { kind: ViewerRecordsLandingKin
             { label: 'Open active run tournaments', to: viewerTournamentsPath(activeRunId) },
             { label: 'Open active run rankings', to: viewerRankingsPath(activeRunId) },
             { label: 'Open active run race', to: viewerRacePath(activeRunId) },
-            { label: 'Open active run finals', to: `/viewer/runs/${activeRunId}/finals` }
+            { label: 'Open active run finals', to: viewerFinalsPath(activeRunId) }
           ]}
         />
       </article>

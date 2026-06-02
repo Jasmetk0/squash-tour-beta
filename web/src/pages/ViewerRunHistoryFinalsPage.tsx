@@ -15,6 +15,9 @@ import {
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import {
+  viewerFinalsPath,
+  viewerFinalsQualificationPath,
+  viewerFinalsResultPath,
   viewerPlannedEventPath,
   viewerPlayerProfilePath,
   viewerRacePath,
@@ -117,9 +120,6 @@ function hasPayloadData(payload: Record<string, unknown> | null | undefined): bo
   return Object.keys(payload ?? {}).length > 0
 }
 
-function viewerFinalsPath(runId: string): string {
-  return `/viewer/runs/${encodeURIComponent(runId)}/finals`
-}
 
 function sourceSnapshotLabel(season: number | null | undefined, week: number | null | undefined): string {
   return typeof week === 'number' ? `${season ?? '—'} W${week}` : '—'
@@ -426,7 +426,9 @@ export function ViewerRunFinalsPage(): JSX.Element {
 
       <SectionCard title="Links">
         <p className="viewer-active-run-actions">
-          <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(runId)}>Back to Season Hub</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(runId)}>Back to Season Calendar</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerFinalsQualificationPath(runId)}>Open Finals qualification</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerFinalsResultPath(runId)}>Open Finals result</Link>{' '}
           <Link className="viewer-active-run-link" to={viewerRankingsPath(runId)}>Open rankings</Link>{' '}
           <Link className="viewer-active-run-link" to={viewerRacePath(runId)}>Open race</Link>{' '}
           <Link className="viewer-active-run-link" to={viewerTournamentsPath(runId)}>Open tournaments</Link>

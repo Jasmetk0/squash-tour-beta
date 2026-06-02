@@ -598,3 +598,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Player/snapshot/source-event links are added only when IDs are available.
 - Missing or unknown finals payloads remain deferred/no-data.
 - No backend/Admin/finals-engine behavior changed.
+
+## Phase 3Y — Viewer Finals/History route helpers cleanup
+
+- Remaining run-scoped History/Finals route path construction was centralized in shared Viewer route helpers.
+- Finals Summary calendar-back link label now matches its calendar destination.
+- Existing History/Finals href behavior remains unchanged.
+- No backend/Admin/finals-engine behavior changed.

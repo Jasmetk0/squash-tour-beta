@@ -32,6 +32,22 @@ export function viewerSeasonCalendarPath(runId: ViewerPathSegment): string {
   return `/viewer/runs/${encodePathSegment(runId)}/calendar`
 }
 
+export function viewerHistoryPath(runId: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(runId)}/history`
+}
+
+export function viewerFinalsPath(runId: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(runId)}/finals`
+}
+
+export function viewerFinalsQualificationPath(runId: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(runId)}/finals/qualification`
+}
+
+export function viewerFinalsResultPath(runId: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(runId)}/finals/result`
+}
+
 export function viewerPlannedEventPath(runId: ViewerPathSegment, eventId: ViewerPathSegment): string {
   return `/viewer/runs/${encodePathSegment(runId)}/calendar/${encodePathSegment(eventId)}`
 }

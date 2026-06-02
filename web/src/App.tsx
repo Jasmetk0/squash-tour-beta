@@ -34,6 +34,7 @@ import {
   ViewerRankingsPage,
   ViewerRacePage,
   ViewerRecordsPage,
+  ViewerRunBrowserPage,
   ViewerSearchPage,
   ViewerShellPage,
   ViewerStatsPage,
@@ -215,6 +216,7 @@ export default function App(): JSX.Element {
         <Route path="viewer/predictions/futures" element={<ViewerShellPage title="Futures Markets" />} />
         <Route path="viewer/search" element={<ViewerSearchPage />} />
         <Route path="viewer/history" element={<ViewerHistoryPage />} />
+        <Route path="viewer/runs" element={<ViewerRunBrowserPage />} />
         <Route path="viewer/runs/:runId/rankings" element={<ViewerRunSnapshotListPage mode="ranking" />} />
         <Route path="viewer/runs/:runId/rankings/:snapshotSequence" element={<ViewerRunSnapshotDetailPage mode="ranking" />} />
         <Route path="viewer/runs/:runId/race" element={<ViewerRunSnapshotListPage mode="race" />} />

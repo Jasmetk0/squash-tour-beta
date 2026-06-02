@@ -70,7 +70,15 @@ function mockEvents(): void {
         season: 2027,
         week: 3,
         template_id: 'WT-PLAT',
-        tournament_result: { secret_debug_marker: 'event-list-payload-should-not-render', champion: { name: 'List Hidden Champion' } }
+        tournament_result: {
+          summary: {
+            champion: { player_id: 'P-001', name: 'Ali Farag', country: 'EGY' },
+            match_count: 31,
+            status: 'completed',
+            secret_debug_marker: 'event-list-payload-should-not-render',
+            matches: [{ label: 'Match 1 should not render from raw payload' }]
+          }
+        }
       },
       { event_sequence: 9, event_id: 'EVENT-2', season: 2027, week: 4, template_id: 'ET-GOLD', tournament_result: null }
     ]
@@ -111,26 +119,62 @@ describe('ViewerRunTournamentsPage', () => {
     mockEvents()
   })
 
-  it('renders run-scoped tournaments as sports-facing metadata without primary raw payload JSON', async () => {
+  it('renders parseable tournament result metadata on the sports-facing tournaments list', async () => {
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
 
     expect(await screen.findByRole('heading', { name: 'Tournaments' })).toBeInTheDocument()
     expect(screen.getAllByText('viewer-run-1').length).toBeGreaterThan(0)
-    expect(await screen.findByText('EVENT-1')).toBeInTheDocument()
+    const eventOne = (await screen.findByText('EVENT-1')).closest('li') as HTMLElement
     expect(screen.getByText('EVENT-2')).toBeInTheDocument()
     expect(screen.getByText('WT-PLAT')).toBeInTheDocument()
     expect(screen.getByText('ET-GOLD')).toBeInTheDocument()
     expect(screen.getAllByText('W3').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Platinum').length).toBeGreaterThan(0)
     expect(screen.getAllByText('World Tour').length).toBeGreaterThan(0)
+    expect(within(eventOne).getByText('Champion')).toBeInTheDocument()
+    expect(within(eventOne).getByText('Ali Farag (EGY)')).toBeInTheDocument()
+    expect(within(eventOne).getByText('Result status')).toBeInTheDocument()
+    expect(within(eventOne).getByText('completed')).toBeInTheDocument()
+    expect(within(eventOne).getByText('Matches')).toBeInTheDocument()
+    expect(within(eventOne).getByText('31')).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: /Open tournament detail/i })[0]).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-1/tournaments/EVENT-1'
     )
     expect(screen.queryByText(/event-list-payload-should-not-render/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/List Hidden Champion/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Match 1 should not render/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
     expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
+  })
+
+  it('hides unknown tournament result payloads on the tournaments list without fake result metadata', async () => {
+    api.listEvents.mockResolvedValueOnce({
+      run_id: 'viewer-run-1',
+      events: [
+        {
+          event_sequence: 10,
+          event_id: 'EVENT-UNKNOWN',
+          season: 2027,
+          week: 5,
+          template_id: 'WT-GOLD',
+          tournament_result: {
+            secret_debug_marker: 'unknown-list-payload-should-not-render',
+            fake_champion: 'Fake Champion',
+            unknown_status: 'invented'
+          }
+        }
+      ]
+    })
+
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
+
+    expect(await screen.findByText('EVENT-UNKNOWN')).toBeInTheDocument()
+    expect(screen.getByText('Result publication available')).toBeInTheDocument()
+    expect(screen.queryByText('Champion')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Fake Champion/i)).not.toBeInTheDocument()
+    expect(screen.queryByText('Result status')).not.toBeInTheDocument()
+    expect(screen.queryByText(/unknown-list-payload-should-not-render/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
   })
 })
 

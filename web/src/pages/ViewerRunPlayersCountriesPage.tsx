@@ -35,6 +35,20 @@ function countryCodeCell(countryCode: string | null | undefined, runId: string):
   return <Link to={countryProfilePath(runId, countryCode)}>{countryCode}</Link>
 }
 
+function tournamentDetailPath(runId: string, eventId: string): string {
+  return `/viewer/runs/${encodeURIComponent(runId)}/tournaments/${encodeURIComponent(eventId)}`
+}
+
+function tournamentEventCell(
+  runId: string,
+  eventId: string | null | undefined,
+  eventName: string | null | undefined
+): JSX.Element | string {
+  if (!eventId) return eventName ?? '—'
+
+  return <Link to={tournamentDetailPath(runId, eventId)}>{eventName ?? eventId}</Link>
+}
+
 function hasPlayerProfileShape(value: unknown): value is {
   player_id: string
   name: string
@@ -418,7 +432,7 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
                 <tr key={`result-${entry.run_id}-${entry.event_id}-${entry.event_sequence}`}>
                   <td>{entry.season}</td>
                   <td>{displayMetric(entry.week)}</td>
-                  <td>{entry.event_name ?? entry.event_id}</td>
+                  <td>{tournamentEventCell(runId, entry.event_id, entry.event_name)}</td>
                   <td>{entry.event_category ?? '—'}</td>
                   <td>{entry.finish ?? '—'}{entry.is_title ? ' 🏆' : ''}</td>
                   <td>{entry.wins}</td>

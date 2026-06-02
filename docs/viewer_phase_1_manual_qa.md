@@ -519,3 +519,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Entries without week remain plain text.
 - Existing event links remain unchanged.
 - No backend/Admin behavior changed.
+
+## Phase 3M country top player profile links note
+
+- Country list/profile top player values now link to Player Profile pages when `player_id` is available.
+- Rows without `player_id` remain plain text.
+- No backend/Admin behavior changed.

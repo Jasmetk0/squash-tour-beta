@@ -298,6 +298,20 @@ function mockCountries(): void {
         top_player_name: 'Ali A',
         top_player_overall: 91,
         secret_debug_marker: 'country-list-payload-should-not-render'
+      },
+      {
+        country_code: 'USA',
+        country_name: 'United States',
+        total_players: 0,
+        average_overall: null,
+        average_age: null,
+        top_band_count: 0,
+        manual_override_count: 0,
+        planner_generated_count: 0,
+        rollover_carried_count: 0,
+        top_player_id: null,
+        top_player_name: null,
+        top_player_overall: null
       }
     ]
   })
@@ -328,6 +342,15 @@ function mockCountryDetail(): void {
         source_type: 'planner_generated',
         quality_band: 'top',
         is_top_band: true
+      },
+      {
+        player_id: null,
+        name: 'Unlinked Player',
+        age: 28,
+        overall: 80,
+        source_type: 'rollover_carried',
+        quality_band: 'contender',
+        is_top_band: false
       }
     ],
     secret_debug_marker: 'country-detail-hidden-payload'
@@ -465,13 +488,19 @@ describe('ViewerRunCountriesPage', () => {
     expect(screen.getByRole('columnheader', { name: 'Source mix' })).toBeInTheDocument()
     expect(await screen.findByText(/Egypt/)).toBeInTheDocument()
     expect(screen.getAllByText(/EGY/).length).toBeGreaterThan(0)
-    expect(screen.getByText('5')).toBeInTheDocument()
-    expect(screen.getByText('78.40')).toBeInTheDocument()
-    expect(screen.getByText('25.20')).toBeInTheDocument()
-    expect(screen.getByText(/carryover 1 · intake 3 · manual 1/i)).toBeInTheDocument()
-    expect(screen.getByText(/Ali A/)).toBeInTheDocument()
-    expect(screen.getByText(/EGY-0001/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Open country profile/i })).toHaveAttribute(
+    const egyptRow = screen.getByText(/Egypt/).closest('tr') as HTMLElement
+    const usaRow = screen.getByText(/United States/).closest('tr') as HTMLElement
+    expect(within(egyptRow).getByText('5')).toBeInTheDocument()
+    expect(within(egyptRow).getByText('78.40')).toBeInTheDocument()
+    expect(within(egyptRow).getByText('25.20')).toBeInTheDocument()
+    expect(within(egyptRow).getByText(/carryover 1 · intake 3 · manual 1/i)).toBeInTheDocument()
+    expect(within(egyptRow).getByRole('link', { name: 'Ali A (EGY-0001)' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2c/players/EGY-0001/career'
+    )
+    expect(within(usaRow).getAllByText('—').length).toBeGreaterThan(0)
+    expect(within(usaRow).getAllByRole('link')).toHaveLength(1)
+    expect(within(egyptRow).getByRole('link', { name: /Open country profile/i })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2c/countries/EGY'
     )
@@ -507,7 +536,13 @@ describe('ViewerRunCountryDetailPage', () => {
     expect(screen.getByText(/rollover_carried 1 · planner_generated 3 · manual_override 1/i)).toBeInTheDocument()
     expect(screen.getByText(/top 2/i)).toBeInTheDocument()
     expect(screen.getByText(/elite_talent 2/i)).toBeInTheDocument()
-    expect(screen.getByText('Ali A (EGY-0001)')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ali A (EGY-0001)' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2c/players/EGY-0001/career'
+    )
+    expect(screen.getByText('Unlinked Player')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Unlinked Player' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open player profile/i })).not.toBeInTheDocument()
     expect(screen.getByText('91')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Back to countries/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/countries')
     expect(screen.getByRole('link', { name: /Player list/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/players?country=EGY')

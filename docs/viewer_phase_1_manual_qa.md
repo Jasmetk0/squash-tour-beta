@@ -500,3 +500,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Player list/profile country values now link to Country Profile pages.
 - Missing country values remain plain text.
 - No parser/backend/Admin behavior changed.
+
+## Phase 3J player tournament history links note
+
+- Player Profile Tournament History event names now link to Tournament Detail pages when `event_id` is available.
+- Entries without `event_id` remain plain text.
+- No backend/Admin behavior changed.

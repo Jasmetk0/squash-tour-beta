@@ -4,10 +4,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import {
   getRunNationDetail,
-  getRunPlayerCareerHistory,
-  getRunPlayerCareerPerformance,
   getRunPlayerDetail,
-  getRunPlayerTournamentResults,
   listRunNations,
   listRunPlayers
 } from '../api/client'
@@ -22,6 +19,36 @@ function displayMetric(value: number | null | undefined): string | number {
 
 function displayFixed(value: number | null | undefined): string {
   return typeof value === 'number' ? value.toFixed(2) : '—'
+}
+
+function hasPlayerProfileShape(value: unknown): value is {
+  player_id: string
+  name: string
+  country_code: string
+  age: number
+  source_type?: string | null
+  override_id?: string | null
+  quality_band?: string | null
+  is_top_band?: boolean | null
+  origin_source_type?: string | null
+  origin_season?: number | null
+  origin_quality_band?: string | null
+  technique?: number | null
+  movement?: number | null
+  physical?: number | null
+  mental?: number | null
+  overall?: number | null
+} {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+  const candidate = value as Record<string, unknown>
+  return (
+    typeof candidate.player_id === 'string' &&
+    typeof candidate.name === 'string' &&
+    typeof candidate.country_code === 'string' &&
+    typeof candidate.age === 'number'
+  )
 }
 
 export function ViewerRunPlayersPage(): JSX.Element {
@@ -103,34 +130,24 @@ export function ViewerRunPlayersPage(): JSX.Element {
             <table>
               <thead>
                 <tr>
-                  <th>Player ID</th>
                   <th>Name</th>
                   <th>Country</th>
                   <th>Age</th>
-                  <th>Source</th>
-                  <th>Band</th>
-                  <th>Technique</th>
-                  <th>Movement</th>
-                  <th>Physical</th>
-                  <th>Mental</th>
-                  <th>Profile</th>
+                  <th>Quality band</th>
+                  <th>Power Rating</th>
+                  <th>Player Profile</th>
                 </tr>
               </thead>
               <tbody>
                 {playersQuery.data.players.map((player) => (
                   <tr key={player.player_id}>
-                    <td>{player.player_id}</td>
                     <td>{player.name}</td>
                     <td>{player.country_code}</td>
                     <td>{player.age}</td>
-                    <td>{player.source_type}</td>
                     <td>{player.quality_band ?? '—'}</td>
-                    <td>{player.technique}</td>
-                    <td>{player.movement}</td>
-                    <td>{player.physical}</td>
-                    <td>{player.mental}</td>
+                    <td>{displayMetric(player.overall)}</td>
                     <td>
-                      <Link to={`/viewer/runs/${runId}/players/${player.player_id}/career`}>Open player career/profile</Link>
+                      <Link to={`/viewer/runs/${runId}/players/${player.player_id}/career`}>Open Player Profile</Link>
                     </td>
                   </tr>
                 ))}
@@ -153,25 +170,9 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
     queryFn: () => getRunPlayerDetail(runId, playerId),
     enabled: Boolean(runId && playerId)
   })
-  const careerQuery = useQuery({
-    queryKey: ['viewer-player-career-history', runId, playerId],
-    queryFn: () => getRunPlayerCareerHistory(runId, playerId),
-    enabled: Boolean(runId && playerId)
-  })
-  const performanceQuery = useQuery({
-    queryKey: ['viewer-player-career-performance', runId, playerId],
-    queryFn: () => getRunPlayerCareerPerformance(runId, playerId),
-    enabled: Boolean(runId && playerId)
-  })
-  const tournamentResultsQuery = useQuery({
-    queryKey: ['viewer-player-career-results', runId, playerId],
-    queryFn: () => getRunPlayerTournamentResults(runId, playerId),
-    enabled: Boolean(runId && playerId)
-  })
 
-  const latestCareerEntry = careerQuery.data?.entries.length ? careerQuery.data.entries[careerQuery.data.entries.length - 1] : null
-  const name = detailQuery.data?.name ?? careerQuery.data?.player_name ?? performanceQuery.data?.player_name ?? tournamentResultsQuery.data?.player_name ?? null
-  const countryCode = detailQuery.data?.country_code ?? careerQuery.data?.country_code ?? performanceQuery.data?.country_code ?? tournamentResultsQuery.data?.country_code ?? null
+  const playerProfile = hasPlayerProfileShape(detailQuery.data) ? detailQuery.data : null
+  const showDeferredPreview = !detailQuery.isLoading && !detailQuery.error && !playerProfile
 
   return (
     <section className="panel">
@@ -180,160 +181,65 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
         items={[
           { label: 'Active run ID', value: runId || 'unknown' },
           { label: 'Player ID', value: playerId || 'unknown' },
-          { label: 'Career entries', value: careerQuery.data?.entries.length ?? '—' }
+          { label: 'Profile status', value: playerProfile ? 'connected' : 'preview pending' }
         ]}
       />
 
-      <SectionCard title="Profile summary">
-        {detailQuery.isLoading || careerQuery.isLoading ? <p className="status">Loading player profile…</p> : null}
-        {detailQuery.error && careerQuery.error ? <p className="error">Failed to load player profile: {String(detailQuery.error)}</p> : null}
-        <MetadataList
-          items={[
-            { label: 'Name', value: name ?? '—' },
-            { label: 'Player ID', value: playerId || 'unknown' },
-            { label: 'Country', value: countryCode ?? '—' },
-            { label: 'Age', value: detailQuery.data?.age ?? latestCareerEntry?.age ?? '—' },
-            { label: 'Source', value: detailQuery.data?.source_type ?? latestCareerEntry?.source_type ?? '—' },
-            { label: 'Band', value: detailQuery.data?.quality_band ?? latestCareerEntry?.quality_band ?? '—' }
-          ]}
-        />
-        <p>
-          <Link to={`/viewer/runs/${runId}/players`}>Back to players</Link>
-          {countryCode ? <> · <Link to={`/viewer/runs/${runId}/countries/${countryCode}`}>Country page</Link></> : null}
-        </p>
-      </SectionCard>
+      {detailQuery.isLoading ? <p className="status">Loading player profile…</p> : null}
+      {detailQuery.error ? <p className="error">Failed to load player profile: {String(detailQuery.error)}</p> : null}
+      {showDeferredPreview ? <p className="status">This preview is not connected for this data shape yet.</p> : null}
 
-      <SectionCard title="Attributes">
-        {detailQuery.data || latestCareerEntry ? (
-          <MetadataList
-            items={[
-              { label: 'Technique', value: detailQuery.data?.technique ?? latestCareerEntry?.technique ?? '—' },
-              { label: 'Movement', value: detailQuery.data?.movement ?? latestCareerEntry?.movement ?? '—' },
-              { label: 'Physical', value: detailQuery.data?.physical ?? latestCareerEntry?.physical ?? '—' },
-              { label: 'Mental', value: detailQuery.data?.mental ?? latestCareerEntry?.mental ?? '—' }
-            ]}
-          />
-        ) : (
-          <p className="status">This preview is not connected for this data shape yet.</p>
-        )}
-      </SectionCard>
+      {playerProfile ? (
+        <>
+          <SectionCard title="Identity">
+            <MetadataList
+              items={[
+                { label: 'Name', value: playerProfile.name },
+                { label: 'Player ID', value: playerProfile.player_id },
+                { label: 'Country', value: playerProfile.country_code },
+                { label: 'Age', value: playerProfile.age }
+              ]}
+            />
+          </SectionCard>
 
-      <SectionCard title="Season timeline">
-        {careerQuery.error ? <p className="error">Failed to load career history: {String(careerQuery.error)}</p> : null}
-        {careerQuery.data ? (
-          careerQuery.data.entries.length > 0 ? (
-            <table>
-              <thead>
-                <tr>
-                  <th>Season</th>
-                  <th>Run</th>
-                  <th>Age</th>
-                  <th>Overall</th>
-                  <th>Technique</th>
-                  <th>Movement</th>
-                  <th>Physical</th>
-                  <th>Mental</th>
-                  <th>Source</th>
-                  <th>Band</th>
-                </tr>
-              </thead>
-              <tbody>
-                {careerQuery.data.entries.map((entry) => (
-                  <tr key={`${entry.run_id}-${entry.season}`}>
-                    <td>{entry.season}</td>
-                    <td>{entry.run_id}</td>
-                    <td>{entry.age}</td>
-                    <td>{entry.overall}</td>
-                    <td>{entry.technique}</td>
-                    <td>{entry.movement}</td>
-                    <td>{entry.physical}</td>
-                    <td>{entry.mental}</td>
-                    <td>{entry.source_type ?? '—'}</td>
-                    <td>{entry.quality_band ?? '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="status">This preview is not connected for this data shape yet.</p>
-          )
-        ) : null}
-      </SectionCard>
+          <SectionCard title="Attributes / Power Rating">
+            <MetadataList
+              items={[
+                { label: 'Technique', value: displayMetric(playerProfile.technique) },
+                { label: 'Movement', value: displayMetric(playerProfile.movement) },
+                { label: 'Physical', value: displayMetric(playerProfile.physical) },
+                { label: 'Mental', value: displayMetric(playerProfile.mental) },
+                { label: 'Power Rating', value: displayMetric(playerProfile.overall) }
+              ]}
+            />
+          </SectionCard>
 
-      <SectionCard title="Tournament history">
-        {performanceQuery.isLoading || tournamentResultsQuery.isLoading ? <p className="status">Loading tournament history…</p> : null}
-        {performanceQuery.error ? <p className="error">Failed to load season performance: {String(performanceQuery.error)}</p> : null}
-        {tournamentResultsQuery.error ? <p className="error">Failed to load tournament results: {String(tournamentResultsQuery.error)}</p> : null}
-        {performanceQuery.data?.entries.length ? (
-          <table>
-            <thead>
-              <tr>
-                <th>Season</th>
-                <th>Run</th>
-                <th>Ranking</th>
-                <th>Race</th>
-                <th>Tournaments</th>
-                <th>Titles</th>
-                <th>Wins</th>
-                <th>Losses</th>
-              </tr>
-            </thead>
-            <tbody>
-              {performanceQuery.data.entries.map((entry) => (
-                <tr key={`performance-${entry.run_id}-${entry.season}`}>
-                  <td>{entry.season}</td>
-                  <td>{entry.run_id}</td>
-                  <td>{displayMetric(entry.ranking_position)}</td>
-                  <td>{displayMetric(entry.race_position)}</td>
-                  <td>{entry.tournaments_played}</td>
-                  <td>{entry.titles}</td>
-                  <td>{entry.wins}</td>
-                  <td>{entry.losses}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : null}
-        {tournamentResultsQuery.data?.entries.length ? (
-          <table>
-            <thead>
-              <tr>
-                <th>Season</th>
-                <th>Week</th>
-                <th>Event</th>
-                <th>Category</th>
-                <th>Finish</th>
-                <th>Wins</th>
-                <th>Losses</th>
-                <th>Points</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tournamentResultsQuery.data.entries.map((entry) => (
-                <tr key={`result-${entry.run_id}-${entry.event_id}-${entry.event_sequence}`}>
-                  <td>{entry.season}</td>
-                  <td>{displayMetric(entry.week)}</td>
-                  <td>{entry.event_name ?? entry.event_id}</td>
-                  <td>{entry.event_category ?? '—'}</td>
-                  <td>{entry.finish ?? '—'}{entry.is_title ? ' 🏆' : ''}</td>
-                  <td>{entry.wins}</td>
-                  <td>{entry.losses}</td>
-                  <td>{displayMetric(entry.ranking_points_awarded)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : null}
-        {performanceQuery.data && tournamentResultsQuery.data && !performanceQuery.data.entries.length && !tournamentResultsQuery.data.entries.length ? (
-          <p className="status">This preview is not connected for this data shape yet.</p>
-        ) : null}
-      </SectionCard>
+          <SectionCard title="Origin / source">
+            <MetadataList
+              items={[
+                { label: 'Source type', value: playerProfile.source_type ?? '—' },
+                { label: 'Manual provenance ID', value: playerProfile.override_id ?? '—' },
+                { label: 'Quality band', value: playerProfile.quality_band ?? '—' },
+                { label: 'Top band', value: typeof playerProfile.is_top_band === 'boolean' ? (playerProfile.is_top_band ? 'yes' : 'no') : '—' },
+                { label: 'Origin source type', value: playerProfile.origin_source_type ?? '—' },
+                { label: 'Origin season', value: displayMetric(playerProfile.origin_season) },
+                { label: 'Origin quality band', value: playerProfile.origin_quality_band ?? '—' }
+              ]}
+            />
+          </SectionCard>
 
-      {detailQuery.data ? (
-        <details>
-          <summary>Show technical player data</summary>
-          <pre className="json-block">{JSON.stringify(detailQuery.data, null, 2)}</pre>
-        </details>
+          <SectionCard title="Links">
+            <p>
+              <Link to={`/viewer/runs/${runId}/players`}>Back to players</Link> ·{' '}
+              <Link to={`/viewer/runs/${runId}/countries/${playerProfile.country_code}`}>Country page</Link>
+            </p>
+          </SectionCard>
+
+          <details>
+            <summary>Show technical player data</summary>
+            <pre className="json-block">{JSON.stringify(detailQuery.data, null, 2)}</pre>
+          </details>
+        </>
       ) : null}
     </section>
   )

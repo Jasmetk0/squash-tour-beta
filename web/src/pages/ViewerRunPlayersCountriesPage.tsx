@@ -28,11 +28,26 @@ function countryProfilePath(runId: string, countryCode: string): string {
   return `/viewer/runs/${encodeURIComponent(runId)}/countries/${encodeURIComponent(countryCode)}`
 }
 
+function playerProfilePath(runId: string, playerId: string): string {
+  return `/viewer/runs/${encodeURIComponent(runId)}/players/${encodeURIComponent(playerId)}/career`
+}
+
 function countryCodeCell(countryCode: string | null | undefined, runId: string): JSX.Element | string {
   if (!countryCode) return '—'
   if (!runId) return countryCode
 
   return <Link to={countryProfilePath(runId, countryCode)}>{countryCode}</Link>
+}
+
+function playerProfileCell(
+  runId: string,
+  playerId: string | null | undefined,
+  playerName: string | null | undefined
+): JSX.Element | string {
+  if (!playerId) return playerName ?? '—'
+
+  const label = playerName ? `${playerName} (${playerId})` : playerId
+  return <Link to={playerProfilePath(runId, playerId)}>{label}</Link>
 }
 
 function tournamentDetailPath(runId: string, eventId: string): string {
@@ -111,8 +126,8 @@ type CountryProfileShape = {
   band_distribution?: Array<{ band: string; count: number }> | null
   origin_band_distribution?: Array<{ band: string; count: number }> | null
   top_players?: Array<{
-    player_id: string
-    name: string
+    player_id?: string | null
+    name?: string | null
     age?: number | null
     overall?: number | null
     source_type?: string | null
@@ -544,7 +559,7 @@ export function ViewerRunCountriesPage(): JSX.Element {
                     <td>{displayFixed(nation.average_overall)}</td>
                     <td>{displayFixed(nation.average_age)}</td>
                     <td>
-                      {nation.top_player_name ?? '—'} {nation.top_player_id ? `(${nation.top_player_id})` : ''}
+                      {playerProfileCell(runId, nation.top_player_id, nation.top_player_name)}
                     </td>
                     <td>
                       carryover {nation.rollover_carried_count} · intake {nation.planner_generated_count} · manual {nation.manual_override_count}
@@ -644,20 +659,16 @@ export function ViewerRunCountryDetailPage(): JSX.Element {
                     <th>Power Rating</th>
                     <th>Source</th>
                     <th>Band</th>
-                    <th>Profile</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {countryProfile.top_players.map((player) => (
-                    <tr key={player.player_id}>
-                      <td>{player.name} ({player.player_id})</td>
+                  {countryProfile.top_players.map((player, index) => (
+                    <tr key={player.player_id ?? `${player.name ?? 'unknown'}-${index}`}>
+                      <td>{playerProfileCell(runId, player.player_id, player.name)}</td>
                       <td>{displayMetric(player.age)}</td>
                       <td>{displayMetric(player.overall)}</td>
                       <td>{player.source_type ?? '—'}</td>
                       <td>{player.quality_band ?? '—'}</td>
-                      <td>
-                        <Link to={`/viewer/runs/${runId}/players/${player.player_id}/career`}>Open player profile</Link>
-                      </td>
                     </tr>
                   ))}
                 </tbody>

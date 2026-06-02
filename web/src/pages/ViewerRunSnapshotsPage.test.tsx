@@ -220,7 +220,10 @@ describe('ViewerRunSnapshotDetailPage', () => {
       'href',
       '/viewer/runs/viewer-run-1/players/P1/career'
     )
-    expect(within(table).getByText('EGY')).toBeInTheDocument()
+    expect(within(table).getByRole('link', { name: 'EGY' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/countries/EGY'
+    )
     expect(within(table).getByText('20000')).toBeInTheDocument()
     expect(within(table).getByText('12')).toBeInTheDocument()
     expect(within(table).getByText('+1')).toBeInTheDocument()
@@ -252,6 +255,29 @@ describe('ViewerRunSnapshotDetailPage', () => {
     const table = await screen.findByRole('table', { name: 'Top 10 ranking preview table' })
     expect(within(table).getByText('Name Only Player')).toBeInTheDocument()
     expect(within(table).queryByRole('link', { name: 'Name Only Player' })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('keeps missing ranking preview countries as plain em dash text', async () => {
+    api.getRankingSnapshot.mockResolvedValue({
+      snapshot_sequence: 12,
+      snapshot_kind: 'WEEKLY_PUBLICATION',
+      source_event_id: 'EVENT-1',
+      payload: {
+        rankings: [{ rank: 1, player_id: 'P-MISSING-COUNTRY', player_name: 'Country Missing Player', points: 5000, tournaments_counted: 10 }]
+      }
+    })
+    api.listRankingSnapshots.mockResolvedValue({
+      run_id: 'viewer-run-1',
+      snapshots: [{ snapshot_sequence: 12, snapshot_kind: 'WEEKLY_PUBLICATION', source_event_id: 'EVENT-1', payload: {} }]
+    })
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings/12')
+
+    const table = await screen.findByRole('table', { name: 'Top 10 ranking preview table' })
+    const row = within(table).getByText('Country Missing Player').closest('tr') as HTMLElement
+    expect(within(row).getAllByRole('cell')[2]).toHaveTextContent('—')
+    expect(within(row).queryByRole('link', { name: '—' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
@@ -300,7 +326,10 @@ describe('ViewerRunSnapshotDetailPage', () => {
       'href',
       '/viewer/runs/viewer-run-1/players/R1/career'
     )
-    expect(within(table).getByText('EGY')).toBeInTheDocument()
+    expect(within(table).getByRole('link', { name: 'EGY' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/countries/EGY'
+    )
     expect(within(table).getByText('9000')).toBeInTheDocument()
     expect(within(table).getAllByText('8').length).toBeGreaterThan(0)
     expect(within(table).getByText('Qualified')).toBeInTheDocument()

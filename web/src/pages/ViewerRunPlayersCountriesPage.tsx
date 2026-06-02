@@ -54,6 +54,62 @@ function hasPlayerProfileShape(value: unknown): value is {
   )
 }
 
+
+type CountryProfileShape = {
+  run_id?: string
+  country_code: string
+  country_name?: string | null
+  total_players: number
+  average_overall?: number | null
+  average_age?: number | null
+  top_band_count?: number | null
+  manual_override_count?: number | null
+  planner_generated_count?: number | null
+  rollover_carried_count?: number | null
+  average_visible_stats?: {
+    technique?: number | null
+    movement?: number | null
+    physical?: number | null
+    mental?: number | null
+  } | null
+  source_mix?: Record<string, number> | null
+  band_distribution?: Array<{ band: string; count: number }> | null
+  origin_band_distribution?: Array<{ band: string; count: number }> | null
+  top_players?: Array<{
+    player_id: string
+    name: string
+    age?: number | null
+    overall?: number | null
+    source_type?: string | null
+    quality_band?: string | null
+    is_top_band?: boolean | null
+  }> | null
+}
+
+function hasCountryProfileShape(value: unknown): value is CountryProfileShape {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+  const candidate = value as Record<string, unknown>
+  return typeof candidate.country_code === 'string' && typeof candidate.total_players === 'number'
+}
+
+function displayCountMap(values: Record<string, number> | null | undefined): string {
+  if (!values || !Object.keys(values).length) {
+    return '—'
+  }
+  return Object.entries(values)
+    .map(([label, count]) => `${label} ${count}`)
+    .join(' · ')
+}
+
+function displayDistribution(values: Array<{ band: string; count: number }> | null | undefined): string {
+  if (!values?.length) {
+    return '—'
+  }
+  return values.map((entry) => `${entry.band} ${entry.count}`).join(' · ')
+}
+
 export function ViewerRunPlayersPage(): JSX.Element {
   const { runId = '' } = useParams()
   const [searchParams] = useSearchParams()
@@ -436,29 +492,27 @@ export function ViewerRunCountriesPage(): JSX.Element {
             <table>
               <thead>
                 <tr>
-                  <th>Country code</th>
-                  <th>Country name</th>
-                  <th>Total players</th>
-                  <th>Average overall</th>
+                  <th>Country</th>
+                  <th>Players</th>
+                  <th>Average Power Rating</th>
                   <th>Average age</th>
-                  <th>Source counts</th>
                   <th>Top player</th>
-                  <th>Profile</th>
+                  <th>Source mix</th>
+                  <th>Country Profile</th>
                 </tr>
               </thead>
               <tbody>
                 {nationsQuery.data.nations.map((nation) => (
                   <tr key={nation.country_code}>
-                    <td>{nation.country_code}</td>
-                    <td>{nation.country_name ?? '—'}</td>
+                    <td>{nation.country_name ?? nation.country_code} ({nation.country_code})</td>
                     <td>{nation.total_players}</td>
                     <td>{displayFixed(nation.average_overall)}</td>
                     <td>{displayFixed(nation.average_age)}</td>
                     <td>
-                      carryover {nation.rollover_carried_count} · intake {nation.planner_generated_count} · manual {nation.manual_override_count}
+                      {nation.top_player_name ?? '—'} {nation.top_player_id ? `(${nation.top_player_id})` : ''}
                     </td>
                     <td>
-                      {nation.top_player_name ?? '—'} {nation.top_player_id ? `(${nation.top_player_id})` : ''}
+                      carryover {nation.rollover_carried_count} · intake {nation.planner_generated_count} · manual {nation.manual_override_count}
                     </td>
                     <td>
                       <Link to={`/viewer/runs/${runId}/countries/${nation.country_code}`}>Open country profile</Link>
@@ -485,6 +539,9 @@ export function ViewerRunCountryDetailPage(): JSX.Element {
     enabled: Boolean(runId && countryCode)
   })
 
+  const countryProfile = hasCountryProfileShape(detailQuery.data) ? detailQuery.data : null
+  const showDeferredPreview = !detailQuery.isLoading && !detailQuery.error && !countryProfile
+
   return (
     <section className="panel">
       <PageIntro title="Country Profile" subtitle="Read-only country profile for the selected run." />
@@ -492,77 +549,99 @@ export function ViewerRunCountryDetailPage(): JSX.Element {
         items={[
           { label: 'Active run ID', value: runId || 'unknown' },
           { label: 'Country code', value: countryCode || 'unknown' },
-          { label: 'Player count', value: detailQuery.data?.total_players ?? '—' }
+          { label: 'Profile status', value: countryProfile ? 'connected' : 'preview pending' }
         ]}
       />
 
-      <SectionCard title="Country summary">
-        {detailQuery.isLoading ? <p className="status">Loading country profile…</p> : null}
-        {detailQuery.error ? <p className="error">Failed to load country profile: {String(detailQuery.error)}</p> : null}
-        {detailQuery.data ? (
-          <>
+      {detailQuery.isLoading ? <p className="status">Loading country profile…</p> : null}
+      {detailQuery.error ? <p className="error">Failed to load country profile: {String(detailQuery.error)}</p> : null}
+      {showDeferredPreview ? <p className="status">This preview is not connected for this data shape yet.</p> : null}
+
+      {countryProfile ? (
+        <>
+          <SectionCard title="Overview">
             <MetadataList
               items={[
-                { label: 'Country code', value: detailQuery.data.country_code },
-                { label: 'Country name', value: detailQuery.data.country_name ?? '—' },
-                { label: 'Player count', value: detailQuery.data.total_players },
-                { label: 'Average overall', value: displayFixed(detailQuery.data.average_overall) },
-                { label: 'Average age', value: displayFixed(detailQuery.data.average_age) },
-                {
-                  label: 'Source counts',
-                  value: `carryover ${detailQuery.data.rollover_carried_count} · intake ${detailQuery.data.planner_generated_count} · manual ${detailQuery.data.manual_override_count}`
-                }
+                { label: 'Country code', value: countryProfile.country_code },
+                { label: 'Country name', value: countryProfile.country_name ?? '—' },
+                { label: 'Total players', value: countryProfile.total_players },
+                { label: 'Average Power Rating', value: displayFixed(countryProfile.average_overall) },
+                { label: 'Average age', value: displayFixed(countryProfile.average_age) }
               ]}
             />
+          </SectionCard>
+
+          <SectionCard title="Player base">
+            <MetadataList
+              items={[
+                { label: 'Top band count', value: displayMetric(countryProfile.top_band_count) },
+                { label: 'Manual override count', value: displayMetric(countryProfile.manual_override_count) },
+                { label: 'Planner generated count', value: displayMetric(countryProfile.planner_generated_count) },
+                { label: 'Rollover carried count', value: displayMetric(countryProfile.rollover_carried_count) }
+              ]}
+            />
+          </SectionCard>
+
+          <SectionCard title="Source mix">
+            <p>{displayCountMap(countryProfile.source_mix)}</p>
+          </SectionCard>
+
+          <SectionCard title="Talent bands">
+            <MetadataList
+              items={[
+                { label: 'Current band distribution', value: displayDistribution(countryProfile.band_distribution) },
+                { label: 'Origin band distribution', value: displayDistribution(countryProfile.origin_band_distribution) },
+                { label: 'Average technique', value: displayFixed(countryProfile.average_visible_stats?.technique) },
+                { label: 'Average movement', value: displayFixed(countryProfile.average_visible_stats?.movement) },
+                { label: 'Average physical', value: displayFixed(countryProfile.average_visible_stats?.physical) },
+                { label: 'Average mental', value: displayFixed(countryProfile.average_visible_stats?.mental) }
+              ]}
+            />
+          </SectionCard>
+
+          <SectionCard title="Top players">
+            {countryProfile.top_players?.length ? (
+              <table>
+                <thead>
+                  <tr>
+                    <th>Player</th>
+                    <th>Age</th>
+                    <th>Power Rating</th>
+                    <th>Source</th>
+                    <th>Band</th>
+                    <th>Profile</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {countryProfile.top_players.map((player) => (
+                    <tr key={player.player_id}>
+                      <td>{player.name} ({player.player_id})</td>
+                      <td>{displayMetric(player.age)}</td>
+                      <td>{displayMetric(player.overall)}</td>
+                      <td>{player.source_type ?? '—'}</td>
+                      <td>{player.quality_band ?? '—'}</td>
+                      <td>
+                        <Link to={`/viewer/runs/${runId}/players/${player.player_id}/career`}>Open player profile</Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="status">No data is available for this run yet.</p>
+            )}
+          </SectionCard>
+
+          <SectionCard title="Links">
             <p>
               <Link to={`/viewer/runs/${runId}/countries`}>Back to countries</Link> ·{' '}
-              <Link to={`/viewer/runs/${runId}/players?country=${detailQuery.data.country_code}`}>Player list</Link>
+              <Link to={`/viewer/runs/${runId}/players?country=${countryProfile.country_code}`}>Player list</Link>
             </p>
-          </>
-        ) : null}
-        {!detailQuery.isLoading && !detailQuery.error && !detailQuery.data ? (
-          <p className="status">This preview is not connected for this data shape yet.</p>
-        ) : null}
-      </SectionCard>
+          </SectionCard>
+        </>
+      ) : null}
 
-      <SectionCard title="Top players">
-        {detailQuery.data ? (
-          detailQuery.data.top_players.length > 0 ? (
-            <table>
-              <thead>
-                <tr>
-                  <th>Player</th>
-                  <th>Age</th>
-                  <th>Overall</th>
-                  <th>Source</th>
-                  <th>Band</th>
-                  <th>Profile</th>
-                </tr>
-              </thead>
-              <tbody>
-                {detailQuery.data.top_players.map((player) => (
-                  <tr key={player.player_id}>
-                    <td>{player.name} ({player.player_id})</td>
-                    <td>{player.age}</td>
-                    <td>{player.overall}</td>
-                    <td>{player.source_type}</td>
-                    <td>{player.quality_band ?? '—'}</td>
-                    <td>
-                      <Link to={`/viewer/runs/${runId}/players/${player.player_id}/career`}>Open player career/profile</Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="status">No data is available for this run yet.</p>
-          )
-        ) : (
-          <p className="status">This preview is not connected for this data shape yet.</p>
-        )}
-      </SectionCard>
-
-      {detailQuery.data ? (
+      {countryProfile ? (
         <details>
           <summary>Show technical country data</summary>
           <pre className="json-block">{JSON.stringify(detailQuery.data, null, 2)}</pre>

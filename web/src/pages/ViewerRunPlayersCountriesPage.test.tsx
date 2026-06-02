@@ -405,25 +405,31 @@ describe('ViewerRunCountriesPage', () => {
     mockCountries()
   })
 
-  it('renders sports-facing country metadata without fake achievements or forbidden actions', async () => {
+  it('renders real country metadata with profile links and no primary raw JSON', async () => {
     renderViewerRoute('/viewer/runs/viewer-run-2c/countries', <ViewerRunCountriesPage />, '/viewer/runs/:runId/countries')
 
     expect(await screen.findByRole('heading', { name: 'Countries' })).toBeInTheDocument()
     expect(screen.getAllByText('viewer-run-2c').length).toBeGreaterThan(0)
-    expect(await screen.findByText('Egypt')).toBeInTheDocument()
-    expect(screen.getByText('EGY')).toBeInTheDocument()
+    expect(await screen.findByRole('columnheader', { name: 'Country' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Players' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Average Power Rating' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Average age' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Top player' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Source mix' })).toBeInTheDocument()
+    expect(await screen.findByText(/Egypt/)).toBeInTheDocument()
+    expect(screen.getAllByText(/EGY/).length).toBeGreaterThan(0)
     expect(screen.getByText('5')).toBeInTheDocument()
     expect(screen.getByText('78.40')).toBeInTheDocument()
+    expect(screen.getByText('25.20')).toBeInTheDocument()
     expect(screen.getByText(/carryover 1 · intake 3 · manual 1/i)).toBeInTheDocument()
-    expect(screen.getByText(/Ali A \(EGY-0001\)/i)).toBeInTheDocument()
+    expect(screen.getByText(/Ali A/)).toBeInTheDocument()
+    expect(screen.getByText(/EGY-0001/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Open country profile/i })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2c/countries/EGY'
     )
     expect(screen.queryByText(/country-list-payload-should-not-render/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Team Championship/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Title/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Top 100/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Team Championship|titles?|records?|medals?|hosting|Top 100/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
     expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
   })
@@ -435,21 +441,48 @@ describe('ViewerRunCountryDetailPage', () => {
     mockCountryDetail()
   })
 
-  it('renders sports-facing country profile and keeps technical data collapsed', async () => {
+  it('renders real country profile summary and keeps technical data collapsed', async () => {
     renderViewerRoute('/viewer/runs/viewer-run-2c/countries/EGY', <ViewerRunCountryDetailPage />, '/viewer/runs/:runId/countries/:countryCode')
 
     expect(await screen.findByRole('heading', { name: 'Country Profile' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Overview' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Player base' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Source mix' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Talent bands' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Top players' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Links' })).toBeInTheDocument()
     expect(screen.getAllByText('viewer-run-2c').length).toBeGreaterThan(0)
     expect(screen.getAllByText('EGY').length).toBeGreaterThan(0)
     expect(await screen.findByText('Egypt')).toBeInTheDocument()
+    ;['5', '78.40', '25.20', '2', '1', '3', '80.10', '79.10', '76.10', '78.10'].forEach((value) =>
+      expect(screen.getAllByText(value).length).toBeGreaterThan(0)
+    )
+    expect(screen.getByText(/rollover_carried 1 · planner_generated 3 · manual_override 1/i)).toBeInTheDocument()
+    expect(screen.getByText(/top 2/i)).toBeInTheDocument()
+    expect(screen.getByText(/elite_talent 2/i)).toBeInTheDocument()
     expect(screen.getByText('Ali A (EGY-0001)')).toBeInTheDocument()
+    expect(screen.getByText('91')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Back to countries/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/countries')
     expect(screen.getByRole('link', { name: /Player list/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/players?country=EGY')
+    expect(screen.queryByText(/Team Championship|titles?|records?|medals?|hosting|Top 100/i)).not.toBeInTheDocument()
     const technicalSection = screen.getByText('Show technical country data').closest('details')
     expect(technicalSection).not.toHaveAttribute('open')
     expect(screen.getByText(/country-detail-hidden-payload/i)).not.toBeVisible()
     await userEvent.click(screen.getByText('Show technical country data'))
     expect(within(technicalSection as HTMLElement).getByText(/country-detail-hidden-payload/i)).toBeVisible()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows deferred preview when country detail data is missing', async () => {
+    api.getRunNationDetail.mockResolvedValue(null)
+
+    renderViewerRoute('/viewer/runs/viewer-run-2c/countries/MISSING', <ViewerRunCountryDetailPage />, '/viewer/runs/:runId/countries/:countryCode')
+
+    expect(await screen.findByRole('heading', { name: 'Country Profile' })).toBeInTheDocument()
+    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
+    expect(screen.queryByText('Egypt')).not.toBeInTheDocument()
+    expect(screen.queryByText(/78\.40|25\.20|country-detail-hidden-payload/i)).not.toBeInTheDocument()
+    expect(screen.queryByText('Show technical country data')).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 })

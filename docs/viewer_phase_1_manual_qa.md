@@ -473,3 +473,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Missing/unknown detail shapes still show deferred previews.
 - Technical player data remains collapsed.
 - No fake rankings, titles, records, Elo, or career achievements were added.
+
+## Phase 3F country profile summary note
+
+- Viewer country profile now shows real country overview/player-base/source/talent-band summary from existing data.
+- Missing/unknown detail shapes still show deferred previews.
+- Technical country data remains collapsed.
+- No fake country rankings, Team Championship wins, titles, records, medals, hosting stats, or top 100 counts were added.

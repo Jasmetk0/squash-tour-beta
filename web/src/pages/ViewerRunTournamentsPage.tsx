@@ -15,6 +15,8 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
+import { parseTournamentResultPayload } from '../viewer/tournamentResultPayload'
+import type { TournamentPlayerSummary } from '../viewer/tournamentResultPayload'
 import { getPlannedEventStatus } from './plannedEventUtils'
 
 type PlannedEvent = SeasonStateResponse['season_state']['ordered_events'][number]
@@ -48,6 +50,18 @@ function resultAvailability(event: EventRecord | null | undefined): string {
 
 function completionStatus(event: EventRecord, completedEventIds: Set<string>): string {
   return completedEventIds.has(event.event_id) ? 'Completed in season plan' : 'Completion not recorded in plan'
+}
+
+function displayValue(value: number | string | null | undefined): number | string {
+  return value ?? '—'
+}
+
+function displayPlayer(player: TournamentPlayerSummary | null): string {
+  if (!player) return '—'
+
+  const identity = player.name ?? player.playerId ?? '—'
+  const country = player.country ? ` (${player.country})` : ''
+  return `${identity}${country}`
 }
 
 export function ViewerRunTournamentsPage(): JSX.Element {
@@ -149,6 +163,7 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
       })
     : null
   const event = eventQuery.data
+  const resultPreview = useMemo(() => parseTournamentResultPayload(event?.tournament_result), [event?.tournament_result])
   const week = eventWeek(event, planned)
   const season = eventSeason(event, planned)
   const templateId = planned?.template_id ?? event?.template_id ?? null
@@ -236,8 +251,23 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
           </SectionCard>
 
           {event ? (
-            <SectionCard title="Tournament result preview">
-              <EmptyState message="This preview is not connected for this data shape yet." />
+            <SectionCard title="Tournament Result Preview">
+              {resultPreview.summary ? (
+                <MetadataList
+                  items={[
+                    { label: 'Champion', value: displayPlayer(resultPreview.summary.champion) },
+                    { label: 'Finalist', value: displayPlayer(resultPreview.summary.finalist) },
+                    { label: 'Final score', value: displayValue(resultPreview.summary.finalScore) },
+                    { label: 'Match count', value: displayValue(resultPreview.summary.matchCount) },
+                    { label: 'Completed matches', value: displayValue(resultPreview.summary.completedMatchCount) },
+                    { label: 'Draw size', value: displayValue(resultPreview.summary.drawSize) },
+                    { label: 'Round count', value: displayValue(resultPreview.summary.roundCount) },
+                    { label: 'Result status', value: resultPreview.summary.resultStatus ?? '—' }
+                  ]}
+                />
+              ) : (
+                <EmptyState message="This preview is not connected for this data shape yet." />
+              )}
             </SectionCard>
           ) : null}
 

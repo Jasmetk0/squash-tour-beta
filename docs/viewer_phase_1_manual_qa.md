@@ -451,3 +451,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Unknown payload shapes still show deferred previews.
 - Raw technical payload remains collapsed.
 - No fake race rows or new Race engine were added.
+
+## Phase 3C tournament result preview note
+
+- Viewer tournament detail can now show a real result preview when event result payload shape is safely parsed.
+- Unknown payload shapes still show deferred previews.
+- Raw technical event data remains collapsed.
+- No fake tournament winners, matches, scores, or new tournament engine were added.

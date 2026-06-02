@@ -70,7 +70,7 @@ function mockEvents(): void {
         season: 2027,
         week: 3,
         template_id: 'WT-PLAT',
-        tournament_result: { secret_debug_marker: 'event-list-payload-should-not-render' }
+        tournament_result: { secret_debug_marker: 'event-list-payload-should-not-render', champion: { name: 'List Hidden Champion' } }
       },
       { event_sequence: 9, event_id: 'EVENT-2', season: 2027, week: 4, template_id: 'ET-GOLD', tournament_result: null }
     ]
@@ -128,6 +128,7 @@ describe('ViewerRunTournamentsPage', () => {
       '/viewer/runs/viewer-run-1/tournaments/EVENT-1'
     )
     expect(screen.queryByText(/event-list-payload-should-not-render/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/List Hidden Champion/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
     expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
   })
@@ -147,7 +148,48 @@ describe('ViewerRunTournamentDetailPage', () => {
     })
   })
 
-  it('renders sports-facing tournament detail with deferred preview and collapsed technical data', async () => {
+  it('renders parseable tournament result preview with collapsed technical data', async () => {
+    api.getEvent.mockResolvedValueOnce({
+      event_sequence: 8,
+      event_id: 'EVENT-1',
+      season: 2027,
+      week: 3,
+      template_id: 'WT-PLAT',
+      tournament_result: {
+        summary: {
+          champion: { player_id: 'P-001', name: 'Ali Farag', country: 'EGY' },
+          finalist: { player_id: 'P-002', name: 'Paul Coll', country: 'NZL' },
+          final_score: '11-8, 9-11, 11-7, 11-6',
+          match_count: 31,
+          completed_matches: 30,
+          draw_size: 32,
+          round_count: 5,
+          status: 'completed',
+          secret_debug_marker: 'parseable-hidden-payload'
+        }
+      }
+    })
+
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
+
+    expect(await screen.findByRole('heading', { name: 'Tournament Result Preview' })).toBeInTheDocument()
+    expect(screen.getByText('Ali Farag (EGY)')).toBeInTheDocument()
+    expect(screen.getByText('Paul Coll (NZL)')).toBeInTheDocument()
+    expect(screen.getByText('11-8, 9-11, 11-7, 11-6')).toBeInTheDocument()
+    expect(screen.getByText('31')).toBeInTheDocument()
+    expect(screen.getByText('30')).toBeInTheDocument()
+    expect(screen.getByText('32')).toBeInTheDocument()
+    expect(screen.getByText('5')).toBeInTheDocument()
+    expect(screen.getByText('completed')).toBeInTheDocument()
+    expect(screen.queryByText(/This preview is not connected/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Match 1/i)).not.toBeInTheDocument()
+    const technicalSection = screen.getByText('Show technical event data').closest('details')
+    expect(technicalSection).not.toHaveAttribute('open')
+    expect(screen.getByText(/parseable-hidden-payload/i)).not.toBeVisible()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('renders sports-facing tournament detail with deferred preview for unknown result shapes', async () => {
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
 
     expect(await screen.findByRole('heading', { name: 'Tournament Detail' })).toBeInTheDocument()

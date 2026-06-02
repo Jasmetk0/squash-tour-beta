@@ -560,3 +560,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Viewer route path construction was centralized in shared helpers.
 - Existing Viewer links keep the same href behavior.
 - No backend/Admin/parser/result-preview behavior changed.
+
+## Viewer Phase 3S — Tournament Result Metadata Helper
+
+- Tournament result metadata rendering was centralized in a shared read-only Viewer helper.
+- Existing Season Calendar, Planned Event, Week Detail, Tournament list, and Tournament Detail result previews keep the same behavior.
+- No backend/Admin/parser behavior changed.

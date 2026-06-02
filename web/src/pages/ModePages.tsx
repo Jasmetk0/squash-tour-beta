@@ -1270,12 +1270,12 @@ function ViewerComparisonPlayerCard({ activeRunId, title, player }: { activeRunI
   )
 }
 
-function ViewerComparisonSummary({ playerA, playerB }: { playerA: RunPlayerListItem | null; playerB: RunPlayerListItem | null }): JSX.Element {
+function ViewerComparisonSummary({ playerA, playerB, title = 'Comparison Summary' }: { playerA: RunPlayerListItem | null; playerB: RunPlayerListItem | null; title?: string }): JSX.Element {
   return (
-    <ViewerSectionCard title="Comparison Summary" kicker="Numeric field differences">
+    <ViewerSectionCard title={title} kicker="Numeric field differences">
       {playerA && playerB ? (
         <ViewerMetadataList
-          ariaLabel="Comparison Summary differences"
+          ariaLabel={`${title} differences`}
           items={comparisonStatFields.map((field) => ({
             label: field.label,
             value: formatComparisonDifference(playerA, playerB, field.key)
@@ -1418,9 +1418,13 @@ export function ViewerH2HSubroutePage({ kind }: { kind: ViewerH2HSubrouteKind })
 
 export function ViewerMatchPredictorPage(): JSX.Element {
   const activeRunId = useActiveViewerRunId()
+  const [searchParams] = useSearchParams()
+  const playerAParam = searchParams.get('playerA') || searchParams.get('player_a') || searchParams.get('a') || ''
+  const playerBParam = searchParams.get('playerB') || searchParams.get('player_b') || searchParams.get('b') || ''
+  const hasPlayerParams = Boolean(playerAParam || playerBParam)
   const playersQuery = useQuery({
     queryKey: ['viewer-match-predictor-run-players', activeRunId],
-    queryFn: () => listRunPlayers(activeRunId ?? '', { limit: 5, offset: 0 }),
+    queryFn: () => listRunPlayers(activeRunId ?? '', { limit: 50, offset: 0 }),
     enabled: Boolean(activeRunId),
     retry: false
   })
@@ -1428,34 +1432,63 @@ export function ViewerMatchPredictorPage(): JSX.Element {
   if (!activeRunId) {
     return (
       <ViewerShellPage title="Match Predictor" description="Read-only Match Predictor destination used by H2H and Predictions navigation.">
-        <ViewerEmptyState>This preview is not connected for this data shape yet.</ViewerEmptyState>
+        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
       </ViewerShellPage>
     )
   }
 
   const players = playersQuery.data?.players ?? []
+  const playerA = playerAParam ? players.find((player) => player.player_id === playerAParam) ?? null : null
+  const playerB = playerBParam ? players.find((player) => player.player_id === playerBParam) ?? null : null
+  const hasMissingRequestedPlayer = hasPlayerParams && (!playerAParam || !playerBParam || !playerA || !playerB)
+  const h2hPath = playerA && playerB ? `/viewer/h2h?playerA=${encodeURIComponent(playerA.player_id)}&playerB=${encodeURIComponent(playerB.player_id)}` : '/viewer/h2h'
 
   return (
     <ViewerShellPage title="Match Predictor" description="Read-only Match Predictor using existing active-run player data only.">
-      <article className="viewer-active-run-card" aria-label="Match Predictor active run summary">
-        <span className="eyebrow">Active Viewer run</span>
-        <h3>Match Predictor</h3>
-        {playersQuery.isLoading ? <p className="status">Loading active run player metadata…</p> : null}
-        {playersQuery.isError ? <ViewerEmptyState>Player metadata is temporarily unavailable for this run.</ViewerEmptyState> : null}
-        <dl className="metadata-list">
-          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
-          <div><dt>Total player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : playersQuery.data?.total ?? '—'}</dd></div>
-          <div><dt>Sample player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : players.length}</dd></div>
-        </dl>
-        {!playersQuery.isLoading && !playersQuery.isError && players.length === 0 ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
-        <ViewerSamplePlayersList players={players} label="Sample active run players for future predictor inputs" />
-        <ul className="viewer-home-list" aria-label="Deferred prediction outputs">
-          <li>This preview is not connected for this data shape yet.</li>
-          <li>This preview is not connected for this data shape yet.</li>
-          <li>This preview is not connected for this data shape yet.</li>
-        </ul>
-        <ViewerActiveRunSportsLinks activeRunId={activeRunId} />
-      </article>
+      <ViewerLandingGrid>
+        <ViewerSectionCard title="Match Predictor" kicker="Active Viewer run" variant="hero">
+          {playersQuery.isLoading ? <p className="status">Loading active run player metadata…</p> : null}
+          {playersQuery.isError ? <ViewerEmptyState>Player metadata is temporarily unavailable for this run.</ViewerEmptyState> : null}
+          <ViewerMetadataList
+            ariaLabel="Match Predictor active run summary"
+            items={[
+              { label: 'Active run ID', value: activeRunId },
+              { label: 'Total player count', value: playersQuery.isLoading ? 'Loading…' : playersQuery.data?.total ?? '—' },
+              { label: 'Returned player count', value: playersQuery.isLoading ? 'Loading…' : players.length }
+            ]}
+          />
+          {!playersQuery.isLoading && !playersQuery.isError && players.length === 0 ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
+        </ViewerSectionCard>
+        <ViewerSectionCard title="Predictor Inputs" kicker="Read-only player fields">
+          {!playersQuery.isLoading && !playersQuery.isError && hasMissingRequestedPlayer ? <ViewerEmptyState>Player data is not available for this run yet.</ViewerEmptyState> : null}
+          {!playersQuery.isLoading && !playersQuery.isError && !hasPlayerParams ? (
+            <>
+              <ViewerEmptyState>This preview is not connected for this data shape yet.</ViewerEmptyState>
+              <ViewerSamplePlayersList players={players} label="Sample active run players for future predictor inputs" runId={activeRunId} />
+            </>
+          ) : null}
+          {!playersQuery.isLoading && !playersQuery.isError && playerA && playerB ? <p className="status">Matched players are shown from active-run player data only.</p> : null}
+        </ViewerSectionCard>
+        <ViewerComparisonPlayerCard activeRunId={activeRunId} title="Player A" player={playerA} />
+        <ViewerComparisonPlayerCard activeRunId={activeRunId} title="Player B" player={playerB} />
+        <ViewerComparisonSummary playerA={playerA} playerB={playerB} title="Input Comparison" />
+        <ViewerSectionCard title="Links" kicker="Read-only navigation">
+          <ViewerActiveRunLinks
+            links={[
+              { label: 'Open active run players', to: viewerPlayersPath(activeRunId) },
+              { label: 'Open Viewer search', to: '/viewer/search' },
+              { label: 'Open H2H comparison', to: h2hPath }
+            ]}
+          />
+        </ViewerSectionCard>
+        <ViewerSectionCard title="Deferred Predictor Outputs" kicker="No prediction read model">
+          <ul className="viewer-home-list" aria-label="Deferred Predictor Outputs">
+            <li>This preview is not connected for this data shape yet.</li>
+            <li>No prediction is shown until a real prediction read model exists.</li>
+            <li>No odds are shown until a real odds read model exists.</li>
+          </ul>
+        </ViewerSectionCard>
+      </ViewerLandingGrid>
     </ViewerShellPage>
   )
 }

@@ -627,3 +627,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Missing params/data remain deferred or no-data.
 - No fake H2H records, predictions, odds, or match results were added.
 - No backend/Admin behavior changed.
+
+## Phase 3AC — Match Predictor input preview MVP note
+
+- Viewer Match Predictor now shows read-only predictor input previews from existing active-run player data.
+- Player/country links are added only when IDs are available.
+- Missing params/data remain deferred or no-data.
+- Prediction/odds outputs remain deferred; no fake winners, odds, probabilities, or match results were added.
+- No backend/Admin behavior changed.

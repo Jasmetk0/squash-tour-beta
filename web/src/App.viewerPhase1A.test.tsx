@@ -289,8 +289,8 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       ['/viewer/records', 'No data is available for this run yet.'],
       ['/viewer/stats', 'No data is available for this run yet.'],
       ['/viewer/h2h', 'No data is available for this run yet.'],
-      ['/viewer/predictions', 'This preview is not connected for this data shape yet.'],
-      ['/viewer/predictions/match-predictor', 'This preview is not connected for this data shape yet.'],
+      ['/viewer/predictions', 'No data is available for this run yet.'],
+      ['/viewer/predictions/match-predictor', 'No data is available for this run yet.'],
       ['/viewer/search', 'No data is available for this run yet.']
     ] as const
 
@@ -455,30 +455,101 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
 
-  it('shows conservative Match Predictor landing for predictions shortcut routes', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-1i-run')
+  it('shows Match Predictor no-data state when no active run is selected', async () => {
+    localStorage.removeItem('beta_engine:viewer_active_run_id')
+
+    renderAppAt('/viewer/predictions')
+
+    expect(await screen.findByRole('heading', { name: 'Match Predictor', level: 2 })).toBeInTheDocument()
+    expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
+    expect(api.listRunPlayers).not.toHaveBeenCalled()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows Match Predictor deferred inputs and sample player profile links without player params', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ac-run')
     api.listRunPlayers.mockResolvedValue({
-      run_id: 'phase-1i-run',
-      total: 6,
-      limit: 5,
+      run_id: 'phase-3ac-run',
+      total: 2,
+      limit: 50,
       offset: 0,
       players: [
-        { player_id: 'P3', name: 'Player Three', country_code: 'CCC', age: 23, source_type: 'planner_generated', override_id: null, quality_band: 'A', is_top_band: true, origin_source_type: 'planner_generated', origin_quality_band: 'A', origin_override_id: null, origin_season: 2030, technique: 82, movement: 83, physical: 84, mental: 85, overall: 86 }
+        { player_id: 'P1', name: 'Player One', country_code: 'EGY', age: 28, source_type: 'planner_generated', override_id: null, quality_band: 'Elite', is_top_band: true, origin_source_type: 'planner_generated', origin_quality_band: 'Elite', origin_override_id: null, origin_season: 2030, technique: 90, movement: 91, physical: 88, mental: 92, overall: 95 },
+        { player_id: 'P2', name: 'Player Two', country_code: 'NZL', age: 31, source_type: 'planner_generated', override_id: null, quality_band: 'A', is_top_band: true, origin_source_type: 'planner_generated', origin_quality_band: 'A', origin_override_id: null, origin_season: 2030, technique: 86, movement: 84, physical: 89, mental: 85, overall: 90 }
       ]
     })
 
-    for (const route of ['/viewer/predictions', '/viewer/predictions/match-predictor']) {
-      cleanup()
-      renderAppAt(route)
-      expect(await screen.findByRole('heading', { name: 'Match Predictor', level: 2 })).toBeInTheDocument()
-      expect(await screen.findByLabelText('Match Predictor active run summary')).toHaveTextContent('phase-1i-run')
-      expect(screen.getByText('Player Three')).toBeInTheDocument()
-      expect(screen.getAllByText('This preview is not connected for this data shape yet.')).toHaveLength(3)
-      expect(screen.getByRole('link', { name: 'Open active run players' })).toHaveAttribute('href', '/viewer/runs/phase-1i-run/players')
-      expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/phase-1i-run/tournaments')
-      expect(screen.queryByText(/%/)).not.toBeInTheDocument()
-      expectNoForbiddenViewerActions()
-    }
+    renderAppAt('/viewer/predictions')
+
+    expect(await screen.findByRole('heading', { name: 'Match Predictor', level: 2 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Predictor Inputs' })).toBeInTheDocument()
+    expect(screen.getAllByText('This preview is not connected for this data shape yet.').length).toBeGreaterThan(0)
+    expect(await screen.findByRole('link', { name: 'Player One' })).toHaveAttribute('href', '/viewer/runs/phase-3ac-run/players/P1/career')
+    expect(await screen.findByRole('link', { name: 'P1' })).toHaveAttribute('href', '/viewer/runs/phase-3ac-run/players/P1/career')
+    expect(screen.getByRole('link', { name: 'Open active run players' })).toHaveAttribute('href', '/viewer/runs/phase-3ac-run/players')
+    expect(screen.getByRole('link', { name: 'Open Viewer search' })).toHaveAttribute('href', '/viewer/search')
+    expect(screen.getByRole('link', { name: 'Open H2H comparison' })).toHaveAttribute('href', '/viewer/h2h')
+    expect(api.listRunPlayers).toHaveBeenCalledWith('phase-3ac-run', { limit: 50, offset: 0 })
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows Match Predictor selected player cards, links, numeric input differences, and deferred outputs', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ac-run')
+    api.listRunPlayers.mockResolvedValue({
+      run_id: 'phase-3ac-run',
+      total: 2,
+      limit: 50,
+      offset: 0,
+      players: [
+        { player_id: 'P1', name: 'Player One', country_code: 'EGY', age: 28, source_type: 'planner_generated', override_id: null, quality_band: 'Elite', is_top_band: true, origin_source_type: 'planner_generated', origin_quality_band: 'Elite', origin_override_id: null, origin_season: 2030, technique: 90, movement: 91, physical: 88, mental: 92, overall: 95 },
+        { player_id: 'P2', name: 'Player Two', country_code: 'NZL', age: 31, source_type: 'planner_generated', override_id: null, quality_band: 'A', is_top_band: true, origin_source_type: 'planner_generated', origin_quality_band: 'A', origin_override_id: null, origin_season: 2030, technique: 86, movement: 84, physical: 89, mental: 85, overall: 90 }
+      ]
+    })
+
+    renderAppAt('/viewer/predictions?playerA=P1&playerB=P2')
+
+    expect(await screen.findByRole('heading', { name: 'Match Predictor', level: 2 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Player A' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Player B' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Input Comparison' })).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Player One' })).toHaveAttribute('href', '/viewer/runs/phase-3ac-run/players/P1/career')
+    expect(await screen.findByRole('link', { name: 'P2' })).toHaveAttribute('href', '/viewer/runs/phase-3ac-run/players/P2/career')
+    expect(await screen.findByRole('link', { name: 'EGY' })).toHaveAttribute('href', '/viewer/runs/phase-3ac-run/countries/EGY')
+    expect(await screen.findByRole('link', { name: 'NZL' })).toHaveAttribute('href', '/viewer/runs/phase-3ac-run/countries/NZL')
+    const comparison = await screen.findByLabelText('Input Comparison differences')
+    expect(comparison).toHaveTextContent('Power Rating difference+5')
+    expect(comparison).toHaveTextContent('Technique difference+4')
+    expect(comparison).toHaveTextContent('Movement difference+7')
+    expect(comparison).toHaveTextContent('Physical difference-1')
+    expect(comparison).toHaveTextContent('Mental difference+7')
+    expect(comparison).toHaveTextContent('Age difference-3')
+    expect(screen.getByRole('link', { name: 'Open H2H comparison' })).toHaveAttribute('href', '/viewer/h2h?playerA=P1&playerB=P2')
+    expect(screen.getByText('No prediction is shown until a real prediction read model exists.')).toBeInTheDocument()
+    expect(screen.getByText('No odds are shown until a real odds read model exists.')).toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent(/predicted winner|win probability|upset chance|H2H record|match result|betting odds|3-1 H2H|"source_type"|planner_generated/i)
+    expect(document.body).not.toHaveTextContent(/[0-9]+%|[0-9]+\.[0-9]+/)
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows Match Predictor safe missing-player state and keeps shortcut routes consistent', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ac-run')
+    api.listRunPlayers.mockResolvedValue({
+      run_id: 'phase-3ac-run',
+      total: 1,
+      limit: 50,
+      offset: 0,
+      players: [
+        { player_id: 'P1', name: 'Player One', country_code: 'EGY', age: 28, source_type: 'planner_generated', override_id: null, quality_band: 'Elite', is_top_band: true, origin_source_type: 'planner_generated', origin_quality_band: 'Elite', origin_override_id: null, origin_season: 2030, technique: 90, movement: 91, physical: 88, mental: 92, overall: 95 }
+      ]
+    })
+
+    renderAppAt('/viewer/predictions/match-predictor?playerA=P1&playerB=P404')
+
+    expect(await screen.findByRole('heading', { name: 'Match Predictor', level: 2 })).toBeInTheDocument()
+    expect(screen.getAllByText('Player data is not available for this run yet.').length).toBeGreaterThan(0)
+    expect(screen.getByText('No prediction is shown until a real prediction read model exists.')).toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent(/predicted winner|win probability|upset chance|H2H record|match result|betting odds|3-1 H2H|"players"/i)
+    expectNoForbiddenViewerActions()
   })
 
   it('shows active-run Search player results with profile and country links', async () => {

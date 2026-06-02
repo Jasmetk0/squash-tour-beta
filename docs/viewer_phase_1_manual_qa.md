@@ -533,3 +533,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Publication previews remain metadata-only/deferred unless safely matched.
 - No fake tournament results, matches, odds, or storylines were added.
 - No backend/Admin behavior changed.
+
+## Phase 3O week detail tournament result badges note
+
+- Week Detail tournament rows now show small real result metadata when event `tournament_result` is safely parsed.
+- Champion links to Player Profile when `player_id` is available.
+- Unknown result payloads do not show fake winners/status/matches.
+- No backend/Admin behavior changed.

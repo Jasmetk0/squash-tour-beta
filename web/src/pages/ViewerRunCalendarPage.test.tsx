@@ -74,7 +74,13 @@ function mockEvents(): void {
         season: 2028,
         week: 2,
         template_id: 'ET-GOLD',
-        tournament_result: { result_status: 'available' }
+        tournament_result: {
+          champion: { player_id: 'PLAYER-42', player_name: 'Linked Champion' },
+          result_status: 'completed',
+          match_count: 31,
+          completed_match_count: 31,
+          raw_week_result_marker_should_be_hidden: true
+        }
       }
     ]
   })
@@ -232,6 +238,15 @@ describe('ViewerRunWeekPage', () => {
     expect(screen.getAllByText('Elite Tour').length).toBeGreaterThan(0)
     expect(screen.getAllByText('ET-GOLD').length).toBeGreaterThan(0)
     expect(screen.getByText('Available')).toBeInTheDocument()
+    expect(screen.getByText('Champion')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Linked Champion' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2d/players/PLAYER-42/career'
+    )
+    expect(screen.getByText('Result status')).toBeInTheDocument()
+    expect(screen.getByText('completed')).toBeInTheDocument()
+    expect(screen.getByText('Matches')).toBeInTheDocument()
+    expect(screen.getByText('31 of 31')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Open planned event/i })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2d/calendar/EVENT-NEXT'
@@ -250,9 +265,63 @@ describe('ViewerRunWeekPage', () => {
       'href',
       '/viewer/runs/viewer-run-2d/race/7'
     )
-    expect(screen.queryByText(/winner/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/match/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/raw_week_result_marker_should_be_hidden/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/storyline/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+
+  it('keeps champion plain text when parsed tournament_result has no player id', async () => {
+    api.listEvents.mockResolvedValue({
+      run_id: 'viewer-run-2d',
+      events: [
+        {
+          event_sequence: 2,
+          event_id: 'EVENT-NEXT',
+          season: 2028,
+          week: 2,
+          template_id: 'ET-GOLD',
+          tournament_result: { champion: { player_name: 'Plain Champion' }, result_status: 'completed', match_count: 15 }
+        }
+      ]
+    })
+
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2')
+
+    expect(await screen.findByRole('heading', { name: 'Week Detail' })).toBeInTheDocument()
+    expect((await screen.findAllByText('EVENT-NEXT')).length).toBeGreaterThan(0)
+    expect(screen.getByText('Champion')).toBeInTheDocument()
+    expect(screen.getByText('Plain Champion')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Plain Champion' })).not.toBeInTheDocument()
+    expect(screen.getByText('Result status')).toBeInTheDocument()
+    expect(screen.getByText('Matches')).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('does not show fake result metadata for unknown persisted tournament_result payloads', async () => {
+    api.listEvents.mockResolvedValue({
+      run_id: 'viewer-run-2d',
+      events: [
+        {
+          event_sequence: 2,
+          event_id: 'EVENT-NEXT',
+          season: 2028,
+          week: 2,
+          template_id: 'ET-GOLD',
+          tournament_result: { unknown_payload_marker_should_be_hidden: true }
+        }
+      ]
+    })
+
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2')
+
+    expect(await screen.findByRole('heading', { name: 'Week Detail' })).toBeInTheDocument()
+    expect((await screen.findAllByText('EVENT-NEXT')).length).toBeGreaterThan(0)
+    expect(screen.getByText('Available')).toBeInTheDocument()
+    expect(screen.queryByText('Champion')).not.toBeInTheDocument()
+    expect(screen.queryByText('Result status')).not.toBeInTheDocument()
+    expect(screen.queryByText('Matches')).not.toBeInTheDocument()
+    expect(screen.queryByText(/unknown_payload_marker_should_be_hidden/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

@@ -101,6 +101,15 @@ function mockSnapshots(): void {
   })
 }
 
+
+function seasonCalendarEventRow(eventId: string): HTMLElement {
+  for (const eventLabel of screen.getAllByText(eventId)) {
+    const row = eventLabel.closest('li')
+    if (row) return row
+  }
+  throw new Error(`Missing season calendar row for ${eventId}`)
+}
+
 function expectNoForbiddenViewerActions(): void {
   const forbiddenLabels = [
     'Simulate',
@@ -165,11 +174,79 @@ describe('ViewerRunCalendarPage', () => {
       'href',
       '/viewer/runs/viewer-run-2d/tournaments/EVENT-COMPLETE'
     )
+    const nextRow = seasonCalendarEventRow('EVENT-NEXT')
+    expect(within(nextRow).getByText('Champion')).toBeInTheDocument()
+    expect(within(nextRow).getByRole('link', { name: 'Linked Champion' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2d/players/PLAYER-42/career'
+    )
+    expect(within(nextRow).getByText('Result status')).toBeInTheDocument()
+    expect(within(nextRow).getByText('completed')).toBeInTheDocument()
+    expect(within(nextRow).getByText('Matches')).toBeInTheDocument()
+    expect(within(nextRow).getByText('31 of 31')).toBeInTheDocument()
     expect(screen.getByText('Show technical calendar data')).toBeInTheDocument()
     expect(screen.queryByText(/raw_calendar_marker_should_be_hidden/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/raw_week_result_marker_should_be_hidden/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
     expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
   })
+
+
+  it('keeps season calendar champion plain text when parsed tournament_result has no player id', async () => {
+    api.listEvents.mockResolvedValue({
+      run_id: 'viewer-run-2d',
+      events: [
+        {
+          event_sequence: 2,
+          event_id: 'EVENT-NEXT',
+          season: 2028,
+          week: 2,
+          template_id: 'ET-GOLD',
+          tournament_result: { champion: { player_name: 'Plain Calendar Champion' }, result_status: 'completed', match_count: 15 }
+        }
+      ]
+    })
+
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
+
+    expect(await screen.findByRole('heading', { name: 'Season Calendar' })).toBeInTheDocument()
+    expect((await screen.findAllByText('EVENT-NEXT')).length).toBeGreaterThan(0)
+    const nextRow = seasonCalendarEventRow('EVENT-NEXT')
+    expect(within(nextRow).getByText('Champion')).toBeInTheDocument()
+    expect(within(nextRow).getByText('Plain Calendar Champion')).toBeInTheDocument()
+    expect(within(nextRow).queryByRole('link', { name: 'Plain Calendar Champion' })).not.toBeInTheDocument()
+    expect(within(nextRow).getByText('Result status')).toBeInTheDocument()
+    expect(within(nextRow).getByText('Matches')).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('does not show fake season calendar metadata for unknown persisted tournament_result payloads', async () => {
+    api.listEvents.mockResolvedValue({
+      run_id: 'viewer-run-2d',
+      events: [
+        {
+          event_sequence: 2,
+          event_id: 'EVENT-NEXT',
+          season: 2028,
+          week: 2,
+          template_id: 'ET-GOLD',
+          tournament_result: { unknown_calendar_payload_marker_should_be_hidden: true }
+        }
+      ]
+    })
+
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
+
+    expect(await screen.findByRole('heading', { name: 'Season Calendar' })).toBeInTheDocument()
+    expect((await screen.findAllByText('EVENT-NEXT')).length).toBeGreaterThan(0)
+    const nextRow = seasonCalendarEventRow('EVENT-NEXT')
+    expect(within(nextRow).queryByText('Champion')).not.toBeInTheDocument()
+    expect(within(nextRow).queryByText('Result status')).not.toBeInTheDocument()
+    expect(within(nextRow).queryByText('Matches')).not.toBeInTheDocument()
+    expect(screen.queryByText(/unknown_calendar_payload_marker_should_be_hidden/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
 })
 
 describe('ViewerRunPlannedEventPage', () => {

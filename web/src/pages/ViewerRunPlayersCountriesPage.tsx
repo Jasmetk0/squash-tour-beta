@@ -55,7 +55,7 @@ export function ViewerRunPlayersPage(): JSX.Element {
 
   return (
     <section className="panel">
-      <PageIntro title="Players" subtitle="Read-only player pool for the selected run." />
+      <PageIntro title="Players" subtitle="Read-only player profiles for the selected run." />
       <CurrentContextStrip
         items={[
           { label: 'Active run ID', value: runId || 'unknown' },
@@ -95,7 +95,7 @@ export function ViewerRunPlayersPage(): JSX.Element {
         </div>
       </SectionCard>
 
-      <SectionCard title="Player pool">
+      <SectionCard title="Player profiles">
         {playersQuery.isLoading ? <p className="status">Loading players…</p> : null}
         {playersQuery.error ? <p className="error">Failed to load players: {String(playersQuery.error)}</p> : null}
         {!playersQuery.isLoading && !playersQuery.error && playersQuery.data ? (
@@ -137,7 +137,7 @@ export function ViewerRunPlayersPage(): JSX.Element {
               </tbody>
             </table>
           ) : (
-            <p className="status">No players matched the selected read-only filters.</p>
+            <p className="status">No data is available for this run yet.</p>
           )
         ) : null}
       </SectionCard>
@@ -175,7 +175,7 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
 
   return (
     <section className="panel">
-      <PageIntro title="Player Profile" subtitle="Read-only player profile and career preview for the selected run." />
+      <PageIntro title="Player Profile" subtitle="Read-only player profile for the selected run." />
       <CurrentContextStrip
         items={[
           { label: 'Active run ID', value: runId || 'unknown' },
@@ -218,7 +218,7 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
         )}
       </SectionCard>
 
-      <SectionCard title="Career timeline">
+      <SectionCard title="Season timeline">
         {careerQuery.error ? <p className="error">Failed to load career history: {String(careerQuery.error)}</p> : null}
         {careerQuery.data ? (
           careerQuery.data.entries.length > 0 ? (
@@ -430,7 +430,7 @@ export function ViewerRunCountriesPage(): JSX.Element {
               </tbody>
             </table>
           ) : (
-            <p className="status">No countries matched the selected read-only filters.</p>
+            <p className="status">No data is available for this run yet.</p>
           )
         ) : null}
       </SectionCard>

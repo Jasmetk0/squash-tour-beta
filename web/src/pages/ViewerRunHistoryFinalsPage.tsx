@@ -69,7 +69,7 @@ export function ViewerRunHistoryPage(): JSX.Element {
         ]}
       />
 
-      <SectionCard title="Activity metadata">
+      <SectionCard title="Season timeline">
         {activityQuery.isLoading ? <p className="status">Loading history…</p> : null}
         {activityQuery.error ? <p className="error">Failed to load run activity: {formatApiError(activityQuery.error)}</p> : null}
         {activityQuery.data && items.length === 0 ? <EmptyState message="No data is available for this run yet." /> : null}
@@ -105,7 +105,7 @@ export function ViewerRunHistoryPage(): JSX.Element {
         <SectionCard title="Read-only data">
           <TechnicalData
             summary="Show technical history data"
-            title="Activity payload"
+            title="Technical activity data"
             payload={activityQuery.data}
             emptyText="No technical history data is available."
           />
@@ -131,7 +131,7 @@ export function ViewerRunFinalsPage(): JSX.Element {
 
   return (
     <section className="panel">
-      <RunScopedHeader title="World Tour Finals" runId={runId} subtitle="Read-only Finals availability for the selected run." />
+      <RunScopedHeader title="World Tour Finals" runId={runId} subtitle="Read-only World Tour Finals availability for the selected run." />
       <CurrentContextStrip
         items={[
           { label: 'Active run', value: runId || 'unknown' },
@@ -187,7 +187,7 @@ export function ViewerRunFinalsQualificationPage(): JSX.Element {
 
   return (
     <section className="panel">
-      <RunScopedHeader title="Finals Qualification" runId={runId} subtitle="Read-only qualification metadata for the selected run." />
+      <RunScopedHeader title="Finals Qualification" runId={runId} subtitle="Read-only Finals qualification for the selected run." />
       <CurrentContextStrip
         items={[
           { label: 'Active run', value: runId || 'unknown' },
@@ -219,7 +219,7 @@ export function ViewerRunFinalsQualificationPage(): JSX.Element {
         <SectionCard title="Read-only data">
           <TechnicalData
             summary="Show technical finals qualification data"
-            title="Qualification payload"
+            title="Technical qualification data"
             payload={qualificationQuery.data}
             emptyText="No technical Finals qualification data is available."
           />
@@ -246,7 +246,7 @@ export function ViewerRunFinalsResultPage(): JSX.Element {
 
   return (
     <section className="panel">
-      <RunScopedHeader title="Finals Result" runId={runId} subtitle="Read-only Finals result metadata for the selected run." />
+      <RunScopedHeader title="Finals Result" runId={runId} subtitle="Read-only Finals result for the selected run." />
       <CurrentContextStrip
         items={[
           { label: 'Active run', value: runId || 'unknown' },
@@ -280,7 +280,7 @@ export function ViewerRunFinalsResultPage(): JSX.Element {
         <SectionCard title="Read-only data">
           <TechnicalData
             summary="Show technical finals result data"
-            title="Result payload"
+            title="Technical result data"
             payload={resultQuery.data}
             emptyText="No technical Finals result data is available."
           />

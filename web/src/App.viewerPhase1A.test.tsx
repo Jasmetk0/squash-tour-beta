@@ -283,7 +283,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     renderAppAt('/viewer/tour/calendar')
     expect(await screen.findByRole('button', { name: 'Jump to W24' })).toBeInTheDocument()
     expect(screen.getAllByText('No data is available for this run yet.').length).toBeGreaterThan(0)
-    expect(screen.queryByRole('link', { name: 'Open active run calendar' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open active run schedule' })).not.toBeInTheDocument()
   })
 
   it('shows conservative active-run H2H landing and subroute deferred states', async () => {
@@ -595,7 +595,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(panel).toHaveTextContent('E1 · W2 · GOLD · WORLD · TEMP-A')
     expect(panel).toHaveTextContent('Finals qualification available')
     expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments')
-    expect(screen.getByRole('link', { name: 'Open active run calendar' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
+    expect(screen.getByRole('link', { name: 'Open active run schedule' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
     expect(screen.getByRole('link', { name: 'Open active run finals' })).toHaveAttribute('href', '/viewer/runs/run-a/finals')
     expectNoForbiddenViewerActions()
   })
@@ -629,7 +629,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(panel).toHaveTextContent('TEMP-24')
     expect(panel).not.toHaveTextContent('E9')
     expect(panel).not.toHaveTextContent('E10')
-    expect(screen.getByRole('link', { name: 'Open active run calendar' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
+    expect(screen.getByRole('link', { name: 'Open active run schedule' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
     expectNoForbiddenViewerActions()
   })
 
@@ -663,7 +663,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(panel).toHaveTextContent('E1 · W2 · GOLD · WORLD · TEMP-A')
     expect(panel).toHaveTextContent('E3')
     expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments')
-    expect(screen.getByRole('link', { name: 'Open active run calendar' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
+    expect(screen.getByRole('link', { name: 'Open active run schedule' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
     expectNoForbiddenViewerActions()
   })
 
@@ -944,7 +944,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     renderAppAt('/viewer/tour/calendar')
 
     expect(await screen.findByRole('button', { name: 'Jump to W24' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open active run calendar' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
+    expect(screen.getByRole('link', { name: 'Open active run schedule' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
   })
 
   it('does not render forbidden mutating Viewer buttons or links on top-level shell pages', async () => {
@@ -978,9 +978,9 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     renderAppAt('/viewer/runs/run-a/calendar')
 
     expect(await screen.findByRole('heading', { name: 'Season Calendar' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Calendar events' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Season timeline' })).toBeInTheDocument()
     expect(await screen.findByRole('list', { name: 'Viewer season calendar events' })).toHaveTextContent('E1')
-    expect(screen.queryByText('Sample calendar card for future read-only weekly event browsing.')).not.toBeInTheDocument()
+    expect(screen.queryByText('This section uses existing read-only run data only.')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Jump to W24' })).not.toBeInTheDocument()
   })
 
@@ -988,7 +988,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     renderAppAt('/viewer/runs/run-a/tournaments')
 
     expect(await screen.findByText('Tournaments', { selector: 'h2' })).toBeInTheDocument()
-    expect(screen.getByText(/Read-only tournament\/event history for the selected run/)).toBeInTheDocument()
+    expect(screen.getByText(/Read-only tournament schedule and results for the selected run/)).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
@@ -996,7 +996,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     renderAppAt('/viewer/runs/run-a/players')
 
     expect(await screen.findByRole('heading', { name: 'Players', level: 2 })).toBeInTheDocument()
-    expect(screen.getByText('Read-only player pool for the selected run.')).toBeInTheDocument()
+    expect(screen.getByText('Read-only player profiles for the selected run.')).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

@@ -89,6 +89,17 @@ function topRankingRows(count: number): Array<Record<string, unknown>> {
   }))
 }
 
+function topRaceRows(count: number): Array<Record<string, unknown>> {
+  return Array.from({ length: count }, (_, index) => ({
+    rank: index + 1,
+    player: { id: `R${index + 1}`, name: index === 0 ? 'Paul Coll' : `Race Top Player ${index + 1}`, country_code: index === 0 ? 'NZ' : 'EG' },
+    points: 7000 - index,
+    events_counted: index === 0 ? 8 : 6,
+    qualification_status: index === 0 ? 'Qualified' : 'Chasing',
+    next_max_points: index === 0 ? 1500 : 1000
+  }))
+}
+
 function renderAppAt(route: string): void {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
@@ -530,13 +541,13 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('shows top-level race snapshot metadata when an active run has race snapshots', async () => {
+  it('shows top-level race snapshot metadata and preview when an active run has parseable race snapshots', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
     api.listRaceSnapshots.mockResolvedValue({
       run_id: 'run-a',
       snapshots: [
         { snapshot_sequence: 2, snapshot_kind: 'TOURNAMENT', source_event_id: 'E1', payload: {} },
-        { snapshot_sequence: 9, snapshot_kind: 'WEEK', source_event_id: 'E4', payload: {} }
+        { snapshot_sequence: 9, snapshot_kind: 'WEEK', source_event_id: 'E4', payload: { race_table: { rows: topRaceRows(11) } } }
       ]
     })
 
@@ -553,6 +564,16 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(panel).toHaveTextContent('E4')
     expect(panel).toHaveTextContent('Latest snapshot kind')
     expect(panel).toHaveTextContent('WEEK')
+    expect(screen.getByRole('heading', { name: 'Top 10 Race Preview' })).toBeInTheDocument()
+    const table = screen.getByRole('table', { name: 'Latest Top 10 race preview table' })
+    expect(within(table).getByText('Paul Coll')).toBeInTheDocument()
+    expect(within(table).getByText('NZ')).toBeInTheDocument()
+    expect(within(table).getByText('7000')).toBeInTheDocument()
+    expect(within(table).getAllByText('8').length).toBeGreaterThan(0)
+    expect(within(table).getByText('Qualified')).toBeInTheDocument()
+    expect(within(table).getByText('1500')).toBeInTheDocument()
+    expect(within(table).getAllByRole('row')).toHaveLength(11)
+    expect(screen.queryByText('Race Top Player 11')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
     expect(screen.getByRole('link', { name: 'View latest race snapshot' })).toHaveAttribute('href', '/viewer/runs/run-a/race/9')
     expectNoForbiddenViewerActions()

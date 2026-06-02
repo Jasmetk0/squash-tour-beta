@@ -444,3 +444,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Unknown payload shapes still show deferred previews.
 - Raw technical payload remains collapsed.
 - No fake ranking rows or new ranking engine were added.
+
+## Phase 3B race preview note
+
+- Viewer Race to Finals can now show a real Top 10 preview when race snapshot payload shape is safely parsed.
+- Unknown payload shapes still show deferred previews.
+- Raw technical payload remains collapsed.
+- No fake race rows or new Race engine were added.

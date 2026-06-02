@@ -1346,15 +1346,74 @@ export function ViewerMatchPredictorPage(): JSX.Element {
   )
 }
 
-function renderSearchEventLabel(event: SeasonStateResponse['season_state']['ordered_events'][number]): string {
-  return `${event.event_id} · W${event.week} · ${event.category} · ${event.tour}`
+type ViewerSearchPlannedEvent = SeasonStateResponse['season_state']['ordered_events'][number]
+
+type ViewerSearchTournamentResult = {
+  eventId: string
+  season: number | null
+  week: number | null
+  tour: string | null
+  category: string | null
+  templateId: string | null
+  hasPlannedEvent: boolean
+  hasPersistedEvent: boolean
+}
+
+function normalizeViewerSearchQuery(searchParams: URLSearchParams): string {
+  return (searchParams.get('q') ?? searchParams.get('query') ?? searchParams.get('search') ?? '').trim()
+}
+
+function searchTextMatches(query: string, values: Array<string | number | null | undefined>): boolean {
+  const normalizedQuery = query.toLowerCase()
+  return values.some((value) => String(value ?? '').toLowerCase().includes(normalizedQuery))
+}
+
+function buildSearchTournamentResults(plannedEvents: ViewerSearchPlannedEvent[], persistedEvents: EventRecord[], query: string): ViewerSearchTournamentResult[] {
+  const plannedById = new Map(plannedEvents.map((event) => [event.event_id, event]))
+  const persistedById = new Map(persistedEvents.map((event) => [event.event_id, event]))
+  const eventIds = Array.from(new Set([...plannedById.keys(), ...persistedById.keys()]))
+
+  return eventIds
+    .map((eventId) => {
+      const planned = plannedById.get(eventId)
+      const persisted = persistedById.get(eventId)
+      return {
+        eventId,
+        season: planned?.season ?? persisted?.season ?? null,
+        week: planned?.week ?? persisted?.week ?? null,
+        tour: planned?.tour ?? null,
+        category: planned?.category ?? null,
+        templateId: planned?.template_id ?? persisted?.template_id ?? null,
+        hasPlannedEvent: Boolean(planned),
+        hasPersistedEvent: Boolean(persisted)
+      }
+    })
+    .filter((event) => searchTextMatches(query, [event.eventId, event.tour, event.category, event.templateId, event.week]))
+}
+
+function renderSearchTournamentMetadata(runId: string, event: ViewerSearchTournamentResult): JSX.Element {
+  return (
+    <ViewerMetadataList
+      items={[
+        { label: 'Event ID', value: event.hasPlannedEvent ? <Link to={viewerPlannedEventPath(runId, event.eventId)}>Planned Event: {event.eventId}</Link> : event.eventId },
+        { label: 'Season', value: event.season ?? '—' },
+        { label: 'Week', value: event.week ? <Link to={viewerWeekDetailPath(runId, event.week)}>Week Detail: W{event.week}</Link> : '—' },
+        { label: 'Tour', value: event.tour ?? '—' },
+        { label: 'Category', value: event.category ?? '—' },
+        { label: 'Template', value: event.templateId ?? '—' },
+        { label: 'Persisted availability', value: event.hasPersistedEvent ? 'Available' : 'Not available' },
+        { label: 'Tournament detail', value: event.hasPersistedEvent ? <Link to={viewerTournamentDetailPath(runId, event.eventId)}>Tournament Detail: {event.eventId}</Link> : '—' }
+      ]}
+    />
+  )
 }
 
 export function ViewerSearchPage(): JSX.Element {
   const activeRunId = useActiveViewerRunId()
   const [searchParams] = useSearchParams()
-  const urlQuery = searchParams.get('q') ?? ''
+  const urlQuery = normalizeViewerSearchQuery(searchParams)
   const [query, setQuery] = useState(urlQuery)
+  const hasSearchQuery = urlQuery.length > 0
 
   useEffect(() => {
     setQuery(urlQuery)
@@ -1362,30 +1421,36 @@ export function ViewerSearchPage(): JSX.Element {
 
   const playersQuery = useQuery({
     queryKey: ['viewer-search-run-players', activeRunId],
-    queryFn: () => listRunPlayers(activeRunId ?? '', { limit: 5, offset: 0 }),
-    enabled: Boolean(activeRunId),
+    queryFn: () => listRunPlayers(activeRunId ?? '', { limit: 50, offset: 0 }),
+    enabled: Boolean(activeRunId && hasSearchQuery),
     retry: false
   })
   const nationsQuery = useQuery({
     queryKey: ['viewer-search-run-nations', activeRunId],
-    queryFn: () => listRunNations(activeRunId ?? '', { limit: 5, offset: 0 }),
-    enabled: Boolean(activeRunId),
+    queryFn: () => listRunNations(activeRunId ?? '', { limit: 50, offset: 0 }),
+    enabled: Boolean(activeRunId && hasSearchQuery),
     retry: false
   })
   const runQuery = useQuery({
     queryKey: ['viewer-search-run-calendar', activeRunId],
     queryFn: () => getRun(activeRunId ?? ''),
-    enabled: Boolean(activeRunId),
+    enabled: Boolean(activeRunId && hasSearchQuery),
+    retry: false
+  })
+  const eventsQuery = useQuery({
+    queryKey: ['viewer-search-run-events', activeRunId],
+    queryFn: () => listEvents(activeRunId ?? ''),
+    enabled: Boolean(activeRunId && hasSearchQuery),
     retry: false
   })
 
-  if (!activeRunId) {
+  if (!activeRunId || !hasSearchQuery) {
     return (
-      <ViewerShellPage title="Search" description="Read-only Search for future player, tournament, country, match, and season results.">
-        <article className="viewer-active-run-card" aria-label="Search query shell">
-          <span className="eyebrow">Viewer search shell</span>
-          <h3>Search query{urlQuery ? `: ${urlQuery}` : ''}</h3>
-          <label className="field-label" htmlFor="viewer-search-shell-input">Search shell</label>
+      <ViewerShellPage title="Search" description="Read-only Viewer Search using active-run data only.">
+        <article className="viewer-active-run-card" aria-label="Search">
+          <span className="eyebrow">Viewer search</span>
+          <h3>Search{urlQuery ? `: ${urlQuery}` : ''}</h3>
+          <label className="field-label" htmlFor="viewer-search-shell-input">Search</label>
           <input
             id="viewer-search-shell-input"
             aria-label="Read-only Viewer search shell"
@@ -1394,30 +1459,30 @@ export function ViewerSearchPage(): JSX.Element {
             onChange={(event) => setQuery(event.target.value)}
           />
           <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
-          <p className="status">Full search result sets are not shown yet; this page only reflects the local query from the URL.</p>
         </article>
       </ViewerShellPage>
     )
   }
 
-  const players = playersQuery.data?.players ?? []
-  const nations = nationsQuery.data?.nations ?? []
-  const events = runQuery.data?.season_state.ordered_events.slice(0, 5) ?? []
+  const players = (playersQuery.data?.players ?? []).filter((player) => searchTextMatches(urlQuery, [player.player_id, player.name, player.country_code, player.quality_band]))
+  const nations = (nationsQuery.data?.nations ?? []).filter((nation) => searchTextMatches(urlQuery, [nation.country_code, nation.country_name, nation.top_player_name, nation.top_player_id]))
+  const tournaments = buildSearchTournamentResults(runQuery.data?.season_state.ordered_events ?? [], eventsQuery.data?.events ?? [], urlQuery)
+  const isLoading = playersQuery.isLoading || nationsQuery.isLoading || runQuery.isLoading || eventsQuery.isLoading
+  const hasError = playersQuery.isError || nationsQuery.isError || runQuery.isError || eventsQuery.isError
+  const hasResults = players.length > 0 || nations.length > 0 || tournaments.length > 0
 
   return (
-    <ViewerShellPage title="Search" description="Read-only Search using small active-run data samples only.">
-      <article className="viewer-active-run-card" aria-label="Search active run metadata summary">
+    <ViewerShellPage title="Search" description="Read-only Viewer Search using active-run player, country, and tournament data only.">
+      <article className="viewer-active-run-card" aria-label="Search">
         <span className="eyebrow">Active Viewer run</span>
-        <h3>Search query{urlQuery ? `: ${urlQuery}` : ''}</h3>
-        {playersQuery.isLoading || nationsQuery.isLoading || runQuery.isLoading ? <p className="status">Loading active run searchable metadata samples…</p> : null}
-        {playersQuery.isError || nationsQuery.isError || runQuery.isError ? <ViewerEmptyState>Some active run searchable metadata is temporarily unavailable.</ViewerEmptyState> : null}
+        <h3>Search: {urlQuery}</h3>
+        {isLoading ? <p className="status">Loading active run search results…</p> : null}
+        {hasError ? <ViewerEmptyState>Some active run searchable metadata is temporarily unavailable.</ViewerEmptyState> : null}
         <dl className="metadata-list">
           <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
-          <div><dt>Sample player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : players.length}</dd></div>
-          <div><dt>Sample country count</dt><dd>{nationsQuery.isLoading ? 'Loading…' : nations.length}</dd></div>
-          <div><dt>Sample ordered event count</dt><dd>{runQuery.isLoading ? 'Loading…' : events.length}</dd></div>
+          <div><dt>Query</dt><dd>{urlQuery}</dd></div>
         </dl>
-        <label className="field-label" htmlFor="viewer-search-shell-input">Search shell</label>
+        <label className="field-label" htmlFor="viewer-search-shell-input">Search</label>
         <input
           id="viewer-search-shell-input"
           aria-label="Read-only Viewer search shell"
@@ -1425,29 +1490,45 @@ export function ViewerSearchPage(): JSX.Element {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
-        <ViewerEmptyState>This preview is not connected for this data shape yet.</ViewerEmptyState>
-        <p className="status">Full search result sets are not shown yet; active-run lists below use existing read-only run data only.</p>
-        <ViewerSamplePlayersList players={players} label="Sample searchable players" />
-        {nations.length ? (
-          <div>
-            <h4>Sample countries</h4>
-            <ul className="viewer-home-list" aria-label="Sample searchable countries">
-              {nations.slice(0, 5).map((nation) => (
-                <li key={nation.country_code}>{renderCountrySampleMetadata(nation)}</li>
+        {!isLoading && !hasError && !hasResults ? <ViewerEmptyState>No matching Viewer results found.</ViewerEmptyState> : null}
+
+        <section aria-label="Players">
+          <h4>Players</h4>
+          {players.length ? (
+            <ul className="viewer-home-list">
+              {players.map((player) => (
+                <li key={player.player_id}>{renderPlayerSampleMetadata(player, activeRunId)}</li>
               ))}
             </ul>
-          </div>
-        ) : null}
-        {events.length ? (
-          <div>
-            <h4>Sample schedule events</h4>
-            <ul className="viewer-home-list" aria-label="Sample searchable ordered events">
-              {events.map((event) => (
-                <li key={event.event_id}>{renderSearchEventLabel(event)}</li>
+          ) : <p className="status">No matching players.</p>}
+        </section>
+
+        <section aria-label="Countries">
+          <h4>Countries</h4>
+          {nations.length ? (
+            <ul className="viewer-home-list">
+              {nations.map((nation) => (
+                <li key={nation.country_code}>{renderCountrySampleMetadata(nation, activeRunId)}</li>
               ))}
             </ul>
-          </div>
-        ) : null}
+          ) : <p className="status">No matching countries.</p>}
+        </section>
+
+        <section aria-label="Tournaments">
+          <h4>Tournaments</h4>
+          {tournaments.length ? (
+            <ul className="viewer-home-list">
+              {tournaments.map((event) => (
+                <li key={event.eventId}>{renderSearchTournamentMetadata(activeRunId, event)}</li>
+              ))}
+            </ul>
+          ) : <p className="status">No matching tournaments.</p>}
+        </section>
+
+        <section aria-label="Links">
+          <h4>Links</h4>
+          <p className="status">Result links are shown only when player, country, event, or week IDs are available.</p>
+        </section>
       </article>
     </ViewerShellPage>
   )

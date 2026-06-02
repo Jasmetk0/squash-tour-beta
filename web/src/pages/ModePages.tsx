@@ -1222,22 +1222,66 @@ function formatComparisonDifference(playerA: RunPlayerListItem, playerB: RunPlay
   return difference > 0 ? `+${difference}` : String(difference)
 }
 
-function playerSearchLink(player: RunPlayerListItem): string {
+type ViewerComparisonQueryParams = {
+  playerAParam: string
+  playerBParam: string
+  hasPlayerParams: boolean
+}
+
+type ViewerSelectedComparisonPlayers = ViewerComparisonQueryParams & {
+  playerA: RunPlayerListItem | null
+  playerB: RunPlayerListItem | null
+  hasMissingRequestedPlayer: boolean
+}
+
+function readViewerComparisonQueryParams(searchParams: URLSearchParams): ViewerComparisonQueryParams {
+  const playerAParam = searchParams.get('playerA') || searchParams.get('player_a') || searchParams.get('a') || ''
+  const playerBParam = searchParams.get('playerB') || searchParams.get('player_b') || searchParams.get('b') || ''
+  return {
+    playerAParam,
+    playerBParam,
+    hasPlayerParams: Boolean(playerAParam || playerBParam)
+  }
+}
+
+function selectViewerComparisonPlayers(players: RunPlayerListItem[], searchParams: URLSearchParams): ViewerSelectedComparisonPlayers {
+  const params = readViewerComparisonQueryParams(searchParams)
+  const playerA = params.playerAParam ? players.find((player) => player.player_id === params.playerAParam) ?? null : null
+  const playerB = params.playerBParam ? players.find((player) => player.player_id === params.playerBParam) ?? null : null
+  return {
+    ...params,
+    playerA,
+    playerB,
+    hasMissingRequestedPlayer: params.hasPlayerParams && (!params.playerAParam || !params.playerBParam || !playerA || !playerB)
+  }
+}
+
+function selectedComparisonPlayers(selection: Pick<ViewerSelectedComparisonPlayers, 'playerA' | 'playerB'>): RunPlayerListItem[] {
+  return [selection.playerA, selection.playerB].filter((player): player is RunPlayerListItem => Boolean(player))
+}
+
+function buildPlayerSearchLink(player: RunPlayerListItem): string {
   return `/viewer/search?q=${encodeURIComponent(player.player_id || player.name || '')}`
 }
 
-function ViewerPlayerComparisonLinks({ activeRunId, players }: { activeRunId: string; players: RunPlayerListItem[] }): JSX.Element {
-  const selectedPlayerLinks = players
+function buildSelectedPlayerSearchLinks(players: RunPlayerListItem[]): { label: string; to: string }[] {
+  return players
     .filter((player) => player.player_id || player.name)
-    .map((player) => ({ label: `Search ${player.name || player.player_id}`, to: playerSearchLink(player) }))
+    .map((player) => ({ label: `Search ${player.name || player.player_id}`, to: buildPlayerSearchLink(player) }))
+}
 
+function buildSelectedH2HPath(selection: Pick<ViewerSelectedComparisonPlayers, 'playerA' | 'playerB'>): string {
+  return selection.playerA && selection.playerB ? `/viewer/h2h?playerA=${encodeURIComponent(selection.playerA.player_id)}&playerB=${encodeURIComponent(selection.playerB.player_id)}` : '/viewer/h2h'
+}
+
+function ViewerPlayerComparisonLinks({ activeRunId, players }: { activeRunId: string; players: RunPlayerListItem[] }): JSX.Element {
   return (
     <ViewerSectionCard title="Links" kicker="Read-only navigation">
       <ViewerActiveRunLinks
         links={[
           { label: 'Open active run players', to: viewerPlayersPath(activeRunId) },
           { label: 'Open Viewer search', to: '/viewer/search' },
-          ...selectedPlayerLinks
+          ...buildSelectedPlayerSearchLinks(players)
         ]}
       />
     </ViewerSectionCard>
@@ -1291,9 +1335,6 @@ function ViewerComparisonSummary({ playerA, playerB, title = 'Comparison Summary
 function ViewerPlayerComparisonContent({ routeKind }: { routeKind: ViewerComparisonRouteKind }): JSX.Element {
   const activeRunId = useActiveViewerRunId()
   const [searchParams] = useSearchParams()
-  const playerAParam = searchParams.get('playerA') || searchParams.get('player_a') || searchParams.get('a') || ''
-  const playerBParam = searchParams.get('playerB') || searchParams.get('player_b') || searchParams.get('b') || ''
-  const hasPlayerParams = Boolean(playerAParam || playerBParam)
   const playersQuery = useQuery({
     queryKey: ['viewer-player-comparison-run-players', activeRunId],
     queryFn: () => listRunPlayers(activeRunId ?? '', { limit: 50, offset: 0 }),
@@ -1310,9 +1351,8 @@ function ViewerPlayerComparisonContent({ routeKind }: { routeKind: ViewerCompari
   }
 
   const players = playersQuery.data?.players ?? []
-  const playerA = playerAParam ? players.find((player) => player.player_id === playerAParam) ?? null : null
-  const playerB = playerBParam ? players.find((player) => player.player_id === playerBParam) ?? null : null
-  const hasMissingRequestedPlayer = hasPlayerParams && (!playerAParam || !playerBParam || !playerA || !playerB)
+  const selectedPlayers = selectViewerComparisonPlayers(players, searchParams)
+  const { playerA, playerB, hasPlayerParams, hasMissingRequestedPlayer } = selectedPlayers
 
   return (
     <ViewerShellPage
@@ -1342,7 +1382,7 @@ function ViewerPlayerComparisonContent({ routeKind }: { routeKind: ViewerCompari
         <ViewerComparisonPlayerCard activeRunId={activeRunId} title="Player A" player={playerA} />
         <ViewerComparisonPlayerCard activeRunId={activeRunId} title="Player B" player={playerB} />
         <ViewerComparisonSummary playerA={playerA} playerB={playerB} />
-        <ViewerPlayerComparisonLinks activeRunId={activeRunId} players={[playerA, playerB].filter((player): player is RunPlayerListItem => Boolean(player))} />
+        <ViewerPlayerComparisonLinks activeRunId={activeRunId} players={selectedComparisonPlayers(selectedPlayers)} />
       </ViewerLandingGrid>
     </ViewerShellPage>
   )
@@ -1419,9 +1459,6 @@ export function ViewerH2HSubroutePage({ kind }: { kind: ViewerH2HSubrouteKind })
 export function ViewerMatchPredictorPage(): JSX.Element {
   const activeRunId = useActiveViewerRunId()
   const [searchParams] = useSearchParams()
-  const playerAParam = searchParams.get('playerA') || searchParams.get('player_a') || searchParams.get('a') || ''
-  const playerBParam = searchParams.get('playerB') || searchParams.get('player_b') || searchParams.get('b') || ''
-  const hasPlayerParams = Boolean(playerAParam || playerBParam)
   const playersQuery = useQuery({
     queryKey: ['viewer-match-predictor-run-players', activeRunId],
     queryFn: () => listRunPlayers(activeRunId ?? '', { limit: 50, offset: 0 }),
@@ -1438,10 +1475,9 @@ export function ViewerMatchPredictorPage(): JSX.Element {
   }
 
   const players = playersQuery.data?.players ?? []
-  const playerA = playerAParam ? players.find((player) => player.player_id === playerAParam) ?? null : null
-  const playerB = playerBParam ? players.find((player) => player.player_id === playerBParam) ?? null : null
-  const hasMissingRequestedPlayer = hasPlayerParams && (!playerAParam || !playerBParam || !playerA || !playerB)
-  const h2hPath = playerA && playerB ? `/viewer/h2h?playerA=${encodeURIComponent(playerA.player_id)}&playerB=${encodeURIComponent(playerB.player_id)}` : '/viewer/h2h'
+  const selectedPlayers = selectViewerComparisonPlayers(players, searchParams)
+  const { playerA, playerB, hasPlayerParams, hasMissingRequestedPlayer } = selectedPlayers
+  const h2hPath = buildSelectedH2HPath(selectedPlayers)
 
   return (
     <ViewerShellPage title="Match Predictor" description="Read-only Match Predictor using existing active-run player data only.">

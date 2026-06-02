@@ -69,6 +69,16 @@ function playerProfilePath(runId: string, playerId: string): string {
   return `/viewer/runs/${runId}/players/${encodeURIComponent(playerId)}/career`
 }
 
+function weekDetailPath(runId: string, week: number): string {
+  return `/viewer/runs/${runId}/weeks/${week}`
+}
+
+function displayWeekDetailLink(runId: string, week: number | null): ReactNode {
+  if (week == null) return '—'
+
+  return <Link to={weekDetailPath(runId, week)}>{`W${week}`}</Link>
+}
+
 function displayPlayerProfileLink(runId: string, player: TournamentPlayerSummary | null): ReactNode {
   const label = displayPlayer(player)
 
@@ -145,7 +155,7 @@ export function ViewerRunTournamentsPage(): JSX.Element {
                     items={[
                       { label: 'Sequence', value: event.event_sequence ?? '—' },
                       { label: 'Season', value: season ?? '—' },
-                      { label: 'Week', value: week != null ? `W${week}` : '—' },
+                      { label: 'Week', value: displayWeekDetailLink(runId, week) },
                       { label: 'Template', value: planned?.template_id ?? event.template_id ?? '—' },
                       { label: 'Category', value: planned?.category ?? 'No ordered-calendar category' },
                       { label: 'Tour', value: planned?.tour ?? 'No ordered-calendar tour' },
@@ -226,7 +236,7 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
           {week != null ? (
             <>
               {' · '}
-              <Link to={`/viewer/runs/${runId}/weeks/${week}`}>Open week detail</Link>
+              <Link to={weekDetailPath(runId, week)}>Open week detail</Link>
             </>
           ) : null}
         </p>
@@ -262,7 +272,7 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
                     { label: 'Run ID', value: runId || 'unknown' },
                     { label: 'Sequence', value: event.event_sequence ?? '—' },
                     { label: 'Season', value: season ?? '—' },
-                    { label: 'Week', value: week != null ? `W${week}` : '—' },
+                    { label: 'Week', value: displayWeekDetailLink(runId, week) },
                     { label: 'Tour', value: planned?.tour ?? 'No ordered-calendar tour' },
                     { label: 'Category', value: planned?.category ?? 'No ordered-calendar category' },
                     { label: 'Template', value: templateId ?? '—' }

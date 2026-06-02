@@ -136,6 +136,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     renderAppAt('/viewer')
 
     expect(await screen.findByRole('heading', { name: /MSA Squash/, level: 2 })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
     for (const section of [
       'Featured Tournament Hero',
       'Other Tournaments This Week',
@@ -165,6 +166,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     const picker = await screen.findByLabelText('Active run picker')
     expect(picker).toHaveTextContent('No active run selected')
+    expect(within(picker).getByRole('link', { name: 'Browse all runs' })).toHaveAttribute('href', '/viewer/runs')
     expect(await within(picker).findByRole('option', { name: /run-a — season 2030, seed 9/ })).toBeInTheDocument()
     expect(within(picker).getByRole('option', { name: /run-b — season 2031, seed 11/ })).toBeInTheDocument()
     expectNoForbiddenViewerActions()
@@ -680,6 +682,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(screen.getByRole('link', { name: 'Ali Farag' })).toHaveAttribute('href', '/viewer/runs/phase-3aa-run/players/ALI-1/career')
     expect(screen.getByRole('link', { name: 'EGY' })).toHaveAttribute('href', '/viewer/runs/phase-3aa-run/countries/EGY')
     expect(screen.queryByText(/planner_generated/)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
     expectNoForbiddenViewerActions()
   })
 
@@ -977,6 +980,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments')
     expect(screen.getByRole('link', { name: 'Open active run schedule' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
     expect(screen.getByRole('link', { name: 'Open active run finals' })).toHaveAttribute('href', '/viewer/runs/run-a/finals')
+    expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
     expectNoForbiddenViewerActions()
   })
 
@@ -1010,6 +1014,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(panel).not.toHaveTextContent('E9')
     expect(panel).not.toHaveTextContent('E10')
     expect(screen.getByRole('link', { name: 'Open active run schedule' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
+    expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
     expectNoForbiddenViewerActions()
   })
 
@@ -1191,6 +1196,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
     expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
     expect(screen.getByRole('link', { name: 'Open active run finals' })).toHaveAttribute('href', '/viewer/runs/run-a/finals')
+    expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
     expect(panel).not.toHaveTextContent('source_event_id')
     expect(panel).not.toHaveTextContent('payload')
     expectNoForbiddenViewerActions()
@@ -1212,6 +1218,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(panel).toHaveTextContent('Player Stats: needs dedicated player statistics read model.')
     expect(panel).toHaveTextContent('Tournament Stats: needs dedicated tournament statistics read model.')
     expect(panel).toHaveTextContent('Era Rankings: needs dedicated era comparison read model.')
+    expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
     expect(within(panel).queryByText('GOAT')).not.toBeInTheDocument()
     expect(panel).not.toHaveTextContent('source_event_id')
     expect(panel).not.toHaveTextContent('payload')

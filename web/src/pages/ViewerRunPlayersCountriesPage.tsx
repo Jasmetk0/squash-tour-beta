@@ -39,6 +39,16 @@ function tournamentDetailPath(runId: string, eventId: string): string {
   return `/viewer/runs/${encodeURIComponent(runId)}/tournaments/${encodeURIComponent(eventId)}`
 }
 
+function weekDetailPath(runId: string, week: number): string {
+  return `/viewer/runs/${encodeURIComponent(runId)}/weeks/${week}`
+}
+
+function weekCell(runId: string, week: number | null | undefined): JSX.Element | string {
+  if (typeof week !== 'number') return '—'
+
+  return <Link to={weekDetailPath(runId, week)}>W{week}</Link>
+}
+
 function tournamentEventCell(
   runId: string,
   eventId: string | null | undefined,
@@ -431,7 +441,7 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
               {tournamentResultsQuery.data.entries.map((entry) => (
                 <tr key={`result-${entry.run_id}-${entry.event_id}-${entry.event_sequence}`}>
                   <td>{entry.season}</td>
-                  <td>{displayMetric(entry.week)}</td>
+                  <td>{weekCell(runId, entry.week)}</td>
                   <td>{tournamentEventCell(runId, entry.event_id, entry.event_name)}</td>
                   <td>{entry.event_category ?? '—'}</td>
                   <td>{entry.finish ?? '—'}{entry.is_title ? ' 🏆' : ''}</td>

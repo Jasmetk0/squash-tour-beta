@@ -437,3 +437,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - No data logic or backend behavior changed.
 - Technical data remains collapsed.
 - No fake data was added.
+
+## Phase 3A rankings preview note
+
+- Viewer rankings can now show a real Top 10 preview when the latest ranking snapshot payload shape is safely parsed.
+- Unknown payload shapes still show deferred previews.
+- Raw technical payload remains collapsed.
+- No fake ranking rows or new ranking engine were added.

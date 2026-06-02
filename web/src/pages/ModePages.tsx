@@ -14,6 +14,8 @@ import { ViewerJumpToWeekButton } from '../components/ViewerContextControls'
 import { ViewerRunSelector } from '../components/ViewerRunSelector'
 import { useViewerContext } from '../viewer/ViewerContext'
 import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewer/activeRun'
+import { RankingPreviewTable } from '../viewer/RankingPreviewTable'
+import { parseRankingPreviewPayload } from '../viewer/rankingPayload'
 import type { EventRecord, FinalsSummaryResponse, RankingSnapshot, RaceSnapshot, RunActivityItem, RunNationSummaryItem, RunPlayerListItem, SeasonStateResponse } from '../api/types'
 
 export function LandingPage(): JSX.Element {
@@ -542,6 +544,7 @@ function ViewerSnapshotLandingPage({ config }: { config: ViewerSnapshotLandingCo
 
   const snapshots = snapshotsQuery.data?.snapshots ?? []
   const latest = latestSnapshot(snapshots)
+  const rankingPreview = config.mode === 'ranking' && latest ? parseRankingPreviewPayload(latest.payload) : null
 
   return (
     <ViewerShellPage title={config.title} description={config.description}>
@@ -558,6 +561,12 @@ function ViewerSnapshotLandingPage({ config }: { config: ViewerSnapshotLandingCo
 
         {snapshotsQuery.isError ? <ViewerEmptyState>Snapshot metadata is temporarily unavailable for this run.</ViewerEmptyState> : null}
         {!snapshotsQuery.isLoading && !snapshotsQuery.isError && !latest ? <ViewerEmptyState>{config.noSnapshotsMessage}</ViewerEmptyState> : null}
+        {rankingPreview?.rows.length ? (
+          <div>
+            <h4>Top 10 Ranking Preview</h4>
+            <RankingPreviewTable rows={rankingPreview.rows} ariaLabel="Latest Top 10 ranking preview table" />
+          </div>
+        ) : null}
 
         <ViewerActiveRunLinks
           links={[

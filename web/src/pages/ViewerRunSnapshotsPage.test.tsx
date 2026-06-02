@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ViewerRunSnapshotDetailPage, ViewerRunSnapshotListPage } from './ViewerRunSnapshotsPage'
 
@@ -23,6 +23,8 @@ const api = vi.hoisted(() => ({
 }))
 
 vi.mock('../api/client', () => api)
+
+afterEach(() => cleanup())
 
 function renderViewerSnapshotRoute(route: string): void {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -67,6 +69,19 @@ function mockRunMetadata(): void {
     run_id: 'viewer-run-1',
     events: [{ event_sequence: 8, event_id: 'EVENT-1', season: 2027, week: 3, template_id: 'WT-PLAT', tournament_result: {} }]
   })
+}
+
+
+function rankingRows(count: number): Array<Record<string, unknown>> {
+  return Array.from({ length: count }, (_, index) => ({
+    rank: index + 1,
+    player_id: `P${index + 1}`,
+    player_name: index === 0 ? 'Ali Farag' : `Real Player ${index + 1}`,
+    country_code: index === 0 ? 'EGY' : 'ENG',
+    points: 20000 - index,
+    tournaments_counted: index === 0 ? 12 : 10,
+    movement: index === 0 ? '+1' : 'same'
+  }))
 }
 
 function expectNoForbiddenViewerActions(): void {
@@ -167,12 +182,12 @@ describe('ViewerRunSnapshotDetailPage', () => {
     mockRunMetadata()
   })
 
-  it('renders a sports-facing MSA Ranking Publication detail with collapsed technical payload', async () => {
+  it('renders a real Top 10 ranking preview from a parseable MSA Rankings payload', async () => {
     api.getRankingSnapshot.mockResolvedValue({
       snapshot_sequence: 12,
       snapshot_kind: 'WEEKLY_PUBLICATION',
       source_event_id: 'EVENT-1',
-      payload: { secret_debug_marker: 'ranking-detail-hidden-payload' }
+      payload: { rankings: rankingRows(11), secret_debug_marker: 'ranking-detail-hidden-payload' }
     })
     api.listRankingSnapshots.mockResolvedValue({
       run_id: 'viewer-run-1',
@@ -184,26 +199,47 @@ describe('ViewerRunSnapshotDetailPage', () => {
 
     renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings/12')
 
-    expect(await screen.findByRole('heading', { name: 'MSA Ranking Publication' })).toBeInTheDocument()
-    expect(screen.getAllByText('viewer-run-1').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('12').length).toBeGreaterThan(0)
-    expect(await screen.findByText('WEEKLY_PUBLICATION')).toBeInTheDocument()
-    expect(screen.getByText('EVENT-1')).toBeInTheDocument()
-    expect(screen.getAllByText('W3').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Platinum').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('World Tour').length).toBeGreaterThan(0)
-    expect(screen.getByText('WT-PLAT')).toBeInTheDocument()
-    expect(screen.getByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
-    const details = screen.getByText('Show technical snapshot data').closest('details')
+    expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Top 10 Ranking Preview' })).toBeInTheDocument()
+    const table = screen.getByRole('table', { name: 'Top 10 ranking preview table' })
+    expect(within(table).getByText('1')).toBeInTheDocument()
+    expect(within(table).getByText('Ali Farag')).toBeInTheDocument()
+    expect(within(table).getByText('EGY')).toBeInTheDocument()
+    expect(within(table).getByText('20000')).toBeInTheDocument()
+    expect(within(table).getByText('12')).toBeInTheDocument()
+    expect(within(table).getByText('+1')).toBeInTheDocument()
+    expect(within(table).getAllByRole('row')).toHaveLength(11)
+    expect(screen.queryByText('Real Player 11')).not.toBeInTheDocument()
+    const details = screen.getByText('Show technical payload').closest('details')
     expect(details).not.toHaveAttribute('open')
     expect(screen.getByText(/ranking-detail-hidden-payload/i)).not.toBeVisible()
-    await userEvent.click(screen.getByText('Show technical snapshot data'))
-    expect(screen.getByText(/ranking-detail-hidden-payload/i)).toBeVisible()
     expectNoForbiddenViewerActions()
-    expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
   })
 
-  it('renders a sports-facing Race to Finals Publication detail with collapsed technical payload', async () => {
+  it('renders the deferred ranking preview for unknown payload shapes without crashing', async () => {
+    api.getRankingSnapshot.mockResolvedValue({
+      snapshot_sequence: 12,
+      snapshot_kind: 'WEEKLY_PUBLICATION',
+      source_event_id: 'EVENT-1',
+      payload: { secret_debug_marker: 'ranking-detail-hidden-payload' }
+    })
+    api.listRankingSnapshots.mockResolvedValue({
+      run_id: 'viewer-run-1',
+      snapshots: [{ snapshot_sequence: 12, snapshot_kind: 'WEEKLY_PUBLICATION', source_event_id: 'EVENT-1', payload: {} }]
+    })
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings/12')
+
+    expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
+    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Top 10 ranking preview table' })).not.toBeInTheDocument()
+    const details = screen.getByText('Show technical payload').closest('details')
+    expect(details).not.toHaveAttribute('open')
+    expect(screen.getByText(/ranking-detail-hidden-payload/i)).not.toBeVisible()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('renders a sports-facing Race to Finals detail with collapsed technical payload', async () => {
     api.getRaceSnapshot.mockResolvedValue({
       snapshot_sequence: 5,
       snapshot_kind: 'RACE_WEEKLY_PUBLICATION',
@@ -217,15 +253,15 @@ describe('ViewerRunSnapshotDetailPage', () => {
 
     renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/race/5')
 
-    expect(await screen.findByRole('heading', { name: 'Race to Finals Publication' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Race to Finals' })).toBeInTheDocument()
     expect(await screen.findByText('RACE_WEEKLY_PUBLICATION')).toBeInTheDocument()
     expect(screen.getByText('EVENT-1')).toBeInTheDocument()
     expect(screen.getAllByText('W3').length).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: /Back to race publications/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/race')
-    const technicalSection = screen.getByText('Show technical snapshot data').closest('details')
+    const technicalSection = screen.getByText('Show technical payload').closest('details')
     expect(technicalSection).not.toHaveAttribute('open')
     expect(screen.getByText(/race-detail-hidden-payload/i)).not.toBeVisible()
-    await userEvent.click(screen.getByText('Show technical snapshot data'))
+    await userEvent.click(screen.getByText('Show technical payload'))
     expect(within(technicalSection as HTMLElement).getByText(/race-detail-hidden-payload/i)).toBeVisible()
     expectNoForbiddenViewerActions()
     expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()

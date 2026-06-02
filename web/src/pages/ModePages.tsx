@@ -1087,7 +1087,7 @@ function ViewerRecordsStatsLandingPage({ kind }: { kind: ViewerRecordsLandingKin
   if (!activeRunId) {
     return (
       <ViewerShellPage title={title} description={isStats ? 'Stats library destination prepared for connected run-scoped statistical read models.' : 'Record book destination prepared for statistics, milestones, and historical achievements.'}>
-        <ViewerEmptyState>{isStats ? 'This preview is not connected for this data shape yet.' : 'This preview is not connected for this data shape yet.'}</ViewerEmptyState>
+        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
       </ViewerShellPage>
     )
   }
@@ -1095,37 +1095,60 @@ function ViewerRecordsStatsLandingPage({ kind }: { kind: ViewerRecordsLandingKin
   const eventCount = eventsQuery.data?.events.length ?? statusQuery.data?.history_counts.events ?? null
   const rankingSnapshotCount = rankingSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.ranking_snapshots ?? null
   const raceSnapshotCount = raceSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.race_snapshots ?? null
+  const latestPersistedEvent = selectLatestPersistedEvent(eventsQuery.data?.events ?? [])
+  const latestRankingSnapshot = latestSnapshot(rankingSnapshotsQuery.data?.snapshots ?? [])
+  const latestRaceSnapshot = latestSnapshot(raceSnapshotsQuery.data?.snapshots ?? [])
   const finalsAvailability = finalsQuery.data ? formatFinalsAvailability(finalsQuery.data) : statusQuery.data?.finals.result_available ? 'Finals result available' : statusQuery.data?.finals.qualification_available ? 'Finals qualification available' : 'Finals summary not available yet'
-  const deferredGroups = isStats ? [...deferredRecordGroups, ...deferredStatsGroups] : deferredRecordGroups
+  const hasFinalsAvailability = finalsAvailability !== 'Finals summary not available yet' && finalsAvailability !== 'Loading or unavailable'
+  const hasAnySourceMetadata = (eventCount ?? 0) > 0 || (rankingSnapshotCount ?? 0) > 0 || (raceSnapshotCount ?? 0) > 0 || hasFinalsAvailability
+  const deferredGroups = isStats ? deferredStatsGroups : deferredRecordGroups
 
   return (
-    <ViewerShellPage title={title} description={isStats ? 'Conservative Stats Library landing using existing active-run metadata only.' : 'Conservative Records landing using existing active-run metadata only.'}>
+    <ViewerShellPage title={title} description={isStats ? 'Conservative Stats landing using existing active-run metadata only.' : 'Conservative Records landing using existing active-run metadata only.'}>
       <article className="viewer-active-run-card" aria-label={`${title} active run metadata summary`}>
         <span className="eyebrow">Active Viewer run</span>
-        <h3>{isStats ? 'Stats Library metadata' : 'Records metadata'}</h3>
+        <h3>{isStats ? 'Stats Overview' : 'Records Overview'}</h3>
+        <p className="subtitle">
+          {isStats
+            ? 'Read-only statistics landing showing only available active-run source metadata until real stat read models exist.'
+            : 'Read-only record book landing showing only available active-run source metadata until real record read models exist.'}
+        </p>
         {statusQuery.isLoading || eventsQuery.isLoading || rankingSnapshotsQuery.isLoading || raceSnapshotsQuery.isLoading || finalsQuery.isLoading ? <p className="status">Loading active run metadata…</p> : null}
         {statusQuery.isError || eventsQuery.isError || rankingSnapshotsQuery.isError || raceSnapshotsQuery.isError || finalsQuery.isError ? <ViewerEmptyState>Some active run metadata is temporarily unavailable.</ViewerEmptyState> : null}
-        <dl className="metadata-list">
-          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
-          <div><dt>Completed/persisted event count</dt><dd>{eventsQuery.isLoading && eventCount == null ? 'Loading…' : eventCount ?? '—'}</dd></div>
-          <div><dt>Ranking snapshot count</dt><dd>{rankingSnapshotsQuery.isLoading && rankingSnapshotCount == null ? 'Loading…' : rankingSnapshotCount ?? '—'}</dd></div>
-          <div><dt>Race snapshot count</dt><dd>{raceSnapshotsQuery.isLoading && raceSnapshotCount == null ? 'Loading…' : raceSnapshotCount ?? '—'}</dd></div>
-          <div><dt>Finals availability</dt><dd>{finalsQuery.isLoading ? 'Loading…' : finalsAvailability}</dd></div>
-        </dl>
-        <ViewerEmptyState>This preview is not connected for this data shape yet.</ViewerEmptyState>
-        <ViewerDeferredFeatureList
-          title={isStats ? 'Deferred stat groups' : 'Deferred record groups'}
-          label={isStats ? 'Deferred stat groups' : 'Deferred record groups'}
-          features={deferredGroups}
-        />
-        <ViewerActiveRunLinks
-          links={[
-            { label: 'Open active run tournaments', to: viewerTournamentsPath(activeRunId) },
-            { label: 'Open active run rankings', to: viewerRankingsPath(activeRunId) },
-            { label: 'Open active run race', to: viewerRacePath(activeRunId) },
-            { label: 'Open active run finals', to: viewerFinalsPath(activeRunId) }
-          ]}
-        />
+        <section aria-label={`${title} source metadata`}>
+          <h3>Available source metadata</h3>
+          <dl className="metadata-list">
+            <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
+            <div><dt>Completed/persisted event count</dt><dd>{eventsQuery.isLoading && eventCount == null ? 'Loading…' : eventCount ?? '—'}</dd></div>
+            <div><dt>Ranking snapshot count</dt><dd>{rankingSnapshotsQuery.isLoading && rankingSnapshotCount == null ? 'Loading…' : rankingSnapshotCount ?? '—'}</dd></div>
+            <div><dt>Race snapshot count</dt><dd>{raceSnapshotsQuery.isLoading && raceSnapshotCount == null ? 'Loading…' : raceSnapshotCount ?? '—'}</dd></div>
+            <div><dt>Finals availability</dt><dd>{finalsQuery.isLoading ? 'Loading…' : hasFinalsAvailability ? <Link to={viewerFinalsPath(activeRunId)}>{finalsAvailability}</Link> : finalsAvailability}</dd></div>
+            <div><dt>Latest persisted event</dt><dd>{latestPersistedEvent?.event_id ? <Link to={viewerTournamentDetailPath(activeRunId, latestPersistedEvent.event_id)}>{latestPersistedEvent.event_id}</Link> : '—'}</dd></div>
+            <div><dt>Latest ranking snapshot</dt><dd>{latestRankingSnapshot ? <Link to={viewerRankingSnapshotPath(activeRunId, latestRankingSnapshot.snapshot_sequence)}>#{latestRankingSnapshot.snapshot_sequence}</Link> : '—'}</dd></div>
+            <div><dt>Latest race snapshot</dt><dd>{latestRaceSnapshot ? <Link to={viewerRaceSnapshotPath(activeRunId, latestRaceSnapshot.snapshot_sequence)}>#{latestRaceSnapshot.snapshot_sequence}</Link> : '—'}</dd></div>
+          </dl>
+          {!statusQuery.isLoading && !eventsQuery.isLoading && !rankingSnapshotsQuery.isLoading && !raceSnapshotsQuery.isLoading && !finalsQuery.isLoading && !hasAnySourceMetadata ? (
+            <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
+          ) : null}
+        </section>
+        <section aria-label={`${title} deferred groups`}>
+          <ViewerDeferredFeatureList
+            title={isStats ? 'Deferred stat groups' : 'Deferred record groups'}
+            label={isStats ? 'Deferred stat groups' : 'Deferred record groups'}
+            features={deferredGroups}
+          />
+        </section>
+        <section aria-label={`${title} links`}>
+          <h3>Links</h3>
+          <ViewerActiveRunLinks
+            links={[
+              { label: 'Open active run tournaments', to: viewerTournamentsPath(activeRunId) },
+              { label: 'Open active run rankings', to: viewerRankingsPath(activeRunId) },
+              { label: 'Open active run race', to: viewerRacePath(activeRunId) },
+              { label: 'Open active run finals', to: viewerFinalsPath(activeRunId) }
+            ]}
+          />
+        </section>
       </article>
     </ViewerShellPage>
   )

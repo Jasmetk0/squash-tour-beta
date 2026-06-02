@@ -64,6 +64,23 @@ function displayPlayer(player: TournamentPlayerSummary | null): string {
   return `${identity}${country}`
 }
 
+function TournamentListResultMetadata({ event }: { event: EventRecord }): JSX.Element | null {
+  const resultPreview = parseTournamentResultPayload(event.tournament_result)
+  const summary = resultPreview.summary
+
+  if (!summary) return null
+
+  const items = [
+    summary.champion ? { label: 'Champion', value: displayPlayer(summary.champion) } : null,
+    summary.resultStatus ? { label: 'Result status', value: summary.resultStatus } : null,
+    summary.matchCount !== null ? { label: 'Matches', value: summary.matchCount } : null
+  ].filter((item): item is { label: string; value: string | number } => item !== null)
+
+  if (items.length === 0) return null
+
+  return <MetadataList items={items} />
+}
+
 export function ViewerRunTournamentsPage(): JSX.Element {
   const { runId = '' } = useParams()
 
@@ -123,6 +140,7 @@ export function ViewerRunTournamentsPage(): JSX.Element {
                       { label: 'Result availability', value: resultAvailability(event) }
                     ]}
                   />
+                  <TournamentListResultMetadata event={event} />
                   <p>
                     <Link to={`/viewer/runs/${runId}/tournaments/${encodeURIComponent(event.event_id)}`}>Open tournament detail</Link>
                   </p>

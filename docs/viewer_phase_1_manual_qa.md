@@ -458,3 +458,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Unknown payload shapes still show deferred previews.
 - Raw technical event data remains collapsed.
 - No fake tournament winners, matches, scores, or new tournament engine were added.
+
+
+## Phase 3D tournament list result badges note
+
+- Viewer tournaments list can now show small real result metadata when event result payload is safely parsed.
+- Unknown result payloads do not show fake winners/status.
+- Raw tournament result payloads remain hidden from the list page.
+- No backend/tournament engine changes were added.

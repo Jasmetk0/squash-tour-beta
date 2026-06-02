@@ -53,7 +53,7 @@ type SnapshotPageCopy = {
 const SNAPSHOT_COPY: Record<ViewerSnapshotMode, SnapshotPageCopy> = {
   ranking: {
     listTitle: 'MSA Rankings',
-    detailTitle: 'MSA Ranking Publication',
+    detailTitle: 'MSA Rankings',
     publicationLabel: 'Ranking publication',
     pluralPublicationLabel: 'Ranking publications',
     listDescription: 'Read-only weekly ranking publications for the selected run.',
@@ -63,7 +63,7 @@ const SNAPSHOT_COPY: Record<ViewerSnapshotMode, SnapshotPageCopy> = {
   },
   race: {
     listTitle: 'Race to Finals',
-    detailTitle: 'Race to Finals Publication',
+    detailTitle: 'Race to Finals',
     publicationLabel: 'Race publication',
     pluralPublicationLabel: 'Race publications',
     listDescription: 'Read-only Race publications for the selected run.',

@@ -189,7 +189,7 @@ describe('ViewerRunWeekPage', () => {
   it('renders sports-facing week detail with events from the selected week only', async () => {
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2')
 
-    expect(await screen.findByRole('heading', { name: 'Week Detail' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Current Week' })).toBeInTheDocument()
     expect(screen.getAllByText('viewer-run-2d').length).toBeGreaterThan(0)
     expect((await screen.findAllByText('EVENT-NEXT')).length).toBeGreaterThan(0)
     expect(screen.queryByText('EVENT-COMPLETE')).not.toBeInTheDocument()

@@ -43,7 +43,7 @@ function eventSeason(event: EventRecord | null | undefined, planned: PlannedTour
 
 function resultAvailability(event: EventRecord | null | undefined): string {
   if (!event) return 'Not loaded'
-  return event.tournament_result ? 'Result payload available' : 'No result payload recorded'
+  return event.tournament_result ? 'Result publication available' : 'No result publication recorded'
 }
 
 function completionStatus(event: EventRecord, completedEventIds: Set<string>): string {
@@ -69,7 +69,7 @@ export function ViewerRunTournamentsPage(): JSX.Element {
       <RunScopedHeader
         title="Tournaments"
         runId={runId}
-        subtitle="Read-only tournament/event history for the selected run."
+        subtitle="Read-only tournament schedule and results for the selected run."
       />
       <CurrentContextStrip
         items={[
@@ -158,7 +158,7 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
       <RunScopedHeader
         title="Tournament Detail"
         runId={runId}
-        subtitle="Read-only tournament/event metadata for the selected run."
+        subtitle="Read-only tournament detail for the selected run."
       />
       <CurrentContextStrip
         items={[
@@ -245,7 +245,7 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
             <SectionCard title="Read-only data">
               <details>
                 <summary>Show technical event data</summary>
-                <p className="status">Read-only technical event/result data for audit/debugging. Viewer tournament pages do not mutate run state.</p>
+                <p className="status">Read-only technical event/result data for audit/debugging. Viewer tournament detail pages do not mutate run state.</p>
                 <JsonPayloadBlock title="Technical event record" emptyText="No technical event data is available for this event." payload={event} />
               </details>
             </SectionCard>

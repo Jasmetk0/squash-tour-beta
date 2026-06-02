@@ -90,7 +90,7 @@ export function ViewerRunCalendarPage(): JSX.Element {
         ]}
       />
 
-      <SectionCard title="Season schedule overview">
+      <SectionCard title="Season timeline overview">
         {runQuery.isLoading ? <p className="status">Loading season calendar…</p> : null}
         {runQuery.error ? <p className="error">Failed to load run season state: {formatApiError(runQuery.error)}</p> : null}
         {eventsQuery.error ? <p className="error">Failed to load tournament records: {formatApiError(eventsQuery.error)}</p> : null}
@@ -115,7 +115,7 @@ export function ViewerRunCalendarPage(): JSX.Element {
         ) : null}
       </SectionCard>
 
-      <SectionCard title="Calendar events">
+      <SectionCard title="Season timeline">
         {runQuery.data && orderedEvents.length === 0 ? <EmptyState message="No data is available for this run yet." /> : null}
         {runQuery.data && orderedEvents.length > 0 ? (
           <ol className="item-list" aria-label="Viewer season calendar events">
@@ -194,7 +194,7 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
       <RunScopedHeader
         title="Planned Event"
         runId={runId}
-        subtitle="Read-only calendar event page for the selected run."
+        subtitle="Read-only schedule event page for the selected run."
       />
       <CurrentContextStrip
         items={[
@@ -229,7 +229,7 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
         {eventsQuery.error ? <p className="error">Failed to load tournament records: {formatApiError(eventsQuery.error)}</p> : null}
         {!eventId ? <EmptyState message="No planned event ID was provided in the URL." /> : null}
         {eventId && runQuery.data && !plannedEvent ? (
-          <EmptyState message="Planned event preview is not connected for this data shape yet." />
+          <EmptyState message="This preview is not connected for this data shape yet." />
         ) : null}
         {plannedEvent ? (
           <>
@@ -296,7 +296,7 @@ export function ViewerRunWeekPage(): JSX.Element {
 
   return (
     <section className="panel">
-      <RunScopedHeader title="Week Detail" runId={runId} subtitle="Read-only planned events for the selected calendar week." />
+      <RunScopedHeader title="Current Week" runId={runId} subtitle="Read-only schedule for the selected week." />
       <CurrentContextStrip
         items={[
           { label: 'Active run', value: runId || 'unknown' },

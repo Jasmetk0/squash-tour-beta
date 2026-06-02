@@ -584,3 +584,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Viewer History/Storyline sections now link existing activity events, weeks, and snapshot metadata to run-scoped detail pages when IDs are available.
 - Missing/unmatched IDs remain plain text.
 - No backend/Admin/parser/result-preview behavior changed.
+
+## Phase 3W — Viewer Finals page sports-facing polish
+
+- Run-scoped Finals page now shows sports-facing finals summary, qualification, and result metadata from existing finals data when available.
+- Player/snapshot links are added only when IDs are available.
+- Missing finals data remains deferred/no-data.
+- No backend/Admin/finals-engine behavior changed.

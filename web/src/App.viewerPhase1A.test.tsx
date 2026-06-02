@@ -477,10 +477,12 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     }
     expect(screen.getByText(/Next scheduled event:/)).toHaveTextContent('E2')
     expect(screen.getByText(/DIAMOND/)).toHaveTextContent('W5')
-    expect(screen.getByText(/E3 · BRONZE · W5/)).toBeInTheDocument()
-    expect(screen.getByText(/Latest ranking snapshot #2 from E2/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'E3' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar/E3')
+    expect(screen.getAllByRole('link', { name: 'W5' }).some((link) => link.getAttribute('href') === '/viewer/runs/run-a/weeks/5')).toBe(true)
+    expect(screen.getByRole('link', { name: '#2' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings/2')
+    expect(screen.getAllByText(/from E2/).length).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
-    expect(screen.getByText(/Latest race snapshot #3 from E2/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '#3' })).toHaveAttribute('href', '/viewer/runs/run-a/race/3')
     expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
     expect(screen.getByText(/1 activity items · Latest: E1 completed/)).toBeInTheDocument()
     expect(screen.getAllByText('This preview is not connected for this data shape yet.').length).toBeGreaterThan(0)
@@ -906,6 +908,9 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(panel).toHaveTextContent('30')
     expect(panel).toHaveTextContent('Power Rating')
     expect(panel).toHaveTextContent('91')
+    expect(within(panel).getByRole('link', { name: 'Ali Farag' })).toHaveAttribute('href', '/viewer/runs/run-a/players/EGY-0001/career')
+    expect(within(panel).getByRole('link', { name: 'EGY-0001' })).toHaveAttribute('href', '/viewer/runs/run-a/players/EGY-0001/career')
+    expect(within(panel).getByRole('link', { name: 'EGY' })).toHaveAttribute('href', '/viewer/runs/run-a/countries/EGY')
     expect(screen.getByRole('link', { name: 'Open active run players' })).toHaveAttribute('href', '/viewer/runs/run-a/players')
     expect(api.listRunPlayers).toHaveBeenCalledWith('run-a', { limit: 5, offset: 0 })
     expectNoForbiddenViewerActions()
@@ -952,8 +957,84 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(panel).toHaveTextContent('78.4')
     expect(panel).toHaveTextContent('Ali Farag')
     expect(panel).toHaveTextContent('91')
+    expect(within(panel).getByRole('link', { name: 'EGY' })).toHaveAttribute('href', '/viewer/runs/run-a/countries/EGY')
+    expect(within(panel).getByRole('link', { name: 'Egypt' })).toHaveAttribute('href', '/viewer/runs/run-a/countries/EGY')
+    expect(within(panel).getByRole('link', { name: 'Ali Farag' })).toHaveAttribute('href', '/viewer/runs/run-a/players/EGY-0001/career')
     expect(screen.getByRole('link', { name: 'Open active run countries' })).toHaveAttribute('href', '/viewer/runs/run-a/countries')
     expect(api.listRunNations).toHaveBeenCalledWith('run-a', { limit: 5, offset: 0 })
+    expectNoForbiddenViewerActions()
+  })
+
+
+  it('keeps top-level sample player and country fields as plain text when IDs are missing', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    api.listRunPlayers.mockResolvedValue({
+      run_id: 'run-a',
+      total: 1,
+      limit: 5,
+      offset: 0,
+      players: [
+        {
+          player_id: '',
+          name: 'Mystery Player',
+          country_code: '',
+          age: 22,
+          source_type: 'planner_generated',
+          override_id: null,
+          quality_band: 'prospect',
+          is_top_band: false,
+          origin_source_type: 'planner_generated',
+          origin_quality_band: 'prospect',
+          origin_override_id: null,
+          origin_season: 2030,
+          technique: 70,
+          movement: 71,
+          physical: 72,
+          mental: 73,
+          overall: 74
+        }
+      ]
+    })
+
+    renderAppAt('/viewer/players')
+
+    const playersPanel = await screen.findByLabelText('Players active run summary')
+    await waitFor(() => expect(playersPanel).toHaveTextContent('Mystery Player'))
+    expect(within(playersPanel).queryByRole('link', { name: 'Mystery Player' })).not.toBeInTheDocument()
+    expect(within(playersPanel).queryByRole('link', { name: '—' })).not.toBeInTheDocument()
+
+    cleanup()
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    api.listRunNations.mockResolvedValue({
+      run_id: 'run-a',
+      total: 1,
+      limit: 5,
+      offset: 0,
+      nations: [
+        {
+          country_code: '',
+          country_name: 'Unknown Country',
+          total_players: 1,
+          average_overall: 74,
+          average_age: 22,
+          top_band_count: 0,
+          manual_override_count: 0,
+          planner_generated_count: 1,
+          rollover_carried_count: 0,
+          top_player_id: null,
+          top_player_name: 'Mystery Player',
+          top_player_overall: 74
+        }
+      ]
+    })
+
+    renderAppAt('/viewer/countries')
+
+    const countriesPanel = await screen.findByLabelText('Countries active run summary')
+    await waitFor(() => expect(countriesPanel).toHaveTextContent('Unknown Country'))
+    expect(countriesPanel).toHaveTextContent('Mystery Player')
+    expect(within(countriesPanel).queryByRole('link', { name: 'Unknown Country' })).not.toBeInTheDocument()
+    expect(within(countriesPanel).queryByRole('link', { name: 'Mystery Player' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

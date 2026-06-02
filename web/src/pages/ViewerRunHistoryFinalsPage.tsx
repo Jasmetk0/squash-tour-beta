@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { getFinalsQualification, getFinalsResult, getFinalsSummary, getRunActivity } from '../api/client'
-import type { RunActivityItem } from '../api/types'
+import type { FinalsQualificationResponse, FinalsResultResponse, FinalsSummaryResponse, RunActivityItem } from '../api/types'
 import {
   CurrentContextStrip,
   EmptyState,
@@ -13,6 +14,136 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
+import {
+  viewerPlannedEventPath,
+  viewerPlayerProfilePath,
+  viewerRacePath,
+  viewerRaceSnapshotPath,
+  viewerRankingsPath,
+  viewerRankingSnapshotPath,
+  viewerSeasonCalendarPath,
+  viewerTournamentsPath
+} from '../viewer/viewerRoutes'
+
+
+function formatFieldLabel(key: string): string {
+  return key
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+function isPrimitiveMetadataValue(value: unknown): value is string | number | boolean {
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+}
+
+function collectPrimitivePayloadItems(payload: Record<string, unknown> | null | undefined, excludedKeys: Set<string> = new Set()): Array<{ label: string; value: string | number }> {
+  return Object.entries(payload ?? {})
+    .filter(([key, value]) => !excludedKeys.has(key) && isPrimitiveMetadataValue(value))
+    .map(([key, value]) => ({ label: formatFieldLabel(key), value: typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value }))
+}
+
+function collectArrayCountItems(payload: Record<string, unknown> | null | undefined): Array<{ label: string; value: number }> {
+  return Object.entries(payload ?? {})
+    .filter(([, value]) => Array.isArray(value))
+    .map(([key, value]) => ({ label: `${formatFieldLabel(key)} count`, value: value.length }))
+}
+
+function collectPlayerIds(payload: Record<string, unknown> | null | undefined): string[] {
+  const playerIds = new Set<string>()
+  Object.entries(payload ?? {}).forEach(([key, value]) => {
+    const normalizedKey = key.toLowerCase()
+    if (!normalizedKey.includes('player') || !normalizedKey.includes('id')) return
+    if (typeof value === 'string' && value) playerIds.add(value)
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (typeof item === 'string' && item) playerIds.add(item)
+      })
+    }
+  })
+  return [...playerIds]
+}
+
+function readNumberField(payload: Record<string, unknown> | null | undefined, key: string): number | null {
+  const value = payload?.[key]
+  return typeof value === 'number' ? value : null
+}
+
+function findSnapshotSequence(payload: Record<string, unknown> | null | undefined, kind: 'ranking' | 'race'): number | null {
+  const candidates = kind === 'ranking'
+    ? ['ranking_snapshot_sequence', 'source_ranking_snapshot_sequence', 'ranking_snapshot_seq', 'source_ranking_snapshot_seq']
+    : ['race_snapshot_sequence', 'source_race_snapshot_sequence', 'race_snapshot_seq', 'source_race_snapshot_seq']
+  for (const key of candidates) {
+    const value = readNumberField(payload, key)
+    if (value != null) return value
+  }
+  return null
+}
+
+function hasPayloadData(payload: Record<string, unknown> | null | undefined): boolean {
+  return Object.keys(payload ?? {}).length > 0
+}
+
+function renderPlayerLinks(runId: string, playerIds: string[]): JSX.Element | null {
+  if (!playerIds.length) return null
+  return (
+    <ul className="item-list" aria-label="Finals player profile links">
+      {playerIds.map((playerId) => (
+        <li key={playerId}>
+          <Link to={viewerPlayerProfilePath(runId, playerId)}>Player {playerId} profile</Link>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function finalsSummaryItems(summary: FinalsSummaryResponse | undefined, runId: string): Array<{ label: string; value: ReactNode }> {
+  const qualification = summary?.qualification ?? null
+  const result = summary?.result ?? null
+  const qualificationPayload = qualification?.qualification ?? null
+  const resultPayload = result?.result ?? null
+  return [
+    { label: 'Active run ID', value: summary?.run_id ?? (runId || 'unknown') },
+    { label: 'Qualification availability', value: qualification ? 'Available' : 'Unavailable' },
+    { label: 'Result availability', value: result ? 'Available' : 'Unavailable' },
+    { label: 'Season', value: summary?.season ?? qualification?.season ?? result?.season ?? '—' },
+    { label: 'Source event ID', value: result?.event_id ? <Link to={viewerPlannedEventPath(runId, result.event_id)}>{result.event_id}</Link> : '—' },
+    { label: 'Qualification source snapshot', value: qualification?.source_as_of_week != null ? `${qualification.source_as_of_season} W${qualification.source_as_of_week}` : '—' },
+    { label: 'Result source snapshot', value: result?.source_as_of_week != null ? `${result.source_as_of_season} W${result.source_as_of_week}` : '—' },
+    ...collectArrayCountItems(qualificationPayload).map((item) => ({ label: `Qualification ${item.label}`, value: item.value })),
+    ...collectArrayCountItems(resultPayload).map((item) => ({ label: `Result ${item.label}`, value: item.value }))
+  ]
+}
+
+function qualificationMetadataItems(qualification: FinalsQualificationResponse, runId: string): Array<{ label: string; value: ReactNode }> {
+  const payload = qualification.qualification
+  const rankingSequence = findSnapshotSequence(payload, 'ranking')
+  const raceSequence = findSnapshotSequence(payload, 'race')
+  return [
+    { label: 'Run ID', value: qualification.run_id },
+    { label: 'Season', value: qualification.season },
+    { label: 'Source season', value: qualification.source_as_of_season },
+    { label: 'Source week', value: `W${qualification.source_as_of_week}` },
+    { label: 'Ranking snapshot', value: rankingSequence != null ? <Link to={viewerRankingSnapshotPath(runId, rankingSequence)}>Ranking snapshot {rankingSequence}</Link> : '—' },
+    { label: 'Race snapshot', value: raceSequence != null ? <Link to={viewerRaceSnapshotPath(runId, raceSequence)}>Race snapshot {raceSequence}</Link> : '—' },
+    ...collectArrayCountItems(payload),
+    ...collectPrimitivePayloadItems(payload, new Set(['ranking_snapshot_sequence', 'source_ranking_snapshot_sequence', 'ranking_snapshot_seq', 'source_ranking_snapshot_seq', 'race_snapshot_sequence', 'source_race_snapshot_sequence', 'race_snapshot_seq', 'source_race_snapshot_seq']))
+  ]
+}
+
+function resultMetadataItems(result: FinalsResultResponse, runId: string): Array<{ label: string; value: ReactNode }> {
+  const payload = result.result
+  const playerIds = collectPlayerIds(payload)
+  return [
+    { label: 'Run ID', value: result.run_id },
+    { label: 'Season', value: result.season },
+    { label: 'Source event ID', value: result.event_id ? <Link to={viewerPlannedEventPath(runId, result.event_id)}>{result.event_id}</Link> : '—' },
+    { label: 'Source season', value: result.source_as_of_season },
+    { label: 'Source week', value: `W${result.source_as_of_week}` },
+    ...collectArrayCountItems(payload),
+    ...collectPrimitivePayloadItems(payload),
+    ...playerIds.map((playerId) => ({ label: `Player ${playerId}`, value: <Link to={viewerPlayerProfilePath(runId, playerId)}>Player Profile</Link> }))
+  ]
+}
 
 function readArrayFieldLength(payload: Record<string, unknown> | null | undefined, key: string): number | null {
   const value = payload?.[key]
@@ -124,48 +255,83 @@ export function ViewerRunFinalsPage(): JSX.Element {
     retry: false
   })
 
-  const qualification = summaryQuery.data?.qualification ?? null
-  const result = summaryQuery.data?.result ?? null
-  const sourceSeason = qualification?.source_as_of_season ?? result?.source_as_of_season ?? summaryQuery.data?.season ?? null
-  const sourceWeek = qualification?.source_as_of_week ?? result?.source_as_of_week ?? null
+  const summary = summaryQuery.data
+  const qualification = summary?.qualification ?? null
+  const result = summary?.result ?? null
+  const qualificationPayload = qualification?.qualification ?? null
+  const resultPayload = result?.result ?? null
+  const qualificationPlayerIds = collectPlayerIds(qualificationPayload)
+  const resultPlayerIds = collectPlayerIds(resultPayload)
 
   return (
     <section className="panel">
-      <RunScopedHeader title="World Tour Finals" runId={runId} subtitle="Read-only World Tour Finals availability for the selected run." />
+      <RunScopedHeader title="World Tour Finals" runId={runId} subtitle="Read-only Finals summary, qualification, and result metadata from existing run data only." />
       <CurrentContextStrip
         items={[
           { label: 'Active run', value: runId || 'unknown' },
           { label: 'Qualification', value: qualification ? 'Available' : 'Unavailable' },
           { label: 'Result', value: result ? 'Available' : 'Unavailable' },
-          { label: 'Source season', value: sourceSeason ?? '—' },
-          { label: 'Source week', value: sourceWeek != null ? `W${sourceWeek}` : '—' }
+          { label: 'Season', value: summary?.season ?? qualification?.season ?? result?.season ?? '—' }
         ]}
       />
 
-      <SectionCard title="Finals availability">
+      <SectionCard title="Finals Summary">
         {summaryQuery.isLoading ? <p className="status">Loading Finals summary…</p> : null}
         {summaryQuery.error ? <p className="error">Failed to load Finals summary: {formatApiError(summaryQuery.error)}</p> : null}
-        {summaryQuery.data ? (
-          <>
-            <SummaryPills
-              items={[
-                { label: 'Qualification availability', value: qualification ? 'Available' : 'Unavailable' },
-                { label: 'Result availability', value: result ? 'Available' : 'Unavailable' },
-                { label: 'Season', value: summaryQuery.data.season }
-              ]}
-            />
-            <p>
-              <Link to={`/viewer/runs/${runId}/finals/qualification`}>Open Finals qualification</Link>
-              {result ? (
-                <>
-                  {' · '}
-                  <Link to={`/viewer/runs/${runId}/finals/result`}>Open Finals result</Link>
-                </>
-              ) : null}
-            </p>
-          </>
+        {summary ? <MetadataList items={finalsSummaryItems(summary, runId)} /> : null}
+      </SectionCard>
+
+      <SectionCard title="Qualification">
+        {summaryQuery.isLoading ? <p className="status">Loading Finals qualification metadata…</p> : null}
+        {qualification ? (
+          hasPayloadData(qualificationPayload) ? (
+            <>
+              <MetadataList items={qualificationMetadataItems(qualification, runId)} />
+              {renderPlayerLinks(runId, qualificationPlayerIds)}
+            </>
+          ) : (
+            <EmptyState message="This preview is not connected for this data shape yet." />
+          )
+        ) : summaryQuery.data ? (
+          <EmptyState message="This preview is not connected for this data shape yet." />
         ) : null}
       </SectionCard>
+
+      <SectionCard title="Result">
+        {summaryQuery.isLoading ? <p className="status">Loading Finals result metadata…</p> : null}
+        {result ? (
+          hasPayloadData(resultPayload) ? (
+            <>
+              <MetadataList items={resultMetadataItems(result, runId)} />
+              {renderPlayerLinks(runId, resultPlayerIds)}
+            </>
+          ) : (
+            <EmptyState message="This preview is not connected for this data shape yet." />
+          )
+        ) : summaryQuery.data ? (
+          <EmptyState message="This preview is not connected for this data shape yet." />
+        ) : null}
+      </SectionCard>
+
+      <SectionCard title="Links">
+        <p className="viewer-active-run-actions">
+          <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(runId)}>Back to Season Hub</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerRankingsPath(runId)}>Open rankings</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerRacePath(runId)}>Open race</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerTournamentsPath(runId)}>Open tournaments</Link>
+        </p>
+      </SectionCard>
+
+      {summary ? (
+        <SectionCard title="Read-only data">
+          <TechnicalData
+            summary="Show technical finals data"
+            title="Technical Finals data"
+            payload={summary}
+            emptyText="No technical Finals data is available."
+          />
+        </SectionCard>
+      ) : null}
     </section>
   )
 }

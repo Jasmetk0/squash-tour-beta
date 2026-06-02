@@ -1179,12 +1179,90 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('renders read-only Viewer Finals without simulation action', async () => {
+  it('renders sports-facing Viewer Finals summary from existing Finals summary data only', async () => {
+    api.getFinalsSummary.mockResolvedValue({
+      run_id: 'run-a',
+      season: 2030,
+      qualification: {
+        run_id: 'run-a',
+        season: 2030,
+        source_as_of_season: 2030,
+        source_as_of_week: 40,
+        qualification: {
+          qualified_player_ids: ['P1', 'P2'],
+          ranking_snapshot_sequence: 4,
+          race_snapshot_sequence: 5,
+          cutoff_points: 1200,
+          qualification_locked: true
+        }
+      },
+      result: {
+        run_id: 'run-a',
+        season: 2030,
+        event_id: 'E1',
+        source_as_of_season: 2030,
+        source_as_of_week: 61,
+        result: {
+          champion_player_id: 'P1',
+          runner_up_player_id: 'P2',
+          completed_matches_count: 15,
+          result_status: 'complete'
+        }
+      }
+    })
+
     renderAppAt('/viewer/runs/run-a/finals')
 
-    expect(await screen.findByRole('heading', { name: 'World Tour Finals' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Finals Summary' })).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Finals Summary' }).closest('article')).toHaveTextContent('Active run IDrun-a'))
+    const summary = screen.getByRole('heading', { name: 'Finals Summary' }).closest('article')
+    expect(summary).toHaveTextContent('Qualification availabilityAvailable')
+    expect(summary).toHaveTextContent('Result availabilityAvailable')
+    expect(summary).toHaveTextContent('Season2030')
+    expect(summary).toHaveTextContent('Source event IDE1')
+    expect(summary).toHaveTextContent('Qualification Qualified Player Ids count2')
+
+    const qualification = screen.getByRole('heading', { name: 'Qualification' }).closest('article')
+    expect(qualification).toHaveTextContent('Source weekW40')
+    expect(qualification).toHaveTextContent('Qualified Player Ids count2')
+    expect(qualification).toHaveTextContent('Cutoff Points1200')
+    expect(qualification).toHaveTextContent('Qualification LockedYes')
+    expect(within(qualification as HTMLElement).getByRole('link', { name: 'Player P1 profile' })).toHaveAttribute('href', '/viewer/runs/run-a/players/P1/career')
+    expect(within(qualification as HTMLElement).getByRole('link', { name: 'Ranking snapshot 4' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings/4')
+    expect(within(qualification as HTMLElement).getByRole('link', { name: 'Race snapshot 5' })).toHaveAttribute('href', '/viewer/runs/run-a/race/5')
+
+    const result = screen.getByRole('heading', { name: 'Result' }).closest('article')
+    expect(result).toHaveTextContent('Source weekW61')
+    expect(result).toHaveTextContent('Completed Matches Count15')
+    expect(result).toHaveTextContent('Result Statuscomplete')
+    expect(within(result as HTMLElement).getAllByRole('link', { name: 'Player Profile' })[0]).toHaveAttribute('href', '/viewer/runs/run-a/players/P1/career')
+    expect(within(result as HTMLElement).getByRole('link', { name: 'E1' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar/E1')
+
+    expect(screen.getByRole('link', { name: 'Back to Season Hub' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
+    expect(screen.getByRole('link', { name: 'Open rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
+    expect(screen.getByRole('link', { name: 'Open race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
+    expect(screen.getByRole('link', { name: 'Open tournaments' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments')
+
+    const technical = screen.getByText('Show technical finals data').closest('details')
+    expect(technical).not.toHaveAttribute('open')
+    expect(screen.queryByText(/Finals bracket/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/6-11, 11-8/i)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Simulate World Tour Finals/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Simulate World Tour Finals/i })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows deferred states when Viewer Finals qualification and result data are missing', async () => {
+    api.getFinalsSummary.mockResolvedValue({ run_id: 'run-a', season: 2030, qualification: null, result: null })
+
+    renderAppAt('/viewer/runs/run-a/finals')
+
+    expect(await screen.findByRole('heading', { name: 'Finals Summary' })).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Qualification' }).closest('article')).toHaveTextContent('This preview is not connected for this data shape yet.'))
+    expect(screen.getByRole('heading', { name: 'Result' }).closest('article')).toHaveTextContent('This preview is not connected for this data shape yet.')
+    expect(screen.queryByText(/Finals bracket/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/winner/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/runner-up/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

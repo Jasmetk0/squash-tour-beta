@@ -547,3 +547,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Champion links to Player Profile when `player_id` is available.
 - Unknown result payloads do not show fake winners/status/matches.
 - No backend/Admin behavior changed.
+
+## Phase 3Q planned event result preview note
+
+- Planned Event page now shows small real result metadata when persisted event `tournament_result` is safely parsed.
+- Champion links to Player Profile when `player_id` is available.
+- Unknown result payloads do not show fake winners/status/matches.
+- No backend/Admin behavior changed.

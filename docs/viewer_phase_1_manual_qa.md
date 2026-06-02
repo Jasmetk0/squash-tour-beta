@@ -525,3 +525,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Country list/profile top player values now link to Player Profile pages when `player_id` is available.
 - Rows without `player_id` remain plain text.
 - No backend/Admin behavior changed.
+
+## Phase 3N week detail sports-facing polish note
+
+- Week Detail now shows sports-facing run/week context and real events for the selected week.
+- Week event links point to planned event and tournament detail pages when available.
+- Publication previews remain metadata-only/deferred unless safely matched.
+- No fake tournament results, matches, odds, or storylines were added.
+- No backend/Admin behavior changed.

@@ -246,17 +246,17 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(localStorage.getItem('beta_engine:viewer_context')).toContain('24')
   })
 
-  it('navigates the topbar search input to the query shell without fake results', async () => {
+  it('navigates the topbar search input to canonical q search results without fake results', async () => {
     const user = userEvent.setup()
     renderAppAt('/viewer')
 
     const searchInput = await screen.findByRole('textbox', { name: 'Search players, countries, tournaments' })
     await user.type(searchInput, 'Paris{Enter}')
 
-    expect(await screen.findByRole('heading', { name: 'Search' })).toBeInTheDocument()
-    expect(screen.getByText('Search query: Paris')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Search', level: 2 })).toBeInTheDocument()
+    expect(screen.getByText('Search: Paris')).toBeInTheDocument()
     expect(screen.getAllByLabelText('Read-only Viewer search shell')[0]).toHaveValue('Paris')
-    expect(screen.getByText('Full search result sets are not shown yet; this page only reflects the local query from the URL.')).toBeInTheDocument()
+    expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
     expect(screen.queryByText(/Paris can reclaim/i)).not.toBeInTheDocument()
   })
 
@@ -268,7 +268,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     await user.click(searchInput)
     await user.keyboard('{Enter}')
 
-    expect(await screen.findByRole('heading', { name: 'Search' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Search', level: 2 })).toBeInTheDocument()
     expect(screen.getAllByLabelText('Read-only Viewer search shell')[0]).toHaveValue('')
     expect(screen.queryByText(/Search query:/)).not.toBeInTheDocument()
     expect(screen.getAllByText('No data is available for this run yet.').length).toBeGreaterThan(0)
@@ -380,44 +380,98 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     }
   })
 
-  it('shows conservative active-run Search landing with metadata samples only', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-1i-run')
+  it('shows active-run Search player results with profile and country links', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3aa-run')
     api.listRunPlayers.mockResolvedValue({
-      run_id: 'phase-1i-run',
-      total: 2,
-      limit: 5,
+      run_id: 'phase-3aa-run',
+      total: 1,
+      limit: 50,
       offset: 0,
       players: [
-        { player_id: 'P4', name: 'Searchable Player', country_code: 'DDD', age: 28, source_type: 'planner_generated', override_id: null, quality_band: 'B', is_top_band: false, origin_source_type: 'planner_generated', origin_quality_band: 'B', origin_override_id: null, origin_season: 2030, technique: 75, movement: 76, physical: 77, mental: 78, overall: 79 }
+        { player_id: 'ALI-1', name: 'Ali Farag', country_code: 'EGY', age: 34, source_type: 'planner_generated', override_id: null, quality_band: 'Elite', is_top_band: true, origin_source_type: 'planner_generated', origin_quality_band: 'Elite', origin_override_id: null, origin_season: 2030, technique: 90, movement: 91, physical: 88, mental: 92, overall: 95 }
       ]
     })
-    api.listRunNations.mockResolvedValue({
-      run_id: 'phase-1i-run',
-      total: 1,
-      limit: 5,
-      offset: 0,
-      nations: [{ country_code: 'DDD', country_name: 'Delta', total_players: 2, average_overall: 79, average_age: 28, top_band_count: 0, manual_override_count: 0, planner_generated_count: 2, rollover_carried_count: 0, top_player_id: 'P4', top_player_name: 'Searchable Player', top_player_overall: 79 }]
-    })
-    api.getRun.mockResolvedValue({
-      run: { run_id: 'phase-1i-run', season: 2030, seed: 7, next_event_index: 0, total_events: 1, completed_event_ids: [] },
-      season_state: {
-        season: 2030,
-        next_event_index: 0,
-        completed_event_ids: [],
-        ordered_events: [{ event_id: 'EVT-1', season: 2030, week: 12, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-1' }]
-      }
-    })
+    api.listRunNations.mockResolvedValue({ run_id: 'phase-3aa-run', total: 0, limit: 50, offset: 0, nations: [] })
+    api.getRun.mockResolvedValue({ run: { run_id: 'phase-3aa-run', season: 2030, seed: 7, next_event_index: 0, total_events: 0, completed_event_ids: [] }, season_state: { season: 2030, next_event_index: 0, completed_event_ids: [], ordered_events: [] } })
+    api.listEvents.mockResolvedValue({ run_id: 'phase-3aa-run', events: [] })
 
+    renderAppAt('/viewer/search?q=ali')
+    expect(await screen.findByRole('heading', { name: 'Search', level: 2 })).toBeInTheDocument()
+    expect(screen.getByText('Search: ali')).toBeInTheDocument()
+    await screen.findByRole('link', { name: 'Ali Farag' })
+    const players = screen.getByLabelText('Players')
+    expect(within(players).getByText('Ali Farag')).toBeInTheDocument()
+    expect(within(players).getByText('95')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ali Farag' })).toHaveAttribute('href', '/viewer/runs/phase-3aa-run/players/ALI-1/career')
+    expect(screen.getByRole('link', { name: 'EGY' })).toHaveAttribute('href', '/viewer/runs/phase-3aa-run/countries/EGY')
+    expect(screen.queryByText(/planner_generated/)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows active-run Search country results with country and top-player links', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3aa-run')
+    api.listRunPlayers.mockResolvedValue({ run_id: 'phase-3aa-run', total: 0, limit: 50, offset: 0, players: [] })
+    api.listRunNations.mockResolvedValue({
+      run_id: 'phase-3aa-run',
+      total: 1,
+      limit: 50,
+      offset: 0,
+      nations: [{ country_code: 'EGY', country_name: 'Egypt', total_players: 12, average_overall: 82, average_age: 27, top_band_count: 3, manual_override_count: 0, planner_generated_count: 12, rollover_carried_count: 0, top_player_id: 'ALI-1', top_player_name: 'Ali Farag', top_player_overall: 95 }]
+    })
+    api.getRun.mockResolvedValue({ run: { run_id: 'phase-3aa-run', season: 2030, seed: 7, next_event_index: 0, total_events: 0, completed_event_ids: [] }, season_state: { season: 2030, next_event_index: 0, completed_event_ids: [], ordered_events: [] } })
+    api.listEvents.mockResolvedValue({ run_id: 'phase-3aa-run', events: [] })
+
+    renderAppAt('/viewer/search?q=egy')
+    await screen.findByRole('link', { name: 'Egypt' })
+    const countries = screen.getByLabelText('Countries')
+    expect(countries).toHaveTextContent('Egypt')
+    expect(countries).toHaveTextContent('Player count')
+    expect(countries).toHaveTextContent('Average Power Rating')
+    expect(screen.getByRole('link', { name: 'Egypt' })).toHaveAttribute('href', '/viewer/runs/phase-3aa-run/countries/EGY')
+    expect(screen.getByRole('link', { name: 'Ali Farag' })).toHaveAttribute('href', '/viewer/runs/phase-3aa-run/players/ALI-1/career')
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows active-run Search tournament results with planned, week, and detail links', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3aa-run')
+    api.listRunPlayers.mockResolvedValue({ run_id: 'phase-3aa-run', total: 0, limit: 50, offset: 0, players: [] })
+    api.listRunNations.mockResolvedValue({ run_id: 'phase-3aa-run', total: 0, limit: 50, offset: 0, nations: [] })
+    api.getRun.mockResolvedValue({
+      run: { run_id: 'phase-3aa-run', season: 2030, seed: 7, next_event_index: 0, total_events: 1, completed_event_ids: [] },
+      season_state: { season: 2030, next_event_index: 0, completed_event_ids: [], ordered_events: [{ event_id: 'GOLD-1', season: 2030, week: 12, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-GOLD' }] }
+    })
+    api.listEvents.mockResolvedValue({ run_id: 'phase-3aa-run', events: [{ event_sequence: 1, event_id: 'GOLD-1', season: 2030, week: 12, template_id: 'TEMP-GOLD', tournament_result: {} }] })
+
+    renderAppAt('/viewer/search?q=gold')
+    await screen.findByRole('link', { name: 'Planned Event: GOLD-1' })
+    const tournaments = screen.getByLabelText('Tournaments')
+    expect(tournaments).toHaveTextContent('WORLD')
+    expect(tournaments).toHaveTextContent('GOLD')
+    expect(tournaments).toHaveTextContent('TEMP-GOLD')
+    expect(tournaments).toHaveTextContent('Available')
+    expect(screen.getByRole('link', { name: 'Planned Event: GOLD-1' })).toHaveAttribute('href', '/viewer/runs/phase-3aa-run/calendar/GOLD-1')
+    expect(screen.getByRole('link', { name: 'Week Detail: W12' })).toHaveAttribute('href', '/viewer/runs/phase-3aa-run/weeks/12')
+    expect(screen.getByRole('link', { name: 'Tournament Detail: GOLD-1' })).toHaveAttribute('href', '/viewer/runs/phase-3aa-run/tournaments/GOLD-1')
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows safe active-run Search empty and no-match states without raw payloads', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3aa-run')
     renderAppAt('/viewer/search')
     expect(await screen.findByRole('heading', { name: 'Search', level: 2 })).toBeInTheDocument()
-    const summary = await screen.findByLabelText('Search active run metadata summary')
-    expect(summary).toHaveTextContent('phase-1i-run')
-    expect(screen.getByLabelText('Read-only Viewer search shell')).toBeInTheDocument()
-    expect(screen.getAllByText('This preview is not connected for this data shape yet.').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Searchable Player').length).toBeGreaterThan(0)
-    expect(screen.getByText('Delta')).toBeInTheDocument()
-    expect(screen.getByText('EVT-1 · W12 · GOLD · WORLD')).toBeInTheDocument()
-    expect(screen.queryByText(/Complete search results/i)).not.toBeInTheDocument()
+    expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Read-only Viewer search shell')).toHaveValue('')
+    expectNoForbiddenViewerActions()
+
+    cleanup()
+    api.listRunPlayers.mockResolvedValue({ run_id: 'phase-3aa-run', total: 1, limit: 50, offset: 0, players: [{ player_id: 'ALI-1', name: 'Ali Farag', country_code: 'EGY', age: 34, source_type: 'planner_generated', override_id: null, quality_band: 'Elite', is_top_band: true, origin_source_type: 'planner_generated', origin_quality_band: 'Elite', origin_override_id: null, origin_season: 2030, technique: 90, movement: 91, physical: 88, mental: 92, overall: 95 }] })
+    api.listRunNations.mockResolvedValue({ run_id: 'phase-3aa-run', total: 0, limit: 50, offset: 0, nations: [] })
+    api.getRun.mockResolvedValue({ run: { run_id: 'phase-3aa-run', season: 2030, seed: 7, next_event_index: 0, total_events: 0, completed_event_ids: [] }, season_state: { season: 2030, next_event_index: 0, completed_event_ids: [], ordered_events: [] } })
+    api.listEvents.mockResolvedValue({ run_id: 'phase-3aa-run', events: [] })
+    renderAppAt('/viewer/search?q=nomatch')
+    expect(await screen.findByText('No matching Viewer results found.')).toBeInTheDocument()
+    expect(screen.queryByText(/planner_generated/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/\{/)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

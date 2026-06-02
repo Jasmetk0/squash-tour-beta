@@ -612,3 +612,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Record/stat groups remain deferred unless real read models exist.
 - No fake records, stats, awards, or Hall of Fame data were added.
 - No backend/Admin behavior changed.
+
+## Viewer Phase 3AA — Search sports-facing MVP
+
+- Viewer Search now shows read-only active-run results for players, countries, and tournaments using existing APIs.
+- Result links are added only when IDs are available.
+- Empty/no-match states remain safe.
+- No backend/Admin behavior changed.

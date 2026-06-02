@@ -1238,7 +1238,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(within(result as HTMLElement).getAllByRole('link', { name: 'Player Profile' })[0]).toHaveAttribute('href', '/viewer/runs/run-a/players/P1/career')
     expect(within(result as HTMLElement).getByRole('link', { name: 'E1' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar/E1')
 
-    expect(screen.getByRole('link', { name: 'Back to Season Hub' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
+    expect(screen.getByRole('link', { name: 'Back to Season Calendar' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
     expect(screen.getByRole('link', { name: 'Open rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
     expect(screen.getByRole('link', { name: 'Open race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
     expect(screen.getByRole('link', { name: 'Open tournaments' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments')

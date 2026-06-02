@@ -222,12 +222,24 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
   )
   const eventRecords = useMemo(() => eventsQuery.data?.events ?? [], [eventsQuery.data?.events])
   const eventRecordIds = useMemo(() => new Set(eventRecords.map((event) => event.event_id)), [eventRecords])
+  const eventRecordsById = useMemo(() => new Map(eventRecords.map((event) => [event.event_id, event])), [eventRecords])
   const plannedContext = useMemo(() => buildPlannedEventContext(runQuery.data), [runQuery.data])
   const plannedEvent = plannedContext.get(eventId)
   const status = plannedEvent
     ? plannedStatus({ index: plannedEvent.planIndex, nextEventIndex, completedEventIds, eventId: plannedEvent.event_id })
     : null
   const hasEventRecord = eventRecordIds.has(eventId)
+  const eventRecord = eventRecordsById.get(eventId)
+  const resultSummary = eventRecord?.tournament_result ? parseTournamentResultPayload(eventRecord.tournament_result).summary : null
+  const championValue = resultSummary ? tournamentChampionValue(resultSummary, runId) : null
+  const matchesValue = resultSummary ? tournamentMatchesValue(resultSummary) : null
+  const resultMetadataItems = resultSummary
+    ? [
+        ...(championValue ? [{ label: 'Champion', value: championValue }] : []),
+        ...(resultSummary.resultStatus ? [{ label: 'Result status', value: resultSummary.resultStatus }] : []),
+        ...(matchesValue !== null ? [{ label: 'Matches', value: matchesValue }] : [])
+      ]
+    : []
 
   return (
     <section className="panel">
@@ -303,6 +315,12 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
           </>
         ) : null}
       </SectionCard>
+
+      {plannedEvent && resultMetadataItems.length > 0 ? (
+        <SectionCard title="Tournament Result Preview">
+          <MetadataList items={resultMetadataItems} />
+        </SectionCard>
+      ) : null}
 
       {plannedEvent ? (
         <SectionCard title="Read-only data">

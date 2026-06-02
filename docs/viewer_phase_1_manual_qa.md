@@ -635,3 +635,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Missing params/data remain deferred or no-data.
 - Prediction/odds outputs remain deferred; no fake winners, odds, probabilities, or match results were added.
 - No backend/Admin behavior changed.
+
+## Phase 3AD — Shared Player Comparison / Match Predictor helper cleanup
+
+- Shared Player Comparison / Match Predictor helper logic was cleaned up while preserving existing read-only behavior.
+- H2H and Match Predictor still use active-run player data only.
+- Prediction/H2H outputs remain deferred; no fake odds, winners, records, or match results were added.
+- No backend/Admin behavior changed.

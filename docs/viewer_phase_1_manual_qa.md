@@ -506,3 +506,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Player Profile Tournament History event names now link to Tournament Detail pages when `event_id` is available.
 - Entries without `event_id` remain plain text.
 - No backend/Admin behavior changed.
+
+## Phase 3K tournament week detail links note
+
+- Tournament list/detail week values now link to Week Detail pages when week is available.
+- Missing week values remain plain text.
+- No backend/Admin behavior changed.

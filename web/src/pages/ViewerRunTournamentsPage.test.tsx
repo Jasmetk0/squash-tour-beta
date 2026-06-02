@@ -128,7 +128,7 @@ describe('ViewerRunTournamentsPage', () => {
     expect(screen.getByText('EVENT-2')).toBeInTheDocument()
     expect(screen.getByText('WT-PLAT')).toBeInTheDocument()
     expect(screen.getByText('ET-GOLD')).toBeInTheDocument()
-    expect(screen.getAllByText('W3').length).toBeGreaterThan(0)
+    expect(screen.getByRole('link', { name: 'W3' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/weeks/3')
     expect(screen.getAllByText('Platinum').length).toBeGreaterThan(0)
     expect(screen.getAllByText('World Tour').length).toBeGreaterThan(0)
     expect(within(eventOne).getByText('Champion')).toBeInTheDocument()
@@ -148,6 +148,29 @@ describe('ViewerRunTournamentsPage', () => {
     expect(screen.queryByText(/Match 1 should not render/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
     expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
+  })
+
+  it('keeps missing tournament list weeks as plain text without a broken week link', async () => {
+    api.listEvents.mockResolvedValueOnce({
+      run_id: 'viewer-run-1',
+      events: [
+        {
+          event_sequence: 10,
+          event_id: 'EVENT-NO-WEEK',
+          season: 2027,
+          week: null,
+          template_id: 'WT-GOLD',
+          tournament_result: null
+        }
+      ]
+    })
+
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
+
+    const eventWithoutWeek = (await screen.findByText('EVENT-NO-WEEK')).closest('li') as HTMLElement
+    expect(within(eventWithoutWeek).getByText('—')).toBeInTheDocument()
+    expect(within(eventWithoutWeek).queryByRole('link', { name: /^W/i })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
   })
 
   it('hides unknown tournament result payloads on the tournaments list without fake result metadata', async () => {
@@ -180,6 +203,7 @@ describe('ViewerRunTournamentsPage', () => {
     expect(screen.queryByText(/unknown-list-payload-should-not-render/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
+
 })
 
 describe('ViewerRunTournamentDetailPage', () => {
@@ -277,7 +301,7 @@ describe('ViewerRunTournamentDetailPage', () => {
     expect(screen.getAllByText('viewer-run-1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('EVENT-1').length).toBeGreaterThan(0)
     expect((await screen.findAllByText('2027')).length).toBeGreaterThan(0)
-    expect(screen.getAllByText('W3').length).toBeGreaterThan(0)
+    expect(screen.getByRole('link', { name: 'W3' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/weeks/3')
     expect(screen.getAllByText('Platinum').length).toBeGreaterThan(0)
     expect(screen.getAllByText('World Tour').length).toBeGreaterThan(0)
     expect(screen.getByText('WT-PLAT')).toBeInTheDocument()
@@ -298,5 +322,33 @@ describe('ViewerRunTournamentDetailPage', () => {
     expect(within(technicalSection as HTMLElement).getByText(/event-detail-hidden-payload/i)).toBeVisible()
     expectNoForbiddenViewerActions()
     expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
+  })
+
+  it('keeps missing tournament detail weeks as plain text without a broken week link', async () => {
+    api.getEvent.mockResolvedValueOnce({
+      event_sequence: 10,
+      event_id: 'EVENT-NO-WEEK',
+      season: 2027,
+      week: null,
+      template_id: 'WT-GOLD',
+      tournament_result: {
+        summary: {
+          champion: { player_id: 'P-001', name: 'Ali Farag', country: 'EGY' },
+          status: 'completed'
+        }
+      }
+    })
+
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-NO-WEEK')
+
+    expect(await screen.findByRole('heading', { name: 'Tournament Result Preview' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ali Farag (EGY)' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/players/P-001/career'
+    )
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0)
+    expect(screen.queryByRole('link', { name: /^W/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open week detail/i })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
   })
 })

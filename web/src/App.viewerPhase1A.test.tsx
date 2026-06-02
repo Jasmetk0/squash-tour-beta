@@ -529,7 +529,10 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(panel).toHaveTextContent('WEEK')
     expect(screen.getByRole('heading', { name: 'Top 10 Ranking Preview' })).toBeInTheDocument()
     const table = screen.getByRole('table', { name: 'Latest Top 10 ranking preview table' })
-    expect(within(table).getByText('Nour El Sherbini')).toBeInTheDocument()
+    expect(within(table).getByRole('link', { name: 'Nour El Sherbini' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/run-a/players/P1/career'
+    )
     expect(within(table).getByText('EG')).toBeInTheDocument()
     expect(within(table).getByText('1000')).toBeInTheDocument()
     expect(within(table).getAllByText('9').length).toBeGreaterThan(0)
@@ -566,7 +569,10 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(panel).toHaveTextContent('WEEK')
     expect(screen.getByRole('heading', { name: 'Top 10 Race Preview' })).toBeInTheDocument()
     const table = screen.getByRole('table', { name: 'Latest Top 10 race preview table' })
-    expect(within(table).getByText('Paul Coll')).toBeInTheDocument()
+    expect(within(table).getByRole('link', { name: 'Paul Coll' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/run-a/players/R1/career'
+    )
     expect(within(table).getByText('NZ')).toBeInTheDocument()
     expect(within(table).getByText('7000')).toBeInTheDocument()
     expect(within(table).getAllByText('8').length).toBeGreaterThan(0)

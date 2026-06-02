@@ -480,3 +480,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Missing/unknown detail shapes still show deferred previews.
 - Technical country data remains collapsed.
 - No fake country rankings, Team Championship wins, titles, records, medals, hosting stats, or top 100 counts were added.
+
+## Phase 3G ranking/race player profile links note
+
+- Ranking and Race preview player names now link to Player Profile pages when `player_id` is available.
+- Rows without `player_id` remain plain text.
+- No parser/backend/Admin behavior changed.

@@ -216,7 +216,10 @@ describe('ViewerRunSnapshotDetailPage', () => {
     expect(await screen.findByRole('heading', { name: 'Top 10 Ranking Preview' })).toBeInTheDocument()
     const table = screen.getByRole('table', { name: 'Top 10 ranking preview table' })
     expect(within(table).getByText('1')).toBeInTheDocument()
-    expect(within(table).getByText('Ali Farag')).toBeInTheDocument()
+    expect(within(table).getByRole('link', { name: 'Ali Farag' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/players/P1/career'
+    )
     expect(within(table).getByText('EGY')).toBeInTheDocument()
     expect(within(table).getByText('20000')).toBeInTheDocument()
     expect(within(table).getByText('12')).toBeInTheDocument()
@@ -226,6 +229,29 @@ describe('ViewerRunSnapshotDetailPage', () => {
     const details = screen.getByText('Show technical payload').closest('details')
     expect(details).not.toHaveAttribute('open')
     expect(screen.getByText(/ranking-detail-hidden-payload/i)).not.toBeVisible()
+    expectNoForbiddenViewerActions()
+  })
+
+
+  it('keeps ranking preview players without player IDs as plain text', async () => {
+    api.getRankingSnapshot.mockResolvedValue({
+      snapshot_sequence: 12,
+      snapshot_kind: 'WEEKLY_PUBLICATION',
+      source_event_id: 'EVENT-1',
+      payload: {
+        rankings: [{ rank: 1, player_name: 'Name Only Player', country_code: 'WAL', points: 5000, tournaments_counted: 10 }]
+      }
+    })
+    api.listRankingSnapshots.mockResolvedValue({
+      run_id: 'viewer-run-1',
+      snapshots: [{ snapshot_sequence: 12, snapshot_kind: 'WEEKLY_PUBLICATION', source_event_id: 'EVENT-1', payload: {} }]
+    })
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings/12')
+
+    const table = await screen.findByRole('table', { name: 'Top 10 ranking preview table' })
+    expect(within(table).getByText('Name Only Player')).toBeInTheDocument()
+    expect(within(table).queryByRole('link', { name: 'Name Only Player' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
@@ -270,7 +296,10 @@ describe('ViewerRunSnapshotDetailPage', () => {
     expect(await screen.findByRole('heading', { name: 'Top 10 Race Preview' })).toBeInTheDocument()
     const table = screen.getByRole('table', { name: 'Top 10 race preview table' })
     expect(within(table).getByText('1')).toBeInTheDocument()
-    expect(within(table).getByText('Mostafa Asal')).toBeInTheDocument()
+    expect(within(table).getByRole('link', { name: 'Mostafa Asal' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/players/R1/career'
+    )
     expect(within(table).getByText('EGY')).toBeInTheDocument()
     expect(within(table).getByText('9000')).toBeInTheDocument()
     expect(within(table).getAllByText('8').length).toBeGreaterThan(0)

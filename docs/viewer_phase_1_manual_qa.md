@@ -591,3 +591,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Player/snapshot links are added only when IDs are available.
 - Missing finals data remains deferred/no-data.
 - No backend/Admin/finals-engine behavior changed.
+
+## Phase 3X — Viewer Finals qualification/result subpage polish
+
+- Finals qualification/result subpages now show sports-facing metadata from existing finals APIs when available.
+- Player/snapshot/source-event links are added only when IDs are available.
+- Missing or unknown finals payloads remain deferred/no-data.
+- No backend/Admin/finals-engine behavior changed.

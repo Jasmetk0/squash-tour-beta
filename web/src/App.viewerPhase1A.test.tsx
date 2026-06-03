@@ -2217,6 +2217,152 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     }
   })
 
+
+  it('renders conservative deferred Players subpages without active run data', async () => {
+    const routes = [
+      ['/viewer/players/all', 'All Players'],
+      ['/viewer/players/active', 'Active Players'],
+      ['/viewer/players/next-gen', 'Prospects / Next Gen'],
+      ['/viewer/players/retired', 'Retired Players']
+    ] as const
+
+    for (const [route, title] of routes) {
+      cleanup()
+      resetApiMocks()
+      localStorage.removeItem('beta_engine:viewer_active_run_id')
+      renderAppAt(route)
+
+      expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
+      expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
+      expect(api.listRunPlayers).not.toHaveBeenCalled()
+      expect(api.getRunStatusSummary).not.toHaveBeenCalled()
+      expect(api.listEvents).not.toHaveBeenCalled()
+      expect(api.listRankingSnapshots).not.toHaveBeenCalled()
+      expect(api.listRaceSnapshots).not.toHaveBeenCalled()
+      expectNoForbiddenViewerActions()
+    }
+  })
+
+  it('shows active-run metadata, safe links, samples, and route-specific deferred copy on Players subpages', async () => {
+    const routes = [
+      ['/viewer/players/all', 'All Players', 'No full player directory is shown until a real player directory read model exists.'],
+      ['/viewer/players/active', 'Active Players', 'No active-player list is shown until a real player status read model exists.'],
+      ['/viewer/players/next-gen', 'Prospects / Next Gen', 'No prospects list is shown until a real Next Gen player read model exists.'],
+      ['/viewer/players/retired', 'Retired Players', 'No retired-player list is shown until a real player career-status read model exists.']
+    ] as const
+
+    for (const [route, title, deferredCopy] of routes) {
+      cleanup()
+      resetApiMocks()
+      localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ak-run')
+      api.listRunPlayers.mockResolvedValue({
+        run_id: 'phase-3ak-run',
+        total: 124,
+        limit: 50,
+        offset: 0,
+        players: [
+          {
+            player_id: 'P-A',
+            name: 'Actual Player A',
+            country_code: 'EG',
+            age: 24,
+            source_type: 'planner_generated',
+            override_id: 'hidden-override',
+            quality_band: 'elite',
+            is_top_band: true,
+            origin_source_type: 'manual_override',
+            origin_quality_band: 'hidden-origin-band',
+            origin_override_id: 'hidden-origin-override',
+            origin_season: 2030,
+            technique: 81,
+            movement: 82,
+            physical: 83,
+            mental: 84,
+            overall: 85
+          },
+          {
+            player_id: 'P-B',
+            name: 'Actual Player B',
+            country_code: 'NZ',
+            age: 29,
+            source_type: 'manual_override',
+            override_id: null,
+            quality_band: null,
+            is_top_band: false,
+            origin_source_type: null,
+            origin_quality_band: null,
+            origin_override_id: null,
+            origin_season: null,
+            technique: 71,
+            movement: 72,
+            physical: 73,
+            mental: 74,
+            overall: 75
+          }
+        ]
+      })
+      api.getRunStatusSummary.mockResolvedValue({
+        run_id: 'phase-3ak-run',
+        season: 2034,
+        seed: 33,
+        progress: { next_event_index: 2, total_events: 5, completed_event_count: 2 },
+        finals: { qualification_available: false, result_available: false },
+        rollover: null,
+        source: { source_type: 'fresh_seed', parent_run_id: null },
+        lineage: { child_run_count: 0 },
+        history_counts: { events: 2, ranking_snapshots: 3, race_snapshots: 4 }
+      })
+      api.listEvents.mockResolvedValue({
+        run_id: 'phase-3ak-run',
+        events: [
+          { event_sequence: 1, event_id: 'EVENT-A', season: 2034, week: 2, template_id: 'TEMP-A', tournament_result: { raw_secret: 'hidden event payload' } },
+          { event_sequence: 2, event_id: 'EVENT-B', season: 2034, week: 4, template_id: 'TEMP-B', tournament_result: { raw_secret: 'hidden event payload' } }
+        ]
+      })
+      api.listRankingSnapshots.mockResolvedValue({ run_id: 'phase-3ak-run', snapshots: [
+        { snapshot_sequence: 1, snapshot_kind: 'ranking', source_event_id: 'EVENT-A', payload: { raw_secret: 'hidden ranking payload' } },
+        { snapshot_sequence: 2, snapshot_kind: 'ranking', source_event_id: 'EVENT-B', payload: { raw_secret: 'hidden ranking payload' } },
+        { snapshot_sequence: 3, snapshot_kind: 'ranking', source_event_id: 'EVENT-B', payload: { raw_secret: 'hidden ranking payload' } }
+      ] })
+      api.listRaceSnapshots.mockResolvedValue({ run_id: 'phase-3ak-run', snapshots: [
+        { snapshot_sequence: 4, snapshot_kind: 'race', source_event_id: 'EVENT-A', payload: { raw_secret: 'hidden race payload' } },
+        { snapshot_sequence: 5, snapshot_kind: 'race', source_event_id: 'EVENT-B', payload: { raw_secret: 'hidden race payload' } },
+        { snapshot_sequence: 6, snapshot_kind: 'race', source_event_id: 'EVENT-B', payload: { raw_secret: 'hidden race payload' } },
+        { snapshot_sequence: 7, snapshot_kind: 'race', source_event_id: 'EVENT-B', payload: { raw_secret: 'hidden race payload' } }
+      ] })
+
+      renderAppAt(route)
+
+      expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
+      expect(screen.getByText(deferredCopy)).toBeInTheDocument()
+      const metadata = await screen.findByLabelText(`${title} source metadata`)
+      expect(metadata).toHaveTextContent('Active run IDphase-3ak-run')
+      expect(metadata).toHaveTextContent('Total player count124')
+      expect(metadata).toHaveTextContent('Returned/sample player count2/2')
+      expect(metadata).toHaveTextContent('Completed/persisted event count2')
+      expect(metadata).toHaveTextContent('Ranking snapshot count3')
+      expect(metadata).toHaveTextContent('Race snapshot count4')
+
+      const samples = screen.getByLabelText(`${title} safe sample players`)
+      expect(within(samples).getByRole('link', { name: 'Actual Player A' })).toHaveAttribute('href', '/viewer/runs/phase-3ak-run/players/P-A/career')
+      expect(within(samples).getByRole('link', { name: 'P-A' })).toHaveAttribute('href', '/viewer/runs/phase-3ak-run/players/P-A/career')
+      expect(within(samples).getByRole('link', { name: 'EG' })).toHaveAttribute('href', '/viewer/runs/phase-3ak-run/countries/EG')
+      expect(samples).toHaveTextContent('Age24')
+      expect(samples).toHaveTextContent('Power Rating85')
+      expect(samples).toHaveTextContent('Quality bandelite')
+
+      expect(screen.getByRole('link', { name: 'Open active run players' })).toHaveAttribute('href', '/viewer/runs/phase-3ak-run/players')
+      expect(screen.getByRole('link', { name: 'Open active run countries' })).toHaveAttribute('href', '/viewer/runs/phase-3ak-run/countries')
+      expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/phase-3ak-run/rankings')
+      expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/phase-3ak-run/tournaments')
+      expect(screen.getByRole('link', { name: 'Open Viewer search' })).toHaveAttribute('href', '/viewer/search')
+      expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
+      expect(document.body).not.toHaveTextContent(/source_type|origin_source_type|override_id|origin_override_id|raw_secret|hidden event payload|hidden ranking payload|hidden race payload/i)
+      expect(document.body).not.toHaveTextContent(/Player Directory Row|Active status value|Retired status value|Prospect score|Form score value|Player bio|Awards list|Storyline card|Fake player list/i)
+      expectNoForbiddenViewerActions()
+    }
+  })
+
   it('Admin routes still render', async () => {
     renderAppAt('/admin')
 

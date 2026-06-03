@@ -31,6 +31,7 @@ import {
   ViewerMatchPredictorPage,
   ViewerPredictionDeferredPage,
   ViewerPlayerComparisonPage,
+  ViewerPlayersDeferredPage,
   ViewerPlayersPage,
   ViewerRankingsPage,
   ViewerRacePage,
@@ -182,10 +183,10 @@ export default function App(): JSX.Element {
         <Route path="viewer/tour/champions" element={<ViewerTourDeferredPage kind="champions" />} />
         <Route path="viewer/tournaments" element={<ViewerTournamentsPage />} />
         <Route path="viewer/players" element={<ViewerPlayersPage />} />
-        <Route path="viewer/players/all" element={<ViewerShellPage title="All Players" />} />
-        <Route path="viewer/players/active" element={<ViewerShellPage title="Active Players" />} />
-        <Route path="viewer/players/next-gen" element={<ViewerShellPage title="Prospects / Next Gen" />} />
-        <Route path="viewer/players/retired" element={<ViewerShellPage title="Retired Players" />} />
+        <Route path="viewer/players/all" element={<ViewerPlayersDeferredPage kind="all" />} />
+        <Route path="viewer/players/active" element={<ViewerPlayersDeferredPage kind="active" />} />
+        <Route path="viewer/players/next-gen" element={<ViewerPlayersDeferredPage kind="next-gen" />} />
+        <Route path="viewer/players/retired" element={<ViewerPlayersDeferredPage kind="retired" />} />
         <Route path="viewer/players/compare" element={<ViewerPlayerComparisonPage />} />
         <Route path="viewer/countries" element={<ViewerCountriesPage />} />
         <Route path="viewer/countries/ranking" element={<ViewerCountryRankingPage />} />

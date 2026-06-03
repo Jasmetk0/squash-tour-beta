@@ -679,3 +679,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Rankings subpages now show conservative active-run metadata and safe links while keeping ranking outputs deferred.
 - No fake rankings, Elo ratings, Power Ratings, form scores, Next Gen standings, No.1 history, leaders, or storylines were added.
 - No backend/Admin behavior changed.
+
+## Phase 3AK — Players subpages deferred polish
+
+- Players subpages now show conservative active-run player metadata and safe links while keeping directory/status/prospect outputs deferred.
+- No fake player lists, statuses, prospects, bios, rankings, awards, or storylines were added.
+- No backend/Admin behavior changed.

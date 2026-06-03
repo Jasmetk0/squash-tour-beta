@@ -41,6 +41,7 @@ import {
   ViewerStatsDeferredPage,
   ViewerStatsPage,
   ViewerSeasonHubPage,
+  ViewerTourDeferredPage,
   ViewerTourCalendarPage,
   ViewerTournamentsPage
 } from './pages/ModePages'
@@ -175,9 +176,9 @@ export default function App(): JSX.Element {
         <Route path="viewer/tour/calendar" element={<ViewerTourCalendarPage />} />
         <Route path="viewer/tour/current-week" element={<ViewerCurrentWeekPage />} />
         <Route path="viewer/tour/tournaments" element={<ViewerTournamentsPage />} />
-        <Route path="viewer/tour/matches" element={<ViewerShellPage title="Match Center" />} />
-        <Route path="viewer/tour/categories" element={<ViewerShellPage title="Tournament Categories" />} />
-        <Route path="viewer/tour/champions" element={<ViewerShellPage title="Past Champions" />} />
+        <Route path="viewer/tour/matches" element={<ViewerTourDeferredPage kind="matches" />} />
+        <Route path="viewer/tour/categories" element={<ViewerTourDeferredPage kind="categories" />} />
+        <Route path="viewer/tour/champions" element={<ViewerTourDeferredPage kind="champions" />} />
         <Route path="viewer/tournaments" element={<ViewerTournamentsPage />} />
         <Route path="viewer/players" element={<ViewerPlayersPage />} />
         <Route path="viewer/players/all" element={<ViewerShellPage title="All Players" />} />

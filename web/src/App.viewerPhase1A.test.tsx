@@ -387,6 +387,9 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       ['/viewer/tour', 'No data is available for this run yet.'],
       ['/viewer/tour/current-week', 'No data is available for this run yet.'],
       ['/viewer/tour/tournaments', 'No data is available for this run yet.'],
+      ['/viewer/tour/matches', 'No data is available for this run yet.'],
+      ['/viewer/tour/categories', 'No data is available for this run yet.'],
+      ['/viewer/tour/champions', 'No data is available for this run yet.'],
       ['/viewer/tournaments', 'No data is available for this run yet.'],
       ['/viewer/players', 'No data is available for this run yet.'],
       ['/viewer/countries', 'No data is available for this run yet.'],
@@ -1134,6 +1137,78 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
   })
 
+  it('shows conservative active-run Tour deferred subpages with safe source links only', async () => {
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    api.getRun.mockResolvedValue({
+      run: { run_id: 'run-a', season: 2030, seed: 99, next_event_index: 1, total_events: 3, completed_event_ids: ['E1'] },
+      season_state: {
+        season: 2030,
+        next_event_index: 1,
+        completed_event_ids: ['E1'],
+        ordered_events: [
+          { event_id: 'E1', season: 2030, week: 2, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-A' },
+          { event_id: 'E2', season: 2030, week: 10, tour: 'WORLD', category: 'DIAMOND', template_id: 'TEMP-B' },
+          { event_id: 'E3', season: 2030, week: 11, tour: 'ELITE', category: 'BRONZE', template_id: 'TEMP-C' }
+        ]
+      }
+    })
+    api.getRunStatusSummary.mockResolvedValue({
+      run_id: 'run-a',
+      season: 2030,
+      seed: 99,
+      progress: { next_event_index: 1, total_events: 3, completed_event_count: 1 },
+      finals: { qualification_available: true, result_available: false },
+      rollover: null,
+      source: null,
+      lineage: { child_run_count: 0 },
+      history_counts: { events: 1, ranking_snapshots: 2, race_snapshots: 1 }
+    })
+    api.listEvents.mockResolvedValue({ run_id: 'run-a', events: [{ event_sequence: 1, event_id: 'E1', season: 2030, week: 2, template_id: 'TEMP-A', tournament_result: { hidden: 'raw event payload' } }] })
+    api.listRankingSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [{ snapshot_sequence: 4, snapshot_kind: 'ranking', source_event_id: 'E1', payload: { raw_secret: 'ranking payload' } }] })
+    api.listRaceSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [{ snapshot_sequence: 5, snapshot_kind: 'race', source_event_id: 'E1', payload: { raw_secret: 'race payload' } }] })
+    api.getFinalsSummary.mockResolvedValue({ run_id: 'run-a', season: 2030, qualification: { run_id: 'run-a', season: 2030, source_as_of_season: 2030, source_as_of_week: 40, qualification: { raw_secret: 'finals payload' } }, result: null })
+
+    const routes = [
+      ['/viewer/tour/matches', 'Match Center', 'No match list is shown until a real match read model exists.'],
+      ['/viewer/tour/categories', 'Tournament Categories', 'No connected category breakdown is shown until a real category read model exists.'],
+      ['/viewer/tour/champions', 'Past Champions', 'No champions index is shown until a real champions read model exists.']
+    ] as const
+
+    for (const [route, title, deferredCopy] of routes) {
+      cleanup()
+      localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+      renderAppAt(route)
+
+      expect(await screen.findByRole('heading', { name: title })).toBeInTheDocument()
+      const panel = await screen.findByLabelText(`${title} active run metadata summary`)
+      expect(panel).toHaveTextContent('run-a')
+      expect(panel).toHaveTextContent('Season')
+      expect(panel).toHaveTextContent('2030')
+      expect(panel).toHaveTextContent('Completed/persisted event count')
+      expect(panel).toHaveTextContent('Ordered calendar event count')
+      expect(panel).toHaveTextContent('Ranking snapshot count')
+      expect(panel).toHaveTextContent('Race snapshot count')
+      expect(panel).toHaveTextContent('Finals availability')
+      expect(panel).toHaveTextContent('Next scheduled event')
+      expect(panel).toHaveTextContent('Latest persisted event')
+      expect(panel).toHaveTextContent('Latest ranking snapshot')
+      expect(panel).toHaveTextContent('Latest race snapshot')
+      expect(within(panel).getByRole('link', { name: 'E2' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar/E2')
+      expect(within(panel).getByRole('link', { name: 'E1' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments/E1')
+      expect(within(panel).getByRole('link', { name: '#4' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings/4')
+      expect(within(panel).getByRole('link', { name: '#5' })).toHaveAttribute('href', '/viewer/runs/run-a/race/5')
+      expect(within(panel).getByRole('link', { name: 'Finals qualification available' })).toHaveAttribute('href', '/viewer/runs/run-a/finals')
+      expect(screen.getByRole('link', { name: 'Open active run calendar' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
+      expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments')
+      expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
+      expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
+      expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
+      expect(panel).toHaveTextContent(deferredCopy)
+      expect(document.body).not.toHaveTextContent(/fake matches|fake match scores|fake winners|fake champions|fake brackets|fake category standings|fake tournament records|fake storylines|raw_secret|raw event payload|source_event_id|payload/i)
+      expectNoForbiddenViewerActions()
+    }
+  })
+
   it('shows active-run top-level tournament and current-week empty states without event metadata', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
     api.getRun.mockResolvedValue({
@@ -1652,6 +1727,9 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       '/viewer/tour',
       '/viewer/tour/calendar',
       '/viewer/tour/tournaments',
+      '/viewer/tour/matches',
+      '/viewer/tour/categories',
+      '/viewer/tour/champions',
       '/viewer/h2h',
       '/viewer/stats',
       '/viewer/predictions',

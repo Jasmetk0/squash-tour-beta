@@ -667,3 +667,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Stats/Records subpages now show conservative active-run metadata and safe links while keeping outputs deferred.
 - No fake records, stats, awards, Hall of Fame entries, rankings, leaders, or achievements were added.
 - No backend/Admin behavior changed.
+
+## Phase 3AI — Tour subpages deferred polish
+
+- Tour subpages now show conservative active-run metadata and safe links while keeping match/category/champion outputs deferred.
+- No fake matches, categories, champions, brackets, scores, winners, or storylines were added.
+- No backend/Admin behavior changed.

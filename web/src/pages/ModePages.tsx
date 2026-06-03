@@ -1378,6 +1378,99 @@ export function ViewerStatsDeferredPage({ kind }: { kind: ViewerStatsDeferredKin
   )
 }
 
+
+type ViewerTourDeferredKind = 'matches' | 'categories' | 'champions'
+
+type ViewerTourDeferredConfig = {
+  title: string
+  deferredCopy: string
+}
+
+const viewerTourDeferredConfigs: Record<ViewerTourDeferredKind, ViewerTourDeferredConfig> = {
+  matches: { title: 'Match Center', deferredCopy: 'No match list is shown until a real match read model exists.' },
+  categories: { title: 'Tournament Categories', deferredCopy: 'No connected category breakdown is shown until a real category read model exists.' },
+  champions: { title: 'Past Champions', deferredCopy: 'No champions index is shown until a real champions read model exists.' }
+}
+
+export function ViewerTourDeferredPage({ kind }: { kind: ViewerTourDeferredKind }): JSX.Element {
+  const activeRunId = useActiveViewerRunId()
+  const config = viewerTourDeferredConfigs[kind]
+  const runQuery = useQuery({ queryKey: ['viewer-tour-deferred-run', kind, activeRunId], queryFn: () => getRun(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const statusQuery = useQuery({ queryKey: ['viewer-tour-deferred-status', kind, activeRunId], queryFn: () => getRunStatusSummary(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const eventsQuery = useQuery({ queryKey: ['viewer-tour-deferred-events', kind, activeRunId], queryFn: () => listEvents(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const rankingSnapshotsQuery = useQuery({ queryKey: ['viewer-tour-deferred-ranking-snapshots', kind, activeRunId], queryFn: () => listRankingSnapshots(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const raceSnapshotsQuery = useQuery({ queryKey: ['viewer-tour-deferred-race-snapshots', kind, activeRunId], queryFn: () => listRaceSnapshots(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const finalsQuery = useQuery({ queryKey: ['viewer-tour-deferred-finals', kind, activeRunId], queryFn: () => getFinalsSummary(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+
+  if (!activeRunId) {
+    return (
+      <ViewerShellPage title={config.title} description="Read-only Tour destination requiring an active Viewer run.">
+        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
+      </ViewerShellPage>
+    )
+  }
+
+  const eventCount = eventsQuery.data?.events.length ?? statusQuery.data?.progress.completed_event_count ?? statusQuery.data?.history_counts.events ?? null
+  const orderedEventCount = runQuery.data?.season_state.ordered_events.length ?? runQuery.data?.run.total_events ?? statusQuery.data?.progress.total_events ?? null
+  const rankingSnapshotCount = rankingSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.ranking_snapshots ?? null
+  const raceSnapshotCount = raceSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.race_snapshots ?? null
+  const season = runQuery.data?.season_state.season ?? runQuery.data?.run.season ?? statusQuery.data?.season ?? finalsQuery.data?.season ?? null
+  const nextScheduledEvent = selectNextOrderedEvent(runQuery.data)
+  const latestPersistedEvent = selectLatestPersistedEvent(eventsQuery.data?.events ?? [])
+  const latestRankingSnapshot = latestSnapshot(rankingSnapshotsQuery.data?.snapshots ?? [])
+  const latestRaceSnapshot = latestSnapshot(raceSnapshotsQuery.data?.snapshots ?? [])
+  const finalsAvailability = finalsQuery.data ? formatFinalsAvailability(finalsQuery.data) : statusQuery.data?.finals.result_available ? 'Finals result available' : statusQuery.data?.finals.qualification_available ? 'Finals qualification available' : 'Finals summary not available yet'
+  const hasFinalsAvailability = finalsAvailability !== 'Finals summary not available yet' && finalsAvailability !== 'Loading or unavailable'
+  const isLoadingMetadata = runQuery.isLoading || statusQuery.isLoading || eventsQuery.isLoading || rankingSnapshotsQuery.isLoading || raceSnapshotsQuery.isLoading || finalsQuery.isLoading
+  const hasMetadataError = runQuery.isError || statusQuery.isError || eventsQuery.isError || rankingSnapshotsQuery.isError || raceSnapshotsQuery.isError || finalsQuery.isError
+  const hasAnySourceMetadata = (eventCount ?? 0) > 0 || (orderedEventCount ?? 0) > 0 || (rankingSnapshotCount ?? 0) > 0 || (raceSnapshotCount ?? 0) > 0 || hasFinalsAvailability
+
+  return (
+    <ViewerShellPage title={config.title} description="Conservative read-only Tour page using existing active-run metadata only.">
+      <article className="viewer-active-run-card" aria-label={`${config.title} active run metadata summary`}>
+        <span className="eyebrow">Active Viewer run</span>
+        <h3>{config.title} sources</h3>
+        <p className="subtitle">No real read model exists yet. This page only shows safe source availability from the active Viewer run.</p>
+        {isLoadingMetadata ? <p className="status">Loading active run metadata…</p> : null}
+        {hasMetadataError ? <ViewerEmptyState>Some active run metadata is temporarily unavailable.</ViewerEmptyState> : null}
+        <section aria-label={`${config.title} source metadata`}>
+          <h3>Available source metadata</h3>
+          <dl className="metadata-list">
+            <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
+            <div><dt>Season</dt><dd>{runQuery.isLoading && season == null ? 'Loading…' : season ?? '—'}</dd></div>
+            <div><dt>Completed/persisted event count</dt><dd>{eventsQuery.isLoading && eventCount == null ? 'Loading…' : eventCount ?? '—'}</dd></div>
+            <div><dt>Ordered calendar event count</dt><dd>{runQuery.isLoading && orderedEventCount == null ? 'Loading…' : orderedEventCount ?? '—'}</dd></div>
+            <div><dt>Ranking snapshot count</dt><dd>{rankingSnapshotsQuery.isLoading && rankingSnapshotCount == null ? 'Loading…' : rankingSnapshotCount ?? '—'}</dd></div>
+            <div><dt>Race snapshot count</dt><dd>{raceSnapshotsQuery.isLoading && raceSnapshotCount == null ? 'Loading…' : raceSnapshotCount ?? '—'}</dd></div>
+            <div><dt>Finals availability</dt><dd>{finalsQuery.isLoading ? 'Loading…' : hasFinalsAvailability ? <Link to={viewerFinalsPath(activeRunId)}>{finalsAvailability}</Link> : finalsAvailability}</dd></div>
+            <div><dt>Next scheduled event</dt><dd>{nextScheduledEvent ? <Link to={viewerPlannedEventPath(activeRunId, nextScheduledEvent.event_id)}>{nextScheduledEvent.event_id}</Link> : '—'}</dd></div>
+            <div><dt>Latest persisted event</dt><dd>{latestPersistedEvent?.event_id ? <Link to={viewerTournamentDetailPath(activeRunId, latestPersistedEvent.event_id)}>{latestPersistedEvent.event_id}</Link> : '—'}</dd></div>
+            <div><dt>Latest ranking snapshot</dt><dd>{latestRankingSnapshot ? <Link to={viewerRankingSnapshotPath(activeRunId, latestRankingSnapshot.snapshot_sequence)}>#{latestRankingSnapshot.snapshot_sequence}</Link> : '—'}</dd></div>
+            <div><dt>Latest race snapshot</dt><dd>{latestRaceSnapshot ? <Link to={viewerRaceSnapshotPath(activeRunId, latestRaceSnapshot.snapshot_sequence)}>#{latestRaceSnapshot.snapshot_sequence}</Link> : '—'}</dd></div>
+          </dl>
+          {!isLoadingMetadata && !hasMetadataError && !hasAnySourceMetadata ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
+        </section>
+        <section aria-label={`${config.title} deferred output explanation`}>
+          <h3>Deferred output</h3>
+          <p className="status">{config.deferredCopy}</p>
+        </section>
+        <section aria-label={`${config.title} source links`}>
+          <h3>Source links</h3>
+          <ViewerActiveRunLinks
+            links={[
+              { label: 'Open active run calendar', to: viewerSeasonCalendarPath(activeRunId) },
+              { label: 'Open active run tournaments', to: viewerTournamentsPath(activeRunId) },
+              { label: 'Open active run rankings', to: viewerRankingsPath(activeRunId) },
+              { label: 'Open active run race', to: viewerRacePath(activeRunId) },
+              { label: 'Open run browser', to: viewerRunsPath() }
+            ]}
+          />
+        </section>
+      </article>
+    </ViewerShellPage>
+  )
+}
+
 export function ViewerTourCalendarPage(): JSX.Element {
   const activeRunId = useActiveViewerRunId()
   const runQuery = useQuery({ queryKey: ['viewer-tour-calendar-run', activeRunId], queryFn: () => getRun(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })

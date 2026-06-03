@@ -29,6 +29,7 @@ import {
   ViewerHistoryPage,
   ViewerHomePage,
   ViewerMatchPredictorPage,
+  ViewerPredictionDeferredPage,
   ViewerPlayerComparisonPage,
   ViewerPlayersPage,
   ViewerRankingsPage,
@@ -208,12 +209,12 @@ export default function App(): JSX.Element {
         <Route path="viewer/records" element={<ViewerRecordsPage />} />
         <Route path="viewer/predictions" element={<ViewerMatchPredictorPage />} />
         <Route path="viewer/predictions/match-predictor" element={<ViewerMatchPredictorPage />} />
-        <Route path="viewer/predictions/match-odds" element={<ViewerShellPage title="Match Odds" />} />
-        <Route path="viewer/predictions/tournament-odds" element={<ViewerShellPage title="Tournament Odds" />} />
-        <Route path="viewer/predictions/finals-qualification" element={<ViewerShellPage title="Finals Qualification" />} />
-        <Route path="viewer/predictions/season-end-no1" element={<ViewerShellPage title="Season-End No.1" />} />
-        <Route path="viewer/predictions/upset-watch" element={<ViewerShellPage title="Upset Watch" />} />
-        <Route path="viewer/predictions/futures" element={<ViewerShellPage title="Futures Markets" />} />
+        <Route path="viewer/predictions/match-odds" element={<ViewerPredictionDeferredPage kind="match-odds" />} />
+        <Route path="viewer/predictions/tournament-odds" element={<ViewerPredictionDeferredPage kind="tournament-odds" />} />
+        <Route path="viewer/predictions/finals-qualification" element={<ViewerPredictionDeferredPage kind="finals-qualification" />} />
+        <Route path="viewer/predictions/season-end-no1" element={<ViewerPredictionDeferredPage kind="season-end-no1" />} />
+        <Route path="viewer/predictions/upset-watch" element={<ViewerPredictionDeferredPage kind="upset-watch" />} />
+        <Route path="viewer/predictions/futures" element={<ViewerPredictionDeferredPage kind="futures" />} />
         <Route path="viewer/search" element={<ViewerSearchPage />} />
         <Route path="viewer/history" element={<ViewerHistoryPage />} />
         <Route path="viewer/runs" element={<ViewerRunBrowserPage />} />

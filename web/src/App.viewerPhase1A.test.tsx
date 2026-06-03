@@ -657,6 +657,88 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
   })
 
+  it('renders deferred prediction subpages with no active run empty state', async () => {
+    const routes = [
+      ['/viewer/predictions/match-odds', 'Match Odds'],
+      ['/viewer/predictions/tournament-odds', 'Tournament Odds'],
+      ['/viewer/predictions/finals-qualification', 'Finals Qualification'],
+      ['/viewer/predictions/season-end-no1', 'Season-End No.1'],
+      ['/viewer/predictions/upset-watch', 'Upset Watch'],
+      ['/viewer/predictions/futures', 'Futures']
+    ] as const
+
+    for (const [route, title] of routes) {
+      cleanup()
+      resetApiMocks()
+      localStorage.removeItem('beta_engine:viewer_active_run_id')
+      renderAppAt(route)
+      expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
+      expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
+      expect(api.getRunStatusSummary).not.toHaveBeenCalled()
+      expectNoForbiddenViewerActions()
+    }
+  })
+
+  it('shows conservative active-run metadata and links on deferred prediction subpages', async () => {
+    const routes = [
+      ['/viewer/predictions/match-odds', 'Match Odds', 'No odds are shown until a real odds read model exists.'],
+      ['/viewer/predictions/tournament-odds', 'Tournament Odds', 'No tournament odds are shown until a real tournament odds read model exists.'],
+      ['/viewer/predictions/finals-qualification', 'Finals Qualification', 'No finals qualification probability is shown until a real qualification probability read model exists.'],
+      ['/viewer/predictions/season-end-no1', 'Season-End No.1', 'No season-end No.1 probability is shown until a real season projection read model exists.'],
+      ['/viewer/predictions/upset-watch', 'Upset Watch', 'No upset chance is shown until a real upset model exists.'],
+      ['/viewer/predictions/futures', 'Futures', 'No futures markets are shown until a real futures read model exists.']
+    ] as const
+
+    for (const [route, title, deferredCopy] of routes) {
+      cleanup()
+      resetApiMocks()
+      localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ag-run')
+      api.getRunStatusSummary.mockResolvedValue({
+        run_id: 'phase-3ag-run',
+        season: 2031,
+        seed: 13,
+        progress: { next_event_index: 3, total_events: 6, completed_event_count: 2 },
+        finals: { qualification_available: true, result_available: false },
+        rollover: null,
+        source: { source_type: 'fresh_seed', parent_run_id: null },
+        lineage: { child_run_count: 0 },
+        history_counts: { events: 2, ranking_snapshots: 1, race_snapshots: 1 }
+      })
+      api.listEvents.mockResolvedValue({
+        run_id: 'phase-3ag-run',
+        events: [
+          { event_sequence: 1, event_id: 'EVENT-OLD', season: 2031, week: 2, template_id: 'TEMP-OLD', tournament_result: { raw_secret: 'Fake Final winner payload' } },
+          { event_sequence: 2, event_id: 'EVENT-LATEST', season: 2031, week: 4, template_id: 'TEMP-LATEST', tournament_result: { raw_secret: 'Projected No.1 payload' } }
+        ]
+      })
+      api.listRankingSnapshots.mockResolvedValue({ run_id: 'phase-3ag-run', snapshots: [{ snapshot_sequence: 7, snapshot_kind: 'ranking', source_event_id: 'EVENT-LATEST', payload: { raw_secret: 'favorite payload' } }] })
+      api.listRaceSnapshots.mockResolvedValue({ run_id: 'phase-3ag-run', snapshots: [{ snapshot_sequence: 8, snapshot_kind: 'race', source_event_id: 'EVENT-LATEST', payload: { raw_secret: 'underdog payload' } }] })
+      api.getFinalsSummary.mockResolvedValue({ run_id: 'phase-3ag-run', season: 2031, qualification: { run_id: 'phase-3ag-run', season: 2031, source_as_of_season: 2031, source_as_of_week: 4, qualification: { raw_secret: 'betting line payload' } }, result: null })
+
+      renderAppAt(route)
+
+      expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
+      expect(screen.getByText(deferredCopy)).toBeInTheDocument()
+      const metadata = await screen.findByLabelText(`${title} source metadata`)
+      expect(metadata).toHaveTextContent('Active run IDphase-3ag-run')
+      expect(metadata).toHaveTextContent('Completed/persisted event count2')
+      expect(metadata).toHaveTextContent('Ranking snapshot count1')
+      expect(metadata).toHaveTextContent('Race snapshot count1')
+      expect(within(metadata).getByRole('link', { name: 'Finals qualification available' })).toHaveAttribute('href', '/viewer/runs/phase-3ag-run/finals')
+      expect(within(metadata).getByRole('link', { name: 'EVENT-LATEST' })).toHaveAttribute('href', '/viewer/runs/phase-3ag-run/tournaments/EVENT-LATEST')
+      expect(within(metadata).getByRole('link', { name: '#7' })).toHaveAttribute('href', '/viewer/runs/phase-3ag-run/rankings/7')
+      expect(within(metadata).getByRole('link', { name: '#8' })).toHaveAttribute('href', '/viewer/runs/phase-3ag-run/race/8')
+      expect(screen.getByRole('link', { name: 'Open match predictor' })).toHaveAttribute('href', '/viewer/predictions/match-predictor')
+      expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/phase-3ag-run/tournaments')
+      expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/phase-3ag-run/rankings')
+      expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/phase-3ag-run/race')
+      expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
+      expect(document.body).not.toHaveTextContent(/raw_secret|Fake Final winner payload|Projected No\.1 payload|favorite payload|underdog payload|betting line payload|predicted winner|favorites|underdogs|betting lines|fake result|\{|\"/i)
+      expect(document.body).not.toHaveTextContent(/\d+%/)
+      expectNoForbiddenViewerActions()
+    }
+  })
+
   it('shows active-run Search player results with profile and country links', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3aa-run')
     api.listRunPlayers.mockResolvedValue({

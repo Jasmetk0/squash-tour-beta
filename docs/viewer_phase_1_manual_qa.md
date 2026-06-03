@@ -673,3 +673,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Tour subpages now show conservative active-run metadata and safe links while keeping match/category/champion outputs deferred.
 - No fake matches, categories, champions, brackets, scores, winners, or storylines were added.
 - No backend/Admin behavior changed.
+
+## Phase 3AJ — Rankings subpages deferred polish
+
+- Rankings subpages now show conservative active-run metadata and safe links while keeping ranking outputs deferred.
+- No fake rankings, Elo ratings, Power Ratings, form scores, Next Gen standings, No.1 history, leaders, or storylines were added.
+- No backend/Admin behavior changed.

@@ -685,3 +685,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Players subpages now show conservative active-run player metadata and safe links while keeping directory/status/prospect outputs deferred.
 - No fake player lists, statuses, prospects, bios, rankings, awards, or storylines were added.
 - No backend/Admin behavior changed.
+
+## Phase 3AL — Countries subpages deferred polish
+
+- Countries subpages now show conservative active-run country metadata and safe links while keeping directory/hosting/talent/record outputs deferred.
+- No fake country rankings, hosting records, talent pipelines, medals, awards, records, or storylines were added.
+- No backend/Admin behavior changed.

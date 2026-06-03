@@ -30,6 +30,7 @@ import {
   viewerRaceSnapshotPath,
   viewerRankingsPath,
   viewerRankingSnapshotPath,
+  viewerRunsPath,
   viewerSeasonCalendarPath,
   viewerWeekDetailPath,
   viewerTournamentsPath,
@@ -585,6 +586,9 @@ export function ViewerHomePage(): JSX.Element {
         </p>
       </div>
       <ViewerRunSelector compact />
+      <p className="viewer-active-run-actions">
+        <Link className="viewer-active-run-link" to={viewerRunsPath()}>Open run browser</Link>
+      </p>
       <section className="viewer-active-run-panel" aria-label="Active Viewer run status">
         {activeRunId ? (
           <>
@@ -845,7 +849,8 @@ export function ViewerSeasonHubPage(): JSX.Element {
         <p className="viewer-active-run-actions">
           <Link className="viewer-active-run-link" to={viewerTournamentsPath(activeRunId)}>Open active run tournaments</Link>{' '}
           <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(activeRunId)}>Open active run schedule</Link>{' '}
-          <Link className="viewer-active-run-link" to={viewerFinalsPath(activeRunId)}>Open active run finals</Link>
+          <Link className="viewer-active-run-link" to={viewerFinalsPath(activeRunId)}>Open active run finals</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerRunsPath()}>Open run browser</Link>
         </p>
       </article>
     </ViewerShellPage>
@@ -888,7 +893,8 @@ export function ViewerCurrentWeekPage(): JSX.Element {
           </ul>
         ) : null}
         <p className="viewer-active-run-actions">
-          <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(activeRunId)}>Open active run schedule</Link>
+          <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(activeRunId)}>Open active run schedule</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerRunsPath()}>Open run browser</Link>
         </p>
       </article>
     </ViewerShellPage>
@@ -943,7 +949,8 @@ export function ViewerTournamentsPage(): JSX.Element {
         ) : null}
         <p className="viewer-active-run-actions">
           <Link className="viewer-active-run-link" to={viewerTournamentsPath(activeRunId)}>Open active run tournaments</Link>{' '}
-          <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(activeRunId)}>Open active run schedule</Link>
+          <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(activeRunId)}>Open active run schedule</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerRunsPath()}>Open run browser</Link>
         </p>
       </article>
     </ViewerShellPage>
@@ -1244,6 +1251,7 @@ function ViewerRecordsStatsLandingPage({ kind }: { kind: ViewerRecordsLandingKin
           <h3>Links</h3>
           <ViewerActiveRunLinks
             links={[
+              { label: 'Open run browser', to: viewerRunsPath() },
               { label: 'Open active run tournaments', to: viewerTournamentsPath(activeRunId) },
               { label: 'Open active run rankings', to: viewerRankingsPath(activeRunId) },
               { label: 'Open active run race', to: viewerRacePath(activeRunId) },
@@ -1812,6 +1820,7 @@ export function ViewerSearchPage(): JSX.Element {
 
         <section aria-label="Links">
           <h4>Links</h4>
+          <ViewerActiveRunLinks links={[{ label: 'Open run browser', to: viewerRunsPath() }]} />
           <p className="status">Result links are shown only when player, country, event, or week IDs are available.</p>
         </section>
       </article>

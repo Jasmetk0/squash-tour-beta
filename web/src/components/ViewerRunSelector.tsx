@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { FormEvent, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import { listRuns } from '../api/client'
 import {
@@ -10,6 +11,7 @@ import {
   readViewerActiveRunId,
   writeViewerActiveRunId
 } from '../viewer/activeRun'
+import { viewerRunsPath } from '../viewer/viewerRoutes'
 
 type ViewerRunSelectorProps = {
   compact?: boolean
@@ -114,6 +116,9 @@ export function ViewerRunSelector({ compact = false }: ViewerRunSelectorProps): 
       </p>
       <p className="metadata-note">
         Viewer selection is stored locally in <code>{VIEWER_ACTIVE_RUN_STORAGE_KEY}</code>; no backend run state is changed.
+      </p>
+      <p className="viewer-active-run-actions">
+        <Link className="viewer-active-run-link" to={viewerRunsPath()}>Browse all runs</Link>
       </p>
 
       <form className="stacked-form" onSubmit={handleSubmit}>

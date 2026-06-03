@@ -4,6 +4,10 @@ function encodePathSegment(segment: ViewerPathSegment): string {
   return encodeURIComponent(String(segment))
 }
 
+export function viewerRunsPath(): string {
+  return '/viewer/runs'
+}
+
 export function viewerPlayerProfilePath(runId: ViewerPathSegment, playerId: ViewerPathSegment): string {
   return `/viewer/runs/${encodePathSegment(runId)}/players/${encodePathSegment(playerId)}/career`
 }

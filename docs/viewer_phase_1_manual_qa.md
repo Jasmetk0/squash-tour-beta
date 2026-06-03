@@ -649,3 +649,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Active Viewer run status remains client-side and uses existing selection behavior.
 - Empty/error states remain safe.
 - No backend/Admin behavior changed.
+
+## Phase 3AF — Run Browser hub discovery note
+
+- Run Browser is now discoverable from Viewer hub/link areas.
+- Existing active-run links and selection behavior remain unchanged.
+- No backend/Admin behavior changed.

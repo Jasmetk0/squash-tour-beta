@@ -655,3 +655,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Run Browser is now discoverable from Viewer hub/link areas.
 - Existing active-run links and selection behavior remain unchanged.
 - No backend/Admin behavior changed.
+
+## Phase 3AG — Predictions subpages deferred polish
+
+- Prediction/odds subpages now show conservative active-run metadata and safe links while keeping outputs deferred.
+- No fake odds, probabilities, winners, markets, projections, or results were added.
+- No backend/Admin behavior changed.

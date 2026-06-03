@@ -1411,7 +1411,7 @@ export function ViewerPlayersPage(): JSX.Element {
 }
 
 
-type ViewerCountriesDeferredKind = 'all' | 'hosting' | 'talent-pipeline' | 'records'
+type ViewerCountriesDeferredKind = 'ranking' | 'all' | 'hosting' | 'talent-pipeline' | 'records'
 
 type ViewerCountriesDeferredConfig = {
   title: string
@@ -1419,6 +1419,10 @@ type ViewerCountriesDeferredConfig = {
 }
 
 const viewerCountriesDeferredConfigs: Record<ViewerCountriesDeferredKind, ViewerCountriesDeferredConfig> = {
+  ranking: {
+    title: 'Country Ranking',
+    deferredCopy: 'No country ranking table is shown until a real country ranking read model exists.'
+  },
   all: {
     title: 'All Countries',
     deferredCopy: 'No full country directory is shown until a real country directory read model exists.'
@@ -1982,7 +1986,7 @@ export function ViewerTourCalendarPage(): JSX.Element {
 }
 
 export function ViewerCountryRankingPage(): JSX.Element {
-  return <ViewerShellPage title="Country Ranking" description="Shared Country Ranking destination used by Rankings and Countries navigation. Future country standings will appear here once connected." />
+  return <ViewerCountriesDeferredPage kind="ranking" />
 }
 
 type ViewerComparisonRouteKind = 'h2h' | 'compare'

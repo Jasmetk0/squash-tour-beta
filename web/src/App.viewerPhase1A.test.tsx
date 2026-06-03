@@ -537,29 +537,95 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('keeps H2H subroute deferred states read-only', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-1i-run')
+  it('keeps H2H subroutes as conservative active-run metadata pages', async () => {
+    const routes = [
+      ['/viewer/h2h/rivalries', 'Rivalries', 'No rivalry list is shown until direct match records are available.'],
+      ['/viewer/h2h/most-played', 'Most Played Matchups', 'No matchup list is shown until completed match counts are available.'],
+      ['/viewer/h2h/finals-rivalries', 'Finals Rivalries', 'No finals rivalry list is shown until final-round match records are available.']
+    ] as const
 
-    renderAppAt('/viewer/h2h/rivalries')
-    expect((await screen.findAllByText('This preview is not connected for this data shape yet.')).length).toBeGreaterThan(0)
-    expect(screen.getByText('No rivalry list is shown until direct match records are available.')).toBeInTheDocument()
-    expect(screen.getAllByText('phase-1i-run').length).toBeGreaterThan(0)
-    expect(screen.queryByText(/Top rivalry/i)).not.toBeInTheDocument()
-    expectNoForbiddenViewerActions()
+    for (const [route, title, deferredCopy] of routes) {
+      cleanup()
+      resetApiMocks()
+      vi.clearAllMocks()
+      localStorage.removeItem('beta_engine:viewer_active_run_id')
 
-    cleanup()
-    renderAppAt('/viewer/h2h/most-played')
-    expect((await screen.findAllByText('This preview is not connected for this data shape yet.')).length).toBeGreaterThan(0)
-    expect(screen.getByText('No matchup list is shown until completed match counts are available.')).toBeInTheDocument()
-    expect(screen.queryByText(/matchup record/i)).not.toBeInTheDocument()
-    expectNoForbiddenViewerActions()
+      renderAppAt(route)
 
-    cleanup()
-    renderAppAt('/viewer/h2h/finals-rivalries')
-    expect((await screen.findAllByText('This preview is not connected for this data shape yet.')).length).toBeGreaterThan(0)
-    expect(screen.getByText('No finals rivalry list is shown until final-round match records are available.')).toBeInTheDocument()
-    expect(screen.queryByText(/finals record/i)).not.toBeInTheDocument()
-    expectNoForbiddenViewerActions()
+      expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
+      expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
+      expect(api.getRunStatusSummary).not.toHaveBeenCalled()
+      expect(api.listRunPlayers).not.toHaveBeenCalled()
+      expectNoForbiddenViewerActions()
+
+      cleanup()
+      resetApiMocks()
+      vi.clearAllMocks()
+      localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3am-run')
+      api.getRunStatusSummary.mockResolvedValue({
+        run_id: 'phase-3am-run',
+        season: 2034,
+        seed: 44,
+        progress: { next_event_index: 2, total_events: 9, completed_event_count: 2 },
+        finals: { qualification_available: true, result_available: false },
+        rollover: null,
+        source: { source_type: 'fresh_seed', parent_run_id: null },
+        lineage: { child_run_count: 0 },
+        history_counts: { events: 2, ranking_snapshots: 3, race_snapshots: 1 }
+      })
+      api.listRunPlayers.mockResolvedValue({
+        run_id: 'phase-3am-run',
+        total: 2,
+        limit: 50,
+        offset: 0,
+        players: [
+          { player_id: 'P1', name: 'Player One', country_code: 'AAA', age: 24, source_type: 'planner_generated', override_id: null, quality_band: 'A', is_top_band: true, origin_source_type: 'planner_generated', origin_quality_band: 'A', origin_override_id: null, origin_season: 2034, technique: 80, movement: 81, physical: 82, mental: 83, overall: 84 },
+          { player_id: 'P2', name: 'Player Two', country_code: 'BBB', age: 26, source_type: 'planner_generated', override_id: null, quality_band: 'B', is_top_band: false, origin_source_type: 'planner_generated', origin_quality_band: 'B', origin_override_id: null, origin_season: 2034, technique: 70, movement: 71, physical: 72, mental: 73, overall: 74 }
+        ]
+      })
+      api.listEvents.mockResolvedValue({
+        run_id: 'phase-3am-run',
+        events: [
+          { event_sequence: 1, event_id: 'E1', season: 2034, week: 4, template_id: 'T1', tournament_result: { raw_secret: 'fake finals score payload' } },
+          { event_sequence: 2, event_id: 'E2', season: 2034, week: 7, template_id: 'T2', tournament_result: { raw_secret: 'fake winner payload' } }
+        ]
+      })
+      api.listRankingSnapshots.mockResolvedValue({ run_id: 'phase-3am-run', snapshots: [
+        { snapshot_sequence: 1, snapshot_kind: 'ranking', source_event_id: 'E1', payload: { raw_secret: 'fake H2H table payload' } },
+        { snapshot_sequence: 2, snapshot_kind: 'ranking', source_event_id: 'E2', payload: { raw_secret: 'fake rivalry record payload' } },
+        { snapshot_sequence: 3, snapshot_kind: 'ranking', source_event_id: 'E2', payload: { raw_secret: 'fake storyline payload' } }
+      ] })
+      api.listRaceSnapshots.mockResolvedValue({ run_id: 'phase-3am-run', snapshots: [
+        { snapshot_sequence: 4, snapshot_kind: 'race', source_event_id: 'E2', payload: { raw_secret: 'fake matchup count payload' } }
+      ] })
+      api.getFinalsSummary.mockResolvedValue({ run_id: 'phase-3am-run', season: 2034, qualification: { run_id: 'phase-3am-run', season: 2034, source_as_of_season: 2034, source_as_of_week: 40, qualification: { raw_secret: 'fake finals rivalry payload' } }, result: null })
+
+      renderAppAt(route)
+
+      expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
+      expect(screen.getByText(deferredCopy)).toBeInTheDocument()
+      const metadata = await screen.findByLabelText(`${title} source metadata`)
+      await waitFor(() => expect(metadata).toHaveTextContent('Active run IDphase-3am-run'))
+      expect(metadata).toHaveTextContent('Total player count2')
+      expect(metadata).toHaveTextContent('Returned/sample player count2')
+      expect(metadata).toHaveTextContent('Completed/persisted event count2')
+      expect(metadata).toHaveTextContent('Ranking snapshot count3')
+      expect(metadata).toHaveTextContent('Race snapshot count1')
+      expect(within(metadata).getByRole('link', { name: 'Finals qualification available' })).toHaveAttribute('href', '/viewer/runs/phase-3am-run/finals')
+      expect(within(metadata).getByRole('link', { name: 'Player One' })).toHaveAttribute('href', '/viewer/runs/phase-3am-run/players/P1/career')
+      expect(within(metadata).getByRole('link', { name: 'P1' })).toHaveAttribute('href', '/viewer/runs/phase-3am-run/players/P1/career')
+      expect(within(metadata).getByRole('link', { name: 'AAA' })).toHaveAttribute('href', '/viewer/runs/phase-3am-run/countries/AAA')
+      expect(screen.getByRole('link', { name: 'Open H2H comparison' })).toHaveAttribute('href', '/viewer/h2h')
+      expect(screen.getByRole('link', { name: 'Open active run players' })).toHaveAttribute('href', '/viewer/runs/phase-3am-run/players')
+      expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/phase-3am-run/tournaments')
+      expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/phase-3am-run/rankings')
+      expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/phase-3am-run/race')
+      expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
+      expect(api.listRunPlayers).toHaveBeenCalledWith('phase-3am-run', { limit: 50, offset: 0 })
+      expect(document.body).not.toHaveTextContent(/raw_secret|source_type|origin_source_type|override_id|planner_generated|payload/i)
+      expect(document.body).not.toHaveTextContent(/Top rivalry|3-1 H2H|fake H2H|fake rivalry|fake matchup|fake finals|fake winner|fake storyline|matchup count payload|winner payload|score payload|storyline payload/i)
+      expectNoForbiddenViewerActions()
+    }
   })
 
 

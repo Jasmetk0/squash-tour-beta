@@ -1307,6 +1307,100 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
   })
 
+
+  it('renders conservative deferred Stats/Records subpages without active run data', async () => {
+    const routes = [
+      ['/viewer/stats/title-leaders', 'Title Leaders', 'No title leader table is shown until a real records read model exists.'],
+      ['/viewer/stats/no1-weeks', 'Weeks at No.1', 'No weeks-at-No.1 table is shown until a real ranking history read model exists.'],
+      ['/viewer/stats/streaks', 'Streaks', 'No streak table is shown until a real streak records read model exists.'],
+      ['/viewer/stats/upsets', 'Biggest Upsets', 'No upset table is shown until real match and ranking history read models exist.'],
+      ['/viewer/stats/best-seasons', 'Best Seasons', 'No best-season table is shown until a real season statistics read model exists.'],
+      ['/viewer/stats/player-stats', 'Player Stats', 'No player statistics table is shown until a real player statistics read model exists.'],
+      ['/viewer/stats/tournament-stats', 'Tournament Stats', 'No tournament statistics table is shown until a real tournament statistics read model exists.'],
+      ['/viewer/stats/country-stats', 'Country Stats', 'No country statistics table is shown until a real country statistics read model exists.'],
+      ['/viewer/stats/awards', 'Awards', 'No awards are shown until a real awards read model exists.'],
+      ['/viewer/stats/hall-of-fame', 'Hall of Fame', 'No Hall of Fame entries are shown until a real Hall of Fame read model exists.'],
+      ['/viewer/stats/era-rankings', 'Era Rankings', 'No era rankings are shown until a real era comparison read model exists.']
+    ] as const
+
+    for (const [route, title] of routes) {
+      cleanup()
+      resetApiMocks()
+      localStorage.removeItem('beta_engine:viewer_active_run_id')
+      renderAppAt(route)
+      expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
+      expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
+      expect(api.getRunStatusSummary).not.toHaveBeenCalled()
+      expectNoForbiddenViewerActions()
+    }
+  })
+
+  it('shows active-run metadata, safe links, and route-specific deferred copy on Stats/Records subpages', async () => {
+    const routes = [
+      ['/viewer/stats/title-leaders', 'Title Leaders', 'No title leader table is shown until a real records read model exists.'],
+      ['/viewer/stats/no1-weeks', 'Weeks at No.1', 'No weeks-at-No.1 table is shown until a real ranking history read model exists.'],
+      ['/viewer/stats/streaks', 'Streaks', 'No streak table is shown until a real streak records read model exists.'],
+      ['/viewer/stats/upsets', 'Biggest Upsets', 'No upset table is shown until real match and ranking history read models exist.'],
+      ['/viewer/stats/best-seasons', 'Best Seasons', 'No best-season table is shown until a real season statistics read model exists.'],
+      ['/viewer/stats/player-stats', 'Player Stats', 'No player statistics table is shown until a real player statistics read model exists.'],
+      ['/viewer/stats/tournament-stats', 'Tournament Stats', 'No tournament statistics table is shown until a real tournament statistics read model exists.'],
+      ['/viewer/stats/country-stats', 'Country Stats', 'No country statistics table is shown until a real country statistics read model exists.'],
+      ['/viewer/stats/awards', 'Awards', 'No awards are shown until a real awards read model exists.'],
+      ['/viewer/stats/hall-of-fame', 'Hall of Fame', 'No Hall of Fame entries are shown until a real Hall of Fame read model exists.'],
+      ['/viewer/stats/era-rankings', 'Era Rankings', 'No era rankings are shown until a real era comparison read model exists.']
+    ] as const
+
+    for (const [route, title, deferredCopy] of routes) {
+      cleanup()
+      resetApiMocks()
+      localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ah-run')
+      api.getRunStatusSummary.mockResolvedValue({
+        run_id: 'phase-3ah-run',
+        season: 2032,
+        seed: 21,
+        progress: { next_event_index: 3, total_events: 6, completed_event_count: 2 },
+        finals: { qualification_available: true, result_available: false },
+        rollover: null,
+        source: { source_type: 'fresh_seed', parent_run_id: null },
+        lineage: { child_run_count: 0 },
+        history_counts: { events: 2, ranking_snapshots: 1, race_snapshots: 1 }
+      })
+      api.listEvents.mockResolvedValue({
+        run_id: 'phase-3ah-run',
+        events: [
+          { event_sequence: 1, event_id: 'EVENT-OLD', season: 2032, week: 2, template_id: 'TEMP-OLD', tournament_result: { raw_secret: 'Fake record holder payload' } },
+          { event_sequence: 2, event_id: 'EVENT-LATEST', season: 2032, week: 4, template_id: 'TEMP-LATEST', tournament_result: { raw_secret: 'GOAT ranking payload' } }
+        ]
+      })
+      api.listRankingSnapshots.mockResolvedValue({ run_id: 'phase-3ah-run', snapshots: [{ snapshot_sequence: 7, snapshot_kind: 'ranking', source_event_id: 'EVENT-LATEST', payload: { raw_secret: 'fake weeks at No.1 payload' } }] })
+      api.listRaceSnapshots.mockResolvedValue({ run_id: 'phase-3ah-run', snapshots: [{ snapshot_sequence: 8, snapshot_kind: 'race', source_event_id: 'EVENT-LATEST', payload: { raw_secret: 'fake leader payload' } }] })
+      api.getFinalsSummary.mockResolvedValue({ run_id: 'phase-3ah-run', season: 2032, qualification: { run_id: 'phase-3ah-run', season: 2032, source_as_of_season: 2032, source_as_of_week: 4, qualification: { raw_secret: 'award payload' } }, result: null })
+
+      renderAppAt(route)
+
+      expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
+      expect(screen.getByText(deferredCopy)).toBeInTheDocument()
+      const metadata = await screen.findByLabelText(`${title} source metadata`)
+      expect(metadata).toHaveTextContent('Active run IDphase-3ah-run')
+      expect(metadata).toHaveTextContent('Completed/persisted event count2')
+      expect(metadata).toHaveTextContent('Ranking snapshot count1')
+      expect(metadata).toHaveTextContent('Race snapshot count1')
+      expect(within(metadata).getByRole('link', { name: 'EVENT-LATEST' })).toHaveAttribute('href', '/viewer/runs/phase-3ah-run/tournaments/EVENT-LATEST')
+      expect(within(metadata).getByRole('link', { name: '#7' })).toHaveAttribute('href', '/viewer/runs/phase-3ah-run/rankings/7')
+      expect(within(metadata).getByRole('link', { name: '#8' })).toHaveAttribute('href', '/viewer/runs/phase-3ah-run/race/8')
+      expect(within(metadata).getByRole('link', { name: 'Finals qualification available' })).toHaveAttribute('href', '/viewer/runs/phase-3ah-run/finals')
+      expect(screen.getByRole('link', { name: 'Open records' })).toHaveAttribute('href', '/viewer/records')
+      expect(screen.getByRole('link', { name: 'Open stats' })).toHaveAttribute('href', '/viewer/stats')
+      expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/phase-3ah-run/tournaments')
+      expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/phase-3ah-run/rankings')
+      expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/phase-3ah-run/race')
+      expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
+      expect(document.body).not.toHaveTextContent(/Fake record holder|GOAT ranking payload|fake weeks at No\.1 payload|fake leader payload|award payload|raw_secret|source_event_id|payload/i)
+      expect(document.body).not.toHaveTextContent(/Most titles|Title count|Weeks at No\.1\s*\d|Winning streak|Upset list|Player of the Year|Hall of Fame inductee|GOAT rankings/i)
+      expectNoForbiddenViewerActions()
+    }
+  })
+
   it('shows active-run History Records and Stats empty metadata states without fake leaders', async () => {
     localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
 

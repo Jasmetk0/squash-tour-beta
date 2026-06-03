@@ -38,6 +38,7 @@ import {
   ViewerRunBrowserPage,
   ViewerSearchPage,
   ViewerShellPage,
+  ViewerStatsDeferredPage,
   ViewerStatsPage,
   ViewerSeasonHubPage,
   ViewerTourCalendarPage,
@@ -195,17 +196,17 @@ export default function App(): JSX.Element {
         <Route path="viewer/h2h/most-played" element={<ViewerH2HSubroutePage kind="most-played" />} />
         <Route path="viewer/h2h/finals-rivalries" element={<ViewerH2HSubroutePage kind="finals-rivalries" />} />
         <Route path="viewer/stats" element={<ViewerStatsPage />} />
-        <Route path="viewer/stats/title-leaders" element={<ViewerShellPage title="Title Leaders" />} />
-        <Route path="viewer/stats/no1-weeks" element={<ViewerShellPage title="Weeks at No.1" />} />
-        <Route path="viewer/stats/streaks" element={<ViewerShellPage title="Streaks" />} />
-        <Route path="viewer/stats/upsets" element={<ViewerShellPage title="Biggest Upsets" />} />
-        <Route path="viewer/stats/best-seasons" element={<ViewerShellPage title="Best Seasons" />} />
-        <Route path="viewer/stats/player-stats" element={<ViewerShellPage title="Player Stats" />} />
-        <Route path="viewer/stats/tournament-stats" element={<ViewerShellPage title="Tournament Stats" />} />
-        <Route path="viewer/stats/country-stats" element={<ViewerShellPage title="Country Stats" />} />
-        <Route path="viewer/stats/awards" element={<ViewerShellPage title="Awards" />} />
-        <Route path="viewer/stats/hall-of-fame" element={<ViewerShellPage title="Hall of Fame" />} />
-        <Route path="viewer/stats/era-rankings" element={<ViewerShellPage title="Era Rankings" />} />
+        <Route path="viewer/stats/title-leaders" element={<ViewerStatsDeferredPage kind="title-leaders" />} />
+        <Route path="viewer/stats/no1-weeks" element={<ViewerStatsDeferredPage kind="no1-weeks" />} />
+        <Route path="viewer/stats/streaks" element={<ViewerStatsDeferredPage kind="streaks" />} />
+        <Route path="viewer/stats/upsets" element={<ViewerStatsDeferredPage kind="upsets" />} />
+        <Route path="viewer/stats/best-seasons" element={<ViewerStatsDeferredPage kind="best-seasons" />} />
+        <Route path="viewer/stats/player-stats" element={<ViewerStatsDeferredPage kind="player-stats" />} />
+        <Route path="viewer/stats/tournament-stats" element={<ViewerStatsDeferredPage kind="tournament-stats" />} />
+        <Route path="viewer/stats/country-stats" element={<ViewerStatsDeferredPage kind="country-stats" />} />
+        <Route path="viewer/stats/awards" element={<ViewerStatsDeferredPage kind="awards" />} />
+        <Route path="viewer/stats/hall-of-fame" element={<ViewerStatsDeferredPage kind="hall-of-fame" />} />
+        <Route path="viewer/stats/era-rankings" element={<ViewerStatsDeferredPage kind="era-rankings" />} />
         <Route path="viewer/records" element={<ViewerRecordsPage />} />
         <Route path="viewer/predictions" element={<ViewerMatchPredictorPage />} />
         <Route path="viewer/predictions/match-predictor" element={<ViewerMatchPredictorPage />} />

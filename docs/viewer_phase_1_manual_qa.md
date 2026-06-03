@@ -703,3 +703,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Deferred Viewer source metadata helper logic was cleaned up while preserving existing read-only behavior.
 - Deferred pages keep the same labels, links, no-data states, and safety behavior.
 - No backend/Admin behavior changed.
+
+## Phase 3AO — Remaining ViewerShell placeholder audit note
+
+- Remaining top-level Viewer routes were checked for generic `ViewerShellPage` placeholders.
+- The only remaining generic top-level Viewer route found is `/viewer/countries/ranking` (`Country Ranking`), which should become a conservative deferred country-ranking metadata page later.
+- No new deferred pages were implemented in this phase.
+- Viewer remains read-only; no backend/Admin behavior changed.

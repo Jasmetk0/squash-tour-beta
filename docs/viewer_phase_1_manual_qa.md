@@ -716,3 +716,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Country Ranking now shows conservative active-run country metadata and safe links while keeping ranking output deferred.
 - No fake country rankings, ranking positions, medals, awards, records, talent rankings, hosting rankings, or storylines were added.
 - No backend/Admin behavior changed.
+
+## Phase 3AQ — Viewer Phase 3 completion audit
+
+- Viewer Phase 3 completion audit was performed across Viewer routing, Viewer page/test coverage, and this QA note.
+- Remaining generic top-level `ViewerShellPage` placeholders: none found under `/viewer` or `/viewer/*` routes.
+- Viewer remains read-only with no backend/Admin behavior changes.
+- Full `npm test` and `pytest` were not run; only targeted Viewer frontend test/build checks were run for this audit.

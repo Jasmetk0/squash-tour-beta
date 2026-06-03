@@ -40,7 +40,6 @@ import {
   ViewerRecordsPage,
   ViewerRunBrowserPage,
   ViewerSearchPage,
-  ViewerShellPage,
   ViewerStatsDeferredPage,
   ViewerStatsPage,
   ViewerSeasonHubPage,

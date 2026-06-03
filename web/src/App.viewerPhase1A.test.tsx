@@ -2363,6 +2363,144 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     }
   })
 
+
+  it('renders conservative deferred Countries subpages without active run data', async () => {
+    const routes = [
+      ['/viewer/countries/all', 'All Countries'],
+      ['/viewer/countries/hosting', 'Hosting Nations'],
+      ['/viewer/countries/talent-pipeline', 'Talent Pipeline'],
+      ['/viewer/countries/records', 'Country Records']
+    ] as const
+
+    for (const [route, title] of routes) {
+      cleanup()
+      resetApiMocks()
+      localStorage.removeItem('beta_engine:viewer_active_run_id')
+      renderAppAt(route)
+
+      expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
+      expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
+      expect(api.listRunNations).not.toHaveBeenCalled()
+      expect(api.getRunStatusSummary).not.toHaveBeenCalled()
+      expect(api.listEvents).not.toHaveBeenCalled()
+      expect(api.listRankingSnapshots).not.toHaveBeenCalled()
+      expect(api.listRaceSnapshots).not.toHaveBeenCalled()
+      expectNoForbiddenViewerActions()
+    }
+  })
+
+  it('shows active-run metadata, safe links, samples, and route-specific deferred copy on Countries subpages', async () => {
+    const routes = [
+      ['/viewer/countries/all', 'All Countries', 'No full country directory is shown until a real country directory read model exists.'],
+      ['/viewer/countries/hosting', 'Hosting Nations', 'No hosting nation table is shown until a real hosting read model exists.'],
+      ['/viewer/countries/talent-pipeline', 'Talent Pipeline', 'No talent pipeline table is shown until a real country talent read model exists.'],
+      ['/viewer/countries/records', 'Country Records', 'No country records table is shown until a real country records read model exists.']
+    ] as const
+
+    for (const [route, title, deferredCopy] of routes) {
+      cleanup()
+      resetApiMocks()
+      localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3al-run')
+      api.listRunNations.mockResolvedValue({
+        run_id: 'phase-3al-run',
+        total: 64,
+        limit: 50,
+        offset: 0,
+        nations: [
+          {
+            country_code: 'EG',
+            country_name: 'Egypt',
+            total_players: 18,
+            average_overall: 82.5,
+            average_age: 26.4,
+            top_band_count: 5,
+            manual_override_count: 99,
+            planner_generated_count: 88,
+            rollover_carried_count: 77,
+            top_player_id: 'ALI-1',
+            top_player_name: 'Ali Farag',
+            top_player_overall: 94
+          },
+          {
+            country_code: 'NZ',
+            country_name: 'New Zealand',
+            total_players: 6,
+            average_overall: 76.25,
+            average_age: 29.1,
+            top_band_count: 1,
+            manual_override_count: 0,
+            planner_generated_count: 6,
+            rollover_carried_count: 0,
+            top_player_id: null,
+            top_player_name: 'Known Top Name',
+            top_player_overall: 88
+          }
+        ]
+      })
+      api.getRunStatusSummary.mockResolvedValue({
+        run_id: 'phase-3al-run',
+        season: 2035,
+        seed: 44,
+        progress: { next_event_index: 2, total_events: 5, completed_event_count: 2 },
+        finals: { qualification_available: false, result_available: false },
+        rollover: null,
+        source: { source_type: 'fresh_seed', parent_run_id: null },
+        lineage: { child_run_count: 0 },
+        history_counts: { events: 2, ranking_snapshots: 3, race_snapshots: 4 }
+      })
+      api.listEvents.mockResolvedValue({
+        run_id: 'phase-3al-run',
+        events: [
+          { event_sequence: 1, event_id: 'EVENT-A', season: 2035, week: 2, template_id: 'TEMP-A', tournament_result: { raw_secret: 'hidden event payload' } },
+          { event_sequence: 2, event_id: 'EVENT-B', season: 2035, week: 4, template_id: 'TEMP-B', tournament_result: { raw_secret: 'hidden event payload' } }
+        ]
+      })
+      api.listRankingSnapshots.mockResolvedValue({ run_id: 'phase-3al-run', snapshots: [
+        { snapshot_sequence: 1, snapshot_kind: 'ranking', source_event_id: 'EVENT-A', payload: { raw_secret: 'hidden ranking payload' } },
+        { snapshot_sequence: 2, snapshot_kind: 'ranking', source_event_id: 'EVENT-B', payload: { raw_secret: 'hidden ranking payload' } },
+        { snapshot_sequence: 3, snapshot_kind: 'ranking', source_event_id: 'EVENT-B', payload: { raw_secret: 'hidden ranking payload' } }
+      ] })
+      api.listRaceSnapshots.mockResolvedValue({ run_id: 'phase-3al-run', snapshots: [
+        { snapshot_sequence: 4, snapshot_kind: 'race', source_event_id: 'EVENT-A', payload: { raw_secret: 'hidden race payload' } },
+        { snapshot_sequence: 5, snapshot_kind: 'race', source_event_id: 'EVENT-B', payload: { raw_secret: 'hidden race payload' } },
+        { snapshot_sequence: 6, snapshot_kind: 'race', source_event_id: 'EVENT-B', payload: { raw_secret: 'hidden race payload' } },
+        { snapshot_sequence: 7, snapshot_kind: 'race', source_event_id: 'EVENT-B', payload: { raw_secret: 'hidden race payload' } }
+      ] })
+
+      renderAppAt(route)
+
+      expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
+      expect(screen.getByText(deferredCopy)).toBeInTheDocument()
+      const metadata = await screen.findByLabelText(`${title} source metadata`)
+      expect(metadata).toHaveTextContent('Active run IDphase-3al-run')
+      expect(metadata).toHaveTextContent('Total country/nation count64')
+      expect(metadata).toHaveTextContent('Returned/sample country count2/2')
+      expect(metadata).toHaveTextContent('Completed/persisted event count2')
+      expect(metadata).toHaveTextContent('Ranking snapshot count3')
+      expect(metadata).toHaveTextContent('Race snapshot count4')
+
+      const samples = screen.getByLabelText(`${title} safe sample countries`)
+      expect(within(samples).getByRole('link', { name: 'EG' })).toHaveAttribute('href', '/viewer/runs/phase-3al-run/countries/EG')
+      expect(within(samples).getByRole('link', { name: 'Egypt' })).toHaveAttribute('href', '/viewer/runs/phase-3al-run/countries/EG')
+      expect(within(samples).getByRole('link', { name: 'Ali Farag' })).toHaveAttribute('href', '/viewer/runs/phase-3al-run/players/ALI-1/career')
+      expect(samples).toHaveTextContent('Player count18')
+      expect(samples).toHaveTextContent('Average Power Rating82.5')
+      expect(samples).toHaveTextContent('Top player Power Rating94')
+      expect(within(samples).queryByRole('link', { name: 'Known Top Name' })).not.toBeInTheDocument()
+
+      expect(screen.getByRole('link', { name: 'Open active run countries' })).toHaveAttribute('href', '/viewer/runs/phase-3al-run/countries')
+      expect(screen.getByRole('link', { name: 'Open active run players' })).toHaveAttribute('href', '/viewer/runs/phase-3al-run/players')
+      expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/phase-3al-run/rankings')
+      expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/phase-3al-run/tournaments')
+      expect(screen.getByRole('link', { name: 'Open Viewer search' })).toHaveAttribute('href', '/viewer/search')
+      expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
+      expect(api.listRunNations).toHaveBeenCalledWith('phase-3al-run', { limit: 50, offset: 0 })
+      expect(document.body).not.toHaveTextContent(/manual_override_count|planner_generated_count|rollover_carried_count|raw_secret|hidden event payload|hidden ranking payload|hidden race payload/i)
+      expect(document.body).not.toHaveTextContent(/Fake country ranking|Hosting record row|Talent pipeline rank|Medal table|Award winner|Country record value|Storyline card/i)
+      expectNoForbiddenViewerActions()
+    }
+  })
+
   it('Admin routes still render', async () => {
     renderAppAt('/admin')
 

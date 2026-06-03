@@ -21,6 +21,7 @@ import {
   AdminTournamentTemplatesPage,
   AdminWorldPage,
   LandingPage,
+  ViewerCountriesDeferredPage,
   ViewerCountriesPage,
   ViewerCurrentWeekPage,
   ViewerCountryRankingPage,
@@ -190,10 +191,10 @@ export default function App(): JSX.Element {
         <Route path="viewer/players/compare" element={<ViewerPlayerComparisonPage />} />
         <Route path="viewer/countries" element={<ViewerCountriesPage />} />
         <Route path="viewer/countries/ranking" element={<ViewerCountryRankingPage />} />
-        <Route path="viewer/countries/all" element={<ViewerShellPage title="All Countries" />} />
-        <Route path="viewer/countries/hosting" element={<ViewerShellPage title="Hosting Nations" />} />
-        <Route path="viewer/countries/talent-pipeline" element={<ViewerShellPage title="Talent Pipeline" />} />
-        <Route path="viewer/countries/records" element={<ViewerShellPage title="Country Records" />} />
+        <Route path="viewer/countries/all" element={<ViewerCountriesDeferredPage kind="all" />} />
+        <Route path="viewer/countries/hosting" element={<ViewerCountriesDeferredPage kind="hosting" />} />
+        <Route path="viewer/countries/talent-pipeline" element={<ViewerCountriesDeferredPage kind="talent-pipeline" />} />
+        <Route path="viewer/countries/records" element={<ViewerCountriesDeferredPage kind="records" />} />
         <Route path="viewer/h2h" element={<ViewerH2HPage />} />
         <Route path="viewer/h2h/rivalries" element={<ViewerH2HSubroutePage kind="rivalries" />} />
         <Route path="viewer/h2h/most-played" element={<ViewerH2HSubroutePage kind="most-played" />} />

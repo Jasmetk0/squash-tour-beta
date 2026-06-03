@@ -723,3 +723,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Remaining generic top-level `ViewerShellPage` placeholders: none found under `/viewer` or `/viewer/*` routes.
 - Viewer remains read-only with no backend/Admin behavior changes.
 - Full `npm test` and `pytest` were not run; only targeted Viewer frontend test/build checks were run for this audit.
+
+## Phase 4A — Viewer route/link registry audit
+
+- Viewer route/link registry audit was performed across Viewer routes, Viewer navigation, active-run links, route helpers, and this QA note.
+- Findings by severity: blocker 0, medium 3, low 2.
+- No broken Viewer links to missing `App.tsx` routes were found in the inspected Viewer nav/link areas.
+- No backend/Admin behavior changed; Viewer remains read-only.
+- Full `npm test` and `pytest` were not run; this documentation-only phase ran `git diff --check` only.

@@ -1,3 +1,5 @@
+import appSource from './App.tsx?raw'
+
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -129,6 +131,15 @@ beforeEach(() => {
   localStorage.removeItem('beta_engine:viewer_active_run_id')
   localStorage.removeItem('beta_engine:viewer_context')
   resetApiMocks()
+})
+
+describe('Viewer Phase 3AQ completion audit', () => {
+  it('keeps Viewer routes free of direct generic ViewerShellPage placeholders', () => {
+    const directViewerShellRoutes = [...appSource.matchAll(/<Route\s+path="(viewer[^"]*)"\s+element=\{<ViewerShellPage\s+title="([^"]*)"\s*\/>\}/g)]
+      .map((match) => ({ path: match[1], title: match[2] }))
+
+    expect(directViewerShellRoutes).toEqual([])
+  })
 })
 
 describe('Viewer Phase 1B/1C/1D routes and safety', () => {

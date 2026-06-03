@@ -7,6 +7,8 @@ import { ViewerActiveRunCompact } from './ViewerRunSelector'
 import { ViewerContextProvider } from '../viewer/ViewerContext'
 import {
   viewerHomePath,
+  viewerPlayersPath,
+  viewerSeasonCalendarPath,
   viewerTopCountriesPath,
   viewerTopCountryRankingPath,
   viewerTopH2HPath,
@@ -157,6 +159,14 @@ function readMode(pathname: string): 'admin' | 'viewer' | 'landing' {
   return 'landing'
 }
 
+function safeDecodePathSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment)
+  } catch {
+    return segment
+  }
+}
+
 function readRunId(pathname: string, paramRunId?: string): string | undefined {
   if (paramRunId) return paramRunId
   const match = pathname.match(/^\/(?:admin|viewer)\/runs\/([^/]+)/)
@@ -168,7 +178,7 @@ export function getModeSwitcherTarget(pathname: string): { viewerTarget: string;
   const runCalendarMatch = pathname.match(/^\/(viewer|admin)\/runs\/([^/]+)\/calendar$/)
   if (runCalendarMatch) {
     return {
-      viewerTarget: `/viewer/runs/${runCalendarMatch[2]}/calendar`,
+      viewerTarget: viewerSeasonCalendarPath(safeDecodePathSegment(runCalendarMatch[2])),
       adminTarget: `/admin/runs/${runCalendarMatch[2]}/calendar`
     }
   }
@@ -176,7 +186,7 @@ export function getModeSwitcherTarget(pathname: string): { viewerTarget: string;
   const runPlayersMatch = pathname.match(/^\/(viewer|admin)\/runs\/([^/]+)\/players$/)
   if (runPlayersMatch) {
     return {
-      viewerTarget: `/viewer/runs/${runPlayersMatch[2]}/players`,
+      viewerTarget: viewerPlayersPath(safeDecodePathSegment(runPlayersMatch[2])),
       adminTarget: `/admin/runs/${runPlayersMatch[2]}/players`
     }
   }

@@ -178,6 +178,14 @@ describe('Layout mode navigation', () => {
     expect(getModeSwitcherTarget('/admin/runs/abc/calendar')).toEqual({ viewerTarget: '/viewer/runs/abc/calendar', adminTarget: '/admin/runs/abc/calendar' })
     expect(getModeSwitcherTarget('/viewer/runs/abc/players')).toEqual({ viewerTarget: '/viewer/runs/abc/players', adminTarget: '/admin/runs/abc/players' })
     expect(getModeSwitcherTarget('/admin/runs/abc/players')).toEqual({ viewerTarget: '/viewer/runs/abc/players', adminTarget: '/admin/runs/abc/players' })
+    expect(getModeSwitcherTarget('/admin/runs/run%20alpha/calendar')).toEqual({
+      viewerTarget: '/viewer/runs/run%20alpha/calendar',
+      adminTarget: '/admin/runs/run%20alpha/calendar'
+    })
+    expect(getModeSwitcherTarget('/admin/runs/run%2Falpha/players')).toEqual({
+      viewerTarget: '/viewer/runs/run%2Falpha/players',
+      adminTarget: '/admin/runs/run%2Falpha/players'
+    })
     expect(getModeSwitcherTarget('/viewer/unknown')).toEqual({ viewerTarget: '/viewer/unknown', adminTarget: '/admin' })
     expect(getModeSwitcherTarget('/admin/unknown')).toEqual({ viewerTarget: '/viewer', adminTarget: '/admin/unknown' })
   })

@@ -739,3 +739,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Country Ranking nav ownership was clarified under Countries navigation only.
 - `/viewer/tour/tournaments` and `/viewer/tournaments` remain available; Tour navigation uses `/viewer/tour/tournaments`, while `/viewer/tournaments` remains an alias/public shortcut to the same ViewerTournamentsPage. Future cleanup may choose one canonical public URL.
 - No backend/Admin behavior changed.
+
+## Phase 4C — Mode switcher route-helper cleanup
+
+- Mode switcher Viewer targets now use shared Viewer route helpers where available.
+- Existing Admin/Viewer mode switch behavior remains unchanged.
+- Dynamic Viewer run IDs remain safely encoded where helpers are used.
+- No backend/Admin behavior changed.

@@ -2114,6 +2114,109 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     }
   })
 
+
+  it('renders conservative deferred Rankings subpages without active run data', async () => {
+    const routes = [
+      ['/viewer/rankings/next-gen', 'Next Gen Race'],
+      ['/viewer/rankings/elo', 'Elo Ranking'],
+      ['/viewer/rankings/power', 'Power Rating'],
+      ['/viewer/rankings/form', 'Form Ranking'],
+      ['/viewer/rankings/no1-history', 'No.1 History']
+    ] as const
+
+    for (const [route, title] of routes) {
+      cleanup()
+      resetApiMocks()
+      localStorage.removeItem('beta_engine:viewer_active_run_id')
+      renderAppAt(route)
+
+      expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
+      expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
+      expect(api.getRunStatusSummary).not.toHaveBeenCalled()
+      expect(api.listRankingSnapshots).not.toHaveBeenCalled()
+      expectNoForbiddenViewerActions()
+    }
+  })
+
+  it('shows active-run metadata, safe links, and route-specific deferred copy on Rankings subpages', async () => {
+    const routes = [
+      ['/viewer/rankings/next-gen', 'Next Gen Race', 'No Next Gen ranking table is shown until a real Next Gen ranking read model exists.'],
+      ['/viewer/rankings/elo', 'Elo Ranking', 'No Elo ranking table is shown until a real Elo ranking read model exists.'],
+      ['/viewer/rankings/power', 'Power Rating', 'No Power Rating table is shown until a real Power Rating read model exists.'],
+      ['/viewer/rankings/form', 'Form Ranking', 'No form ranking table is shown until a real form ranking read model exists.'],
+      ['/viewer/rankings/no1-history', 'No.1 History', 'No No.1 history table is shown until a real ranking history read model exists.']
+    ] as const
+
+    for (const [route, title, deferredCopy] of routes) {
+      cleanup()
+      resetApiMocks()
+      localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3aj-run')
+      api.getRun.mockResolvedValue({
+        run: { run_id: 'phase-3aj-run', season: 2033, seed: 22, next_event_index: 1, total_events: 3, completed_event_ids: ['EVENT-DONE'] },
+        season_state: {
+          season: 2033,
+          next_event_index: 1,
+          completed_event_ids: ['EVENT-DONE'],
+          ordered_events: [
+            { event_id: 'EVENT-DONE', season: 2033, week: 2, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-DONE' },
+            { event_id: 'EVENT-NEXT', season: 2033, week: 4, tour: 'WORLD', category: 'PLATINUM', template_id: 'TEMP-NEXT' },
+            { event_id: 'EVENT-LATER', season: 2033, week: 6, tour: 'ELITE', category: 'BRONZE', template_id: 'TEMP-LATER' }
+          ]
+        }
+      })
+      api.getRunStatusSummary.mockResolvedValue({
+        run_id: 'phase-3aj-run',
+        season: 2033,
+        seed: 22,
+        progress: { next_event_index: 1, total_events: 3, completed_event_count: 1 },
+        finals: { qualification_available: true, result_available: false },
+        rollover: null,
+        source: { source_type: 'fresh_seed', parent_run_id: null },
+        lineage: { child_run_count: 0 },
+        history_counts: { events: 1, ranking_snapshots: 2, race_snapshots: 1 }
+      })
+      api.listEvents.mockResolvedValue({
+        run_id: 'phase-3aj-run',
+        events: [
+          { event_sequence: 1, event_id: 'EVENT-DONE', season: 2033, week: 2, template_id: 'TEMP-DONE', tournament_result: { raw_secret: 'fake ranking table payload' } }
+        ]
+      })
+      api.listRankingSnapshots.mockResolvedValue({ run_id: 'phase-3aj-run', snapshots: [
+        { snapshot_sequence: 10, snapshot_kind: 'ranking', source_event_id: 'EVENT-OLD', payload: { raw_secret: 'fake player ranks payload' } },
+        { snapshot_sequence: 11, snapshot_kind: 'ranking', source_event_id: 'EVENT-DONE', payload: { raw_secret: 'fake Elo ratings payload' } }
+      ] })
+      api.listRaceSnapshots.mockResolvedValue({ run_id: 'phase-3aj-run', snapshots: [
+        { snapshot_sequence: 12, snapshot_kind: 'race', source_event_id: 'EVENT-DONE', payload: { raw_secret: 'fake Next Gen standings payload' } }
+      ] })
+      api.getFinalsSummary.mockResolvedValue({ run_id: 'phase-3aj-run', season: 2033, qualification: { run_id: 'phase-3aj-run', season: 2033, source_as_of_season: 2033, source_as_of_week: 5, qualification: { raw_secret: 'fake leader payload' } }, result: null })
+
+      renderAppAt(route)
+
+      expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
+      expect(screen.getByText(deferredCopy)).toBeInTheDocument()
+      const metadata = await screen.findByLabelText(`${title} source metadata`)
+      expect(metadata).toHaveTextContent('Active run IDphase-3aj-run')
+      expect(metadata).toHaveTextContent('Season2033')
+      expect(metadata).toHaveTextContent('Ranking snapshot count2')
+      expect(metadata).toHaveTextContent('Race snapshot count1')
+      expect(metadata).toHaveTextContent('Completed/persisted event count1')
+      expect(metadata).toHaveTextContent('Ordered calendar event count3')
+      expect(within(metadata).getByRole('link', { name: '#11' })).toHaveAttribute('href', '/viewer/runs/phase-3aj-run/rankings/11')
+      expect(within(metadata).getByRole('link', { name: '#12' })).toHaveAttribute('href', '/viewer/runs/phase-3aj-run/race/12')
+      expect(within(metadata).getByRole('link', { name: 'EVENT-DONE' })).toHaveAttribute('href', '/viewer/runs/phase-3aj-run/tournaments/EVENT-DONE')
+      expect(within(metadata).getByRole('link', { name: 'EVENT-NEXT' })).toHaveAttribute('href', '/viewer/runs/phase-3aj-run/calendar/EVENT-NEXT')
+      expect(within(metadata).getByRole('link', { name: 'Finals qualification available' })).toHaveAttribute('href', '/viewer/runs/phase-3aj-run/finals')
+      expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/phase-3aj-run/rankings')
+      expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/phase-3aj-run/race')
+      expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/phase-3aj-run/tournaments')
+      expect(screen.getByRole('link', { name: 'Open active run calendar' })).toHaveAttribute('href', '/viewer/runs/phase-3aj-run/calendar')
+      expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
+      expect(document.body).not.toHaveTextContent(/raw_secret|source_event_id|payload|fake player ranks payload|fake Elo ratings payload|fake Next Gen standings payload|fake leader payload/i)
+      expect(document.body).not.toHaveTextContent(/Top 10 Ranking Preview|Top 10 Race Preview|Player rank #|Elo rating value|Power Rating score|Form score value|Next Gen standings table|No\.1 history row|Leader table|Storyline card/i)
+      expectNoForbiddenViewerActions()
+    }
+  })
+
   it('Admin routes still render', async () => {
     renderAppAt('/admin')
 

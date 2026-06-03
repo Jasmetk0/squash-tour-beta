@@ -34,6 +34,7 @@ import {
   ViewerPlayersPage,
   ViewerRankingsPage,
   ViewerRacePage,
+  ViewerRankingDeferredPage,
   ViewerRecordsPage,
   ViewerRunBrowserPage,
   ViewerSearchPage,
@@ -167,11 +168,11 @@ export default function App(): JSX.Element {
         <Route path="viewer" element={<ViewerHomePage />} />
         <Route path="viewer/rankings" element={<ViewerRankingsPage />} />
         <Route path="viewer/rankings/race" element={<ViewerRacePage />} />
-        <Route path="viewer/rankings/next-gen" element={<ViewerShellPage title="Next Gen Race" />} />
-        <Route path="viewer/rankings/elo" element={<ViewerShellPage title="Elo Ranking" />} />
-        <Route path="viewer/rankings/power" element={<ViewerShellPage title="Power Rating" />} />
-        <Route path="viewer/rankings/form" element={<ViewerShellPage title="Form Ranking" />} />
-        <Route path="viewer/rankings/no1-history" element={<ViewerShellPage title="No.1 History" />} />
+        <Route path="viewer/rankings/next-gen" element={<ViewerRankingDeferredPage kind="next-gen" />} />
+        <Route path="viewer/rankings/elo" element={<ViewerRankingDeferredPage kind="elo" />} />
+        <Route path="viewer/rankings/power" element={<ViewerRankingDeferredPage kind="power" />} />
+        <Route path="viewer/rankings/form" element={<ViewerRankingDeferredPage kind="form" />} />
+        <Route path="viewer/rankings/no1-history" element={<ViewerRankingDeferredPage kind="no1-history" />} />
         <Route path="viewer/tour" element={<ViewerSeasonHubPage />} />
         <Route path="viewer/tour/calendar" element={<ViewerTourCalendarPage />} />
         <Route path="viewer/tour/current-week" element={<ViewerCurrentWeekPage />} />

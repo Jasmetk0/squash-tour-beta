@@ -59,7 +59,7 @@ For each dropdown, open it with mouse and keyboard where possible.
 - [ ] Dropdown links are readable and do not overlap the page content in a confusing way.
 - [ ] Clicking each dropdown item closes or navigates in a normal browser-expected way.
 - [ ] Shared shortcut links lead to a single shared destination rather than duplicate-looking pages:
-  - [ ] Rankings → Country Ranking and Countries → Country Ranking both land on `/viewer/countries/ranking`.
+  - [ ] Countries → Country Ranking lands on `/viewer/countries/ranking`; Rankings no longer owns the Country Ranking nav item.
   - [ ] Players → Compare Players and H2H → Player Comparison both land on `/viewer/players/compare`.
   - [ ] H2H → Predict Matchup and Predictions → Match Predictor both land on `/viewer/predictions/match-predictor`.
 
@@ -731,3 +731,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - No broken Viewer links to missing `App.tsx` routes were found in the inspected Viewer nav/link areas.
 - No backend/Admin behavior changed; Viewer remains read-only.
 - Full `npm test` and `pytest` were not run; this documentation-only phase ran `git diff --check` only.
+
+## Phase 4B — Viewer nav canonicalization and route helpers
+
+- Viewer top-level route helpers and conservative navigation canonicalization were added.
+- Stats/Records nav mismatch was resolved: Stats uses `/viewer/stats`, and Records uses `/viewer/records`.
+- Country Ranking nav ownership was clarified under Countries navigation only.
+- `/viewer/tour/tournaments` and `/viewer/tournaments` remain available; Tour navigation uses `/viewer/tour/tournaments`, while `/viewer/tournaments` remains an alias/public shortcut to the same ViewerTournamentsPage. Future cleanup may choose one canonical public URL.
+- No backend/Admin behavior changed.

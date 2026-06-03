@@ -12,12 +12,12 @@ const api = vi.hoisted(() => ({
 vi.mock('../api/client', () => api)
 
 const dropdownExpectations: Record<string, string[]> = {
-  Rankings: ['MSA Rankings', 'Race to Finals', 'Next Gen Race', 'Elo Ranking', 'Power Rating', 'Form Ranking', 'Country Ranking', 'No.1 History'],
+  Rankings: ['MSA Rankings', 'Race to Finals', 'Next Gen Race', 'Elo Ranking', 'Power Rating', 'Form Ranking', 'No.1 History'],
   Tour: ['Season Hub', 'Season Calendar', 'Current Week', 'All Tournaments', 'Match Center', 'Tournament Categories', 'Past Champions'],
   Players: ['Players Hub', 'All Players', 'Active Players', 'Prospects / Next Gen', 'Retired Players', 'Compare Players'],
   Countries: ['Countries Hub', 'Country Ranking', 'All Countries', 'Hosting Nations', 'Talent Pipeline', 'Country Records'],
   H2H: ['H2H Explorer', 'Rivalry Rankings', 'Most Played Matchups', 'Finals Rivalries', 'Player Comparison', 'Predict Matchup'],
-  Stats: ['Records', 'Title Leaders', 'Weeks at No.1', 'Streaks', 'Biggest Upsets', 'Best Seasons', 'Player Stats', 'Tournament Stats', 'Country Stats', 'Awards', 'Hall of Fame', 'Era Rankings'],
+  Stats: ['Stats Hub', 'Records', 'Title Leaders', 'Weeks at No.1', 'Streaks', 'Biggest Upsets', 'Best Seasons', 'Player Stats', 'Tournament Stats', 'Country Stats', 'Awards', 'Hall of Fame', 'Era Rankings'],
   Predictions: ['Match Predictor', 'Match Odds', 'Tournament Odds', 'Finals Qualification', 'Season-End No.1', 'Upset Watch', 'Futures Markets']
 }
 
@@ -138,7 +138,6 @@ describe('Layout mode navigation', () => {
 
     const nav = await screen.findByTestId('viewer-primary-nav')
     expect(within(nav).getAllByRole('link', { name: 'Country Ranking' }).map((link) => link.getAttribute('href'))).toEqual([
-      '/viewer/countries/ranking',
       '/viewer/countries/ranking'
     ])
     expect(within(nav).getByRole('link', { name: 'Compare Players' })).toHaveAttribute('href', '/viewer/players/compare')

@@ -32,6 +32,8 @@ import {
   viewerRankingSnapshotPath,
   viewerRunsPath,
   viewerSeasonCalendarPath,
+  viewerTopRecordsPath,
+  viewerTopStatsPath,
   viewerWeekDetailPath,
   viewerTournamentsPath,
   viewerTournamentDetailPath
@@ -1847,8 +1849,8 @@ export function ViewerStatsDeferredPage({ kind }: { kind: ViewerStatsDeferredKin
         <section aria-label={`${config.title} links`}>
           <h3>Source links</h3>
           {renderDeferredSourceLinks([
-            { label: 'Open records', to: '/viewer/records' },
-            { label: 'Open stats', to: '/viewer/stats' },
+            { label: 'Open records', to: viewerTopRecordsPath() },
+            { label: 'Open stats', to: viewerTopStatsPath() },
             { label: 'Open active run tournaments', to: viewerTournamentsPath(activeRunId) },
             { label: 'Open active run rankings', to: viewerRankingsPath(activeRunId) },
             { label: 'Open active run race', to: viewerRacePath(activeRunId) },

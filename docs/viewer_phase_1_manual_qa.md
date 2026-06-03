@@ -691,3 +691,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Countries subpages now show conservative active-run country metadata and safe links while keeping directory/hosting/talent/record outputs deferred.
 - No fake country rankings, hosting records, talent pipelines, medals, awards, records, or storylines were added.
 - No backend/Admin behavior changed.
+
+## Phase 3AM H2H subpages deferred polish note
+
+- H2H subpages now show conservative active-run metadata and safe links while keeping rivalry, matchup, and finals-rivalry outputs deferred.
+- No fake H2H records, rivalry records, matchup counts, finals records, scores, winners, or storylines were added.
+- No backend or Admin behavior changed.

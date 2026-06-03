@@ -4,6 +4,74 @@ function encodePathSegment(segment: ViewerPathSegment): string {
   return encodeURIComponent(String(segment))
 }
 
+export function viewerHomePath(): string {
+  return '/viewer'
+}
+
+export function viewerTopRankingsPath(): string {
+  return '/viewer/rankings'
+}
+
+export function viewerTopRacePath(): string {
+  return '/viewer/rankings/race'
+}
+
+export function viewerTopTourPath(): string {
+  return '/viewer/tour'
+}
+
+export function viewerTopTourCalendarPath(): string {
+  return '/viewer/tour/calendar'
+}
+
+export function viewerTopTourCurrentWeekPath(): string {
+  return '/viewer/tour/current-week'
+}
+
+export function viewerTopTourTournamentsPath(): string {
+  return '/viewer/tour/tournaments'
+}
+
+export function viewerTopTournamentsPath(): string {
+  return '/viewer/tournaments'
+}
+
+export function viewerTopPlayersPath(): string {
+  return '/viewer/players'
+}
+
+export function viewerTopCountriesPath(): string {
+  return '/viewer/countries'
+}
+
+export function viewerTopCountryRankingPath(): string {
+  return '/viewer/countries/ranking'
+}
+
+export function viewerTopStatsPath(): string {
+  return '/viewer/stats'
+}
+
+export function viewerTopRecordsPath(): string {
+  return '/viewer/records'
+}
+
+export function viewerTopPredictionsPath(): string {
+  return '/viewer/predictions'
+}
+
+export function viewerTopSearchPath(): string {
+  return '/viewer/search'
+}
+
+export function viewerTopHistoryPath(): string {
+  return '/viewer/history'
+}
+
+export function viewerTopH2HPath(): string {
+  return '/viewer/h2h'
+}
+
 export function viewerRunsPath(): string {
   return '/viewer/runs'
 }

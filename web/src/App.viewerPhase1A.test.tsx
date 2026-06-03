@@ -7,6 +7,26 @@ import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
+import { viewerDropdowns } from './components/Layout'
+import {
+  viewerHomePath,
+  viewerTopCountriesPath,
+  viewerTopCountryRankingPath,
+  viewerTopH2HPath,
+  viewerTopHistoryPath,
+  viewerTopPlayersPath,
+  viewerTopPredictionsPath,
+  viewerTopRacePath,
+  viewerTopRankingsPath,
+  viewerTopRecordsPath,
+  viewerTopSearchPath,
+  viewerTopStatsPath,
+  viewerTopTourCalendarPath,
+  viewerTopTourCurrentWeekPath,
+  viewerTopTourPath,
+  viewerTopTournamentsPath,
+  viewerTopTourTournamentsPath
+} from './viewer/viewerRoutes'
 
 const api = vi.hoisted(() => ({
   getCountriesMetadata: vi.fn(),
@@ -139,6 +159,77 @@ describe('Viewer Phase 3AQ completion audit', () => {
       .map((match) => ({ path: match[1], title: match[2] }))
 
     expect(directViewerShellRoutes).toEqual([])
+  })
+})
+
+describe('Viewer Phase 4B navigation canonicalization', () => {
+  it('exposes expected top-level Viewer route helper paths', () => {
+    expect({
+      home: viewerHomePath(),
+      rankings: viewerTopRankingsPath(),
+      race: viewerTopRacePath(),
+      tour: viewerTopTourPath(),
+      tourCalendar: viewerTopTourCalendarPath(),
+      tourCurrentWeek: viewerTopTourCurrentWeekPath(),
+      tourTournaments: viewerTopTourTournamentsPath(),
+      tournaments: viewerTopTournamentsPath(),
+      players: viewerTopPlayersPath(),
+      countries: viewerTopCountriesPath(),
+      countryRanking: viewerTopCountryRankingPath(),
+      stats: viewerTopStatsPath(),
+      records: viewerTopRecordsPath(),
+      predictions: viewerTopPredictionsPath(),
+      search: viewerTopSearchPath(),
+      history: viewerTopHistoryPath(),
+      h2h: viewerTopH2HPath()
+    }).toEqual({
+      home: '/viewer',
+      rankings: '/viewer/rankings',
+      race: '/viewer/rankings/race',
+      tour: '/viewer/tour',
+      tourCalendar: '/viewer/tour/calendar',
+      tourCurrentWeek: '/viewer/tour/current-week',
+      tourTournaments: '/viewer/tour/tournaments',
+      tournaments: '/viewer/tournaments',
+      players: '/viewer/players',
+      countries: '/viewer/countries',
+      countryRanking: '/viewer/countries/ranking',
+      stats: '/viewer/stats',
+      records: '/viewer/records',
+      predictions: '/viewer/predictions',
+      search: '/viewer/search',
+      history: '/viewer/history',
+      h2h: '/viewer/h2h'
+    })
+  })
+
+  it('keeps Viewer nav Records and Country Ranking ownership canonical', () => {
+    const navItems = viewerDropdowns.flatMap((dropdown) => dropdown.items.map((item) => ({ ...item, owner: dropdown.label })))
+    const recordsItems = navItems.filter((item) => /Records/.test(item.label))
+    expect(recordsItems).toEqual(expect.arrayContaining([expect.objectContaining({ label: 'Records', to: '/viewer/records', owner: 'Stats' })]))
+    expect(recordsItems).not.toEqual(expect.arrayContaining([expect.objectContaining({ label: 'Records', to: '/viewer/stats' })]))
+    expect(navItems).toEqual(expect.arrayContaining([expect.objectContaining({ label: 'Stats Hub', to: '/viewer/stats', owner: 'Stats' })]))
+
+    const countryRankingOwners = navItems.filter((item) => item.to === '/viewer/countries/ranking').map((item) => item.owner)
+    expect(countryRankingOwners).toEqual(['Countries'])
+  })
+
+  it('renders canonicalized Viewer routes and tournament alias without forbidden Viewer actions', async () => {
+    const routes = [
+      ['/viewer/records', 'Records'],
+      ['/viewer/stats', 'Stats'],
+      ['/viewer/countries/ranking', 'Country Ranking'],
+      ['/viewer/tour/tournaments', 'All Tournaments'],
+      ['/viewer/tournaments', 'All Tournaments']
+    ] as const
+
+    for (const [route, heading] of routes) {
+      cleanup()
+      resetApiMocks()
+      renderAppAt(route)
+      expect(await screen.findByRole('heading', { name: heading, level: 2 })).toBeInTheDocument()
+      expectNoForbiddenViewerActions()
+    }
   })
 })
 

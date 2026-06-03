@@ -5,6 +5,24 @@ import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from 'reac
 import { ViewerSeasonWeekSelector } from './ViewerContextControls'
 import { ViewerActiveRunCompact } from './ViewerRunSelector'
 import { ViewerContextProvider } from '../viewer/ViewerContext'
+import {
+  viewerHomePath,
+  viewerTopCountriesPath,
+  viewerTopCountryRankingPath,
+  viewerTopH2HPath,
+  viewerTopPlayersPath,
+  viewerTopPredictionsPath,
+  viewerTopRacePath,
+  viewerTopRankingsPath,
+  viewerTopRecordsPath,
+  viewerTopSearchPath,
+  viewerTopStatsPath,
+  viewerTopTourCalendarPath,
+  viewerTopTourCurrentWeekPath,
+  viewerTopTourPath,
+  viewerTopTourTournamentsPath,
+  viewerTopTournamentsPath
+} from '../viewer/viewerRoutes'
 
 type NavItem = {
   to: string
@@ -32,28 +50,27 @@ const adminNav: NavItem[] = [
 export const viewerDropdowns: ViewerDropdown[] = [
   {
     label: 'Rankings',
-    to: '/viewer/rankings',
-    routePrefixes: ['/viewer/rankings', '/viewer/countries/ranking'],
+    to: viewerTopRankingsPath(),
+    routePrefixes: [viewerTopRankingsPath()],
     items: [
-      { to: '/viewer/rankings', label: 'MSA Rankings' },
-      { to: '/viewer/rankings/race', label: 'Race to Finals' },
+      { to: viewerTopRankingsPath(), label: 'MSA Rankings' },
+      { to: viewerTopRacePath(), label: 'Race to Finals' },
       { to: '/viewer/rankings/next-gen', label: 'Next Gen Race' },
       { to: '/viewer/rankings/elo', label: 'Elo Ranking' },
       { to: '/viewer/rankings/power', label: 'Power Rating' },
       { to: '/viewer/rankings/form', label: 'Form Ranking' },
-      { to: '/viewer/countries/ranking', label: 'Country Ranking' },
       { to: '/viewer/rankings/no1-history', label: 'No.1 History' }
     ]
   },
   {
     label: 'Tour',
-    to: '/viewer/tour',
-    routePrefixes: ['/viewer/tour', '/viewer/tournaments'],
+    to: viewerTopTourPath(),
+    routePrefixes: [viewerTopTourPath(), viewerTopTournamentsPath()],
     items: [
-      { to: '/viewer/tour', label: 'Season Hub' },
-      { to: '/viewer/tour/calendar', label: 'Season Calendar' },
-      { to: '/viewer/tour/current-week', label: 'Current Week' },
-      { to: '/viewer/tour/tournaments', label: 'All Tournaments' },
+      { to: viewerTopTourPath(), label: 'Season Hub' },
+      { to: viewerTopTourCalendarPath(), label: 'Season Calendar' },
+      { to: viewerTopTourCurrentWeekPath(), label: 'Current Week' },
+      { to: viewerTopTourTournamentsPath(), label: 'All Tournaments' },
       { to: '/viewer/tour/matches', label: 'Match Center' },
       { to: '/viewer/tour/categories', label: 'Tournament Categories' },
       { to: '/viewer/tour/champions', label: 'Past Champions' }
@@ -61,10 +78,10 @@ export const viewerDropdowns: ViewerDropdown[] = [
   },
   {
     label: 'Players',
-    to: '/viewer/players',
-    routePrefixes: ['/viewer/players'],
+    to: viewerTopPlayersPath(),
+    routePrefixes: [viewerTopPlayersPath()],
     items: [
-      { to: '/viewer/players', label: 'Players Hub' },
+      { to: viewerTopPlayersPath(), label: 'Players Hub' },
       { to: '/viewer/players/all', label: 'All Players' },
       { to: '/viewer/players/active', label: 'Active Players' },
       { to: '/viewer/players/next-gen', label: 'Prospects / Next Gen' },
@@ -74,11 +91,11 @@ export const viewerDropdowns: ViewerDropdown[] = [
   },
   {
     label: 'Countries',
-    to: '/viewer/countries',
-    routePrefixes: ['/viewer/countries'],
+    to: viewerTopCountriesPath(),
+    routePrefixes: [viewerTopCountriesPath()],
     items: [
-      { to: '/viewer/countries', label: 'Countries Hub' },
-      { to: '/viewer/countries/ranking', label: 'Country Ranking' },
+      { to: viewerTopCountriesPath(), label: 'Countries Hub' },
+      { to: viewerTopCountryRankingPath(), label: 'Country Ranking' },
       { to: '/viewer/countries/all', label: 'All Countries' },
       { to: '/viewer/countries/hosting', label: 'Hosting Nations' },
       { to: '/viewer/countries/talent-pipeline', label: 'Talent Pipeline' },
@@ -87,10 +104,10 @@ export const viewerDropdowns: ViewerDropdown[] = [
   },
   {
     label: 'H2H',
-    to: '/viewer/h2h',
-    routePrefixes: ['/viewer/h2h'],
+    to: viewerTopH2HPath(),
+    routePrefixes: [viewerTopH2HPath()],
     items: [
-      { to: '/viewer/h2h', label: 'H2H Explorer' },
+      { to: viewerTopH2HPath(), label: 'H2H Explorer' },
       { to: '/viewer/h2h/rivalries', label: 'Rivalry Rankings' },
       { to: '/viewer/h2h/most-played', label: 'Most Played Matchups' },
       { to: '/viewer/h2h/finals-rivalries', label: 'Finals Rivalries' },
@@ -100,10 +117,11 @@ export const viewerDropdowns: ViewerDropdown[] = [
   },
   {
     label: 'Stats',
-    to: '/viewer/stats',
-    routePrefixes: ['/viewer/stats', '/viewer/records'],
+    to: viewerTopStatsPath(),
+    routePrefixes: [viewerTopStatsPath(), viewerTopRecordsPath()],
     items: [
-      { to: '/viewer/stats', label: 'Records' },
+      { to: viewerTopStatsPath(), label: 'Stats Hub' },
+      { to: viewerTopRecordsPath(), label: 'Records' },
       { to: '/viewer/stats/title-leaders', label: 'Title Leaders' },
       { to: '/viewer/stats/no1-weeks', label: 'Weeks at No.1' },
       { to: '/viewer/stats/streaks', label: 'Streaks' },
@@ -119,8 +137,8 @@ export const viewerDropdowns: ViewerDropdown[] = [
   },
   {
     label: 'Predictions',
-    to: '/viewer/predictions',
-    routePrefixes: ['/viewer/predictions'],
+    to: viewerTopPredictionsPath(),
+    routePrefixes: [viewerTopPredictionsPath()],
     items: [
       { to: '/viewer/predictions/match-predictor', label: 'Match Predictor' },
       { to: '/viewer/predictions/match-odds', label: 'Match Odds' },
@@ -164,20 +182,20 @@ export function getModeSwitcherTarget(pathname: string): { viewerTarget: string;
   }
 
   const mappings: Record<string, { viewerTarget: string; adminTarget: string }> = {
-    '/viewer': { viewerTarget: '/viewer', adminTarget: '/admin' },
-    '/admin': { viewerTarget: '/viewer', adminTarget: '/admin' },
-    '/viewer/players': { viewerTarget: '/viewer/players', adminTarget: '/admin/players' },
-    '/admin/players': { viewerTarget: '/viewer/players', adminTarget: '/admin/players' },
-    '/viewer/countries': { viewerTarget: '/viewer/countries', adminTarget: '/admin/world/countries' },
-    '/admin/world/countries': { viewerTarget: '/viewer/countries', adminTarget: '/admin/world/countries' },
-    '/viewer/tour': { viewerTarget: '/viewer/tour', adminTarget: '/admin/tour-seasons' },
-    '/admin/tour-seasons': { viewerTarget: '/viewer/tour', adminTarget: '/admin/tour-seasons' }
+    [viewerHomePath()]: { viewerTarget: viewerHomePath(), adminTarget: '/admin' },
+    '/admin': { viewerTarget: viewerHomePath(), adminTarget: '/admin' },
+    [viewerTopPlayersPath()]: { viewerTarget: viewerTopPlayersPath(), adminTarget: '/admin/players' },
+    '/admin/players': { viewerTarget: viewerTopPlayersPath(), adminTarget: '/admin/players' },
+    [viewerTopCountriesPath()]: { viewerTarget: viewerTopCountriesPath(), adminTarget: '/admin/world/countries' },
+    '/admin/world/countries': { viewerTarget: viewerTopCountriesPath(), adminTarget: '/admin/world/countries' },
+    [viewerTopTourPath()]: { viewerTarget: viewerTopTourPath(), adminTarget: '/admin/tour-seasons' },
+    '/admin/tour-seasons': { viewerTarget: viewerTopTourPath(), adminTarget: '/admin/tour-seasons' }
   }
 
   if (mappings[pathname]) return mappings[pathname]
   if (pathname.startsWith('/viewer')) return { viewerTarget: pathname, adminTarget: '/admin' }
-  if (pathname.startsWith('/admin')) return { viewerTarget: '/viewer', adminTarget: pathname }
-  return { viewerTarget: '/viewer', adminTarget: '/admin' }
+  if (pathname.startsWith('/admin')) return { viewerTarget: viewerHomePath(), adminTarget: pathname }
+  return { viewerTarget: viewerHomePath(), adminTarget: '/admin' }
 }
 
 function runNavFor(runId: string): NavItem[] {
@@ -214,7 +232,7 @@ function ViewerTopbarSearch(): JSX.Element {
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
     const trimmed = query.trim()
-    navigate(trimmed ? `/viewer/search?q=${encodeURIComponent(trimmed)}` : '/viewer/search')
+    navigate(trimmed ? `${viewerTopSearchPath()}?q=${encodeURIComponent(trimmed)}` : viewerTopSearchPath())
   }
 
   return (
@@ -248,7 +266,7 @@ function ViewerTopbar(): JSX.Element {
 
   return (
     <nav className="viewer-topbar" aria-label="Viewer primary navigation" data-testid="viewer-primary-nav">
-      <NavLink to="/viewer" end className={({ isActive }) => (isActive ? 'active viewer-brand-link' : 'viewer-brand-link')}>
+      <NavLink to={viewerHomePath()} end className={({ isActive }) => (isActive ? 'active viewer-brand-link' : 'viewer-brand-link')}>
         MSA
       </NavLink>
       {viewerDropdowns.map((dropdown) => {

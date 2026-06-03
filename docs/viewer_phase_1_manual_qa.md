@@ -710,3 +710,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - The only remaining generic top-level Viewer route found is `/viewer/countries/ranking` (`Country Ranking`), which should become a conservative deferred country-ranking metadata page later.
 - No new deferred pages were implemented in this phase.
 - Viewer remains read-only; no backend/Admin behavior changed.
+
+## Phase 3AP — Country Ranking deferred metadata page
+
+- Country Ranking now shows conservative active-run country metadata and safe links while keeping ranking output deferred.
+- No fake country rankings, ranking positions, medals, awards, records, talent rankings, hosting rankings, or storylines were added.
+- No backend/Admin behavior changed.

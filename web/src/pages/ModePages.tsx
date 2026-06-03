@@ -36,7 +36,7 @@ import {
   viewerTournamentsPath,
   viewerTournamentDetailPath
 } from '../viewer/viewerRoutes'
-import type { EventRecord, FinalsSummaryResponse, RankingSnapshot, RaceSnapshot, RunActivityItem, RunNationSummaryItem, RunPlayerListItem, RunsIndexResponse, SeasonStateResponse } from '../api/types'
+import type { EventRecord, FinalsSummaryResponse, RankingSnapshot, RaceSnapshot, RunActivityItem, RunNationSummaryItem, RunPlayerListItem, RunStatusSummary, RunsIndexResponse, SeasonStateResponse } from '../api/types'
 
 export function LandingPage(): JSX.Element {
   return (
@@ -499,6 +499,121 @@ function latestSnapshot<T extends RankingSnapshot | RaceSnapshot>(snapshots: T[]
   return [...snapshots].sort((a, b) => b.snapshot_sequence - a.snapshot_sequence)[0] ?? null
 }
 
+
+type DeferredSourceMetadata = {
+  eventCount: number | null
+  rankingSnapshotCount: number | null
+  raceSnapshotCount: number | null
+  latestPersistedEvent: EventRecord | null
+  latestRankingSnapshot: RankingSnapshot | null
+  latestRaceSnapshot: RaceSnapshot | null
+  finalsAvailability: string
+  hasFinalsAvailability: boolean
+}
+
+type DeferredSourceMetadataItem = {
+  label: string
+  value: ReactNode
+}
+
+function resolveFinalsAvailability(finals: FinalsSummaryResponse | undefined, status: RunStatusSummary | undefined): string {
+  if (finals) return formatFinalsAvailability(finals)
+  if (status?.finals.result_available) return 'Finals result available'
+  if (status?.finals.qualification_available) return 'Finals qualification available'
+  return 'Finals summary not available yet'
+}
+
+function hasAvailableFinals(finalsAvailability: string): boolean {
+  return finalsAvailability !== 'Finals summary not available yet' && finalsAvailability !== 'Loading or unavailable'
+}
+
+function buildDeferredSourceMetadata(args: {
+  events: EventRecord[] | undefined
+  rankingSnapshots: RankingSnapshot[] | undefined
+  raceSnapshots: RaceSnapshot[] | undefined
+  status: RunStatusSummary | undefined
+  finals: FinalsSummaryResponse | undefined
+  eventCount?: number | null
+}): DeferredSourceMetadata {
+  const events = args.events ?? []
+  const rankingSnapshots = args.rankingSnapshots ?? []
+  const raceSnapshots = args.raceSnapshots ?? []
+  const eventCount = args.eventCount ?? args.events?.length ?? args.status?.history_counts.events ?? null
+  const rankingSnapshotCount = args.rankingSnapshots?.length ?? args.status?.history_counts.ranking_snapshots ?? null
+  const raceSnapshotCount = args.raceSnapshots?.length ?? args.status?.history_counts.race_snapshots ?? null
+  const finalsAvailability = resolveFinalsAvailability(args.finals, args.status)
+
+  return {
+    eventCount,
+    rankingSnapshotCount,
+    raceSnapshotCount,
+    latestPersistedEvent: selectLatestPersistedEvent(events),
+    latestRankingSnapshot: latestSnapshot(rankingSnapshots),
+    latestRaceSnapshot: latestSnapshot(raceSnapshots),
+    finalsAvailability,
+    hasFinalsAvailability: hasAvailableFinals(finalsAvailability)
+  }
+}
+
+function renderSourceMetadataList(items: DeferredSourceMetadataItem[]): JSX.Element {
+  return (
+    <dl className="metadata-list">
+      {items.map((item) => (
+        <div key={item.label}><dt>{item.label}</dt><dd>{item.value}</dd></div>
+      ))}
+    </dl>
+  )
+}
+
+function renderLoadingValue(isLoading: boolean, value: ReactNode | null | undefined): ReactNode {
+  return isLoading && value == null ? 'Loading…' : value ?? '—'
+}
+
+function renderFinalsSourceValue(activeRunId: string, finalsAvailability: string, isLoading: boolean): ReactNode {
+  if (isLoading) return 'Loading…'
+  return hasAvailableFinals(finalsAvailability) ? <Link to={viewerFinalsPath(activeRunId)}>{finalsAvailability}</Link> : finalsAvailability
+}
+
+function renderLatestPersistedEventSourceValue(activeRunId: string, event: EventRecord | null): ReactNode {
+  return event?.event_id ? <Link to={viewerTournamentDetailPath(activeRunId, event.event_id)}>{event.event_id}</Link> : '—'
+}
+
+function renderLatestRankingSnapshotSourceValue(activeRunId: string, snapshot: RankingSnapshot | null): ReactNode {
+  return snapshot ? <Link to={viewerRankingSnapshotPath(activeRunId, snapshot.snapshot_sequence)}>#{snapshot.snapshot_sequence}</Link> : '—'
+}
+
+function renderLatestRaceSnapshotSourceValue(activeRunId: string, snapshot: RaceSnapshot | null): ReactNode {
+  return snapshot ? <Link to={viewerRaceSnapshotPath(activeRunId, snapshot.snapshot_sequence)}>#{snapshot.snapshot_sequence}</Link> : '—'
+}
+
+function commonDeferredSourceMetadataItems(args: {
+  activeRunId: string
+  metadata: DeferredSourceMetadata
+  eventsLoading: boolean
+  rankingSnapshotsLoading: boolean
+  raceSnapshotsLoading: boolean
+  finalsLoading: boolean
+}): DeferredSourceMetadataItem[] {
+  return [
+    { label: 'Active run ID', value: args.activeRunId },
+    { label: 'Completed/persisted event count', value: renderLoadingValue(args.eventsLoading, args.metadata.eventCount) },
+    { label: 'Ranking snapshot count', value: renderLoadingValue(args.rankingSnapshotsLoading, args.metadata.rankingSnapshotCount) },
+    { label: 'Race snapshot count', value: renderLoadingValue(args.raceSnapshotsLoading, args.metadata.raceSnapshotCount) },
+    { label: 'Finals availability', value: renderFinalsSourceValue(args.activeRunId, args.metadata.finalsAvailability, args.finalsLoading) },
+    { label: 'Latest persisted event', value: renderLatestPersistedEventSourceValue(args.activeRunId, args.metadata.latestPersistedEvent) },
+    { label: 'Latest ranking snapshot', value: renderLatestRankingSnapshotSourceValue(args.activeRunId, args.metadata.latestRankingSnapshot) },
+    { label: 'Latest race snapshot', value: renderLatestRaceSnapshotSourceValue(args.activeRunId, args.metadata.latestRaceSnapshot) }
+  ]
+}
+
+function hasAnyDeferredSourceMetadata(metadata: DeferredSourceMetadata, orderedEventCount?: number | null): boolean {
+  return (metadata.eventCount ?? 0) > 0 || (orderedEventCount ?? 0) > 0 || (metadata.rankingSnapshotCount ?? 0) > 0 || (metadata.raceSnapshotCount ?? 0) > 0 || metadata.hasFinalsAvailability
+}
+
+function renderDeferredSourceLinks(links: { label: string; to: string }[]): JSX.Element {
+  return <ViewerActiveRunLinks links={links} />
+}
+
 function formatSource(sourceType: string | undefined, parentRunId: string | null | undefined): string {
   if (!sourceType) return 'Not available yet'
   return parentRunId ? `${sourceType} from ${parentRunId}` : sourceType
@@ -815,20 +930,19 @@ export function ViewerRankingDeferredPage({ kind }: { kind: ViewerRankingDeferre
     )
   }
 
-  const eventCount = eventsQuery.data?.events.length ?? statusQuery.data?.history_counts.events ?? null
+  const metadata = buildDeferredSourceMetadata({
+    events: eventsQuery.data?.events,
+    rankingSnapshots: rankingSnapshotsQuery.data?.snapshots,
+    raceSnapshots: raceSnapshotsQuery.data?.snapshots,
+    status: statusQuery.data,
+    finals: finalsQuery.data
+  })
   const orderedEventCount = runQuery.data?.season_state.ordered_events.length ?? statusQuery.data?.progress.total_events ?? runQuery.data?.run.total_events ?? null
-  const rankingSnapshotCount = rankingSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.ranking_snapshots ?? null
-  const raceSnapshotCount = raceSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.race_snapshots ?? null
   const season = statusQuery.data?.season ?? runQuery.data?.season_state.season ?? runQuery.data?.run.season ?? finalsQuery.data?.season ?? null
   const nextScheduledEvent = selectNextOrderedEvent(runQuery.data)
-  const latestPersistedEvent = selectLatestPersistedEvent(eventsQuery.data?.events ?? [])
-  const latestRankingSnapshot = latestSnapshot(rankingSnapshotsQuery.data?.snapshots ?? [])
-  const latestRaceSnapshot = latestSnapshot(raceSnapshotsQuery.data?.snapshots ?? [])
-  const finalsAvailability = finalsQuery.data ? formatFinalsAvailability(finalsQuery.data) : statusQuery.data?.finals.result_available ? 'Finals result available' : statusQuery.data?.finals.qualification_available ? 'Finals qualification available' : 'Finals summary not available yet'
-  const hasFinalsAvailability = finalsAvailability !== 'Finals summary not available yet' && finalsAvailability !== 'Loading or unavailable'
   const isLoadingMetadata = runQuery.isLoading || statusQuery.isLoading || eventsQuery.isLoading || rankingSnapshotsQuery.isLoading || raceSnapshotsQuery.isLoading || finalsQuery.isLoading
   const hasMetadataError = runQuery.isError || statusQuery.isError || eventsQuery.isError || rankingSnapshotsQuery.isError || raceSnapshotsQuery.isError || finalsQuery.isError
-  const hasAnySourceMetadata = (eventCount ?? 0) > 0 || (orderedEventCount ?? 0) > 0 || (rankingSnapshotCount ?? 0) > 0 || (raceSnapshotCount ?? 0) > 0 || hasFinalsAvailability
+  const hasAnySourceMetadata = hasAnyDeferredSourceMetadata(metadata, orderedEventCount)
 
   return (
     <ViewerShellPage title={config.title} description="Conservative read-only rankings page using existing active-run metadata only.">
@@ -840,19 +954,19 @@ export function ViewerRankingDeferredPage({ kind }: { kind: ViewerRankingDeferre
         {hasMetadataError ? <ViewerEmptyState>Some active run metadata is temporarily unavailable.</ViewerEmptyState> : null}
         <section aria-label={`${config.title} source metadata`}>
           <h3>Available source metadata</h3>
-          <dl className="metadata-list">
-            <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
-            <div><dt>Season</dt><dd>{runQuery.isLoading && season == null ? 'Loading…' : season ?? '—'}</dd></div>
-            <div><dt>Ranking snapshot count</dt><dd>{rankingSnapshotsQuery.isLoading && rankingSnapshotCount == null ? 'Loading…' : rankingSnapshotCount ?? '—'}</dd></div>
-            <div><dt>Race snapshot count</dt><dd>{raceSnapshotsQuery.isLoading && raceSnapshotCount == null ? 'Loading…' : raceSnapshotCount ?? '—'}</dd></div>
-            <div><dt>Completed/persisted event count</dt><dd>{eventsQuery.isLoading && eventCount == null ? 'Loading…' : eventCount ?? '—'}</dd></div>
-            <div><dt>Ordered calendar event count</dt><dd>{runQuery.isLoading && orderedEventCount == null ? 'Loading…' : orderedEventCount ?? '—'}</dd></div>
-            <div><dt>Finals availability</dt><dd>{finalsQuery.isLoading ? 'Loading…' : hasFinalsAvailability ? <Link to={viewerFinalsPath(activeRunId)}>{finalsAvailability}</Link> : finalsAvailability}</dd></div>
-            <div><dt>Latest ranking snapshot</dt><dd>{latestRankingSnapshot ? <Link to={viewerRankingSnapshotPath(activeRunId, latestRankingSnapshot.snapshot_sequence)}>#{latestRankingSnapshot.snapshot_sequence}</Link> : '—'}</dd></div>
-            <div><dt>Latest race snapshot</dt><dd>{latestRaceSnapshot ? <Link to={viewerRaceSnapshotPath(activeRunId, latestRaceSnapshot.snapshot_sequence)}>#{latestRaceSnapshot.snapshot_sequence}</Link> : '—'}</dd></div>
-            <div><dt>Latest persisted event</dt><dd>{latestPersistedEvent?.event_id ? <Link to={viewerTournamentDetailPath(activeRunId, latestPersistedEvent.event_id)}>{latestPersistedEvent.event_id}</Link> : '—'}</dd></div>
-            <div><dt>Next scheduled event</dt><dd>{nextScheduledEvent ? <Link to={viewerPlannedEventPath(activeRunId, nextScheduledEvent.event_id)}>{nextScheduledEvent.event_id}</Link> : '—'}</dd></div>
-          </dl>
+          {renderSourceMetadataList([
+            { label: 'Active run ID', value: activeRunId },
+            { label: 'Season', value: renderLoadingValue(runQuery.isLoading, season) },
+            { label: 'Ranking snapshot count', value: renderLoadingValue(rankingSnapshotsQuery.isLoading, metadata.rankingSnapshotCount) },
+            { label: 'Race snapshot count', value: renderLoadingValue(raceSnapshotsQuery.isLoading, metadata.raceSnapshotCount) },
+            { label: 'Completed/persisted event count', value: renderLoadingValue(eventsQuery.isLoading, metadata.eventCount) },
+            { label: 'Ordered calendar event count', value: renderLoadingValue(runQuery.isLoading, orderedEventCount) },
+            { label: 'Finals availability', value: renderFinalsSourceValue(activeRunId, metadata.finalsAvailability, finalsQuery.isLoading) },
+            { label: 'Latest ranking snapshot', value: renderLatestRankingSnapshotSourceValue(activeRunId, metadata.latestRankingSnapshot) },
+            { label: 'Latest race snapshot', value: renderLatestRaceSnapshotSourceValue(activeRunId, metadata.latestRaceSnapshot) },
+            { label: 'Latest persisted event', value: renderLatestPersistedEventSourceValue(activeRunId, metadata.latestPersistedEvent) },
+            { label: 'Next scheduled event', value: nextScheduledEvent ? <Link to={viewerPlannedEventPath(activeRunId, nextScheduledEvent.event_id)}>{nextScheduledEvent.event_id}</Link> : '—' }
+          ])}
           {!isLoadingMetadata && !hasMetadataError && !hasAnySourceMetadata ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
         </section>
         <section aria-label={`${config.title} deferred output explanation`}>
@@ -1573,15 +1687,14 @@ function ViewerRecordsStatsLandingPage({ kind }: { kind: ViewerRecordsLandingKin
     )
   }
 
-  const eventCount = eventsQuery.data?.events.length ?? statusQuery.data?.history_counts.events ?? null
-  const rankingSnapshotCount = rankingSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.ranking_snapshots ?? null
-  const raceSnapshotCount = raceSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.race_snapshots ?? null
-  const latestPersistedEvent = selectLatestPersistedEvent(eventsQuery.data?.events ?? [])
-  const latestRankingSnapshot = latestSnapshot(rankingSnapshotsQuery.data?.snapshots ?? [])
-  const latestRaceSnapshot = latestSnapshot(raceSnapshotsQuery.data?.snapshots ?? [])
-  const finalsAvailability = finalsQuery.data ? formatFinalsAvailability(finalsQuery.data) : statusQuery.data?.finals.result_available ? 'Finals result available' : statusQuery.data?.finals.qualification_available ? 'Finals qualification available' : 'Finals summary not available yet'
-  const hasFinalsAvailability = finalsAvailability !== 'Finals summary not available yet' && finalsAvailability !== 'Loading or unavailable'
-  const hasAnySourceMetadata = (eventCount ?? 0) > 0 || (rankingSnapshotCount ?? 0) > 0 || (raceSnapshotCount ?? 0) > 0 || hasFinalsAvailability
+  const metadata = buildDeferredSourceMetadata({
+    events: eventsQuery.data?.events,
+    rankingSnapshots: rankingSnapshotsQuery.data?.snapshots,
+    raceSnapshots: raceSnapshotsQuery.data?.snapshots,
+    status: statusQuery.data,
+    finals: finalsQuery.data
+  })
+  const hasAnySourceMetadata = hasAnyDeferredSourceMetadata(metadata)
   const deferredGroups = isStats ? deferredStatsGroups : deferredRecordGroups
 
   return (
@@ -1598,16 +1711,14 @@ function ViewerRecordsStatsLandingPage({ kind }: { kind: ViewerRecordsLandingKin
         {statusQuery.isError || eventsQuery.isError || rankingSnapshotsQuery.isError || raceSnapshotsQuery.isError || finalsQuery.isError ? <ViewerEmptyState>Some active run metadata is temporarily unavailable.</ViewerEmptyState> : null}
         <section aria-label={`${title} source metadata`}>
           <h3>Available source metadata</h3>
-          <dl className="metadata-list">
-            <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
-            <div><dt>Completed/persisted event count</dt><dd>{eventsQuery.isLoading && eventCount == null ? 'Loading…' : eventCount ?? '—'}</dd></div>
-            <div><dt>Ranking snapshot count</dt><dd>{rankingSnapshotsQuery.isLoading && rankingSnapshotCount == null ? 'Loading…' : rankingSnapshotCount ?? '—'}</dd></div>
-            <div><dt>Race snapshot count</dt><dd>{raceSnapshotsQuery.isLoading && raceSnapshotCount == null ? 'Loading…' : raceSnapshotCount ?? '—'}</dd></div>
-            <div><dt>Finals availability</dt><dd>{finalsQuery.isLoading ? 'Loading…' : hasFinalsAvailability ? <Link to={viewerFinalsPath(activeRunId)}>{finalsAvailability}</Link> : finalsAvailability}</dd></div>
-            <div><dt>Latest persisted event</dt><dd>{latestPersistedEvent?.event_id ? <Link to={viewerTournamentDetailPath(activeRunId, latestPersistedEvent.event_id)}>{latestPersistedEvent.event_id}</Link> : '—'}</dd></div>
-            <div><dt>Latest ranking snapshot</dt><dd>{latestRankingSnapshot ? <Link to={viewerRankingSnapshotPath(activeRunId, latestRankingSnapshot.snapshot_sequence)}>#{latestRankingSnapshot.snapshot_sequence}</Link> : '—'}</dd></div>
-            <div><dt>Latest race snapshot</dt><dd>{latestRaceSnapshot ? <Link to={viewerRaceSnapshotPath(activeRunId, latestRaceSnapshot.snapshot_sequence)}>#{latestRaceSnapshot.snapshot_sequence}</Link> : '—'}</dd></div>
-          </dl>
+          {renderSourceMetadataList(commonDeferredSourceMetadataItems({
+            activeRunId,
+            metadata,
+            eventsLoading: eventsQuery.isLoading,
+            rankingSnapshotsLoading: rankingSnapshotsQuery.isLoading,
+            raceSnapshotsLoading: raceSnapshotsQuery.isLoading,
+            finalsLoading: finalsQuery.isLoading
+          }))}
           {!statusQuery.isLoading && !eventsQuery.isLoading && !rankingSnapshotsQuery.isLoading && !raceSnapshotsQuery.isLoading && !finalsQuery.isLoading && !hasAnySourceMetadata ? (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           ) : null}
@@ -1694,15 +1805,14 @@ export function ViewerStatsDeferredPage({ kind }: { kind: ViewerStatsDeferredKin
     )
   }
 
-  const eventCount = eventsQuery.data?.events.length ?? statusQuery.data?.history_counts.events ?? null
-  const rankingSnapshotCount = rankingSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.ranking_snapshots ?? null
-  const raceSnapshotCount = raceSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.race_snapshots ?? null
-  const latestPersistedEvent = selectLatestPersistedEvent(eventsQuery.data?.events ?? [])
-  const latestRankingSnapshot = latestSnapshot(rankingSnapshotsQuery.data?.snapshots ?? [])
-  const latestRaceSnapshot = latestSnapshot(raceSnapshotsQuery.data?.snapshots ?? [])
-  const finalsAvailability = finalsQuery.data ? formatFinalsAvailability(finalsQuery.data) : statusQuery.data?.finals.result_available ? 'Finals result available' : statusQuery.data?.finals.qualification_available ? 'Finals qualification available' : 'Finals summary not available yet'
-  const hasFinalsAvailability = finalsAvailability !== 'Finals summary not available yet' && finalsAvailability !== 'Loading or unavailable'
-  const hasAnySourceMetadata = (eventCount ?? 0) > 0 || (rankingSnapshotCount ?? 0) > 0 || (raceSnapshotCount ?? 0) > 0 || hasFinalsAvailability
+  const metadata = buildDeferredSourceMetadata({
+    events: eventsQuery.data?.events,
+    rankingSnapshots: rankingSnapshotsQuery.data?.snapshots,
+    raceSnapshots: raceSnapshotsQuery.data?.snapshots,
+    status: statusQuery.data,
+    finals: finalsQuery.data
+  })
+  const hasAnySourceMetadata = hasAnyDeferredSourceMetadata(metadata)
   const isLoadingMetadata = statusQuery.isLoading || eventsQuery.isLoading || rankingSnapshotsQuery.isLoading || raceSnapshotsQuery.isLoading || finalsQuery.isLoading
   const hasMetadataError = statusQuery.isError || eventsQuery.isError || rankingSnapshotsQuery.isError || raceSnapshotsQuery.isError || finalsQuery.isError
 
@@ -1716,16 +1826,14 @@ export function ViewerStatsDeferredPage({ kind }: { kind: ViewerStatsDeferredKin
         {hasMetadataError ? <ViewerEmptyState>Some active run metadata is temporarily unavailable.</ViewerEmptyState> : null}
         <section aria-label={`${config.title} source metadata`}>
           <h3>Available source metadata</h3>
-          <dl className="metadata-list">
-            <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
-            <div><dt>Completed/persisted event count</dt><dd>{eventsQuery.isLoading && eventCount == null ? 'Loading…' : eventCount ?? '—'}</dd></div>
-            <div><dt>Ranking snapshot count</dt><dd>{rankingSnapshotsQuery.isLoading && rankingSnapshotCount == null ? 'Loading…' : rankingSnapshotCount ?? '—'}</dd></div>
-            <div><dt>Race snapshot count</dt><dd>{raceSnapshotsQuery.isLoading && raceSnapshotCount == null ? 'Loading…' : raceSnapshotCount ?? '—'}</dd></div>
-            <div><dt>Finals availability</dt><dd>{finalsQuery.isLoading ? 'Loading…' : hasFinalsAvailability ? <Link to={viewerFinalsPath(activeRunId)}>{finalsAvailability}</Link> : finalsAvailability}</dd></div>
-            <div><dt>Latest persisted event</dt><dd>{latestPersistedEvent?.event_id ? <Link to={viewerTournamentDetailPath(activeRunId, latestPersistedEvent.event_id)}>{latestPersistedEvent.event_id}</Link> : '—'}</dd></div>
-            <div><dt>Latest ranking snapshot</dt><dd>{latestRankingSnapshot ? <Link to={viewerRankingSnapshotPath(activeRunId, latestRankingSnapshot.snapshot_sequence)}>#{latestRankingSnapshot.snapshot_sequence}</Link> : '—'}</dd></div>
-            <div><dt>Latest race snapshot</dt><dd>{latestRaceSnapshot ? <Link to={viewerRaceSnapshotPath(activeRunId, latestRaceSnapshot.snapshot_sequence)}>#{latestRaceSnapshot.snapshot_sequence}</Link> : '—'}</dd></div>
-          </dl>
+          {renderSourceMetadataList(commonDeferredSourceMetadataItems({
+            activeRunId,
+            metadata,
+            eventsLoading: eventsQuery.isLoading,
+            rankingSnapshotsLoading: rankingSnapshotsQuery.isLoading,
+            raceSnapshotsLoading: raceSnapshotsQuery.isLoading,
+            finalsLoading: finalsQuery.isLoading
+          }))}
           {!isLoadingMetadata && !hasMetadataError && !hasAnySourceMetadata ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
         </section>
         <section aria-label={`${config.title} deferred output explanation`}>
@@ -1734,16 +1842,14 @@ export function ViewerStatsDeferredPage({ kind }: { kind: ViewerStatsDeferredKin
         </section>
         <section aria-label={`${config.title} links`}>
           <h3>Source links</h3>
-          <ViewerActiveRunLinks
-            links={[
-              { label: 'Open records', to: '/viewer/records' },
-              { label: 'Open stats', to: '/viewer/stats' },
-              { label: 'Open active run tournaments', to: viewerTournamentsPath(activeRunId) },
-              { label: 'Open active run rankings', to: viewerRankingsPath(activeRunId) },
-              { label: 'Open active run race', to: viewerRacePath(activeRunId) },
-              { label: 'Open run browser', to: viewerRunsPath() }
-            ]}
-          />
+          {renderDeferredSourceLinks([
+            { label: 'Open records', to: '/viewer/records' },
+            { label: 'Open stats', to: '/viewer/stats' },
+            { label: 'Open active run tournaments', to: viewerTournamentsPath(activeRunId) },
+            { label: 'Open active run rankings', to: viewerRankingsPath(activeRunId) },
+            { label: 'Open active run race', to: viewerRacePath(activeRunId) },
+            { label: 'Open run browser', to: viewerRunsPath() }
+          ])}
         </section>
       </article>
     </ViewerShellPage>
@@ -1782,20 +1888,20 @@ export function ViewerTourDeferredPage({ kind }: { kind: ViewerTourDeferredKind 
     )
   }
 
-  const eventCount = eventsQuery.data?.events.length ?? statusQuery.data?.progress.completed_event_count ?? statusQuery.data?.history_counts.events ?? null
+  const metadata = buildDeferredSourceMetadata({
+    events: eventsQuery.data?.events,
+    rankingSnapshots: rankingSnapshotsQuery.data?.snapshots,
+    raceSnapshots: raceSnapshotsQuery.data?.snapshots,
+    status: statusQuery.data,
+    finals: finalsQuery.data,
+    eventCount: eventsQuery.data?.events.length ?? statusQuery.data?.progress.completed_event_count ?? statusQuery.data?.history_counts.events ?? null
+  })
   const orderedEventCount = runQuery.data?.season_state.ordered_events.length ?? runQuery.data?.run.total_events ?? statusQuery.data?.progress.total_events ?? null
-  const rankingSnapshotCount = rankingSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.ranking_snapshots ?? null
-  const raceSnapshotCount = raceSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.race_snapshots ?? null
   const season = runQuery.data?.season_state.season ?? runQuery.data?.run.season ?? statusQuery.data?.season ?? finalsQuery.data?.season ?? null
   const nextScheduledEvent = selectNextOrderedEvent(runQuery.data)
-  const latestPersistedEvent = selectLatestPersistedEvent(eventsQuery.data?.events ?? [])
-  const latestRankingSnapshot = latestSnapshot(rankingSnapshotsQuery.data?.snapshots ?? [])
-  const latestRaceSnapshot = latestSnapshot(raceSnapshotsQuery.data?.snapshots ?? [])
-  const finalsAvailability = finalsQuery.data ? formatFinalsAvailability(finalsQuery.data) : statusQuery.data?.finals.result_available ? 'Finals result available' : statusQuery.data?.finals.qualification_available ? 'Finals qualification available' : 'Finals summary not available yet'
-  const hasFinalsAvailability = finalsAvailability !== 'Finals summary not available yet' && finalsAvailability !== 'Loading or unavailable'
   const isLoadingMetadata = runQuery.isLoading || statusQuery.isLoading || eventsQuery.isLoading || rankingSnapshotsQuery.isLoading || raceSnapshotsQuery.isLoading || finalsQuery.isLoading
   const hasMetadataError = runQuery.isError || statusQuery.isError || eventsQuery.isError || rankingSnapshotsQuery.isError || raceSnapshotsQuery.isError || finalsQuery.isError
-  const hasAnySourceMetadata = (eventCount ?? 0) > 0 || (orderedEventCount ?? 0) > 0 || (rankingSnapshotCount ?? 0) > 0 || (raceSnapshotCount ?? 0) > 0 || hasFinalsAvailability
+  const hasAnySourceMetadata = hasAnyDeferredSourceMetadata(metadata, orderedEventCount)
 
   return (
     <ViewerShellPage title={config.title} description="Conservative read-only Tour page using existing active-run metadata only.">
@@ -1807,19 +1913,19 @@ export function ViewerTourDeferredPage({ kind }: { kind: ViewerTourDeferredKind 
         {hasMetadataError ? <ViewerEmptyState>Some active run metadata is temporarily unavailable.</ViewerEmptyState> : null}
         <section aria-label={`${config.title} source metadata`}>
           <h3>Available source metadata</h3>
-          <dl className="metadata-list">
-            <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
-            <div><dt>Season</dt><dd>{runQuery.isLoading && season == null ? 'Loading…' : season ?? '—'}</dd></div>
-            <div><dt>Completed/persisted event count</dt><dd>{eventsQuery.isLoading && eventCount == null ? 'Loading…' : eventCount ?? '—'}</dd></div>
-            <div><dt>Ordered calendar event count</dt><dd>{runQuery.isLoading && orderedEventCount == null ? 'Loading…' : orderedEventCount ?? '—'}</dd></div>
-            <div><dt>Ranking snapshot count</dt><dd>{rankingSnapshotsQuery.isLoading && rankingSnapshotCount == null ? 'Loading…' : rankingSnapshotCount ?? '—'}</dd></div>
-            <div><dt>Race snapshot count</dt><dd>{raceSnapshotsQuery.isLoading && raceSnapshotCount == null ? 'Loading…' : raceSnapshotCount ?? '—'}</dd></div>
-            <div><dt>Finals availability</dt><dd>{finalsQuery.isLoading ? 'Loading…' : hasFinalsAvailability ? <Link to={viewerFinalsPath(activeRunId)}>{finalsAvailability}</Link> : finalsAvailability}</dd></div>
-            <div><dt>Next scheduled event</dt><dd>{nextScheduledEvent ? <Link to={viewerPlannedEventPath(activeRunId, nextScheduledEvent.event_id)}>{nextScheduledEvent.event_id}</Link> : '—'}</dd></div>
-            <div><dt>Latest persisted event</dt><dd>{latestPersistedEvent?.event_id ? <Link to={viewerTournamentDetailPath(activeRunId, latestPersistedEvent.event_id)}>{latestPersistedEvent.event_id}</Link> : '—'}</dd></div>
-            <div><dt>Latest ranking snapshot</dt><dd>{latestRankingSnapshot ? <Link to={viewerRankingSnapshotPath(activeRunId, latestRankingSnapshot.snapshot_sequence)}>#{latestRankingSnapshot.snapshot_sequence}</Link> : '—'}</dd></div>
-            <div><dt>Latest race snapshot</dt><dd>{latestRaceSnapshot ? <Link to={viewerRaceSnapshotPath(activeRunId, latestRaceSnapshot.snapshot_sequence)}>#{latestRaceSnapshot.snapshot_sequence}</Link> : '—'}</dd></div>
-          </dl>
+          {renderSourceMetadataList([
+            { label: 'Active run ID', value: activeRunId },
+            { label: 'Season', value: renderLoadingValue(runQuery.isLoading, season) },
+            { label: 'Completed/persisted event count', value: renderLoadingValue(eventsQuery.isLoading, metadata.eventCount) },
+            { label: 'Ordered calendar event count', value: renderLoadingValue(runQuery.isLoading, orderedEventCount) },
+            { label: 'Ranking snapshot count', value: renderLoadingValue(rankingSnapshotsQuery.isLoading, metadata.rankingSnapshotCount) },
+            { label: 'Race snapshot count', value: renderLoadingValue(raceSnapshotsQuery.isLoading, metadata.raceSnapshotCount) },
+            { label: 'Finals availability', value: renderFinalsSourceValue(activeRunId, metadata.finalsAvailability, finalsQuery.isLoading) },
+            { label: 'Next scheduled event', value: nextScheduledEvent ? <Link to={viewerPlannedEventPath(activeRunId, nextScheduledEvent.event_id)}>{nextScheduledEvent.event_id}</Link> : '—' },
+            { label: 'Latest persisted event', value: renderLatestPersistedEventSourceValue(activeRunId, metadata.latestPersistedEvent) },
+            { label: 'Latest ranking snapshot', value: renderLatestRankingSnapshotSourceValue(activeRunId, metadata.latestRankingSnapshot) },
+            { label: 'Latest race snapshot', value: renderLatestRaceSnapshotSourceValue(activeRunId, metadata.latestRaceSnapshot) }
+          ])}
           {!isLoadingMetadata && !hasMetadataError && !hasAnySourceMetadata ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
         </section>
         <section aria-label={`${config.title} deferred output explanation`}>
@@ -2370,15 +2476,14 @@ export function ViewerPredictionDeferredPage({ kind }: { kind: ViewerPredictionD
     )
   }
 
-  const eventCount = eventsQuery.data?.events.length ?? statusQuery.data?.history_counts.events ?? null
-  const rankingSnapshotCount = rankingSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.ranking_snapshots ?? null
-  const raceSnapshotCount = raceSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.race_snapshots ?? null
-  const latestPersistedEvent = selectLatestPersistedEvent(eventsQuery.data?.events ?? [])
-  const latestRankingSnapshot = latestSnapshot(rankingSnapshotsQuery.data?.snapshots ?? [])
-  const latestRaceSnapshot = latestSnapshot(raceSnapshotsQuery.data?.snapshots ?? [])
-  const finalsAvailability = finalsQuery.data ? formatFinalsAvailability(finalsQuery.data) : statusQuery.data?.finals.result_available ? 'Finals result available' : statusQuery.data?.finals.qualification_available ? 'Finals qualification available' : 'Finals summary not available yet'
-  const hasFinalsAvailability = finalsAvailability !== 'Finals summary not available yet' && finalsAvailability !== 'Loading or unavailable'
-  const hasAnySourceMetadata = (eventCount ?? 0) > 0 || (rankingSnapshotCount ?? 0) > 0 || (raceSnapshotCount ?? 0) > 0 || hasFinalsAvailability
+  const metadata = buildDeferredSourceMetadata({
+    events: eventsQuery.data?.events,
+    rankingSnapshots: rankingSnapshotsQuery.data?.snapshots,
+    raceSnapshots: raceSnapshotsQuery.data?.snapshots,
+    status: statusQuery.data,
+    finals: finalsQuery.data
+  })
+  const hasAnySourceMetadata = hasAnyDeferredSourceMetadata(metadata)
   const isLoadingMetadata = statusQuery.isLoading || eventsQuery.isLoading || rankingSnapshotsQuery.isLoading || raceSnapshotsQuery.isLoading || finalsQuery.isLoading
   const hasMetadataError = statusQuery.isError || eventsQuery.isError || rankingSnapshotsQuery.isError || raceSnapshotsQuery.isError || finalsQuery.isError
 
@@ -2392,16 +2497,14 @@ export function ViewerPredictionDeferredPage({ kind }: { kind: ViewerPredictionD
         {hasMetadataError ? <ViewerEmptyState>Some active run metadata is temporarily unavailable.</ViewerEmptyState> : null}
         <section aria-label={`${config.title} source metadata`}>
           <h3>Available source metadata</h3>
-          <dl className="metadata-list">
-            <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
-            <div><dt>Completed/persisted event count</dt><dd>{eventsQuery.isLoading && eventCount == null ? 'Loading…' : eventCount ?? '—'}</dd></div>
-            <div><dt>Ranking snapshot count</dt><dd>{rankingSnapshotsQuery.isLoading && rankingSnapshotCount == null ? 'Loading…' : rankingSnapshotCount ?? '—'}</dd></div>
-            <div><dt>Race snapshot count</dt><dd>{raceSnapshotsQuery.isLoading && raceSnapshotCount == null ? 'Loading…' : raceSnapshotCount ?? '—'}</dd></div>
-            <div><dt>Finals availability</dt><dd>{finalsQuery.isLoading ? 'Loading…' : hasFinalsAvailability ? <Link to={viewerFinalsPath(activeRunId)}>{finalsAvailability}</Link> : finalsAvailability}</dd></div>
-            <div><dt>Latest persisted event</dt><dd>{latestPersistedEvent?.event_id ? <Link to={viewerTournamentDetailPath(activeRunId, latestPersistedEvent.event_id)}>{latestPersistedEvent.event_id}</Link> : '—'}</dd></div>
-            <div><dt>Latest ranking snapshot</dt><dd>{latestRankingSnapshot ? <Link to={viewerRankingSnapshotPath(activeRunId, latestRankingSnapshot.snapshot_sequence)}>#{latestRankingSnapshot.snapshot_sequence}</Link> : '—'}</dd></div>
-            <div><dt>Latest race snapshot</dt><dd>{latestRaceSnapshot ? <Link to={viewerRaceSnapshotPath(activeRunId, latestRaceSnapshot.snapshot_sequence)}>#{latestRaceSnapshot.snapshot_sequence}</Link> : '—'}</dd></div>
-          </dl>
+          {renderSourceMetadataList(commonDeferredSourceMetadataItems({
+            activeRunId,
+            metadata,
+            eventsLoading: eventsQuery.isLoading,
+            rankingSnapshotsLoading: rankingSnapshotsQuery.isLoading,
+            raceSnapshotsLoading: raceSnapshotsQuery.isLoading,
+            finalsLoading: finalsQuery.isLoading
+          }))}
           {!isLoadingMetadata && !hasMetadataError && !hasAnySourceMetadata ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
         </section>
         <section aria-label={`${config.title} deferred output explanation`}>

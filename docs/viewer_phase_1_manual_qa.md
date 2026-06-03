@@ -697,3 +697,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - H2H subpages now show conservative active-run metadata and safe links while keeping rivalry, matchup, and finals-rivalry outputs deferred.
 - No fake H2H records, rivalry records, matchup counts, finals records, scores, winners, or storylines were added.
 - No backend or Admin behavior changed.
+
+## Phase 3AN — Deferred source metadata helper cleanup
+
+- Deferred Viewer source metadata helper logic was cleaned up while preserving existing read-only behavior.
+- Deferred pages keep the same labels, links, no-data states, and safety behavior.
+- No backend/Admin behavior changed.

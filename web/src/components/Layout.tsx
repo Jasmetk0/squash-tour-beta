@@ -9,21 +9,59 @@ import {
   viewerHomePath,
   viewerPlayersPath,
   viewerSeasonCalendarPath,
+  viewerTopActivePlayersPath,
+  viewerTopAllCountriesPath,
+  viewerTopAllPlayersPath,
   viewerTopCountriesPath,
   viewerTopCountryRankingPath,
+  viewerTopCountryRecordsPath,
+  viewerTopEloRankingPath,
+  viewerTopFinalsQualificationPredictionPath,
+  viewerTopFormRankingPath,
+  viewerTopFuturesPath,
+  viewerTopH2HFinalsRivalriesPath,
+  viewerTopH2HMostPlayedPath,
   viewerTopH2HPath,
+  viewerTopH2HRivalriesPath,
+  viewerTopHostingCountriesPath,
+  viewerTopMatchOddsPath,
+  viewerTopMatchPredictorPath,
+  viewerTopNextGenPlayersPath,
+  viewerTopNextGenRankingPath,
+  viewerTopNo1HistoryPath,
+  viewerTopPlayerComparePath,
   viewerTopPlayersPath,
+  viewerTopPowerRankingPath,
   viewerTopPredictionsPath,
   viewerTopRacePath,
   viewerTopRankingsPath,
   viewerTopRecordsPath,
+  viewerTopRetiredPlayersPath,
   viewerTopSearchPath,
+  viewerTopSeasonEndNo1PredictionPath,
+  viewerTopStatsAwardsPath,
+  viewerTopStatsBestSeasonsPath,
+  viewerTopStatsCountryStatsPath,
+  viewerTopStatsEraRankingsPath,
+  viewerTopStatsHallOfFamePath,
+  viewerTopStatsNo1WeeksPath,
   viewerTopStatsPath,
+  viewerTopStatsPlayerStatsPath,
+  viewerTopStatsStreaksPath,
+  viewerTopStatsTitleLeadersPath,
+  viewerTopStatsTournamentStatsPath,
+  viewerTopStatsUpsetsPath,
+  viewerTopTalentPipelineCountriesPath,
   viewerTopTourCalendarPath,
+  viewerTopTourCategoriesPath,
+  viewerTopTourChampionsPath,
   viewerTopTourCurrentWeekPath,
+  viewerTopTourMatchesPath,
   viewerTopTourPath,
   viewerTopTourTournamentsPath,
-  viewerTopTournamentsPath
+  viewerTopTournamentOddsPath,
+  viewerTopTournamentsPath,
+  viewerTopUpsetWatchPath
 } from '../viewer/viewerRoutes'
 
 type NavItem = {
@@ -57,11 +95,11 @@ export const viewerDropdowns: ViewerDropdown[] = [
     items: [
       { to: viewerTopRankingsPath(), label: 'MSA Rankings' },
       { to: viewerTopRacePath(), label: 'Race to Finals' },
-      { to: '/viewer/rankings/next-gen', label: 'Next Gen Race' },
-      { to: '/viewer/rankings/elo', label: 'Elo Ranking' },
-      { to: '/viewer/rankings/power', label: 'Power Rating' },
-      { to: '/viewer/rankings/form', label: 'Form Ranking' },
-      { to: '/viewer/rankings/no1-history', label: 'No.1 History' }
+      { to: viewerTopNextGenRankingPath(), label: 'Next Gen Race' },
+      { to: viewerTopEloRankingPath(), label: 'Elo Ranking' },
+      { to: viewerTopPowerRankingPath(), label: 'Power Rating' },
+      { to: viewerTopFormRankingPath(), label: 'Form Ranking' },
+      { to: viewerTopNo1HistoryPath(), label: 'No.1 History' }
     ]
   },
   {
@@ -73,9 +111,9 @@ export const viewerDropdowns: ViewerDropdown[] = [
       { to: viewerTopTourCalendarPath(), label: 'Season Calendar' },
       { to: viewerTopTourCurrentWeekPath(), label: 'Current Week' },
       { to: viewerTopTourTournamentsPath(), label: 'All Tournaments' },
-      { to: '/viewer/tour/matches', label: 'Match Center' },
-      { to: '/viewer/tour/categories', label: 'Tournament Categories' },
-      { to: '/viewer/tour/champions', label: 'Past Champions' }
+      { to: viewerTopTourMatchesPath(), label: 'Match Center' },
+      { to: viewerTopTourCategoriesPath(), label: 'Tournament Categories' },
+      { to: viewerTopTourChampionsPath(), label: 'Past Champions' }
     ]
   },
   {
@@ -84,11 +122,11 @@ export const viewerDropdowns: ViewerDropdown[] = [
     routePrefixes: [viewerTopPlayersPath()],
     items: [
       { to: viewerTopPlayersPath(), label: 'Players Hub' },
-      { to: '/viewer/players/all', label: 'All Players' },
-      { to: '/viewer/players/active', label: 'Active Players' },
-      { to: '/viewer/players/next-gen', label: 'Prospects / Next Gen' },
-      { to: '/viewer/players/retired', label: 'Retired Players' },
-      { to: '/viewer/players/compare', label: 'Compare Players' }
+      { to: viewerTopAllPlayersPath(), label: 'All Players' },
+      { to: viewerTopActivePlayersPath(), label: 'Active Players' },
+      { to: viewerTopNextGenPlayersPath(), label: 'Prospects / Next Gen' },
+      { to: viewerTopRetiredPlayersPath(), label: 'Retired Players' },
+      { to: viewerTopPlayerComparePath(), label: 'Compare Players' }
     ]
   },
   {
@@ -98,10 +136,10 @@ export const viewerDropdowns: ViewerDropdown[] = [
     items: [
       { to: viewerTopCountriesPath(), label: 'Countries Hub' },
       { to: viewerTopCountryRankingPath(), label: 'Country Ranking' },
-      { to: '/viewer/countries/all', label: 'All Countries' },
-      { to: '/viewer/countries/hosting', label: 'Hosting Nations' },
-      { to: '/viewer/countries/talent-pipeline', label: 'Talent Pipeline' },
-      { to: '/viewer/countries/records', label: 'Country Records' }
+      { to: viewerTopAllCountriesPath(), label: 'All Countries' },
+      { to: viewerTopHostingCountriesPath(), label: 'Hosting Nations' },
+      { to: viewerTopTalentPipelineCountriesPath(), label: 'Talent Pipeline' },
+      { to: viewerTopCountryRecordsPath(), label: 'Country Records' }
     ]
   },
   {
@@ -110,11 +148,11 @@ export const viewerDropdowns: ViewerDropdown[] = [
     routePrefixes: [viewerTopH2HPath()],
     items: [
       { to: viewerTopH2HPath(), label: 'H2H Explorer' },
-      { to: '/viewer/h2h/rivalries', label: 'Rivalry Rankings' },
-      { to: '/viewer/h2h/most-played', label: 'Most Played Matchups' },
-      { to: '/viewer/h2h/finals-rivalries', label: 'Finals Rivalries' },
-      { to: '/viewer/players/compare', label: 'Player Comparison' },
-      { to: '/viewer/predictions/match-predictor', label: 'Predict Matchup' }
+      { to: viewerTopH2HRivalriesPath(), label: 'Rivalry Rankings' },
+      { to: viewerTopH2HMostPlayedPath(), label: 'Most Played Matchups' },
+      { to: viewerTopH2HFinalsRivalriesPath(), label: 'Finals Rivalries' },
+      { to: viewerTopPlayerComparePath(), label: 'Player Comparison' },
+      { to: viewerTopMatchPredictorPath(), label: 'Predict Matchup' }
     ]
   },
   {
@@ -124,17 +162,17 @@ export const viewerDropdowns: ViewerDropdown[] = [
     items: [
       { to: viewerTopStatsPath(), label: 'Stats Hub' },
       { to: viewerTopRecordsPath(), label: 'Records' },
-      { to: '/viewer/stats/title-leaders', label: 'Title Leaders' },
-      { to: '/viewer/stats/no1-weeks', label: 'Weeks at No.1' },
-      { to: '/viewer/stats/streaks', label: 'Streaks' },
-      { to: '/viewer/stats/upsets', label: 'Biggest Upsets' },
-      { to: '/viewer/stats/best-seasons', label: 'Best Seasons' },
-      { to: '/viewer/stats/player-stats', label: 'Player Stats' },
-      { to: '/viewer/stats/tournament-stats', label: 'Tournament Stats' },
-      { to: '/viewer/stats/country-stats', label: 'Country Stats' },
-      { to: '/viewer/stats/awards', label: 'Awards' },
-      { to: '/viewer/stats/hall-of-fame', label: 'Hall of Fame' },
-      { to: '/viewer/stats/era-rankings', label: 'Era Rankings' }
+      { to: viewerTopStatsTitleLeadersPath(), label: 'Title Leaders' },
+      { to: viewerTopStatsNo1WeeksPath(), label: 'Weeks at No.1' },
+      { to: viewerTopStatsStreaksPath(), label: 'Streaks' },
+      { to: viewerTopStatsUpsetsPath(), label: 'Biggest Upsets' },
+      { to: viewerTopStatsBestSeasonsPath(), label: 'Best Seasons' },
+      { to: viewerTopStatsPlayerStatsPath(), label: 'Player Stats' },
+      { to: viewerTopStatsTournamentStatsPath(), label: 'Tournament Stats' },
+      { to: viewerTopStatsCountryStatsPath(), label: 'Country Stats' },
+      { to: viewerTopStatsAwardsPath(), label: 'Awards' },
+      { to: viewerTopStatsHallOfFamePath(), label: 'Hall of Fame' },
+      { to: viewerTopStatsEraRankingsPath(), label: 'Era Rankings' }
     ]
   },
   {
@@ -142,13 +180,13 @@ export const viewerDropdowns: ViewerDropdown[] = [
     to: viewerTopPredictionsPath(),
     routePrefixes: [viewerTopPredictionsPath()],
     items: [
-      { to: '/viewer/predictions/match-predictor', label: 'Match Predictor' },
-      { to: '/viewer/predictions/match-odds', label: 'Match Odds' },
-      { to: '/viewer/predictions/tournament-odds', label: 'Tournament Odds' },
-      { to: '/viewer/predictions/finals-qualification', label: 'Finals Qualification' },
-      { to: '/viewer/predictions/season-end-no1', label: 'Season-End No.1' },
-      { to: '/viewer/predictions/upset-watch', label: 'Upset Watch' },
-      { to: '/viewer/predictions/futures', label: 'Futures Markets' }
+      { to: viewerTopMatchPredictorPath(), label: 'Match Predictor' },
+      { to: viewerTopMatchOddsPath(), label: 'Match Odds' },
+      { to: viewerTopTournamentOddsPath(), label: 'Tournament Odds' },
+      { to: viewerTopFinalsQualificationPredictionPath(), label: 'Finals Qualification' },
+      { to: viewerTopSeasonEndNo1PredictionPath(), label: 'Season-End No.1' },
+      { to: viewerTopUpsetWatchPath(), label: 'Upset Watch' },
+      { to: viewerTopFuturesPath(), label: 'Futures Markets' }
     ]
   }
 ]

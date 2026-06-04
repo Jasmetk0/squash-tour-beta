@@ -874,3 +874,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Viewer active-run controls were audited and safely cleaned up after the Layout/navigation extraction sequence.
 - Active-run labels, localStorage behavior, changed-event behavior, quick links, and topbar behavior remain unchanged.
 - No backend/Admin route behavior changed.
+
+## Phase 4V — Viewer Season/Week context controls architecture cleanup
+
+- Viewer Season/Week context controls were audited and safely cleaned up after the Layout/navigation and active-run extraction sequence.
+- Season/Week labels, context update behavior, selector metadata, and topbar behavior remain unchanged.
+- No backend/Admin route behavior changed.

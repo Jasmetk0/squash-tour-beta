@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { useViewerContext } from '../viewer/ViewerContext'
+import { buildViewerContextSummaryItems, formatViewerContextButtonLabel, formatViewerWeekLabel, normalizeViewerWeekInput } from '../viewer/viewerContextDisplay'
 
 export function ViewerSeasonWeekSelector(): JSX.Element {
   const context = useViewerContext()
@@ -13,8 +14,10 @@ export function ViewerSeasonWeekSelector(): JSX.Element {
     setDraftWeek(String(context.selectedWeek))
   }, [context.selectedSeason, context.selectedWeek])
 
+  const contextSummaryItems = buildViewerContextSummaryItems(context)
+
   function updateViewerContext(): void {
-    context.setViewerContext(draftSeason, Number(draftWeek))
+    context.setViewerContext(draftSeason, normalizeViewerWeekInput(draftWeek))
   }
 
   return (
@@ -26,7 +29,7 @@ export function ViewerSeasonWeekSelector(): JSX.Element {
         aria-controls="viewer-context-selector-panel"
         onClick={() => setExpanded((current) => !current)}
       >
-        Season {context.selectedSeason} · W{context.selectedWeek}
+        {formatViewerContextButtonLabel(context)}
       </button>
       {expanded ? (
         <div id="viewer-context-selector-panel" className="viewer-context-selector__panel" role="region" aria-label="Viewer season and week context controls">
@@ -50,10 +53,9 @@ export function ViewerSeasonWeekSelector(): JSX.Element {
           <button type="button" className="viewer-context-selector__update" onClick={updateViewerContext}>
             Set Viewer Week
           </button>
-          <p>Season Week: {context.selectedWeek} / {context.seasonWeekCount}</p>
-          <p>Calendar Year: {context.calendarYear}</p>
-          <p>Year Week: {context.yearWeek}</p>
-          <p>Status: selected viewer context; stored locally in this browser.</p>
+          {contextSummaryItems.map((item) => (
+            <p key={item.label}>{item.label}: {item.value}</p>
+          ))}
         </div>
       ) : null}
     </div>
@@ -65,7 +67,7 @@ export function ViewerJumpToWeekButton({ week }: { week: number }): JSX.Element 
 
   return (
     <button type="button" className="viewer-jump-button" onClick={() => setSelectedWeek(week)}>
-      Jump to W{week}
+      Jump to {formatViewerWeekLabel(week)}
     </button>
   )
 }

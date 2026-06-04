@@ -847,3 +847,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Admin primary nav, run-scoped nav, and current run context behavior remain unchanged.
 - Viewer behavior remains unchanged.
 - No backend/Admin route behavior changed.
+
+## Phase 4R — Mode switcher component extraction
+
+- Mode switcher rendering was extracted from `Layout.tsx` into a dedicated component.
+- Mode switcher labels, hrefs, active-link behavior, and route-target behavior remain unchanged.
+- Viewer and Admin navigation behavior remain unchanged.
+- No backend/Admin route behavior changed.

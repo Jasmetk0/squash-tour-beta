@@ -10,6 +10,7 @@ export { ViewerRunBrowserPage } from './viewer/ViewerRunBrowserPage'
 export { ViewerHomePage } from './viewer/ViewerHomePage'
 export { ViewerRankingsPage, ViewerRacePage } from './viewer/rankings'
 export { ViewerSeasonHubPage, ViewerTourCalendarPage, ViewerCurrentWeekPage, ViewerTournamentsPage } from './viewer/tour'
+export { ViewerPlayersPage, ViewerCountriesPage } from './viewer/people'
 import { getCountriesMetadata, getFinalsSummary, getRun, getRunActivity, getRunStatusSummary, getTournamentTemplatesMetadata, listEvents, listRaceSnapshots, listRankingSnapshots, listRunNations, listRunPlayers, listRuns } from '../api/client'
 
 import { LinkCardGrid } from '../components/LinkCardGrid'
@@ -20,14 +21,13 @@ import { latestSnapshot } from './viewer/rankings/viewerSnapshotDisplay'
 import { buildPlannedEventMap, formatFinalsAvailability, selectLatestPersistedEvent, selectNextOrderedEvent } from './viewer/tour/viewerTourDisplay'
 import type { OrderedSeasonEvent } from './viewer/tour/viewerTourDisplay'
 import { renderLinkedEventId, renderLinkedWeek } from './viewer/tour/viewerTourEventRender'
+import { renderCountrySampleMetadata, renderLinkedCountry, renderLinkedPlayer, renderPlayerSampleMetadata } from './viewer/people'
 import {
   viewerCountriesPath,
   viewerHomePath,
-  viewerCountryProfilePath,
   viewerFinalsPath,
   viewerHistoryPath,
   viewerPlannedEventPath,
-  viewerPlayerProfilePath,
   viewerPlayersPath,
   viewerRacePath,
   viewerRaceSnapshotPath,
@@ -493,58 +493,6 @@ export function ViewerRankingDeferredPage({ kind }: { kind: ViewerRankingDeferre
 }
 
 
-
-
-function renderLinkedPlayer(runId: string, playerId: string | null | undefined, label: ReactNode): ReactNode {
-  if (!playerId) return label || '—'
-  return <Link to={viewerPlayerProfilePath(runId, playerId)}>{label || playerId}</Link>
-}
-
-function renderLinkedCountry(runId: string, countryCode: string | null | undefined, label?: ReactNode): ReactNode {
-  if (!countryCode) return label ?? '—'
-  return <Link to={viewerCountryProfilePath(runId, countryCode)}>{label ?? countryCode}</Link>
-}
-
-function renderPlayerSampleMetadata(player: RunPlayerListItem, runId?: string, options: { includeQualityBand?: boolean } = {}): JSX.Element {
-  const playerLabel = player.name || player.player_id || '—'
-  const playerId = player.player_id || '—'
-  const country = player.country_code || '—'
-
-  const items = [
-    { label: 'Player', value: runId ? renderLinkedPlayer(runId, player.player_id, playerLabel) : playerLabel },
-    { label: 'Player ID', value: runId ? renderLinkedPlayer(runId, player.player_id, playerId) : playerId },
-    { label: 'Country', value: runId ? renderLinkedCountry(runId, player.country_code) : country },
-    { label: 'Age', value: player.age ?? '—' },
-    { label: 'Power Rating', value: player.overall ?? '—' }
-  ]
-
-  if (options.includeQualityBand) {
-    items.push({ label: 'Quality band', value: player.quality_band ?? '—' })
-  }
-
-  return <ViewerMetadataList items={items} />
-}
-
-function renderCountrySampleMetadata(nation: RunNationSummaryItem, runId?: string): JSX.Element {
-  const countryCode = nation.country_code || '—'
-  const countryName = nation.country_name ?? nation.country_code ?? '—'
-  const topPlayer = nation.top_player_name ?? nation.top_player_id ?? '—'
-
-  return (
-    <ViewerMetadataList
-      items={[
-        { label: 'Country code', value: runId ? renderLinkedCountry(runId, nation.country_code) : countryCode },
-        { label: 'Country name', value: runId ? renderLinkedCountry(runId, nation.country_code, countryName) : countryName },
-        { label: 'Player count', value: nation.total_players ?? '—' },
-        { label: 'Average Power Rating', value: nation.average_overall ?? '—' },
-        { label: 'Top player', value: runId ? renderLinkedPlayer(runId, nation.top_player_id, topPlayer) : topPlayer },
-        { label: 'Top player Power Rating', value: nation.top_player_overall ?? '—' }
-      ]}
-    />
-  )
-}
-
-
 type ViewerPlayersDeferredKind = 'all' | 'active' | 'next-gen' | 'retired'
 
 type ViewerPlayersDeferredConfig = {
@@ -669,56 +617,6 @@ export function ViewerPlayersDeferredPage({ kind }: { kind: ViewerPlayersDeferre
             ]}
           />
         </section>
-      </article>
-    </ViewerShellPage>
-  )
-}
-
-export function ViewerPlayersPage(): JSX.Element {
-  const activeRunId = useActiveViewerRunId()
-  const playersQuery = useQuery({
-    queryKey: ['viewer-players-hub-run-players', activeRunId],
-    queryFn: () => listRunPlayers(activeRunId ?? '', { limit: 5, offset: 0 }),
-    enabled: Boolean(activeRunId),
-    retry: false
-  })
-
-  if (!activeRunId) {
-    return (
-      <ViewerShellPage
-        title="Players"
-        description="Read-only player profiles and browsing in the selected Viewer context."
-      >
-        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
-      </ViewerShellPage>
-    )
-  }
-
-  const players = playersQuery.data?.players ?? []
-
-  return (
-    <ViewerShellPage title="Players" description="Read-only player profiles using existing active-run player data.">
-      <article className="viewer-active-run-card" aria-label="Players active run summary">
-        <span className="eyebrow">Active Viewer run</span>
-        <h3>Players summary</h3>
-        {playersQuery.isLoading ? <p className="status">Loading active run player metadata…</p> : null}
-        {playersQuery.isError ? <ViewerEmptyState>Player metadata is temporarily unavailable for this run.</ViewerEmptyState> : null}
-        <dl className="metadata-list">
-          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
-          <div><dt>Total player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : playersQuery.data?.total ?? '—'}</dd></div>
-          <div><dt>Returned player count</dt><dd>{playersQuery.isLoading ? 'Loading…' : players.length}</dd></div>
-        </dl>
-        {!playersQuery.isLoading && !playersQuery.isError && players.length === 0 ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
-        <ViewerSampleList
-          title="Sample players"
-          label="Sample active run players"
-          items={players}
-          getKey={(player) => player.player_id || player.name || 'unknown-player'}
-          renderItem={(player) => renderPlayerSampleMetadata(player, activeRunId)}
-        />
-        <p className="viewer-active-run-actions">
-          <Link className="viewer-active-run-link" to={viewerPlayersPath(activeRunId)}>Open active run players</Link>
-        </p>
       </article>
     </ViewerShellPage>
   )
@@ -853,53 +751,6 @@ export function ViewerCountriesDeferredPage({ kind }: { kind: ViewerCountriesDef
             ]}
           />
         </section>
-      </article>
-    </ViewerShellPage>
-  )
-}
-
-export function ViewerCountriesPage(): JSX.Element {
-  const activeRunId = useActiveViewerRunId()
-  const nationsQuery = useQuery({
-    queryKey: ['viewer-countries-hub-run-nations', activeRunId],
-    queryFn: () => listRunNations(activeRunId ?? '', { limit: 5, offset: 0 }),
-    enabled: Boolean(activeRunId),
-    retry: false
-  })
-
-  if (!activeRunId) {
-    return (
-      <ViewerShellPage title="Countries" description="Read-only country profiles and national summaries in the selected Viewer context.">
-        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
-      </ViewerShellPage>
-    )
-  }
-
-  const nations = nationsQuery.data?.nations ?? []
-
-  return (
-    <ViewerShellPage title="Countries" description="Read-only country profiles using existing active-run country data.">
-      <article className="viewer-active-run-card" aria-label="Countries active run summary">
-        <span className="eyebrow">Active Viewer run</span>
-        <h3>Countries summary</h3>
-        {nationsQuery.isLoading ? <p className="status">Loading active run country metadata…</p> : null}
-        {nationsQuery.isError ? <ViewerEmptyState>Country metadata is temporarily unavailable for this run.</ViewerEmptyState> : null}
-        <dl className="metadata-list">
-          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
-          <div><dt>Total country count</dt><dd>{nationsQuery.isLoading ? 'Loading…' : nationsQuery.data?.total ?? '—'}</dd></div>
-          <div><dt>Returned country count</dt><dd>{nationsQuery.isLoading ? 'Loading…' : nations.length}</dd></div>
-        </dl>
-        {!nationsQuery.isLoading && !nationsQuery.isError && nations.length === 0 ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
-        <ViewerSampleList
-          title="Sample countries"
-          label="Sample active run countries"
-          items={nations}
-          getKey={(nation) => nation.country_code}
-          renderItem={(nation) => renderCountrySampleMetadata(nation, activeRunId)}
-        />
-        <p className="viewer-active-run-actions">
-          <Link className="viewer-active-run-link" to={viewerCountriesPath(activeRunId)}>Open active run countries</Link>
-        </p>
       </article>
     </ViewerShellPage>
   )

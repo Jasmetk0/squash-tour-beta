@@ -880,3 +880,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Viewer Season/Week context controls were audited and safely cleaned up after the Layout/navigation and active-run extraction sequence.
 - Season/Week labels, context update behavior, selector metadata, and topbar behavior remain unchanged.
 - No backend/Admin route behavior changed.
+
+## Phase 4W — Viewer active-run and context architecture completion audit
+
+- Viewer active-run and Season/Week context architecture was audited after helper extraction.
+- Module boundaries and focused regression coverage were verified.
+- Active-run storage/event behavior and Season/Week context behavior remain unchanged.
+- No backend/Admin route behavior changed.

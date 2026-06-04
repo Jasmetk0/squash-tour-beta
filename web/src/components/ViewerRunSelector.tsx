@@ -4,11 +4,11 @@ import { Link } from 'react-router-dom'
 
 import { listRuns } from '../api/client'
 import {
-  LAST_RUN_ID_STORAGE_KEY,
   VIEWER_ACTIVE_RUN_STORAGE_KEY,
   VIEWER_ACTIVE_RUN_CHANGED_EVENT,
   readLastRunId,
   readViewerActiveRunId,
+  writeLastRunId,
   writeViewerActiveRunId
 } from '../viewer/activeRun'
 import { formatViewerActiveRunLabel, formatViewerCompactRunOptionLabel, formatViewerRunOptionLabel } from '../viewer/activeRunDisplay'
@@ -56,7 +56,7 @@ function useViewerRunSelection() {
   function applyRunSelection(runId: string): void {
     const normalizedRunId = runId.trim()
     if (!normalizedRunId) return
-    window.localStorage.setItem(LAST_RUN_ID_STORAGE_KEY, normalizedRunId)
+    writeLastRunId(normalizedRunId)
     writeViewerActiveRunId(normalizedRunId)
     setActiveRunId(normalizedRunId)
   }

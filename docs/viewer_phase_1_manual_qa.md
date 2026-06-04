@@ -826,3 +826,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Viewer topbar rendering was extracted from `Layout.tsx` into a dedicated component.
 - Labels, order, destinations, search behavior, active-state behavior, and route ownership remain unchanged.
 - No backend/Admin behavior changed.
+
+
+## Phase 4O — Viewer navigation test module split
+
+- Viewer navigation tests were split by module after ViewerTopbar/navigation/mode-switcher extraction.
+- Coverage for canonical nav ownership, active states, aliases, search, and mode switcher mappings remains intact.
+- No backend/Admin/source behavior changed.

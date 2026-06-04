@@ -34,6 +34,7 @@ import {
   viewerRunsPath,
   viewerSeasonCalendarPath,
   viewerTopH2HPath,
+  viewerTopMatchPredictorPath,
   viewerTopRecordsPath,
   viewerTopSearchPath,
   viewerTopStatsPath,
@@ -2057,7 +2058,7 @@ function selectedComparisonPlayers(selection: Pick<ViewerSelectedComparisonPlaye
 }
 
 function buildPlayerSearchLink(player: RunPlayerListItem): string {
-  return `/viewer/search?q=${encodeURIComponent(player.player_id || player.name || '')}`
+  return `${viewerTopSearchPath()}?q=${encodeURIComponent(player.player_id || player.name || '')}`
 }
 
 function buildSelectedPlayerSearchLinks(players: RunPlayerListItem[]): { label: string; to: string }[] {
@@ -2524,7 +2525,7 @@ export function ViewerPredictionDeferredPage({ kind }: { kind: ViewerPredictionD
           <h3>Source links</h3>
           <ViewerActiveRunLinks
             links={[
-              { label: 'Open match predictor', to: '/viewer/predictions/match-predictor' },
+              { label: 'Open match predictor', to: viewerTopMatchPredictorPath() },
               { label: 'Open active run tournaments', to: viewerTournamentsPath(activeRunId) },
               { label: 'Open active run rankings', to: viewerRankingsPath(activeRunId) },
               { label: 'Open active run race', to: viewerRacePath(activeRunId) },

@@ -746,3 +746,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Existing Admin/Viewer mode switch behavior remains unchanged.
 - Dynamic Viewer run IDs remain safely encoded where helpers are used.
 - No backend/Admin behavior changed.
+
+## Phase 4D — Inline Viewer route string cleanup audit
+
+- Remaining inline top-level Viewer route strings were audited.
+- Obvious top-level Viewer links now use shared route helpers where safe.
+- Inline route strings without helpers were left unchanged and documented for future cleanup: deferred Rankings, Tour, Players, Countries, H2H, Stats, and Predictions subpage links still live inline until a broader route registry pass.
+- No backend/Admin behavior changed.

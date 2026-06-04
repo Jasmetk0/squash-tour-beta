@@ -20,6 +20,7 @@ import { parseRacePreviewPayload } from '../viewer/racePayload'
 import { parseRankingPreviewPayload } from '../viewer/rankingPayload'
 import {
   viewerCountriesPath,
+  viewerHomePath,
   viewerCountryProfilePath,
   viewerFinalsPath,
   viewerHistoryPath,
@@ -32,7 +33,9 @@ import {
   viewerRankingSnapshotPath,
   viewerRunsPath,
   viewerSeasonCalendarPath,
+  viewerTopH2HPath,
   viewerTopRecordsPath,
+  viewerTopSearchPath,
   viewerTopStatsPath,
   viewerWeekDetailPath,
   viewerTournamentsPath,
@@ -48,7 +51,7 @@ export function LandingPage(): JSX.Element {
         <p className="subtitle">Choose how you want to use the deterministic FAX squash world.</p>
       </div>
       <div className="mode-choice-grid">
-        <Link className="mode-choice mode-choice--viewer" to="/viewer">
+        <Link className="mode-choice mode-choice--viewer" to={viewerHomePath()}>
           <span className="eyebrow">Viewer / MSA Website Mode</span>
           <strong>Browse the generated squash world</strong>
           <span>Rankings, tournaments, players, countries, history, and records in a public sports-site view.</span>
@@ -1352,7 +1355,7 @@ export function ViewerPlayersDeferredPage({ kind }: { kind: ViewerPlayersDeferre
               { label: 'Open active run countries', to: viewerCountriesPath(activeRunId) },
               { label: 'Open active run rankings', to: viewerRankingsPath(activeRunId) },
               { label: 'Open active run tournaments', to: viewerTournamentsPath(activeRunId) },
-              { label: 'Open Viewer search', to: '/viewer/search' },
+              { label: 'Open Viewer search', to: viewerTopSearchPath() },
               { label: 'Open run browser', to: viewerRunsPath() }
             ]}
           />
@@ -1536,7 +1539,7 @@ export function ViewerCountriesDeferredPage({ kind }: { kind: ViewerCountriesDef
               { label: 'Open active run players', to: viewerPlayersPath(activeRunId) },
               { label: 'Open active run rankings', to: viewerRankingsPath(activeRunId) },
               { label: 'Open active run tournaments', to: viewerTournamentsPath(activeRunId) },
-              { label: 'Open Viewer search', to: '/viewer/search' },
+              { label: 'Open Viewer search', to: viewerTopSearchPath() },
               { label: 'Open run browser', to: viewerRunsPath() }
             ]}
           />
@@ -2064,7 +2067,7 @@ function buildSelectedPlayerSearchLinks(players: RunPlayerListItem[]): { label: 
 }
 
 function buildSelectedH2HPath(selection: Pick<ViewerSelectedComparisonPlayers, 'playerA' | 'playerB'>): string {
-  return selection.playerA && selection.playerB ? `/viewer/h2h?playerA=${encodeURIComponent(selection.playerA.player_id)}&playerB=${encodeURIComponent(selection.playerB.player_id)}` : '/viewer/h2h'
+  return selection.playerA && selection.playerB ? `${viewerTopH2HPath()}?playerA=${encodeURIComponent(selection.playerA.player_id)}&playerB=${encodeURIComponent(selection.playerB.player_id)}` : viewerTopH2HPath()
 }
 
 function ViewerPlayerComparisonLinks({ activeRunId, players }: { activeRunId: string; players: RunPlayerListItem[] }): JSX.Element {
@@ -2073,7 +2076,7 @@ function ViewerPlayerComparisonLinks({ activeRunId, players }: { activeRunId: st
       <ViewerActiveRunLinks
         links={[
           { label: 'Open active run players', to: viewerPlayersPath(activeRunId) },
-          { label: 'Open Viewer search', to: '/viewer/search' },
+          { label: 'Open Viewer search', to: viewerTopSearchPath() },
           ...buildSelectedPlayerSearchLinks(players)
         ]}
       />
@@ -2281,7 +2284,7 @@ export function ViewerH2HSubroutePage({ kind }: { kind: ViewerH2HSubrouteKind })
         <ViewerSectionCard title="Source links" kicker="Read-only navigation">
           <ViewerActiveRunLinks
             links={[
-              { label: 'Open H2H comparison', to: '/viewer/h2h' },
+              { label: 'Open H2H comparison', to: viewerTopH2HPath() },
               { label: 'Open active run players', to: viewerPlayersPath(activeRunId) },
               { label: 'Open active run tournaments', to: viewerTournamentsPath(activeRunId) },
               { label: 'Open active run rankings', to: viewerRankingsPath(activeRunId) },
@@ -2351,7 +2354,7 @@ export function ViewerMatchPredictorPage(): JSX.Element {
           <ViewerActiveRunLinks
             links={[
               { label: 'Open active run players', to: viewerPlayersPath(activeRunId) },
-              { label: 'Open Viewer search', to: '/viewer/search' },
+              { label: 'Open Viewer search', to: viewerTopSearchPath() },
               { label: 'Open H2H comparison', to: h2hPath }
             ]}
           />

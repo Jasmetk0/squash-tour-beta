@@ -854,3 +854,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Mode switcher labels, hrefs, active-link behavior, and route-target behavior remain unchanged.
 - Viewer and Admin navigation behavior remain unchanged.
 - No backend/Admin route behavior changed.
+
+## Phase 4S — Layout shell extraction and regression hardening
+
+- Layout shell mode/run/header logic was extracted into dedicated helpers/components.
+- Layout remains a thin shell composing AppShellHeader, AdminNavigation, ViewerTopbar, and Outlet.
+- Titles, subtitles, app-shell classes, current-run context behavior, and navigation behavior remain unchanged.
+- No backend/Admin route behavior changed.

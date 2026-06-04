@@ -6,17 +6,18 @@ import { AdminPlayersPage as InitialPoolAdminPlayersPage } from './AdminPlayersP
 import { AdminPlayersHubPage } from './AdminPlayersHubPage'
 import { AdminSeasonsPage as SeasonBootstrapAdminSeasonsPage } from './AdminSeasonsPage'
 import { TournamentTemplatesPage } from './TournamentTemplatesPage'
+export { ViewerRunBrowserPage } from './viewer/ViewerRunBrowserPage'
 import { getCountriesMetadata, getFinalsSummary, getRun, getRunActivity, getRunStatusSummary, getTournamentTemplatesMetadata, listEvents, listRaceSnapshots, listRankingSnapshots, listRunNations, listRunPlayers, listRuns } from '../api/client'
 
 import { LinkCardGrid } from '../components/LinkCardGrid'
 import { ViewerActiveRunCard, ViewerActiveRunLinks, ViewerDeferredFeatureList, ViewerEmptyState, ViewerLandingGrid, ViewerMetadataList, ViewerSampleList, ViewerSectionCard, ViewerStatusMessage } from '../components/viewer/ViewerLandingComponents'
+import { ViewerShellPage } from '../components/viewer/ViewerShellPage'
 import { ViewerJumpToWeekButton } from '../components/ViewerContextControls'
 import { ViewerRunSelector } from '../components/ViewerRunSelector'
 import { useViewerContext } from '../viewer/ViewerContext'
-import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewer/activeRun'
 import { RacePreviewTable } from '../viewer/RacePreviewTable'
 import { RankingPreviewTable } from '../viewer/RankingPreviewTable'
-import { buildViewerRunBrowserLinks, viewerRunMetadataFields, type ViewerRunBrowserListItem } from '../viewer/runBrowserDisplay'
+import { useActiveViewerRunId } from '../viewer/useActiveViewerRunId'
 import { buildActiveRunHubLinks, findViewerTopLevelHubLink } from '../viewer/viewerHubLinks'
 import { parseRacePreviewPayload } from '../viewer/racePayload'
 import { parseRankingPreviewPayload } from '../viewer/rankingPayload'
@@ -227,114 +228,8 @@ export function AdminSettingsPage(): JSX.Element {
 }
 
 
-
-function useActiveViewerRunId(): string | null {
-  const [activeRunId, setActiveRunId] = useState(() => readViewerActiveRunId())
-
-  useEffect(() => {
-    function handleActiveRunChange(): void {
-      setActiveRunId(readViewerActiveRunId())
-    }
-
-    window.addEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, handleActiveRunChange)
-    window.addEventListener('storage', handleActiveRunChange)
-    return () => {
-      window.removeEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, handleActiveRunChange)
-      window.removeEventListener('storage', handleActiveRunChange)
-    }
-  }, [])
-
-  return activeRunId
-}
-
-
-
-export function ViewerRunBrowserPage(): JSX.Element {
-  const activeRunId = useActiveViewerRunId()
-  const runsQuery = useQuery({ queryKey: ['viewer-run-selector-runs'], queryFn: listRuns, retry: false })
-  const runs = (runsQuery.data?.runs ?? []) as ViewerRunBrowserListItem[]
-
-  return (
-    <ViewerShellPage
-      title={VIEWER_RUN_BROWSER_HUB_LINK.label}
-      kicker="Read-only Viewer runs"
-      description={VIEWER_RUN_BROWSER_HUB_LINK.description}
-    >
-      <ViewerRunSelector />
-
-      <section className="viewer-active-run-panel" aria-label="Run Browser active run">
-        <span className="eyebrow">Active run</span>
-        <h3>Active run</h3>
-        {activeRunId ? (
-          <p className="status">Current active Viewer run id: <strong>{activeRunId}</strong></p>
-        ) : (
-          <ViewerEmptyState>No active Viewer run selected.</ViewerEmptyState>
-        )}
-      </section>
-
-      <section className="viewer-active-run-card" aria-label="Available runs">
-        <span className="eyebrow">Run Browser</span>
-        <h3>Available runs</h3>
-        {runsQuery.isLoading ? <p className="status">Loading available runs…</p> : null}
-        {runsQuery.isError ? <ViewerEmptyState>Run metadata is temporarily unavailable.</ViewerEmptyState> : null}
-        {!runsQuery.isLoading && !runsQuery.isError && runs.length === 0 ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
-        {!runsQuery.isLoading && !runsQuery.isError && runs.length > 0 ? (
-          <div className="viewer-run-browser-list">
-            {runs.map((run) => {
-              const fields = viewerRunMetadataFields(run)
-              return (
-                <article className="viewer-active-run-card" key={run.run_id} aria-label={`Run ${run.run_id}`}>
-                  <h4>{run.run_id}</h4>
-                  <ViewerMetadataList ariaLabel={`Run ${run.run_id} metadata`} items={fields} />
-                  <div className="viewer-run-browser-links" aria-label={`Run ${run.run_id} links`}>
-                    <h5>Links</h5>
-                    <ViewerActiveRunLinks layout="grid" links={buildViewerRunBrowserLinks(run.run_id)} />
-                  </div>
-                </article>
-              )
-            })}
-          </div>
-        ) : null}
-      </section>
-    </ViewerShellPage>
-  )
-}
-
 const VIEWER_RANKINGS_HUB_LINK = findViewerTopLevelHubLink('MSA Rankings')
 const VIEWER_RACE_HUB_LINK = findViewerTopLevelHubLink('Race to Finals')
-const VIEWER_RUN_BROWSER_HUB_LINK = findViewerTopLevelHubLink('Run Browser')
-
-type ViewerShellPageProps = {
-  title: string
-  kicker?: string
-  description?: string
-  children?: ReactNode
-}
-
-function ViewerContextLine(): JSX.Element {
-  const context = useViewerContext()
-  return (
-    <ViewerStatusMessage>
-      Viewer context: Season {context.selectedSeason} · W{context.selectedWeek}. This section is ready for read-only tour data once the Viewer read model is connected.
-    </ViewerStatusMessage>
-  )
-}
-
-export function ViewerShellPage({ title, kicker = 'Read-only Viewer section', description, children }: ViewerShellPageProps): JSX.Element {
-  return (
-    <section className="panel viewer-shell-page">
-      <div className="page-intro">
-        <span className="eyebrow">{kicker}</span>
-        <h2>{title}</h2>
-        <p className="subtitle">
-          {description ?? 'This Viewer section is ready for read-only data. Future tour information will appear here once the read model is connected.'}
-        </p>
-      </div>
-      <ViewerContextLine />
-      {children ?? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>}
-    </section>
-  )
-}
 
 type HomepageEventSummary = {
   eventId: string

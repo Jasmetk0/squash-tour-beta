@@ -907,3 +907,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Viewer Home visible copy, active-run links, hub labels, descriptions, link order, and routes remain unchanged.
 - Page-specific dynamic links and Admin/Engine links remain local to their existing pages.
 - No backend or Admin route behavior changed.
+
+## Phase 5A — Foundational Viewer page module split
+
+- Foundational Viewer page infrastructure was split out of `ModePages.tsx`.
+- `useActiveViewerRunId`, `ViewerShellPage`, and `ViewerRunBrowserPage` now live in dedicated modules.
+- Visible Viewer shell, Run Browser, active-run behavior, links, and routes remain unchanged.
+- `ModePages.tsx` keeps compatibility exports for existing routes.
+- No backend/Admin route behavior changed.

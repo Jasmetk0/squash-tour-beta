@@ -152,6 +152,54 @@ describe('Layout mode navigation', () => {
   })
 
 
+  it('keeps Country Ranking active under Countries instead of Rankings', async () => {
+    renderWithRoute(<Layout />, '/viewer/countries/ranking')
+
+    const nav = await screen.findByTestId('viewer-primary-nav')
+
+    expect(within(nav).getByRole('link', { name: 'Countries' })).toHaveClass('active')
+    expect(within(nav).getByRole('link', { name: 'Rankings' })).not.toHaveClass('active')
+    expect(within(nav).getByRole('link', { name: 'Country Ranking' })).toHaveClass('active')
+  })
+
+  it('keeps Records active under Stats without marking Stats Hub active', async () => {
+    renderWithRoute(<Layout />, '/viewer/records')
+
+    const nav = await screen.findByTestId('viewer-primary-nav')
+
+    expect(within(nav).getByRole('link', { name: 'Stats' })).toHaveClass('active')
+    expect(within(nav).getByRole('link', { name: 'Records' })).toHaveClass('active')
+    expect(within(nav).getByRole('link', { name: 'Stats Hub' })).not.toHaveClass('active')
+  })
+
+  it('keeps Stats Hub active under Stats without marking Records active', async () => {
+    renderWithRoute(<Layout />, '/viewer/stats')
+
+    const nav = await screen.findByTestId('viewer-primary-nav')
+
+    expect(within(nav).getByRole('link', { name: 'Stats' })).toHaveClass('active')
+    expect(within(nav).getByRole('link', { name: 'Stats Hub' })).toHaveClass('active')
+    expect(within(nav).getByRole('link', { name: 'Records' })).not.toHaveClass('active')
+  })
+
+  it('keeps canonical Tour tournaments active under Tour and All Tournaments', async () => {
+    renderWithRoute(<Layout />, '/viewer/tour/tournaments')
+
+    const nav = await screen.findByTestId('viewer-primary-nav')
+
+    expect(within(nav).getByRole('link', { name: 'Tour' })).toHaveClass('active')
+    expect(within(nav).getByRole('link', { name: 'All Tournaments' })).toHaveClass('active')
+  })
+
+  it('keeps the public tournaments alias accepted under Tour topbar ownership', async () => {
+    renderWithRoute(<Layout />, '/viewer/tournaments')
+
+    const nav = await screen.findByTestId('viewer-primary-nav')
+
+    expect(within(nav).getByRole('link', { name: 'Tour' })).toHaveClass('active')
+    expect(appViewerTopLevelRoutes()).toContain('/viewer/tournaments')
+  })
+
   it('keeps shared Viewer shortcut dropdown entries pointed at the same canonical routes', async () => {
     renderWithRoute(<Layout />, '/viewer')
 

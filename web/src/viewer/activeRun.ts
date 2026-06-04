@@ -17,6 +17,13 @@ export function readLastRunId(): string | null {
   return window.localStorage.getItem(LAST_RUN_ID_STORAGE_KEY)
 }
 
+export function writeLastRunId(runId: string): void {
+  if (typeof window === 'undefined') return
+  const normalizedRunId = runId.trim()
+  if (!normalizedRunId) return
+  window.localStorage.setItem(LAST_RUN_ID_STORAGE_KEY, normalizedRunId)
+}
+
 export function writeViewerActiveRunId(runId: string): void {
   if (typeof window === 'undefined') return
   const normalizedRunId = runId.trim()

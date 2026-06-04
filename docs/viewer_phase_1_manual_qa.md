@@ -833,3 +833,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Viewer navigation tests were split by module after ViewerTopbar/navigation/mode-switcher extraction.
 - Coverage for canonical nav ownership, active states, aliases, search, and mode switcher mappings remains intact.
 - No backend/Admin/source behavior changed.
+
+## Phase 4P — Admin navigation registry extraction
+
+- Admin navigation data/helpers were extracted from `Layout.tsx` into a dedicated navigation module.
+- Admin nav labels, order, run-scoped links, and behavior remain unchanged.
+- Viewer behavior remains unchanged.
+- No backend/Admin route behavior changed.

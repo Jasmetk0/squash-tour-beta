@@ -13,6 +13,7 @@ export { ViewerSeasonHubPage, ViewerTourCalendarPage, ViewerCurrentWeekPage, Vie
 export { ViewerPlayersPage, ViewerCountriesPage } from './viewer/people'
 export { ViewerSearchPage, ViewerH2HPage, ViewerPlayerComparePage, ViewerPlayerComparisonPage, ViewerMatchPredictorPage } from './viewer/explore'
 export { ViewerHistoryPage, ViewerFinalsReadOnlyPage } from './viewer/history'
+export { ViewerRecordsPage, ViewerStatsPage } from './viewer/stats'
 import { getCountriesMetadata, getFinalsSummary, getRun, getRunStatusSummary, getTournamentTemplatesMetadata, listEvents, listRaceSnapshots, listRankingSnapshots, listRunNations, listRunPlayers, listRuns } from '../api/client'
 
 import { LinkCardGrid } from '../components/LinkCardGrid'
@@ -713,113 +714,6 @@ export function ViewerCountriesDeferredPage({ kind }: { kind: ViewerCountriesDef
     </ViewerShellPage>
   )
 }
-
-type ViewerRecordsLandingKind = 'records' | 'stats'
-
-const deferredRecordGroups = [
-  { title: 'Title Leaders', description: 'needs dedicated records read model.' },
-  { title: 'Weeks at No.1', description: 'needs dedicated records read model.' },
-  { title: 'Streaks', description: 'needs dedicated records read model.' },
-  { title: 'Biggest Upsets', description: 'needs match/prediction read model.' },
-  { title: 'Best Seasons', description: 'needs historical stats read model.' }
-]
-
-const deferredStatsGroups = [
-  { title: 'Player Stats', description: 'needs dedicated player statistics read model.' },
-  { title: 'Tournament Stats', description: 'needs dedicated tournament statistics read model.' },
-  { title: 'Country Stats', description: 'needs dedicated country statistics read model.' },
-  { title: 'Awards', description: 'needs dedicated awards read model.' },
-  { title: 'Hall of Fame', description: 'needs dedicated Hall of Fame read model.' },
-  { title: 'Era Rankings', description: 'needs dedicated era comparison read model.' }
-]
-
-function ViewerRecordsStatsLandingPage({ kind }: { kind: ViewerRecordsLandingKind }): JSX.Element {
-  const activeRunId = useActiveViewerRunId()
-  const statusQuery = useQuery({ queryKey: ['viewer-records-status', kind, activeRunId], queryFn: () => getRunStatusSummary(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
-  const eventsQuery = useQuery({ queryKey: ['viewer-records-events', kind, activeRunId], queryFn: () => listEvents(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
-  const rankingSnapshotsQuery = useQuery({ queryKey: ['viewer-records-ranking-snapshots', kind, activeRunId], queryFn: () => listRankingSnapshots(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
-  const raceSnapshotsQuery = useQuery({ queryKey: ['viewer-records-race-snapshots', kind, activeRunId], queryFn: () => listRaceSnapshots(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
-  const finalsQuery = useQuery({ queryKey: ['viewer-records-finals', kind, activeRunId], queryFn: () => getFinalsSummary(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
-
-  const isStats = kind === 'stats'
-  const title = isStats ? 'Stats' : 'Records'
-
-  if (!activeRunId) {
-    return (
-      <ViewerShellPage title={title} description={isStats ? 'Stats library destination prepared for connected run-scoped statistical read models.' : 'Record book destination prepared for statistics, milestones, and historical achievements.'}>
-        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
-      </ViewerShellPage>
-    )
-  }
-
-  const metadata = buildDeferredSourceMetadata({
-    events: eventsQuery.data?.events,
-    rankingSnapshots: rankingSnapshotsQuery.data?.snapshots,
-    raceSnapshots: raceSnapshotsQuery.data?.snapshots,
-    status: statusQuery.data,
-    finals: finalsQuery.data
-  })
-  const hasAnySourceMetadata = hasAnyDeferredSourceMetadata(metadata)
-  const deferredGroups = isStats ? deferredStatsGroups : deferredRecordGroups
-
-  return (
-    <ViewerShellPage title={title} description={isStats ? 'Conservative Stats landing using existing active-run metadata only.' : 'Conservative Records landing using existing active-run metadata only.'}>
-      <article className="viewer-active-run-card" aria-label={`${title} active run metadata summary`}>
-        <span className="eyebrow">Active Viewer run</span>
-        <h3>{isStats ? 'Stats Overview' : 'Records Overview'}</h3>
-        <p className="subtitle">
-          {isStats
-            ? 'Read-only statistics landing showing only available active-run source metadata until real stat read models exist.'
-            : 'Read-only record book landing showing only available active-run source metadata until real record read models exist.'}
-        </p>
-        {statusQuery.isLoading || eventsQuery.isLoading || rankingSnapshotsQuery.isLoading || raceSnapshotsQuery.isLoading || finalsQuery.isLoading ? <p className="status">Loading active run metadata…</p> : null}
-        {statusQuery.isError || eventsQuery.isError || rankingSnapshotsQuery.isError || raceSnapshotsQuery.isError || finalsQuery.isError ? <ViewerEmptyState>Some active run metadata is temporarily unavailable.</ViewerEmptyState> : null}
-        <section aria-label={`${title} source metadata`}>
-          <h3>Available source metadata</h3>
-          {renderSourceMetadataList(commonDeferredSourceMetadataItems({
-            activeRunId,
-            metadata,
-            eventsLoading: eventsQuery.isLoading,
-            rankingSnapshotsLoading: rankingSnapshotsQuery.isLoading,
-            raceSnapshotsLoading: raceSnapshotsQuery.isLoading,
-            finalsLoading: finalsQuery.isLoading
-          }))}
-          {!statusQuery.isLoading && !eventsQuery.isLoading && !rankingSnapshotsQuery.isLoading && !raceSnapshotsQuery.isLoading && !finalsQuery.isLoading && !hasAnySourceMetadata ? (
-            <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
-          ) : null}
-        </section>
-        <section aria-label={`${title} deferred groups`}>
-          <ViewerDeferredFeatureList
-            title={isStats ? 'Deferred stat groups' : 'Deferred record groups'}
-            label={isStats ? 'Deferred stat groups' : 'Deferred record groups'}
-            features={deferredGroups}
-          />
-        </section>
-        <section aria-label={`${title} links`}>
-          <h3>Links</h3>
-          <ViewerActiveRunLinks
-            links={[
-              { label: 'Open run browser', to: viewerRunsPath() },
-              { label: 'Open active run tournaments', to: viewerTournamentsPath(activeRunId) },
-              { label: 'Open active run rankings', to: viewerRankingsPath(activeRunId) },
-              { label: 'Open active run race', to: viewerRacePath(activeRunId) },
-              { label: 'Open active run finals', to: viewerFinalsPath(activeRunId) }
-            ]}
-          />
-        </section>
-      </article>
-    </ViewerShellPage>
-  )
-}
-
-export function ViewerRecordsPage(): JSX.Element {
-  return <ViewerRecordsStatsLandingPage kind="records" />
-}
-
-export function ViewerStatsPage(): JSX.Element {
-  return <ViewerRecordsStatsLandingPage kind="stats" />
-}
-
 
 type ViewerStatsDeferredKind =
   | 'title-leaders'

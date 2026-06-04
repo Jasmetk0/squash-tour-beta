@@ -9,7 +9,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { viewerDropdowns } from './components/Layout'
 import {
+  viewerCountriesPath,
+  viewerCountryProfilePath,
+  viewerFinalsPath,
+  viewerFinalsQualificationPath,
+  viewerFinalsResultPath,
+  viewerHistoryPath,
   viewerHomePath,
+  viewerPlayerProfilePath,
+  viewerPlayersPath,
+  viewerPlannedEventPath,
+  viewerRacePath,
+  viewerRaceSnapshotPath,
+  viewerRankingSnapshotPath,
+  viewerRankingsPath,
+  viewerSeasonCalendarPath,
   viewerTopCountriesPath,
   viewerTopCountryRankingPath,
   viewerTopH2HPath,
@@ -25,7 +39,10 @@ import {
   viewerTopTourCurrentWeekPath,
   viewerTopTourPath,
   viewerTopTournamentsPath,
-  viewerTopTourTournamentsPath
+  viewerTopTourTournamentsPath,
+  viewerTournamentDetailPath,
+  viewerTournamentsPath,
+  viewerWeekDetailPath
 } from './viewer/viewerRoutes'
 
 const api = vi.hoisted(() => ({
@@ -159,6 +176,75 @@ describe('Viewer Phase 3AQ completion audit', () => {
       .map((match) => ({ path: match[1], title: match[2] }))
 
     expect(directViewerShellRoutes).toEqual([])
+  })
+})
+
+describe('Viewer Phase 4H run-scoped route helper audit', () => {
+  it('keeps run-scoped Viewer helpers aligned with App route patterns and encodes dynamic segments', () => {
+    const runId = 'run alpha'
+    const eventId = 'EV/01'
+    const playerId = 'P/1'
+    const countryCode = 'GB & IE'
+
+    expect({
+      calendar: viewerSeasonCalendarPath(runId),
+      plannedEvent: viewerPlannedEventPath(runId, eventId),
+      week: viewerWeekDetailPath(runId, 7),
+      tournaments: viewerTournamentsPath(runId),
+      tournamentDetail: viewerTournamentDetailPath(runId, eventId),
+      players: viewerPlayersPath(runId),
+      playerProfile: viewerPlayerProfilePath(runId, playerId),
+      countries: viewerCountriesPath(runId),
+      countryProfile: viewerCountryProfilePath(runId, countryCode),
+      rankings: viewerRankingsPath(runId),
+      rankingSnapshot: viewerRankingSnapshotPath(runId, 12),
+      race: viewerRacePath(runId),
+      raceSnapshot: viewerRaceSnapshotPath(runId, 12),
+      history: viewerHistoryPath(runId),
+      finals: viewerFinalsPath(runId),
+      finalsQualification: viewerFinalsQualificationPath(runId),
+      finalsResult: viewerFinalsResultPath(runId)
+    }).toEqual({
+      calendar: '/viewer/runs/run%20alpha/calendar',
+      plannedEvent: '/viewer/runs/run%20alpha/calendar/EV%2F01',
+      week: '/viewer/runs/run%20alpha/weeks/7',
+      tournaments: '/viewer/runs/run%20alpha/tournaments',
+      tournamentDetail: '/viewer/runs/run%20alpha/tournaments/EV%2F01',
+      players: '/viewer/runs/run%20alpha/players',
+      playerProfile: '/viewer/runs/run%20alpha/players/P%2F1/career',
+      countries: '/viewer/runs/run%20alpha/countries',
+      countryProfile: '/viewer/runs/run%20alpha/countries/GB%20%26%20IE',
+      rankings: '/viewer/runs/run%20alpha/rankings',
+      rankingSnapshot: '/viewer/runs/run%20alpha/rankings/12',
+      race: '/viewer/runs/run%20alpha/race',
+      raceSnapshot: '/viewer/runs/run%20alpha/race/12',
+      history: '/viewer/runs/run%20alpha/history',
+      finals: '/viewer/runs/run%20alpha/finals',
+      finalsQualification: '/viewer/runs/run%20alpha/finals/qualification',
+      finalsResult: '/viewer/runs/run%20alpha/finals/result'
+    })
+
+    for (const routePattern of [
+      'viewer/runs/:runId/rankings',
+      'viewer/runs/:runId/rankings/:snapshotSequence',
+      'viewer/runs/:runId/race',
+      'viewer/runs/:runId/race/:snapshotSequence',
+      'viewer/runs/:runId/tournaments',
+      'viewer/runs/:runId/tournaments/:eventId',
+      'viewer/runs/:runId/calendar',
+      'viewer/runs/:runId/calendar/:eventId',
+      'viewer/runs/:runId/weeks/:week',
+      'viewer/runs/:runId/players',
+      'viewer/runs/:runId/players/:playerId/career',
+      'viewer/runs/:runId/countries',
+      'viewer/runs/:runId/countries/:countryCode',
+      'viewer/runs/:runId/history',
+      'viewer/runs/:runId/finals',
+      'viewer/runs/:runId/finals/qualification',
+      'viewer/runs/:runId/finals/result'
+    ]) {
+      expect(appSource).toContain(`path="${routePattern}"`)
+    }
   })
 })
 

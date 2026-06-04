@@ -773,3 +773,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Link labels and destinations remain unchanged.
 - Deferred page behavior and route availability remain unchanged.
 - No backend/Admin behavior changed.
+
+## Phase 4H — Run-scoped Viewer route helper coverage audit
+
+- Run-scoped Viewer route helper coverage was audited against real Viewer run routes.
+- Dynamic route segments are covered by focused helper tests.
+- No backend/Admin behavior changed.

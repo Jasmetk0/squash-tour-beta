@@ -931,3 +931,12 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Visible Rankings/Race titles, descriptions, empty states, snapshot links, and routes remain unchanged.
 - `ModePages.tsx` keeps compatibility exports for existing routes.
 - No backend/Admin route behavior changed.
+
+## Phase 5D — Viewer Season/Tour page module extraction
+
+- Viewer Season/Tour page family was extracted from `ModePages.tsx` into dedicated Viewer page modules.
+- Shared season/tour helper logic moved with the page family where safe.
+- Visible Season/Tour titles, descriptions, metadata labels, event links, empty states, and routes remain unchanged.
+- `ModePages.tsx` keeps compatibility exports for existing routes.
+- Deferred Tour pages stayed in `ModePages.tsx` because they share broader deferred source metadata behavior with remaining Viewer page families.
+- No backend/Admin route behavior changed.

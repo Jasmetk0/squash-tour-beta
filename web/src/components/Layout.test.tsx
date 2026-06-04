@@ -4,7 +4,8 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getModeSwitcherTarget, isExactViewerActivePath, Layout, viewerDropdowns } from './Layout'
+import { getModeSwitcherTarget, isExactViewerActivePath, Layout } from './Layout'
+import { viewerDropdowns } from '../viewer/viewerNavigation'
 import { renderWithRoute } from '../test/testUtils'
 
 const api = vi.hoisted(() => ({

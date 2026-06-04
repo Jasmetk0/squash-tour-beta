@@ -808,3 +808,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Country Ranking is documented under Countries only; Stats Hub and Records point to their canonical Viewer routes; Tour All Tournaments points to `/viewer/tour/tournaments` while `/viewer/tournaments` remains documented as a public alias/shortcut.
 - Active-state expectations now align with Phase 4J regression coverage.
 - No backend/Admin/source behavior changed.
+
+## Phase 4L — Viewer navigation registry extraction
+
+- Viewer navigation registry was extracted from `Layout.tsx` into a dedicated Viewer navigation module.
+- Labels, order, destinations, route ownership, active-state behavior, and route availability remain unchanged.
+- No backend/Admin behavior changed.

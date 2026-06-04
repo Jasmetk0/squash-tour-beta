@@ -10,7 +10,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { viewerDropdowns } from './components/Layout'
+import { viewerDropdowns } from './viewer/viewerNavigation'
 import {
   viewerCountriesPath,
   viewerCountryProfilePath,

@@ -814,3 +814,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Viewer navigation registry was extracted from `Layout.tsx` into a dedicated Viewer navigation module.
 - Labels, order, destinations, route ownership, active-state behavior, and route availability remain unchanged.
 - No backend/Admin behavior changed.
+
+## Phase 4M — Mode switcher route helper extraction
+
+- Mode switcher route-target logic was extracted from `Layout.tsx` into a dedicated Viewer helper module.
+- Existing Admin/Viewer mode switch behavior and encoding behavior remain unchanged.
+- No backend/Admin behavior changed.

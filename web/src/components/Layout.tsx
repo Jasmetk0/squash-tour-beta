@@ -5,17 +5,10 @@ import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from 'reac
 import { ViewerSeasonWeekSelector } from './ViewerContextControls'
 import { ViewerActiveRunCompact } from './ViewerRunSelector'
 import { ViewerContextProvider } from '../viewer/ViewerContext'
+import { getModeSwitcherTarget } from '../viewer/modeSwitcherRoutes'
 import { viewerDropdowns } from '../viewer/viewerNavigation'
 import type { ViewerDropdown } from '../viewer/viewerNavigation'
-import {
-  viewerHomePath,
-  viewerPlayersPath,
-  viewerSeasonCalendarPath,
-  viewerTopCountriesPath,
-  viewerTopPlayersPath,
-  viewerTopSearchPath,
-  viewerTopTourPath
-} from '../viewer/viewerRoutes'
+import { viewerHomePath, viewerTopSearchPath } from '../viewer/viewerRoutes'
 
 type AdminNavItem = {
   to: string
@@ -39,53 +32,11 @@ function readMode(pathname: string): 'admin' | 'viewer' | 'landing' {
   return 'landing'
 }
 
-function safeDecodePathSegment(segment: string): string {
-  try {
-    return decodeURIComponent(segment)
-  } catch {
-    return segment
-  }
-}
-
 function readRunId(pathname: string, paramRunId?: string): string | undefined {
   if (paramRunId) return paramRunId
   const match = pathname.match(/^\/(?:admin|viewer)\/runs\/([^/]+)/)
   if (match?.[1] === 'new') return undefined
   return match?.[1]
-}
-
-export function getModeSwitcherTarget(pathname: string): { viewerTarget: string; adminTarget: string } {
-  const runCalendarMatch = pathname.match(/^\/(viewer|admin)\/runs\/([^/]+)\/calendar$/)
-  if (runCalendarMatch) {
-    return {
-      viewerTarget: viewerSeasonCalendarPath(safeDecodePathSegment(runCalendarMatch[2])),
-      adminTarget: `/admin/runs/${runCalendarMatch[2]}/calendar`
-    }
-  }
-
-  const runPlayersMatch = pathname.match(/^\/(viewer|admin)\/runs\/([^/]+)\/players$/)
-  if (runPlayersMatch) {
-    return {
-      viewerTarget: viewerPlayersPath(safeDecodePathSegment(runPlayersMatch[2])),
-      adminTarget: `/admin/runs/${runPlayersMatch[2]}/players`
-    }
-  }
-
-  const mappings: Record<string, { viewerTarget: string; adminTarget: string }> = {
-    [viewerHomePath()]: { viewerTarget: viewerHomePath(), adminTarget: '/admin' },
-    '/admin': { viewerTarget: viewerHomePath(), adminTarget: '/admin' },
-    [viewerTopPlayersPath()]: { viewerTarget: viewerTopPlayersPath(), adminTarget: '/admin/players' },
-    '/admin/players': { viewerTarget: viewerTopPlayersPath(), adminTarget: '/admin/players' },
-    [viewerTopCountriesPath()]: { viewerTarget: viewerTopCountriesPath(), adminTarget: '/admin/world/countries' },
-    '/admin/world/countries': { viewerTarget: viewerTopCountriesPath(), adminTarget: '/admin/world/countries' },
-    [viewerTopTourPath()]: { viewerTarget: viewerTopTourPath(), adminTarget: '/admin/tour-seasons' },
-    '/admin/tour-seasons': { viewerTarget: viewerTopTourPath(), adminTarget: '/admin/tour-seasons' }
-  }
-
-  if (mappings[pathname]) return mappings[pathname]
-  if (pathname.startsWith('/viewer')) return { viewerTarget: pathname, adminTarget: '/admin' }
-  if (pathname.startsWith('/admin')) return { viewerTarget: viewerHomePath(), adminTarget: pathname }
-  return { viewerTarget: viewerHomePath(), adminTarget: '/admin' }
 }
 
 function runNavFor(runId: string): AdminNavItem[] {

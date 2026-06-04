@@ -1,4 +1,7 @@
 import appSource from './App.tsx?raw'
+import layoutSource from './components/Layout.tsx?raw'
+import modePagesSource from './pages/ModePages.tsx?raw'
+import viewerRunSelectorSource from './components/ViewerRunSelector.tsx?raw'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
@@ -176,6 +179,20 @@ describe('Viewer Phase 3AQ completion audit', () => {
       .map((match) => ({ path: match[1], title: match[2] }))
 
     expect(directViewerShellRoutes).toEqual([])
+  })
+})
+
+describe('Viewer Phase 4I run-scoped inline route cleanup audit', () => {
+  it('keeps obvious run-scoped Viewer link construction on shared helpers in inspected Viewer sources', () => {
+    const inspectedSources = [modePagesSource, layoutSource, viewerRunSelectorSource]
+    const obviousInlineRunScopedPatterns = [
+      /`\/viewer\/runs\/\$\{[^`]+`/,
+      /['"]\/viewer\/runs\/\$\{[^'"]+['"]/
+    ]
+
+    expect(
+      inspectedSources.flatMap((source) => obviousInlineRunScopedPatterns.flatMap((pattern) => source.match(pattern) ?? []))
+    ).toEqual([])
   })
 })
 

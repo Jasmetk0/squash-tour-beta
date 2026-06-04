@@ -779,3 +779,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Run-scoped Viewer route helper coverage was audited against real Viewer run routes.
 - Dynamic route segments are covered by focused helper tests.
 - No backend/Admin behavior changed.
+
+## Phase 4I — Run-scoped Viewer inline route helper cleanup
+
+- Remaining obvious inline run-scoped Viewer route strings were audited.
+- Safe replacements now use shared run-scoped Viewer route helpers.
+- Link labels and destinations remain unchanged.
+- No backend/Admin behavior changed.

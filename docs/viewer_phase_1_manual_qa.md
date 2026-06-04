@@ -753,3 +753,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Obvious top-level Viewer links now use shared route helpers where safe.
 - Inline route strings without helpers were left unchanged and documented for future cleanup: deferred Rankings, Tour, Players, Countries, H2H, Stats, and Predictions subpage links still live inline until a broader route registry pass.
 - No backend/Admin behavior changed.
+
+## Phase 4E — Viewer dropdown subroute helper cleanup
+
+- Viewer dropdown subroute helpers were added.
+- Viewer dropdown links now use shared route helpers while preserving labels, order, and destinations.
+- Deferred page behavior and route availability remain unchanged.
+- No backend/Admin behavior changed.

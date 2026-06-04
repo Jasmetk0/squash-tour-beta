@@ -1,0 +1,56 @@
+import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import { describe, expect, it } from 'vitest'
+
+import { AppShellHeader } from './AppShellHeader'
+import type { AppShellMode } from '../navigation/appShellMode'
+
+function renderAppShellHeader(mode: AppShellMode, pathname: string): void {
+  render(
+    <MemoryRouter initialEntries={[pathname]}>
+      <AppShellHeader mode={mode} pathname={pathname} />
+    </MemoryRouter>
+  )
+}
+
+describe('AppShellHeader', () => {
+  it('renders the Viewer mode title and subtitle', () => {
+    renderAppShellHeader('viewer', '/viewer')
+
+    expect(screen.getByRole('heading', { name: 'MSA Squash' })).toBeInTheDocument()
+    expect(screen.getByText('Viewer / MSA Website Mode')).toHaveClass('subtitle')
+  })
+
+  it('renders the Admin mode title and subtitle', () => {
+    renderAppShellHeader('admin', '/admin')
+
+    expect(screen.getByRole('heading', { name: 'Squash Tour Beta Engine' })).toBeInTheDocument()
+    expect(screen.getByText('Admin / Engine Mode')).toHaveClass('subtitle')
+  })
+
+  it('renders the landing mode title and subtitle', () => {
+    renderAppShellHeader('landing', '/')
+
+    expect(screen.getByRole('heading', { name: 'Squash Tour Beta Engine' })).toBeInTheDocument()
+    expect(screen.getByText('Mode selection')).toHaveClass('subtitle')
+  })
+
+  it('renders the mode switcher in the header', () => {
+    renderAppShellHeader('viewer', '/viewer')
+
+    expect(screen.getByLabelText('Mode switcher')).toBeInTheDocument()
+  })
+
+  it('preserves mode switcher targets from a Viewer route', () => {
+    renderAppShellHeader('viewer', '/viewer')
+
+    expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', '/admin')
+  })
+
+  it('preserves mode switcher targets from an Admin route', () => {
+    renderAppShellHeader('admin', '/admin/runs/run-a/finals')
+
+    expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', '/admin/runs/run-a/finals')
+    expect(screen.getByRole('link', { name: 'Viewer / MSA' })).toHaveAttribute('href', '/viewer')
+  })
+})

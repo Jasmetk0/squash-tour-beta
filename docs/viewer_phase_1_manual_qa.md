@@ -861,3 +861,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Layout remains a thin shell composing AppShellHeader, AdminNavigation, ViewerTopbar, and Outlet.
 - Titles, subtitles, app-shell classes, current-run context behavior, and navigation behavior remain unchanged.
 - No backend/Admin route behavior changed.
+
+## Phase 4T — Layout/navigation architecture completion audit
+
+- Layout/navigation architecture was audited after the Phase 4L–4S extraction sequence.
+- `Layout.tsx` remains a thin shell composing the extracted header, Admin navigation, Viewer topbar, non-admin run-context fallback, and route outlet.
+- Extracted Layout/navigation modules have focused regression coverage for shell mode helpers, header rendering, mode-switcher targets, Admin navigation, Viewer navigation, and Viewer topbar behavior.
+- No backend/Admin route behavior changed.

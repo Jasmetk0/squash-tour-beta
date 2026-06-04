@@ -820,3 +820,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Mode switcher route-target logic was extracted from `Layout.tsx` into a dedicated Viewer helper module.
 - Existing Admin/Viewer mode switch behavior and encoding behavior remain unchanged.
 - No backend/Admin behavior changed.
+
+## Phase 4N — Viewer topbar component extraction
+
+- Viewer topbar rendering was extracted from `Layout.tsx` into a dedicated component.
+- Labels, order, destinations, search behavior, active-state behavior, and route ownership remain unchanged.
+- No backend/Admin behavior changed.

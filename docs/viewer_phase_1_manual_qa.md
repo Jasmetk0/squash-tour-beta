@@ -887,3 +887,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Module boundaries and focused regression coverage were verified.
 - Active-run storage/event behavior and Season/Week context behavior remain unchanged.
 - No backend/Admin route behavior changed.
+
+## Phase 4X — Viewer Run Browser architecture cleanup note
+
+- Viewer Run Browser metadata/link display was audited and safely cleaned up.
+- Run metadata labels/order, quick links, active-run behavior, and routes remain unchanged.
+- No backend/Admin route behavior changed.

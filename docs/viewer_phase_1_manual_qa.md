@@ -760,3 +760,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Viewer dropdown links now use shared route helpers while preserving labels, order, and destinations.
 - Deferred page behavior and route availability remain unchanged.
 - No backend/Admin behavior changed.
+
+## Phase 4F route helper coverage note
+
+- Viewer route helper coverage was audited against the real Viewer routes registered in `web/src/App.tsx`.
+- Dropdown helper destinations were verified against existing Viewer routes, including the `/viewer/tour/tournaments` and `/viewer/tournaments` All Tournaments aliases.
+- No backend or Admin behavior changed.

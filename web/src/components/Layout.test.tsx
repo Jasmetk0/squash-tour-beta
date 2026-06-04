@@ -1,3 +1,5 @@
+import appSource from '../App.tsx?raw'
+
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -19,6 +21,12 @@ const dropdownExpectations: Record<string, string[]> = {
   H2H: ['H2H Explorer', 'Rivalry Rankings', 'Most Played Matchups', 'Finals Rivalries', 'Player Comparison', 'Predict Matchup'],
   Stats: ['Stats Hub', 'Records', 'Title Leaders', 'Weeks at No.1', 'Streaks', 'Biggest Upsets', 'Best Seasons', 'Player Stats', 'Tournament Stats', 'Country Stats', 'Awards', 'Hall of Fame', 'Era Rankings'],
   Predictions: ['Match Predictor', 'Match Odds', 'Tournament Odds', 'Finals Qualification', 'Season-End No.1', 'Upset Watch', 'Futures Markets']
+}
+
+function appViewerTopLevelRoutes(): Set<string> {
+  return new Set(
+    [...appSource.matchAll(/<Route\s+path="(viewer(?:\/[^:"]*)?)"/g)].map((match) => `/${match[1]}`)
+  )
 }
 
 describe('Layout mode navigation', () => {
@@ -96,6 +104,17 @@ describe('Layout mode navigation', () => {
     expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBe('run-b')
     expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run-b')
     expect(control).toHaveTextContent('Active run: run-b')
+  })
+
+  it('keeps every Viewer dropdown destination backed by an App Viewer route', () => {
+    const appRoutes = appViewerTopLevelRoutes()
+    const dropdownDestinations = viewerDropdowns.flatMap((dropdown) => [
+      { label: dropdown.label, to: dropdown.to },
+      ...dropdown.items.map((item) => ({ label: `${dropdown.label} > ${item.label}`, to: item.to }))
+    ])
+
+    expect(dropdownDestinations.filter((destination) => !appRoutes.has(destination.to))).toEqual([])
+    expect([...appRoutes]).toEqual(expect.arrayContaining(['/viewer/tour/tournaments', '/viewer/tournaments']))
   })
 
   it('shows exact Viewer topbar categories and dropdown menu items', async () => {

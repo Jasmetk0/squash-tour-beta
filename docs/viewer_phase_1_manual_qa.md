@@ -50,18 +50,27 @@ Open `/viewer` and review the global Viewer header/topbar.
 For each dropdown, open it with mouse and keyboard where possible.
 
 - [ ] `Rankings` opens and contains sports-facing ranking destinations.
-- [ ] `Tour` opens and contains season, calendar, current week, tournaments, match center, categories, and champions destinations.
+- [ ] `Tour` opens and contains Season Hub, Season Calendar, Current Week, All Tournaments, Match Center, Tournament Categories, and Past Champions destinations; All Tournaments points to `/viewer/tour/tournaments`.
 - [ ] `Players` opens and contains player hub/list/status/compare destinations.
-- [ ] `Countries` opens and contains country hub/ranking/list/hosting/talent/records destinations.
+- [ ] `Countries` opens and contains Countries Hub, Country Ranking, All Countries, Hosting Nations, Talent Pipeline, and Country Records destinations; Country Ranking points to `/viewer/countries/ranking` and is not listed under Rankings.
 - [ ] `H2H` opens and contains explorer, rivalry, matchup, comparison, and predict destinations.
-- [ ] `Stats` opens and contains records, leaders, streaks, awards, Hall of Fame, and era destinations.
+- [ ] `Stats` opens and contains Stats Hub (`/viewer/stats`), Records (`/viewer/records`), leaders, streaks, awards, Hall of Fame, and era destinations.
 - [ ] `Predictions` opens and contains predictor, odds, qualification, season-end, upset, and futures destinations.
 - [ ] Dropdown links are readable and do not overlap the page content in a confusing way.
 - [ ] Clicking each dropdown item closes or navigates in a normal browser-expected way.
 - [ ] Shared shortcut links lead to a single shared destination rather than duplicate-looking pages:
-  - [ ] Countries → Country Ranking lands on `/viewer/countries/ranking`; Rankings no longer owns the Country Ranking nav item.
+  - [ ] Countries → Country Ranking lands on `/viewer/countries/ranking`; Rankings no longer owns or shares the Country Ranking nav item.
+  - [ ] Tour → All Tournaments lands on `/viewer/tour/tournaments`; `/viewer/tournaments` remains available as a public alias/shortcut to All Tournaments.
+  - [ ] Stats → Stats Hub lands on `/viewer/stats`; Stats → Records lands on `/viewer/records`.
   - [ ] Players → Compare Players and H2H → Player Comparison both land on `/viewer/players/compare`.
   - [ ] H2H → Predict Matchup and Predictions → Match Predictor both land on `/viewer/predictions/match-predictor`.
+
+- [ ] Active navigation state matches the current canonical ownership:
+  - [ ] `/viewer/countries/ranking` marks `Countries` and `Country Ranking` active, not `Rankings`.
+  - [ ] `/viewer/stats` marks `Stats` and `Stats Hub` active, not `Records`.
+  - [ ] `/viewer/records` marks `Stats` and `Records` active, not `Stats Hub`.
+  - [ ] `/viewer/tour/tournaments` marks `Tour` and `All Tournaments` active.
+  - [ ] `/viewer/tournaments` is accepted as a public shortcut/alias and keeps Tour topbar ownership.
 
 ### Season/Week selector
 
@@ -792,3 +801,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Viewer topbar active-state regression coverage was added for Country Ranking, Stats/Records, and tournament aliases.
 - Canonical nav ownership remains unchanged.
 - No backend/Admin behavior changed.
+
+## Phase 4K — Viewer manual QA navigation checklist sync
+
+- Viewer manual QA navigation checklist wording was synced with the current canonical Viewer navigation behavior after Phases 4B–4J.
+- Country Ranking is documented under Countries only; Stats Hub and Records point to their canonical Viewer routes; Tour All Tournaments points to `/viewer/tour/tournaments` while `/viewer/tournaments` remains documented as a public alias/shortcut.
+- Active-state expectations now align with Phase 4J regression coverage.
+- No backend/Admin/source behavior changed.

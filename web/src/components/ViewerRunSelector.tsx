@@ -11,6 +11,7 @@ import {
   readViewerActiveRunId,
   writeViewerActiveRunId
 } from '../viewer/activeRun'
+import { formatViewerActiveRunLabel, formatViewerCompactRunOptionLabel, formatViewerRunOptionLabel } from '../viewer/activeRunDisplay'
 import { viewerRunsPath } from '../viewer/viewerRoutes'
 
 type ViewerRunSelectorProps = {
@@ -74,7 +75,7 @@ export function ViewerActiveRunCompact(): JSX.Element {
   return (
     <form className="viewer-active-run-compact" aria-label="Viewer topbar active run">
       <span className="viewer-active-run-compact__status">
-        Active run: <strong>{activeRunId ?? 'None'}</strong>
+        Active run: <strong>{formatViewerActiveRunLabel(activeRunId)}</strong>
       </span>
       <label className="viewer-active-run-compact__field">
         <span className="sr-only">Viewer active run</span>
@@ -90,7 +91,7 @@ export function ViewerActiveRunCompact(): JSX.Element {
           {runs.length === 0 ? <option value="">No runs available</option> : null}
           {runs.map((run) => (
             <option key={run.run_id} value={run.run_id}>
-              {run.run_id} · S{run.season} · seed {run.seed}
+              {formatViewerCompactRunOptionLabel(run)}
             </option>
           ))}
         </select>
@@ -132,7 +133,7 @@ export function ViewerRunSelector({ compact = false }: ViewerRunSelectorProps): 
             {runs.length === 0 ? <option value="">No runs available</option> : null}
             {runs.map((run) => (
               <option key={run.run_id} value={run.run_id}>
-                {run.run_id} — season {run.season}, seed {run.seed}
+                {formatViewerRunOptionLabel(run)}
               </option>
             ))}
           </select>

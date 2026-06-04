@@ -868,3 +868,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - `Layout.tsx` remains a thin shell composing the extracted header, Admin navigation, Viewer topbar, non-admin run-context fallback, and route outlet.
 - Extracted Layout/navigation modules have focused regression coverage for shell mode helpers, header rendering, mode-switcher targets, Admin navigation, Viewer navigation, and Viewer topbar behavior.
 - No backend/Admin route behavior changed.
+
+## Phase 4U — Viewer active-run controls architecture cleanup
+
+- Viewer active-run controls were audited and safely cleaned up after the Layout/navigation extraction sequence.
+- Active-run labels, localStorage behavior, changed-event behavior, quick links, and topbar behavior remain unchanged.
+- No backend/Admin route behavior changed.

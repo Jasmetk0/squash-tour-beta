@@ -14,6 +14,7 @@ import { ViewerJumpToWeekButton } from '../components/ViewerContextControls'
 import { ViewerRunSelector } from '../components/ViewerRunSelector'
 import { useViewerContext } from '../viewer/ViewerContext'
 import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewer/activeRun'
+import { buildViewerActiveRunQuickLinks } from '../viewer/activeRunDisplay'
 import { RacePreviewTable } from '../viewer/RacePreviewTable'
 import { RankingPreviewTable } from '../viewer/RankingPreviewTable'
 import { parseRacePreviewPayload } from '../viewer/racePayload'
@@ -285,16 +286,7 @@ function viewerRunMetadataFields(run: ViewerRunListItem): ViewerRunMetadataField
 }
 
 function viewerRunBrowserLinks(runId: string): Array<{ label: string; to: string }> {
-  return [
-    { label: 'Open calendar', to: viewerSeasonCalendarPath(runId) },
-    { label: 'Open rankings', to: viewerRankingsPath(runId) },
-    { label: 'Open race', to: viewerRacePath(runId) },
-    { label: 'Open tournaments', to: viewerTournamentsPath(runId) },
-    { label: 'Open players', to: viewerPlayersPath(runId) },
-    { label: 'Open countries', to: viewerCountriesPath(runId) },
-    { label: 'Open history', to: viewerHistoryPath(runId) },
-    { label: 'Open finals', to: viewerFinalsPath(runId) }
-  ]
+  return buildViewerActiveRunQuickLinks(runId)
 }
 
 export function ViewerRunBrowserPage(): JSX.Element {

@@ -923,3 +923,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Visible Viewer Home copy, active-run summary, featured event, nearby events, previews, links, and routes remain unchanged.
 - `ModePages.tsx` keeps compatibility exports for existing routes.
 - No backend/Admin route behavior changed.
+
+## Phase 5C — Viewer Rankings/Race page module extraction
+
+- Viewer Rankings/Race snapshot landing pages were extracted from `ModePages.tsx` into dedicated Viewer page modules.
+- Shared snapshot landing behavior moved with the page family.
+- Visible Rankings/Race titles, descriptions, empty states, snapshot links, and routes remain unchanged.
+- `ModePages.tsx` keeps compatibility exports for existing routes.
+- No backend/Admin route behavior changed.

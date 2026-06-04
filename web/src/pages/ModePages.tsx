@@ -8,6 +8,7 @@ import { AdminSeasonsPage as SeasonBootstrapAdminSeasonsPage } from './AdminSeas
 import { TournamentTemplatesPage } from './TournamentTemplatesPage'
 export { ViewerRunBrowserPage } from './viewer/ViewerRunBrowserPage'
 export { ViewerHomePage } from './viewer/ViewerHomePage'
+export { ViewerRankingsPage, ViewerRacePage } from './viewer/rankings'
 import { getCountriesMetadata, getFinalsSummary, getRun, getRunActivity, getRunStatusSummary, getTournamentTemplatesMetadata, listEvents, listRaceSnapshots, listRankingSnapshots, listRunNations, listRunPlayers, listRuns } from '../api/client'
 
 import { LinkCardGrid } from '../components/LinkCardGrid'
@@ -15,12 +16,8 @@ import { ViewerActiveRunCard, ViewerActiveRunLinks, ViewerDeferredFeatureList, V
 import { ViewerShellPage } from '../components/viewer/ViewerShellPage'
 import { ViewerJumpToWeekButton } from '../components/ViewerContextControls'
 import { useViewerContext } from '../viewer/ViewerContext'
-import { RacePreviewTable } from '../viewer/RacePreviewTable'
-import { RankingPreviewTable } from '../viewer/RankingPreviewTable'
 import { useActiveViewerRunId } from '../viewer/useActiveViewerRunId'
-import { findViewerTopLevelHubLink } from '../viewer/viewerHubLinks'
-import { parseRacePreviewPayload } from '../viewer/racePayload'
-import { parseRankingPreviewPayload } from '../viewer/rankingPayload'
+import { latestSnapshot } from './viewer/rankings/viewerSnapshotDisplay'
 import {
   viewerCountriesPath,
   viewerHomePath,
@@ -228,8 +225,6 @@ export function AdminSettingsPage(): JSX.Element {
 }
 
 
-const VIEWER_RANKINGS_HUB_LINK = findViewerTopLevelHubLink('MSA Rankings')
-const VIEWER_RACE_HUB_LINK = findViewerTopLevelHubLink('Race to Finals')
 
 function buildPlannedEventMap(runData: SeasonStateResponse | undefined): Map<string, SeasonStateResponse['season_state']['ordered_events'][number]> {
   const map = new Map<string, SeasonStateResponse['season_state']['ordered_events'][number]>()
@@ -297,10 +292,6 @@ function renderPersistedEventSummary(event: EventRecord | null, plannedMap: Map<
   const eventId = runId ? renderLinkedEventId(runId, event.event_id) : event.event_id
   const weekValue = runId ? renderLinkedWeek(runId, week) : week != null ? `W${week}` : 'W—'
   return <>{eventId} · {weekValue} · {category} · {tour} · {templateId}</>
-}
-
-function latestSnapshot<T extends RankingSnapshot | RaceSnapshot>(snapshots: T[]): T | null {
-  return [...snapshots].sort((a, b) => b.snapshot_sequence - a.snapshot_sequence)[0] ?? null
 }
 
 
@@ -458,82 +449,6 @@ function renderActivityItem(item: RunActivityItem, runId: string, context: Activ
   ))
 }
 
-type ViewerSnapshotLandingMode = 'ranking' | 'race'
-
-type ViewerSnapshotLandingConfig = {
-  mode: ViewerSnapshotLandingMode
-  title: string
-  description: string
-  emptyMessage: string
-  noSnapshotsMessage: string
-  countLabel: string
-  openLabel: string
-  latestLabel: string
-  runScopedPath: (runId: string) => string
-  detailPath: (runId: string, snapshotSequence: number) => string
-}
-
-function ViewerSnapshotLandingPage({ config }: { config: ViewerSnapshotLandingConfig }): JSX.Element {
-  const activeRunId = useActiveViewerRunId()
-  const snapshotsQuery = useQuery({
-    queryKey: ['viewer-top-level-snapshots', config.mode, activeRunId],
-    queryFn: () => (config.mode === 'ranking' ? listRankingSnapshots(activeRunId ?? '') : listRaceSnapshots(activeRunId ?? '')),
-    enabled: Boolean(activeRunId),
-    retry: false
-  })
-
-  if (!activeRunId) {
-    return (
-      <ViewerShellPage title={config.title} description={config.description}>
-        <ViewerEmptyState>{config.emptyMessage}</ViewerEmptyState>
-      </ViewerShellPage>
-    )
-  }
-
-  const snapshots = snapshotsQuery.data?.snapshots ?? []
-  const latest = latestSnapshot(snapshots)
-  const rankingPreview = config.mode === 'ranking' && latest ? parseRankingPreviewPayload(latest.payload) : null
-  const racePreview = config.mode === 'race' && latest ? parseRacePreviewPayload(latest.payload) : null
-
-  return (
-    <ViewerShellPage title={config.title} description={config.description}>
-      <ViewerActiveRunCard ariaLabel={`${config.title} active run snapshot summary`} title={`${config.title} snapshot landing`}>
-        <ViewerMetadataList
-          items={[
-            { label: 'Active run ID', value: activeRunId },
-            { label: config.countLabel, value: snapshotsQuery.isLoading ? 'Loading…' : snapshots.length },
-            { label: 'Latest snapshot sequence', value: latest ? latest.snapshot_sequence : '—' },
-            { label: 'Latest source event ID', value: latest?.source_event_id ?? '—' },
-            { label: 'Latest snapshot kind', value: latest?.snapshot_kind ?? '—' }
-          ]}
-        />
-
-        {snapshotsQuery.isError ? <ViewerEmptyState>Snapshot metadata is temporarily unavailable for this run.</ViewerEmptyState> : null}
-        {!snapshotsQuery.isLoading && !snapshotsQuery.isError && !latest ? <ViewerEmptyState>{config.noSnapshotsMessage}</ViewerEmptyState> : null}
-        {rankingPreview?.rows.length ? (
-          <div>
-            <h4>Top 10 Ranking Preview</h4>
-            <RankingPreviewTable rows={rankingPreview.rows} ariaLabel="Latest Top 10 ranking preview table" runId={activeRunId} />
-          </div>
-        ) : null}
-        {racePreview?.rows.length ? (
-          <div>
-            <h4>Top 10 Race Preview</h4>
-            <RacePreviewTable rows={racePreview.rows} ariaLabel="Latest Top 10 race preview table" runId={activeRunId} />
-          </div>
-        ) : null}
-
-        <ViewerActiveRunLinks
-          links={[
-            { label: config.openLabel, to: config.runScopedPath(activeRunId) },
-            ...(latest ? [{ label: config.latestLabel, to: config.detailPath(activeRunId, latest.snapshot_sequence) }] : [])
-          ]}
-        />
-      </ViewerActiveRunCard>
-    </ViewerShellPage>
-  )
-}
-
 
 type ViewerRankingDeferredKind = 'next-gen' | 'elo' | 'power' | 'form' | 'no1-history'
 
@@ -643,43 +558,6 @@ export function ViewerRankingDeferredPage({ kind }: { kind: ViewerRankingDeferre
   )
 }
 
-export function ViewerRankingsPage(): JSX.Element {
-  return (
-    <ViewerSnapshotLandingPage
-      config={{
-        mode: 'ranking',
-        title: VIEWER_RANKINGS_HUB_LINK.label,
-        description: VIEWER_RANKINGS_HUB_LINK.description ?? '',
-        emptyMessage: 'No data is available for this run yet.',
-        noSnapshotsMessage: 'No data is available for this run yet.',
-        countLabel: 'Ranking snapshot count',
-        openLabel: 'Open active run rankings',
-        latestLabel: 'View latest ranking snapshot',
-        runScopedPath: (runId) => viewerRankingsPath(runId),
-        detailPath: (runId, snapshotSequence) => viewerRankingSnapshotPath(runId, snapshotSequence)
-      }}
-    />
-  )
-}
-
-export function ViewerRacePage(): JSX.Element {
-  return (
-    <ViewerSnapshotLandingPage
-      config={{
-        mode: 'race',
-        title: VIEWER_RACE_HUB_LINK.label,
-        description: VIEWER_RACE_HUB_LINK.description ?? '',
-        emptyMessage: 'No data is available for this run yet.',
-        noSnapshotsMessage: 'No data is available for this run yet.',
-        countLabel: 'Race snapshot count',
-        openLabel: 'Open active run race',
-        latestLabel: 'View latest race snapshot',
-        runScopedPath: (runId) => viewerRacePath(runId),
-        detailPath: (runId, snapshotSequence) => viewerRaceSnapshotPath(runId, snapshotSequence)
-      }}
-    />
-  )
-}
 
 export function ViewerSeasonHubPage(): JSX.Element {
   const activeRunId = useActiveViewerRunId()

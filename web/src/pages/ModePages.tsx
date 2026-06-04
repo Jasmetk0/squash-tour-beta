@@ -14,9 +14,9 @@ import { ViewerJumpToWeekButton } from '../components/ViewerContextControls'
 import { ViewerRunSelector } from '../components/ViewerRunSelector'
 import { useViewerContext } from '../viewer/ViewerContext'
 import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewer/activeRun'
-import { buildViewerActiveRunQuickLinks } from '../viewer/activeRunDisplay'
 import { RacePreviewTable } from '../viewer/RacePreviewTable'
 import { RankingPreviewTable } from '../viewer/RankingPreviewTable'
+import { buildViewerRunBrowserLinks, viewerRunMetadataFields, type ViewerRunBrowserListItem } from '../viewer/runBrowserDisplay'
 import { parseRacePreviewPayload } from '../viewer/racePayload'
 import { parseRankingPreviewPayload } from '../viewer/rankingPayload'
 import {
@@ -248,51 +248,10 @@ function useActiveViewerRunId(): string | null {
 
 
 
-type ViewerRunListItem = RunsIndexResponse['runs'][number] & Record<string, unknown>
-
-type ViewerRunMetadataField = {
-  label: string
-  value: ReactNode
-}
-
-function hasSafeMetadataValue(value: unknown): boolean {
-  return value !== null && value !== undefined && value !== ''
-}
-
-function optionalRunField(run: ViewerRunListItem, key: string): unknown {
-  return run[key]
-}
-
-function viewerRunMetadataFields(run: ViewerRunListItem): ViewerRunMetadataField[] {
-  const fields: ViewerRunMetadataField[] = []
-  const progress = run.progress
-  const parentRunId = optionalRunField(run, 'parent_run_id')
-  const sourceType = optionalRunField(run, 'source_type')
-  const createdAt = optionalRunField(run, 'created_at') ?? optionalRunField(run, 'created')
-  const updatedAt = optionalRunField(run, 'updated_at') ?? optionalRunField(run, 'updated')
-
-  if (hasSafeMetadataValue(run.run_id)) fields.push({ label: 'Run id', value: run.run_id })
-  if (hasSafeMetadataValue(run.season)) fields.push({ label: 'Season', value: run.season })
-  if (hasSafeMetadataValue(run.seed)) fields.push({ label: 'Seed', value: run.seed })
-  if (hasSafeMetadataValue(progress?.next_event_index)) fields.push({ label: 'Next event index', value: progress.next_event_index })
-  if (hasSafeMetadataValue(progress?.total_events)) fields.push({ label: 'Total events', value: progress.total_events })
-  if (hasSafeMetadataValue(progress?.completed_event_count)) fields.push({ label: 'Completed event count', value: progress.completed_event_count })
-  if (hasSafeMetadataValue(sourceType)) fields.push({ label: 'Source', value: String(sourceType) })
-  if (hasSafeMetadataValue(parentRunId)) fields.push({ label: 'Parent run', value: String(parentRunId) })
-  if (hasSafeMetadataValue(createdAt)) fields.push({ label: 'Created', value: String(createdAt) })
-  if (hasSafeMetadataValue(updatedAt)) fields.push({ label: 'Updated', value: String(updatedAt) })
-
-  return fields
-}
-
-function viewerRunBrowserLinks(runId: string): Array<{ label: string; to: string }> {
-  return buildViewerActiveRunQuickLinks(runId)
-}
-
 export function ViewerRunBrowserPage(): JSX.Element {
   const activeRunId = useActiveViewerRunId()
   const runsQuery = useQuery({ queryKey: ['viewer-run-selector-runs'], queryFn: listRuns, retry: false })
-  const runs = (runsQuery.data?.runs ?? []) as ViewerRunListItem[]
+  const runs = (runsQuery.data?.runs ?? []) as ViewerRunBrowserListItem[]
 
   return (
     <ViewerShellPage
@@ -328,7 +287,7 @@ export function ViewerRunBrowserPage(): JSX.Element {
                   <ViewerMetadataList ariaLabel={`Run ${run.run_id} metadata`} items={fields} />
                   <div className="viewer-run-browser-links" aria-label={`Run ${run.run_id} links`}>
                     <h5>Links</h5>
-                    <ViewerActiveRunLinks layout="grid" links={viewerRunBrowserLinks(run.run_id)} />
+                    <ViewerActiveRunLinks layout="grid" links={buildViewerRunBrowserLinks(run.run_id)} />
                   </div>
                 </article>
               )

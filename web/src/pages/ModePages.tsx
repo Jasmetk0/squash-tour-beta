@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { AdminPlayersPage as InitialPoolAdminPlayersPage } from './AdminPlayersPage'
 import { AdminPlayersHubPage } from './AdminPlayersHubPage'
 import { AdminSeasonsPage as SeasonBootstrapAdminSeasonsPage } from './AdminSeasonsPage'
@@ -11,6 +11,7 @@ export { ViewerHomePage } from './viewer/ViewerHomePage'
 export { ViewerRankingsPage, ViewerRacePage } from './viewer/rankings'
 export { ViewerSeasonHubPage, ViewerTourCalendarPage, ViewerCurrentWeekPage, ViewerTournamentsPage } from './viewer/tour'
 export { ViewerPlayersPage, ViewerCountriesPage } from './viewer/people'
+export { ViewerSearchPage, ViewerH2HPage, ViewerPlayerComparePage, ViewerPlayerComparisonPage, ViewerMatchPredictorPage } from './viewer/explore'
 import { getCountriesMetadata, getFinalsSummary, getRun, getRunActivity, getRunStatusSummary, getTournamentTemplatesMetadata, listEvents, listRaceSnapshots, listRankingSnapshots, listRunNations, listRunPlayers, listRuns } from '../api/client'
 
 import { LinkCardGrid } from '../components/LinkCardGrid'
@@ -21,7 +22,8 @@ import { latestSnapshot } from './viewer/rankings/viewerSnapshotDisplay'
 import { buildPlannedEventMap, formatFinalsAvailability, selectLatestPersistedEvent, selectNextOrderedEvent } from './viewer/tour/viewerTourDisplay'
 import type { OrderedSeasonEvent } from './viewer/tour/viewerTourDisplay'
 import { renderLinkedEventId, renderLinkedWeek } from './viewer/tour/viewerTourEventRender'
-import { renderCountrySampleMetadata, renderLinkedCountry, renderLinkedPlayer, renderPlayerSampleMetadata } from './viewer/people'
+import { renderCountrySampleMetadata, renderPlayerSampleMetadata } from './viewer/people'
+import { ViewerSamplePlayersList } from './viewer/explore/viewerComparisonRender'
 import {
   viewerCountriesPath,
   viewerHomePath,
@@ -44,7 +46,7 @@ import {
   viewerTournamentsPath,
   viewerTournamentDetailPath
 } from '../viewer/viewerRoutes'
-import type { EventRecord, FinalsSummaryResponse, RankingSnapshot, RaceSnapshot, RunActivityItem, RunNationSummaryItem, RunPlayerListItem, RunStatusSummary, RunsIndexResponse, SeasonStateResponse } from '../api/types'
+import type { EventRecord, FinalsSummaryResponse, RankingSnapshot, RaceSnapshot, RunActivityItem, RunPlayerListItem, RunStatusSummary, RunsIndexResponse } from '../api/types'
 
 export function LandingPage(): JSX.Element {
   return (
@@ -1124,228 +1126,7 @@ export function ViewerCountryRankingPage(): JSX.Element {
   return <ViewerCountriesDeferredPage kind="ranking" />
 }
 
-type ViewerComparisonRouteKind = 'h2h' | 'compare'
-
-const comparisonStatFields = [
-  { key: 'overall', label: 'Power Rating difference' },
-  { key: 'technique', label: 'Technique difference' },
-  { key: 'movement', label: 'Movement difference' },
-  { key: 'physical', label: 'Physical difference' },
-  { key: 'mental', label: 'Mental difference' },
-  { key: 'age', label: 'Age difference' }
-] as const
-
-function playerNumericField(player: RunPlayerListItem, field: typeof comparisonStatFields[number]['key']): number | null {
-  const value = player[field]
-  return typeof value === 'number' && Number.isFinite(value) ? value : null
-}
-
-function formatComparisonDifference(playerA: RunPlayerListItem, playerB: RunPlayerListItem, field: typeof comparisonStatFields[number]['key']): string {
-  const valueA = playerNumericField(playerA, field)
-  const valueB = playerNumericField(playerB, field)
-  if (valueA === null || valueB === null) return '—'
-  const difference = valueA - valueB
-  return difference > 0 ? `+${difference}` : String(difference)
-}
-
-type ViewerComparisonQueryParams = {
-  playerAParam: string
-  playerBParam: string
-  hasPlayerParams: boolean
-}
-
-type ViewerSelectedComparisonPlayers = ViewerComparisonQueryParams & {
-  playerA: RunPlayerListItem | null
-  playerB: RunPlayerListItem | null
-  hasMissingRequestedPlayer: boolean
-}
-
-function readViewerComparisonQueryParams(searchParams: URLSearchParams): ViewerComparisonQueryParams {
-  const playerAParam = searchParams.get('playerA') || searchParams.get('player_a') || searchParams.get('a') || ''
-  const playerBParam = searchParams.get('playerB') || searchParams.get('player_b') || searchParams.get('b') || ''
-  return {
-    playerAParam,
-    playerBParam,
-    hasPlayerParams: Boolean(playerAParam || playerBParam)
-  }
-}
-
-function selectViewerComparisonPlayers(players: RunPlayerListItem[], searchParams: URLSearchParams): ViewerSelectedComparisonPlayers {
-  const params = readViewerComparisonQueryParams(searchParams)
-  const playerA = params.playerAParam ? players.find((player) => player.player_id === params.playerAParam) ?? null : null
-  const playerB = params.playerBParam ? players.find((player) => player.player_id === params.playerBParam) ?? null : null
-  return {
-    ...params,
-    playerA,
-    playerB,
-    hasMissingRequestedPlayer: params.hasPlayerParams && (!params.playerAParam || !params.playerBParam || !playerA || !playerB)
-  }
-}
-
-function selectedComparisonPlayers(selection: Pick<ViewerSelectedComparisonPlayers, 'playerA' | 'playerB'>): RunPlayerListItem[] {
-  return [selection.playerA, selection.playerB].filter((player): player is RunPlayerListItem => Boolean(player))
-}
-
-function buildPlayerSearchLink(player: RunPlayerListItem): string {
-  return `${viewerTopSearchPath()}?q=${encodeURIComponent(player.player_id || player.name || '')}`
-}
-
-function buildSelectedPlayerSearchLinks(players: RunPlayerListItem[]): { label: string; to: string }[] {
-  return players
-    .filter((player) => player.player_id || player.name)
-    .map((player) => ({ label: `Search ${player.name || player.player_id}`, to: buildPlayerSearchLink(player) }))
-}
-
-function buildSelectedH2HPath(selection: Pick<ViewerSelectedComparisonPlayers, 'playerA' | 'playerB'>): string {
-  return selection.playerA && selection.playerB ? `${viewerTopH2HPath()}?playerA=${encodeURIComponent(selection.playerA.player_id)}&playerB=${encodeURIComponent(selection.playerB.player_id)}` : viewerTopH2HPath()
-}
-
-function ViewerPlayerComparisonLinks({ activeRunId, players }: { activeRunId: string; players: RunPlayerListItem[] }): JSX.Element {
-  return (
-    <ViewerSectionCard title="Links" kicker="Read-only navigation">
-      <ViewerActiveRunLinks
-        links={[
-          { label: 'Open active run players', to: viewerPlayersPath(activeRunId) },
-          { label: 'Open Viewer search', to: viewerTopSearchPath() },
-          ...buildSelectedPlayerSearchLinks(players)
-        ]}
-      />
-    </ViewerSectionCard>
-  )
-}
-
-function ViewerComparisonPlayerCard({ activeRunId, title, player }: { activeRunId: string; title: string; player: RunPlayerListItem | null }): JSX.Element {
-  return (
-    <ViewerSectionCard title={title} kicker="Selected player">
-      {player ? (
-        <ViewerMetadataList
-          ariaLabel={`${title} comparison fields`}
-          items={[
-            { label: 'Player', value: renderLinkedPlayer(activeRunId, player.player_id, player.name || player.player_id || '—') },
-            { label: 'Player ID', value: renderLinkedPlayer(activeRunId, player.player_id, player.player_id || '—') },
-            { label: 'Country', value: renderLinkedCountry(activeRunId, player.country_code) },
-            { label: 'Age', value: player.age ?? '—' },
-            { label: 'Power Rating', value: player.overall ?? '—' },
-            { label: 'Technique', value: player.technique ?? '—' },
-            { label: 'Movement', value: player.movement ?? '—' },
-            { label: 'Physical', value: player.physical ?? '—' },
-            { label: 'Mental', value: player.mental ?? '—' },
-            { label: 'Quality band', value: player.quality_band ?? '—' }
-          ]}
-        />
-      ) : (
-        <ViewerEmptyState>Player data is not available for this run yet.</ViewerEmptyState>
-      )}
-    </ViewerSectionCard>
-  )
-}
-
-function ViewerComparisonSummary({ playerA, playerB, title = 'Comparison Summary' }: { playerA: RunPlayerListItem | null; playerB: RunPlayerListItem | null; title?: string }): JSX.Element {
-  return (
-    <ViewerSectionCard title={title} kicker="Numeric field differences">
-      {playerA && playerB ? (
-        <ViewerMetadataList
-          ariaLabel={`${title} differences`}
-          items={comparisonStatFields.map((field) => ({
-            label: field.label,
-            value: formatComparisonDifference(playerA, playerB, field.key)
-          }))}
-        />
-      ) : (
-        <ViewerEmptyState>This preview is not connected for this data shape yet.</ViewerEmptyState>
-      )}
-    </ViewerSectionCard>
-  )
-}
-
-function ViewerPlayerComparisonContent({ routeKind }: { routeKind: ViewerComparisonRouteKind }): JSX.Element {
-  const activeRunId = useActiveViewerRunId()
-  const [searchParams] = useSearchParams()
-  const playersQuery = useQuery({
-    queryKey: ['viewer-player-comparison-run-players', activeRunId],
-    queryFn: () => listRunPlayers(activeRunId ?? '', { limit: 50, offset: 0 }),
-    enabled: Boolean(activeRunId),
-    retry: false
-  })
-
-  if (!activeRunId) {
-    return (
-      <ViewerShellPage title="Player Comparison" description="Read-only player comparison using the active Viewer run.">
-        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
-      </ViewerShellPage>
-    )
-  }
-
-  const players = playersQuery.data?.players ?? []
-  const selectedPlayers = selectViewerComparisonPlayers(players, searchParams)
-  const { playerA, playerB, hasPlayerParams, hasMissingRequestedPlayer } = selectedPlayers
-
-  return (
-    <ViewerShellPage
-      title="Player Comparison"
-      description={routeKind === 'h2h' ? 'Read-only H2H comparison using existing active-run player fields only.' : 'Read-only player comparison using existing active-run player fields only.'}
-    >
-      <ViewerLandingGrid>
-        <ViewerSectionCard title="Player Comparison" kicker="Active Viewer run" variant="hero">
-          {playersQuery.isLoading ? <p className="status">Loading active run player metadata…</p> : null}
-          {playersQuery.isError ? <ViewerEmptyState>Player metadata is temporarily unavailable for this run.</ViewerEmptyState> : null}
-          <ViewerMetadataList
-            items={[
-              { label: 'Active run ID', value: activeRunId },
-              { label: 'Total player count', value: playersQuery.isLoading ? 'Loading…' : playersQuery.data?.total ?? '—' },
-              { label: 'Returned player count', value: playersQuery.isLoading ? 'Loading…' : players.length }
-            ]}
-          />
-          {!playersQuery.isLoading && !playersQuery.isError && players.length === 0 ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
-          {!playersQuery.isLoading && !playersQuery.isError && hasMissingRequestedPlayer ? <ViewerEmptyState>Player data is not available for this run yet.</ViewerEmptyState> : null}
-          {!playersQuery.isLoading && !playersQuery.isError && !hasPlayerParams ? (
-            <>
-              <ViewerEmptyState>This preview is not connected for this data shape yet.</ViewerEmptyState>
-              <ViewerSamplePlayersList players={players} label="Sample active run players for comparison links" runId={activeRunId} />
-            </>
-          ) : null}
-        </ViewerSectionCard>
-        <ViewerComparisonPlayerCard activeRunId={activeRunId} title="Player A" player={playerA} />
-        <ViewerComparisonPlayerCard activeRunId={activeRunId} title="Player B" player={playerB} />
-        <ViewerComparisonSummary playerA={playerA} playerB={playerB} />
-        <ViewerPlayerComparisonLinks activeRunId={activeRunId} players={selectedComparisonPlayers(selectedPlayers)} />
-      </ViewerLandingGrid>
-    </ViewerShellPage>
-  )
-}
-
-export function ViewerPlayerComparisonPage(): JSX.Element {
-  return <ViewerPlayerComparisonContent routeKind="compare" />
-}
-
 type ViewerH2HSubrouteKind = 'rivalries' | 'most-played' | 'finals-rivalries'
-
-function ViewerActiveRunSportsLinks({ activeRunId }: { activeRunId: string }): JSX.Element {
-  return (
-    <ViewerActiveRunLinks
-      links={[
-        { label: 'Open active run players', to: viewerPlayersPath(activeRunId) },
-        { label: 'Open active run tournaments', to: viewerTournamentsPath(activeRunId) }
-      ]}
-    />
-  )
-}
-
-function ViewerSamplePlayersList({ players, label, runId }: { players: RunPlayerListItem[]; label: string; runId?: string }): JSX.Element | null {
-  return (
-    <ViewerSampleList
-      title="Sample players"
-      label={label}
-      items={players}
-      getKey={(player) => player.player_id || player.name || 'unknown-player'}
-      renderItem={(player) => renderPlayerSampleMetadata(player, runId)}
-    />
-  )
-}
-
-export function ViewerH2HPage(): JSX.Element {
-  return <ViewerPlayerComparisonContent routeKind="h2h" />
-}
 
 export function ViewerH2HSubroutePage({ kind }: { kind: ViewerH2HSubrouteKind }): JSX.Element {
   const activeRunId = useActiveViewerRunId()
@@ -1427,142 +1208,6 @@ export function ViewerH2HSubroutePage({ kind }: { kind: ViewerH2HSubrouteKind })
     </ViewerShellPage>
   )
 }
-
-export function ViewerMatchPredictorPage(): JSX.Element {
-  const activeRunId = useActiveViewerRunId()
-  const [searchParams] = useSearchParams()
-  const playersQuery = useQuery({
-    queryKey: ['viewer-match-predictor-run-players', activeRunId],
-    queryFn: () => listRunPlayers(activeRunId ?? '', { limit: 50, offset: 0 }),
-    enabled: Boolean(activeRunId),
-    retry: false
-  })
-
-  if (!activeRunId) {
-    return (
-      <ViewerShellPage title="Match Predictor" description="Read-only Match Predictor destination used by H2H and Predictions navigation.">
-        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
-      </ViewerShellPage>
-    )
-  }
-
-  const players = playersQuery.data?.players ?? []
-  const selectedPlayers = selectViewerComparisonPlayers(players, searchParams)
-  const { playerA, playerB, hasPlayerParams, hasMissingRequestedPlayer } = selectedPlayers
-  const h2hPath = buildSelectedH2HPath(selectedPlayers)
-
-  return (
-    <ViewerShellPage title="Match Predictor" description="Read-only Match Predictor using existing active-run player data only.">
-      <ViewerLandingGrid>
-        <ViewerSectionCard title="Match Predictor" kicker="Active Viewer run" variant="hero">
-          {playersQuery.isLoading ? <p className="status">Loading active run player metadata…</p> : null}
-          {playersQuery.isError ? <ViewerEmptyState>Player metadata is temporarily unavailable for this run.</ViewerEmptyState> : null}
-          <ViewerMetadataList
-            ariaLabel="Match Predictor active run summary"
-            items={[
-              { label: 'Active run ID', value: activeRunId },
-              { label: 'Total player count', value: playersQuery.isLoading ? 'Loading…' : playersQuery.data?.total ?? '—' },
-              { label: 'Returned player count', value: playersQuery.isLoading ? 'Loading…' : players.length }
-            ]}
-          />
-          {!playersQuery.isLoading && !playersQuery.isError && players.length === 0 ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
-        </ViewerSectionCard>
-        <ViewerSectionCard title="Predictor Inputs" kicker="Read-only player fields">
-          {!playersQuery.isLoading && !playersQuery.isError && hasMissingRequestedPlayer ? <ViewerEmptyState>Player data is not available for this run yet.</ViewerEmptyState> : null}
-          {!playersQuery.isLoading && !playersQuery.isError && !hasPlayerParams ? (
-            <>
-              <ViewerEmptyState>This preview is not connected for this data shape yet.</ViewerEmptyState>
-              <ViewerSamplePlayersList players={players} label="Sample active run players for future predictor inputs" runId={activeRunId} />
-            </>
-          ) : null}
-          {!playersQuery.isLoading && !playersQuery.isError && playerA && playerB ? <p className="status">Matched players are shown from active-run player data only.</p> : null}
-        </ViewerSectionCard>
-        <ViewerComparisonPlayerCard activeRunId={activeRunId} title="Player A" player={playerA} />
-        <ViewerComparisonPlayerCard activeRunId={activeRunId} title="Player B" player={playerB} />
-        <ViewerComparisonSummary playerA={playerA} playerB={playerB} title="Input Comparison" />
-        <ViewerSectionCard title="Links" kicker="Read-only navigation">
-          <ViewerActiveRunLinks
-            links={[
-              { label: 'Open active run players', to: viewerPlayersPath(activeRunId) },
-              { label: 'Open Viewer search', to: viewerTopSearchPath() },
-              { label: 'Open H2H comparison', to: h2hPath }
-            ]}
-          />
-        </ViewerSectionCard>
-        <ViewerSectionCard title="Deferred Predictor Outputs" kicker="No prediction read model">
-          <ul className="viewer-home-list" aria-label="Deferred Predictor Outputs">
-            <li>This preview is not connected for this data shape yet.</li>
-            <li>No prediction is shown until a real prediction read model exists.</li>
-            <li>No odds are shown until a real odds read model exists.</li>
-          </ul>
-        </ViewerSectionCard>
-      </ViewerLandingGrid>
-    </ViewerShellPage>
-  )
-}
-
-type ViewerSearchPlannedEvent = SeasonStateResponse['season_state']['ordered_events'][number]
-
-type ViewerSearchTournamentResult = {
-  eventId: string
-  season: number | null
-  week: number | null
-  tour: string | null
-  category: string | null
-  templateId: string | null
-  hasPlannedEvent: boolean
-  hasPersistedEvent: boolean
-}
-
-function normalizeViewerSearchQuery(searchParams: URLSearchParams): string {
-  return (searchParams.get('q') ?? searchParams.get('query') ?? searchParams.get('search') ?? '').trim()
-}
-
-function searchTextMatches(query: string, values: Array<string | number | null | undefined>): boolean {
-  const normalizedQuery = query.toLowerCase()
-  return values.some((value) => String(value ?? '').toLowerCase().includes(normalizedQuery))
-}
-
-function buildSearchTournamentResults(plannedEvents: ViewerSearchPlannedEvent[], persistedEvents: EventRecord[], query: string): ViewerSearchTournamentResult[] {
-  const plannedById = new Map(plannedEvents.map((event) => [event.event_id, event]))
-  const persistedById = new Map(persistedEvents.map((event) => [event.event_id, event]))
-  const eventIds = Array.from(new Set([...plannedById.keys(), ...persistedById.keys()]))
-
-  return eventIds
-    .map((eventId) => {
-      const planned = plannedById.get(eventId)
-      const persisted = persistedById.get(eventId)
-      return {
-        eventId,
-        season: planned?.season ?? persisted?.season ?? null,
-        week: planned?.week ?? persisted?.week ?? null,
-        tour: planned?.tour ?? null,
-        category: planned?.category ?? null,
-        templateId: planned?.template_id ?? persisted?.template_id ?? null,
-        hasPlannedEvent: Boolean(planned),
-        hasPersistedEvent: Boolean(persisted)
-      }
-    })
-    .filter((event) => searchTextMatches(query, [event.eventId, event.tour, event.category, event.templateId, event.week]))
-}
-
-function renderSearchTournamentMetadata(runId: string, event: ViewerSearchTournamentResult): JSX.Element {
-  return (
-    <ViewerMetadataList
-      items={[
-        { label: 'Event ID', value: event.hasPlannedEvent ? <Link to={viewerPlannedEventPath(runId, event.eventId)}>Planned Event: {event.eventId}</Link> : event.eventId },
-        { label: 'Season', value: event.season ?? '—' },
-        { label: 'Week', value: event.week ? <Link to={viewerWeekDetailPath(runId, event.week)}>Week Detail: W{event.week}</Link> : '—' },
-        { label: 'Tour', value: event.tour ?? '—' },
-        { label: 'Category', value: event.category ?? '—' },
-        { label: 'Template', value: event.templateId ?? '—' },
-        { label: 'Persisted availability', value: event.hasPersistedEvent ? 'Available' : 'Not available' },
-        { label: 'Tournament detail', value: event.hasPersistedEvent ? <Link to={viewerTournamentDetailPath(runId, event.eventId)}>Tournament Detail: {event.eventId}</Link> : '—' }
-      ]}
-    />
-  )
-}
-
 
 type ViewerPredictionDeferredKind = 'match-odds' | 'tournament-odds' | 'finals-qualification' | 'season-end-no1' | 'upset-watch' | 'futures'
 
@@ -1661,133 +1306,6 @@ export function ViewerPredictionDeferredPage({ kind }: { kind: ViewerPredictionD
               { label: 'Open run browser', to: viewerRunsPath() }
             ]}
           />
-        </section>
-      </article>
-    </ViewerShellPage>
-  )
-}
-
-export function ViewerSearchPage(): JSX.Element {
-  const activeRunId = useActiveViewerRunId()
-  const [searchParams] = useSearchParams()
-  const urlQuery = normalizeViewerSearchQuery(searchParams)
-  const [query, setQuery] = useState(urlQuery)
-  const hasSearchQuery = urlQuery.length > 0
-
-  useEffect(() => {
-    setQuery(urlQuery)
-  }, [urlQuery])
-
-  const playersQuery = useQuery({
-    queryKey: ['viewer-search-run-players', activeRunId],
-    queryFn: () => listRunPlayers(activeRunId ?? '', { limit: 50, offset: 0 }),
-    enabled: Boolean(activeRunId && hasSearchQuery),
-    retry: false
-  })
-  const nationsQuery = useQuery({
-    queryKey: ['viewer-search-run-nations', activeRunId],
-    queryFn: () => listRunNations(activeRunId ?? '', { limit: 50, offset: 0 }),
-    enabled: Boolean(activeRunId && hasSearchQuery),
-    retry: false
-  })
-  const runQuery = useQuery({
-    queryKey: ['viewer-search-run-calendar', activeRunId],
-    queryFn: () => getRun(activeRunId ?? ''),
-    enabled: Boolean(activeRunId && hasSearchQuery),
-    retry: false
-  })
-  const eventsQuery = useQuery({
-    queryKey: ['viewer-search-run-events', activeRunId],
-    queryFn: () => listEvents(activeRunId ?? ''),
-    enabled: Boolean(activeRunId && hasSearchQuery),
-    retry: false
-  })
-
-  if (!activeRunId || !hasSearchQuery) {
-    return (
-      <ViewerShellPage title="Search" description="Read-only Viewer Search using active-run data only.">
-        <article className="viewer-active-run-card" aria-label="Search">
-          <span className="eyebrow">Viewer search</span>
-          <h3>Search{urlQuery ? `: ${urlQuery}` : ''}</h3>
-          <label className="field-label" htmlFor="viewer-search-shell-input">Search</label>
-          <input
-            id="viewer-search-shell-input"
-            aria-label="Read-only Viewer search shell"
-            placeholder="Search players, countries, tournaments…"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-          <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
-        </article>
-      </ViewerShellPage>
-    )
-  }
-
-  const players = (playersQuery.data?.players ?? []).filter((player) => searchTextMatches(urlQuery, [player.player_id, player.name, player.country_code, player.quality_band]))
-  const nations = (nationsQuery.data?.nations ?? []).filter((nation) => searchTextMatches(urlQuery, [nation.country_code, nation.country_name, nation.top_player_name, nation.top_player_id]))
-  const tournaments = buildSearchTournamentResults(runQuery.data?.season_state.ordered_events ?? [], eventsQuery.data?.events ?? [], urlQuery)
-  const isLoading = playersQuery.isLoading || nationsQuery.isLoading || runQuery.isLoading || eventsQuery.isLoading
-  const hasError = playersQuery.isError || nationsQuery.isError || runQuery.isError || eventsQuery.isError
-  const hasResults = players.length > 0 || nations.length > 0 || tournaments.length > 0
-
-  return (
-    <ViewerShellPage title="Search" description="Read-only Viewer Search using active-run player, country, and tournament data only.">
-      <article className="viewer-active-run-card" aria-label="Search">
-        <span className="eyebrow">Active Viewer run</span>
-        <h3>Search: {urlQuery}</h3>
-        {isLoading ? <p className="status">Loading active run search results…</p> : null}
-        {hasError ? <ViewerEmptyState>Some active run searchable metadata is temporarily unavailable.</ViewerEmptyState> : null}
-        <dl className="metadata-list">
-          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
-          <div><dt>Query</dt><dd>{urlQuery}</dd></div>
-        </dl>
-        <label className="field-label" htmlFor="viewer-search-shell-input">Search</label>
-        <input
-          id="viewer-search-shell-input"
-          aria-label="Read-only Viewer search shell"
-          placeholder="Search players, countries, tournaments…"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
-        {!isLoading && !hasError && !hasResults ? <ViewerEmptyState>No matching Viewer results found.</ViewerEmptyState> : null}
-
-        <section aria-label="Players">
-          <h4>Players</h4>
-          {players.length ? (
-            <ul className="viewer-home-list">
-              {players.map((player) => (
-                <li key={player.player_id}>{renderPlayerSampleMetadata(player, activeRunId)}</li>
-              ))}
-            </ul>
-          ) : <p className="status">No matching players.</p>}
-        </section>
-
-        <section aria-label="Countries">
-          <h4>Countries</h4>
-          {nations.length ? (
-            <ul className="viewer-home-list">
-              {nations.map((nation) => (
-                <li key={nation.country_code}>{renderCountrySampleMetadata(nation, activeRunId)}</li>
-              ))}
-            </ul>
-          ) : <p className="status">No matching countries.</p>}
-        </section>
-
-        <section aria-label="Tournaments">
-          <h4>Tournaments</h4>
-          {tournaments.length ? (
-            <ul className="viewer-home-list">
-              {tournaments.map((event) => (
-                <li key={event.eventId}>{renderSearchTournamentMetadata(activeRunId, event)}</li>
-              ))}
-            </ul>
-          ) : <p className="status">No matching tournaments.</p>}
-        </section>
-
-        <section aria-label="Links">
-          <h4>Links</h4>
-          <ViewerActiveRunLinks links={[{ label: 'Open run browser', to: viewerRunsPath() }]} />
-          <p className="status">Result links are shown only when player, country, event, or week IDs are available.</p>
         </section>
       </article>
     </ViewerShellPage>

@@ -949,3 +949,12 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - `ModePages.tsx` keeps compatibility exports for existing routes.
 - Country Ranking, H2H, and Compare stayed in `ModePages.tsx` because they share broader deferred/comparison behavior with remaining Viewer page families.
 - No backend/Admin route behavior changed.
+
+## Phase 5F — Viewer Search/Comparison page module extraction
+
+- Viewer Search/H2H/Compare exploration page family was extracted from `ModePages.tsx` into dedicated Viewer page modules.
+- Shared comparison/search display/render helper logic moved with the page family where safe.
+- Visible Search/H2H/Compare/Match Predictor titles, descriptions, query behavior, metadata labels, links, empty states, and routes remain unchanged.
+- `ModePages.tsx` keeps compatibility exports for existing routes.
+- H2H deferred subroutes and broader Predictions pages stayed in `ModePages.tsx` because they share broader predictions/deferred source metadata behavior with remaining Viewer page families.
+- No backend/Admin route behavior changed.

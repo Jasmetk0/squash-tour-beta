@@ -893,3 +893,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Viewer Run Browser metadata/link display was audited and safely cleaned up.
 - Run metadata labels/order, quick links, active-run behavior, and routes remain unchanged.
 - No backend/Admin route behavior changed.
+
+## Phase 4Y — Viewer hub/link-card configuration audit
+
+- Viewer hub/link-card configuration was audited and safely cleaned up.
+- Hub labels, descriptions, link order, active-run links, and routes remain unchanged.
+- No backend or Admin route behavior changed.

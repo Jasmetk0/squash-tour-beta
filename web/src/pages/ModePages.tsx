@@ -17,6 +17,7 @@ import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewe
 import { RacePreviewTable } from '../viewer/RacePreviewTable'
 import { RankingPreviewTable } from '../viewer/RankingPreviewTable'
 import { buildViewerRunBrowserLinks, viewerRunMetadataFields, type ViewerRunBrowserListItem } from '../viewer/runBrowserDisplay'
+import { buildActiveRunHubLinks } from '../viewer/viewerHubLinks'
 import { parseRacePreviewPayload } from '../viewer/racePayload'
 import { parseRankingPreviewPayload } from '../viewer/rankingPayload'
 import {
@@ -298,17 +299,6 @@ export function ViewerRunBrowserPage(): JSX.Element {
     </ViewerShellPage>
   )
 }
-
-const activeRunLinks = [
-  { title: 'Active Run Rankings', href: (runId: string) => viewerRankingsPath(runId) },
-  { title: 'Active Run Race', href: (runId: string) => viewerRacePath(runId) },
-  { title: 'Active Run Tournaments', href: (runId: string) => viewerTournamentsPath(runId) },
-  { title: 'Active Run Calendar', href: (runId: string) => viewerSeasonCalendarPath(runId) },
-  { title: 'Active Run Players', href: (runId: string) => viewerPlayersPath(runId) },
-  { title: 'Active Run Countries', href: (runId: string) => viewerCountriesPath(runId) },
-  { title: 'Active Run History', href: (runId: string) => viewerHistoryPath(runId) },
-  { title: 'Active Run Finals', href: (runId: string) => viewerFinalsPath(runId) }
-]
 
 type ViewerShellPageProps = {
   title: string
@@ -690,7 +680,7 @@ export function ViewerHomePage(): JSX.Element {
             </div>
             <ViewerActiveRunLinks
               layout="grid"
-              links={activeRunLinks.map((link) => ({ label: link.title, to: link.href(activeRunId) }))}
+              links={buildActiveRunHubLinks(activeRunId)}
             />
           </>
         ) : (

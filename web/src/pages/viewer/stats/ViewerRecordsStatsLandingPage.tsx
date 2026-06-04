@@ -1,139 +1,27 @@
-import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
-
 import { getFinalsSummary, getRunStatusSummary, listEvents, listRaceSnapshots, listRankingSnapshots } from '../../../api/client'
-import type { EventRecord, FinalsSummaryResponse, RaceSnapshot, RankingSnapshot, RunStatusSummary } from '../../../api/types'
 import { ViewerActiveRunLinks, ViewerDeferredFeatureList, ViewerEmptyState } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
 import { useActiveViewerRunId } from '../../../viewer/useActiveViewerRunId'
 import {
   viewerFinalsPath,
   viewerRacePath,
-  viewerRaceSnapshotPath,
-  viewerRankingSnapshotPath,
   viewerRankingsPath,
   viewerRunsPath,
-  viewerTournamentDetailPath,
   viewerTournamentsPath
 } from '../../../viewer/viewerRoutes'
-import { latestSnapshot } from '../rankings/viewerSnapshotDisplay'
-import { formatFinalsAvailability, selectLatestPersistedEvent } from '../tour/viewerTourDisplay'
+import {
+  buildDeferredSourceMetadata,
+  commonDeferredSourceMetadataItems,
+  hasAnyDeferredSourceMetadata,
+  renderSourceMetadataList
+} from '../deferred'
 import {
   buildStatsRecordsSourceLinks,
   getStatsRecordsDeferredGroups,
   getStatsRecordsLandingConfig,
   type ViewerRecordsLandingKind
 } from './viewerStatsRecordsDisplay'
-
-type DeferredSourceMetadata = {
-  eventCount: number | null
-  rankingSnapshotCount: number | null
-  raceSnapshotCount: number | null
-  latestPersistedEvent: EventRecord | null
-  latestRankingSnapshot: RankingSnapshot | null
-  latestRaceSnapshot: RaceSnapshot | null
-  finalsAvailability: string
-  hasFinalsAvailability: boolean
-}
-
-type DeferredSourceMetadataItem = {
-  label: string
-  value: ReactNode
-}
-
-function resolveFinalsAvailability(finals: FinalsSummaryResponse | undefined, status: RunStatusSummary | undefined): string {
-  if (finals) return formatFinalsAvailability(finals)
-  if (status?.finals.result_available) return 'Finals result available'
-  if (status?.finals.qualification_available) return 'Finals qualification available'
-  return 'Finals summary not available yet'
-}
-
-function hasAvailableFinals(finalsAvailability: string): boolean {
-  return finalsAvailability !== 'Finals summary not available yet' && finalsAvailability !== 'Loading or unavailable'
-}
-
-function buildDeferredSourceMetadata(args: {
-  events: EventRecord[] | undefined
-  rankingSnapshots: RankingSnapshot[] | undefined
-  raceSnapshots: RaceSnapshot[] | undefined
-  status: RunStatusSummary | undefined
-  finals: FinalsSummaryResponse | undefined
-}): DeferredSourceMetadata {
-  const events = args.events ?? []
-  const rankingSnapshots = args.rankingSnapshots ?? []
-  const raceSnapshots = args.raceSnapshots ?? []
-  const eventCount = args.events?.length ?? args.status?.history_counts.events ?? null
-  const rankingSnapshotCount = args.rankingSnapshots?.length ?? args.status?.history_counts.ranking_snapshots ?? null
-  const raceSnapshotCount = args.raceSnapshots?.length ?? args.status?.history_counts.race_snapshots ?? null
-  const finalsAvailability = resolveFinalsAvailability(args.finals, args.status)
-
-  return {
-    eventCount,
-    rankingSnapshotCount,
-    raceSnapshotCount,
-    latestPersistedEvent: selectLatestPersistedEvent(events),
-    latestRankingSnapshot: latestSnapshot(rankingSnapshots),
-    latestRaceSnapshot: latestSnapshot(raceSnapshots),
-    finalsAvailability,
-    hasFinalsAvailability: hasAvailableFinals(finalsAvailability)
-  }
-}
-
-function renderSourceMetadataList(items: DeferredSourceMetadataItem[]): JSX.Element {
-  return (
-    <dl className="metadata-list">
-      {items.map((item) => (
-        <div key={item.label}><dt>{item.label}</dt><dd>{item.value}</dd></div>
-      ))}
-    </dl>
-  )
-}
-
-function renderLoadingValue(isLoading: boolean, value: ReactNode | null | undefined): ReactNode {
-  return isLoading && value == null ? 'Loading…' : value ?? '—'
-}
-
-function renderFinalsSourceValue(activeRunId: string, finalsAvailability: string, isLoading: boolean): ReactNode {
-  if (isLoading) return 'Loading…'
-  return hasAvailableFinals(finalsAvailability) ? <Link to={viewerFinalsPath(activeRunId)}>{finalsAvailability}</Link> : finalsAvailability
-}
-
-function renderLatestPersistedEventSourceValue(activeRunId: string, event: EventRecord | null): ReactNode {
-  return event?.event_id ? <Link to={viewerTournamentDetailPath(activeRunId, event.event_id)}>{event.event_id}</Link> : '—'
-}
-
-function renderLatestRankingSnapshotSourceValue(activeRunId: string, snapshot: RankingSnapshot | null): ReactNode {
-  return snapshot ? <Link to={viewerRankingSnapshotPath(activeRunId, snapshot.snapshot_sequence)}>#{snapshot.snapshot_sequence}</Link> : '—'
-}
-
-function renderLatestRaceSnapshotSourceValue(activeRunId: string, snapshot: RaceSnapshot | null): ReactNode {
-  return snapshot ? <Link to={viewerRaceSnapshotPath(activeRunId, snapshot.snapshot_sequence)}>#{snapshot.snapshot_sequence}</Link> : '—'
-}
-
-function commonDeferredSourceMetadataItems(args: {
-  activeRunId: string
-  metadata: DeferredSourceMetadata
-  eventsLoading: boolean
-  rankingSnapshotsLoading: boolean
-  raceSnapshotsLoading: boolean
-  finalsLoading: boolean
-}): DeferredSourceMetadataItem[] {
-  return [
-    { label: 'Active run ID', value: args.activeRunId },
-    { label: 'Completed/persisted event count', value: renderLoadingValue(args.eventsLoading, args.metadata.eventCount) },
-    { label: 'Ranking snapshot count', value: renderLoadingValue(args.rankingSnapshotsLoading, args.metadata.rankingSnapshotCount) },
-    { label: 'Race snapshot count', value: renderLoadingValue(args.raceSnapshotsLoading, args.metadata.raceSnapshotCount) },
-    { label: 'Finals availability', value: renderFinalsSourceValue(args.activeRunId, args.metadata.finalsAvailability, args.finalsLoading) },
-    { label: 'Latest persisted event', value: renderLatestPersistedEventSourceValue(args.activeRunId, args.metadata.latestPersistedEvent) },
-    { label: 'Latest ranking snapshot', value: renderLatestRankingSnapshotSourceValue(args.activeRunId, args.metadata.latestRankingSnapshot) },
-    { label: 'Latest race snapshot', value: renderLatestRaceSnapshotSourceValue(args.activeRunId, args.metadata.latestRaceSnapshot) }
-  ]
-}
-
-function hasAnyDeferredSourceMetadata(metadata: DeferredSourceMetadata): boolean {
-  return (metadata.eventCount ?? 0) > 0 || (metadata.rankingSnapshotCount ?? 0) > 0 || (metadata.raceSnapshotCount ?? 0) > 0 || metadata.hasFinalsAvailability
-}
 
 export function ViewerRecordsStatsLandingPage({ kind }: { kind: ViewerRecordsLandingKind }): JSX.Element {
   const activeRunId = useActiveViewerRunId()

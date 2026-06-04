@@ -977,3 +977,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - `ModePages.tsx` keeps compatibility exports for existing routes.
 - Stats/Records deferred subroute pages stayed in `ModePages.tsx` because they share broader deferred source metadata behavior with remaining Viewer page families.
 - No backend/Admin route behavior changed.
+
+## Phase 5I deferred source metadata extraction
+
+- Shared Viewer deferred source metadata infrastructure was extracted from ModePages into dedicated Viewer deferred modules.
+- Remaining deferred pages and Stats/Records landing now reuse the shared source metadata helpers where exact.
+- Source metadata labels, loading/fallback text, latest event/snapshot/finals links, empty states, and routes remain unchanged.
+- No backend/Admin route behavior changed.

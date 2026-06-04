@@ -915,3 +915,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Visible Viewer shell, Run Browser, active-run behavior, links, and routes remain unchanged.
 - `ModePages.tsx` keeps compatibility exports for existing routes.
 - No backend/Admin route behavior changed.
+
+## Phase 5B — Viewer Home page module extraction
+
+- `ViewerHomePage` was extracted from `ModePages.tsx` into a dedicated Viewer page module.
+- Homepage helper logic moved with the page where safe.
+- Visible Viewer Home copy, active-run summary, featured event, nearby events, previews, links, and routes remain unchanged.
+- `ModePages.tsx` keeps compatibility exports for existing routes.
+- No backend/Admin route behavior changed.

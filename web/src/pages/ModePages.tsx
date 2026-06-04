@@ -12,23 +12,21 @@ export { ViewerRankingsPage, ViewerRacePage } from './viewer/rankings'
 export { ViewerSeasonHubPage, ViewerTourCalendarPage, ViewerCurrentWeekPage, ViewerTournamentsPage } from './viewer/tour'
 export { ViewerPlayersPage, ViewerCountriesPage } from './viewer/people'
 export { ViewerSearchPage, ViewerH2HPage, ViewerPlayerComparePage, ViewerPlayerComparisonPage, ViewerMatchPredictorPage } from './viewer/explore'
-import { getCountriesMetadata, getFinalsSummary, getRun, getRunActivity, getRunStatusSummary, getTournamentTemplatesMetadata, listEvents, listRaceSnapshots, listRankingSnapshots, listRunNations, listRunPlayers, listRuns } from '../api/client'
+export { ViewerHistoryPage, ViewerFinalsReadOnlyPage } from './viewer/history'
+import { getCountriesMetadata, getFinalsSummary, getRun, getRunStatusSummary, getTournamentTemplatesMetadata, listEvents, listRaceSnapshots, listRankingSnapshots, listRunNations, listRunPlayers, listRuns } from '../api/client'
 
 import { LinkCardGrid } from '../components/LinkCardGrid'
 import { ViewerActiveRunCard, ViewerActiveRunLinks, ViewerDeferredFeatureList, ViewerEmptyState, ViewerLandingGrid, ViewerMetadataList, ViewerSampleList, ViewerSectionCard, ViewerStatusMessage } from '../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../components/viewer/ViewerShellPage'
 import { useActiveViewerRunId } from '../viewer/useActiveViewerRunId'
 import { latestSnapshot } from './viewer/rankings/viewerSnapshotDisplay'
-import { buildPlannedEventMap, formatFinalsAvailability, selectLatestPersistedEvent, selectNextOrderedEvent } from './viewer/tour/viewerTourDisplay'
-import type { OrderedSeasonEvent } from './viewer/tour/viewerTourDisplay'
-import { renderLinkedEventId, renderLinkedWeek } from './viewer/tour/viewerTourEventRender'
+import { formatFinalsAvailability, selectLatestPersistedEvent, selectNextOrderedEvent } from './viewer/tour/viewerTourDisplay'
 import { renderCountrySampleMetadata, renderPlayerSampleMetadata } from './viewer/people'
 import { ViewerSamplePlayersList } from './viewer/explore/viewerComparisonRender'
 import {
   viewerCountriesPath,
   viewerHomePath,
   viewerFinalsPath,
-  viewerHistoryPath,
   viewerPlannedEventPath,
   viewerPlayersPath,
   viewerRacePath,
@@ -42,11 +40,10 @@ import {
   viewerTopRecordsPath,
   viewerTopSearchPath,
   viewerTopStatsPath,
-  viewerWeekDetailPath,
   viewerTournamentsPath,
   viewerTournamentDetailPath
 } from '../viewer/viewerRoutes'
-import type { EventRecord, FinalsSummaryResponse, RankingSnapshot, RaceSnapshot, RunActivityItem, RunPlayerListItem, RunStatusSummary, RunsIndexResponse } from '../api/types'
+import type { EventRecord, FinalsSummaryResponse, RankingSnapshot, RaceSnapshot, RunPlayerListItem, RunStatusSummary, RunsIndexResponse } from '../api/types'
 
 export function LandingPage(): JSX.Element {
   return (
@@ -344,47 +341,6 @@ function hasAnyDeferredSourceMetadata(metadata: DeferredSourceMetadata, orderedE
 function renderDeferredSourceLinks(links: { label: string; to: string }[]): JSX.Element {
   return <ViewerActiveRunLinks links={links} />
 }
-
-type ActivityLinkContext = {
-  plannedEvents: Map<string, OrderedSeasonEvent>
-  persistedEvents: Map<string, EventRecord>
-}
-
-function renderActivityItem(item: RunActivityItem, runId: string, context: ActivityLinkContext): ReactNode {
-  const eventId = item.event_id
-  const plannedEvent = eventId ? context.plannedEvents.get(eventId) : null
-  const persistedEvent = eventId ? context.persistedEvents.get(eventId) : null
-  const resolvedWeek = plannedEvent?.week ?? persistedEvent?.week ?? null
-
-  const parts: ReactNode[] = [item.label]
-  if (item.season != null) parts.push(`Season ${item.season}`)
-  if (resolvedWeek != null) {
-    parts.push(renderLinkedWeek(runId, resolvedWeek))
-  } else if (item.week != null) {
-    parts.push(`W${item.week}`)
-  }
-  if (eventId) {
-    parts.push(plannedEvent ? renderLinkedEventId(runId, eventId) : eventId)
-    if (persistedEvent) {
-      parts.push(<Link to={viewerTournamentDetailPath(runId, eventId)}>Tournament detail {eventId}</Link>)
-    }
-  }
-  if (item.snapshot_sequence != null) {
-    if (item.kind === 'ranking_snapshot') {
-      parts.push(<Link to={viewerRankingSnapshotPath(runId, item.snapshot_sequence)}>Ranking snapshot #{item.snapshot_sequence}</Link>)
-    } else if (item.kind === 'race_snapshot') {
-      parts.push(<Link to={viewerRaceSnapshotPath(runId, item.snapshot_sequence)}>Race snapshot #{item.snapshot_sequence}</Link>)
-    }
-  }
-
-  return parts.map((part, index) => (
-    <span key={index}>
-      {index > 0 ? ' · ' : null}
-      {part}
-    </span>
-  ))
-}
-
 
 type ViewerRankingDeferredKind = 'next-gen' | 'elo' | 'power' | 'form' | 'no1-history'
 
@@ -753,68 +709,6 @@ export function ViewerCountriesDeferredPage({ kind }: { kind: ViewerCountriesDef
             ]}
           />
         </section>
-      </article>
-    </ViewerShellPage>
-  )
-}
-
-function selectLatestActivityItem(items: RunActivityItem[]): RunActivityItem | null {
-  return [...items].sort((a, b) => (b.sequence ?? -1) - (a.sequence ?? -1))[0] ?? null
-}
-
-export function ViewerHistoryPage(): JSX.Element {
-  const activeRunId = useActiveViewerRunId()
-  const activityQuery = useQuery({ queryKey: ['viewer-history-activity', activeRunId], queryFn: () => getRunActivity(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
-  const runQuery = useQuery({ queryKey: ['viewer-history-run', activeRunId], queryFn: () => getRun(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
-  const statusQuery = useQuery({ queryKey: ['viewer-history-run-status', activeRunId], queryFn: () => getRunStatusSummary(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
-  const eventsQuery = useQuery({ queryKey: ['viewer-history-events', activeRunId], queryFn: () => listEvents(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
-  const rankingSnapshotsQuery = useQuery({ queryKey: ['viewer-history-ranking-snapshots', activeRunId], queryFn: () => listRankingSnapshots(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
-  const raceSnapshotsQuery = useQuery({ queryKey: ['viewer-history-race-snapshots', activeRunId], queryFn: () => listRaceSnapshots(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
-
-  if (!activeRunId) {
-    return (
-      <ViewerShellPage title="History" description="Read-only history and season timeline for the selected Viewer run.">
-        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
-      </ViewerShellPage>
-    )
-  }
-
-  const activityItems = activityQuery.data?.items ?? []
-  const latestActivity = selectLatestActivityItem(activityItems)
-  const eventCount = eventsQuery.data?.events.length ?? statusQuery.data?.history_counts.events ?? null
-  const rankingSnapshotCount = rankingSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.ranking_snapshots ?? null
-  const raceSnapshotCount = raceSnapshotsQuery.data?.snapshots.length ?? statusQuery.data?.history_counts.race_snapshots ?? null
-  const latestRankingSnapshot = latestSnapshot(rankingSnapshotsQuery.data?.snapshots ?? [])
-  const latestRaceSnapshot = latestSnapshot(raceSnapshotsQuery.data?.snapshots ?? [])
-  const activityLinkContext: ActivityLinkContext = {
-    plannedEvents: buildPlannedEventMap(runQuery.data),
-    persistedEvents: new Map((eventsQuery.data?.events ?? []).map((event) => [event.event_id, event]))
-  }
-  const hasAnyMetadata = activityItems.length > 0 || (eventCount ?? 0) > 0 || (rankingSnapshotCount ?? 0) > 0 || (raceSnapshotCount ?? 0) > 0
-
-  return (
-    <ViewerShellPage title="History" description="Read-only history using existing active-run activity, event, and publication data only.">
-      <article className="viewer-active-run-card" aria-label="History active run metadata summary">
-        <span className="eyebrow">Active Viewer run</span>
-        <h3>History summary</h3>
-        {activityQuery.isLoading || runQuery.isLoading || statusQuery.isLoading || eventsQuery.isLoading || rankingSnapshotsQuery.isLoading || raceSnapshotsQuery.isLoading ? <p className="status">Loading active run history metadata…</p> : null}
-        {activityQuery.isError || runQuery.isError || statusQuery.isError || eventsQuery.isError || rankingSnapshotsQuery.isError || raceSnapshotsQuery.isError ? <ViewerEmptyState>Some active run history metadata is temporarily unavailable.</ViewerEmptyState> : null}
-        <dl className="metadata-list">
-          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
-          <div><dt>Activity item count</dt><dd>{activityQuery.isLoading ? 'Loading…' : activityItems.length}</dd></div>
-          <div><dt>Latest activity item</dt><dd>{latestActivity ? renderActivityItem(latestActivity, activeRunId, activityLinkContext) : '—'}</dd></div>
-          <div><dt>Event count</dt><dd>{eventsQuery.isLoading && eventCount == null ? 'Loading…' : eventCount ?? '—'}</dd></div>
-          <div><dt>Ranking snapshot count</dt><dd>{rankingSnapshotsQuery.isLoading && rankingSnapshotCount == null ? 'Loading…' : rankingSnapshotCount ?? '—'}</dd></div>
-          <div><dt>Latest ranking snapshot sequence</dt><dd>{latestRankingSnapshot ? <Link to={viewerRankingSnapshotPath(activeRunId, latestRankingSnapshot.snapshot_sequence)}>#{latestRankingSnapshot.snapshot_sequence}</Link> : '—'}</dd></div>
-          <div><dt>Race snapshot count</dt><dd>{raceSnapshotsQuery.isLoading && raceSnapshotCount == null ? 'Loading…' : raceSnapshotCount ?? '—'}</dd></div>
-          <div><dt>Latest race snapshot sequence</dt><dd>{latestRaceSnapshot ? <Link to={viewerRaceSnapshotPath(activeRunId, latestRaceSnapshot.snapshot_sequence)}>#{latestRaceSnapshot.snapshot_sequence}</Link> : '—'}</dd></div>
-        </dl>
-        {!activityQuery.isLoading && !runQuery.isLoading && !statusQuery.isLoading && !eventsQuery.isLoading && !rankingSnapshotsQuery.isLoading && !raceSnapshotsQuery.isLoading && !hasAnyMetadata ? (
-          <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
-        ) : null}
-        <p className="viewer-active-run-actions">
-          <Link className="viewer-active-run-link" to={viewerHistoryPath(activeRunId)}>Open active run history</Link>
-        </p>
       </article>
     </ViewerShellPage>
   )
@@ -1310,10 +1204,6 @@ export function ViewerPredictionDeferredPage({ kind }: { kind: ViewerPredictionD
       </article>
     </ViewerShellPage>
   )
-}
-
-export function ViewerFinalsReadOnlyPage(): JSX.Element {
-  return <ViewerShellPage title="World Tour Finals" description="Read-only World Tour Finals destination for qualification and results." />
 }
 
 export function ViewerPlannedEventReadOnlyPage(): JSX.Element {

@@ -958,3 +958,13 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - `ModePages.tsx` keeps compatibility exports for existing routes.
 - H2H deferred subroutes and broader Predictions pages stayed in `ModePages.tsx` because they share broader predictions/deferred source metadata behavior with remaining Viewer page families.
 - No backend/Admin route behavior changed.
+
+## Phase 5G — Viewer History/Finals page module extraction
+
+- Viewer History/Finals page family was extracted from `ModePages.tsx` into dedicated Viewer page modules.
+- Shared history/finals display/render helper logic moved with the page family where safe.
+- Visible History/Finals titles, descriptions, metadata labels, activity summaries, links, empty states, and routes remain unchanged.
+- `ModePages.tsx` keeps compatibility exports for existing routes.
+- Existing run-scoped History/Finals detail pages stayed in `ViewerRunHistoryFinalsPage.tsx` because they were already outside `ModePages.tsx` and have focused route/detail coverage.
+- Broader predictions/deferred Finals Qualification stayed in `ModePages.tsx` because it shares broader deferred/prediction source metadata behavior with remaining Viewer page families.
+- No backend/Admin route behavior changed.

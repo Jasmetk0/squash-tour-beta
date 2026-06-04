@@ -840,3 +840,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Admin nav labels, order, run-scoped links, and behavior remain unchanged.
 - Viewer behavior remains unchanged.
 - No backend/Admin route behavior changed.
+
+## Phase 4Q — Admin navigation component extraction
+
+- Admin navigation rendering was extracted from `Layout.tsx` into a dedicated component.
+- Admin primary nav, run-scoped nav, and current run context behavior remain unchanged.
+- Viewer behavior remains unchanged.
+- No backend/Admin route behavior changed.

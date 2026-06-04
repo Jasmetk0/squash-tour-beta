@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useLocation, useParams } from 'react-router-dom'
 
+import { AdminNavigation } from './AdminNavigation'
 import { ViewerTopbar } from './ViewerTopbar'
-import { adminNav, runNavFor } from '../navigation/adminNavigation'
 import { ViewerContextProvider } from '../viewer/ViewerContext'
 import { getModeSwitcherTarget } from '../viewer/modeSwitcherRoutes'
 
@@ -24,7 +24,6 @@ export function Layout(): JSX.Element {
   const mode = readMode(location.pathname)
   const runId = readRunId(location.pathname, paramRunId)
   const modeLabel = mode === 'admin' ? 'Admin / Engine Mode' : mode === 'viewer' ? 'Viewer / MSA Website Mode' : 'Mode selection'
-  const runNav = runId && mode === 'admin' ? runNavFor(runId) : []
   const { viewerTarget, adminTarget } = getModeSwitcherTarget(location.pathname)
 
   return (
@@ -44,26 +43,9 @@ export function Layout(): JSX.Element {
             </NavLink>
           </div>
         </header>
-        {mode === 'admin' ? (
-          <nav className="primary-nav" aria-label="Admin / Engine Mode navigation">
-            {adminNav.map((item) => (
-              <NavLink key={item.to} to={item.to} end={item.to === '/admin'} className={({ isActive }) => (isActive ? 'active' : '')}>
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-        ) : null}
+        {mode === 'admin' ? <AdminNavigation runId={runId} /> : null}
         {mode === 'viewer' ? <ViewerTopbar /> : null}
-        {runNav.length > 0 ? (
-          <nav className="run-nav" aria-label="Run navigation">
-            {runNav.map((item) => (
-              <NavLink key={item.to} to={item.to} end={item.to.endsWith(runId ?? '')} className={({ isActive }) => (isActive ? 'active' : '')}>
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-        ) : null}
-        {runId ? <p className="status">Current run context: {runId}</p> : null}
+        {mode !== 'admin' && runId ? <p className="status">Current run context: {runId}</p> : null}
         <main>
           <Outlet />
         </main>

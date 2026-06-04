@@ -115,3 +115,11 @@ export const viewerTopLevelHubLinks: ViewerHubLink[] = [
     description: 'Browse available generated runs and open run-scoped Viewer pages using existing run list metadata only.'
   }
 ]
+
+export function findViewerTopLevelHubLink(label: string): ViewerHubLink {
+  const link = viewerTopLevelHubLinks.find((hubLink) => hubLink.label === label)
+  if (!link) {
+    throw new Error(`Unknown Viewer top-level hub link: ${label}`)
+  }
+  return link
+}

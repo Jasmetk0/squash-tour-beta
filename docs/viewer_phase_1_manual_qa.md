@@ -786,3 +786,9 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Safe replacements now use shared run-scoped Viewer route helpers.
 - Link labels and destinations remain unchanged.
 - No backend/Admin behavior changed.
+
+## Phase 4J — Viewer topbar active-state regression coverage
+
+- Viewer topbar active-state regression coverage was added for Country Ranking, Stats/Records, and tournament aliases.
+- Canonical nav ownership remains unchanged.
+- No backend/Admin behavior changed.

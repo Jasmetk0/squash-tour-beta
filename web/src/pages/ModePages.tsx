@@ -17,7 +17,7 @@ import { VIEWER_ACTIVE_RUN_CHANGED_EVENT, readViewerActiveRunId } from '../viewe
 import { RacePreviewTable } from '../viewer/RacePreviewTable'
 import { RankingPreviewTable } from '../viewer/RankingPreviewTable'
 import { buildViewerRunBrowserLinks, viewerRunMetadataFields, type ViewerRunBrowserListItem } from '../viewer/runBrowserDisplay'
-import { buildActiveRunHubLinks } from '../viewer/viewerHubLinks'
+import { buildActiveRunHubLinks, findViewerTopLevelHubLink } from '../viewer/viewerHubLinks'
 import { parseRacePreviewPayload } from '../viewer/racePayload'
 import { parseRankingPreviewPayload } from '../viewer/rankingPayload'
 import {
@@ -256,9 +256,9 @@ export function ViewerRunBrowserPage(): JSX.Element {
 
   return (
     <ViewerShellPage
-      title="Run Browser"
+      title={VIEWER_RUN_BROWSER_HUB_LINK.label}
       kicker="Read-only Viewer runs"
-      description="Browse available generated runs and open run-scoped Viewer pages using existing run list metadata only."
+      description={VIEWER_RUN_BROWSER_HUB_LINK.description}
     >
       <ViewerRunSelector />
 
@@ -299,6 +299,10 @@ export function ViewerRunBrowserPage(): JSX.Element {
     </ViewerShellPage>
   )
 }
+
+const VIEWER_RANKINGS_HUB_LINK = findViewerTopLevelHubLink('MSA Rankings')
+const VIEWER_RACE_HUB_LINK = findViewerTopLevelHubLink('Race to Finals')
+const VIEWER_RUN_BROWSER_HUB_LINK = findViewerTopLevelHubLink('Run Browser')
 
 type ViewerShellPageProps = {
   title: string
@@ -942,8 +946,8 @@ export function ViewerRankingsPage(): JSX.Element {
     <ViewerSnapshotLandingPage
       config={{
         mode: 'ranking',
-        title: 'MSA Rankings',
-        description: 'Read-only rankings publication for the selected season and week context.',
+        title: VIEWER_RANKINGS_HUB_LINK.label,
+        description: VIEWER_RANKINGS_HUB_LINK.description ?? '',
         emptyMessage: 'No data is available for this run yet.',
         noSnapshotsMessage: 'No data is available for this run yet.',
         countLabel: 'Ranking snapshot count',
@@ -961,8 +965,8 @@ export function ViewerRacePage(): JSX.Element {
     <ViewerSnapshotLandingPage
       config={{
         mode: 'race',
-        title: 'Race to Finals',
-        description: 'Read-only Race to Finals publication for the selected Viewer run.',
+        title: VIEWER_RACE_HUB_LINK.label,
+        description: VIEWER_RACE_HUB_LINK.description ?? '',
         emptyMessage: 'No data is available for this run yet.',
         noSnapshotsMessage: 'No data is available for this run yet.',
         countLabel: 'Race snapshot count',

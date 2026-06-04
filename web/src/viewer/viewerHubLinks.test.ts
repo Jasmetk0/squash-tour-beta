@@ -2,7 +2,7 @@ import appSource from '../App.tsx?raw'
 
 import { describe, expect, it } from 'vitest'
 
-import { buildActiveRunHubLinks, viewerTopLevelHubLinks } from './viewerHubLinks'
+import { buildActiveRunHubLinks, findViewerTopLevelHubLink, viewerTopLevelHubLinks } from './viewerHubLinks'
 
 const forbiddenViewerActionLabels = [
   'Simulate',
@@ -69,6 +69,12 @@ describe('viewerHubLinks', () => {
       { label: 'Search', to: '/viewer/search', description: 'Read-only Viewer search across safe active-run source data.' },
       { label: 'Run Browser', to: '/viewer/runs', description: 'Browse available generated runs and open run-scoped Viewer pages using existing run list metadata only.' }
     ])
+  })
+
+  it('finds top-level hub links by visible label', () => {
+    expect(findViewerTopLevelHubLink('MSA Rankings')).toEqual(viewerTopLevelHubLinks[0])
+    expect(findViewerTopLevelHubLink('Run Browser')).toEqual(viewerTopLevelHubLinks[12])
+    expect(() => findViewerTopLevelHubLink('Unknown Viewer link')).toThrow('Unknown Viewer top-level hub link: Unknown Viewer link')
   })
 
   it('does not expose forbidden Viewer action labels', () => {

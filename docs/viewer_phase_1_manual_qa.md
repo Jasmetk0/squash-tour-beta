@@ -899,3 +899,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Viewer hub/link-card configuration was audited and safely cleaned up.
 - Hub labels, descriptions, link order, active-run links, and routes remain unchanged.
 - No backend or Admin route behavior changed.
+
+## Phase 4Z — Viewer Home hub links integration + ModePages cleanup note
+
+- Viewer Home and MSA landing hub links were audited after Phase 4Y.
+- `viewerTopLevelHubLinks` is now used only where it exactly preserves existing top-level Viewer page title/description behavior for MSA Rankings, Race to Finals, and Run Browser.
+- Viewer Home visible copy, active-run links, hub labels, descriptions, link order, and routes remain unchanged.
+- Page-specific dynamic links and Admin/Engine links remain local to their existing pages.
+- No backend or Admin route behavior changed.

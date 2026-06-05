@@ -24,7 +24,12 @@ import {
 } from './pages/admin'
 import { ViewerHomePage } from './pages/viewer/ViewerHomePage'
 import { ViewerRunBrowserPage } from './pages/viewer/ViewerRunBrowserPage'
-import { ViewerRankingsPage, ViewerRacePage } from './pages/viewer/rankings'
+import {
+  ViewerRankingSnapshotDetailPage,
+  ViewerRankingsPage,
+  ViewerRacePage,
+  ViewerRaceSnapshotDetailPage
+} from './pages/viewer/rankings'
 import { ViewerSeasonHubPage, ViewerTourCalendarPage, ViewerCurrentWeekPage, ViewerTournamentsPage } from './pages/viewer/tour'
 import { ViewerPlayersPage, ViewerCountriesPage } from './pages/viewer/people'
 import { ViewerSearchPage, ViewerH2HPage, ViewerPlayerComparisonPage, ViewerMatchPredictorPage } from './pages/viewer/explore'
@@ -63,7 +68,7 @@ import { SeasonCalendarPage } from './pages/SeasonCalendarPage'
 import { SeasonChainPage } from './pages/SeasonChainPage'
 import { SnapshotDetailPage } from './pages/SnapshotDetailPage'
 import { SnapshotsPage } from './pages/SnapshotsPage'
-import { ViewerRunSnapshotDetailPage, ViewerRunSnapshotListPage } from './pages/ViewerRunSnapshotsPage'
+import { ViewerRunSnapshotListPage } from './pages/ViewerRunSnapshotsPage'
 import { ViewerRunTournamentDetailPage, ViewerRunTournamentsPage } from './pages/ViewerRunTournamentsPage'
 import {
   ViewerRunCountriesPage,
@@ -216,9 +221,9 @@ export default function App(): JSX.Element {
         <Route path="viewer/history" element={<ViewerHistoryPage />} />
         <Route path="viewer/runs" element={<ViewerRunBrowserPage />} />
         <Route path="viewer/runs/:runId/rankings" element={<ViewerRunSnapshotListPage mode="ranking" />} />
-        <Route path="viewer/runs/:runId/rankings/:snapshotSequence" element={<ViewerRunSnapshotDetailPage mode="ranking" />} />
+        <Route path="viewer/runs/:runId/rankings/:snapshotSequence" element={<ViewerRankingSnapshotDetailPage />} />
         <Route path="viewer/runs/:runId/race" element={<ViewerRunSnapshotListPage mode="race" />} />
-        <Route path="viewer/runs/:runId/race/:snapshotSequence" element={<ViewerRunSnapshotDetailPage mode="race" />} />
+        <Route path="viewer/runs/:runId/race/:snapshotSequence" element={<ViewerRaceSnapshotDetailPage />} />
         <Route path="viewer/runs/:runId/tournaments" element={<ViewerRunTournamentsPage />} />
         <Route path="viewer/runs/:runId/tournaments/:eventId" element={<ViewerRunTournamentDetailPage />} />
         <Route path="viewer/runs/:runId/calendar" element={<ViewerRunCalendarPage />} />

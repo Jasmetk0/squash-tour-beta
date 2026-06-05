@@ -1156,3 +1156,12 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Ranking and Race snapshot detail wrappers are covered for metadata, payload summaries, links, error/no-data states, and read-only safety.
 - Payload helper edge cases remain conservative and do not infer standings.
 - Routes, existing links, API behavior, active-run behavior, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 8C note — tournament/event detail read-model audit
+
+- Viewer tournament/event detail read-model audit was performed for run-scoped tournament detail, planned calendar event detail, week context, route helpers, API client/types, and relevant tests.
+- One safe run-scoped persisted tournament detail improvement was added using existing event, season-state, ranking snapshot, and race snapshot API data only.
+- The tournament detail page renders only existing metadata plus conservative source/context links between the run browser, tournament list, season calendar, planned event, week detail, rankings/race lists, and directly source-matched ranking/race publications.
+- No invented tournament results, draws, winners, points, prize money, standings, or tournament facts were added.
+- Routes, existing link paths, active-run behavior, API request behavior for non-target pages, and Viewer read-only safety remain unchanged.
+- Fuller draw/result/player surfaces remain deferred until backend/read-model schemas expose those facts explicitly.

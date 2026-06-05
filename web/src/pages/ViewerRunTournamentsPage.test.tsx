@@ -10,6 +10,8 @@ const api = vi.hoisted(() => ({
   getEvent: vi.fn(),
   getRun: vi.fn(),
   listEvents: vi.fn(),
+  listRankingSnapshots: vi.fn(),
+  listRaceSnapshots: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
     constructor(message: string, status: number) {
@@ -210,6 +212,8 @@ describe('ViewerRunTournamentDetailPage', () => {
   beforeEach(() => {
     vi.resetAllMocks()
     mockRunMetadata()
+    api.listRankingSnapshots.mockResolvedValue({ run_id: 'viewer-run-1', snapshots: [] })
+    api.listRaceSnapshots.mockResolvedValue({ run_id: 'viewer-run-1', snapshots: [] })
     api.getEvent.mockResolvedValue({
       event_sequence: 8,
       event_id: 'EVENT-1',

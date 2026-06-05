@@ -1218,8 +1218,7 @@ textarea:focus-visible {
 
 .viewer-active-run-panel::before,
 .viewer-active-run-card::before,
-.viewer-home-card::before,
-.viewer-jump-demo::before {
+.viewer-home-card::before {
   content: '';
   display: block;
   width: 54px;

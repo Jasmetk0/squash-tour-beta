@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { VIEWER_CONTEXT_STORAGE_KEY, ViewerContextProvider, useViewerContext } from './ViewerContext'
 
@@ -33,6 +33,10 @@ describe('ViewerContextProvider', () => {
     localStorage.clear()
   })
 
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('provides the existing default Viewer season/week context', () => {
     renderViewerContextProbe()
 
@@ -55,6 +59,17 @@ describe('ViewerContextProvider', () => {
 
   it('falls back safely for invalid stored Viewer context payloads', () => {
     localStorage.setItem(VIEWER_CONTEXT_STORAGE_KEY, '{bad json')
+
+    renderViewerContextProbe()
+
+    expect(screen.getByLabelText('Selected season')).toHaveTextContent('2004/05')
+    expect(screen.getByLabelText('Selected week')).toHaveTextContent('10')
+  })
+
+  it('falls back safely when localStorage reads are unavailable', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('localStorage unavailable')
+    })
 
     renderViewerContextProbe()
 

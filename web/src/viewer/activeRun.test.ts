@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   LAST_RUN_ID_STORAGE_KEY,
@@ -14,6 +14,10 @@ import {
 describe('Viewer active run storage helpers', () => {
   beforeEach(() => {
     localStorage.clear()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('reads an empty active run and last run as null', () => {
@@ -61,6 +65,29 @@ describe('Viewer active run storage helpers', () => {
 
     expect(readViewerActiveRunId()).toBeNull()
     expect(listener).toHaveBeenCalledTimes(1)
+    window.removeEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, listener)
+  })
+
+  it('keeps storage helper reads and writes safe when localStorage is unavailable', () => {
+    const listener = vi.fn()
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('localStorage unavailable')
+    })
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('localStorage unavailable')
+    })
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+      throw new Error('localStorage unavailable')
+    })
+    window.addEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, listener)
+
+    expect(readViewerActiveRunId()).toBeNull()
+    expect(readLastRunId()).toBeNull()
+    expect(() => writeLastRunId('run-a')).not.toThrow()
+    expect(() => writeViewerActiveRunId('run-a')).not.toThrow()
+    expect(() => clearViewerActiveRunId()).not.toThrow()
+    expect(listener).toHaveBeenCalledTimes(2)
+
     window.removeEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, listener)
   })
 

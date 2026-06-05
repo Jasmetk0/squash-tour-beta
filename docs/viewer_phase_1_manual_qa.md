@@ -1054,3 +1054,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Only behavior-identical/high-value duplicated setup was migrated.
 - Exact assertions for routes, labels, metadata, links, empty states, and read-only safety remain explicit.
 - No production Viewer/Admin behavior changed.
+
+## Phase 7A — Viewer UI consistency polish
+
+- Viewer UI consistency polish was applied through shared Viewer components/styles.
+- Card spacing, metadata readability, empty/loading/error hierarchy, and responsive grids were improved.
+- Routes, data fetching, active-run behavior, visible copy, metadata labels, links, and read-only safety remain unchanged.
+- No backend/Admin route behavior changed.

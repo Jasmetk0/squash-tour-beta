@@ -25,7 +25,7 @@ type ViewerActiveRunCardProps = {
 
 export function ViewerActiveRunCard({ ariaLabel, kicker = 'Active Viewer run', title, children }: ViewerActiveRunCardProps): JSX.Element {
   return (
-    <article className="viewer-active-run-card" aria-label={ariaLabel}>
+    <article className="viewer-active-run-card viewer-active-run-card--summary" aria-label={ariaLabel}>
       <span className="eyebrow">{kicker}</span>
       <h3>{title}</h3>
       {children}
@@ -42,7 +42,7 @@ type ViewerSectionCardProps = {
 
 export function ViewerSectionCard({ kicker, title, variant = 'standard', children }: ViewerSectionCardProps): JSX.Element {
   return (
-    <article className={`viewer-home-card viewer-home-card--${variant}`}>
+    <article className={`viewer-home-card viewer-home-card--${variant} viewer-section-card`}>
       {kicker ? <span className="eyebrow">{kicker}</span> : null}
       <h3>{title}</h3>
       {children}
@@ -62,7 +62,7 @@ type ViewerMetadataListProps = {
 
 export function ViewerMetadataList({ items, ariaLabel, className = 'metadata-list' }: ViewerMetadataListProps): JSX.Element {
   return (
-    <dl className={className} aria-label={ariaLabel}>
+    <dl className={`${className} viewer-metadata-list`} aria-label={ariaLabel}>
       {items.map((item) => (
         <ViewerMetadataListItem key={item.label} label={item.label} value={item.value} />
       ))}

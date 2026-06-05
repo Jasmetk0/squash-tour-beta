@@ -1105,18 +1105,19 @@ textarea:focus-visible {
   margin-top: 0.35rem;
 }
 
+/* Viewer public-site card system. Keep these styles scoped to Viewer pages so Admin/Engine UI remains unchanged. */
 .viewer-home-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: clamp(0.85rem, 2vw, 1.25rem);
 }
 
 .viewer-home-card,
 .viewer-jump-demo {
   border: 1px solid #dbeafe;
-  border-radius: 18px;
+  border-radius: 20px;
   background: #f8fbff;
-  padding: 1rem;
+  padding: clamp(1rem, 2vw, 1.25rem);
   box-shadow: 0 12px 28px rgb(15 23 42 / 6%);
 }
 
@@ -1127,20 +1128,25 @@ textarea:focus-visible {
 }
 
 .viewer-home-card p {
-  margin: 0.35rem 0;
+  margin: 0.45rem 0;
 }
 
 .viewer-shell-page .eyebrow,
 .viewer-home__hero .eyebrow,
-.viewer-home-card .eyebrow {
+.viewer-home-card .eyebrow,
+.viewer-active-run-card .eyebrow,
+.viewer-active-run-panel .eyebrow {
   display: inline-flex;
   width: fit-content;
   border-radius: 999px;
   background: #dbeafe;
   color: #1e3a8a;
+  font-size: 0.76rem;
   font-weight: 800;
-  padding: 0.2rem 0.6rem;
-  margin-bottom: 0.5rem;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  padding: 0.22rem 0.62rem;
+  margin-bottom: 0.55rem;
 }
 
 .viewer-jump-demo {
@@ -1198,69 +1204,21 @@ textarea:focus-visible {
 
 .viewer-active-run-panel,
 .viewer-active-run-card {
-  border: 1px solid #bfdbfe;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #eff6ff, #f8fafc);
-  padding: 1rem;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #b6ccfe;
+  border-radius: 20px;
+  background:
+    linear-gradient(135deg, rgb(239 246 255 / 96%), rgb(255 255 255 / 94%)),
+    radial-gradient(circle at top right, rgb(147 197 253 / 28%), transparent 24rem);
+  padding: clamp(1rem, 2vw, 1.3rem);
   margin-bottom: 1rem;
   box-shadow: 0 12px 28px rgb(15 23 42 / 6%);
 }
 
-.viewer-active-run-panel h3,
-.viewer-active-run-card h3 {
-  margin: 0.25rem 0;
-}
-
-.viewer-active-run-link-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.viewer-active-run-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #93c5fd;
-  border-radius: 999px;
-  background: #ffffff;
-  color: #1d4ed8;
-  font-weight: 800;
-  padding: 0.55rem 0.85rem;
-  text-decoration: none;
-}
-
-.viewer-active-run-link:hover,
-.viewer-active-run-link:focus-visible {
-  background: #dbeafe;
-  color: #1e3a8a;
-}
-
-.viewer-shell-page {
-  background:
-    radial-gradient(circle at top right, rgb(191 219 254 / 32%), transparent 34rem),
-    #ffffff;
-}
-
-.viewer-landing-grid {
-  align-items: stretch;
-}
-
-.viewer-active-run-panel,
-.viewer-active-run-card {
-  position: relative;
-  overflow: hidden;
-  border-color: #b6ccfe;
-  background:
-    linear-gradient(135deg, rgb(239 246 255 / 96%), rgb(255 255 255 / 94%)),
-    radial-gradient(circle at top right, rgb(147 197 253 / 28%), transparent 24rem);
-}
-
 .viewer-active-run-panel::before,
 .viewer-active-run-card::before,
-.viewer-home-card::before,
-.viewer-jump-demo::before {
+.viewer-home-card::before {
   content: '';
   display: block;
   width: 54px;
@@ -1268,6 +1226,97 @@ textarea:focus-visible {
   margin-bottom: 0.85rem;
   border-radius: 999px;
   background: linear-gradient(90deg, #2563eb, #38bdf8);
+}
+
+.viewer-active-run-panel h3,
+.viewer-active-run-card h3,
+.viewer-section-card h3 {
+  margin: 0.2rem 0 0.55rem;
+  line-height: 1.18;
+}
+
+.viewer-active-run-card h4,
+.viewer-active-run-card h5,
+.viewer-section-card h4,
+.viewer-deferred-feature-block h4,
+.viewer-sample-list-block h4 {
+  margin: 1rem 0 0.45rem;
+  line-height: 1.2;
+}
+
+.viewer-active-run-card > section {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgb(191 219 254 / 62%);
+}
+
+.viewer-active-run-card > section:first-of-type {
+  margin-top: 0.85rem;
+}
+
+.viewer-active-run-card .subtitle,
+.viewer-active-run-card .status,
+.viewer-section-card .subtitle,
+.viewer-section-card .status,
+.viewer-shell-page .subtitle,
+.viewer-shell-page .status {
+  max-width: 72ch;
+}
+
+.viewer-active-run-link-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+
+.viewer-active-run-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  border: 1px solid #93c5fd;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1d4ed8;
+  font-weight: 800;
+  line-height: 1.2;
+  padding: 0.6rem 0.9rem;
+  text-align: center;
+  text-decoration: none;
+  box-shadow: 0 8px 18px rgb(37 99 235 / 8%);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.viewer-active-run-link:hover,
+.viewer-active-run-link:focus-visible {
+  background: #dbeafe;
+  color: #1e3a8a;
+  box-shadow: 0 12px 24px rgb(37 99 235 / 14%);
+  transform: translateY(-1px);
+}
+
+.viewer-shell-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background:
+    radial-gradient(circle at top right, rgb(191 219 254 / 32%), transparent 34rem),
+    #ffffff;
+}
+
+.viewer-shell-page .page-intro {
+  margin-bottom: 0;
+  padding-bottom: 0.35rem;
+}
+
+.viewer-shell-page .page-intro h2 {
+  margin-bottom: 0.45rem;
+  line-height: 1.12;
+}
+
+.viewer-landing-grid {
+  align-items: stretch;
 }
 
 .viewer-home-card,
@@ -1295,34 +1344,42 @@ textarea:focus-visible {
 }
 
 .metadata-list,
+.viewer-metadata-list,
 .viewer-home-summary-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.7rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 0.75rem;
+  margin: 0.85rem 0;
 }
 
 .metadata-list > div,
+.viewer-metadata-list > div,
 .viewer-home-summary-list > div {
+  min-width: 0;
   border: 1px solid rgb(191 219 254 / 70%);
-  border-radius: 14px;
-  background: rgb(255 255 255 / 76%);
-  padding: 0.65rem 0.75rem;
+  border-radius: 15px;
+  background: rgb(255 255 255 / 82%);
+  padding: 0.72rem 0.8rem;
 }
 
 .metadata-list dt,
+.viewer-metadata-list dt,
 .viewer-home-summary-list dt {
   color: #475569;
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   font-weight: 800;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.055em;
+  line-height: 1.2;
   text-transform: uppercase;
 }
 
 .metadata-list dd,
+.viewer-metadata-list dd,
 .viewer-home-summary-list dd {
-  margin: 0.2rem 0 0;
+  margin: 0.22rem 0 0;
   color: #0f172a;
   font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .viewer-home-list,
@@ -1331,6 +1388,12 @@ textarea:focus-visible {
   display: grid;
   gap: 0.65rem;
   padding-left: 1.1rem;
+  margin: 0.6rem 0 0;
+}
+
+.viewer-sample-list-block,
+.viewer-deferred-feature-block {
+  margin-top: 1rem;
 }
 
 .viewer-sample-list > li,
@@ -1346,14 +1409,28 @@ textarea:focus-visible {
   padding: 0.5rem 0.65rem;
 }
 
-.viewer-status-message {
+.viewer-status-message,
+.viewer-active-run-card > .status,
+.viewer-section-card > .status,
+.viewer-shell-page > .status {
+  border: 1px solid rgb(191 219 254 / 72%);
+  border-left: 4px solid #60a5fa;
   border-radius: 14px;
-  padding: 0.65rem 0.8rem;
+  background: rgb(239 246 255 / 64%);
+  padding: 0.7rem 0.85rem;
 }
 
-.viewer-status-message--empty {
-  border: 1px dashed #bfdbfe;
-  background: rgb(248 250 252 / 82%);
+.viewer-status-message--empty,
+.viewer-active-run-card > .empty-state,
+.viewer-section-card > .empty-state,
+.viewer-shell-page > .empty-state {
+  border-style: dashed;
+  border-left-style: solid;
+  background: rgb(248 250 252 / 88%);
+}
+
+.viewer-status-message--loading {
+  background: rgb(239 246 255 / 86%);
 }
 
 .viewer-active-run-actions {
@@ -1361,19 +1438,38 @@ textarea:focus-visible {
   flex-wrap: wrap;
   gap: 0.55rem;
   align-items: center;
+  margin: 0.75rem 0 0;
 }
 
 .viewer-active-run-action-item {
   display: inline-flex;
 }
 
-.viewer-active-run-link {
-  box-shadow: 0 8px 18px rgb(37 99 235 / 8%);
-  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+.viewer-run-browser-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
-.viewer-active-run-link:hover,
-.viewer-active-run-link:focus-visible {
-  box-shadow: 0 12px 24px rgb(37 99 235 / 14%);
-  transform: translateY(-1px);
+.viewer-run-browser-list .viewer-active-run-card {
+  margin-bottom: 0;
+}
+
+.viewer-run-browser-links {
+  margin-top: 0.85rem;
+}
+
+@media (max-width: 560px) {
+  .viewer-active-run-panel,
+  .viewer-active-run-card,
+  .viewer-home-card,
+  .viewer-jump-demo {
+    border-radius: 16px;
+  }
+
+  .viewer-active-run-actions,
+  .viewer-active-run-link {
+    width: 100%;
+  }
 }

@@ -141,7 +141,7 @@ describe('ViewerRankingDeferredPage', () => {
     })
   })
 
-  it('preserves ranking metadata fallback and encoded source links', async () => {
+  it('preserves ranking nullish ordered-event fallback and encoded source links', async () => {
     localStorage.setItem(VIEWER_ACTIVE_RUN_STORAGE_KEY, 'run alpha')
 
     renderRankingDeferredPage()
@@ -151,7 +151,7 @@ describe('ViewerRankingDeferredPage', () => {
 
     const orderedCalendarItem = screen.getByText('Ordered calendar event count').closest('div')
     expect(orderedCalendarItem).not.toBeNull()
-    await waitFor(() => expect(within(orderedCalendarItem as HTMLElement).getByText('61')).toBeInTheDocument())
+    await waitFor(() => expect(within(orderedCalendarItem as HTMLElement).getByText('0')).toBeInTheDocument())
 
     expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/rankings')
     expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/race')

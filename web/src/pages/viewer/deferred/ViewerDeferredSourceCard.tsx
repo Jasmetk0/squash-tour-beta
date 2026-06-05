@@ -8,7 +8,7 @@ import {
 import {
   renderSourceMetadataList,
   type DeferredSourceMetadataItem,
-} from './ViewerDeferredSourceMetadata'
+} from './ViewerDeferredSourceMetadataRender'
 
 type ViewerDeferredSourceCardProps = {
   title: string

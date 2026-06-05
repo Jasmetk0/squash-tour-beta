@@ -1,7 +1,7 @@
 import { ViewerEmptyState } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
 import { useActiveViewerRunId } from '../../../viewer/useActiveViewerRunId'
-import { commonDeferredSourceMetadataItems } from './ViewerDeferredSourceMetadata'
+import { commonDeferredSourceMetadataItems } from './ViewerDeferredSourceMetadataRender'
 import { ViewerDeferredSourceCard } from './ViewerDeferredSourceCard'
 import { buildStatsDeferredSourceLinks } from './viewerDeferredLinks'
 import {

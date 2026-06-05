@@ -1024,3 +1024,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Historical Phase 5A–5L notes that mention `ModePages.tsx` compatibility exports describe those earlier phases only; Phase 5M and later reflect the current retired state.
 - `App.tsx`, dedicated page modules, and page family barrels are now the source of truth for route page imports.
 - No visible Viewer/Admin behavior, route paths, route order, route params, fallback behavior, or backend behavior changed.
+
+## Phase 6A — Deferred page query/render consolidation
+
+- Deferred page source-query/render patterns were audited and consolidated where exact.
+- Shared deferred hooks/components/link helpers were introduced only for behavior-identical page patterns.
+- Deferred page titles, descriptions, source metadata labels, source links, empty/loading/error text, sample lists, and routes remain unchanged.
+- Pages with distinct structure kept local logic where safer.
+- No backend/Admin route behavior changed.

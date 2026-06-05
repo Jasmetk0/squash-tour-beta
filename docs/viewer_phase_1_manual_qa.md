@@ -6,6 +6,12 @@ Use this checklist to manually review Viewer Mode Phase 1 in a browser. The goal
 
 This is a documentation-only QA guide. It does not request product, React, backend, or test changes.
 
+## Phase 7B Viewer UI contract hardening note
+
+- Viewer UI component/class contracts were hardened after Phase 7A.
+- Shared active-run, section-card, metadata-list, status-message, deferred-source-card, and CSS safety contracts are now covered.
+- The `.viewer-jump-demo::before` flex pseudo-element risk is guarded against.
+- No production Viewer/Admin behavior changed.
 
 ## Phase 6B deferred infrastructure exactness note
 

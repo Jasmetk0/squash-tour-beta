@@ -4,6 +4,7 @@ import {
   LAST_RUN_ID_STORAGE_KEY,
   VIEWER_ACTIVE_RUN_CHANGED_EVENT,
   VIEWER_ACTIVE_RUN_STORAGE_KEY,
+  clearLastRunId,
   clearViewerActiveRunId,
   readLastRunId,
   readViewerActiveRunId,
@@ -56,6 +57,18 @@ describe('Viewer active run storage helpers', () => {
     expect(readLastRunId()).toBeNull()
   })
 
+  it('clears the last run id without dispatching the active-run changed event', () => {
+    const listener = vi.fn()
+    localStorage.setItem(LAST_RUN_ID_STORAGE_KEY, 'run-a')
+    window.addEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, listener)
+
+    clearLastRunId()
+
+    expect(readLastRunId()).toBeNull()
+    expect(listener).not.toHaveBeenCalled()
+    window.removeEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, listener)
+  })
+
   it('clears the active run id and dispatches the active-run changed event', () => {
     const listener = vi.fn()
     localStorage.setItem(VIEWER_ACTIVE_RUN_STORAGE_KEY, 'run-a')
@@ -84,6 +97,7 @@ describe('Viewer active run storage helpers', () => {
     expect(readViewerActiveRunId()).toBeNull()
     expect(readLastRunId()).toBeNull()
     expect(() => writeLastRunId('run-a')).not.toThrow()
+    expect(() => clearLastRunId()).not.toThrow()
     expect(() => writeViewerActiveRunId('run-a')).not.toThrow()
     expect(() => clearViewerActiveRunId()).not.toThrow()
     expect(listener).toHaveBeenCalledTimes(2)

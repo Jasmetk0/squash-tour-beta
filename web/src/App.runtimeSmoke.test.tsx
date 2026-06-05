@@ -31,4 +31,21 @@ describe('App runtime smoke', () => {
     expect(screen.getByRole('heading', { name: 'Squash Tour Beta Engine', level: 2 })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Browse the generated squash world/i })).toBeInTheDocument()
   })
+
+  it('renders the admin create-run route when remembered-run storage is unavailable', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('localStorage unavailable')
+    })
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('localStorage unavailable')
+    })
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+      throw new Error('localStorage unavailable')
+    })
+
+    renderAppAt('/admin/runs/new')
+
+    expect(screen.getByRole('heading', { name: 'Dashboard', level: 2 })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Create and open run/i })).toBeInTheDocument()
+  })
 })

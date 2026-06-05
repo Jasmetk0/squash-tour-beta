@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom'
 
 import { SectionCard } from '../components/RunScopedUi'
+import { readLastRunId } from '../viewer/activeRun'
 
 export function AdminDiagnosticsPage(): JSX.Element {
-  const lastRunId = typeof window === 'undefined' ? null : window.localStorage.getItem('beta_engine:last_run_id')
+  const lastRunId = readLastRunId()
   const lastRunDiagnosticsPath = lastRunId ? `/admin/runs/${lastRunId}/diagnostics` : null
 
   return (

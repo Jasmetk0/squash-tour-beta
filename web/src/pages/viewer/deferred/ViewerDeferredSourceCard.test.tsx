@@ -27,15 +27,20 @@ describe('ViewerDeferredSourceCard', () => {
       { includeViewerContext: false },
     )
 
-    expect(
-      screen.getByRole('article', {
-        name: 'Match Odds active run metadata summary',
-      }),
-    ).toBeInTheDocument()
+    const card = screen.getByRole('article', {
+      name: 'Match Odds active run metadata summary',
+    })
+    expect(card).toBeInTheDocument()
+    expect(card).toHaveClass('viewer-active-run-card')
+    expect(card).toHaveClass('viewer-deferred-source-card')
     expect(
       screen.getByRole('heading', { name: 'Match Odds sources' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Loading active run metadata…')).toBeInTheDocument()
+    const loadingMessage = screen.getByText('Loading active run metadata…')
+    expect(loadingMessage).toBeInTheDocument()
+    expect(loadingMessage).toHaveClass('status')
+    expect(loadingMessage).toHaveClass('viewer-status-message')
+    expect(loadingMessage).toHaveClass('viewer-status-message--loading')
     expect(
       screen.getByRole('heading', { name: 'Available source metadata' }),
     ).toBeInTheDocument()
@@ -45,7 +50,13 @@ describe('ViewerDeferredSourceCard', () => {
     expect(
       screen.getByRole('heading', { name: 'Deferred output' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('No match odds are shown yet.')).toBeInTheDocument()
+    const deferredOutput = screen.getByText('No match odds are shown yet.')
+    expect(deferredOutput).toBeInTheDocument()
+    expect(deferredOutput).toHaveClass('status')
+    expect(deferredOutput).toHaveClass('viewer-status-message')
+    expect(
+      screen.getByRole('heading', { name: 'Source links' }),
+    ).toBeInTheDocument()
     expect(
       screen.getByRole('link', { name: 'Open run browser' }),
     ).toHaveAttribute('href', '/viewer/runs')

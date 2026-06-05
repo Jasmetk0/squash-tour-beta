@@ -32,6 +32,17 @@ describe('App runtime smoke', () => {
     expect(screen.getByRole('link', { name: /Browse the generated squash world/i })).toBeInTheDocument()
   })
 
+  it('renders the admin simulate route when remembered-run storage is unavailable', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('localStorage unavailable')
+    })
+
+    renderAppAt('/admin/simulate')
+
+    expect(screen.getByRole('heading', { name: 'Simulate', level: 2 })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open Runs' })).toBeInTheDocument()
+  })
+
   it('renders the admin create-run route when remembered-run storage is unavailable', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('localStorage unavailable')

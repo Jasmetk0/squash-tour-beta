@@ -2,9 +2,10 @@ import { Link } from 'react-router-dom'
 
 import { LinkCard, LinkCardGrid } from '../components/LinkCardGrid'
 import { SectionCard } from '../components/RunScopedUi'
+import { readLastRunId } from '../viewer/activeRun'
 
 export function AdminSimulatePage(): JSX.Element {
-  const lastRunId = typeof window === 'undefined' ? null : window.localStorage.getItem('beta_engine:last_run_id')
+  const lastRunId = readLastRunId()
 
   const levelCards: LinkCard[] = [
     {

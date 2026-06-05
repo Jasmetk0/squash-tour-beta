@@ -1,10 +1,8 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { VIEWER_ACTIVE_RUN_STORAGE_KEY } from '../../../viewer/activeRun'
-import { ViewerContextProvider } from '../../../viewer/ViewerContext'
+import { makeRunNation } from '../../../test/viewerDeferredFixtures'
+import { clearViewerStorage, expectNoForbiddenViewerActions, renderWithViewerProviders, setViewerActiveRunId } from '../../../test/viewerTestUtils'
 import { ViewerCountriesPage } from './ViewerCountriesPage'
 
 const api = vi.hoisted(() => ({
@@ -13,42 +11,14 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../../../api/client', () => api)
 
-const forbiddenViewerActionLabels = [
-  'Simulate',
-  'Generate',
-  'Persist',
-  'Apply',
-  'Execute',
-  'Delete',
-  'Edit',
-  'Import',
-  'Rollover',
-  'Rebuild',
-  'Override',
-  'Save changes',
-  'Commit',
-  'Regenerate',
-  'Repair',
-  'Merge',
-  'Overwrite'
-]
 
 function renderCountriesPage(): void {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter>
-        <ViewerContextProvider>
-          <ViewerCountriesPage />
-        </ViewerContextProvider>
-      </MemoryRouter>
-    </QueryClientProvider>
-  )
+  renderWithViewerProviders(<ViewerCountriesPage />)
 }
 
 describe('ViewerCountriesPage', () => {
   beforeEach(() => {
-    localStorage.clear()
+    clearViewerStorage()
     vi.clearAllMocks()
     api.listRunNations.mockResolvedValue({
       run_id: 'run alpha',
@@ -56,7 +26,7 @@ describe('ViewerCountriesPage', () => {
       limit: 5,
       offset: 0,
       nations: [
-        {
+        makeRunNation({
           country_code: 'NZ',
           country_name: 'New Zealand',
           total_players: 8,
@@ -64,7 +34,7 @@ describe('ViewerCountriesPage', () => {
           top_player_id: 'paul coll',
           top_player_name: 'Paul Coll',
           top_player_overall: 93
-        }
+        })
       ]
     })
   })
@@ -76,13 +46,11 @@ describe('ViewerCountriesPage', () => {
     expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
     expect(api.listRunNations).not.toHaveBeenCalled()
 
-    for (const label of forbiddenViewerActionLabels) {
-      expect(screen.queryByText(label, { exact: true })).not.toBeInTheDocument()
-    }
+    expectNoForbiddenViewerActions()
   })
 
   it('renders active-run country metadata and encoded source/profile links', async () => {
-    localStorage.setItem(VIEWER_ACTIVE_RUN_STORAGE_KEY, 'run alpha')
+    setViewerActiveRunId('run alpha')
 
     renderCountriesPage()
 

@@ -1047,3 +1047,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Deferred exactness tests now share common provider setup and fixture factories.
 - Test assertions for query enablement, metadata fallback behavior, source links, empty/error/loading states, and read-only safety remain explicit.
 - No production Viewer/Admin behavior changed.
+
+## Phase 6D — Viewer test utility adoption audit
+
+- Remaining Viewer tests were audited for shared harness/fixture adoption.
+- Only behavior-identical/high-value duplicated setup was migrated.
+- Exact assertions for routes, labels, metadata, links, empty states, and read-only safety remain explicit.
+- No production Viewer/Admin behavior changed.

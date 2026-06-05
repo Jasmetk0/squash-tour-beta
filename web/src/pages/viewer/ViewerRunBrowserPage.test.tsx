@@ -1,10 +1,7 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { VIEWER_ACTIVE_RUN_STORAGE_KEY } from '../../viewer/activeRun'
-import { ViewerContextProvider } from '../../viewer/ViewerContext'
+import { clearViewerStorage, expectNoForbiddenViewerActions, renderWithViewerProviders, setViewerActiveRunId } from '../../test/viewerTestUtils'
 import { ViewerRunBrowserPage } from './ViewerRunBrowserPage'
 
 const api = vi.hoisted(() => ({
@@ -13,37 +10,9 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../../api/client', () => api)
 
-const forbiddenViewerActionLabels = [
-  'Simulate',
-  'Generate',
-  'Persist',
-  'Apply',
-  'Execute',
-  'Delete',
-  'Edit',
-  'Import',
-  'Rollover',
-  'Rebuild',
-  'Override',
-  'Save changes',
-  'Commit',
-  'Regenerate',
-  'Repair',
-  'Merge',
-  'Overwrite'
-]
 
 function renderRunBrowser(): void {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter>
-        <ViewerContextProvider>
-          <ViewerRunBrowserPage />
-        </ViewerContextProvider>
-      </MemoryRouter>
-    </QueryClientProvider>
-  )
+  renderWithViewerProviders(<ViewerRunBrowserPage />)
 }
 
 function sampleRun() {
@@ -66,7 +35,7 @@ function sampleRun() {
 
 describe('ViewerRunBrowserPage', () => {
   beforeEach(() => {
-    localStorage.clear()
+    clearViewerStorage()
     vi.clearAllMocks()
     api.listRuns.mockResolvedValue({ runs: [] })
   })
@@ -92,7 +61,7 @@ describe('ViewerRunBrowserPage', () => {
   })
 
   it('renders sample run metadata and encoded quick links exactly', async () => {
-    localStorage.setItem(VIEWER_ACTIVE_RUN_STORAGE_KEY, 'run alpha')
+    setViewerActiveRunId('run alpha')
     api.listRuns.mockResolvedValue({ runs: [sampleRun()] })
 
     renderRunBrowser()
@@ -130,8 +99,6 @@ describe('ViewerRunBrowserPage', () => {
     renderRunBrowser()
 
     expect(await screen.findByRole('heading', { level: 2, name: 'Run Browser' })).toBeInTheDocument()
-    for (const label of forbiddenViewerActionLabels) {
-      expect(screen.queryByText(label, { exact: true })).not.toBeInTheDocument()
-    }
+    expectNoForbiddenViewerActions()
   })
 })

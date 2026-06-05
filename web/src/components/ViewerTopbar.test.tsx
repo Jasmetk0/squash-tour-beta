@@ -1,10 +1,11 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 
 import { ViewerTopbar, isExactViewerActivePath } from './ViewerTopbar'
+import { createTestQueryClient, expectNoForbiddenViewerActions } from '../test/viewerTestUtils'
 import { ViewerContextProvider } from '../viewer/ViewerContext'
 import { viewerDropdowns } from '../viewer/viewerNavigation'
 
@@ -24,25 +25,6 @@ const dropdownExpectations: Record<string, string[]> = {
   Predictions: ['Match Predictor', 'Match Odds', 'Tournament Odds', 'Finals Qualification', 'Season-End No.1', 'Upset Watch', 'Futures Markets']
 }
 
-const forbiddenViewerActions = [
-  'Simulate',
-  'Generate',
-  'Persist',
-  'Apply',
-  'Execute',
-  'Delete',
-  'Edit',
-  'Import',
-  'Rollover',
-  'Rebuild',
-  'Override',
-  'Save changes',
-  'Commit',
-  'Regenerate',
-  'Repair',
-  'Merge',
-  'Overwrite'
-]
 
 function LocationProbe(): JSX.Element {
   const location = useLocation()
@@ -50,7 +32,7 @@ function LocationProbe(): JSX.Element {
 }
 
 function renderViewerTopbarAt(route: string): void {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const client = createTestQueryClient()
 
   render(
     <QueryClientProvider client={client}>
@@ -111,10 +93,7 @@ describe('ViewerTopbar', () => {
       }
     }
 
-    for (const label of forbiddenViewerActions) {
-      expect(within(nav).queryByRole('link', { name: label })).not.toBeInTheDocument()
-      expect(within(nav).queryByRole('button', { name: label })).not.toBeInTheDocument()
-    }
+    expectNoForbiddenViewerActions(within(nav))
   })
 
   it('navigates Viewer search submissions to the canonical search route with encoded query text', async () => {

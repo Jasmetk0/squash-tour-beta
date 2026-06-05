@@ -14,14 +14,7 @@ import {
 } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
 import { useActiveViewerRunId } from '../../../viewer/useActiveViewerRunId'
-import {
-  viewerCountriesPath,
-  viewerPlayersPath,
-  viewerRankingsPath,
-  viewerRunsPath,
-  viewerTopSearchPath,
-  viewerTournamentsPath,
-} from '../../../viewer/viewerRoutes'
+import { buildCountriesDeferredSourceLinks } from './viewerDeferredLinks'
 import { renderCountrySampleMetadata } from '../people'
 import {
   type ViewerCountriesDeferredKind,
@@ -213,26 +206,7 @@ export function ViewerCountriesDeferredPage({
         <section aria-label={`${config.title} source links`}>
           <h3>Source links</h3>
           <ViewerActiveRunLinks
-            links={[
-              {
-                label: 'Open active run countries',
-                to: viewerCountriesPath(activeRunId),
-              },
-              {
-                label: 'Open active run players',
-                to: viewerPlayersPath(activeRunId),
-              },
-              {
-                label: 'Open active run rankings',
-                to: viewerRankingsPath(activeRunId),
-              },
-              {
-                label: 'Open active run tournaments',
-                to: viewerTournamentsPath(activeRunId),
-              },
-              { label: 'Open Viewer search', to: viewerTopSearchPath() },
-              { label: 'Open run browser', to: viewerRunsPath() },
-            ]}
+            links={buildCountriesDeferredSourceLinks(activeRunId)}
           />
         </section>
       </article>

@@ -38,6 +38,16 @@ export function writeLastRunId(runId: string): void {
   }
 }
 
+export function clearLastRunId(): void {
+  if (typeof window === 'undefined') return
+
+  try {
+    window.localStorage.removeItem(LAST_RUN_ID_STORAGE_KEY)
+  } catch {
+    // Storage may be unavailable in restricted browser contexts; keep the app rendering.
+  }
+}
+
 export function writeViewerActiveRunId(runId: string): void {
   if (typeof window === 'undefined') return
   const normalizedRunId = runId.trim()

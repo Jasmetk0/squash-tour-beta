@@ -6,8 +6,7 @@ import { getRun, getRunStatusSummary, listRuns } from '../api/client'
 import { CompactSummaryCard, EmptyState, MetadataList, PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 import { normalizeRunSourceType } from '../utils/runSourceTypes'
-
-const LAST_RUN_ID_STORAGE_KEY = 'beta_engine:last_run_id'
+import { readLastRunId, writeLastRunId } from '../viewer/activeRun'
 
 function formatProgress(nextEventIndex: number, totalEvents: number): string {
   return `${nextEventIndex} / ${totalEvents}`
@@ -24,7 +23,7 @@ export function RunsPage(): JSX.Element {
   const [childrenFilter, setChildrenFilter] = useState<ChildrenFilter>('any')
   const [openingRunId, setOpeningRunId] = useState<string | null>(null)
   const [openError, setOpenError] = useState<string | null>(null)
-  const [rememberedRunId, setRememberedRunId] = useState(() => localStorage.getItem(LAST_RUN_ID_STORAGE_KEY))
+  const [rememberedRunId, setRememberedRunId] = useState(() => readLastRunId())
 
   const runsQuery = useQuery({
     queryKey: ['runs-index-page'],
@@ -92,7 +91,7 @@ export function RunsPage(): JSX.Element {
     setOpeningRunId(runId)
     try {
       const run = await getRun(runId)
-      localStorage.setItem(LAST_RUN_ID_STORAGE_KEY, run.run.run_id)
+      writeLastRunId(run.run.run_id)
       setRememberedRunId(run.run.run_id)
       navigate(`/admin/runs/${run.run.run_id}`)
     } catch (err) {

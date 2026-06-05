@@ -6,6 +6,7 @@ import { createRun, getHealth, getRun, getRunLineage, getRunSource, getRunStatus
 import { CompactSummaryCard, EmptyState, MetadataList, PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
 import { SUPPORTED_CALENDAR_SEASON } from '../config'
 import { formatApiError } from '../utils/apiErrors'
+import { clearLastRunId, readLastRunId, writeLastRunId } from '../viewer/activeRun'
 
 type CreateInputState = {
   run_id: string
@@ -13,7 +14,6 @@ type CreateInputState = {
   season: number
 }
 
-const LAST_RUN_ID_STORAGE_KEY = 'beta_engine:last_run_id'
 
 function formatProgress(nextEventIndex: number, totalEvents: number): string {
   return `${nextEventIndex} / ${totalEvents}`
@@ -27,7 +27,7 @@ export function DashboardPage(): JSX.Element {
     season: SUPPORTED_CALENDAR_SEASON
   })
   const [loadRunId, setLoadRunId] = useState('')
-  const [lastRunId, setLastRunId] = useState(() => localStorage.getItem(LAST_RUN_ID_STORAGE_KEY))
+  const [lastRunId, setLastRunId] = useState(() => readLastRunId())
   const [isCreating, setIsCreating] = useState(false)
   const [openingTarget, setOpeningTarget] = useState<'manual' | 'resume' | null>(null)
   const [createError, setCreateError] = useState<string | null>(null)
@@ -66,7 +66,7 @@ export function DashboardPage(): JSX.Element {
     setIsCreating(true)
     try {
       const run = await createRun(createInput)
-      localStorage.setItem(LAST_RUN_ID_STORAGE_KEY, run.run_id)
+      writeLastRunId(run.run_id)
       setLastRunId(run.run_id)
       navigate(`/admin/runs/${run.run_id}`)
     } catch (err) {
@@ -82,7 +82,7 @@ export function DashboardPage(): JSX.Element {
     setOpeningTarget(target)
     try {
       const run = await getRun(runId)
-      localStorage.setItem(LAST_RUN_ID_STORAGE_KEY, run.run.run_id)
+      writeLastRunId(run.run.run_id)
       setLastRunId(run.run.run_id)
       navigate(`/admin/runs/${run.run.run_id}`)
     } catch (err) {
@@ -256,7 +256,7 @@ export function DashboardPage(): JSX.Element {
                   type="button"
                   disabled={openingTarget !== null}
                   onClick={() => {
-                    localStorage.removeItem(LAST_RUN_ID_STORAGE_KEY)
+                    clearLastRunId()
                     setLastRunId(null)
                     setResumeError(null)
                   }}

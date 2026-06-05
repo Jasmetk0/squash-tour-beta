@@ -17,10 +17,8 @@ import { useActiveViewerRunId } from '../../../viewer/useActiveViewerRunId'
 import {
   viewerCountriesPath,
   viewerPlayersPath,
-  viewerRacePath,
   viewerRankingsPath,
   viewerRunsPath,
-  viewerTopH2HPath,
   viewerTopSearchPath,
   viewerTournamentsPath,
 } from '../../../viewer/viewerRoutes'

@@ -7,10 +7,7 @@ import {
   listRaceSnapshots,
   listRankingSnapshots,
 } from '../../../api/client'
-import {
-  ViewerActiveRunLinks,
-  ViewerEmptyState,
-} from '../../../components/viewer/ViewerLandingComponents'
+import { ViewerEmptyState } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
 import { useActiveViewerRunId } from '../../../viewer/useActiveViewerRunId'
 import {
@@ -22,12 +19,14 @@ import {
   viewerTournamentsPath,
 } from '../../../viewer/viewerRoutes'
 import {
-  buildDeferredSourceMetadata,
   commonDeferredSourceMetadataItems,
-  hasAnyDeferredSourceMetadata,
   renderDeferredSourceLinks,
   renderSourceMetadataList,
-} from './index'
+} from './ViewerDeferredSourceMetadata'
+import {
+  buildDeferredSourceMetadata,
+  hasAnyDeferredSourceMetadata,
+} from './viewerDeferredSourceMetadata'
 import {
   type ViewerStatsDeferredKind,
   viewerStatsDeferredConfigs,

@@ -25,15 +25,17 @@ import {
 } from '../../../viewer/viewerRoutes'
 import { selectNextOrderedEvent } from '../tour/viewerTourDisplay'
 import {
-  buildDeferredSourceMetadata,
-  hasAnyDeferredSourceMetadata,
   renderFinalsSourceValue,
   renderLatestPersistedEventSourceValue,
   renderLatestRaceSnapshotSourceValue,
   renderLatestRankingSnapshotSourceValue,
   renderLoadingValue,
   renderSourceMetadataList,
-} from './index'
+} from './ViewerDeferredSourceMetadata'
+import {
+  buildDeferredSourceMetadata,
+  hasAnyDeferredSourceMetadata,
+} from './viewerDeferredSourceMetadata'
 import {
   type ViewerTourDeferredKind,
   viewerTourDeferredConfigs,

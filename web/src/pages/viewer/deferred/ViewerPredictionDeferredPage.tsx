@@ -21,11 +21,13 @@ import {
   viewerTournamentsPath,
 } from '../../../viewer/viewerRoutes'
 import {
-  buildDeferredSourceMetadata,
   commonDeferredSourceMetadataItems,
-  hasAnyDeferredSourceMetadata,
   renderSourceMetadataList,
-} from './index'
+} from './ViewerDeferredSourceMetadata'
+import {
+  buildDeferredSourceMetadata,
+  hasAnyDeferredSourceMetadata,
+} from './viewerDeferredSourceMetadata'
 import {
   type ViewerPredictionDeferredKind,
   viewerPredictionDeferredConfigs,

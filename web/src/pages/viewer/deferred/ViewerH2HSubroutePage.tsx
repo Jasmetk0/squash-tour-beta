@@ -30,7 +30,7 @@ import {
 } from '../../../viewer/viewerRoutes'
 import { ViewerSamplePlayersList } from '../explore/viewerComparisonRender'
 import { formatFinalsAvailability } from '../tour/viewerTourDisplay'
-import { hasAvailableFinals } from './index'
+import { hasAvailableFinals } from './viewerDeferredSourceMetadata'
 import {
   type ViewerH2HSubrouteKind,
   viewerH2HSubrouteContent,

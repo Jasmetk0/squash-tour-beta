@@ -1,6 +1,5 @@
 import appSource from './App.tsx?raw'
 import layoutSource from './components/Layout.tsx?raw'
-import modePagesSource from './pages/ModePages.tsx?raw'
 import viewerRunSelectorSource from './components/ViewerRunSelector.tsx?raw'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -184,7 +183,7 @@ describe('Viewer Phase 3AQ completion audit', () => {
 
 describe('Viewer Phase 4I run-scoped inline route cleanup audit', () => {
   it('keeps obvious run-scoped Viewer link construction on shared helpers in inspected Viewer sources', () => {
-    const inspectedSources = [modePagesSource, layoutSource, viewerRunSelectorSource]
+    const inspectedSources = [appSource, layoutSource, viewerRunSelectorSource]
     const obviousInlineRunScopedPatterns = [
       /`\/viewer\/runs\/\$\{[^`]+`/,
       /['"]\/viewer\/runs\/\$\{[^'"]+['"]/

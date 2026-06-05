@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { getEvent, getRun, listEvents } from '../api/client'
+import { getEvent, getRun, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
 import type { EventRecord, SeasonStateResponse } from '../api/types'
 import {
   CompactSummaryCard,
@@ -27,6 +27,10 @@ import {
   viewerTournamentDetailPath,
   viewerWeekDetailPath
 } from '../viewer/viewerRoutes'
+import {
+  buildEventDetailLinks,
+  snapshotsForSourceEvent
+} from './viewer/tour/viewerEventDetailDisplay'
 import { getPlannedEventStatus } from './plannedEventUtils'
 
 type PlannedEvent = SeasonStateResponse['season_state']['ordered_events'][number]
@@ -166,6 +170,18 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
     retry: false
   })
   const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId && eventId), retry: false })
+  const rankingSnapshotsQuery = useQuery({
+    queryKey: ['viewer-tournament-ranking-snapshots', runId, eventId],
+    queryFn: () => listRankingSnapshots(runId),
+    enabled: Boolean(runId && eventId),
+    retry: false
+  })
+  const raceSnapshotsQuery = useQuery({
+    queryKey: ['viewer-tournament-race-snapshots', runId, eventId],
+    queryFn: () => listRaceSnapshots(runId),
+    enabled: Boolean(runId && eventId),
+    retry: false
+  })
 
   const plannedContext = useMemo(() => buildPlannedContext(runQuery.data), [runQuery.data])
   const planned = plannedContext.get(eventId)
@@ -187,6 +203,17 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
   const week = eventWeek(event, planned)
   const season = eventSeason(event, planned)
   const templateId = planned?.template_id ?? event?.template_id ?? null
+  const rankingPublications = snapshotsForSourceEvent(rankingSnapshotsQuery.data?.snapshots, eventId)
+  const racePublications = snapshotsForSourceEvent(raceSnapshotsQuery.data?.snapshots, eventId)
+  const sourceLinks = buildEventDetailLinks({
+    runId,
+    eventId,
+    week,
+    hasPlanned: Boolean(planned),
+    hasPersisted: Boolean(event),
+    rankingSnapshotSequences: rankingPublications.map((snapshot) => snapshot.snapshot_sequence),
+    raceSnapshotSequences: racePublications.map((snapshot) => snapshot.snapshot_sequence)
+  })
 
   return (
     <section className="panel">
@@ -269,6 +296,31 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
               </>
             ) : null}
           </SectionCard>
+
+          {event ? (
+            <SectionCard title="Source context links">
+              {rankingSnapshotsQuery.error ? <p className="error">Failed to load ranking publications: {formatApiError(rankingSnapshotsQuery.error)}</p> : null}
+              {raceSnapshotsQuery.error ? <p className="error">Failed to load race publications: {formatApiError(raceSnapshotsQuery.error)}</p> : null}
+              <MetadataList
+                items={[
+                  { label: 'Ranking publications from event', value: rankingPublications.length },
+                  { label: 'Race publications from event', value: racePublications.length },
+                  {
+                    label: 'Safe links',
+                    value: (
+                      <ul className="item-list">
+                        {sourceLinks.map((link) => (
+                          <li key={`${link.label}-${link.href}`}>
+                            <Link to={link.href}>{link.label}</Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )
+                  }
+                ]}
+              />
+            </SectionCard>
+          ) : null}
 
           {event ? (
             <SectionCard title="Tournament Result Preview">

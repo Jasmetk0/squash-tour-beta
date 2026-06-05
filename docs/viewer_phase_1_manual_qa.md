@@ -13,6 +13,14 @@ This is a documentation-only QA guide. It does not request product, React, backe
 - The `.viewer-jump-demo::before` flex pseudo-element risk is guarded against.
 - No production Viewer/Admin behavior changed.
 
+
+## Phase 7D responsive and accessibility visual QA note
+
+- Viewer responsive/accessibility manual QA scenarios were documented.
+- CSS regression guards now cover topbar/search/card/link wrapping and focus-safety contracts.
+- Routes, data fetching, visible copy, metadata labels, links, and read-only safety remain unchanged.
+- No backend/Admin route behavior changed.
+
 ## Phase 6B deferred infrastructure exactness note
 
 - Deferred infrastructure exactness tests were added after Phase 6A consolidation.
@@ -322,6 +330,64 @@ Review at desktop width and at least one narrow/mobile width.
 - [ ] The main Viewer experience emphasizes rankings, tour, players, countries, H2H, stats, predictions, search, and season/week context.
 - [ ] Deferred areas still feel planned and polished, not broken.
 - [ ] No page suggests the Viewer can authoritatively simulate or decide sporting outcomes.
+
+
+## Responsive and accessibility visual QA
+
+Use this Phase 7D checklist after the Viewer UI polish passes to protect the public Viewer surface from responsive, keyboard, and read-only regressions. These checks are manual visual QA scenarios only; they should not change product behavior, route ownership, data fetching, metadata labels, link destinations, or visible product copy.
+
+### Desktop width
+
+- [ ] Viewer topbar categories fit or wrap cleanly without crowding the header.
+- [ ] Dropdown menus open on hover and on keyboard `focus-within`.
+- [ ] Active route styling remains visible for topbar links and dropdown links.
+- [ ] Search input and button remain aligned.
+- [ ] Active-run compact selector remains usable and readable.
+
+### Tablet width
+
+- [ ] Topbar wraps without horizontal overflow.
+- [ ] Dropdown menu panels remain inside the viewport.
+- [ ] Search form remains full-width when needed.
+- [ ] Cards maintain readable spacing and do not collapse into cramped columns.
+
+### Mobile width around 360–430px
+
+- [ ] No horizontal page scroll appears.
+- [ ] Long run IDs wrap in metadata cards.
+- [ ] Long event/player/country names wrap inside cards.
+- [ ] Active-run link pills stack or wrap safely.
+- [ ] Search input and button remain usable.
+- [ ] Context selector panel is reachable and not clipped.
+
+### Keyboard-only navigation
+
+- [ ] Tab focus is visible on topbar links.
+- [ ] Tab focus is visible on dropdown links.
+- [ ] Tab focus is visible on the search input.
+- [ ] Tab focus is visible on the search button.
+- [ ] Tab focus is visible on active-run links.
+- [ ] Tab focus is visible on context selector controls.
+- [ ] Dropdown links are reachable through `focus-within` behavior.
+- [ ] No focus trap exists while moving through Viewer navigation, search, active-run links, and context selector controls.
+
+### Viewer read-only safety
+
+- [ ] Viewer pages do not expose forbidden mutation labels: Simulate, Generate, Persist, Apply, Execute, Delete, Edit, Import, Rollover, Rebuild, Override, Save changes, Commit, Regenerate, Repair, Merge, Overwrite.
+
+### Representative pages to manually check
+
+- [ ] `/viewer`
+- [ ] `/viewer/runs`
+- [ ] `/viewer/runs/:runId/rankings`
+- [ ] `/viewer/runs/:runId/calendar`
+- [ ] `/viewer/runs/:runId/players`
+- [ ] `/viewer/runs/:runId/countries`
+- [ ] `/viewer/runs/:runId/history`
+- [ ] `/viewer/runs/:runId/finals`
+- [ ] `/viewer/predictions/match-odds`
+- [ ] `/viewer/stats`
+- [ ] `/viewer/records`
 
 ## 6. Bug report template
 

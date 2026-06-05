@@ -1009,3 +1009,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - `ModePages.tsx` remains as a compatibility export shell.
 - Route paths, route order, route params, visible page behavior, and compatibility exports remain unchanged.
 - No backend/Admin route behavior changed.
+
+## Phase 5M — ModePages retirement audit
+
+- `ModePages.tsx` compatibility shell was removed after App route imports were decoupled.
+- Page modules/barrels are now the source of truth for route imports.
+- App route paths, order, params, visible behavior, and route availability remain unchanged.
+- No backend/Admin route behavior changed.

@@ -1149,3 +1149,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - No simulation, generation, mutation, invented standings, fake rankings, fake Race rows, or Admin behavior was added.
 - Routes, route params, route order, existing top-level links, active-run behavior, and Viewer read-only safety remain unchanged.
 - Full standings/detail schemas remain deferred until the backend/read-model payload contract is explicit enough to render rows without inference.
+
+## Viewer Phase 8B note — snapshot detail parity and payload summary hardening
+
+- Snapshot detail parity was hardened after Phase 8A.
+- Ranking and Race snapshot detail wrappers are covered for metadata, payload summaries, links, error/no-data states, and read-only safety.
+- Payload helper edge cases remain conservative and do not infer standings.
+- Routes, existing links, API behavior, active-run behavior, and Viewer read-only safety remain unchanged.

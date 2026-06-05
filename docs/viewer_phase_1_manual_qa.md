@@ -1040,3 +1040,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Deferred page titles, descriptions, source metadata labels, source links, empty/loading/error text, sample lists, and routes remain unchanged.
 - Pages with distinct structure kept local logic where safer.
 - No backend/Admin route behavior changed.
+
+## Phase 6C — Viewer test harness and deferred fixtures consolidation
+
+- Viewer test harness and deferred fixture builders were consolidated.
+- Deferred exactness tests now share common provider setup and fixture factories.
+- Test assertions for query enablement, metadata fallback behavior, source links, empty/error/loading states, and read-only safety remain explicit.
+- No production Viewer/Admin behavior changed.

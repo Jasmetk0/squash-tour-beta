@@ -104,6 +104,7 @@ export function useViewerDeferredSourceQueries({
     : [statusQuery, eventsQuery, rankingSnapshotsQuery, raceSnapshotsQuery, finalsQuery]
   const isLoadingMetadata = metadataQueries.some((query) => query.isLoading)
   const hasMetadataError = metadataQueries.some((query) => query.isError)
+  // Pages with route-specific ordered event fallback ordering can compute this locally.
   const hasAnySourceMetadata = hasAnyDeferredSourceMetadata(
     metadata,
     includeRun ? orderedEventCount : undefined,

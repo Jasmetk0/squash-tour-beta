@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  buildCountriesDeferredSourceLinks,
+  buildPlayersDeferredSourceLinks,
   buildPredictionDeferredSourceLinks,
   buildRankingDeferredSourceLinks,
   buildStatsDeferredSourceLinks,
@@ -63,6 +65,34 @@ describe('viewerDeferredLinks', () => {
       },
       { label: 'Open active run rankings', to: '/viewer/runs/run%20alpha/rankings' },
       { label: 'Open active run race', to: '/viewer/runs/run%20alpha/race' },
+      { label: 'Open run browser', to: '/viewer/runs' },
+    ])
+  })
+
+  it('preserves players deferred source link label order and hrefs', () => {
+    expect(buildPlayersDeferredSourceLinks('run alpha')).toEqual([
+      { label: 'Open active run players', to: '/viewer/runs/run%20alpha/players' },
+      { label: 'Open active run countries', to: '/viewer/runs/run%20alpha/countries' },
+      { label: 'Open active run rankings', to: '/viewer/runs/run%20alpha/rankings' },
+      {
+        label: 'Open active run tournaments',
+        to: '/viewer/runs/run%20alpha/tournaments',
+      },
+      { label: 'Open Viewer search', to: '/viewer/search' },
+      { label: 'Open run browser', to: '/viewer/runs' },
+    ])
+  })
+
+  it('preserves countries deferred source link label order and hrefs', () => {
+    expect(buildCountriesDeferredSourceLinks('run alpha')).toEqual([
+      { label: 'Open active run countries', to: '/viewer/runs/run%20alpha/countries' },
+      { label: 'Open active run players', to: '/viewer/runs/run%20alpha/players' },
+      { label: 'Open active run rankings', to: '/viewer/runs/run%20alpha/rankings' },
+      {
+        label: 'Open active run tournaments',
+        to: '/viewer/runs/run%20alpha/tournaments',
+      },
+      { label: 'Open Viewer search', to: '/viewer/search' },
       { label: 'Open run browser', to: '/viewer/runs' },
     ])
   })

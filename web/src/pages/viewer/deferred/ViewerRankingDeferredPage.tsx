@@ -14,6 +14,7 @@ import {
 } from './ViewerDeferredSourceMetadata'
 import { ViewerDeferredSourceCard } from './ViewerDeferredSourceCard'
 import { buildRankingDeferredSourceLinks } from './viewerDeferredLinks'
+import { hasAnyDeferredSourceMetadata } from './viewerDeferredSourceMetadata'
 import {
   viewerRankingDeferredConfigs,
   type ViewerRankingDeferredKind,
@@ -37,7 +38,6 @@ export function ViewerRankingDeferredPage({
     metadata,
     isLoadingMetadata,
     hasMetadataError,
-    hasAnySourceMetadata,
   } = useViewerDeferredSourceQueries({
     activeRunId,
     kind,
@@ -69,6 +69,10 @@ export function ViewerRankingDeferredPage({
     runQuery.data?.run.season ??
     finalsQuery.data?.season ??
     null
+  const hasAnySourceMetadata = hasAnyDeferredSourceMetadata(
+    metadata,
+    orderedEventCount,
+  )
   const nextScheduledEvent = selectNextOrderedEvent(runQuery.data)
 
   return (

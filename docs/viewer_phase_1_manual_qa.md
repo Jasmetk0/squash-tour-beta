@@ -1016,3 +1016,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Page modules/barrels are now the source of truth for route imports.
 - App route paths, order, params, visible behavior, and route availability remain unchanged.
 - No backend/Admin route behavior changed.
+
+
+## Phase 5N — Page module architecture completion audit
+
+- Final page-module architecture audit confirmed `ModePages.tsx` remains removed and is no longer a current route import source.
+- Historical Phase 5A–5L notes that mention `ModePages.tsx` compatibility exports describe those earlier phases only; Phase 5M and later reflect the current retired state.
+- `App.tsx`, dedicated page modules, and page family barrels are now the source of truth for route page imports.
+- No visible Viewer/Admin behavior, route paths, route order, route params, fallback behavior, or backend behavior changed.

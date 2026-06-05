@@ -9,6 +9,10 @@ const sourceModules = import.meta.glob('../**/*.{ts,tsx}', {
 }) as Record<string, string>
 
 describe('page module architecture', () => {
+  it('keeps the retired ModePages file deleted', () => {
+    expect(sourceModules).not.toHaveProperty('../pages/ModePages.tsx')
+  })
+
   it('keeps App route imports decoupled from ModePages', () => {
     expect(appSource).not.toMatch(/from ['"]\.\/pages\/ModePages(?:\.tsx)?['"]/)
   })
@@ -20,5 +24,16 @@ describe('page module architecture', () => {
     })
 
     expect(modePagesImports).toEqual([])
+  })
+
+  it('keeps page-family modules from importing through local index barrels', () => {
+    const localBarrelImports = Object.entries(sourceModules)
+      .filter(([path]) => path.startsWith('../pages/'))
+      .flatMap(([path, source]) => {
+        const matches = source.match(/from ['"](?:\.\/index|\.\.\/index)['"]/g) ?? []
+        return matches.map((match) => `${path}: ${match}`)
+      })
+
+    expect(localBarrelImports).toEqual([])
   })
 })

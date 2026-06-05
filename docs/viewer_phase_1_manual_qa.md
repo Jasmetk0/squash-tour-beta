@@ -1002,3 +1002,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Visible Landing/Admin/read-only Viewer titles, descriptions, links, and routes remain unchanged.
 - No complex leftovers stayed in `ModePages.tsx`; it now contains compatibility re-exports only.
 - No backend/Admin route behavior changed.
+
+## Phase 5L — App route import decoupling
+
+- App route imports were decoupled from `ModePages.tsx` and now point directly to dedicated page modules/barrels.
+- `ModePages.tsx` remains as a compatibility export shell.
+- Route paths, route order, route params, visible page behavior, and compatibility exports remain unchanged.
+- No backend/Admin route behavior changed.

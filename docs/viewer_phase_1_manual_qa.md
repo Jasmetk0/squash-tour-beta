@@ -1140,3 +1140,12 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Focus visibility, mobile wrapping, long-value overflow safety, and small-screen Viewer layout were improved.
 - Routes, data fetching, active-run behavior, visible copy, metadata labels, links, and read-only safety remain unchanged.
 - No backend/Admin route behavior changed.
+
+## Viewer Phase 8A note — read-model content audit and first detail improvement
+
+- Viewer read-model content audit was performed after UI polish for the current App route mapping, Viewer route helpers, snapshot API client/types, and ranking/race/read-only Viewer modules.
+- First safe read-only detail page content improvement was added using existing snapshot API data only: ranking/race run-scoped snapshot detail pages now include a conservative payload summary.
+- Snapshot detail pages render only existing snapshot metadata and payload shape summaries: payload type, top-level keys, array item count, empty-payload status, and top-level field shapes when available.
+- No simulation, generation, mutation, invented standings, fake rankings, fake Race rows, or Admin behavior was added.
+- Routes, route params, route order, existing top-level links, active-run behavior, and Viewer read-only safety remain unchanged.
+- Full standings/detail schemas remain deferred until the backend/read-model payload contract is explicit enough to render rows without inference.

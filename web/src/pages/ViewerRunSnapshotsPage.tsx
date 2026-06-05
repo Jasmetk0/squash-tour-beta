@@ -27,6 +27,7 @@ import { RacePreviewTable } from '../viewer/RacePreviewTable'
 import { RankingPreviewTable } from '../viewer/RankingPreviewTable'
 import { parseRacePreviewPayload } from '../viewer/racePayload'
 import { parseRankingPreviewPayload } from '../viewer/rankingPayload'
+import { getSnapshotPayloadRows } from './viewer/rankings/viewerSnapshotPayloadDisplay'
 import {
   viewerPlannedEventPath,
   viewerRacePath,
@@ -445,6 +446,7 @@ export function ViewerRunSnapshotDetailPage({ mode }: { mode: ViewerSnapshotMode
   const week = resolveWeek(planned, persisted)
   const rankingPreview = mode === 'ranking' && snapshot ? parseRankingPreviewPayload(snapshot.payload) : null
   const racePreview = mode === 'race' && snapshot ? parseRacePreviewPayload(snapshot.payload) : null
+  const payloadRows = snapshot ? getSnapshotPayloadRows(snapshot.payload) : []
 
   return (
     <section className="panel">
@@ -542,6 +544,13 @@ export function ViewerRunSnapshotDetailPage({ mode }: { mode: ViewerSnapshotMode
                   { label: 'Season calendar', value: <Link to={viewerSeasonCalendarPath(runId)}>Open season calendar</Link> }
                 ]}
               />
+            </SectionCard>
+          ) : null}
+
+          {snapshot ? (
+            <SectionCard title="Payload summary">
+              <p className="status">Conservative read-only payload summary. The Viewer does not infer standings from unknown fields.</p>
+              <MetadataList items={payloadRows} />
             </SectionCard>
           ) : null}
 

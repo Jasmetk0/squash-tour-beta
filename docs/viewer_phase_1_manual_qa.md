@@ -1165,3 +1165,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - No invented tournament results, draws, winners, points, prize money, standings, or tournament facts were added.
 - Routes, existing link paths, active-run behavior, API request behavior for non-target pages, and Viewer read-only safety remain unchanged.
 - Fuller draw/result/player surfaces remain deferred until backend/read-model schemas expose those facts explicitly.
+
+## Viewer Phase 8D note — tournament detail source-context hardening
+
+- Tournament detail source-context behavior was hardened after Phase 8C.
+- Snapshot publication query error states, planned/persisted mismatch states, exact source-event filtering, encoded links, and read-only safety are covered.
+- The page still renders only existing event metadata and conservative context links.
+- No invented tournament results, draws, winners, points, prize money, or standings were added.
+- Routes, API behavior, active-run behavior, and Viewer read-only safety remain unchanged.

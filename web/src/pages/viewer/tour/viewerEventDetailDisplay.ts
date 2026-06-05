@@ -34,10 +34,11 @@ export function findPlannedEventById(
   seasonState: SeasonStateResponse['season_state'] | null | undefined,
   eventId: string
 ): PlannedEventContext | null {
-  const matchIndex = seasonState?.ordered_events.findIndex((event) => event.event_id === eventId) ?? -1
-  if (matchIndex < 0 || !seasonState) return null
+  const orderedEvents = seasonState?.ordered_events ?? []
+  const matchIndex = orderedEvents.findIndex((event) => event.event_id === eventId)
+  if (matchIndex < 0) return null
 
-  return { ...seasonState.ordered_events[matchIndex], planIndex: matchIndex }
+  return { ...orderedEvents[matchIndex], planIndex: matchIndex }
 }
 
 export function findPersistedEventById(events: EventRecord[] | null | undefined, eventId: string): EventRecord | null {

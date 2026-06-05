@@ -58,11 +58,13 @@ export function ViewerRankingDeferredPage({
     )
   }
 
+  const runOrderedEventCount = runQuery.data?.season_state.ordered_events.length
   const orderedEventCount =
-    runQuery.data?.season_state.ordered_events.length ??
-    statusQuery.data?.progress.total_events ??
-    runQuery.data?.run.total_events ??
-    null
+    runOrderedEventCount && runOrderedEventCount > 0
+      ? runOrderedEventCount
+      : statusQuery.data?.progress.total_events ??
+        runQuery.data?.run.total_events ??
+        null
   const season =
     statusQuery.data?.season ??
     runQuery.data?.season_state.season ??

@@ -82,4 +82,74 @@ describe('ViewerDeferredSourceCard', () => {
 
     expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
   })
+
+  it('renders the preserved metadata error state', () => {
+    render(
+      <MemoryRouter>
+        <ViewerDeferredSourceCard
+          title="Match Odds"
+          subtitle="Outputs remain deferred."
+          isLoadingMetadata={false}
+          hasMetadataError={true}
+          hasAnySourceMetadata={false}
+          metadataItems={[{ label: 'Active run ID', value: 'run alpha' }]}
+          deferredCopy="No match odds are shown yet."
+          sourceLinks={[]}
+          sourceLinksAriaLabel="Match Odds links"
+        />
+      </MemoryRouter>,
+    )
+
+    expect(
+      screen.getByText('Some active run metadata is temporarily unavailable.'),
+    ).toBeInTheDocument()
+  })
+
+  it('does not render the no-data state while metadata is loading', () => {
+    render(
+      <MemoryRouter>
+        <ViewerDeferredSourceCard
+          title="Match Odds"
+          subtitle="Outputs remain deferred."
+          isLoadingMetadata={true}
+          hasMetadataError={false}
+          hasAnySourceMetadata={false}
+          metadataItems={[{ label: 'Active run ID', value: 'run alpha' }]}
+          deferredCopy="No match odds are shown yet."
+          sourceLinks={[]}
+          sourceLinksAriaLabel="Match Odds links"
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Loading active run metadata…')).toBeInTheDocument()
+    expect(
+      screen.queryByText('No data is available for this run yet.'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('does not render the no-data state when metadata has an error', () => {
+    render(
+      <MemoryRouter>
+        <ViewerDeferredSourceCard
+          title="Match Odds"
+          subtitle="Outputs remain deferred."
+          isLoadingMetadata={false}
+          hasMetadataError={true}
+          hasAnySourceMetadata={false}
+          metadataItems={[{ label: 'Active run ID', value: 'run alpha' }]}
+          deferredCopy="No match odds are shown yet."
+          sourceLinks={[]}
+          sourceLinksAriaLabel="Match Odds links"
+        />
+      </MemoryRouter>,
+    )
+
+    expect(
+      screen.getByText('Some active run metadata is temporarily unavailable.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText('No data is available for this run yet.'),
+    ).not.toBeInTheDocument()
+  })
 })

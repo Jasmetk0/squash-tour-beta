@@ -25,6 +25,8 @@ type DeepPartial<T> = {
 export function makeRunStatusSummary(
   overrides: DeepPartial<RunStatusSummary> = {},
 ): RunStatusSummary {
+  const { progress, finals, lineage, history_counts, ...rest } = overrides
+
   return {
     run_id: defaultViewerRunId,
     season: defaultViewerSeason,
@@ -33,26 +35,26 @@ export function makeRunStatusSummary(
       next_event_index: 0,
       total_events: 61,
       completed_event_count: 5,
-      ...overrides.progress,
+      ...progress,
     },
     finals: {
       qualification_available: false,
       result_available: false,
-      ...overrides.finals,
+      ...finals,
     },
     rollover: null,
     source: null,
     lineage: {
       child_run_count: 0,
-      ...overrides.lineage,
+      ...lineage,
     },
     history_counts: {
       events: 3,
       ranking_snapshots: 2,
       race_snapshots: 1,
-      ...overrides.history_counts,
+      ...history_counts,
     },
-    ...overrides,
+    ...rest,
   } as RunStatusSummary
 }
 

@@ -35,14 +35,14 @@ export function ViewerDeferredSourceCard({
 }: ViewerDeferredSourceCardProps): JSX.Element {
   return (
     <article
-      className="viewer-active-run-card"
+      className="viewer-active-run-card viewer-deferred-source-card"
       aria-label={`${title} active run metadata summary`}
     >
       <span className="eyebrow">Active Viewer run</span>
       <h3>{title} sources</h3>
       <p className="subtitle">{subtitle}</p>
       {isLoadingMetadata ? (
-        <p className="status">Loading active run metadata…</p>
+        <p className="status viewer-status-message viewer-status-message--loading">Loading active run metadata…</p>
       ) : null}
       {hasMetadataError ? (
         <ViewerEmptyState>
@@ -58,7 +58,7 @@ export function ViewerDeferredSourceCard({
       </section>
       <section aria-label={`${title} deferred output explanation`}>
         <h3>Deferred output</h3>
-        <p className="status">{deferredCopy}</p>
+        <p className="status viewer-status-message">{deferredCopy}</p>
       </section>
       <section aria-label={sourceLinksAriaLabel}>
         <h3>Source links</h3>

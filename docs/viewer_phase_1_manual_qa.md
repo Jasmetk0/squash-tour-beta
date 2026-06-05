@@ -993,3 +993,12 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Visible deferred titles, descriptions, source metadata labels, sample lists, source links, empty states, and routes remain unchanged.
 - `ModePages.tsx` keeps compatibility exports for existing routes.
 - No backend/Admin route behavior changed.
+
+## Phase 5K — ModePages final shell cleanup
+
+- `ModePages.tsx` final shell cleanup was performed after major Viewer page family extraction.
+- Landing, Admin landing/settings/wrapper pages, and simple Viewer read-only pages were moved into dedicated modules where safe.
+- `ModePages.tsx` now acts primarily as a compatibility export shell.
+- Visible Landing/Admin/read-only Viewer titles, descriptions, links, and routes remain unchanged.
+- No complex leftovers stayed in `ModePages.tsx`; it now contains compatibility re-exports only.
+- No backend/Admin route behavior changed.

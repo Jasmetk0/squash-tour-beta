@@ -72,6 +72,9 @@ describe('ViewerRunTournamentDetailPage read model', () => {
 
     expect(await screen.findByRole('heading', { name: 'Tournament Detail' })).toBeInTheDocument()
     expect(api.getEvent).toHaveBeenCalledWith('run alpha', 'EVENT/1')
+    expect(api.getRun).toHaveBeenCalledWith('run alpha')
+    expect(api.listRankingSnapshots).toHaveBeenCalledWith('run alpha')
+    expect(api.listRaceSnapshots).toHaveBeenCalledWith('run alpha')
     expect(screen.getAllByText('run alpha').length).toBeGreaterThan(0)
     expect(screen.getAllByText('EVENT/1').length).toBeGreaterThan(0)
     expect(await screen.findByText('Sequence')).toBeInTheDocument()
@@ -112,6 +115,144 @@ describe('ViewerRunTournamentDetailPage read model', () => {
     expect(screen.queryByText(/winner/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/champion/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/draw/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+
+  it('keeps tournament detail visible when ranking snapshot publications fail', async () => {
+    api.listRankingSnapshots.mockRejectedValue(new Error('ranking snapshot outage'))
+    api.listRaceSnapshots.mockResolvedValue({
+      run_id: 'run alpha',
+      snapshots: [{ snapshot_sequence: 12, snapshot_kind: 'race', source_event_id: 'EVENT/1', payload: {} }]
+    })
+
+    renderDetail()
+
+    expect(await screen.findByText('EVENT/1')).toBeInTheDocument()
+    expect(await screen.findByText('Failed to load ranking publications: ranking snapshot outage')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Source context links' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Race publication #12' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/run%20alpha/race/12'
+    )
+    expect(screen.queryByRole('link', { name: /Ranking publication #/ })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('keeps tournament detail visible when race snapshot publications fail', async () => {
+    api.listRaceSnapshots.mockRejectedValue(new Error('race snapshot outage'))
+
+    renderDetail()
+
+    expect(await screen.findByText('EVENT/1')).toBeInTheDocument()
+    expect(await screen.findByText('Failed to load race publications: race snapshot outage')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Source context links' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ranking publication #10' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/run%20alpha/rankings/10'
+    )
+    expect(screen.queryByRole('link', { name: /Race publication #/ })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('keeps persisted event metadata visible when both snapshot publication queries fail', async () => {
+    api.listRankingSnapshots.mockRejectedValue(new Error('ranking snapshot outage'))
+    api.listRaceSnapshots.mockRejectedValue(new Error('race snapshot outage'))
+
+    renderDetail()
+
+    expect(await screen.findByText('Sequence')).toBeInTheDocument()
+    expect(screen.getByText('W5')).toBeInTheDocument()
+    expect(await screen.findByText('Failed to load ranking publications: ranking snapshot outage')).toBeInTheDocument()
+    expect(await screen.findByText('Failed to load race publications: race snapshot outage')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Ranking publication #/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Race publication #/ })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('renders conservative source links when persisted event has no planned calendar match', async () => {
+    api.getRun.mockResolvedValue({
+      run: { run_id: 'run alpha', season: 2028, seed: 42 },
+      season_state: {
+        season: 2028,
+        next_event_index: 1,
+        completed_event_ids: [],
+        ordered_events: [
+          { event_id: 'OTHER', season: 2028, week: 4, tour: 'Elite Tour', category: 'Gold', template_id: 'ET-GOLD' }
+        ]
+      }
+    })
+
+    renderDetail()
+
+    expect(await screen.findByText('No ordered-calendar tour')).toBeInTheDocument()
+    expect(screen.getByText('No ordered-calendar category')).toBeInTheDocument()
+    const sourceLinks = screen.getByRole('heading', { name: 'Source context links' }).closest('article') as HTMLElement
+    expect(within(sourceLinks).getByRole('link', { name: 'Run browser' })).toHaveAttribute('href', '/viewer/runs')
+    expect(within(sourceLinks).getByRole('link', { name: 'Tournament list' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/run%20alpha/tournaments'
+    )
+    expect(within(sourceLinks).getByRole('link', { name: 'Season calendar' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/run%20alpha/calendar'
+    )
+    expect(within(sourceLinks).getByRole('link', { name: 'Tournament detail' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/run%20alpha/tournaments/EVENT%2F1'
+    )
+    expect(within(sourceLinks).getByRole('link', { name: 'Ranking snapshots' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/run%20alpha/rankings'
+    )
+    expect(within(sourceLinks).getByRole('link', { name: 'Race snapshots' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/run%20alpha/race'
+    )
+    expect(within(sourceLinks).queryByRole('link', { name: 'Planned calendar event' })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('keeps the persisted week link when an event has week context but no planned calendar match', async () => {
+    api.getRun.mockResolvedValue({
+      run: { run_id: 'run alpha', season: 2028, seed: 42 },
+      season_state: { season: 2028, next_event_index: 1, completed_event_ids: [], ordered_events: [] }
+    })
+
+    renderDetail()
+
+    expect(await screen.findByRole('heading', { name: 'Source context links' })).toBeInTheDocument()
+    const sourceLinks = screen.getByRole('heading', { name: 'Source context links' }).closest('article') as HTMLElement
+    expect(within(sourceLinks).getByRole('link', { name: 'Week W5' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/run%20alpha/weeks/5'
+    )
+    expect(within(sourceLinks).queryByRole('link', { name: 'Planned calendar event' })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('omits week and planned-event links when neither persisted nor planned week context exists', async () => {
+    api.getRun.mockResolvedValue({
+      run: { run_id: 'run alpha', season: 2028, seed: 42 },
+      season_state: { season: 2028, next_event_index: 1, completed_event_ids: [], ordered_events: [] }
+    })
+    api.getEvent.mockResolvedValue({
+      event_sequence: 7,
+      event_id: 'EVENT/1',
+      season: null,
+      week: null,
+      template_id: null,
+      tournament_result: null
+    })
+
+    renderDetail()
+
+    expect(await screen.findByText('No ordered-calendar tour')).toBeInTheDocument()
+    expect(screen.getByText('No ordered-calendar category')).toBeInTheDocument()
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0)
+    const sourceLinks = screen.getByRole('heading', { name: 'Source context links' }).closest('article') as HTMLElement
+    expect(within(sourceLinks).queryByRole('link', { name: /^Week W/ })).not.toBeInTheDocument()
+    expect(within(sourceLinks).queryByRole('link', { name: 'Planned calendar event' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

@@ -984,3 +984,12 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Remaining deferred pages and Stats/Records landing now reuse the shared source metadata helpers where exact.
 - Source metadata labels, loading/fallback text, latest event/snapshot/finals links, empty states, and routes remain unchanged.
 - No backend/Admin route behavior changed.
+
+## Phase 5J — Remaining Viewer deferred page module extraction
+
+- Remaining Viewer deferred page families were extracted from `ModePages.tsx` into dedicated Viewer deferred modules.
+- Deferred page configs moved into pure config helpers where safe.
+- Existing shared deferred source metadata helpers continue to drive source metadata rendering.
+- Visible deferred titles, descriptions, source metadata labels, sample lists, source links, empty states, and routes remain unchanged.
+- `ModePages.tsx` keeps compatibility exports for existing routes.
+- No backend/Admin route behavior changed.

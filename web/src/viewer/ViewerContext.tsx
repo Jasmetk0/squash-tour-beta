@@ -39,12 +39,12 @@ function readStoredViewerContext(): { selectedSeason: string; selectedWeek: numb
     return { selectedSeason: DEFAULT_SEASON, selectedWeek: DEFAULT_WEEK }
   }
 
-  const raw = window.localStorage.getItem(VIEWER_CONTEXT_STORAGE_KEY)
-  if (!raw) {
-    return { selectedSeason: DEFAULT_SEASON, selectedWeek: DEFAULT_WEEK }
-  }
-
   try {
+    const raw = window.localStorage.getItem(VIEWER_CONTEXT_STORAGE_KEY)
+    if (!raw) {
+      return { selectedSeason: DEFAULT_SEASON, selectedWeek: DEFAULT_WEEK }
+    }
+
     const parsed = JSON.parse(raw) as StoredViewerContext
     return {
       selectedSeason: typeof parsed.selectedSeason === 'string' ? normalizeSeason(parsed.selectedSeason) : DEFAULT_SEASON,
@@ -57,10 +57,15 @@ function readStoredViewerContext(): { selectedSeason: string; selectedWeek: numb
 
 function writeStoredViewerContext(selectedSeason: string, selectedWeek: number): void {
   if (typeof window === 'undefined') return
-  window.localStorage.setItem(
-    VIEWER_CONTEXT_STORAGE_KEY,
-    JSON.stringify({ selectedSeason: normalizeSeason(selectedSeason), selectedWeek: clampWeek(selectedWeek) })
-  )
+
+  try {
+    window.localStorage.setItem(
+      VIEWER_CONTEXT_STORAGE_KEY,
+      JSON.stringify({ selectedSeason: normalizeSeason(selectedSeason), selectedWeek: clampWeek(selectedWeek) })
+    )
+  } catch {
+    // Storage may be unavailable in restricted browser contexts; keep Viewer context in memory.
+  }
 }
 
 function deriveCalendarYear(season: string, seasonWeek: number): number {

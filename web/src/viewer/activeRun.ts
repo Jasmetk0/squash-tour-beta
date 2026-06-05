@@ -9,19 +9,33 @@ function notifyViewerActiveRunChanged(): void {
 
 export function readViewerActiveRunId(): string | null {
   if (typeof window === 'undefined') return null
-  return window.localStorage.getItem(VIEWER_ACTIVE_RUN_STORAGE_KEY)
+
+  try {
+    return window.localStorage.getItem(VIEWER_ACTIVE_RUN_STORAGE_KEY)
+  } catch {
+    return null
+  }
 }
 
 export function readLastRunId(): string | null {
   if (typeof window === 'undefined') return null
-  return window.localStorage.getItem(LAST_RUN_ID_STORAGE_KEY)
+
+  try {
+    return window.localStorage.getItem(LAST_RUN_ID_STORAGE_KEY)
+  } catch {
+    return null
+  }
 }
 
 export function writeLastRunId(runId: string): void {
   if (typeof window === 'undefined') return
   const normalizedRunId = runId.trim()
   if (!normalizedRunId) return
-  window.localStorage.setItem(LAST_RUN_ID_STORAGE_KEY, normalizedRunId)
+  try {
+    window.localStorage.setItem(LAST_RUN_ID_STORAGE_KEY, normalizedRunId)
+  } catch {
+    // Storage may be unavailable in restricted browser contexts; keep the app rendering.
+  }
 }
 
 export function writeViewerActiveRunId(runId: string): void {
@@ -31,12 +45,20 @@ export function writeViewerActiveRunId(runId: string): void {
     clearViewerActiveRunId()
     return
   }
-  window.localStorage.setItem(VIEWER_ACTIVE_RUN_STORAGE_KEY, normalizedRunId)
+  try {
+    window.localStorage.setItem(VIEWER_ACTIVE_RUN_STORAGE_KEY, normalizedRunId)
+  } catch {
+    // Storage may be unavailable in restricted browser contexts; keep the app rendering.
+  }
   notifyViewerActiveRunChanged()
 }
 
 export function clearViewerActiveRunId(): void {
   if (typeof window === 'undefined') return
-  window.localStorage.removeItem(VIEWER_ACTIVE_RUN_STORAGE_KEY)
+  try {
+    window.localStorage.removeItem(VIEWER_ACTIVE_RUN_STORAGE_KEY)
+  } catch {
+    // Storage may be unavailable in restricted browser contexts; keep the app rendering.
+  }
   notifyViewerActiveRunChanged()
 }

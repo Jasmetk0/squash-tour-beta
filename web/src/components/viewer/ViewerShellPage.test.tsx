@@ -1,31 +1,12 @@
-import { render, screen, within } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { ViewerContextProvider } from '../../viewer/ViewerContext'
+import { expectNoForbiddenViewerActions, renderWithViewerProviders } from '../../test/viewerTestUtils'
 import { ViewerShellPage } from './ViewerShellPage'
 
-const forbiddenViewerActionLabels = [
-  'Simulate',
-  'Generate',
-  'Persist',
-  'Apply',
-  'Execute',
-  'Delete',
-  'Edit',
-  'Import',
-  'Rollover',
-  'Rebuild',
-  'Override',
-  'Save changes',
-  'Commit',
-  'Regenerate',
-  'Repair',
-  'Merge',
-  'Overwrite'
-]
 
 function renderShell(component: JSX.Element): void {
-  render(<ViewerContextProvider>{component}</ViewerContextProvider>)
+  renderWithViewerProviders(component)
 }
 
 describe('ViewerShellPage', () => {
@@ -61,8 +42,6 @@ describe('ViewerShellPage', () => {
 
     const shell = screen.getByRole('heading', { level: 2, name: 'Safe Viewer Page' }).closest('section')
     expect(shell).not.toBeNull()
-    for (const label of forbiddenViewerActionLabels) {
-      expect(within(shell as HTMLElement).queryByText(label, { exact: true })).not.toBeInTheDocument()
-    }
+    expectNoForbiddenViewerActions(within(shell as HTMLElement))
   })
 })

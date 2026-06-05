@@ -1,10 +1,7 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { VIEWER_ACTIVE_RUN_STORAGE_KEY } from '../../../viewer/activeRun'
-import { ViewerContextProvider } from '../../../viewer/ViewerContext'
+import { clearViewerStorage, expectNoForbiddenViewerActions, renderWithViewerProviders, setViewerActiveRunId } from '../../../test/viewerTestUtils'
 import { ViewerRacePage } from './ViewerRacePage'
 
 const api = vi.hoisted(() => ({
@@ -14,42 +11,14 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../../../api/client', () => api)
 
-const forbiddenViewerActionLabels = [
-  'Simulate',
-  'Generate',
-  'Persist',
-  'Apply',
-  'Execute',
-  'Delete',
-  'Edit',
-  'Import',
-  'Rollover',
-  'Rebuild',
-  'Override',
-  'Save changes',
-  'Commit',
-  'Regenerate',
-  'Repair',
-  'Merge',
-  'Overwrite'
-]
 
 function renderRace(): void {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter>
-        <ViewerContextProvider>
-          <ViewerRacePage />
-        </ViewerContextProvider>
-      </MemoryRouter>
-    </QueryClientProvider>
-  )
+  renderWithViewerProviders(<ViewerRacePage />)
 }
 
 describe('ViewerRacePage', () => {
   beforeEach(() => {
-    localStorage.clear()
+    clearViewerStorage()
     vi.clearAllMocks()
     api.listRankingSnapshots.mockResolvedValue({ snapshots: [] })
     api.listRaceSnapshots.mockResolvedValue({ snapshots: [] })
@@ -61,13 +30,11 @@ describe('ViewerRacePage', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Race to Finals' })).toBeInTheDocument()
     expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
 
-    for (const label of forbiddenViewerActionLabels) {
-      expect(screen.queryByText(label, { exact: true })).not.toBeInTheDocument()
-    }
+    expectNoForbiddenViewerActions()
   })
 
   it('renders active-run snapshot metadata and encoded links', async () => {
-    localStorage.setItem(VIEWER_ACTIVE_RUN_STORAGE_KEY, 'run alpha')
+    setViewerActiveRunId('run alpha')
     api.listRaceSnapshots.mockResolvedValue({
       snapshots: [
         { snapshot_sequence: 4, snapshot_kind: 'race', source_event_id: 'EVT-OLD', payload: {} },

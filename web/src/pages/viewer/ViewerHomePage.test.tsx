@@ -1,10 +1,7 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { VIEWER_ACTIVE_RUN_STORAGE_KEY } from '../../viewer/activeRun'
-import { ViewerContextProvider } from '../../viewer/ViewerContext'
+import { clearViewerStorage, expectNoForbiddenViewerActions, renderWithViewerProviders, setViewerActiveRunId } from '../../test/viewerTestUtils'
 import { ViewerHomePage } from './ViewerHomePage'
 
 const api = vi.hoisted(() => ({
@@ -20,25 +17,6 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../../api/client', () => api)
 
-const forbiddenViewerActionLabels = [
-  'Simulate',
-  'Generate',
-  'Persist',
-  'Apply',
-  'Execute',
-  'Delete',
-  'Edit',
-  'Import',
-  'Rollover',
-  'Rebuild',
-  'Override',
-  'Save changes',
-  'Commit',
-  'Regenerate',
-  'Repair',
-  'Merge',
-  'Overwrite'
-]
 
 function sampleRun() {
   return {
@@ -92,21 +70,12 @@ function resetApiMocks(): void {
 }
 
 function renderHome(): void {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter>
-        <ViewerContextProvider>
-          <ViewerHomePage />
-        </ViewerContextProvider>
-      </MemoryRouter>
-    </QueryClientProvider>
-  )
+  renderWithViewerProviders(<ViewerHomePage />)
 }
 
 describe('ViewerHomePage', () => {
   beforeEach(() => {
-    localStorage.clear()
+    clearViewerStorage()
     vi.clearAllMocks()
     resetApiMocks()
   })
@@ -121,7 +90,7 @@ describe('ViewerHomePage', () => {
   })
 
   it('renders active-run summary, hub links, featured event, and nearby events', async () => {
-    localStorage.setItem(VIEWER_ACTIVE_RUN_STORAGE_KEY, 'run alpha')
+    setViewerActiveRunId('run alpha')
 
     renderHome()
 
@@ -155,8 +124,6 @@ describe('ViewerHomePage', () => {
   it('does not expose forbidden Viewer action labels', () => {
     renderHome()
 
-    for (const label of forbiddenViewerActionLabels) {
-      expect(screen.queryByText(label, { exact: true })).not.toBeInTheDocument()
-    }
+    expectNoForbiddenViewerActions()
   })
 })

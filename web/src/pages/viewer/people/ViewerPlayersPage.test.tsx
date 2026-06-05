@@ -1,10 +1,8 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { VIEWER_ACTIVE_RUN_STORAGE_KEY } from '../../../viewer/activeRun'
-import { ViewerContextProvider } from '../../../viewer/ViewerContext'
+import { makeRunPlayer } from '../../../test/viewerDeferredFixtures'
+import { clearViewerStorage, expectNoForbiddenViewerActions, renderWithViewerProviders, setViewerActiveRunId } from '../../../test/viewerTestUtils'
 import { ViewerPlayersPage } from './ViewerPlayersPage'
 
 const api = vi.hoisted(() => ({
@@ -13,42 +11,14 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../../../api/client', () => api)
 
-const forbiddenViewerActionLabels = [
-  'Simulate',
-  'Generate',
-  'Persist',
-  'Apply',
-  'Execute',
-  'Delete',
-  'Edit',
-  'Import',
-  'Rollover',
-  'Rebuild',
-  'Override',
-  'Save changes',
-  'Commit',
-  'Regenerate',
-  'Repair',
-  'Merge',
-  'Overwrite'
-]
 
 function renderPlayersPage(): void {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter>
-        <ViewerContextProvider>
-          <ViewerPlayersPage />
-        </ViewerContextProvider>
-      </MemoryRouter>
-    </QueryClientProvider>
-  )
+  renderWithViewerProviders(<ViewerPlayersPage />)
 }
 
 describe('ViewerPlayersPage', () => {
   beforeEach(() => {
-    localStorage.clear()
+    clearViewerStorage()
     vi.clearAllMocks()
     api.listRunPlayers.mockResolvedValue({
       run_id: 'run alpha',
@@ -56,14 +26,14 @@ describe('ViewerPlayersPage', () => {
       limit: 5,
       offset: 0,
       players: [
-        {
+        makeRunPlayer({
           player_id: 'player one',
           name: 'Ali Farag',
           country_code: 'EG',
           age: 31,
           overall: 96,
           quality_band: 'Elite'
-        }
+        })
       ]
     })
   })
@@ -75,13 +45,11 @@ describe('ViewerPlayersPage', () => {
     expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
     expect(api.listRunPlayers).not.toHaveBeenCalled()
 
-    for (const label of forbiddenViewerActionLabels) {
-      expect(screen.queryByText(label, { exact: true })).not.toBeInTheDocument()
-    }
+    expectNoForbiddenViewerActions()
   })
 
   it('renders active-run player metadata and encoded source/profile links', async () => {
-    localStorage.setItem(VIEWER_ACTIVE_RUN_STORAGE_KEY, 'run alpha')
+    setViewerActiveRunId('run alpha')
 
     renderPlayersPage()
 

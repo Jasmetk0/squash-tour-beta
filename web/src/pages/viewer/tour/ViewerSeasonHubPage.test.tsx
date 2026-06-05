@@ -1,10 +1,7 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { VIEWER_ACTIVE_RUN_STORAGE_KEY } from '../../../viewer/activeRun'
-import { ViewerContextProvider } from '../../../viewer/ViewerContext'
+import { clearViewerStorage, expectNoForbiddenViewerActions, renderWithViewerProviders, setViewerActiveRunId } from '../../../test/viewerTestUtils'
 import { ViewerSeasonHubPage } from './ViewerSeasonHubPage'
 
 const api = vi.hoisted(() => ({
@@ -16,42 +13,14 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../../../api/client', () => api)
 
-const forbiddenViewerActionLabels = [
-  'Simulate',
-  'Generate',
-  'Persist',
-  'Apply',
-  'Execute',
-  'Delete',
-  'Edit',
-  'Import',
-  'Rollover',
-  'Rebuild',
-  'Override',
-  'Save changes',
-  'Commit',
-  'Regenerate',
-  'Repair',
-  'Merge',
-  'Overwrite'
-]
 
 function renderSeasonHub(): void {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter>
-        <ViewerContextProvider>
-          <ViewerSeasonHubPage />
-        </ViewerContextProvider>
-      </MemoryRouter>
-    </QueryClientProvider>
-  )
+  renderWithViewerProviders(<ViewerSeasonHubPage />)
 }
 
 describe('ViewerSeasonHubPage', () => {
   beforeEach(() => {
-    localStorage.clear()
+    clearViewerStorage()
     vi.clearAllMocks()
     api.getRun.mockResolvedValue({
       run: {
@@ -98,13 +67,11 @@ describe('ViewerSeasonHubPage', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Season Hub' })).toBeInTheDocument()
     expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
 
-    for (const label of forbiddenViewerActionLabels) {
-      expect(screen.queryByText(label, { exact: true })).not.toBeInTheDocument()
-    }
+    expectNoForbiddenViewerActions()
   })
 
   it('renders active-run season metadata and encoded source links', async () => {
-    localStorage.setItem(VIEWER_ACTIVE_RUN_STORAGE_KEY, 'run alpha')
+    setViewerActiveRunId('run alpha')
 
     renderSeasonHub()
 

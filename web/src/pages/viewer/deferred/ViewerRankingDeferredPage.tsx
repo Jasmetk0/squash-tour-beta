@@ -11,7 +11,7 @@ import {
   renderLatestRaceSnapshotSourceValue,
   renderLatestRankingSnapshotSourceValue,
   renderLoadingValue,
-} from './ViewerDeferredSourceMetadata'
+} from './ViewerDeferredSourceMetadataRender'
 import { ViewerDeferredSourceCard } from './ViewerDeferredSourceCard'
 import { buildRankingDeferredSourceLinks } from './viewerDeferredLinks'
 import { hasAnyDeferredSourceMetadata } from './viewerDeferredSourceMetadata'

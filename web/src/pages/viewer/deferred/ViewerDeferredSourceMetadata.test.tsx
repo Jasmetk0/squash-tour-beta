@@ -8,7 +8,7 @@ import {
   renderDeferredSourceLinks,
   renderLoadingValue,
   renderSourceMetadataList
-} from './ViewerDeferredSourceMetadata'
+} from './ViewerDeferredSourceMetadataRender'
 
 const metadata: DeferredSourceMetadata = {
   eventCount: 12,

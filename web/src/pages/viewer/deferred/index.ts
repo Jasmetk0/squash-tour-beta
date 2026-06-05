@@ -1,5 +1,5 @@
 export * from './viewerDeferredSourceMetadata'
-export * from './ViewerDeferredSourceMetadata'
+export * from './ViewerDeferredSourceMetadataRender'
 export * from './viewerDeferredConfigs'
 export * from './ViewerRankingDeferredPage'
 export * from './ViewerPlayersDeferredPage'

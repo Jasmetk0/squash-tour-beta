@@ -15,4 +15,13 @@ describe('viewer CSS architecture guards', () => {
     expect(stylesSource).toContain('.viewer-status-message--loading')
     expect(stylesSource).toContain('.viewer-run-browser-list')
   })
+
+  it('keeps Viewer responsive and focus accessibility guards in shared CSS', () => {
+    expect(stylesSource).toContain('.viewer-topbar a:focus-visible')
+    expect(stylesSource).toContain('.viewer-topbar-search input:focus-visible')
+    expect(stylesSource).toContain('.viewer-active-run-link:focus-visible')
+    expect(stylesSource).toContain('overflow-wrap: anywhere')
+    expect(stylesSource).toContain('grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr))')
+    expect(stylesSource).toContain('@media (max-width: 560px)')
+  })
 })

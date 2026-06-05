@@ -893,6 +893,8 @@ textarea:focus-visible {
   align-items: center;
   gap: 0.35rem;
   flex-wrap: nowrap;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 0.65rem 0.75rem;
   border: 1px solid #cbd5e1;
   border-radius: 24px;
@@ -912,8 +914,11 @@ textarea:focus-visible {
   color: #334155;
   font-weight: 700;
   line-height: 1.1;
+  min-width: 0;
   padding: 0.42rem 0.62rem;
   text-decoration: none;
+  overflow-wrap: anywhere;
+  white-space: normal;
   cursor: pointer;
   transition: background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
 }
@@ -935,9 +940,11 @@ textarea:focus-visible {
 .viewer-jump-button:focus-visible,
 .viewer-topbar-search input:focus-visible,
 .viewer-topbar-search button:focus-visible,
-.viewer-context-selector__panel input:focus-visible {
+.viewer-context-selector__panel input:focus-visible,
+.viewer-active-run-link:focus-visible {
   outline: 3px solid #93c5fd;
   outline-offset: 2px;
+  box-shadow: 0 0 0 5px rgb(147 197 253 / 28%);
 }
 
 .viewer-topbar a.active {
@@ -962,6 +969,7 @@ textarea:focus-visible {
   position: relative;
   display: inline-flex;
   align-items: center;
+  min-width: 0;
 }
 
 .viewer-dropdown__menu {
@@ -970,7 +978,7 @@ textarea:focus-visible {
   left: 0;
   z-index: 10;
   display: none;
-  min-width: 220px;
+  min-width: min(calc(100vw - 2rem), 220px);
   gap: 0.35rem;
   padding: 0.6rem;
   border: 1px solid #cbd5e1;
@@ -1000,7 +1008,8 @@ textarea:focus-visible {
   align-items: center;
   gap: 0.25rem;
   flex: 0 1 260px;
-  min-width: 185px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .viewer-topbar-search input,
@@ -1043,7 +1052,7 @@ textarea:focus-visible {
   align-items: center;
   gap: 0.25rem;
   flex: 0 1 230px;
-  min-width: 190px;
+  min-width: 0;
   margin-left: 0.25rem;
   padding-left: 0.25rem;
   border-left: 1px solid #cbd5e1;
@@ -1053,7 +1062,8 @@ textarea:focus-visible {
   color: #475569;
   font-size: 0.82rem;
   font-weight: 800;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .viewer-active-run-compact__field {
@@ -1108,7 +1118,7 @@ textarea:focus-visible {
 /* Viewer public-site card system. Keep these styles scoped to Viewer pages so Admin/Engine UI remains unchanged. */
 .viewer-home-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
   gap: clamp(0.85rem, 2vw, 1.25rem);
 }
 
@@ -1194,17 +1204,29 @@ textarea:focus-visible {
 
   .viewer-topbar-search {
     width: 100%;
+    flex: 1 1 100%;
   }
 
   .viewer-topbar-search input {
-    flex: 1;
+    flex: 1 1 12rem;
     min-width: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .viewer-topbar-search {
+    flex-wrap: wrap;
+  }
+
+  .viewer-topbar-search button {
+    flex: 1 0 auto;
   }
 }
 
 .viewer-active-run-panel,
 .viewer-active-run-card {
   position: relative;
+  min-width: 0;
   overflow: hidden;
   border: 1px solid #b6ccfe;
   border-radius: 20px;
@@ -1275,6 +1297,8 @@ textarea:focus-visible {
   align-items: center;
   justify-content: center;
   min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   border: 1px solid #93c5fd;
   border-radius: 999px;
   background: #ffffff;
@@ -1283,6 +1307,8 @@ textarea:focus-visible {
   line-height: 1.2;
   padding: 0.6rem 0.9rem;
   text-align: center;
+  overflow-wrap: anywhere;
+  white-space: normal;
   text-decoration: none;
   box-shadow: 0 8px 18px rgb(37 99 235 / 8%);
   transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
@@ -1322,6 +1348,7 @@ textarea:focus-visible {
 .viewer-home-card,
 .viewer-jump-demo {
   position: relative;
+  min-width: 0;
   overflow: hidden;
   border-color: #cfe0ff;
   background:
@@ -1366,6 +1393,7 @@ textarea:focus-visible {
 .viewer-metadata-list dt,
 .viewer-home-summary-list dt {
   color: #475569;
+  overflow-wrap: anywhere;
   font-size: 0.74rem;
   font-weight: 800;
   letter-spacing: 0.055em;
@@ -1400,6 +1428,8 @@ textarea:focus-visible {
 .viewer-deferred-feature-list > li,
 .viewer-home-list > li {
   line-height: 1.45;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .viewer-deferred-feature-list > li {
@@ -1414,6 +1444,7 @@ textarea:focus-visible {
 .viewer-section-card > .status,
 .viewer-shell-page > .status {
   border: 1px solid rgb(191 219 254 / 72%);
+  overflow-wrap: anywhere;
   border-left: 4px solid #60a5fa;
   border-radius: 14px;
   background: rgb(239 246 255 / 64%);
@@ -1443,6 +1474,8 @@ textarea:focus-visible {
 
 .viewer-active-run-action-item {
   display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .viewer-run-browser-list {

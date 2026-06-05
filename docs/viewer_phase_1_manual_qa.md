@@ -1067,3 +1067,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Card spacing, metadata readability, empty/loading/error hierarchy, and responsive grids were improved.
 - Routes, data fetching, active-run behavior, visible copy, metadata labels, links, and read-only safety remain unchanged.
 - No backend/Admin route behavior changed.
+
+## Phase 7C — Viewer responsive/accessibility polish
+
+- Viewer responsive/accessibility polish was applied through shared styles/components.
+- Focus visibility, mobile wrapping, long-value overflow safety, and small-screen Viewer layout were improved.
+- Routes, data fetching, active-run behavior, visible copy, metadata labels, links, and read-only safety remain unchanged.
+- No backend/Admin route behavior changed.

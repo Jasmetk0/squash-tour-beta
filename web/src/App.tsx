@@ -11,6 +11,7 @@ import { EventsPage } from './pages/EventsPage'
 import { FinalsPage } from './pages/FinalsPage'
 import { FinalsQualificationDetailPage } from './pages/FinalsQualificationDetailPage'
 import { FinalsResultDetailPage } from './pages/FinalsResultDetailPage'
+import { LandingPage } from './pages/LandingPage'
 import {
   AdminHomePage,
   AdminPlayersDatabasePage,
@@ -19,34 +20,26 @@ import {
   AdminSettingsPage,
   AdminTourSeasonsPage,
   AdminTournamentTemplatesPage,
-  AdminWorldPage,
-  LandingPage,
+  AdminWorldPage
+} from './pages/admin'
+import { ViewerHomePage } from './pages/viewer/ViewerHomePage'
+import { ViewerRunBrowserPage } from './pages/viewer/ViewerRunBrowserPage'
+import { ViewerRankingsPage, ViewerRacePage } from './pages/viewer/rankings'
+import { ViewerSeasonHubPage, ViewerTourCalendarPage, ViewerCurrentWeekPage, ViewerTournamentsPage } from './pages/viewer/tour'
+import { ViewerPlayersPage, ViewerCountriesPage } from './pages/viewer/people'
+import { ViewerSearchPage, ViewerH2HPage, ViewerPlayerComparisonPage, ViewerMatchPredictorPage } from './pages/viewer/explore'
+import { ViewerHistoryPage } from './pages/viewer/history'
+import { ViewerRecordsPage, ViewerStatsPage } from './pages/viewer/stats'
+import {
   ViewerCountriesDeferredPage,
-  ViewerCountriesPage,
-  ViewerCurrentWeekPage,
   ViewerCountryRankingPage,
-  ViewerH2HPage,
   ViewerH2HSubroutePage,
-  ViewerHistoryPage,
-  ViewerHomePage,
-  ViewerMatchPredictorPage,
   ViewerPredictionDeferredPage,
-  ViewerPlayerComparisonPage,
   ViewerPlayersDeferredPage,
-  ViewerPlayersPage,
-  ViewerRankingsPage,
-  ViewerRacePage,
   ViewerRankingDeferredPage,
-  ViewerRecordsPage,
-  ViewerRunBrowserPage,
-  ViewerSearchPage,
   ViewerStatsDeferredPage,
-  ViewerStatsPage,
-  ViewerSeasonHubPage,
-  ViewerTourDeferredPage,
-  ViewerTourCalendarPage,
-  ViewerTournamentsPage
-} from './pages/ModePages'
+  ViewerTourDeferredPage
+} from './pages/viewer/deferred'
 import { AdminTourSeasonsComparePage } from './pages/CalendarComparePage'
 import { AdminTourSeasonsValidationPage } from './pages/CalendarValidationPage'
 import { AdminTourSeasonsCategoriesPage } from './pages/CategoriesPage'

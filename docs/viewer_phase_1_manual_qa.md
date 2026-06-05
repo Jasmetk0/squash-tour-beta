@@ -6,6 +6,14 @@ Use this checklist to manually review Viewer Mode Phase 1 in a browser. The goal
 
 This is a documentation-only QA guide. It does not request product, React, backend, or test changes.
 
+
+## Phase 6B deferred infrastructure exactness note
+
+- Deferred infrastructure exactness tests were added after Phase 6A consolidation.
+- Hook query enablement, includeRun/includeFinals behavior, event count fallback behavior, source-card empty/error/loading behavior, and source-link order are now covered.
+- Deferred visible behavior and routes remain unchanged.
+- No backend/Admin route behavior changed.
+
 ## Assumptions and setup
 
 - Start the frontend and backend using the normal local development workflow for this repository.

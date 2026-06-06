@@ -127,6 +127,54 @@ describe('ViewerHomePage', () => {
     expect(hubLinks.getByRole('link', { name: 'Predictions' })).toHaveAttribute('href', '/viewer/predictions')
   })
 
+  it('treats a whitespace-only active run as no active run without active-run queries', () => {
+    setViewerActiveRunId('   ')
+    api.listRuns.mockResolvedValue({ runs: [] })
+
+    renderHome()
+
+    expect(screen.getByRole('heading', { level: 2, name: /MSA Squash/ })).toBeInTheDocument()
+    expect(screen.getByText(/No active Viewer run selected/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Active Run Rankings' })).not.toBeInTheDocument()
+    expect(api.getRun).not.toHaveBeenCalled()
+    expect(api.getRunStatusSummary).not.toHaveBeenCalled()
+    expect(api.listEvents).not.toHaveBeenCalled()
+    expect(api.listRankingSnapshots).not.toHaveBeenCalled()
+    expect(api.listRaceSnapshots).not.toHaveBeenCalled()
+    expect(api.getRunActivity).not.toHaveBeenCalled()
+    expect(api.getFinalsSummary).not.toHaveBeenCalled()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('trims leading and trailing active-run whitespace for queries, labels, and route links', async () => {
+    setViewerActiveRunId(' run alpha ')
+
+    renderHome()
+
+    expect(await screen.findByRole('heading', { name: 'Active Viewer run: run alpha' })).toBeInTheDocument()
+    expect(await screen.findByText('child_run from parent run')).toBeInTheDocument()
+    for (const activeRunApi of [
+      api.getRun,
+      api.getRunStatusSummary,
+      api.listEvents,
+      api.listRankingSnapshots,
+      api.listRaceSnapshots,
+      api.getRunActivity,
+      api.getFinalsSummary
+    ]) {
+      expect(activeRunApi).toHaveBeenCalledWith('run alpha')
+      expect(activeRunApi).not.toHaveBeenCalledWith(' run alpha ')
+    }
+    expect(screen.getByLabelText('Active Viewer run status')).toHaveTextContent('Using Viewer run run alpha')
+    expect(screen.getAllByText('run alpha').length).toBeGreaterThan(0)
+    expect(screen.getByRole('link', { name: 'Active Run Rankings' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/rankings')
+    expect(screen.getByRole('link', { name: 'Active Run Calendar' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar')
+    for (const link of screen.getAllByRole('link')) {
+      expect(link.getAttribute('href') ?? '').not.toContain('%20run%20alpha%20')
+    }
+    expectNoForbiddenViewerActions()
+  })
+
   it('renders safely when active-run storage is unavailable during render', () => {
     api.listRuns.mockResolvedValue({ runs: [] })
     const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {

@@ -137,19 +137,20 @@ function renderActivityItem(item: RunActivityItem, runId: string, context: Activ
 export function ViewerHomePage(): JSX.Element {
   const context = useViewerContext()
   const activeRunId = useActiveViewerRunId()
-  const activeRunLinks = buildViewerHomeActiveRunLinks(activeRunId)
+  const normalizedActiveRunId = activeRunId?.trim() || null
+  const activeRunLinks = buildViewerHomeActiveRunLinks(normalizedActiveRunId)
   const primaryHubLinks = buildViewerHomePrimaryHubLinks()
   const readOnlyNotes = buildViewerHomeReadOnlyNotes()
-  const activeRunLabel = getViewerHomeActiveRunLabel(activeRunId)
-  const queryEnabled = Boolean(activeRunId)
+  const activeRunLabel = getViewerHomeActiveRunLabel(normalizedActiveRunId)
+  const queryEnabled = Boolean(normalizedActiveRunId)
 
-  const runQuery = useQuery({ queryKey: ['viewer-home-run', activeRunId], queryFn: () => getRun(activeRunId ?? ''), enabled: queryEnabled, retry: false })
-  const statusQuery = useQuery({ queryKey: ['viewer-home-run-status', activeRunId], queryFn: () => getRunStatusSummary(activeRunId ?? ''), enabled: queryEnabled, retry: false })
-  const eventsQuery = useQuery({ queryKey: ['viewer-home-events', activeRunId], queryFn: () => listEvents(activeRunId ?? ''), enabled: queryEnabled, retry: false })
-  const rankingSnapshotsQuery = useQuery({ queryKey: ['viewer-home-ranking-snapshots', activeRunId], queryFn: () => listRankingSnapshots(activeRunId ?? ''), enabled: queryEnabled, retry: false })
-  const raceSnapshotsQuery = useQuery({ queryKey: ['viewer-home-race-snapshots', activeRunId], queryFn: () => listRaceSnapshots(activeRunId ?? ''), enabled: queryEnabled, retry: false })
-  const activityQuery = useQuery({ queryKey: ['viewer-home-activity', activeRunId], queryFn: () => getRunActivity(activeRunId ?? ''), enabled: queryEnabled, retry: false })
-  const finalsQuery = useQuery({ queryKey: ['viewer-home-finals', activeRunId], queryFn: () => getFinalsSummary(activeRunId ?? ''), enabled: queryEnabled, retry: false })
+  const runQuery = useQuery({ queryKey: ['viewer-home-run', normalizedActiveRunId], queryFn: () => getRun(normalizedActiveRunId ?? ''), enabled: queryEnabled, retry: false })
+  const statusQuery = useQuery({ queryKey: ['viewer-home-run-status', normalizedActiveRunId], queryFn: () => getRunStatusSummary(normalizedActiveRunId ?? ''), enabled: queryEnabled, retry: false })
+  const eventsQuery = useQuery({ queryKey: ['viewer-home-events', normalizedActiveRunId], queryFn: () => listEvents(normalizedActiveRunId ?? ''), enabled: queryEnabled, retry: false })
+  const rankingSnapshotsQuery = useQuery({ queryKey: ['viewer-home-ranking-snapshots', normalizedActiveRunId], queryFn: () => listRankingSnapshots(normalizedActiveRunId ?? ''), enabled: queryEnabled, retry: false })
+  const raceSnapshotsQuery = useQuery({ queryKey: ['viewer-home-race-snapshots', normalizedActiveRunId], queryFn: () => listRaceSnapshots(normalizedActiveRunId ?? ''), enabled: queryEnabled, retry: false })
+  const activityQuery = useQuery({ queryKey: ['viewer-home-activity', normalizedActiveRunId], queryFn: () => getRunActivity(normalizedActiveRunId ?? ''), enabled: queryEnabled, retry: false })
+  const finalsQuery = useQuery({ queryKey: ['viewer-home-finals', normalizedActiveRunId], queryFn: () => getFinalsSummary(normalizedActiveRunId ?? ''), enabled: queryEnabled, retry: false })
 
   const activeQueries = [runQuery, statusQuery, eventsQuery, rankingSnapshotsQuery, raceSnapshotsQuery, activityQuery, finalsQuery]
   const isActiveSummaryLoading = queryEnabled && activeQueries.some((query) => query.isLoading)
@@ -184,7 +185,7 @@ export function ViewerHomePage(): JSX.Element {
         <Link className="viewer-active-run-link" to={viewerRunsPath()}>Open run browser</Link>
       </p>
       <section className="viewer-active-run-panel" aria-label="Active Viewer run status">
-        {activeRunId ? (
+        {normalizedActiveRunId ? (
           <>
             <div>
               <span className="eyebrow">Active Viewer run</span>
@@ -193,12 +194,12 @@ export function ViewerHomePage(): JSX.Element {
               {isActiveSummaryUnavailable ? <ViewerEmptyState>Active run summary is temporarily unavailable. Try opening the run pages below for more detail.</ViewerEmptyState> : null}
               {!isActiveSummaryLoading && !isActiveSummaryUnavailable ? (
                 <>
-                  <p className="status">Using Viewer run <strong>{activeRunId}</strong> for read-only run pages.</p>
+                  <p className="status">Using Viewer run <strong>{normalizedActiveRunId}</strong> for read-only run pages.</p>
                   <ViewerMetadataList
                     className="viewer-home-summary-list"
                     ariaLabel="Active run summary fields"
                     items={[
-                      { label: 'Run id', value: statusQuery.data?.run_id ?? runQuery.data?.run.run_id ?? activeRunId },
+                      { label: 'Run id', value: statusQuery.data?.run_id ?? runQuery.data?.run.run_id ?? normalizedActiveRunId },
                       { label: 'Season', value: statusQuery.data?.season ?? runQuery.data?.run.season ?? 'Not available yet' },
                       { label: 'Seed', value: statusQuery.data?.seed ?? runQuery.data?.run.seed ?? 'Not available yet' },
                       { label: 'Progress', value: statusQuery.data ? `${statusQuery.data.progress.completed_event_count}/${statusQuery.data.progress.total_events} events complete` : `${runQuery.data?.run.completed_event_ids.length ?? 0}/${runQuery.data?.run.total_events ?? 0} events complete` },
@@ -221,11 +222,11 @@ export function ViewerHomePage(): JSX.Element {
       </section>
       <ViewerLandingGrid>
         <ViewerSectionCard kicker="Featured Tournament Hero" title="Featured Tournament Hero" variant="hero">
-          {activeRunId && featuredEvent ? (
+          {normalizedActiveRunId && featuredEvent ? (
             <>
-              <p>{featuredEvent.status}: <strong>{renderLinkedEventId(activeRunId, featuredEvent.eventId)}</strong></p>
-              <p className="status">{featuredEvent.category ?? 'Category unavailable'} · {featuredEvent.tour ?? 'Tour unavailable'} · {featuredEvent.week != null ? renderLinkedWeek(activeRunId, featuredEvent.week) : 'Week unavailable'} · Template {featuredEvent.templateId ?? 'unavailable'}</p>
-              <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(activeRunId)}>Open active run schedule</Link>
+              <p>{featuredEvent.status}: <strong>{renderLinkedEventId(normalizedActiveRunId, featuredEvent.eventId)}</strong></p>
+              <p className="status">{featuredEvent.category ?? 'Category unavailable'} · {featuredEvent.tour ?? 'Tour unavailable'} · {featuredEvent.week != null ? renderLinkedWeek(normalizedActiveRunId, featuredEvent.week) : 'Week unavailable'} · Template {featuredEvent.templateId ?? 'unavailable'}</p>
+              <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(normalizedActiveRunId)}>Open active run schedule</Link>
             </>
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
@@ -233,10 +234,10 @@ export function ViewerHomePage(): JSX.Element {
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only schedule" title="Other Tournaments This Week">
-          {activeRunId && nearbyEvents.length ? (
+          {normalizedActiveRunId && nearbyEvents.length ? (
             <ul>
               {nearbyEvents.map((event) => (
-                <li key={event.event_id}>{renderLinkedEventId(activeRunId, event.event_id)} · {event.category} · {renderLinkedWeek(activeRunId, event.week)}</li>
+                <li key={event.event_id}>{renderLinkedEventId(normalizedActiveRunId, event.event_id)} · {event.category} · {renderLinkedWeek(normalizedActiveRunId, event.week)}</li>
               ))}
             </ul>
           ) : (
@@ -245,26 +246,26 @@ export function ViewerHomePage(): JSX.Element {
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only rankings" title="Ranking snapshots">
-          {activeRunId && latestRankingSnapshot ? (
-            <p>Latest ranking snapshot <Link to={viewerRankingSnapshotPath(activeRunId, latestRankingSnapshot.snapshot_sequence)}>#{latestRankingSnapshot.snapshot_sequence}</Link> from {latestRankingSnapshot.source_event_id ?? 'run history'} · {rankingSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
+          {normalizedActiveRunId && latestRankingSnapshot ? (
+            <p>Latest ranking snapshot <Link to={viewerRankingSnapshotPath(normalizedActiveRunId, latestRankingSnapshot.snapshot_sequence)}>#{latestRankingSnapshot.snapshot_sequence}</Link> from {latestRankingSnapshot.source_event_id ?? 'run history'} · {rankingSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           )}
-          {activeRunId ? <Link className="viewer-active-run-link" to={viewerRankingsPath(activeRunId)}>Open active run rankings</Link> : null}
+          {normalizedActiveRunId ? <Link className="viewer-active-run-link" to={viewerRankingsPath(normalizedActiveRunId)}>Open active run rankings</Link> : null}
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only race" title="Race snapshots">
-          {activeRunId && latestRaceSnapshot ? (
-            <p>Latest race snapshot <Link to={viewerRaceSnapshotPath(activeRunId, latestRaceSnapshot.snapshot_sequence)}>#{latestRaceSnapshot.snapshot_sequence}</Link> from {latestRaceSnapshot.source_event_id ?? 'run history'} · {raceSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
+          {normalizedActiveRunId && latestRaceSnapshot ? (
+            <p>Latest race snapshot <Link to={viewerRaceSnapshotPath(normalizedActiveRunId, latestRaceSnapshot.snapshot_sequence)}>#{latestRaceSnapshot.snapshot_sequence}</Link> from {latestRaceSnapshot.source_event_id ?? 'run history'} · {raceSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           )}
-          {activeRunId ? <Link className="viewer-active-run-link" to={viewerRacePath(activeRunId)}>Open active run race</Link> : null}
+          {normalizedActiveRunId ? <Link className="viewer-active-run-link" to={viewerRacePath(normalizedActiveRunId)}>Open active run race</Link> : null}
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only matches" title="Featured Matches">
           <ViewerEmptyState>This preview is not connected for this data shape yet.</ViewerEmptyState>
-          {activeRunId ? <Link className="viewer-active-run-link" to={viewerTournamentsPath(activeRunId)}>Open active run tournaments</Link> : null}
+          {normalizedActiveRunId ? <Link className="viewer-active-run-link" to={viewerTournamentsPath(normalizedActiveRunId)}>Open active run tournaments</Link> : null}
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only analytics" title="Predictions &amp; Upset Watch">
@@ -289,12 +290,12 @@ export function ViewerHomePage(): JSX.Element {
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only storylines" title="Storylines">
-          {activeRunId && latestActivityItem ? (
-            <p>{activityItems.length} activity items · Latest: {renderActivityItem(latestActivityItem, activeRunId, activityLinkContext)}</p>
+          {normalizedActiveRunId && latestActivityItem ? (
+            <p>{activityItems.length} activity items · Latest: {renderActivityItem(latestActivityItem, normalizedActiveRunId, activityLinkContext)}</p>
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           )}
-          {activeRunId ? <Link className="viewer-active-run-link" to={viewerHistoryPath(activeRunId)}>Open active run history</Link> : null}
+          {normalizedActiveRunId ? <Link className="viewer-active-run-link" to={viewerHistoryPath(normalizedActiveRunId)}>Open active run history</Link> : null}
         </ViewerSectionCard>
       </ViewerLandingGrid>
     </section>

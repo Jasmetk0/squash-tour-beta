@@ -1229,3 +1229,4 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - The page renders top-level Viewer hub links and active-run scoped shortcuts when an active run exists.
 - No invented progress, results, rankings, winners, standings, schedule facts, or Admin behavior was added.
 - Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.
+- Viewer Home active-run IDs are normalized consistently before queries and route links.

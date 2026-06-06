@@ -29,6 +29,21 @@ describe('viewerHomeDisplay', () => {
     expect(buildViewerHomeActiveRunLinks('   ')).toEqual([])
   })
 
+  it('trims leading and trailing whitespace without changing internal run id characters', () => {
+    expect(buildViewerHomeActiveRunLinks(' run alpha ')).toEqual([
+      { label: 'Active Run Rankings', to: '/viewer/runs/run%20alpha/rankings' },
+      { label: 'Active Run Race', to: '/viewer/runs/run%20alpha/race' },
+      { label: 'Active Run Tournaments', to: '/viewer/runs/run%20alpha/tournaments' },
+      { label: 'Active Run Calendar', to: '/viewer/runs/run%20alpha/calendar' },
+      { label: 'Active Run Players', to: '/viewer/runs/run%20alpha/players' },
+      { label: 'Active Run Countries', to: '/viewer/runs/run%20alpha/countries' },
+      { label: 'Active Run History', to: '/viewer/runs/run%20alpha/history' },
+      { label: 'Active Run Finals', to: '/viewer/runs/run%20alpha/finals' }
+    ])
+    expect(getViewerHomeActiveRunLabel(' run alpha ')).toBe('Active Viewer run: run alpha')
+    expect(getViewerHomeActiveRunLabel('   ')).toBe('No active Viewer run selected')
+  })
+
   it('keeps primary hub links backed by existing Viewer hub definitions without Admin destinations', () => {
     const links = buildViewerHomePrimaryHubLinks()
 

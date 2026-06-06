@@ -46,11 +46,11 @@ export function ViewerRunBrowserPage(): JSX.Element {
         {!runsQuery.isLoading && !runsQuery.isError && runs.length === 0 ? <ViewerEmptyState>No Viewer runs are available yet.</ViewerEmptyState> : null}
         {!runsQuery.isLoading && !runsQuery.isError && runs.length > 0 ? (
           <div className="viewer-run-browser-list">
-            {runs.map((run) => {
+            {runs.map((run, runIndex) => {
               const fields = buildRunBrowserMetadataItems(run)
               const isActiveRun = activeRunId === run.run_id
               return (
-                <article className="viewer-active-run-card" key={run.run_id} aria-label={`Run ${run.run_id}`}>
+                <article className="viewer-active-run-card" key={`${run.run_id}:${runIndex}`} aria-label={`Run ${run.run_id}`}>
                   <span className="eyebrow">{isActiveRun ? 'Active Viewer run' : 'Available Viewer run'}</span>
                   <h4>{run.run_id}</h4>
                   {isActiveRun ? <p className="status">Currently selected for active-run Viewer pages.</p> : null}

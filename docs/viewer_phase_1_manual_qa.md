@@ -1181,3 +1181,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - The page renders existing planned metadata and conservative links/context, including run, calendar, tournament list, planned event, week, rankings/race, and persisted tournament detail links only when a persisted event match exists.
 - No invented results, draws, winners, points, prize money, player lists, or standings were added.
 - Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 8F note — planned calendar event detail hardening
+
+- Planned event detail source-context behavior was hardened after Phase 8E.
+- listEvents error states, planned/persisted mismatch states, exact event matching, encoded links, status labels, and read-only safety are covered.
+- The page still renders only existing planned metadata and conservative context links.
+- No invented results, draws, winners, points, prize money, player lists, or standings were added.
+- Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.

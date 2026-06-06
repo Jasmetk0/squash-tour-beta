@@ -106,4 +106,65 @@ describe('viewerPlannedEventDetailDisplay', () => {
       { label: 'Race snapshots', href: '/viewer/runs/run%20alpha/race' }
     ])
   })
+
+  it('omits week and tournament links when no planned week or persisted event is available', () => {
+    expect(buildPlannedEventContextLinks({ runId: 'run alpha', eventId: 'EVENT/1', hasPersisted: false })).toEqual([
+      { label: 'Run browser', href: '/viewer/runs' },
+      { label: 'Tournament list', href: '/viewer/runs/run%20alpha/tournaments' },
+      { label: 'Season calendar', href: '/viewer/runs/run%20alpha/calendar' },
+      { label: 'Planned calendar event', href: '/viewer/runs/run%20alpha/calendar/EVENT%2F1' },
+      { label: 'Ranking snapshots', href: '/viewer/runs/run%20alpha/rankings' },
+      { label: 'Race snapshots', href: '/viewer/runs/run%20alpha/race' }
+    ])
+  })
+
+  it('encodes special characters in planned context links', () => {
+    expect(buildPlannedEventContextLinks({ runId: 'run/alpha #1', eventId: 'EVENT ?/1&2', week: 7, hasPersisted: true })).toEqual([
+      { label: 'Run browser', href: '/viewer/runs' },
+      { label: 'Tournament list', href: '/viewer/runs/run%2Falpha%20%231/tournaments' },
+      { label: 'Season calendar', href: '/viewer/runs/run%2Falpha%20%231/calendar' },
+      { label: 'Planned calendar event', href: '/viewer/runs/run%2Falpha%20%231/calendar/EVENT%20%3F%2F1%262' },
+      { label: 'Tournament detail', href: '/viewer/runs/run%2Falpha%20%231/tournaments/EVENT%20%3F%2F1%262' },
+      { label: 'Week W7', href: '/viewer/runs/run%2Falpha%20%231/weeks/7' },
+      { label: 'Ranking snapshots', href: '/viewer/runs/run%2Falpha%20%231/rankings' },
+      { label: 'Race snapshots', href: '/viewer/runs/run%2Falpha%20%231/race' }
+    ])
+  })
+
+  it('shows numeric plan position when ordered event count is not provided', () => {
+    const planned = findPlannedEventById(seasonState, 'EVENT/10')
+
+    expect(planned).not.toBeNull()
+    expect(
+      buildPlannedEventDetailMetadataItems({
+        runId: 'run alpha',
+        plannedEvent: planned!,
+        nextEventIndex: 1
+      }).find((item) => item.label === 'Plan position')
+    ).toEqual({ label: 'Plan position', value: 2 })
+  })
+
+  it('uses persisted event fallbacks for null sequence and week', () => {
+    const planned = findPlannedEventById(seasonState, 'EVENT/1')
+    const persistedWithNulls = { ...persistedEvent, event_sequence: null, week: null } as unknown as EventRecord
+
+    expect(planned).not.toBeNull()
+    expect(
+      buildPlannedEventDetailMetadataItems({
+        runId: 'run alpha',
+        plannedEvent: planned!,
+        nextEventIndex: 1,
+        persistedEvent: persistedWithNulls
+      }).slice(-3)
+    ).toEqual([
+      { label: 'Persisted event record', value: 'Available' },
+      { label: 'Persisted event sequence', value: '—' },
+      { label: 'Persisted event week', value: '—' }
+    ])
+  })
+
+  it('does not infer completed status from an old plan index alone', () => {
+    expect(resolvePlannedEventStatusLabel({ eventId: 'OLD', planIndex: 0, nextEventIndex: 2, completedEventIds: [] })).toBe('Planned')
+  })
+
 })

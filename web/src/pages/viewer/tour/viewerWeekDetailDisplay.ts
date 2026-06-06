@@ -173,6 +173,7 @@ export function buildWeekPersistedEventMetadataItems(
   return [
     { label: "Event ID", value: event.event_id },
     { label: "Event sequence", value: event.event_sequence ?? "—" },
+    { label: "Week", value: event.week == null ? "—" : `W${event.week}` },
     { label: "Template ID", value: event.template_id ?? "—" },
   ];
 }

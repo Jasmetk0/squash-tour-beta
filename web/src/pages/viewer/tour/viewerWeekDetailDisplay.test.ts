@@ -7,7 +7,10 @@ import type {
 } from "../../../api/types";
 import {
   buildWeekContextLinks,
+  buildWeekDetailMetadataItems,
   buildWeekEventLinks,
+  buildWeekPersistedEventMetadataItems,
+  completedPlannedEventsForWeek,
   parseViewerWeekParam,
   persistedEventsForWeek,
   plannedEventsForWeek,
@@ -56,6 +59,14 @@ const eventRecords: EventRecord[] = [
     template_id: "ET-GOLD",
     tournament_result: {},
   },
+  {
+    event_sequence: 9,
+    event_id: "PERSISTED-ONLY",
+    season: 2028,
+    week: 5,
+    template_id: "WT-ONLY",
+    tournament_result: {},
+  },
 ];
 
 const snapshots: RankingSnapshot[] = [
@@ -90,21 +101,17 @@ describe("viewerWeekDetailDisplay helpers", () => {
     expect(parseViewerWeekParam("5")).toBe(5);
     expect(parseViewerWeekParam(undefined)).toBeNull();
     expect(parseViewerWeekParam("")).toBeNull();
+    expect(parseViewerWeekParam("   ")).toBeNull();
     expect(parseViewerWeekParam("0")).toBeNull();
+    expect(parseViewerWeekParam("-1")).toBeNull();
     expect(parseViewerWeekParam("1.5")).toBeNull();
+    expect(parseViewerWeekParam("Infinity")).toBeNull();
     expect(parseViewerWeekParam("abc")).toBeNull();
   });
 
-  it("filters planned and persisted events by exact week and exact event ids", () => {
-    const planned = plannedEventsForWeek(seasonState, 5);
-    const sourceIds = sourceEventIdsForWeek(planned);
-
-    expect(planned.map((event) => event.event_id)).toEqual(["EVENT/1"]);
-    expect(
-      persistedEventsForWeek(eventRecords, 5, sourceIds).map(
-        (event) => event.event_id,
-      ),
-    ).toEqual(["EVENT/1"]);
+  it("filters planned events by exact week and handles null week or arrays safely", () => {
+    expect(plannedEventsForWeek(seasonState, 5).map((event) => event.event_id)).toEqual(["EVENT/1"]);
+    expect(plannedEventsForWeek(seasonState, null)).toEqual([]);
     expect(
       plannedEventsForWeek(
         {
@@ -114,16 +121,68 @@ describe("viewerWeekDetailDisplay helpers", () => {
         5,
       ),
     ).toEqual([]);
-    expect(persistedEventsForWeek(undefined, 5, sourceIds)).toEqual([]);
   });
 
-  it("matches snapshot source_event_id exactly and never by partial event id", () => {
-    const matches = snapshotsForWeekSourceEvents(
-      snapshots,
-      new Set(["EVENT/1"]),
-    );
+  it("filters persisted events by exact week or exact planned event ids only", () => {
+    const sourceIds = new Set(["EVENT/1"]);
 
-    expect(matches.map((snapshot) => snapshot.snapshot_sequence)).toEqual([3]);
+    expect(
+      persistedEventsForWeek(eventRecords, 5, sourceIds).map(
+        (event) => event.event_id,
+      ),
+    ).toEqual(["EVENT/1", "PERSISTED-ONLY"]);
+    expect(
+      persistedEventsForWeek(
+        [
+          {
+            event_sequence: 10,
+            event_id: "EVENT/1",
+            season: 2028,
+            week: 8,
+            template_id: "WT-PLAT",
+            tournament_result: {},
+          },
+        ],
+        5,
+        sourceIds,
+      ).map((event) => event.event_id),
+    ).toEqual(["EVENT/1"]);
+    expect(
+      persistedEventsForWeek(
+        [
+          {
+            event_sequence: 11,
+            event_id: "EVENT/10",
+            season: 2028,
+            week: 8,
+            template_id: "ET-GOLD",
+            tournament_result: {},
+          },
+        ],
+        5,
+        sourceIds,
+      ),
+    ).toEqual([]);
+    expect(persistedEventsForWeek(undefined, 5, sourceIds)).toEqual([]);
+    expect(persistedEventsForWeek(eventRecords, null, sourceIds)).toEqual([]);
+  });
+
+  it("matches snapshot source_event_id exactly and handles nullish snapshots safely", () => {
+    expect(
+      snapshotsForWeekSourceEvents(snapshots, new Set(["EVENT/1"])).map(
+        (snapshot) => snapshot.snapshot_sequence,
+      ),
+    ).toEqual([3]);
+    expect(snapshotsForWeekSourceEvents(null, new Set(["EVENT/1"]))).toEqual([]);
+    expect(snapshotsForWeekSourceEvents(undefined, new Set(["EVENT/1"]))).toEqual([]);
+  });
+
+  it("handles completed planned-event inputs without throwing", () => {
+    const planned = plannedEventsForWeek(seasonState, 5);
+
+    expect(completedPlannedEventsForWeek(planned, ["EVENT/1"]).map((event) => event.event_id)).toEqual(["EVENT/1"]);
+    expect(completedPlannedEventsForWeek(null, ["EVENT/1"])).toEqual([]);
+    expect(completedPlannedEventsForWeek(planned, null)).toEqual([]);
   });
 
   it("builds encoded stable context and event links with existing route helpers", () => {
@@ -176,5 +235,60 @@ describe("viewerWeekDetailDisplay helpers", () => {
         href: "/viewer/runs/run%20alpha%2F%231/tournaments/EVENT%2F1",
       },
     ]);
+    expect(
+      buildWeekEventLinks({
+        runId: "run alpha/#1",
+        eventId: "EVENT/1",
+        hasPlanned: false,
+        hasPersisted: false,
+      }),
+    ).toEqual([]);
+  });
+
+  it("builds fallback metadata for missing week summary and persisted event fields", () => {
+    expect(
+      buildWeekDetailMetadataItems({
+        runId: "",
+        week: 5,
+        season: null,
+        plannedEventCount: 0,
+        persistedEventCount: 0,
+        rankingPublicationCount: 0,
+        racePublicationCount: 0,
+        nextEventIndex: null,
+        completedPlannedEventCount: 0,
+      }),
+    ).toContainEqual({ label: "Season", value: "—" });
+    expect(
+      buildWeekDetailMetadataItems({
+        runId: "",
+        week: 5,
+        season: null,
+        plannedEventCount: 0,
+        persistedEventCount: 0,
+        rankingPublicationCount: 0,
+        racePublicationCount: 0,
+        nextEventIndex: null,
+        completedPlannedEventCount: 0,
+      }),
+    ).toContainEqual({ label: "Next event index", value: "—" });
+    expect(
+      buildWeekPersistedEventMetadataItems({
+        event_id: "EVENT/NULLS",
+        season: 2028,
+        week: null,
+        tournament_result: {},
+      } as unknown as EventRecord),
+    ).toEqual([
+      { label: "Event ID", value: "EVENT/NULLS" },
+      { label: "Event sequence", value: "—" },
+      { label: "Week", value: "—" },
+      { label: "Template ID", value: "—" },
+    ]);
+  });
+
+  it("derives source ids from planned events only", () => {
+    expect(Array.from(sourceEventIdsForWeek(plannedEventsForWeek(seasonState, 5)))).toEqual(["EVENT/1"]);
+    expect(Array.from(sourceEventIdsForWeek(null))).toEqual([]);
   });
 });

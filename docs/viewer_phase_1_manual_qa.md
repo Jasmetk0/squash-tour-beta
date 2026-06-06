@@ -1221,3 +1221,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - The page still renders only existing run-list metadata and conservative Viewer route links.
 - No invented progress, results, rankings, winners, standings, or Admin behavior was added.
 - Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 8K note — Viewer Home hub read-model polish
+
+- Viewer Home hub audit was performed.
+- A safe Viewer Home polish was added using existing active-run context and route-helper links only.
+- The page renders top-level Viewer hub links and active-run scoped shortcuts when an active run exists.
+- No invented progress, results, rankings, winners, standings, schedule facts, or Admin behavior was added.
+- Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.

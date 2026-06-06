@@ -8,7 +8,7 @@ import { ViewerActiveRunLinks, ViewerEmptyState, ViewerLandingGrid, ViewerMetada
 import { ViewerRunSelector } from '../../components/ViewerRunSelector'
 import { useViewerContext } from '../../viewer/ViewerContext'
 import { useActiveViewerRunId } from '../../viewer/useActiveViewerRunId'
-import { buildActiveRunHubLinks } from '../../viewer/viewerHubLinks'
+import { buildViewerHomeActiveRunLinks, buildViewerHomePrimaryHubLinks, buildViewerHomeReadOnlyNotes, getViewerHomeActiveRunLabel } from '../../viewer/viewerHomeDisplay'
 import {
   viewerHistoryPath,
   viewerPlannedEventPath,
@@ -137,6 +137,10 @@ function renderActivityItem(item: RunActivityItem, runId: string, context: Activ
 export function ViewerHomePage(): JSX.Element {
   const context = useViewerContext()
   const activeRunId = useActiveViewerRunId()
+  const activeRunLinks = buildViewerHomeActiveRunLinks(activeRunId)
+  const primaryHubLinks = buildViewerHomePrimaryHubLinks()
+  const readOnlyNotes = buildViewerHomeReadOnlyNotes()
+  const activeRunLabel = getViewerHomeActiveRunLabel(activeRunId)
   const queryEnabled = Boolean(activeRunId)
 
   const runQuery = useQuery({ queryKey: ['viewer-home-run', activeRunId], queryFn: () => getRun(activeRunId ?? ''), enabled: queryEnabled, retry: false })
@@ -172,7 +176,7 @@ export function ViewerHomePage(): JSX.Element {
         <span className="eyebrow">MSA Homepage</span>
         <h2>MSA Squash — Season {context.selectedSeason} · W{context.selectedWeek}</h2>
         <p className="subtitle">
-          A premium, public-style squash tour homepage for the selected Viewer context. These cards are read-only and show small real summaries only when existing safe run APIs provide them.
+          A public, read-only entry hub for Viewer run pages, top-level publications, and deferred source surfaces. Cards only show summaries when existing safe run APIs provide them.
         </p>
       </div>
       <ViewerRunSelector compact />
@@ -184,7 +188,7 @@ export function ViewerHomePage(): JSX.Element {
           <>
             <div>
               <span className="eyebrow">Active Viewer run</span>
-              <h3>Active run data is available</h3>
+              <h3>{activeRunLabel}</h3>
               {isActiveSummaryLoading ? <p className="status">Loading current tour summary from the active Viewer run…</p> : null}
               {isActiveSummaryUnavailable ? <ViewerEmptyState>Active run summary is temporarily unavailable. Try opening the run pages below for more detail.</ViewerEmptyState> : null}
               {!isActiveSummaryLoading && !isActiveSummaryUnavailable ? (
@@ -208,11 +212,11 @@ export function ViewerHomePage(): JSX.Element {
             </div>
             <ViewerActiveRunLinks
               layout="grid"
-              links={buildActiveRunHubLinks(activeRunId)}
+              links={activeRunLinks}
             />
           </>
         ) : (
-          <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
+          <ViewerEmptyState>No active Viewer run selected. Open the run browser to choose a run before using run-scoped shortcuts.</ViewerEmptyState>
         )}
       </section>
       <ViewerLandingGrid>
@@ -240,7 +244,7 @@ export function ViewerHomePage(): JSX.Element {
           )}
         </ViewerSectionCard>
 
-        <ViewerSectionCard kicker="Read-only rankings" title="Top 10 Rankings">
+        <ViewerSectionCard kicker="Read-only rankings" title="Ranking snapshots">
           {activeRunId && latestRankingSnapshot ? (
             <p>Latest ranking snapshot <Link to={viewerRankingSnapshotPath(activeRunId, latestRankingSnapshot.snapshot_sequence)}>#{latestRankingSnapshot.snapshot_sequence}</Link> from {latestRankingSnapshot.source_event_id ?? 'run history'} · {rankingSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
           ) : (
@@ -249,7 +253,7 @@ export function ViewerHomePage(): JSX.Element {
           {activeRunId ? <Link className="viewer-active-run-link" to={viewerRankingsPath(activeRunId)}>Open active run rankings</Link> : null}
         </ViewerSectionCard>
 
-        <ViewerSectionCard kicker="Read-only race" title="Race to Finals">
+        <ViewerSectionCard kicker="Read-only race" title="Race snapshots">
           {activeRunId && latestRaceSnapshot ? (
             <p>Latest race snapshot <Link to={viewerRaceSnapshotPath(activeRunId, latestRaceSnapshot.snapshot_sequence)}>#{latestRaceSnapshot.snapshot_sequence}</Link> from {latestRaceSnapshot.source_event_id ?? 'run history'} · {raceSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
           ) : (
@@ -265,6 +269,23 @@ export function ViewerHomePage(): JSX.Element {
 
         <ViewerSectionCard kicker="Read-only analytics" title="Predictions &amp; Upset Watch">
           <ViewerEmptyState>This preview is not connected for this data shape yet.</ViewerEmptyState>
+        </ViewerSectionCard>
+
+        <ViewerSectionCard kicker="Viewer surfaces" title="Viewer hub links">
+          <p className="status">Open read-only Viewer pages without changing simulation state.</p>
+          <ul className="viewer-home-list" aria-label="Viewer Home top-level hub links">
+            {primaryHubLinks.map((link) => (
+              <li key={`${link.label}:${link.to}`}>
+                <Link to={link.to}>{link.label}</Link>{link.description ? <> · {link.description}</> : null}
+              </li>
+            ))}
+          </ul>
+        </ViewerSectionCard>
+
+        <ViewerSectionCard kicker="Read-only safety" title="What this hub does not infer">
+          <ul className="viewer-home-list" aria-label="Viewer Home read-only notes">
+            {readOnlyNotes.map((note) => <li key={note}>{note}</li>)}
+          </ul>
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only storylines" title="Storylines">

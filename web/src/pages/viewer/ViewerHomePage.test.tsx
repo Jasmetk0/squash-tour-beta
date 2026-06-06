@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { clearViewerStorage, expectNoForbiddenViewerActions, renderWithViewerProviders, setViewerActiveRunId } from '../../test/viewerTestUtils'
@@ -86,7 +86,10 @@ describe('ViewerHomePage', () => {
     renderHome()
 
     expect(screen.getByRole('heading', { level: 2, name: /MSA Squash/ })).toBeInTheDocument()
-    expect(screen.getAllByText('No data is available for this run yet.').length).toBeGreaterThan(0)
+    expect(screen.getByText(/No active Viewer run selected/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
+    expect(screen.queryByRole('link', { name: 'Active Run Rankings' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Viewer hub links' })).toBeInTheDocument()
   })
 
   it('renders active-run summary, hub links, featured event, and nearby events', async () => {
@@ -94,7 +97,7 @@ describe('ViewerHomePage', () => {
 
     renderHome()
 
-    expect(await screen.findByText('Active run data is available')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Active Viewer run: run alpha' })).toBeInTheDocument()
     expect(screen.getAllByText('run alpha').length).toBeGreaterThan(0)
     expect(await screen.findByText('child_run from parent run')).toBeInTheDocument()
     expect(screen.getByText('1/2 events complete')).toBeInTheDocument()
@@ -119,6 +122,40 @@ describe('ViewerHomePage', () => {
     expect(screen.getByRole('link', { name: 'EVT-SAME-WEEK' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar/EVT-SAME-WEEK')
     expect(screen.getByText(/Latest ranking snapshot/)).toBeInTheDocument()
     expect(screen.getByText(/Latest race snapshot/)).toBeInTheDocument()
+    const hubLinks = within(screen.getByRole('list', { name: 'Viewer Home top-level hub links' }))
+    expect(hubLinks.getByRole('link', { name: 'Run Browser' })).toHaveAttribute('href', '/viewer/runs')
+    expect(hubLinks.getByRole('link', { name: 'Predictions' })).toHaveAttribute('href', '/viewer/predictions')
+  })
+
+  it('renders safely when active-run storage is unavailable during render', () => {
+    api.listRuns.mockResolvedValue({ runs: [] })
+    const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('storage unavailable')
+    })
+
+    try {
+      renderHome()
+
+      expect(screen.getByRole('heading', { level: 2, name: /MSA Squash/ })).toBeInTheDocument()
+      expect(screen.getByText(/No active Viewer run selected/)).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
+      expect(screen.queryByText(/storage unavailable/i)).not.toBeInTheDocument()
+    } finally {
+      getItemSpy.mockRestore()
+    }
+  })
+
+  it('keeps active-run scoped Home links encoded and free of Admin destinations', async () => {
+    setViewerActiveRunId('run/alpha #1')
+
+    renderHome()
+
+    expect(await screen.findByRole('heading', { name: 'Active Viewer run: run/alpha #1' })).toBeInTheDocument()
+    for (const link of screen.getAllByRole('link')) {
+      expect(link.getAttribute('href') ?? '').not.toMatch(/^\/admin(?:\/|$)/)
+    }
+    expect(screen.getByRole('link', { name: 'Active Run Rankings' })).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/rankings')
+    expect(screen.getByRole('link', { name: 'Active Run Calendar' })).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/calendar')
   })
 
   it('does not expose forbidden Viewer action labels', () => {

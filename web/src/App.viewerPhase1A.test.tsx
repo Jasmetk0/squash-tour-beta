@@ -461,28 +461,28 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(runCard).toHaveTextContent('2032')
     expect(runCard).toHaveTextContent('Seed')
     expect(runCard).toHaveTextContent('21')
+    expect(runCard).toHaveTextContent('Source')
+    expect(runCard).toHaveTextContent('fresh_seed')
+    expect(runCard).toHaveTextContent('Child runs')
+    expect(runCard).toHaveTextContent('0')
     expect(runCard).toHaveTextContent('Next event index')
     expect(runCard).toHaveTextContent('2')
     expect(runCard).toHaveTextContent('Total events')
     expect(runCard).toHaveTextContent('9')
     expect(runCard).toHaveTextContent('Completed event count')
-    expect(runCard).toHaveTextContent('Created')
-    expect(runCard).toHaveTextContent('2032-01-01T00:00:00Z')
-    expect(runCard).toHaveTextContent('Updated')
-    expect(runCard).toHaveTextContent('2032-01-02T00:00:00Z')
 
     expect(screen.getByLabelText('Run browser-run-b')).toHaveTextContent('Parent run')
     expect(screen.getByLabelText('Run browser-run-b')).toHaveTextContent('browser-run-a')
 
     const expectedLinks = [
-      ['Open calendar', '/viewer/runs/browser-run-a/calendar'],
-      ['Open rankings', '/viewer/runs/browser-run-a/rankings'],
-      ['Open race', '/viewer/runs/browser-run-a/race'],
-      ['Open tournaments', '/viewer/runs/browser-run-a/tournaments'],
-      ['Open players', '/viewer/runs/browser-run-a/players'],
-      ['Open countries', '/viewer/runs/browser-run-a/countries'],
-      ['Open history', '/viewer/runs/browser-run-a/history'],
-      ['Open finals', '/viewer/runs/browser-run-a/finals']
+      ['Season calendar', '/viewer/runs/browser-run-a/calendar'],
+      ['Tournaments', '/viewer/runs/browser-run-a/tournaments'],
+      ['Rankings', '/viewer/runs/browser-run-a/rankings'],
+      ['Race', '/viewer/runs/browser-run-a/race'],
+      ['Players', '/viewer/runs/browser-run-a/players'],
+      ['Countries', '/viewer/runs/browser-run-a/countries'],
+      ['History', '/viewer/runs/browser-run-a/history'],
+      ['Finals', '/viewer/runs/browser-run-a/finals']
     ]
     for (const [name, href] of expectedLinks) {
       expect(within(runCard).getByRole('link', { name })).toHaveAttribute('href', href)
@@ -512,7 +512,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     renderAppAt('/viewer/runs')
 
-    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No Viewer runs are available yet.')).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

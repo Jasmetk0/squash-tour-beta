@@ -4,7 +4,12 @@ import { listRuns } from '../../api/client'
 import { ViewerRunSelector } from '../../components/ViewerRunSelector'
 import { ViewerShellPage } from '../../components/viewer/ViewerShellPage'
 import { ViewerActiveRunLinks, ViewerEmptyState, ViewerMetadataList } from '../../components/viewer/ViewerLandingComponents'
-import { buildViewerRunBrowserLinks, viewerRunMetadataFields, type ViewerRunBrowserListItem } from '../../viewer/runBrowserDisplay'
+import {
+  buildRunBrowserContextLinks,
+  buildRunBrowserMetadataItems,
+  buildRunBrowserPrimaryLinks,
+  type ViewerRunBrowserListItem
+} from '../../viewer/runBrowserDisplay'
 import { useActiveViewerRunId } from '../../viewer/useActiveViewerRunId'
 import { findViewerTopLevelHubLink } from '../../viewer/viewerHubLinks'
 
@@ -38,18 +43,25 @@ export function ViewerRunBrowserPage(): JSX.Element {
         <h3>Available runs</h3>
         {runsQuery.isLoading ? <p className="status">Loading available runs…</p> : null}
         {runsQuery.isError ? <ViewerEmptyState>Run metadata is temporarily unavailable.</ViewerEmptyState> : null}
-        {!runsQuery.isLoading && !runsQuery.isError && runs.length === 0 ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
+        {!runsQuery.isLoading && !runsQuery.isError && runs.length === 0 ? <ViewerEmptyState>No Viewer runs are available yet.</ViewerEmptyState> : null}
         {!runsQuery.isLoading && !runsQuery.isError && runs.length > 0 ? (
           <div className="viewer-run-browser-list">
             {runs.map((run) => {
-              const fields = viewerRunMetadataFields(run)
+              const fields = buildRunBrowserMetadataItems(run)
+              const isActiveRun = activeRunId === run.run_id
               return (
                 <article className="viewer-active-run-card" key={run.run_id} aria-label={`Run ${run.run_id}`}>
+                  <span className="eyebrow">{isActiveRun ? 'Active Viewer run' : 'Available Viewer run'}</span>
                   <h4>{run.run_id}</h4>
+                  {isActiveRun ? <p className="status">Currently selected for active-run Viewer pages.</p> : null}
                   <ViewerMetadataList ariaLabel={`Run ${run.run_id} metadata`} items={fields} />
-                  <div className="viewer-run-browser-links" aria-label={`Run ${run.run_id} links`}>
-                    <h5>Links</h5>
-                    <ViewerActiveRunLinks layout="grid" links={buildViewerRunBrowserLinks(run.run_id)} />
+                  <div className="viewer-run-browser-links" aria-label={`Run ${run.run_id} primary links`}>
+                    <h5>Run entry points</h5>
+                    <ViewerActiveRunLinks layout="grid" links={buildRunBrowserPrimaryLinks(run.run_id)} />
+                  </div>
+                  <div className="viewer-run-browser-links" aria-label={`Run ${run.run_id} context links`}>
+                    <h5>Context and history</h5>
+                    <ViewerActiveRunLinks layout="grid" links={buildRunBrowserContextLinks(run.run_id)} />
                   </div>
                 </article>
               )

@@ -3,7 +3,6 @@ import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { getRun, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
-import type { RaceSnapshot, RankingSnapshot } from '../api/types'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -23,13 +22,24 @@ import {
   resolvePlannedEventStatusLabel
 } from './viewer/tour/viewerPlannedEventDetailDisplay'
 import {
+  buildWeekContextLinks,
+  buildWeekDetailMetadataItems,
+  buildWeekEventLinks,
+  buildWeekPersistedEventMetadataItems,
+  buildWeekPlannedEventMetadataItems,
+  completedPlannedEventsForWeek,
+  parseViewerWeekParam,
+  persistedEventsByExactId,
+  persistedEventsForWeek,
+  plannedEventsForWeek,
+  snapshotsForWeekSourceEvents,
+  sourceEventIdsForWeek
+} from './viewer/tour/viewerWeekDetailDisplay'
+import {
   viewerPlannedEventPath,
-  viewerRacePath,
   viewerRaceSnapshotPath,
   viewerRankingSnapshotPath,
-  viewerRankingsPath,
   viewerSeasonCalendarPath,
-  viewerTournamentsPath,
   viewerTournamentDetailPath,
   viewerWeekDetailPath
 } from '../viewer/viewerRoutes'
@@ -59,13 +69,6 @@ function eventIsCompleted(completedEventIds: Set<string>, eventId: string): stri
   return completedEventIds.has(eventId) ? 'Yes' : 'No'
 }
 
-function snapshotDetailPath(kind: 'ranking' | 'race', runId: string, snapshotSequence: number): string {
-  return kind === 'ranking' ? viewerRankingSnapshotPath(runId, snapshotSequence) : viewerRaceSnapshotPath(runId, snapshotSequence)
-}
-
-function snapshotsForEventIds<T extends RankingSnapshot | RaceSnapshot>(snapshots: T[], eventIds: Set<string>): T[] {
-  return snapshots.filter((snapshot) => Boolean(snapshot.source_event_id && eventIds.has(snapshot.source_event_id)))
-}
 
 export function ViewerRunCalendarPage(): JSX.Element {
   const { runId = '' } = useParams()
@@ -307,41 +310,58 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
 
 export function ViewerRunWeekPage(): JSX.Element {
   const { runId = '', week = '' } = useParams()
-  const parsedWeek = Number(week)
-  const hasValidWeek = Number.isInteger(parsedWeek)
+  const parsedWeek = parseViewerWeekParam(week)
+  const hasValidWeek = parsedWeek != null
+  const queriesEnabled = Boolean(runId && hasValidWeek)
 
-  const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId), retry: false })
-  const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId), retry: false })
+  const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: queriesEnabled, retry: false })
+  const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: queriesEnabled, retry: false })
   const rankingSnapshotsQuery = useQuery({
     queryKey: ['viewer-week-ranking-snapshots', runId],
     queryFn: () => listRankingSnapshots(runId),
-    enabled: Boolean(runId),
+    enabled: queriesEnabled,
     retry: false
   })
   const raceSnapshotsQuery = useQuery({
     queryKey: ['viewer-week-race-snapshots', runId],
     queryFn: () => listRaceSnapshots(runId),
-    enabled: Boolean(runId),
+    enabled: queriesEnabled,
     retry: false
   })
 
   const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
-  const weekEvents = hasValidWeek ? orderedEvents.filter((event) => event.week === parsedWeek) : []
-  const weekEventIds = useMemo(() => new Set(weekEvents.map((event) => event.event_id)), [weekEvents])
+  const weekEvents = useMemo(() => plannedEventsForWeek(runQuery.data?.season_state, parsedWeek), [parsedWeek, runQuery.data?.season_state])
+  const weekEventIds = useMemo(() => sourceEventIdsForWeek(weekEvents), [weekEvents])
   const nextEventIndex = runQuery.data?.season_state.next_event_index ?? 0
   const completedEventIds = useMemo(
     () => new Set(runQuery.data?.season_state.completed_event_ids ?? []),
     [runQuery.data?.season_state.completed_event_ids]
   )
-  const eventRecords = eventsQuery.data?.events ?? []
-  const eventRecordsById = useMemo(() => new Map(eventRecords.map((event) => [event.event_id, event])), [eventRecords])
-  const persistedWeekEvents = hasValidWeek
-    ? eventRecords.filter((event) => event.week === parsedWeek || weekEventIds.has(event.event_id))
-    : []
-  const rankingPublications = snapshotsForEventIds(rankingSnapshotsQuery.data?.snapshots ?? [], weekEventIds)
-  const racePublications = snapshotsForEventIds(raceSnapshotsQuery.data?.snapshots ?? [], weekEventIds)
+  const eventRecords = useMemo(() => eventsQuery.data?.events ?? [], [eventsQuery.data?.events])
+  const eventRecordsById = useMemo(() => persistedEventsByExactId(eventRecords), [eventRecords])
+  const persistedWeekEvents = useMemo(
+    () => persistedEventsForWeek(eventRecords, parsedWeek, weekEventIds),
+    [eventRecords, parsedWeek, weekEventIds]
+  )
+  const rankingPublications = useMemo(
+    () => snapshotsForWeekSourceEvents(rankingSnapshotsQuery.data?.snapshots, weekEventIds),
+    [rankingSnapshotsQuery.data?.snapshots, weekEventIds]
+  )
+  const racePublications = useMemo(
+    () => snapshotsForWeekSourceEvents(raceSnapshotsQuery.data?.snapshots, weekEventIds),
+    [raceSnapshotsQuery.data?.snapshots, weekEventIds]
+  )
+  const completedWeekEvents = useMemo(() => completedPlannedEventsForWeek(weekEvents, completedEventIds), [completedEventIds, weekEvents])
   const hasPublicationMatches = rankingPublications.length > 0 || racePublications.length > 0
-  const hasAnyWeekData = weekEvents.length > 0 || hasPublicationMatches
+  const hasAnyWeekData = weekEvents.length > 0 || persistedWeekEvents.length > 0 || hasPublicationMatches
+  const contextLinks = hasValidWeek
+    ? buildWeekContextLinks({
+        runId,
+        week: parsedWeek,
+        rankingSnapshotSequences: rankingPublications.map((snapshot) => snapshot.snapshot_sequence),
+        raceSnapshotSequences: racePublications.map((snapshot) => snapshot.snapshot_sequence)
+      })
+    : []
 
   return (
     <section className="panel">
@@ -352,68 +372,103 @@ export function ViewerRunWeekPage(): JSX.Element {
           { label: 'Week', value: hasValidWeek ? `W${parsedWeek}` : '—' },
           { label: 'Season', value: runQuery.data?.season_state.season ?? '—' },
           { label: 'Planned events', value: weekEvents.length },
-          { label: 'Persisted events', value: persistedWeekEvents.length }
+          { label: 'Persisted events', value: persistedWeekEvents.length },
+          { label: 'Ranking publications', value: rankingPublications.length },
+          { label: 'Race publications', value: racePublications.length }
         ]}
       />
 
       <SectionCard title="Week context">
+        {!runId ? <EmptyState message="No run route context was provided." /> : null}
+        {!hasValidWeek ? <EmptyState message="Week must be a positive whole number in the URL (for example /weeks/12)." /> : null}
         {runQuery.isLoading ? <p className="status">Loading week detail…</p> : null}
         {runQuery.error ? <p className="error">Failed to load run season state: {formatApiError(runQuery.error)}</p> : null}
-        {eventsQuery.error ? <p className="error">Failed to load tournament records: {formatApiError(eventsQuery.error)}</p> : null}
-        {!hasValidWeek ? <EmptyState message="Week must be a whole number in the URL (for example /weeks/12)." /> : null}
-        {hasValidWeek && runQuery.data && !hasAnyWeekData ? <EmptyState message="No data is available for this run yet." /> : null}
+        {hasValidWeek && runQuery.data && !hasAnyWeekData ? <EmptyState message="No planned or persisted tournament records are available for this week." /> : null}
         {hasValidWeek ? (
           <CompactSummaryCard
-            items={[
-              { label: 'Active run id', value: runId || 'unknown' },
-              { label: 'Week number', value: parsedWeek },
-              { label: 'Season', value: runQuery.data?.season_state.season ?? '—' },
-              { label: 'Planned events this week', value: weekEvents.length },
-              { label: 'Persisted/completed events this week', value: persistedWeekEvents.length }
-            ]}
+            items={buildWeekDetailMetadataItems({
+              runId,
+              week: parsedWeek,
+              season: runQuery.data?.season_state.season,
+              plannedEventCount: weekEvents.length,
+              persistedEventCount: persistedWeekEvents.length,
+              rankingPublicationCount: rankingPublications.length,
+              racePublicationCount: racePublications.length,
+              nextEventIndex: runQuery.data?.season_state.next_event_index,
+              completedPlannedEventCount: completedWeekEvents.length
+            })}
           />
         ) : null}
       </SectionCard>
 
-      <SectionCard title="Tournaments this week">
+      <SectionCard title="Source context links">
+        {!hasValidWeek ? <EmptyState message="No valid week route context is available for source links." /> : null}
+        {hasValidWeek ? (
+          <ul className="item-list" aria-label="Week source links">
+            {contextLinks.map((link) => (
+              <li key={link.label}>
+                <Link to={link.href}>{link.label}</Link>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </SectionCard>
+
+      <SectionCard title="Planned events this week">
         {hasValidWeek && runQuery.data && weekEvents.length === 0 ? <EmptyState message="No planned tournaments are available for this week." /> : null}
         {weekEvents.length > 0 ? (
-          <ol className="item-list" aria-label="Viewer week events">
+          <ol className="item-list" aria-label="Viewer week planned events">
             {weekEvents.map((event) => {
-              const planIndex = orderedEvents.indexOf(event)
-              const status = plannedStatus({ index: planIndex, nextEventIndex, completedEventIds, eventId: event.event_id })
               const eventRecord = eventRecordsById.get(event.event_id)
-              const hasEventRecord = Boolean(eventRecord)
-              const hasResult = Boolean(eventRecord?.tournament_result)
-              const resultMetadataItems = eventRecord?.tournament_result
-                ? tournamentResultPayloadMetadataItems(eventRecord.tournament_result, { runId })
-                : []
+              const eventLinks = buildWeekEventLinks({ runId, eventId: event.event_id, hasPlanned: true, hasPersisted: Boolean(eventRecord) })
 
               return (
                 <li key={event.event_id}>
                   <strong>{event.event_id}</strong>
                   <MetadataList
-                    items={[
-                      { label: 'Event ID', value: event.event_id },
-                      { label: 'Season', value: event.season },
-                      { label: 'Week', value: `W${event.week}` },
-                      { label: 'Tour', value: event.tour },
-                      { label: 'Category', value: event.category },
-                      { label: 'Template', value: event.template_id },
-                      { label: 'Status', value: eventStatusLabel(status) },
-                      { label: 'Persisted event record', value: hasEventRecord ? 'Yes' : 'No' },
-                      { label: 'Result availability', value: hasResult ? 'Available' : 'Not available' },
-                      ...resultMetadataItems
-                    ]}
+                    items={buildWeekPlannedEventMetadataItems({
+                      event,
+                      orderedEventCount: orderedEvents.length,
+                      nextEventIndex,
+                      completedEventIds,
+                      persistedEvent: eventRecord
+                    })}
                   />
                   <p>
-                    <Link to={viewerPlannedEventPath(runId, event.event_id)}>Open planned event</Link>
-                    {hasEventRecord ? (
-                      <>
-                        {' · '}
-                        <Link to={viewerTournamentDetailPath(runId, event.event_id)}>Open tournament detail</Link>
-                      </>
-                    ) : null}
+                    {eventLinks.map((link, index) => (
+                      <span key={link.label}>
+                        {index > 0 ? ' · ' : null}
+                        <Link to={link.href}>{link.label}</Link>
+                      </span>
+                    ))}
+                  </p>
+                </li>
+              )
+            })}
+          </ol>
+        ) : null}
+      </SectionCard>
+
+      <SectionCard title="Persisted tournament records this week">
+        {eventsQuery.error ? <p className="error">Failed to load tournament records: {formatApiError(eventsQuery.error)}</p> : null}
+        {!eventsQuery.error && hasValidWeek && runQuery.data && persistedWeekEvents.length === 0 ? (
+          <EmptyState message="No persisted tournament records are available for this week." />
+        ) : null}
+        {!eventsQuery.error && persistedWeekEvents.length > 0 ? (
+          <ol className="item-list" aria-label="Viewer week persisted events">
+            {persistedWeekEvents.map((event) => {
+              const eventLinks = buildWeekEventLinks({ runId, eventId: event.event_id, hasPersisted: true })
+
+              return (
+                <li key={event.event_id}>
+                  <strong>{event.event_id}</strong>
+                  <MetadataList items={buildWeekPersistedEventMetadataItems(event)} />
+                  <p>
+                    {eventLinks.map((link) => (
+                      <Link key={link.label} to={link.href}>
+                        {link.label}
+                      </Link>
+                    ))}
                   </p>
                 </li>
               )
@@ -425,67 +480,37 @@ export function ViewerRunWeekPage(): JSX.Element {
       <SectionCard title="Publications this week">
         {rankingSnapshotsQuery.error ? <p className="error">Failed to load ranking publications: {formatApiError(rankingSnapshotsQuery.error)}</p> : null}
         {raceSnapshotsQuery.error ? <p className="error">Failed to load race publications: {formatApiError(raceSnapshotsQuery.error)}</p> : null}
-        {!rankingSnapshotsQuery.error && !raceSnapshotsQuery.error && hasPublicationMatches ? (
+        {!rankingSnapshotsQuery.error && !raceSnapshotsQuery.error && hasValidWeek ? (
           <MetadataList
             items={[
-              {
-                label: 'Ranking publications count',
-                value: (
-                  <span>
-                    {rankingPublications.length}
-                    {rankingPublications.length > 0 ? (
-                      <ul className="item-list">
-                        {rankingPublications.map((snapshot) => (
-                          <li key={`ranking-${snapshot.snapshot_sequence}`}>
-                            <Link to={snapshotDetailPath('ranking', runId, snapshot.snapshot_sequence)}>
-                              Ranking publication #{snapshot.snapshot_sequence}
-                            </Link>{' '}
-                            <span className="status">Source {snapshot.source_event_id}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </span>
-                )
-              },
-              {
-                label: 'Race publications count',
-                value: (
-                  <span>
-                    {racePublications.length}
-                    {racePublications.length > 0 ? (
-                      <ul className="item-list">
-                        {racePublications.map((snapshot) => (
-                          <li key={`race-${snapshot.snapshot_sequence}`}>
-                            <Link to={snapshotDetailPath('race', runId, snapshot.snapshot_sequence)}>
-                              Race publication #{snapshot.snapshot_sequence}
-                            </Link>{' '}
-                            <span className="status">Source {snapshot.source_event_id}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </span>
-                )
-              }
+              { label: 'Ranking publications count', value: rankingPublications.length },
+              { label: 'Race publications count', value: racePublications.length }
             ]}
           />
         ) : null}
-        {!rankingSnapshotsQuery.error && !raceSnapshotsQuery.error && !hasPublicationMatches && weekEvents.length > 0 ? (
-          <p className="status">This preview is not connected for this data shape yet.</p>
+        {!rankingSnapshotsQuery.error && rankingPublications.length > 0 ? (
+          <ul className="item-list" aria-label="Week ranking publications">
+            {rankingPublications.map((snapshot) => (
+              <li key={`ranking-${snapshot.snapshot_sequence}`}>
+                <Link to={viewerRankingSnapshotPath(runId, snapshot.snapshot_sequence)}>Ranking publication #{snapshot.snapshot_sequence}</Link>{' '}
+                <span className="status">Source {snapshot.source_event_id}</span>
+              </li>
+            ))}
+          </ul>
         ) : null}
-      </SectionCard>
-
-      <SectionCard title="Links">
-        <p>
-          <Link to={viewerSeasonCalendarPath(runId)}>Back to season calendar</Link>
-          {' · '}
-          <Link to={viewerTournamentsPath(runId)}>Open tournaments</Link>
-          {' · '}
-          <Link to={viewerRankingsPath(runId)}>Open rankings</Link>
-          {' · '}
-          <Link to={viewerRacePath(runId)}>Open race</Link>
-        </p>
+        {!raceSnapshotsQuery.error && racePublications.length > 0 ? (
+          <ul className="item-list" aria-label="Week race publications">
+            {racePublications.map((snapshot) => (
+              <li key={`race-${snapshot.snapshot_sequence}`}>
+                <Link to={viewerRaceSnapshotPath(runId, snapshot.snapshot_sequence)}>Race publication #{snapshot.snapshot_sequence}</Link>{' '}
+                <span className="status">Source {snapshot.source_event_id}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {!rankingSnapshotsQuery.error && !raceSnapshotsQuery.error && !hasPublicationMatches && weekEvents.length > 0 ? (
+          <p className="status">No ranking or race publications are source-matched to this week.</p>
+        ) : null}
       </SectionCard>
     </section>
   )

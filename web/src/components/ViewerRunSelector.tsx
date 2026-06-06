@@ -89,8 +89,8 @@ export function ViewerActiveRunCompact(): JSX.Element {
           disabled={runsQuery.isLoading || runs.length === 0}
         >
           {runs.length === 0 ? <option value="">No runs available</option> : null}
-          {runs.map((run) => (
-            <option key={run.run_id} value={run.run_id}>
+          {runs.map((run, runIndex) => (
+            <option key={`${run.run_id}:${runIndex}`} value={run.run_id}>
               {formatViewerCompactRunOptionLabel(run)}
             </option>
           ))}
@@ -131,8 +131,8 @@ export function ViewerRunSelector({ compact = false }: ViewerRunSelectorProps): 
             disabled={runsQuery.isLoading || runs.length === 0}
           >
             {runs.length === 0 ? <option value="">No runs available</option> : null}
-            {runs.map((run) => (
-              <option key={run.run_id} value={run.run_id}>
+            {runs.map((run, runIndex) => (
+              <option key={`${run.run_id}:${runIndex}`} value={run.run_id}>
                 {formatViewerRunOptionLabel(run)}
               </option>
             ))}

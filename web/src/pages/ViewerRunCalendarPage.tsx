@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { getRun, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
-import type { RaceSnapshot, RankingSnapshot, SeasonStateResponse } from '../api/types'
+import type { RaceSnapshot, RankingSnapshot } from '../api/types'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -16,6 +16,12 @@ import {
 } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 import { tournamentResultPayloadMetadataItems } from '../viewer/TournamentResultMetadata'
+import { findPersistedEventById, findPlannedEventById } from './viewer/tour/viewerEventDetailDisplay'
+import {
+  buildPlannedEventContextLinks,
+  buildPlannedEventDetailMetadataItems,
+  resolvePlannedEventStatusLabel
+} from './viewer/tour/viewerPlannedEventDetailDisplay'
 import {
   viewerPlannedEventPath,
   viewerRacePath,
@@ -27,23 +33,6 @@ import {
   viewerTournamentDetailPath,
   viewerWeekDetailPath
 } from '../viewer/viewerRoutes'
-
-export type ViewerPlannedEvent = SeasonStateResponse['season_state']['ordered_events'][number]
-
-type ViewerPlannedEventContext = ViewerPlannedEvent & {
-  planIndex: number
-}
-
-function buildPlannedEventContext(runData: SeasonStateResponse | undefined): Map<string, ViewerPlannedEventContext> {
-  const contexts = new Map<string, ViewerPlannedEventContext>()
-  const orderedEvents = runData?.season_state.ordered_events ?? []
-
-  orderedEvents.forEach((event, index) => {
-    contexts.set(event.event_id, { ...event, planIndex: index })
-  })
-
-  return contexts
-}
 
 function plannedStatus({
   index,
@@ -209,17 +198,34 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
     [runQuery.data?.season_state.completed_event_ids]
   )
   const eventRecords = useMemo(() => eventsQuery.data?.events ?? [], [eventsQuery.data?.events])
-  const eventRecordIds = useMemo(() => new Set(eventRecords.map((event) => event.event_id)), [eventRecords])
-  const eventRecordsById = useMemo(() => new Map(eventRecords.map((event) => [event.event_id, event])), [eventRecords])
-  const plannedContext = useMemo(() => buildPlannedEventContext(runQuery.data), [runQuery.data])
-  const plannedEvent = plannedContext.get(eventId)
-  const status = plannedEvent
-    ? plannedStatus({ index: plannedEvent.planIndex, nextEventIndex, completedEventIds, eventId: plannedEvent.event_id })
+  const plannedEvent = useMemo(() => findPlannedEventById(runQuery.data?.season_state, eventId), [eventId, runQuery.data?.season_state])
+  const eventRecord = useMemo(() => findPersistedEventById(eventRecords, eventId), [eventRecords, eventId])
+  const hasEventRecord = Boolean(eventRecord)
+  const statusLabel = plannedEvent
+    ? resolvePlannedEventStatusLabel({
+        eventId: plannedEvent.event_id,
+        planIndex: plannedEvent.planIndex,
+        nextEventIndex,
+        completedEventIds
+      })
     : null
-  const hasEventRecord = eventRecordIds.has(eventId)
-  const eventRecord = eventRecordsById.get(eventId)
-  const resultMetadataItems = eventRecord?.tournament_result
-    ? tournamentResultPayloadMetadataItems(eventRecord.tournament_result, { runId })
+  const plannedMetadataItems = plannedEvent
+    ? buildPlannedEventDetailMetadataItems({
+        runId,
+        plannedEvent,
+        orderedEventCount: orderedEvents.length,
+        nextEventIndex,
+        completedEventIds,
+        persistedEvent: eventRecord
+      })
+    : []
+  const contextLinks = runId && eventId
+    ? buildPlannedEventContextLinks({
+        runId,
+        eventId: plannedEvent?.event_id ?? eventId,
+        week: plannedEvent?.week,
+        hasPersisted: hasEventRecord
+      })
     : []
 
   return (
@@ -238,22 +244,17 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
         ]}
       />
 
-      <SectionCard title="Planned event links">
-        <p>
-          <Link to={viewerSeasonCalendarPath(runId)}>Back to season calendar</Link>
-          {plannedEvent ? (
-            <>
-              {' · '}
-              <Link to={viewerWeekDetailPath(runId, plannedEvent.week)}>Open week detail</Link>
-            </>
-          ) : null}
-          {hasEventRecord ? (
-            <>
-              {' · '}
-              <Link to={viewerTournamentDetailPath(runId, eventId)}>Open tournament detail</Link>
-            </>
-          ) : null}
-        </p>
+      <SectionCard title="Source context links">
+        {!runId || !eventId ? <EmptyState message="No planned event route context was provided." /> : null}
+        {runId && eventId ? (
+          <ul className="item-list" aria-label="Planned event source links">
+            {contextLinks.map((link) => (
+              <li key={link.label}>
+                <Link to={link.href}>{link.label}</Link>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </SectionCard>
 
       <SectionCard title="Planned event summary">
@@ -268,7 +269,7 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
           <>
             <SummaryPills
               items={[
-                { label: 'Status', value: eventStatusLabel(status ?? 'planned') },
+                { label: 'Status', value: statusLabel ?? 'Planned' },
                 { label: 'Plan position', value: `${plannedEvent.planIndex + 1} of ${orderedEvents.length}` },
                 { label: 'Next event index', value: nextEventIndex },
                 { label: 'Completed', value: eventIsCompleted(completedEventIds, plannedEvent.event_id) }
@@ -285,23 +286,11 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
                 { label: 'Template ID', value: plannedEvent.template_id }
               ]}
             />
-            <MetadataList
-              items={[
-                { label: 'Plan index', value: plannedEvent.planIndex },
-                { label: 'Status', value: eventStatusLabel(status ?? 'planned') },
-                { label: 'Completed indicator', value: eventIsCompleted(completedEventIds, plannedEvent.event_id) },
-                { label: 'Tournament detail available', value: hasEventRecord ? 'Yes' : 'No' }
-              ]}
-            />
+            <MetadataList items={plannedMetadataItems} />
+            {!hasEventRecord ? <p className="status">No persisted tournament record is available for this planned event yet.</p> : null}
           </>
         ) : null}
       </SectionCard>
-
-      {plannedEvent && resultMetadataItems.length > 0 ? (
-        <SectionCard title="Tournament Result Preview">
-          <MetadataList items={resultMetadataItems} />
-        </SectionCard>
-      ) : null}
 
       {plannedEvent ? (
         <SectionCard title="Read-only data">

@@ -269,26 +269,24 @@ describe('ViewerRunPlannedEventPage', () => {
     expect(screen.getAllByText('Elite Tour').length).toBeGreaterThan(0)
     expect(screen.getAllByText('ET-GOLD').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Current/next').length).toBeGreaterThan(0)
-    expect(screen.getByText('2 of 3')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Back to season calendar/i })).toHaveAttribute(
+    expect(screen.getAllByText('2 of 3').length).toBeGreaterThan(0)
+    expect(screen.getByRole('link', { name: 'Season calendar' })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2d/calendar'
     )
-    expect(screen.getByRole('link', { name: /Open week detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-2d/weeks/2')
-    expect(screen.getByRole('link', { name: /Open tournament detail/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Week W2' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2d/weeks/2')
+    expect(screen.getByRole('link', { name: 'Tournament detail' })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2d/tournaments/EVENT-NEXT'
     )
-    expect(screen.getByText('Tournament Result Preview')).toBeInTheDocument()
-    expect(screen.getByText('Champion')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Linked Champion' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-2d/players/PLAYER-42/career'
-    )
-    expect(screen.getByText('Result status')).toBeInTheDocument()
-    expect(screen.getByText('completed')).toBeInTheDocument()
-    expect(screen.getByText('Matches')).toBeInTheDocument()
-    expect(screen.getByText('31 of 31')).toBeInTheDocument()
+    expect(screen.getByText('Persisted event record')).toBeInTheDocument()
+    expect(screen.getByText('Persisted event sequence')).toBeInTheDocument()
+    expect(screen.getByText('Persisted event week')).toBeInTheDocument()
+    expect(screen.queryByText('Tournament Result Preview')).not.toBeInTheDocument()
+    expect(screen.queryByText('Champion')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Linked Champion' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Result status')).not.toBeInTheDocument()
+    expect(screen.queryByText('Matches')).not.toBeInTheDocument()
     expect(screen.queryByText(/raw_week_result_marker_should_be_hidden/i)).not.toBeInTheDocument()
     const technicalSection = screen.getByText('Show technical planned event data').closest('details')
     expect(technicalSection).not.toHaveAttribute('open')
@@ -303,7 +301,7 @@ describe('ViewerRunPlannedEventPage', () => {
     expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
   })
 
-  it('keeps planned event champion plain text when parsed tournament_result has no player id', async () => {
+  it('keeps planned event result content hidden when parsed tournament_result has no player id', async () => {
     api.listEvents.mockResolvedValue({
       run_id: 'viewer-run-2d',
       events: [
@@ -322,12 +320,13 @@ describe('ViewerRunPlannedEventPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Planned Event' })).toBeInTheDocument()
     expect((await screen.findAllByText('EVENT-NEXT')).length).toBeGreaterThan(0)
-    expect(screen.getByText('Tournament Result Preview')).toBeInTheDocument()
-    expect(screen.getByText('Champion')).toBeInTheDocument()
-    expect(screen.getByText('Plain Planned Champion')).toBeInTheDocument()
+    expect(screen.getByText('Persisted event record')).toBeInTheDocument()
+    expect(screen.queryByText('Tournament Result Preview')).not.toBeInTheDocument()
+    expect(screen.queryByText('Champion')).not.toBeInTheDocument()
+    expect(screen.queryByText('Plain Planned Champion')).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Plain Planned Champion' })).not.toBeInTheDocument()
-    expect(screen.getByText('Result status')).toBeInTheDocument()
-    expect(screen.getByText('Matches')).toBeInTheDocument()
+    expect(screen.queryByText('Result status')).not.toBeInTheDocument()
+    expect(screen.queryByText('Matches')).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
@@ -350,12 +349,12 @@ describe('ViewerRunPlannedEventPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Planned Event' })).toBeInTheDocument()
     expect((await screen.findAllByText('EVENT-NEXT')).length).toBeGreaterThan(0)
-    expect(screen.getByRole('link', { name: /Back to season calendar/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Season calendar' })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2d/calendar'
     )
-    expect(screen.getByRole('link', { name: /Open week detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-2d/weeks/2')
-    expect(screen.getByRole('link', { name: /Open tournament detail/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Week W2' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2d/weeks/2')
+    expect(screen.getByRole('link', { name: 'Tournament detail' })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2d/tournaments/EVENT-NEXT'
     )

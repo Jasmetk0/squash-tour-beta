@@ -1197,3 +1197,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - The page renders existing week, planned-event, persisted-event, and conservative source-publication metadata plus context/detail links.
 - No invented results, draws, winners, points, prize money, player lists, or standings were added.
 - Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 8H note — week detail read-model hardening
+
+- Week detail source-context behavior was hardened after Phase 8G.
+- getRun/listEvents/snapshot error states, planned/persisted mismatch states, exact source matching, encoded links, status labels, and read-only safety are covered.
+- The page still renders only existing week/planned/persisted metadata and conservative context links.
+- No invented results, draws, winners, points, prize money, player lists, or standings were added.
+- Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.

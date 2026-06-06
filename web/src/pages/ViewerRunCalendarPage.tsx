@@ -337,7 +337,7 @@ export function ViewerRunWeekPage(): JSX.Element {
     () => new Set(runQuery.data?.season_state.completed_event_ids ?? []),
     [runQuery.data?.season_state.completed_event_ids]
   )
-  const eventRecords = useMemo(() => eventsQuery.data?.events ?? [], [eventsQuery.data?.events])
+  const eventRecords = useMemo(() => (runQuery.data ? (eventsQuery.data?.events ?? []) : []), [eventsQuery.data?.events, runQuery.data])
   const eventRecordsById = useMemo(() => persistedEventsByExactId(eventRecords), [eventRecords])
   const persistedWeekEvents = useMemo(
     () => persistedEventsForWeek(eventRecords, parsedWeek, weekEventIds),

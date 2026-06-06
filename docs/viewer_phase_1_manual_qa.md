@@ -1189,3 +1189,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - The page still renders only existing planned metadata and conservative context links.
 - No invented results, draws, winners, points, prize money, player lists, or standings were added.
 - Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 8G note — week detail read-model improvement
+
+- Week detail read-model audit was performed for the run-scoped week route, calendar/week page, route helpers, API client/types, and existing tournament/planned-event display helpers.
+- A safe week detail improvement was added using existing season-state, event-list, and snapshot read-model data only.
+- The page renders existing week, planned-event, persisted-event, and conservative source-publication metadata plus context/detail links.
+- No invented results, draws, winners, points, prize money, player lists, or standings were added.
+- Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.

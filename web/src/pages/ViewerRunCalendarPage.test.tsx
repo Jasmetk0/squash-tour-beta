@@ -383,43 +383,41 @@ describe('ViewerRunWeekPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Week Detail' })).toBeInTheDocument()
     expect(screen.getAllByText('viewer-run-2d').length).toBeGreaterThan(0)
-    expect(screen.getByText('Week context')).toBeInTheDocument()
-    expect(screen.getByText('Tournaments this week')).toBeInTheDocument()
-    expect(screen.getByText('Publications this week')).toBeInTheDocument()
-    expect(screen.getByText('Links')).toBeInTheDocument()
-    expect(screen.getAllByText('2').length).toBeGreaterThan(0)
     expect((await screen.findAllByText('EVENT-NEXT')).length).toBeGreaterThan(0)
+    expect(screen.getByText('Week context')).toBeInTheDocument()
+    expect(screen.getAllByText('Planned events this week').length).toBeGreaterThan(0)
+    expect(screen.getByText('Persisted tournament records this week')).toBeInTheDocument()
+    expect(screen.getByText('Publications this week')).toBeInTheDocument()
+    expect(screen.getByText('Source context links')).toBeInTheDocument()
+    expect(screen.getAllByText('2').length).toBeGreaterThan(0)
     expect(screen.queryByText('EVENT-COMPLETE')).not.toBeInTheDocument()
     expect(screen.queryByText('EVENT-FUTURE')).not.toBeInTheDocument()
     expect(screen.getAllByText('W2').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Gold').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Elite Tour').length).toBeGreaterThan(0)
     expect(screen.getAllByText('ET-GOLD').length).toBeGreaterThan(0)
-    expect(screen.getByText('Available')).toBeInTheDocument()
-    expect(screen.getByText('Champion')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Linked Champion' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-2d/players/PLAYER-42/career'
-    )
-    expect(screen.getByText('Result status')).toBeInTheDocument()
-    expect(screen.getByText('completed')).toBeInTheDocument()
-    expect(screen.getByText('Matches')).toBeInTheDocument()
-    expect(screen.getByText('31 of 31')).toBeInTheDocument()
+    expect(screen.getAllByText('Persisted event record').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Available').length).toBeGreaterThan(0)
+    expect(screen.getByText('Event sequence')).toBeInTheDocument()
+    expect(screen.queryByText('Champion')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Linked Champion' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Result status')).not.toBeInTheDocument()
+    expect(screen.queryByText('Matches')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Open planned event/i })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2d/calendar/EVENT-NEXT'
     )
-    expect(screen.getByRole('link', { name: /Open tournament detail/i })).toHaveAttribute(
+    expect(screen.getAllByRole('link', { name: /Open tournament detail/i })[0]).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2d/tournaments/EVENT-NEXT'
     )
     expect(screen.getByText('Ranking publications count')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Ranking publication #4/i })).toHaveAttribute(
+    expect(screen.getAllByRole('link', { name: /Ranking publication #4/i })[0]).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2d/rankings/4'
     )
     expect(screen.getByText('Race publications count')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Race publication #7/i })).toHaveAttribute(
+    expect(screen.getAllByRole('link', { name: /Race publication #7/i })[0]).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2d/race/7'
     )
@@ -428,33 +426,6 @@ describe('ViewerRunWeekPage', () => {
     expectNoForbiddenViewerActions()
   })
 
-
-  it('keeps champion plain text when parsed tournament_result has no player id', async () => {
-    api.listEvents.mockResolvedValue({
-      run_id: 'viewer-run-2d',
-      events: [
-        {
-          event_sequence: 2,
-          event_id: 'EVENT-NEXT',
-          season: 2028,
-          week: 2,
-          template_id: 'ET-GOLD',
-          tournament_result: { champion: { player_name: 'Plain Champion' }, result_status: 'completed', match_count: 15 }
-        }
-      ]
-    })
-
-    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2')
-
-    expect(await screen.findByRole('heading', { name: 'Week Detail' })).toBeInTheDocument()
-    expect((await screen.findAllByText('EVENT-NEXT')).length).toBeGreaterThan(0)
-    expect(screen.getByText('Champion')).toBeInTheDocument()
-    expect(screen.getByText('Plain Champion')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Plain Champion' })).not.toBeInTheDocument()
-    expect(screen.getByText('Result status')).toBeInTheDocument()
-    expect(screen.getByText('Matches')).toBeInTheDocument()
-    expectNoForbiddenViewerActions()
-  })
 
   it('does not show fake result metadata for unknown persisted tournament_result payloads', async () => {
     api.listEvents.mockResolvedValue({
@@ -475,7 +446,7 @@ describe('ViewerRunWeekPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Week Detail' })).toBeInTheDocument()
     expect((await screen.findAllByText('EVENT-NEXT')).length).toBeGreaterThan(0)
-    expect(screen.getByText('Available')).toBeInTheDocument()
+    expect(screen.getAllByText('Available').length).toBeGreaterThan(0)
     expect(screen.queryByText('Champion')).not.toBeInTheDocument()
     expect(screen.queryByText('Result status')).not.toBeInTheDocument()
     expect(screen.queryByText('Matches')).not.toBeInTheDocument()
@@ -493,7 +464,7 @@ describe('ViewerRunWeekPage', () => {
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2')
 
     expect(await screen.findByRole('heading', { name: 'Week Detail' })).toBeInTheDocument()
-    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No ranking or race publications are source-matched to this week.')).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
@@ -501,7 +472,7 @@ describe('ViewerRunWeekPage', () => {
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/12')
 
     expect(await screen.findByRole('heading', { name: 'Week Detail' })).toBeInTheDocument()
-    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No planned or persisted tournament records are available for this week.')).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 })

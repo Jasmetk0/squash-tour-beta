@@ -57,7 +57,7 @@ describe('ViewerRunBrowserPage', () => {
   it('shows the empty runs state when listRuns returns no runs', async () => {
     renderRunBrowser()
 
-    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No Viewer runs are available yet.')).toBeInTheDocument()
   })
 
   it('renders sample run metadata and encoded quick links exactly', async () => {
@@ -73,26 +73,25 @@ describe('ViewerRunBrowserPage', () => {
       ['Run id', 'run alpha'],
       ['Season', '2031'],
       ['Seed', '42'],
-      ['Next event index', '3'],
-      ['Total events', '11'],
-      ['Completed event count', '2'],
       ['Source', 'fresh_seed'],
       ['Parent run', 'parent-run'],
-      ['Created', '2031-09-01T00:00:00Z'],
-      ['Updated', '2031-09-02T00:00:00Z']
+      ['Child runs', '0'],
+      ['Next event index', '3'],
+      ['Total events', '11'],
+      ['Completed event count', '2']
     ]) {
       expect(within(metadata).getByText(label)).toBeInTheDocument()
       expect(within(metadata).getByText(value)).toBeInTheDocument()
     }
 
-    expect(screen.getByRole('link', { name: 'Open calendar' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar')
-    expect(screen.getByRole('link', { name: 'Open rankings' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/rankings')
-    expect(screen.getByRole('link', { name: 'Open race' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/race')
-    expect(screen.getByRole('link', { name: 'Open tournaments' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/tournaments')
-    expect(screen.getByRole('link', { name: 'Open players' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/players')
-    expect(screen.getByRole('link', { name: 'Open countries' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/countries')
-    expect(screen.getByRole('link', { name: 'Open history' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/history')
-    expect(screen.getByRole('link', { name: 'Open finals' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/finals')
+    expect(screen.getByRole('link', { name: 'Season calendar' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar')
+    expect(screen.getByRole('link', { name: 'Rankings' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/rankings')
+    expect(screen.getByRole('link', { name: 'Race' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/race')
+    expect(screen.getByRole('link', { name: 'Tournaments' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/tournaments')
+    expect(screen.getByRole('link', { name: 'Players' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/players')
+    expect(screen.getByRole('link', { name: 'Countries' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/countries')
+    expect(screen.getByRole('link', { name: 'History' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/history')
+    expect(screen.getByRole('link', { name: 'Finals' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/finals')
   })
 
   it('does not expose forbidden Viewer action labels', async () => {

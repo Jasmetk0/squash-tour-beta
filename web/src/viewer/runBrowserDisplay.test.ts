@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  buildRunBrowserContextLinks,
+  buildRunBrowserMetadataItems,
+  buildRunBrowserPrimaryLinks,
   buildViewerRunBrowserLinks,
+  formatRunSourceLabel,
   hasSafeRunMetadataValue,
   optionalRunField,
   viewerRunMetadataFields,
@@ -21,92 +25,100 @@ function sampleRun(overrides: Record<string, unknown> = {}): ViewerRunBrowserLis
     source_type: 'fresh_seed',
     parent_run_id: 'parent-run',
     child_run_count: 0,
-    created_at: '2031-09-01T00:00:00Z',
-    updated_at: '2031-09-02T00:00:00Z',
     ...overrides
   } as ViewerRunBrowserListItem
 }
 
 describe('Viewer Run Browser display helpers', () => {
-  it('preserves Run Browser metadata labels and order for a sample run', () => {
-    expect(viewerRunMetadataFields(sampleRun())).toEqual([
+  it('preserves conservative Run Browser metadata labels and order for a sample run', () => {
+    expect(buildRunBrowserMetadataItems(sampleRun())).toEqual([
       { label: 'Run id', value: 'run alpha' },
       { label: 'Season', value: 2031 },
       { label: 'Seed', value: 42 },
-      { label: 'Next event index', value: 3 },
-      { label: 'Total events', value: 11 },
-      { label: 'Completed event count', value: 2 },
       { label: 'Source', value: 'fresh_seed' },
       { label: 'Parent run', value: 'parent-run' },
-      { label: 'Created', value: '2031-09-01T00:00:00Z' },
-      { label: 'Updated', value: '2031-09-02T00:00:00Z' }
+      { label: 'Child runs', value: 0 },
+      { label: 'Next event index', value: 3 },
+      { label: 'Total events', value: 11 },
+      { label: 'Completed event count', value: 2 }
     ])
   })
 
-  it('omits missing metadata values while preserving safe zero values', () => {
+  it('keeps the previous viewerRunMetadataFields export as the metadata helper alias', () => {
+    expect(viewerRunMetadataFields(sampleRun())).toEqual(buildRunBrowserMetadataItems(sampleRun()))
+  })
+
+  it('uses em dash fallback for missing optional metadata while preserving safe zero values', () => {
     expect(
-      viewerRunMetadataFields(
+      buildRunBrowserMetadataItems(
         sampleRun({
           progress: { next_event_index: 0, total_events: 0, completed_event_count: 0 },
           source_type: '',
           parent_run_id: null,
-          created_at: undefined,
-          updated_at: undefined
+          child_run_count: 0
         })
       )
     ).toEqual([
       { label: 'Run id', value: 'run alpha' },
       { label: 'Season', value: 2031 },
       { label: 'Seed', value: 42 },
+      { label: 'Source', value: '—' },
+      { label: 'Parent run', value: '—' },
+      { label: 'Child runs', value: 0 },
       { label: 'Next event index', value: 0 },
       { label: 'Total events', value: 0 },
       { label: 'Completed event count', value: 0 }
     ])
   })
 
-  it('preserves created_at/created and updated_at/updated fallback behavior', () => {
-    expect(
-      viewerRunMetadataFields(
-        sampleRun({
-          created_at: undefined,
-          created: 'created fallback',
-          updated_at: undefined,
-          updated: 'updated fallback'
-        })
-      ).slice(-2)
-    ).toEqual([
-      { label: 'Created', value: 'created fallback' },
-      { label: 'Updated', value: 'updated fallback' }
-    ])
-  })
-
-  it('does not return unsafe object metadata values', () => {
-    const fields = viewerRunMetadataFields(
+  it('does not stringify unsafe object metadata values', () => {
+    const fields = buildRunBrowserMetadataItems(
       sampleRun({
         source_type: { raw: 'source' },
         parent_run_id: ['parent'],
-        created_at: { raw: 'created' },
-        updated_at: { raw: 'updated' }
+        child_run_count: { count: 1 },
+        progress: { next_event_index: { raw: 1 }, total_events: ['x'], completed_event_count: null }
       })
     )
 
-    expect(fields.map((field) => field.label)).not.toContain('Source')
-    expect(fields.map((field) => field.label)).not.toContain('Parent run')
-    expect(fields.map((field) => field.label)).not.toContain('Created')
-    expect(fields.map((field) => field.label)).not.toContain('Updated')
+    expect(fields.filter((field) => field.value === '—').map((field) => field.label)).toEqual([
+      'Source',
+      'Parent run',
+      'Child runs',
+      'Next event index',
+      'Total events',
+      'Completed event count'
+    ])
     expect(fields.some((field) => String(field.value) === '[object Object]')).toBe(false)
   })
 
-  it('preserves Run Browser quick link labels, hrefs, and order', () => {
+  it('formats source labels with the same fallback used by the metadata list', () => {
+    expect(formatRunSourceLabel(sampleRun())).toBe('fresh_seed')
+    expect(formatRunSourceLabel(sampleRun({ source_type: null }))).toBe('—')
+  })
+
+  it('preserves primary run browser link labels, hrefs, and order', () => {
+    expect(buildRunBrowserPrimaryLinks('run alpha/with #hash')).toEqual([
+      { label: 'Season calendar', to: '/viewer/runs/run%20alpha%2Fwith%20%23hash/calendar' },
+      { label: 'Tournaments', to: '/viewer/runs/run%20alpha%2Fwith%20%23hash/tournaments' },
+      { label: 'Rankings', to: '/viewer/runs/run%20alpha%2Fwith%20%23hash/rankings' },
+      { label: 'Race', to: '/viewer/runs/run%20alpha%2Fwith%20%23hash/race' }
+    ])
+  })
+
+  it('preserves context run browser link labels, hrefs, and order', () => {
+    expect(buildRunBrowserContextLinks('run alpha')).toEqual([
+      { label: 'Players', to: '/viewer/runs/run%20alpha/players' },
+      { label: 'Countries', to: '/viewer/runs/run%20alpha/countries' },
+      { label: 'History', to: '/viewer/runs/run%20alpha/history' },
+      { label: 'Finals', to: '/viewer/runs/run%20alpha/finals' }
+    ])
+  })
+
+  it('combines primary and context links for the legacy run browser link helper', () => {
     expect(buildViewerRunBrowserLinks('run alpha')).toEqual([
-      { label: 'Open calendar', to: '/viewer/runs/run%20alpha/calendar' },
-      { label: 'Open rankings', to: '/viewer/runs/run%20alpha/rankings' },
-      { label: 'Open race', to: '/viewer/runs/run%20alpha/race' },
-      { label: 'Open tournaments', to: '/viewer/runs/run%20alpha/tournaments' },
-      { label: 'Open players', to: '/viewer/runs/run%20alpha/players' },
-      { label: 'Open countries', to: '/viewer/runs/run%20alpha/countries' },
-      { label: 'Open history', to: '/viewer/runs/run%20alpha/history' },
-      { label: 'Open finals', to: '/viewer/runs/run%20alpha/finals' }
+      ...buildRunBrowserPrimaryLinks('run alpha'),
+      ...buildRunBrowserContextLinks('run alpha')
     ])
   })
 

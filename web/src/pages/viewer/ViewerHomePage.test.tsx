@@ -73,6 +73,46 @@ function renderHome(): void {
   renderWithViewerProviders(<ViewerHomePage />)
 }
 
+function expectActiveRunScopedLinks(runIdPathSegment: string): void {
+  for (const [label, href] of [
+    ['Active Run Rankings', `/viewer/runs/${runIdPathSegment}/rankings`],
+    ['Active Run Race', `/viewer/runs/${runIdPathSegment}/race`],
+    ['Active Run Tournaments', `/viewer/runs/${runIdPathSegment}/tournaments`],
+    ['Active Run Calendar', `/viewer/runs/${runIdPathSegment}/calendar`],
+    ['Active Run Players', `/viewer/runs/${runIdPathSegment}/players`],
+    ['Active Run Countries', `/viewer/runs/${runIdPathSegment}/countries`],
+    ['Active Run History', `/viewer/runs/${runIdPathSegment}/history`],
+    ['Active Run Finals', `/viewer/runs/${runIdPathSegment}/finals`]
+  ]) {
+    expect(screen.getByRole('link', { name: label })).toHaveAttribute('href', href)
+  }
+}
+
+function expectNoActiveRunScopedLinks(): void {
+  for (const label of [
+    'Active Run Rankings',
+    'Active Run Race',
+    'Active Run Tournaments',
+    'Active Run Calendar',
+    'Active Run Players',
+    'Active Run Countries',
+    'Active Run History',
+    'Active Run Finals'
+  ]) {
+    expect(screen.queryByRole('link', { name: label })).not.toBeInTheDocument()
+  }
+}
+
+function expectNoInventedActiveRunPreviewContent(): void {
+  expect(screen.queryByText('Next scheduled event:')).not.toBeInTheDocument()
+  expect(screen.queryByText(/Most recent completed event:/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/Latest ranking snapshot/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/Latest race snapshot/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/activity items/)).not.toBeInTheDocument()
+  expect(screen.queryByText('1/2 events complete')).not.toBeInTheDocument()
+  expect(screen.queryByText('Qualification available')).not.toBeInTheDocument()
+}
+
 describe('ViewerHomePage', () => {
   beforeEach(() => {
     clearViewerStorage()
@@ -88,7 +128,10 @@ describe('ViewerHomePage', () => {
     expect(screen.getByRole('heading', { level: 2, name: /MSA Squash/ })).toBeInTheDocument()
     expect(screen.getByText(/No active Viewer run selected/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
-    expect(screen.queryByRole('link', { name: 'Active Run Rankings' })).not.toBeInTheDocument()
+    const hubLinks = within(screen.getByRole('list', { name: 'Viewer Home top-level hub links' }))
+    expect(hubLinks.getByRole('link', { name: 'Run Browser' })).toHaveAttribute('href', '/viewer/runs')
+    expect(hubLinks.getByRole('link', { name: 'MSA Rankings' })).toHaveAttribute('href', '/viewer/rankings')
+    expectNoActiveRunScopedLinks()
     expect(api.getRun).not.toHaveBeenCalled()
     expect(api.getRunStatusSummary).not.toHaveBeenCalled()
     expect(api.listEvents).not.toHaveBeenCalled()
@@ -110,18 +153,7 @@ describe('ViewerHomePage', () => {
     expect(screen.getByText('1/2 events complete')).toBeInTheDocument()
     expect(screen.getByText('Qualification available')).toBeInTheDocument()
 
-    for (const [label, href] of [
-      ['Active Run Rankings', '/viewer/runs/run%20alpha/rankings'],
-      ['Active Run Race', '/viewer/runs/run%20alpha/race'],
-      ['Active Run Tournaments', '/viewer/runs/run%20alpha/tournaments'],
-      ['Active Run Calendar', '/viewer/runs/run%20alpha/calendar'],
-      ['Active Run Players', '/viewer/runs/run%20alpha/players'],
-      ['Active Run Countries', '/viewer/runs/run%20alpha/countries'],
-      ['Active Run History', '/viewer/runs/run%20alpha/history'],
-      ['Active Run Finals', '/viewer/runs/run%20alpha/finals']
-    ]) {
-      expect(screen.getByRole('link', { name: label })).toHaveAttribute('href', href)
-    }
+    expectActiveRunScopedLinks('run%20alpha')
 
     expect(screen.getByText('Next scheduled event:')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'EVT-NEXT' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar/EVT-NEXT')
@@ -179,6 +211,62 @@ describe('ViewerHomePage', () => {
     for (const link of screen.getAllByRole('link')) {
       expect(link.getAttribute('href') ?? '').not.toContain('%20run%20alpha%20')
     }
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows a safe unavailable state when getRun fails for an active run', async () => {
+    setViewerActiveRunId('run alpha')
+    api.getRun.mockRejectedValue(new Error('run outage'))
+
+    renderHome()
+
+    expect(await screen.findByRole('heading', { level: 2, name: /MSA Squash/ })).toBeInTheDocument()
+    expect(await screen.findByText(/Active run summary is temporarily unavailable/)).toBeInTheDocument()
+    expectActiveRunScopedLinks('run%20alpha')
+    expectNoInventedActiveRunPreviewContent()
+    expect(screen.queryByText(/run outage/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows a safe unavailable state when getRunStatusSummary fails while getRun succeeds', async () => {
+    setViewerActiveRunId('run alpha')
+    api.getRunStatusSummary.mockRejectedValue(new Error('status outage'))
+
+    renderHome()
+
+    expect(await screen.findByRole('heading', { name: 'Active Viewer run: run alpha' })).toBeInTheDocument()
+    expect(await screen.findByText(/Active run summary is temporarily unavailable/)).toBeInTheDocument()
+    expectActiveRunScopedLinks('run%20alpha')
+    expectNoInventedActiveRunPreviewContent()
+    expect(screen.queryByText(/status outage/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows a safe unavailable state when listEvents fails while run and status summary succeed', async () => {
+    setViewerActiveRunId('run alpha')
+    api.listEvents.mockRejectedValue(new Error('events outage'))
+
+    renderHome()
+
+    expect(await screen.findByRole('heading', { name: 'Active Viewer run: run alpha' })).toBeInTheDocument()
+    expect(await screen.findByText(/Active run summary is temporarily unavailable/)).toBeInTheDocument()
+    expectActiveRunScopedLinks('run%20alpha')
+    expectNoInventedActiveRunPreviewContent()
+    expect(screen.queryByText(/events outage/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows a safe unavailable state when listRankingSnapshots fails without inventing ranking text', async () => {
+    setViewerActiveRunId('run alpha')
+    api.listRankingSnapshots.mockRejectedValue(new Error('ranking snapshots outage'))
+
+    renderHome()
+
+    expect(await screen.findByRole('heading', { name: 'Active Viewer run: run alpha' })).toBeInTheDocument()
+    expect(await screen.findByText(/Active run summary is temporarily unavailable/)).toBeInTheDocument()
+    expectActiveRunScopedLinks('run%20alpha')
+    expectNoInventedActiveRunPreviewContent()
+    expect(screen.queryByText(/ranking snapshots outage/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

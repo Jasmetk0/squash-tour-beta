@@ -36,6 +36,7 @@ describe('viewerHomeDisplay', () => {
 
   it('returns no active-run scoped links when no active run exists', () => {
     expect(buildViewerHomeActiveRunLinks(null)).toEqual([])
+    expect(buildViewerHomeActiveRunLinks(undefined)).toEqual([])
     expect(buildViewerHomeActiveRunLinks('   ')).toEqual([])
   })
 
@@ -62,13 +63,16 @@ describe('viewerHomeDisplay', () => {
     expect(links.some((link) => forbiddenAdminPathPattern.test(link.to))).toBe(false)
   })
 
-  it('formats active-run labels and read-only notes without invented facts', () => {
+  it('formats active-run labels and read-only notes without invented facts or mutation language', () => {
     expect(getViewerHomeActiveRunLabel('run alpha')).toBe('Active Viewer run: run alpha')
     expect(getViewerHomeActiveRunLabel(null)).toBe('No active Viewer run selected')
-    expect(buildViewerHomeReadOnlyNotes()).toEqual([
+    const notes = buildViewerHomeReadOnlyNotes()
+
+    expect(notes).toEqual([
       'Viewer Home is read-only and links to existing Viewer surfaces only.',
       'Active-run shortcuts appear only when an active Viewer run is selected.',
       'Unavailable previews stay empty instead of inventing progress, results, standings, winners, or schedule facts.'
     ])
+    expect(notes.join(' ')).not.toMatch(/admin|simulate|generate|persist|apply|execute|delete|edit|import|rollover|rebuild|override|save changes|commit|regenerate|repair|merge|overwrite/i)
   })
 })

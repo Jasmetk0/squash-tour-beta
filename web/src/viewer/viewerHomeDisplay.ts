@@ -1,8 +1,13 @@
 import type { ViewerHubLink } from './viewerHubLinks'
 import { buildActiveRunHubLinks, viewerTopLevelHubLinks } from './viewerHubLinks'
 
-export function buildViewerHomeActiveRunLinks(activeRunId: string | null | undefined): ViewerHubLink[] {
+export function normalizeViewerHomeActiveRunId(activeRunId: string | null | undefined): string | null {
   const normalizedRunId = activeRunId?.trim()
+  return normalizedRunId ? normalizedRunId : null
+}
+
+export function buildViewerHomeActiveRunLinks(activeRunId: string | null | undefined): ViewerHubLink[] {
+  const normalizedRunId = normalizeViewerHomeActiveRunId(activeRunId)
   if (!normalizedRunId) return []
   return buildActiveRunHubLinks(normalizedRunId)
 }
@@ -20,6 +25,6 @@ export function buildViewerHomeReadOnlyNotes(): string[] {
 }
 
 export function getViewerHomeActiveRunLabel(activeRunId: string | null | undefined): string {
-  const normalizedRunId = activeRunId?.trim()
+  const normalizedRunId = normalizeViewerHomeActiveRunId(activeRunId)
   return normalizedRunId ? `Active Viewer run: ${normalizedRunId}` : 'No active Viewer run selected'
 }

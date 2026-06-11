@@ -8,7 +8,13 @@ import { ViewerActiveRunLinks, ViewerEmptyState, ViewerLandingGrid, ViewerMetada
 import { ViewerRunSelector } from '../../components/ViewerRunSelector'
 import { useViewerContext } from '../../viewer/ViewerContext'
 import { useActiveViewerRunId } from '../../viewer/useActiveViewerRunId'
-import { buildViewerHomeActiveRunLinks, buildViewerHomePrimaryHubLinks, buildViewerHomeReadOnlyNotes, getViewerHomeActiveRunLabel } from '../../viewer/viewerHomeDisplay'
+import {
+  buildViewerHomeActiveRunLinks,
+  buildViewerHomePrimaryHubLinks,
+  buildViewerHomeReadOnlyNotes,
+  getViewerHomeActiveRunLabel,
+  normalizeViewerHomeActiveRunId
+} from '../../viewer/viewerHomeDisplay'
 import {
   viewerHistoryPath,
   viewerPlannedEventPath,
@@ -137,7 +143,7 @@ function renderActivityItem(item: RunActivityItem, runId: string, context: Activ
 export function ViewerHomePage(): JSX.Element {
   const context = useViewerContext()
   const activeRunId = useActiveViewerRunId()
-  const normalizedActiveRunId = activeRunId?.trim() || null
+  const normalizedActiveRunId = normalizeViewerHomeActiveRunId(activeRunId)
   const activeRunLinks = buildViewerHomeActiveRunLinks(normalizedActiveRunId)
   const primaryHubLinks = buildViewerHomePrimaryHubLinks()
   const readOnlyNotes = buildViewerHomeReadOnlyNotes()

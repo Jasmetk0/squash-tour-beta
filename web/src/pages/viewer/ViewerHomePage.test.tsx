@@ -89,6 +89,13 @@ describe('ViewerHomePage', () => {
     expect(screen.getByText(/No active Viewer run selected/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
     expect(screen.queryByRole('link', { name: 'Active Run Rankings' })).not.toBeInTheDocument()
+    expect(api.getRun).not.toHaveBeenCalled()
+    expect(api.getRunStatusSummary).not.toHaveBeenCalled()
+    expect(api.listEvents).not.toHaveBeenCalled()
+    expect(api.listRankingSnapshots).not.toHaveBeenCalled()
+    expect(api.listRaceSnapshots).not.toHaveBeenCalled()
+    expect(api.getRunActivity).not.toHaveBeenCalled()
+    expect(api.getFinalsSummary).not.toHaveBeenCalled()
     expect(screen.getByRole('heading', { name: 'Viewer hub links' })).toBeInTheDocument()
   })
 

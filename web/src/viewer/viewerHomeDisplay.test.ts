@@ -4,13 +4,23 @@ import {
   buildViewerHomeActiveRunLinks,
   buildViewerHomePrimaryHubLinks,
   buildViewerHomeReadOnlyNotes,
-  getViewerHomeActiveRunLabel
+  getViewerHomeActiveRunLabel,
+  normalizeViewerHomeActiveRunId
 } from './viewerHomeDisplay'
 import { viewerTopLevelHubLinks } from './viewerHubLinks'
 
 const forbiddenAdminPathPattern = /^\/admin(?:\/|$)/
 
 describe('viewerHomeDisplay', () => {
+  it('normalizes Viewer Home active-run ids consistently', () => {
+    expect(normalizeViewerHomeActiveRunId(null)).toBeNull()
+    expect(normalizeViewerHomeActiveRunId(undefined)).toBeNull()
+    expect(normalizeViewerHomeActiveRunId('')).toBeNull()
+    expect(normalizeViewerHomeActiveRunId('   ')).toBeNull()
+    expect(normalizeViewerHomeActiveRunId(' run alpha ')).toBe('run alpha')
+    expect(normalizeViewerHomeActiveRunId('run/alpha #1')).toBe('run/alpha #1')
+  })
+
   it('builds active-run links in the Viewer Home order with route-helper encoded hrefs', () => {
     expect(buildViewerHomeActiveRunLinks('run/alpha #1')).toEqual([
       { label: 'Active Run Rankings', to: '/viewer/runs/run%2Falpha%20%231/rankings' },

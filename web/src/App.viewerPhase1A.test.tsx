@@ -344,10 +344,12 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     for (const section of [
       'Featured Tournament Hero',
       'Other Tournaments This Week',
-      'Top 10 Rankings',
-      'Race to Finals',
+      'Ranking snapshots',
+      'Race snapshots',
       'Featured Matches',
       'Predictions & Upset Watch',
+      'Viewer hub links',
+      'What this hub does not infer',
       'Storylines'
     ]) {
       expect(screen.getByRole('heading', { name: section })).toBeInTheDocument()
@@ -1141,7 +1143,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     api.getFinalsSummary.mockResolvedValue({ run_id: 'run-a', season: 2030, qualification: { run_id: 'run-a', season: 2030, source_as_of_season: 2030, source_as_of_week: 40, qualification: {} }, result: null })
     renderAppAt('/viewer')
 
-    expect(await screen.findByRole('heading', { name: 'Active run data is available' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Active Viewer run: run-a' })).toBeInTheDocument()
     const statusPanel = screen.getByLabelText('Active Viewer run status')
     await waitFor(() => expect(statusPanel).toHaveTextContent('Using Viewer run'))
     expect(statusPanel).toHaveTextContent('run-a')

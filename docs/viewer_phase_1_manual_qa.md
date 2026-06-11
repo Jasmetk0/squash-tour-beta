@@ -1230,3 +1230,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - No invented progress, results, rankings, winners, standings, schedule facts, or Admin behavior was added.
 - Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.
 - Viewer Home active-run IDs are normalized consistently before queries and route links.
+
+## Viewer Phase 8L note — Viewer Home hub hardening
+
+- Viewer Home hub behavior was hardened after Phase 8K.
+- Active-run error states, no-active-run query disabling, active-run ID normalization, source guards, encoded route links, and CI broad-test parity are covered.
+- The page still renders only existing active-run data, top-level Viewer hub links, and conservative run-scoped shortcuts.
+- No invented progress, results, rankings, winners, standings, schedule facts, or Admin behavior was added.
+- Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.

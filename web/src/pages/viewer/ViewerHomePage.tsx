@@ -161,6 +161,7 @@ export function ViewerHomePage(): JSX.Element {
   const activeQueries = [runQuery, statusQuery, eventsQuery, rankingSnapshotsQuery, raceSnapshotsQuery, activityQuery, finalsQuery]
   const isActiveSummaryLoading = queryEnabled && activeQueries.some((query) => query.isLoading)
   const isActiveSummaryUnavailable = queryEnabled && activeQueries.some((query) => query.isError)
+  const canRenderActiveRunData = !isActiveSummaryUnavailable
 
   const featuredEvent = useMemo(() => selectHomepageEvent(runQuery.data, eventsQuery.data?.events ?? []), [eventsQuery.data?.events, runQuery.data])
   const nearbyEvents = useMemo(() => {
@@ -228,7 +229,7 @@ export function ViewerHomePage(): JSX.Element {
       </section>
       <ViewerLandingGrid>
         <ViewerSectionCard kicker="Featured Tournament Hero" title="Featured Tournament Hero" variant="hero">
-          {normalizedActiveRunId && featuredEvent ? (
+          {normalizedActiveRunId && canRenderActiveRunData && featuredEvent ? (
             <>
               <p>{featuredEvent.status}: <strong>{renderLinkedEventId(normalizedActiveRunId, featuredEvent.eventId)}</strong></p>
               <p className="status">{featuredEvent.category ?? 'Category unavailable'} · {featuredEvent.tour ?? 'Tour unavailable'} · {featuredEvent.week != null ? renderLinkedWeek(normalizedActiveRunId, featuredEvent.week) : 'Week unavailable'} · Template {featuredEvent.templateId ?? 'unavailable'}</p>
@@ -240,7 +241,7 @@ export function ViewerHomePage(): JSX.Element {
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only schedule" title="Other Tournaments This Week">
-          {normalizedActiveRunId && nearbyEvents.length ? (
+          {normalizedActiveRunId && canRenderActiveRunData && nearbyEvents.length ? (
             <ul>
               {nearbyEvents.map((event) => (
                 <li key={event.event_id}>{renderLinkedEventId(normalizedActiveRunId, event.event_id)} · {event.category} · {renderLinkedWeek(normalizedActiveRunId, event.week)}</li>
@@ -252,7 +253,7 @@ export function ViewerHomePage(): JSX.Element {
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only rankings" title="Ranking snapshots">
-          {normalizedActiveRunId && latestRankingSnapshot ? (
+          {normalizedActiveRunId && canRenderActiveRunData && latestRankingSnapshot ? (
             <p>Latest ranking snapshot <Link to={viewerRankingSnapshotPath(normalizedActiveRunId, latestRankingSnapshot.snapshot_sequence)}>#{latestRankingSnapshot.snapshot_sequence}</Link> from {latestRankingSnapshot.source_event_id ?? 'run history'} · {rankingSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
@@ -261,7 +262,7 @@ export function ViewerHomePage(): JSX.Element {
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only race" title="Race snapshots">
-          {normalizedActiveRunId && latestRaceSnapshot ? (
+          {normalizedActiveRunId && canRenderActiveRunData && latestRaceSnapshot ? (
             <p>Latest race snapshot <Link to={viewerRaceSnapshotPath(normalizedActiveRunId, latestRaceSnapshot.snapshot_sequence)}>#{latestRaceSnapshot.snapshot_sequence}</Link> from {latestRaceSnapshot.source_event_id ?? 'run history'} · {raceSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
@@ -296,7 +297,7 @@ export function ViewerHomePage(): JSX.Element {
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only storylines" title="Storylines">
-          {normalizedActiveRunId && latestActivityItem ? (
+          {normalizedActiveRunId && canRenderActiveRunData && latestActivityItem ? (
             <p>{activityItems.length} activity items · Latest: {renderActivityItem(latestActivityItem, normalizedActiveRunId, activityLinkContext)}</p>
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>

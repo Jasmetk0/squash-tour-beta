@@ -1238,3 +1238,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - The page still renders only existing active-run data, top-level Viewer hub links, and conservative run-scoped shortcuts.
 - No invented progress, results, rankings, winners, standings, schedule facts, or Admin behavior was added.
 - Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 8M note — Viewer read-model route/link integration sweep
+
+- Viewer read-model route/link integration was audited across Home, Run Browser, calendar, week, planned event, tournament, rankings/race snapshots, and deferred surfaces.
+- Route helper encoding, App route parity, Viewer-only destinations, stale Home heading guards, raw activeRunId guards, and CI broad-test parity are covered.
+- No new Viewer data, invented progress, results, rankings, winners, standings, schedule facts, or Admin behavior was added.
+- Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.

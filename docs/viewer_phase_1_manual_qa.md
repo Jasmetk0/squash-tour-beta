@@ -1253,3 +1253,12 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Snapshot detail pages continue to use conservative fallback summaries for unknown, malformed, partial, or ambiguous payloads.
 - No ranks, players, points, standings, source events, or race positions are invented.
 - Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 9B note — snapshot list/detail boundary hardening
+
+- Snapshot list-page preview behavior and snapshot detail-page payload rendering were audited as separate concerns.
+- Detail pages remain conservative: they show payload summaries and deferred table-audit reasons instead of inferred standings tables.
+- Existing list/selected-publication previews remain read-only and separate from detail payload table rendering.
+- Source guards cover the boundary so heuristic preview tables are not reintroduced into detail pages.
+- No ranks, players, points, standings, source events, or race positions are invented.
+- Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.

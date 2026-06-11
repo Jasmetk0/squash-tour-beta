@@ -41,7 +41,7 @@ describe('ViewerRaceSnapshotDetailPage', () => {
       snapshot_sequence: 12,
       snapshot_kind: 'race',
       source_event_id: 'EVT ALPHA',
-      payload: { rows: [{ player_id: 'p1', rank: 1 }], as_of_week: 8 }
+      payload: { race_table: { table_type: 'race', rows: [{ rank: 1, player_id: 'p_beta', player_name: 'Fixture Player Beta', race_points: 900 }] }, as_of_week: 8 }
     })
     api.listRaceSnapshots.mockResolvedValue({
       snapshots: [
@@ -72,11 +72,37 @@ describe('ViewerRaceSnapshotDetailPage', () => {
     expect(screen.getByText('Payload summary')).toBeInTheDocument()
     expect(screen.getByText('Payload type')).toBeInTheDocument()
     expect(screen.getByText('Top-level keys')).toBeInTheDocument()
-    expect(screen.getByText('as_of_week, rows')).toBeInTheDocument()
+    expect(screen.getByText('as_of_week, race_table')).toBeInTheDocument()
     expect(screen.getByText('Conservative read-only payload summary. The Viewer does not infer standings from unknown fields.')).toBeInTheDocument()
+    expect(screen.getByText(/Snapshot payload table rendering deferred:/)).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.queryByText('Fixture Player Beta')).not.toBeInTheDocument()
+    expect(screen.queryByText('900')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Top 10/)).not.toBeInTheDocument()
+    expect(screen.queryByText('Standings preview')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Back to race publications' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/race')
     expect(screen.getByRole('link', { name: 'Open source event' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/tournaments/EVT%20ALPHA')
     expect(screen.getByRole('link', { name: 'Open planned event' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar/EVT%20ALPHA')
+    expectNoForbiddenViewerActions()
+  })
+
+  it('keeps unsupported race payloads on the conservative fallback without rendering standings', async () => {
+    api.getRaceSnapshot.mockResolvedValue({
+      snapshot_sequence: 12,
+      snapshot_kind: 'race',
+      source_event_id: 'EVT ALPHA',
+      payload: { rows: [{ player_id: 'p_unsupported', rank: 1, race_points: 1000 }], note: 'unsupported shape' }
+    })
+
+    renderDetail()
+
+    expect(await screen.findByText('EVT ALPHA')).toBeInTheDocument()
+    expect(screen.getByText('Payload summary')).toBeInTheDocument()
+    expect(screen.getByText('note, rows')).toBeInTheDocument()
+    expect(screen.getByText(/Snapshot payload table rendering deferred:/)).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.queryByText('p_unsupported')).not.toBeInTheDocument()
+    expect(screen.queryByText('1000')).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

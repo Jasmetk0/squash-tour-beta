@@ -10,6 +10,20 @@ export type SnapshotPayloadRow = {
   value: string
 }
 
+export type SnapshotPayloadTableAuditKind = 'ranking' | 'race'
+
+export type SnapshotPayloadTableAuditStatus = {
+  kind: SnapshotPayloadTableAuditKind
+  classification: 'B_NOT_STABLE_ENOUGH'
+  tableSupported: false
+  reason: string
+}
+
+export type SnapshotPayloadTypedRow = never
+
+const SNAPSHOT_TABLE_DEFERRED_REASON =
+  'Snapshot payload detail records are typed as unknown record payloads; row containers, player labels, ranks, and points are not stable enough for table rendering without inference.'
+
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -84,4 +98,21 @@ export function getSnapshotPayloadRows(payload: unknown): SnapshotPayloadRow[] {
   }
 
   return rows
+}
+
+export function getSnapshotPayloadTableAuditStatus(kind: SnapshotPayloadTableAuditKind, _payload: unknown): SnapshotPayloadTableAuditStatus {
+  return {
+    kind,
+    classification: 'B_NOT_STABLE_ENOUGH',
+    tableSupported: false,
+    reason: SNAPSHOT_TABLE_DEFERRED_REASON
+  }
+}
+
+export function parseRankingSnapshotRows(_payload: unknown): SnapshotPayloadTypedRow[] {
+  return []
+}
+
+export function parseRaceSnapshotRows(_payload: unknown): SnapshotPayloadTypedRow[] {
+  return []
 }

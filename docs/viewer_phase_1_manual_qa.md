@@ -1245,3 +1245,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Route helper encoding, App route parity, Viewer-only destinations, stale Home heading guards, raw activeRunId guards, and CI broad-test parity are covered.
 - No new Viewer data, invented progress, results, rankings, winners, standings, schedule facts, or Admin behavior was added.
 - Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 9A note — snapshot payload table rendering audit
+
+- Ranking/Race snapshot payload schemas were audited.
+- Explicit table rendering remains deferred because the current payload shape is not stable enough to render rows without inference.
+- Snapshot detail pages continue to use conservative fallback summaries for unknown, malformed, partial, or ambiguous payloads.
+- No ranks, players, points, standings, source events, or race positions are invented.
+- Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.

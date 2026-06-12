@@ -88,6 +88,29 @@ describe('Viewer read-model route integration', () => {
     }
   })
 
+  it('keeps snapshot list/detail route helpers Viewer-only, registered, and encoded', () => {
+    const runId = 'run/alpha #1'
+    const eventId = 'EVT/1 #A'
+    const encodedRunSegment = 'run%2Falpha%20%231'
+    const encodedEventSegment = 'EVT%2F1%20%23A'
+    const snapshotDestinations = [
+      viewerRankingsPath(runId),
+      viewerRankingSnapshotPath(runId, 4),
+      viewerRacePath(runId),
+      viewerRaceSnapshotPath(runId, 5)
+    ]
+
+    for (const destination of snapshotDestinations) {
+      expectViewerOnlyPath(destination)
+      expect(destination).toContain(`/viewer/runs/${encodedRunSegment}`)
+      expect(destination).not.toContain(runId)
+      expect(viewerRouteExists(destination)).toBe(true)
+    }
+
+    expect(viewerPlannedEventPath(runId, eventId)).toContain(encodedEventSegment)
+    expect(viewerTournamentDetailPath(runId, eventId)).toContain(encodedEventSegment)
+  })
+
   it('keeps run-scoped route helpers Viewer-only and safely encoded', () => {
     const runId = 'run/alpha #1'
     const eventId = 'EVT/1 #A'

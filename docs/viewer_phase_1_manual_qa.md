@@ -1293,3 +1293,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Detail pages remain conservative: they render payload summaries and deferred table-audit reasons instead of inferred standings tables.
 - Missing, malformed, unavailable, ambiguous, or non-string source-event data does not invent planned events, tournament links, weeks, rows, rankings, standings, or race positions.
 - Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 9G note — snapshot module final guard
+
+- Snapshot Viewer module invariants were locked with final source/integration guards after Phases 9A–9F.
+- List preview rendering remains separate from detail payload rendering.
+- Detail pages remain conservative and do not render inferred standings tables from unknown detail payloads.
+- Strict sequence parsing, unsafe snapshot normalization, source-event normalization, Viewer-only encoded links, and read-only safety are guarded.
+- Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.

@@ -48,8 +48,9 @@ function numberish(value: unknown): number | string | null {
   if (typeof value === 'string') {
     const trimmed = value.trim()
     if (!trimmed) return null
-    const parsed = Number(trimmed)
-    return Number.isFinite(parsed) ? parsed : trimmed
+    const normalized = trimmed.replace(/,/g, '')
+    const parsed = Number(normalized)
+    return Number.isFinite(parsed) ? parsed : null
   }
   return null
 }
@@ -84,6 +85,24 @@ function nestedRecord(record: UnknownRecord, key: string): UnknownRecord | null 
   return isRecord(value) ? value : null
 }
 
+function hasNestedObjectValue(record: UnknownRecord, keys: string[]): boolean {
+  return keys.some((key) => isRecord(record[key]))
+}
+
+function hasInvalidNumberishValue(record: UnknownRecord, keys: string[]): boolean {
+  return keys.some((key) => record[key] !== undefined && record[key] !== null && numberish(record[key]) === null)
+}
+
+function isRaceSpecificSource(sourceKey: string): boolean {
+  return ['race', 'race_rows', 'race_standings', 'race_to_finals', 'rtf', 'race_table'].some(
+    (key) => sourceKey === key || sourceKey.startsWith(`${key}.`)
+  )
+}
+
+function hasRaceSpecificStandingField(record: UnknownRecord): boolean {
+  return ['position', 'race_rank', 'raceRank', 'race_points', 'racePoints'].some((key) => record[key] !== undefined)
+}
+
 function candidateRows(payload: UnknownRecord): { rows: unknown[]; sourceKey: string } | null {
   for (const key of ROW_CONTAINER_KEYS) {
     const value = payload[key]
@@ -94,8 +113,13 @@ function candidateRows(payload: UnknownRecord): { rows: unknown[]; sourceKey: st
   return null
 }
 
-function parseRaceRow(value: unknown): RacePreviewRow | null {
+function parseRaceRow(value: unknown, sourceKey: string): RacePreviewRow | null {
   if (!isRecord(value)) return null
+
+  const standingValueKeys = ['rank', 'position', 'race_rank', 'raceRank', 'place', 'points', 'race_points', 'racePoints', 'total_points', 'totalPoints', 'point_total']
+  if (hasNestedObjectValue(value, ['rank', 'position', 'race_rank', 'raceRank', 'place', 'player_id', 'playerId', 'player_name', 'playerName', 'name', 'full_name', 'fullName', 'display_name', 'displayName', 'points', 'race_points', 'racePoints', 'total_points', 'totalPoints', 'point_total'])) return null
+  if (hasInvalidNumberishValue(value, standingValueKeys)) return null
+  if (!isRaceSpecificSource(sourceKey) && !hasRaceSpecificStandingField(value)) return null
 
   const player = nestedRecord(value, 'player')
   const rank = firstNumberish(value, ['rank', 'position', 'race_rank', 'raceRank', 'place'])
@@ -146,7 +170,7 @@ export function parseRacePreviewPayload(payload: unknown): RacePreviewParseResul
   if (!candidate) return { rows: [], unsupportedReason: 'No supported race row container was found.', sourceKey: null }
 
   const rows = candidate.rows
-    .map(parseRaceRow)
+    .map((row) => parseRaceRow(row, candidate.sourceKey))
     .filter((row): row is RacePreviewRow => row !== null)
     .sort((left, right) => {
       const leftRank = numericRank(left.rank)

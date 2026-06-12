@@ -247,6 +247,81 @@ describe('ViewerRunSnapshotListPage', () => {
     expectNoForbiddenViewerActions()
     expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
   })
+
+  it('renders a safe selected ranking publication preview table with Viewer-only links', async () => {
+    api.listRankingSnapshots.mockResolvedValue({
+      run_id: 'viewer-run-1',
+      snapshots: [
+        {
+          snapshot_sequence: 12,
+          snapshot_kind: 'WEEKLY_PUBLICATION',
+          source_event_id: 'EVENT-1',
+          payload: { rankings: rankingRows(2) }
+        }
+      ]
+    })
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings')
+
+    const table = await screen.findByRole('table', { name: 'Latest selected Top 10 ranking preview table' })
+    expect(within(table).getByRole('link', { name: 'Ali Farag' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/players/P1/career'
+    )
+    expect(within(table).getByRole('link', { name: 'EGY' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/countries/EGY')
+    expect(screen.getByRole('link', { name: /Open ranking detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/rankings/12')
+    expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('renders a safe selected race publication preview table with Viewer-only links', async () => {
+    api.listRaceSnapshots.mockResolvedValue({
+      run_id: 'viewer-run-1',
+      snapshots: [
+        {
+          snapshot_sequence: 5,
+          snapshot_kind: 'RACE_WEEKLY_PUBLICATION',
+          source_event_id: 'EVENT-1',
+          payload: { race_to_finals: { rows: raceRows(2) } }
+        }
+      ]
+    })
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/race')
+
+    const table = await screen.findByRole('table', { name: 'Latest selected Top 10 race preview table' })
+    expect(within(table).getByRole('link', { name: 'Mostafa Asal' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/players/R1/career'
+    )
+    expect(within(table).getByRole('link', { name: 'EGY' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/countries/EGY')
+    expect(screen.getByRole('link', { name: /Open race detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/race/5')
+    expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('keeps malformed selected publication payloads on the existing empty preview state while preserving detail links', async () => {
+    api.listRankingSnapshots.mockResolvedValue({
+      run_id: 'viewer-run-1',
+      snapshots: [
+        {
+          snapshot_sequence: 16,
+          snapshot_kind: 'WEEKLY_PUBLICATION',
+          source_event_id: 'EVENT-1',
+          payload: { rankings: [{ rank: { value: 1 }, player_name: { label: 'Unsafe' }, points: { value: 100 } }] }
+        }
+      ]
+    })
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings')
+
+    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Latest selected Top 10 ranking preview table' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Open ranking detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/rankings/16')
+    expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
 })
 
 describe('ViewerRunSnapshotDetailPage', () => {
@@ -255,7 +330,7 @@ describe('ViewerRunSnapshotDetailPage', () => {
     mockRunMetadata()
   })
 
-  it('renders a real Top 10 ranking preview from a parseable MSA Rankings payload', async () => {
+  it('keeps parseable MSA Rankings detail payloads on the conservative summary path', async () => {
     api.getRankingSnapshot.mockResolvedValue({
       snapshot_sequence: 12,
       snapshot_kind: 'WEEKLY_PUBLICATION',
@@ -273,30 +348,17 @@ describe('ViewerRunSnapshotDetailPage', () => {
     renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings/12')
 
     expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
-    expect(await screen.findByRole('heading', { name: 'Top 10 Ranking Preview' })).toBeInTheDocument()
-    const table = screen.getByRole('table', { name: 'Top 10 ranking preview table' })
-    expect(within(table).getByText('1')).toBeInTheDocument()
-    expect(within(table).getByRole('link', { name: 'Ali Farag' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-1/players/P1/career'
-    )
-    expect(within(table).getByRole('link', { name: 'EGY' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-1/countries/EGY'
-    )
-    expect(within(table).getByText('20000')).toBeInTheDocument()
-    expect(within(table).getByText('12')).toBeInTheDocument()
-    expect(within(table).getByText('+1')).toBeInTheDocument()
-    expect(within(table).getAllByRole('row')).toHaveLength(11)
-    expect(screen.queryByText('Real Player 11')).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Payload summary' })).toBeInTheDocument()
+    expect(await screen.findByText(/Snapshot payload table rendering deferred/i)).toBeInTheDocument()
+    expect(screen.queryByText('Top 10 Ranking Preview')).not.toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Top 10 ranking preview table' })).not.toBeInTheDocument()
     const details = screen.getByText('Show technical payload').closest('details')
     expect(details).not.toHaveAttribute('open')
-    expect(screen.getByText(/ranking-detail-hidden-payload/i)).not.toBeVisible()
     expectNoForbiddenViewerActions()
   })
 
 
-  it('keeps ranking preview players without player IDs as plain text', async () => {
+  it('does not render ranking preview player links on detail pages', async () => {
     api.getRankingSnapshot.mockResolvedValue({
       snapshot_sequence: 12,
       snapshot_kind: 'WEEKLY_PUBLICATION',
@@ -312,13 +374,14 @@ describe('ViewerRunSnapshotDetailPage', () => {
 
     renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings/12')
 
-    const table = await screen.findByRole('table', { name: 'Top 10 ranking preview table' })
-    expect(within(table).getByText('Name Only Player')).toBeInTheDocument()
-    expect(within(table).queryByRole('link', { name: 'Name Only Player' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Payload summary' })).toBeInTheDocument()
+    expect(screen.queryByText('Top 10 Ranking Preview')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Name Only Player' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
-  it('keeps missing ranking preview countries as plain em dash text', async () => {
+  it('does not render missing ranking preview country cells on detail pages', async () => {
     api.getRankingSnapshot.mockResolvedValue({
       snapshot_sequence: 12,
       snapshot_kind: 'WEEKLY_PUBLICATION',
@@ -334,10 +397,10 @@ describe('ViewerRunSnapshotDetailPage', () => {
 
     renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings/12')
 
-    const table = await screen.findByRole('table', { name: 'Top 10 ranking preview table' })
-    const row = within(table).getByText('Country Missing Player').closest('tr') as HTMLElement
-    expect(within(row).getAllByRole('cell')[2]).toHaveTextContent('—')
-    expect(within(row).queryByRole('link', { name: '—' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Payload summary' })).toBeInTheDocument()
+    expect(screen.queryByText('Top 10 Ranking Preview')).not.toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Top 10 ranking preview table' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
@@ -356,15 +419,14 @@ describe('ViewerRunSnapshotDetailPage', () => {
     renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings/12')
 
     expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
-    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
+    expect(await screen.findByText(/Snapshot payload table rendering deferred/i)).toBeInTheDocument()
     expect(screen.queryByRole('table', { name: 'Top 10 ranking preview table' })).not.toBeInTheDocument()
     const details = screen.getByText('Show technical payload').closest('details')
     expect(details).not.toHaveAttribute('open')
-    expect(screen.getByText(/ranking-detail-hidden-payload/i)).not.toBeVisible()
     expectNoForbiddenViewerActions()
   })
 
-  it('renders a real Top 10 Race to Finals preview from a parseable payload', async () => {
+  it('keeps parseable Race to Finals detail payloads on the conservative summary path', async () => {
     api.getRaceSnapshot.mockResolvedValue({
       snapshot_sequence: 5,
       snapshot_kind: 'RACE_WEEKLY_PUBLICATION',
@@ -379,26 +441,12 @@ describe('ViewerRunSnapshotDetailPage', () => {
     renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/race/5')
 
     expect(await screen.findByRole('heading', { name: 'Race to Finals' })).toBeInTheDocument()
-    expect(await screen.findByRole('heading', { name: 'Top 10 Race Preview' })).toBeInTheDocument()
-    const table = screen.getByRole('table', { name: 'Top 10 race preview table' })
-    expect(within(table).getByText('1')).toBeInTheDocument()
-    expect(within(table).getByRole('link', { name: 'Mostafa Asal' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-1/players/R1/career'
-    )
-    expect(within(table).getByRole('link', { name: 'EGY' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-1/countries/EGY'
-    )
-    expect(within(table).getByText('9000')).toBeInTheDocument()
-    expect(within(table).getAllByText('8').length).toBeGreaterThan(0)
-    expect(within(table).getByText('Qualified')).toBeInTheDocument()
-    expect(within(table).getByText('1200')).toBeInTheDocument()
-    expect(within(table).getAllByRole('row')).toHaveLength(11)
-    expect(screen.queryByText('Race Player 11')).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Payload summary' })).toBeInTheDocument()
+    expect(await screen.findByText(/Snapshot payload table rendering deferred/i)).toBeInTheDocument()
+    expect(screen.queryByText('Top 10 Race Preview')).not.toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Top 10 race preview table' })).not.toBeInTheDocument()
     const technicalSection = screen.getByText('Show technical payload').closest('details')
     expect(technicalSection).not.toHaveAttribute('open')
-    expect(screen.getByText(/race-detail-hidden-payload/i)).not.toBeVisible()
     expectNoForbiddenViewerActions()
   })
 
@@ -417,14 +465,13 @@ describe('ViewerRunSnapshotDetailPage', () => {
     renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/race/5')
 
     expect(await screen.findByRole('heading', { name: 'Race to Finals' })).toBeInTheDocument()
-    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
+    expect(await screen.findByText(/Snapshot payload table rendering deferred/i)).toBeInTheDocument()
     expect(screen.queryByRole('table', { name: 'Top 10 race preview table' })).not.toBeInTheDocument()
     expect(screen.getAllByText('EVENT-1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('W3').length).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: /Back to race publications/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/race')
     const technicalSection = screen.getByText('Show technical payload').closest('details')
     expect(technicalSection).not.toHaveAttribute('open')
-    expect(screen.getByText(/race-detail-hidden-payload/i)).not.toBeVisible()
     await userEvent.click(screen.getByText('Show technical payload'))
     expect(within(technicalSection as HTMLElement).getByText(/race-detail-hidden-payload/i)).toBeVisible()
     expectNoForbiddenViewerActions()

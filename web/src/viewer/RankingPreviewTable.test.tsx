@@ -44,6 +44,38 @@ describe('RankingPreviewTable', () => {
     screen.getAllByRole('link').forEach((link) => expect(link).toHaveAttribute('href', expect.stringMatching(/^\/viewer\//)))
   })
 
+  it('encodes slash, hash, and space player/country IDs as Viewer-only links', () => {
+    renderTable(
+      [
+        {
+          rank: 1,
+          playerId: 'P/1 #A',
+          playerName: 'Encoded Player',
+          country: 'CO/DE #1',
+          points: 100,
+          tournamentsCounted: 1,
+          movement: null,
+          previousRank: null
+        }
+      ],
+      'run/alpha #1'
+    )
+
+    const playerHref = screen.getByRole('link', { name: 'Encoded Player' }).getAttribute('href')
+    const countryHref = screen.getByRole('link', { name: 'CO/DE #1' }).getAttribute('href')
+
+    expect(playerHref).toBe('/viewer/runs/run%2Falpha%20%231/players/P%2F1%20%23A/career')
+    expect(countryHref).toBe('/viewer/runs/run%2Falpha%20%231/countries/CO%2FDE%20%231')
+    for (const href of [playerHref, countryHref]) {
+      expect(href).toMatch(/^\/viewer\//)
+      expect(href).not.toMatch(/^\/admin(?:\/|$)/)
+      expect(href).not.toContain('run/alpha #1')
+      expect(href).not.toContain('#')
+    }
+    expect(playerHref).not.toContain('P/1 #A')
+    expect(countryHref).not.toContain('CO/DE #1')
+  })
+
   it('does not expose Admin links or mutation controls', () => {
     renderTable([{ rank: 1, playerId: 'P1', playerName: 'Safe Player', country: null, points: 100, tournamentsCounted: null, movement: null, previousRank: null }])
 
@@ -52,7 +84,7 @@ describe('RankingPreviewTable', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
-  it('does not render object values as [object Object]', () => {
+  it('does not create links or render [object Object] for object-derived player/country IDs', () => {
     renderTable([
       {
         rank: { value: 1 },

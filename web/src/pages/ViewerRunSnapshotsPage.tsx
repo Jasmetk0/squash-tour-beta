@@ -456,8 +456,8 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
 export function ViewerRunSnapshotDetailPage({ mode }: { mode: ViewerSnapshotMode }): JSX.Element {
   const { runId = '', snapshotSequence = '' } = useParams()
   const copy = getSnapshotCopy(mode)
-  const parsedSequence = Number.parseInt(snapshotSequence, 10)
-  const isValidSequence = Number.isInteger(parsedSequence) && parsedSequence > 0
+  const parsedSequence = Number(snapshotSequence)
+  const isValidSequence = /^\d+$/.test(snapshotSequence) && Number.isSafeInteger(parsedSequence) && parsedSequence > 0
 
   const snapshotQuery = useQuery({
     queryKey: [`viewer-${mode}-publication`, runId, parsedSequence],

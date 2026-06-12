@@ -3,17 +3,22 @@ import { Link } from 'react-router-dom'
 import type { RankingPreviewRow } from './rankingPayload'
 import { viewerCountryProfilePath, viewerPlayerProfilePath } from './viewerRoutes'
 
-function displayValue(value: number | string | null): string {
-  return value === null ? '—' : String(value)
+function displayValue(value: unknown): string {
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    return trimmed ? trimmed : '—'
+  }
+  return '—'
 }
 
 function playerLabel(row: RankingPreviewRow): string {
-  return row.playerName ?? row.playerId ?? '—'
+  return displayValue(row.playerName ?? row.playerId)
 }
 
 function movementLabel(row: RankingPreviewRow): string {
-  if (row.movement !== null) return String(row.movement)
-  if (row.previousRank !== null) return `Previous ${row.previousRank}`
+  if (row.movement !== null) return displayValue(row.movement)
+  if (row.previousRank !== null) return `Previous ${displayValue(row.previousRank)}`
   return '—'
 }
 
@@ -25,16 +30,18 @@ type RankingPreviewTableProps = {
 
 function playerCell(row: RankingPreviewRow, runId?: string): JSX.Element | string {
   const label = playerLabel(row)
-  if (!runId || !row.playerId) return label
+  const playerId = displayValue(row.playerId)
+  if (!runId || playerId === '—') return label
 
-  return <Link to={viewerPlayerProfilePath(runId, row.playerId)}>{label}</Link>
+  return <Link to={viewerPlayerProfilePath(runId, playerId)}>{label}</Link>
 }
 
 function countryCell(row: RankingPreviewRow, runId?: string): JSX.Element | string {
-  if (!row.country) return '—'
-  if (!runId) return row.country
+  const country = displayValue(row.country)
+  if (country === '—') return country
+  if (!runId) return country
 
-  return <Link to={viewerCountryProfilePath(runId, row.country)}>{row.country}</Link>
+  return <Link to={viewerCountryProfilePath(runId, country)}>{country}</Link>
 }
 
 export function RankingPreviewTable({ rows, ariaLabel = 'Top 10 ranking preview table', runId }: RankingPreviewTableProps): JSX.Element {

@@ -1262,3 +1262,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Source guards cover the boundary so heuristic preview tables are not reintroduced into detail pages.
 - No ranks, players, points, standings, source events, or race positions are invented.
 - Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 9C note — snapshot list preview safety hardening
+
+- Snapshot list/selected-publication preview parsing and table rendering were hardened separately from detail-page payload rendering.
+- Existing list previews remain read-only and only render rows from supported safe preview payload shapes.
+- Malformed, partial, empty, ambiguous, or nested payloads do not invent ranks, players, points, standings, or race positions.
+- Detail pages remain conservative and do not render inferred standings tables from unknown detail payloads.
+- Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.

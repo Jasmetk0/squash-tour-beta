@@ -3,12 +3,17 @@ import { Link } from 'react-router-dom'
 import type { RacePreviewRow } from './racePayload'
 import { viewerCountryProfilePath, viewerPlayerProfilePath } from './viewerRoutes'
 
-function displayValue(value: number | string | null): string {
-  return value === null ? '—' : String(value)
+function displayValue(value: unknown): string {
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    return trimmed ? trimmed : '—'
+  }
+  return '—'
 }
 
 function playerLabel(row: RacePreviewRow): string {
-  return row.playerName ?? row.playerId ?? '—'
+  return displayValue(row.playerName ?? row.playerId)
 }
 
 type RacePreviewTableProps = {
@@ -19,16 +24,18 @@ type RacePreviewTableProps = {
 
 function playerCell(row: RacePreviewRow, runId?: string): JSX.Element | string {
   const label = playerLabel(row)
-  if (!runId || !row.playerId) return label
+  const playerId = displayValue(row.playerId)
+  if (!runId || playerId === '—') return label
 
-  return <Link to={viewerPlayerProfilePath(runId, row.playerId)}>{label}</Link>
+  return <Link to={viewerPlayerProfilePath(runId, playerId)}>{label}</Link>
 }
 
 function countryCell(row: RacePreviewRow, runId?: string): JSX.Element | string {
-  if (!row.country) return '—'
-  if (!runId) return row.country
+  const country = displayValue(row.country)
+  if (country === '—') return country
+  if (!runId) return country
 
-  return <Link to={viewerCountryProfilePath(runId, row.country)}>{row.country}</Link>
+  return <Link to={viewerCountryProfilePath(runId, country)}>{country}</Link>
 }
 
 export function RacePreviewTable({ rows, ariaLabel = 'Top 10 race preview table', runId }: RacePreviewTableProps): JSX.Element {

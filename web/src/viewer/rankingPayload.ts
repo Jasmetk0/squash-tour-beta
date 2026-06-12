@@ -37,8 +37,9 @@ function numberish(value: unknown): number | string | null {
   if (typeof value === 'string') {
     const trimmed = value.trim()
     if (!trimmed) return null
-    const parsed = Number(trimmed)
-    return Number.isFinite(parsed) ? parsed : trimmed
+    const normalized = trimmed.replace(/,/g, '')
+    const parsed = Number(normalized)
+    return Number.isFinite(parsed) ? parsed : null
   }
   return null
 }
@@ -85,6 +86,14 @@ function nestedRecord(record: UnknownRecord, key: string): UnknownRecord | null 
   return isRecord(value) ? value : null
 }
 
+function hasNestedObjectValue(record: UnknownRecord, keys: string[]): boolean {
+  return keys.some((key) => isRecord(record[key]))
+}
+
+function hasInvalidNumberishValue(record: UnknownRecord, keys: string[]): boolean {
+  return keys.some((key) => record[key] !== undefined && record[key] !== null && numberish(record[key]) === null)
+}
+
 function candidateRows(payload: UnknownRecord): { rows: unknown[]; sourceKey: string } | null {
   for (const key of ROW_CONTAINER_KEYS) {
     const value = payload[key]
@@ -102,6 +111,10 @@ function parseRankingRow(value: unknown): RankingPreviewRow | null {
   if (!isRecord(value)) return null
 
   const player = nestedRecord(value, 'player')
+  const standingValueKeys = ['rank', 'position', 'current_rank', 'ranking', 'place', 'points', 'ranking_points', 'total_points', 'point_total']
+  if (hasNestedObjectValue(value, ['rank', 'position', 'current_rank', 'ranking', 'place', 'player_id', 'playerId', 'player_name', 'playerName', 'name', 'full_name', 'display_name', 'points', 'ranking_points', 'total_points', 'point_total'])) return null
+  if (hasInvalidNumberishValue(value, standingValueKeys)) return null
+
   const rank = firstNumberish(value, ['rank', 'position', 'current_rank', 'ranking', 'place'])
   const playerId = firstString(value, ['player_id', 'playerId']) ?? (player ? firstString(player, ['player_id', 'playerId', 'id']) : null)
   const playerName =

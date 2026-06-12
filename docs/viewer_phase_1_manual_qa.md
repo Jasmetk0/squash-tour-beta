@@ -1278,3 +1278,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Empty, malformed, unavailable, or ambiguous list payloads do not invent ranks, players, points, standings, source events, or race positions.
 - Detail pages remain conservative and do not render inferred standings tables from unknown detail payloads.
 - Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 9E note — snapshot filter/selection state hardening
+
+- Snapshot list filter and selected-publication state were hardened for invalid URL selections, missing selected snapshots, filter transitions, and no-match states.
+- Week, category, and source-event filters keep selected-publication summaries aligned with real filtered snapshots only.
+- Empty, malformed, unavailable, filtered-out, or ambiguous states do not invent snapshot sequences, source events, rows, rankings, standings, or race positions.
+- Detail pages remain conservative and do not render inferred standings tables from unknown detail payloads.
+- Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.

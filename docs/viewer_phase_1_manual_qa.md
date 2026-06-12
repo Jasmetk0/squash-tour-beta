@@ -1286,3 +1286,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Empty, malformed, unavailable, filtered-out, or ambiguous states do not invent snapshot sequences, source events, rows, rankings, standings, or race positions.
 - Detail pages remain conservative and do not render inferred standings tables from unknown detail payloads.
 - Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 9F note — snapshot detail error/source-context hardening
+
+- Snapshot detail pages were hardened for invalid route params, missing publications, API errors, neighboring publications, source-event context, encoded links, and technical payload disclosure.
+- Detail pages remain conservative: they render payload summaries and deferred table-audit reasons instead of inferred standings tables.
+- Missing, malformed, unavailable, ambiguous, or non-string source-event data does not invent planned events, tournament links, weeks, rows, rankings, standings, or race positions.
+- Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.

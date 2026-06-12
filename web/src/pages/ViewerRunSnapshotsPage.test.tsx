@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -69,6 +69,76 @@ function mockRunMetadata(runId = 'viewer-run-1', sourceEventId = 'EVENT-1'): voi
     run_id: runId,
     events: [{ event_sequence: 8, event_id: sourceEventId, season: 2027, week: 3, template_id: 'WT-PLAT', tournament_result: {} }]
   })
+}
+
+function mockRunMetadataWithEvents(
+  runId = 'viewer-run-1',
+  events: Array<{ event_id: string; week: number; tour: string; category: string; template_id: string }>
+): void {
+  api.getRun.mockResolvedValue({
+    run: {
+      run_id: runId,
+      season: 2027,
+      seed: 42,
+      config_version: 'v1',
+      config_fingerprint: 'fp',
+      next_event_index: events.length,
+      total_events: events.length,
+      completed_event_ids: events.map((event) => event.event_id)
+    },
+    season_state: {
+      season: 2027,
+      next_event_index: events.length,
+      completed_event_ids: events.map((event) => event.event_id),
+      ordered_events: events.map((event) => ({ ...event, season: 2027 }))
+    }
+  })
+  api.listEvents.mockResolvedValue({
+    run_id: runId,
+    events: events.map((event, index) => ({
+      event_sequence: index + 1,
+      event_id: event.event_id,
+      season: 2027,
+      week: event.week,
+      template_id: event.template_id,
+      tournament_result: {}
+    }))
+  })
+}
+
+function mockPhase9ESnapshotContext(): void {
+  mockRunMetadataWithEvents('viewer-run-1', [
+    { event_id: 'EVENT-1', week: 3, tour: 'World Tour', category: 'Platinum', template_id: 'WT-PLAT' },
+    { event_id: 'EVENT-2', week: 4, tour: 'Elite Tour', category: 'Gold', template_id: 'ET-GOLD' },
+    { event_id: 'EVENT-3', week: 5, tour: 'World Tour', category: 'Bronze', template_id: 'WT-BRONZE' }
+  ])
+}
+
+function mockRankingSnapshotsForSelection(): void {
+  api.listRankingSnapshots.mockResolvedValue({
+    run_id: 'viewer-run-1',
+    snapshots: [
+      { snapshot_sequence: 11, snapshot_kind: 'WEEKLY_PUBLICATION', source_event_id: 'EVENT-1', payload: {} },
+      { snapshot_sequence: 12, snapshot_kind: 'WEEKLY_PUBLICATION', source_event_id: 'EVENT-2', payload: {} }
+    ]
+  })
+}
+
+function selectedPublicationSummary(): HTMLElement {
+  const heading = screen.getByRole('heading', { name: 'Latest selected publication summary' })
+  const summary = heading.closest('article')
+  expect(summary).not.toBeNull()
+  return summary as HTMLElement
+}
+
+function expectSelectedSummarySequence(sequence: number): void {
+  const summary = selectedPublicationSummary()
+  expect(within(summary).getByText('Snapshot sequence')).toBeInTheDocument()
+  expect(within(summary).getByText(String(sequence))).toBeInTheDocument()
+  expect(within(summary).getByRole('link', { name: /Open ranking detail/i })).toHaveAttribute(
+    'href',
+    `/viewer/runs/viewer-run-1/rankings/${sequence}`
+  )
 }
 
 
@@ -273,6 +343,167 @@ describe('ViewerRunSnapshotListPage', () => {
     expect(screen.queryByText(/Snapshot sequence \d+/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/Source event EVENT/i)).not.toBeInTheDocument()
     expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
+    expectNoPreviewTables()
+    expectNoForbiddenViewerActions()
+  })
+
+
+  it('falls back from an invalid selectedSequence query param to the first valid filtered snapshot', async () => {
+    mockPhase9ESnapshotContext()
+    mockRankingSnapshotsForSelection()
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings?selectedSequence=abc')
+
+    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
+    expectSelectedSummarySequence(11)
+    expect(screen.getByRole('link', { name: /Open ranking detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/rankings/11')
+    expect(screen.queryByText(/abc/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('article', { name: /Ranking publication abc/i })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('falls back when selectedSequence points to a missing snapshot without inventing the missing summary', async () => {
+    mockPhase9ESnapshotContext()
+    mockRankingSnapshotsForSelection()
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings?selectedSequence=999')
+
+    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
+    expectSelectedSummarySequence(11)
+    expect(screen.getByRole('link', { name: /Open ranking detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/rankings/11')
+    expect(screen.queryByRole('article', { name: 'Ranking publication 999' })).not.toBeInTheDocument()
+    expect(screen.queryByText('999')).not.toBeInTheDocument()
+    expectNoPreviewTables()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('honors a valid selectedSequence query param for an existing filtered snapshot', async () => {
+    mockPhase9ESnapshotContext()
+    mockRankingSnapshotsForSelection()
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings?selectedSequence=12')
+
+    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
+    expectSelectedSummarySequence(12)
+    expect(screen.getByRole('button', { name: /Ranking publication #12/i })).toHaveAttribute('aria-current', 'true')
+    expect(screen.getByRole('link', { name: /Open ranking detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/rankings/12')
+    expectNoForbiddenViewerActions()
+  })
+
+  it('moves the selected publication when the week filter removes the URL-selected snapshot', async () => {
+    const user = userEvent.setup()
+    mockPhase9ESnapshotContext()
+    mockRankingSnapshotsForSelection()
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings?selectedSequence=12')
+
+    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
+    expectSelectedSummarySequence(12)
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Filter publications by week' }), '3')
+
+    await waitFor(() => expectSelectedSummarySequence(11))
+    expect(screen.getByRole('link', { name: /Open ranking detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/rankings/11')
+    expect(screen.queryByRole('article', { name: 'Ranking publication 12' })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('moves the selected publication when the category filter removes the URL-selected snapshot', async () => {
+    const user = userEvent.setup()
+    mockPhase9ESnapshotContext()
+    mockRankingSnapshotsForSelection()
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings?selectedSequence=12')
+
+    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
+    expectSelectedSummarySequence(12)
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Filter publications by category' }), 'Platinum')
+
+    await waitFor(() => expectSelectedSummarySequence(11))
+    expect(screen.getByRole('link', { name: /Open ranking detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/rankings/11')
+    expect(screen.queryByRole('article', { name: 'Ranking publication 12' })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('moves the selected publication when the case-insensitive source event filter removes it', async () => {
+    const user = userEvent.setup()
+    mockPhase9ESnapshotContext()
+    mockRankingSnapshotsForSelection()
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings?selectedSequence=12')
+
+    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
+    expectSelectedSummarySequence(12)
+
+    await user.type(screen.getByRole('textbox', { name: 'Filter publications by source event' }), 'event-1')
+
+    await waitFor(() => expectSelectedSummarySequence(11))
+    expect(screen.getByRole('link', { name: /Open ranking detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/rankings/11')
+    expect(screen.queryByRole('article', { name: 'Ranking publication 12' })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('filters slash/hash source events and keeps generated links encoded and Viewer-only', async () => {
+    const user = userEvent.setup()
+    const sourceEventId = 'EVENT/SLASH#HASH'
+    const encodedSourceEventId = encodeURIComponent(sourceEventId)
+    mockRunMetadataWithEvents('viewer-run-1', [
+      { event_id: sourceEventId, week: 6, tour: 'World Tour', category: 'Platinum', template_id: 'WT-SLASH' },
+      { event_id: 'EVENT-OTHER', week: 7, tour: 'Elite Tour', category: 'Gold', template_id: 'ET-OTHER' }
+    ])
+    api.listRankingSnapshots.mockResolvedValue({
+      run_id: 'viewer-run-1',
+      snapshots: [
+        { snapshot_sequence: 31, snapshot_kind: 'WEEKLY_PUBLICATION', source_event_id: sourceEventId, payload: {} },
+        { snapshot_sequence: 32, snapshot_kind: 'WEEKLY_PUBLICATION', source_event_id: 'EVENT-OTHER', payload: {} }
+      ]
+    })
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings')
+
+    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
+    await user.type(screen.getByRole('textbox', { name: 'Filter publications by source event' }), 'slash#hash')
+
+    await waitFor(() => expectSelectedSummarySequence(31))
+    expect(screen.getByRole('article', { name: 'Ranking publication 31' })).toBeInTheDocument()
+    expect(screen.queryByRole('article', { name: 'Ranking publication 32' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Open planned event/i })).toHaveAttribute(
+      'href',
+      `/viewer/runs/viewer-run-1/calendar/${encodedSourceEventId}`
+    )
+    expect(screen.getByRole('link', { name: /Open tournament detail/i })).toHaveAttribute(
+      'href',
+      `/viewer/runs/viewer-run-1/tournaments/${encodedSourceEventId}`
+    )
+    screen.queryAllByRole('link').forEach((link) => {
+      const href = link.getAttribute('href') ?? ''
+      expect(href).toMatch(/^\/viewer\//)
+      expect(href).not.toContain(`/calendar/${sourceEventId}`)
+      expect(href).not.toContain(`/tournaments/${sourceEventId}`)
+    })
+    expectNoForbiddenViewerActions()
+    expectNoAdminLinks()
+  })
+
+  it('clears selected publication UI when filters match no publications without inventing snapshot data', async () => {
+    const user = userEvent.setup()
+    mockPhase9ESnapshotContext()
+    mockRankingSnapshotsForSelection()
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings?selectedSequence=12')
+
+    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
+    expectSelectedSummarySequence(12)
+
+    await user.type(screen.getByRole('textbox', { name: 'Filter publications by source event' }), 'NO-MATCH')
+
+    expect(await screen.findByText('No publications match the current filters.')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: 'Latest selected publication summary' })).not.toBeInTheDocument()
+    })
+    expect(screen.queryByRole('link', { name: /Open ranking detail/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('article', { name: /Ranking publication 999/i })).not.toBeInTheDocument()
     expectNoPreviewTables()
     expectNoForbiddenViewerActions()
   })

@@ -156,8 +156,9 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
   const [weekFilter, setWeekFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [sourceEventFilter, setSourceEventFilter] = useState('')
-  const requestedSequence = Number.parseInt(searchParams.get('selectedSequence') ?? '', 10)
-  const hasRequestedSequence = Number.isInteger(requestedSequence)
+  const requestedSequenceParam = searchParams.get('selectedSequence')
+  const requestedSequence = requestedSequenceParam && /^\d+$/.test(requestedSequenceParam) ? Number.parseInt(requestedSequenceParam, 10) : NaN
+  const hasRequestedSequence = Number.isInteger(requestedSequence) && requestedSequence > 0
 
   const snapshotsQuery = useQuery({
     queryKey: [`viewer-${mode}-publications`, runId],
@@ -215,20 +216,45 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
   }, [plannedContext, snapshots])
 
   useEffect(() => {
-    if (!filteredSnapshots.length) {
-      setSelectedSequence(null)
-      return
+    if (snapshotsQuery.isLoading || snapshotsQuery.error) return
+
+    const requestedSnapshot = hasRequestedSequence
+      ? filteredSnapshots.find((snapshot) => snapshot.snapshot_sequence === requestedSequence)
+      : null
+    const selectedSnapshot = selectedSequence
+      ? filteredSnapshots.find((snapshot) => snapshot.snapshot_sequence === selectedSequence)
+      : null
+    const nextSelectedSequence = requestedSnapshot?.snapshot_sequence ?? selectedSnapshot?.snapshot_sequence ?? filteredSnapshots[0]?.snapshot_sequence ?? null
+
+    if (selectedSequence !== nextSelectedSequence) {
+      setSelectedSequence(nextSelectedSequence)
     }
 
-    if (hasRequestedSequence && filteredSnapshots.some((snapshot) => snapshot.snapshot_sequence === requestedSequence)) {
-      if (selectedSequence !== requestedSequence) setSelectedSequence(requestedSequence)
-      return
+    const nextSelectedSequenceParam = nextSelectedSequence == null ? null : String(nextSelectedSequence)
+    if (requestedSequenceParam !== nextSelectedSequenceParam) {
+      setSearchParams(
+        (current) => {
+          const next = new URLSearchParams(current)
+          if (nextSelectedSequenceParam == null) {
+            next.delete('selectedSequence')
+          } else {
+            next.set('selectedSequence', nextSelectedSequenceParam)
+          }
+          return next
+        },
+        { replace: true }
+      )
     }
-
-    if (!selectedSequence || !filteredSnapshots.some((snapshot) => snapshot.snapshot_sequence === selectedSequence)) {
-      setSelectedSequence(filteredSnapshots[0].snapshot_sequence)
-    }
-  }, [filteredSnapshots, hasRequestedSequence, requestedSequence, selectedSequence])
+  }, [
+    filteredSnapshots,
+    hasRequestedSequence,
+    requestedSequence,
+    requestedSequenceParam,
+    selectedSequence,
+    setSearchParams,
+    snapshotsQuery.error,
+    snapshotsQuery.isLoading
+  ])
 
   const selected = filteredSnapshots.find((snapshot) => snapshot.snapshot_sequence === selectedSequence) ?? null
   const selectedSourceEventId = normalizeSourceEventId(selected?.source_event_id)

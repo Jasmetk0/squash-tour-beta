@@ -197,6 +197,86 @@ describe('ViewerRunSnapshotListPage', () => {
     expectNoForbiddenViewerActions()
   })
 
+  it('drops unsafe ranking snapshot entries and renders only the valid snapshot', async () => {
+    api.listRankingSnapshots.mockResolvedValue({
+      run_id: 'viewer-run-1',
+      snapshots: [
+        null,
+        123,
+        'bad',
+        {},
+        { snapshot_sequence: 'bad', snapshot_kind: 'WEEKLY_PUBLICATION', payload: {} },
+        {
+          snapshot_sequence: 18,
+          snapshot_kind: 'WEEKLY_PUBLICATION',
+          source_event_id: 'EVENT-1',
+          payload: {}
+        }
+      ]
+    })
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings')
+
+    expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
+    expect(screen.getByRole('article', { name: 'Ranking publication 18' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Open ranking detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/rankings/18')
+    expect(screen.getAllByText('WEEKLY_PUBLICATION').length).toBeGreaterThan(0)
+    expect(screen.queryByRole('article', { name: /Ranking publication bad/i })).not.toBeInTheDocument()
+    expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
+    expectNoPreviewTables()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('drops unsafe race snapshot entries and renders only the valid snapshot', async () => {
+    api.listRaceSnapshots.mockResolvedValue({
+      run_id: 'viewer-run-1',
+      snapshots: [
+        null,
+        123,
+        'bad',
+        {},
+        { snapshot_sequence: 'bad', snapshot_kind: 'RACE_WEEKLY_PUBLICATION', payload: {} },
+        {
+          snapshot_sequence: 7,
+          snapshot_kind: 'RACE_WEEKLY_PUBLICATION',
+          source_event_id: 'EVENT-1',
+          payload: {}
+        }
+      ]
+    })
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/race')
+
+    expect(await screen.findByRole('heading', { name: 'Race to Finals' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
+    expect(screen.getByRole('article', { name: 'Race publication 7' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Open race detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/race/7')
+    expect(screen.getAllByText('RACE_WEEKLY_PUBLICATION').length).toBeGreaterThan(0)
+    expect(screen.queryByRole('article', { name: /Race publication bad/i })).not.toBeInTheDocument()
+    expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
+    expectNoPreviewTables()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('normalizes lists with only unsafe snapshot entries to the empty state', async () => {
+    api.listRankingSnapshots.mockResolvedValue({
+      run_id: 'viewer-run-1',
+      snapshots: [null, 123, 'bad', {}, { snapshot_sequence: 'bad', snapshot_kind: 'WEEKLY_PUBLICATION', payload: {} }]
+    })
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings')
+
+    expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Latest selected publication summary' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Snapshot sequence \d+/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Source event EVENT/i)).not.toBeInTheDocument()
+    expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
+    expectNoPreviewTables()
+    expectNoForbiddenViewerActions()
+  })
+
   it('renders the run-scoped MSA Rankings page without primary raw payload content', async () => {
     api.listRankingSnapshots.mockResolvedValue({
       run_id: 'viewer-run-1',

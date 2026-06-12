@@ -123,8 +123,21 @@ function normalizeSourceEventId(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value : null
 }
 
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isSnapshotListItem(value: unknown): value is RankingSnapshot | RaceSnapshot {
+  if (!isPlainRecord(value)) return false
+  const sequence = value.snapshot_sequence
+  if (typeof sequence !== 'number' || !Number.isInteger(sequence) || sequence <= 0) return false
+  if (typeof value.snapshot_kind !== 'string') return false
+  if (!Object.prototype.hasOwnProperty.call(value, 'payload')) return false
+  return true
+}
+
 function normalizeSnapshots(data: { snapshots?: unknown } | undefined): Array<RankingSnapshot | RaceSnapshot> {
-  return Array.isArray(data?.snapshots) ? (data.snapshots as Array<RankingSnapshot | RaceSnapshot>) : []
+  return Array.isArray(data?.snapshots) ? data.snapshots.filter(isSnapshotListItem) : []
 }
 
 function detailPath(mode: ViewerSnapshotMode, runId: string, sequence: number): string {

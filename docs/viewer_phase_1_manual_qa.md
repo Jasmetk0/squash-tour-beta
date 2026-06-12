@@ -1301,3 +1301,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Detail pages remain conservative and do not render inferred standings tables from unknown detail payloads.
 - Strict sequence parsing, unsafe snapshot normalization, source-event normalization, Viewer-only encoded links, and read-only safety are guarded.
 - Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 10A note — player/country preview-link route parity audit
+
+- Viewer player/country preview links used by ranking/race preview tables were audited for route parity.
+- Player and country links remain Viewer-only, encoded, scalar-safe, and backed by registered App route patterns.
+- Unsafe or object-derived player/country values do not create links or [object Object] output.
+- No player/country data, rankings, standings, or profiles are invented.
+- Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.

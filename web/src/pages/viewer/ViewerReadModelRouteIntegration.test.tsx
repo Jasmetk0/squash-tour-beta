@@ -5,8 +5,10 @@ import { buildRunBrowserContextLinks, buildRunBrowserPrimaryLinks } from '../../
 import { buildViewerHomeActiveRunLinks, buildViewerHomePrimaryHubLinks } from '../../viewer/viewerHomeDisplay'
 import { viewerTopLevelHubLinks } from '../../viewer/viewerHubLinks'
 import {
+  viewerCountryProfilePath,
   viewerHistoryPath,
   viewerPlannedEventPath,
+  viewerPlayerProfilePath,
   viewerRacePath,
   viewerRaceSnapshotPath,
   viewerRankingSnapshotPath,
@@ -34,7 +36,9 @@ const expectedViewerRoutePatterns = [
   '/viewer/runs/:runId/race',
   '/viewer/runs/:runId/race/:snapshotSequence',
   '/viewer/runs/:runId/players',
+  '/viewer/runs/:runId/players/:playerId/career',
   '/viewer/runs/:runId/countries',
+  '/viewer/runs/:runId/countries/:countryCode',
   '/viewer/runs/:runId/history',
   '/viewer/runs/:runId/finals',
   '/viewer/predictions',
@@ -85,6 +89,41 @@ describe('Viewer read-model route integration', () => {
 
     for (const route of expectedViewerRoutePatterns) {
       expect(routes).toContain(route)
+    }
+  })
+
+  it('keeps player/country preview route helpers Viewer-only, registered, and encoded', () => {
+    const runId = 'run/alpha #1'
+    const playerId = 'P/1 #A'
+    const countryCode = 'CO/DE #1'
+    const encodedRunSegment = 'run%2Falpha%20%231'
+    const encodedPlayerSegment = 'P%2F1%20%23A'
+    const encodedCountrySegment = 'CO%2FDE%20%231'
+    const destinations = [
+      {
+        destination: viewerPlayerProfilePath(runId, playerId),
+        encodedSegment: encodedPlayerSegment,
+        rawSegment: playerId,
+        routeTail: `/players/${encodedPlayerSegment}/career`
+      },
+      {
+        destination: viewerCountryProfilePath(runId, countryCode),
+        encodedSegment: encodedCountrySegment,
+        rawSegment: countryCode,
+        routeTail: `/countries/${encodedCountrySegment}`
+      }
+    ]
+
+    for (const { destination, encodedSegment, rawSegment, routeTail } of destinations) {
+      expectViewerOnlyPath(destination)
+      expect(destination).not.toMatch(adminPathPattern)
+      expect(destination).toContain(`/viewer/runs/${encodedRunSegment}`)
+      expect(destination).toContain(encodedSegment)
+      expect(destination).toContain(routeTail)
+      expect(destination).not.toContain(runId)
+      expect(destination).not.toContain(rawSegment)
+      expect(destination).not.toContain('#')
+      expect(viewerRouteExists(destination)).toBe(true)
     }
   })
 

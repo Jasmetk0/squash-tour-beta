@@ -1270,3 +1270,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Malformed, partial, empty, ambiguous, or nested payloads do not invent ranks, players, points, standings, or race positions.
 - Detail pages remain conservative and do not render inferred standings tables from unknown detail payloads.
 - Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 9D note — snapshot list page error/empty-state hardening
+
+- Snapshot list pages were hardened for loading, empty, error, selected-publication, malformed preview payload, and encoded-link states.
+- Ranking/Race list previews remain read-only and only render rows from supported safe preview payload shapes.
+- Empty, malformed, unavailable, or ambiguous list payloads do not invent ranks, players, points, standings, source events, or race positions.
+- Detail pages remain conservative and do not render inferred standings tables from unknown detail payloads.
+- Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.

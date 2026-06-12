@@ -103,6 +103,7 @@ function getSnapshot(mode: ViewerSnapshotMode, runId: string, sequence: number):
 function buildPlannedContext(runData: SeasonStateResponse | undefined): Map<string, PlannedSnapshotContext> {
   const map = new Map<string, PlannedSnapshotContext>()
   ;(runData?.season_state.ordered_events ?? []).forEach((event, index) => {
+    if (typeof event.event_id !== 'string') return
     map.set(event.event_id, {
       week: event.week,
       category: event.category,
@@ -116,6 +117,27 @@ function buildPlannedContext(runData: SeasonStateResponse | undefined): Map<stri
 
 function resolveWeek(plannedContext?: PlannedSnapshotContext, persistedEvent?: PersistedEventContext): number | null {
   return persistedEvent?.week ?? plannedContext?.week ?? null
+}
+
+function normalizeSourceEventId(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value : null
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isSnapshotListItem(value: unknown): value is RankingSnapshot | RaceSnapshot {
+  if (!isPlainRecord(value)) return false
+  const sequence = value.snapshot_sequence
+  if (typeof sequence !== 'number' || !Number.isInteger(sequence) || sequence <= 0) return false
+  if (typeof value.snapshot_kind !== 'string') return false
+  if (!Object.prototype.hasOwnProperty.call(value, 'payload')) return false
+  return true
+}
+
+function normalizeSnapshots(data: { snapshots?: unknown } | undefined): Array<RankingSnapshot | RaceSnapshot> {
+  return Array.isArray(data?.snapshots) ? data.snapshots.filter(isSnapshotListItem) : []
 }
 
 function detailPath(mode: ViewerSnapshotMode, runId: string, sequence: number): string {
@@ -145,11 +167,12 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
   const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId) })
   const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId) })
 
-  const snapshots = snapshotsQuery.data?.snapshots ?? []
+  const snapshots = normalizeSnapshots(snapshotsQuery.data)
   const plannedContext = useMemo(() => buildPlannedContext(runQuery.data), [runQuery.data])
   const persistedEventsById = useMemo(() => {
     const map = new Map<string, PersistedEventContext>()
     ;(eventsQuery.data?.events ?? []).forEach((event) => {
+      if (typeof event.event_id !== 'string') return
       map.set(event.event_id, { eventSequence: event.event_sequence, week: event.week })
     })
     return map
@@ -157,7 +180,7 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
 
   const normalizedSourceEventFilter = sourceEventFilter.trim().toLowerCase()
   const filteredSnapshots = snapshots.filter((snapshot) => {
-    const sourceEventId = snapshot.source_event_id
+    const sourceEventId = normalizeSourceEventId(snapshot.source_event_id)
     const planned = sourceEventId ? plannedContext.get(sourceEventId) : undefined
     const persisted = sourceEventId ? persistedEventsById.get(sourceEventId) : undefined
     const effectiveWeek = resolveWeek(planned, persisted)
@@ -172,7 +195,7 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
   const weekOptions = useMemo(() => {
     const values = new Set<string>()
     snapshots.forEach((snapshot) => {
-      const sourceEventId = snapshot.source_event_id
+      const sourceEventId = normalizeSourceEventId(snapshot.source_event_id)
       const planned = sourceEventId ? plannedContext.get(sourceEventId) : undefined
       const persisted = sourceEventId ? persistedEventsById.get(sourceEventId) : undefined
       const effectiveWeek = resolveWeek(planned, persisted)
@@ -184,7 +207,7 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
   const categoryOptions = useMemo(() => {
     const values = new Set<string>()
     snapshots.forEach((snapshot) => {
-      const sourceEventId = snapshot.source_event_id
+      const sourceEventId = normalizeSourceEventId(snapshot.source_event_id)
       const category = sourceEventId ? plannedContext.get(sourceEventId)?.category : undefined
       if (category) values.add(category)
     })
@@ -208,8 +231,9 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
   }, [filteredSnapshots, hasRequestedSequence, requestedSequence, selectedSequence])
 
   const selected = filteredSnapshots.find((snapshot) => snapshot.snapshot_sequence === selectedSequence) ?? null
-  const selectedPlanned = selected?.source_event_id ? plannedContext.get(selected.source_event_id) : undefined
-  const selectedPersisted = selected?.source_event_id ? persistedEventsById.get(selected.source_event_id) : undefined
+  const selectedSourceEventId = normalizeSourceEventId(selected?.source_event_id)
+  const selectedPlanned = selectedSourceEventId ? plannedContext.get(selectedSourceEventId) : undefined
+  const selectedPersisted = selectedSourceEventId ? persistedEventsById.get(selectedSourceEventId) : undefined
   const selectedWeek = resolveWeek(selectedPlanned, selectedPersisted)
   const selectedRankingPreview = mode === 'ranking' && selected ? parseRankingPreviewPayload(selected.payload) : null
   const selectedRacePreview = mode === 'race' && selected ? parseRacePreviewPayload(selected.payload) : null
@@ -232,7 +256,7 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
             items={[
               { label: 'Snapshot sequence', value: selected.snapshot_sequence },
               { label: 'Kind', value: selected.snapshot_kind },
-              { label: 'Source event', value: selected.source_event_id ?? 'No source event recorded' },
+              { label: 'Source event', value: selectedSourceEventId ?? 'No source event recorded' },
               { label: 'Week', value: selectedWeek != null ? `W${selectedWeek}` : 'No week context' },
               { label: 'Planned category', value: selectedPlanned?.category ?? 'No ordered-plan match' },
               { label: 'Planned tour', value: selectedPlanned?.tour ?? 'No ordered-plan match' },
@@ -309,7 +333,7 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
             getKey={(snapshot) => `${snapshot.snapshot_kind}-${snapshot.snapshot_sequence}`}
             getLabel={(snapshot) => `${copy.publicationLabel} #${snapshot.snapshot_sequence}`}
             getSubLabel={(snapshot) => {
-              const sourceEventId = snapshot.source_event_id
+              const sourceEventId = normalizeSourceEventId(snapshot.source_event_id)
               const planned = sourceEventId ? plannedContext.get(sourceEventId) : undefined
               const persisted = sourceEventId ? persistedEventsById.get(sourceEventId) : undefined
               const week = resolveWeek(planned, persisted)
@@ -342,7 +366,7 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
         {filteredSnapshots.length > 0 ? (
           <ul className="item-list" aria-label={`${copy.pluralPublicationLabel} sports metadata`}>
             {filteredSnapshots.map((snapshot) => {
-              const sourceEventId = snapshot.source_event_id
+              const sourceEventId = normalizeSourceEventId(snapshot.source_event_id)
               const planned = sourceEventId ? plannedContext.get(sourceEventId) : undefined
               const persisted = sourceEventId ? persistedEventsById.get(sourceEventId) : undefined
               const week = resolveWeek(planned, persisted)
@@ -428,19 +452,20 @@ export function ViewerRunSnapshotDetailPage({ mode }: { mode: ViewerSnapshotMode
   const persistedEventsById = useMemo(() => {
     const map = new Map<string, PersistedEventContext>()
     ;(eventsQuery.data?.events ?? []).forEach((event) => {
+      if (typeof event.event_id !== 'string') return
       map.set(event.event_id, { eventSequence: event.event_sequence, week: event.week })
     })
     return map
   }, [eventsQuery.data?.events])
 
-  const neighboringSnapshots = snapshotsQuery.data?.snapshots ?? []
+  const neighboringSnapshots = normalizeSnapshots(snapshotsQuery.data)
   const currentSnapshotIndex = neighboringSnapshots.findIndex((item) => item.snapshot_sequence === parsedSequence)
   const previousSnapshot = currentSnapshotIndex > 0 ? neighboringSnapshots[currentSnapshotIndex - 1] : null
   const nextSnapshot =
     currentSnapshotIndex >= 0 && currentSnapshotIndex < neighboringSnapshots.length - 1
       ? neighboringSnapshots[currentSnapshotIndex + 1]
       : null
-  const sourceEventId = snapshot?.source_event_id ?? null
+  const sourceEventId = normalizeSourceEventId(snapshot?.source_event_id)
   const planned = sourceEventId ? plannedContext.get(sourceEventId) : undefined
   const persisted = sourceEventId ? persistedEventsById.get(sourceEventId) : undefined
   const week = resolveWeek(planned, persisted)

@@ -43,31 +43,31 @@ function renderViewerSnapshotRoute(route: string): void {
   )
 }
 
-function mockRunMetadata(): void {
+function mockRunMetadata(runId = 'viewer-run-1', sourceEventId = 'EVENT-1'): void {
   api.getRun.mockResolvedValue({
     run: {
-      run_id: 'viewer-run-1',
+      run_id: runId,
       season: 2027,
       seed: 42,
       config_version: 'v1',
       config_fingerprint: 'fp',
       next_event_index: 1,
       total_events: 2,
-      completed_event_ids: ['EVENT-1']
+      completed_event_ids: [sourceEventId]
     },
     season_state: {
       season: 2027,
       next_event_index: 1,
-      completed_event_ids: ['EVENT-1'],
+      completed_event_ids: [sourceEventId],
       ordered_events: [
-        { event_id: 'EVENT-1', season: 2027, week: 3, tour: 'World Tour', category: 'Platinum', template_id: 'WT-PLAT' },
+        { event_id: sourceEventId, season: 2027, week: 3, tour: 'World Tour', category: 'Platinum', template_id: 'WT-PLAT' },
         { event_id: 'EVENT-2', season: 2027, week: 4, tour: 'Elite Tour', category: 'Gold', template_id: 'ET-GOLD' }
       ]
     }
   })
   api.listEvents.mockResolvedValue({
-    run_id: 'viewer-run-1',
-    events: [{ event_sequence: 8, event_id: 'EVENT-1', season: 2027, week: 3, template_id: 'WT-PLAT', tournament_result: {} }]
+    run_id: runId,
+    events: [{ event_sequence: 8, event_id: sourceEventId, season: 2027, week: 3, template_id: 'WT-PLAT', tournament_result: {} }]
   })
 }
 
@@ -124,10 +124,157 @@ function expectNoForbiddenViewerActions(): void {
   })
 }
 
+function expectNoAdminLinks(): void {
+  screen.queryAllByRole('link').forEach((link) => {
+    expect(link.getAttribute('href') ?? '').not.toMatch(/^\/admin/)
+  })
+}
+
+function expectNoPreviewTables(): void {
+  expect(screen.queryByRole('table', { name: /ranking preview table/i })).not.toBeInTheDocument()
+  expect(screen.queryByRole('table', { name: /race preview table/i })).not.toBeInTheDocument()
+}
+
 describe('ViewerRunSnapshotListPage', () => {
   beforeEach(() => {
     vi.resetAllMocks()
     mockRunMetadata()
+  })
+
+  it('keeps the ranking list API error state safe and read-only', async () => {
+    api.listRankingSnapshots.mockRejectedValue(new Error('ranking list outage'))
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings')
+
+    expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
+    expect(await screen.findByText(/Failed to load publications/i)).toBeInTheDocument()
+    expect(screen.getByText(/ranking list outage/i)).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Latest selected publication summary' })).not.toBeInTheDocument()
+    expectNoPreviewTables()
+    expectNoForbiddenViewerActions()
+    expectNoAdminLinks()
+  })
+
+  it('keeps the race list API error state safe and read-only', async () => {
+    api.listRaceSnapshots.mockRejectedValue(new Error('race list outage'))
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/race')
+
+    expect(await screen.findByRole('heading', { name: 'Race to Finals' })).toBeInTheDocument()
+    expect(await screen.findByText(/Failed to load publications/i)).toBeInTheDocument()
+    expect(screen.getByText(/race list outage/i)).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Latest selected publication summary' })).not.toBeInTheDocument()
+    expectNoPreviewTables()
+    expectNoForbiddenViewerActions()
+    expectNoAdminLinks()
+  })
+
+  it('renders an empty ranking list without fake selected publication data', async () => {
+    api.listRankingSnapshots.mockResolvedValue([])
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings')
+
+    expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Latest selected publication summary' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Snapshot sequence \d+/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Source event EVENT/i)).not.toBeInTheDocument()
+    expectNoPreviewTables()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('renders an empty race list without fake selected publication data', async () => {
+    api.listRaceSnapshots.mockResolvedValue([])
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/race')
+
+    expect(await screen.findByRole('heading', { name: 'Race to Finals' })).toBeInTheDocument()
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Latest selected publication summary' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Snapshot sequence \d+/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Source event EVENT/i)).not.toBeInTheDocument()
+    expectNoPreviewTables()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('drops unsafe ranking snapshot entries and renders only the valid snapshot', async () => {
+    api.listRankingSnapshots.mockResolvedValue({
+      run_id: 'viewer-run-1',
+      snapshots: [
+        null,
+        123,
+        'bad',
+        {},
+        { snapshot_sequence: 'bad', snapshot_kind: 'WEEKLY_PUBLICATION', payload: {} },
+        {
+          snapshot_sequence: 18,
+          snapshot_kind: 'WEEKLY_PUBLICATION',
+          source_event_id: 'EVENT-1',
+          payload: {}
+        }
+      ]
+    })
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings')
+
+    expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
+    expect(screen.getByRole('article', { name: 'Ranking publication 18' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Open ranking detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/rankings/18')
+    expect(screen.getAllByText('WEEKLY_PUBLICATION').length).toBeGreaterThan(0)
+    expect(screen.queryByRole('article', { name: /Ranking publication bad/i })).not.toBeInTheDocument()
+    expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
+    expectNoPreviewTables()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('drops unsafe race snapshot entries and renders only the valid snapshot', async () => {
+    api.listRaceSnapshots.mockResolvedValue({
+      run_id: 'viewer-run-1',
+      snapshots: [
+        null,
+        123,
+        'bad',
+        {},
+        { snapshot_sequence: 'bad', snapshot_kind: 'RACE_WEEKLY_PUBLICATION', payload: {} },
+        {
+          snapshot_sequence: 7,
+          snapshot_kind: 'RACE_WEEKLY_PUBLICATION',
+          source_event_id: 'EVENT-1',
+          payload: {}
+        }
+      ]
+    })
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/race')
+
+    expect(await screen.findByRole('heading', { name: 'Race to Finals' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
+    expect(screen.getByRole('article', { name: 'Race publication 7' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Open race detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/race/7')
+    expect(screen.getAllByText('RACE_WEEKLY_PUBLICATION').length).toBeGreaterThan(0)
+    expect(screen.queryByRole('article', { name: /Race publication bad/i })).not.toBeInTheDocument()
+    expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
+    expectNoPreviewTables()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('normalizes lists with only unsafe snapshot entries to the empty state', async () => {
+    api.listRankingSnapshots.mockResolvedValue({
+      run_id: 'viewer-run-1',
+      snapshots: [null, 123, 'bad', {}, { snapshot_sequence: 'bad', snapshot_kind: 'WEEKLY_PUBLICATION', payload: {} }]
+    })
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/rankings')
+
+    expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Latest selected publication summary' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Snapshot sequence \d+/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Source event EVENT/i)).not.toBeInTheDocument()
+    expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
+    expectNoPreviewTables()
+    expectNoForbiddenViewerActions()
   })
 
   it('renders the run-scoped MSA Rankings page without primary raw payload content', async () => {
@@ -270,8 +417,18 @@ describe('ViewerRunSnapshotListPage', () => {
     )
     expect(within(table).getByRole('link', { name: 'EGY' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/countries/EGY')
     expect(screen.getByRole('link', { name: /Open ranking detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/rankings/12')
+    expect(screen.getByRole('link', { name: /Open planned event/i })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/calendar/EVENT-1'
+    )
+    expect(screen.getByRole('link', { name: /Open tournament detail/i })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/tournaments/EVENT-1'
+    )
+    expect(screen.getByRole('link', { name: 'W3' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/weeks/3')
     expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
+    expectNoAdminLinks()
   })
 
   it('renders a safe selected race publication preview table with Viewer-only links', async () => {
@@ -296,8 +453,18 @@ describe('ViewerRunSnapshotListPage', () => {
     )
     expect(within(table).getByRole('link', { name: 'EGY' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/countries/EGY')
     expect(screen.getByRole('link', { name: /Open race detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/race/5')
+    expect(screen.getByRole('link', { name: /Open planned event/i })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/calendar/EVENT-1'
+    )
+    expect(screen.getByRole('link', { name: /Open tournament detail/i })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/tournaments/EVENT-1'
+    )
+    expect(screen.getByRole('link', { name: 'W3' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/weeks/3')
     expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
+    expectNoAdminLinks()
   })
 
   it('keeps malformed selected publication payloads on the existing empty preview state while preserving detail links', async () => {
@@ -320,6 +487,78 @@ describe('ViewerRunSnapshotListPage', () => {
     expect(screen.getByRole('link', { name: /Open ranking detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/rankings/16')
     expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
+  })
+
+  it('keeps malformed selected race payloads on the existing empty preview state while preserving detail links', async () => {
+    api.listRaceSnapshots.mockResolvedValue({
+      run_id: 'viewer-run-1',
+      snapshots: [
+        {
+          snapshot_sequence: 6,
+          snapshot_kind: 'RACE_WEEKLY_PUBLICATION',
+          source_event_id: 'EVENT-1',
+          payload: { race_to_finals: { rows: [{ position: { value: 1 }, player_name: { label: 'Unsafe' }, race_points: { value: 100 } }] } }
+        }
+      ]
+    })
+
+    renderViewerSnapshotRoute('/viewer/runs/viewer-run-1/race')
+
+    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Latest selected Top 10 race preview table' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Open race detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/race/6')
+    expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('encodes run and source event IDs in Viewer-only ranking list links', async () => {
+    const runId = 'viewer run/with#hash'
+    const sourceEventId = 'EVENT/SLASH#HASH'
+    const encodedRunId = encodeURIComponent(runId)
+    const encodedSourceEventId = encodeURIComponent(sourceEventId)
+    mockRunMetadata(runId, sourceEventId)
+    api.listRankingSnapshots.mockResolvedValue({
+      run_id: runId,
+      snapshots: [
+        {
+          snapshot_sequence: 22,
+          snapshot_kind: 'WEEKLY_PUBLICATION',
+          source_event_id: sourceEventId,
+          payload: { rankings: rankingRows(1) }
+        }
+      ]
+    })
+
+    renderViewerSnapshotRoute(`/viewer/runs/${encodedRunId}/rankings`)
+
+    const table = await screen.findByRole('table', { name: 'Latest selected Top 10 ranking preview table' })
+    expect(screen.getByRole('link', { name: /Open ranking detail/i })).toHaveAttribute(
+      'href',
+      `/viewer/runs/${encodedRunId}/rankings/22`
+    )
+    expect(screen.getByRole('link', { name: /Open planned event/i })).toHaveAttribute(
+      'href',
+      `/viewer/runs/${encodedRunId}/calendar/${encodedSourceEventId}`
+    )
+    expect(screen.getByRole('link', { name: /Open tournament detail/i })).toHaveAttribute(
+      'href',
+      `/viewer/runs/${encodedRunId}/tournaments/${encodedSourceEventId}`
+    )
+    expect(screen.getByRole('link', { name: 'W3' })).toHaveAttribute('href', `/viewer/runs/${encodedRunId}/weeks/3`)
+    expect(within(table).getByRole('link', { name: 'Ali Farag' })).toHaveAttribute(
+      'href',
+      `/viewer/runs/${encodedRunId}/players/P1/career`
+    )
+    expect(screen.queryByRole('link', { name: /Admin/i })).not.toBeInTheDocument()
+    screen.queryAllByRole('link').forEach((link) => {
+      const href = link.getAttribute('href') ?? ''
+      expect(href).toMatch(/^\/viewer\//)
+      expect(href).not.toContain(`/viewer/runs/${runId}/`)
+      expect(href).not.toContain(`/calendar/${sourceEventId}`)
+      expect(href).not.toContain(`/tournaments/${sourceEventId}`)
+    })
+    expectNoForbiddenViewerActions()
+    expectNoAdminLinks()
   })
 
 })

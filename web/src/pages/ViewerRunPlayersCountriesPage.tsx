@@ -25,19 +25,103 @@ const PLAYER_SOURCE_OPTIONS = ['', 'rollover_carried', 'planner_generated', 'man
 const COUNTRY_SORT_OPTIONS = ['total_players_desc', 'avg_overall_desc', 'avg_age_asc', 'country_code_asc']
 
 function displayMetric(value: number | null | undefined): string | number {
-  return value ?? '—'
+  return typeof value === 'number' ? value : '—'
 }
 
 function displayFixed(value: number | null | undefined): string {
-  return typeof value === 'number' ? value.toFixed(2) : '—'
+  return typeof value === 'number' && Number.isFinite(value) ? value.toFixed(2) : '—'
 }
 
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+function scalarText(value: unknown): string | null {
+  if (typeof value === 'string') return value
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  if (typeof value === 'boolean') return value ? 'yes' : 'no'
+  return null
+}
+
+function optionalNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+type SafePlayerListEntry = {
+  player_id: string
+  name: string
+  country_code: string | null
+  age: number | null
+  quality_band: string | null
+  overall: number | null
+}
+
+type SafeNationListEntry = {
+  country_code: string
+  country_name: string | null
+  total_players: number | null
+  average_overall: number | null
+  average_age: number | null
+  rollover_carried_count: number | null
+  planner_generated_count: number | null
+  manual_override_count: number | null
+  top_player_id: string | null
+  top_player_name: string | null
+}
+
+function normalizePlayerListEntries(value: unknown): SafePlayerListEntry[] {
+  if (!Array.isArray(value)) return []
+
+  return value.flatMap((entry) => {
+    if (!isPlainRecord(entry)) return []
+    const playerId = scalarText(entry.player_id)
+    const name = scalarText(entry.name)
+    if (!playerId || !name) return []
+
+    return [
+      {
+        player_id: playerId,
+        name,
+        country_code: scalarText(entry.country_code),
+        age: optionalNumber(entry.age),
+        quality_band: scalarText(entry.quality_band),
+        overall: optionalNumber(entry.overall)
+      }
+    ]
+  })
+}
+
+function normalizeNationListEntries(value: unknown): SafeNationListEntry[] {
+  if (!Array.isArray(value)) return []
+
+  return value.flatMap((entry) => {
+    if (!isPlainRecord(entry)) return []
+    const countryCode = scalarText(entry.country_code)
+    if (!countryCode) return []
+
+    return [
+      {
+        country_code: countryCode,
+        country_name: scalarText(entry.country_name),
+        total_players: optionalNumber(entry.total_players),
+        average_overall: optionalNumber(entry.average_overall),
+        average_age: optionalNumber(entry.average_age),
+        rollover_carried_count: optionalNumber(entry.rollover_carried_count),
+        planner_generated_count: optionalNumber(entry.planner_generated_count),
+        manual_override_count: optionalNumber(entry.manual_override_count),
+        top_player_id: scalarText(entry.top_player_id),
+        top_player_name: scalarText(entry.top_player_name)
+      }
+    ]
+  })
+}
 
 function countryCodeCell(countryCode: string | null | undefined, runId: string): JSX.Element | string {
-  if (!countryCode) return '—'
-  if (!runId) return countryCode
+  const safeCountryCode = scalarText(countryCode)
+  if (!safeCountryCode) return '—'
+  if (!runId) return safeCountryCode
 
-  return <Link to={viewerCountryProfilePath(runId, countryCode)}>{countryCode}</Link>
+  return <Link to={viewerCountryProfilePath(runId, safeCountryCode)}>{safeCountryCode}</Link>
 }
 
 function playerProfileCell(
@@ -45,12 +129,13 @@ function playerProfileCell(
   playerId: string | null | undefined,
   playerName: string | null | undefined
 ): JSX.Element | string {
-  if (!playerId) return playerName ?? '—'
+  const safePlayerId = scalarText(playerId)
+  const safePlayerName = scalarText(playerName)
+  if (!safePlayerId) return safePlayerName ?? '—'
 
-  const label = playerName ? `${playerName} (${playerId})` : playerId
-  return <Link to={viewerPlayerProfilePath(runId, playerId)}>{label}</Link>
+  const label = safePlayerName ? `${safePlayerName} (${safePlayerId})` : safePlayerId
+  return <Link to={viewerPlayerProfilePath(runId, safePlayerId)}>{label}</Link>
 }
-
 
 function weekCell(runId: string, week: number | null | undefined): JSX.Element | string {
   if (typeof week !== 'number') return '—'
@@ -97,7 +182,6 @@ function hasPlayerProfileShape(value: unknown): value is {
     typeof candidate.age === 'number'
   )
 }
-
 
 type CountryProfileShape = {
   run_id?: string
@@ -182,6 +266,7 @@ export function ViewerRunPlayersPage(): JSX.Element {
     queryFn: () => listRunPlayers(runId, queryParams),
     enabled: Boolean(runId)
   })
+  const players = normalizePlayerListEntries(playersQuery.data?.players)
 
   return (
     <section className="panel">
@@ -190,7 +275,7 @@ export function ViewerRunPlayersPage(): JSX.Element {
         items={[
           { label: 'Active run ID', value: runId || 'unknown' },
           { label: 'Total player count', value: playersQuery.data?.total ?? '—' },
-          { label: 'Visible players', value: playersQuery.data?.players.length ?? '—' }
+          { label: 'Visible players', value: players.length }
         ]}
       />
 
@@ -229,7 +314,7 @@ export function ViewerRunPlayersPage(): JSX.Element {
         {playersQuery.isLoading ? <p className="status">Loading players…</p> : null}
         {playersQuery.error ? <p className="error">Failed to load players: {String(playersQuery.error)}</p> : null}
         {!playersQuery.isLoading && !playersQuery.error && playersQuery.data ? (
-          playersQuery.data.players.length > 0 ? (
+          players.length > 0 ? (
             <table>
               <thead>
                 <tr>
@@ -242,11 +327,11 @@ export function ViewerRunPlayersPage(): JSX.Element {
                 </tr>
               </thead>
               <tbody>
-                {playersQuery.data.players.map((player) => (
+                {players.map((player) => (
                   <tr key={player.player_id}>
                     <td>{player.name}</td>
                     <td>{countryCodeCell(player.country_code, runId)}</td>
-                    <td>{player.age}</td>
+                    <td>{displayMetric(player.age)}</td>
                     <td>{player.quality_band ?? '—'}</td>
                     <td>{displayMetric(player.overall)}</td>
                     <td>
@@ -453,7 +538,10 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
                   <td>{weekCell(runId, entry.week)}</td>
                   <td>{tournamentEventCell(runId, entry.event_id, entry.event_name)}</td>
                   <td>{entry.event_category ?? '—'}</td>
-                  <td>{entry.finish ?? '—'}{entry.is_title ? ' 🏆' : ''}</td>
+                  <td>
+                    {entry.finish ?? '—'}
+                    {entry.is_title ? ' 🏆' : ''}
+                  </td>
                   <td>{entry.wins}</td>
                   <td>{entry.losses}</td>
                   <td>{displayMetric(entry.ranking_points_awarded)}</td>
@@ -462,7 +550,10 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
             </tbody>
           </table>
         ) : null}
-        {performanceQuery.data && tournamentResultsQuery.data && !performanceQuery.data.entries.length && !tournamentResultsQuery.data.entries.length ? (
+        {performanceQuery.data &&
+        tournamentResultsQuery.data &&
+        !performanceQuery.data.entries.length &&
+        !tournamentResultsQuery.data.entries.length ? (
           <p className="status">This preview is not connected for this data shape yet.</p>
         ) : null}
       </SectionCard>
@@ -497,6 +588,7 @@ export function ViewerRunCountriesPage(): JSX.Element {
     queryFn: () => listRunNations(runId, queryParams),
     enabled: Boolean(runId)
   })
+  const nations = normalizeNationListEntries(nationsQuery.data?.nations)
 
   return (
     <section className="panel">
@@ -505,7 +597,7 @@ export function ViewerRunCountriesPage(): JSX.Element {
         items={[
           { label: 'Active run ID', value: runId || 'unknown' },
           { label: 'Total country count', value: nationsQuery.data?.total ?? '—' },
-          { label: 'Visible countries', value: nationsQuery.data?.nations.length ?? '—' }
+          { label: 'Visible countries', value: nations.length }
         ]}
       />
 
@@ -532,7 +624,7 @@ export function ViewerRunCountriesPage(): JSX.Element {
         {nationsQuery.isLoading ? <p className="status">Loading countries…</p> : null}
         {nationsQuery.error ? <p className="error">Failed to load countries: {String(nationsQuery.error)}</p> : null}
         {!nationsQuery.isLoading && !nationsQuery.error && nationsQuery.data ? (
-          nationsQuery.data.nations.length > 0 ? (
+          nations.length > 0 ? (
             <table>
               <thead>
                 <tr>
@@ -546,17 +638,18 @@ export function ViewerRunCountriesPage(): JSX.Element {
                 </tr>
               </thead>
               <tbody>
-                {nationsQuery.data.nations.map((nation) => (
+                {nations.map((nation) => (
                   <tr key={nation.country_code}>
                     <td>{nation.country_name ?? nation.country_code} ({nation.country_code})</td>
-                    <td>{nation.total_players}</td>
+                    <td>{displayMetric(nation.total_players)}</td>
                     <td>{displayFixed(nation.average_overall)}</td>
                     <td>{displayFixed(nation.average_age)}</td>
                     <td>
                       {playerProfileCell(runId, nation.top_player_id, nation.top_player_name)}
                     </td>
                     <td>
-                      carryover {nation.rollover_carried_count} · intake {nation.planner_generated_count} · manual {nation.manual_override_count}
+                      carryover {displayMetric(nation.rollover_carried_count)} · intake {displayMetric(nation.planner_generated_count)} ·
+                      manual {displayMetric(nation.manual_override_count)}
                     </td>
                     <td>
                       <Link to={viewerCountryProfilePath(runId, nation.country_code)}>Open country profile</Link>

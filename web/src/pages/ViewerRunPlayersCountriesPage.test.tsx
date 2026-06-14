@@ -382,6 +382,87 @@ describe('ViewerRunPlayersPage', () => {
     expectNoForbiddenViewerActions()
     expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
   })
+
+  it('keeps the player list page read-only and empty on API error', async () => {
+    api.listRunPlayers.mockRejectedValue(new Error('player list outage'))
+
+    renderViewerRoute('/viewer/runs/viewer-run-2c/players', <ViewerRunPlayersPage />, '/viewer/runs/:runId/players')
+
+    expect(await screen.findByRole('heading', { name: 'Players' })).toBeInTheDocument()
+    expect(await screen.findByText(/Failed to load players/i)).toBeInTheDocument()
+    expect(screen.getByText(/player list outage/i)).toBeInTheDocument()
+    expect(screen.queryByText('Ali A')).not.toBeInTheDocument()
+    expect(screen.queryByText('Bob B')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open Player Profile/i })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows no-data copy for an empty player list without inventing players or links', async () => {
+    api.listRunPlayers.mockResolvedValue({ run_id: 'viewer-run-2c', total: 0, limit: 200, offset: 0, players: [] })
+
+    renderViewerRoute('/viewer/runs/viewer-run-2c/players', <ViewerRunPlayersPage />, '/viewer/runs/:runId/players')
+
+    expect(await screen.findByRole('heading', { name: 'Players' })).toBeInTheDocument()
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
+    expect(screen.queryByText(/Ali A|Bob B|elite_talent|67|72/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open Player Profile/i })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('drops malformed player list entries without crashing or rendering object text', async () => {
+    api.listRunPlayers.mockResolvedValue({
+      run_id: 'viewer-run-2c',
+      total: 7,
+      limit: 200,
+      offset: 0,
+      players: [
+        null,
+        12,
+        'bad-player',
+        {},
+        { player_id: { raw: 'OBJ-ID' }, name: 'Object ID', country_code: 'EGY', age: 21 },
+        { player_id: 'OBJ-NAME', name: { raw: 'Object Name' }, country_code: 'EGY', age: 21 },
+        { player_id: 'SAFE-1', name: 'Safe Player', country_code: { raw: 'OBJ-COUNTRY' }, age: 'old', quality_band: { raw: 'OBJ-BAND' }, overall: { raw: 99 } }
+      ]
+    })
+
+    const { container } = renderViewerRoute('/viewer/runs/viewer-run-2c/players', <ViewerRunPlayersPage />, '/viewer/runs/:runId/players')
+
+    expect(await screen.findByRole('heading', { name: 'Players' })).toBeInTheDocument()
+    expect(await screen.findByText('Safe Player')).toBeInTheDocument()
+    expect(container).not.toHaveTextContent('[object Object]')
+    expect(screen.queryByText(/Object ID|Object Name|OBJ-COUNTRY|OBJ-BAND|99/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Object ID|Object Name|OBJ-ID|OBJ-NAME/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Open Player Profile/i })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2c/players/SAFE-1/career'
+    )
+    expectNoForbiddenViewerActions()
+  })
+
+  it('builds encoded Viewer-only player profile links from the list page', async () => {
+    api.listRunPlayers.mockResolvedValue({
+      run_id: 'run/alpha #1',
+      total: 1,
+      limit: 200,
+      offset: 0,
+      players: [{ player_id: 'P/1 #A', name: 'Encoded Player', country_code: 'CO/DE #1', age: 24, overall: 88 }]
+    })
+
+    renderViewerRoute('/viewer/runs/run%2Falpha%20%231/players', <ViewerRunPlayersPage />, '/viewer/runs/:runId/players')
+
+    const profileLink = await screen.findByRole('link', { name: /Open Player Profile/i })
+    expect(profileLink).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/players/P%2F1%20%23A/career')
+    expect(profileLink.getAttribute('href')).not.toContain('/admin')
+    expect(profileLink.getAttribute('href')).not.toContain('run/alpha #1')
+    expect(profileLink.getAttribute('href')).not.toContain('P/1 #A')
+    expect(await screen.findByRole('link', { name: 'CO/DE #1' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/run%2Falpha%20%231/countries/CO%2FDE%20%231'
+    )
+    expectNoForbiddenViewerActions()
+  })
+
 })
 
 describe('ViewerRunPlayerCareerPage', () => {
@@ -531,6 +612,82 @@ describe('ViewerRunCountriesPage', () => {
     expectNoForbiddenViewerActions()
     expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
   })
+
+  it('keeps the country list page read-only and empty on API error', async () => {
+    api.listRunNations.mockRejectedValue(new Error('country list outage'))
+
+    renderViewerRoute('/viewer/runs/viewer-run-2c/countries', <ViewerRunCountriesPage />, '/viewer/runs/:runId/countries')
+
+    expect(await screen.findByRole('heading', { name: 'Countries' })).toBeInTheDocument()
+    expect(await screen.findByText(/Failed to load countries/i)).toBeInTheDocument()
+    expect(screen.getByText(/country list outage/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Egypt|United States/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open country profile/i })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows no-data copy for an empty country list without inventing countries or links', async () => {
+    api.listRunNations.mockResolvedValue({ run_id: 'viewer-run-2c', total: 0, limit: 300, offset: 0, nations: [] })
+
+    renderViewerRoute('/viewer/runs/viewer-run-2c/countries', <ViewerRunCountriesPage />, '/viewer/runs/:runId/countries')
+
+    expect(await screen.findByRole('heading', { name: 'Countries' })).toBeInTheDocument()
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
+    expect(screen.queryByText(/Egypt|United States|78\.40|25\.20|Team Championship|records?|Top 100/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open country profile/i })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('drops malformed country list entries without crashing or rendering object text', async () => {
+    api.listRunNations.mockResolvedValue({
+      run_id: 'viewer-run-2c',
+      total: 7,
+      limit: 300,
+      offset: 0,
+      nations: [
+        null,
+        12,
+        'bad-country',
+        {},
+        { country_code: { raw: 'OBJ-COUNTRY' }, country_name: 'Object Country', total_players: 1 },
+        { country_code: 'SAFE', country_name: { raw: 'Object Name' }, total_players: 'many', average_overall: { raw: 99 }, top_player_id: { raw: 'OBJ-P' }, top_player_name: { raw: 'Obj Player' } }
+      ]
+    })
+
+    const { container } = renderViewerRoute('/viewer/runs/viewer-run-2c/countries', <ViewerRunCountriesPage />, '/viewer/runs/:runId/countries')
+
+    expect(await screen.findByRole('heading', { name: 'Countries' })).toBeInTheDocument()
+    expect(await screen.findByText('SAFE (SAFE)')).toBeInTheDocument()
+    expect(container).not.toHaveTextContent('[object Object]')
+    expect(screen.queryByText(/Object Country|Object Name|OBJ-COUNTRY|Obj Player|99/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Object Country|Obj Player|OBJ-P/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Open country profile/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/countries/SAFE')
+    expectNoForbiddenViewerActions()
+  })
+
+  it('builds encoded Viewer-only country detail links from the list page', async () => {
+    api.listRunNations.mockResolvedValue({
+      run_id: 'run/alpha #1',
+      total: 1,
+      limit: 300,
+      offset: 0,
+      nations: [{ country_code: 'CO/DE #1', country_name: 'Encoded Country', total_players: 4, top_player_id: 'P/1 #A', top_player_name: 'Encoded Player' }]
+    })
+
+    renderViewerRoute('/viewer/runs/run%2Falpha%20%231/countries', <ViewerRunCountriesPage />, '/viewer/runs/:runId/countries')
+
+    const countryLink = await screen.findByRole('link', { name: /Open country profile/i })
+    expect(countryLink).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/countries/CO%2FDE%20%231')
+    expect(countryLink.getAttribute('href')).not.toContain('/admin')
+    expect(countryLink.getAttribute('href')).not.toContain('run/alpha #1')
+    expect(countryLink.getAttribute('href')).not.toContain('CO/DE #1')
+    expect(await screen.findByRole('link', { name: 'Encoded Player (P/1 #A)' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/run%2Falpha%20%231/players/P%2F1%20%23A/career'
+    )
+    expectNoForbiddenViewerActions()
+  })
+
 })
 
 describe('ViewerRunCountryDetailPage', () => {

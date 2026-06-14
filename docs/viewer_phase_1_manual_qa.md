@@ -1316,3 +1316,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Encoded slash/hash/space route params render safely without creating Admin links, mutation controls, fake profiles, fake rankings, or [object Object] output.
 - Placeholder/deferred player and country pages remain conservative until real read-model data contracts exist.
 - Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 10C note — player/country list page safety hardening
+
+- Viewer player/country list pages were audited for loading, empty, error, malformed data, encoded links, and read-only safety.
+- Player and country list links remain Viewer-only, encoded, scalar-safe, and backed by route helpers.
+- Empty, malformed, unavailable, or ambiguous list data does not invent players, countries, rankings, stats, records, or profiles.
+- Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.

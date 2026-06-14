@@ -1352,3 +1352,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Encoded slash/hash/space route params and week params render safely without creating Admin links, mutation controls, fake events, fake tournaments, fake winners, fake standings, or [object Object] output.
 - Empty, malformed, unavailable, or ambiguous calendar/tournament data does not invent events, weeks, matches, results, winners, standings, or tournament records.
 - Routes, API behavior, active-run behavior, runtime safety, snapshot boundaries, player/country boundaries, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 11C note — calendar/tournament module final guard
+
+- Viewer calendar/tournament module invariants were locked with final source/integration guards after Phases 11A–11B.
+- Calendar, planned-event, week, tournament-list, and tournament-detail pages continue to normalize malformed data before rendering rows, metadata, publications, and links.
+- Calendar/tournament/week/snapshot links remain Viewer-only, encoded, scalar-safe, and backed by route helpers.
+- Empty, malformed, unavailable, or ambiguous data does not invent events, weeks, matches, results, winners, standings, tournaments, or records.
+- Routes, API behavior, active-run behavior, runtime safety, snapshot boundaries, player/country boundaries, and Viewer read-only safety remain unchanged.

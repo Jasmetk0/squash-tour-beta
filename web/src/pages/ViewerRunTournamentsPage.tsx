@@ -366,7 +366,7 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
                       includeEmptyValues: true,
                       playerLabelMode: 'identityWithCountry'
                     }),
-                    { label: 'Final score', value: displayValue(resultPreview.summary.finalScore) },
+                    { label: 'Reported score', value: displayValue(resultPreview.summary.finalScore) },
                     { label: 'Match count', value: displayValue(resultPreview.summary.matchCount) },
                     { label: 'Completed matches', value: displayValue(resultPreview.summary.completedMatchCount) },
                     { label: 'Draw size', value: displayValue(resultPreview.summary.drawSize) },

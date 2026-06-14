@@ -128,6 +128,12 @@ function expectNoDuplicateRunNav(): void {
   expect(screen.queryByRole('navigation', { name: /Viewer active run quick links/i })).not.toBeInTheDocument()
 }
 
+function expectNoUnsafeOutput(): void {
+  expect(document.body).not.toHaveTextContent('[object Object]')
+  expect(document.body).not.toHaveTextContent(/Fake Champion|Fake Winner|Invented Champion|Invented Winner|Fake Finalist|Invented Finalist|Fake History Entry|Invented History Entry|Fake Standing|Invented Standing|Fake Record|Invented Record|Qualification Standing #1|Champion Player Name/i)
+  expectNoForbiddenViewerActions()
+}
+
 describe('ViewerRunHistoryFinalsPage', () => {
   beforeEach(() => {
     vi.resetAllMocks()
@@ -145,7 +151,68 @@ describe('ViewerRunHistoryFinalsPage', () => {
     expect(screen.getByText('Show technical history data')).toBeInTheDocument()
     expect(within(document.body).queryByText(/raw_history_marker_should_be_collapsed/i)).not.toBeVisible()
     expectNoForbiddenViewerActions()
+    expectNoUnsafeOutput()
     expectNoDuplicateRunNav()
+  })
+
+  it('renders History route loading/empty/deferred behavior without fake read-model data', async () => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'viewer-run-1', items: [] })
+    renderViewerRoute('/viewer/runs/viewer-run-1/history')
+
+    expect(screen.getByRole('heading', { name: 'History' })).toBeInTheDocument()
+    expect(screen.getByText('Loading history…')).toBeInTheDocument()
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
+    expect(api.getRunActivity).toHaveBeenCalledWith('viewer-run-1')
+    expectNoUnsafeOutput()
+  })
+
+  it('renders encoded History run IDs as safe route context and passes decoded runId to the API', async () => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run/alpha #1', items: [] })
+    renderViewerRoute('/viewer/runs/run%2Falpha%20%231/history')
+
+    expect(await screen.findByRole('heading', { name: 'History' })).toBeInTheDocument()
+    expect(api.getRunActivity).toHaveBeenCalledWith('run/alpha #1')
+    expect(screen.getAllByText('run/alpha #1').length).toBeGreaterThan(0)
+    expectNoUnsafeOutput()
+  })
+
+  it('renders History API errors without fake fallback data or expanded technical payloads', async () => {
+    api.getRunActivity.mockRejectedValueOnce(new Error('history outage'))
+    renderViewerRoute('/viewer/runs/viewer-run-1/history')
+
+    expect(await screen.findByRole('heading', { name: 'History' })).toBeInTheDocument()
+    expect(await screen.findByText(/Failed to load run activity: history outage/i)).toBeInTheDocument()
+    expect(screen.queryByText('Show technical history data')).not.toBeInTheDocument()
+    expectNoUnsafeOutput()
+  })
+
+  it('renders malformed History payloads scalar-safely without unsafe object output', async () => {
+    api.getRunActivity.mockResolvedValueOnce({
+      run_id: { unsafe: 'run-object' },
+      items: [
+        null,
+        7,
+        'raw history string',
+        {},
+        {
+          kind: { unsafe: 'kind-object' },
+          label: { unsafe: 'label-object' },
+          sequence: { unsafe: 'sequence-object' },
+          event_id: { unsafe: 'event-object' },
+          season: { unsafe: 'season-object' },
+          week: { unsafe: 'week-object' },
+          snapshot_sequence: { unsafe: 'snapshot-object' },
+          source_event_id: { unsafe: 'source-event-object' },
+          related_run_id: { unsafe: 'related-run-object' }
+        }
+      ]
+    })
+    renderViewerRoute('/viewer/runs/viewer-run-1/history')
+
+    expect(await screen.findByRole('heading', { name: 'History' })).toBeInTheDocument()
+    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
+    expect(screen.getByText('Show technical history data').closest('details')).not.toHaveAttribute('open')
+    expectNoUnsafeOutput()
   })
 
   it('renders Finals overview availability and Viewer links without simulation controls', async () => {
@@ -166,7 +233,90 @@ describe('ViewerRunHistoryFinalsPage', () => {
     expect(screen.queryByRole('button', { name: /Simulate World Tour Finals/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Simulate World Tour Finals/i })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
+    expectNoUnsafeOutput()
     expectNoDuplicateRunNav()
+  })
+
+  it('renders Finals loading/empty/deferred behavior without fake qualification data', async () => {
+    api.getFinalsSummary.mockResolvedValueOnce({
+      run_id: 'viewer-run-1',
+      season: 2031,
+      qualification: null,
+      result: null
+    })
+    renderViewerRoute('/viewer/runs/viewer-run-1/finals')
+
+    expect(screen.getByRole('heading', { name: 'World Tour Finals' })).toBeInTheDocument()
+    expect(screen.getByText('Loading Finals summary…')).toBeInTheDocument()
+    expect(await screen.findAllByText('This preview is not connected for this data shape yet.')).toHaveLength(2)
+    expect(api.getFinalsSummary).toHaveBeenCalledWith('viewer-run-1')
+    expectNoUnsafeOutput()
+  })
+
+  it('renders encoded Finals run IDs as safe route context and passes decoded runId to the API', async () => {
+    api.getFinalsSummary.mockResolvedValueOnce({ run_id: 'run/alpha #1', season: 2031, qualification: null, result: null })
+    renderViewerRoute('/viewer/runs/run%2Falpha%20%231/finals')
+
+    expect(await screen.findByRole('heading', { name: 'World Tour Finals' })).toBeInTheDocument()
+    expect(api.getFinalsSummary).toHaveBeenCalledWith('run/alpha #1')
+    expect(screen.getAllByText('run/alpha #1').length).toBeGreaterThan(0)
+    expect(screen.getByRole('link', { name: 'Open Finals qualification' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/run%2Falpha%20%231/finals/qualification'
+    )
+    expectNoUnsafeOutput()
+  })
+
+  it('renders Finals API errors without fake fallback data', async () => {
+    api.getFinalsSummary.mockRejectedValueOnce(new Error('finals outage'))
+    renderViewerRoute('/viewer/runs/viewer-run-1/finals')
+
+    expect(await screen.findByRole('heading', { name: 'World Tour Finals' })).toBeInTheDocument()
+    expect(await screen.findByText(/Failed to load Finals summary: finals outage/i)).toBeInTheDocument()
+    expect(screen.queryByText('Show technical finals data')).not.toBeInTheDocument()
+    expectNoUnsafeOutput()
+  })
+
+  it('renders malformed Finals payloads scalar-safely without unsafe object links', async () => {
+    api.getFinalsSummary.mockResolvedValueOnce({
+      run_id: { unsafe: 'run-object' },
+      season: { unsafe: 'season-object' },
+      qualification: {
+        run_id: { unsafe: 'qualification-run-object' },
+        season: { unsafe: 'qualification-season-object' },
+        source_as_of_season: { unsafe: 'source-season-object' },
+        source_as_of_week: { unsafe: 'source-week-object' },
+        qualification: {
+          qualified_player_ids: [{ unsafe: 'player-object' }, null, 4],
+          groups: [{ unsafe: 'group-object' }],
+          ranking_snapshot_sequence: { unsafe: 'ranking-sequence-object' },
+          race_snapshot_sequence: { unsafe: 'race-sequence-object' },
+          status: { unsafe: 'status-object' },
+          points: { unsafe: 'points-object' }
+        }
+      },
+      result: {
+        run_id: { unsafe: 'result-run-object' },
+        season: { unsafe: 'result-season-object' },
+        event_id: { unsafe: 'event-object' },
+        source_as_of_season: { unsafe: 'source-season-object' },
+        source_as_of_week: { unsafe: 'source-week-object' },
+        result: {
+          champion_player_id: { unsafe: 'champion-object' },
+          runner_up_player_id: { unsafe: 'runner-object' },
+          standings: [{ unsafe: 'standing-object' }],
+          rank: { unsafe: 'rank-object' },
+          points: { unsafe: 'points-object' },
+          status: { unsafe: 'status-object' }
+        }
+      }
+    })
+    renderViewerRoute('/viewer/runs/viewer-run-1/finals')
+
+    expect(await screen.findByRole('heading', { name: 'World Tour Finals' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Planned event/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Player \[object Object\] profile/i })).not.toBeInTheDocument()
+    expectNoUnsafeOutput()
   })
 
   it('renders Finals Qualification with safe metadata/deferred message and collapsed technical data', async () => {

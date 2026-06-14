@@ -58,6 +58,8 @@ describe('History/Finals Viewer route source guard', () => {
     expect(registeredRoutePatterns).toContain('/viewer/runs/:runId/finals')
     expect(historyFinalsSource).toContain('export function ViewerRunHistoryPage')
     expect(historyFinalsSource).toContain('export function ViewerRunFinalsPage')
+    expect(historyFinalsSource).toContain('export function ViewerRunFinalsQualificationPage')
+    expect(historyFinalsSource).toContain('export function ViewerRunFinalsResultPage')
     expect(appSource).toContain('path="viewer/runs/:runId/history" element={<ViewerRunHistoryPage />}')
     expect(appSource).toContain('path="viewer/runs/:runId/finals" element={<ViewerRunFinalsPage />}')
   })
@@ -80,8 +82,13 @@ describe('History/Finals Viewer route source guard', () => {
   })
 
   it('keeps history/finals source free of fake-data claims and unsafe route templates', () => {
-    expect(historyFinalsSource).not.toMatch(/fake champion|fake winner|invented champion|invented standings|invented finals|fake finals|fixture finals|fake history|invented history/i)
+    expect(historyFinalsSource).not.toMatch(/fake champion|fake winner|invented champion|invented standings|invented finals|fake finals|fixture finals|fake history|invented history|fake finalist|invented finalist/i)
     expect(historyFinalsSource).not.toContain('`/viewer/runs/${runId}/history`')
     expect(historyFinalsSource).not.toContain('`/viewer/runs/${runId}/finals`')
+    expect(historyFinalsSource).toContain('viewerFinalsPath(runId)')
+    expect(historyFinalsSource).toContain('viewerFinalsQualificationPath(runId)')
+    expect(historyFinalsSource).toContain('viewerFinalsResultPath(runId)')
+    expect(historyFinalsSource).toContain('safeScalarValue')
+    expect(historyFinalsSource).toContain('safeLinkId')
   })
 })

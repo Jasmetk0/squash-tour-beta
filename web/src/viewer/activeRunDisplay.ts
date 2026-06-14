@@ -12,17 +12,24 @@ import {
 
 type ViewerRunOptionSummary = Pick<RunSummary, 'run_id' | 'season' | 'seed'>
 
+function formatSafeRunOptionValue(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (typeof value === 'number') return String(value)
+  if (typeof value === 'boolean') return String(value)
+  return '—'
+}
+
 export type ViewerActiveRunQuickLink = {
   label: string
   to: string
 }
 
 export function formatViewerRunOptionLabel(run: ViewerRunOptionSummary): string {
-  return `${run.run_id} — season ${run.season}, seed ${run.seed}`
+  return `${formatSafeRunOptionValue(run.run_id)} — season ${formatSafeRunOptionValue(run.season)}, seed ${formatSafeRunOptionValue(run.seed)}`
 }
 
 export function formatViewerCompactRunOptionLabel(run: ViewerRunOptionSummary): string {
-  return `${run.run_id} · S${run.season} · seed ${run.seed}`
+  return `${formatSafeRunOptionValue(run.run_id)} · S${formatSafeRunOptionValue(run.season)} · seed ${formatSafeRunOptionValue(run.seed)}`
 }
 
 export function formatViewerActiveRunLabel(runId: string | null | undefined): string {

@@ -1396,3 +1396,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Viewer Home, Run Browser, and deferred/global Viewer hub routes remain read-only, conservative, and separate from Admin routes.
 - Empty, unavailable, or deferred hub pages do not invent rankings, predictions, odds, stats, H2H records, players, countries, tournaments, matches, winners, champions, or standings.
 - Routes, API behavior, active-run behavior, completed run-scoped module boundaries, runtime safety, and Viewer/Admin separation remain unchanged.
+
+## Viewer Phase 14B note — top-level Viewer hub target page safety audit
+
+- Viewer Home, Run Browser, and deferred/global Viewer hub target pages were audited for read-only safety.
+- Top-level Viewer pages remain conservative and do not create Admin links, mutation controls, fake rankings, fake predictions, fake odds, fake stats, fake H2H records, fake players, fake countries, fake tournaments, fake winners, fake champions, or [object Object] output.
+- Empty, unavailable, malformed, or deferred hub data does not invent rankings, race standings, predictions, odds, stats, H2H records, players, countries, tournaments, matches, winners, champions, records, or standings.
+- Routes, API behavior, active-run behavior, completed run-scoped module boundaries, runtime safety, and Viewer/Admin separation remain unchanged.

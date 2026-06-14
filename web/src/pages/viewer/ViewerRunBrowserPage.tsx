@@ -8,7 +8,7 @@ import {
   buildRunBrowserContextLinks,
   buildRunBrowserMetadataItems,
   buildRunBrowserPrimaryLinks,
-  type ViewerRunBrowserListItem
+  normalizeRunBrowserRuns
 } from '../../viewer/runBrowserDisplay'
 import { useActiveViewerRunId } from '../../viewer/useActiveViewerRunId'
 import { findViewerTopLevelHubLink } from '../../viewer/viewerHubLinks'
@@ -18,7 +18,7 @@ const VIEWER_RUN_BROWSER_HUB_LINK = findViewerTopLevelHubLink('Run Browser')
 export function ViewerRunBrowserPage(): JSX.Element {
   const activeRunId = useActiveViewerRunId()
   const runsQuery = useQuery({ queryKey: ['viewer-run-selector-runs'], queryFn: listRuns, retry: false })
-  const runs = (runsQuery.data?.runs ?? []) as ViewerRunBrowserListItem[]
+  const runs = normalizeRunBrowserRuns(runsQuery.data?.runs)
 
   return (
     <ViewerShellPage

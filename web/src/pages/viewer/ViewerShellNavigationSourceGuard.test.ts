@@ -18,6 +18,38 @@ import guardSource from './ViewerShellNavigationSourceGuard.test.ts?raw'
 import viewerHomePageSource from './ViewerHomePage.tsx?raw'
 import viewerRunBrowserPageSource from './ViewerRunBrowserPage.tsx?raw'
 
+
+const expectedShellNavigationSourceNames = [
+  'App.tsx',
+  'Layout.tsx',
+  'ViewerTopbar.tsx',
+  'ViewerRunSelector.tsx',
+  'ViewerShellPage.tsx',
+  'ViewerLandingComponents.tsx',
+  'viewerRoutes.ts',
+  'viewerHubLinks.ts',
+  'viewerNavigation.ts',
+  'viewerHomeDisplay.ts',
+  'runBrowserDisplay.ts',
+  'activeRunDisplay.ts',
+  'ViewerHomePage.tsx',
+  'ViewerRunBrowserPage.tsx'
+]
+
+const expectedViewerLinkSourceNames = [
+  'ViewerTopbar.tsx',
+  'ViewerRunSelector.tsx',
+  'ViewerLandingComponents.tsx',
+  'viewerRoutes.ts',
+  'viewerHubLinks.ts',
+  'viewerNavigation.ts',
+  'viewerHomeDisplay.ts',
+  'runBrowserDisplay.ts',
+  'activeRunDisplay.ts',
+  'ViewerHomePage.tsx',
+  'ViewerRunBrowserPage.tsx'
+]
+
 const shellNavigationSources: Record<string, string> = {
   'App.tsx': appSource,
   'Layout.tsx': layoutSource,
@@ -85,6 +117,29 @@ function appRouteExists(destination: string): boolean {
 }
 
 describe('Viewer shell/navigation source guard', () => {
+  it('keeps source coverage focused on shell/navigation and top-level Viewer sources', () => {
+    expect(Object.keys(shellNavigationSources)).toEqual(expectedShellNavigationSourceNames)
+    expect(Object.keys(viewerLinkSources)).toEqual(expectedViewerLinkSourceNames)
+
+    for (const sourceName of expectedShellNavigationSourceNames) {
+      expect(shellNavigationSources[sourceName], sourceName).toBeTruthy()
+    }
+
+    expect(guardSource).toContain("Layout.tsx?raw")
+    expect(guardSource).toContain("ViewerTopbar.tsx?raw")
+    expect(guardSource).toContain("ViewerRunSelector.tsx?raw")
+    expect(guardSource).toContain("ViewerShellPage.tsx?raw")
+    expect(guardSource).toContain("ViewerLandingComponents.tsx?raw")
+    expect(guardSource).toContain("viewerRoutes.ts?raw")
+    expect(guardSource).toContain("viewerHubLinks.ts?raw")
+    expect(guardSource).toContain("viewerNavigation.ts?raw")
+    expect(guardSource).toContain("viewerHomeDisplay.ts?raw")
+    expect(guardSource).toContain("runBrowserDisplay.ts?raw")
+    expect(guardSource).toContain("activeRunDisplay.ts?raw")
+    expect(guardSource).toContain("ViewerHomePage.tsx?raw")
+    expect(guardSource).toContain("ViewerRunBrowserPage.tsx?raw")
+  })
+
   it('keeps Viewer navigation and link builder sources Viewer-only', () => {
     expect(viewerRoutesSource).toContain("'/viewer")
     expect(viewerHubLinksRawSource).toContain('viewerTopLevelHubLinks')
@@ -124,8 +179,12 @@ describe('Viewer shell/navigation source guard', () => {
     }
 
     for (const dropdown of viewerDropdowns) {
+      expect(dropdown.to, dropdown.label).toMatch(/^\/viewer(?:\/|$)/)
+      expect(dropdown.to, dropdown.label).not.toMatch(/^\/admin(?:\/|$)/)
       expect(appRouteExists(dropdown.to), dropdown.label).toBe(true)
       for (const item of dropdown.items) {
+        expect(item.to, `${dropdown.label}: ${item.label}`).toMatch(/^\/viewer(?:\/|$)/)
+        expect(item.to, `${dropdown.label}: ${item.label}`).not.toMatch(/^\/admin(?:\/|$)/)
         expect(appRouteExists(item.to), `${dropdown.label}: ${item.label}`).toBe(true)
       }
     }
@@ -137,6 +196,24 @@ describe('Viewer shell/navigation source guard', () => {
       expect(link.to, link.label).not.toContain(runId)
       expect(link.to, link.label).not.toContain('#')
       expect(appRouteExists(link.to), link.label).toBe(true)
+    }
+  })
+
+  it('keeps selector normalization and active-run storage source paths scalar-safe and local', () => {
+    expect(viewerRunSelectorSource).toContain('normalizeRunBrowserRuns')
+    expect(viewerRunBrowserPageSource).toContain('normalizeRunBrowserRuns')
+    expect(runBrowserDisplaySource).toContain('getSafeRunBrowserRunId')
+    expect(activeRunDisplaySource).toContain('formatSafeRunOptionValue')
+    expect(viewerRunSelectorSource).toContain('readViewerActiveRunId')
+    expect(viewerRunSelectorSource).toContain('writeViewerActiveRunId')
+
+    for (const [sourceName, source] of Object.entries(shellNavigationSources)) {
+      expect(source, `${sourceName} must not directly cast API run lists`).not.toContain('as ViewerRunBrowserListItem[]')
+    }
+
+    for (const [sourceName, source] of Object.entries(viewerLinkSources)) {
+      expect(source, `${sourceName} must not hardcode unsafe run links`).not.toMatch(forbiddenUnsafeRunTemplates)
+      expect(source, `${sourceName} must not expose /admin destinations`).not.toMatch(forbiddenAdminDestination)
     }
   })
 

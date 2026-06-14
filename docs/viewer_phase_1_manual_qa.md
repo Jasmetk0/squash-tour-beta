@@ -1424,3 +1424,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Viewer navigation and active-run selection remain local/read-only, encoded, route-helper-backed, and separate from Admin/Engine controls.
 - Malformed or unavailable run-selector data does not create unsafe links, fake run records, mutation controls, or [object Object] output.
 - Routes, API behavior, active-run behavior, completed module boundaries, runtime safety, and Viewer/Admin separation remain unchanged.
+
+## Viewer Phase 15C note — Viewer shell/navigation final guard
+
+- Viewer shell/navigation invariants were locked with final source/runtime guards after Phases 15A–15B.
+- Viewer topbar, dropdown links, active-run selector, active-run shortcuts, shell pages, and landing components remain Viewer-only, encoded, route-helper-backed, local/read-only, and separate from Admin/Engine controls.
+- Malformed, unavailable, or local selector data does not create unsafe links, fake run records, mutation controls, fake sports data, or [object Object] output.
+- Routes, API behavior, active-run behavior, completed module boundaries, runtime safety, and Viewer/Admin separation remain unchanged.

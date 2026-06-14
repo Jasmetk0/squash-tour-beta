@@ -1410,3 +1410,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Top-level Viewer pages remain conservative and do not create Admin links, mutation controls, fake rankings, fake predictions, fake odds, fake stats, fake H2H records, fake players, fake countries, fake tournaments, fake winners, fake champions, or [object Object] output.
 - Empty, unavailable, malformed, or deferred hub data does not invent rankings, race standings, predictions, odds, stats, H2H records, players, countries, tournaments, matches, winners, champions, records, or standings.
 - Routes, API behavior, active-run behavior, completed run-scoped module boundaries, runtime safety, and Viewer/Admin separation remain unchanged.
+
+## Viewer Phase 15A note — Viewer shell/navigation route safety audit
+
+- Viewer shell, navigation, topbar/link helpers, active-run selector, and landing components were audited for Viewer-only route safety.
+- Viewer navigation links and active-run shortcuts remain encoded, route-helper-backed, read-only, and separate from Admin routes.
+- Shell/navigation components do not invent rankings, predictions, odds, stats, H2H records, players, countries, tournaments, matches, winners, champions, records, standings, or profiles.
+- Routes, API behavior, active-run behavior, completed module boundaries, runtime safety, and Viewer/Admin separation remain unchanged.

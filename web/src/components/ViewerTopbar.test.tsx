@@ -177,42 +177,12 @@ describe('ViewerTopbar', () => {
     expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
   })
 
-  it('shows and updates the compact Viewer active run control in the topbar', async () => {
-    const user = userEvent.setup()
+  it('keeps run and season utility controls out of the Viewer primary navbar', async () => {
     renderViewerTopbarAt('/viewer')
 
     const nav = await screen.findByTestId('viewer-primary-nav')
-    const control = within(nav).getByRole('form', { name: 'Viewer topbar active run' })
-    expect(control).toHaveTextContent('Run None')
-    expect(within(control).getByLabelText('Viewer active run')).toBeInTheDocument()
-    expect(within(control).queryByRole('button', { name: 'Set run' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
+    expect(within(nav).queryByRole('form', { name: 'Viewer topbar active run' })).not.toBeInTheDocument()
+    expect(within(nav).queryByRole('button', { name: 'Season 2004/05 · W10' })).not.toBeInTheDocument()
     expect(within(nav).queryByRole('link', { name: 'Admin / Engine' })).not.toBeInTheDocument()
-
-    await within(control).findByRole('option', { name: /run-b · S2031 · seed 11/ })
-    await user.selectOptions(within(control).getByLabelText('Viewer active run'), 'run-b')
-
-    expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBe('run-b')
-    expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run-b')
-    expect(control).toHaveTextContent('Run run-b')
-  })
-
-  it('shows and expands the Season/Week selector on click', async () => {
-    const user = userEvent.setup()
-    renderViewerTopbarAt('/viewer')
-
-    const selector = await screen.findByRole('button', { name: 'Season 2004/05 · W10' })
-    expect(selector).toHaveAttribute('aria-expanded', 'false')
-
-    await user.click(selector)
-
-    expect(selector).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByLabelText('Selected season')).toHaveValue('2004/05')
-    expect(screen.getByLabelText('Selected week')).toHaveValue(10)
-    expect(screen.getByRole('button', { name: 'Set Viewer Week' })).toBeInTheDocument()
-    expect(screen.getByText('Season Week: 10 / 61')).toBeInTheDocument()
-    expect(screen.getByText('Calendar Year: 2004')).toBeInTheDocument()
-    expect(screen.getByText('Year Week: 46')).toBeInTheDocument()
-    expect(screen.getByText(/Status: selected viewer context/)).toBeInTheDocument()
   })
 })

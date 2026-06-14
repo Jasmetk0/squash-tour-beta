@@ -306,12 +306,32 @@ button {
   margin: 0;
 }
 
+.app-header__controls {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.55rem;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.app-header__viewer-context {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 1 auto;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
 .mode-switcher {
-  background: #e2e8f0;
+  background: #e8eef7;
+  border: 1px solid #dbe3ef;
   border-radius: 999px;
   display: flex;
   gap: 0.25rem;
   padding: 0.25rem;
+  min-height: 38px;
+  box-sizing: border-box;
 }
 
 .mode-switcher a,
@@ -325,7 +345,8 @@ button {
   border-radius: 999px;
   color: #334155;
   font-weight: 700;
-  padding: 0.45rem 0.8rem;
+  padding: 0.42rem 0.78rem;
+  white-space: nowrap;
 }
 
 .mode-switcher a.active {
@@ -412,6 +433,13 @@ button {
 @media (max-width: 720px) {
   .app-header {
     flex-direction: column;
+  }
+
+  .app-header__controls,
+  .app-header__viewer-context {
+    align-items: stretch;
+    flex-wrap: wrap;
+    width: 100%;
   }
 
   .mode-switcher {
@@ -891,17 +919,16 @@ textarea:focus-visible {
 .viewer-topbar {
   display: flex;
   align-items: center;
-
-  gap: 0.42rem;
+  gap: 0.7rem;
   flex-wrap: nowrap;
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  padding: 0.72rem 0.85rem;
-  border: 1px solid rgb(148 163 184 / 55%);
-  border-radius: 26px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 52%, #eef6ff 100%);
-  box-shadow: 0 16px 36px rgb(15 23 42 / 9%), inset 0 1px 0 rgb(255 255 255 / 86%);
+  padding: 0.62rem 0.7rem;
+  border: 1px solid rgb(96 165 250 / 25%);
+  border-radius: 18px;
+  background: linear-gradient(135deg, #071527 0%, #0b1f38 54%, #102a4a 100%);
+  box-shadow: 0 18px 42px rgb(2 6 23 / 24%), inset 0 1px 0 rgb(255 255 255 / 7%);
   margin: 1rem 0;
   overflow: visible;
 }
@@ -914,7 +941,7 @@ textarea:focus-visible {
 }
 
 .viewer-topbar__primary {
-  gap: 0.28rem;
+  gap: 0.32rem;
   flex: 1 1 auto;
   overflow: visible;
 }
@@ -930,18 +957,20 @@ textarea:focus-visible {
 .viewer-context-selector__update,
 .viewer-jump-button,
 .viewer-topbar-search button {
-  border: 1px solid rgb(203 213 225 / 82%);
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  border: 1px solid rgb(96 165 250 / 18%);
   border-radius: 999px;
-  background: rgb(255 255 255 / 88%);
-  color: #334155;
+  background: rgb(15 39 71 / 64%);
+  color: #dbeafe;
   font-weight: 750;
   line-height: 1.1;
   min-width: 0;
-  padding: 0.46rem 0.68rem;
+  min-height: 38px;
+  padding: 0.46rem 0.72rem;
   text-decoration: none;
-  overflow: hidden;
   overflow-wrap: normal;
-  text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
   transition: background 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
@@ -952,10 +981,10 @@ textarea:focus-visible {
 .viewer-context-selector__update:hover,
 .viewer-jump-button:hover,
 .viewer-topbar-search button:hover {
-  background: #f8fbff;
-  border-color: #60a5fa;
-  color: #1d4ed8;
-  box-shadow: 0 9px 20px rgb(37 99 235 / 16%);
+  background: rgb(37 99 235 / 28%);
+  border-color: rgb(56 189 248 / 54%);
+  color: #f8fbff;
+  box-shadow: 0 10px 22px rgb(6 182 212 / 16%);
   transform: translateY(-1px);
 }
 
@@ -974,10 +1003,10 @@ textarea:focus-visible {
 }
 
 .viewer-topbar a.active {
-  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
-  border-color: #3b82f6;
-  box-shadow: inset 0 -2px 0 #2563eb, 0 8px 18px rgb(37 99 235 / 12%);
-  color: #0f172a;
+  background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  border-color: rgb(125 211 252 / 60%);
+  box-shadow: 0 10px 24px rgb(37 99 235 / 28%);
+  color: #fff;
   font-weight: 800;
 }
 
@@ -989,15 +1018,16 @@ textarea:focus-visible {
 
 .viewer-brand-link {
   flex: 0 0 auto;
-  width: 56px;
-  min-width: 56px;
+  width: 62px;
+  min-width: 62px;
   min-height: 40px;
   padding: 0;
-  border-color: rgb(251 191 36 / 35%) !important;
-  background: linear-gradient(135deg, rgb(251 191 36 / 20%), rgb(37 99 235 / 28%)) !important;
-  color: #f8fbff !important;
+  border-color: rgb(251 191 36 / 48%) !important;
+  background: linear-gradient(135deg, rgb(251 191 36 / 22%), rgb(37 99 235 / 36%)) !important;
+  color: #fef3c7 !important;
   font-size: 0.95rem;
   letter-spacing: 0.12em;
+  overflow: visible;
 }
 
 .viewer-dropdown {
@@ -1009,16 +1039,10 @@ textarea:focus-visible {
 }
 
 .viewer-dropdown__label {
-  max-width: 108px;
-}
-
-.viewer-dropdown::after {
-  content: '';
-  position: absolute;
-  left: -0.35rem;
-  right: -0.35rem;
-  top: 100%;
-  height: 0.72rem;
+  flex: 0 0 auto;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
 }
 
 .viewer-dropdown::after {
@@ -1036,13 +1060,13 @@ textarea:focus-visible {
   left: 0;
   z-index: 10;
   display: grid;
-  min-width: min(calc(100vw - 2rem), 230px);
+  width: min(calc(100vw - 2rem), 250px);
   gap: 0.32rem;
   padding: 0.62rem;
-  border: 1px solid rgb(148 163 184 / 48%);
+  border: 1px solid rgb(96 165 250 / 30%);
   border-radius: 18px;
-  background: rgb(255 255 255 / 98%);
-  box-shadow: 0 20px 44px rgb(15 23 42 / 18%), inset 0 1px 0 rgb(255 255 255 / 90%);
+  background: rgb(7 21 39 / 96%);
+  box-shadow: 0 22px 46px rgb(2 6 23 / 42%), inset 0 1px 0 rgb(255 255 255 / 8%);
   opacity: 0;
   pointer-events: none;
   transform: translateY(-0.35rem) scale(0.985);
@@ -1063,22 +1087,23 @@ textarea:focus-visible {
 .viewer-dropdown__menu a {
   border-radius: 12px;
   box-shadow: none;
+  justify-content: flex-start;
   padding: 0.5rem 0.64rem;
   transition: background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
 }
 
 .viewer-dropdown__menu a.active {
-  background: #eff6ff;
-  border-color: #3b82f6;
-  color: #0f172a;
+  background: linear-gradient(135deg, rgb(37 99 235 / 74%), rgb(6 182 212 / 58%));
+  border-color: rgb(125 211 252 / 60%);
+  color: #fff;
 }
 
 .viewer-dropdown__menu a:hover,
 .viewer-dropdown__menu a:focus-visible {
-  background: #f1f7ff;
-  border-color: #60a5fa;
-  color: #1d4ed8;
-  box-shadow: 0 8px 18px rgb(37 99 235 / 12%);
+  background: rgb(30 64 175 / 54%);
+  border-color: rgb(56 189 248 / 58%);
+  color: #e5f0ff;
+  box-shadow: inset 3px 0 0 #06b6d4, 0 8px 18px rgb(37 99 235 / 18%);
   transform: translateX(2px);
 }
 
@@ -1098,9 +1123,9 @@ textarea:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 0.22rem;
-  flex: 0 1 210px;
-  min-width: 140px;
-  max-width: 220px;
+  flex: 0 1 260px;
+  min-width: 160px;
+  max-width: 280px;
 }
 
 .viewer-topbar-search input,
@@ -1158,33 +1183,33 @@ textarea:focus-visible {
 .viewer-active-run-compact {
   display: inline-flex;
   align-items: center;
-  gap: 0.28rem;
-  flex: 0 1 172px;
+  gap: 0.34rem;
+  flex: 0 1 230px;
   min-width: 0;
-  max-width: 180px;
-  padding: 0.18rem 0.2rem 0.18rem 0.52rem;
-  border: 1px solid rgb(96 165 250 / 20%);
+  max-width: 250px;
+  min-height: 38px;
+  box-sizing: border-box;
+  padding: 0.18rem 0.22rem 0.18rem 0.62rem;
+  border: 1px solid rgb(96 165 250 / 28%);
   border-radius: 999px;
-  background: rgb(15 39 71 / 62%);
+  background: #f8fbff;
 }
 
 .viewer-active-run-compact__status {
-  color: #94a3b8;
+  color: #475569;
   flex: 0 1 auto;
-  min-width: 2.25rem;
-  max-width: 4.8rem;
-  font-size: 0.72rem;
+  min-width: 2.1rem;
+  font-size: 0.76rem;
   font-weight: 800;
   overflow: hidden;
   overflow-wrap: normal;
   text-overflow: ellipsis;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
 .viewer-active-run-compact__status strong {
-  color: #e5f0ff;
-  font-size: 0.78rem;
+  color: #0f172a;
+  font-size: 0.82rem;
   text-transform: none;
 }
 
@@ -1197,10 +1222,10 @@ textarea:focus-visible {
   width: 100%;
   min-width: 0;
   height: 30px;
-  border: 1px solid rgb(96 165 250 / 26%);
+  border: 1px solid rgb(96 165 250 / 34%);
   border-radius: 999px;
-  background: #071527;
-  color: #e5f0ff;
+  background: #eff6ff;
+  color: #0f172a;
   font-size: 0.78rem;
   font-weight: 700;
   padding: 0.28rem 0.45rem;
@@ -1213,6 +1238,14 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
+.viewer-active-run-compact .error {
+  color: #64748b;
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .viewer-context-selector {
   position: relative;
   flex: 0 1 auto;
@@ -1220,9 +1253,13 @@ textarea:focus-visible {
 }
 
 .viewer-context-selector__button {
-  max-width: 142px;
-  min-height: 36px;
-  color: #e5f0ff;
+  max-width: 180px;
+  min-height: 38px;
+  border-color: rgb(96 165 250 / 28%);
+  background: #f8fbff;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .viewer-context-selector__panel {

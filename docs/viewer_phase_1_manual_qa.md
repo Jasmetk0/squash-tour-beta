@@ -1338,3 +1338,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Player/country/tournament/week links remain Viewer-only, encoded, scalar-safe, and backed by route helpers.
 - Empty, malformed, unavailable, or ambiguous data does not invent players, countries, rankings, stats, records, tournaments, medals, or profiles.
 - Routes, API behavior, active-run behavior, runtime safety, snapshot boundaries, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 11A note — calendar/tournament route-helper parity audit
+
+- Viewer calendar, planned-event, week, and tournament route helpers were audited for route parity.
+- Calendar/tournament/week links remain Viewer-only, encoded, scalar-safe, and backed by registered App route patterns.
+- No calendar events, weeks, tournament results, winners, standings, or match data are invented.
+- Routes, API behavior, active-run behavior, runtime safety, snapshot boundaries, player/country boundaries, and Viewer read-only safety remain unchanged.

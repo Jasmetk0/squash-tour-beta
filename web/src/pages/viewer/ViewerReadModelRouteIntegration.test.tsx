@@ -17,6 +17,7 @@ import {
   viewerRankingsPath,
   viewerSeasonCalendarPath,
   viewerTournamentDetailPath,
+  viewerTournamentsPath,
   viewerWeekDetailPath
 } from '../../viewer/viewerRoutes'
 import viewerHomeSource from './ViewerHomePage.tsx?raw'
@@ -159,6 +160,35 @@ describe('Viewer read-model route integration', () => {
 
     expect(viewerPlannedEventPath(runId, eventId)).toContain(encodedEventSegment)
     expect(viewerTournamentDetailPath(runId, eventId)).toContain(encodedEventSegment)
+  })
+
+  it('keeps calendar/week/tournament route helpers Viewer-only, registered, and encoded', () => {
+    const runId = 'run/alpha #1'
+    const eventId = 'EVT/1 #A'
+    const week = 7
+    const encodedRunSegment = 'run%2Falpha%20%231'
+    const encodedEventSegment = 'EVT%2F1%20%23A'
+    const calendarTournamentDestinations = [
+      { destination: viewerSeasonCalendarPath(runId), routeTail: '/calendar' },
+      { destination: viewerPlannedEventPath(runId, eventId), routeTail: `/calendar/${encodedEventSegment}`, encodedEventSegment },
+      { destination: viewerWeekDetailPath(runId, week), routeTail: '/weeks/7' },
+      { destination: viewerTournamentsPath(runId), routeTail: '/tournaments' },
+      { destination: viewerTournamentDetailPath(runId, eventId), routeTail: `/tournaments/${encodedEventSegment}`, encodedEventSegment }
+    ]
+
+    for (const { destination, routeTail, encodedEventSegment: destinationEventSegment } of calendarTournamentDestinations) {
+      expectViewerOnlyPath(destination)
+      expect(destination).not.toMatch(adminPathPattern)
+      expect(destination).toContain(`/viewer/runs/${encodedRunSegment}`)
+      expect(destination).toContain(routeTail)
+      expect(destination).not.toContain(runId)
+      expect(destination).not.toContain('#')
+      expect(destination).not.toContain(eventId)
+      if (destinationEventSegment) {
+        expect(destination).toContain(destinationEventSegment)
+      }
+      expect(viewerRouteExists(destination)).toBe(true)
+    }
   })
 
   it('keeps run-scoped route helpers Viewer-only and safely encoded', () => {

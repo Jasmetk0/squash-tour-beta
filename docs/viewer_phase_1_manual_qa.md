@@ -1309,3 +1309,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Unsafe or object-derived player/country values do not create links or [object Object] output.
 - No player/country data, rankings, standings, or profiles are invented.
 - Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 10B note — player/country target page safety audit
+
+- Viewer player/country target pages reached from preview links were audited for read-only safety.
+- Encoded slash/hash/space route params render safely without creating Admin links, mutation controls, fake profiles, fake rankings, or [object Object] output.
+- Placeholder/deferred player and country pages remain conservative until real read-model data contracts exist.
+- Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.

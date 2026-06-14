@@ -23,10 +23,10 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../api/client', () => api)
 
-function renderViewerRoute(route: string, element: JSX.Element, path = '/viewer/runs/:runId/*'): void {
+function renderViewerRoute(route: string, element: JSX.Element, path = '/viewer/runs/:runId/*'): ReturnType<typeof render> {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 
-  render(
+  return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[route]}>
         <Routes>
@@ -454,6 +454,28 @@ describe('ViewerRunPlayerCareerPage', () => {
     expectNoForbiddenViewerActions()
   })
 
+
+  it('renders safely for encoded slash/hash/space route params without fake data', async () => {
+    api.getRunPlayerDetail.mockResolvedValue(null)
+    mockEmptyPlayerCareerData()
+
+    const { container } = renderViewerRoute(
+      '/viewer/runs/run%2Falpha%20%231/players/P%2F1%20%23A/career',
+      <ViewerRunPlayerCareerPage />,
+      '/viewer/runs/:runId/players/:playerId/career'
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Player Profile' })).toBeInTheDocument()
+    expect(screen.getByText('run/alpha #1')).toBeInTheDocument()
+    expect(screen.getByText('P/1 #A')).toBeInTheDocument()
+    expect(await screen.findAllByText('This preview is not connected for this data shape yet.')).toHaveLength(3)
+    expect(api.getRunPlayerDetail).toHaveBeenCalledWith('run/alpha #1', 'P/1 #A')
+    expect(screen.queryByText(/world champion|grand slam|career high no\. 1|h2h|elo|ranking|rank #|wins|losses|titles/i)).not.toBeInTheDocument()
+    expect(screen.queryByText('Show technical player data')).not.toBeInTheDocument()
+    expect(container).not.toHaveTextContent('[object Object]')
+    expectNoForbiddenViewerActions()
+  })
+
   it('shows deferred preview when player detail data is missing', async () => {
     api.getRunPlayerDetail.mockResolvedValue(null)
     mockEmptyPlayerCareerData()
@@ -552,6 +574,27 @@ describe('ViewerRunCountryDetailPage', () => {
     expect(screen.getByText(/country-detail-hidden-payload/i)).not.toBeVisible()
     await userEvent.click(screen.getByText('Show technical country data'))
     expect(within(technicalSection as HTMLElement).getByText(/country-detail-hidden-payload/i)).toBeVisible()
+    expectNoForbiddenViewerActions()
+  })
+
+
+  it('renders safely for encoded slash/hash/space route params without fake data', async () => {
+    api.getRunNationDetail.mockResolvedValue(null)
+
+    const { container } = renderViewerRoute(
+      '/viewer/runs/run%2Falpha%20%231/countries/CO%2FDE%20%231',
+      <ViewerRunCountryDetailPage />,
+      '/viewer/runs/:runId/countries/:countryCode'
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Country Profile' })).toBeInTheDocument()
+    expect(screen.getByText('run/alpha #1')).toBeInTheDocument()
+    expect(screen.getByText('CO/DE #1')).toBeInTheDocument()
+    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
+    expect(api.getRunNationDetail).toHaveBeenCalledWith('run/alpha #1', 'CO/DE #1')
+    expect(screen.queryByText(/Team Championship|titles?|records?|medals?|hosting|Top 100|ranking|rank #|wins|losses/i)).not.toBeInTheDocument()
+    expect(screen.queryByText('Show technical country data')).not.toBeInTheDocument()
+    expect(container).not.toHaveTextContent('[object Object]')
     expectNoForbiddenViewerActions()
   })
 

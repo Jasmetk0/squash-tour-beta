@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { getRun, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
+import type { EventRecord, RaceSnapshot, RankingSnapshot, SeasonStateResponse } from '../api/types'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -69,6 +70,47 @@ function eventIsCompleted(completedEventIds: Set<string>, eventId: string): stri
   return completedEventIds.has(eventId) ? 'Yes' : 'No'
 }
 
+function isScalar(value: unknown): value is string | number {
+  return typeof value === 'string' || typeof value === 'number'
+}
+
+function safeText(value: unknown, fallback: string | number = '—'): string | number {
+  return isScalar(value) ? value : fallback
+}
+
+function safeWeekLabel(value: unknown): string {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? `W${value}` : '—'
+}
+
+function safeOrderedEvents(data: SeasonStateResponse | undefined): SeasonStateResponse['season_state']['ordered_events'] {
+  const orderedEvents = data?.season_state?.ordered_events
+  if (!Array.isArray(orderedEvents)) return []
+
+  return orderedEvents.filter((event) =>
+    event &&
+    typeof event === 'object' &&
+    typeof event.event_id === 'string' &&
+    typeof event.week === 'number' &&
+    Number.isInteger(event.week) &&
+    event.week > 0
+  )
+}
+
+function safeCompletedEventIds(data: SeasonStateResponse | undefined): string[] {
+  const completedEventIds = data?.season_state?.completed_event_ids
+  return Array.isArray(completedEventIds) ? completedEventIds.filter((eventId) => typeof eventId === 'string') : []
+}
+
+function safeEventRecords(events: EventRecord[] | undefined): EventRecord[] {
+  if (!Array.isArray(events)) return []
+  return events.filter((event) => event && typeof event === 'object' && typeof event.event_id === 'string')
+}
+
+function safeSnapshotRecords<T extends RankingSnapshot | RaceSnapshot>(snapshots: T[] | undefined): T[] {
+  if (!Array.isArray(snapshots)) return []
+  return snapshots.filter((snapshot) => snapshot && typeof snapshot === 'object' && typeof snapshot.snapshot_sequence === 'number')
+}
+
 
 export function ViewerRunCalendarPage(): JSX.Element {
   const { runId = '' } = useParams()
@@ -76,13 +118,13 @@ export function ViewerRunCalendarPage(): JSX.Element {
   const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId), retry: false })
   const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId), retry: false })
 
-  const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
+  const orderedEvents = safeOrderedEvents(runQuery.data)
   const nextEventIndex = runQuery.data?.season_state.next_event_index ?? 0
   const completedEventIds = useMemo(
-    () => new Set(runQuery.data?.season_state.completed_event_ids ?? []),
+    () => new Set(safeCompletedEventIds(runQuery.data)),
     [runQuery.data?.season_state.completed_event_ids]
   )
-  const eventRecords = useMemo(() => eventsQuery.data?.events ?? [], [eventsQuery.data?.events])
+  const eventRecords = useMemo(() => safeEventRecords(eventsQuery.data?.events), [eventsQuery.data?.events])
   const eventRecordIds = useMemo(() => new Set(eventRecords.map((event) => event.event_id)), [eventRecords])
   const eventRecordsById = useMemo(() => new Map(eventRecords.map((event) => [event.event_id, event])), [eventRecords])
   const completedCount = completedEventIds.size
@@ -148,11 +190,11 @@ export function ViewerRunCalendarPage(): JSX.Element {
                     items={[
                       { label: 'Status', value: eventStatusLabel(status) },
                       { label: 'Event ID', value: event.event_id },
-                      { label: 'Season', value: event.season },
-                      { label: 'Week', value: `W${event.week}` },
-                      { label: 'Tour', value: event.tour },
-                      { label: 'Category', value: event.category },
-                      { label: 'Template ID', value: event.template_id },
+                      { label: 'Season', value: safeText(event.season) },
+                      { label: 'Week', value: safeWeekLabel(event.week) },
+                      { label: 'Tour', value: safeText(event.tour) },
+                      { label: 'Category', value: safeText(event.category) },
+                      { label: 'Template ID', value: safeText(event.template_id) },
                       { label: 'Plan position', value: `${index + 1} of ${orderedEvents.length}` },
                       ...resultMetadataItems
                     ]}
@@ -194,13 +236,13 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
   const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId && eventId), retry: false })
   const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId && eventId), retry: false })
 
-  const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
+  const orderedEvents = safeOrderedEvents(runQuery.data)
   const nextEventIndex = runQuery.data?.season_state.next_event_index ?? 0
   const completedEventIds = useMemo(
-    () => new Set(runQuery.data?.season_state.completed_event_ids ?? []),
+    () => new Set(safeCompletedEventIds(runQuery.data)),
     [runQuery.data?.season_state.completed_event_ids]
   )
-  const eventRecords = useMemo(() => eventsQuery.data?.events ?? [], [eventsQuery.data?.events])
+  const eventRecords = useMemo(() => safeEventRecords(eventsQuery.data?.events), [eventsQuery.data?.events])
   const plannedEvent = useMemo(() => findPlannedEventById(runQuery.data?.season_state, eventId), [eventId, runQuery.data?.season_state])
   const eventRecord = useMemo(() => findPersistedEventById(eventRecords, eventId), [eventRecords, eventId])
   const hasEventRecord = Boolean(eventRecord)
@@ -225,7 +267,7 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
   const contextLinks = runId && eventId
     ? buildPlannedEventContextLinks({
         runId,
-        eventId: plannedEvent?.event_id ?? eventId,
+        eventId,
         week: plannedEvent?.week,
         hasPersisted: hasEventRecord
       })
@@ -329,26 +371,26 @@ export function ViewerRunWeekPage(): JSX.Element {
     retry: false
   })
 
-  const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
+  const orderedEvents = safeOrderedEvents(runQuery.data)
   const weekEvents = useMemo(() => plannedEventsForWeek(runQuery.data?.season_state, parsedWeek), [parsedWeek, runQuery.data?.season_state])
   const weekEventIds = useMemo(() => sourceEventIdsForWeek(weekEvents), [weekEvents])
   const nextEventIndex = runQuery.data?.season_state.next_event_index ?? 0
   const completedEventIds = useMemo(
-    () => new Set(runQuery.data?.season_state.completed_event_ids ?? []),
+    () => new Set(safeCompletedEventIds(runQuery.data)),
     [runQuery.data?.season_state.completed_event_ids]
   )
-  const eventRecords = useMemo(() => (runQuery.data ? (eventsQuery.data?.events ?? []) : []), [eventsQuery.data?.events, runQuery.data])
+  const eventRecords = useMemo(() => (runQuery.data ? safeEventRecords(eventsQuery.data?.events) : []), [eventsQuery.data?.events, runQuery.data])
   const eventRecordsById = useMemo(() => persistedEventsByExactId(eventRecords), [eventRecords])
   const persistedWeekEvents = useMemo(
     () => persistedEventsForWeek(eventRecords, parsedWeek, weekEventIds),
     [eventRecords, parsedWeek, weekEventIds]
   )
   const rankingPublications = useMemo(
-    () => snapshotsForWeekSourceEvents(rankingSnapshotsQuery.data?.snapshots, weekEventIds),
+    () => snapshotsForWeekSourceEvents(safeSnapshotRecords(rankingSnapshotsQuery.data?.snapshots), weekEventIds),
     [rankingSnapshotsQuery.data?.snapshots, weekEventIds]
   )
   const racePublications = useMemo(
-    () => snapshotsForWeekSourceEvents(raceSnapshotsQuery.data?.snapshots, weekEventIds),
+    () => snapshotsForWeekSourceEvents(safeSnapshotRecords(raceSnapshotsQuery.data?.snapshots), weekEventIds),
     [raceSnapshotsQuery.data?.snapshots, weekEventIds]
   )
   const completedWeekEvents = useMemo(() => completedPlannedEventsForWeek(weekEvents, completedEventIds), [completedEventIds, weekEvents])
@@ -493,7 +535,7 @@ export function ViewerRunWeekPage(): JSX.Element {
             {rankingPublications.map((snapshot) => (
               <li key={`ranking-${snapshot.snapshot_sequence}`}>
                 <Link to={viewerRankingSnapshotPath(runId, snapshot.snapshot_sequence)}>Ranking publication #{snapshot.snapshot_sequence}</Link>{' '}
-                <span className="status">Source {snapshot.source_event_id}</span>
+                <span className="status">Source {safeText(snapshot.source_event_id)}</span>
               </li>
             ))}
           </ul>
@@ -503,7 +545,7 @@ export function ViewerRunWeekPage(): JSX.Element {
             {racePublications.map((snapshot) => (
               <li key={`race-${snapshot.snapshot_sequence}`}>
                 <Link to={viewerRaceSnapshotPath(runId, snapshot.snapshot_sequence)}>Race publication #{snapshot.snapshot_sequence}</Link>{' '}
-                <span className="status">Source {snapshot.source_event_id}</span>
+                <span className="status">Source {safeText(snapshot.source_event_id)}</span>
               </li>
             ))}
           </ul>

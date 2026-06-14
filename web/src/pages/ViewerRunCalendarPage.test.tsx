@@ -368,6 +368,34 @@ describe('ViewerRunPlannedEventPage', () => {
     expectNoForbiddenViewerActions()
   })
 
+  it('handles encoded planned event route params and malformed payload rows without unsafe output', async () => {
+    api.getRun.mockResolvedValueOnce({
+      run: { run_id: 'run/alpha #1', season: 2030, seed: 1, config_version: 'v', config_fingerprint: 'fp', next_event_index: 0, total_events: 2, completed_event_ids: [] },
+      season_state: {
+        season: 2030,
+        next_event_index: 0,
+        completed_event_ids: [{ bad: true }],
+        ordered_events: [
+          { event_id: { bad: true }, season: 2030, week: 7, tour: 'Bad', category: 'Bad', template_id: 'BAD' },
+          { event_id: 'EVT/1 #A', season: 2030, week: 7, tour: { bad: true }, category: 'Gold', template_id: { bad: true } }
+        ]
+      }
+    })
+    api.listEvents.mockResolvedValueOnce({ run_id: 'run/alpha #1', events: [null, 42, { event_id: { bad: true }, week: { bad: true } }] })
+
+    renderViewerCalendarRoute('/viewer/runs/run%2Falpha%20%231/calendar/EVT%2F1%20%23A')
+
+    expect(await screen.findByRole('heading', { name: 'Planned Event' })).toBeInTheDocument()
+    expect(api.getRun).toHaveBeenCalledWith('run/alpha #1')
+    expect(api.listEvents).toHaveBeenCalledWith('run/alpha #1')
+    expect(screen.getAllByText('run/alpha #1').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('EVT/1 #A').length).toBeGreaterThan(0)
+    expect(screen.getByRole('link', { name: 'Season calendar' })).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/calendar')
+    expect(screen.queryByRole('link', { name: 'Tournament detail' })).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent('[object Object]')
+    expectNoForbiddenViewerActions()
+  })
+
 })
 
 describe('ViewerRunWeekPage', () => {
@@ -475,4 +503,19 @@ describe('ViewerRunWeekPage', () => {
     expect(await screen.findByText('No planned or persisted tournament records are available for this week.')).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
+
+  it('keeps invalid week route params local, safe, and free of invented match data', async () => {
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-1/weeks/not-a-week')
+
+    expect(await screen.findByRole('heading', { name: 'Week Detail' })).toBeInTheDocument()
+    expect(screen.getByText('Week must be a positive whole number in the URL (for example /weeks/12).')).toBeInTheDocument()
+    expect(api.getRun).not.toHaveBeenCalled()
+    expect(api.listEvents).not.toHaveBeenCalled()
+    expect(api.listRankingSnapshots).not.toHaveBeenCalled()
+    expect(api.listRaceSnapshots).not.toHaveBeenCalled()
+    expect(screen.queryByText(/match result|final score|standings|winner/i)).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent('[object Object]')
+    expectNoForbiddenViewerActions()
+  })
+
 })

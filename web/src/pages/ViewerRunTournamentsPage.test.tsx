@@ -206,6 +206,34 @@ describe('ViewerRunTournamentsPage', () => {
     expectNoForbiddenViewerActions()
   })
 
+  it('renders safe empty state on the normal tournament list route without invented data', async () => {
+    api.listEvents.mockResolvedValueOnce({ run_id: 'viewer-run-1', events: [] })
+
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
+
+    expect(await screen.findByRole('heading', { name: 'Tournaments' })).toBeInTheDocument()
+    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
+    expect(screen.queryByText(/champion|winner|final score|standings|match result/i)).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent('[object Object]')
+    expectNoForbiddenViewerActions()
+  })
+
+  it('drops malformed tournament list rows and does not create unsafe links from object IDs', async () => {
+    api.listEvents.mockResolvedValueOnce({
+      run_id: 'viewer-run-1',
+      events: [null, 12, 'bad', {}, { event_id: { bad: true }, week: 3 }, { event_id: 'EVENT-SAFE', week: { bad: true }, template_id: { bad: true }, tournament_result: { fake_winner: 'Fake Winner' } }]
+    })
+
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
+
+    expect(await screen.findByText('EVENT-SAFE')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Open tournament detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/tournaments/EVENT-SAFE')
+    expect(screen.queryByRole('link', { name: /^W/i })).not.toBeInTheDocument()
+    expect(screen.queryByText('Fake Winner')).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent('[object Object]')
+    expectNoForbiddenViewerActions()
+  })
+
 })
 
 describe('ViewerRunTournamentDetailPage', () => {
@@ -309,7 +337,7 @@ describe('ViewerRunTournamentDetailPage', () => {
     expect(screen.getAllByText('Platinum').length).toBeGreaterThan(0)
     expect(screen.getAllByText('World Tour').length).toBeGreaterThan(0)
     expect(screen.getByText('WT-PLAT')).toBeInTheDocument()
-    expect(screen.getByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
+    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Back to tournaments/i })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-1/tournaments'
@@ -355,4 +383,28 @@ describe('ViewerRunTournamentDetailPage', () => {
     expect(screen.queryByRole('link', { name: /Open week detail/i })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
+
+  it('handles encoded tournament detail route params and malformed snapshots safely', async () => {
+    api.getEvent.mockResolvedValueOnce({ event_sequence: 1, event_id: 'EVT/1 #A', season: 2030, week: null, template_id: { bad: true }, tournament_result: { fake_winner: 'Fake Winner' } })
+    api.getRun.mockResolvedValueOnce({
+      run: { run_id: 'run/alpha #1', season: 2030, seed: 1, config_version: 'v', config_fingerprint: 'fp', next_event_index: 0, total_events: 0, completed_event_ids: [] },
+      season_state: { season: 2030, next_event_index: 0, completed_event_ids: [], ordered_events: [{ event_id: { bad: true }, week: { bad: true } }] }
+    })
+    api.listRankingSnapshots.mockResolvedValueOnce({ run_id: 'run/alpha #1', snapshots: [null, {}, { snapshot_sequence: { bad: true }, source_event_id: { bad: true } }] })
+    api.listRaceSnapshots.mockResolvedValueOnce({ run_id: 'run/alpha #1', snapshots: [null, 7] })
+
+    renderViewerTournamentRoute('/viewer/runs/run%2Falpha%20%231/tournaments/EVT%2F1%20%23A')
+
+    expect(await screen.findByRole('heading', { name: 'Tournament Detail' })).toBeInTheDocument()
+    expect(api.getEvent).toHaveBeenCalledWith('run/alpha #1', 'EVT/1 #A')
+    expect(api.getRun).toHaveBeenCalledWith('run/alpha #1')
+    expect(screen.getAllByText('run/alpha #1').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('EVT/1 #A').length).toBeGreaterThan(0)
+    expect(screen.getByRole('link', { name: /Back to tournaments/i })).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/tournaments')
+    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
+    expect(screen.queryByText('Fake Winner')).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent('[object Object]')
+    expectNoForbiddenViewerActions()
+  })
+
 })

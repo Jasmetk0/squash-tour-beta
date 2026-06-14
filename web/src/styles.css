@@ -891,15 +891,15 @@ textarea:focus-visible {
 .viewer-topbar {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.42rem;
   flex-wrap: nowrap;
   max-width: 100%;
   box-sizing: border-box;
-  padding: 0.65rem 0.75rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 24px;
-  background: #f8fafc;
-  box-shadow: 0 14px 32px rgb(15 23 42 / 7%);
+  padding: 0.72rem 0.85rem;
+  border: 1px solid rgb(148 163 184 / 55%);
+  border-radius: 26px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 52%, #eef6ff 100%);
+  box-shadow: 0 16px 36px rgb(15 23 42 / 9%), inset 0 1px 0 rgb(255 255 255 / 86%);
   margin: 1rem 0;
 }
 
@@ -908,14 +908,14 @@ textarea:focus-visible {
 .viewer-context-selector__update,
 .viewer-jump-button,
 .viewer-topbar-search button {
-  border: 1px solid #cbd5e1;
+  border: 1px solid rgb(203 213 225 / 82%);
   border-radius: 999px;
-  background: #fff;
+  background: rgb(255 255 255 / 88%);
   color: #334155;
-  font-weight: 700;
+  font-weight: 750;
   line-height: 1.1;
   min-width: 0;
-  padding: 0.42rem 0.62rem;
+  padding: 0.46rem 0.68rem;
   text-decoration: none;
   overflow-wrap: anywhere;
   white-space: normal;
@@ -928,9 +928,10 @@ textarea:focus-visible {
 .viewer-context-selector__update:hover,
 .viewer-jump-button:hover,
 .viewer-topbar-search button:hover {
+  background: #f8fbff;
   border-color: #60a5fa;
   color: #1d4ed8;
-  box-shadow: 0 8px 18px rgb(37 99 235 / 14%);
+  box-shadow: 0 9px 20px rgb(37 99 235 / 16%);
   transform: translateY(-1px);
 }
 
@@ -948,9 +949,9 @@ textarea:focus-visible {
 }
 
 .viewer-topbar a.active {
-  background: #fff;
-  border-color: #94a3b8;
-  box-shadow: inset 0 -2px 0 #64748b;
+  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+  border-color: #3b82f6;
+  box-shadow: inset 0 -2px 0 #2563eb, 0 8px 18px rgb(37 99 235 / 12%);
   color: #0f172a;
   font-weight: 800;
 }
@@ -972,35 +973,77 @@ textarea:focus-visible {
   min-width: 0;
 }
 
+.viewer-dropdown::after {
+  content: '';
+  position: absolute;
+  left: -0.35rem;
+  right: -0.35rem;
+  top: 100%;
+  height: 0.7rem;
+}
+
 .viewer-dropdown__menu {
   position: absolute;
-  top: calc(100% + 0.45rem);
+  top: calc(100% + 0.55rem);
   left: 0;
   z-index: 10;
-  display: none;
-  min-width: min(calc(100vw - 2rem), 220px);
-  gap: 0.35rem;
-  padding: 0.6rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 18px 40px rgb(15 23 42 / 16%);
+  display: grid;
+  min-width: min(calc(100vw - 2rem), 230px);
+  gap: 0.32rem;
+  padding: 0.62rem;
+  border: 1px solid rgb(148 163 184 / 48%);
+  border-radius: 18px;
+  background: rgb(255 255 255 / 98%);
+  box-shadow: 0 20px 44px rgb(15 23 42 / 18%), inset 0 1px 0 rgb(255 255 255 / 90%);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-0.35rem) scale(0.985);
+  transform-origin: top left;
+  visibility: hidden;
+  transition: opacity 160ms ease, transform 160ms ease, visibility 0s linear 160ms;
 }
 
 .viewer-dropdown:hover .viewer-dropdown__menu,
 .viewer-dropdown:focus-within .viewer-dropdown__menu {
-  display: grid;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+  transition-delay: 0s;
 }
 
 .viewer-dropdown__menu a {
-  border-radius: 10px;
+  border-radius: 12px;
   box-shadow: none;
+  padding: 0.5rem 0.64rem;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
 }
 
 .viewer-dropdown__menu a.active {
-  background: #fff;
-  border-color: #94a3b8;
+  background: #eff6ff;
+  border-color: #3b82f6;
   color: #0f172a;
+}
+
+.viewer-dropdown__menu a:hover,
+.viewer-dropdown__menu a:focus-visible {
+  background: #f1f7ff;
+  border-color: #60a5fa;
+  color: #1d4ed8;
+  box-shadow: 0 8px 18px rgb(37 99 235 / 12%);
+  transform: translateX(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewer-dropdown__menu,
+  .viewer-dropdown__menu a,
+  .viewer-topbar a,
+  .viewer-context-selector__button,
+  .viewer-context-selector__update,
+  .viewer-jump-button,
+  .viewer-topbar-search button {
+    transition: none;
+  }
 }
 
 .viewer-topbar-search {

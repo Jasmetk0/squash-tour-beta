@@ -12,6 +12,7 @@ import {
   writeViewerActiveRunId
 } from '../viewer/activeRun'
 import { formatViewerActiveRunLabel, formatViewerCompactRunOptionLabel, formatViewerRunOptionLabel } from '../viewer/activeRunDisplay'
+import { normalizeRunBrowserRuns } from '../viewer/runBrowserDisplay'
 import { viewerRunsPath } from '../viewer/viewerRoutes'
 
 type ViewerRunSelectorProps = {
@@ -28,7 +29,7 @@ function useViewerRunSelection() {
     retry: false
   })
 
-  const runs = runsQuery.data?.runs ?? []
+  const runs = normalizeRunBrowserRuns(runsQuery.data?.runs)
 
   useEffect(() => {
     function handleActiveRunChange(): void {

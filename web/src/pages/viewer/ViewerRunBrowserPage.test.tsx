@@ -94,6 +94,60 @@ describe('ViewerRunBrowserPage', () => {
     expect(screen.getByRole('link', { name: 'Finals' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/finals')
   })
 
+
+  it('keeps the normal and empty route conservative without fake records or object output', async () => {
+    renderRunBrowser()
+
+    expect(await screen.findByRole('heading', { level: 2, name: 'Run Browser' })).toBeInTheDocument()
+    expect(await screen.findByText('No Viewer runs are available yet.')).toBeInTheDocument()
+    expect(screen.queryByText(/Current tournament|Top ranking|Storyline|Winner|Champion|Standings/i)).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent('[object Object]')
+    expectNoForbiddenViewerActions()
+  })
+
+  it('drops malformed run records without object output or unsafe links', async () => {
+    api.listRuns.mockResolvedValue({
+      runs: [
+        null,
+        7,
+        'run-string',
+        {},
+        { run_id: { value: 'object-run' }, season: { value: 2031 }, progress: { next_event_index: {} } },
+        { run_id: '', season: 2031 },
+        { run_id: 'safe run', season: { value: 2031 }, seed: ['bad'], progress: { next_event_index: {}, total_events: [], completed_event_count: null } }
+      ]
+    })
+
+    renderRunBrowser()
+
+    expect(await screen.findByRole('heading', { level: 4, name: 'safe run' })).toBeInTheDocument()
+    expect(screen.queryByText('object-run')).not.toBeInTheDocument()
+    expect(screen.queryByText('run-string')).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent('[object Object]')
+    for (const link of screen.getAllByRole('link')) {
+      const href = link.getAttribute('href') ?? ''
+      expect(href).not.toContain('[object%20Object]')
+      expect(href).not.toContain('[object Object]')
+      expect(href).not.toMatch(/^\/admin(?:\/|$)/)
+    }
+    expectNoForbiddenViewerActions()
+  })
+
+  it('encodes safe run ids with slashes, hashes, and spaces in Viewer-only links', async () => {
+    api.listRuns.mockResolvedValue({ runs: [{ ...sampleRun(), run_id: 'run/alpha #1' }] })
+
+    renderRunBrowser()
+
+    expect(await screen.findByRole('heading', { level: 4, name: 'run/alpha #1' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Season calendar' })).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/calendar')
+    expect(screen.getByRole('link', { name: 'Rankings' })).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/rankings')
+    for (const link of screen.getAllByRole('link')) {
+      const href = link.getAttribute('href') ?? ''
+      expect(href).not.toContain('/viewer/runs/run/alpha #1')
+      expect(href).not.toMatch(/^\/admin(?:\/|$)/)
+    }
+  })
+
   it('does not expose forbidden Viewer action labels', async () => {
     renderRunBrowser()
 

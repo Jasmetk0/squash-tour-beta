@@ -41,6 +41,19 @@ const forbiddenMutationSource = [
 
 const forbiddenVisibleMutationLabels = /(?:>\s*|['"`])(?:Simulate|Generate|Persist|Apply|Execute|Delete|Edit|Import|Rollover|Rebuild|Override|Save changes|Commit|Regenerate|Repair|Merge|Overwrite)(?:\s*<|['"`])/i
 
+const forbiddenUnsafeRunTemplates = /\/viewer\/runs\/\$\{|\/viewer\/runs\/['"`]?\s*\+/
+
+const forbiddenRunScopedProductionImportPatterns = [
+  /from ['"](?:\.\.\/)?ViewerRun(Snapshots|PlayersCountries|Calendar|Tournaments|HistoryFinals)Page/,
+  /from ['"][^'"]*\/(?:rankings|players-countries|calendar|tournaments|history-finals)\//
+]
+
+function expectNoRunScopedProductionImports(sourceName: string, source: string): void {
+  for (const forbiddenPattern of forbiddenRunScopedProductionImportPatterns) {
+    expect(source, `${sourceName} must not match ${forbiddenPattern}`).not.toMatch(forbiddenPattern)
+  }
+}
+
 const forbiddenFakeHubClaims = /(?:fake champion|fake winner|invented champion|invented winner|fake standings|invented standings|fake prediction|invented prediction|fake odds|invented odds|fake ranking|invented ranking|fake stat|invented stat|fake H2H|invented H2H|world champion|grand slam|career high no\. 1|Team Championship|medals|Top 100|standings table)/i
 
 function viewerRoutesFromApp(): string[] {
@@ -72,6 +85,24 @@ describe('Viewer top-level route source guard', () => {
   it('keeps top-level and deferred Viewer sources free of fake or invented hub claims', () => {
     for (const [sourceName, source] of Object.entries(topLevelAndDeferredViewerSources)) {
       expect(source, sourceName).not.toMatch(forbiddenFakeHubClaims)
+    }
+  })
+
+
+
+  it('keeps deferred page sources conservative and free of unsafe route templates', () => {
+    expect(Object.keys(deferredViewerPageSources).length).toBeGreaterThan(0)
+
+    for (const [sourceName, source] of Object.entries(deferredViewerPageSources)) {
+      expect(source, `${sourceName} should expose conservative deferred copy`).toMatch(/deferred|unavailable|not available|read-only/i)
+      expect(source, `${sourceName} must not hardcode unsafe run-scoped route templates`).not.toMatch(forbiddenUnsafeRunTemplates)
+      expectNoRunScopedProductionImports(sourceName, source)
+    }
+  })
+
+  it('keeps top-level target pages from importing completed run-scoped production modules directly', () => {
+    for (const [sourceName, source] of Object.entries(topLevelAndDeferredViewerSources)) {
+      expectNoRunScopedProductionImports(sourceName, source)
     }
   })
 

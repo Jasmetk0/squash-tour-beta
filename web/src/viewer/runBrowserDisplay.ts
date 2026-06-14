@@ -3,6 +3,27 @@ import { viewerCountriesPath, viewerFinalsPath, viewerHistoryPath, viewerPlayers
 
 export type ViewerRunBrowserListItem = RunsIndexResponse['runs'][number] & Record<string, unknown>
 
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+export function getSafeRunBrowserRunId(run: unknown): string | null {
+  if (!isObjectRecord(run)) return null
+  const runId = run.run_id
+  if (typeof runId !== 'string') return null
+  const normalizedRunId = runId.trim()
+  return normalizedRunId ? normalizedRunId : null
+}
+
+export function normalizeRunBrowserRuns(runs: unknown): ViewerRunBrowserListItem[] {
+  if (!Array.isArray(runs)) return []
+  return runs.flatMap((run) => {
+    const runId = getSafeRunBrowserRunId(run)
+    if (!runId || !isObjectRecord(run)) return []
+    return [{ ...run, run_id: runId } as ViewerRunBrowserListItem]
+  })
+}
+
 export type ViewerRunBrowserMetadataField = {
   label: string
   value: string | number

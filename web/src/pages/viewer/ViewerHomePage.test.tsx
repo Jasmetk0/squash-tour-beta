@@ -120,6 +120,35 @@ describe('ViewerHomePage', () => {
     resetApiMocks()
   })
 
+
+  it('keeps the default Viewer route read-only without fake hub data or object output', () => {
+    renderHome()
+
+    expect(screen.getByRole('heading', { level: 2, name: /MSA Squash/ })).toBeInTheDocument()
+    expect(screen.getByText(/public, read-only entry hub/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'What this hub does not infer' })).toBeInTheDocument()
+    expect(screen.queryByText(/Current tournament|Top ranking|fake prediction|Winner|Champion|Standings/i)).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent('[object Object]')
+    expectNoActiveRunScopedLinks()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('keeps encoded active-run shortcut links Viewer-only without raw slash or hash href leakage', async () => {
+    setViewerActiveRunId('run/alpha #1')
+
+    renderHome()
+
+    expect(await screen.findByRole('heading', { name: 'Active Viewer run: run/alpha #1' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Active Run Rankings' })).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/rankings')
+    expect(screen.getByRole('link', { name: 'Active Run History' })).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/history')
+    for (const link of screen.getAllByRole('link')) {
+      const href = link.getAttribute('href') ?? ''
+      expect(href).not.toContain('/viewer/runs/run/alpha #1')
+      expect(href).not.toMatch(/^\/admin(?:\/|$)/)
+    }
+    expectNoForbiddenViewerActions()
+  })
+
   it('shows the existing empty state when no active run is selected', () => {
     api.listRuns.mockResolvedValue({ runs: [] })
 

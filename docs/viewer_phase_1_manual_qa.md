@@ -1382,3 +1382,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - History/finals/player/event/tournament/snapshot links remain Viewer-only, encoded, scalar-safe, and backed by route helpers.
 - Empty, malformed, unavailable, or ambiguous data does not invent history entries, finals qualifications, champions, winners, standings, rankings, records, finalists, or profiles.
 - Routes, API behavior, active-run behavior, runtime safety, snapshot boundaries, player/country boundaries, calendar/tournament boundaries, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 13A note — run-scoped Viewer final integration guard
+
+- Completed run-scoped Viewer modules were locked with a final cross-module source/integration guard after Phases 9–12.
+- Snapshot, player/country, calendar/tournament, and history/finals modules remain Viewer-only, read-only, encoded, scalar-safe, and route-helper-backed.
+- Empty, malformed, unavailable, or ambiguous data does not invent rankings, race standings, players, countries, events, weeks, tournaments, matches, winners, champions, records, history entries, finals qualifications, finalists, or profiles.
+- Routes, API behavior, active-run behavior, runtime safety, module boundaries, and Viewer/Admin separation remain unchanged.

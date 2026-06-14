@@ -20,7 +20,7 @@ export function buildViewerHomeReadOnlyNotes(): string[] {
   return [
     'Viewer Home is read-only and links to existing Viewer surfaces only.',
     'Active-run shortcuts appear only when an active Viewer run is selected.',
-    'Unavailable previews stay empty instead of inventing progress, results, standings, winners, or schedule facts.'
+    'Unavailable previews stay empty instead of inventing progress, results, table rows, or schedule facts.'
   ]
 }
 

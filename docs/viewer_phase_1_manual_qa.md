@@ -1345,3 +1345,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Calendar/tournament/week links remain Viewer-only, encoded, scalar-safe, and backed by registered App route patterns.
 - No calendar events, weeks, tournament results, winners, standings, or match data are invented.
 - Routes, API behavior, active-run behavior, runtime safety, snapshot boundaries, player/country boundaries, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 11B note — calendar/tournament target page safety audit
+
+- Viewer calendar, planned-event, week, tournament-list, and tournament-detail target pages were audited for read-only safety.
+- Encoded slash/hash/space route params and week params render safely without creating Admin links, mutation controls, fake events, fake tournaments, fake winners, fake standings, or [object Object] output.
+- Empty, malformed, unavailable, or ambiguous calendar/tournament data does not invent events, weeks, matches, results, winners, standings, or tournament records.
+- Routes, API behavior, active-run behavior, runtime safety, snapshot boundaries, player/country boundaries, and Viewer read-only safety remain unchanged.

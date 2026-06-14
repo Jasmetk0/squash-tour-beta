@@ -41,20 +41,51 @@ type PlannedTournamentContext = PlannedEvent & {
 
 function buildPlannedContext(runData: SeasonStateResponse | undefined): Map<string, PlannedTournamentContext> {
   const plannedContext = new Map<string, PlannedTournamentContext>()
-  const orderedEvents = runData?.season_state.ordered_events ?? []
+  const orderedEvents = runData?.season_state?.ordered_events
+
+  if (!Array.isArray(orderedEvents)) return plannedContext
 
   orderedEvents.forEach((event, index) => {
-    plannedContext.set(event.event_id, { ...event, planPosition: index })
+    if (event && typeof event === 'object' && typeof event.event_id === 'string') {
+      plannedContext.set(event.event_id, { ...event, planPosition: index })
+    }
   })
   return plannedContext
 }
 
+function isScalar(value: unknown): value is string | number {
+  return typeof value === 'string' || typeof value === 'number'
+}
+
+function safeText(value: unknown, fallback: string | number = '—'): string | number {
+  return isScalar(value) ? value : fallback
+}
+
+function safeNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function safeEventRecords(events: EventRecord[] | undefined): EventRecord[] {
+  if (!Array.isArray(events)) return []
+  return events.filter((event) => event && typeof event === 'object' && typeof event.event_id === 'string')
+}
+
+function safeCompletedEventIds(data: SeasonStateResponse | undefined): string[] {
+  const completedEventIds = data?.season_state?.completed_event_ids
+  return Array.isArray(completedEventIds) ? completedEventIds.filter((eventId) => typeof eventId === 'string') : []
+}
+
+function safeSnapshotRecords<T extends { snapshot_sequence: number }>(snapshots: T[] | undefined): T[] {
+  if (!Array.isArray(snapshots)) return []
+  return snapshots.filter((snapshot) => snapshot && typeof snapshot === 'object' && typeof snapshot.snapshot_sequence === 'number')
+}
+
 function eventWeek(event: EventRecord | null | undefined, planned: PlannedTournamentContext | undefined): number | null {
-  return event?.week ?? planned?.week ?? null
+  return safeNumber(event?.week) ?? safeNumber(planned?.week) ?? null
 }
 
 function eventSeason(event: EventRecord | null | undefined, planned: PlannedTournamentContext | undefined): number | null {
-  return event?.season ?? planned?.season ?? null
+  return safeNumber(event?.season) ?? safeNumber(planned?.season) ?? null
 }
 
 function resultAvailability(event: EventRecord | null | undefined): string {
@@ -66,8 +97,8 @@ function completionStatus(event: EventRecord, completedEventIds: Set<string>): s
   return completedEventIds.has(event.event_id) ? 'Completed in season plan' : 'Completion not recorded in plan'
 }
 
-function displayValue(value: number | string | null | undefined): number | string {
-  return value ?? '—'
+function displayValue(value: unknown): number | string {
+  return safeText(value)
 }
 
 function displayWeekDetailLink(runId: string, week: number | null): ReactNode {
@@ -93,10 +124,10 @@ export function ViewerRunTournamentsPage(): JSX.Element {
   const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId) })
   const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId), retry: false })
 
-  const events = eventsQuery.data?.events ?? []
+  const events = safeEventRecords(eventsQuery.data?.events)
   const plannedContext = useMemo(() => buildPlannedContext(runQuery.data), [runQuery.data])
   const completedEventIds = useMemo(
-    () => new Set(runQuery.data?.season_state.completed_event_ids ?? []),
+    () => new Set(safeCompletedEventIds(runQuery.data)),
     [runQuery.data?.season_state.completed_event_ids]
   )
   const completedPersistedCount = events.filter((event) => completedEventIds.has(event.event_id)).length
@@ -136,12 +167,12 @@ export function ViewerRunTournamentsPage(): JSX.Element {
                   <strong>{event.event_id}</strong>
                   <MetadataList
                     items={[
-                      { label: 'Sequence', value: event.event_sequence ?? '—' },
+                      { label: 'Sequence', value: safeText(event.event_sequence) },
                       { label: 'Season', value: season ?? '—' },
                       { label: 'Week', value: displayWeekDetailLink(runId, week) },
-                      { label: 'Template', value: planned?.template_id ?? event.template_id ?? '—' },
-                      { label: 'Category', value: planned?.category ?? 'No ordered-calendar category' },
-                      { label: 'Tour', value: planned?.tour ?? 'No ordered-calendar tour' },
+                      { label: 'Template', value: safeText(planned?.template_id ?? event.template_id) },
+                      { label: 'Category', value: safeText(planned?.category, 'No ordered-calendar category') },
+                      { label: 'Tour', value: safeText(planned?.tour, 'No ordered-calendar tour') },
                       { label: 'Completion', value: completionStatus(event, completedEventIds) },
                       { label: 'Result availability', value: resultAvailability(event) }
                     ]}
@@ -185,9 +216,9 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
 
   const plannedContext = useMemo(() => buildPlannedContext(runQuery.data), [runQuery.data])
   const planned = plannedContext.get(eventId)
-  const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
+  const orderedEvents = Array.isArray(runQuery.data?.season_state?.ordered_events) ? runQuery.data.season_state.ordered_events : []
   const completedEventIds = useMemo(
-    () => new Set(runQuery.data?.season_state.completed_event_ids ?? []),
+    () => new Set(safeCompletedEventIds(runQuery.data)),
     [runQuery.data?.season_state.completed_event_ids]
   )
   const plannedStatus = planned
@@ -203,8 +234,8 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
   const week = eventWeek(event, planned)
   const season = eventSeason(event, planned)
   const templateId = planned?.template_id ?? event?.template_id ?? null
-  const rankingPublications = snapshotsForSourceEvent(rankingSnapshotsQuery.data?.snapshots, eventId)
-  const racePublications = snapshotsForSourceEvent(raceSnapshotsQuery.data?.snapshots, eventId)
+  const rankingPublications = snapshotsForSourceEvent(safeSnapshotRecords(rankingSnapshotsQuery.data?.snapshots), eventId)
+  const racePublications = snapshotsForSourceEvent(safeSnapshotRecords(raceSnapshotsQuery.data?.snapshots), eventId)
   const sourceLinks = buildEventDetailLinks({
     runId,
     eventId,
@@ -276,12 +307,12 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
                   items={[
                     { label: 'Event ID', value: event.event_id },
                     { label: 'Run ID', value: runId || 'unknown' },
-                    { label: 'Sequence', value: event.event_sequence ?? '—' },
+                    { label: 'Sequence', value: safeText(event.event_sequence) },
                     { label: 'Season', value: season ?? '—' },
                     { label: 'Week', value: displayWeekDetailLink(runId, week) },
-                    { label: 'Tour', value: planned?.tour ?? 'No ordered-calendar tour' },
-                    { label: 'Category', value: planned?.category ?? 'No ordered-calendar category' },
-                    { label: 'Template', value: templateId ?? '—' }
+                    { label: 'Tour', value: safeText(planned?.tour, 'No ordered-calendar tour') },
+                    { label: 'Category', value: safeText(planned?.category, 'No ordered-calendar category') },
+                    { label: 'Template', value: safeText(templateId) }
                   ]}
                 />
                 {planned ? (

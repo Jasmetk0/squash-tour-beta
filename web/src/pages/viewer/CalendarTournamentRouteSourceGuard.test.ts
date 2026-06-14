@@ -19,6 +19,8 @@ const unsafeTemplateRoutePatterns = [
   /`\/viewer\/runs\/\$\{runId\}\/weeks(?:`|\/|\?)/
 ]
 const forbiddenMutationLabelText = />\s*(?:Simulate|Generate|Persist|Apply|Execute|Delete|Edit|Import|Rollover|Rebuild|Override|Save changes|Commit|Regenerate|Repair|Merge|Overwrite)\s*</i
+const forbiddenMutationCalls = /\b(?:fetch|axios|mutate|useMutation)\b[^\n]*(?:POST|PUT|PATCH|DELETE|simulate|generate|persist|apply|execute|delete|edit|import|rollover|rebuild|override|save|commit|regenerate|repair|merge|overwrite)/i
+const forbiddenFakeClaims = /(?:World Champion|fake tournament|fixture tournament|fake winner|fake champion|fake standings|fake match result|invented standings|invented winner)/i
 
 function expectNoUnsafeRouteTemplates(source: string): void {
   for (const pattern of unsafeTemplateRoutePatterns) {
@@ -53,7 +55,24 @@ describe('Calendar/tournament Viewer route source guard', () => {
     for (const source of viewerCalendarTournamentSources) {
       expectNoUnsafeRouteTemplates(source)
       expect(source).not.toContain('/admin')
+      expect(source).not.toContain('<button')
+      expect(source).not.toContain('type="submit"')
+      expect(source).not.toMatch(forbiddenMutationCalls)
       expect(source).not.toMatch(forbiddenMutationLabelText)
+    }
+  })
+
+  it('keeps actual calendar/tournament targets exported, read-only, and free of fake claims', () => {
+    for (const componentName of ['ViewerRunCalendarPage', 'ViewerRunPlannedEventPage', 'ViewerRunWeekPage']) {
+      expect(viewerRunCalendarSource).toContain(`export function ${componentName}`)
+    }
+    for (const componentName of ['ViewerRunTournamentsPage', 'ViewerRunTournamentDetailPage']) {
+      expect(viewerRunTournamentsSource).toContain(`export function ${componentName}`)
+    }
+
+    for (const source of [viewerRunCalendarSource, viewerRunTournamentsSource]) {
+      expect(source).toMatch(/viewer(?:SeasonCalendar|PlannedEvent|WeekDetail|Tournaments|TournamentDetail)Path/)
+      expect(source).not.toMatch(forbiddenFakeClaims)
     }
   })
 })

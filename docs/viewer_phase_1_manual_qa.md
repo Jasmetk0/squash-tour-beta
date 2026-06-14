@@ -21,13 +21,6 @@ This is a documentation-only QA guide. It does not request product, React, backe
 - Routes, data fetching, visible copy, metadata labels, links, and read-only safety remain unchanged.
 - No backend/Admin route behavior changed.
 
-## Viewer Phase 14C note — top-level Viewer hub final guard
-
-- Top-level Viewer hub invariants were locked with final source/integration guards after Phases 14A–14B.
-- Viewer Home, Run Browser, active-run shortcuts, run selector, and deferred/global Viewer hub pages remain Viewer-only, conservative, encoded, scalar-safe, and separate from Admin behavior.
-- Empty, unavailable, malformed, or deferred hub data does not invent rankings, race standings, predictions, odds, stats, H2H records, players, countries, tournaments, matches, winners, champions, records, standings, or profiles.
-- Routes, API behavior, active-run behavior, completed run-scoped module boundaries, runtime safety, and Viewer/Admin separation remain unchanged.
-
 ## Phase 6B deferred infrastructure exactness note
 
 - Deferred infrastructure exactness tests were added after Phase 6A consolidation.
@@ -1411,6 +1404,13 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Empty, unavailable, malformed, or deferred hub data does not invent rankings, race standings, predictions, odds, stats, H2H records, players, countries, tournaments, matches, winners, champions, records, or standings.
 - Routes, API behavior, active-run behavior, completed run-scoped module boundaries, runtime safety, and Viewer/Admin separation remain unchanged.
 
+## Viewer Phase 14C note — top-level Viewer hub final guard
+
+- Top-level Viewer hub invariants were locked with final source/integration guards after Phases 14A–14B.
+- Viewer Home, Run Browser, active-run shortcuts, run selector, and deferred/global Viewer hub pages remain Viewer-only, conservative, encoded, scalar-safe, and separate from Admin behavior.
+- Empty, unavailable, malformed, or deferred hub data does not invent rankings, race standings, predictions, odds, stats, H2H records, players, countries, tournaments, matches, winners, champions, records, standings, or profiles.
+- Routes, API behavior, active-run behavior, completed run-scoped module boundaries, runtime safety, and Viewer/Admin separation remain unchanged.
+
 ## Viewer Phase 15A note — Viewer shell/navigation route safety audit
 
 - Viewer shell, navigation, topbar/link helpers, active-run selector, and landing components were audited for Viewer-only route safety.
@@ -1430,4 +1430,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Viewer shell/navigation invariants were locked with final source/runtime guards after Phases 15A–15B.
 - Viewer topbar, dropdown links, active-run selector, active-run shortcuts, shell pages, and landing components remain Viewer-only, encoded, route-helper-backed, local/read-only, and separate from Admin/Engine controls.
 - Malformed, unavailable, or local selector data does not create unsafe links, fake run records, mutation controls, fake sports data, or [object Object] output.
+- Routes, API behavior, active-run behavior, completed module boundaries, runtime safety, and Viewer/Admin separation remain unchanged.
+
+## Viewer Phase 16A note — Viewer Phase 1 final release gate
+
+- Completed Viewer Phase 1 surfaces were audited with the final release-gate guard after Phases 9–15.
+- Run-scoped Viewer modules, top-level Viewer hubs, and Viewer shell/navigation remain Viewer-only, read-only, encoded, scalar-safe, route-helper-backed, and separate from Admin behavior.
+- Empty, unavailable, malformed, deferred, or local Viewer data does not invent rankings, race standings, predictions, odds, stats, H2H records, players, countries, events, tournaments, matches, winners, champions, records, standings, finalists, profiles, search results, or current-week data.
 - Routes, API behavior, active-run behavior, completed module boundaries, runtime safety, and Viewer/Admin separation remain unchanged.

@@ -183,7 +183,7 @@ describe('ViewerTopbar', () => {
 
     const nav = await screen.findByTestId('viewer-primary-nav')
     const control = within(nav).getByRole('form', { name: 'Viewer topbar active run' })
-    expect(control).toHaveTextContent('Active run: None')
+    expect(control).toHaveTextContent('Run None')
     expect(within(control).getByLabelText('Viewer active run')).toBeInTheDocument()
     expect(within(control).queryByRole('button', { name: 'Set run' })).not.toBeInTheDocument()
     expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
@@ -194,7 +194,7 @@ describe('ViewerTopbar', () => {
 
     expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBe('run-b')
     expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run-b')
-    expect(control).toHaveTextContent('Active run: run-b')
+    expect(control).toHaveTextContent('Run run-b')
   })
 
   it('shows and expands the Season/Week selector on click', async () => {

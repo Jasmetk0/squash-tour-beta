@@ -76,7 +76,7 @@ export function ViewerActiveRunCompact(): JSX.Element {
   return (
     <form className="viewer-active-run-compact" aria-label="Viewer topbar active run">
       <span className="viewer-active-run-compact__status">
-        Active run: <strong>{formatViewerActiveRunLabel(activeRunId)}</strong>
+        Run <strong>{formatViewerActiveRunLabel(activeRunId)}</strong>
       </span>
       <label className="viewer-active-run-compact__field">
         <span className="sr-only">Viewer active run</span>

@@ -57,38 +57,42 @@ export function ViewerTopbar(): JSX.Element {
 
   return (
     <nav className="viewer-topbar" aria-label="Viewer primary navigation" data-testid="viewer-primary-nav">
-      <NavLink to={viewerHomePath()} end className={({ isActive }) => (isActive ? 'active viewer-brand-link' : 'viewer-brand-link')}>
-        MSA
-      </NavLink>
-      {viewerDropdowns.map((dropdown) => {
-        const parentActive = isViewerRouteGroupActive(location.pathname, dropdown)
-        return (
-          <div key={dropdown.label} className="viewer-dropdown">
-            <NavLink
-              to={dropdown.to}
-              className={parentActive ? 'active viewer-dropdown__label' : 'viewer-dropdown__label'}
-              aria-haspopup="true"
-            >
-              {dropdown.label}
-            </NavLink>
-            <div className="viewer-dropdown__menu" aria-label={`${dropdown.label} menu`}>
-              {dropdown.items.map((item) => (
-                <Link
-                  key={`${dropdown.label}-${item.label}`}
-                  to={item.to}
-                  className={isExactViewerActivePath(location.pathname, item.to) ? 'active' : ''}
-                  onClick={closeDropdownAfterNavigation}
-                >
-                  {item.label}
-                </Link>
-              ))}
+      <div className="viewer-topbar__primary">
+        <NavLink to={viewerHomePath()} end className={({ isActive }) => (isActive ? 'active viewer-brand-link' : 'viewer-brand-link')}>
+          MSA
+        </NavLink>
+        {viewerDropdowns.map((dropdown) => {
+          const parentActive = isViewerRouteGroupActive(location.pathname, dropdown)
+          return (
+            <div key={dropdown.label} className="viewer-dropdown">
+              <NavLink
+                to={dropdown.to}
+                className={parentActive ? 'active viewer-dropdown__label' : 'viewer-dropdown__label'}
+                aria-haspopup="true"
+              >
+                {dropdown.label}
+              </NavLink>
+              <div className="viewer-dropdown__menu" aria-label={`${dropdown.label} menu`}>
+                {dropdown.items.map((item) => (
+                  <Link
+                    key={`${dropdown.label}-${item.label}`}
+                    to={item.to}
+                    className={isExactViewerActivePath(location.pathname, item.to) ? 'active' : ''}
+                    onClick={closeDropdownAfterNavigation}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
-        )
-      })}
-      <ViewerTopbarSearch />
-      <ViewerActiveRunCompact />
-      <ViewerSeasonWeekSelector />
+          )
+        })}
+      </div>
+      <div className="viewer-topbar__utility">
+        <ViewerTopbarSearch />
+        <ViewerActiveRunCompact />
+        <ViewerSeasonWeekSelector />
+      </div>
     </nav>
   )
 }

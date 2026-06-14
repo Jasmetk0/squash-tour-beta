@@ -20,12 +20,23 @@ describe('Player/country preview route source guard', () => {
   })
 
 
-  it('keeps player/country target page source read-only without Admin or fake profile fixtures', () => {
+  it('keeps player/country list and target page source read-only without Admin or fake profile fixtures', () => {
+    expect(viewerRunPlayersCountriesSource).toContain('export function ViewerRunPlayersPage')
+    expect(viewerRunPlayersCountriesSource).toContain('export function ViewerRunCountriesPage')
     expect(viewerRunPlayersCountriesSource).toContain('export function ViewerRunPlayerCareerPage')
     expect(viewerRunPlayersCountriesSource).toContain('export function ViewerRunCountryDetailPage')
     expect(viewerRunPlayersCountriesSource).not.toContain('/admin')
     expect(viewerRunPlayersCountriesSource).not.toMatch(forbiddenTargetPageMutationSource)
     expect(viewerRunPlayersCountriesSource).not.toMatch(/world champion|grand slam|career high no\. 1|Team Championship|medals?|Top 100/i)
+  })
+
+  it('keeps player/country list links backed by encoded Viewer route helpers', () => {
+    expect(viewerRunPlayersCountriesSource).toContain('viewerPlayerProfilePath')
+    expect(viewerRunPlayersCountriesSource).toContain('viewerCountryProfilePath')
+    expect(viewerRunPlayersCountriesSource).toContain('viewerPlayersPath')
+    expect(viewerRunPlayersCountriesSource).toContain('viewerCountriesPath')
+    expect(viewerRunPlayersCountriesSource).not.toMatch(/to=\{`\/viewer\/runs\/\$\{runId\}\/players/)
+    expect(viewerRunPlayersCountriesSource).not.toMatch(/to=\{`\/viewer\/runs\/\$\{runId\}\/countries/)
   })
 
   it('keeps player/country Viewer route helper names exported from viewerRoutes', () => {

@@ -1,7 +1,8 @@
-import { screen } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { Layout } from './Layout'
+import { forbiddenViewerActionLabels, expectNoForbiddenViewerActions } from '../test/viewerTestUtils'
 import { renderWithRoute } from '../test/testUtils'
 
 const api = vi.hoisted(() => ({
@@ -9,6 +10,10 @@ const api = vi.hoisted(() => ({
 }))
 
 vi.mock('../api/client', () => api)
+
+function viewerNav(): HTMLElement {
+  return screen.getByTestId('viewer-primary-nav')
+}
 
 describe('Layout mode navigation', () => {
   beforeEach(() => {
@@ -63,5 +68,54 @@ describe('Layout mode navigation', () => {
 
     expect(await screen.findByText('Viewer / MSA Website Mode')).toBeInTheDocument()
     expect(screen.getAllByTestId('viewer-primary-nav')).toHaveLength(1)
+  })
+
+  it('renders Viewer topbar links as Viewer-only links without Admin shell controls in the Viewer nav', async () => {
+    renderWithRoute(<Layout />, '/viewer/rankings')
+
+    expect(await screen.findByText('Viewer / MSA Website Mode')).toBeInTheDocument()
+    const nav = viewerNav()
+    const links = within(nav).getAllByRole('link')
+    expect(links.length).toBeGreaterThan(0)
+    for (const link of links) {
+      const href = link.getAttribute('href') ?? ''
+      expect(href).toMatch(/^\/viewer(?:\/|$)/)
+      expect(href).not.toMatch(/^\/admin(?:\/|$)/)
+    }
+    expect(within(nav).queryByText(/Admin|Commissioner|Engine Mode|Engine/i)).not.toBeInTheDocument()
+  })
+
+  it('registers Viewer dropdown links as Viewer-only destinations without fake result labels', async () => {
+    renderWithRoute(<Layout />, '/viewer/tour')
+
+    expect(await screen.findByText('Viewer / MSA Website Mode')).toBeInTheDocument()
+    const nav = viewerNav()
+    const dropdownMenus = within(nav).getAllByLabelText(/ menu$/)
+    expect(dropdownMenus.length).toBeGreaterThan(0)
+    for (const menu of dropdownMenus) {
+      for (const link of within(menu).getAllByRole('link')) {
+        const href = link.getAttribute('href') ?? ''
+        expect(href).toMatch(/^\/viewer(?:\/|$)/)
+        expect(href).not.toMatch(/^\/admin(?:\/|$)/)
+      }
+    }
+    expect(within(nav).queryByText(/Winner|Top 100|standings table/i)).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent('[object Object]')
+  })
+
+  it('keeps Viewer nav free of backend mutation controls while allowing local selectors', async () => {
+    renderWithRoute(<Layout />, '/viewer')
+
+    expect(await screen.findByText('Viewer / MSA Website Mode')).toBeInTheDocument()
+    const nav = viewerNav()
+    expect(within(nav).getByRole('search', { name: 'Viewer search' })).toBeInTheDocument()
+    expect(await within(nav).findByRole('option', { name: /run-b/i })).toHaveAttribute('value', 'run-b')
+    fireEvent.change(within(nav).getByLabelText('Viewer active run'), { target: { value: 'run-b' } })
+    expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBe('run-b')
+    expectNoForbiddenViewerActions(within(nav))
+    for (const label of forbiddenViewerActionLabels) {
+      expect(within(nav).queryByRole('button', { name: label })).not.toBeInTheDocument()
+      expect(within(nav).queryByRole('link', { name: label })).not.toBeInTheDocument()
+    }
   })
 })

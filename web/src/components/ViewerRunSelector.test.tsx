@@ -1,11 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { fireEvent, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { VIEWER_ACTIVE_RUN_CHANGED_EVENT } from '../viewer/activeRun'
-import { ViewerActiveRunCompact, ViewerRunSelector } from './ViewerRunSelector'
+import { ViewerRunSelector } from './ViewerRunSelector'
+import { VIEWER_ACTIVE_RUN_STORAGE_KEY } from '../viewer/activeRun'
+import { expectNoForbiddenViewerActions, renderWithViewerProviders } from '../test/viewerTestUtils'
 
 const api = vi.hoisted(() => ({
   listRuns: vi.fn()
@@ -13,83 +11,99 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../api/client', () => api)
 
-function renderSelector(component: JSX.Element = <ViewerRunSelector />): void {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter>{component}</MemoryRouter>
-    </QueryClientProvider>
-  )
+function renderSelector(): void {
+  renderWithViewerProviders(<ViewerRunSelector />)
 }
 
-describe('ViewerRunSelector', () => {
+function expectViewerOnlyLinks(): void {
+  for (const link of screen.queryAllByRole('link')) {
+    const href = link.getAttribute('href') ?? ''
+    expect(href).toMatch(/^\/viewer(?:\/|$)/)
+    expect(href).not.toMatch(/^\/admin(?:\/|$)/)
+    expect(href).not.toContain('[object Object]')
+    expect(href).not.toContain('[object%20Object]')
+  }
+}
+
+describe('ViewerRunSelector runtime safety', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.clearAllMocks()
-    api.listRuns.mockResolvedValue({
-      runs: [
-        {
-          run_id: 'run-a',
-          season: 2027,
-          seed: 5,
-          progress: { next_event_index: 1, total_events: 10, completed_event_count: 0 },
-          source_type: 'new_run',
-          parent_run_id: null,
-          child_run_count: 0
-        },
-        {
-          run_id: 'run-b',
-          season: 2028,
-          seed: 8,
-          progress: { next_event_index: 2, total_events: 12, completed_event_count: 1 },
-          source_type: 'new_run',
-          parent_run_id: null,
-          child_run_count: 0
-        }
-      ]
-    })
-  })
-
-  it('sets active viewer run in localStorage', async () => {
-    const user = userEvent.setup()
-    renderSelector()
-
-    await screen.findByRole('option', { name: /run-a/i })
-    await user.selectOptions(screen.getByLabelText('Available runs'), 'run-b')
-    await user.click(screen.getByRole('button', { name: 'Set active run' }))
-
-    expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBe('run-b')
-    expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run-b')
-    expect(screen.getByText('run-b')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Open Admin Run Detail' })).not.toBeInTheDocument()
-  })
-
-  it('auto-applies the compact topbar selector without rendering a compact Set run button', async () => {
-    const user = userEvent.setup()
-    const activeRunChanged = vi.fn()
-    window.addEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, activeRunChanged)
-    renderSelector(<ViewerActiveRunCompact />)
-
-    const control = screen.getByRole('form', { name: 'Viewer topbar active run' })
-    expect(control).toHaveTextContent('Active run: None')
-    expect(screen.getByLabelText('Viewer active run')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Set run' })).not.toBeInTheDocument()
-
-    await screen.findByRole('option', { name: /run-b/i })
-    await user.selectOptions(screen.getByLabelText('Viewer active run'), 'run-b')
-
-    expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBe('run-b')
-    expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run-b')
-    expect(activeRunChanged).toHaveBeenCalledTimes(1)
-    expect(control).toHaveTextContent('Active run: run-b')
-    window.removeEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, activeRunChanged)
-  })
-
-  it('shows the no-runs empty state from the read-only runs API', async () => {
     api.listRuns.mockResolvedValue({ runs: [] })
+  })
+
+  it('renders empty behavior conservatively without fake run records, object output, or mutation controls', async () => {
     renderSelector()
 
     expect(await screen.findByText('No runs are available yet.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Set active run' })).toBeDisabled()
+    expect(screen.getByRole('option', { name: 'No runs available' })).toHaveAttribute('value', '')
+    expect(screen.getByRole('link', { name: 'Browse all runs' })).toHaveAttribute('href', '/viewer/runs')
+    expect(screen.queryByText(/run-a|run alpha|Champion|Winner|Standings/i)).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent('[object Object]')
+    expectViewerOnlyLinks()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('renders error behavior conservatively without fake run records, object output, or Admin links', async () => {
+    api.listRuns.mockRejectedValue(new Error('run index outage'))
+
+    renderSelector()
+
+    expect(await screen.findByText('Run list is unavailable.')).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'No runs available' })).toHaveAttribute('value', '')
+    expect(screen.queryByText(/run index outage/i)).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent('[object Object]')
+    expectViewerOnlyLinks()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('drops malformed run list entries and prevents object-valued run ids from options or links', async () => {
+    api.listRuns.mockResolvedValue({
+      runs: [
+        null,
+        5,
+        'run-string',
+        {},
+        { run_id: { value: 'object-run' }, season: { value: 2031 }, seed: { value: 7 } },
+        { run_id: '', season: 2031, seed: 1 },
+        { run_id: 'safe run', season: { value: 2032 }, seed: ['bad'] }
+      ]
+    })
+
+    renderSelector()
+
+    const safeOption = await screen.findByRole('option', { name: 'safe run — season —, seed —' })
+    expect(safeOption).toHaveAttribute('value', 'safe run')
+    expect(screen.queryByText('object-run')).not.toBeInTheDocument()
+    expect(screen.queryByText('run-string')).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent('[object Object]')
+    for (const option of screen.getAllByRole('option')) {
+      expect(option).not.toHaveAttribute('value', '[object Object]')
+      expect(option.textContent ?? '').not.toContain('[object Object]')
+    }
+    expectViewerOnlyLinks()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('stores encoded-slash/hash/space run ids only in local Viewer active-run state and keeps browser link Viewer-only', async () => {
+    api.listRuns.mockResolvedValue({
+      runs: [{ run_id: 'run/alpha #1', season: 2035, seed: 12 }]
+    })
+
+    renderSelector()
+
+    const option = await screen.findByRole('option', { name: 'run/alpha #1 — season 2035, seed 12' })
+    expect(option).toHaveAttribute('value', 'run/alpha #1')
+    const select = screen.getByLabelText('Available runs')
+    fireEvent.change(select, { target: { value: 'run/alpha #1' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Set active run' }))
+
+    expect(localStorage.getItem(VIEWER_ACTIVE_RUN_STORAGE_KEY)).toBe('run/alpha #1')
+    expect(await screen.findByText('run/alpha #1')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Browse all runs' })).toHaveAttribute('href', '/viewer/runs')
+    expect(document.body).not.toHaveTextContent('[object Object]')
+    expectViewerOnlyLinks()
+    expectNoForbiddenViewerActions()
+    expect(api.listRuns).toHaveBeenCalledTimes(1)
   })
 })

@@ -1417,3 +1417,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Viewer navigation links and active-run shortcuts remain encoded, route-helper-backed, read-only, and separate from Admin routes.
 - Shell/navigation components do not invent rankings, predictions, odds, stats, H2H records, players, countries, tournaments, matches, winners, champions, records, standings, or profiles.
 - Routes, API behavior, active-run behavior, completed module boundaries, runtime safety, and Viewer/Admin separation remain unchanged.
+
+## Viewer Phase 15B note — Viewer shell/navigation runtime safety audit
+
+- Viewer shell, topbar, dropdown links, active-run selector, and landing components were audited for rendered Viewer-only behavior.
+- Viewer navigation and active-run selection remain local/read-only, encoded, route-helper-backed, and separate from Admin/Engine controls.
+- Malformed or unavailable run-selector data does not create unsafe links, fake run records, mutation controls, or [object Object] output.
+- Routes, API behavior, active-run behavior, completed module boundaries, runtime safety, and Viewer/Admin separation remain unchanged.

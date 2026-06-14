@@ -68,6 +68,22 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value))
 }
 
+function isScalar(value: unknown): value is string | number | boolean {
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+}
+
+function safeScalarValue(value: unknown, fallback: string | number = '—'): string | number {
+  if (typeof value === 'string' || typeof value === 'number') return value
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+  return fallback
+}
+
+function safeLinkId(value: unknown): string | null {
+  if (typeof value !== 'string' && typeof value !== 'number') return null
+  const id = String(value)
+  return id.length > 0 ? id : null
+}
+
 function collectPlayerIds(payload: Record<string, unknown> | null | undefined): string[] {
   const playerIds = new Set<string>()
 
@@ -143,12 +159,13 @@ function finalsSummaryItems(summary: FinalsSummaryResponse | undefined, runId: s
   const result = summary?.result ?? null
   const qualificationPayload = qualification?.qualification ?? null
   const resultPayload = result?.result ?? null
+  const eventId = safeLinkId(result?.event_id)
   return [
-    { label: 'Active run ID', value: summary?.run_id ?? (runId || 'unknown') },
+    { label: 'Active run ID', value: safeScalarValue(summary?.run_id, runId || 'unknown') },
     { label: 'Qualification availability', value: qualification ? 'Available' : 'Unavailable' },
     { label: 'Result availability', value: result ? 'Available' : 'Unavailable' },
-    { label: 'Season', value: summary?.season ?? qualification?.season ?? result?.season ?? '—' },
-    { label: 'Source event ID', value: result?.event_id ? <Link to={viewerPlannedEventPath(runId, result.event_id)}>{result.event_id}</Link> : '—' },
+    { label: 'Season', value: safeScalarValue(summary?.season ?? qualification?.season ?? result?.season) },
+    { label: 'Source event ID', value: eventId ? <Link to={viewerPlannedEventPath(runId, eventId)}>{eventId}</Link> : '—' },
     { label: 'Qualification source snapshot', value: qualification?.source_as_of_week != null ? `${qualification.source_as_of_season} W${qualification.source_as_of_week}` : '—' },
     { label: 'Result source snapshot', value: result?.source_as_of_week != null ? `${result.source_as_of_season} W${result.source_as_of_week}` : '—' },
     ...collectArrayCountItems(qualificationPayload).map((item) => ({ label: `Qualification ${item.label}`, value: item.value })),
@@ -199,12 +216,13 @@ function subpageQualificationMetadataItems(qualification: FinalsQualificationRes
 function subpageResultMetadataItems(result: FinalsResultResponse, runId: string): Array<{ label: string; value: ReactNode }> {
   const payload = result.result
   const playerIds = collectPlayerIds(payload)
+  const eventId = safeLinkId(result.event_id)
   return [
-    { label: 'Active run ID', value: result.run_id },
-    { label: 'Season', value: result.season },
-    { label: 'Source season', value: result.source_as_of_season },
+    { label: 'Active run ID', value: safeScalarValue(result.run_id) },
+    { label: 'Season', value: safeScalarValue(result.season) },
+    { label: 'Source season', value: safeScalarValue(result.source_as_of_season) },
     { label: 'Source week', value: formatWeek(result.source_as_of_week) },
-    { label: 'Source event ID', value: result.event_id ? <Link to={viewerPlannedEventPath(runId, result.event_id)}>{result.event_id}</Link> : '—' },
+    { label: 'Source event ID', value: eventId ? <Link to={viewerPlannedEventPath(runId, eventId)}>{eventId}</Link> : '—' },
     ...collectArrayCountItems(payload),
     ...collectPrimitivePayloadItems(payload),
     ...playerIds.map((playerId) => ({ label: `Player ${playerId}`, value: <Link to={viewerPlayerProfilePath(runId, playerId)}>Player Profile</Link> }))
@@ -216,9 +234,9 @@ function qualificationMetadataItems(qualification: FinalsQualificationResponse, 
   const rankingSequence = findSnapshotSequence(payload, 'ranking')
   const raceSequence = findSnapshotSequence(payload, 'race')
   return [
-    { label: 'Run ID', value: qualification.run_id },
-    { label: 'Season', value: qualification.season },
-    { label: 'Source season', value: qualification.source_as_of_season },
+    { label: 'Run ID', value: safeScalarValue(qualification.run_id) },
+    { label: 'Season', value: safeScalarValue(qualification.season) },
+    { label: 'Source season', value: safeScalarValue(qualification.source_as_of_season) },
     { label: 'Source week', value: `W${qualification.source_as_of_week}` },
     { label: 'Ranking snapshot', value: rankingSequence != null ? <Link to={viewerRankingSnapshotPath(runId, rankingSequence)}>Ranking snapshot {rankingSequence}</Link> : '—' },
     { label: 'Race snapshot', value: raceSequence != null ? <Link to={viewerRaceSnapshotPath(runId, raceSequence)}>Race snapshot {raceSequence}</Link> : '—' },
@@ -230,11 +248,12 @@ function qualificationMetadataItems(qualification: FinalsQualificationResponse, 
 function resultMetadataItems(result: FinalsResultResponse, runId: string): Array<{ label: string; value: ReactNode }> {
   const payload = result.result
   const playerIds = collectPlayerIds(payload)
+  const eventId = safeLinkId(result.event_id)
   return [
-    { label: 'Run ID', value: result.run_id },
-    { label: 'Season', value: result.season },
-    { label: 'Source event ID', value: result.event_id ? <Link to={viewerPlannedEventPath(runId, result.event_id)}>{result.event_id}</Link> : '—' },
-    { label: 'Source season', value: result.source_as_of_season },
+    { label: 'Run ID', value: safeScalarValue(result.run_id) },
+    { label: 'Season', value: safeScalarValue(result.season) },
+    { label: 'Source event ID', value: eventId ? <Link to={viewerPlannedEventPath(runId, eventId)}>{eventId}</Link> : '—' },
+    { label: 'Source season', value: safeScalarValue(result.source_as_of_season) },
     { label: 'Source week', value: `W${result.source_as_of_week}` },
     ...collectArrayCountItems(payload),
     ...collectPrimitivePayloadItems(payload),
@@ -275,7 +294,7 @@ function formatSeason(season: number | null | undefined): string | number {
 }
 
 function isPreviewableActivityItem(item: RunActivityItem | undefined): item is RunActivityItem {
-  return Boolean(item && typeof item.label === 'string' && typeof item.kind === 'string')
+  return Boolean(item && isScalar(item.label) && isScalar(item.kind))
 }
 
 function TechnicalData({ summary, title, payload, emptyText }: { summary: string; title: string; payload: unknown; emptyText: string }): JSX.Element {
@@ -296,7 +315,7 @@ export function ViewerRunHistoryPage(): JSX.Element {
     retry: false
   })
 
-  const items = activityQuery.data?.items ?? []
+  const items = Array.isArray(activityQuery.data?.items) ? activityQuery.data.items : []
   const latestItem = items[0]
   const canPreviewLatest = isPreviewableActivityItem(latestItem)
 
@@ -321,19 +340,19 @@ export function ViewerRunHistoryPage(): JSX.Element {
               <SummaryPills
                 items={[
                   { label: 'Activity count', value: items.length },
-                  { label: 'Latest kind', value: latestItem.kind },
+                  { label: 'Latest kind', value: safeScalarValue(latestItem.kind) },
                   { label: 'Latest season', value: formatSeason(latestItem.season) },
                   { label: 'Latest week', value: formatWeek(latestItem.week) }
                 ]}
               />
               <MetadataList
                 items={[
-                  { label: 'Latest label', value: latestItem.label },
-                  { label: 'Sequence', value: latestItem.sequence ?? '—' },
-                  { label: 'Event ID', value: latestItem.event_id ?? '—' },
-                  { label: 'Snapshot sequence', value: latestItem.snapshot_sequence ?? '—' },
-                  { label: 'Source event', value: latestItem.source_event_id ?? '—' },
-                  { label: 'Related run', value: latestItem.related_run_id ?? '—' }
+                  { label: 'Latest label', value: safeScalarValue(latestItem.label) },
+                  { label: 'Sequence', value: safeScalarValue(latestItem.sequence) },
+                  { label: 'Event ID', value: safeScalarValue(latestItem.event_id) },
+                  { label: 'Snapshot sequence', value: safeScalarValue(latestItem.snapshot_sequence) },
+                  { label: 'Source event', value: safeScalarValue(latestItem.source_event_id) },
+                  { label: 'Related run', value: safeScalarValue(latestItem.related_run_id) }
                 ]}
               />
             </>
@@ -369,8 +388,8 @@ export function ViewerRunFinalsPage(): JSX.Element {
   const summary = summaryQuery.data
   const qualification = summary?.qualification ?? null
   const result = summary?.result ?? null
-  const qualificationPayload = qualification?.qualification ?? null
-  const resultPayload = result?.result ?? null
+  const qualificationPayload = isRecord(qualification?.qualification) ? qualification.qualification : null
+  const resultPayload = isRecord(result?.result) ? result.result : null
   const qualificationPlayerIds = collectPlayerIds(qualificationPayload)
   const resultPlayerIds = collectPlayerIds(resultPayload)
 
@@ -382,7 +401,7 @@ export function ViewerRunFinalsPage(): JSX.Element {
           { label: 'Active run', value: runId || 'unknown' },
           { label: 'Qualification', value: qualification ? 'Available' : 'Unavailable' },
           { label: 'Result', value: result ? 'Available' : 'Unavailable' },
-          { label: 'Season', value: summary?.season ?? qualification?.season ?? result?.season ?? '—' }
+          { label: 'Season', value: safeScalarValue(summary?.season ?? qualification?.season ?? result?.season) }
         ]}
       />
 
@@ -530,6 +549,7 @@ export function ViewerRunFinalsResultPage(): JSX.Element {
   const payload = isRecord(result?.result) ? result.result : null
   const playerIds = collectPlayerIds(payload)
   const hasSafePreview = Boolean(result && hasResultPreviewData(payload))
+  const eventId = safeLinkId(result?.event_id)
 
   return (
     <section className="panel">
@@ -561,10 +581,10 @@ export function ViewerRunFinalsResultPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title="Source Links">
-        {hasSafePreview && result?.event_id ? (
+        {hasSafePreview && eventId ? (
           <ul className="item-list" aria-label="Finals source event links">
-            <li><Link to={viewerPlannedEventPath(runId, result.event_id)}>Planned event {result.event_id}</Link></li>
-            <li><Link to={viewerTournamentDetailPath(runId, result.event_id)}>Tournament detail {result.event_id}</Link></li>
+            <li><Link to={viewerPlannedEventPath(runId, eventId)}>Planned event {eventId}</Link></li>
+            <li><Link to={viewerTournamentDetailPath(runId, eventId)}>Tournament detail {eventId}</Link></li>
           </ul>
         ) : (
           <EmptyState message="This preview is not connected for this data shape yet." />

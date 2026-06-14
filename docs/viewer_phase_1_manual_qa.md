@@ -1367,3 +1367,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - History/finals links remain Viewer-only, encoded, scalar-safe, and backed by registered App route patterns.
 - No history entries, finals qualifications, champions, winners, standings, rankings, or records are invented.
 - Routes, API behavior, active-run behavior, runtime safety, snapshot boundaries, player/country boundaries, calendar/tournament boundaries, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 12B note — history/finals target page safety audit
+
+- Viewer history and finals target pages were audited for read-only safety.
+- Encoded slash/hash/space run route params render safely without creating Admin links, mutation controls, fake history, fake finals, fake champions, fake winners, fake standings, or [object Object] output.
+- Empty, malformed, unavailable, or ambiguous history/finals data does not invent history entries, finals qualifications, champions, winners, standings, rankings, records, finalists, or profiles.
+- Routes, API behavior, active-run behavior, runtime safety, snapshot boundaries, player/country boundaries, calendar/tournament boundaries, and Viewer read-only safety remain unchanged.

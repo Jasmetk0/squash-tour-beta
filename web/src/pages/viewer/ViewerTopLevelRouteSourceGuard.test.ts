@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import appSource from '../../App.tsx?raw'
+import viewerRunSelectorSource from '../../components/ViewerRunSelector.tsx?raw'
+import activeRunDisplaySource from '../../viewer/activeRunDisplay.ts?raw'
 import runBrowserDisplaySource from '../../viewer/runBrowserDisplay.ts?raw'
 import viewerHomeDisplaySource from '../../viewer/viewerHomeDisplay.ts?raw'
 import viewerHubLinksSource from '../../viewer/viewerHubLinks.ts?raw'
@@ -16,6 +18,7 @@ const linkBuilderSources: Record<string, string> = {
   'viewerHubLinks.ts': viewerHubLinksSource,
   'viewerHomeDisplay.ts': viewerHomeDisplaySource,
   'runBrowserDisplay.ts': runBrowserDisplaySource,
+  'activeRunDisplay.ts': activeRunDisplaySource,
   'ViewerHomePage.tsx': viewerHomePageSource,
   'ViewerRunBrowserPage.tsx': viewerRunBrowserPageSource
 }
@@ -24,6 +27,7 @@ const topLevelAndDeferredViewerSources: Record<string, string> = {
   'viewerHubLinks.ts': viewerHubLinksSource,
   'viewerHomeDisplay.ts': viewerHomeDisplaySource,
   'runBrowserDisplay.ts': runBrowserDisplaySource,
+  'activeRunDisplay.ts': activeRunDisplaySource,
   'ViewerHomePage.tsx': viewerHomePageSource,
   'ViewerRunBrowserPage.tsx': viewerRunBrowserPageSource,
   ...deferredViewerPageSources
@@ -54,6 +58,65 @@ function expectNoRunScopedProductionImports(sourceName: string, source: string):
   }
 }
 
+const lockedTopLevelViewerRoutes = [
+  '/viewer',
+  '/viewer/rankings',
+  '/viewer/rankings/race',
+  '/viewer/rankings/next-gen',
+  '/viewer/rankings/elo',
+  '/viewer/rankings/power',
+  '/viewer/rankings/form',
+  '/viewer/rankings/no1-history',
+  '/viewer/tour',
+  '/viewer/tour/calendar',
+  '/viewer/tour/current-week',
+  '/viewer/tour/tournaments',
+  '/viewer/tour/matches',
+  '/viewer/tour/categories',
+  '/viewer/tour/champions',
+  '/viewer/tournaments',
+  '/viewer/players',
+  '/viewer/players/all',
+  '/viewer/players/active',
+  '/viewer/players/next-gen',
+  '/viewer/players/retired',
+  '/viewer/players/compare',
+  '/viewer/countries',
+  '/viewer/countries/ranking',
+  '/viewer/countries/all',
+  '/viewer/countries/hosting',
+  '/viewer/countries/talent-pipeline',
+  '/viewer/countries/records',
+  '/viewer/h2h',
+  '/viewer/h2h/rivalries',
+  '/viewer/h2h/most-played',
+  '/viewer/h2h/finals-rivalries',
+  '/viewer/stats',
+  '/viewer/stats/title-leaders',
+  '/viewer/stats/no1-weeks',
+  '/viewer/stats/streaks',
+  '/viewer/stats/upsets',
+  '/viewer/stats/best-seasons',
+  '/viewer/stats/player-stats',
+  '/viewer/stats/tournament-stats',
+  '/viewer/stats/country-stats',
+  '/viewer/stats/awards',
+  '/viewer/stats/hall-of-fame',
+  '/viewer/stats/era-rankings',
+  '/viewer/records',
+  '/viewer/predictions',
+  '/viewer/predictions/match-predictor',
+  '/viewer/predictions/match-odds',
+  '/viewer/predictions/tournament-odds',
+  '/viewer/predictions/finals-qualification',
+  '/viewer/predictions/season-end-no1',
+  '/viewer/predictions/upset-watch',
+  '/viewer/predictions/futures',
+  '/viewer/search',
+  '/viewer/history',
+  '/viewer/runs'
+]
+
 const forbiddenFakeHubClaims = /(?:fake champion|fake winner|invented champion|invented winner|fake standings|invented standings|fake prediction|invented prediction|fake odds|invented odds|fake ranking|invented ranking|fake stat|invented stat|fake H2H|invented H2H|world champion|grand slam|career high no\. 1|Team Championship|medals|Top 100|standings table)/i
 
 function viewerRoutesFromApp(): string[] {
@@ -61,6 +124,13 @@ function viewerRoutesFromApp(): string[] {
 }
 
 describe('Viewer top-level route source guard', () => {
+  it('keeps top-level Viewer route registration locked', () => {
+    const routes = viewerRoutesFromApp()
+    const topLevelViewerRoutes = routes.filter((route) => route.startsWith('/viewer') && !route.startsWith('/viewer/runs/:'))
+
+    expect(topLevelViewerRoutes).toEqual(lockedTopLevelViewerRoutes)
+  })
+
   it('keeps top-level Viewer link builders Viewer-only', () => {
     expect(viewerRoutesSource).toContain("'/viewer")
     expect(viewerHubLinksSource).toContain('viewerTopLevelHubLinks')
@@ -70,6 +140,46 @@ describe('Viewer top-level route source guard', () => {
     for (const [sourceName, source] of Object.entries(linkBuilderSources)) {
       expect(source, sourceName).not.toMatch(/\/admin(?:\/|['"`]|$)/)
       expect(source, sourceName).not.toMatch(/to=\{?['"`]\/admin|href=\{?['"`]\/admin/i)
+    }
+  })
+
+  it('keeps top-level link and display helper exports wired into source', () => {
+    const expectedHelperNames = [
+      'viewerTopLevelHubLinks',
+      'buildActiveRunHubLinks',
+      'buildViewerHomeActiveRunLinks',
+      'buildViewerHomePrimaryHubLinks',
+      'buildViewerHomeReadOnlyNotes',
+      'buildRunBrowserPrimaryLinks',
+      'buildRunBrowserContextLinks',
+      'buildRunBrowserMetadataItems',
+      'normalizeRunBrowserRuns',
+      'getSafeRunBrowserRunId',
+      'formatViewerRunOptionLabel',
+      'formatViewerCompactRunOptionLabel',
+      'buildViewerActiveRunQuickLinks'
+    ]
+    const combinedHelperSource = [viewerHubLinksSource, viewerHomeDisplaySource, runBrowserDisplaySource, activeRunDisplaySource].join('\n')
+
+    for (const helperName of expectedHelperNames) {
+      expect(combinedHelperSource, helperName).toContain(helperName)
+    }
+  })
+
+  it('keeps run browser and selector list rendering behind scalar-safe normalization', () => {
+    expect(viewerRunBrowserPageSource).toContain('normalizeRunBrowserRuns')
+    expect(viewerRunSelectorSource).toContain('normalizeRunBrowserRuns')
+    expect(runBrowserDisplaySource).toContain('getSafeRunBrowserRunId')
+    expect(runBrowserDisplaySource).toContain('normalizeRunBrowserRuns')
+    expect(activeRunDisplaySource).toContain('formatSafeRunOptionValue')
+
+    for (const [sourceName, source] of Object.entries({
+      'ViewerRunBrowserPage.tsx': viewerRunBrowserPageSource,
+      'ViewerRunSelector.tsx': viewerRunSelectorSource,
+      'runBrowserDisplay.ts': runBrowserDisplaySource,
+      'activeRunDisplay.ts': activeRunDisplaySource
+    })) {
+      expect(source, `${sourceName} must not directly trust API run lists`).not.toContain('as ViewerRunBrowserListItem[]')
     }
   })
 
@@ -87,8 +197,6 @@ describe('Viewer top-level route source guard', () => {
       expect(source, sourceName).not.toMatch(forbiddenFakeHubClaims)
     }
   })
-
-
 
   it('keeps deferred page sources conservative and free of unsafe route templates', () => {
     expect(Object.keys(deferredViewerPageSources).length).toBeGreaterThan(0)

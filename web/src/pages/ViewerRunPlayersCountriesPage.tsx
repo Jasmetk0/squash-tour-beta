@@ -47,6 +47,149 @@ function optionalNumber(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
+
+function safeEntries(value: unknown): unknown[] {
+  if (!isPlainRecord(value) || !Array.isArray(value.entries)) return []
+  return value.entries
+}
+
+type SafeCareerEntry = {
+  run_id: string | null
+  season: number | null
+  age: number | null
+  overall: number | null
+  technique: number | null
+  movement: number | null
+  physical: number | null
+  mental: number | null
+  source_type: string | null
+  quality_band: string | null
+}
+
+type SafePerformanceEntry = {
+  run_id: string | null
+  season: number | null
+  ranking_position: number | null
+  race_position: number | null
+  tournaments_played: number | null
+  titles: number | null
+  wins: number | null
+  losses: number | null
+}
+
+type SafeTournamentResultEntry = {
+  run_id: string | null
+  season: number | null
+  week: number | null
+  event_sequence: number | null
+  event_id: string | null
+  event_name: string | null
+  event_category: string | null
+  finish: string | null
+  is_title: boolean | null
+  wins: number | null
+  losses: number | null
+  ranking_points_awarded: number | null
+}
+
+function normalizeCareerEntries(value: unknown): SafeCareerEntry[] {
+  return safeEntries(value).flatMap((entry) => {
+    if (!isPlainRecord(entry)) return []
+    return [{
+      run_id: scalarText(entry.run_id),
+      season: optionalNumber(entry.season),
+      age: optionalNumber(entry.age),
+      overall: optionalNumber(entry.overall),
+      technique: optionalNumber(entry.technique),
+      movement: optionalNumber(entry.movement),
+      physical: optionalNumber(entry.physical),
+      mental: optionalNumber(entry.mental),
+      source_type: scalarText(entry.source_type),
+      quality_band: scalarText(entry.quality_band)
+    }]
+  })
+}
+
+function normalizePerformanceEntries(value: unknown): SafePerformanceEntry[] {
+  return safeEntries(value).flatMap((entry) => {
+    if (!isPlainRecord(entry)) return []
+    return [{
+      run_id: scalarText(entry.run_id),
+      season: optionalNumber(entry.season),
+      ranking_position: optionalNumber(entry.ranking_position),
+      race_position: optionalNumber(entry.race_position),
+      tournaments_played: optionalNumber(entry.tournaments_played),
+      titles: optionalNumber(entry.titles),
+      wins: optionalNumber(entry.wins),
+      losses: optionalNumber(entry.losses)
+    }]
+  })
+}
+
+function normalizeTournamentResultEntries(value: unknown): SafeTournamentResultEntry[] {
+  return safeEntries(value).flatMap((entry) => {
+    if (!isPlainRecord(entry)) return []
+    return [{
+      run_id: scalarText(entry.run_id),
+      season: optionalNumber(entry.season),
+      week: optionalNumber(entry.week),
+      event_sequence: optionalNumber(entry.event_sequence),
+      event_id: scalarText(entry.event_id),
+      event_name: scalarText(entry.event_name),
+      event_category: scalarText(entry.event_category),
+      finish: scalarText(entry.finish),
+      is_title: typeof entry.is_title === 'boolean' ? entry.is_title : null,
+      wins: optionalNumber(entry.wins),
+      losses: optionalNumber(entry.losses),
+      ranking_points_awarded: optionalNumber(entry.ranking_points_awarded)
+    }]
+  })
+}
+
+type SafeTopPlayer = {
+  player_id: string | null
+  name: string | null
+  age: number | null
+  overall: number | null
+  source_type: string | null
+  quality_band: string | null
+}
+
+function normalizeTopPlayers(value: unknown): SafeTopPlayer[] {
+  if (!Array.isArray(value)) return []
+  return value.flatMap((player) => {
+    if (!isPlainRecord(player)) return []
+    const playerId = scalarText(player.player_id)
+    const name = scalarText(player.name)
+    if (!playerId && !name) return []
+    return [{
+      player_id: playerId,
+      name,
+      age: optionalNumber(player.age),
+      overall: optionalNumber(player.overall),
+      source_type: scalarText(player.source_type),
+      quality_band: scalarText(player.quality_band)
+    }]
+  })
+}
+
+function normalizeCountMap(value: unknown): Record<string, number> | null {
+  if (!isPlainRecord(value)) return null
+  const safeEntries = Object.entries(value).filter((entry): entry is [string, number] => typeof entry[1] === 'number' && Number.isFinite(entry[1]))
+  return safeEntries.length ? Object.fromEntries(safeEntries) : null
+}
+
+function normalizeDistribution(value: unknown): Array<{ band: string; count: number }> | null {
+  if (!Array.isArray(value)) return null
+  const safeEntries = value.flatMap((entry) => {
+    if (!isPlainRecord(entry)) return []
+    const band = scalarText(entry.band)
+    const count = optionalNumber(entry.count)
+    return band && count !== null ? [{ band, count }] : []
+  })
+  return safeEntries.length ? safeEntries : null
+}
+
 type SafePlayerListEntry = {
   player_id: string
   name: string
@@ -148,9 +291,11 @@ function tournamentEventCell(
   eventId: string | null | undefined,
   eventName: string | null | undefined
 ): JSX.Element | string {
-  if (!eventId) return eventName ?? '—'
+  const safeEventId = scalarText(eventId)
+  const safeEventName = scalarText(eventName)
+  if (!safeEventId) return safeEventName ?? '—'
 
-  return <Link to={viewerTournamentDetailPath(runId, eventId)}>{eventName ?? eventId}</Link>
+  return <Link to={viewerTournamentDetailPath(runId, safeEventId)}>{safeEventName ?? safeEventId}</Link>
 }
 
 function hasPlayerProfileShape(value: unknown): value is {
@@ -375,6 +520,9 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
   })
 
   const playerProfile = hasPlayerProfileShape(detailQuery.data) ? detailQuery.data : null
+  const careerEntries = normalizeCareerEntries(careerQuery.data)
+  const performanceEntries = normalizePerformanceEntries(performanceQuery.data)
+  const tournamentResultEntries = normalizeTournamentResultEntries(tournamentResultsQuery.data)
   const showDeferredPreview = !detailQuery.isLoading && !detailQuery.error && !playerProfile
 
   return (
@@ -444,7 +592,7 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
         {careerQuery.isLoading ? <p className="status">Loading season timeline…</p> : null}
         {careerQuery.error ? <p className="error">Failed to load career history: {String(careerQuery.error)}</p> : null}
         {careerQuery.data ? (
-          careerQuery.data.entries.length > 0 ? (
+          careerEntries.length > 0 ? (
             <table>
               <thead>
                 <tr>
@@ -461,8 +609,8 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
                 </tr>
               </thead>
               <tbody>
-                {careerQuery.data.entries.map((entry) => (
-                  <tr key={`${entry.run_id}-${entry.season}`}>
+                {careerEntries.map((entry, index) => (
+                  <tr key={`${entry.run_id}-${entry.season}-${index}`}>
                     <td>{entry.season}</td>
                     <td>{entry.run_id}</td>
                     <td>{entry.age}</td>
@@ -487,7 +635,7 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
         {performanceQuery.isLoading || tournamentResultsQuery.isLoading ? <p className="status">Loading tournament history…</p> : null}
         {performanceQuery.error ? <p className="error">Failed to load season performance: {String(performanceQuery.error)}</p> : null}
         {tournamentResultsQuery.error ? <p className="error">Failed to load tournament results: {String(tournamentResultsQuery.error)}</p> : null}
-        {performanceQuery.data?.entries.length ? (
+        {performanceEntries.length ? (
           <table>
             <thead>
               <tr>
@@ -502,8 +650,8 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
               </tr>
             </thead>
             <tbody>
-              {performanceQuery.data.entries.map((entry) => (
-                <tr key={`performance-${entry.run_id}-${entry.season}`}>
+              {performanceEntries.map((entry, index) => (
+                <tr key={`performance-${entry.run_id}-${entry.season}-${index}`}>
                   <td>{entry.season}</td>
                   <td>{entry.run_id}</td>
                   <td>{displayMetric(entry.ranking_position)}</td>
@@ -517,7 +665,7 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
             </tbody>
           </table>
         ) : null}
-        {tournamentResultsQuery.data?.entries.length ? (
+        {tournamentResultEntries.length ? (
           <table>
             <thead>
               <tr>
@@ -532,8 +680,8 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
               </tr>
             </thead>
             <tbody>
-              {tournamentResultsQuery.data.entries.map((entry) => (
-                <tr key={`result-${entry.run_id}-${entry.event_id}-${entry.event_sequence}`}>
+              {tournamentResultEntries.map((entry, index) => (
+                <tr key={`result-${entry.run_id}-${entry.event_id}-${entry.event_sequence}-${index}`}>
                   <td>{entry.season}</td>
                   <td>{weekCell(runId, entry.week)}</td>
                   <td>{tournamentEventCell(runId, entry.event_id, entry.event_name)}</td>
@@ -552,13 +700,13 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
         ) : null}
         {performanceQuery.data &&
         tournamentResultsQuery.data &&
-        !performanceQuery.data.entries.length &&
-        !tournamentResultsQuery.data.entries.length ? (
+        !performanceEntries.length &&
+        !tournamentResultEntries.length ? (
           <p className="status">This preview is not connected for this data shape yet.</p>
         ) : null}
       </SectionCard>
 
-      {detailQuery.data ? (
+      {playerProfile ? (
         <details>
           <summary>Show technical player data</summary>
           <pre className="json-block">{JSON.stringify(detailQuery.data, null, 2)}</pre>
@@ -677,6 +825,10 @@ export function ViewerRunCountryDetailPage(): JSX.Element {
   })
 
   const countryProfile = hasCountryProfileShape(detailQuery.data) ? detailQuery.data : null
+  const topPlayers = normalizeTopPlayers(countryProfile?.top_players)
+  const sourceMix = normalizeCountMap(countryProfile?.source_mix)
+  const bandDistribution = normalizeDistribution(countryProfile?.band_distribution)
+  const originBandDistribution = normalizeDistribution(countryProfile?.origin_band_distribution)
   const showDeferredPreview = !detailQuery.isLoading && !detailQuery.error && !countryProfile
 
   return (
@@ -720,14 +872,14 @@ export function ViewerRunCountryDetailPage(): JSX.Element {
           </SectionCard>
 
           <SectionCard title="Source mix">
-            <p>{displayCountMap(countryProfile.source_mix)}</p>
+            <p>{displayCountMap(sourceMix)}</p>
           </SectionCard>
 
           <SectionCard title="Talent bands">
             <MetadataList
               items={[
-                { label: 'Current band distribution', value: displayDistribution(countryProfile.band_distribution) },
-                { label: 'Origin band distribution', value: displayDistribution(countryProfile.origin_band_distribution) },
+                { label: 'Current band distribution', value: displayDistribution(bandDistribution) },
+                { label: 'Origin band distribution', value: displayDistribution(originBandDistribution) },
                 { label: 'Average technique', value: displayFixed(countryProfile.average_visible_stats?.technique) },
                 { label: 'Average movement', value: displayFixed(countryProfile.average_visible_stats?.movement) },
                 { label: 'Average physical', value: displayFixed(countryProfile.average_visible_stats?.physical) },
@@ -737,7 +889,7 @@ export function ViewerRunCountryDetailPage(): JSX.Element {
           </SectionCard>
 
           <SectionCard title="Top players">
-            {countryProfile.top_players?.length ? (
+            {topPlayers.length ? (
               <table>
                 <thead>
                   <tr>
@@ -749,7 +901,7 @@ export function ViewerRunCountryDetailPage(): JSX.Element {
                   </tr>
                 </thead>
                 <tbody>
-                  {countryProfile.top_players.map((player, index) => (
+                  {topPlayers.map((player, index) => (
                     <tr key={player.player_id ?? `${player.name ?? 'unknown'}-${index}`}>
                       <td>{playerProfileCell(runId, player.player_id, player.name)}</td>
                       <td>{displayMetric(player.age)}</td>

@@ -7,6 +7,7 @@ import { viewerTopLevelHubLinks } from '../../viewer/viewerHubLinks'
 import {
   viewerCountriesPath,
   viewerCountryProfilePath,
+  viewerFinalsPath,
   viewerHistoryPath,
   viewerPlannedEventPath,
   viewerPlayerProfilePath,
@@ -160,6 +161,21 @@ describe('Viewer read-model route integration', () => {
 
     expect(viewerPlannedEventPath(runId, eventId)).toContain(encodedEventSegment)
     expect(viewerTournamentDetailPath(runId, eventId)).toContain(encodedEventSegment)
+  })
+
+  it('keeps history/finals route helpers Viewer-only, registered, and encoded', () => {
+    const runId = 'run/alpha #1'
+    const encodedRunSegment = 'run%2Falpha%20%231'
+    const destinations = [viewerHistoryPath(runId), viewerFinalsPath(runId)]
+
+    for (const destination of destinations) {
+      expectViewerOnlyPath(destination)
+      expect(destination).not.toMatch(adminPathPattern)
+      expect(destination).toContain(`/viewer/runs/${encodedRunSegment}`)
+      expect(destination).not.toContain(runId)
+      expect(destination).not.toContain('#')
+      expect(viewerRouteExists(destination)).toBe(true)
+    }
   })
 
   it('keeps calendar/week/tournament route helpers Viewer-only, registered, and encoded', () => {

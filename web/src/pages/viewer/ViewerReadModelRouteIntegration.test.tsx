@@ -100,6 +100,77 @@ describe('Viewer read-model route integration', () => {
     }
   })
 
+  it('keeps top-level Viewer hub routes registered and Viewer-only', () => {
+    const routes = [...appRoutePaths()]
+    const topLevelViewerRoutes = routes.filter((route) => route.startsWith('/viewer') && !route.startsWith('/viewer/runs/:'))
+    const expectedTopLevelViewerRoutes = [
+      '/viewer',
+      '/viewer/rankings',
+      '/viewer/rankings/race',
+      '/viewer/rankings/next-gen',
+      '/viewer/rankings/elo',
+      '/viewer/rankings/power',
+      '/viewer/rankings/form',
+      '/viewer/rankings/no1-history',
+      '/viewer/tour',
+      '/viewer/tour/calendar',
+      '/viewer/tour/current-week',
+      '/viewer/tour/tournaments',
+      '/viewer/tour/matches',
+      '/viewer/tour/categories',
+      '/viewer/tour/champions',
+      '/viewer/tournaments',
+      '/viewer/players',
+      '/viewer/players/all',
+      '/viewer/players/active',
+      '/viewer/players/next-gen',
+      '/viewer/players/retired',
+      '/viewer/players/compare',
+      '/viewer/countries',
+      '/viewer/countries/ranking',
+      '/viewer/countries/all',
+      '/viewer/countries/hosting',
+      '/viewer/countries/talent-pipeline',
+      '/viewer/countries/records',
+      '/viewer/h2h',
+      '/viewer/h2h/rivalries',
+      '/viewer/h2h/most-played',
+      '/viewer/h2h/finals-rivalries',
+      '/viewer/stats',
+      '/viewer/stats/title-leaders',
+      '/viewer/stats/no1-weeks',
+      '/viewer/stats/streaks',
+      '/viewer/stats/upsets',
+      '/viewer/stats/best-seasons',
+      '/viewer/stats/player-stats',
+      '/viewer/stats/tournament-stats',
+      '/viewer/stats/country-stats',
+      '/viewer/stats/awards',
+      '/viewer/stats/hall-of-fame',
+      '/viewer/stats/era-rankings',
+      '/viewer/records',
+      '/viewer/predictions',
+      '/viewer/predictions/match-predictor',
+      '/viewer/predictions/match-odds',
+      '/viewer/predictions/tournament-odds',
+      '/viewer/predictions/finals-qualification',
+      '/viewer/predictions/season-end-no1',
+      '/viewer/predictions/upset-watch',
+      '/viewer/predictions/futures',
+      '/viewer/search',
+      '/viewer/history',
+      '/viewer/runs'
+    ]
+
+    expect(topLevelViewerRoutes).toEqual(expect.arrayContaining(expectedTopLevelViewerRoutes))
+    expect(new Set(topLevelViewerRoutes).size).toBe(topLevelViewerRoutes.length)
+
+    for (const route of topLevelViewerRoutes) {
+      expect(route).toMatch(viewerOnlyPathPattern)
+      expect(route).not.toMatch(adminPathPattern)
+    }
+  })
+
   it('keeps player/country route helpers Viewer-only, registered, and encoded', () => {
     const runId = 'run/alpha #1'
     const playerId = 'P/1 #A'

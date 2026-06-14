@@ -1389,3 +1389,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Snapshot, player/country, calendar/tournament, and history/finals modules remain Viewer-only, read-only, encoded, scalar-safe, and route-helper-backed.
 - Empty, malformed, unavailable, or ambiguous data does not invent rankings, race standings, players, countries, events, weeks, tournaments, matches, winners, champions, records, history entries, finals qualifications, finalists, or profiles.
 - Routes, API behavior, active-run behavior, runtime safety, module boundaries, and Viewer/Admin separation remain unchanged.
+
+## Viewer Phase 14A note — top-level Viewer hub route parity audit
+
+- Top-level Viewer hub routes and link builders were audited for route parity and Viewer-only behavior.
+- Viewer Home, Run Browser, and deferred/global Viewer hub routes remain read-only, conservative, and separate from Admin routes.
+- Empty, unavailable, or deferred hub pages do not invent rankings, predictions, odds, stats, H2H records, players, countries, tournaments, matches, winners, champions, or standings.
+- Routes, API behavior, active-run behavior, completed run-scoped module boundaries, runtime safety, and Viewer/Admin separation remain unchanged.

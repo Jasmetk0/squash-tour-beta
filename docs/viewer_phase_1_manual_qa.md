@@ -1374,3 +1374,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Encoded slash/hash/space run route params render safely without creating Admin links, mutation controls, fake history, fake finals, fake champions, fake winners, fake standings, or [object Object] output.
 - Empty, malformed, unavailable, or ambiguous history/finals data does not invent history entries, finals qualifications, champions, winners, standings, rankings, records, finalists, or profiles.
 - Routes, API behavior, active-run behavior, runtime safety, snapshot boundaries, player/country boundaries, calendar/tournament boundaries, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 12C note — history/finals module final guard
+
+- Viewer history/finals module invariants were locked with final source/integration guards after Phases 12A–12B.
+- History and Finals pages continue to normalize malformed data before rendering activity metadata, qualification metadata, result metadata, player links, source-event links, and snapshot links.
+- History/finals/player/event/tournament/snapshot links remain Viewer-only, encoded, scalar-safe, and backed by route helpers.
+- Empty, malformed, unavailable, or ambiguous data does not invent history entries, finals qualifications, champions, winners, standings, rankings, records, finalists, or profiles.
+- Routes, API behavior, active-run behavior, runtime safety, snapshot boundaries, player/country boundaries, calendar/tournament boundaries, and Viewer read-only safety remain unchanged.

@@ -21,6 +21,13 @@ This is a documentation-only QA guide. It does not request product, React, backe
 - Routes, data fetching, visible copy, metadata labels, links, and read-only safety remain unchanged.
 - No backend/Admin route behavior changed.
 
+## Viewer Phase 14C note — top-level Viewer hub final guard
+
+- Top-level Viewer hub invariants were locked with final source/integration guards after Phases 14A–14B.
+- Viewer Home, Run Browser, active-run shortcuts, run selector, and deferred/global Viewer hub pages remain Viewer-only, conservative, encoded, scalar-safe, and separate from Admin behavior.
+- Empty, unavailable, malformed, or deferred hub data does not invent rankings, race standings, predictions, odds, stats, H2H records, players, countries, tournaments, matches, winners, champions, records, standings, or profiles.
+- Routes, API behavior, active-run behavior, completed run-scoped module boundaries, runtime safety, and Viewer/Admin separation remain unchanged.
+
 ## Phase 6B deferred infrastructure exactness note
 
 - Deferred infrastructure exactness tests were added after Phase 6A consolidation.

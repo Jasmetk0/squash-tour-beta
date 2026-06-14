@@ -5,10 +5,12 @@ import { buildRunBrowserContextLinks, buildRunBrowserPrimaryLinks } from '../../
 import { buildViewerHomeActiveRunLinks, buildViewerHomePrimaryHubLinks } from '../../viewer/viewerHomeDisplay'
 import { viewerTopLevelHubLinks } from '../../viewer/viewerHubLinks'
 import {
+  viewerCountriesPath,
   viewerCountryProfilePath,
   viewerHistoryPath,
   viewerPlannedEventPath,
   viewerPlayerProfilePath,
+  viewerPlayersPath,
   viewerRacePath,
   viewerRaceSnapshotPath,
   viewerRankingSnapshotPath,
@@ -92,14 +94,15 @@ describe('Viewer read-model route integration', () => {
     }
   })
 
-  it('keeps player/country preview route helpers Viewer-only, registered, and encoded', () => {
+  it('keeps player/country route helpers Viewer-only, registered, and encoded', () => {
     const runId = 'run/alpha #1'
     const playerId = 'P/1 #A'
     const countryCode = 'CO/DE #1'
     const encodedRunSegment = 'run%2Falpha%20%231'
     const encodedPlayerSegment = 'P%2F1%20%23A'
     const encodedCountrySegment = 'CO%2FDE%20%231'
-    const destinations = [
+    const listDestinations = [viewerPlayersPath(runId), viewerCountriesPath(runId)]
+    const detailDestinations = [
       {
         destination: viewerPlayerProfilePath(runId, playerId),
         encodedSegment: encodedPlayerSegment,
@@ -114,7 +117,15 @@ describe('Viewer read-model route integration', () => {
       }
     ]
 
-    for (const { destination, encodedSegment, rawSegment, routeTail } of destinations) {
+    for (const destination of listDestinations) {
+      expectViewerOnlyPath(destination)
+      expect(destination).toContain(`/viewer/runs/${encodedRunSegment}`)
+      expect(destination).not.toContain(runId)
+      expect(destination).not.toContain('#')
+      expect(viewerRouteExists(destination)).toBe(true)
+    }
+
+    for (const { destination, encodedSegment, rawSegment, routeTail } of detailDestinations) {
       expectViewerOnlyPath(destination)
       expect(destination).not.toMatch(adminPathPattern)
       expect(destination).toContain(`/viewer/runs/${encodedRunSegment}`)

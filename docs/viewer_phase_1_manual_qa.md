@@ -1330,3 +1330,11 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Player/country detail links remain Viewer-only, encoded, scalar-safe, and backed by route helpers.
 - Empty, malformed, unavailable, or ambiguous detail payloads do not invent players, countries, rankings, stats, records, tournaments, or profiles.
 - Routes, API behavior, active-run behavior, runtime safety, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 10E note — player/country module final guard
+
+- Viewer player/country module invariants were locked with final source/integration guards after Phases 10A–10D.
+- List and detail pages continue to normalize malformed data before rendering rows, payload sections, and links.
+- Player/country/tournament/week links remain Viewer-only, encoded, scalar-safe, and backed by route helpers.
+- Empty, malformed, unavailable, or ambiguous data does not invent players, countries, rankings, stats, records, tournaments, medals, or profiles.
+- Routes, API behavior, active-run behavior, runtime safety, snapshot boundaries, and Viewer read-only safety remain unchanged.

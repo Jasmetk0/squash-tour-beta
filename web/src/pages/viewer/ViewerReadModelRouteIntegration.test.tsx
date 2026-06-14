@@ -8,6 +8,8 @@ import {
   viewerCountriesPath,
   viewerCountryProfilePath,
   viewerFinalsPath,
+  viewerFinalsQualificationPath,
+  viewerFinalsResultPath,
   viewerHistoryPath,
   viewerPlannedEventPath,
   viewerPlayerProfilePath,
@@ -45,6 +47,8 @@ const expectedViewerRoutePatterns = [
   '/viewer/runs/:runId/countries/:countryCode',
   '/viewer/runs/:runId/history',
   '/viewer/runs/:runId/finals',
+  '/viewer/runs/:runId/finals/qualification',
+  '/viewer/runs/:runId/finals/result',
   '/viewer/predictions',
   '/viewer/predictions/match-predictor',
   '/viewer/predictions/match-odds',
@@ -166,7 +170,12 @@ describe('Viewer read-model route integration', () => {
   it('keeps history/finals route helpers Viewer-only, registered, and encoded', () => {
     const runId = 'run/alpha #1'
     const encodedRunSegment = 'run%2Falpha%20%231'
-    const destinations = [viewerHistoryPath(runId), viewerFinalsPath(runId)]
+    const destinations = [
+      viewerHistoryPath(runId),
+      viewerFinalsPath(runId),
+      viewerFinalsQualificationPath(runId),
+      viewerFinalsResultPath(runId)
+    ]
 
     for (const destination of destinations) {
       expectViewerOnlyPath(destination)

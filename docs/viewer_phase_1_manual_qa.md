@@ -1360,3 +1360,10 @@ Do not use this note to mark full Viewer Phase 2 complete; this is only the Phas
 - Calendar/tournament/week/snapshot links remain Viewer-only, encoded, scalar-safe, and backed by route helpers.
 - Empty, malformed, unavailable, or ambiguous data does not invent events, weeks, matches, results, winners, standings, tournaments, or records.
 - Routes, API behavior, active-run behavior, runtime safety, snapshot boundaries, player/country boundaries, and Viewer read-only safety remain unchanged.
+
+## Viewer Phase 12A note — history/finals route-helper parity audit
+
+- Viewer history and finals route helpers were audited for route parity.
+- History/finals links remain Viewer-only, encoded, scalar-safe, and backed by registered App route patterns.
+- No history entries, finals qualifications, champions, winners, standings, rankings, or records are invented.
+- Routes, API behavior, active-run behavior, runtime safety, snapshot boundaries, player/country boundaries, calendar/tournament boundaries, and Viewer read-only safety remain unchanged.

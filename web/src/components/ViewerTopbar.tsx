@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent, MouseEvent } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 
+import { ViewerSeasonWeekSelector } from './ViewerContextControls'
 import { viewerDropdowns } from '../viewer/viewerNavigation'
 import type { ViewerDropdown } from '../viewer/viewerNavigation'
 import { viewerHomePath, viewerTopSearchPath } from '../viewer/viewerRoutes'
@@ -88,6 +89,7 @@ export function ViewerTopbar(): JSX.Element {
       </div>
       <div className="viewer-topbar__utility">
         <ViewerTopbarSearch />
+        <ViewerSeasonWeekSelector />
       </div>
     </nav>
   )

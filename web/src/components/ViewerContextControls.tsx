@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react'
 
 import { useViewerContext } from '../viewer/ViewerContext'
-import { buildViewerContextSummaryItems, formatViewerContextButtonLabel, formatViewerWeekLabel, normalizeViewerWeekInput } from '../viewer/viewerContextDisplay'
+import {
+  buildViewerContextSummaryItems,
+  formatViewerContextButtonLabel,
+  formatViewerContextFullLabel,
+  formatViewerWeekLabel,
+  normalizeViewerWeekInput
+} from '../viewer/viewerContextDisplay'
 
 export function ViewerSeasonWeekSelector(): JSX.Element {
   const context = useViewerContext()
@@ -15,6 +21,7 @@ export function ViewerSeasonWeekSelector(): JSX.Element {
   }, [context.selectedSeason, context.selectedWeek])
 
   const contextSummaryItems = buildViewerContextSummaryItems(context)
+  const fullContextLabel = formatViewerContextFullLabel(context)
 
   function updateViewerContext(): void {
     context.setViewerContext(draftSeason, normalizeViewerWeekInput(draftWeek))
@@ -27,12 +34,15 @@ export function ViewerSeasonWeekSelector(): JSX.Element {
         className="viewer-context-selector__button"
         aria-expanded={expanded}
         aria-controls="viewer-context-selector-panel"
+        aria-label={fullContextLabel}
+        title={fullContextLabel}
         onClick={() => setExpanded((current) => !current)}
       >
         {formatViewerContextButtonLabel(context)}
       </button>
       {expanded ? (
         <div id="viewer-context-selector-panel" className="viewer-context-selector__panel" role="region" aria-label="Viewer season and week context controls">
+          <p className="viewer-context-selector__summary">{fullContextLabel}</p>
           <label className="field-label" htmlFor="viewer-season-input">Selected season</label>
           <input
             id="viewer-season-input"

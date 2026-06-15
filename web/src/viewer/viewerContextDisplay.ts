@@ -20,6 +20,10 @@ export function formatViewerWeekLabel(week: number): string {
 }
 
 export function formatViewerContextButtonLabel(context: Pick<ViewerContextDisplayInput, 'selectedSeason' | 'selectedWeek'>): string {
+  return `Week ${formatViewerWeekLabel(context.selectedWeek)}`
+}
+
+export function formatViewerContextFullLabel(context: Pick<ViewerContextDisplayInput, 'selectedSeason' | 'selectedWeek'>): string {
   return `${formatViewerSeasonLabel(context.selectedSeason)} · ${formatViewerWeekLabel(context.selectedWeek)}`
 }
 

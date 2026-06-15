@@ -110,7 +110,7 @@ describe('Layout mode navigation', () => {
     const nav = viewerNav()
     expect(within(nav).getByRole('search', { name: 'Viewer search' })).toBeInTheDocument()
     expect(within(nav).queryByLabelText('Viewer active run')).not.toBeInTheDocument()
-    expect(within(nav).queryByRole('button', { name: 'Season 2004/05 · W10' })).not.toBeInTheDocument()
+    expect(within(nav).getByRole('button', { name: 'Season 2004/05 · W10' })).toHaveTextContent('Week W10')
     expect(await screen.findByRole('option', { name: /run-b/i })).toHaveAttribute('value', 'run-b')
     fireEvent.change(screen.getByLabelText('Viewer active run'), { target: { value: 'run-b' } })
     expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBe('run-b')

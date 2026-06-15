@@ -177,12 +177,12 @@ describe('ViewerTopbar', () => {
     expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
   })
 
-  it('keeps run and season utility controls out of the Viewer primary navbar', async () => {
+  it('keeps the active run control out of the Viewer primary navbar while showing local week context', async () => {
     renderViewerTopbarAt('/viewer')
 
     const nav = await screen.findByTestId('viewer-primary-nav')
     expect(within(nav).queryByRole('form', { name: 'Viewer topbar active run' })).not.toBeInTheDocument()
-    expect(within(nav).queryByRole('button', { name: 'Season 2004/05 · W10' })).not.toBeInTheDocument()
+    expect(within(nav).getByRole('button', { name: 'Season 2004/05 · W10' })).toHaveTextContent('Week W10')
     expect(within(nav).queryByRole('link', { name: 'Admin / Engine' })).not.toBeInTheDocument()
   })
 })

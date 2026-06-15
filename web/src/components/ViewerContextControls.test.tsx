@@ -19,10 +19,13 @@ describe('ViewerContextControls', () => {
     localStorage.clear()
   })
 
-  it('renders the collapsed Season/Week selector with the existing label and aria state', () => {
+  it('renders the collapsed Season/Week selector with a compact visible label and full accessible label', () => {
     renderViewerContextControls()
 
-    expect(screen.getByRole('button', { name: 'Season 2004/05 · W10' })).toHaveAttribute('aria-expanded', 'false')
+    const selector = screen.getByRole('button', { name: 'Season 2004/05 · W10' })
+
+    expect(selector).toHaveTextContent('Week W10')
+    expect(selector).toHaveAttribute('aria-expanded', 'false')
   })
 
   it('expands the selector with existing fields, update button, and metadata', async () => {
@@ -42,7 +45,7 @@ describe('ViewerContextControls', () => {
     expect(screen.getByText('Status: selected viewer context; stored locally in this browser.')).toBeInTheDocument()
   })
 
-  it('updates season/week context and preserves the collapsed display format', async () => {
+  it('updates season/week context and preserves the compact collapsed display format', async () => {
     const user = userEvent.setup()
     renderViewerContextControls()
 
@@ -53,7 +56,7 @@ describe('ViewerContextControls', () => {
     await user.type(screen.getByLabelText('Selected week'), '24')
     await user.click(screen.getByRole('button', { name: 'Set Viewer Week' }))
 
-    expect(screen.getByRole('button', { name: 'Season 2005/06 · W24' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Season 2005/06 · W24' })).toHaveTextContent('Week W24')
     expect(screen.getByText('Season Week: 24 / 61')).toBeInTheDocument()
     expect(localStorage.getItem(VIEWER_CONTEXT_STORAGE_KEY)).toBe(JSON.stringify({ selectedSeason: '2005/06', selectedWeek: 24 }))
   })
@@ -64,7 +67,7 @@ describe('ViewerContextControls', () => {
 
     await user.click(screen.getByRole('button', { name: 'Jump to W24' }))
 
-    expect(screen.getByRole('button', { name: 'Season 2004/05 · W24' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Season 2004/05 · W24' })).toHaveTextContent('Week W24')
     expect(localStorage.getItem(VIEWER_CONTEXT_STORAGE_KEY)).toBe(JSON.stringify({ selectedSeason: '2004/05', selectedWeek: 24 }))
   })
 })

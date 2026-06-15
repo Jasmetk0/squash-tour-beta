@@ -4,7 +4,7 @@ import { buildViewerContextSummaryItems, formatViewerContextButtonLabel, formatV
 
 describe('viewerContextDisplay', () => {
   it('formats the existing Viewer season/week button and jump labels', () => {
-    expect(formatViewerContextButtonLabel({ selectedSeason: '2004/05', selectedWeek: 10 })).toBe('Season 2004/05 · W10')
+    expect(formatViewerContextButtonLabel({ selectedSeason: '2004/05', selectedWeek: 10 })).toBe('Week W10')
     expect(formatViewerWeekLabel(24)).toBe('W24')
   })
 

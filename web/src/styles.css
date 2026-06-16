@@ -87,6 +87,18 @@ button {
   color: #fff;
 }
 
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 0.55rem 0.8rem;
+  background: #1d4ed8;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
 .actions {
   display: flex;
   gap: 0.5rem;
@@ -716,6 +728,26 @@ textarea:focus-visible {
 .button-secondary { background: #334155; }
 .button-ghost { background: #e2e8f0; color: #0f172a; }
 .button-danger { background: #b91c1c; }
+
+.runs-hub-actions {
+  align-items: center;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+
+.runs-hub-actions h3 {
+  margin: 0 0 0.25rem;
+}
+
+.runs-hub-actions .status {
+  margin: 0;
+}
 
 .country-drawer-backdrop {
   position: fixed;

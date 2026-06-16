@@ -116,6 +116,16 @@ export function RunsPage(): JSX.Element {
         subtitle="Browse deterministic run summaries, select a run for compact inspection, and bridge directly into run-level surfaces."
       />
 
+      <section className="runs-hub-actions" aria-label="Run management actions">
+        <div>
+          <h3>Create or open a run</h3>
+          <p className="status">Start a new deterministic season run, or use the browser below to continue an existing run.</p>
+        </div>
+        <Link className="button-link" to="/admin/runs/new">
+          Create new run
+        </Link>
+      </section>
+
       <SectionCard title="Filters">
         <div className="grid">
           <label>
@@ -144,7 +154,13 @@ export function RunsPage(): JSX.Element {
       {runsQuery.isLoading ? <p className="status">Loading runs index…</p> : null}
       {runsQuery.isError ? <p className="error">Runs list unavailable: {formatApiError(runsQuery.error)}</p> : null}
       {!runsQuery.isLoading && !runsQuery.isError && runsQuery.data?.runs.length === 0 ? (
-        <EmptyState message="No runs exist yet. Create a run from Admin / Runs / New to populate this browser." />
+        <section className="panel nested-panel" aria-labelledby="runs-empty-heading">
+          <h3 id="runs-empty-heading">No runs exist yet.</h3>
+          <EmptyState message="Create your first run to start simulating a season." />
+          <Link className="button-link" to="/admin/runs/new">
+            Create new run
+          </Link>
+        </section>
       ) : null}
       {!runsQuery.isLoading && !runsQuery.isError && runsQuery.data && filteredRuns.length === 0 && runsQuery.data.runs.length > 0 ? (
         <EmptyState message="No runs match the current filters." />

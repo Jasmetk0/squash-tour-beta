@@ -119,7 +119,7 @@ export function RunsPage(): JSX.Element {
       <section className="runs-hub-actions" aria-label="Run management actions">
         <div>
           <h3>Create or open a run</h3>
-          <p className="status">Start a new deterministic season run, or use the browser below to continue an existing run.</p>
+          <p className="status">Create a new 2000/01 root run, or use the browser below to continue an existing run.</p>
         </div>
         <Link className="button-link" to="/admin/runs/new">
           Create new run
@@ -156,7 +156,7 @@ export function RunsPage(): JSX.Element {
       {!runsQuery.isLoading && !runsQuery.isError && runsQuery.data?.runs.length === 0 ? (
         <section className="panel nested-panel" aria-labelledby="runs-empty-heading">
           <h3 id="runs-empty-heading">No runs exist yet.</h3>
-          <EmptyState message="Create your first run to start simulating a season." />
+          <EmptyState message="Create your first 2000/01 root run to start the MSA timeline." />
           <Link className="button-link" to="/admin/runs/new">
             Create new run
           </Link>

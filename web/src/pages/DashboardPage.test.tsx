@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DashboardPage } from './DashboardPage'
-import { SUPPORTED_CALENDAR_SEASON } from '../config'
+import { MSA_TIMELINE_START_YEAR } from '../config'
 import { renderWithRoute } from '../test/testUtils'
 
 const navigateMock = vi.fn()
@@ -107,23 +107,31 @@ describe('DashboardPage', () => {
     expect(screen.getByRole('heading', { name: /Create run/i })).toBeInTheDocument()
   })
 
-  it('creates a run and navigates to run detail', async () => {
+  it('creates a fixed-timeline root run and navigates to run detail', async () => {
     renderWithRoute(<DashboardPage />, '/')
 
-    expect(screen.getByLabelText('Season')).toHaveValue(SUPPORTED_CALENDAR_SEASON)
+    const createPanel = screen.getByRole('heading', { name: 'Create run' }).closest('form') as HTMLElement
+    expect(within(createPanel).queryByLabelText('Season')).not.toBeInTheDocument()
+    expect(within(createPanel).getByText(/New root runs start at 2000\/01/i)).toBeInTheDocument()
+    expect(within(createPanel).getByText(/2039\/40: 40 seasons, 61 Season Weeks per season/i)).toBeInTheDocument()
+    expect(within(createPanel).getByText(/rollover\/bootstrap child runs/i)).toBeInTheDocument()
 
-    const runIdInput = screen.getByLabelText('Run ID')
+    const runIdInput = within(createPanel).getByLabelText('Run ID')
+    const seedInput = within(createPanel).getByLabelText('Seed')
     await userEvent.clear(runIdInput)
     await userEvent.type(runIdInput, 'run-a')
-    await userEvent.click(screen.getByRole('button', { name: 'Create and open run' }))
+    await userEvent.clear(seedInput)
+    await userEvent.type(seedInput, '99')
+    await userEvent.click(within(createPanel).getByRole('button', { name: 'Create and open run' }))
 
     await waitFor(() =>
       expect(api.createRun).toHaveBeenCalledWith({
         run_id: 'run-a',
-        seed: 42,
-        season: SUPPORTED_CALENDAR_SEASON
+        seed: 99,
+        season: MSA_TIMELINE_START_YEAR
       })
     )
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run-a')
     expect(navigateMock).toHaveBeenCalledWith('/admin/runs/run-a')
   })
 

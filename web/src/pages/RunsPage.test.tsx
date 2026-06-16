@@ -97,7 +97,7 @@ describe('RunsPage', () => {
     renderWithRoute(<RunsPage />, '/admin/runs')
 
     expect(await screen.findByRole('heading', { name: 'No runs exist yet.' })).toBeInTheDocument()
-    expect(screen.getByText('Create your first run to start simulating a season.')).toBeInTheDocument()
+    expect(screen.getByText('Create your first 2000/01 root run to start the MSA timeline.')).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Create new run' })).toHaveLength(2)
     for (const link of screen.getAllByRole('link', { name: 'Create new run' })) {
       expect(link).toHaveAttribute('href', '/admin/runs/new')

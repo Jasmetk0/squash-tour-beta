@@ -4,7 +4,13 @@ import { Link, useNavigate } from 'react-router-dom'
 
 import { createRun, getHealth, getRun, getRunLineage, getRunSource, getRunStatusSummary, listRuns } from '../api/client'
 import { CompactSummaryCard, EmptyState, MetadataList, PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
-import { SUPPORTED_CALENDAR_SEASON } from '../config'
+import {
+  MSA_SEASON_WEEK_COUNT,
+  MSA_TIMELINE_END_LABEL,
+  MSA_TIMELINE_SEASON_COUNT,
+  MSA_TIMELINE_START_LABEL,
+  MSA_TIMELINE_START_YEAR
+} from '../config'
 import { formatApiError } from '../utils/apiErrors'
 import { clearLastRunId, readLastRunId, writeLastRunId } from '../viewer/activeRun'
 
@@ -24,7 +30,7 @@ export function DashboardPage(): JSX.Element {
   const [createInput, setCreateInput] = useState<CreateInputState>({
     run_id: 'mvp-run',
     seed: 42,
-    season: SUPPORTED_CALENDAR_SEASON
+    season: MSA_TIMELINE_START_YEAR
   })
   const [loadRunId, setLoadRunId] = useState('')
   const [lastRunId, setLastRunId] = useState(() => readLastRunId())
@@ -133,12 +139,12 @@ export function DashboardPage(): JSX.Element {
         <section className="panel" aria-labelledby="dashboard-help-heading">
           <h3 id="dashboard-help-heading">How to use this MVP</h3>
           <ul className="dashboard-help-list">
-            <li>Create a run with a unique run ID, seed, and season.</li>
+            <li>Create a root run with a unique run ID and seed.</li>
             <li>Open any existing run using its run ID.</li>
             <li>After launch/open, continue from Run Detail and its linked views.</li>
             <li>Manage world countries from the in-app <Link to="/admin/world/countries">Countries Editor</Link>.</li>
           </ul>
-          <p className="status">Supported season default: {SUPPORTED_CALENDAR_SEASON}.</p>
+          <p className="status">New root runs start at {MSA_TIMELINE_START_LABEL}; later seasons continue through rollover/bootstrap child runs.</p>
         </section>
 
         <section className="panel" aria-labelledby="dashboard-resume-heading">
@@ -293,15 +299,9 @@ export function DashboardPage(): JSX.Element {
               required
             />
           </label>
-          <label>
-            Season
-            <input
-              type="number"
-              value={createInput.season}
-              onChange={(e) => setCreateInput((v) => ({ ...v, season: Number(e.target.value) }))}
-              required
-            />
-          </label>
+          <div className="status" role="note" aria-label="Fixed MSA timeline">
+            New root runs start at {MSA_TIMELINE_START_LABEL}. The intended MSA timeline runs through {MSA_TIMELINE_END_LABEL}: {MSA_TIMELINE_SEASON_COUNT} seasons, {MSA_SEASON_WEEK_COUNT} Season Weeks per season. Later seasons continue through rollover/bootstrap child runs.
+          </div>
           <button type="submit" disabled={isCreating}>
             {isCreating ? 'Creating...' : 'Create and open run'}
           </button>

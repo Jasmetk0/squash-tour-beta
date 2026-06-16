@@ -86,8 +86,22 @@ describe('RunsPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Runs browser' })).toBeInTheDocument()
     expect(api.listRuns).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('link', { name: 'Create new run' })).toHaveAttribute('href', '/admin/runs/new')
     expect(await screen.findByRole('button', { name: 'Selected run-3' })).toBeInTheDocument()
     expect(await screen.findByRole('button', { name: 'Inspect run-1' })).toBeInTheDocument()
+  })
+
+  it('renders no-runs empty state with create-run link', async () => {
+    api.listRuns.mockResolvedValueOnce({ runs: [] })
+
+    renderWithRoute(<RunsPage />, '/admin/runs')
+
+    expect(await screen.findByRole('heading', { name: 'No runs exist yet.' })).toBeInTheDocument()
+    expect(screen.getByText('Create your first run to start simulating a season.')).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Create new run' })).toHaveLength(2)
+    for (const link of screen.getAllByRole('link', { name: 'Create new run' })) {
+      expect(link).toHaveAttribute('href', '/admin/runs/new')
+    }
   })
 
   it('preserves backend order exactly as returned', async () => {

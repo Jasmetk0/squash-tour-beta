@@ -2,8 +2,58 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
 import { getSeasonTemplates } from '../api/client'
+import { describeCalendarEventTiming, type CalendarEventDraft } from '../tour/calendarEventModel'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
+
+
+const exampleDraftTemplateEvents: CalendarEventDraft[] = [
+  {
+    id: 'example-nemarque-open',
+    name: 'Némarque Open',
+    categoryCode: 'DIAMOND',
+    weeks: [6, 7],
+    qualificationWeeks: [5],
+    locked: true,
+    status: 'template'
+  },
+  {
+    id: 'example-ameriga-open',
+    name: 'Ameriga Open',
+    categoryCode: 'DIAMOND',
+    weeks: [44, 45],
+    qualificationWeeks: [43],
+    locked: true,
+    status: 'template'
+  },
+  {
+    id: 'example-world-championship',
+    name: 'World Championship',
+    categoryCode: 'WORLD_CHAMPIONSHIP',
+    weeks: [49, 50],
+    qualificationWeeks: [48],
+    locked: true,
+    status: 'template'
+  },
+  {
+    id: 'example-world-tour-finals',
+    name: 'World Tour Finals',
+    categoryCode: 'WORLD_TOUR_FINALS',
+    weeks: [55],
+    qualificationWeeks: [],
+    locked: true,
+    status: 'template'
+  }
+]
+
+const plannedTemplateWorkflow = [
+  'Create draft template — planned',
+  'Add events using weeks and qualificationWeeks — planned',
+  'Lock important events — planned',
+  'Compare template against canonical season — planned',
+  'Copy selected events into canonical season — planned',
+  'Replace unlocked events only — planned'
+]
 
 export function AdminTourSeasonsSeasonTemplatesPage(): JSX.Element {
   const templatesQuery = useQuery({ queryKey: ['season-templates'], queryFn: getSeasonTemplates, retry: false })
@@ -17,6 +67,29 @@ export function AdminTourSeasonsSeasonTemplatesPage(): JSX.Element {
           <li>Editing/copy/apply workflows are planned.</li>
           <li>Current operational calendar tooling remains in <Link to="/admin/seasons">/admin/seasons</Link>.</li>
           <li>Season Registry is separate and available at <Link to="/admin/tour-seasons/season-registry">/admin/tour-seasons/season-registry</Link>.</li>
+        </ul>
+      </SectionCard>
+      <SectionCard title="Admin-only calendar draft templates">
+        <p>
+          Calendar draft templates are Admin-only planning objects. They are not played, not visible in Viewer,
+          and do not mutate canonical seasons until explicitly copied/applied later.
+        </p>
+        <p>
+          Template events use weeks and qualificationWeeks. Qualification belongs to the main event. Locked events
+          must be explicitly unlocked before move/delete/overwrite actions.
+        </p>
+        <h3>Future template workflow</h3>
+        <ul className="dashboard-help-list">
+          {plannedTemplateWorkflow.map((item) => <li key={item}>{item}</li>)}
+        </ul>
+        <h3>Default World Tour Skeleton</h3>
+        <p>Examples only — future Admin template model, not persisted template data.</p>
+        <ul className="dashboard-help-list">
+          {exampleDraftTemplateEvents.map((event) => (
+            <li key={event.id}>
+              {event.name} — {event.categoryCode} — {describeCalendarEventTiming(event)} — {event.locked ? 'Locked' : 'Unlocked'}
+            </li>
+          ))}
         </ul>
       </SectionCard>
       <SectionCard title="Summary">
@@ -35,10 +108,13 @@ export function AdminTourSeasonsSeasonTemplatesPage(): JSX.Element {
         </SectionCard>
       ))}
       <SectionCard title="Navigation">
+        <p><Link to="/admin/tour-seasons">Back to Tour &amp; Seasons</Link></p>
         <p><Link to="/admin/seasons">Open Seasons</Link></p>
         <p>
           <Link to="/admin/tour-seasons/season-registry">Open Season Registry</Link>
         </p>
+        <p><Link to="/admin/tour-seasons/categories">Open Categories</Link></p>
+        <p><Link to="/admin/tour-seasons/compare">Open Calendar Compare / Apply</Link></p>
         <p><Link to="/admin/tournament-templates">Open Tournament Templates current tooling</Link></p>
       </SectionCard>
     </section>

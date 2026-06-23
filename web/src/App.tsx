@@ -52,6 +52,7 @@ import { AdminTourSeasonsCategoryDetailPage } from './pages/CategoryDetailPage'
 import { AdminTourSeasonsTournamentsPage } from './pages/TournamentsPage'
 import { AdminTourSeasonsTournamentDetailPage } from './pages/TournamentDetailPage'
 import { AdminTourSeasonsSeasonTemplatesPage } from './pages/SeasonTemplatesPage'
+import { SeasonTemplateDraftSandboxPage } from './pages/SeasonTemplateDraftSandboxPage'
 import { AdminTourSeasonsSeasonTemplateDetailPage } from './pages/SeasonTemplateDetailPage'
 import { AdminTourSeasonsSeasonRegistryPage } from './pages/SeasonRegistryPage'
 import { AdminSimulatePage } from './pages/AdminSimulatePage'
@@ -123,6 +124,7 @@ export default function App(): JSX.Element {
         <Route path="admin/tour-seasons/tournaments" element={<AdminTourSeasonsTournamentsPage />} />
         <Route path="admin/tour-seasons/tournaments/:tournamentId" element={<AdminTourSeasonsTournamentDetailPage />} />
         <Route path="admin/tour-seasons/season-templates" element={<AdminTourSeasonsSeasonTemplatesPage />} />
+        <Route path="admin/tour-seasons/season-templates/draft-sandbox" element={<SeasonTemplateDraftSandboxPage />} />
         <Route path="admin/tour-seasons/season-templates/:templateId" element={<AdminTourSeasonsSeasonTemplateDetailPage />} />
         <Route path="admin/tour-seasons/season-registry" element={<AdminTourSeasonsSeasonRegistryPage />} />
         <Route path="admin/tour-seasons/compare" element={<AdminTourSeasonsComparePage />} />

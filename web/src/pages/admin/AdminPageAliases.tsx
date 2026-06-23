@@ -3,6 +3,30 @@ import { AdminPlayersHubPage } from '../AdminPlayersHubPage'
 import { AdminSeasonsPage as SeasonBootstrapAdminSeasonsPage } from '../AdminSeasonsPage'
 import { TournamentTemplatesPage } from '../TournamentTemplatesPage'
 import { LinkCardGrid } from '../../components/LinkCardGrid'
+import { describeCalendarEventTiming } from '../../tour/calendarEventModel'
+import type { CalendarEventDraft } from '../../tour/calendarEventModel'
+
+
+const futureCalendarPlanningExamples: CalendarEventDraft[] = [
+  {
+    id: 'future-planning-nemarque-open',
+    name: 'Némarque Open',
+    categoryCode: 'DIAMOND',
+    qualificationWeeks: [5],
+    weeks: [6, 7],
+    locked: true,
+    status: 'template'
+  },
+  {
+    id: 'future-planning-world-tour-finals',
+    name: 'World Tour Finals',
+    categoryCode: 'WORLD_TOUR_FINALS',
+    qualificationWeeks: [],
+    weeks: [55],
+    locked: true,
+    status: 'template'
+  }
+]
 
 export function AdminWorldPage(): JSX.Element {
   return (
@@ -36,6 +60,16 @@ export function AdminTourSeasonsPage(): JSX.Element {
         <h2>Tour & Seasons</h2>
         <p className="subtitle">Manage categories, recurring tournaments, season templates, concrete season calendars, and validation workflows.</p>
       </div>
+      <section className="section-card" aria-label="Future calendar planning model examples">
+        <h3>Future calendar planning model</h3>
+        <p className="status">Season calendar events will use weeks and qualificationWeeks. Qualification belongs to the main event. Locked events must be unlocked before move/delete/overwrite actions. Calendar templates will be Admin-only until copied into canonical seasons.</p>
+        <p className="status"><strong>Examples only — future planning model, not persisted season data.</strong></p>
+        <ul>
+          {futureCalendarPlanningExamples.map((event) => (
+            <li key={event.id}>{event.name} — {event.categoryCode} — {describeCalendarEventTiming(event)} — {event.locked ? 'Locked' : 'Unlocked'}</li>
+          ))}
+        </ul>
+      </section>
       <LinkCardGrid
         cards={[
           {

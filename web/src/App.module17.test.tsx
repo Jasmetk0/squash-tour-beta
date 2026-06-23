@@ -860,6 +860,11 @@ describe('Module 17 pages through routes', () => {
   it('renders Tour & Seasons hub and shell routes while keeping operational routes available', async () => {
     renderAppAt('/admin/tour-seasons')
     expect(await screen.findByRole('heading', { name: 'Tour & Seasons' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Future calendar planning model' })).toBeInTheDocument()
+    expect(screen.getByText('Season calendar events will use weeks and qualificationWeeks. Qualification belongs to the main event. Locked events must be unlocked before move/delete/overwrite actions. Calendar templates will be Admin-only until copied into canonical seasons.')).toBeInTheDocument()
+    expect(screen.getByText('Examples only — future planning model, not persisted season data.')).toBeInTheDocument()
+    expect(screen.getByText('Némarque Open — DIAMOND — Qualifying W5 · Main W6–W7 — Locked')).toBeInTheDocument()
+    expect(screen.getByText('World Tour Finals — WORLD_TOUR_FINALS — Main W55 — Locked')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Categories/ })).toHaveAttribute('href', '/admin/tour-seasons/categories')
     expect(screen.getByRole('link', { name: /Tournaments/ })).toHaveAttribute('href', '/admin/tour-seasons/tournaments')
     expect(screen.getByRole('link', { name: /Season Templates/ })).toHaveAttribute('href', '/admin/tour-seasons/season-templates')

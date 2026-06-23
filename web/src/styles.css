@@ -1737,3 +1737,87 @@ textarea:focus-visible {
     width: 100%;
   }
 }
+
+.category-catalog {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.category-catalog__group {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.9rem;
+  background: #f8fafc;
+}
+
+.category-catalog__group h3 {
+  margin: 0 0 0.75rem;
+}
+
+.category-catalog__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.75rem;
+}
+
+.category-catalog-card {
+  border: 1px solid #d9e2ee;
+  border-radius: 12px;
+  background: #fff;
+  padding: 0.85rem;
+}
+
+.category-catalog-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.category-catalog-card__code {
+  color: #64748b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+}
+
+.category-catalog-card h4 {
+  margin: 0.7rem 0 0.35rem;
+}
+
+.category-catalog-card p {
+  margin: 0;
+  color: #475569;
+}
+
+.category-sticker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  color: #0f172a;
+  background: #f8fafc;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.category-sticker--world-championship { background: #dbeafe; border-color: #93c5fd; }
+.category-sticker--world-finals { background: #fef3c7; border-color: #f59e0b; }
+.category-sticker--diamond { background: #e0f2fe; border-color: #38bdf8; }
+.category-sticker--emerald { background: #dcfce7; border-color: #4ade80; }
+.category-sticker--platinium { background: #e5e7eb; border-color: #94a3b8; }
+.category-sticker--gold { background: #fef9c3; border-color: #eab308; }
+.category-sticker--silver { background: #f1f5f9; border-color: #94a3b8; }
+.category-sticker--bronze { background: #fed7aa; border-color: #fb923c; }
+.category-sticker--copper { background: #ffedd5; border-color: #c2410c; }
+.category-sticker--cobalt { background: #dbeafe; border-color: #2563eb; }
+.category-sticker--iron { background: #e2e8f0; border-color: #64748b; }
+.category-sticker--nickel { background: #f5f5f4; border-color: #a8a29e; }
+.category-sticker--tin { background: #f1f5f9; border-color: #64748b; }
+.category-sticker--zinc { background: #ede9fe; border-color: #8b5cf6; }
+.category-sticker--challenger { background: #ecfeff; border-color: #06b6d4; }
+.category-sticker--future { background: #f0fdf4; border-color: #22c55e; }

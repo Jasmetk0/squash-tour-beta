@@ -34,14 +34,17 @@ export function AdminTourSeasonsSeasonRegistryPage(): JSX.Element {
         ) : null}
       </SectionCard>
 
-      <SectionCard title="Model notes">
+      <SectionCard title="Canonical calendar foundation">
+        <p>Canonical seasons are the real 40-season MSA timeline from 2000/01 through 2039/40. Admin-only calendar templates will be created separately and can later be copied into these seasons. Template changes will not automatically mutate canonical seasons.</p>
+        <p>Calendar events will use weeks and qualificationWeeks. Qualification belongs to the main event. Locked events must be explicitly unlocked before move/delete/overwrite actions.</p>
         <ul className="dashboard-help-list">
           <li>Registry is read-only.</li>
-          <li>Every season has exactly 61 weeks.</li>
+          <li>Every canonical season has exactly 61 Season Weeks.</li>
           <li>Season Week 1 = Year Week 37.</li>
           <li>This is the simplified engine model.</li>
           <li>Compact label YYYY/YY is canonical for registry.</li>
           <li>Legacy YYYY/YYYY labels are still accepted at selected API boundaries during migration.</li>
+          <li>Admin calendar editor: planned.</li>
         </ul>
       </SectionCard>
 
@@ -77,7 +80,10 @@ export function AdminTourSeasonsSeasonRegistryPage(): JSX.Element {
                   <th>Season Week Range</th>
                   <th>Year Week Start</th>
                   <th>Year Week End</th>
-                  <th>Status</th>
+                  <th>Registry status</th>
+                  <th>Calendar status</th>
+                  <th>Calendar planning</th>
+                  <th>Future actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -91,6 +97,14 @@ export function AdminTourSeasonsSeasonRegistryPage(): JSX.Element {
                     <td>YW{entry.year_week_start}</td>
                     <td>YW{entry.year_week_end}</td>
                     <td>{entry.status}</td>
+                    <td>Calendar status: existing read model unavailable / not loaded</td>
+                    <td>Canonical season · 61 Season Weeks · Admin calendar editor: planned</td>
+                    <td>
+                      <span>Open calendar — planned</span>{' · '}
+                      <span>Copy from template — planned</span>{' · '}
+                      <span>Save as template — planned</span>{' · '}
+                      <span>Compare/copy workspace — planned</span>
+                    </td>
                   </tr>
                 ))}
               </tbody>

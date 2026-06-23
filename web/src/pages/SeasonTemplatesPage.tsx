@@ -64,6 +64,7 @@ export function AdminTourSeasonsSeasonTemplatesPage(): JSX.Element {
       <SectionCard title="Read-only foundation notes">
         <ul className="dashboard-help-list">
           <li>Read-only foundation.</li>
+          <li><Link to="/admin/tour-seasons/season-templates/draft-sandbox">Open Draft Template Sandbox</Link></li>
           <li>Editing/copy/apply workflows are planned.</li>
           <li>Current operational calendar tooling remains in <Link to="/admin/seasons">/admin/seasons</Link>.</li>
           <li>Season Registry is separate and available at <Link to="/admin/tour-seasons/season-registry">/admin/tour-seasons/season-registry</Link>.</li>

@@ -870,8 +870,14 @@ describe('Module 17 pages through routes', () => {
 
     renderAppAt('/admin/tour-seasons/categories')
     expect(await screen.findByRole('heading', { name: 'Categories' })).toBeInTheDocument()
-    expect(screen.getAllByText(/Read-only foundation\./).length).toBeGreaterThan(0)
+    expect(screen.getByText(/stable tournament category identities/i)).toBeInTheDocument()
+    expect(screen.getByText(/Season-specific points, prize money, draw sizes, qualification formats, and ranking rules will be defined later/i)).toBeInTheDocument()
+    expect(screen.getByLabelText('Canonical tournament category catalog')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'World Tour' })).toBeInTheDocument()
+    expect(screen.getByRole('article', { name: 'Platinium category' })).toBeInTheDocument()
+    expect(screen.getByText(/Existing backend category previews remain read-only/i)).toBeInTheDocument()
     expect(await screen.findByRole('link', { name: /GOLD \(gold\)/ })).toHaveAttribute('href', '/admin/tour-seasons/categories/gold')
+    expect(screen.getByRole('heading', { name: 'Derived category rules packages' })).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Open Tournament Templates' })[0]).toHaveAttribute('href', '/admin/tournament-templates')
     expect(screen.getAllByRole('link', { name: 'Open Season Templates' })[0]).toHaveAttribute('href', '/admin/tour-seasons/season-templates')
 

@@ -43,6 +43,8 @@ const api = vi.hoisted(() => ({
   getSeasonActivePlayers: vi.fn(),
   getSeasonCalendar: vi.fn(),
   getSeasonTemplates: vi.fn(),
+  listCalendarTemplates: vi.fn(),
+  getCalendarTemplate: vi.fn(),
   getSeasonTemplateSlotValidation: vi.fn(),
   getSeasonTemplateSlotValidationIssueCodes: vi.fn(),
   getSeasonTemplateSlotConflicts: vi.fn(),
@@ -361,6 +363,18 @@ describe('Module 17 pages through routes', () => {
       templates: [{ template_id: 'default_msa_template_preview', name: 'Default MSA Template Preview', description: 'Read-only derived preview built from current tournament templates config.', season_count_supported: 40, week_count: 61, slot_count: 1, source: 'derived_preview:tournament_templates', status: 'read_only_foundation', slots: [{ slot_id: 'slot-01-wt_gold_24', season_week_start: 1, season_week_end: 1, duration_weeks: 1, tournament_name: 'World Tour Gold', category: 'GOLD', host_country: 'ENG', region: 'EUROPE', has_qualification: true, qualifying_week_start: 1, main_draw_week_start: 1, source_template_id: 'wt_gold_24', notes: null }] }],
       source_path: 'config/tournament_templates/mvp_templates.json',
       status: 'read_only_foundation'
+    })
+    api.listCalendarTemplates.mockResolvedValue({
+      templates: [],
+      source_path: 'config/world/calendar_templates.json',
+      status: 'ok',
+      schema_version: 'calendar_templates.v1'
+    })
+    api.getCalendarTemplate.mockResolvedValue({
+      template: null,
+      source_path: 'config/world/calendar_templates.json',
+      status: 'ok',
+      schema_version: 'calendar_templates.v1'
     })
     api.getSeasonTemplateSlotValidation.mockResolvedValue({
       template_id: 'default_msa_template_preview',
@@ -923,12 +937,63 @@ describe('Module 17 pages through routes', () => {
       expect(within(draftTemplatesSection as HTMLElement).queryByText(forbiddenCopy)).not.toBeInTheDocument()
     }
     expect((await screen.findAllByText(/Source path: config\/tournament_templates\/mvp_templates\.json/)).length).toBeGreaterThan(0)
+    const persistedTemplatesSection = screen.getByRole('heading', { name: 'Persisted Admin calendar templates' }).closest('article')
+    expect(persistedTemplatesSection).not.toBeNull()
+    expect(within(persistedTemplatesSection as HTMLElement).getByText(/Persisted Admin calendar templates are Admin-only planning\/config objects stored by the backend\./)).toBeInTheDocument()
+    expect(within(persistedTemplatesSection as HTMLElement).getByText(/They are not played,/)).toBeInTheDocument()
+    expect(within(persistedTemplatesSection as HTMLElement).getByText(/not visible in Viewer, and do not mutate canonical seasons, runs, rankings, race, history, or simulation output\./)).toBeInTheDocument()
+    expect(within(persistedTemplatesSection as HTMLElement).getByText(/Phase A is read-only wiring only\./)).toBeInTheDocument()
+    expect(within(persistedTemplatesSection as HTMLElement).getByText('Persisted templates: 0')).toBeInTheDocument()
+    expect(within(persistedTemplatesSection as HTMLElement).getByText('Schema version: calendar_templates.v1')).toBeInTheDocument()
+    expect(within(persistedTemplatesSection as HTMLElement).getByText('No persisted Admin calendar templates exist yet.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Default MSA Template Preview \(default_msa_template_preview\)/ })).toHaveAttribute('href', '/admin/tour-seasons/season-templates/default_msa_template_preview')
     expect(screen.getAllByRole('link', { name: 'Open Season Registry' }).some((link) => link.getAttribute('href') === '/admin/tour-seasons/season-registry')).toBe(true)
     expect(screen.getByRole('link', { name: 'Open Seasons' })).toHaveAttribute('href', '/admin/seasons')
     expect(screen.getAllByRole('link', { name: 'Back to Tour & Seasons' }).some((link) => link.getAttribute('href') === '/admin/tour-seasons')).toBe(true)
     expect(screen.getAllByRole('link', { name: 'Open Categories' }).some((link) => link.getAttribute('href') === '/admin/tour-seasons/categories')).toBe(true)
     expect(screen.getAllByRole('link', { name: 'Open Calendar Compare / Apply' }).some((link) => link.getAttribute('href') === '/admin/tour-seasons/compare')).toBe(true)
+    expect(within(persistedTemplatesSection as HTMLElement).queryByRole('button', { name: /save|create|update|archive|delete|copy|apply|simulate/i })).not.toBeInTheDocument()
+    expect(api.listCalendarTemplates).toHaveBeenCalled()
+
+    api.listCalendarTemplates.mockResolvedValueOnce({
+      templates: [{
+        id: 'template-a',
+        name: 'Template A',
+        description: 'Persisted read-only template',
+        status: 'draft',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-02T00:00:00Z',
+        template_fingerprint: 'tpl_template_a',
+        events: [{
+          id: 'event-a',
+          name: 'Event A',
+          category_code: 'DIAMOND',
+          weeks: [6, 7],
+          qualification_weeks: [5],
+          locked: true,
+          country_code: 'EGY',
+          city: 'Cairo',
+          venue: 'Glass Court',
+          notes: 'Read-only persisted event',
+          source_template_id: 'source-a',
+          event_fingerprint: 'evt_event_a'
+        }]
+      }],
+      source_path: 'config/world/calendar_templates.json',
+      status: 'ok',
+      schema_version: 'calendar_templates.v1'
+    })
+    renderAppAt('/admin/tour-seasons/season-templates')
+    expect(await screen.findByText('Template A')).toBeInTheDocument()
+    expect(screen.getByText('template-a')).toBeInTheDocument()
+    expect(screen.getByText('draft')).toBeInTheDocument()
+    expect(screen.getByText('tpl_template_a')).toBeInTheDocument()
+    const persistedTemplateHeadings = screen.getAllByRole('heading', { name: 'Persisted Admin calendar templates' })
+    const persistedTemplatesWithRowsSection = persistedTemplateHeadings[persistedTemplateHeadings.length - 1]?.closest('article')
+    expect(persistedTemplatesWithRowsSection).not.toBeNull()
+    expect(within(persistedTemplatesWithRowsSection as HTMLElement).getByRole('cell', { name: '1' })).toBeInTheDocument()
+    expect(within(persistedTemplatesWithRowsSection as HTMLElement).getByRole('link', { name: 'Open persisted calendar template' })).toHaveAttribute('href', '/admin/tour-seasons/season-templates/calendar/template-a')
+    expect(within(persistedTemplatesWithRowsSection as HTMLElement).queryByRole('button', { name: /save|create|update|archive|delete|copy|apply|simulate/i })).not.toBeInTheDocument()
 
 
     renderAppAt('/admin/tour-seasons/season-registry')
@@ -2533,6 +2598,99 @@ describe('Module 17 pages through routes', () => {
 
     renderAppAt('/admin/tour-seasons/season-templates/unknown-id')
     expect(await screen.findByText('Season template not found.')).toBeInTheDocument()
+  })
+
+  it('renders persisted Admin calendar template detail route without mutation controls', async () => {
+    api.getCalendarTemplate.mockResolvedValueOnce({
+      template: {
+        id: 'template-a',
+        name: 'Template A',
+        description: 'Persisted read-only template',
+        status: 'active',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-02T00:00:00Z',
+        template_fingerprint: 'tpl_template_a',
+        events: [
+          {
+            id: 'event-a',
+            name: 'Event A',
+            category_code: 'DIAMOND',
+            weeks: [6, 7],
+            qualification_weeks: [5],
+            locked: true,
+            country_code: 'EGY',
+            city: 'Cairo',
+            venue: 'Glass Court',
+            notes: 'Read-only persisted event',
+            source_template_id: 'source-a',
+            event_fingerprint: 'evt_event_a'
+          },
+          {
+            id: 'event-b',
+            name: 'Event B',
+            category_code: 'WORLD_TOUR_FINALS',
+            weeks: [55],
+            qualification_weeks: [],
+            locked: false,
+            country_code: null,
+            city: null,
+            venue: null,
+            notes: null,
+            source_template_id: null,
+            event_fingerprint: 'evt_event_b'
+          }
+        ]
+      },
+      source_path: 'config/world/calendar_templates.json',
+      status: 'ok',
+      schema_version: 'calendar_templates.v1'
+    })
+
+    renderAppAt('/admin/tour-seasons/season-templates/calendar/template-a')
+    expect(await screen.findByRole('heading', { name: 'Persisted Admin calendar template' })).toBeInTheDocument()
+    expect(screen.getByText(/Read-only persisted Admin calendar template\./)).toBeInTheDocument()
+    expect(screen.getByText(/Editing, archive, copy\/apply to canonical seasons, and simulation integration are planned but not enabled\./)).toBeInTheDocument()
+    expect(screen.getByText(/They are not played,/)).toBeInTheDocument()
+    expect(screen.getByText(/not visible in Viewer, and do not mutate canonical seasons, runs, rankings, race, history, or simulation output\./)).toBeInTheDocument()
+    expect(await screen.findByText('Name: Template A')).toBeInTheDocument()
+    expect(screen.getByText('id: template-a')).toBeInTheDocument()
+    expect(screen.getByText('description: Persisted read-only template')).toBeInTheDocument()
+    expect(screen.getByText('status: active')).toBeInTheDocument()
+    expect(screen.getByText('created_at: 2026-01-01T00:00:00Z')).toBeInTheDocument()
+    expect(screen.getByText('updated_at: 2026-01-02T00:00:00Z')).toBeInTheDocument()
+    expect(screen.getByText('template_fingerprint: tpl_template_a')).toBeInTheDocument()
+    expect(screen.getByText('source_path: config/world/calendar_templates.json')).toBeInTheDocument()
+    expect(screen.getByText('schema_version: calendar_templates.v1')).toBeInTheDocument()
+    expect(screen.getByText('event_count: 2')).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'Event A' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'event-a' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'DIAMOND' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'W6–W7' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'W5' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'Locked' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'EGY' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'Cairo' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'Glass Court' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'Read-only persisted event' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'evt_event_a' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'WORLD_TOUR_FINALS' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'W55' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'Unlocked' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Back to Season Templates' })).toHaveAttribute('href', '/admin/tour-seasons/season-templates')
+    expect(screen.getByRole('link', { name: 'Open Draft Template Sandbox' })).toHaveAttribute('href', '/admin/tour-seasons/season-templates/draft-sandbox')
+    expect(screen.getByRole('link', { name: 'Open Calendar Compare / Apply' })).toHaveAttribute('href', '/admin/tour-seasons/compare')
+    expect(screen.getByRole('link', { name: 'Open Season Registry' })).toHaveAttribute('href', '/admin/tour-seasons/season-registry')
+    expect(screen.queryByRole('button', { name: /save|create|update|archive|delete|copy|apply|simulate/i })).not.toBeInTheDocument()
+    expect(api.getCalendarTemplate).toHaveBeenCalledWith('template-a')
+
+    api.getCalendarTemplate.mockResolvedValueOnce({
+      template: null,
+      source_path: 'config/world/calendar_templates.json',
+      status: 'ok',
+      schema_version: 'calendar_templates.v1'
+    })
+    renderAppAt('/admin/tour-seasons/season-templates/calendar/missing-template')
+    expect(await screen.findByText('Persisted Admin calendar template not found.')).toBeInTheDocument()
   })
 
   it('renders Players hub route with Talent Intake and Player Database links', async () => {

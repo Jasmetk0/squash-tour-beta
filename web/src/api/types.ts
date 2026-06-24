@@ -154,6 +154,46 @@ export type SeasonTemplatesResponse = {
   status: string
 }
 
+export type CalendarTemplateEventRecord = {
+  id: string
+  name: string
+  category_code: string
+  weeks: number[]
+  qualification_weeks: number[]
+  locked: boolean
+  country_code?: string | null
+  city?: string | null
+  venue?: string | null
+  notes?: string | null
+  source_template_id?: string | null
+  event_fingerprint?: string | null
+}
+
+export type CalendarTemplateRecord = {
+  id: string
+  name: string
+  description: string
+  status: 'draft' | 'active' | 'archived'
+  created_at?: string | null
+  updated_at?: string | null
+  events: CalendarTemplateEventRecord[]
+  template_fingerprint?: string | null
+}
+
+export type CalendarTemplateListResponse = {
+  templates: CalendarTemplateRecord[]
+  source_path?: string | null
+  status: string
+  schema_version: string
+}
+
+export type CalendarTemplateDetailResponse = {
+  template: CalendarTemplateRecord | null
+  source_path?: string | null
+  status: string
+  schema_version: string
+}
+
 export type SeasonTemplateValidationIssue = {
   severity: 'warning' | 'error'
   code: string

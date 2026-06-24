@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
-import { getSeasonTemplates } from '../api/client'
+import { getSeasonTemplates, listCalendarTemplates } from '../api/client'
 import { describeCalendarEventTiming, type CalendarEventDraft } from '../tour/calendarEventModel'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
@@ -57,7 +57,10 @@ const plannedTemplateWorkflow = [
 
 export function AdminTourSeasonsSeasonTemplatesPage(): JSX.Element {
   const templatesQuery = useQuery({ queryKey: ['season-templates'], queryFn: getSeasonTemplates, retry: false })
+  const calendarTemplatesQuery = useQuery({ queryKey: ['calendar-templates'], queryFn: listCalendarTemplates, retry: false })
   const payload = templatesQuery.data
+  const calendarTemplatesPayload = calendarTemplatesQuery.data
+  const calendarTemplates = calendarTemplatesPayload?.templates ?? []
   return (
     <section className="panel">
       <PageIntro title="Season Templates" subtitle="Reusable calendar plans that can later be copied into concrete seasons." />
@@ -97,6 +100,52 @@ export function AdminTourSeasonsSeasonTemplatesPage(): JSX.Element {
         {templatesQuery.isLoading ? <p className="status">Loading season templates…</p> : null}
         {templatesQuery.error ? <p className="error">Failed to load season templates: {formatApiError(templatesQuery.error)}</p> : null}
         {payload ? <ul className="dashboard-help-list"><li>Templates: {payload.templates.length}</li><li>Source path: {payload.source_path ?? '—'}</li><li>Status: {payload.status}</li></ul> : null}
+      </SectionCard>
+      <SectionCard title="Persisted Admin calendar templates">
+        <p>
+          Persisted Admin calendar templates are Admin-only planning/config objects stored by the backend. They are not played,
+          not visible in Viewer, and do not mutate canonical seasons, runs, rankings, race, history, or simulation output.
+        </p>
+        <p>
+          Phase A is read-only wiring only. Editing, archive, copy/apply to canonical seasons, and simulation integration are planned but not enabled.
+        </p>
+        {calendarTemplatesQuery.isLoading ? <p className="status">Loading persisted Admin calendar templates…</p> : null}
+        {calendarTemplatesQuery.error ? <p className="error">Failed to load persisted Admin calendar templates: {formatApiError(calendarTemplatesQuery.error)}</p> : null}
+        {calendarTemplatesPayload ? (
+          <ul className="dashboard-help-list">
+            <li>Persisted templates: {calendarTemplates.length}</li>
+            <li>Source path: {calendarTemplatesPayload.source_path ?? '—'}</li>
+            <li>Schema version: {calendarTemplatesPayload.schema_version}</li>
+            <li>Status: {calendarTemplatesPayload.status}</li>
+          </ul>
+        ) : null}
+        {calendarTemplatesPayload && calendarTemplates.length === 0 ? <p className="status">No persisted Admin calendar templates exist yet.</p> : null}
+        {calendarTemplates.length ? (
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>id</th>
+                <th>Status</th>
+                <th>Event count</th>
+                <th>template_fingerprint</th>
+                <th>Read-only detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              {calendarTemplates.map((template) => (
+                <tr key={template.id}>
+                  <td>{template.name}</td>
+                  <td>{template.id}</td>
+                  <td>{template.status}</td>
+                  <td>{template.events.length}</td>
+                  <td>{template.template_fingerprint ?? '—'}</td>
+                  <td><Link to={`/admin/tour-seasons/season-templates/calendar/${encodeURIComponent(template.id)}`}>Open persisted calendar template</Link></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : null}
       </SectionCard>
       {payload?.templates.map((template) => (
         <SectionCard key={template.template_id} title={`${template.name} (${template.template_id})`}>

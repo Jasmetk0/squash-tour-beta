@@ -123,6 +123,8 @@ import type {
   SeasonRangePreflightResult,
   RunSeasonRangeRequest,
   RunSeasonRangeResult,
+  CalendarTemplateDetailResponse,
+  CalendarTemplateListResponse,
   SeasonRegistryResponse,
   SeasonTemplatesResponse,
   SeasonTemplateSlotValidationResponse,
@@ -195,6 +197,14 @@ export function getSeasonRegistry(): Promise<SeasonRegistryResponse> {
 
 export function getSeasonTemplates(): Promise<SeasonTemplatesResponse> {
   return request('/admin/seasons/templates')
+}
+
+export function listCalendarTemplates(): Promise<CalendarTemplateListResponse> {
+  return request('/admin/seasons/calendar-templates')
+}
+
+export function getCalendarTemplate(templateId: string): Promise<CalendarTemplateDetailResponse> {
+  return request(`/admin/seasons/calendar-templates/${encodeURIComponent(templateId)}`)
 }
 
 export function getSeasonTemplateSlotValidation(templateId: string): Promise<SeasonTemplateSlotValidationResponse> {

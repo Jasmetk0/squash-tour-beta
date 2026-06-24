@@ -1,9 +1,11 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { type FormEvent, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { getSeasonRegistry, getSeasonTemplates } from '../api/client'
+import { compareCalendarTemplateDryRun, getSeasonRegistry, getSeasonTemplates, listCalendarTemplates } from '../api/client'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
-import { type CalendarEventDraft, describeCalendarEventTiming } from '../tour/calendarEventModel'
+import type { CalendarTemplateComparePolicy, CalendarTemplateCompareDryRunResponse, CalendarTemplateEventRecord } from '../api/types'
+import { type CalendarEventDraft, describeCalendarEventTiming, formatSeasonWeeks } from '../tour/calendarEventModel'
 import { formatApiError } from '../utils/apiErrors'
 
 
@@ -98,6 +100,24 @@ function getPreviewComparisonSummary(): Array<{ status: string, events: string[]
   ]
 }
 
+
+function toCalendarTemplateEventRecord(event: CalendarEventDraft): CalendarTemplateEventRecord {
+  return {
+    id: event.id,
+    name: event.name,
+    category_code: event.categoryCode,
+    qualification_weeks: event.qualificationWeeks,
+    weeks: event.weeks,
+    locked: event.locked,
+    source_template_id: null,
+    event_fingerprint: null
+  }
+}
+
+function formatOptionalWeeks(weeks?: number[] | null): string {
+  return formatSeasonWeeks(weeks ?? [])
+}
+
 function PreviewEventList({ events }: { events: CalendarEventDraft[] }): JSX.Element {
   return (
     <ul className="dashboard-help-list">
@@ -113,10 +133,38 @@ function PreviewEventList({ events }: { events: CalendarEventDraft[] }): JSX.Ele
 export function AdminTourSeasonsComparePage(): JSX.Element {
   const registryQuery = useQuery({ queryKey: ['season-registry'], queryFn: getSeasonRegistry, retry: false })
   const templatesQuery = useQuery({ queryKey: ['season-templates'], queryFn: getSeasonTemplates, retry: false })
+  const calendarTemplatesQuery = useQuery({ queryKey: ['calendar-templates'], queryFn: listCalendarTemplates, retry: false })
+  const [sourceTemplateId, setSourceTemplateId] = useState('')
+  const [targetSeasonLabel, setTargetSeasonLabel] = useState('2006/07')
+  const [policy, setPolicy] = useState<CalendarTemplateComparePolicy>('replace_unlocked_only')
+  const [dryRunResponse, setDryRunResponse] = useState<CalendarTemplateCompareDryRunResponse | null>(null)
 
   const registry = registryQuery.data
   const templates = templatesQuery.data?.templates ?? []
   const templateSlotCount = templates.reduce((total, template) => total + template.slot_count, 0)
+  const calendarTemplates = calendarTemplatesQuery.data?.templates ?? []
+  const targetEvents = TARGET_PREVIEW_EVENTS.map(toCalendarTemplateEventRecord)
+  const compareMutation = useMutation({
+    mutationFn: compareCalendarTemplateDryRun,
+    onSuccess: (response) => setDryRunResponse(response)
+  })
+
+  useEffect(() => {
+    if (!sourceTemplateId && calendarTemplates.length) {
+      setSourceTemplateId(calendarTemplates[0].id)
+    }
+  }, [calendarTemplates, sourceTemplateId])
+
+  function handleCompareSubmit(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault()
+    setDryRunResponse(null)
+    compareMutation.mutate({
+      target_season_label: targetSeasonLabel,
+      source_template_id: sourceTemplateId,
+      target_events: targetEvents,
+      policy
+    })
+  }
 
   return (
     <section className="panel">
@@ -230,6 +278,67 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
             </li>
           ))}
         </ul>
+      </SectionCard>
+
+      <SectionCard title="Backend compare dry-run">
+        <p><strong>Backend dry-run only.</strong></p>
+        <ul className="dashboard-help-list">
+          <li>No canonical season calendar is modified.</li>
+          <li>No copy/apply endpoint is called.</li>
+          <li>No Viewer, run, rankings, race, history, or simulation output changes.</li>
+          <li>Target events are still local preview rows for this phase. The dry-run endpoint is real, but no canonical season calendar is read or mutated.</li>
+        </ul>
+        {calendarTemplatesQuery.isLoading ? <p className="status">Loading persisted calendar templates…</p> : null}
+        {calendarTemplatesQuery.error ? <p className="error">Failed to load persisted calendar templates: {formatApiError(calendarTemplatesQuery.error)}</p> : null}
+        {!calendarTemplatesQuery.isLoading && !calendarTemplates.length ? (
+          <p className="status">Create a persisted calendar template first. <Link to="/admin/tour-seasons/season-templates/new">Create new calendar template</Link></p>
+        ) : null}
+        {calendarTemplates.length ? (
+          <form onSubmit={handleCompareSubmit} className="form-grid">
+            <label>
+              Source template
+              <select value={sourceTemplateId} onChange={(event) => setSourceTemplateId(event.target.value)}>
+                {calendarTemplates.map((template) => <option key={template.id} value={template.id}>{template.name}</option>)}
+              </select>
+            </label>
+            <label>
+              Target season label
+              <input value={targetSeasonLabel} onChange={(event) => setTargetSeasonLabel(event.target.value)} />
+            </label>
+            <label>
+              Policy
+              <select value={policy} onChange={(event) => setPolicy(event.target.value as CalendarTemplateComparePolicy)}>
+                <option value="replace_unlocked_only">replace_unlocked_only</option>
+                <option value="copy_missing_only">copy_missing_only</option>
+              </select>
+            </label>
+            <button type="submit" disabled={compareMutation.isPending || !sourceTemplateId}>Run backend compare dry-run</button>
+          </form>
+        ) : null}
+        {compareMutation.error ? <p className="error">Backend compare dry-run failed: {formatApiError(compareMutation.error)}</p> : null}
+        {dryRunResponse ? (
+          <div>
+            <div className="dashboard-grid">
+              <article className="metric-card"><span>dry_run</span><strong>{String(dryRunResponse.dry_run)}</strong></article>
+              <article className="metric-card"><span>mutation_performed</span><strong>{String(dryRunResponse.mutation_performed)}</strong></article>
+              <article className="metric-card"><span>status</span><strong>{dryRunResponse.status}</strong></article>
+              <article className="metric-card"><span>source_template_fingerprint</span><strong>{dryRunResponse.source_template_fingerprint ?? '—'}</strong></article>
+              <article className="metric-card"><span>target_fingerprint</span><strong>{dryRunResponse.target_fingerprint}</strong></article>
+              <article className="metric-card"><span>diff_fingerprint</span><strong>{dryRunResponse.diff_fingerprint}</strong></article>
+              <article className="metric-card"><span>safety.read_only</span><strong>{String(dryRunResponse.safety.read_only)}</strong></article>
+              <article className="metric-card"><span>safety.apply_endpoint_enabled</span><strong>{String(dryRunResponse.safety.apply_endpoint_enabled)}</strong></article>
+            </div>
+            <p>{dryRunResponse.safety.message}</p>
+            <table>
+              <thead><tr><th>same</th><th>missing_from_target</th><th>only_in_target</th><th>conflict</th><th>locked_target_preserved</th><th>selected source</th><th>source</th><th>target</th></tr></thead>
+              <tbody><tr><td>{dryRunResponse.summary.same_count}</td><td>{dryRunResponse.summary.missing_from_target_count}</td><td>{dryRunResponse.summary.only_in_target_count}</td><td>{dryRunResponse.summary.conflict_count}</td><td>{dryRunResponse.summary.locked_target_preserved_count}</td><td>{dryRunResponse.summary.selected_source_event_count}</td><td>{dryRunResponse.summary.source_event_count}</td><td>{dryRunResponse.summary.target_event_count}</td></tr></tbody>
+            </table>
+            <table>
+              <thead><tr><th>Status</th><th>Event</th><th>Category</th><th>Source event ID</th><th>Target event ID</th><th>Source weeks</th><th>Target weeks</th><th>Source qualification</th><th>Target qualification</th><th>Locked target</th><th>Reason</th></tr></thead>
+              <tbody>{dryRunResponse.items.map((item, index) => <tr key={`${item.status}-${item.source_event_id ?? 'none'}-${item.target_event_id ?? 'none'}-${index}`}><td>{item.status}</td><td>{item.event_name}</td><td>{item.category_code}</td><td>{item.source_event_id ?? '—'}</td><td>{item.target_event_id ?? '—'}</td><td>{formatOptionalWeeks(item.source_weeks)}</td><td>{formatOptionalWeeks(item.target_weeks)}</td><td>{formatOptionalWeeks(item.source_qualification_weeks)}</td><td>{formatOptionalWeeks(item.target_qualification_weeks)}</td><td>{String(item.locked_target)}</td><td>{item.reason}</td></tr>)}</tbody>
+            </table>
+          </div>
+        ) : null}
       </SectionCard>
 
       <SectionCard title="Future copy/apply actions">

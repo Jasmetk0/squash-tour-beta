@@ -107,8 +107,9 @@ export function AdminTourSeasonsSeasonTemplatesPage(): JSX.Element {
           not visible in Viewer, and do not mutate canonical seasons, runs, rankings, race, history, or simulation output.
         </p>
         <p>
-          Phase A is read-only wiring only. Editing, archive, copy/apply to canonical seasons, and simulation integration are planned but not enabled.
+          Phase B enables safe Admin-only create/update for persisted templates. Archive, delete, copy/apply to canonical seasons, and simulation integration are not enabled.
         </p>
+        <p><Link to="/admin/tour-seasons/season-templates/new">Create persisted calendar template</Link></p>
         {calendarTemplatesQuery.isLoading ? <p className="status">Loading persisted Admin calendar templates…</p> : null}
         {calendarTemplatesQuery.error ? <p className="error">Failed to load persisted Admin calendar templates: {formatApiError(calendarTemplatesQuery.error)}</p> : null}
         {calendarTemplatesPayload ? (

@@ -45,6 +45,8 @@ const api = vi.hoisted(() => ({
   getSeasonTemplates: vi.fn(),
   listCalendarTemplates: vi.fn(),
   getCalendarTemplate: vi.fn(),
+  createCalendarTemplate: vi.fn(),
+  updateCalendarTemplate: vi.fn(),
   getSeasonTemplateSlotValidation: vi.fn(),
   getSeasonTemplateSlotValidationIssueCodes: vi.fn(),
   getSeasonTemplateSlotConflicts: vi.fn(),
@@ -942,7 +944,8 @@ describe('Module 17 pages through routes', () => {
     expect(within(persistedTemplatesSection as HTMLElement).getByText(/Persisted Admin calendar templates are Admin-only planning\/config objects stored by the backend\./)).toBeInTheDocument()
     expect(within(persistedTemplatesSection as HTMLElement).getByText(/They are not played,/)).toBeInTheDocument()
     expect(within(persistedTemplatesSection as HTMLElement).getByText(/not visible in Viewer, and do not mutate canonical seasons, runs, rankings, race, history, or simulation output\./)).toBeInTheDocument()
-    expect(within(persistedTemplatesSection as HTMLElement).getByText(/Phase A is read-only wiring only\./)).toBeInTheDocument()
+    expect(within(persistedTemplatesSection as HTMLElement).getByText(/Phase B enables safe Admin-only create\/update/)).toBeInTheDocument()
+    expect(within(persistedTemplatesSection as HTMLElement).getByRole('link', { name: 'Create persisted calendar template' })).toHaveAttribute('href', '/admin/tour-seasons/season-templates/new')
     expect(within(persistedTemplatesSection as HTMLElement).getByText('Persisted templates: 0')).toBeInTheDocument()
     expect(within(persistedTemplatesSection as HTMLElement).getByText('Schema version: calendar_templates.v1')).toBeInTheDocument()
     expect(within(persistedTemplatesSection as HTMLElement).getByText('No persisted Admin calendar templates exist yet.')).toBeInTheDocument()
@@ -2648,8 +2651,7 @@ describe('Module 17 pages through routes', () => {
 
     renderAppAt('/admin/tour-seasons/season-templates/calendar/template-a')
     expect(await screen.findByRole('heading', { name: 'Persisted Admin calendar template' })).toBeInTheDocument()
-    expect(screen.getByText(/Read-only persisted Admin calendar template\./)).toBeInTheDocument()
-    expect(screen.getByText(/Editing, archive, copy\/apply to canonical seasons, and simulation integration are planned but not enabled\./)).toBeInTheDocument()
+    expect(screen.getByText(/Persisted Admin calendar template detail with Admin-only create\/update template editing\./)).toBeInTheDocument()
     expect(screen.getByText(/They are not played,/)).toBeInTheDocument()
     expect(screen.getByText(/not visible in Viewer, and do not mutate canonical seasons, runs, rankings, race, history, or simulation output\./)).toBeInTheDocument()
     expect(await screen.findByText('Name: Template A')).toBeInTheDocument()
@@ -2678,10 +2680,19 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByRole('cell', { name: 'Unlocked' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Back to Season Templates' })).toHaveAttribute('href', '/admin/tour-seasons/season-templates')
     expect(screen.getByRole('link', { name: 'Open Draft Template Sandbox' })).toHaveAttribute('href', '/admin/tour-seasons/season-templates/draft-sandbox')
-    expect(screen.getByRole('link', { name: 'Open Calendar Compare / Apply' })).toHaveAttribute('href', '/admin/tour-seasons/compare')
     expect(screen.getByRole('link', { name: 'Open Season Registry' })).toHaveAttribute('href', '/admin/tour-seasons/season-registry')
-    expect(screen.queryByRole('button', { name: /save|create|update|archive|delete|copy|apply|simulate/i })).not.toBeInTheDocument()
-    expect(api.getCalendarTemplate).toHaveBeenCalledWith('template-a')
+    expect(screen.queryByRole('button', { name: /archive|copy|apply|simulate/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Edit persisted template — Admin-only' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Template id')).toBeDisabled()
+    expect(screen.getByLabelText('Template name')).toHaveValue('Template A')
+    expect(screen.getAllByRole('button', { name: 'Delete event row' })[0]).toBeDisabled()
+    fireEvent.click(screen.getByLabelText('Event 1 locked'))
+    expect(screen.getAllByRole('button', { name: 'Delete event row' })[0]).not.toBeDisabled()
+    api.updateCalendarTemplate.mockResolvedValueOnce({ template: null, status: 'ok', schema_version: 'calendar_templates.v1' })
+    fireEvent.change(screen.getByLabelText('Template name'), { target: { value: 'Template A Updated' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Update persisted calendar template' }))
+    await waitFor(() => expect(api.updateCalendarTemplate).toHaveBeenCalledWith('template-a', expect.objectContaining({ id: 'template-a', name: 'Template A Updated' })))
+    await waitFor(() => expect(api.getCalendarTemplate.mock.calls.filter((call) => call[0] === 'template-a').length).toBeGreaterThan(1))
 
     api.getCalendarTemplate.mockResolvedValueOnce({
       template: null,
@@ -2691,6 +2702,60 @@ describe('Module 17 pages through routes', () => {
     })
     renderAppAt('/admin/tour-seasons/season-templates/calendar/missing-template')
     expect(await screen.findByText('Persisted Admin calendar template not found.')).toBeInTheDocument()
+  })
+
+
+  it('creates persisted Admin calendar templates and blocks invalid event payloads', async () => {
+    api.createCalendarTemplate.mockResolvedValueOnce({
+      template: { id: 'template-a', name: 'Template A', description: '', status: 'draft', events: [] },
+      status: 'ok',
+      schema_version: 'calendar_templates.v1'
+    })
+
+    renderAppAt('/admin/tour-seasons/season-templates/new')
+    expect(await screen.findByRole('heading', { name: 'Create persisted Admin calendar template' })).toBeInTheDocument()
+    expect(screen.getAllByText(/does not mutate canonical seasons, Viewer, runs, rankings, race, history, or simulation output/i).length).toBeGreaterThan(0)
+    expect(screen.queryByRole('button', { name: /copy|apply|simulate/i })).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Template id'), { target: { value: 'template-a' } })
+    fireEvent.change(screen.getByLabelText('Template name'), { target: { value: 'Template A' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add event row' }))
+    fireEvent.change(screen.getByLabelText('Event 1 id'), { target: { value: 'event-a' } })
+    fireEvent.change(screen.getByLabelText('Event 1 name'), { target: { value: 'Event A' } })
+    fireEvent.change(screen.getByLabelText('Event 1 weeks'), { target: { value: '6,7' } })
+    fireEvent.change(screen.getByLabelText('Event 1 qualification_weeks'), { target: { value: '5' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create persisted calendar template' }))
+
+    await waitFor(() => expect(api.createCalendarTemplate).toHaveBeenCalledWith(expect.objectContaining({ id: 'template-a', events: [expect.objectContaining({ id: 'event-a', weeks: [6, 7], qualification_weeks: [5] })] })))
+    expect(await screen.findByRole('heading', { name: 'Persisted Admin calendar template' })).toBeInTheDocument()
+  })
+
+  it('blocks invalid persisted Admin calendar template create submissions', async () => {
+    renderAppAt('/admin/tour-seasons/season-templates/new')
+    expect(await screen.findByRole('heading', { name: 'Create persisted Admin calendar template' })).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Template id'), { target: { value: 'template-b' } })
+    fireEvent.change(screen.getByLabelText('Template name'), { target: { value: 'Template B' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add event row' }))
+    fireEvent.change(screen.getByLabelText('Event 1 id'), { target: { value: 'event-a' } })
+    fireEvent.change(screen.getByLabelText('Event 1 name'), { target: { value: 'Event A' } })
+    fireEvent.change(screen.getByLabelText('Event 1 weeks'), { target: { value: '0,6,6' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create persisted calendar template' }))
+    expect(await screen.findByText(/values must be integers 1..61/)).toBeInTheDocument()
+    expect(screen.getByText(/values must be unique per event/)).toBeInTheDocument()
+    expect(api.createCalendarTemplate).not.toHaveBeenCalled()
+
+    fireEvent.change(screen.getByLabelText('Event 1 weeks'), { target: { value: '' } })
+    fireEvent.change(screen.getByLabelText('Template status'), { target: { value: 'active' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create persisted calendar template' }))
+    expect(await screen.findByText(/active templates require weeks/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add event row' }))
+    fireEvent.change(screen.getByLabelText('Event 2 id'), { target: { value: 'event-a' } })
+    fireEvent.change(screen.getByLabelText('Event 2 name'), { target: { value: 'Event B' } })
+    fireEvent.change(screen.getByLabelText('Event 1 weeks'), { target: { value: '6' } })
+    fireEvent.change(screen.getByLabelText('Event 2 weeks'), { target: { value: '7' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create persisted calendar template' }))
+    expect(await screen.findByText(/Event ids must be unique inside template/)).toBeInTheDocument()
   })
 
   it('renders Players hub route with Talent Intake and Player Database links', async () => {

@@ -1,10 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  createCalendarTemplate,
+  updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
   validateFutureApplyRequestPreview
 } from './client'
 import type {
+  CalendarTemplateUpsertPayload,
   SeasonBuilderApplyCreateOnlyCommandRequest,
   SeasonBuilderApplyCreateOnlyCommandResponse,
   SeasonBuilderFutureApplyRequestValidationPreviewRequest,
@@ -248,6 +251,52 @@ describe('validateFutureApplyRequestPreview', () => {
   })
 })
 
+
+
+describe('calendar template upsert API client', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  const payload: CalendarTemplateUpsertPayload = {
+    id: 'template-a',
+    name: 'Template A',
+    description: 'Admin template',
+    status: 'draft',
+    events: [{
+      id: 'event-a',
+      name: 'Event A',
+      category_code: 'DIAMOND',
+      weeks: [6, 7],
+      qualification_weeks: [5],
+      locked: true,
+      country_code: 'EGY',
+      city: 'Cairo',
+      venue: 'Glass Court',
+      notes: 'Notes',
+      source_template_id: null,
+      event_fingerprint: null
+    }]
+  }
+
+  it('createCalendarTemplate uses POST /admin/seasons/calendar-templates', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ template: payload, status: 'ok', schema_version: 'calendar_templates.v1' }), { status: 200 }))
+    await createCalendarTemplate(payload)
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/admin/seasons/calendar-templates',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify(payload) })
+    )
+  })
+
+  it('updateCalendarTemplate uses PUT /admin/seasons/calendar-templates/:templateId', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ template: payload, status: 'ok', schema_version: 'calendar_templates.v1' }), { status: 200 }))
+    await updateCalendarTemplate('template/a', payload)
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/admin/seasons/calendar-templates/template%2Fa',
+      expect.objectContaining({ method: 'PUT', body: JSON.stringify(payload) })
+    )
+  })
+})
 
 describe('postSeasonBuilderApplyCreateOnlyCommand', () => {
   afterEach(() => {

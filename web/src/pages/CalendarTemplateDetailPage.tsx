@@ -1,14 +1,18 @@
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
-import { getCalendarTemplate } from '../api/client'
+import { getCalendarTemplate, updateCalendarTemplate } from '../api/client'
 import { DetailFieldGrid } from '../components/DetailUi'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import { formatSeasonWeeks } from '../tour/calendarEventModel'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
+import { CalendarTemplateEditor, formValueFromTemplate } from './CalendarTemplateEditor'
 
 export function AdminCalendarTemplateDetailPage(): JSX.Element {
   const { templateId = '' } = useParams()
+  const queryClient = useQueryClient()
+  const [successMessage, setSuccessMessage] = useState('')
   const templateQuery = useQuery({
     queryKey: ['calendar-template', templateId],
     queryFn: () => getCalendarTemplate(templateId),
@@ -18,12 +22,24 @@ export function AdminCalendarTemplateDetailPage(): JSX.Element {
 
   const template = templateQuery.data?.template ?? null
   const notFound = templateQuery.error && isApiNotFound(templateQuery.error)
+  const updateMutation = useMutation({
+    mutationFn: (payload: Parameters<typeof updateCalendarTemplate>[1]) => updateCalendarTemplate(templateId, payload),
+    onSuccess: () => {
+      setSuccessMessage('Persisted Admin calendar template updated.')
+      queryClient.invalidateQueries({ queryKey: ['calendar-templates'] })
+      queryClient.invalidateQueries({ queryKey: ['calendar-template', templateId] })
+    }
+  })
+
+  useEffect(() => {
+    setSuccessMessage('')
+  }, [templateId])
 
   return (
     <section className="panel">
       <PageIntro
         title="Persisted Admin calendar template"
-        subtitle="Read-only persisted Admin calendar template. Editing, archive, copy/apply to canonical seasons, and simulation integration are planned but not enabled."
+        subtitle="Persisted Admin calendar template detail with Admin-only create/update template editing. Archive, delete, copy/apply, and simulation integration are not enabled."
       />
 
       <SectionCard title="Phase A safety boundary">
@@ -96,13 +112,29 @@ export function AdminCalendarTemplateDetailPage(): JSX.Element {
               <p className="status">This persisted Admin calendar template has no events.</p>
             )}
           </SectionCard>
+
+          <SectionCard title="Edit persisted template — Admin-only">
+            <p>
+              This edit form updates only the persisted Admin calendar template. It does not mutate canonical seasons,
+              Viewer, runs, rankings, race, history, or simulation output.
+            </p>
+            {successMessage ? <p className="status">{successMessage}</p> : null}
+            {updateMutation.error ? <p role="alert" className="error">Update failed: {formatApiError(updateMutation.error)}</p> : null}
+            <CalendarTemplateEditor
+              mode="update"
+              initialValue={formValueFromTemplate(template)}
+              idEditable={false}
+              submitLabel="Update persisted calendar template"
+              isSubmitting={updateMutation.isPending}
+              onSubmit={(payload) => updateMutation.mutate(payload)}
+            />
+          </SectionCard>
         </>
       ) : null}
 
       <SectionCard title="Navigation">
         <p><Link to="/admin/tour-seasons/season-templates">Back to Season Templates</Link></p>
         <p><Link to="/admin/tour-seasons/season-templates/draft-sandbox">Open Draft Template Sandbox</Link></p>
-        <p><Link to="/admin/tour-seasons/compare">Open Calendar Compare / Apply</Link></p>
         <p><Link to="/admin/tour-seasons/season-registry">Open Season Registry</Link></p>
       </SectionCard>
     </section>

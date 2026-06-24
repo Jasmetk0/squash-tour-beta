@@ -169,6 +169,71 @@ export type CalendarTemplateEventRecord = {
   event_fingerprint?: string | null
 }
 
+
+export type CalendarTemplateComparePolicy = 'replace_unlocked_only' | 'copy_missing_only'
+
+export type CalendarTemplateCompareStatus =
+  | 'same'
+  | 'missing_from_target'
+  | 'only_in_target'
+  | 'conflict'
+  | 'locked_target_preserved'
+
+export type CalendarTemplateCompareDryRunRequest = {
+  target_season_label: string
+  source_template_id: string
+  target_events: CalendarTemplateEventRecord[]
+  selected_source_event_ids?: string[] | null
+  policy: CalendarTemplateComparePolicy
+}
+
+export type CalendarTemplateCompareSummary = {
+  same_count: number
+  missing_from_target_count: number
+  only_in_target_count: number
+  conflict_count: number
+  locked_target_preserved_count: number
+  selected_source_event_count: number
+  source_event_count: number
+  target_event_count: number
+}
+
+export type CalendarTemplateCompareItem = {
+  status: CalendarTemplateCompareStatus
+  source_event_id?: string | null
+  target_event_id?: string | null
+  event_name: string
+  category_code: string
+  source_weeks?: number[] | null
+  target_weeks?: number[] | null
+  source_qualification_weeks?: number[] | null
+  target_qualification_weeks?: number[] | null
+  locked_target: boolean
+  reason: string
+}
+
+export type CalendarTemplateCompareSafety = {
+  read_only: boolean
+  mutation_performed: boolean
+  apply_endpoint_enabled: boolean
+  message: string
+}
+
+export type CalendarTemplateCompareDryRunResponse = {
+  dry_run: boolean
+  mutation_performed: boolean
+  target_season_label: string
+  source_template_id: string
+  policy: CalendarTemplateComparePolicy
+  source_template_fingerprint?: string | null
+  target_fingerprint: string
+  diff_fingerprint: string
+  summary: CalendarTemplateCompareSummary
+  items: CalendarTemplateCompareItem[]
+  safety: CalendarTemplateCompareSafety
+  status: string
+}
+
 export type CalendarTemplateUpsertPayload = {
   id: string
   name: string

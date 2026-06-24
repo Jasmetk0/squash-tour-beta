@@ -123,6 +123,8 @@ import type {
   SeasonRangePreflightResult,
   RunSeasonRangeRequest,
   RunSeasonRangeResult,
+  CalendarTemplateCompareDryRunRequest,
+  CalendarTemplateCompareDryRunResponse,
   CalendarTemplateDetailResponse,
   CalendarTemplateListResponse,
   CalendarTemplateUpsertPayload,
@@ -214,6 +216,10 @@ export function createCalendarTemplate(payload: CalendarTemplateUpsertPayload): 
 
 export function updateCalendarTemplate(templateId: string, payload: CalendarTemplateUpsertPayload): Promise<CalendarTemplateDetailResponse> {
   return request(`/admin/seasons/calendar-templates/${encodeURIComponent(templateId)}`, { method: 'PUT', body: JSON.stringify(payload) })
+}
+
+export function compareCalendarTemplateDryRun(payload: CalendarTemplateCompareDryRunRequest): Promise<CalendarTemplateCompareDryRunResponse> {
+  return request('/admin/seasons/calendar-templates/compare-dry-run', { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function getSeasonTemplateSlotValidation(templateId: string): Promise<SeasonTemplateSlotValidationResponse> {

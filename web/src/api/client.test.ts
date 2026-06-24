@@ -1,12 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  compareCalendarTemplateDryRun,
   createCalendarTemplate,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
   validateFutureApplyRequestPreview
 } from './client'
 import type {
+  CalendarTemplateCompareDryRunRequest,
   CalendarTemplateUpsertPayload,
   SeasonBuilderApplyCreateOnlyCommandRequest,
   SeasonBuilderApplyCreateOnlyCommandResponse,
@@ -252,6 +254,55 @@ describe('validateFutureApplyRequestPreview', () => {
 })
 
 
+
+
+describe('compareCalendarTemplateDryRun', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('uses POST /admin/seasons/calendar-templates/compare-dry-run and sends payload unchanged', async () => {
+    const payload: CalendarTemplateCompareDryRunRequest = {
+      target_season_label: '2006/07',
+      source_template_id: 'template-a',
+      policy: 'replace_unlocked_only',
+      target_events: [{
+        id: 'target-nemarque-open-2006-07',
+        name: 'Némarque Open',
+        category_code: 'DIAMOND',
+        qualification_weeks: [5],
+        weeks: [6, 7],
+        locked: true
+      }]
+    }
+    const responseBody = {
+      dry_run: true,
+      mutation_performed: false,
+      target_season_label: '2006/07',
+      source_template_id: 'template-a',
+      policy: 'replace_unlocked_only',
+      source_template_fingerprint: 'source-fp',
+      target_fingerprint: 'target-fp',
+      diff_fingerprint: 'diff-fp',
+      summary: { same_count: 1, missing_from_target_count: 0, only_in_target_count: 0, conflict_count: 0, locked_target_preserved_count: 1, selected_source_event_count: 1, source_event_count: 1, target_event_count: 1 },
+      items: [],
+      safety: { read_only: true, mutation_performed: false, apply_endpoint_enabled: false, message: 'Dry-run only.' },
+      status: 'ok'
+    }
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(responseBody), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+
+    const result = await compareCalendarTemplateDryRun(payload)
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/admin/seasons/calendar-templates/compare-dry-run',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify(payload) })
+    )
+    const [, init] = vi.mocked(globalThis.fetch).mock.calls[0]
+    expect(JSON.parse(String((init as RequestInit).body))).toEqual(payload)
+    expect(result).toEqual(responseBody)
+  })
+})
 
 describe('calendar template upsert API client', () => {
   afterEach(() => {

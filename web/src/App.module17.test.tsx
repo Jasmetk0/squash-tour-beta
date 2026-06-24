@@ -47,6 +47,7 @@ const api = vi.hoisted(() => ({
   getCalendarTemplate: vi.fn(),
   createCalendarTemplate: vi.fn(),
   updateCalendarTemplate: vi.fn(),
+  compareCalendarTemplateDryRun: vi.fn(),
   getSeasonTemplateSlotValidation: vi.fn(),
   getSeasonTemplateSlotValidationIssueCodes: vi.fn(),
   getSeasonTemplateSlotConflicts: vi.fn(),
@@ -371,6 +372,20 @@ describe('Module 17 pages through routes', () => {
       source_path: 'config/world/calendar_templates.json',
       status: 'ok',
       schema_version: 'calendar_templates.v1'
+    })
+    api.compareCalendarTemplateDryRun.mockResolvedValue({
+      dry_run: true,
+      mutation_performed: false,
+      target_season_label: '2006/07',
+      source_template_id: 'template-a',
+      policy: 'replace_unlocked_only',
+      source_template_fingerprint: 'source-fp',
+      target_fingerprint: 'target-fp',
+      diff_fingerprint: 'diff-fp',
+      summary: { same_count: 1, missing_from_target_count: 1, only_in_target_count: 0, conflict_count: 0, locked_target_preserved_count: 1, selected_source_event_count: 2, source_event_count: 2, target_event_count: 2 },
+      items: [{ status: 'same', source_event_id: 'source-nemarque-open', target_event_id: 'target-nemarque-open-2006-07', event_name: 'Némarque Open', category_code: 'DIAMOND', source_weeks: [6, 7], target_weeks: [6, 7], source_qualification_weeks: [5], target_qualification_weeks: [5], locked_target: true, reason: 'Matched event.' }],
+      safety: { read_only: true, mutation_performed: false, apply_endpoint_enabled: false, message: 'Dry-run only; no mutation performed.' },
+      status: 'ok'
     })
     api.getCalendarTemplate.mockResolvedValue({
       template: null,
@@ -873,6 +888,60 @@ describe('Module 17 pages through routes', () => {
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
     expect(screen.queryByText(/warning count|error count|total issues/i)).not.toBeInTheDocument()
   })
+  it('wires Admin Calendar Compare to backend dry-run without mutation controls', async () => {
+    api.listCalendarTemplates.mockResolvedValueOnce({
+      templates: [{ id: 'template-a', name: 'Template A', description: 'Persisted template', status: 'draft', events: [], template_fingerprint: 'tpl-a' }],
+      source_path: 'config/world/calendar_templates.json',
+      status: 'ok',
+      schema_version: 'calendar_templates.v1'
+    })
+
+    renderAppAt('/admin/tour-seasons/compare')
+
+    expect(await screen.findByRole('heading', { name: 'Backend compare dry-run' })).toBeInTheDocument()
+    expect(screen.getByText('Backend dry-run only.')).toBeInTheDocument()
+    expect(screen.getByText('No canonical season calendar is modified.')).toBeInTheDocument()
+    expect(screen.getByText('No copy/apply endpoint is called.')).toBeInTheDocument()
+    expect(screen.getByText('No Viewer, run, rankings, race, history, or simulation output changes.')).toBeInTheDocument()
+    expect(screen.getByText(/Target events are still local preview rows for this phase/)).toBeInTheDocument()
+    expect(await screen.findByRole('option', { name: 'Template A' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Target season label')).toHaveValue('2006/07')
+    expect(screen.getByLabelText('Policy')).toHaveValue('replace_unlocked_only')
+    expect(screen.getByRole('heading', { name: 'Two-pane compare/copy workspace preview' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run backend compare dry-run' }))
+
+    await waitFor(() => expect(api.compareCalendarTemplateDryRun).toHaveBeenCalledTimes(1))
+    const [dryRunPayload] = api.compareCalendarTemplateDryRun.mock.calls[0]
+    expect(dryRunPayload).toEqual({
+      target_season_label: '2006/07',
+      source_template_id: 'template-a',
+      policy: 'replace_unlocked_only',
+      target_events: [
+        expect.objectContaining({ id: 'target-nemarque-open-2006-07', name: 'Némarque Open', category_code: 'DIAMOND', qualification_weeks: [5], weeks: [6, 7], locked: true }),
+        expect.objectContaining({ id: 'target-world-championship-2006-07', name: 'World Championship', category_code: 'WORLD_CHAMPIONSHIP', qualification_weeks: [48], weeks: [49, 50], locked: true })
+      ]
+    })
+    expect(await screen.findByText('source-fp')).toBeInTheDocument()
+    expect(screen.getByText('target-fp')).toBeInTheDocument()
+    expect(screen.getByText('diff-fp')).toBeInTheDocument()
+    expect(screen.getByText('Dry-run only; no mutation performed.')).toBeInTheDocument()
+    expect(screen.getAllByText('same').length).toBeGreaterThan(0)
+    expect(screen.getByText('Matched event.')).toBeInTheDocument()
+    expect(screen.getAllByText('W6–W7').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('W5').length).toBeGreaterThan(0)
+    expect(screen.queryByRole('button', { name: /copy|apply|save|archive|delete|simulate/i })).not.toBeInTheDocument()
+  })
+
+  it('shows safe create-template link when no persisted calendar templates exist on compare page', async () => {
+    api.listCalendarTemplates.mockResolvedValueOnce({ templates: [], source_path: null, status: 'ok', schema_version: 'calendar_templates.v1' })
+
+    renderAppAt('/admin/tour-seasons/compare')
+
+    expect(await screen.findByText(/Create a persisted calendar template first\./)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Create new calendar template' })).toHaveAttribute('href', '/admin/tour-seasons/season-templates/new')
+  })
+
   it('renders Tour & Seasons hub and shell routes while keeping operational routes available', async () => {
     renderAppAt('/admin/tour-seasons')
     expect(await screen.findByRole('heading', { name: 'Tour & Seasons' })).toBeInTheDocument()

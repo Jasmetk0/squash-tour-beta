@@ -4,8 +4,9 @@ import hashlib
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
 
-from beta_engine.api.deps import get_calendar_template_service, get_initial_pool_season_bootstrap_service, get_season_builder_apply_audit_service, get_season_calendar_service, get_season_range_execution_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service, get_season_template_service
+from beta_engine.api.deps import get_calendar_template_service, get_initial_pool_season_bootstrap_service, get_planning_season_calendar_service, get_season_builder_apply_audit_service, get_season_calendar_service, get_season_range_execution_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service, get_season_template_service
 from beta_engine.api.schemas import SeasonBootstrapRequest
 from beta_engine.application.calendar_template_apply_contract_service import (
     CalendarTemplateApplyContractReadinessRequest,
@@ -22,6 +23,11 @@ from beta_engine.application.calendar_template_service import (
     CalendarTemplateDetailResponse,
     CalendarTemplateListResponse,
     CalendarTemplateService,
+)
+from beta_engine.application.planning_season_calendar_service import (
+    PLANNING_SEASON_CALENDAR_SCHEMA_VERSION,
+    PlanningSeasonCalendar,
+    PlanningSeasonCalendarService,
 )
 from beta_engine.application.season_player_bootstrap_service import (
     InitialPoolSeasonBootstrapService,
@@ -102,6 +108,34 @@ router = APIRouter(prefix="/admin/seasons", tags=["admin-seasons"])
 REQUIRED_CREATE_ONLY_APPLY_CONFIRMATION_PHRASE = "I understand this will create a new season calendar."
 
 
+class PlanningCalendarSafetyResponse(BaseModel):
+    planning_only: bool = True
+    viewer_visible: bool = False
+    simulation_consumed: bool = False
+    canonical_season_calendar_modified: bool = False
+
+
+class PlanningSeasonCalendarListResponse(BaseModel):
+    calendars: list[PlanningSeasonCalendar]
+    source_path: str | None
+    schema_version: str = PLANNING_SEASON_CALENDAR_SCHEMA_VERSION
+    registry_fingerprint: str | None
+    read_only: bool = True
+    status: str = "ok"
+    safety: PlanningCalendarSafetyResponse = Field(default_factory=PlanningCalendarSafetyResponse)
+
+
+class PlanningSeasonCalendarDetailResponse(BaseModel):
+    calendar: PlanningSeasonCalendar | None
+    source_path: str | None
+    schema_version: str = PLANNING_SEASON_CALENDAR_SCHEMA_VERSION
+    registry_fingerprint: str | None
+    read_only: bool = True
+    status: str = "ok"
+    safety: PlanningCalendarSafetyResponse = Field(default_factory=PlanningCalendarSafetyResponse)
+
+
+
 def _build_deterministic_digest(payload: dict[str, object]) -> str:
     canonical_payload = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(canonical_payload.encode("utf-8")).hexdigest()
@@ -153,6 +187,41 @@ def _format_template_issue(issue: SeasonTemplateValidationIssue) -> str:
 
 
 
+
+
+
+@router.get("/planning-calendars", response_model=PlanningSeasonCalendarListResponse)
+def list_planning_season_calendars(
+    service: PlanningSeasonCalendarService = Depends(get_planning_season_calendar_service),
+) -> PlanningSeasonCalendarListResponse:
+    registry = service.load_registry()
+    return PlanningSeasonCalendarListResponse(
+        calendars=[registry.calendars_by_season[key] for key in sorted(registry.calendars_by_season)],
+        source_path=str(service.registry_path),
+        schema_version=registry.schema_version,
+        registry_fingerprint=registry.registry_fingerprint,
+    )
+
+
+@router.get("/planning-calendars/{season_label:path}", response_model=PlanningSeasonCalendarDetailResponse)
+def get_planning_season_calendar(
+    season_label: str,
+    service: PlanningSeasonCalendarService = Depends(get_planning_season_calendar_service),
+) -> PlanningSeasonCalendarDetailResponse:
+    registry = service.load_registry()
+    try:
+        normalized = to_long_season_label(normalize_season_label(season_label))
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    calendar = registry.calendars_by_season.get(normalized)
+    if calendar is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Planning season calendar not found: {season_label}")
+    return PlanningSeasonCalendarDetailResponse(
+        calendar=calendar,
+        source_path=str(service.registry_path),
+        schema_version=registry.schema_version,
+        registry_fingerprint=registry.registry_fingerprint,
+    )
 
 @router.get("/registry", response_model=SeasonRegistryResponse)
 def get_season_registry(service: SeasonRegistryService = Depends(get_season_registry_service)) -> SeasonRegistryResponse:

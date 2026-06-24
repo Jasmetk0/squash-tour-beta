@@ -5,8 +5,14 @@ import json
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from beta_engine.api.deps import get_initial_pool_season_bootstrap_service, get_season_builder_apply_audit_service, get_season_calendar_service, get_season_range_execution_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service, get_season_template_service
+from beta_engine.api.deps import get_calendar_template_service, get_initial_pool_season_bootstrap_service, get_season_builder_apply_audit_service, get_season_calendar_service, get_season_range_execution_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service, get_season_template_service
 from beta_engine.api.schemas import SeasonBootstrapRequest
+from beta_engine.application.calendar_template_service import (
+    CalendarTemplate,
+    CalendarTemplateDetailResponse,
+    CalendarTemplateListResponse,
+    CalendarTemplateService,
+)
 from beta_engine.application.season_player_bootstrap_service import (
     InitialPoolSeasonBootstrapService,
     SeasonActivePlayersResponse,
@@ -146,6 +152,63 @@ def get_season_registry(service: SeasonRegistryService = Depends(get_season_regi
 @router.get("/templates", response_model=SeasonTemplatesResponse)
 def get_season_templates(service: SeasonTemplateService = Depends(get_season_template_service)) -> SeasonTemplatesResponse:
     return service.list_templates()
+
+
+@router.get("/calendar-templates", response_model=CalendarTemplateListResponse)
+def list_calendar_templates(
+    service: CalendarTemplateService = Depends(get_calendar_template_service),
+) -> CalendarTemplateListResponse:
+    return service.list_templates()
+
+
+@router.get("/calendar-templates/{template_id}", response_model=CalendarTemplateDetailResponse)
+def get_calendar_template(
+    template_id: str,
+    service: CalendarTemplateService = Depends(get_calendar_template_service),
+) -> CalendarTemplateDetailResponse:
+    response = service.get_template(template_id=template_id)
+    if response.template is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Calendar template not found: {template_id}")
+    return response
+
+
+@router.post("/calendar-templates", response_model=CalendarTemplateDetailResponse, status_code=status.HTTP_201_CREATED)
+def create_calendar_template(
+    payload: CalendarTemplate,
+    service: CalendarTemplateService = Depends(get_calendar_template_service),
+) -> CalendarTemplateDetailResponse:
+    try:
+        template = service.create_template(template=payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return CalendarTemplateDetailResponse(template=template, source_path=str(service.registry_path), status="created")
+
+
+@router.put("/calendar-templates/{template_id}", response_model=CalendarTemplateDetailResponse)
+def update_calendar_template(
+    template_id: str,
+    payload: CalendarTemplate,
+    service: CalendarTemplateService = Depends(get_calendar_template_service),
+) -> CalendarTemplateDetailResponse:
+    try:
+        template = service.update_template(template_id=template_id, template=payload)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Calendar template not found: {template_id}") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return CalendarTemplateDetailResponse(template=template, source_path=str(service.registry_path), status="updated")
+
+
+@router.post("/calendar-templates/{template_id}/archive", response_model=CalendarTemplateDetailResponse)
+def archive_calendar_template(
+    template_id: str,
+    service: CalendarTemplateService = Depends(get_calendar_template_service),
+) -> CalendarTemplateDetailResponse:
+    try:
+        template = service.archive_template(template_id=template_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Calendar template not found: {template_id}") from exc
+    return CalendarTemplateDetailResponse(template=template, source_path=str(service.registry_path), status="archived")
 
 @router.get(
     "/templates/slot-validation/issue-codes",

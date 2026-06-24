@@ -9,6 +9,7 @@ from fastapi import Request
 from beta_engine.application.api_services import SimulationApiService
 from beta_engine.application.config_validation_service import ConfigValidationService
 from beta_engine.application.category_service import CategoryService
+from beta_engine.application.calendar_template_service import CalendarTemplateService
 from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.initial_player_pool_service import InitialPlayerPoolService
 from beta_engine.application.season_player_bootstrap_service import InitialPoolSeasonBootstrapService
@@ -97,6 +98,13 @@ def get_tournament_templates_config_service(request: Request) -> TournamentTempl
 
 def get_category_service(request: Request) -> CategoryService:
     return CategoryService(template_service=get_tournament_templates_config_service(request))
+
+
+def get_calendar_template_service(request: Request) -> CalendarTemplateService:
+    configured_path = getattr(request.app.state, "calendar_templates_registry_path", None)
+    if configured_path is None:
+        return CalendarTemplateService()
+    return CalendarTemplateService(registry_path=configured_path)
 
 
 def get_world_talent_preview_service(request: Request) -> WorldTalentPreviewService:

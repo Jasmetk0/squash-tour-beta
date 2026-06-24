@@ -292,3 +292,185 @@ def test_no_simulation_adapter_invoked_or_added(tmp_path: Path) -> None:
     assert not hasattr(service, "to_season_calendar")
     assert not hasattr(planning_service, "to_season_calendar")
     assert not hasattr(planning_service, "to_season_calendar_event")
+
+from beta_engine.application.planning_calendar_apply_audit_service import PlanningCalendarApplyAuditService
+from beta_engine.application.planning_calendar_apply_template_service import (
+    PlanningCalendarApplyBackupService,
+    PlanningCalendarApplyTemplateCommandRequest,
+    PlanningCalendarApplyTemplateCommandService,
+)
+
+
+def valid_command_request(template_service: CalendarTemplateService, planning_service: PlanningSeasonCalendarService, **overrides) -> PlanningCalendarApplyTemplateCommandRequest:
+    plan_request = valid_request(template_service, planning_service, **{k: v for k, v in overrides.items() if k in {"policy", "selected_source_event_ids"}})
+    payload = {
+        "source_template_id": plan_request.source_template_id,
+        "policy": plan_request.policy,
+        "selected_source_event_ids": plan_request.selected_source_event_ids,
+        "expected_planning_calendar_fingerprint": plan_request.expected_planning_calendar_fingerprint,
+        "source_template_fingerprint": plan_request.source_template_fingerprint,
+        "reviewed_diff_fingerprint": plan_request.reviewed_diff_fingerprint,
+        "requested_by": plan_request.requested_by,
+        "audit_reason": plan_request.audit_reason,
+        "explicit_confirmation": plan_request.explicit_confirmation,
+    }
+    payload.update(overrides)
+    return PlanningCalendarApplyTemplateCommandRequest.model_validate(payload)
+
+
+def command_service(tmp_path: Path, *, template_events: list[dict] | None = None, planning_events: list[dict] | None = None):
+    service, template_service, planning_service, template_path, planning_path, season_calendar_path = build_services(
+        tmp_path,
+        template_events=template_events,
+        planning_events=planning_events,
+    )
+    audit_path = tmp_path / "planning_calendar_apply_audit.jsonl"
+    backup_dir = tmp_path / "planning_calendar_apply_backups"
+    command = PlanningCalendarApplyTemplateCommandService(
+        template_service=template_service,
+        planning_calendar_service=planning_service,
+        audit_service=PlanningCalendarApplyAuditService(audit_log_path=audit_path),
+        backup_service=PlanningCalendarApplyBackupService(backup_dir=backup_dir),
+    )
+    return command, template_service, planning_service, planning_path, season_calendar_path, audit_path, backup_dir
+
+
+def read_audit(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def test_successful_copy_missing_only_creates_missing_events_in_planning_calendar(tmp_path: Path) -> None:
+    command, template_service, planning_service, planning_path, season_calendar_path, audit_path, backup_dir = command_service(tmp_path, planning_events=[])
+    before = planning_path.read_text(encoding="utf-8")
+
+    response = command.apply_template(target_season_label="2000/01", request=valid_command_request(template_service, planning_service))
+
+    assert response.mutation_performed is True
+    assert response.created_event_count == 1
+    assert planning_path.read_text(encoding="utf-8") != before
+    saved = planning_service.get_calendar("2000/01")
+    assert saved is not None
+    assert len(saved.events) == 1
+    created = saved.events[0]
+    assert created.id == stable_planning_event_id(source_template_id="template-a", source_template_event_id="event-a")
+    assert created.source_template_id == "template-a"
+    assert created.source_template_event_id == "event-a"
+    assert created.apply_metadata is not None
+    assert created.apply_metadata.last_apply_policy == "copy_missing_only"
+    assert read_audit(audit_path)[0]["audit_stage"] == "pre_mutation_reserved"
+    assert read_audit(audit_path)[1]["audit_stage"] == "succeeded"
+    assert list(backup_dir.rglob("*.before.json"))
+    assert not season_calendar_path.exists()
+
+
+def test_copy_missing_only_apply_does_not_update_existing_locked_or_target_only_events(tmp_path: Path) -> None:
+    generated_id = stable_planning_event_id(source_template_id="template-a", source_template_event_id="event-a")
+    command, template_service, planning_service, _, _, _, _ = command_service(
+        tmp_path,
+        planning_events=[
+            planning_event(generated_id, weeks=[9], locked=True),
+            planning_event("target-only", name="Target Only", source_template_id=None, source_template_event_id=None),
+        ],
+    )
+    before_calendar = planning_service.get_calendar("2000/01")
+    assert before_calendar is not None
+    before_by_id = {event.id: event.event_fingerprint for event in before_calendar.events}
+
+    response = command.apply_template(target_season_label="2000/01", request=valid_command_request(template_service, planning_service))
+
+    assert response.mutation_performed is False or response.created_event_count == 0
+    after_calendar = planning_service.get_calendar("2000/01")
+    assert after_calendar is not None
+    assert {event.id: event.event_fingerprint for event in after_calendar.events} == before_by_id
+
+
+def test_selected_source_event_ids_restrict_real_created_events(tmp_path: Path) -> None:
+    command, template_service, planning_service, *_ = command_service(
+        tmp_path,
+        template_events=[template_event("event-a"), template_event("event-b", name="Event B")],
+        planning_events=[],
+    )
+
+    response = command.apply_template(target_season_label="2000/01", request=valid_command_request(template_service, planning_service, selected_source_event_ids=["event-b"]))
+
+    assert response.created_event_count == 1
+    saved = planning_service.get_calendar("2000/01")
+    assert saved is not None
+    assert [event.source_template_event_id for event in saved.events] == ["event-b"]
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "expected"),
+    [
+        ("selected_source_event_ids", ["missing"], "Unknown selected_source_event_id"),
+        ("source_template_fingerprint", "tpl_stale", "source_template_fingerprint"),
+        ("expected_planning_calendar_fingerprint", "pl_cal_stale", "expected_planning_calendar_fingerprint"),
+        ("reviewed_diff_fingerprint", "diff_stale", "reviewed_diff_fingerprint"),
+        ("explicit_confirmation", None, "explicit_confirmation is required"),
+        ("explicit_confirmation", "wrong", "explicit_confirmation does not match"),
+        ("requested_by", " ", "requested_by is required"),
+        ("audit_reason", " ", "audit_reason is required"),
+        ("policy", "replace_unlocked_only", "not supported"),
+        ("policy", "replace_all", "not supported"),
+    ],
+)
+def test_real_apply_rejections_are_audited_with_no_mutation(tmp_path: Path, field: str, value, expected: str) -> None:
+    command, template_service, planning_service, planning_path, season_calendar_path, audit_path, _ = command_service(tmp_path, planning_events=[])
+    before = planning_path.read_text(encoding="utf-8")
+    request = valid_command_request(template_service, planning_service).model_copy(update={field: value})
+
+    response = command.apply_template(target_season_label="2000/01", request=request)
+
+    assert response.mutation_performed is False
+    assert any(expected in error for error in response.validation_errors)
+    assert planning_path.read_text(encoding="utf-8") == before
+    assert not season_calendar_path.exists()
+    records = read_audit(audit_path)
+    assert records
+    assert records[-1]["audit_stage"] == "rejected"
+
+
+class FailingAuditService:
+    def append_record(self, record):
+        raise OSError("audit unavailable")
+
+
+class FailingBackupService(PlanningCalendarApplyBackupService):
+    def write_before_backup(self, **kwargs):
+        raise OSError("backup unavailable")
+
+
+def test_audit_prewrite_failure_fails_closed_with_no_mutation(tmp_path: Path) -> None:
+    _, template_service, planning_service, _, planning_path, _ = build_services(tmp_path, planning_events=[])
+    command = PlanningCalendarApplyTemplateCommandService(
+        template_service=template_service,
+        planning_calendar_service=planning_service,
+        audit_service=FailingAuditService(),
+        backup_service=PlanningCalendarApplyBackupService(backup_dir=tmp_path / "backups"),
+    )
+    before = planning_path.read_text(encoding="utf-8")
+
+    response = command.apply_template(target_season_label="2000/01", request=valid_command_request(template_service, planning_service))
+
+    assert response.mutation_performed is False
+    assert "audit pre-write failed" in response.validation_errors[0]
+    assert planning_path.read_text(encoding="utf-8") == before
+
+
+def test_backup_failure_fails_closed_with_no_mutation(tmp_path: Path) -> None:
+    _, template_service, planning_service, _, planning_path, _ = build_services(tmp_path, planning_events=[])
+    command = PlanningCalendarApplyTemplateCommandService(
+        template_service=template_service,
+        planning_calendar_service=planning_service,
+        audit_service=PlanningCalendarApplyAuditService(audit_log_path=tmp_path / "audit.jsonl"),
+        backup_service=FailingBackupService(backup_dir=tmp_path / "backups"),
+    )
+    before = planning_path.read_text(encoding="utf-8")
+
+    response = command.apply_template(target_season_label="2000/01", request=valid_command_request(template_service, planning_service))
+
+    assert response.mutation_performed is False
+    assert "before-state backup failed" in response.validation_errors[0]
+    assert planning_path.read_text(encoding="utf-8") == before

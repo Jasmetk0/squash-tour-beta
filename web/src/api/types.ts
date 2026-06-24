@@ -221,6 +221,57 @@ export type CalendarTemplateCompareSafety = {
   message: string
 }
 
+
+export type PlanningCalendarApplyTemplatePolicy = 'copy_missing_only'
+
+export type PlanningCalendarApplyTemplateCommandRequest = {
+  source_template_id: string
+  policy: PlanningCalendarApplyTemplatePolicy
+  selected_source_event_ids?: string[] | null
+  expected_planning_calendar_fingerprint: string
+  source_template_fingerprint: string
+  reviewed_diff_fingerprint: string
+  requested_by: string
+  audit_reason: string
+  explicit_confirmation: string
+  idempotency_key?: string | null
+}
+
+export type PlanningCalendarApplyTemplateCommandResponse = {
+  command: string
+  applied: boolean
+  mutation_performed: boolean
+  target_season_label: string
+  normalized_target_season_label: string
+  source_template_id: string
+  policy: PlanningCalendarApplyTemplatePolicy
+  audit_record_id: string | null
+  audit_record_fingerprint: string | null
+  audit_persisted: boolean
+  audit_persistence_status: string
+  before_calendar_fingerprint: string | null
+  after_calendar_fingerprint: string | null
+  source_template_fingerprint: string
+  reviewed_diff_fingerprint: string
+  recomputed_diff_fingerprint: string | null
+  apply_plan_fingerprint: string | null
+  applied_event_count: number
+  created_event_count: number
+  updated_event_count: number
+  preserved_locked_event_count: number
+  skipped_event_count: number
+  rejected_event_count: number
+  created_items: unknown[]
+  updated_items: unknown[]
+  preserved_locked_items: unknown[]
+  skipped_items: unknown[]
+  rejected_items: unknown[]
+  validation_errors: string[]
+  validation_warnings: string[]
+  safety_summary: Record<string, unknown> | string | null
+  message: string
+}
+
 export type CalendarTemplateCompareDryRunResponse = {
   dry_run: boolean
   mutation_performed: boolean

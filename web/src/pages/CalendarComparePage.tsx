@@ -1,10 +1,10 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { compareCalendarTemplateDryRun, getSeasonRegistry, getSeasonTemplates, listCalendarTemplates, listPlanningSeasonCalendars } from '../api/client'
+import { applyCalendarTemplateToPlanningCalendar, compareCalendarTemplateDryRun, getSeasonRegistry, getSeasonTemplates, listCalendarTemplates, listPlanningSeasonCalendars } from '../api/client'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
-import type { CalendarTemplateComparePolicy, CalendarTemplateCompareDryRunResponse, CalendarTemplateCompareTargetSource, CalendarTemplateEventRecord } from '../api/types'
+import type { CalendarTemplateCompareDryRunResponse, CalendarTemplateCompareTargetSource, CalendarTemplateEventRecord, PlanningCalendarApplyTemplateCommandResponse } from '../api/types'
 import { type CalendarEventDraft, describeCalendarEventTiming, formatSeasonWeeks } from '../tour/calendarEventModel'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -69,14 +69,7 @@ const SOURCE_PREVIEW_EVENTS: CalendarEventDraft[] = [
   }
 ]
 
-const FUTURE_COPY_APPLY_ACTIONS = [
-  'Copy selected source events — planned',
-  'Replace unlocked target events only — planned',
-  'Preserve locked target events — planned',
-  'Unlock target event before overwrite — planned',
-  'Preview diff before apply — planned',
-  'Confirm apply with audit log — planned'
-]
+const PLANNING_APPLY_CONFIRMATION = 'I understand this will apply reviewed template events to the planning calendar only.'
 
 function eventComparisonKey(event: CalendarEventDraft): string {
   return `${event.name}|${event.categoryCode}|${event.weeks.join(',')}|${event.qualificationWeeks.join(',')}`
@@ -131,6 +124,7 @@ function PreviewEventList({ events }: { events: CalendarEventDraft[] }): JSX.Ele
 }
 
 export function AdminTourSeasonsComparePage(): JSX.Element {
+  const queryClient = useQueryClient()
   const registryQuery = useQuery({ queryKey: ['season-registry'], queryFn: getSeasonRegistry, retry: false })
   const templatesQuery = useQuery({ queryKey: ['season-templates'], queryFn: getSeasonTemplates, retry: false })
   const calendarTemplatesQuery = useQuery({ queryKey: ['calendar-templates'], queryFn: listCalendarTemplates, retry: false })
@@ -138,8 +132,11 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
   const [sourceTemplateId, setSourceTemplateId] = useState('')
   const [targetSeasonLabel, setTargetSeasonLabel] = useState('2006/07')
   const [targetSource, setTargetSource] = useState<CalendarTemplateCompareTargetSource>('payload')
-  const [policy, setPolicy] = useState<CalendarTemplateComparePolicy>('replace_unlocked_only')
   const [dryRunResponse, setDryRunResponse] = useState<CalendarTemplateCompareDryRunResponse | null>(null)
+  const [requestedBy, setRequestedBy] = useState('')
+  const [auditReason, setAuditReason] = useState('')
+  const [explicitConfirmation, setExplicitConfirmation] = useState('')
+  const [applyResponse, setApplyResponse] = useState<PlanningCalendarApplyTemplateCommandResponse | null>(null)
 
   const registry = registryQuery.data
   const templates = templatesQuery.data?.templates ?? []
@@ -149,7 +146,27 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
   const targetEvents = TARGET_PREVIEW_EVENTS.map(toCalendarTemplateEventRecord)
   const compareMutation = useMutation({
     mutationFn: compareCalendarTemplateDryRun,
-    onSuccess: (response) => setDryRunResponse(response)
+    onSuccess: (response) => {
+      setDryRunResponse(response)
+      setApplyResponse(null)
+    }
+  })
+  const applyMutation = useMutation({
+    mutationFn: () => applyCalendarTemplateToPlanningCalendar(targetSeasonLabel, {
+      source_template_id: sourceTemplateId,
+      policy: 'copy_missing_only',
+      selected_source_event_ids: null,
+      expected_planning_calendar_fingerprint: dryRunResponse?.target_calendar_fingerprint ?? '',
+      source_template_fingerprint: dryRunResponse?.source_template_fingerprint ?? '',
+      reviewed_diff_fingerprint: dryRunResponse?.diff_fingerprint ?? '',
+      requested_by: requestedBy,
+      audit_reason: auditReason,
+      explicit_confirmation: explicitConfirmation
+    }),
+    onSuccess: (response) => {
+      setApplyResponse(response)
+      void queryClient.invalidateQueries({ queryKey: ['planning-season-calendars'] })
+    }
   })
 
   useEffect(() => {
@@ -164,20 +181,36 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
     }
   }, [planningCalendars, targetSeasonLabel, targetSource])
 
+  const canShowApplyUi = targetSource === 'planning_calendar'
+    && Boolean(sourceTemplateId)
+    && Boolean(targetSeasonLabel)
+    && Boolean(dryRunResponse)
+    && dryRunResponse?.target_source === 'planning_calendar'
+    && dryRunResponse.target_calendar_exists === true
+    && Boolean(dryRunResponse.diff_fingerprint)
+    && Boolean(dryRunResponse.source_template_fingerprint)
+    && Boolean(dryRunResponse.target_calendar_fingerprint)
+
+  const canApplyReviewedDiff = canShowApplyUi
+    && requestedBy.trim().length > 0
+    && auditReason.trim().length > 0
+    && explicitConfirmation === PLANNING_APPLY_CONFIRMATION
+
   function handleCompareSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
     setDryRunResponse(null)
+    setApplyResponse(null)
     compareMutation.mutate(targetSource === 'planning_calendar' ? {
       target_season_label: targetSeasonLabel,
       source_template_id: sourceTemplateId,
       target_source: 'planning_calendar',
-      policy
+      policy: 'copy_missing_only'
     } : {
       target_season_label: targetSeasonLabel,
       source_template_id: sourceTemplateId,
       target_source: 'payload',
       target_events: targetEvents,
-      policy
+      policy: 'copy_missing_only'
     })
   }
 
@@ -298,9 +331,11 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
       <SectionCard title="Backend compare dry-run">
         <p><strong>Backend dry-run only.</strong></p>
         <ul className="dashboard-help-list">
-          <li>Compare dry-run only.</li>
-          <li>No apply/copy endpoint is called.</li>
-          <li>No planning calendar is modified.</li>
+          <li>Compare dry-run only until the reviewed planning-calendar diff is explicitly applied below.</li>
+          <li>Apply uses copy_missing_only only.</li>
+          <li>No existing planning event is updated.</li>
+          <li>No locked event is changed.</li>
+          <li>No target-only event is deleted.</li>
           <li>No canonical season calendar is modified.</li>
           <li>No Viewer, run, rankings, race, history, or simulation output changes.</li>
           <li>Payload target mode uses local preview rows. Planning calendar target mode loads persisted planning calendars server-side.</li>
@@ -342,13 +377,7 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
                 <input value={targetSeasonLabel} onChange={(event) => setTargetSeasonLabel(event.target.value)} />
               </label>
             )}
-            <label>
-              Policy
-              <select value={policy} onChange={(event) => setPolicy(event.target.value as CalendarTemplateComparePolicy)}>
-                <option value="replace_unlocked_only">replace_unlocked_only</option>
-                <option value="copy_missing_only">copy_missing_only</option>
-              </select>
-            </label>
+            <p className="status"><strong>Policy:</strong> copy_missing_only only.</p>
             {targetSource === 'payload' ? <p className="status">Payload target uses local preview target rows; target_fingerprint is derived from those rows.</p> : null}
             {targetSource === 'planning_calendar' ? <p className="status">Target is loaded server-side from persisted planning calendars. No planning calendar is mutated. target_fingerprint uses the persisted planning calendar fingerprint.</p> : null}
             {targetSource === 'planning_calendar' && planningCalendarsQuery.isLoading ? <p className="status">Loading persisted planning calendars…</p> : null}
@@ -387,11 +416,62 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
         ) : null}
       </SectionCard>
 
-      <SectionCard title="Future copy/apply actions">
-        <ul className="dashboard-help-list">
-          {FUTURE_COPY_APPLY_ACTIONS.map((action) => <li key={action}>{action}</li>)}
-        </ul>
-      </SectionCard>
+      {canShowApplyUi ? (
+        <SectionCard title="Apply reviewed diff to planning calendar">
+          <p><strong>copy_missing_only only</strong></p>
+          <ul className="dashboard-help-list">
+            <li>This applies only missing source events.</li>
+            <li>No existing planning event is updated.</li>
+            <li>No locked event is changed.</li>
+            <li>No target-only event is deleted.</li>
+            <li>No canonical season calendar is modified.</li>
+            <li>No simulation is invoked.</li>
+            <li>No Viewer, rankings, simulation, history, race, or run data changes.</li>
+          </ul>
+          <div className="dashboard-grid">
+            <article className="metric-card"><span>source_template_id</span><strong>{sourceTemplateId}</strong></article>
+            <article className="metric-card"><span>target_season_label</span><strong>{dryRunResponse.target_season_label}</strong></article>
+            <article className="metric-card"><span>policy</span><strong>copy_missing_only</strong></article>
+            <article className="metric-card"><span>source_template_fingerprint</span><strong>{dryRunResponse.source_template_fingerprint}</strong></article>
+            <article className="metric-card"><span>target_calendar_fingerprint</span><strong>{dryRunResponse.target_calendar_fingerprint}</strong></article>
+            <article className="metric-card"><span>reviewed diff fingerprint</span><strong>{dryRunResponse.diff_fingerprint}</strong></article>
+            <article className="metric-card"><span>missing_from_target_count</span><strong>{dryRunResponse.summary.missing_from_target_count}</strong></article>
+            <article className="metric-card"><span>same_count</span><strong>{dryRunResponse.summary.same_count}</strong></article>
+            <article className="metric-card"><span>only_in_target_count</span><strong>{dryRunResponse.summary.only_in_target_count}</strong></article>
+            <article className="metric-card"><span>conflict_count</span><strong>{dryRunResponse.summary.conflict_count}</strong></article>
+            <article className="metric-card"><span>locked_target_preserved_count</span><strong>{dryRunResponse.summary.locked_target_preserved_count}</strong></article>
+          </div>
+          <form className="form-grid" onSubmit={(event) => { event.preventDefault(); applyMutation.mutate() }}>
+            <label>requested_by<input value={requestedBy} onChange={(event) => setRequestedBy(event.target.value)} /></label>
+            <label>audit_reason<textarea value={auditReason} onChange={(event) => setAuditReason(event.target.value)} /></label>
+            <label>explicit_confirmation<input value={explicitConfirmation} onChange={(event) => setExplicitConfirmation(event.target.value)} /></label>
+            <p className="status">Required exact confirmation: {PLANNING_APPLY_CONFIRMATION}</p>
+            <button type="submit" disabled={!canApplyReviewedDiff || applyMutation.isPending}>Apply reviewed diff to planning calendar</button>
+          </form>
+          {applyMutation.error ? <div className="error"><p>Planning calendar apply failed: {formatApiError(applyMutation.error)}</p></div> : null}
+          {applyResponse ? (applyResponse.mutation_performed ? (
+            <div className="success">
+              <p>{applyResponse.message}</p>
+              <ul className="dashboard-help-list">
+                <li>created_event_count: {applyResponse.created_event_count}</li>
+                <li>audit_record_id: {applyResponse.audit_record_id ?? '—'}</li>
+                <li>audit_record_fingerprint: {applyResponse.audit_record_fingerprint ?? '—'}</li>
+                <li>audit_persisted: {String(applyResponse.audit_persisted)}</li>
+                <li>audit_persistence_status: {applyResponse.audit_persistence_status}</li>
+                <li>before_calendar_fingerprint: {applyResponse.before_calendar_fingerprint ?? '—'}</li>
+                <li>after_calendar_fingerprint: {applyResponse.after_calendar_fingerprint ?? '—'}</li>
+              </ul>
+              <p>Planning calendar caches were invalidated. Re-run compare dry-run to review the updated diff.</p>
+            </div>
+          ) : (
+            <div className="error">
+              <p>{applyResponse.message}</p>
+              <p>validation_errors: {applyResponse.validation_errors.length ? applyResponse.validation_errors.join('; ') : 'None'}</p>
+              <p>validation_warnings: {applyResponse.validation_warnings.length ? applyResponse.validation_warnings.join('; ') : 'None'}</p>
+            </div>
+          )) : null}
+        </SectionCard>
+      ) : null}
 
       <SectionCard title="Future compare states (planned)">
         <p>Planned statuses: Same, Modified, Missing from current, Only in current, and Conflict.</p>

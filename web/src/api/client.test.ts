@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  applyCalendarTemplateToPlanningCalendar,
   compareCalendarTemplateDryRun,
   createCalendarTemplate,
   getPlanningSeasonCalendar,
@@ -13,6 +14,8 @@ import type {
   CalendarTemplateCompareDryRunRequest,
   CalendarTemplateUpsertPayload,
   PlanningSeasonCalendarDetailResponse,
+  PlanningCalendarApplyTemplateCommandRequest,
+  PlanningCalendarApplyTemplateCommandResponse,
   PlanningSeasonCalendarListResponse,
   SeasonBuilderApplyCreateOnlyCommandRequest,
   SeasonBuilderApplyCreateOnlyCommandResponse,
@@ -373,6 +376,72 @@ describe('planning season calendar API client', () => {
       expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
     )
     expect(result).toEqual(listResponse)
+  })
+
+
+
+  it('applyCalendarTemplateToPlanningCalendar posts snake_case copy_missing_only payload to encoded season endpoint', async () => {
+    const payload: PlanningCalendarApplyTemplateCommandRequest = {
+      source_template_id: 'template-a',
+      policy: 'copy_missing_only',
+      selected_source_event_ids: ['event-a'],
+      expected_planning_calendar_fingerprint: 'target-fp',
+      source_template_fingerprint: 'source-fp',
+      reviewed_diff_fingerprint: 'diff-fp',
+      requested_by: 'admin',
+      audit_reason: 'reviewed missing events',
+      explicit_confirmation: 'I understand this will apply reviewed template events to the planning calendar only.',
+      idempotency_key: null
+    }
+    const responseBody: PlanningCalendarApplyTemplateCommandResponse = {
+      command: 'apply_template_to_planning_calendar',
+      applied: true,
+      mutation_performed: true,
+      target_season_label: '2000/01',
+      normalized_target_season_label: '2000/2001',
+      source_template_id: 'template-a',
+      policy: 'copy_missing_only',
+      audit_record_id: 'audit-1',
+      audit_record_fingerprint: 'audit-fp',
+      audit_persisted: true,
+      audit_persistence_status: 'persisted',
+      before_calendar_fingerprint: 'before-fp',
+      after_calendar_fingerprint: 'after-fp',
+      source_template_fingerprint: 'source-fp',
+      reviewed_diff_fingerprint: 'diff-fp',
+      recomputed_diff_fingerprint: 'diff-fp',
+      apply_plan_fingerprint: 'plan-fp',
+      applied_event_count: 1,
+      created_event_count: 1,
+      updated_event_count: 0,
+      preserved_locked_event_count: 0,
+      skipped_event_count: 0,
+      rejected_event_count: 0,
+      created_items: [],
+      updated_items: [],
+      preserved_locked_items: [],
+      skipped_items: [],
+      rejected_items: [],
+      validation_errors: [],
+      validation_warnings: [],
+      safety_summary: { planning_only: true },
+      message: 'Applied.'
+    }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(responseBody), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+
+    const result = await applyCalendarTemplateToPlanningCalendar('2000/01', payload)
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/admin/seasons/planning-calendars/2000%2F01/apply-template',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify(payload) })
+    )
+    const [, init] = vi.mocked(globalThis.fetch).mock.calls[0]
+    const sentPayload = JSON.parse(String((init as RequestInit).body))
+    expect(sentPayload.policy).toBe('copy_missing_only')
+    expect(sentPayload.expected_planning_calendar_fingerprint).toBe('target-fp')
+    expect(sentPayload.reviewed_diff_fingerprint).toBe('diff-fp')
+    expect(sentPayload).not.toHaveProperty('target_events')
+    expect(result).toEqual(responseBody)
   })
 
   it('getPlanningSeasonCalendar encodes season labels', async () => {

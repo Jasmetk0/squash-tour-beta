@@ -49,6 +49,7 @@ const api = vi.hoisted(() => ({
   getCalendarTemplate: vi.fn(),
   createCalendarTemplate: vi.fn(),
   updateCalendarTemplate: vi.fn(),
+  applyCalendarTemplateToPlanningCalendar: vi.fn(),
   compareCalendarTemplateDryRun: vi.fn(),
   getSeasonTemplateSlotValidation: vi.fn(),
   getSeasonTemplateSlotValidationIssueCodes: vi.fn(),
@@ -389,7 +390,7 @@ describe('Module 17 pages through routes', () => {
       mutation_performed: false,
       target_season_label: '2006/07',
       source_template_id: 'template-a',
-      policy: 'replace_unlocked_only',
+      policy: 'copy_missing_only',
       target_source: 'payload',
       source_template_fingerprint: 'source-fp',
       target_calendar_fingerprint: null,
@@ -914,16 +915,17 @@ describe('Module 17 pages through routes', () => {
 
     expect(await screen.findByRole('heading', { name: 'Backend compare dry-run' })).toBeInTheDocument()
     expect(screen.getByText('Backend dry-run only.')).toBeInTheDocument()
-    expect(screen.getByText('Compare dry-run only.')).toBeInTheDocument()
+    expect(screen.getByText(/Compare dry-run only until/)).toBeInTheDocument()
     expect(screen.getByText('No canonical season calendar is modified.')).toBeInTheDocument()
-    expect(screen.getByText('No apply/copy endpoint is called.')).toBeInTheDocument()
-    expect(screen.getByText('No planning calendar is modified.')).toBeInTheDocument()
+    expect(screen.getByText('Apply uses copy_missing_only only.')).toBeInTheDocument()
+    expect(screen.getByText('No existing planning event is updated.')).toBeInTheDocument()
     expect(screen.getByText('No Viewer, run, rankings, race, history, or simulation output changes.')).toBeInTheDocument()
     expect(screen.getByText(/Payload target mode uses local preview rows/)).toBeInTheDocument()
     expect(await screen.findByRole('option', { name: 'Template A' })).toBeInTheDocument()
     expect(screen.getByLabelText('Target source')).toHaveValue('payload')
     expect(screen.getByLabelText('Target season label')).toHaveValue('2006/07')
-    expect(screen.getByLabelText('Policy')).toHaveValue('replace_unlocked_only')
+    expect(screen.getByText(/Policy:/)).toBeInTheDocument()
+    expect(screen.queryByText('replace_unlocked_only')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Two-pane compare/copy workspace preview' })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Run backend compare dry-run' }))
@@ -933,7 +935,7 @@ describe('Module 17 pages through routes', () => {
     expect(dryRunPayload).toEqual({
       target_season_label: '2006/07',
       source_template_id: 'template-a',
-      policy: 'replace_unlocked_only',
+      policy: 'copy_missing_only',
       target_source: 'payload',
       target_events: [
         expect.objectContaining({ id: 'target-nemarque-open-2006-07', name: 'Némarque Open', category_code: 'DIAMOND', qualification_weeks: [5], weeks: [6, 7], locked: true }),
@@ -948,7 +950,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Matched event.')).toBeInTheDocument()
     expect(screen.getAllByText('W6–W7').length).toBeGreaterThan(0)
     expect(screen.getAllByText('W5').length).toBeGreaterThan(0)
-    expect(screen.queryByRole('button', { name: /copy|apply|save|archive|delete|simulate/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /save|archive|delete|simulate/i })).not.toBeInTheDocument()
   })
 
   it('runs Admin Calendar Compare with a persisted planning calendar target', async () => {
@@ -972,7 +974,7 @@ describe('Module 17 pages through routes', () => {
       mutation_performed: false,
       target_season_label: '2000/2001',
       source_template_id: 'template-a',
-      policy: 'replace_unlocked_only',
+      policy: 'copy_missing_only',
       target_source: 'planning_calendar',
       source_template_fingerprint: 'source-fp',
       target_fingerprint: 'pl_cal_abc',
@@ -1000,14 +1002,21 @@ describe('Module 17 pages through routes', () => {
       target_season_label: '2000/2001',
       source_template_id: 'template-a',
       target_source: 'planning_calendar',
-      policy: 'replace_unlocked_only'
+      policy: 'copy_missing_only'
     })
     expect(dryRunPayload).not.toHaveProperty('target_events')
     expect(await screen.findByText('planning_calendar')).toBeInTheDocument()
     expect(screen.getAllByText('pl_cal_abc').length).toBeGreaterThan(0)
     expect(screen.getAllByText('true').length).toBeGreaterThan(0)
     expect(screen.getByText('Planning calendar mode: target_fingerprint uses the persisted planning calendar fingerprint.')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /copy|apply|save|archive|delete|simulate/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Apply reviewed diff to planning calendar' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Apply reviewed diff to planning calendar' })).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('requested_by'), { target: { value: 'admin' } })
+    fireEvent.change(screen.getByLabelText('audit_reason'), { target: { value: 'reviewed diff' } })
+    fireEvent.change(screen.getByLabelText('explicit_confirmation'), { target: { value: 'wrong' } })
+    expect(screen.getByRole('button', { name: 'Apply reviewed diff to planning calendar' })).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('explicit_confirmation'), { target: { value: 'I understand this will apply reviewed template events to the planning calendar only.' } })
+    expect(screen.getByRole('button', { name: 'Apply reviewed diff to planning calendar' })).toBeEnabled()
   })
 
   it('shows empty planning calendar message and disables planning target dry-run while keeping payload available', async () => {
@@ -1233,12 +1242,6 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText(/Same:/)).toBeInTheDocument()
     expect(screen.getByText(/Missing from target:/)).toBeInTheDocument()
     expect(screen.getByText(/Locked target preserved:/)).toBeInTheDocument()
-    expect(screen.getByText('Copy selected source events — planned')).toBeInTheDocument()
-    expect(screen.getByText('Replace unlocked target events only — planned')).toBeInTheDocument()
-    expect(screen.getByText('Preserve locked target events — planned')).toBeInTheDocument()
-    expect(screen.getByText('Unlock target event before overwrite — planned')).toBeInTheDocument()
-    expect(screen.getByText('Preview diff before apply — planned')).toBeInTheDocument()
-    expect(screen.getByText('Confirm apply with audit log — planned')).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Open Draft Template Sandbox' }).some((link) => link.getAttribute('href') === '/admin/tour-seasons/season-templates/draft-sandbox')).toBe(true)
     expect(screen.getByText('Planned statuses: Same, Modified, Missing from current, Only in current, and Conflict.')).toBeInTheDocument()
     expect(screen.getByText('Planned actions: Apply to this season, Replace current, Keep current, Ignore, and Open editor.')).toBeInTheDocument()

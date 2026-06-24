@@ -11,8 +11,10 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, model_validator
 
 from beta_engine.application.calendar_template_service import CalendarTemplateEvent, CalendarTemplateService
+from beta_engine.application.planning_season_calendar_service import PlanningCalendarEvent, PlanningSeasonCalendarService
 
 CalendarTemplateComparePolicy = Literal["replace_unlocked_only", "copy_missing_only"]
+CalendarTemplateCompareTargetSource = Literal["payload", "planning_calendar"]
 CalendarTemplateCompareStatus = Literal[
     "same",
     "missing_from_target",
@@ -51,10 +53,15 @@ def _event_fingerprint_payload(event: CalendarTemplateEvent) -> dict[str, Any]:
     }
 
 
+class PlanningCalendarTargetNotFoundError(KeyError):
+    pass
+
+
 class CalendarTemplateCompareDryRunRequest(BaseModel):
     target_season_label: str = Field(min_length=1)
     source_template_id: str = Field(min_length=1)
     target_events: list[CalendarTemplateEvent] = Field(default_factory=list)
+    target_source: CalendarTemplateCompareTargetSource = "payload"
     selected_source_event_ids: list[str] | None = None
     policy: CalendarTemplateComparePolicy = "replace_unlocked_only"
 
@@ -62,6 +69,8 @@ class CalendarTemplateCompareDryRunRequest(BaseModel):
     def validate_selected_ids_are_unique(self) -> "CalendarTemplateCompareDryRunRequest":
         if self.selected_source_event_ids is not None and len(self.selected_source_event_ids) != len(set(self.selected_source_event_ids)):
             raise ValueError("selected_source_event_ids must contain unique event ids.")
+        if self.target_source == "planning_calendar" and self.target_events:
+            raise ValueError("target_events must be omitted when target_source is planning_calendar.")
         return self
 
 
@@ -103,8 +112,11 @@ class CalendarTemplateCompareDryRunResponse(BaseModel):
     target_season_label: str
     source_template_id: str
     policy: CalendarTemplateComparePolicy
+    target_source: CalendarTemplateCompareTargetSource = "payload"
     source_template_fingerprint: str | None = None
     target_fingerprint: str
+    target_calendar_fingerprint: str | None = None
+    target_calendar_exists: bool = False
     diff_fingerprint: str
     summary: CalendarTemplateCompareSummary
     items: list[CalendarTemplateCompareItem] = Field(default_factory=list)
@@ -115,6 +127,7 @@ class CalendarTemplateCompareDryRunResponse(BaseModel):
 @dataclass(slots=True)
 class CalendarTemplateCompareService:
     template_service: CalendarTemplateService
+    planning_calendar_service: PlanningSeasonCalendarService | None = None
 
     def compare_dry_run(self, request: CalendarTemplateCompareDryRunRequest) -> CalendarTemplateCompareDryRunResponse:
         source_template = self.template_service.get_template(template_id=request.source_template_id).template
@@ -130,21 +143,23 @@ class CalendarTemplateCompareService:
             selected_set = set(request.selected_source_event_ids)
             source_events = [event for event in source_events if event.id in selected_set]
 
+        target_events, target_fingerprint, target_calendar_fingerprint, target_calendar_exists = self._resolve_target(request)
+
         source_by_key = {_identity_key(event): event for event in source_events}
-        target_by_key = {_identity_key(event): event for event in request.target_events}
+        target_by_key = {_identity_key(event): event for event in target_events}
         all_keys = sorted(set(source_by_key) | set(target_by_key))
         items = [self._compare_key(key, source_by_key.get(key), target_by_key.get(key), request.policy) for key in all_keys]
         summary = self._build_summary(
             items=items,
             selected_source_event_count=len(source_events),
             source_event_count=len(source_template.events),
-            target_event_count=len(request.target_events),
+            target_event_count=len(target_events),
         )
-        target_fingerprint = _digest("target", [_event_fingerprint_payload(event) for event in sorted(request.target_events, key=lambda event: (_identity_key(event), event.id))])
         diff_payload = {
             "target_season_label": request.target_season_label,
             "source_template_id": request.source_template_id,
             "policy": request.policy,
+            "target_source": request.target_source,
             "source_template_fingerprint": source_template.template_fingerprint,
             "target_fingerprint": target_fingerprint,
             "summary": summary.model_dump(mode="json"),
@@ -154,11 +169,59 @@ class CalendarTemplateCompareService:
             target_season_label=request.target_season_label,
             source_template_id=request.source_template_id,
             policy=request.policy,
+            target_source=request.target_source,
             source_template_fingerprint=source_template.template_fingerprint,
             target_fingerprint=target_fingerprint,
+            target_calendar_fingerprint=target_calendar_fingerprint,
+            target_calendar_exists=target_calendar_exists,
             diff_fingerprint=_digest("diff", diff_payload),
             summary=summary,
             items=items,
+        )
+
+
+    def _resolve_target(
+        self,
+        request: CalendarTemplateCompareDryRunRequest,
+    ) -> tuple[list[CalendarTemplateEvent], str, str | None, bool]:
+        if request.target_source == "payload":
+            target_events = list(request.target_events)
+            target_fingerprint = _digest(
+                "target",
+                [_event_fingerprint_payload(event) for event in sorted(target_events, key=lambda event: (_identity_key(event), event.id))],
+            )
+            return target_events, target_fingerprint, None, bool(target_events)
+
+        if self.planning_calendar_service is None:
+            raise PlanningCalendarTargetNotFoundError(request.target_season_label)
+
+        calendar = self.planning_calendar_service.get_calendar(request.target_season_label)
+        if calendar is None:
+            raise PlanningCalendarTargetNotFoundError(request.target_season_label)
+
+        target_events = [self._planning_event_to_template_event(event) for event in calendar.events]
+        target_fingerprint = calendar.calendar_fingerprint or _digest(
+            "target",
+            [_event_fingerprint_payload(event) for event in sorted(target_events, key=lambda event: (_identity_key(event), event.id))],
+        )
+        return target_events, target_fingerprint, calendar.calendar_fingerprint, True
+
+    def _planning_event_to_template_event(self, event: PlanningCalendarEvent) -> CalendarTemplateEvent:
+        return CalendarTemplateEvent.model_validate(
+            {
+                "id": event.id,
+                "name": event.name,
+                "category_code": event.category_code,
+                "weeks": event.weeks,
+                "qualification_weeks": event.qualification_weeks,
+                "locked": event.locked,
+                "country_code": event.country_code,
+                "city": event.city,
+                "venue": event.venue,
+                "notes": event.notes,
+                "source_template_id": event.source_template_id,
+                "event_fingerprint": event.event_fingerprint,
+            }
         )
 
     def _compare_key(

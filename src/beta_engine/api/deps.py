@@ -12,6 +12,7 @@ from beta_engine.application.category_service import CategoryService
 from beta_engine.application.calendar_template_service import CalendarTemplateService
 from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.initial_player_pool_service import InitialPlayerPoolService
+from beta_engine.application.planning_calendar_apply_audit_service import PlanningCalendarApplyAuditService
 from beta_engine.application.planning_season_calendar_service import PlanningSeasonCalendarService
 from beta_engine.application.season_player_bootstrap_service import InitialPoolSeasonBootstrapService
 from beta_engine.application.season_calendar_service import SeasonCalendarService
@@ -140,6 +141,14 @@ def get_planning_season_calendar_service(request: Request) -> PlanningSeasonCale
     if configured_path is None:
         return PlanningSeasonCalendarService()
     return PlanningSeasonCalendarService(registry_path=configured_path)
+
+
+def get_planning_calendar_apply_audit_service(request: Request) -> PlanningCalendarApplyAuditService:
+    configured_path = getattr(request.app.state, "planning_calendar_apply_audit_log_path", None)
+    if configured_path is not None:
+        return PlanningCalendarApplyAuditService(audit_log_path=configured_path)
+    planning_registry_path = getattr(request.app.state, "planning_season_calendar_registry_path", None)
+    return PlanningCalendarApplyAuditService.for_planning_registry_path(planning_registry_path)
 
 
 def get_season_calendar_service(request: Request) -> SeasonCalendarService:

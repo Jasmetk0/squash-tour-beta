@@ -7,6 +7,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from beta_engine.api.deps import get_calendar_template_service, get_initial_pool_season_bootstrap_service, get_season_builder_apply_audit_service, get_season_calendar_service, get_season_range_execution_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service, get_season_template_service
 from beta_engine.api.schemas import SeasonBootstrapRequest
+from beta_engine.application.calendar_template_compare_service import (
+    CalendarTemplateCompareDryRunRequest,
+    CalendarTemplateCompareDryRunResponse,
+    CalendarTemplateCompareService,
+)
 from beta_engine.application.calendar_template_service import (
     CalendarTemplate,
     CalendarTemplateDetailResponse,
@@ -159,6 +164,19 @@ def list_calendar_templates(
     service: CalendarTemplateService = Depends(get_calendar_template_service),
 ) -> CalendarTemplateListResponse:
     return service.list_templates()
+
+
+@router.post("/calendar-templates/compare-dry-run", response_model=CalendarTemplateCompareDryRunResponse)
+def compare_calendar_template_dry_run(
+    payload: CalendarTemplateCompareDryRunRequest,
+    service: CalendarTemplateService = Depends(get_calendar_template_service),
+) -> CalendarTemplateCompareDryRunResponse:
+    try:
+        return CalendarTemplateCompareService(template_service=service).compare_dry_run(payload)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Calendar template not found: {payload.source_template_id}") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
 @router.get("/calendar-templates/{template_id}", response_model=CalendarTemplateDetailResponse)

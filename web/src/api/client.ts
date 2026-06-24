@@ -128,6 +128,8 @@ import type {
   CalendarTemplateDetailResponse,
   CalendarTemplateListResponse,
   CalendarTemplateUpsertPayload,
+  PlanningSeasonCalendarDetailResponse,
+  PlanningSeasonCalendarListResponse,
   SeasonRegistryResponse,
   SeasonTemplatesResponse,
   SeasonTemplateSlotValidationResponse,
@@ -220,6 +222,14 @@ export function updateCalendarTemplate(templateId: string, payload: CalendarTemp
 
 export function compareCalendarTemplateDryRun(payload: CalendarTemplateCompareDryRunRequest): Promise<CalendarTemplateCompareDryRunResponse> {
   return request('/admin/seasons/calendar-templates/compare-dry-run', { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function listPlanningSeasonCalendars(): Promise<PlanningSeasonCalendarListResponse> {
+  return request('/admin/seasons/planning-calendars')
+}
+
+export function getPlanningSeasonCalendar(seasonLabel: string): Promise<PlanningSeasonCalendarDetailResponse> {
+  return request(`/admin/seasons/planning-calendars/${encodeURIComponent(seasonLabel)}`)
 }
 
 export function getSeasonTemplateSlotValidation(templateId: string): Promise<SeasonTemplateSlotValidationResponse> {

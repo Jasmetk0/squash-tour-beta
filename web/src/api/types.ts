@@ -171,6 +171,7 @@ export type CalendarTemplateEventRecord = {
 
 
 export type CalendarTemplateComparePolicy = 'replace_unlocked_only' | 'copy_missing_only'
+export type CalendarTemplateCompareTargetSource = 'payload' | 'planning_calendar'
 
 export type CalendarTemplateCompareStatus =
   | 'same'
@@ -182,7 +183,8 @@ export type CalendarTemplateCompareStatus =
 export type CalendarTemplateCompareDryRunRequest = {
   target_season_label: string
   source_template_id: string
-  target_events: CalendarTemplateEventRecord[]
+  target_source?: CalendarTemplateCompareTargetSource
+  target_events?: CalendarTemplateEventRecord[]
   selected_source_event_ids?: string[] | null
   policy: CalendarTemplateComparePolicy
 }
@@ -225,13 +227,74 @@ export type CalendarTemplateCompareDryRunResponse = {
   target_season_label: string
   source_template_id: string
   policy: CalendarTemplateComparePolicy
+  target_source: CalendarTemplateCompareTargetSource
   source_template_fingerprint?: string | null
   target_fingerprint: string
+  target_calendar_fingerprint?: string | null
+  target_calendar_exists?: boolean
   diff_fingerprint: string
   summary: CalendarTemplateCompareSummary
   items: CalendarTemplateCompareItem[]
   safety: CalendarTemplateCompareSafety
   status: string
+}
+
+
+export type PlanningCalendarSafetyResponse = {
+  planning_only: boolean
+  viewer_visible: boolean
+  simulation_consumed: boolean
+  canonical_season_calendar_modified: boolean
+}
+
+export type PlanningCalendarEventRecord = {
+  id: string
+  name: string
+  category_code: string
+  weeks: number[]
+  qualification_weeks: number[]
+  locked: boolean
+  country_code?: string | null
+  city?: string | null
+  venue?: string | null
+  notes?: string | null
+  source_template_id?: string | null
+  source_template_fingerprint?: string | null
+  source_template_event_id?: string | null
+  source_template_event_fingerprint?: string | null
+  event_fingerprint?: string | null
+  apply_metadata?: Record<string, unknown> | null
+}
+
+export type PlanningSeasonCalendarRecord = {
+  season_label: string
+  normalized_season_label: string
+  status: 'draft' | 'active' | 'archived'
+  events: PlanningCalendarEventRecord[]
+  metadata: Record<string, unknown>
+  calendar_fingerprint?: string | null
+  created_at?: string | null
+  updated_at?: string | null
+}
+
+export type PlanningSeasonCalendarListResponse = {
+  calendars: PlanningSeasonCalendarRecord[]
+  source_path: string | null
+  schema_version: 'planning_season_calendars.v1'
+  registry_fingerprint: string | null
+  read_only: boolean
+  status: 'ok'
+  safety: PlanningCalendarSafetyResponse
+}
+
+export type PlanningSeasonCalendarDetailResponse = {
+  calendar: PlanningSeasonCalendarRecord | null
+  source_path: string | null
+  schema_version: 'planning_season_calendars.v1'
+  registry_fingerprint: string | null
+  read_only: boolean
+  status: 'ok'
+  safety: PlanningCalendarSafetyResponse
 }
 
 export type CalendarTemplateUpsertPayload = {

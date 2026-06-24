@@ -2,9 +2,9 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { type FormEvent, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { compareCalendarTemplateDryRun, getSeasonRegistry, getSeasonTemplates, listCalendarTemplates } from '../api/client'
+import { compareCalendarTemplateDryRun, getSeasonRegistry, getSeasonTemplates, listCalendarTemplates, listPlanningSeasonCalendars } from '../api/client'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
-import type { CalendarTemplateComparePolicy, CalendarTemplateCompareDryRunResponse, CalendarTemplateEventRecord } from '../api/types'
+import type { CalendarTemplateComparePolicy, CalendarTemplateCompareDryRunResponse, CalendarTemplateCompareTargetSource, CalendarTemplateEventRecord } from '../api/types'
 import { type CalendarEventDraft, describeCalendarEventTiming, formatSeasonWeeks } from '../tour/calendarEventModel'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -134,8 +134,10 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
   const registryQuery = useQuery({ queryKey: ['season-registry'], queryFn: getSeasonRegistry, retry: false })
   const templatesQuery = useQuery({ queryKey: ['season-templates'], queryFn: getSeasonTemplates, retry: false })
   const calendarTemplatesQuery = useQuery({ queryKey: ['calendar-templates'], queryFn: listCalendarTemplates, retry: false })
+  const planningCalendarsQuery = useQuery({ queryKey: ['planning-season-calendars'], queryFn: listPlanningSeasonCalendars, retry: false })
   const [sourceTemplateId, setSourceTemplateId] = useState('')
   const [targetSeasonLabel, setTargetSeasonLabel] = useState('2006/07')
+  const [targetSource, setTargetSource] = useState<CalendarTemplateCompareTargetSource>('payload')
   const [policy, setPolicy] = useState<CalendarTemplateComparePolicy>('replace_unlocked_only')
   const [dryRunResponse, setDryRunResponse] = useState<CalendarTemplateCompareDryRunResponse | null>(null)
 
@@ -143,6 +145,7 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
   const templates = templatesQuery.data?.templates ?? []
   const templateSlotCount = templates.reduce((total, template) => total + template.slot_count, 0)
   const calendarTemplates = calendarTemplatesQuery.data?.templates ?? []
+  const planningCalendars = planningCalendarsQuery.data?.calendars ?? []
   const targetEvents = TARGET_PREVIEW_EVENTS.map(toCalendarTemplateEventRecord)
   const compareMutation = useMutation({
     mutationFn: compareCalendarTemplateDryRun,
@@ -155,12 +158,24 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
     }
   }, [calendarTemplates, sourceTemplateId])
 
+  useEffect(() => {
+    if (targetSource === 'planning_calendar' && planningCalendars.length && !planningCalendars.some((calendar) => calendar.normalized_season_label === targetSeasonLabel || calendar.season_label === targetSeasonLabel)) {
+      setTargetSeasonLabel(planningCalendars[0].normalized_season_label)
+    }
+  }, [planningCalendars, targetSeasonLabel, targetSource])
+
   function handleCompareSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
     setDryRunResponse(null)
-    compareMutation.mutate({
+    compareMutation.mutate(targetSource === 'planning_calendar' ? {
       target_season_label: targetSeasonLabel,
       source_template_id: sourceTemplateId,
+      target_source: 'planning_calendar',
+      policy
+    } : {
+      target_season_label: targetSeasonLabel,
+      source_template_id: sourceTemplateId,
+      target_source: 'payload',
       target_events: targetEvents,
       policy
     })
@@ -283,10 +298,12 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
       <SectionCard title="Backend compare dry-run">
         <p><strong>Backend dry-run only.</strong></p>
         <ul className="dashboard-help-list">
+          <li>Compare dry-run only.</li>
+          <li>No apply/copy endpoint is called.</li>
+          <li>No planning calendar is modified.</li>
           <li>No canonical season calendar is modified.</li>
-          <li>No copy/apply endpoint is called.</li>
           <li>No Viewer, run, rankings, race, history, or simulation output changes.</li>
-          <li>Target events are still local preview rows for this phase. The dry-run endpoint is real, but no canonical season calendar is read or mutated.</li>
+          <li>Payload target mode uses local preview rows. Planning calendar target mode loads persisted planning calendars server-side.</li>
         </ul>
         {calendarTemplatesQuery.isLoading ? <p className="status">Loading persisted calendar templates…</p> : null}
         {calendarTemplatesQuery.error ? <p className="error">Failed to load persisted calendar templates: {formatApiError(calendarTemplatesQuery.error)}</p> : null}
@@ -302,9 +319,29 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
               </select>
             </label>
             <label>
-              Target season label
-              <input value={targetSeasonLabel} onChange={(event) => setTargetSeasonLabel(event.target.value)} />
+              Target source
+              <select value={targetSource} onChange={(event) => setTargetSource(event.target.value as CalendarTemplateCompareTargetSource)}>
+                <option value="payload">Local payload preview rows</option>
+                <option value="planning_calendar">Persisted planning calendar</option>
+              </select>
             </label>
+            {targetSource === 'planning_calendar' && planningCalendars.length ? (
+              <label>
+                Planning calendar
+                <select value={targetSeasonLabel} onChange={(event) => setTargetSeasonLabel(event.target.value)}>
+                  {planningCalendars.map((calendar) => (
+                    <option key={calendar.normalized_season_label} value={calendar.normalized_season_label}>
+                      {calendar.normalized_season_label} — {calendar.events.length} events — {calendar.status}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <label>
+                Target season label
+                <input value={targetSeasonLabel} onChange={(event) => setTargetSeasonLabel(event.target.value)} />
+              </label>
+            )}
             <label>
               Policy
               <select value={policy} onChange={(event) => setPolicy(event.target.value as CalendarTemplateComparePolicy)}>
@@ -312,23 +349,32 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
                 <option value="copy_missing_only">copy_missing_only</option>
               </select>
             </label>
-            <button type="submit" disabled={compareMutation.isPending || !sourceTemplateId}>Run backend compare dry-run</button>
+            {targetSource === 'payload' ? <p className="status">Payload target uses local preview target rows; target_fingerprint is derived from those rows.</p> : null}
+            {targetSource === 'planning_calendar' ? <p className="status">Target is loaded server-side from persisted planning calendars. No planning calendar is mutated. target_fingerprint uses the persisted planning calendar fingerprint.</p> : null}
+            {targetSource === 'planning_calendar' && planningCalendarsQuery.isLoading ? <p className="status">Loading persisted planning calendars…</p> : null}
+            {targetSource === 'planning_calendar' && planningCalendarsQuery.error ? <p className="error">Failed to load persisted planning calendars: {formatApiError(planningCalendarsQuery.error)}</p> : null}
+            {targetSource === 'planning_calendar' && !planningCalendarsQuery.isLoading && !planningCalendars.length ? <p className="status">No persisted planning calendars exist yet.</p> : null}
+            <button type="submit" disabled={compareMutation.isPending || !sourceTemplateId || (targetSource === 'planning_calendar' && !planningCalendars.length)}>Run backend compare dry-run</button>
           </form>
         ) : null}
-        {compareMutation.error ? <p className="error">Backend compare dry-run failed: {formatApiError(compareMutation.error)}</p> : null}
+        {compareMutation.error ? <p className="error">Backend compare dry-run failed: {formatApiError(compareMutation.error)}{targetSource === 'planning_calendar' ? ' The selected planning calendar was not found or may not exist yet.' : ''}</p> : null}
         {dryRunResponse ? (
           <div>
             <div className="dashboard-grid">
               <article className="metric-card"><span>dry_run</span><strong>{String(dryRunResponse.dry_run)}</strong></article>
               <article className="metric-card"><span>mutation_performed</span><strong>{String(dryRunResponse.mutation_performed)}</strong></article>
               <article className="metric-card"><span>status</span><strong>{dryRunResponse.status}</strong></article>
+              <article className="metric-card"><span>target_source</span><strong>{dryRunResponse.target_source}</strong></article>
               <article className="metric-card"><span>source_template_fingerprint</span><strong>{dryRunResponse.source_template_fingerprint ?? '—'}</strong></article>
               <article className="metric-card"><span>target_fingerprint</span><strong>{dryRunResponse.target_fingerprint}</strong></article>
+              <article className="metric-card"><span>target_calendar_fingerprint</span><strong>{dryRunResponse.target_calendar_fingerprint ?? '—'}</strong></article>
+              <article className="metric-card"><span>target_calendar_exists</span><strong>{String(dryRunResponse.target_calendar_exists ?? false)}</strong></article>
               <article className="metric-card"><span>diff_fingerprint</span><strong>{dryRunResponse.diff_fingerprint}</strong></article>
               <article className="metric-card"><span>safety.read_only</span><strong>{String(dryRunResponse.safety.read_only)}</strong></article>
               <article className="metric-card"><span>safety.apply_endpoint_enabled</span><strong>{String(dryRunResponse.safety.apply_endpoint_enabled)}</strong></article>
             </div>
             <p>{dryRunResponse.safety.message}</p>
+            <p>{dryRunResponse.target_source === 'planning_calendar' ? 'Planning calendar mode: target_fingerprint uses the persisted planning calendar fingerprint.' : 'Payload mode: target_fingerprint is derived from local preview target rows.'}</p>
             <table>
               <thead><tr><th>same</th><th>missing_from_target</th><th>only_in_target</th><th>conflict</th><th>locked_target_preserved</th><th>selected source</th><th>source</th><th>target</th></tr></thead>
               <tbody><tr><td>{dryRunResponse.summary.same_count}</td><td>{dryRunResponse.summary.missing_from_target_count}</td><td>{dryRunResponse.summary.only_in_target_count}</td><td>{dryRunResponse.summary.conflict_count}</td><td>{dryRunResponse.summary.locked_target_preserved_count}</td><td>{dryRunResponse.summary.selected_source_event_count}</td><td>{dryRunResponse.summary.source_event_count}</td><td>{dryRunResponse.summary.target_event_count}</td></tr></tbody>

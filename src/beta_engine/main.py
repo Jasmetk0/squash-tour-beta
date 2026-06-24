@@ -27,6 +27,8 @@ def create_app(
     planning_season_calendar_registry_path: str | None = None,
     calendar_templates_registry_path: str | None = None,
     season_builder_apply_audit_log_path: str | None = None,
+    planning_calendar_apply_audit_log_path: str | None = None,
+    planning_calendar_apply_backup_dir: str | None = None,
     season_entry_lists_registry_path: str | None = None,
     season_draws_registry_path: str | None = None,
     season_matches_registry_path: str | None = None,
@@ -69,6 +71,10 @@ def create_app(
         app.state.calendar_templates_registry_path = calendar_templates_registry_path
     if season_builder_apply_audit_log_path is not None:
         app.state.season_builder_apply_audit_log_path = season_builder_apply_audit_log_path
+    if planning_calendar_apply_audit_log_path is not None:
+        app.state.planning_calendar_apply_audit_log_path = planning_calendar_apply_audit_log_path
+    if planning_calendar_apply_backup_dir is not None:
+        app.state.planning_calendar_apply_backup_dir = planning_calendar_apply_backup_dir
     if season_entry_lists_registry_path is not None:
         app.state.season_entry_lists_registry_path = season_entry_lists_registry_path
     if season_draws_registry_path is not None:

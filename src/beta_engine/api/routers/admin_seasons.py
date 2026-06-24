@@ -6,7 +6,7 @@ import json
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from beta_engine.api.deps import get_calendar_template_service, get_initial_pool_season_bootstrap_service, get_planning_season_calendar_service, get_season_builder_apply_audit_service, get_season_calendar_service, get_season_range_execution_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service, get_season_template_service
+from beta_engine.api.deps import get_calendar_template_service, get_initial_pool_season_bootstrap_service, get_planning_calendar_apply_template_service, get_planning_season_calendar_service, get_season_builder_apply_audit_service, get_season_calendar_service, get_season_range_execution_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service, get_season_template_service
 from beta_engine.api.schemas import SeasonBootstrapRequest
 from beta_engine.application.calendar_template_apply_contract_service import (
     CalendarTemplateApplyContractReadinessRequest,
@@ -24,6 +24,11 @@ from beta_engine.application.calendar_template_service import (
     CalendarTemplateDetailResponse,
     CalendarTemplateListResponse,
     CalendarTemplateService,
+)
+from beta_engine.application.planning_calendar_apply_template_service import (
+    PlanningCalendarApplyTemplateCommandRequest,
+    PlanningCalendarApplyTemplateCommandResponse,
+    PlanningCalendarApplyTemplateCommandService,
 )
 from beta_engine.application.planning_season_calendar_service import (
     PLANNING_SEASON_CALENDAR_SCHEMA_VERSION,
@@ -223,6 +228,34 @@ def get_planning_season_calendar(
         schema_version=registry.schema_version,
         registry_fingerprint=registry.registry_fingerprint,
     )
+
+
+@router.post("/planning-calendars/{season_label:path}/apply-template", response_model=PlanningCalendarApplyTemplateCommandResponse)
+def apply_calendar_template_to_planning_calendar(
+    season_label: str,
+    payload: PlanningCalendarApplyTemplateCommandRequest,
+    service: PlanningCalendarApplyTemplateCommandService = Depends(get_planning_calendar_apply_template_service),
+) -> PlanningCalendarApplyTemplateCommandResponse:
+    try:
+        response = service.apply_template(target_season_label=season_label, request=payload)
+    except KeyError as exc:
+        detail = str(exc).strip("'\"")
+        if detail == payload.source_template_id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Calendar template not found: {payload.source_template_id}") from exc
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Planning season calendar not found: {season_label}") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    if response.mutation_performed:
+        return response
+    joined_errors = " ".join(response.validation_errors)
+    if "not supported" in joined_errors:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=response.model_dump(mode="json"))
+    if "fingerprint" in joined_errors:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=response.model_dump(mode="json"))
+    if "Ambiguous" in joined_errors or "ambiguous" in joined_errors:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=response.model_dump(mode="json"))
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=response.model_dump(mode="json"))
 
 @router.get("/registry", response_model=SeasonRegistryResponse)
 def get_season_registry(service: SeasonRegistryService = Depends(get_season_registry_service)) -> SeasonRegistryResponse:

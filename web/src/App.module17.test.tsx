@@ -44,6 +44,8 @@ const api = vi.hoisted(() => ({
   getSeasonCalendar: vi.fn(),
   getSeasonTemplates: vi.fn(),
   listCalendarTemplates: vi.fn(),
+  listPlanningSeasonCalendars: vi.fn(),
+  getPlanningSeasonCalendar: vi.fn(),
   getCalendarTemplate: vi.fn(),
   createCalendarTemplate: vi.fn(),
   updateCalendarTemplate: vi.fn(),
@@ -373,13 +375,25 @@ describe('Module 17 pages through routes', () => {
       status: 'ok',
       schema_version: 'calendar_templates.v1'
     })
+    api.listPlanningSeasonCalendars.mockResolvedValue({
+      calendars: [],
+      source_path: 'config/world/planning_season_calendars.json',
+      schema_version: 'planning_season_calendars.v1',
+      registry_fingerprint: 'pl_reg_empty',
+      read_only: true,
+      status: 'ok',
+      safety: { planning_only: true, viewer_visible: false, simulation_consumed: false, canonical_season_calendar_modified: false }
+    })
     api.compareCalendarTemplateDryRun.mockResolvedValue({
       dry_run: true,
       mutation_performed: false,
       target_season_label: '2006/07',
       source_template_id: 'template-a',
       policy: 'replace_unlocked_only',
+      target_source: 'payload',
       source_template_fingerprint: 'source-fp',
+      target_calendar_fingerprint: null,
+      target_calendar_exists: false,
       target_fingerprint: 'target-fp',
       diff_fingerprint: 'diff-fp',
       summary: { same_count: 1, missing_from_target_count: 1, only_in_target_count: 0, conflict_count: 0, locked_target_preserved_count: 1, selected_source_event_count: 2, source_event_count: 2, target_event_count: 2 },
@@ -900,11 +914,14 @@ describe('Module 17 pages through routes', () => {
 
     expect(await screen.findByRole('heading', { name: 'Backend compare dry-run' })).toBeInTheDocument()
     expect(screen.getByText('Backend dry-run only.')).toBeInTheDocument()
+    expect(screen.getByText('Compare dry-run only.')).toBeInTheDocument()
     expect(screen.getByText('No canonical season calendar is modified.')).toBeInTheDocument()
-    expect(screen.getByText('No copy/apply endpoint is called.')).toBeInTheDocument()
+    expect(screen.getByText('No apply/copy endpoint is called.')).toBeInTheDocument()
+    expect(screen.getByText('No planning calendar is modified.')).toBeInTheDocument()
     expect(screen.getByText('No Viewer, run, rankings, race, history, or simulation output changes.')).toBeInTheDocument()
-    expect(screen.getByText(/Target events are still local preview rows for this phase/)).toBeInTheDocument()
+    expect(screen.getByText(/Payload target mode uses local preview rows/)).toBeInTheDocument()
     expect(await screen.findByRole('option', { name: 'Template A' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Target source')).toHaveValue('payload')
     expect(screen.getByLabelText('Target season label')).toHaveValue('2006/07')
     expect(screen.getByLabelText('Policy')).toHaveValue('replace_unlocked_only')
     expect(screen.getByRole('heading', { name: 'Two-pane compare/copy workspace preview' })).toBeInTheDocument()
@@ -917,6 +934,7 @@ describe('Module 17 pages through routes', () => {
       target_season_label: '2006/07',
       source_template_id: 'template-a',
       policy: 'replace_unlocked_only',
+      target_source: 'payload',
       target_events: [
         expect.objectContaining({ id: 'target-nemarque-open-2006-07', name: 'Némarque Open', category_code: 'DIAMOND', qualification_weeks: [5], weeks: [6, 7], locked: true }),
         expect.objectContaining({ id: 'target-world-championship-2006-07', name: 'World Championship', category_code: 'WORLD_CHAMPIONSHIP', qualification_weeks: [48], weeks: [49, 50], locked: true })
@@ -931,6 +949,93 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText('W6–W7').length).toBeGreaterThan(0)
     expect(screen.getAllByText('W5').length).toBeGreaterThan(0)
     expect(screen.queryByRole('button', { name: /copy|apply|save|archive|delete|simulate/i })).not.toBeInTheDocument()
+  })
+
+  it('runs Admin Calendar Compare with a persisted planning calendar target', async () => {
+    api.listCalendarTemplates.mockResolvedValueOnce({
+      templates: [{ id: 'template-a', name: 'Template A', description: 'Persisted template', status: 'draft', events: [], template_fingerprint: 'tpl-a' }],
+      source_path: 'config/world/calendar_templates.json',
+      status: 'ok',
+      schema_version: 'calendar_templates.v1'
+    })
+    api.listPlanningSeasonCalendars.mockResolvedValueOnce({
+      calendars: [{ season_label: '2000/01', normalized_season_label: '2000/2001', status: 'draft', events: [{ id: 'pl-a', name: 'Planning A', category_code: 'DIAMOND', weeks: [6], qualification_weeks: [5], locked: true, event_fingerprint: 'pl_evt_a' }], metadata: {}, calendar_fingerprint: 'pl_cal_abc' }],
+      source_path: 'config/world/planning_season_calendars.json',
+      schema_version: 'planning_season_calendars.v1',
+      registry_fingerprint: 'pl_reg_abc',
+      read_only: true,
+      status: 'ok',
+      safety: { planning_only: true, viewer_visible: false, simulation_consumed: false, canonical_season_calendar_modified: false }
+    })
+    api.compareCalendarTemplateDryRun.mockResolvedValueOnce({
+      dry_run: true,
+      mutation_performed: false,
+      target_season_label: '2000/2001',
+      source_template_id: 'template-a',
+      policy: 'replace_unlocked_only',
+      target_source: 'planning_calendar',
+      source_template_fingerprint: 'source-fp',
+      target_fingerprint: 'pl_cal_abc',
+      target_calendar_fingerprint: 'pl_cal_abc',
+      target_calendar_exists: true,
+      diff_fingerprint: 'diff-planning',
+      summary: { same_count: 1, missing_from_target_count: 0, only_in_target_count: 0, conflict_count: 0, locked_target_preserved_count: 0, selected_source_event_count: 1, source_event_count: 1, target_event_count: 1 },
+      items: [],
+      safety: { read_only: true, mutation_performed: false, apply_endpoint_enabled: false, message: 'Dry-run only; no mutation performed.' },
+      status: 'ok'
+    })
+
+    renderAppAt('/admin/tour-seasons/compare')
+
+    expect(await screen.findByRole('option', { name: 'Template A' })).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Target source'), { target: { value: 'planning_calendar' } })
+    expect(await screen.findByRole('option', { name: /2000\/2001 — 1 events — draft/ })).toBeInTheDocument()
+    expect(screen.getByText('Target is loaded server-side from persisted planning calendars. No planning calendar is mutated. target_fingerprint uses the persisted planning calendar fingerprint.')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run backend compare dry-run' }))
+
+    await waitFor(() => expect(api.compareCalendarTemplateDryRun).toHaveBeenCalledTimes(1))
+    const [dryRunPayload] = api.compareCalendarTemplateDryRun.mock.calls[0]
+    expect(dryRunPayload).toEqual({
+      target_season_label: '2000/2001',
+      source_template_id: 'template-a',
+      target_source: 'planning_calendar',
+      policy: 'replace_unlocked_only'
+    })
+    expect(dryRunPayload).not.toHaveProperty('target_events')
+    expect(await screen.findByText('planning_calendar')).toBeInTheDocument()
+    expect(screen.getAllByText('pl_cal_abc').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('true').length).toBeGreaterThan(0)
+    expect(screen.getByText('Planning calendar mode: target_fingerprint uses the persisted planning calendar fingerprint.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /copy|apply|save|archive|delete|simulate/i })).not.toBeInTheDocument()
+  })
+
+  it('shows empty planning calendar message and disables planning target dry-run while keeping payload available', async () => {
+    api.listCalendarTemplates.mockResolvedValueOnce({
+      templates: [{ id: 'template-a', name: 'Template A', description: 'Persisted template', status: 'draft', events: [], template_fingerprint: 'tpl-a' }],
+      source_path: 'config/world/calendar_templates.json',
+      status: 'ok',
+      schema_version: 'calendar_templates.v1'
+    })
+    api.listPlanningSeasonCalendars.mockResolvedValueOnce({
+      calendars: [],
+      source_path: 'config/world/planning_season_calendars.json',
+      schema_version: 'planning_season_calendars.v1',
+      registry_fingerprint: 'pl_reg_empty',
+      read_only: true,
+      status: 'ok',
+      safety: { planning_only: true, viewer_visible: false, simulation_consumed: false, canonical_season_calendar_modified: false }
+    })
+
+    renderAppAt('/admin/tour-seasons/compare')
+
+    expect(await screen.findByRole('option', { name: 'Template A' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Run backend compare dry-run' })).toBeEnabled()
+    fireEvent.change(screen.getByLabelText('Target source'), { target: { value: 'planning_calendar' } })
+    expect(screen.getByText('No persisted planning calendars exist yet.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Run backend compare dry-run' })).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Target source'), { target: { value: 'payload' } })
+    expect(screen.getByRole('button', { name: 'Run backend compare dry-run' })).toBeEnabled()
   })
 
   it('shows safe create-template link when no persisted calendar templates exist on compare page', async () => {

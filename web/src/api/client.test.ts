@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   compareCalendarTemplateDryRun,
   createCalendarTemplate,
+  getPlanningSeasonCalendar,
+  listPlanningSeasonCalendars,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
   validateFutureApplyRequestPreview
@@ -10,6 +12,8 @@ import {
 import type {
   CalendarTemplateCompareDryRunRequest,
   CalendarTemplateUpsertPayload,
+  PlanningSeasonCalendarDetailResponse,
+  PlanningSeasonCalendarListResponse,
   SeasonBuilderApplyCreateOnlyCommandRequest,
   SeasonBuilderApplyCreateOnlyCommandResponse,
   SeasonBuilderFutureApplyRequestValidationPreviewRequest,
@@ -266,6 +270,7 @@ describe('compareCalendarTemplateDryRun', () => {
       target_season_label: '2006/07',
       source_template_id: 'template-a',
       policy: 'replace_unlocked_only',
+      target_source: 'payload',
       target_events: [{
         id: 'target-nemarque-open-2006-07',
         name: 'Némarque Open',
@@ -281,7 +286,10 @@ describe('compareCalendarTemplateDryRun', () => {
       target_season_label: '2006/07',
       source_template_id: 'template-a',
       policy: 'replace_unlocked_only',
+      target_source: 'payload',
       source_template_fingerprint: 'source-fp',
+      target_calendar_fingerprint: null,
+      target_calendar_exists: false,
       target_fingerprint: 'target-fp',
       diff_fingerprint: 'diff-fp',
       summary: { same_count: 1, missing_from_target_count: 0, only_in_target_count: 0, conflict_count: 0, locked_target_preserved_count: 1, selected_source_event_count: 1, source_event_count: 1, target_event_count: 1 },
@@ -301,6 +309,91 @@ describe('compareCalendarTemplateDryRun', () => {
     const [, init] = vi.mocked(globalThis.fetch).mock.calls[0]
     expect(JSON.parse(String((init as RequestInit).body))).toEqual(payload)
     expect(result).toEqual(responseBody)
+  })
+
+  it('can send planning_calendar target source without target_events', async () => {
+    const payload: CalendarTemplateCompareDryRunRequest = {
+      target_season_label: '2000/2001',
+      source_template_id: 'template-a',
+      target_source: 'planning_calendar',
+      policy: 'replace_unlocked_only'
+    }
+    const responseBody = {
+      dry_run: true,
+      mutation_performed: false,
+      target_season_label: '2000/2001',
+      source_template_id: 'template-a',
+      policy: 'replace_unlocked_only',
+      target_source: 'planning_calendar',
+      source_template_fingerprint: 'source-fp',
+      target_fingerprint: 'pl_cal_abc',
+      target_calendar_fingerprint: 'pl_cal_abc',
+      target_calendar_exists: true,
+      diff_fingerprint: 'diff-fp',
+      summary: { same_count: 1, missing_from_target_count: 0, only_in_target_count: 0, conflict_count: 0, locked_target_preserved_count: 0, selected_source_event_count: 1, source_event_count: 1, target_event_count: 1 },
+      items: [],
+      safety: { read_only: true, mutation_performed: false, apply_endpoint_enabled: false, message: 'Dry-run only.' },
+      status: 'ok'
+    }
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(responseBody), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+
+    await compareCalendarTemplateDryRun(payload)
+
+    const [, init] = vi.mocked(globalThis.fetch).mock.calls[0]
+    const sentPayload = JSON.parse(String((init as RequestInit).body))
+    expect(sentPayload).toEqual(payload)
+    expect(sentPayload).not.toHaveProperty('target_events')
+  })
+
+})
+
+describe('planning season calendar API client', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  const listResponse: PlanningSeasonCalendarListResponse = {
+    calendars: [],
+    source_path: 'config/world/planning_season_calendars.json',
+    schema_version: 'planning_season_calendars.v1',
+    registry_fingerprint: 'pl_reg_empty',
+    read_only: true,
+    status: 'ok',
+    safety: { planning_only: true, viewer_visible: false, simulation_consumed: false, canonical_season_calendar_modified: false }
+  }
+
+  it('listPlanningSeasonCalendars uses GET /admin/seasons/planning-calendars', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(listResponse), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+
+    const result = await listPlanningSeasonCalendars()
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/admin/seasons/planning-calendars',
+      expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
+    )
+    expect(result).toEqual(listResponse)
+  })
+
+  it('getPlanningSeasonCalendar encodes season labels', async () => {
+    const detailResponse: PlanningSeasonCalendarDetailResponse = {
+      calendar: null,
+      source_path: 'config/world/planning_season_calendars.json',
+      schema_version: 'planning_season_calendars.v1',
+      registry_fingerprint: 'pl_reg_empty',
+      read_only: true,
+      status: 'ok',
+      safety: { planning_only: true, viewer_visible: false, simulation_consumed: false, canonical_season_calendar_modified: false }
+    }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(detailResponse), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+
+    const result = await getPlanningSeasonCalendar('2000/01')
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/admin/seasons/planning-calendars/2000%2F01',
+      expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
+    )
+    expect(result).toEqual(detailResponse)
   })
 })
 

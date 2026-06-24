@@ -17,6 +17,7 @@ from beta_engine.application.calendar_template_compare_service import (
     CalendarTemplateCompareDryRunRequest,
     CalendarTemplateCompareDryRunResponse,
     CalendarTemplateCompareService,
+    PlanningCalendarTargetNotFoundError,
 )
 from beta_engine.application.calendar_template_service import (
     CalendarTemplate,
@@ -244,9 +245,15 @@ def list_calendar_templates(
 def compare_calendar_template_dry_run(
     payload: CalendarTemplateCompareDryRunRequest,
     service: CalendarTemplateService = Depends(get_calendar_template_service),
+    planning_calendar_service: PlanningSeasonCalendarService = Depends(get_planning_season_calendar_service),
 ) -> CalendarTemplateCompareDryRunResponse:
     try:
-        return CalendarTemplateCompareService(template_service=service).compare_dry_run(payload)
+        return CalendarTemplateCompareService(
+            template_service=service,
+            planning_calendar_service=planning_calendar_service,
+        ).compare_dry_run(payload)
+    except PlanningCalendarTargetNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Planning season calendar not found: {payload.target_season_label}") from exc
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Calendar template not found: {payload.source_template_id}") from exc
     except ValueError as exc:

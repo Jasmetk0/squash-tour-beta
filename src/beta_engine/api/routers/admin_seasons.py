@@ -7,6 +7,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from beta_engine.api.deps import get_calendar_template_service, get_initial_pool_season_bootstrap_service, get_season_builder_apply_audit_service, get_season_calendar_service, get_season_range_execution_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service, get_season_template_service
 from beta_engine.api.schemas import SeasonBootstrapRequest
+from beta_engine.application.calendar_template_apply_contract_service import (
+    CalendarTemplateApplyContractReadinessRequest,
+    CalendarTemplateApplyContractReadinessResponse,
+    CalendarTemplateApplyContractService,
+)
 from beta_engine.application.calendar_template_compare_service import (
     CalendarTemplateCompareDryRunRequest,
     CalendarTemplateCompareDryRunResponse,
@@ -178,6 +183,24 @@ def compare_calendar_template_dry_run(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
+
+
+
+@router.post("/calendar-templates/apply-contract-readiness", response_model=CalendarTemplateApplyContractReadinessResponse)
+def calendar_template_apply_contract_readiness(
+    payload: CalendarTemplateApplyContractReadinessRequest,
+    template_service: CalendarTemplateService = Depends(get_calendar_template_service),
+    calendar_service: SeasonCalendarService = Depends(get_season_calendar_service),
+) -> CalendarTemplateApplyContractReadinessResponse:
+    try:
+        return CalendarTemplateApplyContractService(
+            template_service=template_service,
+            calendar_service=calendar_service,
+        ).build_readiness(payload)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Calendar template not found: {payload.source_template_id}") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 @router.get("/calendar-templates/{template_id}", response_model=CalendarTemplateDetailResponse)
 def get_calendar_template(

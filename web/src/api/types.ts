@@ -169,6 +169,14 @@ export type CalendarTemplateEventRecord = {
   event_fingerprint?: string | null
 }
 
+export type CalendarTemplateUpsertPayload = {
+  id: string
+  name: string
+  description: string
+  status: 'draft' | 'active' | 'archived'
+  events: CalendarTemplateEventRecord[]
+}
+
 export type CalendarTemplateRecord = {
   id: string
   name: string

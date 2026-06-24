@@ -3,7 +3,112 @@ import { Link } from 'react-router-dom'
 
 import { getSeasonRegistry, getSeasonTemplates } from '../api/client'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
+import { type CalendarEventDraft, describeCalendarEventTiming } from '../tour/calendarEventModel'
 import { formatApiError } from '../utils/apiErrors'
+
+
+const TARGET_PREVIEW_EVENTS: CalendarEventDraft[] = [
+  {
+    id: 'target-nemarque-open-2006-07',
+    name: 'Némarque Open',
+    categoryCode: 'DIAMOND',
+    qualificationWeeks: [5],
+    weeks: [6, 7],
+    locked: true,
+    status: 'canonical'
+  },
+  {
+    id: 'target-world-championship-2006-07',
+    name: 'World Championship',
+    categoryCode: 'WORLD_CHAMPIONSHIP',
+    qualificationWeeks: [48],
+    weeks: [49, 50],
+    locked: true,
+    status: 'canonical'
+  }
+]
+
+const SOURCE_PREVIEW_EVENTS: CalendarEventDraft[] = [
+  {
+    id: 'source-nemarque-open-sandbox',
+    name: 'Némarque Open',
+    categoryCode: 'DIAMOND',
+    qualificationWeeks: [5],
+    weeks: [6, 7],
+    locked: true,
+    status: 'template'
+  },
+  {
+    id: 'source-ameriga-open-sandbox',
+    name: 'Ameriga Open',
+    categoryCode: 'DIAMOND',
+    qualificationWeeks: [43],
+    weeks: [44, 45],
+    locked: true,
+    status: 'template'
+  },
+  {
+    id: 'source-world-championship-sandbox',
+    name: 'World Championship',
+    categoryCode: 'WORLD_CHAMPIONSHIP',
+    qualificationWeeks: [48],
+    weeks: [49, 50],
+    locked: true,
+    status: 'template'
+  },
+  {
+    id: 'source-world-tour-finals-sandbox',
+    name: 'World Tour Finals',
+    categoryCode: 'WORLD_TOUR_FINALS',
+    qualificationWeeks: [],
+    weeks: [55],
+    locked: true,
+    status: 'template'
+  }
+]
+
+const FUTURE_COPY_APPLY_ACTIONS = [
+  'Copy selected source events — planned',
+  'Replace unlocked target events only — planned',
+  'Preserve locked target events — planned',
+  'Unlock target event before overwrite — planned',
+  'Preview diff before apply — planned',
+  'Confirm apply with audit log — planned'
+]
+
+function eventComparisonKey(event: CalendarEventDraft): string {
+  return `${event.name}|${event.categoryCode}|${event.weeks.join(',')}|${event.qualificationWeeks.join(',')}`
+}
+
+function getPreviewComparisonSummary(): Array<{ status: string, events: string[] }> {
+  const targetKeys = new Map(TARGET_PREVIEW_EVENTS.map((event) => [eventComparisonKey(event), event]))
+  const sourceKeys = new Map(SOURCE_PREVIEW_EVENTS.map((event) => [eventComparisonKey(event), event]))
+
+  const same = SOURCE_PREVIEW_EVENTS.filter((event) => targetKeys.has(eventComparisonKey(event))).map((event) => event.name)
+  const missingFromTarget = SOURCE_PREVIEW_EVENTS.filter((event) => !targetKeys.has(eventComparisonKey(event))).map((event) => event.name)
+  const onlyInTarget = TARGET_PREVIEW_EVENTS.filter((event) => !sourceKeys.has(eventComparisonKey(event))).map((event) => event.name)
+  const lockedTargetPreserved = TARGET_PREVIEW_EVENTS.filter((event) => event.locked).map((event) => event.name)
+
+  return [
+    { status: 'Same', events: same },
+    { status: 'Missing from target', events: missingFromTarget },
+    { status: 'Only in target', events: onlyInTarget },
+    { status: 'Conflict', events: [] },
+    { status: 'Locked target preserved', events: lockedTargetPreserved }
+  ]
+}
+
+function PreviewEventList({ events }: { events: CalendarEventDraft[] }): JSX.Element {
+  return (
+    <ul className="dashboard-help-list">
+      {events.map((event) => (
+        <li key={event.id}>
+          <strong>{event.name}</strong> — {event.categoryCode} — {describeCalendarEventTiming(event)} — {event.locked ? 'Locked' : 'Unlocked'}
+        </li>
+      ))}
+    </ul>
+  )
+}
 
 export function AdminTourSeasonsComparePage(): JSX.Element {
   const registryQuery = useQuery({ queryKey: ['season-registry'], queryFn: getSeasonRegistry, retry: false })
@@ -96,6 +201,43 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
         )}
       </SectionCard>
 
+
+      <SectionCard title="Two-pane compare/copy workspace preview">
+        <p><strong>Preview only — not persisted, not applied, not simulation data.</strong></p>
+        <p>This Admin-only foundation uses local example CalendarEventDraft rows with weeks and qualificationWeeks vocabulary. It does not call copy/apply APIs.</p>
+        <div className="dashboard-grid">
+          <article className="metric-card">
+            <span>Target canonical season</span>
+            <strong>2006/07</strong>
+            <p>Left pane: target canonical season being edited in a future workflow.</p>
+            <PreviewEventList events={TARGET_PREVIEW_EVENTS} />
+          </article>
+          <article className="metric-card">
+            <span>Source calendar/template</span>
+            <strong>Default World Tour Skeleton Sandbox</strong>
+            <p>Right pane: source template or source season used for inspiration/copying in a future workflow.</p>
+            <PreviewEventList events={SOURCE_PREVIEW_EVENTS} />
+          </article>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Comparison summary preview">
+        <p>Preview only — this local deterministic comparison does not inspect persisted calendars or templates.</p>
+        <ul className="dashboard-help-list">
+          {getPreviewComparisonSummary().map((summary) => (
+            <li key={summary.status}>
+              <strong>{summary.status}:</strong> {summary.events.length ? summary.events.join(', ') : 'None in preview'}
+            </li>
+          ))}
+        </ul>
+      </SectionCard>
+
+      <SectionCard title="Future copy/apply actions">
+        <ul className="dashboard-help-list">
+          {FUTURE_COPY_APPLY_ACTIONS.map((action) => <li key={action}>{action}</li>)}
+        </ul>
+      </SectionCard>
+
       <SectionCard title="Future compare states (planned)">
         <p>Planned statuses: Same, Modified, Missing from current, Only in current, and Conflict.</p>
         <p>Planned actions: Apply to this season, Replace current, Keep current, Ignore, and Open editor.</p>
@@ -104,6 +246,7 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
 
       <SectionCard title="Navigation">
         <p><Link to="/admin/tour-seasons/season-templates">Open Season Templates</Link></p>
+        <p><Link to="/admin/tour-seasons/season-templates/draft-sandbox">Open Draft Template Sandbox</Link></p>
         <p><Link to="/admin/tour-seasons/season-registry">Open Season Registry</Link></p>
         <p><Link to="/admin/seasons">Open Seasons</Link></p>
         <p><Link to="/admin/tour-seasons/validation">Open Calendar Validation</Link></p>

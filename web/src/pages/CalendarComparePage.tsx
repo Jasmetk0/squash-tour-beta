@@ -218,14 +218,21 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
     <section className="panel">
       <PageIntro
         title="Calendar Compare / Apply"
-        subtitle="Read-only comparison foundation for templates, registry seasons, and future concrete season calendars."
+        subtitle="Dry-run compare by default, with guarded copy_missing_only apply for persisted planning calendars."
       />
 
-      <SectionCard title="Read-only foundation notes">
+      <SectionCard title="Calendar compare and apply safety notes">
         <ul className="dashboard-help-list">
-          <li>Comparison foundation only.</li>
-          <li>Apply/Replace workflows are planned and not enabled.</li>
-          <li>No concrete season calendars are created or modified on this page.</li>
+          <li>Compare remains dry-run by default.</li>
+          <li>Payload mode remains dry-run only.</li>
+          <li>Only planning-calendar copy_missing_only apply is enabled after a reviewed persisted planning-calendar dry-run; replace/update workflows remain disabled.</li>
+          <li>replace_unlocked_only is not enabled.</li>
+          <li>replace_all is not enabled.</li>
+          <li>No existing planning event is updated.</li>
+          <li>No locked event is changed.</li>
+          <li>No target-only event is deleted.</li>
+          <li>No canonical season calendar is modified.</li>
+          <li>No Viewer, rankings, race, history, run data, or simulation output changes.</li>
         </ul>
       </SectionCard>
 
@@ -337,7 +344,7 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
           <li>No locked event is changed.</li>
           <li>No target-only event is deleted.</li>
           <li>No canonical season calendar is modified.</li>
-          <li>No Viewer, run, rankings, race, history, or simulation output changes.</li>
+          <li>No Viewer, rankings, race, history, run data, or simulation output changes.</li>
           <li>Payload target mode uses local preview rows. Planning calendar target mode loads persisted planning calendars server-side.</li>
         </ul>
         {calendarTemplatesQuery.isLoading ? <p className="status">Loading persisted calendar templates…</p> : null}
@@ -426,7 +433,7 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
             <li>No target-only event is deleted.</li>
             <li>No canonical season calendar is modified.</li>
             <li>No simulation is invoked.</li>
-            <li>No Viewer, rankings, simulation, history, race, or run data changes.</li>
+            <li>No Viewer, rankings, race, history, run data, or simulation output changes.</li>
           </ul>
           <div className="dashboard-grid">
             <article className="metric-card"><span>source_template_id</span><strong>{sourceTemplateId}</strong></article>

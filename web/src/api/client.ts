@@ -130,6 +130,8 @@ import type {
   CalendarTemplateUpsertPayload,
   PlanningSeasonCalendarDetailResponse,
   PlanningSeasonCalendarListResponse,
+  PlanningCalendarApplyTemplateCommandRequest,
+  PlanningCalendarApplyTemplateCommandResponse,
   SeasonRegistryResponse,
   SeasonTemplatesResponse,
   SeasonTemplateSlotValidationResponse,
@@ -230,6 +232,13 @@ export function listPlanningSeasonCalendars(): Promise<PlanningSeasonCalendarLis
 
 export function getPlanningSeasonCalendar(seasonLabel: string): Promise<PlanningSeasonCalendarDetailResponse> {
   return request(`/admin/seasons/planning-calendars/${encodeURIComponent(seasonLabel)}`)
+}
+
+export function applyCalendarTemplateToPlanningCalendar(
+  seasonLabel: string,
+  payload: PlanningCalendarApplyTemplateCommandRequest
+): Promise<PlanningCalendarApplyTemplateCommandResponse> {
+  return request(`/admin/seasons/planning-calendars/${encodeURIComponent(seasonLabel)}/apply-template`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function getSeasonTemplateSlotValidation(templateId: string): Promise<SeasonTemplateSlotValidationResponse> {

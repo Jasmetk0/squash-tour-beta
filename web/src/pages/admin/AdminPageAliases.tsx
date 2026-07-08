@@ -38,6 +38,11 @@ export function AdminWorldPage(): JSX.Element {
       <LinkCardGrid
         cards={[
           {
+            title: 'World Library',
+            description: 'Browse registered World Packages, including the built-in read-only Official FAX World.',
+            to: '/admin/world/library'
+          },
+          {
             title: 'Countries',
             description: 'Edit country inputs, country model data, style DNA, and future country profiles.',
             to: '/admin/world/countries'

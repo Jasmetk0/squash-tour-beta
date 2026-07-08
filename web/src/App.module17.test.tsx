@@ -24,6 +24,8 @@ const api = vi.hoisted(() => ({
   getFinalsQualification: vi.fn(),
   getFinalsResult: vi.fn(),
   simulateWorldTourFinals: vi.fn(),
+  listWorldPackages: vi.fn(),
+  getWorldPackage: vi.fn(),
   getLatestRollover: vi.fn(),
   getRolloverBySeason: vi.fn(),
   getPlayerTransitions: vi.fn(),
@@ -268,6 +270,8 @@ describe('Module 17 pages through routes', () => {
     localStorage.clear()
     vi.clearAllMocks()
     api.listRuns.mockResolvedValue({ runs: [] })
+    api.listWorldPackages.mockResolvedValue({ packages: [{ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'canonical_config', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 3, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json' } }] })
+    api.getWorldPackage.mockResolvedValue({ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'canonical_config', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 3, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json' } })
     api.listCountries.mockResolvedValue({
       countries: [
         {
@@ -2960,9 +2964,46 @@ describe('Module 17 pages through routes', () => {
     renderAppAt('/admin/world')
     expect(await screen.findByRole('heading', { name: 'World' })).toBeInTheDocument()
     expect(screen.getByText('Manage country inputs and expected talent output used by the FAX squash simulation engine.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /World Library Browse registered World Packages/i })).toHaveAttribute('href', '/admin/world/library')
     expect(screen.getByRole('link', { name: /Countries Edit country inputs/i })).toHaveAttribute('href', '/admin/world/countries')
     expect(screen.getByRole('link', { name: /Talent Preview Preview expected Elite Talents/i })).toHaveAttribute('href', '/admin/world/talent-preview')
     expect(screen.queryByRole('link', { name: 'Country Momentum' })).not.toBeInTheDocument()
+  })
+
+  it('renders read-only World Library from the registry', async () => {
+    renderAppAt('/admin/world/library')
+
+    expect(await screen.findByRole('heading', { name: 'World Library' })).toBeInTheDocument()
+    expect(api.listWorldPackages).toHaveBeenCalled()
+    expect(await screen.findByRole('cell', { name: 'Official FAX World' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'official_fax_world' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'official' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'active' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'canonical_config' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'Read-only' })).toBeInTheDocument()
+    expect(screen.getByText('Usage not tracked yet')).toBeInTheDocument()
+    expect(screen.getByTitle('abcdef1234567890fedcba0987654321')).toHaveTextContent('abcdef12…87654321')
+    expect(screen.getByRole('link', { name: 'View details' })).toHaveAttribute('href', '/admin/world/library/official_fax_world')
+  })
+
+  it('opens World Library detail as read-only', async () => {
+    renderAppAt('/admin/world/library/official_fax_world')
+
+    expect(await screen.findByRole('heading', { name: 'World Package Details' })).toBeInTheDocument()
+    expect(api.getWorldPackage).toHaveBeenCalledWith('official_fax_world')
+    expect(await screen.findByText('Built-in official FAX squash world package.')).toBeInTheDocument()
+    expect(screen.getByText('Not deletable')).toBeInTheDocument()
+    expect(screen.getByText('Not archivable')).toBeInTheDocument()
+    expect(screen.getByText('Usage aggregation is not implemented yet.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open Countries Editor' })).toHaveAttribute('href', '/admin/world/countries')
+    expect(screen.getByRole('link', { name: 'Open Legacy World Package Import/Export' })).toHaveAttribute('href', '/admin/world/package')
+  })
+
+  it('handles World Library API errors', async () => {
+    api.listWorldPackages.mockRejectedValueOnce(new api.ApiError('registry unavailable', 500))
+    renderAppAt('/admin/world/library')
+
+    expect(await screen.findByText(/Failed to load World Packages: registry unavailable/i)).toBeInTheDocument()
   })
 
   it('renders country detail route for existing country code', async () => {

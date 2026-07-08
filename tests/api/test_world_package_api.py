@@ -333,3 +333,108 @@ def test_invalid_package_does_not_partially_write(tmp_path) -> None:
 
     assert countries_path.read_text(encoding="utf-8") == countries_before
     assert overrides_path.read_text(encoding="utf-8") == overrides_before
+
+
+def test_world_packages_registry_lists_canonical_official_package(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-packages-list.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages")
+        assert status == 200
+        assert len(payload["packages"]) == 1
+        package = payload["packages"][0]
+        assert package["world_id"] == "official_fax_world"
+        assert package["name"] == "Official FAX World"
+        assert package["description"] == "Built-in official FAX squash world package."
+        assert package["type"] == "official"
+        assert package["status"] == "active"
+        assert package["source"] == "canonical_config"
+        assert package["editable"] is False
+        assert package["deletable"] is False
+        assert package["archivable"] is False
+        assert package["version"] == "v1"
+        assert package["country_count"] == 1
+        assert package["manual_override_count"] == 1
+        assert package["continent_count"] == 0
+        assert package["region_count"] == 0
+        assert package["travel_region_count"] == 0
+        assert package["used_by_run_count"] is None
+        assert package["validation_status"] == "valid"
+        assert package["storage"] == {
+            "countries_path": str(countries_path),
+            "manual_player_overrides_path": str(overrides_path),
+        }
+        assert isinstance(package["fingerprint"], str)
+        assert len(package["fingerprint"]) == 64
+
+
+def test_world_packages_registry_detail_and_deterministic_fingerprint(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-packages-detail.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, list_payload = _request("GET", f"{server.base_url}/world/packages")
+        assert status == 200
+        list_fingerprint = list_payload["packages"][0]["fingerprint"]
+
+        status, detail = _request("GET", f"{server.base_url}/world/packages/official_fax_world")
+        assert status == 200
+        assert detail["world_id"] == "official_fax_world"
+        assert detail["fingerprint"] == list_fingerprint
+
+        status, detail_again = _request("GET", f"{server.base_url}/world/packages/official_fax_world")
+        assert status == 200
+        assert detail_again["fingerprint"] == list_fingerprint
+
+
+def test_world_packages_registry_unknown_world_returns_404(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-packages-unknown.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages/unknown")
+        assert status == 404
+        assert "not found" in payload["detail"]
+
+
+def test_world_packages_registry_does_not_change_existing_world_package_export(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-packages-export-compat.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        registry_status, registry_payload = _request("GET", f"{server.base_url}/world/packages")
+        assert registry_status == 200
+        assert registry_payload["packages"][0]["world_id"] == "official_fax_world"
+
+        status, body = _request_raw("GET", f"{server.base_url}/world/package/export")
+        assert status == 200
+        package = json.loads(body)
+        assert package["package_version"] == "1"
+        assert "exported_at" in package
+        assert package["countries_dataset"]["countries"][0]["code"] == "AAA"
+        assert package["manual_player_overrides_dataset"]["overrides"][0]["override_id"] == "aaa-manual-2027"

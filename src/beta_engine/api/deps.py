@@ -41,6 +41,7 @@ from beta_engine.application.tour_seasons_validation_service import TourSeasonsV
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.application.world_package_service import WorldPackageService
+from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
 from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
 from beta_engine.infrastructure.config import load_settings
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
@@ -221,6 +222,13 @@ def get_season_draw_service(request: Request) -> SeasonDrawService:
 
 def get_world_package_service(request: Request) -> WorldPackageService:
     return WorldPackageService(
+        countries_service=get_countries_config_service(request),
+        manual_overrides_service=get_manual_player_overrides_service(request),
+    )
+
+
+def get_world_package_registry_service(request: Request) -> WorldPackageRegistryService:
+    return WorldPackageRegistryService(
         countries_service=get_countries_config_service(request),
         manual_overrides_service=get_manual_player_overrides_service(request),
     )

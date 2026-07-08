@@ -6,6 +6,8 @@ import {
   createCalendarTemplate,
   getPlanningSeasonCalendar,
   listPlanningSeasonCalendars,
+  listWorldPackages,
+  getWorldPackage,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
   validateFutureApplyRequestPreview
@@ -566,6 +568,59 @@ describe('postSeasonBuilderApplyCreateOnlyCommand', () => {
     expect(sentPayload.requested_candidate_identity_reference_id).toBe('candidate-ref-create-only')
     expect(sentPayload.requested_candidate_identity_fingerprint).toBe('candidate-fp-create-only')
     expect(sentPayload.requested_candidate_identity_reference_type).toBe('candidate_identity_set')
+    expect(result).toEqual(responseBody)
+  })
+})
+
+
+describe('world package registry client', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('lists World Packages from GET /world/packages', async () => {
+    const responseBody = { packages: [] }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(responseBody), { status: 200 }))
+
+    const result = await listWorldPackages()
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/world/packages',
+      expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
+    )
+    expect(result).toEqual(responseBody)
+  })
+
+  it('gets one World Package from GET /world/packages/:worldId with encoding', async () => {
+    const responseBody = {
+      world_id: 'official_fax_world',
+      name: 'Official FAX World',
+      description: 'Built-in official FAX squash world package.',
+      type: 'official',
+      status: 'active',
+      source: 'canonical_config',
+      editable: false,
+      deletable: false,
+      archivable: false,
+      version: 'v1',
+      fingerprint: 'abc123',
+      country_count: 1,
+      manual_override_count: 0,
+      continent_count: 1,
+      region_count: 1,
+      travel_region_count: 1,
+      used_by_run_count: null,
+      validation_status: 'valid',
+      storage: { countries_path: 'config/world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json' }
+    }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(responseBody), { status: 200 }))
+
+    const result = await getWorldPackage('official/fax world')
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/world/packages/official%2Ffax%20world',
+      expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
+    )
     expect(result).toEqual(responseBody)
   })
 })

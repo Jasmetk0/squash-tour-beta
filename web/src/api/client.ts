@@ -69,8 +69,10 @@ import type {
   WildcardCandidatesResponse,
   WildcardActionHistoryResponse,
   WildcardStateResponse,
+  WorldPackage,
   WorldPackageImportPayload,
   WorldPackageImportResponse,
+  WorldPackageListResponse,
   TournamentTemplatesDatasetResponse,
   TournamentTemplatesImportPayload,
   TournamentTemplatesImportResponse,
@@ -673,6 +675,14 @@ export async function exportWorldPackageJson(): Promise<string> {
 
 export function importWorldPackage(payload: WorldPackageImportPayload): Promise<WorldPackageImportResponse> {
   return request('/world/package/import', { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function listWorldPackages(): Promise<WorldPackageListResponse> {
+  return request('/world/packages')
+}
+
+export function getWorldPackage(worldId: string): Promise<WorldPackage> {
+  return request(`/world/packages/${encodeURIComponent(worldId)}`)
 }
 
 export function createRun(payload: CreateRunPayload): Promise<RunSummary> {

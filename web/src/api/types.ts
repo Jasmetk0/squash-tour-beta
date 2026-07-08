@@ -1359,6 +1359,37 @@ export type TalentClassSummaryResponse = {
 }
 
 
+export type WorldPackageStorage = {
+  countries_path: string
+  manual_player_overrides_path: string
+}
+
+export type WorldPackage = {
+  world_id: string
+  name: string
+  description: string
+  type: 'official'
+  status: 'active'
+  source: 'canonical_config'
+  editable: boolean
+  deletable: boolean
+  archivable: boolean
+  version: string
+  fingerprint: string
+  country_count: number
+  manual_override_count: number
+  continent_count: number
+  region_count: number
+  travel_region_count: number
+  used_by_run_count: number | null
+  validation_status: 'valid' | 'unknown'
+  storage: WorldPackageStorage
+}
+
+export type WorldPackageListResponse = {
+  packages: WorldPackage[]
+}
+
 export type WorldPackageImportPayload = {
   package_text: string
   dry_run: boolean

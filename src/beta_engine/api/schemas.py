@@ -136,6 +136,41 @@ class RunWorldStatusResponse(BaseModel):
     message: str
 
 
+class WorldPackageStorageResponse(BaseModel):
+    countries_path: str
+    manual_player_overrides_path: str
+
+
+class WorldPackageSummaryResponse(BaseModel):
+    world_id: str
+    name: str
+    description: str
+    type: Literal["official"]
+    status: Literal["active"]
+    source: Literal["canonical_config"]
+    editable: bool
+    deletable: bool
+    archivable: bool
+    version: str
+    fingerprint: str
+    country_count: int
+    manual_override_count: int
+    continent_count: int
+    region_count: int
+    travel_region_count: int
+    used_by_run_count: int | None = None
+    validation_status: Literal["valid", "unknown"]
+    storage: WorldPackageStorageResponse
+
+
+class WorldPackageDetailResponse(WorldPackageSummaryResponse):
+    pass
+
+
+class WorldPackageListResponse(BaseModel):
+    packages: list[WorldPackageSummaryResponse] = Field(default_factory=list)
+
+
 class RunTalentPlanCountryAllocationResponse(BaseModel):
     country_code: str
     planned_count: int

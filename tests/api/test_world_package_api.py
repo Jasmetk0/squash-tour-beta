@@ -335,7 +335,7 @@ def test_invalid_package_does_not_partially_write(tmp_path) -> None:
     assert overrides_path.read_text(encoding="utf-8") == overrides_before
 
 
-def test_world_packages_registry_lists_canonical_official_package(tmp_path) -> None:
+def test_world_packages_registry_lists_built_in_official_package(tmp_path) -> None:
     countries_path = tmp_path / "countries.json"
     overrides_path = tmp_path / "manual_overrides.json"
     _write_fixture(countries_path, COUNTRIES_FIXTURE)
@@ -355,21 +355,25 @@ def test_world_packages_registry_lists_canonical_official_package(tmp_path) -> N
         assert package["description"] == "Built-in official FAX squash world package."
         assert package["type"] == "official"
         assert package["status"] == "active"
-        assert package["source"] == "canonical_config"
+        assert package["source"] == "built_in"
         assert package["editable"] is False
         assert package["deletable"] is False
         assert package["archivable"] is False
         assert package["version"] == "v1"
-        assert package["country_count"] == 1
+        assert package["country_count"] == 5
         assert package["manual_override_count"] == 1
-        assert package["continent_count"] == 0
-        assert package["region_count"] == 0
-        assert package["travel_region_count"] == 0
+        assert package["continent_count"] == 6
+        assert package["region_count"] == 5
+        assert package["travel_region_count"] == 5
         assert package["used_by_run_count"] is None
         assert package["validation_status"] == "valid"
         assert package["storage"] == {
-            "countries_path": str(countries_path),
+            "countries_path": "config/worlds/official_fax_world/countries.json",
             "manual_player_overrides_path": str(overrides_path),
+            "world_metadata_path": "config/worlds/official_fax_world/world.json",
+            "continents_path": "config/worlds/official_fax_world/continents.json",
+            "regions_path": "config/worlds/official_fax_world/regions.json",
+            "travel_regions_path": "config/worlds/official_fax_world/travel_regions.json",
         }
         assert isinstance(package["fingerprint"], str)
         assert len(package["fingerprint"]) == 64
@@ -394,6 +398,8 @@ def test_world_packages_registry_detail_and_deterministic_fingerprint(tmp_path) 
         assert status == 200
         assert detail["world_id"] == "official_fax_world"
         assert detail["fingerprint"] == list_fingerprint
+        assert detail["source"] == "built_in"
+        assert detail["storage"]["world_metadata_path"] == "config/worlds/official_fax_world/world.json"
 
         status, detail_again = _request("GET", f"{server.base_url}/world/packages/official_fax_world")
         assert status == 200

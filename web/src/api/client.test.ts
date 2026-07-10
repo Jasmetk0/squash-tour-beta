@@ -598,7 +598,7 @@ describe('world package registry client', () => {
       description: 'Built-in official FAX squash world package.',
       type: 'official',
       status: 'active',
-      source: 'canonical_config',
+      source: 'built_in',
       editable: false,
       deletable: false,
       archivable: false,
@@ -611,7 +611,7 @@ describe('world package registry client', () => {
       travel_region_count: 1,
       used_by_run_count: null,
       validation_status: 'valid',
-      storage: { countries_path: 'config/world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json' }
+      storage: { countries_path: 'config/worlds/official_fax_world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json' }
     }
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(responseBody), { status: 200 }))
 

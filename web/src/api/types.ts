@@ -1362,6 +1362,10 @@ export type TalentClassSummaryResponse = {
 export type WorldPackageStorage = {
   countries_path: string
   manual_player_overrides_path: string
+  world_metadata_path?: string | null
+  continents_path?: string | null
+  regions_path?: string | null
+  travel_regions_path?: string | null
 }
 
 export type WorldPackage = {
@@ -1370,7 +1374,7 @@ export type WorldPackage = {
   description: string
   type: 'official'
   status: 'active'
-  source: 'canonical_config'
+  source: 'canonical_config' | 'built_in'
   editable: boolean
   deletable: boolean
   archivable: boolean

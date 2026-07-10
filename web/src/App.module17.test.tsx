@@ -270,8 +270,8 @@ describe('Module 17 pages through routes', () => {
     localStorage.clear()
     vi.clearAllMocks()
     api.listRuns.mockResolvedValue({ runs: [] })
-    api.listWorldPackages.mockResolvedValue({ packages: [{ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'canonical_config', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 3, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json' } }] })
-    api.getWorldPackage.mockResolvedValue({ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'canonical_config', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 3, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json' } })
+    api.listWorldPackages.mockResolvedValue({ packages: [{ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'built_in', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 3, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/official_fax_world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json', world_metadata_path: 'config/worlds/official_fax_world/world.json', continents_path: 'config/worlds/official_fax_world/continents.json', regions_path: 'config/worlds/official_fax_world/regions.json', travel_regions_path: 'config/worlds/official_fax_world/travel_regions.json' } }] })
+    api.getWorldPackage.mockResolvedValue({ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'built_in', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 3, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/official_fax_world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json', world_metadata_path: 'config/worlds/official_fax_world/world.json', continents_path: 'config/worlds/official_fax_world/continents.json', regions_path: 'config/worlds/official_fax_world/regions.json', travel_regions_path: 'config/worlds/official_fax_world/travel_regions.json' } })
     api.listCountries.mockResolvedValue({
       countries: [
         {
@@ -293,13 +293,13 @@ describe('Module 17 pages through routes', () => {
         }
       ]
     })
-    api.getCountriesMetadata.mockResolvedValue({ dataset_status: 'temporary_seed_demo', country_count: 0, source_path: 'config/world/countries.json' })
+    api.getCountriesMetadata.mockResolvedValue({ dataset_status: 'temporary_seed_demo', country_count: 0, source_path: 'config/worlds/official_fax_world/countries.json' })
     api.getTournamentTemplatesMetadata.mockResolvedValue({ template_count: 0, source_path: 'config/tournament_templates/mvp_templates.json', referenced_by_calendar: false, referenced_template_ids: [] })
     api.getViewerRankingTable.mockResolvedValue({ rows: [], summary: { season: '2000/2001', table_type: 'ranking', player_count: 0, total_source_players: 0, ranked_player_count: 0, zero_point_players: 0, countries_represented: 0, leader_player_id: null, leader_points: null, generated_from_active_players_fingerprint: 'active-fp', rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false }, metadata: { season: '2000/2001', table_type: 'ranking', source: 'season_active_players', active_players_fingerprint: 'active-fp', generated_fingerprint: 'generated-fp', ranking_basis: 'current active season player ranking_points', filters: { country_code: null, search: null, include_zero_points: true, min_points: null }, limit: 100, warnings: [] }, validation_warnings: ['Rolling 61-week ranking not implemented.'], validation_errors: [] })
     api.getAdminRankingTable.mockResolvedValue({ rows: [], summary: { season: '2000/2001', table_type: 'ranking', player_count: 0, total_source_players: 0, ranked_player_count: 0, zero_point_players: 0, countries_represented: 0, leader_player_id: null, leader_points: null, generated_from_active_players_fingerprint: 'active-fp', rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false }, metadata: { season: '2000/2001', table_type: 'ranking', source: 'season_active_players', active_players_fingerprint: 'active-fp', generated_fingerprint: 'generated-fp', ranking_basis: 'current active season player ranking_points', filters: { country_code: null, search: null, include_zero_points: true, min_points: null }, limit: 100, warnings: [] }, validation_warnings: [], validation_errors: [] })
     api.getAdminRankingSnapshot.mockResolvedValue({ snapshot: null, snapshot_exists: false, summary: null, metadata: null, validation_warnings: [], validation_errors: [] })
     api.getAdminPointBreakdown.mockResolvedValue({ breakdown: null, summary_rows: [], metadata: { season: '2000/2001', source: 'season_point_awards', active_players_fingerprint: 'active-fp', point_awards_fingerprint: 'awards-fp', generated_fingerprint: 'generated-fp', applied_only: true, table_type: 'both', filters: { player_id: null, search: null, country_code: null, include_zero_point_awards: false }, limit: 10, rolling_ranking_implemented: false, best_n_implemented: false, movement_implemented: false }, validation_warnings: [], validation_errors: [] })
-    api.getTalentClassSummary.mockResolvedValue({ year_start: 2030, years: 10, seed: 123, dataset_status: 'temporary_seed_demo', country_count: 0, source_path: 'config/world/countries.json', total_talents_across_span: 0, average_total_talents_per_year: 0, global_band_totals: {}, global_elite_talents: 0, global_tour_talents: 0, global_pro_depth: 0, countries: [] })
+    api.getTalentClassSummary.mockResolvedValue({ year_start: 2030, years: 10, seed: 123, dataset_status: 'temporary_seed_demo', country_count: 0, source_path: 'config/worlds/official_fax_world/countries.json', total_talents_across_span: 0, average_total_talents_per_year: 0, global_band_totals: {}, global_elite_talents: 0, global_tour_talents: 0, global_pro_depth: 0, countries: [] })
     api.getSeasonRegistry.mockResolvedValue({
       start_season: '2000/01',
       end_season: '2039/40',
@@ -2979,7 +2979,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByRole('cell', { name: 'official_fax_world' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'official' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'active' })).toBeInTheDocument()
-    expect(screen.getByRole('cell', { name: 'canonical_config' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'built_in' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'Read-only' })).toBeInTheDocument()
     expect(screen.getByText('Usage not tracked yet')).toBeInTheDocument()
     expect(screen.getByTitle('abcdef1234567890fedcba0987654321')).toHaveTextContent('abcdef12…87654321')
@@ -2995,6 +2995,8 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Not deletable')).toBeInTheDocument()
     expect(screen.getByText('Not archivable')).toBeInTheDocument()
     expect(screen.getByText('Usage aggregation is not implemented yet.')).toBeInTheDocument()
+    expect(screen.getByText('config/worlds/official_fax_world/world.json')).toBeInTheDocument()
+    expect(screen.getByText('config/worlds/official_fax_world/continents.json')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open Countries Editor' })).toHaveAttribute('href', '/admin/world/countries')
     expect(screen.getByRole('link', { name: 'Open Legacy World Package Import/Export' })).toHaveAttribute('href', '/admin/world/package')
   })

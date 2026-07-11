@@ -2,8 +2,8 @@ import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
-import { getWorldPackage, listWorldPackages } from '../api/client'
-import type { WorldPackage } from '../api/types'
+import { getWorldPackage, getWorldPackageValidation, listWorldPackages } from '../api/client'
+import type { WorldPackage, WorldPackageValidation } from '../api/types'
 import { SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -100,11 +100,52 @@ function DetailRow({ label, value }: { label: string, value: ReactNode }): JSX.E
   return <p><strong>{label}:</strong> {value}</p>
 }
 
+function ValidationSection({ validation }: { validation: WorldPackageValidation }): JSX.Element {
+  return (
+    <SectionCard title="World Package Validation">
+      <DetailRow label="Overall status" value={validation.status} />
+      <DetailRow label="Errors" value={validation.error_count} />
+      <DetailRow label="Warnings" value={validation.warning_count} />
+      <DetailRow label="Info" value={validation.info_count} />
+      <table aria-label="World package validation checks">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Severity</th>
+            <th>Status</th>
+            <th>Message</th>
+            <th>Path</th>
+            <th>Field</th>
+          </tr>
+        </thead>
+        <tbody>
+          {validation.checks.map((check) => (
+            <tr key={`${check.code}-${check.path ?? 'package'}-${check.field ?? 'root'}`}>
+              <td><code>{check.code}</code></td>
+              <td>{check.severity}</td>
+              <td>{check.status}</td>
+              <td>{check.message}</td>
+              <td>{check.path ? <code>{check.path}</code> : '—'}</td>
+              <td>{check.field ? <code>{check.field}</code> : '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </SectionCard>
+  )
+}
+
 export function WorldLibraryDetailPage(): JSX.Element {
   const { worldId = '' } = useParams()
   const packageQuery = useQuery({
     queryKey: ['world-package', worldId],
     queryFn: () => getWorldPackage(worldId),
+    enabled: Boolean(worldId),
+    retry: false
+  })
+  const validationQuery = useQuery({
+    queryKey: ['world-package-validation', worldId],
+    queryFn: () => getWorldPackageValidation(worldId),
     enabled: Boolean(worldId),
     retry: false
   })
@@ -156,6 +197,17 @@ export function WorldLibraryDetailPage(): JSX.Element {
             <DetailRow label="Used by runs" value={usageLabel(pkg.used_by_run_count)} />
             {pkg.used_by_run_count === null && <p className="status">Usage aggregation is not implemented yet.</p>}
           </SectionCard>
+          {validationQuery.isLoading && (
+            <SectionCard title="World Package Validation">
+              <p className="status">Loading World Package validation...</p>
+            </SectionCard>
+          )}
+          {validationQuery.error && (
+            <SectionCard title="World Package Validation">
+              <p className="error">Failed to load World Package validation: {formatApiError(validationQuery.error)}</p>
+            </SectionCard>
+          )}
+          {validationQuery.data && <ValidationSection validation={validationQuery.data} />}
           <SectionCard title="Read-only links">
             <p><Link to="/admin/world/countries">Open Countries Editor</Link> — this still edits the current canonical countries dataset, not package-scoped countries yet.</p>
             <p><Link to="/admin/world/package">Open Legacy World Package Import/Export</Link> — this is legacy canonical import/export, not multi-world package management yet.</p>

@@ -1394,6 +1394,24 @@ export type WorldPackageListResponse = {
   packages: WorldPackage[]
 }
 
+export type WorldPackageValidationCheck = {
+  code: string
+  severity: 'info' | 'warning' | 'error'
+  status: 'passed' | 'warning' | 'failed'
+  message: string
+  path: string | null
+  field: string | null
+}
+
+export type WorldPackageValidation = {
+  world_id: string
+  status: 'valid' | 'warnings' | 'errors'
+  error_count: number
+  warning_count: number
+  info_count: number
+  checks: WorldPackageValidationCheck[]
+}
+
 export type WorldPackageImportPayload = {
   package_text: string
   dry_run: boolean

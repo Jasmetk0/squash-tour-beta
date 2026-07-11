@@ -73,6 +73,7 @@ import type {
   WorldPackageImportPayload,
   WorldPackageImportResponse,
   WorldPackageListResponse,
+  WorldPackageValidation,
   TournamentTemplatesDatasetResponse,
   TournamentTemplatesImportPayload,
   TournamentTemplatesImportResponse,
@@ -683,6 +684,10 @@ export function listWorldPackages(): Promise<WorldPackageListResponse> {
 
 export function getWorldPackage(worldId: string): Promise<WorldPackage> {
   return request(`/world/packages/${encodeURIComponent(worldId)}`)
+}
+
+export function getWorldPackageValidation(worldId: string): Promise<WorldPackageValidation> {
+  return request(`/world/packages/${encodeURIComponent(worldId)}/validation`)
 }
 
 export function createRun(payload: CreateRunPayload): Promise<RunSummary> {

@@ -422,6 +422,61 @@ def test_world_packages_registry_unknown_world_returns_404(tmp_path) -> None:
         assert "not found" in payload["detail"]
 
 
+def test_world_package_validation_for_official_fax_world_returns_health(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    package_paths = [
+        "config/worlds/official_fax_world/world.json",
+        "config/worlds/official_fax_world/countries.json",
+        "config/worlds/official_fax_world/continents.json",
+        "config/worlds/official_fax_world/regions.json",
+        "config/worlds/official_fax_world/travel_regions.json",
+    ]
+    before = {path: Path(path).read_bytes() for path in package_paths}
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-packages-validation.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages/official_fax_world/validation")
+
+    assert status == 200
+    assert payload["world_id"] == "official_fax_world"
+    assert payload["status"] in {"valid", "warnings"}
+    assert payload["error_count"] == 0
+    assert payload["warning_count"] >= 0
+    assert payload["info_count"] > 0
+    assert {check["code"] for check in payload["checks"]} >= {
+        "world_metadata_valid",
+        "countries_valid",
+        "continents_valid",
+        "regions_valid",
+        "travel_regions_valid",
+        "registry_consistency_valid",
+    }
+    assert all(Path(path).read_bytes() == contents for path, contents in before.items())
+
+
+def test_world_package_validation_unknown_world_returns_404(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-packages-validation-unknown.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages/unknown/validation")
+        assert status == 404
+        assert "not found" in payload["detail"]
+
+
 def test_world_packages_registry_does_not_change_existing_world_package_export(tmp_path) -> None:
     countries_path = tmp_path / "countries.json"
     overrides_path = tmp_path / "manual_overrides.json"

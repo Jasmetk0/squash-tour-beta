@@ -175,6 +175,24 @@ class WorldPackageListResponse(BaseModel):
     packages: list[WorldPackageSummaryResponse] = Field(default_factory=list)
 
 
+class WorldPackageValidationCheckResponse(BaseModel):
+    code: str
+    severity: Literal["info", "warning", "error"]
+    status: Literal["passed", "warning", "failed"]
+    message: str
+    path: str | None = None
+    field: str | None = None
+
+
+class WorldPackageValidationResponse(BaseModel):
+    world_id: str
+    status: Literal["valid", "warnings", "errors"]
+    error_count: int
+    warning_count: int
+    info_count: int
+    checks: list[WorldPackageValidationCheckResponse] = Field(default_factory=list)
+
+
 class RunTalentPlanCountryAllocationResponse(BaseModel):
     country_code: str
     planned_count: int

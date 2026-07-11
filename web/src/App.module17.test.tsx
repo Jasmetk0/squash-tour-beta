@@ -26,6 +26,7 @@ const api = vi.hoisted(() => ({
   simulateWorldTourFinals: vi.fn(),
   listWorldPackages: vi.fn(),
   getWorldPackage: vi.fn(),
+  getWorldPackageValidation: vi.fn(),
   getLatestRollover: vi.fn(),
   getRolloverBySeason: vi.fn(),
   getPlayerTransitions: vi.fn(),
@@ -272,6 +273,7 @@ describe('Module 17 pages through routes', () => {
     api.listRuns.mockResolvedValue({ runs: [] })
     api.listWorldPackages.mockResolvedValue({ packages: [{ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'built_in', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 3, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/official_fax_world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json', world_metadata_path: 'config/worlds/official_fax_world/world.json', continents_path: 'config/worlds/official_fax_world/continents.json', regions_path: 'config/worlds/official_fax_world/regions.json', travel_regions_path: 'config/worlds/official_fax_world/travel_regions.json' } }] })
     api.getWorldPackage.mockResolvedValue({ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'built_in', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 3, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/official_fax_world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json', world_metadata_path: 'config/worlds/official_fax_world/world.json', continents_path: 'config/worlds/official_fax_world/continents.json', regions_path: 'config/worlds/official_fax_world/regions.json', travel_regions_path: 'config/worlds/official_fax_world/travel_regions.json' } })
+    api.getWorldPackageValidation.mockResolvedValue({ world_id: 'official_fax_world', status: 'warnings', error_count: 0, warning_count: 1, info_count: 6, checks: [{ code: 'world_metadata_valid', severity: 'info', status: 'passed', message: 'world.json is present and declares official_fax_world.', path: 'config/worlds/official_fax_world/world.json', field: 'world_id' }] })
     api.listCountries.mockResolvedValue({
       countries: [
         {
@@ -2991,14 +2993,25 @@ describe('Module 17 pages through routes', () => {
 
     expect(await screen.findByRole('heading', { name: 'World Package Details' })).toBeInTheDocument()
     expect(api.getWorldPackage).toHaveBeenCalledWith('official_fax_world')
+    expect(api.getWorldPackageValidation).toHaveBeenCalledWith('official_fax_world')
     expect(await screen.findByText('Built-in official FAX squash world package.')).toBeInTheDocument()
     expect(screen.getByText('Not deletable')).toBeInTheDocument()
     expect(screen.getByText('Not archivable')).toBeInTheDocument()
     expect(screen.getByText('Usage aggregation is not implemented yet.')).toBeInTheDocument()
-    expect(screen.getByText('config/worlds/official_fax_world/world.json')).toBeInTheDocument()
+    expect(screen.getAllByText('config/worlds/official_fax_world/world.json').length).toBeGreaterThan(0)
     expect(screen.getByText('config/worlds/official_fax_world/continents.json')).toBeInTheDocument()
+    expect(await screen.findByText('World Package Validation')).toBeInTheDocument()
+    expect(screen.getByText('warnings')).toBeInTheDocument()
+    expect(screen.getByText('world_metadata_valid')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open Countries Editor' })).toHaveAttribute('href', '/admin/world/countries')
     expect(screen.getByRole('link', { name: 'Open Legacy World Package Import/Export' })).toHaveAttribute('href', '/admin/world/package')
+  })
+
+  it('handles World Library detail validation API errors', async () => {
+    api.getWorldPackageValidation.mockRejectedValueOnce(new api.ApiError('validation unavailable', 500))
+    renderAppAt('/admin/world/library/official_fax_world')
+
+    expect(await screen.findByText(/Failed to load World Package validation: validation unavailable/i)).toBeInTheDocument()
   })
 
   it('handles World Library API errors', async () => {

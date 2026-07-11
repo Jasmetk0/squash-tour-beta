@@ -108,6 +108,16 @@ class WorldPackageRegistryService:
             ),
         )
 
+    def official_paths(self) -> dict[str, Path]:
+        """Return built-in official package storage paths for read-only consumers."""
+        return {
+            "world": self._world_metadata_path(),
+            "countries": self._countries_path(),
+            "continents": self._continents_path(),
+            "regions": self._regions_path(),
+            "travel_regions": self._travel_regions_path(),
+        }
+
     def _fingerprint(self) -> str:
         payload = self._fingerprint_payload()
         serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))

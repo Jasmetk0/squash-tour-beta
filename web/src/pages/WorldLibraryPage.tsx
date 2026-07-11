@@ -83,7 +83,8 @@ export function WorldLibraryPage(): JSX.Element {
       <p>
         World Packages are foundational world input bundles. A run will eventually be created from one selected World Package.
         Official FAX World is built in and read-only. Custom Worlds are not implemented yet. This page currently exposes the
-        canonical config as Official FAX World.
+        built-in Official FAX World package from repository config. Legacy Countries Editor and package import/export workflows
+        still use canonical config until package-scoped editing is implemented.
       </p>
       <p><Link to="/admin/world">Back to World hub</Link></p>
 

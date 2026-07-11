@@ -1,0 +1,13 @@
+{
+  "world_id": "official_fax_world",
+  "name": "Official FAX World",
+  "description": "Built-in official FAX squash world package.",
+  "type": "official",
+  "status": "active",
+  "source": "built_in",
+  "editable": false,
+  "deletable": false,
+  "archivable": false,
+  "version": "v1",
+  "content_schema_version": "1"
+}

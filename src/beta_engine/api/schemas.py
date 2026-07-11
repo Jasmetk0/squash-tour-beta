@@ -139,6 +139,10 @@ class RunWorldStatusResponse(BaseModel):
 class WorldPackageStorageResponse(BaseModel):
     countries_path: str
     manual_player_overrides_path: str
+    world_metadata_path: str | None = None
+    continents_path: str | None = None
+    regions_path: str | None = None
+    travel_regions_path: str | None = None
 
 
 class WorldPackageSummaryResponse(BaseModel):
@@ -147,7 +151,7 @@ class WorldPackageSummaryResponse(BaseModel):
     description: str
     type: Literal["official"]
     status: Literal["active"]
-    source: Literal["canonical_config"]
+    source: Literal["canonical_config", "built_in"]
     editable: bool
     deletable: bool
     archivable: bool

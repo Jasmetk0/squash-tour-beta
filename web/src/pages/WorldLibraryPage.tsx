@@ -135,7 +135,7 @@ export function WorldLibraryDetailPage(): JSX.Element {
             <DetailRow label="Editable" value={yesNo(pkg.editable, 'Editable', 'Read-only')} />
             <DetailRow label="Deletable" value={yesNo(pkg.deletable, 'Deletable', 'Not deletable')} />
             <DetailRow label="Archivable" value={yesNo(pkg.archivable, 'Archivable', 'Not archivable')} />
-            <p className="status">Official FAX World is built into canonical config and is read-only in this phase.</p>
+            <p className="status">Official FAX World is built into repository config and is read-only in this phase.</p>
           </SectionCard>
           <SectionCard title="Contents">
             <DetailRow label="Countries" value={pkg.country_count} />
@@ -145,7 +145,11 @@ export function WorldLibraryDetailPage(): JSX.Element {
             <DetailRow label="Travel regions" value={pkg.travel_region_count} />
           </SectionCard>
           <SectionCard title="Storage">
+            {pkg.storage.world_metadata_path && <DetailRow label="World metadata path" value={<code>{pkg.storage.world_metadata_path}</code>} />}
             <DetailRow label="Countries path" value={<code>{pkg.storage.countries_path}</code>} />
+            {pkg.storage.continents_path && <DetailRow label="Continents path" value={<code>{pkg.storage.continents_path}</code>} />}
+            {pkg.storage.regions_path && <DetailRow label="Regions path" value={<code>{pkg.storage.regions_path}</code>} />}
+            {pkg.storage.travel_regions_path && <DetailRow label="Travel regions path" value={<code>{pkg.storage.travel_regions_path}</code>} />}
             <DetailRow label="Manual player overrides path" value={<code>{pkg.storage.manual_player_overrides_path}</code>} />
           </SectionCard>
           <SectionCard title="Usage">

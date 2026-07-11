@@ -270,8 +270,8 @@ describe('Module 17 pages through routes', () => {
     localStorage.clear()
     vi.clearAllMocks()
     api.listRuns.mockResolvedValue({ runs: [] })
-    api.listWorldPackages.mockResolvedValue({ packages: [{ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'canonical_config', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 3, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json' } }] })
-    api.getWorldPackage.mockResolvedValue({ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'canonical_config', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 3, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json' } })
+    api.listWorldPackages.mockResolvedValue({ packages: [{ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'built_in', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 3, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/official_fax_world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json', world_metadata_path: 'config/worlds/official_fax_world/world.json', continents_path: 'config/worlds/official_fax_world/continents.json', regions_path: 'config/worlds/official_fax_world/regions.json', travel_regions_path: 'config/worlds/official_fax_world/travel_regions.json' } }] })
+    api.getWorldPackage.mockResolvedValue({ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'built_in', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 3, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/official_fax_world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json', world_metadata_path: 'config/worlds/official_fax_world/world.json', continents_path: 'config/worlds/official_fax_world/continents.json', regions_path: 'config/worlds/official_fax_world/regions.json', travel_regions_path: 'config/worlds/official_fax_world/travel_regions.json' } })
     api.listCountries.mockResolvedValue({
       countries: [
         {
@@ -2979,7 +2979,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByRole('cell', { name: 'official_fax_world' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'official' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'active' })).toBeInTheDocument()
-    expect(screen.getByRole('cell', { name: 'canonical_config' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'built_in' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'Read-only' })).toBeInTheDocument()
     expect(screen.getByText('Usage not tracked yet')).toBeInTheDocument()
     expect(screen.getByTitle('abcdef1234567890fedcba0987654321')).toHaveTextContent('abcdef12…87654321')
@@ -2995,6 +2995,8 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Not deletable')).toBeInTheDocument()
     expect(screen.getByText('Not archivable')).toBeInTheDocument()
     expect(screen.getByText('Usage aggregation is not implemented yet.')).toBeInTheDocument()
+    expect(screen.getByText('config/worlds/official_fax_world/world.json')).toBeInTheDocument()
+    expect(screen.getByText('config/worlds/official_fax_world/continents.json')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open Countries Editor' })).toHaveAttribute('href', '/admin/world/countries')
     expect(screen.getByRole('link', { name: 'Open Legacy World Package Import/Export' })).toHaveAttribute('href', '/admin/world/package')
   })

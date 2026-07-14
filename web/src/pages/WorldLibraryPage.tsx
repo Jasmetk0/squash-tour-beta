@@ -1,9 +1,10 @@
-import type { ReactNode } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import type { FormEvent, ReactNode } from 'react'
+import { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
-import { getWorldPackage, getWorldPackageValidation, listWorldPackages } from '../api/client'
-import type { WorldPackage, WorldPackageValidation } from '../api/types'
+import { cloneOfficialWorldPackage, getWorldPackage, getWorldPackageValidation, listWorldPackages } from '../api/client'
+import type { WorldPackage, WorldPackageCloneResponse, WorldPackageValidation } from '../api/types'
 import { SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -100,6 +101,120 @@ function DetailRow({ label, value }: { label: string, value: ReactNode }): JSX.E
   return <p><strong>{label}:</strong> {value}</p>
 }
 
+
+function CloneResultCard({ result }: { result: WorldPackageCloneResponse }): JSX.Element {
+  return (
+    <div className={result.ok && !result.dry_run ? 'status' : result.ok ? 'status' : 'error'} aria-label="Clone result">
+      {result.ok && result.dry_run && <p><strong>Preview only:</strong> no files were written.</p>}
+      {result.ok && !result.dry_run && <p><strong>Success:</strong> Custom World package created.</p>}
+      <DetailRow label="Target path" value={<code>{result.target_path}</code>} />
+      <DetailRow label="Source world ID" value={<code>{result.source_world_id}</code>} />
+      <DetailRow label="New world ID" value={<code>{result.new_world_id}</code>} />
+      <DetailRow label="Dry run" value={String(result.dry_run)} />
+      <p><strong>Created files:</strong></p>
+      <ul>
+        {result.created_files.map((file) => <li key={file}><code>{file}</code></li>)}
+      </ul>
+      {result.errors.length > 0 && (
+        <>
+          <p><strong>Clone errors:</strong></p>
+          <ul>
+            {result.errors.map((error, index) => <li key={`${error.field ?? 'root'}-${index}`}>{error.field ? `${error.field}: ` : ''}{error.message}</li>)}
+          </ul>
+        </>
+      )}
+      {result.package && (
+        <div aria-label="Created package summary">
+          <h4>Created package</h4>
+          <DetailRow label="World ID" value={<code>{result.package.world_id}</code>} />
+          <DetailRow label="Type" value={result.package.type} />
+          <DetailRow label="Source" value={result.package.source} />
+          <DetailRow label="Counts" value={`${result.package.country_count} countries, ${result.package.manual_override_count} manual overrides, ${result.package.continent_count} continents, ${result.package.region_count} regions, ${result.package.travel_region_count} travel regions`} />
+          <DetailRow label="Fingerprint" value={<code title={result.package.fingerprint}>{shortFingerprint(result.package.fingerprint)}</code>} />
+        </div>
+      )}
+      {result.validation && (
+        <div aria-label="Clone validation summary">
+          <h4>Validation</h4>
+          <DetailRow label="Status" value={result.validation.status} />
+          <DetailRow label="Errors" value={result.validation.error_count} />
+          <DetailRow label="Warnings" value={result.validation.warning_count} />
+          <DetailRow label="Info" value={result.validation.info_count} />
+        </div>
+      )}
+      {result.ok && !result.dry_run && <p><Link to={`/admin/world/library/${encodeURIComponent(result.new_world_id)}`}>Open new Custom World detail</Link></p>}
+    </div>
+  )
+}
+
+function CloneOfficialWorldSection(): JSX.Element {
+  const queryClient = useQueryClient()
+  const [newWorldId, setNewWorldId] = useState('')
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('Custom world cloned from Official FAX World.')
+  const [result, setResult] = useState<WorldPackageCloneResponse | null>(null)
+  const [apiError, setApiError] = useState<string | null>(null)
+  const mutation = useMutation({
+    mutationFn: cloneOfficialWorldPackage,
+    onSuccess: (response) => {
+      setResult(response)
+      setApiError(null)
+      if (response.ok && !response.dry_run) {
+        void queryClient.invalidateQueries({ queryKey: ['world-packages'] })
+        void queryClient.invalidateQueries({ queryKey: ['world-package', response.new_world_id] })
+        void queryClient.invalidateQueries({ queryKey: ['world-package-validation', response.new_world_id] })
+      }
+    },
+    onError: (error) => {
+      setResult(null)
+      setApiError(formatApiError(error))
+    }
+  })
+
+  function submitClone(dryRun: boolean): void {
+    setApiError(null)
+    mutation.mutate({
+      new_world_id: newWorldId,
+      name,
+      description: description.trim() === '' ? null : description,
+      dry_run: dryRun
+    })
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault()
+  }
+
+  return (
+    <SectionCard title="Clone Official World">
+      <p>Create a repository-stored Custom World by cloning the current built-in Official FAX World package. This does not edit Official FAX World and does not affect existing runs.</p>
+      <p className="status">Clone creates a new Custom World package only. Custom World edit/delete/archive actions are not implemented yet. Countries Editor still edits canonical countries, not package-scoped custom world countries.</p>
+      <form onSubmit={handleSubmit}>
+        <label>
+          New World ID
+          <input value={newWorldId} onChange={(event) => setNewWorldId(event.target.value)} placeholder="my_custom_world" />
+        </label>
+        <p className="status">lowercase letters, numbers, underscores only; 3–64 chars; no spaces</p>
+        <label>
+          Name
+          <input value={name} onChange={(event) => setName(event.target.value)} placeholder="My Custom World" />
+        </label>
+        <label>
+          Description
+          <textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Custom world cloned from Official FAX World." />
+        </label>
+        <div className="actions">
+          <button type="button" disabled={mutation.isPending} onClick={() => submitClone(true)}>Preview clone</button>
+          <button type="button" disabled={mutation.isPending} onClick={() => submitClone(false)}>Create Custom World</button>
+        </div>
+      </form>
+      {apiError && <p className="error">Clone request failed: {apiError}</p>}
+      {result && !result.ok && <CloneResultCard result={result} />}
+      {result && result.ok && <CloneResultCard result={result} />}
+    </SectionCard>
+  )
+}
+
 function ValidationSection({ validation }: { validation: WorldPackageValidation }): JSX.Element {
   return (
     <SectionCard title="World Package Validation">
@@ -178,6 +293,7 @@ export function WorldLibraryDetailPage(): JSX.Element {
             <DetailRow label="Archivable" value={yesNo(pkg.archivable, 'Archivable', 'Not archivable')} />
             <p className="status">Official FAX World is built into repository config and is read-only. Custom World mutation actions are not implemented yet; safety fields are metadata only.</p>
           </SectionCard>
+          {pkg.world_id === 'official_fax_world' && pkg.type === 'official' && <CloneOfficialWorldSection />}
           <SectionCard title="Contents">
             <DetailRow label="Countries" value={pkg.country_count} />
             <DetailRow label="Manual overrides" value={pkg.manual_override_count} />

@@ -70,6 +70,8 @@ import type {
   WildcardActionHistoryResponse,
   WildcardStateResponse,
   WorldPackage,
+  WorldPackageClonePayload,
+  WorldPackageCloneResponse,
   WorldPackageImportPayload,
   WorldPackageImportResponse,
   WorldPackageListResponse,
@@ -688,6 +690,10 @@ export function getWorldPackage(worldId: string): Promise<WorldPackage> {
 
 export function getWorldPackageValidation(worldId: string): Promise<WorldPackageValidation> {
   return request(`/world/packages/${encodeURIComponent(worldId)}/validation`)
+}
+
+export function cloneOfficialWorldPackage(payload: WorldPackageClonePayload): Promise<WorldPackageCloneResponse> {
+  return request('/world/packages/official_fax_world/clone', { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function createRun(payload: CreateRunPayload): Promise<RunSummary> {

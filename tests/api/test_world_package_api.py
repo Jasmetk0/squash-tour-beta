@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import socket
 import threading
 import time
@@ -51,13 +52,14 @@ def _free_port() -> int:
 
 
 class ApiServer:
-    def __init__(self, *, database_url: str, countries_config_path: str, manual_overrides_config_path: str) -> None:
+    def __init__(self, *, database_url: str, countries_config_path: str, manual_overrides_config_path: str, worlds_root: str | None = None) -> None:
         self.port = _free_port()
         self.base_url = f"http://127.0.0.1:{self.port}"
         app = create_app(
             database_url=database_url,
             countries_config_path=countries_config_path,
             manual_player_overrides_config_path=manual_overrides_config_path,
+            worlds_root=worlds_root,
         )
         self.server = uvicorn.Server(uvicorn.Config(app=app, host="127.0.0.1", port=self.port, log_level="error"))
         self.thread = threading.Thread(target=self.server.run, daemon=True)
@@ -77,6 +79,44 @@ class ApiServer:
         self.server.should_exit = True
         self.thread.join(timeout=10)
 
+
+
+def _copy_worlds_root(tmp_path: Path) -> Path:
+    worlds_root = tmp_path / "worlds"
+    shutil.copytree(Path("config/worlds/official_fax_world"), worlds_root / "official_fax_world")
+    return worlds_root
+
+
+def _write_custom_world(root: Path, world_id: str = "my_custom_world", *, malformed: bool = False) -> Path:
+    package_dir = root / "custom" / world_id
+    package_dir.mkdir(parents=True, exist_ok=True)
+    if malformed:
+        (package_dir / "world.json").write_text("{not-json", encoding="utf-8")
+        return package_dir
+    _write_fixture(package_dir / "world.json", {
+        "world_id": world_id,
+        "name": "My Custom World",
+        "description": "Custom world package.",
+        "type": "custom",
+        "status": "active",
+        "source": "custom_config",
+        "editable": True,
+        "deletable": True,
+        "archivable": True,
+        "version": "v1",
+        "content_schema_version": "1",
+    })
+    _write_fixture(package_dir / "continents.json", {"continents": [{"code": "EU", "name": "Europe"}]})
+    _write_fixture(package_dir / "regions.json", {"regions": [{"code": "EUROPE", "name": "Europe", "continent_code": "EU"}]})
+    _write_fixture(package_dir / "travel_regions.json", {"travel_regions": [{"code": "WEST", "name": "West"}]})
+    _write_fixture(package_dir / "countries.json", {
+        "dataset_status": "temporary_test_custom_world",
+        "countries": [
+            {"code": "AAA", "name": "Alpha", "flag_asset": None, "region": "EUROPE", "travel_region": "WEST", "population": 1_000_000, "wealth_support": 3, "squash_popularity": 4, "squash_tradition": 2, "system_quality": 5},
+            {"code": "BBB", "name": "Beta", "flag_asset": None, "region": "EUROPE", "travel_region": "WEST", "population": 2_000_000, "wealth_support": 4, "squash_popularity": 3, "squash_tradition": 3, "system_quality": 4},
+        ],
+    })
+    return package_dir
 
 def _request(method: str, url: str, payload: dict[str, object] | None = None) -> tuple[int, dict[str, object]]:
     body = None if payload is None else json.dumps(payload).encode("utf-8")
@@ -377,6 +417,107 @@ def test_world_packages_registry_lists_built_in_official_package(tmp_path) -> No
         }
         assert isinstance(package["fingerprint"], str)
         assert len(package["fingerprint"]) == 64
+
+def test_world_packages_registry_lists_official_when_custom_root_missing(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+    worlds_root = _copy_worlds_root(tmp_path)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-packages-no-custom.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+        worlds_root=str(worlds_root),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages")
+
+    assert status == 200
+    assert [package["world_id"] for package in payload["packages"]] == ["official_fax_world"]
+
+
+def test_world_packages_registry_discovers_custom_world_read_only(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+    worlds_root = _copy_worlds_root(tmp_path)
+    custom_dir = _write_custom_world(worlds_root)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-packages-custom.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+        worlds_root=str(worlds_root),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages")
+        detail_status, detail = _request("GET", f"{server.base_url}/world/packages/my_custom_world")
+
+    assert status == 200
+    assert [package["world_id"] for package in payload["packages"]] == ["official_fax_world", "my_custom_world"]
+    custom = payload["packages"][1]
+    assert detail_status == 200
+    assert detail == custom
+    assert custom["type"] == "custom"
+    assert custom["status"] == "active"
+    assert custom["source"] == "custom_config"
+    assert custom["editable"] is True
+    assert custom["deletable"] is True
+    assert custom["archivable"] is True
+    assert custom["country_count"] == 2
+    assert custom["manual_override_count"] == 0
+    assert custom["continent_count"] == 1
+    assert custom["region_count"] == 1
+    assert custom["travel_region_count"] == 1
+    assert custom["used_by_run_count"] is None
+    assert custom["storage"]["world_metadata_path"] == str(custom_dir / "world.json")
+    assert custom["storage"]["countries_path"] == str(custom_dir / "countries.json")
+    assert isinstance(custom["fingerprint"], str)
+    assert __import__("re").fullmatch(r"[0-9a-f]{64}", custom["fingerprint"])
+
+
+def test_world_packages_registry_malformed_custom_world_does_not_break_official(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+    worlds_root = _copy_worlds_root(tmp_path)
+    _write_custom_world(worlds_root, "broken_custom", malformed=True)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-packages-malformed-custom.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+        worlds_root=str(worlds_root),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages")
+
+    assert status == 200
+    assert [package["world_id"] for package in payload["packages"]] == ["official_fax_world"]
+
+
+def test_world_package_validation_supports_custom_world(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+    worlds_root = _copy_worlds_root(tmp_path)
+    _write_custom_world(worlds_root)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-packages-custom-validation.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+        worlds_root=str(worlds_root),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages/my_custom_world/validation")
+
+    assert status == 200
+    assert payload["world_id"] == "my_custom_world"
+    assert payload["status"] == "valid"
+    assert payload["error_count"] == 0
+    assert {check["code"] for check in payload["checks"]} >= {"world_metadata_valid", "countries_valid", "registry_consistency_valid"}
 
 
 def test_world_packages_registry_detail_and_deterministic_fingerprint(tmp_path) -> None:

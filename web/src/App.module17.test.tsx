@@ -2988,6 +2988,34 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByRole('link', { name: 'View details' })).toHaveAttribute('href', '/admin/world/library/official_fax_world')
   })
 
+
+  it('renders read-only Custom Worlds returned by the registry', async () => {
+    api.listWorldPackages.mockResolvedValueOnce({ packages: [{ world_id: 'my_custom_world', name: 'My Custom World', description: 'Custom world package.', type: 'custom', status: 'active', source: 'custom_config', editable: true, deletable: true, archivable: true, version: 'v1', fingerprint: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', country_count: 2, manual_override_count: 0, continent_count: 1, region_count: 1, travel_region_count: 1, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/custom/my_custom_world/countries.json', manual_player_overrides_path: '', world_metadata_path: 'config/worlds/custom/my_custom_world/world.json', continents_path: 'config/worlds/custom/my_custom_world/continents.json', regions_path: 'config/worlds/custom/my_custom_world/regions.json', travel_regions_path: 'config/worlds/custom/my_custom_world/travel_regions.json' } }] })
+
+    renderAppAt('/admin/world/library')
+
+    expect(await screen.findByRole('cell', { name: 'My Custom World' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'my_custom_world' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'custom' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'custom_config' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'Editable' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /create|edit|delete|archive|clone|import|export/i })).not.toBeInTheDocument()
+  })
+
+  it('opens Custom World Library detail without mutation actions', async () => {
+    api.getWorldPackage.mockResolvedValueOnce({ world_id: 'my_custom_world', name: 'My Custom World', description: 'Custom world package.', type: 'custom', status: 'active', source: 'custom_config', editable: true, deletable: true, archivable: true, version: 'v1', fingerprint: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', country_count: 2, manual_override_count: 0, continent_count: 1, region_count: 1, travel_region_count: 1, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/custom/my_custom_world/countries.json', manual_player_overrides_path: '', world_metadata_path: 'config/worlds/custom/my_custom_world/world.json', continents_path: 'config/worlds/custom/my_custom_world/continents.json', regions_path: 'config/worlds/custom/my_custom_world/regions.json', travel_regions_path: 'config/worlds/custom/my_custom_world/travel_regions.json' } })
+    api.getWorldPackageValidation.mockResolvedValueOnce({ world_id: 'my_custom_world', status: 'valid', error_count: 0, warning_count: 0, info_count: 6, checks: [{ code: 'world_metadata_valid', severity: 'info', status: 'passed', message: 'world.json is present and declares my_custom_world.', path: 'config/worlds/custom/my_custom_world/world.json', field: 'world_id' }] })
+
+    renderAppAt('/admin/world/library/my_custom_world')
+
+    expect(await screen.findByText('Custom world package.')).toBeInTheDocument()
+    expect(screen.getByText('custom_config')).toBeInTheDocument()
+    expect(screen.getByText('Deletable')).toBeInTheDocument()
+    expect(screen.getByText('Archivable')).toBeInTheDocument()
+    expect(screen.getByText(/Custom World mutation actions are not implemented yet/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /create|edit|delete|archive|clone|import|export/i })).not.toBeInTheDocument()
+  })
+
   it('opens World Library detail as read-only', async () => {
     renderAppAt('/admin/world/library/official_fax_world')
 

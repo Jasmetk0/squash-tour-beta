@@ -1372,9 +1372,9 @@ export type WorldPackage = {
   world_id: string
   name: string
   description: string
-  type: 'official'
-  status: 'active'
-  source: 'canonical_config' | 'built_in'
+  type: 'official' | 'custom'
+  status: 'active' | 'archived'
+  source: 'canonical_config' | 'built_in' | 'custom_config'
   editable: boolean
   deletable: boolean
   archivable: boolean

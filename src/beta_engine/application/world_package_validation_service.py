@@ -46,11 +46,14 @@ class WorldPackageValidationService:
 
     def validate_package(self, world_id: str) -> WorldPackageValidationResult | None:
         normalized = world_id.strip().lower()
-        if normalized != OFFICIAL_FAX_WORLD_ID:
+        record = self.registry_service.get_package(normalized)
+        if record is None:
             return None
 
         checks: list[WorldPackageValidationCheck] = []
-        paths = self.registry_service.official_paths()
+        paths = self.registry_service.package_paths(record.world_id)
+        if paths is None:
+            return None
 
         world_payload = self._read_json(paths["world"], checks, code="world_metadata_json_valid")
         continents_payload = self._read_json(paths["continents"], checks, code="continents_json_valid")
@@ -58,7 +61,7 @@ class WorldPackageValidationService:
         travel_regions_payload = self._read_json(paths["travel_regions"], checks, code="travel_regions_json_valid")
         countries_payload = self._read_json(paths["countries"], checks, code="countries_json_valid")
 
-        self._validate_world_metadata(world_payload, paths["world"], checks)
+        self._validate_world_metadata(world_payload, paths["world"], checks, expected_world_id=record.world_id, expected_type=record.type, expected_status=record.status, expected_source=record.source, expected_editable=record.editable, expected_deletable=record.deletable, expected_archivable=record.archivable)
         continent_codes, continent_count = self._validate_code_name_collection(
             continents_payload, "continents", paths["continents"], checks, "continents_valid", required_non_empty=False
         )
@@ -72,14 +75,14 @@ class WorldPackageValidationService:
             required_non_empty=False,
         )
         country_count = self._validate_countries(countries_payload, region_codes, travel_region_codes, paths["countries"], checks)
-        self._validate_registry_consistency(checks, country_count, continent_count, region_count, travel_region_count)
+        self._validate_registry_consistency(record.world_id, checks, country_count, continent_count, region_count, travel_region_count)
 
         error_count = sum(1 for check in checks if check.severity == "error" and check.status == "failed")
         warning_count = sum(1 for check in checks if check.severity == "warning")
         info_count = sum(1 for check in checks if check.severity == "info")
         status: ValidationStatus = "errors" if error_count else "warnings" if warning_count else "valid"
         return WorldPackageValidationResult(
-            world_id=OFFICIAL_FAX_WORLD_ID,
+            world_id=record.world_id,
             status=status,
             error_count=error_count,
             warning_count=warning_count,
@@ -103,8 +106,21 @@ class WorldPackageValidationService:
         checks.append(WorldPackageValidationCheck(code=code, severity="info", status="passed", message=f"{path.name} is present and valid JSON.", path=path_text))
         return payload
 
-    def _validate_world_metadata(self, payload: dict[str, Any] | None, path: Path, checks: list[WorldPackageValidationCheck]) -> None:
-        expected = {"world_id": OFFICIAL_FAX_WORLD_ID, "type": "official", "status": "active", "source": "built_in", "editable": False, "deletable": False, "archivable": False}
+    def _validate_world_metadata(
+        self,
+        payload: dict[str, Any] | None,
+        path: Path,
+        checks: list[WorldPackageValidationCheck],
+        *,
+        expected_world_id: str,
+        expected_type: str,
+        expected_status: str,
+        expected_source: str,
+        expected_editable: bool,
+        expected_deletable: bool,
+        expected_archivable: bool,
+    ) -> None:
+        expected = {"world_id": expected_world_id, "type": expected_type, "status": expected_status, "source": expected_source, "editable": expected_editable, "deletable": expected_deletable, "archivable": expected_archivable}
         if payload is None:
             return
         missing = [field for field in ("world_id", "name", "version", "content_schema_version", *expected.keys()) if field not in payload]
@@ -113,7 +129,7 @@ class WorldPackageValidationService:
         if missing or mismatches or empty:
             checks.append(WorldPackageValidationCheck("world_metadata_valid", "error", "failed", f"world.json metadata is invalid (missing={sorted(set(missing))}, mismatches={mismatches}, empty={empty}).", str(path)))
         else:
-            checks.append(WorldPackageValidationCheck("world_metadata_valid", "info", "passed", "world.json is present and declares official_fax_world.", str(path), "world_id"))
+            checks.append(WorldPackageValidationCheck("world_metadata_valid", "info", "passed", f"world.json is present and declares {expected_world_id}.", str(path), "world_id"))
 
     def _validate_code_name_collection(self, payload: dict[str, Any] | None, key: str, path: Path, checks: list[WorldPackageValidationCheck], code: str, *, required_non_empty: bool) -> tuple[set[str], int]:
         if payload is None:
@@ -210,17 +226,17 @@ class WorldPackageValidationService:
             checks.append(WorldPackageValidationCheck("countries_valid", "info", "passed", "countries array is present with unique country codes, names, and valid region references.", str(path), "countries"))
         return len(countries)
 
-    def _validate_registry_consistency(self, checks: list[WorldPackageValidationCheck], country_count: int, continent_count: int, region_count: int, travel_region_count: int) -> None:
+    def _validate_registry_consistency(self, world_id: str, checks: list[WorldPackageValidationCheck], country_count: int, continent_count: int, region_count: int, travel_region_count: int) -> None:
         try:
-            record = self.registry_service.get_package(OFFICIAL_FAX_WORLD_ID)
+            record = self.registry_service.get_package(world_id)
         except Exception as exc:  # noqa: BLE001 - validation reports registry build failures as data health checks.
             checks.append(WorldPackageValidationCheck("registry_consistency_valid", "error", "failed", f"Registry record could not be built: {exc}."))
             return
         if record is None:
-            checks.append(WorldPackageValidationCheck("registry_consistency_valid", "error", "failed", "Registry did not return official_fax_world."))
+            checks.append(WorldPackageValidationCheck("registry_consistency_valid", "error", "failed", f"Registry did not return {world_id}."))
             return
         errors: list[str] = []
-        expected = {"source": "built_in", "editable": False, "deletable": False, "archivable": False, "country_count": country_count, "continent_count": continent_count, "region_count": region_count, "travel_region_count": travel_region_count}
+        expected = {"country_count": country_count, "continent_count": continent_count, "region_count": region_count, "travel_region_count": travel_region_count}
         for field, value in expected.items():
             if getattr(record, field) != value:
                 errors.append(f"{field}={getattr(record, field)!r} expected {value!r}")
@@ -229,4 +245,4 @@ class WorldPackageValidationService:
         if errors:
             checks.append(WorldPackageValidationCheck("registry_consistency_valid", "error", "failed", f"Registry consistency failed: {'; '.join(errors)}."))
         else:
-            checks.append(WorldPackageValidationCheck("registry_consistency_valid", "info", "passed", "Registry record is consistent with built-in official package storage."))
+            checks.append(WorldPackageValidationCheck("registry_consistency_valid", "info", "passed", f"Registry record is consistent with {world_id} package storage."))

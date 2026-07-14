@@ -37,6 +37,7 @@ def create_app(
     season_ranking_snapshots_registry_path: str | None = None,
     points_config_path: str | None = None,
     entry_tuning_config_path: str | None = None,
+    worlds_root: str | None = None,
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -91,6 +92,8 @@ def create_app(
         app.state.season_ranking_snapshots_registry_path = season_ranking_snapshots_registry_path
     if points_config_path is not None:
         app.state.points_config_path = points_config_path
+    if worlds_root is not None:
+        app.state.worlds_root = worlds_root
     app.include_router(api_router)
     return app
 

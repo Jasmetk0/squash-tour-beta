@@ -82,8 +82,7 @@ export function WorldLibraryPage(): JSX.Element {
       </div>
       <p>
         World Packages are foundational world input bundles. A run will eventually be created from one selected World Package.
-        Official FAX World is built in and read-only. Custom Worlds are not implemented yet. This page currently exposes the
-        built-in Official FAX World package from repository config. Legacy Countries Editor and package import/export workflows
+        Official FAX World is built in and read-only. Repository-stored Custom Worlds can be discovered and inspected read-only when present under config/worlds/custom/. Legacy Countries Editor and package import/export workflows
         still use canonical config until package-scoped editing is implemented.
       </p>
       <p><Link to="/admin/world">Back to World hub</Link></p>
@@ -177,7 +176,7 @@ export function WorldLibraryDetailPage(): JSX.Element {
             <DetailRow label="Editable" value={yesNo(pkg.editable, 'Editable', 'Read-only')} />
             <DetailRow label="Deletable" value={yesNo(pkg.deletable, 'Deletable', 'Not deletable')} />
             <DetailRow label="Archivable" value={yesNo(pkg.archivable, 'Archivable', 'Not archivable')} />
-            <p className="status">Official FAX World is built into repository config and is read-only in this phase.</p>
+            <p className="status">Official FAX World is built into repository config and is read-only. Custom World mutation actions are not implemented yet; safety fields are metadata only.</p>
           </SectionCard>
           <SectionCard title="Contents">
             <DetailRow label="Countries" value={pkg.country_count} />

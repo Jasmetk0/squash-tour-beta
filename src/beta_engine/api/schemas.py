@@ -149,9 +149,9 @@ class WorldPackageSummaryResponse(BaseModel):
     world_id: str
     name: str
     description: str
-    type: Literal["official"]
-    status: Literal["active"]
-    source: Literal["canonical_config", "built_in"]
+    type: Literal["official", "custom"]
+    status: Literal["active", "archived"]
+    source: Literal["canonical_config", "built_in", "custom_config"]
     editable: bool
     deletable: bool
     archivable: bool

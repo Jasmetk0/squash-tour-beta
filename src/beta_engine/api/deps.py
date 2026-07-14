@@ -42,6 +42,7 @@ from beta_engine.application.tour_seasons_validation_service import TourSeasonsV
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.application.world_package_service import WorldPackageService
+from beta_engine.application.world_package_clone_service import WorldPackageCloneService
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
 from beta_engine.application.world_package_validation_service import WorldPackageValidationService
 from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
@@ -242,6 +243,14 @@ def get_world_package_registry_service(request: Request) -> WorldPackageRegistry
 
 def get_world_package_validation_service(request: Request) -> WorldPackageValidationService:
     return WorldPackageValidationService(registry_service=get_world_package_registry_service(request))
+
+
+def get_world_package_clone_service(request: Request) -> WorldPackageCloneService:
+    registry_service = get_world_package_registry_service(request)
+    return WorldPackageCloneService(
+        registry_service=registry_service,
+        validation_service=WorldPackageValidationService(registry_service=registry_service),
+    )
 
 
 def get_season_match_service(request: Request) -> SeasonMatchService:

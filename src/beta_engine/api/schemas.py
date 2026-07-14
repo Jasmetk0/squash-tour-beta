@@ -193,6 +193,30 @@ class WorldPackageValidationResponse(BaseModel):
     checks: list[WorldPackageValidationCheckResponse] = Field(default_factory=list)
 
 
+class WorldPackageCloneRequest(BaseModel):
+    new_world_id: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    description: str | None = None
+    dry_run: bool = True
+
+
+class WorldPackageCloneErrorResponse(BaseModel):
+    field: str | None = None
+    message: str
+
+
+class WorldPackageCloneResponse(BaseModel):
+    ok: bool
+    dry_run: bool
+    source_world_id: str
+    new_world_id: str
+    target_path: str
+    created_files: list[str] = Field(default_factory=list)
+    package: WorldPackageDetailResponse | None = None
+    validation: WorldPackageValidationResponse | None = None
+    errors: list[WorldPackageCloneErrorResponse] = Field(default_factory=list)
+
+
 class RunTalentPlanCountryAllocationResponse(BaseModel):
     country_code: str
     planned_count: int

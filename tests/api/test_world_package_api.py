@@ -640,3 +640,155 @@ def test_world_packages_registry_does_not_change_existing_world_package_export(t
         assert "exported_at" in package
         assert package["countries_dataset"]["countries"][0]["code"] == "AAA"
         assert package["manual_player_overrides_dataset"]["overrides"][0]["override_id"] == "aaa-manual-2027"
+
+
+def test_clone_official_world_dry_run_does_not_write_target(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+    worlds_root = _copy_worlds_root(tmp_path)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-packages-clone-dry-run.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+        worlds_root=str(worlds_root),
+    ) as server:
+        status, payload = _request(
+            "POST",
+            f"{server.base_url}/world/packages/official_fax_world/clone",
+            {"new_world_id": "dry_run_world", "name": "Dry Run World", "description": "Preview clone.", "dry_run": True},
+        )
+
+    assert status == 200
+    assert payload["ok"] is True
+    assert payload["dry_run"] is True
+    assert payload["source_world_id"] == "official_fax_world"
+    assert payload["new_world_id"] == "dry_run_world"
+    assert payload["created_files"] == ["world.json", "countries.json", "continents.json", "regions.json", "travel_regions.json"]
+    assert payload["package"] is None
+    assert payload["validation"] is None
+    assert payload["errors"] == []
+    assert not (worlds_root / "custom" / "dry_run_world").exists()
+
+
+def test_clone_official_world_actual_creates_discoverable_custom_world(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+    worlds_root = _copy_worlds_root(tmp_path)
+    target_dir = worlds_root / "custom" / "actual_world"
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-packages-clone-actual.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+        worlds_root=str(worlds_root),
+    ) as server:
+        status, payload = _request(
+            "POST",
+            f"{server.base_url}/world/packages/official_fax_world/clone",
+            {"new_world_id": "actual_world", "name": "Actual World", "description": "Cloned world.", "dry_run": False},
+        )
+        list_status, list_payload = _request("GET", f"{server.base_url}/world/packages")
+        detail_status, detail = _request("GET", f"{server.base_url}/world/packages/actual_world")
+        validation_status, validation = _request("GET", f"{server.base_url}/world/packages/actual_world/validation")
+
+    assert status == 200
+    assert payload["ok"] is True
+    assert payload["dry_run"] is False
+    assert payload["package"]["world_id"] == "actual_world"
+    assert payload["package"]["manual_override_count"] == 0
+    assert payload["validation"]["error_count"] == 0
+    assert target_dir.is_dir()
+    for filename in ["world.json", "countries.json", "continents.json", "regions.json", "travel_regions.json"]:
+        assert (target_dir / filename).is_file()
+    metadata = json.loads((target_dir / "world.json").read_text(encoding="utf-8"))
+    assert metadata == {
+        "world_id": "actual_world",
+        "name": "Actual World",
+        "description": "Cloned world.",
+        "type": "custom",
+        "status": "active",
+        "source": "custom_config",
+        "editable": True,
+        "deletable": True,
+        "archivable": True,
+        "version": "v1",
+        "content_schema_version": "1",
+        "cloned_from_world_id": "official_fax_world",
+    }
+    for filename in ["countries.json", "continents.json", "regions.json", "travel_regions.json"]:
+        assert (target_dir / filename).read_text(encoding="utf-8") == (worlds_root / "official_fax_world" / filename).read_text(encoding="utf-8")
+    assert list_status == 200
+    assert [package["world_id"] for package in list_payload["packages"]] == ["official_fax_world", "actual_world"]
+    assert detail_status == 200
+    assert detail["world_id"] == "actual_world"
+    assert detail["type"] == "custom"
+    assert validation_status == 200
+    assert validation["error_count"] == 0
+
+
+def test_clone_official_world_duplicate_invalid_official_id_and_missing_name_rejected(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+    worlds_root = _copy_worlds_root(tmp_path)
+    existing_dir = _write_custom_world(worlds_root, "existing_world")
+    before = (existing_dir / "world.json").read_text(encoding="utf-8")
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-packages-clone-rejected.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+        worlds_root=str(worlds_root),
+    ) as server:
+        duplicate_status, duplicate = _request("POST", f"{server.base_url}/world/packages/official_fax_world/clone", {"new_world_id": "existing_world", "name": "Duplicate", "dry_run": False})
+        invalid_status, invalid = _request("POST", f"{server.base_url}/world/packages/official_fax_world/clone", {"new_world_id": "Bad/World", "name": "Invalid", "dry_run": False})
+        official_status, official = _request("POST", f"{server.base_url}/world/packages/official_fax_world/clone", {"new_world_id": "official_fax_world", "name": "Official", "dry_run": False})
+        missing_name_status, missing_name = _request("POST", f"{server.base_url}/world/packages/official_fax_world/clone", {"new_world_id": "missing_name_world", "name": "", "dry_run": False})
+
+    assert duplicate_status == 200
+    assert duplicate["ok"] is False
+    assert (existing_dir / "world.json").read_text(encoding="utf-8") == before
+    assert invalid_status == 200
+    assert invalid["ok"] is False
+    assert not (worlds_root / "custom" / "Bad/World").exists()
+    assert official_status == 200
+    assert official["ok"] is False
+    assert missing_name_status == 422 or missing_name["ok"] is False
+    assert not (worlds_root / "custom" / "missing_name_world").exists()
+
+
+def test_clone_official_world_filesystem_failure_cleans_temporary_package(tmp_path, monkeypatch) -> None:
+    from beta_engine.application.countries_service import CountriesConfigService
+    from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
+    from beta_engine.application.world_package_clone_service import WorldPackageCloneService
+    from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
+    from beta_engine.application.world_package_validation_service import WorldPackageValidationService
+
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+    worlds_root = _copy_worlds_root(tmp_path)
+    registry = WorldPackageRegistryService(
+        countries_service=CountriesConfigService(config_path=countries_path),
+        manual_overrides_service=ManualPlayerOverridesService(config_path=overrides_path),
+        worlds_root=worlds_root,
+    )
+    service = WorldPackageCloneService(registry_service=registry, validation_service=WorldPackageValidationService(registry_service=registry))
+
+    def fail_copy(*args, **kwargs):
+        raise OSError("forced copy failure")
+
+    monkeypatch.setattr("beta_engine.application.world_package_clone_service.shutil.copy2", fail_copy)
+    result = service.clone_official_world(new_world_id="failed_world", name="Failed World", description=None, dry_run=False)
+
+    assert result.ok is False
+    assert "forced copy failure" in result.errors[0].message
+    assert not (worlds_root / "custom" / "failed_world").exists()
+    assert not list((worlds_root / "custom").glob(".failed_world.tmp-*"))

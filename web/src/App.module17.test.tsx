@@ -27,6 +27,7 @@ const api = vi.hoisted(() => ({
   listWorldPackages: vi.fn(),
   getWorldPackage: vi.fn(),
   getWorldPackageValidation: vi.fn(),
+  getWorldPackageCountries: vi.fn(),
   cloneOfficialWorldPackage: vi.fn(),
   getLatestRollover: vi.fn(),
   getRolloverBySeason: vi.fn(),
@@ -276,6 +277,7 @@ describe('Module 17 pages through routes', () => {
     api.getWorldPackage.mockResolvedValue({ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'built_in', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 3, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/official_fax_world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json', world_metadata_path: 'config/worlds/official_fax_world/world.json', continents_path: 'config/worlds/official_fax_world/continents.json', regions_path: 'config/worlds/official_fax_world/regions.json', travel_regions_path: 'config/worlds/official_fax_world/travel_regions.json' } })
     api.cloneOfficialWorldPackage.mockResolvedValue({ ok: true, dry_run: true, source_world_id: 'official_fax_world', new_world_id: 'my_custom_world', target_path: 'config/worlds/custom/my_custom_world', created_files: ['world.json'], package: null, validation: null, errors: [] })
     api.getWorldPackageValidation.mockResolvedValue({ world_id: 'official_fax_world', status: 'warnings', error_count: 0, warning_count: 1, info_count: 6, checks: [{ code: 'world_metadata_valid', severity: 'info', status: 'passed', message: 'world.json is present and declares official_fax_world.', path: 'config/worlds/official_fax_world/world.json', field: 'world_id' }] })
+    api.getWorldPackageCountries.mockResolvedValue({ world_id: 'official_fax_world', world_name: 'Official FAX World', type: 'official', source: 'built_in', read_only: true, country_count: 1, source_path: 'config/worlds/official_fax_world/countries.json', countries: [{ code: 'EGY', name: 'Egypt', flag_asset: null, region: 'MENA', population: 100000000, wealth_support: 3, squash_popularity: 5, squash_tradition: 5, system_quality: 5, competition_density: 5, federation_quality: 5, court_count: 1200, travel_region: 'MENA', notes: null, style_dna: {} }] })
     api.listCountries.mockResolvedValue({
       countries: [
         {
@@ -3039,6 +3041,41 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByRole('link', { name: 'Open Legacy World Package Import/Export' })).toHaveAttribute('href', '/admin/world/package')
   })
 
+
+  it('links from World Package detail to read-only package countries', async () => {
+    renderAppAt('/admin/world/library/official_fax_world')
+
+    expect(await screen.findByRole('heading', { name: 'World Package Details' })).toBeInTheDocument()
+    expect((await screen.findAllByRole('link', { name: 'Open package countries' }))[0]).toHaveAttribute('href', '/admin/world/library/official_fax_world/countries')
+  })
+
+  it('renders read-only Official World Package countries page', async () => {
+    renderAppAt('/admin/world/library/official_fax_world/countries')
+
+    expect(await screen.findByRole('heading', { name: 'World Package Countries' })).toBeInTheDocument()
+    expect(api.getWorldPackageCountries).toHaveBeenCalledWith('official_fax_world')
+    expect(await screen.findByText('Official FAX World')).toBeInTheDocument()
+    expect(screen.getByText('config/worlds/official_fax_world/countries.json')).toBeInTheDocument()
+    expect(screen.getByText('Egypt')).toBeInTheDocument()
+    expect(screen.getAllByText('MENA').length).toBeGreaterThan(0)
+    expect(screen.queryByRole('button', { name: /create|edit|delete|import|export/i })).not.toBeInTheDocument()
+  })
+
+  it('renders read-only Custom World Package countries page', async () => {
+    api.getWorldPackageCountries.mockResolvedValueOnce({ world_id: 'my_custom_world', world_name: 'My Custom World', type: 'custom', source: 'custom_config', read_only: true, country_count: 1, source_path: 'config/worlds/custom/my_custom_world/countries.json', countries: [{ code: 'NZL', name: 'New Zealand', flag_asset: null, region: 'OCEANIA', population: 5000000, wealth_support: 4, squash_popularity: 3, squash_tradition: 4, system_quality: 4, competition_density: 3, federation_quality: 4, court_count: 100, travel_region: 'OCEANIA', notes: null, style_dna: {} }] })
+    renderAppAt('/admin/world/library/my_custom_world/countries')
+
+    expect(await screen.findByText('My Custom World')).toBeInTheDocument()
+    expect(api.getWorldPackageCountries).toHaveBeenCalledWith('my_custom_world')
+    expect(screen.getByText('New Zealand')).toBeInTheDocument()
+  })
+
+  it('handles World Package countries API errors', async () => {
+    api.getWorldPackageCountries.mockRejectedValueOnce(new api.ApiError('countries unavailable', 500))
+    renderAppAt('/admin/world/library/unknown/countries')
+
+    expect(await screen.findByText(/Failed to load package countries: countries unavailable/i)).toBeInTheDocument()
+  })
 
   it('renders Clone Official World section for Official World detail', async () => {
     renderAppAt('/admin/world/library/official_fax_world')

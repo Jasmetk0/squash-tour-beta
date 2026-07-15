@@ -9,6 +9,7 @@ import {
   listPlanningSeasonCalendars,
   listWorldPackages,
   getWorldPackage,
+  getWorldPackageCountries,
   getWorldPackageValidation,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
@@ -641,6 +642,28 @@ describe('world package registry client', () => {
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
       'http://127.0.0.1:8000/world/packages/official%2Ffax%20world/validation',
+      expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
+    )
+    expect(result).toEqual(responseBody)
+  })
+
+  it('gets World Package countries from GET /world/packages/:worldId/countries with encoding', async () => {
+    const responseBody = {
+      world_id: 'official_fax_world',
+      world_name: 'Official FAX World',
+      type: 'official',
+      source: 'built_in',
+      read_only: true,
+      country_count: 0,
+      source_path: 'config/worlds/official_fax_world/countries.json',
+      countries: []
+    }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(responseBody), { status: 200 }))
+
+    const result = await getWorldPackageCountries('official/fax world')
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/world/packages/official%2Ffax%20world/countries',
       expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
     )
     expect(result).toEqual(responseBody)

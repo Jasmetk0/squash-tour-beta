@@ -43,6 +43,7 @@ from beta_engine.application.manual_player_overrides_service import ManualPlayer
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.application.world_package_service import WorldPackageService
 from beta_engine.application.world_package_clone_service import WorldPackageCloneService
+from beta_engine.application.world_package_countries_service import WorldPackageCountriesService
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
 from beta_engine.application.world_package_validation_service import WorldPackageValidationService
 from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
@@ -243,6 +244,10 @@ def get_world_package_registry_service(request: Request) -> WorldPackageRegistry
 
 def get_world_package_validation_service(request: Request) -> WorldPackageValidationService:
     return WorldPackageValidationService(registry_service=get_world_package_registry_service(request))
+
+
+def get_world_package_countries_service(request: Request) -> WorldPackageCountriesService:
+    return WorldPackageCountriesService(registry_service=get_world_package_registry_service(request))
 
 
 def get_world_package_clone_service(request: Request) -> WorldPackageCloneService:

@@ -308,11 +308,11 @@ describe('Module 17 pages through routes', () => {
     api.getTalentClassSummary.mockResolvedValue({ year_start: 2030, years: 10, seed: 123, dataset_status: 'temporary_seed_demo', country_count: 0, source_path: 'config/world/countries.json', total_talents_across_span: 0, average_total_talents_per_year: 0, global_band_totals: {}, global_elite_talents: 0, global_tour_talents: 0, global_pro_depth: 0, countries: [] })
     api.getSeasonRegistry.mockResolvedValue({
       start_season: '2000/01',
-      end_season: '2039/40',
-      season_count: 40,
+      end_season: '2049/50',
+      season_count: 50,
       week_count: 61,
       season_week_1_year_week: 37,
-      seasons: Array.from({ length: 40 }, (_, index) => ({ season_start_year: 2000 + index, label: `${2000 + index}/${String((2001 + index) % 100).padStart(2, '0')}`, season_index: index, week_count: 61, season_week_start: 1, season_week_end: 61, year_week_start: 37, year_week_end: 36, status: 'registry_only' }))
+      seasons: Array.from({ length: 50 }, (_, index) => ({ season_start_year: 2000 + index, label: `${2000 + index}/${String((2001 + index) % 100).padStart(2, '0')}`, season_index: index, week_count: 61, season_week_start: 1, season_week_end: 61, year_week_start: 37, year_week_end: 36, status: 'registry_only' }))
     })
     api.getSeasonActivePlayers.mockResolvedValue({ players: [], summary: { total_active_players: 0 }, metadata: null, warnings: [] })
     api.getSeasonCalendarValidationIssueCodes.mockResolvedValue({
@@ -376,7 +376,7 @@ describe('Module 17 pages through routes', () => {
       planned_future: ['Backend validation engine.']
     })
     api.getSeasonTemplates.mockResolvedValue({
-      templates: [{ template_id: 'default_msa_template_preview', name: 'Default MSA Template Preview', description: 'Read-only derived preview built from current tournament templates config.', season_count_supported: 40, week_count: 61, slot_count: 1, source: 'derived_preview:tournament_templates', status: 'read_only_foundation', slots: [{ slot_id: 'slot-01-wt_gold_24', season_week_start: 1, season_week_end: 1, duration_weeks: 1, tournament_name: 'World Tour Gold', category: 'GOLD', host_country: 'ENG', region: 'EUROPE', has_qualification: true, qualifying_week_start: 1, main_draw_week_start: 1, source_template_id: 'wt_gold_24', notes: null }] }],
+      templates: [{ template_id: 'default_msa_template_preview', name: 'Default MSA Template Preview', description: 'Read-only derived preview built from current tournament templates config.', season_count_supported: 50, week_count: 61, slot_count: 1, source: 'derived_preview:tournament_templates', status: 'read_only_foundation', slots: [{ slot_id: 'slot-01-wt_gold_24', season_week_start: 1, season_week_end: 1, duration_weeks: 1, tournament_name: 'World Tour Gold', category: 'GOLD', host_country: 'ENG', region: 'EUROPE', has_qualification: true, qualifying_week_start: 1, main_draw_week_start: 1, source_template_id: 'wt_gold_24', notes: null }] }],
       source_path: 'config/tournament_templates/mvp_templates.json',
       status: 'read_only_foundation'
     })
@@ -1202,8 +1202,8 @@ describe('Module 17 pages through routes', () => {
 
     renderAppAt('/admin/tour-seasons/season-registry')
     expect(await screen.findByRole('heading', { level: 2, name: 'Season Registry' })).toBeInTheDocument()
-    expect(screen.getByText(/fixed 2000\/01–2039\/40 MSA season model\./)).toBeInTheDocument()
-    expect(screen.getByText(/Canonical seasons are the real 40-season MSA timeline from 2000\/01 through 2039\/40\./)).toBeInTheDocument()
+    expect(screen.getByText(/fixed 2000\/01–2049\/50 MSA season model\./)).toBeInTheDocument()
+    expect(screen.getByText(/Canonical seasons are the real 50-season MSA timeline from 2000\/01 through 2049\/50\./)).toBeInTheDocument()
     expect(screen.getByText(/Admin-only calendar templates will be created separately and can later be copied into these seasons\./)).toBeInTheDocument()
     expect(screen.getByText(/Template changes will not automatically mutate canonical seasons\./)).toBeInTheDocument()
     expect(screen.getByText(/Calendar events will use weeks and qualificationWeeks\./)).toBeInTheDocument()
@@ -1211,14 +1211,14 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByText(/Locked events must be explicitly unlocked before move\/delete\/overwrite actions\./).length).toBeGreaterThan(0)
     const seasonLink = await screen.findByRole('link', { name: '2000/01' })
     expect(seasonLink).toHaveAttribute('href', '/admin/seasons/detail/2000%2F01')
-    expect(screen.getByRole('cell', { name: '2039/40' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: '2049/50' })).toBeInTheDocument()
     expect(screen.getAllByText(/61 Season Weeks/).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/Calendar status: existing read model unavailable \/ not loaded/).length).toBe(40)
-    expect(screen.getAllByText(/Canonical season · 61 Season Weeks · Admin calendar editor: planned/).length).toBe(40)
-    expect(screen.getAllByText('Open calendar — planned')).toHaveLength(40)
-    expect(screen.getAllByText('Copy from template — planned')).toHaveLength(40)
-    expect(screen.getAllByText('Save as template — planned')).toHaveLength(40)
-    expect(screen.getAllByText('Compare/copy workspace — planned')).toHaveLength(40)
+    expect(screen.getAllByText(/Calendar status: existing read model unavailable \/ not loaded/).length).toBe(50)
+    expect(screen.getAllByText(/Canonical season · 61 Season Weeks · Admin calendar editor: planned/).length).toBe(50)
+    expect(screen.getAllByText('Open calendar — planned')).toHaveLength(50)
+    expect(screen.getAllByText('Copy from template — planned')).toHaveLength(50)
+    expect(screen.getAllByText('Save as template — planned')).toHaveLength(50)
+    expect(screen.getAllByText('Compare/copy workspace — planned')).toHaveLength(50)
     expect(screen.queryByRole('button', { name: /Open calendar|Copy from template|Save as template|Compare\/copy workspace/ })).not.toBeInTheDocument()
     const registryTableSection = screen.getByRole('heading', { name: 'Registry table' }).closest('article')
     expect(registryTableSection).not.toBeNull()
@@ -1236,7 +1236,7 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByRole('heading', { name: 'Calendar Compare / Apply' })).toBeInTheDocument()
     expect(screen.getByText(/Dry-run compare by default, with guarded copy_missing_only apply for persisted planning calendars\./)).toBeInTheDocument()
     expect(await screen.findByText('Registry range')).toBeInTheDocument()
-    expect(await screen.findByText('2000/01–2039/40')).toBeInTheDocument()
+    expect(await screen.findByText('2000/01–2049/50')).toBeInTheDocument()
     expect(screen.getByText('Registry season count')).toBeInTheDocument()
     expect(screen.getByText('Registry week count')).toBeInTheDocument()
     expect(screen.getByText('Season templates count')).toBeInTheDocument()

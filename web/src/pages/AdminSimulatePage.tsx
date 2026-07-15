@@ -36,7 +36,7 @@ export function AdminSimulatePage(): JSX.Element {
     },
     {
       title: 'Full Timeline',
-      description: 'Future high-risk action to simulate through 2039/40. Requires explicit confirmation when implemented.',
+      description: 'Future high-risk action to simulate through 2049/50. Requires explicit confirmation when implemented.',
       to: '/admin/runs#timeline'
     }
   ]

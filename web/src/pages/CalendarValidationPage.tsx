@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 
 import { getCategories, getSeasonRegistry, getSeasonTemplates, getTourSeasonsValidation, getTournaments } from '../api/client'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
+import { MSA_TIMELINE_SEASON_COUNT } from '../config'
 import { formatApiError } from '../utils/apiErrors'
 
 type ValidationSeverity = 'OK' | 'Info' | 'Warning'
@@ -69,7 +70,7 @@ export function AdminTourSeasonsValidationPage(): JSX.Element {
 
   const registryChecks: { severity: ValidationSeverity; message: string }[] = registry
     ? [
-        { severity: registry.season_count === 40 ? 'OK' : 'Warning', message: `season_count is ${registry.season_count} (expected 40).` },
+        { severity: registry.season_count === MSA_TIMELINE_SEASON_COUNT ? 'OK' : 'Warning', message: `season_count is ${registry.season_count} (expected ${MSA_TIMELINE_SEASON_COUNT}).` },
         { severity: registry.week_count === 61 ? 'OK' : 'Warning', message: `week_count is ${registry.week_count} (expected 61).` },
         { severity: registry.season_week_1_year_week === 37 ? 'OK' : 'Warning', message: `season_week_1_year_week is ${registry.season_week_1_year_week} (expected 37).` }
       ]

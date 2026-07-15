@@ -31,7 +31,7 @@ def test_long_label_from_start_year() -> None:
 
 
 def test_compact_label_from_start_year() -> None:
-    assert season_label_from_start_year(2039) == "2039/40"
+    assert season_label_from_start_year(2049) == "2049/50"
 
 
 def test_roundtrip_helpers() -> None:

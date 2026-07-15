@@ -6,7 +6,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from beta_engine.application.category_service import CategoryService
-from beta_engine.application.season_registry_service import SeasonRegistryService
+from beta_engine.application.season_registry_service import SeasonRegistryService, TOTAL_REGISTRY_SEASONS
 from beta_engine.application.season_template_service import SeasonTemplateService
 from beta_engine.application.tournament_master_service import TournamentMasterService
 
@@ -62,7 +62,7 @@ class TourSeasonsValidationService:
         templates = self.season_template_service.list_templates().templates
 
         registry_issues: list[TourSeasonsValidationIssue] = [
-            self._issue("registry-season-count", "ok" if registry.season_count == 40 else "warning", "registry", f"season_count is {registry.season_count} (expected 40).", link_hint="/admin/tour-seasons/season-registry"),
+            self._issue("registry-season-count", "ok" if registry.season_count == TOTAL_REGISTRY_SEASONS else "warning", "registry", f"season_count is {registry.season_count} (expected {TOTAL_REGISTRY_SEASONS}).", link_hint="/admin/tour-seasons/season-registry"),
             self._issue("registry-week-count", "ok" if registry.week_count == 61 else "warning", "registry", f"week_count is {registry.week_count} (expected 61).", link_hint="/admin/tour-seasons/season-registry"),
             self._issue("registry-season-week-1", "ok" if registry.season_week_1_year_week == 37 else "warning", "registry", f"season_week_1_year_week is {registry.season_week_1_year_week} (expected 37).", link_hint="/admin/tour-seasons/season-registry"),
         ]

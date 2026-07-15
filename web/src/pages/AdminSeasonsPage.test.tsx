@@ -613,8 +613,8 @@ describe('AdminSeasonsPage', () => {
     api.getSeasonActivePlayers.mockResolvedValue(empty)
     api.getSeasonRegistry.mockResolvedValue({
       start_season: '2000/01',
-      end_season: '2039/40',
-      season_count: 40,
+      end_season: '2049/50',
+      season_count: 50,
       week_count: 61,
       season_week_1_year_week: 37,
       seasons: [{ label: '2000/01', season_start_year: 2000, season_index: 0, week_count: 61, season_week_start: 1, season_week_end: 61, year_week_start: 37, year_week_end: 36, status: 'registry_only' }]

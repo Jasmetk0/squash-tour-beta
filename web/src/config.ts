@@ -4,8 +4,8 @@ export const SUPPORTED_CALENDAR_SEASON = Number(import.meta.env.VITE_SUPPORTED_S
 
 
 export const MSA_TIMELINE_START_YEAR = 2000
-export const MSA_TIMELINE_END_YEAR = 2039
-export const MSA_TIMELINE_SEASON_COUNT = 40
+export const MSA_TIMELINE_END_YEAR = 2049
+export const MSA_TIMELINE_SEASON_COUNT = 50
 export const MSA_SEASON_WEEK_COUNT = 61
 export const MSA_TIMELINE_START_LABEL = '2000/01'
-export const MSA_TIMELINE_END_LABEL = '2039/40'
+export const MSA_TIMELINE_END_LABEL = '2049/50'

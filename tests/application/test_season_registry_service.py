@@ -4,9 +4,9 @@ from beta_engine.application.season_registry_service import SeasonRegistryServic
 def test_registry_shape_and_bounds() -> None:
     service = SeasonRegistryService()
     seasons = service.list_seasons()
-    assert len(seasons) == 40
+    assert len(seasons) == 50
     assert seasons[0].label == '2000/01'
-    assert seasons[-1].label == '2039/40'
+    assert seasons[-1].label == '2049/50'
     assert all(entry.week_count == 61 for entry in seasons)
 
 

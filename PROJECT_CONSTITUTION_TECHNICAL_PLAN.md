@@ -8,7 +8,7 @@ It is not just an academy manager.
 It should eventually generate and preserve a whole professional squash history.
 
 The simulator should support a fictional FAX timeline roughly from:
-- 2000/2001 to 2039/2040
+- 2000/01 to 2049/50
 
 The early development mode may simulate many seasons in bulk to test realism.
 The final usage mode should allow detailed simulation and browsing match by match, tournament by tournament, week by week.
@@ -59,7 +59,7 @@ A season is identified by a label such as:
 - 2000/2001
 - 2001/2002
 - ...
-- 2039/2040
+- 2049/50
 
 ### 3.2 Season Week
 Every season has exactly:
@@ -155,7 +155,7 @@ Population must not be the only driver.
 Small squash nations must be able to produce elite players if their culture/system/pipeline is strong.
 
 ### 4.3 Country Momentum / Era Modifiers
-Countries should not have to be static across 40 seasons.
+Countries should not have to be static across 50 seasons.
 
 Each country may optionally define time-based modifiers.
 
@@ -336,7 +336,7 @@ Simulation commands:
 - simulate next week
 - simulate full season
 - simulate from season X to season Y
-- simulate full history from 2000/2001 to 2039/2040
+- simulate full history from 2000/01 to 2049/50
 
 Early development priority:
 Allow bulk simulation of many seasons to test realism.
@@ -488,7 +488,7 @@ The engine must preserve:
 - records and milestones
 
 Long-term goal:
-The user should be able to browse any season/week from 2000/2001 to 2039/2040.
+The user should be able to browse any season/week from 2000/01 to 2049/50.
 
 ## 8. Regeneration Philosophy
 The app should support generation, preview, edit, lock, confirm, simulate, and regenerate workflows.
@@ -543,7 +543,7 @@ Current next implementation direction should be:
 8. Annual intake at season end.
 9. Retirement logic at season end.
 10. Stale-history detection when past data changes.
-11. Bulk simulation 2000/2001 → 2039/2040.
+11. Bulk simulation 2000/01 → 2049/50.
 12. Viewer Mode pages for browsing generated history.
 
 ## 11. Non-Negotiables

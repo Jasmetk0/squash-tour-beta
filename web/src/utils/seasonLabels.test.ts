@@ -14,7 +14,7 @@ describe('seasonLabels', () => {
   })
 
   it('builds compact label from start year', () => {
-    expect(seasonLabelFromStartYear(2039)).toBe('2039/40')
+    expect(seasonLabelFromStartYear(2049)).toBe('2049/50')
   })
 
   it('rejects malformed labels', () => {

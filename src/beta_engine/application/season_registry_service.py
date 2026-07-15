@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 from beta_engine.domain.calendar.season_labels import season_label_from_start_year
 
-TOTAL_REGISTRY_SEASONS = 40
+TOTAL_REGISTRY_SEASONS = 50
 REGISTRY_START_YEAR = 2000
 REGISTRY_END_YEAR = REGISTRY_START_YEAR + TOTAL_REGISTRY_SEASONS - 1
 SIMPLIFIED_YEAR_WEEK_COUNT = 61

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   applyCalendarTemplateToPlanningCalendar,
   compareCalendarTemplateDryRun,
+  cloneOfficialWorldPackage,
   createCalendarTemplate,
   getPlanningSeasonCalendar,
   listPlanningSeasonCalendars,
@@ -644,4 +645,38 @@ describe('world package registry client', () => {
     )
     expect(result).toEqual(responseBody)
   })
+
+  it('clones Official FAX World via POST /world/packages/official_fax_world/clone', async () => {
+    const payload = {
+      new_world_id: 'my_custom_world',
+      name: 'My Custom World',
+      description: 'Custom world cloned from Official FAX World.',
+      dry_run: true
+    }
+    const responseBody = {
+      ok: true,
+      dry_run: true,
+      source_world_id: 'official_fax_world',
+      new_world_id: 'my_custom_world',
+      target_path: 'config/worlds/custom/my_custom_world',
+      created_files: ['world.json'],
+      package: null,
+      validation: null,
+      errors: []
+    }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(responseBody), { status: 200 }))
+
+    const result = await cloneOfficialWorldPackage(payload)
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/world/packages/official_fax_world/clone',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(payload)
+      })
+    )
+    expect(result).toEqual(responseBody)
+  })
+
 })

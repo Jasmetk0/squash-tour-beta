@@ -27,6 +27,7 @@ const api = vi.hoisted(() => ({
   listWorldPackages: vi.fn(),
   getWorldPackage: vi.fn(),
   getWorldPackageValidation: vi.fn(),
+  cloneOfficialWorldPackage: vi.fn(),
   getLatestRollover: vi.fn(),
   getRolloverBySeason: vi.fn(),
   getPlayerTransitions: vi.fn(),
@@ -273,6 +274,7 @@ describe('Module 17 pages through routes', () => {
     api.listRuns.mockResolvedValue({ runs: [] })
     api.listWorldPackages.mockResolvedValue({ packages: [{ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'built_in', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 3, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/official_fax_world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json', world_metadata_path: 'config/worlds/official_fax_world/world.json', continents_path: 'config/worlds/official_fax_world/continents.json', regions_path: 'config/worlds/official_fax_world/regions.json', travel_regions_path: 'config/worlds/official_fax_world/travel_regions.json' } }] })
     api.getWorldPackage.mockResolvedValue({ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'built_in', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 3, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/official_fax_world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json', world_metadata_path: 'config/worlds/official_fax_world/world.json', continents_path: 'config/worlds/official_fax_world/continents.json', regions_path: 'config/worlds/official_fax_world/regions.json', travel_regions_path: 'config/worlds/official_fax_world/travel_regions.json' } })
+    api.cloneOfficialWorldPackage.mockResolvedValue({ ok: true, dry_run: true, source_world_id: 'official_fax_world', new_world_id: 'my_custom_world', target_path: 'config/worlds/custom/my_custom_world', created_files: ['world.json'], package: null, validation: null, errors: [] })
     api.getWorldPackageValidation.mockResolvedValue({ world_id: 'official_fax_world', status: 'warnings', error_count: 0, warning_count: 1, info_count: 6, checks: [{ code: 'world_metadata_valid', severity: 'info', status: 'passed', message: 'world.json is present and declares official_fax_world.', path: 'config/worlds/official_fax_world/world.json', field: 'world_id' }] })
     api.listCountries.mockResolvedValue({
       countries: [
@@ -940,7 +942,9 @@ describe('Module 17 pages through routes', () => {
     expect(screen.queryByText('replace_unlocked_only')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Two-pane compare/copy workspace preview' })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Run backend compare dry-run' }))
+    const runBackendCompareButton = screen.getByRole('button', { name: 'Run backend compare dry-run' })
+    await waitFor(() => expect(runBackendCompareButton).toBeEnabled())
+    fireEvent.click(runBackendCompareButton)
 
     await waitFor(() => expect(api.compareCalendarTemplateDryRun).toHaveBeenCalledTimes(1))
     const [dryRunPayload] = api.compareCalendarTemplateDryRun.mock.calls[0]
@@ -3033,6 +3037,71 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('world_metadata_valid')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open Countries Editor' })).toHaveAttribute('href', '/admin/world/countries')
     expect(screen.getByRole('link', { name: 'Open Legacy World Package Import/Export' })).toHaveAttribute('href', '/admin/world/package')
+  })
+
+
+  it('renders Clone Official World section for Official World detail', async () => {
+    renderAppAt('/admin/world/library/official_fax_world')
+
+    expect(await screen.findByRole('heading', { name: 'Clone Official World' })).toBeInTheDocument()
+    expect(screen.getByText(/does not edit Official FAX World and does not affect existing runs/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('my_custom_world')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Preview clone' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Create Custom World' })).toBeInTheDocument()
+  })
+
+  it('previews Official World clone with dry_run true and shows no-write result', async () => {
+    api.cloneOfficialWorldPackage.mockResolvedValueOnce({ ok: true, dry_run: true, source_world_id: 'official_fax_world', new_world_id: 'my_custom_world', target_path: 'config/worlds/custom/my_custom_world', created_files: ['world.json', 'countries.json'], package: null, validation: null, errors: [] })
+    renderAppAt('/admin/world/library/official_fax_world')
+
+    fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), { target: { value: 'my_custom_world' } })
+    fireEvent.change(screen.getByPlaceholderText('My Custom World'), { target: { value: 'My Custom World' } })
+    fireEvent.change(screen.getByPlaceholderText('Custom world cloned from Official FAX World.'), { target: { value: 'Custom world cloned from Official FAX World.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Preview clone' }))
+
+    await waitFor(() => expect(api.cloneOfficialWorldPackage.mock.calls[0][0]).toEqual({ new_world_id: 'my_custom_world', name: 'My Custom World', description: 'Custom world cloned from Official FAX World.', dry_run: true }))
+    expect(await screen.findByText(/no files were written/i)).toBeInTheDocument()
+    expect(screen.getByText('config/worlds/custom/my_custom_world')).toBeInTheDocument()
+    expect(screen.getByText('countries.json')).toBeInTheDocument()
+  })
+
+  it('creates Official World clone with dry_run false and shows package, validation, and detail link', async () => {
+    api.cloneOfficialWorldPackage.mockResolvedValueOnce({ ok: true, dry_run: false, source_world_id: 'official_fax_world', new_world_id: 'my_custom_world', target_path: 'config/worlds/custom/my_custom_world', created_files: ['world.json'], package: { world_id: 'my_custom_world', name: 'My Custom World', description: 'Custom world package.', type: 'custom', status: 'active', source: 'custom_config', editable: true, deletable: true, archivable: true, version: 'v1', fingerprint: '1234567890abcdef1234567890abcdef', country_count: 3, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/custom/my_custom_world/countries.json', manual_player_overrides_path: 'config/worlds/custom/my_custom_world/manual_player_overrides.json' } }, validation: { world_id: 'my_custom_world', status: 'valid', error_count: 0, warning_count: 0, info_count: 6, checks: [] }, errors: [] })
+    renderAppAt('/admin/world/library/official_fax_world')
+
+    fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), { target: { value: 'my_custom_world' } })
+    fireEvent.change(screen.getByPlaceholderText('My Custom World'), { target: { value: 'My Custom World' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create Custom World' }))
+
+    await waitFor(() => expect(api.cloneOfficialWorldPackage.mock.calls[0][0]).toEqual(expect.objectContaining({ dry_run: false })))
+    expect(await screen.findByText(/Custom World package created/i)).toBeInTheDocument()
+    expect(screen.getByLabelText('Created package summary')).toHaveTextContent('custom_config')
+    expect(screen.getByLabelText('Created package summary')).toHaveTextContent('3 countries')
+    expect(screen.getByLabelText('Clone validation summary')).toHaveTextContent('valid')
+    expect(screen.getByRole('link', { name: 'Open new Custom World detail' })).toHaveAttribute('href', '/admin/world/library/my_custom_world')
+  })
+
+  it('displays structured clone errors when clone response is not ok', async () => {
+    api.cloneOfficialWorldPackage.mockResolvedValueOnce({ ok: false, dry_run: true, source_world_id: 'official_fax_world', new_world_id: 'Bad World', target_path: 'config/worlds/custom/Bad World', created_files: [], package: null, validation: null, errors: [{ field: 'new_world_id', message: 'lowercase letters, numbers, underscores only' }] })
+    renderAppAt('/admin/world/library/official_fax_world')
+
+    fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), { target: { value: 'Bad World' } })
+    fireEvent.change(screen.getByPlaceholderText('My Custom World'), { target: { value: 'Bad World' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Preview clone' }))
+
+    expect(await screen.findByText(/new_world_id: lowercase letters/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Custom World package created/i)).not.toBeInTheDocument()
+  })
+
+  it('displays formatted API errors for clone network failures', async () => {
+    api.cloneOfficialWorldPackage.mockRejectedValueOnce(new api.ApiError('clone unavailable', 500))
+    renderAppAt('/admin/world/library/official_fax_world')
+
+    fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), { target: { value: 'my_custom_world' } })
+    fireEvent.change(screen.getByPlaceholderText('My Custom World'), { target: { value: 'My Custom World' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Preview clone' }))
+
+    expect(await screen.findByText(/Clone request failed: clone unavailable/i)).toBeInTheDocument()
   })
 
   it('handles World Library detail validation API errors', async () => {

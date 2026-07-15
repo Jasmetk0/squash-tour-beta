@@ -1412,6 +1412,31 @@ export type WorldPackageValidation = {
   checks: WorldPackageValidationCheck[]
 }
 
+
+export type WorldPackageClonePayload = {
+  new_world_id: string
+  name: string
+  description?: string | null
+  dry_run: boolean
+}
+
+export type WorldPackageCloneError = {
+  field: string | null
+  message: string
+}
+
+export type WorldPackageCloneResponse = {
+  ok: boolean
+  dry_run: boolean
+  source_world_id: string
+  new_world_id: string
+  target_path: string
+  created_files: string[]
+  package: WorldPackage | null
+  validation: WorldPackageValidation | null
+  errors: WorldPackageCloneError[]
+}
+
 export type WorldPackageImportPayload = {
   package_text: string
   dry_run: boolean

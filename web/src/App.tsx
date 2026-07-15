@@ -93,7 +93,7 @@ import {
 import { WorldGenerationPage } from './pages/WorldGenerationPage'
 import { NationsPage } from './pages/NationsPage'
 import { WorldPackagePage } from './pages/WorldPackagePage'
-import { WorldLibraryDetailPage, WorldLibraryPage } from './pages/WorldLibraryPage'
+import { WorldLibraryDetailPage, WorldLibraryPage, WorldPackageCountriesPage } from './pages/WorldLibraryPage'
 import { CountryMomentumPage } from './pages/CountryMomentumPage'
 import { AdminSeasonDetailPage } from './pages/SeasonDetailPage'
 import { AdminSeasonBuilderPage } from './pages/SeasonBuilderPage'
@@ -118,6 +118,7 @@ export default function App(): JSX.Element {
         <Route path="admin/world" element={<AdminWorldPage />} />
         <Route path="admin/world/library" element={<WorldLibraryPage />} />
         <Route path="admin/world/library/:worldId" element={<WorldLibraryDetailPage />} />
+        <Route path="admin/world/library/:worldId/countries" element={<WorldPackageCountriesPage />} />
         <Route path="admin/world/countries" element={<CountriesPage />} />
         <Route path="admin/world/countries/:countryCode" element={<CountryDetailPage />} />
         <Route path="admin/world/talent-preview" element={<TalentPreviewPage />} />

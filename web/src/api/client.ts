@@ -72,6 +72,7 @@ import type {
   WorldPackage,
   WorldPackageClonePayload,
   WorldPackageCloneResponse,
+  WorldPackageCountriesResponse,
   WorldPackageImportPayload,
   WorldPackageImportResponse,
   WorldPackageListResponse,
@@ -690,6 +691,10 @@ export function getWorldPackage(worldId: string): Promise<WorldPackage> {
 
 export function getWorldPackageValidation(worldId: string): Promise<WorldPackageValidation> {
   return request(`/world/packages/${encodeURIComponent(worldId)}/validation`)
+}
+
+export function getWorldPackageCountries(worldId: string): Promise<WorldPackageCountriesResponse> {
+  return request(`/world/packages/${encodeURIComponent(worldId)}/countries`)
 }
 
 export function cloneOfficialWorldPackage(payload: WorldPackageClonePayload): Promise<WorldPackageCloneResponse> {

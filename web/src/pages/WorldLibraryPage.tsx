@@ -3,8 +3,8 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
-import { cloneOfficialWorldPackage, getWorldPackage, getWorldPackageValidation, listWorldPackages } from '../api/client'
-import type { WorldPackage, WorldPackageCloneResponse, WorldPackageValidation } from '../api/types'
+import { cloneOfficialWorldPackage, getWorldPackage, getWorldPackageCountries, getWorldPackageValidation, listWorldPackages } from '../api/client'
+import type { CountryRecord, WorldPackage, WorldPackageCloneResponse, WorldPackageValidation } from '../api/types'
 import { SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -250,6 +250,83 @@ function ValidationSection({ validation }: { validation: WorldPackageValidation 
   )
 }
 
+function CountryCell({ value }: { value: ReactNode }): JSX.Element {
+  return <td>{value === null || value === undefined || value === '' ? '—' : value}</td>
+}
+
+function PackageCountriesTable({ countries }: { countries: CountryRecord[] }): JSX.Element {
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th><th>Name</th><th>Region</th><th>Population</th><th>Wealth</th><th>Popularity</th><th>Tradition</th><th>System</th><th>Competition</th><th>Federation</th><th>Courts</th><th>Travel region</th>
+        </tr>
+      </thead>
+      <tbody>
+        {countries.map((country) => (
+          <tr key={country.code}>
+            <CountryCell value={<code>{country.code}</code>} />
+            <CountryCell value={country.name} />
+            <CountryCell value={country.region} />
+            <CountryCell value={country.population.toLocaleString()} />
+            <CountryCell value={country.wealth_support} />
+            <CountryCell value={country.squash_popularity} />
+            <CountryCell value={country.squash_tradition} />
+            <CountryCell value={country.system_quality} />
+            <CountryCell value={country.competition_density} />
+            <CountryCell value={country.federation_quality} />
+            <CountryCell value={country.court_count} />
+            <CountryCell value={country.travel_region} />
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+export function WorldPackageCountriesPage(): JSX.Element {
+  const { worldId = '' } = useParams()
+  const countriesQuery = useQuery({
+    queryKey: ['world-package-countries', worldId],
+    queryFn: () => getWorldPackageCountries(worldId),
+    enabled: Boolean(worldId),
+    retry: false
+  })
+  const data = countriesQuery.data
+
+  return (
+    <section className="panel">
+      <div className="page-intro">
+        <h2>World Package Countries</h2>
+        <p className="subtitle">This page inspects the countries inside this World Package. It does not edit canonical Countries config and does not edit the package.</p>
+      </div>
+      <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}`}>Back to World Package detail</Link></p>
+      {countriesQuery.isLoading && <p className="status">Loading package countries...</p>}
+      {countriesQuery.error && <p className="error">Failed to load package countries: {formatApiError(countriesQuery.error)}</p>}
+      {data && (
+        <>
+          <SectionCard title="Package">
+            <DetailRow label="World name" value={data.world_name} />
+            <DetailRow label="World ID" value={<code>{data.world_id}</code>} />
+            <DetailRow label="Type" value={data.type} />
+            <DetailRow label="Source" value={data.source} />
+            <DetailRow label="Country count" value={data.country_count} />
+            <DetailRow label="Source path" value={<code>{data.source_path}</code>} />
+            <DetailRow label="Mode" value={data.read_only ? 'Read-only' : 'Editable'} />
+          </SectionCard>
+          <SectionCard title="Read-only package countries">
+            <p className="status">No create, edit, delete, import, or export actions are available here. The legacy Countries Editor edits canonical config, not this package.</p>
+            <PackageCountriesTable countries={data.countries} />
+          </SectionCard>
+          <SectionCard title="Related links">
+            <p><Link to="/admin/world/countries">Open legacy Countries Editor</Link> — warning: it edits canonical Countries config, not this World Package.</p>
+          </SectionCard>
+        </>
+      )}
+    </section>
+  )
+}
+
 export function WorldLibraryDetailPage(): JSX.Element {
   const { worldId = '' } = useParams()
   const packageQuery = useQuery({
@@ -295,7 +372,7 @@ export function WorldLibraryDetailPage(): JSX.Element {
           </SectionCard>
           {pkg.world_id === 'official_fax_world' && pkg.type === 'official' && <CloneOfficialWorldSection />}
           <SectionCard title="Contents">
-            <DetailRow label="Countries" value={pkg.country_count} />
+            <DetailRow label="Countries" value={<><span>{pkg.country_count}</span> · <Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}/countries`}>Open package countries</Link></>} />
             <DetailRow label="Manual overrides" value={pkg.manual_override_count} />
             <DetailRow label="Continents" value={pkg.continent_count} />
             <DetailRow label="Regions" value={pkg.region_count} />
@@ -303,7 +380,7 @@ export function WorldLibraryDetailPage(): JSX.Element {
           </SectionCard>
           <SectionCard title="Storage">
             {pkg.storage.world_metadata_path && <DetailRow label="World metadata path" value={<code>{pkg.storage.world_metadata_path}</code>} />}
-            <DetailRow label="Countries path" value={<code>{pkg.storage.countries_path}</code>} />
+            <DetailRow label="Countries path" value={<><code>{pkg.storage.countries_path}</code> · <Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}/countries`}>Open package countries</Link></>} />
             {pkg.storage.continents_path && <DetailRow label="Continents path" value={<code>{pkg.storage.continents_path}</code>} />}
             {pkg.storage.regions_path && <DetailRow label="Regions path" value={<code>{pkg.storage.regions_path}</code>} />}
             {pkg.storage.travel_regions_path && <DetailRow label="Travel regions path" value={<code>{pkg.storage.travel_regions_path}</code>} />}

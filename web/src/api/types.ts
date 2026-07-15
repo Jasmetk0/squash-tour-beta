@@ -1394,6 +1394,17 @@ export type WorldPackageListResponse = {
   packages: WorldPackage[]
 }
 
+export type WorldPackageCountriesResponse = {
+  world_id: string
+  world_name: string
+  type: 'official' | 'custom'
+  source: 'canonical_config' | 'built_in' | 'custom_config'
+  read_only: boolean
+  country_count: number
+  source_path: string
+  countries: CountryRecord[]
+}
+
 export type WorldPackageValidationCheck = {
   code: string
   severity: 'info' | 'warning' | 'error'

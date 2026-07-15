@@ -2,17 +2,20 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from beta_engine.api.deps import get_world_package_clone_service, get_world_package_registry_service, get_world_package_validation_service
+from beta_engine.api.deps import get_world_package_clone_service, get_world_package_countries_service, get_world_package_registry_service, get_world_package_validation_service
 from beta_engine.api.schemas import (
     WorldPackageCloneErrorResponse,
     WorldPackageCloneRequest,
     WorldPackageCloneResponse,
+    CountryResponse,
+    WorldPackageCountriesResponse,
     WorldPackageDetailResponse,
     WorldPackageListResponse,
     WorldPackageSummaryResponse,
     WorldPackageValidationResponse,
 )
 from beta_engine.application.world_package_clone_service import WorldPackageCloneResult, WorldPackageCloneService
+from beta_engine.application.world_package_countries_service import WorldPackageCountriesResult, WorldPackageCountriesService
 from beta_engine.application.world_package_registry_service import OFFICIAL_FAX_WORLD_ID, WorldPackageRegistryRecord, WorldPackageRegistryService
 from beta_engine.application.world_package_validation_service import WorldPackageValidationResult, WorldPackageValidationService
 
@@ -29,6 +32,19 @@ def _to_detail(record: WorldPackageRegistryRecord) -> WorldPackageDetailResponse
 
 def _to_validation(result: WorldPackageValidationResult) -> WorldPackageValidationResponse:
     return WorldPackageValidationResponse.model_validate(result, from_attributes=True)
+
+
+def _to_countries(result: WorldPackageCountriesResult) -> WorldPackageCountriesResponse:
+    return WorldPackageCountriesResponse(
+        world_id=result.world_id,
+        world_name=result.world_name,
+        type=result.type,
+        source=result.source,
+        read_only=result.read_only,
+        country_count=result.country_count,
+        source_path=result.source_path,
+        countries=[CountryResponse.model_validate(country.model_dump(mode="json")) for country in result.countries],
+    )
 
 
 def _to_clone_response(result: WorldPackageCloneResult) -> WorldPackageCloneResponse:
@@ -67,6 +83,17 @@ def clone_world_package(
         dry_run=payload.dry_run,
     )
     return _to_clone_response(result)
+
+
+@router.get("/{world_id}/countries", response_model=WorldPackageCountriesResponse)
+def get_world_package_countries(
+    world_id: str,
+    service: WorldPackageCountriesService = Depends(get_world_package_countries_service),
+) -> WorldPackageCountriesResponse:
+    result = service.get_countries(world_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"world package '{world_id}' not found")
+    return _to_countries(result)
 
 
 @router.get("/{world_id}/validation", response_model=WorldPackageValidationResponse)

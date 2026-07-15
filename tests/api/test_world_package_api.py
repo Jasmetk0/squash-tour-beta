@@ -375,6 +375,76 @@ def test_invalid_package_does_not_partially_write(tmp_path) -> None:
     assert overrides_path.read_text(encoding="utf-8") == overrides_before
 
 
+
+def test_world_package_countries_returns_official_package_countries_without_canonical_fallback(tmp_path) -> None:
+    countries_path = tmp_path / "canonical-countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-package-countries-official.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages/official_fax_world/countries")
+
+    official_config = json.loads(Path("config/worlds/official_fax_world/countries.json").read_text(encoding="utf-8"))
+    assert status == 200
+    assert payload["world_id"] == "official_fax_world"
+    assert payload["world_name"] == "Official FAX World"
+    assert payload["type"] == "official"
+    assert payload["source"] == "built_in"
+    assert payload["read_only"] is True
+    assert payload["country_count"] == len(official_config["countries"])
+    assert payload["source_path"] == "config/worlds/official_fax_world/countries.json"
+    assert payload["countries"][0]["code"] == official_config["countries"][0]["code"]
+    assert all(country["code"] != "AAA" for country in payload["countries"])
+
+
+def test_world_package_countries_returns_custom_package_countries(tmp_path) -> None:
+    countries_path = tmp_path / "canonical-countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+    worlds_root = _copy_worlds_root(tmp_path)
+    _write_custom_world(worlds_root)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-package-countries-custom.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+        worlds_root=str(worlds_root),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages/my_custom_world/countries")
+
+    assert status == 200
+    assert payload["world_id"] == "my_custom_world"
+    assert payload["world_name"] == "My Custom World"
+    assert payload["type"] == "custom"
+    assert payload["source"] == "custom_config"
+    assert payload["read_only"] is True
+    assert payload["country_count"] == 2
+    assert payload["source_path"].endswith("worlds/custom/my_custom_world/countries.json")
+    assert [country["code"] for country in payload["countries"]] == ["AAA", "BBB"]
+
+
+def test_world_package_countries_unknown_world_returns_404(tmp_path) -> None:
+    countries_path = tmp_path / "canonical-countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-package-countries-unknown.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages/unknown/countries")
+
+    assert status == 404
+    assert "not found" in payload["detail"]
+
 def test_world_packages_registry_lists_built_in_official_package(tmp_path) -> None:
     countries_path = tmp_path / "countries.json"
     overrides_path = tmp_path / "manual_overrides.json"

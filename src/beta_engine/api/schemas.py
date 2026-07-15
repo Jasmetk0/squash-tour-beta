@@ -175,6 +175,17 @@ class WorldPackageListResponse(BaseModel):
     packages: list[WorldPackageSummaryResponse] = Field(default_factory=list)
 
 
+class WorldPackageCountriesResponse(BaseModel):
+    world_id: str
+    world_name: str
+    type: Literal["official", "custom"]
+    source: Literal["canonical_config", "built_in", "custom_config"]
+    read_only: bool
+    country_count: int
+    source_path: str
+    countries: list[CountryResponse] = Field(default_factory=list)
+
+
 class WorldPackageValidationCheckResponse(BaseModel):
     code: str
     severity: Literal["info", "warning", "error"]

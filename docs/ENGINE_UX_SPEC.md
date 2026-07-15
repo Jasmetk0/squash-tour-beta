@@ -44,7 +44,7 @@ Country Momentum should not remain a separate top-level world destination in the
 - Default generated output views (country/player/viewer) should use Master Run unless explicitly changed.
 
 ### 4) Season model hard rules
-- Fixed season range: **2000/01 through 2039/40**.
+- Fixed season range: **2000/01 through 2049/50**.
 - Every season has exactly **61 season weeks**.
 - **Season Week 1 maps to Year Week 37**.
 - This is an intentional engine simplification even if deeper FAX lore may be more complex.
@@ -363,7 +363,7 @@ Top-level consolidation target:
 
 ### 5.1 Season Registry
 Hard model decisions:
-- Season range: 2000/01 to 2039/40
+- Season range: 2000/01 to 2049/50
 - 61 season weeks per season
 - Season Week 1 = Year Week 37 mapping
 
@@ -390,7 +390,7 @@ Category meaning:
 
 Examples:
 - Diamond 2000/01–2015/16
-- Diamond 2016/17–2039/40
+- Diamond 2016/17–2049/50
 
 Category fields:
 - category name

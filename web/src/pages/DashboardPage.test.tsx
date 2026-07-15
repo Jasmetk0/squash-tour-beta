@@ -113,7 +113,7 @@ describe('DashboardPage', () => {
     const createPanel = screen.getByRole('heading', { name: 'Create run' }).closest('form') as HTMLElement
     expect(within(createPanel).queryByLabelText('Season')).not.toBeInTheDocument()
     expect(within(createPanel).getByText(/New root runs start at 2000\/01/i)).toBeInTheDocument()
-    expect(within(createPanel).getByText(/2039\/40: 40 seasons, 61 Season Weeks per season/i)).toBeInTheDocument()
+    expect(within(createPanel).getByText(/2049\/50: 50 seasons, 61 Season Weeks per season/i)).toBeInTheDocument()
     expect(within(createPanel).getByText(/rollover\/bootstrap child runs/i)).toBeInTheDocument()
 
     const runIdInput = within(createPanel).getByLabelText('Run ID')

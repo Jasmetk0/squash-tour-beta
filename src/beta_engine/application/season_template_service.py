@@ -7,6 +7,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+from beta_engine.application.season_registry_service import TOTAL_REGISTRY_SEASONS
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.domain.tournaments import (
     SeasonTemplateConflictDiagnosticsOverview,
@@ -229,7 +230,7 @@ class SeasonTemplateService:
             template_id="default_msa_template_preview",
             name="Default MSA Template Preview",
             description="Read-only derived preview built from current tournament templates config.",
-            season_count_supported=40,
+            season_count_supported=TOTAL_REGISTRY_SEASONS,
             slot_count=len(slots),
             source="derived_preview:tournament_templates",
             slots=slots,

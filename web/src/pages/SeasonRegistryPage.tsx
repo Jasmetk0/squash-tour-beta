@@ -17,7 +17,7 @@ export function AdminTourSeasonsSeasonRegistryPage(): JSX.Element {
     <section className="panel">
       <PageIntro
         title="Season Registry"
-        subtitle="Read-only deterministic registry for the fixed 2000/01–2039/40 MSA season model."
+        subtitle="Read-only deterministic registry for the fixed 2000/01–2049/50 MSA season model."
       />
 
       <SectionCard title="Registry summary">
@@ -35,7 +35,7 @@ export function AdminTourSeasonsSeasonRegistryPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title="Canonical calendar foundation">
-        <p>Canonical seasons are the real 40-season MSA timeline from 2000/01 through 2039/40. Admin-only calendar templates will be created separately and can later be copied into these seasons. Template changes will not automatically mutate canonical seasons.</p>
+        <p>Canonical seasons are the real 50-season MSA timeline from 2000/01 through 2049/50. Admin-only calendar templates will be created separately and can later be copied into these seasons. Template changes will not automatically mutate canonical seasons.</p>
         <p>Calendar events will use weeks and qualificationWeeks. Qualification belongs to the main event. Locked events must be explicitly unlocked before move/delete/overwrite actions.</p>
         <ul className="dashboard-help-list">
           <li>Registry is read-only.</li>

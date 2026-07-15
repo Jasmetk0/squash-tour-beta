@@ -942,7 +942,9 @@ describe('Module 17 pages through routes', () => {
     expect(screen.queryByText('replace_unlocked_only')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Two-pane compare/copy workspace preview' })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Run backend compare dry-run' }))
+    const runBackendCompareButton = screen.getByRole('button', { name: 'Run backend compare dry-run' })
+    await waitFor(() => expect(runBackendCompareButton).toBeEnabled())
+    fireEvent.click(runBackendCompareButton)
 
     await waitFor(() => expect(api.compareCalendarTemplateDryRun).toHaveBeenCalledTimes(1))
     const [dryRunPayload] = api.compareCalendarTemplateDryRun.mock.calls[0]

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import pytest
+from pydantic import ValidationError
+
 from beta_engine.domain.countries.models import Country
 
 
@@ -62,3 +65,53 @@ def test_country_explicit_travel_region_overrides_region_and_blank_normalizes_to
     assert explicit.effective_travel_region == "MIDDLE_EAST"
     assert blank.travel_region is None
     assert blank.effective_travel_region == "AFRICA"
+
+
+def test_country_accepts_phase_7b_population_timeline_fields() -> None:
+    country = Country.model_validate(
+        {
+            **_base_country_payload(),
+            "area_km2": 12345,
+            "default_population_year": 2020,
+            "default_population": 1_500_000,
+            "population_by_year": {"2019": 1_450_000, "2020": 1_500_000, "2021": None},
+        }
+    )
+
+    assert country.area_km2 == 12345
+    assert country.default_population_year == 2020
+    assert country.default_population == 1_500_000
+    assert country.population_by_year == {2019: 1_450_000, 2020: 1_500_000, 2021: None}
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("area_km2", 0),
+        ("default_population", 0),
+        ("default_population_year", 1954),
+        ("default_population_year", 2036),
+    ],
+)
+def test_country_rejects_invalid_phase_7b_scalar_fields(field: str, value: int) -> None:
+    with pytest.raises(ValidationError):
+        Country.model_validate({**_base_country_payload(), field: value})
+
+
+@pytest.mark.parametrize(
+    "population_by_year",
+    [
+        {"1954": 1_000_000},
+        {"2036": 1_000_000},
+        {"2020": 0},
+        {"2020": -1},
+    ],
+)
+def test_country_rejects_invalid_population_by_year(population_by_year: dict[str, int]) -> None:
+    with pytest.raises(ValidationError):
+        Country.model_validate({**_base_country_payload(), "population_by_year": population_by_year})
+
+
+def test_country_still_rejects_unknown_extra_fields() -> None:
+    with pytest.raises(ValidationError):
+        Country.model_validate({**_base_country_payload(), "unexpected": "blocked"})

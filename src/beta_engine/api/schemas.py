@@ -902,6 +902,10 @@ class CountryUpsertRequest(BaseModel):
     flag_asset: str | None = None
     region: str = Field(min_length=1)
     population: int = Field(gt=0)
+    area_km2: int | None = Field(default=None, gt=0)
+    default_population_year: int | None = Field(default=None, ge=1955, le=2035)
+    default_population: int | None = Field(default=None, gt=0)
+    population_by_year: dict[int, int | None] | None = None
     wealth_support: int = Field(ge=1, le=5)
     squash_popularity: int = Field(ge=1, le=5)
     squash_tradition: int = Field(ge=1, le=5)
@@ -944,6 +948,10 @@ class CountryResponse(BaseModel):
     flag_asset: str | None = None
     region: str
     population: int
+    area_km2: int | None = None
+    default_population_year: int | None = None
+    default_population: int | None = None
+    population_by_year: dict[int, int | None] | None = None
     wealth_support: int
     squash_popularity: int
     squash_tradition: int

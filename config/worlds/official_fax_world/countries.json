@@ -1,60 +1,97 @@
 {
-  "dataset_status": "temporary_seed_demo",
+  "dataset_status": "official_fax_world_phase_7b",
   "countries": [
     {
-      "code": "EGY",
-      "name": "Egypt",
-      "flag_asset": null,
-      "region": "MENA",
-      "population": 112000000,
-      "wealth_support": 5,
-      "squash_popularity": 5,
-      "squash_tradition": 5,
-      "system_quality": 5
-    },
-    {
-      "code": "ENG",
-      "name": "England",
+      "code": "GER",
+      "name": "Germanica",
       "flag_asset": null,
       "region": "EUROPE",
-      "population": 57000000,
-      "wealth_support": 4,
-      "squash_popularity": 4,
-      "squash_tradition": 5,
-      "system_quality": 4
-    },
-    {
-      "code": "PAK",
-      "name": "Pakistan",
-      "flag_asset": null,
-      "region": "ASIA",
-      "population": 241000000,
-      "wealth_support": 3,
+      "population": 169702055,
+      "area_km2": 870516,
+      "default_population_year": 2020,
+      "default_population": 169702055,
+      "population_by_year": {
+        "2020": 169702055
+      },
+      "wealth_support": 5,
       "squash_popularity": 3,
-      "squash_tradition": 5,
-      "system_quality": 3
+      "squash_tradition": 3,
+      "system_quality": 5,
+      "competition_density": 4.0,
+      "federation_quality": 5.0,
+      "court_count": 1800,
+      "travel_region": "EUROPE",
+      "notes": "Analog of a huge Germany and all German lands unified into one state.",
+      "style_dna": {}
     },
     {
-      "code": "USA",
-      "name": "United States",
+      "code": "BOG",
+      "name": "Bogemia",
       "flag_asset": null,
-      "region": "AMERICAS",
-      "population": 333000000,
+      "region": "EUROPE",
+      "population": 48566934,
+      "area_km2": 237528,
+      "default_population_year": 2020,
+      "default_population": 48566934,
+      "population_by_year": {
+        "2020": 48566934
+      },
       "wealth_support": 4,
       "squash_popularity": 2,
       "squash_tradition": 2,
-      "system_quality": 3
+      "system_quality": 4,
+      "competition_density": 3.0,
+      "federation_quality": 4.0,
+      "court_count": 520,
+      "travel_region": "EUROPE",
+      "notes": "Large analog of Czechia, Moravia, Silesia, Lusatia, Slovakia, and Carpathian Ruthenia.",
+      "style_dna": {}
     },
     {
-      "code": "NGA",
-      "name": "Nigeria",
+      "code": "HUN",
+      "name": "Hungarica",
       "flag_asset": null,
-      "region": "AFRICA",
-      "population": 223000000,
-      "wealth_support": 2,
-      "squash_popularity": 1,
-      "squash_tradition": 1,
-      "system_quality": 1
+      "region": "EUROPE",
+      "population": 32407718,
+      "area_km2": 368441,
+      "default_population_year": 2020,
+      "default_population": 32407718,
+      "population_by_year": {
+        "2020": 32407718
+      },
+      "wealth_support": 3,
+      "squash_popularity": 2,
+      "squash_tradition": 2,
+      "system_quality": 3,
+      "competition_density": 2.5,
+      "federation_quality": 3.0,
+      "court_count": 360,
+      "travel_region": "EUROPE",
+      "notes": "Analog of Hungary.",
+      "style_dna": {}
+    },
+    {
+      "code": "POL",
+      "name": "Polandia",
+      "flag_asset": null,
+      "region": "EUROPE",
+      "population": 31584129,
+      "area_km2": 296910,
+      "default_population_year": 2020,
+      "default_population": 31584129,
+      "population_by_year": {
+        "2020": 31584129
+      },
+      "wealth_support": 4,
+      "squash_popularity": 2,
+      "squash_tradition": 2,
+      "system_quality": 4,
+      "competition_density": 3.0,
+      "federation_quality": 4.0,
+      "court_count": 430,
+      "travel_region": "EUROPE",
+      "notes": "Analog of Poland.",
+      "style_dna": {}
     }
   ]
 }

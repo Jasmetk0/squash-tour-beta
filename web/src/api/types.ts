@@ -1183,6 +1183,10 @@ export type CountryRecord = {
   flag_asset: string | null
   region: string
   population: number
+  area_km2?: number | null
+  default_population_year?: number | null
+  default_population?: number | null
+  population_by_year?: Record<string, number | null> | null
   wealth_support: number
   squash_popularity: number
   squash_tradition: number

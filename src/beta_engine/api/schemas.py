@@ -186,6 +186,28 @@ class WorldPackageCountriesResponse(BaseModel):
     countries: list[CountryResponse] = Field(default_factory=list)
 
 
+
+
+class WorldPackageCountryEffectivePopulationResponse(BaseModel):
+    world_id: str
+    world_name: str
+    type: Literal["official", "custom"]
+    source: Literal["canonical_config", "built_in", "custom_config"]
+    read_only: bool
+    source_path: str
+    country_code: str
+    country_name: str
+    requested_year: int
+    effective_population: int
+    source_year: int | None = None
+    source_type: str
+    is_estimated: bool
+    default_population_year: int | None = None
+    default_population: int | None = None
+    legacy_population: int
+    population_by_year_count: int
+    usable_population_by_year_count: int
+
 class WorldPackageValidationCheckResponse(BaseModel):
     code: str
     severity: Literal["info", "warning", "error"]

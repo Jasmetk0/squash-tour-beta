@@ -44,6 +44,7 @@ from beta_engine.application.tournament_templates_service import TournamentTempl
 from beta_engine.application.world_package_service import WorldPackageService
 from beta_engine.application.world_package_clone_service import WorldPackageCloneService
 from beta_engine.application.world_package_countries_service import WorldPackageCountriesService
+from beta_engine.application.world_package_effective_population_service import WorldPackageEffectivePopulationService
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
 from beta_engine.application.world_package_validation_service import WorldPackageValidationService
 from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
@@ -248,6 +249,10 @@ def get_world_package_validation_service(request: Request) -> WorldPackageValida
 
 def get_world_package_countries_service(request: Request) -> WorldPackageCountriesService:
     return WorldPackageCountriesService(registry_service=get_world_package_registry_service(request))
+
+
+def get_world_package_effective_population_service(request: Request) -> WorldPackageEffectivePopulationService:
+    return WorldPackageEffectivePopulationService(countries_service=get_world_package_countries_service(request))
 
 
 def get_world_package_clone_service(request: Request) -> WorldPackageCloneService:

@@ -10,6 +10,7 @@ import {
   listWorldPackages,
   getWorldPackage,
   getWorldPackageCountries,
+  getWorldPackageCountryEffectivePopulation,
   getWorldPackageValidation,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
@@ -664,6 +665,39 @@ describe('world package registry client', () => {
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
       'http://127.0.0.1:8000/world/packages/official%2Ffax%20world/countries',
+      expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
+    )
+    expect(result).toEqual(responseBody)
+  })
+
+
+  it('gets World Package country effective population diagnostics with encoded path and year query', async () => {
+    const responseBody = {
+      world_id: 'official_fax_world',
+      world_name: 'Official FAX World',
+      type: 'official',
+      source: 'built_in',
+      read_only: true,
+      source_path: 'config/worlds/official_fax_world/countries.json',
+      country_code: 'GER',
+      country_name: 'Germanica',
+      requested_year: 1987,
+      effective_population: 169702055,
+      source_year: 2020,
+      source_type: 'nearest_population_year',
+      is_estimated: true,
+      default_population_year: 2020,
+      default_population: 169702055,
+      legacy_population: 169702055,
+      population_by_year_count: 1,
+      usable_population_by_year_count: 1
+    }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(responseBody), { status: 200 }))
+
+    const result = await getWorldPackageCountryEffectivePopulation('official/fax world', 'g/e/r', 1987)
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/world/packages/official%2Ffax%20world/countries/g%2Fe%2Fr/effective-population?year=1987',
       expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
     )
     expect(result).toEqual(responseBody)

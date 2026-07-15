@@ -452,6 +452,180 @@ def test_world_package_countries_unknown_world_returns_404(tmp_path) -> None:
     assert status == 404
     assert "not found" in payload["detail"]
 
+
+def test_world_package_effective_population_official_ger_1987_uses_nearest_2020(tmp_path) -> None:
+    countries_path = tmp_path / "canonical-countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-package-effective-population-1987.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages/official_fax_world/countries/GER/effective-population?year=1987")
+
+    assert status == 200
+    assert payload["world_id"] == "official_fax_world"
+    assert payload["world_name"] == "Official FAX World"
+    assert payload["type"] == "official"
+    assert payload["source"] == "built_in"
+    assert payload["read_only"] is True
+    assert payload["country_code"] == "GER"
+    assert payload["country_name"] == "Germanica"
+    assert payload["requested_year"] == 1987
+    assert payload["effective_population"] == 169702055
+    assert payload["source_type"] == "nearest_population_year"
+    assert payload["source_year"] == 2020
+    assert payload["is_estimated"] is True
+    assert payload["default_population_year"] == 2020
+    assert payload["default_population"] == 169702055
+    assert payload["legacy_population"] == 169702055
+    assert payload["population_by_year_count"] == 1
+    assert payload["usable_population_by_year_count"] == 1
+
+
+def test_world_package_effective_population_official_ger_2020_uses_exact_population_year(tmp_path) -> None:
+    countries_path = tmp_path / "canonical-countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-package-effective-population-2020.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages/official_fax_world/countries/GER/effective-population?year=2020")
+
+    assert status == 200
+    assert payload["country_code"] == "GER"
+    assert payload["requested_year"] == 2020
+    assert payload["effective_population"] == 169702055
+    assert payload["source_type"] == "exact_population_year"
+    assert payload["source_year"] == 2020
+    assert payload["is_estimated"] is False
+
+
+def test_world_package_effective_population_normalizes_lowercase_country_code(tmp_path) -> None:
+    countries_path = tmp_path / "canonical-countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-package-effective-population-lowercase.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages/official_fax_world/countries/ger/effective-population?year=2020")
+
+    assert status == 200
+    assert payload["country_code"] == "GER"
+
+
+def test_world_package_effective_population_unknown_country_returns_404(tmp_path) -> None:
+    countries_path = tmp_path / "canonical-countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-package-effective-population-unknown-country.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages/official_fax_world/countries/ZZZ/effective-population?year=2020")
+
+    assert status == 404
+    assert "country 'ZZZ' not found" in payload["detail"]
+
+
+def test_world_package_effective_population_unknown_world_returns_404(tmp_path) -> None:
+    countries_path = tmp_path / "canonical-countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-package-effective-population-unknown-world.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages/unknown/countries/GER/effective-population?year=2020")
+
+    assert status == 404
+    assert "world package 'unknown' not found" in payload["detail"]
+
+
+def test_world_package_effective_population_rejects_year_below_range(tmp_path) -> None:
+    countries_path = tmp_path / "canonical-countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-package-effective-population-year-low.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages/official_fax_world/countries/GER/effective-population?year=1954")
+
+    assert status == 422
+    assert payload["detail"]
+
+
+def test_world_package_effective_population_rejects_year_above_range(tmp_path) -> None:
+    countries_path = tmp_path / "canonical-countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-package-effective-population-year-high.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages/official_fax_world/countries/GER/effective-population?year=2036")
+
+    assert status == 422
+    assert payload["detail"]
+
+
+def test_world_package_effective_population_uses_custom_package_country_data(tmp_path) -> None:
+    countries_path = tmp_path / "canonical-countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+    worlds_root = _copy_worlds_root(tmp_path)
+    custom_dir = _write_custom_world(worlds_root)
+    custom_countries = json.loads((custom_dir / "countries.json").read_text(encoding="utf-8"))
+    custom_countries["countries"][0]["population"] = 1_000_000
+    custom_countries["countries"][0]["default_population"] = 1_500_000
+    custom_countries["countries"][0]["default_population_year"] = 2020
+    custom_countries["countries"][0]["population_by_year"] = {"1980": 900_000, "2000": 1_200_000}
+    _write_fixture(custom_dir / "countries.json", custom_countries)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-package-effective-population-custom.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+        worlds_root=str(worlds_root),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages/my_custom_world/countries/AAA/effective-population?year=1987")
+
+    assert status == 200
+    assert payload["world_id"] == "my_custom_world"
+    assert payload["country_code"] == "AAA"
+    assert payload["effective_population"] == 900_000
+    assert payload["source_type"] == "nearest_population_year"
+    assert payload["source_year"] == 1980
+    assert payload["legacy_population"] == 1_000_000
+    assert payload["default_population"] == 1_500_000
+    assert payload["population_by_year_count"] == 2
+    assert payload["usable_population_by_year_count"] == 2
+
 def test_world_packages_registry_lists_built_in_official_package(tmp_path) -> None:
     countries_path = tmp_path / "countries.json"
     overrides_path = tmp_path / "manual_overrides.json"

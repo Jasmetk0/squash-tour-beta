@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
-from beta_engine.api.deps import get_world_package_clone_service, get_world_package_countries_service, get_world_package_registry_service, get_world_package_validation_service
+from beta_engine.api.deps import get_world_package_clone_service, get_world_package_countries_service, get_world_package_effective_population_service, get_world_package_registry_service, get_world_package_validation_service
 from beta_engine.api.schemas import (
     WorldPackageCloneErrorResponse,
     WorldPackageCloneRequest,
     WorldPackageCloneResponse,
     CountryResponse,
     WorldPackageCountriesResponse,
+    WorldPackageCountryEffectivePopulationResponse,
     WorldPackageDetailResponse,
     WorldPackageListResponse,
     WorldPackageSummaryResponse,
@@ -16,6 +17,7 @@ from beta_engine.api.schemas import (
 )
 from beta_engine.application.world_package_clone_service import WorldPackageCloneResult, WorldPackageCloneService
 from beta_engine.application.world_package_countries_service import WorldPackageCountriesResult, WorldPackageCountriesService
+from beta_engine.application.world_package_effective_population_service import WorldPackageCountryEffectivePopulationResult, WorldPackageEffectivePopulationService
 from beta_engine.application.world_package_registry_service import OFFICIAL_FAX_WORLD_ID, WorldPackageRegistryRecord, WorldPackageRegistryService
 from beta_engine.application.world_package_validation_service import WorldPackageValidationResult, WorldPackageValidationService
 
@@ -45,6 +47,10 @@ def _to_countries(result: WorldPackageCountriesResult) -> WorldPackageCountriesR
         source_path=result.source_path,
         countries=[CountryResponse.model_validate(country.model_dump(mode="json")) for country in result.countries],
     )
+
+
+def _to_effective_population(result: WorldPackageCountryEffectivePopulationResult) -> WorldPackageCountryEffectivePopulationResponse:
+    return WorldPackageCountryEffectivePopulationResponse.model_validate(result, from_attributes=True)
 
 
 def _to_clone_response(result: WorldPackageCloneResult) -> WorldPackageCloneResponse:
@@ -94,6 +100,25 @@ def get_world_package_countries(
     if result is None:
         raise HTTPException(status_code=404, detail=f"world package '{world_id}' not found")
     return _to_countries(result)
+
+
+@router.get(
+    "/{world_id}/countries/{country_code}/effective-population",
+    response_model=WorldPackageCountryEffectivePopulationResponse,
+)
+def get_world_package_country_effective_population(
+    world_id: str,
+    country_code: str,
+    year: int = Query(ge=1955, le=2035),
+    service: WorldPackageEffectivePopulationService = Depends(get_world_package_effective_population_service),
+) -> WorldPackageCountryEffectivePopulationResponse:
+    result = service.get_effective_population(world_id=world_id, country_code=country_code, requested_year=year)
+    if result is None:
+        countries_result = service.countries_service.get_countries(world_id)
+        if countries_result is None:
+            raise HTTPException(status_code=404, detail=f"world package '{world_id}' not found")
+        raise HTTPException(status_code=404, detail=f"country '{country_code.upper()}' not found in world package '{world_id}'")
+    return _to_effective_population(result)
 
 
 @router.get("/{world_id}/validation", response_model=WorldPackageValidationResponse)

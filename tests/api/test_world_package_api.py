@@ -396,10 +396,17 @@ def test_world_package_countries_returns_official_package_countries_without_cano
     assert payload["type"] == "official"
     assert payload["source"] == "built_in"
     assert payload["read_only"] is True
+    assert payload["country_count"] == 4
     assert payload["country_count"] == len(official_config["countries"])
     assert payload["source_path"] == "config/worlds/official_fax_world/countries.json"
-    assert payload["countries"][0]["code"] == official_config["countries"][0]["code"]
+    assert [country["code"] for country in payload["countries"]] == ["GER", "BOG", "HUN", "POL"]
+    assert [country["name"] for country in payload["countries"]] == ["Germanica", "Bogemia", "Hungarica", "Polandia"]
     assert all(country["code"] != "AAA" for country in payload["countries"])
+    for country in payload["countries"]:
+        assert country["area_km2"] is not None
+        assert country["default_population_year"] == 2020
+        assert country["default_population"] == country["population"]
+        assert country["population_by_year"] == {"2020": country["population"]}
 
 
 def test_world_package_countries_returns_custom_package_countries(tmp_path) -> None:
@@ -470,7 +477,7 @@ def test_world_packages_registry_lists_built_in_official_package(tmp_path) -> No
         assert package["deletable"] is False
         assert package["archivable"] is False
         assert package["version"] == "v1"
-        assert package["country_count"] == 5
+        assert package["country_count"] == 4
         assert package["manual_override_count"] == 1
         assert package["continent_count"] == 6
         assert package["region_count"] == 5
@@ -792,6 +799,10 @@ def test_clone_official_world_actual_creates_discoverable_custom_world(tmp_path)
     }
     for filename in ["countries.json", "continents.json", "regions.json", "travel_regions.json"]:
         assert (target_dir / filename).read_text(encoding="utf-8") == (worlds_root / "official_fax_world" / filename).read_text(encoding="utf-8")
+    cloned_countries = json.loads((target_dir / "countries.json").read_text(encoding="utf-8"))["countries"]
+    assert [country["code"] for country in cloned_countries] == ["GER", "BOG", "HUN", "POL"]
+    assert cloned_countries[0]["area_km2"] == 870516
+    assert cloned_countries[0]["population_by_year"] == {"2020": 169702055}
     assert list_status == 200
     assert [package["world_id"] for package in list_payload["packages"]] == ["official_fax_world", "actual_world"]
     assert detail_status == 200

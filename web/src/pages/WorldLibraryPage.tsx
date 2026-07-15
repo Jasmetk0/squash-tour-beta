@@ -250,6 +250,21 @@ function ValidationSection({ validation }: { validation: WorldPackageValidation 
   )
 }
 
+
+function formatNumber(value: number | null | undefined): string {
+  return value === null || value === undefined ? '—' : value.toLocaleString()
+}
+
+function formatPopulationYears(populationByYear: CountryRecord['population_by_year']): string {
+  if (!populationByYear) return '—'
+  const years = Object.entries(populationByYear)
+    .filter(([, value]) => value !== null && value !== undefined)
+    .map(([year]) => year)
+    .sort((left, right) => Number(left) - Number(right))
+  if (years.length === 0) return '—'
+  return `${years.length} ${years.length === 1 ? 'year' : 'years'}: ${years.join(', ')}`
+}
+
 function CountryCell({ value }: { value: ReactNode }): JSX.Element {
   return <td>{value === null || value === undefined || value === '' ? '—' : value}</td>
 }
@@ -259,7 +274,7 @@ function PackageCountriesTable({ countries }: { countries: CountryRecord[] }): J
     <table>
       <thead>
         <tr>
-          <th>Code</th><th>Name</th><th>Region</th><th>Population</th><th>Wealth</th><th>Popularity</th><th>Tradition</th><th>System</th><th>Competition</th><th>Federation</th><th>Courts</th><th>Travel region</th>
+          <th>Code</th><th>Name</th><th>Region</th><th>Area km²</th><th>Population</th><th>Default population year</th><th>Default population</th><th>Population years</th><th>Wealth</th><th>Popularity</th><th>Tradition</th><th>System</th><th>Competition</th><th>Federation</th><th>Courts</th><th>Travel region</th>
         </tr>
       </thead>
       <tbody>
@@ -268,7 +283,11 @@ function PackageCountriesTable({ countries }: { countries: CountryRecord[] }): J
             <CountryCell value={<code>{country.code}</code>} />
             <CountryCell value={country.name} />
             <CountryCell value={country.region} />
+            <CountryCell value={formatNumber(country.area_km2)} />
             <CountryCell value={country.population.toLocaleString()} />
+            <CountryCell value={country.default_population_year} />
+            <CountryCell value={formatNumber(country.default_population)} />
+            <CountryCell value={formatPopulationYears(country.population_by_year)} />
             <CountryCell value={country.wealth_support} />
             <CountryCell value={country.squash_popularity} />
             <CountryCell value={country.squash_tradition} />

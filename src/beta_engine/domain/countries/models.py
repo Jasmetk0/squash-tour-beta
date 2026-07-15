@@ -40,8 +40,8 @@ class Country(BaseModel):
     def validate_default_population_year(cls, value: int | None) -> int | None:
         if value is None:
             return None
-        if not 1955 <= value <= 2035:
-            raise ValueError("default_population_year must be between 1955 and 2035")
+        if value != 2020:
+            raise ValueError("default_population_year must be 2020 when provided")
         return value
 
     @field_validator("population_by_year")

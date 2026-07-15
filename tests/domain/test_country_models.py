@@ -67,6 +67,18 @@ def test_country_explicit_travel_region_overrides_region_and_blank_normalizes_to
     assert blank.effective_travel_region == "AFRICA"
 
 
+def test_country_accepts_default_population_year_2020() -> None:
+    country = Country.model_validate({**_base_country_payload(), "default_population_year": 2020})
+
+    assert country.default_population_year == 2020
+
+
+def test_country_accepts_missing_default_population_year() -> None:
+    country = Country.model_validate(_base_country_payload())
+
+    assert country.default_population_year is None
+
+
 def test_country_accepts_phase_7b_population_timeline_fields() -> None:
     country = Country.model_validate(
         {
@@ -74,14 +86,14 @@ def test_country_accepts_phase_7b_population_timeline_fields() -> None:
             "area_km2": 12345,
             "default_population_year": 2020,
             "default_population": 1_500_000,
-            "population_by_year": {"2019": 1_450_000, "2020": 1_500_000, "2021": None},
+            "population_by_year": {"1955": 1_000_000, "2020": 1_500_000, "2035": None},
         }
     )
 
     assert country.area_km2 == 12345
     assert country.default_population_year == 2020
     assert country.default_population == 1_500_000
-    assert country.population_by_year == {2019: 1_450_000, 2020: 1_500_000, 2021: None}
+    assert country.population_by_year == {1955: 1_000_000, 2020: 1_500_000, 2035: None}
 
 
 @pytest.mark.parametrize(
@@ -89,8 +101,8 @@ def test_country_accepts_phase_7b_population_timeline_fields() -> None:
     [
         ("area_km2", 0),
         ("default_population", 0),
-        ("default_population_year", 1954),
-        ("default_population_year", 2036),
+        ("default_population_year", 2019),
+        ("default_population_year", 2035),
     ],
 )
 def test_country_rejects_invalid_phase_7b_scalar_fields(field: str, value: int) -> None:

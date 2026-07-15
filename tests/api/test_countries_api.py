@@ -7,8 +7,11 @@ import time
 from pathlib import Path
 from urllib import error, request
 
+import pytest
 import uvicorn
+from pydantic import ValidationError
 
+from beta_engine.api.schemas import CountryUpsertRequest
 from beta_engine.main import create_app
 
 
@@ -86,6 +89,36 @@ def _request_raw(method: str, url: str) -> tuple[int, str]:
 def _write_fixture(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(COUNTRIES_FIXTURE, indent=2) + "\n", encoding="utf-8")
+
+
+
+def _base_country_upsert_payload() -> dict[str, object]:
+    return {
+        "code": "BBB",
+        "name": "Beta",
+        "flag_asset": None,
+        "region": "ASIA",
+        "population": 2_000_000,
+        "wealth_support": 2,
+        "squash_popularity": 2,
+        "squash_tradition": 2,
+        "system_quality": 2,
+    }
+
+
+def test_country_upsert_request_accepts_default_population_year_2020() -> None:
+    payload = CountryUpsertRequest.model_validate(
+        {**_base_country_upsert_payload(), "default_population_year": 2020}
+    )
+
+    assert payload.default_population_year == 2020
+
+
+def test_country_upsert_request_rejects_non_2020_default_population_year() -> None:
+    with pytest.raises(ValidationError, match="default_population_year must be 2020 when provided"):
+        CountryUpsertRequest.model_validate(
+            {**_base_country_upsert_payload(), "default_population_year": 2019}
+        )
 
 
 def test_list_countries_endpoint(tmp_path) -> None:

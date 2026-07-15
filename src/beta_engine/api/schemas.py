@@ -903,7 +903,7 @@ class CountryUpsertRequest(BaseModel):
     region: str = Field(min_length=1)
     population: int = Field(gt=0)
     area_km2: int | None = Field(default=None, gt=0)
-    default_population_year: int | None = Field(default=None, ge=1955, le=2035)
+    default_population_year: int | None = Field(default=None)
     default_population: int | None = Field(default=None, gt=0)
     population_by_year: dict[int, int | None] | None = None
     wealth_support: int = Field(ge=1, le=5)
@@ -932,6 +932,15 @@ class CountryUpsertRequest(BaseModel):
         if not normalized:
             raise ValueError("must be non-empty")
         return normalized
+
+    @field_validator("default_population_year")
+    @classmethod
+    def validate_default_population_year(cls, value: int | None) -> int | None:
+        if value is None:
+            return None
+        if value != 2020:
+            raise ValueError("default_population_year must be 2020 when provided")
+        return value
 
     @field_validator("flag_asset")
     @classmethod

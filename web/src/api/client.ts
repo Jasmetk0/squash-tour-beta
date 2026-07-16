@@ -73,6 +73,7 @@ import type {
   WorldPackageClonePayload,
   WorldPackageCloneResponse,
   WorldPackageCountriesResponse,
+  WorldPackageCountryEffectivePopulationResponse,
   WorldPackageImportPayload,
   WorldPackageImportResponse,
   WorldPackageListResponse,
@@ -695,6 +696,18 @@ export function getWorldPackageValidation(worldId: string): Promise<WorldPackage
 
 export function getWorldPackageCountries(worldId: string): Promise<WorldPackageCountriesResponse> {
   return request(`/world/packages/${encodeURIComponent(worldId)}/countries`)
+}
+
+
+export function getWorldPackageCountryEffectivePopulation(
+  worldId: string,
+  countryCode: string,
+  year: number
+): Promise<WorldPackageCountryEffectivePopulationResponse> {
+  const query = new URLSearchParams({ year: String(year) })
+  return request(
+    `/world/packages/${encodeURIComponent(worldId)}/countries/${encodeURIComponent(countryCode)}/effective-population?${query.toString()}`
+  )
 }
 
 export function cloneOfficialWorldPackage(payload: WorldPackageClonePayload): Promise<WorldPackageCloneResponse> {

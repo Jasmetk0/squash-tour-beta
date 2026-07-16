@@ -1409,6 +1409,28 @@ export type WorldPackageCountriesResponse = {
   countries: CountryRecord[]
 }
 
+
+export type WorldPackageCountryEffectivePopulationResponse = {
+  world_id: string
+  world_name: string
+  type: 'official' | 'custom'
+  source: 'canonical_config' | 'built_in' | 'custom_config'
+  read_only: boolean
+  source_path: string
+  country_code: string
+  country_name: string
+  requested_year: number
+  effective_population: number
+  source_year: number | null
+  source_type: string
+  is_estimated: boolean
+  default_population_year: number | null
+  default_population: number | null
+  legacy_population: number
+  population_by_year_count: number
+  usable_population_by_year_count: number
+}
+
 export type WorldPackageValidationCheck = {
   code: string
   severity: 'info' | 'warning' | 'error'

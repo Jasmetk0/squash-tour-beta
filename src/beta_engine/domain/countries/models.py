@@ -52,8 +52,8 @@ class Country(BaseModel):
         normalized: dict[int, int | None] = {}
         for year, population in value.items():
             year_int = int(year)
-            if not 1955 <= year_int <= 2035:
-                raise ValueError("population_by_year years must be between 1955 and 2035")
+            if not 1955 <= year_int <= 2050:
+                raise ValueError("population_by_year years must be between 1955 and 2050")
             if population is not None and population <= 0:
                 raise ValueError("population_by_year values must be positive integers or null")
             normalized[year_int] = population

@@ -86,14 +86,14 @@ def test_country_accepts_phase_7b_population_timeline_fields() -> None:
             "area_km2": 12345,
             "default_population_year": 2020,
             "default_population": 1_500_000,
-            "population_by_year": {"1955": 1_000_000, "2020": 1_500_000, "2035": None},
+            "population_by_year": {"1955": 1_000_000, "2020": 1_500_000, "2050": 123_456_789},
         }
     )
 
     assert country.area_km2 == 12345
     assert country.default_population_year == 2020
     assert country.default_population == 1_500_000
-    assert country.population_by_year == {1955: 1_000_000, 2020: 1_500_000, 2035: None}
+    assert country.population_by_year == {1955: 1_000_000, 2020: 1_500_000, 2050: 123_456_789}
 
 
 @pytest.mark.parametrize(
@@ -103,6 +103,7 @@ def test_country_accepts_phase_7b_population_timeline_fields() -> None:
         ("default_population", 0),
         ("default_population_year", 2019),
         ("default_population_year", 2035),
+        ("default_population_year", 2050),
     ],
 )
 def test_country_rejects_invalid_phase_7b_scalar_fields(field: str, value: int) -> None:
@@ -114,7 +115,7 @@ def test_country_rejects_invalid_phase_7b_scalar_fields(field: str, value: int) 
     "population_by_year",
     [
         {"1954": 1_000_000},
-        {"2036": 1_000_000},
+        {"2051": 1_000_000},
         {"2020": 0},
         {"2020": -1},
     ],

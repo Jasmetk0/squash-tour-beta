@@ -139,7 +139,7 @@ def test_falls_back_to_legacy_population_when_default_population_missing() -> No
     assert result.is_estimated is True
 
 
-@pytest.mark.parametrize("requested_year", [1955, 2035])
+@pytest.mark.parametrize("requested_year", [1955, 2050])
 def test_boundary_years_are_accepted(requested_year: int) -> None:
     result = resolve_effective_population(_country(population_by_year={str(requested_year): 1_000_000}), requested_year)
 
@@ -147,10 +147,36 @@ def test_boundary_years_are_accepted(requested_year: int) -> None:
     assert result.source_type == "exact_population_year"
 
 
-@pytest.mark.parametrize("requested_year", [1954, 2036])
+@pytest.mark.parametrize("requested_year", [1954, 2051])
 def test_out_of_range_requested_years_are_rejected(requested_year: int) -> None:
-    with pytest.raises(ValueError, match="requested population year must be between 1955 and 2035"):
+    with pytest.raises(ValueError, match="requested population year must be between 1955 and 2050"):
         resolve_effective_population(_country(), requested_year)
+
+
+def test_nearest_population_year_works_above_2035() -> None:
+    later_result = resolve_effective_population(
+        _country(population_by_year={"2035": 100_000_000, "2050": 130_000_000}), 2044
+    )
+    assert later_result.effective_population == 130_000_000
+    assert later_result.source_type == "nearest_population_year"
+    assert later_result.source_year == 2050
+
+    earlier_result = resolve_effective_population(
+        _country(population_by_year={"2035": 100_000_000, "2050": 130_000_000}), 2042
+    )
+    assert earlier_result.effective_population == 100_000_000
+    assert earlier_result.source_type == "nearest_population_year"
+    assert earlier_result.source_year == 2035
+
+
+def test_tied_nearest_population_year_above_2035_prefers_earlier_year() -> None:
+    result = resolve_effective_population(
+        _country(population_by_year={"2030": 100_000_000, "2050": 130_000_000}), 2040
+    )
+
+    assert result.effective_population == 100_000_000
+    assert result.source_type == "nearest_population_year"
+    assert result.source_year == 2030
 
 
 def test_resolver_does_not_mutate_population_by_year_or_fill_missing_years() -> None:

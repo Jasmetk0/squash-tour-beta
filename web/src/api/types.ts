@@ -1422,7 +1422,7 @@ export type WorldPackageCountryEffectivePopulationResponse = {
   requested_year: number
   effective_population: number
   source_year: number | null
-  source_type: string
+  source_type: 'exact_population_year' | 'nearest_population_year' | 'default_population' | 'legacy_population'
   is_estimated: boolean
   default_population_year: number | null
   default_population: number | null

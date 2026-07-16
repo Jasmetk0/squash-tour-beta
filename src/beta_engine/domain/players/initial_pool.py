@@ -47,7 +47,7 @@ STAGE_AGE_RANGES: dict[CareerStage, tuple[int, int]] = {
     "breakthrough": (20, 24),
     "prime": (24, 30),
     "veteran": (30, 34),
-    "late_career": (34, 38),
+    "late_career": (35, 45),
 }
 STAGE_WEIGHTS: tuple[tuple[CareerStage, float], ...] = (
     ("junior", 0.14),
@@ -182,8 +182,8 @@ class InitialPoolGeneratedPlayer(BaseModel):
     nationality: str | None = None
     birth_year: int = Field(ge=1900, le=2100)
     birth_year_week: int = Field(ge=1, le=52)
-    age_at_generation: int = Field(ge=15, le=38)
-    current_age_years: int = Field(ge=15, le=38)
+    age_at_generation: int = Field(ge=15, le=45)
+    current_age_years: int = Field(ge=15, le=45)
     current_ability: int = Field(ge=1, le=99)
     potential_ability: int = Field(ge=1, le=99)
     potential_tier: PotentialTier

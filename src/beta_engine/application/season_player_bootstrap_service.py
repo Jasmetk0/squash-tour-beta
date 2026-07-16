@@ -12,6 +12,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from beta_engine.application.initial_player_pool_service import InitialPlayerPoolService
+from beta_engine.domain.calendar import DEFAULT_WEEKS_PER_CALENDAR_YEAR
 from beta_engine.domain.players.initial_pool import GeneratedPlayerAttributes, InitialPoolGeneratedPlayer, PotentialTier
 from beta_engine.domain.players.models import HiddenCareerTraits
 
@@ -28,7 +29,7 @@ class SeasonActivePlayer(BaseModel):
     country_code: str = Field(min_length=3, max_length=3)
     nationality: str = Field(min_length=3, max_length=3)
     birth_year: int = Field(ge=1900, le=2100)
-    birth_year_week: int = Field(ge=1, le=52)
+    birth_year_week: int = Field(ge=1, le=DEFAULT_WEEKS_PER_CALENDAR_YEAR)
     age_years_at_season_start: int = Field(ge=0, le=120)
     age_weeks_at_season_start: int = Field(ge=0)
     current_ability: int = Field(ge=1, le=99)

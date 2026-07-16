@@ -78,6 +78,7 @@ describe('AdminPlayersPage', () => {
     expect(screen.getByText(/regeneration-safe/)).toBeInTheDocument()
     expect(screen.getByLabelText('Season')).toHaveValue('2000/2001')
     expect(screen.getByLabelText('Seed')).toHaveValue(12345)
+    expect(screen.getByLabelText('Birth week (FAX year_week 1–61)')).toHaveAttribute('max', '61')
 
     const table = await screen.findByRole('table', { name: 'Initial player pool table' })
     expect(within(table).getByText('Adam Ahmed AA01')).toBeInTheDocument()

@@ -109,7 +109,7 @@ def get_world_package_countries(
 def get_world_package_country_effective_population(
     world_id: str,
     country_code: str,
-    year: int = Query(ge=1955, le=2035),
+    year: int = Query(ge=1955, le=2050),
     service: WorldPackageEffectivePopulationService = Depends(get_world_package_effective_population_service),
 ) -> WorldPackageCountryEffectivePopulationResponse:
     result = service.get_effective_population(world_id=world_id, country_code=country_code, requested_year=year)

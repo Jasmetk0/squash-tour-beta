@@ -559,6 +559,27 @@ def test_world_package_effective_population_unknown_world_returns_404(tmp_path) 
     assert "world package 'unknown' not found" in payload["detail"]
 
 
+def test_world_package_effective_population_accepts_2050_as_nearest_2020_for_official_ger(tmp_path) -> None:
+    countries_path = tmp_path / "canonical-countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'world-package-effective-population-2050.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages/official_fax_world/countries/GER/effective-population?year=2050")
+
+    assert status == 200
+    assert payload["requested_year"] == 2050
+    assert payload["effective_population"] == 169_702_055
+    assert payload["source_type"] == "nearest_population_year"
+    assert payload["source_year"] == 2020
+    assert payload["is_estimated"] is True
+
+
 def test_world_package_effective_population_rejects_year_below_range(tmp_path) -> None:
     countries_path = tmp_path / "canonical-countries.json"
     overrides_path = tmp_path / "manual_overrides.json"
@@ -587,7 +608,7 @@ def test_world_package_effective_population_rejects_year_above_range(tmp_path) -
         countries_config_path=str(countries_path),
         manual_overrides_config_path=str(overrides_path),
     ) as server:
-        status, payload = _request("GET", f"{server.base_url}/world/packages/official_fax_world/countries/GER/effective-population?year=2036")
+        status, payload = _request("GET", f"{server.base_url}/world/packages/official_fax_world/countries/GER/effective-population?year=2051")
 
     assert status == 422
     assert payload["detail"]

@@ -8,7 +8,7 @@ from typing import Literal
 from beta_engine.domain.countries.models import Country
 
 MIN_POPULATION_YEAR = 1955
-MAX_POPULATION_YEAR = 2035
+MAX_POPULATION_YEAR = 2050
 DEFAULT_POPULATION_YEAR = 2020
 
 PopulationSourceType = Literal[
@@ -38,7 +38,7 @@ def resolve_effective_population(country: Country, requested_year: int) -> Effec
     """
 
     if not MIN_POPULATION_YEAR <= requested_year <= MAX_POPULATION_YEAR:
-        raise ValueError("requested population year must be between 1955 and 2035")
+        raise ValueError("requested population year must be between 1955 and 2050")
 
     usable_population_by_year = _usable_population_by_year(country.population_by_year)
     exact_population = usable_population_by_year.get(requested_year)

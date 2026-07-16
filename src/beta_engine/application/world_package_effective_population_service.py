@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from beta_engine.application.world_package_countries_service import WorldPackageCountriesService
-from beta_engine.domain.countries.population_resolver import resolve_effective_population
+from beta_engine.domain.countries.population_resolver import PopulationSourceType, resolve_effective_population
 
 
 @dataclass(frozen=True)
@@ -21,7 +21,7 @@ class WorldPackageCountryEffectivePopulationResult:
     requested_year: int
     effective_population: int
     source_year: int | None
-    source_type: str
+    source_type: PopulationSourceType
     is_estimated: bool
     default_population_year: int | None
     default_population: int | None

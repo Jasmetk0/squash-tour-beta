@@ -200,7 +200,7 @@ class WorldPackageCountryEffectivePopulationResponse(BaseModel):
     requested_year: int
     effective_population: int
     source_year: int | None = None
-    source_type: str
+    source_type: Literal["exact_population_year", "nearest_population_year", "default_population", "legacy_population"]
     is_estimated: bool
     default_population_year: int | None = None
     default_population: int | None = None
@@ -963,6 +963,21 @@ class CountryUpsertRequest(BaseModel):
         if value != 2020:
             raise ValueError("default_population_year must be 2020 when provided")
         return value
+
+    @field_validator("population_by_year")
+    @classmethod
+    def validate_population_by_year(cls, value: dict[int, int | None] | None) -> dict[int, int | None] | None:
+        if value is None:
+            return None
+        normalized: dict[int, int | None] = {}
+        for year, population in value.items():
+            year_int = int(year)
+            if not 1955 <= year_int <= 2050:
+                raise ValueError("population_by_year years must be between 1955 and 2050")
+            if population is not None and population <= 0:
+                raise ValueError("population_by_year values must be positive integers or null")
+            normalized[year_int] = population
+        return normalized
 
     @field_validator("flag_asset")
     @classmethod

@@ -121,6 +121,28 @@ def test_country_upsert_request_rejects_non_2020_default_population_year() -> No
         )
 
 
+def test_country_upsert_request_accepts_population_by_year_2050() -> None:
+    payload = CountryUpsertRequest.model_validate(
+        {**_base_country_upsert_payload(), "population_by_year": {"2050": 123_456_789}}
+    )
+
+    assert payload.population_by_year == {2050: 123_456_789}
+
+
+def test_country_upsert_request_rejects_population_by_year_2051() -> None:
+    with pytest.raises(ValidationError, match="population_by_year years must be between 1955 and 2050"):
+        CountryUpsertRequest.model_validate(
+            {**_base_country_upsert_payload(), "population_by_year": {"2051": 123_456_789}}
+        )
+
+
+def test_country_upsert_request_rejects_default_population_year_2050() -> None:
+    with pytest.raises(ValidationError, match="default_population_year must be 2020 when provided"):
+        CountryUpsertRequest.model_validate(
+            {**_base_country_upsert_payload(), "default_population_year": 2050}
+        )
+
+
 def test_list_countries_endpoint(tmp_path) -> None:
     countries_path = tmp_path / "countries.json"
     _write_fixture(countries_path)

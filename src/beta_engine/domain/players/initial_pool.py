@@ -10,6 +10,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from beta_engine.core import DeterministicRng, SeedScope
+from beta_engine.domain.calendar import DEFAULT_WEEKS_PER_CALENDAR_YEAR
 from beta_engine.domain.countries import Country
 from beta_engine.domain.players.models import HiddenCareerTraits
 from beta_engine.infrastructure.world_config import PlayerIdentityConfig
@@ -100,7 +101,7 @@ class CustomInitialPoolPlayerCreate(BaseModel):
     country_code: str = Field(min_length=3, max_length=3)
     nationality: str | None = Field(default=None, min_length=3, max_length=3)
     birth_year: int = Field(ge=1900, le=2100)
-    birth_year_week: int = Field(ge=1, le=52)
+    birth_year_week: int = Field(ge=1, le=DEFAULT_WEEKS_PER_CALENDAR_YEAR)
     current_ability: int = Field(ge=1, le=99)
     potential_ability: int = Field(ge=1, le=99)
     potential_tier: PotentialTier
@@ -145,7 +146,7 @@ class InitialPoolPlayerUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
     nationality: str | None = Field(default=None, min_length=3, max_length=3)
     birth_year: int | None = Field(default=None, ge=1900, le=2100)
-    birth_year_week: int | None = Field(default=None, ge=1, le=52)
+    birth_year_week: int | None = Field(default=None, ge=1, le=DEFAULT_WEEKS_PER_CALENDAR_YEAR)
     current_ability: int | None = Field(default=None, ge=1, le=99)
     potential_ability: int | None = Field(default=None, ge=1, le=99)
     potential_tier: PotentialTier | None = None
@@ -172,7 +173,10 @@ class InitialPoolPlayerUpdate(BaseModel):
 
 
 class InitialPoolGeneratedPlayer(BaseModel):
-    """Canonical DTO for inspectable pre-season initial-pool generation."""
+    """Canonical DTO for inspectable pre-season initial-pool generation.
+
+    birth_year_week is a FAX year_week in the 1–61 model, not an ISO week.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -181,7 +185,7 @@ class InitialPoolGeneratedPlayer(BaseModel):
     country_code: str = Field(min_length=3, max_length=3)
     nationality: str | None = None
     birth_year: int = Field(ge=1900, le=2100)
-    birth_year_week: int = Field(ge=1, le=52)
+    birth_year_week: int = Field(ge=1, le=DEFAULT_WEEKS_PER_CALENDAR_YEAR)
     age_at_generation: int = Field(ge=15, le=45)
     current_age_years: int = Field(ge=15, le=45)
     current_ability: int = Field(ge=1, le=99)
@@ -406,7 +410,9 @@ class InitialPlayerPoolGenerator:
         age_min, age_max = STAGE_AGE_RANGES[stage]
         age = rng.randint(age_min, age_max)
         season_start_year = int(season.split("/")[0])
-        birth_week = rng.randint(1, 52)
+        # Preserve the established player-quality RNG stream; the FAX birth week
+        # is sampled from a dedicated branch below.
+        rng.randint(1, 52)
         birth_year = season_start_year - age
         potential_tier, potential = self._potential(rng, quality)
         growth_curve = rng.choice(self._identity().growth_curves)
@@ -425,10 +431,12 @@ class InitialPlayerPoolGenerator:
             resilience=self._clamp01(0.25 + country.squash_tradition_norm * 0.30 + rng.uniform(-0.05, 0.38)),
         )
         player_id = f"P-{season_start_year}-{country.code}-{sequence:04d}"
+        name = self._name(rng, country, sequence)
+        birth_week = rng.branch(SeedScope.SEASON, "fax_birth_year_week").randint(1, DEFAULT_WEEKS_PER_CALENDAR_YEAR)
         fingerprint = hashlib.blake2b(f"{season}|{seed}|{country.code}|{sequence}".encode(), digest_size=8).hexdigest()
         return InitialPoolGeneratedPlayer(
             player_id=player_id,
-            name=self._name(rng, country, sequence),
+            name=name,
             country_code=country.code,
             nationality=country.code,
             birth_year=birth_year,

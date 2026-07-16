@@ -68,7 +68,8 @@ def test_generate_preview_dry_run_and_lock_workflow(tmp_path) -> None:
         status, preview = call("POST", f"{server.base_url}/admin/players/initial-pool/generate", {"season": "2000/2001", "seed": 7, "target_pool_size": 24, "dry_run": True})
         assert status == 200
         assert preview["summary"]["total_players"] == 24
-        assert preview["players"][0]["birth_year_week"] >= 1
+        assert all(1 <= player["birth_year_week"] <= 61 for player in preview["players"])
+        assert any(player["birth_year_week"] > 52 for player in preview["players"])
         assert all(15 <= player["current_age_years"] <= 45 for player in preview["players"])
         assert all(player["birth_year"] == 2000 - player["current_age_years"] for player in preview["players"])
 
@@ -130,3 +131,17 @@ def test_custom_update_and_audit_api_workflow(tmp_path) -> None:
             assert getattr(exc, "code", None) == 400
         else:
             raise AssertionError("duplicate custom player_id should fail")
+
+
+def test_custom_player_api_validates_fax_birth_year_week_bounds(tmp_path) -> None:
+    with Server(tmp_path) as server:
+        status, created = call("POST", f"{server.base_url}/admin/players/custom", custom_api_payload(player_id="CUST-2000-AAA-W61") | {"birth_year_week": 61})
+        assert status == 200
+        assert created["birth_year_week"] == 61
+
+        try:
+            call("POST", f"{server.base_url}/admin/players/custom", custom_api_payload(player_id="CUST-2000-AAA-W62") | {"birth_year_week": 62})
+        except Exception as exc:  # urllib raises HTTPError for validation failures.
+            assert getattr(exc, "code", None) == 422
+        else:
+            raise AssertionError("birth_year_week=62 should fail API validation")

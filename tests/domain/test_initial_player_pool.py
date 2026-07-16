@@ -190,6 +190,37 @@ def generated_player_data(**overrides):
     return data
 
 
+
+
+def test_initial_pool_generated_player_accepts_fax_birth_year_week_61() -> None:
+    player = InitialPoolGeneratedPlayer.model_validate(generated_player_data(birth_year_week=61))
+
+    assert player.birth_year_week == 61
+
+
+def test_initial_pool_generated_player_rejects_birth_year_week_outside_fax_range() -> None:
+    with pytest.raises(ValueError):
+        InitialPoolGeneratedPlayer.model_validate(generated_player_data(birth_year_week=62))
+    with pytest.raises(ValueError):
+        InitialPoolGeneratedPlayer.model_validate(generated_player_data(birth_year_week=0))
+
+
+def test_custom_initial_pool_player_create_accepts_and_rejects_fax_birth_year_week_bounds() -> None:
+    assert custom_payload(birth_year_week=61).birth_year_week == 61
+    with pytest.raises(ValueError):
+        custom_payload(birth_year_week=62)
+
+
+def test_initial_pool_generator_uses_fax_birth_year_week_range() -> None:
+    countries = [country("AAA", population=15_000_000, system=4, popularity=4, tradition=4)]
+    generator = InitialPlayerPoolGenerator()
+
+    result = generator.generate(countries=countries, seed=123, season="2000/2001", target_pool_size=500)
+    weeks = [player.birth_year_week for player in result.players]
+
+    assert all(1 <= week <= 61 for week in weeks)
+    assert any(week > 52 for week in weeks)
+
 def test_initial_pool_generated_player_accepts_age_45_and_birth_year_1955() -> None:
     player = InitialPoolGeneratedPlayer.model_validate(generated_player_data())
 

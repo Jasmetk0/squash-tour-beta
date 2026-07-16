@@ -69,6 +69,8 @@ def test_generate_preview_dry_run_and_lock_workflow(tmp_path) -> None:
         assert status == 200
         assert preview["summary"]["total_players"] == 24
         assert preview["players"][0]["birth_year_week"] >= 1
+        assert all(15 <= player["current_age_years"] <= 45 for player in preview["players"])
+        assert all(player["birth_year"] == 2000 - player["current_age_years"] for player in preview["players"])
 
         _, empty = call("GET", f"{server.base_url}/admin/players/initial-pool?season=2000/2001")
         assert empty["summary"]["total_players"] == 0

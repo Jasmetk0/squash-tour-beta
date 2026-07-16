@@ -38,7 +38,20 @@ def test_initial_pool_changes_with_seed_and_spreads_career_stages() -> None:
     assert left.players != right.players
     assert len(left.summary.by_career_stage) >= 4
     assert {player.current_age_years for player in left.players} != {15}
-    assert all(15 <= player.current_age_years <= 38 for player in left.players)
+    assert all(15 <= player.current_age_years <= 45 for player in left.players)
+
+
+def test_initial_pool_generator_allows_older_tail_and_preserves_birth_year_formula() -> None:
+    countries = [country("AAA", population=15_000_000, system=4, popularity=4, tradition=4)]
+    generator = InitialPlayerPoolGenerator()
+
+    result = generator.generate(countries=countries, seed=123, season="2000/2001", target_pool_size=500)
+    ages = [player.current_age_years for player in result.players]
+
+    assert min(ages) >= 15
+    assert max(ages) <= 45
+    assert any(age >= 39 for age in ages)
+    assert all(player.birth_year == 2000 - player.current_age_years for player in result.players)
 
 
 def test_country_quality_influence_and_population_is_not_only_driver() -> None:
@@ -96,6 +109,7 @@ from beta_engine.domain.players.initial_pool import (
     CustomInitialPoolPlayerCreate,
     GeneratedPlayerAttributes,
     HiddenCareerTraits,
+    InitialPoolGeneratedPlayer,
     InitialPoolPlayerUpdate,
     InitialPoolRegistry,
 )
@@ -136,6 +150,60 @@ def custom_payload(**overrides):
     data.update(overrides)
     return CustomInitialPoolPlayerCreate.model_validate(data)
 
+
+
+def generated_player_data(**overrides):
+    data = {
+        "player_id": "P-2000-AAA-TEST",
+        "name": "Generated Test",
+        "country_code": "AAA",
+        "nationality": "AAA",
+        "birth_year": 1955,
+        "birth_year_week": 10,
+        "age_at_generation": 45,
+        "current_age_years": 45,
+        "current_ability": 70,
+        "potential_ability": 78,
+        "potential_tier": "B",
+        "career_stage": "late_career",
+        "play_style": "balanced",
+        "archetype": "all_court",
+        "attributes": {"technique": 70, "movement": 70, "physical": 70, "mental": 70, "consistency": 70, "clutch": 70, "recovery": 70},
+        "hidden_career_traits": {
+            "potential_ceiling": 78,
+            "growth_curve": "steady",
+            "professionalism": 0.8,
+            "ambition": 0.7,
+            "travel_tolerance": 0.6,
+            "schedule_aggression": 0.5,
+            "injury_proneness": 0.2,
+            "resilience": 0.7,
+        },
+        "locked": False,
+        "generation_source": "initial_pool",
+        "manual_override": False,
+        "generation_seed": 123,
+        "generation_fingerprint": "test-fingerprint",
+        "created_for_season": "2000/2001",
+    }
+    data.update(overrides)
+    return data
+
+
+def test_initial_pool_generated_player_accepts_age_45_and_birth_year_1955() -> None:
+    player = InitialPoolGeneratedPlayer.model_validate(generated_player_data())
+
+    assert player.age_at_generation == 45
+    assert player.current_age_years == 45
+    assert player.birth_year == 1955
+    assert player.birth_year == 2000 - player.current_age_years
+
+
+def test_initial_pool_generated_player_rejects_age_46() -> None:
+    with pytest.raises(ValueError):
+        InitialPoolGeneratedPlayer.model_validate(generated_player_data(age_at_generation=46))
+    with pytest.raises(ValueError):
+        InitialPoolGeneratedPlayer.model_validate(generated_player_data(current_age_years=46))
 
 def test_create_custom_player_is_locked_manual_and_rejects_duplicates_and_invalid_attributes(tmp_path) -> None:
     svc = service_with_countries(tmp_path, [country("AAA", population=2_000_000, system=5, popularity=5, tradition=5)])

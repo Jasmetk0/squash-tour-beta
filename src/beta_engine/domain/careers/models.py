@@ -5,6 +5,7 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from beta_engine.domain.players import Player
+from beta_engine.domain.players.lifecycle import MAX_RUNTIME_PLAYER_AGE, MIN_RUNTIME_PLAYER_AGE
 
 
 class SeasonHealthInput(BaseModel):
@@ -39,8 +40,8 @@ class PlayerSeasonTransition(BaseModel):
     player_id: str
     from_season: int = Field(ge=1900)
     to_season: int = Field(ge=1900)
-    age_before: int = Field(ge=16, le=60)
-    age_after: int = Field(ge=16, le=60)
+    age_before: int = Field(ge=MIN_RUNTIME_PLAYER_AGE, le=MAX_RUNTIME_PLAYER_AGE)
+    age_after: int = Field(ge=MIN_RUNTIME_PLAYER_AGE, le=MAX_RUNTIME_PLAYER_AGE)
     season_health_input: SeasonHealthInput
     development_deltas: list[PlayerDevelopmentDelta] = Field(default_factory=list)
     style_changed: bool = False

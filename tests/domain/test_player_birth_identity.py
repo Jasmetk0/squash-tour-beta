@@ -40,6 +40,17 @@ def _player_payload(**updates):
     return payload
 
 
+@pytest.mark.parametrize("age", [15, 45, 46])
+def test_run_scoped_player_accepts_lifecycle_age_bounds(age: int) -> None:
+    assert Player(**_player_payload(age=age)).age == age
+
+
+@pytest.mark.parametrize("age", [14, 47])
+def test_run_scoped_player_rejects_age_outside_lifecycle_bounds(age: int) -> None:
+    with pytest.raises(ValidationError):
+        Player(**_player_payload(age=age))
+
+
 def test_run_scoped_player_accepts_birth_identity_bounds() -> None:
     assert Player(**_player_payload(birth_year=2000, birth_year_week=1)).birth_year_week == 1
     assert Player(**_player_payload(birth_year=2000, birth_year_week=61)).birth_year_week == 61

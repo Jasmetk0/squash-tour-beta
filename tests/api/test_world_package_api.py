@@ -1068,3 +1068,107 @@ def test_clone_official_world_filesystem_failure_cleans_temporary_package(tmp_pa
     assert "forced copy failure" in result.errors[0].message
     assert not (worlds_root / "custom" / "failed_world").exists()
     assert not list((worlds_root / "custom").glob(".failed_world.tmp-*"))
+
+
+def test_world_package_weekly_intake_preview_success_for_official_world(tmp_path) -> None:
+    countries_path = tmp_path / "canonical-countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'weekly-intake-preview.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages/official_fax_world/weekly-intake/preview?season=2000/2001&season_week=1&target_intake_count=10")
+
+    assert status == 200
+    assert payload["world_id"] == "official_fax_world"
+    assert payload["world_name"] == "Official FAX World"
+    assert payload["season"] == "2000/2001"
+    assert payload["season_start_year"] == 2000
+    assert payload["season_week"] == 1
+    assert payload["calendar_year"] == 2000
+    assert payload["year_week"] == 37
+    assert payload["birth_year"] == 1985
+    assert payload["birth_year_week"] == 37
+    assert payload["intake_age"] == 15
+    assert payload["target_intake_count"] == 10
+    assert payload["total_allocated"] == 10
+    assert payload["allocations"]
+    assert sum(row["allocated_count"] for row in payload["allocations"]) == 10
+    assert {"population_source_type", "population_source_year", "is_population_estimated"} <= set(payload["allocations"][0])
+
+
+def test_world_package_weekly_intake_preview_calendar_boundaries(tmp_path) -> None:
+    countries_path = tmp_path / "canonical-countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+    expected = {1: (37, 1985), 25: (61, 1985), 26: (1, 1986), 61: (36, 1986)}
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'weekly-intake-boundaries.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        for season_week, (year_week, birth_year) in expected.items():
+            status, payload = _request("GET", f"{server.base_url}/world/packages/official_fax_world/weekly-intake/preview?season=2000/2001&season_week={season_week}&target_intake_count=1")
+            assert status == 200
+            assert payload["year_week"] == year_week
+            assert payload["birth_year"] == birth_year
+            assert payload["birth_year_week"] == year_week
+
+
+def test_world_package_weekly_intake_preview_validation_and_errors(tmp_path) -> None:
+    countries_path = tmp_path / "canonical-countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'weekly-intake-errors.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        for query in [
+            "season=2000/2001&season_week=0&target_intake_count=1",
+            "season=2000/2001&season_week=62&target_intake_count=1",
+            "season=2000/2001&season_week=1&target_intake_count=-1",
+        ]:
+            status, payload = _request("GET", f"{server.base_url}/world/packages/official_fax_world/weekly-intake/preview?{query}")
+            assert status == 422
+            assert payload["detail"]
+
+        status, payload = _request("GET", f"{server.base_url}/world/packages/unknown/weekly-intake/preview?season=2000/2001&season_week=1&target_intake_count=1")
+        assert status == 404
+        assert "world package 'unknown' not found" in payload["detail"]
+
+        status, payload = _request("GET", f"{server.base_url}/world/packages/official_fax_world/weekly-intake/preview?season=2000/2001&season_week=1&target_intake_count=1&country_code=ZZZ")
+        assert status == 404
+        assert "no matching countries" in payload["detail"]
+
+
+def test_world_package_weekly_intake_preview_filters_and_is_read_only(tmp_path) -> None:
+    countries_path = tmp_path / "canonical-countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+    package_path = Path("config/worlds/official_fax_world/countries.json")
+    before = package_path.read_text(encoding="utf-8")
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'weekly-intake-filters.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, payload = _request("GET", f"{server.base_url}/world/packages/official_fax_world/weekly-intake/preview?season=2000/2001&season_week=1&target_intake_count=10&country_code=ger")
+        region_status, region_payload = _request("GET", f"{server.base_url}/world/packages/official_fax_world/weekly-intake/preview?season=2000/2001&season_week=1&target_intake_count=10&region=EUROPE")
+
+    assert status == 200
+    assert [row["country_code"] for row in payload["allocations"]] == ["GER"]
+    assert payload["total_allocated"] == 10
+    assert region_status == 200
+    assert {row["country_code"] for row in region_payload["allocations"]} == {"BOG", "GER", "HUN", "POL"}
+    assert package_path.read_text(encoding="utf-8") == before

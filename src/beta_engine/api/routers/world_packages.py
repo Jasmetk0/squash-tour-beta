@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from beta_engine.api.deps import get_world_package_clone_service, get_world_package_countries_service, get_world_package_effective_population_service, get_world_package_registry_service, get_world_package_validation_service
+from beta_engine.api.deps import get_world_package_clone_service, get_world_package_countries_service, get_world_package_effective_population_service, get_world_package_registry_service, get_world_package_weekly_intake_preview_service, get_world_package_validation_service
 from beta_engine.api.schemas import (
     WorldPackageCloneErrorResponse,
     WorldPackageCloneRequest,
@@ -10,6 +10,7 @@ from beta_engine.api.schemas import (
     CountryResponse,
     WorldPackageCountriesResponse,
     WorldPackageCountryEffectivePopulationResponse,
+    WeeklyIntakePreviewResponse,
     WorldPackageDetailResponse,
     WorldPackageListResponse,
     WorldPackageSummaryResponse,
@@ -20,6 +21,7 @@ from beta_engine.application.world_package_countries_service import WorldPackage
 from beta_engine.application.world_package_effective_population_service import WorldPackageCountryEffectivePopulationResult, WorldPackageEffectivePopulationService
 from beta_engine.application.world_package_registry_service import OFFICIAL_FAX_WORLD_ID, WorldPackageRegistryRecord, WorldPackageRegistryService
 from beta_engine.application.world_package_validation_service import WorldPackageValidationResult, WorldPackageValidationService
+from beta_engine.application.world_package_weekly_intake_preview_service import WorldPackageWeeklyIntakePreviewResult, WorldPackageWeeklyIntakePreviewService
 
 router = APIRouter(prefix="/world/packages", tags=["world"])
 
@@ -51,6 +53,11 @@ def _to_countries(result: WorldPackageCountriesResult) -> WorldPackageCountriesR
 
 def _to_effective_population(result: WorldPackageCountryEffectivePopulationResult) -> WorldPackageCountryEffectivePopulationResponse:
     return WorldPackageCountryEffectivePopulationResponse.model_validate(result, from_attributes=True)
+
+
+def _to_weekly_intake_preview(result: WorldPackageWeeklyIntakePreviewResult) -> WeeklyIntakePreviewResponse:
+    plan_payload = result.plan.model_dump(mode="json")
+    return WeeklyIntakePreviewResponse(world_id=result.world_id, world_name=result.world_name, **plan_payload)
 
 
 def _to_clone_response(result: WorldPackageCloneResult) -> WorldPackageCloneResponse:
@@ -119,6 +126,31 @@ def get_world_package_country_effective_population(
             raise HTTPException(status_code=404, detail=f"world package '{world_id}' not found")
         raise HTTPException(status_code=404, detail=f"country '{country_code.upper()}' not found in world package '{world_id}'")
     return _to_effective_population(result)
+
+
+@router.get("/{world_id}/weekly-intake/preview", response_model=WeeklyIntakePreviewResponse)
+def preview_world_package_weekly_intake(
+    world_id: str,
+    season: str,
+    season_week: int = Query(..., ge=1, le=61),
+    target_intake_count: int = Query(..., ge=0),
+    country_code: str | None = None,
+    region: str | None = None,
+    service: WorldPackageWeeklyIntakePreviewService = Depends(get_world_package_weekly_intake_preview_service),
+) -> WeeklyIntakePreviewResponse:
+    result = service.preview(
+        world_id=world_id,
+        season=season,
+        season_week=season_week,
+        target_intake_count=target_intake_count,
+        country_code=country_code,
+        region=region,
+    )
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"world package '{world_id}' not found")
+    if not result.plan.allocations and target_intake_count > 0:
+        raise HTTPException(status_code=404, detail="no matching countries found for weekly intake preview")
+    return _to_weekly_intake_preview(result)
 
 
 @router.get("/{world_id}/validation", response_model=WorldPackageValidationResponse)

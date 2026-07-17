@@ -11,6 +11,7 @@ import {
   getWorldPackage,
   getWorldPackageCountries,
   getWorldPackageCountryEffectivePopulation,
+  getWorldPackageWeeklyIntakePreview,
   getWorldPackageValidation,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
@@ -665,6 +666,34 @@ describe('world package registry client', () => {
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
       'http://127.0.0.1:8000/world/packages/official%2Ffax%20world/countries',
+      expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
+    )
+    expect(result).toEqual(responseBody)
+  })
+
+
+  it('gets World Package weekly intake preview with encoded path and query params', async () => {
+    const responseBody = {
+      world_id: 'official_fax_world',
+      world_name: 'Official FAX World',
+      season: '2000/2001',
+      season_start_year: 2000,
+      season_week: 1,
+      calendar_year: 2000,
+      year_week: 37,
+      birth_year: 1985,
+      birth_year_week: 37,
+      intake_age: 15,
+      target_intake_count: 10,
+      total_allocated: 10,
+      allocations: []
+    }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(responseBody), { status: 200 }))
+
+    const result = await getWorldPackageWeeklyIntakePreview('official/fax world', { season: '2000/2001', season_week: 1, target_intake_count: 10, country_code: 'GER', region: 'EUROPE' })
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/world/packages/official%2Ffax%20world/weekly-intake/preview?season=2000%2F2001&season_week=1&target_intake_count=10&country_code=GER&region=EUROPE',
       expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
     )
     expect(result).toEqual(responseBody)

@@ -1414,6 +1414,42 @@ export type WorldPackageCountriesResponse = {
 }
 
 
+
+export type WeeklyIntakeCountryAllocation = {
+  country_code: string
+  allocated_count: number
+  allocation_weight: number
+  allocation_share: number
+  effective_population: number
+  population_source_type: string
+  population_source_year: number | null
+  is_population_estimated: boolean
+}
+
+export type WeeklyIntakePreviewResponse = {
+  world_id: string
+  world_name: string | null
+  season: string
+  season_start_year: number
+  season_week: number
+  calendar_year: number
+  year_week: number
+  birth_year: number
+  birth_year_week: number
+  intake_age: number
+  target_intake_count: number
+  total_allocated: number
+  allocations: WeeklyIntakeCountryAllocation[]
+}
+
+export type WeeklyIntakePreviewParams = {
+  season: string
+  season_week: number
+  target_intake_count: number
+  country_code?: string
+  region?: string
+}
+
 export type WorldPackageCountryEffectivePopulationResponse = {
   world_id: string
   world_name: string

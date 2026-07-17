@@ -186,6 +186,31 @@ class WorldPackageCountriesResponse(BaseModel):
     countries: list[CountryResponse] = Field(default_factory=list)
 
 
+class WeeklyIntakeCountryAllocationResponse(BaseModel):
+    country_code: str
+    allocated_count: int
+    allocation_weight: float
+    allocation_share: float
+    effective_population: int | float
+    population_source_type: str
+    population_source_year: int | None = None
+    is_population_estimated: bool
+
+
+class WeeklyIntakePreviewResponse(BaseModel):
+    world_id: str
+    world_name: str | None = None
+    season: str
+    season_start_year: int
+    season_week: int
+    calendar_year: int
+    year_week: int
+    birth_year: int
+    birth_year_week: int
+    intake_age: int
+    target_intake_count: int
+    total_allocated: int
+    allocations: list[WeeklyIntakeCountryAllocationResponse] = Field(default_factory=list)
 
 
 class WorldPackageCountryEffectivePopulationResponse(BaseModel):

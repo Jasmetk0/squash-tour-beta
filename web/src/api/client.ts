@@ -74,6 +74,8 @@ import type {
   WorldPackageCloneResponse,
   WorldPackageCountriesResponse,
   WorldPackageCountryEffectivePopulationResponse,
+  WeeklyIntakePreviewParams,
+  WeeklyIntakePreviewResponse,
   WorldPackageImportPayload,
   WorldPackageImportResponse,
   WorldPackageListResponse,
@@ -696,6 +698,21 @@ export function getWorldPackageValidation(worldId: string): Promise<WorldPackage
 
 export function getWorldPackageCountries(worldId: string): Promise<WorldPackageCountriesResponse> {
   return request(`/world/packages/${encodeURIComponent(worldId)}/countries`)
+}
+
+
+export function getWorldPackageWeeklyIntakePreview(
+  worldId: string,
+  params: WeeklyIntakePreviewParams
+): Promise<WeeklyIntakePreviewResponse> {
+  const query = new URLSearchParams({
+    season: params.season,
+    season_week: String(params.season_week),
+    target_intake_count: String(params.target_intake_count)
+  })
+  if (params.country_code !== undefined) query.set('country_code', params.country_code)
+  if (params.region !== undefined) query.set('region', params.region)
+  return request(`/world/packages/${encodeURIComponent(worldId)}/weekly-intake/preview?${query.toString()}`)
 }
 
 

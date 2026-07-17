@@ -13,8 +13,13 @@ from beta_engine.application.rollover_models import (
     SeasonRolloverSummaryResponse,
 )
 from beta_engine.application.season_models import SeasonState
+from beta_engine.application.season_registry_service import SeasonRegistryEntry, SeasonRegistryService
 from beta_engine.domain.players import Player
 from beta_engine.infrastructure.db import SimulationPersistenceRepository, SimulationRunInfo
+
+
+class FinalSeasonRolloverError(ValueError):
+    """Raised when a completed run is already at the final registered season."""
 
 
 @dataclass(slots=True)
@@ -31,8 +36,9 @@ class SeasonRolloverOrchestrationService:
         state: SeasonState,
         players_by_id: dict[str, Player],
     ) -> SeasonRolloverResponse:
+        next_season = self._validate_next_registered_season(run_season=run.season)
         self._validate_season_complete(state=state)
-        to_season = run.season + 1
+        to_season = next_season.season_start_year
 
         existing = self.repository.get_season_rollover(run_id=run.run_id, to_season=to_season)
         if existing is not None:
@@ -133,6 +139,18 @@ class SeasonRolloverOrchestrationService:
     def _validate_season_complete(*, state: SeasonState) -> None:
         if state.has_remaining_events:
             raise ValueError("Season rollover requires a completed season; run simulate_full_season first")
+
+    @staticmethod
+    def _validate_next_registered_season(*, run_season: int) -> SeasonRegistryEntry:
+        registry = SeasonRegistryService()
+        current = registry.get_season(start_year=run_season)
+        next_season = registry.get_next_season(start_year=run_season)
+        if current is None or next_season is None:
+            final_label = registry.build_registry().end_season if current is None else current.label
+            raise FinalSeasonRolloverError(
+                f"Cannot roll over final registry season {final_label}; no next season exists."
+            )
+        return next_season
 
 
 def to_persisted_rollover(payload: SeasonRolloverSummaryResponse) -> PersistedSeasonRollover:

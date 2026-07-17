@@ -1028,6 +1028,43 @@ def test_rollover_endpoints_execute_and_read_persisted_data(tmp_path) -> None:
         assert len(transitions["transitions"]) == rollover["rollover"]["transitioned_players"]
 
 
+def test_rollover_final_registry_season_returns_conflict_without_artifacts(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-rollover-final-season.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request(
+            "POST",
+            f"{server.base_url}/runs",
+            {"run_id": "run-final-rollover", "seed": 4054, "season": 2049},
+        )
+        assert status == 201
+
+        status, _ = _request("POST", f"{server.base_url}/runs/run-final-rollover/simulate/full-season")
+        assert status == 200
+
+        status, payload = _request("POST", f"{server.base_url}/runs/run-final-rollover/rollover/next-season")
+
+        assert status == 409
+        assert "final registry season 2049/50" in payload["detail"]
+        assert "no next season exists" in payload["detail"]
+
+        status, latest = _request("GET", f"{server.base_url}/runs/run-final-rollover/rollover/latest")
+        assert status == 404
+        assert "No rollover found" in latest["detail"]
+
+        status, next_players = _request("GET", f"{server.base_url}/runs/run-final-rollover/players/next-season/2050")
+        assert status == 200
+        assert next_players["players"] == []
+
+        status, transitions = _request("GET", f"{server.base_url}/runs/run-final-rollover/players/transitions/2050")
+        assert status == 200
+        assert transitions["transitions"] == []
+
+        status, runs = _request("GET", f"{server.base_url}/runs")
+        assert status == 200
+        run_ids = [run["run_id"] for run in runs["runs"]]
+        assert run_ids == ["run-final-rollover"]
+
+
 def test_bootstrap_next_season_and_lineage_endpoints(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'api-bootstrap.db'}"
     with ApiServer(database_url=database_url) as server:

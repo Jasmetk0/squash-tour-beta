@@ -12,7 +12,7 @@ from beta_engine.domain.calendar import (
     season_week_to_year_week,
     year_week_to_season_week,
 )
-from beta_engine.domain.calendar.season_labels import season_label_from_start_year
+from beta_engine.domain.calendar.season_labels import normalize_season_label, season_label_from_start_year
 
 TOTAL_REGISTRY_SEASONS = 50
 REGISTRY_START_YEAR = 2000
@@ -63,12 +63,21 @@ class SeasonRegistryService:
     def get_season(self, *, label: str | None = None, start_year: int | None = None) -> SeasonRegistryEntry | None:
         if label is None and start_year is None:
             raise ValueError("label or start_year is required")
+        normalized_label = normalize_season_label(label) if label is not None else None
         for entry in self.list_seasons():
-            if label is not None and entry.label == label:
+            if normalized_label is not None and entry.label == normalized_label:
                 return entry
             if start_year is not None and entry.season_start_year == start_year:
                 return entry
         return None
+
+    def get_next_season(
+        self, *, label: str | None = None, start_year: int | None = None
+    ) -> SeasonRegistryEntry | None:
+        current = self.get_season(label=label, start_year=start_year)
+        if current is None:
+            return None
+        return self.get_season(start_year=current.season_start_year + 1)
 
     def season_week_to_year_week(self, season_week: int) -> int:
         return season_week_to_year_week(season_week)

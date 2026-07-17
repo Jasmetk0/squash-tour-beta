@@ -32,6 +32,11 @@ from beta_engine.domain.players.talent_models import (
     TalentSeed,
 )
 from beta_engine.domain.players.talent_planner import AnnualTalentClassPlanner
+from beta_engine.domain.players.weekly_intake import (
+    WeeklyIntakeCountryAllocation,
+    WeeklyIntakePlan,
+    WeeklyIntakePlanner,
+)
 
 __all__ = [
     "HiddenCareerTraits",
@@ -45,6 +50,9 @@ __all__ = [
     "InitialPoolResult",
     "InitialPoolSummary",
     "AnnualTalentClassPlanner",
+    "WeeklyIntakeCountryAllocation",
+    "WeeklyIntakePlan",
+    "WeeklyIntakePlanner",
     "AnnualTalentClassPlan",
     "CountryTalentAllocation",
     "CountryGenerationBiasProfile",

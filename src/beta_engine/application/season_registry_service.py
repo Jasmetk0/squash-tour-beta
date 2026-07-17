@@ -4,22 +4,29 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel, Field
 
+from beta_engine.domain.calendar import (
+    DEFAULT_WEEKS_PER_CALENDAR_YEAR,
+    DEFAULT_WEEKS_PER_SEASON,
+    SEASON_WEEK_1_YEAR_WEEK,
+    season_week_to_calendar_position,
+    season_week_to_year_week,
+    year_week_to_season_week,
+)
 from beta_engine.domain.calendar.season_labels import season_label_from_start_year
 
 TOTAL_REGISTRY_SEASONS = 50
 REGISTRY_START_YEAR = 2000
 REGISTRY_END_YEAR = REGISTRY_START_YEAR + TOTAL_REGISTRY_SEASONS - 1
-SIMPLIFIED_YEAR_WEEK_COUNT = 61
-SEASON_WEEK_1_YEAR_WEEK = 37
+SIMPLIFIED_YEAR_WEEK_COUNT = DEFAULT_WEEKS_PER_CALENDAR_YEAR
 
 
 class SeasonRegistryEntry(BaseModel):
     season_start_year: int
     label: str
     season_index: int = Field(description="0-based season index within the deterministic registry")
-    week_count: int = SIMPLIFIED_YEAR_WEEK_COUNT
+    week_count: int = DEFAULT_WEEKS_PER_SEASON
     season_week_start: int = 1
-    season_week_end: int = SIMPLIFIED_YEAR_WEEK_COUNT
+    season_week_end: int = DEFAULT_WEEKS_PER_SEASON
     year_week_start: int = SEASON_WEEK_1_YEAR_WEEK
     year_week_end: int
     status: str = "registry_only"
@@ -36,18 +43,19 @@ class SeasonRegistryResponse(BaseModel):
 
 @dataclass(slots=True)
 class SeasonRegistryService:
-    """Read-only deterministic season registry using the simplified 61-week year model."""
+    """Read-only deterministic season registry using the shared FAX 61-week calendar model."""
 
     def list_seasons(self) -> list[SeasonRegistryEntry]:
         seasons: list[SeasonRegistryEntry] = []
         for season_index, start_year in enumerate(range(REGISTRY_START_YEAR, REGISTRY_END_YEAR + 1)):
             label = _season_label(start_year)
+            end_position = season_week_to_calendar_position(start_year, DEFAULT_WEEKS_PER_SEASON)
             seasons.append(
                 SeasonRegistryEntry(
                     season_start_year=start_year,
                     label=label,
                     season_index=season_index,
-                    year_week_end=self.season_week_to_year_week(SIMPLIFIED_YEAR_WEEK_COUNT),
+                    year_week_end=end_position.year_week,
                 )
             )
         return seasons
@@ -63,14 +71,10 @@ class SeasonRegistryService:
         return None
 
     def season_week_to_year_week(self, season_week: int) -> int:
-        if not 1 <= season_week <= SIMPLIFIED_YEAR_WEEK_COUNT:
-            raise ValueError("season_week must be between 1 and 61")
-        return ((SEASON_WEEK_1_YEAR_WEEK + season_week - 2) % SIMPLIFIED_YEAR_WEEK_COUNT) + 1
+        return season_week_to_year_week(season_week)
 
     def year_week_to_season_week(self, year_week: int) -> int:
-        if not 1 <= year_week <= SIMPLIFIED_YEAR_WEEK_COUNT:
-            raise ValueError("year_week must be between 1 and 61")
-        return ((year_week - SEASON_WEEK_1_YEAR_WEEK) % SIMPLIFIED_YEAR_WEEK_COUNT) + 1
+        return year_week_to_season_week(year_week)
 
     def build_registry(self) -> SeasonRegistryResponse:
         seasons = self.list_seasons()
@@ -78,7 +82,7 @@ class SeasonRegistryService:
             start_season=seasons[0].label,
             end_season=seasons[-1].label,
             season_count=len(seasons),
-            week_count=SIMPLIFIED_YEAR_WEEK_COUNT,
+            week_count=DEFAULT_WEEKS_PER_SEASON,
             season_week_1_year_week=SEASON_WEEK_1_YEAR_WEEK,
             seasons=seasons,
         )

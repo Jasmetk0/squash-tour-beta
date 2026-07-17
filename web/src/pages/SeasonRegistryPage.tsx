@@ -5,8 +5,12 @@ import { getSeasonRegistry } from '../api/client'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
-function seasonWeekToYearWeek(seasonWeek: number, seasonWeek1YearWeek: number): number {
-  return ((seasonWeek1YearWeek - 1 + (seasonWeek - 1)) % 61) + 1
+const WEEKS_PER_SEASON = 61
+const WEEKS_PER_YEAR = 61
+const SEASON_WEEK_1_YEAR_WEEK = 37
+
+function seasonWeekToYearWeek(seasonWeek: number): number {
+  return ((SEASON_WEEK_1_YEAR_WEEK - 1 + (seasonWeek - 1)) % WEEKS_PER_YEAR) + 1
 }
 
 export function AdminTourSeasonsSeasonRegistryPage(): JSX.Element {
@@ -39,8 +43,8 @@ export function AdminTourSeasonsSeasonRegistryPage(): JSX.Element {
         <p>Calendar events will use weeks and qualificationWeeks. Qualification belongs to the main event. Locked events must be explicitly unlocked before move/delete/overwrite actions.</p>
         <ul className="dashboard-help-list">
           <li>Registry is read-only.</li>
-          <li>Every canonical season has exactly 61 Season Weeks.</li>
-          <li>Season Week 1 = Year Week 37.</li>
+          <li>Every canonical season has exactly {WEEKS_PER_SEASON} Season Weeks.</li>
+          <li>Season Week 1 = Year Week {SEASON_WEEK_1_YEAR_WEEK}.</li>
           <li>This is the simplified engine model.</li>
           <li>Compact label YYYY/YY is canonical for registry.</li>
           <li>Legacy YYYY/YYYY labels are still accepted at selected API boundaries during migration.</li>
@@ -51,10 +55,10 @@ export function AdminTourSeasonsSeasonRegistryPage(): JSX.Element {
       <SectionCard title="Mapping examples">
         {registry ? (
           <ul className="dashboard-help-list">
-            <li>SW1 → YW{seasonWeekToYearWeek(1, registry.season_week_1_year_week)}</li>
-            <li>SW25 → YW{seasonWeekToYearWeek(25, registry.season_week_1_year_week)}</li>
-            <li>SW26 → YW{seasonWeekToYearWeek(26, registry.season_week_1_year_week)}</li>
-            <li>SW61 → YW{seasonWeekToYearWeek(61, registry.season_week_1_year_week)}</li>
+            <li>SW1 → YW{seasonWeekToYearWeek(1)}</li>
+            <li>SW25 → YW{seasonWeekToYearWeek(25)}</li>
+            <li>SW26 → YW{seasonWeekToYearWeek(26)}</li>
+            <li>SW61 → YW{seasonWeekToYearWeek(61)}</li>
           </ul>
         ) : (
           <ul className="dashboard-help-list">
@@ -98,7 +102,7 @@ export function AdminTourSeasonsSeasonRegistryPage(): JSX.Element {
                     <td>YW{entry.year_week_end}</td>
                     <td>{entry.status}</td>
                     <td>Calendar status: existing read model unavailable / not loaded</td>
-                    <td>Canonical season · 61 Season Weeks · Admin calendar editor: planned</td>
+                    <td>Canonical season · {WEEKS_PER_SEASON} Season Weeks · Admin calendar editor: planned</td>
                     <td>
                       <span>Open calendar — planned</span>{' · '}
                       <span>Copy from template — planned</span>{' · '}

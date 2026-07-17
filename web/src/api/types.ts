@@ -588,6 +588,8 @@ export type RunPlayerListItem = {
   name: string
   country_code: string
   age: number
+  birth_year?: number | null
+  birth_year_week?: number | null
   source_type: 'rollover_carried' | 'planner_generated' | 'manual_override'
   override_id: string | null
   quality_band: string | null
@@ -616,6 +618,8 @@ export type RunPlayerDetail = {
   name: string
   country_code: string
   age: number
+  birth_year?: number | null
+  birth_year_week?: number | null
   play_style: string
   archetype: string
   technique: number

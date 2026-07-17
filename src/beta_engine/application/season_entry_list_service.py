@@ -309,6 +309,8 @@ class SeasonEntryListService:
             player_id=player.player_id,
             name=player.name,
             age=max(16, min(41, player.age_years_at_season_start)),
+            birth_year=player.birth_year,
+            birth_year_week=player.birth_year_week,
             nationality=player.nationality or player.country_code,
             technique=attrs.technique,
             movement=attrs.movement,

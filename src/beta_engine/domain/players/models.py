@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from beta_engine.domain.calendar import DEFAULT_WEEKS_PER_CALENDAR_YEAR
+
 
 class HiddenCareerTraits(BaseModel):
     potential_ceiling: int = Field(ge=50, le=99)
@@ -20,6 +22,8 @@ class Player(BaseModel):
     player_id: str
     name: str
     age: int = Field(ge=16, le=41)
+    birth_year: int | None = Field(default=None, ge=1900, le=2100)
+    birth_year_week: int | None = Field(default=None, ge=1, le=DEFAULT_WEEKS_PER_CALENDAR_YEAR)
     nationality: str
     technique: int = Field(ge=1, le=99)
     movement: int = Field(ge=1, le=99)

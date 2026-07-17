@@ -103,6 +103,8 @@ def test_generated_player_has_required_mvp_fields() -> None:
         "player_id",
         "name",
         "age",
+        "birth_year",
+        "birth_year_week",
         "nationality",
         "technique",
         "movement",

@@ -82,6 +82,7 @@ def test_child_run_uses_rollover_player_pool_for_next_rollover(tmp_path) -> None
 
     parent_next_players = service.list_next_season_players(run_id="run-parent", to_season=2028)
     player_ages_2028 = {record.player_id: record.state.player.age for record in parent_next_players}
+    player_births_2028 = {record.player_id: (record.state.player.birth_year, record.state.player.birth_year_week) for record in parent_next_players}
 
     service.bootstrap_next_season_run(run_id="run-parent", child_run_id="run-child")
     service.simulate_full_season(run_id="run-child")
@@ -94,6 +95,11 @@ def test_child_run_uses_rollover_player_pool_for_next_rollover(tmp_path) -> None
     assert common_player_ids
     sample_id = common_player_ids[0]
     assert observed_age_before[sample_id] == player_ages_2028[sample_id]
+
+    child_run_info = service.repository.get_simulation_run(run_id="run-child")
+    assert child_run_info is not None
+    child_players = service._load_players_by_id_for_run(run_info=child_run_info)
+    assert (child_players[sample_id].birth_year, child_players[sample_id].birth_year_week) == player_births_2028[sample_id]
 
 
 def test_bootstrap_child_player_pool_merges_carried_and_intake_without_duplicates(tmp_path) -> None:
@@ -174,3 +180,37 @@ def test_legacy_source_types_are_normalized_to_canonical_contract(tmp_path) -> N
     runs_index = service.list_runs_index()
     legacy_index = next(row for row in runs_index if row.run_id == "run-legacy")
     assert legacy_index.source_type == "rollover_bootstrap"
+
+
+def test_fresh_run_players_backfill_birth_identity_without_changing_age_or_count(tmp_path) -> None:
+    service = _service(tmp_path)
+    service.initialize_run(run_id="run-parent", season=2027, seed=5858, config_version=None, config_fingerprint=None)
+
+    run_info = service.repository.get_simulation_run(run_id="run-parent")
+    assert run_info is not None
+    players = service._load_players_by_id_for_run(run_info=run_info)
+    assert players
+
+    for player in players.values():
+        assert player.birth_year == 2027 - player.age
+        assert player.birth_year_week is not None
+        assert 1 <= player.birth_year_week <= 61
+
+
+def test_parent_rollover_next_season_players_preserve_birth_identity(tmp_path) -> None:
+    service = _service(tmp_path)
+    service.initialize_run(run_id="run-parent", season=2027, seed=5959, config_version=None, config_fingerprint=None)
+    run_info = service.repository.get_simulation_run(run_id="run-parent")
+    assert run_info is not None
+    before = service._load_players_by_id_for_run(run_info=run_info)
+
+    service.simulate_full_season(run_id="run-parent")
+    service.rollover_to_next_season(run_id="run-parent")
+
+    next_players = service.list_next_season_players(run_id="run-parent", to_season=2028)
+    assert next_players
+    for record in next_players:
+        previous = before[record.player_id]
+        assert record.state.player.age == previous.age + 1
+        assert record.state.player.birth_year == previous.birth_year
+        assert record.state.player.birth_year_week == previous.birth_year_week

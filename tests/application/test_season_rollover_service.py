@@ -12,6 +12,8 @@ def _player(player_id: str, recovery: int) -> Player:
         player_id=player_id,
         name=player_id,
         age=27,
+        birth_year=2000,
+        birth_year_week=17,
         nationality="ENG",
         technique=72,
         movement=72,
@@ -104,3 +106,15 @@ def test_explicit_health_inputs_override_derived_values() -> None:
     )
 
     assert rollover.transitions[0].season_health_input == explicit["P-A"]
+
+
+def test_rollover_preserves_birth_identity_while_incrementing_stored_age() -> None:
+    players = [_player("P-A", 78)]
+
+    service = SeasonRolloverService(progression_engine=CareerProgressionEngine(rng=DeterministicRng(8081)))
+    rollover = service.rollover(season=2027, players=players, completed_tournaments=[])
+
+    next_player = rollover.next_players[0]
+    assert next_player.age == players[0].age + 1
+    assert next_player.birth_year == players[0].birth_year
+    assert next_player.birth_year_week == players[0].birth_year_week

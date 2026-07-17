@@ -297,6 +297,8 @@ class RunPlayerListItemResponse(BaseModel):
     name: str
     country_code: str
     age: int
+    birth_year: int | None = None
+    birth_year_week: int | None = None
     source_type: Literal["rollover_carried", "planner_generated", "manual_override"]
     override_id: str | None = None
     quality_band: str | None = None
@@ -336,6 +338,8 @@ class RunPlayerDetailResponse(BaseModel):
     name: str
     country_code: str
     age: int
+    birth_year: int | None = None
+    birth_year_week: int | None = None
     play_style: str
     archetype: str
     technique: int

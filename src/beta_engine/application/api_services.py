@@ -44,6 +44,7 @@ from beta_engine.core import DeterministicRng, SeedScope
 from beta_engine.domain.careers import CareerProgressionEngine, NextSeasonPlayerState
 from beta_engine.domain.countries import Country, CountryTalentModel
 from beta_engine.domain.entries import AcceptanceList, AcceptanceStatus, TournamentEntry
+from beta_engine.domain.players.lifecycle import derive_birth_year_from_age, synthesize_birth_year_week
 from beta_engine.domain.players import (
     AnnualTalentClassPlanner,
     ManualPlayerOverride,
@@ -261,6 +262,8 @@ class RunPlayerListItem:
     name: str
     country_code: str
     age: int
+    birth_year: int | None
+    birth_year_week: int | None
     source_type: Literal["rollover_carried", "planner_generated", "manual_override"]
     override_id: str | None
     quality_band: str | None
@@ -303,6 +306,8 @@ class RunPlayerDetail:
     name: str
     country_code: str
     age: int
+    birth_year: int | None
+    birth_year_week: int | None
     play_style: str
     archetype: str
     technique: int
@@ -2250,7 +2255,7 @@ class SimulationApiService:
                         f"intake player_id collision for run_id {run_id} season {season}: {player.player_id}"
                     )
                 reserved_player_ids.add(player.player_id)
-                players.append(player)
+                players.append(self._with_birth_identity(player, season_start_year=season))
                 band_key = talent.quality_band.value
                 band_counts[band_key] = band_counts.get(band_key, 0) + 1
                 provenance_records.append(
@@ -2319,7 +2324,7 @@ class SimulationApiService:
                     f"manual override player_id collision for run_id {run_id} season {season}: {player.player_id}"
                 )
             reserved_player_ids.add(player.player_id)
-            players.append(player)
+            players.append(self._with_birth_identity(player, season_start_year=season))
             provenance_records.append(
                 PersistedGeneratedPlayerProvenanceRecord(
                     run_id=run_id,
@@ -2423,6 +2428,17 @@ class SimulationApiService:
         if len({state.player.player_id for state in merged_player_states}) != len(merged_player_states):
             raise ValueError(f"bootstrapped player pool contains duplicate player_id values for run_id {run_id}")
         return merged_player_states, plan_record, country_records, provenance_records
+
+
+    @staticmethod
+    def _with_birth_identity(player: Player, *, season_start_year: int) -> Player:
+        birth_year = player.birth_year
+        if birth_year is None:
+            birth_year = derive_birth_year_from_age(season_start_year, player.age)
+        birth_year_week = player.birth_year_week
+        if birth_year_week is None:
+            birth_year_week = synthesize_birth_year_week(player_id=player.player_id, birth_year=birth_year)
+        return player.model_copy(update={"birth_year": birth_year, "birth_year_week": birth_year_week})
 
     def _build_recent_greatness_dampener(self, *, season: int, include_history: bool) -> WeightedRecentGreatnessDampener:
         if not include_history:
@@ -2681,6 +2697,8 @@ class SimulationApiService:
             name=player.name,
             country_code=player.nationality,
             age=player.age,
+            birth_year=player.birth_year,
+            birth_year_week=player.birth_year_week,
             source_type=self._provenance_source_type(provenance),
             override_id=provenance.override_id if provenance else None,
             quality_band=provenance.quality_band if provenance else None,
@@ -2832,6 +2850,8 @@ class SimulationApiService:
             name=player.name,
             country_code=player.nationality,
             age=player.age,
+            birth_year=player.birth_year,
+            birth_year_week=player.birth_year_week,
             play_style=player.play_style,
             archetype=player.archetype,
             technique=player.technique,

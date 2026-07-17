@@ -787,6 +787,8 @@ class SeasonMatchService:
             player_id=player.player_id,
             name=player.name,
             age=player.age_years_at_season_start,
+            birth_year=player.birth_year,
+            birth_year_week=player.birth_year_week,
             nationality=player.nationality,
             technique=player.attributes.technique,
             movement=player.attributes.movement,

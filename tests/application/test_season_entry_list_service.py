@@ -30,10 +30,10 @@ def write_templates(path: Path, *, main_draw_size: int = 8) -> None:
     }]}), encoding="utf-8")
 
 
-def active_player(index: int, country: str = "AAA", ability: int = 88) -> SeasonActivePlayer:
+def active_player(index: int, country: str = "AAA", ability: int = 88, *, age: int = 25, birth_year: int = 1975, birth_year_week: int = 1) -> SeasonActivePlayer:
     return SeasonActivePlayer(
         player_id=f"P{index:03d}", name=f"Player {index:03d}", country_code=country, nationality=country,
-        birth_year=1975, birth_year_week=1, age_years_at_season_start=25, age_weeks_at_season_start=1300,
+        birth_year=birth_year, birth_year_week=birth_year_week, age_years_at_season_start=age, age_weeks_at_season_start=age * 52,
         current_ability=ability, potential_ability=max(ability, 90), potential_tier="A", career_stage="prime", play_style="balanced", archetype="all_court",
         attributes=GeneratedPlayerAttributes(technique=ability, movement=ability, physical=ability, mental=ability, consistency=ability, clutch=ability, recovery=ability),
         hidden_career_traits=HiddenCareerTraits(potential_ceiling=max(ability, 90), growth_curve="steady", professionalism=0.9, ambition=0.9, travel_tolerance=0.9, schedule_aggression=0.9, injury_proneness=0.1, resilience=0.9),
@@ -134,3 +134,18 @@ def test_one_event_per_week_overlap_rejects_persistence(tmp_path: Path) -> None:
     assert any(issue.code == "player_week_overlap" for issue in preview.validation_errors)
     with pytest.raises(ValueError, match="player_week_overlap"):
         svc.generate_entry_list(event_id=second.event_id, request=EntryListGenerateRequest(seed=123, dry_run=False))
+
+
+def test_active_player_adapter_preserves_lifecycle_boundary_ages_and_birth_identity() -> None:
+    fifteen = active_player(901, age=15, birth_year=1985, birth_year_week=61)
+    forty_five = active_player(902, age=45, birth_year=1955, birth_year_week=1)
+
+    adapted_fifteen = SeasonEntryListService._adapt_player(fifteen)
+    adapted_forty_five = SeasonEntryListService._adapt_player(forty_five)
+
+    assert adapted_fifteen.age == 15
+    assert adapted_fifteen.birth_year == 1985
+    assert adapted_fifteen.birth_year_week == 61
+    assert adapted_forty_five.age == 45
+    assert adapted_forty_five.birth_year == 1955
+    assert adapted_forty_five.birth_year_week == 1

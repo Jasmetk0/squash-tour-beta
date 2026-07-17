@@ -15,6 +15,7 @@ from beta_engine.application.season_calendar_service import SeasonCalendarServic
 from beta_engine.application.season_player_bootstrap_service import InitialPoolSeasonBootstrapService, SeasonActivePlayer
 from beta_engine.core import DeterministicRng, SeedScope
 from beta_engine.domain.entries import EntryDecision, EntryEngine, EntryTarget
+from beta_engine.domain.players.lifecycle import MAX_RUNTIME_PLAYER_AGE, MIN_RUNTIME_PLAYER_AGE
 from beta_engine.domain.players.models import Player
 from beta_engine.domain.tournaments import LuckyLoserRules, SeasonCalendarEvent, TournamentTemplate
 from beta_engine.infrastructure.entry_config import load_entry_tuning_config
@@ -308,7 +309,8 @@ class SeasonEntryListService:
         return Player(
             player_id=player.player_id,
             name=player.name,
-            age=max(16, min(41, player.age_years_at_season_start)),
+            # Defensive legacy normalization only; valid 15/45 lifecycle ages are preserved.
+            age=max(MIN_RUNTIME_PLAYER_AGE, min(MAX_RUNTIME_PLAYER_AGE, player.age_years_at_season_start)),
             birth_year=player.birth_year,
             birth_year_week=player.birth_year_week,
             nationality=player.nationality or player.country_code,

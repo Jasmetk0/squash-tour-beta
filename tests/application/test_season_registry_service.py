@@ -49,3 +49,27 @@ def test_registry_response_preserves_horizon_and_week_count() -> None:
     assert registry.week_count == 61
     assert len(registry.seasons) == 50
     assert all(entry.week_count == 61 for entry in registry.seasons)
+
+
+def test_get_next_season_returns_registered_successor() -> None:
+    service = SeasonRegistryService()
+
+    next_season = service.get_next_season(label="2000/01")
+
+    assert next_season is not None
+    assert next_season.label == "2001/02"
+    assert next_season.season_start_year == 2001
+
+
+def test_get_next_season_returns_none_for_final_registry_season() -> None:
+    service = SeasonRegistryService()
+
+    assert service.get_next_season(label="2049/50") is None
+
+
+def test_get_next_season_accepts_long_label_compatibility() -> None:
+    service = SeasonRegistryService()
+
+    next_season = service.get_next_season(label="2049/2050")
+
+    assert next_season is None

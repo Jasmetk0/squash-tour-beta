@@ -1,7 +1,10 @@
+import pytest
+
 from beta_engine.domain.countries import Country
 from beta_engine.domain.players.initial_pool import (
     InitialPlayerPoolGenerator,
     initial_pool_age_weights,
+    initial_pool_effective_population_diagnostics,
     initial_pool_effective_population_quantity,
 )
 
@@ -59,7 +62,7 @@ def test_effective_population_quantity_uses_birth_year_window_not_season_year() 
     quantity = initial_pool_effective_population_quantity(c, 2000)
     expected = sum(timeline[2000 - age] * weight for age, weight in initial_pool_age_weights().items())
 
-    assert quantity == expected
+    assert quantity == pytest.approx(expected)
     assert quantity != 1_000_000
     assert quantity != 10_002_000
 
@@ -79,8 +82,101 @@ def test_effective_population_quantity_uses_resolver_fallbacks_without_mutation(
 
     quantity = initial_pool_effective_population_quantity(c, 2000)
 
-    assert quantity == 5_000_000
+    assert quantity == pytest.approx(5_000_000)
     assert c.model_dump(mode="python") == before
+
+
+def test_effective_population_diagnostics_exact_source_type() -> None:
+    timeline = {year: 1_000_000 + year for year in range(1955, 1986)}
+    c = country(
+        "EXA",
+        population=999_999,
+        population_by_year=timeline,
+        system=3,
+        popularity=3,
+        tradition=3,
+    )
+
+    diagnostics = initial_pool_effective_population_diagnostics(c, 2000)
+    expected = sum(timeline[2000 - age] * weight for age, weight in initial_pool_age_weights().items())
+
+    assert diagnostics.effective_population_quantity == pytest.approx(expected)
+    assert diagnostics.source_type_weight_shares == {"exact_population_year": 1.0}
+    assert diagnostics.estimated_weight_share == 0.0
+    assert diagnostics.source_year_min == 1955
+    assert diagnostics.source_year_max == 1985
+
+
+def test_effective_population_diagnostics_fallback_source_types() -> None:
+    nearest = country(
+        "NEA",
+        population=1_000_000,
+        population_by_year={2020: 9_000_000},
+        system=3,
+        popularity=3,
+        tradition=3,
+    )
+    default = country(
+        "DEF",
+        population=1_000_000,
+        default_population=7_000_000,
+        default_population_year=2020,
+        system=3,
+        popularity=3,
+        tradition=3,
+    )
+    legacy = country("LEG", population=5_000_000, system=3, popularity=3, tradition=3)
+
+    nearest_diag = initial_pool_effective_population_diagnostics(nearest, 2000)
+    default_diag = initial_pool_effective_population_diagnostics(default, 2000)
+    legacy_diag = initial_pool_effective_population_diagnostics(legacy, 2000)
+
+    assert nearest_diag.effective_population_quantity == pytest.approx(9_000_000)
+    assert nearest_diag.source_type_weight_shares == {"nearest_population_year": 1.0}
+    assert nearest_diag.estimated_weight_share == pytest.approx(1.0)
+    assert nearest_diag.source_year_min == 2020
+    assert nearest_diag.source_year_max == 2020
+
+    assert default_diag.effective_population_quantity == pytest.approx(7_000_000)
+    assert default_diag.source_type_weight_shares == {"default_population": 1.0}
+    assert default_diag.estimated_weight_share == pytest.approx(1.0)
+    assert default_diag.source_year_min == 2020
+    assert default_diag.source_year_max == 2020
+
+    assert legacy_diag.effective_population_quantity == pytest.approx(5_000_000)
+    assert legacy_diag.source_type_weight_shares == {"legacy_population": 1.0}
+    assert legacy_diag.estimated_weight_share == pytest.approx(1.0)
+    assert legacy_diag.source_year_min is None
+    assert legacy_diag.source_year_max is None
+
+
+def test_effective_population_diagnostics_do_not_mutate_country() -> None:
+    c = country(
+        "IMM",
+        population=1_000_000,
+        default_population=2_000_000,
+        population_by_year={1955: None, 1970: 5_000_000},
+        system=3,
+        popularity=3,
+        tradition=3,
+    )
+    before = c.model_dump(mode="python")
+
+    initial_pool_effective_population_diagnostics(c, 2000)
+
+    assert c.model_dump(mode="python") == before
+
+
+def test_effective_population_diagnostics_use_initial_pool_age_weights() -> None:
+    c = country("AGE", population=3_000_000, system=3, popularity=3, tradition=3)
+
+    diagnostics = initial_pool_effective_population_diagnostics(c, 2000)
+
+    assert sum(diagnostics.source_type_weight_shares.values()) == pytest.approx(1.0)
+    assert diagnostics.age_min == 15
+    assert diagnostics.age_max == 45
+    assert diagnostics.population_year_min == 1955
+    assert diagnostics.population_year_max == 1985
 
 
 def test_initial_pool_allocation_favors_higher_birth_year_effective_population() -> None:
@@ -124,8 +220,8 @@ def test_effective_population_quantity_changes_with_season_birth_year_window() -
     quantity_2000 = initial_pool_effective_population_quantity(c, 2000)
     quantity_2049 = initial_pool_effective_population_quantity(c, 2049)
 
-    assert quantity_2000 == 2_000_000
-    assert quantity_2049 == 80_000_000
+    assert quantity_2000 == pytest.approx(2_000_000)
+    assert quantity_2049 == pytest.approx(80_000_000)
 
 
 def test_initial_pool_is_deterministic_for_same_seed_and_season() -> None:
@@ -136,6 +232,60 @@ def test_initial_pool_is_deterministic_for_same_seed_and_season() -> None:
     right = generator.generate(countries=countries, seed=123, season="2000/2001", target_pool_size=64)
 
     assert left.model_dump(mode="json") == right.model_dump(mode="json")
+
+
+def test_initial_pool_generation_includes_population_weighting_diagnostics() -> None:
+    countries = [
+        country("AAA", population=2_000_000, system=5, popularity=5, tradition=5),
+        country("BBB", population=80_000_000, system=2, popularity=2, tradition=2),
+    ]
+    generator = InitialPlayerPoolGenerator()
+
+    result = generator.generate(countries=countries, seed=123, season="2000/2001", target_pool_size=64)
+    diagnostics = result.metadata.population_weighting_diagnostics
+
+    assert result.metadata.population_weighting == "effective_population_birth_year_aggregate"
+    assert {row.country_code for row in diagnostics} == {"AAA", "BBB"}
+    assert all(row.allocation_weight > 0 for row in diagnostics)
+    assert sum(row.allocation_share for row in diagnostics) == pytest.approx(1.0)
+    assert sum(row.generated_allocation_count for row in diagnostics) == result.metadata.generated_count
+    assert {row.country_code: row.final_country_count for row in diagnostics} == result.summary.by_country
+
+
+def test_initial_pool_population_weighting_diagnostics_respect_country_filter() -> None:
+    countries = [
+        country("AAA", population=2_000_000, system=5, popularity=5, tradition=5),
+        country("BBB", population=80_000_000, system=2, popularity=2, tradition=2),
+    ]
+    generator = InitialPlayerPoolGenerator()
+
+    result = generator.generate(countries=countries, seed=123, season="2000/2001", target_pool_size=10, country_code="BBB")
+
+    assert [row.country_code for row in result.metadata.population_weighting_diagnostics] == ["BBB"]
+    assert result.metadata.population_weighting_diagnostics[0].generated_allocation_count == result.metadata.generated_count
+
+
+def test_initial_pool_population_weighting_diagnostics_include_locked_players_in_final_count() -> None:
+    countries = [
+        country("AAA", population=2_000_000, system=5, popularity=5, tradition=5),
+        country("BBB", population=80_000_000, system=2, popularity=2, tradition=2),
+    ]
+    generator = InitialPlayerPoolGenerator()
+    initial = generator.generate(countries=countries, seed=123, season="2000/2001", target_pool_size=10)
+    locked = initial.players[0].model_copy(update={"locked": True})
+
+    result = generator.generate(
+        countries=countries,
+        seed=124,
+        season="2000/2001",
+        target_pool_size=10,
+        existing_locked_players=[locked],
+    )
+
+    diagnostics_by_country = {row.country_code: row for row in result.metadata.population_weighting_diagnostics}
+    assert sum(row.generated_allocation_count for row in diagnostics_by_country.values()) == result.metadata.generated_count
+    assert diagnostics_by_country[locked.country_code].final_country_count == result.summary.by_country[locked.country_code]
+    assert diagnostics_by_country[locked.country_code].final_country_count == diagnostics_by_country[locked.country_code].generated_allocation_count + 1
 
 
 def test_initial_pool_changes_with_seed_and_spreads_career_stages() -> None:

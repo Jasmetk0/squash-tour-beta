@@ -1635,6 +1635,24 @@ export type InitialPoolSummary = {
   by_potential_tier: Record<string, number>
 }
 
+export type InitialPoolPopulationWeightingDiagnostic = {
+  country_code: string
+  allocation_weight: number
+  allocation_share: number
+  generated_allocation_count: number
+  final_country_count: number
+  effective_population_quantity: number
+  legacy_population: number
+  population_year_min: number
+  population_year_max: number
+  age_min: number
+  age_max: number
+  source_type_weight_shares: Record<string, number>
+  estimated_weight_share: number
+  source_year_min: number | null
+  source_year_max: number | null
+}
+
 export type InitialPoolMetadata = {
   season: string
   seed: number
@@ -1646,6 +1664,13 @@ export type InitialPoolMetadata = {
   preserved_locked_count: number
   changed_count: number
   generation_fingerprint: string
+  population_weighting?: string | null
+  population_year_min?: number | null
+  population_year_max?: number | null
+  default_population_year?: number | null
+  age_min?: number | null
+  age_max?: number | null
+  population_weighting_diagnostics: InitialPoolPopulationWeightingDiagnostic[]
 }
 
 export type InitialPoolResponse = {

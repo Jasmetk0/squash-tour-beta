@@ -71,6 +71,27 @@ def test_generate_preview_dry_run_and_lock_workflow(tmp_path) -> None:
         assert preview["metadata"]["population_weighting"] == "effective_population_birth_year_aggregate"
         assert preview["metadata"]["population_year_min"] == 1955
         assert preview["metadata"]["population_year_max"] == 1985
+        diagnostics = preview["metadata"]["population_weighting_diagnostics"]
+        assert diagnostics
+        assert set(diagnostics[0]) >= {
+            "country_code",
+            "allocation_weight",
+            "allocation_share",
+            "generated_allocation_count",
+            "final_country_count",
+            "effective_population_quantity",
+            "legacy_population",
+            "population_year_min",
+            "population_year_max",
+            "age_min",
+            "age_max",
+            "source_type_weight_shares",
+            "estimated_weight_share",
+            "source_year_min",
+            "source_year_max",
+        }
+        assert {row["country_code"] for row in diagnostics} == set(preview["summary"]["by_country"])
+        assert sum(row["generated_allocation_count"] for row in diagnostics) == preview["metadata"]["generated_count"]
         assert all(1 <= player["birth_year_week"] <= 61 for player in preview["players"])
         assert any(player["birth_year_week"] > 52 for player in preview["players"])
         assert all(15 <= player["current_age_years"] <= 45 for player in preview["players"])

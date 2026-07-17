@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import math
 from collections import Counter
 from dataclasses import dataclass
 from typing import Literal
@@ -223,6 +224,26 @@ class InitialPoolGeneratedPlayer(BaseModel):
         return value.upper() if value is not None else None
 
 
+class InitialPoolPopulationWeightingDiagnostic(BaseModel):
+    """Per-country explanation of initial-pool population weighting inputs."""
+
+    country_code: str
+    allocation_weight: float
+    allocation_share: float
+    generated_allocation_count: int
+    final_country_count: int
+    effective_population_quantity: float
+    legacy_population: int
+    population_year_min: int
+    population_year_max: int
+    age_min: int
+    age_max: int
+    source_type_weight_shares: dict[str, float]
+    estimated_weight_share: float
+    source_year_min: int | None = None
+    source_year_max: int | None = None
+
+
 class InitialPoolMetadata(BaseModel):
     season: str
     seed: int
@@ -240,6 +261,7 @@ class InitialPoolMetadata(BaseModel):
     default_population_year: int | None = None
     age_min: int | None = None
     age_max: int | None = None
+    population_weighting_diagnostics: list[InitialPoolPopulationWeightingDiagnostic] = Field(default_factory=list)
 
 
 class InitialPoolSummary(BaseModel):
@@ -297,10 +319,58 @@ def initial_pool_effective_population_quantity(country: Country, season_start_ye
     expected value of the generator's public career-stage weights and ranges.
     """
 
-    return sum(
+    return initial_pool_effective_population_diagnostics(country, season_start_year).effective_population_quantity
+
+
+def initial_pool_effective_population_diagnostics(
+    country: Country, season_start_year: int
+) -> InitialPoolPopulationWeightingDiagnostic:
+    """Explain the weighted effective-population aggregate without mutating country data."""
+
+    age_weights = initial_pool_age_weights()
+    source_type_weight_shares: dict[str, float] = {}
+    estimated_weight_share = 0.0
+    source_years: list[int] = []
+    effective_population_quantity = sum(
         resolve_effective_population(country, season_start_year - age).effective_population * age_weight
-        for age, age_weight in initial_pool_age_weights().items()
+        for age, age_weight in age_weights.items()
     )
+    for age, age_weight in age_weights.items():
+        resolved = resolve_effective_population(country, season_start_year - age)
+        source_type_weight_shares[resolved.source_type] = source_type_weight_shares.get(resolved.source_type, 0.0) + age_weight
+        if resolved.is_estimated:
+            estimated_weight_share += age_weight
+        if resolved.source_year is not None:
+            source_years.append(resolved.source_year)
+    source_type_weight_shares = {
+        source_type: 1.0 if math.isclose(weight, 1.0) else weight
+        for source_type, weight in source_type_weight_shares.items()
+    }
+    if math.isclose(estimated_weight_share, 1.0):
+        estimated_weight_share = 1.0
+    return InitialPoolPopulationWeightingDiagnostic(
+        country_code=country.code,
+        allocation_weight=0.0,
+        allocation_share=0.0,
+        generated_allocation_count=0,
+        final_country_count=0,
+        effective_population_quantity=effective_population_quantity,
+        legacy_population=country.population,
+        population_year_min=season_start_year - max(age_weights),
+        population_year_max=season_start_year - min(age_weights),
+        age_min=min(age_weights),
+        age_max=max(age_weights),
+        source_type_weight_shares=dict(sorted(source_type_weight_shares.items())),
+        estimated_weight_share=estimated_weight_share,
+        source_year_min=min(source_years) if source_years else None,
+        source_year_max=max(source_years) if source_years else None,
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class InitialPoolAllocationPlan:
+    counts: dict[str, int]
+    diagnostics: list[InitialPoolPopulationWeightingDiagnostic]
 
 
 @dataclass(slots=True)
@@ -324,7 +394,14 @@ class InitialPlayerPoolGenerator:
             raise ValueError("initial pool generation requires at least one matching country")
         locked = sorted(existing_locked_players or [], key=lambda player: player.player_id)
         unlocked_slots = max(0, target_pool_size - len(locked))
-        allocations = self._allocate_counts(selected, unlocked_slots, seed=seed, season=season)
+        allocation_plan = self._build_allocation_plan(
+            selected,
+            unlocked_slots,
+            seed=seed,
+            season=season,
+            locked_counts=Counter(player.country_code for player in locked),
+        )
+        allocations = allocation_plan.counts
         generated: list[InitialPoolGeneratedPlayer] = []
         locked_sequences = {country.code: self._locked_sequences_for_country(locked, country.code) for country in selected}
         for country in selected:
@@ -336,10 +413,11 @@ class InitialPlayerPoolGenerator:
                     generated_for_country += 1
                 sequence += 1
         players = sorted([*locked, *generated], key=lambda player: (player.country_code, player.player_id))
+        summary = self._summarize(players)
         fingerprint = self._fingerprint(players, season=season, seed=seed)
         return InitialPoolResult(
             players=players,
-            summary=self._summarize(players),
+            summary=summary,
             metadata=InitialPoolMetadata(
                 season=season,
                 seed=seed,
@@ -351,7 +429,7 @@ class InitialPlayerPoolGenerator:
                 preserved_locked_count=len(locked),
                 changed_count=len(generated),
                 generation_fingerprint=fingerprint,
-                **self._population_weighting_metadata(season),
+                **self._population_weighting_metadata(season, diagnostics=allocation_plan.diagnostics),
             ),
         )
 
@@ -419,30 +497,59 @@ class InitialPlayerPoolGenerator:
         return sorted(items, key=lambda country: country.code)
 
     def _allocate_counts(self, countries: list[Country], target: int, *, seed: int, season: str) -> dict[str, int]:
-        if target <= 0:
-            return {country.code: 0 for country in countries}
+        return self._build_allocation_plan(countries, target, seed=seed, season=season).counts
+
+    def _build_allocation_plan(
+        self,
+        countries: list[Country],
+        target: int,
+        *,
+        seed: int,
+        season: str,
+        locked_counts: Counter[str] | None = None,
+    ) -> InitialPoolAllocationPlan:
+        del seed  # Allocation is deterministic and currently seed-independent; keep API unchanged.
         season_start_year = self._season_start_year(season)
+        population_diagnostics = {
+            country.code: initial_pool_effective_population_diagnostics(country, season_start_year) for country in countries
+        }
         weights = {country.code: self._quantity_weight(country, season_start_year=season_start_year) for country in countries}
         total = sum(weights.values())
-        counts = {country.code: int((weights[country.code] / total) * target) for country in countries}
+        counts = {country.code: 0 for country in countries}
+        if target > 0 and total > 0:
+            counts = {country.code: int((weights[country.code] / total) * target) for country in countries}
+            for country in countries:
+                if counts[country.code] == 0 and target >= len(countries):
+                    counts[country.code] = 1
+            remainder = target - sum(counts.values())
+            ranked = sorted(countries, key=lambda c: (-((weights[c.code] / total) * target - int((weights[c.code] / total) * target)), c.code))
+            index = 0
+            while remainder > 0:
+                counts[ranked[index % len(ranked)].code] += 1
+                remainder -= 1
+                index += 1
+            while remainder < 0:
+                removable = sorted(countries, key=lambda c: (-counts[c.code], c.code))
+                for country in removable:
+                    if counts[country.code] > 0:
+                        counts[country.code] -= 1
+                        remainder += 1
+                        break
+        locked_counts = locked_counts or Counter()
+        diagnostics = []
         for country in countries:
-            if counts[country.code] == 0 and target >= len(countries):
-                counts[country.code] = 1
-        remainder = target - sum(counts.values())
-        ranked = sorted(countries, key=lambda c: (-((weights[c.code] / total) * target - int((weights[c.code] / total) * target)), c.code))
-        index = 0
-        while remainder > 0:
-            counts[ranked[index % len(ranked)].code] += 1
-            remainder -= 1
-            index += 1
-        while remainder < 0:
-            removable = sorted(countries, key=lambda c: (-counts[c.code], c.code))
-            for country in removable:
-                if counts[country.code] > 0:
-                    counts[country.code] -= 1
-                    remainder += 1
-                    break
-        return counts
+            base = population_diagnostics[country.code]
+            diagnostics.append(
+                base.model_copy(
+                    update={
+                        "allocation_weight": weights[country.code],
+                        "allocation_share": weights[country.code] / total if total > 0 else 0.0,
+                        "generated_allocation_count": counts[country.code],
+                        "final_country_count": counts[country.code] + locked_counts[country.code],
+                    }
+                )
+            )
+        return InitialPoolAllocationPlan(counts=counts, diagnostics=diagnostics)
 
     def _generate_player(self, *, country: Country, season: str, seed: int, sequence: int) -> InitialPoolGeneratedPlayer:
         rng = DeterministicRng(seed).branch(SeedScope.SEASON, "initial_pool", season, country.code, sequence)
@@ -520,7 +627,9 @@ class InitialPlayerPoolGenerator:
     def _effective_population_quantity(self, country: Country, season_start_year: int) -> float:
         return initial_pool_effective_population_quantity(country, season_start_year)
 
-    def _population_weighting_metadata(self, season: str) -> dict[str, int | str]:
+    def _population_weighting_metadata(
+        self, season: str, *, diagnostics: list[InitialPoolPopulationWeightingDiagnostic] | None = None
+    ) -> dict[str, int | str | list[InitialPoolPopulationWeightingDiagnostic]]:
         season_start_year = self._season_start_year(season)
         age_weights = initial_pool_age_weights()
         return {
@@ -530,6 +639,7 @@ class InitialPlayerPoolGenerator:
             "default_population_year": DEFAULT_POPULATION_YEAR,
             "age_min": min(age_weights),
             "age_max": max(age_weights),
+            "population_weighting_diagnostics": diagnostics or [],
         }
 
     @staticmethod

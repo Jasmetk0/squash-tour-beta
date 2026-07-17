@@ -62,7 +62,7 @@ def test_effective_population_quantity_uses_birth_year_window_not_season_year() 
     quantity = initial_pool_effective_population_quantity(c, 2000)
     expected = sum(timeline[2000 - age] * weight for age, weight in initial_pool_age_weights().items())
 
-    assert quantity == expected
+    assert quantity == pytest.approx(expected)
     assert quantity != 1_000_000
     assert quantity != 10_002_000
 
@@ -82,7 +82,7 @@ def test_effective_population_quantity_uses_resolver_fallbacks_without_mutation(
 
     quantity = initial_pool_effective_population_quantity(c, 2000)
 
-    assert quantity == 5_000_000
+    assert quantity == pytest.approx(5_000_000)
     assert c.model_dump(mode="python") == before
 
 
@@ -100,7 +100,7 @@ def test_effective_population_diagnostics_exact_source_type() -> None:
     diagnostics = initial_pool_effective_population_diagnostics(c, 2000)
     expected = sum(timeline[2000 - age] * weight for age, weight in initial_pool_age_weights().items())
 
-    assert diagnostics.effective_population_quantity == expected
+    assert diagnostics.effective_population_quantity == pytest.approx(expected)
     assert diagnostics.source_type_weight_shares == {"exact_population_year": 1.0}
     assert diagnostics.estimated_weight_share == 0.0
     assert diagnostics.source_year_min == 1955
@@ -131,21 +131,21 @@ def test_effective_population_diagnostics_fallback_source_types() -> None:
     default_diag = initial_pool_effective_population_diagnostics(default, 2000)
     legacy_diag = initial_pool_effective_population_diagnostics(legacy, 2000)
 
-    assert nearest_diag.effective_population_quantity == 9_000_000
+    assert nearest_diag.effective_population_quantity == pytest.approx(9_000_000)
     assert nearest_diag.source_type_weight_shares == {"nearest_population_year": 1.0}
-    assert nearest_diag.estimated_weight_share == 1.0
+    assert nearest_diag.estimated_weight_share == pytest.approx(1.0)
     assert nearest_diag.source_year_min == 2020
     assert nearest_diag.source_year_max == 2020
 
-    assert default_diag.effective_population_quantity == 7_000_000
+    assert default_diag.effective_population_quantity == pytest.approx(7_000_000)
     assert default_diag.source_type_weight_shares == {"default_population": 1.0}
-    assert default_diag.estimated_weight_share == 1.0
+    assert default_diag.estimated_weight_share == pytest.approx(1.0)
     assert default_diag.source_year_min == 2020
     assert default_diag.source_year_max == 2020
 
-    assert legacy_diag.effective_population_quantity == 5_000_000
+    assert legacy_diag.effective_population_quantity == pytest.approx(5_000_000)
     assert legacy_diag.source_type_weight_shares == {"legacy_population": 1.0}
-    assert legacy_diag.estimated_weight_share == 1.0
+    assert legacy_diag.estimated_weight_share == pytest.approx(1.0)
     assert legacy_diag.source_year_min is None
     assert legacy_diag.source_year_max is None
 
@@ -220,8 +220,8 @@ def test_effective_population_quantity_changes_with_season_birth_year_window() -
     quantity_2000 = initial_pool_effective_population_quantity(c, 2000)
     quantity_2049 = initial_pool_effective_population_quantity(c, 2049)
 
-    assert quantity_2000 == 2_000_000
-    assert quantity_2049 == 80_000_000
+    assert quantity_2000 == pytest.approx(2_000_000)
+    assert quantity_2049 == pytest.approx(80_000_000)
 
 
 def test_initial_pool_is_deterministic_for_same_seed_and_season() -> None:

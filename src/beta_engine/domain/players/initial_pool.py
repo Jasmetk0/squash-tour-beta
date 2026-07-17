@@ -12,6 +12,10 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from beta_engine.core import DeterministicRng, SeedScope
 from beta_engine.domain.calendar import DEFAULT_WEEKS_PER_CALENDAR_YEAR
 from beta_engine.domain.countries import Country
+from beta_engine.domain.countries.population_resolver import (
+    DEFAULT_POPULATION_YEAR,
+    resolve_effective_population,
+)
 from beta_engine.domain.players.models import HiddenCareerTraits
 from beta_engine.infrastructure.world_config import PlayerIdentityConfig
 
@@ -230,6 +234,12 @@ class InitialPoolMetadata(BaseModel):
     preserved_locked_count: int = 0
     changed_count: int = 0
     generation_fingerprint: str
+    population_weighting: str | None = None
+    population_year_min: int | None = None
+    population_year_max: int | None = None
+    default_population_year: int | None = None
+    age_min: int | None = None
+    age_max: int | None = None
 
 
 class InitialPoolSummary(BaseModel):
@@ -262,6 +272,35 @@ class InitialPoolRegistry(BaseModel):
         if isinstance(value, dict) and "audit_events" not in value:
             return {**value, "audit_events": []}
         return value
+
+
+def initial_pool_age_weights() -> dict[int, float]:
+    """Expected initial-pool age distribution derived from stage weights/ranges."""
+
+    age_weights: dict[int, float] = {}
+    for stage, stage_weight in STAGE_WEIGHTS:
+        age_min, age_max = STAGE_AGE_RANGES[stage]
+        per_age_weight = stage_weight / (age_max - age_min + 1)
+        for age in range(age_min, age_max + 1):
+            age_weights[age] = age_weights.get(age, 0.0) + per_age_weight
+    total_weight = sum(age_weights.values())
+    if total_weight <= 0:
+        raise ValueError("initial-pool age distribution must have positive total weight")
+    return {age: weight / total_weight for age, weight in sorted(age_weights.items())}
+
+
+def initial_pool_effective_population_quantity(country: Country, season_start_year: int) -> float:
+    """Weighted effective population quantity for initial-pool country allocation.
+
+    Population years follow the initial-pool birth-year rule: populationYear =
+    birthYear = season_start_year - generated_age. The age distribution is the
+    expected value of the generator's public career-stage weights and ranges.
+    """
+
+    return sum(
+        resolve_effective_population(country, season_start_year - age).effective_population * age_weight
+        for age, age_weight in initial_pool_age_weights().items()
+    )
 
 
 @dataclass(slots=True)
@@ -312,6 +351,7 @@ class InitialPlayerPoolGenerator:
                 preserved_locked_count=len(locked),
                 changed_count=len(generated),
                 generation_fingerprint=fingerprint,
+                **self._population_weighting_metadata(season),
             ),
         )
 
@@ -381,7 +421,8 @@ class InitialPlayerPoolGenerator:
     def _allocate_counts(self, countries: list[Country], target: int, *, seed: int, season: str) -> dict[str, int]:
         if target <= 0:
             return {country.code: 0 for country in countries}
-        weights = {country.code: self._quantity_weight(country) for country in countries}
+        season_start_year = self._season_start_year(season)
+        weights = {country.code: self._quantity_weight(country, season_start_year=season_start_year) for country in countries}
         total = sum(weights.values())
         counts = {country.code: int((weights[country.code] / total) * target) for country in countries}
         for country in countries:
@@ -409,7 +450,7 @@ class InitialPlayerPoolGenerator:
         stage = self._choose_stage(rng)
         age_min, age_max = STAGE_AGE_RANGES[stage]
         age = rng.randint(age_min, age_max)
-        season_start_year = int(season.split("/")[0])
+        season_start_year = self._season_start_year(season)
         # Preserve the established player-quality RNG stream; the FAX birth week
         # is sampled from a dedicated branch below.
         rng.randint(1, 52)
@@ -468,12 +509,32 @@ class InitialPlayerPoolGenerator:
             growth_curves=list(DEFAULT_GROWTH_CURVES),
         )
 
-    def _quantity_weight(self, country: Country) -> float:
-        population_component = min(3.0, (country.population / 5_000_000) ** 0.35)
+    def _quantity_weight(self, country: Country, *, season_start_year: int) -> float:
+        effective_quantity_population = self._effective_population_quantity(country, season_start_year)
+        population_component = min(3.0, (effective_quantity_population / 5_000_000) ** 0.35)
         courts = 0.25 if country.court_count is None else min(1.4, (country.court_count / 300) ** 0.35)
         culture = 0.55 + country.squash_popularity_norm + country.squash_tradition_norm * 0.85
         system = 0.45 + country.system_quality_norm * 0.85 + ((country.competition_density or 3.0) - 1) / 4 * 0.45
         return max(0.1, population_component * 0.65 + culture * 0.9 + system * 0.8 + courts * 0.35)
+
+    def _effective_population_quantity(self, country: Country, season_start_year: int) -> float:
+        return initial_pool_effective_population_quantity(country, season_start_year)
+
+    def _population_weighting_metadata(self, season: str) -> dict[str, int | str]:
+        season_start_year = self._season_start_year(season)
+        age_weights = initial_pool_age_weights()
+        return {
+            "population_weighting": "effective_population_birth_year_aggregate",
+            "population_year_min": season_start_year - max(age_weights),
+            "population_year_max": season_start_year - min(age_weights),
+            "default_population_year": DEFAULT_POPULATION_YEAR,
+            "age_min": min(age_weights),
+            "age_max": max(age_weights),
+        }
+
+    @staticmethod
+    def _season_start_year(season: str) -> int:
+        return int(season.split("/")[0])
 
     def _country_quality(self, country: Country) -> float:
         competition = ((country.competition_density or 3.0) - 1) / 4

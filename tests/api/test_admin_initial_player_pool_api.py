@@ -68,6 +68,9 @@ def test_generate_preview_dry_run_and_lock_workflow(tmp_path) -> None:
         status, preview = call("POST", f"{server.base_url}/admin/players/initial-pool/generate", {"season": "2000/2001", "seed": 7, "target_pool_size": 24, "dry_run": True})
         assert status == 200
         assert preview["summary"]["total_players"] == 24
+        assert preview["metadata"]["population_weighting"] == "effective_population_birth_year_aggregate"
+        assert preview["metadata"]["population_year_min"] == 1955
+        assert preview["metadata"]["population_year_max"] == 1985
         assert all(1 <= player["birth_year_week"] <= 61 for player in preview["players"])
         assert any(player["birth_year_week"] > 52 for player in preview["players"])
         assert all(15 <= player["current_age_years"] <= 45 for player in preview["players"])

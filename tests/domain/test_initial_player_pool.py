@@ -1,9 +1,22 @@
 from beta_engine.domain.countries import Country
-from beta_engine.domain.players.initial_pool import InitialPlayerPoolGenerator
+from beta_engine.domain.players.initial_pool import (
+    InitialPlayerPoolGenerator,
+    initial_pool_age_weights,
+    initial_pool_effective_population_quantity,
+)
 
 
-def country(code: str, *, population: int, system: int, popularity: int, tradition: int, region: str = "EUROPE") -> Country:
-    return Country(
+def country(
+    code: str,
+    *,
+    population: int,
+    system: int,
+    popularity: int,
+    tradition: int,
+    region: str = "EUROPE",
+    **overrides,
+) -> Country:
+    payload = dict(
         code=code,
         name=code,
         region=region,
@@ -16,6 +29,103 @@ def country(code: str, *, population: int, system: int, popularity: int, traditi
         federation_quality=float(system),
         court_count=500 if system >= 4 else 80,
     )
+    payload.update(overrides)
+    return Country(**payload)
+
+
+def test_initial_pool_age_weights_cover_full_supported_age_range() -> None:
+    weights = initial_pool_age_weights()
+
+    assert min(weights) == 15
+    assert max(weights) == 45
+    assert set(weights) == set(range(15, 46))
+    assert round(sum(weights.values()), 12) == 1.0
+    assert weights[18] > weights[17]  # overlapping junior/developing ranges add together.
+
+
+def test_effective_population_quantity_uses_birth_year_window_not_season_year() -> None:
+    timeline = {year: 10_000_000 + year for year in range(1955, 1986)}
+    c = country(
+        "HIS",
+        population=1_000_000,
+        default_population=1_000_000,
+        default_population_year=2020,
+        population_by_year=timeline,
+        system=3,
+        popularity=3,
+        tradition=3,
+    )
+
+    quantity = initial_pool_effective_population_quantity(c, 2000)
+    expected = sum(timeline[2000 - age] * weight for age, weight in initial_pool_age_weights().items())
+
+    assert quantity == expected
+    assert quantity != 1_000_000
+    assert quantity != 10_002_000
+
+
+def test_effective_population_quantity_uses_resolver_fallbacks_without_mutation() -> None:
+    c = country(
+        "SPX",
+        population=1_000_000,
+        default_population=2_000_000,
+        default_population_year=2020,
+        population_by_year={1955: None, 1970: 5_000_000, 1985: None},
+        system=3,
+        popularity=3,
+        tradition=3,
+    )
+    before = c.model_dump(mode="python")
+
+    quantity = initial_pool_effective_population_quantity(c, 2000)
+
+    assert quantity == 5_000_000
+    assert c.model_dump(mode="python") == before
+
+
+def test_initial_pool_allocation_favors_higher_birth_year_effective_population() -> None:
+    old = country(
+        "OLD",
+        population=5_000_000,
+        population_by_year={year: 200_000_000 for year in range(1955, 1986)},
+        system=3,
+        popularity=3,
+        tradition=3,
+    )
+    new = country(
+        "NEW",
+        population=150_000_000,
+        population_by_year={year: 1_000_000 for year in range(1955, 1986)},
+        system=3,
+        popularity=3,
+        tradition=3,
+    )
+    generator = InitialPlayerPoolGenerator()
+
+    result = generator.generate(countries=[old, new], seed=42, season="2000/2001", target_pool_size=400)
+
+    assert result.summary.by_country["OLD"] > result.summary.by_country["NEW"]
+    assert result.metadata.population_weighting == "effective_population_birth_year_aggregate"
+
+
+def test_effective_population_quantity_changes_with_season_birth_year_window() -> None:
+    c = country(
+        "ERA",
+        population=1_000_000,
+        population_by_year={
+            **{year: 2_000_000 for year in range(1955, 1986)},
+            **{year: 80_000_000 for year in range(2004, 2035)},
+        },
+        system=3,
+        popularity=3,
+        tradition=3,
+    )
+
+    quantity_2000 = initial_pool_effective_population_quantity(c, 2000)
+    quantity_2049 = initial_pool_effective_population_quantity(c, 2049)
+
+    assert quantity_2000 == 2_000_000
+    assert quantity_2049 == 80_000_000
 
 
 def test_initial_pool_is_deterministic_for_same_seed_and_season() -> None:

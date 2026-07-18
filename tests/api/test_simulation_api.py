@@ -15,6 +15,8 @@ from beta_engine.core import DeterministicRng
 from beta_engine.domain.countries import CountryTalentModel
 from beta_engine.domain.players import AnnualTalentClassPlanner, PlayerGenerator
 from beta_engine.infrastructure.world_config import load_countries_config, load_player_identity_config
+from beta_engine.infrastructure.db.repositories import RunProspectRecord, SimulationPersistenceRepository, deterministic_prospect_id
+from beta_engine.infrastructure.db import DatabaseSettings, create_session_factory, create_sqlite_engine
 
 
 def _free_port() -> int:
@@ -46,6 +48,18 @@ class ApiServer:
         self.server.should_exit = True
         self.thread.join(timeout=10)
 
+
+
+def _insert_api_test_prospect(database_url: str, *, run_id: str, country_code: str = "EGY", season_week: int = 3) -> str:
+    engine = create_sqlite_engine(DatabaseSettings(url=database_url))
+    repository = SimulationPersistenceRepository(engine=engine, session_factory=create_session_factory(engine))
+    prospect_id = deterministic_prospect_id(
+        run_id=run_id, world_id="official_fax_world", season_start_year=2027, season_week=season_week, country_code=country_code, local_sequence=1, profile_version="prospect_profile_v1", cohort_policy_version="intake_volume_v1"
+    )
+    repository.upsert_run_prospects([RunProspectRecord(
+        prospect_id=prospect_id, run_id=run_id, world_id="official_fax_world", season_start_year=2027, season_label="2027/2028", season_week=season_week, calendar_year=2027, year_week=10, birth_year=2012, birth_year_week=10, age=15, country_code=country_code, country_name="Egypt", status="prospect", source_type="weekly_15yo_cohort", cohort_policy_version="intake_volume_v1", profile_version="prospect_profile_v1", first_name=None, last_name=None, display_name=f"{country_code} Prospect 0001", short_name=None, identity_seed="identity", profile_seed="profile", development_seed="development", potential_seed="potential", trait_seed="trait", profile_json={"foundation": True}, development_json={}, potential_json={"reserved": True}, trait_json={}
+    )])
+    return prospect_id
 
 def _request(
     method: str,
@@ -1598,3 +1612,28 @@ def test_run_weekly_intake_cohort_season_preview_read_only(tmp_path) -> None:
         assert status == 200
         assert after_run == before_run
         assert after_index == before_index
+
+
+def test_run_prospects_endpoint_is_read_only_and_filterable(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, missing = _request("GET", f"{server.base_url}/runs/missing/prospects")
+        assert status == 404
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-prospects", "seed": 9090, "season": 2027})
+        assert status == 201
+        status, empty = _request("GET", f"{server.base_url}/runs/run-prospects/prospects")
+        assert status == 200
+        assert empty["prospects"] == []
+        assert empty["total"] == 0
+
+        prospect_id = _insert_api_test_prospect(database_url, run_id="run-prospects")
+        status, payload = _request("GET", f"{server.base_url}/runs/run-prospects/prospects?country_code=EGY&status=prospect&season_start_year=2027&season_week=3")
+        assert status == 200
+        assert payload["total"] == 1
+        assert payload["prospects"][0]["prospect_id"] == prospect_id
+        assert payload["prospects"][0]["profile_version"] == "prospect_profile_v1"
+        assert payload["prospects"][0]["profile_json"] == {"foundation": True}
+
+        status, unmatched = _request("GET", f"{server.base_url}/runs/run-prospects/prospects?country_code=ENG")
+        assert status == 200
+        assert unmatched["prospects"] == []

@@ -225,6 +225,43 @@ class RunTalentCountryAllocationModel(Base):
     dampener_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
 
 
+class RunProspectModel(Base):
+    __tablename__ = "run_prospects"
+    __table_args__ = (UniqueConstraint("run_id", "prospect_id", name="uq_run_prospects_run_prospect"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    prospect_id: Mapped[str] = mapped_column(String(160), nullable=False)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    world_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    season_start_year: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    season_label: Mapped[str] = mapped_column(String(32), nullable=False)
+    season_week: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    calendar_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    year_week: Mapped[int] = mapped_column(Integer, nullable=False)
+    birth_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    birth_year_week: Mapped[int] = mapped_column(Integer, nullable=False)
+    age: Mapped[int] = mapped_column(Integer, nullable=False)
+    country_code: Mapped[str] = mapped_column(String(8), nullable=False, index=True)
+    country_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="prospect")
+    source_type: Mapped[str] = mapped_column(String(64), nullable=False, default="weekly_15yo_cohort")
+    cohort_policy_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    profile_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    first_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    last_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    display_name: Mapped[str] = mapped_column(String(256), nullable=False)
+    short_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    identity_seed: Mapped[str] = mapped_column(String(128), nullable=False)
+    profile_seed: Mapped[str] = mapped_column(String(128), nullable=False)
+    development_seed: Mapped[str] = mapped_column(String(128), nullable=False)
+    potential_seed: Mapped[str] = mapped_column(String(128), nullable=False)
+    trait_seed: Mapped[str] = mapped_column(String(128), nullable=False)
+    profile_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    development_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    potential_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    trait_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
 class RunGeneratedPlayerProvenanceModel(Base):
     __tablename__ = "run_generated_player_provenance"
     __table_args__ = (

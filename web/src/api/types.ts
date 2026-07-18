@@ -562,6 +562,48 @@ export type RunTalentPlanSummary = {
   }>
 }
 
+
+export type RunProspect = {
+  prospect_id: string
+  run_id: string
+  world_id: string
+  season_start_year: number
+  season_label: string
+  season_week: number
+  calendar_year: number
+  year_week: number
+  birth_year: number
+  birth_year_week: number
+  age: number
+  country_code: string
+  country_name: string | null
+  status: 'prospect'
+  source_type: 'weekly_15yo_cohort'
+  cohort_policy_version: string
+  profile_version: string
+  first_name: string | null
+  last_name: string | null
+  display_name: string
+  short_name: string | null
+  identity_seed: string
+  profile_seed: string
+  development_seed: string
+  potential_seed: string
+  trait_seed: string
+  profile_json: Record<string, unknown>
+  development_json: Record<string, unknown>
+  potential_json: Record<string, unknown>
+  trait_json: Record<string, unknown>
+}
+
+export type RunProspectListResponse = {
+  run_id: string
+  total: number
+  limit: number
+  offset: number
+  prospects: RunProspect[]
+}
+
 export type GeneratedPlayerProvenance = {
   run_id: string
   season: number

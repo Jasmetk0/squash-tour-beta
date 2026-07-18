@@ -242,6 +242,49 @@ class RunTalentPlanSummary:
     countries: list[RunTalentPlanCountryAllocation]
 
 
+
+@dataclass(frozen=True)
+class RunProspect:
+    prospect_id: str
+    run_id: str
+    world_id: str
+    season_start_year: int
+    season_label: str
+    season_week: int
+    calendar_year: int
+    year_week: int
+    birth_year: int
+    birth_year_week: int
+    age: int
+    country_code: str
+    country_name: str | None
+    status: str
+    source_type: str
+    cohort_policy_version: str
+    profile_version: str
+    first_name: str | None
+    last_name: str | None
+    display_name: str
+    short_name: str | None
+    identity_seed: str
+    profile_seed: str
+    development_seed: str
+    potential_seed: str
+    trait_seed: str
+    profile_json: dict[str, object]
+    development_json: dict[str, object]
+    potential_json: dict[str, object]
+    trait_json: dict[str, object]
+
+
+@dataclass(frozen=True)
+class RunProspectListResponse:
+    run_id: str
+    total: int
+    limit: int
+    offset: int
+    prospects: list[RunProspect]
+
 @dataclass(frozen=True)
 class GeneratedPlayerProvenance:
     run_id: str
@@ -783,6 +826,25 @@ class SimulationApiService:
                 for country in countries
             ],
         )
+
+
+    def list_run_prospects(
+        self,
+        *,
+        run_id: str,
+        country_code: str | None = None,
+        status: str | None = None,
+        season_start_year: int | None = None,
+        season_week: int | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> RunProspectListResponse:
+        self.get_run_summary(run_id=run_id)
+        prospects = self.repository.list_run_prospects(
+            run_id=run_id, country_code=country_code, status=status, season_start_year=season_start_year, season_week=season_week, limit=limit, offset=offset
+        )
+        total = self.repository.count_run_prospects(run_id=run_id, country_code=country_code, status=status, season_start_year=season_start_year, season_week=season_week)
+        return RunProspectListResponse(run_id=run_id, total=total, limit=limit, offset=offset, prospects=[RunProspect(**record.__dict__) for record in prospects])
 
     def list_generated_player_provenance(
         self,

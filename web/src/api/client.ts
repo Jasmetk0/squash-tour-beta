@@ -56,6 +56,7 @@ import type {
   SeasonRolloverSummaryApiResponse,
   GeneratedPlayerProvenance,
   GeneratedPlayerProvenanceListResponse,
+  RunProspectListResponse,
   RunSummary,
   RunWeeklyIntakeCohortSeasonPreviewParams,
   RunWeeklyIntakeCohortSeasonPreviewResponse,
@@ -793,6 +794,22 @@ export function rebuildRunWorld(runId: string): Promise<RunWorldStatus> {
 
 export function getRunTalentPlan(runId: string): Promise<RunTalentPlanSummary> {
   return request(`/runs/${encodeURIComponent(runId)}/world/talent-plan`)
+}
+
+
+export function listRunProspects(
+  runId: string,
+  params?: { country_code?: string; status?: string; season_start_year?: number; season_week?: number; limit?: number; offset?: number }
+): Promise<RunProspectListResponse> {
+  const query = new URLSearchParams()
+  if (params?.country_code) query.set('country_code', params.country_code)
+  if (params?.status) query.set('status', params.status)
+  if (typeof params?.season_start_year === 'number') query.set('season_start_year', String(params.season_start_year))
+  if (typeof params?.season_week === 'number') query.set('season_week', String(params.season_week))
+  if (typeof params?.limit === 'number') query.set('limit', String(params.limit))
+  if (typeof params?.offset === 'number') query.set('offset', String(params.offset))
+  const suffix = query.toString() ? `?${query.toString()}` : ''
+  return request(`/runs/${encodeURIComponent(runId)}/prospects${suffix}`)
 }
 
 export function listGeneratedPlayersProvenance(

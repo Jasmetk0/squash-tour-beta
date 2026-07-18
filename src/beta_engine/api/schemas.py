@@ -129,6 +129,47 @@ class RunIndexResponse(BaseModel):
     runs: list[RunIndexSummaryResponse] = Field(default_factory=list)
 
 
+
+class RunProspectResponse(BaseModel):
+    prospect_id: str
+    run_id: str
+    world_id: str
+    season_start_year: int
+    season_label: str
+    season_week: int
+    calendar_year: int
+    year_week: int
+    birth_year: int
+    birth_year_week: int
+    age: int
+    country_code: str
+    country_name: str | None = None
+    status: Literal["prospect"]
+    source_type: Literal["weekly_15yo_cohort"]
+    cohort_policy_version: str
+    profile_version: str
+    first_name: str | None = None
+    last_name: str | None = None
+    display_name: str
+    short_name: str | None = None
+    identity_seed: str
+    profile_seed: str
+    development_seed: str
+    potential_seed: str
+    trait_seed: str
+    profile_json: dict[str, object] = Field(default_factory=dict)
+    development_json: dict[str, object] = Field(default_factory=dict)
+    potential_json: dict[str, object] = Field(default_factory=dict)
+    trait_json: dict[str, object] = Field(default_factory=dict)
+
+
+class RunProspectListResponse(BaseModel):
+    run_id: str
+    total: int
+    limit: int
+    offset: int
+    prospects: list[RunProspectResponse] = Field(default_factory=list)
+
 class RunWeeklyIntakeCohortCountryAllocationResponse(BaseModel):
     country_code: str
     country_name: str | None = None

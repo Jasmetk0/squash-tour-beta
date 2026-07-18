@@ -727,6 +727,16 @@ class SimulationPersistenceRepository:
                     for key, value in payload.items():
                         setattr(model, key, value)
 
+    def delete_run_prospects_by_ids(self, *, run_id: str, prospect_ids: list[str]) -> None:
+        """Delete only the explicitly identified prospects for a run."""
+        if not prospect_ids:
+            return
+        with self._session_factory.begin() as session:
+            session.query(RunProspectModel).filter(
+                RunProspectModel.run_id == run_id,
+                RunProspectModel.prospect_id.in_(prospect_ids),
+            ).delete(synchronize_session=False)
+
     def list_run_prospects(
         self,
         *,

@@ -140,3 +140,64 @@ def test_materialize_15yo_cohort_is_idempotent_and_detects_conflicts(tmp_path):
     repaired = service.materialize_15yo_cohort(run_id="run-i", base_annual_intake_target=2, country_code="GER", overwrite=True)
     assert repaired.conflict_count == 1
     assert repository.get_run_prospect(run_id="run-i", prospect_id=record.prospect_id).display_name != "Tampered Prospect"
+
+
+def test_materialization_policy_conflict_removes_only_stale_scope_records_on_overwrite(tmp_path):
+    repository, _ = _repository(tmp_path)
+    repository.upsert_simulation_run(SimulationRunInfo(run_id="run-policy", season=2027, seed=1))
+    service = _materialization_service(repository)
+
+    service.materialize_15yo_cohort(
+        run_id="run-policy",
+        base_annual_intake_target=2,
+        country_code="GER",
+    )
+    unrelated = service.materialize_15yo_cohort(
+        run_id="run-policy",
+        base_annual_intake_target=2,
+        country_code="BOG",
+    )
+    future_season_record = RunProspectRecord(
+        **(
+            repository.list_run_prospects(run_id="run-policy", country_code="BOG", limit=None)[0].__dict__
+            | {"prospect_id": "future-season-prospect", "season_start_year": 2028}
+        )
+    )
+    repository.upsert_run_prospects([future_season_record])
+
+    try:
+        service.materialize_15yo_cohort(
+            run_id="run-policy",
+            base_annual_intake_target=4,
+            country_code="GER",
+        )
+    except RunProspectMaterializationConflictError as exc:
+        assert exc.conflicts
+    else:
+        raise AssertionError("expected policy scope conflict")
+
+    overwritten = service.materialize_15yo_cohort(
+        run_id="run-policy",
+        base_annual_intake_target=4,
+        country_code="GER",
+        overwrite=True,
+    )
+    ger_records = repository.list_run_prospects(
+        run_id="run-policy",
+        country_code="GER",
+        season_start_year=2027,
+        limit=None,
+    )
+    assert overwritten.conflict_count > 0
+    assert len(ger_records) == overwritten.requested_prospect_count
+    assert {record.prospect_id for record in ger_records}.isdisjoint(
+        {record.prospect_id for record in repository.list_run_prospects(run_id="run-policy", country_code="BOG", season_start_year=2027, limit=None)}
+    )
+    assert unrelated.requested_prospect_count == repository.count_run_prospects(
+        run_id="run-policy",
+        country_code="BOG",
+        season_start_year=2027,
+    )
+    assert repository.get_run_prospect(run_id="run-policy", prospect_id="future-season-prospect") == future_season_record
+    assert "materialization_policy" in ger_records[0].profile_json
+    assert ger_records[0].profile_json["materialization_policy"]["policy_fingerprint"]

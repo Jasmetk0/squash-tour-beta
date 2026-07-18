@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import json
 
 from beta_engine.application.run_weekly_intake_cohort_preview_service import RunWeeklyIntakeCohortPreviewService
 from beta_engine.infrastructure.db import RunProspectRecord, SimulationPersistenceRepository, deterministic_prospect_id
@@ -74,7 +75,11 @@ class RunProspectMaterializationService:
             country_code=country_code,
             region=region,
         )
-        expected = self._build_records(preview)
+        expected = self._build_records(
+            preview,
+            country_code=country_code,
+            region=region,
+        )
         if not expected:
             return MaterializeRunProspectsResult(
                 run_id=preview.run_id, world_id=preview.world_id, season=preview.season, season_start_year=preview.season_start_year,
@@ -83,18 +88,45 @@ class RunProspectMaterializationService:
                 message="No prospects requested for this materialization scope.",
             )
 
-        existing_by_id = {record.prospect_id: record for record in self.repository.list_run_prospects(run_id=run_id, season_start_year=preview.season_start_year, limit=None)}
-        conflicts = [record.prospect_id for record in expected if record.prospect_id in existing_by_id and existing_by_id[record.prospect_id] != record]
+        scope_country_codes = self._scope_country_codes(preview)
+        existing_for_season = self.repository.list_run_prospects(
+            run_id=run_id,
+            season_start_year=preview.season_start_year,
+            limit=None,
+        )
+        existing_by_id = {record.prospect_id: record for record in existing_for_season}
+        expected_by_id = {record.prospect_id: record for record in expected}
+        expected_ids = set(expected_by_id)
+        existing_in_scope = [
+            record
+            for record in existing_for_season
+            if record.source_type == SOURCE_TYPE
+            and record.profile_version == PROFILE_VERSION
+            and record.cohort_policy_version == COHORT_POLICY_VERSION
+            and record.country_code in scope_country_codes
+        ]
+        payload_conflicts = [
+            record.prospect_id
+            for record in expected
+            if record.prospect_id in existing_by_id and existing_by_id[record.prospect_id] != record
+        ]
+        stale_records = [record for record in existing_in_scope if record.prospect_id not in expected_ids]
+        conflicts = sorted(set(payload_conflicts + [record.prospect_id for record in stale_records]))
         if conflicts and not overwrite:
             raise RunProspectMaterializationConflictError(conflicts)
 
         to_upsert = [record for record in expected if overwrite or record.prospect_id not in existing_by_id]
         self.repository.upsert_run_prospects(to_upsert)
+        if overwrite:
+            self.repository.delete_run_prospects_by_ids(
+                run_id=run_id,
+                prospect_ids=[record.prospect_id for record in stale_records],
+            )
         existing_count = len(expected) - len([r for r in expected if r.prospect_id not in existing_by_id])
         created_count = len([r for r in expected if r.prospect_id not in existing_by_id])
         if overwrite:
             created_count = len([r for r in expected if r.prospect_id not in existing_by_id])
-        persisted_expected_ids = {record.prospect_id for record in expected}
+        persisted_expected_ids = expected_ids
         persisted = [record for record in self.repository.list_run_prospects(run_id=run_id, season_start_year=preview.season_start_year, limit=None) if record.prospect_id in persisted_expected_ids]
         country_totals: dict[tuple[str, str | None], int] = {}
         week_totals: dict[int, int] = {}
@@ -112,8 +144,19 @@ class RunProspectMaterializationService:
             message=("Prospect cohort was already materialized." if already else "Prospect cohort materialized."),
         )
 
-    def _build_records(self, preview) -> list[RunProspectRecord]:
+    def _build_records(
+        self,
+        preview,
+        *,
+        country_code: str | None,
+        region: str | None,
+    ) -> list[RunProspectRecord]:
         records: list[RunProspectRecord] = []
+        policy = self._materialization_policy(
+            preview,
+            country_code=country_code,
+            region=region,
+        )
         for week in preview.weeks:
             for allocation in week.allocations:
                 for local_sequence in range(1, allocation.allocated_count + 1):
@@ -132,12 +175,52 @@ class RunProspectMaterializationService:
                         profile_version=PROFILE_VERSION, first_name=None, last_name=None, display_name=display_name, short_name=display_name,
                         identity_seed=seeds["identity"], profile_seed=seeds["profile"], development_seed=seeds["development"],
                         potential_seed=seeds["potential"], trait_seed=seeds["trait"],
-                        profile_json={"schema_version": PROFILE_VERSION, "profile_version": PROFILE_VERSION, "generated_by": SOURCE_TYPE, "reserved_for_future_attributes": True},
+                        profile_json={
+                            "schema_version": PROFILE_VERSION,
+                            "profile_version": PROFILE_VERSION,
+                            "generated_by": SOURCE_TYPE,
+                            "reserved_for_future_attributes": True,
+                            "materialization_policy": policy,
+                        },
                         development_json={"schema_version": PROFILE_VERSION, "profile_version": PROFILE_VERSION, "reserved_for_future_development": True},
                         potential_json={"schema_version": PROFILE_VERSION, "profile_version": PROFILE_VERSION, "reserved_for_future_potential": True},
                         trait_json={"schema_version": PROFILE_VERSION, "profile_version": PROFILE_VERSION, "reserved_for_future_traits": True},
                     ))
         return records
+
+    @staticmethod
+    def _scope_country_codes(preview) -> set[str]:
+        return {
+            allocation.country_code.upper()
+            for week in preview.weeks
+            for allocation in week.allocations
+        }
+
+    def _materialization_policy(
+        self,
+        preview,
+        *,
+        country_code: str | None,
+        region: str | None,
+    ) -> dict[str, object]:
+        country_codes = sorted(self._scope_country_codes(preview))
+        # The preview service normalizes filters before applying them.  Store the
+        # corresponding canonical values so policy identity remains replayable.
+        policy = {
+            "base_annual_intake_target": preview.base_annual_intake_target,
+            "season_growth_rate": preview.season_growth_rate,
+            "country_code": self._normalized_filter_value(country_code),
+            "region": self._normalized_filter_value(region),
+            "filtered_country_codes": country_codes,
+            "profile_version": PROFILE_VERSION,
+            "cohort_policy_version": COHORT_POLICY_VERSION,
+        }
+        fingerprint_payload = json.dumps(policy, sort_keys=True, separators=(",", ":"))
+        return policy | {"policy_fingerprint": hashlib.sha256(fingerprint_payload.encode("utf-8")).hexdigest()[:32]}
+
+    @staticmethod
+    def _normalized_filter_value(value: str | None) -> str | None:
+        return value.strip().upper() if value is not None else None
 
 
 def _stable_seed(prospect_id: str, run_id: str, world_id: str, profile_version: str, kind: str) -> str:

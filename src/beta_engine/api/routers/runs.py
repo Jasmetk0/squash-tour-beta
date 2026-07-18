@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from beta_engine.api.deps import get_simulation_api_service
+from beta_engine.api.deps import get_run_weekly_intake_cohort_preview_service, get_simulation_api_service
 from beta_engine.api.schemas import (
     BootstrapNextSeasonApiResponse,
     BootstrapNextSeasonRequest,
     RunIndexResponse,
+    RunWeeklyIntakeCohortSeasonPreviewResponse,
     RunIndexSummaryResponse,
     RunStatusSummaryResponse,
     RunSummaryResponse,
@@ -12,6 +13,7 @@ from beta_engine.api.schemas import (
     SeasonStateResponse,
 )
 from beta_engine.application.api_services import PersistedRunSummary, RunStatusSummary, RunIndexSummary, SimulationApiService
+from beta_engine.application.run_weekly_intake_cohort_preview_service import RunWeeklyIntakeCohortPreviewService
 
 router = APIRouter(prefix="/runs", tags=["runs"])
 
@@ -53,6 +55,35 @@ def get_run(run_id: str, service: SimulationApiService = Depends(get_simulation_
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
     return SeasonStateResponse(run=_to_run_summary(summary), season_state=state)
+
+
+@router.get(
+    "/{run_id}/weekly-intake/cohort-season/preview",
+    response_model=RunWeeklyIntakeCohortSeasonPreviewResponse,
+)
+def preview_run_weekly_intake_cohort_season(
+    run_id: str,
+    base_annual_intake_target: int = Query(200, ge=0),
+    season_growth_rate: float = Query(0.015, ge=0.0, le=0.10),
+    country_code: str | None = None,
+    region: str | None = None,
+    service: RunWeeklyIntakeCohortPreviewService = Depends(get_run_weekly_intake_cohort_preview_service),
+) -> RunWeeklyIntakeCohortSeasonPreviewResponse:
+    try:
+        result = service.preview_season(
+            run_id=run_id,
+            base_annual_intake_target=base_annual_intake_target,
+            season_growth_rate=season_growth_rate,
+            country_code=country_code,
+            region=region,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except LookupError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    return RunWeeklyIntakeCohortSeasonPreviewResponse.model_validate(result, from_attributes=True)
 
 
 @router.get("/{run_id}/status-summary", response_model=RunStatusSummaryResponse)

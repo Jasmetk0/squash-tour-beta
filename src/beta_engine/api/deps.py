@@ -48,6 +48,7 @@ from beta_engine.application.world_package_effective_population_service import W
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
 from beta_engine.application.world_package_validation_service import WorldPackageValidationService
 from beta_engine.application.world_package_weekly_intake_preview_service import WorldPackageWeeklyIntakePreviewService
+from beta_engine.application.run_weekly_intake_cohort_preview_service import RunWeeklyIntakeCohortPreviewService
 from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
 from beta_engine.infrastructure.config import load_settings
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
@@ -258,6 +259,14 @@ def get_world_package_effective_population_service(request: Request) -> WorldPac
 
 def get_world_package_weekly_intake_preview_service(request: Request) -> WorldPackageWeeklyIntakePreviewService:
     return WorldPackageWeeklyIntakePreviewService(countries_service=get_world_package_countries_service(request))
+
+
+def get_run_weekly_intake_cohort_preview_service(request: Request) -> RunWeeklyIntakeCohortPreviewService:
+    return RunWeeklyIntakeCohortPreviewService(
+        repository=get_runtime(request).repository,
+        countries_service=get_world_package_countries_service(request),
+        season_registry=get_season_registry_service(request),
+    )
 
 
 def get_world_package_clone_service(request: Request) -> WorldPackageCloneService:

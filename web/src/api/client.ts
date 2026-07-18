@@ -57,6 +57,8 @@ import type {
   GeneratedPlayerProvenance,
   GeneratedPlayerProvenanceListResponse,
   RunSummary,
+  RunWeeklyIntakeCohortSeasonPreviewParams,
+  RunWeeklyIntakeCohortSeasonPreviewResponse,
   RunPlayerDetail,
   PlayerCareerHistoryResponse,
   PlayerCareerPerformanceResponse,
@@ -757,6 +759,24 @@ export function listRuns(): Promise<RunsIndexResponse> {
 
 export function getRun(runId: string): Promise<SeasonStateResponse> {
   return request(`/runs/${encodeURIComponent(runId)}`)
+}
+
+
+export function getRunWeeklyIntakeCohortSeasonPreview(
+  runId: string,
+  params: RunWeeklyIntakeCohortSeasonPreviewParams = {}
+): Promise<RunWeeklyIntakeCohortSeasonPreviewResponse> {
+  const query = new URLSearchParams()
+  if (params.base_annual_intake_target !== undefined) {
+    query.set('base_annual_intake_target', String(params.base_annual_intake_target))
+  }
+  if (params.season_growth_rate !== undefined) {
+    query.set('season_growth_rate', String(params.season_growth_rate))
+  }
+  if (params.country_code !== undefined) query.set('country_code', params.country_code)
+  if (params.region !== undefined) query.set('region', params.region)
+  const suffix = query.toString() ? `?${query.toString()}` : ''
+  return request(`/runs/${encodeURIComponent(runId)}/weekly-intake/cohort-season/preview${suffix}`)
 }
 
 export function getRunStatusSummary(runId: string): Promise<RunStatusSummary> {

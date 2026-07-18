@@ -49,6 +49,7 @@ from beta_engine.application.world_package_registry_service import WorldPackageR
 from beta_engine.application.world_package_validation_service import WorldPackageValidationService
 from beta_engine.application.world_package_weekly_intake_preview_service import WorldPackageWeeklyIntakePreviewService
 from beta_engine.application.run_weekly_intake_cohort_preview_service import RunWeeklyIntakeCohortPreviewService
+from beta_engine.application.run_prospect_materialization_service import RunProspectMaterializationService
 from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
 from beta_engine.infrastructure.config import load_settings
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
@@ -266,6 +267,13 @@ def get_run_weekly_intake_cohort_preview_service(request: Request) -> RunWeeklyI
         repository=get_runtime(request).repository,
         countries_service=get_world_package_countries_service(request),
         season_registry=get_season_registry_service(request),
+    )
+
+
+def get_run_prospect_materialization_service(request: Request) -> RunProspectMaterializationService:
+    return RunProspectMaterializationService(
+        repository=get_runtime(request).repository,
+        preview_service=get_run_weekly_intake_cohort_preview_service(request),
     )
 
 

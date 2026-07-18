@@ -69,3 +69,74 @@ def test_deterministic_prospect_id_is_stable_and_input_sensitive():
     kwargs = dict(run_id="run", world_id="official_fax_world", season_start_year=2027, season_week=1, country_code="EGY", local_sequence=1, profile_version="v1", cohort_policy_version="c1")
     assert deterministic_prospect_id(**kwargs) == deterministic_prospect_id(**kwargs)
     assert deterministic_prospect_id(**kwargs) != deterministic_prospect_id(**(kwargs | {"local_sequence": 2}))
+
+from beta_engine.application.run_prospect_materialization_service import (
+    COHORT_POLICY_VERSION,
+    PROFILE_VERSION,
+    RunProspectMaterializationConflictError,
+    RunProspectMaterializationService,
+)
+from beta_engine.application.run_weekly_intake_cohort_preview_service import RunWeeklyIntakeCohortPreviewService
+from beta_engine.application.season_registry_service import SeasonRegistryService
+from beta_engine.application.world_package_countries_service import WorldPackageCountriesService
+from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
+from beta_engine.application.countries_service import CountriesConfigService
+from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
+
+
+def _materialization_service(repository: SimulationPersistenceRepository) -> RunProspectMaterializationService:
+    preview = RunWeeklyIntakeCohortPreviewService(
+        repository=repository,
+        countries_service=WorldPackageCountriesService(registry_service=WorldPackageRegistryService(countries_service=CountriesConfigService(), manual_overrides_service=ManualPlayerOverridesService())),
+        season_registry=SeasonRegistryService(),
+    )
+    return RunProspectMaterializationService(repository=repository, preview_service=preview)
+
+
+def test_materialize_15yo_cohort_generates_deterministic_records_and_shells(tmp_path):
+    repository, _ = _repository(tmp_path)
+    repository.upsert_simulation_run(SimulationRunInfo(run_id="run-m", season=2027, seed=1))
+    service = _materialization_service(repository)
+
+    result = service.materialize_15yo_cohort(run_id="run-m", base_annual_intake_target=4, country_code="GER")
+
+    assert result.requested_prospect_count == result.annual_target
+    assert result.created_count == result.annual_target
+    records = repository.list_run_prospects(run_id="run-m", country_code="GER", season_start_year=2027, limit=None)
+    assert len(records) == result.annual_target
+    first = records[0]
+    assert first.prospect_id == deterministic_prospect_id(run_id="run-m", world_id="official_fax_world", season_start_year=2027, season_week=first.season_week, country_code="GER", local_sequence=1, profile_version=PROFILE_VERSION, cohort_policy_version=COHORT_POLICY_VERSION)
+    assert first.age == 15
+    assert first.status == "prospect"
+    assert first.source_type == "weekly_15yo_cohort"
+    assert first.display_name.startswith("GER Prospect ")
+    assert all([first.identity_seed, first.profile_seed, first.development_seed, first.potential_seed, first.trait_seed])
+    assert first.profile_json["reserved_for_future_attributes"] is True
+    assert first.development_json["reserved_for_future_development"] is True
+    assert first.potential_json["reserved_for_future_potential"] is True
+    assert first.trait_json["reserved_for_future_traits"] is True
+
+
+def test_materialize_15yo_cohort_is_idempotent_and_detects_conflicts(tmp_path):
+    repository, _ = _repository(tmp_path)
+    repository.upsert_simulation_run(SimulationRunInfo(run_id="run-i", season=2027, seed=1))
+    service = _materialization_service(repository)
+
+    first = service.materialize_15yo_cohort(run_id="run-i", base_annual_intake_target=2, country_code="GER")
+    second = service.materialize_15yo_cohort(run_id="run-i", base_annual_intake_target=2, country_code="GER")
+    assert first.created_count == first.annual_target
+    assert second.created_count == 0
+    assert second.skipped_count == first.annual_target
+    assert second.already_materialized is True
+
+    record = repository.list_run_prospects(run_id="run-i", country_code="GER", limit=None)[0]
+    repository.upsert_run_prospects([RunProspectRecord(**(record.__dict__ | {"display_name": "Tampered Prospect"}))])
+    try:
+        service.materialize_15yo_cohort(run_id="run-i", base_annual_intake_target=2, country_code="GER")
+    except RunProspectMaterializationConflictError as exc:
+        assert exc.conflicts == [record.prospect_id]
+    else:
+        raise AssertionError("expected conflict")
+    repaired = service.materialize_15yo_cohort(run_id="run-i", base_annual_intake_target=2, country_code="GER", overwrite=True)
+    assert repaired.conflict_count == 1
+    assert repository.get_run_prospect(run_id="run-i", prospect_id=record.prospect_id).display_name != "Tampered Prospect"

@@ -604,6 +604,44 @@ export type RunProspectListResponse = {
   prospects: RunProspect[]
 }
 
+
+export type MaterializeRunProspectsRequest = {
+  base_annual_intake_target?: number
+  season_growth_rate?: number
+  country_code?: string | null
+  region?: string | null
+  overwrite?: boolean
+}
+
+export type MaterializeRunProspectsCountryTotal = {
+  country_code: string
+  country_name: string | null
+  materialized_count: number
+}
+
+export type MaterializeRunProspectsWeekTotal = {
+  season_week: number
+  materialized_count: number
+}
+
+export type MaterializeRunProspectsResponse = {
+  run_id: string
+  world_id: string
+  season: string
+  season_start_year: number
+  annual_target: number
+  requested_prospect_count: number
+  created_count: number
+  existing_count: number
+  skipped_count: number
+  conflict_count: number
+  total_persisted_for_scope: number
+  weeks_materialized: MaterializeRunProspectsWeekTotal[]
+  country_totals: MaterializeRunProspectsCountryTotal[]
+  already_materialized: boolean
+  message: string
+}
+
 export type GeneratedPlayerProvenance = {
   run_id: string
   season: number

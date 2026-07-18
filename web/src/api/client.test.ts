@@ -15,6 +15,7 @@ import {
   getWorldPackageWeeklyIntakeSeasonSchedulePreview,
   getRunWeeklyIntakeCohortSeasonPreview,
   listRunProspects,
+  materializeRunProspects,
   getWorldPackageValidation,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
@@ -775,6 +776,24 @@ describe('world package registry client', () => {
     expect(globalThis.fetch).toHaveBeenCalledWith(
       'http://127.0.0.1:8000/runs/run%2Fa/prospects?country_code=EGY&status=prospect&season_start_year=2027&season_week=4&limit=25&offset=5',
       expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
+    )
+    expect(result).toEqual(responseBody)
+  })
+
+
+  it('materializes run prospects with encoded path and payload', async () => {
+    const responseBody = {
+      run_id: 'run/a', world_id: 'official_fax_world', season: '2027/2028', season_start_year: 2027, annual_target: 3,
+      requested_prospect_count: 3, created_count: 3, existing_count: 0, skipped_count: 0, conflict_count: 0,
+      total_persisted_for_scope: 3, weeks_materialized: [], country_totals: [], already_materialized: false, message: 'ok'
+    }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(responseBody), { status: 200 }))
+
+    const result = await materializeRunProspects('run/a', { base_annual_intake_target: 3, country_code: 'GER', overwrite: true })
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/runs/run%2Fa/prospects/materialize-15yo-cohort',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ base_annual_intake_target: 3, country_code: 'GER', overwrite: true }) })
     )
     expect(result).toEqual(responseBody)
   })

@@ -170,6 +170,43 @@ class RunProspectListResponse(BaseModel):
     offset: int
     prospects: list[RunProspectResponse] = Field(default_factory=list)
 
+
+class MaterializeRunProspectsRequest(BaseModel):
+    base_annual_intake_target: int = Field(default=200, ge=0)
+    season_growth_rate: float = Field(default=0.015, ge=0.0, le=0.10)
+    country_code: str | None = None
+    region: str | None = None
+    overwrite: bool = False
+
+
+class MaterializeRunProspectsCountryTotalResponse(BaseModel):
+    country_code: str
+    country_name: str | None = None
+    materialized_count: int
+
+
+class MaterializeRunProspectsWeekTotalResponse(BaseModel):
+    season_week: int
+    materialized_count: int
+
+
+class MaterializeRunProspectsResponse(BaseModel):
+    run_id: str
+    world_id: str
+    season: str
+    season_start_year: int
+    annual_target: int
+    requested_prospect_count: int
+    created_count: int
+    existing_count: int
+    skipped_count: int
+    conflict_count: int
+    total_persisted_for_scope: int
+    weeks_materialized: list[MaterializeRunProspectsWeekTotalResponse] = Field(default_factory=list)
+    country_totals: list[MaterializeRunProspectsCountryTotalResponse] = Field(default_factory=list)
+    already_materialized: bool
+    message: str
+
 class RunWeeklyIntakeCohortCountryAllocationResponse(BaseModel):
     country_code: str
     country_name: str | None = None

@@ -8,6 +8,7 @@ import time
 from urllib import error, request
 
 import uvicorn
+from sqlalchemy import create_engine, text
 
 from beta_engine.main import create_app
 from beta_engine.core import DeterministicRng
@@ -1470,3 +1471,130 @@ def test_next_match_and_round_are_allowed_until_finals_marker_is_persisted(tmp_p
         status, payload = _request("POST", f"{server.base_url}/runs/run-finals-marker/simulate/next-round")
         assert status == 400
         assert "finals phase has begun" in payload["detail"]
+
+
+def _preview_totals(payload: dict[str, object]) -> tuple[int, int]:
+    weeks = payload["weeks"]
+    country_totals = payload["country_totals"]
+    assert isinstance(weeks, list)
+    assert isinstance(country_totals, list)
+    return (
+        sum(int(week["total_allocated"]) for week in weeks),
+        sum(int(country["allocated_count"]) for country in country_totals),
+    )
+
+
+def test_run_weekly_intake_cohort_season_preview_basic_success(tmp_path) -> None:
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'run-cohort-basic.db'}") as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-cohort", "seed": 4242, "season": 2027})
+        assert status == 201
+        status, payload = _request("GET", f"{server.base_url}/runs/run-cohort/weekly-intake/cohort-season/preview")
+        assert status == 200
+        assert payload["run_id"] == "run-cohort"
+        assert payload["world_id"] == "official_fax_world"
+        assert payload["season"] == "2027/2028"
+        assert len(payload["weeks"]) == 61
+        assert payload["annual_target"] > 0
+        assert payload["total_weekly_target"] == payload["annual_target"]
+        weekly_total, country_total = _preview_totals(payload)
+        assert weekly_total == payload["annual_target"]
+        assert country_total == payload["annual_target"]
+        for week in payload["weeks"]:
+            assert week["total_allocated"] == week["target_intake_count"]
+
+
+def test_run_weekly_intake_cohort_season_preview_calendar_mapping(tmp_path) -> None:
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'run-cohort-mapping.db'}") as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-2000", "seed": 123, "season": 2000})
+        assert status == 201
+        status, payload = _request("GET", f"{server.base_url}/runs/run-2000/weekly-intake/cohort-season/preview")
+        assert status == 200
+        week_1 = payload["weeks"][0]
+        week_26 = payload["weeks"][25]
+        assert week_1["year_week"] == 37
+        assert week_1["birth_year"] == 1985
+        assert week_26["year_week"] == 1
+        assert week_26["birth_year"] == 1986
+
+
+def test_run_weekly_intake_cohort_season_preview_filters(tmp_path) -> None:
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'run-cohort-filters.db'}") as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-filters", "seed": 123, "season": 2027})
+        assert status == 201
+        status, ger = _request("GET", f"{server.base_url}/runs/run-filters/weekly-intake/cohort-season/preview?country_code=GER")
+        assert status == 200
+        assert {row["country_code"] for row in ger["country_totals"]} == {"GER"}
+        assert all({allocation["country_code"] for allocation in week["allocations"]} <= {"GER"} for week in ger["weeks"])
+
+        status, europe = _request("GET", f"{server.base_url}/runs/run-filters/weekly-intake/cohort-season/preview?region=EUROPE")
+        assert status == 200
+        assert len(europe["country_totals"]) > 0
+        assert _preview_totals(europe)[0] == europe["annual_target"]
+
+
+def test_run_weekly_intake_cohort_season_preview_zero_target(tmp_path) -> None:
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'run-cohort-zero.db'}") as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-zero", "seed": 123, "season": 2027})
+        assert status == 201
+        status, payload = _request("GET", f"{server.base_url}/runs/run-zero/weekly-intake/cohort-season/preview?base_annual_intake_target=0")
+        assert status == 200
+        assert payload["annual_target"] == 0
+        assert payload["total_weekly_target"] == 0
+        assert all(week["target_intake_count"] == 0 for week in payload["weeks"])
+        assert all(week["total_allocated"] == 0 for week in payload["weeks"])
+        assert payload["country_totals"] == []
+
+
+def test_run_weekly_intake_cohort_season_preview_growth_bounds(tmp_path) -> None:
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'run-cohort-growth.db'}") as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-growth", "seed": 123, "season": 2027})
+        assert status == 201
+        status, _ = _request("GET", f"{server.base_url}/runs/run-growth/weekly-intake/cohort-season/preview?season_growth_rate=0.10")
+        assert status == 200
+        status, _ = _request("GET", f"{server.base_url}/runs/run-growth/weekly-intake/cohort-season/preview?season_growth_rate=0.11")
+        assert status == 422
+        status, _ = _request("GET", f"{server.base_url}/runs/run-growth/weekly-intake/cohort-season/preview?season_growth_rate=-0.01")
+        assert status == 422
+
+
+def test_run_weekly_intake_cohort_season_preview_errors(tmp_path) -> None:
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'run-cohort-errors.db'}") as server:
+        status, _ = _request("GET", f"{server.base_url}/runs/unknown/weekly-intake/cohort-season/preview")
+        assert status == 404
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-before", "seed": 123, "season": 1999})
+        assert status == 201
+        status, _ = _request("GET", f"{server.base_url}/runs/run-before/weekly-intake/cohort-season/preview")
+        assert status == 422
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-after", "seed": 123, "season": 2050})
+        assert status == 201
+        status, _ = _request("GET", f"{server.base_url}/runs/run-after/weekly-intake/cohort-season/preview")
+        assert status == 422
+
+        db_url = f"sqlite:///{tmp_path / 'run-cohort-errors.db'}"
+        engine = create_engine(db_url)
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-missing-world", "seed": 123, "season": 2027})
+        assert status == 201
+        with engine.begin() as connection:
+            connection.execute(text("UPDATE simulation_runs SET world_id = 'missing_world' WHERE run_id = 'run-missing-world'"))
+        status, missing_world = _request("GET", f"{server.base_url}/runs/run-missing-world/weekly-intake/cohort-season/preview")
+        assert status == 404
+        assert "locked world package" in missing_world["detail"]
+
+
+def test_run_weekly_intake_cohort_season_preview_read_only(tmp_path) -> None:
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'run-cohort-readonly.db'}") as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-readonly", "seed": 123, "season": 2027})
+        assert status == 201
+        status, before_run = _request("GET", f"{server.base_url}/runs/run-readonly")
+        assert status == 200
+        status, before_index = _request("GET", f"{server.base_url}/runs")
+        assert status == 200
+        status, preview = _request("GET", f"{server.base_url}/runs/run-readonly/weekly-intake/cohort-season/preview")
+        assert status == 200
+        assert preview["annual_target"] > 0
+        status, after_run = _request("GET", f"{server.base_url}/runs/run-readonly")
+        assert status == 200
+        status, after_index = _request("GET", f"{server.base_url}/runs")
+        assert status == 200
+        assert after_run == before_run
+        assert after_index == before_index

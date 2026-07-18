@@ -1419,6 +1419,60 @@ export type WorldPackageCountriesResponse = {
 
 
 
+export type RunWeeklyIntakeCohortCountryAllocation = {
+  country_code: string
+  country_name: string | null
+  allocated_count: number
+  allocation_weight: number
+  allocation_share: number
+  effective_population: number
+  population_source_type: string
+  population_source_year: number | null
+  is_population_estimated: boolean
+}
+
+export type RunWeeklyIntakeCohortSeasonWeek = {
+  season_week: number
+  target_intake_count: number
+  total_allocated: number
+  week_weight: number
+  calendar_year: number
+  year_week: number
+  birth_year: number
+  birth_year_week: number
+  allocations: RunWeeklyIntakeCohortCountryAllocation[]
+}
+
+export type RunWeeklyIntakeCohortCountryTotal = {
+  country_code: string
+  country_name: string | null
+  allocated_count: number
+}
+
+export type RunWeeklyIntakeCohortSeasonPreviewResponse = {
+  run_id: string
+  world_id: string
+  world_name: string | null
+  season: string
+  season_start_year: number
+  season_index: number
+  base_annual_intake_target: number
+  season_growth_rate: number
+  season_variation_multiplier: number
+  annual_target: number
+  total_weekly_target: number
+  weeks: RunWeeklyIntakeCohortSeasonWeek[]
+  country_totals: RunWeeklyIntakeCohortCountryTotal[]
+}
+
+export type RunWeeklyIntakeCohortSeasonPreviewParams = {
+  base_annual_intake_target?: number
+  season_growth_rate?: number
+  country_code?: string
+  region?: string
+}
+
+
 export type WeeklyIntakeCountryAllocation = {
   country_code: string
   allocated_count: number

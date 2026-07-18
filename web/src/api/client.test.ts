@@ -13,6 +13,7 @@ import {
   getWorldPackageCountryEffectivePopulation,
   getWorldPackageWeeklyIntakePreview,
   getWorldPackageWeeklyIntakeSeasonSchedulePreview,
+  getRunWeeklyIntakeCohortSeasonPreview,
   getWorldPackageValidation,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
@@ -725,6 +726,39 @@ describe('world package registry client', () => {
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
       'http://127.0.0.1:8000/world/packages/official%2Ffax%20world/weekly-intake/season-schedule/preview?season=2000%2F2001&base_annual_intake_target=200&season_growth_rate=0.015',
+      expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
+    )
+    expect(result).toEqual(responseBody)
+  })
+
+
+  it('gets run weekly intake cohort season preview with encoded path and query params', async () => {
+    const responseBody = {
+      run_id: 'run/a',
+      world_id: 'official_fax_world',
+      world_name: 'Official FAX World',
+      season: '2000/2001',
+      season_start_year: 2000,
+      season_index: 0,
+      base_annual_intake_target: 200,
+      season_growth_rate: 0.015,
+      season_variation_multiplier: 1.0,
+      annual_target: 200,
+      total_weekly_target: 200,
+      weeks: [],
+      country_totals: []
+    }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(responseBody), { status: 200 }))
+
+    const result = await getRunWeeklyIntakeCohortSeasonPreview('run/a', {
+      base_annual_intake_target: 200,
+      season_growth_rate: 0.015,
+      country_code: 'GER',
+      region: 'EUROPE'
+    })
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/runs/run%2Fa/weekly-intake/cohort-season/preview?base_annual_intake_target=200&season_growth_rate=0.015&country_code=GER&region=EUROPE',
       expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
     )
     expect(result).toEqual(responseBody)

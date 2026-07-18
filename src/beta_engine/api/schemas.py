@@ -129,6 +129,52 @@ class RunIndexResponse(BaseModel):
     runs: list[RunIndexSummaryResponse] = Field(default_factory=list)
 
 
+class RunWeeklyIntakeCohortCountryAllocationResponse(BaseModel):
+    country_code: str
+    country_name: str | None = None
+    allocated_count: int
+    allocation_weight: float
+    allocation_share: float
+    effective_population: int | float
+    population_source_type: str
+    population_source_year: int | None = None
+    is_population_estimated: bool
+
+
+class RunWeeklyIntakeCohortSeasonWeekResponse(BaseModel):
+    season_week: int
+    target_intake_count: int
+    total_allocated: int
+    week_weight: float
+    calendar_year: int
+    year_week: int
+    birth_year: int
+    birth_year_week: int
+    allocations: list[RunWeeklyIntakeCohortCountryAllocationResponse] = Field(default_factory=list)
+
+
+class RunWeeklyIntakeCohortCountryTotalResponse(BaseModel):
+    country_code: str
+    country_name: str | None = None
+    allocated_count: int
+
+
+class RunWeeklyIntakeCohortSeasonPreviewResponse(BaseModel):
+    run_id: str
+    world_id: str
+    world_name: str | None = None
+    season: str
+    season_start_year: int
+    season_index: int
+    base_annual_intake_target: int
+    season_growth_rate: float
+    season_variation_multiplier: float
+    annual_target: int
+    total_weekly_target: int
+    weeks: list[RunWeeklyIntakeCohortSeasonWeekResponse] = Field(default_factory=list)
+    country_totals: list[RunWeeklyIntakeCohortCountryTotalResponse] = Field(default_factory=list)
+
+
 class RunWorldStatusResponse(BaseModel):
     run_id: str
     source_type: Literal["fresh_seed", "rollover_bootstrap"]

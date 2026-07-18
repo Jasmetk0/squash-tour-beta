@@ -41,6 +41,7 @@ from beta_engine.api.schemas import (
     PlayerCareerPerformanceResponse,
     PlayerTournamentResultsTimelineResponse,
     RunPlayersListResponse,
+    RunProspectListResponse,
     RunNationsSummaryResponse,
     RunNationDetailResponse,
     RunWorldStatusResponse,
@@ -55,6 +56,7 @@ from beta_engine.application.api_services import (
     PlayerCareerPerformanceResponse as PlayerCareerPerformanceServiceResponse,
     PlayerTournamentResultsTimelineResponse as PlayerTournamentResultsTimelineServiceResponse,
     RunPlayerListResponse,
+    RunProspectListResponse as RunProspectListServiceResponse,
     RunTalentPlanSummary,
     RunWorldStatus,
     SimulationApiService,
@@ -71,6 +73,11 @@ def _to_run_talent_plan_summary(summary: RunTalentPlanSummary) -> RunTalentPlanS
 def _to_player_provenance(record: GeneratedPlayerProvenance) -> GeneratedPlayerProvenanceResponse:
     return GeneratedPlayerProvenanceResponse.model_validate(record, from_attributes=True)
 
+
+
+
+def _to_run_prospects_response(response: RunProspectListServiceResponse) -> RunProspectListResponse:
+    return RunProspectListResponse.model_validate(response, from_attributes=True)
 
 def _to_run_players_response(response: RunPlayerListResponse) -> RunPlayersListResponse:
     return RunPlayersListResponse.model_validate(response, from_attributes=True)
@@ -104,6 +111,27 @@ def _to_run_nation_detail(response: RunNationDetail) -> RunNationDetailResponse:
 
 def _to_run_world_status(response: RunWorldStatus) -> RunWorldStatusResponse:
     return RunWorldStatusResponse.model_validate(response, from_attributes=True)
+
+
+
+@router.get("/prospects", response_model=RunProspectListResponse)
+def list_run_prospects(
+    run_id: str,
+    country_code: str | None = None,
+    prospect_status: str | None = Query(default=None, alias="status"),
+    season_start_year: int | None = None,
+    season_week: int | None = None,
+    limit: int = Query(default=50, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> RunProspectListResponse:
+    try:
+        prospects = service.list_run_prospects(
+            run_id=run_id, country_code=country_code, status=prospect_status, season_start_year=season_start_year, season_week=season_week, limit=limit, offset=offset
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return _to_run_prospects_response(prospects)
 
 
 @router.get("/world/talent-plan", response_model=RunTalentPlanSummaryResponse)

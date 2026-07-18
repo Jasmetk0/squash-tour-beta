@@ -14,6 +14,7 @@ import {
   getWorldPackageWeeklyIntakePreview,
   getWorldPackageWeeklyIntakeSeasonSchedulePreview,
   getRunWeeklyIntakeCohortSeasonPreview,
+  listRunProspects,
   getWorldPackageValidation,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
@@ -759,6 +760,20 @@ describe('world package registry client', () => {
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
       'http://127.0.0.1:8000/runs/run%2Fa/weekly-intake/cohort-season/preview?base_annual_intake_target=200&season_growth_rate=0.015&country_code=GER&region=EUROPE',
+      expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
+    )
+    expect(result).toEqual(responseBody)
+  })
+
+
+  it('lists run prospects with encoded path and filters', async () => {
+    const responseBody = { run_id: 'run/a', total: 0, limit: 25, offset: 5, prospects: [] }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(responseBody), { status: 200 }))
+
+    const result = await listRunProspects('run/a', { country_code: 'EGY', status: 'prospect', season_start_year: 2027, season_week: 4, limit: 25, offset: 5 })
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/runs/run%2Fa/prospects?country_code=EGY&status=prospect&season_start_year=2027&season_week=4&limit=25&offset=5',
       expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
     )
     expect(result).toEqual(responseBody)

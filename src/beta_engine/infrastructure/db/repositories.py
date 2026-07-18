@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass
 from typing import Literal
@@ -30,6 +31,7 @@ from beta_engine.infrastructure.db.models import (
     RaceSnapshotModel,
     RankingSnapshotModel,
     RunGeneratedPlayerProvenanceModel,
+    RunProspectModel,
     RunTalentCountryAllocationModel,
     RunTalentPlanModel,
     SeasonStateModel,
@@ -170,6 +172,66 @@ class PersistedRunTalentCountryAllocationRecord:
     bias_profile: dict[str, float]
     dampener: dict[str, object]
 
+
+@dataclass(frozen=True)
+class RunProspectRecord:
+    prospect_id: str
+    run_id: str
+    world_id: str
+    season_start_year: int
+    season_label: str
+    season_week: int
+    calendar_year: int
+    year_week: int
+    birth_year: int
+    birth_year_week: int
+    age: int
+    country_code: str
+    country_name: str | None
+    status: str
+    source_type: str
+    cohort_policy_version: str
+    profile_version: str
+    first_name: str | None
+    last_name: str | None
+    display_name: str
+    short_name: str | None
+    identity_seed: str
+    profile_seed: str
+    development_seed: str
+    potential_seed: str
+    trait_seed: str
+    profile_json: dict[str, object]
+    development_json: dict[str, object]
+    potential_json: dict[str, object]
+    trait_json: dict[str, object]
+
+
+def deterministic_prospect_id(
+    *,
+    run_id: str,
+    world_id: str,
+    season_start_year: int,
+    season_week: int,
+    country_code: str,
+    local_sequence: int,
+    profile_version: str,
+    cohort_policy_version: str,
+) -> str:
+    payload = "|".join(
+        [
+            run_id,
+            world_id,
+            str(season_start_year),
+            str(season_week),
+            country_code.upper(),
+            str(local_sequence),
+            profile_version,
+            cohort_policy_version,
+        ]
+    )
+    digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()[:20].upper()
+    return f"PR-{season_start_year}-W{season_week:02d}-{country_code.upper()}-{local_sequence:04d}-{digest}"
 
 @dataclass(frozen=True)
 class PersistedGeneratedPlayerProvenanceRecord:
@@ -619,6 +681,111 @@ class SimulationPersistenceRepository:
                 )
                 for model in session.execute(statement).scalars().all()
             ]
+
+
+    def upsert_run_prospects(self, records: list[RunProspectRecord]) -> None:
+        with self._session_factory.begin() as session:
+            for record in records:
+                statement: Select[tuple[RunProspectModel]] = select(RunProspectModel).where(
+                    RunProspectModel.run_id == record.run_id,
+                    RunProspectModel.prospect_id == record.prospect_id,
+                )
+                model = session.execute(statement).scalar_one_or_none()
+                payload = dict(
+                    world_id=record.world_id,
+                    season_start_year=record.season_start_year,
+                    season_label=record.season_label,
+                    season_week=record.season_week,
+                    calendar_year=record.calendar_year,
+                    year_week=record.year_week,
+                    birth_year=record.birth_year,
+                    birth_year_week=record.birth_year_week,
+                    age=record.age,
+                    country_code=record.country_code.upper(),
+                    country_name=record.country_name,
+                    status=record.status,
+                    source_type=record.source_type,
+                    cohort_policy_version=record.cohort_policy_version,
+                    profile_version=record.profile_version,
+                    first_name=record.first_name,
+                    last_name=record.last_name,
+                    display_name=record.display_name,
+                    short_name=record.short_name,
+                    identity_seed=record.identity_seed,
+                    profile_seed=record.profile_seed,
+                    development_seed=record.development_seed,
+                    potential_seed=record.potential_seed,
+                    trait_seed=record.trait_seed,
+                    profile_json=_to_json(record.profile_json),
+                    development_json=_to_json(record.development_json),
+                    potential_json=_to_json(record.potential_json),
+                    trait_json=_to_json(record.trait_json),
+                )
+                if model is None:
+                    session.add(RunProspectModel(prospect_id=record.prospect_id, run_id=record.run_id, **payload))
+                else:
+                    for key, value in payload.items():
+                        setattr(model, key, value)
+
+    def list_run_prospects(
+        self,
+        *,
+        run_id: str,
+        country_code: str | None = None,
+        status: str | None = None,
+        season_start_year: int | None = None,
+        season_week: int | None = None,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> list[RunProspectRecord]:
+        with self._session_factory() as session:
+            statement: Select[tuple[RunProspectModel]] = select(RunProspectModel).where(RunProspectModel.run_id == run_id)
+            if country_code is not None:
+                statement = statement.where(RunProspectModel.country_code == country_code.upper())
+            if status is not None:
+                statement = statement.where(RunProspectModel.status == status)
+            if season_start_year is not None:
+                statement = statement.where(RunProspectModel.season_start_year == season_start_year)
+            if season_week is not None:
+                statement = statement.where(RunProspectModel.season_week == season_week)
+            statement = statement.order_by(RunProspectModel.season_start_year.asc(), RunProspectModel.season_week.asc(), RunProspectModel.country_code.asc(), RunProspectModel.prospect_id.asc())
+            if offset > 0:
+                statement = statement.offset(offset)
+            if limit is not None:
+                statement = statement.limit(limit)
+            return [self._to_run_prospect_record(model) for model in session.execute(statement).scalars().all()]
+
+    def count_run_prospects(self, *, run_id: str, country_code: str | None = None, status: str | None = None, season_start_year: int | None = None, season_week: int | None = None) -> int:
+        with self._session_factory() as session:
+            statement = select(func.count()).select_from(RunProspectModel).where(RunProspectModel.run_id == run_id)
+            if country_code is not None:
+                statement = statement.where(RunProspectModel.country_code == country_code.upper())
+            if status is not None:
+                statement = statement.where(RunProspectModel.status == status)
+            if season_start_year is not None:
+                statement = statement.where(RunProspectModel.season_start_year == season_start_year)
+            if season_week is not None:
+                statement = statement.where(RunProspectModel.season_week == season_week)
+            return int(session.execute(statement).scalar_one())
+
+    def get_run_prospect(self, *, run_id: str, prospect_id: str) -> RunProspectRecord | None:
+        with self._session_factory() as session:
+            statement = select(RunProspectModel).where(RunProspectModel.run_id == run_id, RunProspectModel.prospect_id == prospect_id)
+            model = session.execute(statement).scalar_one_or_none()
+            return None if model is None else self._to_run_prospect_record(model)
+
+    @staticmethod
+    def _to_run_prospect_record(model: RunProspectModel) -> RunProspectRecord:
+        return RunProspectRecord(
+            prospect_id=model.prospect_id, run_id=model.run_id, world_id=model.world_id, season_start_year=model.season_start_year,
+            season_label=model.season_label, season_week=model.season_week, calendar_year=model.calendar_year, year_week=model.year_week,
+            birth_year=model.birth_year, birth_year_week=model.birth_year_week, age=model.age, country_code=model.country_code,
+            country_name=model.country_name, status=model.status, source_type=model.source_type, cohort_policy_version=model.cohort_policy_version,
+            profile_version=model.profile_version, first_name=model.first_name, last_name=model.last_name, display_name=model.display_name,
+            short_name=model.short_name, identity_seed=model.identity_seed, profile_seed=model.profile_seed, development_seed=model.development_seed,
+            potential_seed=model.potential_seed, trait_seed=model.trait_seed, profile_json=_from_json(model.profile_json or "{}"),
+            development_json=_from_json(model.development_json or "{}"), potential_json=_from_json(model.potential_json or "{}"), trait_json=_from_json(model.trait_json or "{}"),
+        )
 
     def replace_generated_player_provenance(
         self,

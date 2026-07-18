@@ -91,6 +91,32 @@ def test_create_run_rejects_known_custom_world_id_until_generation_is_package_sc
         )
 
 
+def test_list_simulation_runs_preserves_non_null_stored_world_id(tmp_path) -> None:
+    repository = _repository(tmp_path)
+    repository.upsert_simulation_run(
+        SimulationRunInfo(run_id="run-custom-row", season=2027, seed=1, world_id="custom_world")
+    )
+
+    runs = repository.list_simulation_runs()
+
+    assert len(runs) == 1
+    assert runs[0].world_id == "custom_world"
+
+
+def test_run_index_preserves_repository_world_id_lock(tmp_path) -> None:
+    service = _service(tmp_path)
+    service.repository.upsert_simulation_run(
+        SimulationRunInfo(run_id="run-custom-index", season=2027, seed=2, world_id="custom_world")
+    )
+    state = service._build_orchestrator(season=2027, seed=2, run_info=None).initialize_state()
+    service.repository.save_season_state(run_id="run-custom-index", state=state)
+
+    index = service.list_runs_index()
+
+    assert len(index) == 1
+    assert index[0].world_id == "custom_world"
+
+
 def test_legacy_run_without_world_id_reads_as_official_world_id(tmp_path) -> None:
     repository = _repository(tmp_path)
     repository.upsert_simulation_run(SimulationRunInfo(run_id="run-legacy", season=2027, seed=1005))

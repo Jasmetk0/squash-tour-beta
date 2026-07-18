@@ -484,6 +484,7 @@ class SimulationPersistenceRepository:
                     seed=model.seed,
                     config_version=model.config_version,
                     config_fingerprint=model.config_fingerprint,
+                    world_id=model.world_id or OFFICIAL_FAX_WORLD_ID,
                     world_generation_fingerprint=model.world_generation_fingerprint,
                     parent_run_id=model.parent_run_id,
                     source_type=model.source_type,

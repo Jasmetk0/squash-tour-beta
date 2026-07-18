@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from beta_engine.api.deps import get_world_package_clone_service, get_world_package_countries_service, get_world_package_effective_population_service, get_world_package_registry_service, get_world_package_weekly_intake_preview_service, get_world_package_validation_service
+from beta_engine.api.deps import get_season_registry_service, get_world_package_clone_service, get_world_package_countries_service, get_world_package_effective_population_service, get_world_package_registry_service, get_world_package_weekly_intake_preview_service, get_world_package_validation_service
 from beta_engine.api.schemas import (
     WorldPackageCloneErrorResponse,
     WorldPackageCloneRequest,
@@ -12,6 +12,7 @@ from beta_engine.api.schemas import (
     WorldPackageCountryEffectivePopulationResponse,
     WeeklyIntakePreviewResponse,
     WeeklyIntakeSeasonSchedulePreviewResponse,
+    WeeklyIntakeSeasonScheduleWeekResponse,
     WorldPackageDetailResponse,
     WorldPackageListResponse,
     WorldPackageSummaryResponse,
@@ -22,7 +23,8 @@ from beta_engine.application.world_package_countries_service import WorldPackage
 from beta_engine.application.world_package_effective_population_service import WorldPackageCountryEffectivePopulationResult, WorldPackageEffectivePopulationService
 from beta_engine.application.world_package_registry_service import OFFICIAL_FAX_WORLD_ID, WorldPackageRegistryRecord, WorldPackageRegistryService
 from beta_engine.application.world_package_validation_service import WorldPackageValidationResult, WorldPackageValidationService
-from beta_engine.application.world_package_weekly_intake_preview_service import WorldPackageWeeklyIntakePreviewResult, WorldPackageWeeklyIntakeSeasonSchedulePreviewResult, WorldPackageWeeklyIntakePreviewService
+from beta_engine.application.season_registry_service import SeasonRegistryService
+from beta_engine.application.world_package_weekly_intake_preview_service import WorldPackageWeeklyIntakePreviewResult, WorldPackageWeeklyIntakeSeasonSchedulePreviewResult, WorldPackageWeeklyIntakeSeasonScheduleWeek, WorldPackageWeeklyIntakePreviewService
 
 router = APIRouter(prefix="/world/packages", tags=["world"])
 
@@ -61,6 +63,20 @@ def _to_weekly_intake_preview(result: WorldPackageWeeklyIntakePreviewResult) -> 
     return WeeklyIntakePreviewResponse(world_id=result.world_id, world_name=result.world_name, **plan_payload)
 
 
+def _to_weekly_intake_schedule_week(
+    week: WorldPackageWeeklyIntakeSeasonScheduleWeek,
+) -> WeeklyIntakeSeasonScheduleWeekResponse:
+    return WeeklyIntakeSeasonScheduleWeekResponse(
+        season_week=week.season_week,
+        target_intake_count=week.target_intake_count,
+        week_weight=week.week_weight,
+        calendar_year=week.calendar_year,
+        year_week=week.year_week,
+        birth_year=week.birth_year,
+        birth_year_week=week.birth_year_week,
+    )
+
+
 def _to_weekly_intake_season_schedule_preview(
     result: WorldPackageWeeklyIntakeSeasonSchedulePreviewResult,
 ) -> WeeklyIntakeSeasonSchedulePreviewResponse:
@@ -69,7 +85,7 @@ def _to_weekly_intake_season_schedule_preview(
         world_id=result.world_id,
         world_name=result.world_name,
         **plan_payload,
-        weeks=[week.__dict__ for week in result.weeks],
+        weeks=[_to_weekly_intake_schedule_week(week) for week in result.weeks],
     )
 
 
@@ -174,9 +190,17 @@ def preview_world_package_weekly_intake_season_schedule(
     world_id: str,
     season: str,
     base_annual_intake_target: int = Query(200, ge=0),
-    season_growth_rate: float = Query(0.015, ge=0.0),
+    season_growth_rate: float = Query(0.015, ge=0.0, le=0.10),
     service: WorldPackageWeeklyIntakePreviewService = Depends(get_world_package_weekly_intake_preview_service),
+    season_registry: SeasonRegistryService = Depends(get_season_registry_service),
 ) -> WeeklyIntakeSeasonSchedulePreviewResponse:
+    try:
+        registry_entry = season_registry.get_season(label=season)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    if registry_entry is None:
+        raise HTTPException(status_code=422, detail=f"season '{season}' is outside the supported season registry")
+
     result = service.preview_season_schedule(
         world_id=world_id,
         season=season,

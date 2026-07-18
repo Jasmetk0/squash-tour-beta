@@ -31,6 +31,8 @@ from beta_engine.application.player_tournament_results_query_service import (
 from beta_engine.application.persistence import SimulationPersistenceService
 from beta_engine.application.run_bootstrap_models import BootstrapNextSeasonResponse, RunLineageRecord, RunSourceSummary
 from beta_engine.application.run_bootstrap_service import NextSeasonRunBootstrapService
+from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
+from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
 from beta_engine.application.rollover_models import (
     NextSeasonPlayerRecord,
     PersistedPlayerTransition,
@@ -89,6 +91,7 @@ class PersistedRunSummary:
     next_event_index: int
     total_events: int
     completed_event_ids: list[str]
+    world_id: str
 
 
 @dataclass(frozen=True)
@@ -107,6 +110,7 @@ class RunIndexSummary:
     source_type: str
     parent_run_id: str | None
     child_run_count: int
+    world_id: str
 
 
 @dataclass(frozen=True)
@@ -670,6 +674,7 @@ class SimulationApiService:
     repository: SimulationPersistenceRepository
     manual_overrides_service: ManualPlayerOverridesService = field(default_factory=ManualPlayerOverridesService)
     countries_service: CountriesConfigService = field(default_factory=CountriesConfigService)
+    world_package_registry_service: WorldPackageRegistryService | None = None
     def initialize_run(
         self,
         *,
@@ -678,7 +683,9 @@ class SimulationApiService:
         seed: int,
         config_version: str | None,
         config_fingerprint: str | None,
+        world_id: str | None = None,
     ) -> PersistedRunSummary:
+        locked_world_id = self._validate_create_run_world_id(world_id)
         world_generation_fingerprint = self._current_world_generation_fingerprint()
         countries_metadata = self.countries_service.get_config()
         countries = countries_metadata.countries
@@ -700,6 +707,7 @@ class SimulationApiService:
             seed=seed,
             config_version=config_version,
             config_fingerprint=config_fingerprint,
+            world_id=locked_world_id,
             world_generation_fingerprint=world_generation_fingerprint,
             source_type="fresh_seed",
         )
@@ -710,6 +718,20 @@ class SimulationApiService:
         self.repository.replace_run_talent_country_allocations(run_id=run_id, season=season, records=country_records)
         self.repository.replace_generated_player_provenance(run_id=run_id, season=season, records=provenance_records)
         return self.get_run_summary(run_id=run_id)
+
+
+    def _validate_create_run_world_id(self, world_id: str | None) -> str:
+        requested_world_id = (world_id or OFFICIAL_FAX_WORLD_ID).strip().lower()
+        registry = self.world_package_registry_service or WorldPackageRegistryService(
+            countries_service=self.countries_service,
+            manual_overrides_service=self.manual_overrides_service,
+        )
+        package = registry.get_package(requested_world_id)
+        if package is None:
+            raise ValueError(f"world package '{requested_world_id}' was not found")
+        if requested_world_id != OFFICIAL_FAX_WORLD_ID:
+            raise ValueError("custom world package run creation is not enabled yet")
+        return requested_world_id
 
     def get_run_summary(self, *, run_id: str) -> PersistedRunSummary:
         run_info = self.repository.get_simulation_run(run_id=run_id)
@@ -723,6 +745,7 @@ class SimulationApiService:
             seed=run_info.seed,
             config_version=run_info.config_version,
             config_fingerprint=run_info.config_fingerprint,
+            world_id=run_info.world_id,
             next_event_index=state.next_event_index,
             total_events=len(state.ordered_events),
             completed_event_ids=list(state.completed_event_ids),
@@ -1745,6 +1768,7 @@ class SimulationApiService:
                 source_rollover_run_id=lineage.source_rollover_run_id,
                 source_rollover_from_season=lineage.source_rollover_from_season,
                 source_rollover_to_season=lineage.source_rollover_to_season,
+                world_id=lineage.world_id,
             ),
             children=[child.run_id for child in children],
         )
@@ -1759,6 +1783,7 @@ class SimulationApiService:
             source_rollover_run_id=lineage.source_rollover_run_id,
             source_rollover_from_season=lineage.source_rollover_from_season,
             source_rollover_to_season=lineage.source_rollover_to_season,
+            world_id=lineage.world_id,
         )
 
     def get_run_status_summary(self, *, run_id: str) -> RunStatusSummary:
@@ -1868,6 +1893,7 @@ class SimulationApiService:
                 source_rollover_run_id=run_info.source_rollover_run_id,
                 source_rollover_from_season=run_info.source_rollover_from_season,
                 source_rollover_to_season=run_info.source_rollover_to_season,
+                world_id=run_info.world_id,
             )
         )
         return self.get_run_world_status(run_id=run_id)
@@ -1907,6 +1933,7 @@ class SimulationApiService:
                     source_type=source_type,
                     parent_run_id=run.parent_run_id,
                     child_run_count=child_counts.get(run.run_id, 0),
+                    world_id=run.world_id,
                 )
             )
         return summaries

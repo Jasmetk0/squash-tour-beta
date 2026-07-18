@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from beta_engine.application.api_services import SimulationApiService
+from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationRunInfo, create_session_factory, create_sqlite_engine
 from beta_engine.infrastructure.db.repositories import SimulationPersistenceRepository
 
@@ -35,6 +36,7 @@ def test_bootstrap_next_season_creates_child_run_with_lineage_and_simulation(tmp
 
     child_summary = service.get_run_summary(run_id="run-child")
     assert child_summary.season == 2028
+    assert child_summary.world_id == OFFICIAL_FAX_WORLD_ID
 
     lineage = service.get_run_lineage(run_id="run-parent")
     assert lineage.children == ["run-child"]
@@ -43,6 +45,7 @@ def test_bootstrap_next_season_creates_child_run_with_lineage_and_simulation(tmp
     assert child_source.source_type == "rollover_bootstrap"
     assert child_source.parent_run_id == "run-parent"
     assert child_source.source_rollover_to_season == 2028
+    assert child_source.world_id == OFFICIAL_FAX_WORLD_ID
 
     step = service.simulate_next_week(run_id="run-child")
     assert step.mode == "simulate_next_week"

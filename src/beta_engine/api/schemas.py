@@ -50,6 +50,7 @@ class CreateRunRequest(BaseModel):
     season: int = Field(ge=1900)
     config_version: str | None = Field(default=None, max_length=128)
     config_fingerprint: str | None = Field(default=None, max_length=256)
+    world_id: str | None = Field(default=None, min_length=1, max_length=128)
 
 
 class RunSummaryResponse(BaseModel):
@@ -58,6 +59,7 @@ class RunSummaryResponse(BaseModel):
     seed: int
     config_version: str | None = None
     config_fingerprint: str | None = None
+    world_id: str
     next_event_index: int
     total_events: int
     completed_event_ids: list[str] = Field(default_factory=list)
@@ -120,6 +122,7 @@ class RunIndexSummaryResponse(BaseModel):
     source_type: Literal["fresh_seed", "rollover_bootstrap"]
     parent_run_id: str | None = None
     child_run_count: int
+    world_id: str
 
 
 class RunIndexResponse(BaseModel):

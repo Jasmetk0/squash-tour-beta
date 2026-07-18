@@ -11,6 +11,7 @@ function makeRun(overrides: Partial<SeasonStateResponse> = {}): SeasonStateRespo
       seed: 123,
       config_version: null,
       config_fingerprint: null,
+      world_id: 'official_fax_world',
       total_events: 3,
       completed_event_ids: [],
       next_event_index: 1

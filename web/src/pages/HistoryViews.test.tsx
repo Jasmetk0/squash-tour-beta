@@ -34,7 +34,7 @@ describe('history list ordering, detail selection, and states', () => {
       ]
     })
     api.getRun.mockResolvedValue({
-      run: { run_id: 'run-a', season: 2027, seed: 42, config_version: null, config_fingerprint: null, next_event_index: 1, total_events: 2, completed_event_ids: ['E2'] },
+      run: { run_id: 'run-a', season: 2027, seed: 42, config_version: null, config_fingerprint: null, world_id: 'official_fax_world', next_event_index: 1, total_events: 2, completed_event_ids: ['E2'] },
       season_state: {
         season: 2027,
         next_event_index: 1,

@@ -498,6 +498,7 @@ export type RunSummary = {
   seed: number
   config_version: string | null
   config_fingerprint: string | null
+  world_id: string
   next_event_index: number
   total_events: number
   completed_event_ids: string[]
@@ -795,6 +796,7 @@ export type RunsIndexResponse = {
     source_type: RunSourceType
     parent_run_id: string | null
     child_run_count: number
+    world_id: string
   }>
 }
 
@@ -821,6 +823,7 @@ export type CreateRunPayload = {
   season: number
   config_version?: string
   config_fingerprint?: string
+  world_id?: string | null
 }
 
 export type SimulateResponse = {
@@ -1150,6 +1153,7 @@ export type RunSourceSummary = {
   source_rollover_run_id: string | null
   source_rollover_from_season: number | null
   source_rollover_to_season: number | null
+  world_id?: string | null
 }
 
 export type RunSourceApiResponse = {

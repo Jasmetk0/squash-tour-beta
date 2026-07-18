@@ -39,6 +39,7 @@ class NextSeasonRunBootstrapService:
             seed=child_seed,
             config_version=parent_run.config_version,
             config_fingerprint=parent_run.config_fingerprint,
+            world_id=parent_run.world_id,
             world_generation_fingerprint=world_generation_fingerprint,
             parent_run_id=parent_run.run_id,
             source_type="rollover_bootstrap",
@@ -88,6 +89,7 @@ class NextSeasonRunBootstrapService:
             and existing.seed == expected.seed
             and existing.config_version == expected.config_version
             and existing.config_fingerprint == expected.config_fingerprint
+            and existing.world_id == expected.world_id
             and existing.parent_run_id == expected.parent_run_id
             and existing.source_type == expected.source_type
             and existing.source_rollover_run_id == expected.source_rollover_run_id

@@ -37,6 +37,7 @@ def create_run(payload: CreateRunRequest, service: SimulationApiService = Depend
             seed=payload.seed,
             config_version=payload.config_version,
             config_fingerprint=payload.config_fingerprint,
+            world_id=payload.world_id,
         )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc

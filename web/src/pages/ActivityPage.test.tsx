@@ -69,7 +69,7 @@ const baseItems = [
 
 function mockContext(): void {
   api.getRun.mockResolvedValue({
-    run: { run_id: 'run-a', season: 2027, seed: 1, config_version: null, config_fingerprint: null, next_event_index: 0, total_events: 1, completed_event_ids: [] },
+    run: { run_id: 'run-a', season: 2027, seed: 1, config_version: null, config_fingerprint: null, world_id: 'official_fax_world', next_event_index: 0, total_events: 1, completed_event_ids: [] },
     season_state: {
       season: 2027,
       next_event_index: 0,

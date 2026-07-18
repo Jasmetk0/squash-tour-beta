@@ -18,6 +18,7 @@ class RunSourceSummary(BaseModel):
     source_rollover_run_id: str | None = None
     source_rollover_from_season: int | None = None
     source_rollover_to_season: int | None = None
+    world_id: str = "official_fax_world"
 
 
 class RunLineageRecord(BaseModel):

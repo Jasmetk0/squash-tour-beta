@@ -15,6 +15,7 @@ from beta_engine.domain.careers import NextSeasonPlayerState, PlayerSeasonTransi
 from beta_engine.domain.finals import FinalsQualificationResult, FinalsResult
 from beta_engine.domain.rankings import CompletedTournamentPointsInput
 
+from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
 from beta_engine.infrastructure.db.models import (
     AdminActionModel,
     Base,
@@ -53,6 +54,7 @@ class SimulationRunInfo:
     seed: int
     config_version: str | None = None
     config_fingerprint: str | None = None
+    world_id: str = OFFICIAL_FAX_WORLD_ID
     world_generation_fingerprint: str | None = None
     parent_run_id: str | None = None
     source_type: str = "fresh_seed"
@@ -69,6 +71,7 @@ class RunLineageRecord:
     source_rollover_run_id: str | None
     source_rollover_from_season: int | None
     source_rollover_to_season: int | None
+    world_id: str = OFFICIAL_FAX_WORLD_ID
 
 
 @dataclass(frozen=True)
@@ -254,6 +257,12 @@ class SimulationPersistenceRepository:
             self._ensure_column(
                 connection=connection,
                 table_name="simulation_runs",
+                column_name="world_id",
+                column_type="TEXT",
+            )
+            self._ensure_column(
+                connection=connection,
+                table_name="simulation_runs",
                 column_name="world_generation_fingerprint",
                 column_type="TEXT",
             )
@@ -276,6 +285,7 @@ class SimulationPersistenceRepository:
                     seed=run.seed,
                     config_version=run.config_version,
                     config_fingerprint=run.config_fingerprint,
+                    world_id=run.world_id,
                     world_generation_fingerprint=run.world_generation_fingerprint,
                     parent_run_id=run.parent_run_id,
                     source_type=run.source_type,
@@ -289,6 +299,9 @@ class SimulationPersistenceRepository:
             model.seed = run.seed
             model.config_version = run.config_version
             model.config_fingerprint = run.config_fingerprint
+            # world_id is an immutable run creation lock; preserve existing values on metadata updates.
+            if model.world_id is None:
+                model.world_id = run.world_id
             model.world_generation_fingerprint = run.world_generation_fingerprint
             model.parent_run_id = run.parent_run_id
             model.source_type = run.source_type
@@ -437,6 +450,7 @@ class SimulationPersistenceRepository:
                 seed=model.seed,
                 config_version=model.config_version,
                 config_fingerprint=model.config_fingerprint,
+                world_id=model.world_id or OFFICIAL_FAX_WORLD_ID,
                 world_generation_fingerprint=model.world_generation_fingerprint,
                 parent_run_id=model.parent_run_id,
                 source_type=model.source_type,
@@ -457,6 +471,7 @@ class SimulationPersistenceRepository:
                 source_rollover_run_id=model.source_rollover_run_id,
                 source_rollover_from_season=model.source_rollover_from_season,
                 source_rollover_to_season=model.source_rollover_to_season,
+                world_id=model.world_id or OFFICIAL_FAX_WORLD_ID,
             )
 
     def list_simulation_runs(self) -> list[SimulationRunInfo]:
@@ -469,6 +484,7 @@ class SimulationPersistenceRepository:
                     seed=model.seed,
                     config_version=model.config_version,
                     config_fingerprint=model.config_fingerprint,
+                    world_id=model.world_id or OFFICIAL_FAX_WORLD_ID,
                     world_generation_fingerprint=model.world_generation_fingerprint,
                     parent_run_id=model.parent_run_id,
                     source_type=model.source_type,

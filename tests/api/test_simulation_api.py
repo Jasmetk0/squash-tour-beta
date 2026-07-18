@@ -104,6 +104,42 @@ def test_preflight_options_request_succeeds_for_health_endpoint(tmp_path) -> Non
             assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
 
 
+
+def test_run_world_id_create_read_and_index_contract(tmp_path) -> None:
+    db_path = tmp_path / "world-lock-api.db"
+    with ApiServer(database_url=f"sqlite:///{db_path}") as server:
+        status, created = _request("POST", f"{server.base_url}/runs", {"run_id": "run-world-lock", "seed": 4242, "season": 2027})
+        assert status == 201
+        assert created["world_id"] == "official_fax_world"
+
+        status, detail = _request("GET", f"{server.base_url}/runs/run-world-lock")
+        assert status == 200
+        assert detail["run"]["world_id"] == "official_fax_world"
+
+        status, index = _request("GET", f"{server.base_url}/runs")
+        assert status == 200
+        assert index["runs"][0]["world_id"] == "official_fax_world"
+
+
+def test_run_world_id_validation_contract(tmp_path) -> None:
+    db_path = tmp_path / "world-lock-validation-api.db"
+    with ApiServer(database_url=f"sqlite:///{db_path}") as server:
+        status, created = _request(
+            "POST",
+            f"{server.base_url}/runs",
+            {"run_id": "run-world-official", "seed": 4243, "season": 2027, "world_id": "official_fax_world"},
+        )
+        assert status == 201
+        assert created["world_id"] == "official_fax_world"
+
+        status, unknown = _request(
+            "POST",
+            f"{server.base_url}/runs",
+            {"run_id": "run-world-unknown", "seed": 4244, "season": 2027, "world_id": "missing_world"},
+        )
+        assert status == 400
+        assert "world package 'missing_world' was not found" in unknown["detail"]
+
 def test_run_initialization_and_state_fetch_work(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'api-init.db'}"
     with ApiServer(database_url=database_url) as server:

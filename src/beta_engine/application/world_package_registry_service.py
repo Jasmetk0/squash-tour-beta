@@ -11,8 +11,8 @@ from typing import Any
 from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.infrastructure.world_config import load_countries_config
+from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
 
-OFFICIAL_FAX_WORLD_ID = "official_fax_world"
 OFFICIAL_FAX_WORLD_NAME = "Official FAX World"
 OFFICIAL_FAX_WORLD_DESCRIPTION = "Built-in official FAX squash world package."
 OFFICIAL_FAX_WORLD_VERSION = "v1"

@@ -1191,6 +1191,14 @@ def test_world_package_weekly_intake_season_schedule_preview_success(tmp_path) -
             "GET",
             f"{server.base_url}/world/packages/official_fax_world/weekly-intake/season-schedule/preview?season=2000/2001",
         )
+        final_status, final_payload = _request(
+            "GET",
+            f"{server.base_url}/world/packages/official_fax_world/weekly-intake/season-schedule/preview?season=2049/2050",
+        )
+        max_growth_status, max_growth_payload = _request(
+            "GET",
+            f"{server.base_url}/world/packages/official_fax_world/weekly-intake/season-schedule/preview?season=2000/2001&season_growth_rate=0.10",
+        )
 
     assert status == 200
     assert payload["world_id"] == "official_fax_world"
@@ -1208,6 +1216,16 @@ def test_world_package_weekly_intake_season_schedule_preview_success(tmp_path) -
     assert payload["weeks"][25]["year_week"] == 1
     assert payload["weeks"][25]["birth_year"] == 1986
     assert all(week["target_intake_count"] >= 0 for week in payload["weeks"])
+    assert final_status == 200
+    assert final_payload["season"] == "2049/2050"
+    assert final_payload["season_start_year"] == 2049
+    assert final_payload["season_index"] == 49
+    assert len(final_payload["weeks"]) == 61
+    assert final_payload["total_weekly_target"] == final_payload["annual_target"]
+    assert max_growth_status == 200
+    assert max_growth_payload["season_growth_rate"] == 0.10
+    assert len(max_growth_payload["weeks"]) == 61
+    assert max_growth_payload["total_weekly_target"] == max_growth_payload["annual_target"]
     assert package_path.read_text(encoding="utf-8") == before
 
 
@@ -1234,6 +1252,22 @@ def test_world_package_weekly_intake_season_schedule_preview_errors_and_custom_t
             "GET",
             f"{server.base_url}/world/packages/official_fax_world/weekly-intake/season-schedule/preview?season=2000/2001&base_annual_intake_target=0",
         )
+        before_registry_status, before_registry_payload = _request(
+            "GET",
+            f"{server.base_url}/world/packages/official_fax_world/weekly-intake/season-schedule/preview?season=1999/2000",
+        )
+        after_registry_status, after_registry_payload = _request(
+            "GET",
+            f"{server.base_url}/world/packages/official_fax_world/weekly-intake/season-schedule/preview?season=2050/2051",
+        )
+        high_growth_status, high_growth_payload = _request(
+            "GET",
+            f"{server.base_url}/world/packages/official_fax_world/weekly-intake/season-schedule/preview?season=2000/2001&season_growth_rate=0.11",
+        )
+        negative_growth_status, negative_growth_payload = _request(
+            "GET",
+            f"{server.base_url}/world/packages/official_fax_world/weekly-intake/season-schedule/preview?season=2000/2001&season_growth_rate=-0.01",
+        )
 
     assert missing_status == 404
     assert "world package 'unknown' not found" in missing_payload["detail"]
@@ -1244,3 +1278,11 @@ def test_world_package_weekly_intake_season_schedule_preview_errors_and_custom_t
     assert zero_payload["annual_target"] == 0
     assert zero_payload["total_weekly_target"] == 0
     assert all(week["target_intake_count"] == 0 for week in zero_payload["weeks"])
+    assert before_registry_status == 422
+    assert "outside the supported season registry" in before_registry_payload["detail"]
+    assert after_registry_status == 422
+    assert "outside the supported season registry" in after_registry_payload["detail"]
+    assert high_growth_status == 422
+    assert high_growth_payload["detail"]
+    assert negative_growth_status == 422
+    assert negative_growth_payload["detail"]

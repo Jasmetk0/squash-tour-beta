@@ -76,6 +76,8 @@ import type {
   WorldPackageCountryEffectivePopulationResponse,
   WeeklyIntakePreviewParams,
   WeeklyIntakePreviewResponse,
+  WeeklyIntakeSeasonSchedulePreviewParams,
+  WeeklyIntakeSeasonSchedulePreviewResponse,
   WorldPackageImportPayload,
   WorldPackageImportResponse,
   WorldPackageListResponse,
@@ -715,6 +717,20 @@ export function getWorldPackageWeeklyIntakePreview(
   return request(`/world/packages/${encodeURIComponent(worldId)}/weekly-intake/preview?${query.toString()}`)
 }
 
+
+export function getWorldPackageWeeklyIntakeSeasonSchedulePreview(
+  worldId: string,
+  params: WeeklyIntakeSeasonSchedulePreviewParams
+): Promise<WeeklyIntakeSeasonSchedulePreviewResponse> {
+  const query = new URLSearchParams({ season: params.season })
+  if (params.base_annual_intake_target !== undefined) {
+    query.set('base_annual_intake_target', String(params.base_annual_intake_target))
+  }
+  if (params.season_growth_rate !== undefined) {
+    query.set('season_growth_rate', String(params.season_growth_rate))
+  }
+  return request(`/world/packages/${encodeURIComponent(worldId)}/weekly-intake/season-schedule/preview?${query.toString()}`)
+}
 
 export function getWorldPackageCountryEffectivePopulation(
   worldId: string,

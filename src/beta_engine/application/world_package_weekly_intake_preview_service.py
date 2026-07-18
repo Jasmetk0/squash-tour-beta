@@ -5,8 +5,34 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from beta_engine.application.world_package_countries_service import WorldPackageCountriesService
+from beta_engine.domain.calendar import season_week_to_calendar_position
 from beta_engine.domain.countries import Country
+from beta_engine.domain.calendar.season_weeks import PLAYER_15TH_BIRTHDAY_AGE
+from beta_engine.domain.players.intake_volume_policy import (
+    IntakeVolumePolicy,
+    IntakeVolumePolicyConfig,
+    SeasonIntakeVolumePlan,
+)
 from beta_engine.domain.players.weekly_intake import WeeklyIntakePlan, WeeklyIntakePlanner
+
+
+@dataclass(frozen=True)
+class WorldPackageWeeklyIntakeSeasonScheduleWeek:
+    season_week: int
+    target_intake_count: int
+    week_weight: float
+    calendar_year: int
+    year_week: int
+    birth_year: int
+    birth_year_week: int
+
+
+@dataclass(frozen=True)
+class WorldPackageWeeklyIntakeSeasonSchedulePreviewResult:
+    world_id: str
+    world_name: str
+    plan: SeasonIntakeVolumePlan
+    weeks: list[WorldPackageWeeklyIntakeSeasonScheduleWeek]
 
 
 @dataclass(frozen=True)
@@ -22,6 +48,7 @@ class WorldPackageWeeklyIntakePreviewService:
 
     countries_service: WorldPackageCountriesService
     planner: WeeklyIntakePlanner = WeeklyIntakePlanner()
+    volume_policy: IntakeVolumePolicy = IntakeVolumePolicy()
 
     def preview(
         self,
@@ -48,6 +75,47 @@ class WorldPackageWeeklyIntakePreviewService:
             world_id=countries_result.world_id,
             world_name=countries_result.world_name,
             plan=plan,
+        )
+
+    def preview_season_schedule(
+        self,
+        *,
+        world_id: str,
+        season: str,
+        base_annual_intake_target: int = 200,
+        season_growth_rate: float = 0.015,
+    ) -> WorldPackageWeeklyIntakeSeasonSchedulePreviewResult | None:
+        countries_result = self.countries_service.get_countries(world_id)
+        if countries_result is None:
+            return None
+
+        plan = self.volume_policy.plan_season(
+            world_id=countries_result.world_id,
+            season=season,
+            config=IntakeVolumePolicyConfig(
+                base_annual_intake_target=base_annual_intake_target,
+                season_growth_rate=season_growth_rate,
+            ),
+        )
+        weeks = []
+        for week in plan.weeks:
+            position = season_week_to_calendar_position(plan.season, week.season_week)
+            weeks.append(
+                WorldPackageWeeklyIntakeSeasonScheduleWeek(
+                    season_week=week.season_week,
+                    target_intake_count=week.target_intake_count,
+                    week_weight=week.week_weight,
+                    calendar_year=position.calendar_year,
+                    year_week=position.year_week,
+                    birth_year=position.calendar_year - PLAYER_15TH_BIRTHDAY_AGE,
+                    birth_year_week=position.year_week,
+                )
+            )
+        return WorldPackageWeeklyIntakeSeasonSchedulePreviewResult(
+            world_id=countries_result.world_id,
+            world_name=countries_result.world_name,
+            plan=plan,
+            weeks=weeks,
         )
 
     def _filter_countries(self, countries: list[Country], *, country_code: str | None, region: str | None) -> list[Country]:

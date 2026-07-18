@@ -1450,6 +1450,37 @@ export type WeeklyIntakePreviewParams = {
   region?: string
 }
 
+
+export type WeeklyIntakeSeasonScheduleWeek = {
+  season_week: number
+  target_intake_count: number
+  week_weight: number
+  calendar_year: number
+  year_week: number
+  birth_year: number
+  birth_year_week: number
+}
+
+export type WeeklyIntakeSeasonSchedulePreviewResponse = {
+  world_id: string
+  world_name: string | null
+  season: string
+  season_start_year: number
+  season_index: number
+  base_annual_intake_target: number
+  season_growth_rate: number
+  season_variation_multiplier: number
+  annual_target: number
+  total_weekly_target: number
+  weeks: WeeklyIntakeSeasonScheduleWeek[]
+}
+
+export type WeeklyIntakeSeasonSchedulePreviewParams = {
+  season: string
+  base_annual_intake_target?: number
+  season_growth_rate?: number
+}
+
 export type WorldPackageCountryEffectivePopulationResponse = {
   world_id: string
   world_name: string

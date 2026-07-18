@@ -56,6 +56,8 @@ import type {
   SeasonRolloverSummaryApiResponse,
   GeneratedPlayerProvenance,
   GeneratedPlayerProvenanceListResponse,
+  MaterializeRunProspectsRequest,
+  MaterializeRunProspectsResponse,
   RunProspectListResponse,
   RunSummary,
   RunWeeklyIntakeCohortSeasonPreviewParams,
@@ -810,6 +812,14 @@ export function listRunProspects(
   if (typeof params?.offset === 'number') query.set('offset', String(params.offset))
   const suffix = query.toString() ? `?${query.toString()}` : ''
   return request(`/runs/${encodeURIComponent(runId)}/prospects${suffix}`)
+}
+
+
+export function materializeRunProspects(
+  runId: string,
+  payload: MaterializeRunProspectsRequest = {}
+): Promise<MaterializeRunProspectsResponse> {
+  return request(`/runs/${encodeURIComponent(runId)}/prospects/materialize-15yo-cohort`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function listGeneratedPlayersProvenance(

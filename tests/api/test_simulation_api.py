@@ -1637,3 +1637,106 @@ def test_run_prospects_endpoint_is_read_only_and_filterable(tmp_path) -> None:
         status, unmatched = _request("GET", f"{server.base_url}/runs/run-prospects/prospects?country_code=ENG")
         assert status == 200
         assert unmatched["prospects"] == []
+
+
+def test_run_prospects_materialize_15yo_cohort_basic_idempotent_filter_and_zero(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'materialize.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-materialize", "seed": 9090, "season": 2027})
+        assert status == 201
+
+        status, payload = _request("POST", f"{server.base_url}/runs/run-materialize/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 6})
+        assert status == 200
+        assert payload["run_id"] == "run-materialize"
+        assert payload["world_id"] == "official_fax_world"
+        assert payload["requested_prospect_count"] == payload["annual_target"]
+        assert payload["created_count"] == payload["annual_target"]
+        assert payload["existing_count"] == 0
+
+        status, listed = _request("GET", f"{server.base_url}/runs/run-materialize/prospects?limit=500")
+        assert status == 200
+        assert listed["total"] == payload["annual_target"]
+        for prospect in listed["prospects"]:
+            assert prospect["age"] == 15
+            assert prospect["status"] == "prospect"
+            assert prospect["source_type"] == "weekly_15yo_cohort"
+            assert prospect["world_id"] == "official_fax_world"
+            assert prospect["profile_version"] == "prospect_profile_v1"
+            assert prospect["display_name"]
+            assert all(prospect[key] for key in ["identity_seed", "profile_seed", "development_seed", "potential_seed", "trait_seed"])
+            assert prospect["profile_json"]["reserved_for_future_attributes"] is True
+            assert prospect["development_json"]["reserved_for_future_development"] is True
+            assert prospect["potential_json"]["reserved_for_future_potential"] is True
+            assert prospect["trait_json"]["reserved_for_future_traits"] is True
+
+        status, again = _request("POST", f"{server.base_url}/runs/run-materialize/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 6})
+        assert status == 200
+        assert again["created_count"] == 0
+        assert again["skipped_count"] == payload["annual_target"]
+        assert again["already_materialized"] is True
+
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-materialize-filter", "seed": 9091, "season": 2027})
+        assert status == 201
+        status, ger = _request("POST", f"{server.base_url}/runs/run-materialize-filter/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 3, "country_code": "GER"})
+        assert status == 200
+        assert ger["requested_prospect_count"] == ger["annual_target"]
+        status, listed_ger = _request("GET", f"{server.base_url}/runs/run-materialize-filter/prospects?country_code=GER&limit=500")
+        assert status == 200
+        assert listed_ger["total"] >= 3
+        assert {p["country_code"] for p in listed_ger["prospects"]} == {"GER"}
+
+        status, zero = _request("POST", f"{server.base_url}/runs/run-materialize/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 0})
+        assert status == 200
+        assert zero["requested_prospect_count"] == 0
+        assert zero["created_count"] == 0
+
+
+def test_run_prospects_materialize_15yo_cohort_conflict_overwrite_and_errors(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'materialize-conflict.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, missing = _request("POST", f"{server.base_url}/runs/missing/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 1})
+        assert status == 404
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-conflict", "seed": 9090, "season": 2027})
+        assert status == 201
+        status, first = _request("POST", f"{server.base_url}/runs/run-conflict/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 2, "country_code": "GER"})
+        assert status == 200
+        assert first["created_count"] == first["annual_target"]
+
+        engine = create_sqlite_engine(DatabaseSettings(url=database_url))
+        repository = SimulationPersistenceRepository(engine=engine, session_factory=create_session_factory(engine))
+        record = repository.list_run_prospects(run_id="run-conflict", country_code="GER", limit=None)[0]
+        repository.upsert_run_prospects([RunProspectRecord(**(record.__dict__ | {"profile_json": {"tampered": True}}))])
+
+        status, conflict = _request("POST", f"{server.base_url}/runs/run-conflict/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 2, "country_code": "GER"})
+        assert status == 409
+        assert record.prospect_id in conflict["detail"]["conflicts"]
+
+        status, repaired = _request("POST", f"{server.base_url}/runs/run-conflict/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 2, "country_code": "GER", "overwrite": True})
+        assert status == 200
+        assert repaired["conflict_count"] == 1
+        assert repository.get_run_prospect(run_id="run-conflict", prospect_id=record.prospect_id).profile_json != {"tampered": True}
+
+        status, policy_conflict = _request(
+            "POST",
+            f"{server.base_url}/runs/run-conflict/prospects/materialize-15yo-cohort",
+            {"base_annual_intake_target": 4, "country_code": "GER"},
+        )
+        assert status == 409
+        assert policy_conflict["detail"]["conflicts"]
+        status, policy_overwrite = _request(
+            "POST",
+            f"{server.base_url}/runs/run-conflict/prospects/materialize-15yo-cohort",
+            {"base_annual_intake_target": 4, "country_code": "GER", "overwrite": True},
+        )
+        assert status == 200
+        assert policy_overwrite["conflict_count"] > 0
+        assert repository.count_run_prospects(
+            run_id="run-conflict",
+            country_code="GER",
+            season_start_year=2027,
+        ) == policy_overwrite["requested_prospect_count"]
+
+        status, bad_season = _request("POST", f"{server.base_url}/runs", {"run_id": "run-before-materialize", "seed": 1, "season": 1999})
+        assert status == 201
+        status, unsupported = _request("POST", f"{server.base_url}/runs/run-before-materialize/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 1})
+        assert status == 422

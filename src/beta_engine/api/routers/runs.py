@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from beta_engine.api.deps import get_run_weekly_intake_cohort_preview_service, get_simulation_api_service
+from beta_engine.api.deps import get_run_prospect_materialization_service, get_run_weekly_intake_cohort_preview_service, get_simulation_api_service
 from beta_engine.api.schemas import (
     BootstrapNextSeasonApiResponse,
     BootstrapNextSeasonRequest,
+    MaterializeRunProspectsRequest,
+    MaterializeRunProspectsResponse,
     RunIndexResponse,
     RunWeeklyIntakeCohortSeasonPreviewResponse,
     RunIndexSummaryResponse,
@@ -13,6 +15,7 @@ from beta_engine.api.schemas import (
     SeasonStateResponse,
 )
 from beta_engine.application.api_services import PersistedRunSummary, RunStatusSummary, RunIndexSummary, SimulationApiService
+from beta_engine.application.run_prospect_materialization_service import RunProspectMaterializationConflictError, RunProspectMaterializationService
 from beta_engine.application.run_weekly_intake_cohort_preview_service import RunWeeklyIntakeCohortPreviewService
 
 router = APIRouter(prefix="/runs", tags=["runs"])
@@ -84,6 +87,35 @@ def preview_run_weekly_intake_cohort_season(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
     return RunWeeklyIntakeCohortSeasonPreviewResponse.model_validate(result, from_attributes=True)
+
+
+@router.post(
+    "/{run_id}/prospects/materialize-15yo-cohort",
+    response_model=MaterializeRunProspectsResponse,
+)
+def materialize_run_prospect_15yo_cohort(
+    run_id: str,
+    payload: MaterializeRunProspectsRequest,
+    service: RunProspectMaterializationService = Depends(get_run_prospect_materialization_service),
+) -> MaterializeRunProspectsResponse:
+    try:
+        result = service.materialize_15yo_cohort(
+            run_id=run_id,
+            base_annual_intake_target=payload.base_annual_intake_target,
+            season_growth_rate=payload.season_growth_rate,
+            country_code=payload.country_code,
+            region=payload.region,
+            overwrite=payload.overwrite,
+        )
+    except RunProspectMaterializationConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={"message": str(exc), "conflicts": exc.conflicts}) from exc
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except LookupError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    return MaterializeRunProspectsResponse.model_validate(result, from_attributes=True)
 
 
 @router.get("/{run_id}/status-summary", response_model=RunStatusSummaryResponse)

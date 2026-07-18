@@ -32,6 +32,12 @@ from beta_engine.domain.players.talent_models import (
     TalentSeed,
 )
 from beta_engine.domain.players.talent_planner import AnnualTalentClassPlanner
+from beta_engine.domain.players.intake_volume_policy import (
+    IntakeVolumePolicy,
+    IntakeVolumePolicyConfig,
+    SeasonIntakeVolumePlan,
+    WeeklyIntakeVolume,
+)
 from beta_engine.domain.players.weekly_intake import (
     WeeklyIntakeCountryAllocation,
     WeeklyIntakePlan,
@@ -50,6 +56,10 @@ __all__ = [
     "InitialPoolResult",
     "InitialPoolSummary",
     "AnnualTalentClassPlanner",
+    "IntakeVolumePolicy",
+    "IntakeVolumePolicyConfig",
+    "SeasonIntakeVolumePlan",
+    "WeeklyIntakeVolume",
     "WeeklyIntakeCountryAllocation",
     "WeeklyIntakePlan",
     "WeeklyIntakePlanner",

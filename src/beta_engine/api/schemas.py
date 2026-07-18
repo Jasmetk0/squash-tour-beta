@@ -213,6 +213,30 @@ class WeeklyIntakePreviewResponse(BaseModel):
     allocations: list[WeeklyIntakeCountryAllocationResponse] = Field(default_factory=list)
 
 
+class WeeklyIntakeSeasonScheduleWeekResponse(BaseModel):
+    season_week: int
+    target_intake_count: int
+    week_weight: float
+    calendar_year: int
+    year_week: int
+    birth_year: int
+    birth_year_week: int
+
+
+class WeeklyIntakeSeasonSchedulePreviewResponse(BaseModel):
+    world_id: str
+    world_name: str | None = None
+    season: str
+    season_start_year: int
+    season_index: int
+    base_annual_intake_target: int
+    season_growth_rate: float
+    season_variation_multiplier: float
+    annual_target: int
+    total_weekly_target: int
+    weeks: list[WeeklyIntakeSeasonScheduleWeekResponse] = Field(default_factory=list)
+
+
 class WorldPackageCountryEffectivePopulationResponse(BaseModel):
     world_id: str
     world_name: str

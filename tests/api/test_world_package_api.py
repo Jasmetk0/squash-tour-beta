@@ -1172,3 +1172,75 @@ def test_world_package_weekly_intake_preview_filters_and_is_read_only(tmp_path) 
     assert region_status == 200
     assert {row["country_code"] for row in region_payload["allocations"]} == {"BOG", "GER", "HUN", "POL"}
     assert package_path.read_text(encoding="utf-8") == before
+
+
+def test_world_package_weekly_intake_season_schedule_preview_success(tmp_path) -> None:
+    countries_path = tmp_path / "canonical-countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+    package_path = Path("config/worlds/official_fax_world/countries.json")
+    before = package_path.read_text(encoding="utf-8")
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'weekly-intake-season-schedule.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, payload = _request(
+            "GET",
+            f"{server.base_url}/world/packages/official_fax_world/weekly-intake/season-schedule/preview?season=2000/2001",
+        )
+
+    assert status == 200
+    assert payload["world_id"] == "official_fax_world"
+    assert payload["world_name"] == "Official FAX World"
+    assert payload["season"] == "2000/2001"
+    assert payload["season_start_year"] == 2000
+    assert payload["season_index"] == 0
+    assert payload["annual_target"] > 0
+    assert payload["total_weekly_target"] == payload["annual_target"]
+    assert len(payload["weeks"]) == 61
+    assert payload["weeks"][0]["season_week"] == 1
+    assert payload["weeks"][0]["year_week"] == 37
+    assert payload["weeks"][0]["birth_year"] == 1985
+    assert payload["weeks"][25]["season_week"] == 26
+    assert payload["weeks"][25]["year_week"] == 1
+    assert payload["weeks"][25]["birth_year"] == 1986
+    assert all(week["target_intake_count"] >= 0 for week in payload["weeks"])
+    assert package_path.read_text(encoding="utf-8") == before
+
+
+def test_world_package_weekly_intake_season_schedule_preview_errors_and_custom_targets(tmp_path) -> None:
+    countries_path = tmp_path / "canonical-countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'weekly-intake-season-schedule-custom.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        missing_status, missing_payload = _request(
+            "GET",
+            f"{server.base_url}/world/packages/unknown/weekly-intake/season-schedule/preview?season=2000/2001",
+        )
+        custom_status, custom_payload = _request(
+            "GET",
+            f"{server.base_url}/world/packages/official_fax_world/weekly-intake/season-schedule/preview?season=2000/2001&base_annual_intake_target=200",
+        )
+        zero_status, zero_payload = _request(
+            "GET",
+            f"{server.base_url}/world/packages/official_fax_world/weekly-intake/season-schedule/preview?season=2000/2001&base_annual_intake_target=0",
+        )
+
+    assert missing_status == 404
+    assert "world package 'unknown' not found" in missing_payload["detail"]
+    assert custom_status == 200
+    assert custom_payload["base_annual_intake_target"] == 200
+    assert custom_payload["annual_target"] > 0
+    assert zero_status == 200
+    assert zero_payload["annual_target"] == 0
+    assert zero_payload["total_weekly_target"] == 0
+    assert all(week["target_intake_count"] == 0 for week in zero_payload["weeks"])

@@ -11,6 +11,7 @@ from beta_engine.api.schemas import (
     WorldPackageCountriesResponse,
     WorldPackageCountryEffectivePopulationResponse,
     WeeklyIntakePreviewResponse,
+    WeeklyIntakeSeasonSchedulePreviewResponse,
     WorldPackageDetailResponse,
     WorldPackageListResponse,
     WorldPackageSummaryResponse,
@@ -21,7 +22,7 @@ from beta_engine.application.world_package_countries_service import WorldPackage
 from beta_engine.application.world_package_effective_population_service import WorldPackageCountryEffectivePopulationResult, WorldPackageEffectivePopulationService
 from beta_engine.application.world_package_registry_service import OFFICIAL_FAX_WORLD_ID, WorldPackageRegistryRecord, WorldPackageRegistryService
 from beta_engine.application.world_package_validation_service import WorldPackageValidationResult, WorldPackageValidationService
-from beta_engine.application.world_package_weekly_intake_preview_service import WorldPackageWeeklyIntakePreviewResult, WorldPackageWeeklyIntakePreviewService
+from beta_engine.application.world_package_weekly_intake_preview_service import WorldPackageWeeklyIntakePreviewResult, WorldPackageWeeklyIntakeSeasonSchedulePreviewResult, WorldPackageWeeklyIntakePreviewService
 
 router = APIRouter(prefix="/world/packages", tags=["world"])
 
@@ -58,6 +59,18 @@ def _to_effective_population(result: WorldPackageCountryEffectivePopulationResul
 def _to_weekly_intake_preview(result: WorldPackageWeeklyIntakePreviewResult) -> WeeklyIntakePreviewResponse:
     plan_payload = result.plan.model_dump(mode="json")
     return WeeklyIntakePreviewResponse(world_id=result.world_id, world_name=result.world_name, **plan_payload)
+
+
+def _to_weekly_intake_season_schedule_preview(
+    result: WorldPackageWeeklyIntakeSeasonSchedulePreviewResult,
+) -> WeeklyIntakeSeasonSchedulePreviewResponse:
+    plan_payload = result.plan.model_dump(mode="json", exclude={"world_id", "weeks"})
+    return WeeklyIntakeSeasonSchedulePreviewResponse(
+        world_id=result.world_id,
+        world_name=result.world_name,
+        **plan_payload,
+        weeks=[week.__dict__ for week in result.weeks],
+    )
 
 
 def _to_clone_response(result: WorldPackageCloneResult) -> WorldPackageCloneResponse:
@@ -151,6 +164,28 @@ def preview_world_package_weekly_intake(
     if not result.plan.allocations and target_intake_count > 0:
         raise HTTPException(status_code=404, detail="no matching countries found for weekly intake preview")
     return _to_weekly_intake_preview(result)
+
+
+@router.get(
+    "/{world_id}/weekly-intake/season-schedule/preview",
+    response_model=WeeklyIntakeSeasonSchedulePreviewResponse,
+)
+def preview_world_package_weekly_intake_season_schedule(
+    world_id: str,
+    season: str,
+    base_annual_intake_target: int = Query(200, ge=0),
+    season_growth_rate: float = Query(0.015, ge=0.0),
+    service: WorldPackageWeeklyIntakePreviewService = Depends(get_world_package_weekly_intake_preview_service),
+) -> WeeklyIntakeSeasonSchedulePreviewResponse:
+    result = service.preview_season_schedule(
+        world_id=world_id,
+        season=season,
+        base_annual_intake_target=base_annual_intake_target,
+        season_growth_rate=season_growth_rate,
+    )
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"world package '{world_id}' not found")
+    return _to_weekly_intake_season_schedule_preview(result)
 
 
 @router.get("/{world_id}/validation", response_model=WorldPackageValidationResponse)

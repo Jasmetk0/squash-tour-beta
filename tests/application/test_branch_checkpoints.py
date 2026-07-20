@@ -238,3 +238,45 @@ def test_checkpoint_hash_verification_detects_direct_database_tampering(tmp_path
         with repository._session_factory.begin() as session:  # Deliberate corruption verifies stored integrity checks.
             setattr(session.get(BranchCheckpointModel, checkpoint.checkpoint_id), field, value)
         assert not repository.verify_branch_checkpoint_hash(checkpoint_id=checkpoint.checkpoint_id), field
+
+
+def test_week_completed_checkpoint_captures_completed_scheduled_week_once(tmp_path) -> None:
+    repository = _repository(tmp_path)
+    service = SimulationApiService(repository=repository)
+    service.initialize_run(run_id="week-capture-run", season=2027, seed=7, config_version="v1", config_fingerprint="cfg")
+    state = repository.load_season_state(run_id="week-capture-run")
+    assert state is not None
+    week = state.ordered_events[0].week
+    initial = repository.capture_initial_checkpoint_for_legacy_simulation_run(simulation_run_id="week-capture-run")
+    for invalid_week in (0, 62):
+        try:
+            repository.capture_completed_week_checkpoint_for_legacy_simulation_run(simulation_run_id="week-capture-run", week=invalid_week)
+        except ValueError as exc:
+            assert "1..61" in str(exc)
+        else:
+            raise AssertionError("invalid weeks must be rejected")
+    try:
+        repository.capture_completed_week_checkpoint_for_legacy_simulation_run(simulation_run_id="week-capture-run", week=week)
+    except ValueError as exc:
+        assert "not completed" in str(exc)
+    else:
+        raise AssertionError("incomplete weeks must be rejected")
+    service.simulate_next_week(run_id="week-capture-run")
+    before_state = repository.load_season_state(run_id="week-capture-run")
+    assert before_state is not None
+    completed = [event for event in repository.list_completed_events(run_id="week-capture-run") if event.week == week]
+    checkpoint = repository.capture_completed_week_checkpoint_for_legacy_simulation_run(simulation_run_id="week-capture-run", week=week)
+    assert checkpoint.kind == "week_completed"
+    assert checkpoint.parent_checkpoint_id == initial.checkpoint_id
+    assert checkpoint.sequence == initial.sequence + 1
+    assert checkpoint.event_sequence == max(event.event_sequence for event in completed)
+    assert checkpoint.payload["week"]["completed_event_ids"] == [event.event_id for event in before_state.ordered_events if event.week == week]
+    assert checkpoint.payload["limitations"]["forkable"] is False
+    assert checkpoint.payload["limitations"]["replayable"] is False
+    assert repository.verify_branch_checkpoint_hash(checkpoint_id=checkpoint.checkpoint_id)
+    assert repository.load_season_state(run_id="week-capture-run").model_dump() == before_state.model_dump()
+    assert repository.list_run_prospects(run_id="week-capture-run") == []
+    assert repository.capture_completed_week_checkpoint_for_legacy_simulation_run(simulation_run_id="week-capture-run", week=week) == checkpoint
+    assert repository.capture_completed_week_checkpoint_for_legacy_simulation_run(simulation_run_id="week-capture-run", week=week, command_id="different") == checkpoint
+    assert repository.get_run_branch(branch_id=checkpoint.branch_id).head_checkpoint_id == checkpoint.checkpoint_id
+    assert repository.get_branch_state(branch_id=checkpoint.branch_id).head_checkpoint_id == checkpoint.checkpoint_id

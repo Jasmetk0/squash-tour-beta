@@ -25,6 +25,7 @@ import {
   captureInitialBranchCheckpoint,
   captureCurrentBranchCheckpoint,
   captureCompletedEventBranchCheckpoint,
+  captureCompletedWeekBranchCheckpoint,
   listBranchStates,
   getBranchState,
   getWorldPackageValidation,
@@ -898,16 +899,19 @@ describe('world package registry client', () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ checkpoint_id: 'cp/a #1' }), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ checkpoint_id: 'cp/a #2' }), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ checkpoint_id: 'cp/a #3' }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ checkpoint_id: 'cp/a #4' }), { status: 200 }))
     await listBranchCheckpoints({ branch_id: 'branch/a #1' })
     await getBranchCheckpoint('cp/a #1')
     await captureInitialBranchCheckpoint({ simulation_run_id: 'save/a #1', command_id: 'initial' })
     await captureCurrentBranchCheckpoint({ simulation_run_id: 'save/a #1' })
     await captureCompletedEventBranchCheckpoint({ simulation_run_id: 'save/a #1', event_id: 'event-1', event_sequence: 1, command_id: 'event' })
+    await captureCompletedWeekBranchCheckpoint({ simulation_run_id: 'save/a #1', week: 12, command_id: 'week' })
     expect(globalThis.fetch).toHaveBeenNthCalledWith(1, 'http://127.0.0.1:8000/branch-checkpoints?branch_id=branch%2Fa+%231', expect.anything())
     expect(globalThis.fetch).toHaveBeenNthCalledWith(2, 'http://127.0.0.1:8000/branch-checkpoints/cp%2Fa%20%231', expect.anything())
     expect(globalThis.fetch).toHaveBeenNthCalledWith(3, 'http://127.0.0.1:8000/branch-checkpoints/capture-initial', expect.objectContaining({ method: 'POST', body: JSON.stringify({ simulation_run_id: 'save/a #1', command_id: 'initial' }) }))
     expect(globalThis.fetch).toHaveBeenNthCalledWith(4, 'http://127.0.0.1:8000/branch-checkpoints/capture-current', expect.objectContaining({ method: 'POST', body: JSON.stringify({ simulation_run_id: 'save/a #1' }) }))
     expect(globalThis.fetch).toHaveBeenNthCalledWith(5, 'http://127.0.0.1:8000/branch-checkpoints/capture-completed-event', expect.objectContaining({ method: 'POST', body: JSON.stringify({ simulation_run_id: 'save/a #1', event_id: 'event-1', event_sequence: 1, command_id: 'event' }) }))
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(6, 'http://127.0.0.1:8000/branch-checkpoints/capture-completed-week', expect.objectContaining({ method: 'POST', body: JSON.stringify({ simulation_run_id: 'save/a #1', week: 12, command_id: 'week' }) }))
   })
 
   it('lists BranchState metadata and encodes branch state detail ids', async () => {

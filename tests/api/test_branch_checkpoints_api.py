@@ -124,3 +124,29 @@ def test_branch_state_inspection_is_read_only_and_filterable(tmp_path) -> None:
         assert status == 200 and detail == branch_state
         status, missing = _request("GET", f"{server.base_url}/branch-states/missing")
         assert status == 404 and "not found" in missing["detail"]
+
+
+def test_capture_completed_week_branch_checkpoint_api(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'checkpoint-week-api.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, state = _request("POST", f"{server.base_url}/runs", {"run_id": "checkpoint-week", "seed": 12, "season": 2027})
+        assert status == 201
+        status, run_state = _request("GET", f"{server.base_url}/runs/checkpoint-week")
+        assert status == 200
+        week = run_state["season_state"]["ordered_events"][0]["week"]
+        status, rejected = _request("POST", f"{server.base_url}/branch-checkpoints/capture-completed-week", {"simulation_run_id": "checkpoint-week", "week": week})
+        assert status == 400
+        status, initial = _request("POST", f"{server.base_url}/branch-checkpoints/capture-initial", {"simulation_run_id": "checkpoint-week"})
+        assert status == 200
+        status, rejected = _request("POST", f"{server.base_url}/branch-checkpoints/capture-completed-week", {"simulation_run_id": "checkpoint-week", "week": week})
+        assert status == 400 and "not completed" in rejected["detail"]
+        status, _ = _request("POST", f"{server.base_url}/runs/checkpoint-week/simulate/next-week")
+        assert status == 200
+        status, checkpoint = _request("POST", f"{server.base_url}/branch-checkpoints/capture-completed-week", {"simulation_run_id": "checkpoint-week", "week": week})
+        assert status == 200 and checkpoint["kind"] == "week_completed" and checkpoint["parent_checkpoint_id"] == initial["checkpoint_id"]
+        status, repeated = _request("POST", f"{server.base_url}/branch-checkpoints/capture-completed-week", {"simulation_run_id": "checkpoint-week", "week": week, "command_id": "different"})
+        assert status == 200 and repeated["checkpoint_id"] == checkpoint["checkpoint_id"]
+        status, listed = _request("GET", f"{server.base_url}/branch-checkpoints?branch_id={checkpoint['branch_id']}")
+        assert status == 200 and [item["sequence"] for item in listed["branch_checkpoints"]] == [1, 2]
+        status, branch_state = _request("GET", f"{server.base_url}/branch-states/{checkpoint['branch_id']}")
+        assert status == 200 and branch_state["head_checkpoint_id"] == checkpoint["checkpoint_id"]

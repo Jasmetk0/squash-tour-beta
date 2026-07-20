@@ -747,6 +747,17 @@ class SimulationPersistenceRepository:
             )).scalar_one_or_none()
             return self._to_branch_checkpoint(model) if model is not None else None
 
+    def get_week_completed_branch_checkpoint(self, *, branch_id: str, season: int, week: int) -> BranchCheckpointRecord | None:
+        """Return the sole capture-only completed-week boundary for a branch/week."""
+        with self._session_factory() as session:
+            model = session.execute(select(BranchCheckpointModel).where(
+                BranchCheckpointModel.branch_id == branch_id,
+                BranchCheckpointModel.kind == "week_completed",
+                BranchCheckpointModel.season == season,
+                BranchCheckpointModel.week == week,
+            )).scalar_one_or_none()
+            return self._to_branch_checkpoint(model) if model is not None else None
+
     def list_branch_checkpoints(self, *, branch_id: str | None = None, run_id: str | None = None) -> list[BranchCheckpointRecord]:
         with self._session_factory() as session:
             statement = select(BranchCheckpointModel)
@@ -1035,6 +1046,90 @@ class SimulationPersistenceRepository:
             world_fingerprint=legacy.world_generation_fingerprint, global_seed=legacy.seed, branch_seed=branch.branch_seed,
             seed_namespace=seed_namespace, payload_schema_version="branch_checkpoint_payload_v1", content_hash_algorithm="sha256", content_hash="", payload=payload)
         checkpoint = BranchCheckpointRecord(**{**incomplete.__dict__, "content_hash": self.checkpoint_envelope_content_hash(incomplete)})
+        created = self.create_branch_checkpoint(checkpoint)
+        with self._session_factory.begin() as session:
+            model = session.get(RunBranchModel, branch.branch_id)
+            if model is not None:
+                model.head_checkpoint_id = created.checkpoint_id
+        self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+        return created
+
+    def capture_completed_week_checkpoint_for_legacy_simulation_run(
+        self, *, simulation_run_id: str, week: int, command_id: str | None = None,
+    ) -> BranchCheckpointRecord:
+        """Capture an already completed scheduled legacy week without replaying or forking it."""
+        if not 1 <= week <= 61:
+            raise ValueError("week must be within the FAX season range 1..61")
+        legacy = self.get_simulation_run(run_id=simulation_run_id)
+        if legacy is None:
+            raise KeyError(f"run_id {simulation_run_id} was not found")
+        branch = self.ensure_default_branch_for_simulation_run(simulation_run_id=simulation_run_id)
+        if branch is None:
+            raise KeyError(f"default branch for run_id {simulation_run_id} was not found")
+        state = self.load_season_state(run_id=simulation_run_id)
+        if state is None:
+            raise ValueError(f"run_id {simulation_run_id} has no season state")
+        scheduled = [event for event in state.ordered_events if event.week == week]
+        if not scheduled:
+            raise ValueError(f"week {week} has no scheduled events; empty-week checkpoints are not supported")
+        scheduled_ids = [event.event_id for event in scheduled]
+        incomplete = [event_id for event_id in scheduled_ids if event_id not in state.completed_event_ids]
+        if incomplete:
+            raise ValueError(f"week {week} is not completed; scheduled events are incomplete: {', '.join(incomplete)}")
+        persisted_by_id = {item.event_id: item for item in self.list_completed_events(run_id=simulation_run_id)}
+        missing = [event_id for event_id in scheduled_ids if event_id not in persisted_by_id]
+        if missing:
+            raise ValueError(f"week {week} has completed events without persisted completed-event records: {', '.join(missing)}")
+        branch_state = self.get_branch_state(branch_id=branch.branch_id) or self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+        effective_head_id = branch_state.head_checkpoint_id if branch_state is not None else branch.head_checkpoint_id
+        if effective_head_id is None:
+            raise ValueError(f"branch {branch.branch_id} has no existing head checkpoint; capture initial first")
+        if self.get_branch_checkpoint(checkpoint_id=effective_head_id) is None:
+            raise ValueError(f"branch {branch.branch_id} head checkpoint {effective_head_id} was not found")
+        existing_week = self.get_week_completed_branch_checkpoint(branch_id=branch.branch_id, season=state.season, week=week)
+        if existing_week is not None:
+            self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+            return existing_week
+        completed = [persisted_by_id[event_id] for event_id in scheduled_ids]
+        completed.sort(key=lambda item: item.event_sequence)
+        completed_inputs = {
+            item.event_id: item.model_dump(mode="json") for item in state.completed_tournament_inputs
+            if item.event_id in set(scheduled_ids)
+        }
+        actions = [action.__dict__ for action in self.list_admin_actions(run_id=simulation_run_id)]
+        seed_namespace = {"hierarchy": ["global", "season", "entries", "draws", "tournament_progression"], "global_seed": legacy.seed, "branch_seed": branch.branch_seed}
+        ranking_refs = [item.__dict__ for item in self.list_ranking_snapshot_records(run_id=simulation_run_id) if item.source_event_id in scheduled_ids]
+        race_refs = [item.__dict__ for item in self.list_race_snapshot_records(run_id=simulation_run_id) if item.source_event_id in scheduled_ids]
+        event_rows = [{"record": item.__dict__, "metadata": {"season": item.season, "week": item.week, "template_id": item.template_id}, "tournament_result": item.tournament_result, "tournament_result_hash": self.checkpoint_content_hash(item.tournament_result or {}), "completed_tournament_input": completed_inputs.get(item.event_id), "completed_tournament_input_hash": self.checkpoint_content_hash(completed_inputs.get(item.event_id) or {})} for item in completed]
+        sequences = [item.event_sequence for item in completed]
+        payload: dict[str, object] = {
+            "fork_capability": "not_forkable_player_state_not_migrated", "capture_mode": "legacy_week_completed_capture_only",
+            "payload_schema_version": "branch_checkpoint_payload_v1", "run_id": branch.run_id, "branch_id": branch.branch_id,
+            "legacy_simulation_run_id": simulation_run_id, "parent_checkpoint_id": effective_head_id,
+            "week": {"season": state.season, "week": week, "source": "legacy_completed_week", "scheduled_event_count": len(scheduled), "completed_event_count": len(completed), "completed_event_ids": scheduled_ids, "completed_event_sequences": sequences},
+            "simulation_run": legacy.__dict__, "season_state": state.model_dump(mode="json"), "completed_events": event_rows,
+            "publications": {"ranking_snapshot_references": ranking_refs, "race_snapshot_references": race_refs},
+            "admin": {"actions": actions, "admin_actions_hash": self.checkpoint_content_hash({"actions": actions})},
+            "provenance": {"world_id": legacy.world_id, "world_fingerprint": legacy.world_generation_fingerprint, "config_version": legacy.config_version, "config_fingerprint": legacy.config_fingerprint, "global_seed": legacy.seed, "branch_seed": branch.branch_seed, "seed_namespace": seed_namespace},
+            "limitations": {"forkable": False, "replayable": False, "player_state": "hash_only_or_not_migrated", "prospects": "legacy_run_scoped_not_captured_as_durable_identity", "simulation_source": "legacy_simulation_run_state", "empty_week_checkpoints": "not_supported_until_calendar_week_state_exists", "match_level_checkpoints": "declared_future_boundary_not_supported_by_current_precomputed_tournament_model"},
+        }
+        logical_fingerprint = self.checkpoint_content_hash({key: value for key, value in payload.items() if key != "parent_checkpoint_id"})
+        command_id = command_id or f"legacy-week-completed-capture:{simulation_run_id}:{state.season}:{week}:{','.join(scheduled_ids)}:{','.join(map(str, sequences))}:{logical_fingerprint[:24]}"
+        existing = self.get_branch_checkpoint_by_command_id(branch_id=branch.branch_id, command_id=command_id)
+        if existing is not None:
+            self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+            return existing
+        suffix = hashlib.sha256(f"{branch.branch_id}\x00{command_id}".encode("utf-8")).hexdigest()[:24]
+        incomplete_checkpoint = BranchCheckpointRecord(
+            checkpoint_id=f"checkpoint-{suffix}", run_id=branch.run_id, branch_id=branch.branch_id, parent_checkpoint_id=effective_head_id,
+            sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id), kind="week_completed", season=state.season, week=week,
+            event_id=None, event_sequence=max(sequences) if sequences else None, command_id=command_id,
+            command_kind="capture_completed_week_legacy_state", command_boundary="after_completed_week_persisted",
+            config_version=legacy.config_version, config_fingerprint=legacy.config_fingerprint, world_id=legacy.world_id,
+            world_fingerprint=legacy.world_generation_fingerprint, global_seed=legacy.seed, branch_seed=branch.branch_seed,
+            seed_namespace=seed_namespace, payload_schema_version="branch_checkpoint_payload_v1", content_hash_algorithm="sha256", content_hash="", payload=payload,
+        )
+        checkpoint = BranchCheckpointRecord(**{**incomplete_checkpoint.__dict__, "content_hash": self.checkpoint_envelope_content_hash(incomplete_checkpoint)})
         created = self.create_branch_checkpoint(checkpoint)
         with self._session_factory.begin() as session:
             model = session.get(RunBranchModel, branch.branch_id)

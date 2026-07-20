@@ -16,6 +16,8 @@ import {
   getRunWeeklyIntakeCohortSeasonPreview,
   listRunProspects,
   materializeRunProspects,
+  listRunContainers,
+  getRunContainer,
   getWorldPackageValidation,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
@@ -862,6 +864,22 @@ describe('world package registry client', () => {
       })
     )
     expect(result).toEqual(responseBody)
+  })
+
+  it('lists read-only Run containers and encodes a Run container id on detail lookup', async () => {
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify({ run_containers: [] }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ run_id: 'save/a #1' }), { status: 200 }))
+
+    await listRunContainers()
+    await getRunContainer('save/a #1')
+
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(
+      1, 'http://127.0.0.1:8000/run-containers', expect.anything()
+    )
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(
+      2, 'http://127.0.0.1:8000/run-containers/save%2Fa%20%231', expect.anything()
+    )
   })
 
 })

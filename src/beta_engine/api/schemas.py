@@ -129,6 +129,28 @@ class RunIndexResponse(BaseModel):
     runs: list[RunIndexSummaryResponse] = Field(default_factory=list)
 
 
+class RunContainerResponse(BaseModel):
+    run_id: str
+    display_name: str | None = None
+    storage_kind: Literal["built_in", "custom_local"]
+    read_only: bool
+    world_id: str
+    world_package_fingerprint: str | None = None
+    config_version: str | None = None
+    config_fingerprint: str | None = None
+    global_seed: int | None = None
+    timeline_start_season: int
+    timeline_end_season: int
+    official_branch_id: str | None = None
+    status: str
+    metadata_json: dict[str, object] = Field(default_factory=dict)
+    mapped_simulation_run_count: int
+
+
+class RunContainerListResponse(BaseModel):
+    run_containers: list[RunContainerResponse] = Field(default_factory=list)
+
+
 
 class RunProspectResponse(BaseModel):
     prospect_id: str

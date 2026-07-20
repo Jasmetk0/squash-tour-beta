@@ -83,6 +83,37 @@ def _request(
         return int(exc.code), parsed
 
 
+def test_run_container_endpoints_follow_legacy_run_creation_without_changing_runs(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'run-container-api.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, empty = _request("GET", f"{server.base_url}/run-containers")
+        assert status == 200
+        assert empty == {"run_containers": []}
+
+        status, legacy_run = _request(
+            "POST", f"{server.base_url}/runs", {"run_id": "save/a #1", "seed": 123, "season": 2027}
+        )
+        assert status == 201
+        assert legacy_run["run_id"] == "save/a #1"
+
+        status, containers = _request("GET", f"{server.base_url}/run-containers")
+        assert status == 200
+        assert containers["run_containers"][0]["run_id"] == "save/a #1"
+        assert containers["run_containers"][0]["mapped_simulation_run_count"] == 1
+
+        status, detail = _request("GET", f"{server.base_url}/run-containers/save%2Fa%20%231")
+        assert status == 200
+        assert detail["world_id"] == "official_fax_world"
+
+        status, missing = _request("GET", f"{server.base_url}/run-containers/not-found")
+        assert status == 404
+        assert "not found" in missing["detail"]
+
+        status, runs = _request("GET", f"{server.base_url}/runs")
+        assert status == 200
+        assert runs["runs"][0]["run_id"] == "save/a #1"
+
+
 def _generated_player_ids(*, season: int, seed: int) -> list[str]:
     countries = load_countries_config().countries
     plan = AnnualTalentClassPlanner().plan(year=season, seed=seed, countries=countries)

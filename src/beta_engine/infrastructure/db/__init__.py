@@ -11,6 +11,7 @@ from beta_engine.infrastructure.db.repositories import (
     PersistedPlayerTransitionRecord,
     PersistedSeasonRolloverRecord,
     RunLineageRecord,
+    RunContainerRecord,
     SimulationPersistenceRepository,
     SimulationRunInfo,
 )
@@ -26,6 +27,7 @@ __all__ = [
     "deterministic_prospect_id",
     "PersistedSeasonRolloverRecord",
     "RunLineageRecord",
+    "RunContainerRecord",
     "SimulationPersistenceRepository",
     "SimulationRunInfo",
     "create_session_factory",

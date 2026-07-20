@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import Integer, String, Text, UniqueConstraint
+from sqlalchemy import CheckConstraint, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -25,6 +25,41 @@ class SimulationRunModel(Base):
     source_rollover_run_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     source_rollover_from_season: Mapped[int | None] = mapped_column(Integer, nullable=True)
     source_rollover_to_season: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+
+class RunContainerModel(Base):
+    """Product-level save/world container; distinct from legacy season attempts."""
+
+    __tablename__ = "runs"
+    __table_args__ = (
+        CheckConstraint("storage_kind IN ('built_in', 'custom_local')", name="ck_runs_storage_kind"),
+    )
+
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    display_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    storage_kind: Mapped[str] = mapped_column(String(32), nullable=False, default="built_in")
+    read_only: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    world_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    world_package_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    config_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    config_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    global_seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    timeline_start_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    timeline_end_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    official_branch_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
+class LegacySimulationRunMappingModel(Base):
+    """One-to-one compatibility mapping from legacy season attempts to Runs."""
+
+    __tablename__ = "legacy_simulation_run_mappings"
+
+    simulation_run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, unique=True, index=True)
+    mapping_kind: Mapped[str] = mapped_column(String(64), nullable=False, default="legacy_single_attempt")
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
 
 
 class SeasonStateModel(Base):

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import CheckConstraint, Integer, String, Text, UniqueConstraint
+from sqlalchemy import CheckConstraint, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -88,6 +88,12 @@ class BranchCheckpointModel(Base):
         UniqueConstraint("branch_id", "sequence", name="uq_branch_checkpoints_branch_sequence"),
         UniqueConstraint("branch_id", "command_id", name="uq_branch_checkpoints_branch_command"),
         CheckConstraint("content_hash_algorithm = 'sha256'", name="ck_branch_checkpoints_sha256"),
+        Index(
+            "uq_branch_checkpoints_one_initial_per_branch",
+            "branch_id",
+            unique=True,
+            sqlite_where=text("kind = 'initial'"),
+        ),
     )
 
     checkpoint_id: Mapped[str] = mapped_column(String(128), primary_key=True)

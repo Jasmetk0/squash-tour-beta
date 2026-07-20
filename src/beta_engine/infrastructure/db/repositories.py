@@ -19,6 +19,7 @@ from beta_engine.domain.rankings import CompletedTournamentPointsInput
 from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
 from beta_engine.infrastructure.db.models import (
     AdminActionModel,
+    BranchCheckpointModel,
     Base,
     CompletedEventMetadataModel,
     FinalsQualificationModel,
@@ -112,6 +113,16 @@ class RunBranchRecord:
     legacy_simulation_run_id: str | None
     metadata: dict[str, object]
     is_official: bool = False
+
+
+@dataclass(frozen=True)
+class BranchCheckpointRecord:
+    checkpoint_id: str; run_id: str; branch_id: str; parent_checkpoint_id: str | None; sequence: int; kind: str
+    season: int; week: int | None; event_id: str | None; event_sequence: int | None
+    command_id: str; command_kind: str; command_boundary: str
+    config_version: str | None; config_fingerprint: str | None; world_id: str; world_fingerprint: str | None
+    global_seed: int | None; branch_seed: int | None; seed_namespace: dict[str, object]
+    payload_schema_version: str; content_hash_algorithm: str; content_hash: str; payload: dict[str, object]
 
 
 @dataclass(frozen=True)
@@ -554,6 +565,129 @@ class SimulationPersistenceRepository:
         self.backfill_run_containers_for_existing_simulation_runs()
         for legacy in self.list_simulation_runs():
             self.ensure_default_branch_for_simulation_run(simulation_run_id=legacy.run_id)
+
+    @staticmethod
+    def canonical_json(payload: object) -> str:
+        return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+    @classmethod
+    def checkpoint_content_hash(cls, payload: dict[str, object]) -> str:
+        return hashlib.sha256(cls.canonical_json(payload).encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def _to_branch_checkpoint(model: BranchCheckpointModel) -> BranchCheckpointRecord:
+        return BranchCheckpointRecord(
+            checkpoint_id=model.checkpoint_id, run_id=model.run_id, branch_id=model.branch_id,
+            parent_checkpoint_id=model.parent_checkpoint_id, sequence=model.sequence, kind=model.kind,
+            season=model.season, week=model.week, event_id=model.event_id, event_sequence=model.event_sequence,
+            command_id=model.command_id, command_kind=model.command_kind, command_boundary=model.command_boundary,
+            config_version=model.config_version, config_fingerprint=model.config_fingerprint, world_id=model.world_id,
+            world_fingerprint=model.world_fingerprint, global_seed=model.global_seed, branch_seed=model.branch_seed,
+            seed_namespace=_from_json(model.seed_namespace_json), payload_schema_version=model.payload_schema_version,
+            content_hash_algorithm=model.content_hash_algorithm, content_hash=model.content_hash,
+            payload=_from_json(model.payload_json),
+        )
+
+    def next_checkpoint_sequence(self, *, branch_id: str) -> int:
+        with self._session_factory() as session:
+            value = session.execute(select(func.max(BranchCheckpointModel.sequence)).where(BranchCheckpointModel.branch_id == branch_id)).scalar_one()
+            return 1 if value is None else int(value) + 1
+
+    def get_branch_checkpoint(self, *, checkpoint_id: str) -> BranchCheckpointRecord | None:
+        with self._session_factory() as session:
+            model = session.get(BranchCheckpointModel, checkpoint_id)
+            return self._to_branch_checkpoint(model) if model is not None else None
+
+    def get_branch_checkpoint_by_command_id(self, *, branch_id: str, command_id: str) -> BranchCheckpointRecord | None:
+        with self._session_factory() as session:
+            model = session.execute(select(BranchCheckpointModel).where(BranchCheckpointModel.branch_id == branch_id, BranchCheckpointModel.command_id == command_id)).scalar_one_or_none()
+            return self._to_branch_checkpoint(model) if model is not None else None
+
+    def list_branch_checkpoints(self, *, branch_id: str | None = None, run_id: str | None = None) -> list[BranchCheckpointRecord]:
+        with self._session_factory() as session:
+            statement = select(BranchCheckpointModel)
+            if branch_id is not None: statement = statement.where(BranchCheckpointModel.branch_id == branch_id)
+            if run_id is not None: statement = statement.where(BranchCheckpointModel.run_id == run_id)
+            return [self._to_branch_checkpoint(model) for model in session.execute(statement.order_by(BranchCheckpointModel.branch_id, BranchCheckpointModel.sequence)).scalars()]
+
+    def verify_branch_checkpoint_hash(self, *, checkpoint_id: str) -> bool:
+        record = self.get_branch_checkpoint(checkpoint_id=checkpoint_id)
+        return record is not None and record.content_hash_algorithm == "sha256" and self.checkpoint_content_hash(record.payload) == record.content_hash
+
+    def create_branch_checkpoint(self, record: BranchCheckpointRecord) -> BranchCheckpointRecord:
+        if record.content_hash_algorithm != "sha256" or self.checkpoint_content_hash(record.payload) != record.content_hash:
+            raise ValueError("branch checkpoint content hash is invalid")
+        with self._session_factory.begin() as session:
+            existing = session.get(BranchCheckpointModel, record.checkpoint_id)
+            if existing is not None:
+                persisted = self._to_branch_checkpoint(existing)
+                if persisted == record: return persisted
+                raise ValueError(f"checkpoint_id {record.checkpoint_id} already exists with different content")
+            by_command = session.execute(select(BranchCheckpointModel).where(BranchCheckpointModel.branch_id == record.branch_id, BranchCheckpointModel.command_id == record.command_id)).scalar_one_or_none()
+            if by_command is not None: return self._to_branch_checkpoint(by_command)
+            expected = session.execute(select(func.max(BranchCheckpointModel.sequence)).where(BranchCheckpointModel.branch_id == record.branch_id)).scalar_one()
+            if record.sequence != (1 if expected is None else int(expected) + 1): raise ValueError("branch checkpoint sequence must increase by one")
+            if record.kind == "initial" and record.parent_checkpoint_id is not None: raise ValueError("initial checkpoint parent must be null")
+            session.add(BranchCheckpointModel(
+                checkpoint_id=record.checkpoint_id, run_id=record.run_id, branch_id=record.branch_id, parent_checkpoint_id=record.parent_checkpoint_id,
+                sequence=record.sequence, kind=record.kind, season=record.season, week=record.week, event_id=record.event_id,
+                event_sequence=record.event_sequence, command_id=record.command_id, command_kind=record.command_kind,
+                command_boundary=record.command_boundary, config_version=record.config_version, config_fingerprint=record.config_fingerprint,
+                world_id=record.world_id, world_fingerprint=record.world_fingerprint, global_seed=record.global_seed, branch_seed=record.branch_seed,
+                seed_namespace_json=self.canonical_json(record.seed_namespace), payload_schema_version=record.payload_schema_version,
+                content_hash_algorithm=record.content_hash_algorithm, content_hash=record.content_hash, payload_json=self.canonical_json(record.payload),
+            ))
+        return record
+
+    def capture_initial_checkpoint_for_legacy_simulation_run(self, *, simulation_run_id: str, command_id: str | None = None) -> BranchCheckpointRecord:
+        legacy = self.get_simulation_run(run_id=simulation_run_id)
+        if legacy is None: raise KeyError(f"run_id {simulation_run_id} was not found")
+        branch = self.ensure_default_branch_for_simulation_run(simulation_run_id=simulation_run_id)
+        if branch is None: raise KeyError(f"default branch for run_id {simulation_run_id} was not found")
+        state = self.load_season_state(run_id=simulation_run_id)
+        if state is None: raise ValueError(f"run_id {simulation_run_id} has no season state")
+        command_id = command_id or f"legacy-initial-capture:{simulation_run_id}"
+        existing = self.get_branch_checkpoint_by_command_id(branch_id=branch.branch_id, command_id=command_id)
+        if existing is not None: return existing
+        actions = [action.__dict__ for action in self.list_admin_actions(run_id=simulation_run_id)]
+        seed_namespace = {"hierarchy": ["global", "season", "entries", "draws", "tournament_progression"], "global_seed": legacy.seed, "branch_seed": branch.branch_seed}
+        payload: dict[str, object] = {"fork_capability": "not_forkable_player_state_not_migrated", "capture_mode": "legacy_initial_capture_only", "payload_schema_version": "branch_checkpoint_payload_v1", "run_id": branch.run_id, "branch_id": branch.branch_id, "legacy_simulation_run_id": simulation_run_id, "simulation_run": legacy.__dict__, "season_state": state.model_dump(mode="json"), "admin": {"actions": actions, "admin_actions_hash": self.checkpoint_content_hash({"actions": actions})}, "provenance": {"world_id": legacy.world_id, "world_fingerprint": legacy.world_generation_fingerprint, "config_version": legacy.config_version, "config_fingerprint": legacy.config_fingerprint, "global_seed": legacy.seed, "branch_seed": branch.branch_seed, "seed_namespace": seed_namespace}, "limitations": {"player_state": "hash_only_or_not_migrated", "prospects": "legacy_run_scoped_not_captured_as_durable_identity", "forkable": False}}
+        digest = self.checkpoint_content_hash(payload)
+        separator = "\x00"
+        checkpoint_identity = separator.join([branch.branch_id, command_id])
+        checkpoint_suffix = hashlib.sha256(checkpoint_identity.encode("utf-8")).hexdigest()[:24]
+        checkpoint_id = f"checkpoint-{checkpoint_suffix}"
+        checkpoint = BranchCheckpointRecord(
+            checkpoint_id=checkpoint_id,
+            run_id=branch.run_id,
+            branch_id=branch.branch_id,
+            parent_checkpoint_id=None,
+            sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id),
+            kind="initial",
+            season=legacy.season,
+            week=None,
+            event_id=None,
+            event_sequence=None,
+            command_id=command_id,
+            command_kind="capture_initial",
+            command_boundary="after_legacy_state_load",
+            config_version=legacy.config_version,
+            config_fingerprint=legacy.config_fingerprint,
+            world_id=legacy.world_id,
+            world_fingerprint=legacy.world_generation_fingerprint,
+            global_seed=legacy.seed,
+            branch_seed=branch.branch_seed,
+            seed_namespace=seed_namespace,
+            payload_schema_version="branch_checkpoint_payload_v1",
+            content_hash_algorithm="sha256",
+            content_hash=digest,
+            payload=payload,
+        )
+        created = self.create_branch_checkpoint(checkpoint)
+        with self._session_factory.begin() as session:
+            model = session.get(RunBranchModel, branch.branch_id)
+            if model is not None and model.head_checkpoint_id is None: model.head_checkpoint_id = created.checkpoint_id
+        return created
 
     def save_season_state(self, *, run_id: str, state: SeasonState) -> None:
         with self._session_factory.begin() as session:

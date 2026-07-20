@@ -20,6 +20,9 @@ import {
   getRunContainer,
   listRunBranches,
   getRunBranch,
+  listBranchCheckpoints,
+  getBranchCheckpoint,
+  captureInitialBranchCheckpoint,
   getWorldPackageValidation,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
@@ -882,6 +885,19 @@ describe('world package registry client', () => {
     expect(globalThis.fetch).toHaveBeenNthCalledWith(
       2, 'http://127.0.0.1:8000/run-branches/branch%2Fa%20%231', expect.anything()
     )
+  })
+
+  it('lists, gets, and capture-posts immutable branch checkpoints', async () => {
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify({ branch_checkpoints: [] }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ checkpoint_id: 'cp/a #1' }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ checkpoint_id: 'cp/a #1' }), { status: 200 }))
+    await listBranchCheckpoints({ branch_id: 'branch/a #1' })
+    await getBranchCheckpoint('cp/a #1')
+    await captureInitialBranchCheckpoint({ simulation_run_id: 'save/a #1', command_id: 'initial' })
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(1, 'http://127.0.0.1:8000/branch-checkpoints?branch_id=branch%2Fa+%231', expect.anything())
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(2, 'http://127.0.0.1:8000/branch-checkpoints/cp%2Fa%20%231', expect.anything())
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(3, 'http://127.0.0.1:8000/branch-checkpoints/capture-initial', expect.objectContaining({ method: 'POST', body: JSON.stringify({ simulation_run_id: 'save/a #1', command_id: 'initial' }) }))
   })
 
   it('lists read-only Run containers and encodes a Run container id on detail lookup', async () => {

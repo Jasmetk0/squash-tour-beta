@@ -80,6 +80,42 @@ class RunBranchModel(Base):
     metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
 
 
+class BranchCheckpointModel(Base):
+    """Immutable, capture-only checkpoint for a product Run branch."""
+
+    __tablename__ = "branch_checkpoints"
+    __table_args__ = (
+        UniqueConstraint("branch_id", "sequence", name="uq_branch_checkpoints_branch_sequence"),
+        UniqueConstraint("branch_id", "command_id", name="uq_branch_checkpoints_branch_command"),
+        CheckConstraint("content_hash_algorithm = 'sha256'", name="ck_branch_checkpoints_sha256"),
+    )
+
+    checkpoint_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    parent_checkpoint_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    kind: Mapped[str] = mapped_column(String(64), nullable=False)
+    season: Mapped[int] = mapped_column(Integer, nullable=False)
+    week: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    event_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    event_sequence: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    command_kind: Mapped[str] = mapped_column(String(64), nullable=False)
+    command_boundary: Mapped[str] = mapped_column(String(64), nullable=False)
+    config_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    config_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    world_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    world_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    global_seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    branch_seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    seed_namespace_json: Mapped[str] = mapped_column(Text, nullable=False)
+    payload_schema_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    content_hash_algorithm: Mapped[str] = mapped_column(String(16), nullable=False, default="sha256")
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class SeasonStateModel(Base):
     __tablename__ = "season_state"
 

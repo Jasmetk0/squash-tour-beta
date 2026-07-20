@@ -70,6 +70,7 @@ def test_database_bootstrap_creates_required_tables(tmp_path) -> None:
 
     assert repository.list_table_names() == [
         "admin_actions",
+        "branch_checkpoints",
         "completed_event_metadata",
         "completed_events",
         "completed_tournament_inputs",

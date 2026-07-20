@@ -551,6 +551,7 @@ export type BranchCheckpoint = {
 }
 export type BranchCheckpointListResponse = { branch_checkpoints: BranchCheckpoint[] }
 export type CaptureInitialBranchCheckpointRequest = { simulation_run_id: string; command_id?: string | null }
+export type CaptureCurrentBranchCheckpointRequest = { simulation_run_id: string; command_id?: string | null }
 export type BranchState = {
   branch_id: string; run_id: string; head_checkpoint_id: string | null
   current_season: number | null; current_week: number | null; current_event_id: string | null; current_event_sequence: number | null

@@ -848,6 +848,110 @@ class SimulationPersistenceRepository:
         self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
         return created
 
+    def capture_current_checkpoint_for_legacy_simulation_run(
+        self, *, simulation_run_id: str, command_id: str | None = None
+    ) -> BranchCheckpointRecord:
+        """Capture the legacy run's current state as an immutable, non-forkable checkpoint.
+
+        This intentionally reads the legacy ``season_state`` and does not make branch
+        state authoritative for simulation or provide replay/fork behavior.
+        """
+        legacy = self.get_simulation_run(run_id=simulation_run_id)
+        if legacy is None:
+            raise KeyError(f"run_id {simulation_run_id} was not found")
+        branch = self.ensure_default_branch_for_simulation_run(simulation_run_id=simulation_run_id)
+        if branch is None:
+            raise KeyError(f"default branch for run_id {simulation_run_id} was not found")
+        state = self.load_season_state(run_id=simulation_run_id)
+        if state is None:
+            raise ValueError(f"run_id {simulation_run_id} has no season state")
+
+        # BranchState is the mutable checkpoint-head locator.  Older branches may
+        # not have one yet, in which case it is backfilled from run_branches.
+        branch_state = self.get_branch_state(branch_id=branch.branch_id)
+        if branch_state is None:
+            branch_state = self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+        effective_head_id = branch_state.head_checkpoint_id if branch_state is not None else branch.head_checkpoint_id
+        if effective_head_id is None:
+            raise ValueError(f"branch {branch.branch_id} has no existing head checkpoint; capture initial first")
+        parent = self.get_branch_checkpoint(checkpoint_id=effective_head_id)
+        if parent is None:
+            raise ValueError(f"branch {branch.branch_id} head checkpoint {effective_head_id} was not found")
+
+        actions = [action.__dict__ for action in self.list_admin_actions(run_id=simulation_run_id)]
+        seed_namespace = {
+            "hierarchy": ["global", "season", "entries", "draws", "tournament_progression"],
+            "global_seed": legacy.seed,
+            "branch_seed": branch.branch_seed,
+        }
+        serialized_state = state.model_dump(mode="json")
+        payload: dict[str, object] = {
+            "fork_capability": "not_forkable_player_state_not_migrated",
+            "capture_mode": "legacy_current_state_capture_only",
+            "payload_schema_version": "branch_checkpoint_payload_v1",
+            "run_id": branch.run_id,
+            "branch_id": branch.branch_id,
+            "legacy_simulation_run_id": simulation_run_id,
+            "parent_checkpoint_id": effective_head_id,
+            "simulation_run": legacy.__dict__,
+            "season_state": serialized_state,
+            "admin": {"actions": actions, "admin_actions_hash": self.checkpoint_content_hash({"actions": actions})},
+            "provenance": {
+                "world_id": legacy.world_id,
+                "world_fingerprint": legacy.world_generation_fingerprint,
+                "config_version": legacy.config_version,
+                "config_fingerprint": legacy.config_fingerprint,
+                "global_seed": legacy.seed,
+                "branch_seed": branch.branch_seed,
+                "seed_namespace": seed_namespace,
+            },
+            "limitations": {
+                "forkable": False,
+                "player_state": "hash_only_or_not_migrated",
+                "prospects": "legacy_run_scoped_not_captured_as_durable_identity",
+                "simulation_source": "legacy_simulation_run_state",
+            },
+        }
+        # The default command identity represents the captured logical legacy state,
+        # not the mutable branch head.  Keeping the parent out makes a repeated
+        # no-command capture idempotent even after its first call advances the head.
+        state_fingerprint = self.checkpoint_content_hash({
+            key: value for key, value in payload.items() if key != "parent_checkpoint_id"
+        })
+        command_id = command_id or f"legacy-current-capture:{simulation_run_id}:{state_fingerprint[:24]}"
+        existing = self.get_branch_checkpoint_by_command_id(branch_id=branch.branch_id, command_id=command_id)
+        if existing is not None:
+            self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+            return existing
+
+        checkpoint_suffix = hashlib.sha256(f"{branch.branch_id}\x00{command_id}".encode("utf-8")).hexdigest()[:24]
+        active_event = state.active_tournament.event if state.active_tournament is not None else None
+        checkpoint_without_hash = BranchCheckpointRecord(
+            checkpoint_id=f"checkpoint-{checkpoint_suffix}", run_id=branch.run_id, branch_id=branch.branch_id,
+            parent_checkpoint_id=effective_head_id, sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id),
+            kind="current_state_capture", season=state.season,
+            week=active_event.week if active_event is not None else None,
+            event_id=active_event.event_id if active_event is not None else None,
+            event_sequence=state.next_event_index if active_event is not None else None,
+            command_id=command_id, command_kind="capture_current_legacy_state", command_boundary="after_legacy_state_load",
+            config_version=legacy.config_version, config_fingerprint=legacy.config_fingerprint,
+            world_id=legacy.world_id, world_fingerprint=legacy.world_generation_fingerprint,
+            global_seed=legacy.seed, branch_seed=branch.branch_seed, seed_namespace=seed_namespace,
+            payload_schema_version="branch_checkpoint_payload_v1", content_hash_algorithm="sha256", content_hash="",
+            payload=payload,
+        )
+        checkpoint = BranchCheckpointRecord(**{
+            **checkpoint_without_hash.__dict__,
+            "content_hash": self.checkpoint_envelope_content_hash(checkpoint_without_hash),
+        })
+        created = self.create_branch_checkpoint(checkpoint)
+        with self._session_factory.begin() as session:
+            model = session.get(RunBranchModel, branch.branch_id)
+            if model is not None:
+                model.head_checkpoint_id = created.checkpoint_id
+        self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+        return created
+
     def save_season_state(self, *, run_id: str, state: SeasonState) -> None:
         with self._session_factory.begin() as session:
             model = session.get(SeasonStateModel, run_id)

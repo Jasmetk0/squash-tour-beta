@@ -67,6 +67,59 @@ def test_initial_checkpoint_default_command_is_idempotent_and_does_not_overwrite
     assert state.current_season is None
 
 
+def test_current_checkpoint_captures_legacy_state_after_initial_and_moves_heads(tmp_path) -> None:
+    repository = _repository(tmp_path)
+    service = SimulationApiService(repository=repository)
+    service.initialize_run(run_id="current-capture-run", season=2027, seed=7, config_version="v1", config_fingerprint="cfg")
+    before_state = repository.load_season_state(run_id="current-capture-run")
+    assert before_state is not None
+    initial = repository.capture_initial_checkpoint_for_legacy_simulation_run(simulation_run_id="current-capture-run")
+
+    checkpoint = repository.capture_current_checkpoint_for_legacy_simulation_run(
+        simulation_run_id="current-capture-run", command_id="current-1"
+    )
+    assert checkpoint.kind == "current_state_capture"
+    assert checkpoint.parent_checkpoint_id == initial.checkpoint_id
+    assert checkpoint.sequence == initial.sequence + 1
+    assert checkpoint.payload["capture_mode"] == "legacy_current_state_capture_only"
+    assert checkpoint.payload["fork_capability"] == "not_forkable_player_state_not_migrated"
+    assert checkpoint.payload["limitations"] == {
+        "forkable": False,
+        "player_state": "hash_only_or_not_migrated",
+        "prospects": "legacy_run_scoped_not_captured_as_durable_identity",
+        "simulation_source": "legacy_simulation_run_state",
+    }
+    assert repository.verify_branch_checkpoint_hash(checkpoint_id=checkpoint.checkpoint_id)
+    assert repository.load_season_state(run_id="current-capture-run").model_dump() == before_state.model_dump()
+    assert repository.list_run_prospects(run_id="current-capture-run") == []
+    branch = repository.get_run_branch(branch_id=checkpoint.branch_id)
+    state = repository.get_branch_state(branch_id=checkpoint.branch_id)
+    assert branch is not None and branch.head_checkpoint_id == checkpoint.checkpoint_id
+    assert state is not None and state.head_checkpoint_id == checkpoint.checkpoint_id
+
+
+def test_current_checkpoint_requires_existing_head_and_is_idempotent_for_unchanged_state(tmp_path) -> None:
+    repository = _repository(tmp_path)
+    service = SimulationApiService(repository=repository)
+    service.initialize_run(run_id="current-idempotency-run", season=2027, seed=7, config_version=None, config_fingerprint=None)
+    try:
+        repository.capture_current_checkpoint_for_legacy_simulation_run(simulation_run_id="current-idempotency-run")
+    except ValueError as exc:
+        assert "no existing head checkpoint" in str(exc)
+    else:
+        raise AssertionError("capture-current must require an initial/head checkpoint")
+
+    repository.capture_initial_checkpoint_for_legacy_simulation_run(simulation_run_id="current-idempotency-run")
+    explicit = repository.capture_current_checkpoint_for_legacy_simulation_run(
+        simulation_run_id="current-idempotency-run", command_id="same-current-command"
+    )
+    assert explicit == repository.capture_current_checkpoint_for_legacy_simulation_run(
+        simulation_run_id="current-idempotency-run", command_id="same-current-command"
+    )
+    default = repository.capture_current_checkpoint_for_legacy_simulation_run(simulation_run_id="current-idempotency-run")
+    assert default == repository.capture_current_checkpoint_for_legacy_simulation_run(simulation_run_id="current-idempotency-run")
+
+
 def test_branch_state_backfill_and_initial_checkpoint_metadata_are_idempotent(tmp_path) -> None:
     repository = _repository(tmp_path)
     repository.bootstrap_schema()

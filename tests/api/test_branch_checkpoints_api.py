@@ -59,6 +59,31 @@ def test_capture_initial_uses_a_deterministic_default_command_id(tmp_path) -> No
         assert status == 200 and repeated["checkpoint_id"] == checkpoint["checkpoint_id"]
 
 
+def test_capture_current_branch_checkpoint_requires_head_then_is_idempotent(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'checkpoint-current-api.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "checkpoint-current", "seed": 12, "season": 2027})
+        assert status == 201
+        status, rejected = _request("POST", f"{server.base_url}/branch-checkpoints/capture-current", {"simulation_run_id": "checkpoint-current"})
+        assert status == 400 and "no existing head checkpoint" in rejected["detail"]
+        status, initial = _request("POST", f"{server.base_url}/branch-checkpoints/capture-initial", {"simulation_run_id": "checkpoint-current"})
+        assert status == 200
+        status, current = _request("POST", f"{server.base_url}/branch-checkpoints/capture-current", {"simulation_run_id": "checkpoint-current", "command_id": "current-api"})
+        assert status == 200
+        assert current["parent_checkpoint_id"] == initial["checkpoint_id"]
+        assert current["sequence"] == initial["sequence"] + 1
+        status, repeated = _request("POST", f"{server.base_url}/branch-checkpoints/capture-current", {"simulation_run_id": "checkpoint-current", "command_id": "current-api"})
+        assert status == 200 and repeated["checkpoint_id"] == current["checkpoint_id"]
+        status, default = _request("POST", f"{server.base_url}/branch-checkpoints/capture-current", {"simulation_run_id": "checkpoint-current"})
+        assert status == 200
+        status, default_repeated = _request("POST", f"{server.base_url}/branch-checkpoints/capture-current", {"simulation_run_id": "checkpoint-current"})
+        assert status == 200 and default_repeated["checkpoint_id"] == default["checkpoint_id"]
+        status, listed = _request("GET", f"{server.base_url}/branch-checkpoints?branch_id={current['branch_id']}")
+        assert status == 200 and [item["sequence"] for item in listed["branch_checkpoints"]] == [1, 2, 3]
+        status, branch_state = _request("GET", f"{server.base_url}/branch-states/{current['branch_id']}")
+        assert status == 200 and branch_state["head_checkpoint_id"] == default["checkpoint_id"]
+
+
 def test_branch_state_inspection_is_read_only_and_filterable(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'branch-state-api.db'}"
     with ApiServer(database_url=database_url) as server:

@@ -62,6 +62,24 @@ class LegacySimulationRunMappingModel(Base):
     metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
 
 
+class RunBranchModel(Base):
+    """Metadata for a timeline inside a product-level Run."""
+
+    __tablename__ = "run_branches"
+
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    display_name: Mapped[str] = mapped_column(String(256), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
+    read_only: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    branch_seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    forked_from_branch_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    forked_from_checkpoint_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    head_checkpoint_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    legacy_simulation_run_id: Mapped[str | None] = mapped_column(String(128), nullable=True, unique=True, index=True)
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
 class SeasonStateModel(Base):
     __tablename__ = "season_state"
 

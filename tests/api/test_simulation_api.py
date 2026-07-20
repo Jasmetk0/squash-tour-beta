@@ -109,6 +109,31 @@ def test_run_container_endpoints_follow_legacy_run_creation_without_changing_run
         assert detail["storage_kind"] == "custom_local"
         assert detail["read_only"] is False
 
+        status, branches = _request("GET", f"{server.base_url}/run-branches?run_id=save%2Fa+%231")
+        assert status == 200
+        assert len(branches["run_branches"]) == 1
+        branch = branches["run_branches"][0]
+        assert branch["run_id"] == "save/a #1"
+        assert branch["display_name"] == "Main"
+        assert branch["legacy_simulation_run_id"] == "save/a #1"
+        assert branch["is_official"] is True
+
+        status, all_branches = _request("GET", f"{server.base_url}/run-branches")
+        assert status == 200
+        assert all_branches == {"run_branches": [branch]}
+
+        status, unknown_run = _request("GET", f"{server.base_url}/run-branches?run_id=missing")
+        assert status == 404
+        assert "not found" in unknown_run["detail"]
+
+        status, branch_detail = _request("GET", f"{server.base_url}/run-branches/{branch['branch_id']}")
+        assert status == 200
+        assert branch_detail == branch
+
+        status, branch_missing = _request("GET", f"{server.base_url}/run-branches/not-found")
+        assert status == 404
+        assert "not found" in branch_missing["detail"]
+
         status, missing = _request("GET", f"{server.base_url}/run-containers/not-found")
         assert status == 404
         assert "not found" in missing["detail"]

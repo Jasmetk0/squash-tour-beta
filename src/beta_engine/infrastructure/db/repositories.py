@@ -33,6 +33,7 @@ from beta_engine.infrastructure.db.models import (
     RankingSnapshotModel,
     RunGeneratedPlayerProvenanceModel,
     RunContainerModel,
+    RunBranchModel,
     RunProspectModel,
     RunTalentCountryAllocationModel,
     RunTalentPlanModel,
@@ -95,6 +96,22 @@ class RunContainerRecord:
     status: str
     metadata: dict[str, object]
     mapped_simulation_run_count: int = 0
+
+
+@dataclass(frozen=True)
+class RunBranchRecord:
+    branch_id: str
+    run_id: str
+    display_name: str
+    status: str
+    read_only: bool
+    branch_seed: int | None
+    forked_from_branch_id: str | None
+    forked_from_checkpoint_id: str | None
+    head_checkpoint_id: str | None
+    legacy_simulation_run_id: str | None
+    metadata: dict[str, object]
+    is_official: bool = False
 
 
 @dataclass(frozen=True)
@@ -286,7 +303,7 @@ class SimulationPersistenceRepository:
             if "already exists" not in str(exc).lower():
                 raise
         self._ensure_schema_compatibility()
-        self.backfill_run_containers_for_existing_simulation_runs()
+        self.backfill_default_branches_for_existing_run_containers()
 
     def _ensure_schema_compatibility(self) -> None:
         with self._engine.begin() as connection:
@@ -458,11 +475,85 @@ class SimulationPersistenceRepository:
         with self._session_factory.begin() as session:
             if session.get(LegacySimulationRunMappingModel, simulation_run_id) is None:
                 session.add(LegacySimulationRunMappingModel(simulation_run_id=simulation_run_id, run_id=container.run_id))
+        self.ensure_default_branch_for_simulation_run(simulation_run_id=simulation_run_id)
         return self.get_run_container(run_id=container.run_id)
 
     def backfill_run_containers_for_existing_simulation_runs(self) -> None:
         for legacy in self.list_simulation_runs():
             self.ensure_run_container_for_simulation_run(simulation_run_id=legacy.run_id)
+
+    @staticmethod
+    def deterministic_default_branch_id(*, run_id: str, legacy_simulation_run_id: str) -> str:
+        digest = hashlib.sha256(f"{run_id}\x00{legacy_simulation_run_id}".encode("utf-8")).hexdigest()[:24]
+        return f"branch-{digest}"
+
+    @staticmethod
+    def _to_run_branch(model: RunBranchModel, *, official_branch_id: str | None) -> RunBranchRecord:
+        return RunBranchRecord(
+            branch_id=model.branch_id, run_id=model.run_id, display_name=model.display_name,
+            status=model.status, read_only=bool(model.read_only), branch_seed=model.branch_seed,
+            forked_from_branch_id=model.forked_from_branch_id,
+            forked_from_checkpoint_id=model.forked_from_checkpoint_id,
+            head_checkpoint_id=model.head_checkpoint_id,
+            legacy_simulation_run_id=model.legacy_simulation_run_id,
+            metadata=_from_json(model.metadata_json), is_official=model.branch_id == official_branch_id,
+        )
+
+    def create_run_branch(self, record: RunBranchRecord) -> RunBranchRecord:
+        with self._session_factory.begin() as session:
+            if session.get(RunBranchModel, record.branch_id) is None:
+                session.add(RunBranchModel(
+                    branch_id=record.branch_id, run_id=record.run_id, display_name=record.display_name,
+                    status=record.status, read_only=int(record.read_only), branch_seed=record.branch_seed,
+                    forked_from_branch_id=record.forked_from_branch_id,
+                    forked_from_checkpoint_id=record.forked_from_checkpoint_id,
+                    head_checkpoint_id=record.head_checkpoint_id,
+                    legacy_simulation_run_id=record.legacy_simulation_run_id,
+                    metadata_json=_to_json(record.metadata),
+                ))
+        return self.get_run_branch(branch_id=record.branch_id)  # type: ignore[return-value]
+
+    def get_run_branch(self, *, branch_id: str) -> RunBranchRecord | None:
+        with self._session_factory() as session:
+            model = session.get(RunBranchModel, branch_id)
+            if model is None:
+                return None
+            container = session.get(RunContainerModel, model.run_id)
+            return self._to_run_branch(model, official_branch_id=container.official_branch_id if container else None)
+
+    def list_run_branches(self, *, run_id: str | None = None) -> list[RunBranchRecord]:
+        with self._session_factory() as session:
+            statement = select(RunBranchModel).order_by(RunBranchModel.branch_id)
+            if run_id is not None:
+                statement = statement.where(RunBranchModel.run_id == run_id)
+            models = session.execute(statement).scalars().all()
+            official_by_run = {
+                container.run_id: container.official_branch_id
+                for container in session.execute(select(RunContainerModel)).scalars()
+            }
+            return [self._to_run_branch(model, official_branch_id=official_by_run.get(model.run_id)) for model in models]
+
+    def ensure_default_branch_for_simulation_run(self, *, simulation_run_id: str) -> RunBranchRecord | None:
+        container = self.get_run_container_for_simulation_run(simulation_run_id=simulation_run_id)
+        if container is None:
+            return None
+        branch_id = self.deterministic_default_branch_id(run_id=container.run_id, legacy_simulation_run_id=simulation_run_id)
+        record = self.create_run_branch(RunBranchRecord(
+            branch_id=branch_id, run_id=container.run_id, display_name="Main", status="active",
+            read_only=container.read_only, branch_seed=container.global_seed,
+            forked_from_branch_id=None, forked_from_checkpoint_id=None, head_checkpoint_id=None,
+            legacy_simulation_run_id=simulation_run_id, metadata={},
+        ))
+        with self._session_factory.begin() as session:
+            model = session.get(RunContainerModel, container.run_id)
+            if model is not None and model.official_branch_id is None:
+                model.official_branch_id = branch_id
+        return self.get_run_branch(branch_id=record.branch_id)
+
+    def backfill_default_branches_for_existing_run_containers(self) -> None:
+        self.backfill_run_containers_for_existing_simulation_runs()
+        for legacy in self.list_simulation_runs():
+            self.ensure_default_branch_for_simulation_run(simulation_run_id=legacy.run_id)
 
     def save_season_state(self, *, run_id: str, state: SeasonState) -> None:
         with self._session_factory.begin() as session:

@@ -62,6 +62,8 @@ import type {
   RunSummary,
   RunContainer,
   RunContainerListResponse,
+  RunBranch,
+  RunBranchListResponse,
   RunWeeklyIntakeCohortSeasonPreviewParams,
   RunWeeklyIntakeCohortSeasonPreviewResponse,
   RunPlayerDetail,
@@ -768,6 +770,15 @@ export function listRunContainers(): Promise<RunContainerListResponse> {
 
 export function getRunContainer(runId: string): Promise<RunContainer> {
   return request(`/run-containers/${encodeURIComponent(runId)}`)
+}
+
+export function listRunBranches(runId?: string): Promise<RunBranchListResponse> {
+  const suffix = runId === undefined ? '' : `?${new URLSearchParams({ run_id: runId }).toString()}`
+  return request(`/run-branches${suffix}`)
+}
+
+export function getRunBranch(branchId: string): Promise<RunBranch> {
+  return request(`/run-branches/${encodeURIComponent(branchId)}`)
 }
 
 export function getRun(runId: string): Promise<SeasonStateResponse> {

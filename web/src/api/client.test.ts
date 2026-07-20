@@ -18,6 +18,8 @@ import {
   materializeRunProspects,
   listRunContainers,
   getRunContainer,
+  listRunBranches,
+  getRunBranch,
   getWorldPackageValidation,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
@@ -864,6 +866,22 @@ describe('world package registry client', () => {
       })
     )
     expect(result).toEqual(responseBody)
+  })
+
+  it('lists Run branches with an encoded run query and encodes branch detail ids', async () => {
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify({ run_branches: [] }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ branch_id: 'branch/a #1' }), { status: 200 }))
+
+    await listRunBranches('save/a #1')
+    await getRunBranch('branch/a #1')
+
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(
+      1, 'http://127.0.0.1:8000/run-branches?run_id=save%2Fa+%231', expect.anything()
+    )
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(
+      2, 'http://127.0.0.1:8000/run-branches/branch%2Fa%20%231', expect.anything()
+    )
   })
 
   it('lists read-only Run containers and encodes a Run container id on detail lookup', async () => {

@@ -199,6 +199,13 @@ class CaptureCurrentBranchCheckpointRequest(BaseModel):
     command_id: str | None = None
 
 
+class CaptureCompletedEventBranchCheckpointRequest(BaseModel):
+    simulation_run_id: str
+    event_id: str | None = None
+    event_sequence: int | None = None
+    command_id: str | None = None
+
+
 
 class RunProspectResponse(BaseModel):
     prospect_id: str

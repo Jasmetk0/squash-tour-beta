@@ -7,6 +7,7 @@ from beta_engine.api.schemas import (
     BranchCheckpointListResponse,
     BranchCheckpointResponse,
     CaptureCurrentBranchCheckpointRequest,
+    CaptureCompletedEventBranchCheckpointRequest,
     CaptureInitialBranchCheckpointRequest,
 )
 from beta_engine.application.api_services import SimulationApiService
@@ -72,6 +73,25 @@ def capture_current(
     try:
         record = service.repository.capture_current_checkpoint_for_legacy_simulation_run(
             simulation_run_id=payload.simulation_run_id,
+            command_id=payload.command_id,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return _response(record)
+
+
+@router.post("/capture-completed-event", response_model=BranchCheckpointResponse)
+def capture_completed_event(
+    payload: CaptureCompletedEventBranchCheckpointRequest,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> BranchCheckpointResponse:
+    try:
+        record = service.repository.capture_completed_event_checkpoint_for_legacy_simulation_run(
+            simulation_run_id=payload.simulation_run_id,
+            event_id=payload.event_id,
+            event_sequence=payload.event_sequence,
             command_id=payload.command_id,
         )
     except KeyError as exc:

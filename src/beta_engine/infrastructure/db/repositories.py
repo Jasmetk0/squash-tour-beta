@@ -653,7 +653,36 @@ class SimulationPersistenceRepository:
         seed_namespace = {"hierarchy": ["global", "season", "entries", "draws", "tournament_progression"], "global_seed": legacy.seed, "branch_seed": branch.branch_seed}
         payload: dict[str, object] = {"fork_capability": "not_forkable_player_state_not_migrated", "capture_mode": "legacy_initial_capture_only", "payload_schema_version": "branch_checkpoint_payload_v1", "run_id": branch.run_id, "branch_id": branch.branch_id, "legacy_simulation_run_id": simulation_run_id, "simulation_run": legacy.__dict__, "season_state": state.model_dump(mode="json"), "admin": {"actions": actions, "admin_actions_hash": self.checkpoint_content_hash({"actions": actions})}, "provenance": {"world_id": legacy.world_id, "world_fingerprint": legacy.world_generation_fingerprint, "config_version": legacy.config_version, "config_fingerprint": legacy.config_fingerprint, "global_seed": legacy.seed, "branch_seed": branch.branch_seed, "seed_namespace": seed_namespace}, "limitations": {"player_state": "hash_only_or_not_migrated", "prospects": "legacy_run_scoped_not_captured_as_durable_identity", "forkable": False}}
         digest = self.checkpoint_content_hash(payload)
-        checkpoint = BranchCheckpointRecord(checkpoint_id=f"checkpoint-{hashlib.sha256((branch.branch_id + '\\x00' + command_id).encode()).hexdigest()[:24]}", run_id=branch.run_id, branch_id=branch.branch_id, parent_checkpoint_id=None, sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id), kind="initial", season=legacy.season, week=None, event_id=None, event_sequence=None, command_id=command_id, command_kind="capture_initial", command_boundary="after_legacy_state_load", config_version=legacy.config_version, config_fingerprint=legacy.config_fingerprint, world_id=legacy.world_id, world_fingerprint=legacy.world_generation_fingerprint, global_seed=legacy.seed, branch_seed=branch.branch_seed, seed_namespace=seed_namespace, payload_schema_version="branch_checkpoint_payload_v1", content_hash_algorithm="sha256", content_hash=digest, payload=payload)
+        separator = "\x00"
+        checkpoint_identity = separator.join([branch.branch_id, command_id])
+        checkpoint_suffix = hashlib.sha256(checkpoint_identity.encode("utf-8")).hexdigest()[:24]
+        checkpoint_id = f"checkpoint-{checkpoint_suffix}"
+        checkpoint = BranchCheckpointRecord(
+            checkpoint_id=checkpoint_id,
+            run_id=branch.run_id,
+            branch_id=branch.branch_id,
+            parent_checkpoint_id=None,
+            sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id),
+            kind="initial",
+            season=legacy.season,
+            week=None,
+            event_id=None,
+            event_sequence=None,
+            command_id=command_id,
+            command_kind="capture_initial",
+            command_boundary="after_legacy_state_load",
+            config_version=legacy.config_version,
+            config_fingerprint=legacy.config_fingerprint,
+            world_id=legacy.world_id,
+            world_fingerprint=legacy.world_generation_fingerprint,
+            global_seed=legacy.seed,
+            branch_seed=branch.branch_seed,
+            seed_namespace=seed_namespace,
+            payload_schema_version="branch_checkpoint_payload_v1",
+            content_hash_algorithm="sha256",
+            content_hash=digest,
+            payload=payload,
+        )
         created = self.create_branch_checkpoint(checkpoint)
         with self._session_factory.begin() as session:
             model = session.get(RunBranchModel, branch.branch_id)

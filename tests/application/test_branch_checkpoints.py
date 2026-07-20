@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from beta_engine.application.api_services import SimulationApiService
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
 
@@ -18,6 +19,8 @@ def test_initial_checkpoint_is_capture_only_idempotent_and_hash_verified(tmp_pat
     assert checkpoint == repeated
     assert checkpoint.kind == "initial"
     assert checkpoint.parent_checkpoint_id is None
+    expected_suffix = hashlib.sha256(f"{checkpoint.branch_id}\x00capture-1".encode("utf-8")).hexdigest()[:24]
+    assert checkpoint.checkpoint_id == f"checkpoint-{expected_suffix}"
     assert checkpoint.payload["fork_capability"] == "not_forkable_player_state_not_migrated"
     assert repository.verify_branch_checkpoint_hash(checkpoint_id=checkpoint.checkpoint_id)
     branch = repository.get_run_branch(branch_id=checkpoint.branch_id)

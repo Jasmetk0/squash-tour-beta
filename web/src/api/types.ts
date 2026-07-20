@@ -543,6 +543,15 @@ export type RunBranch = {
 
 export type RunBranchListResponse = { run_branches: RunBranch[] }
 
+export type BranchCheckpoint = {
+  checkpoint_id: string; run_id: string; branch_id: string; parent_checkpoint_id: string | null; sequence: number; kind: string; season: number
+  week: number | null; event_id: string | null; event_sequence: number | null; command_id: string; command_kind: string; command_boundary: string
+  config_version: string | null; config_fingerprint: string | null; world_id: string; world_fingerprint: string | null; global_seed: number | null; branch_seed: number | null
+  seed_namespace: Record<string, unknown>; payload_schema_version: string; content_hash_algorithm: string; content_hash: string; payload: Record<string, unknown>
+}
+export type BranchCheckpointListResponse = { branch_checkpoints: BranchCheckpoint[] }
+export type CaptureInitialBranchCheckpointRequest = { simulation_run_id: string; command_id?: string | null }
+
 export type RunStatusSummary = {
   run_id: string
   season: number

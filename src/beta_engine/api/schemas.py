@@ -169,6 +169,20 @@ class RunBranchResponse(BaseModel):
 class RunBranchListResponse(BaseModel):
     run_branches: list[RunBranchResponse] = Field(default_factory=list)
 
+class BranchCheckpointResponse(BaseModel):
+    checkpoint_id: str; run_id: str; branch_id: str; parent_checkpoint_id: str | None = None; sequence: int; kind: str; season: int
+    week: int | None = None; event_id: str | None = None; event_sequence: int | None = None; command_id: str; command_kind: str; command_boundary: str
+    config_version: str | None = None; config_fingerprint: str | None = None; world_id: str; world_fingerprint: str | None = None
+    global_seed: int | None = None; branch_seed: int | None = None; seed_namespace: dict[str, object] = Field(default_factory=dict)
+    payload_schema_version: str; content_hash_algorithm: str; content_hash: str; payload: dict[str, object] = Field(default_factory=dict)
+
+class BranchCheckpointListResponse(BaseModel):
+    branch_checkpoints: list[BranchCheckpointResponse] = Field(default_factory=list)
+
+class CaptureInitialBranchCheckpointRequest(BaseModel):
+    simulation_run_id: str
+    command_id: str | None = None
+
 
 
 class RunProspectResponse(BaseModel):

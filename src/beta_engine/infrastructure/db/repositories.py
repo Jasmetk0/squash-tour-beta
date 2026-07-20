@@ -20,6 +20,7 @@ from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
 from beta_engine.infrastructure.db.models import (
     AdminActionModel,
     BranchCheckpointModel,
+    BranchStateModel,
     Base,
     CompletedEventMetadataModel,
     FinalsQualificationModel,
@@ -123,6 +124,20 @@ class BranchCheckpointRecord:
     config_version: str | None; config_fingerprint: str | None; world_id: str; world_fingerprint: str | None
     global_seed: int | None; branch_seed: int | None; seed_namespace: dict[str, object]
     payload_schema_version: str; content_hash_algorithm: str; content_hash: str; payload: dict[str, object]
+
+
+@dataclass(frozen=True)
+class RunBranchStateRecord:
+    branch_id: str
+    run_id: str
+    head_checkpoint_id: str | None
+    current_season: int | None
+    current_week: int | None
+    current_event_id: str | None
+    current_event_sequence: int | None
+    state_schema_version: str
+    status: str
+    metadata: dict[str, object]
 
 
 @dataclass(frozen=True)
@@ -315,6 +330,7 @@ class SimulationPersistenceRepository:
                 raise
         self._ensure_schema_compatibility()
         self.backfill_default_branches_for_existing_run_containers()
+        self.backfill_branch_states_for_existing_branches()
 
     def _ensure_schema_compatibility(self) -> None:
         with self._engine.begin() as connection:
@@ -522,7 +538,9 @@ class SimulationPersistenceRepository:
                     legacy_simulation_run_id=record.legacy_simulation_run_id,
                     metadata_json=_to_json(record.metadata),
                 ))
-        return self.get_run_branch(branch_id=record.branch_id)  # type: ignore[return-value]
+        created = self.get_run_branch(branch_id=record.branch_id)
+        self.ensure_branch_state_for_branch(branch_id=record.branch_id)
+        return created  # type: ignore[return-value]
 
     def get_run_branch(self, *, branch_id: str) -> RunBranchRecord | None:
         with self._session_factory() as session:
@@ -565,6 +583,77 @@ class SimulationPersistenceRepository:
         self.backfill_run_containers_for_existing_simulation_runs()
         for legacy in self.list_simulation_runs():
             self.ensure_default_branch_for_simulation_run(simulation_run_id=legacy.run_id)
+
+    @staticmethod
+    def _to_branch_state(model: BranchStateModel) -> RunBranchStateRecord:
+        return RunBranchStateRecord(
+            branch_id=model.branch_id, run_id=model.run_id, head_checkpoint_id=model.head_checkpoint_id,
+            current_season=model.current_season, current_week=model.current_week,
+            current_event_id=model.current_event_id, current_event_sequence=model.current_event_sequence,
+            state_schema_version=model.state_schema_version, status=model.status,
+            metadata=_from_json(model.metadata_json),
+        )
+
+    def create_or_update_branch_state(self, record: RunBranchStateRecord) -> RunBranchStateRecord:
+        with self._session_factory.begin() as session:
+            model = session.get(BranchStateModel, record.branch_id)
+            values = {
+                "run_id": record.run_id, "head_checkpoint_id": record.head_checkpoint_id,
+                "current_season": record.current_season, "current_week": record.current_week,
+                "current_event_id": record.current_event_id, "current_event_sequence": record.current_event_sequence,
+                "state_schema_version": record.state_schema_version, "status": record.status,
+                "metadata_json": _to_json(record.metadata),
+            }
+            if model is None:
+                session.add(BranchStateModel(branch_id=record.branch_id, **values))
+            else:
+                for field, value in values.items():
+                    setattr(model, field, value)
+        return self.get_branch_state(branch_id=record.branch_id)  # type: ignore[return-value]
+
+    def get_branch_state(self, *, branch_id: str) -> RunBranchStateRecord | None:
+        with self._session_factory() as session:
+            model = session.get(BranchStateModel, branch_id)
+            return self._to_branch_state(model) if model is not None else None
+
+    def list_branch_states(self, *, run_id: str | None = None) -> list[RunBranchStateRecord]:
+        with self._session_factory() as session:
+            statement = select(BranchStateModel).order_by(BranchStateModel.branch_id)
+            if run_id is not None:
+                statement = statement.where(BranchStateModel.run_id == run_id)
+            return [self._to_branch_state(model) for model in session.execute(statement).scalars()]
+
+    def ensure_branch_state_for_branch(self, *, branch_id: str) -> RunBranchStateRecord | None:
+        branch = self.get_run_branch(branch_id=branch_id)
+        if branch is None:
+            return None
+        return self.ensure_branch_state_for_checkpoint(checkpoint_id=branch.head_checkpoint_id, branch=branch)
+
+    def ensure_branch_state_for_checkpoint(
+        self, *, checkpoint_id: str | None, branch: RunBranchRecord | None = None
+    ) -> RunBranchStateRecord | None:
+        if branch is None:
+            if checkpoint_id is None:
+                return None
+            checkpoint = self.get_branch_checkpoint(checkpoint_id=checkpoint_id)
+            if checkpoint is None:
+                return None
+            branch = self.get_run_branch(branch_id=checkpoint.branch_id)
+        if branch is None:
+            return None
+        checkpoint = self.get_branch_checkpoint(checkpoint_id=checkpoint_id) if checkpoint_id is not None else None
+        return self.create_or_update_branch_state(RunBranchStateRecord(
+            branch_id=branch.branch_id, run_id=branch.run_id, head_checkpoint_id=checkpoint_id,
+            current_season=checkpoint.season if checkpoint else None,
+            current_week=checkpoint.week if checkpoint else None,
+            current_event_id=checkpoint.event_id if checkpoint else None,
+            current_event_sequence=checkpoint.event_sequence if checkpoint else None,
+            state_schema_version="branch_state_v1", status=branch.status, metadata={},
+        ))
+
+    def backfill_branch_states_for_existing_branches(self) -> None:
+        for branch in self.list_run_branches():
+            self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
 
     @staticmethod
     def canonical_json(payload: object) -> str:
@@ -706,9 +795,13 @@ class SimulationPersistenceRepository:
         if state is None: raise ValueError(f"run_id {simulation_run_id} has no season state")
         command_id = command_id or f"legacy-initial-capture:{simulation_run_id}"
         existing = self.get_branch_checkpoint_by_command_id(branch_id=branch.branch_id, command_id=command_id)
-        if existing is not None: return existing
+        if existing is not None:
+            self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+            return existing
         existing_initial = self.get_initial_branch_checkpoint(branch_id=branch.branch_id)
-        if existing_initial is not None: return existing_initial
+        if existing_initial is not None:
+            self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+            return existing_initial
         actions = [action.__dict__ for action in self.list_admin_actions(run_id=simulation_run_id)]
         seed_namespace = {"hierarchy": ["global", "season", "entries", "draws", "tournament_progression"], "global_seed": legacy.seed, "branch_seed": branch.branch_seed}
         payload: dict[str, object] = {"fork_capability": "not_forkable_player_state_not_migrated", "capture_mode": "legacy_initial_capture_only", "payload_schema_version": "branch_checkpoint_payload_v1", "run_id": branch.run_id, "branch_id": branch.branch_id, "legacy_simulation_run_id": simulation_run_id, "simulation_run": legacy.__dict__, "season_state": state.model_dump(mode="json"), "admin": {"actions": actions, "admin_actions_hash": self.checkpoint_content_hash({"actions": actions})}, "provenance": {"world_id": legacy.world_id, "world_fingerprint": legacy.world_generation_fingerprint, "config_version": legacy.config_version, "config_fingerprint": legacy.config_fingerprint, "global_seed": legacy.seed, "branch_seed": branch.branch_seed, "seed_namespace": seed_namespace}, "limitations": {"player_state": "hash_only_or_not_migrated", "prospects": "legacy_run_scoped_not_captured_as_durable_identity", "forkable": False}}
@@ -752,6 +845,7 @@ class SimulationPersistenceRepository:
         with self._session_factory.begin() as session:
             model = session.get(RunBranchModel, branch.branch_id)
             if model is not None and model.head_checkpoint_id is None: model.head_checkpoint_id = created.checkpoint_id
+        self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
         return created
 
     def save_season_state(self, *, run_id: str, state: SeasonState) -> None:

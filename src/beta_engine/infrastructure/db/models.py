@@ -80,6 +80,23 @@ class RunBranchModel(Base):
     metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
 
 
+class BranchStateModel(Base):
+    """Mutable branch-head metadata; not a simulation state source."""
+
+    __tablename__ = "branch_states"
+
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    head_checkpoint_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    current_season: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    current_week: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    current_event_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    current_event_sequence: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    state_schema_version: Mapped[str] = mapped_column(String(64), nullable=False, default="branch_state_v1")
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
 class BranchCheckpointModel(Base):
     """Immutable, capture-only checkpoint for a product Run branch."""
 

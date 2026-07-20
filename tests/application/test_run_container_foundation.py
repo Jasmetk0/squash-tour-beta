@@ -24,6 +24,8 @@ def test_bootstrap_backfills_legacy_runs_idempotently_and_preserves_world_lock(t
 
     assert first is not None and second is not None
     assert first.run_id == second.run_id == "legacy run"
+    assert second.storage_kind == "custom_local"
+    assert second.read_only is False
     assert second.world_id == "custom_world"
     assert second.mapped_simulation_run_count == 1
     # A second create call cannot alter the product Run's creation lock.

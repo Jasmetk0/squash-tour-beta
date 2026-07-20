@@ -99,11 +99,15 @@ def test_run_container_endpoints_follow_legacy_run_creation_without_changing_run
         status, containers = _request("GET", f"{server.base_url}/run-containers")
         assert status == 200
         assert containers["run_containers"][0]["run_id"] == "save/a #1"
+        assert containers["run_containers"][0]["storage_kind"] == "custom_local"
+        assert containers["run_containers"][0]["read_only"] is False
         assert containers["run_containers"][0]["mapped_simulation_run_count"] == 1
 
         status, detail = _request("GET", f"{server.base_url}/run-containers/save%2Fa%20%231")
         assert status == 200
         assert detail["world_id"] == "official_fax_world"
+        assert detail["storage_kind"] == "custom_local"
+        assert detail["read_only"] is False
 
         status, missing = _request("GET", f"{server.base_url}/run-containers/not-found")
         assert status == 404

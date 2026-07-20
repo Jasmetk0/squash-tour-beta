@@ -449,7 +449,7 @@ class SimulationPersistenceRepository:
         if legacy is None:
             return None
         container = self.create_run_container(RunContainerRecord(
-            run_id=legacy.run_id, display_name=None, storage_kind="built_in", read_only=False,
+            run_id=legacy.run_id, display_name=None, storage_kind="custom_local", read_only=False,
             world_id=legacy.world_id, world_package_fingerprint=legacy.world_generation_fingerprint,
             config_version=legacy.config_version, config_fingerprint=legacy.config_fingerprint, global_seed=legacy.seed,
             timeline_start_season=legacy.season, timeline_end_season=legacy.season, official_branch_id=None,

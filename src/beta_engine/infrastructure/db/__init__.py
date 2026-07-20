@@ -12,6 +12,7 @@ from beta_engine.infrastructure.db.repositories import (
     PersistedSeasonRolloverRecord,
     RunLineageRecord,
     RunContainerRecord,
+    RunBranchRecord,
     SimulationPersistenceRepository,
     SimulationRunInfo,
 )
@@ -28,6 +29,7 @@ __all__ = [
     "PersistedSeasonRolloverRecord",
     "RunLineageRecord",
     "RunContainerRecord",
+    "RunBranchRecord",
     "SimulationPersistenceRepository",
     "SimulationRunInfo",
     "create_session_factory",

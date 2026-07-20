@@ -526,6 +526,23 @@ export type RunContainerListResponse = {
   run_containers: RunContainer[]
 }
 
+export type RunBranch = {
+  branch_id: string
+  run_id: string
+  display_name: string
+  status: string
+  read_only: boolean
+  branch_seed: number | null
+  forked_from_branch_id: string | null
+  forked_from_checkpoint_id: string | null
+  head_checkpoint_id: string | null
+  legacy_simulation_run_id: string | null
+  metadata_json: Record<string, unknown>
+  is_official: boolean
+}
+
+export type RunBranchListResponse = { run_branches: RunBranch[] }
+
 export type RunStatusSummary = {
   run_id: string
   season: number

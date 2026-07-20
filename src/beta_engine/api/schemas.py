@@ -151,6 +151,25 @@ class RunContainerListResponse(BaseModel):
     run_containers: list[RunContainerResponse] = Field(default_factory=list)
 
 
+class RunBranchResponse(BaseModel):
+    branch_id: str
+    run_id: str
+    display_name: str
+    status: str
+    read_only: bool
+    branch_seed: int | None = None
+    forked_from_branch_id: str | None = None
+    forked_from_checkpoint_id: str | None = None
+    head_checkpoint_id: str | None = None
+    legacy_simulation_run_id: str | None = None
+    metadata_json: dict[str, object] = Field(default_factory=dict)
+    is_official: bool
+
+
+class RunBranchListResponse(BaseModel):
+    run_branches: list[RunBranchResponse] = Field(default_factory=list)
+
+
 
 class RunProspectResponse(BaseModel):
     prospect_id: str

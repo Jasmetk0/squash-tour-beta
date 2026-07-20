@@ -568,11 +568,46 @@ class SimulationPersistenceRepository:
 
     @staticmethod
     def canonical_json(payload: object) -> str:
+        """Serialize deterministic JSON for payload hashes and checkpoint envelopes."""
         return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
     @classmethod
     def checkpoint_content_hash(cls, payload: dict[str, object]) -> str:
+        """Return a payload-only hash (for example, ``admin_actions_hash``)."""
         return hashlib.sha256(cls.canonical_json(payload).encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def checkpoint_hash_envelope(record: BranchCheckpointRecord) -> dict[str, object]:
+        """Return the deterministic, immutable fields protected by a checkpoint hash."""
+        return {
+            "checkpoint_id": record.checkpoint_id,
+            "run_id": record.run_id,
+            "branch_id": record.branch_id,
+            "parent_checkpoint_id": record.parent_checkpoint_id,
+            "sequence": record.sequence,
+            "kind": record.kind,
+            "season": record.season,
+            "week": record.week,
+            "event_id": record.event_id,
+            "event_sequence": record.event_sequence,
+            "command_id": record.command_id,
+            "command_kind": record.command_kind,
+            "command_boundary": record.command_boundary,
+            "config_version": record.config_version,
+            "config_fingerprint": record.config_fingerprint,
+            "world_id": record.world_id,
+            "world_fingerprint": record.world_fingerprint,
+            "global_seed": record.global_seed,
+            "branch_seed": record.branch_seed,
+            "seed_namespace": record.seed_namespace,
+            "payload_schema_version": record.payload_schema_version,
+            "payload": record.payload,
+        }
+
+    @classmethod
+    def checkpoint_envelope_content_hash(cls, record: BranchCheckpointRecord) -> str:
+        """Return the SHA-256 hash of the full deterministic checkpoint envelope."""
+        return hashlib.sha256(cls.canonical_json(cls.checkpoint_hash_envelope(record)).encode("utf-8")).hexdigest()
 
     @staticmethod
     def _to_branch_checkpoint(model: BranchCheckpointModel) -> BranchCheckpointRecord:
@@ -603,6 +638,16 @@ class SimulationPersistenceRepository:
             model = session.execute(select(BranchCheckpointModel).where(BranchCheckpointModel.branch_id == branch_id, BranchCheckpointModel.command_id == command_id)).scalar_one_or_none()
             return self._to_branch_checkpoint(model) if model is not None else None
 
+    def get_initial_branch_checkpoint(self, *, branch_id: str) -> BranchCheckpointRecord | None:
+        with self._session_factory() as session:
+            model = session.execute(
+                select(BranchCheckpointModel).where(
+                    BranchCheckpointModel.branch_id == branch_id,
+                    BranchCheckpointModel.kind == "initial",
+                )
+            ).scalar_one_or_none()
+            return self._to_branch_checkpoint(model) if model is not None else None
+
     def list_branch_checkpoints(self, *, branch_id: str | None = None, run_id: str | None = None) -> list[BranchCheckpointRecord]:
         with self._session_factory() as session:
             statement = select(BranchCheckpointModel)
@@ -612,10 +657,14 @@ class SimulationPersistenceRepository:
 
     def verify_branch_checkpoint_hash(self, *, checkpoint_id: str) -> bool:
         record = self.get_branch_checkpoint(checkpoint_id=checkpoint_id)
-        return record is not None and record.content_hash_algorithm == "sha256" and self.checkpoint_content_hash(record.payload) == record.content_hash
+        return (
+            record is not None
+            and record.content_hash_algorithm == "sha256"
+            and self.checkpoint_envelope_content_hash(record) == record.content_hash
+        )
 
     def create_branch_checkpoint(self, record: BranchCheckpointRecord) -> BranchCheckpointRecord:
-        if record.content_hash_algorithm != "sha256" or self.checkpoint_content_hash(record.payload) != record.content_hash:
+        if record.content_hash_algorithm != "sha256" or self.checkpoint_envelope_content_hash(record) != record.content_hash:
             raise ValueError("branch checkpoint content hash is invalid")
         with self._session_factory.begin() as session:
             existing = session.get(BranchCheckpointModel, record.checkpoint_id)
@@ -625,6 +674,15 @@ class SimulationPersistenceRepository:
                 raise ValueError(f"checkpoint_id {record.checkpoint_id} already exists with different content")
             by_command = session.execute(select(BranchCheckpointModel).where(BranchCheckpointModel.branch_id == record.branch_id, BranchCheckpointModel.command_id == record.command_id)).scalar_one_or_none()
             if by_command is not None: return self._to_branch_checkpoint(by_command)
+            if record.kind == "initial":
+                existing_initial = session.execute(
+                    select(BranchCheckpointModel).where(
+                        BranchCheckpointModel.branch_id == record.branch_id,
+                        BranchCheckpointModel.kind == "initial",
+                    )
+                ).scalar_one_or_none()
+                if existing_initial is not None:
+                    raise ValueError(f"branch_id {record.branch_id} already has an initial checkpoint")
             expected = session.execute(select(func.max(BranchCheckpointModel.sequence)).where(BranchCheckpointModel.branch_id == record.branch_id)).scalar_one()
             if record.sequence != (1 if expected is None else int(expected) + 1): raise ValueError("branch checkpoint sequence must increase by one")
             if record.kind == "initial" and record.parent_checkpoint_id is not None: raise ValueError("initial checkpoint parent must be null")
@@ -649,15 +707,16 @@ class SimulationPersistenceRepository:
         command_id = command_id or f"legacy-initial-capture:{simulation_run_id}"
         existing = self.get_branch_checkpoint_by_command_id(branch_id=branch.branch_id, command_id=command_id)
         if existing is not None: return existing
+        existing_initial = self.get_initial_branch_checkpoint(branch_id=branch.branch_id)
+        if existing_initial is not None: return existing_initial
         actions = [action.__dict__ for action in self.list_admin_actions(run_id=simulation_run_id)]
         seed_namespace = {"hierarchy": ["global", "season", "entries", "draws", "tournament_progression"], "global_seed": legacy.seed, "branch_seed": branch.branch_seed}
         payload: dict[str, object] = {"fork_capability": "not_forkable_player_state_not_migrated", "capture_mode": "legacy_initial_capture_only", "payload_schema_version": "branch_checkpoint_payload_v1", "run_id": branch.run_id, "branch_id": branch.branch_id, "legacy_simulation_run_id": simulation_run_id, "simulation_run": legacy.__dict__, "season_state": state.model_dump(mode="json"), "admin": {"actions": actions, "admin_actions_hash": self.checkpoint_content_hash({"actions": actions})}, "provenance": {"world_id": legacy.world_id, "world_fingerprint": legacy.world_generation_fingerprint, "config_version": legacy.config_version, "config_fingerprint": legacy.config_fingerprint, "global_seed": legacy.seed, "branch_seed": branch.branch_seed, "seed_namespace": seed_namespace}, "limitations": {"player_state": "hash_only_or_not_migrated", "prospects": "legacy_run_scoped_not_captured_as_durable_identity", "forkable": False}}
-        digest = self.checkpoint_content_hash(payload)
         separator = "\x00"
         checkpoint_identity = separator.join([branch.branch_id, command_id])
         checkpoint_suffix = hashlib.sha256(checkpoint_identity.encode("utf-8")).hexdigest()[:24]
         checkpoint_id = f"checkpoint-{checkpoint_suffix}"
-        checkpoint = BranchCheckpointRecord(
+        checkpoint_without_hash = BranchCheckpointRecord(
             checkpoint_id=checkpoint_id,
             run_id=branch.run_id,
             branch_id=branch.branch_id,
@@ -680,8 +739,14 @@ class SimulationPersistenceRepository:
             seed_namespace=seed_namespace,
             payload_schema_version="branch_checkpoint_payload_v1",
             content_hash_algorithm="sha256",
-            content_hash=digest,
+            content_hash="",
             payload=payload,
+        )
+        checkpoint = BranchCheckpointRecord(
+            **{
+                **checkpoint_without_hash.__dict__,
+                "content_hash": self.checkpoint_envelope_content_hash(checkpoint_without_hash),
+            }
         )
         created = self.create_branch_checkpoint(checkpoint)
         with self._session_factory.begin() as session:

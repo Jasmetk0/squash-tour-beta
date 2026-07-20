@@ -504,6 +504,28 @@ export type RunSummary = {
   completed_event_ids: string[]
 }
 
+export type RunContainer = {
+  run_id: string
+  display_name: string | null
+  storage_kind: 'built_in' | 'custom_local'
+  read_only: boolean
+  world_id: string
+  world_package_fingerprint: string | null
+  config_version: string | null
+  config_fingerprint: string | null
+  global_seed: number | null
+  timeline_start_season: number
+  timeline_end_season: number
+  official_branch_id: string | null
+  status: string
+  metadata_json: Record<string, unknown>
+  mapped_simulation_run_count: number
+}
+
+export type RunContainerListResponse = {
+  run_containers: RunContainer[]
+}
+
 export type RunStatusSummary = {
   run_id: string
   season: number

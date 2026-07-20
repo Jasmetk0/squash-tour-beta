@@ -60,6 +60,8 @@ import type {
   MaterializeRunProspectsResponse,
   RunProspectListResponse,
   RunSummary,
+  RunContainer,
+  RunContainerListResponse,
   RunWeeklyIntakeCohortSeasonPreviewParams,
   RunWeeklyIntakeCohortSeasonPreviewResponse,
   RunPlayerDetail,
@@ -758,6 +760,14 @@ export function createRun(payload: CreateRunPayload): Promise<RunSummary> {
 
 export function listRuns(): Promise<RunsIndexResponse> {
   return request('/runs')
+}
+
+export function listRunContainers(): Promise<RunContainerListResponse> {
+  return request('/run-containers')
+}
+
+export function getRunContainer(runId: string): Promise<RunContainer> {
+  return request(`/run-containers/${encodeURIComponent(runId)}`)
 }
 
 export function getRun(runId: string): Promise<SeasonStateResponse> {

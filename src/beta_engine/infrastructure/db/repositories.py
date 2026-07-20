@@ -28,9 +28,11 @@ from beta_engine.infrastructure.db.models import (
     SeasonRolloverModel,
     CompletedEventModel,
     CompletedTournamentInputModel,
+    LegacySimulationRunMappingModel,
     RaceSnapshotModel,
     RankingSnapshotModel,
     RunGeneratedPlayerProvenanceModel,
+    RunContainerModel,
     RunProspectModel,
     RunTalentCountryAllocationModel,
     RunTalentPlanModel,
@@ -74,6 +76,25 @@ class RunLineageRecord:
     source_rollover_from_season: int | None
     source_rollover_to_season: int | None
     world_id: str = OFFICIAL_FAX_WORLD_ID
+
+
+@dataclass(frozen=True)
+class RunContainerRecord:
+    run_id: str
+    display_name: str | None
+    storage_kind: str
+    read_only: bool
+    world_id: str
+    world_package_fingerprint: str | None
+    config_version: str | None
+    config_fingerprint: str | None
+    global_seed: int | None
+    timeline_start_season: int
+    timeline_end_season: int
+    official_branch_id: str | None
+    status: str
+    metadata: dict[str, object]
+    mapped_simulation_run_count: int = 0
 
 
 @dataclass(frozen=True)
@@ -265,6 +286,7 @@ class SimulationPersistenceRepository:
             if "already exists" not in str(exc).lower():
                 raise
         self._ensure_schema_compatibility()
+        self.backfill_run_containers_for_existing_simulation_runs()
 
     def _ensure_schema_compatibility(self) -> None:
         with self._engine.begin() as connection:
@@ -356,20 +378,91 @@ class SimulationPersistenceRepository:
                     source_rollover_to_season=run.source_rollover_to_season,
                 )
                 session.add(model)
-                return
-            model.season = run.season
-            model.seed = run.seed
-            model.config_version = run.config_version
-            model.config_fingerprint = run.config_fingerprint
-            # world_id is an immutable run creation lock; preserve existing values on metadata updates.
-            if model.world_id is None:
-                model.world_id = run.world_id
-            model.world_generation_fingerprint = run.world_generation_fingerprint
-            model.parent_run_id = run.parent_run_id
-            model.source_type = run.source_type
-            model.source_rollover_run_id = run.source_rollover_run_id
-            model.source_rollover_from_season = run.source_rollover_from_season
-            model.source_rollover_to_season = run.source_rollover_to_season
+            else:
+                model.season = run.season
+                model.seed = run.seed
+                model.config_version = run.config_version
+                model.config_fingerprint = run.config_fingerprint
+                # world_id is an immutable run creation lock; preserve existing values on metadata updates.
+                if model.world_id is None:
+                    model.world_id = run.world_id
+                model.world_generation_fingerprint = run.world_generation_fingerprint
+                model.parent_run_id = run.parent_run_id
+                model.source_type = run.source_type
+                model.source_rollover_run_id = run.source_rollover_run_id
+                model.source_rollover_from_season = run.source_rollover_from_season
+                model.source_rollover_to_season = run.source_rollover_to_season
+        self.ensure_run_container_for_simulation_run(simulation_run_id=run.run_id)
+
+    @staticmethod
+    def _to_run_container(model: RunContainerModel, mapped_simulation_run_count: int = 0) -> RunContainerRecord:
+        return RunContainerRecord(
+            run_id=model.run_id, display_name=model.display_name, storage_kind=model.storage_kind,
+            read_only=bool(model.read_only), world_id=model.world_id,
+            world_package_fingerprint=model.world_package_fingerprint, config_version=model.config_version,
+            config_fingerprint=model.config_fingerprint, global_seed=model.global_seed,
+            timeline_start_season=model.timeline_start_season, timeline_end_season=model.timeline_end_season,
+            official_branch_id=model.official_branch_id, status=model.status,
+            metadata=_from_json(model.metadata_json), mapped_simulation_run_count=mapped_simulation_run_count,
+        )
+
+    def create_run_container(self, record: RunContainerRecord) -> RunContainerRecord:
+        if record.storage_kind not in {"built_in", "custom_local"}:
+            raise ValueError("storage_kind must be 'built_in' or 'custom_local'")
+        with self._session_factory.begin() as session:
+            model = session.get(RunContainerModel, record.run_id)
+            if model is None:
+                session.add(RunContainerModel(
+                    run_id=record.run_id, display_name=record.display_name, storage_kind=record.storage_kind,
+                    read_only=int(record.read_only), world_id=record.world_id,
+                    world_package_fingerprint=record.world_package_fingerprint, config_version=record.config_version,
+                    config_fingerprint=record.config_fingerprint, global_seed=record.global_seed,
+                    timeline_start_season=record.timeline_start_season, timeline_end_season=record.timeline_end_season,
+                    official_branch_id=record.official_branch_id, status=record.status,
+                    metadata_json=_to_json(record.metadata),
+                ))
+            # Containers are immutable in R1; return the persisted creation lock unchanged.
+        return self.get_run_container(run_id=record.run_id)  # type: ignore[return-value]
+
+    def get_run_container(self, *, run_id: str) -> RunContainerRecord | None:
+        with self._session_factory() as session:
+            model = session.get(RunContainerModel, run_id)
+            if model is None:
+                return None
+            count = session.scalar(select(func.count(LegacySimulationRunMappingModel.simulation_run_id)).where(LegacySimulationRunMappingModel.run_id == run_id)) or 0
+            return self._to_run_container(model, int(count))
+
+    def list_run_containers(self) -> list[RunContainerRecord]:
+        with self._session_factory() as session:
+            counts = dict(session.execute(select(LegacySimulationRunMappingModel.run_id, func.count()).group_by(LegacySimulationRunMappingModel.run_id)).all())
+            return [self._to_run_container(model, int(counts.get(model.run_id, 0))) for model in session.execute(select(RunContainerModel).order_by(RunContainerModel.run_id)).scalars()]
+
+    def get_run_container_for_simulation_run(self, *, simulation_run_id: str) -> RunContainerRecord | None:
+        with self._session_factory() as session:
+            mapping = session.get(LegacySimulationRunMappingModel, simulation_run_id)
+            if mapping is None:
+                return None
+        return self.get_run_container(run_id=mapping.run_id)
+
+    def ensure_run_container_for_simulation_run(self, *, simulation_run_id: str) -> RunContainerRecord | None:
+        legacy = self.get_simulation_run(run_id=simulation_run_id)
+        if legacy is None:
+            return None
+        container = self.create_run_container(RunContainerRecord(
+            run_id=legacy.run_id, display_name=None, storage_kind="custom_local", read_only=False,
+            world_id=legacy.world_id, world_package_fingerprint=legacy.world_generation_fingerprint,
+            config_version=legacy.config_version, config_fingerprint=legacy.config_fingerprint, global_seed=legacy.seed,
+            timeline_start_season=legacy.season, timeline_end_season=legacy.season, official_branch_id=None,
+            status="active", metadata={},
+        ))
+        with self._session_factory.begin() as session:
+            if session.get(LegacySimulationRunMappingModel, simulation_run_id) is None:
+                session.add(LegacySimulationRunMappingModel(simulation_run_id=simulation_run_id, run_id=container.run_id))
+        return self.get_run_container(run_id=container.run_id)
+
+    def backfill_run_containers_for_existing_simulation_runs(self) -> None:
+        for legacy in self.list_simulation_runs():
+            self.ensure_run_container_for_simulation_run(simulation_run_id=legacy.run_id)
 
     def save_season_state(self, *, run_id: str, state: SeasonState) -> None:
         with self._session_factory.begin() as session:

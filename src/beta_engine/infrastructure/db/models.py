@@ -5,6 +5,12 @@ from __future__ import annotations
 from sqlalchemy import CheckConstraint, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+from beta_engine.infrastructure.db.checkpoint_boundaries import (
+    BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED,
+    BRANCH_CHECKPOINT_KIND_INITIAL,
+    BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
+)
+
 
 class Base(DeclarativeBase):
     """Declarative SQLAlchemy base for persistence tables."""
@@ -109,7 +115,22 @@ class BranchCheckpointModel(Base):
             "uq_branch_checkpoints_one_initial_per_branch",
             "branch_id",
             unique=True,
-            sqlite_where=text("kind = 'initial'"),
+            sqlite_where=text(f"kind = '{BRANCH_CHECKPOINT_KIND_INITIAL}'"),
+        ),
+        Index(
+            "uq_branch_checkpoints_one_event_completed_per_branch_event_sequence",
+            "branch_id",
+            "event_sequence",
+            unique=True,
+            sqlite_where=text(f"kind = '{BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED}'"),
+        ),
+        Index(
+            "uq_branch_checkpoints_one_week_completed_per_branch_season_week",
+            "branch_id",
+            "season",
+            "week",
+            unique=True,
+            sqlite_where=text(f"kind = '{BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED}'"),
         ),
     )
 

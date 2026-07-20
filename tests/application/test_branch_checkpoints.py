@@ -8,6 +8,12 @@ from sqlalchemy import inspect
 from beta_engine.application.api_services import SimulationApiService
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
 from beta_engine.infrastructure.db.models import BranchCheckpointModel, BranchStateModel, RunBranchModel
+from beta_engine.infrastructure.db.checkpoint_boundaries import (
+    BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE,
+    BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED,
+    BRANCH_CHECKPOINT_KIND_INITIAL,
+    BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
+)
 
 
 def _repository(tmp_path) -> SimulationPersistenceRepository:
@@ -30,7 +36,7 @@ def test_initial_checkpoint_is_capture_only_idempotent_and_hash_verified(tmp_pat
     assert checkpoint == repository.capture_initial_checkpoint_for_legacy_simulation_run(
         simulation_run_id="checkpoint-run", command_id="different-capture-command"
     )
-    assert checkpoint.kind == "initial"
+    assert checkpoint.kind == BRANCH_CHECKPOINT_KIND_INITIAL
     assert checkpoint.parent_checkpoint_id is None
     expected_suffix = hashlib.sha256(f"{checkpoint.branch_id}\x00capture-1".encode("utf-8")).hexdigest()[:24]
     assert checkpoint.checkpoint_id == f"checkpoint-{expected_suffix}"
@@ -78,7 +84,7 @@ def test_current_checkpoint_captures_legacy_state_after_initial_and_moves_heads(
     checkpoint = repository.capture_current_checkpoint_for_legacy_simulation_run(
         simulation_run_id="current-capture-run", command_id="current-1"
     )
-    assert checkpoint.kind == "current_state_capture"
+    assert checkpoint.kind == BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE
     assert checkpoint.parent_checkpoint_id == initial.checkpoint_id
     assert checkpoint.sequence == initial.sequence + 1
     assert checkpoint.payload["capture_mode"] == "legacy_current_state_capture_only"
@@ -144,7 +150,7 @@ def test_event_completed_checkpoint_captures_persisted_event_once_without_mutati
     checkpoint = repository.capture_completed_event_checkpoint_for_legacy_simulation_run(
         simulation_run_id="event-capture-run", event_id=completed.event_id
     )
-    assert checkpoint.kind == "event_completed"
+    assert checkpoint.kind == BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED
     assert checkpoint.parent_checkpoint_id == current.checkpoint_id
     assert checkpoint.sequence == current.sequence + 1
     assert (checkpoint.event_id, checkpoint.event_sequence) == (completed.event_id, completed.event_sequence)
@@ -266,7 +272,7 @@ def test_week_completed_checkpoint_captures_completed_scheduled_week_once(tmp_pa
     assert before_state is not None
     completed = [event for event in repository.list_completed_events(run_id="week-capture-run") if event.week == week]
     checkpoint = repository.capture_completed_week_checkpoint_for_legacy_simulation_run(simulation_run_id="week-capture-run", week=week)
-    assert checkpoint.kind == "week_completed"
+    assert checkpoint.kind == BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED
     assert checkpoint.parent_checkpoint_id == initial.checkpoint_id
     assert checkpoint.sequence == initial.sequence + 1
     assert checkpoint.event_sequence == max(event.event_sequence for event in completed)
@@ -280,3 +286,47 @@ def test_week_completed_checkpoint_captures_completed_scheduled_week_once(tmp_pa
     assert repository.capture_completed_week_checkpoint_for_legacy_simulation_run(simulation_run_id="week-capture-run", week=week, command_id="different") == checkpoint
     assert repository.get_run_branch(branch_id=checkpoint.branch_id).head_checkpoint_id == checkpoint.checkpoint_id
     assert repository.get_branch_state(branch_id=checkpoint.branch_id).head_checkpoint_id == checkpoint.checkpoint_id
+
+
+def test_checkpoint_boundary_partial_unique_indexes_are_present_and_bootstrap_is_idempotent(tmp_path) -> None:
+    repository = _repository(tmp_path)
+    repository.bootstrap_schema()
+    repository.bootstrap_schema()
+    indexes = {item["name"]: item for item in inspect(repository._engine).get_indexes("branch_checkpoints")}
+    expected = {
+        "uq_branch_checkpoints_one_initial_per_branch": ["branch_id"],
+        "uq_branch_checkpoints_one_event_completed_per_branch_event_sequence": ["branch_id", "event_sequence"],
+        "uq_branch_checkpoints_one_week_completed_per_branch_season_week": ["branch_id", "season", "week"],
+    }
+    for name, columns in expected.items():
+        assert indexes[name]["unique"]
+        assert indexes[name]["column_names"] == columns
+        assert "kind" in str(indexes[name]["dialect_options"]["sqlite_where"])
+
+
+def test_direct_checkpoint_creation_rejects_duplicate_event_and_week_boundaries(tmp_path) -> None:
+    repository = _repository(tmp_path)
+    service = SimulationApiService(repository=repository)
+    service.initialize_run(run_id="direct-boundary-run", season=2027, seed=7, config_version="v1", config_fingerprint="cfg")
+    repository.capture_initial_checkpoint_for_legacy_simulation_run(simulation_run_id="direct-boundary-run")
+    state = repository.load_season_state(run_id="direct-boundary-run")
+    assert state is not None
+    week = state.ordered_events[0].week
+    service.simulate_next_week(run_id="direct-boundary-run")
+    event = repository.capture_completed_event_checkpoint_for_legacy_simulation_run(simulation_run_id="direct-boundary-run", event_sequence=0)
+    week_checkpoint = repository.capture_completed_week_checkpoint_for_legacy_simulation_run(simulation_run_id="direct-boundary-run", week=week)
+
+    for original, expected in ((event, "event_completed checkpoint"), (week_checkpoint, "week_completed checkpoint")):
+        duplicate_without_hash = replace(
+            original, checkpoint_id=f"duplicate-{original.checkpoint_id}", command_id=f"duplicate-{original.command_id}", sequence=999,
+            content_hash="",
+        )
+        duplicate = replace(
+            duplicate_without_hash, content_hash=repository.checkpoint_envelope_content_hash(duplicate_without_hash)
+        )
+        try:
+            repository.create_branch_checkpoint(duplicate)
+        except ValueError as exc:
+            assert expected in str(exc)
+        else:
+            raise AssertionError("duplicate checkpoint boundary must be rejected")

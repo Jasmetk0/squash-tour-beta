@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from sqlalchemy import Engine, Select, func, select, text
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 
 from beta_engine.application.season_models import RaceSnapshot, RankingSnapshot, SeasonState, TournamentSimulationResult
@@ -41,6 +41,16 @@ from beta_engine.infrastructure.db.models import (
     RunTalentPlanModel,
     SeasonStateModel,
     SimulationRunModel,
+)
+from beta_engine.infrastructure.db.checkpoint_boundaries import (
+    BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_EVENT_LEGACY_STATE,
+    BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_WEEK_LEGACY_STATE,
+    BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_CURRENT_LEGACY_STATE,
+    BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_INITIAL,
+    BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE,
+    BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED,
+    BRANCH_CHECKPOINT_KIND_INITIAL,
+    BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
 )
 
 SnapshotKind = Literal["tournament", "week"]
@@ -334,6 +344,7 @@ class SimulationPersistenceRepository:
 
     def _ensure_schema_compatibility(self) -> None:
         with self._engine.begin() as connection:
+            self._ensure_branch_checkpoint_boundary_indexes(connection=connection)
             self._ensure_column(
                 connection=connection,
                 table_name="season_state",
@@ -346,54 +357,36 @@ class SimulationPersistenceRepository:
                 column_name="source_type",
                 column_type="TEXT",
             )
-            self._ensure_column(
-                connection=connection,
-                table_name="run_generated_player_provenance",
-                column_name="override_id",
-                column_type="TEXT",
-            )
-            self._ensure_column(
-                connection=connection,
-                table_name="run_generated_player_provenance",
-                column_name="origin_source_type",
-                column_type="TEXT",
-            )
-            self._ensure_column(
-                connection=connection,
-                table_name="run_generated_player_provenance",
-                column_name="origin_quality_band",
-                column_type="TEXT",
-            )
-            self._ensure_column(
-                connection=connection,
-                table_name="run_generated_player_provenance",
-                column_name="origin_override_id",
-                column_type="TEXT",
-            )
-            self._ensure_column(
-                connection=connection,
-                table_name="run_generated_player_provenance",
-                column_name="origin_season",
-                column_type="INTEGER",
-            )
-            self._ensure_column(
-                connection=connection,
-                table_name="run_talent_country_allocations",
-                column_name="dampener_json",
-                column_type="TEXT",
-            )
-            self._ensure_column(
-                connection=connection,
-                table_name="simulation_runs",
-                column_name="world_id",
-                column_type="TEXT",
-            )
-            self._ensure_column(
-                connection=connection,
-                table_name="simulation_runs",
-                column_name="world_generation_fingerprint",
-                column_type="TEXT",
-            )
+            self._ensure_column(connection=connection, table_name="run_generated_player_provenance", column_name="override_id", column_type="TEXT")
+            self._ensure_column(connection=connection, table_name="run_generated_player_provenance", column_name="origin_source_type", column_type="TEXT")
+            self._ensure_column(connection=connection, table_name="run_generated_player_provenance", column_name="origin_quality_band", column_type="TEXT")
+            self._ensure_column(connection=connection, table_name="run_generated_player_provenance", column_name="origin_override_id", column_type="TEXT")
+            self._ensure_column(connection=connection, table_name="run_generated_player_provenance", column_name="origin_season", column_type="INTEGER")
+            self._ensure_column(connection=connection, table_name="run_talent_country_allocations", column_name="dampener_json", column_type="TEXT")
+            self._ensure_column(connection=connection, table_name="simulation_runs", column_name="world_id", column_type="TEXT")
+            self._ensure_column(connection=connection, table_name="simulation_runs", column_name="world_generation_fingerprint", column_type="TEXT")
+
+    @staticmethod
+    def _ensure_branch_checkpoint_boundary_indexes(*, connection) -> None:
+        """Add partial checkpoint-boundary indexes to pre-R3G SQLite databases.
+
+        ``CREATE INDEX IF NOT EXISTS`` keeps normal bootstrap idempotent. A
+        pre-existing duplicate boundary prevents SQLite from adding its unique
+        index; preserve that data rather than rewriting historical records.
+        """
+        indexes = (
+            ("uq_branch_checkpoints_one_initial_per_branch", "branch_id", BRANCH_CHECKPOINT_KIND_INITIAL),
+            ("uq_branch_checkpoints_one_event_completed_per_branch_event_sequence", "branch_id, event_sequence", BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED),
+            ("uq_branch_checkpoints_one_week_completed_per_branch_season_week", "branch_id, season, week", BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED),
+        )
+        for name, columns, kind in indexes:
+            try:
+                connection.execute(text(
+                    f"CREATE UNIQUE INDEX IF NOT EXISTS {name} ON branch_checkpoints ({columns}) WHERE kind = '{kind}'"
+                ))
+            except IntegrityError:
+                # Repository validation reports a clear conflict on later use.
+                continue
 
     @staticmethod
     def _ensure_column(*, connection, table_name: str, column_name: str, column_type: str) -> None:
@@ -732,9 +725,9 @@ class SimulationPersistenceRepository:
             model = session.execute(
                 select(BranchCheckpointModel).where(
                     BranchCheckpointModel.branch_id == branch_id,
-                    BranchCheckpointModel.kind == "initial",
+                    BranchCheckpointModel.kind == BRANCH_CHECKPOINT_KIND_INITIAL,
                 )
-            ).scalar_one_or_none()
+            ).scalars().first()
             return self._to_branch_checkpoint(model) if model is not None else None
 
     def get_event_completed_branch_checkpoint(self, *, branch_id: str, event_sequence: int) -> BranchCheckpointRecord | None:
@@ -742,9 +735,9 @@ class SimulationPersistenceRepository:
         with self._session_factory() as session:
             model = session.execute(select(BranchCheckpointModel).where(
                 BranchCheckpointModel.branch_id == branch_id,
-                BranchCheckpointModel.kind == "event_completed",
+                BranchCheckpointModel.kind == BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED,
                 BranchCheckpointModel.event_sequence == event_sequence,
-            )).scalar_one_or_none()
+            )).scalars().first()
             return self._to_branch_checkpoint(model) if model is not None else None
 
     def get_week_completed_branch_checkpoint(self, *, branch_id: str, season: int, week: int) -> BranchCheckpointRecord | None:
@@ -752,10 +745,10 @@ class SimulationPersistenceRepository:
         with self._session_factory() as session:
             model = session.execute(select(BranchCheckpointModel).where(
                 BranchCheckpointModel.branch_id == branch_id,
-                BranchCheckpointModel.kind == "week_completed",
+                BranchCheckpointModel.kind == BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
                 BranchCheckpointModel.season == season,
                 BranchCheckpointModel.week == week,
-            )).scalar_one_or_none()
+            )).scalars().first()
             return self._to_branch_checkpoint(model) if model is not None else None
 
     def list_branch_checkpoints(self, *, branch_id: str | None = None, run_id: str | None = None) -> list[BranchCheckpointRecord]:
@@ -784,18 +777,41 @@ class SimulationPersistenceRepository:
                 raise ValueError(f"checkpoint_id {record.checkpoint_id} already exists with different content")
             by_command = session.execute(select(BranchCheckpointModel).where(BranchCheckpointModel.branch_id == record.branch_id, BranchCheckpointModel.command_id == record.command_id)).scalar_one_or_none()
             if by_command is not None: return self._to_branch_checkpoint(by_command)
-            if record.kind == "initial":
+            if record.kind == BRANCH_CHECKPOINT_KIND_INITIAL:
                 existing_initial = session.execute(
                     select(BranchCheckpointModel).where(
                         BranchCheckpointModel.branch_id == record.branch_id,
-                        BranchCheckpointModel.kind == "initial",
+                        BranchCheckpointModel.kind == BRANCH_CHECKPOINT_KIND_INITIAL,
                     )
-                ).scalar_one_or_none()
+                ).scalars().first()
                 if existing_initial is not None:
                     raise ValueError(f"branch_id {record.branch_id} already has an initial checkpoint")
+            if record.kind == BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED:
+                existing_event = session.execute(select(BranchCheckpointModel).where(
+                    BranchCheckpointModel.branch_id == record.branch_id,
+                    BranchCheckpointModel.kind == BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED,
+                    BranchCheckpointModel.event_sequence == record.event_sequence,
+                )).scalars().first()
+                if existing_event is not None:
+                    raise ValueError(
+                        f"branch_id {record.branch_id} already has an event_completed checkpoint "
+                        f"for event_sequence {record.event_sequence}"
+                    )
+            if record.kind == BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED:
+                existing_week = session.execute(select(BranchCheckpointModel).where(
+                    BranchCheckpointModel.branch_id == record.branch_id,
+                    BranchCheckpointModel.kind == BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
+                    BranchCheckpointModel.season == record.season,
+                    BranchCheckpointModel.week == record.week,
+                )).scalars().first()
+                if existing_week is not None:
+                    raise ValueError(
+                        f"branch_id {record.branch_id} already has a week_completed checkpoint "
+                        f"for season {record.season} week {record.week}"
+                    )
             expected = session.execute(select(func.max(BranchCheckpointModel.sequence)).where(BranchCheckpointModel.branch_id == record.branch_id)).scalar_one()
             if record.sequence != (1 if expected is None else int(expected) + 1): raise ValueError("branch checkpoint sequence must increase by one")
-            if record.kind == "initial" and record.parent_checkpoint_id is not None: raise ValueError("initial checkpoint parent must be null")
+            if record.kind == BRANCH_CHECKPOINT_KIND_INITIAL and record.parent_checkpoint_id is not None: raise ValueError("initial checkpoint parent must be null")
             session.add(BranchCheckpointModel(
                 checkpoint_id=record.checkpoint_id, run_id=record.run_id, branch_id=record.branch_id, parent_checkpoint_id=record.parent_checkpoint_id,
                 sequence=record.sequence, kind=record.kind, season=record.season, week=record.week, event_id=record.event_id,
@@ -805,6 +821,10 @@ class SimulationPersistenceRepository:
                 seed_namespace_json=self.canonical_json(record.seed_namespace), payload_schema_version=record.payload_schema_version,
                 content_hash_algorithm=record.content_hash_algorithm, content_hash=record.content_hash, payload_json=self.canonical_json(record.payload),
             ))
+            try:
+                session.flush()
+            except IntegrityError as exc:
+                raise ValueError(f"branch checkpoint boundary conflict for branch_id {record.branch_id}") from exc
         return record
 
     def capture_initial_checkpoint_for_legacy_simulation_run(self, *, simulation_run_id: str, command_id: str | None = None) -> BranchCheckpointRecord:
@@ -836,13 +856,13 @@ class SimulationPersistenceRepository:
             branch_id=branch.branch_id,
             parent_checkpoint_id=None,
             sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id),
-            kind="initial",
+            kind=BRANCH_CHECKPOINT_KIND_INITIAL,
             season=legacy.season,
             week=None,
             event_id=None,
             event_sequence=None,
             command_id=command_id,
-            command_kind="capture_initial",
+            command_kind=BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_INITIAL,
             command_boundary="after_legacy_state_load",
             config_version=legacy.config_version,
             config_fingerprint=legacy.config_fingerprint,
@@ -950,11 +970,11 @@ class SimulationPersistenceRepository:
         checkpoint_without_hash = BranchCheckpointRecord(
             checkpoint_id=f"checkpoint-{checkpoint_suffix}", run_id=branch.run_id, branch_id=branch.branch_id,
             parent_checkpoint_id=effective_head_id, sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id),
-            kind="current_state_capture", season=state.season,
+            kind=BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE, season=state.season,
             week=active_event.week if active_event is not None else None,
             event_id=active_event.event_id if active_event is not None else None,
             event_sequence=state.next_event_index if active_event is not None else None,
-            command_id=command_id, command_kind="capture_current_legacy_state", command_boundary="after_legacy_state_load",
+            command_id=command_id, command_kind=BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_CURRENT_LEGACY_STATE, command_boundary="after_legacy_state_load",
             config_version=legacy.config_version, config_fingerprint=legacy.config_fingerprint,
             world_id=legacy.world_id, world_fingerprint=legacy.world_generation_fingerprint,
             global_seed=legacy.seed, branch_seed=branch.branch_seed, seed_namespace=seed_namespace,
@@ -1039,9 +1059,9 @@ class SimulationPersistenceRepository:
         suffix = hashlib.sha256(f"{branch.branch_id}\x00{command_id}".encode("utf-8")).hexdigest()[:24]
         incomplete = BranchCheckpointRecord(
             checkpoint_id=f"checkpoint-{suffix}", run_id=branch.run_id, branch_id=branch.branch_id, parent_checkpoint_id=effective_head_id,
-            sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id), kind="event_completed", season=target.season or state.season,
+            sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id), kind=BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED, season=target.season or state.season,
             week=target.week, event_id=target.event_id, event_sequence=target.event_sequence, command_id=command_id,
-            command_kind="capture_completed_event_legacy_state", command_boundary="after_completed_event_persisted",
+            command_kind=BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_EVENT_LEGACY_STATE, command_boundary="after_completed_event_persisted",
             config_version=legacy.config_version, config_fingerprint=legacy.config_fingerprint, world_id=legacy.world_id,
             world_fingerprint=legacy.world_generation_fingerprint, global_seed=legacy.seed, branch_seed=branch.branch_seed,
             seed_namespace=seed_namespace, payload_schema_version="branch_checkpoint_payload_v1", content_hash_algorithm="sha256", content_hash="", payload=payload)
@@ -1122,9 +1142,9 @@ class SimulationPersistenceRepository:
         suffix = hashlib.sha256(f"{branch.branch_id}\x00{command_id}".encode("utf-8")).hexdigest()[:24]
         incomplete_checkpoint = BranchCheckpointRecord(
             checkpoint_id=f"checkpoint-{suffix}", run_id=branch.run_id, branch_id=branch.branch_id, parent_checkpoint_id=effective_head_id,
-            sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id), kind="week_completed", season=state.season, week=week,
+            sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id), kind=BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED, season=state.season, week=week,
             event_id=None, event_sequence=max(sequences) if sequences else None, command_id=command_id,
-            command_kind="capture_completed_week_legacy_state", command_boundary="after_completed_week_persisted",
+            command_kind=BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_WEEK_LEGACY_STATE, command_boundary="after_completed_week_persisted",
             config_version=legacy.config_version, config_fingerprint=legacy.config_fingerprint, world_id=legacy.world_id,
             world_fingerprint=legacy.world_generation_fingerprint, global_seed=legacy.seed, branch_seed=branch.branch_seed,
             seed_namespace=seed_namespace, payload_schema_version="branch_checkpoint_payload_v1", content_hash_algorithm="sha256", content_hash="", payload=payload,

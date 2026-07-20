@@ -84,6 +84,31 @@ def test_capture_current_branch_checkpoint_requires_head_then_is_idempotent(tmp_
         assert status == 200 and branch_state["head_checkpoint_id"] == default["checkpoint_id"]
 
 
+def test_capture_completed_event_branch_checkpoint_api(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'checkpoint-event-api.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "checkpoint-event", "seed": 12, "season": 2027})
+        assert status == 201
+        status, rejected = _request("POST", f"{server.base_url}/branch-checkpoints/capture-completed-event", {"simulation_run_id": "checkpoint-event", "event_sequence": 0})
+        assert status == 400
+        status, initial = _request("POST", f"{server.base_url}/branch-checkpoints/capture-initial", {"simulation_run_id": "checkpoint-event"})
+        assert status == 200
+        status, simulated = _request("POST", f"{server.base_url}/runs/checkpoint-event/simulate/next-tournament")
+        assert status == 200
+        event_id = simulated["step"]["tournament_result"]["event"]["event_id"]
+        status, current = _request("POST", f"{server.base_url}/branch-checkpoints/capture-current", {"simulation_run_id": "checkpoint-event"})
+        assert status == 200
+        status, checkpoint = _request("POST", f"{server.base_url}/branch-checkpoints/capture-completed-event", {"simulation_run_id": "checkpoint-event", "event_id": event_id})
+        assert status == 200 and checkpoint["kind"] == "event_completed"
+        assert checkpoint["parent_checkpoint_id"] == current["checkpoint_id"]
+        status, repeated = _request("POST", f"{server.base_url}/branch-checkpoints/capture-completed-event", {"simulation_run_id": "checkpoint-event", "event_id": event_id, "command_id": "different"})
+        assert status == 200 and repeated["checkpoint_id"] == checkpoint["checkpoint_id"]
+        status, listed = _request("GET", f"{server.base_url}/branch-checkpoints?branch_id={checkpoint['branch_id']}")
+        assert status == 200 and [item["kind"] for item in listed["branch_checkpoints"]] == ["initial", "current_state_capture", "event_completed"]
+        status, branch_state = _request("GET", f"{server.base_url}/branch-states/{checkpoint['branch_id']}")
+        assert status == 200 and branch_state["head_checkpoint_id"] == checkpoint["checkpoint_id"]
+
+
 def test_branch_state_inspection_is_read_only_and_filterable(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'branch-state-api.db'}"
     with ApiServer(database_url=database_url) as server:

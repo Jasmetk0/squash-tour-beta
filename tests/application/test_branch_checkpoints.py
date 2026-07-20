@@ -120,6 +120,59 @@ def test_current_checkpoint_requires_existing_head_and_is_idempotent_for_unchang
     assert default == repository.capture_current_checkpoint_for_legacy_simulation_run(simulation_run_id="current-idempotency-run")
 
 
+def test_event_completed_checkpoint_captures_persisted_event_once_without_mutating_legacy_state(tmp_path) -> None:
+    repository = _repository(tmp_path)
+    service = SimulationApiService(repository=repository)
+    service.initialize_run(run_id="event-capture-run", season=2027, seed=7, config_version="v1", config_fingerprint="cfg")
+    try:
+        repository.capture_completed_event_checkpoint_for_legacy_simulation_run(simulation_run_id="event-capture-run")
+    except ValueError as exc:
+        assert "event_id or event_sequence" in str(exc)
+    else:
+        raise AssertionError("event locator is required")
+    try:
+        repository.capture_completed_event_checkpoint_for_legacy_simulation_run(simulation_run_id="event-capture-run", event_sequence=0)
+    except ValueError as exc:
+        assert "completed event locator" in str(exc)
+    else:
+        raise AssertionError("uncompleted events cannot be captured")
+    initial = repository.capture_initial_checkpoint_for_legacy_simulation_run(simulation_run_id="event-capture-run")
+    service.simulate_next_tournament(run_id="event-capture-run")
+    before_state = repository.load_season_state(run_id="event-capture-run")
+    completed = repository.list_completed_events(run_id="event-capture-run")[0]
+    current = repository.capture_current_checkpoint_for_legacy_simulation_run(simulation_run_id="event-capture-run")
+    checkpoint = repository.capture_completed_event_checkpoint_for_legacy_simulation_run(
+        simulation_run_id="event-capture-run", event_id=completed.event_id
+    )
+    assert checkpoint.kind == "event_completed"
+    assert checkpoint.parent_checkpoint_id == current.checkpoint_id
+    assert checkpoint.sequence == current.sequence + 1
+    assert (checkpoint.event_id, checkpoint.event_sequence) == (completed.event_id, completed.event_sequence)
+    assert checkpoint.payload["capture_mode"] == "legacy_event_completed_capture_only"
+    assert checkpoint.payload["event"]["source"] == "legacy_completed_event"
+    assert checkpoint.payload["completed_event"]["record"]["event_id"] == completed.event_id
+    assert checkpoint.payload["limitations"]["forkable"] is False
+    assert checkpoint.payload["limitations"]["replayable"] is False
+    assert repository.verify_branch_checkpoint_hash(checkpoint_id=checkpoint.checkpoint_id)
+    assert repository.load_season_state(run_id="event-capture-run").model_dump() == before_state.model_dump()
+    assert repository.list_run_prospects(run_id="event-capture-run") == []
+    assert repository.capture_completed_event_checkpoint_for_legacy_simulation_run(
+        simulation_run_id="event-capture-run", event_sequence=completed.event_sequence, command_id="other-command"
+    ) == checkpoint
+    branch = repository.get_run_branch(branch_id=checkpoint.branch_id)
+    branch_state = repository.get_branch_state(branch_id=checkpoint.branch_id)
+    assert branch is not None and branch.head_checkpoint_id == checkpoint.checkpoint_id
+    assert branch_state is not None and branch_state.head_checkpoint_id == checkpoint.checkpoint_id
+    try:
+        repository.capture_completed_event_checkpoint_for_legacy_simulation_run(
+            simulation_run_id="event-capture-run", event_id=completed.event_id, event_sequence=completed.event_sequence + 99
+        )
+    except ValueError as exc:
+        assert "different completed events" in str(exc)
+    else:
+        raise AssertionError("mismatched locators must be rejected")
+
+
 def test_branch_state_backfill_and_initial_checkpoint_metadata_are_idempotent(tmp_path) -> None:
     repository = _repository(tmp_path)
     repository.bootstrap_schema()

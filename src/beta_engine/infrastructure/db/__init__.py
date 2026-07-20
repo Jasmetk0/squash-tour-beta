@@ -14,6 +14,7 @@ from beta_engine.infrastructure.db.repositories import (
     RunContainerRecord,
     RunBranchRecord,
     BranchCheckpointRecord,
+    RunBranchStateRecord,
     SimulationPersistenceRepository,
     SimulationRunInfo,
 )
@@ -32,6 +33,7 @@ __all__ = [
     "RunContainerRecord",
     "RunBranchRecord",
     "BranchCheckpointRecord",
+    "RunBranchStateRecord",
     "SimulationPersistenceRepository",
     "SimulationRunInfo",
     "create_session_factory",

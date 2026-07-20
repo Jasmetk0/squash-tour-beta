@@ -3,9 +3,11 @@ from __future__ import annotations
 import hashlib
 from dataclasses import replace
 
+from sqlalchemy import inspect
+
 from beta_engine.application.api_services import SimulationApiService
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
-from beta_engine.infrastructure.db.models import BranchCheckpointModel, RunBranchModel
+from beta_engine.infrastructure.db.models import BranchCheckpointModel, BranchStateModel, RunBranchModel
 
 
 def _repository(tmp_path) -> SimulationPersistenceRepository:
@@ -60,6 +62,33 @@ def test_initial_checkpoint_default_command_is_idempotent_and_does_not_overwrite
     )
     branch = repository.get_run_branch(branch_id=checkpoint.branch_id)
     assert branch is not None and branch.head_checkpoint_id == "preexisting-head"
+    state = repository.get_branch_state(branch_id=checkpoint.branch_id)
+    assert state is not None and state.head_checkpoint_id == "preexisting-head"
+    assert state.current_season is None
+
+
+def test_branch_state_backfill_and_initial_checkpoint_metadata_are_idempotent(tmp_path) -> None:
+    repository = _repository(tmp_path)
+    repository.bootstrap_schema()
+    assert "branch_states" in inspect(repository._engine).get_table_names()
+    service = SimulationApiService(repository=repository)
+    service.initialize_run(run_id="branch-state-run", season=2027, seed=7, config_version="v1", config_fingerprint="cfg")
+    branch = repository.ensure_default_branch_for_simulation_run(simulation_run_id="branch-state-run")
+    assert branch is not None
+    empty_state = repository.get_branch_state(branch_id=branch.branch_id)
+    assert empty_state is not None and empty_state.head_checkpoint_id is None
+
+    checkpoint = repository.capture_initial_checkpoint_for_legacy_simulation_run(simulation_run_id="branch-state-run")
+    state = repository.get_branch_state(branch_id=branch.branch_id)
+    assert state is not None
+    assert state.head_checkpoint_id == checkpoint.checkpoint_id
+    assert (state.current_season, state.current_week, state.current_event_id, state.current_event_sequence) == (
+        checkpoint.season, checkpoint.week, checkpoint.event_id, checkpoint.event_sequence,
+    )
+    repository.backfill_branch_states_for_existing_branches()
+    repository.backfill_branch_states_for_existing_branches()
+    with repository._session_factory() as session:
+        assert session.query(BranchStateModel).count() == 1
 
 
 def test_checkpoint_envelope_hash_is_order_independent_and_protects_all_envelope_fields(tmp_path) -> None:

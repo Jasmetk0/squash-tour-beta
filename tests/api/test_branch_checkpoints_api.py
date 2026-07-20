@@ -57,3 +57,20 @@ def test_capture_initial_uses_a_deterministic_default_command_id(tmp_path) -> No
             "POST", f"{server.base_url}/branch-checkpoints/capture-initial", {"simulation_run_id": "checkpoint-default"}
         )
         assert status == 200 and repeated["checkpoint_id"] == checkpoint["checkpoint_id"]
+
+
+def test_branch_state_inspection_is_read_only_and_filterable(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'branch-state-api.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, run = _request("POST", f"{server.base_url}/runs", {"run_id": "branch-state-api", "seed": 12, "season": 2027})
+        assert status == 201
+        status, empty = _request("GET", f"{server.base_url}/branch-states")
+        assert status == 200 and len(empty["branch_states"]) == 1
+        branch_state = empty["branch_states"][0]
+        assert branch_state["run_id"] == run["run_id"] and branch_state["head_checkpoint_id"] is None
+        status, filtered = _request("GET", f"{server.base_url}/branch-states?run_id=branch-state-api")
+        assert status == 200 and filtered == empty
+        status, detail = _request("GET", f"{server.base_url}/branch-states/{branch_state['branch_id']}")
+        assert status == 200 and detail == branch_state
+        status, missing = _request("GET", f"{server.base_url}/branch-states/missing")
+        assert status == 404 and "not found" in missing["detail"]

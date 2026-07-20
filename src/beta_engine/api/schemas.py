@@ -169,6 +169,16 @@ class RunBranchResponse(BaseModel):
 class RunBranchListResponse(BaseModel):
     run_branches: list[RunBranchResponse] = Field(default_factory=list)
 
+class BranchStateResponse(BaseModel):
+    branch_id: str; run_id: str; head_checkpoint_id: str | None = None
+    current_season: int | None = None; current_week: int | None = None
+    current_event_id: str | None = None; current_event_sequence: int | None = None
+    state_schema_version: str; status: str
+    metadata_json: dict[str, object] = Field(default_factory=dict)
+
+class BranchStateListResponse(BaseModel):
+    branch_states: list[BranchStateResponse] = Field(default_factory=list)
+
 class BranchCheckpointResponse(BaseModel):
     checkpoint_id: str; run_id: str; branch_id: str; parent_checkpoint_id: str | None = None; sequence: int; kind: str; season: int
     week: int | None = None; event_id: str | None = None; event_sequence: int | None = None; command_id: str; command_kind: str; command_boundary: str

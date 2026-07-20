@@ -24,6 +24,7 @@ from beta_engine.api.routers.runs import router as runs_router
 from beta_engine.api.routers.run_containers import router as run_containers_router
 from beta_engine.api.routers.run_branches import router as run_branches_router
 from beta_engine.api.routers.branch_checkpoints import router as branch_checkpoints_router
+from beta_engine.api.routers.branch_states import router as branch_states_router
 from beta_engine.api.routers.rankings import router as rankings_router
 from beta_engine.api.routers.ranking_snapshots import router as ranking_snapshots_router
 from beta_engine.api.routers.sim import router as sim_router
@@ -55,6 +56,7 @@ router.include_router(runs_router)
 router.include_router(run_containers_router)
 router.include_router(run_branches_router)
 router.include_router(branch_checkpoints_router)
+router.include_router(branch_states_router)
 router.include_router(rankings_router)
 router.include_router(ranking_snapshots_router)
 router.include_router(point_breakdowns_router)

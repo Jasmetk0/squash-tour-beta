@@ -67,6 +67,8 @@ import type {
   BranchCheckpoint,
   BranchCheckpointListResponse,
   CaptureInitialBranchCheckpointRequest,
+  BranchState,
+  BranchStateListResponse,
   RunWeeklyIntakeCohortSeasonPreviewParams,
   RunWeeklyIntakeCohortSeasonPreviewResponse,
   RunPlayerDetail,
@@ -792,6 +794,12 @@ export function listBranchCheckpoints(params?: { branch_id?: string; run_id?: st
 }
 export function getBranchCheckpoint(checkpointId: string): Promise<BranchCheckpoint> { return request(`/branch-checkpoints/${encodeURIComponent(checkpointId)}`) }
 export function captureInitialBranchCheckpoint(payload: CaptureInitialBranchCheckpointRequest): Promise<BranchCheckpoint> { return request('/branch-checkpoints/capture-initial', { method: 'POST', body: JSON.stringify(payload) }) }
+export function listBranchStates(params?: { run_id?: string }): Promise<BranchStateListResponse> {
+  const query = new URLSearchParams()
+  if (params?.run_id) query.set('run_id', params.run_id)
+  return request(`/branch-states${query.size ? `?${query}` : ''}`)
+}
+export function getBranchState(branchId: string): Promise<BranchState> { return request(`/branch-states/${encodeURIComponent(branchId)}`) }
 
 export function getRun(runId: string): Promise<SeasonStateResponse> {
   return request(`/runs/${encodeURIComponent(runId)}`)

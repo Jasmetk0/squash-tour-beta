@@ -60,6 +60,7 @@ from beta_engine.domain.players import (
 from beta_engine.domain.tournaments import CalendarEvent
 from beta_engine.infrastructure.db import (
     BranchExecutionTarget,
+    LegacyRunCloneResult,
     LegacyRunClonePreflightResult,
     SimulationPersistenceRepository,
     SimulationRunInfo,
@@ -819,6 +820,20 @@ class SimulationApiService:
         """Return a read-only R4C0 clone-source preflight inventory."""
         return self.repository.inspect_legacy_run_clone_inventory(
             simulation_run_id=simulation_run_id, branch_id=branch_id, checkpoint_id=checkpoint_id
+        )
+
+    def clone_legacy_simulation_run_namespace(
+        self, *, source_simulation_run_id: str, target_simulation_run_id: str,
+        source_branch_id: str | None = None, source_checkpoint_id: str | None = None,
+        target_seed: int | None = None,
+    ) -> LegacyRunCloneResult:
+        """Create an unmapped legacy namespace; this does not create or bind a Branch."""
+        return self.repository.clone_legacy_simulation_run_namespace(
+            source_simulation_run_id=source_simulation_run_id,
+            target_simulation_run_id=target_simulation_run_id,
+            source_branch_id=source_branch_id,
+            source_checkpoint_id=source_checkpoint_id,
+            target_seed=target_seed,
         )
 
     def get_run_talent_plan_summary(self, *, run_id: str) -> RunTalentPlanSummary:

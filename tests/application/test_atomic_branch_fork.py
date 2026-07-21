@@ -9,8 +9,12 @@ from beta_engine.infrastructure.db import (
     ForkRunBranchCommand, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine,
 )
 from beta_engine.infrastructure.db.models import (
+    AdminActionModel, CompletedEventMetadataModel, CompletedEventModel, CompletedTournamentInputModel,
     BranchCheckpointModel, BranchForkCommandModel, BranchStateModel, LegacySimulationRunMappingModel,
-    RunBranchModel, RunContainerModel, SeasonStateModel, SimulationRunModel,
+    FinalsQualificationModel, FinalsResultModel, NextSeasonPlayerModel, PlayerSeasonTransitionModel,
+    RaceSnapshotModel, RankingSnapshotModel, RunGeneratedPlayerProvenanceModel, RunProspectModel,
+    RunTalentCountryAllocationModel, RunTalentPlanModel, SeasonRolloverModel, RunBranchModel,
+    RunContainerModel, SeasonStateModel, SimulationRunModel,
 )
 from beta_engine.infrastructure.db.repositories import BranchCheckpointRecord
 
@@ -109,21 +113,29 @@ def test_atomic_fork_accepts_current_capture_and_rejects_read_only_and_missing_s
 
 def _rollback_case(tmp_path, monkeypatch, seam, *, equivalence=False):
     repository, service, branch, checkpoint = _setup(tmp_path); reached = []
+    def values(model): return {column.name: getattr(model, column.name) for column in model.__table__.columns}
+    with repository._session_factory() as session:
+        source_snapshot = (values(session.get(SimulationRunModel, "source")), values(session.get(SeasonStateModel, "source")), values(session.get(RunBranchModel, branch.branch_id)), values(session.get(BranchStateModel, branch.branch_id)), values(session.get(BranchCheckpointModel, checkpoint.checkpoint_id)), session.get(RunContainerModel, "source").official_branch_id, values(session.get(LegacySimulationRunMappingModel, "source")))
     if equivalence:
         original = repository._normalized_clone_content_hash
         def fail(**kwargs):
-            reached.append("equivalence")
+            reached.append(kwargs["run_id"])
             if kwargs["run_id"] == "fork-legacy": return "mismatch"
             return original(**kwargs)
     else:
         def fail(**kwargs): reached.append(seam); raise RuntimeError(seam)
     monkeypatch.setattr(repository, seam, fail)
     with pytest.raises(Exception): service.fork_run_branch_atomically(_command(branch.branch_id, checkpoint.checkpoint_id))
-    assert reached
+    assert reached[-1] == "fork-legacy" if equivalence else reached == [seam]
     with repository._session_factory() as session:
-        assert session.get(SimulationRunModel, "fork-legacy") is None and session.get(SeasonStateModel, "fork-legacy") is None
+        models = (SimulationRunModel, SeasonStateModel, CompletedEventModel, CompletedEventMetadataModel, CompletedTournamentInputModel, RankingSnapshotModel, RaceSnapshotModel, FinalsQualificationModel, FinalsResultModel, AdminActionModel, SeasonRolloverModel, PlayerSeasonTransitionModel, NextSeasonPlayerModel, RunTalentPlanModel, RunTalentCountryAllocationModel, RunGeneratedPlayerProvenanceModel, RunProspectModel)
+        for model in models: assert session.execute(select(model).where(model.run_id == "fork-legacy")).scalars().all() == []
         assert session.get(RunBranchModel, "fork-branch") is None and session.get(BranchStateModel, "fork-branch") is None
         assert session.get(BranchForkCommandModel, "fork-command") is None and session.get(LegacySimulationRunMappingModel, "fork-legacy") is None
+        assert session.get(BranchCheckpointModel, "checkpoint-f7b6d8b60c815da04f4141d7") is None
+        assert session.execute(select(BranchCheckpointModel).where(BranchCheckpointModel.branch_id == "fork-branch")).scalars().all() == []
+        after = (values(session.get(SimulationRunModel, "source")), values(session.get(SeasonStateModel, "source")), values(session.get(RunBranchModel, branch.branch_id)), values(session.get(BranchStateModel, branch.branch_id)), values(session.get(BranchCheckpointModel, checkpoint.checkpoint_id)), session.get(RunContainerModel, "source").official_branch_id, values(session.get(LegacySimulationRunMappingModel, "source")))
+        assert after == source_snapshot
 
 
 def test_atomic_fork_rolls_back_on_equivalence_failure(tmp_path, monkeypatch):

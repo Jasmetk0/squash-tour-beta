@@ -5,7 +5,7 @@ from sqlalchemy import select
 
 from beta_engine.application.api_services import SimulationApiService
 from beta_engine.infrastructure.db import (
-    BranchForkIdempotencyConflictError, BranchForkValidationError, DatabaseSettings,
+    BranchForkIdempotencyConflictError, BranchForkSourceStateMismatchError, BranchForkValidationError, DatabaseSettings,
     ForkRunBranchCommand, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine,
 )
 from beta_engine.infrastructure.db.models import (
@@ -37,6 +37,7 @@ def test_atomic_fork_creates_branch_namespace_checkpoint_and_replays_idempotentl
     original_official = repository.get_run_container(run_id="source").official_branch_id
     result = service.fork_run_branch_atomically(_command(source_branch.branch_id, source_checkpoint.checkpoint_id))
     assert result.idempotent_replay is False and result.created_mapping is False and result.official_branch_changed is False
+    assert result.target_checkpoint_id == "checkpoint-f7b6d8b60c815da04f4141d7"
     with repository._session_factory() as session:
         branch = session.get(RunBranchModel, "fork-branch"); state = session.get(BranchStateModel, "fork-branch")
         checkpoint = session.get(BranchCheckpointModel, result.target_checkpoint_id)
@@ -44,6 +45,8 @@ def test_atomic_fork_creates_branch_namespace_checkpoint_and_replays_idempotentl
         assert session.get(SeasonStateModel, "fork-legacy") is not None
         assert branch.head_checkpoint_id == state.head_checkpoint_id == checkpoint.checkpoint_id
         assert checkpoint.kind == "branch_fork_start" and checkpoint.sequence == 1 and checkpoint.parent_checkpoint_id is None
+        assert repository.verify_branch_checkpoint_hash(checkpoint_id=checkpoint.checkpoint_id)
+        assert checkpoint.payload_json.find('"fork_semantics":"cloned_current_state_not_checkpoint_replay"') >= 0
         assert session.get(LegacySimulationRunMappingModel, "fork-legacy") is None
         assert session.get(BranchForkCommandModel, "fork-command") is not None
     assert repository.get_run_container(run_id="source").official_branch_id == original_official
@@ -52,6 +55,18 @@ def test_atomic_fork_creates_branch_namespace_checkpoint_and_replays_idempotentl
     assert replay.idempotent_replay is True and replay.target_checkpoint_id == result.target_checkpoint_id
     with pytest.raises(BranchForkIdempotencyConflictError):
         service.fork_run_branch_atomically(_command(source_branch.branch_id, source_checkpoint.checkpoint_id, target_branch_seed=100))
+
+
+def test_inventory_hash_is_r4c0_inventory_not_clone_equivalence_and_corrupt_replay_fails(tmp_path):
+    repository, service, source_branch, source_checkpoint = _setup(tmp_path)
+    expected_inventory = repository.inspect_legacy_run_clone_inventory(simulation_run_id="source", branch_id=source_branch.branch_id, checkpoint_id=source_checkpoint.checkpoint_id).inventory.inventory_hash
+    result = service.fork_run_branch_atomically(_command(source_branch.branch_id, source_checkpoint.checkpoint_id))
+    assert result.source_inventory_hash == expected_inventory
+    assert result.source_inventory_hash != result.normalized_clone_equivalence_hash
+    with repository._session_factory.begin() as session:
+        session.delete(session.get(SeasonStateModel, "fork-legacy"))
+    with pytest.raises(BranchForkSourceStateMismatchError, match="inconsistent"):
+        service.fork_run_branch_atomically(_command(source_branch.branch_id, source_checkpoint.checkpoint_id))
 
 
 def test_atomic_fork_accepts_current_capture_and_rejects_read_only_and_missing_state(tmp_path):

@@ -941,6 +941,27 @@ class SimulationPersistenceRepository:
         completed_inputs = self._load_completed_inputs(session=session, run_id=model.run_id)
         return SeasonState.model_validate({"season": model.season, "ordered_events": _from_json(model.ordered_events_json), "next_event_index": model.next_event_index, "completed_event_ids": _from_json(model.completed_event_ids_json), "completed_tournament_inputs": [payload.model_dump() for payload in completed_inputs], "ranking_snapshot": _from_json(model.ranking_snapshot_json) if model.ranking_snapshot_json else None, "race_snapshot": _from_json(model.race_snapshot_json) if model.race_snapshot_json else None, "active_tournament": _from_json(model.active_tournament_json) if model.active_tournament_json else None}).model_dump(mode="json")
 
+    def _legacy_run_clone_inventory_hash_in_session(self, *, session: Session, simulation_run_id: str, branch_id: str, checkpoint_id: str) -> str:
+        """Compute the R4C0 inventory hash in an existing transaction."""
+        simulation_run = session.get(SimulationRunModel, simulation_run_id)
+        mapping = session.get(LegacySimulationRunMappingModel, simulation_run_id)
+        branch = session.get(RunBranchModel, branch_id)
+        checkpoint = session.get(BranchCheckpointModel, checkpoint_id)
+        if simulation_run is None or branch is None or checkpoint is None:
+            raise BranchForkSourceStateMismatchError("fork inventory source is missing")
+        scoped = lambda model: session.execute(select(model).where(model.run_id == simulation_run_id)).scalars().all()
+        sections = [self._clone_inventory_section(name=name, models=scoped(model), copy_policy=policy) for name, model, policy in (
+            ("simulation_run", SimulationRunModel, "copy"), ("season_state", SeasonStateModel, "copy"), ("completed_events", CompletedEventModel, "copy"), ("completed_event_metadata", CompletedEventMetadataModel, "copy"), ("completed_tournament_inputs", CompletedTournamentInputModel, "copy"), ("ranking_snapshots", RankingSnapshotModel, "copy"), ("race_snapshots", RaceSnapshotModel, "copy"), ("finals_qualification", FinalsQualificationModel, "copy"), ("finals_results", FinalsResultModel, "copy"), ("admin_actions", AdminActionModel, "copy"), ("season_rollovers", SeasonRolloverModel, "copy"), ("player_season_transitions", PlayerSeasonTransitionModel, "copy"), ("next_season_players", NextSeasonPlayerModel, "copy"), ("run_talent_plans", RunTalentPlanModel, "copy"), ("run_talent_country_allocations", RunTalentCountryAllocationModel, "copy"), ("run_generated_player_provenance", RunGeneratedPlayerProvenanceModel, "copy"), ("run_prospects", RunProspectModel, "unsupported"))]
+        # SimulationRun is primary-key scoped and is the sole exception to run_id filtering.
+        sections[0] = self._clone_inventory_section(name="simulation_run", models=[simulation_run])
+        product_run_id = mapping.run_id if mapping else None
+        for name, model in (("run_branches", RunBranchModel), ("branch_states", BranchStateModel), ("branch_checkpoints", BranchCheckpointModel)):
+            rows = session.execute(select(model).where(model.run_id == product_run_id)).scalars().all() if product_run_id else []
+            sections.append(self._clone_inventory_section(name=name, models=rows, copy_policy="excluded_metadata"))
+        state = session.get(SeasonStateModel, simulation_run_id)
+        fields = {"source_legacy_simulation_run_id": simulation_run_id, "source_product_run_id": product_run_id, "source_branch_id": branch_id, "source_checkpoint_id": checkpoint_id, "source_checkpoint_kind": checkpoint.kind, "season": state.season if state else simulation_run.season, "week": checkpoint.week, "next_event_index": state.next_event_index if state else None, "sections": tuple(sections)}
+        return hashlib.sha256(_to_json({**fields, "sections": [item.__dict__ for item in sections]}).encode("utf-8")).hexdigest()
+
     def clone_legacy_simulation_run_namespace(
         self,
         *,
@@ -1035,9 +1056,19 @@ class SimulationPersistenceRepository:
                 if existing.request_fingerprint != fingerprint:
                     raise BranchForkIdempotencyConflictError("command_id already exists with different fork request")
                 result_branch = session.get(RunBranchModel, existing.result_branch_id)
+                result_state = session.get(BranchStateModel, existing.result_branch_id)
                 result_checkpoint = session.get(BranchCheckpointModel, existing.result_checkpoint_id)
                 result_run = session.get(SimulationRunModel, existing.result_legacy_simulation_run_id)
-                if result_branch is None or result_checkpoint is None or result_run is None or result_branch.run_id != command.product_run_id or result_branch.head_checkpoint_id != result_checkpoint.checkpoint_id:
+                result_season_state = session.get(SeasonStateModel, existing.result_legacy_simulation_run_id)
+                mapping = session.get(LegacySimulationRunMappingModel, existing.result_legacy_simulation_run_id)
+                if (result_branch is None or result_state is None or result_checkpoint is None or result_run is None or result_season_state is None or mapping is not None
+                    or existing.target_branch_id != command.target_branch_id or existing.target_legacy_simulation_run_id != command.target_legacy_simulation_run_id
+                    or existing.result_branch_id != command.target_branch_id or existing.result_legacy_simulation_run_id != command.target_legacy_simulation_run_id
+                    or result_branch.run_id != command.product_run_id or result_state.run_id != command.product_run_id
+                    or result_branch.legacy_simulation_run_id != existing.result_legacy_simulation_run_id
+                    or result_branch.head_checkpoint_id != result_state.head_checkpoint_id or result_branch.head_checkpoint_id != existing.result_checkpoint_id
+                    or result_checkpoint.checkpoint_id != existing.result_checkpoint_id or result_checkpoint.branch_id != existing.result_branch_id
+                    or result_checkpoint.run_id != command.product_run_id or result_checkpoint.kind != BRANCH_CHECKPOINT_KIND_BRANCH_FORK_START):
                     raise BranchForkSourceStateMismatchError("idempotent fork result is missing or inconsistent")
                 metadata = _from_json(existing.metadata_json)
                 return ForkRunBranchResult(command.product_run_id, command.source_branch_id, command.source_checkpoint_id, command.target_branch_id, command.target_legacy_simulation_run_id, existing.result_checkpoint_id, command.target_branch_seed, metadata["source_inventory_hash"], metadata["normalized_clone_equivalence_hash"], fingerprint, True)
@@ -1065,10 +1096,12 @@ class SimulationPersistenceRepository:
             if (container.config_version and checkpoint.config_version and container.config_version != checkpoint.config_version) or (container.config_fingerprint and checkpoint.config_fingerprint and container.config_fingerprint != checkpoint.config_fingerprint) or (container.global_seed is not None and checkpoint.global_seed is not None and container.global_seed != checkpoint.global_seed): raise BranchForkSourceStateMismatchError("run provenance mismatch")
             if command.target_branch_id == command.source_branch_id or session.get(RunBranchModel, command.target_branch_id) is not None: raise BranchForkTargetExistsError("target branch already exists or equals source")
             if command.target_legacy_simulation_run_id == source_run.run_id or session.get(SimulationRunModel, command.target_legacy_simulation_run_id) is not None or session.execute(select(RunBranchModel).where(RunBranchModel.legacy_simulation_run_id == command.target_legacy_simulation_run_id)).scalar_one_or_none() is not None: raise BranchForkTargetExistsError("target legacy simulation run already exists or is bound")
-            source_inventory_hash = self._normalized_clone_content_hash(session=session, run_id=source_run.run_id, expected_clone_seed=source_run.seed)
+            source_inventory_hash = self._legacy_run_clone_inventory_hash_in_session(session=session, simulation_run_id=source_run.run_id, branch_id=command.source_branch_id, checkpoint_id=command.source_checkpoint_id)
             target_run, target_state, equivalence_hash = self._clone_legacy_simulation_run_namespace_in_session(session=session, source_simulation_run_id=source_run.run_id, target_simulation_run_id=command.target_legacy_simulation_run_id, preserve_source_seed=True)
             if target_run.world_id != container.world_id: raise BranchForkSourceStateMismatchError("cloned target world_id mismatch")
-            checkpoint_id = f"checkpoint-{hashlib.sha256(('branch-fork-v1\\x00' + command.target_branch_id + '\\x00' + command.command_id).encode('utf-8')).hexdigest()[:24]}"
+            checkpoint_material = "\x00".join(("branch-fork-v1", command.target_branch_id, command.command_id))
+            checkpoint_digest = hashlib.sha256(checkpoint_material.encode("utf-8")).hexdigest()[:24]
+            checkpoint_id = f"checkpoint-{checkpoint_digest}"
             seed_namespace = {"hierarchy": ["global", "branch"], "global_seed": container.global_seed, "source_branch_seed": branch.branch_seed, "source_legacy_simulation_run_seed": source_run.seed, "target_branch_seed": command.target_branch_seed}
             payload = {"product_run_id": command.product_run_id, "source_branch_id": command.source_branch_id, "source_checkpoint_id": command.source_checkpoint_id, "source_checkpoint_kind": checkpoint.kind, "source_checkpoint_content_hash": checkpoint.content_hash, "source_legacy_simulation_run_id": source_run.run_id, "target_branch_id": command.target_branch_id, "target_legacy_simulation_run_id": command.target_legacy_simulation_run_id, "source_inventory_hash": source_inventory_hash, "normalized_clone_equivalence_hash": equivalence_hash, "request_fingerprint": fingerprint, "provenance": {"world_id": container.world_id, "world_fingerprint": container.world_package_fingerprint, "config_version": container.config_version, "config_fingerprint": container.config_fingerprint, "global_seed": container.global_seed, "source_branch_seed": branch.branch_seed, "source_legacy_simulation_run_seed": source_run.seed, "target_branch_seed": command.target_branch_seed}, "fork_semantics": "cloned_current_state_not_checkpoint_replay"}
             branch_metadata = {"fork_command_id": command.command_id, "request_fingerprint": fingerprint, "source_checkpoint_id": checkpoint.checkpoint_id}

@@ -49,11 +49,13 @@ from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_ADMIN_ACTION_LEGACY_STATE,
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_INITIAL,
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_SEASON_ROLLOVER_LEGACY_STATE,
+    BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_BOOTSTRAP_START_LEGACY_STATE,
     BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE,
     BRANCH_CHECKPOINT_KIND_ADMIN_ACTION_APPLIED,
     BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED,
     BRANCH_CHECKPOINT_KIND_INITIAL,
     BRANCH_CHECKPOINT_KIND_SEASON_ROLLOVER,
+    BRANCH_CHECKPOINT_KIND_BOOTSTRAP_START,
     BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
 )
 
@@ -1227,6 +1229,112 @@ class SimulationPersistenceRepository:
         with self._session_factory.begin() as session:
             model = session.get(RunBranchModel, branch.branch_id)
             if model is not None: model.head_checkpoint_id = created.checkpoint_id
+        self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+        return created
+
+    def get_bootstrap_start_branch_checkpoint(self, *, branch_id: str, simulation_run_id: str,
+                                               source_run_id: str | None, from_season: int | None,
+                                               to_season: int | None) -> BranchCheckpointRecord | None:
+        """Find the single capture-only bootstrap boundary for its persisted locator."""
+        for checkpoint in self.list_branch_checkpoints(branch_id=branch_id):
+            bootstrap = checkpoint.payload.get("bootstrap", {})
+            if checkpoint.kind == BRANCH_CHECKPOINT_KIND_BOOTSTRAP_START and isinstance(bootstrap, dict) and (
+                bootstrap.get("simulation_run_id") == simulation_run_id
+                and bootstrap.get("source_run_id") == source_run_id
+                and bootstrap.get("from_season") == from_season
+                and bootstrap.get("to_season") == to_season
+            ):
+                return checkpoint
+        return None
+
+    def capture_bootstrap_start_checkpoint_for_legacy_simulation_run(
+        self, *, simulation_run_id: str, source_run_id: str | None = None,
+        from_season: int | None = None, to_season: int | None = None,
+        command_id: str | None = None,
+    ) -> BranchCheckpointRecord:
+        """Capture an already persisted rollover-bootstrap target state, without replaying it."""
+        legacy = self.get_simulation_run(run_id=simulation_run_id)
+        if legacy is None:
+            raise KeyError(f"run_id {simulation_run_id} was not found")
+        if legacy.source_type != "rollover_bootstrap" or not (
+            legacy.parent_run_id or legacy.source_rollover_run_id
+        ):
+            raise ValueError(f"run_id {simulation_run_id} has no stable bootstrap/rollover provenance")
+        persisted_source = legacy.source_rollover_run_id or legacy.parent_run_id
+        if source_run_id is not None and source_run_id not in {legacy.parent_run_id, legacy.source_rollover_run_id}:
+            raise ValueError("source_run_id does not match persisted bootstrap provenance")
+        if from_season is not None and from_season != legacy.source_rollover_from_season:
+            raise ValueError("from_season does not match persisted bootstrap provenance")
+        if to_season is not None and to_season != legacy.source_rollover_to_season:
+            raise ValueError("to_season does not match persisted bootstrap provenance")
+        if legacy.source_rollover_from_season is None or legacy.source_rollover_to_season is None:
+            raise ValueError(f"run_id {simulation_run_id} has incomplete stable bootstrap/rollover provenance")
+        branch = self.ensure_default_branch_for_simulation_run(simulation_run_id=simulation_run_id)
+        if branch is None:
+            raise KeyError(f"default branch for run_id {simulation_run_id} was not found")
+        state = self.load_season_state(run_id=simulation_run_id)
+        if state is None:
+            raise ValueError(f"run_id {simulation_run_id} has no season state")
+        branch_state = self.get_branch_state(branch_id=branch.branch_id) or self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+        head_id = branch_state.head_checkpoint_id if branch_state is not None else branch.head_checkpoint_id
+        if head_id is None:
+            raise ValueError(f"branch {branch.branch_id} has no existing head checkpoint; capture initial first")
+        if self.get_branch_checkpoint(checkpoint_id=head_id) is None:
+            raise ValueError(f"branch {branch.branch_id} head checkpoint {head_id} was not found")
+        # Normalize omitted locators to durable target provenance for one-per-bootstrap identity.
+        locator_source = source_run_id or persisted_source
+        locator_from = from_season if from_season is not None else legacy.source_rollover_from_season
+        locator_to = to_season if to_season is not None else legacy.source_rollover_to_season
+        existing_bootstrap = self.get_bootstrap_start_branch_checkpoint(
+            branch_id=branch.branch_id, simulation_run_id=simulation_run_id, source_run_id=locator_source,
+            from_season=locator_from, to_season=locator_to,
+        )
+        if existing_bootstrap is not None:
+            self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+            return existing_bootstrap
+        transitions = [row.__dict__ | {"transition": row.transition.model_dump(mode="json")} for row in self.list_player_transitions(run_id=persisted_source, to_season=locator_to)]
+        next_players = [row.__dict__ | {"state": row.state.model_dump(mode="json")} for row in self.list_next_season_players(run_id=persisted_source, to_season=locator_to)]
+        source_rollovers = [row.__dict__ for row in self.list_season_rollovers(run_id=persisted_source) if row.from_season == locator_from and row.to_season == locator_to]
+        initial_player_refs = [{"player_id": row["player_id"]} for row in next_players]
+        artifacts: dict[str, object] = {
+            "target_initial_player_state_refs": initial_player_refs,
+            "source_rollover_references": source_rollovers,
+            "source_transition_rows": transitions,
+            "source_next_season_player_rows": next_players,
+            "target_initial_player_state_refs_hash": self.checkpoint_content_hash({"rows": initial_player_refs}),
+            "source_rollover_references_hash": self.checkpoint_content_hash({"rows": source_rollovers}),
+            "source_transition_rows_hash": self.checkpoint_content_hash({"rows": transitions}),
+            "source_next_season_player_rows_hash": self.checkpoint_content_hash({"rows": next_players}),
+        }
+        artifacts["bootstrap_artifacts_hash"] = self.checkpoint_content_hash(artifacts)
+        actions = [action.__dict__ for action in self.list_admin_actions(run_id=simulation_run_id)]
+        seed_namespace = {"hierarchy": ["global", "season", "entries", "draws", "tournament_progression"], "global_seed": legacy.seed, "branch_seed": branch.branch_seed}
+        serialized_state = state.model_dump(mode="json")
+        payload: dict[str, object] = {
+            "fork_capability": "not_forkable_player_state_not_migrated", "capture_mode": "legacy_bootstrap_start_capture_only",
+            "payload_schema_version": "branch_checkpoint_payload_v1", "run_id": branch.run_id, "branch_id": branch.branch_id,
+            "legacy_simulation_run_id": simulation_run_id, "parent_checkpoint_id": head_id,
+            "bootstrap": {"locator": {"source_run_id": locator_source, "from_season": locator_from, "to_season": locator_to}, "target_run_id": simulation_run_id, "simulation_run_id": simulation_run_id, "source_run_id": persisted_source, "from_season": locator_from, "to_season": locator_to, "source_type": legacy.source_type, "parent_run_id": legacy.parent_run_id, "source_rollover_run_id": legacy.source_rollover_run_id, "source_rollover_from_season": legacy.source_rollover_from_season, "source_rollover_to_season": legacy.source_rollover_to_season, "source": "legacy_bootstrap_start"},
+            "simulation_run": legacy.__dict__, "season_state": serialized_state, "bootstrap_artifacts": artifacts,
+            "publications": {"latest_ranking_snapshot_references": [x.__dict__ for x in self.list_ranking_snapshot_records(run_id=simulation_run_id)][-1:], "latest_race_snapshot_references": [x.__dict__ for x in self.list_race_snapshot_records(run_id=simulation_run_id)][-1:]},
+            "admin": {"actions": actions, "admin_actions_hash": self.checkpoint_content_hash({"actions": actions})},
+            "provenance": {"world_id": legacy.world_id, "world_fingerprint": legacy.world_generation_fingerprint, "config_version": legacy.config_version, "config_fingerprint": legacy.config_fingerprint, "global_seed": legacy.seed, "branch_seed": branch.branch_seed, "seed_namespace": seed_namespace},
+            "limitations": {"forkable": False, "replayable": False, "player_state": "hash_only_or_not_migrated", "prospects": "legacy_run_scoped_not_captured_as_durable_identity", "simulation_source": "legacy_simulation_run_state", "bootstrap_replay": "not_supported_yet", "cross_run_parent_link": "not_supported_in_r3j", "branch_timeline_stitching": "not_supported_yet"},
+        }
+        logical = self.checkpoint_content_hash({key: value for key, value in payload.items() if key != "parent_checkpoint_id"})
+        command_id = command_id or f"legacy-bootstrap-start-capture:{simulation_run_id}:{locator_source}:{locator_from}:{locator_to}:{artifacts['bootstrap_artifacts_hash'][:24]}:{logical[:16]}"
+        existing = self.get_branch_checkpoint_by_command_id(branch_id=branch.branch_id, command_id=command_id)
+        if existing is not None:
+            self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+            return existing
+        suffix = hashlib.sha256(f"{branch.branch_id}\x00{command_id}".encode()).hexdigest()[:24]
+        incomplete = BranchCheckpointRecord(checkpoint_id=f"checkpoint-{suffix}", run_id=branch.run_id, branch_id=branch.branch_id, parent_checkpoint_id=head_id, sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id), kind=BRANCH_CHECKPOINT_KIND_BOOTSTRAP_START, season=legacy.season, week=1 if state.next_event_index == 0 else None, event_id=None, event_sequence=None, command_id=command_id, command_kind=BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_BOOTSTRAP_START_LEGACY_STATE, command_boundary="after_bootstrap_start_persisted", config_version=legacy.config_version, config_fingerprint=legacy.config_fingerprint, world_id=legacy.world_id, world_fingerprint=legacy.world_generation_fingerprint, global_seed=legacy.seed, branch_seed=branch.branch_seed, seed_namespace=seed_namespace, payload_schema_version="branch_checkpoint_payload_v1", content_hash_algorithm="sha256", content_hash="", payload=payload)
+        checkpoint = BranchCheckpointRecord(**{**incomplete.__dict__, "content_hash": self.checkpoint_envelope_content_hash(incomplete)})
+        created = self.create_branch_checkpoint(checkpoint)
+        with self._session_factory.begin() as session:
+            model = session.get(RunBranchModel, branch.branch_id)
+            if model is not None:
+                model.head_checkpoint_id = created.checkpoint_id
         self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
         return created
 

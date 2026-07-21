@@ -19,6 +19,7 @@ from beta_engine.domain.rankings import CompletedTournamentPointsInput
 from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
 from beta_engine.infrastructure.db.models import (
     AdminActionModel,
+    BranchForkCommandModel,
     BranchCheckpointModel,
     BranchStateModel,
     Base,
@@ -50,6 +51,9 @@ from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_INITIAL,
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_SEASON_ROLLOVER_LEGACY_STATE,
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_BOOTSTRAP_START_LEGACY_STATE,
+    BRANCH_CHECKPOINT_COMMAND_KIND_FORK_BRANCH,
+    BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_ATOMIC_FORK_MATERIALIZATION,
+    BRANCH_CHECKPOINT_KIND_BRANCH_FORK_START,
     BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE,
     BRANCH_CHECKPOINT_KIND_ADMIN_ACTION_APPLIED,
     BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED,
@@ -211,6 +215,26 @@ class LegacyRunCloneTargetExistsError(LegacyRunCloneError):
     """Raised when a target legacy simulation-run namespace already exists."""
 
 
+class BranchForkError(ValueError):
+    """Raised when an internal atomic Branch fork cannot complete."""
+
+
+class BranchForkValidationError(BranchForkError):
+    """Raised when a fork command violates a fail-closed invariant."""
+
+
+class BranchForkTargetExistsError(BranchForkError):
+    """Raised when a requested Branch or legacy namespace target already exists."""
+
+
+class BranchForkIdempotencyConflictError(BranchForkError):
+    """Raised when a command id is reused with different content."""
+
+
+class BranchForkSourceStateMismatchError(BranchForkValidationError):
+    """Raised when persisted source state cannot prove the requested fork boundary."""
+
+
 @dataclass(frozen=True)
 class LegacyRunCloneSectionResult:
     name: str
@@ -232,6 +256,23 @@ class LegacyRunCloneResult:
     target_product_run_id: str | None
     created_mapping: bool = False
     created_branch: bool = False
+
+
+@dataclass(frozen=True)
+class ForkRunBranchCommand:
+    product_run_id: str; source_branch_id: str; source_checkpoint_id: str
+    target_branch_id: str; target_branch_display_name: str
+    target_legacy_simulation_run_id: str; target_branch_seed: int; command_id: str
+
+
+@dataclass(frozen=True)
+class ForkRunBranchResult:
+    product_run_id: str; source_branch_id: str; source_checkpoint_id: str
+    target_branch_id: str; target_legacy_simulation_run_id: str; target_checkpoint_id: str
+    target_branch_seed: int; source_inventory_hash: str; normalized_clone_equivalence_hash: str
+    request_fingerprint: str; idempotent_replay: bool
+    created_mapping: bool = False
+    official_branch_changed: bool = False
 
 
 @dataclass(frozen=True)
@@ -864,6 +905,42 @@ class SimulationPersistenceRepository:
             sections[model.__tablename__] = sorted(canonical_rows, key=_to_json)
         return hashlib.sha256(_to_json(sections).encode("utf-8")).hexdigest()
 
+    def _clone_legacy_simulation_run_namespace_in_session(
+        self, *, session: Session, source_simulation_run_id: str, target_simulation_run_id: str,
+        target_seed: int | None = None, preserve_source_seed: bool = False,
+    ) -> tuple[SimulationRunModel, SeasonStateModel, str]:
+        """Copy a legacy namespace without opening or committing a transaction."""
+        if session.get(SimulationRunModel, target_simulation_run_id) is not None:
+            raise BranchForkTargetExistsError(f"target legacy simulation run {target_simulation_run_id} already exists")
+        source_run = session.get(SimulationRunModel, source_simulation_run_id)
+        source_state = session.get(SeasonStateModel, source_simulation_run_id)
+        if source_run is None or source_state is None:
+            raise BranchForkSourceStateMismatchError("source simulation run or season state is missing")
+        copy_models = (CompletedEventModel, CompletedEventMetadataModel, CompletedTournamentInputModel,
+            RankingSnapshotModel, RaceSnapshotModel, FinalsQualificationModel, FinalsResultModel,
+            AdminActionModel, SeasonRolloverModel, PlayerSeasonTransitionModel, NextSeasonPlayerModel,
+            RunTalentPlanModel, RunTalentCountryAllocationModel, RunGeneratedPlayerProvenanceModel)
+        run_values = {column.name: getattr(source_run, column.name) for column in SimulationRunModel.__table__.columns}
+        run_values.update({"run_id": target_simulation_run_id, "seed": source_run.seed if preserve_source_seed else (target_seed if target_seed is not None else source_run.seed), "parent_run_id": source_simulation_run_id, "source_type": "branch_clone"})
+        target_run = SimulationRunModel(**run_values); session.add(target_run)
+        state_values = {column.name: getattr(source_state, column.name) for column in SeasonStateModel.__table__.columns}; state_values["run_id"] = target_simulation_run_id
+        target_state = SeasonStateModel(**state_values); session.add(target_state)
+        for model in copy_models:
+            for row in session.execute(select(model).where(model.run_id == source_simulation_run_id).order_by(*model.__table__.primary_key.columns)).scalars():
+                values = {column.name: getattr(row, column.name) for column in model.__table__.columns if column.name != "id"}; values["run_id"] = target_simulation_run_id
+                session.add(model(**values))
+        session.flush()
+        expected = self._normalized_clone_content_hash(session=session, run_id=source_simulation_run_id, expected_clone_seed=source_run.seed if preserve_source_seed else (target_seed if target_seed is not None else source_run.seed))
+        actual = self._normalized_clone_content_hash(session=session, run_id=target_simulation_run_id)
+        if actual != expected:
+            raise LegacyRunCloneError("cloned namespace failed normalized durable-content equivalence verification")
+        return target_run, target_state, actual
+
+    def _season_state_payload_in_session(self, *, session: Session, model: SeasonStateModel) -> dict[str, object]:
+        """Return the canonical SeasonState payload without opening a second Session."""
+        completed_inputs = self._load_completed_inputs(session=session, run_id=model.run_id)
+        return SeasonState.model_validate({"season": model.season, "ordered_events": _from_json(model.ordered_events_json), "next_event_index": model.next_event_index, "completed_event_ids": _from_json(model.completed_event_ids_json), "completed_tournament_inputs": [payload.model_dump() for payload in completed_inputs], "ranking_snapshot": _from_json(model.ranking_snapshot_json) if model.ranking_snapshot_json else None, "race_snapshot": _from_json(model.race_snapshot_json) if model.race_snapshot_json else None, "active_tournament": _from_json(model.active_tournament_json) if model.active_tournament_json else None}).model_dump(mode="json")
+
     def clone_legacy_simulation_run_namespace(
         self,
         *,
@@ -892,12 +969,6 @@ class SimulationPersistenceRepository:
                 "legacy simulation run is not clone safe: " + ", ".join(preflight.unsupported_reasons)
             )
 
-        copy_models = (
-            CompletedEventModel, CompletedEventMetadataModel, CompletedTournamentInputModel,
-            RankingSnapshotModel, RaceSnapshotModel, FinalsQualificationModel, FinalsResultModel,
-            AdminActionModel, SeasonRolloverModel, PlayerSeasonTransitionModel, NextSeasonPlayerModel,
-            RunTalentPlanModel, RunTalentCountryAllocationModel, RunGeneratedPlayerProvenanceModel,
-        )
         with self._session_factory.begin() as session:
             if session.get(SimulationRunModel, target_simulation_run_id) is not None:
                 raise LegacyRunCloneTargetExistsError(
@@ -925,39 +996,14 @@ class SimulationPersistenceRepository:
                 elif checkpoint.kind == BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE:
                     payload = _from_json(checkpoint.payload_json)
                     captured = payload.get("season_state") if isinstance(payload, dict) else None
-                    current = self._to_season_state(source_state).model_dump(mode="json")
+                    current = self._season_state_payload_in_session(session=session, model=source_state)
                     if not isinstance(captured, dict) or _to_json(captured) != _to_json(current):
                         raise UnsafeLegacyRunCloneSourceError("current_state_capture cannot be proven to match current persisted source state")
 
-            run_values = {column.name: getattr(source_run, column.name) for column in SimulationRunModel.__table__.columns}
-            run_values.update({"run_id": target_simulation_run_id, "seed": target_seed if target_seed is not None else source_run.seed,
-                               "parent_run_id": source_simulation_run_id, "source_type": "branch_clone"})
-            session.add(SimulationRunModel(**run_values))
-            state_values = {column.name: getattr(source_state, column.name) for column in SeasonStateModel.__table__.columns}
-            state_values["run_id"] = target_simulation_run_id
-            session.add(SeasonStateModel(**state_values))
-            for model in copy_models:
-                rows = session.execute(select(model).where(model.run_id == source_simulation_run_id).order_by(*model.__table__.primary_key.columns)).scalars().all()
-                for row in rows:
-                    values = {column.name: getattr(row, column.name) for column in model.__table__.columns if column.name != "id"}
-                    values["run_id"] = target_simulation_run_id
-                    session.add(model(**values))
-
-            # Flush and verify while this transaction still owns every target write.
-            # A mismatch must abort the transaction rather than leave a committed
-            # namespace whose equivalence could not be proven.
-            session.flush()
-            expected_normalized_source_hash = self._normalized_clone_content_hash(
-                session=session, run_id=source_simulation_run_id,
-                expected_clone_seed=target_seed if target_seed is not None else source_run.seed,
+            _, _, target_normalized_clone_hash = self._clone_legacy_simulation_run_namespace_in_session(
+                session=session, source_simulation_run_id=source_simulation_run_id,
+                target_simulation_run_id=target_simulation_run_id, target_seed=target_seed,
             )
-            target_normalized_clone_hash = self._normalized_clone_content_hash(
-                session=session, run_id=target_simulation_run_id,
-            )
-            if target_normalized_clone_hash != expected_normalized_source_hash:
-                raise LegacyRunCloneError(
-                    "cloned namespace failed normalized durable-content equivalence verification"
-                )
 
         target = self.inspect_legacy_run_clone_inventory(simulation_run_id=target_simulation_run_id)
         counts = tuple(LegacyRunCloneSectionResult(section.name, section.count) for section in preflight.inventory.sections if section.copy_policy == "copy")
@@ -969,6 +1015,74 @@ class SimulationPersistenceRepository:
             normalized_clone_equivalence_hash=target_normalized_clone_hash,
             source_product_run_id=preflight.inventory.source_product_run_id, target_product_run_id=None,
         )
+
+    def fork_run_branch_atomically(self, command: ForkRunBranchCommand) -> ForkRunBranchResult:
+        """Atomically materialize a Branch fork and its legacy execution namespace."""
+        fields = command.__dict__
+        if any(not isinstance(value, str) or not value.strip() for key, value in fields.items() if key != "target_branch_seed") or not isinstance(command.target_branch_seed, int):
+            raise BranchForkValidationError("fork command fields must be non-empty and target_branch_seed must be an integer")
+        canonical = {key: (value.strip() if isinstance(value, str) else value) for key, value in fields.items()}
+        command = ForkRunBranchCommand(**canonical)
+        with self._session_factory.begin() as session:
+            container = session.get(RunContainerModel, command.product_run_id)
+            branch = session.get(RunBranchModel, command.source_branch_id)
+            checkpoint = session.get(BranchCheckpointModel, command.source_checkpoint_id)
+            source_run = session.get(SimulationRunModel, branch.legacy_simulation_run_id) if branch and branch.legacy_simulation_run_id else None
+            provenance = {"run_world_id": container.world_id if container else None, "run_config_version": container.config_version if container else None, "run_config_fingerprint": container.config_fingerprint if container else None, "run_global_seed": container.global_seed if container else None, "source_checkpoint_hash": checkpoint.content_hash if checkpoint else None, "source_legacy_seed": source_run.seed if source_run else None}
+            fingerprint = hashlib.sha256(self.canonical_json({"command": canonical, "source_provenance": provenance}).encode("utf-8")).hexdigest()
+            existing = session.get(BranchForkCommandModel, command.command_id)
+            if existing is not None:
+                if existing.request_fingerprint != fingerprint:
+                    raise BranchForkIdempotencyConflictError("command_id already exists with different fork request")
+                result_branch = session.get(RunBranchModel, existing.result_branch_id)
+                result_checkpoint = session.get(BranchCheckpointModel, existing.result_checkpoint_id)
+                result_run = session.get(SimulationRunModel, existing.result_legacy_simulation_run_id)
+                if result_branch is None or result_checkpoint is None or result_run is None or result_branch.run_id != command.product_run_id or result_branch.head_checkpoint_id != result_checkpoint.checkpoint_id:
+                    raise BranchForkSourceStateMismatchError("idempotent fork result is missing or inconsistent")
+                metadata = _from_json(existing.metadata_json)
+                return ForkRunBranchResult(command.product_run_id, command.source_branch_id, command.source_checkpoint_id, command.target_branch_id, command.target_legacy_simulation_run_id, existing.result_checkpoint_id, command.target_branch_seed, metadata["source_inventory_hash"], metadata["normalized_clone_equivalence_hash"], fingerprint, True)
+            if container is None: raise BranchForkValidationError("product run was not found")
+            if container.storage_kind != "custom_local" or container.read_only or container.status != "active": raise BranchForkValidationError("product run is not editable and active")
+            if branch is None or branch.run_id != command.product_run_id: raise BranchForkValidationError("source branch was not found in product run")
+            if branch.read_only or branch.status != "active" or not (branch.legacy_simulation_run_id or "").strip(): raise BranchForkValidationError("source branch is not writable and active with a legacy binding")
+            branch_state = session.get(BranchStateModel, command.source_branch_id)
+            if branch_state is None: raise BranchForkValidationError("source branch state was not found")
+            if branch.head_checkpoint_id != branch_state.head_checkpoint_id: raise BranchForkSourceStateMismatchError("source branch and branch state heads disagree")
+            if checkpoint is None or checkpoint.run_id != command.product_run_id or checkpoint.branch_id != command.source_branch_id or checkpoint.checkpoint_id != branch_state.head_checkpoint_id: raise BranchForkSourceStateMismatchError("source checkpoint is not the effective branch head")
+            record = self._to_branch_checkpoint(checkpoint)
+            if record.content_hash_algorithm != "sha256" or self.checkpoint_envelope_content_hash(record) != record.content_hash: raise BranchForkSourceStateMismatchError("source checkpoint content hash is invalid")
+            if checkpoint.kind not in {BRANCH_CHECKPOINT_KIND_INITIAL, BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE}: raise BranchForkValidationError("source checkpoint kind is not fork-safe")
+            source_run = session.get(SimulationRunModel, branch.legacy_simulation_run_id)
+            source_state = session.get(SeasonStateModel, branch.legacy_simulation_run_id)
+            if source_run is None or source_state is None: raise BranchForkSourceStateMismatchError("source legacy state is missing")
+            if source_state.active_tournament_json not in (None, "", "null", "{}", "[]"): raise BranchForkValidationError("source has an active tournament")
+            if session.execute(select(RunProspectModel).where(RunProspectModel.run_id == source_run.run_id)).scalars().first() is not None: raise BranchForkValidationError("source has unsupported run prospects")
+            if checkpoint.kind == BRANCH_CHECKPOINT_KIND_INITIAL and (source_state.next_event_index != 0 or session.execute(select(CompletedEventModel).where(CompletedEventModel.run_id == source_run.run_id)).scalars().first() is not None): raise BranchForkSourceStateMismatchError("initial source is no longer season start")
+            if checkpoint.kind == BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE:
+                payload = _from_json(checkpoint.payload_json); captured = payload.get("season_state") if isinstance(payload, dict) else None
+                if not isinstance(captured, dict) or _to_json(captured) != _to_json(self._season_state_payload_in_session(session=session, model=source_state)): raise BranchForkSourceStateMismatchError("current state capture is stale")
+            if container.world_id != source_run.world_id or container.world_id != checkpoint.world_id: raise BranchForkSourceStateMismatchError("locked world_id provenance mismatch")
+            if (container.config_version and checkpoint.config_version and container.config_version != checkpoint.config_version) or (container.config_fingerprint and checkpoint.config_fingerprint and container.config_fingerprint != checkpoint.config_fingerprint) or (container.global_seed is not None and checkpoint.global_seed is not None and container.global_seed != checkpoint.global_seed): raise BranchForkSourceStateMismatchError("run provenance mismatch")
+            if command.target_branch_id == command.source_branch_id or session.get(RunBranchModel, command.target_branch_id) is not None: raise BranchForkTargetExistsError("target branch already exists or equals source")
+            if command.target_legacy_simulation_run_id == source_run.run_id or session.get(SimulationRunModel, command.target_legacy_simulation_run_id) is not None or session.execute(select(RunBranchModel).where(RunBranchModel.legacy_simulation_run_id == command.target_legacy_simulation_run_id)).scalar_one_or_none() is not None: raise BranchForkTargetExistsError("target legacy simulation run already exists or is bound")
+            source_inventory_hash = self._normalized_clone_content_hash(session=session, run_id=source_run.run_id, expected_clone_seed=source_run.seed)
+            target_run, target_state, equivalence_hash = self._clone_legacy_simulation_run_namespace_in_session(session=session, source_simulation_run_id=source_run.run_id, target_simulation_run_id=command.target_legacy_simulation_run_id, preserve_source_seed=True)
+            if target_run.world_id != container.world_id: raise BranchForkSourceStateMismatchError("cloned target world_id mismatch")
+            checkpoint_id = f"checkpoint-{hashlib.sha256(('branch-fork-v1\\x00' + command.target_branch_id + '\\x00' + command.command_id).encode('utf-8')).hexdigest()[:24]}"
+            seed_namespace = {"hierarchy": ["global", "branch"], "global_seed": container.global_seed, "source_branch_seed": branch.branch_seed, "source_legacy_simulation_run_seed": source_run.seed, "target_branch_seed": command.target_branch_seed}
+            payload = {"product_run_id": command.product_run_id, "source_branch_id": command.source_branch_id, "source_checkpoint_id": command.source_checkpoint_id, "source_checkpoint_kind": checkpoint.kind, "source_checkpoint_content_hash": checkpoint.content_hash, "source_legacy_simulation_run_id": source_run.run_id, "target_branch_id": command.target_branch_id, "target_legacy_simulation_run_id": command.target_legacy_simulation_run_id, "source_inventory_hash": source_inventory_hash, "normalized_clone_equivalence_hash": equivalence_hash, "request_fingerprint": fingerprint, "provenance": {"world_id": container.world_id, "world_fingerprint": container.world_package_fingerprint, "config_version": container.config_version, "config_fingerprint": container.config_fingerprint, "global_seed": container.global_seed, "source_branch_seed": branch.branch_seed, "source_legacy_simulation_run_seed": source_run.seed, "target_branch_seed": command.target_branch_seed}, "fork_semantics": "cloned_current_state_not_checkpoint_replay"}
+            branch_metadata = {"fork_command_id": command.command_id, "request_fingerprint": fingerprint, "source_checkpoint_id": checkpoint.checkpoint_id}
+            session.add(RunBranchModel(branch_id=command.target_branch_id, run_id=command.product_run_id, display_name=command.target_branch_display_name, status="active", read_only=0, branch_seed=command.target_branch_seed, forked_from_branch_id=command.source_branch_id, forked_from_checkpoint_id=command.source_checkpoint_id, head_checkpoint_id=checkpoint_id, legacy_simulation_run_id=command.target_legacy_simulation_run_id, metadata_json=_to_json(branch_metadata)))
+            state_metadata = {"fork_command_id": command.command_id, "source_checkpoint_id": checkpoint.checkpoint_id}
+            session.add(BranchStateModel(branch_id=command.target_branch_id, run_id=command.product_run_id, head_checkpoint_id=checkpoint_id, current_season=target_state.season, current_week=checkpoint.week, current_event_id=checkpoint.event_id, current_event_sequence=checkpoint.event_sequence, state_schema_version="branch_state_v1", status="active", metadata_json=_to_json(state_metadata)))
+            incomplete = BranchCheckpointRecord(checkpoint_id, command.product_run_id, command.target_branch_id, None, 1, BRANCH_CHECKPOINT_KIND_BRANCH_FORK_START, target_state.season, checkpoint.week, checkpoint.event_id, checkpoint.event_sequence, command.command_id, BRANCH_CHECKPOINT_COMMAND_KIND_FORK_BRANCH, BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_ATOMIC_FORK_MATERIALIZATION, container.config_version, container.config_fingerprint, container.world_id, container.world_package_fingerprint, container.global_seed, command.target_branch_seed, seed_namespace, "branch_checkpoint_payload_v1", "sha256", "", payload)
+            fork_checkpoint = BranchCheckpointRecord(**{**incomplete.__dict__, "content_hash": self.checkpoint_envelope_content_hash(incomplete)})
+            session.add(BranchCheckpointModel(checkpoint_id=fork_checkpoint.checkpoint_id, run_id=fork_checkpoint.run_id, branch_id=fork_checkpoint.branch_id, parent_checkpoint_id=None, sequence=1, kind=fork_checkpoint.kind, season=fork_checkpoint.season, week=fork_checkpoint.week, event_id=fork_checkpoint.event_id, event_sequence=fork_checkpoint.event_sequence, command_id=fork_checkpoint.command_id, command_kind=fork_checkpoint.command_kind, command_boundary=fork_checkpoint.command_boundary, config_version=fork_checkpoint.config_version, config_fingerprint=fork_checkpoint.config_fingerprint, world_id=fork_checkpoint.world_id, world_fingerprint=fork_checkpoint.world_fingerprint, global_seed=fork_checkpoint.global_seed, branch_seed=fork_checkpoint.branch_seed, seed_namespace_json=self.canonical_json(fork_checkpoint.seed_namespace), payload_schema_version=fork_checkpoint.payload_schema_version, content_hash_algorithm="sha256", content_hash=fork_checkpoint.content_hash, payload_json=self.canonical_json(fork_checkpoint.payload)))
+            metadata = {"source_inventory_hash": source_inventory_hash, "normalized_clone_equivalence_hash": equivalence_hash}
+            session.add(BranchForkCommandModel(command_id=command.command_id, product_run_id=command.product_run_id, request_fingerprint=fingerprint, source_branch_id=command.source_branch_id, source_checkpoint_id=command.source_checkpoint_id, target_branch_id=command.target_branch_id, target_legacy_simulation_run_id=command.target_legacy_simulation_run_id, result_branch_id=command.target_branch_id, result_checkpoint_id=checkpoint_id, result_legacy_simulation_run_id=command.target_legacy_simulation_run_id, metadata_json=_to_json(metadata)))
+            try: session.flush()
+            except IntegrityError as exc: raise BranchForkTargetExistsError("fork target conflicts with existing durable state") from exc
+            return ForkRunBranchResult(command.product_run_id, command.source_branch_id, command.source_checkpoint_id, command.target_branch_id, command.target_legacy_simulation_run_id, checkpoint_id, command.target_branch_seed, source_inventory_hash, equivalence_hash, fingerprint, False)
 
     def list_run_branches(self, *, run_id: str | None = None) -> list[RunBranchRecord]:
         with self._session_factory() as session:

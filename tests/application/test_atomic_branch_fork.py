@@ -12,6 +12,7 @@ from beta_engine.infrastructure.db.models import (
     BranchCheckpointModel, BranchForkCommandModel, BranchStateModel, LegacySimulationRunMappingModel,
     RunBranchModel, RunContainerModel, SeasonStateModel, SimulationRunModel,
 )
+from beta_engine.infrastructure.db.repositories import BranchCheckpointRecord
 
 
 def _setup(tmp_path):
@@ -67,6 +68,32 @@ def test_inventory_hash_is_r4c0_inventory_not_clone_equivalence_and_corrupt_repl
         session.delete(session.get(SeasonStateModel, "fork-legacy"))
     with pytest.raises(BranchForkSourceStateMismatchError, match="inconsistent"):
         service.fork_run_branch_atomically(_command(source_branch.branch_id, source_checkpoint.checkpoint_id))
+
+
+def test_fork_of_unmapped_fork_uses_branch_owned_inventory(tmp_path):
+    repository, service, source_branch, source_checkpoint = _setup(tmp_path)
+    first = service.fork_run_branch_atomically(_command(source_branch.branch_id, source_checkpoint.checkpoint_id))
+    assert repository.get_run_container_for_simulation_run(simulation_run_id="fork-legacy") is None
+    branch_a = repository.get_run_branch(branch_id="fork-branch")
+    state = repository.load_season_state(run_id="fork-legacy")
+    parent = repository.get_branch_checkpoint(checkpoint_id=first.target_checkpoint_id)
+    payload = {"season_state": state.model_dump(mode="json")}
+    incomplete = BranchCheckpointRecord("fork-a-current", "source", branch_a.branch_id, parent.checkpoint_id, 2, "current_state_capture", state.season, None, None, None, "fork-a-current-command", "capture_current_legacy_state", "after_legacy_state_load", parent.config_version, parent.config_fingerprint, parent.world_id, parent.world_fingerprint, parent.global_seed, branch_a.branch_seed, parent.seed_namespace, "branch_checkpoint_payload_v1", "sha256", "", payload)
+    capture = BranchCheckpointRecord(**{**incomplete.__dict__, "content_hash": repository.checkpoint_envelope_content_hash(incomplete)})
+    repository.create_branch_checkpoint(capture)
+    with repository._session_factory.begin() as session:
+        session.get(RunBranchModel, branch_a.branch_id).head_checkpoint_id = capture.checkpoint_id
+        session.get(BranchStateModel, branch_a.branch_id).head_checkpoint_id = capture.checkpoint_id
+    second_command = _command(branch_a.branch_id, capture.checkpoint_id, target_branch_id="fork-b", target_legacy_simulation_run_id="fork-b-legacy", command_id="fork-b-command")
+    expected = repository.inspect_legacy_run_clone_inventory(simulation_run_id="fork-legacy", branch_id=branch_a.branch_id, checkpoint_id=capture.checkpoint_id).inventory.inventory_hash
+    second = service.fork_run_branch_atomically(second_command)
+    assert second.source_inventory_hash == expected
+    branch_b = repository.get_run_branch(branch_id="fork-b")
+    assert branch_b.run_id == branch_a.run_id == "source"
+    assert (branch_b.forked_from_branch_id, branch_b.forked_from_checkpoint_id) == (branch_a.branch_id, capture.checkpoint_id)
+    with repository._session_factory() as session:
+        assert session.get(LegacySimulationRunMappingModel, "fork-legacy") is None
+        assert session.get(LegacySimulationRunMappingModel, "fork-b-legacy") is None
 
 
 def test_atomic_fork_accepts_current_capture_and_rejects_read_only_and_missing_state(tmp_path):

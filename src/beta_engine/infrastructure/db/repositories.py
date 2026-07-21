@@ -787,13 +787,13 @@ class SimulationPersistenceRepository:
                 raise UnsupportedCloneSourceError(f"legacy simulation run {simulation_run_id} was not found")
 
             mapping = session.get(LegacySimulationRunMappingModel, simulation_run_id)
-            product_run_id = mapping.run_id if mapping is not None else None
             selected_branch = session.get(RunBranchModel, branch_id) if branch_id else None
             if selected_branch is None and branch_id is None:
                 selected_branch = session.execute(
                     select(RunBranchModel).where(RunBranchModel.legacy_simulation_run_id == simulation_run_id).order_by(RunBranchModel.branch_id)
                 ).scalars().first()
             resolved_branch_id = selected_branch.branch_id if selected_branch is not None else branch_id
+            product_run_id = selected_branch.run_id if selected_branch is not None else (mapping.run_id if mapping is not None else None)
             checkpoint = session.get(BranchCheckpointModel, checkpoint_id) if checkpoint_id else None
 
             scoped = lambda model: session.execute(select(model).where(model.run_id == simulation_run_id)).scalars().all()
@@ -840,6 +840,8 @@ class SimulationPersistenceRepository:
                     reasons.append("source_branch_legacy_simulation_run_mismatch")
                 elif product_run_id is not None and selected_branch.run_id != product_run_id:
                     reasons.append("source_branch_product_run_mismatch")
+                elif mapping is not None and mapping.run_id != selected_branch.run_id:
+                    reasons.append("source_branch_mapping_product_run_mismatch")
             if checkpoint_id is not None:
                 if checkpoint is None:
                     reasons.append("source_checkpoint_not_found")
@@ -949,14 +951,18 @@ class SimulationPersistenceRepository:
         checkpoint = session.get(BranchCheckpointModel, checkpoint_id)
         if simulation_run is None or branch is None or checkpoint is None:
             raise BranchForkSourceStateMismatchError("fork inventory source is missing")
+        if branch.legacy_simulation_run_id != simulation_run_id:
+            raise BranchForkSourceStateMismatchError("fork inventory branch legacy binding mismatch")
+        product_run_id = branch.run_id
+        if mapping is not None and mapping.run_id != product_run_id:
+            raise BranchForkSourceStateMismatchError("fork inventory mapping product run mismatch")
         scoped = lambda model: session.execute(select(model).where(model.run_id == simulation_run_id)).scalars().all()
         sections = [self._clone_inventory_section(name=name, models=scoped(model), copy_policy=policy) for name, model, policy in (
             ("simulation_run", SimulationRunModel, "copy"), ("season_state", SeasonStateModel, "copy"), ("completed_events", CompletedEventModel, "copy"), ("completed_event_metadata", CompletedEventMetadataModel, "copy"), ("completed_tournament_inputs", CompletedTournamentInputModel, "copy"), ("ranking_snapshots", RankingSnapshotModel, "copy"), ("race_snapshots", RaceSnapshotModel, "copy"), ("finals_qualification", FinalsQualificationModel, "copy"), ("finals_results", FinalsResultModel, "copy"), ("admin_actions", AdminActionModel, "copy"), ("season_rollovers", SeasonRolloverModel, "copy"), ("player_season_transitions", PlayerSeasonTransitionModel, "copy"), ("next_season_players", NextSeasonPlayerModel, "copy"), ("run_talent_plans", RunTalentPlanModel, "copy"), ("run_talent_country_allocations", RunTalentCountryAllocationModel, "copy"), ("run_generated_player_provenance", RunGeneratedPlayerProvenanceModel, "copy"), ("run_prospects", RunProspectModel, "unsupported"))]
         # SimulationRun is primary-key scoped and is the sole exception to run_id filtering.
         sections[0] = self._clone_inventory_section(name="simulation_run", models=[simulation_run])
-        product_run_id = mapping.run_id if mapping else None
         for name, model in (("run_branches", RunBranchModel), ("branch_states", BranchStateModel), ("branch_checkpoints", BranchCheckpointModel)):
-            rows = session.execute(select(model).where(model.run_id == product_run_id)).scalars().all() if product_run_id else []
+            rows = session.execute(select(model).where(model.run_id == product_run_id)).scalars().all()
             sections.append(self._clone_inventory_section(name=name, models=rows, copy_policy="excluded_metadata"))
         state = session.get(SeasonStateModel, simulation_run_id)
         fields = {"source_legacy_simulation_run_id": simulation_run_id, "source_product_run_id": product_run_id, "source_branch_id": branch_id, "source_checkpoint_id": checkpoint_id, "source_checkpoint_kind": checkpoint.kind, "season": state.season if state else simulation_run.season, "week": checkpoint.week, "next_event_index": state.next_event_index if state else None, "sections": tuple(sections)}

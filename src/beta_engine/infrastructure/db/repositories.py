@@ -48,10 +48,12 @@ from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_CURRENT_LEGACY_STATE,
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_ADMIN_ACTION_LEGACY_STATE,
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_INITIAL,
+    BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_SEASON_ROLLOVER_LEGACY_STATE,
     BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE,
     BRANCH_CHECKPOINT_KIND_ADMIN_ACTION_APPLIED,
     BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED,
     BRANCH_CHECKPOINT_KIND_INITIAL,
+    BRANCH_CHECKPOINT_KIND_SEASON_ROLLOVER,
     BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
 )
 
@@ -763,6 +765,14 @@ class SimulationPersistenceRepository:
                 return checkpoint
         return None
 
+    def get_season_rollover_branch_checkpoint(self, *, branch_id: str, from_season: int, to_season: int) -> BranchCheckpointRecord | None:
+        """Find the sole capture-only checkpoint for a persisted rollover locator."""
+        for checkpoint in self.list_branch_checkpoints(branch_id=branch_id):
+            rollover = checkpoint.payload.get("rollover", {})
+            if checkpoint.kind == BRANCH_CHECKPOINT_KIND_SEASON_ROLLOVER and isinstance(rollover, dict) and rollover.get("from_season") == from_season and rollover.get("to_season") == to_season:
+                return checkpoint
+        return None
+
     def list_branch_checkpoints(self, *, branch_id: str | None = None, run_id: str | None = None) -> list[BranchCheckpointRecord]:
         with self._session_factory() as session:
             statement = select(BranchCheckpointModel)
@@ -1167,6 +1177,56 @@ class SimulationPersistenceRepository:
             model = session.get(RunBranchModel, branch.branch_id)
             if model is not None:
                 model.head_checkpoint_id = created.checkpoint_id
+        self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+        return created
+
+    def capture_season_rollover_checkpoint_for_legacy_simulation_run(
+        self, *, simulation_run_id: str, from_season: int | None = None,
+        to_season: int | None = None, command_id: str | None = None,
+    ) -> BranchCheckpointRecord:
+        """Capture an already persisted legacy season rollover; never execute or replay it."""
+        legacy = self.get_simulation_run(run_id=simulation_run_id)
+        if legacy is None: raise KeyError(f"run_id {simulation_run_id} was not found")
+        branch = self.ensure_default_branch_for_simulation_run(simulation_run_id=simulation_run_id)
+        if branch is None: raise KeyError(f"default branch for run_id {simulation_run_id} was not found")
+        state = self.load_season_state(run_id=simulation_run_id)
+        if state is None: raise ValueError(f"run_id {simulation_run_id} has no season state")
+        rollovers = self.list_season_rollovers(run_id=simulation_run_id)
+        if not rollovers: raise ValueError(f"run_id {simulation_run_id} has no persisted season rollover artifact")
+        matches = [row for row in rollovers if (from_season is None or row.from_season == from_season) and (to_season is None or row.to_season == to_season)]
+        if not matches: raise ValueError("rollover locator does not match a persisted season rollover artifact")
+        if len(matches) > 1: raise ValueError("season rollover locator is ambiguous; provide from_season and to_season")
+        rollover = matches[0]
+        branch_state = self.get_branch_state(branch_id=branch.branch_id) or self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+        head_id = branch_state.head_checkpoint_id if branch_state is not None else branch.head_checkpoint_id
+        if head_id is None: raise ValueError(f"branch {branch.branch_id} has no existing head checkpoint; capture initial first")
+        if self.get_branch_checkpoint(checkpoint_id=head_id) is None: raise ValueError(f"branch {branch.branch_id} head checkpoint {head_id} was not found")
+        existing_rollover = self.get_season_rollover_branch_checkpoint(branch_id=branch.branch_id, from_season=rollover.from_season, to_season=rollover.to_season)
+        if existing_rollover is not None:
+            # Keep both mutable head locators aligned with the durable branch head.
+            self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+            return existing_rollover
+        transitions = [row.__dict__ | {"transition": row.transition.model_dump(mode="json")} for row in self.list_player_transitions(run_id=simulation_run_id, to_season=rollover.to_season)]
+        next_players = [row.__dict__ | {"state": row.state.model_dump(mode="json")} for row in self.list_next_season_players(run_id=simulation_run_id, to_season=rollover.to_season)]
+        rollover_record = rollover.__dict__
+        artifacts = {"player_transition_rows": transitions, "player_transition_rows_hash": self.checkpoint_content_hash({"rows": transitions}), "next_season_player_rows": next_players, "next_season_player_rows_hash": self.checkpoint_content_hash({"rows": next_players}), "rollover_summary": rollover_record}
+        artifacts["rollover_artifacts_hash"] = self.checkpoint_content_hash(artifacts)
+        actions = [action.__dict__ for action in self.list_admin_actions(run_id=simulation_run_id)]
+        seed_namespace = {"hierarchy": ["global", "season", "entries", "draws", "tournament_progression"], "global_seed": legacy.seed, "branch_seed": branch.branch_seed}
+        payload: dict[str, object] = {"fork_capability": "not_forkable_player_state_not_migrated", "capture_mode": "legacy_season_rollover_capture_only", "payload_schema_version": "branch_checkpoint_payload_v1", "run_id": branch.run_id, "branch_id": branch.branch_id, "legacy_simulation_run_id": simulation_run_id, "parent_checkpoint_id": head_id, "rollover": {"locator": {"from_season": rollover.from_season, "to_season": rollover.to_season}, "from_season": rollover.from_season, "to_season": rollover.to_season, "source_run_id": rollover.run_id, "target_run_id": legacy.parent_run_id, "record": rollover_record, "source": "legacy_season_rollover"}, "simulation_run": legacy.__dict__, "season_state": state.model_dump(mode="json"), "rollover_artifacts": artifacts, "publications": {"latest_ranking_snapshot_references": [x.__dict__ for x in self.list_ranking_snapshot_records(run_id=simulation_run_id)][-1:], "latest_race_snapshot_references": [x.__dict__ for x in self.list_race_snapshot_records(run_id=simulation_run_id)][-1:]}, "admin": {"actions": actions, "admin_actions_hash": self.checkpoint_content_hash({"actions": actions})}, "provenance": {"world_id": legacy.world_id, "world_fingerprint": legacy.world_generation_fingerprint, "config_version": legacy.config_version, "config_fingerprint": legacy.config_fingerprint, "global_seed": legacy.seed, "branch_seed": branch.branch_seed, "seed_namespace": seed_namespace}, "limitations": {"forkable": False, "replayable": False, "player_state": "hash_only_or_not_migrated", "prospects": "legacy_run_scoped_not_captured_as_durable_identity", "simulation_source": "legacy_simulation_run_state", "rollover_replay": "not_supported_yet", "bootstrap_state": "not_captured_by_season_rollover_checkpoint"}}
+        logical = self.checkpoint_content_hash({key: value for key, value in payload.items() if key != "parent_checkpoint_id"})
+        command_id = command_id or f"legacy-season-rollover-capture:{simulation_run_id}:{rollover.from_season}:{rollover.to_season}:{artifacts['rollover_artifacts_hash'][:24]}:{logical[:16]}"
+        existing = self.get_branch_checkpoint_by_command_id(branch_id=branch.branch_id, command_id=command_id)
+        if existing is not None:
+            self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+            return existing
+        suffix = hashlib.sha256(f"{branch.branch_id}\x00{command_id}".encode()).hexdigest()[:24]
+        incomplete = BranchCheckpointRecord(checkpoint_id=f"checkpoint-{suffix}", run_id=branch.run_id, branch_id=branch.branch_id, parent_checkpoint_id=head_id, sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id), kind=BRANCH_CHECKPOINT_KIND_SEASON_ROLLOVER, season=rollover.from_season, week=61, event_id=None, event_sequence=None, command_id=command_id, command_kind=BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_SEASON_ROLLOVER_LEGACY_STATE, command_boundary="after_season_rollover_persisted", config_version=legacy.config_version, config_fingerprint=legacy.config_fingerprint, world_id=legacy.world_id, world_fingerprint=legacy.world_generation_fingerprint, global_seed=legacy.seed, branch_seed=branch.branch_seed, seed_namespace=seed_namespace, payload_schema_version="branch_checkpoint_payload_v1", content_hash_algorithm="sha256", content_hash="", payload=payload)
+        checkpoint = BranchCheckpointRecord(**{**incomplete.__dict__, "content_hash": self.checkpoint_envelope_content_hash(incomplete)})
+        created = self.create_branch_checkpoint(checkpoint)
+        with self._session_factory.begin() as session:
+            model = session.get(RunBranchModel, branch.branch_id)
+            if model is not None: model.head_checkpoint_id = created.checkpoint_id
         self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
         return created
 

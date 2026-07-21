@@ -7,6 +7,7 @@ from beta_engine.api.schemas import (
     BranchCheckpointListResponse,
     BranchCheckpointResponse,
     CaptureCurrentBranchCheckpointRequest,
+    CaptureSeasonRolloverBranchCheckpointRequest,
     CaptureCompletedEventBranchCheckpointRequest,
     CaptureCompletedWeekBranchCheckpointRequest,
     CaptureInitialBranchCheckpointRequest,
@@ -60,6 +61,17 @@ def capture_initial(
             simulation_run_id=payload.simulation_run_id,
             command_id=payload.command_id,
         )
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return _response(record)
+
+
+@router.post("/capture-season-rollover", response_model=BranchCheckpointResponse)
+def capture_season_rollover(payload: CaptureSeasonRolloverBranchCheckpointRequest, service: SimulationApiService = Depends(get_simulation_api_service)) -> BranchCheckpointResponse:
+    try:
+        record = service.repository.capture_season_rollover_checkpoint_for_legacy_simulation_run(simulation_run_id=payload.simulation_run_id, from_season=payload.from_season, to_season=payload.to_season, command_id=payload.command_id)
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except ValueError as exc:

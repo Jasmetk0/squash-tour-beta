@@ -362,3 +362,41 @@ def test_admin_action_checkpoint_is_capture_only_idempotent_and_moves_heads(tmp_
     branch_state = repository.get_branch_state(branch_id=checkpoint.branch_id)
     assert branch is not None and branch.head_checkpoint_id == checkpoint.checkpoint_id
     assert branch_state is not None and branch_state.head_checkpoint_id == checkpoint.checkpoint_id
+
+
+def test_season_rollover_checkpoint_captures_persisted_artifacts_once_without_mutating_legacy_state(tmp_path) -> None:
+    repository = _repository(tmp_path)
+    service = SimulationApiService(repository=repository)
+    service.initialize_run(run_id="rollover-capture-run", season=2027, seed=7, config_version="v1", config_fingerprint="cfg")
+    try:
+        repository.capture_season_rollover_checkpoint_for_legacy_simulation_run(simulation_run_id="rollover-capture-run")
+    except ValueError as exc:
+        assert "no persisted season rollover" in str(exc)
+    else:
+        raise AssertionError("a persisted rollover is required")
+    initial = repository.capture_initial_checkpoint_for_legacy_simulation_run(simulation_run_id="rollover-capture-run")
+    repository.upsert_season_rollover(run_id="rollover-capture-run", from_season=2027, to_season=2028, transitioned_players=0, metadata={"status": "persisted"}, transitions=[], next_player_states=[])
+    before_state = repository.load_season_state(run_id="rollover-capture-run").model_dump()
+    before_rollovers = repository.list_season_rollovers(run_id="rollover-capture-run")
+    before_next_players = repository.list_next_season_players(run_id="rollover-capture-run", to_season=2028)
+    checkpoint = repository.capture_season_rollover_checkpoint_for_legacy_simulation_run(simulation_run_id="rollover-capture-run")
+    assert checkpoint.kind == "season_rollover"
+    assert checkpoint.parent_checkpoint_id == initial.checkpoint_id and checkpoint.sequence == initial.sequence + 1
+    assert checkpoint.payload["capture_mode"] == "legacy_season_rollover_capture_only"
+    assert checkpoint.payload["rollover"]["locator"] == {"from_season": 2027, "to_season": 2028}
+    assert checkpoint.payload["limitations"]["forkable"] is False and checkpoint.payload["limitations"]["replayable"] is False
+    assert repository.verify_branch_checkpoint_hash(checkpoint_id=checkpoint.checkpoint_id)
+    assert repository.load_season_state(run_id="rollover-capture-run").model_dump() == before_state
+    assert repository.list_season_rollovers(run_id="rollover-capture-run") == before_rollovers
+    assert repository.list_next_season_players(run_id="rollover-capture-run", to_season=2028) == before_next_players
+    assert repository.capture_season_rollover_checkpoint_for_legacy_simulation_run(simulation_run_id="rollover-capture-run", command_id="different") == checkpoint
+    branch = repository.get_run_branch(branch_id=checkpoint.branch_id)
+    state = repository.get_branch_state(branch_id=checkpoint.branch_id)
+    assert branch is not None and branch.head_checkpoint_id == checkpoint.checkpoint_id
+    assert state is not None and state.head_checkpoint_id == checkpoint.checkpoint_id
+    try:
+        repository.capture_season_rollover_checkpoint_for_legacy_simulation_run(simulation_run_id="rollover-capture-run", from_season=2026, to_season=2027)
+    except ValueError as exc:
+        assert "locator does not match" in str(exc)
+    else:
+        raise AssertionError("rollover locator mismatch must be rejected")

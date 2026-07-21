@@ -171,3 +171,23 @@ def test_capture_admin_action_branch_checkpoint_api(tmp_path) -> None:
         assert status == 200 and repeated["checkpoint_id"] == checkpoint["checkpoint_id"]
         status, state = _request("GET", f"{server.base_url}/branch-states/{checkpoint['branch_id']}")
         assert status == 200 and state["head_checkpoint_id"] == checkpoint["checkpoint_id"]
+
+
+def test_capture_season_rollover_branch_checkpoint_api(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'checkpoint-rollover-api.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "checkpoint-rollover", "seed": 12, "season": 2027})
+        assert status == 201
+        status, rejected = _request("POST", f"{server.base_url}/branch-checkpoints/capture-season-rollover", {"simulation_run_id": "checkpoint-rollover"})
+        assert status == 400 and "no persisted season rollover" in rejected["detail"]
+        status, initial = _request("POST", f"{server.base_url}/branch-checkpoints/capture-initial", {"simulation_run_id": "checkpoint-rollover"})
+        assert status == 200
+        engine = create_sqlite_engine(DatabaseSettings(url=database_url))
+        repository = SimulationPersistenceRepository(engine=engine, session_factory=create_session_factory(engine))
+        repository.upsert_season_rollover(run_id="checkpoint-rollover", from_season=2027, to_season=2028, transitioned_players=0, metadata={}, transitions=[], next_player_states=[])
+        status, checkpoint = _request("POST", f"{server.base_url}/branch-checkpoints/capture-season-rollover", {"simulation_run_id": "checkpoint-rollover", "from_season": 2027, "to_season": 2028})
+        assert status == 200 and checkpoint["kind"] == "season_rollover" and checkpoint["parent_checkpoint_id"] == initial["checkpoint_id"]
+        status, repeated = _request("POST", f"{server.base_url}/branch-checkpoints/capture-season-rollover", {"simulation_run_id": "checkpoint-rollover", "command_id": "different"})
+        assert status == 200 and repeated["checkpoint_id"] == checkpoint["checkpoint_id"]
+        status, branch_state = _request("GET", f"{server.base_url}/branch-states/{checkpoint['branch_id']}")
+        assert status == 200 and branch_state["head_checkpoint_id"] == checkpoint["checkpoint_id"]

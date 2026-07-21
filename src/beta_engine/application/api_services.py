@@ -58,7 +58,7 @@ from beta_engine.domain.players import (
     WeightedRecentGreatnessDampener,
 )
 from beta_engine.domain.tournaments import CalendarEvent
-from beta_engine.infrastructure.db import SimulationPersistenceRepository, SimulationRunInfo
+from beta_engine.infrastructure.db import BranchExecutionTarget, SimulationPersistenceRepository, SimulationRunInfo
 from beta_engine.infrastructure.db.repositories import (
     PersistedGeneratedPlayerProvenanceRecord,
     PersistedRunTalentCountryAllocationRecord,
@@ -799,6 +799,14 @@ class SimulationApiService:
         if state is None:
             raise KeyError(f"run_id {run_id} was not found")
         return state
+
+    def resolve_branch_execution_target(self, *, branch_id: str) -> BranchExecutionTarget:
+        """Return a read-only legacy execution target for a future Branch command.
+
+        Existing ``/runs`` commands intentionally bypass this method and continue
+        to accept legacy simulation run IDs.
+        """
+        return self.repository.get_branch_execution_target(branch_id=branch_id)
 
     def get_run_talent_plan_summary(self, *, run_id: str) -> RunTalentPlanSummary:
         self.get_run_summary(run_id=run_id)

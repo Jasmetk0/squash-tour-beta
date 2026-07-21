@@ -160,6 +160,25 @@ class BranchCheckpointModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class BranchForkCommandModel(Base):
+    """Durable idempotency record for one atomic internal Branch fork."""
+
+    __tablename__ = "branch_fork_commands"
+
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    product_run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_branch_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    source_checkpoint_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    target_branch_id: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
+    target_legacy_simulation_run_id: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
+    result_branch_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    result_checkpoint_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    result_legacy_simulation_run_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    created_at: Mapped[str] = mapped_column(String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+
+
 class SeasonStateModel(Base):
     __tablename__ = "season_state"
 

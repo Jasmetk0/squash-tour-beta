@@ -60,6 +60,8 @@ from beta_engine.domain.players import (
 from beta_engine.domain.tournaments import CalendarEvent
 from beta_engine.infrastructure.db import (
     BranchExecutionTarget,
+    ForkRunBranchCommand,
+    ForkRunBranchResult,
     LegacyRunCloneResult,
     LegacyRunClonePreflightResult,
     SimulationPersistenceRepository,
@@ -850,6 +852,10 @@ class SimulationApiService:
             source_checkpoint_id=source_checkpoint_id,
             target_seed=target_seed,
         )
+
+    def fork_run_branch_atomically(self, command: ForkRunBranchCommand) -> ForkRunBranchResult:
+        """Internal adapter only; no public API route is exposed for Branch forks."""
+        return self.repository.fork_run_branch_atomically(command)
 
     def get_run_talent_plan_summary(self, *, run_id: str) -> RunTalentPlanSummary:
         self.get_run_summary(run_id=run_id)

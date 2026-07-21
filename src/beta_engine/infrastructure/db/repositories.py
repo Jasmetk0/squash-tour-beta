@@ -133,6 +133,30 @@ class RunBranchRecord:
 
 
 @dataclass(frozen=True)
+class BranchExecutionTarget:
+    """Read-only legacy execution namespace bound to an executable Branch.
+
+    This compatibility target deliberately contains no mutable simulation state.
+    Future branch commands can resolve a Branch first, then pass only
+    ``legacy_simulation_run_id`` to the unchanged legacy simulation services.
+    """
+
+    branch_id: str
+    product_run_id: str
+    legacy_simulation_run_id: str
+    branch_status: str
+    branch_read_only: bool
+    is_official: bool
+    display_name: str
+    branch_seed: int | None
+    head_checkpoint_id: str | None
+
+
+class BranchExecutionTargetResolutionError(ValueError):
+    """Raised when a Branch cannot safely target legacy simulation execution."""
+
+
+@dataclass(frozen=True)
 class BranchCheckpointRecord:
     checkpoint_id: str; run_id: str; branch_id: str; parent_checkpoint_id: str | None; sequence: int; kind: str
     season: int; week: int | None; event_id: str | None; event_sequence: int | None
@@ -548,6 +572,55 @@ class SimulationPersistenceRepository:
                 return None
             container = session.get(RunContainerModel, model.run_id)
             return self._to_run_branch(model, official_branch_id=container.official_branch_id if container else None)
+
+    def get_branch_execution_target(self, *, branch_id: str) -> BranchExecutionTarget:
+        """Resolve a Branch to its existing legacy simulation execution namespace.
+
+        The resolver is intentionally read-only.  It neither treats BranchState as
+        simulation state nor changes any branch, checkpoint, or legacy-run record.
+        ``active`` is the sole executable branch status currently produced by the
+        branch foundation, so unknown/future status values fail closed.
+        """
+        with self._session_factory() as session:
+            branch = session.get(RunBranchModel, branch_id)
+            if branch is None:
+                raise KeyError(f"run branch {branch_id} was not found")
+
+            container = session.get(RunContainerModel, branch.run_id)
+            if container is None:
+                raise BranchExecutionTargetResolutionError(
+                    f"run branch {branch_id} references missing product run {branch.run_id}"
+                )
+
+            legacy_simulation_run_id = (branch.legacy_simulation_run_id or "").strip()
+            if not legacy_simulation_run_id:
+                raise BranchExecutionTargetResolutionError(
+                    f"run branch {branch_id} has no legacy simulation run binding"
+                )
+            if session.get(SimulationRunModel, legacy_simulation_run_id) is None:
+                raise BranchExecutionTargetResolutionError(
+                    f"run branch {branch_id} references missing legacy simulation run {legacy_simulation_run_id}"
+                )
+            if branch.read_only:
+                raise BranchExecutionTargetResolutionError(
+                    f"run branch {branch_id} is read-only and cannot execute simulation commands"
+                )
+            if branch.status != "active":
+                raise BranchExecutionTargetResolutionError(
+                    f"run branch {branch_id} has non-executable status {branch.status!r}"
+                )
+
+            return BranchExecutionTarget(
+                branch_id=branch.branch_id,
+                product_run_id=container.run_id,
+                legacy_simulation_run_id=legacy_simulation_run_id,
+                branch_status=branch.status,
+                branch_read_only=bool(branch.read_only),
+                is_official=branch.branch_id == container.official_branch_id,
+                display_name=branch.display_name,
+                branch_seed=branch.branch_seed,
+                head_checkpoint_id=branch.head_checkpoint_id,
+            )
 
     def list_run_branches(self, *, run_id: str | None = None) -> list[RunBranchRecord]:
         with self._session_factory() as session:

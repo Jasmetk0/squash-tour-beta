@@ -154,15 +154,17 @@ def test_atomic_fork_rolls_back_on_command_insert_failure(tmp_path, monkeypatch)
     _rollback_case(tmp_path, monkeypatch, "_insert_fork_command_in_session")
 
 
-def _assert_rejected_fork(repository, branch, checkpoint, official):
+def _assert_rejected_fork(repository, branch, checkpoint, official, *, expect_source_simulation_run=True, expect_source_season_state=True, expect_source_branch_state=True):
     with repository._session_factory() as session:
         assert session.get(SimulationRunModel, "fork-legacy") is None and session.get(SeasonStateModel, "fork-legacy") is None
         assert session.get(RunBranchModel, "fork-branch") is None and session.get(BranchStateModel, "fork-branch") is None
         assert session.execute(select(BranchCheckpointModel).where(BranchCheckpointModel.branch_id == "fork-branch")).scalars().all() == []
         assert session.get(BranchForkCommandModel, "fork-command") is None and session.get(LegacySimulationRunMappingModel, "fork-legacy") is None
         assert session.get(RunContainerModel, "source").official_branch_id == official
-        assert session.get(RunBranchModel, branch.branch_id) is not None and session.get(BranchStateModel, branch.branch_id) is not None
+        assert session.get(RunBranchModel, branch.branch_id) is not None and (session.get(BranchStateModel, branch.branch_id) is not None) == expect_source_branch_state
         assert session.get(BranchCheckpointModel, checkpoint.checkpoint_id) is not None
+        assert (session.get(SimulationRunModel, "source") is not None) == expect_source_simulation_run
+        assert (session.get(SeasonStateModel, "source") is not None) == expect_source_season_state
 
 
 @pytest.mark.parametrize("case", ["product-run-missing", "product-run-built-in", "product-run-read-only", "product-run-inactive", "branch-missing", "branch-wrong-run", "branch-read-only", "branch-inactive"])
@@ -181,3 +183,19 @@ def test_atomic_fork_rejects_run_and_basic_branch_invariants(tmp_path, case):
     if case == "branch-missing": command = _command("missing", checkpoint.checkpoint_id)
     with pytest.raises(BranchForkValidationError): service.fork_run_branch_atomically(command)
     _assert_rejected_fork(repository, branch, checkpoint, official)
+
+
+@pytest.mark.parametrize("case, error", [("branch-legacy-binding-null", BranchForkValidationError), ("branch-legacy-binding-blank", BranchForkValidationError), ("source-simulation-run-missing", BranchForkSourceStateMismatchError), ("source-season-state-missing", BranchForkSourceStateMismatchError), ("source-branch-state-missing", BranchForkValidationError), ("source-active-tournament", BranchForkValidationError), ("source-run-prospect", BranchForkValidationError)], ids=["branch-legacy-binding-null", "branch-legacy-binding-blank", "source-simulation-run-missing", "source-season-state-missing", "source-branch-state-missing", "source-active-tournament", "source-run-prospect"])
+def test_atomic_fork_rejects_legacy_source_invariants(tmp_path, case, error):
+    repository, service, branch, checkpoint = _setup(tmp_path); official = repository.get_run_container(run_id="source").official_branch_id
+    kwargs = {}
+    with repository._session_factory.begin() as session:
+        if case == "branch-legacy-binding-null": session.get(RunBranchModel, branch.branch_id).legacy_simulation_run_id = None
+        elif case == "branch-legacy-binding-blank": session.get(RunBranchModel, branch.branch_id).legacy_simulation_run_id = "   "
+        elif case == "source-simulation-run-missing": session.delete(session.get(SimulationRunModel, "source")); kwargs["expect_source_simulation_run"] = False
+        elif case == "source-season-state-missing": session.delete(session.get(SeasonStateModel, "source")); kwargs["expect_source_season_state"] = False
+        elif case == "source-branch-state-missing": session.delete(session.get(BranchStateModel, branch.branch_id)); kwargs["expect_source_branch_state"] = False
+        elif case == "source-active-tournament": session.get(SeasonStateModel, "source").active_tournament_json = '{"event_id":"E1"}'
+        else: session.add(RunProspectModel(prospect_id="P", run_id="source", world_id="fax_official", season_start_year=2027, season_label="2027", season_week=1, calendar_year=2027, year_week=1, birth_year=2012, birth_year_week=1, age=15, country_code="EGY", cohort_policy_version="v", profile_version="v", display_name="P", identity_seed="a", profile_seed="b", development_seed="c", potential_seed="d", trait_seed="e"))
+    with pytest.raises(error): service.fork_run_branch_atomically(_command(branch.branch_id, checkpoint.checkpoint_id))
+    _assert_rejected_fork(repository, branch, checkpoint, official, **kwargs)

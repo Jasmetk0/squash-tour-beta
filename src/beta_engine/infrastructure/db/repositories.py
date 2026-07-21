@@ -968,6 +968,22 @@ class SimulationPersistenceRepository:
         fields = {"source_legacy_simulation_run_id": simulation_run_id, "source_product_run_id": product_run_id, "source_branch_id": branch_id, "source_checkpoint_id": checkpoint_id, "source_checkpoint_kind": checkpoint.kind, "season": state.season if state else simulation_run.season, "week": checkpoint.week, "next_event_index": state.next_event_index if state else None, "sections": tuple(sections)}
         return hashlib.sha256(_to_json({**fields, "sections": [item.__dict__ for item in sections]}).encode("utf-8")).hexdigest()
 
+    @staticmethod
+    def _insert_fork_run_branch_in_session(*, session: Session, model: RunBranchModel) -> None:
+        session.add(model)
+
+    @staticmethod
+    def _insert_fork_branch_state_in_session(*, session: Session, model: BranchStateModel) -> None:
+        session.add(model)
+
+    @staticmethod
+    def _insert_fork_checkpoint_in_session(*, session: Session, model: BranchCheckpointModel) -> None:
+        session.add(model)
+
+    @staticmethod
+    def _insert_fork_command_in_session(*, session: Session, model: BranchForkCommandModel) -> None:
+        session.add(model)
+
     def clone_legacy_simulation_run_namespace(
         self,
         *,
@@ -1027,10 +1043,15 @@ class SimulationPersistenceRepository:
                     if not isinstance(captured, dict) or _to_json(captured) != _to_json(current):
                         raise UnsafeLegacyRunCloneSourceError("current_state_capture cannot be proven to match current persisted source state")
 
-            _, _, target_normalized_clone_hash = self._clone_legacy_simulation_run_namespace_in_session(
-                session=session, source_simulation_run_id=source_simulation_run_id,
-                target_simulation_run_id=target_simulation_run_id, target_seed=target_seed,
-            )
+            try:
+                _, _, target_normalized_clone_hash = self._clone_legacy_simulation_run_namespace_in_session(
+                    session=session, source_simulation_run_id=source_simulation_run_id,
+                    target_simulation_run_id=target_simulation_run_id, target_seed=target_seed,
+                )
+            except BranchForkTargetExistsError as exc:
+                raise LegacyRunCloneTargetExistsError(str(exc)) from exc
+            except BranchForkSourceStateMismatchError as exc:
+                raise UnsafeLegacyRunCloneSourceError(str(exc)) from exc
 
         target = self.inspect_legacy_run_clone_inventory(simulation_run_id=target_simulation_run_id)
         counts = tuple(LegacyRunCloneSectionResult(section.name, section.count) for section in preflight.inventory.sections if section.copy_policy == "copy")
@@ -1111,14 +1132,14 @@ class SimulationPersistenceRepository:
             seed_namespace = {"hierarchy": ["global", "branch"], "global_seed": container.global_seed, "source_branch_seed": branch.branch_seed, "source_legacy_simulation_run_seed": source_run.seed, "target_branch_seed": command.target_branch_seed}
             payload = {"product_run_id": command.product_run_id, "source_branch_id": command.source_branch_id, "source_checkpoint_id": command.source_checkpoint_id, "source_checkpoint_kind": checkpoint.kind, "source_checkpoint_content_hash": checkpoint.content_hash, "source_legacy_simulation_run_id": source_run.run_id, "target_branch_id": command.target_branch_id, "target_legacy_simulation_run_id": command.target_legacy_simulation_run_id, "source_inventory_hash": source_inventory_hash, "normalized_clone_equivalence_hash": equivalence_hash, "request_fingerprint": fingerprint, "provenance": {"world_id": container.world_id, "world_fingerprint": container.world_package_fingerprint, "config_version": container.config_version, "config_fingerprint": container.config_fingerprint, "global_seed": container.global_seed, "source_branch_seed": branch.branch_seed, "source_legacy_simulation_run_seed": source_run.seed, "target_branch_seed": command.target_branch_seed}, "fork_semantics": "cloned_current_state_not_checkpoint_replay"}
             branch_metadata = {"fork_command_id": command.command_id, "request_fingerprint": fingerprint, "source_checkpoint_id": checkpoint.checkpoint_id}
-            session.add(RunBranchModel(branch_id=command.target_branch_id, run_id=command.product_run_id, display_name=command.target_branch_display_name, status="active", read_only=0, branch_seed=command.target_branch_seed, forked_from_branch_id=command.source_branch_id, forked_from_checkpoint_id=command.source_checkpoint_id, head_checkpoint_id=checkpoint_id, legacy_simulation_run_id=command.target_legacy_simulation_run_id, metadata_json=_to_json(branch_metadata)))
+            self._insert_fork_run_branch_in_session(session=session, model=RunBranchModel(branch_id=command.target_branch_id, run_id=command.product_run_id, display_name=command.target_branch_display_name, status="active", read_only=0, branch_seed=command.target_branch_seed, forked_from_branch_id=command.source_branch_id, forked_from_checkpoint_id=command.source_checkpoint_id, head_checkpoint_id=checkpoint_id, legacy_simulation_run_id=command.target_legacy_simulation_run_id, metadata_json=_to_json(branch_metadata)))
             state_metadata = {"fork_command_id": command.command_id, "source_checkpoint_id": checkpoint.checkpoint_id}
-            session.add(BranchStateModel(branch_id=command.target_branch_id, run_id=command.product_run_id, head_checkpoint_id=checkpoint_id, current_season=target_state.season, current_week=checkpoint.week, current_event_id=checkpoint.event_id, current_event_sequence=checkpoint.event_sequence, state_schema_version="branch_state_v1", status="active", metadata_json=_to_json(state_metadata)))
+            self._insert_fork_branch_state_in_session(session=session, model=BranchStateModel(branch_id=command.target_branch_id, run_id=command.product_run_id, head_checkpoint_id=checkpoint_id, current_season=target_state.season, current_week=checkpoint.week, current_event_id=checkpoint.event_id, current_event_sequence=checkpoint.event_sequence, state_schema_version="branch_state_v1", status="active", metadata_json=_to_json(state_metadata)))
             incomplete = BranchCheckpointRecord(checkpoint_id, command.product_run_id, command.target_branch_id, None, 1, BRANCH_CHECKPOINT_KIND_BRANCH_FORK_START, target_state.season, checkpoint.week, checkpoint.event_id, checkpoint.event_sequence, command.command_id, BRANCH_CHECKPOINT_COMMAND_KIND_FORK_BRANCH, BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_ATOMIC_FORK_MATERIALIZATION, container.config_version, container.config_fingerprint, container.world_id, container.world_package_fingerprint, container.global_seed, command.target_branch_seed, seed_namespace, "branch_checkpoint_payload_v1", "sha256", "", payload)
             fork_checkpoint = BranchCheckpointRecord(**{**incomplete.__dict__, "content_hash": self.checkpoint_envelope_content_hash(incomplete)})
-            session.add(BranchCheckpointModel(checkpoint_id=fork_checkpoint.checkpoint_id, run_id=fork_checkpoint.run_id, branch_id=fork_checkpoint.branch_id, parent_checkpoint_id=None, sequence=1, kind=fork_checkpoint.kind, season=fork_checkpoint.season, week=fork_checkpoint.week, event_id=fork_checkpoint.event_id, event_sequence=fork_checkpoint.event_sequence, command_id=fork_checkpoint.command_id, command_kind=fork_checkpoint.command_kind, command_boundary=fork_checkpoint.command_boundary, config_version=fork_checkpoint.config_version, config_fingerprint=fork_checkpoint.config_fingerprint, world_id=fork_checkpoint.world_id, world_fingerprint=fork_checkpoint.world_fingerprint, global_seed=fork_checkpoint.global_seed, branch_seed=fork_checkpoint.branch_seed, seed_namespace_json=self.canonical_json(fork_checkpoint.seed_namespace), payload_schema_version=fork_checkpoint.payload_schema_version, content_hash_algorithm="sha256", content_hash=fork_checkpoint.content_hash, payload_json=self.canonical_json(fork_checkpoint.payload)))
+            self._insert_fork_checkpoint_in_session(session=session, model=BranchCheckpointModel(checkpoint_id=fork_checkpoint.checkpoint_id, run_id=fork_checkpoint.run_id, branch_id=fork_checkpoint.branch_id, parent_checkpoint_id=None, sequence=1, kind=fork_checkpoint.kind, season=fork_checkpoint.season, week=fork_checkpoint.week, event_id=fork_checkpoint.event_id, event_sequence=fork_checkpoint.event_sequence, command_id=fork_checkpoint.command_id, command_kind=fork_checkpoint.command_kind, command_boundary=fork_checkpoint.command_boundary, config_version=fork_checkpoint.config_version, config_fingerprint=fork_checkpoint.config_fingerprint, world_id=fork_checkpoint.world_id, world_fingerprint=fork_checkpoint.world_fingerprint, global_seed=fork_checkpoint.global_seed, branch_seed=fork_checkpoint.branch_seed, seed_namespace_json=self.canonical_json(fork_checkpoint.seed_namespace), payload_schema_version=fork_checkpoint.payload_schema_version, content_hash_algorithm="sha256", content_hash=fork_checkpoint.content_hash, payload_json=self.canonical_json(fork_checkpoint.payload)))
             metadata = {"source_inventory_hash": source_inventory_hash, "normalized_clone_equivalence_hash": equivalence_hash}
-            session.add(BranchForkCommandModel(command_id=command.command_id, product_run_id=command.product_run_id, request_fingerprint=fingerprint, source_branch_id=command.source_branch_id, source_checkpoint_id=command.source_checkpoint_id, target_branch_id=command.target_branch_id, target_legacy_simulation_run_id=command.target_legacy_simulation_run_id, result_branch_id=command.target_branch_id, result_checkpoint_id=checkpoint_id, result_legacy_simulation_run_id=command.target_legacy_simulation_run_id, metadata_json=_to_json(metadata)))
+            self._insert_fork_command_in_session(session=session, model=BranchForkCommandModel(command_id=command.command_id, product_run_id=command.product_run_id, request_fingerprint=fingerprint, source_branch_id=command.source_branch_id, source_checkpoint_id=command.source_checkpoint_id, target_branch_id=command.target_branch_id, target_legacy_simulation_run_id=command.target_legacy_simulation_run_id, result_branch_id=command.target_branch_id, result_checkpoint_id=checkpoint_id, result_legacy_simulation_run_id=command.target_legacy_simulation_run_id, metadata_json=_to_json(metadata)))
             try: session.flush()
             except IntegrityError as exc: raise BranchForkTargetExistsError("fork target conflicts with existing durable state") from exc
             return ForkRunBranchResult(command.product_run_id, command.source_branch_id, command.source_checkpoint_id, command.target_branch_id, command.target_legacy_simulation_run_id, checkpoint_id, command.target_branch_seed, source_inventory_hash, equivalence_hash, fingerprint, False)

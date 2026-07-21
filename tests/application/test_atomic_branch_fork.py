@@ -218,3 +218,17 @@ def test_atomic_fork_rejects_checkpoint_invariants(tmp_path, case, error):
             record = repository._to_branch_checkpoint(model); model.content_hash = repository.checkpoint_envelope_content_hash(record)
     with pytest.raises(error): service.fork_run_branch_atomically(_command(branch.branch_id, checkpoint.checkpoint_id))
     _assert_rejected_fork(repository, branch, checkpoint, official)
+
+
+@pytest.mark.parametrize("case", ["current-state-capture-stale", "initial-next-event-index-progressed", "initial-completed-event-present"])
+def test_atomic_fork_rejects_state_boundary_invariants(tmp_path, case):
+    repository, service, branch, checkpoint = _setup(tmp_path); official = repository.get_run_container(run_id="source").official_branch_id
+    if case == "current-state-capture-stale":
+        checkpoint = repository.capture_current_checkpoint_for_legacy_simulation_run(simulation_run_id="source")
+        with repository._session_factory.begin() as session: session.get(SeasonStateModel, "source").next_event_index = 1
+    elif case == "initial-next-event-index-progressed":
+        with repository._session_factory.begin() as session: session.get(SeasonStateModel, "source").next_event_index = 1
+    else:
+        with repository._session_factory.begin() as session: session.add(CompletedEventModel(run_id="source", event_sequence=1, event_id="E1"))
+    with pytest.raises(BranchForkSourceStateMismatchError): service.fork_run_branch_atomically(_command(branch.branch_id, checkpoint.checkpoint_id))
+    _assert_rejected_fork(repository, branch, checkpoint, official)

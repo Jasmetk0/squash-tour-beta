@@ -199,3 +199,22 @@ def test_atomic_fork_rejects_legacy_source_invariants(tmp_path, case, error):
         else: session.add(RunProspectModel(prospect_id="P", run_id="source", world_id="fax_official", season_start_year=2027, season_label="2027", season_week=1, calendar_year=2027, year_week=1, birth_year=2012, birth_year_week=1, age=15, country_code="EGY", cohort_policy_version="v", profile_version="v", display_name="P", identity_seed="a", profile_seed="b", development_seed="c", potential_seed="d", trait_seed="e"))
     with pytest.raises(error): service.fork_run_branch_atomically(_command(branch.branch_id, checkpoint.checkpoint_id))
     _assert_rejected_fork(repository, branch, checkpoint, official, **kwargs)
+
+
+@pytest.mark.parametrize("case, error", [("branch-head-state-head-disagree", BranchForkSourceStateMismatchError), ("checkpoint-not-effective-head", BranchForkSourceStateMismatchError), ("checkpoint-wrong-branch", BranchForkSourceStateMismatchError), ("checkpoint-wrong-run", BranchForkSourceStateMismatchError), ("checkpoint-invalid-hash", BranchForkSourceStateMismatchError), ("checkpoint-kind-event-completed", BranchForkValidationError), ("checkpoint-kind-branch-fork-start", BranchForkValidationError)], ids=["branch-head-state-head-disagree", "checkpoint-not-effective-head", "checkpoint-wrong-branch", "checkpoint-wrong-run", "checkpoint-invalid-hash", "checkpoint-kind-event-completed", "checkpoint-kind-branch-fork-start"])
+def test_atomic_fork_rejects_checkpoint_invariants(tmp_path, case, error):
+    repository, service, branch, checkpoint = _setup(tmp_path); official = repository.get_run_container(run_id="source").official_branch_id
+    with repository._session_factory.begin() as session:
+        model = session.get(BranchCheckpointModel, checkpoint.checkpoint_id)
+        if case == "branch-head-state-head-disagree": session.get(BranchStateModel, branch.branch_id).head_checkpoint_id = "other"
+        elif case == "checkpoint-not-effective-head":
+            session.get(RunBranchModel, branch.branch_id).head_checkpoint_id = "other"; session.get(BranchStateModel, branch.branch_id).head_checkpoint_id = "other"
+        elif case == "checkpoint-invalid-hash": model.content_hash = "0" * 64
+        else:
+            if case == "checkpoint-wrong-branch": model.branch_id = "other-branch"
+            elif case == "checkpoint-wrong-run": model.run_id = "other-run"
+            elif case == "checkpoint-kind-event-completed": model.kind = "event_completed"
+            elif case == "checkpoint-kind-branch-fork-start": model.kind = "branch_fork_start"
+            record = repository._to_branch_checkpoint(model); model.content_hash = repository.checkpoint_envelope_content_hash(record)
+    with pytest.raises(error): service.fork_run_branch_atomically(_command(branch.branch_id, checkpoint.checkpoint_id))
+    _assert_rejected_fork(repository, branch, checkpoint, official)

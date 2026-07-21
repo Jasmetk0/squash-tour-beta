@@ -6,7 +6,7 @@ from dataclasses import replace
 from sqlalchemy import inspect
 
 from beta_engine.application.api_services import SimulationApiService
-from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
+from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, SimulationRunInfo, create_session_factory, create_sqlite_engine
 from beta_engine.infrastructure.db.models import BranchCheckpointModel, BranchStateModel, RunBranchModel
 from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE,
@@ -384,6 +384,8 @@ def test_season_rollover_checkpoint_captures_persisted_artifacts_once_without_mu
     assert checkpoint.parent_checkpoint_id == initial.checkpoint_id and checkpoint.sequence == initial.sequence + 1
     assert checkpoint.payload["capture_mode"] == "legacy_season_rollover_capture_only"
     assert checkpoint.payload["rollover"]["locator"] == {"from_season": 2027, "to_season": 2028}
+    assert checkpoint.payload["rollover"]["target_run_id"] is None
+    assert checkpoint.payload["rollover"]["target_run_id_source"] == "not_available_in_legacy_rollover_artifact"
     assert checkpoint.payload["limitations"]["forkable"] is False and checkpoint.payload["limitations"]["replayable"] is False
     assert repository.verify_branch_checkpoint_hash(checkpoint_id=checkpoint.checkpoint_id)
     assert repository.load_season_state(run_id="rollover-capture-run").model_dump() == before_state
@@ -400,3 +402,20 @@ def test_season_rollover_checkpoint_captures_persisted_artifacts_once_without_mu
         assert "locator does not match" in str(exc)
     else:
         raise AssertionError("rollover locator mismatch must be rejected")
+
+
+def test_season_rollover_checkpoint_never_infers_target_from_legacy_parent_run(tmp_path) -> None:
+    repository = _repository(tmp_path)
+    service = SimulationApiService(repository=repository)
+    service.initialize_run(run_id="child-style-rollover-run", season=2028, seed=17, config_version="v1", config_fingerprint="cfg")
+    repository.upsert_simulation_run(SimulationRunInfo(run_id="child-style-rollover-run", season=2028, seed=17, config_version="v1", config_fingerprint="cfg", parent_run_id="prior-source-run", source_type="rollover_bootstrap"))
+    repository.capture_initial_checkpoint_for_legacy_simulation_run(simulation_run_id="child-style-rollover-run")
+    repository.upsert_season_rollover(run_id="child-style-rollover-run", from_season=2028, to_season=2029, transitioned_players=0, metadata={}, transitions=[], next_player_states=[])
+
+    checkpoint = repository.capture_season_rollover_checkpoint_for_legacy_simulation_run(simulation_run_id="child-style-rollover-run")
+
+    assert repository.get_simulation_run(run_id="child-style-rollover-run").parent_run_id == "prior-source-run"
+    assert checkpoint.payload["rollover"]["source_run_id"] == "child-style-rollover-run"
+    assert checkpoint.payload["rollover"]["target_run_id"] is None
+    assert checkpoint.payload["rollover"]["target_run_id"] != "prior-source-run"
+    assert repository.verify_branch_checkpoint_hash(checkpoint_id=checkpoint.checkpoint_id)

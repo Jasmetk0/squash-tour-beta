@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from beta_engine.application.api_services import SimulationApiService
-from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
+from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID, REAL_WORLD_ID
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationRunInfo, create_session_factory, create_sqlite_engine
 from beta_engine.infrastructure.db.repositories import SimulationPersistenceRepository
 
@@ -58,6 +58,37 @@ def test_bootstrap_next_season_creates_child_run_with_lineage_and_simulation(tmp
     child_provenance = service.list_generated_player_provenance(run_id="run-child")
     assert any(row.source_type == "rollover_carried" for row in child_provenance)
     assert any(row.source_type == "planner_generated" for row in child_provenance)
+
+
+def test_real_world_rollover_bootstrap_preserves_world_and_fingerprint(tmp_path) -> None:
+    service = _service(tmp_path)
+    parent = service.initialize_run(
+        run_id="real-parent",
+        season=2027,
+        seed=5253,
+        config_version="mvp",
+        config_fingerprint="cfg-real",
+        world_id=REAL_WORLD_ID,
+    )
+    service.simulate_full_season(run_id="real-parent")
+    service.rollover_to_next_season(run_id="real-parent")
+
+    service.bootstrap_next_season_run(run_id="real-parent", child_run_id="real-child")
+
+    child = service.repository.get_simulation_run(run_id="real-child")
+    parent_record = service.repository.get_simulation_run(run_id="real-parent")
+    assert child is not None
+    assert parent_record is not None
+    assert parent.world_id == REAL_WORLD_ID
+    assert child.world_id == REAL_WORLD_ID
+    assert child.world_generation_fingerprint == parent_record.world_generation_fingerprint
+    assert child.world_generation_fingerprint == service._current_world_generation_fingerprint(REAL_WORLD_ID)
+    child_world_status = service.get_run_world_status(run_id="real-child")
+    assert child_world_status.world_id == REAL_WORLD_ID
+    assert child_world_status.is_stale is False
+    child_players = service._load_players_by_id_for_run(run_info=child)
+    assert child_players
+    assert {player.nationality for player in child_players.values()}.isdisjoint({"BOG"})
 
 
 def test_bootstrap_next_season_is_idempotent_and_rejects_conflicting_child_seed(tmp_path) -> None:

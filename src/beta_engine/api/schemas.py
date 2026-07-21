@@ -358,6 +358,7 @@ class RunWeeklyIntakeCohortSeasonPreviewResponse(BaseModel):
 
 class RunWorldStatusResponse(BaseModel):
     run_id: str
+    world_id: str
     source_type: Literal["fresh_seed", "rollover_bootstrap"]
     stored_world_generation_fingerprint: str | None = None
     current_world_generation_fingerprint: str

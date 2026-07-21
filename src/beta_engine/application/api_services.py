@@ -32,7 +32,7 @@ from beta_engine.application.persistence import SimulationPersistenceService
 from beta_engine.application.run_bootstrap_models import BootstrapNextSeasonResponse, RunLineageRecord, RunSourceSummary
 from beta_engine.application.run_bootstrap_service import NextSeasonRunBootstrapService
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
-from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
+from beta_engine.world_packages import BUILT_IN_WORLD_IDS, OFFICIAL_FAX_WORLD_ID
 from beta_engine.application.rollover_models import (
     NextSeasonPlayerRecord,
     PersistedPlayerTransition,
@@ -172,6 +172,7 @@ class RunStatusSummary:
 @dataclass(frozen=True)
 class RunWorldStatus:
     run_id: str
+    world_id: str
     source_type: str
     stored_world_generation_fingerprint: str | None
     current_world_generation_fingerprint: str
@@ -735,8 +736,9 @@ class SimulationApiService:
         world_id: str | None = None,
     ) -> PersistedRunSummary:
         locked_world_id = self._validate_create_run_world_id(world_id)
-        world_generation_fingerprint = self._current_world_generation_fingerprint()
-        countries_metadata = self.countries_service.get_config()
+        countries_service = self._countries_service_for_world(locked_world_id)
+        world_generation_fingerprint = self._current_world_generation_fingerprint(locked_world_id)
+        countries_metadata = countries_service.get_config()
         countries = countries_metadata.countries
         _, plan_record, country_records, provenance_records = self._build_fresh_players_and_provenance(
             run_id=run_id,
@@ -746,6 +748,7 @@ class SimulationApiService:
             dataset_status=countries_metadata.dataset_status,
             config_version=config_version,
             config_fingerprint=config_fingerprint,
+            world_id=locked_world_id,
         )
         orchestrator = self._build_orchestrator(season=season, seed=seed, run_info=None)
         state = orchestrator.initialize_state()
@@ -778,9 +781,21 @@ class SimulationApiService:
         package = registry.get_package(requested_world_id)
         if package is None:
             raise ValueError(f"world package '{requested_world_id}' was not found")
-        if requested_world_id != OFFICIAL_FAX_WORLD_ID:
+        if requested_world_id not in BUILT_IN_WORLD_IDS:
             raise ValueError("custom world package run creation is not enabled yet")
         return requested_world_id
+
+    def _countries_service_for_world(self, world_id: str) -> CountriesConfigService:
+        if world_id == OFFICIAL_FAX_WORLD_ID:
+            return self.countries_service
+        registry = self.world_package_registry_service or WorldPackageRegistryService(
+            countries_service=self.countries_service,
+            manual_overrides_service=self.manual_overrides_service,
+        )
+        paths = registry.package_paths(world_id)
+        if paths is None:
+            raise ValueError(f"world package '{world_id}' was not found")
+        return CountriesConfigService(config_path=paths["countries"])
 
     def get_run_summary(self, *, run_id: str) -> PersistedRunSummary:
         run_info = self.repository.get_simulation_run(run_id=run_id)
@@ -998,7 +1013,10 @@ class SimulationApiService:
 
         players_by_id = self._load_players_by_id_for_run(run_info=run_info)
         provenance_by_id = {item.player_id: item for item in self.list_generated_player_provenance(run_id=run_id)}
-        country_names = {country.code: country.name for country in self.countries_service.get_config().countries}
+        country_names = {
+            country.code: country.name
+            for country in self._countries_service_for_world(run_info.world_id).get_config().countries
+        }
         rows = [self._to_run_player_list_item(players_by_id[player_id], provenance_by_id.get(player_id)) for player_id in players_by_id]
         summaries = self._aggregate_run_nation_summaries(rows=rows, country_names=country_names)
         filtered = self._filter_run_nations(summaries=summaries, search=search)
@@ -1014,7 +1032,10 @@ class SimulationApiService:
         normalized_country_code = country_code.strip().upper()
         players_by_id = self._load_players_by_id_for_run(run_info=run_info)
         provenance_by_id = {item.player_id: item for item in self.list_generated_player_provenance(run_id=run_id)}
-        country_names = {country.code: country.name for country in self.countries_service.get_config().countries}
+        country_names = {
+            country.code: country.name
+            for country in self._countries_service_for_world(run_info.world_id).get_config().countries
+        }
         rows = [self._to_run_player_list_item(players_by_id[player_id], provenance_by_id.get(player_id)) for player_id in players_by_id]
         country_rows = [row for row in rows if row.country_code.upper() == normalized_country_code]
         if not country_rows:
@@ -1794,7 +1815,7 @@ class SimulationApiService:
         parent_run, _ = self._load_run_context(run_id=run_id)
         effective_seed = parent_run.seed if child_seed is None else child_seed
         bootstrap_service = NextSeasonRunBootstrapService(repository=self.repository)
-        world_generation_fingerprint = self._current_world_generation_fingerprint()
+        world_generation_fingerprint = self._current_world_generation_fingerprint(parent_run.world_id)
         response = bootstrap_service.bootstrap_from_rollover(
             parent_run=parent_run,
             child_run_id=child_run_id,
@@ -1804,7 +1825,7 @@ class SimulationApiService:
         if response.already_bootstrapped:
             return response
 
-        countries_metadata = self.countries_service.get_config()
+        countries_metadata = self._countries_service_for_world(parent_run.world_id).get_config()
         countries = countries_metadata.countries
         parent_next_season_players = self.repository.list_next_season_players(
             run_id=run_id,
@@ -1826,6 +1847,7 @@ class SimulationApiService:
             dataset_status=countries_metadata.dataset_status,
             config_version=parent_run.config_version,
             config_fingerprint=parent_run.config_fingerprint,
+            world_id=parent_run.world_id,
         )
         self.repository.save_run_talent_plan(child_plan_record)
         self.repository.replace_run_talent_country_allocations(
@@ -1934,7 +1956,7 @@ class SimulationApiService:
 
     def get_run_world_status(self, *, run_id: str) -> RunWorldStatus:
         run_info, state = self._load_run_context(run_id=run_id)
-        current_fingerprint = self._current_world_generation_fingerprint()
+        current_fingerprint = self._current_world_generation_fingerprint(run_info.world_id)
         stored_fingerprint = run_info.world_generation_fingerprint
         is_stale = stored_fingerprint != current_fingerprint
         rebuild_supported, reason = self._evaluate_rebuild_support(run_info=run_info, state=state)
@@ -1946,6 +1968,7 @@ class SimulationApiService:
             message = reason
         return RunWorldStatus(
             run_id=run_id,
+            world_id=run_info.world_id,
             source_type=_normalize_source_type(run_info.source_type),
             stored_world_generation_fingerprint=stored_fingerprint,
             current_world_generation_fingerprint=current_fingerprint,
@@ -1960,8 +1983,8 @@ class SimulationApiService:
         if not rebuild_supported:
             raise ValueError(reason)
 
-        world_generation_fingerprint = self._current_world_generation_fingerprint()
-        countries_metadata = self.countries_service.get_config()
+        world_generation_fingerprint = self._current_world_generation_fingerprint(run_info.world_id)
+        countries_metadata = self._countries_service_for_world(run_info.world_id).get_config()
         countries = countries_metadata.countries
         _, plan_record, country_records, provenance_records = self._build_fresh_players_and_provenance(
             run_id=run_id,
@@ -1971,6 +1994,7 @@ class SimulationApiService:
             dataset_status=countries_metadata.dataset_status,
             config_version=run_info.config_version,
             config_fingerprint=run_info.config_fingerprint,
+            world_id=run_info.world_id,
         )
         orchestrator = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info)
         rebuilt_state = orchestrator.initialize_state()
@@ -2241,7 +2265,8 @@ class SimulationApiService:
         calendar = load_season_calendar(season=season)
 
         templates = load_tournament_templates_config().templates
-        countries = self.countries_service.get_config().countries
+        world_id = run_info.world_id if run_info is not None else OFFICIAL_FAX_WORLD_ID
+        countries = self._countries_service_for_world(world_id).get_config().countries
         countries_by_code = {country.code: country for country in countries}
         players = self._build_players_for_run(
             run_info=run_info,
@@ -2305,6 +2330,7 @@ class SimulationApiService:
         dataset_status: str | None,
         config_version: str | None,
         config_fingerprint: str | None,
+        world_id: str = OFFICIAL_FAX_WORLD_ID,
     ) -> tuple[
         list[Player],
         PersistedRunTalentPlanRecord,
@@ -2321,6 +2347,7 @@ class SimulationApiService:
             config_fingerprint=config_fingerprint,
             existing_player_ids=None,
             sequence_floor_by_country=None,
+            world_id=world_id,
         )
 
     def _build_intake_players_and_provenance(
@@ -2335,13 +2362,14 @@ class SimulationApiService:
         config_fingerprint: str | None,
         existing_player_ids: set[str] | None,
         sequence_floor_by_country: dict[str, int] | None,
+        world_id: str = OFFICIAL_FAX_WORLD_ID,
     ) -> tuple[
         list[Player],
         PersistedRunTalentPlanRecord,
         list[PersistedRunTalentCountryAllocationRecord],
         list[PersistedGeneratedPlayerProvenanceRecord],
     ]:
-        planner = AnnualTalentClassPlanner(dampener=self._build_recent_greatness_dampener(season=season, include_history=run_id != "ephemeral-preview"))
+        planner = AnnualTalentClassPlanner(dampener=self._build_recent_greatness_dampener(season=season, include_history=run_id != "ephemeral-preview", world_id=world_id))
         plan = planner.plan(year=season, seed=seed, countries=countries)
         generator = PlayerGenerator(
             rng=DeterministicRng(seed),
@@ -2414,7 +2442,11 @@ class SimulationApiService:
                 )
             )
 
-        active_manual_overrides = self.manual_overrides_service.list_overrides(season=season, enabled=True)
+        active_manual_overrides = (
+            self.manual_overrides_service.list_overrides(season=season, enabled=True)
+            if world_id in {None, OFFICIAL_FAX_WORLD_ID}
+            else []
+        )
         for index, override in enumerate(active_manual_overrides, start=1):
             country = countries_by_code.get(override.country_code)
             if country is None:
@@ -2495,6 +2527,7 @@ class SimulationApiService:
         dataset_status: str | None,
         config_version: str | None,
         config_fingerprint: str | None,
+        world_id: str = OFFICIAL_FAX_WORLD_ID,
     ) -> tuple[
         list[NextSeasonPlayerState],
         PersistedRunTalentPlanRecord,
@@ -2519,6 +2552,7 @@ class SimulationApiService:
             config_fingerprint=config_fingerprint,
             existing_player_ids=set(carried_players_by_id),
             sequence_floor_by_country=sequence_floor_by_country,
+            world_id=world_id,
         )
 
         merged_player_states = list(carried_player_states)
@@ -2565,13 +2599,23 @@ class SimulationApiService:
             birth_year_week = synthesize_birth_year_week(player_id=player.player_id, birth_year=birth_year)
         return player.model_copy(update={"birth_year": birth_year, "birth_year_week": birth_year_week})
 
-    def _build_recent_greatness_dampener(self, *, season: int, include_history: bool) -> WeightedRecentGreatnessDampener:
+    def _build_recent_greatness_dampener(
+        self,
+        *,
+        season: int,
+        include_history: bool,
+        world_id: str | None = None,
+    ) -> WeightedRecentGreatnessDampener:
         if not include_history:
             return WeightedRecentGreatnessDampener(signals=tuple())
 
         signals: list[RecentGreatnessSignal] = []
 
-        for override in self.manual_overrides_service.list_overrides(enabled=True):
+        for override in (
+            self.manual_overrides_service.list_overrides(enabled=True)
+            if world_id in {None, OFFICIAL_FAX_WORLD_ID}
+            else []
+        ):
             if override.season >= season:
                 continue
             signals.append(
@@ -2589,6 +2633,7 @@ class SimulationApiService:
             season_lt=season,
             season_gte=season - 8,
             source_type="planner_generated",
+            world_id=world_id,
         )
         seen: set[tuple[int, str, str, str]] = set()
         for record in historical:
@@ -2615,19 +2660,23 @@ class SimulationApiService:
 
         return WeightedRecentGreatnessDampener(signals=tuple(sorted(signals, key=lambda item: (item.country_code, item.season, item.source, item.reference_id or ""))))
 
-    def _current_world_generation_fingerprint(self) -> str:
-        payload = self._world_generation_fingerprint_payload()
+    def _current_world_generation_fingerprint(self, world_id: str = OFFICIAL_FAX_WORLD_ID) -> str:
+        payload = self._world_generation_fingerprint_payload(world_id)
         serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
-    def _world_generation_fingerprint_payload(self) -> dict[str, object]:
+    def _world_generation_fingerprint_payload(self, world_id: str = OFFICIAL_FAX_WORLD_ID) -> dict[str, object]:
         countries = sorted(
-            (country.model_dump(mode="json") for country in self.countries_service.get_config().countries),
+            (country.model_dump(mode="json") for country in self._countries_service_for_world(world_id).get_config().countries),
             key=lambda item: str(item["code"]),
         )
-        overrides = sorted(
-            (override.model_dump(mode="json") for override in self.manual_overrides_service.list_overrides()),
-            key=lambda item: (int(item["season"]), str(item["country_code"]), str(item["override_id"])),
+        overrides = (
+            sorted(
+                (override.model_dump(mode="json") for override in self.manual_overrides_service.list_overrides()),
+                key=lambda item: (int(item["season"]), str(item["country_code"]), str(item["override_id"])),
+            )
+            if world_id == OFFICIAL_FAX_WORLD_ID
+            else []
         )
         return {
             "countries": countries,
@@ -2763,7 +2812,7 @@ class SimulationApiService:
         return {player.player_id: player for player in self._build_players(seed=seed, season=season, countries=countries)}
 
     def _load_players_by_id_for_run(self, *, run_info: SimulationRunInfo) -> dict[str, Player]:
-        countries = self.countries_service.get_config().countries
+        countries = self._countries_service_for_world(run_info.world_id).get_config().countries
         players = self._build_players_for_run(
             run_info=run_info,
             season=run_info.season,

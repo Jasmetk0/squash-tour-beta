@@ -10,7 +10,7 @@ from typing import Any, Literal
 
 from pydantic import ValidationError
 
-from beta_engine.application.world_package_registry_service import OFFICIAL_FAX_WORLD_ID, WorldPackageRegistryService
+from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
 from beta_engine.infrastructure.world_config import load_countries_config
 
 ValidationSeverity = Literal["info", "warning", "error"]
@@ -75,6 +75,7 @@ class WorldPackageValidationService:
             required_non_empty=False,
         )
         country_count = self._validate_countries(countries_payload, region_codes, travel_region_codes, paths["countries"], checks)
+        self._validate_population_coverage(world_payload, countries_payload, paths["countries"], checks)
         self._validate_registry_consistency(record.world_id, checks, country_count, continent_count, region_count, travel_region_count)
 
         error_count = sum(1 for check in checks if check.severity == "error" and check.status == "failed")
@@ -225,6 +226,44 @@ class WorldPackageValidationService:
         else:
             checks.append(WorldPackageValidationCheck("countries_valid", "info", "passed", "countries array is present with unique country codes, names, and valid region references.", str(path), "countries"))
         return len(countries)
+
+    def _validate_population_coverage(
+        self,
+        world_payload: dict[str, Any] | None,
+        countries_payload: dict[str, Any] | None,
+        path: Path,
+        checks: list[WorldPackageValidationCheck],
+    ) -> None:
+        coverage = world_payload.get("population_years") if world_payload is not None else None
+        if coverage is None:
+            return
+        if not isinstance(coverage, dict) or not isinstance(coverage.get("from"), int) or not isinstance(coverage.get("to"), int):
+            checks.append(WorldPackageValidationCheck("population_coverage_valid", "error", "failed", "world.json population_years must contain integer from/to values.", str(path), "population_by_year"))
+            return
+        start, end = coverage["from"], coverage["to"]
+        if start > end or start < 1955 or end > 2050:
+            checks.append(WorldPackageValidationCheck("population_coverage_valid", "error", "failed", f"Declared population coverage {start}–{end} is outside the supported 1955–2050 range.", str(path), "population_by_year"))
+            return
+        countries = countries_payload.get("countries") if countries_payload is not None else None
+        if not isinstance(countries, list):
+            return
+        required_years = {str(year) for year in range(start, end + 1)}
+        incomplete: list[str] = []
+        for country in countries:
+            if not isinstance(country, dict):
+                continue
+            timeline = country.get("population_by_year")
+            available = {
+                str(year)
+                for year, population in timeline.items()
+                if isinstance(timeline, dict) and isinstance(population, int) and population > 0
+            } if isinstance(timeline, dict) else set()
+            if not required_years.issubset(available):
+                incomplete.append(str(country.get("code", "?")))
+        if incomplete:
+            checks.append(WorldPackageValidationCheck("population_coverage_valid", "error", "failed", f"Countries missing positive annual population values for {start}–{end}: {incomplete}.", str(path), "population_by_year"))
+        else:
+            checks.append(WorldPackageValidationCheck("population_coverage_valid", "info", "passed", f"All countries have positive annual population values for {start}–{end}.", str(path), "population_by_year"))
 
     def _validate_registry_consistency(self, world_id: str, checks: list[WorldPackageValidationCheck], country_count: int, continent_count: int, region_count: int, travel_region_count: int) -> None:
         try:

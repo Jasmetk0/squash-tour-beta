@@ -660,7 +660,7 @@ def test_world_packages_registry_lists_built_in_official_package(tmp_path) -> No
     ) as server:
         status, payload = _request("GET", f"{server.base_url}/world/packages")
         assert status == 200
-        assert len(payload["packages"]) == 1
+        assert len(payload["packages"]) == 2
         package = payload["packages"][0]
         assert package["world_id"] == "official_fax_world"
         assert package["name"] == "Official FAX World"
@@ -1037,6 +1037,27 @@ def test_clone_official_world_duplicate_invalid_official_id_and_missing_name_rej
     assert official["ok"] is False
     assert missing_name_status == 422 or missing_name["ok"] is False
     assert not (worlds_root / "custom" / "missing_name_world").exists()
+
+
+def test_real_world_clone_is_not_supported(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "manual_overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'real-world-clone-rejected.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+    ) as server:
+        status, payload = _request(
+            "POST",
+            f"{server.base_url}/world/packages/real_world/clone",
+            {"new_world_id": "real_copy", "name": "Real Copy", "dry_run": False},
+        )
+
+    assert status == 404
+    assert "clone is not supported" in payload["detail"]
 
 
 def test_clone_official_world_filesystem_failure_cleans_temporary_package(tmp_path, monkeypatch) -> None:

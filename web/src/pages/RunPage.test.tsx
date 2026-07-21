@@ -95,6 +95,7 @@ describe('RunPage', () => {
     })
     api.getRunWorldStatus.mockResolvedValue({
       run_id: 'run-a',
+      world_id: 'official_fax_world',
       source_type: 'fresh_seed',
       stored_world_generation_fingerprint: 'fp-a',
       current_world_generation_fingerprint: 'fp-a',
@@ -147,6 +148,7 @@ describe('RunPage', () => {
     })
     api.rebuildRunWorld.mockResolvedValue({
       run_id: 'run-a',
+      world_id: 'official_fax_world',
       source_type: 'fresh_seed',
       stored_world_generation_fingerprint: 'fp-a',
       current_world_generation_fingerprint: 'fp-a',
@@ -223,6 +225,7 @@ describe('RunPage', () => {
   it('hides rebuild action when unsupported and renders stale label', async () => {
     api.getRunWorldStatus.mockResolvedValueOnce({
       run_id: 'run-a',
+      world_id: 'official_fax_world',
       source_type: 'rollover_bootstrap',
       stored_world_generation_fingerprint: 'fp-old',
       current_world_generation_fingerprint: 'fp-new',

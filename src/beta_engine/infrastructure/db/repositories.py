@@ -832,6 +832,38 @@ class SimulationPersistenceRepository:
             )
             return LegacyRunClonePreflightResult(inventory=inventory, clone_safe=not reasons, unsupported_reasons=tuple(reasons))
 
+    @classmethod
+    def _normalized_clone_content_hash(
+        cls, *, session: Session, run_id: str, expected_clone_seed: int | None = None
+    ) -> str:
+        """Hash all cloned durable data after normalizing namespace/provenance."""
+        models = (
+            SimulationRunModel, SeasonStateModel, CompletedEventModel, CompletedEventMetadataModel,
+            CompletedTournamentInputModel, RankingSnapshotModel, RaceSnapshotModel,
+            FinalsQualificationModel, FinalsResultModel, AdminActionModel, SeasonRolloverModel,
+            PlayerSeasonTransitionModel, NextSeasonPlayerModel, RunTalentPlanModel,
+            RunTalentCountryAllocationModel, RunGeneratedPlayerProvenanceModel,
+        )
+        sections: dict[str, list[dict[str, object]]] = {}
+        for model in models:
+            rows = session.execute(select(model).where(model.run_id == run_id)).scalars().all()
+            canonical_rows = []
+            for row in rows:
+                item = {
+                    column.name: cls._clone_inventory_value(getattr(row, column.name))
+                    for column in model.__table__.columns if column.name != "id"
+                }
+                item["run_id"] = "<legacy-run>"
+                if model is SimulationRunModel:
+                    # These are intentional target-clone provenance differences.
+                    item["source_type"] = "branch_clone"
+                    item["parent_run_id"] = "<legacy-run>"
+                    if expected_clone_seed is not None:
+                        item["seed"] = expected_clone_seed
+                canonical_rows.append(item)
+            sections[model.__tablename__] = sorted(canonical_rows, key=_to_json)
+        return hashlib.sha256(_to_json(sections).encode("utf-8")).hexdigest()
+
     def clone_legacy_simulation_run_namespace(
         self,
         *,
@@ -911,22 +943,23 @@ class SimulationPersistenceRepository:
                     values["run_id"] = target_simulation_run_id
                     session.add(model(**values))
 
+            expected_hash = self._normalized_clone_content_hash(
+                session=session, run_id=source_simulation_run_id,
+                expected_clone_seed=target_seed if target_seed is not None else source_run.seed,
+            )
+
         target = self.inspect_legacy_run_clone_inventory(simulation_run_id=target_simulation_run_id)
         counts = tuple(LegacyRunCloneSectionResult(section.name, section.count) for section in preflight.inventory.sections if section.copy_policy == "copy")
-        # This hash is namespace-normalized and excludes surrogate IDs.  Clone-only
-        # SimulationRun provenance and an optional seed override intentionally remain.
-        normalized = {
-            "source": source_simulation_run_id,
-            "target": target_simulation_run_id,
-            "source_sections": [(s.name, s.count) for s in preflight.inventory.sections if s.copy_policy == "copy"],
-            "target_sections": [(s.name, s.count) for s in target.inventory.sections if s.copy_policy == "copy"],
-        }
+        with self._session_factory() as session:
+            target_hash = self._normalized_clone_content_hash(session=session, run_id=target_simulation_run_id)
+        if target_hash != expected_hash:
+            raise LegacyRunCloneError("cloned namespace failed normalized durable-content equivalence verification")
         return LegacyRunCloneResult(
             source_legacy_simulation_run_id=source_simulation_run_id, target_legacy_simulation_run_id=target_simulation_run_id,
             source_branch_id=preflight.inventory.source_branch_id, source_checkpoint_id=source_checkpoint_id,
             source_checkpoint_kind=preflight.inventory.source_checkpoint_kind, source_inventory_hash=preflight.inventory.inventory_hash,
             target_inventory_hash=target.inventory.inventory_hash, cloned_section_counts=counts,
-            normalized_clone_equivalence_hash=hashlib.sha256(_to_json(normalized).encode("utf-8")).hexdigest(),
+            normalized_clone_equivalence_hash=target_hash,
             source_product_run_id=preflight.inventory.source_product_run_id, target_product_run_id=None,
         )
 

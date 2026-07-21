@@ -943,23 +943,30 @@ class SimulationPersistenceRepository:
                     values["run_id"] = target_simulation_run_id
                     session.add(model(**values))
 
-            expected_hash = self._normalized_clone_content_hash(
+            # Flush and verify while this transaction still owns every target write.
+            # A mismatch must abort the transaction rather than leave a committed
+            # namespace whose equivalence could not be proven.
+            session.flush()
+            expected_normalized_source_hash = self._normalized_clone_content_hash(
                 session=session, run_id=source_simulation_run_id,
                 expected_clone_seed=target_seed if target_seed is not None else source_run.seed,
             )
+            target_normalized_clone_hash = self._normalized_clone_content_hash(
+                session=session, run_id=target_simulation_run_id,
+            )
+            if target_normalized_clone_hash != expected_normalized_source_hash:
+                raise LegacyRunCloneError(
+                    "cloned namespace failed normalized durable-content equivalence verification"
+                )
 
         target = self.inspect_legacy_run_clone_inventory(simulation_run_id=target_simulation_run_id)
         counts = tuple(LegacyRunCloneSectionResult(section.name, section.count) for section in preflight.inventory.sections if section.copy_policy == "copy")
-        with self._session_factory() as session:
-            target_hash = self._normalized_clone_content_hash(session=session, run_id=target_simulation_run_id)
-        if target_hash != expected_hash:
-            raise LegacyRunCloneError("cloned namespace failed normalized durable-content equivalence verification")
         return LegacyRunCloneResult(
             source_legacy_simulation_run_id=source_simulation_run_id, target_legacy_simulation_run_id=target_simulation_run_id,
             source_branch_id=preflight.inventory.source_branch_id, source_checkpoint_id=source_checkpoint_id,
             source_checkpoint_kind=preflight.inventory.source_checkpoint_kind, source_inventory_hash=preflight.inventory.inventory_hash,
             target_inventory_hash=target.inventory.inventory_hash, cloned_section_counts=counts,
-            normalized_clone_equivalence_hash=target_hash,
+            normalized_clone_equivalence_hash=target_normalized_clone_hash,
             source_product_run_id=preflight.inventory.source_product_run_id, target_product_run_id=None,
         )
 

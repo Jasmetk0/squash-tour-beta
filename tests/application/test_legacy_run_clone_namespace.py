@@ -121,3 +121,28 @@ def test_clone_namespace_rejects_unsafe_preflight_sources(tmp_path) -> None:
         s.add(RunProspectModel(prospect_id="P", run_id="source", world_id="fax_official", season_start_year=2027, season_label="2027", season_week=1, calendar_year=2027, year_week=1, birth_year=2012, birth_year_week=1, age=15, country_code="EGY", cohort_policy_version="v", profile_version="v", display_name="P", identity_seed="a", profile_seed="b", development_seed="c", potential_seed="d", trait_seed="e"))
     with pytest.raises(UnsafeLegacyRunCloneSourceError, match="run_prospects"):
         service.clone_legacy_simulation_run_namespace(source_simulation_run_id="source", target_simulation_run_id="target")
+
+
+def test_clone_namespace_rolls_back_every_target_row_when_equivalence_fails(tmp_path, monkeypatch) -> None:
+    from beta_engine.infrastructure.db import LegacyRunCloneError
+    from beta_engine.infrastructure.db.models import RunTalentPlanModel
+    repository, service = _service(tmp_path)
+    original = repository._normalized_clone_content_hash
+
+    def mismatched_hash(*, session, run_id, expected_clone_seed=None):
+        value = original(session=session, run_id=run_id, expected_clone_seed=expected_clone_seed)
+        return "mismatch" if run_id == "target" else value
+
+    monkeypatch.setattr(repository, "_normalized_clone_content_hash", mismatched_hash)
+    with pytest.raises(LegacyRunCloneError, match="equivalence"):
+        service.clone_legacy_simulation_run_namespace(source_simulation_run_id="source", target_simulation_run_id="target")
+
+    with repository._session_factory() as session:
+        assert session.get(SimulationRunModel, "target") is None
+        assert session.get(SeasonStateModel, "target") is None
+        assert session.execute(select(RunTalentPlanModel).where(RunTalentPlanModel.run_id == "target")).scalars().all() == []
+        assert session.get(LegacySimulationRunMappingModel, "target") is None
+        assert session.get(RunContainerModel, "target") is None
+        assert session.execute(select(RunBranchModel).where(RunBranchModel.legacy_simulation_run_id == "target")).scalars().all() == []
+        assert session.execute(select(BranchStateModel).where(BranchStateModel.branch_id == "target")).scalars().all() == []
+        assert session.execute(select(BranchCheckpointModel).where(BranchCheckpointModel.checkpoint_id == "target")).scalars().all() == []

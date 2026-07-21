@@ -152,3 +152,32 @@ def test_atomic_fork_rolls_back_on_checkpoint_insert_failure(tmp_path, monkeypat
 
 def test_atomic_fork_rolls_back_on_command_insert_failure(tmp_path, monkeypatch):
     _rollback_case(tmp_path, monkeypatch, "_insert_fork_command_in_session")
+
+
+def _assert_rejected_fork(repository, branch, checkpoint, official):
+    with repository._session_factory() as session:
+        assert session.get(SimulationRunModel, "fork-legacy") is None and session.get(SeasonStateModel, "fork-legacy") is None
+        assert session.get(RunBranchModel, "fork-branch") is None and session.get(BranchStateModel, "fork-branch") is None
+        assert session.execute(select(BranchCheckpointModel).where(BranchCheckpointModel.branch_id == "fork-branch")).scalars().all() == []
+        assert session.get(BranchForkCommandModel, "fork-command") is None and session.get(LegacySimulationRunMappingModel, "fork-legacy") is None
+        assert session.get(RunContainerModel, "source").official_branch_id == official
+        assert session.get(RunBranchModel, branch.branch_id) is not None and session.get(BranchStateModel, branch.branch_id) is not None
+        assert session.get(BranchCheckpointModel, checkpoint.checkpoint_id) is not None
+
+
+@pytest.mark.parametrize("case", ["product-run-missing", "product-run-built-in", "product-run-read-only", "product-run-inactive", "branch-missing", "branch-wrong-run", "branch-read-only", "branch-inactive"])
+def test_atomic_fork_rejects_run_and_basic_branch_invariants(tmp_path, case):
+    repository, service, branch, checkpoint = _setup(tmp_path)
+    official = repository.get_run_container(run_id="source").official_branch_id
+    command = _command(branch.branch_id, checkpoint.checkpoint_id)
+    with repository._session_factory.begin() as session:
+        if case == "product-run-built-in": session.get(RunContainerModel, "source").storage_kind = "built_in"
+        elif case == "product-run-read-only": session.get(RunContainerModel, "source").read_only = 1
+        elif case == "product-run-inactive": session.get(RunContainerModel, "source").status = "inactive"
+        elif case == "branch-wrong-run": session.get(RunBranchModel, branch.branch_id).run_id = "other"
+        elif case == "branch-read-only": session.get(RunBranchModel, branch.branch_id).read_only = 1
+        elif case == "branch-inactive": session.get(RunBranchModel, branch.branch_id).status = "inactive"
+    if case == "product-run-missing": command = _command(branch.branch_id, checkpoint.checkpoint_id, product_run_id="missing")
+    if case == "branch-missing": command = _command("missing", checkpoint.checkpoint_id)
+    with pytest.raises(BranchForkValidationError): service.fork_run_branch_atomically(command)
+    _assert_rejected_fork(repository, branch, checkpoint, official)

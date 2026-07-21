@@ -107,30 +107,36 @@ def test_atomic_fork_accepts_current_capture_and_rejects_read_only_and_missing_s
         service.fork_run_branch_atomically(_command(source_branch.branch_id, capture.checkpoint_id, target_branch_id="other", target_legacy_simulation_run_id="other-legacy", command_id="other"))
 
 
-@pytest.mark.parametrize("failure", ["equivalence", "branch", "state", "checkpoint", "command"])
-def test_atomic_fork_rolls_back_all_target_rows(tmp_path, monkeypatch, failure):
-    repository, service, source_branch, source_checkpoint = _setup(tmp_path)
-    if failure == "equivalence":
+def _rollback_case(tmp_path, monkeypatch, seam, *, equivalence=False):
+    repository, service, branch, checkpoint = _setup(tmp_path); reached = []
+    if equivalence:
         original = repository._normalized_clone_content_hash
-        monkeypatch.setattr(repository, "_normalized_clone_content_hash", lambda **kw: "bad" if kw["run_id"] == "fork-legacy" else original(**kw))
+        def fail(**kwargs):
+            reached.append("equivalence")
+            if kwargs["run_id"] == "fork-legacy": return "mismatch"
+            return original(**kwargs)
     else:
-        original_add = repository._session_factory
-        # Fail specifically at flush after target rows are staged; transaction rollback is the invariant under test.
-        original_flush = None
-        from sqlalchemy.orm import Session
-        original_flush = Session.flush
-        calls = {"n": 0}
-        def fail_flush(self, *args, **kwargs):
-            calls["n"] += 1
-            if calls["n"] == 2: raise RuntimeError(failure)
-            return original_flush(self, *args, **kwargs)
-        monkeypatch.setattr(Session, "flush", fail_flush)
-    with pytest.raises(Exception):
-        service.fork_run_branch_atomically(_command(source_branch.branch_id, source_checkpoint.checkpoint_id))
+        def fail(**kwargs): reached.append(seam); raise RuntimeError(seam)
+    monkeypatch.setattr(repository, seam, fail)
+    with pytest.raises(Exception): service.fork_run_branch_atomically(_command(branch.branch_id, checkpoint.checkpoint_id))
+    assert reached
     with repository._session_factory() as session:
-        assert session.get(SimulationRunModel, "fork-legacy") is None
-        assert session.get(SeasonStateModel, "fork-legacy") is None
-        assert session.get(RunBranchModel, "fork-branch") is None
-        assert session.get(BranchStateModel, "fork-branch") is None
-        assert session.execute(select(BranchCheckpointModel).where(BranchCheckpointModel.branch_id == "fork-branch")).scalars().all() == []
-        assert session.get(BranchForkCommandModel, "fork-command") is None
+        assert session.get(SimulationRunModel, "fork-legacy") is None and session.get(SeasonStateModel, "fork-legacy") is None
+        assert session.get(RunBranchModel, "fork-branch") is None and session.get(BranchStateModel, "fork-branch") is None
+        assert session.get(BranchForkCommandModel, "fork-command") is None and session.get(LegacySimulationRunMappingModel, "fork-legacy") is None
+
+
+def test_atomic_fork_rolls_back_on_equivalence_failure(tmp_path, monkeypatch):
+    _rollback_case(tmp_path, monkeypatch, "_normalized_clone_content_hash", equivalence=True)
+
+def test_atomic_fork_rolls_back_on_run_branch_insert_failure(tmp_path, monkeypatch):
+    _rollback_case(tmp_path, monkeypatch, "_insert_fork_run_branch_in_session")
+
+def test_atomic_fork_rolls_back_on_branch_state_insert_failure(tmp_path, monkeypatch):
+    _rollback_case(tmp_path, monkeypatch, "_insert_fork_branch_state_in_session")
+
+def test_atomic_fork_rolls_back_on_checkpoint_insert_failure(tmp_path, monkeypatch):
+    _rollback_case(tmp_path, monkeypatch, "_insert_fork_checkpoint_in_session")
+
+def test_atomic_fork_rolls_back_on_command_insert_failure(tmp_path, monkeypatch):
+    _rollback_case(tmp_path, monkeypatch, "_insert_fork_command_in_session")

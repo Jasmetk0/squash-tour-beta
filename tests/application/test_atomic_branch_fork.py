@@ -232,3 +232,19 @@ def test_atomic_fork_rejects_state_boundary_invariants(tmp_path, case):
         with repository._session_factory.begin() as session: session.add(CompletedEventModel(run_id="source", event_sequence=1, event_id="E1"))
     with pytest.raises(BranchForkSourceStateMismatchError): service.fork_run_branch_atomically(_command(branch.branch_id, checkpoint.checkpoint_id))
     _assert_rejected_fork(repository, branch, checkpoint, official)
+
+
+@pytest.mark.parametrize("case", ["run-world-vs-legacy-run-mismatch", "run-world-vs-checkpoint-mismatch", "run-config-version-vs-checkpoint-mismatch", "run-config-fingerprint-vs-checkpoint-mismatch", "run-global-seed-vs-checkpoint-mismatch"])
+def test_atomic_fork_rejects_provenance_invariants(tmp_path, case):
+    repository, service, branch, checkpoint = _setup(tmp_path); official = repository.get_run_container(run_id="source").official_branch_id
+    with repository._session_factory.begin() as session:
+        container = session.get(RunContainerModel, "source"); model = session.get(BranchCheckpointModel, checkpoint.checkpoint_id)
+        if case == "run-world-vs-legacy-run-mismatch": session.get(SimulationRunModel, "source").world_id = "other-world"
+        else:
+            if case == "run-world-vs-checkpoint-mismatch": model.world_id = "other-world"
+            elif case == "run-config-version-vs-checkpoint-mismatch": container.config_version, model.config_version = "run-v", "checkpoint-v"
+            elif case == "run-config-fingerprint-vs-checkpoint-mismatch": container.config_fingerprint, model.config_fingerprint = "run-f", "checkpoint-f"
+            else: container.global_seed, model.global_seed = 1, 2
+            model.content_hash = repository.checkpoint_envelope_content_hash(repository._to_branch_checkpoint(model))
+    with pytest.raises(BranchForkSourceStateMismatchError): service.fork_run_branch_atomically(_command(branch.branch_id, checkpoint.checkpoint_id))
+    _assert_rejected_fork(repository, branch, checkpoint, official)

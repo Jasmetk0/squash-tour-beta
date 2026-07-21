@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
-import { createRun, getHealth, getRun, getRunLineage, getRunSource, getRunStatusSummary, listRuns } from '../api/client'
+import { createRun, getHealth, getRun, getRunLineage, getRunSource, getRunStatusSummary, listRuns, listWorldPackages } from '../api/client'
 import { CompactSummaryCard, EmptyState, MetadataList, PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
 import {
   MSA_SEASON_WEEK_COUNT,
@@ -32,6 +32,7 @@ export function DashboardPage(): JSX.Element {
     seed: 42,
     season: MSA_TIMELINE_START_YEAR
   })
+  const [worldId, setWorldId] = useState('official_fax_world')
   const [loadRunId, setLoadRunId] = useState('')
   const [lastRunId, setLastRunId] = useState(() => readLastRunId())
   const [isCreating, setIsCreating] = useState(false)
@@ -65,13 +66,18 @@ export function DashboardPage(): JSX.Element {
     queryFn: listRuns,
     retry: false
   })
+  const worldPackagesQuery = useQuery({
+    queryKey: ['dashboard-world-packages'],
+    queryFn: listWorldPackages,
+    retry: false
+  })
 
   const onCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setCreateError(null)
     setIsCreating(true)
     try {
-      const run = await createRun(createInput)
+      const run = await createRun(worldId === 'official_fax_world' ? createInput : { ...createInput, world_id: worldId })
       writeLastRunId(run.run_id)
       setLastRunId(run.run_id)
       navigate(`/admin/runs/${run.run_id}`)
@@ -299,6 +305,18 @@ export function DashboardPage(): JSX.Element {
               required
             />
           </label>
+          <label>
+            World Package
+            <select value={worldId} onChange={(e) => setWorldId(e.target.value)}>
+              {(worldPackagesQuery.data?.packages ?? []).filter((pkg) => pkg.type === 'official' && pkg.status === 'active').map((pkg) => (
+                <option key={pkg.world_id} value={pkg.world_id}>{pkg.name}</option>
+              ))}
+              {!worldPackagesQuery.data?.packages.some((pkg) => pkg.world_id === 'official_fax_world') ? (
+                <option value="official_fax_world">Official FAX World</option>
+              ) : null}
+            </select>
+          </label>
+          {worldPackagesQuery.isError ? <p className="status">World Package list unavailable; Official FAX World will be used.</p> : null}
           <div className="status" role="note" aria-label="Fixed MSA timeline">
             New root runs start at {MSA_TIMELINE_START_LABEL}. The intended MSA timeline runs through {MSA_TIMELINE_END_LABEL}: {MSA_TIMELINE_SEASON_COUNT} seasons, {MSA_SEASON_WEEK_COUNT} Season Weeks per season. Later seasons continue through rollover/bootstrap child runs.
           </div>

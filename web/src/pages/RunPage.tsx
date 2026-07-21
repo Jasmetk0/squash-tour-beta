@@ -527,6 +527,7 @@ export function RunPage(): JSX.Element {
                 <MetadataList
                   items={[
                     { label: 'Status', value: worldStatusQuery.data.is_stale ? 'Stale' : 'Fresh' },
+                    { label: 'World Package', value: worldStatusQuery.data.world_id },
                     { label: 'Rebuild supported', value: worldStatusQuery.data.rebuild_supported ? 'Yes' : 'No' },
                     { label: 'Source type', value: worldStatusQuery.data.source_type },
                     {

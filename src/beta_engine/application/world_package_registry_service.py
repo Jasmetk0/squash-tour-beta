@@ -11,7 +11,7 @@ from typing import Any
 from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.infrastructure.world_config import load_countries_config
-from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
+from beta_engine.world_packages import BUILT_IN_WORLD_IDS, OFFICIAL_FAX_WORLD_ID
 
 OFFICIAL_FAX_WORLD_NAME = "Official FAX World"
 OFFICIAL_FAX_WORLD_DESCRIPTION = "Built-in official FAX squash world package."
@@ -69,8 +69,12 @@ class WorldPackageRegistryService:
     worlds_root: Path = DEFAULT_WORLDS_ROOT
 
     def list_packages(self) -> list[WorldPackageRegistryRecord]:
-        packages = [self.get_official_package()]
-        seen = {OFFICIAL_FAX_WORLD_ID}
+        packages = [
+            self._build_builtin_package(world_id)
+            for world_id in BUILT_IN_WORLD_IDS
+            if (self.worlds_root / world_id).is_dir()
+        ]
+        seen = {record.world_id for record in packages}
         for package_dir in self._custom_package_dirs():
             record = self._build_custom_package(package_dir)
             if record is None or record.world_id in seen:
@@ -81,21 +85,30 @@ class WorldPackageRegistryService:
 
     def get_package(self, world_id: str) -> WorldPackageRegistryRecord | None:
         normalized = world_id.strip().lower()
-        if normalized == OFFICIAL_FAX_WORLD_ID:
-            return self.get_official_package()
-        for record in self.list_packages()[1:]:
+        if normalized in BUILT_IN_WORLD_IDS:
+            package_dir = self.worlds_root / normalized
+            return self._build_builtin_package(normalized) if package_dir.is_dir() else None
+        for record in self.list_packages():
             if record.world_id == normalized:
                 return record
         return None
 
     def get_official_package(self) -> WorldPackageRegistryRecord:
-        package_dir = self._official_dir()
+        return self._build_builtin_package(OFFICIAL_FAX_WORLD_ID)
+
+    def _build_builtin_package(self, world_id: str) -> WorldPackageRegistryRecord:
+        package_dir = self.worlds_root / world_id
         metadata = self._read_json(package_dir / "world.json")
+        if str(metadata.get("world_id", "")).strip().lower() != world_id:
+            raise ValueError(f"built-in package directory {package_dir} has a mismatched world_id")
+        if metadata.get("type") != "official" or metadata.get("source") != "built_in":
+            raise ValueError(f"built-in package {world_id} must declare official/built_in metadata")
         countries_config = load_countries_config(package_dir / "countries.json")
         continents = self._read_registry_items(package_dir / "continents.json", "continents")
         regions = self._read_registry_items(package_dir / "regions.json", "regions")
         travel_regions = self._read_registry_items(package_dir / "travel_regions.json", "travel_regions")
-        overrides = self.manual_overrides_service.list_overrides()
+        includes_manual_overrides = world_id == OFFICIAL_FAX_WORLD_ID
+        overrides = self.manual_overrides_service.list_overrides() if includes_manual_overrides else []
         return WorldPackageRegistryRecord(
             world_id=str(metadata["world_id"]),
             name=str(metadata["name"]),
@@ -115,7 +128,7 @@ class WorldPackageRegistryService:
             travel_region_count=len(travel_regions),
             used_by_run_count=None,
             validation_status="valid",
-            storage=self._storage_summary(package_dir, include_manual_overrides=True),
+            storage=self._storage_summary(package_dir, include_manual_overrides=includes_manual_overrides),
         )
 
     def official_paths(self) -> dict[str, Path]:
@@ -123,8 +136,9 @@ class WorldPackageRegistryService:
 
     def package_paths(self, world_id: str) -> dict[str, Path] | None:
         normalized = world_id.strip().lower()
-        if normalized == OFFICIAL_FAX_WORLD_ID:
-            return self._paths_for_dir(self._official_dir())
+        if normalized in BUILT_IN_WORLD_IDS:
+            package_dir = self.worlds_root / normalized
+            return self._paths_for_dir(package_dir) if package_dir.is_dir() else None
         for package_dir in self._custom_package_dirs():
             metadata = self._safe_read_json(package_dir / "world.json")
             if isinstance(metadata, dict) and str(metadata.get("world_id", "")).strip().lower() == normalized:
@@ -137,7 +151,7 @@ class WorldPackageRegistryService:
         try:
             metadata = self._read_json(package_dir / "world.json")
             world_id = str(metadata.get("world_id", "")).strip().lower()
-            if world_id != package_dir.name.strip().lower() or world_id == OFFICIAL_FAX_WORLD_ID:
+            if world_id != package_dir.name.strip().lower() or world_id in BUILT_IN_WORLD_IDS:
                 return None
             if metadata.get("type") != "custom" or metadata.get("source") != "custom_config" or metadata.get("status") not in {"active", "archived"}:
                 return None

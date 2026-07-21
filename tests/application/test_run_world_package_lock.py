@@ -6,7 +6,10 @@ import pytest
 from sqlalchemy import text
 
 from beta_engine.application.api_services import SimulationApiService
-from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
+from beta_engine.application.countries_service import CountriesConfigService
+from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
+from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
+from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID, REAL_WORLD_ID
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationRunInfo, create_session_factory, create_sqlite_engine
 from beta_engine.infrastructure.db.repositories import SimulationPersistenceRepository
 
@@ -61,6 +64,27 @@ def test_create_run_accepts_explicit_official_world_id(tmp_path) -> None:
     )
 
     assert summary.world_id == OFFICIAL_FAX_WORLD_ID
+
+
+def test_create_run_accepts_real_world_and_uses_package_countries(tmp_path) -> None:
+    registry = WorldPackageRegistryService(
+        countries_service=CountriesConfigService(),
+        manual_overrides_service=ManualPlayerOverridesService(),
+    )
+    service = SimulationApiService(repository=_repository(tmp_path), world_package_registry_service=registry)
+
+    summary = service.initialize_run(
+        run_id="run-real-world",
+        season=2027,
+        seed=1008,
+        config_version=None,
+        config_fingerprint=None,
+        world_id=REAL_WORLD_ID,
+    )
+
+    allocations = service.repository.list_run_talent_country_allocations(run_id="run-real-world")
+    assert summary.world_id == REAL_WORLD_ID
+    assert len(allocations) > 4
 
 
 def test_create_run_rejects_unknown_world_id(tmp_path) -> None:

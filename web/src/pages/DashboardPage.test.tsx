@@ -31,7 +31,8 @@ const api = vi.hoisted(() => {
     getRunSource: vi.fn(),
     getRunLineage: vi.fn(),
     getRun: vi.fn(),
-    listRuns: vi.fn()
+    listRuns: vi.fn(),
+    listWorldPackages: vi.fn()
   }
 })
 
@@ -42,6 +43,12 @@ describe('DashboardPage', () => {
     localStorage.clear()
     api.getHealth.mockResolvedValue({ status: 'ok' })
     api.createRun.mockResolvedValue({ run_id: 'run-a' })
+    api.listWorldPackages.mockResolvedValue({
+      packages: [
+        { world_id: 'official_fax_world', name: 'Official FAX World', type: 'official', status: 'active' },
+        { world_id: 'real_world', name: 'Real World', type: 'official', status: 'active' }
+      ]
+    })
     api.getRunStatusSummary.mockResolvedValue({
       run_id: 'run-a',
       season: 2027,
@@ -133,6 +140,22 @@ describe('DashboardPage', () => {
     )
     expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run-a')
     expect(navigateMock).toHaveBeenCalledWith('/admin/runs/run-a')
+  })
+
+  it('creates a run with the selected Real World package', async () => {
+    renderWithRoute(<DashboardPage />, '/')
+
+    const createPanel = screen.getByRole('heading', { name: 'Create run' }).closest('form') as HTMLElement
+    await within(createPanel).findByRole('option', { name: 'Real World' })
+    await userEvent.selectOptions(within(createPanel).getByLabelText('World Package'), 'real_world')
+    await userEvent.click(within(createPanel).getByRole('button', { name: 'Create and open run' }))
+
+    await waitFor(() => expect(api.createRun).toHaveBeenCalledWith({
+      run_id: 'mvp-run',
+      seed: 42,
+      season: MSA_TIMELINE_START_YEAR,
+      world_id: 'real_world'
+    }))
   })
 
   it('opens an existing run and navigates using the same route pattern', async () => {

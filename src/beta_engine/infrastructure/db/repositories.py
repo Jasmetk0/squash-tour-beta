@@ -2395,6 +2395,7 @@ class SimulationPersistenceRepository:
         season_gte: int | None = None,
         country_code: str | None = None,
         source_type: str | None = None,
+        world_id: str | None = None,
     ) -> list[PersistedGeneratedPlayerProvenanceRecord]:
         with self._session_factory() as session:
             statement: Select[tuple[RunGeneratedPlayerProvenanceModel]] = select(RunGeneratedPlayerProvenanceModel).where(
@@ -2406,6 +2407,11 @@ class SimulationPersistenceRepository:
                 statement = statement.where(RunGeneratedPlayerProvenanceModel.country_code == country_code.upper())
             if source_type is not None:
                 statement = statement.where(RunGeneratedPlayerProvenanceModel.source_type == source_type)
+            if world_id is not None:
+                statement = statement.join(
+                    SimulationRunModel,
+                    SimulationRunModel.run_id == RunGeneratedPlayerProvenanceModel.run_id,
+                ).where(SimulationRunModel.world_id == world_id)
             statement = statement.order_by(
                 RunGeneratedPlayerProvenanceModel.season.desc(),
                 RunGeneratedPlayerProvenanceModel.country_code.asc(),

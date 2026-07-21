@@ -597,6 +597,7 @@ export type RunStatusSummary = {
 
 export type RunWorldStatus = {
   run_id: string
+  world_id: string
   source_type: 'fresh_seed' | 'rollover_bootstrap'
   stored_world_generation_fingerprint: string | null
   current_world_generation_fingerprint: string

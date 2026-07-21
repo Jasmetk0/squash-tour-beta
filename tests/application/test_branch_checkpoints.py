@@ -10,6 +10,7 @@ from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenc
 from beta_engine.infrastructure.db.models import BranchCheckpointModel, BranchStateModel, RunBranchModel
 from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE,
+    BRANCH_CHECKPOINT_KIND_ADMIN_ACTION_APPLIED,
     BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED,
     BRANCH_CHECKPOINT_KIND_INITIAL,
     BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
@@ -330,3 +331,34 @@ def test_direct_checkpoint_creation_rejects_duplicate_event_and_week_boundaries(
             assert expected in str(exc)
         else:
             raise AssertionError("duplicate checkpoint boundary must be rejected")
+
+
+def test_admin_action_checkpoint_is_capture_only_idempotent_and_moves_heads(tmp_path) -> None:
+    repository = _repository(tmp_path)
+    service = SimulationApiService(repository=repository)
+    service.initialize_run(run_id="admin-action-run", season=2027, seed=7, config_version="v1", config_fingerprint="cfg")
+    with __import__("pytest").raises(ValueError, match="no existing head checkpoint"):
+        repository.capture_admin_action_checkpoint_for_legacy_simulation_run(simulation_run_id="admin-action-run", action_sequence=1)
+    repository.capture_initial_checkpoint_for_legacy_simulation_run(simulation_run_id="admin-action-run")
+    with __import__("pytest").raises(ValueError, match="was not found"):
+        repository.capture_admin_action_checkpoint_for_legacy_simulation_run(simulation_run_id="admin-action-run", action_sequence=1)
+    with __import__("pytest").raises(ValueError, match="required"):
+        repository.capture_admin_action_checkpoint_for_legacy_simulation_run(simulation_run_id="admin-action-run")
+    repository.append_admin_action(run_id="admin-action-run", event_id="event-1", action_kind="assign_wildcards", payload={"assignments": []})
+    before_state = repository.load_season_state(run_id="admin-action-run").model_dump()
+    before_actions = repository.list_admin_actions(run_id="admin-action-run")
+    parent = repository.get_run_branch(branch_id=repository.ensure_default_branch_for_simulation_run(simulation_run_id="admin-action-run").branch_id).head_checkpoint_id
+    checkpoint = repository.capture_admin_action_checkpoint_for_legacy_simulation_run(simulation_run_id="admin-action-run", action_sequence=1)
+    assert checkpoint.kind == BRANCH_CHECKPOINT_KIND_ADMIN_ACTION_APPLIED
+    assert checkpoint.parent_checkpoint_id == parent and checkpoint.sequence == 2
+    assert checkpoint.payload["admin_action"]["locator"] == "legacy_admin_action_sequence"
+    assert checkpoint.payload["admin"]["target_admin_action_hash"] == repository.checkpoint_content_hash(checkpoint.payload["admin_action"]["record"])
+    assert checkpoint.payload["limitations"]["forkable"] is False and checkpoint.payload["limitations"]["replayable"] is False
+    assert repository.verify_branch_checkpoint_hash(checkpoint_id=checkpoint.checkpoint_id)
+    assert repository.capture_admin_action_checkpoint_for_legacy_simulation_run(simulation_run_id="admin-action-run", action_sequence=1, command_id="different") == checkpoint
+    assert repository.load_season_state(run_id="admin-action-run").model_dump() == before_state
+    assert repository.list_admin_actions(run_id="admin-action-run") == before_actions
+    branch = repository.get_run_branch(branch_id=checkpoint.branch_id)
+    branch_state = repository.get_branch_state(branch_id=checkpoint.branch_id)
+    assert branch is not None and branch.head_checkpoint_id == checkpoint.checkpoint_id
+    assert branch_state is not None and branch_state.head_checkpoint_id == checkpoint.checkpoint_id

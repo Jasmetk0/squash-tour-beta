@@ -10,6 +10,7 @@ from beta_engine.api.schemas import (
     CaptureCompletedEventBranchCheckpointRequest,
     CaptureCompletedWeekBranchCheckpointRequest,
     CaptureInitialBranchCheckpointRequest,
+    CaptureAdminActionBranchCheckpointRequest,
 )
 from beta_engine.application.api_services import SimulationApiService
 from beta_engine.infrastructure.db import BranchCheckpointRecord
@@ -110,6 +111,23 @@ def capture_completed_week(
     try:
         record = service.repository.capture_completed_week_checkpoint_for_legacy_simulation_run(
             simulation_run_id=payload.simulation_run_id, week=payload.week, command_id=payload.command_id,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return _response(record)
+
+
+@router.post("/capture-admin-action", response_model=BranchCheckpointResponse)
+def capture_admin_action(
+    payload: CaptureAdminActionBranchCheckpointRequest,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> BranchCheckpointResponse:
+    try:
+        record = service.repository.capture_admin_action_checkpoint_for_legacy_simulation_run(
+            simulation_run_id=payload.simulation_run_id, action_id=payload.action_id,
+            action_sequence=payload.action_sequence, command_id=payload.command_id,
         )
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

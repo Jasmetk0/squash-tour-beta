@@ -70,6 +70,7 @@ import type {
   CaptureCurrentBranchCheckpointRequest,
   CaptureCompletedEventBranchCheckpointRequest,
   CaptureCompletedWeekBranchCheckpointRequest,
+  CaptureAdminActionBranchCheckpointRequest,
   BranchState,
   BranchStateListResponse,
   RunWeeklyIntakeCohortSeasonPreviewParams,
@@ -800,6 +801,7 @@ export function captureInitialBranchCheckpoint(payload: CaptureInitialBranchChec
 export function captureCurrentBranchCheckpoint(payload: CaptureCurrentBranchCheckpointRequest): Promise<BranchCheckpoint> { return request('/branch-checkpoints/capture-current', { method: 'POST', body: JSON.stringify(payload) }) }
 export function captureCompletedEventBranchCheckpoint(payload: CaptureCompletedEventBranchCheckpointRequest): Promise<BranchCheckpoint> { return request('/branch-checkpoints/capture-completed-event', { method: 'POST', body: JSON.stringify(payload) }) }
 export function captureCompletedWeekBranchCheckpoint(payload: CaptureCompletedWeekBranchCheckpointRequest): Promise<BranchCheckpoint> { return request('/branch-checkpoints/capture-completed-week', { method: 'POST', body: JSON.stringify(payload) }) }
+export function captureAdminActionBranchCheckpoint(payload: CaptureAdminActionBranchCheckpointRequest): Promise<BranchCheckpoint> { return request('/branch-checkpoints/capture-admin-action', { method: 'POST', body: JSON.stringify(payload) }) }
 export function listBranchStates(params?: { run_id?: string }): Promise<BranchStateListResponse> {
   const query = new URLSearchParams()
   if (params?.run_id) query.set('run_id', params.run_id)

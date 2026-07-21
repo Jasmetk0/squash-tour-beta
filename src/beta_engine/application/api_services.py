@@ -58,7 +58,12 @@ from beta_engine.domain.players import (
     WeightedRecentGreatnessDampener,
 )
 from beta_engine.domain.tournaments import CalendarEvent
-from beta_engine.infrastructure.db import BranchExecutionTarget, SimulationPersistenceRepository, SimulationRunInfo
+from beta_engine.infrastructure.db import (
+    BranchExecutionTarget,
+    LegacyRunClonePreflightResult,
+    SimulationPersistenceRepository,
+    SimulationRunInfo,
+)
 from beta_engine.infrastructure.db.repositories import (
     PersistedGeneratedPlayerProvenanceRecord,
     PersistedRunTalentCountryAllocationRecord,
@@ -807,6 +812,14 @@ class SimulationApiService:
         to accept legacy simulation run IDs.
         """
         return self.repository.get_branch_execution_target(branch_id=branch_id)
+
+    def inspect_legacy_run_clone_inventory(
+        self, *, simulation_run_id: str, branch_id: str | None = None, checkpoint_id: str | None = None
+    ) -> LegacyRunClonePreflightResult:
+        """Return a read-only R4C0 clone-source preflight inventory."""
+        return self.repository.inspect_legacy_run_clone_inventory(
+            simulation_run_id=simulation_run_id, branch_id=branch_id, checkpoint_id=checkpoint_id
+        )
 
     def get_run_talent_plan_summary(self, *, run_id: str) -> RunTalentPlanSummary:
         self.get_run_summary(run_id=run_id)

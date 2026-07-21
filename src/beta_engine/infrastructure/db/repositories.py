@@ -157,6 +157,49 @@ class BranchExecutionTargetResolutionError(ValueError):
 
 
 @dataclass(frozen=True)
+class LegacyRunCloneInventorySection:
+    """Deterministic, bounded inventory of one legacy-run persistence section."""
+
+    name: str
+    count: int
+    content_hash: str
+    copy_policy: str = "copy"
+
+
+@dataclass(frozen=True)
+class LegacyRunCloneInventory:
+    """Read-only persistence inventory required by a future legacy-run clone."""
+
+    source_legacy_simulation_run_id: str
+    source_product_run_id: str | None
+    source_branch_id: str | None
+    source_checkpoint_id: str | None
+    source_checkpoint_kind: str | None
+    season: int | None
+    week: int | None
+    next_event_index: int | None
+    sections: tuple[LegacyRunCloneInventorySection, ...]
+    inventory_hash: str
+
+
+@dataclass(frozen=True)
+class LegacyRunClonePreflightResult:
+    """Fail-closed readiness result; this does not create, fork, or restore anything."""
+
+    inventory: LegacyRunCloneInventory
+    clone_safe: bool
+    unsupported_reasons: tuple[str, ...]
+
+
+class LegacyRunClonePreflightError(ValueError):
+    """Raised when the source legacy simulation run cannot be inspected."""
+
+
+class UnsupportedCloneSourceError(LegacyRunClonePreflightError):
+    """Raised when an explicit clone source does not exist."""
+
+
+@dataclass(frozen=True)
 class BranchCheckpointRecord:
     checkpoint_id: str; run_id: str; branch_id: str; parent_checkpoint_id: str | None; sequence: int; kind: str
     season: int; week: int | None; event_id: str | None; event_sequence: int | None
@@ -621,6 +664,138 @@ class SimulationPersistenceRepository:
                 branch_seed=branch.branch_seed,
                 head_checkpoint_id=branch.head_checkpoint_id,
             )
+
+    @staticmethod
+    def _clone_inventory_value(value: object) -> object:
+        """Normalize durable values without relying on database row identity."""
+        if isinstance(value, str) and (value.startswith("{") or value.startswith("[")):
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError:
+                pass
+        return value
+
+    @classmethod
+    def _clone_inventory_section(
+        cls, *, name: str, models: list[object], copy_policy: str = "copy"
+    ) -> LegacyRunCloneInventorySection:
+        rows = [
+            {
+                column.name: cls._clone_inventory_value(getattr(model, column.name))
+                for column in model.__table__.columns
+                if column.name != "id"
+            }
+            for model in models
+        ]
+        # Sorting canonicalized rows makes the inventory independent of SQL row order.
+        rows.sort(key=lambda row: _to_json(row))
+        content_hash = hashlib.sha256(_to_json({"name": name, "rows": rows}).encode("utf-8")).hexdigest()
+        return LegacyRunCloneInventorySection(name=name, count=len(rows), content_hash=content_hash, copy_policy=copy_policy)
+
+    def inspect_legacy_run_clone_inventory(
+        self,
+        *,
+        simulation_run_id: str,
+        branch_id: str | None = None,
+        checkpoint_id: str | None = None,
+    ) -> LegacyRunClonePreflightResult:
+        """Inspect, but never copy or mutate, a future legacy-run clone source.
+
+        R4C0 deliberately treats checkpoints as readiness context only. Their
+        existing payload limitations remain authoritative: no checkpoint is
+        restored or claimed to be forkable by this inspection.
+        """
+        with self._session_factory() as session:
+            simulation_run = session.get(SimulationRunModel, simulation_run_id)
+            if simulation_run is None:
+                raise UnsupportedCloneSourceError(f"legacy simulation run {simulation_run_id} was not found")
+
+            mapping = session.get(LegacySimulationRunMappingModel, simulation_run_id)
+            product_run_id = mapping.run_id if mapping is not None else None
+            selected_branch = session.get(RunBranchModel, branch_id) if branch_id else None
+            if selected_branch is None and branch_id is None:
+                selected_branch = session.execute(
+                    select(RunBranchModel).where(RunBranchModel.legacy_simulation_run_id == simulation_run_id).order_by(RunBranchModel.branch_id)
+                ).scalars().first()
+            resolved_branch_id = selected_branch.branch_id if selected_branch is not None else branch_id
+            checkpoint = session.get(BranchCheckpointModel, checkpoint_id) if checkpoint_id else None
+
+            scoped = lambda model: session.execute(select(model).where(model.run_id == simulation_run_id)).scalars().all()
+            sections = [
+                self._clone_inventory_section(name="simulation_run", models=[simulation_run]),
+                self._clone_inventory_section(name="season_state", models=scoped(SeasonStateModel)),
+                self._clone_inventory_section(name="completed_events", models=scoped(CompletedEventModel)),
+                self._clone_inventory_section(name="completed_event_metadata", models=scoped(CompletedEventMetadataModel)),
+                self._clone_inventory_section(name="completed_tournament_inputs", models=scoped(CompletedTournamentInputModel)),
+                self._clone_inventory_section(name="ranking_snapshots", models=scoped(RankingSnapshotModel)),
+                self._clone_inventory_section(name="race_snapshots", models=scoped(RaceSnapshotModel)),
+                self._clone_inventory_section(name="finals_qualification", models=scoped(FinalsQualificationModel)),
+                self._clone_inventory_section(name="finals_results", models=scoped(FinalsResultModel)),
+                self._clone_inventory_section(name="admin_actions", models=scoped(AdminActionModel)),
+                self._clone_inventory_section(name="season_rollovers", models=scoped(SeasonRolloverModel)),
+                self._clone_inventory_section(name="player_season_transitions", models=scoped(PlayerSeasonTransitionModel)),
+                self._clone_inventory_section(name="next_season_players", models=scoped(NextSeasonPlayerModel)),
+                self._clone_inventory_section(name="run_talent_plans", models=scoped(RunTalentPlanModel)),
+                self._clone_inventory_section(name="run_talent_country_allocations", models=scoped(RunTalentCountryAllocationModel)),
+                self._clone_inventory_section(name="run_generated_player_provenance", models=scoped(RunGeneratedPlayerProvenanceModel)),
+                self._clone_inventory_section(name="run_prospects", models=scoped(RunProspectModel), copy_policy="unsupported"),
+            ]
+            if product_run_id is not None:
+                product_scoped = lambda model: session.execute(select(model).where(model.run_id == product_run_id)).scalars().all()
+                sections.extend([
+                    self._clone_inventory_section(name="run_branches", models=product_scoped(RunBranchModel), copy_policy="excluded_metadata"),
+                    self._clone_inventory_section(name="branch_states", models=product_scoped(BranchStateModel), copy_policy="excluded_metadata"),
+                    self._clone_inventory_section(name="branch_checkpoints", models=product_scoped(BranchCheckpointModel), copy_policy="excluded_metadata"),
+                ])
+            else:
+                for name in ("run_branches", "branch_states", "branch_checkpoints"):
+                    sections.append(self._clone_inventory_section(name=name, models=[], copy_policy="excluded_metadata"))
+
+            state = session.get(SeasonStateModel, simulation_run_id)
+            reasons: list[str] = []
+            if state is None:
+                reasons.append("season_state_missing")
+            elif state.active_tournament_json not in (None, "", "null", "{}", "[]"):
+                reasons.append("active_tournament_present")
+            if branch_id is not None:
+                if selected_branch is None:
+                    reasons.append("source_branch_not_found")
+                elif selected_branch.legacy_simulation_run_id != simulation_run_id:
+                    reasons.append("source_branch_legacy_simulation_run_mismatch")
+                elif product_run_id is not None and selected_branch.run_id != product_run_id:
+                    reasons.append("source_branch_product_run_mismatch")
+            if checkpoint_id is not None:
+                if checkpoint is None:
+                    reasons.append("source_checkpoint_not_found")
+                else:
+                    if checkpoint.kind not in {BRANCH_CHECKPOINT_KIND_INITIAL, BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE}:
+                        reasons.append(f"checkpoint_kind_{checkpoint.kind}_is_not_clone_safe_yet")
+                    if product_run_id is None or checkpoint.run_id != product_run_id:
+                        reasons.append("source_checkpoint_product_run_mismatch")
+                    if branch_id is not None and (selected_branch is None or checkpoint.branch_id != selected_branch.branch_id):
+                        reasons.append("source_checkpoint_branch_mismatch")
+            prospects = next(section for section in sections if section.name == "run_prospects")
+            if prospects.count:
+                reasons.append("run_prospects_are_legacy_run_scoped_and_not_clone_safe_yet")
+
+            checkpoint_kind = checkpoint.kind if checkpoint is not None else None
+            inventory_fields = {
+                "source_legacy_simulation_run_id": simulation_run_id,
+                "source_product_run_id": product_run_id,
+                "source_branch_id": resolved_branch_id,
+                "source_checkpoint_id": checkpoint_id,
+                "source_checkpoint_kind": checkpoint_kind,
+                "season": state.season if state else simulation_run.season,
+                "week": checkpoint.week if checkpoint else None,
+                "next_event_index": state.next_event_index if state else None,
+                "sections": tuple(sections),
+            }
+            inventory_hash_payload = {**inventory_fields, "sections": [section.__dict__ for section in sections]}
+            inventory = LegacyRunCloneInventory(
+                **inventory_fields,
+                inventory_hash=hashlib.sha256(_to_json(inventory_hash_payload).encode("utf-8")).hexdigest(),
+            )
+            return LegacyRunClonePreflightResult(inventory=inventory, clone_safe=not reasons, unsupported_reasons=tuple(reasons))
 
     def list_run_branches(self, *, run_id: str | None = None) -> list[RunBranchRecord]:
         with self._session_factory() as session:

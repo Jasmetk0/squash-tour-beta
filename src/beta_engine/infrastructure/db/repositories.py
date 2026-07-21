@@ -199,6 +199,41 @@ class UnsupportedCloneSourceError(LegacyRunClonePreflightError):
     """Raised when an explicit clone source does not exist."""
 
 
+class LegacyRunCloneError(ValueError):
+    """Raised when a legacy namespace clone cannot be completed safely."""
+
+
+class UnsafeLegacyRunCloneSourceError(LegacyRunCloneError):
+    """Raised when clone preflight or checkpoint validation fails closed."""
+
+
+class LegacyRunCloneTargetExistsError(LegacyRunCloneError):
+    """Raised when a target legacy simulation-run namespace already exists."""
+
+
+@dataclass(frozen=True)
+class LegacyRunCloneSectionResult:
+    name: str
+    count: int
+
+
+@dataclass(frozen=True)
+class LegacyRunCloneResult:
+    source_legacy_simulation_run_id: str
+    target_legacy_simulation_run_id: str
+    source_branch_id: str | None
+    source_checkpoint_id: str | None
+    source_checkpoint_kind: str | None
+    source_inventory_hash: str
+    target_inventory_hash: str
+    cloned_section_counts: tuple[LegacyRunCloneSectionResult, ...]
+    normalized_clone_equivalence_hash: str
+    source_product_run_id: str | None
+    target_product_run_id: str | None
+    created_mapping: bool = False
+    created_branch: bool = False
+
+
 @dataclass(frozen=True)
 class BranchCheckpointRecord:
     checkpoint_id: str; run_id: str; branch_id: str; parent_checkpoint_id: str | None; sequence: int; kind: str
@@ -796,6 +831,104 @@ class SimulationPersistenceRepository:
                 inventory_hash=hashlib.sha256(_to_json(inventory_hash_payload).encode("utf-8")).hexdigest(),
             )
             return LegacyRunClonePreflightResult(inventory=inventory, clone_safe=not reasons, unsupported_reasons=tuple(reasons))
+
+    def clone_legacy_simulation_run_namespace(
+        self,
+        *,
+        source_simulation_run_id: str,
+        target_simulation_run_id: str,
+        source_branch_id: str | None = None,
+        source_checkpoint_id: str | None = None,
+        target_seed: int | None = None,
+    ) -> LegacyRunCloneResult:
+        """Transactionally copy a safe legacy-run namespace without product metadata.
+
+        This is deliberately clone infrastructure, not a branch fork or checkpoint
+        restore operation.  The target is an unmapped legacy simulation run.
+        """
+        if not target_simulation_run_id or not target_simulation_run_id.strip():
+            raise LegacyRunCloneError("target legacy simulation run id must not be empty")
+        if target_simulation_run_id == source_simulation_run_id:
+            raise LegacyRunCloneError("target legacy simulation run id must differ from source")
+        preflight = self.inspect_legacy_run_clone_inventory(
+            simulation_run_id=source_simulation_run_id,
+            branch_id=source_branch_id,
+            checkpoint_id=source_checkpoint_id,
+        )
+        if not preflight.clone_safe:
+            raise UnsafeLegacyRunCloneSourceError(
+                "legacy simulation run is not clone safe: " + ", ".join(preflight.unsupported_reasons)
+            )
+
+        copy_models = (
+            CompletedEventModel, CompletedEventMetadataModel, CompletedTournamentInputModel,
+            RankingSnapshotModel, RaceSnapshotModel, FinalsQualificationModel, FinalsResultModel,
+            AdminActionModel, SeasonRolloverModel, PlayerSeasonTransitionModel, NextSeasonPlayerModel,
+            RunTalentPlanModel, RunTalentCountryAllocationModel, RunGeneratedPlayerProvenanceModel,
+        )
+        with self._session_factory.begin() as session:
+            if session.get(SimulationRunModel, target_simulation_run_id) is not None:
+                raise LegacyRunCloneTargetExistsError(
+                    f"target legacy simulation run {target_simulation_run_id} already exists"
+                )
+            source_run = session.get(SimulationRunModel, source_simulation_run_id)
+            source_state = session.get(SeasonStateModel, source_simulation_run_id)
+            if source_run is None or source_state is None:
+                # The source may have changed since the separate read-only preflight.
+                raise UnsafeLegacyRunCloneSourceError("source changed after clone preflight")
+            if source_checkpoint_id is not None:
+                checkpoint = session.get(BranchCheckpointModel, source_checkpoint_id)
+                branch = session.get(RunBranchModel, source_branch_id) if source_branch_id else None
+                if checkpoint is None:
+                    raise UnsafeLegacyRunCloneSourceError("source checkpoint no longer exists")
+                if source_branch_id is not None:
+                    effective_head = (session.get(BranchStateModel, source_branch_id).head_checkpoint_id
+                                      if session.get(BranchStateModel, source_branch_id) is not None
+                                      else branch.head_checkpoint_id if branch is not None else None)
+                    if effective_head != checkpoint.checkpoint_id:
+                        raise UnsafeLegacyRunCloneSourceError("source checkpoint is not the current effective branch head")
+                if checkpoint.kind == BRANCH_CHECKPOINT_KIND_INITIAL:
+                    if source_state.next_event_index != 0 or source_state.active_tournament_json not in (None, "", "null", "{}", "[]") or session.execute(select(CompletedEventModel).where(CompletedEventModel.run_id == source_simulation_run_id)).scalars().first() is not None:
+                        raise UnsafeLegacyRunCloneSourceError("initial checkpoint source is no longer at season start")
+                elif checkpoint.kind == BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE:
+                    payload = _from_json(checkpoint.payload_json)
+                    captured = payload.get("season_state") if isinstance(payload, dict) else None
+                    current = self._to_season_state(source_state).model_dump(mode="json")
+                    if not isinstance(captured, dict) or _to_json(captured) != _to_json(current):
+                        raise UnsafeLegacyRunCloneSourceError("current_state_capture cannot be proven to match current persisted source state")
+
+            run_values = {column.name: getattr(source_run, column.name) for column in SimulationRunModel.__table__.columns}
+            run_values.update({"run_id": target_simulation_run_id, "seed": target_seed if target_seed is not None else source_run.seed,
+                               "parent_run_id": source_simulation_run_id, "source_type": "branch_clone"})
+            session.add(SimulationRunModel(**run_values))
+            state_values = {column.name: getattr(source_state, column.name) for column in SeasonStateModel.__table__.columns}
+            state_values["run_id"] = target_simulation_run_id
+            session.add(SeasonStateModel(**state_values))
+            for model in copy_models:
+                rows = session.execute(select(model).where(model.run_id == source_simulation_run_id).order_by(*model.__table__.primary_key.columns)).scalars().all()
+                for row in rows:
+                    values = {column.name: getattr(row, column.name) for column in model.__table__.columns if column.name != "id"}
+                    values["run_id"] = target_simulation_run_id
+                    session.add(model(**values))
+
+        target = self.inspect_legacy_run_clone_inventory(simulation_run_id=target_simulation_run_id)
+        counts = tuple(LegacyRunCloneSectionResult(section.name, section.count) for section in preflight.inventory.sections if section.copy_policy == "copy")
+        # This hash is namespace-normalized and excludes surrogate IDs.  Clone-only
+        # SimulationRun provenance and an optional seed override intentionally remain.
+        normalized = {
+            "source": source_simulation_run_id,
+            "target": target_simulation_run_id,
+            "source_sections": [(s.name, s.count) for s in preflight.inventory.sections if s.copy_policy == "copy"],
+            "target_sections": [(s.name, s.count) for s in target.inventory.sections if s.copy_policy == "copy"],
+        }
+        return LegacyRunCloneResult(
+            source_legacy_simulation_run_id=source_simulation_run_id, target_legacy_simulation_run_id=target_simulation_run_id,
+            source_branch_id=preflight.inventory.source_branch_id, source_checkpoint_id=source_checkpoint_id,
+            source_checkpoint_kind=preflight.inventory.source_checkpoint_kind, source_inventory_hash=preflight.inventory.inventory_hash,
+            target_inventory_hash=target.inventory.inventory_hash, cloned_section_counts=counts,
+            normalized_clone_equivalence_hash=hashlib.sha256(_to_json(normalized).encode("utf-8")).hexdigest(),
+            source_product_run_id=preflight.inventory.source_product_run_id, target_product_run_id=None,
+        )
 
     def list_run_branches(self, *, run_id: str | None = None) -> list[RunBranchRecord]:
         with self._session_factory() as session:

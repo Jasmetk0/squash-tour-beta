@@ -210,6 +210,12 @@ class CaptureCompletedWeekBranchCheckpointRequest(BaseModel):
     week: int
     command_id: str | None = None
 
+class CaptureAdminActionBranchCheckpointRequest(BaseModel):
+    simulation_run_id: str
+    action_id: str | None = None
+    action_sequence: int | None = None
+    command_id: str | None = None
+
 
 
 class RunProspectResponse(BaseModel):

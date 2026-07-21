@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from test_simulation_api import ApiServer, _request
+from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
 
 
 def test_capture_and_inspect_initial_branch_checkpoint(tmp_path) -> None:
@@ -150,3 +151,23 @@ def test_capture_completed_week_branch_checkpoint_api(tmp_path) -> None:
         assert status == 200 and [item["sequence"] for item in listed["branch_checkpoints"]] == [1, 2]
         status, branch_state = _request("GET", f"{server.base_url}/branch-states/{checkpoint['branch_id']}")
         assert status == 200 and branch_state["head_checkpoint_id"] == checkpoint["checkpoint_id"]
+
+
+def test_capture_admin_action_branch_checkpoint_api(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'checkpoint-admin-api.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "checkpoint-admin", "seed": 12, "season": 2027})
+        assert status == 201
+        status, rejected = _request("POST", f"{server.base_url}/branch-checkpoints/capture-admin-action", {"simulation_run_id": "checkpoint-admin", "action_sequence": 1})
+        assert status == 400 and "no existing head checkpoint" in rejected["detail"]
+        status, initial = _request("POST", f"{server.base_url}/branch-checkpoints/capture-initial", {"simulation_run_id": "checkpoint-admin"})
+        assert status == 200
+        engine = create_sqlite_engine(DatabaseSettings(url=database_url))
+        repository = SimulationPersistenceRepository(engine=engine, session_factory=create_session_factory(engine))
+        repository.append_admin_action(run_id="checkpoint-admin", event_id="legacy-event", action_kind="assign_wildcards", payload={"assignments": []})
+        status, checkpoint = _request("POST", f"{server.base_url}/branch-checkpoints/capture-admin-action", {"simulation_run_id": "checkpoint-admin", "action_sequence": 1})
+        assert status == 200 and checkpoint["kind"] == "admin_action_applied" and checkpoint["parent_checkpoint_id"] == initial["checkpoint_id"]
+        status, repeated = _request("POST", f"{server.base_url}/branch-checkpoints/capture-admin-action", {"simulation_run_id": "checkpoint-admin", "action_sequence": 1, "command_id": "different"})
+        assert status == 200 and repeated["checkpoint_id"] == checkpoint["checkpoint_id"]
+        status, state = _request("GET", f"{server.base_url}/branch-states/{checkpoint['branch_id']}")
+        assert status == 200 and state["head_checkpoint_id"] == checkpoint["checkpoint_id"]

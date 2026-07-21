@@ -85,6 +85,39 @@ def test_capture_current_branch_checkpoint_requires_head_then_is_idempotent(tmp_
         assert status == 200 and branch_state["head_checkpoint_id"] == default["checkpoint_id"]
 
 
+def test_capture_bootstrap_start_checkpoint_is_target_scoped_and_idempotent(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'checkpoint-bootstrap-api.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "bootstrap-parent", "seed": 12, "season": 2027})
+        assert status == 201
+        status, rejected = _request("POST", f"{server.base_url}/branch-checkpoints/capture-bootstrap-start", {"simulation_run_id": "bootstrap-parent"})
+        assert status == 400 and "provenance" in rejected["detail"]
+        status, _ = _request("POST", f"{server.base_url}/runs/bootstrap-parent/simulate/full-season")
+        assert status == 200
+        status, _ = _request("POST", f"{server.base_url}/runs/bootstrap-parent/rollover/next-season")
+        assert status == 200
+        status, _ = _request("POST", f"{server.base_url}/runs/bootstrap-parent/bootstrap-next-season", {"child_run_id": "bootstrap-child"})
+        assert status == 200
+        status, rejected = _request("POST", f"{server.base_url}/branch-checkpoints/capture-bootstrap-start", {"simulation_run_id": "bootstrap-child"})
+        assert status == 400 and "no existing head checkpoint" in rejected["detail"]
+        status, initial = _request("POST", f"{server.base_url}/branch-checkpoints/capture-initial", {"simulation_run_id": "bootstrap-child"})
+        assert status == 200
+        status, checkpoint = _request("POST", f"{server.base_url}/branch-checkpoints/capture-bootstrap-start", {"simulation_run_id": "bootstrap-child", "source_run_id": "bootstrap-parent", "from_season": 2027, "to_season": 2028})
+        assert status == 200 and checkpoint["kind"] == "bootstrap_start"
+        assert checkpoint["parent_checkpoint_id"] == initial["checkpoint_id"]
+        assert checkpoint["sequence"] == initial["sequence"] + 1
+        assert checkpoint["payload"]["limitations"]["forkable"] is False
+        assert checkpoint["payload"]["limitations"]["replayable"] is False
+        assert checkpoint["payload"]["bootstrap"]["source_run_id"] == "bootstrap-parent"
+        assert checkpoint["payload"]["bootstrap_artifacts"]["bootstrap_artifacts_hash"]
+        status, repeated = _request("POST", f"{server.base_url}/branch-checkpoints/capture-bootstrap-start", {"simulation_run_id": "bootstrap-child", "source_run_id": "bootstrap-parent", "from_season": 2027, "to_season": 2028, "command_id": "different-command"})
+        assert status == 200 and repeated["checkpoint_id"] == checkpoint["checkpoint_id"]
+        status, mismatch = _request("POST", f"{server.base_url}/branch-checkpoints/capture-bootstrap-start", {"simulation_run_id": "bootstrap-child", "from_season": 2000})
+        assert status == 400 and "from_season" in mismatch["detail"]
+        status, state = _request("GET", f"{server.base_url}/branch-states/{checkpoint['branch_id']}")
+        assert status == 200 and state["head_checkpoint_id"] == checkpoint["checkpoint_id"]
+
+
 def test_capture_completed_event_branch_checkpoint_api(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'checkpoint-event-api.db'}"
     with ApiServer(database_url=database_url) as server:

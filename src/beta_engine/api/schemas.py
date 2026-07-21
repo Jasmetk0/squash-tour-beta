@@ -201,6 +201,14 @@ class CaptureSeasonRolloverBranchCheckpointRequest(BaseModel):
     command_id: str | None = None
 
 
+class CaptureBootstrapStartBranchCheckpointRequest(BaseModel):
+    simulation_run_id: str
+    source_run_id: str | None = None
+    from_season: int | None = None
+    to_season: int | None = None
+    command_id: str | None = None
+
+
 class CaptureCurrentBranchCheckpointRequest(BaseModel):
     simulation_run_id: str
     command_id: str | None = None

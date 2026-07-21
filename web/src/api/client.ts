@@ -69,6 +69,7 @@ import type {
   CaptureInitialBranchCheckpointRequest,
   CaptureCurrentBranchCheckpointRequest,
   CaptureSeasonRolloverBranchCheckpointRequest,
+  CaptureBootstrapStartBranchCheckpointRequest,
   CaptureCompletedEventBranchCheckpointRequest,
   CaptureCompletedWeekBranchCheckpointRequest,
   CaptureAdminActionBranchCheckpointRequest,
@@ -800,6 +801,7 @@ export function listBranchCheckpoints(params?: { branch_id?: string; run_id?: st
 export function getBranchCheckpoint(checkpointId: string): Promise<BranchCheckpoint> { return request(`/branch-checkpoints/${encodeURIComponent(checkpointId)}`) }
 export function captureInitialBranchCheckpoint(payload: CaptureInitialBranchCheckpointRequest): Promise<BranchCheckpoint> { return request('/branch-checkpoints/capture-initial', { method: 'POST', body: JSON.stringify(payload) }) }
 export function captureSeasonRolloverBranchCheckpoint(payload: CaptureSeasonRolloverBranchCheckpointRequest): Promise<BranchCheckpoint> { return request('/branch-checkpoints/capture-season-rollover', { method: 'POST', body: JSON.stringify(payload) }) }
+export function captureBootstrapStartBranchCheckpoint(payload: CaptureBootstrapStartBranchCheckpointRequest): Promise<BranchCheckpoint> { return request('/branch-checkpoints/capture-bootstrap-start', { method: 'POST', body: JSON.stringify(payload) }) }
 export function captureCurrentBranchCheckpoint(payload: CaptureCurrentBranchCheckpointRequest): Promise<BranchCheckpoint> { return request('/branch-checkpoints/capture-current', { method: 'POST', body: JSON.stringify(payload) }) }
 export function captureCompletedEventBranchCheckpoint(payload: CaptureCompletedEventBranchCheckpointRequest): Promise<BranchCheckpoint> { return request('/branch-checkpoints/capture-completed-event', { method: 'POST', body: JSON.stringify(payload) }) }
 export function captureCompletedWeekBranchCheckpoint(payload: CaptureCompletedWeekBranchCheckpointRequest): Promise<BranchCheckpoint> { return request('/branch-checkpoints/capture-completed-week', { method: 'POST', body: JSON.stringify(payload) }) }

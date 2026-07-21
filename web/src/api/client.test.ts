@@ -25,6 +25,7 @@ import {
   captureInitialBranchCheckpoint,
   captureCurrentBranchCheckpoint,
   captureSeasonRolloverBranchCheckpoint,
+  captureBootstrapStartBranchCheckpoint,
   captureCompletedEventBranchCheckpoint,
   captureCompletedWeekBranchCheckpoint,
   captureAdminActionBranchCheckpoint,
@@ -904,6 +905,7 @@ describe('world package registry client', () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ checkpoint_id: 'cp/a #4' }), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ checkpoint_id: 'cp/a #5' }), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ checkpoint_id: 'cp/a #6' }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ checkpoint_id: 'cp/a #7' }), { status: 200 }))
     await listBranchCheckpoints({ branch_id: 'branch/a #1' })
     await getBranchCheckpoint('cp/a #1')
     await captureInitialBranchCheckpoint({ simulation_run_id: 'save/a #1', command_id: 'initial' })
@@ -912,6 +914,7 @@ describe('world package registry client', () => {
     await captureCompletedWeekBranchCheckpoint({ simulation_run_id: 'save/a #1', week: 12, command_id: 'week' })
     await captureAdminActionBranchCheckpoint({ simulation_run_id: 'save/a #1', action_sequence: 1, command_id: 'admin' })
     await captureSeasonRolloverBranchCheckpoint({ simulation_run_id: 'save/a #1', from_season: 2027, to_season: 2028, command_id: 'rollover' })
+    await captureBootstrapStartBranchCheckpoint({ simulation_run_id: 'save/a #1', source_run_id: 'source/a #1', from_season: 2027, to_season: 2028, command_id: 'bootstrap' })
     expect(globalThis.fetch).toHaveBeenNthCalledWith(1, 'http://127.0.0.1:8000/branch-checkpoints?branch_id=branch%2Fa+%231', expect.anything())
     expect(globalThis.fetch).toHaveBeenNthCalledWith(2, 'http://127.0.0.1:8000/branch-checkpoints/cp%2Fa%20%231', expect.anything())
     expect(globalThis.fetch).toHaveBeenNthCalledWith(3, 'http://127.0.0.1:8000/branch-checkpoints/capture-initial', expect.objectContaining({ method: 'POST', body: JSON.stringify({ simulation_run_id: 'save/a #1', command_id: 'initial' }) }))
@@ -920,6 +923,7 @@ describe('world package registry client', () => {
     expect(globalThis.fetch).toHaveBeenNthCalledWith(6, 'http://127.0.0.1:8000/branch-checkpoints/capture-completed-week', expect.objectContaining({ method: 'POST', body: JSON.stringify({ simulation_run_id: 'save/a #1', week: 12, command_id: 'week' }) }))
     expect(globalThis.fetch).toHaveBeenNthCalledWith(7, 'http://127.0.0.1:8000/branch-checkpoints/capture-admin-action', expect.objectContaining({ method: 'POST', body: JSON.stringify({ simulation_run_id: 'save/a #1', action_sequence: 1, command_id: 'admin' }) }))
     expect(globalThis.fetch).toHaveBeenNthCalledWith(8, 'http://127.0.0.1:8000/branch-checkpoints/capture-season-rollover', expect.objectContaining({ method: 'POST', body: JSON.stringify({ simulation_run_id: 'save/a #1', from_season: 2027, to_season: 2028, command_id: 'rollover' }) }))
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(9, 'http://127.0.0.1:8000/branch-checkpoints/capture-bootstrap-start', expect.objectContaining({ method: 'POST', body: JSON.stringify({ simulation_run_id: 'save/a #1', source_run_id: 'source/a #1', from_season: 2027, to_season: 2028, command_id: 'bootstrap' }) }))
   })
 
   it('lists BranchState metadata and encodes branch state detail ids', async () => {

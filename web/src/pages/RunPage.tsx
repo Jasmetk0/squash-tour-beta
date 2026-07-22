@@ -265,6 +265,10 @@ export function RunPage(): JSX.Element {
             <MetadataList
               items={[
                 {
+                  label: 'Branch management',
+                  value: <Link to={`/admin/runs/${runId}/branches`}>Manage Branches</Link>
+                },
+                {
                   label: 'Latest completed event',
                   value: latestCompletedEvent ? (
                     <Link to={`/runs/${runId}/events/${encodeURIComponent(latestCompletedEvent.event_id)}`}>

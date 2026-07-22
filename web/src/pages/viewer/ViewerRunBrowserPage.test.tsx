@@ -5,7 +5,10 @@ import { clearViewerStorage, expectNoForbiddenViewerActions, renderWithViewerPro
 import { ViewerRunBrowserPage } from './ViewerRunBrowserPage'
 
 const api = vi.hoisted(() => ({
-  listRuns: vi.fn()
+  listRuns: vi.fn(),
+  listRunContainers: vi.fn(),
+  getViewerOfficialRunContext: vi.fn(),
+  ApiError: class ApiError extends Error { status = 500 }
 }))
 
 vi.mock('../../api/client', () => api)
@@ -38,6 +41,7 @@ describe('ViewerRunBrowserPage', () => {
     clearViewerStorage()
     vi.clearAllMocks()
     api.listRuns.mockResolvedValue({ runs: [] })
+    api.listRunContainers.mockResolvedValue({ run_containers: [] })
   })
 
   it('shows no active run when no active Viewer run is selected', async () => {

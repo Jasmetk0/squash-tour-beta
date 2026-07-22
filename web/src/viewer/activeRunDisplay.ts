@@ -1,4 +1,4 @@
-import type { RunSummary } from '../api/types'
+import type { RunContainer, RunSummary } from '../api/types'
 import {
   viewerCountriesPath,
   viewerFinalsPath,
@@ -47,4 +47,10 @@ export function buildViewerActiveRunQuickLinks(runId: string): ViewerActiveRunQu
     { label: 'Open history', to: viewerHistoryPath(runId) },
     { label: 'Open finals', to: viewerFinalsPath(runId) }
   ]
+}
+
+export function formatViewerProductRunOptionLabel(run: RunContainer, compact = false): string {
+  const name = formatSafeRunOptionValue(run.display_name) === '—' ? run.run_id : formatSafeRunOptionValue(run.display_name)
+  const suffix = `${formatSafeRunOptionValue(run.run_id)} · ${formatSafeRunOptionValue(run.status)} · ${formatSafeRunOptionValue(run.storage_kind)}${run.read_only === true ? ' · read-only' : ''}`
+  return compact ? `${name} · ${suffix}` : `${name} — Product Run ${suffix}`
 }

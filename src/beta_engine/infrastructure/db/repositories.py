@@ -1222,6 +1222,10 @@ class SimulationPersistenceRepository:
             previous = container.official_branch_id
             container.official_branch_id = command.target_branch_id
             session.add(OfficialBranchSelectionCommandModel(command_id=command.command_id, product_run_id=command.product_run_id, request_fingerprint=fingerprint, expected_previous_official_branch_id=command.expected_current_official_branch_id, target_branch_id=command.target_branch_id, result_previous_official_branch_id=previous, result_official_branch_id=command.target_branch_id, audit_reason=command.audit_reason))
+            try:
+                session.flush()
+            except IntegrityError as exc:
+                raise OfficialBranchSelectionConflictError("official Branch selection conflicts with existing durable state") from exc
             return SetOfficialRunBranchResult(command.product_run_id, previous, command.target_branch_id, command.target_branch_id, previous != command.target_branch_id, False, fingerprint)
 
 

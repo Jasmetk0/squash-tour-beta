@@ -157,6 +157,36 @@ class BranchExecutionTarget:
     head_checkpoint_id: str | None
 
 
+class ViewerOfficialRunContextNotFoundError(ValueError):
+    """Raised when a requested Product Run does not exist."""
+
+
+class ViewerOfficialRunContextConflictError(ValueError):
+    """Raised when a Product Run cannot yield a coherent official Viewer context."""
+
+
+@dataclass(frozen=True)
+class ViewerOfficialRunContext:
+    product_run_id: str
+    product_run_display_name: str
+    product_run_status: str
+    product_run_storage_kind: str
+    product_run_read_only: bool
+    official_branch_id: str
+    official_branch_display_name: str
+    official_branch_status: str
+    official_branch_read_only: bool
+    official_branch_seed: int | None
+    legacy_simulation_run_id: str
+    head_checkpoint_id: str
+    head_checkpoint_kind: str
+    current_season: int | None
+    current_week: int | None
+    current_event_id: str | None
+    current_event_sequence: int | None
+    resolution_version: str = "viewer_official_branch_v1"
+
+
 class BranchExecutionTargetResolutionError(ValueError):
     """Raised when a Branch cannot safely target legacy simulation execution."""
 
@@ -724,6 +754,44 @@ class SimulationPersistenceRepository:
                 return None
             container = session.get(RunContainerModel, model.run_id)
             return self._to_run_branch(model, official_branch_id=container.official_branch_id if container else None)
+
+    def get_viewer_official_run_context(self, *, product_run_id: str) -> ViewerOfficialRunContext:
+        """Resolve the current official Branch and legacy Viewer namespace without mutation."""
+        with self._session_factory() as session:
+            container = session.get(RunContainerModel, product_run_id)
+            if container is None:
+                raise ViewerOfficialRunContextNotFoundError(f"product run {product_run_id} was not found")
+            official_branch_id = (container.official_branch_id or "").strip()
+            if not official_branch_id:
+                raise ViewerOfficialRunContextConflictError("product run has no official branch")
+            branch = session.get(RunBranchModel, official_branch_id)
+            if branch is None or branch.run_id != product_run_id:
+                raise ViewerOfficialRunContextConflictError("official branch is missing or belongs to another product run")
+            legacy_simulation_run_id = (branch.legacy_simulation_run_id or "").strip()
+            if not legacy_simulation_run_id or session.get(SimulationRunModel, legacy_simulation_run_id) is None:
+                raise ViewerOfficialRunContextConflictError("official branch has no valid legacy simulation run binding")
+            state = session.get(BranchStateModel, official_branch_id)
+            if state is None or state.run_id != product_run_id:
+                raise ViewerOfficialRunContextConflictError("official branch state is missing or belongs to another product run")
+            if branch.head_checkpoint_id != state.head_checkpoint_id:
+                raise ViewerOfficialRunContextConflictError("official branch and branch state heads disagree")
+            head_checkpoint_id = (state.head_checkpoint_id or "").strip()
+            if not head_checkpoint_id:
+                raise ViewerOfficialRunContextConflictError("official branch has no effective head checkpoint")
+            checkpoint = session.get(BranchCheckpointModel, head_checkpoint_id)
+            if checkpoint is None or checkpoint.branch_id != official_branch_id or checkpoint.run_id != product_run_id:
+                raise ViewerOfficialRunContextConflictError("effective head checkpoint is missing or incoherent")
+            return ViewerOfficialRunContext(
+                product_run_id=container.run_id, product_run_display_name=container.display_name or container.run_id,
+                product_run_status=container.status, product_run_storage_kind=container.storage_kind,
+                product_run_read_only=bool(container.read_only), official_branch_id=branch.branch_id,
+                official_branch_display_name=branch.display_name, official_branch_status=branch.status,
+                official_branch_read_only=bool(branch.read_only), official_branch_seed=branch.branch_seed,
+                legacy_simulation_run_id=legacy_simulation_run_id, head_checkpoint_id=checkpoint.checkpoint_id,
+                head_checkpoint_kind=checkpoint.kind, current_season=state.current_season,
+                current_week=state.current_week, current_event_id=state.current_event_id,
+                current_event_sequence=state.current_event_sequence,
+            )
 
     def get_branch_execution_target(self, *, branch_id: str) -> BranchExecutionTarget:
         """Resolve a Branch to its existing legacy simulation execution namespace.

@@ -18,6 +18,7 @@ import {
   materializeRunProspects,
   listRunContainers,
   getRunContainer,
+  getViewerOfficialRunContext,
   listRunBranches,
   getRunBranch,
   listBranchCheckpoints,
@@ -952,6 +953,17 @@ describe('world package registry client', () => {
     expect(globalThis.fetch).toHaveBeenNthCalledWith(
       2, 'http://127.0.0.1:8000/run-containers/save%2Fa%20%231', expect.anything()
     )
+  })
+
+
+  it('gets Viewer official context with an encoded Product Run ID and no request body', async () => {
+    const context = { product_run_id: 'save/a #1', product_run_display_name: 'Save', product_run_status: 'active', product_run_storage_kind: 'custom_local', product_run_read_only: false, official_branch_id: 'branch-1', official_branch_display_name: 'Official', official_branch_status: 'active', official_branch_read_only: true, official_branch_seed: 7, legacy_simulation_run_id: 'legacy-1', head_checkpoint_id: 'checkpoint-1', head_checkpoint_kind: 'initial', current_season: 2000, current_week: 1, current_event_id: null, current_event_sequence: null, resolution_version: 'viewer_official_branch_v1' }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(context), { status: 200 }))
+    await expect(getViewerOfficialRunContext('save/a #1')).resolves.toEqual(context)
+    expect(globalThis.fetch).toHaveBeenCalledWith('http://127.0.0.1:8000/viewer/runs/save%2Fa%20%231/official-context', expect.anything())
+    const init = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1]
+    expect(init.method).toBeUndefined()
+    expect(init.body).toBeUndefined()
   })
 
   it('posts Make official with encoded URL parameters and only the request contract body', async () => {

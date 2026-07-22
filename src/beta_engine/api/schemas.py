@@ -1558,3 +1558,23 @@ class InitialPoolRegenerateRequest(BaseModel):
     @classmethod
     def normalize_country_code(cls, value: str | None) -> str | None:
         return value.upper() if value else value
+
+class ViewerOfficialRunContextResponse(BaseModel):
+    product_run_id: str
+    product_run_display_name: str
+    product_run_status: str
+    product_run_storage_kind: str
+    product_run_read_only: bool
+    official_branch_id: str
+    official_branch_display_name: str
+    official_branch_status: str
+    official_branch_read_only: bool
+    official_branch_seed: int | None = None
+    legacy_simulation_run_id: str
+    head_checkpoint_id: str
+    head_checkpoint_kind: str
+    current_season: int | None = None
+    current_week: int | None = None
+    current_event_id: str | None = None
+    current_event_sequence: int | None = None
+    resolution_version: str

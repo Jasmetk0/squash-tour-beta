@@ -20,6 +20,7 @@ from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
 from beta_engine.infrastructure.db.models import (
     AdminActionModel,
     BranchForkCommandModel,
+    OfficialBranchSelectionCommandModel,
     BranchCheckpointModel,
     BranchStateModel,
     Base,
@@ -273,6 +274,38 @@ class ForkRunBranchResult:
     request_fingerprint: str; idempotent_replay: bool
     created_mapping: bool = False
     official_branch_changed: bool = False
+
+
+class OfficialBranchSelectionError(ValueError):
+    """Raised when an official Branch selection cannot complete."""
+
+
+class OfficialBranchSelectionValidationError(OfficialBranchSelectionError):
+    """Raised when the request or selected state violates an invariant."""
+
+
+class OfficialBranchSelectionConflictError(OfficialBranchSelectionError):
+    """Raised when optimistic concurrency fails."""
+
+
+class OfficialBranchSelectionIdempotencyConflictError(OfficialBranchSelectionConflictError):
+    """Raised when a command id is reused with different content."""
+
+
+class OfficialBranchSelectionStateMismatchError(OfficialBranchSelectionConflictError):
+    """Raised when an otherwise valid replay no longer matches current state."""
+
+
+@dataclass(frozen=True)
+class SetOfficialRunBranchCommand:
+    product_run_id: str; target_branch_id: str; expected_current_official_branch_id: str | None
+    command_id: str; audit_reason: str; explicit_confirmation: bool
+
+
+@dataclass(frozen=True)
+class SetOfficialRunBranchResult:
+    product_run_id: str; previous_official_branch_id: str | None; official_branch_id: str | None
+    target_branch_id: str; changed: bool; idempotent_replay: bool; request_fingerprint: str
 
 
 @dataclass(frozen=True)
@@ -1143,6 +1176,54 @@ class SimulationPersistenceRepository:
             try: session.flush()
             except IntegrityError as exc: raise BranchForkTargetExistsError("fork target conflicts with existing durable state") from exc
             return ForkRunBranchResult(command.product_run_id, command.source_branch_id, command.source_checkpoint_id, command.target_branch_id, command.target_legacy_simulation_run_id, checkpoint_id, command.target_branch_seed, source_inventory_hash, equivalence_hash, fingerprint, False)
+
+
+    def set_official_run_branch_atomically(self, command: SetOfficialRunBranchCommand) -> SetOfficialRunBranchResult:
+        """Atomically validate and publish an existing Branch as a Run's official Branch."""
+        if (not all(isinstance(value, str) and value.strip() for value in (command.product_run_id, command.target_branch_id, command.command_id, command.audit_reason))
+                or command.expected_current_official_branch_id is not None and (not isinstance(command.expected_current_official_branch_id, str) or not command.expected_current_official_branch_id.strip())
+                or command.explicit_confirmation is not True):
+            raise OfficialBranchSelectionValidationError("official Branch selection requires non-empty fields and explicit confirmation")
+        canonical = {key: (value.strip() if isinstance(value, str) else value) for key, value in command.__dict__.items()}
+        command = SetOfficialRunBranchCommand(**canonical)
+        fingerprint = hashlib.sha256(self.canonical_json(canonical).encode("utf-8")).hexdigest()
+        with self._session_factory.begin() as session:
+            existing = session.get(OfficialBranchSelectionCommandModel, command.command_id)
+            if existing is not None:
+                if existing.request_fingerprint != fingerprint:
+                    raise OfficialBranchSelectionIdempotencyConflictError("command_id already exists with different official Branch selection request")
+                container = session.get(RunContainerModel, command.product_run_id)
+                if container is None or container.official_branch_id != existing.result_official_branch_id:
+                    raise OfficialBranchSelectionStateMismatchError("official Branch changed since recorded command result")
+                return SetOfficialRunBranchResult(command.product_run_id, existing.result_previous_official_branch_id, existing.result_official_branch_id, existing.target_branch_id, existing.result_previous_official_branch_id != existing.result_official_branch_id, True, fingerprint)
+            container = session.get(RunContainerModel, command.product_run_id)
+            if container is None:
+                raise KeyError(f"product_run_id {command.product_run_id} was not found")
+            if container.storage_kind == "built_in" or container.read_only or container.status != "active":
+                raise OfficialBranchSelectionValidationError("product run is not editable and active")
+            if container.official_branch_id != command.expected_current_official_branch_id:
+                raise OfficialBranchSelectionConflictError("current official Branch does not match expected official Branch")
+            branch = session.get(RunBranchModel, command.target_branch_id)
+            if branch is None:
+                raise KeyError(f"target_branch_id {command.target_branch_id} was not found")
+            if branch.run_id != command.product_run_id or branch.status != "active" or not (branch.legacy_simulation_run_id or "").strip():
+                raise OfficialBranchSelectionValidationError("target Branch is not active in product run with a legacy binding")
+            if session.get(SimulationRunModel, branch.legacy_simulation_run_id) is None:
+                raise OfficialBranchSelectionValidationError("target Branch legacy SimulationRun was not found")
+            state = session.get(BranchStateModel, command.target_branch_id)
+            if state is None or state.run_id != command.product_run_id:
+                raise OfficialBranchSelectionValidationError("target BranchState is missing or belongs to another product run")
+            if branch.head_checkpoint_id != state.head_checkpoint_id:
+                raise OfficialBranchSelectionValidationError("target Branch and BranchState heads disagree")
+            head = branch.head_checkpoint_id
+            checkpoint = session.get(BranchCheckpointModel, head) if head else None
+            if checkpoint is None or checkpoint.branch_id != command.target_branch_id or checkpoint.run_id != command.product_run_id:
+                raise OfficialBranchSelectionValidationError("target effective head checkpoint is missing or incoherent")
+            previous = container.official_branch_id
+            container.official_branch_id = command.target_branch_id
+            session.add(OfficialBranchSelectionCommandModel(command_id=command.command_id, product_run_id=command.product_run_id, request_fingerprint=fingerprint, expected_previous_official_branch_id=command.expected_current_official_branch_id, target_branch_id=command.target_branch_id, result_previous_official_branch_id=previous, result_official_branch_id=command.target_branch_id, audit_reason=command.audit_reason))
+            return SetOfficialRunBranchResult(command.product_run_id, previous, command.target_branch_id, command.target_branch_id, previous != command.target_branch_id, False, fingerprint)
+
 
     def list_run_branches(self, *, run_id: str | None = None) -> list[RunBranchRecord]:
         with self._session_factory() as session:

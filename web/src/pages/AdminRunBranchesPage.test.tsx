@@ -4,9 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AdminRunBranchesPage } from './AdminRunBranchesPage'
 import { renderWithRoute } from '../test/testUtils'
 
-const api = vi.hoisted(() => { class ApiError extends Error { constructor(message: string, public status: number) { super(message) } }; return { ApiError, getRunContainer: vi.fn(), listRunBranches: vi.fn(), listBranchStates: vi.fn(), listBranchCheckpoints: vi.fn(), forkRunBranch: vi.fn() } })
+const api = vi.hoisted(() => { class ApiError extends Error { constructor(message: string, public status: number) { super(message) } }; return { ApiError, getRunContainer: vi.fn(), listRunBranches: vi.fn(), listBranchStates: vi.fn(), listBranchCheckpoints: vi.fn(), forkRunBranch: vi.fn(), makeOfficialRunBranch: vi.fn() } })
 vi.mock('../api/client', () => api)
-const run = { run_id: 'run-a', display_name: 'Admin Run', status: 'active' }
+const run = { run_id: 'run-a', display_name: 'Admin Run', status: 'active', read_only: false, storage_kind: 'custom_local', official_branch_id: 'official' }
 const official = { branch_id: 'official', run_id: 'run-a', display_name: 'Official Branch', status: 'active', read_only: false, branch_seed: 17, legacy_simulation_run_id: 'legacy-official', forked_from_branch_id: null, forked_from_checkpoint_id: null, head_checkpoint_id: 'cp-initial', is_official: true }
 const readonly = { ...official, branch_id: 'readonly', display_name: 'Read only Branch', read_only: true, head_checkpoint_id: 'cp-readonly', is_official: false }
 const state = (branchId = 'official', head = 'cp-initial') => ({ branch_id: branchId, run_id: 'run-a', head_checkpoint_id: head, current_season: 2030, current_week: 12, current_event_id: 'EVENT-12', current_event_sequence: 4 })
@@ -16,12 +16,68 @@ function setup({ branches = [official, readonly], states = [state(), state('read
 async function fillValidForm(confirm = true) { const user = userEvent.setup(); await user.type(screen.getByLabelText('target_branch_display_name'), ' Fork Name '); await user.type(screen.getByLabelText('target_branch_id'), ' fork-a '); await user.type(screen.getByLabelText('target_legacy_simulation_run_id'), ' legacy-fork '); await user.type(screen.getByLabelText('target_branch_seed'), ' 44 '); await user.type(screen.getByLabelText('command_id'), ' command-a '); if (confirm) await user.click(screen.getByRole('checkbox')) }
 beforeEach(() => { vi.clearAllMocks(); setup() })
 describe('AdminRunBranchesPage', () => {
-  it('renders Product Run Branch overview and effective BranchState context', async () => { renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); expect(await screen.findByText('Admin Run')).toBeInTheDocument(); expect(screen.getAllByText('Official Branch')[0]).toBeInTheDocument(); expect(screen.getByText('official')).toBeInTheDocument(); expect(screen.getByText('Official')).toBeInTheDocument(); expect(screen.getAllByText('17').length).toBeGreaterThan(0); expect(screen.getAllByText('legacy-official').length).toBeGreaterThan(0); expect(screen.getAllByText('cp-initial').length).toBeGreaterThan(0); for (const value of ['2030', '12', 'EVENT-12', '4']) expect(screen.getAllByText(value).length).toBeGreaterThan(0) })
+  it('renders Product Run Branch overview and effective BranchState context', async () => { renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); expect(await screen.findByText('Admin Run')).toBeInTheDocument(); expect(screen.getAllByText('Official Branch')[0]).toBeInTheDocument(); expect(screen.getAllByText('official').length).toBeGreaterThan(0); expect(screen.getByText('Official')).toBeInTheDocument(); expect(screen.getAllByText('17').length).toBeGreaterThan(0); expect(screen.getAllByText('legacy-official').length).toBeGreaterThan(0); expect(screen.getAllByText('cp-initial').length).toBeGreaterThan(0); for (const value of ['2030', '12', 'EVENT-12', '4']) expect(screen.getAllByText(value).length).toBeGreaterThan(0) })
   it.each(['initial', 'current_state_capture'])('enables a safe %s effective head after valid confirmed input', async (kind) => { setup({ checkpoints: [checkpoint('cp-initial', kind), checkpoint('cp-readonly', 'initial', 'readonly')] }); renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); const submit = await screen.findByRole('button', { name: 'Create Branch fork' }); expect(submit).toBeDisabled(); await fillValidForm(); expect(submit).toBeEnabled() })
   it.each([['read-only Branch', [readonly], [state('readonly', 'cp-readonly')], [checkpoint('cp-readonly', 'initial', 'readonly')]], ['inactive Branch', [{ ...official, status: 'inactive' }], [state()], [checkpoint()]], ['disagreeing heads', [official], [state('official', 'other-head')], [checkpoint()]], ['missing head checkpoint', [official], [state()], []], ['unsupported checkpoint kind', [official], [state()], [checkpoint('cp-initial', 'event_completed')]]])('keeps submission disabled for %s', async (_name, branches, states, checkpoints) => { setup({ branches, states, checkpoints }); renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await screen.findByRole('heading', { name: 'Create Branch fork' }); await fillValidForm(); expect(screen.getByRole('button', { name: 'Create Branch fork' })).toBeDisabled() })
   it('only submits explicitly, with the exact trimmed payload after validation and confirmation', async () => { renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); const submit = await screen.findByRole('button', { name: 'Create Branch fork' }); await fillValidForm(false); expect(api.forkRunBranch).not.toHaveBeenCalled(); expect(submit).toBeDisabled(); await userEvent.click(screen.getByRole('checkbox')); await userEvent.click(submit); await waitFor(() => expect(api.forkRunBranch).toHaveBeenCalledTimes(1)); expect(api.forkRunBranch).toHaveBeenCalledWith('run-a', { source_branch_id: 'official', source_checkpoint_id: 'cp-initial', target_branch_id: 'fork-a', target_branch_display_name: 'Fork Name', target_legacy_simulation_run_id: 'legacy-fork', target_branch_seed: 44, command_id: 'command-a' }); expect(api.listRunBranches.mock.calls.length).toBeGreaterThanOrEqual(2); expect(api.listBranchStates.mock.calls.length).toBeGreaterThanOrEqual(2); expect(api.listBranchCheckpoints.mock.calls.length).toBeGreaterThanOrEqual(2); expect(api.getRunContainer.mock.calls.length).toBeGreaterThanOrEqual(2) })
   it('blocks blank and non-integer seed submissions', async () => { renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await screen.findByRole('heading', { name: 'Create Branch fork' }); await userEvent.click(screen.getByRole('checkbox')); expect(screen.getByRole('button', { name: 'Create Branch fork' })).toBeDisabled(); await fillValidForm(false); await userEvent.clear(screen.getByLabelText('target_branch_seed')); await userEvent.type(screen.getByLabelText('target_branch_seed'), '4.4'); expect(screen.getByRole('button', { name: 'Create Branch fork' })).toBeDisabled(); expect(api.forkRunBranch).not.toHaveBeenCalled() })
   it('displays a successful idempotent fork result without claiming another Branch', async () => { api.forkRunBranch.mockResolvedValueOnce(success(true)); renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await screen.findByRole('heading', { name: 'Create Branch fork' }); await fillValidForm(); await userEvent.click(screen.getByRole('button', { name: 'Create Branch fork' })); const result = await screen.findByLabelText('Fork result'); for (const value of ['fork-a', 'cp-fork', 'legacy-fork', 'idempotent replay: true', 'created_mapping: false', 'official_branch_changed: false']) expect(result).toHaveTextContent(value); expect(result).not.toHaveTextContent('another separate Branch') })
   it('shows formatted 409 conflicts while preserving form values and the Branch overview', async () => { api.forkRunBranch.mockRejectedValueOnce(new api.ApiError(JSON.stringify({ detail: 'target Branch already exists' }), 409)); renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await screen.findAllByText('Official Branch'); await fillValidForm(); await userEvent.click(screen.getByRole('button', { name: 'Create Branch fork' })); expect(await screen.findByText('target Branch already exists')).toBeInTheDocument(); expect(screen.getByLabelText('target_branch_id')).toHaveValue(' fork-a '); expect(screen.getAllByText('Official Branch')[0]).toBeInTheDocument(); expect(api.forkRunBranch).toHaveBeenCalledTimes(1) })
-  it('has no unsafe Branch or Viewer action surface', async () => { renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await screen.findAllByText('Official Branch'); for (const text of ['Make official', 'delete Branch', 'replay checkpoint', 'restore checkpoint', 'Viewer', 'simulate against selected Branch']) expect(screen.queryByText(text, { exact: false })).not.toBeInTheDocument() })
+
+  it('opens official selection for an active coherent read-only Branch and submits the exact guarded request', async () => {
+    api.makeOfficialRunBranch.mockResolvedValueOnce({ product_run_id: 'run-a', previous_official_branch_id: 'official', official_branch_id: 'readonly', target_branch_id: 'readonly', changed: true, idempotent_replay: false, request_fingerprint: 'fingerprint-a' })
+    renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches')
+    await screen.findByText('Admin Run')
+    const action = screen.getByRole('button', { name: 'Make official' })
+    expect(action).toBeEnabled()
+    await userEvent.click(action)
+    expect(api.makeOfficialRunBranch).not.toHaveBeenCalled()
+    await userEvent.type(screen.getByLabelText('Audit reason'), ' publish readonly ')
+    const boxes = screen.getAllByRole('checkbox')
+    await userEvent.click(boxes[0])
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm Make official' }))
+    await waitFor(() => expect(api.makeOfficialRunBranch).toHaveBeenCalledTimes(1))
+    expect(api.makeOfficialRunBranch).toHaveBeenCalledWith('run-a', 'readonly', expect.objectContaining({ expected_current_official_branch_id: 'official', audit_reason: 'publish readonly', explicit_confirmation: true }))
+    expect(api.forkRunBranch).not.toHaveBeenCalled()
+    expect(await screen.findByLabelText('Official Branch result')).toHaveTextContent('The official Branch was changed successfully.')
+  })
+  it('preserves the reviewed official Branch and command ID for an ordinary error retry', async () => {
+    api.makeOfficialRunBranch.mockRejectedValueOnce(new api.ApiError(JSON.stringify({ detail: 'try again' }), 400)).mockResolvedValueOnce({ product_run_id: 'run-a', previous_official_branch_id: 'official', official_branch_id: 'readonly', target_branch_id: 'readonly', changed: true, idempotent_replay: false, request_fingerprint: 'retry' })
+    renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches')
+    await screen.findByText('Admin Run'); await userEvent.click(screen.getByRole('button', { name: 'Make official' })); await userEvent.type(screen.getByLabelText('Audit reason'), 'reviewed reason'); await userEvent.click(screen.getAllByRole('checkbox')[0]); await userEvent.click(screen.getByRole('button', { name: 'Confirm Make official' }))
+    await waitFor(() => expect(api.makeOfficialRunBranch).toHaveBeenCalledTimes(1))
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm Make official' }))
+    await waitFor(() => expect(api.makeOfficialRunBranch).toHaveBeenCalledTimes(2))
+    expect(api.makeOfficialRunBranch.mock.calls[1]).toEqual(api.makeOfficialRunBranch.mock.calls[0])
+  })
+  it('refreshes the reviewed official Branch snapshot after a 409 conflict', async () => {
+    const refreshedRun = { ...run, official_branch_id: 'official-b' }
+    api.getRunContainer.mockResolvedValueOnce({ ...run, official_branch_id: 'official-a' }).mockResolvedValue(refreshedRun)
+    api.makeOfficialRunBranch.mockRejectedValueOnce(new api.ApiError(JSON.stringify({ detail: 'official changed' }), 409)).mockResolvedValueOnce({ product_run_id: 'run-a', previous_official_branch_id: 'official-b', official_branch_id: 'readonly', target_branch_id: 'readonly', changed: true, idempotent_replay: false, request_fingerprint: 'after-conflict' })
+    renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches')
+    await screen.findByText('Admin Run'); await userEvent.click(screen.getAllByRole('button', { name: 'Make official' })[1]); await userEvent.type(screen.getByLabelText('Audit reason'), 'reviewed reason'); await userEvent.click(screen.getAllByRole('checkbox')[0]); await userEvent.click(screen.getByRole('button', { name: 'Confirm Make official' }))
+    await waitFor(() => expect(api.makeOfficialRunBranch).toHaveBeenCalledTimes(1)); expect(api.makeOfficialRunBranch.mock.calls[0][2].expected_current_official_branch_id).toBe('official-a')
+    await screen.findByText('Official Branch state changed or must be reviewed again.')
+    expect(screen.getAllByRole('checkbox')[0]).not.toBeChecked(); expect(screen.getAllByText('official-b').length).toBeGreaterThan(0)
+    const firstCommandId = api.makeOfficialRunBranch.mock.calls[0][2].command_id
+    await userEvent.click(screen.getAllByRole('checkbox')[0]); await userEvent.click(screen.getByRole('button', { name: 'Confirm Make official' }))
+    await waitFor(() => expect(api.makeOfficialRunBranch).toHaveBeenCalledTimes(2)); expect(api.makeOfficialRunBranch.mock.calls[1][2]).toMatchObject({ expected_current_official_branch_id: 'official-b', audit_reason: 'reviewed reason' }); expect(api.makeOfficialRunBranch.mock.calls[1][2].command_id).not.toBe(firstCommandId)
+  })
+  it.each(['read-only Product Run', 'built-in Product Run', 'inactive Branch', 'missing legacy binding', 'missing BranchState', 'disagreeing heads', 'missing checkpoint', 'foreign Branch checkpoint', 'foreign Run checkpoint'])('disables Make official for an ineligible target: %s', async (caseName) => {
+    let modifiedRun = run; let branches = [official, readonly]; let states = [state(), state('readonly', 'cp-readonly')]; let checkpoints = [checkpoint(), checkpoint('cp-readonly', 'initial', 'readonly')]
+    if (caseName === 'read-only Product Run') modifiedRun = { ...run, read_only: true }
+    if (caseName === 'built-in Product Run') modifiedRun = { ...run, storage_kind: 'built_in' }
+    if (caseName === 'inactive Branch') branches = [official, { ...readonly, status: 'inactive' }]
+    if (caseName === 'missing legacy binding') branches = [official, { ...readonly, legacy_simulation_run_id: '' }]
+    if (caseName === 'missing BranchState') states = [state()]
+    if (caseName === 'disagreeing heads') states = [state(), state('readonly', 'other')]
+    if (caseName === 'missing checkpoint') checkpoints = [checkpoint()]
+    if (caseName === 'foreign Branch checkpoint') checkpoints = [checkpoint(), checkpoint('cp-readonly', 'initial', 'other')]
+    if (caseName === 'foreign Run checkpoint') checkpoints = [checkpoint(), { ...checkpoint('cp-readonly', 'initial', 'readonly'), run_id: 'other-run' }]
+    api.getRunContainer.mockResolvedValue(modifiedRun); setup({ branches, states, checkpoints })
+    api.getRunContainer.mockResolvedValue(modifiedRun)
+    renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches')
+    expect(await screen.findByRole('button', { name: 'Make official' })).toBeDisabled()
+  })
+  it('has no unsafe Branch or Viewer action surface', async () => { renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await screen.findAllByText('Official Branch'); for (const text of ['delete Branch', 'replay checkpoint', 'restore checkpoint', 'Viewer', 'simulate against selected Branch']) expect(screen.queryByText(text, { exact: false })).not.toBeInTheDocument() })
 })

@@ -32,6 +32,7 @@ import {
   listBranchStates,
   getBranchState,
   forkRunBranch,
+  makeOfficialRunBranch,
   getWorldPackageValidation,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
@@ -951,6 +952,17 @@ describe('world package registry client', () => {
     expect(globalThis.fetch).toHaveBeenNthCalledWith(
       2, 'http://127.0.0.1:8000/run-containers/save%2Fa%20%231', expect.anything()
     )
+  })
+
+  it('posts Make official with encoded URL parameters and only the request contract body', async () => {
+    const payload = { expected_current_official_branch_id: 'official', command_id: 'command-a', audit_reason: 'publish selected Branch', explicit_confirmation: true }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ official_branch_id: 'target' }), { status: 200 }))
+    await makeOfficialRunBranch('run/a #1', 'target/a #2', payload)
+    expect(globalThis.fetch).toHaveBeenCalledWith('http://127.0.0.1:8000/admin/runs/run%2Fa%20%231/branches/target%2Fa%20%232/make-official', expect.objectContaining({ method: 'POST', body: JSON.stringify(payload) }))
+    const sent = JSON.parse((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body)
+    expect(sent).toEqual(payload)
+    expect(sent).not.toHaveProperty('product_run_id')
+    expect(sent).not.toHaveProperty('target_branch_id')
   })
 
   it('posts an Admin Branch fork with the Product Run only in the URL', async () => {

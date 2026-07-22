@@ -62,6 +62,8 @@ from beta_engine.infrastructure.db import (
     BranchExecutionTarget,
     ForkRunBranchCommand,
     ForkRunBranchResult,
+    SetOfficialRunBranchCommand,
+    SetOfficialRunBranchResult,
     LegacyRunCloneResult,
     LegacyRunClonePreflightResult,
     SimulationPersistenceRepository,
@@ -856,6 +858,10 @@ class SimulationApiService:
     def fork_run_branch_atomically(self, command: ForkRunBranchCommand) -> ForkRunBranchResult:
         """Internal adapter only; no public API route is exposed for Branch forks."""
         return self.repository.fork_run_branch_atomically(command)
+
+    def set_official_run_branch_atomically(self, command: SetOfficialRunBranchCommand) -> SetOfficialRunBranchResult:
+        """Publish an existing coherent Branch without mutating Branch or simulation state."""
+        return self.repository.set_official_run_branch_atomically(command)
 
     def get_run_talent_plan_summary(self, *, run_id: str) -> RunTalentPlanSummary:
         self.get_run_summary(run_id=run_id)

@@ -179,6 +179,22 @@ class BranchForkCommandModel(Base):
     created_at: Mapped[str] = mapped_column(String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP"))
 
 
+class OfficialBranchSelectionCommandModel(Base):
+    """Durable idempotency and audit record for official Branch selection."""
+
+    __tablename__ = "official_branch_selection_commands"
+
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    product_run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    expected_previous_official_branch_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    target_branch_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    result_previous_official_branch_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    result_official_branch_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    audit_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[str] = mapped_column(String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+
+
 class SeasonStateModel(Base):
     __tablename__ = "season_state"
 

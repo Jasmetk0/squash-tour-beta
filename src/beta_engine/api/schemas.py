@@ -196,6 +196,23 @@ class AdminForkRunBranchResponse(BaseModel):
     official_branch_changed: bool
 
 
+class AdminSetOfficialRunBranchRequest(BaseModel):
+    expected_current_official_branch_id: str | None = Field(default=None, max_length=128)
+    command_id: str = Field(min_length=1, max_length=128)
+    audit_reason: str = Field(min_length=1, max_length=2000)
+    explicit_confirmation: bool
+
+
+class AdminSetOfficialRunBranchResponse(BaseModel):
+    product_run_id: str
+    previous_official_branch_id: str | None = None
+    official_branch_id: str | None = None
+    target_branch_id: str
+    changed: bool
+    idempotent_replay: bool
+    request_fingerprint: str
+
+
 class BranchStateResponse(BaseModel):
     branch_id: str; run_id: str; head_checkpoint_id: str | None = None
     current_season: int | None = None; current_week: int | None = None

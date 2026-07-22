@@ -1,154 +1,37 @@
-import { useQuery } from '@tanstack/react-query'
-import { FormEvent, useEffect, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { FormEvent, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-
-import { listRuns } from '../api/client'
-import {
-  VIEWER_ACTIVE_RUN_STORAGE_KEY,
-  VIEWER_ACTIVE_RUN_CHANGED_EVENT,
-  readLastRunId,
-  readViewerActiveRunId,
-  writeLastRunId,
-  writeViewerActiveRunId
-} from '../viewer/activeRun'
-import { formatViewerActiveRunLabel, formatViewerCompactRunOptionLabel, formatViewerRunOptionLabel } from '../viewer/activeRunDisplay'
-import { normalizeRunBrowserRuns } from '../viewer/runBrowserDisplay'
+import type { RunContainer, ViewerOfficialRunContext } from '../api/types'
+import { getViewerOfficialRunContext, listRunContainers } from '../api/client'
+import { formatApiError, isApiNotFound } from '../utils/apiErrors'
+import { VIEWER_ACTIVE_PRODUCT_RUN_STORAGE_KEY, readViewerActiveProductRunId, writeViewerActiveProductRunId } from '../viewer/activeProductRun'
+import { readLastRunId, readViewerActiveRunId, writeLastRunId, writeViewerActiveRunId } from '../viewer/activeRun'
+import { formatViewerActiveRunLabel, formatViewerProductRunOptionLabel } from '../viewer/activeRunDisplay'
+import { useActiveViewerProductRunId } from '../viewer/useActiveViewerProductRunId'
+import { useViewerOfficialRunContext } from '../viewer/useViewerOfficialRunContext'
 import { viewerRunsPath } from '../viewer/viewerRoutes'
 
-type ViewerRunSelectorProps = {
-  compact?: boolean
+type ViewerRunSelectorProps = { compact?: boolean }
+function safeContainers(value: unknown): RunContainer[] { return Array.isArray(value) ? value.filter((r): r is RunContainer => typeof r === 'object' && r !== null && typeof (r as RunContainer).run_id === 'string' && Boolean((r as RunContainer).run_id.trim())) : [] }
+function contextDetails(context: ViewerOfficialRunContext): string { return `${context.product_run_display_name || context.product_run_id} (${context.product_run_id}) · Official Branch ${context.official_branch_display_name} (${context.official_branch_id}) · legacy SimulationRun ${context.legacy_simulation_run_id} · season ${context.current_season ?? '—'}, week ${context.current_week ?? '—'}${context.official_branch_read_only ? ' · read-only' : ''}` }
+
+function useSelection() {
+  const queryClient = useQueryClient()
+  const activeProductRunId = useActiveViewerProductRunId()
+  const [selectedRunId, setSelectedRunId] = useState(() => readViewerActiveProductRunId() ?? '')
+  const [pending, setPending] = useState(false); const [selectionError, setSelectionError] = useState<string | null>(null); const [context, setContext] = useState<ViewerOfficialRunContext | null>(null); const previous = useRef<ViewerOfficialRunContext | null>(null); const migrated = useRef(false)
+  const containersQuery = useQuery({ queryKey: ['viewer-run-containers'], queryFn: listRunContainers, retry: false })
+  const runs = safeContainers(containersQuery.data?.run_containers)
+  const officialQuery = useViewerOfficialRunContext(activeProductRunId)
+  const applyContext = (next: ViewerOfficialRunContext) => { const old = previous.current; setContext(next); previous.current = next; writeViewerActiveRunId(next.legacy_simulation_run_id); writeLastRunId(next.legacy_simulation_run_id); if (old && (old.official_branch_id !== next.official_branch_id || old.legacy_simulation_run_id !== next.legacy_simulation_run_id)) setSelectionError(`The official Branch changed from ${old.official_branch_display_name} to ${next.official_branch_display_name}. Viewer now resolves this Product Run through the new official Branch. An already-open legacy run-scoped URL may still represent the previously opened namespace until you follow a refreshed active-run link.`) }
+  useEffect(() => { if (officialQuery.data) applyContext(officialQuery.data) }, [officialQuery.data])
+  useEffect(() => { if (activeProductRunId) { setSelectedRunId(activeProductRunId); return } const legacy = readViewerActiveRunId(); if (!migrated.current && legacy && runs.some(r => r.run_id === legacy)) { migrated.current = true; void select(legacy, true) } }, [activeProductRunId, runs])
+  async function select(productRunId: string, migration = false) { const normalized = productRunId.trim(); if (!normalized || pending) return; setPending(true); setSelectionError(null); try { const next = await getViewerOfficialRunContext(normalized); writeViewerActiveProductRunId(normalized); applyContext(next); queryClient.setQueryData(['viewer-official-run-context', normalized], next) } catch (error) { setSelectionError(isApiNotFound(error) ? 'This Product Run no longer exists. ' + formatApiError(error) : formatApiError(error)); if (!migration) setSelectedRunId(normalized) } finally { setPending(false) } }
+  const displayed = context ?? officialQuery.data ?? previous.current
+  const contextError = officialQuery.isError && previous.current ? `Official context is temporarily unavailable; showing the last resolved context. ${formatApiError(officialQuery.error)}` : officialQuery.isError ? (isApiNotFound(officialQuery.error) ? 'This Product Run no longer exists.' : formatApiError(officialQuery.error)) : null
+  return { activeProductRunId, legacyRunId: readViewerActiveRunId(), selectedRunId, setSelectedRunId, pending, selectionError, contextError, displayed, containersQuery, runs, select }
 }
 
-function useViewerRunSelection() {
-  const [activeRunId, setActiveRunId] = useState(() => readViewerActiveRunId())
-  const [selectedRunId, setSelectedRunId] = useState(() => readViewerActiveRunId() ?? '')
+export function ViewerActiveRunCompact(): JSX.Element { const s = useSelection(); return <form className="viewer-active-run-compact" aria-label="Viewer topbar active run"><span className="viewer-active-run-compact__status" title={s.displayed ? contextDetails(s.displayed) : undefined}>Run <strong>{s.displayed?.product_run_display_name ?? formatViewerActiveRunLabel(s.activeProductRunId)}</strong></span><label className="viewer-active-run-compact__field"><span className="sr-only">Viewer active Product Run</span><select aria-label="Viewer active Product Run" value={s.selectedRunId} onChange={(e) => { s.setSelectedRunId(e.target.value); void s.select(e.target.value) }} disabled={s.pending || s.containersQuery.isLoading || s.runs.length === 0}>{s.runs.length === 0 ? <option value="">No Product Runs available</option> : null}{s.runs.map(r => <option key={r.run_id} value={r.run_id}>{formatViewerProductRunOptionLabel(r, true)}</option>)}</select></label>{s.pending ? <span className="status">Resolving official Branch…</span> : null}{s.selectionError || s.contextError ? <span className="error">{s.selectionError ?? s.contextError}</span> : null}</form> }
 
-  const runsQuery = useQuery({
-    queryKey: ['viewer-run-selector-runs'],
-    queryFn: listRuns,
-    retry: false
-  })
-
-  const runs = normalizeRunBrowserRuns(runsQuery.data?.runs)
-
-  useEffect(() => {
-    function handleActiveRunChange(): void {
-      const nextActiveRunId = readViewerActiveRunId()
-      setActiveRunId(nextActiveRunId)
-      if (nextActiveRunId) setSelectedRunId(nextActiveRunId)
-    }
-
-    window.addEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, handleActiveRunChange)
-    window.addEventListener('storage', handleActiveRunChange)
-    return () => {
-      window.removeEventListener(VIEWER_ACTIVE_RUN_CHANGED_EVENT, handleActiveRunChange)
-      window.removeEventListener('storage', handleActiveRunChange)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (runs.length === 0) return
-    if (selectedRunId && runs.some((run) => run.run_id === selectedRunId)) return
-    const preferredRunId = activeRunId ?? readLastRunId()
-    const preferredRun = runs.find((run) => run.run_id === preferredRunId)
-    setSelectedRunId((preferredRun ?? runs[0]).run_id)
-  }, [activeRunId, runs, selectedRunId])
-
-  function applyRunSelection(runId: string): void {
-    const normalizedRunId = runId.trim()
-    if (!normalizedRunId) return
-    writeLastRunId(normalizedRunId)
-    writeViewerActiveRunId(normalizedRunId)
-    setActiveRunId(normalizedRunId)
-  }
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
-    event.preventDefault()
-    applyRunSelection(selectedRunId)
-  }
-
-  return { activeRunId, selectedRunId, setSelectedRunId, applyRunSelection, runsQuery, runs, handleSubmit }
-}
-
-export function ViewerActiveRunCompact(): JSX.Element {
-  const { activeRunId, selectedRunId, setSelectedRunId, applyRunSelection, runsQuery, runs } = useViewerRunSelection()
-
-  return (
-    <form className="viewer-active-run-compact" aria-label="Viewer topbar active run">
-      <span className="viewer-active-run-compact__status">
-        Run <strong>{formatViewerActiveRunLabel(activeRunId)}</strong>
-      </span>
-      <label className="viewer-active-run-compact__field">
-        <span className="sr-only">Viewer active run</span>
-        <select
-          aria-label="Viewer active run"
-          value={selectedRunId}
-          onChange={(event) => {
-            setSelectedRunId(event.target.value)
-            applyRunSelection(event.target.value)
-          }}
-          disabled={runsQuery.isLoading || runs.length === 0}
-        >
-          {runs.length === 0 ? <option value="">No runs available</option> : null}
-          {runs.map((run, runIndex) => (
-            <option key={`${run.run_id}:${runIndex}`} value={run.run_id}>
-              {formatViewerCompactRunOptionLabel(run)}
-            </option>
-          ))}
-        </select>
-      </label>
-      {runsQuery.isError ? <span className="error">Runs unavailable</span> : null}
-    </form>
-  )
-}
-
-export function ViewerRunSelector({ compact = false }: ViewerRunSelectorProps): JSX.Element {
-  const { activeRunId, selectedRunId, setSelectedRunId, runsQuery, runs, handleSubmit } = useViewerRunSelection()
-
-  return (
-    <section className={compact ? 'viewer-run-selector viewer-run-selector--compact' : 'panel nested-panel viewer-run-selector'} aria-label="Active run picker">
-      <div className="page-intro">
-        <span className="eyebrow">Active run</span>
-        <h3>Active Run</h3>
-        <p className="subtitle">Select which existing run Viewer / MSA Website Mode should browse. This only changes local Viewer context.</p>
-      </div>
-
-      <p className="status">
-        Current active run id: <strong>{activeRunId ?? 'No active run selected'}</strong>
-      </p>
-      <p className="metadata-note">
-        Viewer selection is stored locally in <code>{VIEWER_ACTIVE_RUN_STORAGE_KEY}</code>; no backend run state is changed.
-      </p>
-      <p className="viewer-active-run-actions">
-        <Link className="viewer-active-run-link" to={viewerRunsPath()}>Browse all runs</Link>
-      </p>
-
-      <form className="stacked-form" onSubmit={handleSubmit}>
-        <label>
-          Available runs
-          <select
-            value={selectedRunId}
-            onChange={(event) => setSelectedRunId(event.target.value)}
-            disabled={runsQuery.isLoading || runs.length === 0}
-          >
-            {runs.length === 0 ? <option value="">No runs available</option> : null}
-            {runs.map((run, runIndex) => (
-              <option key={`${run.run_id}:${runIndex}`} value={run.run_id}>
-                {formatViewerRunOptionLabel(run)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="actions">
-          <button type="submit" disabled={!selectedRunId.trim()}>
-            Set active run
-          </button>
-        </div>
-      </form>
-
-      {runsQuery.isLoading ? <p className="status">Loading available runs…</p> : null}
-      {runsQuery.isError ? <p className="error">Run list is unavailable.</p> : null}
-      {!runsQuery.isLoading && !runsQuery.isError && runs.length === 0 ? <p className="status">No runs are available yet.</p> : null}
-    </section>
-  )
-}
+export function ViewerRunSelector({ compact = false }: ViewerRunSelectorProps): JSX.Element { const s = useSelection(); function submit(e: FormEvent) { e.preventDefault(); void s.select(s.selectedRunId) } return <section className={compact ? 'viewer-run-selector viewer-run-selector--compact' : 'panel nested-panel viewer-run-selector'} aria-label="Active Product Run picker"><div className="page-intro"><span className="eyebrow">Active Product Run</span><h3>Active Product Run</h3><p className="subtitle">Select which Product Run Viewer should browse. This only changes local Viewer context after its official Branch is resolved.</p></div><p className="status">Current Product Run id: <strong>{s.activeProductRunId ?? 'No Product Run selected'}</strong></p><p className="status">Resolved legacy SimulationRun id: <strong>{s.legacyRunId ?? 'No active run selected'}</strong></p><p className="metadata-note">Product Run selection is stored locally in <code>{VIEWER_ACTIVE_PRODUCT_RUN_STORAGE_KEY}</code>; no backend state is changed.</p>{s.displayed ? <p className="status">{contextDetails(s.displayed)}</p> : null}<p className="viewer-active-run-actions"><Link className="viewer-active-run-link" to={viewerRunsPath()}>Browse all runs</Link></p><form className="stacked-form" onSubmit={submit}><label>Available Product Runs<select value={s.selectedRunId} onChange={e => s.setSelectedRunId(e.target.value)} disabled={s.pending || s.containersQuery.isLoading || s.runs.length === 0}>{s.runs.length === 0 ? <option value="">No Product Runs available</option> : null}{s.runs.map(r => <option key={r.run_id} value={r.run_id}>{formatViewerProductRunOptionLabel(r)}</option>)}</select></label><div className="actions"><button type="submit" disabled={s.pending || !s.selectedRunId.trim()}>{s.pending ? 'Resolving official Branch…' : 'Set active run'}</button></div></form>{s.containersQuery.isLoading ? <p className="status">Loading available Product Runs…</p> : null}{s.containersQuery.isError ? <p className="error">{formatApiError(s.containersQuery.error)}</p> : null}{!s.containersQuery.isLoading && !s.containersQuery.isError && s.runs.length === 0 ? <p className="status">No Product Runs are available yet.</p> : null}{s.selectionError ? <p className="error">{s.selectionError}</p> : null}{s.contextError ? <p className="error">{s.contextError}</p> : null}</section> }

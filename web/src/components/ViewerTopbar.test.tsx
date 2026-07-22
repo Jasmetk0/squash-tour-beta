@@ -10,7 +10,10 @@ import { ViewerContextProvider } from '../viewer/ViewerContext'
 import { viewerDropdowns } from '../viewer/viewerNavigation'
 
 const api = vi.hoisted(() => ({
-  listRuns: vi.fn()
+  listRuns: vi.fn(),
+  listRunContainers: vi.fn(),
+  getViewerOfficialRunContext: vi.fn(),
+  ApiError: class ApiError extends Error { status = 500 }
 }))
 
 vi.mock('../api/client', () => api)

@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { Layout } from './Layout'
@@ -6,7 +6,10 @@ import { forbiddenViewerActionLabels, expectNoForbiddenViewerActions } from '../
 import { renderWithRoute } from '../test/testUtils'
 
 const api = vi.hoisted(() => ({
-  listRuns: vi.fn()
+  listRuns: vi.fn(),
+  listRunContainers: vi.fn(),
+  getViewerOfficialRunContext: vi.fn(),
+  ApiError: class ApiError extends Error { status = 500 }
 }))
 
 vi.mock('../api/client', () => api)
@@ -41,6 +44,8 @@ describe('Layout mode navigation', () => {
         }
       ]
     })
+    api.listRunContainers.mockResolvedValue({ run_containers: [{ run_id: 'run-a', display_name: 'Run A', status: 'active', storage_kind: 'custom_local', read_only: false }, { run_id: 'run-b', display_name: 'Run B', status: 'active', storage_kind: 'custom_local', read_only: false }] })
+    api.getViewerOfficialRunContext.mockResolvedValue({ product_run_id: 'run-b', product_run_display_name: 'Run B', official_branch_id: 'branch-b', official_branch_display_name: 'Branch B', legacy_simulation_run_id: 'legacy-b', current_season: 2031, current_week: 1, official_branch_read_only: false })
   })
 
   it('keeps Admin / Engine mode navigation and run-scoped admin links stable', async () => {
@@ -112,8 +117,8 @@ describe('Layout mode navigation', () => {
     expect(within(nav).queryByLabelText('Viewer active run')).not.toBeInTheDocument()
     expect(within(nav).getByRole('button', { name: 'Season 2004/05 · W10' })).toHaveTextContent('Week W10')
     expect(await screen.findByRole('option', { name: /run-b/i })).toHaveAttribute('value', 'run-b')
-    fireEvent.change(screen.getByLabelText('Viewer active run'), { target: { value: 'run-b' } })
-    expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBe('run-b')
+    fireEvent.change(screen.getByLabelText('Viewer active Product Run'), { target: { value: 'run-b' } })
+    await waitFor(() => expect(localStorage.getItem('beta_engine:viewer_active_product_run_id')).toBe('run-b'))
     expect(screen.getByLabelText('Viewer header context controls')).toBeInTheDocument()
     expectNoForbiddenViewerActions(within(nav))
     for (const label of forbiddenViewerActionLabels) {

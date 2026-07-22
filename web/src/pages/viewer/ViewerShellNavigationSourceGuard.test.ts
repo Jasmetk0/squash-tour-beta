@@ -200,7 +200,7 @@ describe('Viewer shell/navigation source guard', () => {
   })
 
   it('keeps selector normalization and active-run storage source paths scalar-safe and local', () => {
-    expect(viewerRunSelectorSource).toContain('normalizeRunBrowserRuns')
+    expect(viewerRunSelectorSource).toContain('listRunContainers')
     expect(viewerRunBrowserPageSource).toContain('normalizeRunBrowserRuns')
     expect(runBrowserDisplaySource).toContain('getSafeRunBrowserRunId')
     expect(activeRunDisplaySource).toContain('formatSafeRunOptionValue')

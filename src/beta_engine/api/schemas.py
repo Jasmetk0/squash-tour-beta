@@ -169,6 +169,33 @@ class RunBranchResponse(BaseModel):
 class RunBranchListResponse(BaseModel):
     run_branches: list[RunBranchResponse] = Field(default_factory=list)
 
+
+class AdminForkRunBranchRequest(BaseModel):
+    source_branch_id: str = Field(min_length=1, max_length=128)
+    source_checkpoint_id: str = Field(min_length=1, max_length=128)
+    target_branch_id: str = Field(min_length=1, max_length=128)
+    target_branch_display_name: str = Field(min_length=1, max_length=256)
+    target_legacy_simulation_run_id: str = Field(min_length=1, max_length=128)
+    target_branch_seed: int
+    command_id: str = Field(min_length=1, max_length=128)
+
+
+class AdminForkRunBranchResponse(BaseModel):
+    product_run_id: str
+    source_branch_id: str
+    source_checkpoint_id: str
+    target_branch_id: str
+    target_legacy_simulation_run_id: str
+    target_checkpoint_id: str
+    target_branch_seed: int
+    source_inventory_hash: str
+    normalized_clone_equivalence_hash: str
+    request_fingerprint: str
+    idempotent_replay: bool
+    created_mapping: bool
+    official_branch_changed: bool
+
+
 class BranchStateResponse(BaseModel):
     branch_id: str; run_id: str; head_checkpoint_id: str | None = None
     current_season: int | None = None; current_week: int | None = None

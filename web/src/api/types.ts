@@ -564,6 +564,17 @@ export type BranchState = {
 }
 export type BranchStateListResponse = { branch_states: BranchState[] }
 
+export type AdminForkRunBranchRequest = {
+  source_branch_id: string; source_checkpoint_id: string; target_branch_id: string; target_branch_display_name: string
+  target_legacy_simulation_run_id: string; target_branch_seed: number; command_id: string
+}
+export type AdminForkRunBranchResponse = {
+  product_run_id: string; source_branch_id: string; source_checkpoint_id: string; target_branch_id: string
+  target_legacy_simulation_run_id: string; target_checkpoint_id: string; target_branch_seed: number
+  source_inventory_hash: string; normalized_clone_equivalence_hash: string; request_fingerprint: string
+  idempotent_replay: boolean; created_mapping: boolean; official_branch_changed: boolean
+}
+
 export type RunStatusSummary = {
   run_id: string
   season: number

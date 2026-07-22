@@ -31,6 +31,7 @@ import {
   captureAdminActionBranchCheckpoint,
   listBranchStates,
   getBranchState,
+  forkRunBranch,
   getWorldPackageValidation,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
@@ -950,6 +951,13 @@ describe('world package registry client', () => {
     expect(globalThis.fetch).toHaveBeenNthCalledWith(
       2, 'http://127.0.0.1:8000/run-containers/save%2Fa%20%231', expect.anything()
     )
+  })
+
+  it('posts an Admin Branch fork with the Product Run only in the URL', async () => {
+    const payload = { source_branch_id: 'source', source_checkpoint_id: 'cp-1', target_branch_id: 'fork', target_branch_display_name: 'Fork', target_legacy_simulation_run_id: 'fork-legacy', target_branch_seed: 9, command_id: 'fork-command' }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ target_branch_id: 'fork' }), { status: 200 }))
+    await forkRunBranch('run/a #1', payload)
+    expect(globalThis.fetch).toHaveBeenCalledWith('http://127.0.0.1:8000/admin/runs/run%2Fa%20%231/branches/fork', expect.objectContaining({ method: 'POST', body: JSON.stringify(payload) }))
   })
 
 })

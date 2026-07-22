@@ -575,6 +575,23 @@ export type AdminForkRunBranchResponse = {
   idempotent_replay: boolean; created_mapping: boolean; official_branch_changed: boolean
 }
 
+export type AdminSetOfficialRunBranchRequest = {
+  expected_current_official_branch_id: string | null
+  command_id: string
+  audit_reason: string
+  explicit_confirmation: boolean
+}
+
+export type AdminSetOfficialRunBranchResponse = {
+  product_run_id: string
+  previous_official_branch_id: string | null
+  official_branch_id: string | null
+  target_branch_id: string
+  changed: boolean
+  idempotent_replay: boolean
+  request_fingerprint: string
+}
+
 export type RunStatusSummary = {
   run_id: string
   season: number

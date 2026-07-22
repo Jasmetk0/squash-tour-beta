@@ -77,6 +77,8 @@ import type {
   BranchStateListResponse,
   AdminForkRunBranchRequest,
   AdminForkRunBranchResponse,
+  AdminSetOfficialRunBranchRequest,
+  AdminSetOfficialRunBranchResponse,
   RunWeeklyIntakeCohortSeasonPreviewParams,
   RunWeeklyIntakeCohortSeasonPreviewResponse,
   RunPlayerDetail,
@@ -816,6 +818,9 @@ export function listBranchStates(params?: { run_id?: string }): Promise<BranchSt
 export function getBranchState(branchId: string): Promise<BranchState> { return request(`/branch-states/${encodeURIComponent(branchId)}`) }
 export function forkRunBranch(productRunId: string, payload: AdminForkRunBranchRequest): Promise<AdminForkRunBranchResponse> {
   return request(`/admin/runs/${encodeURIComponent(productRunId)}/branches/fork`, { method: 'POST', body: JSON.stringify(payload) })
+}
+export function makeOfficialRunBranch(productRunId: string, targetBranchId: string, payload: AdminSetOfficialRunBranchRequest): Promise<AdminSetOfficialRunBranchResponse> {
+  return request(`/admin/runs/${encodeURIComponent(productRunId)}/branches/${encodeURIComponent(targetBranchId)}/make-official`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function getRun(runId: string): Promise<SeasonStateResponse> {

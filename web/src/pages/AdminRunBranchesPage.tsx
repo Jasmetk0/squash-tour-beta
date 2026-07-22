@@ -2,87 +2,68 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 
-import { forkRunBranch, getRunContainer, listBranchCheckpoints, listBranchStates, listRunBranches } from '../api/client'
-import type { AdminForkRunBranchRequest, BranchCheckpoint, RunBranch } from '../api/types'
+import { forkRunBranch, getRunContainer, listBranchCheckpoints, listBranchStates, listRunBranches, makeOfficialRunBranch } from '../api/client'
+import type { AdminForkRunBranchRequest, AdminSetOfficialRunBranchRequest, BranchCheckpoint, BranchState, RunBranch, RunContainer } from '../api/types'
 import { EmptyState, MetadataList, PageIntro, SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
 const forkSafeKinds = new Set(['initial', 'current_state_capture'])
 const fieldNames = ['target_branch_display_name', 'target_branch_id', 'target_legacy_simulation_run_id', 'target_branch_seed', 'command_id'] as const
-
 type FormValues = Record<(typeof fieldNames)[number], string>
 const emptyForm: FormValues = { target_branch_display_name: '', target_branch_id: '', target_legacy_simulation_run_id: '', target_branch_seed: '', command_id: '' }
 
+export function newCommandId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
+  return `official-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`
+}
+
+function officialEligibility(run: RunContainer | undefined, branch: RunBranch, state: BranchState | undefined, checkpoints: BranchCheckpoint[]): string | null {
+  if (run?.status !== 'active') return 'Product Run must be active.'
+  if (run.read_only) return 'Product Run is read-only.'
+  if (run.storage_kind === 'built_in') return 'Built-in Product Runs cannot change their official Branch.'
+  if (branch.status !== 'active') return 'Branch must be active.'
+  if (!branch.legacy_simulation_run_id?.trim()) return 'Branch has no legacy simulation run binding.'
+  if (!branch.head_checkpoint_id) return 'Branch has no head checkpoint.'
+  if (!state) return 'BranchState is missing.'
+  if (state.run_id !== run.run_id) return 'BranchState belongs to another Product Run.'
+  if (state.head_checkpoint_id !== branch.head_checkpoint_id) return 'Branch and BranchState heads disagree.'
+  const checkpoint = checkpoints.find((item) => item.checkpoint_id === branch.head_checkpoint_id)
+  if (!checkpoint) return 'Effective head checkpoint is missing.'
+  if (checkpoint.branch_id !== branch.branch_id) return 'Checkpoint belongs to another Branch.'
+  if (checkpoint.run_id !== run.run_id) return 'Checkpoint belongs to another Product Run.'
+  return null
+}
+
 export function AdminRunBranchesPage(): JSX.Element {
-  const { runId = '' } = useParams()
-  const queryClient = useQueryClient()
-  const [sourceBranchId, setSourceBranchId] = useState('')
-  const [form, setForm] = useState<FormValues>(emptyForm)
-  const [confirmed, setConfirmed] = useState(false)
+  const { runId = '' } = useParams(); const queryClient = useQueryClient()
+  const [sourceBranchId, setSourceBranchId] = useState(''); const [form, setForm] = useState<FormValues>(emptyForm); const [confirmed, setConfirmed] = useState(false)
+  const [officialTargetId, setOfficialTargetId] = useState<string | null>(null); const [auditReason, setAuditReason] = useState(''); const [officialCommandId, setOfficialCommandId] = useState(''); const [officialConfirmed, setOfficialConfirmed] = useState(false); const [officialNotice, setOfficialNotice] = useState<string | null>(null)
   const runQuery = useQuery({ queryKey: ['run-container', runId], queryFn: () => getRunContainer(runId), enabled: Boolean(runId) })
   const branchesQuery = useQuery({ queryKey: ['run-branches', runId], queryFn: () => listRunBranches(runId), enabled: Boolean(runId) })
   const statesQuery = useQuery({ queryKey: ['branch-states', runId], queryFn: () => listBranchStates({ run_id: runId }), enabled: Boolean(runId) })
   const checkpointsQuery = useQuery({ queryKey: ['branch-checkpoints', runId], queryFn: () => listBranchCheckpoints({ run_id: runId }), enabled: Boolean(runId) })
-  const branches = branchesQuery.data?.run_branches ?? []
-  const selectedId = sourceBranchId || branches[0]?.branch_id || ''
-  const selected = branches.find((branch) => branch.branch_id === selectedId)
-  const selectedState = statesQuery.data?.branch_states.find((state) => state.branch_id === selectedId)
-  const effectiveHead = selected?.head_checkpoint_id && selectedState?.head_checkpoint_id === selected.head_checkpoint_id ? selected.head_checkpoint_id : null
-  const headCheckpoint = checkpointsQuery.data?.branch_checkpoints.find((checkpoint) => checkpoint.checkpoint_id === effectiveHead)
-  const sourceEligible = Boolean(selected && selected.status === 'active' && !selected.read_only && effectiveHead && headCheckpoint && forkSafeKinds.has(headCheckpoint.kind))
-  const validForm = fieldNames.every((name) => form[name].trim()) && /^-?\d+$/.test(form.target_branch_seed.trim())
-  const mutation = useMutation({
-    mutationFn: (payload: AdminForkRunBranchRequest) => forkRunBranch(runId, payload),
-    onSuccess: async () => {
-      await Promise.all(['run-container', 'run-branches', 'branch-states', 'branch-checkpoints'].map((key) => queryClient.invalidateQueries({ queryKey: [key, runId] })))
-    }
+  const branches = branchesQuery.data?.run_branches ?? []; const states = statesQuery.data?.branch_states ?? []; const checkpoints = checkpointsQuery.data?.branch_checkpoints ?? []
+  const selectedId = sourceBranchId || branches[0]?.branch_id || ''; const selected = branches.find((branch) => branch.branch_id === selectedId); const selectedState = states.find((state) => state.branch_id === selectedId)
+  const effectiveHead = selected?.head_checkpoint_id && selectedState?.head_checkpoint_id === selected.head_checkpoint_id ? selected.head_checkpoint_id : null; const headCheckpoint = checkpoints.find((checkpoint) => checkpoint.checkpoint_id === effectiveHead)
+  const sourceEligible = Boolean(selected && selected.status === 'active' && !selected.read_only && effectiveHead && headCheckpoint && forkSafeKinds.has(headCheckpoint.kind)); const validForm = fieldNames.every((name) => form[name].trim()) && /^-?\d+$/.test(form.target_branch_seed.trim())
+  const target = branches.find((branch) => branch.branch_id === officialTargetId); const targetState = states.find((state) => state.branch_id === officialTargetId); const eligibilityReason = target ? officialEligibility(runQuery.data, target, targetState, checkpoints) : 'Select a Branch.'
+  const forkMutation = useMutation({ mutationFn: (payload: AdminForkRunBranchRequest) => forkRunBranch(runId, payload), onSuccess: async () => { await Promise.all(['run-container', 'run-branches', 'branch-states', 'branch-checkpoints'].map((key) => queryClient.invalidateQueries({ queryKey: [key, runId] }))) } })
+  const officialMutation = useMutation({
+    mutationFn: ({ targetBranchId, payload }: { targetBranchId: string; payload: AdminSetOfficialRunBranchRequest }) => makeOfficialRunBranch(runId, targetBranchId, payload),
+    onSuccess: async () => { setOfficialConfirmed(false); setOfficialNotice(null); await Promise.all(['run-container', 'run-branches'].map((key) => queryClient.invalidateQueries({ queryKey: [key, runId] }))) },
+    onError: async (error) => { if ((error as { status?: number }).status === 409) { setOfficialConfirmed(false); setOfficialCommandId(newCommandId()); setOfficialNotice('Official Branch state changed or must be reviewed again.'); await Promise.all(['run-container', 'run-branches'].map((key) => queryClient.invalidateQueries({ queryKey: [key, runId] }))) } }
   })
-  const canSubmit = sourceEligible && validForm && confirmed && !mutation.isPending
-  const allCheckpoints = checkpointsQuery.data?.branch_checkpoints ?? []
-  const loading = runQuery.isLoading || branchesQuery.isLoading || statesQuery.isLoading || checkpointsQuery.isLoading
-  const error = runQuery.error || branchesQuery.error || statesQuery.error || checkpointsQuery.error
-
-  function submit(event: React.FormEvent<HTMLFormElement>): void {
-    event.preventDefault()
-    if (!canSubmit || !selected || !effectiveHead) return
-    mutation.mutate({
-      source_branch_id: selected.branch_id, source_checkpoint_id: effectiveHead,
-      target_branch_id: form.target_branch_id.trim(), target_branch_display_name: form.target_branch_display_name.trim(),
-      target_legacy_simulation_run_id: form.target_legacy_simulation_run_id.trim(), target_branch_seed: Number.parseInt(form.target_branch_seed.trim(), 10), command_id: form.command_id.trim()
-    })
-  }
-
-  return <main>
-    <PageIntro title="Manage Branches" subtitle="Inspect Product Run Branches and create an independent atomic fork." meta={`Product Run: ${runId || 'unknown'}`} />
-    {loading && <p className="status">Loading Branches...</p>}
-    {error && <p className="error">Failed to load Branches: {formatApiError(error)}</p>}
-    {!loading && !error && <>
-      <SectionCard title="Product Run">
-        <MetadataList items={[{ label: 'Display name', value: runQuery.data?.display_name ?? '—' }, { label: 'Status', value: runQuery.data?.status ?? '—' }, { label: 'Branches', value: branches.length }]} />
-      </SectionCard>
-      <SectionCard title="Branches">
-        {branches.length === 0 ? <EmptyState message="No Branches are available for this Product Run." /> : <div className="item-list" aria-label="Product Run Branches">{branches.map((branch) => <BranchCard key={branch.branch_id} branch={branch} checkpoint={allCheckpoints.find((item) => item.checkpoint_id === branch.head_checkpoint_id)} state={statesQuery.data?.branch_states.find((item) => item.branch_id === branch.branch_id)} />)}</div>}
-      </SectionCard>
-      <SectionCard title="Create Branch fork">
-        <form onSubmit={submit}>
-          <label>Source Branch<select aria-label="Source Branch" value={selectedId} onChange={(event) => setSourceBranchId(event.target.value)}>{branches.map((branch) => <option key={branch.branch_id} value={branch.branch_id}>{branch.display_name} ({branch.branch_id})</option>)}</select></label>
-          <p>Source checkpoint: <strong>{effectiveHead ?? 'No safe effective head'}</strong></p>
-          {!sourceEligible && <p className="error">The selected source must be active, writable, have agreeing heads, and use an initial or current_state_capture head.</p>}
-          {fieldNames.map((name) => <label key={name}>{name.replace(/_/g, ' ')}<input aria-label={name} value={form[name]} onChange={(event) => setForm({ ...form, [name]: event.target.value })} /></label>)}
-          <label><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} /> I understand this creates an independent Branch and does not change the official Branch.</label>
-          <button type="submit" disabled={!canSubmit}>{mutation.isPending ? 'Creating fork...' : 'Create Branch fork'}</button>
-        </form>
-        {mutation.error && <p className="error">{formatApiError(mutation.error)}</p>}
-        {mutation.data && <div className="status" aria-label="Fork result">Created target Branch: {mutation.data.target_branch_id}; target checkpoint: {mutation.data.target_checkpoint_id}; target legacy run: {mutation.data.target_legacy_simulation_run_id}; idempotent replay: {String(mutation.data.idempotent_replay)}; created_mapping: {String(mutation.data.created_mapping)}; official_branch_changed: {String(mutation.data.official_branch_changed)}</div>}
-      </SectionCard>
-      <SectionCard title="Selected Branch checkpoints">
-        {!selected ? <EmptyState message="Select a Branch to inspect checkpoints." /> : <ul className="item-list" aria-label="Branch checkpoints">{allCheckpoints.filter((checkpoint) => checkpoint.branch_id === selected.branch_id).map((checkpoint) => <li key={checkpoint.checkpoint_id}><strong>{checkpoint.checkpoint_id}</strong> — {checkpoint.kind}, sequence {checkpoint.sequence}, season {checkpoint.season}, week {checkpoint.week ?? '—'}, event {checkpoint.event_id ?? '—'}; {checkpoint.checkpoint_id === effectiveHead ? ' effective head;' : ''} {checkpoint.checkpoint_id === effectiveHead && forkSafeKinds.has(checkpoint.kind) ? ' fork-safe' : ' not fork-safe'}</li>)}</ul>}
-      </SectionCard>
-    </>}
-  </main>
+  const canForkSubmit = sourceEligible && validForm && confirmed && !forkMutation.isPending; const canOfficialSubmit = Boolean(target && !eligibilityReason && auditReason.trim() && officialCommandId.trim() && officialConfirmed && !officialMutation.isPending)
+  const officialBranch = branches.find((branch) => branch.branch_id === runQuery.data?.official_branch_id); const loading = runQuery.isLoading || branchesQuery.isLoading || statesQuery.isLoading || checkpointsQuery.isLoading; const error = runQuery.error || branchesQuery.error || statesQuery.error || checkpointsQuery.error
+  function submitFork(event: React.FormEvent<HTMLFormElement>): void { event.preventDefault(); if (!canForkSubmit || !selected || !effectiveHead) return; forkMutation.mutate({ source_branch_id: selected.branch_id, source_checkpoint_id: effectiveHead, target_branch_id: form.target_branch_id.trim(), target_branch_display_name: form.target_branch_display_name.trim(), target_legacy_simulation_run_id: form.target_legacy_simulation_run_id.trim(), target_branch_seed: Number.parseInt(form.target_branch_seed.trim(), 10), command_id: form.command_id.trim() }) }
+  function openOfficial(branchId: string): void { setOfficialTargetId(branchId); setOfficialCommandId(newCommandId()); setOfficialConfirmed(false); setOfficialNotice(null) }
+  function submitOfficial(event: React.FormEvent<HTMLFormElement>): void { event.preventDefault(); if (!canOfficialSubmit || !target) return; officialMutation.mutate({ targetBranchId: target.branch_id, payload: { expected_current_official_branch_id: runQuery.data?.official_branch_id ?? null, command_id: officialCommandId.trim(), audit_reason: auditReason.trim(), explicit_confirmation: true } }) }
+  return <main><PageIntro title="Manage Branches" subtitle="Inspect Product Run Branches, create an independent atomic fork, or select its official Branch." meta={`Product Run: ${runId || 'unknown'}`} />
+    {loading && <p className="status">Loading Branches...</p>}{error && <p className="error">Failed to load Branches: {formatApiError(error)}</p>}
+    {!loading && !error && <><SectionCard title="Product Run"><MetadataList items={[{ label: 'Display name', value: runQuery.data?.display_name ?? '—' }, { label: 'Status', value: runQuery.data?.status ?? '—' }, { label: 'Official Branch ID', value: runQuery.data?.official_branch_id ?? 'None' }, { label: 'Branches', value: branches.length }]} />{runQuery.data?.official_branch_id === null && <p className="error">Warning: this Product Run has no official Branch.</p>}{runQuery.data?.official_branch_id && !officialBranch && <p className="error">Warning: the official Branch ID does not match any loaded Branch.</p>}</SectionCard>
+      <SectionCard title="Branches">{branches.length === 0 ? <EmptyState message="No Branches are available for this Product Run." /> : <div className="item-list" aria-label="Product Run Branches">{branches.map((branch) => { const reason = officialEligibility(runQuery.data, branch, states.find((item) => item.branch_id === branch.branch_id), checkpoints); const isOfficial = branch.branch_id === runQuery.data?.official_branch_id; return <BranchCard key={branch.branch_id} branch={branch} isOfficial={isOfficial} checkpoint={checkpoints.find((item) => item.checkpoint_id === branch.head_checkpoint_id)} state={states.find((item) => item.branch_id === branch.branch_id)} action={isOfficial ? undefined : <><button type="button" onClick={() => openOfficial(branch.branch_id)} disabled={Boolean(reason)}>Make official</button>{reason && <p className="error">{reason}</p>}</>} /> })}</div>}</SectionCard>
+      {target && <SectionCard title="Make official Branch"><form onSubmit={submitOfficial}><MetadataList items={[{ label: 'Product Run', value: `${runQuery.data?.display_name ?? '—'} (${runId})` }, { label: 'Current official Branch', value: officialBranch ? `${officialBranch.display_name} (${officialBranch.branch_id})` : runQuery.data?.official_branch_id ?? 'None' }, { label: 'Target Branch', value: `${target.display_name} (${target.branch_id})` }, { label: 'Target season/week', value: `${targetState?.current_season ?? '—'} / ${targetState?.current_week ?? '—'}` }, { label: 'Effective head checkpoint', value: target.head_checkpoint_id ?? '—' }, { label: 'Legacy simulation run', value: target.legacy_simulation_run_id ?? '—' }]} />{eligibilityReason && <p className="error">{eligibilityReason}</p>}<label>Audit reason<textarea aria-label="Audit reason" value={auditReason} onChange={(event) => setAuditReason(event.target.value)} /></label><p>Command ID: <code>{officialCommandId}</code> <button type="button" onClick={() => { setOfficialCommandId(newCommandId()); setOfficialConfirmed(false) }}>Generate new command ID</button></p><label><input type="checkbox" checked={officialConfirmed} onChange={(event) => setOfficialConfirmed(event.target.checked)} /> I understand this changes the Product Run’s official Branch and therefore which Branch is published to the Viewer.</label><button type="submit" disabled={!canOfficialSubmit}>{officialMutation.isPending ? 'Making official...' : 'Confirm Make official'}</button></form>{officialNotice && <p className="status">{officialNotice}</p>}{officialMutation.error && <p className="error">{formatApiError(officialMutation.error)}</p>}{officialMutation.data && <div className="status" aria-label="Official Branch result">{officialMutation.data.changed ? 'The official Branch was changed successfully.' : 'The selected Branch was already official; no pointer change was required.'} {officialMutation.data.idempotent_replay && 'This previously completed command was returned as an idempotent replay. No duplicate change was performed.'} Previous official Branch ID: {officialMutation.data.previous_official_branch_id ?? 'None'}; official Branch ID: {officialMutation.data.official_branch_id ?? 'None'}; target Branch ID: {officialMutation.data.target_branch_id}; changed: {String(officialMutation.data.changed)}; idempotent replay: {String(officialMutation.data.idempotent_replay)}; request fingerprint: {officialMutation.data.request_fingerprint}</div>}</SectionCard>}
+      <SectionCard title="Create Branch fork"><form onSubmit={submitFork}><label>Source Branch<select aria-label="Source Branch" value={selectedId} onChange={(event) => setSourceBranchId(event.target.value)}>{branches.map((branch) => <option key={branch.branch_id} value={branch.branch_id}>{branch.display_name} ({branch.branch_id})</option>)}</select></label><p>Source checkpoint: <strong>{effectiveHead ?? 'No safe effective head'}</strong></p>{!sourceEligible && <p className="error">The selected source must be active, writable, have agreeing heads, and use an initial or current_state_capture head.</p>}{fieldNames.map((name) => <label key={name}>{name.replace(/_/g, ' ')}<input aria-label={name} value={form[name]} onChange={(event) => setForm({ ...form, [name]: event.target.value })} /></label>)}<label><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} /> I understand this creates an independent Branch and does not change the official Branch.</label><button type="submit" disabled={!canForkSubmit}>{forkMutation.isPending ? 'Creating fork...' : 'Create Branch fork'}</button></form>{forkMutation.error && <p className="error">{formatApiError(forkMutation.error)}</p>}{forkMutation.data && <div className="status" aria-label="Fork result">Created target Branch: {forkMutation.data.target_branch_id}; target checkpoint: {forkMutation.data.target_checkpoint_id}; target legacy run: {forkMutation.data.target_legacy_simulation_run_id}; idempotent replay: {String(forkMutation.data.idempotent_replay)}; created_mapping: {String(forkMutation.data.created_mapping)}; official_branch_changed: {String(forkMutation.data.official_branch_changed)}</div>}</SectionCard>
+      <SectionCard title="Selected Branch checkpoints">{!selected ? <EmptyState message="Select a Branch to inspect checkpoints." /> : <ul className="item-list" aria-label="Branch checkpoints">{checkpoints.filter((checkpoint) => checkpoint.branch_id === selected.branch_id).map((checkpoint) => <li key={checkpoint.checkpoint_id}><strong>{checkpoint.checkpoint_id}</strong> — {checkpoint.kind}, sequence {checkpoint.sequence}, season {checkpoint.season}, week {checkpoint.week ?? '—'}, event {checkpoint.event_id ?? '—'}; {checkpoint.checkpoint_id === effectiveHead ? ' effective head;' : ''} {checkpoint.checkpoint_id === effectiveHead && forkSafeKinds.has(checkpoint.kind) ? ' fork-safe' : ' not fork-safe'}</li>)}</ul>}</SectionCard></>}</main>
 }
-
-function BranchCard({ branch, state, checkpoint }: { branch: RunBranch; state?: { head_checkpoint_id: string | null; current_season: number | null; current_week: number | null; current_event_id: string | null; current_event_sequence: number | null }; checkpoint?: BranchCheckpoint }): JSX.Element {
-  const mode = branch.is_official ? 'Official Branch' : branch.status === 'active' && !branch.read_only ? 'Active writable Branch' : 'Read-only or inactive Branch'
-  return <article className="panel nested-panel"><h4>{branch.display_name} {branch.is_official && <span className="status">Official</span>}</h4><p>{mode}</p><MetadataList items={[{ label: 'Branch ID', value: branch.branch_id }, { label: 'Status', value: branch.status }, { label: 'Read only', value: String(branch.read_only) }, { label: 'Branch seed', value: branch.branch_seed ?? '—' }, { label: 'Legacy simulation run', value: branch.legacy_simulation_run_id ?? '—' }, { label: 'Forked from Branch', value: branch.forked_from_branch_id ?? '—' }, { label: 'Forked from checkpoint', value: branch.forked_from_checkpoint_id ?? '—' }, { label: 'Head checkpoint', value: branch.head_checkpoint_id ?? '—' }, { label: 'Effective head', value: branch.head_checkpoint_id && branch.head_checkpoint_id === state?.head_checkpoint_id ? branch.head_checkpoint_id : 'Heads disagree or missing' }, { label: 'Current season', value: state?.current_season ?? '—' }, { label: 'Current week', value: state?.current_week ?? '—' }, { label: 'Current event ID', value: state?.current_event_id ?? '—' }, { label: 'Current event sequence', value: state?.current_event_sequence ?? '—' }, { label: 'Head kind', value: checkpoint?.kind ?? '—' }]} /></article>
-}
+function BranchCard({ branch, state, checkpoint, isOfficial, action }: { branch: RunBranch; state?: BranchState; checkpoint?: BranchCheckpoint; isOfficial: boolean; action?: JSX.Element }): JSX.Element { const mode = isOfficial ? 'Official Branch' : branch.status === 'active' && !branch.read_only ? 'Active writable Branch' : 'Read-only or inactive Branch'; return <article className="panel nested-panel"><h4>{branch.display_name} {isOfficial && <span className="status">Official</span>}</h4><p>{mode}</p><MetadataList items={[{ label: 'Branch ID', value: branch.branch_id }, { label: 'Status', value: branch.status }, { label: 'Read only', value: String(branch.read_only) }, { label: 'Branch seed', value: branch.branch_seed ?? '—' }, { label: 'Legacy simulation run', value: branch.legacy_simulation_run_id ?? '—' }, { label: 'Forked from Branch', value: branch.forked_from_branch_id ?? '—' }, { label: 'Forked from checkpoint', value: branch.forked_from_checkpoint_id ?? '—' }, { label: 'Head checkpoint', value: branch.head_checkpoint_id ?? '—' }, { label: 'Effective head', value: branch.head_checkpoint_id && branch.head_checkpoint_id === state?.head_checkpoint_id ? branch.head_checkpoint_id : 'Heads disagree or missing' }, { label: 'Current season', value: state?.current_season ?? '—' }, { label: 'Current week', value: state?.current_week ?? '—' }, { label: 'Current event ID', value: state?.current_event_id ?? '—' }, { label: 'Current event sequence', value: state?.current_event_sequence ?? '—' }, { label: 'Head kind', value: checkpoint?.kind ?? '—' }]} />{action}</article> }

@@ -41,6 +41,28 @@ describe('AdminRunBranchesPage', () => {
     expect(api.forkRunBranch).not.toHaveBeenCalled()
     expect(await screen.findByLabelText('Official Branch result')).toHaveTextContent('The official Branch was changed successfully.')
   })
+  it('preserves the reviewed official Branch and command ID for an ordinary error retry', async () => {
+    api.makeOfficialRunBranch.mockRejectedValueOnce(new api.ApiError(JSON.stringify({ detail: 'try again' }), 400)).mockResolvedValueOnce({ product_run_id: 'run-a', previous_official_branch_id: 'official', official_branch_id: 'readonly', target_branch_id: 'readonly', changed: true, idempotent_replay: false, request_fingerprint: 'retry' })
+    renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches')
+    await screen.findByText('Admin Run'); await userEvent.click(screen.getByRole('button', { name: 'Make official' })); await userEvent.type(screen.getByLabelText('Audit reason'), 'reviewed reason'); await userEvent.click(screen.getAllByRole('checkbox')[0]); await userEvent.click(screen.getByRole('button', { name: 'Confirm Make official' }))
+    await waitFor(() => expect(api.makeOfficialRunBranch).toHaveBeenCalledTimes(1))
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm Make official' }))
+    await waitFor(() => expect(api.makeOfficialRunBranch).toHaveBeenCalledTimes(2))
+    expect(api.makeOfficialRunBranch.mock.calls[1]).toEqual(api.makeOfficialRunBranch.mock.calls[0])
+  })
+  it('refreshes the reviewed official Branch snapshot after a 409 conflict', async () => {
+    const refreshedRun = { ...run, official_branch_id: 'official-b' }
+    api.getRunContainer.mockResolvedValueOnce({ ...run, official_branch_id: 'official-a' }).mockResolvedValue(refreshedRun)
+    api.makeOfficialRunBranch.mockRejectedValueOnce(new api.ApiError(JSON.stringify({ detail: 'official changed' }), 409)).mockResolvedValueOnce({ product_run_id: 'run-a', previous_official_branch_id: 'official-b', official_branch_id: 'readonly', target_branch_id: 'readonly', changed: true, idempotent_replay: false, request_fingerprint: 'after-conflict' })
+    renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches')
+    await screen.findByText('Admin Run'); await userEvent.click(screen.getAllByRole('button', { name: 'Make official' })[1]); await userEvent.type(screen.getByLabelText('Audit reason'), 'reviewed reason'); await userEvent.click(screen.getAllByRole('checkbox')[0]); await userEvent.click(screen.getByRole('button', { name: 'Confirm Make official' }))
+    await waitFor(() => expect(api.makeOfficialRunBranch).toHaveBeenCalledTimes(1)); expect(api.makeOfficialRunBranch.mock.calls[0][2].expected_current_official_branch_id).toBe('official-a')
+    await screen.findByText('Official Branch state changed or must be reviewed again.')
+    expect(screen.getAllByRole('checkbox')[0]).not.toBeChecked(); expect(screen.getAllByText('official-b').length).toBeGreaterThan(0)
+    const firstCommandId = api.makeOfficialRunBranch.mock.calls[0][2].command_id
+    await userEvent.click(screen.getAllByRole('checkbox')[0]); await userEvent.click(screen.getByRole('button', { name: 'Confirm Make official' }))
+    await waitFor(() => expect(api.makeOfficialRunBranch).toHaveBeenCalledTimes(2)); expect(api.makeOfficialRunBranch.mock.calls[1][2]).toMatchObject({ expected_current_official_branch_id: 'official-b', audit_reason: 'reviewed reason' }); expect(api.makeOfficialRunBranch.mock.calls[1][2].command_id).not.toBe(firstCommandId)
+  })
   it.each(['read-only Product Run', 'built-in Product Run', 'inactive Branch', 'missing legacy binding', 'missing BranchState', 'disagreeing heads', 'missing checkpoint', 'foreign Branch checkpoint', 'foreign Run checkpoint'])('disables Make official for an ineligible target: %s', async (caseName) => {
     let modifiedRun = run; let branches = [official, readonly]; let states = [state(), state('readonly', 'cp-readonly')]; let checkpoints = [checkpoint(), checkpoint('cp-readonly', 'initial', 'readonly')]
     if (caseName === 'read-only Product Run') modifiedRun = { ...run, read_only: true }

@@ -12,6 +12,8 @@ const api = vi.hoisted(() => ({
   getRun: vi.fn(),
   getRunStatusSummary: vi.fn(),
   listRuns: vi.fn(),
+  listRunContainers: vi.fn(),
+  getViewerOfficialRunContext: vi.fn(),
   listCountries: vi.fn(),
   getCountriesMetadata: vi.fn(),
   getTournamentTemplatesMetadata: vi.fn(),
@@ -273,6 +275,8 @@ describe('Module 17 pages through routes', () => {
     localStorage.clear()
     vi.clearAllMocks()
     api.listRuns.mockResolvedValue({ runs: [] })
+    api.listRunContainers.mockResolvedValue({ run_containers: [] })
+    api.getViewerOfficialRunContext.mockResolvedValue({ product_run_id: 'product-run-a', product_run_display_name: 'Product Run A', product_run_status: 'active', product_run_storage_kind: 'custom_local', product_run_read_only: false, official_branch_id: 'branch-a', official_branch_display_name: 'Official Branch A', official_branch_status: 'active', official_branch_read_only: false, official_branch_seed: 42, legacy_simulation_run_id: 'run-a', head_checkpoint_id: 'checkpoint-a', head_checkpoint_kind: 'current_state_capture', current_season: 2027, current_week: 9, current_event_id: null, current_event_sequence: null, resolution_version: 'v1' })
     api.listWorldPackages.mockResolvedValue({ packages: [{ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'built_in', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 4, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/official_fax_world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json', world_metadata_path: 'config/worlds/official_fax_world/world.json', continents_path: 'config/worlds/official_fax_world/continents.json', regions_path: 'config/worlds/official_fax_world/regions.json', travel_regions_path: 'config/worlds/official_fax_world/travel_regions.json' } }] })
     api.getWorldPackage.mockResolvedValue({ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'built_in', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 4, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/official_fax_world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json', world_metadata_path: 'config/worlds/official_fax_world/world.json', continents_path: 'config/worlds/official_fax_world/continents.json', regions_path: 'config/worlds/official_fax_world/regions.json', travel_regions_path: 'config/worlds/official_fax_world/travel_regions.json' } })
     api.cloneOfficialWorldPackage.mockResolvedValue({ ok: true, dry_run: true, source_world_id: 'official_fax_world', new_world_id: 'my_custom_world', target_path: 'config/worlds/custom/my_custom_world', created_files: ['world.json'], package: null, validation: null, errors: [] })

@@ -34,6 +34,7 @@ from beta_engine.api.routers.world_talent_preview import router as world_talent_
 from beta_engine.api.routers.world_manual_player_overrides import router as world_manual_player_overrides_router
 from beta_engine.api.routers.world_package import router as world_package_router
 from beta_engine.api.routers.world_packages import router as world_packages_router
+from beta_engine.api.routers.viewer_run_context import router as viewer_run_context_router
 
 router = APIRouter()
 router.include_router(health_router)
@@ -68,3 +69,4 @@ router.include_router(world_talent_preview_router)
 router.include_router(world_manual_player_overrides_router)
 router.include_router(world_package_router)
 router.include_router(world_packages_router)
+router.include_router(viewer_run_context_router)

@@ -4349,3 +4349,25 @@ export type DryRunValidationSummary = {
     validation_conflicts: number
   }
 }
+
+
+export type ViewerOfficialRunContext = {
+  product_run_id: string
+  product_run_display_name: string
+  product_run_status: string
+  product_run_storage_kind: string
+  product_run_read_only: boolean
+  official_branch_id: string
+  official_branch_display_name: string
+  official_branch_status: string
+  official_branch_read_only: boolean
+  official_branch_seed: number | null
+  legacy_simulation_run_id: string
+  head_checkpoint_id: string
+  head_checkpoint_kind: string
+  current_season: number | null
+  current_week: number | null
+  current_event_id: string | null
+  current_event_sequence: number | null
+  resolution_version: string
+}

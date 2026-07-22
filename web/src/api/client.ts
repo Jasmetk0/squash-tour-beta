@@ -62,6 +62,7 @@ import type {
   RunSummary,
   RunContainer,
   RunContainerListResponse,
+  ViewerOfficialRunContext,
   RunBranch,
   RunBranchListResponse,
   BranchCheckpoint,
@@ -785,6 +786,10 @@ export function listRunContainers(): Promise<RunContainerListResponse> {
 
 export function getRunContainer(runId: string): Promise<RunContainer> {
   return request(`/run-containers/${encodeURIComponent(runId)}`)
+}
+
+export function getViewerOfficialRunContext(productRunId: string): Promise<ViewerOfficialRunContext> {
+  return request(`/viewer/runs/${encodeURIComponent(productRunId)}/official-context`)
 }
 
 export function listRunBranches(runId?: string): Promise<RunBranchListResponse> {

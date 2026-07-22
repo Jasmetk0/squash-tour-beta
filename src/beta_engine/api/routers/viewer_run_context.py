@@ -18,7 +18,7 @@ def get_viewer_official_run_context(
     product_run_id: str, service: SimulationApiService = Depends(get_simulation_api_service)
 ) -> ViewerOfficialRunContextResponse:
     try:
-        context = service.repository.get_viewer_official_run_context(product_run_id=product_run_id)
+        context = service.get_viewer_official_run_context(product_run_id)
     except ViewerOfficialRunContextNotFoundError as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
     except ViewerOfficialRunContextConflictError as error:

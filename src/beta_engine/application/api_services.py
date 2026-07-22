@@ -67,6 +67,7 @@ from beta_engine.infrastructure.db import (
     LegacyRunCloneResult,
     LegacyRunClonePreflightResult,
     SimulationPersistenceRepository,
+    ViewerOfficialRunContext,
     SimulationRunInfo,
 )
 from beta_engine.infrastructure.db.repositories import (
@@ -729,6 +730,10 @@ class SimulationApiService:
     manual_overrides_service: ManualPlayerOverridesService = field(default_factory=ManualPlayerOverridesService)
     countries_service: CountriesConfigService = field(default_factory=CountriesConfigService)
     world_package_registry_service: WorldPackageRegistryService | None = None
+    def get_viewer_official_run_context(self, product_run_id: str) -> ViewerOfficialRunContext:
+        """Read the current official Viewer context for a Product Run."""
+        return self.repository.get_viewer_official_run_context(product_run_id=product_run_id)
+
     def initialize_run(
         self,
         *,

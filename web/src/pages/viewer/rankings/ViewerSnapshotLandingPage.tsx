@@ -8,6 +8,7 @@ import { RankingPreviewTable } from '../../../viewer/RankingPreviewTable'
 import { parseRacePreviewPayload } from '../../../viewer/racePayload'
 import { parseRankingPreviewPayload } from '../../../viewer/rankingPayload'
 import { useActiveViewerRunId } from '../../../viewer/useActiveViewerRunId'
+import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
 import { latestSnapshot } from './viewerSnapshotDisplay'
 
 export type ViewerSnapshotLandingMode = 'ranking' | 'race'
@@ -26,15 +27,16 @@ export type ViewerSnapshotLandingConfig = {
 }
 
 export function ViewerSnapshotLandingPage({ config }: { config: ViewerSnapshotLandingConfig }): JSX.Element {
-  const activeRunId = useActiveViewerRunId()
+  const legacySimulationRunId = useActiveViewerRunId()
+  const productRunId = useActiveViewerProductRunId()
   const snapshotsQuery = useQuery({
-    queryKey: ['viewer-top-level-snapshots', config.mode, activeRunId],
-    queryFn: () => (config.mode === 'ranking' ? listRankingSnapshots(activeRunId ?? '') : listRaceSnapshots(activeRunId ?? '')),
-    enabled: Boolean(activeRunId),
+    queryKey: ['viewer-top-level-snapshots', config.mode, legacySimulationRunId],
+    queryFn: () => (config.mode === 'ranking' ? listRankingSnapshots(legacySimulationRunId ?? '') : listRaceSnapshots(legacySimulationRunId ?? '')),
+    enabled: Boolean(legacySimulationRunId),
     retry: false
   })
 
-  if (!activeRunId) {
+  if (!legacySimulationRunId) {
     return (
       <ViewerShellPage title={config.title} description={config.description}>
         <ViewerEmptyState>{config.emptyMessage}</ViewerEmptyState>
@@ -52,7 +54,7 @@ export function ViewerSnapshotLandingPage({ config }: { config: ViewerSnapshotLa
       <ViewerActiveRunCard ariaLabel={`${config.title} active run snapshot summary`} title={`${config.title} snapshot landing`}>
         <ViewerMetadataList
           items={[
-            { label: 'Active run ID', value: activeRunId },
+            { label: 'Active run ID', value: legacySimulationRunId },
             { label: config.countLabel, value: snapshotsQuery.isLoading ? 'Loading…' : snapshots.length },
             { label: 'Latest snapshot sequence', value: latest ? latest.snapshot_sequence : '—' },
             { label: 'Latest source event ID', value: latest?.source_event_id ?? '—' },
@@ -65,22 +67,20 @@ export function ViewerSnapshotLandingPage({ config }: { config: ViewerSnapshotLa
         {rankingPreview?.rows.length ? (
           <div>
             <h4>Top 10 Ranking Preview</h4>
-            <RankingPreviewTable rows={rankingPreview.rows} ariaLabel="Latest Top 10 ranking preview table" runId={activeRunId} />
+            <RankingPreviewTable rows={rankingPreview.rows} ariaLabel="Latest Top 10 ranking preview table" runId={productRunId ?? undefined} />
           </div>
         ) : null}
         {racePreview?.rows.length ? (
           <div>
             <h4>Top 10 Race Preview</h4>
-            <RacePreviewTable rows={racePreview.rows} ariaLabel="Latest Top 10 race preview table" runId={activeRunId} />
+            <RacePreviewTable rows={racePreview.rows} ariaLabel="Latest Top 10 race preview table" runId={productRunId ?? undefined} />
           </div>
         ) : null}
 
-        <ViewerActiveRunLinks
-          links={[
-            { label: config.openLabel, to: config.runScopedPath(activeRunId) },
-            ...(latest ? [{ label: config.latestLabel, to: config.detailPath(activeRunId, latest.snapshot_sequence) }] : [])
-          ]}
-        />
+        {productRunId ? <ViewerActiveRunLinks links={[
+          { label: config.openLabel, to: config.runScopedPath(productRunId) },
+          ...(latest ? [{ label: config.latestLabel, to: config.detailPath(productRunId, latest.snapshot_sequence) }] : [])
+        ]} /> : <p className="status">Select a Product Run before opening run-scoped pages.</p>}
       </ViewerActiveRunCard>
     </ViewerShellPage>
   )

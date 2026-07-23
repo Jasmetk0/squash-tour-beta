@@ -3225,12 +3225,13 @@ describe('Module 17 pages through routes', () => {
   })
 
   it('renders top-level Viewer rankings snapshot landing without duplicate active run nav', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    localStorage.setItem('beta_engine:viewer_active_product_run_id', 'product-run-a')
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'legacy-run-a')
     renderAppAt('/viewer/rankings')
     expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
-    expect(await screen.findByLabelText('MSA Rankings active run snapshot summary')).toHaveTextContent('run-a')
-    expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
-    expect(screen.getByRole('link', { name: 'View latest ranking snapshot' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings/4')
+    expect(await screen.findByLabelText('MSA Rankings active run snapshot summary')).toHaveTextContent('legacy-run-a')
+    expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/product-run-a/rankings')
+    expect(screen.getByRole('link', { name: 'View latest ranking snapshot' })).toHaveAttribute('href', '/viewer/runs/product-run-a/rankings/4')
     expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
   })
 

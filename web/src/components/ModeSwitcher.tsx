@@ -1,13 +1,17 @@
 import { NavLink } from 'react-router-dom'
 
 import { getModeSwitcherTarget } from '../viewer/modeSwitcherRoutes'
+import { useActiveViewerProductRunId } from '../viewer/useActiveViewerProductRunId'
+import { useActiveViewerRunId } from '../viewer/useActiveViewerRunId'
 
 type ModeSwitcherProps = {
   pathname: string
 }
 
 export function ModeSwitcher({ pathname }: ModeSwitcherProps): JSX.Element {
-  const { viewerTarget, adminTarget } = getModeSwitcherTarget(pathname)
+  const activeProductRunId = useActiveViewerProductRunId()
+  const activeLegacySimulationRunId = useActiveViewerRunId()
+  const { viewerTarget, adminTarget } = getModeSwitcherTarget(pathname, { activeProductRunId, activeLegacySimulationRunId })
 
   return (
     <div className="mode-switcher" aria-label="Mode switcher">

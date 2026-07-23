@@ -79,5 +79,6 @@ describe('AdminRunBranchesPage', () => {
     renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches')
     expect(await screen.findByRole('button', { name: 'Make official' })).toBeDisabled()
   })
-  it('has no unsafe Branch or Viewer action surface', async () => { renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await screen.findAllByText('Official Branch'); for (const text of ['delete Branch', 'replay checkpoint', 'restore checkpoint', 'Viewer', 'simulate against selected Branch']) expect(screen.queryByText(text, { exact: false })).not.toBeInTheDocument() })
+  it('links read-only to the official Viewer Product Run without additional requests', async () => { renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); const link = await screen.findByRole('link', { name: 'Open official Viewer' }); expect(link).toHaveAttribute('href', '/viewer/runs/run-a/rankings'); expect(api.getRunContainer).toHaveBeenCalledTimes(1); expect(api.listRunBranches).toHaveBeenCalledTimes(1); expect(api.listBranchStates).toHaveBeenCalledTimes(1); expect(api.listBranchCheckpoints).toHaveBeenCalledTimes(1) })
+  it('has no unsafe Branch action surface', async () => { renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await screen.findAllByText('Official Branch'); for (const text of ['delete Branch', 'replay checkpoint', 'restore checkpoint', 'simulate against selected Branch']) expect(screen.queryByText(text, { exact: false })).not.toBeInTheDocument() })
 })

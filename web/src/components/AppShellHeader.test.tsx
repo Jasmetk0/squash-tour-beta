@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
@@ -7,9 +8,11 @@ import type { AppShellMode } from '../navigation/appShellMode'
 
 function renderAppShellHeader(mode: AppShellMode, pathname: string): void {
   render(
-    <MemoryRouter initialEntries={[pathname]}>
-      <AppShellHeader mode={mode} pathname={pathname} />
-    </MemoryRouter>
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <MemoryRouter initialEntries={[pathname]}>
+        <AppShellHeader mode={mode} pathname={pathname} />
+      </MemoryRouter>
+    </QueryClientProvider>
   )
 }
 
@@ -51,6 +54,6 @@ describe('AppShellHeader', () => {
     renderAppShellHeader('admin', '/admin/runs/run-a/finals')
 
     expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', '/admin/runs/run-a/finals')
-    expect(screen.getByRole('link', { name: 'Viewer / MSA' })).toHaveAttribute('href', '/viewer')
+    expect(screen.getByRole('link', { name: 'Viewer / MSA' })).toHaveAttribute('href', '/viewer/runs')
   })
 })

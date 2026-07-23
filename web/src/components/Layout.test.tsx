@@ -52,7 +52,7 @@ describe('Layout mode navigation', () => {
     renderWithRoute(<Layout />, '/admin/runs/run-a/finals')
 
     expect(await screen.findByText('Admin / Engine Mode')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Viewer / MSA' })).toHaveAttribute('href', '/viewer')
+    expect(screen.getByRole('link', { name: 'Viewer / MSA' })).toHaveAttribute('href', '/viewer/runs')
     expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', '/admin/runs/run-a/finals')
     expect(screen.getByRole('link', { name: 'World' })).toHaveAttribute('href', '/admin/world')
     expect(screen.getByRole('link', { name: 'Tour & Seasons' })).toHaveAttribute('href', '/admin/tour-seasons')

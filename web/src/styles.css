@@ -305,6 +305,19 @@ button {
   color: #0f172a;
 }
 
+.viewer-product-run-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.8rem;
+  align-items: center;
+  margin: 0 0 0.85rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #dbeafe;
+  border-radius: 0.4rem;
+  background: #eff6ff;
+  font-size: 0.82rem;
+}
+
 .app-header {
   align-items: flex-start;
   border-bottom: 1px solid #e2e8f0;

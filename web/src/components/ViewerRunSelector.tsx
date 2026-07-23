@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { FormEvent, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import type { RunContainer, ViewerOfficialRunContext } from '../api/types'
 import { getViewerOfficialRunContext, listRunContainers } from '../api/client'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
@@ -17,6 +17,8 @@ function contextDetails(context: ViewerOfficialRunContext): string { return `${c
 
 function useSelection() {
   const queryClient = useQueryClient()
+  const location = useLocation()
+  const navigate = useNavigate()
   const activeProductRunId = useActiveViewerProductRunId()
   const [selectedRunId, setSelectedRunId] = useState(() => readViewerActiveProductRunId() ?? '')
   const [pending, setPending] = useState(false); const [selectionError, setSelectionError] = useState<string | null>(null); const [context, setContext] = useState<ViewerOfficialRunContext | null>(null); const previous = useRef<ViewerOfficialRunContext | null>(null); const migrated = useRef(false)
@@ -26,7 +28,7 @@ function useSelection() {
   const applyContext = (next: ViewerOfficialRunContext) => { const old = previous.current; setContext(next); previous.current = next; writeViewerActiveRunId(next.legacy_simulation_run_id); writeLastRunId(next.legacy_simulation_run_id); if (old && (old.official_branch_id !== next.official_branch_id || old.legacy_simulation_run_id !== next.legacy_simulation_run_id)) setSelectionError(`The official Branch changed from ${old.official_branch_display_name} to ${next.official_branch_display_name}. Viewer now resolves this Product Run through the new official Branch. An already-open legacy run-scoped URL may still represent the previously opened namespace until you follow a refreshed active-run link.`) }
   useEffect(() => { if (officialQuery.data) applyContext(officialQuery.data) }, [officialQuery.data])
   useEffect(() => { if (activeProductRunId) { setSelectedRunId(activeProductRunId); return } const legacy = readViewerActiveRunId(); if (!migrated.current && legacy && runs.some(r => r.run_id === legacy)) { migrated.current = true; void select(legacy, true) } }, [activeProductRunId, runs])
-  async function select(productRunId: string, migration = false) { const normalized = productRunId.trim(); if (!normalized || pending) return; setPending(true); setSelectionError(null); try { const next = await getViewerOfficialRunContext(normalized); writeViewerActiveProductRunId(normalized); applyContext(next); queryClient.setQueryData(['viewer-official-run-context', normalized], next) } catch (error) { setSelectionError(isApiNotFound(error) ? 'This Product Run no longer exists. ' + formatApiError(error) : formatApiError(error)); if (!migration) setSelectedRunId(normalized) } finally { setPending(false) } }
+  async function select(productRunId: string, migration = false) { const normalized = productRunId.trim(); if (!normalized || pending) return; setPending(true); setSelectionError(null); try { const next = await getViewerOfficialRunContext(normalized); writeViewerActiveProductRunId(normalized); applyContext(next); queryClient.setQueryData(['viewer-official-run-context', normalized], next); const match = location.pathname.match(/^\/viewer\/runs\/[^/]+(.*)$/); if (match) navigate(`/viewer/runs/${encodeURIComponent(normalized)}${match[1]}${location.search}${location.hash}`) } catch (error) { setSelectionError(isApiNotFound(error) ? 'This Product Run no longer exists. ' + formatApiError(error) : formatApiError(error)); if (!migration) setSelectedRunId(normalized) } finally { setPending(false) } }
   const displayed = context ?? officialQuery.data ?? previous.current
   const contextError = officialQuery.isError && previous.current ? `Official context is temporarily unavailable; showing the last resolved context. ${formatApiError(officialQuery.error)}` : officialQuery.isError ? (isApiNotFound(officialQuery.error) ? 'This Product Run no longer exists.' : formatApiError(officialQuery.error)) : null
   return { activeProductRunId, legacyRunId: readViewerActiveRunId(), selectedRunId, setSelectedRunId, pending, selectionError, contextError, displayed, containersQuery, runs, select }

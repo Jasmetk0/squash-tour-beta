@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes, useParams } from 'react-router-dom'
+import { ViewerProductRunRouteBoundary } from './viewer/ViewerProductRunRouteContext'
 
 import { Layout } from './components/Layout'
 import { BootstrapLineagePage } from './pages/BootstrapLineagePage'
@@ -232,23 +233,25 @@ export default function App(): JSX.Element {
         <Route path="viewer/search" element={<ViewerSearchPage />} />
         <Route path="viewer/history" element={<ViewerHistoryPage />} />
         <Route path="viewer/runs" element={<ViewerRunBrowserPage />} />
-        <Route path="viewer/runs/:runId/rankings" element={<ViewerRunSnapshotListPage mode="ranking" />} />
-        <Route path="viewer/runs/:runId/rankings/:snapshotSequence" element={<ViewerRankingSnapshotDetailPage />} />
-        <Route path="viewer/runs/:runId/race" element={<ViewerRunSnapshotListPage mode="race" />} />
-        <Route path="viewer/runs/:runId/race/:snapshotSequence" element={<ViewerRaceSnapshotDetailPage />} />
-        <Route path="viewer/runs/:runId/tournaments" element={<ViewerRunTournamentsPage />} />
-        <Route path="viewer/runs/:runId/tournaments/:eventId" element={<ViewerRunTournamentDetailPage />} />
-        <Route path="viewer/runs/:runId/calendar" element={<ViewerRunCalendarPage />} />
-        <Route path="viewer/runs/:runId/calendar/:eventId" element={<ViewerRunPlannedEventPage />} />
-        <Route path="viewer/runs/:runId/weeks/:week" element={<ViewerRunWeekPage />} />
-        <Route path="viewer/runs/:runId/players" element={<ViewerRunPlayersPage />} />
-        <Route path="viewer/runs/:runId/players/:playerId/career" element={<ViewerRunPlayerCareerPage />} />
-        <Route path="viewer/runs/:runId/countries" element={<ViewerRunCountriesPage />} />
-        <Route path="viewer/runs/:runId/countries/:countryCode" element={<ViewerRunCountryDetailPage />} />
-        <Route path="viewer/runs/:runId/history" element={<ViewerRunHistoryPage />} />
-        <Route path="viewer/runs/:runId/finals" element={<ViewerRunFinalsPage />} />
-        <Route path="viewer/runs/:runId/finals/qualification" element={<ViewerRunFinalsQualificationPage />} />
-        <Route path="viewer/runs/:runId/finals/result" element={<ViewerRunFinalsResultPage />} />
+        <Route path="viewer/runs/:runId" element={<ViewerProductRunRouteBoundary />}>
+        <Route path="rankings" element={<ViewerRunSnapshotListPage mode="ranking" />} />
+        <Route path="rankings/:snapshotSequence" element={<ViewerRankingSnapshotDetailPage />} />
+        <Route path="race" element={<ViewerRunSnapshotListPage mode="race" />} />
+        <Route path="race/:snapshotSequence" element={<ViewerRaceSnapshotDetailPage />} />
+        <Route path="tournaments" element={<ViewerRunTournamentsPage />} />
+        <Route path="tournaments/:eventId" element={<ViewerRunTournamentDetailPage />} />
+        <Route path="calendar" element={<ViewerRunCalendarPage />} />
+        <Route path="calendar/:eventId" element={<ViewerRunPlannedEventPage />} />
+        <Route path="weeks/:week" element={<ViewerRunWeekPage />} />
+        <Route path="players" element={<ViewerRunPlayersPage />} />
+        <Route path="players/:playerId/career" element={<ViewerRunPlayerCareerPage />} />
+        <Route path="countries" element={<ViewerRunCountriesPage />} />
+        <Route path="countries/:countryCode" element={<ViewerRunCountryDetailPage />} />
+        <Route path="history" element={<ViewerRunHistoryPage />} />
+        <Route path="finals" element={<ViewerRunFinalsPage />} />
+        <Route path="finals/qualification" element={<ViewerRunFinalsQualificationPage />} />
+        <Route path="finals/result" element={<ViewerRunFinalsResultPage />} />
+        </Route>
 
         <Route path="runs" element={<Navigate to="/admin/runs" replace />} />
         <Route path="runs/:runId" element={<LegacyRunRedirect />} />

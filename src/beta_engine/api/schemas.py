@@ -213,6 +213,21 @@ class AdminSetOfficialRunBranchResponse(BaseModel):
     request_fingerprint: str
 
 
+class AdminBranchSimulateNextMatchRequest(BaseModel):
+    expected_head_checkpoint_id: str = Field(min_length=1, max_length=128)
+    command_id: str = Field(min_length=1, max_length=128)
+    audit_reason: str = Field(min_length=1, max_length=2000)
+    explicit_confirmation: bool
+
+
+class AdminBranchSimulateNextMatchResponse(BaseModel):
+    product_run_id: str; branch_id: str; legacy_simulation_run_id: str; command_id: str
+    request_fingerprint: str; idempotent_replay: bool; previous_head_checkpoint_id: str; new_head_checkpoint_id: str
+    previous_season: int; previous_week: int | None = None; previous_event_id: str | None = None; previous_event_sequence: int | None = None
+    current_season: int; current_week: int | None = None; current_event_id: str | None = None; current_event_sequence: int | None = None
+    official_branch_changed: bool; simulation_result: dict[str, object]
+
+
 class BranchStateResponse(BaseModel):
     branch_id: str; run_id: str; head_checkpoint_id: str | None = None
     current_season: int | None = None; current_week: int | None = None

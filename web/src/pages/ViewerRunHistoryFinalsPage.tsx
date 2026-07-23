@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
 import { getFinalsQualification, getFinalsResult, getFinalsSummary, getRunActivity } from '../api/client'
 import type { FinalsQualificationResponse, FinalsResultResponse, FinalsSummaryResponse, RunActivityItem } from '../api/types'
@@ -307,10 +308,10 @@ function TechnicalData({ summary, title, payload, emptyText }: { summary: string
 }
 
 export function ViewerRunHistoryPage(): JSX.Element {
-  const { runId = '' } = useParams()
+  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
   const activityQuery = useQuery({
-    queryKey: ['run-activity', runId],
-    queryFn: () => getRunActivity(runId),
+    queryKey: ['run-activity', runId, legacySimulationRunId],
+    queryFn: () => getRunActivity(legacySimulationRunId),
     enabled: Boolean(runId),
     retry: false
   })
@@ -377,10 +378,10 @@ export function ViewerRunHistoryPage(): JSX.Element {
 }
 
 export function ViewerRunFinalsPage(): JSX.Element {
-  const { runId = '' } = useParams()
+  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
   const summaryQuery = useQuery({
-    queryKey: ['finals-summary', runId],
-    queryFn: () => getFinalsSummary(runId),
+    queryKey: ['finals-summary', runId, legacySimulationRunId],
+    queryFn: () => getFinalsSummary(legacySimulationRunId),
     enabled: Boolean(runId),
     retry: false
   })
@@ -469,10 +470,10 @@ export function ViewerRunFinalsPage(): JSX.Element {
 }
 
 export function ViewerRunFinalsQualificationPage(): JSX.Element {
-  const { runId = '' } = useParams()
+  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
   const qualificationQuery = useQuery({
-    queryKey: ['finals-qualification', runId],
-    queryFn: () => getFinalsQualification(runId),
+    queryKey: ['finals-qualification', runId, legacySimulationRunId],
+    queryFn: () => getFinalsQualification(legacySimulationRunId),
     enabled: Boolean(runId),
     retry: false
   })
@@ -536,10 +537,10 @@ export function ViewerRunFinalsQualificationPage(): JSX.Element {
 }
 
 export function ViewerRunFinalsResultPage(): JSX.Element {
-  const { runId = '' } = useParams()
+  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
   const resultQuery = useQuery({
-    queryKey: ['finals-result', runId],
-    queryFn: () => getFinalsResult(runId),
+    queryKey: ['finals-result', runId, legacySimulationRunId],
+    queryFn: () => getFinalsResult(legacySimulationRunId),
     enabled: Boolean(runId),
     retry: false
   })

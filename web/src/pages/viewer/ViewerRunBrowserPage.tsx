@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { listRuns } from '../../api/client'
+import { listRunContainers } from '../../api/client'
 import { ViewerRunSelector } from '../../components/ViewerRunSelector'
 import { ViewerShellPage } from '../../components/viewer/ViewerShellPage'
 import { ViewerActiveRunLinks, ViewerEmptyState, ViewerMetadataList } from '../../components/viewer/ViewerLandingComponents'
@@ -10,15 +10,15 @@ import {
   buildRunBrowserPrimaryLinks,
   normalizeRunBrowserRuns
 } from '../../viewer/runBrowserDisplay'
-import { useActiveViewerRunId } from '../../viewer/useActiveViewerRunId'
+import { useActiveViewerProductRunId } from '../../viewer/useActiveViewerProductRunId'
 import { findViewerTopLevelHubLink } from '../../viewer/viewerHubLinks'
 
 const VIEWER_RUN_BROWSER_HUB_LINK = findViewerTopLevelHubLink('Run Browser')
 
 export function ViewerRunBrowserPage(): JSX.Element {
-  const activeRunId = useActiveViewerRunId()
-  const runsQuery = useQuery({ queryKey: ['viewer-run-selector-runs'], queryFn: listRuns, retry: false })
-  const runs = normalizeRunBrowserRuns(runsQuery.data?.runs)
+  const activeRunId = useActiveViewerProductRunId()
+  const runsQuery = useQuery({ queryKey: ['viewer-run-selector-runs'], queryFn: listRunContainers, retry: false })
+  const runs = normalizeRunBrowserRuns(runsQuery.data?.run_containers)
 
   return (
     <ViewerShellPage

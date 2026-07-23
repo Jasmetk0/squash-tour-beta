@@ -228,70 +228,70 @@ export function viewerRunsPath(): string {
   return '/viewer/runs'
 }
 
-export function viewerPlayerProfilePath(runId: ViewerPathSegment, playerId: ViewerPathSegment): string {
-  return `/viewer/runs/${encodePathSegment(runId)}/players/${encodePathSegment(playerId)}/career`
+export function viewerPlayerProfilePath(productRunId: ViewerPathSegment, playerId: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(productRunId)}/players/${encodePathSegment(playerId)}/career`
 }
 
-export function viewerCountryProfilePath(runId: ViewerPathSegment, countryCode: ViewerPathSegment): string {
-  return `/viewer/runs/${encodePathSegment(runId)}/countries/${encodePathSegment(countryCode)}`
+export function viewerCountryProfilePath(productRunId: ViewerPathSegment, countryCode: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(productRunId)}/countries/${encodePathSegment(countryCode)}`
 }
 
-export function viewerTournamentDetailPath(runId: ViewerPathSegment, eventId: ViewerPathSegment): string {
-  return `/viewer/runs/${encodePathSegment(runId)}/tournaments/${encodePathSegment(eventId)}`
+export function viewerTournamentDetailPath(productRunId: ViewerPathSegment, eventId: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(productRunId)}/tournaments/${encodePathSegment(eventId)}`
 }
 
-export function viewerWeekDetailPath(runId: ViewerPathSegment, week: ViewerPathSegment): string {
-  return `/viewer/runs/${encodePathSegment(runId)}/weeks/${encodePathSegment(week)}`
+export function viewerWeekDetailPath(productRunId: ViewerPathSegment, week: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(productRunId)}/weeks/${encodePathSegment(week)}`
 }
 
-export function viewerRankingSnapshotPath(runId: ViewerPathSegment, snapshotSequence: ViewerPathSegment): string {
-  return `/viewer/runs/${encodePathSegment(runId)}/rankings/${encodePathSegment(snapshotSequence)}`
+export function viewerRankingSnapshotPath(productRunId: ViewerPathSegment, snapshotSequence: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(productRunId)}/rankings/${encodePathSegment(snapshotSequence)}`
 }
 
-export function viewerRaceSnapshotPath(runId: ViewerPathSegment, snapshotSequence: ViewerPathSegment): string {
-  return `/viewer/runs/${encodePathSegment(runId)}/race/${encodePathSegment(snapshotSequence)}`
+export function viewerRaceSnapshotPath(productRunId: ViewerPathSegment, snapshotSequence: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(productRunId)}/race/${encodePathSegment(snapshotSequence)}`
 }
 
-export function viewerSeasonCalendarPath(runId: ViewerPathSegment): string {
-  return `/viewer/runs/${encodePathSegment(runId)}/calendar`
+export function viewerSeasonCalendarPath(productRunId: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(productRunId)}/calendar`
 }
 
-export function viewerHistoryPath(runId: ViewerPathSegment): string {
-  return `/viewer/runs/${encodePathSegment(runId)}/history`
+export function viewerHistoryPath(productRunId: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(productRunId)}/history`
 }
 
-export function viewerFinalsPath(runId: ViewerPathSegment): string {
-  return `/viewer/runs/${encodePathSegment(runId)}/finals`
+export function viewerFinalsPath(productRunId: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(productRunId)}/finals`
 }
 
-export function viewerFinalsQualificationPath(runId: ViewerPathSegment): string {
-  return `/viewer/runs/${encodePathSegment(runId)}/finals/qualification`
+export function viewerFinalsQualificationPath(productRunId: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(productRunId)}/finals/qualification`
 }
 
-export function viewerFinalsResultPath(runId: ViewerPathSegment): string {
-  return `/viewer/runs/${encodePathSegment(runId)}/finals/result`
+export function viewerFinalsResultPath(productRunId: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(productRunId)}/finals/result`
 }
 
-export function viewerPlannedEventPath(runId: ViewerPathSegment, eventId: ViewerPathSegment): string {
-  return `/viewer/runs/${encodePathSegment(runId)}/calendar/${encodePathSegment(eventId)}`
+export function viewerPlannedEventPath(productRunId: ViewerPathSegment, eventId: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(productRunId)}/calendar/${encodePathSegment(eventId)}`
 }
 
-export function viewerPlayersPath(runId: ViewerPathSegment): string {
-  return `/viewer/runs/${encodePathSegment(runId)}/players`
+export function viewerPlayersPath(productRunId: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(productRunId)}/players`
 }
 
-export function viewerCountriesPath(runId: ViewerPathSegment): string {
-  return `/viewer/runs/${encodePathSegment(runId)}/countries`
+export function viewerCountriesPath(productRunId: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(productRunId)}/countries`
 }
 
-export function viewerTournamentsPath(runId: ViewerPathSegment): string {
-  return `/viewer/runs/${encodePathSegment(runId)}/tournaments`
+export function viewerTournamentsPath(productRunId: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(productRunId)}/tournaments`
 }
 
-export function viewerRankingsPath(runId: ViewerPathSegment): string {
-  return `/viewer/runs/${encodePathSegment(runId)}/rankings`
+export function viewerRankingsPath(productRunId: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(productRunId)}/rankings`
 }
 
-export function viewerRacePath(runId: ViewerPathSegment): string {
-  return `/viewer/runs/${encodePathSegment(runId)}/race`
+export function viewerRacePath(productRunId: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(productRunId)}/race`
 }

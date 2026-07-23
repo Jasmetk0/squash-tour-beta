@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
 import {
   getRunNationDetail,
@@ -384,7 +385,7 @@ function displayDistribution(values: Array<{ band: string; count: number }> | nu
 }
 
 export function ViewerRunPlayersPage(): JSX.Element {
-  const { runId = '' } = useParams()
+  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
   const [searchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [countryCode, setCountryCode] = useState(() => searchParams.get('country') ?? '')
@@ -408,7 +409,7 @@ export function ViewerRunPlayersPage(): JSX.Element {
 
   const playersQuery = useQuery({
     queryKey: ['viewer-run-players', runId, queryParams],
-    queryFn: () => listRunPlayers(runId, queryParams),
+    queryFn: () => listRunPlayers(legacySimulationRunId, queryParams),
     enabled: Boolean(runId)
   })
   const players = normalizePlayerListEntries(playersQuery.data?.players)
@@ -496,26 +497,27 @@ export function ViewerRunPlayersPage(): JSX.Element {
 }
 
 export function ViewerRunPlayerCareerPage(): JSX.Element {
-  const { runId = '', playerId = '' } = useParams()
+  const { playerId = '' } = useParams()
+  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
 
   const detailQuery = useQuery({
     queryKey: ['viewer-run-player-detail', runId, playerId],
-    queryFn: () => getRunPlayerDetail(runId, playerId),
+    queryFn: () => getRunPlayerDetail(legacySimulationRunId, playerId),
     enabled: Boolean(runId && playerId)
   })
   const careerQuery = useQuery({
     queryKey: ['viewer-player-career-history', runId, playerId],
-    queryFn: () => getRunPlayerCareerHistory(runId, playerId),
+    queryFn: () => getRunPlayerCareerHistory(legacySimulationRunId, playerId),
     enabled: Boolean(runId && playerId)
   })
   const performanceQuery = useQuery({
     queryKey: ['viewer-player-career-performance', runId, playerId],
-    queryFn: () => getRunPlayerCareerPerformance(runId, playerId),
+    queryFn: () => getRunPlayerCareerPerformance(legacySimulationRunId, playerId),
     enabled: Boolean(runId && playerId)
   })
   const tournamentResultsQuery = useQuery({
     queryKey: ['viewer-player-career-results', runId, playerId],
-    queryFn: () => getRunPlayerTournamentResults(runId, playerId),
+    queryFn: () => getRunPlayerTournamentResults(legacySimulationRunId, playerId),
     enabled: Boolean(runId && playerId)
   })
 
@@ -717,7 +719,7 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
 }
 
 export function ViewerRunCountriesPage(): JSX.Element {
-  const { runId = '' } = useParams()
+  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('total_players_desc')
 
@@ -733,7 +735,7 @@ export function ViewerRunCountriesPage(): JSX.Element {
 
   const nationsQuery = useQuery({
     queryKey: ['viewer-run-countries', runId, queryParams],
-    queryFn: () => listRunNations(runId, queryParams),
+    queryFn: () => listRunNations(legacySimulationRunId, queryParams),
     enabled: Boolean(runId)
   })
   const nations = normalizeNationListEntries(nationsQuery.data?.nations)
@@ -816,11 +818,12 @@ export function ViewerRunCountriesPage(): JSX.Element {
 }
 
 export function ViewerRunCountryDetailPage(): JSX.Element {
-  const { runId = '', countryCode = '' } = useParams()
+  const { countryCode = '' } = useParams()
+  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
 
   const detailQuery = useQuery({
     queryKey: ['viewer-run-country-detail', runId, countryCode],
-    queryFn: () => getRunNationDetail(runId, countryCode),
+    queryFn: () => getRunNationDetail(legacySimulationRunId, countryCode),
     enabled: Boolean(runId && countryCode)
   })
 

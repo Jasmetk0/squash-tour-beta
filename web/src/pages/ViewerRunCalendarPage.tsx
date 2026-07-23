@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
 import { getRun, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
 import type { EventRecord, RaceSnapshot, RankingSnapshot, SeasonStateResponse } from '../api/types'
@@ -113,10 +114,10 @@ function safeSnapshotRecords<T extends RankingSnapshot | RaceSnapshot>(snapshots
 
 
 export function ViewerRunCalendarPage(): JSX.Element {
-  const { runId = '' } = useParams()
+  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
 
-  const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId), retry: false })
-  const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId), retry: false })
+  const runQuery = useQuery({ queryKey: ['run', runId, legacySimulationRunId], queryFn: () => getRun(legacySimulationRunId), enabled: Boolean(runId), retry: false })
+  const eventsQuery = useQuery({ queryKey: ['events', runId, legacySimulationRunId], queryFn: () => listEvents(legacySimulationRunId), enabled: Boolean(runId), retry: false })
 
   const orderedEvents = safeOrderedEvents(runQuery.data)
   const nextEventIndex = runQuery.data?.season_state.next_event_index ?? 0
@@ -231,10 +232,11 @@ export function ViewerRunCalendarPage(): JSX.Element {
 }
 
 export function ViewerRunPlannedEventPage(): JSX.Element {
-  const { runId = '', eventId = '' } = useParams()
+  const { eventId = '' } = useParams()
+  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
 
-  const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId && eventId), retry: false })
-  const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId && eventId), retry: false })
+  const runQuery = useQuery({ queryKey: ['run', runId, legacySimulationRunId], queryFn: () => getRun(legacySimulationRunId), enabled: Boolean(runId && eventId), retry: false })
+  const eventsQuery = useQuery({ queryKey: ['events', runId, legacySimulationRunId], queryFn: () => listEvents(legacySimulationRunId), enabled: Boolean(runId && eventId), retry: false })
 
   const orderedEvents = safeOrderedEvents(runQuery.data)
   const nextEventIndex = runQuery.data?.season_state.next_event_index ?? 0
@@ -351,22 +353,23 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
 }
 
 export function ViewerRunWeekPage(): JSX.Element {
-  const { runId = '', week = '' } = useParams()
+  const { week = '' } = useParams()
+  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
   const parsedWeek = parseViewerWeekParam(week)
   const hasValidWeek = parsedWeek != null
   const queriesEnabled = Boolean(runId && hasValidWeek)
 
-  const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: queriesEnabled, retry: false })
-  const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: queriesEnabled, retry: false })
+  const runQuery = useQuery({ queryKey: ['run', runId, legacySimulationRunId], queryFn: () => getRun(legacySimulationRunId), enabled: queriesEnabled, retry: false })
+  const eventsQuery = useQuery({ queryKey: ['events', runId, legacySimulationRunId], queryFn: () => listEvents(legacySimulationRunId), enabled: queriesEnabled, retry: false })
   const rankingSnapshotsQuery = useQuery({
-    queryKey: ['viewer-week-ranking-snapshots', runId],
-    queryFn: () => listRankingSnapshots(runId),
+    queryKey: ['viewer-week-ranking-snapshots', runId, legacySimulationRunId],
+    queryFn: () => listRankingSnapshots(legacySimulationRunId),
     enabled: queriesEnabled,
     retry: false
   })
   const raceSnapshotsQuery = useQuery({
-    queryKey: ['viewer-week-race-snapshots', runId],
-    queryFn: () => listRaceSnapshots(runId),
+    queryKey: ['viewer-week-race-snapshots', runId, legacySimulationRunId],
+    queryFn: () => listRaceSnapshots(legacySimulationRunId),
     enabled: queriesEnabled,
     retry: false
   })

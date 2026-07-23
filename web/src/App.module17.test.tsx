@@ -270,13 +270,18 @@ function futureApplyValidationResponseMock(
   }
 }
 
+
+function viewerOfficialContext(productRunId: string, legacySimulationRunId: string) {
+  return { product_run_id: productRunId, product_run_display_name: `Product Run ${productRunId}`, product_run_status: 'active', product_run_storage_kind: 'custom_local', product_run_read_only: false, official_branch_id: `branch-${productRunId}`, official_branch_display_name: 'Official Branch', official_branch_status: 'active', official_branch_read_only: false, official_branch_seed: 42, legacy_simulation_run_id: legacySimulationRunId, head_checkpoint_id: 'checkpoint-a', head_checkpoint_kind: 'current_state_capture', current_season: 2027, current_week: 9, current_event_id: null, current_event_sequence: null, resolution_version: 'viewer_official_branch_v1' }
+}
+
 describe('Module 17 pages through routes', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.clearAllMocks()
     api.listRuns.mockResolvedValue({ runs: [] })
     api.listRunContainers.mockResolvedValue({ run_containers: [] })
-    api.getViewerOfficialRunContext.mockResolvedValue({ product_run_id: 'product-run-a', product_run_display_name: 'Product Run A', product_run_status: 'active', product_run_storage_kind: 'custom_local', product_run_read_only: false, official_branch_id: 'branch-a', official_branch_display_name: 'Official Branch A', official_branch_status: 'active', official_branch_read_only: false, official_branch_seed: 42, legacy_simulation_run_id: 'run-a', head_checkpoint_id: 'checkpoint-a', head_checkpoint_kind: 'current_state_capture', current_season: 2027, current_week: 9, current_event_id: null, current_event_sequence: null, resolution_version: 'v1' })
+    api.getViewerOfficialRunContext.mockImplementation((productRunId: string) => Promise.resolve(viewerOfficialContext(productRunId, productRunId === 'product-run-a' ? 'legacy-run-a' : `legacy-${productRunId}`)))
     api.listWorldPackages.mockResolvedValue({ packages: [{ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'built_in', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 4, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/official_fax_world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json', world_metadata_path: 'config/worlds/official_fax_world/world.json', continents_path: 'config/worlds/official_fax_world/continents.json', regions_path: 'config/worlds/official_fax_world/regions.json', travel_regions_path: 'config/worlds/official_fax_world/travel_regions.json' } }] })
     api.getWorldPackage.mockResolvedValue({ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'built_in', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 4, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/official_fax_world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json', world_metadata_path: 'config/worlds/official_fax_world/world.json', continents_path: 'config/worlds/official_fax_world/continents.json', regions_path: 'config/worlds/official_fax_world/regions.json', travel_regions_path: 'config/worlds/official_fax_world/travel_regions.json' } })
     api.cloneOfficialWorldPackage.mockResolvedValue({ ok: true, dry_run: true, source_world_id: 'official_fax_world', new_world_id: 'my_custom_world', target_path: 'config/worlds/custom/my_custom_world', created_files: ['world.json'], package: null, validation: null, errors: [] })
@@ -3174,6 +3179,7 @@ describe('Module 17 pages through routes', () => {
   })
 
   it('renders the Viewer MSA home route as the MSA homepage shell', async () => {
+    localStorage.removeItem('beta_engine:viewer_active_product_run_id')
     localStorage.removeItem('beta_engine:viewer_active_run_id')
     api.listRuns.mockResolvedValueOnce({ runs: [] })
     renderAppAt('/viewer')
@@ -3190,14 +3196,15 @@ describe('Module 17 pages through routes', () => {
   })
 
   it('renders the Viewer MSA home route with active run status links without duplicate run navigation', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'viewer-run-1')
+    localStorage.setItem('beta_engine:viewer_active_product_run_id', 'product-run-1')
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'legacy-run-1')
     api.listRuns.mockResolvedValueOnce({ runs: [] })
     api.getRun.mockResolvedValueOnce({
-      run: { run_id: 'viewer-run-1', season: 2027, seed: 5, next_event_index: 0, total_events: 0, completed_event_ids: [] },
+      run: { run_id: 'legacy-run-1', season: 2027, seed: 5, next_event_index: 0, total_events: 0, completed_event_ids: [] },
       season_state: { season: 2027, next_event_index: 0, completed_event_ids: [], ordered_events: [] }
     })
     api.getRunStatusSummary.mockResolvedValueOnce({
-      run_id: 'viewer-run-1',
+      run_id: 'legacy-run-1',
       season: 2027,
       seed: 5,
       progress: { next_event_index: 0, total_events: 0, completed_event_count: 0 },
@@ -3207,25 +3214,36 @@ describe('Module 17 pages through routes', () => {
       lineage: { child_run_count: 0 },
       history_counts: { events: 0, ranking_snapshots: 0, race_snapshots: 0 }
     })
-    api.listEvents.mockResolvedValueOnce({ run_id: 'viewer-run-1', events: [] })
-    api.listRankingSnapshots.mockResolvedValueOnce({ run_id: 'viewer-run-1', snapshots: [] })
-    api.listRaceSnapshots.mockResolvedValueOnce({ run_id: 'viewer-run-1', snapshots: [] })
-    api.getRunActivity.mockResolvedValueOnce({ run_id: 'viewer-run-1', items: [] })
-    api.getFinalsSummary.mockResolvedValueOnce({ run_id: 'viewer-run-1', season: 2027, qualification: null, result: null })
+    api.listEvents.mockResolvedValueOnce({ run_id: 'legacy-run-1', events: [] })
+    api.listRankingSnapshots.mockResolvedValueOnce({ run_id: 'legacy-run-1', snapshots: [] })
+    api.listRaceSnapshots.mockResolvedValueOnce({ run_id: 'legacy-run-1', snapshots: [] })
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'legacy-run-1', items: [] })
+    api.getFinalsSummary.mockResolvedValueOnce({ run_id: 'legacy-run-1', season: 2027, qualification: null, result: null })
     renderAppAt('/viewer')
     expect(await screen.findByRole('heading', { name: /MSA Squash/, level: 2 })).toBeInTheDocument()
-    expect(screen.getAllByText(/viewer-run-1/)[0]).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Active Run Rankings' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/rankings')
+    expect(screen.getAllByText(/legacy-run-1/)[0]).toBeInTheDocument()
+    expect(api.getRun).toHaveBeenCalledWith('legacy-run-1')
+    expect(api.getRunStatusSummary).toHaveBeenCalledWith('legacy-run-1')
+    expect(api.listEvents).toHaveBeenCalledWith('legacy-run-1')
+    expect(api.listRankingSnapshots).toHaveBeenCalledWith('legacy-run-1')
+    expect(api.listRaceSnapshots).toHaveBeenCalledWith('legacy-run-1')
+    expect(api.getRunActivity).toHaveBeenCalledWith('legacy-run-1')
+    expect(api.getFinalsSummary).toHaveBeenCalledWith('legacy-run-1')
+    expect(screen.getByRole('link', { name: 'Active Run Rankings' })).toHaveAttribute('href', '/viewer/runs/product-run-1/rankings')
     expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
+    const runHrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href')).filter((href) => href?.startsWith('/viewer/runs/'))
+    expect(runHrefs.some((href) => href?.includes('product-run-1'))).toBe(true)
+    expect(runHrefs.some((href) => href?.includes('legacy-run-1') || href?.includes('/viewer/runs//'))).toBe(false)
   })
 
   it('renders top-level Viewer rankings snapshot landing without duplicate active run nav', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    localStorage.setItem('beta_engine:viewer_active_product_run_id', 'product-run-a')
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'legacy-run-a')
     renderAppAt('/viewer/rankings')
     expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
-    expect(await screen.findByLabelText('MSA Rankings active run snapshot summary')).toHaveTextContent('run-a')
-    expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
-    expect(screen.getByRole('link', { name: 'View latest ranking snapshot' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings/4')
+    expect(await screen.findByLabelText('MSA Rankings active run snapshot summary')).toHaveTextContent('legacy-run-a')
+    expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/product-run-a/rankings')
+    expect(screen.getByRole('link', { name: 'View latest ranking snapshot' })).toHaveAttribute('href', '/viewer/runs/product-run-a/rankings/4')
     expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
   })
 

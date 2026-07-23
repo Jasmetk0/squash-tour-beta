@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
 import { getEvent, getRun, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
 import type { EventRecord, SeasonStateResponse } from '../api/types'
@@ -119,10 +120,10 @@ function TournamentListResultMetadata({ event, runId }: { event: EventRecord; ru
 }
 
 export function ViewerRunTournamentsPage(): JSX.Element {
-  const { runId = '' } = useParams()
+  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
 
-  const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId) })
-  const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId), retry: false })
+  const eventsQuery = useQuery({ queryKey: ['events', runId, legacySimulationRunId], queryFn: () => listEvents(legacySimulationRunId), enabled: Boolean(runId) })
+  const runQuery = useQuery({ queryKey: ['run', runId, legacySimulationRunId], queryFn: () => getRun(legacySimulationRunId), enabled: Boolean(runId), retry: false })
 
   const events = safeEventRecords(eventsQuery.data?.events)
   const plannedContext = useMemo(() => buildPlannedContext(runQuery.data), [runQuery.data])
@@ -192,24 +193,25 @@ export function ViewerRunTournamentsPage(): JSX.Element {
 }
 
 export function ViewerRunTournamentDetailPage(): JSX.Element {
-  const { runId = '', eventId = '' } = useParams()
+  const { eventId = '' } = useParams()
+  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
 
   const eventQuery = useQuery({
     queryKey: ['event', runId, eventId],
-    queryFn: () => getEvent(runId, eventId),
+    queryFn: () => getEvent(legacySimulationRunId, eventId),
     enabled: Boolean(runId && eventId),
     retry: false
   })
-  const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId && eventId), retry: false })
+  const runQuery = useQuery({ queryKey: ['run', runId, legacySimulationRunId], queryFn: () => getRun(legacySimulationRunId), enabled: Boolean(runId && eventId), retry: false })
   const rankingSnapshotsQuery = useQuery({
     queryKey: ['viewer-tournament-ranking-snapshots', runId, eventId],
-    queryFn: () => listRankingSnapshots(runId),
+    queryFn: () => listRankingSnapshots(legacySimulationRunId),
     enabled: Boolean(runId && eventId),
     retry: false
   })
   const raceSnapshotsQuery = useQuery({
     queryKey: ['viewer-tournament-race-snapshots', runId, eventId],
-    queryFn: () => listRaceSnapshots(runId),
+    queryFn: () => listRaceSnapshots(legacySimulationRunId),
     enabled: Boolean(runId && eventId),
     retry: false
   })

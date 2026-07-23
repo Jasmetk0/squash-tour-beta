@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
 import {
   getRaceSnapshot,
@@ -149,7 +150,7 @@ function listPath(mode: ViewerSnapshotMode, runId: string): string {
 }
 
 export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }): JSX.Element {
-  const { runId = '' } = useParams()
+  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
   const copy = getSnapshotCopy(mode)
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedSequence, setSelectedSequence] = useState<number | null>(null)
@@ -161,12 +162,12 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
   const hasRequestedSequence = Number.isInteger(requestedSequence) && requestedSequence > 0
 
   const snapshotsQuery = useQuery({
-    queryKey: [`viewer-${mode}-publications`, runId],
-    queryFn: () => listSnapshots(mode, runId),
+    queryKey: [`viewer-${mode}-publications`, runId, legacySimulationRunId],
+    queryFn: () => listSnapshots(mode, legacySimulationRunId),
     enabled: Boolean(runId)
   })
-  const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId) })
-  const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId) })
+  const runQuery = useQuery({ queryKey: ['run', runId, legacySimulationRunId], queryFn: () => getRun(legacySimulationRunId), enabled: Boolean(runId) })
+  const eventsQuery = useQuery({ queryKey: ['events', runId, legacySimulationRunId], queryFn: () => listEvents(legacySimulationRunId), enabled: Boolean(runId) })
 
   const snapshots = normalizeSnapshots(snapshotsQuery.data)
   const plannedContext = useMemo(() => buildPlannedContext(runQuery.data), [runQuery.data])
@@ -454,24 +455,25 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
 }
 
 export function ViewerRunSnapshotDetailPage({ mode }: { mode: ViewerSnapshotMode }): JSX.Element {
-  const { runId = '', snapshotSequence = '' } = useParams()
+  const { snapshotSequence = '' } = useParams()
+  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
   const copy = getSnapshotCopy(mode)
   const parsedSequence = Number(snapshotSequence)
   const isValidSequence = /^\d+$/.test(snapshotSequence) && Number.isSafeInteger(parsedSequence) && parsedSequence > 0
 
   const snapshotQuery = useQuery({
     queryKey: [`viewer-${mode}-publication`, runId, parsedSequence],
-    queryFn: () => getSnapshot(mode, runId, parsedSequence),
+    queryFn: () => getSnapshot(mode, legacySimulationRunId, parsedSequence),
     enabled: Boolean(runId && isValidSequence),
     retry: false
   })
   const snapshotsQuery = useQuery({
-    queryKey: [`viewer-${mode}-publications`, runId],
-    queryFn: () => listSnapshots(mode, runId),
+    queryKey: [`viewer-${mode}-publications`, runId, legacySimulationRunId],
+    queryFn: () => listSnapshots(mode, legacySimulationRunId),
     enabled: Boolean(runId && isValidSequence)
   })
-  const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId && isValidSequence) })
-  const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId && isValidSequence) })
+  const runQuery = useQuery({ queryKey: ['run', runId, legacySimulationRunId], queryFn: () => getRun(legacySimulationRunId), enabled: Boolean(runId && isValidSequence) })
+  const eventsQuery = useQuery({ queryKey: ['events', runId, legacySimulationRunId], queryFn: () => listEvents(legacySimulationRunId), enabled: Boolean(runId && isValidSequence) })
 
   const snapshot = snapshotQuery.data ?? null
   const plannedContext = useMemo(() => buildPlannedContext(runQuery.data), [runQuery.data])

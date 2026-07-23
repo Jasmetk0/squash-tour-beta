@@ -3179,6 +3179,7 @@ describe('Module 17 pages through routes', () => {
   })
 
   it('renders the Viewer MSA home route as the MSA homepage shell', async () => {
+    localStorage.removeItem('beta_engine:viewer_active_product_run_id')
     localStorage.removeItem('beta_engine:viewer_active_run_id')
     api.listRuns.mockResolvedValueOnce({ runs: [] })
     renderAppAt('/viewer')
@@ -3195,14 +3196,15 @@ describe('Module 17 pages through routes', () => {
   })
 
   it('renders the Viewer MSA home route with active run status links without duplicate run navigation', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'viewer-run-1')
+    localStorage.setItem('beta_engine:viewer_active_product_run_id', 'product-run-1')
+    localStorage.setItem('beta_engine:viewer_active_run_id', 'legacy-run-1')
     api.listRuns.mockResolvedValueOnce({ runs: [] })
     api.getRun.mockResolvedValueOnce({
-      run: { run_id: 'viewer-run-1', season: 2027, seed: 5, next_event_index: 0, total_events: 0, completed_event_ids: [] },
+      run: { run_id: 'legacy-run-1', season: 2027, seed: 5, next_event_index: 0, total_events: 0, completed_event_ids: [] },
       season_state: { season: 2027, next_event_index: 0, completed_event_ids: [], ordered_events: [] }
     })
     api.getRunStatusSummary.mockResolvedValueOnce({
-      run_id: 'viewer-run-1',
+      run_id: 'legacy-run-1',
       season: 2027,
       seed: 5,
       progress: { next_event_index: 0, total_events: 0, completed_event_count: 0 },
@@ -3212,16 +3214,26 @@ describe('Module 17 pages through routes', () => {
       lineage: { child_run_count: 0 },
       history_counts: { events: 0, ranking_snapshots: 0, race_snapshots: 0 }
     })
-    api.listEvents.mockResolvedValueOnce({ run_id: 'viewer-run-1', events: [] })
-    api.listRankingSnapshots.mockResolvedValueOnce({ run_id: 'viewer-run-1', snapshots: [] })
-    api.listRaceSnapshots.mockResolvedValueOnce({ run_id: 'viewer-run-1', snapshots: [] })
-    api.getRunActivity.mockResolvedValueOnce({ run_id: 'viewer-run-1', items: [] })
-    api.getFinalsSummary.mockResolvedValueOnce({ run_id: 'viewer-run-1', season: 2027, qualification: null, result: null })
+    api.listEvents.mockResolvedValueOnce({ run_id: 'legacy-run-1', events: [] })
+    api.listRankingSnapshots.mockResolvedValueOnce({ run_id: 'legacy-run-1', snapshots: [] })
+    api.listRaceSnapshots.mockResolvedValueOnce({ run_id: 'legacy-run-1', snapshots: [] })
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'legacy-run-1', items: [] })
+    api.getFinalsSummary.mockResolvedValueOnce({ run_id: 'legacy-run-1', season: 2027, qualification: null, result: null })
     renderAppAt('/viewer')
     expect(await screen.findByRole('heading', { name: /MSA Squash/, level: 2 })).toBeInTheDocument()
-    expect(screen.getAllByText(/viewer-run-1/)[0]).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Active Run Rankings' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/rankings')
+    expect(screen.getAllByText(/legacy-run-1/)[0]).toBeInTheDocument()
+    expect(api.getRun).toHaveBeenCalledWith('legacy-run-1')
+    expect(api.getRunStatusSummary).toHaveBeenCalledWith('legacy-run-1')
+    expect(api.listEvents).toHaveBeenCalledWith('legacy-run-1')
+    expect(api.listRankingSnapshots).toHaveBeenCalledWith('legacy-run-1')
+    expect(api.listRaceSnapshots).toHaveBeenCalledWith('legacy-run-1')
+    expect(api.getRunActivity).toHaveBeenCalledWith('legacy-run-1')
+    expect(api.getFinalsSummary).toHaveBeenCalledWith('legacy-run-1')
+    expect(screen.getByRole('link', { name: 'Active Run Rankings' })).toHaveAttribute('href', '/viewer/runs/product-run-1/rankings')
     expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
+    const runHrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href')).filter((href) => href?.startsWith('/viewer/runs/'))
+    expect(runHrefs.some((href) => href?.includes('product-run-1'))).toBe(true)
+    expect(runHrefs.some((href) => href?.includes('legacy-run-1') || href?.includes('/viewer/runs//'))).toBe(false)
   })
 
   it('renders top-level Viewer rankings snapshot landing without duplicate active run nav', async () => {

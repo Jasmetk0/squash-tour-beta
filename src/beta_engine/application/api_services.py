@@ -1740,6 +1740,8 @@ class SimulationApiService:
         replay = self.repository.get_branch_next_match_command_replay(command)
         if replay is not None:
             return replay
+        if self.repository.get_run_container(run_id=command.product_run_id.strip()) is None:
+            raise KeyError(f"product_run_id {command.product_run_id.strip()} was not found")
         target = self.resolve_branch_execution_target(branch_id=command.branch_id)
         if target.product_run_id != command.product_run_id:
             # The repository repeats this inside its transaction; this avoids doing expensive work for a bad path.

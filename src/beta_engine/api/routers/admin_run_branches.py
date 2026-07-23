@@ -21,6 +21,7 @@ from beta_engine.infrastructure.db import (
     OfficialBranchSelectionIdempotencyConflictError,
     OfficialBranchSelectionStateMismatchError,
     BranchSimulateNextMatchCommand, BranchSimulationValidationError,
+    BranchExecutionTargetNotFoundError, BranchExecutionTargetConflictError,
     BranchSimulationConflictError, BranchSimulationIdempotencyConflictError,
 )
 
@@ -32,9 +33,9 @@ def simulate_next_match_on_branch(product_run_id: str, branch_id: str, payload: 
     command = BranchSimulateNextMatchCommand(product_run_id=product_run_id, branch_id=branch_id, **payload.model_dump())
     try:
         return AdminBranchSimulateNextMatchResponse.model_validate(service.simulate_next_match_on_branch_atomically(command).__dict__)
-    except KeyError as exc:
+    except (KeyError, BranchExecutionTargetNotFoundError) as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except BranchSimulationIdempotencyConflictError as exc:
+    except (BranchSimulationIdempotencyConflictError, BranchExecutionTargetConflictError) as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     except BranchSimulationConflictError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc

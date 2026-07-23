@@ -194,6 +194,14 @@ class BranchExecutionTargetResolutionError(ValueError):
     """Raised when a Branch cannot safely target legacy simulation execution."""
 
 
+class BranchExecutionTargetNotFoundError(BranchExecutionTargetResolutionError):
+    """The selected Branch points at a missing legacy execution namespace."""
+
+
+class BranchExecutionTargetConflictError(BranchExecutionTargetResolutionError):
+    """The selected Branch is present but not executable in its current state."""
+
+
 @dataclass(frozen=True)
 class LegacyRunCloneInventorySection:
     """Deterministic, bounded inventory of one legacy-run persistence section."""
@@ -832,25 +840,25 @@ class SimulationPersistenceRepository:
 
             container = session.get(RunContainerModel, branch.run_id)
             if container is None:
-                raise BranchExecutionTargetResolutionError(
+                raise BranchExecutionTargetConflictError(
                     f"run branch {branch_id} references missing product run {branch.run_id}"
                 )
 
             legacy_simulation_run_id = (branch.legacy_simulation_run_id or "").strip()
             if not legacy_simulation_run_id:
-                raise BranchExecutionTargetResolutionError(
+                raise BranchExecutionTargetConflictError(
                     f"run branch {branch_id} has no legacy simulation run binding"
                 )
             if session.get(SimulationRunModel, legacy_simulation_run_id) is None:
-                raise BranchExecutionTargetResolutionError(
+                raise BranchExecutionTargetNotFoundError(
                     f"run branch {branch_id} references missing legacy simulation run {legacy_simulation_run_id}"
                 )
             if branch.read_only:
-                raise BranchExecutionTargetResolutionError(
+                raise BranchExecutionTargetConflictError(
                     f"run branch {branch_id} is read-only and cannot execute simulation commands"
                 )
             if branch.status != "active":
-                raise BranchExecutionTargetResolutionError(
+                raise BranchExecutionTargetConflictError(
                     f"run branch {branch_id} has non-executable status {branch.status!r}"
                 )
 

@@ -51,11 +51,13 @@ function buildPlannedEventMap(runData: SeasonStateResponse | undefined): Map<str
 
 function renderLinkedEventId(runId: string, eventId: string | null | undefined): ReactNode {
   if (!eventId) return '—'
+  if (!runId) return eventId
   return <Link to={viewerPlannedEventPath(runId, eventId)}>{eventId}</Link>
 }
 
 function renderLinkedWeek(runId: string, week: number | string | null | undefined): ReactNode {
   if (week == null || week === '') return '—'
+  if (!runId) return `W${week}`
   return <Link to={viewerWeekDetailPath(runId, week)}>W{week}</Link>
 }
 
@@ -121,7 +123,7 @@ function renderActivityItem(item: RunActivityItem, runId: string, context: Activ
   }
   if (eventId) {
     parts.push(plannedEvent ? renderLinkedEventId(runId, eventId) : eventId)
-    if (persistedEvent) {
+    if (persistedEvent && runId) {
       parts.push(<Link to={viewerTournamentDetailPath(runId, eventId)}>Tournament detail {eventId}</Link>)
     }
   }
@@ -146,6 +148,7 @@ export function ViewerHomePage(): JSX.Element {
   const activeRunId = useActiveViewerRunId()
   const activeProductRunId = useActiveViewerProductRunId()
   const normalizedActiveProductRunId = activeProductRunId ?? ''
+  const hasProductRunId = Boolean(normalizedActiveProductRunId)
   const normalizedActiveRunId = normalizeViewerHomeActiveRunId(activeRunId)
   const activeRunLinks = buildViewerHomeActiveRunLinks(normalizedActiveProductRunId)
   const primaryHubLinks = buildViewerHomePrimaryHubLinks()
@@ -223,8 +226,10 @@ export function ViewerHomePage(): JSX.Element {
             </div>
             <ViewerActiveRunLinks
               layout="grid"
-              links={activeRunLinks}
+              links={hasProductRunId ? activeRunLinks : []}
             />
+            {!hasProductRunId ? <p className="status">Select a Product Run before opening run-scoped pages.</p> : null}
+
           </>
         ) : (
           <ViewerEmptyState>No active Viewer run selected. Open the run browser to choose a run before using run-scoped shortcuts.</ViewerEmptyState>
@@ -236,7 +241,7 @@ export function ViewerHomePage(): JSX.Element {
             <>
               <p>{featuredEvent.status}: <strong>{renderLinkedEventId(normalizedActiveProductRunId, featuredEvent.eventId)}</strong></p>
               <p className="status">{featuredEvent.category ?? 'Category unavailable'} · {featuredEvent.tour ?? 'Tour unavailable'} · {featuredEvent.week != null ? renderLinkedWeek(normalizedActiveProductRunId, featuredEvent.week) : 'Week unavailable'} · Template {featuredEvent.templateId ?? 'unavailable'}</p>
-              <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(normalizedActiveProductRunId)}>Open active run schedule</Link>
+              {hasProductRunId ? <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(normalizedActiveProductRunId)}>Open active run schedule</Link> : null}
             </>
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
@@ -257,25 +262,25 @@ export function ViewerHomePage(): JSX.Element {
 
         <ViewerSectionCard kicker="Read-only rankings" title="Ranking snapshots">
           {normalizedActiveRunId && canRenderActiveRunData && latestRankingSnapshot ? (
-            <p>Latest ranking snapshot <Link to={viewerRankingSnapshotPath(normalizedActiveProductRunId, latestRankingSnapshot.snapshot_sequence)}>#{latestRankingSnapshot.snapshot_sequence}</Link> from {latestRankingSnapshot.source_event_id ?? 'run history'} · {rankingSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
+            <p>Latest ranking snapshot {hasProductRunId ? <Link to={viewerRankingSnapshotPath(normalizedActiveProductRunId, latestRankingSnapshot.snapshot_sequence)}>#{latestRankingSnapshot.snapshot_sequence}</Link> : `#${latestRankingSnapshot.snapshot_sequence}`} from {latestRankingSnapshot.source_event_id ?? 'run history'} · {rankingSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           )}
-          {normalizedActiveRunId ? <Link className="viewer-active-run-link" to={viewerRankingsPath(normalizedActiveProductRunId)}>Open active run rankings</Link> : null}
+          {hasProductRunId ? <Link className="viewer-active-run-link" to={viewerRankingsPath(normalizedActiveProductRunId)}>Open active run rankings</Link> : null}
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only race" title="Race snapshots">
           {normalizedActiveRunId && canRenderActiveRunData && latestRaceSnapshot ? (
-            <p>Latest race snapshot <Link to={viewerRaceSnapshotPath(normalizedActiveProductRunId, latestRaceSnapshot.snapshot_sequence)}>#{latestRaceSnapshot.snapshot_sequence}</Link> from {latestRaceSnapshot.source_event_id ?? 'run history'} · {raceSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
+            <p>Latest race snapshot {hasProductRunId ? <Link to={viewerRaceSnapshotPath(normalizedActiveProductRunId, latestRaceSnapshot.snapshot_sequence)}>#{latestRaceSnapshot.snapshot_sequence}</Link> : `#${latestRaceSnapshot.snapshot_sequence}`} from {latestRaceSnapshot.source_event_id ?? 'run history'} · {raceSnapshotsQuery.data?.snapshots.length ?? 0} snapshots stored.</p>
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           )}
-          {normalizedActiveRunId ? <Link className="viewer-active-run-link" to={viewerRacePath(normalizedActiveProductRunId)}>Open active run race</Link> : null}
+          {hasProductRunId ? <Link className="viewer-active-run-link" to={viewerRacePath(normalizedActiveProductRunId)}>Open active run race</Link> : null}
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only matches" title="Featured Matches">
           <ViewerEmptyState>This preview is not connected for this data shape yet.</ViewerEmptyState>
-          {normalizedActiveRunId ? <Link className="viewer-active-run-link" to={viewerTournamentsPath(normalizedActiveProductRunId)}>Open active run tournaments</Link> : null}
+          {hasProductRunId ? <Link className="viewer-active-run-link" to={viewerTournamentsPath(normalizedActiveProductRunId)}>Open active run tournaments</Link> : null}
         </ViewerSectionCard>
 
         <ViewerSectionCard kicker="Read-only analytics" title="Predictions &amp; Upset Watch">
@@ -305,7 +310,7 @@ export function ViewerHomePage(): JSX.Element {
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           )}
-          {normalizedActiveRunId ? <Link className="viewer-active-run-link" to={viewerHistoryPath(normalizedActiveProductRunId)}>Open active run history</Link> : null}
+          {hasProductRunId ? <Link className="viewer-active-run-link" to={viewerHistoryPath(normalizedActiveProductRunId)}>Open active run history</Link> : null}
         </ViewerSectionCard>
       </ViewerLandingGrid>
     </section>

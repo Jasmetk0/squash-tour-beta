@@ -179,6 +179,24 @@ class BranchForkCommandModel(Base):
     created_at: Mapped[str] = mapped_column(String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP"))
 
 
+class BranchSimulationCommandModel(Base):
+    """Completed, idempotent Branch simulation command journal."""
+    __tablename__ = "branch_simulation_commands"
+    __table_args__ = (UniqueConstraint("branch_id", "previous_head_checkpoint_id", name="uq_branch_simulation_commands_branch_previous_head"),)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    product_run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    action_kind: Mapped[str] = mapped_column(String(64), nullable=False)
+    expected_head_checkpoint_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    previous_head_checkpoint_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    resulting_head_checkpoint_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    legacy_simulation_run_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    result_json: Mapped[str] = mapped_column(Text, nullable=False)
+    audit_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[str] = mapped_column(String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+
+
 class OfficialBranchSelectionCommandModel(Base):
     """Durable idempotency and audit record for official Branch selection."""
 

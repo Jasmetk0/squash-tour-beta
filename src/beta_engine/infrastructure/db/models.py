@@ -182,6 +182,7 @@ class BranchForkCommandModel(Base):
 class BranchSimulationCommandModel(Base):
     """Completed, idempotent Branch simulation command journal."""
     __tablename__ = "branch_simulation_commands"
+    __table_args__ = (UniqueConstraint("branch_id", "previous_head_checkpoint_id", name="uq_branch_simulation_commands_branch_previous_head"),)
     command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     product_run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)

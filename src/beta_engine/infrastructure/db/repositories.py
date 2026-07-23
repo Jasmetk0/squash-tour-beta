@@ -7,7 +7,7 @@ import json
 from dataclasses import dataclass
 from typing import Literal
 
-from sqlalchemy import Engine, Select, func, select, text
+from sqlalchemy import Engine, Select, func, select, text, update
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -1320,7 +1320,19 @@ class SimulationPersistenceRepository:
                 raise OfficialBranchSelectionConflictError("official Branch selection conflicts with existing durable state") from exc
             return SetOfficialRunBranchResult(command.product_run_id, previous, command.target_branch_id, command.target_branch_id, previous != command.target_branch_id, False, fingerprint)
 
-    def simulate_next_match_on_branch_atomically(self, command: BranchSimulateNextMatchCommand, *, step: object) -> BranchSimulateNextMatchResult:
+    def get_branch_next_match_command_replay(self, command: BranchSimulateNextMatchCommand) -> BranchSimulateNextMatchResult | None:
+        """Journal-only idempotency check; deliberately performs no Branch resolution."""
+        if not all(isinstance(v, str) and v.strip() for v in (command.product_run_id, command.branch_id, command.expected_head_checkpoint_id, command.command_id, command.audit_reason)) or command.explicit_confirmation is not True:
+            raise BranchSimulationValidationError("Branch Next Match requires non-empty identifiers, audit reason, and explicit confirmation")
+        normalized = {k: (v.strip() if isinstance(v, str) else v) for k, v in command.__dict__.items()}
+        fingerprint = hashlib.sha256(self.canonical_json({"product_run_id": normalized["product_run_id"], "branch_id": normalized["branch_id"], "expected_head_checkpoint_id": normalized["expected_head_checkpoint_id"], "action_kind": "simulate_next_match", "audit_reason": normalized["audit_reason"], "explicit_confirmation": True}).encode("utf-8")).hexdigest()
+        with self._session_factory() as session:
+            existing = session.get(BranchSimulationCommandModel, normalized["command_id"])
+            if existing is None: return None
+            if existing.request_fingerprint != fingerprint: raise BranchSimulationIdempotencyConflictError("command_id already exists with different Branch Next Match request")
+            return BranchSimulateNextMatchResult(**{**_from_json(existing.result_json), "idempotent_replay": True})
+
+    def simulate_next_match_on_branch_atomically(self, command: BranchSimulateNextMatchCommand, *, step: object, reviewed_pre_state_fingerprint: str) -> BranchSimulateNextMatchResult:
         """Commit legacy Next Match, checkpoint, locators, and journal as one unit."""
         if (not all(isinstance(v, str) and v.strip() for v in (command.product_run_id, command.branch_id, command.expected_head_checkpoint_id, command.command_id, command.audit_reason)) or command.explicit_confirmation is not True):
             raise BranchSimulationValidationError("Branch Next Match requires non-empty identifiers, audit reason, and explicit confirmation")
@@ -1360,6 +1372,8 @@ class SimulationPersistenceRepository:
                 if not isinstance(captured, dict) or _to_json(captured) != _to_json(self._season_state_payload_in_session(session=session, model=state_model)): raise BranchSimulationConflictError("effective head does not match current legacy state")
             elif not isinstance(payload, dict) or payload.get("target_legacy_simulation_run_id") != legacy_id: raise BranchSimulationConflictError("fork head provenance cannot prove selected legacy namespace")
             before = self._season_state_payload_in_session(session=session, model=state_model)
+            if self.checkpoint_content_hash(before) != reviewed_pre_state_fingerprint: raise BranchSimulationConflictError("legacy SeasonState changed after Next Match review")
+            previous_locator = (branch_state.current_season, branch_state.current_week, branch_state.current_event_id, branch_state.current_event_sequence)
             self._persist_branch_next_match_step_in_session(session=session, run_id=legacy_id, step=step)
             after_model = session.get(SeasonStateModel, legacy_id); after = self._season_state_payload_in_session(session=session, model=after_model)
             active = step.season_state.active_tournament.event if step.season_state.active_tournament else None
@@ -1370,8 +1384,10 @@ class SimulationPersistenceRepository:
             incomplete = BranchCheckpointRecord(checkpoint_id, command.product_run_id, command.branch_id, head, int(sequence) + 1, BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE, step.season_state.season, active.week if active else None, active.event_id if active else None, step.season_state.next_event_index if active else None, command.command_id, BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_MATCH_BRANCH, BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_MATCH_PERSISTED, container.config_version, container.config_fingerprint, container.world_id, container.world_package_fingerprint, container.global_seed, branch.branch_seed, {"hierarchy": ["global", "branch"], "global_seed": container.global_seed, "branch_seed": branch.branch_seed}, "branch_checkpoint_payload_v1", "sha256", "", checkpoint_payload)
             record = BranchCheckpointRecord(**{**incomplete.__dict__, "content_hash": self.checkpoint_envelope_content_hash(incomplete)})
             session.add(BranchCheckpointModel(checkpoint_id=record.checkpoint_id, run_id=record.run_id, branch_id=record.branch_id, parent_checkpoint_id=record.parent_checkpoint_id, sequence=record.sequence, kind=record.kind, season=record.season, week=record.week, event_id=record.event_id, event_sequence=record.event_sequence, command_id=record.command_id, command_kind=record.command_kind, command_boundary=record.command_boundary, config_version=record.config_version, config_fingerprint=record.config_fingerprint, world_id=record.world_id, world_fingerprint=record.world_fingerprint, global_seed=record.global_seed, branch_seed=record.branch_seed, seed_namespace_json=_to_json(record.seed_namespace), payload_schema_version=record.payload_schema_version, content_hash_algorithm="sha256", content_hash=record.content_hash, payload_json=_to_json(record.payload)))
-            branch.head_checkpoint_id = checkpoint_id; branch_state.head_checkpoint_id = checkpoint_id; branch_state.current_season = record.season; branch_state.current_week = record.week; branch_state.current_event_id = record.event_id; branch_state.current_event_sequence = record.event_sequence
-            result = BranchSimulateNextMatchResult(command.product_run_id, command.branch_id, legacy_id, command.command_id, fingerprint, False, head, checkpoint_id, before["season"], None, None, None, record.season, record.week, record.event_id, record.event_sequence, False, summary)
+            branch_updated = session.execute(update(RunBranchModel).where(RunBranchModel.branch_id == command.branch_id, RunBranchModel.run_id == command.product_run_id, RunBranchModel.head_checkpoint_id == head).values(head_checkpoint_id=checkpoint_id)).rowcount
+            state_updated = session.execute(update(BranchStateModel).where(BranchStateModel.branch_id == command.branch_id, BranchStateModel.run_id == command.product_run_id, BranchStateModel.head_checkpoint_id == head).values(head_checkpoint_id=checkpoint_id, current_season=record.season, current_week=record.week, current_event_id=record.event_id, current_event_sequence=record.event_sequence)).rowcount
+            if branch_updated != 1 or state_updated != 1: raise BranchSimulationConflictError("Branch head changed concurrently")
+            result = BranchSimulateNextMatchResult(command.product_run_id, command.branch_id, legacy_id, command.command_id, fingerprint, False, head, checkpoint_id, previous_locator[0] if previous_locator[0] is not None else before["season"], previous_locator[1], previous_locator[2], previous_locator[3], record.season, record.week, record.event_id, record.event_sequence, False, summary)
             session.add(BranchSimulationCommandModel(command_id=command.command_id, product_run_id=command.product_run_id, branch_id=command.branch_id, action_kind="simulate_next_match", expected_head_checkpoint_id=head, previous_head_checkpoint_id=head, resulting_head_checkpoint_id=checkpoint_id, legacy_simulation_run_id=legacy_id, request_fingerprint=fingerprint, result_json=_to_json(result.__dict__), audit_reason=command.audit_reason))
             try: session.flush()
             except IntegrityError as exc: raise BranchSimulationConflictError("concurrent Branch Next Match command conflict") from exc

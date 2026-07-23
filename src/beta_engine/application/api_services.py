@@ -1737,6 +1737,9 @@ class SimulationApiService:
 
     def simulate_next_match_on_branch_atomically(self, command: BranchSimulateNextMatchCommand) -> BranchSimulateNextMatchResult:
         """Use the legacy deterministic algorithm, committing only through Branch orchestration."""
+        replay = self.repository.get_branch_next_match_command_replay(command)
+        if replay is not None:
+            return replay
         target = self.resolve_branch_execution_target(branch_id=command.branch_id)
         if target.product_run_id != command.product_run_id:
             # The repository repeats this inside its transaction; this avoids doing expensive work for a bad path.
@@ -1745,7 +1748,9 @@ class SimulationApiService:
         run_info, state = self._load_run_context(run_id=target.legacy_simulation_run_id)
         self._validate_finals_phase_not_started(run_id=target.legacy_simulation_run_id, season=run_info.season)
         step = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info).simulate_next_match(state=state)
-        return self.repository.simulate_next_match_on_branch_atomically(command, step=step)
+        return self.repository.simulate_next_match_on_branch_atomically(
+            command, step=step, reviewed_pre_state_fingerprint=self.repository.checkpoint_content_hash(state.model_dump(mode="json"))
+        )
 
     def simulate_next_round(self, *, run_id: str) -> SimulationStepResult:
         return self._simulate_step(run_id=run_id, mode="simulate_next_round")

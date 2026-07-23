@@ -234,8 +234,8 @@ export function ViewerHomePage(): JSX.Element {
         <ViewerSectionCard kicker="Featured Tournament Hero" title="Featured Tournament Hero" variant="hero">
           {normalizedActiveRunId && canRenderActiveRunData && featuredEvent ? (
             <>
-              <p>{featuredEvent.status}: <strong>{renderLinkedEventId(normalizedActiveRunId, featuredEvent.eventId)}</strong></p>
-              <p className="status">{featuredEvent.category ?? 'Category unavailable'} · {featuredEvent.tour ?? 'Tour unavailable'} · {featuredEvent.week != null ? renderLinkedWeek(normalizedActiveRunId, featuredEvent.week) : 'Week unavailable'} · Template {featuredEvent.templateId ?? 'unavailable'}</p>
+              <p>{featuredEvent.status}: <strong>{renderLinkedEventId(normalizedActiveProductRunId, featuredEvent.eventId)}</strong></p>
+              <p className="status">{featuredEvent.category ?? 'Category unavailable'} · {featuredEvent.tour ?? 'Tour unavailable'} · {featuredEvent.week != null ? renderLinkedWeek(normalizedActiveProductRunId, featuredEvent.week) : 'Week unavailable'} · Template {featuredEvent.templateId ?? 'unavailable'}</p>
               <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(normalizedActiveProductRunId)}>Open active run schedule</Link>
             </>
           ) : (
@@ -247,7 +247,7 @@ export function ViewerHomePage(): JSX.Element {
           {normalizedActiveRunId && canRenderActiveRunData && nearbyEvents.length ? (
             <ul>
               {nearbyEvents.map((event) => (
-                <li key={event.event_id}>{renderLinkedEventId(normalizedActiveRunId, event.event_id)} · {event.category} · {renderLinkedWeek(normalizedActiveRunId, event.week)}</li>
+                <li key={event.event_id}>{renderLinkedEventId(normalizedActiveProductRunId, event.event_id)} · {event.category} · {renderLinkedWeek(normalizedActiveProductRunId, event.week)}</li>
               ))}
             </ul>
           ) : (
@@ -301,7 +301,7 @@ export function ViewerHomePage(): JSX.Element {
 
         <ViewerSectionCard kicker="Read-only storylines" title="Storylines">
           {normalizedActiveRunId && canRenderActiveRunData && latestActivityItem ? (
-            <p>{activityItems.length} activity items · Latest: {renderActivityItem(latestActivityItem, normalizedActiveRunId, activityLinkContext)}</p>
+            <p>{activityItems.length} activity items · Latest: {renderActivityItem(latestActivityItem, normalizedActiveProductRunId, activityLinkContext)}</p>
           ) : (
             <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
           )}

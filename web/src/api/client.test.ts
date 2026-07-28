@@ -36,6 +36,7 @@ import {
   makeOfficialRunBranch,
   simulateNextMatchOnBranch,
   simulateNextRoundOnBranch,
+  simulateNextWeekOnBranch,
   getWorldPackageValidation,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
@@ -1002,6 +1003,18 @@ describe('world package registry client', () => {
     await expect(simulateNextRoundOnBranch('run/a #1', 'branch/a #2', payload)).resolves.toEqual(response)
     expect(globalThis.fetch).toHaveBeenCalledWith('http://127.0.0.1:8000/admin/runs/run%2Fa%20%231/branches/branch%2Fa%20%232/simulate-next-round', expect.objectContaining({ method: 'POST', body: JSON.stringify(payload) }))
     expect((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]).not.toContain('/simulate-next-match')
+  })
+
+  it('posts Branch Next Week to its distinct exactly once encoded URL with the typed contract', async () => {
+    const payload = { expected_head_checkpoint_id: 'cp/1 #', command_id: 'week-command', audit_reason: 'advance reviewed week', explicit_confirmation: true }
+    const response = { product_run_id: 'run/a #1', branch_id: 'branch/a #2', legacy_simulation_run_id: 'legacy-1', command_id: 'week-command', request_fingerprint: 'week-fingerprint', idempotent_replay: false, previous_head_checkpoint_id: 'cp/1 #', new_head_checkpoint_id: 'cp-2', previous_season: 2030, previous_week: 1, previous_event_id: null, previous_event_sequence: null, current_season: 2030, current_week: 2, current_event_id: 'EVENT', current_event_sequence: 4, official_branch_changed: false, simulation_result: { mode: 'simulate_next_week' as const, active_tournament: null, completed_event_count: 5, next_event_index: 6 } }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(response), { status: 200 }))
+    await expect(simulateNextWeekOnBranch('run/a #1', 'branch/a #2', payload)).resolves.toEqual(response)
+    expect(globalThis.fetch).toHaveBeenCalledWith('http://127.0.0.1:8000/admin/runs/run%2Fa%20%231/branches/branch%2Fa%20%232/simulate-next-week', expect.objectContaining({ method: 'POST', body: JSON.stringify(payload) }))
+    const [url, init] = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0]
+    expect(url).not.toContain('%252F')
+    expect(JSON.parse(init.body)).toEqual(payload)
+    expect(['/simulate-next-match', '/simulate-next-round']).not.toContain(String(url).slice(String(url).lastIndexOf('/')))
   })
 
 })

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from beta_engine.application.api_services import SimulationApiService
-from beta_engine.infrastructure.db import BranchSimulateNextMatchCommand, DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
+from beta_engine.infrastructure.db import BranchSimulateNextMatchCommand, BranchSimulateNextMatchResult, DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
 from beta_engine.infrastructure.db.models import BranchCheckpointModel, BranchSimulationCommandModel, BranchStateModel, RunBranchModel, RunContainerModel
 
 
@@ -21,14 +21,20 @@ def test_branch_next_match_is_atomic_and_replay_is_journal_only(tmp_path):
     repository, service, branch_id, head = _setup(tmp_path)
     command = BranchSimulateNextMatchCommand("source", branch_id, head, "next-match-1", "test execution", True)
     result = service.simulate_next_match_on_branch_atomically(command)
+    assert isinstance(result, BranchSimulateNextMatchResult)
     assert result.idempotent_replay is False
     assert result.previous_head_checkpoint_id == head
     assert result.previous_season == 2027
     with repository._session_factory() as session:
-        assert session.query(BranchSimulationCommandModel).count() == 1
+        journal = session.get(BranchSimulationCommandModel, command.command_id)
+        assert journal.action_kind == "simulate_next_match"
         assert session.query(BranchCheckpointModel).filter_by(branch_id=branch_id).count() == 2
+        checkpoint = session.get(BranchCheckpointModel, result.new_head_checkpoint_id)
+        assert checkpoint.command_kind == "simulate_next_match_branch"
+        assert checkpoint.command_boundary == "after_branch_next_match_persisted"
         assert session.get(RunBranchModel, branch_id).head_checkpoint_id == result.new_head_checkpoint_id
         assert session.get(BranchStateModel, branch_id).head_checkpoint_id == result.new_head_checkpoint_id
+        assert session.get(RunContainerModel, "source").official_branch_id == branch_id
     # A completed journal replay must not resolve an executable Branch or calculate a match.
     with repository._session_factory.begin() as session:
         session.get(RunBranchModel, branch_id).read_only = 1

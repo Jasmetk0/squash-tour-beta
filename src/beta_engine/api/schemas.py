@@ -227,6 +227,12 @@ class AdminBranchSimulateNextMatchResponse(BaseModel):
     current_season: int; current_week: int | None = None; current_event_id: str | None = None; current_event_sequence: int | None = None
     official_branch_changed: bool; simulation_result: dict[str, object]
 
+class AdminBranchSimulateNextRoundRequest(AdminBranchSimulateNextMatchRequest):
+    pass
+
+class AdminBranchSimulateNextRoundResponse(AdminBranchSimulateNextMatchResponse):
+    pass
+
 
 class BranchStateResponse(BaseModel):
     branch_id: str; run_id: str; head_checkpoint_id: str | None = None

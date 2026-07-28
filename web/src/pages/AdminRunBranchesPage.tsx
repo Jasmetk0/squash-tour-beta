@@ -85,7 +85,16 @@ export function AdminRunBranchesPage(): JSX.Element {
   const simulationMutation = useMutation({
     mutationFn: ({ branchId, payload }: { branchId: string; payload: AdminBranchSimulateNextMatchRequest }) => simulateNextMatchOnBranch(runId, branchId, payload),
     onSuccess: async (result) => {
-      setSimulationConfirmed(false); setSimulationNotice(null); setReviewedHead(result.new_head_checkpoint_id); setSimulationCommandId(newCommandId())
+      setSimulationConfirmed(false); setSimulationNotice(null); setReviewedHead(result.new_head_checkpoint_id); setReviewedLocator((current) => ({
+        ...(current ?? { state_schema_version: '', status: 'active', metadata_json: {} }),
+        branch_id: result.branch_id,
+        run_id: result.product_run_id,
+        head_checkpoint_id: result.new_head_checkpoint_id,
+        current_season: result.current_season,
+        current_week: result.current_week,
+        current_event_id: result.current_event_id,
+        current_event_sequence: result.current_event_sequence
+      })); setSimulationCommandId(newCommandId())
       const invalidations = ['run-branches', 'branch-states', 'branch-checkpoints'].map((key) => queryClient.invalidateQueries({ queryKey: [key, runId] }))
       invalidations.push(queryClient.invalidateQueries({ predicate: (query) => query.queryKey.includes(result.legacy_simulation_run_id) }))
       if (result.branch_id === runQuery.data?.official_branch_id) invalidations.push(queryClient.invalidateQueries({ queryKey: ['viewer-official-run-context', runId] }))
@@ -99,7 +108,7 @@ export function AdminRunBranchesPage(): JSX.Element {
       const state = refreshedStates.data?.branch_states.find((item) => item.branch_id === simulationTargetId)
       const freshCheckpoints = refreshedCheckpoints.data?.branch_checkpoints ?? []
       const coherent = branch && state && !simulationEligibility(runQuery.data, branch, state, freshCheckpoints)
-      setReviewedHead(coherent ? branch.head_checkpoint_id ?? '' : branch?.head_checkpoint_id ?? '')
+      setReviewedHead(coherent ? branch.head_checkpoint_id ?? '' : '')
       setReviewedLocator(state ?? null); setSimulationCommandId(newCommandId())
     }
   })

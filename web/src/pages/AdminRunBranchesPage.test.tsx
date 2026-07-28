@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AdminRunBranchesPage, simulationEligibility } from './AdminRunBranchesPage'
 import { renderWithRoute } from '../test/testUtils'
 
-const api = vi.hoisted(() => { class ApiError extends Error { constructor(message: string, public status: number) { super(message) } }; return { ApiError, getRunContainer: vi.fn(), listRunBranches: vi.fn(), listBranchStates: vi.fn(), listBranchCheckpoints: vi.fn(), forkRunBranch: vi.fn(), makeOfficialRunBranch: vi.fn(), simulateNextMatchOnBranch: vi.fn() } })
+const api = vi.hoisted(() => { class ApiError extends Error { constructor(message: string, public status: number) { super(message) } }; return { ApiError, getRunContainer: vi.fn(), listRunBranches: vi.fn(), listBranchStates: vi.fn(), listBranchCheckpoints: vi.fn(), forkRunBranch: vi.fn(), makeOfficialRunBranch: vi.fn(), simulateNextMatchOnBranch: vi.fn(), simulateNextRoundOnBranch: vi.fn() } })
 vi.mock('../api/client', () => api)
 const run = { run_id: 'run-a', display_name: 'Admin Run', status: 'active', read_only: false, storage_kind: 'custom_local', official_branch_id: 'official' }
 const official = { branch_id: 'official', run_id: 'run-a', display_name: 'Official Branch', status: 'active', read_only: false, branch_seed: 17, legacy_simulation_run_id: 'legacy-official', forked_from_branch_id: null, forked_from_checkpoint_id: null, head_checkpoint_id: 'cp-initial', is_official: true }
@@ -13,8 +13,8 @@ const readonly = { ...official, branch_id: 'readonly', display_name: 'Read only 
 const state = (branchId = 'official', head = 'cp-initial') => ({ branch_id: branchId, run_id: 'run-a', head_checkpoint_id: head, current_season: 2030, current_week: 12, current_event_id: 'EVENT-12', current_event_sequence: 4 })
 const checkpoint = (id = 'cp-initial', kind = 'initial', branchId = 'official') => ({ checkpoint_id: id, run_id: 'run-a', branch_id: branchId, kind, sequence: 1, season: 2030, week: 12, event_id: 'EVENT-12', event_sequence: 4 })
 const success = (replay = false) => ({ product_run_id: 'run-a', source_branch_id: 'official', source_checkpoint_id: 'cp-initial', target_branch_id: 'fork-a', target_legacy_simulation_run_id: 'legacy-fork', target_checkpoint_id: 'cp-fork', target_branch_seed: 44, source_inventory_hash: 'source', normalized_clone_equivalence_hash: 'clone', request_fingerprint: 'request', idempotent_replay: replay, created_mapping: false, official_branch_changed: false })
-const simulationSuccess = (replay = false) => ({ product_run_id: 'run-a', branch_id: 'official', legacy_simulation_run_id: 'legacy-official', command_id: 'simulation-command', request_fingerprint: 'simulation-fingerprint', idempotent_replay: replay, previous_head_checkpoint_id: 'cp-initial', new_head_checkpoint_id: 'cp-next', previous_season: 2030, previous_week: 12, previous_event_id: 'EVENT-12', previous_event_sequence: 4, current_season: 2030, current_week: 12, current_event_id: 'EVENT-12', current_event_sequence: 5, official_branch_changed: false, simulation_result: { mode: 'next_match', active_tournament: null, completed_event_count: 2, next_event_index: 3 } })
-function setup({ branches = [official, readonly], states = [state(), state('readonly', 'cp-readonly')], checkpoints = [checkpoint(), checkpoint('cp-readonly', 'initial', 'readonly')] } = {}) { api.getRunContainer.mockResolvedValue(run); api.listRunBranches.mockResolvedValue({ run_branches: branches }); api.listBranchStates.mockResolvedValue({ branch_states: states }); api.listBranchCheckpoints.mockResolvedValue({ branch_checkpoints: checkpoints }); api.forkRunBranch.mockResolvedValue(success()); api.simulateNextMatchOnBranch.mockResolvedValue(simulationSuccess()) }
+const simulationSuccess = (replay = false) => ({ product_run_id: 'run-a', branch_id: 'official', legacy_simulation_run_id: 'legacy-official', command_id: 'simulation-command', request_fingerprint: 'simulation-fingerprint', idempotent_replay: replay, previous_head_checkpoint_id: 'cp-initial', new_head_checkpoint_id: 'cp-next', previous_season: 2030, previous_week: 12, previous_event_id: 'EVENT-12', previous_event_sequence: 4, current_season: 2030, current_week: 12, current_event_id: 'EVENT-12', current_event_sequence: 5, official_branch_changed: false, simulation_result: { mode: 'simulate_next_match', active_tournament: null, completed_event_count: 2, next_event_index: 3 } })
+function setup({ branches = [official, readonly], states = [state(), state('readonly', 'cp-readonly')], checkpoints = [checkpoint(), checkpoint('cp-readonly', 'initial', 'readonly')] } = {}) { api.getRunContainer.mockResolvedValue(run); api.listRunBranches.mockResolvedValue({ run_branches: branches }); api.listBranchStates.mockResolvedValue({ branch_states: states }); api.listBranchCheckpoints.mockResolvedValue({ branch_checkpoints: checkpoints }); api.forkRunBranch.mockResolvedValue(success()); api.simulateNextMatchOnBranch.mockResolvedValue(simulationSuccess()); api.simulateNextRoundOnBranch.mockResolvedValue({ ...simulationSuccess(), simulation_result: { ...simulationSuccess().simulation_result, mode: 'simulate_next_round' } }) }
 async function fillValidForm(confirm = true) { const user = userEvent.setup(); await user.type(screen.getByLabelText('target_branch_display_name'), ' Fork Name '); await user.type(screen.getByLabelText('target_branch_id'), ' fork-a '); await user.type(screen.getByLabelText('target_legacy_simulation_run_id'), ' legacy-fork '); await user.type(screen.getByLabelText('target_branch_seed'), ' 44 '); await user.type(screen.getByLabelText('command_id'), ' command-a '); if (confirm) await user.click(screen.getByRole('checkbox')) }
 beforeEach(() => { vi.clearAllMocks(); for (const value of Object.values(api)) if (vi.isMockFunction(value)) value.mockReset(); setup() })
 describe('AdminRunBranchesPage', () => {
@@ -151,6 +151,38 @@ describe('AdminRunBranchesPage', () => {
     renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await userEvent.click((await screen.findAllByRole('button', { name: 'Simulate Next Match' }))[isOfficial ? 0 : 1]); await userEvent.type(screen.getByLabelText('Simulation audit reason'), 'invalidate'); await userEvent.click(screen.getByLabelText('Confirm simulation')); await userEvent.click(screen.getByRole('button', { name: 'Confirm Simulate Next Match' })); await waitFor(() => expect(api.simulateNextMatchOnBranch).toHaveBeenCalledTimes(1))
     for (const key of ['run-branches', 'branch-states', 'branch-checkpoints']) expect(invalidate).toHaveBeenCalledWith(expect.objectContaining({ queryKey: [key, 'run-a'] })); const predicate = invalidate.mock.calls.map(([filters]) => filters).find((filters) => Boolean(filters && 'predicate' in filters))?.predicate; expect(predicate?.({ queryKey: ['read', branch.legacy_simulation_run_id] } as never)).toBe(true); const viewerCall = invalidate.mock.calls.some(([filters]) => Boolean(filters && 'queryKey' in filters && JSON.stringify(filters.queryKey) === JSON.stringify(['viewer-official-run-context', 'run-a']))); expect(viewerCall).toBe(isOfficial); invalidate.mockRestore()
   })
+  it('reviews and submits Next Round exclusively with the exact guarded payload', async () => {
+    renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches')
+    const action = (await screen.findAllByRole('button', { name: 'Simulate Next Round' }))[0]
+    await userEvent.click(action)
+    expect(api.simulateNextRoundOnBranch).not.toHaveBeenCalled()
+    expect(screen.getByText('Next Round', { selector: 'dd' })).toBeInTheDocument()
+    expect(screen.getByText(/may simulate multiple matches/)).toBeInTheDocument()
+    const commandId = screen.getByLabelText('Simulation command ID').textContent
+    await userEvent.type(screen.getByLabelText('Simulation audit reason'), ' round reviewed ')
+    expect(screen.getByRole('button', { name: 'Confirm Simulate Next Round' })).toBeDisabled()
+    await userEvent.click(screen.getByLabelText('Confirm simulation')); await userEvent.click(screen.getByRole('button', { name: 'Confirm Simulate Next Round' }))
+    await waitFor(() => expect(api.simulateNextRoundOnBranch).toHaveBeenCalledTimes(1))
+    expect(api.simulateNextRoundOnBranch).toHaveBeenCalledWith('run-a', 'official', { expected_head_checkpoint_id: 'cp-initial', command_id: commandId, audit_reason: 'round reviewed', explicit_confirmation: true })
+    expect(api.simulateNextMatchOnBranch).not.toHaveBeenCalled()
+  })
+
+  it('switches reviewed actions with a fresh command ID and reset confirmation', async () => {
+    renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches')
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Simulate Next Match' }))[0]); const first = screen.getByLabelText('Simulation command ID').textContent
+    await userEvent.click(screen.getByLabelText('Confirm simulation'))
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Simulate Next Round' }))[0])
+    expect(screen.getByRole('heading', { name: 'Review Simulate Next Round' })).toBeInTheDocument(); expect(screen.getByLabelText('Simulation command ID')).not.toHaveTextContent(first ?? ''); expect(screen.getByLabelText('Confirm simulation')).not.toBeChecked()
+    expect(api.simulateNextMatchOnBranch).not.toHaveBeenCalled(); expect(api.simulateNextRoundOnBranch).not.toHaveBeenCalled()
+  })
+
+  it('shows exact Next Round replay safety and rejects a mismatched result mode', async () => {
+    api.simulateNextRoundOnBranch.mockResolvedValueOnce({ ...simulationSuccess(true), simulation_result: { ...simulationSuccess().simulation_result, mode: 'simulate_next_round' } })
+    renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await userEvent.click((await screen.findAllByRole('button', { name: 'Simulate Next Round' }))[0]); await userEvent.type(screen.getByLabelText('Simulation audit reason'), 'round'); await userEvent.click(screen.getByLabelText('Confirm simulation')); await userEvent.click(screen.getByRole('button', { name: 'Confirm Simulate Next Round' }))
+    expect(await screen.findByText('The previously completed Next Round command was returned. No duplicate round progression was simulated.')).toBeInTheDocument()
+    expect(api.simulateNextRoundOnBranch).toHaveBeenCalledTimes(1)
+  })
+
 })
 
 describe('simulationEligibility', () => {

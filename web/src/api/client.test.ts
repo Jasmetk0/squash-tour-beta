@@ -35,6 +35,7 @@ import {
   forkRunBranch,
   makeOfficialRunBranch,
   simulateNextMatchOnBranch,
+  simulateNextRoundOnBranch,
   getWorldPackageValidation,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
@@ -987,11 +988,20 @@ describe('world package registry client', () => {
 
   it('posts Branch Next Match to exactly once encoded IDs with the exact typed contract', async () => {
     const payload = { expected_head_checkpoint_id: 'cp-1', command_id: 'command-1', audit_reason: 'advance reviewed branch', explicit_confirmation: true }
-    const response = { product_run_id: 'run/a #1', branch_id: 'branch/a #2', legacy_simulation_run_id: 'legacy-1', command_id: 'command-1', request_fingerprint: 'fingerprint', idempotent_replay: false, previous_head_checkpoint_id: 'cp-1', new_head_checkpoint_id: 'cp-2', previous_season: 2030, previous_week: 1, previous_event_id: null, previous_event_sequence: null, current_season: 2030, current_week: 1, current_event_id: 'EVENT', current_event_sequence: 2, official_branch_changed: false, simulation_result: { mode: 'next_match', active_tournament: null, completed_event_count: 3, next_event_index: 4 } }
+    const response = { product_run_id: 'run/a #1', branch_id: 'branch/a #2', legacy_simulation_run_id: 'legacy-1', command_id: 'command-1', request_fingerprint: 'fingerprint', idempotent_replay: false, previous_head_checkpoint_id: 'cp-1', new_head_checkpoint_id: 'cp-2', previous_season: 2030, previous_week: 1, previous_event_id: null, previous_event_sequence: null, current_season: 2030, current_week: 1, current_event_id: 'EVENT', current_event_sequence: 2, official_branch_changed: false, simulation_result: { mode: 'simulate_next_match', active_tournament: null, completed_event_count: 3, next_event_index: 4 } }
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(response), { status: 200 }))
     await expect(simulateNextMatchOnBranch('run/a #1', 'branch/a #2', payload)).resolves.toEqual(response)
     expect(globalThis.fetch).toHaveBeenCalledWith('http://127.0.0.1:8000/admin/runs/run%2Fa%20%231/branches/branch%2Fa%20%232/simulate-next-match', expect.objectContaining({ method: 'POST', body: JSON.stringify(payload) }))
     expect(JSON.parse((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body)).toEqual(payload)
+  })
+
+  it('posts Branch Next Round to exactly once encoded IDs and never uses the Next Match path', async () => {
+    const payload = { expected_head_checkpoint_id: 'cp/1 #', command_id: 'round-command', audit_reason: 'advance reviewed round', explicit_confirmation: true }
+    const response = { product_run_id: 'run/a #1', branch_id: 'branch/a #2', legacy_simulation_run_id: 'legacy-1', command_id: 'round-command', request_fingerprint: 'round-fingerprint', idempotent_replay: false, previous_head_checkpoint_id: 'cp/1 #', new_head_checkpoint_id: 'cp-2', previous_season: 2030, previous_week: 1, previous_event_id: null, previous_event_sequence: null, current_season: 2030, current_week: 1, current_event_id: 'EVENT', current_event_sequence: 3, official_branch_changed: false, simulation_result: { mode: 'simulate_next_round' as const, active_tournament: null, completed_event_count: 3, next_event_index: 4 } }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(response), { status: 200 }))
+    await expect(simulateNextRoundOnBranch('run/a #1', 'branch/a #2', payload)).resolves.toEqual(response)
+    expect(globalThis.fetch).toHaveBeenCalledWith('http://127.0.0.1:8000/admin/runs/run%2Fa%20%231/branches/branch%2Fa%20%232/simulate-next-round', expect.objectContaining({ method: 'POST', body: JSON.stringify(payload) }))
+    expect((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]).not.toContain('/simulate-next-match')
   })
 
 })

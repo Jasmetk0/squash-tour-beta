@@ -592,6 +592,41 @@ export type AdminSetOfficialRunBranchResponse = {
   request_fingerprint: string
 }
 
+export type AdminBranchSimulateNextMatchRequest = {
+  expected_head_checkpoint_id: string
+  command_id: string
+  audit_reason: string
+  explicit_confirmation: boolean
+}
+
+export type BranchNextMatchSimulationSummary = {
+  mode: string
+  active_tournament: string | null
+  completed_event_count: number
+  next_event_index: number
+}
+
+export type AdminBranchSimulateNextMatchResponse = {
+  product_run_id: string
+  branch_id: string
+  legacy_simulation_run_id: string
+  command_id: string
+  request_fingerprint: string
+  idempotent_replay: boolean
+  previous_head_checkpoint_id: string
+  new_head_checkpoint_id: string
+  previous_season: number
+  previous_week: number | null
+  previous_event_id: string | null
+  previous_event_sequence: number | null
+  current_season: number
+  current_week: number | null
+  current_event_id: string | null
+  current_event_sequence: number | null
+  official_branch_changed: boolean
+  simulation_result: BranchNextMatchSimulationSummary
+}
+
 export type RunStatusSummary = {
   run_id: string
   season: number

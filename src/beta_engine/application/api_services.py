@@ -1773,6 +1773,8 @@ class SimulationApiService:
         run_info, state = self._load_run_context(run_id=target.legacy_simulation_run_id)
         self._validate_finals_phase_not_started(run_id=target.legacy_simulation_run_id, season=run_info.season)
         step = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info).simulate_next_round(state=state)
+        if step.season_state == state:
+            raise ValueError("no executable next round is available")
         return self.repository.simulate_next_round_on_branch_atomically(
             command, step=step,
             reviewed_pre_state_fingerprint=self.repository.checkpoint_content_hash(state.model_dump(mode="json")),

@@ -62,6 +62,8 @@ from beta_engine.infrastructure.db import (
     BranchExecutionTarget,
     BranchSimulateNextMatchCommand,
     BranchSimulateNextMatchResult,
+    BranchSimulateNextRoundCommand,
+    BranchSimulateNextRoundResult,
     ForkRunBranchCommand,
     ForkRunBranchResult,
     SetOfficialRunBranchCommand,
@@ -1756,6 +1758,25 @@ class SimulationApiService:
 
     def simulate_next_round(self, *, run_id: str) -> SimulationStepResult:
         return self._simulate_step(run_id=run_id, mode="simulate_next_round")
+
+    def simulate_next_round_on_branch_atomically(self, command: BranchSimulateNextRoundCommand) -> BranchSimulateNextRoundResult:
+        """Use the legacy deterministic Next Round algorithm for one selected Branch."""
+        replay = self.repository.get_branch_next_round_command_replay(command)
+        if replay is not None:
+            return replay
+        if self.repository.get_run_container(run_id=command.product_run_id.strip()) is None:
+            raise KeyError(f"product_run_id {command.product_run_id.strip()} was not found")
+        target = self.resolve_branch_execution_target(branch_id=command.branch_id)
+        if target.product_run_id != command.product_run_id:
+            from beta_engine.infrastructure.db import BranchSimulationConflictError
+            raise BranchSimulationConflictError("branch belongs to another product run")
+        run_info, state = self._load_run_context(run_id=target.legacy_simulation_run_id)
+        self._validate_finals_phase_not_started(run_id=target.legacy_simulation_run_id, season=run_info.season)
+        step = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info).simulate_next_round(state=state)
+        return self.repository.simulate_next_round_on_branch_atomically(
+            command, step=step,
+            reviewed_pre_state_fingerprint=self.repository.checkpoint_content_hash(state.model_dump(mode="json")),
+        )
 
     def simulate_next_week(self, *, run_id: str) -> SimulationStepResult:
         return self._simulate_step(run_id=run_id, mode="simulate_next_week")

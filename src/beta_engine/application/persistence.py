@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from beta_engine.application.season_models import SimulationStepResult
+from beta_engine.application.season_models import SeasonState, SimulationStepResult
 from beta_engine.infrastructure.db import SimulationPersistenceRepository, SimulationRunInfo
 
 
@@ -18,8 +18,31 @@ class SimulationPersistenceService:
         self.repository.bootstrap_schema()
         self.repository.upsert_simulation_run(run)
 
-    def persist_step(self, *, run_id: str, step: SimulationStepResult) -> None:
+    def persist_step(
+        self, *, run_id: str, step: SimulationStepResult,
+        reviewed_pre_state: SeasonState | None = None,
+    ) -> None:
         self.repository.save_season_state(run_id=run_id, state=step.season_state)
+
+        if (
+            step.mode == "simulate_next_week"
+            and reviewed_pre_state is not None
+            and reviewed_pre_state.active_tournament is not None
+        ):
+            finalized = reviewed_pre_state.active_tournament.full_result
+            event_sequence = reviewed_pre_state.next_event_index
+            self.repository.save_completed_tournament_result(
+                run_id=run_id, event_sequence=event_sequence,
+                tournament_result=finalized,
+            )
+            self.repository.append_snapshot(
+                run_id=run_id,
+                snapshot_sequence=self._tournament_snapshot_sequence(event_sequence),
+                snapshot_kind="tournament",
+                source_event_id=finalized.event.event_id,
+                ranking_snapshot=finalized.ranking_snapshot,
+                race_snapshot=finalized.race_snapshot,
+            )
 
         if step.tournament_result is not None and step.season_state.active_tournament is None:
             if (

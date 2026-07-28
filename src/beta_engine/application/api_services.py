@@ -1756,7 +1756,8 @@ class SimulationApiService:
         self._validate_finals_phase_not_started(run_id=target.legacy_simulation_run_id, season=run_info.season)
         step = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info).simulate_next_match(state=state)
         return self.repository.simulate_next_match_on_branch_atomically(
-            command, step=step, reviewed_pre_state_fingerprint=self.repository.checkpoint_content_hash(state.model_dump(mode="json"))
+            command, step=step, reviewed_pre_state=state,
+            reviewed_pre_state_fingerprint=self.repository.checkpoint_content_hash(state.model_dump(mode="json"))
         )
 
     def simulate_next_round(self, *, run_id: str) -> SimulationStepResult:
@@ -1779,7 +1780,7 @@ class SimulationApiService:
         if step.season_state == state:
             raise ValueError("no executable next round is available")
         return self.repository.simulate_next_round_on_branch_atomically(
-            command, step=step,
+            command, step=step, reviewed_pre_state=state,
             reviewed_pre_state_fingerprint=self.repository.checkpoint_content_hash(state.model_dump(mode="json")),
         )
 
@@ -1803,7 +1804,7 @@ class SimulationApiService:
         if step.season_state == state:
             raise BranchSimulationValidationError("no executable next week is available")
         return self.repository.simulate_next_week_on_branch_atomically(
-            command, step=step,
+            command, step=step, reviewed_pre_state=state,
             reviewed_pre_state_fingerprint=self.repository.checkpoint_content_hash(state.model_dump(mode="json")),
         )
 
@@ -2330,7 +2331,7 @@ class SimulationApiService:
             raise ValueError(f"unsupported mode: {mode}")
 
         persistence = SimulationPersistenceService(repository=self.repository)
-        persistence.persist_step(run_id=run_id, step=step)
+        persistence.persist_step(run_id=run_id, step=step, reviewed_pre_state=state)
         return step
 
     def _validate_finals_phase_not_started(self, *, run_id: str, season: int) -> None:

@@ -80,6 +80,8 @@ import type {
   AdminForkRunBranchResponse,
   AdminSetOfficialRunBranchRequest,
   AdminSetOfficialRunBranchResponse,
+  AdminBranchSimulateNextMatchRequest,
+  AdminBranchSimulateNextMatchResponse,
   RunWeeklyIntakeCohortSeasonPreviewParams,
   RunWeeklyIntakeCohortSeasonPreviewResponse,
   RunPlayerDetail,
@@ -826,6 +828,10 @@ export function forkRunBranch(productRunId: string, payload: AdminForkRunBranchR
 }
 export function makeOfficialRunBranch(productRunId: string, targetBranchId: string, payload: AdminSetOfficialRunBranchRequest): Promise<AdminSetOfficialRunBranchResponse> {
   return request(`/admin/runs/${encodeURIComponent(productRunId)}/branches/${encodeURIComponent(targetBranchId)}/make-official`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function simulateNextMatchOnBranch(productRunId: string, branchId: string, payload: AdminBranchSimulateNextMatchRequest): Promise<AdminBranchSimulateNextMatchResponse> {
+  return request(`/admin/runs/${encodeURIComponent(productRunId)}/branches/${encodeURIComponent(branchId)}/simulate-next-match`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function getRun(runId: string): Promise<SeasonStateResponse> {

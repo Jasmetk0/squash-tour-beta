@@ -592,21 +592,24 @@ export type AdminSetOfficialRunBranchResponse = {
   request_fingerprint: string
 }
 
-export type AdminBranchSimulateNextMatchRequest = {
+export type AdminBranchSimulationRequest = {
   expected_head_checkpoint_id: string
   command_id: string
   audit_reason: string
   explicit_confirmation: boolean
 }
 
-export type BranchNextMatchSimulationSummary = {
-  mode: string
+export type AdminBranchSimulateNextMatchRequest = AdminBranchSimulationRequest
+export type AdminBranchSimulateNextRoundRequest = AdminBranchSimulationRequest
+
+export type BranchSimulationSummary<Mode extends 'simulate_next_match' | 'simulate_next_round'> = {
+  mode: Mode
   active_tournament: string | null
   completed_event_count: number
   next_event_index: number
 }
 
-export type AdminBranchSimulateNextMatchResponse = {
+export type AdminBranchSimulationResponse<Mode extends 'simulate_next_match' | 'simulate_next_round'> = {
   product_run_id: string
   branch_id: string
   legacy_simulation_run_id: string
@@ -624,8 +627,11 @@ export type AdminBranchSimulateNextMatchResponse = {
   current_event_id: string | null
   current_event_sequence: number | null
   official_branch_changed: boolean
-  simulation_result: BranchNextMatchSimulationSummary
+  simulation_result: BranchSimulationSummary<Mode>
 }
+
+export type AdminBranchSimulateNextMatchResponse = AdminBranchSimulationResponse<'simulate_next_match'>
+export type AdminBranchSimulateNextRoundResponse = AdminBranchSimulationResponse<'simulate_next_round'>
 
 export type RunStatusSummary = {
   run_id: string

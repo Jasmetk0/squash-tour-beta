@@ -56,9 +56,11 @@ from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_COMMAND_KIND_FORK_BRANCH,
     BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_MATCH_BRANCH,
     BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_ROUND_BRANCH,
+    BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_WEEK_BRANCH,
     BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_ATOMIC_FORK_MATERIALIZATION,
     BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_MATCH_PERSISTED,
     BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_ROUND_PERSISTED,
+    BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_WEEK_PERSISTED,
     BRANCH_CHECKPOINT_KIND_BRANCH_FORK_START,
     BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE,
     BRANCH_CHECKPOINT_KIND_ADMIN_ACTION_APPLIED,
@@ -313,12 +315,25 @@ class BranchSimulateNextRoundResult:
     official_branch_changed: bool; simulation_result: dict[str, object]
 
 @dataclass(frozen=True)
+class BranchSimulateNextWeekCommand:
+    product_run_id: str; branch_id: str; expected_head_checkpoint_id: str
+    command_id: str; audit_reason: str; explicit_confirmation: bool
+
+@dataclass(frozen=True)
+class BranchSimulateNextWeekResult:
+    product_run_id: str; branch_id: str; legacy_simulation_run_id: str; command_id: str
+    request_fingerprint: str; idempotent_replay: bool; previous_head_checkpoint_id: str; new_head_checkpoint_id: str
+    previous_season: int; previous_week: int | None; previous_event_id: str | None; previous_event_sequence: int | None
+    current_season: int; current_week: int | None; current_event_id: str | None; current_event_sequence: int | None
+    official_branch_changed: bool; simulation_result: dict[str, object]
+
+@dataclass(frozen=True)
 class _BranchSimulationActionSpec:
     action_kind: str
     checkpoint_command_kind: str
     checkpoint_command_boundary: str
     label: str
-    result_type: type[BranchSimulateNextMatchResult] | type[BranchSimulateNextRoundResult]
+    result_type: type[BranchSimulateNextMatchResult] | type[BranchSimulateNextRoundResult] | type[BranchSimulateNextWeekResult]
     summary_builder: Callable[[object], dict[str, object]]
 
 def _branch_step_summary(mode: str, step: object) -> dict[str, object]:
@@ -336,6 +351,11 @@ _NEXT_ROUND_ACTION = _BranchSimulationActionSpec(
     "simulate_next_round", BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_ROUND_BRANCH,
     BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_ROUND_PERSISTED, "Branch Next Round",
     BranchSimulateNextRoundResult, lambda step: _branch_step_summary("simulate_next_round", step),
+)
+_NEXT_WEEK_ACTION = _BranchSimulationActionSpec(
+    "simulate_next_week", BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_WEEK_BRANCH,
+    BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_WEEK_PERSISTED, "Branch Next Week",
+    BranchSimulateNextWeekResult, lambda step: _branch_step_summary("simulate_next_week", step),
 )
 
 
@@ -1375,7 +1395,10 @@ class SimulationPersistenceRepository:
     def get_branch_next_round_command_replay(self, command: BranchSimulateNextRoundCommand) -> BranchSimulateNextRoundResult | None:
         return self._get_branch_simulation_command_replay(command, _NEXT_ROUND_ACTION)  # type: ignore[return-value]
 
-    def _get_branch_simulation_command_replay(self, command: BranchSimulateNextMatchCommand | BranchSimulateNextRoundCommand, action: _BranchSimulationActionSpec) -> BranchSimulateNextMatchResult | BranchSimulateNextRoundResult | None:
+    def get_branch_next_week_command_replay(self, command: BranchSimulateNextWeekCommand) -> BranchSimulateNextWeekResult | None:
+        return self._get_branch_simulation_command_replay(command, _NEXT_WEEK_ACTION)  # type: ignore[return-value]
+
+    def _get_branch_simulation_command_replay(self, command: BranchSimulateNextMatchCommand | BranchSimulateNextRoundCommand | BranchSimulateNextWeekCommand, action: _BranchSimulationActionSpec) -> BranchSimulateNextMatchResult | BranchSimulateNextRoundResult | BranchSimulateNextWeekResult | None:
         """Journal-only idempotency check; deliberately performs no Branch resolution."""
         if not all(isinstance(v, str) and v.strip() for v in (command.product_run_id, command.branch_id, command.expected_head_checkpoint_id, command.command_id, command.audit_reason)) or command.explicit_confirmation is not True:
             raise BranchSimulationValidationError(f"{action.label} requires non-empty identifiers, audit reason, and explicit confirmation")
@@ -1393,7 +1416,10 @@ class SimulationPersistenceRepository:
     def simulate_next_round_on_branch_atomically(self, command: BranchSimulateNextRoundCommand, *, step: object, reviewed_pre_state_fingerprint: str) -> BranchSimulateNextRoundResult:
         return self._simulate_on_branch_atomically(command, action=_NEXT_ROUND_ACTION, step=step, reviewed_pre_state_fingerprint=reviewed_pre_state_fingerprint)  # type: ignore[return-value]
 
-    def _simulate_on_branch_atomically(self, command: BranchSimulateNextMatchCommand | BranchSimulateNextRoundCommand, *, action: _BranchSimulationActionSpec, step: object, reviewed_pre_state_fingerprint: str) -> BranchSimulateNextMatchResult | BranchSimulateNextRoundResult:
+    def simulate_next_week_on_branch_atomically(self, command: BranchSimulateNextWeekCommand, *, step: object, reviewed_pre_state_fingerprint: str) -> BranchSimulateNextWeekResult:
+        return self._simulate_on_branch_atomically(command, action=_NEXT_WEEK_ACTION, step=step, reviewed_pre_state_fingerprint=reviewed_pre_state_fingerprint)  # type: ignore[return-value]
+
+    def _simulate_on_branch_atomically(self, command: BranchSimulateNextMatchCommand | BranchSimulateNextRoundCommand | BranchSimulateNextWeekCommand, *, action: _BranchSimulationActionSpec, step: object, reviewed_pre_state_fingerprint: str) -> BranchSimulateNextMatchResult | BranchSimulateNextRoundResult | BranchSimulateNextWeekResult:
         """Commit one legacy progression step, checkpoint, locators, and journal as one unit."""
         if (not all(isinstance(v, str) and v.strip() for v in (command.product_run_id, command.branch_id, command.expected_head_checkpoint_id, command.command_id, command.audit_reason)) or command.explicit_confirmation is not True):
             raise BranchSimulationValidationError(f"{action.label} requires non-empty identifiers, audit reason, and explicit confirmation")
@@ -2375,8 +2401,11 @@ class SimulationPersistenceRepository:
         if model is None: session.add(SeasonStateModel(run_id=run_id, **values))
         else:
             for key, value in values.items(): setattr(model, key, value)
-        self._upsert_completed_inputs(session=session, run_id=run_id, completed_inputs=state.completed_tournament_inputs)
-        self._upsert_completed_events(session=session, run_id=run_id, completed_event_ids=state.completed_event_ids)
+        # Weekly results are persisted below with their exact event sequences; avoid
+        # staging the same rows twice in this no-autoflush transaction.
+        if step.weekly_result is None:
+            self._upsert_completed_inputs(session=session, run_id=run_id, completed_inputs=state.completed_tournament_inputs)
+            self._upsert_completed_events(session=session, run_id=run_id, completed_event_ids=state.completed_event_ids)
         tournament = step.tournament_result
         if tournament is not None and state.active_tournament is None:
             if tournament.ranking_snapshot is None or tournament.race_snapshot is None or tournament.completed_tournament_input is None:
@@ -2390,6 +2419,35 @@ class SimulationPersistenceRepository:
             self._upsert_completed_inputs(session=session, run_id=run_id, completed_inputs=[tournament.completed_tournament_input], start_sequence=event_sequence)
             self._upsert_ranking_snapshot(session=session, run_id=run_id, snapshot_sequence=event_sequence * 10 + 1, snapshot_kind="tournament", source_event_id=tournament.event.event_id, snapshot=tournament.ranking_snapshot)
             self._upsert_race_snapshot(session=session, run_id=run_id, snapshot_sequence=event_sequence * 10 + 1, snapshot_kind="tournament", source_event_id=tournament.event.event_id, snapshot=tournament.race_snapshot)
+        weekly = step.weekly_result
+        if weekly is not None:
+            end_sequence = state.next_event_index - 1
+            start_sequence = end_sequence - len(weekly.tournaments) + 1
+            for offset, completed in enumerate(weekly.tournaments):
+                if completed.completed_tournament_input is None:
+                    raise ValueError("completed tournament input is required for weekly persistence")
+                event_sequence = start_sequence + offset
+                metadata = session.execute(select(CompletedEventMetadataModel).where(
+                    CompletedEventMetadataModel.run_id == run_id,
+                    CompletedEventMetadataModel.event_id == completed.event.event_id,
+                )).scalar_one_or_none()
+                payload = _to_json(completed.tournament_result.model_dump())
+                if metadata is None:
+                    session.add(CompletedEventMetadataModel(
+                        run_id=run_id, event_id=completed.event.event_id, season=completed.event.season,
+                        week=completed.event.week, template_id=completed.event.template_id,
+                        tournament_result_json=payload,
+                    ))
+                else:
+                    metadata.season, metadata.week, metadata.template_id = completed.event.season, completed.event.week, completed.event.template_id
+                    metadata.tournament_result_json = payload
+                self._upsert_completed_events(session=session, run_id=run_id, completed_event_ids=[completed.event.event_id], start_sequence=event_sequence)
+                self._upsert_completed_inputs(session=session, run_id=run_id, completed_inputs=[completed.completed_tournament_input], start_sequence=event_sequence)
+                self._upsert_ranking_snapshot(session=session, run_id=run_id, snapshot_sequence=event_sequence * 10 + 1, snapshot_kind="tournament", source_event_id=completed.event.event_id, snapshot=completed.ranking_snapshot)
+                self._upsert_race_snapshot(session=session, run_id=run_id, snapshot_sequence=event_sequence * 10 + 1, snapshot_kind="tournament", source_event_id=completed.event.event_id, snapshot=completed.race_snapshot)
+            source_event_id = weekly.tournaments[-1].event.event_id
+            self._upsert_ranking_snapshot(session=session, run_id=run_id, snapshot_sequence=end_sequence * 10 + 9, snapshot_kind="week", source_event_id=source_event_id, snapshot=weekly.ranking_snapshot)
+            self._upsert_race_snapshot(session=session, run_id=run_id, snapshot_sequence=end_sequence * 10 + 9, snapshot_kind="week", source_event_id=source_event_id, snapshot=weekly.race_snapshot)
 
     def save_completed_tournament_result(
         self,

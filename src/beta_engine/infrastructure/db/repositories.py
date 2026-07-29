@@ -57,10 +57,12 @@ from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_MATCH_BRANCH,
     BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_ROUND_BRANCH,
     BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_WEEK_BRANCH,
+    BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_TOURNAMENT_BRANCH,
     BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_ATOMIC_FORK_MATERIALIZATION,
     BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_MATCH_PERSISTED,
     BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_ROUND_PERSISTED,
     BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_WEEK_PERSISTED,
+    BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_TOURNAMENT_PERSISTED,
     BRANCH_CHECKPOINT_KIND_BRANCH_FORK_START,
     BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE,
     BRANCH_CHECKPOINT_KIND_ADMIN_ACTION_APPLIED,
@@ -328,12 +330,25 @@ class BranchSimulateNextWeekResult:
     official_branch_changed: bool; simulation_result: dict[str, object]
 
 @dataclass(frozen=True)
+class BranchSimulateNextTournamentCommand:
+    product_run_id: str; branch_id: str; expected_head_checkpoint_id: str
+    command_id: str; audit_reason: str; explicit_confirmation: bool
+
+@dataclass(frozen=True)
+class BranchSimulateNextTournamentResult:
+    product_run_id: str; branch_id: str; legacy_simulation_run_id: str; command_id: str
+    request_fingerprint: str; idempotent_replay: bool; previous_head_checkpoint_id: str; new_head_checkpoint_id: str
+    previous_season: int; previous_week: int | None; previous_event_id: str | None; previous_event_sequence: int | None
+    current_season: int; current_week: int | None; current_event_id: str | None; current_event_sequence: int | None
+    official_branch_changed: bool; simulation_result: dict[str, object]
+
+@dataclass(frozen=True)
 class _BranchSimulationActionSpec:
     action_kind: str
     checkpoint_command_kind: str
     checkpoint_command_boundary: str
     label: str
-    result_type: type[BranchSimulateNextMatchResult] | type[BranchSimulateNextRoundResult] | type[BranchSimulateNextWeekResult]
+    result_type: type[BranchSimulateNextMatchResult] | type[BranchSimulateNextRoundResult] | type[BranchSimulateNextWeekResult] | type[BranchSimulateNextTournamentResult]
     summary_builder: Callable[[object], dict[str, object]]
 
 def _branch_step_summary(mode: str, step: object) -> dict[str, object]:
@@ -356,6 +371,11 @@ _NEXT_WEEK_ACTION = _BranchSimulationActionSpec(
     "simulate_next_week", BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_WEEK_BRANCH,
     BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_WEEK_PERSISTED, "Branch Next Week",
     BranchSimulateNextWeekResult, lambda step: _branch_step_summary("simulate_next_week", step),
+)
+_NEXT_TOURNAMENT_ACTION = _BranchSimulationActionSpec(
+    "simulate_next_tournament", BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_TOURNAMENT_BRANCH,
+    BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_TOURNAMENT_PERSISTED, "Branch Next Tournament",
+    BranchSimulateNextTournamentResult, lambda step: _branch_step_summary("simulate_next_tournament", step),
 )
 
 
@@ -1398,7 +1418,10 @@ class SimulationPersistenceRepository:
     def get_branch_next_week_command_replay(self, command: BranchSimulateNextWeekCommand) -> BranchSimulateNextWeekResult | None:
         return self._get_branch_simulation_command_replay(command, _NEXT_WEEK_ACTION)  # type: ignore[return-value]
 
-    def _get_branch_simulation_command_replay(self, command: BranchSimulateNextMatchCommand | BranchSimulateNextRoundCommand | BranchSimulateNextWeekCommand, action: _BranchSimulationActionSpec) -> BranchSimulateNextMatchResult | BranchSimulateNextRoundResult | BranchSimulateNextWeekResult | None:
+    def get_branch_next_tournament_command_replay(self, command: BranchSimulateNextTournamentCommand) -> BranchSimulateNextTournamentResult | None:
+        return self._get_branch_simulation_command_replay(command, _NEXT_TOURNAMENT_ACTION)  # type: ignore[return-value]
+
+    def _get_branch_simulation_command_replay(self, command: BranchSimulateNextMatchCommand | BranchSimulateNextRoundCommand | BranchSimulateNextWeekCommand | BranchSimulateNextTournamentCommand, action: _BranchSimulationActionSpec) -> BranchSimulateNextMatchResult | BranchSimulateNextRoundResult | BranchSimulateNextWeekResult | BranchSimulateNextTournamentResult | None:
         """Journal-only idempotency check; deliberately performs no Branch resolution."""
         if not all(isinstance(v, str) and v.strip() for v in (command.product_run_id, command.branch_id, command.expected_head_checkpoint_id, command.command_id, command.audit_reason)) or command.explicit_confirmation is not True:
             raise BranchSimulationValidationError(f"{action.label} requires non-empty identifiers, audit reason, and explicit confirmation")
@@ -1419,7 +1442,10 @@ class SimulationPersistenceRepository:
     def simulate_next_week_on_branch_atomically(self, command: BranchSimulateNextWeekCommand, *, step: object, reviewed_pre_state: object, reviewed_pre_state_fingerprint: str) -> BranchSimulateNextWeekResult:
         return self._simulate_on_branch_atomically(command, action=_NEXT_WEEK_ACTION, step=step, reviewed_pre_state=reviewed_pre_state, reviewed_pre_state_fingerprint=reviewed_pre_state_fingerprint)  # type: ignore[return-value]
 
-    def _simulate_on_branch_atomically(self, command: BranchSimulateNextMatchCommand | BranchSimulateNextRoundCommand | BranchSimulateNextWeekCommand, *, action: _BranchSimulationActionSpec, step: object, reviewed_pre_state: object | None, reviewed_pre_state_fingerprint: str) -> BranchSimulateNextMatchResult | BranchSimulateNextRoundResult | BranchSimulateNextWeekResult:
+    def simulate_next_tournament_on_branch_atomically(self, command: BranchSimulateNextTournamentCommand, *, step: object, reviewed_pre_state: object, reviewed_pre_state_fingerprint: str) -> BranchSimulateNextTournamentResult:
+        return self._simulate_on_branch_atomically(command, action=_NEXT_TOURNAMENT_ACTION, step=step, reviewed_pre_state=reviewed_pre_state, reviewed_pre_state_fingerprint=reviewed_pre_state_fingerprint)  # type: ignore[return-value]
+
+    def _simulate_on_branch_atomically(self, command: BranchSimulateNextMatchCommand | BranchSimulateNextRoundCommand | BranchSimulateNextWeekCommand | BranchSimulateNextTournamentCommand, *, action: _BranchSimulationActionSpec, step: object, reviewed_pre_state: object | None, reviewed_pre_state_fingerprint: str) -> BranchSimulateNextMatchResult | BranchSimulateNextRoundResult | BranchSimulateNextWeekResult | BranchSimulateNextTournamentResult:
         """Commit one legacy progression step, checkpoint, locators, and journal as one unit."""
         if (not all(isinstance(v, str) and v.strip() for v in (command.product_run_id, command.branch_id, command.expected_head_checkpoint_id, command.command_id, command.audit_reason)) or command.explicit_confirmation is not True):
             raise BranchSimulationValidationError(f"{action.label} requires non-empty identifiers, audit reason, and explicit confirmation")

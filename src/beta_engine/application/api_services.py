@@ -66,6 +66,8 @@ from beta_engine.infrastructure.db import (
     BranchSimulateNextRoundResult,
     BranchSimulateNextWeekCommand,
     BranchSimulateNextWeekResult,
+    BranchSimulateNextTournamentCommand,
+    BranchSimulateNextTournamentResult,
     BranchSimulationValidationError,
     ForkRunBranchCommand,
     ForkRunBranchResult,
@@ -1736,6 +1738,31 @@ class SimulationApiService:
 
     def simulate_next_tournament(self, *, run_id: str) -> SimulationStepResult:
         return self._simulate_step(run_id=run_id, mode="simulate_next_tournament")
+
+    def simulate_next_tournament_on_branch_atomically(self, command: BranchSimulateNextTournamentCommand) -> BranchSimulateNextTournamentResult:
+        """Use the legacy deterministic Next Tournament algorithm for one selected Branch."""
+        replay = self.repository.get_branch_next_tournament_command_replay(command)
+        if replay is not None:
+            return replay
+        command = BranchSimulateNextTournamentCommand(**{
+            key: value.strip() if isinstance(value, str) else value
+            for key, value in command.__dict__.items()
+        })
+        if self.repository.get_run_container(run_id=command.product_run_id) is None:
+            raise KeyError(f"product_run_id {command.product_run_id} was not found")
+        target = self.resolve_branch_execution_target(branch_id=command.branch_id)
+        if target.product_run_id != command.product_run_id:
+            from beta_engine.infrastructure.db import BranchSimulationConflictError
+            raise BranchSimulationConflictError("branch belongs to another product run")
+        run_info, state = self._load_run_context(run_id=target.legacy_simulation_run_id)
+        self._validate_finals_phase_not_started(run_id=target.legacy_simulation_run_id, season=run_info.season)
+        step = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info).simulate_next_tournament(state=state)
+        if step.season_state == state:
+            raise BranchSimulationValidationError("no executable next tournament is available")
+        return self.repository.simulate_next_tournament_on_branch_atomically(
+            command, step=step, reviewed_pre_state=state,
+            reviewed_pre_state_fingerprint=self.repository.checkpoint_content_hash(state.model_dump(mode="json")),
+        )
 
     def simulate_next_match(self, *, run_id: str) -> SimulationStepResult:
         return self._simulate_step(run_id=run_id, mode="simulate_next_match")

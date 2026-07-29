@@ -601,15 +601,18 @@ export type AdminBranchSimulationRequest = {
 
 export type AdminBranchSimulateNextMatchRequest = AdminBranchSimulationRequest
 export type AdminBranchSimulateNextRoundRequest = AdminBranchSimulationRequest
+export type AdminBranchSimulateNextWeekRequest = AdminBranchSimulationRequest
 
-export type BranchSimulationSummary<Mode extends 'simulate_next_match' | 'simulate_next_round'> = {
+export type BranchSimulationMode = 'simulate_next_match' | 'simulate_next_round' | 'simulate_next_week'
+
+export type BranchSimulationSummary<Mode extends BranchSimulationMode> = {
   mode: Mode
   active_tournament: string | null
   completed_event_count: number
   next_event_index: number
 }
 
-export type AdminBranchSimulationResponse<Mode extends 'simulate_next_match' | 'simulate_next_round'> = {
+export type AdminBranchSimulationResponse<Mode extends BranchSimulationMode> = {
   product_run_id: string
   branch_id: string
   legacy_simulation_run_id: string
@@ -632,6 +635,7 @@ export type AdminBranchSimulationResponse<Mode extends 'simulate_next_match' | '
 
 export type AdminBranchSimulateNextMatchResponse = AdminBranchSimulationResponse<'simulate_next_match'>
 export type AdminBranchSimulateNextRoundResponse = AdminBranchSimulationResponse<'simulate_next_round'>
+export type AdminBranchSimulateNextWeekResponse = AdminBranchSimulationResponse<'simulate_next_week'>
 
 export type RunStatusSummary = {
   run_id: string

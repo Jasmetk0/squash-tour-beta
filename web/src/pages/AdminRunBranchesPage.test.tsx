@@ -346,6 +346,29 @@ describe('AdminRunBranchesPage', () => {
     expect(screen.getByLabelText('Simulation command ID')).not.toHaveTextContent(command ?? ''); expect(screen.getByLabelText('Confirm simulation')).not.toBeChecked(); expect(api.simulateFullSeasonOnBranch).not.toHaveBeenCalled()
   })
 
+  it('validates a pending Full Season result against its executed action after the review switches', async () => {
+    let resolveFullSeason!: (result: ReturnType<typeof fullSeasonSuccess>) => void
+    api.simulateFullSeasonOnBranch.mockReturnValueOnce(new Promise((resolve) => { resolveFullSeason = resolve }))
+    renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches')
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Simulate Full Season' }))[0])
+    await userEvent.type(screen.getByLabelText('Simulation audit reason'), 'pending season')
+    await userEvent.click(screen.getByLabelText('Confirm simulation'))
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm Simulate Full Season' }))
+    await waitFor(() => expect(api.simulateFullSeasonOnBranch).toHaveBeenCalledTimes(1))
+
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Simulate Next Match' }))[0])
+    expect(screen.getByRole('heading', { name: 'Review Simulate Next Match' })).toBeInTheDocument()
+    resolveFullSeason({ ...fullSeasonSuccess(), simulation_result: { ...fullSeasonSuccess().simulation_result, completed_in_command_count: undefined as never } })
+
+    expect(await screen.findByText('Response contract error: Full Season summary fields are missing or invalid.')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Full Season result')).not.toBeInTheDocument()
+    expect(screen.queryByText('The official Branch pointer was not changed.')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Completed by this command/)).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Review Simulate Next Match' })).toBeInTheDocument()
+    expect(api.simulateFullSeasonOnBranch).toHaveBeenCalledTimes(1)
+    expect(api.simulateNextMatchOnBranch).not.toHaveBeenCalled()
+  })
+
   it('renders truthful Full Season success fields and exact replay without continuing automatically', async () => {
     api.simulateFullSeasonOnBranch.mockResolvedValueOnce(fullSeasonSuccess(true))
     renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await userEvent.click((await screen.findAllByRole('button', { name: 'Simulate Full Season' }))[0]); const command = screen.getByLabelText('Simulation command ID').textContent

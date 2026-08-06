@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AdminRunBranchesPage, simulationEligibility } from './AdminRunBranchesPage'
 import { renderWithRoute } from '../test/testUtils'
 
-const api = vi.hoisted(() => { class ApiError extends Error { constructor(message: string, public status: number) { super(message) } }; return { ApiError, getRunContainer: vi.fn(), listRunBranches: vi.fn(), listBranchStates: vi.fn(), listBranchCheckpoints: vi.fn(), forkRunBranch: vi.fn(), makeOfficialRunBranch: vi.fn(), simulateNextMatchOnBranch: vi.fn(), simulateNextRoundOnBranch: vi.fn(), simulateNextWeekOnBranch: vi.fn(), simulateNextTournamentOnBranch: vi.fn() } })
+const api = vi.hoisted(() => { class ApiError extends Error { constructor(message: string, public status: number) { super(message) } }; return { ApiError, getRunContainer: vi.fn(), listRunBranches: vi.fn(), listBranchStates: vi.fn(), listBranchCheckpoints: vi.fn(), forkRunBranch: vi.fn(), makeOfficialRunBranch: vi.fn(), simulateNextMatchOnBranch: vi.fn(), simulateNextRoundOnBranch: vi.fn(), simulateNextWeekOnBranch: vi.fn(), simulateNextTournamentOnBranch: vi.fn(), simulateFullSeasonOnBranch: vi.fn() } })
 vi.mock('../api/client', () => api)
 const run = { run_id: 'run-a', display_name: 'Admin Run', status: 'active', read_only: false, storage_kind: 'custom_local', official_branch_id: 'official' }
 const official = { branch_id: 'official', run_id: 'run-a', display_name: 'Official Branch', status: 'active', read_only: false, branch_seed: 17, legacy_simulation_run_id: 'legacy-official', forked_from_branch_id: null, forked_from_checkpoint_id: null, head_checkpoint_id: 'cp-initial', is_official: true }
@@ -14,7 +14,8 @@ const state = (branchId = 'official', head = 'cp-initial') => ({ branch_id: bran
 const checkpoint = (id = 'cp-initial', kind = 'initial', branchId = 'official') => ({ checkpoint_id: id, run_id: 'run-a', branch_id: branchId, kind, sequence: 1, season: 2030, week: 12, event_id: 'EVENT-12', event_sequence: 4 })
 const success = (replay = false) => ({ product_run_id: 'run-a', source_branch_id: 'official', source_checkpoint_id: 'cp-initial', target_branch_id: 'fork-a', target_legacy_simulation_run_id: 'legacy-fork', target_checkpoint_id: 'cp-fork', target_branch_seed: 44, source_inventory_hash: 'source', normalized_clone_equivalence_hash: 'clone', request_fingerprint: 'request', idempotent_replay: replay, created_mapping: false, official_branch_changed: false })
 const simulationSuccess = (replay = false) => ({ product_run_id: 'run-a', branch_id: 'official', legacy_simulation_run_id: 'legacy-official', command_id: 'simulation-command', request_fingerprint: 'simulation-fingerprint', idempotent_replay: replay, previous_head_checkpoint_id: 'cp-initial', new_head_checkpoint_id: 'cp-next', previous_season: 2030, previous_week: 12, previous_event_id: 'EVENT-12', previous_event_sequence: 4, current_season: 2030, current_week: 12, current_event_id: 'EVENT-12', current_event_sequence: 5, official_branch_changed: false, simulation_result: { mode: 'simulate_next_match', active_tournament: null, completed_event_count: 2, next_event_index: 3 } })
-function setup({ branches = [official, readonly], states = [state(), state('readonly', 'cp-readonly')], checkpoints = [checkpoint(), checkpoint('cp-readonly', 'initial', 'readonly')] } = {}) { api.getRunContainer.mockResolvedValue(run); api.listRunBranches.mockResolvedValue({ run_branches: branches }); api.listBranchStates.mockResolvedValue({ branch_states: states }); api.listBranchCheckpoints.mockResolvedValue({ branch_checkpoints: checkpoints }); api.forkRunBranch.mockResolvedValue(success()); api.simulateNextMatchOnBranch.mockResolvedValue(simulationSuccess()); api.simulateNextRoundOnBranch.mockResolvedValue({ ...simulationSuccess(), simulation_result: { ...simulationSuccess().simulation_result, mode: 'simulate_next_round' } }); api.simulateNextWeekOnBranch.mockResolvedValue({ ...simulationSuccess(), simulation_result: { ...simulationSuccess().simulation_result, mode: 'simulate_next_week' } }); api.simulateNextTournamentOnBranch.mockResolvedValue({ ...simulationSuccess(), simulation_result: { ...simulationSuccess().simulation_result, mode: 'simulate_next_tournament' } }) }
+function setup({ branches = [official, readonly], states = [state(), state('readonly', 'cp-readonly')], checkpoints = [checkpoint(), checkpoint('cp-readonly', 'initial', 'readonly')] } = {}) { api.getRunContainer.mockResolvedValue(run); api.listRunBranches.mockResolvedValue({ run_branches: branches }); api.listBranchStates.mockResolvedValue({ branch_states: states }); api.listBranchCheckpoints.mockResolvedValue({ branch_checkpoints: checkpoints }); api.forkRunBranch.mockResolvedValue(success()); api.simulateNextMatchOnBranch.mockResolvedValue(simulationSuccess()); api.simulateNextRoundOnBranch.mockResolvedValue({ ...simulationSuccess(), simulation_result: { ...simulationSuccess().simulation_result, mode: 'simulate_next_round' } }); api.simulateNextWeekOnBranch.mockResolvedValue({ ...simulationSuccess(), simulation_result: { ...simulationSuccess().simulation_result, mode: 'simulate_next_week' } }); api.simulateNextTournamentOnBranch.mockResolvedValue({ ...simulationSuccess(), simulation_result: { ...simulationSuccess().simulation_result, mode: 'simulate_next_tournament' } }); api.simulateFullSeasonOnBranch.mockResolvedValue(fullSeasonSuccess()) }
+const fullSeasonSuccess = (replay = false) => ({ ...simulationSuccess(replay), new_head_checkpoint_id: 'cp-season', current_week: null, current_event_id: null, current_event_sequence: null, simulation_result: { ...simulationSuccess().simulation_result, mode: 'simulate_full_season', completed_event_count: 24, next_event_index: 25, completed_in_command_count: 20, completed_week_group_count: 12, season_complete: true } })
 async function fillValidForm(confirm = true) { const user = userEvent.setup(); await user.type(screen.getByLabelText('target_branch_display_name'), ' Fork Name '); await user.type(screen.getByLabelText('target_branch_id'), ' fork-a '); await user.type(screen.getByLabelText('target_legacy_simulation_run_id'), ' legacy-fork '); await user.type(screen.getByLabelText('target_branch_seed'), ' 44 '); await user.type(screen.getByLabelText('command_id'), ' command-a '); if (confirm) await user.click(screen.getByRole('checkbox')) }
 beforeEach(() => { vi.clearAllMocks(); for (const value of Object.values(api)) if (vi.isMockFunction(value)) value.mockReset(); setup() })
 describe('AdminRunBranchesPage', () => {
@@ -314,6 +315,93 @@ describe('AdminRunBranchesPage', () => {
     api.listRunBranches.mockResolvedValueOnce({ run_branches: [official] }).mockResolvedValue({ run_branches: [freshBranch] }); api.listBranchStates.mockResolvedValueOnce({ branch_states: [state()] }).mockResolvedValue({ branch_states: [freshState] }); api.listBranchCheckpoints.mockResolvedValueOnce({ branch_checkpoints: [checkpoint()] }).mockResolvedValue({ branch_checkpoints: [checkpoint('cp-tournament-fresh')] }); api.simulateNextTournamentOnBranch.mockRejectedValueOnce(new api.ApiError('conflict', 409))
     renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await userEvent.click((await screen.findAllByRole('button', { name: 'Simulate Next Tournament' }))[0]); const command = screen.getByLabelText('Simulation command ID').textContent; await userEvent.type(screen.getByLabelText('Simulation audit reason'), 'keep tournament'); await userEvent.click(screen.getByLabelText('Confirm simulation')); await userEvent.click(screen.getByRole('button', { name: 'Confirm Simulate Next Tournament' }))
     await screen.findByText('Branch execution state changed or must be reviewed again.'); const review = screen.getByRole('heading', { name: 'Review Simulate Next Tournament' }).closest('article') as HTMLElement; await waitFor(() => expect(review).toHaveTextContent(incoherent ? 'Reviewed head checkpoint ID—' : 'cp-tournament-fresh')); expect(review).toHaveTextContent('TOURNAMENT-FRESH'); expect(screen.getByLabelText('Simulation audit reason')).toHaveValue('keep tournament'); expect(screen.getByLabelText('Confirm simulation')).not.toBeChecked(); expect(screen.getByLabelText('Simulation command ID')).not.toHaveTextContent(command ?? ''); expect(api.simulateNextTournamentOnBranch).toHaveBeenCalledTimes(1)
+  })
+
+  it('offers all five shared actions to eligible official and non-official Branches while keeping Make official independent', async () => {
+    const fork = { ...official, branch_id: 'fork', display_name: 'Fork Branch', head_checkpoint_id: 'cp-fork', legacy_simulation_run_id: 'legacy-fork', is_official: false }
+    setup({ branches: [official, fork, readonly], states: [state(), state('fork', 'cp-fork'), state('readonly', 'cp-readonly')], checkpoints: [checkpoint(), checkpoint('cp-fork', 'branch_fork_start', 'fork'), checkpoint('cp-readonly', 'initial', 'readonly')] })
+    renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await screen.findByText('Admin Run')
+    for (const label of ['Simulate Next Match', 'Simulate Next Round', 'Simulate Next Week', 'Simulate Next Tournament', 'Simulate Full Season']) {
+      const buttons = screen.getAllByRole('button', { name: label }); expect(buttons).toHaveLength(3); expect(buttons[0]).toBeEnabled(); expect(buttons[1]).toBeEnabled(); expect(buttons[2]).toBeDisabled()
+    }
+    expect(screen.getAllByRole('button', { name: 'Make official' })[0]).toBeEnabled()
+  })
+
+  it('reviews and submits Full Season only after explicit confirmation with the exact guarded payload', async () => {
+    renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await userEvent.click((await screen.findAllByRole('button', { name: 'Simulate Full Season' }))[0])
+    expect(api.simulateFullSeasonOnBranch).not.toHaveBeenCalled()
+    const review = screen.getByRole('heading', { name: 'Review Simulate Full Season' }).closest('article') as HTMLElement
+    expect(review).toHaveTextContent('ActionFull Season'); expect(review).toHaveTextContent('Official Branch (official)'); expect(review).toHaveTextContent('cp-initial')
+    expect(review).toHaveTextContent('finalize any currently active tournament and then complete every remaining calendar event'); expect(review).toHaveTextContent('This command may complete many tournaments and weeks in one atomic operation. It does not run Finals or create the next season.')
+    const command = screen.getByLabelText('Simulation command ID').textContent ?? ''
+    await userEvent.type(screen.getByLabelText('Simulation audit reason'), '  finish season safely  '); expect(screen.getByRole('button', { name: 'Confirm Simulate Full Season' })).toBeDisabled()
+    await userEvent.click(screen.getByLabelText('Confirm simulation')); await userEvent.click(screen.getByRole('button', { name: 'Confirm Simulate Full Season' }))
+    await waitFor(() => expect(api.simulateFullSeasonOnBranch).toHaveBeenCalledWith('run-a', 'official', { expected_head_checkpoint_id: 'cp-initial', command_id: command, audit_reason: 'finish season safely', explicit_confirmation: true }))
+    for (const client of [api.simulateNextMatchOnBranch, api.simulateNextRoundOnBranch, api.simulateNextWeekOnBranch, api.simulateNextTournamentOnBranch, api.makeOfficialRunBranch]) expect(client).not.toHaveBeenCalled()
+  })
+
+  it('switches the shared review to Full Season with a fresh command and cleared confirmation without requesting', async () => {
+    renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await userEvent.click((await screen.findAllByRole('button', { name: 'Simulate Next Match' }))[0]); const command = screen.getByLabelText('Simulation command ID').textContent
+    await userEvent.click(screen.getByLabelText('Confirm simulation')); await userEvent.click((await screen.findAllByRole('button', { name: 'Simulate Full Season' }))[0])
+    expect(screen.getByLabelText('Simulation command ID')).not.toHaveTextContent(command ?? ''); expect(screen.getByLabelText('Confirm simulation')).not.toBeChecked(); expect(api.simulateFullSeasonOnBranch).not.toHaveBeenCalled()
+  })
+
+  it('validates a pending Full Season result against its executed action after the review switches', async () => {
+    let resolveFullSeason!: (result: ReturnType<typeof fullSeasonSuccess>) => void
+    api.simulateFullSeasonOnBranch.mockReturnValueOnce(new Promise((resolve) => { resolveFullSeason = resolve }))
+    renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches')
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Simulate Full Season' }))[0])
+    await userEvent.type(screen.getByLabelText('Simulation audit reason'), 'pending season')
+    await userEvent.click(screen.getByLabelText('Confirm simulation'))
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm Simulate Full Season' }))
+    await waitFor(() => expect(api.simulateFullSeasonOnBranch).toHaveBeenCalledTimes(1))
+
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Simulate Next Match' }))[0])
+    expect(screen.getByRole('heading', { name: 'Review Simulate Next Match' })).toBeInTheDocument()
+    resolveFullSeason({ ...fullSeasonSuccess(), simulation_result: { ...fullSeasonSuccess().simulation_result, completed_in_command_count: undefined as never } })
+
+    expect(await screen.findByText('Response contract error: Full Season summary fields are missing or invalid.')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Full Season result')).not.toBeInTheDocument()
+    expect(screen.queryByText('The official Branch pointer was not changed.')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Completed by this command/)).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Review Simulate Next Match' })).toBeInTheDocument()
+    expect(api.simulateFullSeasonOnBranch).toHaveBeenCalledTimes(1)
+    expect(api.simulateNextMatchOnBranch).not.toHaveBeenCalled()
+  })
+
+  it('renders truthful Full Season success fields and exact replay without continuing automatically', async () => {
+    api.simulateFullSeasonOnBranch.mockResolvedValueOnce(fullSeasonSuccess(true))
+    renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await userEvent.click((await screen.findAllByRole('button', { name: 'Simulate Full Season' }))[0]); const command = screen.getByLabelText('Simulation command ID').textContent
+    await userEvent.type(screen.getByLabelText('Simulation audit reason'), 'season'); await userEvent.click(screen.getByLabelText('Confirm simulation')); await userEvent.click(screen.getByRole('button', { name: 'Confirm Simulate Full Season' }))
+    const result = await screen.findByLabelText('Full Season result'); expect(result).toHaveTextContent('Completed by this command20'); expect(result).toHaveTextContent('Completed week groups12'); expect(result).toHaveTextContent('Season completeYes'); expect(result).toHaveTextContent('Current locator2030 / — / — / —')
+    expect(await screen.findByText('The previously completed Full Season command was returned. No duplicate season progression was simulated.')).toBeInTheDocument(); expect(screen.getByLabelText('Simulation command ID')).not.toHaveTextContent(command ?? ''); expect(screen.getByLabelText('Confirm simulation')).not.toBeChecked(); expect(api.simulateFullSeasonOnBranch).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    ['wrong mode', { simulation_result: { ...fullSeasonSuccess().simulation_result, mode: 'simulate_next_tournament' } }],
+    ['official pointer', { official_branch_changed: true }],
+    ['missing completed count', { simulation_result: { ...fullSeasonSuccess().simulation_result, completed_in_command_count: undefined } }],
+    ['invalid week groups', { simulation_result: { ...fullSeasonSuccess().simulation_result, completed_week_group_count: -1 } }],
+    ['invalid season complete', { simulation_result: { ...fullSeasonSuccess().simulation_result, season_complete: 'yes' } }]
+  ])('rejects malformed Full Season response: %s', async (_name, changes) => {
+    api.simulateFullSeasonOnBranch.mockResolvedValueOnce({ ...fullSeasonSuccess(), ...changes })
+    renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await userEvent.click((await screen.findAllByRole('button', { name: 'Simulate Full Season' }))[0]); await userEvent.type(screen.getByLabelText('Simulation audit reason'), 'season'); await userEvent.click(screen.getByLabelText('Confirm simulation')); await userEvent.click(screen.getByRole('button', { name: 'Confirm Simulate Full Season' }))
+    expect(await screen.findByText(/Response contract error/)).toBeInTheDocument(); expect(screen.queryByLabelText('Full Season result')).not.toBeInTheDocument(); expect(screen.queryByText('The official Branch pointer was not changed.')).not.toBeInTheDocument(); expect(api.simulateFullSeasonOnBranch).toHaveBeenCalledTimes(1)
+  })
+
+  it('preserves the exact Full Season request for an explicit ordinary-error retry', async () => {
+    api.simulateFullSeasonOnBranch.mockRejectedValueOnce(new api.ApiError(JSON.stringify({ detail: 'no executable Full Season' }), 400)).mockResolvedValueOnce(fullSeasonSuccess())
+    renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await userEvent.click((await screen.findAllByRole('button', { name: 'Simulate Full Season' }))[0]); const command = screen.getByLabelText('Simulation command ID').textContent
+    await userEvent.type(screen.getByLabelText('Simulation audit reason'), 'retry season'); await userEvent.click(screen.getByLabelText('Confirm simulation')); await userEvent.click(screen.getByRole('button', { name: 'Confirm Simulate Full Season' }))
+    expect(await screen.findByText('no executable Full Season')).toBeInTheDocument(); expect(screen.getByLabelText('Simulation command ID')).toHaveTextContent(command ?? ''); expect(screen.getByLabelText('Simulation audit reason')).toHaveValue('retry season'); expect(screen.getByLabelText('Confirm simulation')).toBeChecked(); expect(api.simulateFullSeasonOnBranch).toHaveBeenCalledTimes(1)
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm Simulate Full Season' })); await waitFor(() => expect(api.simulateFullSeasonOnBranch).toHaveBeenCalledTimes(2)); expect(api.simulateFullSeasonOnBranch.mock.calls[1]).toEqual(api.simulateFullSeasonOnBranch.mock.calls[0])
+  })
+
+  it.each([false, true])('refreshes a %s incoherent Full Season review after 409 without retrying', async (incoherent) => {
+    const freshBranch = { ...official, head_checkpoint_id: 'cp-season-fresh' }; const freshState = { ...state(), head_checkpoint_id: incoherent ? 'cp-disagree' : 'cp-season-fresh', current_event_id: 'SEASON-FRESH' }
+    api.listRunBranches.mockResolvedValueOnce({ run_branches: [official] }).mockResolvedValue({ run_branches: [freshBranch] }); api.listBranchStates.mockResolvedValueOnce({ branch_states: [state()] }).mockResolvedValue({ branch_states: [freshState] }); api.listBranchCheckpoints.mockResolvedValueOnce({ branch_checkpoints: [checkpoint()] }).mockResolvedValue({ branch_checkpoints: [checkpoint('cp-season-fresh')] }); api.simulateFullSeasonOnBranch.mockRejectedValueOnce(new api.ApiError('conflict', 409))
+    renderWithRoute(<AdminRunBranchesPage />, '/admin/runs/run-a/branches'); await userEvent.click((await screen.findAllByRole('button', { name: 'Simulate Full Season' }))[0]); const command = screen.getByLabelText('Simulation command ID').textContent; await userEvent.type(screen.getByLabelText('Simulation audit reason'), 'keep season'); await userEvent.click(screen.getByLabelText('Confirm simulation')); await userEvent.click(screen.getByRole('button', { name: 'Confirm Simulate Full Season' }))
+    await screen.findByText('Branch execution state changed or must be reviewed again.'); const review = screen.getByRole('heading', { name: 'Review Simulate Full Season' }).closest('article') as HTMLElement; await waitFor(() => expect(review).toHaveTextContent(incoherent ? 'Reviewed head checkpoint ID—' : 'cp-season-fresh')); expect(review).toHaveTextContent('SEASON-FRESH'); expect(screen.getByLabelText('Simulation audit reason')).toHaveValue('keep season'); expect(screen.getByLabelText('Confirm simulation')).not.toBeChecked(); expect(screen.getByLabelText('Simulation command ID')).not.toHaveTextContent(command ?? ''); expect(api.simulateFullSeasonOnBranch).toHaveBeenCalledTimes(1)
   })
 
 })

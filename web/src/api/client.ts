@@ -86,6 +86,8 @@ import type {
   AdminBranchSimulateNextRoundResponse,
   AdminBranchSimulateNextWeekRequest,
   AdminBranchSimulateNextWeekResponse,
+  AdminBranchSimulateNextTournamentRequest,
+  AdminBranchSimulateNextTournamentResponse,
   RunWeeklyIntakeCohortSeasonPreviewParams,
   RunWeeklyIntakeCohortSeasonPreviewResponse,
   RunPlayerDetail,
@@ -844,6 +846,10 @@ export function simulateNextRoundOnBranch(productRunId: string, branchId: string
 
 export function simulateNextWeekOnBranch(productRunId: string, branchId: string, payload: AdminBranchSimulateNextWeekRequest): Promise<AdminBranchSimulateNextWeekResponse> {
   return request(`/admin/runs/${encodeURIComponent(productRunId)}/branches/${encodeURIComponent(branchId)}/simulate-next-week`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function simulateNextTournamentOnBranch(productRunId: string, branchId: string, payload: AdminBranchSimulateNextTournamentRequest): Promise<AdminBranchSimulateNextTournamentResponse> {
+  return request(`/admin/runs/${encodeURIComponent(productRunId)}/branches/${encodeURIComponent(branchId)}/simulate-next-tournament`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function getRun(runId: string): Promise<SeasonStateResponse> {

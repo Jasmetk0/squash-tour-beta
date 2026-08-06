@@ -109,21 +109,39 @@ class FinalsOrchestrationService:
                 already_simulated=True,
             )
 
-        qualification = self.derive_and_persist_qualification(run=run, state=state, players_by_id=players_by_id)
+        derived = self.derive_world_tour_finals(run=run, state=state, players_by_id=players_by_id)
+        qualification = derived.qualification
+        self.repository.upsert_finals_qualification(
+            run_id=run.run_id, season=run.season,
+            source_as_of_season=qualification.source_as_of_season,
+            source_as_of_week=qualification.source_as_of_week,
+            qualification=qualification.qualification,
+        )
+        persisted_result = derived.result
+        self.repository.upsert_finals_result(
+            run_id=run.run_id, season=run.season, event_id=derived.event_id,
+            source_as_of_season=persisted_result.source_as_of_season,
+            source_as_of_week=persisted_result.source_as_of_week,
+            result=persisted_result.result,
+        )
+        return derived
+
+    def derive_world_tour_finals(
+        self, *, run: SimulationRunInfo, state: SeasonState,
+        players_by_id: dict[str, Player],
+    ) -> FinalsSimulationResult:
+        """Purely derive the deterministic Finals payload; perform no persistence."""
+        self._validate_season_complete(state=state)
+        race_snapshot = state.race_snapshot
+        if race_snapshot is None:
+            raise ValueError("Cannot simulate finals before race snapshot exists")
+        qualification = self.derive_qualification(run=run, state=state, players_by_id=players_by_id)
         engine = self._build_engine(seed=run.seed, season=run.season)
         finals_result = engine.simulate_event(
             event_id=self.finals_event_id,
             season=run.season,
             race_table=race_snapshot.report.race,
             players_by_id=players_by_id,
-        )
-        self.repository.upsert_finals_result(
-            run_id=run.run_id,
-            season=run.season,
-            event_id=self.finals_event_id,
-            source_as_of_season=race_snapshot.as_of_season,
-            source_as_of_week=race_snapshot.as_of_week,
-            result=finals_result,
         )
         persisted_result = PersistedFinalsResult(
             run_id=run.run_id,

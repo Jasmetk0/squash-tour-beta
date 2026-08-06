@@ -251,6 +251,17 @@ class AdminBranchSimulateFullSeasonRequest(AdminBranchSimulateNextMatchRequest):
 class AdminBranchSimulateFullSeasonResponse(AdminBranchSimulateNextMatchResponse):
     pass
 
+class AdminBranchSimulateWorldTourFinalsRequest(AdminBranchSimulateNextMatchRequest):
+    pass
+
+class AdminBranchSimulateWorldTourFinalsResponse(BaseModel):
+    product_run_id: str; branch_id: str; legacy_simulation_run_id: str; command_id: str
+    request_fingerprint: str; idempotent_replay: bool; previous_head_checkpoint_id: str; new_head_checkpoint_id: str
+    previous_season: int; previous_week: int | None = None; previous_event_id: str | None = None; previous_event_sequence: int | None = None
+    current_season: int; current_week: int | None = None; current_event_id: str | None = None; current_event_sequence: int | None = None
+    official_branch_changed: bool
+    finals: FinalsSimulationResult
+
 
 class BranchStateResponse(BaseModel):
     branch_id: str; run_id: str; head_checkpoint_id: str | None = None

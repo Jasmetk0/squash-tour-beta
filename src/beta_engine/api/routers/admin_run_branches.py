@@ -10,6 +10,7 @@ from beta_engine.api.schemas import (
     AdminBranchSimulateNextRoundRequest, AdminBranchSimulateNextRoundResponse,
     AdminBranchSimulateNextWeekRequest, AdminBranchSimulateNextWeekResponse,
     AdminBranchSimulateNextTournamentRequest, AdminBranchSimulateNextTournamentResponse,
+    AdminBranchSimulateFullSeasonRequest, AdminBranchSimulateFullSeasonResponse,
 )
 from beta_engine.application.api_services import SimulationApiService
 from beta_engine.infrastructure.db import (
@@ -27,11 +28,24 @@ from beta_engine.infrastructure.db import (
     BranchSimulateNextRoundCommand,
     BranchSimulateNextWeekCommand,
     BranchSimulateNextTournamentCommand,
+    BranchSimulateFullSeasonCommand,
     BranchExecutionTargetNotFoundError, BranchExecutionTargetConflictError,
     BranchSimulationConflictError, BranchSimulationIdempotencyConflictError,
 )
 
 router = APIRouter(prefix="/admin/runs", tags=["admin-runs"])
+
+@router.post("/{product_run_id}/branches/{branch_id}/simulate-full-season", response_model=AdminBranchSimulateFullSeasonResponse)
+def simulate_full_season_on_branch(product_run_id: str, branch_id: str, payload: AdminBranchSimulateFullSeasonRequest, service: SimulationApiService = Depends(get_simulation_api_service)) -> AdminBranchSimulateFullSeasonResponse:
+    command = BranchSimulateFullSeasonCommand(product_run_id=product_run_id, branch_id=branch_id, **payload.model_dump())
+    try:
+        return AdminBranchSimulateFullSeasonResponse.model_validate(service.simulate_full_season_on_branch_atomically(command).__dict__)
+    except (KeyError, BranchExecutionTargetNotFoundError) as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except (BranchSimulationIdempotencyConflictError, BranchExecutionTargetConflictError, BranchSimulationConflictError) as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except (BranchSimulationValidationError, ValueError) as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 @router.post("/{product_run_id}/branches/{branch_id}/simulate-next-tournament", response_model=AdminBranchSimulateNextTournamentResponse)
 def simulate_next_tournament_on_branch(product_run_id: str, branch_id: str, payload: AdminBranchSimulateNextTournamentRequest, service: SimulationApiService = Depends(get_simulation_api_service)) -> AdminBranchSimulateNextTournamentResponse:

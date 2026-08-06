@@ -245,6 +245,12 @@ class AdminBranchSimulateNextTournamentRequest(AdminBranchSimulateNextMatchReque
 class AdminBranchSimulateNextTournamentResponse(AdminBranchSimulateNextMatchResponse):
     pass
 
+class AdminBranchSimulateFullSeasonRequest(AdminBranchSimulateNextMatchRequest):
+    pass
+
+class AdminBranchSimulateFullSeasonResponse(AdminBranchSimulateNextMatchResponse):
+    pass
+
 
 class BranchStateResponse(BaseModel):
     branch_id: str; run_id: str; head_checkpoint_id: str | None = None

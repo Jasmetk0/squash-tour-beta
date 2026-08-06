@@ -25,7 +25,7 @@ class SimulationPersistenceService:
         self.repository.save_season_state(run_id=run_id, state=step.season_state)
 
         if (
-            step.mode == "simulate_next_week"
+            step.mode in {"simulate_next_week", "simulate_full_season"}
             and reviewed_pre_state is not None
             and reviewed_pre_state.active_tournament is not None
         ):

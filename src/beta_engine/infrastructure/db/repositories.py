@@ -1484,6 +1484,29 @@ class SimulationPersistenceRepository:
         return hashlib.sha256(SimulationPersistenceRepository.canonical_json(canonical).encode()).hexdigest()
 
     @staticmethod
+    def _normalize_and_validate_world_tour_finals_command(
+        command: BranchSimulateWorldTourFinalsCommand,
+    ) -> BranchSimulateWorldTourFinalsCommand:
+        normalized = BranchSimulateWorldTourFinalsCommand(**{
+            key: value.strip() if isinstance(value, str) else value
+            for key, value in command.__dict__.items()
+        })
+        if (
+            not all(isinstance(value, str) and value for value in (
+                normalized.product_run_id,
+                normalized.branch_id,
+                normalized.expected_head_checkpoint_id,
+                normalized.command_id,
+                normalized.audit_reason,
+            ))
+            or normalized.explicit_confirmation is not True
+        ):
+            raise BranchSimulationValidationError(
+                "Branch World Tour Finals requires non-empty identifiers, audit reason, and explicit confirmation"
+            )
+        return normalized
+
+    @staticmethod
     def _finals_replay_result(payload: dict[str, object]) -> BranchSimulateWorldTourFinalsResult:
         values = dict(payload)
         values["finals"] = FinalsSimulationResult.model_validate(values["finals"])
@@ -1491,7 +1514,7 @@ class SimulationPersistenceRepository:
         return BranchSimulateWorldTourFinalsResult(**values)  # type: ignore[arg-type]
 
     def get_branch_world_tour_finals_command_replay(self, command: BranchSimulateWorldTourFinalsCommand) -> BranchSimulateWorldTourFinalsResult | None:
-        command = BranchSimulateWorldTourFinalsCommand(**{k: v.strip() if isinstance(v, str) else v for k, v in command.__dict__.items()})
+        command = self._normalize_and_validate_world_tour_finals_command(command)
         fingerprint = self._finals_request_fingerprint(command)
         with self._session_factory() as session:
             existing = session.get(BranchSimulationCommandModel, command.command_id)
@@ -1514,9 +1537,7 @@ class SimulationPersistenceRepository:
         return ReviewedFinalsPhaseDescriptor(qualification is not None, cls.checkpoint_content_hash(q_payload) if q_payload else None, result is not None, cls.checkpoint_content_hash(r_payload) if r_payload else None)
 
     def simulate_world_tour_finals_on_branch_atomically(self, command: BranchSimulateWorldTourFinalsCommand, *, finals: FinalsSimulationResult, reviewed_pre_state_fingerprint: str, reviewed_finals_phase: ReviewedFinalsPhaseDescriptor) -> BranchSimulateWorldTourFinalsResult:
-        if not all(isinstance(v, str) and v.strip() for v in (command.product_run_id, command.branch_id, command.expected_head_checkpoint_id, command.command_id, command.audit_reason)) or command.explicit_confirmation is not True:
-            raise BranchSimulationValidationError("Branch World Tour Finals requires non-empty identifiers, audit reason, and explicit confirmation")
-        command = BranchSimulateWorldTourFinalsCommand(**{k: v.strip() if isinstance(v, str) else v for k, v in command.__dict__.items()})
+        command = self._normalize_and_validate_world_tour_finals_command(command)
         fingerprint = self._finals_request_fingerprint(command)
         with self._session_factory.begin() as session:
             existing = session.get(BranchSimulationCommandModel, command.command_id)
@@ -1548,7 +1569,8 @@ class SimulationPersistenceRepository:
             checkpoint_payload = _from_json(checkpoint.payload_json)
             if checkpoint.kind != BRANCH_CHECKPOINT_KIND_BRANCH_FORK_START:
                 captured = checkpoint_payload.get("season_state") if isinstance(checkpoint_payload, dict) else None
-                if not isinstance(captured, dict): raise BranchSimulationConflictError("effective head does not contain captured legacy state")
+                if not isinstance(captured, dict) or _to_json(captured) != _to_json(before):
+                    raise BranchSimulationConflictError("effective head does not match current legacy state")
             elif not isinstance(checkpoint_payload, dict) or checkpoint_payload.get("target_legacy_simulation_run_id") != legacy_id:
                 raise BranchSimulationConflictError("fork head provenance cannot prove selected legacy namespace")
             state_hash = self.checkpoint_content_hash(before)
@@ -1648,6 +1670,9 @@ class SimulationPersistenceRepository:
                 session=session, run_id=legacy_id, step=step,
                 reviewed_pre_state=reviewed_pre_state,
             )
+            # Materialize pending tournament artifacts before capturing the
+            # canonical state represented by the new effective head.
+            session.flush()
             after_model = session.get(SeasonStateModel, legacy_id); after = self._season_state_payload_in_session(session=session, model=after_model)
             active = step.season_state.active_tournament.event if step.season_state.active_tournament else None
             sequence = session.execute(select(func.max(BranchCheckpointModel.sequence)).where(BranchCheckpointModel.branch_id == command.branch_id)).scalar_one() or 0

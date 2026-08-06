@@ -70,6 +70,8 @@ from beta_engine.infrastructure.db import (
     BranchSimulateNextTournamentResult,
     BranchSimulateFullSeasonCommand,
     BranchSimulateFullSeasonResult,
+    BranchSimulateWorldTourFinalsCommand,
+    BranchSimulateWorldTourFinalsResult,
     BranchSimulationValidationError,
     ForkRunBranchCommand,
     ForkRunBranchResult,
@@ -1884,6 +1886,45 @@ class SimulationApiService:
             state=state,
             players_by_id=self._load_players_by_id_for_run(run_info=run_info),
         )
+
+    def simulate_world_tour_finals_on_branch_atomically(self, command: BranchSimulateWorldTourFinalsCommand) -> BranchSimulateWorldTourFinalsResult:
+        """Derive and atomically persist Finals for one explicitly selected Branch."""
+        replay = self.repository.get_branch_world_tour_finals_command_replay(command)
+        if replay is not None:
+            return replay
+        command = BranchSimulateWorldTourFinalsCommand(**{k: v.strip() if isinstance(v, str) else v for k, v in command.__dict__.items()})
+        if not all((command.product_run_id, command.branch_id, command.expected_head_checkpoint_id, command.command_id, command.audit_reason)) or command.explicit_confirmation is not True:
+            raise BranchSimulationValidationError("Branch World Tour Finals requires non-empty identifiers, audit reason, and explicit confirmation")
+        if self.repository.get_run_container(run_id=command.product_run_id) is None:
+            raise KeyError(f"product_run_id {command.product_run_id} was not found")
+        target = self.resolve_branch_execution_target(branch_id=command.branch_id)
+        if target.product_run_id != command.product_run_id:
+            from beta_engine.infrastructure.db import BranchSimulationConflictError
+            raise BranchSimulationConflictError("branch belongs to another product run")
+        if self.repository.get_branch_checkpoint(checkpoint_id=command.expected_head_checkpoint_id) is None:
+            raise KeyError(f"expected checkpoint {command.expected_head_checkpoint_id} was not found")
+        if target.head_checkpoint_id != command.expected_head_checkpoint_id:
+            from beta_engine.infrastructure.db import BranchSimulationConflictError
+            raise BranchSimulationConflictError("expected head checkpoint is stale")
+        run_info, state = self._load_run_context(run_id=target.legacy_simulation_run_id)
+        if state.has_remaining_events:
+            raise BranchSimulationValidationError("World Tour Finals requires a completed regular season")
+        if state.active_tournament is not None:
+            raise BranchSimulationValidationError("World Tour Finals requires no active regular-season tournament")
+        if state.race_snapshot is None:
+            raise BranchSimulationValidationError("World Tour Finals requires a race snapshot")
+        phase = self.repository.get_finals_phase_descriptor(run_id=run_info.run_id, season=run_info.season)
+        if phase.result_exists:
+            from beta_engine.infrastructure.db import BranchSimulationConflictError
+            raise BranchSimulationConflictError("World Tour Finals result already exists")
+        orchestrator = FinalsOrchestrationService(repository=self.repository)
+        finals = orchestrator.derive_world_tour_finals(run=run_info, state=state, players_by_id=self._load_players_by_id_for_run(run_info=run_info))
+        if phase.qualification_exists:
+            existing = self.repository.get_finals_qualification(run_id=run_info.run_id, season=run_info.season)
+            if existing is None or existing.source_as_of_season != finals.qualification.source_as_of_season or existing.source_as_of_week != finals.qualification.source_as_of_week or existing.qualification != finals.qualification.qualification:
+                from beta_engine.infrastructure.db import BranchSimulationConflictError
+                raise BranchSimulationConflictError("existing Finals qualification differs from deterministic derivation")
+        return self.repository.simulate_world_tour_finals_on_branch_atomically(command, finals=finals, reviewed_pre_state_fingerprint=self.repository.checkpoint_content_hash(state.model_dump(mode="json")), reviewed_finals_phase=phase)
 
     def get_finals_qualification(self, *, run_id: str) -> PersistedFinalsQualification:
         run_info, state = self._load_run_context(run_id=run_id)

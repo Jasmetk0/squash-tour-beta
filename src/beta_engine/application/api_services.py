@@ -68,6 +68,8 @@ from beta_engine.infrastructure.db import (
     BranchSimulateNextWeekResult,
     BranchSimulateNextTournamentCommand,
     BranchSimulateNextTournamentResult,
+    BranchSimulateFullSeasonCommand,
+    BranchSimulateFullSeasonResult,
     BranchSimulationValidationError,
     ForkRunBranchCommand,
     ForkRunBranchResult,
@@ -1760,6 +1762,42 @@ class SimulationApiService:
         if step.season_state == state:
             raise BranchSimulationValidationError("no executable next tournament is available")
         return self.repository.simulate_next_tournament_on_branch_atomically(
+            command, step=step, reviewed_pre_state=state,
+            reviewed_pre_state_fingerprint=self.repository.checkpoint_content_hash(state.model_dump(mode="json")),
+        )
+
+    def simulate_full_season_on_branch_atomically(self, command: BranchSimulateFullSeasonCommand) -> BranchSimulateFullSeasonResult:
+        """Execute the legacy Full Season algorithm once for one selected Branch."""
+        replay = self.repository.get_branch_full_season_command_replay(command)
+        if replay is not None:
+            return replay
+        command = BranchSimulateFullSeasonCommand(**{
+            key: value.strip() if isinstance(value, str) else value
+            for key, value in command.__dict__.items()
+        })
+        if self.repository.get_run_container(run_id=command.product_run_id) is None:
+            raise KeyError(f"product_run_id {command.product_run_id} was not found")
+        target = self.resolve_branch_execution_target(branch_id=command.branch_id)
+        if target.product_run_id != command.product_run_id:
+            from beta_engine.infrastructure.db import BranchSimulationConflictError
+            raise BranchSimulationConflictError("branch belongs to another product run")
+        if target.head_checkpoint_id != command.expected_head_checkpoint_id:
+            from beta_engine.infrastructure.db import BranchSimulationConflictError
+            raise BranchSimulationConflictError("expected head checkpoint is stale")
+        run_info, state = self._load_run_context(run_id=target.legacy_simulation_run_id)
+        try:
+            self._validate_finals_phase_not_started(run_id=target.legacy_simulation_run_id, season=run_info.season)
+        except ValueError as exc:
+            from beta_engine.infrastructure.db import BranchSimulationConflictError
+            raise BranchSimulationConflictError("Finals phase has already started") from exc
+        if state.active_tournament is None and state.next_event_index == len(state.ordered_events):
+            raise BranchSimulationValidationError("no executable full season is available")
+        step = self._build_orchestrator(
+            season=run_info.season, seed=run_info.seed, run_info=run_info,
+        ).simulate_full_season(state=state)
+        if step.season_state == state:
+            raise BranchSimulationValidationError("no executable full season is available")
+        return self.repository.simulate_full_season_on_branch_atomically(
             command, step=step, reviewed_pre_state=state,
             reviewed_pre_state_fingerprint=self.repository.checkpoint_content_hash(state.model_dump(mode="json")),
         )

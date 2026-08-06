@@ -603,15 +603,25 @@ export type AdminBranchSimulateNextMatchRequest = AdminBranchSimulationRequest
 export type AdminBranchSimulateNextRoundRequest = AdminBranchSimulationRequest
 export type AdminBranchSimulateNextWeekRequest = AdminBranchSimulationRequest
 export type AdminBranchSimulateNextTournamentRequest = AdminBranchSimulationRequest
+export type AdminBranchSimulateFullSeasonRequest = AdminBranchSimulationRequest
 
-export type BranchSimulationMode = 'simulate_next_match' | 'simulate_next_round' | 'simulate_next_week' | 'simulate_next_tournament'
+export type BranchSimulationMode = 'simulate_next_match' | 'simulate_next_round' | 'simulate_next_week' | 'simulate_next_tournament' | 'simulate_full_season'
 
-export type BranchSimulationSummary<Mode extends BranchSimulationMode> = {
+export type BranchSimulationBaseSummary<Mode extends BranchSimulationMode> = {
   mode: Mode
   active_tournament: string | null
   completed_event_count: number
   next_event_index: number
 }
+
+export type BranchSimulationSummary<Mode extends BranchSimulationMode> =
+  Mode extends 'simulate_full_season'
+    ? BranchSimulationBaseSummary<Mode> & {
+      completed_in_command_count: number
+      completed_week_group_count: number
+      season_complete: boolean
+    }
+    : BranchSimulationBaseSummary<Mode>
 
 export type AdminBranchSimulationResponse<Mode extends BranchSimulationMode> = {
   product_run_id: string
@@ -638,6 +648,7 @@ export type AdminBranchSimulateNextMatchResponse = AdminBranchSimulationResponse
 export type AdminBranchSimulateNextRoundResponse = AdminBranchSimulationResponse<'simulate_next_round'>
 export type AdminBranchSimulateNextWeekResponse = AdminBranchSimulationResponse<'simulate_next_week'>
 export type AdminBranchSimulateNextTournamentResponse = AdminBranchSimulationResponse<'simulate_next_tournament'>
+export type AdminBranchSimulateFullSeasonResponse = AdminBranchSimulationResponse<'simulate_full_season'>
 
 export type RunStatusSummary = {
   run_id: string

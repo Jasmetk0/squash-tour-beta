@@ -38,6 +38,7 @@ import {
   simulateNextRoundOnBranch,
   simulateNextWeekOnBranch,
   simulateNextTournamentOnBranch,
+  simulateFullSeasonOnBranch,
   getWorldPackageValidation,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
@@ -1029,6 +1030,18 @@ describe('world package registry client', () => {
     expect(url).not.toContain('%252F')
     expect(JSON.parse(init.body)).toEqual(payload)
     expect(['/simulate-next-match', '/simulate-next-round', '/simulate-next-week', '/simulate-next-tournament']).toContain(String(url).slice(String(url).lastIndexOf('/')))
+  })
+
+  it('posts Branch Full Season to its distinct exactly once encoded URL with its required typed summary', async () => {
+    const payload = { expected_head_checkpoint_id: 'cp/1 #', command_id: 'season-command', audit_reason: 'complete reviewed season', explicit_confirmation: true }
+    const response = { product_run_id: 'run/a #1', branch_id: 'branch/a #2', legacy_simulation_run_id: 'legacy-1', command_id: 'season-command', request_fingerprint: 'season-fingerprint', idempotent_replay: false, previous_head_checkpoint_id: 'cp/1 #', new_head_checkpoint_id: 'cp-season', previous_season: 2030, previous_week: 1, previous_event_id: 'EVENT', previous_event_sequence: 4, current_season: 2030, current_week: null, current_event_id: null, current_event_sequence: null, official_branch_changed: false, simulation_result: { mode: 'simulate_full_season' as const, active_tournament: null, completed_event_count: 24, next_event_index: 25, completed_in_command_count: 20, completed_week_group_count: 12, season_complete: true } }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(response), { status: 200 }))
+    await expect(simulateFullSeasonOnBranch('run/a #1', 'branch/a #2', payload)).resolves.toEqual(response)
+    expect(globalThis.fetch).toHaveBeenCalledWith('http://127.0.0.1:8000/admin/runs/run%2Fa%20%231/branches/branch%2Fa%20%232/simulate-full-season', expect.objectContaining({ method: 'POST', body: JSON.stringify(payload) }))
+    const [url, init] = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0]
+    expect(url).not.toContain('%252F')
+    expect(JSON.parse(init.body)).toEqual(payload)
+    expect(['/simulate-next-match', '/simulate-next-round', '/simulate-next-week', '/simulate-next-tournament', '/simulate-full-season']).toContain(String(url).slice(String(url).lastIndexOf('/')))
   })
 
 })

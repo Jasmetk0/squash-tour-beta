@@ -5,11 +5,11 @@ import { Layout } from './Layout'
 import { forbiddenViewerActionLabels, expectNoForbiddenViewerActions } from '../test/viewerTestUtils'
 import { renderWithRoute } from '../test/testUtils'
 import {
-  faxReferenceRunContainersResponse,
-  faxReferenceRunsResponse,
   faxReferenceViewerContext,
   FAX_REFERENCE_RUN_ID,
   makeDisposableFaxRunContainer,
+  makeFaxReferenceRunContainersResponse,
+  makeFaxReferenceRunsResponse,
 } from '../test/faxReferenceFixture'
 
 const api = vi.hoisted(() => ({
@@ -28,10 +28,12 @@ function viewerNav(): HTMLElement {
 describe('Layout mode navigation', () => {
   beforeEach(() => {
     const disposable = makeDisposableFaxRunContainer('layout-switch')
+    const referenceRuns = makeFaxReferenceRunsResponse()
+    const referenceContainers = makeFaxReferenceRunContainersResponse()
     localStorage.clear()
     vi.clearAllMocks()
     api.listRuns.mockResolvedValue({
-      runs: [...faxReferenceRunsResponse.runs, {
+      runs: [...referenceRuns.runs, {
         run_id: disposable.run_id,
         season: 2027,
         seed: disposable.global_seed ?? 20270807,
@@ -43,7 +45,7 @@ describe('Layout mode navigation', () => {
       }],
     })
     api.listRunContainers.mockResolvedValue({
-      run_containers: [...faxReferenceRunContainersResponse.run_containers, disposable],
+      run_containers: [...referenceContainers.run_containers, disposable],
     })
     api.getViewerOfficialRunContext.mockResolvedValue(faxReferenceViewerContext)
   })

@@ -22,14 +22,14 @@ export const faxReferenceRunContainer = Object.freeze({
   read_only: true,
   world_id: 'official_fax_world',
   world_package_fingerprint: null,
-  config_version: FAX_REFERENCE_VERSION,
+  config_version: null,
   config_fingerprint: null,
   global_seed: 20270807,
   timeline_start_season: 2000,
   timeline_end_season: 2049,
   official_branch_id: FAX_REFERENCE_BRANCH_ID,
   status: 'active',
-  metadata_json: Object.freeze({ fixture: FAX_REFERENCE_VERSION }),
+  metadata_json: Object.freeze({ fixture_version: FAX_REFERENCE_VERSION }),
   mapped_simulation_run_count: 1,
 } satisfies RunContainer)
 
@@ -54,9 +54,9 @@ export const faxReferenceViewerContext = Object.freeze({
   resolution_version: 'viewer_official_branch_v1',
 } satisfies ViewerOfficialRunContext)
 
-export const faxReferenceRunsResponse: RunsIndexResponse = Object.freeze({
-  runs: [
-    {
+export function makeFaxReferenceRunsResponse(): RunsIndexResponse {
+  return {
+    runs: [{
       run_id: FAX_REFERENCE_LEGACY_RUN_ID,
       season: 2027,
       seed: 20270807,
@@ -65,13 +65,15 @@ export const faxReferenceRunsResponse: RunsIndexResponse = Object.freeze({
       parent_run_id: null,
       child_run_count: 0,
       world_id: 'official_fax_world',
-    },
-  ],
-})
+    }],
+  } satisfies RunsIndexResponse
+}
 
-export const faxReferenceRunContainersResponse: RunContainerListResponse = Object.freeze({
-  run_containers: [faxReferenceRunContainer],
-})
+export function makeFaxReferenceRunContainersResponse(): RunContainerListResponse {
+  return {
+    run_containers: [{ ...faxReferenceRunContainer, metadata_json: { ...faxReferenceRunContainer.metadata_json } }],
+  } satisfies RunContainerListResponse
+}
 
 /** Returns an in-memory editable contract projection, never a persisted Run. */
 export function makeDisposableFaxRunContainer(suffix: string): RunContainer {

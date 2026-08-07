@@ -51,6 +51,9 @@ function hasValidWorldTourFinalsResult(result: AdminBranchExecutionResponse): re
     && typeof finals.event_id === 'string' && finals.event_id.trim().length > 0 && Number.isFinite(finals.season) && Number.isInteger(finals.season)
     && finals.qualification?.run_id === result.legacy_simulation_run_id && finals.result?.run_id === result.legacy_simulation_run_id
     && finals.qualification.season === finals.season && finals.result.season === finals.season && finals.result.event_id === finals.event_id
+    && finals.qualification.qualification?.target_season === finals.season
+    && finals.result.result?.event_id === finals.event_id && finals.result.result?.season === finals.season
+    && finals.result.result?.qualification?.target_season === finals.season
     && Array.isArray(finals.qualification.qualification?.qualified) && Array.isArray(finals.qualification.qualification?.reserves)
     && Array.isArray(finals.result.result?.groups) && Array.isArray(finals.result.result?.knockout) && Array.isArray(finals.result.result?.placements)
     && result.previous_season === result.current_season && result.previous_week === result.current_week

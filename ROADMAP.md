@@ -1,48 +1,46 @@
-# Beta_Engine Roadmap
+# Squash Engine roadmap
 
-This roadmap is a milestone summary. Detailed current-vs-target architecture and workflow planning lives in `docs/ENGINE_UX_SPEC.md`.
+This is a milestone summary, not a second product constitution. Master Vision v31 decisions synchronized into `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` take precedence; `docs/ENGINE_UX_SPEC.md` provides subordinate migration guidance. Status describes direction and does not imply that target behavior is already implemented.
 
-## Phase 0 — Documentation alignment (current task)
-- Align README/ROADMAP/spec docs with the planned FAX/MSA long-term UX and architecture direction.
-- Explicitly separate: current implementation, planned target, and future phases.
-- No backend/frontend/API/database behavior changes in this phase.
+## Current foundation — canonical model and migration safety
 
-## Phase 1 — Navigation / UX shell cleanup
-- Consolidate top-level Admin IA toward: World, Players, Tour & Seasons, Runs, Simulate, Diagnostics.
-- Keep existing routes operational; add transitional labels/badges for placeholder/advanced areas.
+- Keep new work aligned with independent Runs, equal branches, and exactly one Viewer Branch per Run; migrate legacy `official_branch`/SimulationRun terminology only with compatibility and persistence planning.
+- Preserve the invariant 50-season horizon (`2000/01–2049/50`) and exactly 61 Season Weeks per season.
+- Preserve deterministic replay, historical snapshots, provenance, auditability, and operation-scoped validation.
+- Strengthen contract/component test foundations now; add persisted canonical FAX Run materialization and genuine production-stack FAX integration tests as a later explicit slice.
 
-## Phase 2 — World cleanup
-- World hub focuses on Countries + Talent Preview.
-- Fold Country Momentum into country detail development curves (future direction).
-- Plan country detail route and move duplicate/copy actions into detail-level controls.
+## Near term — application shell and scope cleanup
 
-## Phase 3 — Talent Preview redesign
-- Expected Mode first-class framing (forecast, not concrete generation).
-- Main aggregates: Elite Talents, Tour Talents, Pro Depth; advanced tier breakdown optional.
+- Complete the neutral Squash Engine Home with global Runs and Packages entry points.
+- Keep Global Admin (no Run/branch/time context) distinct from Run Admin (one Run, active Admin branch, and time context).
+- Standardize Run-scoped controls around Run, Branch, Time, and Viewer/Admin while preserving context safely.
+- Continue turning Run Home into a working dashboard and move execution-heavy controls into dedicated Simulate workflows.
+- Remove user-facing privileged Main/Official branch assumptions in favor of Viewer Branch terminology; treat legacy schema/API names as migration debt.
 
-## Phase 4 — Player module restructure
-- Decompose Players into Player Database, Talent Intake, Custom Players, Locks & Overrides, Player Audit, Player Detail.
-- Add explicit seasonal Talent Intake workflow/statuses without overclaiming detailed progression systems.
+## Package and world lifecycle
 
-## Phase 5 — Tour & Seasons architecture
-- Consolidate categories/tournaments/templates/seasons into one workflow.
-- Strengthen Season Registry, calendar editor, compare/apply flows, and validation UX.
+- Provide separate global authoring for source World Packages and Category Packages.
+- Materialize the selected World + Category Package versions as independent Run snapshots with provenance at Run creation.
+- Ensure later source edits affect future Runs only and never silently rewrite existing Run history.
+- Continue country/population, talent intake, player identity, and lifecycle work without hard-coded world content.
 
-## Phase 6 — Tournament lifecycle + simulation controls
-- Standardize tournament lifecycle statuses and allowed actions by state.
-- Build top-level simulation launcher (match/round/tournament/week/season/full timeline) and downstream invalidation UX.
+## Tour, simulation, and history
 
-## Phase 7 — Narrative locks
-- Introduce lock model (soft/hard/winner/round/path/match constraints) with conflict checking and auditability.
+- Consolidate categories, Tournament Series/Editions, seasons, calendars, qualification, draws, and lifecycle validation into coherent workflows.
+- Support deterministic simulation ranges from the next match through a full simulation, with visible long-job state and safe recovery boundaries.
+- Expand historically versioned rankings, statistics, records, and read-only Viewer history without inventing unresolved ranking formulae.
+- Build branch map/timeline, versions, checkpoints, and recoverable saves while storing common pre-divergence history once.
 
-## Phase 8 — Diagnostics control center
-- Build cross-module diagnostics: world balance, calendar validation, run health, invalidated data, narrative locks, warnings/audit.
+## Later realism and product depth
 
-## Phase 9 — Future realism updates
-- Player identity and realism expansions (name pools/distributions, flags, physical profile, attributes, progression depth).
+- Deepen player development, form, fatigue, health, style, and decision systems only after deterministic contracts are specified.
+- Expand diagnostics, import/export, storage/recovery UX, competition formats, and analysis surfaces according to explicitly approved decisions.
+- Do not silently implement open Master Vision areas such as the final navigation tree, Viewer reveal modes, Country Ranking formula, Category Package seasonal format, or the complete engine-wide seed contract.
 
 ## Guardrails
-- Preserve determinism, replayability, and auditability.
-- Keep world/tour content data-driven.
-- Maintain Admin vs Viewer conceptual separation.
-- Do not claim planned features as implemented before delivery.
+
+- Viewer stays read-only; all authoritative mutation and simulation stays in Admin/application commands.
+- Runs are independent saved worlds; branches are timelines inside a Run, not lesser “sandbox Runs.”
+- No branch is Main/Official. Viewer Branch is a display-selection role only.
+- Package snapshots are not live links to global source Packages.
+- Do not claim planned target behavior as implemented.

@@ -33,7 +33,7 @@ export const faxReferenceRunContainer = Object.freeze({
   mapped_simulation_run_count: 1,
 } satisfies RunContainer)
 
-export const faxReferenceViewerContext = Object.freeze({
+const faxReferenceViewerContext = Object.freeze({
   product_run_id: FAX_REFERENCE_RUN_ID,
   product_run_display_name: 'FAX Reference v1',
   product_run_status: 'active',
@@ -53,6 +53,11 @@ export const faxReferenceViewerContext = Object.freeze({
   current_event_sequence: null,
   resolution_version: 'viewer_official_branch_v1',
 } satisfies ViewerOfficialRunContext)
+
+/** Returns an isolated Viewer API response so mocks cannot leak mutations between tests. */
+export function makeFaxReferenceViewerContext(): ViewerOfficialRunContext {
+  return { ...faxReferenceViewerContext }
+}
 
 export function makeFaxReferenceRunsResponse(): RunsIndexResponse {
   return {

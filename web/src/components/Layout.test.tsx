@@ -5,7 +5,7 @@ import { Layout } from './Layout'
 import { forbiddenViewerActionLabels, expectNoForbiddenViewerActions } from '../test/viewerTestUtils'
 import { renderWithRoute } from '../test/testUtils'
 import {
-  faxReferenceViewerContext,
+  makeFaxReferenceViewerContext,
   FAX_REFERENCE_RUN_ID,
   makeDisposableFaxRunContainer,
   makeFaxReferenceRunContainersResponse,
@@ -47,7 +47,7 @@ describe('Layout mode navigation', () => {
     api.listRunContainers.mockResolvedValue({
       run_containers: [...referenceContainers.run_containers, disposable],
     })
-    api.getViewerOfficialRunContext.mockResolvedValue(faxReferenceViewerContext)
+    api.getViewerOfficialRunContext.mockResolvedValue(makeFaxReferenceViewerContext())
   })
 
   it('keeps Admin / Engine mode navigation and run-scoped admin links stable', async () => {

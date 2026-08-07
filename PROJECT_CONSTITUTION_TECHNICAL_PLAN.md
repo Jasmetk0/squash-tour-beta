@@ -41,6 +41,8 @@ When sources disagree, use this order:
 4. older docs, handoffs and existing code only as implementation/history evidence.
 
 Existing beta behavior must not silently overrule the target product model.
+Repository summaries (`README.md`, `ROADMAP.md`, and `AGENTS.md`) are subordinate to
+this constitution and must be corrected when they retain superseded product rules.
 
 ---
 
@@ -500,5 +502,6 @@ For implementation work:
 
 - This file is the active repository-level product constitution synchronized from Master Vision v31.
 - `docs/ENGINE_UX_SPEC.md` is subordinate implementation/migration guidance and must not contradict this file.
+- `README.md`, `ROADMAP.md`, and `AGENTS.md` are concise operating summaries, not parallel constitutions.
 - Older commits/documents are historical context, not current canon.
 - Future Master revisions should update this file (or replace it with a complete canonical Master mirror) before major product architecture work is treated as finalized.

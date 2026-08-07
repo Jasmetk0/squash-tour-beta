@@ -14,6 +14,7 @@ const api = vi.hoisted(() => ({
     }
   },
   getRun: vi.fn(),
+  getRunContainer: vi.fn(),
   getRunStatusSummary: vi.fn(),
   getFinalsSummary: vi.fn(),
   getLatestRollover: vi.fn(),
@@ -50,6 +51,9 @@ describe('RunPage', () => {
           { event_id: 'E3', season: 2025, week: 11, tour: 'WORLD', category: 'SILVER', template_id: 'TEMP-3' }
         ]
       }
+    })
+    api.getRunContainer.mockResolvedValue({
+      run_id: 'run-a', display_name: 'Run A', status: 'active', official_branch_id: 'branch-official', storage_kind: 'persisted'
     })
     api.getRunStatusSummary.mockResolvedValue({
       run_id: 'run-a',
@@ -163,323 +167,57 @@ describe('RunPage', () => {
     api.simulateFullSeason.mockResolvedValue({ step: { mode: 'simulate_full_season' } })
   })
 
-  it('calls finals quick action endpoint from run detail', async () => {
+  it('renders the run-scoped Admin Home identity and live progress', async () => {
     renderWithRoute(<RunPage />, '/runs/run-a')
+    expect(await screen.findByRole('heading', { name: 'Home' })).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'E2 · W10' })).toHaveAttribute('href', '/admin/runs/run-a/calendar/E2')
+    expect(screen.getByText('Run: run-a')).toBeInTheDocument()
+    const context = screen.getByRole('list', { name: 'Current context' })
+    expect(within(context).getByText('W10')).toBeInTheDocument()
+    expect(within(context).getByText('1/4')).toBeInTheDocument()
+  })
 
-    expect(await screen.findByRole('list', { name: 'Current context' })).toBeInTheDocument()
-    await userEvent.click(await screen.findByRole('button', { name: 'Simulate World Tour Finals' }))
+  it('renders real branch, world, activity, and admin navigation context', async () => {
+    renderWithRoute(<RunPage />, '/runs/run-a')
+    expect(await screen.findByText('official_fax_world')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'run-parent' })).toHaveAttribute('href', '/admin/runs/run-parent')
+    expect(screen.getByRole('link', { name: 'Manage branches and official selection' })).toHaveAttribute('href', '/admin/runs/run-a/branches')
+    expect(screen.getByText('branch-official')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'E3' })).toHaveAttribute('href', '/admin/runs/run-a/events/E3')
+    expect(screen.getByRole('link', { name: 'Open Simulate' })).toHaveAttribute('href', '/admin/simulate')
+    expect(screen.getByRole('link', { name: 'Diagnostics' })).toHaveAttribute('href', '/admin/runs/run-a/diagnostics')
+  })
 
+  it('shows no attention warning when loaded run signals are healthy', async () => {
+    renderWithRoute(<RunPage />, '/runs/run-a')
+    expect(await screen.findByText('No warnings require attention.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Simulate next tournament' })).not.toBeInTheDocument()
+  })
+
+  it('surfaces a stale-world warning and preserves the rebuild command', async () => {
+    api.getRunWorldStatus.mockResolvedValueOnce({ run_id: 'run-a', world_id: 'official_fax_world', source_type: 'fresh_seed', stored_world_generation_fingerprint: 'old', current_world_generation_fingerprint: 'new', is_stale: true, rebuild_supported: true, message: 'World inputs changed.' })
+    renderWithRoute(<RunPage />, '/runs/run-a')
+    expect(await screen.findByText(/World inputs are stale/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Rebuild Run from Current World Data' }))
+    await waitFor(() => expect(api.rebuildRunWorld).toHaveBeenCalledWith('run-a'))
+    expect(await screen.findByText('Run world rebuilt.')).toBeInTheDocument()
+  })
+
+  it('offers Finals only when the regular season is complete and qualification exists', async () => {
+    const runResponse = await api.getRun()
+    const statusResponse = await api.getRunStatusSummary()
+    api.getRunStatusSummary.mockResolvedValueOnce({ ...statusResponse, progress: { next_event_index: 4, total_events: 4, completed_event_count: 4 } })
+    api.getRun.mockResolvedValueOnce({ ...runResponse, run: { ...runResponse.run, next_event_index: 4, completed_event_ids: ['E1', 'E2', 'E3', 'E4'] }, season_state: { ...runResponse.season_state, next_event_index: 4 } })
+    renderWithRoute(<RunPage />, '/runs/run-a')
+    expect(await screen.findByText(/World Tour Finals result is pending/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Simulate World Tour Finals' }))
     await waitFor(() => expect(api.simulateWorldTourFinals).toHaveBeenCalledWith('run-a'))
     expect(await screen.findByText('Finals simulation complete.')).toBeInTheDocument()
   })
 
-  it('calls rollover quick action endpoint from run detail', async () => {
+  it('summarizes overview request failures as admin attention', async () => {
+    api.getRunWorldStatus.mockRejectedValueOnce(new Error('world unavailable'))
     renderWithRoute(<RunPage />, '/runs/run-a')
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Roll over to next season' }))
-
-    await waitFor(() => expect(api.rolloverNextSeason).toHaveBeenCalledWith('run-a'))
-    expect(await screen.findByText('Rollover complete for season 2026.')).toBeInTheDocument()
-  })
-
-  it('shows readable quick action errors', async () => {
-    api.simulateWorldTourFinals.mockRejectedValueOnce(new api.ApiError('finals blocked', 409))
-    api.rolloverNextSeason.mockRejectedValueOnce(new api.ApiError('rollover blocked', 409))
-
-    renderWithRoute(<RunPage />, '/runs/run-a')
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Simulate World Tour Finals' }))
-    expect(await screen.findByText('Could not simulate Finals: finals blocked')).toBeInTheDocument()
-
-    await userEvent.click(screen.getByRole('button', { name: 'Roll over to next season' }))
-    expect(await screen.findByText('Could not execute rollover: rollover blocked')).toBeInTheDocument()
-  })
-
-  it('calls each simulation endpoint', async () => {
-    renderWithRoute(<RunPage />, '/runs/run-a')
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Simulate next match' }))
-    await waitFor(() => expect(api.simulateNextMatch).toHaveBeenCalledWith('run-a'))
-
-    await userEvent.click(screen.getByRole('button', { name: 'Simulate next round' }))
-    await waitFor(() => expect(api.simulateNextRound).toHaveBeenCalledWith('run-a'))
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Simulate next tournament' }))
-    await waitFor(() => expect(api.simulateNextTournament).toHaveBeenCalledWith('run-a'))
-
-    await userEvent.click(screen.getByRole('button', { name: 'Simulate next week' }))
-    await waitFor(() => expect(api.simulateNextWeek).toHaveBeenCalledWith('run-a'))
-
-    await userEvent.click(screen.getByRole('button', { name: 'Simulate full season' }))
-    await waitFor(() => expect(api.simulateFullSeason).toHaveBeenCalledWith('run-a'))
-  })
-
-  it('renders world status and supports rebuild action', async () => {
-    renderWithRoute(<RunPage />, '/runs/run-a')
-    expect(await screen.findByText('World data staleness and rebuild')).toBeInTheDocument()
-    expect(screen.getByText('Fresh')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Rebuild Run from Current World Data' }))
-    await waitFor(() => expect(api.rebuildRunWorld).toHaveBeenCalledWith('run-a'))
-  })
-
-  it('hides rebuild action when unsupported and renders stale label', async () => {
-    api.getRunWorldStatus.mockResolvedValueOnce({
-      run_id: 'run-a',
-      world_id: 'official_fax_world',
-      source_type: 'rollover_bootstrap',
-      stored_world_generation_fingerprint: 'fp-old',
-      current_world_generation_fingerprint: 'fp-new',
-      is_stale: true,
-      rebuild_supported: false,
-      message: 'Rebuild is not supported for bootstrap/child runs in this MVP.'
-    })
-    renderWithRoute(<RunPage />, '/runs/run-a')
-    expect(await screen.findByText('Stale')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Rebuild Run from Current World Data' })).not.toBeInTheDocument()
-  })
-
-  it('renders navigation links for finals, rollover, bootstrap lineage, and season chain', async () => {
-    renderWithRoute(<RunPage />, '/runs/run-a')
-
-    expect(await screen.findByRole('link', { name: /View World Tour Finals/i })).toHaveAttribute('href', '/runs/run-a/finals')
-    expect(await screen.findByRole('link', { name: /View season rollover/i })).toHaveAttribute('href', '/runs/run-a/rollover')
-    expect(await screen.findByRole('link', { name: /View bootstrap and lineage/i })).toHaveAttribute(
-      'href',
-      '/runs/run-a/bootstrap-lineage'
-    )
-    expect(screen.getByRole('link', { name: /View season chain/i })).toHaveAttribute('href', '/runs/run-a/season-chain')
-  })
-
-  it('renders run landing summary signals', async () => {
-    const { container } = renderWithRoute(<RunPage />, '/runs/run-a')
-
-    expect(await screen.findByText('Run landing summary')).toBeInTheDocument()
-    expect(screen.getByText('Current season')).toBeInTheDocument()
-    expect(screen.getByText('Finals')).toBeInTheDocument()
-    expect(screen.getByText('Rollover')).toBeInTheDocument()
-    const runSummary = container.querySelector('article.nested-panel .compact-summary-card')
-    expect(runSummary).not.toBeNull()
-    expect(within(runSummary as HTMLElement).getByText('Run ID')).toBeInTheDocument()
-    expect(within(runSummary as HTMLElement).getByText('run-a')).toBeInTheDocument()
-    expect(within(runSummary as HTMLElement).getByText('Seed')).toBeInTheDocument()
-    expect(within(runSummary as HTMLElement).getByText('3')).toBeInTheDocument()
-    expect(api.getRunStatusSummary).toHaveBeenCalledWith('run-a')
-  })
-
-  it('renders most relevant next inspection links from loaded artifacts', async () => {
-    renderWithRoute(<RunPage />, '/runs/run-a')
-
-    expect(await screen.findByRole('heading', { name: 'Most relevant next inspections' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'E3' })).toHaveAttribute('href', '/runs/run-a/events/E3')
-    expect(screen.getByRole('link', { name: 'Seq 10' })).toHaveAttribute('href', '/runs/run-a/snapshots/ranking/10')
-    expect(screen.getByRole('link', { name: 'Seq 7' })).toHaveAttribute('href', '/runs/run-a/snapshots/race/7')
-    expect(screen.getByRole('link', { name: 'Inspect Finals qualification detail' })).toHaveAttribute(
-      'href',
-      '/runs/run-a/finals/qualification'
-    )
-    expect(screen.getByRole('link', { name: 'Inspect latest rollover' })).toHaveAttribute('href', '/runs/run-a/rollover/2026')
-    expect(screen.getByRole('link', { name: 'Inspect season chain' })).toHaveAttribute('href', '/runs/run-a/season-chain')
-    expect(screen.getByRole('link', { name: 'Inspect aggregated run activity' })).toHaveAttribute('href', '/runs/run-a/activity')
-    expect(screen.getByRole('link', { name: 'Inspect ordered season calendar' })).toHaveAttribute('href', '/runs/run-a/calendar')
-    expect(screen.getByRole('link', { name: 'E2' })).toHaveAttribute('href', '/runs/run-a/calendar/E2')
-    expect(screen.getByRole('link', { name: 'W10 (from E2)' })).toHaveAttribute('href', '/runs/run-a/weeks/10')
-    expect(screen.getByRole('link', { name: 'W11' })).toHaveAttribute('href', '/runs/run-a/weeks/11')
-    expect(screen.getByRole('link', { name: 'Inspect source metadata' })).toHaveAttribute(
-      'href',
-      '/runs/run-a/bootstrap-lineage'
-    )
-  })
-
-  it('uses finals result detail link when finals result exists', async () => {
-    api.getFinalsSummary.mockResolvedValueOnce({
-      run_id: 'run-a',
-      season: 2025,
-      qualification: { run_id: 'run-a' },
-      result: { run_id: 'run-a' }
-    })
-    renderWithRoute(<RunPage />, '/runs/run-a')
-
-    expect(await screen.findByRole('link', { name: 'Inspect Finals result detail' })).toHaveAttribute(
-      'href',
-      '/runs/run-a/finals/result'
-    )
-  })
-
-  it('renders readable current artifact state statuses', async () => {
-    renderWithRoute(<RunPage />, '/runs/run-a')
-
-    const sectionHeading = await screen.findByRole('heading', { name: 'Current artifact state' })
-    const section = sectionHeading.closest('article')
-    expect(section).not.toBeNull()
-    expect(within(section as HTMLElement).getByText('Finals qualification')).toBeInTheDocument()
-    expect(within(section as HTMLElement).getByText('Finals result')).toBeInTheDocument()
-    expect(within(section as HTMLElement).getByText('Source metadata')).toBeInTheDocument()
-    expect(within(section as HTMLElement).getByText('Lineage metadata')).toBeInTheDocument()
-    expect(within(section as HTMLElement).getByText('Events')).toBeInTheDocument()
-    expect(within(section as HTMLElement).getAllByText('Available').length).toBeGreaterThan(0)
-    expect(within(section as HTMLElement).getAllByText('None yet').length).toBeGreaterThan(0)
-  })
-
-  it('renders finals overview from finals summary data', async () => {
-    renderWithRoute(<RunPage />, '/runs/run-a')
-
-    const sectionHeading = await screen.findByRole('heading', { name: 'World Tour Finals overview' })
-    const section = sectionHeading.closest('article')
-    expect(section).not.toBeNull()
-    expect(within(section as HTMLElement).getByText('Available')).toBeInTheDocument()
-    expect(within(section as HTMLElement).getByText('Not simulated yet')).toBeInTheDocument()
-  })
-
-  it('renders latest rollover overview from rollover api data', async () => {
-    renderWithRoute(<RunPage />, '/runs/run-a')
-
-    expect(await screen.findByText('Latest rollover overview')).toBeInTheDocument()
-    expect(screen.getByText('From season')).toBeInTheDocument()
-    expect(screen.getByText('To season')).toBeInTheDocument()
-    expect(screen.getByText('2026')).toBeInTheDocument()
-    expect(screen.getByText('128')).toBeInTheDocument()
-  })
-
-  it('renders source and lineage overview from source + lineage data', async () => {
-    renderWithRoute(<RunPage />, '/runs/run-a')
-
-    expect(await screen.findByText('Run source and lineage overview')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'run-parent' })).toHaveAttribute('href', '/runs/run-parent')
-    expect(screen.getByText('Child run count')).toBeInTheDocument()
-    expect(screen.getByText('2')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'run-child-1' })).toHaveAttribute('href', '/runs/run-child-1')
-    expect(screen.getByRole('link', { name: 'run-child-2' })).toHaveAttribute('href', '/runs/run-child-2')
-  })
-
-  it('renders readable not-found empty states for rollover and lineage metadata', async () => {
-    api.getLatestRollover.mockRejectedValueOnce({ status: 404, message: 'not found' })
-    api.getRunSource.mockRejectedValueOnce({ status: 404, message: 'not found' })
-    api.getRunLineage.mockRejectedValueOnce({ status: 404, message: 'not found' })
-
-    renderWithRoute(<RunPage />, '/runs/run-a')
-
-    expect(await screen.findByText('No rollover yet for this run.')).toBeInTheDocument()
-    expect(await screen.findByText('No source metadata available for this run.')).toBeInTheDocument()
-    expect(await screen.findByText('No lineage metadata available for this run.')).toBeInTheDocument()
-  })
-
-  it('refreshes overview queries after quick actions succeed', async () => {
-    renderWithRoute(<RunPage />, '/runs/run-a')
-
-    await screen.findByText('World Tour Finals overview')
-    expect(api.getFinalsSummary).toHaveBeenCalledTimes(1)
-    expect(api.getRunStatusSummary).toHaveBeenCalledTimes(1)
-    expect(api.getLatestRollover).toHaveBeenCalledTimes(1)
-    expect(api.getRunSource).toHaveBeenCalledTimes(1)
-    expect(api.getRunLineage).toHaveBeenCalledTimes(1)
-    expect(api.listEvents).toHaveBeenCalledTimes(1)
-    expect(api.listRankingSnapshots).toHaveBeenCalledTimes(1)
-    expect(api.listRaceSnapshots).toHaveBeenCalledTimes(1)
-
-    await userEvent.click(screen.getByRole('button', { name: 'Simulate World Tour Finals' }))
-
-    await waitFor(() => expect(api.getFinalsSummary).toHaveBeenCalledTimes(2))
-    await waitFor(() => expect(api.getRunStatusSummary).toHaveBeenCalledTimes(2))
-    await waitFor(() => expect(api.getLatestRollover).toHaveBeenCalledTimes(2))
-    await waitFor(() => expect(api.getRunSource).toHaveBeenCalledTimes(2))
-    await waitFor(() => expect(api.getRunLineage).toHaveBeenCalledTimes(2))
-    await waitFor(() => expect(api.listEvents).toHaveBeenCalledTimes(2))
-    await waitFor(() => expect(api.listRankingSnapshots).toHaveBeenCalledTimes(2))
-    await waitFor(() => expect(api.listRaceSnapshots).toHaveBeenCalledTimes(2))
-
-    await userEvent.click(screen.getByRole('button', { name: 'Roll over to next season' }))
-
-    await waitFor(() => expect(api.getFinalsSummary).toHaveBeenCalledTimes(3))
-    await waitFor(() => expect(api.getRunStatusSummary).toHaveBeenCalledTimes(3))
-    await waitFor(() => expect(api.getLatestRollover).toHaveBeenCalledTimes(3))
-    await waitFor(() => expect(api.getRunSource).toHaveBeenCalledTimes(3))
-    await waitFor(() => expect(api.getRunLineage).toHaveBeenCalledTimes(3))
-    await waitFor(() => expect(api.listEvents).toHaveBeenCalledTimes(3))
-    await waitFor(() => expect(api.listRankingSnapshots).toHaveBeenCalledTimes(3))
-    await waitFor(() => expect(api.listRaceSnapshots).toHaveBeenCalledTimes(3))
-  })
-
-  it('refreshes overview queries after simulation succeeds', async () => {
-    renderWithRoute(<RunPage />, '/runs/run-a')
-
-    await screen.findByText('World Tour Finals overview')
-    expect(api.getFinalsSummary).toHaveBeenCalledTimes(1)
-    expect(api.getRunStatusSummary).toHaveBeenCalledTimes(1)
-    expect(api.getLatestRollover).toHaveBeenCalledTimes(1)
-    expect(api.getRunSource).toHaveBeenCalledTimes(1)
-    expect(api.getRunLineage).toHaveBeenCalledTimes(1)
-    expect(api.listEvents).toHaveBeenCalledTimes(1)
-    expect(api.listRankingSnapshots).toHaveBeenCalledTimes(1)
-    expect(api.listRaceSnapshots).toHaveBeenCalledTimes(1)
-
-    await userEvent.click(screen.getByRole('button', { name: 'Simulate next tournament' }))
-
-    await waitFor(() => expect(api.getFinalsSummary).toHaveBeenCalledTimes(2))
-    await waitFor(() => expect(api.getRunStatusSummary).toHaveBeenCalledTimes(2))
-    await waitFor(() => expect(api.getLatestRollover).toHaveBeenCalledTimes(2))
-    await waitFor(() => expect(api.getRunSource).toHaveBeenCalledTimes(2))
-    await waitFor(() => expect(api.getRunLineage).toHaveBeenCalledTimes(2))
-    await waitFor(() => expect(api.listEvents).toHaveBeenCalledTimes(2))
-    await waitFor(() => expect(api.listRankingSnapshots).toHaveBeenCalledTimes(2))
-    await waitFor(() => expect(api.listRaceSnapshots).toHaveBeenCalledTimes(2))
-  })
-
-  it('renders recent history previews in API order with correct links', async () => {
-    renderWithRoute(<RunPage />, '/runs/run-a')
-
-    const eventsPreview = await screen.findByRole('list', { name: 'Recent events preview' })
-    const eventRows = within(eventsPreview).getAllByRole('listitem')
-    expect(eventRows).toHaveLength(3)
-    expect(eventRows[0]).toHaveTextContent('E3')
-    expect(eventRows[1]).toHaveTextContent('E1')
-    expect(eventRows[2]).toHaveTextContent('E2')
-
-    const rankingPreview = await screen.findByRole('list', { name: 'Recent ranking snapshots preview' })
-    const rankingRows = within(rankingPreview).getAllByRole('listitem')
-    expect(rankingRows).toHaveLength(3)
-    expect(rankingRows[0]).toHaveTextContent('Seq 10')
-    expect(rankingRows[1]).toHaveTextContent('Seq 8')
-    expect(rankingRows[2]).toHaveTextContent('Seq 9')
-
-    const racePreview = await screen.findByRole('list', { name: 'Recent race snapshots preview' })
-    const raceRows = within(racePreview).getAllByRole('listitem')
-    expect(raceRows).toHaveLength(3)
-    expect(raceRows[0]).toHaveTextContent('Seq 7')
-    expect(raceRows[1]).toHaveTextContent('Seq 5')
-    expect(raceRows[2]).toHaveTextContent('Seq 6')
-
-    expect(screen.getByRole('link', { name: 'View all events' })).toHaveAttribute('href', '/runs/run-a/events')
-    expect(screen.getByRole('link', { name: 'View all ranking snapshots' })).toHaveAttribute(
-      'href',
-      '/runs/run-a/snapshots/ranking'
-    )
-    expect(screen.getByRole('link', { name: 'View all race snapshots' })).toHaveAttribute('href', '/runs/run-a/snapshots/race')
-
-    expect(within(eventsPreview).getByRole('link', { name: /E3/i })).toHaveAttribute(
-      'href',
-      '/runs/run-a/events/E3'
-    )
-    expect(within(rankingPreview).getByRole('link', { name: /Seq 10 • WEEK/i })).toHaveAttribute(
-      'href',
-      '/runs/run-a/snapshots/ranking/10'
-    )
-    expect(within(racePreview).getByRole('link', { name: /Seq 7 • WEEK/i })).toHaveAttribute(
-      'href',
-      '/runs/run-a/snapshots/race/7'
-    )
-  })
-
-  it('renders readable empty and error states per preview section', async () => {
-    api.listEvents.mockResolvedValueOnce({ events: [] })
-    api.listRankingSnapshots.mockRejectedValueOnce(new Error('ranking unavailable'))
-    api.listRaceSnapshots.mockResolvedValueOnce({ snapshots: [] })
-
-    renderWithRoute(<RunPage />, '/runs/run-a')
-
-    expect(await screen.findByText('No events are available for this run yet.')).toBeInTheDocument()
-    expect(await screen.findByText('Failed to load recent ranking snapshots: ranking unavailable')).toBeInTheDocument()
-    expect(await screen.findByText('No race snapshots are available for this run yet.')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Simulation controls' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Simulate next tournament' })).toBeInTheDocument()
+    expect(await screen.findByText('1 run overview request(s) failed. Refresh or inspect diagnostics.')).toBeInTheDocument()
   })
 })

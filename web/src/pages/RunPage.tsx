@@ -5,75 +5,52 @@ import {
   getFinalsSummary,
   getLatestRollover,
   getRun,
+  getRunContainer,
   getRunLineage,
+  getRunSource,
   getRunStatusSummary,
   getRunWorldStatus,
-  getRunSource,
   listEvents,
-  listRaceSnapshots,
-  listRankingSnapshots,
-  rolloverNextSeason,
   rebuildRunWorld,
-  simulateFullSeason,
-  simulateNextMatch,
-  simulateNextRound,
-  simulateNextTournament,
-  simulateNextWeek,
+  rolloverNextSeason,
   simulateWorldTourFinals
 } from '../api/client'
 import {
   ActionStatusBlock,
   CompactSummaryCard,
   CurrentContextStrip,
-  EmptyState,
   MetadataList,
   PageIntro,
-  PreviewListCard,
   SectionCard,
   SummaryPills
 } from '../components/RunScopedUi'
-import { getFinalsInspectionRoute } from './finalsDetailRoutes'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
+import { normalizeRunSourceType } from '../utils/runSourceTypes'
 
 export function RunPage(): JSX.Element {
-  const previewLimit = 3
   const { runId = '' } = useParams()
   const queryClient = useQueryClient()
 
-  const invalidateRunDetailQueries = async (): Promise<void> => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['run', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['run-status-summary', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['events', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['ranking-snapshots', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['race-snapshots', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['finals-summary', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['finals-qualification', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['finals-result', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['rollover-latest', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['rollover-by-season', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['rollover-transitions', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['rollover-next-season-players', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['run-source', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['run-lineage', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['run-world-status', runId] })
-    ])
-  }
-
   const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId) })
-  const statusSummaryQuery = useQuery({
+  const containerQuery = useQuery({
+    queryKey: ['run-container', runId],
+    queryFn: () => getRunContainer(runId),
+    enabled: Boolean(runId),
+    retry: false
+  })
+  const statusQuery = useQuery({
     queryKey: ['run-status-summary', runId],
     queryFn: () => getRunStatusSummary(runId),
     enabled: Boolean(runId),
     retry: false
   })
-  const finalsSummaryQuery = useQuery({
+  const finalsQuery = useQuery({
     queryKey: ['finals-summary', runId],
     queryFn: () => getFinalsSummary(runId),
     enabled: Boolean(runId),
     retry: false
   })
-  const latestRolloverQuery = useQuery({
+  const rolloverQuery = useQuery({
     queryKey: ['rollover-latest', runId],
     queryFn: () => getLatestRollover(runId),
     enabled: Boolean(runId),
@@ -91,573 +68,171 @@ export function RunPage(): JSX.Element {
     enabled: Boolean(runId),
     retry: false
   })
-  const worldStatusQuery = useQuery({
+  const worldQuery = useQuery({
     queryKey: ['run-world-status', runId],
     queryFn: () => getRunWorldStatus(runId),
     enabled: Boolean(runId),
     retry: false
   })
-  const eventsQuery = useQuery({
-    queryKey: ['events', runId],
-    queryFn: () => listEvents(runId),
-    enabled: Boolean(runId)
-  })
-  const rankingSnapshotsQuery = useQuery({
-    queryKey: ['ranking-snapshots', runId],
-    queryFn: () => listRankingSnapshots(runId),
-    enabled: Boolean(runId)
-  })
-  const raceSnapshotsQuery = useQuery({
-    queryKey: ['race-snapshots', runId],
-    queryFn: () => listRaceSnapshots(runId),
-    enabled: Boolean(runId)
-  })
+  const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId) })
 
-  const finalsQuickAction = useMutation({
-    mutationFn: () => simulateWorldTourFinals(runId),
-    onSuccess: async () => {
-      await invalidateRunDetailQueries()
-    }
-  })
-
-  const rolloverQuickAction = useMutation({
-    mutationFn: () => rolloverNextSeason(runId),
-    onSuccess: async () => {
-      await invalidateRunDetailQueries()
-    }
-  })
-
-  const simulator = useMutation({
-    mutationFn: async (mode: 'next-match' | 'next-round' | 'next-tournament' | 'next-week' | 'full-season') => {
-      if (mode === 'next-match') return simulateNextMatch(runId)
-      if (mode === 'next-round') return simulateNextRound(runId)
-      if (mode === 'next-tournament') return simulateNextTournament(runId)
-      if (mode === 'next-week') return simulateNextWeek(runId)
-      return simulateFullSeason(runId)
-    },
-    onSuccess: async () => {
-      await invalidateRunDetailQueries()
-    }
-  })
-  const rebuildWorldMutation = useMutation({
-    mutationFn: () => rebuildRunWorld(runId),
-    onSuccess: async () => {
-      await invalidateRunDetailQueries()
-    }
-  })
-
-  const recentEvents = eventsQuery.data?.events.slice(0, previewLimit) ?? []
-  const recentRankingSnapshots = rankingSnapshotsQuery.data?.snapshots.slice(0, previewLimit) ?? []
-  const recentRaceSnapshots = raceSnapshotsQuery.data?.snapshots.slice(0, previewLimit) ?? []
-  const latestCompletedEvent = eventsQuery.data?.events[0]
-
-  const nextPlannedEvent = runQuery.data?.season_state.ordered_events[runQuery.data.season_state.next_event_index] ?? null
-  const nextPlannedWeek = nextPlannedEvent?.week ?? null
-  const followingPlannedWeek =
-    nextPlannedEvent && nextPlannedWeek !== null
-      ? (runQuery.data?.season_state.ordered_events
-          .slice(runQuery.data.season_state.next_event_index + 1)
-          .find((event) => event.week !== nextPlannedWeek)
-          ?.week ?? null)
-      : null
-  const latestRankingSnapshot = rankingSnapshotsQuery.data?.snapshots[0]
-  const latestRaceSnapshot = raceSnapshotsQuery.data?.snapshots[0]
-
-  const artifactState = (
-    query: { isLoading: boolean; error: unknown; data: unknown },
-    availableLabel = 'Available',
-    noneLabel = 'None yet'
-  ): string => {
-    if (query.isLoading) return 'Loading'
-    if (query.error) return isApiNotFound(query.error) ? noneLabel : 'Error'
-    if (query.data) return availableLabel
-    return 'Missing'
+  const invalidateHome = async (): Promise<void> => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['run', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['run-status-summary', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['finals-summary', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['rollover-latest', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['run-world-status', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['events', runId] })
+    ])
   }
 
-  const finalsInspectionRoute = getFinalsInspectionRoute({
-    runId,
-    hasQualification: Boolean(finalsSummaryQuery.data?.qualification),
-    hasResult: Boolean(finalsSummaryQuery.data?.result)
-  })
-  const finalsInspectionLabel = finalsSummaryQuery.data?.result
-    ? 'Inspect Finals result detail'
-    : finalsSummaryQuery.data?.qualification
-      ? 'Inspect Finals qualification detail'
-      : 'Inspect Finals overview'
-  const hasLineageRelationships = Boolean(
-    sourceQuery.data?.source.parent_run_id || (lineageQuery.data?.lineage.children.length ?? 0) > 0
-  )
+  const finalsAction = useMutation({ mutationFn: () => simulateWorldTourFinals(runId), onSuccess: invalidateHome })
+  const rolloverAction = useMutation({ mutationFn: () => rolloverNextSeason(runId), onSuccess: invalidateHome })
+  const rebuildAction = useMutation({ mutationFn: () => rebuildRunWorld(runId), onSuccess: invalidateHome })
+
+  const run = runQuery.data?.run
+  const seasonState = runQuery.data?.season_state
+  const progress = statusQuery.data?.progress
+  const nextEvent = seasonState?.ordered_events[seasonState.next_event_index] ?? null
+  const latestEvent = eventsQuery.data?.events[0] ?? null
+  const seasonComplete = Boolean(run && (progress?.next_event_index ?? run.next_event_index) >= (progress?.total_events ?? run.total_events))
+  const source = sourceQuery.data?.source
+  const children = lineageQuery.data?.lineage.children ?? []
+  const dataErrors = [containerQuery.error, statusQuery.error, finalsQuery.error, sourceQuery.error, lineageQuery.error, worldQuery.error, eventsQuery.error]
+    .filter((error) => error && !isApiNotFound(error))
 
   return (
     <section className="panel">
-      <PageIntro title="Run detail" subtitle="Review run status, execute quick actions, and navigate to detailed run views." />
+      <PageIntro
+        title="Home"
+        subtitle="Run command center for current progress, operational attention, and admin workflows."
+        meta={`Run: ${run?.run_id ?? runId ?? 'unknown'}`}
+      />
       <CurrentContextStrip
         items={[
-          { label: 'Run', value: runQuery.data?.run.run_id ?? runId ?? 'unknown' },
-          { label: 'Season', value: statusSummaryQuery.data?.season ?? runQuery.data?.run.season ?? '—' },
+          { label: 'Run', value: run?.run_id ?? runId ?? 'unknown' },
+          { label: 'Season', value: statusQuery.data?.season ?? run?.season ?? '—' },
+          { label: 'Week', value: nextEvent?.week != null ? `W${nextEvent.week}` : seasonComplete ? 'Complete' : '—' },
           {
             label: 'Progress',
-            value: statusSummaryQuery.data
-              ? `${statusSummaryQuery.data.progress.next_event_index}/${statusSummaryQuery.data.progress.total_events}`
-              : runQuery.data
-                ? `${runQuery.data.run.next_event_index}/${runQuery.data.run.total_events}`
-                : '—'
+            value: run
+              ? `${progress?.next_event_index ?? run.next_event_index}/${progress?.total_events ?? run.total_events}`
+              : '—'
           }
         ]}
       />
+
       {runQuery.isLoading && <p className="status">Loading run...</p>}
-      {runQuery.error && <p className="error">Failed to load run: {String(runQuery.error)}</p>}
-      {runQuery.data && (
+      {runQuery.error && <p role="alert" className="error">Failed to load run: {formatApiError(runQuery.error)}</p>}
+      {run && (
         <>
-          <SectionCard title="Run landing summary">
+          <SectionCard title="Run overview">
             <SummaryPills
               items={[
-                { label: 'Current season', value: statusSummaryQuery.data?.season ?? runQuery.data.run.season },
-                {
-                  label: 'Progress',
-                  value: statusSummaryQuery.data
-                    ? `${statusSummaryQuery.data.progress.next_event_index}/${statusSummaryQuery.data.progress.total_events}`
-                    : `${runQuery.data.run.next_event_index}/${runQuery.data.run.total_events}`
-                },
-                {
-                  label: 'Completed events',
-                  value: statusSummaryQuery.data?.progress.completed_event_count ?? runQuery.data.run.completed_event_ids.length
-                },
+                { label: 'Status', value: seasonComplete ? 'Regular season complete' : 'Active' },
+                { label: 'Completed events', value: progress?.completed_event_count ?? run.completed_event_ids.length },
                 {
                   label: 'Finals',
-                  value: finalsSummaryQuery.data?.result
-                    ? 'Result available'
-                    : finalsSummaryQuery.data?.qualification
-                      ? 'Qualification available'
-                      : finalsSummaryQuery.isLoading
-                        ? 'Loading'
-                        : finalsSummaryQuery.error
-                          ? 'Error'
-                          : 'None yet'
+                  value: finalsQuery.data?.result
+                    ? 'Complete'
+                    : finalsQuery.data?.qualification
+                      ? 'Ready to simulate'
+                      : 'Not yet qualified'
                 },
-                {
-                  label: 'Rollover',
-                  value: latestRolloverQuery.data
-                    ? `To S${latestRolloverQuery.data.rollover.to_season}`
-                    : latestRolloverQuery.isLoading
-                      ? 'Loading'
-                      : latestRolloverQuery.error
-                        ? isApiNotFound(latestRolloverQuery.error)
-                          ? 'None yet'
-                          : 'Error'
-                        : 'Missing'
-                },
-                {
-                  label: 'Source / lineage',
-                  value: hasLineageRelationships ? 'Connected' : sourceQuery.data || lineageQuery.data ? 'Standalone' : 'None yet'
-                }
+                { label: 'World data', value: worldQuery.data?.is_stale ? 'Stale' : worldQuery.data ? 'Fresh' : 'Unavailable' }
               ]}
             />
             <CompactSummaryCard
               items={[
-                { label: 'Run ID', value: runQuery.data.run.run_id },
-                { label: 'Seed', value: statusSummaryQuery.data?.seed ?? runQuery.data.run.seed }
+                { label: 'Run ID', value: run.run_id },
+                { label: 'Seed', value: statusQuery.data?.seed ?? run.seed },
+                { label: 'World package', value: worldQuery.data?.world_id ?? '—' },
+                { label: 'Source', value: normalizeRunSourceType(source?.source_type) ?? 'Unknown' }
               ]}
             />
           </SectionCard>
 
-          <SectionCard title="Most relevant next inspections">
+          <SectionCard title="Branch and publication context">
             <MetadataList
               items={[
                 {
-                  label: 'Branch management',
-                  value: <Link to={`/admin/runs/${runId}/branches`}>Manage Branches</Link>
+                  label: 'Parent run',
+                  value: source?.parent_run_id ? <Link to={`/admin/runs/${source.parent_run_id}`}>{source.parent_run_id}</Link> : 'None'
                 },
-                {
-                  label: 'Latest completed event',
-                  value: latestCompletedEvent ? (
-                    <Link to={`/runs/${runId}/events/${encodeURIComponent(latestCompletedEvent.event_id)}`}>
-                      {latestCompletedEvent.event_id}
-                    </Link>
-                  ) : (
-                    'None yet'
-                  )
-                },
-                {
-                  label: 'Latest ranking snapshot',
-                  value: latestRankingSnapshot ? (
-                    <Link to={`/runs/${runId}/snapshots/ranking/${latestRankingSnapshot.snapshot_sequence}`}>
-                      Seq {latestRankingSnapshot.snapshot_sequence}
-                    </Link>
-                  ) : (
-                    'None yet'
-                  )
-                },
-                {
-                  label: 'Latest race snapshot',
-                  value: latestRaceSnapshot ? (
-                    <Link to={`/runs/${runId}/snapshots/race/${latestRaceSnapshot.snapshot_sequence}`}>
-                      Seq {latestRaceSnapshot.snapshot_sequence}
-                    </Link>
-                  ) : (
-                    'None yet'
-                  )
-                },
-                {
-                  label: 'World Tour Finals',
-                  value: finalsSummaryQuery.data ? <Link to={finalsInspectionRoute}>{finalsInspectionLabel}</Link> : 'None yet'
-                },
-                {
-                  label: 'Latest rollover',
-                  value: latestRolloverQuery.data ? (
-                    <Link to={`/runs/${runId}/rollover/${latestRolloverQuery.data.rollover.to_season}`}>Inspect latest rollover</Link>
-                  ) : 'None yet'
-                },
-                {
-                  label: 'Season chain',
-                  value: hasLineageRelationships ? <Link to={`/runs/${runId}/season-chain`}>Inspect season chain</Link> : 'None yet'
-                },
-                {
-                  label: 'Run activity',
-                  value: <Link to={`/runs/${runId}/activity`}>Inspect aggregated run activity</Link>
-                },
-                {
-                  label: 'Season calendar',
-                  value: <Link to={`/runs/${runId}/calendar`}>Inspect ordered season calendar</Link>
-                },
-                {
-                  label: 'Inspect next planned event',
-                  value: nextPlannedEvent ? (
-                    <Link to={`/runs/${runId}/calendar/${encodeURIComponent(nextPlannedEvent.event_id)}`}>
-                      {nextPlannedEvent.event_id}
-                    </Link>
-                  ) : (
-                    'None (season complete)'
-                  )
-                },
-                {
-                  label: 'Inspect current week',
-                  value:
-                    nextPlannedEvent && nextPlannedWeek !== null ? (
-                      <Link to={`/runs/${runId}/weeks/${nextPlannedWeek}`}>
-                        W{nextPlannedWeek} (from {nextPlannedEvent.event_id})
-                      </Link>
-                    ) : (
-                      'None (season complete)'
-                    )
-                },
-                {
-                  label: 'Inspect following week',
-                  value:
-                    followingPlannedWeek !== null ? (
-                      <Link to={`/runs/${runId}/weeks/${followingPlannedWeek}`}>W{followingPlannedWeek}</Link>
-                    ) : (
-                      'None yet'
-                    )
-                },
-                {
-                  label: 'Bootstrap / lineage',
-                  value: sourceQuery.data ? <Link to={`/runs/${runId}/bootstrap-lineage`}>Inspect source metadata</Link> : 'None yet'
-                }
+                { label: 'Child runs', value: children.length },
+                { label: 'Product run status', value: containerQuery.data?.status ?? 'Legacy run' },
+                { label: 'Official branch', value: containerQuery.data?.official_branch_id ?? 'Not available' },
+                { label: 'Branch controls', value: <Link to={`/admin/runs/${runId}/branches`}>Manage branches and official selection</Link> }
               ]}
             />
           </SectionCard>
 
-          <SectionCard title="Current artifact state">
-            <CompactSummaryCard
+          <SectionCard title="Current activity">
+            <MetadataList
               items={[
                 {
-                  label: 'Finals qualification',
-                  value: artifactState(
-                    finalsSummaryQuery,
-                    finalsSummaryQuery.data?.qualification ? 'Available' : 'None yet',
-                    'None yet'
-                  )
+                  label: 'Next scheduled event',
+                  value: nextEvent ? (
+                    <Link to={`/admin/runs/${runId}/calendar/${encodeURIComponent(nextEvent.event_id)}`}>
+                      {nextEvent.event_id} · W{nextEvent.week}
+                    </Link>
+                  ) : 'None — regular season complete'
                 },
                 {
-                  label: 'Finals result',
-                  value: artifactState(finalsSummaryQuery, finalsSummaryQuery.data?.result ? 'Available' : 'None yet', 'None yet')
+                  label: 'Latest history event',
+                  value: latestEvent ? (
+                    <Link to={`/admin/runs/${runId}/events/${encodeURIComponent(latestEvent.event_id)}`}>{latestEvent.event_id}</Link>
+                  ) : eventsQuery.isLoading ? 'Loading…' : 'None yet'
                 },
-                { label: 'Latest rollover', value: artifactState(latestRolloverQuery, 'Available', 'None yet') },
-                { label: 'Source metadata', value: artifactState(sourceQuery, 'Available', 'None yet') },
-                { label: 'Lineage metadata', value: artifactState(lineageQuery, 'Available', 'None yet') },
-                {
-                  label: 'Events',
-                  value: artifactState(eventsQuery, eventsQuery.data?.events.length ? 'Available' : 'None yet', 'None yet')
-                },
-                {
-                  label: 'Ranking snapshots',
-                  value: artifactState(
-                    rankingSnapshotsQuery,
-                    rankingSnapshotsQuery.data?.snapshots.length ? 'Available' : 'None yet',
-                    'None yet'
-                  )
-                },
-                {
-                  label: 'Race snapshots',
-                  value: artifactState(raceSnapshotsQuery, raceSnapshotsQuery.data?.snapshots.length ? 'Available' : 'None yet', 'None yet')
-                }
+                { label: 'Latest rollover', value: rolloverQuery.data ? `S${rolloverQuery.data.rollover.from_season} → S${rolloverQuery.data.rollover.to_season}` : 'None yet' }
               ]}
             />
           </SectionCard>
 
-          <SectionCard title="World Tour Finals overview">
-            {finalsSummaryQuery.isLoading && <p className="status">Loading Finals status...</p>}
-            {finalsSummaryQuery.error && (
-              <p className="error">Failed to load Finals summary: {formatApiError(finalsSummaryQuery.error)}</p>
-            )}
-            {finalsSummaryQuery.data && (
-              <MetadataList
-                items={[
-                  { label: 'Qualification', value: finalsSummaryQuery.data.qualification ? 'Available' : 'Not generated yet' },
-                  { label: 'Finals result', value: finalsSummaryQuery.data.result ? 'Available' : 'Not simulated yet' }
-                ]}
-              />
-            )}
-            <div className="actions">
-              <button onClick={() => finalsQuickAction.mutate()} disabled={!runId || finalsQuickAction.isPending}>
-                {finalsQuickAction.isPending ? 'Simulating Finals...' : 'Simulate World Tour Finals'}
-              </button>
-            </div>
-            <ActionStatusBlock
-              isLoading={finalsQuickAction.isPending}
-              loadingText="Simulating World Tour Finals..."
-              errorText={
-                finalsQuickAction.error ? `Could not simulate Finals: ${formatApiError(finalsQuickAction.error)}` : undefined
-              }
-              successText={
-                finalsQuickAction.data
-                  ? `Finals simulation complete${finalsQuickAction.data.finals.already_simulated ? ' (already simulated)' : ''}.`
-                  : undefined
-              }
-            />
-            <p>
-              <Link to={`/runs/${runId}/finals`}>View World Tour Finals</Link>
-            </p>
-          </SectionCard>
-
-          <SectionCard title="Latest rollover overview">
-            {latestRolloverQuery.isLoading && <p className="status">Loading latest rollover...</p>}
-            {isApiNotFound(latestRolloverQuery.error) && <p className="status">No rollover yet for this run.</p>}
-            {latestRolloverQuery.error && !isApiNotFound(latestRolloverQuery.error) && (
-              <p className="error">Failed to load latest rollover: {formatApiError(latestRolloverQuery.error)}</p>
-            )}
-            {latestRolloverQuery.data && (
-              <MetadataList
-                items={[
-                  { label: 'From season', value: latestRolloverQuery.data.rollover.from_season },
-                  { label: 'To season', value: latestRolloverQuery.data.rollover.to_season },
-                  { label: 'Transitioned players', value: latestRolloverQuery.data.rollover.transitioned_players }
-                ]}
-              />
-            )}
-            <div className="actions">
-              <button onClick={() => rolloverQuickAction.mutate()} disabled={!runId || rolloverQuickAction.isPending}>
-                {rolloverQuickAction.isPending ? 'Rolling over...' : 'Roll over to next season'}
-              </button>
-            </div>
-            <ActionStatusBlock
-              isLoading={rolloverQuickAction.isPending}
-              loadingText="Rolling over to next season..."
-              errorText={
-                rolloverQuickAction.error
-                  ? `Could not execute rollover: ${formatApiError(rolloverQuickAction.error)}`
-                  : undefined
-              }
-              successText={
-                rolloverQuickAction.data
-                  ? `Rollover complete for season ${rolloverQuickAction.data.rollover.to_season}${
-                      rolloverQuickAction.data.rollover.already_persisted ? ' (already persisted)' : ''
-                    }.`
-                  : undefined
-              }
-            />
-            <p>
-              <Link to={`/runs/${runId}/rollover`}>View season rollover</Link>
-            </p>
-          </SectionCard>
-
-          <SectionCard title="Run source and lineage overview">
-            {(sourceQuery.isLoading || lineageQuery.isLoading) && <p className="status">Loading source and lineage...</p>}
-            {sourceQuery.error && !isApiNotFound(sourceQuery.error) && (
-              <p className="error">Failed to load run source: {formatApiError(sourceQuery.error)}</p>
-            )}
-            {lineageQuery.error && !isApiNotFound(lineageQuery.error) && (
-              <p className="error">Failed to load run lineage: {formatApiError(lineageQuery.error)}</p>
-            )}
-            {sourceQuery.data && (
-              <CompactSummaryCard
-                items={[
-                  { label: 'Source type', value: sourceQuery.data.source.source_type || 'Unknown' },
-                  {
-                    label: 'Parent run',
-                    value: sourceQuery.data.source.parent_run_id ? (
-                      <Link to={`/runs/${sourceQuery.data.source.parent_run_id}`}>{sourceQuery.data.source.parent_run_id}</Link>
-                    ) : (
-                      'No parent run'
-                    )
-                  },
-                  { label: 'Child run count', value: lineageQuery.data?.lineage.children.length ?? 0 }
-                ]}
-              />
-            )}
-            {!sourceQuery.data && isApiNotFound(sourceQuery.error) && (
-              <p className="status">No source metadata available for this run.</p>
-            )}
-            {lineageQuery.data && lineageQuery.data.lineage.children.length > 0 && (
-              <ul>
-                {lineageQuery.data.lineage.children.map((childRunId) => (
-                  <li key={childRunId}>
-                    <Link to={`/runs/${childRunId}`}>{childRunId}</Link>
-                  </li>
-                ))}
+          <SectionCard title="Admin attention">
+            {dataErrors.length === 0 && !worldQuery.data?.is_stale && !(seasonComplete && finalsQuery.data?.qualification && !finalsQuery.data.result) ? (
+              <p className="status">No warnings require attention.</p>
+            ) : (
+              <ul aria-label="Admin warnings">
+                {worldQuery.data?.is_stale && <li className="error">World inputs are stale. Review the fingerprint and rebuild support below.</li>}
+                {seasonComplete && finalsQuery.data?.qualification && !finalsQuery.data.result && (
+                  <li className="error">Regular season is complete and the World Tour Finals result is pending.</li>
+                )}
+                {dataErrors.length > 0 && <li className="error">{dataErrors.length} run overview request(s) failed. Refresh or inspect diagnostics.</li>}
               </ul>
             )}
-            {lineageQuery.data && lineageQuery.data.lineage.children.length === 0 && (
-              <EmptyState message="No child runs created yet." />
-            )}
-            {!lineageQuery.data && isApiNotFound(lineageQuery.error) && (
-              <EmptyState message="No lineage metadata available for this run." />
-            )}
-            <p>
-              <Link to={`/runs/${runId}/bootstrap-lineage`}>View bootstrap and lineage</Link>
-              {' · '}
-              <Link to={`/runs/${runId}/season-chain`}>View season chain</Link>
-            </p>
-          </SectionCard>
-
-          <SectionCard title="World data staleness and rebuild">
-            {worldStatusQuery.isLoading && <p className="status">Loading world status...</p>}
-            {worldStatusQuery.error && (
-              <p className="error">Failed to load world status: {formatApiError(worldStatusQuery.error)}</p>
-            )}
-            {worldStatusQuery.data && (
-              <>
-                <MetadataList
-                  items={[
-                    { label: 'Status', value: worldStatusQuery.data.is_stale ? 'Stale' : 'Fresh' },
-                    { label: 'World Package', value: worldStatusQuery.data.world_id },
-                    { label: 'Rebuild supported', value: worldStatusQuery.data.rebuild_supported ? 'Yes' : 'No' },
-                    { label: 'Source type', value: worldStatusQuery.data.source_type },
-                    {
-                      label: 'Stored fingerprint',
-                      value: worldStatusQuery.data.stored_world_generation_fingerprint ?? 'None'
-                    },
-                    { label: 'Current fingerprint', value: worldStatusQuery.data.current_world_generation_fingerprint },
-                    { label: 'Message', value: worldStatusQuery.data.message }
-                  ]}
-                />
-                {worldStatusQuery.data.rebuild_supported ? (
-                  <div className="actions">
-                    <button onClick={() => rebuildWorldMutation.mutate()} disabled={rebuildWorldMutation.isPending}>
-                      {rebuildWorldMutation.isPending
-                        ? 'Rebuilding...'
-                        : 'Rebuild Run from Current World Data'}
-                    </button>
-                  </div>
-                ) : null}
-              </>
-            )}
-            <ActionStatusBlock
-              isLoading={rebuildWorldMutation.isPending}
-              loadingText="Rebuilding run world artifacts..."
-              errorText={
-                rebuildWorldMutation.error
-                  ? `Rebuild failed: ${formatApiError(rebuildWorldMutation.error)}`
-                  : undefined
-              }
-              successText={
-                rebuildWorldMutation.data
-                  ? `Run rebuilt. New fingerprint: ${rebuildWorldMutation.data.current_world_generation_fingerprint}.`
-                  : undefined
-              }
-            />
-          </SectionCard>
-
-          <SectionCard title="Recent history previews">
-            <p className="subtitle">Recent entries are shown in API order to match the full history views.</p>
-            <div className="grid">
-              <PreviewListCard
-                title="Recent events"
-                isLoading={eventsQuery.isLoading}
-                loadingText="Loading recent events..."
-                errorText={eventsQuery.error ? `Failed to load recent events: ${formatApiError(eventsQuery.error)}` : undefined}
-                items={recentEvents}
-                emptyText="No events are available for this run yet."
-                listAriaLabel="Recent events preview"
-                getKey={(event) => event.event_id}
-                renderItem={(event) => (
-                  <Link to={`/runs/${runId}/events/${encodeURIComponent(event.event_id)}`}>
-                    <strong>{event.event_id}</strong>{' '}
-                    <span className="status">
-                      • Seq {event.event_sequence}
-                      {event.season != null ? ` • S${event.season}` : ''}
-                      {event.week != null ? ` • W${event.week}` : ''}
-                    </span>
-                  </Link>
-                )}
-                viewAllLink={<Link to={`/runs/${runId}/events`}>View all events</Link>}
-              />
-
-              <PreviewListCard
-                title="Recent ranking snapshots"
-                isLoading={rankingSnapshotsQuery.isLoading}
-                loadingText="Loading recent ranking snapshots..."
-                errorText={
-                  rankingSnapshotsQuery.error
-                    ? `Failed to load recent ranking snapshots: ${formatApiError(rankingSnapshotsQuery.error)}`
-                    : undefined
-                }
-                items={recentRankingSnapshots}
-                emptyText="No ranking snapshots are available for this run yet."
-                listAriaLabel="Recent ranking snapshots preview"
-                getKey={(snapshot) => `${snapshot.snapshot_kind}-${snapshot.snapshot_sequence}`}
-                renderItem={(snapshot) => (
-                  <Link to={`/runs/${runId}/snapshots/ranking/${snapshot.snapshot_sequence}`}>
-                    <strong>
-                      Seq {snapshot.snapshot_sequence} • {snapshot.snapshot_kind}
-                    </strong>{' '}
-                    <span className="status">{snapshot.source_event_id ? `• Source ${snapshot.source_event_id}` : '• Source —'}</span>
-                  </Link>
-                )}
-                viewAllLink={<Link to={`/runs/${runId}/snapshots/ranking`}>View all ranking snapshots</Link>}
-              />
-
-              <PreviewListCard
-                title="Recent race snapshots"
-                isLoading={raceSnapshotsQuery.isLoading}
-                loadingText="Loading recent race snapshots..."
-                errorText={
-                  raceSnapshotsQuery.error ? `Failed to load recent race snapshots: ${formatApiError(raceSnapshotsQuery.error)}` : undefined
-                }
-                items={recentRaceSnapshots}
-                emptyText="No race snapshots are available for this run yet."
-                listAriaLabel="Recent race snapshots preview"
-                getKey={(snapshot) => `${snapshot.snapshot_kind}-${snapshot.snapshot_sequence}`}
-                renderItem={(snapshot) => (
-                  <Link to={`/runs/${runId}/snapshots/race/${snapshot.snapshot_sequence}`}>
-                    <strong>
-                      Seq {snapshot.snapshot_sequence} • {snapshot.snapshot_kind}
-                    </strong>{' '}
-                    <span className="status">{snapshot.source_event_id ? `• Source ${snapshot.source_event_id}` : '• Source —'}</span>
-                  </Link>
-                )}
-                viewAllLink={<Link to={`/runs/${runId}/snapshots/race`}>View all race snapshots</Link>}
-              />
-            </div>
-          </SectionCard>
-
-          <SectionCard title="Simulation controls">
+            {worldQuery.data?.is_stale && <p>{worldQuery.data.message}</p>}
             <div className="actions">
-              <button onClick={() => simulator.mutate('next-match')}>Simulate next match</button>
-              <button onClick={() => simulator.mutate('next-round')}>Simulate next round</button>
-              <button onClick={() => simulator.mutate('next-tournament')}>Simulate next tournament</button>
-              <button onClick={() => simulator.mutate('next-week')}>Simulate next week</button>
-              <button onClick={() => simulator.mutate('full-season')}>Simulate full season</button>
+              {seasonComplete && finalsQuery.data?.qualification && !finalsQuery.data.result && (
+                <button type="button" onClick={() => finalsAction.mutate()} disabled={finalsAction.isPending}>Simulate World Tour Finals</button>
+              )}
+              {seasonComplete && finalsQuery.data?.result && (
+                <button type="button" onClick={() => rolloverAction.mutate()} disabled={rolloverAction.isPending}>Roll over to next season</button>
+              )}
+              {worldQuery.data?.is_stale && worldQuery.data.rebuild_supported && (
+                <button type="button" onClick={() => rebuildAction.mutate()} disabled={rebuildAction.isPending}>Rebuild Run from Current World Data</button>
+              )}
             </div>
             <ActionStatusBlock
-              errorText={simulator.error ? `Simulation failed: ${formatApiError(simulator.error)}` : undefined}
+              isLoading={finalsAction.isPending || rolloverAction.isPending || rebuildAction.isPending}
+              loadingText="Executing admin command…"
+              errorText={finalsAction.error ? `Could not simulate Finals: ${formatApiError(finalsAction.error)}` : rolloverAction.error ? `Could not execute rollover: ${formatApiError(rolloverAction.error)}` : rebuildAction.error ? `Rebuild failed: ${formatApiError(rebuildAction.error)}` : undefined}
+              successText={finalsAction.data ? 'Finals simulation complete.' : rolloverAction.data ? `Rollover complete for season ${rolloverAction.data.rollover.to_season}.` : rebuildAction.data ? 'Run world rebuilt.' : undefined}
             />
-            {simulator.data && (
-              <pre className="json-block" aria-label="simulation-result">
-                {JSON.stringify(simulator.data.step, null, 2)}
-              </pre>
-            )}
+          </SectionCard>
+
+          <SectionCard title="Admin shortcuts">
+            <div className="actions">
+              <Link to="/admin/simulate">Open Simulate</Link>
+              <Link to={`/admin/runs/${runId}/calendar`}>Season calendar</Link>
+              <Link to={`/admin/runs/${runId}/activity`}>Run activity</Link>
+              <Link to={`/admin/runs/${runId}/diagnostics`}>Diagnostics</Link>
+              <Link to={`/admin/runs/${runId}/finals`}>World Tour Finals</Link>
+              <Link to={`/admin/runs/${runId}/rollover`}>Season rollover</Link>
+              <Link to={`/admin/runs/${runId}/bootstrap-lineage`}>Source and lineage</Link>
+            </div>
+            <p className="status">Simulation commands remain in the dedicated Simulate and Branch workflows.</p>
           </SectionCard>
         </>
       )}

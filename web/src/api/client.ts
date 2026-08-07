@@ -90,6 +90,8 @@ import type {
   AdminBranchSimulateNextTournamentResponse,
   AdminBranchSimulateFullSeasonRequest,
   AdminBranchSimulateFullSeasonResponse,
+  AdminBranchSimulateWorldTourFinalsRequest,
+  AdminBranchSimulateWorldTourFinalsResponse,
   RunWeeklyIntakeCohortSeasonPreviewParams,
   RunWeeklyIntakeCohortSeasonPreviewResponse,
   RunPlayerDetail,
@@ -856,6 +858,10 @@ export function simulateNextTournamentOnBranch(productRunId: string, branchId: s
 
 export function simulateFullSeasonOnBranch(productRunId: string, branchId: string, payload: AdminBranchSimulateFullSeasonRequest): Promise<AdminBranchSimulateFullSeasonResponse> {
   return request(`/admin/runs/${encodeURIComponent(productRunId)}/branches/${encodeURIComponent(branchId)}/simulate-full-season`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function simulateWorldTourFinalsOnBranch(productRunId: string, branchId: string, payload: AdminBranchSimulateWorldTourFinalsRequest): Promise<AdminBranchSimulateWorldTourFinalsResponse> {
+  return request(`/admin/runs/${encodeURIComponent(productRunId)}/branches/${encodeURIComponent(branchId)}/simulate-world-tour-finals`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function getRun(runId: string): Promise<SeasonStateResponse> {

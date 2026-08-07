@@ -604,6 +604,7 @@ export type AdminBranchSimulateNextRoundRequest = AdminBranchSimulationRequest
 export type AdminBranchSimulateNextWeekRequest = AdminBranchSimulationRequest
 export type AdminBranchSimulateNextTournamentRequest = AdminBranchSimulationRequest
 export type AdminBranchSimulateFullSeasonRequest = AdminBranchSimulationRequest
+export type AdminBranchSimulateWorldTourFinalsRequest = AdminBranchSimulationRequest
 
 export type BranchSimulationMode = 'simulate_next_match' | 'simulate_next_round' | 'simulate_next_week' | 'simulate_next_tournament' | 'simulate_full_season'
 
@@ -649,6 +650,23 @@ export type AdminBranchSimulateNextRoundResponse = AdminBranchSimulationResponse
 export type AdminBranchSimulateNextWeekResponse = AdminBranchSimulationResponse<'simulate_next_week'>
 export type AdminBranchSimulateNextTournamentResponse = AdminBranchSimulationResponse<'simulate_next_tournament'>
 export type AdminBranchSimulateFullSeasonResponse = AdminBranchSimulationResponse<'simulate_full_season'>
+
+export type SetResult = { set_number: number; winner_player_id: string; loser_player_id: string; winner_games: number; loser_games: number; was_close_endgame: boolean; ended_by_retirement: boolean }
+export type MatchResult = { match_id: string; winner_player_id: string; loser_player_id: string; player_a_id: string; player_b_id: string; best_of: number; games_to: number; win_by: number; sets: SetResult[]; sets_won: { [playerId: string]: number }; termination_reason: 'COMPLETED' | 'RETIREMENT'; retired_player_id: string | null; retired_at_set_start: number | null }
+export type FinalsQualifiedPlayer = { player_id: string; race_rank: number; race_points: number; seed: number }
+export type FinalsQualificationResult = { target_season: number; qualifier_count: number; reserve_count: number; qualified: FinalsQualifiedPlayer[]; reserves: FinalsQualifiedPlayer[]; ineligible_race_entries: string[] }
+export type PersistedFinalsQualification = { run_id: string; season: number; source_as_of_season: number; source_as_of_week: number; qualification: FinalsQualificationResult }
+export type FinalsGroupSlot = { group_id: string; slot: number; player: FinalsQualifiedPlayer }
+export type FinalsGroupMatch = { match_id: string; group_id: string; match_number: number; player_a_id: string; player_b_id: string; winner_player_id: string; loser_player_id: string; match_result: MatchResult }
+export type FinalsGroupStandingEntry = { group_id: string; rank: number; player_id: string; seed: number; match_wins: number; match_losses: number; set_wins: number; set_losses: number; set_differential: number; game_wins: number; game_losses: number; game_differential: number }
+export type FinalsGroup = { group_id: string; slots: FinalsGroupSlot[]; matches: FinalsGroupMatch[]; standings: FinalsGroupStandingEntry[] }
+export type FinalsKnockoutMatch = { stage: string; match_id: string; player_a_id: string; player_b_id: string; winner_player_id: string; loser_player_id: string; match_result: MatchResult }
+export type FinalsPlacement = { player_id: string; finish: string }
+export type FinalsResult = { event_id: string; season: number; qualification: FinalsQualificationResult; groups: FinalsGroup[]; knockout: FinalsKnockoutMatch[]; placements: FinalsPlacement[] }
+export type PersistedFinalsResult = { run_id: string; season: number; event_id: string; source_as_of_season: number; source_as_of_week: number; result: FinalsResult }
+export type FinalsSimulationResult = { run_id: string; season: number; event_id: string; qualification: PersistedFinalsQualification; result: PersistedFinalsResult; already_simulated: boolean }
+export type AdminBranchSimulateWorldTourFinalsResponse = Omit<AdminBranchSimulationResponse<'simulate_next_match'>, 'simulation_result'> & { finals: FinalsSimulationResult }
+export type AdminBranchExecutionResponse = AdminBranchSimulationResponse<BranchSimulationMode> | AdminBranchSimulateWorldTourFinalsResponse
 
 export type RunStatusSummary = {
   run_id: string

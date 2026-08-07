@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AdminHomePage } from './AdminHomePage'
+import { faxReferenceRunsResponse, FAX_REFERENCE_LEGACY_RUN_ID } from '../../test/faxReferenceFixture'
 
 const api = vi.hoisted(() => ({
   getCountriesMetadata: vi.fn(),
@@ -30,15 +31,7 @@ describe('AdminHomePage', () => {
     vi.clearAllMocks()
     api.getCountriesMetadata.mockResolvedValue({ country_count: 7 })
     api.getTournamentTemplatesMetadata.mockResolvedValue({ template_count: 3 })
-    api.listRuns.mockResolvedValue({
-      runs: [
-        {
-          run_id: 'run alpha',
-          season: 2034,
-          progress: { total_events: 12, completed_event_count: 5 },
-        },
-      ],
-    })
+    api.listRuns.mockResolvedValue(faxReferenceRunsResponse)
   })
 
   it('renders existing dashboard copy and admin links', async () => {
@@ -60,6 +53,6 @@ describe('AdminHomePage', () => {
       expect(link).toHaveAttribute('href', href)
     }
 
-    expect(await screen.findByText('run alpha')).toBeInTheDocument()
+    expect(await screen.findByText(FAX_REFERENCE_LEGACY_RUN_ID)).toBeInTheDocument()
   })
 })

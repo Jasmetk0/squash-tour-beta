@@ -9,6 +9,7 @@ import {
   faxReferenceRunsResponse,
   faxReferenceViewerContext,
   FAX_REFERENCE_RUN_ID,
+  makeDisposableFaxRunContainer,
 } from '../test/faxReferenceFixture'
 
 const api = vi.hoisted(() => ({
@@ -26,10 +27,24 @@ function viewerNav(): HTMLElement {
 
 describe('Layout mode navigation', () => {
   beforeEach(() => {
+    const disposable = makeDisposableFaxRunContainer('layout-switch')
     localStorage.clear()
     vi.clearAllMocks()
-    api.listRuns.mockResolvedValue(faxReferenceRunsResponse)
-    api.listRunContainers.mockResolvedValue(faxReferenceRunContainersResponse)
+    api.listRuns.mockResolvedValue({
+      runs: [...faxReferenceRunsResponse.runs, {
+        run_id: disposable.run_id,
+        season: 2027,
+        seed: disposable.global_seed ?? 20270807,
+        progress: { next_event_index: 0, total_events: 4, completed_event_count: 0 },
+        source_type: 'fresh_seed',
+        parent_run_id: null,
+        child_run_count: 0,
+        world_id: disposable.world_id,
+      }],
+    })
+    api.listRunContainers.mockResolvedValue({
+      run_containers: [...faxReferenceRunContainersResponse.run_containers, disposable],
+    })
     api.getViewerOfficialRunContext.mockResolvedValue(faxReferenceViewerContext)
   })
 
@@ -101,9 +116,10 @@ describe('Layout mode navigation', () => {
     expect(within(nav).getByRole('search', { name: 'Viewer search' })).toBeInTheDocument()
     expect(within(nav).queryByLabelText('Viewer active run')).not.toBeInTheDocument()
     expect(within(nav).getByRole('button', { name: 'Season 2004/05 · W10' })).toHaveTextContent('Week W10')
-    expect(await screen.findByRole('option', { name: /FAX Reference v1/i })).toHaveAttribute('value', FAX_REFERENCE_RUN_ID)
-    fireEvent.change(screen.getByLabelText('Viewer active Product Run'), { target: { value: FAX_REFERENCE_RUN_ID } })
-    await waitFor(() => expect(localStorage.getItem('beta_engine:viewer_active_product_run_id')).toBe(FAX_REFERENCE_RUN_ID))
+    const disposableRunId = `${FAX_REFERENCE_RUN_ID}-layout-switch`
+    expect(await screen.findByRole('option', { name: /FAX test layout-switch/i })).toHaveAttribute('value', disposableRunId)
+    fireEvent.change(screen.getByLabelText('Viewer active Product Run'), { target: { value: disposableRunId } })
+    await waitFor(() => expect(localStorage.getItem('beta_engine:viewer_active_product_run_id')).toBe(disposableRunId))
     expect(screen.getByLabelText('Viewer header context controls')).toBeInTheDocument()
     expectNoForbiddenViewerActions(within(nav))
     for (const label of forbiddenViewerActionLabels) {

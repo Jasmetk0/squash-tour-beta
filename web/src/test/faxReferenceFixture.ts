@@ -1,7 +1,12 @@
-import type { RunContainer, ViewerOfficialRunContext } from '../api/types'
+import type {
+  RunContainer,
+  RunContainerListResponse,
+  RunsIndexResponse,
+  ViewerOfficialRunContext,
+} from '../api/types'
 
 /**
- * Versioned projection of the canonical FAX source used by integration-style UI tests.
+ * Versioned FAX API contract projection used by component tests with a mocked API boundary.
  * Keep this deliberately small: it describes stable identities and API contracts, while
  * the authoritative world content remains in config/worlds/official_fax_world.
  */
@@ -10,7 +15,7 @@ export const FAX_REFERENCE_RUN_ID = 'fax-reference-v1' as const
 export const FAX_REFERENCE_LEGACY_RUN_ID = 'fax-reference-v1-main' as const
 export const FAX_REFERENCE_BRANCH_ID = 'fax-reference-v1-viewer' as const
 
-export const faxReferenceRunContainer: Readonly<RunContainer> = Object.freeze({
+export const faxReferenceRunContainer = Object.freeze({
   run_id: FAX_REFERENCE_RUN_ID,
   display_name: 'FAX Reference v1',
   storage_kind: 'built_in',
@@ -26,9 +31,9 @@ export const faxReferenceRunContainer: Readonly<RunContainer> = Object.freeze({
   status: 'active',
   metadata_json: Object.freeze({ fixture: FAX_REFERENCE_VERSION }),
   mapped_simulation_run_count: 1,
-})
+} satisfies RunContainer)
 
-export const faxReferenceViewerContext: Readonly<ViewerOfficialRunContext> = Object.freeze({
+export const faxReferenceViewerContext = Object.freeze({
   product_run_id: FAX_REFERENCE_RUN_ID,
   product_run_display_name: 'FAX Reference v1',
   product_run_status: 'active',
@@ -47,28 +52,29 @@ export const faxReferenceViewerContext: Readonly<ViewerOfficialRunContext> = Obj
   current_event_id: null,
   current_event_sequence: null,
   resolution_version: 'viewer_official_branch_v1',
-})
+} satisfies ViewerOfficialRunContext)
 
-export const faxReferenceRunsResponse = Object.freeze({
-  runs: Object.freeze([
-    Object.freeze({
+export const faxReferenceRunsResponse: RunsIndexResponse = Object.freeze({
+  runs: [
+    {
       run_id: FAX_REFERENCE_LEGACY_RUN_ID,
       season: 2027,
       seed: 20270807,
-      progress: Object.freeze({ next_event_index: 0, total_events: 61, completed_event_count: 0 }),
+      progress: { next_event_index: 0, total_events: 4, completed_event_count: 0 },
       source_type: 'fresh_seed',
       parent_run_id: null,
       child_run_count: 0,
-    }),
-  ]),
+      world_id: 'official_fax_world',
+    },
+  ],
 })
 
-export const faxReferenceRunContainersResponse = Object.freeze({
-  run_containers: Object.freeze([faxReferenceRunContainer]),
+export const faxReferenceRunContainersResponse: RunContainerListResponse = Object.freeze({
+  run_containers: [faxReferenceRunContainer],
 })
 
-/** Returns an editable disposable projection; tests must never mutate the reference objects. */
-export function makeDisposableFaxRun(suffix: string) {
+/** Returns an in-memory editable contract projection, never a persisted Run. */
+export function makeDisposableFaxRunContainer(suffix: string): RunContainer {
   const runId = `${FAX_REFERENCE_RUN_ID}-${suffix}`
   return {
     ...faxReferenceRunContainer,

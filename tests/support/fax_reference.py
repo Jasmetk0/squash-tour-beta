@@ -12,10 +12,13 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
+from beta_engine.application.world_package_registry_service import REQUIRED_WORLD_PACKAGE_FILES
+
 FAX_REFERENCE_VERSION = "fax-reference-v1"
 FAX_REFERENCE_SEED = 20270807
 FAX_WORLD_ID = "official_fax_world"
-FAX_SOURCE_FILES = ("world.json", "continents.json", "regions.json", "travel_regions.json", "countries.json")
+FAX_SOURCE_FILES = REQUIRED_WORLD_PACKAGE_FILES
+FAX_REFERENCE_V1_SOURCE_TREE_HASH = "1f33ed8018fc5053c2d92de954db35eee141550ce363c467e277dbc93a254308"
 
 
 @dataclass(frozen=True)
@@ -24,7 +27,7 @@ class FaxReferenceSource:
     seed: int
     world_id: str
     root: Path
-    fingerprint: str
+    source_tree_hash: str
 
 
 def _canonical_bytes(root: Path) -> bytes:
@@ -35,7 +38,7 @@ def _canonical_bytes(root: Path) -> bytes:
     return json.dumps(normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
 
 
-def source_fingerprint(root: Path) -> str:
+def compute_source_tree_hash(root: Path) -> str:
     return hashlib.sha256(_canonical_bytes(root)).hexdigest()
 
 
@@ -50,7 +53,7 @@ def copy_reference_source(*, repository_root: Path, destination: Path) -> FaxRef
         seed=FAX_REFERENCE_SEED,
         world_id=FAX_WORLD_ID,
         root=destination,
-        fingerprint=source_fingerprint(destination),
+        source_tree_hash=compute_source_tree_hash(destination),
     )
 
 

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   FAX_REFERENCE_RUN_ID,
   faxReferenceRunContainer,
-  makeDisposableFaxRun,
+  makeDisposableFaxRunContainer,
 } from './faxReferenceFixture'
 
 describe('canonical FAX reference fixture', () => {
@@ -18,7 +18,7 @@ describe('canonical FAX reference fixture', () => {
   })
 
   it('creates isolated editable identities without changing the reference', () => {
-    const clone = makeDisposableFaxRun('mutation-1')
+    const clone = makeDisposableFaxRunContainer('mutation-1')
     clone.display_name = 'Changed only in this test'
     expect(clone).toMatchObject({ storage_kind: 'custom_local', read_only: false })
     expect(faxReferenceRunContainer.display_name).toBe('FAX Reference v1')

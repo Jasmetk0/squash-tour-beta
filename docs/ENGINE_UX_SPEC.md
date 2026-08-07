@@ -1,698 +1,459 @@
-# Engine UX & Architecture Direction (FAX / MSA)
+# Engine UX & Architecture Migration Guide (FAX / MSA)
 
-## Status and scope
-This document is the detailed **planning/specification source** for the long-term Admin UX and product architecture direction.
+## Status and authority
 
-- **Current implementation:** mixed maturity across World, Players, Seasons, and run simulation tooling.
-- **Planned target:** workflow-oriented Admin experience centered on World, Players, Tour & Seasons, Runs, Simulate, and Diagnostics.
-- **Implementation status rule:** this file must never imply that planned features are already implemented.
+This document is **implementation/migration guidance**, not a second product constitution.
 
-Assumptions for this planning slice:
-- `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` remains the active blueprint for implementation constraints and non-negotiables.
-- `Beta_Engine.docx` remains background/historical context only.
-- No backend/API/database/frontend behavior is changed by this documentation update.
-- Existing routes/pages can remain during transition while navigation and workflows are consolidated.
+The current product-level source of truth is:
+
+- `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`
+- synchronized from **Squash Engine Master Vision v31** (updated 6 Aug 2026)
+
+If this guide, older beta code, `Beta_Engine.docx`, an old handoff, or an older UX proposal conflicts with the current constitution/Master, the current constitution/Master wins.
+
+**Important:** planned target behavior must never be described as already implemented unless verified in the repository.
 
 ---
 
-## Key Product Decisions (authoritative UX decisions)
+# 1. What changed relative to the older UX spec
 
-### 1) Top-level Admin information architecture (IA)
-Long-term top-level Admin navigation target:
-1. **World**
-2. **Players**
-3. **Tour & Seasons**
-4. **Runs**
+The previous version of this file contained several concepts that are now obsolete or too strong.
+
+| Older UX assumption | Current Master v31 direction |
+|---|---|
+| One privileged **Master Run** | Runs are normal independent worlds; no user-facing privileged Master Run concept |
+| **Sandbox Runs** as the normal alternative-history model | Alternative history primarily lives in **branches inside a Run**; separate Runs are independent worlds/copies/imports |
+| `Official/Main Branch` as a superior branch | No superior branch. One **Viewer Branch** only selects what the Viewer displays |
+| One global Admin IA mixing Runs, World, Simulate, etc. | Clear split between **Global Admin** and **Run Admin** |
+| App opens into a run-centric/admin-centric surface | Neutral **Squash Engine Home** is the application root |
+| Global run-aware World pages as the default model | Global **source Packages** are separate from editable **Run snapshots** |
+| Dashboard as a generic global engine dashboard | Main dashboard/Home is **Run-scoped** and reflects current Run + active branch |
+| Home contains generic simulation execution controls | Home primarily provides overview/attention/continuation; simulation execution belongs in **Simulate/workflow surfaces** |
+| Existing beta navigation can define the target | Existing beta routes/pages are transitional implementation details only |
+
+Do not reintroduce the older assumptions in new work without an explicit newer product decision.
+
+---
+
+# 2. Current application-shell target
+
+## 2.1 Global root
+
+`Squash Engine Home`
+
+Current confirmed global entries:
+
+- **Runs**
+- **Packages**
+
+This is not a Viewer/Admin chooser and does not silently restore an old Run.
+
+## 2.2 Global Admin scope
+
+Global Admin has no active:
+
+- Run,
+- branch,
+- season/week.
+
+It manages genuinely global data, especially:
+
+- Runs,
+- source World Packages,
+- source Category Packages,
+- future global areas only when they are explicitly designed as global.
+
+Viewer cannot be opened from a global page until a Run is selected.
+
+## 2.3 Run Admin scope
+
+Run Admin always has:
+
+- selected Run,
+- selected active Admin branch,
+- viewed season/week context.
+
+The exact final sidebar is still open, but the current working direction is:
+
+1. **Home**
+2. **World**
+3. **Players**
+4. **Tour / Seasons**
 5. **Simulate**
-6. **Diagnostics**
+6. **Analysis**
+7. **History / Branches**
+8. supporting settings/diagnostics/operator pages where they logically belong
 
-Notes:
-- A future Settings page is allowed, but is not a central workflow pillar.
-- Existing top-level pages can remain operational during transition.
-
-### 2) World hub simplification
-World should eventually expose only:
-- **Countries**
-- **Talent Preview**
-
-Country Momentum should not remain a separate top-level world destination in the long run; it is folded into country detail as authored **Development Curves** plus run-derived output.
-
-### 3) Run model and defaulting
-- The engine supports multiple runs technically.
-- The normal UI should prioritize one active **Master Run**.
-- **Sandbox Runs** are for experiments and may be archived/deleted/compared/promoted.
-- Default generated output views (country/player/viewer) should use Master Run unless explicitly changed.
-
-### 4) Season model hard rules
-- Fixed season range: **2000/01 through 2049/50**.
-- Every season has exactly **61 season weeks**.
-- **Season Week 1 maps to Year Week 37**.
-- This is an intentional engine simplification even if deeper FAX lore may be more complex.
-
-### 5) Talent Intake operating model
-- Intake is **season-based**, not independent random weekly generation.
-- Intake cohort includes players who turn 15 during the selected season.
-- Each generated player can have `eligible_week`.
-- Admin can review the full cohort before all players are currently eligible.
-
-### 6) Simulation granularity decisions
-- No global day-by-day simulation model for now.
-- Main simulation levels are:
-  - Match
-  - Round
-  - Tournament
-  - Week
-  - Season
-  - Full Timeline
-- Tournament internal schedules may map rounds to week segments.
+Do not canonize a more detailed tree just because the current beta already has routes for it.
 
 ---
 
-## A) Current implemented state (high-level)
+# 3. Run Home target
 
-### World
-- Countries editor exists and is operational for CRUD/import/export-style authoring.
-- Country Momentum exists as a separate world surface today.
-- Talent tooling exists in a technical/diagnostic orientation.
+The Run Admin landing page is the working **Home / command center** for the selected Run and branch.
 
-### Players
-- Admin Players page is functional but dense; multiple workflows are grouped together.
-- Initial/seeded generation and lock/regenerate foundations exist.
+It should answer quickly:
 
-### Tour/Seasons
-- Admin Seasons command-center workflows exist with substantial orchestration foundations (entries, draws, matches, progression, points/snapshots, week/range preflight/run).
-- Tournament template/category concepts exist but naming and UX are still technical for end users.
+- Which Run is open?
+- Which branch is active?
+- What season/week is currently being viewed?
+- Where is the actual simulation currently positioned?
+- How far is the Run overall and within the current season?
+- What is currently happening?
+- What requires Admin attention?
+- Are there unsaved changes, failed/active jobs, validation problems or important warnings?
+- Where should the Admin go next?
 
-### Runs/Simulate/Diagnostics
-- Run-scoped simulation actions and lifecycle diagnostics exist in operational form.
-- Top-level Simulate and Diagnostics are not yet the final workflow-first launcher/control-center experience.
+### Preferred content direction
 
----
+- concise Run identity/context,
+- overall Run progress,
+- current season progress,
+- current/next activity,
+- health/validation/attention,
+- Viewer Branch/publication context where useful,
+- task/job state,
+- recent meaningful activity,
+- shortcuts into major Run areas.
 
-## B) Planned target architecture (detailed)
+### What Home should not become
 
-## 1) World module target
-World should focus on:
-- **Countries**
-- **Talent Preview**
+- a copy of Viewer pages,
+- a huge statistics portal,
+- a generic navigation landing page,
+- the main place for every simulation mutation,
+- a page filled with fake summary data when the backend does not provide it.
 
-Country Momentum should be folded into country-level development curves and generated history displays.
-
-### 1.1 Countries list target (`/admin/world/countries`)
-The countries list is a database-style management table:
-- search
-- filters
-- sortable columns
-- quick status summaries where helpful
-- one primary row action: **Open**
-
-Action simplification:
-- Copy/Duplicate should move from noisy list-row actions to secondary actions inside country detail.
-- Existing drawer-centric editing is transitional, not final target UX.
-
-### 1.2 Country detail target (`/admin/world/countries/:countryCode`)
-Country detail should be a sports-profile style country page (not only a form). Target sections:
-1. Overview
-2. Inputs
-3. Development Curves
-4. Talent Preview
-5. Generated Output from Master Run
-6. Top Players
-7. History
-8. Titles / Results
-
-### 1.3 Authored vs Generated separation (required)
-- **Authored Country Model** = manually edited pre-generation country inputs.
-- **Generated Output** = run-derived outcomes for selected run (default Master Run).
-
-This separation should be visible in naming, grouping, and UI text to avoid conceptual mixing.
-
-### 1.4 Development Curves
-Planned first implementation:
-- no drag graph editor initially
-- use editable season-value tables
-- add automatic chart rendering later
-
-Example table concept:
-- `Season | Value`
-- `2000/01 | 4.40`
-- `2001/02 | 4.42`
-- `...`
-
-Curves may include:
-- squash popularity
-- squash tradition
-- system quality
-- competition density
-- federation quality
-- court count
-- talent multiplier/momentum
-
-Important distinction:
-- authored curves are inputs
-- generated/real momentum is derived from run outcomes and displayed separately
-
-### 1.5 Talent Preview in World
-Talent Preview in World is:
-- **Expected Mode only**
-- no seeded concrete player samples
-- no concrete player objects
-- used for balancing and forecasting, not player creation
-
-Main aggregate outputs:
-- Elite Talents
-- Tour Talents
-- Pro Depth
-
-Detailed letter-tier breakdown is available only in advanced/detail views.
+The current implementation of `/admin/runs/:runId` can evolve incrementally into this target while preserving working APIs/routes.
 
 ---
 
-## 2) Talent Preview and talent generation logic
+# 4. Run and branch UX
 
-### 2.1 Aggregate definitions
-- **Elite Talents:** expected elite/world-class output (roughly L through S- tiers)
-- **Tour Talents:** expected stable top-tour professional potential (roughly A+ through B+, exact mapping may be finalized later)
-- **Pro Depth:** broader professional/development/national depth (roughly B through C-ish, exact mapping may be finalized later)
+## 4.1 Runs
 
-### 2.2 Presentation rule
-Main UI should not expose every letter tier as a column in the default table.
+The full `All Runs` page is global and neutral. Current confirmed presentation direction is wide rows rather than oversized cards.
 
-Default UX:
-- aggregate categories (Elite / Tour / Pro Depth)
+Distinct actions for a Run:
 
-Advanced UX:
-- exact tier distributions (`L, S+, S, S-, A+, ... F-`)
+- **Open in Admin**
+- **Open branches**
+- **Open in Viewer**
 
-### 2.3 Generation chain (target concept)
-`Total population`
-→ `male 15-year-old cohort`
-→ `squash participants`
-→ `competitive juniors`
-→ `elite development pool`
-→ `expected talent output`
+A compact Run switcher is for fast context changes only. Complex management belongs on the full Runs page.
 
-### 2.4 Seasonal normalization model
-For each season:
-- all countries are summed into global seasonal talent pools
-- each country receives a relative share of Elite/Tour/Depth pools
+## 4.2 Branches
 
-Intended behavior:
-- if all countries improve together, world output should not explode uncontrollably
-- global depth growth should be controlled by explicit global era multipliers or pool settings
+Branches are equal alternative timelines inside one Run.
 
-Conceptual share formula:
-- `country_weight = eligible_cohort × participation × quality factors`
-- `world_weight = Σ country_weight`
-- `country_share = country_weight / world_weight`
-- `expected_output = global_pool × country_share`
+A branch may diverge after its fork in:
 
-Separate weighting models are expected for Elite vs Tour vs Pro Depth.
+- calendar,
+- tournament editions,
+- entrants/draws,
+- results,
+- rankings/statistics,
+- player attributes/form/fatigue/health,
+- rules/configuration,
+- other time-valid state.
 
----
+The target data model preserves common history once and stores branch-specific divergence.
 
-## 3) Potential Tier System
+## 4.3 Viewer Branch
 
-### 3.1 Target scale (authoritative)
+Exactly one branch per Run is the **Viewer Branch**.
 
-`L`
+Its only special meaning is publication/display: the read-only Viewer uses it.
 
-`S+`
-`S`
-`S-`
+UX must not imply:
 
-`A+`
-`A`
-`A-`
+- “official winner”,
+- main simulation authority,
+- privileged historical truth,
+- branch priority.
 
-`B+`
-`B`
-`B-`
-
-`C+`
-`C`
-`C-`
-
-`D+`
-`D`
-`D-`
-
-`E+`
-`E`
-`E-`
-
-`F+`
-`F`
-`F-`
-
-### 3.2 Rules
-- `L` is standalone only (no `L+` or `L-`).
-- Potential Tier maps internally to expected potential OVR anchors.
-
-Example anchor concept (illustrative, not finalized):
-- `L ≈ 192`
-- `S+ = 191`
-- `S = 190`
-- `S- = 189`
-- `A+ = 188`
-- (continues downward)
-
-### 3.3 Performance interpretation
-- Potential is not a hard cap.
-- Most players peak below potential.
-- Some players can briefly exceed potential.
-- Very rare players can sustain above expected ceiling.
-
-Later systems that affect realization (future phases):
-- progression model
-- work ethic/training environment
-- injuries/recovery
-- mentality/consistency
-- style fit and coaching/system quality
+Use `Viewer Branch` terminology in new UI. Existing backend names such as `official_branch_id` or “main” must be treated as migration debt, not product language.
 
 ---
 
-## 4) Players module target
-Long-term Players navigation:
-- Player Database
-- Talent Intake
-- Custom Players
-- Locks & Overrides
-- Player Audit
-- Player Detail
+# 5. Header and contextual controls
 
-### 4.1 Player Database
-Target behavior:
-- search
-- country/age/potential/status filters
-- sort by name, age, country, potential, OVR, cohort, status
+On pages with an active Run, the current target order is:
 
-Target table shape:
-`Name | Country | Age | Potential | OVR | Status | Cohort | Action`
+### Viewer
+`Run → Time → Viewer/Admin`
 
-Primary row action should be **Open**.
+### Admin
+`Run → Branch → Time → Viewer/Admin`
 
-### 4.2 Talent Intake (`/admin/players/intake`)
-Talent Intake should be a standalone page, not a minor subsection.
+Global search / `Ctrl+K` remains part of the application shell; exact placement can be refined.
 
-Workflow:
-1. Select Season
-2. View Expected Intake
-3. Generate Preview
-4. Review Preview
-5. Lock/edit/customize
-6. Persist Intake
-7. Regenerate Unlocked
+The time control changes **viewing context only**. It never advances or rewinds simulation.
 
-Statuses:
-- Not generated
-- Preview generated
-- Persisted
-- Locked/finalized
+Status below/near the time control:
 
-Generated Preview table target:
-`Name | Country | Eligible Week | Potential | Category | Status | Action`
+- Viewer: `PRESENT / PAST`
+- Admin: `PRESENT / PAST / FUTURE`
 
-Actions:
-- Generate Preview
-- Regenerate Preview
-- Regenerate Unlocked Only
-- Persist Intake
-
-Rules:
-- Preview does not write final records.
-- Persist writes players into Player Database/run data.
-- Intake is seasonal; players become eligible in-world based on `eligible_week`.
-
-### 4.3 Custom players, locks, and budget interaction
-- Custom players default to locked.
-- Locked players are not overwritten unless explicitly unlocked.
-- Custom/locked players count against country-season talent budget.
-- They should strongly reduce probability of additional same-cohort top-tier output, not force absolute zero.
-
-### 4.4 Player Detail split
-Admin and Viewer detail pages serve different goals.
-
-Admin Player Detail:
-- editing/overrides
-- lock management
-- audit/development management
-
-Viewer Player Detail:
-- public sports profile
-- rankings/results/titles/stats/rivalries
-- no technical lock/regeneration internals
-
-### 4.5 Future identity roadmap (explicitly future phase)
-- country-specific name pools
-- flag assets
-- weighted name-origin distributions
-- nationality vs name-origin distinction
-- height/weight/handedness/body-type profile depth
+Changing mode should preserve Run, time, object and matching subpage when possible. Viewer always resolves against the Run's current Viewer Branch.
 
 ---
 
-## 5) Tour & Seasons module target
-Top-level consolidation target:
-- Categories
-- Tournaments
-- Season Templates
-- Seasons
-- Calendar Compare / Apply
-- Validation
+# 6. Packages UX
 
-### 5.1 Season Registry
-Hard model decisions:
-- Season range: 2000/01 to 2049/50
-- 61 season weeks per season
-- Season Week 1 = Year Week 37 mapping
+## 6.1 Global source Packages
 
-Target season statuses:
-- Draft
-- Validated
-- Locked
-- Running
-- Completed
+Confirmed initial types:
 
-Status intent:
-- Draft: editable
-- Validated: passed checks but editable (edits invalidate validation)
-- Locked: prepared for simulation; calendar edits require reopen
-- Running: simulation artifacts exist; edits require invalidation handling
-- Completed: historical state; changes via explicit reopen/override only
+- World Packages
+- Category Packages
 
-### 5.2 Category model
-Use user-facing term **Category**.
-Do not expose Category Definition vs Category Version complexity in everyday UI.
+Built-in GitHub source Packages are read-only. Local/custom source Packages can be editable.
 
-Category meaning:
-- a rules package valid for a season range
+## 6.2 Run snapshots
 
+When a Run is created, selected World + Category Package versions are copied into the Run as independent versioned snapshots.
+
+Therefore UX must clearly distinguish:
+
+- **Edit source Package** — global operation affecting future Runs,
+- **Edit this Run's Package snapshot** — Run-scoped operation affecting only this Run/branch according to historical rules.
+
+There is no live synchronization from a source Package into existing Runs.
+
+Future package types (for example Player Package) are a strong direction only, not current canon.
+
+---
+
+# 7. World UX
+
+Do not assume the old global `World → Countries / Talent Preview` structure is the final target for every context.
+
+We now have two different concepts:
+
+### Global Package authoring
+Edit source World Packages outside a Run.
+
+### Run World
+Inspect/edit the Run's embedded world snapshot and its generated state in the active Run/branch.
+
+Country/profile pages should keep authored/configuration inputs clearly separated from generated historical output.
+
+Population, talent quantity/quality and country strength are important concepts, but exact generation mathematics remain open and should not be hard-coded from an old illustrative UX proposal.
+
+---
+
+# 8. Players UX
+
+Player identity is stable (`player_id`) while time-varying state belongs to Run/branch/week history.
+
+The Admin player system ultimately needs to cover:
+
+- prospects/juniors,
+- Tour players,
+- historical state,
+- attributes/OVR/potential,
+- physical profile,
+- form/fatigue/health,
+- status/lifecycle,
+- manual edits and locks,
+- generation/regeneration provenance.
+
+Viewer exposes public/historical information and must not automatically reveal authoritative internal health/potential information.
+
+The exact page/tab structure is still to be designed page-by-page.
+
+---
+
+# 9. Tour / Seasons UX
+
+This area should consolidate the sporting structure of a Run:
+
+- seasons,
+- calendar,
+- Tournament Series and Editions,
+- categories and their historical configuration,
+- entries,
+- qualification,
+- draws,
+- matches/results,
+- Finals and team/continental/world competitions where relevant.
+
+Existing technical pages can survive during migration, but they should progressively become understandable Admin workflows rather than a collection of backend-shaped screens.
+
+Do not convert currently open sport rules into permanent UI assumptions.
+
+---
+
+# 10. Simulate UX
+
+`Simulate` and manual/step-by-step work are complementary.
+
+The dedicated simulation area should eventually be the primary launcher/control center for supported scopes such as:
+
+- Next Match,
+- Next Round,
+- Next Tournament,
+- Next Week,
+- Next Season,
+- Full Simulation,
+- custom target/range.
+
+Before execution, Admin should understand:
+
+- target Run + branch,
+- starting state,
+- requested stopping point,
+- prerequisites,
+- blocking errors,
+- warnings,
+- likely impacted history/configuration.
+
+Long-running simulation belongs in a Task Center/job model with progress and safe stop/recovery behavior.
+
+### Migration rule
+
+Existing direct Run-level simulation buttons/endpoints can remain temporarily for compatibility, but new Home/dashboard UX should route the user toward dedicated simulation workflows rather than expanding direct execution on Home.
+
+---
+
+# 11. Analysis UX
+
+Current working direction is an Admin analysis area for generated insight and technical/sporting inspection, potentially including:
+
+- Official and alternative rankings,
+- ranking policy inspection,
+- Elo/other analytical ratings,
+- model-derived odds/predictions,
+- comparisons,
+- diagnostics tied to generated sporting data.
+
+The exact boundary between Analysis and Diagnostics remains open. Do not duplicate the same tool in multiple top-level areas simply to fill navigation.
+
+---
+
+# 12. History / Branches UX
+
+Target experience connects:
+
+- interactive branch map,
+- branch divergence points,
+- Viewer Branch badge,
+- selected-branch timeline,
+- saved versions,
+- checkpoints,
+- simulation/import/manual-change history,
+- restore/branch/compare operations.
+
+Viewer Branch must be visually identifiable without implying that it is the “best” or “official” branch.
+
+---
+
+# 13. Global vs Run navigation migration
+
+When refactoring current navigation, classify every destination first:
+
+### Global
 Examples:
-- Diamond 2000/01–2015/16
-- Diamond 2016/17–2049/50
+- Squash Engine Home
+- All Runs
+- source Packages
 
-Category fields:
-- category name
-- valid season range
-- tour level
-- prestige rank
-- mandatory flag
-- main draw size
-- qualification draw size
-- direct entries
-- qualifiers
-- wildcards
-- lucky losers
-- seeds count
-- points by round
-- prize money + distribution
-- match format
-- entry rules
-- qualification rules
-- schedule footprint
-
-### 5.3 Schedule footprint semantics
-Footprint includes:
-- qualifying weeks count
-- main draw weeks count
-- required consecutive block flag
-- optional round-to-week assignment
-
-Example default (Diamond):
-- 1 qualifying week
-- 2 main draw weeks
-- total 3 consecutive weeks
-
-### 5.4 Tournaments model
-Use **Tournaments** in UI (not Tournament Templates).
-
-Tournament = reusable master tournament brand.
+### Run-scoped
 Examples:
-- Némarque Open
-- Ameriga Open
-- Bogemia Gold
-- World Championship
+- Run Home
+- Run World
+- Players of a Run
+- Tour/Seasons
+- Simulate
+- Analysis
+- Branches/History
+- run diagnostics/settings
 
-Tournament stores reusable defaults/identity, not concrete entries/draw/results.
-
-### 5.5 Tournament Edition / Event Instance model
-A concrete tournament in a concrete season (e.g., Némarque Open 2030/31).
-
-When placed into a season:
-- keep tournament reference
-- keep category reference
-- copy category snapshot
-- allow edition-level overrides
-
-Edition owns:
-- actual entries
-- draw and match schedule
-- results/champion
-- points awarded
-- prize awarded
-
-### 5.6 Season Templates and creation paths
-Season Template = reusable calendar plan.
-
-Season creation starts from:
-- blank calendar
-- season template
-- another season
-- copied tournament from anywhere
-- blank custom tournament
-
-### 5.7 Compare / Apply
-Compare current season with:
-- template
-- another season
-
-Statuses:
-- Same
-- Modified
-- Missing from current
-- Only in current
-- Conflict
-
-Actions:
-- Apply to this season
-- Replace current
-- Keep current
-- Ignore
-- Open editor
-
-### 5.8 Season Calendar Editor
-Both views should exist:
-- Week View
-- Tournament Table View
-
-Week View:
-- W01..W61
-- Edit Week panel supports add/remove/move/open and conflict view
-- multi-week tournaments are block objects
-
-Tournament Table View:
-- sort by week, name, category, host, status, duration, qualification
-- filters: category, week range, host, status, mandatory, has qualification
-
-### 5.9 Event block rules
-- Multi-week events move as one block.
-- Diamond-style 3-week footprint is a canonical example.
-- Validation must catch broken/non-consecutive footprints.
+A page must not silently inherit a previous Run if it is meant to be global.
 
 ---
 
-## 6) Simulation, lifecycle, reopen/invalidation, and narrative locks
+# 14. Current implementation principles
 
-### 6.1 Tournament lifecycle states
-Target lifecycle:
-1. Planned
-2. Entries Generated
-3. Draw Generated
-4. In Progress
-5. Completed
-6. Points Applied
-7. Archived
+During migration:
 
-State behavior intent:
-- Planned: calendar/details editable
-- Entries Generated: entry review/regeneration possible; structural edits may invalidate downstream artifacts
-- Draw Generated: bracket exists; entry changes invalidate draw
-- In Progress: match-level simulation/manual actions available; result changes invalidate downstream path
-- Completed: outcomes exist; points can be reviewed/applied/recalculated
-- Points Applied: ranking effects posted; score/result changes invalidate later snapshots
-- Archived: historical locked state; reopen required for mutation
-
-### 6.2 Reopen/invalidation principles
-Any post-downstream edit must expose invalidation scope and mark dependent artifacts.
-
-Examples:
-- Calendar changed → invalidates entries/draws/results/rankings from affected week onward
-- Entries changed → invalidates draw/results/rankings for tournament onward
-- Draw changed → invalidates results/rankings for tournament onward
-- Match result changed → invalidates later bracket/points/ranking snapshots
-- Points/ranking changed → invalidates later ranking/race snapshots
-
-Required UX pattern:
-- show impact preview before apply
-- allow cancel or apply+mark-invalidated
-- persist audit trail of intervention scope
-
-### 6.3 Simulation levels and shortcuts
-Simulation levels:
-- Match
-- Round
-- Tournament
-- Week
-- Season
-- Full Timeline
-
-Shortcuts:
-- Next Match
-- Next Round
-- Next Tournament
-- Next Week
-- Rest of Season
-- Full Timeline
-
-Need both Next Tournament and Next Week because tournaments can span multiple weeks.
-
-### 6.4 Manual controls (where applicable)
-At match/round/tournament level support:
-- simulate
-- resimulate
-- resimulate unlocked
-- enter manual result
-- lock result
-- unlock
-- downstream invalidation handling
-
-### 6.5 Narrative / outcome locks (future feature)
-Lock types:
-- Soft Lock
-- Hard Lock
-- Winner Lock
-- Round Lock
-- Exact Match Lock
-- Path Lock
-
-Rules:
-- visible in UI
-- audited
-- conflict-checked
-- respected by generation/simulation flows
-
-Optional diagnostic:
-- estimated natural probability
-
-Example:
-- Constraint: Arebady must win Némarque Open 2030/31
-- Estimated natural probability: 42%
-- Status: Plausible
+1. Reuse real existing APIs and data where valid.
+2. Do not create fake dashboard values to match mockups.
+3. Preserve current working routes while introducing clearer target navigation when practical.
+4. Do not destructively rename persisted backend fields solely for UI terminology; plan migrations.
+5. New user-facing labels should follow current terminology even if adapters still call old endpoints.
+6. Keep Viewer read-only.
+7. Keep historical time semantics explicit.
+8. Every mutating action needs appropriate validation/preview/confirmation according to risk.
+9. Tests should verify product behavior, not only that components render.
+10. Planned target features must be clearly distinguished from implemented features.
 
 ---
 
-## 7) Runs model target
-- Keep multi-run engine capability.
-- UI defaults to Master Run for normal use.
-- Sandbox Runs support experiments and can be archived/deleted/compared/promoted.
-- Country/player generated output panels default to Master Run unless user explicitly switches.
-- Calendar structure editing remains a Tour & Seasons responsibility; run simulation should not silently mutate authored calendar models.
+# 15. Highest-priority migration backlog
+
+### P0 — stop reinforcing obsolete architecture
+
+- Remove new user-facing `Master Run`, `Sandbox Run`, `Official Branch` and privileged `Main Branch` assumptions.
+- Standardize product terminology around Run, active Admin branch and Viewer Branch.
+- Treat old backend naming as migration debt.
+
+### P1 — shell and scopes
+
+- Add/complete neutral `Squash Engine Home`.
+- Build global Runs area.
+- Build global Packages area.
+- Separate Global Admin and Run Admin sidebars/headers.
+- Standardize Run/Branch/Time/Mode controls.
+
+### P1 — Run Admin
+
+- Continue evolving `/admin/runs/:runId` into concise Home command center.
+- Move generic simulation execution toward dedicated Simulate workflows.
+- Add two useful progress indicators: overall Run progress and current-season progress when supported by real data.
+- Make warnings/attention actionable through links to the correct Admin workflow.
+
+### P1/P2 — data model alignment
+
+- Introduce/complete `viewer_branch_id` semantics through APIs/schema/migrations.
+- Ensure Package sources and Run snapshots are truly independent.
+- Ensure branch-specific configuration/history is correctly persisted.
+- Audit time-travel queries for branch/week correctness.
+
+### P2 — workflow consolidation
+
+- Consolidate Tour/Seasons technical pages into sporting workflows.
+- Design Players and World pages page-by-page against the Run/global split.
+- Build History/Branches map/timeline.
+- Define Analysis vs Diagnostics boundary.
 
 ---
 
-## 8) Diagnostics control center target
-Target sections:
-1. Overview
-2. World Balance
-3. Calendar Validation
-4. Run Health
-5. Invalidated Data
-6. Narrative Locks
-7. Audit / Warnings
+# 16. Explicitly unresolved UX areas
 
-Diagnostics output expectations:
-- what happened
-- why it matters
-- what is affected
-- what to do next
-- where to click
+Do not silently finalize these from the old spec:
 
-Example categories:
-- World Balance: dominance risk, zero-chance risk, preview distribution issues
-- Calendar Validation: footprint errors, missing mandatory events, out-of-range weeks
-- Run Health: unfinished events, missing results, stale snapshot chains
-- Invalidated Data: source changes and impacted downstream artifacts
-- Narrative Locks: conflicts and plausibility indicators
+- complete final Global Admin sidebar,
+- complete final Run Admin sidebar,
+- full Viewer public-site navigation,
+- exact MSA homepage blocks,
+- Viewer reveal modes,
+- exact `Show in Viewer` save timing,
+- complete branch lock/concurrency UX,
+- final Analysis/Diagnostics split,
+- exact source/Run Package editor layouts,
+- detailed player profile Admin tabs,
+- full Tournament/Season page hierarchy,
+- exact Task Center behavior and progress estimation,
+- mobile/responsive design beyond current desktop-first scope.
 
 ---
 
-## 9) Transition from current implementation
-Migration principles:
-- Keep existing routes operational during transition.
-- Do not break current Countries Editor, Admin Players, Admin Seasons, Runs, or run diagnostics during IA migration.
-- Introduce new IA progressively with compatibility links.
-- If legacy pages remain temporarily, label them clearly (Advanced / Legacy / Placeholder).
-- Route consolidation should be phased and regression-tested.
+# 17. Historical note
 
-Operational approach:
-- prefer additive wrappers and redirects later rather than abrupt route removals
-- preserve existing orchestration capabilities while improving discoverability
-- gate risky structural changes behind clear phase boundaries
+The former detailed proposals in this file — including Master Run/Sandbox terminology, global World hub assumptions, specific Talent Preview aggregates/formulas and several fixed page structures — are **not automatically current decisions**.
 
----
+They may still contain useful implementation ideas, but they must be re-evaluated against the current product constitution before reuse.
 
-## C) Phased implementation plan for future tasks
-
-- **Phase 0 — Documentation alignment** (this task)
-- **Phase 1 — Navigation/UX shell cleanup**
-- **Phase 2 — World cleanup**
-- **Phase 3 — Talent Preview redesign**
-- **Phase 4 — Player module restructure**
-- **Phase 5 — Tour & Seasons architecture**
-- **Phase 6 — Tournament lifecycle + simulation controls**
-- **Phase 7 — Narrative locks**
-- **Phase 8 — Diagnostics**
-- **Phase 9 — Future realism updates**
-
----
-
-## D) Expanded gap analysis (current vs target)
-
-| Area | Current implementation | Planned target | Difference/gap | Suggested phase |
-|---|---|---|---|---|
-| Countries list action cleanup | Countries management exists with operational row actions and drawer workflows. | Database-style list with primary **Open** action and reduced row noise. | Copy/Duplicate action placement and list ergonomics need cleanup. | Phase 2 |
-| Country detail route | Country editing exists, mostly list/drawer-driven. | Dedicated `/admin/world/countries/:countryCode` profile/editor. | Route-level country profile page not yet established as primary workflow. | Phase 2 |
-| Development curves | Momentum concepts exist but not integrated as detailed per-country season tables. | Editable seasonal development curves with later charting. | Need authored curve model/UX and generated momentum separation. | Phase 2 |
-| Talent Preview aggregates | Technical/diagnostic flavor with dense detail. | Aggregate Elite/Tour/Depth first, advanced tier detail optional. | Needs UX reframing and aggregate-first data presentation. | Phase 3 |
-| Talent Intake page | Player generation foundations exist. | Standalone `/admin/players/intake` seasonal intake workflow. | Needs dedicated page, statuses, and preview→persist lifecycle semantics. | Phase 4 |
-| Custom/locked budget behavior | Lock/regeneration support exists in part. | Budget-aware custom/locked behavior with strong-but-not-zero elite suppression. | Requires explicit model + UX messaging + diagnostics. | Phase 4 |
-| Player detail split | Admin-centric player management is present. | Separate Admin and Viewer detail experiences. | Viewer-friendly profile depth and admin-only internals separation needed. | Phase 4/9 |
-| Categories model clarity | Technical category/template concepts exist. | User-facing “Category” rules packages by season range. | Terminology and object semantics need simplification in UI workflows. | Phase 5 |
-| Tournaments as reusable master records | Tournament template-like entities exist. | Reusable Tournaments as tournament brands. | Need clearer identity vs season-edition separation. | Phase 5 |
-| Tournament editions + category snapshots | Event workflows exist with artifacts. | Edition retains references + copied category snapshot + overrides. | Snapshot/override UX and historical-stability semantics need formalization. | Phase 5/6 |
-| Season compare/apply | Some season orchestration tooling exists. | Explicit compare/apply with statuses/actions. | Compare UX/status taxonomy and action flows are incomplete. | Phase 5 |
-| Week view + Edit Week panel | Season command workflows exist. | Rich Week View with Edit Week controls and conflict context. | Purpose-built calendar editing UX needs expansion. | Phase 5 |
-| Tournament table view | Event-centric data exists but not fully consolidated into planner table UX. | Sort/filter-heavy tournament edition table view. | Needs robust list ergonomics and bulk operations. | Phase 5 |
-| Event block validation | Validation foundations exist. | Strict multi-week block and footprint validation with actionable guidance. | Block semantics and human-friendly fix guidance need tightening. | Phase 5 |
-| Tournament lifecycle gating | Lifecycle diagnostics exist in foundation form. | Full lifecycle state machine with action gating per state. | State/action contracts need unified UX and policy. | Phase 6 |
-| Reopen/invalidation UX | Partial diagnostics/preflight exist. | Explicit intervention-impact scope and downstream invalidation controls. | Need consistent model and user-facing impact confirmations. | Phase 6 |
-| Narrative locks | Not first-class yet. | Soft/Hard and path/outcome lock system with conflict checks and audit. | New constraints domain and UI integration required. | Phase 7 |
-| Master vs Sandbox defaulting | Multi-run capability exists. | Master-first UX default with optional sandbox workflows. | Run selection friction and default behavior need standardization. | Phase 6/8 |
-| Simulate launcher | Top-level simulate is not fully launcher-centric. | Central launcher with levels + shortcuts. | Action discovery and control consistency require redesign. | Phase 6 |
-| Diagnostics control center | Run-scoped diagnostics exist. | Cross-module diagnostics control center with guided remediation. | Aggregation, triage UX, and action linking need expansion. | Phase 8 |
-
----
-
-## Appendix: non-negotiable guardrail reminders for future implementation prompts
-- Do not weaken determinism/replayability.
-- Keep world/tour content data-driven.
-- Keep Admin and Viewer responsibilities conceptually separate.
-- Preserve historical traceability and auditability after manual interventions.
-- Do not represent planned features as implemented before delivery.
-
-
-## Season Label Transition Note
-- Canonical season label for the season registry is compact `YYYY/YY`.
-- Legacy flows may still display or use long labels `YYYY/YYYY`.
-- API boundaries should accept both compact and long formats during migration.
+For product decisions, consult `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` first.

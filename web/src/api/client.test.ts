@@ -39,6 +39,7 @@ import {
   simulateNextWeekOnBranch,
   simulateNextTournamentOnBranch,
   simulateFullSeasonOnBranch,
+  simulateWorldTourFinalsOnBranch,
   getWorldPackageValidation,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
@@ -1042,6 +1043,16 @@ describe('world package registry client', () => {
     expect(url).not.toContain('%252F')
     expect(JSON.parse(init.body)).toEqual(payload)
     expect(['/simulate-next-match', '/simulate-next-round', '/simulate-next-week', '/simulate-next-tournament', '/simulate-full-season']).toContain(String(url).slice(String(url).lastIndexOf('/')))
+  })
+
+  it('posts Branch World Tour Finals to its distinct exactly once encoded URL with the exact payload', async () => {
+    const payload = { expected_head_checkpoint_id: 'cp/1 #', command_id: 'finals-command', audit_reason: 'simulate reviewed Finals', explicit_confirmation: true }
+    const response = { product_run_id: 'run/a #1', branch_id: 'branch/a #2', legacy_simulation_run_id: 'legacy-1', command_id: 'finals-command', request_fingerprint: 'finals-fingerprint', idempotent_replay: false, previous_head_checkpoint_id: 'cp/1 #', new_head_checkpoint_id: 'cp-finals', previous_season: 2030, previous_week: 52, previous_event_id: null, previous_event_sequence: null, current_season: 2030, current_week: 52, current_event_id: null, current_event_sequence: null, official_branch_changed: false, finals: { run_id: 'legacy-1', season: 2030, event_id: 'WTF-2030', already_simulated: false, qualification: { run_id: 'legacy-1', season: 2030, source_as_of_season: 2030, source_as_of_week: 52, qualification: { target_season: 2030, qualifier_count: 1, reserve_count: 0, qualified: [{ player_id: 'p1', race_rank: 1, race_points: 1000, seed: 1 }], reserves: [], ineligible_race_entries: [] } }, result: { run_id: 'legacy-1', season: 2030, event_id: 'WTF-2030', source_as_of_season: 2030, source_as_of_week: 52, result: { event_id: 'WTF-2030', season: 2030, qualification: { target_season: 2030, qualifier_count: 1, reserve_count: 0, qualified: [], reserves: [], ineligible_race_entries: [] }, groups: [], knockout: [], placements: [{ player_id: 'p1', finish: 'champion' }] } } } }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(response), { status: 200 }))
+    await expect(simulateWorldTourFinalsOnBranch('run/a #1', 'branch/a #2', payload)).resolves.toEqual(response)
+    expect(globalThis.fetch).toHaveBeenCalledWith('http://127.0.0.1:8000/admin/runs/run%2Fa%20%231/branches/branch%2Fa%20%232/simulate-world-tour-finals', expect.objectContaining({ method: 'POST', body: JSON.stringify(payload) }))
+    const [url, init] = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0]
+    expect(url).not.toContain('%252F'); expect(JSON.parse(init.body)).toEqual(payload); expect(JSON.parse(init.body)).not.toHaveProperty('product_run_id'); expect(JSON.parse(init.body)).not.toHaveProperty('branch_id')
   })
 
 })

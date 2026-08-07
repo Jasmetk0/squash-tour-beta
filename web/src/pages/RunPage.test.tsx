@@ -181,7 +181,9 @@ describe('RunPage', () => {
     renderWithRoute(<RunPage />, '/runs/run-a')
     expect(await screen.findByText('official_fax_world')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'run-parent' })).toHaveAttribute('href', '/admin/runs/run-parent')
-    expect(screen.getByRole('link', { name: 'Manage branches and official selection' })).toHaveAttribute('href', '/admin/runs/run-a/branches')
+    expect(screen.getByText('Viewer Branch')).toBeInTheDocument()
+    expect(screen.queryByText('Official branch')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Manage branches and Viewer Branch' })).toHaveAttribute('href', '/admin/runs/run-a/branches')
     expect(screen.getByText('branch-official')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'E3' })).toHaveAttribute('href', '/admin/runs/run-a/events/E3')
     expect(screen.getByRole('link', { name: 'Open Simulate' })).toHaveAttribute('href', '/admin/simulate')
@@ -203,16 +205,33 @@ describe('RunPage', () => {
     expect(await screen.findByText('Run world rebuilt.')).toBeInTheDocument()
   })
 
-  it('offers Finals only when the regular season is complete and qualification exists', async () => {
+  it('routes pending Finals to their dedicated workflow without executing them from Home', async () => {
     const runResponse = await api.getRun()
     const statusResponse = await api.getRunStatusSummary()
     api.getRunStatusSummary.mockResolvedValueOnce({ ...statusResponse, progress: { next_event_index: 4, total_events: 4, completed_event_count: 4 } })
     api.getRun.mockResolvedValueOnce({ ...runResponse, run: { ...runResponse.run, next_event_index: 4, completed_event_ids: ['E1', 'E2', 'E3', 'E4'] }, season_state: { ...runResponse.season_state, next_event_index: 4 } })
     renderWithRoute(<RunPage />, '/runs/run-a')
     expect(await screen.findByText(/World Tour Finals result is pending/)).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Simulate World Tour Finals' }))
-    await waitFor(() => expect(api.simulateWorldTourFinals).toHaveBeenCalledWith('run-a'))
-    expect(await screen.findByText('Finals simulation complete.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Review World Tour Finals' })).toHaveAttribute('href', '/admin/runs/run-a/finals')
+    expect(screen.queryByRole('button', { name: 'Simulate World Tour Finals' })).not.toBeInTheDocument()
+    expect(api.simulateWorldTourFinals).not.toHaveBeenCalled()
+  })
+
+  it('routes an available rollover to its dedicated workflow without executing it from Home', async () => {
+    const runResponse = await api.getRun()
+    const statusResponse = await api.getRunStatusSummary()
+    api.getRunStatusSummary.mockResolvedValueOnce({ ...statusResponse, progress: { next_event_index: 4, total_events: 4, completed_event_count: 4 } })
+    api.getRun.mockResolvedValueOnce({ ...runResponse, run: { ...runResponse.run, next_event_index: 4, completed_event_ids: ['E1', 'E2', 'E3', 'E4'] }, season_state: { ...runResponse.season_state, next_event_index: 4 } })
+    api.getFinalsSummary.mockResolvedValueOnce({
+      run_id: 'run-a',
+      season: 2025,
+      qualification: { run_id: 'run-a', season: 2025, source_as_of_season: 2025, source_as_of_week: 40, qualification: {} },
+      result: { champion_id: 'p-1' }
+    })
+    renderWithRoute(<RunPage />, '/runs/run-a')
+    expect(await screen.findByRole('link', { name: 'Continue to season rollover' })).toHaveAttribute('href', '/admin/runs/run-a/rollover')
+    expect(screen.queryByRole('button', { name: 'Roll over to next season' })).not.toBeInTheDocument()
+    expect(api.rolloverNextSeason).not.toHaveBeenCalled()
   })
 
   it('summarizes overview request failures as admin attention', async () => {

@@ -11,9 +11,7 @@ import {
   getRunStatusSummary,
   getRunWorldStatus,
   listEvents,
-  rebuildRunWorld,
-  rolloverNextSeason,
-  simulateWorldTourFinals
+  rebuildRunWorld
 } from '../api/client'
 import {
   ActionStatusBlock,
@@ -87,8 +85,6 @@ export function RunPage(): JSX.Element {
     ])
   }
 
-  const finalsAction = useMutation({ mutationFn: () => simulateWorldTourFinals(runId), onSuccess: invalidateHome })
-  const rolloverAction = useMutation({ mutationFn: () => rolloverNextSeason(runId), onSuccess: invalidateHome })
   const rebuildAction = useMutation({ mutationFn: () => rebuildRunWorld(runId), onSuccess: invalidateHome })
 
   const run = runQuery.data?.run
@@ -162,8 +158,8 @@ export function RunPage(): JSX.Element {
                 },
                 { label: 'Child runs', value: children.length },
                 { label: 'Product run status', value: containerQuery.data?.status ?? 'Legacy run' },
-                { label: 'Official branch', value: containerQuery.data?.official_branch_id ?? 'Not available' },
-                { label: 'Branch controls', value: <Link to={`/admin/runs/${runId}/branches`}>Manage branches and official selection</Link> }
+                { label: 'Viewer Branch', value: containerQuery.data?.official_branch_id ?? 'Not available' },
+                { label: 'Branch controls', value: <Link to={`/admin/runs/${runId}/branches`}>Manage branches and Viewer Branch</Link> }
               ]}
             />
           </SectionCard>
@@ -205,20 +201,20 @@ export function RunPage(): JSX.Element {
             {worldQuery.data?.is_stale && <p>{worldQuery.data.message}</p>}
             <div className="actions">
               {seasonComplete && finalsQuery.data?.qualification && !finalsQuery.data.result && (
-                <button type="button" onClick={() => finalsAction.mutate()} disabled={finalsAction.isPending}>Simulate World Tour Finals</button>
+                <Link to={`/admin/runs/${runId}/finals`}>Review World Tour Finals</Link>
               )}
               {seasonComplete && finalsQuery.data?.result && (
-                <button type="button" onClick={() => rolloverAction.mutate()} disabled={rolloverAction.isPending}>Roll over to next season</button>
+                <Link to={`/admin/runs/${runId}/rollover`}>Continue to season rollover</Link>
               )}
               {worldQuery.data?.is_stale && worldQuery.data.rebuild_supported && (
                 <button type="button" onClick={() => rebuildAction.mutate()} disabled={rebuildAction.isPending}>Rebuild Run from Current World Data</button>
               )}
             </div>
             <ActionStatusBlock
-              isLoading={finalsAction.isPending || rolloverAction.isPending || rebuildAction.isPending}
-              loadingText="Executing admin command…"
-              errorText={finalsAction.error ? `Could not simulate Finals: ${formatApiError(finalsAction.error)}` : rolloverAction.error ? `Could not execute rollover: ${formatApiError(rolloverAction.error)}` : rebuildAction.error ? `Rebuild failed: ${formatApiError(rebuildAction.error)}` : undefined}
-              successText={finalsAction.data ? 'Finals simulation complete.' : rolloverAction.data ? `Rollover complete for season ${rolloverAction.data.rollover.to_season}.` : rebuildAction.data ? 'Run world rebuilt.' : undefined}
+              isLoading={rebuildAction.isPending}
+              loadingText="Executing maintenance command…"
+              errorText={rebuildAction.error ? `Rebuild failed: ${formatApiError(rebuildAction.error)}` : undefined}
+              successText={rebuildAction.data ? 'Run world rebuilt.' : undefined}
             />
           </SectionCard>
 

@@ -83,6 +83,7 @@ export function RunSimulationPage(): JSX.Element {
   }
   const stale = Boolean(review && (review.runId !== runId || review.branchId !== selectedBranchId || review.head !== currentHead))
   const canSubmit = Boolean(review && !stale && !eligibility && reason.trim() && commandId.trim() && confirmed && !mutation.isPending)
+  const mutationBelongsToCurrentContext = mutation.variables?.runId === runId && mutation.variables.branchId === selectedBranchId
 
   return <section className="panel">
     <PageIntro title="Simulation" subtitle="Advance the Active Admin Branch at its reviewed deterministic head." meta={`Run: ${runQuery.data?.display_name ?? runId}`} />
@@ -106,7 +107,7 @@ export function RunSimulationPage(): JSX.Element {
         <button type="submit" disabled={!canSubmit}>{mutation.isPending ? 'Executing…' : simulationActions[review.action].confirmationLabel}</button>
       </form>
     </SectionCard>}
-    {notice && <p className="status">{notice}</p>}{mutation.error && (mutation.error as { status?: number }).status !== 409 && <p className="error">{formatApiError(mutation.error)}</p>}
+    {notice && <p className="status">{notice}</p>}{mutation.error && mutationBelongsToCurrentContext && (mutation.error as { status?: number }).status !== 409 && <p className="error">{formatApiError(mutation.error)}</p>}
     {result && <SectionCard title="Execution result"><MetadataList items={[{ label: 'Branch', value: result.branch_id }, { label: 'Previous head', value: result.previous_head_checkpoint_id }, { label: 'New head', value: result.new_head_checkpoint_id }, { label: 'Viewer Branch pointer changed', value: result.official_branch_changed ? 'Yes' : 'No' }]} /></SectionCard>}
   </section>
 }

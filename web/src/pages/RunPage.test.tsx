@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RunPage } from './RunPage'
 import { renderWithRoute as renderRoute } from '../test/testUtils'
 import { AdminBranchProvider } from '../admin/AdminBranchContext'
+import { AdminTimeProvider } from '../admin/AdminTimeContext'
 import { AdminBranchSelector } from '../components/AdminBranchSelector'
 import { faxReferenceRunContainer, FAX_REFERENCE_BRANCH_ID, FAX_REFERENCE_RUN_ID } from '../test/faxReferenceFixture'
 
@@ -45,8 +46,7 @@ vi.mock('../api/client', () => api)
 function renderWithRoute(ui: JSX.Element, route: string) {
   return renderRoute(
     <AdminBranchProvider runId={FAX_REFERENCE_RUN_ID}>
-      <AdminBranchSelector />
-      {ui}
+      <AdminTimeProvider><AdminBranchSelector />{ui}</AdminTimeProvider>
     </AdminBranchProvider>,
     route
   )

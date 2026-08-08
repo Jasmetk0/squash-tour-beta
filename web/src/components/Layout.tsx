@@ -6,6 +6,7 @@ import { ViewerTopbar } from './ViewerTopbar'
 import { appShellClassNameForMode, readAppShellMode, readAppShellRunId, resolveAdminScope } from '../navigation/appShellMode'
 import { ViewerContextProvider } from '../viewer/ViewerContext'
 import { AdminBranchProvider } from '../admin/AdminBranchContext'
+import { AdminTimeProvider } from '../admin/AdminTimeContext'
 
 export function Layout(): JSX.Element {
   const location = useLocation()
@@ -29,7 +30,7 @@ export function Layout(): JSX.Element {
   return (
     <ViewerContextProvider>
       {mode === 'admin' && adminScope.kind === 'run'
-        ? <AdminBranchProvider runId={adminScope.runId}>{shell}</AdminBranchProvider>
+        ? <AdminBranchProvider runId={adminScope.runId}><AdminTimeProvider>{shell}</AdminTimeProvider></AdminBranchProvider>
         : shell}
     </ViewerContextProvider>
   )

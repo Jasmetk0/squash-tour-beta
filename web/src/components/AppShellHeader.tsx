@@ -1,6 +1,7 @@
 import { ModeSwitcher } from './ModeSwitcher'
 import { AdminRunSelector } from './AdminRunSelector'
 import { AdminBranchSelector } from './AdminBranchSelector'
+import { AdminTimeControl } from './AdminTimeControl'
 import { ViewerActiveRunCompact } from './ViewerRunSelector'
 import { appShellSubtitleForMode, appShellTitleForMode } from '../navigation/appShellMode'
 import type { AdminScope, AppShellMode } from '../navigation/appShellMode'
@@ -23,6 +24,7 @@ export function AppShellHeader({ mode, pathname, adminScope }: AppShellHeaderPro
           <>
             <AdminRunSelector pathname={pathname} runId={adminScope.runId} />
             <AdminBranchSelector />
+            <AdminTimeControl />
           </>
         ) : null}
         {mode === 'viewer' ? (

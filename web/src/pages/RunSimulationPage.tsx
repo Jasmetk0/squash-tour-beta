@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom'
 import { getBranchCheckpoint, getBranchState, getRunContainer } from '../api/client'
 import type { AdminBranchExecutionResponse, BranchState } from '../api/types'
 import { useAdminBranch } from '../admin/AdminBranchContext'
+import { useAdminTime } from '../admin/AdminTimeContext'
 import { adminBranchHeadQueryKey, adminBranchStateQueryKey } from '../admin/adminQueryKeys'
 import { BranchSimulationAction, executeBranchSimulation, newCommandId, simulationActions, simulationEligibility, validExecutionResponse } from '../admin/branchSimulation'
 import { CurrentContextStrip, MetadataList, PageIntro, SectionCard } from '../components/RunScopedUi'
@@ -17,6 +18,7 @@ export function RunSimulationPage(): JSX.Element {
   const { runId = '' } = useParams()
   const queryClient = useQueryClient()
   const { selectedBranchId, selectedBranch, viewerBranchId } = useAdminBranch()
+  const time = useAdminTime()
   const [review, setReview] = useState<Review | null>(null)
   const [reason, setReason] = useState('')
   const [commandId, setCommandId] = useState(newCommandId)
@@ -89,6 +91,7 @@ export function RunSimulationPage(): JSX.Element {
     <PageIntro title="Simulation" subtitle="Advance the Active Admin Branch at its reviewed deterministic head." meta={`Run: ${runQuery.data?.display_name ?? runId}`} />
     <CurrentContextStrip items={[
       { label: 'Run', value: runId || '—' }, { label: 'Branch', value: selectedBranch ? `${selectedBranch.display_name} (${selectedBranch.branch_id})` : '—' },
+      { label: 'View time', value: time.mode === 'present' ? 'Present' : '—' }, { label: 'Execution target', value: 'Branch HEAD' },
       { label: 'Season', value: state?.current_season ?? '—' }, { label: 'Week', value: state?.current_week != null ? `W${state.current_week}` : '—' },
       { label: 'Event', value: state?.current_event_id ?? '—' }, { label: 'Head', value: currentHead ?? '—' },
     ]} />

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { adminRunSwitchTarget } from './adminRunSwitchTarget'
 
 describe('adminRunSwitchTarget', () => {
-  it.each(['', '/branches', '/events', '/calendar', '/finals'])('preserves the generic %s suffix', suffix => {
+  it.each(['', '/simulate', '/branches', '/events', '/calendar', '/finals'])('preserves the generic %s suffix', suffix => {
     expect(adminRunSwitchTarget(`/admin/runs/run-a${suffix}`, 'run-b')).toBe(`/admin/runs/run-b${suffix}`)
   })
 

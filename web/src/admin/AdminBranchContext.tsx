@@ -42,7 +42,7 @@ export function AdminBranchProvider({ runId, children }: { runId: string; childr
   const viewerBranchId = runQuery.data?.official_branch_id ?? null
 
   useEffect(() => {
-    if (!branchesQuery.isSuccess || !runQuery.isSuccess) return
+    if (!branchesQuery.isSuccess || runQuery.isLoading) return
     const remembered = selectionsByRun.current.get(runId)
     const next = (remembered && branches.some(branch => branch.branch_id === remembered) ? remembered : null)
       ?? (viewerBranchId && branches.some(branch => branch.branch_id === viewerBranchId) ? viewerBranchId : null)
@@ -51,7 +51,7 @@ export function AdminBranchProvider({ runId, children }: { runId: string; childr
     if (next) selectionsByRun.current.set(runId, next)
     else selectionsByRun.current.delete(runId)
     setSelection(next ? { runId, branchId: next } : null)
-  }, [branches, branchesQuery.isSuccess, runId, runQuery.isSuccess, viewerBranchId])
+  }, [branches, branchesQuery.isSuccess, runId, runQuery.isLoading, viewerBranchId])
 
   const selectedBranchId = selection?.runId === runId && branches.some(branch => branch.branch_id === selection.branchId)
     ? selection.branchId
@@ -61,7 +61,10 @@ export function AdminBranchProvider({ runId, children }: { runId: string; childr
     selectionsByRun.current.set(runId, branchId)
     setSelection({ runId, branchId })
   }
-  const errors = [runQuery.error, branchesQuery.error].filter(Boolean).map(formatApiError)
+  const errors = [
+    runQuery.error ? `Run metadata unavailable: ${formatApiError(runQuery.error)}` : null,
+    branchesQuery.error ? `Branch metadata unavailable: ${formatApiError(branchesQuery.error)}` : null,
+  ].filter((error): error is string => Boolean(error))
   const value: AdminBranchContextValue = {
     runId,
     selectedBranchId,

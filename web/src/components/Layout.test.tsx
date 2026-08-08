@@ -98,6 +98,31 @@ describe('Layout mode navigation', () => {
     expect(screen.queryByRole('navigation', { name: 'Global Admin navigation' })).not.toBeInTheDocument()
   })
 
+  it('preserves the Active Admin Branch across real nested Run route navigation', async () => {
+    api.listRunBranches.mockResolvedValue({ run_branches: [
+      {
+        branch_id: `${FAX_REFERENCE_RUN_ID}-branch`, run_id: FAX_REFERENCE_RUN_ID, display_name: 'Viewer timeline', status: 'active', read_only: false,
+        branch_seed: 1, forked_from_branch_id: null, forked_from_checkpoint_id: null, head_checkpoint_id: null,
+        legacy_simulation_run_id: null, metadata_json: {}, is_official: true,
+      },
+      {
+        branch_id: 'branch-b', run_id: FAX_REFERENCE_RUN_ID, display_name: 'Experimental timeline', status: 'active', read_only: true,
+        branch_seed: 2, forked_from_branch_id: `${FAX_REFERENCE_RUN_ID}-branch`, forked_from_checkpoint_id: null, head_checkpoint_id: null,
+        legacy_simulation_run_id: null, metadata_json: {}, is_official: false,
+      },
+    ] })
+    renderWithRoute(<Layout />, `/admin/runs/${FAX_REFERENCE_RUN_ID}`)
+
+    const selector = await screen.findByRole('combobox', { name: 'Admin active Branch' })
+    await waitFor(() => expect(selector).toHaveValue(`${FAX_REFERENCE_RUN_ID}-branch`))
+    fireEvent.change(selector, { target: { value: 'branch-b' } })
+    expect(selector).toHaveValue('branch-b')
+
+    fireEvent.click(screen.getByRole('link', { name: 'Events' }))
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/events`))
+    expect(screen.getByRole('combobox', { name: 'Admin active Branch' })).toHaveValue('branch-b')
+  })
+
   it('switches a generic Run route without changing Viewer selection', async () => {
     localStorage.setItem('beta_engine:viewer_active_product_run_id', 'viewer-run')
     const nextRunId = `${FAX_REFERENCE_RUN_ID}-layout-switch`

@@ -101,4 +101,18 @@ describe('AdminBranchProvider and selector', () => {
     expect(screen.getByText(/Branch metadata unavailable: branch service unavailable/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Change Run' })).toBeEnabled()
   })
+
+  it('uses deterministic Branch fallback when Run metadata is unavailable', async () => {
+    api.getRunContainer.mockRejectedValue(new Error('run metadata unavailable'))
+    api.listRunBranches.mockResolvedValue({ run_branches: [branch('run-a', 'z-last', 'Zed'), branch('run-a', 'a-first', 'Alpha')] })
+    renderHarness()
+
+    const selector = await screen.findByRole('combobox', { name: 'Admin active Branch' })
+    await waitFor(() => expect(selector).toHaveValue('a-first'))
+    expect(selector).toBeEnabled()
+    expect(screen.getByText(/Run metadata unavailable: run metadata unavailable/)).toBeInTheDocument()
+
+    fireEvent.change(selector, { target: { value: 'z-last' } })
+    expect(selector).toHaveValue('z-last')
+  })
 })

@@ -32,7 +32,7 @@ export function AdminBranchSelector(): JSX.Element {
           ))}
         </select>
       </label>
-      {context.error ? <span className="sr-only" role="status">Branch metadata unavailable: {context.error}</span> : null}
+      {context.error ? <span className="sr-only" role="status">{context.error}</span> : null}
       {context.viewerBranchMissing ? <span className="sr-only" role="status">Viewer Branch is missing from the available Branches; using a deterministic fallback.</span> : null}
     </div>
   )

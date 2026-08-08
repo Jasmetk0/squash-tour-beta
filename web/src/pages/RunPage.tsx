@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
 import {
+  getBranchState,
   getFinalsSummary,
   getLatestRollover,
   getRun,
@@ -13,6 +14,8 @@ import {
   listEvents,
   rebuildRunWorld
 } from '../api/client'
+import { useAdminBranch } from '../admin/AdminBranchContext'
+import type { BranchState } from '../api/types'
 import {
   ActionStatusBlock,
   CompactSummaryCard,
@@ -28,6 +31,20 @@ import { normalizeRunSourceType } from '../utils/runSourceTypes'
 export function RunPage(): JSX.Element {
   const { runId = '' } = useParams()
   const queryClient = useQueryClient()
+  const { selectedBranch, selectedBranchId, viewerBranchId } = useAdminBranch()
+
+  const branchStateQuery = useQuery({
+    queryKey: ['admin-branch-state', runId, selectedBranchId],
+    queryFn: () => getBranchState(selectedBranchId!),
+    enabled: Boolean(runId && selectedBranchId),
+    retry: false
+  })
+  const branchState: BranchState | null = branchStateQuery.data
+    && branchStateQuery.data.branch_id === selectedBranchId
+    && branchStateQuery.data.run_id === runId
+    ? branchStateQuery.data
+    : null
+  const branchStateIdentityMismatch = Boolean(branchStateQuery.data && !branchState)
 
   const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId) })
   const containerQuery = useQuery({
@@ -102,22 +119,25 @@ export function RunPage(): JSX.Element {
     <section className="panel">
       <PageIntro
         title="Home"
-        subtitle="Run command center for current progress, operational attention, and admin workflows."
+        subtitle="Run command center for branch position, Run-level operations, and admin workflows."
         meta={`Run: ${run?.run_id ?? runId ?? 'unknown'}`}
       />
       <CurrentContextStrip
         items={[
           { label: 'Run', value: run?.run_id ?? runId ?? 'unknown' },
-          { label: 'Season', value: statusQuery.data?.season ?? run?.season ?? '—' },
-          { label: 'Week', value: nextEvent?.week != null ? `W${nextEvent.week}` : seasonComplete ? 'Complete' : '—' },
-          {
-            label: 'Progress',
-            value: run
-              ? `${progress?.next_event_index ?? run.next_event_index}/${progress?.total_events ?? run.total_events}`
-              : '—'
-          }
+          { label: 'Branch', value: selectedBranch?.display_name ?? '—' },
+          { label: 'Season', value: branchState?.current_season ?? '—' },
+          { label: 'Week', value: branchState?.current_week != null ? `W${branchState.current_week}` : '—' },
+          { label: 'Event', value: branchState?.current_event_id ?? '—' }
         ]}
       />
+
+      {selectedBranchId && branchStateQuery.isLoading && <p className="status">Loading Active Admin Branch position…</p>}
+      {selectedBranchId && (branchStateQuery.error || branchStateIdentityMismatch) && (
+        <p role="alert" className="error">
+          Active Admin Branch position unavailable{branchStateIdentityMismatch ? ': returned Branch State identity does not match this Run and Branch.' : '.'}
+        </p>
+      )}
 
       {runQuery.isLoading && <p className="status">Loading run...</p>}
       {runQuery.error && <p role="alert" className="error">Failed to load run: {formatApiError(runQuery.error)}</p>}
@@ -126,10 +146,10 @@ export function RunPage(): JSX.Element {
           <SectionCard title="Run overview">
             <SummaryPills
               items={[
-                { label: 'Status', value: seasonComplete ? 'Regular season complete' : 'Active' },
-                { label: 'Completed events', value: progress?.completed_event_count ?? run.completed_event_ids.length },
+                { label: 'Legacy simulation status', value: seasonComplete ? 'Regular season complete' : 'Active' },
+                { label: 'Legacy completed events', value: progress?.completed_event_count ?? run.completed_event_ids.length },
                 {
-                  label: 'Finals',
+                  label: 'Legacy Finals',
                   value: finalsQuery.data?.result
                     ? 'Complete'
                     : finalsQuery.data?.qualification
@@ -149,22 +169,43 @@ export function RunPage(): JSX.Element {
             />
           </SectionCard>
 
-          <SectionCard title="Branch and publication context">
+          <SectionCard title="Active Admin Branch">
             <MetadataList
               items={[
+                { label: 'Name', value: selectedBranch?.display_name ?? 'Not available' },
+                { label: 'Branch ID', value: selectedBranchId ?? 'Not available' },
+                { label: 'Status', value: selectedBranch?.status ?? 'Not available' },
+                { label: 'Viewing mode', value: selectedBranch?.read_only ? 'Read-only' : 'Writable' },
+                { label: 'Head checkpoint', value: branchState?.head_checkpoint_id ?? selectedBranch?.head_checkpoint_id ?? '—' },
+                { label: 'Current season', value: branchState?.current_season ?? '—' },
+                { label: 'Current week', value: branchState?.current_week ?? '—' },
+                { label: 'Current event', value: branchState?.current_event_id ?? '—' },
+              ]}
+            />
+            {!selectedBranchId && <p className="status">No Active Admin Branch is available.</p>}
+            {selectedBranchId && !branchStateQuery.isLoading && !branchState && (
+              <p className="status">Branch position is unavailable. Legacy Run position is not used as a fallback.</p>
+            )}
+          </SectionCard>
+
+          <SectionCard title="Viewer publication">
+            <MetadataList
+              items={[
+                { label: 'Viewer Branch', value: viewerBranchId ?? 'Not available' },
+                { label: 'Active Branch is Viewer Branch', value: selectedBranchId && viewerBranchId ? (selectedBranchId === viewerBranchId ? 'Yes' : 'No') : '—' },
                 {
                   label: 'Parent run',
                   value: source?.parent_run_id ? <Link to={`/admin/runs/${source.parent_run_id}`}>{source.parent_run_id}</Link> : 'None'
                 },
                 { label: 'Child runs', value: children.length },
                 { label: 'Product run status', value: containerQuery.data?.status ?? 'Legacy run' },
-                { label: 'Viewer Branch', value: containerQuery.data?.official_branch_id ?? 'Not available' },
                 { label: 'Branch controls', value: <Link to={`/admin/runs/${runId}/branches`}>Manage branches and Viewer Branch</Link> }
               ]}
             />
           </SectionCard>
 
-          <SectionCard title="Current activity">
+          <SectionCard title="Legacy Run activity">
+            <p className="status">Transitional Simulation Run scheduling and history; this is not the Active Admin Branch position.</p>
             <MetadataList
               items={[
                 {

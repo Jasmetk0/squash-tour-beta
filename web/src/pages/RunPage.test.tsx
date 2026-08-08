@@ -3,7 +3,9 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { RunPage } from './RunPage'
-import { renderWithRoute } from '../test/testUtils'
+import { renderWithRoute as renderRoute } from '../test/testUtils'
+import { AdminBranchProvider } from '../admin/AdminBranchContext'
+import { AdminBranchSelector } from '../components/AdminBranchSelector'
 import { faxReferenceRunContainer, FAX_REFERENCE_BRANCH_ID, FAX_REFERENCE_RUN_ID } from '../test/faxReferenceFixture'
 
 const api = vi.hoisted(() => ({
@@ -15,6 +17,9 @@ const api = vi.hoisted(() => ({
     }
   },
   getRun: vi.fn(),
+  listRunBranches: vi.fn(),
+  getBranchState: vi.fn(),
+  makeOfficialRunBranch: vi.fn(),
   getRunContainer: vi.fn(),
   getRunStatusSummary: vi.fn(),
   getFinalsSummary: vi.fn(),
@@ -37,10 +42,26 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../api/client', () => api)
 
+function renderWithRoute(ui: JSX.Element, route: string) {
+  return renderRoute(
+    <AdminBranchProvider runId={FAX_REFERENCE_RUN_ID}>
+      <AdminBranchSelector />
+      {ui}
+    </AdminBranchProvider>,
+    route
+  )
+}
+
 describe('RunPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     // Transitional compatibility: RunPage passes the Product Run route ID to legacy SimulationRun APIs.
+    api.listRunBranches.mockResolvedValue({
+      run_branches: [
+        { branch_id: FAX_REFERENCE_BRANCH_ID, run_id: FAX_REFERENCE_RUN_ID, display_name: 'Viewer timeline', status: 'active', read_only: false, branch_seed: 1, forked_from_branch_id: null, forked_from_checkpoint_id: null, head_checkpoint_id: 'cp-a', legacy_simulation_run_id: FAX_REFERENCE_RUN_ID, metadata_json: {}, is_official: true },
+      ]
+    })
+    api.getBranchState.mockResolvedValue({ branch_id: FAX_REFERENCE_BRANCH_ID, run_id: FAX_REFERENCE_RUN_ID, head_checkpoint_id: 'cp-a', current_season: 2004, current_week: 17, current_event_id: 'event-a', current_event_sequence: 3, state_schema_version: '1', status: 'ready', metadata_json: {} })
     api.getRun.mockResolvedValue({
       run: { run_id: FAX_REFERENCE_RUN_ID, season: 2025, seed: 3, next_event_index: 1, total_events: 4, completed_event_ids: ['E1'] },
       season_state: {
@@ -177,21 +198,69 @@ describe('RunPage', () => {
     expect(await screen.findByRole('link', { name: 'E2 · W10' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/calendar/E2`)
     expect(screen.getByText(`Run: ${FAX_REFERENCE_RUN_ID}`)).toBeInTheDocument()
     const context = screen.getByRole('list', { name: 'Current context' })
-    expect(within(context).getByText('W10')).toBeInTheDocument()
-    expect(within(context).getByText('1/4')).toBeInTheDocument()
+    expect(await within(context).findByText('event-a')).toBeInTheDocument()
+    expect(within(context).getByText('Viewer timeline')).toBeInTheDocument()
+    expect(await within(context).findByText('2004')).toBeInTheDocument()
+    expect(within(context).getByText('W17')).toBeInTheDocument()
+    expect(within(context).getByText('event-a')).toBeInTheDocument()
   })
 
   it('renders real branch, world, activity, and admin navigation context', async () => {
     renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
     expect(await screen.findByText('official_fax_world')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'run-parent' })).toHaveAttribute('href', '/admin/runs/run-parent')
-    expect(screen.getByText('Viewer Branch')).toBeInTheDocument()
+    expect(screen.getAllByText('Viewer Branch').length).toBeGreaterThan(0)
     expect(screen.queryByText('Official branch')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Manage branches and Viewer Branch' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/branches`)
-    expect(screen.getByText(FAX_REFERENCE_BRANCH_ID)).toBeInTheDocument()
+    expect(screen.getAllByText(FAX_REFERENCE_BRANCH_ID).length).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: 'E3' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/events/E3`)
     expect(screen.getByRole('link', { name: 'Open Simulate' })).toHaveAttribute('href', '/admin/simulate')
     expect(screen.getByRole('link', { name: 'Diagnostics' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/diagnostics`)
+  })
+
+
+  it('switches Home to a read-only Active Admin Branch without changing Viewer publication', async () => {
+    const branchB = { branch_id: 'branch-b', run_id: FAX_REFERENCE_RUN_ID, display_name: 'Alternate timeline', status: 'active', read_only: true, branch_seed: 2, forked_from_branch_id: FAX_REFERENCE_BRANCH_ID, forked_from_checkpoint_id: 'cp-a', head_checkpoint_id: 'cp-b', legacy_simulation_run_id: 'legacy-b', metadata_json: {}, is_official: false }
+    const initialBranches = await api.listRunBranches()
+    api.listRunBranches.mockResolvedValue({ run_branches: [...initialBranches.run_branches, branchB] })
+    api.getBranchState.mockImplementation(async (branchId: string) => branchId === 'branch-b'
+      ? { branch_id: 'branch-b', run_id: FAX_REFERENCE_RUN_ID, head_checkpoint_id: 'cp-b', current_season: 2007, current_week: 42, current_event_id: 'event-b', current_event_sequence: 9, state_schema_version: '1', status: 'ready', metadata_json: {} }
+      : { branch_id: FAX_REFERENCE_BRANCH_ID, run_id: FAX_REFERENCE_RUN_ID, head_checkpoint_id: 'cp-a', current_season: 2004, current_week: 17, current_event_id: 'event-a', current_event_sequence: 3, state_schema_version: '1', status: 'ready', metadata_json: {} })
+    const storageSpy = vi.spyOn(Storage.prototype, 'setItem')
+
+    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
+    await within(screen.getByRole('list', { name: 'Current context' })).findByText('event-a')
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Admin active Branch' }), 'branch-b')
+
+    const context = screen.getByRole('list', { name: 'Current context' })
+    expect(await within(context).findByText('Alternate timeline')).toBeInTheDocument()
+    expect(within(context).getByText('2007')).toBeInTheDocument()
+    expect(within(context).getByText('W42')).toBeInTheDocument()
+    expect(within(context).getByText('event-b')).toBeInTheDocument()
+    expect(screen.getByText('Read-only')).toBeInTheDocument()
+    expect(screen.getByText('No')).toBeInTheDocument()
+    expect(screen.getAllByText(FAX_REFERENCE_BRANCH_ID).length).toBeGreaterThan(0)
+    expect(api.makeOfficialRunBranch).not.toHaveBeenCalled()
+    expect(storageSpy).not.toHaveBeenCalled()
+  })
+
+  it('keeps Home usable and does not fall back when Branch State is unavailable', async () => {
+    api.getBranchState.mockRejectedValueOnce(new api.ApiError('missing', 404))
+    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
+    expect(await screen.findByRole('alert', { name: '' })).toHaveTextContent('Active Admin Branch position unavailable')
+    expect(screen.getByRole('heading', { name: 'Home' })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Admin active Branch' })).toHaveValue(FAX_REFERENCE_BRANCH_ID)
+    const context = screen.getByRole('list', { name: 'Current context' })
+    expect(within(context).queryByText('2025')).not.toBeInTheDocument()
+    expect(screen.getByText('Branch position is unavailable. Legacy Run position is not used as a fallback.')).toBeInTheDocument()
+  })
+
+  it('rejects Branch State with a mismatched Branch or Run identity', async () => {
+    api.getBranchState.mockResolvedValueOnce({ branch_id: 'branch-c', run_id: 'run-c', head_checkpoint_id: 'cp-c', current_season: 2049, current_week: 61, current_event_id: 'wrong-event', current_event_sequence: 99, state_schema_version: '1', status: 'ready', metadata_json: {} })
+    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
+    expect(await screen.findByText(/returned Branch State identity does not match/)).toBeInTheDocument()
+    expect(screen.queryByText('wrong-event')).not.toBeInTheDocument()
+    expect(screen.queryByText('2049')).not.toBeInTheDocument()
   })
 
   it('shows no attention warning when loaded run signals are healthy', async () => {

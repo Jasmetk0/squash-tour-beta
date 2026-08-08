@@ -3,7 +3,7 @@ export type AdminNavItem = {
   label: string
 }
 
-export const adminNav: AdminNavItem[] = [
+export const globalAdminNav: AdminNavItem[] = [
   { to: '/admin', label: 'Dashboard' },
   { to: '/admin/world', label: 'World' },
   { to: '/admin/players', label: 'Players' },
@@ -14,7 +14,7 @@ export const adminNav: AdminNavItem[] = [
   { to: '/admin/settings', label: 'Settings' }
 ]
 
-export function runNavFor(runId: string): AdminNavItem[] {
+export function runAdminNavFor(runId: string): AdminNavItem[] {
   return [
     { to: `/admin/runs/${runId}`, label: 'Home' },
     { to: `/admin/runs/${runId}/events`, label: 'Events' },

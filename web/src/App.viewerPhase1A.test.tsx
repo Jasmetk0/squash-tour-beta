@@ -2888,7 +2888,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     renderAppAt('/admin')
 
     expect(await screen.findByRole('heading', { name: 'Admin Engine Dashboard' })).toBeInTheDocument()
-    const adminNav = screen.getByRole('navigation', { name: 'Admin / Engine Mode navigation' })
+    const adminNav = screen.getByRole('navigation', { name: 'Global Admin navigation' })
     expect(within(adminNav).getByRole('link', { name: 'World' })).toHaveAttribute('href', '/admin/world')
     expect(within(adminNav).getByRole('link', { name: 'Simulate' })).toHaveAttribute('href', '/admin/simulate')
   })

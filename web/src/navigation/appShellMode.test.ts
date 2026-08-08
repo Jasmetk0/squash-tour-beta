@@ -5,7 +5,8 @@ import {
   appShellSubtitleForMode,
   appShellTitleForMode,
   readAppShellMode,
-  readAppShellRunId
+  readAppShellRunId,
+  resolveAdminScope
 } from './appShellMode'
 
 describe('appShellMode', () => {
@@ -26,6 +27,16 @@ describe('appShellMode', () => {
     expect(readAppShellRunId('/admin/runs/run%20alpha/finals')).toBe('run%20alpha')
     expect(readAppShellRunId('/viewer', 'param-run')).toBe('param-run')
     expect(readAppShellRunId('/viewer')).toBeUndefined()
+  })
+
+  it('derives Global and Run Admin scopes from the route', () => {
+    expect(resolveAdminScope('/admin')).toEqual({ kind: 'global' })
+    expect(resolveAdminScope('/admin/world')).toEqual({ kind: 'global' })
+    expect(resolveAdminScope('/admin/runs')).toEqual({ kind: 'global' })
+    expect(resolveAdminScope('/admin/runs/new')).toEqual({ kind: 'global' })
+    expect(resolveAdminScope('/admin/runs/run-a')).toEqual({ kind: 'run', runId: 'run-a' })
+    expect(resolveAdminScope('/admin/runs/run-a/finals')).toEqual({ kind: 'run', runId: 'run-a' })
+    expect(resolveAdminScope('/viewer/runs/run-a')).toEqual({ kind: 'global' })
   })
 
   it('returns stable title, subtitle, and class name strings for each shell mode', () => {

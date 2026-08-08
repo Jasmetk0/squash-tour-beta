@@ -1,5 +1,9 @@
 export type AppShellMode = 'admin' | 'viewer' | 'landing'
 
+export type AdminScope =
+  | { kind: 'global' }
+  | { kind: 'run'; runId: string }
+
 export function readAppShellMode(pathname: string): AppShellMode {
   if (pathname.startsWith('/admin')) return 'admin'
   if (pathname.startsWith('/viewer')) return 'viewer'
@@ -11,6 +15,12 @@ export function readAppShellRunId(pathname: string, paramRunId?: string): string
   const match = pathname.match(/^\/(?:admin|viewer)\/runs\/([^/]+)/)
   if (match?.[1] === 'new') return undefined
   return match?.[1]
+}
+
+export function resolveAdminScope(pathname: string): AdminScope {
+  if (readAppShellMode(pathname) !== 'admin') return { kind: 'global' }
+  const runId = readAppShellRunId(pathname)
+  return runId ? { kind: 'run', runId } : { kind: 'global' }
 }
 
 export function appShellTitleForMode(mode: AppShellMode): string {

@@ -1,33 +1,40 @@
 import { NavLink } from 'react-router-dom'
 
-import { adminNav, runNavFor } from '../navigation/adminNavigation'
+import { globalAdminNav, runAdminNavFor } from '../navigation/adminNavigation'
+import type { AdminScope } from '../navigation/appShellMode'
 
 type AdminNavigationProps = {
-  runId?: string
+  scope: AdminScope
 }
 
-export function AdminNavigation({ runId }: AdminNavigationProps): JSX.Element {
-  const runNav = runId ? runNavFor(runId) : []
-
-  return (
-    <>
-      <nav className="primary-nav" aria-label="Admin / Engine Mode navigation">
-        {adminNav.map((item) => (
+export function AdminNavigation({ scope }: AdminNavigationProps): JSX.Element {
+  if (scope.kind === 'global') {
+    return (
+      <nav className="primary-nav" aria-label="Global Admin navigation">
+        {globalAdminNav.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.to === '/admin'} className={({ isActive }) => (isActive ? 'active' : '')}>
             {item.label}
           </NavLink>
         ))}
       </nav>
-      {runNav.length > 0 ? (
-        <nav className="run-nav" aria-label="Run navigation">
-          {runNav.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.to.endsWith(runId ?? '')} className={({ isActive }) => (isActive ? 'active' : '')}>
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-      ) : null}
-      {runId ? <p className="status">Current run context: {runId}</p> : null}
+    )
+  }
+
+  const runNav = runAdminNavFor(scope.runId)
+
+  return (
+    <>
+      <nav className="run-nav" aria-label="Run Admin navigation">
+        <NavLink to="/admin" end className={({ isActive }) => (isActive ? 'active' : '')}>
+          Back to Global
+        </NavLink>
+        {runNav.map((item) => (
+          <NavLink key={item.to} to={item.to} end={item.to === `/admin/runs/${scope.runId}`} className={({ isActive }) => (isActive ? 'active' : '')}>
+            {item.label}
+          </NavLink>
+        ))}
+      </nav>
+      <p className="status">Current run context: {scope.runId}</p>
     </>
   )
 }

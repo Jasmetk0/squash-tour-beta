@@ -145,6 +145,43 @@ describe('Layout mode navigation', () => {
     expect(screen.queryByRole('heading', { name: 'Historical view is not available on this page yet.' })).not.toBeInTheDocument()
   })
 
+  it('keeps Past selected across supported navigation and while an unsupported route is guarded', async () => {
+    api.listBranchCheckpoints.mockResolvedValue({ branch_checkpoints: [{ checkpoint_id: 'cp-old', run_id: FAX_REFERENCE_RUN_ID, branch_id: `${FAX_REFERENCE_RUN_ID}-branch`, sequence: 418, kind: 'completed_week', season: 2005, week: 31, event_id: 'event-old', event_sequence: 31, command_kind: 'simulate_week' }] })
+    renderWithRoute(<Layout />, `/admin/runs/${FAX_REFERENCE_RUN_ID}`)
+    await screen.findByRole('option', { name: /#418 · S2005 · W31/ })
+    fireEvent.change(screen.getByRole('combobox', { name: 'Admin Time context' }), { target: { value: 'cp-old' } })
+
+    fireEvent.click(screen.getByRole('link', { name: 'Simulation' }))
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/simulate`))
+    expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2005 · W31')
+    fireEvent.click(screen.getByRole('link', { name: 'Home' }))
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}`))
+    expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2005 · W31')
+
+    fireEvent.click(screen.getByRole('link', { name: 'Events' }))
+    expect(await screen.findByRole('heading', { name: 'Historical view is not available on this page yet.' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2005 · W31')
+    fireEvent.click(screen.getByRole('link', { name: 'Open Run Home' }))
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}`))
+    expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2005 · W31')
+  })
+
+  it('resets historical Time immediately when the Active Admin Run changes', async () => {
+    api.listBranchCheckpoints.mockImplementation(async ({ run_id }: { run_id: string }) => ({ branch_checkpoints: run_id === FAX_REFERENCE_RUN_ID ? [{ checkpoint_id: 'cp-old', run_id, branch_id: `${run_id}-branch`, sequence: 418, kind: 'completed_week', season: 2005, week: 31, event_id: null, event_sequence: null, command_kind: 'simulate_week' }] : [] }))
+    const nextRunId = `${FAX_REFERENCE_RUN_ID}-layout-switch`
+    renderWithRoute(<Layout />, `/admin/runs/${FAX_REFERENCE_RUN_ID}`)
+    await screen.findByRole('option', { name: /#418 · S2005 · W31/ })
+    fireEvent.change(screen.getByRole('combobox', { name: 'Admin Time context' }), { target: { value: 'cp-old' } })
+    expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2005 · W31')
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Admin active Run' }), { target: { value: nextRunId } })
+    expect(screen.getByLabelText('Admin view time')).not.toHaveTextContent('S2005')
+    expect(screen.getByLabelText('Admin view time')).not.toHaveTextContent('cp-old')
+    expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Present')
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Admin active Run' })).toHaveValue(nextRunId))
+    expect(screen.getByLabelText('Admin view time')).not.toHaveTextContent('S2005')
+  })
+
   it('switches a generic Run route without changing Viewer selection', async () => {
     localStorage.setItem('beta_engine:viewer_active_product_run_id', 'viewer-run')
     const nextRunId = `${FAX_REFERENCE_RUN_ID}-layout-switch`

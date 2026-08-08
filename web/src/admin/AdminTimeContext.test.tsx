@@ -17,7 +17,10 @@ const checkpoint = (id: string, branchId: string, sequence: number, season: numb
 
 function Probe(): JSX.Element {
   const time = useAdminTime()
-  return <output aria-label="time probe">{JSON.stringify(time)}</output>
+  return <>
+    <output aria-label="time probe">{JSON.stringify(time)}</output>
+    <button type="button" onClick={() => time.selectCheckpoint('foreign-checkpoint')}>Select foreign checkpoint</button>
+  </>
 }
 
 function renderTime(client = new QueryClient({ defaultOptions: { queries: { retry: false } } })): QueryClient {
@@ -85,5 +88,79 @@ describe('AdminTimeProvider', () => {
     await userEvent.selectOptions(screen.getByLabelText('Admin active Branch'), 'branch-b')
     expect(screen.getByLabelText('Admin view time')).not.toHaveTextContent('S2003')
     expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Present')
+  })
+
+  it('keeps a historical View fixed while the canonical Branch HEAD advances', async () => {
+    api.getBranchState.mockResolvedValue({ ...state('branch-a', 2007, 42), head_checkpoint_id: 'cp-head' })
+    api.listBranchCheckpoints.mockResolvedValue({ branch_checkpoints: [
+      checkpoint('cp-head', 'branch-a', 101, 2007, 42),
+      checkpoint('cp-old', 'branch-a', 100, 2005, 31),
+    ] })
+    const client = renderTime()
+    await screen.findByRole('option', { name: /#100 · S2005 · W31/ })
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Admin Time context' }), 'cp-old')
+
+    expect(screen.getByLabelText('time probe')).toHaveTextContent('"mode":"checkpoint"')
+    expect(screen.getByLabelText('time probe')).toHaveTextContent('"viewCheckpointId":"cp-old"')
+    expect(screen.getByLabelText('time probe')).toHaveTextContent('"headCheckpointId":"cp-head"')
+
+    client.setQueryData(['admin-branch-state', 'run-a', 'branch-a'], {
+      ...state('branch-a', 2007, 43), head_checkpoint_id: 'cp-new',
+    })
+
+    await waitFor(() => expect(screen.getByLabelText('time probe')).toHaveTextContent('"headCheckpointId":"cp-new"'))
+    expect(screen.getByLabelText('time probe')).toHaveTextContent('"presentSeason":2007')
+    expect(screen.getByLabelText('time probe')).toHaveTextContent('"presentWeek":43')
+    expect(screen.getByLabelText('time probe')).toHaveTextContent('"mode":"checkpoint"')
+    expect(screen.getByLabelText('time probe')).toHaveTextContent('"viewCheckpointId":"cp-old"')
+    expect(screen.getByLabelText('time probe')).toHaveTextContent('"viewSeason":2005')
+    expect(screen.getByLabelText('time probe')).toHaveTextContent('"viewWeek":31')
+    expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2005 · W31')
+  })
+
+  it('rejects checkpoint identities outside the current validated set', async () => {
+    api.listBranchCheckpoints.mockResolvedValue({ branch_checkpoints: [
+      checkpoint('cp-valid', 'branch-a', 5, 2003, 10),
+      checkpoint('foreign-checkpoint', 'branch-b', 99, 2099, 60),
+      { ...checkpoint('foreign-run', 'branch-a', 98, 2098, 59), run_id: 'run-foreign' },
+    ] })
+    renderTime()
+    await waitFor(() => expect(api.listBranchCheckpoints).toHaveBeenCalled())
+    await userEvent.click(screen.getByRole('button', { name: 'Select foreign checkpoint' }))
+    expect(screen.getByLabelText('time probe')).toHaveTextContent('"mode":"present"')
+    expect(screen.getByLabelText('time probe')).not.toHaveTextContent('2099')
+    expect(screen.queryByRole('option', { name: /#99/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: /#98/ })).not.toBeInTheDocument()
+  })
+
+  it('keeps Present available when checkpoint history fails', async () => {
+    api.getBranchState.mockResolvedValue({ ...state('branch-a', 2007, 42), head_checkpoint_id: 'cp-head' })
+    api.listBranchCheckpoints.mockRejectedValue(new Error('checkpoint service offline'))
+    renderTime()
+    await waitFor(() => expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Present · S2007 · W42'))
+    expect(screen.getByLabelText('time probe')).toHaveTextContent('"isAvailable":true')
+    expect(await screen.findByText(/Historical checkpoints unavailable: checkpoint service offline/)).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Present — Branch HEAD' })).toBeInTheDocument()
+  })
+
+  it('filters invalid checkpoint identities and orders valid history by descending sequence', async () => {
+    api.listBranchCheckpoints.mockResolvedValue({ branch_checkpoints: [
+      checkpoint('cp-five', 'branch-a', 5, 2001, 5),
+      checkpoint('cp-twenty', 'branch-a', 20, 2002, 20),
+      checkpoint('cp-ten', 'branch-a', 10, 2001, 10),
+      checkpoint('cp-foreign-branch', 'branch-b', 30, 2099, 30),
+      { ...checkpoint('cp-foreign-run', 'branch-a', 40, 2099, 40), run_id: 'run-b' },
+      checkpoint('', 'branch-a', 50, 2099, 50),
+      checkpoint('cp-invalid-sequence', 'branch-a', Number.NaN, 2099, 60),
+    ] })
+    renderTime()
+    await screen.findByRole('option', { name: /#20/ })
+    const options = Array.from(screen.getByRole('combobox', { name: 'Admin Time context' }).querySelectorAll('option')).map(option => option.textContent)
+    expect(options).toEqual([
+      'Present — Branch HEAD',
+      expect.stringMatching(/^#20 /),
+      expect.stringMatching(/^#10 /),
+      expect.stringMatching(/^#5 /),
+    ])
   })
 })

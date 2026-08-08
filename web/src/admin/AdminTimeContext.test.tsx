@@ -90,6 +90,32 @@ describe('AdminTimeProvider', () => {
     expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Present')
   })
 
+  it('discards Past selection after Branch A to B to A instead of resurrecting it', async () => {
+    api.getBranchState.mockImplementation(async (id: string) => id === 'branch-a'
+      ? { ...state(id, 2007, 42), head_checkpoint_id: 'cp-a-head' }
+      : { ...state(id, 2008, 12), head_checkpoint_id: 'cp-b-head' })
+    api.listBranchCheckpoints.mockImplementation(async ({ branch_id }: { branch_id: string }) => ({ branch_checkpoints: branch_id === 'branch-a'
+      ? [checkpoint('cp-a-head', branch_id, 20, 2007, 42), checkpoint('cp-a-old', branch_id, 10, 2005, 31)]
+      : [checkpoint('cp-b-head', branch_id, 30, 2008, 12), checkpoint('cp-b-old', branch_id, 25, 2006, 20)] }))
+    renderTime()
+    await screen.findByRole('option', { name: /#10 · S2005 · W31/ })
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Admin Time context' }), 'cp-a-old')
+    expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2005 · W31')
+    expect(screen.getByLabelText('time probe')).toHaveTextContent('"viewCheckpointId":"cp-a-old"')
+
+    await userEvent.selectOptions(screen.getByLabelText('Admin active Branch'), 'branch-b')
+    expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Present')
+    expect(screen.getByLabelText('Admin view time')).not.toHaveTextContent('S2005')
+    await waitFor(() => expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Present · S2008 · W12'))
+
+    await userEvent.selectOptions(screen.getByLabelText('Admin active Branch'), 'branch-a')
+    expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Present')
+    await waitFor(() => expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Present · S2007 · W42'))
+    expect(screen.getByLabelText('time probe')).toHaveTextContent('"mode":"present"')
+    expect(screen.getByLabelText('time probe')).toHaveTextContent('"viewCheckpointId":"cp-a-head"')
+    expect(screen.getByLabelText('time probe')).not.toHaveTextContent('"viewCheckpointId":"cp-a-old"')
+  })
+
   it('keeps a historical View fixed while the canonical Branch HEAD advances', async () => {
     api.getBranchState.mockResolvedValue({ ...state('branch-a', 2007, 42), head_checkpoint_id: 'cp-head' })
     api.listBranchCheckpoints.mockResolvedValue({ branch_checkpoints: [

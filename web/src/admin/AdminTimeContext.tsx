@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
 import { getBranchState, listBranchCheckpoints } from '../api/client'
 import type { BranchCheckpoint } from '../api/types'
@@ -38,6 +38,9 @@ const AdminTimeContext = createContext<AdminTimeContextValue | null>(null)
 export function AdminTimeProvider({ children }: { children: React.ReactNode }): JSX.Element {
   const { runId, selectedBranchId } = useAdminBranch()
   const [selection, setSelection] = useState<{ runId: string; branchId: string; checkpointId: string } | null>(null)
+  useEffect(() => {
+    setSelection(null)
+  }, [runId, selectedBranchId])
   const stateQuery = useQuery({
     queryKey: adminBranchStateQueryKey(runId, selectedBranchId),
     queryFn: () => getBranchState(selectedBranchId!),

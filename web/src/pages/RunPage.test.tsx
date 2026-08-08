@@ -7,6 +7,7 @@ import { renderWithRoute as renderRoute } from '../test/testUtils'
 import { AdminBranchProvider } from '../admin/AdminBranchContext'
 import { AdminTimeProvider } from '../admin/AdminTimeContext'
 import { AdminBranchSelector } from '../components/AdminBranchSelector'
+import { AdminTimeControl } from '../components/AdminTimeControl'
 import { faxReferenceRunContainer, FAX_REFERENCE_BRANCH_ID, FAX_REFERENCE_RUN_ID } from '../test/faxReferenceFixture'
 
 const api = vi.hoisted(() => ({
@@ -20,6 +21,7 @@ const api = vi.hoisted(() => ({
   getRun: vi.fn(),
   listRunBranches: vi.fn(),
   getBranchState: vi.fn(),
+  listBranchCheckpoints: vi.fn(),
   makeOfficialRunBranch: vi.fn(),
   getRunContainer: vi.fn(),
   getRunStatusSummary: vi.fn(),
@@ -46,7 +48,7 @@ vi.mock('../api/client', () => api)
 function renderWithRoute(ui: JSX.Element, route: string) {
   return renderRoute(
     <AdminBranchProvider runId={FAX_REFERENCE_RUN_ID}>
-      <AdminTimeProvider><AdminBranchSelector />{ui}</AdminTimeProvider>
+      <AdminTimeProvider><AdminBranchSelector /><AdminTimeControl />{ui}</AdminTimeProvider>
     </AdminBranchProvider>,
     route
   )
@@ -62,6 +64,7 @@ describe('RunPage', () => {
       ]
     })
     api.getBranchState.mockResolvedValue({ branch_id: FAX_REFERENCE_BRANCH_ID, run_id: FAX_REFERENCE_RUN_ID, head_checkpoint_id: 'cp-a', current_season: 2004, current_week: 17, current_event_id: 'event-a', current_event_sequence: 3, state_schema_version: '1', status: 'ready', metadata_json: {} })
+    api.listBranchCheckpoints.mockResolvedValue({ branch_checkpoints: [] })
     api.getRun.mockResolvedValue({
       run: { run_id: FAX_REFERENCE_RUN_ID, season: 2025, seed: 3, next_event_index: 1, total_events: 4, completed_event_ids: ['E1'] },
       season_state: {
@@ -203,6 +206,53 @@ describe('RunPage', () => {
     expect(await within(context).findByText('2004')).toBeInTheDocument()
     expect(within(context).getByText('W17')).toBeInTheDocument()
     expect(within(context).getByText('event-a')).toBeInTheDocument()
+  })
+
+  it('keeps Present Run Home usable when checkpoint history is unavailable', async () => {
+    api.listBranchCheckpoints.mockRejectedValue(new Error('checkpoint history unavailable'))
+    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
+    expect(await screen.findByRole('heading', { name: 'Run overview' })).toBeInTheDocument()
+    expect(await screen.findByText(/Historical checkpoints unavailable: checkpoint history unavailable/)).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Present · S2004 · W17'))
+    expect(screen.getByRole('link', { name: 'Open Simulate' })).toBeInTheDocument()
+  })
+
+  it('renders a focused read-only historical Home and returns explicitly to Present', async () => {
+    api.getBranchState.mockResolvedValue({ branch_id: FAX_REFERENCE_BRANCH_ID, run_id: FAX_REFERENCE_RUN_ID, head_checkpoint_id: 'cp-head', current_season: 2007, current_week: 42, current_event_id: 'event-head', current_event_sequence: 42, state_schema_version: '1', status: 'ready', metadata_json: {} })
+    api.listBranchCheckpoints.mockResolvedValue({ branch_checkpoints: [{
+      checkpoint_id: 'cp-old', run_id: FAX_REFERENCE_RUN_ID, branch_id: FAX_REFERENCE_BRANCH_ID,
+      parent_checkpoint_id: 'cp-parent', sequence: 418, kind: 'completed_week', season: 2005, week: 31,
+      event_id: 'event-old', event_sequence: 31, command_id: 'command-old', command_kind: 'simulate_next_week',
+      command_boundary: 'after', config_version: null, config_fingerprint: null, world_id: 'world', world_fingerprint: null,
+      global_seed: 1, branch_seed: 1, seed_namespace: {}, payload_schema_version: '1', content_hash_algorithm: 'sha256',
+      content_hash: 'hash-old', payload: {},
+    }] })
+    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
+    await screen.findByRole('option', { name: /#418 · S2005 · W31 · event-old/ })
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Admin Time context' }), 'cp-old')
+
+    const context = screen.getByRole('list', { name: 'Current context' })
+    expect(within(context).getByText('Past')).toBeInTheDocument()
+    expect(within(context).getByText('2005')).toBeInTheDocument()
+    expect(within(context).getByText('W31')).toBeInTheDocument()
+    expect(within(context).getByText('event-old')).toBeInTheDocument()
+    expect(screen.getAllByText('cp-old')).toHaveLength(2)
+    expect(screen.getByText('cp-head')).toBeInTheDocument()
+    expect(screen.getByText('418')).toBeInTheDocument()
+    expect(screen.getByText('completed_week')).toBeInTheDocument()
+    expect(screen.getByText('simulate_next_week')).toBeInTheDocument()
+    expect(screen.getByText('after')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Return to Present' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Rebuild Run from Current World Data' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Legacy Run activity' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Admin shortcuts' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Admin attention' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Review World Tour Finals' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Continue to season rollover' })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Return to Present' }))
+    expect(await screen.findByRole('heading', { name: 'Run overview' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Present · S2007 · W42')
   })
 
   it('renders real branch, world, activity, and admin navigation context', async () => {

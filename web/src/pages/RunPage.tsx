@@ -102,6 +102,34 @@ export function RunPage(): JSX.Element {
   const dataErrors = [containerQuery.error, statusQuery.error, finalsQuery.error, sourceQuery.error, lineageQuery.error, worldQuery.error, eventsQuery.error]
     .filter((error) => error && !isApiNotFound(error))
 
+  if (time.mode === 'checkpoint') {
+    const checkpoint = time.selectedCheckpoint
+    return <section className="panel">
+      <PageIntro title="Home" subtitle="Read-only historical checkpoint on the Active Admin Branch." meta={`Run: ${runId}`} />
+      <CurrentContextStrip items={[
+        { label: 'Run', value: runId }, { label: 'Branch', value: selectedBranch?.display_name ?? selectedBranchId ?? '—' },
+        { label: 'Time', value: 'Past' }, { label: 'Season', value: time.viewSeason ?? '—' },
+        { label: 'Week', value: time.viewWeek == null ? '—' : `W${time.viewWeek}` }, { label: 'Event', value: time.viewEventId ?? '—' },
+      ]} />
+      <SectionCard title="Historical checkpoint">
+        {checkpoint ? <MetadataList items={[
+          { label: 'View checkpoint', value: checkpoint.checkpoint_id }, { label: 'Sequence', value: checkpoint.sequence },
+          { label: 'Kind', value: checkpoint.kind }, { label: 'Parent checkpoint', value: checkpoint.parent_checkpoint_id ?? 'None' },
+          { label: 'Season', value: checkpoint.season }, { label: 'Week', value: checkpoint.week ?? '—' },
+          { label: 'Event', value: checkpoint.event_id ?? '—' }, { label: 'Event sequence', value: checkpoint.event_sequence ?? '—' },
+          { label: 'Command kind', value: checkpoint.command_kind }, { label: 'Command boundary', value: checkpoint.command_boundary },
+          { label: 'Content hash', value: checkpoint.content_hash },
+        ]} /> : <p role="alert" className="error">Historical Time unavailable: {time.checkpointsError ?? `checkpoint ${time.viewCheckpointId ?? 'unknown'} is unavailable`}.</p>}
+        <p className="status">This historical checkpoint is read-only. Viewing it does not rewind or mutate the Branch.</p>
+        <button type="button" onClick={time.selectPresent}>Return to Present</button>
+      </SectionCard>
+      <SectionCard title="Branch context"><MetadataList items={[
+        { label: 'Active Admin Branch', value: selectedBranchId ?? '—' }, { label: 'Viewer Branch', value: viewerBranchId ?? '—' },
+        { label: 'View checkpoint', value: time.viewCheckpointId ?? '—' }, { label: 'Current Branch HEAD', value: time.headCheckpointId ?? 'Unavailable' },
+      ]} /></SectionCard>
+    </section>
+  }
+
   return (
     <section className="panel">
       <PageIntro
@@ -114,9 +142,9 @@ export function RunPage(): JSX.Element {
           { label: 'Run', value: run?.run_id ?? runId ?? 'unknown' },
           { label: 'Branch', value: selectedBranch?.display_name ?? '—' },
           { label: 'Time', value: 'Present' },
-          { label: 'Season', value: time.currentSeason ?? '—' },
-          { label: 'Week', value: time.currentWeek != null ? `W${time.currentWeek}` : '—' },
-          { label: 'Event', value: time.currentEventId ?? '—' }
+          { label: 'Season', value: time.presentSeason ?? '—' },
+          { label: 'Week', value: time.presentWeek != null ? `W${time.presentWeek}` : '—' },
+          { label: 'Event', value: time.presentEventId ?? '—' }
         ]}
       />
 
@@ -166,9 +194,9 @@ export function RunPage(): JSX.Element {
                 { label: 'Viewing mode', value: selectedBranch?.read_only ? 'Read-only' : 'Writable' },
                 { label: 'View time', value: 'Present' },
                 { label: 'Head checkpoint', value: time.headCheckpointId ?? '—' },
-                { label: 'Current season', value: time.currentSeason ?? '—' },
-                { label: 'Current week', value: time.currentWeek ?? '—' },
-                { label: 'Current event', value: time.currentEventId ?? '—' },
+                { label: 'Current season', value: time.presentSeason ?? '—' },
+                { label: 'Current week', value: time.presentWeek ?? '—' },
+                { label: 'Current event', value: time.presentEventId ?? '—' },
               ]}
             />
             {!selectedBranchId && <p className="status">No Active Admin Branch is available.</p>}

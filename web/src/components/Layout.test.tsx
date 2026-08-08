@@ -15,6 +15,8 @@ import {
 const api = vi.hoisted(() => ({
   listRuns: vi.fn(),
   listRunContainers: vi.fn(),
+  getRunContainer: vi.fn(),
+  listRunBranches: vi.fn(),
   getViewerOfficialRunContext: vi.fn(),
   ApiError: class ApiError extends Error { status = 500 }
 }))
@@ -48,6 +50,12 @@ describe('Layout mode navigation', () => {
       run_containers: [...referenceContainers.run_containers, disposable],
     })
     api.getViewerOfficialRunContext.mockResolvedValue(makeFaxReferenceViewerContext())
+    api.getRunContainer.mockImplementation(async (runId: string) => ({ ...referenceContainers.run_containers[0], run_id: runId, official_branch_id: `${runId}-branch` }))
+    api.listRunBranches.mockImplementation(async (runId: string) => ({ run_branches: [{
+      branch_id: `${runId}-branch`, run_id: runId, display_name: 'Active timeline', status: 'active', read_only: false,
+      branch_seed: 1, forked_from_branch_id: null, forked_from_checkpoint_id: null, head_checkpoint_id: null,
+      legacy_simulation_run_id: null, metadata_json: {}, is_official: true,
+    }] }))
   })
 
   it('renders only Global Admin navigation on a global route', async () => {
@@ -60,6 +68,7 @@ describe('Layout mode navigation', () => {
     expect(screen.queryByRole('navigation', { name: 'Run Admin navigation' })).not.toBeInTheDocument()
     expect(screen.queryByText(/Current run context:/)).not.toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Admin active Run' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Admin active Branch' })).not.toBeInTheDocument()
   })
 
   it('renders only Run Admin navigation at a Run root', async () => {
@@ -76,6 +85,7 @@ describe('Layout mode navigation', () => {
     expect(screen.getByText(`Current run context: ${FAX_REFERENCE_RUN_ID}`)).toBeInTheDocument()
     const runSelector = await screen.findByRole('combobox', { name: 'Admin active Run' })
     expect(runSelector).toHaveValue(FAX_REFERENCE_RUN_ID)
+    expect(await screen.findByRole('combobox', { name: 'Admin active Branch' })).toHaveValue(`${FAX_REFERENCE_RUN_ID}-branch`)
     expect(screen.getByText('FAX Reference v1', { selector: '.admin-active-run-compact__status strong' })).toBeInTheDocument()
   })
 
@@ -86,6 +96,31 @@ describe('Layout mode navigation', () => {
     const nav = screen.getByRole('navigation', { name: 'Run Admin navigation' })
     expect(within(nav).getByRole('link', { name: 'World Tour Finals' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/finals`)
     expect(screen.queryByRole('navigation', { name: 'Global Admin navigation' })).not.toBeInTheDocument()
+  })
+
+  it('preserves the Active Admin Branch across real nested Run route navigation', async () => {
+    api.listRunBranches.mockResolvedValue({ run_branches: [
+      {
+        branch_id: `${FAX_REFERENCE_RUN_ID}-branch`, run_id: FAX_REFERENCE_RUN_ID, display_name: 'Viewer timeline', status: 'active', read_only: false,
+        branch_seed: 1, forked_from_branch_id: null, forked_from_checkpoint_id: null, head_checkpoint_id: null,
+        legacy_simulation_run_id: null, metadata_json: {}, is_official: true,
+      },
+      {
+        branch_id: 'branch-b', run_id: FAX_REFERENCE_RUN_ID, display_name: 'Experimental timeline', status: 'active', read_only: true,
+        branch_seed: 2, forked_from_branch_id: `${FAX_REFERENCE_RUN_ID}-branch`, forked_from_checkpoint_id: null, head_checkpoint_id: null,
+        legacy_simulation_run_id: null, metadata_json: {}, is_official: false,
+      },
+    ] })
+    renderWithRoute(<Layout />, `/admin/runs/${FAX_REFERENCE_RUN_ID}`)
+
+    const selector = await screen.findByRole('combobox', { name: 'Admin active Branch' })
+    await waitFor(() => expect(selector).toHaveValue(`${FAX_REFERENCE_RUN_ID}-branch`))
+    fireEvent.change(selector, { target: { value: 'branch-b' } })
+    expect(selector).toHaveValue('branch-b')
+
+    fireEvent.click(screen.getByRole('link', { name: 'Events' }))
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/events`))
+    expect(screen.getByRole('combobox', { name: 'Admin active Branch' })).toHaveValue('branch-b')
   })
 
   it('switches a generic Run route without changing Viewer selection', async () => {
@@ -121,6 +156,7 @@ describe('Layout mode navigation', () => {
     expect(screen.queryByRole('navigation', { name: 'Run Admin navigation' })).not.toBeInTheDocument()
     expect(screen.queryByText('Current run context: new')).not.toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Admin active Run' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Admin active Branch' })).not.toBeInTheDocument()
   })
 
   it('keeps the route Run usable as a fallback when metadata loading fails', async () => {

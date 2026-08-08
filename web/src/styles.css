@@ -340,6 +340,28 @@ button {
   min-width: 0;
 }
 
+.admin-active-branch-compact {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-active-branch-compact__status {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.75rem;
+  line-height: 1.15;
+}
+
+.admin-active-branch-compact__status small {
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.admin-active-branch-compact__field select {
+  max-width: 12rem;
+}
+
 .app-header__viewer-context {
   align-items: center;
   display: inline-flex;

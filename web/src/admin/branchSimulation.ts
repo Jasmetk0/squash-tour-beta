@@ -2,7 +2,7 @@ import {
   simulateFullSeasonOnBranch, simulateNextMatchOnBranch, simulateNextRoundOnBranch,
   simulateNextTournamentOnBranch, simulateNextWeekOnBranch, simulateWorldTourFinalsOnBranch
 } from '../api/client'
-import type { AdminBranchExecutionResponse, AdminBranchSimulationRequest, BranchCheckpoint, BranchState, RunBranch, RunContainer } from '../api/types'
+import type { AdminBranchExecutionResponse, AdminBranchSimulationRequest, AdminBranchSimulationResponse, AdminBranchSimulateWorldTourFinalsResponse, BranchCheckpoint, BranchSimulationMode, BranchState, RunBranch, RunContainer } from '../api/types'
 
 export type BranchSimulationAction = 'next_match' | 'next_round' | 'next_week' | 'next_tournament' | 'full_season' | 'world_tour_finals'
 
@@ -54,10 +54,43 @@ export function responseMode(result: AdminBranchExecutionResponse): string {
   return 'finals' in result ? 'simulate_world_tour_finals' : result.simulation_result.mode
 }
 
+export function isWorldTourFinalsResponse(result: AdminBranchExecutionResponse): result is AdminBranchSimulateWorldTourFinalsResponse {
+  return 'finals' in result && typeof result.finals === 'object' && result.finals !== null
+}
+
+export function hasValidFullSeasonSummary(result: AdminBranchSimulationResponse<BranchSimulationMode>): boolean {
+  if (result.simulation_result.mode !== 'simulate_full_season') return false
+  const { completed_in_command_count, completed_week_group_count, season_complete } = result.simulation_result
+  return Number.isFinite(completed_in_command_count) && completed_in_command_count >= 0
+    && Number.isFinite(completed_week_group_count) && completed_week_group_count >= 0
+    && typeof season_complete === 'boolean'
+}
+
+export function hasValidWorldTourFinalsResult(result: AdminBranchExecutionResponse): result is AdminBranchSimulateWorldTourFinalsResponse {
+  if (!isWorldTourFinalsResponse(result)) return false
+  const finals = result.finals
+  return result.official_branch_changed === false && finals.already_simulated === false
+    && typeof finals.run_id === 'string' && finals.run_id.trim().length > 0 && finals.run_id === result.legacy_simulation_run_id
+    && typeof finals.event_id === 'string' && finals.event_id.trim().length > 0 && Number.isFinite(finals.season) && Number.isInteger(finals.season)
+    && finals.qualification?.run_id === result.legacy_simulation_run_id && finals.result?.run_id === result.legacy_simulation_run_id
+    && finals.qualification.season === finals.season && finals.result.season === finals.season && finals.result.event_id === finals.event_id
+    && finals.qualification.qualification?.target_season === finals.season
+    && finals.result.result?.event_id === finals.event_id && finals.result.result?.season === finals.season
+    && finals.result.result?.qualification?.target_season === finals.season
+    && Array.isArray(finals.qualification.qualification?.qualified) && Array.isArray(finals.qualification.qualification?.reserves)
+    && Array.isArray(finals.result.result?.groups) && Array.isArray(finals.result.result?.knockout) && Array.isArray(finals.result.result?.placements)
+    && result.previous_season === result.current_season && result.previous_week === result.current_week
+    && result.previous_event_id === result.current_event_id && result.previous_event_sequence === result.current_event_sequence
+}
+
 export function validExecutionResponse(result: AdminBranchExecutionResponse, action: BranchSimulationAction, runId: string, branchId: string, reviewedHead: string): boolean {
-  return result.product_run_id === runId && result.branch_id === branchId
+  const commonValid = result.product_run_id === runId && result.branch_id === branchId
     && result.previous_head_checkpoint_id === reviewedHead && Boolean(result.new_head_checkpoint_id)
     && result.official_branch_changed === false && responseMode(result) === simulationActions[action].expectedMode
+  if (!commonValid) return false
+  if (action === 'world_tour_finals') return hasValidWorldTourFinalsResult(result)
+  if (isWorldTourFinalsResponse(result)) return false
+  return action !== 'full_season' || hasValidFullSeasonSummary(result)
 }
 
 export function newCommandId(): string {

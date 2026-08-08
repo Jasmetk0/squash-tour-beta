@@ -6,7 +6,7 @@ import { forkRunBranch, getRunContainer, listBranchCheckpoints, listBranchStates
 import type { AdminBranchExecutionResponse, AdminBranchSimulationRequest, AdminBranchSimulationResponse, AdminBranchSimulateWorldTourFinalsResponse, BranchSimulationMode, AdminForkRunBranchRequest, AdminSetOfficialRunBranchRequest, BranchCheckpoint, BranchState, RunBranch, RunContainer } from '../api/types'
 import { EmptyState, MetadataList, PageIntro, SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
-import { BranchSimulationAction, executeBranchSimulation, newCommandId, simulationActions, simulationEligibility } from '../admin/branchSimulation'
+import { BranchSimulationAction, executeBranchSimulation, hasValidFullSeasonSummary, hasValidWorldTourFinalsResult, isWorldTourFinalsResponse, newCommandId, responseMode, simulationActions, simulationEligibility } from '../admin/branchSimulation'
 export { simulationEligibility } from '../admin/branchSimulation'
 import { viewerRankingsPath } from '../viewer/viewerRoutes'
 
@@ -15,39 +15,6 @@ const executionHeadKinds = new Set(['initial', 'current_state_capture', 'branch_
 const fieldNames = ['target_branch_display_name', 'target_branch_id', 'target_legacy_simulation_run_id', 'target_branch_seed', 'command_id'] as const
 type FormValues = Record<(typeof fieldNames)[number], string>
 const emptyForm: FormValues = { target_branch_display_name: '', target_branch_id: '', target_legacy_simulation_run_id: '', target_branch_seed: '', command_id: '' }
-function isWorldTourFinalsResponse(result: AdminBranchExecutionResponse): result is AdminBranchSimulateWorldTourFinalsResponse {
-  return 'finals' in result && typeof result.finals === 'object' && result.finals !== null
-}
-
-function responseMode(result: AdminBranchExecutionResponse): BranchSimulationMode | 'simulate_world_tour_finals' {
-  return isWorldTourFinalsResponse(result) ? 'simulate_world_tour_finals' : result.simulation_result.mode
-}
-
-function hasValidWorldTourFinalsResult(result: AdminBranchExecutionResponse): result is AdminBranchSimulateWorldTourFinalsResponse {
-  if (!isWorldTourFinalsResponse(result)) return false
-  const finals = result.finals
-  return result.official_branch_changed === false && finals.already_simulated === false
-    && typeof finals.run_id === 'string' && finals.run_id.trim().length > 0 && finals.run_id === result.legacy_simulation_run_id
-    && typeof finals.event_id === 'string' && finals.event_id.trim().length > 0 && Number.isFinite(finals.season) && Number.isInteger(finals.season)
-    && finals.qualification?.run_id === result.legacy_simulation_run_id && finals.result?.run_id === result.legacy_simulation_run_id
-    && finals.qualification.season === finals.season && finals.result.season === finals.season && finals.result.event_id === finals.event_id
-    && finals.qualification.qualification?.target_season === finals.season
-    && finals.result.result?.event_id === finals.event_id && finals.result.result?.season === finals.season
-    && finals.result.result?.qualification?.target_season === finals.season
-    && Array.isArray(finals.qualification.qualification?.qualified) && Array.isArray(finals.qualification.qualification?.reserves)
-    && Array.isArray(finals.result.result?.groups) && Array.isArray(finals.result.result?.knockout) && Array.isArray(finals.result.result?.placements)
-    && result.previous_season === result.current_season && result.previous_week === result.current_week
-    && result.previous_event_id === result.current_event_id && result.previous_event_sequence === result.current_event_sequence
-}
-
-function hasValidFullSeasonSummary(result: AdminBranchSimulationResponse<BranchSimulationMode>): boolean {
-  if (result.simulation_result.mode !== 'simulate_full_season') return false
-  const { completed_in_command_count, completed_week_group_count, season_complete } = result.simulation_result
-  return Number.isFinite(completed_in_command_count) && completed_in_command_count >= 0
-    && Number.isFinite(completed_week_group_count) && completed_week_group_count >= 0
-    && typeof season_complete === 'boolean'
-}
-
 function officialEligibility(run: RunContainer | undefined, branch: RunBranch, state: BranchState | undefined, checkpoints: BranchCheckpoint[]): string | null {
   if (run?.status !== 'active') return 'Product Run must be active.'
   if (run.read_only) return 'Product Run is read-only.'

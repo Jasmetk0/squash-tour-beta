@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { getBranchCheckpoint, getBranchState, getRunContainer } from '../api/client'
@@ -11,6 +11,7 @@ import { CurrentContextStrip, MetadataList, PageIntro, SectionCard } from '../co
 import { formatApiError } from '../utils/apiErrors'
 
 type Review = { action: BranchSimulationAction; runId: string; branchId: string; head: string; state: BranchState; checkpointKind: string }
+type ExecutionSnapshot = Review & { auditReason: string; commandId: string; viewerBranchId: string | null }
 
 export function RunSimulationPage(): JSX.Element {
   const { runId = '' } = useParams()
@@ -22,6 +23,8 @@ export function RunSimulationPage(): JSX.Element {
   const [confirmed, setConfirmed] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [result, setResult] = useState<AdminBranchExecutionResponse | null>(null)
+  const currentContextRef = useRef({ runId, branchId: selectedBranchId })
+  currentContextRef.current = { runId, branchId: selectedBranchId }
 
   const runQuery = useQuery({ queryKey: ['admin-run-container', runId], queryFn: () => getRunContainer(runId), enabled: Boolean(runId), retry: false })
   const stateQuery = useQuery({ queryKey: adminBranchStateQueryKey(runId, selectedBranchId), queryFn: () => getBranchState(selectedBranchId!), enabled: Boolean(runId && selectedBranchId), retry: false })
@@ -36,36 +39,40 @@ export function RunSimulationPage(): JSX.Element {
     setReview(null); setReason(''); setConfirmed(false); setNotice(null); setResult(null); setCommandId(newCommandId())
   }, [runId, selectedBranchId])
 
-  async function refreshTarget(): Promise<void> {
+  async function refreshTarget(targetRunId: string, targetBranchId: string): Promise<void> {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
-      queryClient.invalidateQueries({ queryKey: adminBranchStateQueryKey(runId, selectedBranchId) }),
-      queryClient.invalidateQueries({ queryKey: ['admin-branch-head', runId, selectedBranchId] }),
-      queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['branch-states', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['branch-checkpoints', runId] }),
+      queryClient.invalidateQueries({ queryKey: ['admin-run-branches', targetRunId] }),
+      queryClient.invalidateQueries({ queryKey: adminBranchStateQueryKey(targetRunId, targetBranchId) }),
+      queryClient.invalidateQueries({ queryKey: ['admin-branch-head', targetRunId, targetBranchId] }),
+      queryClient.invalidateQueries({ queryKey: ['run-branches', targetRunId] }),
+      queryClient.invalidateQueries({ queryKey: ['branch-states', targetRunId] }),
+      queryClient.invalidateQueries({ queryKey: ['branch-checkpoints', targetRunId] }),
     ])
   }
 
   const mutation = useMutation({
-    mutationFn: (snapshot: Review) => executeBranchSimulation(snapshot.action, snapshot.runId, snapshot.branchId, {
-      expected_head_checkpoint_id: snapshot.head, command_id: commandId.trim(), audit_reason: reason.trim(), explicit_confirmation: true,
+    mutationFn: (snapshot: ExecutionSnapshot) => executeBranchSimulation(snapshot.action, snapshot.runId, snapshot.branchId, {
+      expected_head_checkpoint_id: snapshot.head, command_id: snapshot.commandId, audit_reason: snapshot.auditReason, explicit_confirmation: true,
     }),
     onSuccess: async (response, snapshot) => {
-      setConfirmed(false); setCommandId(newCommandId())
+      const isCurrent = currentContextRef.current.runId === snapshot.runId && currentContextRef.current.branchId === snapshot.branchId
       if (!validExecutionResponse(response, snapshot.action, snapshot.runId, snapshot.branchId, snapshot.head)) {
-        setResult(null); setReview(null); setNotice('Response contract error. Refresh and review the Branch head again.'); await refreshTarget(); return
+        if (isCurrent) { setConfirmed(false); setCommandId(newCommandId()); setResult(null); setReview(null); setNotice('Response contract error. Refresh and review the Branch head again.') }
+        await refreshTarget(snapshot.runId, snapshot.branchId); return
       }
-      setResult(response); setReview(null)
-      setNotice(`${simulationActions[snapshot.action].label} advanced ${snapshot.branchId} from ${response.previous_head_checkpoint_id} to ${response.new_head_checkpoint_id}. The Viewer Branch pointer was not changed.`)
-      await refreshTarget()
+      if (isCurrent) {
+        setConfirmed(false); setCommandId(newCommandId()); setResult(response); setReview(null)
+        setNotice(`${simulationActions[snapshot.action].label} advanced ${snapshot.branchId} from ${response.previous_head_checkpoint_id} to ${response.new_head_checkpoint_id}. The Viewer Branch pointer was not changed.`)
+      }
+      await refreshTarget(snapshot.runId, snapshot.branchId)
       await queryClient.invalidateQueries({ predicate: query => query.queryKey.includes(response.legacy_simulation_run_id) })
-      if (snapshot.branchId === viewerBranchId) await queryClient.invalidateQueries({ queryKey: ['viewer-official-run-context', runId] })
+      if (snapshot.branchId === snapshot.viewerBranchId) await queryClient.invalidateQueries({ queryKey: ['viewer-official-run-context', snapshot.runId] })
     },
-    onError: async (error) => {
+    onError: async (error, snapshot) => {
       if ((error as { status?: number }).status !== 409) return
-      setConfirmed(false); setReview(null); setCommandId(newCommandId()); setNotice('Branch execution state changed. The target was refreshed; review the new head before trying again.')
-      await refreshTarget()
+      const isCurrent = currentContextRef.current.runId === snapshot.runId && currentContextRef.current.branchId === snapshot.branchId
+      if (isCurrent) { setConfirmed(false); setReview(null); setCommandId(newCommandId()); setNotice('Branch execution state changed. The target was refreshed; review the new head before trying again.') }
+      await refreshTarget(snapshot.runId, snapshot.branchId)
     }
   })
 
@@ -89,7 +96,7 @@ export function RunSimulationPage(): JSX.Element {
     {eligibility && <p role="alert" className="error">Simulation blocked: {eligibility}</p>}
     <SectionCard title="Choose action"><div className="quick-actions">{(Object.keys(simulationActions) as BranchSimulationAction[]).map(action => <button key={action} type="button" disabled={Boolean(eligibility)} onClick={() => choose(action)}>{simulationActions[action].label}</button>)}</div></SectionCard>
     {review && <SectionCard title={`Review ${simulationActions[review.action].label}`}>
-      <form onSubmit={event => { event.preventDefault(); if (canSubmit && review) mutation.mutate(review) }}>
+      <form onSubmit={event => { event.preventDefault(); if (canSubmit && review) mutation.mutate({ ...review, auditReason: reason.trim(), commandId: commandId.trim(), viewerBranchId }) }}>
         <MetadataList items={[{ label: 'Action', value: simulationActions[review.action].label }, { label: 'Run', value: review.runId }, { label: 'Branch', value: review.branchId }, { label: 'Reviewed head', value: review.head }, { label: 'Checkpoint kind', value: review.checkpointKind }, { label: 'Season', value: review.state.current_season ?? '—' }, { label: 'Week', value: review.state.current_week ?? '—' }, { label: 'Event', value: review.state.current_event_id ?? '—' }, { label: 'Event sequence', value: review.state.current_event_sequence ?? '—' }]} />
         <p>{simulationActions[review.action].explanation}</p><p>Only this Branch advances. The Viewer Branch pointer never changes.</p>
         {stale && <p role="alert" className="error">The Active Admin Branch or head changed. Choose the action again to review current state.</p>}

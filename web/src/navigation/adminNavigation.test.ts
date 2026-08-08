@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { adminNav, runNavFor } from './adminNavigation'
+import { globalAdminNav, runAdminNavFor } from './adminNavigation'
 
 describe('adminNavigation', () => {
-  it('keeps Admin primary navigation labels, order, and hrefs stable', () => {
-    expect(adminNav).toEqual([
+  it('keeps Global Admin navigation labels, order, and hrefs stable', () => {
+    expect(globalAdminNav).toEqual([
       { to: '/admin', label: 'Dashboard' },
       { to: '/admin/world', label: 'World' },
       { to: '/admin/players', label: 'Players' },
@@ -16,8 +16,8 @@ describe('adminNavigation', () => {
     ])
   })
 
-  it('keeps Admin run-scoped navigation labels, order, and hrefs stable', () => {
-    expect(runNavFor('run-a')).toEqual([
+  it('keeps Run Admin navigation labels, order, and hrefs stable', () => {
+    expect(runAdminNavFor('run-a')).toEqual([
       { to: '/admin/runs/run-a', label: 'Home' },
       { to: '/admin/runs/run-a/events', label: 'Events' },
       { to: '/admin/runs/run-a/calendar', label: 'Season Calendar' },

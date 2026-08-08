@@ -50,24 +50,47 @@ describe('Layout mode navigation', () => {
     api.getViewerOfficialRunContext.mockResolvedValue(makeFaxReferenceViewerContext())
   })
 
-  it('keeps Admin / Engine mode navigation and run-scoped admin links stable', async () => {
+  it('renders only Global Admin navigation on a global route', async () => {
+    renderWithRoute(<Layout />, '/admin/world')
+
+    expect(await screen.findByText('Admin / Engine Mode')).toBeInTheDocument()
+    const nav = screen.getByRole('navigation', { name: 'Global Admin navigation' })
+    expect(within(nav).getByRole('link', { name: 'World' })).toHaveAttribute('href', '/admin/world')
+    expect(within(nav).getByRole('link', { name: 'Runs' })).toHaveAttribute('href', '/admin/runs')
+    expect(screen.queryByRole('navigation', { name: 'Run Admin navigation' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Current run context:/)).not.toBeInTheDocument()
+  })
+
+  it('renders only Run Admin navigation at a Run root', async () => {
+    renderWithRoute(<Layout />, `/admin/runs/${FAX_REFERENCE_RUN_ID}`)
+
+    expect(await screen.findByText('Admin / Engine Mode')).toBeInTheDocument()
+    const nav = screen.getByRole('navigation', { name: 'Run Admin navigation' })
+    expect(within(nav).getByRole('link', { name: 'Back to Global' })).toHaveAttribute('href', '/admin')
+    expect(within(nav).getByRole('link', { name: 'Home' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}`)
+    expect(within(nav).getByRole('link', { name: 'Events' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/events`)
+    expect(within(nav).getByRole('link', { name: 'Season Calendar' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/calendar`)
+    expect(screen.queryByRole('navigation', { name: 'Global Admin navigation' })).not.toBeInTheDocument()
+    expect(within(nav).queryByRole('link', { name: 'Tour & Seasons' })).not.toBeInTheDocument()
+    expect(screen.getByText(`Current run context: ${FAX_REFERENCE_RUN_ID}`)).toBeInTheDocument()
+  })
+
+  it('keeps nested Run routes in Run Admin scope', async () => {
     renderWithRoute(<Layout />, `/admin/runs/${FAX_REFERENCE_RUN_ID}/finals`)
 
     expect(await screen.findByText('Admin / Engine Mode')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Viewer / MSA' })).toHaveAttribute('href', '/viewer/runs')
-    expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/finals`)
-    expect(screen.getByRole('link', { name: 'World' })).toHaveAttribute('href', '/admin/world')
-    expect(screen.getByRole('link', { name: 'Tour & Seasons' })).toHaveAttribute('href', '/admin/tour-seasons')
-    expect(screen.getByRole('link', { name: 'Simulate' })).toHaveAttribute('href', '/admin/simulate')
-    expect(screen.getByRole('link', { name: 'Runs' })).toHaveAttribute('href', '/admin/runs')
-    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}`)
-    expect(screen.getByRole('link', { name: 'Events' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/events`)
-    expect(screen.getByRole('link', { name: 'Season Calendar' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/calendar`)
-    expect(screen.getAllByRole('link', { name: 'Diagnostics' })[1]).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/diagnostics`)
-    expect(screen.getByRole('link', { name: 'World Generation' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/world-generation`)
-    expect(screen.getByRole('link', { name: 'Ranking Snapshots' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/snapshots/ranking`)
-    expect(screen.getByRole('link', { name: 'Race Snapshots' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/snapshots/race`)
-    expect(screen.getByText(`Current run context: ${FAX_REFERENCE_RUN_ID}`)).toBeInTheDocument()
+    const nav = screen.getByRole('navigation', { name: 'Run Admin navigation' })
+    expect(within(nav).getByRole('link', { name: 'World Tour Finals' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/finals`)
+    expect(screen.queryByRole('navigation', { name: 'Global Admin navigation' })).not.toBeInTheDocument()
+  })
+
+  it('keeps the Run creation route in Global Admin scope', async () => {
+    renderWithRoute(<Layout />, '/admin/runs/new')
+
+    expect(await screen.findByText('Admin / Engine Mode')).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Global Admin navigation' })).toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: 'Run Admin navigation' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Current run context: new')).not.toBeInTheDocument()
   })
 
   it('shows one Viewer primary nav in Viewer mode', async () => {
@@ -75,6 +98,8 @@ describe('Layout mode navigation', () => {
 
     expect(await screen.findByText('Viewer / MSA Website Mode')).toBeInTheDocument()
     expect(screen.getAllByTestId('viewer-primary-nav')).toHaveLength(1)
+    expect(screen.queryByRole('navigation', { name: 'Global Admin navigation' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: 'Run Admin navigation' })).not.toBeInTheDocument()
   })
 
   it('renders Viewer topbar links as Viewer-only links without Admin shell controls in the Viewer nav', async () => {

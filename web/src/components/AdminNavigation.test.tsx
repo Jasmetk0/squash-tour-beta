@@ -7,7 +7,7 @@ import { AdminNavigation } from './AdminNavigation'
 function renderAdminNavigation(runId?: string): void {
   render(
     <MemoryRouter initialEntries={[runId ? `/admin/runs/${runId}/finals` : '/admin']}>
-      <AdminNavigation runId={runId} />
+      <AdminNavigation scope={runId ? { kind: 'run', runId } : { kind: 'global' }} />
     </MemoryRouter>
   )
 }
@@ -16,7 +16,7 @@ describe('AdminNavigation', () => {
   it('renders primary Admin navigation labels and hrefs without a run context', () => {
     renderAdminNavigation()
 
-    const primaryNav = screen.getByRole('navigation', { name: 'Admin / Engine Mode navigation' })
+    const primaryNav = screen.getByRole('navigation', { name: 'Global Admin navigation' })
 
     expect(within(primaryNav).getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/admin')
     expect(within(primaryNav).getByRole('link', { name: 'World' })).toHaveAttribute('href', '/admin/world')
@@ -26,16 +26,18 @@ describe('AdminNavigation', () => {
     expect(within(primaryNav).getByRole('link', { name: 'Simulate' })).toHaveAttribute('href', '/admin/simulate')
     expect(within(primaryNav).getByRole('link', { name: 'Diagnostics' })).toHaveAttribute('href', '/admin/diagnostics')
     expect(within(primaryNav).getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/admin/settings')
-    expect(screen.queryByRole('navigation', { name: 'Run navigation' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: 'Run Admin navigation' })).not.toBeInTheDocument()
     expect(screen.queryByText(/Current run context:/)).not.toBeInTheDocument()
   })
 
   it('renders run-scoped Admin navigation labels, hrefs, and current run context', () => {
     renderAdminNavigation('run-a')
 
-    const runNav = screen.getByRole('navigation', { name: 'Run navigation' })
+    const runNav = screen.getByRole('navigation', { name: 'Run Admin navigation' })
 
-    expect(within(runNav).getByRole('link', { name: 'Run Detail' })).toHaveAttribute('href', '/admin/runs/run-a')
+    expect(screen.queryByRole('navigation', { name: 'Global Admin navigation' })).not.toBeInTheDocument()
+    expect(within(runNav).getByRole('link', { name: 'Back to Global' })).toHaveAttribute('href', '/admin')
+    expect(within(runNav).getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/admin/runs/run-a')
     expect(within(runNav).getByRole('link', { name: 'Events' })).toHaveAttribute('href', '/admin/runs/run-a/events')
     expect(within(runNav).getByRole('link', { name: 'Season Calendar' })).toHaveAttribute('href', '/admin/runs/run-a/calendar')
     expect(within(runNav).getByRole('link', { name: 'Activity' })).toHaveAttribute('href', '/admin/runs/run-a/activity')

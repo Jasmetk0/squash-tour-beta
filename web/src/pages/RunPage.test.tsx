@@ -214,7 +214,7 @@ describe('RunPage', () => {
     expect(screen.getByRole('link', { name: 'Manage branches and Viewer Branch' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/branches`)
     expect(screen.getAllByText(FAX_REFERENCE_BRANCH_ID).length).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: 'E3' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/events/E3`)
-    expect(screen.getByRole('link', { name: 'Open Simulate' })).toHaveAttribute('href', '/admin/simulate')
+    expect(screen.getByRole('link', { name: 'Open Simulate' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/simulate`)
     expect(screen.getByRole('link', { name: 'Diagnostics' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/diagnostics`)
   })
 

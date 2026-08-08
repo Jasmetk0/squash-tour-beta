@@ -17,6 +17,7 @@ export const globalAdminNav: AdminNavItem[] = [
 export function runAdminNavFor(runId: string): AdminNavItem[] {
   return [
     { to: `/admin/runs/${runId}`, label: 'Home' },
+    { to: `/admin/runs/${runId}/simulate`, label: 'Simulation' },
     { to: `/admin/runs/${runId}/events`, label: 'Events' },
     { to: `/admin/runs/${runId}/calendar`, label: 'Season Calendar' },
     { to: `/admin/runs/${runId}/activity`, label: 'Activity' },

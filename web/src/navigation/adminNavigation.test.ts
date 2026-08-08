@@ -19,6 +19,7 @@ describe('adminNavigation', () => {
   it('keeps Run Admin navigation labels, order, and hrefs stable', () => {
     expect(runAdminNavFor('run-a')).toEqual([
       { to: '/admin/runs/run-a', label: 'Home' },
+      { to: '/admin/runs/run-a/simulate', label: 'Simulation' },
       { to: '/admin/runs/run-a/events', label: 'Events' },
       { to: '/admin/runs/run-a/calendar', label: 'Season Calendar' },
       { to: '/admin/runs/run-a/activity', label: 'Activity' },

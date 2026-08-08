@@ -15,6 +15,7 @@ import {
   rebuildRunWorld
 } from '../api/client'
 import { useAdminBranch } from '../admin/AdminBranchContext'
+import { adminBranchStateQueryKey } from '../admin/adminQueryKeys'
 import type { BranchState } from '../api/types'
 import {
   ActionStatusBlock,
@@ -34,7 +35,7 @@ export function RunPage(): JSX.Element {
   const { selectedBranch, selectedBranchId, viewerBranchId } = useAdminBranch()
 
   const branchStateQuery = useQuery({
-    queryKey: ['admin-branch-state', runId, selectedBranchId],
+    queryKey: adminBranchStateQueryKey(runId, selectedBranchId),
     queryFn: () => getBranchState(selectedBranchId!),
     enabled: Boolean(runId && selectedBranchId),
     retry: false
@@ -261,7 +262,7 @@ export function RunPage(): JSX.Element {
 
           <SectionCard title="Admin shortcuts">
             <div className="actions">
-              <Link to="/admin/simulate">Open Simulate</Link>
+              <Link to={`/admin/runs/${runId}/simulate`}>Open Simulate</Link>
               <Link to={`/admin/runs/${runId}/calendar`}>Season calendar</Link>
               <Link to={`/admin/runs/${runId}/activity`}>Run activity</Link>
               <Link to={`/admin/runs/${runId}/diagnostics`}>Diagnostics</Link>

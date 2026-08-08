@@ -12,6 +12,7 @@ const SAFE_RUN_SUFFIXES = new Set([
   '/nations',
   '/players',
   '/rollover',
+  '/simulate',
   '/season-chain',
   '/snapshots/race',
   '/snapshots/ranking',

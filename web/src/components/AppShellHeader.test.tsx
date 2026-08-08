@@ -1,22 +1,29 @@
 import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppShellHeader } from './AppShellHeader'
 import type { AppShellMode } from '../navigation/appShellMode'
+import { resolveAdminScope } from '../navigation/appShellMode'
+
+const api = vi.hoisted(() => ({ listRunContainers: vi.fn() }))
+vi.mock('../api/client', () => api)
 
 function renderAppShellHeader(mode: AppShellMode, pathname: string): void {
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
       <MemoryRouter initialEntries={[pathname]}>
-        <AppShellHeader mode={mode} pathname={pathname} />
+        <AppShellHeader mode={mode} pathname={pathname} adminScope={resolveAdminScope(pathname)} />
       </MemoryRouter>
     </QueryClientProvider>
   )
 }
 
 describe('AppShellHeader', () => {
+  beforeEach(() => {
+    api.listRunContainers.mockResolvedValue({ run_containers: [] })
+  })
   it('renders the Viewer mode title and subtitle', () => {
     renderAppShellHeader('viewer', '/viewer')
 

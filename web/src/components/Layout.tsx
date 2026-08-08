@@ -16,7 +16,7 @@ export function Layout(): JSX.Element {
   return (
     <ViewerContextProvider>
       <div className={appShellClassNameForMode(mode)}>
-        <AppShellHeader mode={mode} pathname={location.pathname} />
+        <AppShellHeader mode={mode} pathname={location.pathname} adminScope={adminScope} />
         {mode === 'admin' ? <AdminNavigation scope={adminScope} /> : null}
         {mode === 'viewer' ? <ViewerTopbar /> : null}
         {mode !== 'admin' && runId ? <p className="status">Current run context: {runId}</p> : null}

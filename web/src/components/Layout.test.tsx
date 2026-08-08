@@ -59,6 +59,7 @@ describe('Layout mode navigation', () => {
     expect(within(nav).getByRole('link', { name: 'Runs' })).toHaveAttribute('href', '/admin/runs')
     expect(screen.queryByRole('navigation', { name: 'Run Admin navigation' })).not.toBeInTheDocument()
     expect(screen.queryByText(/Current run context:/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Admin active Run' })).not.toBeInTheDocument()
   })
 
   it('renders only Run Admin navigation at a Run root', async () => {
@@ -73,6 +74,9 @@ describe('Layout mode navigation', () => {
     expect(screen.queryByRole('navigation', { name: 'Global Admin navigation' })).not.toBeInTheDocument()
     expect(within(nav).queryByRole('link', { name: 'Tour & Seasons' })).not.toBeInTheDocument()
     expect(screen.getByText(`Current run context: ${FAX_REFERENCE_RUN_ID}`)).toBeInTheDocument()
+    const runSelector = await screen.findByRole('combobox', { name: 'Admin active Run' })
+    expect(runSelector).toHaveValue(FAX_REFERENCE_RUN_ID)
+    expect(screen.getByText('FAX Reference v1', { selector: '.admin-active-run-compact__status strong' })).toBeInTheDocument()
   })
 
   it('keeps nested Run routes in Run Admin scope', async () => {
@@ -84,6 +88,31 @@ describe('Layout mode navigation', () => {
     expect(screen.queryByRole('navigation', { name: 'Global Admin navigation' })).not.toBeInTheDocument()
   })
 
+  it('switches a generic Run route without changing Viewer selection', async () => {
+    localStorage.setItem('beta_engine:viewer_active_product_run_id', 'viewer-run')
+    const nextRunId = `${FAX_REFERENCE_RUN_ID}-layout-switch`
+    renderWithRoute(<Layout />, `/admin/runs/${FAX_REFERENCE_RUN_ID}/branches`)
+
+    await screen.findByRole('option', { name: 'FAX test layout-switch' })
+    fireEvent.change(screen.getByRole('combobox', { name: 'Admin active Run' }), { target: { value: nextRunId } })
+
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Admin active Run' })).toHaveValue(nextRunId))
+    expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', `/admin/runs/${nextRunId}/branches`)
+    expect(localStorage.getItem('beta_engine:viewer_active_product_run_id')).toBe('viewer-run')
+  })
+
+  it('falls back to destination Run Home when switching from an object-specific route', async () => {
+    const nextRunId = `${FAX_REFERENCE_RUN_ID}-layout-switch`
+    renderWithRoute(<Layout />, `/admin/runs/${FAX_REFERENCE_RUN_ID}/events/E123`)
+
+    await screen.findByRole('option', { name: 'FAX test layout-switch' })
+    fireEvent.change(screen.getByRole('combobox', { name: 'Admin active Run' }), { target: { value: nextRunId } })
+
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Admin active Run' })).toHaveValue(nextRunId))
+    expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', `/admin/runs/${nextRunId}`)
+    expect(screen.getByRole('link', { name: 'Admin / Engine' })).not.toHaveAttribute('href', `/admin/runs/${nextRunId}/events/E123`)
+  })
+
   it('keeps the Run creation route in Global Admin scope', async () => {
     renderWithRoute(<Layout />, '/admin/runs/new')
 
@@ -91,6 +120,18 @@ describe('Layout mode navigation', () => {
     expect(screen.getByRole('navigation', { name: 'Global Admin navigation' })).toBeInTheDocument()
     expect(screen.queryByRole('navigation', { name: 'Run Admin navigation' })).not.toBeInTheDocument()
     expect(screen.queryByText('Current run context: new')).not.toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Admin active Run' })).not.toBeInTheDocument()
+  })
+
+  it('keeps the route Run usable as a fallback when metadata loading fails', async () => {
+    api.listRunContainers.mockRejectedValueOnce(new Error('temporarily unavailable'))
+
+    renderWithRoute(<Layout />, '/admin/runs/run-metadata-fallback')
+
+    const selector = await screen.findByRole('combobox', { name: 'Admin active Run' })
+    expect(selector).toHaveValue('run-metadata-fallback')
+    expect(screen.getByText('run-metadata-fallback', { selector: '.admin-active-run-compact__status strong' })).toBeInTheDocument()
+    expect(await screen.findByText(/Run metadata unavailable: temporarily unavailable/)).toBeInTheDocument()
   })
 
   it('shows one Viewer primary nav in Viewer mode', async () => {

@@ -5,6 +5,7 @@ import {
   faxReferenceRunContainer,
   makeFaxReferenceRunContainersResponse,
   makeFaxReferenceRunsResponse,
+  makeFaxReferenceViewerContext,
   makeDisposableFaxRunContainer,
 } from './faxReferenceFixture'
 
@@ -35,8 +36,13 @@ describe('canonical FAX reference fixture', () => {
     const containersB = makeFaxReferenceRunContainersResponse()
     containersA.run_containers[0].metadata_json.changed = true
 
+    const viewerA = makeFaxReferenceViewerContext()
+    const viewerB = makeFaxReferenceViewerContext()
+    viewerA.product_run_display_name = 'Changed in one mock'
+
     expect(runsB.runs[0].progress.total_events).toBe(4)
     expect(containersB.run_containers[0].metadata_json).toEqual({ fixture_version: 'fax-reference-v1' })
     expect(faxReferenceRunContainer.metadata_json).toEqual({ fixture_version: 'fax-reference-v1' })
+    expect(viewerB.product_run_display_name).toBe('FAX Reference v1')
   })
 })

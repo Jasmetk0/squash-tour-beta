@@ -11,6 +11,10 @@ The current product-level source of truth is:
 
 If this guide, older beta code, `Beta_Engine.docx`, an old handoff, or an older UX proposal conflicts with the current constitution/Master, the current constitution/Master wins.
 
+Repository overview/operating documents (`README.md`, `ROADMAP.md`, and `AGENTS.md`)
+also summarize that canon; they do not outrank the constitution or turn a target into
+implemented behavior.
+
 **Important:** planned target behavior must never be described as already implemented unless verified in the repository.
 
 ---
@@ -213,6 +217,9 @@ Built-in GitHub source Packages are read-only. Local/custom source Packages can 
 ## 6.2 Run snapshots
 
 When a Run is created, selected World + Category Package versions are copied into the Run as independent versioned snapshots.
+
+Both snapshots are required. Their source identities/versions remain provenance only:
+neither snapshot is a live link, and later global source edits must not alter the Run.
 
 Therefore UX must clearly distinguish:
 

@@ -1062,6 +1062,13 @@ export type SeasonStateResponse = {
   }
 }
 
+export type CanonicalSeasonState = SeasonStateResponse['season_state']
+export type HistoricalBranchSeasonStateResponse = {
+  product_run_id: string; branch_id: string; checkpoint_id: string; checkpoint_sequence: number; checkpoint_kind: string
+  checkpoint_content_hash: string; payload_schema_version: string; checkpoint_season: number; checkpoint_week: number | null
+  checkpoint_event_id: string | null; checkpoint_event_sequence: number | null; season_state: CanonicalSeasonState
+}
+
 export type CreateRunPayload = {
   run_id: string
   seed: number

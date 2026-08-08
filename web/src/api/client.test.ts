@@ -23,6 +23,7 @@ import {
   getRunBranch,
   listBranchCheckpoints,
   getBranchCheckpoint,
+  getAdminBranchCheckpointSeasonState,
   captureInitialBranchCheckpoint,
   captureCurrentBranchCheckpoint,
   captureSeasonRolloverBranchCheckpoint,
@@ -933,6 +934,12 @@ describe('world package registry client', () => {
     expect(globalThis.fetch).toHaveBeenNthCalledWith(7, 'http://127.0.0.1:8000/branch-checkpoints/capture-admin-action', expect.objectContaining({ method: 'POST', body: JSON.stringify({ simulation_run_id: 'save/a #1', action_sequence: 1, command_id: 'admin' }) }))
     expect(globalThis.fetch).toHaveBeenNthCalledWith(8, 'http://127.0.0.1:8000/branch-checkpoints/capture-season-rollover', expect.objectContaining({ method: 'POST', body: JSON.stringify({ simulation_run_id: 'save/a #1', from_season: 2027, to_season: 2028, command_id: 'rollover' }) }))
     expect(globalThis.fetch).toHaveBeenNthCalledWith(9, 'http://127.0.0.1:8000/branch-checkpoints/capture-bootstrap-start', expect.objectContaining({ method: 'POST', body: JSON.stringify({ simulation_run_id: 'save/a #1', source_run_id: 'source/a #1', from_season: 2027, to_season: 2028, command_id: 'bootstrap' }) }))
+  })
+
+  it('gets typed historical SeasonState with every identity segment encoded', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(JSON.stringify({ season_state: { season: 2005 } }), { status: 200 }))
+    await getAdminBranchCheckpointSeasonState('run/a #1', 'branch/a #2', 'cp/a #3')
+    expect(globalThis.fetch).toHaveBeenCalledWith('http://127.0.0.1:8000/admin/runs/run%2Fa%20%231/branches/branch%2Fa%20%232/checkpoints/cp%2Fa%20%233/season-state', expect.anything())
   })
 
   it('lists BranchState metadata and encodes branch state detail ids', async () => {

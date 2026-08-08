@@ -283,6 +283,11 @@ class BranchCheckpointResponse(BaseModel):
 class BranchCheckpointListResponse(BaseModel):
     branch_checkpoints: list[BranchCheckpointResponse] = Field(default_factory=list)
 
+class HistoricalBranchSeasonStateResponse(BaseModel):
+    product_run_id: str; branch_id: str; checkpoint_id: str; checkpoint_sequence: int; checkpoint_kind: str
+    checkpoint_content_hash: str; payload_schema_version: str; checkpoint_season: int; checkpoint_week: int | None = None
+    checkpoint_event_id: str | None = None; checkpoint_event_sequence: int | None = None; season_state: SeasonState
+
 class CaptureInitialBranchCheckpointRequest(BaseModel):
     simulation_run_id: str
     command_id: str | None = None

@@ -12,6 +12,7 @@ from beta_engine.api.schemas import (
     AdminBranchSimulateNextTournamentRequest, AdminBranchSimulateNextTournamentResponse,
     AdminBranchSimulateFullSeasonRequest, AdminBranchSimulateFullSeasonResponse,
     AdminBranchSimulateWorldTourFinalsRequest, AdminBranchSimulateWorldTourFinalsResponse,
+    HistoricalBranchSeasonStateResponse,
 )
 from beta_engine.application.api_services import SimulationApiService
 from beta_engine.infrastructure.db import (
@@ -33,9 +34,20 @@ from beta_engine.infrastructure.db import (
     BranchSimulateWorldTourFinalsCommand,
     BranchExecutionTargetNotFoundError, BranchExecutionTargetConflictError,
     BranchSimulationConflictError, BranchSimulationIdempotencyConflictError,
+    HistoricalSeasonStateUnavailableError,
 )
 
 router = APIRouter(prefix="/admin/runs", tags=["admin-runs"])
+
+@router.get("/{product_run_id}/branches/{branch_id}/checkpoints/{checkpoint_id}/season-state", response_model=HistoricalBranchSeasonStateResponse)
+def get_historical_branch_season_state(product_run_id: str, branch_id: str, checkpoint_id: str, service: SimulationApiService = Depends(get_simulation_api_service)) -> HistoricalBranchSeasonStateResponse:
+    try:
+        record = service.get_branch_checkpoint_season_state(product_run_id=product_run_id, branch_id=branch_id, checkpoint_id=checkpoint_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except HistoricalSeasonStateUnavailableError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={"code": "historical_season_state_unavailable", "message": str(exc)}) from exc
+    return HistoricalBranchSeasonStateResponse.model_validate(record.__dict__)
 
 @router.post("/{product_run_id}/branches/{branch_id}/simulate-world-tour-finals", response_model=AdminBranchSimulateWorldTourFinalsResponse)
 def simulate_world_tour_finals_on_branch(product_run_id: str, branch_id: str, payload: AdminBranchSimulateWorldTourFinalsRequest, service: SimulationApiService = Depends(get_simulation_api_service)) -> AdminBranchSimulateWorldTourFinalsResponse:

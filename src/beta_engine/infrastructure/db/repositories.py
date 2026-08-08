@@ -513,6 +513,17 @@ class BranchCheckpointRecord:
 
 
 @dataclass(frozen=True)
+class HistoricalBranchSeasonStateRecord:
+    product_run_id: str; branch_id: str; checkpoint_id: str; checkpoint_sequence: int; checkpoint_kind: str
+    checkpoint_content_hash: str; payload_schema_version: str; checkpoint_season: int; checkpoint_week: int | None
+    checkpoint_event_id: str | None; checkpoint_event_sequence: int | None; season_state: SeasonState
+
+
+class HistoricalSeasonStateUnavailableError(ValueError):
+    """The checkpoint exists, but cannot safely provide canonical historical SeasonState."""
+
+
+@dataclass(frozen=True)
 class RunBranchStateRecord:
     branch_id: str
     run_id: str
@@ -1865,6 +1876,37 @@ class SimulationPersistenceRepository:
         with self._session_factory() as session:
             model = session.get(BranchCheckpointModel, checkpoint_id)
             return self._to_branch_checkpoint(model) if model is not None else None
+
+    def get_branch_checkpoint_season_state(self, *, product_run_id: str, branch_id: str, checkpoint_id: str) -> HistoricalBranchSeasonStateRecord:
+        """Validate checkpoint identity, integrity and its canonical historical SeasonState."""
+        if self.get_run_container(run_id=product_run_id) is None:
+            raise KeyError(f"product Run {product_run_id} was not found")
+        branch = self.get_run_branch(branch_id=branch_id)
+        if branch is None or branch.run_id != product_run_id:
+            raise KeyError(f"Branch {branch_id} was not found in product Run {product_run_id}")
+        try:
+            checkpoint = self.get_branch_checkpoint(checkpoint_id=checkpoint_id)
+        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise HistoricalSeasonStateUnavailableError("historical SeasonState unavailable: malformed checkpoint payload JSON") from exc
+        if checkpoint is None or checkpoint.run_id != product_run_id or checkpoint.branch_id != branch_id or checkpoint.checkpoint_id != checkpoint_id:
+            raise KeyError(f"checkpoint {checkpoint_id} was not found in Branch {branch_id} of product Run {product_run_id}")
+        if not self.verify_branch_checkpoint_hash(checkpoint_id=checkpoint_id):
+            raise HistoricalSeasonStateUnavailableError("historical SeasonState unavailable: checkpoint content integrity validation failed")
+        if checkpoint.payload_schema_version != "branch_checkpoint_payload_v1":
+            raise HistoricalSeasonStateUnavailableError("historical SeasonState unavailable: unsupported checkpoint payload schema")
+        payload = checkpoint.payload
+        if not isinstance(payload, dict) or not isinstance(payload.get("season_state"), dict):
+            raise HistoricalSeasonStateUnavailableError("historical SeasonState unavailable: checkpoint has no canonical season_state")
+        for key, expected in (("run_id", product_run_id), ("branch_id", branch_id)):
+            if key in payload and payload[key] != expected:
+                raise HistoricalSeasonStateUnavailableError(f"historical SeasonState unavailable: payload {key} identity is inconsistent")
+        try:
+            season_state = SeasonState.model_validate(payload["season_state"])
+        except Exception as exc:
+            raise HistoricalSeasonStateUnavailableError("historical SeasonState unavailable: malformed canonical season_state") from exc
+        return HistoricalBranchSeasonStateRecord(product_run_id, branch_id, checkpoint_id, checkpoint.sequence, checkpoint.kind,
+            checkpoint.content_hash, checkpoint.payload_schema_version, checkpoint.season, checkpoint.week, checkpoint.event_id,
+            checkpoint.event_sequence, season_state)
 
     def get_branch_checkpoint_by_command_id(self, *, branch_id: str, command_id: str) -> BranchCheckpointRecord | None:
         with self._session_factory() as session:

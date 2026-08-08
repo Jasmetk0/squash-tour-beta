@@ -110,3 +110,7 @@ export function useAdminTime(): AdminTimeContextValue {
   if (!value) throw new Error('useAdminTime must be used within AdminTimeProvider')
   return value
 }
+
+export function useOptionalAdminTime(): AdminTimeContextValue | null {
+  return useContext(AdminTimeContext)
+}

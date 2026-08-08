@@ -102,6 +102,7 @@ import type {
   RunNationDetail,
   RunNationsSummaryResponse,
   SeasonStateResponse,
+  HistoricalBranchSeasonStateResponse,
   SimulateResponse,
   WildcardCandidatesResponse,
   WildcardActionHistoryResponse,
@@ -820,6 +821,9 @@ export function listBranchCheckpoints(params?: { branch_id?: string; run_id?: st
   return request(`/branch-checkpoints${query.size ? `?${query}` : ''}`)
 }
 export function getBranchCheckpoint(checkpointId: string): Promise<BranchCheckpoint> { return request(`/branch-checkpoints/${encodeURIComponent(checkpointId)}`) }
+export function getAdminBranchCheckpointSeasonState(productRunId: string, branchId: string, checkpointId: string): Promise<HistoricalBranchSeasonStateResponse> {
+  return request(`/admin/runs/${encodeURIComponent(productRunId)}/branches/${encodeURIComponent(branchId)}/checkpoints/${encodeURIComponent(checkpointId)}/season-state`)
+}
 export function captureInitialBranchCheckpoint(payload: CaptureInitialBranchCheckpointRequest): Promise<BranchCheckpoint> { return request('/branch-checkpoints/capture-initial', { method: 'POST', body: JSON.stringify(payload) }) }
 export function captureSeasonRolloverBranchCheckpoint(payload: CaptureSeasonRolloverBranchCheckpointRequest): Promise<BranchCheckpoint> { return request('/branch-checkpoints/capture-season-rollover', { method: 'POST', body: JSON.stringify(payload) }) }
 export function captureBootstrapStartBranchCheckpoint(payload: CaptureBootstrapStartBranchCheckpointRequest): Promise<BranchCheckpoint> { return request('/branch-checkpoints/capture-bootstrap-start', { method: 'POST', body: JSON.stringify(payload) }) }

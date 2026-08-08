@@ -28,10 +28,12 @@ import {
 } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 import { getPlannedEventStatus } from './plannedEventUtils'
+import { useAdminViewedSeasonState } from '../admin/useAdminViewedSeasonState'
 
 export function PlannedEventDetailPage(): JSX.Element {
   const { runId = '', eventId = '' } = useParams()
   const queryClient = useQueryClient()
+  const viewed = useAdminViewedSeasonState()
   const [slotIndexInput, setSlotIndexInput] = useState('1')
   const [selectedPlayerId, setSelectedPlayerId] = useState('')
   const [withdrawnPlayerId, setWithdrawnPlayerId] = useState('')
@@ -60,61 +62,61 @@ export function PlannedEventDetailPage(): JSX.Element {
   const runQuery = useQuery({
     queryKey: ['run', runId],
     queryFn: () => getRun(runId),
-    enabled: Boolean(runId),
+    enabled: Boolean(runId) && !viewed.historical,
     retry: false
   })
   const eventsQuery = useQuery({
     queryKey: ['events', runId],
     queryFn: () => listEvents(runId),
-    enabled: Boolean(runId),
+    enabled: Boolean(runId) && !viewed.historical,
     retry: false
   })
   const wildcardsQuery = useQuery({
     queryKey: ['wildcards', runId, eventId],
     queryFn: () => getEventWildcards(runId, eventId),
-    enabled: Boolean(runId && eventId),
+    enabled: Boolean(runId && eventId) && !viewed.historical,
     retry: false
   })
   const wildcardCandidatesQuery = useQuery({
     queryKey: ['wildcard-candidates', runId, eventId],
     queryFn: () => getEventWildcardCandidates(runId, eventId),
-    enabled: Boolean(runId && eventId),
+    enabled: Boolean(runId && eventId) && !viewed.historical,
     retry: false
   })
   const wildcardActionsQuery = useQuery({
     queryKey: ['wildcard-actions', runId, eventId],
     queryFn: () => getEventWildcardActions(runId, eventId),
-    enabled: Boolean(runId && eventId),
+    enabled: Boolean(runId && eventId) && !viewed.historical,
     retry: false
   })
   const preDrawWithdrawalStateQuery = useQuery({
     queryKey: ['pre-draw-withdrawal-state', runId, eventId],
     queryFn: () => getEventPreDrawWithdrawalState(runId, eventId),
-    enabled: Boolean(runId && eventId),
+    enabled: Boolean(runId && eventId) && !viewed.historical,
     retry: false
   })
   const preDrawWithdrawalActionsQuery = useQuery({
     queryKey: ['pre-draw-withdrawal-actions', runId, eventId],
     queryFn: () => getEventPreDrawWithdrawalActions(runId, eventId),
-    enabled: Boolean(runId && eventId),
+    enabled: Boolean(runId && eventId) && !viewed.historical,
     retry: false
   })
   const lateReplacementStateQuery = useQuery({
     queryKey: ['late-replacement-state', runId, eventId],
     queryFn: () => getEventLateReplacementState(runId, eventId),
-    enabled: Boolean(runId && eventId),
+    enabled: Boolean(runId && eventId) && !viewed.historical,
     retry: false
   })
   const lateReplacementCandidatesQuery = useQuery({
     queryKey: ['late-replacement-candidates', runId, eventId],
     queryFn: () => getEventLateReplacementCandidates(runId, eventId),
-    enabled: Boolean(runId && eventId),
+    enabled: Boolean(runId && eventId) && !viewed.historical,
     retry: false
   })
   const lateReplacementActionsQuery = useQuery({
     queryKey: ['late-replacement-actions', runId, eventId],
     queryFn: () => getEventLateReplacementActions(runId, eventId),
-    enabled: Boolean(runId && eventId),
+    enabled: Boolean(runId && eventId) && !viewed.historical,
     retry: false
   })
   const wildcardMutation = useMutation({
@@ -135,9 +137,10 @@ export function PlannedEventDetailPage(): JSX.Element {
     onSuccess: invalidateCommissionerQueries
   })
 
-  const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
-  const nextEventIndex = runQuery.data?.season_state.next_event_index ?? 0
-  const completedEventIds = new Set(runQuery.data?.season_state.completed_event_ids ?? [])
+  const seasonState = viewed.historical ? viewed.seasonState : runQuery.data?.season_state
+  const orderedEvents = seasonState?.ordered_events ?? []
+  const nextEventIndex = seasonState?.next_event_index ?? 0
+  const completedEventIds = new Set(seasonState?.completed_event_ids ?? [])
   const persistedEventIds = new Set((eventsQuery.data?.events ?? []).map((event) => event.event_id))
 
   const plannedEventIndex = orderedEvents.findIndex((event) => event.event_id === eventId)
@@ -192,6 +195,9 @@ export function PlannedEventDetailPage(): JSX.Element {
     lateReplacementMutation.mutate({ withdrawnPlayerId: lateReplacementWithdrawnPlayerId.trim() })
   }
 
+  if (viewed.historical && viewed.unavailable) return <section className="panel"><h1>Historical calendar is not available for this checkpoint.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
+  if (viewed.historical && viewed.query.isLoading) return <section className="panel"><p className="status">Loading historical planned event...</p></section>
+
   return (
     <section className="panel">
       <RunScopedHeader
@@ -203,7 +209,8 @@ export function PlannedEventDetailPage(): JSX.Element {
       <CurrentContextStrip
         items={[
           { label: 'Run', value: runId || 'unknown' },
-          { label: 'Season', value: runQuery.data?.season_state.season ?? '—' },
+          { label: 'Time', value: viewed.historical ? 'Past' : 'Present' },
+          { label: 'Season', value: seasonState?.season ?? '—' },
           { label: 'Planned event', value: eventId || 'unknown' }
         ]}
       />
@@ -216,7 +223,7 @@ export function PlannedEventDetailPage(): JSX.Element {
           {' · '}
           <Link to={`/runs/${runId}`}>Back to Run Detail</Link>
           {' · '}
-          <Link to={`/runs/${runId}/events`}>Open Events history</Link>
+          {!viewed.historical ? <Link to={`/runs/${runId}/events`}>Open Events history</Link> : <span>Persisted historical event detail is not available in this phase.</span>}
         </p>
         {plannedEvent ? (
           <p>
@@ -239,7 +246,7 @@ export function PlannedEventDetailPage(): JSX.Element {
       <SectionCard title="Planned event summary">
         {runQuery.isLoading ? <p className="status">Loading planned event...</p> : null}
         {runQuery.error ? <p className="error">Failed to load run season state: {formatApiError(runQuery.error)}</p> : null}
-        {eventId && runQuery.data && !plannedEvent ? (
+        {eventId && seasonState && !plannedEvent ? (
           <EmptyState message={`Event ${eventId} is not present in this run's ordered season plan.`} />
         ) : null}
         {!eventId ? <EmptyState message="No planned event ID was provided in the URL." /> : null}
@@ -286,10 +293,10 @@ export function PlannedEventDetailPage(): JSX.Element {
             items={[
               { label: 'Planned status', value: status ?? '—' },
               { label: 'Completed in season state', value: completedEventIds.has(plannedEvent.event_id) ? 'Yes' : 'No' },
-              { label: 'Persisted event record', value: hasPersistedHistory ? 'Available' : 'Not available' }
+              { label: 'Persisted event record', value: viewed.historical ? 'Not available in this historical slice' : hasPersistedHistory ? 'Available' : 'Not available' }
             ]}
           />
-          {status === 'Completed' && hasPersistedHistory ? (
+          {!viewed.historical && status === 'Completed' && hasPersistedHistory ? (
             <p>
               <Link to={`/runs/${runId}/events/${encodeURIComponent(plannedEvent.event_id)}`}>
                 Inspect persisted event detail for {plannedEvent.event_id}
@@ -301,7 +308,7 @@ export function PlannedEventDetailPage(): JSX.Element {
 
       {eventsQuery.error ? <p className="error">Failed to load persisted events: {formatApiError(eventsQuery.error)}</p> : null}
 
-      {plannedEvent ? (
+      {plannedEvent && !viewed.historical ? (
         <SectionCard title="Commissioner late replacement lucky loser">
           {lateReplacementStateQuery.isLoading ? <p className="status">Loading late-replacement state...</p> : null}
           {lateReplacementStateQuery.error ? (
@@ -379,7 +386,7 @@ export function PlannedEventDetailPage(): JSX.Element {
         </SectionCard>
       ) : null}
 
-      {plannedEvent ? (
+      {plannedEvent && !viewed.historical ? (
         <SectionCard title="Late-replacement action history">
           {lateReplacementActionsQuery.isLoading ? <p className="status">Loading late-replacement history...</p> : null}
           {lateReplacementActionsQuery.error ? (
@@ -402,7 +409,7 @@ export function PlannedEventDetailPage(): JSX.Element {
         </SectionCard>
       ) : null}
 
-      {plannedEvent ? (
+      {plannedEvent && !viewed.historical ? (
         <SectionCard title="Commissioner pre-draw withdrawal replacement">
           {preDrawWithdrawalStateQuery.isLoading ? <p className="status">Loading pre-draw withdrawal state...</p> : null}
           {preDrawWithdrawalStateQuery.error ? (
@@ -459,7 +466,7 @@ export function PlannedEventDetailPage(): JSX.Element {
         </SectionCard>
       ) : null}
 
-      {plannedEvent ? (
+      {plannedEvent && !viewed.historical ? (
         <SectionCard title="Pre-draw withdrawal action history">
           {preDrawWithdrawalActionsQuery.isLoading ? <p className="status">Loading pre-draw withdrawal history...</p> : null}
           {preDrawWithdrawalActionsQuery.error ? (
@@ -484,7 +491,7 @@ export function PlannedEventDetailPage(): JSX.Element {
         </SectionCard>
       ) : null}
 
-      {plannedEvent ? (
+      {plannedEvent && !viewed.historical ? (
         <SectionCard title="Commissioner wildcards">
           {wildcardsQuery.isLoading ? <p className="status">Loading wildcard slots...</p> : null}
           {wildcardsQuery.error ? <p className="error">Failed to load wildcard state: {formatApiError(wildcardsQuery.error)}</p> : null}
@@ -568,7 +575,7 @@ export function PlannedEventDetailPage(): JSX.Element {
           ) : null}
         </SectionCard>
       ) : null}
-      {plannedEvent ? (
+      {plannedEvent && !viewed.historical ? (
         <SectionCard title="Wildcard action history">
           <p className="status">
             Append-only event audit trail sourced from admin actions for this event.{' '}

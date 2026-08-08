@@ -1,14 +1,16 @@
 import { ModeSwitcher } from './ModeSwitcher'
+import { AdminRunSelector } from './AdminRunSelector'
 import { ViewerActiveRunCompact } from './ViewerRunSelector'
 import { appShellSubtitleForMode, appShellTitleForMode } from '../navigation/appShellMode'
-import type { AppShellMode } from '../navigation/appShellMode'
+import type { AdminScope, AppShellMode } from '../navigation/appShellMode'
 
 type AppShellHeaderProps = {
   mode: AppShellMode
   pathname: string
+  adminScope: AdminScope
 }
 
-export function AppShellHeader({ mode, pathname }: AppShellHeaderProps): JSX.Element {
+export function AppShellHeader({ mode, pathname, adminScope }: AppShellHeaderProps): JSX.Element {
   return (
     <header className="app-header">
       <div>
@@ -16,6 +18,9 @@ export function AppShellHeader({ mode, pathname }: AppShellHeaderProps): JSX.Ele
         <p className="subtitle">{appShellSubtitleForMode(mode)}</p>
       </div>
       <div className="app-header__controls">
+        {mode === 'admin' && adminScope.kind === 'run' ? (
+          <AdminRunSelector pathname={pathname} runId={adminScope.runId} />
+        ) : null}
         {mode === 'viewer' ? (
           <div className="app-header__viewer-context" aria-label="Viewer header context controls">
             <ViewerActiveRunCompact />

@@ -10,6 +10,7 @@ import { RunSimulationPage } from './RunSimulationPage'
 const context = vi.hoisted(() => ({ value: null as any }))
 const api = vi.hoisted(() => ({ getRunContainer: vi.fn(), getBranchState: vi.fn(), getBranchCheckpoint: vi.fn(), simulateNextMatchOnBranch: vi.fn(), simulateNextRoundOnBranch: vi.fn(), simulateNextWeekOnBranch: vi.fn(), simulateNextTournamentOnBranch: vi.fn(), simulateFullSeasonOnBranch: vi.fn(), simulateWorldTourFinalsOnBranch: vi.fn(), makeOfficialRunBranch: vi.fn() }))
 vi.mock('../admin/AdminBranchContext', () => ({ useAdminBranch: () => context.value }))
+vi.mock('../admin/AdminTimeContext', () => ({ useAdminTime: () => ({ mode: 'present' }) }))
 vi.mock('../api/client', () => api)
 
 const branch = (id: string, head: string, readOnly = false) => ({ branch_id: id, run_id: 'run-a', display_name: id === 'branch-a' ? 'Branch A' : 'Branch B', status: 'active', read_only: readOnly, branch_seed: 1, legacy_simulation_run_id: `legacy-${id}`, forked_from_branch_id: null, forked_from_checkpoint_id: null, head_checkpoint_id: head, is_official: id === 'branch-a' })

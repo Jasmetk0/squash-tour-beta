@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
 import {
-  getBranchState,
   getFinalsSummary,
   getLatestRollover,
   getRun,
@@ -15,8 +14,7 @@ import {
   rebuildRunWorld
 } from '../api/client'
 import { useAdminBranch } from '../admin/AdminBranchContext'
-import { adminBranchStateQueryKey } from '../admin/adminQueryKeys'
-import type { BranchState } from '../api/types'
+import { useAdminTime } from '../admin/AdminTimeContext'
 import {
   ActionStatusBlock,
   CompactSummaryCard,
@@ -33,19 +31,7 @@ export function RunPage(): JSX.Element {
   const { runId = '' } = useParams()
   const queryClient = useQueryClient()
   const { selectedBranch, selectedBranchId, viewerBranchId } = useAdminBranch()
-
-  const branchStateQuery = useQuery({
-    queryKey: adminBranchStateQueryKey(runId, selectedBranchId),
-    queryFn: () => getBranchState(selectedBranchId!),
-    enabled: Boolean(runId && selectedBranchId),
-    retry: false
-  })
-  const branchState: BranchState | null = branchStateQuery.data
-    && branchStateQuery.data.branch_id === selectedBranchId
-    && branchStateQuery.data.run_id === runId
-    ? branchStateQuery.data
-    : null
-  const branchStateIdentityMismatch = Boolean(branchStateQuery.data && !branchState)
+  const time = useAdminTime()
 
   const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId) })
   const containerQuery = useQuery({
@@ -127,16 +113,17 @@ export function RunPage(): JSX.Element {
         items={[
           { label: 'Run', value: run?.run_id ?? runId ?? 'unknown' },
           { label: 'Branch', value: selectedBranch?.display_name ?? '—' },
-          { label: 'Season', value: branchState?.current_season ?? '—' },
-          { label: 'Week', value: branchState?.current_week != null ? `W${branchState.current_week}` : '—' },
-          { label: 'Event', value: branchState?.current_event_id ?? '—' }
+          { label: 'Time', value: 'Present' },
+          { label: 'Season', value: time.currentSeason ?? '—' },
+          { label: 'Week', value: time.currentWeek != null ? `W${time.currentWeek}` : '—' },
+          { label: 'Event', value: time.currentEventId ?? '—' }
         ]}
       />
 
-      {selectedBranchId && branchStateQuery.isLoading && <p className="status">Loading Active Admin Branch position…</p>}
-      {selectedBranchId && (branchStateQuery.error || branchStateIdentityMismatch) && (
+      {selectedBranchId && time.isLoading && <p className="status">Loading Active Admin Branch position…</p>}
+      {selectedBranchId && time.error && (
         <p role="alert" className="error">
-          Active Admin Branch position unavailable{branchStateIdentityMismatch ? ': returned Branch State identity does not match this Run and Branch.' : '.'}
+          Active Admin Branch position unavailable{time.identityMismatch ? ': returned Branch State identity does not match this Run and Branch.' : '.'}
         </p>
       )}
 
@@ -177,14 +164,15 @@ export function RunPage(): JSX.Element {
                 { label: 'Branch ID', value: selectedBranchId ?? 'Not available' },
                 { label: 'Status', value: selectedBranch?.status ?? 'Not available' },
                 { label: 'Viewing mode', value: selectedBranch?.read_only ? 'Read-only' : 'Writable' },
-                { label: 'Head checkpoint', value: branchState?.head_checkpoint_id ?? selectedBranch?.head_checkpoint_id ?? '—' },
-                { label: 'Current season', value: branchState?.current_season ?? '—' },
-                { label: 'Current week', value: branchState?.current_week ?? '—' },
-                { label: 'Current event', value: branchState?.current_event_id ?? '—' },
+                { label: 'View time', value: 'Present' },
+                { label: 'Head checkpoint', value: time.headCheckpointId ?? '—' },
+                { label: 'Current season', value: time.currentSeason ?? '—' },
+                { label: 'Current week', value: time.currentWeek ?? '—' },
+                { label: 'Current event', value: time.currentEventId ?? '—' },
               ]}
             />
             {!selectedBranchId && <p className="status">No Active Admin Branch is available.</p>}
-            {selectedBranchId && !branchStateQuery.isLoading && !branchState && (
+            {selectedBranchId && !time.isLoading && !time.isAvailable && (
               <p className="status">Branch position is unavailable. Legacy Run position is not used as a fallback.</p>
             )}
           </SectionCard>

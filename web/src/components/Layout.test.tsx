@@ -17,6 +17,7 @@ const api = vi.hoisted(() => ({
   listRunContainers: vi.fn(),
   getRunContainer: vi.fn(),
   listRunBranches: vi.fn(),
+  getBranchState: vi.fn(),
   getViewerOfficialRunContext: vi.fn(),
   ApiError: class ApiError extends Error { status = 500 }
 }))
@@ -56,6 +57,7 @@ describe('Layout mode navigation', () => {
       branch_seed: 1, forked_from_branch_id: null, forked_from_checkpoint_id: null, head_checkpoint_id: null,
       legacy_simulation_run_id: null, metadata_json: {}, is_official: true,
     }] }))
+    api.getBranchState.mockImplementation(async (branchId: string) => ({ branch_id: branchId, run_id: branchId === 'branch-b' ? FAX_REFERENCE_RUN_ID : branchId.replace(/-branch$/, ''), head_checkpoint_id: 'cp-1', current_season: branchId === 'branch-b' ? 2007 : 2004, current_week: branchId === 'branch-b' ? 42 : 17, current_event_id: 'event-a', current_event_sequence: 1, state_schema_version: '1', status: 'ready', metadata_json: {} }))
   })
 
   it('renders only Global Admin navigation on a global route', async () => {
@@ -69,6 +71,7 @@ describe('Layout mode navigation', () => {
     expect(screen.queryByText(/Current run context:/)).not.toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Admin active Run' })).not.toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Admin active Branch' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Admin view time')).not.toBeInTheDocument()
   })
 
   it('renders only Run Admin navigation at a Run root', async () => {
@@ -86,6 +89,7 @@ describe('Layout mode navigation', () => {
     const runSelector = await screen.findByRole('combobox', { name: 'Admin active Run' })
     expect(runSelector).toHaveValue(FAX_REFERENCE_RUN_ID)
     expect(await screen.findByRole('combobox', { name: 'Admin active Branch' })).toHaveValue(`${FAX_REFERENCE_RUN_ID}-branch`)
+    expect(await screen.findByLabelText('Admin view time')).toHaveTextContent('Present · S2004 · W17')
     expect(screen.getByText('FAX Reference v1', { selector: '.admin-active-run-compact__status strong' })).toBeInTheDocument()
   })
 
@@ -117,10 +121,12 @@ describe('Layout mode navigation', () => {
     await waitFor(() => expect(selector).toHaveValue(`${FAX_REFERENCE_RUN_ID}-branch`))
     fireEvent.change(selector, { target: { value: 'branch-b' } })
     expect(selector).toHaveValue('branch-b')
+    await waitFor(() => expect(screen.getByLabelText('Admin view time')).toHaveTextContent('S2007 · W42'))
 
     fireEvent.click(screen.getByRole('link', { name: 'Events' }))
     await waitFor(() => expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/events`))
     expect(screen.getByRole('combobox', { name: 'Admin active Branch' })).toHaveValue('branch-b')
+    expect(screen.getByLabelText('Admin view time')).toHaveTextContent('S2007 · W42')
   })
 
   it('switches a generic Run route without changing Viewer selection', async () => {
@@ -157,6 +163,7 @@ describe('Layout mode navigation', () => {
     expect(screen.queryByText('Current run context: new')).not.toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Admin active Run' })).not.toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Admin active Branch' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Admin view time')).not.toBeInTheDocument()
   })
 
   it('keeps the route Run usable as a fallback when metadata loading fails', async () => {

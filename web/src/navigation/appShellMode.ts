@@ -18,9 +18,9 @@ export function readAppShellRunId(pathname: string, paramRunId?: string): string
 }
 
 export function resolveAdminScope(pathname: string): AdminScope {
-  const match = pathname.match(/^\/admin\/runs\/([^/]+)(?:\/|$)/)
-  if (!match || match[1] === 'new') return { kind: 'global' }
-  return { kind: 'run', runId: match[1] }
+  if (readAppShellMode(pathname) !== 'admin') return { kind: 'global' }
+  const runId = readAppShellRunId(pathname)
+  return runId ? { kind: 'run', runId } : { kind: 'global' }
 }
 
 export function appShellTitleForMode(mode: AppShellMode): string {

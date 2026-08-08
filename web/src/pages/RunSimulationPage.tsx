@@ -6,7 +6,7 @@ import { getBranchCheckpoint, getBranchState, getRunContainer } from '../api/cli
 import type { AdminBranchExecutionResponse, BranchState } from '../api/types'
 import { useAdminBranch } from '../admin/AdminBranchContext'
 import { useAdminTime } from '../admin/AdminTimeContext'
-import { adminBranchHeadQueryKey, adminBranchStateQueryKey } from '../admin/adminQueryKeys'
+import { adminBranchCheckpointsQueryKey, adminBranchHeadQueryKey, adminBranchStateQueryKey } from '../admin/adminQueryKeys'
 import { BranchSimulationAction, executeBranchSimulation, newCommandId, simulationActions, simulationEligibility, validExecutionResponse } from '../admin/branchSimulation'
 import { CurrentContextStrip, MetadataList, PageIntro, SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
@@ -49,6 +49,7 @@ export function RunSimulationPage(): JSX.Element {
       queryClient.invalidateQueries({ queryKey: ['run-branches', targetRunId] }),
       queryClient.invalidateQueries({ queryKey: ['branch-states', targetRunId] }),
       queryClient.invalidateQueries({ queryKey: ['branch-checkpoints', targetRunId] }),
+      queryClient.invalidateQueries({ queryKey: adminBranchCheckpointsQueryKey(targetRunId, targetBranchId) }),
     ])
   }
 
@@ -91,7 +92,8 @@ export function RunSimulationPage(): JSX.Element {
     <PageIntro title="Simulation" subtitle="Advance the Active Admin Branch at its reviewed deterministic head." meta={`Run: ${runQuery.data?.display_name ?? runId}`} />
     <CurrentContextStrip items={[
       { label: 'Run', value: runId || '—' }, { label: 'Branch', value: selectedBranch ? `${selectedBranch.display_name} (${selectedBranch.branch_id})` : '—' },
-      { label: 'View time', value: time.mode === 'present' ? 'Present' : '—' }, { label: 'Execution target', value: 'Branch HEAD' },
+      { label: 'View context', value: time.mode === 'present' ? 'Present' : `Past · S${time.viewSeason ?? '—'} · ${time.viewWeek == null ? '—' : `W${time.viewWeek}`} · ${time.viewCheckpointId ?? 'unavailable'}` },
+      { label: 'Execution target', value: 'Branch HEAD' },
       { label: 'Season', value: state?.current_season ?? '—' }, { label: 'Week', value: state?.current_week != null ? `W${state.current_week}` : '—' },
       { label: 'Event', value: state?.current_event_id ?? '—' }, { label: 'Head', value: currentHead ?? '—' },
     ]} />

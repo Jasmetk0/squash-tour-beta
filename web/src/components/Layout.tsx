@@ -7,6 +7,7 @@ import { appShellClassNameForMode, readAppShellMode, readAppShellRunId, resolveA
 import { ViewerContextProvider } from '../viewer/ViewerContext'
 import { AdminBranchProvider } from '../admin/AdminBranchContext'
 import { AdminTimeProvider } from '../admin/AdminTimeContext'
+import { HistoricalAdminTimeBoundary } from './HistoricalAdminTimeBoundary'
 
 export function Layout(): JSX.Element {
   const location = useLocation()
@@ -22,7 +23,7 @@ export function Layout(): JSX.Element {
         {mode === 'viewer' ? <ViewerTopbar /> : null}
         {mode !== 'admin' && runId ? <p className="status">Current run context: {runId}</p> : null}
         <main>
-          <Outlet />
+          {mode === 'admin' && adminScope.kind === 'run' ? <HistoricalAdminTimeBoundary /> : <Outlet />}
         </main>
       </div>
   )

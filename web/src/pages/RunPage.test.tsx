@@ -20,6 +20,7 @@ const api = vi.hoisted(() => ({
   getRun: vi.fn(),
   listRunBranches: vi.fn(),
   getBranchState: vi.fn(),
+  listBranchCheckpoints: vi.fn(),
   makeOfficialRunBranch: vi.fn(),
   getRunContainer: vi.fn(),
   getRunStatusSummary: vi.fn(),
@@ -62,6 +63,7 @@ describe('RunPage', () => {
       ]
     })
     api.getBranchState.mockResolvedValue({ branch_id: FAX_REFERENCE_BRANCH_ID, run_id: FAX_REFERENCE_RUN_ID, head_checkpoint_id: 'cp-a', current_season: 2004, current_week: 17, current_event_id: 'event-a', current_event_sequence: 3, state_schema_version: '1', status: 'ready', metadata_json: {} })
+    api.listBranchCheckpoints.mockResolvedValue({ branch_checkpoints: [] })
     api.getRun.mockResolvedValue({
       run: { run_id: FAX_REFERENCE_RUN_ID, season: 2025, seed: 3, next_event_index: 1, total_events: 4, completed_event_ids: ['E1'] },
       season_state: {

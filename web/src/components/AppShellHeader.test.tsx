@@ -9,7 +9,7 @@ import { resolveAdminScope } from '../navigation/appShellMode'
 import { AdminBranchProvider } from '../admin/AdminBranchContext'
 import { AdminTimeProvider } from '../admin/AdminTimeContext'
 
-const api = vi.hoisted(() => ({ listRunContainers: vi.fn(), getRunContainer: vi.fn(), listRunBranches: vi.fn(), getBranchState: vi.fn() }))
+const api = vi.hoisted(() => ({ listRunContainers: vi.fn(), getRunContainer: vi.fn(), listRunBranches: vi.fn(), getBranchState: vi.fn(), listBranchCheckpoints: vi.fn() }))
 vi.mock('../api/client', () => api)
 
 function renderAppShellHeader(mode: AppShellMode, pathname: string): void {
@@ -30,6 +30,7 @@ describe('AppShellHeader', () => {
     api.getRunContainer.mockResolvedValue({ run_id: 'run-a', official_branch_id: null })
     api.listRunBranches.mockResolvedValue({ run_branches: [] })
     api.getBranchState.mockResolvedValue({})
+    api.listBranchCheckpoints.mockResolvedValue({ branch_checkpoints: [] })
   })
   it('renders the Viewer mode title and subtitle', () => {
     renderAppShellHeader('viewer', '/viewer')

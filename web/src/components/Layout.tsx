@@ -5,6 +5,7 @@ import { AppShellHeader } from './AppShellHeader'
 import { ViewerTopbar } from './ViewerTopbar'
 import { appShellClassNameForMode, readAppShellMode, readAppShellRunId, resolveAdminScope } from '../navigation/appShellMode'
 import { ViewerContextProvider } from '../viewer/ViewerContext'
+import { AdminBranchProvider } from '../admin/AdminBranchContext'
 
 export function Layout(): JSX.Element {
   const location = useLocation()
@@ -13,8 +14,7 @@ export function Layout(): JSX.Element {
   const runId = readAppShellRunId(location.pathname, paramRunId)
   const adminScope = resolveAdminScope(location.pathname)
 
-  return (
-    <ViewerContextProvider>
+  const shell = (
       <div className={appShellClassNameForMode(mode)}>
         <AppShellHeader mode={mode} pathname={location.pathname} adminScope={adminScope} />
         {mode === 'admin' ? <AdminNavigation scope={adminScope} /> : null}
@@ -24,6 +24,13 @@ export function Layout(): JSX.Element {
           <Outlet />
         </main>
       </div>
+  )
+
+  return (
+    <ViewerContextProvider>
+      {mode === 'admin' && adminScope.kind === 'run'
+        ? <AdminBranchProvider runId={adminScope.runId}>{shell}</AdminBranchProvider>
+        : shell}
     </ViewerContextProvider>
   )
 }

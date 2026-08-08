@@ -15,6 +15,8 @@ import {
 const api = vi.hoisted(() => ({
   listRuns: vi.fn(),
   listRunContainers: vi.fn(),
+  getRunContainer: vi.fn(),
+  listRunBranches: vi.fn(),
   getViewerOfficialRunContext: vi.fn(),
   ApiError: class ApiError extends Error { status = 500 }
 }))
@@ -48,6 +50,12 @@ describe('Layout mode navigation', () => {
       run_containers: [...referenceContainers.run_containers, disposable],
     })
     api.getViewerOfficialRunContext.mockResolvedValue(makeFaxReferenceViewerContext())
+    api.getRunContainer.mockImplementation(async (runId: string) => ({ ...referenceContainers.run_containers[0], run_id: runId, official_branch_id: `${runId}-branch` }))
+    api.listRunBranches.mockImplementation(async (runId: string) => ({ run_branches: [{
+      branch_id: `${runId}-branch`, run_id: runId, display_name: 'Active timeline', status: 'active', read_only: false,
+      branch_seed: 1, forked_from_branch_id: null, forked_from_checkpoint_id: null, head_checkpoint_id: null,
+      legacy_simulation_run_id: null, metadata_json: {}, is_official: true,
+    }] }))
   })
 
   it('renders only Global Admin navigation on a global route', async () => {
@@ -60,6 +68,7 @@ describe('Layout mode navigation', () => {
     expect(screen.queryByRole('navigation', { name: 'Run Admin navigation' })).not.toBeInTheDocument()
     expect(screen.queryByText(/Current run context:/)).not.toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Admin active Run' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Admin active Branch' })).not.toBeInTheDocument()
   })
 
   it('renders only Run Admin navigation at a Run root', async () => {
@@ -76,6 +85,7 @@ describe('Layout mode navigation', () => {
     expect(screen.getByText(`Current run context: ${FAX_REFERENCE_RUN_ID}`)).toBeInTheDocument()
     const runSelector = await screen.findByRole('combobox', { name: 'Admin active Run' })
     expect(runSelector).toHaveValue(FAX_REFERENCE_RUN_ID)
+    expect(await screen.findByRole('combobox', { name: 'Admin active Branch' })).toHaveValue(`${FAX_REFERENCE_RUN_ID}-branch`)
     expect(screen.getByText('FAX Reference v1', { selector: '.admin-active-run-compact__status strong' })).toBeInTheDocument()
   })
 
@@ -121,6 +131,7 @@ describe('Layout mode navigation', () => {
     expect(screen.queryByRole('navigation', { name: 'Run Admin navigation' })).not.toBeInTheDocument()
     expect(screen.queryByText('Current run context: new')).not.toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Admin active Run' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Admin active Branch' })).not.toBeInTheDocument()
   })
 
   it('keeps the route Run usable as a fallback when metadata loading fails', async () => {

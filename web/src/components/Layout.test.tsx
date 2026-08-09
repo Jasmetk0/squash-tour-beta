@@ -91,7 +91,8 @@ describe('Layout mode navigation', () => {
     const runSelector = await screen.findByRole('combobox', { name: 'Admin active Run' })
     expect(runSelector).toHaveValue(FAX_REFERENCE_RUN_ID)
     expect(await screen.findByRole('combobox', { name: 'Admin active Branch' })).toHaveValue(`${FAX_REFERENCE_RUN_ID}-branch`)
-    expect(await screen.findByLabelText('Admin view time')).toHaveTextContent('Present · S2004 · W17')
+    const timeControl = await screen.findByLabelText('Admin view time')
+    await waitFor(() => expect(timeControl).toHaveTextContent('Present · S2004 · W17'))
     expect(screen.getByText('FAX Reference v1', { selector: '.admin-active-run-compact__status strong' })).toBeInTheDocument()
   })
 

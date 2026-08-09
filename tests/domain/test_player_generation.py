@@ -1,4 +1,5 @@
 from __future__ import annotations
+from tests.support.world_packages import load_fax_reference_countries
 
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.countries import Country, CountryTalentModel
@@ -6,13 +7,12 @@ from beta_engine.domain.matches import MatchEngine
 from beta_engine.domain.players import PlayerGenerator
 from beta_engine.infrastructure.world_config import (
     PlayerIdentityConfig,
-    load_countries_config,
     load_player_identity_config,
 )
 
 
 def _generator(seed: int) -> tuple[PlayerGenerator, list[Country], PlayerIdentityConfig]:
-    countries = load_countries_config().countries
+    countries = load_fax_reference_countries().countries
     identity = load_player_identity_config()
     generator = PlayerGenerator(
         rng=DeterministicRng(seed),
@@ -41,23 +41,23 @@ def _sample_average_ability(generator: PlayerGenerator, country: Country, count:
 def test_same_seed_and_inputs_generate_same_players() -> None:
     gen_a, countries, _ = _generator(2028)
     gen_b, _, _ = _generator(2028)
-    egypt = next(c for c in countries if c.code == "EGY")
+    germanica = next(c for c in countries if c.code == "GER")
 
-    a = [gen_a.generate(country=egypt, sequence=i).model_dump() for i in range(1, 8)]
-    b = [gen_b.generate(country=egypt, sequence=i).model_dump() for i in range(1, 8)]
+    a = [gen_a.generate(country=germanica, sequence=i).model_dump() for i in range(1, 8)]
+    b = [gen_b.generate(country=germanica, sequence=i).model_dump() for i in range(1, 8)]
 
     assert a == b
 
 
 def test_strong_country_distribution_differs_from_weaker_country() -> None:
     generator, countries, _ = _generator(555)
-    egypt = next(c for c in countries if c.code == "EGY")
-    nigeria = next(c for c in countries if c.code == "NGA")
+    germanica = next(c for c in countries if c.code == "GER")
+    hungarica = next(c for c in countries if c.code == "HUN")
 
-    egypt_avg = _sample_average_ability(generator, egypt, count=120)
-    nigeria_avg = _sample_average_ability(generator, nigeria, count=120)
+    germanica_avg = _sample_average_ability(generator, germanica, count=120)
+    hungarica_avg = _sample_average_ability(generator, hungarica, count=120)
 
-    assert egypt_avg > nigeria_avg + 8.0
+    assert germanica_avg > hungarica_avg + 8.0
 
 
 def test_generation_depends_on_more_than_population() -> None:
@@ -95,9 +95,9 @@ def test_generation_depends_on_more_than_population() -> None:
 
 def test_generated_player_has_required_mvp_fields() -> None:
     generator, countries, _ = _generator(333)
-    england = next(c for c in countries if c.code == "ENG")
+    germanica = next(c for c in countries if c.code == "GER")
 
-    player = generator.generate(country=england, sequence=1)
+    player = generator.generate(country=germanica, sequence=1)
 
     expected_fields = {
         "player_id",

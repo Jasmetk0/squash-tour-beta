@@ -1,4 +1,5 @@
 from __future__ import annotations
+from tests.support.world_packages import load_fax_reference_countries
 
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.draws import DrawEngine, DrawEntrantType
@@ -12,11 +13,11 @@ from beta_engine.domain.tournaments.progression import (
 )
 from beta_engine.infrastructure.entry_config import load_entry_tuning_config
 from beta_engine.infrastructure.tournament_config import load_season_calendar, load_tournament_templates_config
-from beta_engine.infrastructure.world_config import load_countries_config, load_player_identity_config
+from beta_engine.infrastructure.world_config import load_player_identity_config
 
 
 def _players(seed: int, per_country: int = 24) -> tuple[list[Player], dict[str, Country]]:
-    countries = load_countries_config().countries
+    countries = load_fax_reference_countries().countries
     generator = PlayerGenerator(
         rng=DeterministicRng(seed),
         identity_config=load_player_identity_config(),

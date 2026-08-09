@@ -10,6 +10,8 @@ from urllib import error, request
 import uvicorn
 
 from beta_engine.main import create_app
+from beta_engine.domain.countries import CountriesConfig
+from tests.support.world_packages import materialize_test_world_package
 
 COUNTRIES_FIXTURE = {
     "dataset_status": "temporary_seed_demo",
@@ -54,10 +56,14 @@ class ApiServer:
     def __init__(self, *, database_url: str, countries_config_path: str, manual_overrides_config_path: str) -> None:
         self.port = _free_port()
         self.base_url = f"http://127.0.0.1:{self.port}"
+        countries = CountriesConfig.model_validate(json.loads(Path(countries_config_path).read_text(encoding="utf-8")))
+        world_packages_root = Path(countries_config_path).parent / "world_packages"
+        materialize_test_world_package(world_packages_root, countries)
         app = create_app(
             database_url=database_url,
             countries_config_path=countries_config_path,
             manual_player_overrides_config_path=manual_overrides_config_path,
+            world_packages_root=str(world_packages_root),
         )
         self.server = uvicorn.Server(uvicorn.Config(app=app, host="127.0.0.1", port=self.port, log_level="error"))
         self.thread = threading.Thread(target=self.server.run, daemon=True)

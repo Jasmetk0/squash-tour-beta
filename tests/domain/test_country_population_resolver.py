@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import json
-from pathlib import Path
 
 import pytest
 
-from beta_engine.domain.countries.models import CountriesConfig, Country
+from beta_engine.domain.countries.models import Country
 from beta_engine.domain.countries.population_resolver import resolve_effective_population
 
 
@@ -190,9 +188,9 @@ def test_resolver_does_not_mutate_population_by_year_or_fill_missing_years() -> 
 
 
 def test_official_fax_world_ger_uses_authored_2020_population_year_as_nearest() -> None:
-    payload = json.loads(Path("config/worlds/official_fax_world/countries.json").read_text())
-    config = CountriesConfig.model_validate(payload)
-    germany = next(country for country in config.countries if country.code == "GER")
+    from tests.support.world_packages import load_fax_reference_countries
+
+    germany = next(country for country in load_fax_reference_countries().countries if country.code == "GER")
 
     result = resolve_effective_population(germany, 1987)
 

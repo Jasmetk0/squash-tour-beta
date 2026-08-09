@@ -1,4 +1,5 @@
 from __future__ import annotations
+from tests.support.world_packages import load_fax_reference_countries
 
 from statistics import mean
 
@@ -11,11 +12,13 @@ from beta_engine.infrastructure.tournament_config import (
     load_season_calendar,
     load_tournament_templates_config,
 )
-from beta_engine.infrastructure.world_config import load_countries_config, load_player_identity_config
+from beta_engine.infrastructure.world_config import load_player_identity_config
 
 
-def _players(seed: int, per_country: int = 30) -> tuple[list[Player], dict[str, Country]]:
-    countries = load_countries_config().countries
+def _players(seed: int, per_country: int = 30, *, include_england: bool = False) -> tuple[list[Player], dict[str, Country]]:
+    countries = load_fax_reference_countries().countries
+    if include_england:
+        countries = [*countries, Country(code="ENG", name="England", region="EUROPE", population=57_000_000, wealth_support=5, squash_popularity=5, squash_tradition=5, system_quality=5)]
     generator = PlayerGenerator(
         rng=DeterministicRng(seed),
         identity_config=load_player_identity_config(),
@@ -223,7 +226,16 @@ def test_travel_metadata_changes_entry_likelihood() -> None:
 
 
 def test_acceptance_lists_include_required_structures_and_placeholders() -> None:
-    players, countries = _players(seed=123, per_country=20)
+    players, countries = _players(seed=123, per_country=60, include_england=True)
+    qualification_candidates = []
+    for index, base in enumerate(players[:24], start=1):
+        qualification_candidates.append(base.model_copy(update={
+            "player_id": f"QUAL-{index:03d}",
+            "technique": 50, "movement": 50, "physical": 50, "mental": 50,
+            "consistency": 50, "clutch": 50, "recovery": 50,
+            "hidden_career_traits": base.hidden_career_traits.model_copy(update={"schedule_aggression": 0.9}),
+        }))
+    players.extend(qualification_candidates)
     event, template = _event_and_template("ev_2027_w03_england_gold")
     engine = EntryEngine(rng=DeterministicRng(909), tuning=load_entry_tuning_config())
 

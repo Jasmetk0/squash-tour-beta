@@ -5,8 +5,11 @@ from pathlib import Path
 
 from beta_engine.application.api_services import SimulationApiService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
+from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
+from beta_engine.domain.countries import CountriesConfig
 from beta_engine.infrastructure.db import DatabaseSettings, create_session_factory, create_sqlite_engine
 from beta_engine.infrastructure.db.repositories import SimulationPersistenceRepository
+from tests.support.world_packages import materialize_test_world_package
 
 
 def _write_overrides(path: Path, payload: dict[str, object]) -> None:
@@ -22,9 +25,16 @@ def _service(tmp_path, overrides_payload: dict[str, object]) -> SimulationApiSer
     engine = create_sqlite_engine(DatabaseSettings(url=f"sqlite:///{db_file}"))
     session_factory = create_session_factory(engine)
     repository = SimulationPersistenceRepository(engine=engine, session_factory=session_factory)
+    countries = CountriesConfig.model_validate({"countries": [
+        {"code": code, "name": name, "region": "EUROPE", "population": population, "wealth_support": 4, "squash_popularity": 4, "squash_tradition": 4, "system_quality": 4}
+        for code, name, population in (("EGY", "Egypt", 110_000_000), ("ENG", "England", 57_000_000))
+    ]})
+    packages_root = tmp_path / "world_packages"
+    materialize_test_world_package(packages_root, countries)
     return SimulationApiService(
         repository=repository,
         manual_overrides_service=ManualPlayerOverridesService(config_path=overrides_path),
+        world_package_registry_service=WorldPackageRegistryService(world_packages_root=packages_root),
     )
 
 

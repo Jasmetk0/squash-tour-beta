@@ -1,10 +1,12 @@
 from __future__ import annotations
+from tests.support.world_packages import load_simulation_test_countries, materialize_test_world_package
 
 from collections import Counter
 import json
 import socket
 import threading
 import time
+from pathlib import Path
 from urllib import error, request
 
 import uvicorn
@@ -14,7 +16,7 @@ from beta_engine.main import create_app
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.countries import CountryTalentModel
 from beta_engine.domain.players import AnnualTalentClassPlanner, PlayerGenerator
-from beta_engine.infrastructure.world_config import load_countries_config, load_player_identity_config
+from beta_engine.infrastructure.world_config import load_player_identity_config
 from beta_engine.infrastructure.db.repositories import RunProspectRecord, SimulationPersistenceRepository, deterministic_prospect_id
 from beta_engine.infrastructure.db import DatabaseSettings, create_session_factory, create_sqlite_engine
 
@@ -26,10 +28,15 @@ def _free_port() -> int:
 
 
 class ApiServer:
-    def __init__(self, *, database_url: str) -> None:
+    def __init__(self, *, database_url: str, expanded_world: bool = False) -> None:
         self.port = _free_port()
         self.base_url = f"http://127.0.0.1:{self.port}"
-        app = create_app(database_url=database_url)
+        if expanded_world:
+            packages_root = Path(database_url.removeprefix("sqlite:///")).parent / f"world_packages_{self.port}"
+            materialize_test_world_package(packages_root, load_simulation_test_countries())
+            app = create_app(database_url=database_url, world_packages_root=str(packages_root))
+        else:
+            app = create_app(database_url=database_url)
         self.server = uvicorn.Server(uvicorn.Config(app=app, host="127.0.0.1", port=self.port, log_level="error"))
         self.thread = threading.Thread(target=self.server.run, daemon=True)
 
@@ -144,7 +151,7 @@ def test_run_container_endpoints_follow_legacy_run_creation_without_changing_run
 
 
 def _generated_player_ids(*, season: int, seed: int) -> list[str]:
-    countries = load_countries_config().countries
+    countries = load_simulation_test_countries().countries
     plan = AnnualTalentClassPlanner().plan(year=season, seed=seed, countries=countries)
     generator = PlayerGenerator(
         rng=DeterministicRng(seed),
@@ -403,7 +410,7 @@ def test_run_world_status_and_rebuild_endpoints(tmp_path) -> None:
             {
                 "override_id": override_id,
                 "season": 2027,
-                "country_code": "EGY",
+                "country_code": "GER",
                 "player_name": "API World Stale",
                 "age": 18,
                 "profile_tier": "elite",
@@ -930,7 +937,7 @@ def test_pre_draw_withdrawal_replacement_endpoints_validate_fold_and_persist(tmp
 
 def test_late_replacement_endpoints_validate_fold_and_persist(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'api-late-replacement.db'}"
-    with ApiServer(database_url=database_url) as server:
+    with ApiServer(database_url=database_url, expanded_world=True) as server:
         status, _ = _request(
             "POST",
             f"{server.base_url}/runs",
@@ -1017,7 +1024,7 @@ def test_late_replacement_endpoints_validate_fold_and_persist(tmp_path) -> None:
 
 def test_late_replacement_rejects_when_capacity_exhausted(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'api-late-capacity.db'}"
-    with ApiServer(database_url=database_url) as server:
+    with ApiServer(database_url=database_url, expanded_world=True) as server:
         status, _ = _request(
             "POST",
             f"{server.base_url}/runs",
@@ -1366,7 +1373,7 @@ def test_run_activity_endpoint_returns_compact_deterministic_feed(tmp_path) -> N
                 f"{server.base_url}/runs/run-activity/events/{event['event_id']}/pre-draw-withdrawal",
             )
             assert status == 200
-            if not pre_draw_state["withdrawable_main_draw_players"]:
+            if not pre_draw_state["eligible"] or not pre_draw_state["withdrawable_main_draw_players"]:
                 continue
             status, pre_draw_result = _request(
                 "POST",

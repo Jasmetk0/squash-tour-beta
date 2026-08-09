@@ -11,6 +11,11 @@ from urllib import error, request
 import uvicorn
 
 from beta_engine.main import create_app
+from beta_engine.domain.countries import CountriesConfig
+from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
+from beta_engine.application.world_package_registry_service import REQUIRED_WORLD_PACKAGE_FILES
+from tests.support.world_packages import load_fax_reference_countries, materialize_test_world_package
+from tests.support.fax_reference import compute_source_tree_hash
 
 COUNTRIES_FIXTURE = {
     "dataset_status": "temporary_seed_demo",
@@ -82,8 +87,8 @@ class ApiServer:
 
 
 def _copy_worlds_root(tmp_path: Path) -> Path:
-    worlds_root = tmp_path / "worlds"
-    shutil.copytree(Path("config/worlds/official_fax_world"), worlds_root / "official_fax_world")
+    worlds_root = tmp_path / "world_packages"
+    shutil.copytree(Path("config/world_packages/official_fax_world"), worlds_root / "official_fax_world")
     return worlds_root
 
 
@@ -93,29 +98,16 @@ def _write_custom_world(root: Path, world_id: str = "my_custom_world", *, malfor
     if malformed:
         (package_dir / "world.json").write_text("{not-json", encoding="utf-8")
         return package_dir
-    _write_fixture(package_dir / "world.json", {
-        "world_id": world_id,
-        "name": "My Custom World",
-        "description": "Custom world package.",
-        "type": "custom",
-        "status": "active",
-        "source": "custom_config",
-        "editable": True,
-        "deletable": True,
-        "archivable": True,
-        "version": "v1",
-        "content_schema_version": "1",
-    })
-    _write_fixture(package_dir / "continents.json", {"continents": [{"code": "EU", "name": "Europe"}]})
-    _write_fixture(package_dir / "regions.json", {"regions": [{"code": "EUROPE", "name": "Europe", "continent_code": "EU"}]})
-    _write_fixture(package_dir / "travel_regions.json", {"travel_regions": [{"code": "WEST", "name": "West"}]})
-    _write_fixture(package_dir / "countries.json", {
+    package_dir = materialize_test_world_package(root / "custom", CountriesConfig.model_validate({
         "dataset_status": "temporary_test_custom_world",
         "countries": [
             {"code": "AAA", "name": "Alpha", "flag_asset": None, "region": "EUROPE", "travel_region": "WEST", "population": 1_000_000, "wealth_support": 3, "squash_popularity": 4, "squash_tradition": 2, "system_quality": 5},
             {"code": "BBB", "name": "Beta", "flag_asset": None, "region": "EUROPE", "travel_region": "WEST", "population": 2_000_000, "wealth_support": 4, "squash_popularity": 3, "squash_tradition": 3, "system_quality": 4},
         ],
-    })
+    }), world_id=world_id, editable=True)
+    metadata = json.loads((package_dir / "world.json").read_text(encoding="utf-8"))
+    metadata.update({"name": "My Custom World", "description": "Custom world package.", "version": "v1"})
+    _write_fixture(package_dir / "world.json", metadata)
     return package_dir
 
 def _request(method: str, url: str, payload: dict[str, object] | None = None) -> tuple[int, dict[str, object]]:
@@ -389,7 +381,7 @@ def test_world_package_countries_returns_official_package_countries_without_cano
     ) as server:
         status, payload = _request("GET", f"{server.base_url}/world/packages/official_fax_world/countries")
 
-    official_config = json.loads(Path("config/worlds/official_fax_world/countries.json").read_text(encoding="utf-8"))
+    official_config = load_fax_reference_countries()
     assert status == 200
     assert payload["world_id"] == "official_fax_world"
     assert payload["world_name"] == "Official FAX World"
@@ -397,10 +389,10 @@ def test_world_package_countries_returns_official_package_countries_without_cano
     assert payload["source"] == "built_in"
     assert payload["read_only"] is True
     assert payload["country_count"] == 4
-    assert payload["country_count"] == len(official_config["countries"])
-    assert payload["source_path"] == "config/worlds/official_fax_world/countries.json"
-    assert [country["code"] for country in payload["countries"]] == ["GER", "BOG", "HUN", "POL"]
-    assert [country["name"] for country in payload["countries"]] == ["Germanica", "Bogemia", "Hungarica", "Polandia"]
+    assert payload["country_count"] == len(official_config.countries)
+    assert payload["source_path"] == "config/world_packages/official_fax_world/countries/index.json"
+    assert [country["code"] for country in payload["countries"]] == ["BOG", "GER", "HUN", "POL"]
+    assert [country["name"] for country in payload["countries"]] == ["Bogemia", "Germanica", "Hungarica", "Polandia"]
     assert all(country["code"] != "AAA" for country in payload["countries"])
     for country in payload["countries"]:
         assert country["area_km2"] is not None
@@ -430,9 +422,9 @@ def test_world_package_countries_returns_custom_package_countries(tmp_path) -> N
     assert payload["world_name"] == "My Custom World"
     assert payload["type"] == "custom"
     assert payload["source"] == "custom_config"
-    assert payload["read_only"] is True
+    assert payload["read_only"] is False
     assert payload["country_count"] == 2
-    assert payload["source_path"].endswith("worlds/custom/my_custom_world/countries.json")
+    assert payload["source_path"].endswith("world_packages/custom/my_custom_world/countries/index.json")
     assert [country["code"] for country in payload["countries"]] == ["AAA", "BBB"]
 
 
@@ -621,12 +613,14 @@ def test_world_package_effective_population_uses_custom_package_country_data(tmp
     _write_fixture(overrides_path, OVERRIDES_FIXTURE)
     worlds_root = _copy_worlds_root(tmp_path)
     custom_dir = _write_custom_world(worlds_root)
-    custom_countries = json.loads((custom_dir / "countries.json").read_text(encoding="utf-8"))
-    custom_countries["countries"][0]["population"] = 1_000_000
-    custom_countries["countries"][0]["default_population"] = 1_500_000
-    custom_countries["countries"][0]["default_population_year"] = 2020
-    custom_countries["countries"][0]["population_by_year"] = {"1980": 900_000, "2000": 1_200_000}
-    _write_fixture(custom_dir / "countries.json", custom_countries)
+    custom_store = WorldPackageCountryStore(custom_dir)
+    country = custom_store.load_country("AAA").model_copy(update={
+        "population": 1_000_000,
+        "default_population": 1_500_000,
+        "default_population_year": 2020,
+        "population_by_year": {1980: 900_000, 2000: 1_200_000, 2020: 1_500_000},
+    })
+    custom_store.write_country(country)
 
     with ApiServer(
         database_url=f"sqlite:///{tmp_path / 'world-package-effective-population-custom.db'}",
@@ -642,10 +636,10 @@ def test_world_package_effective_population_uses_custom_package_country_data(tmp
     assert payload["effective_population"] == 900_000
     assert payload["source_type"] == "nearest_population_year"
     assert payload["source_year"] == 1980
-    assert payload["legacy_population"] == 1_000_000
+    assert payload["legacy_population"] == 1_500_000
     assert payload["default_population"] == 1_500_000
-    assert payload["population_by_year_count"] == 2
-    assert payload["usable_population_by_year_count"] == 2
+    assert payload["population_by_year_count"] == 3
+    assert payload["usable_population_by_year_count"] == 3
 
 def test_world_packages_registry_lists_built_in_official_package(tmp_path) -> None:
     countries_path = tmp_path / "countries.json"
@@ -673,19 +667,20 @@ def test_world_packages_registry_lists_built_in_official_package(tmp_path) -> No
         assert package["archivable"] is False
         assert package["version"] == "v1"
         assert package["country_count"] == 4
-        assert package["manual_override_count"] == 1
         assert package["continent_count"] == 6
         assert package["region_count"] == 5
         assert package["travel_region_count"] == 5
         assert package["used_by_run_count"] is None
         assert package["validation_status"] == "valid"
         assert package["storage"] == {
-            "countries_path": "config/worlds/official_fax_world/countries.json",
-            "manual_player_overrides_path": str(overrides_path),
-            "world_metadata_path": "config/worlds/official_fax_world/world.json",
-            "continents_path": "config/worlds/official_fax_world/continents.json",
-            "regions_path": "config/worlds/official_fax_world/regions.json",
-            "travel_regions_path": "config/worlds/official_fax_world/travel_regions.json",
+            "package_root_path": "config/world_packages/official_fax_world",
+            "world_metadata_path": "config/world_packages/official_fax_world/world.json",
+            "countries_root_path": "config/world_packages/official_fax_world/countries",
+            "countries_index_path": "config/world_packages/official_fax_world/countries/index.json",
+            "geography_root_path": "config/world_packages/official_fax_world/geography",
+            "continents_path": "config/world_packages/official_fax_world/geography/continents.json",
+            "regions_path": "config/world_packages/official_fax_world/geography/regions.json",
+            "travel_regions_path": "config/world_packages/official_fax_world/geography/travel_regions.json",
         }
         assert isinstance(package["fingerprint"], str)
         assert len(package["fingerprint"]) == 64
@@ -738,13 +733,12 @@ def test_world_packages_registry_discovers_custom_world_read_only(tmp_path) -> N
     assert custom["deletable"] is True
     assert custom["archivable"] is True
     assert custom["country_count"] == 2
-    assert custom["manual_override_count"] == 0
     assert custom["continent_count"] == 1
     assert custom["region_count"] == 1
     assert custom["travel_region_count"] == 1
     assert custom["used_by_run_count"] is None
     assert custom["storage"]["world_metadata_path"] == str(custom_dir / "world.json")
-    assert custom["storage"]["countries_path"] == str(custom_dir / "countries.json")
+    assert custom["storage"]["countries_index_path"] == str(custom_dir / "countries/index.json")
     assert isinstance(custom["fingerprint"], str)
     assert __import__("re").fullmatch(r"[0-9a-f]{64}", custom["fingerprint"])
 
@@ -789,7 +783,7 @@ def test_world_package_validation_supports_custom_world(tmp_path) -> None:
     assert payload["world_id"] == "my_custom_world"
     assert payload["status"] == "valid"
     assert payload["error_count"] == 0
-    assert {check["code"] for check in payload["checks"]} >= {"world_metadata_valid", "countries_valid", "registry_consistency_valid"}
+    assert {check["code"] for check in payload["checks"]} >= {"world_metadata_valid", "countries_index_valid", "country_orphans_valid"}
 
 
 def test_world_packages_registry_detail_and_deterministic_fingerprint(tmp_path) -> None:
@@ -812,7 +806,7 @@ def test_world_packages_registry_detail_and_deterministic_fingerprint(tmp_path) 
         assert detail["world_id"] == "official_fax_world"
         assert detail["fingerprint"] == list_fingerprint
         assert detail["source"] == "built_in"
-        assert detail["storage"]["world_metadata_path"] == "config/worlds/official_fax_world/world.json"
+        assert detail["storage"]["world_metadata_path"] == "config/world_packages/official_fax_world/world.json"
 
         status, detail_again = _request("GET", f"{server.base_url}/world/packages/official_fax_world")
         assert status == 200
@@ -841,14 +835,8 @@ def test_world_package_validation_for_official_fax_world_returns_health(tmp_path
     _write_fixture(countries_path, COUNTRIES_FIXTURE)
     _write_fixture(overrides_path, OVERRIDES_FIXTURE)
 
-    package_paths = [
-        "config/worlds/official_fax_world/world.json",
-        "config/worlds/official_fax_world/countries.json",
-        "config/worlds/official_fax_world/continents.json",
-        "config/worlds/official_fax_world/regions.json",
-        "config/worlds/official_fax_world/travel_regions.json",
-    ]
-    before = {path: Path(path).read_bytes() for path in package_paths}
+    package_root = Path("config/world_packages/official_fax_world")
+    before = compute_source_tree_hash(package_root)
 
     with ApiServer(
         database_url=f"sqlite:///{tmp_path / 'world-packages-validation.db'}",
@@ -865,13 +853,10 @@ def test_world_package_validation_for_official_fax_world_returns_health(tmp_path
     assert payload["info_count"] > 0
     assert {check["code"] for check in payload["checks"]} >= {
         "world_metadata_valid",
-        "countries_valid",
-        "continents_valid",
-        "regions_valid",
-        "travel_regions_valid",
-        "registry_consistency_valid",
+        "countries_index_valid",
+        "country_orphans_valid",
     }
-    assert all(Path(path).read_bytes() == contents for path, contents in before.items())
+    assert compute_source_tree_hash(package_root) == before
 
 
 def test_world_package_validation_unknown_world_returns_404(tmp_path) -> None:
@@ -938,7 +923,7 @@ def test_clone_official_world_dry_run_does_not_write_target(tmp_path) -> None:
     assert payload["dry_run"] is True
     assert payload["source_world_id"] == "official_fax_world"
     assert payload["new_world_id"] == "dry_run_world"
-    assert payload["created_files"] == ["world.json", "countries.json", "continents.json", "regions.json", "travel_regions.json"]
+    assert payload["created_files"] == list(REQUIRED_WORLD_PACKAGE_FILES)
     assert payload["package"] is None
     assert payload["validation"] is None
     assert payload["errors"] == []
@@ -972,10 +957,9 @@ def test_clone_official_world_actual_creates_discoverable_custom_world(tmp_path)
     assert payload["ok"] is True
     assert payload["dry_run"] is False
     assert payload["package"]["world_id"] == "actual_world"
-    assert payload["package"]["manual_override_count"] == 0
     assert payload["validation"]["error_count"] == 0
     assert target_dir.is_dir()
-    for filename in ["world.json", "countries.json", "continents.json", "regions.json", "travel_regions.json"]:
+    for filename in REQUIRED_WORLD_PACKAGE_FILES:
         assert (target_dir / filename).is_file()
     metadata = json.loads((target_dir / "world.json").read_text(encoding="utf-8"))
     assert metadata == {
@@ -990,14 +974,15 @@ def test_clone_official_world_actual_creates_discoverable_custom_world(tmp_path)
         "archivable": True,
         "version": "v1",
         "content_schema_version": "1",
+        "package_format_version": "world_package_directory.v1",
         "cloned_from_world_id": "official_fax_world",
     }
-    for filename in ["countries.json", "continents.json", "regions.json", "travel_regions.json"]:
-        assert (target_dir / filename).read_text(encoding="utf-8") == (worlds_root / "official_fax_world" / filename).read_text(encoding="utf-8")
-    cloned_countries = json.loads((target_dir / "countries.json").read_text(encoding="utf-8"))["countries"]
-    assert [country["code"] for country in cloned_countries] == ["GER", "BOG", "HUN", "POL"]
-    assert cloned_countries[0]["area_km2"] == 870516
-    assert cloned_countries[0]["population_by_year"] == {"2020": 169702055}
+    cloned_countries = WorldPackageCountryStore(target_dir).load_config().countries
+    assert [country.code for country in cloned_countries] == ["BOG", "GER", "HUN", "POL"]
+    germanica = next(country for country in cloned_countries if country.code == "GER")
+    assert germanica.area_km2 == 870516
+    assert germanica.population_by_year == {2020: 169702055}
+    assert WorldPackageCountryStore(target_dir).semantic_payload() == WorldPackageCountryStore(worlds_root / "official_fax_world").semantic_payload()
     assert list_status == 200
     assert [package["world_id"] for package in list_payload["packages"]] == ["official_fax_world", "actual_world"]
     assert detail_status == 200
@@ -1075,14 +1060,14 @@ def test_clone_official_world_filesystem_failure_cleans_temporary_package(tmp_pa
     registry = WorldPackageRegistryService(
         countries_service=CountriesConfigService(config_path=countries_path),
         manual_overrides_service=ManualPlayerOverridesService(config_path=overrides_path),
-        worlds_root=worlds_root,
+        world_packages_root=worlds_root,
     )
     service = WorldPackageCloneService(registry_service=registry, validation_service=WorldPackageValidationService(registry_service=registry))
 
     def fail_copy(*args, **kwargs):
         raise OSError("forced copy failure")
 
-    monkeypatch.setattr("beta_engine.application.world_package_clone_service.shutil.copy2", fail_copy)
+    monkeypatch.setattr(WorldPackageCloneService, "_write_clone_files", fail_copy)
     result = service.clone_official_world(new_world_id="failed_world", name="Failed World", description=None, dry_run=False)
 
     assert result.ok is False
@@ -1176,7 +1161,7 @@ def test_world_package_weekly_intake_preview_filters_and_is_read_only(tmp_path) 
     overrides_path = tmp_path / "manual_overrides.json"
     _write_fixture(countries_path, COUNTRIES_FIXTURE)
     _write_fixture(overrides_path, OVERRIDES_FIXTURE)
-    package_path = Path("config/worlds/official_fax_world/countries.json")
+    package_path = Path("config/world_packages/official_fax_world/countries/index.json")
     before = package_path.read_text(encoding="utf-8")
 
     with ApiServer(
@@ -1200,7 +1185,7 @@ def test_world_package_weekly_intake_season_schedule_preview_success(tmp_path) -
     overrides_path = tmp_path / "manual_overrides.json"
     _write_fixture(countries_path, COUNTRIES_FIXTURE)
     _write_fixture(overrides_path, OVERRIDES_FIXTURE)
-    package_path = Path("config/worlds/official_fax_world/countries.json")
+    package_path = Path("config/world_packages/official_fax_world/countries/index.json")
     before = package_path.read_text(encoding="utf-8")
 
     with ApiServer(

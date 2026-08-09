@@ -93,7 +93,6 @@ import {
 } from './pages/ViewerRunHistoryFinalsPage'
 import { WorldGenerationPage } from './pages/WorldGenerationPage'
 import { NationsPage } from './pages/NationsPage'
-import { WorldPackagePage } from './pages/WorldPackagePage'
 import { WorldLibraryDetailPage, WorldLibraryPage, WorldPackageCountriesPage } from './pages/WorldLibraryPage'
 import { CountryMomentumPage } from './pages/CountryMomentumPage'
 import { AdminSeasonDetailPage } from './pages/SeasonDetailPage'
@@ -125,7 +124,7 @@ export default function App(): JSX.Element {
         <Route path="admin/world/talent-preview" element={<TalentPreviewPage />} />
         <Route path="admin/world/country-momentum" element={<CountryMomentumPage />} />
         <Route path="admin/world/manual-player-overrides" element={<ManualPlayerOverridesPage />} />
-        <Route path="admin/world/package" element={<WorldPackagePage />} />
+        <Route path="admin/world/package" element={<Navigate replace to="/admin/world/library" />} />
         <Route path="admin/tour-seasons/categories" element={<AdminTourSeasonsCategoriesPage />} />
         <Route path="admin/tour-seasons/categories/:categoryId" element={<AdminTourSeasonsCategoryDetailPage />} />
         <Route path="admin/tour-seasons/tournaments" element={<AdminTourSeasonsTournamentsPage />} />

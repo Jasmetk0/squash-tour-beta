@@ -59,7 +59,7 @@ class ApiServer:
             database_url=database_url,
             countries_config_path=countries_config_path,
             manual_player_overrides_config_path=manual_overrides_config_path,
-            worlds_root=worlds_root,
+            world_packages_root=worlds_root,
         )
         self.server = uvicorn.Server(uvicorn.Config(app=app, host="127.0.0.1", port=self.port, log_level="error"))
         self.thread = threading.Thread(target=self.server.run, daemon=True)
@@ -1307,3 +1307,34 @@ def test_world_package_weekly_intake_season_schedule_preview_errors_and_custom_t
     assert high_growth_payload["detail"]
     assert negative_growth_status == 422
     assert negative_growth_payload["detail"]
+
+
+def test_canonical_world_package_countries_api_reports_source_editability(tmp_path) -> None:
+    from beta_engine.application.world_package_clone_service import WorldPackageCloneService
+    from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
+    from beta_engine.application.world_package_validation_service import WorldPackageValidationService
+
+    packages_root = tmp_path / "world_packages"
+    shutil.copytree("config/world_packages/official_fax_world", packages_root / "official_fax_world")
+    shutil.copytree("config/world_packages/real_world", packages_root / "real_world")
+    registry = WorldPackageRegistryService(world_packages_root=packages_root)
+    clone = WorldPackageCloneService(registry, WorldPackageValidationService(registry)).clone_official_world(
+        new_world_id="editable_world", name="Editable World", description=None, dry_run=False
+    )
+    assert clone.ok
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'canonical-world-package-api.db'}",
+        countries_config_path=str(tmp_path / "unused-countries.json"),
+        manual_overrides_config_path=str(tmp_path / "unused-overrides.json"),
+        worlds_root=str(packages_root),
+    ) as server:
+        official_status, official = _request("GET", f"{server.base_url}/world/packages/official_fax_world/countries")
+        custom_status, custom = _request("GET", f"{server.base_url}/world/packages/editable_world/countries")
+
+    assert official_status == 200
+    assert official["read_only"] is True
+    assert official["source_path"].endswith("countries/index.json")
+    assert custom_status == 200
+    assert custom["read_only"] is False
+    assert custom["country_count"] == official["country_count"]

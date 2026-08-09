@@ -74,12 +74,24 @@ class WorldPackageCloneService:
             return self._result(False, dry_run, normalized_world_id, target_dir, errors=[WorldPackageCloneError(None, f"clone failed: {exc}")])
 
         package = self.registry_service.get_package(normalized_world_id)
-        validation = self.validation_service.validate_package(normalized_world_id)
         if package is None:
-            if target_dir.exists():
-                shutil.rmtree(target_dir, ignore_errors=True)
+            self._remove_failed_target(target_dir)
             return self._result(False, dry_run, normalized_world_id, target_dir, errors=[WorldPackageCloneError("new_world_id", "cloned package could not be discovered by the registry.")])
+        try:
+            validation = self.validation_service.validate_package(normalized_world_id)
+        except Exception as exc:  # noqa: BLE001 - validation failure must fail the clone closed.
+            self._remove_failed_target(target_dir)
+            return self._result(False, dry_run, normalized_world_id, target_dir, errors=[WorldPackageCloneError(None, f"cloned package could not be validated: {exc}")])
+        if validation is None or validation.status == "errors":
+            self._remove_failed_target(target_dir)
+            message = "cloned package validation was unavailable." if validation is None else "cloned package validation reported errors."
+            return self._result(False, dry_run, normalized_world_id, target_dir, validation=validation, errors=[WorldPackageCloneError(None, message)])
         return self._result(True, False, normalized_world_id, target_dir, package=package, validation=validation)
+
+    @staticmethod
+    def _remove_failed_target(target_dir: Path) -> None:
+        if target_dir.exists():
+            shutil.rmtree(target_dir, ignore_errors=True)
 
     def _validate_request(self, new_world_id: str, name: str, target_dir: Path) -> list[WorldPackageCloneError]:
         errors: list[WorldPackageCloneError] = []

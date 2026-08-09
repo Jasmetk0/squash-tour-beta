@@ -108,7 +108,7 @@ class CalendarTemplateDetailResponse(BaseModel):
 
 @dataclass(slots=True)
 class CalendarTemplateService:
-    registry_path: Path = Path("config/world/calendar_templates.json")
+    registry_path: Path = Path("config/simulation/calendar_templates.json")
 
     def __post_init__(self) -> None:
         if not isinstance(self.registry_path, Path):

@@ -134,7 +134,7 @@ class SeasonActivePlayersRegistry(BaseModel):
 @dataclass(slots=True)
 class InitialPoolSeasonBootstrapService:
     initial_pool_service: InitialPlayerPoolService
-    active_players_path: Path = Path("config/world/season_active_players.json")
+    active_players_path: Path = Path("config/simulation/season_active_players.json")
 
     def __post_init__(self) -> None:
         if not isinstance(self.active_players_path, Path):

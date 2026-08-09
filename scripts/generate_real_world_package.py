@@ -13,6 +13,9 @@ import csv
 import json
 from pathlib import Path
 
+from beta_engine.domain.countries import CountriesConfig
+from beta_engine.infrastructure.world_package_storage import PACKAGE_FORMAT_VERSION, WorldPackageCountryStore
+
 
 START_YEAR = 1955
 END_YEAR = 2050
@@ -52,7 +55,7 @@ def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--population-csv", type=Path, required=True)
     parser.add_argument("--countries-json", type=Path, required=True)
-    parser.add_argument("--output", type=Path, default=Path("config/worlds/real_world"))
+    parser.add_argument("--output", type=Path, default=Path("config/world_packages/real_world"))
     return parser.parse_args()
 
 
@@ -124,8 +127,7 @@ def main() -> None:
 
     output = args.output
     output.mkdir(parents=True, exist_ok=True)
-    documents = {
-        "world.json": {
+    world_document = {
             "world_id": "real_world",
             "name": "Real World",
             "description": "Built-in real-world geography package for experimental squash simulations.",
@@ -137,32 +139,22 @@ def main() -> None:
             "archivable": False,
             "version": "v1",
             "content_schema_version": "1",
+            "package_format_version": PACKAGE_FORMAT_VERSION,
             "population_years": {"from": START_YEAR, "to": END_YEAR},
             "population_source": "UN World Population Prospects 2024 via Our World in Data; medium projection from 2024",
             "geography_source": "world-countries 5.1.0 (ISO-derived metadata)",
-        },
-        "countries.json": {"dataset_status": "real_world_v1_un_wpp_2024", "countries": countries},
-        "continents.json": {
-            "schema_version": "continents.v1",
-            "continents": [{"code": code, "name": name} for code, name in CONTINENTS.values()],
-        },
-        "regions.json": {
-            "schema_version": "regions.v1",
-            "regions": [
-                {"code": code, "name": name, "continent_code": code}
-                for code, name in CONTINENTS.values()
-            ],
-        },
-        "travel_regions.json": {
-            "schema_version": "travel_regions.v1",
-            "travel_regions": [
-                {"code": code, "name": name, "description": "Real-world continent travel group."}
-                for code, name in CONTINENTS.values()
-            ],
-        },
+    }
+    (output / "world.json").write_text(json.dumps(world_document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    geography = output / "geography"
+    geography.mkdir(parents=True, exist_ok=True)
+    documents = {
+        "continents.json": {"schema_version": "continents.v1", "continents": [{"code": code, "name": name} for code, name in CONTINENTS.values()]},
+        "regions.json": {"schema_version": "regions.v1", "regions": [{"code": code, "name": name, "continent_code": code} for code, name in CONTINENTS.values()]},
+        "travel_regions.json": {"schema_version": "travel_regions.v1", "travel_regions": [{"code": code, "name": name, "description": "Real-world continent travel group."} for code, name in CONTINENTS.values()]},
     }
     for filename, document in documents.items():
-        (output / filename).write_text(json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        (geography / filename).write_text(json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    WorldPackageCountryStore(output).replace_dataset(CountriesConfig.model_validate({"dataset_status": "real_world_v1_un_wpp_2024", "countries": countries}))
 
 
 if __name__ == "__main__":

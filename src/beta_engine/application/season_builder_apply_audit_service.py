@@ -94,7 +94,7 @@ class SeasonBuilderApplyCreateOnlyAuditWriteResult(BaseModel):
 class SeasonBuilderApplyAuditService:
     """Append one canonical JSON audit record per line."""
 
-    audit_log_path: Path = Path("config/world/season_builder_apply_create_only_audit.jsonl")
+    audit_log_path: Path = Path("config/simulation/season_builder_apply_create_only_audit.jsonl")
 
     def __post_init__(self) -> None:
         if not isinstance(self.audit_log_path, Path):

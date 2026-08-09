@@ -26,8 +26,8 @@ from beta_engine.infrastructure.world_config import load_player_identity_config
 @dataclass(slots=True)
 class InitialPlayerPoolService:
     countries_service: CountriesConfigService
-    config_path: Path = Path("config/world/initial_player_pool.json")
-    identity_config_path: Path = Path("config/world/player_identity.json")
+    config_path: Path = Path("config/simulation/initial_player_pool.json")
+    identity_config_path: Path = Path("config/player_generation/player_identity.json")
 
     def __post_init__(self) -> None:
         if not isinstance(self.config_path, Path):

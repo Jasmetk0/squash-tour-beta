@@ -230,7 +230,7 @@ class PlanningSeasonCalendarRegistry(BaseModel):
 class PlanningSeasonCalendarService:
     """Read and write separate Admin planning season calendars."""
 
-    registry_path: Path = Path("config/world/planning_season_calendars.json")
+    registry_path: Path = Path("config/simulation/planning_season_calendars.json")
 
     def __post_init__(self) -> None:
         if not isinstance(self.registry_path, Path):

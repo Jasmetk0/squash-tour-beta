@@ -87,20 +87,20 @@ def _write_json(path: str | Path, payload: dict) -> None:
         fh.write("\n")
 
 
-def load_countries_config(path: str | Path = "config/world/countries.json") -> "CountriesConfig":
+def load_countries_config(path: str | Path) -> "CountriesConfig":
     from beta_engine.domain.countries.models import CountriesConfig
 
     return CountriesConfig.model_validate(_load_json(path))
 
 
 def load_player_identity_config(
-    path: str | Path = "config/world/player_identity.json",
+    path: str | Path = "config/player_generation/player_identity.json",
 ) -> PlayerIdentityConfig:
     return PlayerIdentityConfig.model_validate(_load_json(path))
 
 
 def load_manual_player_overrides_config(
-    path: str | Path = "config/world/manual_player_overrides.json",
+    path: str | Path = "config/player_generation/manual_player_overrides.json",
 ) -> "ManualPlayerOverridesRegistry":
     from beta_engine.domain.players import ManualPlayerOverridesRegistry
 
@@ -109,8 +109,8 @@ def load_manual_player_overrides_config(
 
 def export_countries_to_csv(
     *,
-    json_path: str | Path = "config/world/countries.json",
-    csv_path: str | Path = "config/world/countries.seed.demo.csv",
+    json_path: str | Path,
+    csv_path: str | Path,
 ) -> Path:
     countries_config = load_countries_config(json_path)
     target = Path(csv_path)
@@ -144,7 +144,7 @@ def export_countries_to_csv(
 def import_countries_from_csv(
     *,
     csv_path: str | Path,
-    json_path: str | Path = "config/world/countries.json",
+    json_path: str | Path,
 ) -> "CountriesConfig":
     from beta_engine.domain.countries.models import CountriesConfig
 

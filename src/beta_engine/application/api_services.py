@@ -811,8 +811,6 @@ class SimulationApiService:
         return requested_world_id
 
     def _countries_service_for_world(self, world_id: str) -> CountriesConfigService:
-        if world_id == OFFICIAL_FAX_WORLD_ID:
-            return self.countries_service
         registry = self.world_package_registry_service or WorldPackageRegistryService(
             countries_service=self.countries_service,
             manual_overrides_service=self.manual_overrides_service,
@@ -820,7 +818,7 @@ class SimulationApiService:
         paths = registry.package_paths(world_id)
         if paths is None:
             raise ValueError(f"world package '{world_id}' was not found")
-        return CountriesConfigService(config_path=paths["countries"])
+        return CountriesConfigService(package_root=paths["package_root"])
 
     def get_run_summary(self, *, run_id: str) -> PersistedRunSummary:
         run_info = self.repository.get_simulation_run(run_id=run_id)

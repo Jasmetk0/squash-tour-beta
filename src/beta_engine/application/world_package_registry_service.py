@@ -1,255 +1,76 @@
-"""Read-only registry for world packages backed by repository world package config."""
-
+"""Discovery and semantic fingerprinting for canonical World Packages."""
 from __future__ import annotations
-
-import hashlib
-import json
+import hashlib, json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-
 from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
-from beta_engine.infrastructure.world_config import load_countries_config
+from beta_engine.infrastructure.world_package_storage import PACKAGE_FORMAT_VERSION, WorldPackageCountryStore
 from beta_engine.world_packages import BUILT_IN_WORLD_IDS, OFFICIAL_FAX_WORLD_ID
 
-OFFICIAL_FAX_WORLD_NAME = "Official FAX World"
-OFFICIAL_FAX_WORLD_DESCRIPTION = "Built-in official FAX squash world package."
-OFFICIAL_FAX_WORLD_VERSION = "v1"
-DEFAULT_WORLDS_ROOT = Path("config/worlds")
-
-REQUIRED_WORLD_PACKAGE_FILES = (
-    "world.json",
-    "countries.json",
-    "continents.json",
-    "regions.json",
-    "travel_regions.json",
-)
-
+OFFICIAL_FAX_WORLD_NAME='Official FAX World'
+OFFICIAL_FAX_WORLD_DESCRIPTION='Built-in official FAX squash world package.'
+OFFICIAL_FAX_WORLD_VERSION='v1'
+DEFAULT_WORLD_PACKAGES_ROOT=Path('config/world_packages')
+REQUIRED_WORLD_PACKAGE_FILES=('world.json','countries/index.json','geography/continents.json','geography/regions.json','geography/travel_regions.json')
 
 @dataclass(frozen=True)
 class WorldPackageStorageSummary:
-    countries_path: str
-    manual_player_overrides_path: str
-    world_metadata_path: str | None = None
-    continents_path: str | None = None
-    regions_path: str | None = None
-    travel_regions_path: str | None = None
-
-
+ package_root_path:str; world_metadata_path:str; countries_root_path:str; countries_index_path:str; geography_root_path:str; continents_path:str; regions_path:str; travel_regions_path:str
 @dataclass(frozen=True)
 class WorldPackageRegistryRecord:
-    world_id: str
-    name: str
-    description: str
-    type: str
-    status: str
-    source: str
-    editable: bool
-    deletable: bool
-    archivable: bool
-    version: str
-    fingerprint: str
-    country_count: int
-    manual_override_count: int
-    continent_count: int
-    region_count: int
-    travel_region_count: int
-    used_by_run_count: int | None
-    validation_status: str
-    storage: WorldPackageStorageSummary
-
-
+ world_id:str; name:str; description:str; type:str; status:str; source:str; editable:bool; deletable:bool; archivable:bool; version:str; fingerprint:str; country_count:int; continent_count:int; region_count:int; travel_region_count:int; used_by_run_count:int|None; validation_status:str; storage:WorldPackageStorageSummary
 @dataclass(slots=True)
 class WorldPackageRegistryService:
-    """Read-only package registry exposing built-in and repository custom packages."""
-
-    countries_service: CountriesConfigService
-    manual_overrides_service: ManualPlayerOverridesService
-    worlds_root: Path = DEFAULT_WORLDS_ROOT
-
-    def list_packages(self) -> list[WorldPackageRegistryRecord]:
-        packages = [
-            self._build_builtin_package(world_id)
-            for world_id in BUILT_IN_WORLD_IDS
-            if (self.worlds_root / world_id).is_dir()
-        ]
-        seen = {record.world_id for record in packages}
-        for package_dir in self._custom_package_dirs():
-            record = self._build_custom_package(package_dir)
-            if record is None or record.world_id in seen:
-                continue
-            seen.add(record.world_id)
-            packages.append(record)
-        return packages
-
-    def get_package(self, world_id: str) -> WorldPackageRegistryRecord | None:
-        normalized = world_id.strip().lower()
-        if normalized in BUILT_IN_WORLD_IDS:
-            package_dir = self.worlds_root / normalized
-            return self._build_builtin_package(normalized) if package_dir.is_dir() else None
-        for record in self.list_packages():
-            if record.world_id == normalized:
-                return record
-        return None
-
-    def get_official_package(self) -> WorldPackageRegistryRecord:
-        return self._build_builtin_package(OFFICIAL_FAX_WORLD_ID)
-
-    def _build_builtin_package(self, world_id: str) -> WorldPackageRegistryRecord:
-        package_dir = self.worlds_root / world_id
-        metadata = self._read_json(package_dir / "world.json")
-        if str(metadata.get("world_id", "")).strip().lower() != world_id:
-            raise ValueError(f"built-in package directory {package_dir} has a mismatched world_id")
-        if metadata.get("type") != "official" or metadata.get("source") != "built_in":
-            raise ValueError(f"built-in package {world_id} must declare official/built_in metadata")
-        countries_config = load_countries_config(package_dir / "countries.json")
-        continents = self._read_registry_items(package_dir / "continents.json", "continents")
-        regions = self._read_registry_items(package_dir / "regions.json", "regions")
-        travel_regions = self._read_registry_items(package_dir / "travel_regions.json", "travel_regions")
-        includes_manual_overrides = world_id == OFFICIAL_FAX_WORLD_ID
-        overrides = self.manual_overrides_service.list_overrides() if includes_manual_overrides else []
-        return WorldPackageRegistryRecord(
-            world_id=str(metadata["world_id"]),
-            name=str(metadata["name"]),
-            description=str(metadata["description"]),
-            type=str(metadata["type"]),
-            status=str(metadata["status"]),
-            source=str(metadata["source"]),
-            editable=bool(metadata["editable"]),
-            deletable=bool(metadata["deletable"]),
-            archivable=bool(metadata["archivable"]),
-            version=str(metadata["version"]),
-            fingerprint=self._fingerprint(package_dir),
-            country_count=len(countries_config.countries),
-            manual_override_count=len(overrides),
-            continent_count=len(continents),
-            region_count=len(regions),
-            travel_region_count=len(travel_regions),
-            used_by_run_count=None,
-            validation_status="valid",
-            storage=self._storage_summary(package_dir, include_manual_overrides=includes_manual_overrides),
-        )
-
-    def official_paths(self) -> dict[str, Path]:
-        return self.package_paths(OFFICIAL_FAX_WORLD_ID) or {}
-
-    def package_paths(self, world_id: str) -> dict[str, Path] | None:
-        normalized = world_id.strip().lower()
-        if normalized in BUILT_IN_WORLD_IDS:
-            package_dir = self.worlds_root / normalized
-            return self._paths_for_dir(package_dir) if package_dir.is_dir() else None
-        for package_dir in self._custom_package_dirs():
-            metadata = self._safe_read_json(package_dir / "world.json")
-            if isinstance(metadata, dict) and str(metadata.get("world_id", "")).strip().lower() == normalized:
-                return self._paths_for_dir(package_dir)
-        return None
-
-    def _build_custom_package(self, package_dir: Path) -> WorldPackageRegistryRecord | None:
-        if not all((package_dir / name).is_file() for name in REQUIRED_WORLD_PACKAGE_FILES):
-            return None
-        try:
-            metadata = self._read_json(package_dir / "world.json")
-            world_id = str(metadata.get("world_id", "")).strip().lower()
-            if world_id != package_dir.name.strip().lower() or world_id in BUILT_IN_WORLD_IDS:
-                return None
-            if metadata.get("type") != "custom" or metadata.get("source") != "custom_config" or metadata.get("status") not in {"active", "archived"}:
-                return None
-            countries_config = load_countries_config(package_dir / "countries.json")
-            continents = self._read_registry_items(package_dir / "continents.json", "continents")
-            regions = self._read_registry_items(package_dir / "regions.json", "regions")
-            travel_regions = self._read_registry_items(package_dir / "travel_regions.json", "travel_regions")
-            return WorldPackageRegistryRecord(
-                world_id=world_id,
-                name=str(metadata["name"]),
-                description=str(metadata.get("description", "")),
-                type="custom",
-                status=str(metadata["status"]),
-                source="custom_config",
-                editable=bool(metadata.get("editable", True)),
-                deletable=bool(metadata.get("deletable", True)),
-                archivable=bool(metadata.get("archivable", True)),
-                version=str(metadata["version"]),
-                fingerprint=self._fingerprint(package_dir),
-                country_count=len(countries_config.countries),
-                manual_override_count=0,
-                continent_count=len(continents),
-                region_count=len(regions),
-                travel_region_count=len(travel_regions),
-                used_by_run_count=None,
-                validation_status="valid",
-                storage=self._storage_summary(package_dir, include_manual_overrides=False),
-            )
-        except (KeyError, TypeError, ValueError, OSError, json.JSONDecodeError):
-            return None
-
-    def _fingerprint(self, package_dir: Path) -> str:
-        payload = self._fingerprint_payload(package_dir)
-        serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-        return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
-
-    def _fingerprint_payload(self, package_dir: Path) -> dict[str, object]:
-        metadata = self._read_json(package_dir / "world.json")
-        meaning_metadata = {
-            key: metadata[key]
-            for key in (
-                "world_id", "name", "type", "status", "source", "editable", "deletable", "archivable", "version", "content_schema_version"
-            )
-            if key in metadata
-        }
-        countries = sorted((country.model_dump(mode="json") for country in load_countries_config(package_dir / "countries.json").countries), key=lambda item: str(item["code"]))
-        return {
-            "world_metadata": meaning_metadata,
-            "countries": countries,
-            "continents": self._read_json(package_dir / "continents.json"),
-            "regions": self._read_json(package_dir / "regions.json"),
-            "travel_regions": self._read_json(package_dir / "travel_regions.json"),
-        }
-
-    def _official_dir(self) -> Path:
-        return self.worlds_root / OFFICIAL_FAX_WORLD_ID
-
-    def _custom_root(self) -> Path:
-        return self.worlds_root / "custom"
-
-    def _custom_package_dirs(self) -> list[Path]:
-        root = self._custom_root()
-        if not root.is_dir():
-            return []
-        return sorted((path for path in root.iterdir() if path.is_dir()), key=lambda path: path.name.lower())
-
-    def _paths_for_dir(self, package_dir: Path) -> dict[str, Path]:
-        return {
-            "world": package_dir / "world.json",
-            "countries": package_dir / "countries.json",
-            "continents": package_dir / "continents.json",
-            "regions": package_dir / "regions.json",
-            "travel_regions": package_dir / "travel_regions.json",
-        }
-
-    def _storage_summary(self, package_dir: Path, *, include_manual_overrides: bool) -> WorldPackageStorageSummary:
-        return WorldPackageStorageSummary(
-            countries_path=str(package_dir / "countries.json"),
-            manual_player_overrides_path=str(self.manual_overrides_service.config_path) if include_manual_overrides else "",
-            world_metadata_path=str(package_dir / "world.json"),
-            continents_path=str(package_dir / "continents.json"),
-            regions_path=str(package_dir / "regions.json"),
-            travel_regions_path=str(package_dir / "travel_regions.json"),
-        )
-
-    def _read_json(self, path: Path) -> dict[str, Any]:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-        if not isinstance(payload, dict):
-            raise ValueError(f"{path} must contain a JSON object")
-        return payload
-
-    def _safe_read_json(self, path: Path) -> dict[str, Any] | None:
-        try:
-            return self._read_json(path)
-        except (OSError, json.JSONDecodeError, ValueError):
-            return None
-
-    def _read_registry_items(self, path: Path, key: str) -> list[object]:
-        payload = self._read_json(path)
-        items = payload.get(key, [])
-        return items if isinstance(items, list) else []
+ countries_service: CountriesConfigService|None=None
+ manual_overrides_service: ManualPlayerOverridesService|None=None
+ world_packages_root: Path=DEFAULT_WORLD_PACKAGES_ROOT
+ def __post_init__(self): self.world_packages_root=Path(self.world_packages_root)
+ def list_packages(self):
+  result=[]
+  for world_id in BUILT_IN_WORLD_IDS:
+   if (self.world_packages_root/world_id).is_dir(): result.append(self._build(self.world_packages_root/world_id, world_id, True))
+  seen={x.world_id for x in result}
+  for path in self._custom_package_dirs():
+   try: record=self._build(path,path.name,False)
+   except Exception: continue
+   if record.world_id not in seen: result.append(record); seen.add(record.world_id)
+  return result
+ def get_package(self,world_id):
+  normalized=world_id.strip().lower()
+  path=(self.world_packages_root/normalized) if normalized in BUILT_IN_WORLD_IDS else (self.world_packages_root/'custom'/normalized)
+  if not path.is_dir(): return None
+  try:return self._build(path,normalized,normalized in BUILT_IN_WORLD_IDS)
+  except Exception:return None
+ def get_official_package(self): return self._build(self.world_packages_root/OFFICIAL_FAX_WORLD_ID,OFFICIAL_FAX_WORLD_ID,True)
+ def package_dir(self,world_id):
+  normalized=world_id.strip().lower(); path=(self.world_packages_root/normalized) if normalized in BUILT_IN_WORLD_IDS else self.world_packages_root/'custom'/normalized
+  return path if path.is_dir() else None
+ def package_paths(self,world_id):
+  path=self.package_dir(world_id); return self._paths_for_dir(path) if path else None
+ def official_paths(self): return self.package_paths(OFFICIAL_FAX_WORLD_ID) or {}
+ def _build(self,path,expected,builtin):
+  if not all((path/name).is_file() for name in REQUIRED_WORLD_PACKAGE_FILES): raise ValueError(f'{path} is incomplete')
+  m=self._read_json(path/'world.json')
+  if m.get('world_id')!=expected: raise ValueError('world_id mismatch')
+  if m.get('package_format_version')!=PACKAGE_FORMAT_VERSION: raise ValueError('unsupported package format')
+  if builtin and (m.get('type')!='official' or m.get('source')!='built_in'): raise ValueError('built-in metadata mismatch')
+  if not builtin and (m.get('type')!='custom' or m.get('source')!='custom_config'): raise ValueError('custom metadata mismatch')
+  countries=WorldPackageCountryStore(path).load_config()
+  return WorldPackageRegistryRecord(world_id=expected,name=str(m['name']),description=str(m.get('description','')),type=str(m['type']),status=str(m['status']),source=str(m['source']),editable=bool(m['editable']),deletable=bool(m['deletable']),archivable=bool(m['archivable']),version=str(m['version']),fingerprint=self._fingerprint(path),country_count=len(countries.countries),continent_count=len(self._items(path/'geography/continents.json','continents')),region_count=len(self._items(path/'geography/regions.json','regions')),travel_region_count=len(self._items(path/'geography/travel_regions.json','travel_regions')),used_by_run_count=None,validation_status='valid',storage=self._storage_summary(path))
+ def _fingerprint(self,path): return hashlib.sha256(json.dumps(self._fingerprint_payload(path),sort_keys=True,separators=(',',':')).encode()).hexdigest()
+ def _fingerprint_payload(self,path):
+  m=self._read_json(path/'world.json'); keys=('world_id','name','type','status','source','editable','deletable','archivable','version','content_schema_version','package_format_version')
+  return {'world_metadata':{k:m[k] for k in keys if k in m},'countries':WorldPackageCountryStore(path).semantic_payload(),'continents':self._read_json(path/'geography/continents.json'),'regions':self._read_json(path/'geography/regions.json'),'travel_regions':self._read_json(path/'geography/travel_regions.json')}
+ def _custom_package_dirs(self):
+  root=self.world_packages_root/'custom'; return sorted((p for p in root.iterdir() if p.is_dir()),key=lambda p:p.name) if root.is_dir() else []
+ def _paths_for_dir(self,p): return {'package_root':p,'world':p/'world.json','countries_root':p/'countries','countries_index':p/'countries/index.json','continents':p/'geography/continents.json','regions':p/'geography/regions.json','travel_regions':p/'geography/travel_regions.json'}
+ def _storage_summary(self,p):
+  q=self._paths_for_dir(p); return WorldPackageStorageSummary(*(str(q[k]) for k in ('package_root','world','countries_root','countries_index')) ,str(p/'geography'),*(str(q[k]) for k in ('continents','regions','travel_regions')))
+ def _read_json(self,p):
+  value=json.loads(p.read_text());
+  if not isinstance(value,dict): raise ValueError(f'{p} must contain object')
+  return value
+ def _items(self,p,k):
+  value=self._read_json(p).get(k,[]); return value if isinstance(value,list) else []

@@ -8,7 +8,7 @@ import type {
 /**
  * Versioned FAX API contract projection used by component tests with a mocked API boundary.
  * Keep this deliberately small: it describes stable identities and API contracts, while
- * the authoritative world content remains in config/worlds/official_fax_world.
+ * the authoritative world content remains in config/world_packages/official_fax_world.
  */
 export const FAX_REFERENCE_VERSION = 'fax-reference-v1' as const
 export const FAX_REFERENCE_RUN_ID = 'fax-reference-v1' as const

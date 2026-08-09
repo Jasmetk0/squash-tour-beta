@@ -37,7 +37,6 @@ function PackageTable({ packages }: { packages: WorldPackage[] }): JSX.Element {
           <th>Source</th>
           <th>Editable</th>
           <th>Countries</th>
-          <th>Manual Overrides</th>
           <th>Continents</th>
           <th>Regions</th>
           <th>Travel Regions</th>
@@ -57,7 +56,6 @@ function PackageTable({ packages }: { packages: WorldPackage[] }): JSX.Element {
             <td>{pkg.source}</td>
             <td>{yesNo(pkg.editable, 'Editable', 'Read-only')}</td>
             <td>{pkg.country_count}</td>
-            <td>{pkg.manual_override_count}</td>
             <td>{pkg.continent_count}</td>
             <td>{pkg.region_count}</td>
             <td>{pkg.travel_region_count}</td>
@@ -78,13 +76,12 @@ export function WorldLibraryPage(): JSX.Element {
   return (
     <section className="panel">
       <div className="page-intro">
-        <h2>World Library</h2>
+        <h2>World Packages</h2>
         <p className="subtitle">Read-only registry of foundational world input bundles available to the engine.</p>
       </div>
       <p>
         World Packages are foundational world input bundles. A run will eventually be created from one selected World Package.
-        Official FAX World is built in and read-only. Repository-stored Custom Worlds can be discovered and inspected read-only when present under config/worlds/custom/. Legacy Countries Editor and package import/export workflows
-        still use canonical config until package-scoped editing is implemented.
+        Official FAX World is built in and read-only. Custom World Packages live under <code>config/world_packages/custom/</code> and use the same canonical package-scoped storage contract.
       </p>
       <p><Link to="/admin/world">Back to World hub</Link></p>
 
@@ -129,7 +126,7 @@ function CloneResultCard({ result }: { result: WorldPackageCloneResponse }): JSX
           <DetailRow label="World ID" value={<code>{result.package.world_id}</code>} />
           <DetailRow label="Type" value={result.package.type} />
           <DetailRow label="Source" value={result.package.source} />
-          <DetailRow label="Counts" value={`${result.package.country_count} countries, ${result.package.manual_override_count} manual overrides, ${result.package.continent_count} continents, ${result.package.region_count} regions, ${result.package.travel_region_count} travel regions`} />
+          <DetailRow label="Counts" value={`${result.package.country_count} countries, ${result.package.continent_count} continents, ${result.package.region_count} regions, ${result.package.travel_region_count} travel regions`} />
           <DetailRow label="Fingerprint" value={<code title={result.package.fingerprint}>{shortFingerprint(result.package.fingerprint)}</code>} />
         </div>
       )}
@@ -392,18 +389,19 @@ export function WorldLibraryDetailPage(): JSX.Element {
           {pkg.world_id === 'official_fax_world' && pkg.type === 'official' && <CloneOfficialWorldSection />}
           <SectionCard title="Contents">
             <DetailRow label="Countries" value={<><span>{pkg.country_count}</span> · <Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}/countries`}>Open package countries</Link></>} />
-            <DetailRow label="Manual overrides" value={pkg.manual_override_count} />
             <DetailRow label="Continents" value={pkg.continent_count} />
             <DetailRow label="Regions" value={pkg.region_count} />
             <DetailRow label="Travel regions" value={pkg.travel_region_count} />
           </SectionCard>
           <SectionCard title="Storage">
-            {pkg.storage.world_metadata_path && <DetailRow label="World metadata path" value={<code>{pkg.storage.world_metadata_path}</code>} />}
-            <DetailRow label="Countries path" value={<><code>{pkg.storage.countries_path}</code> · <Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}/countries`}>Open package countries</Link></>} />
-            {pkg.storage.continents_path && <DetailRow label="Continents path" value={<code>{pkg.storage.continents_path}</code>} />}
-            {pkg.storage.regions_path && <DetailRow label="Regions path" value={<code>{pkg.storage.regions_path}</code>} />}
-            {pkg.storage.travel_regions_path && <DetailRow label="Travel regions path" value={<code>{pkg.storage.travel_regions_path}</code>} />}
-            <DetailRow label="Manual player overrides path" value={<code>{pkg.storage.manual_player_overrides_path}</code>} />
+            <DetailRow label="Package root" value={<code>{pkg.storage.package_root_path}</code>} />
+            <DetailRow label="World metadata path" value={<code>{pkg.storage.world_metadata_path}</code>} />
+            <DetailRow label="Countries root" value={<code>{pkg.storage.countries_root_path}</code>} />
+            <DetailRow label="Countries index" value={<><code>{pkg.storage.countries_index_path}</code> · <Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}/countries`}>Open package countries</Link></>} />
+            <DetailRow label="Geography root" value={<code>{pkg.storage.geography_root_path}</code>} />
+            <DetailRow label="Continents path" value={<code>{pkg.storage.continents_path}</code>} />
+            <DetailRow label="Regions path" value={<code>{pkg.storage.regions_path}</code>} />
+            <DetailRow label="Travel regions path" value={<code>{pkg.storage.travel_regions_path}</code>} />
           </SectionCard>
           <SectionCard title="Usage">
             <DetailRow label="Used by runs" value={usageLabel(pkg.used_by_run_count)} />

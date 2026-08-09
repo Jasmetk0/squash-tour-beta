@@ -467,12 +467,14 @@ class RunWorldStatusResponse(BaseModel):
 
 
 class WorldPackageStorageResponse(BaseModel):
-    countries_path: str
-    manual_player_overrides_path: str
-    world_metadata_path: str | None = None
-    continents_path: str | None = None
-    regions_path: str | None = None
-    travel_regions_path: str | None = None
+    package_root_path: str
+    world_metadata_path: str
+    countries_root_path: str
+    countries_index_path: str
+    geography_root_path: str
+    continents_path: str
+    regions_path: str
+    travel_regions_path: str
 
 
 class WorldPackageSummaryResponse(BaseModel):
@@ -488,7 +490,6 @@ class WorldPackageSummaryResponse(BaseModel):
     version: str
     fingerprint: str
     country_count: int
-    manual_override_count: int
     continent_count: int
     region_count: int
     travel_region_count: int

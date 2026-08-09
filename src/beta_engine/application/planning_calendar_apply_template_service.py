@@ -427,7 +427,7 @@ class PlanningCalendarApplyBackupResult(BaseModel):
 
 @dataclass(slots=True)
 class PlanningCalendarApplyBackupService:
-    backup_dir: Any = "config/world/planning_calendar_apply_backups"
+    backup_dir: Any = "config/simulation/planning_calendar_apply_backups"
 
     def __post_init__(self) -> None:
         from pathlib import Path

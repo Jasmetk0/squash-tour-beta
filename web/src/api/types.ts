@@ -1624,12 +1624,14 @@ export type TalentClassSummaryResponse = {
 
 
 export type WorldPackageStorage = {
-  countries_path: string
-  manual_player_overrides_path: string
-  world_metadata_path?: string | null
-  continents_path?: string | null
-  regions_path?: string | null
-  travel_regions_path?: string | null
+  package_root_path: string
+  world_metadata_path: string
+  countries_root_path: string
+  countries_index_path: string
+  geography_root_path: string
+  continents_path: string
+  regions_path: string
+  travel_regions_path: string
 }
 
 export type WorldPackage = {
@@ -1645,7 +1647,6 @@ export type WorldPackage = {
   version: string
   fingerprint: string
   country_count: number
-  manual_override_count: number
   continent_count: number
   region_count: number
   travel_region_count: number

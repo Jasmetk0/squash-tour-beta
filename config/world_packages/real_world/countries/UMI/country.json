@@ -1,0 +1,7 @@
+{
+  "schema_version": "world_package_country.v1",
+  "code": "UMI",
+  "name": "United States Minor Outlying Islands",
+  "flag_asset": null,
+  "notes": "Gameplay fallback: United States curve; personnel anchor; not a separate UN WPP series."
+}

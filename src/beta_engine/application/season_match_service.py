@@ -205,7 +205,7 @@ class SeasonMatchesRegistry(BaseModel):
 class SeasonMatchService:
     draw_service: SeasonDrawService
     active_players_service: InitialPoolSeasonBootstrapService
-    matches_path: Path = Path("config/world/season_matches.json")
+    matches_path: Path = Path("config/simulation/season_matches.json")
 
     def __post_init__(self) -> None:
         if not isinstance(self.matches_path, Path):

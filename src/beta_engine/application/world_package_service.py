@@ -233,6 +233,8 @@ class WorldPackageService:
 
     def _apply_atomic(self, *, countries: CountriesConfig, overrides: ManualPlayerOverridesRegistry) -> None:
         countries_path = self.countries_service.config_path
+        if countries_path is None:
+            raise PermissionError("Built-in World Package countries are read-only; use an editable custom package")
         overrides_path = self.manual_overrides_service.config_path
         countries_before = countries_path.read_text(encoding="utf-8") if countries_path.exists() else None
         overrides_before = overrides_path.read_text(encoding="utf-8") if overrides_path.exists() else None

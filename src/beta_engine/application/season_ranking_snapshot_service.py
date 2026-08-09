@@ -145,7 +145,7 @@ class SeasonRankingSnapshotService:
     ranking_table_service: SeasonRankingTableService
     calendar_service: SeasonCalendarService | None = None
     point_awards_service: SeasonPointAwardsService | None = None
-    snapshots_path: Path = Path("config/world/season_ranking_snapshots.json")
+    snapshots_path: Path = Path("config/simulation/season_ranking_snapshots.json")
 
     def __post_init__(self) -> None:
         if not isinstance(self.snapshots_path, Path):

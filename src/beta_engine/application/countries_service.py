@@ -13,6 +13,7 @@ from pydantic import ValidationError
 
 from beta_engine.domain.countries import CountriesConfig, Country
 from beta_engine.infrastructure.world_config import COUNTRY_EXPORT_TABULAR_FIELDS, COUNTRY_TABULAR_FIELDS, load_countries_config
+from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
 
 
 @dataclass(frozen=True)
@@ -49,10 +50,12 @@ class CountriesImportResult:
 class CountriesConfigService:
     """CRUD management for countries backed by canonical JSON config."""
 
-    config_path: Path = Path("config/world/countries.json")
+    package_root: Path = Path("config/world_packages/official_fax_world")
+    config_path: Path | None = None  # Explicit aggregate fixture compatibility; never a production default.
 
     def __post_init__(self) -> None:
-        if not isinstance(self.config_path, Path):
+        self.package_root = Path(self.package_root)
+        if self.config_path is not None and not isinstance(self.config_path, Path):
             self.config_path = Path(self.config_path)
 
     def list_countries(self) -> list[Country]:
@@ -70,7 +73,7 @@ class CountriesConfigService:
         return CountriesDatasetMetadata(
             dataset_status=config.dataset_status,
             country_count=len(config.countries),
-            source_path=str(self.config_path),
+            source_path=str(self.config_path or (self.package_root / "countries/index.json")),
         )
 
     def export_countries_csv(self) -> str:
@@ -292,9 +295,21 @@ class CountriesConfigService:
         return payload
 
     def _load(self) -> CountriesConfig:
-        return load_countries_config(self.config_path)
+        if self.config_path is not None:
+            return load_countries_config(self.config_path)
+        return WorldPackageCountryStore(self.package_root).load_config()
 
     def _save(self, payload: CountriesConfig) -> None:
+        if self.config_path is None:
+            manifest_path = self.package_root / "world.json"
+            try:
+                editable = bool(json.loads(manifest_path.read_text(encoding="utf-8")).get("editable"))
+            except (OSError, json.JSONDecodeError, AttributeError):
+                editable = False
+            if not editable:
+                raise PermissionError(f"World Package at {self.package_root} is built-in or not editable")
+            WorldPackageCountryStore(self.package_root).replace_dataset(payload)
+            return
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
         target = self.config_path
         tmp_path = target.with_suffix(f"{target.suffix}.tmp")

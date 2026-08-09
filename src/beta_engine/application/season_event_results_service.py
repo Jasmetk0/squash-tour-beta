@@ -167,7 +167,7 @@ class SeasonEventResultsService:
     match_service: SeasonMatchService
     draw_service: SeasonDrawService | None = None
     calendar_service: SeasonCalendarService | None = None
-    results_path: Path = Path("config/world/season_event_results.json")
+    results_path: Path = Path("config/simulation/season_event_results.json")
 
     def __post_init__(self) -> None:
         if not isinstance(self.results_path, Path):

@@ -10,7 +10,8 @@ from beta_engine.domain.tournaments import SeasonCalendar, TournamentTemplate, T
 from beta_engine.infrastructure.entry_config import load_entry_tuning_config
 from beta_engine.infrastructure.points_config import load_points_config
 from beta_engine.infrastructure.tournament_config import load_season_calendar, load_tournament_templates_config
-from beta_engine.infrastructure.world_config import load_countries_config, load_player_identity_config
+from beta_engine.infrastructure.world_config import load_player_identity_config
+from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
 
 ValidationSeverity = Literal["warning", "error"]
 
@@ -51,8 +52,8 @@ class ConfigValidationService:
         domain_sources = {
             "season_calendar": f"config/calendar/season_{season}.json",
             "tournament_templates": "config/tournament_templates/mvp_templates.json",
-            "countries": "config/world/countries.json",
-            "player_identity": "config/world/player_identity.json",
+            "countries": "config/world_packages/official_fax_world/countries/index.json",
+            "player_identity": "config/player_generation/player_identity.json",
             "points": "config/points/mvp_points.json",
             "entry_tuning": "config/balance/entry_tuning.json",
         }
@@ -72,7 +73,7 @@ class ConfigValidationService:
         countries_config = self._load_domain(
             domain="countries",
             source=domain_sources["countries"],
-            loader=load_countries_config,
+            loader=lambda: WorldPackageCountryStore("config/world_packages/official_fax_world").load_config(),
             issues=issues,
         )
         self._load_domain(

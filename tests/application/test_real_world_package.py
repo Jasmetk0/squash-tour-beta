@@ -11,11 +11,11 @@ from beta_engine.application.world_package_validation_service import WorldPackag
 from beta_engine.world_packages import REAL_WORLD_ID
 
 
-def _validation_service(worlds_root: Path) -> WorldPackageValidationService:
+def _validation_service(world_packages_root: Path) -> WorldPackageValidationService:
     registry = WorldPackageRegistryService(
         countries_service=CountriesConfigService(),
         manual_overrides_service=ManualPlayerOverridesService(),
-        worlds_root=worlds_root,
+        world_packages_root=world_packages_root,
     )
     return WorldPackageValidationService(registry_service=registry)
 
@@ -41,15 +41,15 @@ def test_real_world_is_read_only_and_has_complete_population_through_2050() -> N
 
 
 def test_real_world_validation_fails_loudly_when_2050_population_is_missing(tmp_path) -> None:
-    worlds_root = tmp_path / "worlds"
-    package_dir = worlds_root / REAL_WORLD_ID
-    shutil.copytree(Path("config/worlds/real_world"), package_dir)
-    countries_path = package_dir / "countries.json"
+    world_packages_root = tmp_path / "world_packages"
+    package_dir = world_packages_root / REAL_WORLD_ID
+    shutil.copytree(Path("config/world_packages/real_world"), package_dir)
+    countries_path = package_dir / "countries/ABW/attributes/population.json"
     payload = json.loads(countries_path.read_text(encoding="utf-8"))
-    del payload["countries"][0]["population_by_year"]["2050"]
+    del payload["values_by_year"]["2050"]
     countries_path.write_text(json.dumps(payload), encoding="utf-8")
 
-    validation = _validation_service(worlds_root).validate_package(REAL_WORLD_ID)
+    validation = _validation_service(world_packages_root).validate_package(REAL_WORLD_ID)
 
     assert validation is not None
     assert validation.status == "errors"

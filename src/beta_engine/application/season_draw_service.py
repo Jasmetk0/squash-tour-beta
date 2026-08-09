@@ -167,7 +167,7 @@ class SeasonDrawsRegistry(BaseModel):
 class SeasonDrawService:
     entry_list_service: SeasonEntryListService
     calendar_service: SeasonCalendarService
-    draws_path: Path = Path("config/world/season_draws.json")
+    draws_path: Path = Path("config/simulation/season_draws.json")
 
     def __post_init__(self) -> None:
         if not isinstance(self.draws_path, Path):

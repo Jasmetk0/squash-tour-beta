@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryRecord, WorldPackageRegistryService
 from beta_engine.domain.countries import Country
-from beta_engine.infrastructure.world_config import load_countries_config
+from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
 
 
 @dataclass(frozen=True)
@@ -30,11 +30,10 @@ class WorldPackageCountriesService:
     def get_countries(self, world_id: str) -> WorldPackageCountriesResult | None:
         record = self.registry_service.get_package(world_id)
         paths = self.registry_service.package_paths(world_id)
-        if record is None or paths is None or "countries" not in paths:
+        if record is None or paths is None:
             return None
-        countries_path = paths["countries"]
-        countries_config = load_countries_config(countries_path)
-        return self._to_result(record=record, source_path=str(countries_path), countries=countries_config.countries)
+        countries_config = WorldPackageCountryStore(paths["package_root"]).load_config()
+        return self._to_result(record=record, source_path=str(paths["countries_index"]), countries=countries_config.countries)
 
     def _to_result(self, *, record: WorldPackageRegistryRecord, source_path: str, countries: list[Country]) -> WorldPackageCountriesResult:
         return WorldPackageCountriesResult(

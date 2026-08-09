@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 PLANNING_CALENDAR_APPLY_AUDIT_SCHEMA_VERSION = "planning_calendar_apply_audit.v1"
 PLANNING_CALENDAR_APPLY_COMMAND_TYPE = "planning_calendar_apply_template"
-PLANNING_CALENDAR_APPLY_AUDIT_DEFAULT_PATH = Path("config/world/planning_calendar_apply_audit.jsonl")
+PLANNING_CALENDAR_APPLY_AUDIT_DEFAULT_PATH = Path("config/simulation/planning_calendar_apply_audit.jsonl")
 PlanningCalendarApplyAuditStage = Literal["rejected", "pre_mutation_reserved", "succeeded"]
 
 

@@ -236,13 +236,13 @@ def get_world_package_service(request: Request) -> WorldPackageService:
 
 
 def get_world_package_registry_service(request: Request) -> WorldPackageRegistryService:
-    configured_worlds_root = getattr(request.app.state, "worlds_root", None)
+    configured_world_packages_root = getattr(request.app.state, "world_packages_root", None)
     kwargs = {
         "countries_service": get_countries_config_service(request),
         "manual_overrides_service": get_manual_player_overrides_service(request),
     }
-    if configured_worlds_root is not None:
-        kwargs["worlds_root"] = Path(configured_worlds_root)
+    if configured_world_packages_root is not None:
+        kwargs["world_packages_root"] = Path(configured_world_packages_root)
     return WorldPackageRegistryService(**kwargs)
 
 

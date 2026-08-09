@@ -33,6 +33,7 @@ const historicalView = () => ({ historical: true, unavailable: false, failed: fa
     { event_id: 'event-a', season: 2005, week: 10, tour: 'WORLD', category: 'GOLD', template_id: 'EVENT-A' },
     { event_id: 'event-after', season: 2005, week: 12, tour: 'WORLD', category: 'PLATINUM', template_id: 'AFTER' }
   ] } })
+type MockViewedState = ReturnType<typeof presentView> | ReturnType<typeof historicalView>
 
 function renderAt(route: string): void {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -252,7 +253,7 @@ describe('PlannedEventDetailPage', () => {
   })
 
   it('re-enables current and commissioner queries after Past changes to Present', async () => {
-    let current = historicalView(); adminTime.viewed.mockImplementation(() => current)
+    let current: MockViewedState = historicalView(); adminTime.viewed.mockImplementation(() => current)
     function Harness() { const [, update] = useState(0); return <><button onClick={() => { current = presentView(); update(value => value + 1) }}>Switch Present</button><PlannedEventDetailPage /></> }
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(<QueryClientProvider client={client}><MemoryRouter initialEntries={['/runs/run-a/calendar/E1']}><Routes><Route path="/runs/:runId/calendar/:eventId" element={<Harness />} /></Routes></MemoryRouter></QueryClientProvider>)

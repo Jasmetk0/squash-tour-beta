@@ -25,6 +25,9 @@ const pastView = (checkpointId = 'cp-old', season = 2005) => ({
     { event_id: 'C', season, week: 12, tour: 'ELITE', category: 'SILVER', template_id: 'TC' }
   ] }
 })
+type MockPastViewState = Omit<ReturnType<typeof pastView>, 'seasonState'> & {
+  seasonState: ReturnType<typeof pastView>['seasonState'] | null
+}
 
 describe('SeasonCalendarPage', () => {
   beforeEach(() => {
@@ -69,7 +72,7 @@ describe('SeasonCalendarPage', () => {
   })
 
   it('does not label old checkpoint content as a newly selected checkpoint while loading', async () => {
-    let current = pastView('cp-old', 2005)
+    let current: MockPastViewState = pastView('cp-old', 2005)
     adminTime.viewed.mockImplementation(() => current)
     function Harness() { const [, rerender] = useState(0); return <><button onClick={() => { current = { ...pastView('cp-newer', 2006), seasonState: null, query: { isLoading: true } }; rerender(value => value + 1) }}>Switch</button><SeasonCalendarPage /></> }
     renderWithRoute(<Harness />, '/admin/runs/run-a/calendar')

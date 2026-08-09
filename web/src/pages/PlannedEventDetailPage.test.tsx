@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { useState } from 'react'
 
 import { PlannedEventDetailPage } from './PlannedEventDetailPage'
 
@@ -20,8 +21,18 @@ const api = vi.hoisted(() => ({
   getEventWildcardActions: vi.fn(),
   assignEventWildcards: vi.fn()
 }))
+const adminTime = vi.hoisted(() => ({ viewed: vi.fn() }))
 
 vi.mock('../api/client', () => api)
+vi.mock('../admin/useAdminViewedSeasonState', () => ({ useAdminViewedSeasonState: adminTime.viewed }))
+
+const presentView = () => ({ historical: false, seasonState: null, unavailable: false, failed: false, query: { isLoading: false }, time: null })
+const historicalView = () => ({ historical: true, unavailable: false, failed: false, query: { isLoading: false }, time: { viewCheckpointId: 'cp-old' }, seasonState: {
+  season: 2005, completed_event_ids: ['event-a'], next_event_index: 1, ordered_events: [
+    { event_id: 'event-before', season: 2005, week: 9, tour: 'ELITE', category: 'SILVER', template_id: 'BEFORE' },
+    { event_id: 'event-a', season: 2005, week: 10, tour: 'WORLD', category: 'GOLD', template_id: 'EVENT-A' },
+    { event_id: 'event-after', season: 2005, week: 12, tour: 'WORLD', category: 'PLATINUM', template_id: 'AFTER' }
+  ] } })
 
 function renderAt(route: string): void {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -39,6 +50,7 @@ function renderAt(route: string): void {
 describe('PlannedEventDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    adminTime.viewed.mockImplementation(presentView)
     api.getRun.mockResolvedValue({
       run: { run_id: 'run-a', season: 2029, seed: 7, next_event_index: 1, total_events: 3, completed_event_ids: ['E2'] },
       season_state: {
@@ -223,6 +235,32 @@ describe('PlannedEventDetailPage', () => {
         }
       ]
     })
+  })
+
+  it('renders historical planned-event detail without current or commissioner API reads', async () => {
+    adminTime.viewed.mockReturnValue(historicalView())
+    renderAt('/runs/run-a/calendar/event-a')
+    expect(await screen.findByText('Past')).toBeInTheDocument(); expect(screen.getAllByText('2005').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('event-a').length).toBeGreaterThan(0)
+    expect(screen.getByText('2 of 3')).toBeInTheDocument(); expect(screen.getByText('10')).toBeInTheDocument()
+    expect(screen.getAllByText('WORLD').length).toBeGreaterThan(0); expect(screen.getByText('GOLD')).toBeInTheDocument(); expect(screen.getByText('EVENT-A')).toBeInTheDocument()
+    expect(screen.getAllByText('Completed').length).toBeGreaterThan(0); expect(screen.getByText('Yes')).toBeInTheDocument()
+    expect(screen.getAllByText('event-before').length).toBeGreaterThan(0); expect(screen.getAllByText('event-after').length).toBeGreaterThan(0)
+    for (const name of ['Commissioner wildcards', 'Wildcard action history', 'Commissioner pre-draw withdrawal replacement', 'Pre-draw withdrawal action history', 'Commissioner late replacement lucky loser', 'Late-replacement action history']) expect(screen.queryByRole('heading', { name })).not.toBeInTheDocument()
+    for (const method of ['getRun', 'listEvents', 'getEventWildcards', 'getEventWildcardCandidates', 'getEventWildcardActions', 'getEventPreDrawWithdrawalState', 'getEventPreDrawWithdrawalActions', 'getEventLateReplacementState', 'getEventLateReplacementCandidates', 'getEventLateReplacementActions'] as const) expect(api[method]).not.toHaveBeenCalled()
+    expect(screen.queryByRole('link', { name: /Inspect persisted event detail/ })).not.toBeInTheDocument()
+  })
+
+  it('re-enables current and commissioner queries after Past changes to Present', async () => {
+    let current = historicalView(); adminTime.viewed.mockImplementation(() => current)
+    function Harness() { const [, update] = useState(0); return <><button onClick={() => { current = presentView(); update(value => value + 1) }}>Switch Present</button><PlannedEventDetailPage /></> }
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={client}><MemoryRouter initialEntries={['/runs/run-a/calendar/E1']}><Routes><Route path="/runs/:runId/calendar/:eventId" element={<Harness />} /></Routes></MemoryRouter></QueryClientProvider>)
+    await screen.findByText('Past'); expect(api.getEventWildcards).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Switch Present' }))
+    await waitFor(() => expect(api.getRun).toHaveBeenCalled())
+    await waitFor(() => expect(api.getEventWildcards).toHaveBeenCalled())
+    expect(screen.getByText('Present')).toBeInTheDocument()
   })
 
   it('renders planned-event detail for valid event id with status and position', async () => {

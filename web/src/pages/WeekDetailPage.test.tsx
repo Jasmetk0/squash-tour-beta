@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -12,8 +12,10 @@ const api = vi.hoisted(() => ({
   listRankingSnapshots: vi.fn(),
   listRaceSnapshots: vi.fn()
 }))
+const adminTime = vi.hoisted(() => ({ viewed: vi.fn() }))
 
 vi.mock('../api/client', () => api)
+vi.mock('../admin/useAdminViewedSeasonState', () => ({ useAdminViewedSeasonState: adminTime.viewed }))
 
 function renderAt(route: string): void {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -31,6 +33,7 @@ function renderAt(route: string): void {
 describe('WeekDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    adminTime.viewed.mockReturnValue({ historical: false, seasonState: null, unavailable: false, failed: false, query: { isLoading: false }, time: null })
     api.getRun.mockResolvedValue({
       run: { run_id: 'run-a', season: 2029, seed: 7, next_event_index: 2, total_events: 5, completed_event_ids: ['E1', 'E2'] },
       season_state: {
@@ -68,6 +71,28 @@ describe('WeekDetailPage', () => {
         { snapshot_sequence: 21, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} }
       ]
     })
+  })
+
+  it('uses only historical SeasonState for week existence, status, and navigation while Past', async () => {
+    adminTime.viewed.mockReturnValue({ historical: true, unavailable: false, failed: false, query: { isLoading: false }, time: { viewCheckpointId: 'cp-old' }, seasonState: {
+      season: 2005, completed_event_ids: ['A'], next_event_index: 1, ordered_events: [
+        { event_id: 'A', season: 2005, week: 10, tour: 'WORLD', category: 'GOLD', template_id: 'TA' },
+        { event_id: 'B', season: 2005, week: 12, tour: 'WORLD', category: 'PLATINUM', template_id: 'TB' },
+        { event_id: 'C', season: 2005, week: 14, tour: 'ELITE', category: 'SILVER', template_id: 'TC' }
+      ] } })
+    renderAt('/runs/run-a/weeks/12')
+    expect(await screen.findByText('Past')).toBeInTheDocument(); expect(screen.getAllByText('2005').length).toBeGreaterThan(0)
+    const list = screen.getByRole('list', { name: 'Week planned events' }); expect(list).toHaveTextContent('B'); expect(list).toHaveTextContent('Next')
+    expect(screen.getByRole('link', { name: 'W10' })).toBeInTheDocument(); expect(screen.getByRole('link', { name: 'W14' })).toBeInTheDocument()
+    expect(screen.getByText(/Persisted Events and Ranking\/Race snapshots are not available/)).toBeInTheDocument()
+    expect(api.getRun).not.toHaveBeenCalled(); expect(api.listEvents).not.toHaveBeenCalled()
+    expect(api.listRankingSnapshots).not.toHaveBeenCalled(); expect(api.listRaceSnapshots).not.toHaveBeenCalled()
+  })
+
+  it('continues to load current persisted and snapshot APIs while Present', async () => {
+    renderAt('/runs/run-a/weeks/3')
+    await screen.findByRole('heading', { name: 'Week detail' })
+    await waitFor(() => { expect(api.listEvents).toHaveBeenCalled(); expect(api.listRankingSnapshots).toHaveBeenCalled(); expect(api.listRaceSnapshots).toHaveBeenCalled() })
   })
 
   it('renders for a valid week with season-ordered planned events', async () => {

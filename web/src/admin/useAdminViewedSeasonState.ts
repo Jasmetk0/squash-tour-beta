@@ -15,5 +15,6 @@ export function useAdminViewedSeasonState() {
     retry: false,
   })
   const unavailable = historical && Boolean(query.error && typeof query.error === 'object' && 'status' in query.error && query.error.status === 409)
-  return { time: context, historical, query, seasonState: query.data?.season_state ?? null, unavailable }
+  const failed = historical && Boolean(query.error) && !unavailable
+  return { time: context, historical, query, seasonState: query.data?.season_state ?? null, unavailable, failed }
 }

@@ -3,7 +3,7 @@
 ## Decision and scope
 
 Phase 1 pins one **FAX world-package source reference**, `fax-reference-v1`, to
-the required files under `config/worlds/official_fax_world/`. Its manifest contains
+the required files under `config/world_packages/official_fax_world/`. Its manifest contains
 an explicit `source_tree_hash`; changing those source inputs fails the foundation
 test until the version/hash is deliberately reviewed and updated. This hash is a
 test-manifest identity, not the production `world_package_fingerprint` contract.
@@ -46,7 +46,7 @@ tests at a built-in Run, a developer's local Run, or live/user storage.
 ## Audit findings
 
 The audit covered backend tests and fixtures, frontend Vitest fixtures/mocks,
-`config/worlds/official_fax_world`, the legacy SimulationRun and newer Product
+`config/world_packages/official_fax_world`, the legacy SimulationRun and newer Product
 Run/Branch/checkpoint records, and both CI workflows.
 
 Largest duplication observed:

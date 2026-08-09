@@ -34,9 +34,10 @@ def _repository(tmp_path):
 
 
 def _service(tmp_path, *, known_worlds: set[str] | None = None) -> SimulationApiService:
+    registry = _RegistryStub(known_worlds) if known_worlds is not None else WorldPackageRegistryService()
     return SimulationApiService(
         repository=_repository(tmp_path),
-        world_package_registry_service=_RegistryStub(known_worlds or {OFFICIAL_FAX_WORLD_ID}),
+        world_package_registry_service=registry,
     )
 
 
@@ -64,6 +65,7 @@ def test_create_run_accepts_explicit_official_world_id(tmp_path) -> None:
     )
 
     assert summary.world_id == OFFICIAL_FAX_WORLD_ID
+    assert len(service.repository.list_run_talent_country_allocations(run_id="run-explicit-official")) == 4
 
 
 def test_create_run_accepts_real_world_and_uses_package_countries(tmp_path) -> None:

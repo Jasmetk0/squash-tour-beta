@@ -13,7 +13,7 @@ Countries are now modeled with a compact editable schema:
 
 This is intentionally simpler than the previous float-heavy model so tuning dozens of countries stays operationally manageable.
 
-> Note: current `config/world/countries.json` values are a temporary seed/demo dataset, not finalized project world content.
+> Note: current `the retired global countries seed` values are a temporary seed/demo dataset, not finalized project world content.
 
 ## Annual talent class planner
 

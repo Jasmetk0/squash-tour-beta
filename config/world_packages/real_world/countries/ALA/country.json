@@ -1,0 +1,7 @@
+{
+  "schema_version": "world_package_country.v1",
+  "code": "ALA",
+  "name": "\u00c5land Islands",
+  "flag_asset": null,
+  "notes": "Gameplay fallback: Finland curve; territory anchor; not a separate UN WPP series."
+}

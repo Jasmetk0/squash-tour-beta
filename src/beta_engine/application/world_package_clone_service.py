@@ -46,13 +46,13 @@ class WorldPackageCloneService:
 
     def clone_official_world(self, *, new_world_id: str, name: str, description: str | None, dry_run: bool) -> WorldPackageCloneResult:
         normalized_world_id = str(new_world_id or "").strip()
-        target_dir = self.registry_service.worlds_root / "custom" / normalized_world_id
+        target_dir = self.registry_service.world_packages_root / "custom" / normalized_world_id
         errors = self._validate_request(normalized_world_id, str(name or ""), target_dir)
         if errors:
             return self._result(False, dry_run, normalized_world_id, target_dir, errors=errors)
 
-        source_paths = self.registry_service.package_paths(OFFICIAL_FAX_WORLD_ID)
-        if source_paths is None or not all(path.is_file() for path in source_paths.values()):
+        source_dir = self.registry_service.package_dir(OFFICIAL_FAX_WORLD_ID)
+        if source_dir is None or not all((source_dir / path).is_file() for path in REQUIRED_WORLD_PACKAGE_FILES):
             return self._result(False, dry_run, normalized_world_id, target_dir, errors=[WorldPackageCloneError("source_world_id", "official_fax_world package is missing or incomplete.")])
 
         if dry_run:
@@ -64,7 +64,7 @@ class WorldPackageCloneService:
             if target_dir.exists():
                 return self._result(False, dry_run, normalized_world_id, target_dir, errors=[WorldPackageCloneError("new_world_id", f"target directory already exists: {target_dir}")])
             temp_dir.mkdir(parents=False)
-            self._write_clone_files(temp_dir, source_paths, new_world_id=normalized_world_id, name=name.strip(), description=description)
+            self._write_clone_files(temp_dir, source_dir, new_world_id=normalized_world_id, name=name.strip(), description=description)
             temp_dir.rename(target_dir)
         except Exception as exc:  # noqa: BLE001 - convert filesystem failures into API errors and clean up.
             if temp_dir.exists():
@@ -98,7 +98,9 @@ class WorldPackageCloneService:
             errors.append(WorldPackageCloneError("name", "name is required."))
         return errors
 
-    def _write_clone_files(self, temp_dir: Path, source_paths: dict[str, Path], *, new_world_id: str, name: str, description: str | None) -> None:
+    def _write_clone_files(self, temp_dir: Path, source_dir: Path, *, new_world_id: str, name: str, description: str | None) -> None:
+        shutil.copytree(source_dir / "countries", temp_dir / "countries")
+        shutil.copytree(source_dir / "geography", temp_dir / "geography")
         world_metadata = {
             "world_id": new_world_id,
             "name": name,
@@ -111,11 +113,10 @@ class WorldPackageCloneService:
             "archivable": True,
             "version": "v1",
             "content_schema_version": "1",
+            "package_format_version": "world_package_directory.v1",
             "cloned_from_world_id": OFFICIAL_FAX_WORLD_ID,
         }
         (temp_dir / "world.json").write_text(json.dumps(world_metadata, indent=2) + "\n", encoding="utf-8")
-        for key in ("countries", "continents", "regions", "travel_regions"):
-            shutil.copy2(source_paths[key], temp_dir / f"{key}.json")
 
     def _result(self, ok: bool, dry_run: bool, new_world_id: str, target_dir: Path, *, package: WorldPackageRegistryRecord | None = None, validation: WorldPackageValidationResult | None = None, errors: list[WorldPackageCloneError] | None = None) -> WorldPackageCloneResult:
         return WorldPackageCloneResult(

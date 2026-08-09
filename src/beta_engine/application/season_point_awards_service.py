@@ -188,7 +188,7 @@ class SeasonPointAwardsService:
     active_players_service: InitialPoolSeasonBootstrapService
     calendar_service: SeasonCalendarService | None = None
     template_service: TournamentTemplatesConfigService | None = None
-    awards_path: Path = Path("config/world/season_point_awards.json")
+    awards_path: Path = Path("config/simulation/season_point_awards.json")
     points_config_path: Path = Path("config/points/mvp_points.json")
 
     def __post_init__(self) -> None:

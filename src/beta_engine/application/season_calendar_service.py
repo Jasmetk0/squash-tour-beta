@@ -93,7 +93,7 @@ class SeasonCalendarService:
     """Build, validate, read, and persist file-backed season calendars."""
 
     template_service: TournamentTemplatesConfigService
-    calendar_registry_path: Path = Path("config/world/season_calendars.json")
+    calendar_registry_path: Path = Path("config/simulation/season_calendars.json")
 
     def __post_init__(self) -> None:
         if not isinstance(self.calendar_registry_path, Path):

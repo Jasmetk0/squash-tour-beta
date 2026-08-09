@@ -1,0 +1,7 @@
+{
+  "schema_version": "country_population.v1",
+  "default_year": 2020,
+  "values_by_year": {
+    "2020": 31584129
+  }
+}

@@ -5,8 +5,6 @@ import { Layout } from './components/Layout'
 import { BootstrapLineagePage } from './pages/BootstrapLineagePage'
 import { ActivityPage } from './pages/ActivityPage'
 import { DashboardPage } from './pages/DashboardPage'
-import { CountriesPage } from './pages/CountriesPage'
-import { CountryDetailPage } from './pages/CountryDetailPage'
 import { EventDetailPage } from './pages/EventDetailPage'
 import { EventsPage } from './pages/EventsPage'
 import { FinalsPage } from './pages/FinalsPage'
@@ -122,8 +120,8 @@ export default function App(): JSX.Element {
         <Route path="admin/world/library" element={<WorldLibraryPage />} />
         <Route path="admin/world/library/:worldId" element={<WorldLibraryDetailPage />} />
         <Route path="admin/world/library/:worldId/countries" element={<WorldPackageCountriesPage />} />
-        <Route path="admin/world/countries" element={<CountriesPage />} />
-        <Route path="admin/world/countries/:countryCode" element={<CountryDetailPage />} />
+        <Route path="admin/world/countries" element={<Navigate replace to="/admin/world/library/official_fax_world/countries" />} />
+        <Route path="admin/world/countries/:countryCode" element={<Navigate replace to="/admin/world/library/official_fax_world/countries" />} />
         <Route path="admin/world/talent-preview" element={<TalentPreviewPage />} />
         <Route path="admin/world/country-momentum" element={<CountryMomentumPage />} />
         <Route path="admin/world/manual-player-overrides" element={<ManualPlayerOverridesPage />} />

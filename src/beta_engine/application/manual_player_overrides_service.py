@@ -47,7 +47,7 @@ class ManualPlayerOverridesImportResult:
 
 @dataclass(slots=True)
 class ManualPlayerOverridesService:
-    config_path: Path = Path("config/world/manual_player_overrides.json")
+    config_path: Path = Path("config/player_generation/manual_player_overrides.json")
 
     def __post_init__(self) -> None:
         if not isinstance(self.config_path, Path):

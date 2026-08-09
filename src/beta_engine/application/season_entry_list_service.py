@@ -130,7 +130,7 @@ class SeasonEntryListService:
     active_players_service: InitialPoolSeasonBootstrapService
     calendar_service: SeasonCalendarService
     countries_service: CountriesConfigService
-    entry_lists_path: Path = Path("config/world/season_entry_lists.json")
+    entry_lists_path: Path = Path("config/simulation/season_entry_lists.json")
     entry_tuning_path: Path = Path("config/balance/entry_tuning.json")
 
     def __post_init__(self) -> None:

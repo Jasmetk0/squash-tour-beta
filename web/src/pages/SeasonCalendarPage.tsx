@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { getRun, listEvents } from '../api/client'
+import { useAdminViewedSeasonState } from '../admin/useAdminViewedSeasonState'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -20,15 +21,17 @@ export function SeasonCalendarPage(): JSX.Element {
   const [weekFilter, setWeekFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [textFilter, setTextFilter] = useState('')
+  const viewed = useAdminViewedSeasonState()
 
-  const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId) })
-  const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId) })
+  const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId) && !viewed.historical })
+  const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId) && !viewed.historical })
 
-  const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
-  const nextEventIndex = runQuery.data?.season_state.next_event_index ?? 0
+  const seasonState = viewed.historical ? viewed.seasonState : runQuery.data?.season_state
+  const orderedEvents = seasonState?.ordered_events ?? []
+  const nextEventIndex = seasonState?.next_event_index ?? 0
   const completedEventIds = useMemo(
-    () => new Set(runQuery.data?.season_state.completed_event_ids ?? []),
-    [runQuery.data?.season_state.completed_event_ids]
+    () => new Set(seasonState?.completed_event_ids ?? []),
+    [seasonState?.completed_event_ids]
   )
   const persistedEventIds = useMemo(() => new Set((eventsQuery.data?.events ?? []).map((event) => event.event_id)), [eventsQuery.data?.events])
 
@@ -54,6 +57,10 @@ export function SeasonCalendarPage(): JSX.Element {
   const totalCount = orderedEvents.length
   const nextEvent = orderedEvents[nextEventIndex] ?? null
 
+  if (viewed.historical && viewed.unavailable) return <section className="panel"><h1>Historical calendar is not available for this checkpoint.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId} · Kind: {viewed.time?.selectedCheckpoint?.kind ?? 'unknown'}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
+  if (viewed.historical && viewed.failed) return <section className="panel"><h1>Failed to load historical calendar state.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
+  if (viewed.historical && viewed.query.isLoading) return <section className="panel"><p className="status">Loading historical calendar...</p></section>
+
   return (
     <section className="panel">
       <RunScopedHeader
@@ -63,16 +70,18 @@ export function SeasonCalendarPage(): JSX.Element {
       />
       <CurrentContextStrip
         items={[
-          { label: 'Season', value: runQuery.data?.season_state.season ?? '—' },
+          { label: 'Time', value: viewed.historical ? 'Past' : 'Present' },
+          { label: 'Checkpoint', value: viewed.time?.viewCheckpointId ?? '—' },
+          { label: 'Season', value: seasonState?.season ?? '—' },
           { label: 'Next event index', value: nextEventIndex },
           { label: 'Completed', value: `${completedCount}/${totalCount}` }
         ]}
       />
 
       <SectionCard title="Season progress summary">
-        {runQuery.isLoading ? <p className="status">Loading season calendar...</p> : null}
+        {!viewed.historical && runQuery.isLoading ? <p className="status">Loading season calendar...</p> : null}
         {runQuery.error ? <p className="error">Failed to load run season state: {formatApiError(runQuery.error)}</p> : null}
-        {runQuery.data ? (
+        {seasonState ? (
           <>
             <SummaryPills
               items={[
@@ -84,15 +93,15 @@ export function SeasonCalendarPage(): JSX.Element {
             />
             <CompactSummaryCard
               items={[
-                { label: 'Run ID', value: runQuery.data.run.run_id },
-                { label: 'Season', value: runQuery.data.season_state.season },
+                { label: 'Run ID', value: runId },
+                { label: 'Season', value: seasonState.season },
                 { label: 'Next event', value: nextEvent?.event_id ?? 'None (season complete)' }
               ]}
             />
             <p>
               <Link to={`/runs/${runId}`}>Back to Run Detail</Link>
               {' · '}
-              <Link to={`/runs/${runId}/events`}>Open persisted Events history</Link>
+              {!viewed.historical ? <Link to={`/runs/${runId}/events`}>Open persisted Events history</Link> : <span>Persisted historical event detail is not available in this phase.</span>}
               {' · '}
               <Link to={`/runs/${runId}/activity`}>Open run Activity</Link>
             </p>
@@ -137,8 +146,8 @@ export function SeasonCalendarPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title="Ordered season calendar">
-        {runQuery.data && filteredEvents.length === 0 ? <EmptyState message="No calendar events match the current filters." /> : null}
-        {runQuery.data && filteredEvents.length > 0 ? (
+        {seasonState && filteredEvents.length === 0 ? <EmptyState message="No calendar events match the current filters." /> : null}
+        {seasonState && filteredEvents.length > 0 ? (
           <ol className="item-list" aria-label="Season calendar ordered list">
             {filteredEvents.map((event) => {
               const absoluteIndex = orderedEvents.indexOf(event)
@@ -161,7 +170,7 @@ export function SeasonCalendarPage(): JSX.Element {
                         value: (
                           <>
                             <Link to={`/runs/${runId}/calendar/${encodeURIComponent(event.event_id)}`}>{event.event_id}</Link>
-                            {status === 'Completed' && hasPersistedDetail ? (
+                            {!viewed.historical && status === 'Completed' && hasPersistedDetail ? (
                               <>
                                 {' '}·{' '}
                                 <Link to={`/runs/${runId}/events/${encodeURIComponent(event.event_id)}`}>history</Link>
@@ -182,7 +191,7 @@ export function SeasonCalendarPage(): JSX.Element {
             })}
           </ol>
         ) : null}
-        {eventsQuery.error ? <p className="error">Failed to load persisted events: {formatApiError(eventsQuery.error)}</p> : null}
+        {!viewed.historical && eventsQuery.error ? <p className="error">Failed to load persisted events: {formatApiError(eventsQuery.error)}</p> : null}
       </SectionCard>
 
       {nextEvent ? (

@@ -743,6 +743,9 @@ class SimulationApiService:
     manual_overrides_service: ManualPlayerOverridesService = field(default_factory=ManualPlayerOverridesService)
     countries_service: CountriesConfigService = field(default_factory=CountriesConfigService)
     world_package_registry_service: WorldPackageRegistryService | None = None
+    def get_branch_checkpoint_season_state(self, *, product_run_id: str, branch_id: str, checkpoint_id: str):
+        return self.repository.get_branch_checkpoint_season_state(product_run_id=product_run_id, branch_id=branch_id, checkpoint_id=checkpoint_id)
+
     def get_viewer_official_run_context(self, product_run_id: str) -> ViewerOfficialRunContext:
         """Read the current official Viewer context for a Product Run."""
         return self.repository.get_viewer_official_run_context(product_run_id=product_run_id)

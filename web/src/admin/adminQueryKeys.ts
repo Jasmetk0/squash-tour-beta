@@ -6,3 +6,6 @@ export const adminBranchCheckpointsQueryKey = (runId: string, branchId: string |
 
 export const adminBranchHeadQueryKey = (runId: string, branchId: string | null, checkpointId: string | null) =>
   ['admin-branch-head', runId, branchId, checkpointId] as const
+
+export const adminHistoricalSeasonStateQueryKey = (runId: string, branchId: string | null, checkpointId: string | null) =>
+  ['admin-historical-season-state', runId, branchId, checkpointId] as const

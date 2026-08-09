@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
 import { getRun, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
+import { useAdminViewedSeasonState } from '../admin/useAdminViewedSeasonState'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -16,35 +17,37 @@ import { getPlannedEventStatus, getWeekStatus, getWeeksInSeasonOrder } from './p
 
 export function WeekDetailPage(): JSX.Element {
   const { runId = '', week = '' } = useParams()
+  const viewed = useAdminViewedSeasonState()
 
   const runQuery = useQuery({
     queryKey: ['run', runId],
     queryFn: () => getRun(runId),
-    enabled: Boolean(runId),
+    enabled: Boolean(runId) && !viewed.historical,
     retry: false
   })
   const eventsQuery = useQuery({
     queryKey: ['events', runId],
     queryFn: () => listEvents(runId),
-    enabled: Boolean(runId),
+    enabled: Boolean(runId) && !viewed.historical,
     retry: false
   })
   const rankingSnapshotsQuery = useQuery({
     queryKey: ['ranking-snapshots', runId],
     queryFn: () => listRankingSnapshots(runId),
-    enabled: Boolean(runId),
+    enabled: Boolean(runId) && !viewed.historical,
     retry: false
   })
   const raceSnapshotsQuery = useQuery({
     queryKey: ['race-snapshots', runId],
     queryFn: () => listRaceSnapshots(runId),
-    enabled: Boolean(runId),
+    enabled: Boolean(runId) && !viewed.historical,
     retry: false
   })
 
-  const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
-  const nextEventIndex = runQuery.data?.season_state.next_event_index ?? 0
-  const completedEventIds = new Set(runQuery.data?.season_state.completed_event_ids ?? [])
+  const seasonState = viewed.historical ? viewed.seasonState : runQuery.data?.season_state
+  const orderedEvents = seasonState?.ordered_events ?? []
+  const nextEventIndex = seasonState?.next_event_index ?? 0
+  const completedEventIds = new Set(seasonState?.completed_event_ids ?? [])
   const persistedEventIds = new Set((eventsQuery.data?.events ?? []).map((event) => event.event_id))
 
   const parsedWeek = Number.parseInt(week, 10)
@@ -82,6 +85,10 @@ export function WeekDetailPage(): JSX.Element {
   const previousWeek = weekPosition > 0 ? orderedWeeks[weekPosition - 1] : null
   const nextWeek = weekPosition >= 0 && weekPosition < orderedWeeks.length - 1 ? orderedWeeks[weekPosition + 1] : null
 
+  if (viewed.historical && viewed.unavailable) return <section className="panel"><h1>Historical calendar is not available for this checkpoint.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
+  if (viewed.historical && viewed.failed) return <section className="panel"><h1>Failed to load historical calendar state.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
+  if (viewed.historical && viewed.query.isLoading) return <section className="panel"><p className="status">Loading historical week...</p></section>
+
   return (
     <section className="panel">
       <RunScopedHeader
@@ -93,7 +100,8 @@ export function WeekDetailPage(): JSX.Element {
       <CurrentContextStrip
         items={[
           { label: 'Run', value: runId || 'unknown' },
-          { label: 'Season', value: runQuery.data?.season_state.season ?? '—' },
+          { label: 'Time', value: viewed.historical ? 'Past' : 'Present' },
+          { label: 'Season', value: seasonState?.season ?? '—' },
           { label: 'Week', value: week ? `W${week}` : '—' }
         ]}
       />
@@ -104,14 +112,14 @@ export function WeekDetailPage(): JSX.Element {
           {' · '}
           <Link to={`/runs/${runId}`}>Back to Run Detail</Link>
           {' · '}
-          <Link to={`/runs/${runId}/events`}>Open persisted Events history</Link>
+          {!viewed.historical ? <Link to={`/runs/${runId}/events`}>Open persisted Events history</Link> : <span>Persisted Events and Ranking/Race snapshots are not available for historical weeks in this slice.</span>}
         </p>
       </SectionCard>
 
       <SectionCard title="Week summary">
         {runQuery.isLoading ? <p className="status">Loading week detail...</p> : null}
         {runQuery.error ? <p className="error">Failed to load run season state: {formatApiError(runQuery.error)}</p> : null}
-        {hasValidWeekParam && runQuery.data && !weekExists ? (
+        {hasValidWeekParam && seasonState && !weekExists ? (
           <EmptyState message={`Week ${parsedWeek} is not present in this run's ordered season plan.`} />
         ) : null}
         {!hasValidWeekParam ? <EmptyState message="Week must be a whole number in the URL (for example /weeks/12)." /> : null}
@@ -122,13 +130,13 @@ export function WeekDetailPage(): JSX.Element {
               items={[
                 { label: 'Week status', value: weekStatus ?? '—' },
                 { label: 'Planned events', value: weekEvents.length },
-                { label: 'Persisted events', value: weekEvents.filter((event) => persistedEventIds.has(event.event_id)).length }
+                ...(viewed.historical ? [] : [{ label: 'Persisted events', value: weekEvents.filter((event) => persistedEventIds.has(event.event_id)).length }])
               ]}
             />
             <CompactSummaryCard
               items={[
                 { label: 'Run ID', value: runId },
-                { label: 'Season', value: runQuery.data?.season_state.season ?? '—' },
+                { label: 'Season', value: seasonState?.season ?? '—' },
                 { label: 'Week', value: parsedWeek }
               ]}
             />
@@ -163,7 +171,7 @@ export function WeekDetailPage(): JSX.Element {
                         value: (
                           <>
                             <Link to={`/runs/${runId}/calendar/${encodeURIComponent(event.event_id)}`}>Planned detail</Link>
-                            {hasPersistedDetail ? (
+                            {!viewed.historical && hasPersistedDetail ? (
                               <>
                                 {' '}·{' '}
                                 <Link to={`/runs/${runId}/events/${encodeURIComponent(event.event_id)}`}>Persisted detail</Link>
@@ -182,7 +190,7 @@ export function WeekDetailPage(): JSX.Element {
         </SectionCard>
       ) : null}
 
-      {weekExists ? (
+      {weekExists && !viewed.historical ? (
         <SectionCard title="Related snapshots in week">
           <MetadataList
             items={[

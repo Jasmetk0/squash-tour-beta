@@ -1,507 +1,454 @@
 # Squash Engine / FAX Squash / MSA World Tour
 
-## Active Product Constitution — synchronized from Master Vision v31
+## Active Product Constitution — synchronized from Master Vision v42
 
 **Repository status:** canonical product-level specification for current design and implementation decisions.  
-**Source version:** Master Vision **31**.  
-**Source updated:** **6. 8. 2026**.  
-**Imported source file:** `SQUASH_ENGINE_MASTER_VISION_2026-07-21(2)(2).md`.  
-**Source SHA-256:** `3cc7c26efc8812c2b47def02f92b742c3df793c49b5add5e8b5155a52056e43c`.
+**Source version:** Master Vision **42**.  
+**Source updated:** **10. 8. 2026**.  
 
-> This file replaces the older `Beta_Engine — Active Product & Technical Blueprint` as the repository's product constitution. It intentionally follows Master Vision v31 rather than preserving obsolete assumptions from the beta UI. The detailed Master remains broader than the currently implemented application: a decision being specified here does **not** mean it is already implemented.
+> This file is a repository-facing constitution distilled from Master Vision v42. The detailed Master is broader and more granular. A rule being specified here does **not** mean it is already implemented.
 
 ---
 
 ## 0. How to read this document
 
-Decision states used by the Master:
+Decision states:
 
 - **[DECIDED]** — current rule/design; build against it until explicitly changed.
 - **[PROVISIONAL]** — working rule or strong direction, not final canon.
-- **[TARGET]** — required long-term capability whose exact details may still be open.
+- **[TARGET]** — required capability whose exact details may still be open.
 - **[OPEN]** — not decided yet.
 - **[DEFERRED]** — intentionally postponed.
 - **[LATER]** — future-version idea, not current scope.
 - **[OLDER IDEA]** — historical context only unless reconfirmed.
 
-A second independent axis defines scope:
+Independent scope axis:
 
-- **ENGINE INVARIANT** — universal technical contract for all Runs in the current engine version.
+- **ENGINE INVARIANT** — universal technical contract for all Runs in the current version.
 - **RUN CONFIG** — configurable state of a Run/package/season/category/tournament/etc.
-- **OFFICIAL RUN DEFAULT** — default/canon for the Official Run, but not a universal engine restriction.
+- **OFFICIAL RUN DEFAULT** — FAX/MSA default, not a universal restriction.
 - **OVERRIDE** — explicit narrower exception.
 
 ### Precedence
 
-When sources disagree, use this order:
+When sources disagree:
 
-1. explicit newer user decisions,
-2. Master Vision v31 and later synchronized Master revisions,
-3. provisional directions,
-4. older docs, handoffs and existing code only as implementation/history evidence.
+1. explicit newer user/product decisions,
+2. latest audited Master Vision — currently v42,
+3. this constitution,
+4. subordinate migration guidance such as `docs/ENGINE_UX_SPEC.md`,
+5. README/ROADMAP/AGENTS summaries,
+6. older docs, handoffs and current beta behavior only as implementation/history evidence.
 
-Existing beta behavior must not silently overrule the target product model.
-Repository summaries (`README.md`, `ROADMAP.md`, and `AGENTS.md`) are subordinate to
-this constitution and must be corrected when they retain superseded product rules.
+Do not convert `[PROVISIONAL]`, `[OPEN]`, `[DEFERRED]` or `[LATER]` items into hard product rules without a newer explicit decision.
 
 ---
 
-# 1. Product identity and current scope
+# 1. Product identity and scope
 
-**[TARGET]** Squash Engine is a long-term simulator and manager of the professional men's squash world FAX. It must cover countries and population, player generations and careers, tournaments and qualification, match simulation, rankings/statistics/history, alternative timelines, Admin workflows and a historically faithful read-only Viewer.
-
-It is **not** merely a match generator.
+**[TARGET]** Squash Engine is a long-term deterministic manager and simulator of the fictional men's professional FAX squash world. It covers countries and population, player generations/careers, tournaments and entries, match simulation, rankings/statistics/history, alternative timelines, Admin workflows and historically faithful read-only public Viewer websites led by MSA.
 
 **[DECIDED] Current scope:**
 
 - men's squash only,
 - singles matches only,
-- one-user local product; no user accounts/roles/login,
-- current engine horizon is 50 seasons, `2000/01–2049/50`, exactly 61 Season Weeks per season,
-- team competitions are made from individual singles matches,
-- no women's tour, doubles, coaches, personal sponsors/contracts, player salaries, detailed travel costs, AI player photos, automatic articles, simulated attendance, standalone junior ranking or mandatory day-by-day world model in the current version.
+- one-user local product; no accounts/roles/login,
+- exactly 50 seasons `2000/01–2049/50`,
+- exactly 61 Season Weeks per season,
+- team competitions consist of individual singles matches,
+- no women's tour, doubles, coaches, support teams, agents or training centers as separate simulated entities in the current version,
+- no personal sponsors/contracts, player salaries, detailed travel costs, AI player photos, simulated attendance or standalone junior ranking in the current version.
 
 ---
 
-# 2. Viewer and Admin are two different product surfaces
+# 2. Viewer and Admin
 
 ## 2.1 Viewer
 
 **[DECIDED]** Viewer is always read-only. It cannot edit, simulate, import, regenerate or perform Admin mutations.
 
-Viewer is not just one MSA page. It is the read-only environment for multiple fictional public websites above the same Run/time context; the primary current website is official **MSA Squash**.
+Viewer is a historically faithful environment for multiple fictional public websites over the same Run/time context; the main current site is **MSA Squash**.
 
-Viewer must never fabricate unavailable data. Historical views must not leak future results or future-derived information.
+Viewer must not fabricate unavailable data or leak future information. Public news/messages come from then-public World Events rather than becoming a separate source of truth.
 
 ## 2.2 Admin
 
-**[TARGET]** Admin is the working environment for creating, editing, validating, simulating and auditing the world. It includes Run/branch/history management, packages, players, seasons/calendar/tournaments, simulation, manual intervention, import/export and diagnostics.
+**[TARGET]** Admin creates, edits, validates, simulates, reconstructs and audits the world.
 
-**[DECIDED]** The main page of a Run-scoped Admin is a **working Run Home / dashboard**, not another landing chooser. It is centered on the currently selected Run + active branch and should surface current simulation position/state, meaningful warnings/errors, jobs, unsaved changes and fast continuation of work.
+**[DECIDED]** Global Admin and Run Admin are separate scopes:
 
-Normal simulation workflows belong to dedicated simulation/workflow surfaces; Home should primarily orient the Admin and surface what needs attention.
+- **Global Admin:** no active Run/branch/week; manages Runs and source Packages.
+- **Run Admin:** one Run, one active Admin branch and time context.
 
-## 2.3 Viewer ↔ Admin context mapping
+**[DECIDED]** Run Admin landing page is **Home**, not Dashboard. It is an overview/command center, not the place where every simulation control must live.
 
-**[DECIDED IN PRINCIPLE]** Switching mode should preserve as much context as possible: Run, season/week, object and matching subpage when a counterpart exists.
+**[DECIDED]** Run Home has two fixed segmented progress indicators:
 
-Admin → Viewer never silently changes the Run's Viewer Branch. If the same object does not exist/is not public in the Viewer Branch, use the closest meaningful fallback and explain the context change.
+- position in the 50-season Run,
+- position in the current 61-week season.
+
+**[PROVISIONAL]** Full Run Admin navigation tree remains a strong direction rather than final canon.
+
+## 2.3 Viewer ↔ Admin mapping
+
+**[DECIDED IN PRINCIPLE]** Mode switching preserves Run, time, object and matching subpage when possible.
+
+Admin → Viewer never silently changes Viewer Branch. If the exact object/time is unavailable in Viewer Branch, use the closest meaningful fallback and explain the context change.
 
 ---
 
-# 3. Global application shell and scopes
+# 3. Application shell
 
-## 3.1 Squash Engine Home
+**[DECIDED]** Application root is neutral **Squash Engine Home** with current global entries:
 
-**[DECIDED]** The application root is neutral **`Squash Engine Home`**. It currently provides entry into global areas:
+- Runs
+- Packages
 
-- `Runs`
-- `Packages`
+Global pages have no Run/Branch/Time selectors. Viewer is unavailable until a Run is chosen.
 
-It is not a Viewer/Admin landing chooser and does not automatically activate a Run.
-
-## 3.2 Global Admin vs Run Admin
-
-**[DECIDED]** Admin has two distinct scopes:
-
-### Global Admin
-- no active Run,
-- no active branch,
-- no season/week context,
-- manages Runs, source Packages and genuinely global data,
-- Viewer control remains visible but unavailable with an explanation that a Run must be opened first.
-
-### Run Admin
-- one active Run,
-- one active Admin branch,
-- season/week viewing context,
-- Run-specific navigation and working dashboard.
-
-The sidebar is contextual: global and Run-specific sections must not be mixed into one giant menu.
-
-## 3.3 Header hierarchy
-
-**[DECIDED] Admin:**
-- `Squash Engine` logo → global `Squash Engine Home`,
-- in Run Admin only, a generic Run icon + current Run name → that Run's Home/dashboard.
-
-**[DECIDED] Viewer:**
-- Viewer logo → public-web hub for the current Run,
-- current website logo → that site's homepage.
-
-## 3.4 Global controls
-
-Run-scoped pages keep controls in the upper-right area:
+Run-scoped upper-right controls remain conceptually:
 
 - Viewer: `Run → Time → Viewer/Admin`
 - Admin: `Run → Branch → Time → Viewer/Admin`
 
-Global search and `Ctrl+K` remain part of the application shell; exact placement may be refined.
-
-Global pages without a Run do not show Run/Branch/Time selectors.
+Global search/`Ctrl+K` remains part of the shell.
 
 ---
 
-# 4. Run model
+# 4. Run and branch model
 
-**[DECIDED]** A Run is an independent saved simulation world containing at minimum stable identity/name, optional description, embedded package snapshots + provenance, the 50-season horizon, branches/history, players/tournaments/matches/rankings, checkpoints/metadata and simulation/configuration state.
+**[DECIDED][ENGINE INVARIANT]** Every Run spans exactly 50 seasons `2000/01–2049/50`; each contains exactly 61 Season Weeks.
 
-- number of Runs is not artificially limited,
-- displayed Run names are unique across active and archived Runs,
-- technical identity is stable `run_id`,
-- normal lifecycle is `Working / Completed / Archived`,
-- `Built-in / Local`, `Read-only / Editable` and `Valid / Warnings / Errors` are independent axes, not lifecycle states,
-- completion at Week 61 of `2049/50` does not auto-archive the Run,
-- a completed Run may still branch from earlier history.
+**[DECIDED]** Run lifecycle is `Working / Completed / Archived`. `Built-in/Local`, `Read-only/Editable` and `Valid/Warnings/Errors` are independent properties, not lifecycle states.
 
-**[DECIDED] No blocking setup phase.** A Run can be built incrementally and any currently valid operation can be simulated. Validation is operation-scoped rather than one global “Run ready” gate.
+**[DECIDED]** No blocking global Setup phase exists. Validation is operation-scoped: unrelated incomplete data must not block an otherwise valid operation.
 
-## 4.1 Runs page and switcher
+**[DECIDED]** Branches are equal alternative timelines inside one Run. There is no privileged Main/Official branch concept.
 
-`Runs` opens a neutral `Všechny Runy / All Runs` global page outside Run Admin and Viewer. The full list uses wide rows, not a grid of oversized cards.
+**[DECIDED]** Each Run has exactly one **Viewer Branch**. It selects which saved timeline Viewer displays and does not make that branch more authoritative than others.
 
-A Run exposes distinct actions:
+**[OPEN]** Exact save/activation moment of the explicit Show in Viewer operation remains unresolved.
 
-- Open in Admin — opens its normal Run Home using its Viewer Branch as initial branch context,
-- Open branches — opens full branch management/history,
-- Open in Viewer — opens the Run's Viewer Branch.
-
-The compact Run switcher shows at most a small set (current/favorites/recent) plus entry to All Runs; destructive/complex management does not belong in this quick panel.
+History target includes recoverable saves, versions, checkpoints, branch map/timeline and shared pre-divergence storage rather than duplicating common history.
 
 ---
 
-# 5. Branch, history and Viewer Branch
+# 5. Packages and world data
 
-**[DECIDED]** A branch is an alternative timeline inside a Run. Branches share `run_id` and common pre-divergence history, but each has its own `branch_id` and can diverge in calendar, results, rankings, player state, rules/configuration and other time-valid data.
+**[DECIDED]** Every Run selects exactly one World Package and one Category Package during creation.
 
-There is **no privileged `Official Branch` or `Main Branch` concept** in the product model.
+Selected versions are copied into the Run as independent versioned snapshots. Source identity/version remains provenance only; later source edits never silently rewrite existing Runs.
 
-**[DECIDED]** Each Run always has exactly one **`Viewer Branch`**:
+Built-in GitHub source Packages are read-only. Custom/local source Packages can be editable.
 
-- it only selects which saved timeline the read-only Viewer displays,
-- it is not more important than other branches,
-- the technical pointer is `viewer_branch_id`, not `official_branch_id`,
-- it cannot be archived until another active branch is chosen for Viewer.
+**[PROVISIONAL]** Future Package types such as Player Packages remain possible but are not canonized.
 
-**[OPEN]** Exact save/activation moment of the explicit `Show in Viewer` operation remains to be finalized.
+Population, talent quantity/quality and country strength are separate concepts; exact generation formulas remain open.
 
-## 5.1 History model
-
-- branch can be created from any saved historical point,
-- differing simulated histories never auto-merge,
-- shared history should be stored once with branch deltas,
-- full Admin history target combines an interactive branch map and selected-branch timeline,
-- every successful Save creates a recoverable version,
-- checkpoint is a named/technical bookmark, not the only mechanism for recovery,
-- Undo/Redo is for the working session; long-term rollback uses versions/history/checkpoints.
+**[DECIDED IN PRINCIPLE]** Travel Regions and Timezone Areas exist as coarse independent geographic systems for first-version travel/jet-lag handling. Exact networks, distances and acclimatization mathematics remain open/deferred.
 
 ---
 
-# 6. Time model
+# 6. Players, state and AI
 
-**[ENGINE INVARIANT CURRENT VERSION]**
+Player identity uses stable `player_id`; time-varying state belongs to Run/branch/week history.
 
-- every Run: exactly 50 seasons `2000/01–2049/50`,
-- each season: exactly 61 Season Weeks,
-- FAX calendar year: exactly 61 Year Weeks,
-- Season Week 1 maps to Year Week 37,
-- Year Week 1 maps to Season Week 26,
-- no exact calendar dates/days are required in the core time model,
-- player birth is `birth_year + birth_year_week`.
+Current player state target includes attributes, potential/OVR, physical profile, form, fatigue, health, stamina, style/gameplan and decision AI.
 
-Viewer can inspect completed historical weeks and the currently progressing week using only then-known saved data. Future not-yet-started weeks are not Viewer states.
+**[DECIDED]** Each player uses an individual AI; different players may choose differently in the same external situation. Exact behavior is calibrated later over a working simulation.
 
-The global time control changes **viewing context only** and never advances/rewinds simulation.
+**[DECIDED]** Player AI does not get hidden omniscient access to Admin-only truth or Forecast output.
 
-Visible relation to current state:
+## 6.1 Form
 
-- Viewer: `PRESENT / PAST`
-- Admin: `PRESENT / PAST / FUTURE`
+**[DECIDED FOR V1]** Each player has one current Form.
 
-Clicking a non-present state returns viewing context to Present; it does not mutate simulation.
+- updates after each actually played match,
+- considers performance quality relative to opponent/expectation rather than only win/loss,
+- affects the next match immediately, including within the same tournament,
+- regresses gradually toward the player's individual long-term norm during Week Transition,
+- never hard-resets,
+- does not overwrite long-term attributes or stamina capacity.
 
----
+W/O and pre-start DQ do not change Form. RET/post-start DQ use only actually played performance with reduced evidence weight. Abnormal/No Contest cases postpone or constrain recalculation according to final resolution.
 
-# 7. Packages
-
-## 7.1 World + Category Packages
-
-**[DECIDED]** Every Run has exactly one World Package and one Category Package selected during Run creation.
-
-At creation, the selected versions are copied into the Run as independent, versioned snapshots. Source identity/version is stored as provenance only; there is no live link afterwards.
-
-Consequences:
-
-- editing a global source Package changes future Runs only,
-- editing an embedded snapshot in an editable Run changes that Run only,
-- an existing Run never silently absorbs later source updates,
-- built-in GitHub source Packages are read-only,
-- local/custom source Packages are editable,
-- embedded snapshots may be editable inside an editable local Run even if the source was built-in,
-- World and Category Packages are content-independent and are validated independently.
-
-Defaults:
-
-- `Official FAX World`
-- `Official FAX Category Package`
-
-## 7.2 Global Packages area
-
-**[DECIDED]** Source World and Category Packages have global Admin pages outside all Runs. UI must clearly distinguish editing a global source from editing an embedded Run snapshot.
-
-**[PROVISIONAL STRONG DIRECTION]** Package architecture should be extensible to future types such as Player Packages and perhaps distinguish base Packages from one-time import Packages. Do not treat those future types as decided yet.
+Exact formulas, scale and reversion speed remain open.
 
 ---
 
-# 8. Countries, population and talent generation
+# 7. Time progression, Week Transition and Simulation Slots
 
-- population history currently covers 1955–2050,
-- player generation uses the country's population in the player's birth year,
-- changing population/generation parameters does not retroactively rewrite already generated players,
-- quantity and quality of talent are separate concepts,
-- population alone must not determine squash strength,
-- exact formulas/weights/global pools remain open.
+**[DECIDED FOR V1]** Moving into a new week uses an explicit automatic **Week Transition**. It is not a Simulation Slot.
 
-CSV/XLSX imports into editable local data use staging + preview + validation. Errors identify exact row/column/value/reason/expected format/example/fix. Meaning-changing corrections require explicit approval. Valid independent rows may be imported selectively only when referential consistency remains valid. Confirmed writes are atomic and auditable.
+Week Transition prepares the next week's initial state and may include ranking activation, birthdays/prospect intake and other boundary processes.
 
----
+**[DECIDED FOR V1]** `Weekly Player Development Update` uses only state/history known through the end of the completed week. It cannot read information from the newly opened or future week.
 
-# 9. Players and lifecycle
+Continuous states such as fatigue/health are not automatically reset by week change.
 
-Current product direction includes:
+**[DECIDED FOR V1]** Every week has one global chronological sequence with a variable number of **Simulation Slots**.
 
-- stable `player_id`; display names do not need to be globally unique,
-- player profile exists from prospect/junior visibility onward and continues into Tour career,
-- time-varying profile/state is historical,
-- height/weight can change over time,
-- Admin owns authoritative internal state; Viewer exposes only public/estimated layers where applicable,
-- generation includes an initial mixed-age pool and continuing intake,
-- generated prospects are intended to eventually enter Tour according to lifecycle rules,
-- manual creation, lock/unlock and safe regeneration are supported concepts,
-- no separate “player licence” requirement in the current target model.
+- events inside one slot are simultaneous,
+- all use the same pre-slot snapshot,
+- technical execution order must not change their inputs,
+- the next slot starts only after the current slot is validly resolved.
 
-Potential, OVR, attributes, development, form, fatigue, health, style/gameplan and player decision AI are part of the target engine, but much of the exact mathematics/calibration is intentionally still open.
+**[DECIDED]** `Simulate Next Slot` resolves the nearest unresolved slot.
+
+**[DECIDED]** Split `Simulate Next Match` may resolve one stable-order match or a selected unresolved match inside the current slot without changing inputs of other simultaneous matches.
+
+Exact number/taxonomy of slot types remains open.
 
 ---
 
-# 10. Tournaments, calendar, entries, qualification and draws
+# 8. Season Transition and future planning
 
-The engine distinguishes persistent tournament identity (`Tournament Series`) from season-specific editions/configuration.
+**[DECIDED FOR V1]** **Season Transition** is the special Week 61 → Week 1 extension of Week Transition, not a normal slot.
 
-Calendar and category systems are time-aware/configurable rather than hard-coded global constants.
+It requires the closing season's mandatory events to be terminally resolved. Blocking problems are operation-scoped and identify their cause.
 
-Core draw direction already includes:
+New seasonal policies activate atomically. Only explicitly season-scoped state resets; continuous player/history state continues.
 
-- seeded tiers and controlled seed placement,
-- BYEs,
-- qualifier (`Q`) slots,
-- bracket or group qualification,
-- Lucky Losers,
-- withdrawal/replacement logic,
-- qualification/main-draw freeze concepts,
-- manual Admin editing/regeneration with strong warnings once play has begun.
+A lightweight **Season Closure Marker** records the boundary without copying the entire world.
 
-`Simulate` and `Manual / Step-by-step` are complementary workflows, not mutually exclusive global modes.
+**[DECIDED]** Future seasons may use efficient **Inherited Plans**; Drafts/Tournament Editions need not be eagerly materialized until editing, confirmation or simulation requires them.
+
+Future calendar editing distinguishes narrower Edition-specific changes from forward-inherited changes while protecting explicit overrides.
 
 ---
 
-# 11. Match and simulation engine
+# 9. Tournament Editions, publication and entries
 
-Default individual match format for Official Run is BO5 to 11, win by 2 unless a narrower competition configuration overrides it. Individual matches never end in a draw; abnormal statuses such as walkover/retirement/etc. need explicit stored semantics.
+Tournament Series is persistent identity; Tournament Edition is a season-specific occurrence with its own `edition_id`, season/weeks, parameters and edition number.
 
-Simulation target supports ranges such as:
+**[DECIDED]** Tournament Edition has derived lifecycle/component states and a public `Public Stage` rather than one disconnected manually maintained status.
 
-- Next Match,
-- Next Round,
-- Next Tournament,
-- Next Week,
-- Next Season,
-- Full Simulation,
-- custom supported ranges.
+**[DECIDED]** Incomplete Drafts may exist. Missing fields block only dependent operations such as scheduling, entries, draw or simulation.
 
-Long jobs belong in Task Center and should support visible progress/state. Direction includes pausing, safe stopping after a consistent unit, planned stop points, recovery and eventual Windows tray/background continuation.
+## 9.1 Public knowledge
 
-**[OPEN]** Complete deterministic seed contract for the entire engine remains unresolved even though some local algorithms, especially draw behavior, can already be deterministic.
+**[DECIDED]** Each Tournament Edition has historical `announcement_week`.
 
----
+Before that week is activated and the public World Event exists:
 
-# 12. Rankings, statistics, history and predictions
+- Admin may know the Edition,
+- Viewer must not know it,
+- player AI must not use it.
 
-The engine needs historically versioned ranking snapshots and read-only historical browsing. Official/Live ranking concepts and multiple analysis rankings can coexist, with sport-specific policies stored in configuration/history rather than globally hard-coded.
+For first version, all players and Viewer share the same public announcement time.
 
-H2H, statistics, records, awards and historical timelines are first-class generated data products.
+Normal announcement must precede the earliest operational event by at least one full week. Later public changes use explicit update events; emergency handling is a separate exceptional path.
 
-Predictions/odds must be derived from available model state and must not reveal future truth in historical Viewer contexts.
+## 9.2 Entries
 
-Country Ranking's exact meaning/formula is intentionally deferred until the base simulation is mature enough to calibrate it.
+**[DECIDED]** Entry decisions that belong to one Simulation Slot read from the same snapshot and commit transactionally.
 
----
+Retries must not arbitrarily reshuffle unrelated successful decisions.
 
-# 13. Configuration inheritance and overrides
+An application/entry is historical state rather than an ephemeral UI choice.
 
-**[DECIDED]** Stored Runs must preserve the actual values/rules that applied historically; loading old history must not recompute it from today's Official defaults.
-
-Each supported configurable value has:
-
-- `Inherited`
-- `Override`
-
-Admin shows effective value + inheritance/override source. Changing a parent updates dependent inherited values only; explicit overrides remain overrides until `Restore inheritance`.
-
-**[PROVISIONAL STRONG DIRECTION]** Working hierarchy:
-
-`engine default → Run package → Run → season → category → Tournament Series → Tournament Edition → phase/round → match`
-
-Exact placement/availability per setting is still to be finalized.
+Exact Entry Freeze/cut-off rules remain open where not explicitly resolved.
 
 ---
 
-# 14. Save, audit, import/export, storage and safety
+# 10. Match Engine v1
 
-- normal Save stores the current coherent working changes,
-- advanced Save may select safe logical bundles,
+Official Run default individual format is BO5 to 11, win by 2 unless narrower stored configuration overrides it.
+
+**[DECIDED FOR V1]** Matches are simulated **rally-by-rally**, not shot-by-shot.
+
+Each rally uses a hidden multi-phase process with control/pressure states, individual physical load and separate sporting/officiating resolution.
+
+**[DECIDED]** V1 has three distinct trainable stamina systems, each with capacity, current state and recovery. Their state updates after every rally.
+
+**[DECIDED]** Player AI perceives its own fatigue imperfectly and estimates the opponent's fatigue from observable signals rather than hidden exact numbers.
+
+AI selects an effort level before a rally and may change effort during hidden rally-state transitions.
+
+**[DECIDED]** Serve has a weaker initial influence appropriate to squash rather than tennis-like dominance.
+
+**[DECIDED FOR V1]** Interference uses simplified correct squash semantics:
+
+- No Let
+- Yes Let
+- Stroke
+
+Referee errors, detailed reviews, edge interference cases and deliberate delay are later scope.
+
+**[DECIDED]** Authoritative rally log stores compact sporting cause, official decision, duration, estimated shot count and relevant stamina state.
+
+Exact probability formulas, transition values and detailed calibration remain open.
+
+---
+
+# 11. Match timing and health breaks
+
+**[DECIDED FOR V1]** Match history includes authoritative timing events, not only scores.
+
+Official Run defaults currently include:
+
+- 2-minute interval between games,
+- 3-minute simplified health break where the configured health-break workflow applies.
+
+Recovery during actual elapsed time is continuous; these breaks do not hard-reset stamina/form/health state.
+
+Precise broader medical/injury mathematics remains open beyond the decided simplified first-version contract.
+
+---
+
+# 12. Match Reconstruction
+
+**[DECIDED FOR V1]** Admin supports **Match Reconstruction** for matches where some historical facts are known but the detailed rally history is not.
+
+- manually supplied facts are constraints,
+- Admin chooses candidate count,
+- engine generates candidate histories consistent with those constraints,
+- candidate cards provide compact comparison,
+- each candidate has complete read-only detail,
+- candidates remain non-authoritative merely by existing,
+- only an explicitly selected candidate becomes authoritative history.
+
+Selection/commit must be validated and auditable with provenance.
+
+**[PROVISIONAL/OPEN]** Default of ten candidates, remembering last count, exact probability/statistical architecture, session retention and exact compact-card content are not all fixed canon.
+
+---
+
+# 13. Rankings
+
+Ranking policies and snapshots are historically versioned/configurable rather than globally hard-coded.
+
+**[DECIDED][OFFICIAL RUN DEFAULT]** Season `2000/01` starts with **Best 15**.
+
+**[DECIDED]** Each later season uses the immediately previous season's effective Best N as its initial inherited proposal, while remaining independently configurable.
+
+Changing future policy must never silently recompute already historical ranking results from new defaults.
+
+Country Ranking formula remains deferred until base simulation is mature enough to calibrate it.
+
+---
+
+# 14. World Event Log, Audit Log, Task Center and Notification Center
+
+**[DECIDED]** These are four separate product layers:
+
+- **World Event Log** — chronological branch history of world facts/events,
+- **Audit Log** — changes to data and their provenance,
+- **Task Center** — running/completed operations,
+- **Notification Center** — items requiring Admin attention.
+
+Reading/dismissing a notification must not delete its source World Event, audit record, task or validation result.
+
+**[DECIDED]** Notification Center supports automatic system notifications and user watchlists. Repeated notices may be grouped; critical issues remain individually visible.
+
+**[DECIDED]** Severity contract across Admin:
+
+- blue information — non-blocking,
+- orange warning — non-blocking,
+- red critical — blocks or safely stops only the affected operation/branch.
+
+Every blocking/warning state should explain cause, impact and repair options.
+
+Viewer does not show technical alerts, internal validation or Audit Log.
+
+**[DECIDED]** Historical MSA homepage public messages derive only from then-public structured World Events and must not create future leaks.
+
+Standalone News page and News Importance Score remain unresolved/provisional at their actual status.
+
+---
+
+# 15. Forecast and Future Locks
+
+**[PROVISIONAL STRONG DIRECTION]** Forecast is non-authoritative analysis. Running it does not mutate Run, branch, real future seed or current time.
+
+Strong direction includes reproducible Forecast Sessions, scalable sampling, conditional analysis, sample reconstruction, pinning/comparison and explicit branch materialization.
+
+**[PROVISIONAL STRONG DIRECTION]** Future Locks can constrain possible future outcomes for Forecast/testing and potentially real branch workflows. Feasibility is separate from natural probability. Viewer does not see locks; Admin preserves provenance.
+
+Exact algorithms, sampling thresholds, rare-event methods, UI, retention, conflict handling and fulfilled-lock lifecycle remain partially open.
+
+---
+
+# 16. Rivalries, records and tournament prestige
+
+**[DECIDED]** Player rivalries exist as a product concept.
+
+**[PROVISIONAL]** Automatic detection, multi-player/overlapping rivalry groups, scoring, lifecycle, manual insertion from unsimulated junior history and exact Viewer placement remain directions of varying strength.
+
+**[DECIDED]** Viewer/Admin will expose many historically correct records from authoritative branch/week data.
+
+**[PROVISIONAL]** A unified record service and complete holder succession history remain weaker directions.
+
+**[PROVISIONAL]** Tournament Prestige is a direction: Tournament Series may carry changing Prestige Score with category defaults and Admin overrides/locks. Tournament Appeal remains a weaker separate direction.
+
+---
+
+# 17. Save, audit, import/export and storage
+
 - every successful Save creates a recoverable version,
 - important mutations are auditable,
-- data/provenance can identify sources such as Built-in, Generated/Simulated, Imported, Manual, Regenerated,
-- imports use preview and atomic commit,
-- Run export/import supports complete archives and narrower safe forms,
-- version migration must not silently lose data,
-- no artificial storage quota or silent automatic deletion,
-- Admin should expose physical storage use and block only operations that actually lack required space,
-- crash recovery must distinguish saved state from Recovery Draft rather than pretending unsaved history was committed.
+- imports use staging/preview/validation and atomic commit,
+- meaning-changing corrections require explicit approval,
+- valid independent rows may be selectively imported only when referential consistency remains valid,
+- Run export/import must not silently lose data during version migration,
+- no artificial silent deletion/storage quota behavior,
+- crash recovery distinguishes saved state from Recovery Draft.
 
 ---
 
-# 15. Major competition areas
+# 18. UX contract
 
-The product specification has dedicated systems for:
+Desktop-first, highly readable, practical sports-manager/data product.
 
-- World Tour Finals,
-- Individual World Championship,
-- Team World Championship,
-- continental championships,
-- national championships,
-- possible later IFSL/league squash.
+- Viewer/Admin are visually and semantically distinct,
+- important state is never communicated by color alone,
+- Czech + English UI target,
+- Light/Dark/System appearance target,
+- preview must be distinct from mutation,
+- user-facing terminology follows current canon even where backend adapters still use legacy names.
 
-Many exact competition formats remain Run/Official defaults or open items rather than engine invariants.
-
-For Team World Championship, the currently specified Official format uses six singles matches; at 3–3, tie-break proceeds by aggregate set difference, then point difference, then the position-1 singles result. Overall field/qualification/calendar/order details remain open.
+Full final Admin/Viewer navigation, Viewer reveal modes, exact MSA menu and many page-level layouts remain unresolved.
 
 ---
 
-# 16. UX and design contract
+# 19. Explicitly open/deferred areas
 
-**[PROVISIONAL STRONG PREFERENCE]** Premium but practical sports-manager / sports-data product:
+Do not silently invent:
 
-- high readability,
-- clear hierarchy,
-- desktop-first,
-- no overlapping panels,
-- tables optimized for desktop,
-- concise summary first, technical detail lower,
-- strong distinction between Viewer and Admin,
-- explicit preview vs mutation,
-- no unnecessary neon/sci-fi styling.
-
-**[DECIDED]**
-
-- UI languages: Czech + English,
-- global appearance: `Light / Dark / System`,
-- important states are never conveyed by color alone,
-- Viewer and Admin have distinct accent + textual mode indication,
-- suitable Admin tables support multi-select and only valid bulk actions,
-- global search exists with keyboard shortcut,
-- current version is designed for desktop rather than full mobile responsiveness.
-
----
-
-# 17. Run Admin information architecture — current direction
-
-The exact final Run sidebar is **not yet canonized**. Do not treat today's beta navigation as the target structure.
-
-Strong current working direction is to organize Run Admin around a small number of understandable product areas such as:
-
-- **Home** — Run command center/dashboard,
-- **World** — Run-embedded world/package snapshot and countries,
-- **Players** — player/prospect database and player-state workflows,
-- **Tour / Seasons** — calendar, tournaments, categories, competitions and season structure,
-- **Simulate** — actual simulation launcher/control workflows,
-- **Analysis** — rankings, metrics, diagnostics/analytical inspection where appropriate,
-- **History / Branches** — timelines, branch map, versions/checkpoints,
-- secondary settings/diagnostics/operator tools where they logically belong.
-
-This is a **direction**, not permission to invent a final tree without review. The Master v31 explicitly leaves the exact full Admin/Viewer route counterpart table, detailed Run sidebar and several page layouts open.
-
----
-
-# 18. Immediate implementation implications after v31 sync
-
-The current beta predates many product decisions above. Therefore the migration should prefer **incremental compatibility** over destructive rewrites, but new code must stop reinforcing obsolete concepts.
-
-Highest-impact cleanup areas:
-
-1. Replace `Master Run` / privileged `Official/Main Branch` UX assumptions with neutral Runs + `Viewer Branch` semantics.
-2. Build `Squash Engine Home` as true global root with global `Runs` and `Packages` scopes.
-3. Split global Admin navigation from Run-scoped Admin navigation.
-4. Standardize Run-scoped header controls: Run, Branch, Time, Viewer/Admin.
-5. Evolve `/admin/runs/:runId` into the real Run Home/dashboard while moving execution-heavy simulation actions to Simulate workflows.
-6. Introduce global source Package management distinct from Run-embedded snapshots.
-7. Audit code/schema fields named `official_branch`, `main_branch`, `master_run` or equivalent and migrate semantics carefully; do not blindly rename persisted fields without a migration plan.
-8. Audit route/navigation fallbacks for context-preserving Viewer↔Admin switching.
-9. Keep historical state/configuration immutable by later default changes.
-10. Use the Master decision status explicitly: do not implement `[OPEN]`, `[DEFERRED]` or `[PROVISIONAL]` details as if finalized unless required for a reversible working slice.
-
----
-
-# 19. Explicitly open/deferred areas that should not be invented silently
-
-Examples from Master v31 include:
-
-- exact complete Run Admin sidebar/page tree,
-- exact Viewer public-site navigation and full MSA homepage layout,
-- exact Viewer reveal modes,
-- exact activation timing of `Show in Viewer`,
+- final full Admin navigation tree,
+- final Viewer public-site navigation/reveal modes,
+- exact Show in Viewer activation timing,
 - final branch concurrency/lock matrix,
-- full deterministic seed contract,
-- exact country talent-generation mathematics,
-- detailed attribute/development/form/fatigue/health/AI mathematics,
-- complete Entry Freeze/cut-off rules,
-- several competition formats and qualification rules,
-- final Category Package seasonal data format,
-- future Package types beyond World + Category,
-- exact Country Ranking formula,
-- detailed long-job performance/recovery behavior,
-- final import/export formats and migration UX,
-- detailed storage thresholds,
-- complete page-by-page Admin↔Viewer counterpart map.
+- full engine-wide deterministic seed contract,
+- exact talent-generation mathematics,
+- detailed development/health/form/AI calibration,
+- exact Simulation Slot taxonomy/count,
+- unresolved Entry Freeze/cut-off rules,
+- final Category Package seasonal format,
+- Country Ranking formula,
+- final Forecast/Future Lock algorithms and lifecycle,
+- exact Match Reconstruction probability architecture and retention,
+- advanced referee/review/court-condition systems,
+- deep travel/acclimatization mathematics.
 
 ---
 
 # 20. Current implementation vs target
 
-This constitution describes **what Squash Engine should be**. The repository currently contains a beta with mixed implementation maturity and several older naming/navigation assumptions.
+This constitution describes **what Squash Engine should be**. The repository is a beta with mixed implementation maturity and legacy naming/architecture debt.
 
-For implementation work:
+Implementation work must:
 
 - inspect current code/API/schema before editing,
-- preserve working data contracts unless intentionally migrating them,
-- distinguish `implemented now` from `specified target`,
-- add tests for changed behavior,
+- preserve working contracts unless intentionally migrating them,
+- distinguish implemented behavior from target behavior,
+- add deterministic tests for changed behavior,
 - keep migrations backward-safe where saved Runs/data can exist,
-- prefer real existing data over fake dashboard placeholders.
+- avoid fake data merely to satisfy a target mockup,
+- preserve decision status instead of treating every Master item as final.
 
 ---
 
 # 21. Product definition in one sentence
 
-**Squash Engine is a long-term manager and simulator of the men's professional FAX squash world, capable of generating and evolving countries, players, tournaments, rankings and decades of history, safely branching alternative timelines, and presenting the result through both a powerful Admin workspace and historically faithful read-only public Viewer websites led by MSA.**
-
----
-
-## Repository documentation rule
-
-- This file is the active repository-level product constitution synchronized from Master Vision v31.
-- `docs/ENGINE_UX_SPEC.md` is subordinate implementation/migration guidance and must not contradict this file.
-- `README.md`, `ROADMAP.md`, and `AGENTS.md` are concise operating summaries, not parallel constitutions.
-- Older commits/documents are historical context, not current canon.
-- Future Master revisions should update this file (or replace it with a complete canonical Master mirror) before major product architecture work is treated as finalized.
+**Squash Engine is a long-term deterministic manager and simulator of the men's professional FAX squash world, capable of generating and evolving countries, players, tournaments, matches, rankings and decades of history, safely branching alternative timelines, reconstructing constrained historical matches, and presenting the result through a powerful Admin workspace and historically faithful read-only Viewer websites led by MSA.**

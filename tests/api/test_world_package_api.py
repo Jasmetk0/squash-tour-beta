@@ -1438,3 +1438,57 @@ def test_put_country_rejects_stale_package_fingerprint(tmp_path) -> None:
         status,_=_request('PUT',f'{server.base_url}/world/packages/editable/countries/GER',stale)
         _,after=_request('GET',f'{server.base_url}/world/packages/editable/countries/GER')
     assert status==409 and after['country']['name']=='First'
+
+
+def test_put_custom_population_adds_edits_removes_and_materializes_2020(tmp_path) -> None:
+    countries_path=tmp_path/'countries.json'; overrides_path=tmp_path/'overrides.json'; _write_fixture(countries_path,COUNTRIES_FIXTURE); _write_fixture(overrides_path,OVERRIDES_FIXTURE); worlds_root=_copy_worlds_root(tmp_path)
+    with ApiServer(database_url=f"sqlite:///{tmp_path/'population.db'}",countries_config_path=str(countries_path),manual_overrides_config_path=str(overrides_path),worlds_root=str(worlds_root)) as server:
+        assert _request('POST',f'{server.base_url}/world/packages/official_fax_world/clone',{'new_world_id':'editable','name':'Editable','dry_run':False})[0]==200
+        _,before=_request('GET',f'{server.base_url}/world/packages/editable/countries/GER'); old_2020=before['country']['population_by_year']['2020']; new_2020=old_2020+123
+        status,response=_request('PUT',f'{server.base_url}/world/packages/editable/countries/GER/population',{'values_by_year':{'1995':120_000_000,'2020':new_2020},'expected_package_fingerprint':before['package']['fingerprint']})
+        _,after=_request('GET',f'{server.base_url}/world/packages/editable/countries/GER')
+        assert status==200 and response['validation']['error_count']==0
+        assert after['country']['population_by_year']=={'1995':120_000_000,'2020':new_2020}
+        assert after['country']['population']==after['country']['default_population']==new_2020 and after['country']['default_population_year']==2020
+        assert after['package']['fingerprint']!=before['package']['fingerprint']
+        fingerprint=after['package']['fingerprint']
+        assert _request('PUT',f'{server.base_url}/world/packages/editable/countries/GER/population',{'values_by_year':{'1995':121_000_000,'2020':new_2020},'expected_package_fingerprint':fingerprint})[0]==200
+        _,non_default=_request('GET',f'{server.base_url}/world/packages/editable/countries/GER')
+        assert non_default['country']['population_by_year']['1995']==121_000_000
+        assert non_default['country']['population_by_year']['2020']==new_2020 and non_default['country']['population']==non_default['country']['default_population']==new_2020
+        assert _request('PUT',f'{server.base_url}/world/packages/editable/countries/GER/population',{'values_by_year':{'2020':new_2020},'expected_package_fingerprint':non_default['package']['fingerprint']})[0]==200
+        _,removed=_request('GET',f'{server.base_url}/world/packages/editable/countries/GER')
+    assert '1995' not in removed['country']['population_by_year']
+
+
+def test_put_population_rejects_invalid_protected_unknown_builtin_and_stale(tmp_path) -> None:
+    countries_path=tmp_path/'countries.json'; overrides_path=tmp_path/'overrides.json'; _write_fixture(countries_path,COUNTRIES_FIXTURE); _write_fixture(overrides_path,OVERRIDES_FIXTURE); worlds_root=_copy_worlds_root(tmp_path)
+    shutil.copytree(Path('config/world_packages/real_world'),worlds_root/'real_world')
+    builtins={world_id:{path.relative_to(worlds_root/world_id):path.read_bytes() for path in (worlds_root/world_id).rglob('*') if path.is_file()} for world_id in ('official_fax_world','real_world')}
+    with ApiServer(database_url=f"sqlite:///{tmp_path/'population-invalid.db'}",countries_config_path=str(countries_path),manual_overrides_config_path=str(overrides_path),worlds_root=str(worlds_root)) as server:
+        assert _request('POST',f'{server.base_url}/world/packages/official_fax_world/clone',{'new_world_id':'editable','name':'Editable','dry_run':False})[0]==200
+        _,detail=_request('GET',f'{server.base_url}/world/packages/editable/countries/GER'); original=detail['country']['population_by_year']; fingerprint=detail['package']['fingerprint']; url=f'{server.base_url}/world/packages/editable/countries/GER/population'
+        invalid=({'1995':1},{'1954':1,'2020':2},{'2020':2,'2051':1},{'2020':0},{'2020':-1},{'2020':1.5},{'2020':True},{'2020':'text'},{'2020':'123'})
+        for timeline in invalid: assert _request('PUT',url,{'values_by_year':timeline,'expected_package_fingerprint':fingerprint})[0]==422
+        for field in ('code','name','region','squash_popularity','default_year'):
+            assert _request('PUT',url,{'values_by_year':original,field:'forbidden'})[0]==422
+        assert _request('PUT',f'{server.base_url}/world/packages/unknown/countries/GER/population',{'values_by_year':original})[0]==404
+        assert _request('PUT',f'{server.base_url}/world/packages/editable/countries/ZZZ/population',{'values_by_year':original})[0]==404
+        for world_id,code in (('official_fax_world','GER'),('real_world','DEU')):
+            assert _request('PUT',f'{server.base_url}/world/packages/{world_id}/countries/{code}/population',{'values_by_year':{'2020':1}})[0]==403
+        country_payload=_country_update_payload(detail); country_payload.update(name='Newer source',expected_package_fingerprint=fingerprint)
+        assert _request('PUT',f'{server.base_url}/world/packages/editable/countries/GER',country_payload)[0]==200
+        assert _request('PUT',url,{'values_by_year':{'2020':999},'expected_package_fingerprint':fingerprint})[0]==409
+        _,unchanged=_request('GET',f'{server.base_url}/world/packages/editable/countries/GER')
+    assert unchanged['country']['population_by_year']==original
+    assert {world_id:{path.relative_to(worlds_root/world_id):path.read_bytes() for path in (worlds_root/world_id).rglob('*') if path.is_file()} for world_id in builtins}==builtins
+
+
+def test_put_population_semantic_noop_preserves_fingerprint_and_all_bytes(tmp_path) -> None:
+    countries_path=tmp_path/'countries.json'; overrides_path=tmp_path/'overrides.json'; _write_fixture(countries_path,COUNTRIES_FIXTURE); _write_fixture(overrides_path,OVERRIDES_FIXTURE); worlds_root=_copy_worlds_root(tmp_path)
+    with ApiServer(database_url=f"sqlite:///{tmp_path/'population-noop.db'}",countries_config_path=str(countries_path),manual_overrides_config_path=str(overrides_path),worlds_root=str(worlds_root)) as server:
+        _request('POST',f'{server.base_url}/world/packages/official_fax_world/clone',{'new_world_id':'editable','name':'Editable','dry_run':False})
+        _,before=_request('GET',f'{server.base_url}/world/packages/editable/countries/GER'); root=worlds_root/'custom/editable'; tree=compute_source_tree_hash(root); population=(root/'countries/GER/attributes/population.json').read_bytes()
+        status,response=_request('PUT',f'{server.base_url}/world/packages/editable/countries/GER/population',{'values_by_year':before['country']['population_by_year'],'expected_package_fingerprint':before['package']['fingerprint']})
+    assert status==200 and response['package']['fingerprint']==before['package']['fingerprint']
+    assert compute_source_tree_hash(root)==tree and (root/'countries/GER/attributes/population.json').read_bytes()==population

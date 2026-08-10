@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StrictInt, field_validator
 
 from beta_engine.domain.countries import CountriesConfig, Country
 
@@ -48,7 +48,18 @@ class CountryAttribute(BaseModel):
 class CountryPopulation(BaseModel):
     schema_version: str = COUNTRY_POPULATION_SCHEMA
     default_year: int
-    values_by_year: dict[int, int]
+    values_by_year: dict[int, StrictInt]
+
+    @field_validator("values_by_year")
+    @classmethod
+    def validate_timeline(cls, value: dict[int, int]) -> dict[int, int]:
+        if 2020 not in value:
+            raise ValueError("population timeline must contain default year 2020")
+        if any(year < 1955 or year > 2050 for year in value):
+            raise ValueError("population years must be between 1955 and 2050")
+        if any(isinstance(population, bool) or population <= 0 for population in value.values()):
+            raise ValueError("population values must be positive integers")
+        return value
 
 
 def _read_object(path: Path) -> dict[str, Any]:
@@ -69,7 +80,10 @@ def _write_json_atomic(path: Path, payload: object) -> None:
         json.dump(payload, fh, indent=2, sort_keys=False)
         fh.write("\n")
         temporary = Path(fh.name)
-    temporary.replace(path)
+    try:
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 @dataclass(slots=True)
@@ -187,6 +201,37 @@ class WorldPackageCountryStore:
             shutil.rmtree(backup)
         finally:
             shutil.rmtree(stage, ignore_errors=True)
+
+    def replace_population(self, country_code: str, values_by_year: dict[int, int], default_year: int = 2020) -> bytes:
+        """Atomically replace only population.json and return its original bytes."""
+        code = country_code.upper()
+        if code not in self.load_index().country_codes:
+            raise ValueError(f"country {code!r} does not exist")
+        payload = CountryPopulation(default_year=default_year, values_by_year=values_by_year)
+        path = self.countries_root / code / "attributes" / "population.json"
+        original = path.read_bytes()
+        current = CountryPopulation.model_validate(_read_object(path))
+        if current.model_dump() == payload.model_dump():
+            return original
+        _write_json_atomic(path, {
+            "schema_version": COUNTRY_POPULATION_SCHEMA,
+            "default_year": default_year,
+            "values_by_year": {str(year): value for year, value in sorted(values_by_year.items())},
+        })
+        try:
+            self.load_country(code)
+        except Exception:
+            self.restore_population(code, original)
+            raise
+        return original
+
+    def restore_population(self, country_code: str, original: bytes) -> None:
+        """Restore exact population bytes using an atomic promotion."""
+        path = self.countries_root / country_code.upper() / "attributes" / "population.json"
+        with tempfile.NamedTemporaryFile("wb", dir=path.parent, prefix=f".{path.name}.", delete=False) as fh:
+            fh.write(original)
+            temporary = Path(fh.name)
+        temporary.replace(path)
 
     def replace_dataset(self, config: CountriesConfig) -> None:
         parent = self.countries_root.parent

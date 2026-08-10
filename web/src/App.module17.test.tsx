@@ -32,6 +32,7 @@ const api = vi.hoisted(() => ({
   getWorldPackageCountries: vi.fn(),
   getWorldPackageCountry: vi.fn(),
   updateWorldPackageCountry: vi.fn(),
+  updateWorldPackageCountryPopulation: vi.fn(),
   getWorldPackageGeography: vi.fn(),
   cloneOfficialWorldPackage: vi.fn(),
   getLatestRollover: vi.fn(),
@@ -3081,6 +3082,62 @@ describe('Module 17 pages through routes', () => {
     renderAppAt('/admin/world/library/real_world/countries/GER')
     expect(await screen.findByText('Real World · Built-in · Read-only')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Edit country' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Edit population' })).not.toBeInTheDocument()
+  })
+
+  it('keeps Official FAX population visible and read-only', async () => {
+    renderAppAt('/admin/world/library/official_fax_world/countries/GER')
+    expect(await screen.findByRole('table',{name:'Authored population timeline'})).toHaveTextContent('2020 · Default year')
+    expect(screen.queryByRole('button',{name:'Edit population'})).not.toBeInTheDocument()
+  })
+
+  it('opens a separate Custom population editor, validates additions, sorts, and cancels', async () => {
+    const detail=editableCountryDetail(); Object.assign(detail.country.population_by_year,{'1995':120000000})
+    api.getWorldPackageCountry.mockResolvedValue(detail)
+    renderAppAt('/admin/world/library/my_custom_world/countries/GER')
+    fireEvent.click(await screen.findByRole('button',{name:'Edit population'}))
+    expect(screen.queryByRole('button',{name:'Edit country'})).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Population 2020')).toHaveValue(169702055)
+    expect(screen.getByText('2020 · Default year')).toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Remove 2020'})).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('New population year'),{target:{value:'1995'}}); fireEvent.change(screen.getByLabelText('New population value'),{target:{value:'5'}}); fireEvent.click(screen.getByRole('button',{name:'+ Add authored year'}))
+    expect(screen.getByRole('alert')).toHaveTextContent('Year 1995 is already authored.')
+    fireEvent.change(screen.getByLabelText('New population year'),{target:{value:'1954'}}); fireEvent.click(screen.getByRole('button',{name:'+ Add authored year'})); expect(screen.getByRole('alert')).toHaveTextContent('1955 to 2050')
+    fireEvent.change(screen.getByLabelText('New population year'),{target:{value:'2051'}}); fireEvent.click(screen.getByRole('button',{name:'+ Add authored year'})); expect(screen.getByRole('alert')).toHaveTextContent('1955 to 2050')
+    fireEvent.change(screen.getByLabelText('New population year'),{target:{value:'2000'}}); fireEvent.change(screen.getByLabelText('New population value'),{target:{value:'0'}}); fireEvent.click(screen.getByRole('button',{name:'+ Add authored year'})); expect(screen.getByRole('alert')).toHaveTextContent('positive integer')
+    fireEvent.change(screen.getByLabelText('New population value'),{target:{value:'1.5'}}); fireEvent.click(screen.getByRole('button',{name:'+ Add authored year'})); expect(screen.getByRole('alert')).toHaveTextContent('positive integer')
+    fireEvent.change(screen.getByLabelText('New population value'),{target:{value:'130000000'}}); fireEvent.click(screen.getByRole('button',{name:'+ Add authored year'}))
+    const rows=within(screen.getByRole('table',{name:'Edit authored population timeline'})).getAllByRole('row').slice(1)
+    expect(rows.map(row=>within(row).getAllByRole('cell')[0].textContent)).toEqual(['1995','2000','2020 · Default year'])
+    fireEvent.change(screen.getByLabelText('Population 1995'),{target:{value:'121000000'}}); fireEvent.click(screen.getByRole('button',{name:'Remove 1995'})); fireEvent.click(screen.getByRole('button',{name:'Cancel'}))
+    expect(api.updateWorldPackageCountryPopulation).not.toHaveBeenCalled()
+    expect(screen.getByRole('table',{name:'Authored population timeline'})).toHaveTextContent('120,000,000')
+  })
+
+  it('makes Country and Population edit modes mutually exclusive', async () => {
+    api.getWorldPackageCountry.mockResolvedValue(editableCountryDetail()); renderAppAt('/admin/world/library/my_custom_world/countries/GER')
+    fireEvent.click(await screen.findByRole('button',{name:'Edit country'})); expect(screen.queryByRole('button',{name:'Edit population'})).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Cancel'})); fireEvent.click(screen.getByRole('button',{name:'Edit population'})); expect(screen.queryByRole('button',{name:'Edit country'})).not.toBeInTheDocument()
+  })
+
+  it('saves only population fields, refreshes queries, and displays the successful result', async () => {
+    const detail=editableCountryDetail(); const updated={...detail,package:{...detail.package,fingerprint:'fingerprint-after'},country:{...detail.country,population:171000000,default_population:171000000,population_by_year:{'1995':120000000,'2020':171000000}}}
+    api.getWorldPackageCountry.mockResolvedValueOnce(detail).mockResolvedValue(updated)
+    api.updateWorldPackageCountryPopulation.mockResolvedValueOnce({country_detail:updated,package:updated.package,validation:{world_id:'my_custom_world',status:'valid',error_count:0,warning_count:0,info_count:1,checks:[]}})
+    const queryClient=renderAppAt('/admin/world/library/my_custom_world/countries/GER'); const invalidate=vi.spyOn(queryClient,'invalidateQueries')
+    fireEvent.click(await screen.findByRole('button',{name:'Edit population'})); fireEvent.change(screen.getByLabelText('Population 2020'),{target:{value:'171000000'}})
+    fireEvent.change(screen.getByLabelText('New population year'),{target:{value:'1995'}}); fireEvent.change(screen.getByLabelText('New population value'),{target:{value:'120000000'}}); fireEvent.click(screen.getByRole('button',{name:'+ Add authored year'})); fireEvent.click(screen.getByRole('button',{name:'Save population'}))
+    await waitFor(()=>expect(api.updateWorldPackageCountryPopulation).toHaveBeenCalled())
+    expect(api.updateWorldPackageCountryPopulation.mock.calls[0]).toEqual(['my_custom_world','GER',{values_by_year:{'1995':120000000,'2020':171000000},expected_package_fingerprint:'fingerprint-before'}])
+    expect(await screen.findByText('Population saved. Validation status: valid.')).toBeInTheDocument(); expect(screen.queryByRole('button',{name:'Save population'})).not.toBeInTheDocument()
+    expect(screen.getAllByText('171,000,000').length).toBeGreaterThanOrEqual(2)
+    for (const key of [['world-package-country','my_custom_world','GER'],['world-package-countries','my_custom_world'],['world-package','my_custom_world'],['world-package-validation','my_custom_world'],['world-packages']]) expect(invalidate).toHaveBeenCalledWith({queryKey:key})
+  })
+
+  it('keeps unsaved population values open when the backend rejects save', async () => {
+    api.getWorldPackageCountry.mockResolvedValue(editableCountryDetail()); api.updateWorldPackageCountryPopulation.mockRejectedValueOnce(new api.ApiError(JSON.stringify({detail:'stale population edit'}),409))
+    renderAppAt('/admin/world/library/my_custom_world/countries/GER'); fireEvent.click(await screen.findByRole('button',{name:'Edit population'})); fireEvent.change(screen.getByLabelText('Population 2020'),{target:{value:'171000000'}}); fireEvent.click(screen.getByRole('button',{name:'Save population'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('stale population edit'); expect(screen.getByLabelText('Population 2020')).toHaveValue(171000000); expect(screen.getByRole('button',{name:'Save population'})).toBeInTheDocument(); expect(screen.queryByText(/Population saved/)).not.toBeInTheDocument()
   })
 
   it('edits, cancels, and saves a Custom country with geography and protected fields excluded', async () => {

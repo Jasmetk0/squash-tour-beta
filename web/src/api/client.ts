@@ -114,6 +114,7 @@ import type {
   WorldPackageCountryDetail,
   WorldPackageCountryUpdatePayload,
   WorldPackageCountryUpdateResponse,
+  WorldPackageCountryPopulationUpdatePayload,
   WorldPackageGeography,
   WorldPackageCountryEffectivePopulationResponse,
   WeeklyIntakePreviewParams,
@@ -754,6 +755,12 @@ export function getWorldPackageCountry(worldId: string, countryCode: string): Pr
 
 export function updateWorldPackageCountry(worldId: string, countryCode: string, payload: WorldPackageCountryUpdatePayload): Promise<WorldPackageCountryUpdateResponse> {
   return request(`/world/packages/${encodeURIComponent(worldId)}/countries/${encodeURIComponent(countryCode)}`, {
+    method: 'PUT', body: JSON.stringify(payload)
+  })
+}
+
+export function updateWorldPackageCountryPopulation(worldId: string, countryCode: string, payload: WorldPackageCountryPopulationUpdatePayload): Promise<WorldPackageCountryUpdateResponse> {
+  return request(`/world/packages/${encodeURIComponent(worldId)}/countries/${encodeURIComponent(countryCode)}/population`, {
     method: 'PUT', body: JSON.stringify(payload)
   })
 }

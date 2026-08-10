@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-from pydantic import field_validator
+from pydantic import StrictInt, field_validator
 
 from beta_engine.application.finals_models import FinalsSimulationResult
 from beta_engine.application.run_bootstrap_models import (
@@ -566,6 +566,23 @@ class WorldPackageCountryUpdateRequest(BaseModel):
     court_count: int | None = Field(ge=0)
     style_dna: dict[str, float]
     expected_package_fingerprint: str | None = None
+
+
+class WorldPackageCountryPopulationUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    values_by_year: dict[int, StrictInt]
+    expected_package_fingerprint: str | None = None
+
+    @field_validator("values_by_year")
+    @classmethod
+    def validate_population(cls, value: dict[int, int]) -> dict[int, int]:
+        if 2020 not in value:
+            raise ValueError("values_by_year must contain default year 2020")
+        if any(year < 1955 or year > 2050 for year in value):
+            raise ValueError("population years must be between 1955 and 2050")
+        if any(isinstance(population, bool) or population <= 0 for population in value.values()):
+            raise ValueError("population values must be positive integers")
+        return value
 
 
 class WeeklyIntakeCountryAllocationResponse(BaseModel):

@@ -517,6 +517,39 @@ class WorldPackageCountriesResponse(BaseModel):
     countries: list[CountryResponse] = Field(default_factory=list)
 
 
+class WorldPackageContinentResponse(BaseModel):
+    code: str
+    name: str
+
+
+class WorldPackageRegionResponse(BaseModel):
+    code: str
+    name: str
+    continent_code: str | None = None
+
+
+class WorldPackageTravelRegionResponse(BaseModel):
+    code: str
+    name: str
+    description: str | None = None
+
+
+class WorldPackageGeographyResponse(BaseModel):
+    world_id: str
+    continents: list[WorldPackageContinentResponse]
+    regions: list[WorldPackageRegionResponse]
+    travel_regions: list[WorldPackageTravelRegionResponse]
+
+
+class WorldPackageCountryDetailResponse(BaseModel):
+    package: WorldPackageSummaryResponse
+    country: CountryResponse
+    region: WorldPackageRegionResponse | None = None
+    continent: WorldPackageContinentResponse | None = None
+    travel_region: WorldPackageTravelRegionResponse | None = None
+    source_path: str
+
+
 class WeeklyIntakeCountryAllocationResponse(BaseModel):
     country_code: str
     allocated_count: int

@@ -1670,6 +1670,24 @@ export type WorldPackageCountriesResponse = {
   countries: CountryRecord[]
 }
 
+export type WorldPackageContinent = { code: string, name: string }
+export type WorldPackageRegion = { code: string, name: string, continent_code: string | null }
+export type WorldPackageTravelRegion = { code: string, name: string, description: string | null }
+export type WorldPackageGeography = {
+  world_id: string
+  continents: WorldPackageContinent[]
+  regions: WorldPackageRegion[]
+  travel_regions: WorldPackageTravelRegion[]
+}
+export type WorldPackageCountryDetail = {
+  package: WorldPackage
+  country: CountryRecord
+  region: WorldPackageRegion | null
+  continent: WorldPackageContinent | null
+  travel_region: WorldPackageTravelRegion | null
+  source_path: string
+}
+
 
 
 export type RunWeeklyIntakeCohortCountryAllocation = {

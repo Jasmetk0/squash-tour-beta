@@ -3,8 +3,8 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
-import { cloneOfficialWorldPackage, getWorldPackage, getWorldPackageCountries, getWorldPackageValidation, listWorldPackages } from '../api/client'
-import type { CountryRecord, WorldPackage, WorldPackageCloneResponse, WorldPackageValidation } from '../api/types'
+import { cloneOfficialWorldPackage, getWorldPackage, getWorldPackageCountries, getWorldPackageCountry, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages } from '../api/client'
+import type { CountryRecord, WorldPackage, WorldPackageCloneResponse, WorldPackageGeography, WorldPackageValidation } from '../api/types'
 import { SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -34,8 +34,7 @@ function PackageTable({ packages }: { packages: WorldPackage[] }): JSX.Element {
           <th>World ID</th>
           <th>Type</th>
           <th>Status</th>
-          <th>Source</th>
-          <th>Editable</th>
+          <th>Package mode</th>
           <th>Countries</th>
           <th>Continents</th>
           <th>Regions</th>
@@ -51,10 +50,9 @@ function PackageTable({ packages }: { packages: WorldPackage[] }): JSX.Element {
           <tr key={pkg.world_id}>
             <td>{pkg.name}</td>
             <td><code>{pkg.world_id}</code></td>
-            <td>{pkg.type}</td>
+            <td>{pkg.type === 'custom' ? 'Custom' : 'Built-in'}</td>
             <td>{pkg.status}</td>
-            <td>{pkg.source}</td>
-            <td>{yesNo(pkg.editable, 'Editable', 'Read-only')}</td>
+            <td>{yesNo(pkg.editable, 'Editable source', 'Read-only')}</td>
             <td>{pkg.country_count}</td>
             <td>{pkg.continent_count}</td>
             <td>{pkg.region_count}</td>
@@ -62,7 +60,7 @@ function PackageTable({ packages }: { packages: WorldPackage[] }): JSX.Element {
             <td>{usageLabel(pkg.used_by_run_count)}</td>
             <td>{pkg.version}</td>
             <td><code title={pkg.fingerprint}>{shortFingerprint(pkg.fingerprint)}</code></td>
-            <td><Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}`}>View details</Link></td>
+            <td><Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}`}>Open World Package</Link></td>
           </tr>
         ))}
       </tbody>
@@ -247,6 +245,17 @@ function ValidationSection({ validation }: { validation: WorldPackageValidation 
   )
 }
 
+function GeographySection({ geography }: { geography: WorldPackageGeography }): JSX.Element {
+  return <SectionCard title="Geography">
+    <h4>Continents</h4>
+    <table><thead><tr><th>Code</th><th>Name</th></tr></thead><tbody>{geography.continents.map((item) => <tr key={item.code}><td><code>{item.code}</code></td><td>{item.name}</td></tr>)}</tbody></table>
+    <h4>Regions</h4>
+    <table><thead><tr><th>Code</th><th>Name</th><th>Continent</th></tr></thead><tbody>{geography.regions.map((item) => <tr key={item.code}><td><code>{item.code}</code></td><td>{item.name}</td><td>{geography.continents.find((continent) => continent.code === item.continent_code)?.name ?? '—'}</td></tr>)}</tbody></table>
+    <h4>Travel Regions</h4>
+    <table><thead><tr><th>Code</th><th>Name</th><th>Description</th></tr></thead><tbody>{geography.travel_regions.map((item) => <tr key={item.code}><td><code>{item.code}</code></td><td>{item.name}</td><td>{item.description ?? '—'}</td></tr>)}</tbody></table>
+  </SectionCard>
+}
+
 
 function formatNumber(value: number | null | undefined): string {
   return value === null || value === undefined ? '—' : value.toLocaleString()
@@ -266,12 +275,12 @@ function CountryCell({ value }: { value: ReactNode }): JSX.Element {
   return <td>{value === null || value === undefined || value === '' ? '—' : value}</td>
 }
 
-function PackageCountriesTable({ countries }: { countries: CountryRecord[] }): JSX.Element {
+function PackageCountriesTable({ countries, worldId }: { countries: CountryRecord[], worldId: string }): JSX.Element {
   return (
     <table>
       <thead>
         <tr>
-          <th>Code</th><th>Name</th><th>Region</th><th>Area km²</th><th>Population</th><th>Default population year</th><th>Default population</th><th>Population years</th><th>Wealth</th><th>Popularity</th><th>Tradition</th><th>System</th><th>Competition</th><th>Federation</th><th>Courts</th><th>Travel region</th>
+          <th>Code</th><th>Name</th><th>Region</th><th>Population</th><th>Population coverage</th><th>Area km²</th><th>Travel Region</th><th>Squash Popularity</th><th>System Quality</th><th>Federation Quality</th><th>Courts</th><th>Action</th>
         </tr>
       </thead>
       <tbody>
@@ -280,19 +289,15 @@ function PackageCountriesTable({ countries }: { countries: CountryRecord[] }): J
             <CountryCell value={<code>{country.code}</code>} />
             <CountryCell value={country.name} />
             <CountryCell value={country.region} />
-            <CountryCell value={formatNumber(country.area_km2)} />
             <CountryCell value={country.population.toLocaleString()} />
-            <CountryCell value={country.default_population_year} />
-            <CountryCell value={formatNumber(country.default_population)} />
             <CountryCell value={formatPopulationYears(country.population_by_year)} />
-            <CountryCell value={country.wealth_support} />
+            <CountryCell value={formatNumber(country.area_km2)} />
+            <CountryCell value={country.travel_region} />
             <CountryCell value={country.squash_popularity} />
-            <CountryCell value={country.squash_tradition} />
             <CountryCell value={country.system_quality} />
-            <CountryCell value={country.competition_density} />
             <CountryCell value={country.federation_quality} />
             <CountryCell value={country.court_count} />
-            <CountryCell value={country.travel_region} />
+            <td><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries/${encodeURIComponent(country.code)}`}>Open</Link></td>
           </tr>
         ))}
       </tbody>
@@ -309,6 +314,10 @@ export function WorldPackageCountriesPage(): JSX.Element {
     retry: false
   })
   const data = countriesQuery.data
+  const [search, setSearch] = useState('')
+  const visibleCountries = (data?.countries ?? [])
+    .filter((country) => `${country.code} ${country.name}`.toLowerCase().includes(search.trim().toLowerCase()))
+    .sort((left, right) => left.name.localeCompare(right.name) || left.code.localeCompare(right.code))
 
   return (
     <section className="panel">
@@ -327,11 +336,13 @@ export function WorldPackageCountriesPage(): JSX.Element {
             <DetailRow label="Type" value={data.type} />
             <DetailRow label="Source" value={data.source} />
             <DetailRow label="Country count" value={data.country_count} />
-            <DetailRow label="Source package mode" value={data.read_only ? 'Read-only' : 'Editable'} />
+            <DetailRow label="Package mode" value={`${data.type === 'custom' ? 'Custom' : 'Built-in'} · ${data.read_only ? 'Read-only' : 'Editable source'}`} />
           </SectionCard>
           <SectionCard title="Package countries">
             <p className="status">This inspection screen does not currently provide create, edit, delete, import, or export actions, regardless of source package editability.</p>
-            <PackageCountriesTable countries={data.countries} />
+            <label>Search by country name or code<input aria-label="Search countries" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
+            <p>{visibleCountries.length} {visibleCountries.length === 1 ? 'country' : 'countries'}</p>
+            <PackageCountriesTable countries={visibleCountries} worldId={worldId} />
           </SectionCard>
         </>
       )}
@@ -353,6 +364,7 @@ export function WorldLibraryDetailPage(): JSX.Element {
     enabled: Boolean(worldId),
     retry: false
   })
+  const geographyQuery = useQuery({ queryKey: ['world-package-geography', worldId], queryFn: () => getWorldPackageGeography(worldId), enabled: Boolean(worldId), retry: false })
   const pkg = packageQuery.data
 
   return (
@@ -366,6 +378,9 @@ export function WorldLibraryDetailPage(): JSX.Element {
       {packageQuery.error && <p className="error">Failed to load World Package: {formatApiError(packageQuery.error)}</p>}
       {pkg && (
         <>
+          <h2>{pkg.name}</h2><p><code>{pkg.world_id}</code></p><p><strong>{pkg.type === 'custom' ? 'Custom' : 'Built-in'} · {pkg.editable ? 'Editable source' : 'Read-only'}</strong></p>
+          <nav aria-label="Package sections"><a href="#overview">Overview</a> · <Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}/countries`}>Countries</Link> · <a href="#geography">Geography</a> · <a href="#validation">Validation</a></nav>
+          <div id="overview" />
           <SectionCard title="Metadata">
             <DetailRow label="Name" value={pkg.name} />
             <DetailRow label="World ID" value={<code>{pkg.world_id}</code>} />
@@ -393,6 +408,11 @@ export function WorldLibraryDetailPage(): JSX.Element {
             <DetailRow label="Used by runs" value={usageLabel(pkg.used_by_run_count)} />
             {pkg.used_by_run_count === null && <p className="status">Usage aggregation is not implemented yet.</p>}
           </SectionCard>
+          <div id="geography" />
+          {geographyQuery.isLoading && <p className="status">Loading geography...</p>}
+          {geographyQuery.error && <p className="error">Failed to load geography: {formatApiError(geographyQuery.error)}</p>}
+          {geographyQuery.data && <GeographySection geography={geographyQuery.data} />}
+          <div id="validation" />
           {validationQuery.isLoading && (
             <SectionCard title="World Package Validation">
               <p className="status">Loading World Package validation...</p>
@@ -408,4 +428,36 @@ export function WorldLibraryDetailPage(): JSX.Element {
       )}
     </section>
   )
+}
+
+export function WorldPackageCountryDetailPage(): JSX.Element {
+  const { worldId = '', countryCode = '' } = useParams()
+  const query = useQuery({ queryKey: ['world-package-country', worldId, countryCode], queryFn: () => getWorldPackageCountry(worldId, countryCode), enabled: Boolean(worldId && countryCode), retry: false })
+  const data = query.data
+  const timeline = Object.entries(data?.country.population_by_year ?? {}).filter(([, value]) => value != null).sort(([a], [b]) => Number(a) - Number(b))
+  const style = Object.entries(data?.country.style_dna ?? {})
+  return <section className="panel">
+    <p><Link to="/admin/world/library">World Packages</Link> → <Link to={`/admin/world/library/${encodeURIComponent(worldId)}`}>{data?.package.name ?? worldId}</Link> → <Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries`}>Countries</Link>{data ? ` → ${data.country.name}` : ''}</p>
+    {query.isLoading && <p className="status">Loading country...</p>}
+    {query.error && <p className="error">Failed to load country: {formatApiError(query.error)}</p>}
+    {data && <>
+      <div className="page-intro"><h2>{data.country.name}</h2><p className="subtitle"><code>{data.country.code}</code></p></div>
+      <p><strong>{data.package.name} · {data.package.type === 'custom' ? 'Custom' : 'Built-in'} · {data.package.editable ? 'Editable source' : 'Read-only'}</strong></p>
+      {data.package.editable && <p className="status">Source package is editable. Editing controls are not implemented in this explorer yet.</p>}
+      <SectionCard title="Overview">
+        <DetailRow label="Package" value={data.package.name} /><DetailRow label="Region" value={data.region?.name ?? data.country.region} /><DetailRow label="Travel Region" value={data.travel_region?.name ?? data.country.travel_region ?? '—'} /><DetailRow label="Area" value={`${formatNumber(data.country.area_km2)} km²`} /><DetailRow label="Current/default population" value={formatNumber(data.country.default_population ?? data.country.population)} />
+        {data.country.notes && <DetailRow label="Notes" value={data.country.notes} />}
+      </SectionCard>
+      <SectionCard title="Population">
+        <DetailRow label="Effective/default population" value={formatNumber(data.country.default_population ?? data.country.population)} /><DetailRow label="Default authored year" value={data.country.default_population_year ?? '—'} /><DetailRow label="Authored population years" value={timeline.length} /><DetailRow label="Earliest authored year" value={timeline[0]?.[0] ?? '—'} /><DetailRow label="Latest authored year" value={timeline[timeline.length - 1]?.[0] ?? '—'} />
+        <table aria-label="Authored population timeline"><thead><tr><th>Year</th><th>Population</th></tr></thead><tbody>{timeline.map(([year, value]) => <tr key={year}><td>{year}</td><td>{formatNumber(value)}</td></tr>)}</tbody></table>
+      </SectionCard>
+      <SectionCard title="Geography"><DetailRow label="Area km²" value={formatNumber(data.country.area_km2)} /><DetailRow label="Region" value={data.region ? `${data.region.name} (${data.region.code})` : data.country.region} /><DetailRow label="Continent" value={data.continent?.name ?? '—'} /><DetailRow label="Travel Region" value={data.travel_region ? `${data.travel_region.name} (${data.travel_region.code})` : data.country.travel_region ?? '—'} /></SectionCard>
+      <SectionCard title="Squash / Country strength">
+        <DetailRow label="Wealth Support" value={data.country.wealth_support} /><DetailRow label="Squash Popularity" value={data.country.squash_popularity} /><DetailRow label="Squash Tradition" value={data.country.squash_tradition} /><DetailRow label="System Quality" value={data.country.system_quality} /><DetailRow label="Competition Density" value={data.country.competition_density ?? '—'} /><DetailRow label="Federation Quality" value={data.country.federation_quality ?? '—'} /><DetailRow label="Court Count" value={formatNumber(data.country.court_count)} />
+        <h4>Style DNA</h4>{style.length === 0 ? <p>No Style DNA values authored.</p> : <dl>{style.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl>}
+      </SectionCard>
+      <details><summary>Technical source</summary><code>{data.source_path}</code></details>
+    </>}
+  </section>
 }

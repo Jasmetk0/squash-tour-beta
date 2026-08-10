@@ -111,6 +111,8 @@ import type {
   WorldPackageClonePayload,
   WorldPackageCloneResponse,
   WorldPackageCountriesResponse,
+  WorldPackageCountryDetail,
+  WorldPackageGeography,
   WorldPackageCountryEffectivePopulationResponse,
   WeeklyIntakePreviewParams,
   WeeklyIntakePreviewResponse,
@@ -738,6 +740,14 @@ export function getWorldPackageValidation(worldId: string): Promise<WorldPackage
 
 export function getWorldPackageCountries(worldId: string): Promise<WorldPackageCountriesResponse> {
   return request(`/world/packages/${encodeURIComponent(worldId)}/countries`)
+}
+
+export function getWorldPackageGeography(worldId: string): Promise<WorldPackageGeography> {
+  return request(`/world/packages/${encodeURIComponent(worldId)}/geography`)
+}
+
+export function getWorldPackageCountry(worldId: string, countryCode: string): Promise<WorldPackageCountryDetail> {
+  return request(`/world/packages/${encodeURIComponent(worldId)}/countries/${encodeURIComponent(countryCode)}`)
 }
 
 

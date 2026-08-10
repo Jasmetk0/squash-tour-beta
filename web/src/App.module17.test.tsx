@@ -30,6 +30,8 @@ const api = vi.hoisted(() => ({
   getWorldPackage: vi.fn(),
   getWorldPackageValidation: vi.fn(),
   getWorldPackageCountries: vi.fn(),
+  getWorldPackageCountry: vi.fn(),
+  getWorldPackageGeography: vi.fn(),
   cloneOfficialWorldPackage: vi.fn(),
   getLatestRollover: vi.fn(),
   getRolloverBySeason: vi.fn(),
@@ -287,6 +289,8 @@ describe('Module 17 pages through routes', () => {
     api.cloneOfficialWorldPackage.mockResolvedValue({ ok: true, dry_run: true, source_world_id: 'official_fax_world', new_world_id: 'my_custom_world', target_path: 'config/worlds/custom/my_custom_world', created_files: ['world.json'], package: null, validation: null, errors: [] })
     api.getWorldPackageValidation.mockResolvedValue({ world_id: 'official_fax_world', status: 'warnings', error_count: 0, warning_count: 1, info_count: 6, checks: [{ code: 'world_metadata_valid', severity: 'info', status: 'passed', message: 'world.json is present and declares official_fax_world.', path: 'config/worlds/official_fax_world/world.json', field: 'world_id' }] })
     api.getWorldPackageCountries.mockResolvedValue({ world_id: 'official_fax_world', world_name: 'Official FAX World', type: 'official', source: 'built_in', read_only: true, country_count: 4, source_path: 'config/worlds/official_fax_world/countries.json', countries: [{ code: 'GER', name: 'Germanica', flag_asset: null, region: 'EUROPE', population: 169702055, area_km2: 870516, default_population_year: 2020, default_population: 169702055, population_by_year: { '2020': 169702055 }, wealth_support: 5, squash_popularity: 3, squash_tradition: 3, system_quality: 5, competition_density: 4, federation_quality: 5, court_count: 1800, travel_region: 'EUROPE', notes: 'Analog of a huge Germany and all German lands unified into one state.', style_dna: {} }, { code: 'BOG', name: 'Bogemia', flag_asset: null, region: 'EUROPE', population: 48566934, area_km2: 237528, default_population_year: 2020, default_population: 48566934, population_by_year: { '2020': 48566934 }, wealth_support: 4, squash_popularity: 2, squash_tradition: 2, system_quality: 4, competition_density: 3, federation_quality: 4, court_count: 520, travel_region: 'EUROPE', notes: null, style_dna: {} }, { code: 'HUN', name: 'Hungarica', flag_asset: null, region: 'EUROPE', population: 32407718, area_km2: 368441, default_population_year: 2020, default_population: 32407718, population_by_year: { '2020': 32407718 }, wealth_support: 3, squash_popularity: 2, squash_tradition: 2, system_quality: 3, competition_density: 2.5, federation_quality: 3, court_count: 360, travel_region: 'EUROPE', notes: null, style_dna: {} }, { code: 'POL', name: 'Polandia', flag_asset: null, region: 'EUROPE', population: 31584129, area_km2: 296910, default_population_year: 2020, default_population: 31584129, population_by_year: { '2020': 31584129 }, wealth_support: 4, squash_popularity: 2, squash_tradition: 2, system_quality: 4, competition_density: 3, federation_quality: 4, court_count: 430, travel_region: 'EUROPE', notes: null, style_dna: {} }] })
+    api.getWorldPackageGeography.mockResolvedValue({ world_id: 'official_fax_world', continents: [{ code: 'EUR', name: 'Europe' }], regions: [{ code: 'EUROPE', name: 'Europe', continent_code: 'EUR' }], travel_regions: [{ code: 'EUROPE', name: 'Europe', description: null }] })
+    api.getWorldPackageCountry.mockResolvedValue({ package: { world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in.', type: 'official', status: 'active', source: 'built_in', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abc', country_count: 4, continent_count: 1, region_count: 1, travel_region_count: 1, used_by_run_count: null, validation_status: 'valid', storage: {} }, country: { code: 'GER', name: 'Germanica', flag_asset: null, region: 'EUROPE', population: 169702055, area_km2: 870516, default_population_year: 2020, default_population: 169702055, population_by_year: { '2020': 169702055 }, wealth_support: 5, squash_popularity: 3, squash_tradition: 3, system_quality: 5, competition_density: 4, federation_quality: 5, court_count: 1800, travel_region: 'EUROPE', notes: 'Germanica note', style_dna: {} }, region: { code: 'EUROPE', name: 'Europe', continent_code: 'EUR' }, continent: { code: 'EUR', name: 'Europe' }, travel_region: { code: 'EUROPE', name: 'Europe', description: null }, source_path: 'config/world_packages/official_fax_world/countries/GER' })
     api.listCountries.mockResolvedValue({
       countries: [
         {
@@ -2996,13 +3000,12 @@ describe('Module 17 pages through routes', () => {
     expect(api.listWorldPackages).toHaveBeenCalled()
     expect(await screen.findByRole('cell', { name: 'Official FAX World' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'official_fax_world' })).toBeInTheDocument()
-    expect(screen.getByRole('cell', { name: 'official' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'Built-in' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'active' })).toBeInTheDocument()
-    expect(screen.getByRole('cell', { name: 'built_in' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'Read-only' })).toBeInTheDocument()
     expect(screen.getByText('Usage not tracked yet')).toBeInTheDocument()
     expect(screen.getByTitle('abcdef1234567890fedcba0987654321')).toHaveTextContent('abcdef12…87654321')
-    expect(screen.getByRole('link', { name: 'View details' })).toHaveAttribute('href', '/admin/world/library/official_fax_world')
+    expect(screen.getByRole('link', { name: 'Open World Package' })).toHaveAttribute('href', '/admin/world/library/official_fax_world')
   })
 
 
@@ -3013,9 +3016,8 @@ describe('Module 17 pages through routes', () => {
 
     expect(await screen.findByRole('cell', { name: 'My Custom World' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'my_custom_world' })).toBeInTheDocument()
-    expect(screen.getByRole('cell', { name: 'custom' })).toBeInTheDocument()
-    expect(screen.getByRole('cell', { name: 'custom_config' })).toBeInTheDocument()
-    expect(screen.getByRole('cell', { name: 'Editable' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'Custom' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'Editable source' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /create|edit|delete|archive|clone|import|export/i })).not.toBeInTheDocument()
   })
 
@@ -3057,21 +3059,29 @@ describe('Module 17 pages through routes', () => {
     expect((await screen.findAllByRole('link', { name: 'Open package countries' }))[0]).toHaveAttribute('href', '/admin/world/library/official_fax_world/countries')
   })
 
+  it('renders package-scoped country detail with authored values', async () => {
+    renderAppAt('/admin/world/library/official_fax_world/countries/GER')
+    expect(await screen.findByRole('heading', { name: 'Germanica' })).toBeInTheDocument()
+    expect(api.getWorldPackageCountry).toHaveBeenCalledWith('official_fax_world', 'GER')
+    expect(screen.getByText('Official FAX World · Built-in · Read-only')).toBeInTheDocument()
+    expect(screen.getByRole('table', { name: 'Authored population timeline' })).toHaveTextContent('2020')
+    expect(screen.getByText('No Style DNA values authored.')).toBeInTheDocument()
+  })
+
   it('renders read-only Official World Package countries page', async () => {
     renderAppAt('/admin/world/library/official_fax_world/countries')
 
     expect(await screen.findByRole('heading', { name: 'World Package Countries' })).toBeInTheDocument()
     expect(api.getWorldPackageCountries).toHaveBeenCalledWith('official_fax_world')
     expect(await screen.findByText('Official FAX World')).toBeInTheDocument()
-    expect(screen.getByText('Read-only')).toBeInTheDocument()
+    expect(screen.getByText('Built-in · Read-only')).toBeInTheDocument()
     expect(screen.getByText('Germanica')).toBeInTheDocument()
     expect(screen.getByText('Bogemia')).toBeInTheDocument()
     expect(screen.getByText('Hungarica')).toBeInTheDocument()
     expect(screen.getByText('Polandia')).toBeInTheDocument()
     expect(screen.getByText('Area km²')).toBeInTheDocument()
-    expect(screen.getByText('Default population year')).toBeInTheDocument()
-    expect(screen.getByText('Default population')).toBeInTheDocument()
-    expect(screen.getByText('Population years')).toBeInTheDocument()
+    expect(screen.getByText('Population coverage')).toBeInTheDocument()
+    expect(screen.getByText('Squash Popularity')).toBeInTheDocument()
     expect(screen.getAllByText('1 year: 2020').length).toBeGreaterThan(0)
     expect(screen.getAllByText('EUROPE').length).toBeGreaterThan(0)
     expect(screen.queryByRole('button', { name: /create|edit|delete|import|export/i })).not.toBeInTheDocument()
@@ -3084,7 +3094,7 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByText('My Custom World')).toBeInTheDocument()
     expect(api.getWorldPackageCountries).toHaveBeenCalledWith('my_custom_world')
     expect(screen.getByText('New Zealand')).toBeInTheDocument()
-    expect(screen.getByText('Editable')).toBeInTheDocument()
+    expect(screen.getByText('Custom · Editable source')).toBeInTheDocument()
     expect(screen.getByText(/inspection screen does not currently provide/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /create|edit|delete|import|export/i })).not.toBeInTheDocument()
   })

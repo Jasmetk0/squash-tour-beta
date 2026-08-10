@@ -48,7 +48,7 @@ class CountriesImportResult:
 
 @dataclass(slots=True)
 class CountriesConfigService:
-    """CRUD management for countries backed by canonical JSON config."""
+    """CRUD management for countries backed by canonical JSON/package config."""
 
     package_root: Path = Path("config/world_packages/official_fax_world")
     config_path: Path | None = None  # Explicit aggregate fixture compatibility; never a production default.
@@ -88,12 +88,12 @@ class CountriesConfigService:
                     "flag_asset": country.flag_asset or "",
                     "region": country.region,
                     "population": country.population,
-                    "wealth_support": country.wealth_support,
                     "squash_popularity": country.squash_popularity,
+                    "squash_access": country.squash_access,
+                    "development_quality": country.development_quality,
+                    "competition_quality": country.competition_quality,
+                    "elite_support": country.elite_support,
                     "squash_tradition": country.squash_tradition,
-                    "system_quality": country.system_quality,
-                    "competition_density": country.competition_density,
-                    "federation_quality": country.federation_quality,
                     "court_count": country.court_count if country.court_count is not None else "",
                     "travel_region": country.travel_region or "",
                     "notes": country.notes or "",
@@ -123,13 +123,7 @@ class CountriesConfigService:
                 ok=False,
                 dry_run=dry_run,
                 summary=CountriesImportSummary(total_records=0, new_records=0, updated_records=0, unchanged_records=0),
-                errors=[
-                    CountriesImportError(
-                        row_number=None,
-                        field=None,
-                        message=f"countries csv is missing required columns: {', '.join(missing)}",
-                    )
-                ],
+                errors=[CountriesImportError(row_number=None, field=None, message=f"countries csv is missing required columns: {', '.join(missing)}")],
             )
 
         parsed_countries: list[Country] = []
@@ -140,9 +134,7 @@ class CountriesConfigService:
                 errors.append(CountriesImportError(row_number=index, field="code", message="code is required"))
                 continue
             if not re.fullmatch(r"[A-Z]{3}", code):
-                errors.append(
-                    CountriesImportError(row_number=index, field="code", message="code must be exactly 3 uppercase letters")
-                )
+                errors.append(CountriesImportError(row_number=index, field="code", message="code must be exactly 3 uppercase letters"))
             if code in seen_codes:
                 errors.append(CountriesImportError(row_number=index, field="code", message=f"duplicate code '{code}' in import"))
                 continue
@@ -156,10 +148,12 @@ class CountriesConfigService:
             }
             for int_field in (
                 "population",
-                "wealth_support",
                 "squash_popularity",
+                "squash_access",
+                "development_quality",
+                "competition_quality",
+                "elite_support",
                 "squash_tradition",
-                "system_quality",
             ):
                 raw = (row.get(int_field) or "").strip()
                 if not raw:
@@ -169,14 +163,6 @@ class CountriesConfigService:
                     payload[int_field] = int(raw)
                 except ValueError:
                     errors.append(CountriesImportError(row_number=index, field=int_field, message=f"{int_field} must be an integer"))
-
-            for float_field in ("competition_density", "federation_quality"):
-                raw = (row.get(float_field) or "").strip()
-                if raw:
-                    try:
-                        payload[float_field] = float(raw)
-                    except ValueError:
-                        errors.append(CountriesImportError(row_number=index, field=float_field, message=f"{float_field} must be numeric"))
 
             raw_court_count = (row.get("court_count") or "").strip()
             if raw_court_count:
@@ -242,21 +228,15 @@ class CountriesConfigService:
         config = self._load()
         if any(country.code == payload.code for country in config.countries):
             raise ValueError(f"country with code '{payload.code}' already exists")
-
-        updated = CountriesConfig(
-            dataset_status=config.dataset_status,
-            countries=[*config.countries, payload],
-        )
+        updated = CountriesConfig(dataset_status=config.dataset_status, countries=[*config.countries, payload])
         self._save(updated)
         return payload
 
     def update_country(self, code: str, payload: Country) -> Country:
         normalized = code.upper()
         config = self._load()
-
         if payload.code != normalized and any(country.code == payload.code for country in config.countries):
             raise ValueError(f"country with code '{payload.code}' already exists")
-
         replaced = False
         updated_countries: list[Country] = []
         for country in config.countries:
@@ -265,10 +245,8 @@ class CountriesConfigService:
                 replaced = True
             else:
                 updated_countries.append(country)
-
         if not replaced:
             raise LookupError(f"country '{normalized}' was not found")
-
         updated = CountriesConfig(dataset_status=config.dataset_status, countries=updated_countries)
         self._save(updated)
         return payload
@@ -277,10 +255,8 @@ class CountriesConfigService:
         normalized = code.upper()
         config = self._load()
         remaining = [country for country in config.countries if country.code != normalized]
-
         if len(remaining) == len(config.countries):
             raise LookupError(f"country '{normalized}' was not found")
-
         updated = CountriesConfig(dataset_status=config.dataset_status, countries=remaining)
         self._save(updated)
 
@@ -290,7 +266,6 @@ class CountriesConfigService:
             if country.code in seen:
                 raise ValueError(f"duplicate country code '{country.code}' in dataset")
             seen.add(country.code)
-
         self._save(payload)
         return payload
 

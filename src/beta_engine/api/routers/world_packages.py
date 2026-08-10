@@ -9,6 +9,8 @@ from beta_engine.api.schemas import (
     WorldPackageCloneResponse,
     CountryResponse,
     WorldPackageCountriesResponse,
+    WorldPackageCountryDetailResponse,
+    WorldPackageGeographyResponse,
     WorldPackageCountryEffectivePopulationResponse,
     WeeklyIntakePreviewResponse,
     WeeklyIntakeSeasonSchedulePreviewResponse,
@@ -52,6 +54,17 @@ def _to_countries(result: WorldPackageCountriesResult) -> WorldPackageCountriesR
         source_path=result.source_path,
         countries=[CountryResponse.model_validate(country.model_dump(mode="json")) for country in result.countries],
     )
+
+
+@router.get("/{world_id}/geography", response_model=WorldPackageGeographyResponse)
+def get_world_package_geography(
+    world_id: str,
+    service: WorldPackageCountriesService = Depends(get_world_package_countries_service),
+) -> WorldPackageGeographyResponse:
+    result = service.get_geography(world_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"world package '{world_id}' not found")
+    return WorldPackageGeographyResponse.model_validate(result, from_attributes=True)
 
 
 def _to_effective_population(result: WorldPackageCountryEffectivePopulationResult) -> WorldPackageCountryEffectivePopulationResponse:
@@ -155,6 +168,27 @@ def get_world_package_country_effective_population(
             raise HTTPException(status_code=404, detail=f"world package '{world_id}' not found")
         raise HTTPException(status_code=404, detail=f"country '{country_code.upper()}' not found in world package '{world_id}'")
     return _to_effective_population(result)
+
+
+@router.get("/{world_id}/countries/{country_code}", response_model=WorldPackageCountryDetailResponse)
+def get_world_package_country(
+    world_id: str,
+    country_code: str,
+    service: WorldPackageCountriesService = Depends(get_world_package_countries_service),
+) -> WorldPackageCountryDetailResponse:
+    result = service.get_country(world_id, country_code)
+    if result is None:
+        if service.registry_service.get_package(world_id) is None:
+            raise HTTPException(status_code=404, detail=f"world package '{world_id}' not found")
+        raise HTTPException(status_code=404, detail=f"country '{country_code.upper()}' not found in world package '{world_id}'")
+    return WorldPackageCountryDetailResponse(
+        package=_to_summary(result.package),
+        country=CountryResponse.model_validate(result.country.model_dump(mode="json")),
+        region=result.region.model_dump() if result.region else None,
+        continent=result.continent.model_dump() if result.continent else None,
+        travel_region=result.travel_region.model_dump() if result.travel_region else None,
+        source_path=result.source_path,
+    )
 
 
 @router.get("/{world_id}/weekly-intake/preview", response_model=WeeklyIntakePreviewResponse)

@@ -1316,6 +1316,9 @@ def test_canonical_world_package_countries_api_reports_source_editability(tmp_pa
     ) as server:
         official_status, official = _request("GET", f"{server.base_url}/world/packages/official_fax_world/countries")
         custom_status, custom = _request("GET", f"{server.base_url}/world/packages/editable_world/countries")
+        custom_detail_status, custom_detail = _request(
+            "GET", f"{server.base_url}/world/packages/editable_world/countries/GER"
+        )
 
     assert official_status == 200
     assert official["read_only"] is True
@@ -1323,3 +1326,43 @@ def test_canonical_world_package_countries_api_reports_source_editability(tmp_pa
     assert custom_status == 200
     assert custom["read_only"] is False
     assert custom["country_count"] == official["country_count"]
+    assert custom_detail_status == 200
+    assert custom_detail["package"]["world_id"] == "editable_world"
+    assert custom_detail["package"]["editable"] is True
+    assert custom_detail["country"]["name"] == "Germanica"
+
+
+def test_world_package_country_detail_and_geography_are_typed_and_package_scoped(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'explorer.db'}", countries_config_path=str(countries_path), manual_overrides_config_path=str(overrides_path)) as server:
+        status, detail = _request("GET", f"{server.base_url}/world/packages/official_fax_world/countries/GER")
+        geography_status, geography = _request("GET", f"{server.base_url}/world/packages/official_fax_world/geography")
+        missing_country_status, _ = _request("GET", f"{server.base_url}/world/packages/official_fax_world/countries/ZZZ")
+        missing_world_status, _ = _request("GET", f"{server.base_url}/world/packages/unknown/countries/GER")
+    assert status == 200
+    assert detail["package"]["name"] == "Official FAX World"
+    assert detail["country"]["name"] == "Germanica"
+    assert detail["country"]["population"] == 169702055
+    assert detail["country"]["population_by_year"] == {"2020": 169702055}
+    assert detail["region"] == {"code": "EUROPE", "name": "Europe", "continent_code": "EUR"}
+    assert detail["continent"] == {"code": "EUR", "name": "Europe"}
+    assert geography_status == 200
+    assert any(item == {"code": "EUR", "name": "Europe"} for item in geography["continents"])
+    assert missing_country_status == 404
+    assert missing_world_status == 404
+
+
+def test_real_world_country_detail_preserves_authored_population_timeline(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "overrides.json"
+    _write_fixture(countries_path, COUNTRIES_FIXTURE)
+    _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'real-explorer.db'}", countries_config_path=str(countries_path), manual_overrides_config_path=str(overrides_path)) as server:
+        status, detail = _request("GET", f"{server.base_url}/world/packages/real_world/countries/DEU")
+    assert status == 200
+    timeline = detail["country"]["population_by_year"]
+    assert len(timeline) == 96
+    assert "1955" in timeline and "2050" in timeline

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic import field_validator
 
 from beta_engine.application.finals_models import FinalsSimulationResult
@@ -550,6 +550,24 @@ class WorldPackageCountryDetailResponse(BaseModel):
     source_path: str
 
 
+class WorldPackageCountryUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(min_length=1)
+    notes: str | None = None
+    area_km2: int | None = Field(gt=0)
+    region: str = Field(min_length=1)
+    travel_region: str | None = None
+    wealth_support: int = Field(ge=1, le=5)
+    squash_popularity: int = Field(ge=1, le=5)
+    squash_tradition: int = Field(ge=1, le=5)
+    system_quality: int = Field(ge=1, le=5)
+    competition_density: float = Field(ge=1.0, le=5.0)
+    federation_quality: float = Field(ge=1.0, le=5.0)
+    court_count: int | None = Field(ge=0)
+    style_dna: dict[str, float]
+    expected_package_fingerprint: str | None = None
+
+
 class WeeklyIntakeCountryAllocationResponse(BaseModel):
     country_code: str
     allocated_count: int
@@ -637,6 +655,12 @@ class WorldPackageValidationResponse(BaseModel):
     warning_count: int
     info_count: int
     checks: list[WorldPackageValidationCheckResponse] = Field(default_factory=list)
+
+
+class WorldPackageCountryUpdateResponse(BaseModel):
+    country_detail: WorldPackageCountryDetailResponse
+    package: WorldPackageSummaryResponse
+    validation: WorldPackageValidationResponse
 
 
 class WorldPackageCloneRequest(BaseModel):

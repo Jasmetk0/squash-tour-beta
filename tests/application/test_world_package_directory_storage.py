@@ -1,8 +1,9 @@
 import json, shutil
+from dataclasses import replace
 from pathlib import Path
 import pytest
 from beta_engine.application.world_package_clone_service import WorldPackageCloneService
-from beta_engine.application.world_package_countries_service import WorldPackageCountriesService
+from beta_engine.application.world_package_countries_service import WorldPackageCountriesService, WorldPackageCountryUpdate, WorldPackageMutationError
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
 from beta_engine.application.world_package_validation_service import WorldPackageValidationResult, WorldPackageValidationService
 from beta_engine.domain.countries import CountriesConfig, Country
@@ -104,3 +105,64 @@ def test_only_canonical_world_package_root_exists_and_all_attributes_present():
  assert Path('config/world_packages').is_dir(); assert not Path('config/world').exists(); assert not Path('config/worlds').exists()
  country=Path('config/world_packages/official_fax_world/countries/GER/attributes')
  assert {p.stem for p in country.glob('*.json')}=={'population',*ATTRIBUTE_NAMES}
+
+
+def test_replace_country_preserves_index_population_and_cleans_artifacts(tmp_path):
+ store=WorldPackageCountryStore(tmp_path/'world'); store.replace_dataset(CountriesConfig(dataset_status='test',countries=[_scalar_country()]))
+ index=store.index_path.read_bytes(); population=(store.countries_root/'AAA/attributes/population.json').read_bytes()
+ store.replace_country(_scalar_country(name='Alpha Prime'))
+ assert store.load_country('AAA').name=='Alpha Prime'
+ assert store.index_path.read_bytes()==index
+ assert (store.countries_root/'AAA/attributes/population.json').read_bytes()==population
+ assert not list(store.countries_root.glob('.AAA-*'))
+
+
+def test_replace_country_restores_live_country_when_promotion_fails(tmp_path,monkeypatch):
+ store=WorldPackageCountryStore(tmp_path/'world'); store.replace_dataset(CountriesConfig(dataset_status='test',countries=[_scalar_country()]))
+ original_rename=Path.rename
+ def fail(path,target):
+  if path.name=='AAA' and path.parent.name=='countries' and path.parent.parent.name.startswith('.AAA-stage-'): raise OSError('promotion failed')
+  return original_rename(path,target)
+ monkeypatch.setattr(Path,'rename',fail)
+ with pytest.raises(OSError,match='promotion failed'): store.replace_country(_scalar_country(name='Broken'))
+ assert store.load_country('AAA').name=='Alpha'
+
+
+def test_custom_country_edit_changes_fingerprint_and_preserves_population(tmp_path):
+ root=tmp_path/'packages'; shutil.copytree('config/world_packages/official_fax_world',root/'official_fax_world')
+ registry=WorldPackageRegistryService(world_packages_root=root); validation=WorldPackageValidationService(registry)
+ assert WorldPackageCloneService(registry,validation).clone_official_world(new_world_id='editable',name='Editable',description=None,dry_run=False).ok
+ service=WorldPackageCountriesService(registry,validation); before=registry.get_package('editable'); original=service.get_country('editable','GER').country
+ update=WorldPackageCountryUpdate(**{**original.model_dump(include={'name','notes','area_km2','region','travel_region','wealth_support','squash_popularity','squash_tradition','system_quality','competition_density','federation_quality','court_count','style_dna'}), 'name':'Germanica Prime','squash_popularity':4,'style_dna':{'pace':1.25},'expected_package_fingerprint':before.fingerprint})
+ result=service.update_country('editable','GER',update); after=result.detail.country
+ assert (after.code,after.name,after.squash_popularity,after.style_dna)==('GER','Germanica Prime',4,{'pace':1.25})
+ assert after.population_by_year==original.population_by_year and result.validation.status=='valid'
+ assert result.detail.package.fingerprint!=before.fingerprint
+ with pytest.raises(WorldPackageMutationError) as exc: service.update_country('official_fax_world','GER',update)
+ assert exc.value.status_code==403
+
+
+@pytest.mark.parametrize('world_id',['official_fax_world','real_world'])
+def test_builtin_country_edit_is_rejected_even_if_editable_metadata_is_true(tmp_path,monkeypatch,world_id):
+ root=tmp_path/'packages'; shutil.copytree(f'config/world_packages/{world_id}',root/world_id)
+ registry=WorldPackageRegistryService(world_packages_root=root); package=registry.get_package(world_id)
+ monkeypatch.setattr(WorldPackageRegistryService,'get_package',lambda self,candidate: replace(package,editable=True) if candidate==world_id else None)
+ country=WorldPackageCountryStore(root/world_id).load_config().countries[0]
+ payload=WorldPackageCountryUpdate(**country.model_dump(include={'name','notes','area_km2','region','travel_region','wealth_support','squash_popularity','squash_tradition','system_quality','competition_density','federation_quality','court_count','style_dna'}))
+ with pytest.raises(WorldPackageMutationError) as exc: WorldPackageCountriesService(registry).update_country(world_id,country.code,payload)
+ assert exc.value.status_code==403
+
+
+def test_country_edit_restores_original_after_final_validation_errors(tmp_path,monkeypatch):
+ root=tmp_path/'packages'; shutil.copytree('config/world_packages/official_fax_world',root/'official_fax_world')
+ registry=WorldPackageRegistryService(world_packages_root=root); validation=WorldPackageValidationService(registry)
+ assert WorldPackageCloneService(registry,validation).clone_official_world(new_world_id='editable',name='Editable',description=None,dry_run=False).ok
+ store=WorldPackageCountryStore(root/'custom/editable'); original=store.load_country('GER'); index=store.index_path.read_bytes()
+ payload=WorldPackageCountryUpdate(**{**original.model_dump(include={'name','notes','area_km2','region','travel_region','wealth_support','squash_popularity','squash_tradition','system_quality','competition_density','federation_quality','court_count','style_dna'}),'name':'Must Roll Back'})
+ invalid=WorldPackageValidationResult('editable','errors',1,0,0,[])
+ monkeypatch.setattr(WorldPackageValidationService,'validate_package',lambda self,_world_id: invalid)
+ with pytest.raises(WorldPackageMutationError,match='leave the World Package invalid'): WorldPackageCountriesService(registry,validation).update_country('editable','GER',payload)
+ assert store.load_country('GER')==original
+ assert store.index_path.read_bytes()==index
+ assert not list(store.countries_root.glob('.GER-*'))
+ assert registry.get_package('editable') is not None

@@ -135,6 +135,16 @@ def _write_fixture(path: Path, payload: dict[str, object]) -> None:
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
+def _country_update_payload(detail: dict[str, object]) -> dict[str, object]:
+    country = detail["country"]
+    assert isinstance(country, dict)
+    return {key: country[key] for key in (
+        "name", "notes", "area_km2", "region", "travel_region", "wealth_support",
+        "squash_popularity", "squash_tradition", "system_quality",
+        "competition_density", "federation_quality", "court_count", "style_dna",
+    )}
+
+
 def test_export_returns_world_package(tmp_path) -> None:
     countries_path = tmp_path / "countries.json"
     overrides_path = tmp_path / "manual_overrides.json"
@@ -1366,3 +1376,65 @@ def test_real_world_country_detail_preserves_authored_population_timeline(tmp_pa
     timeline = detail["country"]["population_by_year"]
     assert len(timeline) == 96
     assert "1955" in timeline and "2050" in timeline
+
+
+def test_put_custom_country_persists_edit_and_preserves_population_and_index(tmp_path) -> None:
+    countries_path=tmp_path/'countries.json'; overrides_path=tmp_path/'overrides.json'; _write_fixture(countries_path,COUNTRIES_FIXTURE); _write_fixture(overrides_path,OVERRIDES_FIXTURE)
+    worlds_root=_copy_worlds_root(tmp_path)
+    with ApiServer(database_url=f"sqlite:///{tmp_path/'edit.db'}",countries_config_path=str(countries_path),manual_overrides_config_path=str(overrides_path),worlds_root=str(worlds_root)) as server:
+        clone_status,_=_request('POST',f'{server.base_url}/world/packages/official_fax_world/clone',{'new_world_id':'editable','name':'Editable','dry_run':False})
+        assert clone_status==200
+        _,before=_request('GET',f'{server.base_url}/world/packages/editable/countries/GER')
+        payload=_country_update_payload(before); payload.update({'name':'Germanica Prime','squash_popularity':4,'style_dna':{'pace':1.25},'expected_package_fingerprint':before['package']['fingerprint']})
+        package_root=worlds_root/'custom/editable'; population=(package_root/'countries/GER/attributes/population.json').read_bytes(); index=(package_root/'countries/index.json').read_bytes()
+        status,response=_request('PUT',f'{server.base_url}/world/packages/editable/countries/GER',payload)
+        get_status,after=_request('GET',f'{server.base_url}/world/packages/editable/countries/GER')
+    assert status==200 and get_status==200
+    assert response['package']['fingerprint']!=before['package']['fingerprint']
+    assert response['validation']['status']!='errors' and response['validation']['error_count']==0
+    assert (after['country']['code'],after['country']['name'],after['country']['squash_popularity'],after['country']['style_dna'])==('GER','Germanica Prime',4,{'pace':1.25})
+    assert after['country']['population_by_year']==before['country']['population_by_year']
+    assert (package_root/'countries/GER/attributes/population.json').read_bytes()==population
+    assert (package_root/'countries/index.json').read_bytes()==index
+
+
+def test_put_builtin_countries_is_forbidden_without_filesystem_changes(tmp_path) -> None:
+    countries_path=tmp_path/'countries.json'; overrides_path=tmp_path/'overrides.json'; _write_fixture(countries_path,COUNTRIES_FIXTURE); _write_fixture(overrides_path,OVERRIDES_FIXTURE)
+    worlds_root=tmp_path/'world_packages'
+    for world_id in ('official_fax_world','real_world'): shutil.copytree(Path('config/world_packages')/world_id,worlds_root/world_id)
+    before={world_id:compute_source_tree_hash(worlds_root/world_id) for world_id in ('official_fax_world','real_world')}
+    with ApiServer(database_url=f"sqlite:///{tmp_path/'builtins.db'}",countries_config_path=str(countries_path),manual_overrides_config_path=str(overrides_path),worlds_root=str(worlds_root)) as server:
+        for world_id,code in (('official_fax_world','GER'),('real_world','DEU')):
+            _,detail=_request('GET',f'{server.base_url}/world/packages/{world_id}/countries/{code}')
+            status,_=_request('PUT',f'{server.base_url}/world/packages/{world_id}/countries/{code}',_country_update_payload(detail))
+            assert status==403
+    assert {world_id:compute_source_tree_hash(worlds_root/world_id) for world_id in before}==before
+
+
+def test_put_country_rejects_unknown_invalid_and_protected_state_without_mutation(tmp_path) -> None:
+    countries_path=tmp_path/'countries.json'; overrides_path=tmp_path/'overrides.json'; _write_fixture(countries_path,COUNTRIES_FIXTURE); _write_fixture(overrides_path,OVERRIDES_FIXTURE); worlds_root=_copy_worlds_root(tmp_path)
+    with ApiServer(database_url=f"sqlite:///{tmp_path/'invalid.db'}",countries_config_path=str(countries_path),manual_overrides_config_path=str(overrides_path),worlds_root=str(worlds_root)) as server:
+        _request('POST',f'{server.base_url}/world/packages/official_fax_world/clone',{'new_world_id':'editable','name':'Editable','dry_run':False})
+        _,detail=_request('GET',f'{server.base_url}/world/packages/editable/countries/GER'); valid=_country_update_payload(detail)
+        package_root=worlds_root/'custom/editable'; original=compute_source_tree_hash(package_root)
+        assert _request('PUT',f'{server.base_url}/world/packages/unknown/countries/GER',valid)[0]==404
+        assert _request('PUT',f'{server.base_url}/world/packages/editable/countries/ZZZ',valid)[0]==404
+        invalid_cases=(('squash_popularity',6),('competition_density',0.9),('court_count',-1),('area_km2',0),('region','UNKNOWN'),('travel_region','UNKNOWN'))
+        for field,value in invalid_cases:
+            assert _request('PUT',f'{server.base_url}/world/packages/editable/countries/GER',{**valid,field:value})[0]==422
+        for field,value in (('code','ZZZ'),('population',1),('population_by_year',{'2020':1}),('default_population',1),('default_population_year',2020)):
+            assert _request('PUT',f'{server.base_url}/world/packages/editable/countries/GER',{**valid,field:value})[0]==422
+        _,unchanged=_request('GET',f'{server.base_url}/world/packages/editable/countries/GER')
+    assert unchanged['country']==detail['country'] and compute_source_tree_hash(package_root)==original
+
+
+def test_put_country_rejects_stale_package_fingerprint(tmp_path) -> None:
+    countries_path=tmp_path/'countries.json'; overrides_path=tmp_path/'overrides.json'; _write_fixture(countries_path,COUNTRIES_FIXTURE); _write_fixture(overrides_path,OVERRIDES_FIXTURE); worlds_root=_copy_worlds_root(tmp_path)
+    with ApiServer(database_url=f"sqlite:///{tmp_path/'stale.db'}",countries_config_path=str(countries_path),manual_overrides_config_path=str(overrides_path),worlds_root=str(worlds_root)) as server:
+        _request('POST',f'{server.base_url}/world/packages/official_fax_world/clone',{'new_world_id':'editable','name':'Editable','dry_run':False})
+        _,detail=_request('GET',f'{server.base_url}/world/packages/editable/countries/GER'); old=detail['package']['fingerprint']; first={**_country_update_payload(detail),'name':'First','expected_package_fingerprint':old}
+        assert _request('PUT',f'{server.base_url}/world/packages/editable/countries/GER',first)[0]==200
+        stale={**first,'name':'Stale overwrite'}
+        status,_=_request('PUT',f'{server.base_url}/world/packages/editable/countries/GER',stale)
+        _,after=_request('GET',f'{server.base_url}/world/packages/editable/countries/GER')
+    assert status==409 and after['country']['name']=='First'

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, StrictInt, field_validator
 
 from beta_engine.domain.countries import CountriesConfig, Country
 
@@ -48,7 +48,7 @@ class CountryAttribute(BaseModel):
 class CountryPopulation(BaseModel):
     schema_version: str = COUNTRY_POPULATION_SCHEMA
     default_year: int
-    values_by_year: dict[int, int]
+    values_by_year: dict[int, StrictInt]
 
     @field_validator("values_by_year")
     @classmethod
@@ -80,7 +80,10 @@ def _write_json_atomic(path: Path, payload: object) -> None:
         json.dump(payload, fh, indent=2, sort_keys=False)
         fh.write("\n")
         temporary = Path(fh.name)
-    temporary.replace(path)
+    try:
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 @dataclass(slots=True)

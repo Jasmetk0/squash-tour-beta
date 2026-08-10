@@ -194,3 +194,18 @@ def test_population_service_fingerprint_non_default_and_rollback(tmp_path,monkey
  with pytest.raises(WorldPackageMutationError,match='leave the World Package invalid'):
   service.update_population('editable','GER',WorldPackageCountryPopulationUpdate(values_by_year={2020:999}))
  assert (root/'custom/editable/countries/GER/attributes/population.json').read_bytes()==original
+
+
+def test_population_atomic_promotion_failure_preserves_every_file_and_cleans_temp(tmp_path,monkeypatch):
+ store=WorldPackageCountryStore(tmp_path/'world'); store.replace_dataset(CountriesConfig(dataset_status='test',countries=[_scalar_country()]))
+ before={path.relative_to(store.package_root):path.read_bytes() for path in store.package_root.rglob('*.json')}
+ original_replace=Path.replace
+ def fail_population(path,target):
+  if path.name.startswith('.population.json.'):
+   raise OSError('population promotion failed')
+  return original_replace(path,target)
+ monkeypatch.setattr(Path,'replace',fail_population)
+ with pytest.raises(OSError,match='population promotion failed'): store.replace_population('AAA',{2020:9_999_999})
+ assert store.load_country('AAA').population==1_234_567
+ assert {path.relative_to(store.package_root):path.read_bytes() for path in store.package_root.rglob('*.json')}==before
+ assert not list((store.countries_root/'AAA/attributes').glob('.population.json.*'))

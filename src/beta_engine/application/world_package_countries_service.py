@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictInt
 
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryRecord, WorldPackageRegistryService
 from beta_engine.domain.countries import Country
@@ -83,7 +83,7 @@ class WorldPackageCountryUpdate(BaseModel):
 
 class WorldPackageCountryPopulationUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    values_by_year: dict[int, int]
+    values_by_year: dict[int, StrictInt]
     expected_package_fingerprint: str | None = None
 
 

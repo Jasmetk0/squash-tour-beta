@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-from pydantic import field_validator
+from pydantic import StrictInt, field_validator
 
 from beta_engine.application.finals_models import FinalsSimulationResult
 from beta_engine.application.run_bootstrap_models import (
@@ -570,7 +570,7 @@ class WorldPackageCountryUpdateRequest(BaseModel):
 
 class WorldPackageCountryPopulationUpdateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    values_by_year: dict[int, int]
+    values_by_year: dict[int, StrictInt]
     expected_package_fingerprint: str | None = None
 
     @field_validator("values_by_year")

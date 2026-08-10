@@ -19,10 +19,39 @@ COUNTRY_ATTRIBUTE_SCHEMA = "country_attribute.v1"
 COUNTRY_POPULATION_SCHEMA = "country_population.v1"
 PACKAGE_FORMAT_VERSION = "world_package_directory.v1"
 
-ATTRIBUTE_NAMES = (
-    "area_km2", "region", "travel_region", "wealth_support",
-    "squash_popularity", "squash_tradition", "system_quality",
-    "competition_density", "federation_quality", "court_count", "style_dna",
+# Canonical Country V1 storage.  Factual fields and game ratings intentionally
+# share the same modular attribute envelope, but only the six game fields are
+# authored simulation ratings.
+COUNTRY_DATA_ATTRIBUTE_NAMES = (
+    "area_km2",
+    "region",
+    "travel_region",
+    "court_count",
+)
+COUNTRY_GAME_ATTRIBUTE_NAMES = (
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition",
+)
+ATTRIBUTE_NAMES = (*COUNTRY_DATA_ATTRIBUTE_NAMES, *COUNTRY_GAME_ATTRIBUTE_NAMES)
+
+# Read-only migration bridge for World Packages authored before Country V1.
+# New writes never recreate these files.
+LEGACY_ATTRIBUTE_FALLBACKS: dict[str, tuple[str, ...]] = {
+    "squash_access": ("wealth_support",),
+    "development_quality": ("system_quality",),
+    "competition_quality": ("competition_density", "system_quality"),
+    "elite_support": ("federation_quality", "wealth_support"),
+}
+LEGACY_ATTRIBUTE_NAMES = (
+    "wealth_support",
+    "system_quality",
+    "competition_density",
+    "federation_quality",
+    "style_dna",
 )
 
 
@@ -86,6 +115,16 @@ def _write_json_atomic(path: Path, payload: object) -> None:
         temporary.unlink(missing_ok=True)
 
 
+def _coerce_rating(value: Any, *, field_name: str) -> int:
+    try:
+        rating = int(round(float(value)))
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"legacy {field_name} value {value!r} cannot be migrated to a 1..5 rating") from exc
+    if not 1 <= rating <= 5:
+        raise ValueError(f"legacy {field_name} value {value!r} is outside the supported 1..5 range")
+    return rating
+
+
 @dataclass(slots=True)
 class WorldPackageCountryStore:
     """Translate modular package files to and from the typed country domain."""
@@ -114,6 +153,21 @@ class WorldPackageCountryStore:
                 raise ValueError(f"{self.index_path} contains invalid country code {code!r}")
         return index
 
+    def _load_attribute(self, country_root: Path, name: str) -> Any:
+        candidates = (name, *LEGACY_ATTRIBUTE_FALLBACKS.get(name, ()))
+        for candidate in candidates:
+            path = country_root / "attributes" / f"{candidate}.json"
+            if not path.is_file():
+                continue
+            envelope = CountryAttribute.model_validate(_read_object(path))
+            if envelope.schema_version != COUNTRY_ATTRIBUTE_SCHEMA:
+                raise ValueError(f"{path} has unsupported schema_version {envelope.schema_version!r}")
+            if candidate != name and name in COUNTRY_GAME_ATTRIBUTE_NAMES:
+                return _coerce_rating(envelope.value, field_name=candidate)
+            return envelope.value
+        canonical = country_root / "attributes" / f"{name}.json"
+        raise ValueError(f"{canonical} is missing and no supported legacy fallback exists")
+
     def load_country(self, code: str) -> Country:
         country_root = self.countries_root / code
         identity_path = country_root / "country.json"
@@ -122,13 +176,7 @@ class WorldPackageCountryStore:
             raise ValueError(f"{identity_path} has unsupported schema_version {identity.schema_version!r}")
         if identity.code != code:
             raise ValueError(f"{identity_path} code {identity.code!r} does not match directory {code!r}")
-        attributes: dict[str, Any] = {}
-        for name in ATTRIBUTE_NAMES:
-            path = country_root / "attributes" / f"{name}.json"
-            envelope = CountryAttribute.model_validate(_read_object(path))
-            if envelope.schema_version != COUNTRY_ATTRIBUTE_SCHEMA:
-                raise ValueError(f"{path} has unsupported schema_version {envelope.schema_version!r}")
-            attributes[name] = envelope.value
+        attributes = {name: self._load_attribute(country_root, name) for name in ATTRIBUTE_NAMES}
         population_path = country_root / "attributes" / "population.json"
         population = CountryPopulation.model_validate(_read_object(population_path))
         if population.schema_version != COUNTRY_POPULATION_SCHEMA:
@@ -137,7 +185,8 @@ class WorldPackageCountryStore:
             raise ValueError(f"{population_path} default_year {population.default_year} is absent from values_by_year")
         default_population = population.values_by_year[population.default_year]
         return Country.model_validate({
-            **identity.model_dump(exclude={"schema_version"}), **attributes,
+            **identity.model_dump(exclude={"schema_version"}),
+            **attributes,
             "population": default_population,
             "default_population": default_population,
             "default_population_year": population.default_year,
@@ -162,8 +211,6 @@ class WorldPackageCountryStore:
             default_year = country.default_population_year
             timeline = {default_year: country.default_population}
         else:
-            # Scalar population remains a valid Country input for legacy CRUD and
-            # CSV callers. Canonical storage always needs a concrete timeline key.
             default_year = 2020
             timeline = {default_year: country.population}
         _write_json_atomic(root / "attributes" / "population.json", {
@@ -173,7 +220,14 @@ class WorldPackageCountryStore:
         })
         dumped = country.model_dump(mode="json")
         for name in ATTRIBUTE_NAMES:
-            _write_json_atomic(root / "attributes" / f"{name}.json", {"schema_version": COUNTRY_ATTRIBUTE_SCHEMA, "value": dumped.get(name)})
+            _write_json_atomic(
+                root / "attributes" / f"{name}.json",
+                {"schema_version": COUNTRY_ATTRIBUTE_SCHEMA, "value": dumped.get(name)},
+            )
+        # A direct write into an existing scratch directory should not leave a
+        # mixed old/new country behind. Normal replace flows already stage fresh.
+        for legacy_name in LEGACY_ATTRIBUTE_NAMES:
+            (root / "attributes" / f"{legacy_name}.json").unlink(missing_ok=True)
 
     def create_country(self, country: Country) -> bytes:
         """Create one country and update the index, returning exact old index bytes."""

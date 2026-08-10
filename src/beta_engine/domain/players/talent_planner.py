@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 
 from beta_engine.core import DeterministicRng, SeedScope
-from beta_engine.domain.countries import Country
+from beta_engine.domain.countries import Country, CountryTalentModel
 from beta_engine.domain.players.talent_dampener import (
     NeutralRecentGreatnessDampener,
     RecentGreatnessDampener,
@@ -22,10 +22,27 @@ from beta_engine.domain.players.talent_models import (
 
 
 class AnnualTalentClassPlanner:
-    """Builds deterministic year-specific country talent allocations and rarity bands."""
+    """Build deterministic year-specific country allocations and innate rarity bands.
+
+    Country V1 separates two ideas that the legacy planner mixed together:
+    participation/pipeline determines how many prospects a country samples, while
+    innate quality-band rarity is global.  Country development strength can later
+    affect how much of that potential is realised, but does not make a person more
+    likely to be born with generational potential.
+    """
+
+    # Calibration baseline only; these are not product-canon probabilities.
+    BASE_QUALITY_WEIGHTS = {
+        TalentQualityBand.GENERATIONAL: 0.001,
+        TalentQualityBand.SPECIAL: 0.016,
+        TalentQualityBand.ELITE: 0.080,
+        TalentQualityBand.STRONG: 0.270,
+        TalentQualityBand.SOLID: 0.633,
+    }
 
     def __init__(self, dampener: RecentGreatnessDampener | None = None) -> None:
         self._dampener = dampener or NeutralRecentGreatnessDampener()
+        self._country_model = CountryTalentModel()
 
     def plan(self, *, year: int, seed: int, countries: list[Country]) -> AnnualTalentClassPlan:
         if not countries:
@@ -73,10 +90,12 @@ class AnnualTalentClassPlanner:
     def _allocate_counts(self, *, countries: list[Country], total_talents: int) -> dict[str, int]:
         weights: dict[str, float] = {}
         for country in countries:
-            population_component = math.log10(country.population)
-            popularity_component = 1.0 + country.squash_popularity * 1.4
-            support_component = 1.0 + country.system_quality * 0.16 + country.wealth_support * 0.09
-            weights[country.code] = population_component * popularity_component * support_component
+            # Effective squash pool is population × popularity × access.  A log
+            # transform keeps huge countries relevant without allowing raw
+            # population to swamp the rest of the world.  Exact calibration is
+            # intentionally left tunable after simulation data exists.
+            pool = self._country_model.effective_squash_pool_weight(country)
+            weights[country.code] = max(1.0, math.log10(max(10.0, pool)))
 
         weight_sum = sum(weights.values())
         if weight_sum <= 0:
@@ -95,30 +114,17 @@ class AnnualTalentClassPlanner:
         return allocation
 
     def _quality_weights(self, *, country: Country, year: int) -> tuple[dict[TalentQualityBand, float], CountryDampenerSnapshot]:
-        quality_score = (
-            country.system_quality * 0.42
-            + country.squash_tradition * 0.36
-            + country.wealth_support * 0.14
-            + country.squash_popularity * 0.08
-            - 1.0
-        ) / 4.0
-        quality_score = max(0.0, min(1.0, quality_score))
-
-        generational = 0.0004 + quality_score * 0.0012
-        special = 0.006 + quality_score * 0.02
-        elite = 0.04 + quality_score * 0.08
-        strong = 0.22 + quality_score * 0.10
-
+        # Innate rarity is global in Country V1.  The existing recent-greatness
+        # dampener is retained as an explicit historical balancing mechanism,
+        # but authored country strength no longer changes top-band birth odds.
         probabilities = {
-            TalentQualityBand.GENERATIONAL: self._apply_dampener(country.code, year, TalentQualityBand.GENERATIONAL, generational),
-            TalentQualityBand.SPECIAL: self._apply_dampener(country.code, year, TalentQualityBand.SPECIAL, special),
-            TalentQualityBand.ELITE: self._apply_dampener(country.code, year, TalentQualityBand.ELITE, elite),
-            TalentQualityBand.STRONG: strong,
+            band: (
+                self._apply_dampener(country.code, year, band, value)
+                if band in {TalentQualityBand.GENERATIONAL, TalentQualityBand.SPECIAL, TalentQualityBand.ELITE}
+                else value
+            )
+            for band, value in self.BASE_QUALITY_WEIGHTS.items()
         }
-        used = sum(probabilities.values())
-        solid = max(0.0, 1.0 - used)
-        probabilities[TalentQualityBand.SOLID] = solid
-
         total = sum(probabilities.values())
         normalized = {band: value / total for band, value in probabilities.items()}
         diagnostics = self._dampener.diagnostics(country_code=country.code, year=year)
@@ -170,13 +176,13 @@ class AnnualTalentClassPlanner:
 
     @staticmethod
     def _bias_profile(country: Country) -> CountryGenerationBiasProfile:
-        professional = ((country.system_quality - 3) * 0.06) + ((country.wealth_support - 3) * 0.03)
-        technical = ((country.squash_tradition - 3) * 0.05) + ((country.system_quality - 3) * 0.02)
-        mental = ((country.squash_tradition - 3) * 0.04) + ((country.system_quality - 3) * 0.02)
+        # National style/personality DNA is deliberately deferred beyond V1.
+        # Retain the persisted shape but make it neutral.
+        _ = country
         return CountryGenerationBiasProfile(
-            professionalism_tendency=max(-0.3, min(0.3, round(professional, 4))),
-            technical_vs_physical_lean=max(-0.3, min(0.3, round(technical, 4))),
-            mental_sharpness_tendency=max(-0.3, min(0.3, round(mental, 4))),
+            professionalism_tendency=0.0,
+            technical_vs_physical_lean=0.0,
+            mental_sharpness_tendency=0.0,
         )
 
     def _apply_dampener(self, country_code: str, year: int, band: TalentQualityBand, value: float) -> float:

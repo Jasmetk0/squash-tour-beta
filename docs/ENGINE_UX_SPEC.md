@@ -7,182 +7,99 @@ This document is **implementation/migration guidance**, not a second product con
 The current product-level source of truth is:
 
 - `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`
-- synchronized from **Squash Engine Master Vision v31** (updated 6 Aug 2026)
+- synchronized through **Squash Engine Master Vision v42** (updated 10 Aug 2026) and preserving newer explicit post-v42 decisions recorded in the constitution
 
-If this guide, older beta code, `Beta_Engine.docx`, an old handoff, or an older UX proposal conflicts with the current constitution/Master, the current constitution/Master wins.
+If this guide, older beta code, `Beta_Engine.docx`, an old handoff or an older UX proposal conflicts with the current constitution/Master/newer explicit decision, the higher-authority source wins.
 
-Repository overview/operating documents (`README.md`, `ROADMAP.md`, and `AGENTS.md`)
-also summarize that canon; they do not outrank the constitution or turn a target into
-implemented behavior.
+Repository overview/operating documents (`README.md`, `ROADMAP.md`, `AGENTS.md`) summarize that canon; they do not outrank it or turn a target into implemented behavior.
 
-**Important:** planned target behavior must never be described as already implemented unless verified in the repository.
+**Important:** planned target behavior must never be described as already implemented unless verified in the repository. Omission from a shorter summary is not evidence that an older still-valid decision was superseded.
 
 ---
 
-# 1. What changed relative to the older UX spec
+# 1. Application-shell target
 
-The previous version of this file contained several concepts that are now obsolete or too strong.
-
-| Older UX assumption | Current Master v31 direction |
-|---|---|
-| One privileged **Master Run** | Runs are normal independent worlds; no user-facing privileged Master Run concept |
-| **Sandbox Runs** as the normal alternative-history model | Alternative history primarily lives in **branches inside a Run**; separate Runs are independent worlds/copies/imports |
-| `Official/Main Branch` as a superior branch | No superior branch. One **Viewer Branch** only selects what the Viewer displays |
-| One global Admin IA mixing Runs, World, Simulate, etc. | Clear split between **Global Admin** and **Run Admin** |
-| App opens into a run-centric/admin-centric surface | Neutral **Squash Engine Home** is the application root |
-| Global run-aware World pages as the default model | Global **source Packages** are separate from editable **Run snapshots** |
-| Dashboard as a generic global engine dashboard | Main dashboard/Home is **Run-scoped** and reflects current Run + active branch |
-| Home contains generic simulation execution controls | Home primarily provides overview/attention/continuation; simulation execution belongs in **Simulate/workflow surfaces** |
-| Existing beta navigation can define the target | Existing beta routes/pages are transitional implementation details only |
-
-Do not reintroduce the older assumptions in new work without an explicit newer product decision.
-
----
-
-# 2. Current application-shell target
-
-## 2.1 Global root
+## 1.1 Global root
 
 `Squash Engine Home`
 
 Current confirmed global entries:
 
-- **Runs**
-- **Packages**
+- Runs
+- Packages
 
-This is not a Viewer/Admin chooser and does not silently restore an old Run.
+It is not a Viewer/Admin chooser and does not silently restore an old Run.
 
-## 2.2 Global Admin scope
+## 1.2 Global Admin scope
 
-Global Admin has no active:
-
-- Run,
-- branch,
-- season/week.
-
-It manages genuinely global data, especially:
-
-- Runs,
-- source World Packages,
-- source Category Packages,
-- future global areas only when they are explicitly designed as global.
+Global Admin has no active Run, branch or season/week. It manages genuinely global data such as Runs and source Packages.
 
 Viewer cannot be opened from a global page until a Run is selected.
 
-## 2.3 Run Admin scope
+## 1.3 Run Admin scope
 
-Run Admin always has:
+Run Admin always has selected Run, active Admin branch and viewed season/week context.
 
-- selected Run,
-- selected active Admin branch,
-- viewed season/week context.
+The exact final sidebar remains provisional. Current working direction groups the product around areas such as Home, World, Players, Tour/Seasons, Simulation, Analysis, History/Branches and supporting operator/settings tools.
 
-The exact final sidebar is still open, but the current working direction is:
-
-1. **Home**
-2. **World**
-3. **Players**
-4. **Tour / Seasons**
-5. **Simulate**
-6. **Analysis**
-7. **History / Branches**
-8. supporting settings/diagnostics/operator pages where they logically belong
-
-Do not canonize a more detailed tree just because the current beta already has routes for it.
+Do not canonize a more detailed tree merely because current beta routes exist.
 
 ---
 
-# 3. Run Home target
+# 2. Run Home
 
-The Run Admin landing page is the working **Home / command center** for the selected Run and branch.
+Run Admin landing page is **Home**.
 
-It should answer quickly:
+It should quickly answer:
 
-- Which Run is open?
-- Which branch is active?
-- What season/week is currently being viewed?
-- Where is the actual simulation currently positioned?
-- How far is the Run overall and within the current season?
-- What is currently happening?
-- What requires Admin attention?
-- Are there unsaved changes, failed/active jobs, validation problems or important warnings?
-- Where should the Admin go next?
+- Which Run/branch/time context is open?
+- Where is simulation currently positioned?
+- How far is the full 50-season Run?
+- How far is the current 61-week season?
+- What is happening now or next?
+- What needs Admin attention?
+- Are there active/failed tasks, unsaved changes, warnings or blockers?
 
-### Preferred content direction
+**Confirmed fixed elements:**
 
-- concise Run identity/context,
-- overall Run progress,
-- current season progress,
-- current/next activity,
-- health/validation/attention,
-- Viewer Branch/publication context where useful,
-- task/job state,
-- recent meaningful activity,
-- shortcuts into major Run areas.
+- segmented overall-Run progress indicator,
+- segmented current-season progress indicator.
 
-### What Home should not become
-
-- a copy of Viewer pages,
-- a huge statistics portal,
-- a generic navigation landing page,
-- the main place for every simulation mutation,
-- a page filled with fake summary data when the backend does not provide it.
-
-The current implementation of `/admin/runs/:runId` can evolve incrementally into this target while preserving working APIs/routes.
+Home is not the primary place for every simulation mutation. Execution-heavy workflows belong in dedicated Simulation pages.
 
 ---
 
-# 4. Run and branch UX
+# 3. Run, branch and mode context
 
-## 4.1 Runs
+## 3.1 Runs
 
-The full `All Runs` page is global and neutral. Current confirmed presentation direction is wide rows rather than oversized cards.
+All Runs is global and neutral. Confirmed presentation direction remains wide rows rather than oversized cards.
 
-Distinct actions for a Run:
+Distinct Run actions:
 
-- **Open in Admin**
-- **Open branches**
-- **Open in Viewer**
+- Open in Admin
+- Open branches
+- Open in Viewer
 
-A compact Run switcher is for fast context changes only. Complex management belongs on the full Runs page.
+The compact Run switcher is for quick context changes, not destructive/complex management.
 
-## 4.2 Branches
+## 3.2 Branches
 
-Branches are equal alternative timelines inside one Run.
+Branches are equal alternative timelines. UI must not imply a superior Official/Main branch.
 
-A branch may diverge after its fork in:
+Exactly one branch per Run is the **Viewer Branch**; its only special meaning is which saved timeline Viewer displays.
 
-- calendar,
-- tournament editions,
-- entrants/draws,
-- results,
-- rankings/statistics,
-- player attributes/form/fatigue/health,
-- rules/configuration,
-- other time-valid state.
+## 3.3 Viewer ↔ Admin
 
-The target data model preserves common history once and stores branch-specific divergence.
+Switching should preserve Run, time, object and matching subpage when possible.
 
-## 4.3 Viewer Branch
-
-Exactly one branch per Run is the **Viewer Branch**.
-
-Its only special meaning is publication/display: the read-only Viewer uses it.
-
-UX must not imply:
-
-- “official winner”,
-- main simulation authority,
-- privileged historical truth,
-- branch priority.
-
-Use `Viewer Branch` terminology in new UI. Existing backend names such as `official_branch_id` or “main” must be treated as migration debt, not product language.
+Admin → Viewer never silently changes Viewer Branch. If an exact counterpart is unavailable in Viewer Branch, open the closest meaningful fallback and explain the context shift.
 
 ---
 
-# 5. Header and contextual controls
+# 4. Header and time controls
 
-On pages with an active Run, the current target order is:
+Current target order on Run-scoped pages:
 
 ### Viewer
 `Run → Time → Viewer/Admin`
@@ -190,277 +107,428 @@ On pages with an active Run, the current target order is:
 ### Admin
 `Run → Branch → Time → Viewer/Admin`
 
-Global search / `Ctrl+K` remains part of the application shell; exact placement can be refined.
+Global search/`Ctrl+K` remains part of the shell.
 
-The time control changes **viewing context only**. It never advances or rewinds simulation.
+Time control changes **viewing context only**; it never advances or rewinds simulation.
 
-Status below/near the time control:
+Visible relation to actual simulation state:
 
 - Viewer: `PRESENT / PAST`
 - Admin: `PRESENT / PAST / FUTURE`
 
-Changing mode should preserve Run, time, object and matching subpage when possible. Viewer always resolves against the Run's current Viewer Branch.
+---
+
+# 5. Packages and World UX
+
+Clearly distinguish:
+
+- **source Package authoring** — global,
+- **Run snapshot inspection/editing** — Run-scoped.
+
+Selected World + Category Package versions become independent Run snapshots at Run creation; no live synchronization exists afterwards.
+
+Country/profile pages should separate authored configuration from generated historical output.
+
+Travel Regions/Timezone Areas may appear only at the coarse level actually supported by the current product decision; do not invent precise map-distance/acclimatization UX from unresolved mathematics.
 
 ---
 
-# 6. Packages UX
+# 6. Players UX
 
-## 6.1 Global source Packages
+Player identity is stable (`player_id`); time-varying state belongs to Run/branch/week history.
 
-Confirmed initial types:
+Admin player UX ultimately needs to cover:
 
-- World Packages
-- Category Packages
-
-Built-in GitHub source Packages are read-only. Local/custom source Packages can be editable.
-
-## 6.2 Run snapshots
-
-When a Run is created, selected World + Category Package versions are copied into the Run as independent versioned snapshots.
-
-Both snapshots are required. Their source identities/versions remain provenance only:
-neither snapshot is a live link, and later global source edits must not alter the Run.
-
-Therefore UX must clearly distinguish:
-
-- **Edit source Package** — global operation affecting future Runs,
-- **Edit this Run's Package snapshot** — Run-scoped operation affecting only this Run/branch according to historical rules.
-
-There is no live synchronization from a source Package into existing Runs.
-
-Future package types (for example Player Package) are a strong direction only, not current canon.
-
----
-
-# 7. World UX
-
-Do not assume the old global `World → Countries / Talent Preview` structure is the final target for every context.
-
-We now have two different concepts:
-
-### Global Package authoring
-Edit source World Packages outside a Run.
-
-### Run World
-Inspect/edit the Run's embedded world snapshot and its generated state in the active Run/branch.
-
-Country/profile pages should keep authored/configuration inputs clearly separated from generated historical output.
-
-Population, talent quantity/quality and country strength are important concepts, but exact generation mathematics remain open and should not be hard-coded from an old illustrative UX proposal.
-
----
-
-# 8. Players UX
-
-Player identity is stable (`player_id`) while time-varying state belongs to Run/branch/week history.
-
-The Admin player system ultimately needs to cover:
-
-- prospects/juniors,
-- Tour players,
-- historical state,
+- prospect/Tour/historical state,
 - attributes/OVR/potential,
 - physical profile,
-- form/fatigue/health,
+- form,
+- fatigue/health,
+- three physical stamina match dimensions/bars,
+- provisional mental match-state dimension(s),
 - status/lifecycle,
-- manual edits and locks,
-- generation/regeneration provenance.
+- style/gameplan,
+- individual player-AI decisions,
+- manual edits/locks/provenance.
 
-Viewer exposes public/historical information and must not automatically reveal authoritative internal health/potential information.
+Viewer exposes public/historical layers and must not leak authoritative hidden health/potential/AI knowledge.
 
-The exact page/tab structure is still to be designed page-by-page.
+## 6.1 Attributes, physical bars and mental state
+
+Current post-v42 V1 direction deliberately keeps the attribute model relatively lightweight and extensible.
+
+The three physical stamina bars/dimensions used during a match should **derive from underlying attributes/state** rather than be represented as three independent standalone trainable attributes. Their exact derivation remains open.
+
+One or more mental match-state bars/dimensions are desired only as a **provisional direction**. Do not freeze their number, names or mechanics without a later explicit decision.
+
+UX should distinguish long-term player attributes from derived/current match-state bars.
+
+## 6.2 Form UX
+
+Form is one current player state, not a collection of disconnected tournament forms.
+
+Admin should distinguish:
+
+- current Form,
+- long-term attributes,
+- physical stamina capacity/current state,
+- mental match-state direction when implemented,
+- health/fatigue.
+
+Do not visually imply Form resets between tournaments or weeks.
+
+Exact numeric scales/visualizations remain open unless implementation has an explicit temporary contract.
 
 ---
 
-# 9. Tour / Seasons UX
+# 7. Tour / Seasons UX
 
-This area should consolidate the sporting structure of a Run:
+This area should consolidate:
 
 - seasons,
 - calendar,
-- Tournament Series and Editions,
-- categories and their historical configuration,
+- Tournament Series/Editions,
+- categories/policies,
 - entries,
 - qualification,
 - draws,
 - matches/results,
-- Finals and team/continental/world competitions where relevant.
+- major individual/team competitions.
 
-Existing technical pages can survive during migration, but they should progressively become understandable Admin workflows rather than a collection of backend-shaped screens.
+## 7.1 Tournament Edition lifecycle
 
-Do not convert currently open sport rules into permanent UI assumptions.
+Admin may see internal Draft/component/deadline state; Viewer sees only historically public state.
 
----
+Public stage should be derived from authoritative Edition/event state rather than independently editable display flags.
 
-# 10. Simulate UX
+Incomplete Drafts can be saved. Missing fields should block only dependent operations.
 
-`Simulate` and manual/step-by-step work are complementary.
+## 7.2 Announcement and public knowledge
 
-The dedicated simulation area should eventually be the primary launcher/control center for supported scopes such as:
+Every Edition has historical `announcement_week`.
 
-- Next Match,
-- Next Round,
-- Next Tournament,
-- Next Week,
-- Next Season,
-- Full Simulation,
-- custom target/range.
+Before public activation:
 
-Before execution, Admin should understand:
+- Admin may display/edit the private future Edition,
+- Viewer must not display it,
+- player-AI-facing surfaces must treat it as unknown.
 
-- target Run + branch,
-- starting state,
-- requested stopping point,
-- prerequisites,
-- blocking errors,
-- warnings,
-- likely impacted history/configuration.
+Once the announcement World Event becomes public, historical Viewer pages may show it from that week onward.
 
-Long-running simulation belongs in a Task Center/job model with progress and safe stop/recovery behavior.
+Later public updates should appear as explicit update events; emergency changes require a visibly exceptional path.
 
-### Migration rule
+## 7.3 Entries
 
-Existing direct Run-level simulation buttons/endpoints can remain temporarily for compatibility, but new Home/dashboard UX should route the user toward dedicated simulation workflows rather than expanding direct execution on Home.
+Entry decisions belonging to the same Simulation Slot should be presented as one simultaneous batch/state rather than implying one player's decision causally changed another player's inputs through UI click order.
+
+Retries should preserve unrelated successful results where the underlying command contract allows it.
 
 ---
 
-# 11. Analysis UX
+# 8. Simulation UX — chronological model
 
-Current working direction is an Admin analysis area for generated insight and technical/sporting inspection, potentially including:
+Simulation is no longer best thought of only as `Next Match / Next Round / Next Week` buttons. The first-version model has explicit chronological boundaries and slots.
 
-- Official and alternative rankings,
-- ranking policy inspection,
-- Elo/other analytical ratings,
-- model-derived odds/predictions,
-- comparisons,
-- diagnostics tied to generated sporting data.
+## 8.1 Week Transition
 
-The exact boundary between Analysis and Diagnostics remains open. Do not duplicate the same tool in multiple top-level areas simply to fill navigation.
+Week Transition is a boundary operation, not a normal slot.
+
+UX should make clear that it prepares the next week from information known through the completed week and may include ranking activation, birthdays/prospect intake and weekly player development.
+
+A red blocker prevents only the affected transition/operation and explains cause/fix.
+
+## 8.2 Simulation Slots
+
+A week contains a variable chronological sequence of **Simulation Slots**.
+
+UI must communicate that events within one slot are simultaneous and share one input snapshot.
+
+Primary first-version controls include:
+
+- `Simulate Next Slot`
+- split `Simulate Next Match`
+
+When multiple matches exist in the same slot, selecting one manually must not visually imply that the remaining matches now read its result unless the authoritative model explicitly creates that dependency.
+
+## 8.3 Season Transition
+
+Season Transition is the Week 61 → Week 1 special boundary.
+
+UX should separate it from normal slot progression and surface:
+
+- closing-season prerequisites,
+- policy changes activating next season,
+- scoped resets,
+- any blocking problems,
+- successful Season Closure Marker/history entry.
+
+## 8.4 Long-running simulation
+
+Long-running operations belong in Task Center with visible progress/state and safe stop/recovery boundaries.
+
+Existing direct simulation buttons may remain temporarily for compatibility, but new UX should converge toward the chronological model rather than proliferating unrelated shortcuts.
 
 ---
 
-# 12. History / Branches UX
+# 9. Match Engine UX
+
+First-version match simulation is **rally-by-rally**, not shot-by-shot.
+
+Admin match detail should be capable of exposing authoritative rally chronology without requiring the UI to reproduce every hidden internal transition.
+
+Useful authoritative per-rally data includes:
+
+- score context,
+- compact sporting cause,
+- official decision,
+- duration,
+- estimated shot count,
+- physical stamina state/context where appropriate for Admin,
+- future mental-state context only when its provisional mechanics have been explicitly implemented.
+
+Viewer should surface public match progress/statistics without automatically exposing hidden player-AI or internal physical/mental truth.
+
+## 9.1 Interference and timing
+
+V1 uses `No Let / Yes Let / Stroke` for simplified interference.
+
+Match timeline should support authoritative non-rally time events such as:
+
+- game intervals,
+- configured health breaks,
+- other explicitly supported pauses.
+
+Official Run defaults currently include 2 minutes between games and 3 minutes for the simplified configured health break. UI should read stored configuration rather than hard-code these globally.
+
+Recovery continues through elapsed time; breaks should not be represented as magical resets.
+
+---
+
+# 10. Match Reconstruction UX
+
+**Match Reconstruction** is a distinct Admin workflow for reconstructing a plausible detailed match history from known facts.
+
+Recommended workflow contract:
+
+1. Enter/confirm known facts as constraints.
+2. Choose candidate count.
+3. Generate candidate histories.
+4. Compare compact candidate summaries.
+5. Open complete read-only detail for any candidate.
+6. Explicitly select one candidate to commit as authoritative history.
+
+Critical UX rules:
+
+- generating candidates must not mutate history,
+- candidate detail is read-only,
+- selection/commit is a separate explicit mutation,
+- commit should show validation/provenance/audit consequence,
+- the UI must not suggest that a candidate is “the real match” before explicit selection.
+
+Default candidate count, remembering the previous count, compact-card fields, probability displays and session retention remain provisional/open at their actual status.
+
+---
+
+# 11. Rankings and historical policy UX
+
+Ranking screens must respect historical policy snapshots.
+
+Official Run:
+
+- season `2000/01` begins with Best 15,
+- later seasons initially inherit the previous season's effective Best N,
+- each season remains independently configurable.
+
+Admin policy editors should distinguish inherited vs explicit override and show the source/effective value.
+
+Historical ranking views must never be recomputed from the latest default merely because configuration changed later.
+
+---
+
+# 12. World Events, Audit, Tasks and Notifications
+
+These four surfaces are intentionally distinct.
+
+## 12.1 World Event Log
+
+Chronological world facts/events for a branch. It supports historical causality/public knowledge and is not merely an Admin notification feed.
+
+## 12.2 Audit Log
+
+Who/what changed authoritative data, when, why and from which provenance.
+
+## 12.3 Task Center
+
+Running/completed operations such as long simulations, imports or other jobs.
+
+## 12.4 Notification Center
+
+Things requiring Admin attention. It may aggregate system notifications and watchlists.
+
+Notification UX uses a consistent severity contract:
+
+- blue information — no block,
+- orange warning — no block,
+- red critical — block/stop only affected operation or branch.
+
+Every warning/block should explain cause, impact and repair options.
+
+Reading/dismissing a notification never deletes its source event/audit/task/validation.
+
+Viewer shows none of the technical Admin alerts.
+
+---
+
+# 13. Historical MSA homepage/news behavior
+
+Historical MSA homepage includes automatic public messages derived only from structured public World Events valid at the viewed time.
+
+This means:
+
+- no future leak,
+- no independent article database inventing facts,
+- private Admin events remain private,
+- publication starts when the underlying event becomes public.
+
+Standalone News page and News Importance Score remain unresolved/provisional and must not be treated as required first-version navigation.
+
+---
+
+# 14. Forecast and Future Locks UX — provisional
+
+Forecast remains a non-authoritative analysis environment.
+
+Strong working direction includes reproducible Forecast Sessions, scenario comparison, conditional focus, individual sample reconstruction, pins and explicit branch materialization.
+
+Future Locks remain a strong direction for testing/constraining possible futures with feasibility separated from natural probability.
+
+Do not hard-code final layouts, probability controls, retention rules, conflict UX or lifecycle behavior until those provisional areas are explicitly resolved.
+
+Viewer never sees hidden locks or Forecast internal provenance unless a future explicit public feature says otherwise.
+
+---
+
+# 15. History / Branches UX
 
 Target experience connects:
 
-- interactive branch map,
-- branch divergence points,
+- branch map,
+- divergence points,
 - Viewer Branch badge,
 - selected-branch timeline,
-- saved versions,
-- checkpoints,
-- simulation/import/manual-change history,
+- World Events,
+- saved versions/checkpoints,
+- simulation/import/manual/reconstruction provenance,
 - restore/branch/compare operations.
 
-Viewer Branch must be visually identifiable without implying that it is the “best” or “official” branch.
+Viewer Branch must be identifiable without implying that it is the best/official timeline.
 
 ---
 
-# 13. Global vs Run navigation migration
+# 16. Records, rivalries and prestige
 
-When refactoring current navigation, classify every destination first:
+Records should appear contextually across Viewer/Admin from authoritative historical data.
 
-### Global
-Examples:
-- Squash Engine Home
-- All Runs
-- source Packages
+Rivalries exist as a product concept, but automatic detection, groups/overlaps, scoring, lifecycle and exact Viewer placement remain only partially decided.
 
-### Run-scoped
-Examples:
-- Run Home
-- Run World
-- Players of a Run
-- Tour/Seasons
-- Simulate
-- Analysis
-- Branches/History
-- run diagnostics/settings
-
-A page must not silently inherit a previous Run if it is meant to be global.
+Tournament Prestige is provisional; Tournament Appeal is even weaker. UX must not present either as a finished universal metric until implemented against an approved contract.
 
 ---
 
-# 14. Current implementation principles
+# 17. Migration principles
 
-During migration:
-
-1. Reuse real existing APIs and data where valid.
+1. Reuse real APIs/data where valid.
 2. Do not create fake dashboard values to match mockups.
-3. Preserve current working routes while introducing clearer target navigation when practical.
+3. Preserve working routes while introducing clearer target navigation when practical.
 4. Do not destructively rename persisted backend fields solely for UI terminology; plan migrations.
-5. New user-facing labels should follow current terminology even if adapters still call old endpoints.
+5. New user-facing labels follow current terminology even if adapters still call old endpoints.
 6. Keep Viewer read-only.
-7. Keep historical time semantics explicit.
-8. Every mutating action needs appropriate validation/preview/confirmation according to risk.
-9. Tests should verify product behavior, not only that components render.
-10. Planned target features must be clearly distinguished from implemented features.
+7. Keep historical time/public-knowledge semantics explicit.
+8. Every mutation needs validation/preview/confirmation appropriate to risk.
+9. Tests should verify product behavior, not only component rendering.
+10. Planned target features must be distinguished from implemented features.
+11. Do not turn provisional/open Master items into permanent UI assumptions.
+12. Simultaneous slot events must not become order-dependent because of UI interaction order.
+13. Reconstruction candidate generation must remain non-mutating until explicit commit.
+14. Historical Viewer/AI surfaces must respect `announcement_week` and public World Events.
+15. Do not treat the three physical stamina bars as independent trainable attributes unless a newer product decision explicitly changes the current direction.
+16. Do not freeze mental-bar count/names/mechanics from an illustrative screen or placeholder implementation.
 
 ---
 
-# 15. Highest-priority migration backlog
+# 18. Highest-priority migration backlog after v42 sync
 
 ### P0 — stop reinforcing obsolete architecture
 
-- Remove new user-facing `Master Run`, `Sandbox Run`, `Official Branch` and privileged `Main Branch` assumptions.
-- Standardize product terminology around Run, active Admin branch and Viewer Branch.
-- Treat old backend naming as migration debt.
+- Remove new user-facing Master Run/Sandbox Run/Official Branch/privileged Main Branch assumptions.
+- Standardize Run, active Admin branch and Viewer Branch terminology.
 
 ### P1 — shell and scopes
 
-- Add/complete neutral `Squash Engine Home`.
-- Build global Runs area.
-- Build global Packages area.
-- Separate Global Admin and Run Admin sidebars/headers.
+- Complete Squash Engine Home, Runs and Packages.
+- Separate Global Admin and Run Admin navigation.
 - Standardize Run/Branch/Time/Mode controls.
+- Continue Run Home with the two fixed progress indicators and actionable attention state.
 
-### P1 — Run Admin
+### P1 — chronological simulation foundation
 
-- Continue evolving `/admin/runs/:runId` into concise Home command center.
-- Move generic simulation execution toward dedicated Simulate workflows.
-- Add two useful progress indicators: overall Run progress and current-season progress when supported by real data.
-- Make warnings/attention actionable through links to the correct Admin workflow.
+- Implement/align Week Transition.
+- Implement Simulation Slots and simultaneity contract.
+- Add split Simulate Next Slot / Simulate Next Match UX.
+- Implement Season Transition boundary UX.
 
-### P1/P2 — data model alignment
+### P1 — tournament/public-knowledge alignment
 
-- Introduce/complete `viewer_branch_id` semantics through APIs/schema/migrations.
-- Ensure Package sources and Run snapshots are truly independent.
-- Ensure branch-specific configuration/history is correctly persisted.
-- Audit time-travel queries for branch/week correctness.
+- Add derived Edition lifecycle/Public Stage.
+- Persist and surface `announcement_week` correctly.
+- Gate Viewer/player-AI knowledge behind public World Events.
+- Align entry batching/retry UX with shared-slot snapshot semantics.
 
-### P2 — workflow consolidation
+### P1/P2 — Match Engine v1
 
-- Consolidate Tour/Seasons technical pages into sporting workflows.
-- Design Players and World pages page-by-page against the Run/global split.
-- Build History/Branches map/timeline.
-- Define Analysis vs Diagnostics boundary.
+- Move toward authoritative rally-by-rally timeline/logging.
+- Add the three derived physical stamina bars with appropriate Admin vs Viewer visibility once their attribute mapping is specified.
+- Keep mental match-state UI provisional until mechanics are explicitly decided.
+- Add Form/timing visibility appropriate to Admin vs Viewer.
+- Add simplified interference/timing workflows without advanced referee systems.
+
+### P1/P2 — Match Reconstruction
+
+- Build constraint entry, candidate generation/inspection and explicit commit workflow.
+- Ensure generation is non-mutating and commit is auditable.
+
+### P2 — history/attention
+
+- Separate World Event Log, Audit Log, Task Center and Notification Center in UI/data flow.
+- Add historical public MSA messages from World Events.
+- Build branch map/timeline and contextual records/rivalries when supporting data exists.
 
 ---
 
-# 16. Explicitly unresolved UX areas
+# 19. Explicitly unresolved UX areas
 
-Do not silently finalize these from the old spec:
+Do not silently finalize:
 
-- complete final Global Admin sidebar,
-- complete final Run Admin sidebar,
+- complete final Global/Run Admin sidebar,
 - full Viewer public-site navigation,
-- exact MSA homepage blocks,
+- exact MSA menu and standalone News page,
 - Viewer reveal modes,
-- exact `Show in Viewer` save timing,
-- complete branch lock/concurrency UX,
-- final Analysis/Diagnostics split,
-- exact source/Run Package editor layouts,
-- detailed player profile Admin tabs,
-- full Tournament/Season page hierarchy,
-- exact Task Center behavior and progress estimation,
+- exact Show in Viewer activation timing,
+- branch lock/concurrency UX,
+- exact Simulation Slot taxonomy/count,
+- complete Entry Freeze/cut-off UI,
+- final attribute catalogue and physical-stamina derivation,
+- number/names/mechanics of mental match-state bars,
+- detailed Form/health/stamina numeric visualization,
+- advanced referee/review/court-condition UX,
+- Forecast/Future Lock final UI and lifecycle,
+- Match Reconstruction probability display/session retention/default-card design,
 - mobile/responsive design beyond current desktop-first scope.
 
 ---
 
-# 17. Historical note
+# 20. Historical note
 
-The former detailed proposals in this file — including Master Run/Sandbox terminology, global World hub assumptions, specific Talent Preview aggregates/formulas and several fixed page structures — are **not automatically current decisions**.
-
-They may still contain useful implementation ideas, but they must be re-evaluated against the current product constitution before reuse.
+Older proposals in this file — Master Run/Sandbox terminology, global World hub assumptions, fixed navigation trees and illustrative formulas — are not automatically current decisions.
 
 For product decisions, consult `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` first.

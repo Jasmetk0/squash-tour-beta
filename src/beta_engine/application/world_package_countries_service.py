@@ -108,7 +108,7 @@ class WorldPackageCountriesService:
         package = self.registry_service.get_package(world_id)
         if package is None:
             raise WorldPackageMutationError(f"world package '{world_id}' not found", 404)
-        if not package.editable:
+        if package.type != "custom" or package.source != "custom_config" or not package.editable:
             raise WorldPackageMutationError(f"world package '{world_id}' is read-only", 403)
         if update.expected_package_fingerprint and update.expected_package_fingerprint != package.fingerprint:
             raise WorldPackageMutationError("world package changed since this country was loaded", 409)

@@ -441,7 +441,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
     mutationFn: (payload: WorldPackageCountryUpdatePayload) => updateWorldPackageCountry(worldId, countryCode, payload),
     onSuccess: async (response) => {
       queryClient.setQueryData(['world-package-country', worldId, countryCode], response.country_detail)
-      setEditing(false); setSuccess('Country changes saved. World Package validation passed.')
+      setEditing(false); setSuccess(`Country changes saved. Validation status: ${response.validation.status}.`)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['world-package-countries', worldId] }),
         queryClient.invalidateQueries({ queryKey: ['world-package', worldId] }),
@@ -451,6 +451,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
     }
   })
   const data = query.data
+  const canEdit = data?.package.type === 'custom' && data.package.source === 'custom_config' && data.package.editable
   const timeline = Object.entries(data?.country.population_by_year ?? {}).filter(([, value]) => value != null).sort(([a], [b]) => Number(a) - Number(b))
   const style = Object.entries(data?.country.style_dna ?? {})
   return <section className="panel">
@@ -459,8 +460,8 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
     {query.error && <p className="error">Failed to load country: {formatApiError(query.error)}</p>}
     {data && <>
       <div className="page-intro"><h2>{data.country.name}</h2><p className="subtitle"><code>{data.country.code}</code></p></div>
-      <p><strong>{data.package.name} · {data.package.type === 'custom' ? 'Custom' : 'Built-in'} · {data.package.editable ? 'Editable source' : 'Read-only'}</strong></p>
-      {data.package.editable && !editing && <button type="button" onClick={() => { setEditing(true); setSuccess(''); mutation.reset() }}>Edit country</button>}
+      <p><strong>{data.package.name} · {data.package.type === 'custom' ? 'Custom' : 'Built-in'} · {canEdit ? 'Editable source' : 'Read-only'}</strong></p>
+      {canEdit && !editing && <button type="button" onClick={() => { setEditing(true); setSuccess(''); mutation.reset() }}>Edit country</button>}
       {success && <p className="status" role="status">{success}</p>}
       {editing && <CountryEditForm detail={data} geography={geographyQuery.data} saving={mutation.isPending} error={mutation.error} onCancel={() => { setEditing(false); mutation.reset() }} onSave={(payload) => mutation.mutate(payload)} />}
       {!editing && <SectionCard title="Overview">

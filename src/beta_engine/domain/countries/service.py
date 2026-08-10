@@ -38,14 +38,19 @@ class CountryTalentModel:
         return max(0.0, base_population) * self.participation_factor(country)
 
     def development_environment(self, country: Country) -> float:
-        """Simple V1 development/conversion environment, independent of innate talent."""
+        """Simple V1 development/conversion environment, independent of innate talent.
+
+        Development quality is the largest authored driver; competition and
+        elite support are substantial distinct stages, while tradition is a
+        smaller continuity modifier. Exact weights remain calibration baseline.
+        """
 
         return (
-            country.development_quality_norm
-            + country.competition_quality_norm
-            + country.elite_support_norm
-            + country.squash_tradition_norm
-        ) / 4.0
+            country.development_quality_norm * 0.40
+            + country.competition_quality_norm * 0.25
+            + country.elite_support_norm * 0.25
+            + country.squash_tradition_norm * 0.10
+        )
 
     def ecosystem_strength(self, country: Country) -> float:
         """Compatibility summary for diagnostics; not an authored country attribute."""

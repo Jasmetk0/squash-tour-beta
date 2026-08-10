@@ -19,7 +19,7 @@ The target simulation is chronological and historically safe rather than a colle
 - Week changes are handled by an explicit **Week Transition**; the season boundary uses a special **Season Transition**.
 - A week contains a variable chronological sequence of **Simulation Slots**. Events in one slot are simultaneous and read from the same pre-slot snapshot.
 - The first-version match engine is **rally-by-rally**, not shot-by-shot. A rally has hidden control/pressure phases, individual physical load, explicit sporting/officiating outcomes, and compact authoritative logging.
-- Player state includes long-term attributes plus changing form, fatigue, health, stamina and decision state. Exact mathematics and calibration remain intentionally open where the product specification marks them open.
+- Player state includes long-term attributes plus changing form, fatigue, health, physical stamina state, mental match state direction and decision state. The current post-v42 V1 direction keeps the attribute model deliberately lighter: three physical stamina bars/dimensions should derive from underlying attributes/state rather than become three independent standalone trainable attributes; exact derivation and mental-bar mechanics remain open.
 - **Match Reconstruction** is a first-version Admin workflow: known facts become constraints, multiple candidate histories may be generated and inspected, and only an explicitly selected candidate becomes authoritative history.
 - Long-running work belongs in the Task Center/job model with visible state and safe recovery boundaries.
 
@@ -51,11 +51,11 @@ Use this order when documentation conflicts:
 
 1. explicit newer product decisions,
 2. **Squash Engine Master Vision v42** and later audited revisions,
-3. [`PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`](PROJECT_CONSTITUTION_TECHNICAL_PLAN.md),
+3. [`PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`](PROJECT_CONSTITUTION_TECHNICAL_PLAN.md), including newer post-v42 decisions recorded there,
 4. subordinate migration guidance such as [`docs/ENGINE_UX_SPEC.md`](docs/ENGINE_UX_SPEC.md),
 5. older documents, handoffs, and existing beta behavior as historical or implementation evidence only.
 
-`PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` is the active repository constitution synchronized from Master Vision v42. `Beta_Engine.docx` and documents that describe earlier phase-specific designs are non-authoritative background unless the current constitution explicitly reconfirms them. See [`ROADMAP.md`](ROADMAP.md) for the current milestone sequence.
+`PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` is the active repository constitution synchronized through Master Vision v42 and intentionally preserves still-valid earlier canon. `Beta_Engine.docx` and documents that describe earlier phase-specific designs are non-authoritative background unless the current constitution explicitly reconfirms them. See [`ROADMAP.md`](ROADMAP.md) for the current milestone sequence.
 
 Decision status matters: **decided**, **provisional**, **target**, **open**, **deferred**, and **later** must not be silently collapsed into one level of certainty.
 

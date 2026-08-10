@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
 
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryRecord, WorldPackageRegistryService
 from beta_engine.domain.countries import Country
@@ -87,6 +87,37 @@ class WorldPackageCountryPopulationUpdate(BaseModel):
     expected_package_fingerprint: str | None = None
 
 
+class WorldPackageCountryCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    code: str = Field(pattern=r"^[A-Z]{3}$")
+    name: str = Field(min_length=1)
+    notes: str | None = None
+    area_km2: int | None = Field(gt=0)
+    region: str = Field(min_length=1)
+    travel_region: str | None = None
+    wealth_support: int = Field(ge=1, le=5)
+    squash_popularity: int = Field(ge=1, le=5)
+    squash_tradition: int = Field(ge=1, le=5)
+    system_quality: int = Field(ge=1, le=5)
+    competition_density: float = Field(ge=1.0, le=5.0)
+    federation_quality: float = Field(ge=1.0, le=5.0)
+    court_count: int | None = Field(ge=0)
+    style_dna: dict[str, float]
+    population_by_year: dict[int, StrictInt]
+    expected_package_fingerprint: str
+
+    @field_validator("population_by_year")
+    @classmethod
+    def _validate_population(cls, value: dict[int, int]) -> dict[int, int]:
+        if 2020 not in value:
+            raise ValueError("population_by_year must contain default year 2020")
+        if any(year < 1955 or year > 2050 for year in value):
+            raise ValueError("population years must be between 1955 and 2050")
+        if any(isinstance(population, bool) or population <= 0 for population in value.values()):
+            raise ValueError("population values must be positive integers")
+        return value
+
+
 class WorldPackageMutationError(ValueError):
     def __init__(self, message: str, status_code: int = 422):
         super().__init__(message)
@@ -96,6 +127,13 @@ class WorldPackageMutationError(ValueError):
 @dataclass(frozen=True)
 class WorldPackageCountryUpdateResult:
     detail: WorldPackageCountryDetailResult
+    validation: WorldPackageValidationResult
+
+
+@dataclass(frozen=True)
+class WorldPackageCountryDeleteResult:
+    deleted_country_code: str
+    package: WorldPackageRegistryRecord
     validation: WorldPackageValidationResult
 
 
@@ -109,6 +147,80 @@ class WorldPackageCountriesService:
     def __post_init__(self) -> None:
         if self.validation_service is None:
             self.validation_service = WorldPackageValidationService(self.registry_service)
+
+    def _editable_store(self, world_id: str, expected_fingerprint: str) -> WorldPackageCountryStore:
+        package = self.registry_service.get_package(world_id)
+        if package is None:
+            raise WorldPackageMutationError(f"world package '{world_id}' not found", 404)
+        if package.type != "custom" or package.source != "custom_config" or not package.editable:
+            raise WorldPackageMutationError(f"world package '{world_id}' is read-only", 403)
+        if expected_fingerprint != package.fingerprint:
+            raise WorldPackageMutationError("world package changed since this country was loaded", 409)
+        paths = self.registry_service.package_paths(world_id)
+        assert paths is not None
+        return WorldPackageCountryStore(paths["package_root"])
+
+    def create_country(self, world_id: str, create: WorldPackageCountryCreate) -> WorldPackageCountryUpdateResult:
+        store = self._editable_store(world_id, create.expected_package_fingerprint)
+        if create.code in store.load_index().country_codes or (store.countries_root / create.code).exists():
+            raise WorldPackageMutationError(f"country '{create.code}' already exists", 409)
+        geography = self.get_geography(world_id)
+        assert geography is not None
+        if create.region not in {item.code for item in geography.regions}:
+            raise WorldPackageMutationError(f"unknown Region '{create.region}'")
+        if create.travel_region is not None and create.travel_region not in {item.code for item in geography.travel_regions}:
+            raise WorldPackageMutationError(f"unknown Travel Region '{create.travel_region}'")
+        timeline = create.population_by_year
+        if 2020 not in timeline:
+            raise WorldPackageMutationError("population_by_year must contain default year 2020")
+        if any(year < 1955 or year > 2050 for year in timeline):
+            raise WorldPackageMutationError("population years must be between 1955 and 2050")
+        if any(isinstance(value, bool) or value <= 0 for value in timeline.values()):
+            raise WorldPackageMutationError("population values must be positive integers")
+        country = Country.model_validate({
+            **create.model_dump(exclude={"expected_package_fingerprint", "population_by_year"}),
+            "flag_asset": None, "population": timeline[2020], "default_population": timeline[2020],
+            "default_population_year": 2020, "population_by_year": timeline,
+        })
+        original: bytes | None = None
+        try:
+            original = store.create_country(country)
+            assert self.validation_service is not None
+            validation = self.validation_service.validate_package(world_id)
+            if validation is None or validation.status == "errors":
+                raise RuntimeError("country creation would leave the World Package invalid")
+            detail = self.get_country(world_id, create.code)
+            if detail is None:
+                raise RuntimeError("created country detail could not be reconstructed")
+            return WorldPackageCountryUpdateResult(detail=detail, validation=validation)
+        except Exception as exc:
+            if original is not None:
+                store.rollback_create(create.code, original)
+            if isinstance(exc, WorldPackageMutationError):
+                raise
+            raise WorldPackageMutationError(f"country creation failed: {exc}") from exc
+
+    def delete_country(self, world_id: str, country_code: str, expected_fingerprint: str) -> WorldPackageCountryDeleteResult:
+        store = self._editable_store(world_id, expected_fingerprint)
+        code = country_code.upper()
+        if code not in store.load_index().country_codes:
+            raise WorldPackageMutationError(f"country '{code}' not found in world package '{world_id}'", 404)
+        mutation: tuple[bytes, Path] | None = None
+        try:
+            mutation = store.delete_country(code)
+            assert self.validation_service is not None
+            validation = self.validation_service.validate_package(world_id)
+            if validation is None or validation.status == "errors":
+                raise RuntimeError("country deletion would leave the World Package invalid")
+            package = self.registry_service.get_package(world_id)
+            if package is None:
+                raise RuntimeError("updated package could not be reconstructed")
+            store.finalize_delete(mutation[1])
+            return WorldPackageCountryDeleteResult(code, package, validation)
+        except Exception as exc:
+            if mutation is not None:
+                store.rollback_delete(code, *mutation)
+            raise WorldPackageMutationError(f"country deletion failed: {exc}") from exc
 
     def update_country(self, world_id: str, country_code: str, update: WorldPackageCountryUpdate) -> WorldPackageCountryUpdateResult:
         package = self.registry_service.get_package(world_id)

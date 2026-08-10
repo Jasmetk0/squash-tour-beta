@@ -3,7 +3,7 @@ from dataclasses import replace
 from pathlib import Path
 import pytest
 from beta_engine.application.world_package_clone_service import WorldPackageCloneService
-from beta_engine.application.world_package_countries_service import WorldPackageCountriesService, WorldPackageCountryUpdate, WorldPackageCountryPopulationUpdate, WorldPackageMutationError
+from beta_engine.application.world_package_countries_service import WorldPackageCountriesService, WorldPackageCountryCreate, WorldPackageCountryUpdate, WorldPackageCountryPopulationUpdate, WorldPackageMutationError
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
 from beta_engine.application.world_package_validation_service import WorldPackageValidationResult, WorldPackageValidationService
 from beta_engine.domain.countries import CountriesConfig, Country
@@ -227,3 +227,46 @@ def test_population_validation_exception_restores_exact_original_and_package_rea
  assert registry.get_package('editable') is not None
  assert {path.relative_to(store.package_root):path.read_bytes() for path in store.package_root.rglob('*.json') if path != population_path}==unrelated
  assert not list(population_path.parent.glob('.population.json.*'))
+
+
+def _country_create(fingerprint: str) -> WorldPackageCountryCreate:
+ return WorldPackageCountryCreate(code='ABC',name='Alphabetia',notes='Authored country',area_km2=1234,region='EUROPE',travel_region='EUROPE',wealth_support=3,squash_popularity=2,squash_tradition=1,system_quality=4,competition_density=2.5,federation_quality=3.5,court_count=12,style_dna={'pace':1.25},population_by_year={1995:900_000,2020:1_200_000},expected_package_fingerprint=fingerprint)
+
+
+def test_country_create_delete_are_scoped_ordered_and_change_fingerprint(tmp_path):
+ root=tmp_path/'packages'; shutil.copytree('config/world_packages/official_fax_world',root/'official_fax_world')
+ registry=WorldPackageRegistryService(world_packages_root=root); validation=WorldPackageValidationService(registry)
+ assert WorldPackageCloneService(registry,validation).clone_official_world(new_world_id='editable',name='Editable',description=None,dry_run=False).ok
+ service=WorldPackageCountriesService(registry,validation); before=registry.get_package('editable'); store=WorldPackageCountryStore(root/'custom/editable')
+ existing={path.relative_to(store.countries_root):path.read_bytes() for path in store.countries_root.rglob('*.json') if 'index.json' not in str(path)}
+ created=service.create_country('editable',_country_create(before.fingerprint))
+ assert created.detail.country.population==1_200_000 and created.detail.country.population_by_year=={1995:900_000,2020:1_200_000}
+ assert store.load_index().country_codes==sorted(store.load_index().country_codes) and store.load_index().country_codes.count('ABC')==1
+ assert created.detail.package.fingerprint!=before.fingerprint and created.validation.status=='valid'
+ assert all((store.countries_root/path).read_bytes()==value for path,value in existing.items())
+ deleted=service.delete_country('editable','ABC',created.detail.package.fingerprint)
+ assert deleted.package.fingerprint!=created.detail.package.fingerprint and deleted.validation.status=='valid'
+ assert 'ABC' not in store.load_index().country_codes and not (store.countries_root/'ABC').exists()
+ assert all((store.countries_root/path).read_bytes()==value for path,value in existing.items())
+ assert not list(store.countries_root.glob('.ABC-*'))
+
+
+@pytest.mark.parametrize('failure', ['errors','exception'])
+def test_country_lifecycle_validation_failure_restores_exact_state(tmp_path,monkeypatch,failure):
+ root=tmp_path/'packages'; shutil.copytree('config/world_packages/official_fax_world',root/'official_fax_world')
+ registry=WorldPackageRegistryService(world_packages_root=root); real_validation=WorldPackageValidationService(registry)
+ assert WorldPackageCloneService(registry,real_validation).clone_official_world(new_world_id='editable',name='Editable',description=None,dry_run=False).ok
+ service=WorldPackageCountriesService(registry,real_validation); store=WorldPackageCountryStore(root/'custom/editable'); before=registry.get_package('editable'); index=store.index_path.read_bytes()
+ def fail(*_):
+  if failure=='exception': raise RuntimeError('validation exploded')
+  return WorldPackageValidationResult('editable','errors',1,0,0,[])
+ with monkeypatch.context() as scoped:
+  scoped.setattr(WorldPackageValidationService,'validate_package',fail)
+  with pytest.raises(WorldPackageMutationError): service.create_country('editable',_country_create(before.fingerprint))
+ assert store.index_path.read_bytes()==index and not (store.countries_root/'ABC').exists() and registry.get_package('editable')
+ created=service.create_country('editable',_country_create(before.fingerprint)); index=store.index_path.read_bytes(); country=store.load_country('ABC')
+ with monkeypatch.context() as scoped:
+  scoped.setattr(WorldPackageValidationService,'validate_package',fail)
+  with pytest.raises(WorldPackageMutationError): service.delete_country('editable','ABC',created.detail.package.fingerprint)
+ assert store.index_path.read_bytes()==index and store.load_country('ABC')==country and registry.get_package('editable')
+ assert not list(store.countries_root.glob('.ABC-*'))

@@ -1711,6 +1711,18 @@ export type WorldPackageCountryUpdateResponse = {
   validation: WorldPackageValidation
 }
 
+export type WorldPackageCountryCreatePayload = Omit<WorldPackageCountryUpdatePayload, 'expected_package_fingerprint'> & {
+  code: string
+  population_by_year: Record<string, number>
+  expected_package_fingerprint: string
+}
+
+export type WorldPackageCountryDeleteResponse = {
+  deleted_country_code: string
+  package: WorldPackage
+  validation: WorldPackageValidation
+}
+
 export type WorldPackageCountryPopulationUpdatePayload = {
   values_by_year: Record<string, number>
   expected_package_fingerprint?: string

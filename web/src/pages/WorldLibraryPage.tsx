@@ -1,10 +1,10 @@
 import type { FormEvent, ReactNode } from 'react'
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
-import { cloneOfficialWorldPackage, getWorldPackage, getWorldPackageCountries, getWorldPackageCountry, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages, updateWorldPackageCountry, updateWorldPackageCountryPopulation } from '../api/client'
-import type { CountryRecord, WorldPackage, WorldPackageCloneResponse, WorldPackageCountryDetail, WorldPackageCountryPopulationUpdatePayload, WorldPackageCountryUpdatePayload, WorldPackageGeography, WorldPackageValidation } from '../api/types'
+import { cloneOfficialWorldPackage, createWorldPackageCountry, deleteWorldPackageCountry, getWorldPackage, getWorldPackageCountries, getWorldPackageCountry, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages, updateWorldPackageCountry, updateWorldPackageCountryPopulation } from '../api/client'
+import type { CountryRecord, WorldPackage, WorldPackageCloneResponse, WorldPackageCountryCreatePayload, WorldPackageCountryDetail, WorldPackageCountryPopulationUpdatePayload, WorldPackageCountryUpdatePayload, WorldPackageGeography, WorldPackageValidation } from '../api/types'
 import { SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -339,7 +339,8 @@ export function WorldPackageCountriesPage(): JSX.Element {
             <DetailRow label="Package mode" value={`${data.type === 'custom' ? 'Custom' : 'Built-in'} · ${data.read_only ? 'Read-only' : 'Editable source'}`} />
           </SectionCard>
           <SectionCard title="Package countries">
-            <p className="status">This inspection screen does not currently provide create, edit, delete, import, or export actions, regardless of source package editability.</p>
+            <p className="status">This inspection screen does not currently provide bulk edit, import, or export actions.</p>
+            {data.type === 'custom' && data.source === 'custom_config' && !data.read_only && <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries/new`}>+ Add country</Link></p>}
             <label>Search by country name or code<input aria-label="Search countries" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
             <p>{visibleCountries.length} {visibleCountries.length === 1 ? 'country' : 'countries'}</p>
             <PackageCountriesTable countries={visibleCountries} worldId={worldId} />
@@ -430,12 +431,45 @@ export function WorldLibraryDetailPage(): JSX.Element {
   )
 }
 
+export function WorldPackageCountryCreatePage(): JSX.Element {
+  const { worldId = '' } = useParams(); const navigate = useNavigate(); const queryClient = useQueryClient()
+  const packageQuery = useQuery({ queryKey: ['world-package', worldId], queryFn: () => getWorldPackage(worldId), retry: false })
+  const geographyQuery = useQuery({ queryKey: ['world-package-geography', worldId], queryFn: () => getWorldPackageGeography(worldId), retry: false })
+  const [identity, setIdentity] = useState({ code: '', name: '', notes: '', area: '' })
+  const [region, setRegion] = useState(''); const [travelRegion, setTravelRegion] = useState('')
+  const [values, setValues] = useState({ wealth_support: '3', squash_popularity: '3', squash_tradition: '3', system_quality: '3', competition_density: '3', federation_quality: '3', court_count: '0' })
+  const [populations, setPopulations] = useState<PopulationRow[]>([{ year: '2020', population: '' }]); const [styleRows, setStyleRows] = useState<StyleRow[]>([])
+  const mutation = useMutation({ mutationFn: (payload: WorldPackageCountryCreatePayload) => createWorldPackageCountry(worldId, payload), onSuccess: async response => {
+    await Promise.all([queryClient.invalidateQueries({ queryKey: ['world-package-countries', worldId] }), queryClient.invalidateQueries({ queryKey: ['world-package', worldId] }), queryClient.invalidateQueries({ queryKey: ['world-package-validation', worldId] }), queryClient.invalidateQueries({ queryKey: ['world-packages'] })])
+    navigate(`/admin/world/library/${encodeURIComponent(worldId)}/countries/${response.country_detail.country.code}`)
+  } })
+  const pkg = packageQuery.data; const allowed = pkg?.type === 'custom' && pkg.source === 'custom_config' && pkg.editable
+  const setNumber = (key: keyof typeof values, value: string) => setValues(current => ({...current, [key]: value}))
+  const submit = (event: FormEvent) => { event.preventDefault(); if (!pkg || !allowed) return
+    mutation.mutate({ code: identity.code, name: identity.name, notes: identity.notes || null, area_km2: identity.area ? Number(identity.area) : null, region, travel_region: travelRegion || null,
+      wealth_support: Number(values.wealth_support), squash_popularity: Number(values.squash_popularity), squash_tradition: Number(values.squash_tradition), system_quality: Number(values.system_quality), competition_density: Number(values.competition_density), federation_quality: Number(values.federation_quality), court_count: values.court_count === '' ? null : Number(values.court_count),
+      style_dna: Object.fromEntries(styleRows.filter(row => row.key.trim()).map(row => [row.key.trim(), Number(row.value)])), population_by_year: Object.fromEntries([...populations].sort((a,b) => Number(a.year)-Number(b.year)).map(row => [row.year, Number(row.population)])), expected_package_fingerprint: pkg.fingerprint }) }
+  if (packageQuery.isLoading || geographyQuery.isLoading) return <p className="status">Loading country form...</p>
+  if (!allowed) return <section className="panel"><p className="error">Countries can only be created in an editable Custom World source.</p></section>
+  return <section className="panel"><p><Link to={`/admin/world/library/${worldId}/countries`}>Back to countries</Link></p><h2>Add country</h2><form onSubmit={submit}>
+    {mutation.error && <p className="error" role="alert">{formatApiError(mutation.error)}</p>}
+    <fieldset><legend>Identity</legend><label>Code<input required pattern="[A-Z]{3}" maxLength={3} value={identity.code} onChange={e => setIdentity({...identity,code:e.target.value})} /></label><label>Name<input required value={identity.name} onChange={e => setIdentity({...identity,name:e.target.value})} /></label><label>Notes<textarea value={identity.notes} onChange={e => setIdentity({...identity,notes:e.target.value})} /></label><label>Area km²<input type="number" min="1" value={identity.area} onChange={e => setIdentity({...identity,area:e.target.value})} /></label></fieldset>
+    <fieldset><legend>Geography</legend><label>Region<select required value={region} onChange={e => setRegion(e.target.value)}><option value="">Select region</option>{geographyQuery.data?.regions.map(item=><option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label><label>Travel Region<select value={travelRegion} onChange={e=>setTravelRegion(e.target.value)}><option value="">None</option>{geographyQuery.data?.travel_regions.map(item=><option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label></fieldset>
+    <fieldset><legend>Population</legend>{populations.sort((a,b)=>Number(a.year)-Number(b.year)).map((row,index)=><div key={index}><input aria-label={`Population year ${index+1}`} type="number" min="1955" max="2050" required readOnly={row.year==='2020'} value={row.year} onChange={e=>setPopulations(rows=>rows.map((r,i)=>i===index?{...r,year:e.target.value}:r))}/><input aria-label={`Population value ${row.year}`} type="number" min="1" required value={row.population} onChange={e=>setPopulations(rows=>rows.map((r,i)=>i===index?{...r,population:e.target.value}:r))}/>{row.year!=='2020'&&<button type="button" onClick={()=>setPopulations(rows=>rows.filter((_,i)=>i!==index))}>Remove</button>}</div>)}<button type="button" onClick={()=>setPopulations(rows=>[...rows,{year:'',population:''}])}>+ Add authored year</button></fieldset>
+    <fieldset><legend>Squash / Country strength</legend>{Object.entries(values).map(([key,value])=><label key={key}>{key.split('_').join(' ')}<input type="number" required min={key==='court_count'?0:1} max={key==='court_count'?undefined:5} step={key.includes('density')||key.includes('quality')?0.1:1} value={value} onChange={e=>setNumber(key as keyof typeof values,e.target.value)}/></label>)}</fieldset>
+    <fieldset><legend>Style DNA</legend>{styleRows.map((row,index)=><div key={row.id}><input aria-label={`Style DNA key ${index+1}`} value={row.key} onChange={e=>setStyleRows(rows=>rows.map(r=>r.id===row.id?{...r,key:e.target.value}:r))}/><input aria-label={`Style DNA value ${index+1}`} type="number" step="any" value={row.value} onChange={e=>setStyleRows(rows=>rows.map(r=>r.id===row.id?{...r,value:e.target.value}:r))}/><button type="button" onClick={()=>setStyleRows(rows=>rows.filter(r=>r.id!==row.id))}>Remove</button></div>)}<button type="button" onClick={()=>setStyleRows(rows=>[...rows,{id:Math.max(-1,...rows.map(r=>r.id))+1,key:'',value:'0'}])}>Add Style DNA entry</button></fieldset>
+    <button type="submit" disabled={mutation.isPending}>{mutation.isPending?'Saving…':'Save country'}</button>
+  </form></section>
+}
+
 export function WorldPackageCountryDetailPage(): JSX.Element {
   const { worldId = '', countryCode = '' } = useParams()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
   const [populationEditing, setPopulationEditing] = useState(false)
   const [success, setSuccess] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const query = useQuery({ queryKey: ['world-package-country', worldId, countryCode], queryFn: () => getWorldPackageCountry(worldId, countryCode), enabled: Boolean(worldId && countryCode), retry: false })
   const geographyQuery = useQuery({ queryKey: ['world-package-geography', worldId], queryFn: () => getWorldPackageGeography(worldId), enabled: Boolean(worldId), retry: false })
   const mutation = useMutation({
@@ -463,6 +497,17 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
       ])
     }
   })
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteWorldPackageCountry(worldId, countryCode, data!.package.fingerprint),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['world-package-country', worldId, countryCode] }),
+        queryClient.invalidateQueries({ queryKey: ['world-package-countries', worldId] }), queryClient.invalidateQueries({ queryKey: ['world-package', worldId] }),
+        queryClient.invalidateQueries({ queryKey: ['world-package-validation', worldId] }), queryClient.invalidateQueries({ queryKey: ['world-packages'] })
+      ])
+      navigate(`/admin/world/library/${encodeURIComponent(worldId)}/countries`)
+    }
+  })
   const data = query.data
   const canEdit = data?.package.type === 'custom' && data.package.source === 'custom_config' && data.package.editable
   const timeline = Object.entries(data?.country.population_by_year ?? {}).filter(([, value]) => value != null).sort(([a], [b]) => Number(a) - Number(b))
@@ -475,6 +520,8 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
       <div className="page-intro"><h2>{data.country.name}</h2><p className="subtitle"><code>{data.country.code}</code></p></div>
       <p><strong>{data.package.name} · {data.package.type === 'custom' ? 'Custom' : 'Built-in'} · {canEdit ? 'Editable source' : 'Read-only'}</strong></p>
       {canEdit && !editing && !populationEditing && <button type="button" onClick={() => { setEditing(true); setSuccess(''); mutation.reset() }}>Edit country</button>}
+      {canEdit && !editing && !populationEditing && <button type="button" onClick={() => { setConfirmDelete(true); deleteMutation.reset() }}>Delete country</button>}
+      {confirmDelete && <SectionCard title={`Delete ${data.country.code} — ${data.country.name}?`}><p>This removes the Country from this Custom World source.<br />Existing Runs are not changed.</p>{deleteMutation.error && <p className="error" role="alert">{formatApiError(deleteMutation.error)}</p>}<button type="button" disabled={deleteMutation.isPending} onClick={() => deleteMutation.mutate()}>Delete country</button> <button type="button" disabled={deleteMutation.isPending} onClick={() => setConfirmDelete(false)}>Cancel</button></SectionCard>}
       {success && <p className="status" role="status">{success}</p>}
       {editing && <CountryEditForm detail={data} geography={geographyQuery.data} saving={mutation.isPending} error={mutation.error} onCancel={() => { setEditing(false); mutation.reset() }} onSave={(payload) => mutation.mutate(payload)} />}
       {!editing && <SectionCard title="Overview">

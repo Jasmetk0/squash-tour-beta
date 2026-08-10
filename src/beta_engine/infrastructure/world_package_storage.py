@@ -175,6 +175,81 @@ class WorldPackageCountryStore:
         for name in ATTRIBUTE_NAMES:
             _write_json_atomic(root / "attributes" / f"{name}.json", {"schema_version": COUNTRY_ATTRIBUTE_SCHEMA, "value": dumped.get(name)})
 
+    def create_country(self, country: Country) -> bytes:
+        """Create one country and update the index, returning exact old index bytes."""
+        index = self.load_index()
+        live = self.countries_root / country.code
+        if country.code in index.country_codes or live.exists():
+            raise FileExistsError(f"country {country.code!r} already exists")
+        original = self.index_path.read_bytes()
+        stage = Path(tempfile.mkdtemp(prefix=f".{country.code}-create-", dir=self.countries_root))
+        staged = WorldPackageCountryStore(stage)
+        promoted = False
+        try:
+            staged.countries_root.mkdir()
+            staged.write_country(country)
+            if staged.load_country(country.code) != country:
+                raise ValueError(f"staged country {country.code} did not round-trip")
+            staged.countries_root.joinpath(country.code).rename(live)
+            promoted = True
+            _write_json_atomic(self.index_path, {
+                "schema_version": index.schema_version, "dataset_status": index.dataset_status,
+                "country_codes": sorted([*index.country_codes, country.code]),
+            })
+            self.load_config()
+            return original
+        except Exception:
+            if promoted:
+                shutil.rmtree(live, ignore_errors=True)
+            self._restore_index(original)
+            raise
+        finally:
+            shutil.rmtree(stage, ignore_errors=True)
+
+    def rollback_create(self, code: str, original_index: bytes) -> None:
+        shutil.rmtree(self.countries_root / code, ignore_errors=True)
+        self._restore_index(original_index)
+
+    def delete_country(self, code: str) -> tuple[bytes, Path]:
+        """Stage deletion of one country. Caller must finalize or roll it back."""
+        index = self.load_index()
+        live = self.countries_root / code
+        if code not in index.country_codes or not live.is_dir():
+            raise FileNotFoundError(f"country {code!r} does not exist")
+        original = self.index_path.read_bytes()
+        backup = self.countries_root / f".{code}-delete-backup"
+        if backup.exists():
+            shutil.rmtree(backup)
+        live.rename(backup)
+        try:
+            _write_json_atomic(self.index_path, {
+                "schema_version": index.schema_version, "dataset_status": index.dataset_status,
+                "country_codes": [item for item in index.country_codes if item != code],
+            })
+            self.load_config()
+            return original, backup
+        except Exception:
+            self._restore_index(original)
+            if backup.exists() and not live.exists():
+                backup.rename(live)
+            raise
+
+    def rollback_delete(self, code: str, original_index: bytes, backup: Path) -> None:
+        self._restore_index(original_index)
+        live = self.countries_root / code
+        if backup.exists() and not live.exists():
+            backup.rename(live)
+
+    @staticmethod
+    def finalize_delete(backup: Path) -> None:
+        shutil.rmtree(backup)
+
+    def _restore_index(self, original: bytes) -> None:
+        with tempfile.NamedTemporaryFile("wb", dir=self.index_path.parent, prefix=".index.json.", delete=False) as fh:
+            fh.write(original)
+            temporary = Path(fh.name)
+        temporary.replace(self.index_path)
+
     def replace_country(self, country: Country) -> None:
         """Atomically replace one indexed country, restoring the live copy on failure."""
         if country.code not in self.load_index().country_codes:

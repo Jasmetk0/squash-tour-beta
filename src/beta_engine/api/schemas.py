@@ -585,6 +585,37 @@ class WorldPackageCountryPopulationUpdateRequest(BaseModel):
         return value
 
 
+class WorldPackageCountryCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    code: str = Field(pattern=r"^[A-Z]{3}$")
+    name: str = Field(min_length=1)
+    notes: str | None = None
+    area_km2: int | None = Field(gt=0)
+    region: str = Field(min_length=1)
+    travel_region: str | None = None
+    wealth_support: int = Field(ge=1, le=5)
+    squash_popularity: int = Field(ge=1, le=5)
+    squash_tradition: int = Field(ge=1, le=5)
+    system_quality: int = Field(ge=1, le=5)
+    competition_density: float = Field(ge=1.0, le=5.0)
+    federation_quality: float = Field(ge=1.0, le=5.0)
+    court_count: int | None = Field(ge=0)
+    style_dna: dict[str, float]
+    population_by_year: dict[int, StrictInt]
+    expected_package_fingerprint: str
+
+    @field_validator("population_by_year")
+    @classmethod
+    def validate_population(cls, value: dict[int, int]) -> dict[int, int]:
+        if 2020 not in value:
+            raise ValueError("population_by_year must contain default year 2020")
+        if any(year < 1955 or year > 2050 for year in value):
+            raise ValueError("population years must be between 1955 and 2050")
+        if any(isinstance(population, bool) or population <= 0 for population in value.values()):
+            raise ValueError("population values must be positive integers")
+        return value
+
+
 class WeeklyIntakeCountryAllocationResponse(BaseModel):
     country_code: str
     allocated_count: int
@@ -676,6 +707,12 @@ class WorldPackageValidationResponse(BaseModel):
 
 class WorldPackageCountryUpdateResponse(BaseModel):
     country_detail: WorldPackageCountryDetailResponse
+    package: WorldPackageSummaryResponse
+    validation: WorldPackageValidationResponse
+
+
+class WorldPackageCountryDeleteResponse(BaseModel):
+    deleted_country_code: str
     package: WorldPackageSummaryResponse
     validation: WorldPackageValidationResponse
 

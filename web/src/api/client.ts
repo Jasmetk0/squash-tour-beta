@@ -113,6 +113,8 @@ import type {
   WorldPackageCountriesResponse,
   WorldPackageCountryDetail,
   WorldPackageCountryUpdatePayload,
+  WorldPackageCountryCreatePayload,
+  WorldPackageCountryDeleteResponse,
   WorldPackageCountryUpdateResponse,
   WorldPackageCountryPopulationUpdatePayload,
   WorldPackageGeography,
@@ -763,6 +765,15 @@ export function updateWorldPackageCountryPopulation(worldId: string, countryCode
   return request(`/world/packages/${encodeURIComponent(worldId)}/countries/${encodeURIComponent(countryCode)}/population`, {
     method: 'PUT', body: JSON.stringify(payload)
   })
+}
+
+export function createWorldPackageCountry(worldId: string, payload: WorldPackageCountryCreatePayload): Promise<WorldPackageCountryUpdateResponse> {
+  return request(`/world/packages/${encodeURIComponent(worldId)}/countries`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function deleteWorldPackageCountry(worldId: string, countryCode: string, fingerprint: string): Promise<WorldPackageCountryDeleteResponse> {
+  const query = new URLSearchParams({ expected_package_fingerprint: fingerprint })
+  return request(`/world/packages/${encodeURIComponent(worldId)}/countries/${encodeURIComponent(countryCode)}?${query}`, { method: 'DELETE' })
 }
 
 

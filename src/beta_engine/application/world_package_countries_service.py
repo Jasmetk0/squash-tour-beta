@@ -171,19 +171,27 @@ class WorldPackageCountriesService:
         code = country_code.upper()
         if code not in store.load_index().country_codes:
             raise WorldPackageMutationError(f"country '{code}' not found in world package '{world_id}'", 404)
+        original: bytes | None = None
         try:
             original = store.replace_population(code, update.values_by_year)
             assert self.validation_service is not None
             validation = self.validation_service.validate_package(world_id)
             if validation is None or validation.status == "errors":
                 store.restore_population(code, original)
+                original = None
                 raise WorldPackageMutationError("population edit would leave the World Package invalid")
+            detail = self.get_country(world_id, code)
+            if detail is None:
+                raise RuntimeError("updated country detail could not be reconstructed")
         except WorldPackageMutationError:
             raise
         except Exception as exc:
+            if original is not None:
+                try:
+                    store.restore_population(code, original)
+                except Exception:
+                    pass
             raise WorldPackageMutationError(f"population edit failed: {exc}") from exc
-        detail = self.get_country(world_id, code)
-        assert detail is not None
         return WorldPackageCountryUpdateResult(detail=detail, validation=validation)
 
     def get_countries(self, world_id: str) -> WorldPackageCountriesResult | None:

@@ -209,3 +209,21 @@ def test_population_atomic_promotion_failure_preserves_every_file_and_cleans_tem
  assert store.load_country('AAA').population==1_234_567
  assert {path.relative_to(store.package_root):path.read_bytes() for path in store.package_root.rglob('*.json')}==before
  assert not list((store.countries_root/'AAA/attributes').glob('.population.json.*'))
+
+
+def test_population_validation_exception_restores_exact_original_and_package_readability(tmp_path,monkeypatch):
+ root=tmp_path/'packages'; shutil.copytree('config/world_packages/official_fax_world',root/'official_fax_world')
+ registry=WorldPackageRegistryService(world_packages_root=root); validation=WorldPackageValidationService(registry)
+ assert WorldPackageCloneService(registry,validation).clone_official_world(new_world_id='editable',name='Editable',description=None,dry_run=False).ok
+ store=WorldPackageCountryStore(root/'custom/editable'); country=store.load_country('GER')
+ population_path=store.countries_root/'GER/attributes/population.json'
+ original_population=population_path.read_bytes()
+ unrelated={path.relative_to(store.package_root):path.read_bytes() for path in store.package_root.rglob('*.json') if path != population_path}
+ monkeypatch.setattr(WorldPackageValidationService,'validate_package',lambda self,_world_id: (_ for _ in ()).throw(RuntimeError('validation exploded')))
+ with pytest.raises(WorldPackageMutationError,match='validation exploded'):
+  WorldPackageCountriesService(registry,validation).update_population('editable','GER',WorldPackageCountryPopulationUpdate(values_by_year={2020:country.population+1}))
+ assert population_path.read_bytes()==original_population
+ assert store.load_country('GER')==country
+ assert registry.get_package('editable') is not None
+ assert {path.relative_to(store.package_root):path.read_bytes() for path in store.package_root.rglob('*.json') if path != population_path}==unrelated
+ assert not list(population_path.parent.glob('.population.json.*'))

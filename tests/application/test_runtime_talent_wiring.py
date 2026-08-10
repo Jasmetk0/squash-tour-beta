@@ -106,8 +106,10 @@ def test_stronger_country_produces_better_top_end_runtime_players(tmp_path) -> N
     strong_players = sorted([player for player in players if player.nationality == "STR"], key=_overall, reverse=True)
     weak_players = sorted([player for player in players if player.nationality == "WEK"], key=_overall, reverse=True)
 
+    # Country V1 improves the environment in which talent is realised, but does
+    # not increase innate potential-ceiling odds. The separate planner tests
+    # assert that innate quality-band probabilities remain country-neutral.
     assert _overall(strong_players[0]) > _overall(weak_players[0]) + 6.0
-    assert strong_players[0].hidden_career_traits.potential_ceiling > weak_players[0].hidden_career_traits.potential_ceiling
 
 
 def test_population_affects_volume_without_absurd_domination_in_runtime(tmp_path) -> None:

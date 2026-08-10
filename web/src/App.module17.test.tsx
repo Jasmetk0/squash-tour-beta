@@ -33,6 +33,8 @@ const api = vi.hoisted(() => ({
   getWorldPackageCountry: vi.fn(),
   updateWorldPackageCountry: vi.fn(),
   updateWorldPackageCountryPopulation: vi.fn(),
+  createWorldPackageCountry: vi.fn(),
+  deleteWorldPackageCountry: vi.fn(),
   getWorldPackageGeography: vi.fn(),
   cloneOfficialWorldPackage: vi.fn(),
   getLatestRollover: vi.fn(),
@@ -3199,6 +3201,56 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Custom · Editable source')).toBeInTheDocument()
     expect(screen.getByText(/inspection screen does not currently provide/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /create|edit|delete|import|export/i })).not.toBeInTheDocument()
+  })
+
+  it('guards Add country by package identity and links editable Custom sources', async () => {
+    renderAppAt('/admin/world/library/official_fax_world/countries')
+    expect(await screen.findByText('Official FAX World')).toBeInTheDocument(); expect(screen.queryByRole('link',{name:/Add country/})).not.toBeInTheDocument()
+    api.getWorldPackageCountries.mockResolvedValueOnce({world_id:'my_custom_world',world_name:'Custom',type:'custom',source:'custom_config',read_only:false,country_count:0,source_path:'index.json',countries:[]})
+    renderAppAt('/admin/world/library/my_custom_world/countries')
+    expect(await screen.findByRole('link',{name:/Add country/})).toHaveAttribute('href','/admin/world/library/my_custom_world/countries/new')
+  })
+
+  it('hard guards the create route when built-in metadata accidentally says editable', async () => {
+    api.getWorldPackage.mockResolvedValueOnce({...editableCountryDetail().package,world_id:'real_world',type:'official',source:'built_in',editable:true})
+    renderAppAt('/admin/world/library/real_world/countries/new')
+    expect(await screen.findByText(/only be created in an editable Custom World source/)).toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Save country'})).not.toBeInTheDocument()
+  })
+
+  it('renders package geography, fixed 2020 population, and rejects duplicate create years', async () => {
+    api.getWorldPackage.mockResolvedValueOnce(editableCountryDetail().package)
+    api.getWorldPackageGeography.mockResolvedValueOnce({world_id:'my_custom_world',continents:[],regions:[{code:'EUROPE',name:'Europe',continent_code:null},{code:'ASIA',name:'Asia',continent_code:null}],travel_regions:[{code:'EUROPE',name:'Europe',description:null}]})
+    renderAppAt('/admin/world/library/my_custom_world/countries/new')
+    expect(await screen.findByRole('heading',{name:'Add country'})).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Region')).getByRole('option',{name:'Asia (ASIA)'})).toBeInTheDocument()
+    expect(screen.getByLabelText('Population year 2020')).toHaveValue(2020); expect(screen.getByLabelText('Population year 2020')).toHaveAttribute('readonly')
+    expect(screen.queryByRole('button',{name:/Remove 2020/})).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Code'),{target:{value:'ABC'}}); fireEvent.change(screen.getByLabelText('Name'),{target:{value:'Alphabetia'}}); fireEvent.change(screen.getByLabelText('Region'),{target:{value:'EUROPE'}}); fireEvent.change(screen.getByLabelText('Population value 2020'),{target:{value:'1200000'}})
+    fireEvent.click(screen.getByRole('button',{name:'+ Add authored year'})); fireEvent.change(screen.getByLabelText('Population year 1'),{target:{value:'1995'}}); fireEvent.change(screen.getByLabelText('Population value 1995'),{target:{value:'900000'}})
+    fireEvent.click(screen.getByRole('button',{name:'+ Add authored year'})); fireEvent.change(screen.getByLabelText('Population year 2'),{target:{value:'1995'}}); fireEvent.change(screen.getAllByLabelText('Population value 1995')[1],{target:{value:'800000'}}); fireEvent.click(screen.getByRole('button',{name:'Save country'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Year 1995 is already authored.'); expect(api.createWorldPackageCountry).not.toHaveBeenCalled()
+  })
+
+  it('submits the canonical create payload, retains backend errors, and navigates after success', async () => {
+    const pkg=editableCountryDetail().package; api.getWorldPackage.mockResolvedValue(pkg); api.getWorldPackageGeography.mockResolvedValue({world_id:'my_custom_world',continents:[],regions:[{code:'EUROPE',name:'Europe',continent_code:null}],travel_regions:[{code:'EUROPE',name:'Europe',description:null}]})
+    api.createWorldPackageCountry.mockRejectedValueOnce(new api.ApiError(JSON.stringify({detail:'duplicate country'}),409))
+    const queryClient=renderAppAt('/admin/world/library/my_custom_world/countries/new'); const invalidate=vi.spyOn(queryClient,'invalidateQueries'); await screen.findByRole('heading',{name:'Add country'})
+    fireEvent.change(screen.getByLabelText('Code'),{target:{value:'ABC'}}); fireEvent.change(screen.getByLabelText('Name'),{target:{value:'Alphabetia'}}); fireEvent.change(screen.getByLabelText('Region'),{target:{value:'EUROPE'}}); fireEvent.change(screen.getByLabelText('Population value 2020'),{target:{value:'1200000'}}); fireEvent.click(screen.getByRole('button',{name:'Save country'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('duplicate country'); expect(screen.getByLabelText('Name')).toHaveValue('Alphabetia')
+    const payload=api.createWorldPackageCountry.mock.calls[0][1]; expect(payload).toMatchObject({code:'ABC',name:'Alphabetia',region:'EUROPE',population_by_year:{'2020':1200000},expected_package_fingerprint:'fingerprint-before'})
+    for(const field of ['population','default_population','default_population_year','flag_asset']) expect(payload).not.toHaveProperty(field)
+    const created={...editableCountryDetail(),country:{...editableCountryDetail().country,code:'ABC',name:'Alphabetia'}}; api.createWorldPackageCountry.mockResolvedValueOnce({country_detail:created,package:{...pkg,fingerprint:'after'},validation:{world_id:'my_custom_world',status:'valid',error_count:0,warning_count:0,info_count:1,checks:[]}}); api.getWorldPackageCountry.mockResolvedValue(created)
+    fireEvent.click(screen.getByRole('button',{name:'Save country'})); expect(await screen.findByRole('heading',{name:'Alphabetia'})).toBeInTheDocument(); for(const key of [['world-package-countries','my_custom_world'],['world-package','my_custom_world'],['world-package-validation','my_custom_world'],['world-packages']]) expect(invalidate).toHaveBeenCalledWith({queryKey:key})
+  })
+
+  it('requires delete confirmation, preserves stale errors, and navigates only on success', async () => {
+    api.getWorldPackageCountry.mockResolvedValue(editableCountryDetail()); api.deleteWorldPackageCountry.mockRejectedValueOnce(new api.ApiError(JSON.stringify({detail:'stale source; reload first'}),409))
+    const queryClient=renderAppAt('/admin/world/library/my_custom_world/countries/GER'); const invalidate=vi.spyOn(queryClient,'invalidateQueries'); fireEvent.click(await screen.findByRole('button',{name:'Delete country'})); expect(api.deleteWorldPackageCountry).not.toHaveBeenCalled(); fireEvent.click(screen.getByRole('button',{name:'Cancel'})); expect(api.deleteWorldPackageCountry).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button',{name:'Delete country'})); fireEvent.click(within(screen.getByRole('heading',{name:/Delete GER/}).parentElement!).getByRole('button',{name:'Delete country'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('stale source; reload first'); expect(api.deleteWorldPackageCountry).toHaveBeenCalledWith('my_custom_world','GER','fingerprint-before'); expect(screen.getByRole('heading',{name:'Germanica'})).toBeInTheDocument()
+    api.deleteWorldPackageCountry.mockResolvedValueOnce({deleted_country_code:'GER',package:{...editableCountryDetail().package,fingerprint:'after'},validation:{world_id:'my_custom_world',status:'valid',error_count:0,warning_count:0,info_count:1,checks:[]}}); api.getWorldPackageCountries.mockResolvedValue({world_id:'my_custom_world',world_name:'Custom',type:'custom',source:'custom_config',read_only:false,country_count:0,source_path:'index.json',countries:[]})
+    fireEvent.click(within(screen.getByRole('heading',{name:/Delete GER/}).parentElement!).getByRole('button',{name:'Delete country'})); expect(await screen.findByRole('heading',{name:'World Package Countries'})).toBeInTheDocument(); for(const key of [['world-package-country','my_custom_world','GER'],['world-package-countries','my_custom_world'],['world-package','my_custom_world'],['world-package-validation','my_custom_world'],['world-packages']]) expect(invalidate).toHaveBeenCalledWith({queryKey:key})
   })
 
   it('handles World Package countries API errors', async () => {

@@ -217,9 +217,8 @@ class WorldPackageCountryStore:
         if code not in index.country_codes or not live.is_dir():
             raise FileNotFoundError(f"country {code!r} does not exist")
         original = self.index_path.read_bytes()
-        backup = self.countries_root / f".{code}-delete-backup"
-        if backup.exists():
-            shutil.rmtree(backup)
+        backup = Path(tempfile.mkdtemp(prefix=f".{code}-delete-backup-", dir=self.countries_root))
+        backup.rmdir()
         live.rename(backup)
         try:
             _write_json_atomic(self.index_path, {
@@ -248,7 +247,10 @@ class WorldPackageCountryStore:
         with tempfile.NamedTemporaryFile("wb", dir=self.index_path.parent, prefix=".index.json.", delete=False) as fh:
             fh.write(original)
             temporary = Path(fh.name)
-        temporary.replace(self.index_path)
+        try:
+            temporary.replace(self.index_path)
+        finally:
+            temporary.unlink(missing_ok=True)
 
     def replace_country(self, country: Country) -> None:
         """Atomically replace one indexed country, restoring the live copy on failure."""

@@ -215,12 +215,18 @@ class WorldPackageCountriesService:
             package = self.registry_service.get_package(world_id)
             if package is None:
                 raise RuntimeError("updated package could not be reconstructed")
-            store.finalize_delete(mutation[1])
-            return WorldPackageCountryDeleteResult(code, package, validation)
         except Exception as exc:
             if mutation is not None:
                 store.rollback_delete(code, *mutation)
             raise WorldPackageMutationError(f"country deletion failed: {exc}") from exc
+        # Validation and reconstruction are the semantic commit point. Backup
+        # disposal is cleanup only: a partial cleanup must never trigger an
+        # impossible rollback from a partially destroyed Country directory.
+        try:
+            store.finalize_delete(mutation[1])
+        except OSError:
+            pass
+        return WorldPackageCountryDeleteResult(code, package, validation)
 
     def update_country(self, world_id: str, country_code: str, update: WorldPackageCountryUpdate) -> WorldPackageCountryUpdateResult:
         package = self.registry_service.get_package(world_id)

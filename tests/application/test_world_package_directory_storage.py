@@ -270,3 +270,79 @@ def test_country_lifecycle_validation_failure_restores_exact_state(tmp_path,monk
   with pytest.raises(WorldPackageMutationError): service.delete_country('editable','ABC',created.detail.package.fingerprint)
  assert store.index_path.read_bytes()==index and store.load_country('ABC')==country and registry.get_package('editable')
  assert not list(store.countries_root.glob('.ABC-*'))
+
+
+def _lifecycle_store(tmp_path):
+ store=WorldPackageCountryStore(tmp_path/'world'); abc=_scalar_country(name='Alphabetia').model_copy(update={'code':'ABC'})
+ store.replace_dataset(CountriesConfig(dataset_status='test',countries=[_scalar_country(),abc])); return store,store.load_country('ABC')
+
+def _canonical_lifecycle_country(code='ABC'):
+ country=_scalar_country(name='Alphabetia').model_copy(update={'code':code})
+ return country.model_copy(update={'default_population_year':2020,'default_population':country.population,'population_by_year':{2020:country.population}})
+
+
+def test_create_country_directory_promotion_failure_restores_everything(tmp_path,monkeypatch):
+ store=WorldPackageCountryStore(tmp_path/'world'); store.replace_dataset(CountriesConfig(dataset_status='test',countries=[_scalar_country()]))
+ index=store.index_path.read_bytes(); existing={p.relative_to(store.package_root):p.read_bytes() for p in store.package_root.rglob('*.json')}
+ country=_canonical_lifecycle_country(); original=Path.rename
+ def fail(path,target):
+  if path.name=='ABC' and '-create-' in str(path.parent): raise OSError('country promotion failed')
+  return original(path,target)
+ monkeypatch.setattr(Path,'rename',fail)
+ with pytest.raises(OSError,match='country promotion failed'): store.create_country(country)
+ assert store.index_path.read_bytes()==index and not (store.countries_root/'ABC').exists()
+ assert {p.relative_to(store.package_root):p.read_bytes() for p in store.package_root.rglob('*.json')}==existing
+ assert not list(store.countries_root.glob('.ABC-create-*'))
+
+
+def test_create_country_index_promotion_failure_rolls_back(tmp_path,monkeypatch):
+ store=WorldPackageCountryStore(tmp_path/'world'); store.replace_dataset(CountriesConfig(dataset_status='test',countries=[_scalar_country()])); index=store.index_path.read_bytes(); country=_canonical_lifecycle_country()
+ original=Path.replace; failed=False
+ def fail_once(path,target):
+  nonlocal failed
+  if not failed and path.name.startswith('.index.json.'):
+   failed=True; raise OSError('index promotion failed')
+  return original(path,target)
+ monkeypatch.setattr(Path,'replace',fail_once)
+ with pytest.raises(OSError,match='index promotion failed'): store.create_country(country)
+ assert store.index_path.read_bytes()==index and not (store.countries_root/'ABC').exists()
+ assert not list(store.countries_root.glob('.ABC-create-*')) and not list(store.countries_root.glob('.index.json.*'))
+ assert store.load_config().countries
+
+
+def test_delete_country_index_promotion_failure_restores_country(tmp_path,monkeypatch):
+ store,abc=_lifecycle_store(tmp_path); index=store.index_path.read_bytes(); original=Path.replace; failed=False
+ def fail_once(path,target):
+  nonlocal failed
+  if not failed and path.name.startswith('.index.json.'):
+   failed=True; raise OSError('delete index promotion failed')
+  return original(path,target)
+ monkeypatch.setattr(Path,'replace',fail_once)
+ with pytest.raises(OSError,match='delete index promotion failed'): store.delete_country('ABC')
+ assert store.index_path.read_bytes()==index and store.load_country('ABC')==abc
+ assert not list(store.countries_root.glob('.ABC-delete-backup-*')) and not list(store.countries_root.glob('.index.json.*'))
+ assert store.load_config().countries
+
+
+def test_restore_index_failed_promotion_cleans_temporary_file(tmp_path,monkeypatch):
+ store,_=_lifecycle_store(tmp_path); original=Path.replace
+ def fail(path,target):
+  if path.name.startswith('.index.json.'): raise OSError('restore promotion failed')
+  return original(path,target)
+ monkeypatch.setattr(Path,'replace',fail)
+ with pytest.raises(OSError,match='restore promotion failed'): store._restore_index(store.index_path.read_bytes())
+ assert not list(store.countries_root.glob('.index.json.*'))
+
+
+def test_delete_cleanup_failure_happens_after_semantic_commit(tmp_path,monkeypatch):
+ root=tmp_path/'packages'; shutil.copytree('config/world_packages/official_fax_world',root/'official_fax_world')
+ registry=WorldPackageRegistryService(world_packages_root=root); validation=WorldPackageValidationService(registry)
+ assert WorldPackageCloneService(registry,validation).clone_official_world(new_world_id='editable',name='Editable',description=None,dry_run=False).ok
+ service=WorldPackageCountriesService(registry,validation); store=WorldPackageCountryStore(root/'custom/editable'); before=registry.get_package('editable')
+ created=service.create_country('editable',_country_create(before.fingerprint))
+ def partial_cleanup(backup):
+  (backup/'country.json').unlink(); raise OSError('cleanup interrupted')
+ monkeypatch.setattr(WorldPackageCountryStore,'finalize_delete',staticmethod(partial_cleanup))
+ result=service.delete_country('editable','ABC',created.detail.package.fingerprint)
+ assert result.deleted_country_code=='ABC' and 'ABC' not in store.load_index().country_codes
+ assert not (store.countries_root/'ABC').exists() and store.load_config().countries

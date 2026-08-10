@@ -7,13 +7,13 @@ This document is **implementation/migration guidance**, not a second product con
 The current product-level source of truth is:
 
 - `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`
-- synchronized from **Squash Engine Master Vision v42** (updated 10 Aug 2026)
+- synchronized through **Squash Engine Master Vision v42** (updated 10 Aug 2026) and preserving newer explicit post-v42 decisions recorded in the constitution
 
-If this guide, older beta code, `Beta_Engine.docx`, an old handoff or an older UX proposal conflicts with the current constitution/Master, the current constitution/Master wins.
+If this guide, older beta code, `Beta_Engine.docx`, an old handoff or an older UX proposal conflicts with the current constitution/Master/newer explicit decision, the higher-authority source wins.
 
 Repository overview/operating documents (`README.md`, `ROADMAP.md`, `AGENTS.md`) summarize that canon; they do not outrank it or turn a target into implemented behavior.
 
-**Important:** planned target behavior must never be described as already implemented unless verified in the repository.
+**Important:** planned target behavior must never be described as already implemented unless verified in the repository. Omission from a shorter summary is not evidence that an older still-valid decision was superseded.
 
 ---
 
@@ -144,7 +144,8 @@ Admin player UX ultimately needs to cover:
 - physical profile,
 - form,
 - fatigue/health,
-- the three stamina systems,
+- three physical stamina match dimensions/bars,
+- provisional mental match-state dimension(s),
 - status/lifecycle,
 - style/gameplan,
 - individual player-AI decisions,
@@ -152,7 +153,17 @@ Admin player UX ultimately needs to cover:
 
 Viewer exposes public/historical layers and must not leak authoritative hidden health/potential/AI knowledge.
 
-## 6.1 Form UX
+## 6.1 Attributes, physical bars and mental state
+
+Current post-v42 V1 direction deliberately keeps the attribute model relatively lightweight and extensible.
+
+The three physical stamina bars/dimensions used during a match should **derive from underlying attributes/state** rather than be represented as three independent standalone trainable attributes. Their exact derivation remains open.
+
+One or more mental match-state bars/dimensions are desired only as a **provisional direction**. Do not freeze their number, names or mechanics without a later explicit decision.
+
+UX should distinguish long-term player attributes from derived/current match-state bars.
+
+## 6.2 Form UX
 
 Form is one current player state, not a collection of disconnected tournament forms.
 
@@ -160,12 +171,13 @@ Admin should distinguish:
 
 - current Form,
 - long-term attributes,
-- stamina capacity/current stamina,
+- physical stamina capacity/current state,
+- mental match-state direction when implemented,
 - health/fatigue.
 
 Do not visually imply Form resets between tournaments or weeks.
 
-Exact numeric scale/visualization remains open unless implementation has an explicit temporary contract.
+Exact numeric scales/visualizations remain open unless implementation has an explicit temporary contract.
 
 ---
 
@@ -271,9 +283,10 @@ Useful authoritative per-rally data includes:
 - official decision,
 - duration,
 - estimated shot count,
-- stamina state/context where appropriate for Admin.
+- physical stamina state/context where appropriate for Admin,
+- future mental-state context only when its provisional mechanics have been explicitly implemented.
 
-Viewer should surface public match progress/statistics without automatically exposing hidden player-AI or internal physical truth.
+Viewer should surface public match progress/statistics without automatically exposing hidden player-AI or internal physical/mental truth.
 
 ## 9.1 Interference and timing
 
@@ -438,6 +451,8 @@ Tournament Prestige is provisional; Tournament Appeal is even weaker. UX must no
 12. Simultaneous slot events must not become order-dependent because of UI interaction order.
 13. Reconstruction candidate generation must remain non-mutating until explicit commit.
 14. Historical Viewer/AI surfaces must respect `announcement_week` and public World Events.
+15. Do not treat the three physical stamina bars as independent trainable attributes unless a newer product decision explicitly changes the current direction.
+16. Do not freeze mental-bar count/names/mechanics from an illustrative screen or placeholder implementation.
 
 ---
 
@@ -472,7 +487,9 @@ Tournament Prestige is provisional; Tournament Appeal is even weaker. UX must no
 ### P1/P2 — Match Engine v1
 
 - Move toward authoritative rally-by-rally timeline/logging.
-- Add stamina/form/timing visibility appropriate to Admin vs Viewer.
+- Add the three derived physical stamina bars with appropriate Admin vs Viewer visibility once their attribute mapping is specified.
+- Keep mental match-state UI provisional until mechanics are explicitly decided.
+- Add Form/timing visibility appropriate to Admin vs Viewer.
 - Add simplified interference/timing workflows without advanced referee systems.
 
 ### P1/P2 — Match Reconstruction
@@ -500,6 +517,8 @@ Do not silently finalize:
 - branch lock/concurrency UX,
 - exact Simulation Slot taxonomy/count,
 - complete Entry Freeze/cut-off UI,
+- final attribute catalogue and physical-stamina derivation,
+- number/names/mechanics of mental match-state bars,
 - detailed Form/health/stamina numeric visualization,
 - advanced referee/review/court-condition UX,
 - Forecast/Future Lock final UI and lifecycle,

@@ -1,14 +1,18 @@
 from __future__ import annotations
+from tests.support.world_packages import load_fax_reference_countries
 
 import json
 from pathlib import Path
 
 from beta_engine.application.api_services import SimulationApiService
-from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
+from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
+from beta_engine.domain.countries import CountriesConfig
 from beta_engine.infrastructure.db import DatabaseSettings, create_session_factory, create_sqlite_engine
 from beta_engine.infrastructure.db.repositories import SimulationPersistenceRepository
-from beta_engine.infrastructure.world_config import load_countries_config, load_manual_player_overrides_config
+from beta_engine.infrastructure.world_config import load_manual_player_overrides_config
+from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
+from tests.support.world_packages import materialize_test_world_package
 
 
 def _write_json(path: Path, payload: dict[str, object]) -> None:
@@ -18,9 +22,9 @@ def _write_json(path: Path, payload: dict[str, object]) -> None:
 
 def _service(tmp_path: Path, *, countries_payload: dict[str, object] | None = None, overrides_payload: dict[str, object] | None = None) -> SimulationApiService:
     db_file = tmp_path / "run_world_status.db"
-    countries_path = tmp_path / "countries.json"
     overrides_path = tmp_path / "manual_player_overrides.json"
-    _write_json(countries_path, countries_payload or load_countries_config().model_dump(mode="json"))
+    packages_root = tmp_path / "world_packages"
+    materialize_test_world_package(packages_root, CountriesConfig.model_validate(countries_payload or load_fax_reference_countries().model_dump(mode="json")))
     _write_json(overrides_path, overrides_payload or load_manual_player_overrides_config().model_dump(mode="json"))
 
     engine = create_sqlite_engine(DatabaseSettings(url=f"sqlite:///{db_file}"))
@@ -28,8 +32,8 @@ def _service(tmp_path: Path, *, countries_payload: dict[str, object] | None = No
     repository = SimulationPersistenceRepository(engine=engine, session_factory=session_factory)
     return SimulationApiService(
         repository=repository,
-        countries_service=CountriesConfigService(config_path=countries_path),
         manual_overrides_service=ManualPlayerOverridesService(config_path=overrides_path),
+        world_package_registry_service=WorldPackageRegistryService(world_packages_root=packages_root),
     )
 
 
@@ -44,12 +48,13 @@ def test_unchanged_world_data_reports_fresh_status(tmp_path: Path) -> None:
 
 
 def test_changed_countries_dataset_marks_run_as_stale(tmp_path: Path) -> None:
-    countries_payload = load_countries_config().model_dump(mode="json")
+    countries_payload = load_fax_reference_countries().model_dump(mode="json")
     service = _service(tmp_path, countries_payload=countries_payload)
     service.initialize_run(run_id="run-stale-countries", season=2027, seed=100, config_version=None, config_fingerprint=None)
 
-    countries_payload["countries"][0]["population"] = int(countries_payload["countries"][0]["population"]) + 1
-    _write_json(tmp_path / "countries.json", countries_payload)
+    store = WorldPackageCountryStore(tmp_path / "world_packages/official_fax_world")
+    country = store.load_config().countries[0]
+    store.write_country(country.model_copy(update={"population": country.population + 1, "default_population": country.population + 1, "population_by_year": {2020: country.population + 1}}))
 
     status = service.get_run_world_status(run_id="run-stale-countries")
     assert status.is_stale is True
@@ -64,7 +69,7 @@ def test_changed_manual_overrides_marks_run_as_stale(tmp_path: Path) -> None:
         {
             "override_id": "stale-check",
             "season": 2027,
-            "country_code": "EGY",
+            "country_code": "GER",
             "player_name": "Stale Check",
             "age": 19,
             "profile_tier": "elite",
@@ -104,7 +109,7 @@ def test_rebuild_regenerates_world_artifacts_and_updates_fingerprint(tmp_path: P
         {
             "override_id": "rebuild-star",
             "season": 2027,
-            "country_code": "EGY",
+            "country_code": "GER",
             "player_name": "Rebuild Star",
             "age": 18,
             "profile_tier": "special",

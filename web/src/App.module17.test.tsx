@@ -2984,7 +2984,7 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByRole('heading', { name: 'World' })).toBeInTheDocument()
     expect(screen.getByText('Manage country inputs and expected talent output used by the FAX squash simulation engine.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /World Library Browse registered World Packages/i })).toHaveAttribute('href', '/admin/world/library')
-    expect(screen.getByRole('link', { name: /Countries Edit country inputs/i })).toHaveAttribute('href', '/admin/world/countries')
+    expect(screen.getByRole('link', { name: /Countries Inspect the assembled typed country view/i })).toHaveAttribute('href', '/admin/world/library/official_fax_world/countries')
     expect(screen.getByRole('link', { name: /Talent Preview Preview expected Elite Talents/i })).toHaveAttribute('href', '/admin/world/talent-preview')
     expect(screen.queryByRole('link', { name: 'Country Momentum' })).not.toBeInTheDocument()
   })
@@ -2992,7 +2992,7 @@ describe('Module 17 pages through routes', () => {
   it('renders read-only World Library from the registry', async () => {
     renderAppAt('/admin/world/library')
 
-    expect(await screen.findByRole('heading', { name: 'World Library' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'World Packages' })).toBeInTheDocument()
     expect(api.listWorldPackages).toHaveBeenCalled()
     expect(await screen.findByRole('cell', { name: 'Official FAX World' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'official_fax_world' })).toBeInTheDocument()
@@ -3043,13 +3043,10 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Not deletable')).toBeInTheDocument()
     expect(screen.getByText('Not archivable')).toBeInTheDocument()
     expect(screen.getByText('Usage aggregation is not implemented yet.')).toBeInTheDocument()
-    expect(screen.getAllByText('config/worlds/official_fax_world/world.json').length).toBeGreaterThan(0)
-    expect(screen.getByText('config/worlds/official_fax_world/continents.json')).toBeInTheDocument()
     expect(await screen.findByText('World Package Validation')).toBeInTheDocument()
     expect(screen.getByText('warnings')).toBeInTheDocument()
     expect(screen.getByText('world_metadata_valid')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open Countries Editor' })).toHaveAttribute('href', '/admin/world/countries')
-    expect(screen.getByRole('link', { name: 'Open Legacy World Package Import/Export' })).toHaveAttribute('href', '/admin/world/package')
+    expect(screen.queryByText(/Countries Editor|Legacy World Package Import\/Export/i)).not.toBeInTheDocument()
   })
 
 
@@ -3066,7 +3063,7 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByRole('heading', { name: 'World Package Countries' })).toBeInTheDocument()
     expect(api.getWorldPackageCountries).toHaveBeenCalledWith('official_fax_world')
     expect(await screen.findByText('Official FAX World')).toBeInTheDocument()
-    expect(screen.getByText('config/worlds/official_fax_world/countries.json')).toBeInTheDocument()
+    expect(screen.getByText('Read-only')).toBeInTheDocument()
     expect(screen.getByText('Germanica')).toBeInTheDocument()
     expect(screen.getByText('Bogemia')).toBeInTheDocument()
     expect(screen.getByText('Hungarica')).toBeInTheDocument()
@@ -3080,13 +3077,16 @@ describe('Module 17 pages through routes', () => {
     expect(screen.queryByRole('button', { name: /create|edit|delete|import|export/i })).not.toBeInTheDocument()
   })
 
-  it('renders read-only Custom World Package countries page', async () => {
-    api.getWorldPackageCountries.mockResolvedValueOnce({ world_id: 'my_custom_world', world_name: 'My Custom World', type: 'custom', source: 'custom_config', read_only: true, country_count: 1, source_path: 'config/worlds/custom/my_custom_world/countries.json', countries: [{ code: 'NZL', name: 'New Zealand', flag_asset: null, region: 'OCEANIA', population: 5000000, wealth_support: 4, squash_popularity: 3, squash_tradition: 4, system_quality: 4, competition_density: 3, federation_quality: 4, court_count: 100, travel_region: 'OCEANIA', notes: null, style_dna: {} }] })
+  it('renders editable Custom World Package source without claiming this inspection screen has edit controls', async () => {
+    api.getWorldPackageCountries.mockResolvedValueOnce({ world_id: 'my_custom_world', world_name: 'My Custom World', type: 'custom', source: 'custom_config', read_only: false, country_count: 1, source_path: 'config/world_packages/custom/my_custom_world/countries/index.json', countries: [{ code: 'NZL', name: 'New Zealand', flag_asset: null, region: 'OCEANIA', population: 5000000, wealth_support: 4, squash_popularity: 3, squash_tradition: 4, system_quality: 4, competition_density: 3, federation_quality: 4, court_count: 100, travel_region: 'OCEANIA', notes: null, style_dna: {} }] })
     renderAppAt('/admin/world/library/my_custom_world/countries')
 
     expect(await screen.findByText('My Custom World')).toBeInTheDocument()
     expect(api.getWorldPackageCountries).toHaveBeenCalledWith('my_custom_world')
     expect(screen.getByText('New Zealand')).toBeInTheDocument()
+    expect(screen.getByText('Editable')).toBeInTheDocument()
+    expect(screen.getByText(/inspection screen does not currently provide/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /create|edit|delete|import|export/i })).not.toBeInTheDocument()
   })
 
   it('handles World Package countries API errors', async () => {
@@ -3174,10 +3174,20 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByText(/Failed to load World Packages: registry unavailable/i)).toBeInTheDocument()
   })
 
-  it('renders country detail route for existing country code', async () => {
+  it('redirects the legacy country detail route to Official FAX World countries', async () => {
     renderAppAt('/admin/world/countries/EGY')
-    expect(await screen.findByRole('heading', { name: 'Egypt (EGY)' })).toBeInTheDocument()
-    expect(screen.getByText(/Country profile and authored model inputs/i)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'World Package Countries' })).toBeInTheDocument()
+    expect(api.getWorldPackageCountries).toHaveBeenCalledWith('official_fax_world')
+  })
+
+  it('redirects legacy Countries and combined package routes to World Packages', async () => {
+    renderAppAt('/admin/world/countries')
+    expect(await screen.findByRole('heading', { name: 'World Package Countries' })).toBeInTheDocument()
+    expect(screen.queryByText(/Countries Editor/i)).not.toBeInTheDocument()
+
+    renderAppAt('/admin/world/package')
+    expect(await screen.findByRole('heading', { name: 'World Packages' })).toBeInTheDocument()
+    expect(screen.queryByText(/countries \+ manual overrides|Apply package|Export world package/i)).not.toBeInTheDocument()
   })
 
   it('renders the Viewer MSA home route as the MSA homepage shell', async () => {

@@ -44,8 +44,8 @@ export function AdminWorldPage(): JSX.Element {
           },
           {
             title: 'Countries',
-            description: 'Edit country inputs, country model data, style DNA, and future country profiles.',
-            to: '/admin/world/countries'
+            description: 'Inspect the assembled typed country view for the built-in, read-only Official FAX World.',
+            to: '/admin/world/library/official_fax_world/countries'
           },
           {
             title: 'Talent Preview',

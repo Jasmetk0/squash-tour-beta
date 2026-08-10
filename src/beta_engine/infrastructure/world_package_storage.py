@@ -141,10 +141,20 @@ class WorldPackageCountryStore:
         root = self.countries_root / country.code
         identity = {"schema_version": COUNTRY_IDENTITY_SCHEMA, **country.model_dump(mode="json", include={"code", "name", "flag_asset", "notes"})}
         _write_json_atomic(root / "country.json", identity)
-        timeline = country.population_by_year or {country.default_population_year: country.default_population}
+        if country.population_by_year is not None:
+            timeline = country.population_by_year
+            default_year = country.default_population_year
+        elif country.default_population_year is not None and country.default_population is not None:
+            default_year = country.default_population_year
+            timeline = {default_year: country.default_population}
+        else:
+            # Scalar population remains a valid Country input for legacy CRUD and
+            # CSV callers. Canonical storage always needs a concrete timeline key.
+            default_year = 2020
+            timeline = {default_year: country.population}
         _write_json_atomic(root / "attributes" / "population.json", {
             "schema_version": COUNTRY_POPULATION_SCHEMA,
-            "default_year": country.default_population_year,
+            "default_year": default_year,
             "values_by_year": {str(year): value for year, value in sorted(timeline.items())},
         })
         dumped = country.model_dump(mode="json")
@@ -169,9 +179,16 @@ class WorldPackageCountryStore:
             backup = parent / ".countries-backup"
             if backup.exists():
                 shutil.rmtree(backup)
+            moved_live_dataset = False
             if self.countries_root.exists():
                 self.countries_root.rename(backup)
-            staged_store.countries_root.rename(self.countries_root)
+                moved_live_dataset = True
+            try:
+                staged_store.countries_root.rename(self.countries_root)
+            except Exception:
+                if moved_live_dataset and backup.exists() and not self.countries_root.exists():
+                    backup.rename(self.countries_root)
+                raise
             if backup.exists():
                 shutil.rmtree(backup)
         finally:

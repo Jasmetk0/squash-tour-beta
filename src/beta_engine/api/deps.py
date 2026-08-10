@@ -81,6 +81,7 @@ def get_simulation_api_service(request: Request) -> SimulationApiService:
         repository=runtime.repository,
         manual_overrides_service=get_manual_player_overrides_service(request),
         countries_service=get_countries_config_service(request),
+        world_package_registry_service=get_world_package_registry_service(request),
     )
 
 

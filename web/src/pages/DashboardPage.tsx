@@ -148,7 +148,7 @@ export function DashboardPage(): JSX.Element {
             <li>Create a root run with a unique run ID and seed.</li>
             <li>Open any existing run using its run ID.</li>
             <li>After launch/open, continue from Run Detail and its linked views.</li>
-            <li>Manage world countries from the in-app <Link to="/admin/world/countries">Countries Editor</Link>.</li>
+            <li>Inspect Official FAX World countries in the <Link to="/admin/world/library/official_fax_world/countries">World Package library</Link>.</li>
           </ul>
           <p className="status">New root runs start at {MSA_TIMELINE_START_LABEL}; later seasons continue through rollover/bootstrap child runs.</p>
         </section>

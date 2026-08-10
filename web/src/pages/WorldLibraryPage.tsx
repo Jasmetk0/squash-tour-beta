@@ -77,7 +77,7 @@ export function WorldLibraryPage(): JSX.Element {
     <section className="panel">
       <div className="page-intro">
         <h2>World Packages</h2>
-        <p className="subtitle">Read-only registry of foundational world input bundles available to the engine.</p>
+        <p className="subtitle">Registry of foundational World Packages available to the engine.</p>
       </div>
       <p>
         World Packages are foundational world input bundles. A run will eventually be created from one selected World Package.
@@ -185,7 +185,7 @@ function CloneOfficialWorldSection(): JSX.Element {
   return (
     <SectionCard title="Clone Official World">
       <p>Create a repository-stored Custom World by cloning the current built-in Official FAX World package. This does not edit Official FAX World and does not affect existing runs.</p>
-      <p className="status">Clone creates a new Custom World package only. Custom World edit/delete/archive actions are not implemented yet. Countries Editor still edits canonical countries, not package-scoped custom world countries.</p>
+      <p className="status">Clone creates a new Custom World Package only. Editing, deleting, and archiving Custom World Packages are not implemented yet.</p>
       <form onSubmit={handleSubmit}>
         <label>
           New World ID
@@ -314,7 +314,7 @@ export function WorldPackageCountriesPage(): JSX.Element {
     <section className="panel">
       <div className="page-intro">
         <h2>World Package Countries</h2>
-        <p className="subtitle">This page inspects the countries inside this World Package. It does not edit canonical Countries config and does not edit the package.</p>
+        <p className="subtitle">Assembled typed view of the countries in the selected World Package.</p>
       </div>
       <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}`}>Back to World Package detail</Link></p>
       {countriesQuery.isLoading && <p className="status">Loading package countries...</p>}
@@ -327,15 +327,11 @@ export function WorldPackageCountriesPage(): JSX.Element {
             <DetailRow label="Type" value={data.type} />
             <DetailRow label="Source" value={data.source} />
             <DetailRow label="Country count" value={data.country_count} />
-            <DetailRow label="Source path" value={<code>{data.source_path}</code>} />
-            <DetailRow label="Mode" value={data.read_only ? 'Read-only' : 'Editable'} />
+            <DetailRow label="Source package mode" value={data.read_only ? 'Read-only' : 'Editable'} />
           </SectionCard>
-          <SectionCard title="Read-only package countries">
-            <p className="status">No create, edit, delete, import, or export actions are available here. The legacy Countries Editor edits canonical config, not this package.</p>
+          <SectionCard title="Package countries">
+            <p className="status">This inspection screen does not currently provide create, edit, delete, import, or export actions, regardless of source package editability.</p>
             <PackageCountriesTable countries={data.countries} />
-          </SectionCard>
-          <SectionCard title="Related links">
-            <p><Link to="/admin/world/countries">Open legacy Countries Editor</Link> — warning: it edits canonical Countries config, not this World Package.</p>
           </SectionCard>
         </>
       )}
@@ -393,16 +389,6 @@ export function WorldLibraryDetailPage(): JSX.Element {
             <DetailRow label="Regions" value={pkg.region_count} />
             <DetailRow label="Travel regions" value={pkg.travel_region_count} />
           </SectionCard>
-          <SectionCard title="Storage">
-            <DetailRow label="Package root" value={<code>{pkg.storage.package_root_path}</code>} />
-            <DetailRow label="World metadata path" value={<code>{pkg.storage.world_metadata_path}</code>} />
-            <DetailRow label="Countries root" value={<code>{pkg.storage.countries_root_path}</code>} />
-            <DetailRow label="Countries index" value={<><code>{pkg.storage.countries_index_path}</code> · <Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}/countries`}>Open package countries</Link></>} />
-            <DetailRow label="Geography root" value={<code>{pkg.storage.geography_root_path}</code>} />
-            <DetailRow label="Continents path" value={<code>{pkg.storage.continents_path}</code>} />
-            <DetailRow label="Regions path" value={<code>{pkg.storage.regions_path}</code>} />
-            <DetailRow label="Travel regions path" value={<code>{pkg.storage.travel_regions_path}</code>} />
-          </SectionCard>
           <SectionCard title="Usage">
             <DetailRow label="Used by runs" value={usageLabel(pkg.used_by_run_count)} />
             {pkg.used_by_run_count === null && <p className="status">Usage aggregation is not implemented yet.</p>}
@@ -418,10 +404,6 @@ export function WorldLibraryDetailPage(): JSX.Element {
             </SectionCard>
           )}
           {validationQuery.data && <ValidationSection validation={validationQuery.data} />}
-          <SectionCard title="Read-only links">
-            <p><Link to="/admin/world/countries">Open Countries Editor</Link> — this still edits the current canonical countries dataset, not package-scoped countries yet.</p>
-            <p><Link to="/admin/world/package">Open Legacy World Package Import/Export</Link> — this is legacy canonical import/export, not multi-world package management yet.</p>
-          </SectionCard>
         </>
       )}
     </section>

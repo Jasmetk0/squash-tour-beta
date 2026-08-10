@@ -41,7 +41,7 @@ class WorldPackageCountriesService:
             world_name=record.name,
             type=record.type,
             source=record.source,
-            read_only=True,
+            read_only=not record.editable,
             country_count=len(countries),
             source_path=source_path,
             countries=countries,

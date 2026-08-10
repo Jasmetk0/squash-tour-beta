@@ -129,7 +129,7 @@ def test_config_validation_endpoint_can_return_successful_report(tmp_path) -> No
             ]
         }),
     ), patch(
-        "beta_engine.application.config_validation_service.load_countries_config",
+        "beta_engine.application.config_validation_service.WorldPackageCountryStore.load_config",
         return_value=CountriesConfig.model_validate({
             "countries": [
                 {

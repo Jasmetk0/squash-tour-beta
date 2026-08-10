@@ -36,7 +36,7 @@ export function AdminDiagnosticsPage(): JSX.Element {
           </p>
           <p>
             Current action: <Link to="/admin/world/talent-preview">Talent Preview</Link> ·{' '}
-            <Link to="/admin/world/countries">Countries</Link>
+            <Link to="/admin/world/library/official_fax_world/countries">Official FAX World countries</Link>
           </p>
         </SectionCard>
 

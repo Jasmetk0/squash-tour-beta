@@ -27,12 +27,17 @@ jobs:
         with:
           filters: |
             backend:
+              - 'config/world_packages/**'
+              - 'config/player_generation/**'
+              - 'scripts/**'
               - 'src/**'
               - 'tests/**'
               - 'pyproject.toml'
               - 'requirements*.txt'
               - '.github/workflows/**'
             frontend:
+              # Canonical World Package changes affect API contracts consumed by the UI.
+              - 'config/world_packages/**'
               - 'web/**'
               - 'web/package.json'
               - 'web/package-lock.json'
@@ -87,8 +92,6 @@ jobs:
             src/components/Layout.test.tsx \
             src/pages/admin/AdminHomePage.test.tsx \
             src/viewer/ViewerProductRunRouteContext.test.tsx \
-            src/pages/CountriesPage.test.tsx \
-            src/pages/CountryDetailPage.test.tsx \
             src/pages/TalentPreviewPage.test.tsx \
             src/pages/AdminSeasonsPage.test.tsx \
             src/pages/TournamentTemplatesPage.test.tsx \

@@ -1,16 +1,38 @@
 # Squash Engine
 
-Squash Engine is a deterministic, data-driven manager and simulator of the fictional men’s professional **FAX squash world**. It is intended to generate and evolve countries, players, tournaments, rankings, careers, and decades of history across independent saved Runs and alternative branch timelines.
+Squash Engine is a deterministic, data-driven manager and simulator of the fictional men's professional **FAX squash world**. It is intended to generate and evolve countries, players, tournaments, rankings, careers, matches, public history, and alternative timelines across independent saved Runs.
+
+The repository is a beta in migration. The product model below is canonical target behavior, but individual capabilities may still be partial, transitional, or not implemented yet.
 
 ## Product model
 
 - **Viewer** is a historically faithful, read-only environment for fictional public websites; the primary current site is **MSA Squash**.
-- **Admin** creates, edits, validates, simulates, and audits data. **Global Admin** manages Runs and source Packages; **Run Admin** operates one Run and one active Admin branch.
+- **Admin** creates, edits, validates, simulates, reconstructs, and audits data. **Global Admin** manages Runs and source Packages; **Run Admin** operates one Run and one active Admin branch in a selected time context.
 - A **Run** is an independent saved world spanning exactly 50 seasons, `2000/01–2049/50`. Every season contains exactly 61 Season Weeks.
 - Branches are equal alternative timelines within a Run. There is no privileged Main or Official branch. Each Run has exactly one **Viewer Branch**, which only selects the timeline displayed by Viewer.
 - Every Run receives independent, versioned snapshots of one World Package and one Category Package at creation. Source Package identity/version is retained as provenance, not as a live link.
 
-The repository is a beta in migration: the target model above is canonical, but not every capability or legacy technical name has been migrated yet.
+## Simulation model
+
+The target simulation is chronological and historically safe rather than a collection of unrelated buttons.
+
+- Week changes are handled by an explicit **Week Transition**; the season boundary uses a special **Season Transition**.
+- A week contains a variable chronological sequence of **Simulation Slots**. Events in one slot are simultaneous and read from the same pre-slot snapshot.
+- The first-version match engine is **rally-by-rally**, not shot-by-shot. A rally has hidden control/pressure phases, individual physical load, explicit sporting/officiating outcomes, and compact authoritative logging.
+- Player state includes long-term attributes plus changing form, fatigue, health, stamina and decision state. Exact mathematics and calibration remain intentionally open where the product specification marks them open.
+- **Match Reconstruction** is a first-version Admin workflow: known facts become constraints, multiple candidate histories may be generated and inspected, and only an explicitly selected candidate becomes authoritative history.
+- Long-running work belongs in the Task Center/job model with visible state and safe recovery boundaries.
+
+## Historical truth, events and attention
+
+Squash Engine keeps several concepts deliberately separate:
+
+- **World Event Log** — authoritative facts/events of a branch timeline,
+- **Audit Log** — changes to data and their provenance,
+- **Task Center** — running/completed operations,
+- **Notification Center** — things that need Admin attention.
+
+Viewer never exposes internal technical alerts or future-only information. Public MSA news/messages are derived from then-public World Events rather than becoming a second source of truth.
 
 ## Engine foundations
 
@@ -19,20 +41,23 @@ The repository is a beta in migration: the target model above is canonical, but 
 - SQLite/SQLAlchemy persistence with historical snapshots, provenance, and auditable Admin changes.
 - Config/data-driven world and competition content with validation.
 - Injected, hierarchical randomness and replayable commands; AI may explain or suggest but never decides authoritative sporting outcomes.
-- Professional set-by-set matches (default Official Run format: BO5, games to 11, win by 2) and explicit abnormal outcomes.
-- Historically versioned ranking policies and snapshots. Ranking formulae are configuration/history, not a globally hard-coded “best N” rule.
+- Official Run individual-match default: BO5, games to 11, win by 2, unless narrower stored configuration overrides it.
+- Historically versioned ranking policies and snapshots. Ranking formulae are configuration/history, not globally hard-coded constants.
+- Operation-scoped validation: unrelated incomplete data should not block an otherwise valid operation.
 
 ## Documentation authority
 
 Use this order when documentation conflicts:
 
 1. explicit newer product decisions,
-2. the current Master Vision and its synchronized repository constitution,
+2. **Squash Engine Master Vision v42** and later audited revisions,
 3. [`PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`](PROJECT_CONSTITUTION_TECHNICAL_PLAN.md),
 4. subordinate migration guidance such as [`docs/ENGINE_UX_SPEC.md`](docs/ENGINE_UX_SPEC.md),
 5. older documents, handoffs, and existing beta behavior as historical or implementation evidence only.
 
-`PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` is the active repository constitution synchronized from Master Vision v31. `Beta_Engine.docx` and documents that describe earlier phase-specific designs are non-authoritative background unless the current constitution explicitly reconfirms them. See [`ROADMAP.md`](ROADMAP.md) for the current milestone sequence.
+`PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` is the active repository constitution synchronized from Master Vision v42. `Beta_Engine.docx` and documents that describe earlier phase-specific designs are non-authoritative background unless the current constitution explicitly reconfirms them. See [`ROADMAP.md`](ROADMAP.md) for the current milestone sequence.
+
+Decision status matters: **decided**, **provisional**, **target**, **open**, **deferred**, and **later** must not be silently collapsed into one level of certainty.
 
 ## Development
 

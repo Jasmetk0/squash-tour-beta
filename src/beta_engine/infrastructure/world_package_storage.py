@@ -161,6 +161,33 @@ class WorldPackageCountryStore:
         for name in ATTRIBUTE_NAMES:
             _write_json_atomic(root / "attributes" / f"{name}.json", {"schema_version": COUNTRY_ATTRIBUTE_SCHEMA, "value": dumped.get(name)})
 
+    def replace_country(self, country: Country) -> None:
+        """Atomically replace one indexed country, restoring the live copy on failure."""
+        if country.code not in self.load_index().country_codes:
+            raise ValueError(f"country {country.code!r} does not exist")
+        live = self.countries_root / country.code
+        stage = Path(tempfile.mkdtemp(prefix=f".{country.code}-stage-", dir=self.countries_root))
+        backup = self.countries_root / f".{country.code}-backup"
+        staged_store = WorldPackageCountryStore(stage)
+        try:
+            staged_store.countries_root.mkdir(parents=True)
+            staged_store.write_country(country)
+            reloaded = staged_store.load_country(country.code)
+            if reloaded.code != country.code:
+                raise ValueError(f"staged country {country.code} did not round-trip")
+            if backup.exists():
+                shutil.rmtree(backup)
+            live.rename(backup)
+            try:
+                staged_store.countries_root.joinpath(country.code).rename(live)
+            except Exception:
+                if backup.exists() and not live.exists():
+                    backup.rename(live)
+                raise
+            shutil.rmtree(backup)
+        finally:
+            shutil.rmtree(stage, ignore_errors=True)
+
     def replace_dataset(self, config: CountriesConfig) -> None:
         parent = self.countries_root.parent
         parent.mkdir(parents=True, exist_ok=True)

@@ -1688,6 +1688,29 @@ export type WorldPackageCountryDetail = {
   source_path: string
 }
 
+export type WorldPackageCountryUpdatePayload = {
+  name: string
+  notes: string | null
+  area_km2: number | null
+  region: string
+  travel_region: string | null
+  wealth_support: number
+  squash_popularity: number
+  squash_tradition: number
+  system_quality: number
+  competition_density: number
+  federation_quality: number
+  court_count: number | null
+  style_dna: Record<string, number>
+  expected_package_fingerprint?: string
+}
+
+export type WorldPackageCountryUpdateResponse = {
+  country_detail: WorldPackageCountryDetail
+  package: WorldPackage
+  validation: WorldPackageValidation
+}
+
 
 
 export type RunWeeklyIntakeCohortCountryAllocation = {

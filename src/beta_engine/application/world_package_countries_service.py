@@ -7,11 +7,12 @@ import json
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryRecord, WorldPackageRegistryService
 from beta_engine.domain.countries import Country
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
+from beta_engine.application.world_package_validation_service import WorldPackageValidationResult, WorldPackageValidationService
 
 
 @dataclass(frozen=True)
@@ -61,11 +62,94 @@ class WorldPackageCountryDetailResult:
     source_path: str
 
 
+class WorldPackageCountryUpdate(BaseModel):
+    """Complete editable country state; stable identity and population are absent."""
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(min_length=1)
+    notes: str | None = None
+    area_km2: int | None = Field(gt=0)
+    region: str = Field(min_length=1)
+    travel_region: str | None = None
+    wealth_support: int = Field(ge=1, le=5)
+    squash_popularity: int = Field(ge=1, le=5)
+    squash_tradition: int = Field(ge=1, le=5)
+    system_quality: int = Field(ge=1, le=5)
+    competition_density: float = Field(ge=1.0, le=5.0)
+    federation_quality: float = Field(ge=1.0, le=5.0)
+    court_count: int | None = Field(ge=0)
+    style_dna: dict[str, float]
+    expected_package_fingerprint: str | None = None
+
+
+class WorldPackageMutationError(ValueError):
+    def __init__(self, message: str, status_code: int = 422):
+        super().__init__(message)
+        self.status_code = status_code
+
+
+@dataclass(frozen=True)
+class WorldPackageCountryUpdateResult:
+    detail: WorldPackageCountryDetailResult
+    validation: WorldPackageValidationResult
+
+
 @dataclass(slots=True)
 class WorldPackageCountriesService:
     """Load package-scoped countries without touching canonical countries config."""
 
     registry_service: WorldPackageRegistryService
+    validation_service: WorldPackageValidationService | None = None
+
+    def __post_init__(self) -> None:
+        if self.validation_service is None:
+            self.validation_service = WorldPackageValidationService(self.registry_service)
+
+    def update_country(self, world_id: str, country_code: str, update: WorldPackageCountryUpdate) -> WorldPackageCountryUpdateResult:
+        package = self.registry_service.get_package(world_id)
+        if package is None:
+            raise WorldPackageMutationError(f"world package '{world_id}' not found", 404)
+        if not package.editable:
+            raise WorldPackageMutationError(f"world package '{world_id}' is read-only", 403)
+        if update.expected_package_fingerprint and update.expected_package_fingerprint != package.fingerprint:
+            raise WorldPackageMutationError("world package changed since this country was loaded", 409)
+        paths = self.registry_service.package_paths(world_id)
+        assert paths is not None
+        store = WorldPackageCountryStore(paths["package_root"])
+        code = country_code.upper()
+        if code not in store.load_index().country_codes:
+            raise WorldPackageMutationError(f"country '{code}' not found in world package '{world_id}'", 404)
+        geography = self.get_geography(world_id)
+        assert geography is not None
+        if update.region not in {item.code for item in geography.regions}:
+            raise WorldPackageMutationError(f"unknown Region '{update.region}'")
+        if update.travel_region is not None and update.travel_region not in {item.code for item in geography.travel_regions}:
+            raise WorldPackageMutationError(f"unknown Travel Region '{update.travel_region}'")
+        original = store.load_country(code)
+        try:
+            updated = Country.model_validate({
+                **original.model_dump(),
+                **update.model_dump(exclude={"expected_package_fingerprint"}),
+            })
+            store.replace_country(updated)
+            assert self.validation_service is not None
+            validation = self.validation_service.validate_package(world_id)
+            if validation is None or validation.status == "errors":
+                store.replace_country(original)
+                raise WorldPackageMutationError("country edit would leave the World Package invalid")
+        except WorldPackageMutationError:
+            raise
+        except Exception as exc:
+            # replace_country restores promotion failures. If failure happened later,
+            # make the best bounded effort to restore the typed original.
+            try:
+                if store.load_country(code) != original:
+                    store.replace_country(original)
+            except Exception:
+                pass
+            raise WorldPackageMutationError(f"country edit failed: {exc}") from exc
+        detail = self.get_country(world_id, code)
+        assert detail is not None
+        return WorldPackageCountryUpdateResult(detail=detail, validation=validation)
 
     def get_countries(self, world_id: str) -> WorldPackageCountriesResult | None:
         record = self.registry_service.get_package(world_id)

@@ -3,8 +3,8 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
-import { cloneOfficialWorldPackage, getWorldPackage, getWorldPackageCountries, getWorldPackageCountry, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages } from '../api/client'
-import type { CountryRecord, WorldPackage, WorldPackageCloneResponse, WorldPackageGeography, WorldPackageValidation } from '../api/types'
+import { cloneOfficialWorldPackage, getWorldPackage, getWorldPackageCountries, getWorldPackageCountry, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages, updateWorldPackageCountry } from '../api/client'
+import type { CountryRecord, WorldPackage, WorldPackageCloneResponse, WorldPackageCountryDetail, WorldPackageCountryUpdatePayload, WorldPackageGeography, WorldPackageValidation } from '../api/types'
 import { SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -432,7 +432,24 @@ export function WorldLibraryDetailPage(): JSX.Element {
 
 export function WorldPackageCountryDetailPage(): JSX.Element {
   const { worldId = '', countryCode = '' } = useParams()
+  const queryClient = useQueryClient()
+  const [editing, setEditing] = useState(false)
+  const [success, setSuccess] = useState('')
   const query = useQuery({ queryKey: ['world-package-country', worldId, countryCode], queryFn: () => getWorldPackageCountry(worldId, countryCode), enabled: Boolean(worldId && countryCode), retry: false })
+  const geographyQuery = useQuery({ queryKey: ['world-package-geography', worldId], queryFn: () => getWorldPackageGeography(worldId), enabled: Boolean(worldId), retry: false })
+  const mutation = useMutation({
+    mutationFn: (payload: WorldPackageCountryUpdatePayload) => updateWorldPackageCountry(worldId, countryCode, payload),
+    onSuccess: async (response) => {
+      queryClient.setQueryData(['world-package-country', worldId, countryCode], response.country_detail)
+      setEditing(false); setSuccess('Country changes saved. World Package validation passed.')
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['world-package-countries', worldId] }),
+        queryClient.invalidateQueries({ queryKey: ['world-package', worldId] }),
+        queryClient.invalidateQueries({ queryKey: ['world-package-validation', worldId] }),
+        queryClient.invalidateQueries({ queryKey: ['world-packages'] })
+      ])
+    }
+  })
   const data = query.data
   const timeline = Object.entries(data?.country.population_by_year ?? {}).filter(([, value]) => value != null).sort(([a], [b]) => Number(a) - Number(b))
   const style = Object.entries(data?.country.style_dna ?? {})
@@ -443,11 +460,13 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
     {data && <>
       <div className="page-intro"><h2>{data.country.name}</h2><p className="subtitle"><code>{data.country.code}</code></p></div>
       <p><strong>{data.package.name} · {data.package.type === 'custom' ? 'Custom' : 'Built-in'} · {data.package.editable ? 'Editable source' : 'Read-only'}</strong></p>
-      {data.package.editable && <p className="status">Source package is editable. Editing controls are not implemented in this explorer yet.</p>}
-      <SectionCard title="Overview">
+      {data.package.editable && !editing && <button type="button" onClick={() => { setEditing(true); setSuccess(''); mutation.reset() }}>Edit country</button>}
+      {success && <p className="status" role="status">{success}</p>}
+      {editing && <CountryEditForm detail={data} geography={geographyQuery.data} saving={mutation.isPending} error={mutation.error} onCancel={() => { setEditing(false); mutation.reset() }} onSave={(payload) => mutation.mutate(payload)} />}
+      {!editing && <SectionCard title="Overview">
         <DetailRow label="Package" value={data.package.name} /><DetailRow label="Region" value={data.region?.name ?? data.country.region} /><DetailRow label="Travel Region" value={data.travel_region?.name ?? data.country.travel_region ?? '—'} /><DetailRow label="Area" value={`${formatNumber(data.country.area_km2)} km²`} /><DetailRow label="Current/default population" value={formatNumber(data.country.default_population ?? data.country.population)} />
         {data.country.notes && <DetailRow label="Notes" value={data.country.notes} />}
-      </SectionCard>
+      </SectionCard>}
       <SectionCard title="Population">
         <DetailRow label="Effective/default population" value={formatNumber(data.country.default_population ?? data.country.population)} /><DetailRow label="Default authored year" value={data.country.default_population_year ?? '—'} /><DetailRow label="Authored population years" value={timeline.length} /><DetailRow label="Earliest authored year" value={timeline[0]?.[0] ?? '—'} /><DetailRow label="Latest authored year" value={timeline[timeline.length - 1]?.[0] ?? '—'} />
         <table aria-label="Authored population timeline"><thead><tr><th>Year</th><th>Population</th></tr></thead><tbody>{timeline.map(([year, value]) => <tr key={year}><td>{year}</td><td>{formatNumber(value)}</td></tr>)}</tbody></table>
@@ -460,4 +479,34 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
       <details><summary>Technical source</summary><code>{data.source_path}</code></details>
     </>}
   </section>
+}
+
+type StyleRow = { id: number, key: string, value: string }
+function CountryEditForm({ detail, geography, saving, error, onCancel, onSave }: { detail: WorldPackageCountryDetail, geography?: WorldPackageGeography, saving: boolean, error: unknown, onCancel: () => void, onSave: (payload: WorldPackageCountryUpdatePayload) => void }): JSX.Element {
+  const country = detail.country
+  const [name, setName] = useState(country.name)
+  const [notes, setNotes] = useState(country.notes ?? '')
+  const [area, setArea] = useState(country.area_km2 == null ? '' : String(country.area_km2))
+  const [region, setRegion] = useState(country.region)
+  const [travelRegion, setTravelRegion] = useState(country.travel_region ?? '')
+  const [values, setValues] = useState({ wealth_support: String(country.wealth_support), squash_popularity: String(country.squash_popularity), squash_tradition: String(country.squash_tradition), system_quality: String(country.system_quality), competition_density: String(country.competition_density), federation_quality: String(country.federation_quality), court_count: country.court_count == null ? '' : String(country.court_count) })
+  const [styleRows, setStyleRows] = useState<StyleRow[]>(Object.entries(country.style_dna ?? {}).map(([key, value], id) => ({ id, key, value: String(value) })))
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+    onSave({ name, notes: notes || null, area_km2: area ? Number(area) : null, region, travel_region: travelRegion || null,
+      wealth_support: Number(values.wealth_support), squash_popularity: Number(values.squash_popularity), squash_tradition: Number(values.squash_tradition), system_quality: Number(values.system_quality), competition_density: Number(values.competition_density), federation_quality: Number(values.federation_quality), court_count: values.court_count === '' ? null : Number(values.court_count),
+      style_dna: Object.fromEntries(styleRows.filter(row => row.key.trim()).map(row => [row.key.trim(), Number(row.value)])), expected_package_fingerprint: detail.package.fingerprint })
+  }
+  const numeric = (key: keyof typeof values, label: string, min: number, max?: number, step = 1) => <label>{label}<input type="number" required min={min} max={max} step={step} value={values[key]} onChange={event => setValues(current => ({ ...current, [key]: event.target.value }))} /></label>
+  return <SectionCard title="Edit country"><form onSubmit={submit}>
+    {error != null && <p className="error" role="alert">{formatApiError(error)}</p>}
+    <label>Name<input required value={name} onChange={event => setName(event.target.value)} /></label>
+    <label>Notes<textarea value={notes} onChange={event => setNotes(event.target.value)} /></label>
+    <label>Area km²<input type="number" min="1" value={area} onChange={event => setArea(event.target.value)} /></label>
+    <label>Region<select value={region} onChange={event => setRegion(event.target.value)}>{geography?.regions.map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
+    <label>Travel Region<select value={travelRegion} onChange={event => setTravelRegion(event.target.value)}><option value="">None</option>{geography?.travel_regions.map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
+    {numeric('wealth_support', 'Wealth Support', 1, 5)}{numeric('squash_popularity', 'Squash Popularity', 1, 5)}{numeric('squash_tradition', 'Squash Tradition', 1, 5)}{numeric('system_quality', 'System Quality', 1, 5)}{numeric('competition_density', 'Competition Density', 1, 5, 0.1)}{numeric('federation_quality', 'Federation Quality', 1, 5, 0.1)}{numeric('court_count', 'Court Count', 0)}
+    <fieldset><legend>Style DNA</legend>{styleRows.map((row, index) => <div key={row.id}><input aria-label={`Style DNA key ${index + 1}`} value={row.key} onChange={event => setStyleRows(rows => rows.map(item => item.id === row.id ? { ...item, key: event.target.value } : item))} /><input aria-label={`Style DNA value ${index + 1}`} type="number" step="any" value={row.value} onChange={event => setStyleRows(rows => rows.map(item => item.id === row.id ? { ...item, value: event.target.value } : item))} /><button type="button" onClick={() => setStyleRows(rows => rows.filter(item => item.id !== row.id))}>Remove</button></div>)}<button type="button" onClick={() => setStyleRows(rows => [...rows, { id: Math.max(-1, ...rows.map(row => row.id)) + 1, key: '', value: '0' }])}>Add Style DNA entry</button></fieldset>
+    <p><button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button> <button type="button" disabled={saving} onClick={onCancel}>Cancel</button></p>
+  </form></SectionCard>
 }

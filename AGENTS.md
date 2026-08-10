@@ -8,13 +8,13 @@ When sources conflict, use this precedence:
 
 1. explicit newer user/product decisions,
 2. the latest audited **Squash Engine Master Vision** — currently v42,
-3. `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` (the active repository constitution),
+3. `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` (the active repository constitution, including newer post-v42 decisions recorded there),
 4. subordinate guidance such as `docs/ENGINE_UX_SPEC.md`,
 5. older documents, handoffs, and current beta behavior as history/implementation evidence only.
 
 `Beta_Engine.docx` is non-authoritative background. `README.md` is an overview and `ROADMAP.md` is a milestone summary; neither may override the constitution. Mark assumptions and distinguish implemented behavior from target behavior.
 
-Never collapse status labels. A `[DECIDED]` rule, `[PROVISIONAL]` direction, `[TARGET]` capability, `[OPEN]` question, `[DEFERRED]` item and `[LATER]` idea are not interchangeable.
+Never collapse status labels. A `[DECIDED]` rule, `[PROVISIONAL]` direction, `[TARGET]` capability, `[OPEN]` question, `[DEFERRED]` item and `[LATER]` idea are not interchangeable. Never silently delete an older still-valid decided rule merely because a newer summary omits it.
 
 ## Current canonical product rules
 
@@ -26,7 +26,9 @@ Never collapse status labels. A `[DECIDED]` rule, `[PROVISIONAL]` direction, `[T
 - Ranking policies and snapshots are historically versioned/configurable. The Official Run begins season `2000/01` with Best 15; each later season initially inherits the previous season's effective Best N but remains independently configurable.
 - Week progression uses explicit **Week Transition**; season rollover uses **Season Transition**. A week contains a variable chronological sequence of **Simulation Slots**.
 - Events in the same Simulation Slot are simultaneous and must read from the same pre-slot snapshot.
-- The first-version Match Engine is rally-by-rally, not shot-by-shot, with explicit authoritative rally/time logging and three distinct stamina systems.
+- The first-version Match Engine is rally-by-rally, not shot-by-shot, with explicit authoritative rally/time logging and three physical stamina dimensions/bars.
+- **Current post-v42 V1 direction:** those three physical stamina dimensions should derive from the lighter underlying attribute/state model rather than be hard-coded as three independent standalone trainable attributes; exact mapping remains open.
+- **Current provisional direction:** one or more mental match-state bars/dimensions should exist; exact count/names/mechanics remain open.
 - Each player has one current Form; it updates from played performance and regresses toward an individual long-term norm rather than resetting.
 - `World Event Log`, `Audit Log`, `Task Center`, and `Notification Center` are separate concepts and must not be conflated.
 - Public MSA news/messages derive from then-public World Events. Viewer must not expose technical alerts or future-only information.

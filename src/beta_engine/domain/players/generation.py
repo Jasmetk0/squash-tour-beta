@@ -63,7 +63,7 @@ class PlayerGenerator:
         quality_band: TalentQualityBand,
         bias_profile: CountryGenerationBiasProfile | None,
     ) -> Player:
-        band_baseline_bonus, band_ceiling_bonus, age_shift = self._quality_band_parameters(quality_band)
+        band_baseline_bonus, _band_ceiling_bonus, age_shift = self._quality_band_parameters(quality_band)
         technical_lean = 0.0 if bias_profile is None else bias_profile.technical_vs_physical_lean
         mental_lean = 0.0 if bias_profile is None else bias_profile.mental_sharpness_tendency
         professional_lean = 0.0 if bias_profile is None else bias_profile.professionalism_tendency
@@ -104,23 +104,13 @@ class PlayerGenerator:
             band_baseline_bonus + mental_lean * 6.0,
         )
 
-        consistency = self._skill_value(
-            player_rng,
-            (technique + movement) / 200.0,
-            country.competition_quality_norm,
-        )
-        clutch = self._skill_value(
-            player_rng,
-            mental / 99.0,
-            country.competition_quality_norm,
-        )
-        recovery = self._skill_value(
-            player_rng,
-            physical / 99.0,
-            country.development_quality_norm,
-        )
+        consistency = self._skill_value(player_rng, (technique + movement) / 200.0, country.competition_quality_norm)
+        clutch = self._skill_value(player_rng, mental / 99.0, country.competition_quality_norm)
+        recovery = self._skill_value(player_rng, physical / 99.0, country.development_quality_norm)
 
         potential_floor = self._potential_floor_by_band(quality_band)
+        potential_center = self._potential_center_by_band(quality_band)
+        potential_spread = self._potential_spread_by_band(quality_band)
         hidden = HiddenCareerTraits(
             potential_ceiling=max(
                 potential_floor,
@@ -128,8 +118,9 @@ class PlayerGenerator:
                     55,
                     99,
                     # Innate ceiling depends on rarity band + deterministic RNG,
-                    # never on the country development ratings.
-                    int(round(66 + self._innate_band_score(quality_band) * 30 + band_ceiling_bonus + player_rng.uniform(-8, 8))),
+                    # never on the country development ratings. Even the rarest
+                    # band keeps a small distribution instead of becoming 99/99.
+                    int(round(potential_center + player_rng.uniform(-potential_spread, potential_spread))),
                 ),
             ),
             growth_curve=player_rng.choice(self.identity_config.growth_curves),
@@ -186,16 +177,6 @@ class PlayerGenerator:
         return self._clamp_float(rng.uniform(0.18, 0.86))
 
     @staticmethod
-    def _innate_band_score(quality_band: TalentQualityBand) -> float:
-        return {
-            TalentQualityBand.SOLID: 0.18,
-            TalentQualityBand.STRONG: 0.36,
-            TalentQualityBand.ELITE: 0.58,
-            TalentQualityBand.SPECIAL: 0.78,
-            TalentQualityBand.GENERATIONAL: 0.96,
-        }[quality_band]
-
-    @staticmethod
     def _quality_band_parameters(quality_band: TalentQualityBand) -> tuple[float, float, float]:
         if quality_band == TalentQualityBand.GENERATIONAL:
             return (22.0, 22.0, 1.1)
@@ -209,12 +190,30 @@ class PlayerGenerator:
 
     @staticmethod
     def _potential_floor_by_band(quality_band: TalentQualityBand) -> int:
-        if quality_band == TalentQualityBand.GENERATIONAL:
-            return 94
-        if quality_band == TalentQualityBand.SPECIAL:
-            return 87
-        if quality_band == TalentQualityBand.ELITE:
-            return 80
-        if quality_band == TalentQualityBand.STRONG:
-            return 70
-        return 55
+        return {
+            TalentQualityBand.SOLID: 55,
+            TalentQualityBand.STRONG: 70,
+            TalentQualityBand.ELITE: 80,
+            TalentQualityBand.SPECIAL: 87,
+            TalentQualityBand.GENERATIONAL: 94,
+        }[quality_band]
+
+    @staticmethod
+    def _potential_center_by_band(quality_band: TalentQualityBand) -> float:
+        return {
+            TalentQualityBand.SOLID: 67.0,
+            TalentQualityBand.STRONG: 76.0,
+            TalentQualityBand.ELITE: 85.0,
+            TalentQualityBand.SPECIAL: 92.0,
+            TalentQualityBand.GENERATIONAL: 97.0,
+        }[quality_band]
+
+    @staticmethod
+    def _potential_spread_by_band(quality_band: TalentQualityBand) -> float:
+        return {
+            TalentQualityBand.SOLID: 8.0,
+            TalentQualityBand.STRONG: 7.0,
+            TalentQualityBand.ELITE: 6.0,
+            TalentQualityBand.SPECIAL: 5.0,
+            TalentQualityBand.GENERATIONAL: 3.0,
+        }[quality_band]

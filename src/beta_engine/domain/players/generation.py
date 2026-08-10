@@ -1,4 +1,4 @@
-"""Deterministic player generator influenced by country-level strength."""
+"""Deterministic player generator influenced by country development environment."""
 
 from __future__ import annotations
 
@@ -21,12 +21,12 @@ class PlayerGenerator:
         """Legacy-compatible generation path used by non-planner tests/helpers."""
 
         player_rng = self.rng.branch(SeedScope.SEASON, "player", country.code, sequence)
-        talent_index = self.country_talent_model.talent_index(country)
+        development_environment = self.country_talent_model.development_environment(country)
         return self._generate_from_rng(
             country=country,
             sequence=sequence,
             player_rng=player_rng,
-            talent_index=talent_index,
+            development_environment=development_environment,
             quality_band=TalentQualityBand.SOLID,
             bias_profile=None,
         )
@@ -43,12 +43,12 @@ class PlayerGenerator:
         """Planner-driven runtime path: deterministic talent seed + quality band -> player."""
 
         player_rng = DeterministicRng(talent_seed_value).branch(SeedScope.SEASON, "planned_player", country.code, sequence)
-        talent_index = self.country_talent_model.talent_index(country)
+        development_environment = self.country_talent_model.development_environment(country)
         return self._generate_from_rng(
             country=country,
             sequence=sequence,
             player_rng=player_rng,
-            talent_index=talent_index,
+            development_environment=development_environment,
             quality_band=quality_band,
             bias_profile=bias_profile,
         )
@@ -59,7 +59,7 @@ class PlayerGenerator:
         country: Country,
         sequence: int,
         player_rng: DeterministicRng,
-        talent_index: float,
+        development_environment: float,
         quality_band: TalentQualityBand,
         bias_profile: CountryGenerationBiasProfile | None,
     ) -> Player:
@@ -71,36 +71,54 @@ class PlayerGenerator:
         age = self._clamp_int(
             17,
             36,
-            int(round(player_rng.uniform(17, 33) + (1.0 - talent_index) * 1.6 - age_shift)),
+            int(round(player_rng.uniform(17, 33) + (1.0 - development_environment) * 1.6 - age_shift)),
         )
         name = self._build_name(player_rng, country, sequence)
 
         archetype = player_rng.choice(self.identity_config.archetypes)
         play_style = player_rng.choice(self.identity_config.play_styles)
 
+        # Country V1 affects realised development environment, not innate talent.
         technique = self._skill_value(
             player_rng,
-            talent_index,
-            country.development_pipeline_quality,
+            development_environment,
+            country.development_quality_norm,
             band_baseline_bonus + technical_lean * 6.0,
         )
-        movement = self._skill_value(player_rng, talent_index, country.infrastructure_level, band_baseline_bonus)
+        movement = self._skill_value(
+            player_rng,
+            development_environment,
+            country.squash_access_norm,
+            band_baseline_bonus,
+        )
         physical = self._skill_value(
             player_rng,
-            talent_index,
-            self.country_talent_model.population_factor(country),
+            development_environment,
+            country.development_quality_norm,
             band_baseline_bonus - technical_lean * 4.0,
         )
         mental = self._skill_value(
             player_rng,
-            talent_index,
-            country.historical_tradition,
+            development_environment,
+            country.competition_quality_norm,
             band_baseline_bonus + mental_lean * 6.0,
         )
 
-        consistency = self._skill_value(player_rng, (technique + movement) / 200.0, country.elite_system_strength)
-        clutch = self._skill_value(player_rng, mental / 99.0, country.historical_tradition)
-        recovery = self._skill_value(player_rng, physical / 99.0, country.infrastructure_level)
+        consistency = self._skill_value(
+            player_rng,
+            (technique + movement) / 200.0,
+            country.competition_quality_norm,
+        )
+        clutch = self._skill_value(
+            player_rng,
+            mental / 99.0,
+            country.competition_quality_norm,
+        )
+        recovery = self._skill_value(
+            player_rng,
+            physical / 99.0,
+            country.development_quality_norm,
+        )
 
         potential_floor = self._potential_floor_by_band(quality_band)
         hidden = HiddenCareerTraits(
@@ -109,18 +127,18 @@ class PlayerGenerator:
                 self._clamp_int(
                     55,
                     99,
-                    int(round(66 + talent_index * 30 + band_ceiling_bonus + player_rng.uniform(-8, 8))),
+                    # Innate ceiling depends on rarity band + deterministic RNG,
+                    # never on the country development ratings.
+                    int(round(66 + self._innate_band_score(quality_band) * 30 + band_ceiling_bonus + player_rng.uniform(-8, 8))),
                 ),
             ),
             growth_curve=player_rng.choice(self.identity_config.growth_curves),
-            professionalism=self._clamp_float(
-                country.development_pipeline_quality * 0.62 + professional_lean * 0.33 + player_rng.uniform(0.10, 0.42)
-            ),
-            ambition=self._clamp_float(country.squash_popularity_norm * 0.50 + player_rng.uniform(0.12, 0.55)),
-            travel_tolerance=self._travel_tolerance(country, player_rng),
+            professionalism=self._clamp_float(0.48 + professional_lean * 0.20 + player_rng.uniform(-0.22, 0.24)),
+            ambition=self._clamp_float(player_rng.uniform(0.22, 0.88)),
+            travel_tolerance=self._travel_tolerance(player_rng),
             schedule_aggression=self._clamp_float(player_rng.uniform(0.18, 0.82)),
-            injury_proneness=self._clamp_float(1.0 - (country.infrastructure_level * 0.55 + player_rng.uniform(0.12, 0.42))),
-            resilience=self._clamp_float(country.historical_tradition * 0.42 + player_rng.uniform(0.24, 0.68)),
+            injury_proneness=self._clamp_float(player_rng.uniform(0.08, 0.72)),
+            resilience=self._clamp_float(player_rng.uniform(0.22, 0.90)),
         )
 
         return Player(
@@ -156,20 +174,26 @@ class PlayerGenerator:
     def _skill_value(
         self,
         rng: DeterministicRng,
-        talent_index: float,
+        development_environment: float,
         contextual_factor: float,
         additive_bonus: float = 0.0,
     ) -> int:
-        baseline = 34 + talent_index * 36 + contextual_factor * 18 + additive_bonus
+        baseline = 34 + development_environment * 36 + contextual_factor * 18 + additive_bonus
         noise = rng.uniform(-8.0, 8.0)
         return self._clamp_int(20, 99, int(round(baseline + noise)))
 
-    def _travel_tolerance(self, country: Country, rng: DeterministicRng) -> float:
-        if country.travel_affinity:
-            affinity = sum(country.travel_affinity.values()) / len(country.travel_affinity)
-        else:
-            affinity = 0.5
-        return self._clamp_float(affinity * 0.68 + rng.uniform(0.08, 0.42))
+    def _travel_tolerance(self, rng: DeterministicRng) -> float:
+        return self._clamp_float(rng.uniform(0.18, 0.86))
+
+    @staticmethod
+    def _innate_band_score(quality_band: TalentQualityBand) -> float:
+        return {
+            TalentQualityBand.SOLID: 0.18,
+            TalentQualityBand.STRONG: 0.36,
+            TalentQualityBand.ELITE: 0.58,
+            TalentQualityBand.SPECIAL: 0.78,
+            TalentQualityBand.GENERATIONAL: 0.96,
+        }[quality_band]
 
     @staticmethod
     def _quality_band_parameters(quality_band: TalentQualityBand) -> tuple[float, float, float]:

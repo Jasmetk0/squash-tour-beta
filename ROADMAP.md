@@ -1,6 +1,6 @@
 # Squash Engine roadmap
 
-This is a milestone summary, not a second product constitution. **Master Vision v42** and `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` take precedence; `docs/ENGINE_UX_SPEC.md` provides subordinate migration guidance. Planned behavior must not be described as implemented unless verified in the repository.
+This is a milestone summary, not a second product constitution. **Master Vision v42** plus newer explicit decisions recorded in `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` take precedence; `docs/ENGINE_UX_SPEC.md` provides subordinate migration guidance. Planned behavior must not be described as implemented unless verified in the repository.
 
 ## 1. Canonical foundation and migration safety
 
@@ -9,6 +9,7 @@ This is a milestone summary, not a second product constitution. **Master Vision 
 - Preserve deterministic replay, historical snapshots, provenance, auditability and operation-scoped validation.
 - Keep `World Event Log`, `Audit Log`, `Task Center` and `Notification Center` as separate concepts.
 - Migrate legacy Main/Official branch terminology only with compatibility and persistence planning.
+- Preserve still-valid earlier canon when synchronizing newer Master revisions; absence from a short summary is not evidence of supersession.
 
 ## 2. Application shell and Admin/Viewer scopes
 
@@ -48,7 +49,9 @@ This is a milestone summary, not a second product constitution. **Master Vision 
 
 - Build matches **rally-by-rally**, not shot-by-shot.
 - Implement the hidden multi-phase control/pressure process without prematurely freezing still-open probability mathematics.
-- Add the three distinct stamina systems with capacity, current state and recovery.
+- Keep three distinct **physical stamina match dimensions/bars** with capacity/current-state/recovery behavior.
+- Follow the newer V1 direction that these three physical bars derive from the lighter underlying attribute/state model rather than becoming three independent standalone trainable attributes; exact derivation remains open.
+- Add one or more mental match-state dimensions only as a provisional direction until count/names/mechanics are explicitly decided.
 - Let player AI estimate opponent fatigue and vary effort; it must not read hidden Admin truth directly.
 - Keep serve influence squash-appropriate and relatively weak.
 - Use simplified `No Let / Yes Let / Stroke` interference in v1.
@@ -57,8 +60,9 @@ This is a milestone summary, not a second product constitution. **Master Vision 
 
 ## 7. Player state and ranking policy
 
+- Keep the first-version attribute model intentionally lighter and extensible rather than prematurely freezing a final large attribute catalogue.
 - Implement one current **Form** per player, updated after played matches and regressing toward an individual long-term norm rather than resetting.
-- Keep Form separate from long-term attributes and stamina capacity.
+- Keep Form separate from long-term attributes and physical stamina state/capacity.
 - Preserve v42 handling of W/O, DQ, RET and abnormal/no-contest cases.
 - Official Run season `2000/01` starts with Best 15; later seasons initially inherit the previous season's effective Best N while remaining independently configurable.
 - Preserve historical ranking-policy snapshots.
@@ -99,4 +103,4 @@ This is a milestone summary, not a second product constitution. **Master Vision 
 - No branch is Main/Official; Viewer Branch is display selection only.
 - Package snapshots are not live links to global source Packages.
 - Do not claim target behavior as already implemented.
-- Do not silently finalize open/provisional areas such as final navigation, Viewer reveal modes, Country Ranking, full seed contract, final Forecast architecture, complete Entry Freeze rules or Match Reconstruction probability details.
+- Do not silently finalize open/provisional areas such as final navigation, Viewer reveal modes, Country Ranking, full seed contract, final Forecast architecture, complete Entry Freeze rules, Match Reconstruction probability details, exact stamina derivation or mental-bar mechanics.

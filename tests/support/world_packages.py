@@ -25,7 +25,14 @@ def load_simulation_test_countries() -> CountriesConfig:
         code = f"X{chr(65 + index // 26)}{chr(65 + index % 26)}"
         update: dict[str, object] = {"code": code, "name": f"Simulation Test {index + 1}"}
         if index >= 10:
-            update.update({"wealth_support": 1, "squash_popularity": 1, "squash_tradition": 1, "system_quality": 1})
+            update.update({
+                "squash_popularity": 1,
+                "squash_access": 1,
+                "development_quality": 1,
+                "competition_quality": 1,
+                "elite_support": 1,
+                "squash_tradition": 1,
+            })
         countries.append(base.model_copy(update=update))
     return CountriesConfig(dataset_status="disposable_simulation_test", countries=countries)
 

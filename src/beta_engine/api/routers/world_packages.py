@@ -2,19 +2,21 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from beta_engine.api.country_v1_schemas import (
+    CountryV1Response,
+    WorldPackageCountriesV1Response,
+    WorldPackageCountryV1CreateRequest,
+    WorldPackageCountryV1DetailResponse,
+    WorldPackageCountryV1UpdateRequest,
+    WorldPackageCountryV1UpdateResponse,
+)
 from beta_engine.api.deps import get_season_registry_service, get_world_package_clone_service, get_world_package_countries_service, get_world_package_effective_population_service, get_world_package_registry_service, get_world_package_weekly_intake_preview_service, get_world_package_validation_service
 from beta_engine.api.schemas import (
     WorldPackageCloneErrorResponse,
     WorldPackageCloneRequest,
     WorldPackageCloneResponse,
-    CountryResponse,
-    WorldPackageCountriesResponse,
-    WorldPackageCountryDetailResponse,
-    WorldPackageCountryUpdateRequest,
-    WorldPackageCountryCreateRequest,
     WorldPackageCountryDeleteResponse,
     WorldPackageCountryPopulationUpdateRequest,
-    WorldPackageCountryUpdateResponse,
     WorldPackageGeographyResponse,
     WorldPackageCountryEffectivePopulationResponse,
     WeeklyIntakePreviewResponse,
@@ -26,7 +28,7 @@ from beta_engine.api.schemas import (
     WorldPackageValidationResponse,
 )
 from beta_engine.application.world_package_clone_service import WorldPackageCloneResult, WorldPackageCloneService
-from beta_engine.application.world_package_countries_service import WorldPackageCountriesResult, WorldPackageCountriesService, WorldPackageCountryUpdate, WorldPackageCountryPopulationUpdate, WorldPackageCountryCreate, WorldPackageMutationError
+from beta_engine.application.world_package_countries_service import WorldPackageCountriesResult, WorldPackageCountriesService, WorldPackageCountryPopulationUpdate, WorldPackageMutationError
 from beta_engine.application.world_package_effective_population_service import WorldPackageCountryEffectivePopulationResult, WorldPackageEffectivePopulationService
 from beta_engine.application.world_package_registry_service import OFFICIAL_FAX_WORLD_ID, WorldPackageRegistryRecord, WorldPackageRegistryService
 from beta_engine.application.world_package_validation_service import WorldPackageValidationResult, WorldPackageValidationService
@@ -48,8 +50,12 @@ def _to_validation(result: WorldPackageValidationResult) -> WorldPackageValidati
     return WorldPackageValidationResponse.model_validate(result, from_attributes=True)
 
 
-def _to_countries(result: WorldPackageCountriesResult) -> WorldPackageCountriesResponse:
-    return WorldPackageCountriesResponse(
+def _to_country(country) -> CountryV1Response:
+    return CountryV1Response.model_validate(country.model_dump(mode="json"))
+
+
+def _to_countries(result: WorldPackageCountriesResult) -> WorldPackageCountriesV1Response:
+    return WorldPackageCountriesV1Response(
         world_id=result.world_id,
         world_name=result.world_name,
         type=result.type,
@@ -57,7 +63,18 @@ def _to_countries(result: WorldPackageCountriesResult) -> WorldPackageCountriesR
         read_only=result.read_only,
         country_count=result.country_count,
         source_path=result.source_path,
-        countries=[CountryResponse.model_validate(country.model_dump(mode="json")) for country in result.countries],
+        countries=[_to_country(country) for country in result.countries],
+    )
+
+
+def _to_country_detail(result) -> WorldPackageCountryV1DetailResponse:
+    return WorldPackageCountryV1DetailResponse(
+        package=_to_summary(result.package),
+        country=_to_country(result.country),
+        region=result.region.model_dump() if result.region else None,
+        continent=result.continent.model_dump() if result.continent else None,
+        travel_region=result.travel_region.model_dump() if result.travel_region else None,
+        source_path=result.source_path,
     )
 
 
@@ -145,38 +162,42 @@ def clone_world_package(
     return _to_clone_response(result)
 
 
-@router.get("/{world_id}/countries", response_model=WorldPackageCountriesResponse)
+@router.get("/{world_id}/countries", response_model=WorldPackageCountriesV1Response)
 def get_world_package_countries(
     world_id: str,
     service: WorldPackageCountriesService = Depends(get_world_package_countries_service),
-) -> WorldPackageCountriesResponse:
+) -> WorldPackageCountriesV1Response:
     result = service.get_countries(world_id)
     if result is None:
         raise HTTPException(status_code=404, detail=f"world package '{world_id}' not found")
     return _to_countries(result)
 
 
-@router.post("/{world_id}/countries", response_model=WorldPackageCountryUpdateResponse, status_code=201)
+@router.post("/{world_id}/countries", response_model=WorldPackageCountryV1UpdateResponse, status_code=201)
 def create_world_package_country(
-    world_id: str, payload: WorldPackageCountryCreateRequest,
+    world_id: str,
+    payload: WorldPackageCountryV1CreateRequest,
     service: WorldPackageCountriesService = Depends(get_world_package_countries_service),
-) -> WorldPackageCountryUpdateResponse:
+) -> WorldPackageCountryV1UpdateResponse:
     try:
-        result = service.create_country(world_id, WorldPackageCountryCreate.model_validate(payload.model_dump()))
+        # Service accepts a Pydantic value object and relies only on the shared
+        # V1 field contract; legacy service DTOs are no longer exposed publicly.
+        result = service.create_country(world_id, payload)  # type: ignore[arg-type]
     except WorldPackageMutationError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
-    detail = result.detail
-    detail_response = WorldPackageCountryDetailResponse(
-        package=_to_summary(detail.package), country=CountryResponse.model_validate(detail.country.model_dump(mode="json")),
-        region=detail.region.model_dump() if detail.region else None, continent=detail.continent.model_dump() if detail.continent else None,
-        travel_region=detail.travel_region.model_dump() if detail.travel_region else None, source_path=detail.source_path,
+    detail_response = _to_country_detail(result.detail)
+    return WorldPackageCountryV1UpdateResponse(
+        country_detail=detail_response,
+        package=detail_response.package,
+        validation=_to_validation(result.validation),
     )
-    return WorldPackageCountryUpdateResponse(country_detail=detail_response, package=detail_response.package, validation=_to_validation(result.validation))
 
 
 @router.delete("/{world_id}/countries/{country_code}", response_model=WorldPackageCountryDeleteResponse)
 def delete_world_package_country(
-    world_id: str, country_code: str, expected_package_fingerprint: str = Query(min_length=1),
+    world_id: str,
+    country_code: str,
+    expected_package_fingerprint: str = Query(min_length=1),
     service: WorldPackageCountriesService = Depends(get_world_package_countries_service),
 ) -> WorldPackageCountryDeleteResponse:
     try:
@@ -184,7 +205,9 @@ def delete_world_package_country(
     except WorldPackageMutationError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
     return WorldPackageCountryDeleteResponse(
-        deleted_country_code=result.deleted_country_code, package=_to_summary(result.package), validation=_to_validation(result.validation)
+        deleted_country_code=result.deleted_country_code,
+        package=_to_summary(result.package),
+        validation=_to_validation(result.validation),
     )
 
 
@@ -207,70 +230,56 @@ def get_world_package_country_effective_population(
     return _to_effective_population(result)
 
 
-@router.get("/{world_id}/countries/{country_code}", response_model=WorldPackageCountryDetailResponse)
+@router.get("/{world_id}/countries/{country_code}", response_model=WorldPackageCountryV1DetailResponse)
 def get_world_package_country(
     world_id: str,
     country_code: str,
     service: WorldPackageCountriesService = Depends(get_world_package_countries_service),
-) -> WorldPackageCountryDetailResponse:
+) -> WorldPackageCountryV1DetailResponse:
     result = service.get_country(world_id, country_code)
     if result is None:
         if service.registry_service.get_package(world_id) is None:
             raise HTTPException(status_code=404, detail=f"world package '{world_id}' not found")
         raise HTTPException(status_code=404, detail=f"country '{country_code.upper()}' not found in world package '{world_id}'")
-    return WorldPackageCountryDetailResponse(
-        package=_to_summary(result.package),
-        country=CountryResponse.model_validate(result.country.model_dump(mode="json")),
-        region=result.region.model_dump() if result.region else None,
-        continent=result.continent.model_dump() if result.continent else None,
-        travel_region=result.travel_region.model_dump() if result.travel_region else None,
-        source_path=result.source_path,
-    )
+    return _to_country_detail(result)
 
 
-@router.put("/{world_id}/countries/{country_code}", response_model=WorldPackageCountryUpdateResponse)
+@router.put("/{world_id}/countries/{country_code}", response_model=WorldPackageCountryV1UpdateResponse)
 def update_world_package_country(
     world_id: str,
     country_code: str,
-    payload: WorldPackageCountryUpdateRequest,
+    payload: WorldPackageCountryV1UpdateRequest,
     service: WorldPackageCountriesService = Depends(get_world_package_countries_service),
-) -> WorldPackageCountryUpdateResponse:
+) -> WorldPackageCountryV1UpdateResponse:
     try:
-        result = service.update_country(world_id, country_code, WorldPackageCountryUpdate.model_validate(payload.model_dump()))
+        result = service.update_country(world_id, country_code, payload)  # type: ignore[arg-type]
     except WorldPackageMutationError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
-    detail = result.detail
-    detail_response = WorldPackageCountryDetailResponse(
-        package=_to_summary(detail.package),
-        country=CountryResponse.model_validate(detail.country.model_dump(mode="json")),
-        region=detail.region.model_dump() if detail.region else None,
-        continent=detail.continent.model_dump() if detail.continent else None,
-        travel_region=detail.travel_region.model_dump() if detail.travel_region else None,
-        source_path=detail.source_path,
-    )
-    return WorldPackageCountryUpdateResponse(
+    detail_response = _to_country_detail(result.detail)
+    return WorldPackageCountryV1UpdateResponse(
         country_detail=detail_response,
         package=detail_response.package,
         validation=_to_validation(result.validation),
     )
 
 
-@router.put("/{world_id}/countries/{country_code}/population", response_model=WorldPackageCountryUpdateResponse)
+@router.put("/{world_id}/countries/{country_code}/population", response_model=WorldPackageCountryV1UpdateResponse)
 def update_world_package_country_population(
-    world_id: str, country_code: str, payload: WorldPackageCountryPopulationUpdateRequest,
+    world_id: str,
+    country_code: str,
+    payload: WorldPackageCountryPopulationUpdateRequest,
     service: WorldPackageCountriesService = Depends(get_world_package_countries_service),
-) -> WorldPackageCountryUpdateResponse:
+) -> WorldPackageCountryV1UpdateResponse:
     try:
         result = service.update_population(world_id, country_code, WorldPackageCountryPopulationUpdate.model_validate(payload.model_dump()))
     except WorldPackageMutationError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
-    detail = result.detail
-    detail_response = WorldPackageCountryDetailResponse(
-        package=_to_summary(detail.package), country=CountryResponse.model_validate(detail.country.model_dump(mode="json")),
-        region=detail.region.model_dump() if detail.region else None, continent=detail.continent.model_dump() if detail.continent else None,
-        travel_region=detail.travel_region.model_dump() if detail.travel_region else None, source_path=detail.source_path,
+    detail_response = _to_country_detail(result.detail)
+    return WorldPackageCountryV1UpdateResponse(
+        country_detail=detail_response,
+        package=detail_response.package,
+        validation=_to_validation(result.validation),
     )
-    return WorldPackageCountryUpdateResponse(country_detail=detail_response, package=detail_response.package, validation=_to_validation(result.validation))
 
 
 @router.get("/{world_id}/weekly-intake/preview", response_model=WeeklyIntakePreviewResponse)

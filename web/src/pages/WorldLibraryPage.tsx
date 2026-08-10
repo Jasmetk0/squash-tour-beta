@@ -3,8 +3,8 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
-import { cloneOfficialWorldPackage, getWorldPackage, getWorldPackageCountries, getWorldPackageCountry, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages, updateWorldPackageCountry } from '../api/client'
-import type { CountryRecord, WorldPackage, WorldPackageCloneResponse, WorldPackageCountryDetail, WorldPackageCountryUpdatePayload, WorldPackageGeography, WorldPackageValidation } from '../api/types'
+import { cloneOfficialWorldPackage, getWorldPackage, getWorldPackageCountries, getWorldPackageCountry, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages, updateWorldPackageCountry, updateWorldPackageCountryPopulation } from '../api/client'
+import type { CountryRecord, WorldPackage, WorldPackageCloneResponse, WorldPackageCountryDetail, WorldPackageCountryPopulationUpdatePayload, WorldPackageCountryUpdatePayload, WorldPackageGeography, WorldPackageValidation } from '../api/types'
 import { SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -434,6 +434,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
   const { worldId = '', countryCode = '' } = useParams()
   const queryClient = useQueryClient()
   const [editing, setEditing] = useState(false)
+  const [populationEditing, setPopulationEditing] = useState(false)
   const [success, setSuccess] = useState('')
   const query = useQuery({ queryKey: ['world-package-country', worldId, countryCode], queryFn: () => getWorldPackageCountry(worldId, countryCode), enabled: Boolean(worldId && countryCode), retry: false })
   const geographyQuery = useQuery({ queryKey: ['world-package-geography', worldId], queryFn: () => getWorldPackageGeography(worldId), enabled: Boolean(worldId), retry: false })
@@ -450,6 +451,18 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
       ])
     }
   })
+  const populationMutation = useMutation({
+    mutationFn: (payload: WorldPackageCountryPopulationUpdatePayload) => updateWorldPackageCountryPopulation(worldId, countryCode, payload),
+    onSuccess: async (response) => {
+      queryClient.setQueryData(['world-package-country', worldId, countryCode], response.country_detail)
+      setPopulationEditing(false); setSuccess(`Population saved. Validation status: ${response.validation.status}.`)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['world-package-country', worldId, countryCode] }),
+        queryClient.invalidateQueries({ queryKey: ['world-package-countries', worldId] }), queryClient.invalidateQueries({ queryKey: ['world-package', worldId] }),
+        queryClient.invalidateQueries({ queryKey: ['world-package-validation', worldId] }), queryClient.invalidateQueries({ queryKey: ['world-packages'] })
+      ])
+    }
+  })
   const data = query.data
   const canEdit = data?.package.type === 'custom' && data.package.source === 'custom_config' && data.package.editable
   const timeline = Object.entries(data?.country.population_by_year ?? {}).filter(([, value]) => value != null).sort(([a], [b]) => Number(a) - Number(b))
@@ -461,17 +474,19 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
     {data && <>
       <div className="page-intro"><h2>{data.country.name}</h2><p className="subtitle"><code>{data.country.code}</code></p></div>
       <p><strong>{data.package.name} · {data.package.type === 'custom' ? 'Custom' : 'Built-in'} · {canEdit ? 'Editable source' : 'Read-only'}</strong></p>
-      {canEdit && !editing && <button type="button" onClick={() => { setEditing(true); setSuccess(''); mutation.reset() }}>Edit country</button>}
+      {canEdit && !editing && !populationEditing && <button type="button" onClick={() => { setEditing(true); setSuccess(''); mutation.reset() }}>Edit country</button>}
       {success && <p className="status" role="status">{success}</p>}
       {editing && <CountryEditForm detail={data} geography={geographyQuery.data} saving={mutation.isPending} error={mutation.error} onCancel={() => { setEditing(false); mutation.reset() }} onSave={(payload) => mutation.mutate(payload)} />}
       {!editing && <SectionCard title="Overview">
         <DetailRow label="Package" value={data.package.name} /><DetailRow label="Region" value={data.region?.name ?? data.country.region} /><DetailRow label="Travel Region" value={data.travel_region?.name ?? data.country.travel_region ?? '—'} /><DetailRow label="Area" value={`${formatNumber(data.country.area_km2)} km²`} /><DetailRow label="Current/default population" value={formatNumber(data.country.default_population ?? data.country.population)} />
         {data.country.notes && <DetailRow label="Notes" value={data.country.notes} />}
       </SectionCard>}
-      <SectionCard title="Population">
+      {!populationEditing && <SectionCard title="Population">
+        {canEdit && !editing && <button type="button" onClick={() => { setPopulationEditing(true); setSuccess(''); populationMutation.reset() }}>Edit population</button>}
         <DetailRow label="Effective/default population" value={formatNumber(data.country.default_population ?? data.country.population)} /><DetailRow label="Default authored year" value={data.country.default_population_year ?? '—'} /><DetailRow label="Authored population years" value={timeline.length} /><DetailRow label="Earliest authored year" value={timeline[0]?.[0] ?? '—'} /><DetailRow label="Latest authored year" value={timeline[timeline.length - 1]?.[0] ?? '—'} />
-        <table aria-label="Authored population timeline"><thead><tr><th>Year</th><th>Population</th></tr></thead><tbody>{timeline.map(([year, value]) => <tr key={year}><td>{year}</td><td>{formatNumber(value)}</td></tr>)}</tbody></table>
-      </SectionCard>
+        <div style={{maxHeight: '28rem', overflowY: 'auto'}}><table aria-label="Authored population timeline"><thead><tr><th>Year</th><th>Population</th></tr></thead><tbody>{timeline.map(([year, value]) => <tr key={year}><td>{year}{year === '2020' ? ' · Default year' : ''}</td><td>{formatNumber(value)}</td></tr>)}</tbody></table></div>
+      </SectionCard>}
+      {populationEditing && <PopulationEditForm detail={data} saving={populationMutation.isPending} error={populationMutation.error} onCancel={() => { setPopulationEditing(false); populationMutation.reset() }} onSave={payload => populationMutation.mutate(payload)} />}
       <SectionCard title="Geography"><DetailRow label="Area km²" value={formatNumber(data.country.area_km2)} /><DetailRow label="Region" value={data.region ? `${data.region.name} (${data.region.code})` : data.country.region} /><DetailRow label="Continent" value={data.continent?.name ?? '—'} /><DetailRow label="Travel Region" value={data.travel_region ? `${data.travel_region.name} (${data.travel_region.code})` : data.country.travel_region ?? '—'} /></SectionCard>
       <SectionCard title="Squash / Country strength">
         <DetailRow label="Wealth Support" value={data.country.wealth_support} /><DetailRow label="Squash Popularity" value={data.country.squash_popularity} /><DetailRow label="Squash Tradition" value={data.country.squash_tradition} /><DetailRow label="System Quality" value={data.country.system_quality} /><DetailRow label="Competition Density" value={data.country.competition_density ?? '—'} /><DetailRow label="Federation Quality" value={data.country.federation_quality ?? '—'} /><DetailRow label="Court Count" value={formatNumber(data.country.court_count)} />
@@ -480,6 +495,35 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
       <details><summary>Technical source</summary><code>{data.source_path}</code></details>
     </>}
   </section>
+}
+
+type PopulationRow = { year: string, population: string }
+function PopulationEditForm({ detail, saving, error, onCancel, onSave }: { detail: WorldPackageCountryDetail, saving: boolean, error: unknown, onCancel: () => void, onSave: (payload: WorldPackageCountryPopulationUpdatePayload) => void }): JSX.Element {
+  const initial = Object.entries(detail.country.population_by_year ?? {}).filter((entry): entry is [string, number] => entry[1] != null).map(([year, population]) => ({ year, population: String(population) }))
+  const [rows, setRows] = useState<PopulationRow[]>(initial)
+  const [newYear, setNewYear] = useState('')
+  const [newPopulation, setNewPopulation] = useState('')
+  const [validationError, setValidationError] = useState('')
+  const sorted = [...rows].sort((a, b) => Number(a.year) - Number(b.year))
+  const add = () => {
+    const year = Number(newYear), population = Number(newPopulation)
+    if (!Number.isInteger(year) || year < 1955 || year > 2050) return setValidationError('Year must be an integer from 1955 to 2050.')
+    if (!Number.isInteger(population) || population <= 0) return setValidationError('Population must be a positive integer.')
+    if (rows.some(row => row.year === String(year))) return setValidationError(`Year ${year} is already authored.`)
+    setRows(current => [...current, { year: String(year), population: String(population) }]); setNewYear(''); setNewPopulation(''); setValidationError('')
+  }
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+    const invalid = rows.find(row => !Number.isInteger(Number(row.population)) || Number(row.population) <= 0)
+    if (invalid) return setValidationError(`Population for ${invalid.year} must be a positive integer.`)
+    onSave({ values_by_year: Object.fromEntries(sorted.map(row => [row.year, Number(row.population)])), expected_package_fingerprint: detail.package.fingerprint })
+  }
+  return <SectionCard title="Population"><form onSubmit={submit}>
+    <p><strong>Default year: 2020</strong></p>{(validationError || error != null) && <p className="error" role="alert">{validationError || formatApiError(error)}</p>}
+    <table aria-label="Edit authored population timeline"><thead><tr><th>Year</th><th>Population</th><th /></tr></thead><tbody>{sorted.map(row => <tr key={row.year}><td>{row.year}{row.year === '2020' ? ' · Default year' : ''}</td><td><input aria-label={`Population ${row.year}`} type="number" min="1" step="1" required value={row.population} onChange={event => setRows(current => current.map(item => item.year === row.year ? {...item, population: event.target.value} : item))} /></td><td>{row.year !== '2020' && <button type="button" onClick={() => setRows(current => current.filter(item => item.year !== row.year))}>Remove {row.year}</button>}</td></tr>)}</tbody></table>
+    <fieldset><legend>Add authored year</legend><label>Year<input aria-label="New population year" type="number" min="1955" max="2050" step="1" value={newYear} onChange={event => setNewYear(event.target.value)} /></label><label>Population<input aria-label="New population value" type="number" min="1" step="1" value={newPopulation} onChange={event => setNewPopulation(event.target.value)} /></label><button type="button" onClick={add}>+ Add authored year</button></fieldset>
+    <p><button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save population'}</button> <button type="button" disabled={saving} onClick={onCancel}>Cancel</button></p>
+  </form></SectionCard>
 }
 
 type StyleRow = { id: number, key: string, value: string }

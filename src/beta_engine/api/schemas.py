@@ -568,6 +568,23 @@ class WorldPackageCountryUpdateRequest(BaseModel):
     expected_package_fingerprint: str | None = None
 
 
+class WorldPackageCountryPopulationUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    values_by_year: dict[int, int]
+    expected_package_fingerprint: str | None = None
+
+    @field_validator("values_by_year")
+    @classmethod
+    def validate_population(cls, value: dict[int, int]) -> dict[int, int]:
+        if 2020 not in value:
+            raise ValueError("values_by_year must contain default year 2020")
+        if any(year < 1955 or year > 2050 for year in value):
+            raise ValueError("population years must be between 1955 and 2050")
+        if any(isinstance(population, bool) or population <= 0 for population in value.values()):
+            raise ValueError("population values must be positive integers")
+        return value
+
+
 class WeeklyIntakeCountryAllocationResponse(BaseModel):
     country_code: str
     allocated_count: int

@@ -1711,6 +1711,11 @@ export type WorldPackageCountryUpdateResponse = {
   validation: WorldPackageValidation
 }
 
+export type WorldPackageCountryPopulationUpdatePayload = {
+  values_by_year: Record<string, number>
+  expected_package_fingerprint?: string
+}
+
 
 
 export type RunWeeklyIntakeCohortCountryAllocation = {

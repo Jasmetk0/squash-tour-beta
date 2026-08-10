@@ -11,6 +11,7 @@ from beta_engine.api.schemas import (
     WorldPackageCountriesResponse,
     WorldPackageCountryDetailResponse,
     WorldPackageCountryUpdateRequest,
+    WorldPackageCountryPopulationUpdateRequest,
     WorldPackageCountryUpdateResponse,
     WorldPackageGeographyResponse,
     WorldPackageCountryEffectivePopulationResponse,
@@ -23,7 +24,7 @@ from beta_engine.api.schemas import (
     WorldPackageValidationResponse,
 )
 from beta_engine.application.world_package_clone_service import WorldPackageCloneResult, WorldPackageCloneService
-from beta_engine.application.world_package_countries_service import WorldPackageCountriesResult, WorldPackageCountriesService, WorldPackageCountryUpdate, WorldPackageMutationError
+from beta_engine.application.world_package_countries_service import WorldPackageCountriesResult, WorldPackageCountriesService, WorldPackageCountryUpdate, WorldPackageCountryPopulationUpdate, WorldPackageMutationError
 from beta_engine.application.world_package_effective_population_service import WorldPackageCountryEffectivePopulationResult, WorldPackageEffectivePopulationService
 from beta_engine.application.world_package_registry_service import OFFICIAL_FAX_WORLD_ID, WorldPackageRegistryRecord, WorldPackageRegistryService
 from beta_engine.application.world_package_validation_service import WorldPackageValidationResult, WorldPackageValidationService
@@ -218,6 +219,24 @@ def update_world_package_country(
         package=detail_response.package,
         validation=_to_validation(result.validation),
     )
+
+
+@router.put("/{world_id}/countries/{country_code}/population", response_model=WorldPackageCountryUpdateResponse)
+def update_world_package_country_population(
+    world_id: str, country_code: str, payload: WorldPackageCountryPopulationUpdateRequest,
+    service: WorldPackageCountriesService = Depends(get_world_package_countries_service),
+) -> WorldPackageCountryUpdateResponse:
+    try:
+        result = service.update_population(world_id, country_code, WorldPackageCountryPopulationUpdate.model_validate(payload.model_dump()))
+    except WorldPackageMutationError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+    detail = result.detail
+    detail_response = WorldPackageCountryDetailResponse(
+        package=_to_summary(detail.package), country=CountryResponse.model_validate(detail.country.model_dump(mode="json")),
+        region=detail.region.model_dump() if detail.region else None, continent=detail.continent.model_dump() if detail.continent else None,
+        travel_region=detail.travel_region.model_dump() if detail.travel_region else None, source_path=detail.source_path,
+    )
+    return WorldPackageCountryUpdateResponse(country_detail=detail_response, package=detail_response.package, validation=_to_validation(result.validation))
 
 
 @router.get("/{world_id}/weekly-intake/preview", response_model=WeeklyIntakePreviewResponse)

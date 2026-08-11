@@ -20,7 +20,7 @@ FAX_WORLD_ID = "official_fax_world"
 FAX_SOURCE_FILES = ("world.json", "geography/continents.json", "geography/regions.json", "geography/travel_regions.json")
 # Versioned from the canonical typed directory representation. Country V1 changes
 # the assembled semantic payload while leaving the built-in source files untouched.
-FAX_REFERENCE_V1_SOURCE_TREE_HASH = "8982e44f61b3ec43188c18019f1efe9b653c72ea028559585c52081510086aff"
+FAX_REFERENCE_V1_SOURCE_TREE_HASH = "01ea1619cd705318d4294d37b50bb655070e0a1b4c18eeecb3807dee40c2cbc1"
 
 
 @dataclass(frozen=True)

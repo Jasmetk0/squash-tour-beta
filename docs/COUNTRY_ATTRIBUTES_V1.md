@@ -1,7 +1,7 @@
 # Country Game Attributes V1
 
 **Status:** `[DECIDED FOR V1]` attribute structure; exact calibration remains open.  
-**Decision date:** 10 Aug 2026.  
+**Decision date:** 10 Aug 2026; numeric-scale amendment 11 Aug 2026.  
 **Scope:** World Package country model and first-version player-pipeline semantics.
 
 ## 1. V1 principle
@@ -16,7 +16,7 @@ A small or weak squash country must retain a non-zero chance of producing a gene
 
 ## 2. Authored Country Game Attributes
 
-All six V1 game attributes are integer ratings from **1 to 5**.
+All six V1 game attributes are numeric ratings from **1 to 5 inclusive**. Fractional values are valid (for example `2.5` or `4.25`); the earlier integer-only wording is superseded. Whole-number values remain valid anchors, and fractional values represent positions between them.
 
 | Attribute | V1 meaning |
 |---|---|
@@ -27,7 +27,7 @@ All six V1 game attributes are integer ratings from **1 to 5**.
 | `elite_support` | Ability to support an elite junior/prospect through the transition to professional squash: funding, travel, physio and international opportunities. |
 | `squash_tradition` | Long-term squash culture, know-how, role models and institutional continuity. |
 
-The exact quantitative meaning of ratings `1 / 2 / 3 / 4 / 5` is intentionally **OPEN** until calibration against simulation output.
+The exact quantitative meaning of the `1 / 2 / 3 / 4 / 5` anchor points and interpolation between them is intentionally **OPEN** until calibration against simulation output.
 
 ## 3. Factual country data, not ratings
 
@@ -93,7 +93,7 @@ Backward-loading bridge for pre-V1 World Packages:
 - legacy `federation_quality` → initial `elite_support`,
 - existing `squash_popularity` and `squash_tradition` remain directly usable.
 
-This mapping is a deterministic migration bridge only; it does **not** claim semantic equivalence. It only fills a V1 field when an actual legacy source exists; missing authored V1 ratings are not silently invented and invalid legacy ratings are rejected rather than clamped.
+This mapping is a deterministic migration bridge only; it does **not** claim semantic equivalence. It only fills a V1 field when an actual legacy source exists; missing authored V1 ratings are not silently invented and invalid legacy ratings are rejected rather than clamped. Valid fractional legacy ratings are preserved rather than rounded.
 
 `style_dna` / national play-style predispositions are deferred beyond V1. They must not bias first-version player style, personality or innate potential by nationality.
 

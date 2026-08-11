@@ -20,14 +20,19 @@ class Server(BootstrapServer):
         players = sorted(registry["players_by_season"]["2000/2001"], key=lambda player: player["player_id"])
         updates = [
             {"player_id": "P-A", "name": "Alpha One", "country_code": "AAA", "nationality": "AAA", "ranking_points": 120, "race_points": 40, "current_ability": 70},
-            {"player_id": "P-B", "name": "Bravo Two", "country_code": "BBB", "nationality": "BBB", "ranking_points": 90, "race_points": 110, "current_ability": 79, "potential_ability": 90},
+            {"player_id": "P-B", "name": "Bravo Two", "country_code": "BBB", "nationality": "BBB", "ranking_points": 90, "race_points": 110, "current_ability": 79},
             {"player_id": "P-C", "name": "Charlie Three", "country_code": "AAA", "nationality": "AAA", "ranking_points": 0, "race_points": 0, "current_ability": 65},
             {"player_id": "P-D", "name": "Delta Four", "country_code": "BBB", "nationality": "BBB", "ranking_points": 90, "race_points": 100, "current_ability": 68},
         ]
         for player, update in zip(players, updates, strict=True):
-            requested_current = int(update["current_ability"])
-            update["current_ability"] = min(requested_current, int(update.get("potential_ability", player["potential_ability"])) + 4)
+            # Ranking fixtures own ranking/current values explicitly. Pin potential
+            # and its hidden ceiling too so the fixture cannot depend on whatever
+            # country-neutral talent draw the initial-pool generator produced.
             player.update(update)
+            player["potential_ability"] = 90
+            player["hidden_career_traits"]["potential_ceiling"] = max(
+                90, int(player["hidden_career_traits"]["potential_ceiling"])
+            )
         registry["players_by_season"]["2000/2001"] = players
         self.active_path.write_text(json.dumps(registry), encoding="utf-8")
 

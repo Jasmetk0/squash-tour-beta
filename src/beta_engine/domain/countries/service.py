@@ -11,9 +11,13 @@ class CountryTalentModel:
     """Derive V1 country-level squash-pipeline factors.
 
     The six authored country ratings describe different stages of the sporting
-    environment.  These helpers intentionally use simple baseline mathematics;
+    environment. These helpers intentionally use simple baseline mathematics;
     exact calibration remains a separate tuning decision.
     """
+
+    # Calibration only. Country V1 requires diminishing population returns but
+    # deliberately leaves the exact curve open for later simulation tuning.
+    POPULATION_DIMINISHING_EXPONENT = 0.40
 
     def population_factor(self, country: Country) -> float:
         """Legacy-safe nonlinear population context used by old generators."""
@@ -32,10 +36,19 @@ class CountryTalentModel:
         return popularity * access
 
     def effective_squash_pool_weight(self, country: Country, population: int | float | None = None) -> float:
-        """Relative player-pool weight used for country intake allocation."""
+        """Relative V1 intake weight from population, popularity and access only.
 
-        base_population = float(country.population if population is None else population)
-        return max(0.0, base_population) * self.participation_factor(country)
+        A fixed global cohort must not be allocated in direct proportion to raw
+        population: very large populations have diminishing sampling returns.
+        Development, competition, elite support, tradition and factual court
+        count intentionally do not enter this prospect-volume calculation.
+        """
+
+        base_population = max(0.0, float(country.population if population is None else population))
+        if base_population <= 0.0:
+            return 0.0
+        population_weight = (base_population / 1_000_000.0) ** self.POPULATION_DIMINISHING_EXPONENT
+        return population_weight * self.participation_factor(country)
 
     def development_environment(self, country: Country) -> float:
         """Simple V1 development/conversion environment, independent of innate talent.
@@ -60,7 +73,7 @@ class CountryTalentModel:
     def talent_index(self, country: Country) -> float:
         """Compatibility score for legacy generator call sites.
 
-        This is deliberately *not* an innate-talent probability.  Country V1 has
+        This is deliberately *not* an innate-talent probability. Country V1 has
         no authored Talent Quality rating; innate potential is sampled separately.
         """
 

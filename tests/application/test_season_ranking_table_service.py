@@ -21,12 +21,21 @@ def _service_with_ranked_players(tmp_path: Path) -> SeasonRankingTableService:
         {"player_id": "P-D", "name": "Delta Four", "country_code": "BBB", "nationality": "BBB", "ranking_points": 0, "race_points": 0, "current_ability": 67},
         {"player_id": "P-E", "name": "Echo Five", "country_code": "AAA", "nationality": "AAA", "ranking_points": 80, "race_points": 70, "current_ability": 68},
     ]
-    normalized_updates = []
+    controlled_players = []
     for player, update in zip(players, updates, strict=True):
-        normalized = dict(update)
-        normalized["current_ability"] = min(int(normalized["current_ability"]), player.potential_ability + 4)
-        normalized_updates.append(normalized)
-    registry.players_by_season["2000/2001"] = [player.model_copy(update=update) for player, update in zip(players, normalized_updates, strict=True)]
+        hidden = player.hidden_career_traits.model_copy(
+            update={"potential_ceiling": max(90, player.hidden_career_traits.potential_ceiling)}
+        )
+        controlled_players.append(
+            player.model_copy(
+                update={
+                    **update,
+                    "potential_ability": 90,
+                    "hidden_career_traits": hidden,
+                }
+            )
+        )
+    registry.players_by_season["2000/2001"] = controlled_players
     bootstrap._save_registry(registry)
     return SeasonRankingTableService(active_players_service=bootstrap)
 

@@ -39,6 +39,7 @@ export function CountryV1StrengthSection({ country }: { country: CountryV1Record
       <DetailRow label="Elite Support" value={country.elite_support} />
       <DetailRow label="Squash Tradition" value={country.squash_tradition} />
       <DetailRow label="Court Count" value={formatNumber(country.court_count)} />
+      <p>No Style DNA values authored. Country V1 does not author national play-style DNA.</p>
     </SectionCard>
   )
 }
@@ -148,7 +149,7 @@ export function WorldPackageCountryDetailV1Page(): JSX.Element {
       queryClient.setQueryData(['world-package-country', worldId, countryCode], response.country_detail)
       await refreshRelatedCountryQueries()
       setEditing(false)
-      setSuccess('Country saved.')
+      setSuccess(`Country changes saved. Validation status: ${response.validation.status}.`)
     },
   })
 
@@ -159,7 +160,7 @@ export function WorldPackageCountryDetailV1Page(): JSX.Element {
       queryClient.setQueryData(['world-package-country', worldId, countryCode], response.country_detail)
       await refreshRelatedCountryQueries()
       setPopulationEditing(false)
-      setSuccess('Population timeline saved.')
+      setSuccess(`Population saved. Validation status: ${response.validation.status}.`)
     },
   })
 

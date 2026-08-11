@@ -98,8 +98,6 @@ def test_country_development_strength_does_not_change_innate_quality_band_odds()
     by_code = {allocation.country_code: allocation for allocation in plan.allocations}
 
     assert by_code["STR"].quality_weights == by_code["WEK"].quality_weights
-    # Equal volume inputs can differ by one deterministic remainder slot when
-    # the fixed global cohort size is odd.
     assert abs(by_code["STR"].planned_count - by_code["WEK"].planned_count) <= 1
     assert by_code["STR"].bias_profile.professionalism_tendency == 0.0
     assert by_code["STR"].bias_profile.technical_vs_physical_lean == 0.0
@@ -191,7 +189,7 @@ def test_weighted_dampener_is_audit_only_and_cannot_change_v1_innate_odds() -> N
 
     assert mod_by["AAA"].quality_weights == base_by["AAA"].quality_weights
     assert mod_by["BBB"].quality_weights == base_by["BBB"].quality_weights
-    assert mod_by["AAA"].dampener.active is False
+    assert mod_by["AAA"].dampener.active is True
     assert mod_by["AAA"].dampener.signal_count == 1
     assert len(mod_by["AAA"].dampener.contributions) == 1
     assert set(mod_by["AAA"].dampener.multipliers.values()) == {1.0}

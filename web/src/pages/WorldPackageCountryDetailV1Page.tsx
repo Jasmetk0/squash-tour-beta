@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { getWorldPackageGeography } from '../api/client'
 import type {
@@ -10,12 +10,14 @@ import type {
   WorldPackageCountryV1UpdatePayload,
 } from '../api/countryV1'
 import {
+  deleteWorldPackageCountryV1,
   getWorldPackageCountryV1,
   updateWorldPackageCountryPopulationV1,
   updateWorldPackageCountryV1,
 } from '../api/countryV1Client'
 import { SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
+import { CountryV1DeleteConfirmation } from './WorldPackageCountryDeleteV1Confirmation'
 import { CountryV1EditForm } from './WorldPackageCountryEditV1Form'
 import { CountryV1PopulationEditForm } from './WorldPackageCountryPopulationV1Form'
 
@@ -104,9 +106,11 @@ export function CountryV1ReadOnlyDetail({ detail }: { detail: WorldPackageCountr
 
 export function WorldPackageCountryDetailV1Page(): JSX.Element {
   const { worldId = '', countryCode = '' } = useParams()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [editing, setEditing] = useState(false)
   const [populationEditing, setPopulationEditing] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const [success, setSuccess] = useState('')
 
   const query = useQuery({
@@ -159,6 +163,20 @@ export function WorldPackageCountryDetailV1Page(): JSX.Element {
     },
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: () => {
+      if (!detail) throw new Error('Country detail is not loaded')
+      return deleteWorldPackageCountryV1(worldId, countryCode, detail.package.fingerprint)
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['world-package-country', worldId, countryCode] }),
+        refreshRelatedCountryQueries(),
+      ])
+      navigate(`/admin/world/library/${encodeURIComponent(worldId)}/countries`)
+    },
+  })
+
   const showingReadOnly = detail && !editing && !populationEditing
 
   return (
@@ -183,6 +201,7 @@ export function WorldPackageCountryDetailV1Page(): JSX.Element {
                 type="button"
                 onClick={() => {
                   setEditing(true)
+                  setConfirmDelete(false)
                   setSuccess('')
                   updateMutation.reset()
                 }}
@@ -193,13 +212,37 @@ export function WorldPackageCountryDetailV1Page(): JSX.Element {
                 type="button"
                 onClick={() => {
                   setPopulationEditing(true)
+                  setConfirmDelete(false)
                   setSuccess('')
                   populationMutation.reset()
                 }}
               >
                 Edit population
+              </button>{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmDelete(true)
+                  setSuccess('')
+                  deleteMutation.reset()
+                }}
+              >
+                Delete country
               </button>
             </p>
+          )}
+          {confirmDelete && (
+            <CountryV1DeleteConfirmation
+              code={detail.country.code}
+              name={detail.country.name}
+              saving={deleteMutation.isPending}
+              error={deleteMutation.error}
+              onConfirm={() => deleteMutation.mutate()}
+              onCancel={() => {
+                setConfirmDelete(false)
+                deleteMutation.reset()
+              }}
+            />
           )}
           {success && <p className="status" role="status">{success}</p>}
           <CountryV1ReadOnlyDetail detail={detail} />

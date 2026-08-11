@@ -27,10 +27,10 @@ type LegacyCountryReadShape = Partial<CountryV1Record> & {
 }
 
 function readRating(value: unknown, field: string): CountryV1Rating {
-  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > 5) {
-    throw new Error(`${field} must be an integer from 1 to 5`)
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 1 || value > 5) {
+    throw new Error(`${field} must be a number from 1 to 5`)
   }
-  return value as CountryV1Rating
+  return value
 }
 
 /**
@@ -77,8 +77,12 @@ export function normalizeCountryV1Read(country: LegacyCountryReadShape): Country
  * established World Package transport functions. The backend endpoints are the
  * same; only the frontend type surface is being migrated in this PR.
  */
-export function getWorldPackageCountriesV1(worldId: string): Promise<WorldPackageCountriesV1Response> {
-  return getWorldPackageCountries(worldId) as unknown as Promise<WorldPackageCountriesV1Response>
+export async function getWorldPackageCountriesV1(worldId: string): Promise<WorldPackageCountriesV1Response> {
+  const response = await getWorldPackageCountries(worldId) as unknown as WorldPackageCountriesV1Response
+  return {
+    ...response,
+    countries: response.countries.map((country) => normalizeCountryV1Read(country as LegacyCountryReadShape)),
+  }
 }
 
 export async function getWorldPackageCountryV1(

@@ -32,6 +32,7 @@ EDITABLE_FIELDS = {
     "area_km2",
     "region",
     "travel_region",
+    "timezone_area",
     "court_count",
     "squash_popularity",
     "squash_access",
@@ -588,3 +589,28 @@ def test_delete_cleanup_failure_happens_after_semantic_commit(tmp_path: Path, mo
     assert "ABC" not in store.load_index().country_codes
     assert not (store.countries_root / "ABC").exists()
     assert store.load_config().countries
+
+
+def test_timezone_registry_mutation_roundtrip_fingerprint_and_country_reference(tmp_path: Path) -> None:
+    from beta_engine.domain.timezone_areas import TimezoneArea
+    root = tmp_path / "packages"
+    shutil.copytree("config/world_packages/official_fax_world", root / "official_fax_world")
+    registry = WorldPackageRegistryService(world_packages_root=root)
+    validation = WorldPackageValidationService(registry)
+    assert WorldPackageCloneService(registry, validation).clone_official_world(new_world_id="editable", name="Editable", description=None, dry_run=False).ok
+    service = WorldPackageCountriesService(registry, validation)
+    before = registry.get_package("editable")
+    assert before is not None and before.timezone_area_count == 0
+    geography = service.replace_timezone_areas("editable", [TimezoneArea(code="WEST",name="West",position=0), TimezoneArea(code="EAST",name="East",position=1)], before.fingerprint)
+    assert [x.code for x in geography.timezone_areas] == ["WEST", "EAST"]
+    after = registry.get_package("editable")
+    assert after is not None and after.fingerprint != before.fingerprint and after.timezone_area_count == 2
+    country = service.get_country("editable", "GER").country
+    update = _country_update(country, timezone_area="EAST", expected_package_fingerprint=after.fingerprint)
+    result = service.update_country("editable", "GER", update)
+    assert result.detail.country.timezone_area == "EAST"
+    assert result.detail.timezone_area.code == "EAST"
+    reloaded = WorldPackageCountryStore(root / "custom/editable").load_country("GER")
+    assert reloaded.timezone_area == "EAST" and reloaded.travel_region == country.travel_region
+    with pytest.raises(WorldPackageMutationError, match="unknown Timezone Area"):
+        service.update_country("editable", "GER", _country_update(reloaded, timezone_area="MISSING", expected_package_fingerprint=result.detail.package.fingerprint))

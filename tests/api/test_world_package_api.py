@@ -32,6 +32,7 @@ def _country_update_payload(detail: dict[str, object]) -> dict[str, object]:
             "area_km2",
             "region",
             "travel_region",
+            "timezone_area",
             "court_count",
             *_V1_RATING_FIELDS,
         )
@@ -77,6 +78,7 @@ def _assert_canonical_v1_attribute_files(package_root, code: str) -> None:
         "area_km2",
         "region",
         "travel_region",
+        "timezone_area",
         "court_count",
         *_V1_RATING_FIELDS,
     }

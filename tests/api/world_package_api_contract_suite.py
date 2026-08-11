@@ -702,6 +702,7 @@ def test_world_packages_registry_lists_built_in_official_package(tmp_path) -> No
             "continents_path": "config/world_packages/official_fax_world/geography/continents.json",
             "regions_path": "config/world_packages/official_fax_world/geography/regions.json",
             "travel_regions_path": "config/world_packages/official_fax_world/geography/travel_regions.json",
+            "timezone_areas_path": "config/world_packages/official_fax_world/geography/timezone_areas.json",
         }
         assert isinstance(package["fingerprint"], str)
         assert len(package["fingerprint"]) == 64

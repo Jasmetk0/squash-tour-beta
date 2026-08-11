@@ -1455,6 +1455,7 @@ export type CountryRecord = {
   squash_tradition: number
   court_count: number | null
   travel_region: string | null
+  timezone_area: string | null
   notes: string | null
 }
 
@@ -1631,6 +1632,7 @@ export type WorldPackageStorage = {
   continents_path: string
   regions_path: string
   travel_regions_path: string
+  timezone_areas_path: string
 }
 
 export type WorldPackage = {
@@ -1649,6 +1651,7 @@ export type WorldPackage = {
   continent_count: number
   region_count: number
   travel_region_count: number
+  timezone_area_count: number
   used_by_run_count: number | null
   validation_status: 'valid' | 'unknown'
   storage: WorldPackageStorage
@@ -1672,11 +1675,14 @@ export type WorldPackageCountriesResponse = {
 export type WorldPackageContinent = { code: string, name: string }
 export type WorldPackageRegion = { code: string, name: string, continent_code: string | null }
 export type WorldPackageTravelRegion = { code: string, name: string, description: string | null }
+export type WorldPackageTimezoneArea = { code: string, name: string, position: number }
 export type WorldPackageGeography = {
   world_id: string
   continents: WorldPackageContinent[]
   regions: WorldPackageRegion[]
   travel_regions: WorldPackageTravelRegion[]
+  timezone_areas: WorldPackageTimezoneArea[]
+  timezone_areas_authored: boolean
 }
 export type WorldPackageCountryDetail = {
   package: WorldPackage
@@ -1684,6 +1690,7 @@ export type WorldPackageCountryDetail = {
   region: WorldPackageRegion | null
   continent: WorldPackageContinent | null
   travel_region: WorldPackageTravelRegion | null
+  timezone_area: WorldPackageTimezoneArea | null
   source_path: string
 }
 
@@ -1693,6 +1700,7 @@ export type WorldPackageCountryUpdatePayload = {
   area_km2: number | null
   region: string
   travel_region: string | null
+  timezone_area: string | null
   squash_popularity: number
   squash_access: number
   development_quality: number

@@ -27,6 +27,7 @@ COUNTRY_DATA_ATTRIBUTE_NAMES = (
     "area_km2",
     "region",
     "travel_region",
+    "timezone_area",
     "court_count",
 )
 COUNTRY_GAME_ATTRIBUTE_NAMES = (
@@ -178,7 +179,13 @@ class WorldPackageCountryStore:
             raise ValueError(f"{identity_path} has unsupported schema_version {identity.schema_version!r}")
         if identity.code != code:
             raise ValueError(f"{identity_path} code {identity.code!r} does not match directory {code!r}")
-        attributes = {name: self._load_attribute(country_root, name) for name in ATTRIBUTE_NAMES}
+        attributes = {}
+        for name in ATTRIBUTE_NAMES:
+            try:
+                attributes[name] = self._load_attribute(country_root, name)
+            except ValueError:
+                if name != "timezone_area": raise
+                attributes[name] = None
         population_path = country_root / "attributes" / "population.json"
         population = CountryPopulation.model_validate(_read_object(population_path))
         if population.schema_version != COUNTRY_POPULATION_SCHEMA:
@@ -222,10 +229,7 @@ class WorldPackageCountryStore:
         })
         dumped = country.model_dump(mode="json")
         for name in ATTRIBUTE_NAMES:
-            _write_json_atomic(
-                root / "attributes" / f"{name}.json",
-                {"schema_version": COUNTRY_ATTRIBUTE_SCHEMA, "value": dumped.get(name)},
-            )
+            _write_json_atomic(root / "attributes" / f"{name}.json", {"schema_version": COUNTRY_ATTRIBUTE_SCHEMA, "value": dumped.get(name)})
         # A direct write into an existing scratch directory should not leave a
         # mixed old/new country behind. Normal replace flows already stage fresh.
         for legacy_name in LEGACY_ATTRIBUTE_NAMES:

@@ -18,6 +18,7 @@ from beta_engine.api.schemas import (
     WorldPackageCountryDeleteResponse,
     WorldPackageCountryPopulationUpdateRequest,
     WorldPackageGeographyResponse,
+    WorldPackageTimezoneAreasUpdateRequest,
     WorldPackageCountryEffectivePopulationResponse,
     WeeklyIntakePreviewResponse,
     WeeklyIntakeSeasonSchedulePreviewResponse,
@@ -28,6 +29,7 @@ from beta_engine.api.schemas import (
     WorldPackageValidationResponse,
 )
 from beta_engine.application.world_package_clone_service import WorldPackageCloneResult, WorldPackageCloneService
+from beta_engine.domain.timezone_areas import TimezoneArea
 from beta_engine.application.world_package_countries_service import WorldPackageCountriesResult, WorldPackageCountriesService, WorldPackageCountryPopulationUpdate, WorldPackageMutationError
 from beta_engine.application.world_package_effective_population_service import WorldPackageCountryEffectivePopulationResult, WorldPackageEffectivePopulationService
 from beta_engine.application.world_package_registry_service import OFFICIAL_FAX_WORLD_ID, WorldPackageRegistryRecord, WorldPackageRegistryService
@@ -74,6 +76,7 @@ def _to_country_detail(result) -> WorldPackageCountryV1DetailResponse:
         region=result.region.model_dump() if result.region else None,
         continent=result.continent.model_dump() if result.continent else None,
         travel_region=result.travel_region.model_dump() if result.travel_region else None,
+        timezone_area=result.timezone_area.model_dump() if result.timezone_area else None,
         source_path=result.source_path,
     )
 
@@ -86,6 +89,18 @@ def get_world_package_geography(
     result = service.get_geography(world_id)
     if result is None:
         raise HTTPException(status_code=404, detail=f"world package '{world_id}' not found")
+    return WorldPackageGeographyResponse.model_validate(result, from_attributes=True)
+
+
+@router.put("/{world_id}/geography/timezone-areas", response_model=WorldPackageGeographyResponse)
+def replace_world_package_timezone_areas(
+    world_id: str, payload: WorldPackageTimezoneAreasUpdateRequest,
+    service: WorldPackageCountriesService = Depends(get_world_package_countries_service),
+) -> WorldPackageGeographyResponse:
+    try:
+        result = service.replace_timezone_areas(world_id, [TimezoneArea.model_validate(x.model_dump()) for x in payload.timezone_areas], payload.expected_package_fingerprint)
+    except WorldPackageMutationError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
     return WorldPackageGeographyResponse.model_validate(result, from_attributes=True)
 
 

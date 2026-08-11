@@ -751,6 +751,10 @@ export function getWorldPackageGeography(worldId: string): Promise<WorldPackageG
   return request(`/world/packages/${encodeURIComponent(worldId)}/geography`)
 }
 
+export function replaceWorldPackageTimezoneAreas(worldId: string, timezoneAreas: { code: string, name: string, position: number }[], fingerprint: string): Promise<WorldPackageGeography> {
+  return request(`/world/packages/${encodeURIComponent(worldId)}/geography/timezone-areas`, { method: 'PUT', body: JSON.stringify({ timezone_areas: timezoneAreas, expected_package_fingerprint: fingerprint }) })
+}
+
 export function getWorldPackageCountry(worldId: string, countryCode: string): Promise<WorldPackageCountryDetail> {
   return request(`/world/packages/${encodeURIComponent(worldId)}/countries/${encodeURIComponent(countryCode)}`)
 }

@@ -48,6 +48,7 @@ class Country(BaseModel):
     population_by_year: dict[int, int | None] | None = None
     court_count: int | None = Field(default=None, ge=0)
     travel_region: str | None = None
+    timezone_area: str | None = None
     notes: str | None = None
 
     # Country Game Attributes V1. All six are finite numeric ratings 1..5.
@@ -145,9 +146,9 @@ class Country(BaseModel):
             self.default_population_year = 2020
         return self
 
-    @field_validator("travel_region", mode="before")
+    @field_validator("travel_region", "timezone_area", mode="before")
     @classmethod
-    def normalize_travel_region(cls, value: str | None) -> str | None:
+    def normalize_geography_code(cls, value: str | None) -> str | None:
         if value is None:
             return None
         normalized = value.strip()

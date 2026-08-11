@@ -475,6 +475,7 @@ class WorldPackageStorageResponse(BaseModel):
     continents_path: str
     regions_path: str
     travel_regions_path: str
+    timezone_areas_path: str
 
 
 class WorldPackageSummaryResponse(BaseModel):
@@ -493,6 +494,7 @@ class WorldPackageSummaryResponse(BaseModel):
     continent_count: int
     region_count: int
     travel_region_count: int
+    timezone_area_count: int
     used_by_run_count: int | None = None
     validation_status: Literal["valid", "unknown"]
     storage: WorldPackageStorageResponse
@@ -534,11 +536,25 @@ class WorldPackageTravelRegionResponse(BaseModel):
     description: str | None = None
 
 
+class WorldPackageTimezoneAreaResponse(BaseModel):
+    code: str
+    name: str
+    position: int
+
+
+class WorldPackageTimezoneAreasUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    timezone_areas: list[WorldPackageTimezoneAreaResponse]
+    expected_package_fingerprint: str
+
+
 class WorldPackageGeographyResponse(BaseModel):
     world_id: str
     continents: list[WorldPackageContinentResponse]
     regions: list[WorldPackageRegionResponse]
     travel_regions: list[WorldPackageTravelRegionResponse]
+    timezone_areas: list[WorldPackageTimezoneAreaResponse]
+    timezone_areas_authored: bool
 
 
 class WorldPackageCountryDetailResponse(BaseModel):

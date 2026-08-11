@@ -101,4 +101,10 @@ This mapping is a deterministic migration bridge only; it does **not** claim sem
 
 Built-in read-only World Packages authored with legacy attribute files remain readable through the compatibility loader. New countries and edited custom-package countries are written only in the canonical V1 attribute format currently supported by the repository.
 
-This avoids a noisy mechanical rewrite of every built-in country while ensuring all new mutable game-attribute data converges to V1. `Timezone Area` remains a required factual geography field from Master v45 and will join canonical package storage when the dedicated Timezone Area geography registry/assignment slice is implemented.
+This avoids a noisy mechanical rewrite of every built-in country while ensuring all new mutable game-attribute data converges to V1. `Timezone Area` is a factual geography field from Master v45 and now has dedicated canonical package registry/assignment storage; legacy absence remains explicit.
+
+## Timezone Area geography foundation (implemented after Country V1)
+
+World Packages can now author a dedicated, ordered `timezone_areas` registry and a separate optional factual `timezone_area` country assignment. The order is a deterministic circular topology: first and last are adjacent, and topology queries preserve forward/backward direction while representing exact even-ring ties neutrally. This layer is never inferred from Region or Travel Region. Legacy packages without the registry remain readable and explicitly report the layer as not yet authored.
+
+The Official FAX area count, codes, display names, boundaries, country assignments, UTC-offset interpretation, and all biological jet-lag magnitude/effect rules remain **[OPEN]** product/data decisions; this infrastructure does not decide or fabricate them.

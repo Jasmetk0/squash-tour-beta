@@ -6,12 +6,18 @@ import { getWorldPackageGeography } from '../api/client'
 import type {
   CountryV1Record,
   WorldPackageCountryV1Detail,
+  WorldPackageCountryV1PopulationUpdatePayload,
   WorldPackageCountryV1UpdatePayload,
 } from '../api/countryV1'
-import { getWorldPackageCountryV1, updateWorldPackageCountryV1 } from '../api/countryV1Client'
+import {
+  getWorldPackageCountryV1,
+  updateWorldPackageCountryPopulationV1,
+  updateWorldPackageCountryV1,
+} from '../api/countryV1Client'
 import { SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 import { CountryV1EditForm } from './WorldPackageCountryEditV1Form'
+import { CountryV1PopulationEditForm } from './WorldPackageCountryPopulationV1Form'
 
 function formatNumber(value: number | null | undefined): string {
   return value === null || value === undefined ? '—' : value.toLocaleString()
@@ -100,6 +106,7 @@ export function WorldPackageCountryDetailV1Page(): JSX.Element {
   const { worldId = '', countryCode = '' } = useParams()
   const queryClient = useQueryClient()
   const [editing, setEditing] = useState(false)
+  const [populationEditing, setPopulationEditing] = useState(false)
   const [success, setSuccess] = useState('')
 
   const query = useQuery({
@@ -121,24 +128,38 @@ export function WorldPackageCountryDetailV1Page(): JSX.Element {
     retry: false,
   })
 
+  async function refreshRelatedCountryQueries(): Promise<void> {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['world-package-countries', worldId] }),
+      queryClient.invalidateQueries({ queryKey: ['world-package', worldId] }),
+      queryClient.invalidateQueries({ queryKey: ['world-package-validation', worldId] }),
+      queryClient.invalidateQueries({ queryKey: ['world-packages'] }),
+    ])
+  }
+
   const updateMutation = useMutation({
     mutationFn: (payload: WorldPackageCountryV1UpdatePayload) =>
       updateWorldPackageCountryV1(worldId, countryCode, payload),
     onSuccess: async (response) => {
-      queryClient.setQueryData(
-        ['world-package-country', worldId, countryCode],
-        response.country_detail,
-      )
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['world-package-countries', worldId] }),
-        queryClient.invalidateQueries({ queryKey: ['world-package', worldId] }),
-        queryClient.invalidateQueries({ queryKey: ['world-package-validation', worldId] }),
-        queryClient.invalidateQueries({ queryKey: ['world-packages'] }),
-      ])
+      queryClient.setQueryData(['world-package-country', worldId, countryCode], response.country_detail)
+      await refreshRelatedCountryQueries()
       setEditing(false)
       setSuccess('Country saved.')
     },
   })
+
+  const populationMutation = useMutation({
+    mutationFn: (payload: WorldPackageCountryV1PopulationUpdatePayload) =>
+      updateWorldPackageCountryPopulationV1(worldId, countryCode, payload),
+    onSuccess: async (response) => {
+      queryClient.setQueryData(['world-package-country', worldId, countryCode], response.country_detail)
+      await refreshRelatedCountryQueries()
+      setPopulationEditing(false)
+      setSuccess('Population timeline saved.')
+    },
+  })
+
+  const showingReadOnly = detail && !editing && !populationEditing
 
   return (
     <section className="panel">
@@ -154,7 +175,7 @@ export function WorldPackageCountryDetailV1Page(): JSX.Element {
       {query.isLoading && <p className="status">Loading country...</p>}
       {query.error && <p className="error">Failed to load country: {formatApiError(query.error)}</p>}
 
-      {detail && !editing && (
+      {showingReadOnly && (
         <>
           {canEdit && (
             <p>
@@ -167,6 +188,16 @@ export function WorldPackageCountryDetailV1Page(): JSX.Element {
                 }}
               >
                 Edit country
+              </button>{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  setPopulationEditing(true)
+                  setSuccess('')
+                  populationMutation.reset()
+                }}
+              >
+                Edit population
               </button>
             </p>
           )}
@@ -194,6 +225,25 @@ export function WorldPackageCountryDetailV1Page(): JSX.Element {
               updateMutation.reset()
             }}
             onSave={(payload) => updateMutation.mutate(payload)}
+          />
+        </>
+      )}
+
+      {detail && populationEditing && (
+        <>
+          <div className="page-intro">
+            <h2>{detail.country.name}</h2>
+            <p className="subtitle"><code>{detail.country.code}</code></p>
+          </div>
+          <CountryV1PopulationEditForm
+            detail={detail}
+            saving={populationMutation.isPending}
+            error={populationMutation.error}
+            onCancel={() => {
+              setPopulationEditing(false)
+              populationMutation.reset()
+            }}
+            onSave={(payload) => populationMutation.mutate(payload)}
           />
         </>
       )}

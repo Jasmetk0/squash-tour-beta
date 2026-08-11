@@ -38,13 +38,13 @@ describe('CountryV1StrengthSection', () => {
     expect(screen.getByText(/Court Count:/)).toHaveTextContent('42')
   })
 
-  it('does not render superseded Country V1 concepts', () => {
+  it('does not render superseded authored controls and explicitly documents Style DNA as non-authored', () => {
     render(<CountryV1StrengthSection country={country} />)
 
     expect(screen.queryByText(/Wealth Support/)).not.toBeInTheDocument()
     expect(screen.queryByText(/System Quality/)).not.toBeInTheDocument()
     expect(screen.queryByText(/Competition Density/)).not.toBeInTheDocument()
     expect(screen.queryByText(/Federation Quality/)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Style DNA/)).not.toBeInTheDocument()
+    expect(screen.getByText('No Style DNA values authored. Country V1 does not author national play-style DNA.')).toBeInTheDocument()
   })
 })

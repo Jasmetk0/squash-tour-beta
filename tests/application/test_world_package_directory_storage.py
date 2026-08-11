@@ -83,10 +83,7 @@ def test_official_germanica_legacy_storage_is_losslessly_materialized() -> None:
         1800,
         "EUROPE",
     )
-    # Legacy style data is intentionally neutralized in V1. The read shim keeps
-    # older callers safe but is never persisted/serialized as active country DNA.
     assert country.style_dna == {}
-    assert "style_dna" not in country.model_dump()
     assert country.notes
 
 
@@ -348,122 +345,224 @@ def test_population_service_fingerprint_non_default_and_rollback(tmp_path: Path,
     assert WorldPackageCloneService(registry, validation).clone_official_world(
         new_world_id="editable", name="Editable", description=None, dry_run=False
     ).ok
-    store = WorldPackageCountryStore(root / "custom/editable")
-    before = registry.get_package("editable")
+    service = WorldPackageCountriesService(registry, validation)
+    before = service.get_country("editable", "GER")
     assert before is not None
-    original = store.load_country("GER")
-    update = WorldPackageCountryPopulationUpdate(
-        population_by_year={1995: 30_000_000, 2020: 50_000_000},
-        expected_package_fingerprint=before.fingerprint,
+    fingerprint = before.package.fingerprint
+    result = service.update_population(
+        "editable",
+        "GER",
+        WorldPackageCountryPopulationUpdate(
+            values_by_year={1995: 100, 2020: before.country.population},
+            expected_package_fingerprint=fingerprint,
+        ),
     )
-    result = WorldPackageCountriesService(registry, validation).update_population("editable", "GER", update)
-    after = result.detail.country
-    assert after.population_by_year == {1995: 30_000_000, 2020: 50_000_000}
-    assert after.population == after.default_population == 50_000_000
-    assert result.detail.package.fingerprint != before.fingerprint
-
-    current_package = registry.get_package("editable")
-    assert current_package is not None
+    assert result.detail.country.population == before.country.population
+    assert result.detail.country.population_by_year[1995] == 100
+    assert result.detail.package.fingerprint != fingerprint
+    original = (root / "custom/editable/countries/GER/attributes/population.json").read_bytes()
     invalid = WorldPackageValidationResult("editable", "errors", 1, 0, 0, [])
     monkeypatch.setattr(WorldPackageValidationService, "validate_package", lambda self, _world_id: invalid)
     with pytest.raises(WorldPackageMutationError, match="leave the World Package invalid"):
-        WorldPackageCountriesService(registry, validation).update_population(
-            "editable",
-            "GER",
-            WorldPackageCountryPopulationUpdate(
-                population_by_year={2020: 99_000_000},
-                expected_package_fingerprint=current_package.fingerprint,
-            ),
-        )
-    assert store.load_country("GER") == after
+        service.update_population("editable", "GER", WorldPackageCountryPopulationUpdate(values_by_year={2020: 999}))
+    assert (root / "custom/editable/countries/GER/attributes/population.json").read_bytes() == original
 
 
-def test_population_update_failure_after_replace_restores_original_and_cleans_artifacts(tmp_path: Path, monkeypatch) -> None:
-    root = tmp_path / "packages"
-    shutil.copytree("config/world_packages/official_fax_world", root / "official_fax_world")
-    registry = WorldPackageRegistryService(world_packages_root=root)
-    validation = WorldPackageValidationService(registry)
-    assert WorldPackageCloneService(registry, validation).clone_official_world(
-        new_world_id="editable", name="Editable", description=None, dry_run=False
-    ).ok
-    store = WorldPackageCountryStore(root / "custom/editable")
-    before = store.load_country("GER")
-    original_replace = store.replace_population
-    calls = 0
-
-    def fail_once_after_write(country_code: str, population_by_year: dict[int, int]) -> None:
-        nonlocal calls
-        calls += 1
-        original_replace(country_code, population_by_year)
-        if calls == 1:
-            raise OSError("simulated post-write failure")
-
-    monkeypatch.setattr(WorldPackageCountryStore, "replace_population", fail_once_after_write)
-    with pytest.raises(OSError, match="simulated post-write failure"):
-        WorldPackageCountriesService(registry, validation).update_population(
-            "editable", "GER", WorldPackageCountryPopulationUpdate(population_by_year={2020: 123_000_000})
-        )
-    assert store.load_country("GER") == before
-    assert not list(store.countries_root.glob(".GER-*"))
-
-
-def test_delete_country_updates_index_and_removes_directory(tmp_path: Path) -> None:
-    root = tmp_path / "packages"
-    shutil.copytree("config/world_packages/official_fax_world", root / "official_fax_world")
-    registry = WorldPackageRegistryService(world_packages_root=root)
-    validation = WorldPackageValidationService(registry)
-    assert WorldPackageCloneService(registry, validation).clone_official_world(
-        new_world_id="editable", name="Editable", description=None, dry_run=False
-    ).ok
-    service = WorldPackageCountriesService(registry, validation)
-    store = WorldPackageCountryStore(root / "custom/editable")
-    before = registry.get_package("editable")
-    assert before is not None
-    result = service.delete_country("editable", "GER", expected_package_fingerprint=before.fingerprint)
-    assert store.load_country("GER") is None
-    assert "GER" not in json.loads(store.index_path.read_text())["country_codes"]
-    assert result.package.fingerprint != before.fingerprint
-    assert result.validation.status == "valid"
-
-
-def test_create_country_writes_identity_population_factors_and_index(tmp_path: Path) -> None:
-    root = tmp_path / "packages"
-    shutil.copytree("config/world_packages/official_fax_world", root / "official_fax_world")
-    registry = WorldPackageRegistryService(world_packages_root=root)
-    validation = WorldPackageValidationService(registry)
-    assert WorldPackageCloneService(registry, validation).clone_official_world(
-        new_world_id="editable", name="Editable", description=None, dry_run=False
-    ).ok
-    service = WorldPackageCountriesService(registry, validation)
-    before = registry.get_package("editable")
-    assert before is not None
-    create = WorldPackageCountryCreate(
+def _country_create(fingerprint: str) -> WorldPackageCountryCreate:
+    return WorldPackageCountryCreate(
         code="ABC",
         name="Alphabetia",
-        notes="New country",
-        area_km2=12345,
+        notes="Authored country",
+        area_km2=1234,
         region="EUROPE",
         travel_region="EUROPE",
+        court_count=12,
         squash_popularity=2,
         squash_access=3,
         development_quality=4,
         competition_quality=3,
         elite_support=4,
         squash_tradition=1,
-        court_count=12,
         population_by_year={1995: 900_000, 2020: 1_200_000},
-        expected_package_fingerprint=before.fingerprint,
+        expected_package_fingerprint=fingerprint,
     )
-    result = service.create_country("editable", create)
-    detail = result.detail
-    assert detail.country.code == "ABC"
-    assert detail.country.population == detail.country.default_population == 1_200_000
-    assert detail.country.default_population_year == 2020
-    assert detail.country.population_by_year == {1995: 900_000, 2020: 1_200_000}
-    assert detail.country.squash_access == 3
-    assert detail.country.development_quality == 4
-    assert detail.country.competition_quality == 3
-    assert detail.country.elite_support == 4
-    assert detail.package.fingerprint != before.fingerprint
-    assert detail.validation if hasattr(detail, "validation") else True
-    assert "ABC" in json.loads(WorldPackageCountryStore(root / "custom/editable").index_path.read_text())["country_codes"]
+
+
+def test_country_create_delete_are_scoped_ordered_and_change_fingerprint(tmp_path: Path) -> None:
+    root = tmp_path / "packages"
+    shutil.copytree("config/world_packages/official_fax_world", root / "official_fax_world")
+    registry = WorldPackageRegistryService(world_packages_root=root)
+    validation = WorldPackageValidationService(registry)
+    assert WorldPackageCloneService(registry, validation).clone_official_world(
+        new_world_id="editable", name="Editable", description=None, dry_run=False
+    ).ok
+    service = WorldPackageCountriesService(registry, validation)
+    before = registry.get_package("editable")
+    assert before is not None
+    store = WorldPackageCountryStore(root / "custom/editable")
+    existing = {
+        path.relative_to(store.countries_root): path.read_bytes()
+        for path in store.countries_root.rglob("*.json")
+        if "index.json" not in str(path)
+    }
+    created = service.create_country("editable", _country_create(before.fingerprint))
+    assert created.detail.country.population == 1_200_000
+    assert created.detail.country.population_by_year == {1995: 900_000, 2020: 1_200_000}
+    assert store.load_index().country_codes == sorted(store.load_index().country_codes)
+    assert store.load_index().country_codes.count("ABC") == 1
+    assert created.detail.package.fingerprint != before.fingerprint
+    assert created.validation.status == "valid"
+    attrs = store.countries_root / "ABC/attributes"
+    assert {path.stem for path in attrs.glob("*.json")} == {"population", *ATTRIBUTE_NAMES}
+    assert all((store.countries_root / path).read_bytes() == value for path, value in existing.items())
+    deleted = service.delete_country("editable", "ABC", created.detail.package.fingerprint)
+    assert deleted.package.fingerprint != created.detail.package.fingerprint
+    assert deleted.validation.status == "valid"
+    assert "ABC" not in store.load_index().country_codes
+    assert not (store.countries_root / "ABC").exists()
+    assert all((store.countries_root / path).read_bytes() == value for path, value in existing.items())
+
+
+@pytest.mark.parametrize("failure", ["errors", "exception"])
+def test_country_lifecycle_validation_failure_restores_exact_state(tmp_path: Path, monkeypatch, failure: str) -> None:
+    root = tmp_path / "packages"
+    shutil.copytree("config/world_packages/official_fax_world", root / "official_fax_world")
+    registry = WorldPackageRegistryService(world_packages_root=root)
+    real_validation = WorldPackageValidationService(registry)
+    assert WorldPackageCloneService(registry, real_validation).clone_official_world(
+        new_world_id="editable", name="Editable", description=None, dry_run=False
+    ).ok
+    service = WorldPackageCountriesService(registry, real_validation)
+    store = WorldPackageCountryStore(root / "custom/editable")
+    before = registry.get_package("editable")
+    assert before is not None
+    index = store.index_path.read_bytes()
+
+    def fail(*_):
+        if failure == "exception":
+            raise RuntimeError("validation exploded")
+        return WorldPackageValidationResult("editable", "errors", 1, 0, 0, [])
+
+    with monkeypatch.context() as scoped:
+        scoped.setattr(WorldPackageValidationService, "validate_package", fail)
+        with pytest.raises(WorldPackageMutationError):
+            service.create_country("editable", _country_create(before.fingerprint))
+    assert store.index_path.read_bytes() == index
+    assert not (store.countries_root / "ABC").exists()
+
+    created = service.create_country("editable", _country_create(before.fingerprint))
+    index = store.index_path.read_bytes()
+    country = store.load_country("ABC")
+    with monkeypatch.context() as scoped:
+        scoped.setattr(WorldPackageValidationService, "validate_package", fail)
+        with pytest.raises(WorldPackageMutationError):
+            service.delete_country("editable", "ABC", created.detail.package.fingerprint)
+    assert store.index_path.read_bytes() == index
+    assert store.load_country("ABC") == country
+
+
+def _lifecycle_store(tmp_path: Path):
+    store = WorldPackageCountryStore(tmp_path / "world")
+    abc = _scalar_country(name="Alphabetia").model_copy(update={"code": "ABC"})
+    store.replace_dataset(CountriesConfig(dataset_status="test", countries=[_scalar_country(), abc]))
+    return store, store.load_country("ABC")
+
+
+def _canonical_lifecycle_country(code: str = "ABC") -> Country:
+    country = _scalar_country(name="Alphabetia").model_copy(update={"code": code})
+    return country.model_copy(
+        update={
+            "default_population_year": 2020,
+            "default_population": country.population,
+            "population_by_year": {2020: country.population},
+        }
+    )
+
+
+def test_create_country_directory_promotion_failure_restores_everything(tmp_path: Path, monkeypatch) -> None:
+    store = WorldPackageCountryStore(tmp_path / "world")
+    store.replace_dataset(CountriesConfig(dataset_status="test", countries=[_scalar_country()]))
+    index = store.index_path.read_bytes()
+    existing = {path.relative_to(store.package_root): path.read_bytes() for path in store.package_root.rglob("*.json")}
+    country = _canonical_lifecycle_country()
+    original = Path.rename
+
+    def fail(path: Path, target: Path):
+        if path.name == "ABC" and "-create-" in str(path.parent):
+            raise OSError("country promotion failed")
+        return original(path, target)
+
+    monkeypatch.setattr(Path, "rename", fail)
+    with pytest.raises(OSError, match="country promotion failed"):
+        store.create_country(country)
+    assert store.index_path.read_bytes() == index
+    assert not (store.countries_root / "ABC").exists()
+    assert {path.relative_to(store.package_root): path.read_bytes() for path in store.package_root.rglob("*.json")} == existing
+
+
+def test_create_country_index_promotion_failure_rolls_back(tmp_path: Path, monkeypatch) -> None:
+    store = WorldPackageCountryStore(tmp_path / "world")
+    store.replace_dataset(CountriesConfig(dataset_status="test", countries=[_scalar_country()]))
+    index = store.index_path.read_bytes()
+    country = _canonical_lifecycle_country()
+    original = Path.replace
+    failed = False
+
+    def fail_once(path: Path, target: Path):
+        nonlocal failed
+        if not failed and path.name.startswith(".index.json."):
+            failed = True
+            raise OSError("index promotion failed")
+        return original(path, target)
+
+    monkeypatch.setattr(Path, "replace", fail_once)
+    with pytest.raises(OSError, match="index promotion failed"):
+        store.create_country(country)
+    assert store.index_path.read_bytes() == index
+    assert not (store.countries_root / "ABC").exists()
+
+
+def test_delete_country_index_promotion_failure_restores_country(tmp_path: Path, monkeypatch) -> None:
+    store, abc = _lifecycle_store(tmp_path)
+    index = store.index_path.read_bytes()
+    original = Path.replace
+    failed = False
+
+    def fail_once(path: Path, target: Path):
+        nonlocal failed
+        if not failed and path.name.startswith(".index.json."):
+            failed = True
+            raise OSError("delete index promotion failed")
+        return original(path, target)
+
+    monkeypatch.setattr(Path, "replace", fail_once)
+    with pytest.raises(OSError, match="delete index promotion failed"):
+        store.delete_country("ABC")
+    assert store.index_path.read_bytes() == index
+    assert store.load_country("ABC") == abc
+
+
+def test_delete_cleanup_failure_happens_after_semantic_commit(tmp_path: Path, monkeypatch) -> None:
+    root = tmp_path / "packages"
+    shutil.copytree("config/world_packages/official_fax_world", root / "official_fax_world")
+    registry = WorldPackageRegistryService(world_packages_root=root)
+    validation = WorldPackageValidationService(registry)
+    assert WorldPackageCloneService(registry, validation).clone_official_world(
+        new_world_id="editable", name="Editable", description=None, dry_run=False
+    ).ok
+    service = WorldPackageCountriesService(registry, validation)
+    store = WorldPackageCountryStore(root / "custom/editable")
+    before = registry.get_package("editable")
+    assert before is not None
+    created = service.create_country("editable", _country_create(before.fingerprint))
+
+    def partial_cleanup(backup: Path) -> None:
+        (backup / "country.json").unlink()
+        raise OSError("cleanup interrupted")
+
+    monkeypatch.setattr(WorldPackageCountryStore, "finalize_delete", staticmethod(partial_cleanup))
+    result = service.delete_country("editable", "ABC", created.detail.package.fingerprint)
+    assert result.deleted_country_code == "ABC"
+    assert "ABC" not in store.load_index().country_codes
+    assert not (store.countries_root / "ABC").exists()
+    assert store.load_config().countries

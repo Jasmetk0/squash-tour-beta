@@ -55,8 +55,15 @@ def test_country_migrates_phase_two_fields_without_retaining_superseded_state() 
         "style_dna",
     ):
         assert legacy_field not in payload
+    for numeric_legacy_field in (
+        "wealth_support",
+        "system_quality",
+        "competition_density",
+        "federation_quality",
+    ):
         with pytest.raises(AttributeError):
-            getattr(country, legacy_field)
+            getattr(country, numeric_legacy_field)
+    assert country.style_dna == {}
 
 
 def test_country_effective_travel_region_defaults_to_region_and_tracks_region_copy() -> None:

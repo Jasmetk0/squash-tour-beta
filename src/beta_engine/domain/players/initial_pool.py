@@ -12,18 +12,22 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from beta_engine.core import DeterministicRng, SeedScope
 from beta_engine.domain.calendar import DEFAULT_WEEKS_PER_CALENDAR_YEAR
-from beta_engine.domain.countries import Country
-from beta_engine.domain.countries.population_resolver import (
-    DEFAULT_POPULATION_YEAR,
-    resolve_effective_population,
-)
+from beta_engine.domain.countries import Country, CountryTalentModel
+from beta_engine.domain.countries.population_resolver import DEFAULT_POPULATION_YEAR, resolve_effective_population
 from beta_engine.domain.players.models import HiddenCareerTraits
 from beta_engine.infrastructure.world_config import PlayerIdentityConfig
 
 CareerStage = Literal["junior", "developing", "breakthrough", "prime", "veteran", "late_career"]
 PotentialTier = Literal["S", "A", "B", "C", "D"]
 GenerationSource = Literal["initial_pool", "annual_intake", "manual", "imported"]
-InitialPoolAuditAction = Literal["create_custom_player", "update_player", "lock_player", "unlock_player", "regenerate_unlocked", "generate_pool"]
+InitialPoolAuditAction = Literal[
+    "create_custom_player",
+    "update_player",
+    "lock_player",
+    "unlock_player",
+    "regenerate_unlocked",
+    "generate_pool",
+]
 
 DEFAULT_ARCHETYPES = (
     "all_court",
@@ -76,8 +80,6 @@ class GeneratedPlayerAttributes(BaseModel):
 
 
 class InitialPoolAuditEvent(BaseModel):
-    """Compact audit record for intentional Admin initial-pool mutations."""
-
     model_config = ConfigDict(extra="forbid")
 
     audit_id: str
@@ -97,8 +99,6 @@ class InitialPoolAuditList(BaseModel):
 
 
 class CustomInitialPoolPlayerCreate(BaseModel):
-    """Validated command payload for manual initial-pool player creation."""
-
     model_config = ConfigDict(extra="forbid")
 
     player_id: str | None = None
@@ -144,8 +144,6 @@ class CustomInitialPoolPlayerCreate(BaseModel):
 
 
 class InitialPoolPlayerUpdate(BaseModel):
-    """Safe partial update payload for Admin initial-pool edits."""
-
     model_config = ConfigDict(extra="forbid")
 
     name: str | None = Field(default=None, min_length=1, max_length=120)
@@ -178,10 +176,7 @@ class InitialPoolPlayerUpdate(BaseModel):
 
 
 class InitialPoolGeneratedPlayer(BaseModel):
-    """Canonical DTO for inspectable pre-season initial-pool generation.
-
-    birth_year_week is a FAX year_week in the 1–61 model, not an ISO week.
-    """
+    """Canonical DTO for inspectable pre-season initial-pool generation."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -220,13 +215,11 @@ class InitialPoolGeneratedPlayer(BaseModel):
 
     @field_validator("country_code", "nationality")
     @classmethod
-    def normalize_country_code(cls, value: str | None) -> str | None:
+    def normalize_generated_country_code(cls, value: str | None) -> str | None:
         return value.upper() if value is not None else None
 
 
 class InitialPoolPopulationWeightingDiagnostic(BaseModel):
-    """Per-country explanation of initial-pool population weighting inputs."""
-
     country_code: str
     allocation_weight: float
     allocation_share: float
@@ -297,8 +290,6 @@ class InitialPoolRegistry(BaseModel):
 
 
 def initial_pool_age_weights() -> dict[int, float]:
-    """Expected initial-pool age distribution derived from stage weights/ranges."""
-
     age_weights: dict[int, float] = {}
     for stage, stage_weight in STAGE_WEIGHTS:
         age_min, age_max = STAGE_AGE_RANGES[stage]
@@ -312,21 +303,13 @@ def initial_pool_age_weights() -> dict[int, float]:
 
 
 def initial_pool_effective_population_quantity(country: Country, season_start_year: int) -> float:
-    """Weighted effective population quantity for initial-pool country allocation.
-
-    Population years follow the initial-pool birth-year rule: populationYear =
-    birthYear = season_start_year - generated_age. The age distribution is the
-    expected value of the generator's public career-stage weights and ranges.
-    """
-
     return initial_pool_effective_population_diagnostics(country, season_start_year).effective_population_quantity
 
 
 def initial_pool_effective_population_diagnostics(
-    country: Country, season_start_year: int
+    country: Country,
+    season_start_year: int,
 ) -> InitialPoolPopulationWeightingDiagnostic:
-    """Explain the weighted effective-population aggregate without mutating country data."""
-
     age_weights = initial_pool_age_weights()
     source_type_weight_shares: dict[str, float] = {}
     estimated_weight_share = 0.0
@@ -403,13 +386,18 @@ class InitialPlayerPoolGenerator:
         )
         allocations = allocation_plan.counts
         generated: list[InitialPoolGeneratedPlayer] = []
-        locked_sequences = {country.code: self._locked_sequences_for_country(locked, country.code) for country in selected}
+        locked_sequences = {
+            country.code: self._locked_sequences_for_country(locked, country.code)
+            for country in selected
+        }
         for country in selected:
             sequence = 1
             generated_for_country = 0
             while generated_for_country < allocations[country.code]:
                 if sequence not in locked_sequences[country.code]:
-                    generated.append(self._generate_player(country=country, season=season, seed=seed, sequence=sequence))
+                    generated.append(
+                        self._generate_player(country=country, season=season, seed=seed, sequence=sequence)
+                    )
                     generated_for_country += 1
                 sequence += 1
         players = sorted([*locked, *generated], key=lambda player: (player.country_code, player.player_id))
@@ -445,8 +433,13 @@ class InitialPlayerPoolGenerator:
         region: str | None = None,
         dry_run: bool = True,
     ) -> InitialPoolResult:
-        country_codes = {country.code for country in self._filter_countries(countries, country_code=country_code, region=region)}
-        scoped_locked = [player for player in current_players if player.country_code in country_codes and player.locked]
+        country_codes = {
+            country.code
+            for country in self._filter_countries(countries, country_code=country_code, region=region)
+        }
+        scoped_locked = [
+            player for player in current_players if player.country_code in country_codes and player.locked
+        ]
         outside_scope = [player for player in current_players if player.country_code not in country_codes]
         current_scope_count = sum(1 for player in current_players if player.country_code in country_codes)
         scope_target = max(current_scope_count, len(scoped_locked)) if target_pool_size is None else target_pool_size
@@ -476,7 +469,11 @@ class InitialPlayerPoolGenerator:
             ),
         )
 
-    def _locked_sequences_for_country(self, players: list[InitialPoolGeneratedPlayer], country_code: str) -> set[int]:
+    @staticmethod
+    def _locked_sequences_for_country(
+        players: list[InitialPoolGeneratedPlayer],
+        country_code: str,
+    ) -> set[int]:
         sequences: set[int] = set()
         for player in players:
             if player.country_code != country_code:
@@ -487,16 +484,33 @@ class InitialPlayerPoolGenerator:
                 continue
         return sequences
 
-    def _filter_countries(self, countries: list[Country], *, country_code: str | None, region: str | None) -> list[Country]:
+    @staticmethod
+    def _filter_countries(
+        countries: list[Country],
+        *,
+        country_code: str | None,
+        region: str | None,
+    ) -> list[Country]:
         items = countries
         if country_code:
             normalized = country_code.upper()
             items = [country for country in items if country.code == normalized]
         if region:
-            items = [country for country in items if country.region == region or country.effective_travel_region == region]
+            items = [
+                country
+                for country in items
+                if country.region == region or country.effective_travel_region == region
+            ]
         return sorted(items, key=lambda country: country.code)
 
-    def _allocate_counts(self, countries: list[Country], target: int, *, seed: int, season: str) -> dict[str, int]:
+    def _allocate_counts(
+        self,
+        countries: list[Country],
+        target: int,
+        *,
+        seed: int,
+        season: str,
+    ) -> dict[str, int]:
         return self._build_allocation_plan(countries, target, seed=seed, season=season).counts
 
     def _build_allocation_plan(
@@ -508,28 +522,33 @@ class InitialPlayerPoolGenerator:
         season: str,
         locked_counts: Counter[str] | None = None,
     ) -> InitialPoolAllocationPlan:
-        del seed  # Allocation is deterministic and currently seed-independent; keep API unchanged.
+        del seed
         season_start_year = self._season_start_year(season)
         population_diagnostics = {
-            country.code: initial_pool_effective_population_diagnostics(country, season_start_year) for country in countries
+            country.code: initial_pool_effective_population_diagnostics(country, season_start_year)
+            for country in countries
         }
-        weights = {country.code: self._quantity_weight(country, season_start_year=season_start_year) for country in countries}
+        weights = {
+            country.code: self._quantity_weight(country, season_start_year=season_start_year)
+            for country in countries
+        }
         total = sum(weights.values())
         counts = {country.code: 0 for country in countries}
         if target > 0 and total > 0:
-            counts = {country.code: int((weights[country.code] / total) * target) for country in countries}
+            raw = {country.code: weights[country.code] / total * target for country in countries}
+            counts = {country.code: int(raw[country.code]) for country in countries}
             for country in countries:
                 if counts[country.code] == 0 and target >= len(countries):
                     counts[country.code] = 1
             remainder = target - sum(counts.values())
-            ranked = sorted(countries, key=lambda c: (-((weights[c.code] / total) * target - int((weights[c.code] / total) * target)), c.code))
+            ranked = sorted(countries, key=lambda item: (-(raw[item.code] - int(raw[item.code])), item.code))
             index = 0
             while remainder > 0:
                 counts[ranked[index % len(ranked)].code] += 1
                 remainder -= 1
                 index += 1
             while remainder < 0:
-                removable = sorted(countries, key=lambda c: (-counts[c.code], c.code))
+                removable = sorted(countries, key=lambda item: (-counts[item.code], item.code))
                 for country in removable:
                     if counts[country.code] > 0:
                         counts[country.code] -= 1
@@ -551,37 +570,62 @@ class InitialPlayerPoolGenerator:
             )
         return InitialPoolAllocationPlan(counts=counts, diagnostics=diagnostics)
 
-    def _generate_player(self, *, country: Country, season: str, seed: int, sequence: int) -> InitialPoolGeneratedPlayer:
+    def _generate_player(
+        self,
+        *,
+        country: Country,
+        season: str,
+        seed: int,
+        sequence: int,
+    ) -> InitialPoolGeneratedPlayer:
         rng = DeterministicRng(seed).branch(SeedScope.SEASON, "initial_pool", season, country.code, sequence)
-        quality = self._country_quality(country)
         stage = self._choose_stage(rng)
         age_min, age_max = STAGE_AGE_RANGES[stage]
         age = rng.randint(age_min, age_max)
         season_start_year = self._season_start_year(season)
-        # Preserve the established player-quality RNG stream; the FAX birth week
-        # is sampled from a dedicated branch below.
         rng.randint(1, 52)
         birth_year = season_start_year - age
-        potential_tier, potential = self._potential(rng, quality)
+
+        # Country V1 invariant: innate potential is drawn from the global
+        # distribution and deterministic RNG, never from authored country strength.
+        potential_tier, potential = self._potential(rng)
         growth_curve = rng.choice(self._identity().growth_curves)
-        current = self._current_ability(rng, age=age, potential=potential, growth_curve=growth_curve)
-        archetype = self._choose_from_style_dna(country, rng, self._identity().archetypes)
-        play_style = self._identity().play_styles[self._identity().archetypes.index(archetype) % len(self._identity().play_styles)] if archetype in self._identity().archetypes else rng.choice(self._identity().play_styles)
+        development_environment = CountryTalentModel().development_environment(country)
+        current = self._current_ability(
+            rng,
+            age=age,
+            potential=potential,
+            growth_curve=growth_curve,
+            development_environment=development_environment,
+        )
+
+        # National style/personality DNA is explicitly deferred beyond V1.
+        archetype = rng.choice(self._identity().archetypes)
+        if archetype in self._identity().archetypes:
+            play_style = self._identity().play_styles[
+                self._identity().archetypes.index(archetype) % len(self._identity().play_styles)
+            ]
+        else:
+            play_style = rng.choice(self._identity().play_styles)
         attributes = self._attributes(rng, current=current, archetype=archetype)
         hidden = HiddenCareerTraits(
             potential_ceiling=potential,
             growth_curve=growth_curve,
-            professionalism=self._clamp01(0.25 + country.system_quality_norm * 0.45 + rng.uniform(-0.08, 0.25)),
-            ambition=self._clamp01(0.25 + country.squash_popularity_norm * 0.35 + rng.uniform(-0.05, 0.35)),
-            travel_tolerance=self._clamp01(0.35 + country.wealth_support_norm * 0.25 + rng.uniform(-0.12, 0.32)),
-            schedule_aggression=self._clamp01(0.20 + rng.uniform(0.0, 0.65)),
-            injury_proneness=self._clamp01(0.45 - country.system_quality_norm * 0.16 + rng.uniform(-0.18, 0.28)),
-            resilience=self._clamp01(0.25 + country.squash_tradition_norm * 0.30 + rng.uniform(-0.05, 0.38)),
+            professionalism=self._clamp01(rng.uniform(0.20, 0.88)),
+            ambition=self._clamp01(rng.uniform(0.20, 0.90)),
+            travel_tolerance=self._clamp01(rng.uniform(0.18, 0.86)),
+            schedule_aggression=self._clamp01(rng.uniform(0.20, 0.85)),
+            injury_proneness=self._clamp01(rng.uniform(0.10, 0.73)),
+            resilience=self._clamp01(rng.uniform(0.20, 0.90)),
         )
         player_id = f"P-{season_start_year}-{country.code}-{sequence:04d}"
         name = self._name(rng, country, sequence)
-        birth_week = rng.branch(SeedScope.SEASON, "fax_birth_year_week").randint(1, DEFAULT_WEEKS_PER_CALENDAR_YEAR)
-        fingerprint = hashlib.blake2b(f"{season}|{seed}|{country.code}|{sequence}".encode(), digest_size=8).hexdigest()
+        birth_week = rng.branch(SeedScope.SEASON, "fax_birth_year_week").randint(
+            1, DEFAULT_WEEKS_PER_CALENDAR_YEAR
+        )
+        fingerprint = hashlib.blake2b(
+            f"{season}|{seed}|{country.code}|{sequence}".encode(), digest_size=8
+        ).hexdigest()
         return InitialPoolGeneratedPlayer(
             player_id=player_id,
             name=name,
@@ -617,18 +661,18 @@ class InitialPlayerPoolGenerator:
         )
 
     def _quantity_weight(self, country: Country, *, season_start_year: int) -> float:
-        effective_quantity_population = self._effective_population_quantity(country, season_start_year)
-        population_component = min(3.0, (effective_quantity_population / 5_000_000) ** 0.35)
-        courts = 0.25 if country.court_count is None else min(1.4, (country.court_count / 300) ** 0.35)
-        culture = 0.55 + country.squash_popularity_norm + country.squash_tradition_norm * 0.85
-        system = 0.45 + country.system_quality_norm * 0.85 + ((country.competition_density or 3.0) - 1) / 4 * 0.45
-        return max(0.1, population_component * 0.65 + culture * 0.9 + system * 0.8 + courts * 0.35)
+        effective_population = self._effective_population_quantity(country, season_start_year)
+        return CountryTalentModel().effective_squash_pool_weight(country, population=effective_population)
 
-    def _effective_population_quantity(self, country: Country, season_start_year: int) -> float:
+    @staticmethod
+    def _effective_population_quantity(country: Country, season_start_year: int) -> float:
         return initial_pool_effective_population_quantity(country, season_start_year)
 
     def _population_weighting_metadata(
-        self, season: str, *, diagnostics: list[InitialPoolPopulationWeightingDiagnostic] | None = None
+        self,
+        season: str,
+        *,
+        diagnostics: list[InitialPoolPopulationWeightingDiagnostic] | None = None,
     ) -> dict[str, int | str | list[InitialPoolPopulationWeightingDiagnostic]]:
         season_start_year = self._season_start_year(season)
         age_weights = initial_pool_age_weights()
@@ -646,21 +690,8 @@ class InitialPlayerPoolGenerator:
     def _season_start_year(season: str) -> int:
         return int(season.split("/")[0])
 
-    def _country_quality(self, country: Country) -> float:
-        competition = ((country.competition_density or 3.0) - 1) / 4
-        federation = ((country.federation_quality or float(country.system_quality)) - 1) / 4
-        courts = 0.35 if country.court_count is None else min(1.0, (country.court_count / 900) ** 0.4)
-        return self._clamp01(
-            country.squash_popularity_norm * 0.17
-            + country.squash_tradition_norm * 0.22
-            + country.system_quality_norm * 0.24
-            + competition * 0.12
-            + federation * 0.12
-            + country.wealth_support_norm * 0.08
-            + courts * 0.05
-        )
-
-    def _choose_stage(self, rng: DeterministicRng) -> CareerStage:
+    @staticmethod
+    def _choose_stage(rng: DeterministicRng) -> CareerStage:
         roll = rng.random()
         cumulative = 0.0
         for stage, weight in STAGE_WEIGHTS:
@@ -669,19 +700,28 @@ class InitialPlayerPoolGenerator:
                 return stage
         return "prime"
 
-    def _potential(self, rng: DeterministicRng, quality: float) -> tuple[PotentialTier, int]:
-        score = self._clamp01(quality * 0.72 + rng.random() * 0.42)
-        if score >= 0.88:
+    @staticmethod
+    def _potential(rng: DeterministicRng) -> tuple[PotentialTier, int]:
+        roll = rng.random()
+        if roll < 0.015:
             return "S", rng.randint(91, 99)
-        if score >= 0.72:
+        if roll < 0.135:
             return "A", rng.randint(82, 92)
-        if score >= 0.52:
+        if roll < 0.435:
             return "B", rng.randint(72, 84)
-        if score >= 0.30:
+        if roll < 0.765:
             return "C", rng.randint(60, 74)
         return "D", rng.randint(50, 62)
 
-    def _current_ability(self, rng: DeterministicRng, *, age: int, potential: int, growth_curve: str) -> int:
+    def _current_ability(
+        self,
+        rng: DeterministicRng,
+        *,
+        age: int,
+        potential: int,
+        growth_curve: str,
+        development_environment: float,
+    ) -> int:
         if age < 18:
             factor = 0.48 + (age - 15) * 0.055
         elif age < 23:
@@ -698,9 +738,18 @@ class InitialPlayerPoolGenerator:
             factor += -0.05 if age <= 22 else 0.03
         elif growth_curve == "volatile":
             factor += rng.uniform(-0.05, 0.05)
+        # Realisation effect only: environment changes how close a player is to
+        # the already-sampled potential, never the potential itself.
+        factor += (development_environment - 0.5) * 0.12
         return max(1, min(99, potential + 4, int(round(potential * factor + rng.uniform(-4, 4)))))
 
-    def _attributes(self, rng: DeterministicRng, *, current: int, archetype: str) -> GeneratedPlayerAttributes:
+    @staticmethod
+    def _attributes(
+        rng: DeterministicRng,
+        *,
+        current: int,
+        archetype: str,
+    ) -> GeneratedPlayerAttributes:
         leans = {
             "power_attacker": {"physical": 6, "clutch": 3, "recovery": -3},
             "counterpuncher": {"movement": 4, "mental": 4, "technique": -1},
@@ -711,41 +760,37 @@ class InitialPlayerPoolGenerator:
         }.get(archetype, {})
         values = {}
         for attr in ("technique", "movement", "physical", "mental", "consistency", "clutch", "recovery"):
-            values[attr] = max(1, min(99, int(round(current + leans.get(attr, 0) + rng.uniform(-6, 6)))))
+            values[attr] = max(
+                1,
+                min(99, int(round(current + leans.get(attr, 0) + rng.uniform(-6, 6)))),
+            )
         return GeneratedPlayerAttributes(**values)
-
-    def _choose_from_style_dna(self, country: Country, rng: DeterministicRng, options: list[str]) -> str:
-        positive = [(key, weight) for key, weight in country.style_dna.items() if key in options and weight > 0]
-        if not positive:
-            return rng.choice(options)
-        total = sum(weight for _, weight in positive)
-        roll = rng.random() * total
-        cumulative = 0.0
-        for key, weight in sorted(positive):
-            cumulative += weight
-            if roll <= cumulative:
-                return key
-        return positive[-1][0]
 
     def _name(self, rng: DeterministicRng, country: Country, sequence: int) -> str:
         identity = self._identity()
         return f"{rng.choice(identity.given_names)} {rng.choice(identity.family_names)} {country.code[:2]}{sequence:02d}"
 
-    def _summarize(self, players: list[InitialPoolGeneratedPlayer]) -> InitialPoolSummary:
+    @staticmethod
+    def _summarize(players: list[InitialPoolGeneratedPlayer]) -> InitialPoolSummary:
         count = len(players)
         return InitialPoolSummary(
             total_players=count,
             locked_players=sum(1 for player in players if player.locked),
             unlocked_players=sum(1 for player in players if not player.locked),
             countries_represented=len({player.country_code for player in players}),
-            average_current_ability=round(sum(player.current_ability for player in players) / count, 2) if count else 0.0,
-            average_potential_ability=round(sum(player.potential_ability for player in players) / count, 2) if count else 0.0,
+            average_current_ability=(
+                round(sum(player.current_ability for player in players) / count, 2) if count else 0.0
+            ),
+            average_potential_ability=(
+                round(sum(player.potential_ability for player in players) / count, 2) if count else 0.0
+            ),
             by_country=dict(sorted(Counter(player.country_code for player in players).items())),
             by_career_stage=dict(sorted(Counter(player.career_stage for player in players).items())),
             by_potential_tier=dict(sorted(Counter(player.potential_tier for player in players).items())),
         )
 
-    def _fingerprint(self, players: list[InitialPoolGeneratedPlayer], *, season: str, seed: int) -> str:
+    @staticmethod
+    def _fingerprint(players: list[InitialPoolGeneratedPlayer], *, season: str, seed: int) -> str:
         material = "|".join([season, str(seed), *(player.model_dump_json() for player in players)])
         return hashlib.blake2b(material.encode(), digest_size=16).hexdigest()
 

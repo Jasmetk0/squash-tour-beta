@@ -12,7 +12,7 @@ function parseYear(value: string): number {
   }
   const year = Number(normalized)
   if (year < 1955 || year > 2050) {
-    throw new Error('Population year must be between 1955 and 2050')
+    throw new Error('Population year must be from 1955 to 2050')
   }
   return year
 }
@@ -42,7 +42,7 @@ export function countryV1PopulationPayloadFromRows(
     const year = parseYear(row.year)
     const yearKey = String(year)
     if (Object.prototype.hasOwnProperty.call(valuesByYear, yearKey)) {
-      throw new Error(`Population year ${yearKey} is already authored`)
+      throw new Error(`Year ${yearKey} is already authored.`)
     }
     valuesByYear[yearKey] = parsePopulation(row.population)
   }

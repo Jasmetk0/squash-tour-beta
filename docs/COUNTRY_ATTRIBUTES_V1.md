@@ -66,6 +66,7 @@ For the first implementation slice:
 - initial-pool, annual-intake and weekly-intake country volume use effective population together with `squash_popularity` and `squash_access`,
 - very large populations use diminishing-return weighting where a fixed global cohort is allocated,
 - innate potential / quality-band rarity is global rather than increased by country development ratings,
+- country-scoped history balancing such as the pre-V1 Recent Greatness Dampener may remain readable for audit but must not modify innate quality-band probabilities in V1,
 - country strength does not create national style, personality, technical or mental DNA,
 - `development_quality`, `competition_quality`, `elite_support` and `squash_tradition` describe the environment in which potential is realised,
 - exact numerical weights are implementation calibration values, **not canon**.

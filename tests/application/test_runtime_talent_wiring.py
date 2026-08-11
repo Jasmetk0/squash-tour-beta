@@ -17,17 +17,19 @@ def _service(tmp_path) -> SimulationApiService:
     return SimulationApiService(repository=repository)
 
 
-def _country(*, code: str, population: int, wealth_support: int, squash_popularity: int, squash_tradition: int, system_quality: int) -> Country:
+def _country(*, code: str, population: int, strength: int) -> Country:
     return Country(
         code=code,
         name=code,
         flag_asset=None,
         region="TEST",
         population=population,
-        wealth_support=wealth_support,
-        squash_popularity=squash_popularity,
-        squash_tradition=squash_tradition,
-        system_quality=system_quality,
+        squash_popularity=strength,
+        squash_access=strength,
+        development_quality=strength,
+        competition_quality=strength,
+        elite_support=strength,
+        squash_tradition=strength,
     )
 
 
@@ -46,8 +48,8 @@ def _overall(player) -> float:
 def test_runtime_generation_is_deterministic_for_same_seed_and_season(tmp_path) -> None:
     service = _service(tmp_path)
     countries = [
-        _country(code="AAA", population=90_000_000, wealth_support=4, squash_popularity=4, squash_tradition=4, system_quality=4),
-        _country(code="BBB", population=120_000_000, wealth_support=2, squash_popularity=2, squash_tradition=2, system_quality=2),
+        _country(code="AAA", population=90_000_000, strength=4),
+        _country(code="BBB", population=120_000_000, strength=2),
     ]
 
     left = [player.model_dump() for player in service._build_players(seed=2027, season=2031, countries=countries)]
@@ -59,8 +61,8 @@ def test_runtime_generation_is_deterministic_for_same_seed_and_season(tmp_path) 
 def test_runtime_generation_changes_when_season_changes(tmp_path) -> None:
     service = _service(tmp_path)
     countries = [
-        _country(code="AAA", population=90_000_000, wealth_support=4, squash_popularity=4, squash_tradition=4, system_quality=4),
-        _country(code="BBB", population=120_000_000, wealth_support=2, squash_popularity=2, squash_tradition=2, system_quality=2),
+        _country(code="AAA", population=90_000_000, strength=4),
+        _country(code="BBB", population=120_000_000, strength=2),
     ]
 
     season_2031 = [player.model_dump() for player in service._build_players(seed=2027, season=2031, countries=countries)]
@@ -72,9 +74,9 @@ def test_runtime_generation_changes_when_season_changes(tmp_path) -> None:
 def test_runtime_generation_no_longer_uses_equal_fixed_count_per_country(tmp_path) -> None:
     service = _service(tmp_path)
     countries = [
-        _country(code="AAA", population=45_000_000, wealth_support=4, squash_popularity=4, squash_tradition=4, system_quality=4),
-        _country(code="BBB", population=300_000_000, wealth_support=2, squash_popularity=2, squash_tradition=2, system_quality=2),
-        _country(code="CCC", population=90_000_000, wealth_support=3, squash_popularity=3, squash_tradition=3, system_quality=3),
+        _country(code="AAA", population=45_000_000, strength=4),
+        _country(code="BBB", population=300_000_000, strength=2),
+        _country(code="CCC", population=90_000_000, strength=3),
     ]
 
     players = service._build_players(seed=5151, season=2030, countries=countries)
@@ -83,39 +85,27 @@ def test_runtime_generation_no_longer_uses_equal_fixed_count_per_country(tmp_pat
     assert len(set(per_country.values())) > 1
 
 
-def test_stronger_country_produces_better_top_end_runtime_players(tmp_path) -> None:
+def test_stronger_country_realises_better_top_end_runtime_players(tmp_path) -> None:
     service = _service(tmp_path)
-    strong = _country(
-        code="STR",
-        population=55_000_000,
-        wealth_support=5,
-        squash_popularity=5,
-        squash_tradition=5,
-        system_quality=5,
-    )
-    weak = _country(
-        code="WEK",
-        population=55_000_000,
-        wealth_support=1,
-        squash_popularity=1,
-        squash_tradition=1,
-        system_quality=1,
-    )
+    strong = _country(code="STR", population=55_000_000, strength=5)
+    weak = _country(code="WEK", population=55_000_000, strength=1)
 
     players = service._build_players(seed=9191, season=2040, countries=[strong, weak])
-    strong_players = sorted([player for player in players if player.nationality == "STR"], key=_overall, reverse=True)
-    weak_players = sorted([player for player in players if player.nationality == "WEK"], key=_overall, reverse=True)
+    strong_players = sorted(
+        [player for player in players if player.nationality == "STR"], key=_overall, reverse=True
+    )
+    weak_players = sorted(
+        [player for player in players if player.nationality == "WEK"], key=_overall, reverse=True
+    )
 
-    # Country V1 improves the environment in which talent is realised, but does
-    # not increase innate potential-ceiling odds. The separate planner tests
-    # assert that innate quality-band probabilities remain country-neutral.
+    # Country V1 improves realised development, not innate quality-band odds.
     assert _overall(strong_players[0]) > _overall(weak_players[0]) + 6.0
 
 
 def test_population_affects_volume_without_absurd_domination_in_runtime(tmp_path) -> None:
     service = _service(tmp_path)
-    huge_mid = _country(code="HUG", population=1_300_000_000, wealth_support=3, squash_popularity=3, squash_tradition=3, system_quality=3)
-    small_mid = _country(code="SML", population=65_000_000, wealth_support=3, squash_popularity=3, squash_tradition=3, system_quality=3)
+    huge_mid = _country(code="HUG", population=1_300_000_000, strength=3)
+    small_mid = _country(code="SML", population=65_000_000, strength=3)
 
     players = service._build_players(seed=1010, season=2042, countries=[huge_mid, small_mid])
     per_country = Counter(player.nationality for player in players)
@@ -128,9 +118,9 @@ def test_generational_talent_is_rare_and_exceptional_in_runtime(tmp_path) -> Non
     service = _service(tmp_path)
     planner = AnnualTalentClassPlanner()
     countries = [
-        _country(code="AAA", population=120_000_000, wealth_support=4, squash_popularity=4, squash_tradition=5, system_quality=4),
-        _country(code="BBB", population=95_000_000, wealth_support=3, squash_popularity=3, squash_tradition=3, system_quality=3),
-        _country(code="CCC", population=180_000_000, wealth_support=2, squash_popularity=2, squash_tradition=2, system_quality=2),
+        _country(code="AAA", population=120_000_000, strength=4),
+        _country(code="BBB", population=95_000_000, strength=3),
+        _country(code="CCC", population=180_000_000, strength=2),
     ]
 
     total_players = 0

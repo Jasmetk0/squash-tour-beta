@@ -73,6 +73,7 @@ describe('countryV1Client', () => {
       system_quality: 5,
       competition_density: 4,
       federation_quality: 2,
+      style_dna: { attacking: 1 },
     })
 
     expect(normalized).toMatchObject({
@@ -83,6 +84,15 @@ describe('countryV1Client', () => {
       elite_support: 2,
       squash_tradition: 3,
     })
+    for (const legacyField of [
+      'wealth_support',
+      'system_quality',
+      'competition_density',
+      'federation_quality',
+      'style_dna',
+    ]) {
+      expect(normalized).not.toHaveProperty(legacyField)
+    }
   })
 
   it('rejects malformed legacy ratings instead of silently clamping or inventing V1 values', () => {

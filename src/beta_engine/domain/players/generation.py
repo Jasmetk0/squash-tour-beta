@@ -64,9 +64,11 @@ class PlayerGenerator:
         bias_profile: CountryGenerationBiasProfile | None,
     ) -> Player:
         band_baseline_bonus, _band_ceiling_bonus, age_shift = self._quality_band_parameters(quality_band)
-        technical_lean = 0.0 if bias_profile is None else bias_profile.technical_vs_physical_lean
-        mental_lean = 0.0 if bias_profile is None else bias_profile.mental_sharpness_tendency
-        professional_lean = 0.0 if bias_profile is None else bias_profile.professionalism_tendency
+        # CountryGenerationBiasProfile is retained only as a compatibility input
+        # for older persisted planner shapes. Country V1 forbids national
+        # technical, mental, personality and style DNA, so runtime generation
+        # deliberately ignores any non-neutral values that an old payload carries.
+        _ = bias_profile
 
         age = self._clamp_int(
             17,
@@ -78,35 +80,21 @@ class PlayerGenerator:
         archetype = player_rng.choice(self.identity_config.archetypes)
         play_style = player_rng.choice(self.identity_config.play_styles)
 
-        # Country V1 affects realised development environment, not innate talent.
-        technique = self._skill_value(
-            player_rng,
-            development_environment,
-            country.development_quality_norm,
-            band_baseline_bonus + technical_lean * 6.0,
-        )
-        movement = self._skill_value(
-            player_rng,
-            development_environment,
-            country.squash_access_norm,
-            band_baseline_bonus,
-        )
-        physical = self._skill_value(
-            player_rng,
-            development_environment,
-            country.development_quality_norm,
-            band_baseline_bonus - technical_lean * 4.0,
-        )
-        mental = self._skill_value(
-            player_rng,
-            development_environment,
-            country.competition_quality_norm,
-            band_baseline_bonus + mental_lean * 6.0,
-        )
+        # Country V1 may change how much ability is realised through the overall
+        # development/conversion environment, but it must not shape one nation
+        # toward Technique, Movement, Physical or Mental ability. With the same
+        # individual RNG stream, the country contribution is therefore uniform
+        # across the four core ability dimensions.
+        technique = self._skill_value(player_rng, development_environment, band_baseline_bonus)
+        movement = self._skill_value(player_rng, development_environment, band_baseline_bonus)
+        physical = self._skill_value(player_rng, development_environment, band_baseline_bonus)
+        mental = self._skill_value(player_rng, development_environment, band_baseline_bonus)
 
-        consistency = self._skill_value(player_rng, (technique + movement) / 200.0, country.competition_quality_norm)
-        clutch = self._skill_value(player_rng, mental / 99.0, country.competition_quality_norm)
-        recovery = self._skill_value(player_rng, physical / 99.0, country.development_quality_norm)
+        # Secondary realised skills depend on the player's already-realised
+        # individual abilities, not on a second country-specific skill direction.
+        consistency = self._skill_value(player_rng, (technique + movement) / 200.0)
+        clutch = self._skill_value(player_rng, mental / 99.0)
+        recovery = self._skill_value(player_rng, physical / 99.0)
 
         potential_floor = self._potential_floor_by_band(quality_band)
         potential_center = self._potential_center_by_band(quality_band)
@@ -118,13 +106,13 @@ class PlayerGenerator:
                     55,
                     99,
                     # Innate ceiling depends on rarity band + deterministic RNG,
-                    # never on the country development ratings. Even the rarest
-                    # band keeps a small distribution instead of becoming 99/99.
+                    # never on country development ratings. Even the rarest band
+                    # keeps a small distribution instead of becoming 99/99.
                     int(round(potential_center + player_rng.uniform(-potential_spread, potential_spread))),
                 ),
             ),
             growth_curve=player_rng.choice(self.identity_config.growth_curves),
-            professionalism=self._clamp_float(0.48 + professional_lean * 0.20 + player_rng.uniform(-0.22, 0.24)),
+            professionalism=self._clamp_float(0.48 + player_rng.uniform(-0.22, 0.24)),
             ambition=self._clamp_float(player_rng.uniform(0.22, 0.88)),
             travel_tolerance=self._travel_tolerance(player_rng),
             schedule_aggression=self._clamp_float(player_rng.uniform(0.18, 0.82)),
@@ -165,11 +153,13 @@ class PlayerGenerator:
     def _skill_value(
         self,
         rng: DeterministicRng,
-        development_environment: float,
-        contextual_factor: float,
+        realised_environment: float,
         additive_bonus: float = 0.0,
     ) -> int:
-        baseline = 34 + development_environment * 36 + contextual_factor * 18 + additive_bonus
+        # The fixed +9 is the neutral midpoint of the superseded contextual
+        # factor. Keeping it preserves the broad ability scale without retaining
+        # a national direction for any individual skill dimension.
+        baseline = 43 + realised_environment * 36 + additive_bonus
         noise = rng.uniform(-8.0, 8.0)
         return self._clamp_int(20, 99, int(round(baseline + noise)))
 

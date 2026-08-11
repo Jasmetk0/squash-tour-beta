@@ -95,20 +95,23 @@ export function WorldPackageCountriesV1Page(): JSX.Element {
   return (
     <section className="panel">
       <div className="page-intro">
-        <h2>Countries</h2>
+        <h2>World Package Countries</h2>
         <p className="subtitle">Country V1 data for this World Package.</p>
       </div>
       <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}`}>Back to World Package</Link></p>
 
       {countriesQuery.isLoading && <p className="status">Loading countries...</p>}
-      {countriesQuery.error && <p className="error">Failed to load countries: {formatApiError(countriesQuery.error)}</p>}
+      {countriesQuery.error && <p className="error">Failed to load package countries: {formatApiError(countriesQuery.error)}</p>}
 
       {data && (
         <>
           <SectionCard title="Country dataset">
             <p><strong>World:</strong> {data.world_name} (<code>{data.world_id}</code>)</p>
             <p><strong>Country count:</strong> {data.country_count}</p>
-            <p><strong>Package mode:</strong> {data.type === 'custom' ? 'Custom' : 'Built-in'} · {data.read_only ? 'Read-only' : 'Editable source'}</p>
+            <p>
+              <strong>Package mode:</strong>{' '}
+              <span>{data.type === 'custom' ? 'Custom' : 'Built-in'} · {data.read_only ? 'Read-only' : 'Editable source'}</span>
+            </p>
           </SectionCard>
 
           <SectionCard title="Package countries">

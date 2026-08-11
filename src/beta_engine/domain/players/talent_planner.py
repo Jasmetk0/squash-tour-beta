@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import math
-
 from beta_engine.core import DeterministicRng, SeedScope
 from beta_engine.domain.countries import Country, CountryTalentModel
 from beta_engine.domain.players.talent_dampener import (
@@ -26,7 +24,7 @@ class AnnualTalentClassPlanner:
 
     Country V1 separates two ideas that the legacy planner mixed together:
     participation/pipeline determines how many prospects a country samples, while
-    innate quality-band rarity is global.  Country development strength can later
+    innate quality-band rarity is global. Country development strength can later
     affect how much of that potential is realised, but does not make a person more
     likely to be born with generational potential.
     """
@@ -88,14 +86,12 @@ class AnnualTalentClassPlanner:
         return max(country_count, int(round(baseline * (1.0 + cycle))))
 
     def _allocate_counts(self, *, countries: list[Country], total_talents: int) -> dict[str, int]:
-        weights: dict[str, float] = {}
-        for country in countries:
-            # Effective squash pool is population × popularity × access.  A log
-            # transform keeps huge countries relevant without allowing raw
-            # population to swamp the rest of the world.  Exact calibration is
-            # intentionally left tunable after simulation data exists.
-            pool = self._country_model.effective_squash_pool_weight(country)
-            weights[country.code] = max(1.0, math.log10(max(10.0, pool)))
+        # The country model owns the V1 population/popularity/access curve so the
+        # annual planner and weekly intake cannot silently drift apart.
+        weights = {
+            country.code: max(0.000001, self._country_model.effective_squash_pool_weight(country))
+            for country in countries
+        }
 
         weight_sum = sum(weights.values())
         if weight_sum <= 0:
@@ -114,7 +110,7 @@ class AnnualTalentClassPlanner:
         return allocation
 
     def _quality_weights(self, *, country: Country, year: int) -> tuple[dict[TalentQualityBand, float], CountryDampenerSnapshot]:
-        # Innate rarity is global in Country V1.  The existing recent-greatness
+        # Innate rarity is global in Country V1. The existing recent-greatness
         # dampener is retained as an explicit historical balancing mechanism,
         # but authored country strength no longer changes top-band birth odds.
         probabilities = {

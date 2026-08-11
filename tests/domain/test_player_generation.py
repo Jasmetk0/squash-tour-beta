@@ -124,9 +124,9 @@ def test_legacy_non_neutral_country_bias_profile_is_ignored_in_v1_runtime() -> N
         mental_sharpness_tendency=0.0,
     )
     legacy_biased = CountryGenerationBiasProfile(
-        professionalism_tendency=1.0,
-        technical_vs_physical_lean=1.0,
-        mental_sharpness_tendency=1.0,
+        professionalism_tendency=0.3,
+        technical_vs_physical_lean=0.3,
+        mental_sharpness_tendency=0.3,
     )
 
     left = neutral_generator.generate_from_talent_seed(

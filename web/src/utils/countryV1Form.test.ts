@@ -91,7 +91,7 @@ describe('countryV1Form', () => {
       squash_popularity: 4,
       squash_access: 3,
       development_quality: 5,
-      competition_quality: 4,
+      competition_quality: 4.5,
       elite_support: 2,
       squash_tradition: 3,
     }
@@ -106,18 +106,27 @@ describe('countryV1Form', () => {
       squash_popularity: '4',
       squash_access: '3',
       development_quality: '5',
-      competition_quality: '4',
+      competition_quality: '4.5',
       elite_support: '2',
       squash_tradition: '3',
     })
   })
 
-  it('rejects fractional and out-of-range authored ratings before sending them', () => {
-    expect(() => countryV1UpdatePayloadFromDraft({ ...draft, competition_quality: '4.5' })).toThrow(
-      'competition_quality must be an integer from 1 to 5',
+  it('accepts fractional authored ratings and rejects values outside 1 to 5', () => {
+    expect(countryV1UpdatePayloadFromDraft({
+      ...draft,
+      squash_access: '2.25',
+      competition_quality: '4.5',
+    })).toMatchObject({
+      squash_access: 2.25,
+      competition_quality: 4.5,
+    })
+
+    expect(() => countryV1UpdatePayloadFromDraft({ ...draft, elite_support: '5.01' })).toThrow(
+      'elite_support must be a number from 1 to 5',
     )
-    expect(() => countryV1UpdatePayloadFromDraft({ ...draft, elite_support: '6' })).toThrow(
-      'elite_support must be an integer from 1 to 5',
+    expect(() => countryV1UpdatePayloadFromDraft({ ...draft, elite_support: '0.99' })).toThrow(
+      'elite_support must be a number from 1 to 5',
     )
   })
 

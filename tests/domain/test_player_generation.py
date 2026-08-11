@@ -5,7 +5,7 @@ from tests.support.world_packages import load_fax_reference_countries
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.countries import Country, CountryTalentModel
 from beta_engine.domain.matches import MatchEngine
-from beta_engine.domain.players import PlayerGenerator
+from beta_engine.domain.players import CountryGenerationBiasProfile, PlayerGenerator, TalentQualityBand
 from beta_engine.infrastructure.world_config import PlayerIdentityConfig, load_player_identity_config
 
 
@@ -85,7 +85,10 @@ def test_generation_depends_on_development_environment_not_population_alone() ->
     assert "attacking" in identity.play_styles
 
 
-def test_country_strength_does_not_change_intrinsic_potential_with_same_seed() -> None:
+def test_country_strength_changes_realised_level_not_innate_or_directional_dna() -> None:
+    # Same code keeps the individual RNG stream identical. Changing only Country
+    # V1 environment may shift realised level, but not potential, identity,
+    # personality or one core ability direction more than another.
     weak = _v1_country(code="TST", strength=1)
     strong = _v1_country(code="TST", strength=5)
     weak_generator, _, _ = _generator(7781)
@@ -94,12 +97,54 @@ def test_country_strength_does_not_change_intrinsic_potential_with_same_seed() -
     weak_players = [weak_generator.generate(country=weak, sequence=i) for i in range(1, 50)]
     strong_players = [strong_generator.generate(country=strong, sequence=i) for i in range(1, 50)]
 
-    assert [player.hidden_career_traits.potential_ceiling for player in weak_players] == [
-        player.hidden_career_traits.potential_ceiling for player in strong_players
+    assert [player.hidden_career_traits.model_dump() for player in weak_players] == [
+        player.hidden_career_traits.model_dump() for player in strong_players
     ]
-    assert sum(player.technique + player.mental for player in strong_players) > sum(
-        player.technique + player.mental for player in weak_players
+    assert [player.play_style for player in weak_players] == [player.play_style for player in strong_players]
+    assert [player.archetype for player in weak_players] == [player.archetype for player in strong_players]
+
+    for weak_player, strong_player in zip(weak_players, strong_players, strict=True):
+        core_deltas = {
+            strong_player.technique - weak_player.technique,
+            strong_player.movement - weak_player.movement,
+            strong_player.physical - weak_player.physical,
+            strong_player.mental - weak_player.mental,
+        }
+        assert len(core_deltas) == 1
+        assert next(iter(core_deltas)) > 0
+
+
+def test_legacy_non_neutral_country_bias_profile_is_ignored_in_v1_runtime() -> None:
+    country = _v1_country(code="TST", strength=3)
+    neutral_generator, _, _ = _generator(991)
+    biased_generator, _, _ = _generator(991)
+    neutral = CountryGenerationBiasProfile(
+        professionalism_tendency=0.0,
+        technical_vs_physical_lean=0.0,
+        mental_sharpness_tendency=0.0,
     )
+    legacy_biased = CountryGenerationBiasProfile(
+        professionalism_tendency=1.0,
+        technical_vs_physical_lean=1.0,
+        mental_sharpness_tendency=1.0,
+    )
+
+    left = neutral_generator.generate_from_talent_seed(
+        country=country,
+        sequence=1,
+        talent_seed_value=123456,
+        quality_band=TalentQualityBand.ELITE,
+        bias_profile=neutral,
+    )
+    right = biased_generator.generate_from_talent_seed(
+        country=country,
+        sequence=1,
+        talent_seed_value=123456,
+        quality_band=TalentQualityBand.ELITE,
+        bias_profile=legacy_biased,
+    )
+
+    assert left.model_dump(mode="json") == right.model_dump(mode="json")
 
 
 def test_generated_player_has_required_mvp_fields() -> None:

@@ -25,6 +25,8 @@ class Server(BootstrapServer):
             {"player_id": "P-D", "name": "Delta Four", "country_code": "BBB", "nationality": "BBB", "ranking_points": 90, "race_points": 100, "current_ability": 68},
         ]
         for player, update in zip(players, updates, strict=True):
+            requested_current = int(update["current_ability"])
+            update["current_ability"] = min(requested_current, int(update.get("potential_ability", player["potential_ability"])) + 4)
             player.update(update)
         registry["players_by_season"]["2000/2001"] = players
         self.active_path.write_text(json.dumps(registry), encoding="utf-8")

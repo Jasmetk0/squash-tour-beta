@@ -42,6 +42,32 @@ def test_country_v1_serializes_only_six_game_attributes() -> None:
     assert payload["court_count"] == 42
 
 
+def test_country_v1_accepts_fractional_authored_ratings() -> None:
+    country = _v1_country(
+        squash_popularity=1.25,
+        squash_access=2.5,
+        development_quality=3.75,
+        competition_quality=4.5,
+        elite_support=2.25,
+        squash_tradition=4.9,
+    )
+
+    assert country.squash_popularity == 1.25
+    assert country.squash_access == 2.5
+    assert country.development_quality == 3.75
+    assert country.competition_quality == 4.5
+    assert country.elite_support == 2.25
+    assert country.squash_tradition == 4.9
+    assert country.competition_quality_norm == pytest.approx(0.875)
+
+
+def test_country_v1_rejects_ratings_outside_continuous_1_to_5_range() -> None:
+    with pytest.raises(ValidationError):
+        _v1_country(competition_quality=5.01)
+    with pytest.raises(ValidationError):
+        _v1_country(competition_quality=0.99)
+
+
 def test_country_v1_requires_all_six_authored_ratings_without_legacy_source() -> None:
     payload = _v1_country().model_dump(mode="python")
     payload.pop("elite_support")
@@ -63,7 +89,7 @@ def test_legacy_country_payload_migrates_deterministically_to_v1() -> None:
             "squash_popularity": 4,
             "squash_tradition": 5,
             "system_quality": 3,
-            "competition_density": 4.0,
+            "competition_density": 2.5,
             "federation_quality": 2.0,
             "style_dna": {"pace": 1.2},
         }
@@ -72,7 +98,7 @@ def test_legacy_country_payload_migrates_deterministically_to_v1() -> None:
     assert country.squash_popularity == 4
     assert country.squash_access == 2
     assert country.development_quality == 3
-    assert country.competition_quality == 4
+    assert country.competition_quality == 2.5
     assert country.elite_support == 2
     assert country.squash_tradition == 5
     assert "style_dna" not in country.model_dump()

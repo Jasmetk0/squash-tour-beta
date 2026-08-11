@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal, Self
+from typing import Annotated, Any, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-CountrySimFactor = Literal[1, 2, 3, 4, 5]
+CountrySimFactor = Annotated[float, Field(ge=1.0, le=5.0, allow_inf_nan=False)]
 
 
 class Country(BaseModel):
@@ -35,7 +35,8 @@ class Country(BaseModel):
     travel_region: str | None = None
     notes: str | None = None
 
-    # Country Game Attributes V1. All six are authored integer ratings 1..5.
+    # Country Game Attributes V1. All six are authored numeric ratings 1..5;
+    # fractional values such as 2.5 are valid and preserved.
     squash_popularity: CountrySimFactor
     squash_access: CountrySimFactor
     development_quality: CountrySimFactor
@@ -66,7 +67,7 @@ class Country(BaseModel):
                     continue
                 raw = data[name]
                 try:
-                    return int(round(float(raw)))
+                    return float(raw)
                 except (TypeError, ValueError):
                     # Preserve malformed input so the canonical 1..5 field
                     # validation rejects it instead of manufacturing a default.
@@ -139,8 +140,8 @@ class Country(BaseModel):
         return normalized or None
 
     @staticmethod
-    def _normalize_factor(value: int) -> float:
-        return (value - 1) / 4.0
+    def _normalize_factor(value: float) -> float:
+        return (value - 1.0) / 4.0
 
     @property
     def squash_popularity_norm(self) -> float:

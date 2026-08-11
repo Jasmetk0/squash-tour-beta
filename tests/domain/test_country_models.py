@@ -47,10 +47,16 @@ def test_country_migrates_phase_two_fields_without_retaining_superseded_state() 
     assert country.elite_support == 4
     assert country.court_count == 120
     payload = country.model_dump()
-    assert "competition_density" not in payload
-    assert "federation_quality" not in payload
-    assert "style_dna" not in payload
-    assert country.style_dna == {}
+    for legacy_field in (
+        "wealth_support",
+        "system_quality",
+        "competition_density",
+        "federation_quality",
+        "style_dna",
+    ):
+        assert legacy_field not in payload
+        with pytest.raises(AttributeError):
+            getattr(country, legacy_field)
 
 
 def test_country_effective_travel_region_defaults_to_region_and_tracks_region_copy() -> None:

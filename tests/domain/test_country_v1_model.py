@@ -86,3 +86,23 @@ def test_participation_pool_depends_on_popularity_and_access_only() -> None:
 
     assert model.effective_squash_pool_weight(strong_pipeline) == model.effective_squash_pool_weight(weak_pipeline)
     assert model.development_environment(strong_pipeline) > model.development_environment(weak_pipeline)
+
+
+def test_effective_squash_pool_uses_diminishing_population_returns() -> None:
+    model = CountryTalentModel()
+    small = _v1_country(population=10_000_000)
+    large = _v1_country(population=40_000_000)
+
+    small_weight = model.effective_squash_pool_weight(small)
+    large_weight = model.effective_squash_pool_weight(large)
+
+    assert large_weight > small_weight
+    assert large_weight < small_weight * 4.0
+
+
+def test_court_count_does_not_directly_change_v1_prospect_volume() -> None:
+    model = CountryTalentModel()
+    few_courts = _v1_country(court_count=5)
+    many_courts = _v1_country(court_count=5_000)
+
+    assert model.effective_squash_pool_weight(few_courts) == model.effective_squash_pool_weight(many_courts)

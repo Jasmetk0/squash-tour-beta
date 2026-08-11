@@ -12,35 +12,31 @@ describe('CountryV1PopulationRowsEditor', () => {
           { id: 0, year: '2000', population: '900000' },
           { id: 1, year: '2020', population: '1000000' },
         ]}
-        onChange={vi.fn()}
+        onPopulationChange={vi.fn()}
         onRemove={onRemove}
-        onAdd={vi.fn()}
       />,
     )
 
-    expect(screen.getByLabelText('Population year 1')).toHaveAttribute('readonly')
-    expect(screen.getAllByRole('button', { name: 'Remove' })).toHaveLength(1)
+    expect(screen.getByRole('table', { name: 'Edit authored population timeline' })).toHaveTextContent('2020 · Default year')
+    expect(screen.queryByRole('button', { name: 'Remove 2020' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Remove 2000' })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Remove 2000' }))
     expect(onRemove).toHaveBeenCalledWith(0)
   })
 
-  it('reports population edits and add-row requests explicitly', () => {
-    const onChange = vi.fn()
-    const onAdd = vi.fn()
+  it('reports population edits using the authored year label', () => {
+    const onPopulationChange = vi.fn()
     render(
       <CountryV1PopulationRowsEditor
         rows={[{ id: 1, year: '2020', population: '1000000' }]}
-        onChange={onChange}
+        onPopulationChange={onPopulationChange}
         onRemove={vi.fn()}
-        onAdd={onAdd}
       />,
     )
 
-    fireEvent.change(screen.getByLabelText('Population value 2020'), { target: { value: '1100000' } })
-    fireEvent.click(screen.getByRole('button', { name: '+ Add authored year' }))
+    fireEvent.change(screen.getByLabelText('Population 2020'), { target: { value: '1100000' } })
 
-    expect(onChange).toHaveBeenCalledWith(1, 'population', '1100000')
-    expect(onAdd).toHaveBeenCalledOnce()
+    expect(onPopulationChange).toHaveBeenCalledWith(1, '1100000')
   })
 })

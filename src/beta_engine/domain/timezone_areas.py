@@ -28,7 +28,9 @@ class TimezoneDisplacement(BaseModel):
 
 
 def validate_timezone_areas(areas: list[TimezoneArea]) -> list[TimezoneArea]:
-    """Return position order, rejecting ambiguous/malformed registries."""
+    """Return position order, rejecting empty, ambiguous, or malformed registries."""
+    if not areas:
+        raise ValueError("Timezone Area registry must contain at least one area")
     if len({a.code for a in areas}) != len(areas): raise ValueError("Timezone Area codes must be unique")
     ordered = sorted(areas, key=lambda a: a.position)
     if [a.position for a in ordered] != list(range(len(areas))):

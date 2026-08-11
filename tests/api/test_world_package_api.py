@@ -215,7 +215,7 @@ def test_timezone_area_registry_http_contract_and_controlled_errors(tmp_path) ->
     worlds_root = _suite._copy_worlds_root(tmp_path)
     with _suite.ApiServer(database_url=f"sqlite:///{tmp_path/'timezone-api.db'}", countries_config_path=str(countries_path), manual_overrides_config_path=str(overrides_path), worlds_root=str(worlds_root)) as server:
         _, builtin = _suite._request("GET", f"{server.base_url}/world/packages/official_fax_world")
-        readonly_status, _ = _suite._request("PUT", f"{server.base_url}/world/packages/official_fax_world/geography/timezone-areas", {"timezone_areas": [], "expected_package_fingerprint": builtin["fingerprint"]})
+        readonly_status, _ = _suite._request("PUT", f"{server.base_url}/world/packages/official_fax_world/geography/timezone-areas", {"timezone_areas": [{"code":"ONE","name":"One","position":0}], "expected_package_fingerprint": builtin["fingerprint"]})
         assert readonly_status == 403
         assert _suite._request("POST", f"{server.base_url}/world/packages/official_fax_world/clone", {"new_world_id":"editable","name":"Editable","dry_run":False})[0] == 200
         _, package = _suite._request("GET", f"{server.base_url}/world/packages/editable")
@@ -225,6 +225,19 @@ def test_timezone_area_registry_http_contract_and_controlled_errors(tmp_path) ->
         assert status == 200 and geography["timezone_areas"] == areas and geography["timezone_areas_authored"] is True
         _, changed = _suite._request("GET", f"{server.base_url}/world/packages/editable")
         assert changed["fingerprint"] != original
+        malformed_items = [
+            {"code":"","name":"Empty code","position":0},
+            {"code":"bad code","name":"Invalid code","position":0},
+            {"code":" WEST","name":"Whitespace code","position":0},
+            {"code":"WEST","name":" West","position":0},
+            {"code":"WEST","name":"","position":0},
+            {"code":"WEST","name":"West","position":-1},
+        ]
+        for item in malformed_items:
+            item_status, _ = _suite._request("PUT", f"{server.base_url}/world/packages/editable/geography/timezone-areas", {"timezone_areas":[item],"expected_package_fingerprint":changed["fingerprint"]})
+            assert item_status == 422
+        empty_status, empty_body = _suite._request("PUT", f"{server.base_url}/world/packages/editable/geography/timezone-areas", {"timezone_areas":[],"expected_package_fingerprint":changed["fingerprint"]})
+        assert empty_status == 422 and "at least one area" in str(empty_body)
         assert _suite._request("PUT", f"{server.base_url}/world/packages/editable/geography/timezone-areas", {"timezone_areas":areas,"expected_package_fingerprint":original})[0] == 409
         for malformed in (
             [{"code":"WEST","name":"West","position":0},{"code":"WEST","name":"Duplicate","position":1}],

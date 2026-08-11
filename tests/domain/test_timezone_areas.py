@@ -35,3 +35,8 @@ def test_zero_displacement_is_nondirectional():
 def test_unknown_endpoints_fail(source, destination, message):
     with pytest.raises(ValueError, match=message):
         circular_displacement(areas(4), source, destination)
+
+
+def test_empty_authored_registry_is_rejected():
+    with pytest.raises(ValueError, match="at least one area"):
+        validate_timezone_areas([])

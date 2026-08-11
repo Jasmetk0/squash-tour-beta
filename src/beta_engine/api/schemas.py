@@ -22,6 +22,7 @@ from beta_engine.application.rollover_models import (
 )
 from beta_engine.application.season_models import RaceSnapshot, RankingSnapshot, SeasonState, SimulationStepResult
 from beta_engine.domain.finals import FinalsQualificationResult, FinalsResult
+from beta_engine.domain.timezone_areas import TimezoneArea
 from beta_engine.domain.players.initial_pool import CustomInitialPoolPlayerCreate, InitialPoolPlayerUpdate
 
 
@@ -544,7 +545,7 @@ class WorldPackageTimezoneAreaResponse(BaseModel):
 
 class WorldPackageTimezoneAreasUpdateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    timezone_areas: list[WorldPackageTimezoneAreaResponse]
+    timezone_areas: list[TimezoneArea]
     expected_package_fingerprint: str
 
 

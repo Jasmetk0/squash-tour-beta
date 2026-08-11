@@ -72,12 +72,12 @@ class WorldPackageCountryUpdate(BaseModel):
     region: str = Field(min_length=1)
     travel_region: str | None = None
     court_count: int | None = Field(ge=0)
-    squash_popularity: int = Field(ge=1, le=5)
-    squash_access: int = Field(ge=1, le=5)
-    development_quality: int = Field(ge=1, le=5)
-    competition_quality: int = Field(ge=1, le=5)
-    elite_support: int = Field(ge=1, le=5)
-    squash_tradition: int = Field(ge=1, le=5)
+    squash_popularity: float = Field(ge=1.0, le=5.0, allow_inf_nan=False)
+    squash_access: float = Field(ge=1.0, le=5.0, allow_inf_nan=False)
+    development_quality: float = Field(ge=1.0, le=5.0, allow_inf_nan=False)
+    competition_quality: float = Field(ge=1.0, le=5.0, allow_inf_nan=False)
+    elite_support: float = Field(ge=1.0, le=5.0, allow_inf_nan=False)
+    squash_tradition: float = Field(ge=1.0, le=5.0, allow_inf_nan=False)
     expected_package_fingerprint: str | None = None
 
 

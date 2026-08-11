@@ -11,7 +11,7 @@ import pytest
 import uvicorn
 from pydantic import ValidationError
 
-from beta_engine.api.schemas import CountryUpsertRequest
+from beta_engine.api.country_v1_schemas import CountryV1UpsertRequest
 from beta_engine.main import create_app
 
 
@@ -24,10 +24,12 @@ COUNTRIES_FIXTURE = {
             "flag_asset": None,
             "region": "EUROPE",
             "population": 1_000_000,
-            "wealth_support": 3,
             "squash_popularity": 4,
+            "squash_access": 3,
+            "development_quality": 5,
+            "competition_quality": 4,
+            "elite_support": 3,
             "squash_tradition": 2,
-            "system_quality": 5,
         }
     ],
 }
@@ -91,7 +93,6 @@ def _write_fixture(path: Path) -> None:
     path.write_text(json.dumps(COUNTRIES_FIXTURE, indent=2) + "\n", encoding="utf-8")
 
 
-
 def _base_country_upsert_payload() -> dict[str, object]:
     return {
         "code": "BBB",
@@ -99,15 +100,17 @@ def _base_country_upsert_payload() -> dict[str, object]:
         "flag_asset": None,
         "region": "ASIA",
         "population": 2_000_000,
-        "wealth_support": 2,
         "squash_popularity": 2,
+        "squash_access": 2,
+        "development_quality": 2,
+        "competition_quality": 2,
+        "elite_support": 2,
         "squash_tradition": 2,
-        "system_quality": 2,
     }
 
 
 def test_country_upsert_request_accepts_default_population_year_2020() -> None:
-    payload = CountryUpsertRequest.model_validate(
+    payload = CountryV1UpsertRequest.model_validate(
         {**_base_country_upsert_payload(), "default_population_year": 2020}
     )
 
@@ -116,13 +119,13 @@ def test_country_upsert_request_accepts_default_population_year_2020() -> None:
 
 def test_country_upsert_request_rejects_non_2020_default_population_year() -> None:
     with pytest.raises(ValidationError, match="default_population_year must be 2020 when provided"):
-        CountryUpsertRequest.model_validate(
+        CountryV1UpsertRequest.model_validate(
             {**_base_country_upsert_payload(), "default_population_year": 2019}
         )
 
 
 def test_country_upsert_request_accepts_population_by_year_2050() -> None:
-    payload = CountryUpsertRequest.model_validate(
+    payload = CountryV1UpsertRequest.model_validate(
         {**_base_country_upsert_payload(), "population_by_year": {"2050": 123_456_789}}
     )
 
@@ -131,14 +134,14 @@ def test_country_upsert_request_accepts_population_by_year_2050() -> None:
 
 def test_country_upsert_request_rejects_population_by_year_2051() -> None:
     with pytest.raises(ValidationError, match="population_by_year years must be between 1955 and 2050"):
-        CountryUpsertRequest.model_validate(
+        CountryV1UpsertRequest.model_validate(
             {**_base_country_upsert_payload(), "population_by_year": {"2051": 123_456_789}}
         )
 
 
 def test_country_upsert_request_rejects_default_population_year_2050() -> None:
     with pytest.raises(ValidationError, match="default_population_year must be 2020 when provided"):
-        CountryUpsertRequest.model_validate(
+        CountryV1UpsertRequest.model_validate(
             {**_base_country_upsert_payload(), "default_population_year": 2050}
         )
 
@@ -149,11 +152,15 @@ def test_list_countries_endpoint(tmp_path) -> None:
     with ApiServer(database_url=f"sqlite:///{tmp_path / 'countries-list.db'}", countries_config_path=str(countries_path)) as server:
         status, payload = _request("GET", f"{server.base_url}/world/countries")
         assert status == 200
-        assert payload["countries"][0]["code"] == "AAA"
-        assert payload["countries"][0]["competition_density"] == 3.0
-        assert payload["countries"][0]["federation_quality"] == 5.0
-        assert payload["countries"][0]["court_count"] is None
-        assert payload["countries"][0]["style_dna"] == {}
+        country = payload["countries"][0]
+        assert country["code"] == "AAA"
+        assert country["squash_access"] == 3
+        assert country["development_quality"] == 5
+        assert country["competition_quality"] == 4
+        assert country["elite_support"] == 3
+        assert country["court_count"] is None
+        assert "wealth_support" not in country
+        assert "style_dna" not in country
         status, meta = _request("GET", f"{server.base_url}/world/countries/metadata")
         assert status == 200
         assert meta["dataset_status"] == "temporary_seed_demo"
@@ -168,34 +175,26 @@ def test_create_country_and_persist_write_back(tmp_path) -> None:
             "POST",
             f"{server.base_url}/world/countries",
             {
-                "code": "BBB",
-                "name": "Beta",
-                "flag_asset": None,
-                "region": "ASIA",
-                "population": 2_000_000,
-                "wealth_support": 2,
-                "squash_popularity": 2,
-                "squash_tradition": 2,
-                "system_quality": 2,
-                "competition_density": 4.5,
-                "federation_quality": 4.0,
+                **_base_country_upsert_payload(),
+                "competition_quality": 5,
+                "elite_support": 4,
                 "court_count": 80,
-                "style_dna": {"attrition": 0.25},
             },
         )
         assert status == 201
         assert created["code"] == "BBB"
-        assert created["competition_density"] == 4.5
-        assert created["federation_quality"] == 4.0
+        assert created["competition_quality"] == 5
+        assert created["elite_support"] == 4
         assert created["court_count"] == 80
-        assert created["style_dna"] == {"attrition": 0.25}
+        assert "style_dna" not in created
 
     persisted = json.loads(countries_path.read_text(encoding="utf-8"))
     beta = next(country for country in persisted["countries"] if country["code"] == "BBB")
-    assert beta["competition_density"] == 4.5
-    assert beta["federation_quality"] == 4.0
+    assert beta["competition_quality"] == 5
+    assert beta["elite_support"] == 4
     assert beta["court_count"] == 80
-    assert beta["style_dna"] == {"attrition": 0.25}
+    assert "wealth_support" not in beta
+    assert "style_dna" not in beta
 
 
 def test_reject_duplicate_country_code(tmp_path) -> None:
@@ -205,17 +204,7 @@ def test_reject_duplicate_country_code(tmp_path) -> None:
         status, payload = _request(
             "POST",
             f"{server.base_url}/world/countries",
-            {
-                "code": "AAA",
-                "name": "Again Alpha",
-                "flag_asset": None,
-                "region": "EUROPE",
-                "population": 1_100_000,
-                "wealth_support": 3,
-                "squash_popularity": 3,
-                "squash_tradition": 3,
-                "system_quality": 3,
-            },
+            {**_base_country_upsert_payload(), "code": "AAA", "name": "Again Alpha"},
         )
         assert status == 409
         assert "already exists" in payload["detail"]
@@ -228,17 +217,7 @@ def test_reject_invalid_factor_range(tmp_path) -> None:
         status, payload = _request(
             "POST",
             f"{server.base_url}/world/countries",
-            {
-                "code": "BAD",
-                "name": "Bad",
-                "flag_asset": None,
-                "region": "EUROPE",
-                "population": 1_000_000,
-                "wealth_support": 9,
-                "squash_popularity": 3,
-                "squash_tradition": 3,
-                "system_quality": 3,
-            },
+            {**_base_country_upsert_payload(), "code": "BAD", "name": "Bad", "squash_access": 9},
         )
         assert status == 422
         assert payload["detail"]
@@ -252,19 +231,16 @@ def test_update_country(tmp_path) -> None:
             "PUT",
             f"{server.base_url}/world/countries/AAA",
             {
-                "code": "AAA",
+                **COUNTRIES_FIXTURE["countries"][0],
                 "name": "Alpha Updated",
                 "flag_asset": "flags/aaa.svg",
-                "region": "EUROPE",
                 "population": 1_500_000,
-                "wealth_support": 4,
-                "squash_popularity": 4,
-                "squash_tradition": 3,
-                "system_quality": 4,
+                "elite_support": 4,
             },
         )
         assert status == 200
         assert payload["name"] == "Alpha Updated"
+        assert payload["elite_support"] == 4
 
 
 def test_delete_country(tmp_path) -> None:
@@ -286,8 +262,10 @@ def test_export_countries_csv(tmp_path) -> None:
     with ApiServer(database_url=f"sqlite:///{tmp_path / 'countries-export.db'}", countries_config_path=str(countries_path)) as server:
         status, body = _request_raw("GET", f"{server.base_url}/world/countries/export")
         assert status == 200
-        assert "code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality" in body
-        assert "competition_density,federation_quality,court_count" in body
+        assert "code,name,flag_asset,region,population,squash_popularity,squash_access,development_quality,competition_quality,elite_support,squash_tradition" in body
+        assert "court_count,travel_region,notes" in body
+        assert "wealth_support" not in body
+        assert "style_dna" not in body
         assert "AAA,Alpha" in body
 
 
@@ -295,8 +273,8 @@ def test_import_countries_csv_replaces_dataset(tmp_path) -> None:
     countries_path = tmp_path / "countries.json"
     _write_fixture(countries_path)
     csv_text = (
-        "code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality,competition_density,federation_quality,court_count\n"
-        "BBB,Beta,,ASIA,2000000,4,3,2,4,4.5,4,200\n"
+        "code,name,flag_asset,region,population,squash_popularity,squash_access,development_quality,competition_quality,elite_support,squash_tradition,court_count,travel_region,notes\n"
+        "BBB,Beta,,ASIA,2000000,3,4,4,5,4,2,200,,Imported\n"
     )
 
     with ApiServer(database_url=f"sqlite:///{tmp_path / 'countries-import.db'}", countries_config_path=str(countries_path)) as server:
@@ -311,9 +289,10 @@ def test_import_countries_csv_replaces_dataset(tmp_path) -> None:
 
     persisted = json.loads(countries_path.read_text(encoding="utf-8"))
     assert [country["code"] for country in persisted["countries"]] == ["BBB"]
-    assert persisted["countries"][0]["competition_density"] == 4.5
-    assert persisted["countries"][0]["federation_quality"] == 4.0
+    assert persisted["countries"][0]["competition_quality"] == 5
+    assert persisted["countries"][0]["elite_support"] == 4
     assert persisted["countries"][0]["court_count"] == 200
+    assert "wealth_support" not in persisted["countries"][0]
 
 
 def test_import_rejects_duplicate_code_and_does_not_partially_write(tmp_path) -> None:
@@ -321,9 +300,9 @@ def test_import_rejects_duplicate_code_and_does_not_partially_write(tmp_path) ->
     _write_fixture(countries_path)
     before = countries_path.read_text(encoding="utf-8")
     csv_text = (
-        "code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality,competition_density,federation_quality,court_count\n"
-        "BBB,Beta,,ASIA,2000000,4,3,2,4,4.5,4,200\n"
-        "BBB,Beta Again,,ASIA,2100000,4,3,2,4\n"
+        "code,name,flag_asset,region,population,squash_popularity,squash_access,development_quality,competition_quality,elite_support,squash_tradition,court_count,travel_region,notes\n"
+        "BBB,Beta,,ASIA,2000000,3,4,4,5,4,2,200,,First\n"
+        "BBB,Beta Again,,ASIA,2100000,3,4,4,5,4,2,201,,Duplicate\n"
     )
 
     with ApiServer(database_url=f"sqlite:///{tmp_path / 'countries-import-dup.db'}", countries_config_path=str(countries_path)) as server:
@@ -343,8 +322,8 @@ def test_import_rejects_invalid_factor_range(tmp_path) -> None:
     countries_path = tmp_path / "countries.json"
     _write_fixture(countries_path)
     csv_text = (
-        "code,name,flag_asset,region,population,wealth_support,squash_popularity,squash_tradition,system_quality\n"
-        "BBB,Beta,,ASIA,2000000,9,3,2,4\n"
+        "code,name,flag_asset,region,population,squash_popularity,squash_access,development_quality,competition_quality,elite_support,squash_tradition\n"
+        "BBB,Beta,,ASIA,2000000,3,9,4,4,4,2\n"
     )
 
     with ApiServer(database_url=f"sqlite:///{tmp_path / 'countries-import-factors.db'}", countries_config_path=str(countries_path)) as server:
@@ -355,7 +334,7 @@ def test_import_rejects_invalid_factor_range(tmp_path) -> None:
         )
         assert status == 200
         assert payload["ok"] is False
-        assert payload["errors"][0]["field"] == "wealth_support"
+        assert payload["errors"][0]["field"] == "squash_access"
 
 
 def test_import_rejects_malformed_payload(tmp_path) -> None:

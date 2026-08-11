@@ -50,6 +50,27 @@ class CountryV1UpsertRequest(CountryV1Response):
             raise ValueError("code must be exactly 3 characters")
         return normalized
 
+    @field_validator("default_population_year")
+    @classmethod
+    def validate_default_population_year(cls, value: int | None) -> int | None:
+        if value is not None and value != 2020:
+            raise ValueError("default_population_year must be 2020 when provided")
+        return value
+
+    @field_validator("population_by_year")
+    @classmethod
+    def validate_population_by_year(
+        cls,
+        value: dict[int, int | None] | None,
+    ) -> dict[int, int | None] | None:
+        if value is None:
+            return None
+        if any(year < 1955 or year > 2050 for year in value):
+            raise ValueError("population_by_year years must be between 1955 and 2050")
+        if any(population is not None and (isinstance(population, bool) or population <= 0) for population in value.values()):
+            raise ValueError("population_by_year values must be positive integers or null")
+        return value
+
 
 class CountriesV1ListResponse(BaseModel):
     countries: list[CountryV1Response] = Field(default_factory=list)

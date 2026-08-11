@@ -7,6 +7,8 @@ import {
   updateWorldPackageCountryPopulation,
 } from './client'
 import type {
+  CountryV1Rating,
+  CountryV1Record,
   WorldPackageCountriesV1Response,
   WorldPackageCountryV1CreatePayload,
   WorldPackageCountryV1DeleteResponse,
@@ -15,6 +17,48 @@ import type {
   WorldPackageCountryV1UpdatePayload,
   WorldPackageCountryV1UpdateResponse,
 } from './countryV1'
+
+type LegacyCountryReadShape = Partial<CountryV1Record> & {
+  wealth_support?: unknown
+  system_quality?: unknown
+  competition_density?: unknown
+  federation_quality?: unknown
+}
+
+function readRating(value: unknown, field: string): CountryV1Rating {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > 5) {
+    throw new Error(`${field} must be an integer from 1 to 5`)
+  }
+  return value as CountryV1Rating
+}
+
+/**
+ * Read-only compatibility boundary for responses produced by a pre-V1 server or
+ * stale integration fixture. It mirrors the backend legacy load bridge, then
+ * immediately exposes only canonical V1 fields to the active frontend.
+ *
+ * No legacy field is ever written back by this module.
+ */
+export function normalizeCountryV1Read(country: LegacyCountryReadShape): CountryV1Record {
+  return {
+    ...(country as CountryV1Record),
+    squash_popularity: readRating(country.squash_popularity, 'squash_popularity'),
+    squash_access: readRating(country.squash_access ?? country.wealth_support, 'squash_access'),
+    development_quality: readRating(
+      country.development_quality ?? country.system_quality,
+      'development_quality',
+    ),
+    competition_quality: readRating(
+      country.competition_quality ?? country.competition_density ?? country.system_quality,
+      'competition_quality',
+    ),
+    elite_support: readRating(
+      country.elite_support ?? country.federation_quality ?? country.wealth_support,
+      'elite_support',
+    ),
+    squash_tradition: readRating(country.squash_tradition, 'squash_tradition'),
+  }
+}
 
 /**
  * Country V1 keeps canonical frontend contracts while reusing the repository's
@@ -25,11 +69,15 @@ export function getWorldPackageCountriesV1(worldId: string): Promise<WorldPackag
   return getWorldPackageCountries(worldId) as unknown as Promise<WorldPackageCountriesV1Response>
 }
 
-export function getWorldPackageCountryV1(
+export async function getWorldPackageCountryV1(
   worldId: string,
   countryCode: string,
 ): Promise<WorldPackageCountryV1Detail> {
-  return getWorldPackageCountry(worldId, countryCode) as unknown as Promise<WorldPackageCountryV1Detail>
+  const detail = await getWorldPackageCountry(worldId, countryCode) as unknown as WorldPackageCountryV1Detail
+  return {
+    ...detail,
+    country: normalizeCountryV1Read(detail.country as LegacyCountryReadShape),
+  }
 }
 
 export function createWorldPackageCountryV1(

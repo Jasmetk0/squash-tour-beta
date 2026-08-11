@@ -293,7 +293,7 @@ export function WorldPackageCountryCreateV1Page(): JSX.Element {
 
         <p>
           <button type="submit" disabled={mutation.isPending}>
-            {mutation.isPending ? 'Creating…' : 'Create country'}
+            {mutation.isPending ? 'Saving…' : 'Save country'}
           </button>
         </p>
       </form>

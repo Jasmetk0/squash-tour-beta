@@ -6,6 +6,8 @@ small, reviewable and does not require rewriting unrelated API contracts.
 
 from __future__ import annotations
 
+from typing import Annotated
+
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
 
 from beta_engine.api.schemas import (
@@ -15,6 +17,8 @@ from beta_engine.api.schemas import (
     WorldPackageTravelRegionResponse,
     WorldPackageValidationResponse,
 )
+
+CountryV1Rating = Annotated[float, Field(ge=1.0, le=5.0, allow_inf_nan=False)]
 
 
 class CountryV1Response(BaseModel):
@@ -31,12 +35,12 @@ class CountryV1Response(BaseModel):
     travel_region: str | None = None
     notes: str | None = None
 
-    squash_popularity: int = Field(ge=1, le=5)
-    squash_access: int = Field(ge=1, le=5)
-    development_quality: int = Field(ge=1, le=5)
-    competition_quality: int = Field(ge=1, le=5)
-    elite_support: int = Field(ge=1, le=5)
-    squash_tradition: int = Field(ge=1, le=5)
+    squash_popularity: CountryV1Rating
+    squash_access: CountryV1Rating
+    development_quality: CountryV1Rating
+    competition_quality: CountryV1Rating
+    elite_support: CountryV1Rating
+    squash_tradition: CountryV1Rating
 
 
 class CountryV1UpsertRequest(CountryV1Response):
@@ -111,12 +115,12 @@ class WorldPackageCountryV1UpdateRequest(BaseModel):
     travel_region: str | None = None
     court_count: int | None = Field(ge=0)
 
-    squash_popularity: int = Field(ge=1, le=5)
-    squash_access: int = Field(ge=1, le=5)
-    development_quality: int = Field(ge=1, le=5)
-    competition_quality: int = Field(ge=1, le=5)
-    elite_support: int = Field(ge=1, le=5)
-    squash_tradition: int = Field(ge=1, le=5)
+    squash_popularity: CountryV1Rating
+    squash_access: CountryV1Rating
+    development_quality: CountryV1Rating
+    competition_quality: CountryV1Rating
+    elite_support: CountryV1Rating
+    squash_tradition: CountryV1Rating
 
     expected_package_fingerprint: str | None = None
 

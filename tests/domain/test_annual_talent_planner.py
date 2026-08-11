@@ -162,9 +162,10 @@ def test_neutral_dampener_is_default_safe_and_neutral() -> None:
     assert plan.total_talents > 0
     assert plan.allocations[0].country_code == "DMP"
     assert plan.allocations[0].dampener.active is False
+    assert set(plan.allocations[0].dampener.multipliers.values()) == {1.0}
 
 
-def test_weighted_dampener_lowers_top_band_odds_for_country_only() -> None:
+def test_weighted_dampener_is_audit_only_and_cannot_change_v1_innate_odds() -> None:
     country_a = _country(code="AAA", population=80_000_000, squash_popularity=4, squash_access=4)
     country_b = _country(code="BBB", population=80_000_000, squash_popularity=4, squash_access=4)
     baseline = AnnualTalentClassPlanner()
@@ -187,12 +188,16 @@ def test_weighted_dampener_lowers_top_band_odds_for_country_only() -> None:
     mod = dampened.plan(year=2037, seed=123, countries=[country_a, country_b])
     base_by = {item.country_code: item for item in base.allocations}
     mod_by = {item.country_code: item for item in mod.allocations}
-    assert mod_by["AAA"].quality_weights[TalentQualityBand.GENERATIONAL] < base_by["AAA"].quality_weights[TalentQualityBand.GENERATIONAL]
-    assert mod_by["AAA"].quality_weights[TalentQualityBand.SPECIAL] < base_by["AAA"].quality_weights[TalentQualityBand.SPECIAL]
-    assert mod_by["BBB"].quality_weights[TalentQualityBand.GENERATIONAL] == base_by["BBB"].quality_weights[TalentQualityBand.GENERATIONAL]
+
+    assert mod_by["AAA"].quality_weights == base_by["AAA"].quality_weights
+    assert mod_by["BBB"].quality_weights == base_by["BBB"].quality_weights
+    assert mod_by["AAA"].dampener.active is False
+    assert mod_by["AAA"].dampener.signal_count == 1
+    assert len(mod_by["AAA"].dampener.contributions) == 1
+    assert set(mod_by["AAA"].dampener.multipliers.values()) == {1.0}
 
 
-def test_weighted_dampener_decays_and_has_floor() -> None:
+def test_weighted_dampener_decays_and_has_floor_as_legacy_diagnostic_math() -> None:
     dampener = WeightedRecentGreatnessDampener(
         signals=(
             RecentGreatnessSignal(

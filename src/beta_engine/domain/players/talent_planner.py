@@ -121,14 +121,14 @@ class AnnualTalentClassPlanner:
         normalized = {band: value / total for band, value in self.BASE_QUALITY_WEIGHTS.items()}
 
         # Preserve pre-V1 recent-greatness signals as inspectable historical
-        # diagnostics, but report neutral multipliers and inactive application.
-        # This keeps old provenance readable without allowing it to alter V1 RNG.
+        # diagnostics. `active` means an applicable historical signal exists;
+        # neutral multipliers make explicit that V1 does not apply it to innate RNG.
         diagnostics = self._dampener.diagnostics(country_code=country.code, year=year)
         snapshot = CountryDampenerSnapshot(
             recent_greatness_score=diagnostics.recent_greatness_score,
             signal_count=diagnostics.signal_count,
             multipliers={band: 1.0 for band in TalentQualityBand},
-            active=False,
+            active=diagnostics.active,
             contributions=[
                 DampenerContributionSnapshot(
                     source=item.source,

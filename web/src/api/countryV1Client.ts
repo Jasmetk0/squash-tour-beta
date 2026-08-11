@@ -23,6 +23,7 @@ type LegacyCountryReadShape = Partial<CountryV1Record> & {
   system_quality?: unknown
   competition_density?: unknown
   federation_quality?: unknown
+  style_dna?: unknown
 }
 
 function readRating(value: unknown, field: string): CountryV1Rating {
@@ -37,11 +38,22 @@ function readRating(value: unknown, field: string): CountryV1Rating {
  * stale integration fixture. It mirrors the backend legacy load bridge, then
  * immediately exposes only canonical V1 fields to the active frontend.
  *
- * No legacy field is ever written back by this module.
+ * No legacy field is preserved on the returned record or written back.
  */
 export function normalizeCountryV1Read(country: LegacyCountryReadShape): CountryV1Record {
   return {
-    ...(country as CountryV1Record),
+    code: country.code as string,
+    name: country.name as string,
+    flag_asset: country.flag_asset ?? null,
+    region: country.region as string,
+    population: country.population as number,
+    area_km2: country.area_km2 ?? null,
+    default_population_year: country.default_population_year ?? null,
+    default_population: country.default_population ?? null,
+    population_by_year: country.population_by_year ?? null,
+    court_count: country.court_count ?? null,
+    travel_region: country.travel_region ?? null,
+    notes: country.notes ?? null,
     squash_popularity: readRating(country.squash_popularity, 'squash_popularity'),
     squash_access: readRating(country.squash_access ?? country.wealth_support, 'squash_access'),
     development_quality: readRating(

@@ -115,9 +115,9 @@ def _write_json_atomic(path: Path, payload: object) -> None:
         temporary.unlink(missing_ok=True)
 
 
-def _coerce_rating(value: Any, *, field_name: str) -> int:
+def _coerce_rating(value: Any, *, field_name: str) -> float:
     try:
-        rating = int(round(float(value)))
+        rating = float(value)
     except (TypeError, ValueError) as exc:
         raise ValueError(f"legacy {field_name} value {value!r} cannot be migrated to a 1..5 rating") from exc
     if not 1 <= rating <= 5:

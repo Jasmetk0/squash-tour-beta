@@ -36,6 +36,7 @@ const api = vi.hoisted(() => ({
   createWorldPackageCountry: vi.fn(),
   deleteWorldPackageCountry: vi.fn(),
   getWorldPackageGeography: vi.fn(),
+  replaceWorldPackageTimezoneAreas: vi.fn(),
   cloneOfficialWorldPackage: vi.fn(),
   getLatestRollover: vi.fn(),
   getRolloverBySeason: vi.fn(),
@@ -283,7 +284,7 @@ function viewerOfficialContext(productRunId: string, legacySimulationRunId: stri
 }
 
 function editableCountryDetail() {
-  return { package: { world_id: 'my_custom_world', name: 'My Custom World', description: 'Custom.', type: 'custom', status: 'active', source: 'custom_config', editable: true, deletable: true, archivable: true, version: 'v1', fingerprint: 'fingerprint-before', country_count: 1, continent_count: 1, region_count: 2, travel_region_count: 2, used_by_run_count: null, validation_status: 'valid', storage: {} }, country: { code: 'GER', name: 'Germanica', flag_asset: null, region: 'EUROPE', population: 169702055, area_km2: 870516, default_population_year: 2020, default_population: 169702055, population_by_year: { '2020': 169702055 }, squash_access: 5, squash_popularity: 3, squash_tradition: 3, development_quality: 5, competition_quality: 4, elite_support: 5, court_count: 1800, travel_region: 'EUROPE', notes: 'Saved note' }, region: { code: 'EUROPE', name: 'Europe', continent_code: 'EUR' }, continent: { code: 'EUR', name: 'Europe' }, travel_region: { code: 'EUROPE', name: 'Europe', description: null }, source_path: 'config/world_packages/custom/my_custom_world/countries/GER' }
+  return { package: { world_id: 'my_custom_world', name: 'My Custom World', description: 'Custom.', type: 'custom', status: 'active', source: 'custom_config', editable: true, deletable: true, archivable: true, version: 'v1', fingerprint: 'fingerprint-before', country_count: 1, continent_count: 1, region_count: 2, travel_region_count: 2, timezone_area_count: 2, used_by_run_count: null, validation_status: 'valid', storage: {} }, country: { code: 'GER', name: 'Germanica', flag_asset: null, region: 'EUROPE', population: 169702055, area_km2: 870516, default_population_year: 2020, default_population: 169702055, population_by_year: { '2020': 169702055 }, squash_access: 5, squash_popularity: 3, squash_tradition: 3, development_quality: 5, competition_quality: 4, elite_support: 5, court_count: 1800, travel_region: 'EUROPE', timezone_area: 'TZ_EAST', notes: 'Saved note' }, region: { code: 'EUROPE', name: 'Europe', continent_code: 'EUR' }, continent: { code: 'EUR', name: 'Europe' }, travel_region: { code: 'EUROPE', name: 'Europe', description: null }, timezone_area: { code: 'TZ_EAST', name: 'East', position: 1 }, source_path: 'config/world_packages/custom/my_custom_world/countries/GER' }
 }
 
 describe('Module 17 pages through routes', () => {
@@ -298,7 +299,7 @@ describe('Module 17 pages through routes', () => {
     api.cloneOfficialWorldPackage.mockResolvedValue({ ok: true, dry_run: true, source_world_id: 'official_fax_world', new_world_id: 'my_custom_world', target_path: 'config/worlds/custom/my_custom_world', created_files: ['world.json'], package: null, validation: null, errors: [] })
     api.getWorldPackageValidation.mockResolvedValue({ world_id: 'official_fax_world', status: 'warnings', error_count: 0, warning_count: 1, info_count: 6, checks: [{ code: 'world_metadata_valid', severity: 'info', status: 'passed', message: 'world.json is present and declares official_fax_world.', path: 'config/worlds/official_fax_world/world.json', field: 'world_id' }] })
     api.getWorldPackageCountries.mockResolvedValue({ world_id: 'official_fax_world', world_name: 'Official FAX World', type: 'official', source: 'built_in', read_only: true, country_count: 4, source_path: 'config/worlds/official_fax_world/countries.json', countries: [{ code: 'GER', name: 'Germanica', flag_asset: null, region: 'EUROPE', population: 169702055, area_km2: 870516, default_population_year: 2020, default_population: 169702055, population_by_year: { '2020': 169702055 }, squash_access: 5, squash_popularity: 3, squash_tradition: 3, development_quality: 5, competition_quality: 4, elite_support: 5, court_count: 1800, travel_region: 'EUROPE', notes: 'Analog of a huge Germany and all German lands unified into one state.' }, { code: 'BOG', name: 'Bogemia', flag_asset: null, region: 'EUROPE', population: 48566934, area_km2: 237528, default_population_year: 2020, default_population: 48566934, population_by_year: { '2020': 48566934 }, squash_access: 4, squash_popularity: 2, squash_tradition: 2, development_quality: 4, competition_quality: 3, elite_support: 4, court_count: 520, travel_region: 'EUROPE', notes: null }, { code: 'HUN', name: 'Hungarica', flag_asset: null, region: 'EUROPE', population: 32407718, area_km2: 368441, default_population_year: 2020, default_population: 32407718, population_by_year: { '2020': 32407718 }, squash_access: 3, squash_popularity: 2, squash_tradition: 2, development_quality: 3, competition_quality: 2.5, elite_support: 3, court_count: 360, travel_region: 'EUROPE', notes: null }, { code: 'POL', name: 'Polandia', flag_asset: null, region: 'EUROPE', population: 31584129, area_km2: 296910, default_population_year: 2020, default_population: 31584129, population_by_year: { '2020': 31584129 }, squash_access: 4, squash_popularity: 2, squash_tradition: 2, development_quality: 4, competition_quality: 3, elite_support: 4, court_count: 430, travel_region: 'EUROPE', notes: null }] })
-    api.getWorldPackageGeography.mockResolvedValue({ world_id: 'official_fax_world', continents: [{ code: 'EUR', name: 'Europe' }], regions: [{ code: 'EUROPE', name: 'Europe', continent_code: 'EUR' }], travel_regions: [{ code: 'EUROPE', name: 'Europe', description: null }] })
+    api.getWorldPackageGeography.mockResolvedValue({ world_id: 'official_fax_world', continents: [{ code: 'EUR', name: 'Europe' }], regions: [{ code: 'EUROPE', name: 'Europe', continent_code: 'EUR' }], travel_regions: [{ code: 'EUROPE', name: 'Europe', description: null }], timezone_areas: [], timezone_areas_authored: false })
     api.getWorldPackageCountry.mockResolvedValue({ package: { world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in.', type: 'official', status: 'active', source: 'built_in', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abc', country_count: 4, continent_count: 1, region_count: 1, travel_region_count: 1, used_by_run_count: null, validation_status: 'valid', storage: {} }, country: { code: 'GER', name: 'Germanica', flag_asset: null, region: 'EUROPE', population: 169702055, area_km2: 870516, default_population_year: 2020, default_population: 169702055, population_by_year: { '2020': 169702055 }, squash_access: 5, squash_popularity: 3, squash_tradition: 3, development_quality: 5, competition_quality: 4, elite_support: 5, court_count: 1800, travel_region: 'EUROPE', notes: 'Germanica note' }, region: { code: 'EUROPE', name: 'Europe', continent_code: 'EUR' }, continent: { code: 'EUR', name: 'Europe' }, travel_region: { code: 'EUROPE', name: 'Europe', description: null }, source_path: 'config/world_packages/official_fax_world/countries/GER' })
     api.listCountries.mockResolvedValue({
       countries: [
@@ -3256,6 +3257,49 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('stale source; reload first'); expect(api.deleteWorldPackageCountry).toHaveBeenCalledWith('my_custom_world','GER','fingerprint-before'); expect(screen.getByRole('heading',{name:'Germanica'})).toBeInTheDocument()
     api.deleteWorldPackageCountry.mockResolvedValueOnce({deleted_country_code:'GER',package:{...editableCountryDetail().package,fingerprint:'after'},validation:{world_id:'my_custom_world',status:'valid',error_count:0,warning_count:0,info_count:1,checks:[]}}); api.getWorldPackageCountries.mockResolvedValue({world_id:'my_custom_world',world_name:'Custom',type:'custom',source:'custom_config',read_only:false,country_count:0,source_path:'index.json',countries:[]})
     fireEvent.click(within(screen.getByRole('heading',{name:/Delete GER/}).parentElement!).getByRole('button',{name:'Delete country'})); expect(await screen.findByRole('heading',{name:'World Package Countries'})).toBeInTheDocument(); for(const key of [['world-package-country','my_custom_world','GER'],['world-package-countries','my_custom_world'],['world-package','my_custom_world'],['world-package-validation','my_custom_world'],['world-packages']]) expect(invalidate).toHaveBeenCalledWith({queryKey:key})
+  })
+
+  it('shows unavailable Timezone Areas for a built-in legacy package', async () => {
+    renderAppAt('/admin/world/library/official_fax_world')
+    expect(await screen.findByText('Unavailable — this package has not yet authored the Timezone Area layer.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', {name:'Add Timezone Area'})).not.toBeInTheDocument()
+  })
+
+  it('authors ordered Timezone Areas in an editable custom package and surfaces API errors', async () => {
+    const pkg=editableCountryDetail().package
+    api.getWorldPackage.mockResolvedValue(pkg)
+    api.getWorldPackageGeography.mockResolvedValue({world_id:'my_custom_world',continents:[],regions:[],travel_regions:[],timezone_areas:[{code:'WEST',name:'West',position:0}],timezone_areas_authored:true})
+    api.replaceWorldPackageTimezoneAreas.mockRejectedValueOnce(new api.ApiError(JSON.stringify({detail:'registry rejected'}),422))
+    renderAppAt('/admin/world/library/my_custom_world')
+    await screen.findByRole('button',{name:'Add Timezone Area'})
+    fireEvent.click(screen.getByRole('button',{name:'Add Timezone Area'}))
+    fireEvent.change(screen.getByLabelText('Timezone Area code 1'),{target:{value:'EAST'}})
+    fireEvent.change(screen.getByLabelText('Timezone Area name 1'),{target:{value:'East'}})
+    fireEvent.click(screen.getAllByRole('button',{name:'Move Up'})[1])
+    fireEvent.click(screen.getByRole('button',{name:'Save Timezone Areas'}))
+    await waitFor(()=>expect(api.replaceWorldPackageTimezoneAreas).toHaveBeenCalledWith('my_custom_world',[{code:'EAST',name:'East',position:0},{code:'WEST',name:'West',position:1}],'fingerprint-before'))
+    expect(await screen.findByText('registry rejected')).toBeInTheDocument()
+  })
+
+  it('creates a country with Timezone Area independent from Travel Region', async () => {
+    const pkg=editableCountryDetail().package; api.getWorldPackage.mockResolvedValue(pkg)
+    api.getWorldPackageGeography.mockResolvedValue({world_id:'my_custom_world',continents:[],regions:[{code:'EUROPE',name:'Europe',continent_code:null}],travel_regions:[{code:'TRAVEL_WEST',name:'Travel West',description:null}],timezone_areas:[{code:'TZ_EAST',name:'Timezone East',position:0}],timezone_areas_authored:true})
+    api.createWorldPackageCountry.mockRejectedValueOnce(new api.ApiError(JSON.stringify({detail:'stop after payload'}),422))
+    renderAppAt('/admin/world/library/my_custom_world/countries/new'); await screen.findByRole('heading',{name:'Add country'})
+    fireEvent.change(screen.getByLabelText('Code'),{target:{value:'ABC'}}); fireEvent.change(screen.getByLabelText('Name'),{target:{value:'Alpha'}}); fireEvent.change(screen.getByLabelText('Region'),{target:{value:'EUROPE'}}); fireEvent.change(screen.getByLabelText('Travel Region'),{target:{value:'TRAVEL_WEST'}}); fireEvent.change(screen.getByLabelText('Timezone Area'),{target:{value:'TZ_EAST'}}); fireEvent.change(screen.getByLabelText('Population value 2020'),{target:{value:'1000'}}); fireEvent.click(screen.getByRole('button',{name:'Save country'}))
+    await waitFor(()=>expect(api.createWorldPackageCountry).toHaveBeenCalled())
+    expect(api.createWorldPackageCountry.mock.calls[0][1]).toMatchObject({travel_region:'TRAVEL_WEST',timezone_area:'TZ_EAST'})
+  })
+
+  it('preserves and changes country Timezone Area independent from Travel Region', async () => {
+    const detail=editableCountryDetail(); api.getWorldPackageCountry.mockResolvedValue(detail)
+    api.getWorldPackageGeography.mockResolvedValue({world_id:'my_custom_world',continents:[],regions:[{code:'EUROPE',name:'Europe',continent_code:null}],travel_regions:[{code:'EUROPE',name:'Europe',description:null}],timezone_areas:[{code:'TZ_WEST',name:'West',position:0},{code:'TZ_EAST',name:'East',position:1}],timezone_areas_authored:true})
+    api.updateWorldPackageCountry.mockRejectedValueOnce(new api.ApiError(JSON.stringify({detail:'stop after payload'}),422))
+    renderAppAt('/admin/world/library/my_custom_world/countries/GER'); fireEvent.click(await screen.findByRole('button',{name:'Edit country'}))
+    expect(screen.getByLabelText('Travel Region')).toHaveValue('EUROPE'); expect(screen.getByLabelText('Timezone Area')).toHaveValue('TZ_EAST')
+    fireEvent.change(screen.getByLabelText('Timezone Area'),{target:{value:'TZ_WEST'}}); fireEvent.click(screen.getByRole('button',{name:'Save changes'}))
+    await waitFor(()=>expect(api.updateWorldPackageCountry).toHaveBeenCalled())
+    expect(api.updateWorldPackageCountry.mock.calls[0][2]).toMatchObject({travel_region:'EUROPE',timezone_area:'TZ_WEST'})
   })
 
   it('handles World Package countries API errors', async () => {

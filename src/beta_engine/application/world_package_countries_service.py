@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryRecord, WorldPackageRegistryService
 from beta_engine.domain.countries import Country
 from beta_engine.domain.countries.models import CountrySimFactor
+from beta_engine.domain.timezone_areas import TimezoneArea, validate_timezone_areas
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
 from beta_engine.application.world_package_validation_service import WorldPackageValidationResult, WorldPackageValidationService
 
@@ -51,6 +52,8 @@ class WorldPackageGeographyResult:
     continents: list[ContinentRecord]
     regions: list[RegionRecord]
     travel_regions: list[TravelRegionRecord]
+    timezone_areas: list[TimezoneArea]
+    timezone_areas_authored: bool
 
 
 @dataclass(frozen=True)
@@ -60,6 +63,7 @@ class WorldPackageCountryDetailResult:
     region: RegionRecord | None
     continent: ContinentRecord | None
     travel_region: TravelRegionRecord | None
+    timezone_area: TimezoneArea | None
     source_path: str
 
 
@@ -72,6 +76,7 @@ class WorldPackageCountryUpdate(BaseModel):
     area_km2: int | None = Field(gt=0)
     region: str = Field(min_length=1)
     travel_region: str | None = None
+    timezone_area: str | None = None
     court_count: int | None = Field(ge=0)
     squash_popularity: CountrySimFactor
     squash_access: CountrySimFactor
@@ -158,6 +163,8 @@ class WorldPackageCountriesService:
             raise WorldPackageMutationError(f"unknown Region '{create.region}'")
         if create.travel_region is not None and create.travel_region not in {item.code for item in geography.travel_regions}:
             raise WorldPackageMutationError(f"unknown Travel Region '{create.travel_region}'")
+        if create.timezone_area is not None and create.timezone_area not in {item.code for item in geography.timezone_areas}:
+            raise WorldPackageMutationError(f"unknown Timezone Area '{create.timezone_area}'")
         timeline = create.population_by_year
         if 2020 not in timeline:
             raise WorldPackageMutationError("population_by_year must contain default year 2020")
@@ -236,6 +243,8 @@ class WorldPackageCountriesService:
             raise WorldPackageMutationError(f"unknown Region '{update.region}'")
         if update.travel_region is not None and update.travel_region not in {item.code for item in geography.travel_regions}:
             raise WorldPackageMutationError(f"unknown Travel Region '{update.travel_region}'")
+        if update.timezone_area is not None and update.timezone_area not in {item.code for item in geography.timezone_areas}:
+            raise WorldPackageMutationError(f"unknown Timezone Area '{update.timezone_area}'")
         original = store.load_country(code)
         try:
             updated = Country.model_validate({
@@ -298,6 +307,39 @@ class WorldPackageCountriesService:
             raise WorldPackageMutationError(f"population edit failed: {exc}") from exc
         return WorldPackageCountryUpdateResult(detail=detail, validation=validation)
 
+    def replace_timezone_areas(self, world_id: str, areas: list[TimezoneArea], expected_fingerprint: str) -> WorldPackageGeographyResult:
+        """Atomically replace an editable package registry under optimistic concurrency."""
+        self._editable_store(world_id, expected_fingerprint)
+        try:
+            ordered = validate_timezone_areas(areas)
+        except ValueError as exc:
+            raise WorldPackageMutationError(f"invalid Timezone Area registry: {exc}") from exc
+        paths = self.registry_service.package_paths(world_id)
+        assert paths is not None
+        assigned = [c for c in WorldPackageCountryStore(paths["package_root"]).load_config().countries if c.timezone_area]
+        codes = {area.code for area in ordered}
+        missing = sorted({c.timezone_area for c in assigned if c.timezone_area not in codes})
+        if missing:
+            raise WorldPackageMutationError(f"Timezone Area registry would orphan country assignments: {missing}")
+        path = paths["timezone_areas"]
+        original = path.read_bytes() if path.is_file() else None
+        temporary = path.with_name(f".{path.name}.tmp")
+        try:
+            temporary.write_text(json.dumps({"timezone_areas": [a.model_dump(mode="json") for a in ordered]}, indent=2) + "\n", encoding="utf-8")
+            temporary.replace(path)
+            assert self.validation_service is not None
+            validation = self.validation_service.validate_package(world_id)
+            if validation is None or validation.status == "errors": raise RuntimeError("registry edit would leave the World Package invalid")
+        except Exception as exc:
+            if original is None: path.unlink(missing_ok=True)
+            else: path.write_bytes(original)
+            temporary.unlink(missing_ok=True)
+            if isinstance(exc, WorldPackageMutationError): raise
+            raise WorldPackageMutationError(f"Timezone Area registry edit failed: {exc}") from exc
+        result = self.get_geography(world_id)
+        assert result is not None
+        return result
+
     def get_countries(self, world_id: str) -> WorldPackageCountriesResult | None:
         record = self.registry_service.get_package(world_id)
         paths = self.registry_service.package_paths(world_id)
@@ -321,6 +363,8 @@ class WorldPackageCountriesService:
             continents=self._load_items(paths["continents"], "continents", ContinentRecord),
             regions=self._load_items(paths["regions"], "regions", RegionRecord),
             travel_regions=self._load_items(paths["travel_regions"], "travel_regions", TravelRegionRecord),
+            timezone_areas=validate_timezone_areas(self._load_items(paths["timezone_areas"], "timezone_areas", TimezoneArea)) if paths["timezone_areas"].is_file() else [],
+            timezone_areas_authored=paths["timezone_areas"].is_file(),
         )
 
     def get_country(self, world_id: str, country_code: str) -> WorldPackageCountryDetailResult | None:
@@ -338,12 +382,14 @@ class WorldPackageCountriesService:
         region = next((item for item in geography.regions if item.code == country.region), None)
         continent = next((item for item in geography.continents if region and item.code == region.continent_code), None)
         travel_region = next((item for item in geography.travel_regions if item.code == country.travel_region), None)
+        timezone_area = next((item for item in geography.timezone_areas if item.code == country.timezone_area), None)
         return WorldPackageCountryDetailResult(
             package=package,
             country=country,
             region=region,
             continent=continent,
             travel_region=travel_region,
+            timezone_area=timezone_area,
             source_path=str(Path(paths["countries_root"]) / code),
         )
 

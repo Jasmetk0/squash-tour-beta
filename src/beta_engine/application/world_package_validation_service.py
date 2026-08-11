@@ -4,6 +4,7 @@ import json,re
 from dataclasses import dataclass
 from typing import Literal
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
+from beta_engine.domain.timezone_areas import TimezoneArea, validate_timezone_areas
 from beta_engine.infrastructure.world_package_storage import ATTRIBUTE_NAMES, COUNTRIES_INDEX_SCHEMA, PACKAGE_FORMAT_VERSION, WorldPackageCountryStore
 ValidationSeverity=Literal['info','warning','error']; ValidationCheckStatus=Literal['passed','warning','failed']; ValidationStatus=Literal['valid','warnings','errors']
 @dataclass(frozen=True)
@@ -49,10 +50,21 @@ class WorldPackageValidationService:
     return path,items,{x.get('code') for x in items if isinstance(x,dict)}
    except Exception as exc:bad(f'{name}_valid',f'{path.name} is invalid: {exc}',path); return path,[],set()
   cp,continents,continent_codes=collection('continents'); rp,regions,region_codes=collection('regions'); tp,travels,travel_codes=collection('travel_regions')
+  timezone_path=root/'geography/timezone_areas.json'; timezone_codes=set()
+  if timezone_path.is_file():
+   try:
+    raw=json.loads(timezone_path.read_text()); area_items=raw['timezone_areas']
+    if not isinstance(area_items,list): raise ValueError('timezone_areas must be an array')
+    areas=validate_timezone_areas([TimezoneArea.model_validate(x) for x in area_items]); timezone_codes={x.code for x in areas}
+    ok('timezone_areas_valid',f'Timezone Area registry contains {len(areas)} deterministically ordered areas.',timezone_path)
+   except Exception as exc: bad('timezone_areas_valid',f'timezone_areas.json is invalid: {exc}',timezone_path)
+  else:
+   ok('timezone_areas_unavailable','Timezone Area layer is not yet authored; supported legacy compatibility state.',timezone_path)
   for region in regions:
    if isinstance(region,dict) and region.get('continent_code') is not None and region.get('continent_code') not in continent_codes: bad('region_continent_reference',f"regions.json {region.get('code')} references unknown continent {region.get('continent_code')}",rp)
   for country in countries:
    if country.region not in region_codes: bad('country_region_reference',f'{country.code}/attributes/region.json references unknown Region {country.region}',root/'countries'/country.code/'attributes/region.json')
+   if country.timezone_area is not None and country.timezone_area not in timezone_codes: bad('country_timezone_area_reference',f'{country.code}/attributes/timezone_area.json references unknown Timezone Area {country.timezone_area}',root/'countries'/country.code/'attributes/timezone_area.json')
    if country.travel_region is not None and country.travel_region not in travel_codes: bad('country_travel_region_reference',f'{country.code}/attributes/travel_region.json references unknown Travel Region {country.travel_region}',root/'countries'/country.code/'attributes/travel_region.json')
    coverage=world.get('population_years')
    if isinstance(coverage,dict):

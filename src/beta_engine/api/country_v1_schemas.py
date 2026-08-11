@@ -13,6 +13,7 @@ from beta_engine.api.schemas import (
     WorldPackageRegionResponse,
     WorldPackageSummaryResponse,
     WorldPackageTravelRegionResponse,
+    WorldPackageTimezoneAreaResponse,
     WorldPackageValidationResponse,
 )
 from beta_engine.domain.countries.models import CountrySimFactor
@@ -30,6 +31,7 @@ class CountryV1Response(BaseModel):
     population_by_year: dict[int, int | None] | None = None
     court_count: int | None = None
     travel_region: str | None = None
+    timezone_area: str | None = None
     notes: str | None = None
 
     squash_popularity: CountrySimFactor
@@ -99,6 +101,7 @@ class WorldPackageCountryV1DetailResponse(BaseModel):
     region: WorldPackageRegionResponse | None = None
     continent: WorldPackageContinentResponse | None = None
     travel_region: WorldPackageTravelRegionResponse | None = None
+    timezone_area: WorldPackageTimezoneAreaResponse | None = None
     source_path: str
 
 
@@ -110,6 +113,7 @@ class WorldPackageCountryV1UpdateRequest(BaseModel):
     area_km2: int | None = Field(gt=0)
     region: str = Field(min_length=1)
     travel_region: str | None = None
+    timezone_area: str | None = None
     court_count: int | None = Field(ge=0)
 
     squash_popularity: CountrySimFactor

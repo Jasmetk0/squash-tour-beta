@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
-import { cloneOfficialWorldPackage, createWorldPackageCountry, deleteWorldPackageCountry, getWorldPackage, getWorldPackageCountries, getWorldPackageCountry, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages, updateWorldPackageCountry, updateWorldPackageCountryPopulation } from '../api/client'
+import { cloneOfficialWorldPackage, createWorldPackageCountry, deleteWorldPackageCountry, getWorldPackage, getWorldPackageCountries, getWorldPackageCountry, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages, replaceWorldPackageTimezoneAreas, updateWorldPackageCountry, updateWorldPackageCountryPopulation } from '../api/client'
 import type { CountryRecord, WorldPackage, WorldPackageCloneResponse, WorldPackageCountryCreatePayload, WorldPackageCountryDetail, WorldPackageCountryPopulationUpdatePayload, WorldPackageCountryUpdatePayload, WorldPackageGeography, WorldPackageValidation } from '../api/types'
 import { SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
@@ -38,7 +38,7 @@ function PackageTable({ packages }: { packages: WorldPackage[] }): JSX.Element {
           <th>Countries</th>
           <th>Continents</th>
           <th>Regions</th>
-          <th>Travel Regions</th>
+          <th>Travel Regions</th><th>Timezone Areas</th>
           <th>Used by Runs</th>
           <th>Version</th>
           <th>Fingerprint</th>
@@ -56,7 +56,7 @@ function PackageTable({ packages }: { packages: WorldPackage[] }): JSX.Element {
             <td>{pkg.country_count}</td>
             <td>{pkg.continent_count}</td>
             <td>{pkg.region_count}</td>
-            <td>{pkg.travel_region_count}</td>
+            <td>{pkg.travel_region_count}</td><td>{pkg.timezone_area_count}</td>
             <td>{usageLabel(pkg.used_by_run_count)}</td>
             <td>{pkg.version}</td>
             <td><code title={pkg.fingerprint}>{shortFingerprint(pkg.fingerprint)}</code></td>
@@ -245,7 +245,11 @@ function ValidationSection({ validation }: { validation: WorldPackageValidation 
   )
 }
 
-function GeographySection({ geography }: { geography: WorldPackageGeography }): JSX.Element {
+function GeographySection({ geography, pkg }: { geography: WorldPackageGeography, pkg: WorldPackage }): JSX.Element {
+  const queryClient = useQueryClient()
+  const [areas, setAreas] = useState(geography.timezone_areas ?? [])
+  const mutation = useMutation({ mutationFn: () => replaceWorldPackageTimezoneAreas(pkg.world_id, areas.map((area, position) => ({...area, position})), pkg.fingerprint), onSuccess: async () => { await Promise.all([queryClient.invalidateQueries({queryKey:['world-package-geography',pkg.world_id]}), queryClient.invalidateQueries({queryKey:['world-package',pkg.world_id]}), queryClient.invalidateQueries({queryKey:['world-packages']})]) } })
+  const editable = pkg.type === 'custom' && pkg.editable
   return <SectionCard title="Geography">
     <h4>Continents</h4>
     <table><thead><tr><th>Code</th><th>Name</th></tr></thead><tbody>{geography.continents.map((item) => <tr key={item.code}><td><code>{item.code}</code></td><td>{item.name}</td></tr>)}</tbody></table>
@@ -253,9 +257,11 @@ function GeographySection({ geography }: { geography: WorldPackageGeography }): 
     <table><thead><tr><th>Code</th><th>Name</th><th>Continent</th></tr></thead><tbody>{geography.regions.map((item) => <tr key={item.code}><td><code>{item.code}</code></td><td>{item.name}</td><td>{geography.continents.find((continent) => continent.code === item.continent_code)?.name ?? '—'}</td></tr>)}</tbody></table>
     <h4>Travel Regions</h4>
     <table><thead><tr><th>Code</th><th>Name</th><th>Description</th></tr></thead><tbody>{geography.travel_regions.map((item) => <tr key={item.code}><td><code>{item.code}</code></td><td>{item.name}</td><td>{item.description ?? '—'}</td></tr>)}</tbody></table>
+    <h4>Timezone Areas</h4>
+    {!geography.timezone_areas_authored && !editable && <p className="status">Unavailable — this package has not yet authored the Timezone Area layer.</p>}
+    {(geography.timezone_areas_authored || editable) && <><p>Ordered circular topology; the first and last rows are adjacent. This is independent from Travel Regions.</p><table><thead><tr><th>Position</th><th>Code</th><th>Name</th>{editable && <th>Action</th>}</tr></thead><tbody>{areas.map((area,index)=><tr key={`${area.code}-${index}`}><td>{index}</td><td>{editable?<input aria-label={`Timezone Area code ${index}`} value={area.code} onChange={e=>setAreas(current=>current.map((x,i)=>i===index?{...x,code:e.target.value}:x))}/>:<code>{area.code}</code>}</td><td>{editable?<input aria-label={`Timezone Area name ${index}`} value={area.name} onChange={e=>setAreas(current=>current.map((x,i)=>i===index?{...x,name:e.target.value}:x))}/>:area.name}</td>{editable&&<td><button type="button" disabled={index===0} onClick={()=>setAreas(current=>current.map((item,i)=>i===index-1?current[index]:i===index?current[index-1]:item))}>Move Up</button> <button type="button" disabled={index===areas.length-1} onClick={()=>setAreas(current=>current.map((item,i)=>i===index+1?current[index]:i===index?current[index+1]:item))}>Move Down</button> <button type="button" onClick={()=>setAreas(current=>current.filter((_,i)=>i!==index))}>Remove</button></td>}</tr>)}</tbody></table>{editable&&<p><button type="button" onClick={()=>setAreas(current=>[...current,{code:'',name:'',position:current.length}])}>Add Timezone Area</button> <button type="button" disabled={mutation.isPending} onClick={()=>mutation.mutate()}>Save Timezone Areas</button></p>}{mutation.error&&<p className="error">{formatApiError(mutation.error)}</p>}</>}
   </SectionCard>
 }
-
 
 function formatNumber(value: number | null | undefined): string {
   return value === null || value === undefined ? '—' : value.toLocaleString()
@@ -280,7 +286,7 @@ function PackageCountriesTable({ countries, worldId }: { countries: CountryRecor
     <table>
       <thead>
         <tr>
-          <th>Code</th><th>Name</th><th>Region</th><th>Population</th><th>Population coverage</th><th>Area km²</th><th>Travel Region</th><th>Squash Popularity</th><th>Squash Access</th><th>Development Quality</th><th>Competition Quality</th><th>Elite Support</th><th>Squash Tradition</th><th>Courts</th><th>Action</th>
+          <th>Code</th><th>Name</th><th>Region</th><th>Population</th><th>Population coverage</th><th>Area km²</th><th>Travel Region</th><th>Timezone Area</th><th>Squash Popularity</th><th>Squash Access</th><th>Development Quality</th><th>Competition Quality</th><th>Elite Support</th><th>Squash Tradition</th><th>Courts</th><th>Action</th>
         </tr>
       </thead>
       <tbody>
@@ -293,6 +299,7 @@ function PackageCountriesTable({ countries, worldId }: { countries: CountryRecor
             <CountryCell value={formatPopulationYears(country.population_by_year)} />
             <CountryCell value={formatNumber(country.area_km2)} />
             <CountryCell value={country.travel_region} />
+            <CountryCell value={country.timezone_area} />
             <CountryCell value={country.squash_popularity} />
             <CountryCell value={country.squash_access} />
             <CountryCell value={country.development_quality} />
@@ -415,7 +422,7 @@ export function WorldLibraryDetailPage(): JSX.Element {
           <div id="geography" />
           {geographyQuery.isLoading && <p className="status">Loading geography...</p>}
           {geographyQuery.error && <p className="error">Failed to load geography: {formatApiError(geographyQuery.error)}</p>}
-          {geographyQuery.data && <GeographySection geography={geographyQuery.data} />}
+          {geographyQuery.data && <GeographySection geography={geographyQuery.data} pkg={pkg} />}
           <div id="validation" />
           {validationQuery.isLoading && (
             <SectionCard title="World Package Validation">
@@ -439,7 +446,7 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
   const packageQuery = useQuery({ queryKey: ['world-package', worldId], queryFn: () => getWorldPackage(worldId), retry: false })
   const geographyQuery = useQuery({ queryKey: ['world-package-geography', worldId], queryFn: () => getWorldPackageGeography(worldId), retry: false })
   const [identity, setIdentity] = useState({ code: '', name: '', notes: '', area: '' })
-  const [region, setRegion] = useState(''); const [travelRegion, setTravelRegion] = useState('')
+  const [region, setRegion] = useState(''); const [travelRegion, setTravelRegion] = useState(''); const [timezoneArea, setTimezoneArea] = useState('')
   const [values, setValues] = useState({ squash_popularity: '3', squash_access: '3', development_quality: '3', competition_quality: '3', elite_support: '3', squash_tradition: '3', court_count: '0' })
   const [populations, setPopulations] = useState<Array<PopulationRow & { id: number }>>([{ id: 0, year: '2020', population: '' }])
   const [validationError, setValidationError] = useState('')
@@ -455,7 +462,7 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
     if (duplicate) { setValidationError(`Year ${duplicate} is already authored.`); return }
     if (!years.includes('2020')) { setValidationError('Population year 2020 is required.'); return }
     setValidationError('')
-    mutation.mutate({ code: identity.code, name: identity.name, notes: identity.notes || null, area_km2: identity.area ? Number(identity.area) : null, region, travel_region: travelRegion || null,
+    mutation.mutate({ code: identity.code, name: identity.name, notes: identity.notes || null, area_km2: identity.area ? Number(identity.area) : null, region, travel_region: travelRegion || null, timezone_area: timezoneArea || null,
       squash_popularity: Number(values.squash_popularity), squash_access: Number(values.squash_access), development_quality: Number(values.development_quality), competition_quality: Number(values.competition_quality), elite_support: Number(values.elite_support), squash_tradition: Number(values.squash_tradition), court_count: values.court_count === '' ? null : Number(values.court_count),
       population_by_year: Object.fromEntries(sortedPopulations.map(row => [row.year, Number(row.population)])), expected_package_fingerprint: pkg.fingerprint }) }
   if (packageQuery.isLoading || geographyQuery.isLoading) return <p className="status">Loading country form...</p>
@@ -463,7 +470,7 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
   return <section className="panel"><p><Link to={`/admin/world/library/${worldId}/countries`}>Back to countries</Link></p><h2>Add country</h2><form onSubmit={submit}>
     {(validationError || mutation.error) && <p className="error" role="alert">{validationError || formatApiError(mutation.error)}</p>}
     <fieldset><legend>Identity</legend><label>Code<input required pattern="[A-Z]{3}" maxLength={3} value={identity.code} onChange={e => setIdentity({...identity,code:e.target.value})} /></label><label>Name<input required value={identity.name} onChange={e => setIdentity({...identity,name:e.target.value})} /></label><label>Notes<textarea value={identity.notes} onChange={e => setIdentity({...identity,notes:e.target.value})} /></label><label>Area km²<input type="number" min="1" value={identity.area} onChange={e => setIdentity({...identity,area:e.target.value})} /></label></fieldset>
-    <fieldset><legend>Geography</legend><label>Region<select required value={region} onChange={e => setRegion(e.target.value)}><option value="">Select region</option>{geographyQuery.data?.regions.map(item=><option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label><label>Travel Region<select value={travelRegion} onChange={e=>setTravelRegion(e.target.value)}><option value="">None</option>{geographyQuery.data?.travel_regions.map(item=><option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label></fieldset>
+    <fieldset><legend>Geography</legend><label>Region<select required value={region} onChange={e => setRegion(e.target.value)}><option value="">Select region</option>{geographyQuery.data?.regions.map(item=><option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label><label>Travel Region<select value={travelRegion} onChange={e=>setTravelRegion(e.target.value)}><option value="">None</option>{geographyQuery.data?.travel_regions.map(item=><option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label><label>Timezone Area<select value={timezoneArea} onChange={e=>setTimezoneArea(e.target.value)}><option value="">Not assigned</option>{(geographyQuery.data?.timezone_areas ?? []).map(item=><option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label></fieldset>
     <fieldset><legend>Population</legend>{sortedPopulations.map(row=><div key={row.id}><input aria-label={`Population year ${row.id === 0 ? '2020' : row.id}`} type="number" min="1955" max="2050" required readOnly={row.year==='2020'} value={row.year} onChange={e=>setPopulations(rows=>rows.map(item=>item.id===row.id?{...item,year:e.target.value}:item))}/><input aria-label={`Population value ${row.year || row.id}`} type="number" min="1" required value={row.population} onChange={e=>setPopulations(rows=>rows.map(item=>item.id===row.id?{...item,population:e.target.value}:item))}/>{row.year!=='2020'&&<button type="button" onClick={()=>setPopulations(rows=>rows.filter(item=>item.id!==row.id))}>Remove</button>}</div>)}<button type="button" onClick={()=>setPopulations(rows=>[...rows,{id:Math.max(...rows.map(row=>row.id))+1,year:'',population:''}])}>+ Add authored year</button></fieldset>
     <fieldset><legend>Squash / Country strength</legend>{Object.entries(values).map(([key,value])=><label key={key}>{key.split('_').join(' ')}<input type="number" required min={key==='court_count'?0:1} max={key==='court_count'?undefined:5} step={key==='court_count'?1:'any'} value={value} onChange={e=>setNumber(key as keyof typeof values,e.target.value)}/></label>)}</fieldset>
     <button type="submit" disabled={mutation.isPending}>{mutation.isPending?'Saving…':'Save country'}</button>
@@ -532,7 +539,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
       {success && <p className="status" role="status">{success}</p>}
       {editing && <CountryEditForm detail={data} geography={geographyQuery.data} saving={mutation.isPending} error={mutation.error} onCancel={() => { setEditing(false); mutation.reset() }} onSave={(payload) => mutation.mutate(payload)} />}
       {!editing && <SectionCard title="Overview">
-        <DetailRow label="Package" value={data.package.name} /><DetailRow label="Region" value={data.region?.name ?? data.country.region} /><DetailRow label="Travel Region" value={data.travel_region?.name ?? data.country.travel_region ?? '—'} /><DetailRow label="Area" value={`${formatNumber(data.country.area_km2)} km²`} /><DetailRow label="Current/default population" value={formatNumber(data.country.default_population ?? data.country.population)} />
+        <DetailRow label="Package" value={data.package.name} /><DetailRow label="Region" value={data.region?.name ?? data.country.region} /><DetailRow label="Travel Region" value={data.travel_region?.name ?? data.country.travel_region ?? '—'} /><DetailRow label="Timezone Area" value={data.timezone_area?.name ?? data.country.timezone_area ?? 'Not assigned'} /><DetailRow label="Area" value={`${formatNumber(data.country.area_km2)} km²`} /><DetailRow label="Current/default population" value={formatNumber(data.country.default_population ?? data.country.population)} />
         {data.country.notes && <DetailRow label="Notes" value={data.country.notes} />}
       </SectionCard>}
       {!populationEditing && <SectionCard title="Population">
@@ -586,10 +593,11 @@ function CountryEditForm({ detail, geography, saving, error, onCancel, onSave }:
   const [area, setArea] = useState(country.area_km2 == null ? '' : String(country.area_km2))
   const [region, setRegion] = useState(country.region)
   const [travelRegion, setTravelRegion] = useState(country.travel_region ?? '')
+  const [timezoneArea, setTimezoneArea] = useState(country.timezone_area ?? '')
   const [values, setValues] = useState({ squash_popularity: String(country.squash_popularity), squash_access: String(country.squash_access), development_quality: String(country.development_quality), competition_quality: String(country.competition_quality), elite_support: String(country.elite_support), squash_tradition: String(country.squash_tradition), court_count: country.court_count == null ? '' : String(country.court_count) })
   const submit = (event: FormEvent) => {
     event.preventDefault()
-    onSave({ name, notes: notes || null, area_km2: area ? Number(area) : null, region, travel_region: travelRegion || null,
+    onSave({ name, notes: notes || null, area_km2: area ? Number(area) : null, region, travel_region: travelRegion || null, timezone_area: timezoneArea || null,
       squash_popularity: Number(values.squash_popularity), squash_access: Number(values.squash_access), development_quality: Number(values.development_quality), competition_quality: Number(values.competition_quality), elite_support: Number(values.elite_support), squash_tradition: Number(values.squash_tradition), court_count: values.court_count === '' ? null : Number(values.court_count), expected_package_fingerprint: detail.package.fingerprint })
   }
   const numeric = (key: keyof typeof values, label: string, min: number, max?: number, step: number | 'any' = 'any') => <label>{label}<input type="number" required min={min} max={max} step={step} value={values[key]} onChange={event => setValues(current => ({ ...current, [key]: event.target.value }))} /></label>
@@ -600,6 +608,7 @@ function CountryEditForm({ detail, geography, saving, error, onCancel, onSave }:
     <label>Area km²<input type="number" min="1" value={area} onChange={event => setArea(event.target.value)} /></label>
     <label>Region<select value={region} onChange={event => setRegion(event.target.value)}>{geography?.regions.map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
     <label>Travel Region<select value={travelRegion} onChange={event => setTravelRegion(event.target.value)}><option value="">None</option>{geography?.travel_regions.map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
+    <label>Timezone Area<select value={timezoneArea} onChange={event => setTimezoneArea(event.target.value)}><option value="">Not assigned</option>{(geography?.timezone_areas ?? []).map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
     {numeric('squash_popularity', 'Squash Popularity', 1, 5)}{numeric('squash_access', 'Squash Access', 1, 5)}{numeric('development_quality', 'Development Quality', 1, 5)}{numeric('competition_quality', 'Competition Quality', 1, 5)}{numeric('elite_support', 'Elite Support', 1, 5)}{numeric('squash_tradition', 'Squash Tradition', 1, 5)}{numeric('court_count', 'Court Count', 0, undefined, 1)}
     <p><button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button> <button type="button" disabled={saving} onClick={onCancel}>Cancel</button></p>
   </form></SectionCard>

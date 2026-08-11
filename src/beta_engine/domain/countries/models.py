@@ -161,15 +161,24 @@ class Country(BaseModel):
 
         return self.travel_region or self.region
 
-    # Compatibility properties for code paths that have not yet been deleted.
-    # They are derived from V1 state and are intentionally absent from model_dump.
+    # Compatibility properties for code paths that have not yet been migrated.
+    # They are derived from V1 state and are intentionally absent from model_dump
+    # and every public Country V1 API schema.
     @property
     def wealth_support(self) -> int:
         return self.elite_support
 
     @property
+    def wealth_support_norm(self) -> float:
+        return self.elite_support_norm
+
+    @property
     def system_quality(self) -> int:
         return self.development_quality
+
+    @property
+    def system_quality_norm(self) -> float:
+        return self.development_quality_norm
 
     @property
     def competition_density(self) -> float:

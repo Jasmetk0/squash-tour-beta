@@ -59,7 +59,7 @@ class WorldPackageValidationService:
     ok('timezone_areas_valid',f'Timezone Area registry contains {len(areas)} deterministically ordered areas.',timezone_path)
    except Exception as exc: bad('timezone_areas_valid',f'timezone_areas.json is invalid: {exc}',timezone_path)
   else:
-   checks.append(WorldPackageValidationCheck('timezone_areas_unavailable','info','warning',f'{world_id}: Timezone Area layer is not yet authored.',str(timezone_path)))
+   ok('timezone_areas_unavailable','Timezone Area layer is not yet authored; supported legacy compatibility state.',timezone_path)
   for region in regions:
    if isinstance(region,dict) and region.get('continent_code') is not None and region.get('continent_code') not in continent_codes: bad('region_continent_reference',f"regions.json {region.get('code')} references unknown continent {region.get('continent_code')}",rp)
   for country in countries:

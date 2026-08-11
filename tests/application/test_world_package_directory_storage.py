@@ -605,8 +605,11 @@ def test_timezone_registry_mutation_roundtrip_fingerprint_and_country_reference(
     assert [x.code for x in geography.timezone_areas] == ["WEST", "EAST"]
     after = registry.get_package("editable")
     assert after is not None and after.fingerprint != before.fingerprint and after.timezone_area_count == 2
+    reordered = service.replace_timezone_areas("editable", [TimezoneArea(code="EAST",name="East",position=0), TimezoneArea(code="WEST",name="West",position=1)], after.fingerprint)
+    reordered_package = registry.get_package("editable")
+    assert reordered_package is not None and reordered_package.fingerprint != after.fingerprint
     country = service.get_country("editable", "GER").country
-    update = _country_update(country, timezone_area="EAST", expected_package_fingerprint=after.fingerprint)
+    update = _country_update(country, timezone_area="EAST", expected_package_fingerprint=reordered_package.fingerprint)
     result = service.update_country("editable", "GER", update)
     assert result.detail.country.timezone_area == "EAST"
     assert result.detail.timezone_area.code == "EAST"
@@ -614,3 +617,46 @@ def test_timezone_registry_mutation_roundtrip_fingerprint_and_country_reference(
     assert reloaded.timezone_area == "EAST" and reloaded.travel_region == country.travel_region
     with pytest.raises(WorldPackageMutationError, match="unknown Timezone Area"):
         service.update_country("editable", "GER", _country_update(reloaded, timezone_area="MISSING", expected_package_fingerprint=result.detail.package.fingerprint))
+
+@pytest.mark.parametrize(
+    ("content", "message"),
+    [
+        ("{not json", "not valid JSON"),
+        ('{"schema_version":"country_attribute.v999","value":"A"}', "unsupported schema_version"),
+    ],
+)
+def test_existing_malformed_timezone_area_attribute_fails(tmp_path: Path, content: str, message: str) -> None:
+    root = tmp_path / "package"
+    shutil.copytree("config/world_packages/official_fax_world", root)
+    path = root / "countries/GER/attributes/timezone_area.json"
+    path.write_text(content, encoding="utf-8")
+    with pytest.raises(ValueError, match=message):
+        WorldPackageCountryStore(root).load_country("GER")
+
+
+def test_missing_legacy_timezone_area_attribute_loads_none(tmp_path: Path) -> None:
+    root = tmp_path / "package"
+    shutil.copytree("config/world_packages/official_fax_world", root)
+    assert not (root / "countries/GER/attributes/timezone_area.json").exists()
+    assert WorldPackageCountryStore(root).load_country("GER").timezone_area is None
+
+
+def test_legacy_fingerprint_stays_stable_until_timezone_data_is_authored(tmp_path: Path) -> None:
+    root = tmp_path / "packages"
+    shutil.copytree("config/world_packages/official_fax_world", root / "official_fax_world")
+    registry = WorldPackageRegistryService(world_packages_root=root)
+    before = registry.get_official_package().fingerprint
+    # Regression value from pre-Timezone-Area support: optional schema support is not semantic content.
+    assert before == "4113f00b2f9c68e511b7ab8aa65c1139003f666bdb909a9e09c5c86888fc5ae9"
+    # Loading support alone does not materialize either optional storage layer.
+    assert not (root / "official_fax_world/geography/timezone_areas.json").exists()
+    assert registry.get_official_package().fingerprint == before
+
+
+def test_legacy_missing_timezone_layer_is_visible_consistent_info(tmp_path: Path) -> None:
+    root = tmp_path / "packages"
+    shutil.copytree("config/world_packages/official_fax_world", root / "official_fax_world")
+    result = WorldPackageValidationService(WorldPackageRegistryService(world_packages_root=root)).validate_package("official_fax_world")
+    assert result is not None and result.status == "valid"
+    check = next(item for item in result.checks if item.code == "timezone_areas_unavailable")
+    assert (check.severity, check.status) == ("info", "passed")

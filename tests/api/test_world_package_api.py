@@ -205,3 +205,36 @@ def test_country_create_http_roundtrips_authored_state_and_rejects_duplicate(tmp
     assert duplicate_status == 409
     assert unchanged["country"] == country
     _assert_canonical_v1_attribute_files(worlds_root / "custom" / "editable", "ABC")
+
+
+def test_timezone_area_registry_http_contract_and_controlled_errors(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "overrides.json"
+    _suite._write_fixture(countries_path, _suite.COUNTRIES_FIXTURE)
+    _suite._write_fixture(overrides_path, _suite.OVERRIDES_FIXTURE)
+    worlds_root = _suite._copy_worlds_root(tmp_path)
+    with _suite.ApiServer(database_url=f"sqlite:///{tmp_path/'timezone-api.db'}", countries_config_path=str(countries_path), manual_overrides_config_path=str(overrides_path), worlds_root=str(worlds_root)) as server:
+        _, builtin = _suite._request("GET", f"{server.base_url}/world/packages/official_fax_world")
+        readonly_status, _ = _suite._request("PUT", f"{server.base_url}/world/packages/official_fax_world/geography/timezone-areas", {"timezone_areas": [], "expected_package_fingerprint": builtin["fingerprint"]})
+        assert readonly_status == 403
+        assert _suite._request("POST", f"{server.base_url}/world/packages/official_fax_world/clone", {"new_world_id":"editable","name":"Editable","dry_run":False})[0] == 200
+        _, package = _suite._request("GET", f"{server.base_url}/world/packages/editable")
+        original = package["fingerprint"]
+        areas = [{"code":"WEST","name":"West","position":0},{"code":"EAST","name":"East","position":1},{"code":"PAC","name":"Pacific","position":2}]
+        status, geography = _suite._request("PUT", f"{server.base_url}/world/packages/editable/geography/timezone-areas", {"timezone_areas":areas,"expected_package_fingerprint":original})
+        assert status == 200 and geography["timezone_areas"] == areas and geography["timezone_areas_authored"] is True
+        _, changed = _suite._request("GET", f"{server.base_url}/world/packages/editable")
+        assert changed["fingerprint"] != original
+        assert _suite._request("PUT", f"{server.base_url}/world/packages/editable/geography/timezone-areas", {"timezone_areas":areas,"expected_package_fingerprint":original})[0] == 409
+        for malformed in (
+            [{"code":"WEST","name":"West","position":0},{"code":"WEST","name":"Duplicate","position":1}],
+            [{"code":"WEST","name":"West","position":0},{"code":"EAST","name":"East","position":2}],
+        ):
+            code, body = _suite._request("PUT", f"{server.base_url}/world/packages/editable/geography/timezone-areas", {"timezone_areas":malformed,"expected_package_fingerprint":changed["fingerprint"]})
+            assert code == 422 and "invalid Timezone Area registry" in str(body)
+        _, detail = _suite._request("GET", f"{server.base_url}/world/packages/editable/countries/GER")
+        update = {**_country_update_payload(detail), "timezone_area":"EAST", "expected_package_fingerprint":changed["fingerprint"]}
+        assert _suite._request("PUT", f"{server.base_url}/world/packages/editable/countries/GER", update)[0] == 200
+        _, assigned = _suite._request("GET", f"{server.base_url}/world/packages/editable/countries/GER")
+        orphan_status, orphan_body = _suite._request("PUT", f"{server.base_url}/world/packages/editable/geography/timezone-areas", {"timezone_areas":[areas[0], {**areas[2],"position":1}], "expected_package_fingerprint":assigned["package"]["fingerprint"]})
+        assert orphan_status == 422 and "orphan country assignments" in str(orphan_body)

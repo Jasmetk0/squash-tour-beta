@@ -17,6 +17,7 @@ class TimezoneArea(BaseModel):
         return value
 
 class RingDirection(str, Enum):
+    NONE = "none"
     FORWARD = "forward"
     BACKWARD = "backward"
     TIE = "tie"
@@ -44,5 +45,8 @@ def circular_displacement(areas: list[TimezoneArea], source: str, destination: s
     if destination not in positions: raise ValueError(f"unknown destination Timezone Area '{destination}'")
     forward = (positions[destination] - positions[source]) % len(ordered)
     backward = (positions[source] - positions[destination]) % len(ordered)
-    if forward == backward: return TimezoneDisplacement(transitions=forward, direction=RingDirection.TIE if forward else RingDirection.FORWARD)
+    if forward == 0:
+        return TimezoneDisplacement(transitions=0, direction=RingDirection.NONE)
+    if forward == backward:
+        return TimezoneDisplacement(transitions=forward, direction=RingDirection.TIE)
     return TimezoneDisplacement(transitions=min(forward, backward), direction=RingDirection.FORWARD if forward < backward else RingDirection.BACKWARD)

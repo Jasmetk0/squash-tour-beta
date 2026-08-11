@@ -62,7 +62,9 @@ class WorldPackageRegistryService:
  def _fingerprint(self,path): return hashlib.sha256(json.dumps(self._fingerprint_payload(path),sort_keys=True,separators=(',',':')).encode()).hexdigest()
  def _fingerprint_payload(self,path):
   m=self._read_json(path/'world.json'); keys=('world_id','name','type','status','source','editable','deletable','archivable','version','content_schema_version','package_format_version')
-  return {'world_metadata':{k:m[k] for k in keys if k in m},'countries':WorldPackageCountryStore(path).semantic_payload(),'continents':self._read_json(path/'geography/continents.json'),'regions':self._read_json(path/'geography/regions.json'),'travel_regions':self._read_json(path/'geography/travel_regions.json'),'timezone_areas':self._read_json(path/'geography/timezone_areas.json') if (path/'geography/timezone_areas.json').is_file() else None}
+  payload={'world_metadata':{k:m[k] for k in keys if k in m},'countries':WorldPackageCountryStore(path).semantic_payload(),'continents':self._read_json(path/'geography/continents.json'),'regions':self._read_json(path/'geography/regions.json'),'travel_regions':self._read_json(path/'geography/travel_regions.json')}
+  if (path/'geography/timezone_areas.json').is_file(): payload['timezone_areas']=self._read_json(path/'geography/timezone_areas.json')
+  return payload
  def _custom_package_dirs(self):
   root=self.world_packages_root/'custom'; return sorted((p for p in root.iterdir() if p.is_dir()),key=lambda p:p.name) if root.is_dir() else []
  def _paths_for_dir(self,p): return {'package_root':p,'world':p/'world.json','countries_root':p/'countries','countries_index':p/'countries/index.json','continents':p/'geography/continents.json','regions':p/'geography/regions.json','travel_regions':p/'geography/travel_regions.json','timezone_areas':p/'geography/timezone_areas.json'}

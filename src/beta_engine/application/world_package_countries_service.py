@@ -310,7 +310,10 @@ class WorldPackageCountriesService:
     def replace_timezone_areas(self, world_id: str, areas: list[TimezoneArea], expected_fingerprint: str) -> WorldPackageGeographyResult:
         """Atomically replace an editable package registry under optimistic concurrency."""
         self._editable_store(world_id, expected_fingerprint)
-        ordered = validate_timezone_areas(areas)
+        try:
+            ordered = validate_timezone_areas(areas)
+        except ValueError as exc:
+            raise WorldPackageMutationError(f"invalid Timezone Area registry: {exc}") from exc
         paths = self.registry_service.package_paths(world_id)
         assert paths is not None
         assigned = [c for c in WorldPackageCountryStore(paths["package_root"]).load_config().countries if c.timezone_area]

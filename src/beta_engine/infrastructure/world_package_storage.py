@@ -180,12 +180,12 @@ class WorldPackageCountryStore:
         if identity.code != code:
             raise ValueError(f"{identity_path} code {identity.code!r} does not match directory {code!r}")
         attributes = {}
+        timezone_path = country_root / "attributes" / "timezone_area.json"
         for name in ATTRIBUTE_NAMES:
-            try:
-                attributes[name] = self._load_attribute(country_root, name)
-            except ValueError:
-                if name != "timezone_area": raise
+            if name == "timezone_area" and not timezone_path.is_file():
                 attributes[name] = None
+            else:
+                attributes[name] = self._load_attribute(country_root, name)
         population_path = country_root / "attributes" / "population.json"
         population = CountryPopulation.model_validate(_read_object(population_path))
         if population.schema_version != COUNTRY_POPULATION_SCHEMA:
@@ -207,7 +207,14 @@ class WorldPackageCountryStore:
         return CountriesConfig(dataset_status=index.dataset_status, countries=[self.load_country(code) for code in index.country_codes])
 
     def semantic_payload(self) -> list[dict[str, Any]]:
-        return sorted((c.model_dump(mode="json") for c in self.load_config().countries), key=lambda c: c["code"])
+        countries = []
+        for country in self.load_config().countries:
+            payload = country.model_dump(mode="json")
+            # Preserve pre-Timezone-Area fingerprints until an assignment is authored.
+            if payload.get("timezone_area") is None:
+                payload.pop("timezone_area", None)
+            countries.append(payload)
+        return sorted(countries, key=lambda country: country["code"])
 
     def write_country(self, country: Country) -> None:
         root = self.countries_root / country.code

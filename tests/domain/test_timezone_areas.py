@@ -26,3 +26,12 @@ def test_shortest_direction_and_even_ring_tie_are_structural():
 ])
 def test_malformed_registry_rejected(bad):
     with pytest.raises(ValueError): validate_timezone_areas(bad)
+
+
+def test_zero_displacement_is_nondirectional():
+    assert circular_displacement(areas(4), "A2", "A2").model_dump() == {"transitions": 0, "direction": RingDirection.NONE}
+
+@pytest.mark.parametrize(("source", "destination", "message"), [("MISSING", "A0", "unknown source"), ("A0", "MISSING", "unknown destination")])
+def test_unknown_endpoints_fail(source, destination, message):
+    with pytest.raises(ValueError, match=message):
+        circular_displacement(areas(4), source, destination)

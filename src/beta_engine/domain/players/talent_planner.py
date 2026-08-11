@@ -39,6 +39,9 @@ class AnnualTalentClassPlanner:
     }
 
     def __init__(self, dampener: RecentGreatnessDampener | None = None) -> None:
+        # The injected dampener is retained only to read/audit historical signals
+        # from pre-V1 planning data. Country V1 does not allow a country-specific
+        # history multiplier to change innate quality-band probabilities.
         self._dampener = dampener or NeutralRecentGreatnessDampener()
         self._country_model = CountryTalentModel()
 
@@ -110,25 +113,22 @@ class AnnualTalentClassPlanner:
         return allocation
 
     def _quality_weights(self, *, country: Country, year: int) -> tuple[dict[TalentQualityBand, float], CountryDampenerSnapshot]:
-        # Innate rarity is global in Country V1. The existing recent-greatness
-        # dampener is retained as an explicit historical balancing mechanism,
-        # but authored country strength no longer changes top-band birth odds.
-        probabilities = {
-            band: (
-                self._apply_dampener(country.code, year, band, value)
-                if band in {TalentQualityBand.GENERATIONAL, TalentQualityBand.SPECIAL, TalentQualityBand.ELITE}
-                else value
-            )
-            for band, value in self.BASE_QUALITY_WEIGHTS.items()
-        }
-        total = sum(probabilities.values())
-        normalized = {band: value / total for band, value in probabilities.items()}
+        # Innate rarity is global in Country V1. Not only authored country ratings
+        # but also country-scoped historical balancing must stay out of the birth
+        # distribution. Otherwise a nationality could become intrinsically less
+        # likely to produce the next rare talent because of previous players.
+        total = sum(self.BASE_QUALITY_WEIGHTS.values())
+        normalized = {band: value / total for band, value in self.BASE_QUALITY_WEIGHTS.items()}
+
+        # Preserve pre-V1 recent-greatness signals as inspectable historical
+        # diagnostics, but report neutral multipliers and inactive application.
+        # This keeps old provenance readable without allowing it to alter V1 RNG.
         diagnostics = self._dampener.diagnostics(country_code=country.code, year=year)
         snapshot = CountryDampenerSnapshot(
             recent_greatness_score=diagnostics.recent_greatness_score,
             signal_count=diagnostics.signal_count,
-            multipliers=diagnostics.multipliers,
-            active=diagnostics.active,
+            multipliers={band: 1.0 for band in TalentQualityBand},
+            active=False,
             contributions=[
                 DampenerContributionSnapshot(
                     source=item.source,
@@ -180,10 +180,6 @@ class AnnualTalentClassPlanner:
             technical_vs_physical_lean=0.0,
             mental_sharpness_tendency=0.0,
         )
-
-    def _apply_dampener(self, country_code: str, year: int, band: TalentQualityBand, value: float) -> float:
-        multiplier = self._dampener.quality_multiplier(country_code=country_code, year=year, band=band)
-        return max(0.0, value * max(0.0, multiplier))
 
     @staticmethod
     def _cumulative_thresholds(

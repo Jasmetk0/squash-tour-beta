@@ -6,8 +6,8 @@ import type {
   WorldPackageValidation,
 } from './types'
 
-/** Canonical authored Country V1 rating accepted by the backend. */
-export type CountryV1Rating = 1 | 2 | 3 | 4 | 5
+/** Canonical authored Country V1 rating accepted by the backend: any finite number from 1 to 5. */
+export type CountryV1Rating = number
 
 /**
  * Frontend representation of the canonical Country V1 API response.

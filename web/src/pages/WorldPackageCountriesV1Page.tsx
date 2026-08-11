@@ -118,6 +118,10 @@ export function WorldPackageCountriesV1Page(): JSX.Element {
             {data.type === 'custom' && data.source === 'custom_config' && !data.read_only && (
               <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries/new`}>+ Add country</Link></p>
             )}
+            <p>
+              This inspection screen does not currently provide bulk edit, delete, import, or export controls.
+              Editable Custom World sources can create a country and open individual countries for editing.
+            </p>
             <label>
               Search by country name or code
               <input

@@ -15,7 +15,8 @@ class Country(BaseModel):
     V1 deliberately separates factual country data from six authored squash-system
     ratings. Legacy country payloads are accepted at the loading boundary so
     existing World Packages remain readable, but legacy factor names are not part
-    of the serialized/public/runtime country model.
+    of serialized/public country state. ``style_dna`` survives only as an always-
+    empty read compatibility shim and has no authored/runtime influence.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -170,6 +171,12 @@ class Country(BaseModel):
         """Region used by travel/entry calculations when no explicit override is authored."""
 
         return self.travel_region or self.region
+
+    @property
+    def style_dna(self) -> dict[str, float]:
+        """Neutral legacy read shim; Country V1 has no national style DNA."""
+
+        return {}
 
     @property
     def infrastructure_level(self) -> float:

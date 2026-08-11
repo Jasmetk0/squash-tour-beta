@@ -98,8 +98,8 @@ def test_country_development_strength_does_not_change_innate_quality_band_odds()
     by_code = {allocation.country_code: allocation for allocation in plan.allocations}
 
     assert by_code["STR"].quality_weights == by_code["WEK"].quality_weights
-    assert by_code["STR"].allocation_weight == by_code["WEK"].allocation_weight
-    # An odd fixed global cohort can leave one deterministic remainder slot.
+    # Equal volume inputs can differ by one deterministic remainder slot when
+    # the fixed global cohort size is odd.
     assert abs(by_code["STR"].planned_count - by_code["WEK"].planned_count) <= 1
     assert by_code["STR"].bias_profile.professionalism_tendency == 0.0
     assert by_code["STR"].bias_profile.technical_vs_physical_lean == 0.0

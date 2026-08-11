@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import math
-
 from beta_engine.core import DeterministicRng, SeedScope
-from beta_engine.domain.countries import Country
+from beta_engine.domain.countries import Country, CountryTalentModel
 from beta_engine.domain.players.talent_dampener import (
     NeutralRecentGreatnessDampener,
     RecentGreatnessDampener,
@@ -22,10 +20,30 @@ from beta_engine.domain.players.talent_models import (
 
 
 class AnnualTalentClassPlanner:
-    """Builds deterministic year-specific country talent allocations and rarity bands."""
+    """Build deterministic year-specific country allocations and innate rarity bands.
+
+    Country V1 separates two ideas that the legacy planner mixed together:
+    participation/pipeline determines how many prospects a country samples, while
+    innate quality-band rarity is global. Country development strength can later
+    affect how much of that potential is realised, but does not make a person more
+    likely to be born with generational potential.
+    """
+
+    # Calibration baseline only; these are not product-canon probabilities.
+    BASE_QUALITY_WEIGHTS = {
+        TalentQualityBand.GENERATIONAL: 0.001,
+        TalentQualityBand.SPECIAL: 0.016,
+        TalentQualityBand.ELITE: 0.080,
+        TalentQualityBand.STRONG: 0.270,
+        TalentQualityBand.SOLID: 0.633,
+    }
 
     def __init__(self, dampener: RecentGreatnessDampener | None = None) -> None:
+        # The injected dampener is retained only to read/audit historical signals
+        # from pre-V1 planning data. Country V1 does not allow a country-specific
+        # history multiplier to change innate quality-band probabilities.
         self._dampener = dampener or NeutralRecentGreatnessDampener()
+        self._country_model = CountryTalentModel()
 
     def plan(self, *, year: int, seed: int, countries: list[Country]) -> AnnualTalentClassPlan:
         if not countries:
@@ -71,12 +89,12 @@ class AnnualTalentClassPlanner:
         return max(country_count, int(round(baseline * (1.0 + cycle))))
 
     def _allocate_counts(self, *, countries: list[Country], total_talents: int) -> dict[str, int]:
-        weights: dict[str, float] = {}
-        for country in countries:
-            population_component = math.log10(country.population)
-            popularity_component = 1.0 + country.squash_popularity * 1.4
-            support_component = 1.0 + country.system_quality * 0.16 + country.wealth_support * 0.09
-            weights[country.code] = population_component * popularity_component * support_component
+        # The country model owns the V1 population/popularity/access curve so the
+        # annual planner and weekly intake cannot silently drift apart.
+        weights = {
+            country.code: max(0.000001, self._country_model.effective_squash_pool_weight(country))
+            for country in countries
+        }
 
         weight_sum = sum(weights.values())
         if weight_sum <= 0:
@@ -95,37 +113,21 @@ class AnnualTalentClassPlanner:
         return allocation
 
     def _quality_weights(self, *, country: Country, year: int) -> tuple[dict[TalentQualityBand, float], CountryDampenerSnapshot]:
-        quality_score = (
-            country.system_quality * 0.42
-            + country.squash_tradition * 0.36
-            + country.wealth_support * 0.14
-            + country.squash_popularity * 0.08
-            - 1.0
-        ) / 4.0
-        quality_score = max(0.0, min(1.0, quality_score))
+        # Innate rarity is global in Country V1. Not only authored country ratings
+        # but also country-scoped historical balancing must stay out of the birth
+        # distribution. Otherwise a nationality could become intrinsically less
+        # likely to produce the next rare talent because of previous players.
+        total = sum(self.BASE_QUALITY_WEIGHTS.values())
+        normalized = {band: value / total for band, value in self.BASE_QUALITY_WEIGHTS.items()}
 
-        generational = 0.0004 + quality_score * 0.0012
-        special = 0.006 + quality_score * 0.02
-        elite = 0.04 + quality_score * 0.08
-        strong = 0.22 + quality_score * 0.10
-
-        probabilities = {
-            TalentQualityBand.GENERATIONAL: self._apply_dampener(country.code, year, TalentQualityBand.GENERATIONAL, generational),
-            TalentQualityBand.SPECIAL: self._apply_dampener(country.code, year, TalentQualityBand.SPECIAL, special),
-            TalentQualityBand.ELITE: self._apply_dampener(country.code, year, TalentQualityBand.ELITE, elite),
-            TalentQualityBand.STRONG: strong,
-        }
-        used = sum(probabilities.values())
-        solid = max(0.0, 1.0 - used)
-        probabilities[TalentQualityBand.SOLID] = solid
-
-        total = sum(probabilities.values())
-        normalized = {band: value / total for band, value in probabilities.items()}
+        # Preserve pre-V1 recent-greatness signals as inspectable historical
+        # diagnostics. `active` means an applicable historical signal exists;
+        # neutral multipliers make explicit that V1 does not apply it to innate RNG.
         diagnostics = self._dampener.diagnostics(country_code=country.code, year=year)
         snapshot = CountryDampenerSnapshot(
             recent_greatness_score=diagnostics.recent_greatness_score,
             signal_count=diagnostics.signal_count,
-            multipliers=diagnostics.multipliers,
+            multipliers={band: 1.0 for band in TalentQualityBand},
             active=diagnostics.active,
             contributions=[
                 DampenerContributionSnapshot(
@@ -170,18 +172,14 @@ class AnnualTalentClassPlanner:
 
     @staticmethod
     def _bias_profile(country: Country) -> CountryGenerationBiasProfile:
-        professional = ((country.system_quality - 3) * 0.06) + ((country.wealth_support - 3) * 0.03)
-        technical = ((country.squash_tradition - 3) * 0.05) + ((country.system_quality - 3) * 0.02)
-        mental = ((country.squash_tradition - 3) * 0.04) + ((country.system_quality - 3) * 0.02)
+        # National style/personality DNA is deliberately deferred beyond V1.
+        # Retain the persisted shape but make it neutral.
+        _ = country
         return CountryGenerationBiasProfile(
-            professionalism_tendency=max(-0.3, min(0.3, round(professional, 4))),
-            technical_vs_physical_lean=max(-0.3, min(0.3, round(technical, 4))),
-            mental_sharpness_tendency=max(-0.3, min(0.3, round(mental, 4))),
+            professionalism_tendency=0.0,
+            technical_vs_physical_lean=0.0,
+            mental_sharpness_tendency=0.0,
         )
-
-    def _apply_dampener(self, country_code: str, year: int, band: TalentQualityBand, value: float) -> float:
-        multiplier = self._dampener.quality_multiplier(country_code=country_code, year=year, band=band)
-        return max(0.0, value * max(0.0, multiplier))
 
     @staticmethod
     def _cumulative_thresholds(

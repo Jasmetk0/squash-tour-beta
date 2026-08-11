@@ -22,7 +22,6 @@ class PlayerIdentityConfig(BaseModel):
     growth_curves: list[str] = Field(min_length=1)
 
 
-
 MANUAL_PLAYER_OVERRIDE_TABULAR_FIELDS = (
     "override_id",
     "season",
@@ -53,21 +52,22 @@ MANUAL_PLAYER_OVERRIDE_TABULAR_FIELDS = (
     "trait_resilience",
 )
 
+# Country V1 tabular authoring contract.  Ratings are all integer 1..5.
 COUNTRY_TABULAR_FIELDS = (
     "code",
     "name",
     "flag_asset",
     "region",
     "population",
-    "wealth_support",
     "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
     "squash_tradition",
-    "system_quality",
 )
 
 COUNTRY_OPTIONAL_TABULAR_FIELDS = (
-    "competition_density",
-    "federation_quality",
     "court_count",
     "travel_region",
     "notes",
@@ -127,12 +127,12 @@ def export_countries_to_csv(
                     "flag_asset": country.flag_asset or "",
                     "region": country.region,
                     "population": country.population,
-                    "wealth_support": country.wealth_support,
                     "squash_popularity": country.squash_popularity,
+                    "squash_access": country.squash_access,
+                    "development_quality": country.development_quality,
+                    "competition_quality": country.competition_quality,
+                    "elite_support": country.elite_support,
                     "squash_tradition": country.squash_tradition,
-                    "system_quality": country.system_quality,
-                    "competition_density": country.competition_density,
-                    "federation_quality": country.federation_quality,
                     "court_count": country.court_count if country.court_count is not None else "",
                     "travel_region": country.travel_region or "",
                     "notes": country.notes or "",
@@ -163,15 +163,13 @@ def import_countries_from_csv(
                 "flag_asset": row["flag_asset"] or None,
                 "region": row["region"],
                 "population": int(row["population"]),
-                "wealth_support": int(row["wealth_support"]),
                 "squash_popularity": int(row["squash_popularity"]),
+                "squash_access": int(row["squash_access"]),
+                "development_quality": int(row["development_quality"]),
+                "competition_quality": int(row["competition_quality"]),
+                "elite_support": int(row["elite_support"]),
                 "squash_tradition": int(row["squash_tradition"]),
-                "system_quality": int(row["system_quality"]),
             }
-            for optional_float_field in ("competition_density", "federation_quality"):
-                raw_optional = (row.get(optional_float_field) or "").strip()
-                if raw_optional:
-                    country_payload[optional_float_field] = float(raw_optional)
             raw_court_count = (row.get("court_count") or "").strip()
             if raw_court_count:
                 country_payload["court_count"] = int(raw_court_count)

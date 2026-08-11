@@ -38,14 +38,16 @@ def _country(code: str, strength: int = 4) -> Country:
         flag_asset=None,
         region="TEST",
         population=90_000_000,
-        wealth_support=strength,
         squash_popularity=strength,
+        squash_access=strength,
+        development_quality=strength,
+        competition_quality=strength,
+        elite_support=strength,
         squash_tradition=strength,
-        system_quality=strength,
     )
 
 
-def test_manual_exceptional_override_lowers_future_top_band_odds(tmp_path) -> None:
+def test_manual_exceptional_override_is_audit_only_for_v1_innate_odds(tmp_path) -> None:
     countries = [_country("AAA")]
     with_override = _service(
         tmp_path,
@@ -73,11 +75,14 @@ def test_manual_exceptional_override_lowers_future_top_band_odds(tmp_path) -> No
         dampener=without_override._build_recent_greatness_dampener(season=2032, include_history=True)
     )
 
-    with_weights = planner_with.plan(year=2032, seed=11, countries=countries).allocations[0].quality_weights
-    without_weights = planner_without.plan(year=2032, seed=11, countries=countries).allocations[0].quality_weights
+    allocation_with = planner_with.plan(year=2032, seed=11, countries=countries).allocations[0]
+    allocation_without = planner_without.plan(year=2032, seed=11, countries=countries).allocations[0]
 
-    assert with_weights[TalentQualityBand.GENERATIONAL] < without_weights[TalentQualityBand.GENERATIONAL]
-    assert with_weights[TalentQualityBand.SPECIAL] < without_weights[TalentQualityBand.SPECIAL]
+    assert allocation_with.quality_weights == allocation_without.quality_weights
+    assert allocation_with.dampener.active is True
+    assert allocation_with.dampener.signal_count == 1
+    assert set(allocation_with.dampener.multipliers.values()) == {1.0}
+    assert any(item.reference_id == "aaa-legend-2030" for item in allocation_with.dampener.contributions)
 
 
 def test_dampener_effect_decays_over_time_and_has_floor(tmp_path) -> None:

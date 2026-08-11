@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from beta_engine.core import DeterministicRng, SeedScope
 from beta_engine.domain.calendar import DEFAULT_WEEKS_PER_CALENDAR_YEAR
-from beta_engine.domain.countries import Country
+from beta_engine.domain.countries import Country, CountryTalentModel
 from beta_engine.domain.countries.population_resolver import (
     DEFAULT_POPULATION_YEAR,
     resolve_effective_population,
@@ -553,30 +553,39 @@ class InitialPlayerPoolGenerator:
 
     def _generate_player(self, *, country: Country, season: str, seed: int, sequence: int) -> InitialPoolGeneratedPlayer:
         rng = DeterministicRng(seed).branch(SeedScope.SEASON, "initial_pool", season, country.code, sequence)
-        quality = self._country_quality(country)
+        development_environment = CountryTalentModel().development_environment(country)
         stage = self._choose_stage(rng)
         age_min, age_max = STAGE_AGE_RANGES[stage]
         age = rng.randint(age_min, age_max)
         season_start_year = self._season_start_year(season)
-        # Preserve the established player-quality RNG stream; the FAX birth week
-        # is sampled from a dedicated branch below.
+        # Preserve the established pre-birth-week stream separation. Potential
+        # is sampled globally from individual RNG, never from country strength.
         rng.randint(1, 52)
         birth_year = season_start_year - age
-        potential_tier, potential = self._potential(rng, quality)
+        potential_tier, potential = self._potential(rng)
         growth_curve = rng.choice(self._identity().growth_curves)
-        current = self._current_ability(rng, age=age, potential=potential, growth_curve=growth_curve)
-        archetype = self._choose_from_style_dna(country, rng, self._identity().archetypes)
+        current = self._current_ability(
+            rng,
+            age=age,
+            potential=potential,
+            growth_curve=growth_curve,
+            development_environment=development_environment,
+        )
+        # Country V1 has no national style DNA. Identity remains individual RNG.
+        archetype = rng.choice(self._identity().archetypes)
         play_style = self._identity().play_styles[self._identity().archetypes.index(archetype) % len(self._identity().play_styles)] if archetype in self._identity().archetypes else rng.choice(self._identity().play_styles)
         attributes = self._attributes(rng, current=current, archetype=archetype)
         hidden = HiddenCareerTraits(
             potential_ceiling=potential,
             growth_curve=growth_curve,
-            professionalism=self._clamp01(0.25 + country.system_quality_norm * 0.45 + rng.uniform(-0.08, 0.25)),
-            ambition=self._clamp01(0.25 + country.squash_popularity_norm * 0.35 + rng.uniform(-0.05, 0.35)),
-            travel_tolerance=self._clamp01(0.35 + country.wealth_support_norm * 0.25 + rng.uniform(-0.12, 0.32)),
-            schedule_aggression=self._clamp01(0.20 + rng.uniform(0.0, 0.65)),
-            injury_proneness=self._clamp01(0.45 - country.system_quality_norm * 0.16 + rng.uniform(-0.18, 0.28)),
-            resilience=self._clamp01(0.25 + country.squash_tradition_norm * 0.30 + rng.uniform(-0.05, 0.38)),
+            # Personality/career traits are individual in V1; country strength
+            # does not create a national mental or personality bias.
+            professionalism=self._clamp01(0.48 + rng.uniform(-0.22, 0.24)),
+            ambition=self._clamp01(rng.uniform(0.22, 0.88)),
+            travel_tolerance=self._clamp01(rng.uniform(0.18, 0.86)),
+            schedule_aggression=self._clamp01(rng.uniform(0.18, 0.82)),
+            injury_proneness=self._clamp01(rng.uniform(0.08, 0.72)),
+            resilience=self._clamp01(rng.uniform(0.22, 0.90)),
         )
         player_id = f"P-{season_start_year}-{country.code}-{sequence:04d}"
         name = self._name(rng, country, sequence)
@@ -618,11 +627,13 @@ class InitialPlayerPoolGenerator:
 
     def _quantity_weight(self, country: Country, *, season_start_year: int) -> float:
         effective_quantity_population = self._effective_population_quantity(country, season_start_year)
-        population_component = min(3.0, (effective_quantity_population / 5_000_000) ** 0.35)
-        courts = 0.25 if country.court_count is None else min(1.4, (country.court_count / 300) ** 0.35)
-        culture = 0.55 + country.squash_popularity_norm + country.squash_tradition_norm * 0.85
-        system = 0.45 + country.system_quality_norm * 0.85 + ((country.competition_density or 3.0) - 1) / 4 * 0.45
-        return max(0.1, population_component * 0.65 + culture * 0.9 + system * 0.8 + courts * 0.35)
+        # Initial-pool nationality volume follows the same Country V1 boundary
+        # as weekly/annual intake: population + popularity + access only, with
+        # the shared diminishing-return population curve.
+        return max(
+            0.000001,
+            CountryTalentModel().effective_squash_pool_weight(country, effective_quantity_population),
+        )
 
     def _effective_population_quantity(self, country: Country, season_start_year: int) -> float:
         return initial_pool_effective_population_quantity(country, season_start_year)
@@ -646,20 +657,6 @@ class InitialPlayerPoolGenerator:
     def _season_start_year(season: str) -> int:
         return int(season.split("/")[0])
 
-    def _country_quality(self, country: Country) -> float:
-        competition = ((country.competition_density or 3.0) - 1) / 4
-        federation = ((country.federation_quality or float(country.system_quality)) - 1) / 4
-        courts = 0.35 if country.court_count is None else min(1.0, (country.court_count / 900) ** 0.4)
-        return self._clamp01(
-            country.squash_popularity_norm * 0.17
-            + country.squash_tradition_norm * 0.22
-            + country.system_quality_norm * 0.24
-            + competition * 0.12
-            + federation * 0.12
-            + country.wealth_support_norm * 0.08
-            + courts * 0.05
-        )
-
     def _choose_stage(self, rng: DeterministicRng) -> CareerStage:
         roll = rng.random()
         cumulative = 0.0
@@ -669,8 +666,12 @@ class InitialPlayerPoolGenerator:
                 return stage
         return "prime"
 
-    def _potential(self, rng: DeterministicRng, quality: float) -> tuple[PotentialTier, int]:
-        score = self._clamp01(quality * 0.72 + rng.random() * 0.42)
+    def _potential(self, rng: DeterministicRng) -> tuple[PotentialTier, int]:
+        # Keep the established tier thresholds/ranges as an implementation
+        # baseline, but replace country quality with an individual global latent
+        # draw. Exact calibration remains open under Master v43.
+        innate_quality = rng.random()
+        score = self._clamp01(innate_quality * 0.72 + rng.random() * 0.42)
         if score >= 0.88:
             return "S", rng.randint(91, 99)
         if score >= 0.72:
@@ -681,7 +682,15 @@ class InitialPlayerPoolGenerator:
             return "C", rng.randint(60, 74)
         return "D", rng.randint(50, 62)
 
-    def _current_ability(self, rng: DeterministicRng, *, age: int, potential: int, growth_curve: str) -> int:
+    def _current_ability(
+        self,
+        rng: DeterministicRng,
+        *,
+        age: int,
+        potential: int,
+        growth_curve: str,
+        development_environment: float = 0.5,
+    ) -> int:
         if age < 18:
             factor = 0.48 + (age - 15) * 0.055
         elif age < 23:
@@ -698,6 +707,8 @@ class InitialPlayerPoolGenerator:
             factor += -0.05 if age <= 22 else 0.03
         elif growth_curve == "volatile":
             factor += rng.uniform(-0.05, 0.05)
+        # Country pipeline affects realised level, never the potential ceiling.
+        factor += (development_environment - 0.5) * 0.10
         return max(1, min(99, potential + 4, int(round(potential * factor + rng.uniform(-4, 4)))))
 
     def _attributes(self, rng: DeterministicRng, *, current: int, archetype: str) -> GeneratedPlayerAttributes:
@@ -713,19 +724,6 @@ class InitialPlayerPoolGenerator:
         for attr in ("technique", "movement", "physical", "mental", "consistency", "clutch", "recovery"):
             values[attr] = max(1, min(99, int(round(current + leans.get(attr, 0) + rng.uniform(-6, 6)))))
         return GeneratedPlayerAttributes(**values)
-
-    def _choose_from_style_dna(self, country: Country, rng: DeterministicRng, options: list[str]) -> str:
-        positive = [(key, weight) for key, weight in country.style_dna.items() if key in options and weight > 0]
-        if not positive:
-            return rng.choice(options)
-        total = sum(weight for _, weight in positive)
-        roll = rng.random() * total
-        cumulative = 0.0
-        for key, weight in sorted(positive):
-            cumulative += weight
-            if roll <= cumulative:
-                return key
-        return positive[-1][0]
 
     def _name(self, rng: DeterministicRng, country: Country, sequence: int) -> str:
         identity = self._identity()

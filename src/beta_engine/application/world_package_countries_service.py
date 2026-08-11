@@ -63,21 +63,21 @@ class WorldPackageCountryDetailResult:
 
 
 class WorldPackageCountryUpdate(BaseModel):
-    """Complete editable country state; stable identity and population are absent."""
+    """Complete editable Country V1 state; stable identity and population are absent."""
+
     model_config = ConfigDict(extra="forbid")
     name: str = Field(min_length=1)
     notes: str | None = None
     area_km2: int | None = Field(gt=0)
     region: str = Field(min_length=1)
     travel_region: str | None = None
-    wealth_support: int = Field(ge=1, le=5)
-    squash_popularity: int = Field(ge=1, le=5)
-    squash_tradition: int = Field(ge=1, le=5)
-    system_quality: int = Field(ge=1, le=5)
-    competition_density: float = Field(ge=1.0, le=5.0)
-    federation_quality: float = Field(ge=1.0, le=5.0)
     court_count: int | None = Field(ge=0)
-    style_dna: dict[str, float]
+    squash_popularity: int = Field(ge=1, le=5)
+    squash_access: int = Field(ge=1, le=5)
+    development_quality: int = Field(ge=1, le=5)
+    competition_quality: int = Field(ge=1, le=5)
+    elite_support: int = Field(ge=1, le=5)
+    squash_tradition: int = Field(ge=1, le=5)
     expected_package_fingerprint: str | None = None
 
 
@@ -87,22 +87,9 @@ class WorldPackageCountryPopulationUpdate(BaseModel):
     expected_package_fingerprint: str | None = None
 
 
-class WorldPackageCountryCreate(BaseModel):
+class WorldPackageCountryCreate(WorldPackageCountryUpdate):
     model_config = ConfigDict(extra="forbid")
     code: str = Field(pattern=r"^[A-Z]{3}$")
-    name: str = Field(min_length=1)
-    notes: str | None = None
-    area_km2: int | None = Field(gt=0)
-    region: str = Field(min_length=1)
-    travel_region: str | None = None
-    wealth_support: int = Field(ge=1, le=5)
-    squash_popularity: int = Field(ge=1, le=5)
-    squash_tradition: int = Field(ge=1, le=5)
-    system_quality: int = Field(ge=1, le=5)
-    competition_density: float = Field(ge=1.0, le=5.0)
-    federation_quality: float = Field(ge=1.0, le=5.0)
-    court_count: int | None = Field(ge=0)
-    style_dna: dict[str, float]
     population_by_year: dict[int, StrictInt]
     expected_package_fingerprint: str
 
@@ -179,8 +166,11 @@ class WorldPackageCountriesService:
             raise WorldPackageMutationError("population values must be positive integers")
         country = Country.model_validate({
             **create.model_dump(exclude={"expected_package_fingerprint", "population_by_year"}),
-            "flag_asset": None, "population": timeline[2020], "default_population": timeline[2020],
-            "default_population_year": 2020, "population_by_year": timeline,
+            "flag_asset": None,
+            "population": timeline[2020],
+            "default_population": timeline[2020],
+            "default_population_year": 2020,
+            "population_by_year": timeline,
         })
         original: bytes | None = None
         try:
@@ -219,9 +209,6 @@ class WorldPackageCountriesService:
             if mutation is not None:
                 store.rollback_delete(code, *mutation)
             raise WorldPackageMutationError(f"country deletion failed: {exc}") from exc
-        # Validation and reconstruction are the semantic commit point. Backup
-        # disposal is cleanup only: a partial cleanup must never trigger an
-        # impossible rollback from a partially destroyed Country directory.
         try:
             store.finalize_delete(mutation[1])
         except OSError:
@@ -263,8 +250,6 @@ class WorldPackageCountriesService:
         except WorldPackageMutationError:
             raise
         except Exception as exc:
-            # replace_country restores promotion failures. If failure happened later,
-            # make the best bounded effort to restore the typed original.
             try:
                 if store.load_country(code) != original:
                     store.replace_country(original)
@@ -318,7 +303,11 @@ class WorldPackageCountriesService:
         if record is None or paths is None:
             return None
         countries_config = WorldPackageCountryStore(paths["package_root"]).load_config()
-        return self._to_result(record=record, source_path=str(paths["countries_index"]), countries=countries_config.countries)
+        return self._to_result(
+            record=record,
+            source_path=str(paths["countries_index"]),
+            countries=countries_config.countries,
+        )
 
     def get_geography(self, world_id: str) -> WorldPackageGeographyResult | None:
         if self.registry_service.get_package(world_id) is None:
@@ -349,7 +338,10 @@ class WorldPackageCountriesService:
         continent = next((item for item in geography.continents if region and item.code == region.continent_code), None)
         travel_region = next((item for item in geography.travel_regions if item.code == country.travel_region), None)
         return WorldPackageCountryDetailResult(
-            package=package, country=country, region=region, continent=continent,
+            package=package,
+            country=country,
+            region=region,
+            continent=continent,
             travel_region=travel_region,
             source_path=str(Path(paths["countries_root"]) / code),
         )
@@ -361,7 +353,13 @@ class WorldPackageCountriesService:
             raise ValueError(f"{path} must contain a {key} list")
         return [model.model_validate(item) for item in payload[key]]
 
-    def _to_result(self, *, record: WorldPackageRegistryRecord, source_path: str, countries: list[Country]) -> WorldPackageCountriesResult:
+    def _to_result(
+        self,
+        *,
+        record: WorldPackageRegistryRecord,
+        source_path: str,
+        countries: list[Country],
+    ) -> WorldPackageCountriesResult:
         return WorldPackageCountriesResult(
             world_id=record.world_id,
             world_name=record.name,

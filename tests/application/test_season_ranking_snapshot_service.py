@@ -20,7 +20,21 @@ def _service(tmp_path: Path) -> tuple[SeasonRankingSnapshotService, object]:
         {"player_id": "P-C", "name": "Charlie Three", "country_code": "AAA", "nationality": "AAA", "ranking_points": 30, "race_points": 70, "current_ability": 68},
         {"player_id": "P-D", "name": "Delta Four", "country_code": "BBB", "nationality": "BBB", "ranking_points": 0, "race_points": 0, "current_ability": 67},
     ]
-    registry.players_by_season["2000/2001"] = [player.model_copy(update=update) for player, update in zip(players, updates, strict=True)]
+    controlled_players = []
+    for player, update in zip(players, updates, strict=True):
+        hidden = player.hidden_career_traits.model_copy(
+            update={"potential_ceiling": max(90, player.hidden_career_traits.potential_ceiling)}
+        )
+        controlled_players.append(
+            player.model_copy(
+                update={
+                    **update,
+                    "potential_ability": 90,
+                    "hidden_career_traits": hidden,
+                }
+            )
+        )
+    registry.players_by_season["2000/2001"] = controlled_players
     bootstrap._save_registry(registry)
     ranking = SeasonRankingTableService(active_players_service=bootstrap)
     return SeasonRankingSnapshotService(ranking_table_service=ranking, snapshots_path=tmp_path / "season_ranking_snapshots.json"), bootstrap

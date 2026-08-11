@@ -18,9 +18,9 @@ FAX_REFERENCE_VERSION = "fax-reference-v1"
 FAX_REFERENCE_SEED = 20270807
 FAX_WORLD_ID = "official_fax_world"
 FAX_SOURCE_FILES = ("world.json", "geography/continents.json", "geography/regions.json", "geography/travel_regions.json")
-# Deliberately versioned from the canonical typed directory representation;
-# this differs from the retired aggregate-file hash without changing semantics.
-FAX_REFERENCE_V1_SOURCE_TREE_HASH = "dd1bf58958384375b59e68ff92e79828c531c0b538702852ce3a3c840b108ae5"
+# Versioned from the canonical typed directory representation. Country V1 changes
+# the assembled semantic payload while leaving the built-in source files untouched.
+FAX_REFERENCE_V1_SOURCE_TREE_HASH = "8982e44f61b3ec43188c18019f1efe9b653c72ea028559585c52081510086aff"
 
 
 @dataclass(frozen=True)

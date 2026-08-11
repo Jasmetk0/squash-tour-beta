@@ -14,10 +14,12 @@ def _country(
     *,
     code: str,
     population: int,
-    wealth_support: int,
-    squash_popularity: int,
-    squash_tradition: int,
-    system_quality: int,
+    squash_popularity: int = 3,
+    squash_access: int = 3,
+    development_quality: int = 3,
+    competition_quality: int = 3,
+    elite_support: int = 3,
+    squash_tradition: int = 3,
 ) -> Country:
     return Country(
         code=code,
@@ -25,25 +27,20 @@ def _country(
         flag_asset=None,
         region="TEST",
         population=population,
-        wealth_support=wealth_support,
         squash_popularity=squash_popularity,
+        squash_access=squash_access,
+        development_quality=development_quality,
+        competition_quality=competition_quality,
+        elite_support=elite_support,
         squash_tradition=squash_tradition,
-        system_quality=system_quality,
     )
 
 
 def test_country_validation_rejects_factor_out_of_range() -> None:
     try:
-        _country(
-            code="BAD",
-            population=10_000_000,
-            wealth_support=0,
-            squash_popularity=3,
-            squash_tradition=3,
-            system_quality=3,
-        )
+        _country(code="BAD", population=10_000_000, squash_access=0)
     except Exception as exc:  # noqa: BLE001 - assert validation boundary only.
-        assert "wealth_support" in str(exc)
+        assert "squash_access" in str(exc)
     else:
         raise AssertionError("country factor outside 1..5 should be rejected")
 
@@ -51,8 +48,8 @@ def test_country_validation_rejects_factor_out_of_range() -> None:
 def test_planner_is_deterministic_for_same_seed_and_year() -> None:
     planner = AnnualTalentClassPlanner()
     countries = [
-        _country(code="AAA", population=90_000_000, wealth_support=4, squash_popularity=4, squash_tradition=4, system_quality=4),
-        _country(code="BBB", population=220_000_000, wealth_support=2, squash_popularity=2, squash_tradition=2, system_quality=2),
+        _country(code="AAA", population=90_000_000, squash_popularity=4, squash_access=4, development_quality=4),
+        _country(code="BBB", population=220_000_000, squash_popularity=2, squash_access=2, development_quality=2),
     ]
 
     left = planner.plan(year=2032, seed=10101, countries=countries)
@@ -64,8 +61,8 @@ def test_planner_is_deterministic_for_same_seed_and_year() -> None:
 def test_different_years_produce_different_total_cohort_sizes() -> None:
     planner = AnnualTalentClassPlanner()
     countries = [
-        _country(code="AAA", population=90_000_000, wealth_support=4, squash_popularity=4, squash_tradition=4, system_quality=4),
-        _country(code="BBB", population=220_000_000, wealth_support=2, squash_popularity=2, squash_tradition=2, system_quality=2),
+        _country(code="AAA", population=90_000_000, squash_popularity=4, squash_access=4),
+        _country(code="BBB", population=220_000_000, squash_popularity=2, squash_access=2),
     ]
 
     plan_2031 = planner.plan(year=2031, seed=2027, countries=countries)
@@ -74,32 +71,54 @@ def test_different_years_produce_different_total_cohort_sizes() -> None:
     assert plan_2031.total_talents != plan_2032.total_talents
 
 
-def test_stronger_country_has_better_top_band_odds() -> None:
+def test_country_development_strength_does_not_change_innate_quality_band_odds() -> None:
     planner = AnnualTalentClassPlanner()
-    strong = _country(code="STR", population=40_000_000, wealth_support=5, squash_popularity=5, squash_tradition=5, system_quality=5)
-    weak = _country(code="WEK", population=40_000_000, wealth_support=1, squash_popularity=1, squash_tradition=1, system_quality=1)
+    strong = _country(
+        code="STR",
+        population=40_000_000,
+        squash_popularity=3,
+        squash_access=3,
+        development_quality=5,
+        competition_quality=5,
+        elite_support=5,
+        squash_tradition=5,
+    )
+    weak = _country(
+        code="WEK",
+        population=40_000_000,
+        squash_popularity=3,
+        squash_access=3,
+        development_quality=1,
+        competition_quality=1,
+        elite_support=1,
+        squash_tradition=1,
+    )
 
     plan = planner.plan(year=2030, seed=444, countries=[strong, weak])
     by_code = {allocation.country_code: allocation for allocation in plan.allocations}
 
-    strong_top = (
-        by_code["STR"].quality_weights[TalentQualityBand.ELITE]
-        + by_code["STR"].quality_weights[TalentQualityBand.SPECIAL]
-        + by_code["STR"].quality_weights[TalentQualityBand.GENERATIONAL]
-    )
-    weak_top = (
-        by_code["WEK"].quality_weights[TalentQualityBand.ELITE]
-        + by_code["WEK"].quality_weights[TalentQualityBand.SPECIAL]
-        + by_code["WEK"].quality_weights[TalentQualityBand.GENERATIONAL]
-    )
+    assert by_code["STR"].quality_weights == by_code["WEK"].quality_weights
+    assert abs(by_code["STR"].planned_count - by_code["WEK"].planned_count) <= 1
+    assert by_code["STR"].bias_profile.professionalism_tendency == 0.0
+    assert by_code["STR"].bias_profile.technical_vs_physical_lean == 0.0
+    assert by_code["STR"].bias_profile.mental_sharpness_tendency == 0.0
 
-    assert strong_top > weak_top
+
+def test_popularity_and_access_increase_prospect_volume_at_same_population() -> None:
+    planner = AnnualTalentClassPlanner()
+    strong_pool = _country(code="BIG", population=50_000_000, squash_popularity=5, squash_access=5)
+    weak_pool = _country(code="SML", population=50_000_000, squash_popularity=1, squash_access=1)
+
+    plan = planner.plan(year=2035, seed=1515, countries=[strong_pool, weak_pool])
+    by_code = {allocation.country_code: allocation for allocation in plan.allocations}
+
+    assert by_code["BIG"].planned_count > by_code["SML"].planned_count
 
 
 def test_population_helps_volume_but_does_not_dominate_absurdly() -> None:
     planner = AnnualTalentClassPlanner()
-    huge_mid = _country(code="HUG", population=1_300_000_000, wealth_support=3, squash_popularity=3, squash_tradition=3, system_quality=3)
-    smaller_mid = _country(code="SML", population=65_000_000, wealth_support=3, squash_popularity=3, squash_tradition=3, system_quality=3)
+    huge_mid = _country(code="HUG", population=1_300_000_000)
+    smaller_mid = _country(code="SML", population=65_000_000)
 
     plan = planner.plan(year=2035, seed=1515, countries=[huge_mid, smaller_mid])
     by_code = {allocation.country_code: allocation for allocation in plan.allocations}
@@ -111,9 +130,9 @@ def test_population_helps_volume_but_does_not_dominate_absurdly() -> None:
 def test_generational_band_is_very_rare() -> None:
     planner = AnnualTalentClassPlanner()
     countries = [
-        _country(code="AAA", population=120_000_000, wealth_support=4, squash_popularity=4, squash_tradition=5, system_quality=4),
-        _country(code="BBB", population=95_000_000, wealth_support=3, squash_popularity=3, squash_tradition=3, system_quality=3),
-        _country(code="CCC", population=180_000_000, wealth_support=2, squash_popularity=2, squash_tradition=2, system_quality=2),
+        _country(code="AAA", population=120_000_000, squash_popularity=4, squash_access=4),
+        _country(code="BBB", population=95_000_000),
+        _country(code="CCC", population=180_000_000, squash_popularity=2, squash_access=2),
     ]
 
     total = 0
@@ -133,7 +152,7 @@ def test_generational_band_is_very_rare() -> None:
 def test_neutral_dampener_is_default_safe_and_neutral() -> None:
     dampener = NeutralRecentGreatnessDampener()
     planner = AnnualTalentClassPlanner(dampener=dampener)
-    country = _country(code="DMP", population=80_000_000, wealth_support=4, squash_popularity=4, squash_tradition=4, system_quality=4)
+    country = _country(code="DMP", population=80_000_000, squash_popularity=4, squash_access=4)
 
     plan = planner.plan(year=2040, seed=999, countries=[country])
 
@@ -141,11 +160,12 @@ def test_neutral_dampener_is_default_safe_and_neutral() -> None:
     assert plan.total_talents > 0
     assert plan.allocations[0].country_code == "DMP"
     assert plan.allocations[0].dampener.active is False
+    assert set(plan.allocations[0].dampener.multipliers.values()) == {1.0}
 
 
-def test_weighted_dampener_lowers_top_band_odds_for_country_only() -> None:
-    country_a = _country(code="AAA", population=80_000_000, wealth_support=4, squash_popularity=4, squash_tradition=4, system_quality=4)
-    country_b = _country(code="BBB", population=80_000_000, wealth_support=4, squash_popularity=4, squash_tradition=4, system_quality=4)
+def test_weighted_dampener_is_audit_only_and_cannot_change_v1_innate_odds() -> None:
+    country_a = _country(code="AAA", population=80_000_000, squash_popularity=4, squash_access=4)
+    country_b = _country(code="BBB", population=80_000_000, squash_popularity=4, squash_access=4)
     baseline = AnnualTalentClassPlanner()
     dampened = AnnualTalentClassPlanner(
         dampener=WeightedRecentGreatnessDampener(
@@ -167,12 +187,15 @@ def test_weighted_dampener_lowers_top_band_odds_for_country_only() -> None:
     base_by = {item.country_code: item for item in base.allocations}
     mod_by = {item.country_code: item for item in mod.allocations}
 
-    assert mod_by["AAA"].quality_weights[TalentQualityBand.GENERATIONAL] < base_by["AAA"].quality_weights[TalentQualityBand.GENERATIONAL]
-    assert mod_by["AAA"].quality_weights[TalentQualityBand.SPECIAL] < base_by["AAA"].quality_weights[TalentQualityBand.SPECIAL]
-    assert mod_by["BBB"].quality_weights[TalentQualityBand.GENERATIONAL] == base_by["BBB"].quality_weights[TalentQualityBand.GENERATIONAL]
+    assert mod_by["AAA"].quality_weights == base_by["AAA"].quality_weights
+    assert mod_by["BBB"].quality_weights == base_by["BBB"].quality_weights
+    assert mod_by["AAA"].dampener.active is True
+    assert mod_by["AAA"].dampener.signal_count == 1
+    assert len(mod_by["AAA"].dampener.contributions) == 1
+    assert set(mod_by["AAA"].dampener.multipliers.values()) == {1.0}
 
 
-def test_weighted_dampener_decays_and_has_floor() -> None:
+def test_weighted_dampener_decays_and_has_floor_as_legacy_diagnostic_math() -> None:
     dampener = WeightedRecentGreatnessDampener(
         signals=(
             RecentGreatnessSignal(

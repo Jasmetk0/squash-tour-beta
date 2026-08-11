@@ -7,9 +7,9 @@ Build a deterministic, data-driven manager and simulator of the fictional men's 
 When sources conflict, use this precedence:
 
 1. explicit newer user/product decisions,
-2. the latest audited **Squash Engine Master Vision** — currently v42,
-3. `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` (the active repository constitution, including newer post-v42 decisions recorded there),
-4. subordinate guidance such as `docs/ENGINE_UX_SPEC.md`,
+2. the latest audited **Squash Engine Master Vision** — currently v43,
+3. `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` (the active repository constitution, including newer decisions recorded there),
+4. subordinate guidance such as `docs/ENGINE_UX_SPEC.md` and explicit current-version decision specs such as `docs/COUNTRY_ATTRIBUTES_V1.md`,
 5. older documents, handoffs, and current beta behavior as history/implementation evidence only.
 
 `Beta_Engine.docx` is non-authoritative background. `README.md` is an overview and `ROADMAP.md` is a milestone summary; neither may override the constitution. Mark assumptions and distinguish implemented behavior from target behavior.
@@ -23,11 +23,12 @@ Never collapse status labels. A `[DECIDED]` rule, `[PROVISIONAL]` direction, `[T
 - Every Run has exactly one **Viewer Branch**. It only selects the timeline shown by Viewer; legacy `official_branch` technical names are migration debt, not product terminology.
 - Every Run selects exactly one World Package and one Category Package. At creation their selected versions become independent, versioned Run snapshots; provenance remains, but there is no live source link.
 - Viewer is historically faithful and read-only. Admin is authoritative and has distinct Global Admin and Run Admin scopes.
+- **Country Game Attributes V1:** authored country ratings are exactly `Squash Popularity`, `Squash Access`, `Development Quality`, `Competition Quality`, `Elite Support`, and `Squash Tradition`, each 1–5. Population/area/region/travel region/**timezone area**/court count are factual data, while Effective Squash Pool, Competitive Depth, Talent Discovery Rate, Professional Conversion Rate and current country strength are derived. Country ratings may affect sampling and development/conversion, but must not directly make innate/generational potential more likely by nationality or create national technical, mental, personality or style DNA. `style_dna` is deferred beyond V1. Travel Region and Timezone Area are distinct geography layers; the currently missing Timezone Area registry is implementation debt, not permission to collapse the concepts. See `docs/COUNTRY_ATTRIBUTES_V1.md`.
 - Ranking policies and snapshots are historically versioned/configurable. The Official Run begins season `2000/01` with Best 15; each later season initially inherits the previous season's effective Best N but remains independently configurable.
 - Week progression uses explicit **Week Transition**; season rollover uses **Season Transition**. A week contains a variable chronological sequence of **Simulation Slots**.
 - Events in the same Simulation Slot are simultaneous and must read from the same pre-slot snapshot.
 - The first-version Match Engine is rally-by-rally, not shot-by-shot, with explicit authoritative rally/time logging and three physical stamina dimensions/bars.
-- **Current post-v42 V1 direction:** those three physical stamina dimensions should derive from the lighter underlying attribute/state model rather than be hard-coded as three independent standalone trainable attributes; exact mapping remains open.
+- **Current V1 direction:** those three physical stamina dimensions should derive from the lighter underlying attribute/state model rather than be hard-coded as three independent standalone trainable attributes; exact mapping remains open.
 - **Current provisional direction:** one or more mental match-state bars/dimensions should exist; exact count/names/mechanics remain open.
 - Each player has one current Form; it updates from played performance and regresses toward an individual long-term norm rather than resetting.
 - `World Event Log`, `Audit Log`, `Task Center`, and `Notification Center` are separate concepts and must not be conflated.

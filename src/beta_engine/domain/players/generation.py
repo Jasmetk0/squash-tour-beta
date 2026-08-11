@@ -1,4 +1,4 @@
-"""Deterministic player generator influenced by country-level strength."""
+"""Deterministic player generator influenced by country development environment."""
 
 from __future__ import annotations
 
@@ -21,12 +21,12 @@ class PlayerGenerator:
         """Legacy-compatible generation path used by non-planner tests/helpers."""
 
         player_rng = self.rng.branch(SeedScope.SEASON, "player", country.code, sequence)
-        talent_index = self.country_talent_model.talent_index(country)
+        development_environment = self.country_talent_model.development_environment(country)
         return self._generate_from_rng(
             country=country,
             sequence=sequence,
             player_rng=player_rng,
-            talent_index=talent_index,
+            development_environment=development_environment,
             quality_band=TalentQualityBand.SOLID,
             bias_profile=None,
         )
@@ -43,12 +43,12 @@ class PlayerGenerator:
         """Planner-driven runtime path: deterministic talent seed + quality band -> player."""
 
         player_rng = DeterministicRng(talent_seed_value).branch(SeedScope.SEASON, "planned_player", country.code, sequence)
-        talent_index = self.country_talent_model.talent_index(country)
+        development_environment = self.country_talent_model.development_environment(country)
         return self._generate_from_rng(
             country=country,
             sequence=sequence,
             player_rng=player_rng,
-            talent_index=talent_index,
+            development_environment=development_environment,
             quality_band=quality_band,
             bias_profile=bias_profile,
         )
@@ -59,68 +59,65 @@ class PlayerGenerator:
         country: Country,
         sequence: int,
         player_rng: DeterministicRng,
-        talent_index: float,
+        development_environment: float,
         quality_band: TalentQualityBand,
         bias_profile: CountryGenerationBiasProfile | None,
     ) -> Player:
-        band_baseline_bonus, band_ceiling_bonus, age_shift = self._quality_band_parameters(quality_band)
-        technical_lean = 0.0 if bias_profile is None else bias_profile.technical_vs_physical_lean
-        mental_lean = 0.0 if bias_profile is None else bias_profile.mental_sharpness_tendency
-        professional_lean = 0.0 if bias_profile is None else bias_profile.professionalism_tendency
+        band_baseline_bonus, _band_ceiling_bonus, age_shift = self._quality_band_parameters(quality_band)
+        # CountryGenerationBiasProfile is retained only as a compatibility input
+        # for older persisted planner shapes. Country V1 forbids national
+        # technical, mental, personality and style DNA, so runtime generation
+        # deliberately ignores any non-neutral values that an old payload carries.
+        _ = bias_profile
 
         age = self._clamp_int(
             17,
             36,
-            int(round(player_rng.uniform(17, 33) + (1.0 - talent_index) * 1.6 - age_shift)),
+            int(round(player_rng.uniform(17, 33) + (1.0 - development_environment) * 1.6 - age_shift)),
         )
         name = self._build_name(player_rng, country, sequence)
 
         archetype = player_rng.choice(self.identity_config.archetypes)
         play_style = player_rng.choice(self.identity_config.play_styles)
 
-        technique = self._skill_value(
-            player_rng,
-            talent_index,
-            country.development_pipeline_quality,
-            band_baseline_bonus + technical_lean * 6.0,
-        )
-        movement = self._skill_value(player_rng, talent_index, country.infrastructure_level, band_baseline_bonus)
-        physical = self._skill_value(
-            player_rng,
-            talent_index,
-            self.country_talent_model.population_factor(country),
-            band_baseline_bonus - technical_lean * 4.0,
-        )
-        mental = self._skill_value(
-            player_rng,
-            talent_index,
-            country.historical_tradition,
-            band_baseline_bonus + mental_lean * 6.0,
-        )
+        # Country V1 may change how much ability is realised through the overall
+        # development/conversion environment, but it must not shape one nation
+        # toward Technique, Movement, Physical or Mental ability. With the same
+        # individual RNG stream, the country contribution is therefore uniform
+        # across the four core ability dimensions.
+        technique = self._skill_value(player_rng, development_environment, band_baseline_bonus)
+        movement = self._skill_value(player_rng, development_environment, band_baseline_bonus)
+        physical = self._skill_value(player_rng, development_environment, band_baseline_bonus)
+        mental = self._skill_value(player_rng, development_environment, band_baseline_bonus)
 
-        consistency = self._skill_value(player_rng, (technique + movement) / 200.0, country.elite_system_strength)
-        clutch = self._skill_value(player_rng, mental / 99.0, country.historical_tradition)
-        recovery = self._skill_value(player_rng, physical / 99.0, country.infrastructure_level)
+        # Secondary realised skills depend on the player's already-realised
+        # individual abilities, not on a second country-specific skill direction.
+        consistency = self._skill_value(player_rng, (technique + movement) / 200.0)
+        clutch = self._skill_value(player_rng, mental / 99.0)
+        recovery = self._skill_value(player_rng, physical / 99.0)
 
         potential_floor = self._potential_floor_by_band(quality_band)
+        potential_center = self._potential_center_by_band(quality_band)
+        potential_spread = self._potential_spread_by_band(quality_band)
         hidden = HiddenCareerTraits(
             potential_ceiling=max(
                 potential_floor,
                 self._clamp_int(
                     55,
                     99,
-                    int(round(66 + talent_index * 30 + band_ceiling_bonus + player_rng.uniform(-8, 8))),
+                    # Innate ceiling depends on rarity band + deterministic RNG,
+                    # never on country development ratings. Even the rarest band
+                    # keeps a small distribution instead of becoming 99/99.
+                    int(round(potential_center + player_rng.uniform(-potential_spread, potential_spread))),
                 ),
             ),
             growth_curve=player_rng.choice(self.identity_config.growth_curves),
-            professionalism=self._clamp_float(
-                country.development_pipeline_quality * 0.62 + professional_lean * 0.33 + player_rng.uniform(0.10, 0.42)
-            ),
-            ambition=self._clamp_float(country.squash_popularity_norm * 0.50 + player_rng.uniform(0.12, 0.55)),
-            travel_tolerance=self._travel_tolerance(country, player_rng),
+            professionalism=self._clamp_float(0.48 + player_rng.uniform(-0.22, 0.24)),
+            ambition=self._clamp_float(player_rng.uniform(0.22, 0.88)),
+            travel_tolerance=self._travel_tolerance(player_rng),
             schedule_aggression=self._clamp_float(player_rng.uniform(0.18, 0.82)),
-            injury_proneness=self._clamp_float(1.0 - (country.infrastructure_level * 0.55 + player_rng.uniform(0.12, 0.42))),
-            resilience=self._clamp_float(country.historical_tradition * 0.42 + player_rng.uniform(0.24, 0.68)),
+            injury_proneness=self._clamp_float(player_rng.uniform(0.08, 0.72)),
+            resilience=self._clamp_float(player_rng.uniform(0.22, 0.90)),
         )
 
         return Player(
@@ -156,20 +153,18 @@ class PlayerGenerator:
     def _skill_value(
         self,
         rng: DeterministicRng,
-        talent_index: float,
-        contextual_factor: float,
+        realised_environment: float,
         additive_bonus: float = 0.0,
     ) -> int:
-        baseline = 34 + talent_index * 36 + contextual_factor * 18 + additive_bonus
+        # The fixed +9 is the neutral midpoint of the superseded contextual
+        # factor. Keeping it preserves the broad ability scale without retaining
+        # a national direction for any individual skill dimension.
+        baseline = 43 + realised_environment * 36 + additive_bonus
         noise = rng.uniform(-8.0, 8.0)
         return self._clamp_int(20, 99, int(round(baseline + noise)))
 
-    def _travel_tolerance(self, country: Country, rng: DeterministicRng) -> float:
-        if country.travel_affinity:
-            affinity = sum(country.travel_affinity.values()) / len(country.travel_affinity)
-        else:
-            affinity = 0.5
-        return self._clamp_float(affinity * 0.68 + rng.uniform(0.08, 0.42))
+    def _travel_tolerance(self, rng: DeterministicRng) -> float:
+        return self._clamp_float(rng.uniform(0.18, 0.86))
 
     @staticmethod
     def _quality_band_parameters(quality_band: TalentQualityBand) -> tuple[float, float, float]:
@@ -185,12 +180,30 @@ class PlayerGenerator:
 
     @staticmethod
     def _potential_floor_by_band(quality_band: TalentQualityBand) -> int:
-        if quality_band == TalentQualityBand.GENERATIONAL:
-            return 94
-        if quality_band == TalentQualityBand.SPECIAL:
-            return 87
-        if quality_band == TalentQualityBand.ELITE:
-            return 80
-        if quality_band == TalentQualityBand.STRONG:
-            return 70
-        return 55
+        return {
+            TalentQualityBand.SOLID: 55,
+            TalentQualityBand.STRONG: 70,
+            TalentQualityBand.ELITE: 80,
+            TalentQualityBand.SPECIAL: 87,
+            TalentQualityBand.GENERATIONAL: 94,
+        }[quality_band]
+
+    @staticmethod
+    def _potential_center_by_band(quality_band: TalentQualityBand) -> float:
+        return {
+            TalentQualityBand.SOLID: 67.0,
+            TalentQualityBand.STRONG: 76.0,
+            TalentQualityBand.ELITE: 85.0,
+            TalentQualityBand.SPECIAL: 92.0,
+            TalentQualityBand.GENERATIONAL: 97.0,
+        }[quality_band]
+
+    @staticmethod
+    def _potential_spread_by_band(quality_band: TalentQualityBand) -> float:
+        return {
+            TalentQualityBand.SOLID: 8.0,
+            TalentQualityBand.STRONG: 7.0,
+            TalentQualityBand.ELITE: 6.0,
+            TalentQualityBand.SPECIAL: 5.0,
+            TalentQualityBand.GENERATIONAL: 3.0,
+        }[quality_band]

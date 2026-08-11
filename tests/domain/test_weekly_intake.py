@@ -12,10 +12,12 @@ def _country(code: str, **overrides: object) -> Country:
         "name": f"Country {code}",
         "region": "TEST",
         "population": 1_000_000,
-        "wealth_support": 3,
         "squash_popularity": 3,
+        "squash_access": 3,
+        "development_quality": 3,
+        "competition_quality": 3,
+        "elite_support": 3,
         "squash_tradition": 3,
-        "system_quality": 3,
     }
     payload.update(overrides)
     return Country.model_validate(payload)
@@ -76,26 +78,55 @@ def test_weekly_intake_uses_birth_year_as_population_year() -> None:
     planner = WeeklyIntakePlanner()
 
     week_1 = _allocations_by_code(
-        planner.plan_weekly_intake(
-            countries=countries,
-            season="2000/2001",
-            season_week=1,
-            target_intake_count=10,
-        )
+        planner.plan_weekly_intake(countries=countries, season="2000/2001", season_week=1, target_intake_count=10)
     )
     week_26 = _allocations_by_code(
-        planner.plan_weekly_intake(
-            countries=countries,
-            season="2000/2001",
-            season_week=26,
-            target_intake_count=10,
-        )
+        planner.plan_weekly_intake(countries=countries, season="2000/2001", season_week=26, target_intake_count=10)
     )
 
     assert week_1["AAA"].allocated_count > week_1["BBB"].allocated_count
     assert week_1["AAA"].effective_population == 9_000_000
     assert week_26["BBB"].allocated_count > week_26["AAA"].allocated_count
     assert week_26["BBB"].effective_population == 9_000_000
+
+
+def test_weekly_intake_uses_popularity_and_access_not_raw_population_only() -> None:
+    countries = [
+        _country("STR", population_by_year={1985: 10_000_000}, squash_popularity=5, squash_access=5),
+        _country("WEK", population_by_year={1985: 10_000_000}, squash_popularity=1, squash_access=1),
+    ]
+
+    rows = _allocations_by_code(
+        WeeklyIntakePlanner().plan_weekly_intake(
+            countries=countries,
+            season="2000/2001",
+            season_week=1,
+            target_intake_count=26,
+        )
+    )
+
+    assert rows["STR"].effective_population == rows["WEK"].effective_population
+    assert rows["STR"].allocation_weight > rows["WEK"].allocation_weight
+    assert rows["STR"].allocated_count > rows["WEK"].allocated_count
+
+
+def test_development_quality_does_not_change_intake_pool_when_population_popularity_access_match() -> None:
+    countries = [
+        _country("AAA", population_by_year={1985: 5_000_000}, development_quality=5, competition_quality=5, elite_support=5),
+        _country("BBB", population_by_year={1985: 5_000_000}, development_quality=1, competition_quality=1, elite_support=1),
+    ]
+
+    rows = _allocations_by_code(
+        WeeklyIntakePlanner().plan_weekly_intake(
+            countries=countries,
+            season="2000/2001",
+            season_week=1,
+            target_intake_count=10,
+        )
+    )
+
+    assert rows["AAA"].allocation_weight == rows["BBB"].allocation_weight
+    assert rows["AAA"].allocation_share == rows["BBB"].allocation_share
 
 
 def test_weekly_intake_exposes_population_source_diagnostics() -> None:
@@ -107,12 +138,7 @@ def test_weekly_intake_exposes_population_source_diagnostics() -> None:
     ]
 
     rows = _allocations_by_code(
-        WeeklyIntakePlanner().plan_weekly_intake(
-            countries=countries,
-            season="2000/2001",
-            season_week=1,
-            target_intake_count=8,
-        )
+        WeeklyIntakePlanner().plan_weekly_intake(countries=countries, season="2000/2001", season_week=1, target_intake_count=8)
     )
 
     assert rows["AAA"].population_source_type == "exact_population_year"
@@ -146,12 +172,8 @@ def test_weekly_intake_allocation_is_deterministic_and_ties_by_country_code() ->
 
 def test_weekly_intake_zero_target_returns_empty_allocations() -> None:
     plan = WeeklyIntakePlanner().plan_weekly_intake(
-        countries=[_country("AAA")],
-        season="2000/2001",
-        season_week=1,
-        target_intake_count=0,
+        countries=[_country("AAA")], season="2000/2001", season_week=1, target_intake_count=0
     )
-
     assert plan.allocations == []
     assert plan.total_allocated == 0
 
@@ -159,10 +181,7 @@ def test_weekly_intake_zero_target_returns_empty_allocations() -> None:
 def test_weekly_intake_rejects_negative_target() -> None:
     with pytest.raises(ValueError, match="target_intake_count"):
         WeeklyIntakePlanner().plan_weekly_intake(
-            countries=[_country("AAA")],
-            season="2000/2001",
-            season_week=1,
-            target_intake_count=-1,
+            countries=[_country("AAA")], season="2000/2001", season_week=1, target_intake_count=-1
         )
 
 
@@ -171,10 +190,7 @@ def test_weekly_intake_does_not_mutate_countries() -> None:
     before = [country.model_dump(mode="python") for country in countries]
 
     WeeklyIntakePlanner().plan_weekly_intake(
-        countries=countries,
-        season="2000/2001",
-        season_week=1,
-        target_intake_count=3,
+        countries=countries, season="2000/2001", season_week=1, target_intake_count=3
     )
 
     assert [country.model_dump(mode="python") for country in countries] == before

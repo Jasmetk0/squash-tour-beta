@@ -3,16 +3,18 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 
+from beta_engine.api.country_v1_schemas import (
+    CountriesV1DatasetResponse,
+    CountriesV1ListResponse,
+    CountryV1Response,
+    CountryV1UpsertRequest,
+)
 from beta_engine.api.deps import get_countries_config_service
 from beta_engine.api.schemas import (
-    CountriesDatasetResponse,
     CountriesImportRequest,
     CountriesImportResponse,
     CountriesImportSummaryResponse,
-    CountriesListResponse,
     CountriesMetadataResponse,
-    CountryResponse,
-    CountryUpsertRequest,
 )
 from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.domain.countries import CountriesConfig, Country
@@ -20,14 +22,14 @@ from beta_engine.domain.countries import CountriesConfig, Country
 router = APIRouter(prefix="/world/countries", tags=["world"])
 
 
-def _to_country_response(country: Country) -> CountryResponse:
-    return CountryResponse.model_validate(country.model_dump(mode="json"))
+def _to_country_response(country: Country) -> CountryV1Response:
+    return CountryV1Response.model_validate(country.model_dump(mode="json"))
 
 
-@router.get("", response_model=CountriesListResponse)
-def list_countries(service: CountriesConfigService = Depends(get_countries_config_service)) -> CountriesListResponse:
+@router.get("", response_model=CountriesV1ListResponse)
+def list_countries(service: CountriesConfigService = Depends(get_countries_config_service)) -> CountriesV1ListResponse:
     countries = sorted(service.list_countries(), key=lambda country: country.code)
-    return CountriesListResponse(countries=[_to_country_response(country) for country in countries])
+    return CountriesV1ListResponse(countries=[_to_country_response(country) for country in countries])
 
 
 @router.get("/metadata", response_model=CountriesMetadataResponse)
@@ -61,29 +63,25 @@ def import_countries_csv(
             unchanged_records=result.summary.unchanged_records,
         ),
         errors=[
-            {
-                "row_number": item.row_number,
-                "field": item.field,
-                "message": item.message,
-            }
+            {"row_number": item.row_number, "field": item.field, "message": item.message}
             for item in result.errors
         ],
     )
 
 
-@router.get("/{code}", response_model=CountryResponse)
-def get_country(code: str, service: CountriesConfigService = Depends(get_countries_config_service)) -> CountryResponse:
+@router.get("/{code}", response_model=CountryV1Response)
+def get_country(code: str, service: CountriesConfigService = Depends(get_countries_config_service)) -> CountryV1Response:
     country = service.get_country(code)
     if country is None:
         raise HTTPException(status_code=404, detail=f"country '{code.upper()}' not found")
     return _to_country_response(country)
 
 
-@router.post("", response_model=CountryResponse, status_code=201)
+@router.post("", response_model=CountryV1Response, status_code=201)
 def create_country(
-    payload: CountryUpsertRequest,
+    payload: CountryV1UpsertRequest,
     service: CountriesConfigService = Depends(get_countries_config_service),
-) -> CountryResponse:
+) -> CountryV1Response:
     try:
         created = service.create_country(Country.model_validate(payload.model_dump(exclude_none=True)))
         return _to_country_response(created)
@@ -91,12 +89,12 @@ def create_country(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
-@router.put("/{code}", response_model=CountryResponse)
+@router.put("/{code}", response_model=CountryV1Response)
 def update_country(
     code: str,
-    payload: CountryUpsertRequest,
+    payload: CountryV1UpsertRequest,
     service: CountriesConfigService = Depends(get_countries_config_service),
-) -> CountryResponse:
+) -> CountryV1Response:
     try:
         updated = service.update_country(code, Country.model_validate(payload.model_dump(exclude_none=True)))
         return _to_country_response(updated)
@@ -114,11 +112,11 @@ def delete_country(code: str, service: CountriesConfigService = Depends(get_coun
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
-@router.put("", response_model=CountriesDatasetResponse)
+@router.put("", response_model=CountriesV1DatasetResponse)
 def replace_dataset(
-    payload: CountriesDatasetResponse,
+    payload: CountriesV1DatasetResponse,
     service: CountriesConfigService = Depends(get_countries_config_service),
-) -> CountriesDatasetResponse:
+) -> CountriesV1DatasetResponse:
     try:
         config = service.replace_dataset(
             CountriesConfig.model_validate(
@@ -131,7 +129,7 @@ def replace_dataset(
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
-    return CountriesDatasetResponse(
+    return CountriesV1DatasetResponse(
         dataset_status=config.dataset_status,
         countries=[_to_country_response(country) for country in sorted(config.countries, key=lambda item: item.code)],
     )

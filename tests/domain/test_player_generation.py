@@ -1,14 +1,12 @@
 from __future__ import annotations
+
 from tests.support.world_packages import load_fax_reference_countries
 
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.countries import Country, CountryTalentModel
 from beta_engine.domain.matches import MatchEngine
-from beta_engine.domain.players import PlayerGenerator
-from beta_engine.infrastructure.world_config import (
-    PlayerIdentityConfig,
-    load_player_identity_config,
-)
+from beta_engine.domain.players import CountryGenerationBiasProfile, PlayerGenerator, TalentQualityBand
+from beta_engine.infrastructure.world_config import PlayerIdentityConfig, load_player_identity_config
 
 
 def _generator(seed: int) -> tuple[PlayerGenerator, list[Country], PlayerIdentityConfig]:
@@ -24,7 +22,7 @@ def _generator(seed: int) -> tuple[PlayerGenerator, list[Country], PlayerIdentit
 
 def _sample_average_ability(generator: PlayerGenerator, country: Country, count: int = 100) -> float:
     players = [generator.generate(country=country, sequence=i + 1) for i in range(count)]
-    total = 0
+    total = 0.0
     for player in players:
         total += (
             player.technique
@@ -36,6 +34,21 @@ def _sample_average_ability(generator: PlayerGenerator, country: Country, count:
             + player.recovery
         ) / 7
     return total / count
+
+
+def _v1_country(*, code: str, strength: int, population: int = 50_000_000) -> Country:
+    return Country(
+        code=code,
+        name=f"Country {code}",
+        region="TEST",
+        population=population,
+        squash_popularity=strength,
+        squash_access=strength,
+        development_quality=strength,
+        competition_quality=strength,
+        elite_support=strength,
+        squash_tradition=strength,
+    )
 
 
 def test_same_seed_and_inputs_generate_same_players() -> None:
@@ -60,37 +73,78 @@ def test_strong_country_distribution_differs_from_weaker_country() -> None:
     assert germanica_avg > hungarica_avg + 8.0
 
 
-def test_generation_depends_on_more_than_population() -> None:
+def test_generation_depends_on_development_environment_not_population_alone() -> None:
     generator, _, identity = _generator(901)
-    high_strength_small_pop = Country(
-        code="HSP",
-        name="High Strengthland",
-        region="EUROPE",
-        population=35_000_000,
-        flag_asset=None,
-        squash_popularity=5,
-        wealth_support=5,
-        squash_tradition=5,
-        system_quality=5,
-    )
-    weak_but_large_pop = Country(
-        code="WLP",
-        name="Weak Populousia",
-        region="AMERICAS",
-        population=350_000_000,
-        flag_asset=None,
-        squash_popularity=1,
-        wealth_support=1,
-        squash_tradition=1,
-        system_quality=1,
-    )
+    high_strength_small_pop = _v1_country(code="HSP", strength=5, population=35_000_000)
+    weak_but_large_pop = _v1_country(code="WLP", strength=1, population=350_000_000)
 
     high_avg = _sample_average_ability(generator, high_strength_small_pop, count=120)
     weak_avg = _sample_average_ability(generator, weak_but_large_pop, count=120)
 
     assert high_avg > weak_avg + 12.0
-
     assert "attacking" in identity.play_styles
+
+
+def test_country_strength_changes_realised_level_not_innate_or_directional_dna() -> None:
+    # Same code keeps the individual RNG stream identical. Changing only Country
+    # V1 environment may shift realised level, but not potential, identity,
+    # personality or one core ability direction more than another.
+    weak = _v1_country(code="TST", strength=1)
+    strong = _v1_country(code="TST", strength=5)
+    weak_generator, _, _ = _generator(7781)
+    strong_generator, _, _ = _generator(7781)
+
+    weak_players = [weak_generator.generate(country=weak, sequence=i) for i in range(1, 50)]
+    strong_players = [strong_generator.generate(country=strong, sequence=i) for i in range(1, 50)]
+
+    assert [player.hidden_career_traits.model_dump() for player in weak_players] == [
+        player.hidden_career_traits.model_dump() for player in strong_players
+    ]
+    assert [player.play_style for player in weak_players] == [player.play_style for player in strong_players]
+    assert [player.archetype for player in weak_players] == [player.archetype for player in strong_players]
+
+    for weak_player, strong_player in zip(weak_players, strong_players, strict=True):
+        core_deltas = {
+            strong_player.technique - weak_player.technique,
+            strong_player.movement - weak_player.movement,
+            strong_player.physical - weak_player.physical,
+            strong_player.mental - weak_player.mental,
+        }
+        assert len(core_deltas) == 1
+        assert next(iter(core_deltas)) > 0
+
+
+def test_legacy_non_neutral_country_bias_profile_is_ignored_in_v1_runtime() -> None:
+    country = _v1_country(code="TST", strength=3)
+    neutral_generator, _, _ = _generator(991)
+    biased_generator, _, _ = _generator(991)
+    neutral = CountryGenerationBiasProfile(
+        professionalism_tendency=0.0,
+        technical_vs_physical_lean=0.0,
+        mental_sharpness_tendency=0.0,
+    )
+    legacy_biased = CountryGenerationBiasProfile(
+        professionalism_tendency=0.3,
+        technical_vs_physical_lean=0.3,
+        mental_sharpness_tendency=0.3,
+    )
+
+    left = neutral_generator.generate_from_talent_seed(
+        country=country,
+        sequence=1,
+        talent_seed_value=123456,
+        quality_band=TalentQualityBand.ELITE,
+        bias_profile=neutral,
+    )
+    right = biased_generator.generate_from_talent_seed(
+        country=country,
+        sequence=1,
+        talent_seed_value=123456,
+        quality_band=TalentQualityBand.ELITE,
+        bias_profile=legacy_biased,
+    )
+
+    assert left.model_dump(mode="json") == right.model_dump(mode="json")
 
 
 def test_generated_player_has_required_mvp_fields() -> None:

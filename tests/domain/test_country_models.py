@@ -20,16 +20,19 @@ def _base_country_payload() -> dict[str, object]:
     }
 
 
-def test_country_accepts_legacy_payload_without_phase_two_fields() -> None:
+def test_country_migrates_legacy_payload_to_v1_defaults() -> None:
     country = Country.model_validate(_base_country_payload())
 
-    assert country.competition_density == 3.0
-    assert country.federation_quality == 5.0
+    assert country.squash_popularity == 4
+    assert country.squash_access == 3
+    assert country.development_quality == 5
+    assert country.competition_quality == 5
+    assert country.elite_support == 3
+    assert country.squash_tradition == 2
     assert country.court_count is None
-    assert country.style_dna == {}
 
 
-def test_country_accepts_phase_two_optional_fields() -> None:
+def test_country_migrates_phase_two_fields_without_retaining_superseded_state() -> None:
     country = Country.model_validate(
         {
             **_base_country_payload(),
@@ -40,10 +43,27 @@ def test_country_accepts_phase_two_optional_fields() -> None:
         }
     )
 
-    assert country.competition_density == 4.5
-    assert country.federation_quality == 4.0
+    assert country.competition_quality == 4
+    assert country.elite_support == 4
     assert country.court_count == 120
-    assert country.style_dna == {"front_court": 0.2, "attrition": -0.1}
+    payload = country.model_dump()
+    for legacy_field in (
+        "wealth_support",
+        "system_quality",
+        "competition_density",
+        "federation_quality",
+        "style_dna",
+    ):
+        assert legacy_field not in payload
+    for numeric_legacy_field in (
+        "wealth_support",
+        "system_quality",
+        "competition_density",
+        "federation_quality",
+    ):
+        with pytest.raises(AttributeError):
+            getattr(country, numeric_legacy_field)
+    assert country.style_dna == {}
 
 
 def test_country_effective_travel_region_defaults_to_region_and_tracks_region_copy() -> None:

@@ -49,10 +49,12 @@ export function countryV1FormDraftFromRecord(country: CountryV1Record): CountryV
 }
 
 function parseRating(value: string, field: CountryV1RatingField): CountryV1Rating {
-  if (!/^[1-5]$/.test(value.trim())) {
-    throw new Error(`${field} must be an integer from 1 to 5`)
+  const normalized = value.trim()
+  const parsed = Number(normalized)
+  if (normalized === '' || !Number.isFinite(parsed) || parsed < 1 || parsed > 5) {
+    throw new Error(`${field} must be a number from 1 to 5`)
   }
-  return Number(value) as CountryV1Rating
+  return parsed
 }
 
 function parseOptionalInteger(value: string, field: 'area_km2' | 'court_count'): number | null {

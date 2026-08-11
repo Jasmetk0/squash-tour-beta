@@ -2,8 +2,8 @@ from __future__ import annotations
 from tests.support.world_packages import load_fax_reference_countries
 
 from beta_engine.application import SeasonSimulationOrchestrator
-from beta_engine.core import DeterministicRng
-from beta_engine.domain.entries import AcceptanceStatus
+from beta_engine.core import DeterministicRng, SeedScope
+from beta_engine.domain.entries import AcceptanceStatus, EntryTarget
 from beta_engine.domain.countries import Country, CountryTalentModel
 from beta_engine.domain.players import Player, PlayerGenerator
 from beta_engine.infrastructure.entry_config import load_entry_tuning_config
@@ -261,10 +261,43 @@ def test_late_replacement_fold_applies_after_pre_draw_withdrawal_with_destinatio
     state = baseline_orchestrator.initialize_state()
     event = state.ordered_events[0]
     template = baseline_orchestrator.templates_by_id[event.template_id]
+    players = list(baseline_orchestrator.players_by_id.values())
+    # Country V1's lossless decimal semantics legitimately alter this seeded
+    # cohort's acceptance composition. Author one deterministic mid-level
+    # candidate so this replacement-precedence test does not depend on a
+    # coincidental qualification applicant in the generated reference pool.
+    source_player = players[0]
+    qualification_player = None
+    for sequence in range(1, 101):
+        candidate = source_player.model_copy(
+            update={
+                "player_id": f"qualification-fixture-{sequence}",
+                "technique": 45,
+                "movement": 45,
+                "physical": 45,
+                "mental": 45,
+                "consistency": 45,
+                "clutch": 45,
+                "recovery": 45,
+            }
+        )
+        decision = baseline_orchestrator.entry_engine.decide_entry(
+            player=candidate,
+            player_country=baseline_orchestrator.countries_by_code[candidate.nationality],
+            event=event,
+            template=template,
+            event_rng=baseline_orchestrator.entry_engine.rng.branch(SeedScope.WEEK, event.season, event.week, event.event_id),
+        )
+        if decision.target == EntryTarget.QUALIFICATION:
+            qualification_player = candidate
+            break
+    assert qualification_player is not None
+    players.append(qualification_player)
+
     acceptance = baseline_orchestrator.entry_engine.build_acceptance_list(
         event=event,
         template=template,
-        players=list(baseline_orchestrator.players_by_id.values()),
+        players=players,
         countries_by_code=baseline_orchestrator.countries_by_code,
     )
     accepted_main = [
@@ -282,7 +315,7 @@ def test_late_replacement_fold_applies_after_pre_draw_withdrawal_with_destinatio
     with_actions = SeasonSimulationOrchestrator.build(
         calendar=baseline_orchestrator.calendar,
         templates=list(baseline_orchestrator.templates_by_id.values()),
-        players=list(baseline_orchestrator.players_by_id.values()),
+        players=players,
         countries_by_code=baseline_orchestrator.countries_by_code,
         points_by_ref=load_points_config(),
         entry_tuning=load_entry_tuning_config(),

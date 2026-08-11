@@ -2,11 +2,26 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal, Self
+import math
+from typing import Annotated, Any, Self
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator, model_validator
 
-CountrySimFactor = Literal[1, 2, 3, 4, 5]
+
+def _validate_country_rating(value: Any) -> float:
+    """Accept only finite JSON-style numbers on the inclusive V1 scale."""
+
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError("country rating must be a numeric value")
+    rating = float(value)
+    if not math.isfinite(rating):
+        raise ValueError("country rating must be finite")
+    if not 1 <= rating <= 5:
+        raise ValueError("country rating must be between 1 and 5 inclusive")
+    return rating
+
+
+CountrySimFactor = Annotated[float, BeforeValidator(_validate_country_rating)]
 
 
 class Country(BaseModel):
@@ -35,7 +50,7 @@ class Country(BaseModel):
     travel_region: str | None = None
     notes: str | None = None
 
-    # Country Game Attributes V1. All six are authored integer ratings 1..5.
+    # Country Game Attributes V1. All six are finite numeric ratings 1..5.
     squash_popularity: CountrySimFactor
     squash_access: CountrySimFactor
     development_quality: CountrySimFactor
@@ -66,7 +81,7 @@ class Country(BaseModel):
                     continue
                 raw = data[name]
                 try:
-                    return int(round(float(raw)))
+                    return _validate_country_rating(raw)
                 except (TypeError, ValueError):
                     # Preserve malformed input so the canonical 1..5 field
                     # validation rejects it instead of manufacturing a default.
@@ -139,7 +154,7 @@ class Country(BaseModel):
         return normalized or None
 
     @staticmethod
-    def _normalize_factor(value: int) -> float:
+    def _normalize_factor(value: float) -> float:
         return (value - 1) / 4.0
 
     @property

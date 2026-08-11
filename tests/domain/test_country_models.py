@@ -43,7 +43,7 @@ def test_country_migrates_phase_two_fields_without_retaining_superseded_state() 
         }
     )
 
-    assert country.competition_quality == 4
+    assert country.competition_quality == 4.5
     assert country.elite_support == 4
     assert country.court_count == 120
     payload = country.model_dump()

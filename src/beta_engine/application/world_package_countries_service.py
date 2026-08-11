@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
 
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryRecord, WorldPackageRegistryService
 from beta_engine.domain.countries import Country
+from beta_engine.domain.countries.models import CountrySimFactor
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
 from beta_engine.application.world_package_validation_service import WorldPackageValidationResult, WorldPackageValidationService
 
@@ -72,12 +73,12 @@ class WorldPackageCountryUpdate(BaseModel):
     region: str = Field(min_length=1)
     travel_region: str | None = None
     court_count: int | None = Field(ge=0)
-    squash_popularity: int = Field(ge=1, le=5)
-    squash_access: int = Field(ge=1, le=5)
-    development_quality: int = Field(ge=1, le=5)
-    competition_quality: int = Field(ge=1, le=5)
-    elite_support: int = Field(ge=1, le=5)
-    squash_tradition: int = Field(ge=1, le=5)
+    squash_popularity: CountrySimFactor
+    squash_access: CountrySimFactor
+    development_quality: CountrySimFactor
+    competition_quality: CountrySimFactor
+    elite_support: CountrySimFactor
+    squash_tradition: CountrySimFactor
     expected_package_fingerprint: str | None = None
 
 

@@ -16,7 +16,7 @@ A small or weak squash country must retain a non-zero chance of producing a gene
 
 ## 2. Authored Country Game Attributes
 
-All six V1 game attributes are integer ratings from **1 to 5**.
+All six V1 game attributes are finite numeric ratings on the inclusive **1 to 5** scale; fractional values are valid. Values are neither rounded nor clamped, and the domain defines no arbitrary decimal granularity.
 
 | Attribute | V1 meaning |
 |---|---|
@@ -27,7 +27,7 @@ All six V1 game attributes are integer ratings from **1 to 5**.
 | `elite_support` | Ability to support an elite junior/prospect through the transition to professional squash: funding, travel, physio and international opportunities. |
 | `squash_tradition` | Long-term squash culture, know-how, role models and institutional continuity. |
 
-The exact quantitative meaning of ratings `1 / 2 / 3 / 4 / 5` is intentionally **OPEN** until calibration against simulation output.
+The exact quantitative calibration of the scale is intentionally **OPEN**. No fixed meaning for each decimal increment has been decided.
 
 ## 3. Factual country data, not ratings
 
@@ -41,7 +41,7 @@ These remain factual/configuration data rather than game-strength ratings:
 - `court_count` where known,
 - country identity/name/flag/notes.
 
-`Travel Region` and `Timezone Area` are independent geography layers in Master v43: Travel Region represents coarse physical travel burden, while Timezone Area represents biological time shift / jet-lag topology. They must not be collapsed into one field.
+`Travel Region` and `Timezone Area` are independent geography layers in Master v45: Travel Region represents coarse physical travel burden, while Timezone Area represents biological time shift / jet-lag topology. They must not be collapsed into one field.
 
 The current repository already has Travel Regions but does **not** yet have a Timezone Area registry/assignment layer. That is a known implementation gap, not an open product decision. This Country V1 slice must not fake the missing layer by reusing `region` or `travel_region`; the geography layer is a dedicated immediate follow-up.
 
@@ -101,4 +101,4 @@ This mapping is a deterministic migration bridge only; it does **not** claim sem
 
 Built-in read-only World Packages authored with legacy attribute files remain readable through the compatibility loader. New countries and edited custom-package countries are written only in the canonical V1 attribute format currently supported by the repository.
 
-This avoids a noisy mechanical rewrite of every built-in country while ensuring all new mutable game-attribute data converges to V1. `Timezone Area` remains a required factual geography field from Master v43 and will join canonical package storage when the dedicated Timezone Area geography registry/assignment slice is implemented.
+This avoids a noisy mechanical rewrite of every built-in country while ensuring all new mutable game-attribute data converges to V1. `Timezone Area` remains a required factual geography field from Master v45 and will join canonical package storage when the dedicated Timezone Area geography registry/assignment slice is implemented.

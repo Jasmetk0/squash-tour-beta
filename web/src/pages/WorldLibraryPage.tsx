@@ -280,7 +280,7 @@ function PackageCountriesTable({ countries, worldId }: { countries: CountryRecor
     <table>
       <thead>
         <tr>
-          <th>Code</th><th>Name</th><th>Region</th><th>Population</th><th>Population coverage</th><th>Area km²</th><th>Travel Region</th><th>Squash Popularity</th><th>System Quality</th><th>Federation Quality</th><th>Courts</th><th>Action</th>
+          <th>Code</th><th>Name</th><th>Region</th><th>Population</th><th>Population coverage</th><th>Area km²</th><th>Travel Region</th><th>Squash Popularity</th><th>Squash Access</th><th>Development Quality</th><th>Competition Quality</th><th>Elite Support</th><th>Squash Tradition</th><th>Courts</th><th>Action</th>
         </tr>
       </thead>
       <tbody>
@@ -294,8 +294,11 @@ function PackageCountriesTable({ countries, worldId }: { countries: CountryRecor
             <CountryCell value={formatNumber(country.area_km2)} />
             <CountryCell value={country.travel_region} />
             <CountryCell value={country.squash_popularity} />
-            <CountryCell value={country.system_quality} />
-            <CountryCell value={country.federation_quality} />
+            <CountryCell value={country.squash_access} />
+            <CountryCell value={country.development_quality} />
+            <CountryCell value={country.competition_quality} />
+            <CountryCell value={country.elite_support} />
+            <CountryCell value={country.squash_tradition} />
             <CountryCell value={country.court_count} />
             <td><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries/${encodeURIComponent(country.code)}`}>Open</Link></td>
           </tr>
@@ -437,8 +440,8 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
   const geographyQuery = useQuery({ queryKey: ['world-package-geography', worldId], queryFn: () => getWorldPackageGeography(worldId), retry: false })
   const [identity, setIdentity] = useState({ code: '', name: '', notes: '', area: '' })
   const [region, setRegion] = useState(''); const [travelRegion, setTravelRegion] = useState('')
-  const [values, setValues] = useState({ wealth_support: '3', squash_popularity: '3', squash_tradition: '3', system_quality: '3', competition_density: '3', federation_quality: '3', court_count: '0' })
-  const [populations, setPopulations] = useState<Array<PopulationRow & { id: number }>>([{ id: 0, year: '2020', population: '' }]); const [styleRows, setStyleRows] = useState<StyleRow[]>([])
+  const [values, setValues] = useState({ squash_popularity: '3', squash_access: '3', development_quality: '3', competition_quality: '3', elite_support: '3', squash_tradition: '3', court_count: '0' })
+  const [populations, setPopulations] = useState<Array<PopulationRow & { id: number }>>([{ id: 0, year: '2020', population: '' }])
   const [validationError, setValidationError] = useState('')
   const mutation = useMutation({ mutationFn: (payload: WorldPackageCountryCreatePayload) => createWorldPackageCountry(worldId, payload), onSuccess: async response => {
     await Promise.all([queryClient.invalidateQueries({ queryKey: ['world-package-countries', worldId] }), queryClient.invalidateQueries({ queryKey: ['world-package', worldId] }), queryClient.invalidateQueries({ queryKey: ['world-package-validation', worldId] }), queryClient.invalidateQueries({ queryKey: ['world-packages'] })])
@@ -453,8 +456,8 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
     if (!years.includes('2020')) { setValidationError('Population year 2020 is required.'); return }
     setValidationError('')
     mutation.mutate({ code: identity.code, name: identity.name, notes: identity.notes || null, area_km2: identity.area ? Number(identity.area) : null, region, travel_region: travelRegion || null,
-      wealth_support: Number(values.wealth_support), squash_popularity: Number(values.squash_popularity), squash_tradition: Number(values.squash_tradition), system_quality: Number(values.system_quality), competition_density: Number(values.competition_density), federation_quality: Number(values.federation_quality), court_count: values.court_count === '' ? null : Number(values.court_count),
-      style_dna: Object.fromEntries(styleRows.filter(row => row.key.trim()).map(row => [row.key.trim(), Number(row.value)])), population_by_year: Object.fromEntries(sortedPopulations.map(row => [row.year, Number(row.population)])), expected_package_fingerprint: pkg.fingerprint }) }
+      squash_popularity: Number(values.squash_popularity), squash_access: Number(values.squash_access), development_quality: Number(values.development_quality), competition_quality: Number(values.competition_quality), elite_support: Number(values.elite_support), squash_tradition: Number(values.squash_tradition), court_count: values.court_count === '' ? null : Number(values.court_count),
+      population_by_year: Object.fromEntries(sortedPopulations.map(row => [row.year, Number(row.population)])), expected_package_fingerprint: pkg.fingerprint }) }
   if (packageQuery.isLoading || geographyQuery.isLoading) return <p className="status">Loading country form...</p>
   if (!allowed) return <section className="panel"><p className="error">Countries can only be created in an editable Custom World source.</p></section>
   return <section className="panel"><p><Link to={`/admin/world/library/${worldId}/countries`}>Back to countries</Link></p><h2>Add country</h2><form onSubmit={submit}>
@@ -462,8 +465,7 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
     <fieldset><legend>Identity</legend><label>Code<input required pattern="[A-Z]{3}" maxLength={3} value={identity.code} onChange={e => setIdentity({...identity,code:e.target.value})} /></label><label>Name<input required value={identity.name} onChange={e => setIdentity({...identity,name:e.target.value})} /></label><label>Notes<textarea value={identity.notes} onChange={e => setIdentity({...identity,notes:e.target.value})} /></label><label>Area km²<input type="number" min="1" value={identity.area} onChange={e => setIdentity({...identity,area:e.target.value})} /></label></fieldset>
     <fieldset><legend>Geography</legend><label>Region<select required value={region} onChange={e => setRegion(e.target.value)}><option value="">Select region</option>{geographyQuery.data?.regions.map(item=><option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label><label>Travel Region<select value={travelRegion} onChange={e=>setTravelRegion(e.target.value)}><option value="">None</option>{geographyQuery.data?.travel_regions.map(item=><option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label></fieldset>
     <fieldset><legend>Population</legend>{sortedPopulations.map(row=><div key={row.id}><input aria-label={`Population year ${row.id === 0 ? '2020' : row.id}`} type="number" min="1955" max="2050" required readOnly={row.year==='2020'} value={row.year} onChange={e=>setPopulations(rows=>rows.map(item=>item.id===row.id?{...item,year:e.target.value}:item))}/><input aria-label={`Population value ${row.year || row.id}`} type="number" min="1" required value={row.population} onChange={e=>setPopulations(rows=>rows.map(item=>item.id===row.id?{...item,population:e.target.value}:item))}/>{row.year!=='2020'&&<button type="button" onClick={()=>setPopulations(rows=>rows.filter(item=>item.id!==row.id))}>Remove</button>}</div>)}<button type="button" onClick={()=>setPopulations(rows=>[...rows,{id:Math.max(...rows.map(row=>row.id))+1,year:'',population:''}])}>+ Add authored year</button></fieldset>
-    <fieldset><legend>Squash / Country strength</legend>{Object.entries(values).map(([key,value])=><label key={key}>{key.split('_').join(' ')}<input type="number" required min={key==='court_count'?0:1} max={key==='court_count'?undefined:5} step={key.includes('density')||key.includes('quality')?0.1:1} value={value} onChange={e=>setNumber(key as keyof typeof values,e.target.value)}/></label>)}</fieldset>
-    <fieldset><legend>Style DNA</legend>{styleRows.map((row,index)=><div key={row.id}><input aria-label={`Style DNA key ${index+1}`} value={row.key} onChange={e=>setStyleRows(rows=>rows.map(r=>r.id===row.id?{...r,key:e.target.value}:r))}/><input aria-label={`Style DNA value ${index+1}`} type="number" step="any" value={row.value} onChange={e=>setStyleRows(rows=>rows.map(r=>r.id===row.id?{...r,value:e.target.value}:r))}/><button type="button" onClick={()=>setStyleRows(rows=>rows.filter(r=>r.id!==row.id))}>Remove</button></div>)}<button type="button" onClick={()=>setStyleRows(rows=>[...rows,{id:Math.max(-1,...rows.map(r=>r.id))+1,key:'',value:'0'}])}>Add Style DNA entry</button></fieldset>
+    <fieldset><legend>Squash / Country strength</legend>{Object.entries(values).map(([key,value])=><label key={key}>{key.split('_').join(' ')}<input type="number" required min={key==='court_count'?0:1} max={key==='court_count'?undefined:5} step={key==='court_count'?1:'any'} value={value} onChange={e=>setNumber(key as keyof typeof values,e.target.value)}/></label>)}</fieldset>
     <button type="submit" disabled={mutation.isPending}>{mutation.isPending?'Saving…':'Save country'}</button>
   </form></section>
 }
@@ -517,7 +519,6 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
   const data = query.data
   const canEdit = data?.package.type === 'custom' && data.package.source === 'custom_config' && data.package.editable
   const timeline = Object.entries(data?.country.population_by_year ?? {}).filter(([, value]) => value != null).sort(([a], [b]) => Number(a) - Number(b))
-  const style = Object.entries(data?.country.style_dna ?? {})
   return <section className="panel">
     <p><Link to="/admin/world/library">World Packages</Link> → <Link to={`/admin/world/library/${encodeURIComponent(worldId)}`}>{data?.package.name ?? worldId}</Link> → <Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries`}>Countries</Link>{data ? ` → ${data.country.name}` : ''}</p>
     {query.isLoading && <p className="status">Loading country...</p>}
@@ -542,8 +543,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
       {populationEditing && <PopulationEditForm detail={data} saving={populationMutation.isPending} error={populationMutation.error} onCancel={() => { setPopulationEditing(false); populationMutation.reset() }} onSave={payload => populationMutation.mutate(payload)} />}
       <SectionCard title="Geography"><DetailRow label="Area km²" value={formatNumber(data.country.area_km2)} /><DetailRow label="Region" value={data.region ? `${data.region.name} (${data.region.code})` : data.country.region} /><DetailRow label="Continent" value={data.continent?.name ?? '—'} /><DetailRow label="Travel Region" value={data.travel_region ? `${data.travel_region.name} (${data.travel_region.code})` : data.country.travel_region ?? '—'} /></SectionCard>
       <SectionCard title="Squash / Country strength">
-        <DetailRow label="Wealth Support" value={data.country.wealth_support} /><DetailRow label="Squash Popularity" value={data.country.squash_popularity} /><DetailRow label="Squash Tradition" value={data.country.squash_tradition} /><DetailRow label="System Quality" value={data.country.system_quality} /><DetailRow label="Competition Density" value={data.country.competition_density ?? '—'} /><DetailRow label="Federation Quality" value={data.country.federation_quality ?? '—'} /><DetailRow label="Court Count" value={formatNumber(data.country.court_count)} />
-        <h4>Style DNA</h4>{style.length === 0 ? <p>No Style DNA values authored.</p> : <dl>{style.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl>}
+        <DetailRow label="Squash Popularity" value={data.country.squash_popularity} /><DetailRow label="Squash Access" value={data.country.squash_access} /><DetailRow label="Development Quality" value={data.country.development_quality} /><DetailRow label="Competition Quality" value={data.country.competition_quality} /><DetailRow label="Elite Support" value={data.country.elite_support} /><DetailRow label="Squash Tradition" value={data.country.squash_tradition} /><DetailRow label="Court Count" value={formatNumber(data.country.court_count)} />
       </SectionCard>
       <details><summary>Technical source</summary><code>{data.source_path}</code></details>
     </>}
@@ -579,7 +579,6 @@ function PopulationEditForm({ detail, saving, error, onCancel, onSave }: { detai
   </form></SectionCard>
 }
 
-type StyleRow = { id: number, key: string, value: string }
 function CountryEditForm({ detail, geography, saving, error, onCancel, onSave }: { detail: WorldPackageCountryDetail, geography?: WorldPackageGeography, saving: boolean, error: unknown, onCancel: () => void, onSave: (payload: WorldPackageCountryUpdatePayload) => void }): JSX.Element {
   const country = detail.country
   const [name, setName] = useState(country.name)
@@ -587,15 +586,13 @@ function CountryEditForm({ detail, geography, saving, error, onCancel, onSave }:
   const [area, setArea] = useState(country.area_km2 == null ? '' : String(country.area_km2))
   const [region, setRegion] = useState(country.region)
   const [travelRegion, setTravelRegion] = useState(country.travel_region ?? '')
-  const [values, setValues] = useState({ wealth_support: String(country.wealth_support), squash_popularity: String(country.squash_popularity), squash_tradition: String(country.squash_tradition), system_quality: String(country.system_quality), competition_density: String(country.competition_density), federation_quality: String(country.federation_quality), court_count: country.court_count == null ? '' : String(country.court_count) })
-  const [styleRows, setStyleRows] = useState<StyleRow[]>(Object.entries(country.style_dna ?? {}).map(([key, value], id) => ({ id, key, value: String(value) })))
+  const [values, setValues] = useState({ squash_popularity: String(country.squash_popularity), squash_access: String(country.squash_access), development_quality: String(country.development_quality), competition_quality: String(country.competition_quality), elite_support: String(country.elite_support), squash_tradition: String(country.squash_tradition), court_count: country.court_count == null ? '' : String(country.court_count) })
   const submit = (event: FormEvent) => {
     event.preventDefault()
     onSave({ name, notes: notes || null, area_km2: area ? Number(area) : null, region, travel_region: travelRegion || null,
-      wealth_support: Number(values.wealth_support), squash_popularity: Number(values.squash_popularity), squash_tradition: Number(values.squash_tradition), system_quality: Number(values.system_quality), competition_density: Number(values.competition_density), federation_quality: Number(values.federation_quality), court_count: values.court_count === '' ? null : Number(values.court_count),
-      style_dna: Object.fromEntries(styleRows.filter(row => row.key.trim()).map(row => [row.key.trim(), Number(row.value)])), expected_package_fingerprint: detail.package.fingerprint })
+      squash_popularity: Number(values.squash_popularity), squash_access: Number(values.squash_access), development_quality: Number(values.development_quality), competition_quality: Number(values.competition_quality), elite_support: Number(values.elite_support), squash_tradition: Number(values.squash_tradition), court_count: values.court_count === '' ? null : Number(values.court_count), expected_package_fingerprint: detail.package.fingerprint })
   }
-  const numeric = (key: keyof typeof values, label: string, min: number, max?: number, step = 1) => <label>{label}<input type="number" required min={min} max={max} step={step} value={values[key]} onChange={event => setValues(current => ({ ...current, [key]: event.target.value }))} /></label>
+  const numeric = (key: keyof typeof values, label: string, min: number, max?: number, step: number | 'any' = 'any') => <label>{label}<input type="number" required min={min} max={max} step={step} value={values[key]} onChange={event => setValues(current => ({ ...current, [key]: event.target.value }))} /></label>
   return <SectionCard title="Edit country"><form onSubmit={submit}>
     {error != null && <p className="error" role="alert">{formatApiError(error)}</p>}
     <label>Name<input required value={name} onChange={event => setName(event.target.value)} /></label>
@@ -603,8 +600,7 @@ function CountryEditForm({ detail, geography, saving, error, onCancel, onSave }:
     <label>Area km²<input type="number" min="1" value={area} onChange={event => setArea(event.target.value)} /></label>
     <label>Region<select value={region} onChange={event => setRegion(event.target.value)}>{geography?.regions.map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
     <label>Travel Region<select value={travelRegion} onChange={event => setTravelRegion(event.target.value)}><option value="">None</option>{geography?.travel_regions.map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
-    {numeric('wealth_support', 'Wealth Support', 1, 5)}{numeric('squash_popularity', 'Squash Popularity', 1, 5)}{numeric('squash_tradition', 'Squash Tradition', 1, 5)}{numeric('system_quality', 'System Quality', 1, 5)}{numeric('competition_density', 'Competition Density', 1, 5, 0.1)}{numeric('federation_quality', 'Federation Quality', 1, 5, 0.1)}{numeric('court_count', 'Court Count', 0)}
-    <fieldset><legend>Style DNA</legend>{styleRows.map((row, index) => <div key={row.id}><input aria-label={`Style DNA key ${index + 1}`} value={row.key} onChange={event => setStyleRows(rows => rows.map(item => item.id === row.id ? { ...item, key: event.target.value } : item))} /><input aria-label={`Style DNA value ${index + 1}`} type="number" step="any" value={row.value} onChange={event => setStyleRows(rows => rows.map(item => item.id === row.id ? { ...item, value: event.target.value } : item))} /><button type="button" onClick={() => setStyleRows(rows => rows.filter(item => item.id !== row.id))}>Remove</button></div>)}<button type="button" onClick={() => setStyleRows(rows => [...rows, { id: Math.max(-1, ...rows.map(row => row.id)) + 1, key: '', value: '0' }])}>Add Style DNA entry</button></fieldset>
+    {numeric('squash_popularity', 'Squash Popularity', 1, 5)}{numeric('squash_access', 'Squash Access', 1, 5)}{numeric('development_quality', 'Development Quality', 1, 5)}{numeric('competition_quality', 'Competition Quality', 1, 5)}{numeric('elite_support', 'Elite Support', 1, 5)}{numeric('squash_tradition', 'Squash Tradition', 1, 5)}{numeric('court_count', 'Court Count', 0, undefined, 1)}
     <p><button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button> <button type="button" disabled={saving} onClick={onCancel}>Cancel</button></p>
   </form></SectionCard>
 }

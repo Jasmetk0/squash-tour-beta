@@ -50,7 +50,7 @@ def _country_create_payload(fingerprint: str) -> dict[str, object]:
         "squash_popularity": 2,
         "squash_access": 3,
         "development_quality": 4,
-        "competition_quality": 3,
+        "competition_quality": 2.5,
         "elite_support": 4,
         "squash_tradition": 1,
         "population_by_year": {"1995": 900_000, "2020": 1_200_000},
@@ -110,6 +110,7 @@ def test_put_custom_country_persists_edit_and_preserves_population_and_index(tmp
             {
                 "name": "Germanica Prime",
                 "squash_popularity": 4,
+                "development_quality": 3.5,
                 "elite_support": 4,
                 "expected_package_fingerprint": before["package"]["fingerprint"],
             }
@@ -132,6 +133,7 @@ def test_put_custom_country_persists_edit_and_preserves_population_and_index(tmp
     assert country["code"] == "GER"
     assert country["name"] == "Germanica Prime"
     assert country["squash_popularity"] == 4
+    assert country["development_quality"] == 3.5
     assert country["elite_support"] == 4
     assert all(1 <= country[field] <= 5 for field in _V1_RATING_FIELDS)
     assert "style_dna" not in country
@@ -187,7 +189,7 @@ def test_country_create_http_roundtrips_authored_state_and_rejects_duplicate(tmp
         "squash_popularity": 2,
         "squash_access": 3,
         "development_quality": 4,
-        "competition_quality": 3,
+        "competition_quality": 2.5,
         "elite_support": 4,
         "squash_tradition": 1,
     }

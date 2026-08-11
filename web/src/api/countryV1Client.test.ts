@@ -1,43 +1,41 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { ApiError } from './client'
 import type { WorldPackageCountryV1CreatePayload } from './countryV1'
 import {
   createWorldPackageCountryV1,
   deleteWorldPackageCountryV1,
   getWorldPackageCountriesV1,
+  getWorldPackageCountryV1,
+  updateWorldPackageCountryPopulationV1,
   updateWorldPackageCountryV1,
 } from './countryV1Client'
 
-function response(body: string, status = 200): Response {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    text: async () => body,
-  } as Response
-}
+const client = vi.hoisted(() => ({
+  getWorldPackageCountries: vi.fn(),
+  getWorldPackageCountry: vi.fn(),
+  createWorldPackageCountry: vi.fn(),
+  updateWorldPackageCountry: vi.fn(),
+  updateWorldPackageCountryPopulation: vi.fn(),
+  deleteWorldPackageCountry: vi.fn(),
+}))
 
-afterEach(() => {
-  vi.unstubAllGlobals()
+vi.mock('./client', () => client)
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  for (const mock of Object.values(client)) mock.mockResolvedValue({})
 })
 
 describe('countryV1Client', () => {
-  it('uses the canonical world-package countries endpoint', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(response('{"countries":[]}'))
-    vi.stubGlobal('fetch', fetchMock)
-
+  it('delegates list and detail reads to the established World Package client', async () => {
     await getWorldPackageCountriesV1('my world')
+    await getWorldPackageCountryV1('my world', 'A B')
 
-    expect(fetchMock).toHaveBeenCalledOnce()
-    expect(fetchMock.mock.calls[0]?.[0]).toEqual(expect.stringContaining('/world/packages/my%20world/countries'))
-    expect(fetchMock.mock.calls[0]?.[1]).toEqual(expect.objectContaining({
-      headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
-    }))
+    expect(client.getWorldPackageCountries).toHaveBeenCalledWith('my world')
+    expect(client.getWorldPackageCountry).toHaveBeenCalledWith('my world', 'A B')
   })
 
-  it('posts only the canonical Country V1 create payload supplied by the form adapter', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(response('{}', 201))
-    vi.stubGlobal('fetch', fetchMock)
+  it('passes only the canonical Country V1 create payload to the shared client', async () => {
     const payload: WorldPackageCountryV1CreatePayload = {
       code: 'EXP',
       name: 'Exampleland',
@@ -58,59 +56,60 @@ describe('countryV1Client', () => {
 
     await createWorldPackageCountryV1('custom_world', payload)
 
-    const [, init] = fetchMock.mock.calls[0] ?? []
-    expect(init).toEqual(expect.objectContaining({ method: 'POST', body: JSON.stringify(payload) }))
-    expect(String((init as RequestInit).body)).not.toContain('wealth_support')
-    expect(String((init as RequestInit).body)).not.toContain('system_quality')
-    expect(String((init as RequestInit).body)).not.toContain('competition_density')
-    expect(String((init as RequestInit).body)).not.toContain('federation_quality')
-    expect(String((init as RequestInit).body)).not.toContain('style_dna')
+    expect(client.createWorldPackageCountry).toHaveBeenCalledWith('custom_world', payload)
+    const serialized = JSON.stringify(client.createWorldPackageCountry.mock.calls[0]?.[1])
+    expect(serialized).not.toContain('wealth_support')
+    expect(serialized).not.toContain('system_quality')
+    expect(serialized).not.toContain('competition_density')
+    expect(serialized).not.toContain('federation_quality')
+    expect(serialized).not.toContain('style_dna')
   })
 
-  it('uses the V1 update endpoint and preserves the supplied country code safely', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(response('{}'))
-    vi.stubGlobal('fetch', fetchMock)
-
-    await updateWorldPackageCountryV1('custom_world', 'A B', {
+  it('delegates canonical update and population payloads unchanged', async () => {
+    const updatePayload = {
       name: 'Exampleland',
       notes: null,
       area_km2: null,
       region: 'EUR',
       travel_region: null,
       court_count: null,
-      squash_popularity: 3,
-      squash_access: 3,
-      development_quality: 3,
-      competition_quality: 3,
-      elite_support: 3,
-      squash_tradition: 3,
-    })
+      squash_popularity: 3 as const,
+      squash_access: 3 as const,
+      development_quality: 3 as const,
+      competition_quality: 3 as const,
+      elite_support: 3 as const,
+      squash_tradition: 3 as const,
+    }
+    const populationPayload = {
+      values_by_year: { '2020': 1_000_000 },
+      expected_package_fingerprint: 'fp-2',
+    }
 
-    expect(fetchMock.mock.calls[0]?.[0]).toEqual(
-      expect.stringContaining('/world/packages/custom_world/countries/A%20B'),
+    await updateWorldPackageCountryV1('custom_world', 'EXP', updatePayload)
+    await updateWorldPackageCountryPopulationV1('custom_world', 'EXP', populationPayload)
+
+    expect(client.updateWorldPackageCountry).toHaveBeenCalledWith('custom_world', 'EXP', updatePayload)
+    expect(client.updateWorldPackageCountryPopulation).toHaveBeenCalledWith(
+      'custom_world',
+      'EXP',
+      populationPayload,
     )
-    expect(fetchMock.mock.calls[0]?.[1]).toEqual(expect.objectContaining({ method: 'PUT' }))
   })
 
-  it('sends optimistic-concurrency fingerprint when deleting', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(response('{}'))
-    vi.stubGlobal('fetch', fetchMock)
-
+  it('passes optimistic-concurrency fingerprint to shared delete transport', async () => {
     await deleteWorldPackageCountryV1('custom_world', 'EXP', 'fp with space')
 
-    expect(fetchMock.mock.calls[0]?.[0]).toEqual(
-      expect.stringContaining('/world/packages/custom_world/countries/EXP?expected_package_fingerprint=fp+with+space'),
+    expect(client.deleteWorldPackageCountry).toHaveBeenCalledWith(
+      'custom_world',
+      'EXP',
+      'fp with space',
     )
-    expect(fetchMock.mock.calls[0]?.[1]).toEqual(expect.objectContaining({ method: 'DELETE' }))
   })
 
-  it('keeps the existing ApiError behavior for non-success responses', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response('{"detail":"bad country"}', 422)))
+  it('preserves shared client errors without wrapping them', async () => {
+    const error = new Error('bad country')
+    client.getWorldPackageCountries.mockRejectedValueOnce(error)
 
-    const error = await getWorldPackageCountriesV1('custom_world').catch((caught: unknown) => caught)
-
-    expect(error).toBeInstanceOf(ApiError)
-    expect((error as ApiError).status).toBe(422)
-    expect((error as ApiError).message).toContain('bad country')
+    await expect(getWorldPackageCountriesV1('custom_world')).rejects.toBe(error)
   })
 })

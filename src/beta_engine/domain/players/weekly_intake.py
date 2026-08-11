@@ -102,14 +102,10 @@ class WeeklyIntakePlanner:
         rows = []
         for country in sorted(countries, key=lambda item: item.code):
             resolved = resolve_effective_population(country, population_year)
-            # V1 country allocation samples from the effective squash-playing
-            # pool, not raw national population alone. Popularity and access are
-            # the authored inputs to that pool; development quality does not
-            # change a person's innate potential.
-            weight = max(
-                1.0,
-                talent_model.effective_squash_pool_weight(country, resolved.effective_population),
-            )
+            # V1 country allocation samples from effective population,
+            # popularity and access. Do not clamp small positive weights to 1:
+            # doing so would erase authored differences for small squash nations.
+            weight = talent_model.effective_squash_pool_weight(country, resolved.effective_population)
             rows.append((country.code, resolved, weight))
 
         total_weight = sum(weight for _, _, weight in rows)

@@ -6,6 +6,7 @@ import {
   deleteWorldPackageCountryV1,
   getWorldPackageCountriesV1,
   getWorldPackageCountryV1,
+  normalizeCountryV1Read,
   updateWorldPackageCountryPopulationV1,
   updateWorldPackageCountryV1,
 } from './countryV1Client'
@@ -21,9 +22,35 @@ const client = vi.hoisted(() => ({
 
 vi.mock('./client', () => client)
 
+const canonicalCountry = {
+  code: 'EXP',
+  name: 'Exampleland',
+  flag_asset: null,
+  region: 'EUR',
+  population: 1_000_000,
+  area_km2: 100,
+  default_population_year: 2020,
+  default_population: 1_000_000,
+  population_by_year: { '2020': 1_000_000 },
+  court_count: 10,
+  travel_region: null,
+  notes: null,
+  squash_popularity: 4,
+  squash_access: 3,
+  development_quality: 5,
+  competition_quality: 4,
+  elite_support: 2,
+  squash_tradition: 3,
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
-  for (const mock of Object.values(client)) mock.mockResolvedValue({})
+  client.getWorldPackageCountries.mockResolvedValue({ countries: [] })
+  client.getWorldPackageCountry.mockResolvedValue({ country: canonicalCountry })
+  client.createWorldPackageCountry.mockResolvedValue({})
+  client.updateWorldPackageCountry.mockResolvedValue({})
+  client.updateWorldPackageCountryPopulation.mockResolvedValue({})
+  client.deleteWorldPackageCountry.mockResolvedValue({})
 })
 
 describe('countryV1Client', () => {
@@ -33,6 +60,37 @@ describe('countryV1Client', () => {
 
     expect(client.getWorldPackageCountries).toHaveBeenCalledWith('my world')
     expect(client.getWorldPackageCountry).toHaveBeenCalledWith('my world', 'A B')
+  })
+
+  it('normalizes the pre-V1 read bridge immediately into canonical V1 fields', () => {
+    const normalized = normalizeCountryV1Read({
+      ...canonicalCountry,
+      squash_access: undefined,
+      development_quality: undefined,
+      competition_quality: undefined,
+      elite_support: undefined,
+      wealth_support: 3,
+      system_quality: 5,
+      competition_density: 4,
+      federation_quality: 2,
+    })
+
+    expect(normalized).toMatchObject({
+      squash_popularity: 4,
+      squash_access: 3,
+      development_quality: 5,
+      competition_quality: 4,
+      elite_support: 2,
+      squash_tradition: 3,
+    })
+  })
+
+  it('rejects malformed legacy ratings instead of silently clamping or inventing V1 values', () => {
+    expect(() => normalizeCountryV1Read({
+      ...canonicalCountry,
+      competition_quality: undefined,
+      competition_density: 2.5,
+    })).toThrow('competition_quality must be an integer from 1 to 5')
   })
 
   it('passes only the canonical Country V1 create payload to the shared client', async () => {

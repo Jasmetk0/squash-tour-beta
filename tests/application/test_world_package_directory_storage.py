@@ -87,6 +87,28 @@ def test_official_germanica_legacy_storage_is_losslessly_materialized() -> None:
     assert country.notes
 
 
+def test_official_hungarica_fractional_legacy_rating_is_lossless() -> None:
+    country = WorldPackageCountryStore(Path("config/world_packages/official_fax_world")).load_country("HUN")
+
+    assert country.competition_quality == 2.5
+
+
+def test_canonical_fractional_rating_round_trips_without_legacy_output(tmp_path: Path) -> None:
+    root = tmp_path / "world"
+    (root / "countries").mkdir(parents=True)
+    (root / "countries/index.json").write_text(
+        json.dumps({"schema_version": "world_package_countries_index.v1", "country_codes": ["AAA"]})
+    )
+    store = WorldPackageCountryStore(root)
+    store.write_country(_scalar_country().model_copy(update={"competition_quality": 2.5}))
+
+    assert store.load_country("AAA").competition_quality == 2.5
+    value = json.loads((root / "countries/AAA/attributes/competition_quality.json").read_text())["value"]
+    assert value == 2.5
+    for legacy_name in LEGACY_ATTRIBUTE_NAMES:
+        assert not (root / f"countries/AAA/attributes/{legacy_name}.json").exists()
+
+
 def test_real_world_timelines_include_large_country_kosovo_and_fallback() -> None:
     store = WorldPackageCountryStore(Path("config/world_packages/real_world"))
     for code in ("USA", "XKX", "ALA"):

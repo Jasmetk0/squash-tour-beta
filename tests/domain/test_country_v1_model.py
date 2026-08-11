@@ -52,6 +52,20 @@ def test_country_v1_requires_all_six_authored_ratings_without_legacy_source() ->
     assert "elite_support" in str(exc.value)
 
 
+@pytest.mark.parametrize("rating", [1, 1.5, 2.5, 4.75, 5])
+def test_country_v1_accepts_finite_fractional_ratings_losslessly(rating: float) -> None:
+    country = _v1_country(competition_quality=rating)
+
+    assert country.competition_quality == rating
+    assert country.model_dump(mode="json")["competition_quality"] == rating
+
+
+@pytest.mark.parametrize("rating", [0, 0.99, 5.01, 6, True, False, float("nan"), float("inf"), float("-inf"), "2.5"])
+def test_country_v1_rejects_out_of_range_or_non_numeric_ratings(rating: object) -> None:
+    with pytest.raises(ValidationError):
+        _v1_country(competition_quality=rating)
+
+
 def test_legacy_country_payload_migrates_deterministically_to_v1() -> None:
     country = Country.model_validate(
         {
@@ -76,6 +90,14 @@ def test_legacy_country_payload_migrates_deterministically_to_v1() -> None:
     assert country.elite_support == 2
     assert country.squash_tradition == 5
     assert "style_dna" not in country.model_dump()
+
+
+def test_legacy_fractional_rating_is_not_rounded() -> None:
+    country = _v1_country(competition_quality=2.5)
+    legacy = country.model_dump(exclude={"competition_quality"})
+    legacy["competition_density"] = 2.5
+
+    assert Country.model_validate(legacy).competition_quality == 2.5
 
 
 def test_malformed_legacy_rating_is_rejected_not_defaulted() -> None:

@@ -15,6 +15,7 @@ from beta_engine.api.schemas import (
     WorldPackageTravelRegionResponse,
     WorldPackageValidationResponse,
 )
+from beta_engine.domain.countries.models import CountrySimFactor
 
 
 class CountryV1Response(BaseModel):
@@ -31,12 +32,12 @@ class CountryV1Response(BaseModel):
     travel_region: str | None = None
     notes: str | None = None
 
-    squash_popularity: int = Field(ge=1, le=5)
-    squash_access: int = Field(ge=1, le=5)
-    development_quality: int = Field(ge=1, le=5)
-    competition_quality: int = Field(ge=1, le=5)
-    elite_support: int = Field(ge=1, le=5)
-    squash_tradition: int = Field(ge=1, le=5)
+    squash_popularity: CountrySimFactor
+    squash_access: CountrySimFactor
+    development_quality: CountrySimFactor
+    competition_quality: CountrySimFactor
+    elite_support: CountrySimFactor
+    squash_tradition: CountrySimFactor
 
 
 class CountryV1UpsertRequest(CountryV1Response):
@@ -111,12 +112,12 @@ class WorldPackageCountryV1UpdateRequest(BaseModel):
     travel_region: str | None = None
     court_count: int | None = Field(ge=0)
 
-    squash_popularity: int = Field(ge=1, le=5)
-    squash_access: int = Field(ge=1, le=5)
-    development_quality: int = Field(ge=1, le=5)
-    competition_quality: int = Field(ge=1, le=5)
-    elite_support: int = Field(ge=1, le=5)
-    squash_tradition: int = Field(ge=1, le=5)
+    squash_popularity: CountrySimFactor
+    squash_access: CountrySimFactor
+    development_quality: CountrySimFactor
+    competition_quality: CountrySimFactor
+    elite_support: CountrySimFactor
+    squash_tradition: CountrySimFactor
 
     expected_package_fingerprint: str | None = None
 

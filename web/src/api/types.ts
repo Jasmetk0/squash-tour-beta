@@ -1447,16 +1447,15 @@ export type CountryRecord = {
   default_population_year?: number | null
   default_population?: number | null
   population_by_year?: Record<string, number | null> | null
-  wealth_support: number
   squash_popularity: number
+  squash_access: number
+  development_quality: number
+  competition_quality: number
+  elite_support: number
   squash_tradition: number
-  system_quality: number
-  competition_density: number
-  federation_quality: number
   court_count: number | null
   travel_region: string | null
   notes: string | null
-  style_dna: Record<string, number>
 }
 
 export type CountriesListResponse = {
@@ -1694,14 +1693,13 @@ export type WorldPackageCountryUpdatePayload = {
   area_km2: number | null
   region: string
   travel_region: string | null
-  wealth_support: number
   squash_popularity: number
+  squash_access: number
+  development_quality: number
+  competition_quality: number
+  elite_support: number
   squash_tradition: number
-  system_quality: number
-  competition_density: number
-  federation_quality: number
   court_count: number | null
-  style_dna: Record<string, number>
   expected_package_fingerprint?: string
 }
 

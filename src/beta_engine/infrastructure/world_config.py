@@ -163,12 +163,12 @@ def import_countries_from_csv(
                 "flag_asset": row["flag_asset"] or None,
                 "region": row["region"],
                 "population": int(row["population"]),
-                "squash_popularity": int(row["squash_popularity"]),
-                "squash_access": int(row["squash_access"]),
-                "development_quality": int(row["development_quality"]),
-                "competition_quality": int(row["competition_quality"]),
-                "elite_support": int(row["elite_support"]),
-                "squash_tradition": int(row["squash_tradition"]),
+                "squash_popularity": float(row["squash_popularity"]),
+                "squash_access": float(row["squash_access"]),
+                "development_quality": float(row["development_quality"]),
+                "competition_quality": float(row["competition_quality"]),
+                "elite_support": float(row["elite_support"]),
+                "squash_tradition": float(row["squash_tradition"]),
             }
             raw_court_count = (row.get("court_count") or "").strip()
             if raw_court_count:

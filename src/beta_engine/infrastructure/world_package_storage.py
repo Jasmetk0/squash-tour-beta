@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import shutil
 import tempfile
 from dataclasses import dataclass
@@ -115,11 +116,12 @@ def _write_json_atomic(path: Path, payload: object) -> None:
         temporary.unlink(missing_ok=True)
 
 
-def _coerce_rating(value: Any, *, field_name: str) -> int:
-    try:
-        rating = int(round(float(value)))
-    except (TypeError, ValueError) as exc:
-        raise ValueError(f"legacy {field_name} value {value!r} cannot be migrated to a 1..5 rating") from exc
+def _coerce_rating(value: Any, *, field_name: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"legacy {field_name} value {value!r} cannot be migrated to a 1..5 rating")
+    rating = float(value)
+    if not math.isfinite(rating):
+        raise ValueError(f"legacy {field_name} value {value!r} cannot be migrated to a finite 1..5 rating")
     if not 1 <= rating <= 5:
         raise ValueError(f"legacy {field_name} value {value!r} is outside the supported 1..5 range")
     return rating

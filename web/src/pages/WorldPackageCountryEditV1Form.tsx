@@ -82,7 +82,7 @@ export function CountryV1EditFields({
               required
               min="1"
               max="5"
-              step="1"
+              step="any"
               value={draft[key]}
               onChange={(event) => onChange(key, event.target.value)}
             />

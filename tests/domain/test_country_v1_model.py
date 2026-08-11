@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import pytest
+from pydantic import ValidationError
+
 from beta_engine.domain.countries import Country, CountryTalentModel
 
 
@@ -39,6 +42,16 @@ def test_country_v1_serializes_only_six_game_attributes() -> None:
     assert payload["court_count"] == 42
 
 
+def test_country_v1_requires_all_six_authored_ratings_without_legacy_source() -> None:
+    payload = _v1_country().model_dump(mode="python")
+    payload.pop("elite_support")
+
+    with pytest.raises(ValidationError) as exc:
+        Country.model_validate(payload)
+
+    assert "elite_support" in str(exc.value)
+
+
 def test_legacy_country_payload_migrates_deterministically_to_v1() -> None:
     country = Country.model_validate(
         {
@@ -63,6 +76,24 @@ def test_legacy_country_payload_migrates_deterministically_to_v1() -> None:
     assert country.elite_support == 2
     assert country.squash_tradition == 5
     assert "style_dna" not in country.model_dump()
+
+
+def test_malformed_legacy_rating_is_rejected_not_defaulted() -> None:
+    payload = {
+        "code": "BAD",
+        "name": "Bad Legacy",
+        "region": "TEST",
+        "population": 5_000_000,
+        "wealth_support": "not-a-rating",
+        "squash_popularity": 3,
+        "squash_tradition": 3,
+        "system_quality": 3,
+    }
+
+    with pytest.raises(ValidationError) as exc:
+        Country.model_validate(payload)
+
+    assert "squash_access" in str(exc.value)
 
 
 def test_participation_pool_depends_on_popularity_and_access_only() -> None:

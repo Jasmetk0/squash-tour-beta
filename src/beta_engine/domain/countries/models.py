@@ -49,31 +49,41 @@ class Country(BaseModel):
 
         The mapping is intentionally simple and deterministic. It is a storage
         migration bridge, not a claim that the old concepts are semantically
-        identical to the new V1 attributes. Invalid legacy ratings stay invalid
-        instead of being silently clamped into the authored 1..5 contract.
+        identical to the new V1 attributes. It only supplies a V1 field when an
+        actual legacy source exists; missing authored V1 fields are never silently
+        invented, and malformed/out-of-range legacy ratings remain invalid.
         """
 
         if not isinstance(value, dict):
             return value
         data = dict(value)
+        missing = object()
 
-        def legacy_rating(name: str, fallback: int = 3) -> int:
-            raw = data.get(name, fallback)
-            try:
-                return int(round(float(raw)))
-            except (TypeError, ValueError):
-                return fallback
+        def legacy_rating(*names: str) -> object:
+            for name in names:
+                if name not in data:
+                    continue
+                raw = data[name]
+                try:
+                    return int(round(float(raw)))
+                except (TypeError, ValueError):
+                    # Preserve malformed input so the canonical 1..5 field
+                    # validation rejects it instead of manufacturing a default.
+                    return raw
+            return missing
 
-        data.setdefault("squash_access", legacy_rating("wealth_support"))
-        data.setdefault("development_quality", legacy_rating("system_quality"))
-        data.setdefault(
-            "competition_quality",
-            legacy_rating("competition_density", legacy_rating("system_quality")),
+        mappings: tuple[tuple[str, tuple[str, ...]], ...] = (
+            ("squash_access", ("wealth_support",)),
+            ("development_quality", ("system_quality",)),
+            ("competition_quality", ("competition_density", "system_quality")),
+            ("elite_support", ("federation_quality", "wealth_support")),
         )
-        data.setdefault(
-            "elite_support",
-            legacy_rating("federation_quality", legacy_rating("wealth_support")),
-        )
+        for target, sources in mappings:
+            if target in data:
+                continue
+            migrated = legacy_rating(*sources)
+            if migrated is not missing:
+                data[target] = migrated
 
         # These fields belonged to the superseded country model. style_dna is
         # explicitly deferred beyond V1 rather than being silently retained.

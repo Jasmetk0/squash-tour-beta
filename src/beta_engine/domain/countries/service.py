@@ -17,7 +17,7 @@ class CountryTalentModel:
 
     # Calibration only. Country V1 requires diminishing population returns but
     # deliberately leaves the exact curve open for later simulation tuning.
-    POPULATION_DIMINISHING_EXPONENT = 0.40
+    POPULATION_DIMINISHING_EXPONENT = 0.38
 
     def population_factor(self, country: Country) -> float:
         """Legacy-safe nonlinear population context used by old generators."""

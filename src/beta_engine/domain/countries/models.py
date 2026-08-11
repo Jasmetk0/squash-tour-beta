@@ -13,7 +13,7 @@ class Country(BaseModel):
     """Canonical editable country profile used by deterministic simulation.
 
     V1 deliberately separates factual country data from six authored squash-system
-    ratings.  Legacy country payloads are accepted at the loading boundary so
+    ratings. Legacy country payloads are accepted at the loading boundary so
     existing World Packages remain readable, but legacy factor names are not part
     of the serialized/public country model.
     """
@@ -34,7 +34,7 @@ class Country(BaseModel):
     travel_region: str | None = None
     notes: str | None = None
 
-    # Country Game Attributes V1.  All six are authored integer ratings 1..5.
+    # Country Game Attributes V1. All six are authored integer ratings 1..5.
     squash_popularity: CountrySimFactor
     squash_access: CountrySimFactor
     development_quality: CountrySimFactor
@@ -45,11 +45,12 @@ class Country(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def migrate_legacy_factor_names(cls, value: Any) -> Any:
-        """Read legacy country payloads without keeping the old model alive.
+        """Read valid legacy country payloads without keeping the old model alive.
 
-        The mapping is intentionally simple and deterministic.  It is a storage
+        The mapping is intentionally simple and deterministic. It is a storage
         migration bridge, not a claim that the old concepts are semantically
-        identical to the new V1 attributes.
+        identical to the new V1 attributes. Invalid legacy ratings stay invalid
+        instead of being silently clamped into the authored 1..5 contract.
         """
 
         if not isinstance(value, dict):
@@ -59,10 +60,9 @@ class Country(BaseModel):
         def legacy_rating(name: str, fallback: int = 3) -> int:
             raw = data.get(name, fallback)
             try:
-                numeric = int(round(float(raw)))
+                return int(round(float(raw)))
             except (TypeError, ValueError):
-                numeric = fallback
-            return max(1, min(5, numeric))
+                return fallback
 
         data.setdefault("squash_access", legacy_rating("wealth_support"))
         data.setdefault("development_quality", legacy_rating("system_quality"))
@@ -75,7 +75,7 @@ class Country(BaseModel):
             legacy_rating("federation_quality", legacy_rating("wealth_support")),
         )
 
-        # These fields belonged to the superseded country model.  style_dna is
+        # These fields belonged to the superseded country model. style_dna is
         # explicitly deferred beyond V1 rather than being silently retained.
         for legacy_name in (
             "wealth_support",

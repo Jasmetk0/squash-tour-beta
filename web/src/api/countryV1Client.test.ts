@@ -54,12 +54,33 @@ beforeEach(() => {
 })
 
 describe('countryV1Client', () => {
-  it('delegates list and detail reads to the established World Package client', async () => {
-    await getWorldPackageCountriesV1('my world')
+  it('delegates reads and canonicalizes legacy list records as well as detail records', async () => {
+    client.getWorldPackageCountries.mockResolvedValueOnce({
+      countries: [{
+        ...canonicalCountry,
+        squash_access: undefined,
+        development_quality: undefined,
+        competition_quality: undefined,
+        elite_support: undefined,
+        wealth_support: 3,
+        system_quality: 5,
+        competition_density: 2.5,
+        federation_quality: 2,
+      }],
+    })
+
+    const list = await getWorldPackageCountriesV1('my world')
     await getWorldPackageCountryV1('my world', 'A B')
 
     expect(client.getWorldPackageCountries).toHaveBeenCalledWith('my world')
     expect(client.getWorldPackageCountry).toHaveBeenCalledWith('my world', 'A B')
+    expect(list.countries[0]).toMatchObject({
+      squash_access: 3,
+      development_quality: 5,
+      competition_quality: 2.5,
+      elite_support: 2,
+    })
+    expect(list.countries[0]).not.toHaveProperty('competition_density')
   })
 
   it('normalizes the pre-V1 read bridge immediately into canonical V1 fields', () => {
@@ -71,7 +92,7 @@ describe('countryV1Client', () => {
       elite_support: undefined,
       wealth_support: 3,
       system_quality: 5,
-      competition_density: 4,
+      competition_density: 2.5,
       federation_quality: 2,
       style_dna: { attacking: 1 },
     })
@@ -80,7 +101,7 @@ describe('countryV1Client', () => {
       squash_popularity: 4,
       squash_access: 3,
       development_quality: 5,
-      competition_quality: 4,
+      competition_quality: 2.5,
       elite_support: 2,
       squash_tradition: 3,
     })
@@ -95,12 +116,12 @@ describe('countryV1Client', () => {
     }
   })
 
-  it('rejects malformed legacy ratings instead of silently clamping or inventing V1 values', () => {
+  it('rejects malformed or out-of-range legacy ratings instead of silently clamping them', () => {
     expect(() => normalizeCountryV1Read({
       ...canonicalCountry,
       competition_quality: undefined,
-      competition_density: 2.5,
-    })).toThrow('competition_quality must be an integer from 1 to 5')
+      competition_density: 5.5,
+    })).toThrow('competition_quality must be a number from 1 to 5')
   })
 
   it('passes only the canonical Country V1 create payload to the shared client', async () => {
@@ -115,7 +136,7 @@ describe('countryV1Client', () => {
       squash_popularity: 4,
       squash_access: 3,
       development_quality: 5,
-      competition_quality: 4,
+      competition_quality: 4.5,
       elite_support: 2,
       squash_tradition: 3,
       population_by_year: { '2020': 1_000_000 },
@@ -141,12 +162,12 @@ describe('countryV1Client', () => {
       region: 'EUR',
       travel_region: null,
       court_count: null,
-      squash_popularity: 3 as const,
-      squash_access: 3 as const,
-      development_quality: 3 as const,
-      competition_quality: 3 as const,
-      elite_support: 3 as const,
-      squash_tradition: 3 as const,
+      squash_popularity: 3,
+      squash_access: 3,
+      development_quality: 3,
+      competition_quality: 3.25,
+      elite_support: 3,
+      squash_tradition: 3,
     }
     const populationPayload = {
       values_by_year: { '2020': 1_000_000 },

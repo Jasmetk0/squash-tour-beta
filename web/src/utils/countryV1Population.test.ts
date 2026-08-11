@@ -26,19 +26,19 @@ describe('countryV1PopulationPayloadFromRows', () => {
     expect(() => countryV1PopulationPayloadFromRows([
       { year: '2020', population: '1000000' },
       { year: '2020', population: '1100000' },
-    ])).toThrow('Population year 2020 is already authored')
+    ])).toThrow('Year 2020 is already authored.')
   })
 
   it('rejects years outside the supported 1955–2050 range', () => {
     expect(() => countryV1PopulationPayloadFromRows([
       { year: '1954', population: '1000000' },
       { year: '2020', population: '1000000' },
-    ])).toThrow('Population year must be between 1955 and 2050')
+    ])).toThrow('Population year must be from 1955 to 2050')
 
     expect(() => countryV1PopulationPayloadFromRows([
       { year: '2020', population: '1000000' },
       { year: '2051', population: '1000000' },
-    ])).toThrow('Population year must be between 1955 and 2050')
+    ])).toThrow('Population year must be from 1955 to 2050')
   })
 
   it('rejects zero, negative, and fractional population values', () => {

@@ -1,10 +1,17 @@
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
-import type { CountryV1Record, WorldPackageCountryV1Detail } from '../api/countryV1'
-import { getWorldPackageCountryV1 } from '../api/countryV1Client'
+import { getWorldPackageGeography } from '../api/client'
+import type {
+  CountryV1Record,
+  WorldPackageCountryV1Detail,
+  WorldPackageCountryV1UpdatePayload,
+} from '../api/countryV1'
+import { getWorldPackageCountryV1, updateWorldPackageCountryV1 } from '../api/countryV1Client'
 import { SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
+import { CountryV1EditForm } from './WorldPackageCountryEditV1Form'
 
 function formatNumber(value: number | null | undefined): string {
   return value === null || value === undefined ? '—' : value.toLocaleString()
@@ -91,6 +98,10 @@ export function CountryV1ReadOnlyDetail({ detail }: { detail: WorldPackageCountr
 
 export function WorldPackageCountryDetailV1Page(): JSX.Element {
   const { worldId = '', countryCode = '' } = useParams()
+  const queryClient = useQueryClient()
+  const [editing, setEditing] = useState(false)
+  const [success, setSuccess] = useState('')
+
   const query = useQuery({
     queryKey: ['world-package-country', worldId, countryCode],
     queryFn: () => getWorldPackageCountryV1(worldId, countryCode),
@@ -99,6 +110,35 @@ export function WorldPackageCountryDetailV1Page(): JSX.Element {
   })
 
   const detail = query.data
+  const canEdit = detail?.package.type === 'custom'
+    && detail.package.source === 'custom_config'
+    && detail.package.editable
+
+  const geographyQuery = useQuery({
+    queryKey: ['world-package-geography', worldId],
+    queryFn: () => getWorldPackageGeography(worldId),
+    enabled: Boolean(worldId && canEdit),
+    retry: false,
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: (payload: WorldPackageCountryV1UpdatePayload) =>
+      updateWorldPackageCountryV1(worldId, countryCode, payload),
+    onSuccess: async (response) => {
+      queryClient.setQueryData(
+        ['world-package-country', worldId, countryCode],
+        response.country_detail,
+      )
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['world-package-countries', worldId] }),
+        queryClient.invalidateQueries({ queryKey: ['world-package', worldId] }),
+        queryClient.invalidateQueries({ queryKey: ['world-package-validation', worldId] }),
+        queryClient.invalidateQueries({ queryKey: ['world-packages'] }),
+      ])
+      setEditing(false)
+      setSuccess('Country saved.')
+    },
+  })
 
   return (
     <section className="panel">
@@ -113,7 +153,50 @@ export function WorldPackageCountryDetailV1Page(): JSX.Element {
 
       {query.isLoading && <p className="status">Loading country...</p>}
       {query.error && <p className="error">Failed to load country: {formatApiError(query.error)}</p>}
-      {detail && <CountryV1ReadOnlyDetail detail={detail} />}
+
+      {detail && !editing && (
+        <>
+          {canEdit && (
+            <p>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditing(true)
+                  setSuccess('')
+                  updateMutation.reset()
+                }}
+              >
+                Edit country
+              </button>
+            </p>
+          )}
+          {success && <p className="status" role="status">{success}</p>}
+          <CountryV1ReadOnlyDetail detail={detail} />
+        </>
+      )}
+
+      {detail && editing && (
+        <>
+          <div className="page-intro">
+            <h2>{detail.country.name}</h2>
+            <p className="subtitle"><code>{detail.country.code}</code></p>
+          </div>
+          {geographyQuery.error && (
+            <p className="error">Failed to load geography: {formatApiError(geographyQuery.error)}</p>
+          )}
+          <CountryV1EditForm
+            detail={detail}
+            geography={geographyQuery.data}
+            saving={updateMutation.isPending}
+            error={updateMutation.error}
+            onCancel={() => {
+              setEditing(false)
+              updateMutation.reset()
+            }}
+            onSave={(payload) => updateMutation.mutate(payload)}
+          />
+        </>
+      )}
     </section>
   )
 }

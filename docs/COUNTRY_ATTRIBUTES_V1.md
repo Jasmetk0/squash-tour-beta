@@ -41,7 +41,7 @@ These remain factual/configuration data rather than game-strength ratings:
 - `court_count` where known,
 - country identity/name/flag/notes.
 
-`Travel Region` and `Timezone Area` are independent geography layers in Master v44: Travel Region represents coarse physical travel burden, while Timezone Area represents biological time shift / jet-lag topology. They must not be collapsed into one field.
+`Travel Region` and `Timezone Area` are independent geography layers in Master v45: Travel Region represents coarse physical travel burden, while Timezone Area represents biological time shift / jet-lag topology. They must not be collapsed into one field.
 
 The current repository already has Travel Regions but does **not** yet have a Timezone Area registry/assignment layer. That is a known implementation gap, not an open product decision. This Country V1 slice must not fake the missing layer by reusing `region` or `travel_region`; the geography layer is a dedicated immediate follow-up.
 
@@ -101,4 +101,4 @@ This mapping is a deterministic migration bridge only; it does **not** claim sem
 
 Built-in read-only World Packages authored with legacy attribute files remain readable through the compatibility loader. New countries and edited custom-package countries are written only in the canonical V1 attribute format currently supported by the repository.
 
-This avoids a noisy mechanical rewrite of every built-in country while ensuring all new mutable game-attribute data converges to V1. `Timezone Area` remains a required factual geography field from Master v44 and will join canonical package storage when the dedicated Timezone Area geography registry/assignment slice is implemented.
+This avoids a noisy mechanical rewrite of every built-in country while ensuring all new mutable game-attribute data converges to V1. `Timezone Area` remains a required factual geography field from Master v45 and will join canonical package storage when the dedicated Timezone Area geography registry/assignment slice is implemented.

@@ -234,8 +234,12 @@ class SeasonPointAwardsService:
             raise ValueError(f"No active season players found for season '{result_package.season}'. Persist active players before awarding points.")
         active_by_id = {player.player_id: player for player in active_players}
 
-        distribution, distribution_source = self._resolve_point_distribution(result_package)
+        event = self._calendar_event(result_package)
+        unranked = event is not None and event.ranking_status.value == "unranked"
+        distribution, distribution_source = ({}, "calendar_event.unranked") if unranked else self._resolve_point_distribution(result_package)
         warnings = self._foundation_warnings(event_id)
+        if unranked:
+            warnings.append(self._issue("warning", "unranked_edition_no_msa_result", "Unranked Edition records tournament history but creates no MSA points or Best N ranking result", event_id=event_id))
         if distribution_source.startswith("fallback"):
             warnings.append(self._issue("warning", "point_distribution_fallback_used", "fallback event-level point distribution was used", event_id=event_id))
         if result_package.completion_status != "complete":
@@ -249,10 +253,13 @@ class SeasonPointAwardsService:
             if active is None:
                 errors.append(self._issue("error", "active_player_missing", "player in event result is missing from active season players", event_id=event_id, player_id=player_result.player_id))
                 continue
-            if player_result.reached_stage not in distribution:
+            if unranked:
+                points = 0
+            elif player_result.reached_stage not in distribution:
                 errors.append(self._issue("error", "unknown_reached_stage", "reached_stage has no point mapping", event_id=event_id, player_id=player_result.player_id, field="reached_stage"))
                 continue
-            points = max(0, int(distribution[player_result.reached_stage]))
+            else:
+                points = max(0, int(distribution[player_result.reached_stage]))
             player_result_fp = self._fingerprint(player_result.model_dump(mode="json"))
             award_fp = self._fingerprint({
                 "event_id": event_id,
@@ -416,12 +423,13 @@ class SeasonPointAwardsService:
         return result.result_package
 
     def _resolve_point_distribution(self, package: SeasonEventResultPackage) -> tuple[dict[str, int], str]:
-        event = None
-        if self.calendar_service is not None:
-            calendar = self.calendar_service.get_calendar(season=package.season).calendar
-            if calendar is not None:
-                event = next((item for item in calendar.events if item.event_id == package.event_id), None)
+        event = self._calendar_event(package)
         if event is not None:
+            if event.ranking_points_table:
+                source = "calendar_event.ranking_points_table"
+                if event.point_distribution_ref and self._distribution_by_ref(event.point_distribution_ref) is None:
+                    source = "fallback.calendar_event.ranking_points_table"
+                return self._normalize_distribution(event.ranking_points_table), source
             if event.point_distribution is not None:
                 return self._normalize_distribution(event.point_distribution.model_dump(mode="json")), "calendar_event.point_distribution"
             snapshot = event.template_snapshot or {}
@@ -441,6 +449,14 @@ class SeasonPointAwardsService:
                     if resolved is not None:
                         return self._normalize_distribution(resolved), f"point_distribution_ref:{template.point_distribution_ref}"
         return dict(FALLBACK_STAGE_POINTS), "fallback.default_stage_points"
+
+    def _calendar_event(self, package: SeasonEventResultPackage) -> Any | None:
+        if self.calendar_service is None:
+            return None
+        calendar = self.calendar_service.get_calendar(season=package.season).calendar
+        if calendar is None:
+            return None
+        return next((item for item in calendar.events if item.event_id == package.event_id), None)
 
     def _distribution_by_ref(self, ref: str) -> dict[str, int] | None:
         try:

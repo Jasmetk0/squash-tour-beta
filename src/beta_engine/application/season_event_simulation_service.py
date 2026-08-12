@@ -213,6 +213,13 @@ class SeasonEventSimulationService:
                 stop_reason=stop_reason,
             )))
             return self._finish(report, stop_reason or "validation_error")
+        incomplete_ranked = next((reason for reason in event.block_reasons if "Ranked Edition has an incomplete points table" in reason), None)
+        if incomplete_ranked:
+            report.validation_errors.append(incomplete_ranked)
+            report.blocked = True
+            report.can_continue = False
+            steps.append(self._decorate_step(SimulateOneEventStepStatus(step="final_lifecycle", status="blocked", action_detail=incomplete_ranked, fingerprint=preflight.metadata.generated_fingerprint, errors=[incomplete_ranked], lifecycle_stage_before_step=event.current_stage, lifecycle_stage_after_step=event.current_stage, stop_reason="ranked_points_table_incomplete")))
+            return self._finish(report, "ranked_points_table_incomplete")
         if event.is_blocked and not request.allow_blocked:
             msg = "Lifecycle preflight is blocked; resolve blocker or set allow_blocked=true."
             report.validation_errors.append(msg)

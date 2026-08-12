@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
-import { getSeasonCalendar } from '../api/client'
+import { getSeasonCalendar, updateTournamentEditionRanking } from '../api/client'
 import { DetailFieldGrid, DetailList } from '../components/DetailUi'
 import { formatApiError } from '../utils/apiErrors'
 import { safeToCompactSeasonLabel } from '../utils/seasonLabels'
@@ -11,12 +11,18 @@ type Props = {
 }
 
 export function SeasonCalendarPreview({ seasonLabelRaw }: Props): JSX.Element {
+  const queryClient = useQueryClient()
   const compactLabel = seasonLabelRaw ? safeToCompactSeasonLabel(seasonLabelRaw) : null
   const calendarQuery = useQuery({
     queryKey: ['season-detail-calendar-preview', compactLabel],
     queryFn: () => getSeasonCalendar(compactLabel ?? ''),
     enabled: Boolean(compactLabel),
     retry: false
+  })
+  const rankingMutation = useMutation({
+    mutationFn: ({ eventId, status, table }: { eventId: string; status: 'ranked' | 'unranked'; table: Record<string, unknown> }) =>
+      updateTournamentEditionRanking(compactLabel ?? '', eventId, { ranking_status: status, ranking_points_table: table }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['season-detail-calendar-preview', compactLabel] })
   })
 
   if (!compactLabel) {
@@ -65,6 +71,7 @@ export function SeasonCalendarPreview({ seasonLabelRaw }: Props): JSX.Element {
               <th>Region</th>
               <th>Source template / template id</th>
               <th>Status</th>
+              <th>Ranking status</th>
             </tr>
           </thead>
           <tbody>
@@ -77,6 +84,24 @@ export function SeasonCalendarPreview({ seasonLabelRaw }: Props): JSX.Element {
                 <td>{event.region ?? '—'}</td>
                 <td>{event.template_id ?? '—'}</td>
                 <td>{event.status ?? '—'}</td>
+                <td>
+                  <label>
+                    <span className="sr-only">Ranking status for {event.event_name}</span>
+                    <select
+                      aria-label={`Ranking status for ${event.event_name}`}
+                      value={event.ranking_status}
+                      disabled={event.status !== 'planned' || rankingMutation.isPending}
+                      onChange={(change) => rankingMutation.mutate({ eventId: event.event_id, status: change.target.value as 'ranked' | 'unranked', table: event.ranking_points_table })}
+                    >
+                      <option value="ranked">Ranked</option>
+                      <option value="unranked">Unranked</option>
+                    </select>
+                  </label>
+                  {event.ranking_status === 'ranked' ? (
+                    event.points_table_complete ? <p>Points table complete.</p> : <p className="error">Points table incomplete. Publication and simulation are blocked. Missing: {event.missing_required_point_stages.join(', ')}</p>
+                  ) : <p>Unranked: awards no MSA points or Best N result; matches and tournament history are still recorded.</p>}
+                  {event.ranking_status === 'ranked' ? <details><summary>Effective points table</summary><pre>{JSON.stringify(event.ranking_points_table, null, 2)}</pre></details> : null}
+                </td>
               </tr>
             ))}
           </tbody>

@@ -170,6 +170,9 @@ class SeasonEventLifecycleService:
         warnings: list[str] = []
         errors: list[str] = []
         block_reasons: list[str] = []
+        if event.ranking_status.value == "ranked" and not event.points_table_complete:
+            missing = ", ".join(event.missing_required_point_stages)
+            block_reasons.append(f"Ranked Edition has an incomplete points table; missing required stages: {missing}")
         for label, artifact in [("entries", entries), ("draw", draw), ("matches", matches), ("results", results), ("point_awards", point_awards), ("ranking_snapshot", ranking_snapshot)]:
             if artifact.validation_error_count:
                 block_reasons.append(f"{label} artifact has {artifact.validation_error_count} validation error(s)")

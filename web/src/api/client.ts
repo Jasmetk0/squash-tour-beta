@@ -138,6 +138,7 @@ import type {
   SeasonBootstrapPayload,
   SeasonCalendarBuildPayload,
   SeasonCalendarBuildResponse,
+  SeasonCalendarEvent,
   SeasonBootstrapResponse,
   EntryListGeneratePayload,
   DrawGeneratePayload,
@@ -420,6 +421,10 @@ export function bootstrapSeasonFromInitialPool(season: string, payload: SeasonBo
 
 export function getSeasonCalendar(season: string): Promise<SeasonCalendarBuildResponse> {
   return request(`/admin/seasons/${encodeURIComponent(season)}/calendar`)
+}
+
+export function updateTournamentEditionRanking(season: string, eventId: string, payload: { ranking_status: 'ranked' | 'unranked'; ranking_points_table: Record<string, unknown> }): Promise<SeasonCalendarEvent> {
+  return request(`/admin/seasons/${encodeURIComponent(season)}/calendar/events/${encodeURIComponent(eventId)}/ranking`, { method: 'PATCH', body: JSON.stringify(payload) })
 }
 
 export function getSeasonCalendarValidation(season: string): Promise<SeasonCalendarValidationResponse> {

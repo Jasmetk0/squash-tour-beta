@@ -32,6 +32,7 @@ from beta_engine.domain.tournaments.models import (
     SeasonCalendarValidationSummary,
     TournamentTemplate,
 )
+from beta_engine.infrastructure.points_config import load_points_config
 
 SEASON_CALENDAR_VALIDATION_ISSUE_CODES: tuple[SeasonCalendarValidationIssueCodeMetadata, ...] = (
     SeasonCalendarValidationIssueCodeMetadata(code="calendar_missing", severity="warning", title="Calendar missing", description="No persisted season calendar exists for the requested season."),
@@ -68,6 +69,11 @@ class SeasonCalendarRegistry(BaseModel):
 
 class SeasonCalendarAlreadyExistsError(ValueError):
     """Raised when attempting create-only insertion for an existing season calendar."""
+
+
+class TournamentEditionRankingUpdate(BaseModel):
+    ranking_status: str
+    ranking_points_table: dict[str, Any] = Field(default_factory=dict)
 
 
 def map_season_week_to_calendar_week(
@@ -139,6 +145,28 @@ class SeasonCalendarService:
         next_calendars[season] = calendar
         self._save_registry(SeasonCalendarRegistry(calendars_by_season=next_calendars))
         return calendar
+
+    def update_edition_ranking(self, *, season: str, event_id: str, request: TournamentEditionRankingUpdate) -> SeasonCalendarEvent:
+        """Update ranking configuration while an Edition remains an Admin Draft."""
+        registry = self._load_registry()
+        calendar = registry.calendars_by_season.get(season)
+        if calendar is None:
+            raise ValueError(f"No season calendar exists for season '{season}'.")
+        event = next((item for item in calendar.events if item.event_id == event_id), None)
+        if event is None:
+            raise ValueError(f"Unknown Tournament Edition '{event_id}'.")
+        if event.status != "planned":
+            raise ValueError("Ranking status cannot change after competition has begun; retroactive ranking rewrites are not supported.")
+        payload = event.model_dump(exclude_computed_fields=True)
+        payload.update(ranking_status=request.ranking_status, ranking_points_table=dict(request.ranking_points_table), ranking_configuration_legacy=False)
+        # Revalidate enum/input and computed contract before the atomic registry write.
+        updated = SeasonCalendarEvent.model_validate(payload)
+        next_events = [updated if item.event_id == event_id else item for item in calendar.events]
+        next_calendar = calendar.model_copy(update={"events": next_events})
+        next_calendars = dict(registry.calendars_by_season)
+        next_calendars[season] = next_calendar
+        self._save_registry(SeasonCalendarRegistry(calendars_by_season=next_calendars))
+        return updated
 
     def build_calendar(self, *, season: str, request: SeasonCalendarBuildRequest) -> SeasonCalendarBuildResult:
         registry = self._load_registry()
@@ -443,6 +471,10 @@ class SeasonCalendarService:
         offset = seed % step if step > 1 else 0
         events: list[SeasonCalendarEvent] = []
         season_start_year = self._season_start_year(season, fallback=season_start_calendar_year)
+        try:
+            configured_points = load_points_config(Path("config/points/mvp_points.json"))
+        except (OSError, ValueError, json.JSONDecodeError):
+            configured_points = {}
         for index, template in enumerate(templates):
             base_week = 1 + offset + index * step
             season_week = ((base_week - 1) % TOTAL_SEASON_WEEKS) + 1
@@ -457,6 +489,12 @@ class SeasonCalendarService:
             calendar_year, year_week = position.calendar_year, position.year_week
             template_payload = self._template_payload(template)
             template_fingerprint = self._fingerprint(template_payload)
+            authored_points = template.point_distribution.model_dump(mode="json") if template.point_distribution else configured_points.get(template.point_distribution_ref or "", {})
+            edition_points = {{"winner": "champion", "semifinalist": "semifinal", "quarterfinalist": "quarterfinal"}.get(key, key): value for key, value in authored_points.items()}
+            # Preserve the pre-V1 normalizer's deterministic defaults for keys an
+            # older table omitted; the merged copy is now immutable Edition data.
+            legacy_defaults = {"champion": 1000, "finalist": 650, "semifinal": 400, "quarterfinal": 250, "round_of_16": 120, "round_of_32": 60, "round_of_64": 30, "round_of_128": 10, "qualification_winner": 25, "qualification_final": 10, "qualification_semifinal": 5, "qualification_round": 0}
+            edition_points = {**legacy_defaults, **edition_points}
             event_id = f"EVT-{season_start_year}-W{season_week:02d}-{template.template_id}"
             events.append(
                 SeasonCalendarEvent(
@@ -484,6 +522,9 @@ class SeasonCalendarService:
                     byes=template.byes,
                     point_distribution_ref=template.point_distribution_ref,
                     point_distribution=template.point_distribution,
+                    ranking_status="ranked",
+                    ranking_points_table=edition_points,
+                    ranking_configuration_legacy=False,
                     prize_money=template.prize_money,
                     prestige=template.prestige,
                     event_level_overrides={},

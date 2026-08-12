@@ -229,13 +229,12 @@ class SeasonPointAwardsService:
             codes = ", ".join(issue.code for issue in result_package.validation_errors)
             raise ValueError(f"Persisted event result package has validation errors: {codes}")
 
-        active_players = self.active_players_service.get_active_players(season=result_package.season).players
-        if not active_players:
-            raise ValueError(f"No active season players found for season '{result_package.season}'. Persist active players before awarding points.")
-        active_by_id = {player.player_id: player for player in active_players}
-
         event = self._calendar_event(result_package)
         unranked = event is not None and event.ranking_status.value == "unranked"
+        active_players = self.active_players_service.get_active_players(season=result_package.season).players
+        if not active_players and not unranked:
+            raise ValueError(f"No active season players found for season '{result_package.season}'. Persist active players before awarding points.")
+        active_by_id = {player.player_id: player for player in active_players}
         distribution, distribution_source = ({}, "calendar_event.unranked") if unranked else self._resolve_point_distribution(result_package)
         warnings = self._foundation_warnings(event_id)
         if unranked:
@@ -248,14 +247,12 @@ class SeasonPointAwardsService:
         errors: list[MatchValidationIssue] = []
         awards: list[PlayerPointAward] = []
         result_fp = result_package.metadata.build_fingerprint
-        for player_result in result_package.player_results:
+        for player_result in [] if unranked else result_package.player_results:
             active = active_by_id.get(player_result.player_id)
             if active is None:
                 errors.append(self._issue("error", "active_player_missing", "player in event result is missing from active season players", event_id=event_id, player_id=player_result.player_id))
                 continue
-            if unranked:
-                points = 0
-            elif player_result.reached_stage not in distribution:
+            if player_result.reached_stage not in distribution:
                 errors.append(self._issue("error", "unknown_reached_stage", "reached_stage has no point mapping", event_id=event_id, player_id=player_result.player_id, field="reached_stage"))
                 continue
             else:

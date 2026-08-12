@@ -491,10 +491,6 @@ class SeasonCalendarService:
             template_fingerprint = self._fingerprint(template_payload)
             authored_points = template.point_distribution.model_dump(mode="json") if template.point_distribution else configured_points.get(template.point_distribution_ref or "", {})
             edition_points = {{"winner": "champion", "semifinalist": "semifinal", "quarterfinalist": "quarterfinal"}.get(key, key): value for key, value in authored_points.items()}
-            # Preserve the pre-V1 normalizer's deterministic defaults for keys an
-            # older table omitted; the merged copy is now immutable Edition data.
-            legacy_defaults = {"champion": 1000, "finalist": 650, "semifinal": 400, "quarterfinal": 250, "round_of_16": 120, "round_of_32": 60, "round_of_64": 30, "round_of_128": 10, "qualification_winner": 25, "qualification_final": 10, "qualification_semifinal": 5, "qualification_round": 0}
-            edition_points = {**legacy_defaults, **edition_points}
             event_id = f"EVT-{season_start_year}-W{season_week:02d}-{template.template_id}"
             events.append(
                 SeasonCalendarEvent(

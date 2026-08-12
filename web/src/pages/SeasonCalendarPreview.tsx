@@ -1,13 +1,70 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { FormEvent, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { getSeasonCalendar, updateTournamentEditionRanking } from '../api/client'
+import type { SeasonCalendarEvent } from '../api/types'
 import { DetailFieldGrid, DetailList } from '../components/DetailUi'
 import { formatApiError } from '../utils/apiErrors'
 import { safeToCompactSeasonLabel } from '../utils/seasonLabels'
 
 type Props = {
   seasonLabelRaw: string | null
+}
+
+type RankingEditorProps = {
+  event: SeasonCalendarEvent
+  saving: boolean
+  save: (status: 'ranked' | 'unranked', table: Record<string, unknown>) => void
+}
+
+function RankingEditor({ event, saving, save }: RankingEditorProps): JSX.Element {
+  const [status, setStatus] = useState(event.ranking_status)
+  const [values, setValues] = useState<Record<string, string>>({})
+  const editable = event.status === 'planned' && !saving
+
+  useEffect(() => {
+    setStatus(event.ranking_status)
+    setValues(Object.fromEntries(event.required_ranking_point_stages.map((stage) => [stage, event.ranking_points_table[stage]?.toString() ?? ''])))
+  }, [event])
+
+  function submit(change: FormEvent<HTMLFormElement>): void {
+    change.preventDefault()
+    const table = { ...event.ranking_points_table }
+    for (const stage of event.required_ranking_point_stages) {
+      const raw = values[stage]
+      if (raw === '' || !/^\d+$/.test(raw)) delete table[stage]
+      else table[stage] = Number(raw)
+    }
+    save(status, table)
+  }
+
+  return (
+    <form onSubmit={submit}>
+      <label>
+        <span className="sr-only">Ranking status for {event.event_name}</span>
+        <select aria-label={`Ranking status for ${event.event_name}`} value={status} disabled={!editable} onChange={(change) => setStatus(change.target.value as 'ranked' | 'unranked')}>
+          <option value="ranked">Ranked</option>
+          <option value="unranked">Unranked</option>
+        </select>
+      </label>
+      {status === 'ranked' ? (
+        <>
+          {event.points_table_complete ? <p>Points table complete.</p> : <p className="error">Points table incomplete. Publication and simulation are blocked. Missing: {event.missing_required_point_stages.join(', ')}</p>}
+          <fieldset disabled={!editable}>
+            <legend>Required ranking points</legend>
+            {event.required_ranking_point_stages.map((stage) => {
+              const missing = event.missing_required_point_stages.includes(stage)
+              return <label key={stage}>{stage}<input aria-label={`Points for ${stage}`} type="number" min="0" step="1" required value={values[stage] ?? ''} aria-invalid={missing} onChange={(change) => setValues((current) => ({ ...current, [stage]: change.target.value }))} /></label>
+            })}
+          </fieldset>
+          <button type="submit" disabled={!editable}>Save ranking configuration</button>
+        </>
+      ) : (
+        <><p>Unranked: awards no MSA points or Best N result; matches and tournament history are still recorded.</p><button type="submit" disabled={!editable}>Save ranking configuration</button></>
+      )}
+    </form>
+  )
 }
 
 export function SeasonCalendarPreview({ seasonLabelRaw }: Props): JSX.Element {
@@ -85,22 +142,7 @@ export function SeasonCalendarPreview({ seasonLabelRaw }: Props): JSX.Element {
                 <td>{event.template_id ?? '—'}</td>
                 <td>{event.status ?? '—'}</td>
                 <td>
-                  <label>
-                    <span className="sr-only">Ranking status for {event.event_name}</span>
-                    <select
-                      aria-label={`Ranking status for ${event.event_name}`}
-                      value={event.ranking_status}
-                      disabled={event.status !== 'planned' || rankingMutation.isPending}
-                      onChange={(change) => rankingMutation.mutate({ eventId: event.event_id, status: change.target.value as 'ranked' | 'unranked', table: event.ranking_points_table })}
-                    >
-                      <option value="ranked">Ranked</option>
-                      <option value="unranked">Unranked</option>
-                    </select>
-                  </label>
-                  {event.ranking_status === 'ranked' ? (
-                    event.points_table_complete ? <p>Points table complete.</p> : <p className="error">Points table incomplete. Publication and simulation are blocked. Missing: {event.missing_required_point_stages.join(', ')}</p>
-                  ) : <p>Unranked: awards no MSA points or Best N result; matches and tournament history are still recorded.</p>}
-                  {event.ranking_status === 'ranked' ? <details><summary>Effective points table</summary><pre>{JSON.stringify(event.ranking_points_table, null, 2)}</pre></details> : null}
+                  <RankingEditor event={event} saving={rankingMutation.isPending} save={(status, table) => rankingMutation.mutate({ eventId: event.event_id, status, table })} />
                 </td>
               </tr>
             ))}

@@ -6,11 +6,7 @@
       "semifinalist": 1000,
       "quarterfinalist": 520,
       "round_of_16": 270,
-      "round_of_32": 140,
-      "qualification_winner": 25,
-      "qualification_final": 10,
-      "qualification_semifinal": 5,
-      "qualification_round": 0
+      "round_of_32": 140
     },
     "world_tour_gold": {
       "winner": 1400,
@@ -18,11 +14,7 @@
       "semifinalist": 560,
       "quarterfinalist": 290,
       "round_of_16": 150,
-      "round_of_32": 80,
-      "qualification_winner": 25,
-      "qualification_final": 10,
-      "qualification_semifinal": 5,
-      "qualification_round": 0
+      "round_of_32": 80
     },
     "elite_challenger": {
       "winner": 800,
@@ -30,11 +22,7 @@
       "semifinalist": 320,
       "quarterfinalist": 165,
       "round_of_16": 85,
-      "round_of_32": 45,
-      "qualification_winner": 25,
-      "qualification_final": 10,
-      "qualification_semifinal": 5,
-      "qualification_round": 0
+      "round_of_32": 45
     }
   }
 }

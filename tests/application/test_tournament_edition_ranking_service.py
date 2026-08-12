@@ -39,18 +39,56 @@ def test_rejected_edit_after_competition_is_atomic(tmp_path):
         subject.update_edition_ranking(season="2000/01", event_id="evt", request=TournamentEditionRankingUpdate(ranking_status="unranked"))
     assert subject.calendar_registry_path.read_bytes() == before
 
-def test_unranked_awards_no_msa_points_while_result_history_remains(tmp_path):
+def test_unranked_awards_no_msa_points_while_result_history_remains(tmp_path, monkeypatch):
     from beta_engine.application.season_point_awards_service import PointAwardGenerateRequest
+    from beta_engine.application.season_entry_list_service import SeasonEntryListService
+    from beta_engine.domain.tournaments.models import TournamentEditionRankingStatus
     from tests.application.test_season_point_awards_service import make_points_service
 
+    original_generate = SeasonEntryListService.generate_entry_list
+    def generate_as_unranked(self, *, event_id, request):
+        calendar = self.calendar_service._load_registry()
+        for season_calendar in calendar.calendars_by_season.values():
+            for calendar_event in season_calendar.events:
+                if calendar_event.event_id == event_id:
+                    calendar_event.ranking_status = TournamentEditionRankingStatus.UNRANKED
+        self.calendar_service._save_registry(calendar)
+        return original_generate(self, event_id=event_id, request=request)
+    monkeypatch.setattr(SeasonEntryListService, "generate_entry_list", generate_as_unranked)
     points_service, event_id = make_points_service(tmp_path)
     calendar_service = points_service.calendar_service
-    calendar = calendar_service.get_calendar(season="2000/2001").calendar
-    original = next(item for item in calendar.events if item.event_id == event_id)
     calendar_service.update_edition_ranking(season="2000/2001", event_id=event_id, request=TournamentEditionRankingUpdate(ranking_status="unranked", ranking_points_table={}))
     package = points_service.generate_event_point_awards(event_id=event_id, request=PointAwardGenerateRequest(seed=7, dry_run=False)).award_package
     assert package is not None
-    assert package.awards and all(award.ranking_points_awarded == 0 and award.race_points_awarded == 0 for award in package.awards)
+    assert package.awards == []
     assert package.summary.awarded_player_count == 0
+    assert any(issue.code == "unranked_edition_no_msa_result" for issue in package.validation_warnings)
     result = points_service.result_service.get_event_result(event_id=event_id).result_package
     assert result is not None and result.player_results and result.summary.champion_player_id
+
+def test_new_edition_snapshots_only_authored_values_without_fallbacks(tmp_path):
+    from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
+    from beta_engine.domain.tournaments.models import SeasonCalendarBuildRequest
+
+    templates_path = tmp_path / "templates.json"
+    templates_path.write_text(json.dumps({"templates": [{
+        "template_id": "authored", "tour_level": "WORLD_TOUR", "category": "OPEN", "event_name": "Authored",
+        "region": "EUROPE", "host_country": "ENG", "main_draw_size": 8, "qualification_draw_size": 4,
+        "seeds_count": 2, "qualifier_spots": 1, "wild_cards": 0, "byes": 0,
+        "lucky_loser_rules": {"enabled": False, "max_spots": 0},
+        "point_distribution": {"winner": 90, "finalist": 50, "semifinalist": 20, "quarterfinalist": 10},
+        "event_duration_days": 5, "qualification_duration_days": 1
+    }]}), encoding="utf-8")
+    subject = SeasonCalendarService(
+        template_service=TournamentTemplatesConfigService(config_path=templates_path, calendar_dir=tmp_path / "legacy"),
+        calendar_registry_path=tmp_path / "calendars.json",
+    )
+    built = subject.build_calendar(season="2000/2001", request=SeasonCalendarBuildRequest(dry_run=False))
+    built_event = built.calendar.events[0]
+    assert built_event.ranking_points_table == {
+        "champion": 90, "finalist": 50, "semifinal": 20, "quarterfinal": 10,
+        "round_of_16": 0, "round_of_32": 0,
+    }
+    assert "qualification_winner" not in built_event.ranking_points_table
+    assert not built_event.points_table_complete
+    assert built_event.missing_required_point_stages == ["qualification_winner", "qualification_final"]

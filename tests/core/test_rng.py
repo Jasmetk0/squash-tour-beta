@@ -1,3 +1,5 @@
+import pytest
+
 from beta_engine.core import (
     DeterministicRng,
     SeedPath,
@@ -45,6 +47,7 @@ def test_hierarchy_derivation_is_reproducible() -> None:
     ]
 
 
+@pytest.mark.smoke
 def test_branching_rng_uses_deterministic_child_seed() -> None:
     root_a = DeterministicRng(555)
     root_b = DeterministicRng(555)

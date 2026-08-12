@@ -2,9 +2,10 @@ name: Fast CI
 
 on:
   pull_request:
-  push:
-    branches:
-      - main
+
+concurrency:
+  group: fast-ci-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -19,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Fast CI is intentionally a broad smoke subset for faster PR feedback, not full coverage.
+      # Fast CI is intentionally a small smoke suite for fast PR feedback, not full coverage.
       # The separate "Full Test Suite" workflow remains the complete validation safety net.
       - name: Detect changed areas
         id: filter
@@ -47,7 +48,7 @@ jobs:
               - '**/*.md'
 
   backend-tests:
-    name: Backend tests (broad smoke subset)
+    name: Backend smoke
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
@@ -57,18 +58,19 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
+          cache-dependency-path: pyproject.toml
       - name: Install backend dependencies
-        run: pip install -e '.[dev]'
-      - name: Run broad backend subset
+        # Smoke tests need production dependencies and pytest, but not the heavier
+        # dev-only Ruff/httpx extras. The full workflow still installs all dev extras.
+        run: python -m pip install -e . pytest
+      - name: Compile backend source
+        run: python -m compileall -q src
+      - name: Run backend smoke suite
         run: |
-          pytest \
-            tests/test_fax_reference_fixture.py \
-            tests/api \
-            tests/application \
-            tests/domain
+          python -m pytest -m smoke
 
   frontend-checks:
-    name: Frontend build + broad critical tests
+    name: Frontend build + critical tests
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest

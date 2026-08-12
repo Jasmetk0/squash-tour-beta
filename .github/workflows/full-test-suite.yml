@@ -2,8 +2,17 @@ name: Full Test Suite
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - buuk
   schedule:
     - cron: '0 5 * * *'
+
+# Rapid merges to buuk supersede older push runs. Manual and scheduled runs use
+# their unique run IDs, so they neither cancel one another nor a push run.
+concurrency:
+  group: full-tests-${{ github.event_name == 'push' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   backend-full:
@@ -15,10 +24,11 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
+          cache-dependency-path: pyproject.toml
       - name: Install backend dependencies
         run: pip install -e '.[dev]'
       - name: Run full backend suite
-        run: pytest
+        run: pytest --durations=20
 
   frontend-full:
     name: Frontend full tests + build

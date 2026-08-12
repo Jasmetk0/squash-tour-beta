@@ -119,6 +119,7 @@ def test_real_world_timelines_include_large_country_kosovo_and_fallback() -> Non
         assert country.population_by_year[2050] > 0
 
 
+@pytest.mark.smoke
 def test_semantic_fingerprint_ignores_format_and_index_order_but_tracks_attribute(tmp_path: Path) -> None:
     root = tmp_path / "packages"
     shutil.copytree("config/world_packages/official_fax_world", root / "official_fax_world")

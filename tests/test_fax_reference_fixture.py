@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from tests.support.fax_reference import (
     FAX_REFERENCE_V1_SOURCE_TREE_HASH,
     FAX_REFERENCE_VERSION,
@@ -9,6 +11,7 @@ from tests.support.fax_reference import (
 )
 
 
+@pytest.mark.smoke
 def test_fax_reference_is_versioned_deterministic_and_isolated(
     fax_reference_source: FaxReferenceSource,
 ) -> None:
@@ -29,6 +32,7 @@ def test_disposable_fax_source_does_not_mutate_reference(
     assert compute_source_tree_hash(fax_reference_source.root) == before
 
 
+@pytest.mark.smoke
 def test_reference_manifest_covers_typed_country_semantics() -> None:
     assert "world.json" in FAX_SOURCE_FILES
     assert (FAX_REFERENCE_V1_SOURCE_TREE_HASH == compute_source_tree_hash(Path("config/world_packages/official_fax_world")))

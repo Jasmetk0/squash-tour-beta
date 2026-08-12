@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 from dataclasses import replace
 
+import pytest
+
 from sqlalchemy import inspect
 
 from beta_engine.application.api_services import SimulationApiService
@@ -23,6 +25,7 @@ def _repository(tmp_path) -> SimulationPersistenceRepository:
     return SimulationPersistenceRepository(engine=engine, session_factory=create_session_factory(engine))
 
 
+@pytest.mark.smoke
 def test_initial_checkpoint_is_capture_only_idempotent_and_hash_verified(tmp_path) -> None:
     repository = _repository(tmp_path)
     service = SimulationApiService(repository=repository)

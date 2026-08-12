@@ -23,6 +23,7 @@ def _v1_country(**overrides: object) -> Country:
     return Country.model_validate(payload)
 
 
+@pytest.mark.smoke
 def test_country_v1_serializes_only_six_game_attributes() -> None:
     country = _v1_country(court_count=42)
     payload = country.model_dump(mode="json")
@@ -42,6 +43,7 @@ def test_country_v1_serializes_only_six_game_attributes() -> None:
     assert payload["court_count"] == 42
 
 
+@pytest.mark.smoke
 def test_country_v1_requires_all_six_authored_ratings_without_legacy_source() -> None:
     payload = _v1_country().model_dump(mode="python")
     payload.pop("elite_support")

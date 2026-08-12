@@ -4,6 +4,8 @@ import json
 import shutil
 from pathlib import Path
 
+import pytest
+
 from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
@@ -20,6 +22,7 @@ def _validation_service(world_packages_root: Path) -> WorldPackageValidationServ
     return WorldPackageValidationService(registry_service=registry)
 
 
+@pytest.mark.smoke
 def test_real_world_is_read_only_and_has_complete_population_through_2050() -> None:
     registry = WorldPackageRegistryService(
         countries_service=CountriesConfigService(),

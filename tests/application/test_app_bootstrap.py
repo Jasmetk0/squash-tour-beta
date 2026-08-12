@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 import importlib
 
+import pytest
+
 import beta_engine.main as main_module
 from beta_engine.main import create_app
 
@@ -22,6 +24,7 @@ def test_create_app_does_not_build_runtime_during_construction(monkeypatch) -> N
     assert not hasattr(app.state, "runtime")
 
 
+@pytest.mark.smoke
 def test_create_app_builds_runtime_on_startup_with_passed_database_url(monkeypatch) -> None:
     build_calls: list[str | None] = []
     sentinel_runtime = object()

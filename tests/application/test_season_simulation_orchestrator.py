@@ -1,6 +1,8 @@
 from __future__ import annotations
 from tests.support.world_packages import load_fax_reference_countries
 
+import pytest
+
 from beta_engine.application import SeasonSimulationOrchestrator
 from beta_engine.core import DeterministicRng, SeedScope
 from beta_engine.domain.entries import AcceptanceStatus, EntryTarget
@@ -40,6 +42,7 @@ def _orchestrator(seed: int = 6060) -> SeasonSimulationOrchestrator:
     )
 
 
+@pytest.mark.smoke
 def test_same_seed_and_inputs_produce_same_full_season_output() -> None:
     orchestrator_a = _orchestrator(seed=7001)
     orchestrator_b = _orchestrator(seed=7001)

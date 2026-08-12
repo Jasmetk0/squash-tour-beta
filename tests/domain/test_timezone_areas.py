@@ -4,11 +4,13 @@ from beta_engine.domain.timezone_areas import RingDirection, TimezoneArea, circu
 def areas(count: int):
     return [TimezoneArea(code=f"A{i}", name=f"Area {i}", position=i) for i in range(count)]
 
+@pytest.mark.smoke
 @pytest.mark.parametrize("count", [1, 3, 4, 7])
 def test_arbitrary_counts_have_deterministic_position_order(count):
     expected=areas(count)
     assert validate_timezone_areas(list(reversed(expected))) == expected
 
+@pytest.mark.smoke
 def test_first_and_last_are_adjacent_in_both_directions():
     ring=areas(5)
     assert circular_displacement(ring,"A0","A4").model_dump()=={"transitions":1,"direction":RingDirection.BACKWARD}

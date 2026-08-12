@@ -303,6 +303,7 @@ def test_admin_late_replacement_actions_are_append_only_and_replayable(tmp_path)
     ]
 
 
+@pytest.mark.smoke
 def test_simulation_step_state_can_be_saved_and_reloaded(tmp_path) -> None:
     orchestrator = _orchestrator(seed=8801)
     first_step = orchestrator.simulate_next_week(state=orchestrator.initialize_state())

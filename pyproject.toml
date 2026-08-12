@@ -34,3 +34,6 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+markers = [
+  "smoke: small, high-value catastrophic-regression suite for pull-request feedback",
+]

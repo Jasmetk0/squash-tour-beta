@@ -48,3 +48,13 @@ describe('Tournament Edition ranking controls', () => {
     expect(screen.getByRole('button', { name: 'Save ranking configuration' })).toBeDisabled()
   })
 })
+
+it('normalizes a legacy-shaped event without manufacturing point values', async () => {
+  const legacy = { ...rankingEvent(false) } as Record<string, unknown>
+  for (const field of ['ranking_status', 'ranking_points_table', 'ranking_configuration_legacy', 'required_ranking_point_stages', 'missing_required_point_stages', 'points_table_complete']) delete legacy[field]
+  api.getSeasonCalendar.mockResolvedValue(response(legacy as ReturnType<typeof rankingEvent>))
+  renderWithRoute(<SeasonCalendarPreview seasonLabelRaw="2000/01" />, '/')
+  expect(await screen.findByRole('combobox', { name: 'Ranking status for Ranked event' })).toHaveValue('ranked')
+  expect(screen.queryAllByRole('spinbutton')).toHaveLength(0)
+  expect(screen.getByText('Points table complete.')).toBeInTheDocument()
+})

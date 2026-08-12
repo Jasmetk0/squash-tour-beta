@@ -475,7 +475,7 @@ def get_season_calendar(
     return service.get_calendar(season=normalize_season_for_legacy_services(season))
 
 
-@router.patch("/{season}/calendar/events/{event_id}/ranking", response_model=SeasonCalendarEvent)
+@router.patch("/{season:path}/calendar/events/{event_id}/ranking", response_model=SeasonCalendarEvent)
 def update_tournament_edition_ranking(season: str, event_id: str, payload: TournamentEditionRankingUpdate, service: SeasonCalendarService = Depends(get_season_calendar_service), lifecycle_service: SeasonEventLifecycleService = Depends(get_season_event_lifecycle_service)) -> SeasonCalendarEvent:
     try:
         lifecycle = lifecycle_service.get_event_lifecycle(event_id=event_id).event

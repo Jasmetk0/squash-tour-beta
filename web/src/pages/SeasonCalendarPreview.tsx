@@ -18,6 +18,22 @@ type RankingEditorProps = {
   save: (status: 'ranked' | 'unranked', table: Record<string, unknown>) => void
 }
 
+type RankingFields = 'ranking_status' | 'ranking_points_table' | 'ranking_configuration_legacy' |
+  'required_ranking_point_stages' | 'missing_required_point_stages' | 'points_table_complete'
+type LegacySeasonCalendarEvent = Omit<SeasonCalendarEvent, RankingFields> & Partial<Pick<SeasonCalendarEvent, RankingFields>>
+
+export function normalizeEditionRanking(event: LegacySeasonCalendarEvent): SeasonCalendarEvent {
+  return {
+    ...event,
+    ranking_status: event.ranking_status ?? 'ranked',
+    ranking_points_table: event.ranking_points_table ?? {},
+    ranking_configuration_legacy: event.ranking_configuration_legacy ?? true,
+    required_ranking_point_stages: event.required_ranking_point_stages ?? [],
+    missing_required_point_stages: event.missing_required_point_stages ?? [],
+    points_table_complete: event.points_table_complete ?? true
+  }
+}
+
 function RankingEditor({ event, saving, save }: RankingEditorProps): JSX.Element {
   const [status, setStatus] = useState(event.ranking_status)
   const [values, setValues] = useState<Record<string, string>>({})
@@ -98,7 +114,7 @@ export function SeasonCalendarPreview({ seasonLabelRaw }: Props): JSX.Element {
     return <p className="status">No calendar exists yet for this season.</p>
   }
 
-  const events = calendar.events ?? []
+  const events = (calendar.events ?? []).map((event) => normalizeEditionRanking(event))
   const firstTenEvents = events.slice(0, 10)
   const distinctCategories = Array.from(new Set(events.map((event) => event.category).filter(Boolean)))
   const distinctHosts = Array.from(new Set(events.map((event) => event.host_country).filter(Boolean)))

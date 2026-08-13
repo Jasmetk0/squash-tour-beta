@@ -43,7 +43,7 @@ def test_first_season_baseline_and_copy_semantics(tmp_path):
     copied = next(row for row in second.categories if row.category == "PLATINUM")
     assert copied.ranking_points_table == platinum.ranking_points_table
     assert copied.provenance == "prefilled_from_previous_season"
-    assert copied.source_season == "2000/01"
+    assert copied.source_season == "2000/2001"
     subject.update("2001/02", "PLATINUM", {"champion": 1200, "finalist": 0})
     assert subject.resolve_table("2000/01", "PLATINUM")["champion"] == 2500
     subject.update("2000/01", "PLATINUM", {"champion": 999})

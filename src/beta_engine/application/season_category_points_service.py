@@ -10,7 +10,11 @@ from tempfile import NamedTemporaryFile
 from pydantic import BaseModel, Field
 
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
-from beta_engine.domain.calendar import parse_season_start_year
+from beta_engine.domain.calendar.season_labels import (
+    long_season_label_from_start_year,
+    season_start_year_from_label,
+    to_long_season_label,
+)
 from beta_engine.infrastructure.points_config import load_points_config, normalize_ranking_points_table
 
 
@@ -43,10 +47,12 @@ class SeasonCategoryPointsService:
         self.baseline_points_path = Path(self.baseline_points_path)
 
     def get(self, season: str) -> SeasonCategoryPointsResponse:
+        season = self._canonical_season(season)
         rows = self._load().seasons.get(season)
         return SeasonCategoryPointsResponse(season=season, initialized=rows is not None, categories=rows or [])
 
     def initialize(self, season: str) -> SeasonCategoryPointsResponse:
+        season = self._canonical_season(season)
         registry = self._load()
         if season in registry.seasons:
             return self.get(season)
@@ -57,6 +63,7 @@ class SeasonCategoryPointsService:
 
     def preview_initialization(self, season: str, *, registry: SeasonCategoryPointsRegistry | None = None) -> SeasonCategoryPointsResponse:
         """Resolve the exact initialization candidate without writing authoritative state."""
+        season = self._canonical_season(season)
         registry = registry or self._load()
         if season in registry.seasons:
             return SeasonCategoryPointsResponse(season=season, initialized=True, categories=registry.seasons[season])
@@ -75,6 +82,7 @@ class SeasonCategoryPointsService:
         return SeasonCategoryPointsResponse(season=season, initialized=True, categories=rows)
 
     def update(self, season: str, category: str, table: dict[str, object]) -> SeasonCategoryPointsTable:
+        season = self._canonical_season(season)
         registry = self._load()
         rows = registry.seasons.get(season)
         if rows is None:
@@ -88,6 +96,7 @@ class SeasonCategoryPointsService:
         return replacement
 
     def resolve_table(self, season: str, category: str) -> dict[str, int] | None:
+        season = self._canonical_season(season)
         rows = self._load().seasons.get(season)
         if rows is None:
             return None
@@ -112,13 +121,30 @@ class SeasonCategoryPointsService:
 
     @staticmethod
     def _previous_season(season: str) -> str:
-        year = parse_season_start_year(season)
-        return f"{year - 1:04d}/{year % 100:02d}"
+        return long_season_label_from_start_year(season_start_year_from_label(season) - 1)
+
+    @staticmethod
+    def _canonical_season(season: str) -> str:
+        """Use the current file-backed calendar boundary's long Season key."""
+        return to_long_season_label(season)
 
     def _load(self) -> SeasonCategoryPointsRegistry:
         if not self.registry_path.exists():
             return SeasonCategoryPointsRegistry()
-        return SeasonCategoryPointsRegistry.model_validate_json(self.registry_path.read_text(encoding="utf-8"))
+        loaded = SeasonCategoryPointsRegistry.model_validate_json(self.registry_path.read_text(encoding="utf-8"))
+        canonical: dict[str, list[SeasonCategoryPointsTable]] = {}
+        for raw_season, rows in loaded.seasons.items():
+            season = self._canonical_season(raw_season)
+            if season in canonical:
+                raise ValueError(f"duplicate Season Category points registry aliases resolve to '{season}'")
+            canonical[season] = [
+                row.model_copy(update={
+                    "season": season,
+                    "source_season": self._canonical_season(row.source_season) if row.source_season else None,
+                })
+                for row in rows
+            ]
+        return SeasonCategoryPointsRegistry(seasons=canonical)
 
     def _save(self, registry: SeasonCategoryPointsRegistry) -> None:
         self.registry_path.parent.mkdir(parents=True, exist_ok=True)

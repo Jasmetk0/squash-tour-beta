@@ -50,6 +50,16 @@ class SeasonCategoryPointsService:
         registry = self._load()
         if season in registry.seasons:
             return self.get(season)
+        response = self.preview_initialization(season, registry=registry)
+        updated = SeasonCategoryPointsRegistry(seasons={**registry.seasons, season: response.categories})
+        self._save(updated)
+        return response
+
+    def preview_initialization(self, season: str, *, registry: SeasonCategoryPointsRegistry | None = None) -> SeasonCategoryPointsResponse:
+        """Resolve the exact initialization candidate without writing authoritative state."""
+        registry = registry or self._load()
+        if season in registry.seasons:
+            return SeasonCategoryPointsResponse(season=season, initialized=True, categories=registry.seasons[season])
         previous = self._previous_season(season)
         previous_by_category = {row.category: row for row in registry.seasons.get(previous, [])}
         baselines = self._baseline_by_category()
@@ -62,9 +72,6 @@ class SeasonCategoryPointsService:
                 table = dict(baselines.get(category, {}))
                 provenance, source = "seeded_from_baseline", None
             rows.append(SeasonCategoryPointsTable(season=season, category=category, ranking_points_table=table, provenance=provenance, source_season=source))
-        # Models and all tables are validated before the one atomic registry replacement.
-        updated = SeasonCategoryPointsRegistry(seasons={**registry.seasons, season: rows})
-        self._save(updated)
         return SeasonCategoryPointsResponse(season=season, initialized=True, categories=rows)
 
     def update(self, season: str, category: str, table: dict[str, object]) -> SeasonCategoryPointsTable:

@@ -19,6 +19,8 @@ it('renders provenance and saves explicit zero while blank stays missing', async
   expect(screen.getByText(/2000\/01/)).toBeInTheDocument()
   const champion = screen.getByRole('spinbutton', { name: 'PLATINUM champion' })
   const finalist = screen.getByRole('spinbutton', { name: 'PLATINUM finalist' })
+  expect(screen.getByRole('spinbutton', { name: 'PLATINUM round_of_64' })).toBeInTheDocument()
+  expect(screen.getByRole('spinbutton', { name: 'PLATINUM round_of_128' })).toBeInTheDocument()
   await userEvent.clear(champion)
   await userEvent.type(champion, '0')
   await userEvent.clear(finalist)

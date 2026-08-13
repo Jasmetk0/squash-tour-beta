@@ -24,6 +24,10 @@ def test_validation_preserves_zero_missing_and_normalizes_legacy_keys():
     for invalid in (True, -1, 1.5, "2"):
         with pytest.raises(ValueError):
             normalize_ranking_points_table({"winner": invalid})
+    with pytest.raises(ValueError, match="unknown ranking point stage"):
+        normalize_ranking_points_table({"champoin": 1})
+    with pytest.raises(ValueError, match="authored more than once"):
+        normalize_ranking_points_table({"winner": 1, "champion": 2})
 
 
 def test_first_season_baseline_and_copy_semantics(tmp_path):
@@ -73,3 +77,48 @@ def test_editions_snapshot_target_season_not_previous_edition(tmp_path):
     after = calendars.build_calendar(season="2001/02", request=request.model_copy(update={"overwrite_existing": True})).calendar.events[0]
     assert after.ranking_points_table == {"champion": 1300}
     assert not after.points_table_complete
+
+
+def test_dry_run_uses_initialization_candidate_without_mutation(tmp_path):
+    points = service(tmp_path)
+    calendar_path = tmp_path / "calendars.json"
+    calendars = SeasonCalendarService(TournamentTemplatesConfigService(), calendar_path, points)
+    result = calendars.build_calendar(season="2000/01", request=SeasonCalendarBuildRequest(seed=1, dry_run=True, max_events=1))
+    event = result.calendar.events[0]
+    candidate = points.preview_initialization("2000/01")
+    expected = next(row.ranking_points_table for row in candidate.categories if row.category == event.category)
+    assert event.ranking_points_table == expected
+    assert not points.registry_path.exists()
+    assert not calendar_path.exists()
+
+
+def test_persisted_build_initializes_authority_and_ignores_changed_baseline(tmp_path):
+    points = service(tmp_path)
+    calendars = SeasonCalendarService(TournamentTemplatesConfigService(), tmp_path / "calendars.json", points)
+    request = SeasonCalendarBuildRequest(seed=1, dry_run=False, max_events=1)
+    edition = calendars.build_calendar(season="2000/01", request=request).calendar.events[0]
+    assert points.get("2000/01").initialized
+    baseline = json.loads(points.baseline_points_path.read_text(encoding="utf-8"))
+    # A disposable baseline proves it is initialization-only without mutating the shared source.
+    changed = tmp_path / "changed_points.json"
+    distribution = next(iter(baseline["point_distributions"].values()))
+    distribution["winner"] = 999999
+    changed.write_text(json.dumps(baseline), encoding="utf-8")
+    points.baseline_points_path = changed
+    rebuilt = calendars.build_calendar(season="2000/01", request=request.model_copy(update={"overwrite_existing": True})).calendar.events[0]
+    assert rebuilt.ranking_points_table == edition.ranking_points_table
+
+
+def test_legacy_persisted_edition_loads_without_rewrite(tmp_path):
+    calendars = SeasonCalendarService(TournamentTemplatesConfigService(), tmp_path / "calendars.json")
+    request = SeasonCalendarBuildRequest(seed=1, dry_run=False, max_events=1)
+    calendars.build_calendar(season="2000/01", request=request)
+    payload = json.loads(calendars.calendar_registry_path.read_text(encoding="utf-8"))
+    event = payload["calendars_by_season"]["2000/01"]["events"][0]
+    for field in ("ranking_status", "ranking_points_table", "ranking_configuration_legacy"):
+        event.pop(field)
+    calendars.calendar_registry_path.write_text(json.dumps(payload), encoding="utf-8")
+    before = calendars.calendar_registry_path.read_bytes()
+    loaded = calendars.get_calendar(season="2000/01")
+    assert loaded.calendar.events[0].ranking_configuration_legacy is True
+    assert calendars.calendar_registry_path.read_bytes() == before

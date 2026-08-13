@@ -8,6 +8,7 @@ import pytest
 from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.initial_player_pool_service import InitialPlayerPoolService
 from beta_engine.application.season_calendar_service import SeasonCalendarService
+from beta_engine.application.season_category_points_service import SeasonCategoryPointsService
 from beta_engine.application.season_entry_list_service import EntryListGenerateRequest, SeasonEntryListService
 from beta_engine.application.season_player_bootstrap_service import InitialPoolSeasonBootstrapService, SeasonActivePlayer, SeasonActivePlayersRegistry
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
@@ -26,7 +27,7 @@ def write_countries(path: Path) -> None:
 
 def write_templates(path: Path, *, main_draw_size: int = 8) -> None:
     path.write_text(json.dumps({"templates": [{
-        "template_id": "wt_a", "tour_level": "WORLD_TOUR", "category": "PLATINUM", "event_name": "World A", "region": "EUROPE", "host_country": "AAA", "main_draw_size": main_draw_size, "qualification_draw_size": 4, "seeds_count": 4, "qualifier_spots": 2, "wild_cards": 1, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 100000, "prestige": 9, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 1, "active": True
+        "template_id": "wt_a", "tour_level": "WORLD_TOUR", "category": "PLATINUM", "event_name": "World A", "region": "EUROPE", "host_country": "AAA", "main_draw_size": main_draw_size, "qualification_draw_size": 4, "seeds_count": 4, "qualifier_spots": 2, "wild_cards": 1, "byes": 0, "lucky_loser_rules": {"enabled": True, "max_spots": 2, "replacement_window": "pre_main_draw_round_1"}, "point_distribution": {"winner": 100, "finalist": 60, "semifinalist": 30, "quarterfinalist": 10, "round_of_16": 5, "qualification_winner": 3, "qualification_final": 1}, "prize_money": 100000, "prestige": 9, "event_duration_days": 6, "qualification_duration_days": 2, "duration_in_season_weeks": 1, "active": True
     }]}), encoding="utf-8")
 
 
@@ -55,8 +56,14 @@ def make_service(tmp_path: Path, *, calendar: bool = True, active: bool = True, 
         write_active(active_path)
     calendar_path = tmp_path / "calendars.json"
     template_service = TournamentTemplatesConfigService(config_path=templates_path, calendar_dir=tmp_path / "legacy")
-    calendar_service = SeasonCalendarService(template_service=template_service, calendar_registry_path=calendar_path)
+    points_service = SeasonCategoryPointsService(template_service, tmp_path / "category_points.json")
+    calendar_service = SeasonCalendarService(template_service=template_service, calendar_registry_path=calendar_path, category_points_service=points_service)
     if calendar:
+        points_service.initialize("2000/2001")
+        table = {"champion": 100, "finalist": 60, "semifinal": 30, "quarterfinal": 10, "qualification_winner": 3, "qualification_final": 1}
+        if main_draw_size >= 16:
+            table["round_of_16"] = 5
+        points_service.update("2000/2001", "PLATINUM", table)
         calendar_service.build_calendar(season="2000/2001", request=__import__('beta_engine.domain.tournaments', fromlist=['SeasonCalendarBuildRequest']).SeasonCalendarBuildRequest(seed=1, dry_run=False, overwrite_existing=False, max_events=1))
     bootstrap = InitialPoolSeasonBootstrapService(initial_pool_service=InitialPlayerPoolService(countries_service=CountriesConfigService(config_path=countries_path)), active_players_path=active_path)
     return SeasonEntryListService(active_players_service=bootstrap, calendar_service=calendar_service, countries_service=CountriesConfigService(config_path=countries_path), entry_lists_path=tmp_path / "entries.json")

@@ -17,6 +17,9 @@ def test_incomplete_ranked_blocks_ranking_dependent_entries_atomically(tmp_path)
     service = make_service(tmp_path)
     event_id = first_event_id(service)
     event = service.calendar_service.get_calendar(season="2000/2001").calendar.events[0]
+    incomplete = complete_table(event)
+    incomplete.pop("champion")
+    event = service.calendar_service.update_edition_ranking(season="2000/2001", event_id=event_id, request=TournamentEditionRankingUpdate(ranking_status="ranked", ranking_points_table=incomplete))
     assert not event.points_table_complete
     with pytest.raises(ValueError, match="incomplete points table"):
         service.generate_entry_list(event_id=event_id, request=EntryListGenerateRequest(dry_run=False))
@@ -25,6 +28,10 @@ def test_incomplete_ranked_blocks_ranking_dependent_entries_atomically(tmp_path)
 
 def test_incomplete_ranked_blocks_simulation_before_mutation(tmp_path):
     service, event_id = make_simulation_service(tmp_path)
+    event = service.lifecycle_service.calendar_service.get_calendar(season="2000/2001").calendar.events[0]
+    incomplete = complete_table(event)
+    incomplete.pop("champion")
+    service.lifecycle_service.calendar_service.update_edition_ranking(season="2000/2001", event_id=event_id, request=TournamentEditionRankingUpdate(ranking_status="ranked", ranking_points_table=incomplete))
     result = service.simulate_one_event(event_id=event_id, request=SimulateOneEventRequest(dry_run=False))
     assert result.report is not None
     assert result.report.plan_summary.stop_reason == "ranked_points_table_incomplete"

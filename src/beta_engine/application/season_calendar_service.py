@@ -11,6 +11,7 @@ from typing import Any
 from pydantic import BaseModel, Field, ValidationError
 
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
+from beta_engine.application.season_category_points_service import SeasonCategoryPointsService
 from beta_engine.domain.calendar import (
     DEFAULT_SEASON_START_YEAR_WEEK,
     TOTAL_SEASON_WEEKS,
@@ -32,7 +33,6 @@ from beta_engine.domain.tournaments.models import (
     SeasonCalendarValidationSummary,
     TournamentTemplate,
 )
-from beta_engine.infrastructure.points_config import load_points_config
 
 SEASON_CALENDAR_VALIDATION_ISSUE_CODES: tuple[SeasonCalendarValidationIssueCodeMetadata, ...] = (
     SeasonCalendarValidationIssueCodeMetadata(code="calendar_missing", severity="warning", title="Calendar missing", description="No persisted season calendar exists for the requested season."),
@@ -71,6 +71,10 @@ class SeasonCalendarAlreadyExistsError(ValueError):
     """Raised when attempting create-only insertion for an existing season calendar."""
 
 
+class SeasonCategoryPointsPrerequisiteError(ValueError):
+    """Raised when new Edition materialization lacks its points authority."""
+
+
 class TournamentEditionRankingUpdate(BaseModel):
     ranking_status: str
     ranking_points_table: dict[str, Any] = Field(default_factory=dict)
@@ -100,6 +104,7 @@ class SeasonCalendarService:
 
     template_service: TournamentTemplatesConfigService
     calendar_registry_path: Path = Path("config/simulation/season_calendars.json")
+    category_points_service: SeasonCategoryPointsService | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.calendar_registry_path, Path):
@@ -169,10 +174,27 @@ class SeasonCalendarService:
         return updated
 
     def build_calendar(self, *, season: str, request: SeasonCalendarBuildRequest) -> SeasonCalendarBuildResult:
+        if self.category_points_service is None:
+            raise SeasonCategoryPointsPrerequisiteError(
+                "Season Category Points authority is unavailable; configure it before building a new season calendar."
+            )
         registry = self._load_registry()
         existing = season in registry.calendars_by_season
         if not request.dry_run and existing and not request.overwrite_existing:
             raise ValueError(f"Season calendar already exists for season '{season}'. Set overwrite_existing=true to replace only that season.")
+
+        # Persisted creation requires the explicitly initialized authority.
+        # Dry-run resolves the same candidate entirely in memory.
+        if request.dry_run:
+            points_response = self.category_points_service.preview_initialization(season)
+        else:
+            points_response = self.category_points_service.get(season)
+            if not points_response.initialized:
+                raise SeasonCategoryPointsPrerequisiteError(
+                    f"Season Category Points are not initialized for '{season}'. "
+                    "Initialize them before building the persisted season calendar."
+                )
+        category_points = {row.category: dict(row.ranking_points_table) for row in points_response.categories}
 
         templates_config = self.template_service.get_config()
         all_templates = sorted(templates_config.templates, key=self._template_sort_key)
@@ -187,6 +209,7 @@ class SeasonCalendarService:
             seed=request.seed,
             season_start_calendar_year=request.season_start_calendar_year,
             season_start_year_week=request.season_start_year_week,
+            category_points=category_points,
         )
         warnings, errors = self.validate_calendar_events(events, skipped_inactive_count=0 if request.include_inactive_templates else len(skipped_inactive))
         build_fingerprint = self._fingerprint(
@@ -463,6 +486,7 @@ class SeasonCalendarService:
         seed: int,
         season_start_calendar_year: int,
         season_start_year_week: int,
+        category_points: dict[str, dict[str, int]] | None = None,
     ) -> list[SeasonCalendarEvent]:
         if not templates:
             return []
@@ -471,10 +495,6 @@ class SeasonCalendarService:
         offset = seed % step if step > 1 else 0
         events: list[SeasonCalendarEvent] = []
         season_start_year = self._season_start_year(season, fallback=season_start_calendar_year)
-        try:
-            configured_points = load_points_config(Path("config/points/mvp_points.json"))
-        except (OSError, ValueError, json.JSONDecodeError):
-            configured_points = {}
         for index, template in enumerate(templates):
             base_week = 1 + offset + index * step
             season_week = ((base_week - 1) % TOTAL_SEASON_WEEKS) + 1
@@ -489,8 +509,7 @@ class SeasonCalendarService:
             calendar_year, year_week = position.calendar_year, position.year_week
             template_payload = self._template_payload(template)
             template_fingerprint = self._fingerprint(template_payload)
-            authored_points = template.point_distribution.model_dump(mode="json", exclude_unset=True) if template.point_distribution else configured_points.get(template.point_distribution_ref or "", {})
-            edition_points = {{"winner": "champion", "semifinalist": "semifinal", "quarterfinalist": "quarterfinal"}.get(key, key): value for key, value in authored_points.items()}
+            edition_points = dict(category_points.get(template.category, {}))
             event_id = f"EVT-{season_start_year}-W{season_week:02d}-{template.template_id}"
             events.append(
                 SeasonCalendarEvent(

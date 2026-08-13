@@ -18,6 +18,7 @@ from beta_engine.application.planning_calendar_apply_template_service import Pla
 from beta_engine.application.planning_season_calendar_service import PlanningSeasonCalendarService
 from beta_engine.application.season_player_bootstrap_service import InitialPoolSeasonBootstrapService
 from beta_engine.application.season_calendar_service import SeasonCalendarService
+from beta_engine.application.season_category_points_service import SeasonCategoryPointsService
 from beta_engine.application.season_builder_apply_audit_service import SeasonBuilderApplyAuditService
 from beta_engine.application.season_entry_list_service import SeasonEntryListService
 from beta_engine.application.season_draw_service import SeasonDrawService
@@ -181,10 +182,21 @@ def get_planning_calendar_apply_template_service(request: Request) -> PlanningCa
 
 def get_season_calendar_service(request: Request) -> SeasonCalendarService:
     configured_path = getattr(request.app.state, "season_calendar_registry_path", None)
-    kwargs = {"template_service": get_tournament_templates_config_service(request)}
+    kwargs = {"template_service": get_tournament_templates_config_service(request), "category_points_service": get_season_category_points_service(request)}
     if configured_path is not None:
         kwargs["calendar_registry_path"] = configured_path
     return SeasonCalendarService(**kwargs)
+
+
+def get_season_category_points_service(request: Request) -> SeasonCategoryPointsService:
+    kwargs = {"template_service": get_tournament_templates_config_service(request)}
+    configured_path = getattr(request.app.state, "season_category_points_registry_path", None)
+    baseline_path = getattr(request.app.state, "points_config_path", None)
+    if configured_path is not None:
+        kwargs["registry_path"] = configured_path
+    if baseline_path is not None:
+        kwargs["baseline_points_path"] = baseline_path
+    return SeasonCategoryPointsService(**kwargs)
 
 
 def get_season_builder_apply_audit_service(request: Request) -> SeasonBuilderApplyAuditService:

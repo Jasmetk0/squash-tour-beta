@@ -6,6 +6,7 @@ from pathlib import Path
 from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.initial_player_pool_service import InitialPlayerPoolService
 from beta_engine.application.season_calendar_service import SeasonCalendarService
+from beta_engine.application.season_category_points_service import SeasonCategoryPointsService
 from beta_engine.application.season_draw_service import SeasonDrawService
 from beta_engine.application.season_entry_list_service import EntryListGenerateRequest, SeasonEntryListService
 from beta_engine.application.season_event_lifecycle_service import SeasonEventLifecycleService
@@ -25,7 +26,7 @@ from test_season_event_lifecycle_service import lifecycle_service
 def write_complete_templates(path: Path) -> None:
     path.write_text(json.dumps({"templates": [{
         "template_id": "wt_complete", "tour_level": "WORLD_TOUR", "category": "PLATINUM", "event_name": "World Complete", "region": "EUROPE", "host_country": "AAA", "main_draw_size": 4, "qualification_draw_size": 0, "seeds_count": 2, "qualifier_spots": 0, "wild_cards": 0, "byes": 0,
-        "lucky_loser_rules": {"enabled": False, "max_spots": 0, "replacement_window": "pre_main_draw_round_1"}, "point_distribution_ref": "world", "prize_money": 100000, "prestige": 9, "event_duration_days": 4, "qualification_duration_days": 0, "duration_in_season_weeks": 1, "active": True
+        "lucky_loser_rules": {"enabled": False, "max_spots": 0, "replacement_window": "pre_main_draw_round_1"}, "point_distribution": {"winner": 100, "finalist": 60, "semifinalist": 30, "quarterfinalist": 10}, "prize_money": 100000, "prestige": 9, "event_duration_days": 4, "qualification_duration_days": 0, "duration_in_season_weeks": 1, "active": True
     }]}), encoding="utf-8")
 
 
@@ -38,7 +39,9 @@ def make_simulation_service(tmp_path: Path, *, complete_template: bool = True) -
         templates_path = tmp_path / "templates.json"; write_complete_templates(templates_path)
         active_path = tmp_path / "active.json"; write_active(active_path, count=12)
         template_service = TournamentTemplatesConfigService(config_path=templates_path, calendar_dir=tmp_path / "legacy")
-        calendar_service = SeasonCalendarService(template_service=template_service, calendar_registry_path=tmp_path / "calendars.json")
+        points_service = SeasonCategoryPointsService(template_service, tmp_path / "category_points.json")
+        points_service.initialize("2000/2001")
+        calendar_service = SeasonCalendarService(template_service=template_service, calendar_registry_path=tmp_path / "calendars.json", category_points_service=points_service)
         calendar_service.build_calendar(season="2000/2001", request=SeasonCalendarBuildRequest(seed=1, dry_run=False, overwrite_existing=False, max_events=1))
         bootstrap = InitialPoolSeasonBootstrapService(initial_pool_service=InitialPlayerPoolService(countries_service=CountriesConfigService(config_path=countries_path)), active_players_path=active_path)
         entry_service = SeasonEntryListService(active_players_service=bootstrap, calendar_service=calendar_service, countries_service=CountriesConfigService(config_path=countries_path), entry_lists_path=tmp_path / "entries.json")

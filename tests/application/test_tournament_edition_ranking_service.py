@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from beta_engine.application.season_calendar_service import SeasonCalendarRegistry, SeasonCalendarService, TournamentEditionRankingUpdate
+from beta_engine.application.season_category_points_service import SeasonCategoryPointsService
 from beta_engine.domain.tournaments.models import CalendarEvent, SeasonCalendar
 
 
@@ -82,7 +83,11 @@ def test_new_edition_snapshots_only_authored_values_without_fallbacks(tmp_path):
     subject = SeasonCalendarService(
         template_service=TournamentTemplatesConfigService(config_path=templates_path, calendar_dir=tmp_path / "legacy"),
         calendar_registry_path=tmp_path / "calendars.json",
+        category_points_service=SeasonCategoryPointsService(
+            TournamentTemplatesConfigService(config_path=templates_path, calendar_dir=tmp_path / "legacy"), tmp_path / "category_points.json"
+        ),
     )
+    subject.category_points_service.initialize("2000/2001")
     built = subject.build_calendar(season="2000/2001", request=SeasonCalendarBuildRequest(dry_run=False))
     built_event = built.calendar.events[0]
     assert built_event.ranking_points_table == {
@@ -98,7 +103,8 @@ def test_inline_snapshot_does_not_materialize_omitted_default_stage(tmp_path, dr
     from beta_engine.domain.tournaments.models import SeasonCalendarBuildRequest
     templates_path = tmp_path / "templates.json"
     templates_path.write_text(json.dumps({"templates": [{"template_id": "omitted", "tour_level": "WORLD_TOUR", "category": "OPEN", "event_name": "Omitted", "region": "EUROPE", "host_country": "ENG", "main_draw_size": draw_size, "qualification_draw_size": 0, "seeds_count": 4, "qualifier_spots": 0, "wild_cards": 0, "byes": 0, "lucky_loser_rules": {"enabled": False, "max_spots": 0}, "point_distribution": {"winner": 90, "finalist": 50, "semifinalist": 20, "quarterfinalist": 10}, "event_duration_days": 5, "qualification_duration_days": 0}]}), encoding="utf-8")
-    subject = SeasonCalendarService(template_service=TournamentTemplatesConfigService(config_path=templates_path, calendar_dir=tmp_path / "legacy"), calendar_registry_path=tmp_path / "calendars.json")
+    template_service = TournamentTemplatesConfigService(config_path=templates_path, calendar_dir=tmp_path / "legacy")
+    subject = SeasonCalendarService(template_service=template_service, calendar_registry_path=tmp_path / "calendars.json", category_points_service=SeasonCategoryPointsService(template_service, tmp_path / "category_points.json"))
     event = subject.build_calendar(season="2000/2001", request=SeasonCalendarBuildRequest(dry_run=True)).calendar.events[0]
     assert missing_stage not in event.ranking_points_table
     assert missing_stage in event.missing_required_point_stages
@@ -110,7 +116,8 @@ def test_inline_snapshot_preserves_explicit_zero(tmp_path):
     from beta_engine.domain.tournaments.models import SeasonCalendarBuildRequest
     templates_path = tmp_path / "templates.json"
     templates_path.write_text(json.dumps({"templates": [{"template_id": "zero", "tour_level": "WORLD_TOUR", "category": "OPEN", "event_name": "Zero", "region": "EUROPE", "host_country": "ENG", "main_draw_size": 16, "qualification_draw_size": 0, "seeds_count": 4, "qualifier_spots": 0, "wild_cards": 0, "byes": 0, "lucky_loser_rules": {"enabled": False, "max_spots": 0}, "point_distribution": {"winner": 90, "finalist": 50, "semifinalist": 20, "quarterfinalist": 10, "round_of_16": 0}, "event_duration_days": 5, "qualification_duration_days": 0}]}), encoding="utf-8")
-    subject = SeasonCalendarService(template_service=TournamentTemplatesConfigService(config_path=templates_path, calendar_dir=tmp_path / "legacy"), calendar_registry_path=tmp_path / "calendars.json")
+    template_service = TournamentTemplatesConfigService(config_path=templates_path, calendar_dir=tmp_path / "legacy")
+    subject = SeasonCalendarService(template_service=template_service, calendar_registry_path=tmp_path / "calendars.json", category_points_service=SeasonCategoryPointsService(template_service, tmp_path / "category_points.json"))
     event = subject.build_calendar(season="2000/2001", request=SeasonCalendarBuildRequest(dry_run=True)).calendar.events[0]
     assert event.ranking_points_table["round_of_16"] == 0
     assert event.points_table_complete

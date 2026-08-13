@@ -11,6 +11,7 @@ from typing import Any
 from pydantic import BaseModel, Field, ValidationError
 
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
+from beta_engine.application.season_category_points_service import SeasonCategoryPointsService
 from beta_engine.domain.calendar import (
     DEFAULT_SEASON_START_YEAR_WEEK,
     TOTAL_SEASON_WEEKS,
@@ -100,6 +101,7 @@ class SeasonCalendarService:
 
     template_service: TournamentTemplatesConfigService
     calendar_registry_path: Path = Path("config/simulation/season_calendars.json")
+    category_points_service: SeasonCategoryPointsService | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.calendar_registry_path, Path):
@@ -489,7 +491,8 @@ class SeasonCalendarService:
             calendar_year, year_week = position.calendar_year, position.year_week
             template_payload = self._template_payload(template)
             template_fingerprint = self._fingerprint(template_payload)
-            authored_points = template.point_distribution.model_dump(mode="json", exclude_unset=True) if template.point_distribution else configured_points.get(template.point_distribution_ref or "", {})
+            season_points = self.category_points_service.resolve_table(season, template.category) if self.category_points_service else None
+            authored_points = season_points if season_points is not None else (template.point_distribution.model_dump(mode="json", exclude_unset=True) if template.point_distribution else configured_points.get(template.point_distribution_ref or "", {}))
             edition_points = {{"winner": "champion", "semifinalist": "semifinal", "quarterfinalist": "quarterfinal"}.get(key, key): value for key, value in authored_points.items()}
             event_id = f"EVT-{season_start_year}-W{season_week:02d}-{template.template_id}"
             events.append(

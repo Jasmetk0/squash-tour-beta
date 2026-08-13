@@ -24,6 +24,7 @@ def create_app(
     initial_player_pool_config_path: str | None = None,
     season_active_players_config_path: str | None = None,
     season_calendar_registry_path: str | None = None,
+    season_category_points_registry_path: str | None = None,
     planning_season_calendar_registry_path: str | None = None,
     calendar_templates_registry_path: str | None = None,
     season_builder_apply_audit_log_path: str | None = None,
@@ -66,6 +67,8 @@ def create_app(
         app.state.season_active_players_config_path = season_active_players_config_path
     if season_calendar_registry_path is not None:
         app.state.season_calendar_registry_path = season_calendar_registry_path
+    if season_category_points_registry_path is not None:
+        app.state.season_category_points_registry_path = season_category_points_registry_path
     if planning_season_calendar_registry_path is not None:
         app.state.planning_season_calendar_registry_path = planning_season_calendar_registry_path
     if calendar_templates_registry_path is not None:

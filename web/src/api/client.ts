@@ -423,6 +423,18 @@ export function getSeasonCalendar(season: string): Promise<SeasonCalendarBuildRe
   return request(`/admin/seasons/${encodeURIComponent(season)}/calendar`)
 }
 
+export function getSeasonCategoryPoints(season: string): Promise<import('./types').SeasonCategoryPointsResponse> {
+  return request(`/admin/seasons/${encodeURIComponent(season)}/category-points`)
+}
+
+export function initializeSeasonCategoryPoints(season: string): Promise<import('./types').SeasonCategoryPointsResponse> {
+  return request(`/admin/seasons/${encodeURIComponent(season)}/category-points/initialize`, { method: 'POST' })
+}
+
+export function updateSeasonCategoryPoints(season: string, category: string, rankingPointsTable: Record<string, number>): Promise<import('./types').SeasonCategoryPointsTable> {
+  return request(`/admin/seasons/${encodeURIComponent(season)}/category-points/${encodeURIComponent(category)}`, { method: 'PUT', body: JSON.stringify({ ranking_points_table: rankingPointsTable }) })
+}
+
 export function updateTournamentEditionRanking(season: string, eventId: string, payload: { ranking_status: 'ranked' | 'unranked'; ranking_points_table: Record<string, unknown> }): Promise<SeasonCalendarEvent> {
   return request(`/admin/seasons/${encodeURIComponent(season)}/calendar/events/${encodeURIComponent(eventId)}/ranking`, { method: 'PATCH', body: JSON.stringify(payload) })
 }

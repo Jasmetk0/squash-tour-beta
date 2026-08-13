@@ -6,7 +6,7 @@ import json
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from beta_engine.api.deps import get_calendar_template_service, get_initial_pool_season_bootstrap_service, get_planning_calendar_apply_template_service, get_planning_season_calendar_service, get_season_builder_apply_audit_service, get_season_calendar_service, get_season_event_lifecycle_service, get_season_range_execution_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service, get_season_template_service
+from beta_engine.api.deps import get_calendar_template_service, get_initial_pool_season_bootstrap_service, get_planning_calendar_apply_template_service, get_planning_season_calendar_service, get_season_builder_apply_audit_service, get_season_calendar_service, get_season_category_points_service, get_season_event_lifecycle_service, get_season_range_execution_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service, get_season_template_service
 from beta_engine.api.schemas import SeasonBootstrapRequest
 from beta_engine.application.calendar_template_apply_contract_service import (
     CalendarTemplateApplyContractReadinessRequest,
@@ -41,6 +41,7 @@ from beta_engine.application.season_player_bootstrap_service import (
     SeasonBootstrapResult,
 )
 from beta_engine.application.season_calendar_service import SeasonCalendarAlreadyExistsError, SeasonCalendarService, TournamentEditionRankingUpdate
+from beta_engine.application.season_category_points_service import SeasonCategoryPointsResponse, SeasonCategoryPointsService, SeasonCategoryPointsTable
 from beta_engine.application.season_event_lifecycle_service import SeasonEventLifecycleService
 from beta_engine.domain.tournaments.models import SeasonCalendarEvent
 from beta_engine.application.season_builder_apply_audit_service import (
@@ -111,6 +112,31 @@ from beta_engine.domain.tournaments import (
 )
 
 router = APIRouter(prefix="/admin/seasons", tags=["admin-seasons"])
+
+
+class CategoryPointsUpdate(BaseModel):
+    ranking_points_table: dict[str, object]
+
+
+@router.get("/{season:path}/category-points", response_model=SeasonCategoryPointsResponse)
+def get_season_category_points(season: str, service: SeasonCategoryPointsService = Depends(get_season_category_points_service)) -> SeasonCategoryPointsResponse:
+    return service.get(normalize_season_label(season))
+
+
+@router.post("/{season:path}/category-points/initialize", response_model=SeasonCategoryPointsResponse)
+def initialize_season_category_points(season: str, service: SeasonCategoryPointsService = Depends(get_season_category_points_service)) -> SeasonCategoryPointsResponse:
+    try:
+        return service.initialize(normalize_season_label(season))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.put("/{season:path}/category-points/{category}", response_model=SeasonCategoryPointsTable)
+def update_season_category_points(season: str, category: str, payload: CategoryPointsUpdate, service: SeasonCategoryPointsService = Depends(get_season_category_points_service)) -> SeasonCategoryPointsTable:
+    try:
+        return service.update(normalize_season_label(season), category, payload.ranking_points_table)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 REQUIRED_CREATE_ONLY_APPLY_CONFIRMATION_PHRASE = "I understand this will create a new season calendar."

@@ -2620,6 +2620,20 @@ export type SeasonCalendarEvent = {
   template_snapshot: Record<string, unknown>
 }
 
+export type SeasonCategoryPointsTable = {
+  season: string
+  category: string
+  ranking_points_table: Record<string, number>
+  provenance: 'seeded_from_baseline' | 'prefilled_from_previous_season' | 'manually_edited'
+  source_season: string | null
+}
+
+export type SeasonCategoryPointsResponse = {
+  season: string
+  initialized: boolean
+  categories: SeasonCategoryPointsTable[]
+}
+
 export type SeasonCalendar = {
   season: string
   events: SeasonCalendarEvent[]

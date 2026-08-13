@@ -46,6 +46,7 @@ class Server:
             tournament_templates_config_path=str(template_path),
             calendar_config_dir=str(tmp_path / "legacy_calendars"),
             season_calendar_registry_path=str(tmp_path / "season_calendars.json"),
+            season_category_points_registry_path=str(tmp_path / "season_category_points.json"),
         )
         self.server = uvicorn.Server(uvicorn.Config(app=app, host="127.0.0.1", port=self.port, log_level="error"))
         self.thread = threading.Thread(target=self.server.run, daemon=True)

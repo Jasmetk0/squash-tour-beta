@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderWithRoute } from '../test/testUtils'
 import { SeasonCalendarPreview } from './SeasonCalendarPreview'
+import { SeasonEditionRankingConfiguration } from './SeasonEditionRankingConfiguration'
 
 const api = vi.hoisted(() => ({ getSeasonCalendar: vi.fn(), updateTournamentEditionRanking: vi.fn() }))
 vi.mock('../api/client', () => api)
@@ -21,7 +22,7 @@ describe('Tournament Edition ranking controls', () => {
 
   it('renders missing required fields and repairs the table atomically', async () => {
     api.getSeasonCalendar.mockResolvedValueOnce(response(rankingEvent(false))).mockResolvedValue(response(rankingEvent(true)))
-    renderWithRoute(<SeasonCalendarPreview seasonLabelRaw="2000/01" />, '/')
+    renderWithRoute(<SeasonEditionRankingConfiguration seasonLabelRaw="2000/01" />, '/')
     const finalist = await screen.findByRole('spinbutton', { name: 'Points for finalist' })
     expect(finalist).toHaveValue(null)
     expect(finalist).toHaveAttribute('aria-invalid', 'true')
@@ -32,7 +33,7 @@ describe('Tournament Edition ranking controls', () => {
   })
 
   it('saves an Unranked selection only on the atomic save action', async () => {
-    renderWithRoute(<SeasonCalendarPreview seasonLabelRaw="2000/01" />, '/')
+    renderWithRoute(<SeasonEditionRankingConfiguration seasonLabelRaw="2000/01" />, '/')
     await userEvent.selectOptions(await screen.findByRole('combobox', { name: 'Ranking status for Ranked event' }), 'unranked')
     expect(api.updateTournamentEditionRanking).not.toHaveBeenCalled()
     expect(screen.getByText(/awards no MSA points or Best N result/)).toBeInTheDocument()
@@ -42,7 +43,7 @@ describe('Tournament Edition ranking controls', () => {
 
   it('disables ranking editing after the Edition is no longer planned', async () => {
     api.getSeasonCalendar.mockResolvedValue(response(rankingEvent(false, 'active')))
-    renderWithRoute(<SeasonCalendarPreview seasonLabelRaw="2000/01" />, '/')
+    renderWithRoute(<SeasonEditionRankingConfiguration seasonLabelRaw="2000/01" />, '/')
     expect(await screen.findByRole('combobox', { name: 'Ranking status for Ranked event' })).toBeDisabled()
     expect(screen.getByRole('spinbutton', { name: 'Points for finalist' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Save ranking configuration' })).toBeDisabled()
@@ -54,7 +55,7 @@ it('normalizes a legacy-shaped event without manufacturing point values', async 
   for (const field of ['ranking_status', 'ranking_points_table', 'ranking_configuration_legacy', 'required_ranking_point_stages', 'missing_required_point_stages', 'points_table_complete']) delete legacy[field]
   api.getSeasonCalendar.mockResolvedValue(response(legacy as ReturnType<typeof rankingEvent>))
   renderWithRoute(<SeasonCalendarPreview seasonLabelRaw="2000/01" />, '/')
-  expect(await screen.findByRole('combobox', { name: 'Ranking status for Ranked event' })).toHaveValue('ranked')
+  expect(await screen.findByText('Ranked')).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Save ranking configuration' })).not.toBeInTheDocument()
   expect(screen.queryAllByRole('spinbutton')).toHaveLength(0)
-  expect(screen.getByText('Points table complete.')).toBeInTheDocument()
 })

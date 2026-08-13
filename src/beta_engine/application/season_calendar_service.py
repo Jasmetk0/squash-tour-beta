@@ -489,7 +489,7 @@ class SeasonCalendarService:
             calendar_year, year_week = position.calendar_year, position.year_week
             template_payload = self._template_payload(template)
             template_fingerprint = self._fingerprint(template_payload)
-            authored_points = template.point_distribution.model_dump(mode="json") if template.point_distribution else configured_points.get(template.point_distribution_ref or "", {})
+            authored_points = template.point_distribution.model_dump(mode="json", exclude_unset=True) if template.point_distribution else configured_points.get(template.point_distribution_ref or "", {})
             edition_points = {{"winner": "champion", "semifinalist": "semifinal", "quarterfinalist": "quarterfinal"}.get(key, key): value for key, value in authored_points.items()}
             event_id = f"EVT-{season_start_year}-W{season_week:02d}-{template.template_id}"
             events.append(

@@ -92,12 +92,16 @@ def test_dry_run_uses_initialization_candidate_without_mutation(tmp_path):
     assert not calendar_path.exists()
 
 
-def test_persisted_build_initializes_authority_and_ignores_changed_baseline(tmp_path):
+def test_persisted_build_requires_authority_and_ignores_changed_baseline(tmp_path):
     points = service(tmp_path)
     calendars = SeasonCalendarService(TournamentTemplatesConfigService(), tmp_path / "calendars.json", points)
     request = SeasonCalendarBuildRequest(seed=1, dry_run=False, max_events=1)
+    with pytest.raises(ValueError, match="Initialize them before building"):
+        calendars.build_calendar(season="2000/01", request=request)
+    assert not points.registry_path.exists()
+    assert not calendars.calendar_registry_path.exists()
+    points.initialize("2000/01")
     edition = calendars.build_calendar(season="2000/01", request=request).calendar.events[0]
-    assert points.get("2000/01").initialized
     baseline = json.loads(points.baseline_points_path.read_text(encoding="utf-8"))
     # A disposable baseline proves it is initialization-only without mutating the shared source.
     changed = tmp_path / "changed_points.json"
@@ -110,7 +114,9 @@ def test_persisted_build_initializes_authority_and_ignores_changed_baseline(tmp_
 
 
 def test_legacy_persisted_edition_loads_without_rewrite(tmp_path):
-    calendars = SeasonCalendarService(TournamentTemplatesConfigService(), tmp_path / "calendars.json")
+    points = service(tmp_path)
+    points.initialize("2000/01")
+    calendars = SeasonCalendarService(TournamentTemplatesConfigService(), tmp_path / "calendars.json", points)
     request = SeasonCalendarBuildRequest(seed=1, dry_run=False, max_events=1)
     calendars.build_calendar(season="2000/01", request=request)
     payload = json.loads(calendars.calendar_registry_path.read_text(encoding="utf-8"))
@@ -122,3 +128,10 @@ def test_legacy_persisted_edition_loads_without_rewrite(tmp_path):
     loaded = calendars.get_calendar(season="2000/01")
     assert loaded.calendar.events[0].ranking_configuration_legacy is True
     assert calendars.calendar_registry_path.read_bytes() == before
+
+
+def test_missing_authority_fails_closed_without_calendar_mutation(tmp_path):
+    calendars = SeasonCalendarService(TournamentTemplatesConfigService(), tmp_path / "calendars.json")
+    with pytest.raises(ValueError, match="authority is unavailable"):
+        calendars.build_calendar(season="2000/01", request=SeasonCalendarBuildRequest(dry_run=True))
+    assert not calendars.calendar_registry_path.exists()

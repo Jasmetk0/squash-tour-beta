@@ -10,6 +10,7 @@ from beta_engine.application.season_calendar_service import (
     SeasonCalendarService,
     map_season_week_to_calendar_week,
 )
+from beta_engine.application.season_category_points_service import SeasonCategoryPointsService
 from beta_engine.domain.calendar import season_week_to_calendar_position
 from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
 from beta_engine.domain.tournaments import SeasonCalendarBuildRequest, SeasonCalendarEvent
@@ -27,9 +28,11 @@ def write_templates(path: Path) -> None:
 def service(tmp_path: Path) -> SeasonCalendarService:
     template_path = tmp_path / "templates.json"
     write_templates(template_path)
+    template_service = TournamentTemplatesConfigService(config_path=template_path, calendar_dir=tmp_path / "legacy_calendars")
     return SeasonCalendarService(
-        template_service=TournamentTemplatesConfigService(config_path=template_path, calendar_dir=tmp_path / "legacy_calendars"),
+        template_service=template_service,
         calendar_registry_path=tmp_path / "season_calendars.json",
+        category_points_service=SeasonCategoryPointsService(template_service, tmp_path / "season_category_points.json"),
     )
 
 
@@ -76,6 +79,7 @@ def test_calendar_build_rollover_uses_61_week_fax_year(tmp_path: Path) -> None:
         seed=0,
         season_start_calendar_year=2000,
         season_start_year_week=37,
+        category_points={},
     )
     events_by_week = {event.season_week: event for event in events}
 
@@ -87,12 +91,14 @@ def test_calendar_build_rollover_uses_61_week_fax_year(tmp_path: Path) -> None:
 
 def test_persist_calendar_and_overwrite_safety(tmp_path: Path) -> None:
     svc = service(tmp_path)
+    svc.category_points_service.initialize("2000/2001")
     result = svc.build_calendar(season="2000/2001", request=SeasonCalendarBuildRequest(seed=1, dry_run=False))
     assert result.summary.persisted is True
     loaded = svc.get_calendar(season="2000/2001")
     assert loaded.summary.event_count == 2
     with pytest.raises(ValueError, match="already exists"):
         svc.build_calendar(season="2000/2001", request=SeasonCalendarBuildRequest(seed=2, dry_run=False, overwrite_existing=False))
+    svc.category_points_service.initialize("2001/2002")
     svc.build_calendar(season="2001/2002", request=SeasonCalendarBuildRequest(seed=3, dry_run=False))
     overwritten = svc.build_calendar(season="2000/2001", request=SeasonCalendarBuildRequest(seed=2, dry_run=False, overwrite_existing=True))
     assert overwritten.metadata is not None

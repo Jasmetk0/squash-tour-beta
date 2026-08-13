@@ -35,6 +35,10 @@ def free_port() -> int:
         return int(s.getsockname()[1])
 
 
+def initialize_points(server: "Server", season: str = "2000%2F2001") -> None:
+    call("POST", f"{server.base_url}/admin/seasons/{season}/category-points/initialize")
+
+
 class Server:
     def __init__(self, tmp_path: Path) -> None:
         self.port = free_port()
@@ -77,6 +81,7 @@ def test_get_empty_calendar_state(tmp_path: Path) -> None:
 
 def test_get_calendar_accepts_long_and_compact_labels_equivalently(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
+        initialize_points(server)
         payload = {"seed": 5, "dry_run": False, "overwrite_existing": False, "season_start_calendar_year": 2000, "season_start_year_week": 37, "include_inactive_templates": False, "max_events": None}
         call("POST", f"{server.base_url}/admin/seasons/2000%2F2001/calendar/build", payload)
         _, long_body = call("GET", f"{server.base_url}/admin/seasons/2000%2F2001/calendar")
@@ -106,6 +111,7 @@ def test_post_dry_run_and_persist_calendar(tmp_path: Path) -> None:
         assert empty["calendar"] is None
 
         payload["dry_run"] = False
+        initialize_points(server)
         status, persisted = call("POST", f"{server.base_url}/admin/seasons/2000%2F2001/calendar/build", payload)
         assert status == 200
         assert persisted["summary"]["persisted"] is True
@@ -114,8 +120,23 @@ def test_post_dry_run_and_persist_calendar(tmp_path: Path) -> None:
         assert loaded["validation_warnings"]
 
 
+def test_persisted_build_requires_explicit_points_initialization_without_mutation(tmp_path: Path) -> None:
+    with Server(tmp_path) as server:
+        payload = {"seed": 1, "dry_run": False, "overwrite_existing": False, "season_start_calendar_year": 2000, "season_start_year_week": 37, "include_inactive_templates": False, "max_events": 1}
+        try:
+            call("POST", f"{server.base_url}/admin/seasons/2000%2F2001/calendar/build", payload)
+        except HTTPError as exc:
+            assert exc.code == 400
+            assert "Initialize them before building" in json.loads(exc.read())["detail"]
+        else:
+            raise AssertionError("persisted build must require explicit points initialization")
+        assert not (tmp_path / "season_category_points.json").exists()
+        assert not (tmp_path / "season_calendars.json").exists()
+
+
 def test_calendar_overwrite_safety(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
+        initialize_points(server)
         payload = {"seed": 1, "dry_run": False, "overwrite_existing": False, "season_start_calendar_year": 2000, "season_start_year_week": 37, "include_inactive_templates": False, "max_events": None}
         call("POST", f"{server.base_url}/admin/seasons/2000%2F2001/calendar/build", payload)
         try:

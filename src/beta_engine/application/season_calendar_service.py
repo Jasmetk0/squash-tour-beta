@@ -71,6 +71,10 @@ class SeasonCalendarAlreadyExistsError(ValueError):
     """Raised when attempting create-only insertion for an existing season calendar."""
 
 
+class SeasonCategoryPointsPrerequisiteError(ValueError):
+    """Raised when new Edition materialization lacks its points authority."""
+
+
 class TournamentEditionRankingUpdate(BaseModel):
     ranking_status: str
     ranking_points_table: dict[str, Any] = Field(default_factory=dict)
@@ -170,21 +174,27 @@ class SeasonCalendarService:
         return updated
 
     def build_calendar(self, *, season: str, request: SeasonCalendarBuildRequest) -> SeasonCalendarBuildResult:
+        if self.category_points_service is None:
+            raise SeasonCategoryPointsPrerequisiteError(
+                "Season Category Points authority is unavailable; configure it before building a new season calendar."
+            )
         registry = self._load_registry()
         existing = season in registry.calendars_by_season
         if not request.dry_run and existing and not request.overwrite_existing:
             raise ValueError(f"Season calendar already exists for season '{season}'. Set overwrite_existing=true to replace only that season.")
 
-        # Persisted creation deliberately initializes the sole authority first.
+        # Persisted creation requires the explicitly initialized authority.
         # Dry-run resolves the same candidate entirely in memory.
-        category_points = None
-        if self.category_points_service is not None:
-            points_response = (
-                self.category_points_service.preview_initialization(season)
-                if request.dry_run
-                else self.category_points_service.initialize(season)
-            )
-            category_points = {row.category: dict(row.ranking_points_table) for row in points_response.categories}
+        if request.dry_run:
+            points_response = self.category_points_service.preview_initialization(season)
+        else:
+            points_response = self.category_points_service.get(season)
+            if not points_response.initialized:
+                raise SeasonCategoryPointsPrerequisiteError(
+                    f"Season Category Points are not initialized for '{season}'. "
+                    "Initialize them before building the persisted season calendar."
+                )
+        category_points = {row.category: dict(row.ranking_points_table) for row in points_response.categories}
 
         templates_config = self.template_service.get_config()
         all_templates = sorted(templates_config.templates, key=self._template_sort_key)
@@ -499,12 +509,7 @@ class SeasonCalendarService:
             calendar_year, year_week = position.calendar_year, position.year_week
             template_payload = self._template_payload(template)
             template_fingerprint = self._fingerprint(template_payload)
-            if category_points is None:
-                # Compatibility for directly constructed legacy services only. API
-                # wiring always supplies the Season Category points authority.
-                edition_points = {}
-            else:
-                edition_points = dict(category_points.get(template.category, {}))
+            edition_points = dict(category_points.get(template.category, {}))
             event_id = f"EVT-{season_start_year}-W{season_week:02d}-{template.template_id}"
             events.append(
                 SeasonCalendarEvent(

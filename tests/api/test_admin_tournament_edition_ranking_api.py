@@ -10,6 +10,7 @@ BUILD = {"seed": 5, "dry_run": False, "overwrite_existing": False, "season_start
 
 
 def build(server: Server) -> tuple[str, dict]:
+    call("POST", f"{server.base_url}/admin/seasons/2000%2F2001/category-points/initialize")
     _, body = call("POST", f"{server.base_url}/admin/seasons/2000%2F2001/calendar/build", BUILD)
     event = body["calendar"]["events"][0]
     return event["event_id"], event

@@ -9,8 +9,9 @@ Run-and-branch-scoped configuration store.
 Legacy global and tournament-template points are compatibility inputs only when
 initializing a Season's Category tables. New Tournament Editions copy their target
 Season's table and never read those legacy sources directly. Persisted calendar
-creation idempotently initializes an absent Season registry first. Calendar dry-run
-uses the identical in-memory initialization candidate and does not persist it.
+creation requires an explicitly initialized Season registry and fails without that
+prerequisite; calendar building never initializes it as a side effect. Calendar
+dry-run uses the identical in-memory initialization candidate and does not persist it.
 
 Already persisted legacy Tournament Editions continue to load without migration or
 snapshot rewriting. Qualification stage names are structurally valid, but this

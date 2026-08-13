@@ -87,6 +87,7 @@ def test_new_edition_snapshots_only_authored_values_without_fallbacks(tmp_path):
             TournamentTemplatesConfigService(config_path=templates_path, calendar_dir=tmp_path / "legacy"), tmp_path / "category_points.json"
         ),
     )
+    subject.category_points_service.initialize("2000/2001")
     built = subject.build_calendar(season="2000/2001", request=SeasonCalendarBuildRequest(dry_run=False))
     built_event = built.calendar.events[0]
     assert built_event.ranking_points_table == {

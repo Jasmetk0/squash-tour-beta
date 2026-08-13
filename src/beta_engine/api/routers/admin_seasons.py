@@ -120,13 +120,13 @@ class CategoryPointsUpdate(BaseModel):
 
 @router.get("/{season:path}/category-points", response_model=SeasonCategoryPointsResponse)
 def get_season_category_points(season: str, service: SeasonCategoryPointsService = Depends(get_season_category_points_service)) -> SeasonCategoryPointsResponse:
-    return service.get(normalize_season_label(season))
+    return service.get(normalize_season_for_legacy_services(season))
 
 
 @router.post("/{season:path}/category-points/initialize", response_model=SeasonCategoryPointsResponse)
 def initialize_season_category_points(season: str, service: SeasonCategoryPointsService = Depends(get_season_category_points_service)) -> SeasonCategoryPointsResponse:
     try:
-        return service.initialize(normalize_season_label(season))
+        return service.initialize(normalize_season_for_legacy_services(season))
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
@@ -134,7 +134,7 @@ def initialize_season_category_points(season: str, service: SeasonCategoryPoints
 @router.put("/{season:path}/category-points/{category}", response_model=SeasonCategoryPointsTable)
 def update_season_category_points(season: str, category: str, payload: CategoryPointsUpdate, service: SeasonCategoryPointsService = Depends(get_season_category_points_service)) -> SeasonCategoryPointsTable:
     try:
-        return service.update(normalize_season_label(season), category, payload.ranking_points_table)
+        return service.update(normalize_season_for_legacy_services(season), category, payload.ranking_points_table)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
@@ -519,7 +519,7 @@ def build_season_calendar(
     service: SeasonCalendarService = Depends(get_season_calendar_service),
 ) -> SeasonCalendarBuildResult:
     try:
-        return service.build_calendar(season=season, request=payload)
+        return service.build_calendar(season=normalize_season_for_legacy_services(season), request=payload)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 

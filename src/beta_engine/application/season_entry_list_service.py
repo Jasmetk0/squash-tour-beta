@@ -160,6 +160,9 @@ class SeasonEntryListService:
             raise ValueError(f"Entry list already exists for event '{event_id}'. Set overwrite_existing=true to replace only that event.")
 
         event = self._find_event(event_id)
+        if event.ranking_status.value == "ranked" and not event.points_table_complete:
+            missing = ", ".join(event.missing_required_point_stages)
+            raise ValueError(f"Ranked Edition has an incomplete points table; ranking-dependent entries are blocked. Missing required stages: {missing}")
         active_response = self.active_players_service.get_active_players(season=str(event.season))
         active_players = sorted(active_response.players, key=lambda player: player.player_id)
         if not active_players:

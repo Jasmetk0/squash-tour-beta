@@ -6,7 +6,7 @@ import json
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from beta_engine.api.deps import get_calendar_template_service, get_initial_pool_season_bootstrap_service, get_planning_calendar_apply_template_service, get_planning_season_calendar_service, get_season_builder_apply_audit_service, get_season_calendar_service, get_season_range_execution_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service, get_season_template_service
+from beta_engine.api.deps import get_calendar_template_service, get_initial_pool_season_bootstrap_service, get_planning_calendar_apply_template_service, get_planning_season_calendar_service, get_season_builder_apply_audit_service, get_season_calendar_service, get_season_event_lifecycle_service, get_season_range_execution_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service, get_season_template_service
 from beta_engine.api.schemas import SeasonBootstrapRequest
 from beta_engine.application.calendar_template_apply_contract_service import (
     CalendarTemplateApplyContractReadinessRequest,
@@ -40,7 +40,9 @@ from beta_engine.application.season_player_bootstrap_service import (
     SeasonActivePlayersResponse,
     SeasonBootstrapResult,
 )
-from beta_engine.application.season_calendar_service import SeasonCalendarAlreadyExistsError, SeasonCalendarService
+from beta_engine.application.season_calendar_service import SeasonCalendarAlreadyExistsError, SeasonCalendarService, TournamentEditionRankingUpdate
+from beta_engine.application.season_event_lifecycle_service import SeasonEventLifecycleService
+from beta_engine.domain.tournaments.models import SeasonCalendarEvent
 from beta_engine.application.season_builder_apply_audit_service import (
     SeasonBuilderApplyAuditService,
     SeasonBuilderApplyCreateOnlyAuditRecord,
@@ -471,6 +473,17 @@ def get_season_calendar(
     service: SeasonCalendarService = Depends(get_season_calendar_service),
 ) -> SeasonCalendarBuildResult:
     return service.get_calendar(season=normalize_season_for_legacy_services(season))
+
+
+@router.patch("/{season:path}/calendar/events/{event_id}/ranking", response_model=SeasonCalendarEvent)
+def update_tournament_edition_ranking(season: str, event_id: str, payload: TournamentEditionRankingUpdate, service: SeasonCalendarService = Depends(get_season_calendar_service), lifecycle_service: SeasonEventLifecycleService = Depends(get_season_event_lifecycle_service)) -> SeasonCalendarEvent:
+    try:
+        lifecycle = lifecycle_service.get_event_lifecycle(event_id=event_id).event
+        if lifecycle is not None and lifecycle.current_stage != "planned":
+            raise ValueError("Ranking status cannot change after competitive history exists; retroactive ranking rewrites are not supported.")
+        return service.update_edition_ranking(season=normalize_season_for_legacy_services(season), event_id=event_id, request=payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
 @router.post("/{season:path}/calendar/build", response_model=SeasonCalendarBuildResult)

@@ -10,6 +10,8 @@ type Props = {
   seasonLabelRaw: string | null
 }
 
+import { normalizeEditionRanking } from './seasonEditionRanking'
+
 export function SeasonCalendarPreview({ seasonLabelRaw }: Props): JSX.Element {
   const compactLabel = seasonLabelRaw ? safeToCompactSeasonLabel(seasonLabelRaw) : null
   const calendarQuery = useQuery({
@@ -18,7 +20,6 @@ export function SeasonCalendarPreview({ seasonLabelRaw }: Props): JSX.Element {
     enabled: Boolean(compactLabel),
     retry: false
   })
-
   if (!compactLabel) {
     return <p className="status">Calendar preview unavailable for invalid season label.</p>
   }
@@ -35,7 +36,7 @@ export function SeasonCalendarPreview({ seasonLabelRaw }: Props): JSX.Element {
     return <p className="status">No calendar exists yet for this season.</p>
   }
 
-  const events = calendar.events ?? []
+  const events = (calendar.events ?? []).map((event) => normalizeEditionRanking(event))
   const firstTenEvents = events.slice(0, 10)
   const distinctCategories = Array.from(new Set(events.map((event) => event.category).filter(Boolean)))
   const distinctHosts = Array.from(new Set(events.map((event) => event.host_country).filter(Boolean)))
@@ -65,6 +66,7 @@ export function SeasonCalendarPreview({ seasonLabelRaw }: Props): JSX.Element {
               <th>Region</th>
               <th>Source template / template id</th>
               <th>Status</th>
+              <th>Ranking status</th>
             </tr>
           </thead>
           <tbody>
@@ -77,6 +79,10 @@ export function SeasonCalendarPreview({ seasonLabelRaw }: Props): JSX.Element {
                 <td>{event.region ?? '—'}</td>
                 <td>{event.template_id ?? '—'}</td>
                 <td>{event.status ?? '—'}</td>
+                <td>
+                  <p><strong>{event.ranking_status === 'ranked' ? 'Ranked' : 'Unranked'}</strong></p>
+                  {event.ranking_status === 'ranked' ? <><p className={event.points_table_complete ? 'status' : 'error'}>{event.points_table_complete ? 'Points table complete.' : `Points table incomplete. Missing: ${event.missing_required_point_stages.join(', ')}`}</p><details><summary>Effective points table</summary><pre>{JSON.stringify(event.ranking_points_table, null, 2)}</pre></details></> : <p>Unranked: awards no MSA points or Best N result; tournament history remains.</p>}
+                </td>
               </tr>
             ))}
           </tbody>

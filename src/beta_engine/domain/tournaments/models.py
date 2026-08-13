@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from enum import Enum
+from math import ceil, log2
 from typing import Any, Literal
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, computed_field, model_validator
@@ -9,6 +11,11 @@ from pydantic import AliasChoices, BaseModel, ConfigDict, Field, computed_field,
 
 TourLevel = Literal["WORLD_TOUR", "ELITE_TOUR"]
 SeasonCalendarEventStatus = Literal["planned", "active", "completed", "cancelled", "scheduled"]
+
+
+class TournamentEditionRankingStatus(str, Enum):
+    RANKED = "ranked"
+    UNRANKED = "unranked"
 
 
 class LuckyLoserRules(BaseModel):
@@ -143,6 +150,10 @@ class CalendarEvent(BaseModel):
     byes: int = Field(default=0, ge=0)
     point_distribution_ref: str | None = None
     point_distribution: TournamentPointDistribution | None = None
+    # Compatibility boundary: legacy editions entered the ranking pipeline.
+    ranking_status: TournamentEditionRankingStatus = TournamentEditionRankingStatus.RANKED
+    ranking_points_table: dict[str, Any] = Field(default_factory=dict)
+    ranking_configuration_legacy: bool = True
     prize_money: int = Field(default=0, ge=0)
     prestige: float = Field(default=0.0, ge=0)
     event_level_overrides: dict[str, Any] = Field(default_factory=dict)
@@ -163,8 +174,60 @@ class CalendarEvent(BaseModel):
     def week(self) -> int:
         return self.season_week
 
+    @computed_field
+    @property
+    def required_ranking_point_stages(self) -> list[str]:
+        stages = self._main_draw_point_stages(self.main_draw_size)
+        if self.qualification_draw_size > 0:
+            rounds = max(1, ceil(log2(self.qualification_draw_size)))
+            stages.append("qualification_winner")
+            if rounds >= 2:
+                stages.append("qualification_final")
+            if rounds >= 3:
+                stages.append("qualification_semifinal")
+            if rounds >= 4:
+                stages.append("qualification_round")
+        return stages
+
+    @computed_field
+    @property
+    def missing_required_point_stages(self) -> list[str]:
+        if self.ranking_status == TournamentEditionRankingStatus.UNRANKED:
+            return []
+        # Legacy records had no Edition fields and resolved their ranking table via
+        # the pre-V1 points pipeline. Preserve that behavior at the read boundary;
+        # every newly built/edited Edition persists both fields explicitly.
+        if self.ranking_configuration_legacy:
+            return []
+        return [stage for stage in self.required_ranking_point_stages if not self._valid_point(self.ranking_points_table.get(stage))]
+
+    @computed_field
+    @property
+    def points_table_complete(self) -> bool:
+        return self.ranking_status == TournamentEditionRankingStatus.UNRANKED or not self.missing_required_point_stages
+
+    @staticmethod
+    def _valid_point(value: Any) -> bool:
+        return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+    @staticmethod
+    def _main_draw_point_stages(draw_size: int) -> list[str]:
+        stages = ["champion"]
+        if draw_size >= 2:
+            stages.append("finalist")
+        if draw_size >= 4:
+            stages.append("semifinal")
+        if draw_size >= 8:
+            stages.append("quarterfinal")
+        for size, stage in ((16, "round_of_16"), (32, "round_of_32"), (64, "round_of_64"), (128, "round_of_128")):
+            if draw_size >= size:
+                stages.append(stage)
+        return stages
+
     @model_validator(mode="after")
     def normalize_event(self) -> "CalendarEvent":
+        if "ranking_configuration_legacy" not in self.model_fields_set and ({"ranking_status", "ranking_points_table"} & self.model_fields_set):
+            self.ranking_configuration_legacy = False
         if self.start_season_week is None:
             self.start_season_week = self.season_week
         if self.end_season_week is None:

@@ -2605,6 +2605,12 @@ export type SeasonCalendarEvent = {
   byes: number
   point_distribution_ref: string | null
   point_distribution: Record<string, number> | null
+  ranking_status: 'ranked' | 'unranked'
+  ranking_points_table: Record<string, unknown>
+  ranking_configuration_legacy: boolean
+  required_ranking_point_stages: string[]
+  missing_required_point_stages: string[]
+  points_table_complete: boolean
   prize_money: number
   prestige: number
   event_level_overrides: Record<string, unknown>

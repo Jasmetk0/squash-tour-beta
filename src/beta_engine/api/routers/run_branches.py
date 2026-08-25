@@ -13,6 +13,7 @@ router = APIRouter(prefix="/run-branches", tags=["run-branches"])
 def _response(record: RunBranchRecord) -> RunBranchResponse:
     payload = record.__dict__.copy()
     payload["metadata_json"] = payload.pop("metadata")
+    payload["is_viewer_branch"] = record.is_viewer_branch
     return RunBranchResponse.model_validate(payload)
 
 

@@ -1,10 +1,10 @@
 # Squash Engine / FAX Squash / MSA World Tour
 
-## Active Product Constitution — synchronized through Master Vision v42
+## Active Product Constitution — governed by Master Vision v50
 
 **Repository status:** canonical repository-level product constitution for current design and implementation decisions.  
-**Master baseline:** Squash Engine Master Vision **v42**, updated **10. 8. 2026**.  
-**Synchronization rule:** this file preserves still-valid canon from earlier Master revisions and adds later decisions; later synchronization must be additive unless the Master explicitly supersedes an older rule.
+**Latest Master authority:** Squash Engine Master Vision **v50**, updated **24. 8. 2026**.
+**Synchronization rule:** this shorter repository distillation may lag details in the Master. It preserves still-valid earlier canon and records selected later decisions; synchronization must be additive unless the Master explicitly supersedes an older rule.
 
 > This constitution is a repository-facing distillation, not a lossless copy of the full Master Vision. A specified target does **not** imply that the repository already implements it. When a task depends on detail not stated here, use the latest audited Master or an explicit newer user decision rather than inventing the missing rule.
 
@@ -34,7 +34,7 @@ Independent scope axis:
 When sources disagree, use this order:
 
 1. explicit newer user/product decisions,
-2. latest audited Master Vision — currently v42,
+2. latest audited Master Vision — currently v50,
 3. this constitution,
 4. subordinate migration guidance such as `docs/ENGINE_UX_SPEC.md`,
 5. `README.md`, `ROADMAP.md`, and `AGENTS.md` as summaries/operating guidance,
@@ -152,13 +152,15 @@ Global search and `Ctrl+K` remain part of the shell.
 
 **[DECIDED][ENGINE INVARIANT]** Every Run spans exactly 50 seasons `2000/01–2049/50`, each with exactly 61 Season Weeks.
 
-**[DECIDED]** A Run is an independent saved simulation world containing stable identity/name, embedded package snapshots and provenance, seasons, branches/history, players, tournaments, matches, rankings and simulation/configuration state.
+**[DECIDED]** A Run is an independent saved simulation world with stable identity/name and capacity for package snapshots/provenance, seasons, branches/history, players, tournaments, matches, rankings and simulation/configuration state. A newly created Run may contain none of that optional sporting content yet.
 
 ## 4.1 Run identity and lifecycle
 
 **[DECIDED]** Number of Runs is not artificially limited.
 
 **[DECIDED]** Every Run has a unique displayed name across active and archived Runs. An archived Run continues reserving its name. Technical identity is stable `run_id`.
+
+**[DECIDED FOR FIRST PRE-ALPHA]** A unique displayed name is the only user-supplied creation field. The engine assigns `run_id`, creates the empty `2000/01–2049/50` time frame and one neutral initial Viewer Branch, and persists the Run as a valid `Working` state. Description, Packages, players, calendar, rules and other content may be added later.
 
 **[DECIDED]** Run description is optional.
 
@@ -272,9 +274,9 @@ A week with no scheduled match/tournament still has to progress through required
 
 ## 7.1 World + Category Packages
 
-**[DECIDED]** Every Run selects exactly one World Package and one Category Package during creation.
+**[DECIDED]** A Run may be created completely empty, without a World, Category, Series, Calendar or Setup Package. Missing content blocks only operations that require that content.
 
-Selected versions are copied into the Run as independent versioned snapshots. Source identity/version remains provenance only; there is no live link afterwards.
+When selected content is applied, it is copied into the Run as an independent versioned snapshot. Source identity/version remains provenance only; there is no live link afterwards.
 
 Consequences:
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from uuid import uuid4
 
 from fastapi import Request
 
@@ -51,6 +52,9 @@ from beta_engine.application.world_package_validation_service import WorldPackag
 from beta_engine.application.world_package_weekly_intake_preview_service import WorldPackageWeeklyIntakePreviewService
 from beta_engine.application.run_weekly_intake_cohort_preview_service import RunWeeklyIntakeCohortPreviewService
 from beta_engine.application.run_prospect_materialization_service import RunProspectMaterializationService
+from beta_engine.application.run_container_creation_service import (
+    RunContainerCreationService,
+)
 from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
 from beta_engine.infrastructure.config import load_settings
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
@@ -83,6 +87,20 @@ def get_simulation_api_service(request: Request) -> SimulationApiService:
         manual_overrides_service=get_manual_player_overrides_service(request),
         countries_service=get_countries_config_service(request),
         world_package_registry_service=get_world_package_registry_service(request),
+    )
+
+
+def _new_product_entity_id(kind: str) -> str:
+    """Generate persistence identity outside all deterministic simulation RNGs."""
+
+    return f"{kind}-{uuid4().hex}"
+
+
+def get_run_container_creation_service(request: Request) -> RunContainerCreationService:
+    runtime = get_runtime(request)
+    return RunContainerCreationService(
+        repository=runtime.repository,
+        id_factory=_new_product_entity_id,
     )
 
 

@@ -39,13 +39,21 @@ class RunContainerModel(Base):
     __tablename__ = "runs"
     __table_args__ = (
         CheckConstraint("storage_kind IN ('built_in', 'custom_local')", name="ck_runs_storage_kind"),
+        Index(
+            "uq_runs_display_name",
+            "display_name",
+            unique=True,
+            sqlite_where=text("display_name IS NOT NULL"),
+        ),
     )
 
     run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     display_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
     storage_kind: Mapped[str] = mapped_column(String(32), nullable=False, default="built_in")
     read_only: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    world_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    # A canonical Run may be created before any World Package is attached.
+    # Existing legacy-backed Runs continue to persist their immutable world id.
+    world_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     world_package_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)
     config_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
     config_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)

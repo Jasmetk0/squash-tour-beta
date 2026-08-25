@@ -1,6 +1,6 @@
 # Squash Engine roadmap
 
-This is a milestone summary, not a second product constitution. **Master Vision v42** plus newer explicit decisions recorded in `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` take precedence; `docs/ENGINE_UX_SPEC.md` provides subordinate migration guidance. Planned behavior must not be described as implemented unless verified in the repository.
+This is a milestone summary, not a second product constitution. **Master Vision v50** plus newer explicit decisions take precedence over `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`; `docs/ENGINE_UX_SPEC.md` provides subordinate migration guidance. Planned behavior must not be described as implemented unless verified in the repository.
 
 ## 1. Canonical foundation and migration safety
 

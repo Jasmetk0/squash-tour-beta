@@ -1,14 +1,29 @@
-"""Read-only product-level Run container endpoints.
+"""Canonical product-level Run container endpoints.
 
 Legacy ``/runs`` remains the season-attempt API in R1.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from beta_engine.api.deps import get_simulation_api_service
-from beta_engine.api.schemas import RunContainerListResponse, RunContainerResponse
+from beta_engine.api.deps import (
+    get_run_container_creation_service,
+    get_simulation_api_service,
+)
+from beta_engine.api.schemas import (
+    CreateRunContainerRequest,
+    RunContainerListResponse,
+    RunContainerResponse,
+)
 from beta_engine.application.api_services import SimulationApiService
-from beta_engine.infrastructure.db import RunContainerRecord
+from beta_engine.application.run_container_creation_service import (
+    RunContainerCreationService,
+)
+from beta_engine.domain.run_containers import RunDisplayNameValidationError
+from beta_engine.infrastructure.db import (
+    RunContainerRecord,
+    RunDisplayNameConflictError,
+    RunIdentityConflictError,
+)
 
 router = APIRouter(prefix="/run-containers", tags=["run-containers"])
 
@@ -16,17 +31,55 @@ router = APIRouter(prefix="/run-containers", tags=["run-containers"])
 def _response(record: RunContainerRecord) -> RunContainerResponse:
     payload = record.__dict__.copy()
     payload["metadata_json"] = payload.pop("metadata")
+    payload["viewer_branch_id"] = record.viewer_branch_id
     return RunContainerResponse.model_validate(payload)
 
 
+@router.post(
+    "", response_model=RunContainerResponse, status_code=status.HTTP_201_CREATED
+)
+def create_run_container(
+    payload: CreateRunContainerRequest,
+    service: RunContainerCreationService = Depends(get_run_container_creation_service),
+) -> RunContainerResponse:
+    try:
+        return _response(service.create_empty_run(display_name=payload.display_name))
+    except RunDisplayNameConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"code": "run_display_name_conflict", "message": str(exc)},
+        ) from exc
+    except RunIdentityConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"code": "run_identity_conflict", "message": str(exc)},
+        ) from exc
+    except RunDisplayNameValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
+
+
 @router.get("", response_model=RunContainerListResponse)
-def list_run_containers(service: SimulationApiService = Depends(get_simulation_api_service)) -> RunContainerListResponse:
-    return RunContainerListResponse(run_containers=[_response(record) for record in service.repository.list_run_containers()])
+def list_run_containers(
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> RunContainerListResponse:
+    return RunContainerListResponse(
+        run_containers=[
+            _response(record) for record in service.repository.list_run_containers()
+        ]
+    )
 
 
 @router.get("/{run_id:path}", response_model=RunContainerResponse)
-def get_run_container(run_id: str, service: SimulationApiService = Depends(get_simulation_api_service)) -> RunContainerResponse:
+def get_run_container(
+    run_id: str,
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> RunContainerResponse:
     record = service.repository.get_run_container(run_id=run_id)
     if record is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"run container {run_id} was not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"run container {run_id} was not found",
+        )
     return _response(record)

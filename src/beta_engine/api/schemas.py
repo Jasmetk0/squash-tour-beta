@@ -24,6 +24,7 @@ from beta_engine.application.season_models import RaceSnapshot, RankingSnapshot,
 from beta_engine.domain.finals import FinalsQualificationResult, FinalsResult
 from beta_engine.domain.timezone_areas import TimezoneArea
 from beta_engine.domain.players.initial_pool import CustomInitialPoolPlayerCreate, InitialPoolPlayerUpdate
+from beta_engine.domain.run_containers import normalize_run_display_name
 
 
 class HealthResponse(BaseModel):
@@ -130,19 +131,35 @@ class RunIndexResponse(BaseModel):
     runs: list[RunIndexSummaryResponse] = Field(default_factory=list)
 
 
+class CreateRunContainerRequest(BaseModel):
+    """The sole user input required for a canonical empty pre-alpha Run."""
+
+    display_name: str = Field(min_length=1, max_length=256)
+
+    @field_validator("display_name", mode="before")
+    @classmethod
+    def normalize_display_name(cls, value: object) -> str:
+        if not isinstance(value, str):
+            raise ValueError("display_name must be a string")
+        return normalize_run_display_name(value)
+
+
 class RunContainerResponse(BaseModel):
     run_id: str
     display_name: str | None = None
     storage_kind: Literal["built_in", "custom_local"]
     read_only: bool
-    world_id: str
+    world_id: str | None = None
     world_package_fingerprint: str | None = None
     config_version: str | None = None
     config_fingerprint: str | None = None
     global_seed: int | None = None
     timeline_start_season: int
     timeline_end_season: int
-    official_branch_id: str | None = None
+    viewer_branch_id: str | None = None
+    # Transitional response compatibility only. New consumers use
+    # viewer_branch_id; the persistence rename can happen independently.
+    official_branch_id: str | None = Field(default=None, deprecated=True)
     status: str
     metadata_json: dict[str, object] = Field(default_factory=dict)
     mapped_simulation_run_count: int
@@ -164,6 +181,7 @@ class RunBranchResponse(BaseModel):
     head_checkpoint_id: str | None = None
     legacy_simulation_run_id: str | None = None
     metadata_json: dict[str, object] = Field(default_factory=dict)
+    is_viewer_branch: bool
     is_official: bool
 
 

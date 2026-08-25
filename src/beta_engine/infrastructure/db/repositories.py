@@ -122,7 +122,7 @@ class RunContainerRecord:
     display_name: str | None
     storage_kind: str
     read_only: bool
-    world_id: str
+    world_id: str | None
     world_package_fingerprint: str | None
     config_version: str | None
     config_fingerprint: str | None
@@ -133,6 +133,12 @@ class RunContainerRecord:
     status: str
     metadata: dict[str, object]
     mapped_simulation_run_count: int = 0
+
+    @property
+    def viewer_branch_id(self) -> str | None:
+        """Canonical product name for the legacy persistence pointer."""
+
+        return self.official_branch_id
 
 
 @dataclass(frozen=True)
@@ -149,6 +155,24 @@ class RunBranchRecord:
     legacy_simulation_run_id: str | None
     metadata: dict[str, object]
     is_official: bool = False
+
+    @property
+    def is_viewer_branch(self) -> bool:
+        """Canonical product name for the legacy compatibility flag."""
+
+        return self.is_official
+
+
+class RunContainerCreationConflictError(ValueError):
+    """Base error for an atomic product Run creation conflict."""
+
+
+class RunDisplayNameConflictError(RunContainerCreationConflictError):
+    """Raised when an active or archived Run already reserves the name."""
+
+
+class RunIdentityConflictError(RunContainerCreationConflictError):
+    """Raised when a generated Run or Branch identity is already in use."""
 
 
 @dataclass(frozen=True)
@@ -731,6 +755,8 @@ class SimulationPersistenceRepository:
 
     def _ensure_schema_compatibility(self) -> None:
         with self._engine.begin() as connection:
+            self._ensure_runs_world_id_nullable(connection=connection)
+            self._ensure_run_display_name_unique_index(connection=connection)
             self._ensure_branch_checkpoint_boundary_indexes(connection=connection)
             self._ensure_column(
                 connection=connection,
@@ -752,6 +778,65 @@ class SimulationPersistenceRepository:
             self._ensure_column(connection=connection, table_name="run_talent_country_allocations", column_name="dampener_json", column_type="TEXT")
             self._ensure_column(connection=connection, table_name="simulation_runs", column_name="world_id", column_type="TEXT")
             self._ensure_column(connection=connection, table_name="simulation_runs", column_name="world_generation_fingerprint", column_type="TEXT")
+
+    @staticmethod
+    def _ensure_runs_world_id_nullable(*, connection) -> None:
+        """Migrate pre-empty-Run SQLite schemas without losing Run identity.
+
+        SQLite cannot remove a ``NOT NULL`` constraint in place. The repository
+        therefore rebuilds only the small product-Run metadata table, copying
+        every shared column in one transaction. No sporting/history table is
+        rewritten.
+        """
+
+        table_info = list(connection.execute(text("PRAGMA table_info(runs)")))
+        if not table_info:
+            return
+        world_column = next((row for row in table_info if row[1] == "world_id"), None)
+        if world_column is None or int(world_column[3]) == 0:
+            return
+
+        legacy_table = "runs__world_id_required_legacy"
+        if list(connection.execute(text(f"PRAGMA table_info({legacy_table})"))):
+            raise RuntimeError(f"unfinished Run schema migration table {legacy_table} already exists")
+
+        # The index may exist in a partially upgraded database and its global
+        # SQLite name would otherwise collide while the replacement is built.
+        connection.execute(text("DROP INDEX IF EXISTS uq_runs_display_name"))
+        connection.execute(text(f"ALTER TABLE runs RENAME TO {legacy_table}"))
+        RunContainerModel.__table__.create(bind=connection, checkfirst=False)
+
+        old_columns = {row[1] for row in connection.execute(text(f"PRAGMA table_info({legacy_table})"))}
+        new_columns = [column.name for column in RunContainerModel.__table__.columns]
+        shared_columns = [column for column in new_columns if column in old_columns]
+        column_list = ", ".join(shared_columns)
+        try:
+            connection.execute(
+                text(
+                    f"INSERT INTO runs ({column_list}) "
+                    f"SELECT {column_list} FROM {legacy_table}"
+                )
+            )
+        except IntegrityError as exc:
+            raise RuntimeError(
+                "Run schema migration found duplicate non-null display names; "
+                "resolve them before enabling canonical empty Run creation"
+            ) from exc
+        connection.execute(text(f"DROP TABLE {legacy_table}"))
+
+    @staticmethod
+    def _ensure_run_display_name_unique_index(*, connection) -> None:
+        try:
+            connection.execute(
+                text(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS uq_runs_display_name "
+                    "ON runs (display_name) WHERE display_name IS NOT NULL"
+                )
+            )
+        except IntegrityError as exc:
+            raise RuntimeError(
+                "Run display names must be unique across active and archived Runs"
+            ) from exc
 
     @staticmethod
     def _ensure_branch_checkpoint_boundary_indexes(*, connection) -> None:
@@ -847,6 +932,108 @@ class SimulationPersistenceRepository:
                 ))
             # Containers are immutable in R1; return the persisted creation lock unchanged.
         return self.get_run_container(run_id=record.run_id)  # type: ignore[return-value]
+
+    def create_empty_run_container_atomically(
+        self,
+        *,
+        run: RunContainerRecord,
+        branch: RunBranchRecord,
+    ) -> RunContainerRecord:
+        """Persist a new empty Run root, Viewer Branch, and BranchState together."""
+
+        if run.storage_kind != "custom_local" or run.read_only:
+            raise ValueError("an empty user-created Run must be editable custom_local storage")
+        if run.display_name is None or not run.display_name.strip():
+            raise ValueError("an empty user-created Run requires a non-blank display name")
+        if run.display_name != run.display_name.strip():
+            raise ValueError("Run display name must already be normalized")
+        if branch.run_id != run.run_id:
+            raise ValueError("initial Branch must belong to the created Run")
+        if run.official_branch_id != branch.branch_id:
+            raise ValueError("the initial Branch must be selected as the Viewer Branch")
+        if branch.head_checkpoint_id is not None or branch.legacy_simulation_run_id is not None:
+            raise ValueError("an empty Run's initial Branch cannot have simulation state")
+
+        try:
+            with self._session_factory.begin() as session:
+                if session.get(RunContainerModel, run.run_id) is not None:
+                    raise RunIdentityConflictError(f"run_id {run.run_id!r} is already in use")
+                if session.get(RunBranchModel, branch.branch_id) is not None:
+                    raise RunIdentityConflictError(f"branch_id {branch.branch_id!r} is already in use")
+                reserved_by = session.scalar(
+                    select(RunContainerModel.run_id)
+                    .where(RunContainerModel.display_name == run.display_name)
+                    .limit(1)
+                )
+                if reserved_by is not None:
+                    raise RunDisplayNameConflictError(
+                        f"Run display name {run.display_name!r} is already reserved"
+                    )
+
+                session.add(
+                    RunContainerModel(
+                        run_id=run.run_id,
+                        display_name=run.display_name,
+                        storage_kind=run.storage_kind,
+                        read_only=int(run.read_only),
+                        world_id=run.world_id,
+                        world_package_fingerprint=run.world_package_fingerprint,
+                        config_version=run.config_version,
+                        config_fingerprint=run.config_fingerprint,
+                        global_seed=run.global_seed,
+                        timeline_start_season=run.timeline_start_season,
+                        timeline_end_season=run.timeline_end_season,
+                        official_branch_id=branch.branch_id,
+                        status=run.status,
+                        metadata_json=_to_json(run.metadata),
+                    )
+                )
+                session.add(
+                    RunBranchModel(
+                        branch_id=branch.branch_id,
+                        run_id=branch.run_id,
+                        display_name=branch.display_name,
+                        status=branch.status,
+                        read_only=int(branch.read_only),
+                        branch_seed=branch.branch_seed,
+                        forked_from_branch_id=branch.forked_from_branch_id,
+                        forked_from_checkpoint_id=branch.forked_from_checkpoint_id,
+                        head_checkpoint_id=None,
+                        legacy_simulation_run_id=None,
+                        metadata_json=_to_json(branch.metadata),
+                    )
+                )
+                session.add(
+                    BranchStateModel(
+                        branch_id=branch.branch_id,
+                        run_id=run.run_id,
+                        head_checkpoint_id=None,
+                        current_season=None,
+                        current_week=None,
+                        current_event_id=None,
+                        current_event_sequence=None,
+                        state_schema_version="branch_state_v1",
+                        status="active",
+                        metadata_json="{}",
+                    )
+                )
+                # Force all uniqueness checks before the transaction commits so
+                # every failure rolls back the complete aggregate.
+                session.flush()
+        except IntegrityError as exc:
+            message = str(exc.orig).lower()
+            if "display_name" in message:
+                raise RunDisplayNameConflictError(
+                    f"Run display name {run.display_name!r} is already reserved"
+                ) from exc
+            raise RunIdentityConflictError(
+                "generated Run or Branch identity collided with existing data"
+            ) from exc
+
+        created = self.get_run_container(run_id=run.run_id)
+        if created is None:  # pragma: no cover - protects against adapter corruption
+            raise RuntimeError(f"created Run {run.run_id!r} could not be loaded")
+        return created
 
     def get_run_container(self, *, run_id: str) -> RunContainerRecord | None:
         with self._session_factory() as session:

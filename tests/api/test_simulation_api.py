@@ -150,6 +150,65 @@ def test_run_container_endpoints_follow_legacy_run_creation_without_changing_run
         assert runs["runs"][0]["run_id"] == "save/a #1"
 
 
+def test_create_empty_product_run_api_requires_only_a_unique_display_name(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'empty-product-run-api.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, created = _request(
+            "POST",
+            f"{server.base_url}/run-containers",
+            {"display_name": "  My History  "},
+        )
+
+        assert status == 201
+        assert created["display_name"] == "My History"
+        assert created["status"] == "working"
+        assert created["world_id"] is None
+        assert created["global_seed"] is None
+        assert created["timeline_start_season"] == 2000
+        assert created["timeline_end_season"] == 2049
+        assert created["mapped_simulation_run_count"] == 0
+        assert created["viewer_branch_id"]
+        assert created["official_branch_id"] == created["viewer_branch_id"]
+
+        run_id = created["run_id"]
+        status, loaded = _request("GET", f"{server.base_url}/run-containers/{run_id}")
+        assert status == 200
+        assert loaded == created
+
+        status, branches = _request(
+            "GET",
+            f"{server.base_url}/run-branches?run_id={run_id}",
+        )
+        assert status == 200
+        assert len(branches["run_branches"]) == 1
+        branch = branches["run_branches"][0]
+        assert branch["branch_id"] == created["viewer_branch_id"]
+        assert branch["display_name"] == "Timeline 1"
+        assert branch["is_viewer_branch"] is True
+        assert branch["legacy_simulation_run_id"] is None
+        assert branch["head_checkpoint_id"] is None
+
+        status, legacy_runs = _request("GET", f"{server.base_url}/runs")
+        assert status == 200
+        assert legacy_runs == {"runs": []}
+
+        status, duplicate = _request(
+            "POST",
+            f"{server.base_url}/run-containers",
+            {"display_name": "My History"},
+        )
+        assert status == 409
+        assert duplicate["detail"]["code"] == "run_display_name_conflict"
+
+        status, blank = _request(
+            "POST",
+            f"{server.base_url}/run-containers",
+            {"display_name": "   "},
+        )
+        assert status == 422
+        assert blank["detail"]
+
+
 def _generated_player_ids(*, season: int, seed: int) -> list[str]:
     countries = load_simulation_test_countries().countries
     plan = AnnualTalentClassPlanner().plan(year=season, seed=seed, countries=countries)

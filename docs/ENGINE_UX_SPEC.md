@@ -4,10 +4,10 @@
 
 This document is **implementation/migration guidance**, not a second product constitution.
 
-The current product-level source of truth is:
+The current product-level authority order is:
 
-- `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`
-- synchronized through **Squash Engine Master Vision v42** (updated 10 Aug 2026) and preserving newer explicit post-v42 decisions recorded in the constitution
+- **Squash Engine Master Vision v50** (updated 24 Aug 2026)
+- `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`, the shorter repository distillation that may lag Master detail
 
 If this guide, older beta code, `Beta_Engine.docx`, an old handoff or an older UX proposal conflicts with the current constitution/Master/newer explicit decision, the higher-authority source wins.
 
@@ -125,7 +125,7 @@ Clearly distinguish:
 - **source Package authoring** — global,
 - **Run snapshot inspection/editing** — Run-scoped.
 
-Selected World + Category Package versions become independent Run snapshots at Run creation; no live synchronization exists afterwards.
+A Run may be created empty with only its unique displayed name supplied by the user. World, Category and other Packages are optional later inputs; when applied, selected content becomes an independent Run snapshot and no live synchronization exists afterwards.
 
 Country/profile pages should separate authored configuration from generated historical output.
 

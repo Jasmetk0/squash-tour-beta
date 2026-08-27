@@ -11,6 +11,11 @@ INITIAL_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION = "empty_run_saved_revision_v1"
 # This schema names only the clean draft created with an empty Run. It does not
 # choose the still-open representation of future logical change bundles.
 WORKING_DRAFT_SCHEMA_VERSION = "empty_run_working_draft_v1"
+# A new Branch initially shares its selected immutable source revision and owns
+# only this clean draft. Future general draft schemas remain a separate concern.
+SAVED_REVISION_FORK_WORKING_DRAFT_SCHEMA_VERSION = (
+    "saved_revision_fork_working_draft_v1"
+)
 CLEAN_WORKING_DRAFT_STATUS = "clean"
 DIRTY_WORKING_DRAFT_STATUS = "dirty"
 CONTENT_HASH_ALGORITHM = "sha256"

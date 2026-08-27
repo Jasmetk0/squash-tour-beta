@@ -8,6 +8,8 @@ RUN_SEASON_COUNT = 50
 RUN_WEEKS_PER_SEASON = 61
 RUN_DISPLAY_NAME_MAX_LENGTH = 256
 
+# Confirmed product default. Subsequent branches use the same Timeline N
+# sequence through ``first_available_timeline_name``.
 INITIAL_BRANCH_DISPLAY_NAME = "Timeline 1"
 WORKING_RUN_STATUS = "working"
 

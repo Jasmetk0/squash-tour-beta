@@ -55,6 +55,9 @@ from beta_engine.application.run_prospect_materialization_service import RunPros
 from beta_engine.application.run_container_creation_service import (
     RunContainerCreationService,
 )
+from beta_engine.application.run_branch_creation_service import (
+    RunBranchCreationService,
+)
 from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
 from beta_engine.infrastructure.config import load_settings
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
@@ -99,6 +102,14 @@ def _new_product_entity_id(kind: str) -> str:
 def get_run_container_creation_service(request: Request) -> RunContainerCreationService:
     runtime = get_runtime(request)
     return RunContainerCreationService(
+        repository=runtime.repository,
+        id_factory=_new_product_entity_id,
+    )
+
+
+def get_run_branch_creation_service(request: Request) -> RunBranchCreationService:
+    runtime = get_runtime(request)
+    return RunBranchCreationService(
         repository=runtime.repository,
         id_factory=_new_product_entity_id,
     )

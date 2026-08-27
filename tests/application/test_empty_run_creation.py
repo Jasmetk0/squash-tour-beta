@@ -456,12 +456,18 @@ def test_bootstrap_adds_revision_boundary_without_rewriting_legacy_branch(
         branch_columns = {
             row[1] for row in connection.execute(text("PRAGMA table_info(run_branches)"))
         }
+        branch_indexes = {
+            row[1] for row in connection.execute(text("PRAGMA index_list(run_branches)"))
+        }
     assert "saved_head_revision_id" in branch_columns
+    assert "forked_from_saved_revision_id" in branch_columns
+    assert "uq_run_branches_run_display_name" in branch_indexes
     branch = repository.get_run_branch(branch_id="legacy-branch")
     assert branch is not None
     assert branch.display_name == "Legacy Timeline"
     assert branch.branch_seed == 19
     assert branch.saved_head_revision_id is None
+    assert branch.forked_from_saved_revision_id is None
     assert repository.list_branch_saved_revisions(branch_id="legacy-branch") == []
     assert repository.get_branch_working_draft(branch_id="legacy-branch") is None
     with pytest.raises(
@@ -469,3 +475,58 @@ def test_bootstrap_adds_revision_boundary_without_rewriting_legacy_branch(
         match="has no Saved Revision boundary",
     ):
         repository.get_branch_revision_state(branch_id="legacy-branch")
+
+
+def test_bootstrap_preserves_legacy_duplicate_branch_names(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'legacy-duplicate-branches.db'}"
+    engine = create_sqlite_engine(DatabaseSettings(url=database_url))
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                CREATE TABLE run_branches (
+                    branch_id VARCHAR(128) NOT NULL PRIMARY KEY,
+                    run_id VARCHAR(128) NOT NULL,
+                    display_name VARCHAR(256) NOT NULL,
+                    status VARCHAR(32) NOT NULL,
+                    read_only INTEGER NOT NULL,
+                    branch_seed INTEGER,
+                    forked_from_branch_id VARCHAR(128),
+                    forked_from_checkpoint_id VARCHAR(128),
+                    head_checkpoint_id VARCHAR(128),
+                    legacy_simulation_run_id VARCHAR(128),
+                    metadata_json TEXT NOT NULL
+                )
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                INSERT INTO run_branches (
+                    branch_id, run_id, display_name, status, read_only,
+                    metadata_json
+                ) VALUES
+                    ('legacy-a', 'legacy-run', 'Duplicate', 'active', 0, '{}'),
+                    ('legacy-b', 'legacy-run', 'Duplicate', 'active', 0, '{}')
+                """
+            )
+        )
+
+    repository = SimulationPersistenceRepository(
+        engine=engine,
+        session_factory=create_session_factory(engine),
+    )
+    repository.bootstrap_schema()
+
+    branches = repository.list_run_branches(run_id="legacy-run")
+    assert [branch.branch_id for branch in branches] == ["legacy-a", "legacy-b"]
+    with repository._engine.connect() as connection:
+        branch_columns = {
+            row[1] for row in connection.execute(text("PRAGMA table_info(run_branches)"))
+        }
+        branch_indexes = {
+            row[1] for row in connection.execute(text("PRAGMA index_list(run_branches)"))
+        }
+    assert "forked_from_saved_revision_id" in branch_columns
+    assert "uq_run_branches_run_display_name" not in branch_indexes

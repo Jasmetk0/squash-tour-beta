@@ -226,6 +226,93 @@ def test_create_empty_product_run_api_requires_only_a_unique_display_name(tmp_pa
     assert revision_state.working_draft.has_changes is False
 
 
+def test_create_product_branch_from_saved_revision_api(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'saved-revision-branch-api.db'}"
+    with ApiServer(database_url=database_url) as server:
+        status, run = _request(
+            "POST",
+            f"{server.base_url}/run-containers",
+            {"display_name": "Branchable History"},
+        )
+        assert status == 201
+        run_id = run["run_id"]
+
+        status, branches = _request(
+            "GET", f"{server.base_url}/run-branches?run_id={run_id}"
+        )
+        assert status == 200
+        initial = branches["run_branches"][0]
+        source_revision_id = initial["saved_head_revision_id"]
+        assert source_revision_id
+
+        status, automatic = _request(
+            "POST",
+            f"{server.base_url}/run-containers/{run_id}/branches",
+            {
+                "source_branch_id": initial["branch_id"],
+                "source_saved_revision_id": source_revision_id,
+            },
+        )
+        assert status == 201
+        assert automatic["display_name"] == "Timeline 2"
+        assert automatic["forked_from_branch_id"] == initial["branch_id"]
+        assert automatic["forked_from_saved_revision_id"] == source_revision_id
+        assert automatic["saved_head_revision_id"] == source_revision_id
+        assert automatic["is_viewer_branch"] is False
+        assert automatic["legacy_simulation_run_id"] is None
+        assert automatic["head_checkpoint_id"] is None
+
+        status, custom = _request(
+            "POST",
+            f"{server.base_url}/run-containers/{run_id}/branches",
+            {
+                "source_branch_id": initial["branch_id"],
+                "source_saved_revision_id": source_revision_id,
+                "display_name": "  My alternative  ",
+            },
+        )
+        assert status == 201
+        assert custom["display_name"] == "My alternative"
+        assert custom["is_viewer_branch"] is False
+
+        status, duplicate = _request(
+            "POST",
+            f"{server.base_url}/run-containers/{run_id}/branches",
+            {
+                "source_branch_id": initial["branch_id"],
+                "source_saved_revision_id": source_revision_id,
+                "display_name": "Timeline 1",
+            },
+        )
+        assert status == 409
+        assert duplicate["detail"]["code"] == "branch_display_name_conflict"
+
+        status, missing = _request(
+            "POST",
+            f"{server.base_url}/run-containers/{run_id}/branches",
+            {
+                "source_branch_id": initial["branch_id"],
+                "source_saved_revision_id": "missing-revision",
+            },
+        )
+        assert status == 404
+        assert missing["detail"]["code"] == "saved_revision_branch_source_not_found"
+
+        status, loaded_run = _request(
+            "GET", f"{server.base_url}/run-containers/{run_id}"
+        )
+        assert status == 200
+        assert loaded_run["viewer_branch_id"] == initial["branch_id"]
+
+        status, loaded_branches = _request(
+            "GET", f"{server.base_url}/run-branches?run_id={run_id}"
+        )
+        assert status == 200
+        assert {item["display_name"] for item in loaded_branches["run_branches"]} == {
+            "Timeline 1",
+            "Timeline 2",
+            "My alternative",
+        }
 def _generated_player_ids(*, season: int, seed: int) -> list[str]:
     countries = load_simulation_test_countries().countries
     plan = AnnualTalentClassPlanner().plan(year=season, seed=seed, countries=countries)

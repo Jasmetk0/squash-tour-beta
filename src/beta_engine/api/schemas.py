@@ -22,6 +22,7 @@ from beta_engine.application.rollover_models import (
 )
 from beta_engine.application.season_models import RaceSnapshot, RankingSnapshot, SeasonState, SimulationStepResult
 from beta_engine.domain.finals import FinalsQualificationResult, FinalsResult
+from beta_engine.domain.run_branches import normalize_branch_display_name
 from beta_engine.domain.timezone_areas import TimezoneArea
 from beta_engine.domain.players.initial_pool import CustomInitialPoolPlayerCreate, InitialPoolPlayerUpdate
 from beta_engine.domain.run_containers import normalize_run_display_name
@@ -169,6 +170,23 @@ class RunContainerListResponse(BaseModel):
     run_containers: list[RunContainerResponse] = Field(default_factory=list)
 
 
+class CreateRunBranchRequest(BaseModel):
+    """Create a timeline from one immutable Saved Revision."""
+
+    source_branch_id: str = Field(min_length=1, max_length=128)
+    source_saved_revision_id: str = Field(min_length=1, max_length=128)
+    display_name: str | None = Field(default=None, min_length=1, max_length=256)
+
+    @field_validator("display_name", mode="before")
+    @classmethod
+    def normalize_display_name(cls, value: object) -> str | None:
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            raise ValueError("display_name must be a string")
+        return normalize_branch_display_name(value)
+
+
 class RunBranchResponse(BaseModel):
     branch_id: str
     run_id: str
@@ -178,6 +196,8 @@ class RunBranchResponse(BaseModel):
     branch_seed: int | None = None
     forked_from_branch_id: str | None = None
     forked_from_checkpoint_id: str | None = None
+    forked_from_saved_revision_id: str | None = None
+    saved_head_revision_id: str | None = None
     head_checkpoint_id: str | None = None
     legacy_simulation_run_id: str | None = None
     metadata_json: dict[str, object] = Field(default_factory=dict)

@@ -86,6 +86,14 @@ class RunBranchModel(Base):
     """Metadata for a timeline inside a product-level Run."""
 
     __tablename__ = "run_branches"
+    __table_args__ = (
+        Index(
+            "uq_run_branches_run_display_name",
+            "run_id",
+            "display_name",
+            unique=True,
+        ),
+    )
 
     branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
@@ -95,6 +103,9 @@ class RunBranchModel(Base):
     branch_seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
     forked_from_branch_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     forked_from_checkpoint_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    forked_from_saved_revision_id: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
     saved_head_revision_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     head_checkpoint_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     legacy_simulation_run_id: Mapped[str | None] = mapped_column(String(128), nullable=True, unique=True, index=True)

@@ -23,10 +23,15 @@ from beta_engine.domain.run_revisions import (
     INITIAL_SAVED_REVISION_KIND,
     INITIAL_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
     INITIAL_SAVED_REVISION_SEQUENCE,
+    SAVED_REVISION_FORK_WORKING_DRAFT_SCHEMA_VERSION,
     WORKING_DRAFT_SCHEMA_VERSION,
     initial_saved_revision_change_summary,
     initial_saved_revision_payload,
     saved_revision_content_hash,
+)
+from beta_engine.domain.run_branches import (
+    first_available_timeline_name,
+    normalize_branch_display_name,
 )
 
 from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
@@ -169,6 +174,7 @@ class RunBranchRecord:
     legacy_simulation_run_id: str | None
     metadata: dict[str, object]
     saved_head_revision_id: str | None = None
+    forked_from_saved_revision_id: str | None = None
     is_official: bool = False
 
     @property
@@ -259,6 +265,26 @@ class RunDisplayNameConflictError(RunContainerCreationConflictError):
 
 class RunIdentityConflictError(RunContainerCreationConflictError):
     """Raised when a generated Run or Branch identity is already in use."""
+
+
+class SavedRevisionBranchForkError(ValueError):
+    """Base error for creating a Branch from an immutable Saved Revision."""
+
+
+class SavedRevisionBranchForkNotFoundError(SavedRevisionBranchForkError):
+    """Raised when the Run or source Saved Revision does not exist."""
+
+
+class SavedRevisionBranchForkConflictError(SavedRevisionBranchForkError):
+    """Raised when the requested fork cannot preserve Run history integrity."""
+
+
+class BranchDisplayNameConflictError(SavedRevisionBranchForkConflictError):
+    """Raised when a Branch name is already reserved inside its Run."""
+
+
+class BranchCreationIdentityConflictError(SavedRevisionBranchForkConflictError):
+    """Raised when a generated Branch or Working Draft id is already in use."""
 
 
 @dataclass(frozen=True)
@@ -849,12 +875,26 @@ class SimulationPersistenceRepository:
                 column_name="saved_head_revision_id",
                 column_type="VARCHAR(128)",
             )
+            self._ensure_column(
+                connection=connection,
+                table_name="run_branches",
+                column_name="forked_from_saved_revision_id",
+                column_type="VARCHAR(128)",
+            )
             connection.execute(
                 text(
                     "CREATE INDEX IF NOT EXISTS ix_run_branches_saved_head_revision_id "
                     "ON run_branches (saved_head_revision_id)"
                 )
             )
+            connection.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS "
+                    "ix_run_branches_forked_from_saved_revision_id "
+                    "ON run_branches (forked_from_saved_revision_id)"
+                )
+            )
+            self._ensure_run_branch_display_name_unique_index(connection=connection)
             self._ensure_branch_checkpoint_boundary_indexes(connection=connection)
             self._ensure_column(
                 connection=connection,
@@ -957,6 +997,27 @@ class SimulationPersistenceRepository:
             except IntegrityError:
                 # Repository validation reports a clear conflict on later use.
                 continue
+
+    @staticmethod
+    def _ensure_run_branch_display_name_unique_index(*, connection) -> None:
+        """Enforce unique Branch names without rewriting incompatible legacy data.
+
+        New and already coherent databases get the database-level invariant.
+        An old database containing duplicate legacy names is preserved; all new
+        canonical branch creation still performs an explicit transactional
+        uniqueness check and reports a product conflict.
+        """
+
+        try:
+            connection.execute(
+                text(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS "
+                    "uq_run_branches_run_display_name "
+                    "ON run_branches (run_id, display_name)"
+                )
+            )
+        except IntegrityError:
+            return
 
     @staticmethod
     def _ensure_column(*, connection, table_name: str, column_name: str, column_type: str) -> None:
@@ -1157,6 +1218,9 @@ class SimulationPersistenceRepository:
                         branch_seed=branch.branch_seed,
                         forked_from_branch_id=branch.forked_from_branch_id,
                         forked_from_checkpoint_id=branch.forked_from_checkpoint_id,
+                        forked_from_saved_revision_id=(
+                            branch.forked_from_saved_revision_id
+                        ),
                         saved_head_revision_id=revision.revision_id,
                         head_checkpoint_id=None,
                         legacy_simulation_run_id=None,
@@ -1276,6 +1340,7 @@ class SimulationPersistenceRepository:
             status=model.status, read_only=bool(model.read_only), branch_seed=model.branch_seed,
             forked_from_branch_id=model.forked_from_branch_id,
             forked_from_checkpoint_id=model.forked_from_checkpoint_id,
+            forked_from_saved_revision_id=model.forked_from_saved_revision_id,
             head_checkpoint_id=model.head_checkpoint_id,
             legacy_simulation_run_id=model.legacy_simulation_run_id,
             metadata=_from_json(model.metadata_json),
@@ -1291,6 +1356,9 @@ class SimulationPersistenceRepository:
                     status=record.status, read_only=int(record.read_only), branch_seed=record.branch_seed,
                     forked_from_branch_id=record.forked_from_branch_id,
                     forked_from_checkpoint_id=record.forked_from_checkpoint_id,
+                    forked_from_saved_revision_id=(
+                        record.forked_from_saved_revision_id
+                    ),
                     saved_head_revision_id=record.saved_head_revision_id,
                     head_checkpoint_id=record.head_checkpoint_id,
                     legacy_simulation_run_id=record.legacy_simulation_run_id,
@@ -1307,6 +1375,290 @@ class SimulationPersistenceRepository:
                 return None
             container = session.get(RunContainerModel, model.run_id)
             return self._to_run_branch(model, official_branch_id=container.official_branch_id if container else None)
+
+    def _validated_saved_revision_in_session(
+        self,
+        *,
+        session: Session,
+        model: BranchSavedRevisionModel,
+    ) -> BranchSavedRevisionRecord:
+        """Load one immutable revision and validate its stored owner and hash."""
+
+        revision = self._to_branch_saved_revision(model)
+        owner = session.get(RunBranchModel, revision.branch_id)
+        if owner is None or owner.run_id != revision.run_id:
+            raise BranchRevisionStateConflictError(
+                f"Saved Revision {revision.revision_id} has no coherent owning Branch"
+            )
+        payload_run = revision.payload.get("run")
+        payload_branch = revision.payload.get("branch")
+        if (
+            not isinstance(payload_run, dict)
+            or payload_run.get("run_id") != revision.run_id
+            or not isinstance(payload_branch, dict)
+            or payload_branch.get("branch_id") != revision.branch_id
+        ):
+            raise BranchRevisionStateConflictError(
+                f"Saved Revision {revision.revision_id} has incoherent payload identity"
+            )
+        if revision.sequence < 1 or not revision.kind.strip():
+            raise BranchRevisionStateConflictError(
+                f"Saved Revision {revision.revision_id} has invalid lineage metadata"
+            )
+        if (
+            revision.content_hash_algorithm != CONTENT_HASH_ALGORITHM
+            or revision.content_hash != _saved_revision_record_content_hash(revision)
+        ):
+            raise BranchRevisionStateConflictError(
+                f"Saved Revision {revision.revision_id} failed content integrity validation"
+            )
+        return revision
+
+    def _validated_branch_revision_lineage_in_session(
+        self,
+        *,
+        session: Session,
+        branch: RunBranchModel,
+        visiting_branch_ids: frozenset[str] = frozenset(),
+    ) -> list[BranchSavedRevisionRecord]:
+        """Return newest-to-oldest valid history reachable by one Branch."""
+
+        if branch.branch_id in visiting_branch_ids:
+            raise BranchRevisionStateConflictError(
+                "Run Branch fork lineage contains a cycle"
+            )
+        head_revision_id = (branch.saved_head_revision_id or "").strip()
+        if not head_revision_id:
+            raise BranchRevisionStateConflictError(
+                f"run branch {branch.branch_id} has no Saved Revision boundary"
+            )
+        head_model = session.get(BranchSavedRevisionModel, head_revision_id)
+        if head_model is None:
+            raise BranchRevisionStateConflictError(
+                f"Saved Revision {head_revision_id} was not found"
+            )
+        head_revision = self._validated_saved_revision_in_session(
+            session=session, model=head_model
+        )
+        if head_revision.run_id != branch.run_id:
+            raise BranchRevisionStateConflictError(
+                "Saved Revision identity does not match its Run"
+            )
+
+        if head_revision.branch_id != branch.branch_id:
+            source_branch_id = (branch.forked_from_branch_id or "").strip()
+            if (
+                branch.forked_from_saved_revision_id != head_revision.revision_id
+                or not source_branch_id
+            ):
+                raise BranchRevisionStateConflictError(
+                    "Saved Revision is not the Branch's declared shared fork origin"
+                )
+            source_branch = session.get(RunBranchModel, source_branch_id)
+            if source_branch is None or source_branch.run_id != branch.run_id:
+                raise BranchRevisionStateConflictError(
+                    "Run Branch has no coherent source Branch"
+                )
+            source_lineage = self._validated_branch_revision_lineage_in_session(
+                session=session,
+                branch=source_branch,
+                visiting_branch_ids=(visiting_branch_ids | {branch.branch_id}),
+            )
+            if head_revision.revision_id not in {
+                revision.revision_id for revision in source_lineage
+            }:
+                raise BranchRevisionStateConflictError(
+                    "shared fork origin is not part of the source Branch history"
+                )
+
+        lineage: list[BranchSavedRevisionRecord] = []
+        visited_revision_ids: set[str] = set()
+        current_model: BranchSavedRevisionModel | None = head_model
+        while current_model is not None:
+            if current_model.revision_id in visited_revision_ids:
+                raise BranchRevisionStateConflictError(
+                    "Saved Revision lineage contains a cycle"
+                )
+            visited_revision_ids.add(current_model.revision_id)
+            current = self._validated_saved_revision_in_session(
+                session=session, model=current_model
+            )
+            if current.run_id != branch.run_id:
+                raise BranchRevisionStateConflictError(
+                    "Saved Revision lineage crosses Run boundaries"
+                )
+            lineage.append(current)
+            if current.parent_revision_id is None:
+                current_model = None
+            else:
+                current_model = session.get(
+                    BranchSavedRevisionModel, current.parent_revision_id
+                )
+                if current_model is None:
+                    raise BranchRevisionStateConflictError(
+                        f"parent Saved Revision {current.parent_revision_id} was not found"
+                    )
+        return lineage
+
+    def create_branch_from_saved_revision_atomically(
+        self,
+        *,
+        run_id: str,
+        source_branch_id: str,
+        source_revision_id: str,
+        branch_id: str,
+        working_draft_id: str,
+        requested_display_name: str | None,
+    ) -> RunBranchRecord:
+        """Create one timeline that shares an immutable Saved Revision.
+
+        The source revision is referenced, never copied. The new Branch owns a
+        distinct clean Working Draft and does not become the Viewer Branch.
+        """
+
+        if requested_display_name is not None:
+            normalized_name = normalize_branch_display_name(requested_display_name)
+            if normalized_name != requested_display_name:
+                raise ValueError("Branch display name must already be normalized")
+
+        created_display_name: str | None = None
+        try:
+            with self._session_factory.begin() as session:
+                run = session.get(RunContainerModel, run_id)
+                if run is None:
+                    raise SavedRevisionBranchForkNotFoundError(
+                        f"Run {run_id!r} was not found"
+                    )
+                if run.read_only:
+                    raise SavedRevisionBranchForkConflictError(
+                        f"Run {run_id!r} is read-only"
+                    )
+
+                source_branch = session.get(RunBranchModel, source_branch_id)
+                if source_branch is None or source_branch.run_id != run_id:
+                    raise SavedRevisionBranchForkNotFoundError(
+                        f"source Branch {source_branch_id!r} was not found in Run {run_id!r}"
+                    )
+                source_model = session.get(BranchSavedRevisionModel, source_revision_id)
+                if source_model is None:
+                    raise SavedRevisionBranchForkNotFoundError(
+                        f"Saved Revision {source_revision_id!r} was not found"
+                    )
+                if source_model.run_id != run_id:
+                    raise SavedRevisionBranchForkConflictError(
+                        "the source Saved Revision belongs to another Run"
+                    )
+                try:
+                    source_lineage = self._validated_branch_revision_lineage_in_session(
+                        session=session, branch=source_branch
+                    )
+                except BranchRevisionStateConflictError as exc:
+                    raise SavedRevisionBranchForkConflictError(str(exc)) from exc
+                source_revision = next(
+                    (
+                        revision
+                        for revision in source_lineage
+                        if revision.revision_id == source_revision_id
+                    ),
+                    None,
+                )
+                if source_revision is None:
+                    raise SavedRevisionBranchForkConflictError(
+                        "the source Saved Revision is not part of the selected Branch history"
+                    )
+
+                if session.get(RunBranchModel, branch_id) is not None:
+                    raise BranchCreationIdentityConflictError(
+                        f"branch_id {branch_id!r} is already in use"
+                    )
+                if session.get(BranchWorkingDraftModel, working_draft_id) is not None:
+                    raise BranchCreationIdentityConflictError(
+                        f"draft_id {working_draft_id!r} is already in use"
+                    )
+
+                existing_names = list(
+                    session.scalars(
+                        select(RunBranchModel.display_name).where(
+                            RunBranchModel.run_id == run_id
+                        )
+                    )
+                )
+                created_display_name = (
+                    first_available_timeline_name(existing_names)
+                    if requested_display_name is None
+                    else requested_display_name
+                )
+                if created_display_name in existing_names:
+                    raise BranchDisplayNameConflictError(
+                        f"Branch display name {created_display_name!r} is already "
+                        f"reserved in Run {run_id!r}"
+                    )
+
+                session.add(
+                    RunBranchModel(
+                        branch_id=branch_id,
+                        run_id=run_id,
+                        display_name=created_display_name,
+                        status="active",
+                        read_only=0,
+                        branch_seed=None,
+                        forked_from_branch_id=source_branch_id,
+                        forked_from_checkpoint_id=None,
+                        forked_from_saved_revision_id=source_revision_id,
+                        saved_head_revision_id=source_revision_id,
+                        head_checkpoint_id=None,
+                        legacy_simulation_run_id=None,
+                        metadata_json="{}",
+                    )
+                )
+                session.add(
+                    BranchStateModel(
+                        branch_id=branch_id,
+                        run_id=run_id,
+                        head_checkpoint_id=None,
+                        current_season=None,
+                        current_week=None,
+                        current_event_id=None,
+                        current_event_sequence=None,
+                        state_schema_version="branch_state_v1",
+                        status="active",
+                        metadata_json="{}",
+                    )
+                )
+                session.add(
+                    BranchWorkingDraftModel(
+                        draft_id=working_draft_id,
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        base_revision_id=source_revision_id,
+                        status=CLEAN_WORKING_DRAFT_STATUS,
+                        change_count=0,
+                        draft_version=0,
+                        draft_schema_version=(
+                            SAVED_REVISION_FORK_WORKING_DRAFT_SCHEMA_VERSION
+                        ),
+                        changes_json="[]",
+                    )
+                )
+                session.flush()
+        except IntegrityError as exc:
+            message = str(exc.orig).lower()
+            if (
+                "run_branches.run_id" in message
+                and "run_branches.display_name" in message
+            ):
+                raise BranchDisplayNameConflictError(
+                    f"Branch display name {created_display_name!r} is already "
+                    f"reserved in Run {run_id!r}"
+                ) from exc
+            raise BranchCreationIdentityConflictError(
+                "generated Branch or Working Draft identity collided with existing data"
+            ) from exc
+
+        created = self.get_run_branch(branch_id=branch_id)
+        if created is None:  # pragma: no cover - protects against adapter corruption
+            raise RuntimeError(f"created Branch {branch_id!r} could not be loaded")
+        return created
 
     @staticmethod
     def _to_branch_saved_revision(
@@ -1416,16 +1768,9 @@ class SimulationPersistenceRepository:
                 raise BranchRevisionStateNotFoundError(
                     f"run branch {branch_id} was not found"
                 )
-            revision_id = (branch.saved_head_revision_id or "").strip()
-            if not revision_id:
-                raise BranchRevisionStateConflictError(
-                    f"run branch {branch_id} has no Saved Revision boundary"
-                )
-            revision_model = session.get(BranchSavedRevisionModel, revision_id)
-            if revision_model is None:
-                raise BranchRevisionStateConflictError(
-                    f"Saved Revision {revision_id} was not found"
-                )
+            revision = self._validated_branch_revision_lineage_in_session(
+                session=session, branch=branch
+            )[0]
             draft_model = session.execute(
                 select(BranchWorkingDraftModel).where(
                     BranchWorkingDraftModel.branch_id == branch_id
@@ -1435,24 +1780,8 @@ class SimulationPersistenceRepository:
                 raise BranchRevisionStateConflictError(
                     f"run branch {branch_id} has no Working Draft"
                 )
-            revision = self._to_branch_saved_revision(revision_model)
             draft = self._to_branch_working_draft(draft_model)
 
-        if revision.run_id != branch.run_id or revision.branch_id != branch.branch_id:
-            raise BranchRevisionStateConflictError(
-                "Saved Revision identity does not match its Run Branch"
-            )
-        payload_run = revision.payload.get("run")
-        payload_branch = revision.payload.get("branch")
-        if (
-            not isinstance(payload_run, dict)
-            or payload_run.get("run_id") != branch.run_id
-            or not isinstance(payload_branch, dict)
-            or payload_branch.get("branch_id") != branch.branch_id
-        ):
-            raise BranchRevisionStateConflictError(
-                "Saved Revision payload identity does not match its Run Branch"
-            )
         if (
             draft.run_id != branch.run_id
             or draft.branch_id != branch.branch_id
@@ -1460,17 +1789,6 @@ class SimulationPersistenceRepository:
         ):
             raise BranchRevisionStateConflictError(
                 "Working Draft is not based on the Branch Saved Revision"
-            )
-        if revision.sequence < 1 or not revision.kind.strip():
-            raise BranchRevisionStateConflictError(
-                f"Saved Revision {revision.revision_id} has invalid lineage metadata"
-            )
-        if (
-            revision.content_hash_algorithm != CONTENT_HASH_ALGORITHM
-            or revision.content_hash != _saved_revision_record_content_hash(revision)
-        ):
-            raise BranchRevisionStateConflictError(
-                f"Saved Revision {revision.revision_id} failed content integrity validation"
             )
         if draft.change_count != len(draft.changes):
             raise BranchRevisionStateConflictError(
@@ -1972,6 +2290,7 @@ class SimulationPersistenceRepository:
             if (container.config_version and checkpoint.config_version and container.config_version != checkpoint.config_version) or (container.config_fingerprint and checkpoint.config_fingerprint and container.config_fingerprint != checkpoint.config_fingerprint) or (container.global_seed is not None and checkpoint.global_seed is not None and container.global_seed != checkpoint.global_seed): raise BranchForkSourceStateMismatchError("run provenance mismatch")
             if command.target_branch_id == command.source_branch_id or session.get(RunBranchModel, command.target_branch_id) is not None: raise BranchForkTargetExistsError("target branch already exists or equals source")
             if command.target_legacy_simulation_run_id == source_run.run_id or session.get(SimulationRunModel, command.target_legacy_simulation_run_id) is not None or session.execute(select(RunBranchModel).where(RunBranchModel.legacy_simulation_run_id == command.target_legacy_simulation_run_id)).scalar_one_or_none() is not None: raise BranchForkTargetExistsError("target legacy simulation run already exists or is bound")
+            if session.execute(select(RunBranchModel.branch_id).where(RunBranchModel.run_id == command.product_run_id, RunBranchModel.display_name == command.target_branch_display_name)).scalar_one_or_none() is not None: raise BranchForkValidationError("target branch display name already exists in product run")
             source_inventory_hash = self._legacy_run_clone_inventory_hash_in_session(session=session, simulation_run_id=source_run.run_id, branch_id=command.source_branch_id, checkpoint_id=command.source_checkpoint_id)
             target_run, target_state, equivalence_hash = self._clone_legacy_simulation_run_namespace_in_session(session=session, source_simulation_run_id=source_run.run_id, target_simulation_run_id=command.target_legacy_simulation_run_id, preserve_source_seed=True)
             if target_run.world_id != container.world_id: raise BranchForkSourceStateMismatchError("cloned target world_id mismatch")

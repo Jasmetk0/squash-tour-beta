@@ -88,7 +88,7 @@ def test_fork_of_unmapped_fork_uses_branch_owned_inventory(tmp_path):
     with repository._session_factory.begin() as session:
         session.get(RunBranchModel, branch_a.branch_id).head_checkpoint_id = capture.checkpoint_id
         session.get(BranchStateModel, branch_a.branch_id).head_checkpoint_id = capture.checkpoint_id
-    second_command = _command(branch_a.branch_id, capture.checkpoint_id, target_branch_id="fork-b", target_legacy_simulation_run_id="fork-b-legacy", command_id="fork-b-command")
+    second_command = _command(branch_a.branch_id, capture.checkpoint_id, target_branch_id="fork-b", target_branch_display_name="Fork B", target_legacy_simulation_run_id="fork-b-legacy", command_id="fork-b-command")
     expected = repository.inspect_legacy_run_clone_inventory(simulation_run_id="fork-legacy", branch_id=branch_a.branch_id, checkpoint_id=capture.checkpoint_id).inventory.inventory_hash
     second = service.fork_run_branch_atomically(second_command)
     assert second.source_inventory_hash == expected

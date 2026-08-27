@@ -162,6 +162,8 @@ Global search and `Ctrl+K` remain part of the shell.
 
 **[DECIDED FOR FIRST PRE-ALPHA]** A unique displayed name is the only user-supplied creation field. The engine assigns `run_id`, creates the empty `2000/01–2049/50` time frame and one neutral initial Viewer Branch, and persists the Run as a valid `Working` state. Description, Packages, players, calendar, rules and other content may be added later.
 
+**[DECIDED]** Creating a Run is also its first successful save. The same atomic operation creates one immutable, parentless Saved Revision for the initial Viewer Branch and one clean Working Draft based on that revision. The initial Saved Revision is a recoverable history version; it is not a checkpoint, simulation state or Package snapshot.
+
 **[DECIDED]** Run description is optional.
 
 **[DECIDED]** Copy/import with a conflicting name proposes a new unique working name; a still-conflicting name cannot be saved.
@@ -630,6 +632,8 @@ Standalone News page, final event taxonomy and `News Importance Score` remain un
 **[DECIDED]** Normal Save stores coherent working changes; advanced save may select safe logical bundles.
 
 Every successful Save creates a recoverable version.
+
+Viewer reads the Branch's last Saved Revision; Admin works against a separate Working Draft based on that revision. Creating an empty Run materializes this boundary immediately even though its draft contains no changes.
 
 Important mutations are auditable and preserve provenance such as Built-in, Generated/Simulated, Imported, Manual and Regenerated where applicable.
 

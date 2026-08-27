@@ -10,7 +10,7 @@ The repository is a beta in migration. The product model below is canonical targ
 - **Admin** creates, edits, validates, simulates, reconstructs, and audits data. **Global Admin** manages Runs and source Packages; **Run Admin** operates one Run and one active Admin branch in a selected time context.
 - A **Run** is an independent saved world spanning exactly 50 seasons, `2000/01–2049/50`. Every season contains exactly 61 Season Weeks.
 - Branches are equal alternative timelines within a Run. There is no privileged Main or Official branch. Each Run has exactly one **Viewer Branch**, which only selects the timeline displayed by Viewer.
-- A Run may start completely empty. In the first pre-alpha, its unique displayed name is the only user-supplied creation field; `run_id`, the fixed time frame, and one neutral initial Viewer Branch are created automatically.
+- A Run may start completely empty. In the first pre-alpha, its unique displayed name is the only user-supplied creation field; `run_id`, the fixed time frame, one neutral initial Viewer Branch, its first Saved Revision, and a clean Working Draft are created atomically.
 - Packages are optional one-time content sources. Applied content becomes an independent, versioned Run snapshot; source identity/version remains provenance, not a live link.
 
 ## Simulation model

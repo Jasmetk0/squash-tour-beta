@@ -16,6 +16,10 @@ from beta_engine.main import create_app
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.countries import CountryTalentModel
 from beta_engine.domain.players import AnnualTalentClassPlanner, PlayerGenerator
+from beta_engine.domain.run_revisions import (
+    CLEAN_WORKING_DRAFT_STATUS,
+    INITIAL_SAVED_REVISION_KIND,
+)
 from beta_engine.infrastructure.world_config import load_player_identity_config
 from beta_engine.infrastructure.db.repositories import RunProspectRecord, SimulationPersistenceRepository, deterministic_prospect_id
 from beta_engine.infrastructure.db import DatabaseSettings, create_session_factory, create_sqlite_engine
@@ -207,6 +211,19 @@ def test_create_empty_product_run_api_requires_only_a_unique_display_name(tmp_pa
         )
         assert status == 422
         assert blank["detail"]
+
+    reloaded_engine = create_sqlite_engine(DatabaseSettings(url=database_url))
+    reloaded_repository = SimulationPersistenceRepository(
+        engine=reloaded_engine,
+        session_factory=create_session_factory(reloaded_engine),
+    )
+    revision_state = reloaded_repository.get_branch_revision_state(
+        branch_id=branch["branch_id"]
+    )
+    assert revision_state.saved_revision.kind == INITIAL_SAVED_REVISION_KIND
+    assert revision_state.saved_revision.sequence == 1
+    assert revision_state.working_draft.status == CLEAN_WORKING_DRAFT_STATUS
+    assert revision_state.working_draft.has_changes is False
 
 
 def _generated_player_ids(*, season: int, seed: int) -> list[str]:

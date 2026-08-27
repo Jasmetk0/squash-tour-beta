@@ -10,6 +10,12 @@ from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_KIND_INITIAL,
     BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
 )
+from beta_engine.domain.run_revisions import (
+    CLEAN_WORKING_DRAFT_STATUS,
+    CONTENT_HASH_ALGORITHM,
+    DIRTY_WORKING_DRAFT_STATUS,
+    INITIAL_SAVED_REVISION_KIND,
+)
 
 
 class Base(DeclarativeBase):
@@ -89,9 +95,80 @@ class RunBranchModel(Base):
     branch_seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
     forked_from_branch_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     forked_from_checkpoint_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    saved_head_revision_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     head_checkpoint_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     legacy_simulation_run_id: Mapped[str | None] = mapped_column(String(128), nullable=True, unique=True, index=True)
     metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
+class BranchSavedRevisionModel(Base):
+    """Immutable user-visible Saved Revision of one Run Branch."""
+
+    __tablename__ = "branch_saved_revisions"
+    __table_args__ = (
+        UniqueConstraint(
+            "branch_id", "sequence", name="uq_branch_saved_revisions_branch_sequence"
+        ),
+        CheckConstraint("sequence >= 1", name="ck_branch_saved_revisions_sequence"),
+        CheckConstraint(
+            f"content_hash_algorithm = '{CONTENT_HASH_ALGORITHM}'",
+            name="ck_branch_saved_revisions_sha256",
+        ),
+        Index(
+            "uq_branch_saved_revisions_one_initial_per_branch",
+            "branch_id",
+            unique=True,
+            sqlite_where=text(f"kind = '{INITIAL_SAVED_REVISION_KIND}'"),
+        ),
+    )
+
+    revision_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    parent_revision_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    kind: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_schema_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    content_hash_algorithm: Mapped[str] = mapped_column(
+        String(16), nullable=False, default=CONTENT_HASH_ALGORITHM
+    )
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    change_summary_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
+
+
+class BranchWorkingDraftModel(Base):
+    """Current mutable draft based on a Branch's last Saved Revision."""
+
+    __tablename__ = "branch_working_drafts"
+    __table_args__ = (
+        UniqueConstraint("branch_id", name="uq_branch_working_drafts_branch"),
+        CheckConstraint(
+            f"status IN ('{CLEAN_WORKING_DRAFT_STATUS}', "
+            f"'{DIRTY_WORKING_DRAFT_STATUS}')",
+            name="ck_branch_working_drafts_status",
+        ),
+        CheckConstraint("change_count >= 0", name="ck_branch_working_drafts_change_count"),
+        CheckConstraint("draft_version >= 0", name="ck_branch_working_drafts_version"),
+    )
+
+    draft_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    base_revision_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(
+        String(32), nullable=False, default=CLEAN_WORKING_DRAFT_STATUS
+    )
+    change_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    draft_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    draft_schema_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    changes_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    updated_at: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
 
 
 class BranchStateModel(Base):

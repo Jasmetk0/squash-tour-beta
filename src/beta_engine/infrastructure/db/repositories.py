@@ -16,15 +16,29 @@ from beta_engine.application.finals_models import FinalsSimulationResult
 from beta_engine.domain.careers import NextSeasonPlayerState, PlayerSeasonTransition
 from beta_engine.domain.finals import FinalsQualificationResult, FinalsResult
 from beta_engine.domain.rankings import CompletedTournamentPointsInput
+from beta_engine.domain.run_revisions import (
+    CLEAN_WORKING_DRAFT_STATUS,
+    CONTENT_HASH_ALGORITHM,
+    DIRTY_WORKING_DRAFT_STATUS,
+    INITIAL_SAVED_REVISION_KIND,
+    INITIAL_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
+    INITIAL_SAVED_REVISION_SEQUENCE,
+    WORKING_DRAFT_SCHEMA_VERSION,
+    initial_saved_revision_change_summary,
+    initial_saved_revision_payload,
+    saved_revision_content_hash,
+)
 
 from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
 from beta_engine.infrastructure.db.models import (
     AdminActionModel,
     BranchForkCommandModel,
+    BranchSavedRevisionModel,
     BranchSimulationCommandModel,
     OfficialBranchSelectionCommandModel,
     BranchCheckpointModel,
     BranchStateModel,
+    BranchWorkingDraftModel,
     Base,
     CompletedEventMetadataModel,
     FinalsQualificationModel,
@@ -154,6 +168,7 @@ class RunBranchRecord:
     head_checkpoint_id: str | None
     legacy_simulation_run_id: str | None
     metadata: dict[str, object]
+    saved_head_revision_id: str | None = None
     is_official: bool = False
 
     @property
@@ -161,6 +176,77 @@ class RunBranchRecord:
         """Canonical product name for the legacy compatibility flag."""
 
         return self.is_official
+
+
+@dataclass(frozen=True)
+class BranchSavedRevisionRecord:
+    revision_id: str
+    run_id: str
+    branch_id: str
+    sequence: int
+    parent_revision_id: str | None
+    kind: str
+    payload_schema_version: str
+    content_hash_algorithm: str
+    content_hash: str
+    payload: dict[str, object]
+    change_summary: dict[str, object]
+    created_at: str | None = None
+
+
+def _saved_revision_record_content_hash(
+    revision: BranchSavedRevisionRecord,
+) -> str:
+    return saved_revision_content_hash(
+        revision_id=revision.revision_id,
+        run_id=revision.run_id,
+        branch_id=revision.branch_id,
+        sequence=revision.sequence,
+        parent_revision_id=revision.parent_revision_id,
+        kind=revision.kind,
+        payload_schema_version=revision.payload_schema_version,
+        payload=revision.payload,
+        change_summary=revision.change_summary,
+    )
+
+
+@dataclass(frozen=True)
+class BranchWorkingDraftRecord:
+    draft_id: str
+    run_id: str
+    branch_id: str
+    base_revision_id: str
+    status: str
+    change_count: int
+    draft_version: int
+    draft_schema_version: str
+    changes: list[object]
+    updated_at: str | None = None
+
+    @property
+    def has_changes(self) -> bool:
+        return self.status == DIRTY_WORKING_DRAFT_STATUS or self.change_count > 0
+
+
+@dataclass(frozen=True)
+class BranchRevisionStateRecord:
+    run_id: str
+    branch_id: str
+    saved_head_revision_id: str
+    saved_revision: BranchSavedRevisionRecord
+    working_draft: BranchWorkingDraftRecord
+
+
+class BranchRevisionStateError(ValueError):
+    """Base error for a Branch whose Saved Revision/Draft boundary is unusable."""
+
+
+class BranchRevisionStateNotFoundError(BranchRevisionStateError):
+    """Raised when the requested Branch does not exist."""
+
+
+class BranchRevisionStateConflictError(BranchRevisionStateError):
+    """Raised when persisted revision and draft pointers are incoherent."""
 
 
 class RunContainerCreationConflictError(ValueError):
@@ -757,6 +843,18 @@ class SimulationPersistenceRepository:
         with self._engine.begin() as connection:
             self._ensure_runs_world_id_nullable(connection=connection)
             self._ensure_run_display_name_unique_index(connection=connection)
+            self._ensure_column(
+                connection=connection,
+                table_name="run_branches",
+                column_name="saved_head_revision_id",
+                column_type="VARCHAR(128)",
+            )
+            connection.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS ix_run_branches_saved_head_revision_id "
+                    "ON run_branches (saved_head_revision_id)"
+                )
+            )
             self._ensure_branch_checkpoint_boundary_indexes(connection=connection)
             self._ensure_column(
                 connection=connection,
@@ -938,8 +1036,10 @@ class SimulationPersistenceRepository:
         *,
         run: RunContainerRecord,
         branch: RunBranchRecord,
+        revision: BranchSavedRevisionRecord,
+        working_draft: BranchWorkingDraftRecord,
     ) -> RunContainerRecord:
-        """Persist a new empty Run root, Viewer Branch, and BranchState together."""
+        """Persist the complete canonical empty Run aggregate in one transaction."""
 
         if run.storage_kind != "custom_local" or run.read_only:
             raise ValueError("an empty user-created Run must be editable custom_local storage")
@@ -953,6 +1053,57 @@ class SimulationPersistenceRepository:
             raise ValueError("the initial Branch must be selected as the Viewer Branch")
         if branch.head_checkpoint_id is not None or branch.legacy_simulation_run_id is not None:
             raise ValueError("an empty Run's initial Branch cannot have simulation state")
+        if branch.saved_head_revision_id != revision.revision_id:
+            raise ValueError("the initial Branch must point at its first Saved Revision")
+        if revision.run_id != run.run_id or revision.branch_id != branch.branch_id:
+            raise ValueError("the initial Saved Revision must belong to the created Run and Branch")
+        if (
+            revision.sequence != INITIAL_SAVED_REVISION_SEQUENCE
+            or revision.parent_revision_id is not None
+            or revision.kind != INITIAL_SAVED_REVISION_KIND
+            or revision.payload_schema_version
+            != INITIAL_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION
+        ):
+            raise ValueError("the first Saved Revision must be the parentless initial revision")
+        expected_payload = initial_saved_revision_payload(
+            run_id=run.run_id,
+            display_name=run.display_name,
+            run_status=run.status,
+            timeline_start_season=run.timeline_start_season,
+            timeline_end_season=run.timeline_end_season,
+            branch_id=branch.branch_id,
+            branch_display_name=branch.display_name,
+            branch_status=branch.status,
+        )
+        expected_change_summary = initial_saved_revision_change_summary(
+            display_name=run.display_name
+        )
+        if revision.payload != expected_payload:
+            raise ValueError(
+                "the initial Saved Revision payload must exactly capture the empty Run"
+            )
+        if revision.change_summary != expected_change_summary:
+            raise ValueError("the initial Saved Revision change summary is invalid")
+        if (
+            revision.content_hash_algorithm != CONTENT_HASH_ALGORITHM
+            or revision.content_hash != _saved_revision_record_content_hash(revision)
+        ):
+            raise ValueError("the initial Saved Revision content hash is invalid")
+        if (
+            working_draft.run_id != run.run_id
+            or working_draft.branch_id != branch.branch_id
+            or working_draft.base_revision_id != revision.revision_id
+            or working_draft.draft_schema_version != WORKING_DRAFT_SCHEMA_VERSION
+        ):
+            raise ValueError("the initial Working Draft must be based on the first Saved Revision")
+        if (
+            working_draft.status != CLEAN_WORKING_DRAFT_STATUS
+            or working_draft.change_count != 0
+            or working_draft.draft_version != 0
+            or working_draft.changes != []
+            or working_draft.has_changes
+        ):
+            raise ValueError("the initial Working Draft must be clean and contain no changes")
 
         try:
             with self._session_factory.begin() as session:
@@ -960,6 +1111,14 @@ class SimulationPersistenceRepository:
                     raise RunIdentityConflictError(f"run_id {run.run_id!r} is already in use")
                 if session.get(RunBranchModel, branch.branch_id) is not None:
                     raise RunIdentityConflictError(f"branch_id {branch.branch_id!r} is already in use")
+                if session.get(BranchSavedRevisionModel, revision.revision_id) is not None:
+                    raise RunIdentityConflictError(
+                        f"revision_id {revision.revision_id!r} is already in use"
+                    )
+                if session.get(BranchWorkingDraftModel, working_draft.draft_id) is not None:
+                    raise RunIdentityConflictError(
+                        f"draft_id {working_draft.draft_id!r} is already in use"
+                    )
                 reserved_by = session.scalar(
                     select(RunContainerModel.run_id)
                     .where(RunContainerModel.display_name == run.display_name)
@@ -998,6 +1157,7 @@ class SimulationPersistenceRepository:
                         branch_seed=branch.branch_seed,
                         forked_from_branch_id=branch.forked_from_branch_id,
                         forked_from_checkpoint_id=branch.forked_from_checkpoint_id,
+                        saved_head_revision_id=revision.revision_id,
                         head_checkpoint_id=None,
                         legacy_simulation_run_id=None,
                         metadata_json=_to_json(branch.metadata),
@@ -1017,6 +1177,34 @@ class SimulationPersistenceRepository:
                         metadata_json="{}",
                     )
                 )
+                session.add(
+                    BranchSavedRevisionModel(
+                        revision_id=revision.revision_id,
+                        run_id=revision.run_id,
+                        branch_id=revision.branch_id,
+                        sequence=revision.sequence,
+                        parent_revision_id=revision.parent_revision_id,
+                        kind=revision.kind,
+                        payload_schema_version=revision.payload_schema_version,
+                        content_hash_algorithm=revision.content_hash_algorithm,
+                        content_hash=revision.content_hash,
+                        payload_json=_to_json(revision.payload),
+                        change_summary_json=_to_json(revision.change_summary),
+                    )
+                )
+                session.add(
+                    BranchWorkingDraftModel(
+                        draft_id=working_draft.draft_id,
+                        run_id=working_draft.run_id,
+                        branch_id=working_draft.branch_id,
+                        base_revision_id=working_draft.base_revision_id,
+                        status=working_draft.status,
+                        change_count=working_draft.change_count,
+                        draft_version=working_draft.draft_version,
+                        draft_schema_version=working_draft.draft_schema_version,
+                        changes_json=_to_json(working_draft.changes),
+                    )
+                )
                 # Force all uniqueness checks before the transaction commits so
                 # every failure rolls back the complete aggregate.
                 session.flush()
@@ -1027,7 +1215,7 @@ class SimulationPersistenceRepository:
                     f"Run display name {run.display_name!r} is already reserved"
                 ) from exc
             raise RunIdentityConflictError(
-                "generated Run or Branch identity collided with existing data"
+                "generated Run, Branch, revision, or draft identity collided with existing data"
             ) from exc
 
         created = self.get_run_container(run_id=run.run_id)
@@ -1090,7 +1278,9 @@ class SimulationPersistenceRepository:
             forked_from_checkpoint_id=model.forked_from_checkpoint_id,
             head_checkpoint_id=model.head_checkpoint_id,
             legacy_simulation_run_id=model.legacy_simulation_run_id,
-            metadata=_from_json(model.metadata_json), is_official=model.branch_id == official_branch_id,
+            metadata=_from_json(model.metadata_json),
+            saved_head_revision_id=model.saved_head_revision_id,
+            is_official=model.branch_id == official_branch_id,
         )
 
     def create_run_branch(self, record: RunBranchRecord) -> RunBranchRecord:
@@ -1101,6 +1291,7 @@ class SimulationPersistenceRepository:
                     status=record.status, read_only=int(record.read_only), branch_seed=record.branch_seed,
                     forked_from_branch_id=record.forked_from_branch_id,
                     forked_from_checkpoint_id=record.forked_from_checkpoint_id,
+                    saved_head_revision_id=record.saved_head_revision_id,
                     head_checkpoint_id=record.head_checkpoint_id,
                     legacy_simulation_run_id=record.legacy_simulation_run_id,
                     metadata_json=_to_json(record.metadata),
@@ -1116,6 +1307,201 @@ class SimulationPersistenceRepository:
                 return None
             container = session.get(RunContainerModel, model.run_id)
             return self._to_run_branch(model, official_branch_id=container.official_branch_id if container else None)
+
+    @staticmethod
+    def _to_branch_saved_revision(
+        model: BranchSavedRevisionModel,
+    ) -> BranchSavedRevisionRecord:
+        try:
+            payload = _from_json(model.payload_json)
+            change_summary = _from_json(model.change_summary_json)
+        except (TypeError, ValueError) as exc:
+            raise BranchRevisionStateConflictError(
+                f"Saved Revision {model.revision_id} contains malformed JSON"
+            ) from exc
+        if not isinstance(payload, dict) or not isinstance(change_summary, dict):
+            raise BranchRevisionStateConflictError(
+                f"Saved Revision {model.revision_id} contains malformed JSON"
+            )
+        return BranchSavedRevisionRecord(
+            revision_id=model.revision_id,
+            run_id=model.run_id,
+            branch_id=model.branch_id,
+            sequence=model.sequence,
+            parent_revision_id=model.parent_revision_id,
+            kind=model.kind,
+            payload_schema_version=model.payload_schema_version,
+            content_hash_algorithm=model.content_hash_algorithm,
+            content_hash=model.content_hash,
+            payload=payload,
+            change_summary=change_summary,
+            created_at=model.created_at,
+        )
+
+    @staticmethod
+    def _to_branch_working_draft(
+        model: BranchWorkingDraftModel,
+    ) -> BranchWorkingDraftRecord:
+        try:
+            changes = _from_json(model.changes_json)
+        except (TypeError, ValueError) as exc:
+            raise BranchRevisionStateConflictError(
+                f"Working Draft {model.draft_id} contains malformed changes JSON"
+            ) from exc
+        if not isinstance(changes, list):
+            raise BranchRevisionStateConflictError(
+                f"Working Draft {model.draft_id} contains malformed changes JSON"
+            )
+        return BranchWorkingDraftRecord(
+            draft_id=model.draft_id,
+            run_id=model.run_id,
+            branch_id=model.branch_id,
+            base_revision_id=model.base_revision_id,
+            status=model.status,
+            change_count=model.change_count,
+            draft_version=model.draft_version,
+            draft_schema_version=model.draft_schema_version,
+            changes=changes,
+            updated_at=model.updated_at,
+        )
+
+    def get_branch_saved_revision(
+        self, *, revision_id: str
+    ) -> BranchSavedRevisionRecord | None:
+        with self._session_factory() as session:
+            model = session.get(BranchSavedRevisionModel, revision_id)
+            return self._to_branch_saved_revision(model) if model is not None else None
+
+    def list_branch_saved_revisions(
+        self, *, branch_id: str
+    ) -> list[BranchSavedRevisionRecord]:
+        with self._session_factory() as session:
+            models = session.execute(
+                select(BranchSavedRevisionModel)
+                .where(BranchSavedRevisionModel.branch_id == branch_id)
+                .order_by(BranchSavedRevisionModel.sequence)
+            ).scalars()
+            return [self._to_branch_saved_revision(model) for model in models]
+
+    def get_branch_working_draft(
+        self, *, branch_id: str
+    ) -> BranchWorkingDraftRecord | None:
+        with self._session_factory() as session:
+            model = session.execute(
+                select(BranchWorkingDraftModel).where(
+                    BranchWorkingDraftModel.branch_id == branch_id
+                )
+            ).scalar_one_or_none()
+            return self._to_branch_working_draft(model) if model is not None else None
+
+    def verify_branch_saved_revision_hash(self, *, revision_id: str) -> bool:
+        try:
+            revision = self.get_branch_saved_revision(revision_id=revision_id)
+        except BranchRevisionStateConflictError:
+            return False
+        return (
+            revision is not None
+            and revision.content_hash_algorithm == CONTENT_HASH_ALGORITHM
+            and revision.content_hash == _saved_revision_record_content_hash(revision)
+        )
+
+    def get_branch_revision_state(
+        self, *, branch_id: str
+    ) -> BranchRevisionStateRecord:
+        """Load the coherent Saved Revision/Working Draft boundary for a Branch."""
+
+        with self._session_factory() as session:
+            branch = session.get(RunBranchModel, branch_id)
+            if branch is None:
+                raise BranchRevisionStateNotFoundError(
+                    f"run branch {branch_id} was not found"
+                )
+            revision_id = (branch.saved_head_revision_id or "").strip()
+            if not revision_id:
+                raise BranchRevisionStateConflictError(
+                    f"run branch {branch_id} has no Saved Revision boundary"
+                )
+            revision_model = session.get(BranchSavedRevisionModel, revision_id)
+            if revision_model is None:
+                raise BranchRevisionStateConflictError(
+                    f"Saved Revision {revision_id} was not found"
+                )
+            draft_model = session.execute(
+                select(BranchWorkingDraftModel).where(
+                    BranchWorkingDraftModel.branch_id == branch_id
+                )
+            ).scalar_one_or_none()
+            if draft_model is None:
+                raise BranchRevisionStateConflictError(
+                    f"run branch {branch_id} has no Working Draft"
+                )
+            revision = self._to_branch_saved_revision(revision_model)
+            draft = self._to_branch_working_draft(draft_model)
+
+        if revision.run_id != branch.run_id or revision.branch_id != branch.branch_id:
+            raise BranchRevisionStateConflictError(
+                "Saved Revision identity does not match its Run Branch"
+            )
+        payload_run = revision.payload.get("run")
+        payload_branch = revision.payload.get("branch")
+        if (
+            not isinstance(payload_run, dict)
+            or payload_run.get("run_id") != branch.run_id
+            or not isinstance(payload_branch, dict)
+            or payload_branch.get("branch_id") != branch.branch_id
+        ):
+            raise BranchRevisionStateConflictError(
+                "Saved Revision payload identity does not match its Run Branch"
+            )
+        if (
+            draft.run_id != branch.run_id
+            or draft.branch_id != branch.branch_id
+            or draft.base_revision_id != revision.revision_id
+        ):
+            raise BranchRevisionStateConflictError(
+                "Working Draft is not based on the Branch Saved Revision"
+            )
+        if revision.sequence < 1 or not revision.kind.strip():
+            raise BranchRevisionStateConflictError(
+                f"Saved Revision {revision.revision_id} has invalid lineage metadata"
+            )
+        if (
+            revision.content_hash_algorithm != CONTENT_HASH_ALGORITHM
+            or revision.content_hash != _saved_revision_record_content_hash(revision)
+        ):
+            raise BranchRevisionStateConflictError(
+                f"Saved Revision {revision.revision_id} failed content integrity validation"
+            )
+        if draft.change_count != len(draft.changes):
+            raise BranchRevisionStateConflictError(
+                f"Working Draft {draft.draft_id} change count is inconsistent"
+            )
+        if draft.draft_version < 0 or not draft.draft_schema_version.strip():
+            raise BranchRevisionStateConflictError(
+                f"Working Draft {draft.draft_id} has invalid version metadata"
+            )
+        if draft.status == CLEAN_WORKING_DRAFT_STATUS and draft.change_count != 0:
+            raise BranchRevisionStateConflictError(
+                f"clean Working Draft {draft.draft_id} contains changes"
+            )
+        if draft.status == DIRTY_WORKING_DRAFT_STATUS and draft.change_count == 0:
+            raise BranchRevisionStateConflictError(
+                f"dirty Working Draft {draft.draft_id} contains no changes"
+            )
+        if draft.status not in {
+            CLEAN_WORKING_DRAFT_STATUS,
+            DIRTY_WORKING_DRAFT_STATUS,
+        }:
+            raise BranchRevisionStateConflictError(
+                f"Working Draft {draft.draft_id} has unsupported status {draft.status!r}"
+            )
+        return BranchRevisionStateRecord(
+            run_id=branch.run_id,
+            branch_id=branch.branch_id,
+            saved_head_revision_id=revision.revision_id,
+            saved_revision=revision,
+            working_draft=draft,
+        )
 
     def get_viewer_official_run_context(self, *, product_run_id: str) -> ViewerOfficialRunContext:
         """Resolve the current official Branch and legacy Viewer namespace without mutation."""

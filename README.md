@@ -10,6 +10,7 @@ The repository is a beta in migration. The product model below is canonical targ
 - **Admin** creates, edits, validates, simulates, reconstructs, and audits data. **Global Admin** manages Runs and source Packages; **Run Admin** operates one Run and one active Admin branch in a selected time context.
 - A **Run** is an independent saved world spanning exactly 50 seasons, `2000/01–2049/50`. Every season contains exactly 61 Season Weeks.
 - Branches are equal alternative timelines within a Run. There is no privileged Main or Official branch. Each Run has exactly one **Viewer Branch**, which only selects the timeline displayed by Viewer.
+- A Viewer Branch selection is first staged in Admin's Working Draft. Viewer remains on the saved selection until Save atomically creates a Saved Revision and audit event, activates the selection, and returns the editing Branch to a clean Working Draft.
 - A Run may start completely empty. In the first pre-alpha, its unique displayed name is the only user-supplied creation field; `run_id`, the fixed time frame, one neutral initial Viewer Branch, its first Saved Revision, and a clean Working Draft are created atomically.
 - Packages are optional one-time content sources. Applied content becomes an independent, versioned Run snapshot; source identity/version remains provenance, not a live link.
 
@@ -51,12 +52,12 @@ Viewer never exposes internal technical alerts or future-only information. Publi
 Use this order when documentation conflicts:
 
 1. explicit newer product decisions,
-2. **Squash Engine Master Vision v50** and later audited revisions,
+2. **Squash Engine Master Vision v53** and later audited revisions,
 3. [`PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`](PROJECT_CONSTITUTION_TECHNICAL_PLAN.md), including newer post-v42 decisions recorded there,
 4. subordinate migration guidance such as [`docs/ENGINE_UX_SPEC.md`](docs/ENGINE_UX_SPEC.md),
 5. older documents, handoffs, and existing beta behavior as historical or implementation evidence only.
 
-`PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` is the active shorter repository constitution governed by Master Vision v50. It may lag Master detail but intentionally preserves still-valid earlier canon. `Beta_Engine.docx` and documents that describe earlier phase-specific designs are non-authoritative background unless the current constitution explicitly reconfirms them. See [`ROADMAP.md`](ROADMAP.md) for the current milestone sequence.
+`PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` is the active shorter repository constitution governed by Master Vision v53. It may lag Master detail but intentionally preserves still-valid earlier canon. `Beta_Engine.docx` and documents that describe earlier phase-specific designs are non-authoritative background unless the current constitution explicitly reconfirms them. See [`ROADMAP.md`](ROADMAP.md) for the current milestone sequence.
 
 Decision status matters: **decided**, **provisional**, **target**, **open**, **deferred**, and **later** must not be silently collapsed into one level of certainty.
 

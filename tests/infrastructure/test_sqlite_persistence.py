@@ -73,6 +73,7 @@ def test_database_bootstrap_creates_required_tables(tmp_path) -> None:
         "admin_actions",
         "branch_checkpoints",
         "branch_fork_commands",
+        "branch_revision_audit_events",
         "branch_saved_revisions",
         "branch_simulation_commands",
         "branch_states",

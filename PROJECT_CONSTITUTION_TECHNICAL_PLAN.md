@@ -1,9 +1,9 @@
 # Squash Engine / FAX Squash / MSA World Tour
 
-## Active Product Constitution — governed by Master Vision v50
+## Active Product Constitution — governed by Master Vision v53
 
 **Repository status:** canonical repository-level product constitution for current design and implementation decisions.  
-**Latest Master authority:** Squash Engine Master Vision **v50**, updated **24. 8. 2026**.
+**Latest Master authority:** Squash Engine Master Vision **v53**, updated **28. 8. 2026**.
 **Synchronization rule:** this shorter repository distillation may lag details in the Master. It preserves still-valid earlier canon and records selected later decisions; synchronization must be additive unless the Master explicitly supersedes an older rule.
 
 > This constitution is a repository-facing distillation, not a lossless copy of the full Master Vision. A specified target does **not** imply that the repository already implements it. When a task depends on detail not stated here, use the latest audited Master or an explicit newer user decision rather than inventing the missing rule.
@@ -34,7 +34,7 @@ Independent scope axis:
 When sources disagree, use this order:
 
 1. explicit newer user/product decisions,
-2. latest audited Master Vision — currently v50,
+2. latest audited Master Vision — currently v53,
 3. this constitution,
 4. subordinate migration guidance such as `docs/ENGINE_UX_SPEC.md`,
 5. `README.md`, `ROADMAP.md`, and `AGENTS.md` as summaries/operating guidance,
@@ -221,7 +221,7 @@ There is no privileged `Official Branch` or `Main Branch` product concept.
 - product terminology is `viewer_branch_id` / Viewer Branch even if legacy schema names still exist,
 - Viewer Branch cannot simply disappear without another valid active branch being selected.
 
-**[OPEN]** Exact persistence/activation timing of explicit `Show in Viewer` remains unresolved.
+**[DECIDED]** Selecting another Viewer Branch is first stored only as an uncommitted Admin change in the active Branch's Working Draft. Viewer continues to use the currently saved selection. A confirmed Save atomically creates the new immutable Saved Revision and audit event, activates the selected Viewer Branch, and leaves a clean Working Draft based on that new revision.
 
 ## 5.1 History model
 
@@ -634,6 +634,8 @@ Standalone News page, final event taxonomy and `News Importance Score` remain un
 Every successful Save creates a recoverable version.
 
 Viewer reads the Branch's last Saved Revision; Admin works against a separate Working Draft based on that revision. Creating an empty Run materializes this boundary immediately even though its draft contains no changes.
+
+Changing the Viewer Branch follows the same boundary: staging must not alter Viewer-visible state, and the Saved Revision, audit event, Viewer Branch activation and next clean Working Draft either persist together or not at all.
 
 Important mutations are auditable and preserve provenance such as Built-in, Generated/Simulated, Imported, Manual and Regenerated where applicable.
 

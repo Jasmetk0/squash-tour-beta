@@ -7,7 +7,7 @@ Build a deterministic, data-driven manager and simulator of the fictional men's 
 When sources conflict, use this precedence:
 
 1. explicit newer user/product decisions,
-2. the latest audited **Squash Engine Master Vision** — currently v51 plus newer explicit decisions,
+2. the latest audited **Squash Engine Master Vision** — currently v53 plus newer explicit decisions,
 3. `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` (the active repository constitution, including newer decisions recorded there),
 4. subordinate guidance such as `docs/ENGINE_UX_SPEC.md` and explicit current-version decision specs such as `docs/COUNTRY_ATTRIBUTES_V1.md`,
 5. older documents, handoffs, and current beta behavior as history/implementation evidence only.
@@ -21,6 +21,7 @@ Never collapse status labels. A `[DECIDED]` rule, `[PROVISIONAL]` direction, `[T
 - A Run is an independent saved world with exactly 50 seasons, `2000/01–2049/50`; every season has exactly 61 Season Weeks.
 - Branches are equal alternative timelines inside a Run. Never introduce a privileged Main/Official branch concept.
 - Every Run has exactly one **Viewer Branch**. It only selects the timeline shown by Viewer; legacy `official_branch` technical names are migration debt, not product terminology.
+- Selecting a different Viewer Branch is an uncommitted Admin change in the active Branch's Working Draft. Viewer stays on the current saved selection until a confirmed Save atomically creates the new immutable Saved Revision and audit event, activates the selected Viewer Branch, and leaves a clean Working Draft based on the new revision.
 - A Run may be created completely empty. Its sole required user input in the first pre-alpha is a unique display name; the engine assigns `run_id`, creates its empty `2000/01–2049/50` time frame and keeps it in `Working`. Packages and sporting content are operation-scoped additions, not creation prerequisites.
 - Creating that empty Run is itself its first successful save: the initial Viewer Branch points to one immutable, parentless Saved Revision and starts with a clean Working Draft based on it. This revision is recoverable history, not a checkpoint or simulation state.
 - The initial Branch is named `Timeline 1`. Each later ordinary Branch proposes the first unused exact `Timeline N` name within the Run; the user may replace that proposal before creation, and every stored Branch name remains unique within its Run.

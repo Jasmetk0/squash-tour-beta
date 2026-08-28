@@ -205,6 +205,50 @@ class RunBranchResponse(BaseModel):
     is_official: bool
 
 
+class StageViewerBranchRequest(BaseModel):
+    viewer_branch_id: str = Field(min_length=1, max_length=128)
+    expected_draft_version: int = Field(ge=0)
+
+
+class SaveWorkingDraftRequest(BaseModel):
+    expected_draft_version: int = Field(ge=0)
+
+
+class ViewerBranchWorkingDraftResponse(BaseModel):
+    run_id: str
+    branch_id: str
+    draft_id: str
+    base_saved_revision_id: str
+    saved_viewer_branch_id: str
+    proposed_viewer_branch_id: str
+    current_viewer_branch_id: str
+    status: Literal["clean", "dirty"]
+    change_count: int
+    draft_version: int
+    can_save: bool
+
+
+class SavedRevisionResponse(BaseModel):
+    revision_id: str
+    sequence: int
+    parent_revision_id: str | None = None
+    kind: str
+    payload_schema_version: str
+    content_hash_algorithm: str
+    content_hash: str
+    change_summary: dict[str, object]
+
+
+class SaveWorkingDraftResponse(BaseModel):
+    run_id: str
+    branch_id: str
+    previous_viewer_branch_id: str
+    viewer_branch_id: str
+    saved_revision: SavedRevisionResponse
+    working_draft: ViewerBranchWorkingDraftResponse
+    audit_event_id: str
+
+
 class RunBranchListResponse(BaseModel):
     run_branches: list[RunBranchResponse] = Field(default_factory=list)
 

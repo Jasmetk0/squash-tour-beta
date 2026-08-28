@@ -182,6 +182,30 @@ class BranchWorkingDraftModel(Base):
     )
 
 
+class BranchRevisionAuditEventModel(Base):
+    """Append-only product audit event emitted by a successful manual Save."""
+
+    __tablename__ = "branch_revision_audit_events"
+    __table_args__ = (
+        UniqueConstraint(
+            "saved_revision_id",
+            name="uq_branch_revision_audit_events_saved_revision",
+        ),
+    )
+
+    audit_event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    saved_revision_id: Mapped[str] = mapped_column(
+        String(128), nullable=False, index=True
+    )
+    event_kind: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
+
+
 class BranchStateModel(Base):
     """Mutable branch-head metadata; not a simulation state source."""
 

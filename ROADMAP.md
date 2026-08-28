@@ -1,6 +1,6 @@
 # Squash Engine roadmap
 
-This is a milestone summary, not a second product constitution. **Master Vision v50** plus newer explicit decisions take precedence over `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`; `docs/ENGINE_UX_SPEC.md` provides subordinate migration guidance. Planned behavior must not be described as implemented unless verified in the repository.
+This is a milestone summary, not a second product constitution. **Master Vision v53** plus newer explicit decisions take precedence over `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`; `docs/ENGINE_UX_SPEC.md` provides subordinate migration guidance. Planned behavior must not be described as implemented unless verified in the repository.
 
 ## 1. Canonical foundation and migration safety
 
@@ -93,6 +93,7 @@ This is a milestone summary, not a second product constitution. **Master Vision 
 ## 11. Branches, history, records and Viewer
 
 - Build branch map/timeline, versions, checkpoints and recoverable saves with shared pre-divergence history stored once.
+- Preserve the Working Draft boundary for Viewer Branch changes: Viewer switches only through an atomic Save that also creates the Saved Revision and audit event.
 - Expand historically correct rankings, statistics, H2H and records from authoritative branch/week data.
 - Rivalries exist as a product concept; detailed detection, group behavior, scoring and Viewer placement remain partially provisional.
 - Tournament Prestige/Tournament Appeal must remain at their actual provisional strengths.

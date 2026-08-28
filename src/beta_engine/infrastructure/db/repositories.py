@@ -23,11 +23,20 @@ from beta_engine.domain.run_revisions import (
     INITIAL_SAVED_REVISION_KIND,
     INITIAL_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
     INITIAL_SAVED_REVISION_SEQUENCE,
+    RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
+    RUN_WORKING_DRAFT_SCHEMA_VERSION,
+    SAVED_REVISION_AUDIT_EVENT_KIND,
     SAVED_REVISION_FORK_WORKING_DRAFT_SCHEMA_VERSION,
+    VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND,
     WORKING_DRAFT_SCHEMA_VERSION,
     initial_saved_revision_change_summary,
     initial_saved_revision_payload,
+    saved_viewer_branch_id,
     saved_revision_content_hash,
+    viewer_branch_id_from_changes,
+    viewer_branch_saved_revision_change_summary,
+    viewer_branch_saved_revision_payload,
+    viewer_branch_selection_change,
 )
 from beta_engine.domain.run_branches import (
     first_available_timeline_name,
@@ -38,6 +47,7 @@ from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
 from beta_engine.infrastructure.db.models import (
     AdminActionModel,
     BranchForkCommandModel,
+    BranchRevisionAuditEventModel,
     BranchSavedRevisionModel,
     BranchSimulationCommandModel,
     OfficialBranchSelectionCommandModel,
@@ -243,6 +253,46 @@ class BranchRevisionStateRecord:
     working_draft: BranchWorkingDraftRecord
 
 
+@dataclass(frozen=True)
+class ViewerBranchWorkingDraftRecord:
+    run_id: str
+    branch_id: str
+    draft_id: str
+    base_saved_revision_id: str
+    saved_viewer_branch_id: str
+    proposed_viewer_branch_id: str
+    current_viewer_branch_id: str
+    status: str
+    change_count: int
+    draft_version: int
+
+    @property
+    def can_save(self) -> bool:
+        return self.status == DIRTY_WORKING_DRAFT_STATUS and self.change_count > 0
+
+
+@dataclass(frozen=True)
+class BranchRevisionAuditEventRecord:
+    audit_event_id: str
+    run_id: str
+    branch_id: str
+    saved_revision_id: str
+    event_kind: str
+    payload: dict[str, object]
+    created_at: str | None = None
+
+
+@dataclass(frozen=True)
+class ViewerBranchSaveResult:
+    run_id: str
+    branch_id: str
+    previous_viewer_branch_id: str
+    viewer_branch_id: str
+    saved_revision: BranchSavedRevisionRecord
+    working_draft: ViewerBranchWorkingDraftRecord
+    audit_event: BranchRevisionAuditEventRecord
+
+
 class BranchRevisionStateError(ValueError):
     """Base error for a Branch whose Saved Revision/Draft boundary is unusable."""
 
@@ -253,6 +303,26 @@ class BranchRevisionStateNotFoundError(BranchRevisionStateError):
 
 class BranchRevisionStateConflictError(BranchRevisionStateError):
     """Raised when persisted revision and draft pointers are incoherent."""
+
+
+class WorkingDraftSaveError(ValueError):
+    """Base error for staging or saving product-level Working Draft changes."""
+
+
+class WorkingDraftNotFoundError(WorkingDraftSaveError):
+    """Raised when a Run, editing Branch, or target Branch does not exist."""
+
+
+class WorkingDraftConflictError(WorkingDraftSaveError):
+    """Raised when the draft cannot be staged or saved coherently."""
+
+
+class WorkingDraftVersionConflictError(WorkingDraftConflictError):
+    """Raised when a caller attempts to mutate a stale draft version."""
+
+
+class WorkingDraftIdentityConflictError(WorkingDraftConflictError):
+    """Raised when a generated Saved Revision or audit identity collides."""
 
 
 class RunContainerCreationConflictError(ValueError):
@@ -1768,19 +1838,26 @@ class SimulationPersistenceRepository:
                 raise BranchRevisionStateNotFoundError(
                     f"run branch {branch_id} was not found"
                 )
-            revision = self._validated_branch_revision_lineage_in_session(
+            return self._validated_branch_revision_state_in_session(
                 session=session, branch=branch
-            )[0]
-            draft_model = session.execute(
-                select(BranchWorkingDraftModel).where(
-                    BranchWorkingDraftModel.branch_id == branch_id
-                )
-            ).scalar_one_or_none()
-            if draft_model is None:
-                raise BranchRevisionStateConflictError(
-                    f"run branch {branch_id} has no Working Draft"
-                )
-            draft = self._to_branch_working_draft(draft_model)
+            )
+
+    def _validated_branch_revision_state_in_session(
+        self, *, session: Session, branch: RunBranchModel
+    ) -> BranchRevisionStateRecord:
+        revision = self._validated_branch_revision_lineage_in_session(
+            session=session, branch=branch
+        )[0]
+        draft_model = session.execute(
+            select(BranchWorkingDraftModel).where(
+                BranchWorkingDraftModel.branch_id == branch.branch_id
+            )
+        ).scalar_one_or_none()
+        if draft_model is None:
+            raise BranchRevisionStateConflictError(
+                f"run branch {branch.branch_id} has no Working Draft"
+            )
+        draft = self._to_branch_working_draft(draft_model)
 
         if (
             draft.run_id != branch.run_id
@@ -1819,6 +1896,407 @@ class SimulationPersistenceRepository:
             saved_head_revision_id=revision.revision_id,
             saved_revision=revision,
             working_draft=draft,
+        )
+
+    def _viewer_branch_working_draft_in_session(
+        self,
+        *,
+        session: Session,
+        run_id: str,
+        branch_id: str,
+    ) -> ViewerBranchWorkingDraftRecord:
+        run = session.get(RunContainerModel, run_id)
+        if run is None:
+            raise WorkingDraftNotFoundError(f"Run {run_id!r} was not found")
+        branch = session.get(RunBranchModel, branch_id)
+        if branch is None or branch.run_id != run_id:
+            raise WorkingDraftNotFoundError(
+                f"Branch {branch_id!r} was not found in Run {run_id!r}"
+            )
+        try:
+            state = self._validated_branch_revision_state_in_session(
+                session=session, branch=branch
+            )
+            saved_viewer_id = saved_viewer_branch_id(
+                state.saved_revision.payload
+            )
+            if state.working_draft.status == CLEAN_WORKING_DRAFT_STATUS:
+                proposed_viewer_id = saved_viewer_id
+            else:
+                if (
+                    state.working_draft.draft_schema_version
+                    != RUN_WORKING_DRAFT_SCHEMA_VERSION
+                ):
+                    raise ValueError("dirty Working Draft uses an unsupported schema")
+                proposed_viewer_id = viewer_branch_id_from_changes(
+                    state.working_draft.changes
+                )
+        except (BranchRevisionStateConflictError, ValueError) as exc:
+            raise WorkingDraftConflictError(str(exc)) from exc
+
+        current_viewer_id = (run.official_branch_id or "").strip()
+        current_viewer = session.get(RunBranchModel, current_viewer_id)
+        if (
+            current_viewer is None
+            or current_viewer.run_id != run_id
+            or current_viewer.status != "active"
+        ):
+            raise WorkingDraftConflictError(
+                f"Run {run_id!r} has no coherent current Viewer Branch"
+            )
+        return ViewerBranchWorkingDraftRecord(
+            run_id=run_id,
+            branch_id=branch_id,
+            draft_id=state.working_draft.draft_id,
+            base_saved_revision_id=state.saved_head_revision_id,
+            saved_viewer_branch_id=saved_viewer_id,
+            proposed_viewer_branch_id=proposed_viewer_id,
+            current_viewer_branch_id=current_viewer_id,
+            status=state.working_draft.status,
+            change_count=state.working_draft.change_count,
+            draft_version=state.working_draft.draft_version,
+        )
+
+    def get_viewer_branch_working_draft(
+        self, *, run_id: str, branch_id: str
+    ) -> ViewerBranchWorkingDraftRecord:
+        with self._session_factory() as session:
+            return self._viewer_branch_working_draft_in_session(
+                session=session, run_id=run_id, branch_id=branch_id
+            )
+
+    def stage_viewer_branch_selection(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        viewer_branch_id: str,
+        expected_draft_version: int,
+    ) -> ViewerBranchWorkingDraftRecord:
+        """Replace the pending Viewer selection without changing Viewer state."""
+
+        with self._session_factory.begin() as session:
+            draft = self._viewer_branch_working_draft_in_session(
+                session=session, run_id=run_id, branch_id=branch_id
+            )
+            run = session.get(RunContainerModel, run_id)
+            branch = session.get(RunBranchModel, branch_id)
+            target = session.get(RunBranchModel, viewer_branch_id)
+            if target is None or target.run_id != run_id:
+                raise WorkingDraftNotFoundError(
+                    f"Viewer Branch {viewer_branch_id!r} was not found in Run {run_id!r}"
+                )
+            if run.read_only or branch.read_only:
+                raise WorkingDraftConflictError(
+                    "Viewer Branch cannot be changed from a read-only Run or Branch"
+                )
+            if branch.status != "active" or target.status != "active":
+                raise WorkingDraftConflictError(
+                    "Viewer Branch changes require active editing and target Branches"
+                )
+            if expected_draft_version != draft.draft_version:
+                raise WorkingDraftVersionConflictError(
+                    f"expected draft version {expected_draft_version}, "
+                    f"found {draft.draft_version}"
+                )
+
+            if viewer_branch_id == draft.saved_viewer_branch_id:
+                status_value = CLEAN_WORKING_DRAFT_STATUS
+                changes: list[object] = []
+            else:
+                status_value = DIRTY_WORKING_DRAFT_STATUS
+                changes = [
+                    viewer_branch_selection_change(
+                        viewer_branch_id=viewer_branch_id
+                    )
+                ]
+            if (
+                status_value == draft.status
+                and viewer_branch_id == draft.proposed_viewer_branch_id
+            ):
+                return draft
+
+            result = session.execute(
+                update(BranchWorkingDraftModel)
+                .where(
+                    BranchWorkingDraftModel.draft_id == draft.draft_id,
+                    BranchWorkingDraftModel.draft_version
+                    == expected_draft_version,
+                )
+                .values(
+                    status=status_value,
+                    change_count=len(changes),
+                    draft_version=expected_draft_version + 1,
+                    draft_schema_version=RUN_WORKING_DRAFT_SCHEMA_VERSION,
+                    changes_json=_to_json(changes),
+                    updated_at=func.current_timestamp(),
+                )
+            )
+            if result.rowcount != 1:
+                raise WorkingDraftVersionConflictError(
+                    "Working Draft changed concurrently"
+                )
+
+        return self.get_viewer_branch_working_draft(
+            run_id=run_id, branch_id=branch_id
+        )
+
+    @staticmethod
+    def _to_branch_revision_audit_event(
+        model: BranchRevisionAuditEventModel,
+    ) -> BranchRevisionAuditEventRecord:
+        try:
+            payload = _from_json(model.payload_json)
+        except (TypeError, ValueError) as exc:
+            raise BranchRevisionStateConflictError(
+                f"audit event {model.audit_event_id} contains malformed JSON"
+            ) from exc
+        if not isinstance(payload, dict):
+            raise BranchRevisionStateConflictError(
+                f"audit event {model.audit_event_id} contains malformed JSON"
+            )
+        return BranchRevisionAuditEventRecord(
+            audit_event_id=model.audit_event_id,
+            run_id=model.run_id,
+            branch_id=model.branch_id,
+            saved_revision_id=model.saved_revision_id,
+            event_kind=model.event_kind,
+            payload=payload,
+            created_at=model.created_at,
+        )
+
+    def get_branch_revision_audit_event(
+        self, *, audit_event_id: str
+    ) -> BranchRevisionAuditEventRecord | None:
+        with self._session_factory() as session:
+            model = session.get(BranchRevisionAuditEventModel, audit_event_id)
+            return (
+                self._to_branch_revision_audit_event(model)
+                if model is not None
+                else None
+            )
+
+    def list_branch_revision_audit_events(
+        self, *, branch_id: str
+    ) -> list[BranchRevisionAuditEventRecord]:
+        with self._session_factory() as session:
+            models = session.scalars(
+                select(BranchRevisionAuditEventModel)
+                .where(BranchRevisionAuditEventModel.branch_id == branch_id)
+                .order_by(
+                    BranchRevisionAuditEventModel.created_at,
+                    BranchRevisionAuditEventModel.audit_event_id,
+                )
+            )
+            return [
+                self._to_branch_revision_audit_event(model) for model in models
+            ]
+
+    def save_viewer_branch_selection_atomically(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        expected_draft_version: int,
+        revision_id: str,
+        audit_event_id: str,
+    ) -> ViewerBranchSaveResult:
+        """Commit one dirty draft as revision, audit, Viewer pointer, and clean draft."""
+
+        previous_current_viewer_id = ""
+        target_viewer_id = ""
+        try:
+            with self._session_factory.begin() as session:
+                draft = self._viewer_branch_working_draft_in_session(
+                    session=session, run_id=run_id, branch_id=branch_id
+                )
+                run = session.get(RunContainerModel, run_id)
+                branch = session.get(RunBranchModel, branch_id)
+                if run.read_only or branch.read_only:
+                    raise WorkingDraftConflictError(
+                        "Working Draft cannot be saved from a read-only Run or Branch"
+                    )
+                if branch.status != "active":
+                    raise WorkingDraftConflictError(
+                        "Working Draft can be saved only from an active Branch"
+                    )
+                if expected_draft_version != draft.draft_version:
+                    raise WorkingDraftVersionConflictError(
+                        f"expected draft version {expected_draft_version}, "
+                        f"found {draft.draft_version}"
+                    )
+                if not draft.can_save:
+                    raise WorkingDraftConflictError(
+                        "Working Draft is clean and has nothing to save"
+                    )
+                target_viewer_id = draft.proposed_viewer_branch_id
+                target = session.get(RunBranchModel, target_viewer_id)
+                if target is None or target.run_id != run_id:
+                    raise WorkingDraftConflictError(
+                        "pending Viewer Branch is missing or belongs to another Run"
+                    )
+                if target.status != "active":
+                    raise WorkingDraftConflictError(
+                        "pending Viewer Branch is not active"
+                    )
+                if session.get(BranchSavedRevisionModel, revision_id) is not None:
+                    raise WorkingDraftIdentityConflictError(
+                        f"revision_id {revision_id!r} is already in use"
+                    )
+                if (
+                    session.get(BranchRevisionAuditEventModel, audit_event_id)
+                    is not None
+                ):
+                    raise WorkingDraftIdentityConflictError(
+                        f"audit_event_id {audit_event_id!r} is already in use"
+                    )
+
+                try:
+                    state = self._validated_branch_revision_state_in_session(
+                        session=session, branch=branch
+                    )
+                    saved_viewer_id = saved_viewer_branch_id(
+                        state.saved_revision.payload
+                    )
+                    parsed_target_id = viewer_branch_id_from_changes(
+                        state.working_draft.changes
+                    )
+                except (BranchRevisionStateConflictError, ValueError) as exc:
+                    raise WorkingDraftConflictError(str(exc)) from exc
+                if parsed_target_id != target_viewer_id:
+                    raise WorkingDraftConflictError(
+                        "pending Viewer Branch is inconsistent"
+                    )
+                if saved_viewer_id == target_viewer_id:
+                    raise WorkingDraftConflictError(
+                        "Working Draft contains no effective Viewer Branch change"
+                    )
+
+                payload = viewer_branch_saved_revision_payload(
+                    base_payload=state.saved_revision.payload,
+                    run_id=run_id,
+                    display_name=run.display_name or run_id,
+                    run_status=run.status,
+                    timeline_start_season=run.timeline_start_season,
+                    timeline_end_season=run.timeline_end_season,
+                    branch_id=branch_id,
+                    branch_display_name=branch.display_name,
+                    branch_status=branch.status,
+                    forked_from_branch_id=branch.forked_from_branch_id,
+                    forked_from_saved_revision_id=(
+                        branch.forked_from_saved_revision_id
+                    ),
+                    viewer_branch_id=target_viewer_id,
+                )
+                summary = viewer_branch_saved_revision_change_summary(
+                    previous_viewer_branch_id=saved_viewer_id,
+                    viewer_branch_id=target_viewer_id,
+                )
+                sequence = state.saved_revision.sequence + 1
+                content_hash = saved_revision_content_hash(
+                    revision_id=revision_id,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    sequence=sequence,
+                    parent_revision_id=state.saved_revision.revision_id,
+                    kind=VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND,
+                    payload_schema_version=(
+                        RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION
+                    ),
+                    payload=payload,
+                    change_summary=summary,
+                )
+                previous_current_viewer_id = (run.official_branch_id or "").strip()
+                if not previous_current_viewer_id:
+                    raise WorkingDraftConflictError(
+                        "Run has no current Viewer Branch"
+                    )
+
+                claimed = session.execute(
+                    update(BranchWorkingDraftModel)
+                    .where(
+                        BranchWorkingDraftModel.draft_id == draft.draft_id,
+                        BranchWorkingDraftModel.draft_version
+                        == expected_draft_version,
+                    )
+                    .values(
+                        base_revision_id=revision_id,
+                        status=CLEAN_WORKING_DRAFT_STATUS,
+                        change_count=0,
+                        draft_version=expected_draft_version + 1,
+                        draft_schema_version=RUN_WORKING_DRAFT_SCHEMA_VERSION,
+                        changes_json="[]",
+                        updated_at=func.current_timestamp(),
+                    )
+                )
+                if claimed.rowcount != 1:
+                    raise WorkingDraftVersionConflictError(
+                        "Working Draft changed concurrently"
+                    )
+
+                session.add(
+                    BranchSavedRevisionModel(
+                        revision_id=revision_id,
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        sequence=sequence,
+                        parent_revision_id=state.saved_revision.revision_id,
+                        kind=VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND,
+                        payload_schema_version=(
+                            RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION
+                        ),
+                        content_hash_algorithm=CONTENT_HASH_ALGORITHM,
+                        content_hash=content_hash,
+                        payload_json=_to_json(payload),
+                        change_summary_json=_to_json(summary),
+                    )
+                )
+                branch.saved_head_revision_id = revision_id
+                run.official_branch_id = target_viewer_id
+                session.add(
+                    BranchRevisionAuditEventModel(
+                        audit_event_id=audit_event_id,
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        saved_revision_id=revision_id,
+                        event_kind=SAVED_REVISION_AUDIT_EVENT_KIND,
+                        payload_json=_to_json(
+                            {
+                                "base_saved_revision_id": (
+                                    state.saved_revision.revision_id
+                                ),
+                                "draft_id": draft.draft_id,
+                                "saved_draft_version": expected_draft_version,
+                                "previous_viewer_branch_id": (
+                                    previous_current_viewer_id
+                                ),
+                                "viewer_branch_id": target_viewer_id,
+                            }
+                        ),
+                    )
+                )
+                session.flush()
+        except IntegrityError as exc:
+            raise WorkingDraftIdentityConflictError(
+                "generated Saved Revision or audit event identity collided"
+            ) from exc
+
+        revision = self.get_branch_saved_revision(revision_id=revision_id)
+        audit = self.get_branch_revision_audit_event(
+            audit_event_id=audit_event_id
+        )
+        if revision is None or audit is None:  # pragma: no cover
+            raise RuntimeError("saved revision result could not be reloaded")
+        return ViewerBranchSaveResult(
+            run_id=run_id,
+            branch_id=branch_id,
+            previous_viewer_branch_id=previous_current_viewer_id,
+            viewer_branch_id=target_viewer_id,
+            saved_revision=revision,
+            working_draft=self.get_viewer_branch_working_draft(
+                run_id=run_id, branch_id=branch_id
+            ),
+            audit_event=audit,
         )
 
     def get_viewer_official_run_context(self, *, product_run_id: str) -> ViewerOfficialRunContext:

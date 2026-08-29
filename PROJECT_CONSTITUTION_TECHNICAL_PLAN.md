@@ -1,9 +1,9 @@
 # Squash Engine / FAX Squash / MSA World Tour
 
-## Active Product Constitution — governed by Master Vision v53
+## Active Product Constitution — governed by Master Vision v54
 
 **Repository status:** canonical repository-level product constitution for current design and implementation decisions.  
-**Latest Master authority:** Squash Engine Master Vision **v53**, updated **28. 8. 2026**.
+**Latest Master authority:** Squash Engine Master Vision **v54**, updated **29. 8. 2026**.
 **Synchronization rule:** this shorter repository distillation may lag details in the Master. It preserves still-valid earlier canon and records selected later decisions; synchronization must be additive unless the Master explicitly supersedes an older rule.
 
 > This constitution is a repository-facing distillation, not a lossless copy of the full Master Vision. A specified target does **not** imply that the repository already implements it. When a task depends on detail not stated here, use the latest audited Master or an explicit newer user decision rather than inventing the missing rule.
@@ -34,7 +34,7 @@ Independent scope axis:
 When sources disagree, use this order:
 
 1. explicit newer user/product decisions,
-2. latest audited Master Vision — currently v53,
+2. latest audited Master Vision — currently v54,
 3. this constitution,
 4. subordinate migration guidance such as `docs/ENGINE_UX_SPEC.md`,
 5. `README.md`, `ROADMAP.md`, and `AGENTS.md` as summaries/operating guidance,
@@ -636,6 +636,8 @@ Every successful Save creates a recoverable version.
 Viewer reads the Branch's last Saved Revision; Admin works against a separate Working Draft based on that revision. Creating an empty Run materializes this boundary immediately even though its draft contains no changes.
 
 Changing the Viewer Branch follows the same boundary: staging must not alter Viewer-visible state, and the Saved Revision, audit event, Viewer Branch activation and next clean Working Draft either persist together or not at all.
+
+Saved Revision History is a read-only projection of the complete lineage reachable from the selected Branch head, ordered from the oldest revision to the head and including shared pre-fork ancestry. A revision detail is available only through a matching Run/Branch context. Identity, parent sequence, content hash, cycle and declared shared-fork-origin checks fail closed; a history read never changes Viewer selection, Working Draft, Branch head or revision data.
 
 Important mutations are auditable and preserve provenance such as Built-in, Generated/Simulated, Imported, Manual and Regenerated where applicable.
 

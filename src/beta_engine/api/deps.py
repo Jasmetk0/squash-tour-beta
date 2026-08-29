@@ -58,6 +58,9 @@ from beta_engine.application.run_container_creation_service import (
 from beta_engine.application.run_branch_creation_service import (
     RunBranchCreationService,
 )
+from beta_engine.application.run_saved_revision_history_service import (
+    RunSavedRevisionHistoryService,
+)
 from beta_engine.application.run_working_draft_service import (
     RunWorkingDraftService,
 )
@@ -124,6 +127,13 @@ def get_run_working_draft_service(request: Request) -> RunWorkingDraftService:
         repository=runtime.repository,
         id_factory=_new_product_entity_id,
     )
+
+
+def get_run_saved_revision_history_service(
+    request: Request,
+) -> RunSavedRevisionHistoryService:
+    runtime = get_runtime(request)
+    return RunSavedRevisionHistoryService(repository=runtime.repository)
 
 
 def get_config_validation_service(_: Request) -> ConfigValidationService:

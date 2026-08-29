@@ -239,6 +239,36 @@ class SavedRevisionResponse(BaseModel):
     change_summary: dict[str, object]
 
 
+class SavedRevisionHistoryEntryResponse(BaseModel):
+    revision_id: str
+    revision_branch_id: str
+    sequence: int
+    parent_revision_id: str | None = None
+    kind: str
+    payload_schema_version: str
+    content_hash_algorithm: str
+    content_hash: str
+    change_summary: dict[str, object]
+    created_at: str | None = None
+    is_shared_revision: bool
+    is_branch_head: bool
+
+
+class SavedRevisionHistoryDetailResponse(SavedRevisionHistoryEntryResponse):
+    run_id: str
+    branch_id: str
+    payload: dict[str, object]
+
+
+class SavedRevisionHistoryListResponse(BaseModel):
+    run_id: str
+    branch_id: str
+    saved_head_revision_id: str
+    saved_revisions: list[SavedRevisionHistoryEntryResponse] = Field(
+        default_factory=list
+    )
+
+
 class SaveWorkingDraftResponse(BaseModel):
     run_id: str
     branch_id: str

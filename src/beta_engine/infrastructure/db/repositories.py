@@ -210,6 +210,16 @@ class BranchSavedRevisionRecord:
     created_at: str | None = None
 
 
+@dataclass(frozen=True)
+class BranchSavedRevisionHistoryRecord:
+    """Validated oldest-to-newest Saved Revision lineage for one Branch."""
+
+    run_id: str
+    branch_id: str
+    saved_head_revision_id: str
+    saved_revisions: tuple[BranchSavedRevisionRecord, ...]
+
+
 def _saved_revision_record_content_hash(
     revision: BranchSavedRevisionRecord,
 ) -> str:
@@ -303,6 +313,18 @@ class BranchRevisionStateNotFoundError(BranchRevisionStateError):
 
 class BranchRevisionStateConflictError(BranchRevisionStateError):
     """Raised when persisted revision and draft pointers are incoherent."""
+
+
+class SavedRevisionHistoryError(ValueError):
+    """Base error for the validated Saved Revision history read model."""
+
+
+class SavedRevisionHistoryNotFoundError(SavedRevisionHistoryError):
+    """Raised when the requested Run, Branch, or reachable Revision is absent."""
+
+
+class SavedRevisionHistoryConflictError(SavedRevisionHistoryError):
+    """Raised when persisted Saved Revision lineage is incoherent or corrupt."""
 
 
 class WorkingDraftSaveError(ValueError):
@@ -1515,32 +1537,6 @@ class SimulationPersistenceRepository:
                 "Saved Revision identity does not match its Run"
             )
 
-        if head_revision.branch_id != branch.branch_id:
-            source_branch_id = (branch.forked_from_branch_id or "").strip()
-            if (
-                branch.forked_from_saved_revision_id != head_revision.revision_id
-                or not source_branch_id
-            ):
-                raise BranchRevisionStateConflictError(
-                    "Saved Revision is not the Branch's declared shared fork origin"
-                )
-            source_branch = session.get(RunBranchModel, source_branch_id)
-            if source_branch is None or source_branch.run_id != branch.run_id:
-                raise BranchRevisionStateConflictError(
-                    "Run Branch has no coherent source Branch"
-                )
-            source_lineage = self._validated_branch_revision_lineage_in_session(
-                session=session,
-                branch=source_branch,
-                visiting_branch_ids=(visiting_branch_ids | {branch.branch_id}),
-            )
-            if head_revision.revision_id not in {
-                revision.revision_id for revision in source_lineage
-            }:
-                raise BranchRevisionStateConflictError(
-                    "shared fork origin is not part of the source Branch history"
-                )
-
         lineage: list[BranchSavedRevisionRecord] = []
         visited_revision_ids: set[str] = set()
         current_model: BranchSavedRevisionModel | None = head_model
@@ -1568,6 +1564,50 @@ class SimulationPersistenceRepository:
                     raise BranchRevisionStateConflictError(
                         f"parent Saved Revision {current.parent_revision_id} was not found"
                     )
+
+        for child, parent in zip(lineage, lineage[1:], strict=False):
+            if child.sequence != parent.sequence + 1:
+                raise BranchRevisionStateConflictError(
+                    "Saved Revision lineage has a non-contiguous sequence"
+                )
+        if lineage[-1].sequence != INITIAL_SAVED_REVISION_SEQUENCE:
+            raise BranchRevisionStateConflictError(
+                "Saved Revision lineage does not start at the initial sequence"
+            )
+
+        shared_origin = next(
+            (
+                revision
+                for revision in lineage
+                if revision.branch_id != branch.branch_id
+            ),
+            None,
+        )
+        if shared_origin is not None:
+            source_branch_id = (branch.forked_from_branch_id or "").strip()
+            if (
+                branch.forked_from_saved_revision_id != shared_origin.revision_id
+                or not source_branch_id
+            ):
+                raise BranchRevisionStateConflictError(
+                    "Saved Revision is not the Branch's declared shared fork origin"
+                )
+            source_branch = session.get(RunBranchModel, source_branch_id)
+            if source_branch is None or source_branch.run_id != branch.run_id:
+                raise BranchRevisionStateConflictError(
+                    "Run Branch has no coherent source Branch"
+                )
+            source_lineage = self._validated_branch_revision_lineage_in_session(
+                session=session,
+                branch=source_branch,
+                visiting_branch_ids=(visiting_branch_ids | {branch.branch_id}),
+            )
+            if shared_origin.revision_id not in {
+                revision.revision_id for revision in source_lineage
+            }:
+                raise BranchRevisionStateConflictError(
+                    "shared fork origin is not part of the source Branch history"
+                )
         return lineage
 
     def create_branch_from_saved_revision_atomically(
@@ -1804,6 +1844,42 @@ class SimulationPersistenceRepository:
                 .order_by(BranchSavedRevisionModel.sequence)
             ).scalars()
             return [self._to_branch_saved_revision(model) for model in models]
+
+    def get_branch_saved_revision_history(
+        self, *, run_id: str, branch_id: str
+    ) -> BranchSavedRevisionHistoryRecord:
+        """Return the complete reachable lineage after validating every revision."""
+
+        with self._session_factory() as session:
+            run = session.get(RunContainerModel, run_id)
+            if run is None:
+                raise SavedRevisionHistoryNotFoundError(
+                    f"Run {run_id!r} was not found"
+                )
+            branch = session.get(RunBranchModel, branch_id)
+            if branch is None or branch.run_id != run_id:
+                raise SavedRevisionHistoryNotFoundError(
+                    f"Branch {branch_id!r} was not found in Run {run_id!r}"
+                )
+            try:
+                newest_to_oldest = self._validated_branch_revision_lineage_in_session(
+                    session=session,
+                    branch=branch,
+                )
+            except BranchRevisionStateConflictError as exc:
+                raise SavedRevisionHistoryConflictError(str(exc)) from exc
+
+            oldest_to_newest = tuple(reversed(newest_to_oldest))
+            if not oldest_to_newest:
+                raise SavedRevisionHistoryConflictError(
+                    f"Branch {branch_id!r} has no reachable Saved Revision"
+                )
+            return BranchSavedRevisionHistoryRecord(
+                run_id=run_id,
+                branch_id=branch_id,
+                saved_head_revision_id=newest_to_oldest[0].revision_id,
+                saved_revisions=oldest_to_newest,
+            )
 
     def get_branch_working_draft(
         self, *, branch_id: str

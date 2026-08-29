@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from beta_engine.api.deps import (
     get_run_branch_creation_service,
     get_run_container_creation_service,
+    get_run_saved_revision_history_service,
     get_run_working_draft_service,
     get_simulation_api_service,
 )
@@ -17,9 +18,12 @@ from beta_engine.api.schemas import (
     RunBranchResponse,
     RunContainerListResponse,
     RunContainerResponse,
+    SavedRevisionHistoryDetailResponse,
+    SavedRevisionHistoryEntryResponse,
+    SavedRevisionHistoryListResponse,
+    SavedRevisionResponse,
     SaveWorkingDraftRequest,
     SaveWorkingDraftResponse,
-    SavedRevisionResponse,
     StageViewerBranchRequest,
     ViewerBranchWorkingDraftResponse,
 )
@@ -30,20 +34,27 @@ from beta_engine.application.run_branch_creation_service import (
 from beta_engine.application.run_container_creation_service import (
     RunContainerCreationService,
 )
+from beta_engine.application.run_saved_revision_history_service import (
+    RunSavedRevisionHistoryService,
+)
 from beta_engine.application.run_working_draft_service import (
     RunWorkingDraftService,
 )
-from beta_engine.domain.run_containers import RunDisplayNameValidationError
 from beta_engine.domain.run_branches import BranchDisplayNameValidationError
+from beta_engine.domain.run_containers import RunDisplayNameValidationError
 from beta_engine.infrastructure.db import (
     BranchCreationIdentityConflictError,
     BranchDisplayNameConflictError,
+    BranchSavedRevisionHistoryRecord,
+    BranchSavedRevisionRecord,
     RunBranchRecord,
     RunContainerRecord,
     RunDisplayNameConflictError,
     RunIdentityConflictError,
     SavedRevisionBranchForkConflictError,
     SavedRevisionBranchForkNotFoundError,
+    SavedRevisionHistoryConflictError,
+    SavedRevisionHistoryNotFoundError,
     ViewerBranchSaveResult,
     ViewerBranchWorkingDraftRecord,
     WorkingDraftConflictError,
@@ -107,6 +118,58 @@ def _save_response(record: ViewerBranchSaveResult) -> SaveWorkingDraftResponse:
         working_draft=_working_draft_response(record.working_draft),
         audit_event_id=record.audit_event.audit_event_id,
     )
+
+
+def _revision_history_entry_response(
+    record: BranchSavedRevisionRecord,
+    *,
+    requested_branch_id: str,
+    saved_head_revision_id: str,
+) -> SavedRevisionHistoryEntryResponse:
+    return SavedRevisionHistoryEntryResponse(
+        revision_id=record.revision_id,
+        revision_branch_id=record.branch_id,
+        sequence=record.sequence,
+        parent_revision_id=record.parent_revision_id,
+        kind=record.kind,
+        payload_schema_version=record.payload_schema_version,
+        content_hash_algorithm=record.content_hash_algorithm,
+        content_hash=record.content_hash,
+        change_summary=record.change_summary,
+        created_at=record.created_at,
+        is_shared_revision=record.branch_id != requested_branch_id,
+        is_branch_head=record.revision_id == saved_head_revision_id,
+    )
+
+
+def _revision_history_response(
+    record: BranchSavedRevisionHistoryRecord,
+) -> SavedRevisionHistoryListResponse:
+    return SavedRevisionHistoryListResponse(
+        run_id=record.run_id,
+        branch_id=record.branch_id,
+        saved_head_revision_id=record.saved_head_revision_id,
+        saved_revisions=[
+            _revision_history_entry_response(
+                revision,
+                requested_branch_id=record.branch_id,
+                saved_head_revision_id=record.saved_head_revision_id,
+            )
+            for revision in record.saved_revisions
+        ],
+    )
+
+
+def _raise_saved_revision_history_http_error(exc: Exception) -> None:
+    if isinstance(exc, SavedRevisionHistoryNotFoundError):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "saved_revision_history_not_found", "message": str(exc)},
+        ) from exc
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail={"code": "saved_revision_history_conflict", "message": str(exc)},
+    ) from exc
 
 
 def _raise_working_draft_http_error(exc: Exception) -> None:
@@ -274,6 +337,67 @@ def save_working_draft(
     except (WorkingDraftNotFoundError, WorkingDraftConflictError) as exc:
         _raise_working_draft_http_error(exc)
         raise AssertionError("unreachable")
+
+
+@router.get(
+    "/{run_id}/branches/{branch_id}/saved-revisions",
+    response_model=SavedRevisionHistoryListResponse,
+)
+def list_saved_revision_history(
+    run_id: str,
+    branch_id: str,
+    service: RunSavedRevisionHistoryService = Depends(
+        get_run_saved_revision_history_service
+    ),
+) -> SavedRevisionHistoryListResponse:
+    try:
+        return _revision_history_response(
+            service.list_history(run_id=run_id, branch_id=branch_id)
+        )
+    except (
+        SavedRevisionHistoryNotFoundError,
+        SavedRevisionHistoryConflictError,
+    ) as exc:
+        _raise_saved_revision_history_http_error(exc)
+        raise AssertionError("unreachable")
+
+
+@router.get(
+    "/{run_id}/branches/{branch_id}/saved-revisions/{revision_id}",
+    response_model=SavedRevisionHistoryDetailResponse,
+)
+def get_saved_revision_history_detail(
+    run_id: str,
+    branch_id: str,
+    revision_id: str,
+    service: RunSavedRevisionHistoryService = Depends(
+        get_run_saved_revision_history_service
+    ),
+) -> SavedRevisionHistoryDetailResponse:
+    try:
+        detail = service.get_revision(
+            run_id=run_id,
+            branch_id=branch_id,
+            revision_id=revision_id,
+        )
+    except (
+        SavedRevisionHistoryNotFoundError,
+        SavedRevisionHistoryConflictError,
+    ) as exc:
+        _raise_saved_revision_history_http_error(exc)
+        raise AssertionError("unreachable")
+
+    entry = _revision_history_entry_response(
+        detail.saved_revision,
+        requested_branch_id=branch_id,
+        saved_head_revision_id=detail.saved_head_revision_id,
+    )
+    return SavedRevisionHistoryDetailResponse(
+        **entry.model_dump(),
+        run_id=run_id,
+        branch_id=branch_id,
+        payload=detail.saved_revision.payload,
+    )
 
 
 @router.get("/{run_id:path}", response_model=RunContainerResponse)

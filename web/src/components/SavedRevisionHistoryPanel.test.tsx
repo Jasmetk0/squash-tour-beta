@@ -17,6 +17,7 @@ const api = vi.hoisted(() => {
     createRunBranchFromSavedRevision: vi.fn(),
     getBranchWorkingDraft: vi.fn(),
     getSavedRevision: vi.fn(),
+    getSavedRevisionRecoveryActivity: vi.fn(),
     listSavedRevisionHistory: vi.fn(),
     restoreSavedRevision: vi.fn()
   }
@@ -138,6 +139,13 @@ function renderPanel(overrides?: { run?: RunContainer; branches?: RunBranch[] })
 beforeEach(() => {
   vi.clearAllMocks()
   api.listSavedRevisionHistory.mockResolvedValue(history)
+  api.getSavedRevisionRecoveryActivity.mockResolvedValue({
+    run_id: run.run_id,
+    branch_id: branch.branch_id,
+    saved_head_revision_id: history.saved_head_revision_id,
+    safety_checkpoints: [],
+    audit_events: []
+  })
   api.getSavedRevision.mockResolvedValue(detail)
   api.getBranchWorkingDraft.mockResolvedValue(draft)
   api.createRunBranchFromSavedRevision.mockResolvedValue({
@@ -182,6 +190,97 @@ beforeEach(() => {
 })
 
 describe('SavedRevisionHistoryPanel', () => {
+  it('opens a checkpoint recovery source read-only and shows its matching audit event', async () => {
+    const restoredRevision = {
+      revision_id: 'revision-three',
+      revision_branch_id: branch.branch_id,
+      sequence: 3,
+      parent_revision_id: 'revision-two',
+      kind: 'branch_restore',
+      payload_schema_version: 'run_saved_revision_v1',
+      content_hash_algorithm: 'sha256',
+      content_hash: 'hash-three',
+      change_summary: { summary: 'Restored revision-one' },
+      created_at: '2026-08-30 10:10:00',
+      is_shared_revision: false,
+      is_branch_head: true
+    }
+    api.listSavedRevisionHistory.mockResolvedValueOnce({
+      ...history,
+      saved_head_revision_id: 'revision-three',
+      saved_revisions: [
+        revisions[0],
+        { ...revisions[1], is_branch_head: false },
+        restoredRevision
+      ]
+    })
+    api.getSavedRevisionRecoveryActivity.mockResolvedValueOnce({
+      run_id: run.run_id,
+      branch_id: branch.branch_id,
+      saved_head_revision_id: 'revision-three',
+      safety_checkpoints: [
+        {
+          checkpoint_id: 'checkpoint-one',
+          run_id: run.run_id,
+          branch_id: branch.branch_id,
+          saved_revision_id: 'revision-two',
+          target_saved_revision_id: 'revision-one',
+          restore_saved_revision_id: 'revision-three',
+          kind: 'pre_restore_saved_revision',
+          draft_id: 'draft-one',
+          draft_version: 2,
+          viewer_branch_id: 'branch-two',
+          content_hash_algorithm: 'sha256',
+          content_hash: 'checkpoint-hash',
+          created_at: '2026-08-30 10:10:00'
+        }
+      ],
+      audit_events: [
+        {
+          audit_event_id: 'audit-two',
+          run_id: run.run_id,
+          branch_id: branch.branch_id,
+          saved_revision_id: 'revision-three',
+          event_kind: 'branch_restored',
+          payload: { checkpoint_id: 'checkpoint-one', explicit_confirmation: true },
+          created_at: '2026-08-30 10:10:00'
+        }
+      ]
+    })
+    api.getSavedRevision.mockResolvedValueOnce({
+      ...revisions[1],
+      run_id: run.run_id,
+      branch_id: branch.branch_id,
+      payload: {
+        run: { run_id: run.run_id, viewer_branch_id: 'branch-two' },
+        branch: { branch_id: branch.branch_id },
+        content: {}
+      }
+    })
+
+    renderPanel()
+
+    const activity = await screen.findByLabelText('Saved Revision recovery activity')
+    const openCheckpoint = await screen.findByRole('button', {
+      name: 'Open checkpoint recovery source'
+    })
+    expect(activity).toHaveTextContent('checkpoint-one')
+    expect(activity).toHaveTextContent('branch_restored')
+    expect(activity).toHaveTextContent('"explicit_confirmation": true')
+    await userEvent.click(openCheckpoint)
+
+    expect(await screen.findByLabelText('Saved Revision read-only preview')).toHaveTextContent(
+      'revision-two'
+    )
+    expect(api.getSavedRevision).toHaveBeenCalledWith(
+      run.run_id,
+      branch.branch_id,
+      'revision-two'
+    )
+    expect(api.createRunBranchFromSavedRevision).not.toHaveBeenCalled()
+    expect(api.restoreSavedRevision).not.toHaveBeenCalled()
+  })
+
   it('opens an older Saved Revision as read-only without issuing a mutation', async () => {
     renderPanel()
 

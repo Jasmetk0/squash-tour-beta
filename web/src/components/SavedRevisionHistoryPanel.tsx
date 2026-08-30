@@ -5,6 +5,7 @@ import {
   createRunBranchFromSavedRevision,
   getBranchWorkingDraft,
   getSavedRevision,
+  getSavedRevisionRecoveryActivity,
   listSavedRevisionHistory,
   restoreSavedRevision
 } from '../api/client'
@@ -64,6 +65,36 @@ export function SavedRevisionHistoryPanel({
   const historyIdentityIsValid = Boolean(
     history && history.run_id === runId && history.branch_id === branchId
   )
+  const recoveryActivityQuery = useQuery({
+    queryKey: ['saved-revision-recovery-activity', runId, branchId],
+    queryFn: () => getSavedRevisionRecoveryActivity(runId, branchId),
+    enabled: Boolean(runId && branchId)
+  })
+  const recoveryActivity = recoveryActivityQuery.data
+  const reachableRevisionIds = new Set(
+    historyIdentityIsValid ? history?.saved_revisions.map((revision) => revision.revision_id) : []
+  )
+  const recoveryActivityIdentityIsValid = Boolean(
+    recoveryActivity &&
+      historyIdentityIsValid &&
+      recoveryActivity.run_id === runId &&
+      recoveryActivity.branch_id === branchId &&
+      recoveryActivity.saved_head_revision_id === history?.saved_head_revision_id &&
+      recoveryActivity.safety_checkpoints.every(
+        (checkpoint) =>
+          checkpoint.run_id === runId &&
+          checkpoint.branch_id === branchId &&
+          reachableRevisionIds.has(checkpoint.saved_revision_id) &&
+          reachableRevisionIds.has(checkpoint.target_saved_revision_id) &&
+          reachableRevisionIds.has(checkpoint.restore_saved_revision_id)
+      ) &&
+      recoveryActivity.audit_events.every(
+        (auditEvent) =>
+          auditEvent.run_id === runId &&
+          auditEvent.branch_id === branchId &&
+          reachableRevisionIds.has(auditEvent.saved_revision_id)
+      )
+  )
   const selectedEntry = history?.saved_revisions.find(
     (revision) => revision.revision_id === selectedRevisionId
   )
@@ -121,6 +152,7 @@ export function SavedRevisionHistoryPanel({
       setRestoreNotice(null)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['saved-revision-history', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['saved-revision-recovery-activity', runId, branchId] }),
         queryClient.invalidateQueries({ queryKey: ['branch-working-draft', runId, branchId] }),
         queryClient.invalidateQueries({ queryKey: ['run-container', runId] }),
         queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),
@@ -136,6 +168,7 @@ export function SavedRevisionHistoryPanel({
       )
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['saved-revision-history', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['saved-revision-recovery-activity', runId, branchId] }),
         queryClient.invalidateQueries({ queryKey: ['branch-working-draft', runId, branchId] }),
         queryClient.invalidateQueries({ queryKey: ['run-container', runId] }),
         queryClient.invalidateQueries({ queryKey: ['run-branches', runId] })
@@ -358,6 +391,89 @@ export function SavedRevisionHistoryPanel({
           </div>
         </div>
       )}
+
+      <section aria-label="Saved Revision recovery activity">
+        <h4>Recovery activity</h4>
+        <p>
+          Safety checkpoints and revision events are read-only. Opening a checkpoint only opens
+          its pre-restore Saved Revision; returning to it still requires the guarded restore review.
+        </p>
+        {recoveryActivityQuery.isLoading && (
+          <p className="status">Loading recovery activity...</p>
+        )}
+        {recoveryActivityQuery.error && (
+          <p className="error">
+            Failed to load recovery activity: {formatApiError(recoveryActivityQuery.error)}
+          </p>
+        )}
+        {recoveryActivity && !recoveryActivityIdentityIsValid && (
+          <p className="error">
+            Recovery activity returned mismatched or unreachable Run, Branch, or revision data.
+          </p>
+        )}
+        {recoveryActivityIdentityIsValid && recoveryActivity && (
+          <>
+            <h5>Pre-restore safety checkpoints</h5>
+            {recoveryActivity.safety_checkpoints.length === 0 ? (
+              <EmptyState message="No pre-restore safety checkpoint has been created for this Branch." />
+            ) : (
+              <ol className="history-list" aria-label="Pre-restore safety checkpoints">
+                {[...recoveryActivity.safety_checkpoints].reverse().map((checkpoint) => (
+                  <li key={checkpoint.checkpoint_id}>
+                    <article>
+                      <MetadataList
+                        items={[
+                          { label: 'Checkpoint', value: checkpoint.checkpoint_id },
+                          { label: 'Created', value: checkpoint.created_at ?? '—' },
+                          { label: 'Pre-restore head', value: checkpoint.saved_revision_id },
+                          { label: 'Restore target', value: checkpoint.target_saved_revision_id },
+                          { label: 'Restore result', value: checkpoint.restore_saved_revision_id },
+                          { label: 'Reviewed Viewer Branch', value: checkpoint.viewer_branch_id },
+                          { label: 'Reviewed Draft', value: `${checkpoint.draft_id} · version ${checkpoint.draft_version}` },
+                          { label: 'Content hash', value: `${checkpoint.content_hash_algorithm}:${checkpoint.content_hash}` }
+                        ]}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => selectRevision(checkpoint.saved_revision_id)}
+                      >
+                        Open checkpoint recovery source
+                      </button>
+                    </article>
+                  </li>
+                ))}
+              </ol>
+            )}
+
+            <h5>Branch revision events</h5>
+            {recoveryActivity.audit_events.length === 0 ? (
+              <EmptyState message="No revision Audit Event has been recorded for this Branch." />
+            ) : (
+              <ol className="history-list" aria-label="Branch revision Audit Events">
+                {[...recoveryActivity.audit_events].reverse().map((auditEvent) => (
+                  <li key={auditEvent.audit_event_id}>
+                    <article>
+                      <MetadataList
+                        items={[
+                          { label: 'Audit Event', value: auditEvent.audit_event_id },
+                          { label: 'Kind', value: auditEvent.event_kind },
+                          { label: 'Saved Revision', value: auditEvent.saved_revision_id },
+                          { label: 'Created', value: auditEvent.created_at ?? '—' }
+                        ]}
+                      />
+                      <JsonPayloadBlock
+                        title="Audit Event payload"
+                        emptyText="No Audit Event payload is available."
+                        payload={auditEvent.payload}
+                      />
+                    </article>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </>
+        )}
+      </section>
 
       {createBranchMutation.error && (
         <p className="error">Branch creation result is uncertain; review the refreshed Branch list before retrying. {formatApiError(createBranchMutation.error)}</p>

@@ -269,6 +269,42 @@ class SavedRevisionHistoryListResponse(BaseModel):
     )
 
 
+class SavedRevisionRecoveryCheckpointResponse(BaseModel):
+    checkpoint_id: str
+    run_id: str
+    branch_id: str
+    saved_revision_id: str
+    target_saved_revision_id: str
+    restore_saved_revision_id: str
+    kind: Literal["pre_restore_saved_revision"]
+    draft_id: str
+    draft_version: int
+    viewer_branch_id: str
+    content_hash_algorithm: str
+    content_hash: str
+    created_at: str | None = None
+
+
+class SavedRevisionAuditEventResponse(BaseModel):
+    audit_event_id: str
+    run_id: str
+    branch_id: str
+    saved_revision_id: str
+    event_kind: str
+    payload: dict[str, object]
+    created_at: str | None = None
+
+
+class SavedRevisionRecoveryActivityResponse(BaseModel):
+    run_id: str
+    branch_id: str
+    saved_head_revision_id: str
+    safety_checkpoints: list[SavedRevisionRecoveryCheckpointResponse] = Field(
+        default_factory=list
+    )
+    audit_events: list[SavedRevisionAuditEventResponse] = Field(default_factory=list)
+
+
 class RestoreSavedRevisionRequest(BaseModel):
     expected_head_saved_revision_id: str = Field(min_length=1, max_length=128)
     expected_draft_version: int = Field(ge=0)

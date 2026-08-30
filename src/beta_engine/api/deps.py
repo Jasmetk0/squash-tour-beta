@@ -61,6 +61,9 @@ from beta_engine.application.run_branch_creation_service import (
 from beta_engine.application.run_saved_revision_history_service import (
     RunSavedRevisionHistoryService,
 )
+from beta_engine.application.run_saved_revision_recovery_activity_service import (
+    RunSavedRevisionRecoveryActivityService,
+)
 from beta_engine.application.run_saved_revision_restore_service import (
     RunSavedRevisionRestoreService,
 )
@@ -137,6 +140,13 @@ def get_run_saved_revision_history_service(
 ) -> RunSavedRevisionHistoryService:
     runtime = get_runtime(request)
     return RunSavedRevisionHistoryService(repository=runtime.repository)
+
+
+def get_run_saved_revision_recovery_activity_service(
+    request: Request,
+) -> RunSavedRevisionRecoveryActivityService:
+    runtime = get_runtime(request)
+    return RunSavedRevisionRecoveryActivityService(repository=runtime.repository)
 
 
 def get_run_saved_revision_restore_service(

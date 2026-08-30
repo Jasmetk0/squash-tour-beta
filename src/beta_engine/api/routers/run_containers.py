@@ -9,6 +9,7 @@ from beta_engine.api.deps import (
     get_run_branch_creation_service,
     get_run_container_creation_service,
     get_run_saved_revision_history_service,
+    get_run_saved_revision_recovery_activity_service,
     get_run_saved_revision_restore_service,
     get_run_working_draft_service,
     get_simulation_api_service,
@@ -24,6 +25,9 @@ from beta_engine.api.schemas import (
     SavedRevisionHistoryDetailResponse,
     SavedRevisionHistoryEntryResponse,
     SavedRevisionHistoryListResponse,
+    SavedRevisionAuditEventResponse,
+    SavedRevisionRecoveryActivityResponse,
+    SavedRevisionRecoveryCheckpointResponse,
     SavedRevisionResponse,
     SavedRevisionRestoreCheckpointResponse,
     SaveWorkingDraftRequest,
@@ -40,6 +44,12 @@ from beta_engine.application.run_container_creation_service import (
 )
 from beta_engine.application.run_saved_revision_history_service import (
     RunSavedRevisionHistoryService,
+)
+from beta_engine.application.run_saved_revision_recovery_activity_service import (
+    RunSavedRevisionRecoveryActivity,
+    RunSavedRevisionRecoveryActivityConflictError,
+    RunSavedRevisionRecoveryActivityNotFoundError,
+    RunSavedRevisionRecoveryActivityService,
 )
 from beta_engine.application.run_saved_revision_restore_service import (
     RunSavedRevisionRestoreService,
@@ -212,6 +222,26 @@ def _revision_history_response(
     )
 
 
+def _recovery_activity_response(
+    record: RunSavedRevisionRecoveryActivity,
+) -> SavedRevisionRecoveryActivityResponse:
+    return SavedRevisionRecoveryActivityResponse(
+        run_id=record.run_id,
+        branch_id=record.branch_id,
+        saved_head_revision_id=record.saved_head_revision_id,
+        safety_checkpoints=[
+            SavedRevisionRecoveryCheckpointResponse.model_validate(
+                checkpoint.__dict__
+            )
+            for checkpoint in record.safety_checkpoints
+        ],
+        audit_events=[
+            SavedRevisionAuditEventResponse.model_validate(audit_event.__dict__)
+            for audit_event in record.audit_events
+        ],
+    )
+
+
 def _raise_saved_revision_history_http_error(exc: Exception) -> None:
     if isinstance(exc, SavedRevisionHistoryNotFoundError):
         raise HTTPException(
@@ -221,6 +251,24 @@ def _raise_saved_revision_history_http_error(exc: Exception) -> None:
     raise HTTPException(
         status_code=status.HTTP_409_CONFLICT,
         detail={"code": "saved_revision_history_conflict", "message": str(exc)},
+    ) from exc
+
+
+def _raise_saved_revision_recovery_activity_http_error(exc: Exception) -> None:
+    if isinstance(exc, RunSavedRevisionRecoveryActivityNotFoundError):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "saved_revision_recovery_activity_not_found",
+                "message": str(exc),
+            },
+        ) from exc
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail={
+            "code": "saved_revision_recovery_activity_conflict",
+            "message": str(exc),
+        },
     ) from exc
 
 
@@ -431,6 +479,29 @@ def list_saved_revision_history(
         SavedRevisionHistoryConflictError,
     ) as exc:
         _raise_saved_revision_history_http_error(exc)
+        raise AssertionError("unreachable")
+
+
+@router.get(
+    "/{run_id}/branches/{branch_id}/saved-revision-recovery-activity",
+    response_model=SavedRevisionRecoveryActivityResponse,
+)
+def get_saved_revision_recovery_activity(
+    run_id: str,
+    branch_id: str,
+    service: RunSavedRevisionRecoveryActivityService = Depends(
+        get_run_saved_revision_recovery_activity_service
+    ),
+) -> SavedRevisionRecoveryActivityResponse:
+    try:
+        return _recovery_activity_response(
+            service.get_activity(run_id=run_id, branch_id=branch_id)
+        )
+    except (
+        RunSavedRevisionRecoveryActivityNotFoundError,
+        RunSavedRevisionRecoveryActivityConflictError,
+    ) as exc:
+        _raise_saved_revision_recovery_activity_http_error(exc)
         raise AssertionError("unreachable")
 
 

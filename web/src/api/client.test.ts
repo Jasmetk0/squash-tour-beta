@@ -24,6 +24,7 @@ import {
   createRunBranchFromSavedRevision,
   getBranchWorkingDraft,
   listSavedRevisionHistory,
+  getSavedRevisionRecoveryActivity,
   getSavedRevision,
   restoreSavedRevision,
   listBranchCheckpoints,
@@ -993,6 +994,7 @@ describe('world package registry client', () => {
     }
 
     await listSavedRevisionHistory(runId, branchId)
+    await getSavedRevisionRecoveryActivity(runId, branchId)
     await getSavedRevision(runId, branchId, revisionId)
     await getBranchWorkingDraft(runId, branchId)
     await createRunBranchFromSavedRevision(runId, branchPayload)
@@ -1002,17 +1004,22 @@ describe('world package registry client', () => {
     expect(fetchMock).toHaveBeenNthCalledWith(1, `${root}/saved-revisions`, expect.anything())
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
+      `${root}/saved-revision-recovery-activity`,
+      expect.anything()
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
       `${root}/saved-revisions/revision%2Fa%20%233`,
       expect.anything()
     )
-    expect(fetchMock).toHaveBeenNthCalledWith(3, `${root}/working-draft`, expect.anything())
+    expect(fetchMock).toHaveBeenNthCalledWith(4, `${root}/working-draft`, expect.anything())
     expect(fetchMock).toHaveBeenNthCalledWith(
-      4,
+      5,
       'http://127.0.0.1:8000/run-containers/run%2Fa%20%231/branches',
       expect.objectContaining({ method: 'POST', body: JSON.stringify(branchPayload) })
     )
     expect(fetchMock).toHaveBeenNthCalledWith(
-      5,
+      6,
       `${root}/saved-revisions/revision%2Fa%20%233/restore`,
       expect.objectContaining({ method: 'POST', body: JSON.stringify(restorePayload) })
     )

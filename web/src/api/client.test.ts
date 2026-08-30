@@ -21,6 +21,11 @@ import {
   getViewerOfficialRunContext,
   listRunBranches,
   getRunBranch,
+  createRunBranchFromSavedRevision,
+  getBranchWorkingDraft,
+  listSavedRevisionHistory,
+  getSavedRevision,
+  restoreSavedRevision,
   listBranchCheckpoints,
   getBranchCheckpoint,
   getAdminBranchCheckpointSeasonState,
@@ -966,6 +971,52 @@ describe('world package registry client', () => {
     expect(globalThis.fetch).toHaveBeenNthCalledWith(
       2, 'http://127.0.0.1:8000/run-containers/save%2Fa%20%231', expect.anything()
     )
+  })
+
+  it('uses exactly once encoded Saved Revision history, detail, draft, Branch, and restore contracts', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify({}), { status: 200 }))
+    )
+    const runId = 'run/a #1'
+    const branchId = 'branch/a #2'
+    const revisionId = 'revision/a #3'
+    const branchPayload = {
+      source_branch_id: branchId,
+      source_saved_revision_id: revisionId,
+      display_name: 'Alternative history'
+    }
+    const restorePayload = {
+      expected_head_saved_revision_id: 'head/a #4',
+      expected_draft_version: 7,
+      expected_current_viewer_branch_id: 'viewer/a #5',
+      explicit_confirmation: true
+    }
+
+    await listSavedRevisionHistory(runId, branchId)
+    await getSavedRevision(runId, branchId, revisionId)
+    await getBranchWorkingDraft(runId, branchId)
+    await createRunBranchFromSavedRevision(runId, branchPayload)
+    await restoreSavedRevision(runId, branchId, revisionId, restorePayload)
+
+    const root = 'http://127.0.0.1:8000/run-containers/run%2Fa%20%231/branches/branch%2Fa%20%232'
+    expect(fetchMock).toHaveBeenNthCalledWith(1, `${root}/saved-revisions`, expect.anything())
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      `${root}/saved-revisions/revision%2Fa%20%233`,
+      expect.anything()
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(3, `${root}/working-draft`, expect.anything())
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      4,
+      'http://127.0.0.1:8000/run-containers/run%2Fa%20%231/branches',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify(branchPayload) })
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      5,
+      `${root}/saved-revisions/revision%2Fa%20%233/restore`,
+      expect.objectContaining({ method: 'POST', body: JSON.stringify(restorePayload) })
+    )
+    for (const [url] of fetchMock.mock.calls) expect(url).not.toContain('%252F')
   })
 
 

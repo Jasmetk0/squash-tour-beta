@@ -509,13 +509,14 @@ export type RunContainer = {
   display_name: string | null
   storage_kind: 'built_in' | 'custom_local'
   read_only: boolean
-  world_id: string
+  world_id: string | null
   world_package_fingerprint: string | null
   config_version: string | null
   config_fingerprint: string | null
   global_seed: number | null
   timeline_start_season: number
   timeline_end_season: number
+  viewer_branch_id?: string | null
   official_branch_id: string | null
   status: string
   metadata_json: Record<string, unknown>
@@ -535,13 +536,100 @@ export type RunBranch = {
   branch_seed: number | null
   forked_from_branch_id: string | null
   forked_from_checkpoint_id: string | null
+  forked_from_saved_revision_id?: string | null
+  saved_head_revision_id?: string | null
   head_checkpoint_id: string | null
   legacy_simulation_run_id: string | null
   metadata_json: Record<string, unknown>
+  is_viewer_branch?: boolean
   is_official: boolean
 }
 
 export type RunBranchListResponse = { run_branches: RunBranch[] }
+
+export type CreateRunBranchFromSavedRevisionRequest = {
+  source_branch_id: string
+  source_saved_revision_id: string
+  display_name?: string
+}
+
+export type ViewerBranchWorkingDraft = {
+  run_id: string
+  branch_id: string
+  draft_id: string
+  base_saved_revision_id: string
+  saved_viewer_branch_id: string
+  proposed_viewer_branch_id: string
+  current_viewer_branch_id: string
+  status: 'clean' | 'dirty'
+  change_count: number
+  draft_version: number
+  can_save: boolean
+}
+
+export type SavedRevision = {
+  revision_id: string
+  sequence: number
+  parent_revision_id: string | null
+  kind: string
+  payload_schema_version: string
+  content_hash_algorithm: string
+  content_hash: string
+  change_summary: Record<string, unknown>
+}
+
+export type SavedRevisionHistoryEntry = SavedRevision & {
+  revision_branch_id: string
+  created_at: string | null
+  is_shared_revision: boolean
+  is_branch_head: boolean
+}
+
+export type SavedRevisionHistoryDetail = SavedRevisionHistoryEntry & {
+  run_id: string
+  branch_id: string
+  payload: Record<string, unknown>
+}
+
+export type SavedRevisionHistoryResponse = {
+  run_id: string
+  branch_id: string
+  saved_head_revision_id: string
+  saved_revisions: SavedRevisionHistoryEntry[]
+}
+
+export type RestoreSavedRevisionRequest = {
+  expected_head_saved_revision_id: string
+  expected_draft_version: number
+  expected_current_viewer_branch_id: string
+  explicit_confirmation: boolean
+}
+
+export type SavedRevisionRestoreCheckpoint = {
+  checkpoint_id: string
+  saved_revision_id: string
+  target_saved_revision_id: string
+  restore_saved_revision_id: string
+  kind: 'pre_restore_saved_revision'
+  draft_id: string
+  draft_version: number
+  viewer_branch_id: string
+  content_hash_algorithm: string
+  content_hash: string
+}
+
+export type RestoreSavedRevisionResponse = {
+  run_id: string
+  branch_id: string
+  previous_saved_head_revision_id: string
+  target_saved_revision_id: string
+  previous_viewer_branch_id: string
+  viewer_branch_id: string
+  safety_checkpoint: SavedRevisionRestoreCheckpoint
+  saved_revision: SavedRevision
+  working_draft: ViewerBranchWorkingDraft
+  audit_event_id: string
+}
 
 export type BranchCheckpoint = {
   checkpoint_id: string; run_id: string; branch_id: string; parent_checkpoint_id: string | null; sequence: number; kind: string; season: number

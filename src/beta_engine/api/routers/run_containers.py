@@ -9,6 +9,7 @@ from beta_engine.api.deps import (
     get_run_branch_creation_service,
     get_run_container_creation_service,
     get_run_saved_revision_history_service,
+    get_run_saved_revision_restore_service,
     get_run_working_draft_service,
     get_simulation_api_service,
 )
@@ -18,10 +19,13 @@ from beta_engine.api.schemas import (
     RunBranchResponse,
     RunContainerListResponse,
     RunContainerResponse,
+    RestoreSavedRevisionRequest,
+    RestoreSavedRevisionResponse,
     SavedRevisionHistoryDetailResponse,
     SavedRevisionHistoryEntryResponse,
     SavedRevisionHistoryListResponse,
     SavedRevisionResponse,
+    SavedRevisionRestoreCheckpointResponse,
     SaveWorkingDraftRequest,
     SaveWorkingDraftResponse,
     StageViewerBranchRequest,
@@ -37,6 +41,9 @@ from beta_engine.application.run_container_creation_service import (
 from beta_engine.application.run_saved_revision_history_service import (
     RunSavedRevisionHistoryService,
 )
+from beta_engine.application.run_saved_revision_restore_service import (
+    RunSavedRevisionRestoreService,
+)
 from beta_engine.application.run_working_draft_service import (
     RunWorkingDraftService,
 )
@@ -47,6 +54,7 @@ from beta_engine.infrastructure.db import (
     BranchDisplayNameConflictError,
     BranchSavedRevisionHistoryRecord,
     BranchSavedRevisionRecord,
+    BranchSavedRevisionRestoreResult,
     RunBranchRecord,
     RunContainerRecord,
     RunDisplayNameConflictError,
@@ -55,6 +63,11 @@ from beta_engine.infrastructure.db import (
     SavedRevisionBranchForkNotFoundError,
     SavedRevisionHistoryConflictError,
     SavedRevisionHistoryNotFoundError,
+    SavedRevisionRestoreConflictError,
+    SavedRevisionRestoreIdentityConflictError,
+    SavedRevisionRestoreNotFoundError,
+    SavedRevisionRestoreUnsupportedError,
+    SavedRevisionRestoreVersionConflictError,
     ViewerBranchSaveResult,
     ViewerBranchWorkingDraftRecord,
     WorkingDraftConflictError,
@@ -120,6 +133,45 @@ def _save_response(record: ViewerBranchSaveResult) -> SaveWorkingDraftResponse:
     )
 
 
+def _restore_response(
+    record: BranchSavedRevisionRestoreResult,
+) -> RestoreSavedRevisionResponse:
+    revision = record.saved_revision
+    checkpoint = record.safety_checkpoint
+    return RestoreSavedRevisionResponse(
+        run_id=record.run_id,
+        branch_id=record.branch_id,
+        previous_saved_head_revision_id=record.previous_saved_head_revision_id,
+        target_saved_revision_id=record.target_saved_revision_id,
+        previous_viewer_branch_id=record.previous_viewer_branch_id,
+        viewer_branch_id=record.viewer_branch_id,
+        safety_checkpoint=SavedRevisionRestoreCheckpointResponse(
+            checkpoint_id=checkpoint.checkpoint_id,
+            saved_revision_id=checkpoint.saved_revision_id,
+            target_saved_revision_id=checkpoint.target_saved_revision_id,
+            restore_saved_revision_id=checkpoint.restore_saved_revision_id,
+            kind=checkpoint.kind,
+            draft_id=checkpoint.draft_id,
+            draft_version=checkpoint.draft_version,
+            viewer_branch_id=checkpoint.viewer_branch_id,
+            content_hash_algorithm=checkpoint.content_hash_algorithm,
+            content_hash=checkpoint.content_hash,
+        ),
+        saved_revision=SavedRevisionResponse(
+            revision_id=revision.revision_id,
+            sequence=revision.sequence,
+            parent_revision_id=revision.parent_revision_id,
+            kind=revision.kind,
+            payload_schema_version=revision.payload_schema_version,
+            content_hash_algorithm=revision.content_hash_algorithm,
+            content_hash=revision.content_hash,
+            change_summary=revision.change_summary,
+        ),
+        working_draft=_working_draft_response(record.working_draft),
+        audit_event_id=record.audit_event.audit_event_id,
+    )
+
+
 def _revision_history_entry_response(
     record: BranchSavedRevisionRecord,
     *,
@@ -169,6 +221,26 @@ def _raise_saved_revision_history_http_error(exc: Exception) -> None:
     raise HTTPException(
         status_code=status.HTTP_409_CONFLICT,
         detail={"code": "saved_revision_history_conflict", "message": str(exc)},
+    ) from exc
+
+
+def _raise_saved_revision_restore_http_error(exc: Exception) -> None:
+    if isinstance(exc, SavedRevisionRestoreNotFoundError):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "saved_revision_restore_not_found", "message": str(exc)},
+        ) from exc
+    if isinstance(exc, SavedRevisionRestoreVersionConflictError):
+        code = "saved_revision_restore_version_conflict"
+    elif isinstance(exc, SavedRevisionRestoreIdentityConflictError):
+        code = "saved_revision_restore_identity_conflict"
+    elif isinstance(exc, SavedRevisionRestoreUnsupportedError):
+        code = "saved_revision_restore_unsupported"
+    else:
+        code = "saved_revision_restore_conflict"
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail={"code": code, "message": str(exc)},
     ) from exc
 
 
@@ -398,6 +470,44 @@ def get_saved_revision_history_detail(
         branch_id=branch_id,
         payload=detail.saved_revision.payload,
     )
+
+
+@router.post(
+    "/{run_id}/branches/{branch_id}/saved-revisions/{revision_id}/restore",
+    response_model=RestoreSavedRevisionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def restore_saved_revision(
+    run_id: str,
+    branch_id: str,
+    revision_id: str,
+    payload: RestoreSavedRevisionRequest,
+    service: RunSavedRevisionRestoreService = Depends(
+        get_run_saved_revision_restore_service
+    ),
+) -> RestoreSavedRevisionResponse:
+    try:
+        return _restore_response(
+            service.restore_current_branch(
+                run_id=run_id,
+                branch_id=branch_id,
+                target_saved_revision_id=revision_id,
+                expected_head_saved_revision_id=(
+                    payload.expected_head_saved_revision_id
+                ),
+                expected_draft_version=payload.expected_draft_version,
+                expected_current_viewer_branch_id=(
+                    payload.expected_current_viewer_branch_id
+                ),
+                explicit_confirmation=payload.explicit_confirmation,
+            )
+        )
+    except (
+        SavedRevisionRestoreNotFoundError,
+        SavedRevisionRestoreConflictError,
+    ) as exc:
+        _raise_saved_revision_restore_http_error(exc)
+        raise AssertionError("unreachable")
 
 
 @router.get("/{run_id:path}", response_model=RunContainerResponse)

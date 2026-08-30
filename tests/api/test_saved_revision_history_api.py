@@ -214,3 +214,105 @@ def test_saved_revision_history_api_is_scoped_and_fail_closed(tmp_path) -> None:
         status_code, corrupt = _request("GET", history_url)
         assert status_code == 409
         assert corrupt["detail"]["code"] == "saved_revision_history_conflict"
+
+
+def test_saved_revision_restore_api_requires_confirmation_and_returns_checkpoint(
+    tmp_path,
+) -> None:
+    database_url = f"sqlite:///{tmp_path / 'revision-restore-api.db'}"
+    with ApiServer(database_url=database_url) as server:
+        run_id, branch_id, initial_revision_id = _create_run(
+            server,
+            display_name="API Revision Restore",
+        )
+        status_code, fork = _request(
+            "POST",
+            f"{server.base_url}/run-containers/{run_id}/branches",
+            {
+                "source_branch_id": branch_id,
+                "source_saved_revision_id": initial_revision_id,
+            },
+        )
+        assert status_code == 201
+        fork_id = str(fork["branch_id"])
+        draft_url = (
+            f"{server.base_url}/run-containers/{run_id}/branches/"
+            f"{branch_id}/working-draft"
+        )
+        status_code, staged = _request(
+            "PUT",
+            f"{draft_url}/viewer-branch",
+            {"viewer_branch_id": fork_id, "expected_draft_version": 0},
+        )
+        assert status_code == 200
+        status_code, saved = _request(
+            "POST",
+            f"{draft_url}/save",
+            {"expected_draft_version": staged["draft_version"]},
+        )
+        assert status_code == 201
+        saved_revision_id = str(saved["saved_revision"]["revision_id"])
+        restore_url = (
+            f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}/"
+            f"saved-revisions/{initial_revision_id}/restore"
+        )
+        restore_request = {
+            "expected_head_saved_revision_id": saved_revision_id,
+            "expected_draft_version": saved["working_draft"]["draft_version"],
+            "expected_current_viewer_branch_id": fork_id,
+            "explicit_confirmation": False,
+        }
+
+        status_code, unconfirmed = _request("POST", restore_url, restore_request)
+        assert status_code == 409
+        assert (
+            unconfirmed["detail"]["code"]
+            == "saved_revision_restore_conflict"
+        )
+
+        restore_request["explicit_confirmation"] = True
+        status_code, restored = _request("POST", restore_url, restore_request)
+        assert status_code == 201
+        assert restored["previous_saved_head_revision_id"] == saved_revision_id
+        assert restored["target_saved_revision_id"] == initial_revision_id
+        assert restored["previous_viewer_branch_id"] == fork_id
+        assert restored["viewer_branch_id"] == branch_id
+        assert restored["saved_revision"]["kind"] == "branch_restore"
+        assert restored["saved_revision"]["parent_revision_id"] == saved_revision_id
+        assert restored["safety_checkpoint"]["kind"] == (
+            "pre_restore_saved_revision"
+        )
+        assert (
+            restored["safety_checkpoint"]["saved_revision_id"]
+            == saved_revision_id
+        )
+        assert (
+            restored["safety_checkpoint"]["restore_saved_revision_id"]
+            == restored["saved_revision"]["revision_id"]
+        )
+        assert restored["working_draft"]["status"] == "clean"
+        assert (
+            restored["working_draft"]["base_saved_revision_id"]
+            == restored["saved_revision"]["revision_id"]
+        )
+
+        history_url = (
+            f"{server.base_url}/run-containers/{run_id}/branches/"
+            f"{branch_id}/saved-revisions"
+        )
+        status_code, history = _request("GET", history_url)
+        assert status_code == 200
+        assert [item["revision_id"] for item in history["saved_revisions"]] == [
+            initial_revision_id,
+            saved_revision_id,
+            restored["saved_revision"]["revision_id"],
+        ]
+
+        stale_request = dict(restore_request)
+        stale_request["explicit_confirmation"] = True
+        status_code, stale = _request("POST", restore_url, stale_request)
+        assert status_code == 409
+        assert (
+            stale["detail"]["code"]
+            == "saved_revision_restore_version_conflict"
+        )

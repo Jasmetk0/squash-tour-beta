@@ -17,20 +17,25 @@ from beta_engine.domain.careers import NextSeasonPlayerState, PlayerSeasonTransi
 from beta_engine.domain.finals import FinalsQualificationResult, FinalsResult
 from beta_engine.domain.rankings import CompletedTournamentPointsInput
 from beta_engine.domain.run_revisions import (
+    BRANCH_RESTORE_AUDIT_EVENT_KIND,
+    BRANCH_RESTORE_SAVED_REVISION_KIND,
     CLEAN_WORKING_DRAFT_STATUS,
     CONTENT_HASH_ALGORITHM,
     DIRTY_WORKING_DRAFT_STATUS,
     INITIAL_SAVED_REVISION_KIND,
     INITIAL_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
     INITIAL_SAVED_REVISION_SEQUENCE,
+    PRE_RESTORE_CHECKPOINT_KIND,
     RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
     RUN_WORKING_DRAFT_SCHEMA_VERSION,
     SAVED_REVISION_AUDIT_EVENT_KIND,
     SAVED_REVISION_FORK_WORKING_DRAFT_SCHEMA_VERSION,
     VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND,
     WORKING_DRAFT_SCHEMA_VERSION,
+    branch_restore_saved_revision_change_summary,
     initial_saved_revision_change_summary,
     initial_saved_revision_payload,
+    saved_revision_checkpoint_content_hash,
     saved_viewer_branch_id,
     saved_revision_content_hash,
     viewer_branch_id_from_changes,
@@ -48,6 +53,7 @@ from beta_engine.infrastructure.db.models import (
     AdminActionModel,
     BranchForkCommandModel,
     BranchRevisionAuditEventModel,
+    BranchSavedRevisionCheckpointModel,
     BranchSavedRevisionModel,
     BranchSimulationCommandModel,
     OfficialBranchSelectionCommandModel,
@@ -303,6 +309,37 @@ class ViewerBranchSaveResult:
     audit_event: BranchRevisionAuditEventRecord
 
 
+@dataclass(frozen=True)
+class BranchSavedRevisionCheckpointRecord:
+    checkpoint_id: str
+    run_id: str
+    branch_id: str
+    saved_revision_id: str
+    target_saved_revision_id: str
+    restore_saved_revision_id: str
+    kind: str
+    draft_id: str
+    draft_version: int
+    viewer_branch_id: str
+    content_hash_algorithm: str
+    content_hash: str
+    created_at: str | None = None
+
+
+@dataclass(frozen=True)
+class BranchSavedRevisionRestoreResult:
+    run_id: str
+    branch_id: str
+    previous_saved_head_revision_id: str
+    target_saved_revision_id: str
+    previous_viewer_branch_id: str
+    viewer_branch_id: str
+    safety_checkpoint: BranchSavedRevisionCheckpointRecord
+    saved_revision: BranchSavedRevisionRecord
+    working_draft: ViewerBranchWorkingDraftRecord
+    audit_event: BranchRevisionAuditEventRecord
+
+
 class BranchRevisionStateError(ValueError):
     """Base error for a Branch whose Saved Revision/Draft boundary is unusable."""
 
@@ -345,6 +382,30 @@ class WorkingDraftVersionConflictError(WorkingDraftConflictError):
 
 class WorkingDraftIdentityConflictError(WorkingDraftConflictError):
     """Raised when a generated Saved Revision or audit identity collides."""
+
+
+class SavedRevisionRestoreError(ValueError):
+    """Base error for restoring the current Branch from its Saved Revision."""
+
+
+class SavedRevisionRestoreNotFoundError(SavedRevisionRestoreError):
+    """Raised when the Run, Branch, or reachable target revision is absent."""
+
+
+class SavedRevisionRestoreConflictError(SavedRevisionRestoreError):
+    """Raised when restore would violate history or current-state safety."""
+
+
+class SavedRevisionRestoreVersionConflictError(SavedRevisionRestoreConflictError):
+    """Raised when a restore request is based on stale mutable pointers."""
+
+
+class SavedRevisionRestoreIdentityConflictError(SavedRevisionRestoreConflictError):
+    """Raised when any generated restore identity is already in use."""
+
+
+class SavedRevisionRestoreUnsupportedError(SavedRevisionRestoreConflictError):
+    """Raised when current persistence cannot restore the whole captured state."""
 
 
 class RunContainerCreationConflictError(ValueError):
@@ -2167,6 +2228,430 @@ class SimulationPersistenceRepository:
             return [
                 self._to_branch_revision_audit_event(model) for model in models
             ]
+
+    @staticmethod
+    def _to_branch_saved_revision_checkpoint(
+        model: BranchSavedRevisionCheckpointModel,
+    ) -> BranchSavedRevisionCheckpointRecord:
+        record = BranchSavedRevisionCheckpointRecord(
+            checkpoint_id=model.checkpoint_id,
+            run_id=model.run_id,
+            branch_id=model.branch_id,
+            saved_revision_id=model.saved_revision_id,
+            target_saved_revision_id=model.target_saved_revision_id,
+            restore_saved_revision_id=model.restore_saved_revision_id,
+            kind=model.kind,
+            draft_id=model.draft_id,
+            draft_version=model.draft_version,
+            viewer_branch_id=model.viewer_branch_id,
+            content_hash_algorithm=model.content_hash_algorithm,
+            content_hash=model.content_hash,
+            created_at=model.created_at,
+        )
+        expected_hash = saved_revision_checkpoint_content_hash(
+            checkpoint_id=record.checkpoint_id,
+            run_id=record.run_id,
+            branch_id=record.branch_id,
+            saved_revision_id=record.saved_revision_id,
+            target_saved_revision_id=record.target_saved_revision_id,
+            restore_saved_revision_id=record.restore_saved_revision_id,
+            kind=record.kind,
+            draft_id=record.draft_id,
+            draft_version=record.draft_version,
+            viewer_branch_id=record.viewer_branch_id,
+        )
+        if (
+            record.content_hash_algorithm != CONTENT_HASH_ALGORITHM
+            or record.content_hash != expected_hash
+        ):
+            raise SavedRevisionRestoreConflictError(
+                f"restore checkpoint {record.checkpoint_id!r} failed content "
+                "integrity validation"
+            )
+        return record
+
+    def get_branch_saved_revision_checkpoint(
+        self, *, checkpoint_id: str
+    ) -> BranchSavedRevisionCheckpointRecord | None:
+        with self._session_factory() as session:
+            model = session.get(BranchSavedRevisionCheckpointModel, checkpoint_id)
+            return (
+                self._to_branch_saved_revision_checkpoint(model)
+                if model is not None
+                else None
+            )
+
+    def list_branch_saved_revision_checkpoints(
+        self, *, branch_id: str
+    ) -> list[BranchSavedRevisionCheckpointRecord]:
+        with self._session_factory() as session:
+            models = session.scalars(
+                select(BranchSavedRevisionCheckpointModel)
+                .where(BranchSavedRevisionCheckpointModel.branch_id == branch_id)
+                .order_by(
+                    BranchSavedRevisionCheckpointModel.created_at,
+                    BranchSavedRevisionCheckpointModel.checkpoint_id,
+                )
+            )
+            return [
+                self._to_branch_saved_revision_checkpoint(model)
+                for model in models
+            ]
+
+    def restore_branch_saved_revision_atomically(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        target_saved_revision_id: str,
+        expected_head_saved_revision_id: str,
+        expected_draft_version: int,
+        expected_current_viewer_branch_id: str,
+        checkpoint_id: str,
+        restore_saved_revision_id: str,
+        audit_event_id: str,
+    ) -> BranchSavedRevisionRestoreResult:
+        """Restore one reachable snapshot while preserving a linear full history."""
+
+        previous_head_revision_id = ""
+        previous_viewer_branch_id = ""
+        restored_viewer_branch_id = ""
+        try:
+            with self._session_factory.begin() as session:
+                run = session.get(RunContainerModel, run_id)
+                if run is None:
+                    raise SavedRevisionRestoreNotFoundError(
+                        f"Run {run_id!r} was not found"
+                    )
+                branch = session.get(RunBranchModel, branch_id)
+                if branch is None or branch.run_id != run_id:
+                    raise SavedRevisionRestoreNotFoundError(
+                        f"Branch {branch_id!r} was not found in Run {run_id!r}"
+                    )
+                if run.read_only or branch.read_only:
+                    raise SavedRevisionRestoreConflictError(
+                        "Saved Revision restore requires a writable Run and Branch"
+                    )
+                if branch.status != "active":
+                    raise SavedRevisionRestoreConflictError(
+                        "Saved Revision restore requires an active Branch"
+                    )
+
+                try:
+                    state = self._validated_branch_revision_state_in_session(
+                        session=session, branch=branch
+                    )
+                    lineage = self._validated_branch_revision_lineage_in_session(
+                        session=session, branch=branch
+                    )
+                except BranchRevisionStateConflictError as exc:
+                    raise SavedRevisionRestoreConflictError(str(exc)) from exc
+
+                previous_head_revision_id = state.saved_head_revision_id
+                if previous_head_revision_id != expected_head_saved_revision_id:
+                    raise SavedRevisionRestoreVersionConflictError(
+                        "Saved Revision head changed since restore preview"
+                    )
+                if state.working_draft.draft_version != expected_draft_version:
+                    raise SavedRevisionRestoreVersionConflictError(
+                        "Working Draft changed since restore preview"
+                    )
+                if state.working_draft.status != CLEAN_WORKING_DRAFT_STATUS:
+                    raise SavedRevisionRestoreConflictError(
+                        "Save, discard, or branch the dirty Working Draft before restore"
+                    )
+                if target_saved_revision_id == previous_head_revision_id:
+                    raise SavedRevisionRestoreConflictError(
+                        "selected Saved Revision is already the current Branch head"
+                    )
+
+                target_revision = next(
+                    (
+                        revision
+                        for revision in lineage
+                        if revision.revision_id == target_saved_revision_id
+                    ),
+                    None,
+                )
+                if target_revision is None:
+                    raise SavedRevisionRestoreNotFoundError(
+                        f"Saved Revision {target_saved_revision_id!r} was not found "
+                        f"in Branch {branch_id!r} history"
+                    )
+
+                previous_viewer_branch_id = (run.official_branch_id or "").strip()
+                if previous_viewer_branch_id != expected_current_viewer_branch_id:
+                    raise SavedRevisionRestoreVersionConflictError(
+                        "Viewer Branch changed since restore preview"
+                    )
+                previous_viewer = session.get(
+                    RunBranchModel, previous_viewer_branch_id
+                )
+                if (
+                    previous_viewer is None
+                    or previous_viewer.run_id != run_id
+                    or previous_viewer.status != "active"
+                ):
+                    raise SavedRevisionRestoreConflictError(
+                        "Run has no coherent current Viewer Branch"
+                    )
+
+                supported_payload_schemas = {
+                    INITIAL_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
+                    RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
+                }
+                current_content = state.saved_revision.payload.get("content")
+                target_content = target_revision.payload.get("content")
+                has_unrestorable_run_state = any(
+                    value is not None
+                    for value in (
+                        run.world_id,
+                        run.world_package_fingerprint,
+                        run.config_version,
+                        run.config_fingerprint,
+                        run.global_seed,
+                        branch.legacy_simulation_run_id,
+                        branch.head_checkpoint_id,
+                        branch.forked_from_checkpoint_id,
+                    )
+                )
+                if (
+                    state.saved_revision.payload_schema_version
+                    not in supported_payload_schemas
+                    or target_revision.payload_schema_version
+                    not in supported_payload_schemas
+                    or current_content != {}
+                    or target_content != {}
+                    or has_unrestorable_run_state
+                ):
+                    raise SavedRevisionRestoreUnsupportedError(
+                        "restore is blocked because the Saved Revision does not yet "
+                        "capture the complete sporting or legacy-backed Run state"
+                    )
+
+                try:
+                    restored_viewer_branch_id = saved_viewer_branch_id(
+                        target_revision.payload
+                    )
+                except ValueError as exc:
+                    raise SavedRevisionRestoreConflictError(str(exc)) from exc
+                restored_viewer = session.get(
+                    RunBranchModel, restored_viewer_branch_id
+                )
+                if (
+                    restored_viewer is None
+                    or restored_viewer.run_id != run_id
+                    or restored_viewer.status != "active"
+                ):
+                    raise SavedRevisionRestoreConflictError(
+                        "target Saved Revision refers to an unavailable Viewer Branch"
+                    )
+
+                if (
+                    session.get(BranchSavedRevisionCheckpointModel, checkpoint_id)
+                    is not None
+                    or session.get(
+                        BranchSavedRevisionModel, restore_saved_revision_id
+                    )
+                    is not None
+                    or session.get(BranchRevisionAuditEventModel, audit_event_id)
+                    is not None
+                ):
+                    raise SavedRevisionRestoreIdentityConflictError(
+                        "generated restore identity is already in use"
+                    )
+
+                payload = viewer_branch_saved_revision_payload(
+                    base_payload=target_revision.payload,
+                    run_id=run_id,
+                    display_name=run.display_name or run_id,
+                    run_status=run.status,
+                    timeline_start_season=run.timeline_start_season,
+                    timeline_end_season=run.timeline_end_season,
+                    branch_id=branch_id,
+                    branch_display_name=branch.display_name,
+                    branch_status=branch.status,
+                    forked_from_branch_id=branch.forked_from_branch_id,
+                    forked_from_saved_revision_id=(
+                        branch.forked_from_saved_revision_id
+                    ),
+                    viewer_branch_id=restored_viewer_branch_id,
+                )
+                summary = branch_restore_saved_revision_change_summary(
+                    previous_head_revision_id=previous_head_revision_id,
+                    target_saved_revision_id=target_saved_revision_id,
+                    previous_viewer_branch_id=previous_viewer_branch_id,
+                    restored_viewer_branch_id=restored_viewer_branch_id,
+                )
+                sequence = state.saved_revision.sequence + 1
+                revision_hash = saved_revision_content_hash(
+                    revision_id=restore_saved_revision_id,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    sequence=sequence,
+                    parent_revision_id=previous_head_revision_id,
+                    kind=BRANCH_RESTORE_SAVED_REVISION_KIND,
+                    payload_schema_version=RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
+                    payload=payload,
+                    change_summary=summary,
+                )
+                checkpoint_hash = saved_revision_checkpoint_content_hash(
+                    checkpoint_id=checkpoint_id,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    saved_revision_id=previous_head_revision_id,
+                    target_saved_revision_id=target_saved_revision_id,
+                    restore_saved_revision_id=restore_saved_revision_id,
+                    kind=PRE_RESTORE_CHECKPOINT_KIND,
+                    draft_id=state.working_draft.draft_id,
+                    draft_version=expected_draft_version,
+                    viewer_branch_id=previous_viewer_branch_id,
+                )
+
+                claimed = session.execute(
+                    update(BranchWorkingDraftModel)
+                    .where(
+                        BranchWorkingDraftModel.draft_id
+                        == state.working_draft.draft_id,
+                        BranchWorkingDraftModel.base_revision_id
+                        == expected_head_saved_revision_id,
+                        BranchWorkingDraftModel.draft_version
+                        == expected_draft_version,
+                        BranchWorkingDraftModel.status
+                        == CLEAN_WORKING_DRAFT_STATUS,
+                    )
+                    .values(
+                        base_revision_id=restore_saved_revision_id,
+                        status=CLEAN_WORKING_DRAFT_STATUS,
+                        change_count=0,
+                        draft_version=expected_draft_version + 1,
+                        draft_schema_version=RUN_WORKING_DRAFT_SCHEMA_VERSION,
+                        changes_json="[]",
+                        updated_at=func.current_timestamp(),
+                    )
+                )
+                if claimed.rowcount != 1:
+                    raise SavedRevisionRestoreVersionConflictError(
+                        "Working Draft changed concurrently"
+                    )
+
+                session.add(
+                    BranchSavedRevisionCheckpointModel(
+                        checkpoint_id=checkpoint_id,
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        saved_revision_id=previous_head_revision_id,
+                        target_saved_revision_id=target_saved_revision_id,
+                        restore_saved_revision_id=restore_saved_revision_id,
+                        kind=PRE_RESTORE_CHECKPOINT_KIND,
+                        draft_id=state.working_draft.draft_id,
+                        draft_version=expected_draft_version,
+                        viewer_branch_id=previous_viewer_branch_id,
+                        content_hash_algorithm=CONTENT_HASH_ALGORITHM,
+                        content_hash=checkpoint_hash,
+                    )
+                )
+                session.add(
+                    BranchSavedRevisionModel(
+                        revision_id=restore_saved_revision_id,
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        sequence=sequence,
+                        parent_revision_id=previous_head_revision_id,
+                        kind=BRANCH_RESTORE_SAVED_REVISION_KIND,
+                        payload_schema_version=(
+                            RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION
+                        ),
+                        content_hash_algorithm=CONTENT_HASH_ALGORITHM,
+                        content_hash=revision_hash,
+                        payload_json=_to_json(payload),
+                        change_summary_json=_to_json(summary),
+                    )
+                )
+                head_claimed = session.execute(
+                    update(RunBranchModel)
+                    .where(
+                        RunBranchModel.branch_id == branch_id,
+                        RunBranchModel.run_id == run_id,
+                        RunBranchModel.saved_head_revision_id
+                        == expected_head_saved_revision_id,
+                    )
+                    .values(saved_head_revision_id=restore_saved_revision_id)
+                )
+                if head_claimed.rowcount != 1:
+                    raise SavedRevisionRestoreVersionConflictError(
+                        "Saved Revision head changed concurrently"
+                    )
+                viewer_claimed = session.execute(
+                    update(RunContainerModel)
+                    .where(
+                        RunContainerModel.run_id == run_id,
+                        RunContainerModel.official_branch_id
+                        == expected_current_viewer_branch_id,
+                    )
+                    .values(official_branch_id=restored_viewer_branch_id)
+                )
+                if viewer_claimed.rowcount != 1:
+                    raise SavedRevisionRestoreVersionConflictError(
+                        "Viewer Branch changed concurrently"
+                    )
+                session.add(
+                    BranchRevisionAuditEventModel(
+                        audit_event_id=audit_event_id,
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        saved_revision_id=restore_saved_revision_id,
+                        event_kind=BRANCH_RESTORE_AUDIT_EVENT_KIND,
+                        payload_json=_to_json(
+                            {
+                                "checkpoint_id": checkpoint_id,
+                                "previous_saved_head_revision_id": (
+                                    previous_head_revision_id
+                                ),
+                                "target_saved_revision_id": (
+                                    target_saved_revision_id
+                                ),
+                                "previous_viewer_branch_id": (
+                                    previous_viewer_branch_id
+                                ),
+                                "viewer_branch_id": restored_viewer_branch_id,
+                                "draft_id": state.working_draft.draft_id,
+                                "previous_draft_version": expected_draft_version,
+                                "draft_version": expected_draft_version + 1,
+                                "explicit_confirmation": True,
+                            }
+                        ),
+                    )
+                )
+                session.flush()
+        except IntegrityError as exc:
+            raise SavedRevisionRestoreIdentityConflictError(
+                "generated restore checkpoint, revision, or audit identity collided"
+            ) from exc
+
+        checkpoint = self.get_branch_saved_revision_checkpoint(
+            checkpoint_id=checkpoint_id
+        )
+        revision = self.get_branch_saved_revision(
+            revision_id=restore_saved_revision_id
+        )
+        audit = self.get_branch_revision_audit_event(audit_event_id=audit_event_id)
+        if checkpoint is None or revision is None or audit is None:  # pragma: no cover
+            raise RuntimeError("Saved Revision restore result could not be reloaded")
+        return BranchSavedRevisionRestoreResult(
+            run_id=run_id,
+            branch_id=branch_id,
+            previous_saved_head_revision_id=previous_head_revision_id,
+            target_saved_revision_id=target_saved_revision_id,
+            previous_viewer_branch_id=previous_viewer_branch_id,
+            viewer_branch_id=restored_viewer_branch_id,
+            safety_checkpoint=checkpoint,
+            saved_revision=revision,
+            working_draft=self.get_viewer_branch_working_draft(
+                run_id=run_id, branch_id=branch_id
+            ),
+            audit_event=audit,
+        )
 
     def save_viewer_branch_selection_atomically(
         self,

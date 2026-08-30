@@ -22,6 +22,9 @@ RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION = "run_saved_revision_v1"
 VIEWER_BRANCH_SELECTION_CHANGE_KIND = "set_viewer_branch"
 VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND = "viewer_branch_selection"
 SAVED_REVISION_AUDIT_EVENT_KIND = "saved_revision_created"
+BRANCH_RESTORE_SAVED_REVISION_KIND = "branch_restore"
+BRANCH_RESTORE_AUDIT_EVENT_KIND = "branch_restored"
+PRE_RESTORE_CHECKPOINT_KIND = "pre_restore_saved_revision"
 CLEAN_WORKING_DRAFT_STATUS = "clean"
 DIRTY_WORKING_DRAFT_STATUS = "dirty"
 CONTENT_HASH_ALGORITHM = "sha256"
@@ -177,6 +180,87 @@ def viewer_branch_saved_revision_change_summary(
             }
         ],
     }
+
+
+def branch_restore_saved_revision_change_summary(
+    *,
+    previous_head_revision_id: str,
+    target_saved_revision_id: str,
+    previous_viewer_branch_id: str,
+    restored_viewer_branch_id: str,
+) -> dict[str, object]:
+    """Describe a restore without pretending that old history was deleted."""
+
+    return {
+        "kind": BRANCH_RESTORE_SAVED_REVISION_KIND,
+        "summary": (
+            f"Restored Saved Revision {target_saved_revision_id} from "
+            f"{previous_head_revision_id}"
+        ),
+        "previous_head_revision_id": previous_head_revision_id,
+        "target_saved_revision_id": target_saved_revision_id,
+        "previous_viewer_branch_id": previous_viewer_branch_id,
+        "restored_viewer_branch_id": restored_viewer_branch_id,
+    }
+
+
+def saved_revision_checkpoint_hash_envelope(
+    *,
+    checkpoint_id: str,
+    run_id: str,
+    branch_id: str,
+    saved_revision_id: str,
+    target_saved_revision_id: str,
+    restore_saved_revision_id: str,
+    kind: str,
+    draft_id: str,
+    draft_version: int,
+    viewer_branch_id: str,
+) -> dict[str, object]:
+    """Return every deterministic pre-restore checkpoint field."""
+
+    return {
+        "checkpoint_id": checkpoint_id,
+        "run_id": run_id,
+        "branch_id": branch_id,
+        "saved_revision_id": saved_revision_id,
+        "target_saved_revision_id": target_saved_revision_id,
+        "restore_saved_revision_id": restore_saved_revision_id,
+        "kind": kind,
+        "draft_id": draft_id,
+        "draft_version": draft_version,
+        "viewer_branch_id": viewer_branch_id,
+    }
+
+
+def saved_revision_checkpoint_content_hash(
+    *,
+    checkpoint_id: str,
+    run_id: str,
+    branch_id: str,
+    saved_revision_id: str,
+    target_saved_revision_id: str,
+    restore_saved_revision_id: str,
+    kind: str,
+    draft_id: str,
+    draft_version: int,
+    viewer_branch_id: str,
+) -> str:
+    """Hash the immutable bookmark protecting the exact pre-restore state."""
+
+    envelope = saved_revision_checkpoint_hash_envelope(
+        checkpoint_id=checkpoint_id,
+        run_id=run_id,
+        branch_id=branch_id,
+        saved_revision_id=saved_revision_id,
+        target_saved_revision_id=target_saved_revision_id,
+        restore_saved_revision_id=restore_saved_revision_id,
+        kind=kind,
+        draft_id=draft_id,
+        draft_version=draft_version,
+        viewer_branch_id=viewer_branch_id,
+    )
+    return hashlib.sha256(canonical_json(envelope).encode("utf-8")).hexdigest()
 
 
 def saved_revision_hash_envelope(

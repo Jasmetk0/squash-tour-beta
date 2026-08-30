@@ -269,6 +269,39 @@ class SavedRevisionHistoryListResponse(BaseModel):
     )
 
 
+class RestoreSavedRevisionRequest(BaseModel):
+    expected_head_saved_revision_id: str = Field(min_length=1, max_length=128)
+    expected_draft_version: int = Field(ge=0)
+    expected_current_viewer_branch_id: str = Field(min_length=1, max_length=128)
+    explicit_confirmation: bool
+
+
+class SavedRevisionRestoreCheckpointResponse(BaseModel):
+    checkpoint_id: str
+    saved_revision_id: str
+    target_saved_revision_id: str
+    restore_saved_revision_id: str
+    kind: Literal["pre_restore_saved_revision"]
+    draft_id: str
+    draft_version: int
+    viewer_branch_id: str
+    content_hash_algorithm: str
+    content_hash: str
+
+
+class RestoreSavedRevisionResponse(BaseModel):
+    run_id: str
+    branch_id: str
+    previous_saved_head_revision_id: str
+    target_saved_revision_id: str
+    previous_viewer_branch_id: str
+    viewer_branch_id: str
+    safety_checkpoint: SavedRevisionRestoreCheckpointResponse
+    saved_revision: SavedRevisionResponse
+    working_draft: ViewerBranchWorkingDraftResponse
+    audit_event_id: str
+
+
 class SaveWorkingDraftResponse(BaseModel):
     run_id: str
     branch_id: str

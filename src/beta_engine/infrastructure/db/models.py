@@ -11,6 +11,7 @@ from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
 )
 from beta_engine.domain.run_revisions import (
+    PRE_RESTORE_CHECKPOINT_KIND,
     CLEAN_WORKING_DRAFT_STATUS,
     CONTENT_HASH_ALGORITHM,
     DIRTY_WORKING_DRAFT_STATUS,
@@ -183,7 +184,7 @@ class BranchWorkingDraftModel(Base):
 
 
 class BranchRevisionAuditEventModel(Base):
-    """Append-only product audit event emitted by a successful manual Save."""
+    """Append-only product audit event emitted by a revision-changing command."""
 
     __tablename__ = "branch_revision_audit_events"
     __table_args__ = (
@@ -201,6 +202,54 @@ class BranchRevisionAuditEventModel(Base):
     )
     event_kind: Mapped[str] = mapped_column(String(64), nullable=False)
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
+
+
+class BranchSavedRevisionCheckpointModel(Base):
+    """Immutable bookmark of the exact Saved Revision state before restore."""
+
+    __tablename__ = "branch_saved_revision_checkpoints"
+    __table_args__ = (
+        UniqueConstraint(
+            "restore_saved_revision_id",
+            name="uq_branch_saved_revision_checkpoints_restore_revision",
+        ),
+        CheckConstraint(
+            f"kind = '{PRE_RESTORE_CHECKPOINT_KIND}'",
+            name="ck_branch_saved_revision_checkpoints_kind",
+        ),
+        CheckConstraint(
+            f"content_hash_algorithm = '{CONTENT_HASH_ALGORITHM}'",
+            name="ck_branch_saved_revision_checkpoints_sha256",
+        ),
+        CheckConstraint(
+            "draft_version >= 0",
+            name="ck_branch_saved_revision_checkpoints_draft_version",
+        ),
+    )
+
+    checkpoint_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    saved_revision_id: Mapped[str] = mapped_column(
+        String(128), nullable=False, index=True
+    )
+    target_saved_revision_id: Mapped[str] = mapped_column(
+        String(128), nullable=False, index=True
+    )
+    restore_saved_revision_id: Mapped[str] = mapped_column(
+        String(128), nullable=False, index=True
+    )
+    kind: Mapped[str] = mapped_column(String(64), nullable=False)
+    draft_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    draft_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    viewer_branch_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    content_hash_algorithm: Mapped[str] = mapped_column(
+        String(16), nullable=False, default=CONTENT_HASH_ALGORITHM
+    )
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     created_at: Mapped[str] = mapped_column(
         String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )

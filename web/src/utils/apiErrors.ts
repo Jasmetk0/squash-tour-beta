@@ -3,8 +3,12 @@ import { ApiError } from '../api/client'
 export function formatApiError(error: unknown): string {
   if (error instanceof ApiError) {
     try {
-      const parsed = JSON.parse(error.message) as { detail?: string }
-      if (parsed.detail) return parsed.detail
+      const parsed = JSON.parse(error.message) as {
+        detail?: string | { code?: string; message?: string }
+      }
+      if (typeof parsed.detail === 'string') return parsed.detail
+      if (parsed.detail?.message) return parsed.detail.message
+      if (parsed.detail?.code) return parsed.detail.code
     } catch {
       // Fall back to the raw API error text when body is not JSON.
     }

@@ -65,6 +65,12 @@ import type {
   ViewerOfficialRunContext,
   RunBranch,
   RunBranchListResponse,
+  CreateRunBranchFromSavedRevisionRequest,
+  ViewerBranchWorkingDraft,
+  SavedRevisionHistoryResponse,
+  SavedRevisionHistoryDetail,
+  RestoreSavedRevisionRequest,
+  RestoreSavedRevisionResponse,
   BranchCheckpoint,
   BranchCheckpointListResponse,
   CaptureInitialBranchCheckpointRequest,
@@ -869,6 +875,56 @@ export function listRunBranches(runId?: string): Promise<RunBranchListResponse> 
 
 export function getRunBranch(branchId: string): Promise<RunBranch> {
   return request(`/run-branches/${encodeURIComponent(branchId)}`)
+}
+
+export function createRunBranchFromSavedRevision(
+  runId: string,
+  payload: CreateRunBranchFromSavedRevisionRequest
+): Promise<RunBranch> {
+  return request(`/run-containers/${encodeURIComponent(runId)}/branches`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}
+
+export function getBranchWorkingDraft(
+  runId: string,
+  branchId: string
+): Promise<ViewerBranchWorkingDraft> {
+  return request(
+    `/run-containers/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/working-draft`
+  )
+}
+
+export function listSavedRevisionHistory(
+  runId: string,
+  branchId: string
+): Promise<SavedRevisionHistoryResponse> {
+  return request(
+    `/run-containers/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/saved-revisions`
+  )
+}
+
+export function getSavedRevision(
+  runId: string,
+  branchId: string,
+  revisionId: string
+): Promise<SavedRevisionHistoryDetail> {
+  return request(
+    `/run-containers/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/saved-revisions/${encodeURIComponent(revisionId)}`
+  )
+}
+
+export function restoreSavedRevision(
+  runId: string,
+  branchId: string,
+  revisionId: string,
+  payload: RestoreSavedRevisionRequest
+): Promise<RestoreSavedRevisionResponse> {
+  return request(
+    `/run-containers/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/saved-revisions/${encodeURIComponent(revisionId)}/restore`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
 }
 
 export function listBranchCheckpoints(params?: { branch_id?: string; run_id?: string }): Promise<BranchCheckpointListResponse> {

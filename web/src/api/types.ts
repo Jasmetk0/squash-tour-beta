@@ -598,6 +598,40 @@ export type SavedRevisionHistoryResponse = {
   saved_revisions: SavedRevisionHistoryEntry[]
 }
 
+export type SavedRevisionRecoveryCheckpoint = {
+  checkpoint_id: string
+  run_id: string
+  branch_id: string
+  saved_revision_id: string
+  target_saved_revision_id: string
+  restore_saved_revision_id: string
+  kind: 'pre_restore_saved_revision'
+  draft_id: string
+  draft_version: number
+  viewer_branch_id: string
+  content_hash_algorithm: string
+  content_hash: string
+  created_at: string | null
+}
+
+export type SavedRevisionAuditEvent = {
+  audit_event_id: string
+  run_id: string
+  branch_id: string
+  saved_revision_id: string
+  event_kind: string
+  payload: Record<string, unknown>
+  created_at: string | null
+}
+
+export type SavedRevisionRecoveryActivityResponse = {
+  run_id: string
+  branch_id: string
+  saved_head_revision_id: string
+  safety_checkpoints: SavedRevisionRecoveryCheckpoint[]
+  audit_events: SavedRevisionAuditEvent[]
+}
+
 export type RestoreSavedRevisionRequest = {
   expected_head_saved_revision_id: string
   expected_draft_version: number

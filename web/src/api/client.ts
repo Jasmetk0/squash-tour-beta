@@ -68,6 +68,7 @@ import type {
   CreateRunBranchFromSavedRevisionRequest,
   ViewerBranchWorkingDraft,
   SavedRevisionHistoryResponse,
+  SavedRevisionRecoveryActivityResponse,
   SavedRevisionHistoryDetail,
   RestoreSavedRevisionRequest,
   RestoreSavedRevisionResponse,
@@ -902,6 +903,15 @@ export function listSavedRevisionHistory(
 ): Promise<SavedRevisionHistoryResponse> {
   return request(
     `/run-containers/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/saved-revisions`
+  )
+}
+
+export function getSavedRevisionRecoveryActivity(
+  runId: string,
+  branchId: string
+): Promise<SavedRevisionRecoveryActivityResponse> {
+  return request(
+    `/run-containers/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/saved-revision-recovery-activity`
   )
 }
 

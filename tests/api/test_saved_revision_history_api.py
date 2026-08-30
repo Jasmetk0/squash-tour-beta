@@ -296,6 +296,34 @@ def test_saved_revision_restore_api_requires_confirmation_and_returns_checkpoint
             == restored["saved_revision"]["revision_id"]
         )
 
+        recovery_activity_url = (
+            f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}/"
+            "saved-revision-recovery-activity"
+        )
+        status_code, recovery_activity = _request("GET", recovery_activity_url)
+        assert status_code == 200
+        assert recovery_activity["run_id"] == run_id
+        assert recovery_activity["branch_id"] == branch_id
+        assert (
+            recovery_activity["saved_head_revision_id"]
+            == restored["saved_revision"]["revision_id"]
+        )
+        assert len(recovery_activity["safety_checkpoints"]) == 1
+        recovery_checkpoint = recovery_activity["safety_checkpoints"][0]
+        assert recovery_checkpoint["run_id"] == run_id
+        assert recovery_checkpoint["branch_id"] == branch_id
+        assert recovery_checkpoint["checkpoint_id"] == (
+            restored["safety_checkpoint"]["checkpoint_id"]
+        )
+        assert recovery_checkpoint["saved_revision_id"] == saved_revision_id
+        assert [event["event_kind"] for event in recovery_activity["audit_events"]] == [
+            "saved_revision_created",
+            "branch_restored",
+        ]
+        assert recovery_activity["audit_events"][-1]["payload"]["checkpoint_id"] == (
+            recovery_checkpoint["checkpoint_id"]
+        )
+
         history_url = (
             f"{server.base_url}/run-containers/{run_id}/branches/"
             f"{branch_id}/saved-revisions"
@@ -315,4 +343,54 @@ def test_saved_revision_restore_api_requires_confirmation_and_returns_checkpoint
         assert (
             stale["detail"]["code"]
             == "saved_revision_restore_version_conflict"
+        )
+
+
+def test_saved_revision_recovery_activity_api_is_scoped_and_fail_closed(
+    tmp_path,
+) -> None:
+    database_url = f"sqlite:///{tmp_path / 'recovery-activity-api-errors.db'}"
+    with ApiServer(database_url=database_url) as server:
+        run_id, branch_id, _ = _create_run(
+            server,
+            display_name="Scoped Recovery Activity",
+        )
+        activity_url = (
+            f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}/"
+            "saved-revision-recovery-activity"
+        )
+
+        status_code, activity = _request("GET", activity_url)
+        assert status_code == 200
+        assert activity["safety_checkpoints"] == []
+        assert activity["audit_events"] == []
+
+        status_code, missing = _request(
+            "GET",
+            f"{server.base_url}/run-containers/{run_id}/branches/missing-branch/"
+            "saved-revision-recovery-activity",
+        )
+        assert status_code == 404
+        assert missing["detail"]["code"] == (
+            "saved_revision_recovery_activity_not_found"
+        )
+
+        repository = server.app.state.runtime.repository
+        with repository._engine.begin() as connection:
+            connection.execute(
+                text(
+                    "UPDATE branch_saved_revisions "
+                    "SET change_summary_json = :change_summary_json "
+                    "WHERE revision_id = :revision_id"
+                ),
+                {
+                    "change_summary_json": '{"tampered":true}',
+                    "revision_id": activity["saved_head_revision_id"],
+                },
+            )
+
+        status_code, corrupt = _request("GET", activity_url)
+        assert status_code == 409
+        assert corrupt["detail"]["code"] == (
+            "saved_revision_recovery_activity_conflict"
         )

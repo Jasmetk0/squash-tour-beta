@@ -7,7 +7,7 @@ Build a deterministic, data-driven manager and simulator of the fictional men's 
 When sources conflict, use this precedence:
 
 1. explicit newer user/product decisions,
-2. the latest audited **Squash Engine Master Vision** — currently v60 plus newer explicit decisions,
+2. the latest audited **Squash Engine Master Vision** — currently v61 plus newer explicit decisions,
 3. `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` (the active repository constitution, including newer decisions recorded there),
 4. subordinate guidance such as `docs/ENGINE_UX_SPEC.md` and explicit current-version decision specs such as `docs/COUNTRY_ATTRIBUTES_V1.md`,
 5. older documents, handoffs, and current beta behavior as history/implementation evidence only.

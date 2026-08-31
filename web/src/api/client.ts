@@ -158,6 +158,7 @@ import type {
   TournamentProgressionStatus,
   SeasonEventDrawPackageResult,
   SeasonEventMatchPackageResult,
+  MatchReplayResponse,
   SeasonEventResultPackageResult,
   EventPointAwardPackageResult,
   PointAwardGeneratePayload,
@@ -524,6 +525,10 @@ export function simulateNextEventMatch(eventId: string, payload: MatchSimulatePa
 
 export function simulateEventMatch(eventId: string, matchId: string, payload: MatchSimulatePayload): Promise<SeasonEventMatchPackageResult> {
   return request(`/admin/matches/${encodeURIComponent(eventId)}/simulate/${encodeURIComponent(matchId)}`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function getEventMatchReplay(eventId: string, matchId: string): Promise<MatchReplayResponse> {
+  return request(`/admin/matches/${encodeURIComponent(eventId)}/replay/${encodeURIComponent(matchId)}`)
 }
 
 export function getEventProgressionStatus(eventId: string): Promise<TournamentProgressionStatus> {

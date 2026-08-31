@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 33296)
-Total output lines: 4682
-
 export type HealthResponse = { status: 'ok' }
 
 export type SeasonRegistryEntry = {
@@ -2172,7 +2169,490 @@ export type InitialPoolHiddenTraits = {
 export type InitialPoolPlayer = {
   player_id: string
   name: string
- …3296 tokens truncated…r
+  country_code: string
+  nationality: string | null
+  birth_year: number
+  birth_year_week: number
+  age_at_generation: number
+  current_age_years: number
+  current_ability: number
+  potential_ability: number
+  potential_tier: 'S' | 'A' | 'B' | 'C' | 'D'
+  career_stage: string
+  play_style: string
+  archetype: string
+  attributes: InitialPoolAttributes
+  hidden_career_traits: InitialPoolHiddenTraits
+  locked: boolean
+  generation_source: string
+  manual_override: boolean
+  generation_seed: number
+  generation_fingerprint: string
+  created_for_season: string
+}
+
+export type InitialPoolSummary = {
+  total_players: number
+  locked_players: number
+  unlocked_players: number
+  countries_represented: number
+  average_current_ability: number
+  average_potential_ability: number
+  by_country: Record<string, number>
+  by_career_stage: Record<string, number>
+  by_potential_tier: Record<string, number>
+}
+
+export type InitialPoolPopulationWeightingDiagnostic = {
+  country_code: string
+  allocation_weight: number
+  allocation_share: number
+  generated_allocation_count: number
+  final_country_count: number
+  effective_population_quantity: number
+  legacy_population: number
+  population_year_min: number
+  population_year_max: number
+  age_min: number
+  age_max: number
+  source_type_weight_shares: Record<string, number>
+  estimated_weight_share: number
+  source_year_min: number | null
+  source_year_max: number | null
+}
+
+export type InitialPoolMetadata = {
+  season: string
+  seed: number
+  target_pool_size: number
+  country_code: string | null
+  region: string | null
+  dry_run: boolean
+  generated_count: number
+  preserved_locked_count: number
+  changed_count: number
+  generation_fingerprint: string
+  population_weighting?: string | null
+  population_year_min?: number | null
+  population_year_max?: number | null
+  default_population_year?: number | null
+  age_min?: number | null
+  age_max?: number | null
+  population_weighting_diagnostics: InitialPoolPopulationWeightingDiagnostic[]
+}
+
+export type InitialPoolResponse = {
+  players: InitialPoolPlayer[]
+  summary: InitialPoolSummary
+  metadata: InitialPoolMetadata
+}
+
+export type InitialPoolGeneratePayload = {
+  season: string
+  seed: number
+  target_pool_size?: number
+  dry_run: boolean
+}
+
+export type InitialPoolRegeneratePayload = InitialPoolGeneratePayload & {
+  country_code?: string
+  region?: string
+}
+
+
+export type CustomInitialPoolPlayerCreatePayload = Omit<InitialPoolPlayer, 'age_at_generation' | 'current_age_years' | 'locked' | 'generation_source' | 'manual_override' | 'generation_seed' | 'generation_fingerprint' | 'created_for_season'> & {
+  player_id?: string
+  nationality?: string | null
+  created_for_season?: string
+  reason?: string
+}
+
+export type InitialPoolPlayerUpdatePayload = Partial<Pick<InitialPoolPlayer, 'name' | 'nationality' | 'birth_year' | 'birth_year_week' | 'current_ability' | 'potential_ability' | 'potential_tier' | 'career_stage' | 'play_style' | 'archetype' | 'attributes' | 'hidden_career_traits'>> & {
+  reason?: string
+}
+
+export type InitialPoolAuditEvent = {
+  audit_id: string
+  timestamp_utc: string | null
+  actor: string
+  action: 'create_custom_player' | 'update_player' | 'lock_player' | 'unlock_player' | 'regenerate_unlocked' | 'generate_pool'
+  player_id: string | null
+  season: string
+  reason: string | null
+  changed_fields: string[]
+  before_fingerprint: string | null
+  after_fingerprint: string | null
+}
+
+export type InitialPoolAuditResponse = {
+  audit_events: InitialPoolAuditEvent[]
+}
+
+
+export type RankingTableType = 'ranking' | 'race'
+
+export type RankingTableQueryParams = {
+  table_type?: RankingTableType
+  limit?: number
+  country_code?: string
+  search?: string
+  include_zero_points?: boolean
+  min_points?: number
+}
+
+export type RankingTableRow = {
+  rank: number
+  dense_rank: number
+  ordinal_position: number
+  player_id: string
+  player_name: string
+  country_code: string
+  nationality: string
+  age_years_at_season_start: number
+  career_stage: string
+  current_ability: number
+  potential_ability: number
+  potential_tier: string
+  archetype: string
+  play_style: string
+  ranking_points: number
+  race_points: number
+  table_points: number
+  manual_override: boolean
+  source_generation: string
+  locked_from_initial_pool: boolean
+  movement: null
+  previous_rank: null
+  events_counted: null
+  player_fingerprint: string | null
+}
+
+export type RankingTableSummary = {
+  season: string
+  table_type: RankingTableType
+  player_count: number
+  total_source_players: number
+  ranked_player_count: number
+  zero_point_players: number
+  countries_represented: number
+  leader_player_id: string | null
+  leader_points: number | null
+  generated_from_active_players_fingerprint: string
+  rolling_ranking_implemented: boolean
+  best_n_implemented: boolean
+  movement_implemented: boolean
+}
+
+export type RankingTableMetadata = {
+  season: string
+  table_type: RankingTableType
+  source: 'season_active_players'
+  active_players_fingerprint: string
+  generated_fingerprint: string
+  ranking_basis: string
+  filters: {
+    country_code: string | null
+    search: string | null
+    include_zero_points: boolean
+    min_points: number | null
+  }
+  limit: number | null
+  warnings: string[]
+}
+
+export type RankingTableResponse = {
+  rows: RankingTableRow[]
+  summary: RankingTableSummary
+  metadata: RankingTableMetadata
+  validation_warnings: string[]
+  validation_errors: string[]
+}
+
+export type RankingSnapshotRow = Omit<RankingTableRow, 'movement' | 'previous_rank' | 'events_counted'> & {
+  previous_rank: number | null
+  movement: number | null
+  movement_label: 'new' | 'up' | 'down' | 'same' | 'none'
+}
+
+export type RankingSnapshotSummary = {
+  season: string
+  season_week: number
+  table_type: RankingTableType
+  player_count: number
+  ranked_player_count: number
+  zero_point_players: number
+  countries_represented: number
+  leader_player_id: string | null
+  leader_points: number | null
+  previous_snapshot_key: string | null
+  new_entries_count: number
+  moved_up_count: number
+  moved_down_count: number
+  unchanged_count: number
+  rolling_ranking_implemented: boolean
+  best_n_implemented: boolean
+  movement_implemented: boolean
+}
+
+export type RankingSnapshotMetadata = {
+  season: string
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  source: 'active_season_players'
+  active_players_fingerprint: string
+  point_awards_fingerprint: string | null
+  ranking_table_fingerprint: string
+  race_table_fingerprint: string
+  snapshot_fingerprint: string
+  previous_snapshot_fingerprint: string | null
+  dry_run: boolean
+  persisted: boolean
+  generated_seed: number
+  persistence_path: string | null
+  publication_basis: string
+  rolling_ranking_implemented: boolean
+  best_n_implemented: boolean
+}
+
+export type RankingSnapshotTable = {
+  table_type: RankingTableType
+  rows: RankingSnapshotRow[]
+  summary: RankingSnapshotSummary
+  metadata: RankingSnapshotMetadata
+}
+
+export type WeeklyRankingSnapshot = {
+  season: string
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  seed: number
+  dry_run: boolean
+  persisted: boolean
+  ranking_table: RankingSnapshotTable
+  race_table: RankingSnapshotTable
+  summary: { ranking: RankingSnapshotSummary; race: RankingSnapshotSummary }
+  metadata: RankingSnapshotMetadata
+  validation_warnings: string[]
+  validation_errors: string[]
+}
+
+export type WeeklyRankingSnapshotResult = {
+  snapshot: WeeklyRankingSnapshot | null
+  snapshot_exists: boolean
+  summary: { ranking: RankingSnapshotSummary; race: RankingSnapshotSummary } | null
+  metadata: RankingSnapshotMetadata | null
+  validation_warnings: string[]
+  validation_errors: string[]
+}
+
+export type WeeklyRankingSnapshotGeneratePayload = {
+  seed?: number
+  dry_run?: boolean
+  overwrite_existing?: boolean
+  include_zero_points?: boolean
+  limit?: number | null
+}
+
+export type PointBreakdownTableType = 'ranking' | 'race' | 'both'
+
+export type PlayerPointBreakdownQueryParams = {
+  player_id?: string
+  search?: string
+  country_code?: string
+  applied_only?: boolean
+  table_type?: PointBreakdownTableType
+  limit?: number
+  include_zero_point_awards?: boolean
+}
+
+export type PlayerPointBreakdownEntry = {
+  event_id: string
+  season: string
+  season_week: number | null
+  calendar_year: number | null
+  year_week: number | null
+  event_name: string | null
+  category: string | null
+  tour_level: string | null
+  template_id: string | null
+  host_country: string | null
+  reached_stage: string
+  qualifier: boolean
+  seed_number: number | null
+  ranking_points_awarded: number
+  race_points_awarded: number
+  applied: boolean
+  point_distribution_source: string | null
+  source_result_fingerprint: string
+  source_player_result_fingerprint: string
+  award_fingerprint: string
+  award_package_fingerprint: string
+  result_package_fingerprint: string | null
+}
+
+export type PlayerPointBreakdownConsistency = {
+  ranking_points_match_active_player: boolean
+  race_points_match_active_player: boolean
+  ranking_points_delta: number
+  race_points_delta: number
+}
+
+export type PlayerPointBreakdown = {
+  player_id: string
+  player_name: string
+  country_code: string
+  nationality: string | null
+  season: string
+  current_ranking_points: number
+  current_race_points: number
+  breakdown_ranking_points_total: number
+  breakdown_race_points_total: number
+  applied_ranking_points_total: number
+  applied_race_points_total: number
+  unapplied_ranking_points_total: number
+  unapplied_race_points_total: number
+  applied_event_count: number
+  total_event_count: number
+  consistency: PlayerPointBreakdownConsistency
+  entries: PlayerPointBreakdownEntry[]
+}
+
+export type PlayerPointBreakdownSummaryRow = {
+  player_id: string
+  player_name: string
+  country_code: string
+  ranking_points: number
+  race_points: number
+  breakdown_ranking_points_total: number
+  breakdown_race_points_total: number
+  applied_event_count: number
+  total_event_count: number
+  consistency_ok: boolean
+  top_result_stage: string | null
+  top_result_event_id: string | null
+}
+
+export type PlayerPointBreakdownMetadata = {
+  season: string
+  source: 'season_point_awards'
+  active_players_fingerprint: string
+  point_awards_fingerprint: string
+  generated_fingerprint: string
+  applied_only: boolean
+  table_type: PointBreakdownTableType
+  filters: {
+    player_id: string | null
+    search: string | null
+    country_code: string | null
+    include_zero_point_awards: boolean
+  }
+  limit: number | null
+  rolling_ranking_implemented: boolean
+  best_n_implemented: boolean
+  movement_implemented: boolean
+}
+
+export type PlayerPointBreakdownResponse = {
+  breakdown: PlayerPointBreakdown | null
+  summary_rows: PlayerPointBreakdownSummaryRow[]
+  metadata: PlayerPointBreakdownMetadata
+  validation_warnings: string[]
+  validation_errors: string[]
+}
+
+export type SeasonActivePlayer = {
+  player_id: string
+  name: string
+  country_code: string
+  nationality: string
+  birth_year: number
+  birth_year_week: number
+  age_years_at_season_start: number
+  age_weeks_at_season_start: number
+  current_ability: number
+  potential_ability: number
+  potential_tier: 'S' | 'A' | 'B' | 'C' | 'D'
+  career_stage: string
+  play_style: string
+  archetype: string
+  attributes: InitialPoolAttributes
+  hidden_career_traits: InitialPoolHiddenTraits
+  health_status: string
+  active_status: string
+  ranking_points: number
+  race_points: number
+  protected_ranking_points: number
+  season: string
+  source_pool_player_id: string
+  source_generation_fingerprint: string
+  source_generation: 'initial_pool' | 'manual' | 'imported'
+  manual_override: boolean
+  locked_from_initial_pool: boolean
+  bootstrap_fingerprint: string
+  bootstrap_seed: number
+  bootstrap_id: string
+}
+
+export type SeasonBootstrapSummary = {
+  total_active_players: number
+  countries_represented: number
+  manual_players: number
+  generated_players: number
+  locked_from_initial_pool: number
+  average_current_ability: number
+  average_potential_ability: number
+  by_potential_tier: Record<string, number>
+}
+
+export type SeasonBootstrapMetadata = {
+  season: string
+  source_season: string
+  bootstrap_seed: number
+  dry_run: boolean
+  overwrite_existing: boolean
+  source_initial_pool_fingerprint: string
+  bootstrap_id: string
+  bootstrap_fingerprint: string
+  player_count: number
+  persistence_path: string | null
+  ranking_seeding_implemented: boolean
+}
+
+export type SeasonActivePlayersResponse = {
+  players: SeasonActivePlayer[]
+  summary: SeasonBootstrapSummary
+  metadata: SeasonBootstrapMetadata | null
+  warnings: string[]
+}
+
+export type SeasonBootstrapPayload = {
+  source_season?: string
+  seed: number
+  dry_run: boolean
+  overwrite_existing: boolean
+}
+
+export type SeasonBootstrapResponse = {
+  players: SeasonActivePlayer[]
+  summary: SeasonBootstrapSummary
+  metadata: SeasonBootstrapMetadata
+  warnings: string[]
+}
+
+export type SeasonCalendarValidationIssue = {
+  severity: 'error' | 'warning' | 'info'
+  code: string
+  message: string
+  event_id?: string | null
+  field?: string | null
+  context?: Record<string, unknown>
+}
+
+export type SeasonCalendarValidationSummary = {
+  status: 'clean' | 'warnings' | 'errors'
+  error_count: number
   warning_count: number
   info_count: number
   event_count: number

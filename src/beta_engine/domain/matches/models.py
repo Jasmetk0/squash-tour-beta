@@ -6,6 +6,7 @@ from enum import Enum
 
 from pydantic import BaseModel, Field, model_validator
 
+from beta_engine.domain.matches.rallies import MatchRallyLog
 from beta_engine.domain.players.models import Player
 
 
@@ -96,3 +97,56 @@ class MatchResult(BaseModel):
     termination_reason: MatchTerminationReason
     retired_player_id: str | None = None
     retired_at_set_start: int | None = None
+    rally_log: MatchRallyLog | None = None
+
+    @model_validator(mode="after")
+    def validate_rally_log_result(self) -> MatchResult:
+        if self.rally_log is None:
+            return self
+        if self.rally_log.match_id != self.match_id:
+            raise ValueError("match result and rally log identities do not agree")
+        if self.rally_log.total_rallies != sum(
+            set_result.winner_games + set_result.loser_games
+            for set_result in self.sets
+        ):
+            raise ValueError("match result score and rally count do not agree")
+        if {event.set_number for event in self.rally_log.events} != {
+            set_result.set_number for set_result in self.sets
+        }:
+            raise ValueError("match result and rally log contain different played sets")
+        events_by_set = {
+            set_number: [
+                event
+                for event in self.rally_log.events
+                if event.set_number == set_number
+            ]
+            for set_number in range(1, len(self.sets) + 1)
+        }
+        for set_result in self.sets:
+            events = events_by_set[set_result.set_number]
+            if not events:
+                raise ValueError("played set has no authoritative rally events")
+            final_score = events[-1].score_after
+            winner_points = (
+                final_score.points_a
+                if set_result.winner_player_id == self.player_a_id
+                else final_score.points_b
+            )
+            loser_points = (
+                final_score.points_b
+                if set_result.winner_player_id == self.player_a_id
+                else final_score.points_a
+            )
+            if (
+                winner_points != set_result.winner_games
+                or loser_points != set_result.loser_games
+            ):
+                raise ValueError("set result does not match its authoritative rally events")
+        if self.rally_log.events:
+            final_score = self.rally_log.events[-1].score_after
+            if self.sets_won != {
+                self.player_a_id: final_score.sets_a,
+                self.player_b_id: final_score.sets_b,
+            }:
+                raise ValueError("match sets_won does not match authoritative rally log")
+        return self

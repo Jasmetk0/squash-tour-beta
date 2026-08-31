@@ -5,16 +5,25 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from beta_engine.core import DeterministicRng, SeedScope
-from beta_engine.domain.draws.models import DrawEntrantType, DrawNode, DrawType, GeneratedDraw
-from beta_engine.domain.matches import MatchContext, MatchEngine, MatchParticipantContext
+from beta_engine.domain.draws.models import (
+    DrawEntrantType,
+    DrawNode,
+    DrawType,
+    GeneratedDraw,
+)
+from beta_engine.domain.matches import (
+    MatchContext,
+    MatchEngine,
+    MatchParticipantContext,
+)
 from beta_engine.domain.players.models import Player
 from beta_engine.domain.tournaments.models import TournamentTemplate
 from beta_engine.domain.tournaments.progression.models import (
     MainDrawOutcome,
     MatchDisposition,
-    Placement,
     PlaceholderResolution,
     PlaceholderResolutionStatus,
+    Placement,
     QualificationOutcome,
     TournamentMatchRecord,
     TournamentResult,
@@ -328,7 +337,7 @@ class TournamentProgressionEngine:
                 "loser_player_id": result.loser_player_id,
                 "disposition": MatchDisposition.PLAYED,
                 "match_id": match_id,
-                "match_result": result.model_dump(),
+                "match_result": result.model_dump(mode="json"),
             }
         )
 

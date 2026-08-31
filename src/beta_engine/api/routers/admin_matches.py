@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from beta_engine.api.deps import get_season_match_service
 from beta_engine.application.season_match_service import (
     MatchPackageGenerateRequest,
+    MatchReplayResponse,
     MatchSimulateRequest,
     ProgressionCommandRequest,
     ProgressionCommandResult,
@@ -21,6 +22,18 @@ router = APIRouter(prefix="/admin/matches", tags=["admin-matches"])
 @router.get("/{event_id}", response_model=SeasonEventMatchPackageResult)
 def get_event_match_package(event_id: str, service: SeasonMatchService = Depends(get_season_match_service)) -> SeasonEventMatchPackageResult:
     return service.get_match_package(event_id=event_id)
+
+
+@router.get("/{event_id}/replay/{match_id}", response_model=MatchReplayResponse)
+def get_event_match_replay(
+    event_id: str,
+    match_id: str,
+    service: SeasonMatchService = Depends(get_season_match_service),
+) -> MatchReplayResponse:
+    try:
+        return service.get_match_replay(event_id=event_id, match_id=match_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
 @router.post("/{event_id}/generate", response_model=SeasonEventMatchPackageResult)

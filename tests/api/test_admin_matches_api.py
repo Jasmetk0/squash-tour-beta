@@ -3,7 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from urllib.error import HTTPError
 
-from test_admin_draws_api import Server as DrawServer, call
+from test_admin_draws_api import Server as DrawServer
+from test_admin_draws_api import call
 
 
 class Server(DrawServer):
@@ -81,6 +82,21 @@ def test_simulate_selected_and_next(tmp_path: Path) -> None:
         assert completed["loser_player_id"]
         assert completed["scoreline"]
         assert completed["result_fingerprint"]
+        assert completed["simulated_result"]["match_log_hash"]
+        assert completed["simulated_result"]["rally_log"]["events"]
+
+        replay_status, replay = call(
+            "GET",
+            f"{server.base_url}/admin/matches/{event_id}/replay/{match['match_id']}",
+        )
+        assert replay_status == 200
+        assert replay["rng_rerun"] is False
+        assert replay["verified"] is True
+        assert replay["replay_source"] == "stored_authoritative_events"
+        assert (
+            replay["rally_log"]["match_log_hash"]
+            == completed["simulated_result"]["match_log_hash"]
+        )
 
 
 

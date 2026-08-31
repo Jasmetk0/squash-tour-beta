@@ -1,17 +1,20 @@
 from __future__ import annotations
-from tests.support.world_packages import load_fax_reference_countries
 
 import pytest
 
 from beta_engine.application import SeasonSimulationOrchestrator
 from beta_engine.core import DeterministicRng, SeedScope
-from beta_engine.domain.entries import AcceptanceStatus, EntryTarget
 from beta_engine.domain.countries import Country, CountryTalentModel
+from beta_engine.domain.entries import AcceptanceStatus, EntryTarget
 from beta_engine.domain.players import Player, PlayerGenerator
 from beta_engine.infrastructure.entry_config import load_entry_tuning_config
 from beta_engine.infrastructure.points_config import load_points_config
-from beta_engine.infrastructure.tournament_config import load_season_calendar, load_tournament_templates_config
+from beta_engine.infrastructure.tournament_config import (
+    load_season_calendar,
+    load_tournament_templates_config,
+)
 from beta_engine.infrastructure.world_config import load_player_identity_config
+from tests.support.world_packages import load_fax_reference_countries
 
 
 def _players(seed: int, per_country: int = 24) -> tuple[list[Player], dict[str, Country]]:
@@ -126,6 +129,21 @@ def test_ranking_and_race_snapshots_update_after_processed_events() -> None:
     assert second_race is not None
 
     assert len(second.season_state.completed_tournament_inputs) == 2
+    for completed_input in second.season_state.completed_tournament_inputs:
+        for round_payload in completed_input.rounds:
+            assert set(round_payload) == {"round_number", "matches"}
+            assert all(
+                set(match_payload) == {"loser_player_id"}
+                for match_payload in round_payload["matches"]
+            )
+    assert first.tournament_result is not None
+    played_match = next(
+        match
+        for round_result in first.tournament_result.tournament_result.main_draw.rounds
+        for match in round_result.matches
+        if match.match_result is not None
+    )
+    assert played_match.match_result["rally_log"]["events"]
     assert second_ranking.report.model_dump() != first_ranking.report.model_dump()
     assert second_race.report.model_dump() != first_race.report.model_dump()
 

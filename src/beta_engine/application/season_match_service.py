@@ -10,10 +10,24 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from beta_engine.application.season_draw_service import DrawBracket, DrawSlotRecord, SeasonDrawService, SeasonEventDrawPackage
-from beta_engine.application.season_player_bootstrap_service import InitialPoolSeasonBootstrapService, SeasonActivePlayer
+from beta_engine.application.season_draw_service import (
+    DrawBracket,
+    DrawSlotRecord,
+    SeasonDrawService,
+    SeasonEventDrawPackage,
+)
+from beta_engine.application.season_player_bootstrap_service import (
+    InitialPoolSeasonBootstrapService,
+    SeasonActivePlayer,
+)
 from beta_engine.core import DeterministicRng
-from beta_engine.domain.matches import MatchEngine
+from beta_engine.domain.matches import (
+    EffectiveMatchFormatSnapshot,
+    MatchEngine,
+    MatchFormat,
+    official_match_format_snapshot,
+    resolve_effective_match_format,
+)
 from beta_engine.domain.matches.models import MatchContext, MatchParticipantContext
 from beta_engine.domain.players.models import Player
 
@@ -110,6 +124,7 @@ class SeasonMatchRecord(BaseModel):
     scoreline: str | None = None
     simulated_result: MatchSimulationResult | None = None
     winner_to_match_id: str | None = None
+    effective_match_format: EffectiveMatchFormatSnapshot = Field(default_factory=official_match_format_snapshot)
     source_draw_fingerprint: str
     generated_fingerprint: str
     result_fingerprint: str | None = None
@@ -176,6 +191,9 @@ class MatchPackageGenerateRequest(BaseModel):
     seed: int = 12345
     dry_run: bool = True
     overwrite_existing: bool = False
+    tournament_edition_match_format: MatchFormat | None = None
+    phase_match_formats: dict[str, MatchFormat] = Field(default_factory=dict)
+    round_match_formats: dict[str, MatchFormat] = Field(default_factory=dict)
 
 
 class MatchSimulateRequest(BaseModel):
@@ -226,8 +244,12 @@ class SeasonMatchService:
 
     def generate_match_package(self, *, event_id: str, request: MatchPackageGenerateRequest) -> SeasonEventMatchPackageResult:
         registry = self._load_registry()
-        if not request.dry_run and event_id in registry.matches_by_event_id and not request.overwrite_existing:
-            raise ValueError(f"Match package already exists for event '{event_id}'. Set overwrite_existing=true to replace only that event.")
+        existing = registry.matches_by_event_id.get(event_id)
+        if not request.dry_run and existing is not None:
+            if not request.overwrite_existing:
+                raise ValueError(f"Match package already exists for event '{event_id}'. Set overwrite_existing=true to replace only that event.")
+            if any(match.status == "completed" for match in self._all_matches(existing)):
+                raise ValueError("Effective match format is locked because the existing match package contains a completed match.")
 
         draw_result = self.draw_service.get_draw_package(event_id=event_id)
         if draw_result.draw_package is None:
@@ -244,8 +266,8 @@ class SeasonMatchService:
         ]
         errors: list[MatchValidationIssue] = []
 
-        qualification_matches = self._records_from_bracket(draw_package=draw_package, bracket=draw_package.qualification_draw, draw_type="qualification", players_by_id=players_by_id, warnings=warnings, errors=errors)
-        main_draw_matches = self._records_from_bracket(draw_package=draw_package, bracket=draw_package.main_draw, draw_type="main", players_by_id=players_by_id, warnings=warnings, errors=errors)
+        qualification_matches = self._records_from_bracket(draw_package=draw_package, bracket=draw_package.qualification_draw, draw_type="qualification", players_by_id=players_by_id, warnings=warnings, errors=errors, format_request=request)
+        main_draw_matches = self._records_from_bracket(draw_package=draw_package, bracket=draw_package.main_draw, draw_type="main", players_by_id=players_by_id, warnings=warnings, errors=errors, format_request=request)
         all_matches = qualification_matches + main_draw_matches
         seen: set[str] = set()
         for match in all_matches:
@@ -321,6 +343,9 @@ class SeasonMatchService:
             match_id=match_id,
             player_a=MatchParticipantContext(player=self._to_domain_player(top)),
             player_b=MatchParticipantContext(player=self._to_domain_player(bottom)),
+            best_of=match.effective_match_format.format.best_of,
+            games_to=match.effective_match_format.format.games_to,
+            win_by=match.effective_match_format.format.win_by,
         )
         domain_result = MatchEngine(rng=DeterministicRng(sim_seed)).simulate(context)
         result_payload = domain_result.model_dump(mode="json")
@@ -487,7 +512,7 @@ class SeasonMatchService:
                 break
         return self._save_progression_result(registry, package, action="simulate_draw", changed_match_ids=changed, promoted_player_ids=[], warnings=warnings, errors=[], before_points=before_points)
 
-    def _records_from_bracket(self, *, draw_package: SeasonEventDrawPackage, bracket: DrawBracket | None, draw_type: MatchDrawType, players_by_id: dict[str, SeasonActivePlayer], warnings: list[MatchValidationIssue], errors: list[MatchValidationIssue]) -> list[SeasonMatchRecord]:
+    def _records_from_bracket(self, *, draw_package: SeasonEventDrawPackage, bracket: DrawBracket | None, draw_type: MatchDrawType, players_by_id: dict[str, SeasonActivePlayer], warnings: list[MatchValidationIssue], errors: list[MatchValidationIssue], format_request: MatchPackageGenerateRequest) -> list[SeasonMatchRecord]:
         if bracket is None:
             return []
         slots_by_id = {slot.slot_id: slot for slot in bracket.slots}
@@ -526,6 +551,7 @@ class SeasonMatchService:
                     "bottom_country_code": bottom["country_code"],
                     "status": status,
                     "winner_to_match_id": winner_to,
+                    "effective_match_format": resolve_effective_match_format(draw_type=draw_type, round_number=draw_match.round_number, tournament_edition_override=format_request.tournament_edition_match_format, phase_overrides=format_request.phase_match_formats, round_overrides=format_request.round_match_formats).model_dump(mode="json"),
                     "source_draw_fingerprint": bracket.generated_fingerprint,
                 }
                 payload["generated_fingerprint"] = self._fingerprint(payload)
@@ -587,6 +613,9 @@ class SeasonMatchService:
             match_id=match.match_id,
             player_a=MatchParticipantContext(player=self._to_domain_player(top)),
             player_b=MatchParticipantContext(player=self._to_domain_player(bottom)),
+            best_of=match.effective_match_format.format.best_of,
+            games_to=match.effective_match_format.format.games_to,
+            win_by=match.effective_match_format.format.win_by,
         )
         domain_result = MatchEngine(rng=DeterministicRng(sim_seed)).simulate(context)
         result_payload = domain_result.model_dump(mode="json")

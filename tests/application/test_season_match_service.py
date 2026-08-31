@@ -3,11 +3,21 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
-from beta_engine.application.season_draw_service import DrawGenerateRequest, SeasonDrawService
-from beta_engine.application.season_entry_list_service import EntryListGenerateRequest
-from beta_engine.application.season_match_service import MatchPackageGenerateRequest, MatchSimulateRequest, SeasonMatchService
 from test_season_entry_list_service import first_event_id, make_service
+
+from beta_engine.application.season_draw_service import (
+    DrawGenerateRequest,
+    SeasonDrawService,
+)
+from beta_engine.application.season_entry_list_service import EntryListGenerateRequest
+from beta_engine.application.season_match_service import (
+    MatchPackageGenerateRequest,
+    MatchSimulateRequest,
+    ProgressionCommandRequest,
+    SeasonMatchService,
+    SimulateRoundRequest,
+)
+from beta_engine.domain.matches import MatchFormat
 
 
 def make_match_service(tmp_path: Path, *, active: bool = True, draw: bool = True) -> tuple[SeasonMatchService, str]:
@@ -131,8 +141,57 @@ def test_simulate_next_completes_first_pending_and_is_replay_deterministic(tmp_p
     b_completed = next(match for match in b.qualification_matches + b.main_draw_matches if match.status == "completed")
     assert a_completed.model_dump() == b_completed.model_dump()
 
-from beta_engine.application.season_match_service import ProgressionCommandRequest, SimulateRoundRequest
 
+def test_match_package_stores_effective_format_with_nearest_override_provenance(tmp_path: Path) -> None:
+    service, event_id = make_match_service(tmp_path / "format-snapshots")
+    result = service.generate_match_package(
+        event_id=event_id,
+        request=MatchPackageGenerateRequest(
+            seed=101,
+            dry_run=False,
+            tournament_edition_match_format=MatchFormat(best_of=1, games_to=7, win_by=1),
+            phase_match_formats={"main": MatchFormat(best_of=3, games_to=9, win_by=2)},
+            round_match_formats={"main:2": MatchFormat(best_of=5, games_to=15, win_by=2)},
+        ),
+    )
+
+    assert result.match_package is not None
+    qualification = result.match_package.qualification_matches[0]
+    main_round_one = next(match for match in result.match_package.main_draw_matches if match.round_number == 1)
+    main_round_two = next(match for match in result.match_package.main_draw_matches if match.round_number == 2)
+
+    assert qualification.effective_match_format.format == MatchFormat(best_of=1, games_to=7, win_by=1)
+    assert qualification.effective_match_format.source_scope == "tournament_edition_override"
+    assert main_round_one.effective_match_format.format == MatchFormat(best_of=3, games_to=9, win_by=2)
+    assert main_round_one.effective_match_format.source_scope == "phase_override"
+    assert main_round_two.effective_match_format.format == MatchFormat(best_of=5, games_to=15, win_by=2)
+    assert main_round_two.effective_match_format.source_scope == "round_override"
+
+    pending = next(match for match in result.match_package.main_draw_matches if match.round_number == 1 and match.status == "pending" and match.top_player_id and match.bottom_player_id)
+    simulated = service.simulate_match(event_id=event_id, match_id=pending.match_id, request=MatchSimulateRequest(seed=987)).match_package
+    assert simulated is not None
+    completed = next(match for match in simulated.main_draw_matches if match.match_id == pending.match_id)
+    assert completed.simulated_result is not None
+    assert completed.simulated_result.points_summary["best_of"] == 3
+    assert completed.simulated_result.points_summary["games_to"] == 9
+    assert completed.simulated_result.points_summary["win_by"] == 2
+
+
+def test_completed_match_locks_package_format_against_overwrite(tmp_path: Path) -> None:
+    service, event_id = make_match_service(tmp_path / "format-lock")
+    service.generate_match_package(event_id=event_id, request=MatchPackageGenerateRequest(seed=101, dry_run=False))
+    service.simulate_next_match(event_id=event_id, request=MatchSimulateRequest(seed=777))
+
+    with pytest.raises(ValueError, match="format is locked"):
+        service.generate_match_package(
+            event_id=event_id,
+            request=MatchPackageGenerateRequest(
+                seed=102,
+                dry_run=False,
+                overwrite_existing=True,
+                tournament_edition_match_format=MatchFormat(best_of=3, games_to=11, win_by=2),
+            ),
+        )
 
 def test_process_byes_refresh_and_status_are_idempotent(tmp_path: Path) -> None:
     service, event_id = make_match_service(tmp_path / "progression-byes")

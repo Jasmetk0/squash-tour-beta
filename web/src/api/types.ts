@@ -3317,6 +3317,21 @@ export type MatchSimulationResult = {
   seed: number
 }
 
+export type MatchFormat = {
+  best_of: number
+  games_to: number
+  win_by: number
+}
+
+export type EffectiveMatchFormatSnapshot = {
+  schema_version: 'effective_match_format.v1'
+  format: MatchFormat
+  source_scope: 'official_default' | 'tournament_edition_override' | 'phase_override' | 'round_override'
+  source_key: string
+  snapshot_hash_algorithm: 'sha256'
+  snapshot_hash: string
+}
+
 export type SeasonMatchRecord = {
   match_id: string
   event_id: string
@@ -3340,6 +3355,7 @@ export type SeasonMatchRecord = {
   scoreline: string | null
   simulated_result: MatchSimulationResult | null
   winner_to_match_id: string | null
+  effective_match_format: EffectiveMatchFormatSnapshot
   source_draw_fingerprint: string
   generated_fingerprint: string
   result_fingerprint: string | null
@@ -3397,6 +3413,9 @@ export type MatchGeneratePayload = {
   seed: number
   dry_run: boolean
   overwrite_existing: boolean
+  tournament_edition_match_format?: MatchFormat | null
+  phase_match_formats?: Record<string, MatchFormat>
+  round_match_formats?: Record<string, MatchFormat>
 }
 
 export type MatchSimulatePayload = {

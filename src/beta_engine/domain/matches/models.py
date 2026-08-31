@@ -35,7 +35,7 @@ class RetirementRule(BaseModel):
     enabled: bool = False
     retired_player_id: str | None = None
     trigger: RetirementTrigger = RetirementTrigger.EXPLICIT_SET_START
-    set_number: int | None = Field(default=None, ge=1, le=5)
+    set_number: int | None = Field(default=None, ge=1)
     probability: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
@@ -52,15 +52,15 @@ class MatchContext(BaseModel):
     retirement_rule: RetirementRule = Field(default_factory=RetirementRule)
 
     @model_validator(mode="after")
-    def validate_match_settings(self) -> "MatchContext":
+    def validate_match_settings(self) -> MatchContext:
         if self.player_a.player.player_id == self.player_b.player.player_id:
             raise ValueError("player_a and player_b must be distinct players")
-        if self.best_of != 5:
-            raise ValueError("MVP standalone match engine currently supports BO5 only")
-        if self.games_to != 11:
-            raise ValueError("MVP standalone match engine currently supports games to 11")
-        if self.win_by != 2:
-            raise ValueError("MVP standalone match engine currently supports win by 2")
+        if self.best_of < 1 or self.best_of % 2 == 0:
+            raise ValueError("best_of must be a positive odd number")
+        if self.games_to < 1:
+            raise ValueError("games_to must be positive")
+        if self.win_by < 1:
+            raise ValueError("win_by must be positive")
         retirement = self.retirement_rule
         if retirement.enabled and retirement.retired_player_id not in {
             self.player_a.player.player_id,
@@ -73,7 +73,7 @@ class MatchContext(BaseModel):
 
 
 class SetResult(BaseModel):
-    set_number: int = Field(ge=1, le=5)
+    set_number: int = Field(ge=1)
     winner_player_id: str
     loser_player_id: str
     winner_games: int = Field(ge=0)

@@ -7,6 +7,7 @@ from beta_engine.domain.matches.formats import (
     official_match_format_snapshot,
     resolve_effective_match_format,
 )
+from beta_engine.domain.matches.inputs import MatchInputSnapshot
 from beta_engine.domain.matches.match_engine import MatchEngine
 from beta_engine.domain.matches.models import (
     MatchContext,
@@ -24,6 +25,7 @@ __all__ = [
     "MatchContext",
     "MatchEngine",
     "MatchFormat",
+    "MatchInputSnapshot",
     "MatchParticipantContext",
     "MatchResult",
     "MatchTerminationReason",

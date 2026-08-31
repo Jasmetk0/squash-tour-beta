@@ -3332,6 +3332,20 @@ export type EffectiveMatchFormatSnapshot = {
   snapshot_hash: string
 }
 
+export type MatchInputSnapshot = {
+  schema_version: 'match_input_snapshot.v1'
+  match_id: string
+  simulation_seed: number
+  match_engine_version: string
+  effective_match_format: EffectiveMatchFormatSnapshot
+  context: Record<string, unknown>
+  unsupported_future_inputs: Array<
+    'active_gameplans' | 'rally_model_configuration' | 'rally_seed_stream'
+  >
+  snapshot_hash_algorithm: 'sha256'
+  snapshot_hash: string
+}
+
 export type SeasonMatchRecord = {
   match_id: string
   event_id: string
@@ -3356,6 +3370,7 @@ export type SeasonMatchRecord = {
   simulated_result: MatchSimulationResult | null
   winner_to_match_id: string | null
   effective_match_format: EffectiveMatchFormatSnapshot
+  match_input_snapshot: MatchInputSnapshot | null
   source_draw_fingerprint: string
   generated_fingerprint: string
   result_fingerprint: string | null

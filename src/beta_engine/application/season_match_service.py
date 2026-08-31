@@ -25,6 +25,7 @@ from beta_engine.domain.matches import (
     EffectiveMatchFormatSnapshot,
     MatchEngine,
     MatchFormat,
+    MatchInputSnapshot,
     official_match_format_snapshot,
     resolve_effective_match_format,
 )
@@ -43,6 +44,7 @@ MatchValidationSeverity = Literal["warning", "error"]
 ProgressionStatusValue = Literal["not_started", "in_progress", "completed", "not_applicable"]
 EventProgressionStatusValue = Literal["not_started", "in_progress", "completed", "blocked"]
 ProgressionAction = Literal["process_byes", "refresh_status", "simulate_round", "simulate_draw", "promote_qualifiers", "advance_completed"]
+MATCH_ENGINE_VERSION = "match_engine_v1"
 
 
 
@@ -125,6 +127,7 @@ class SeasonMatchRecord(BaseModel):
     simulated_result: MatchSimulationResult | None = None
     winner_to_match_id: str | None = None
     effective_match_format: EffectiveMatchFormatSnapshot = Field(default_factory=official_match_format_snapshot)
+    match_input_snapshot: MatchInputSnapshot | None = None
     source_draw_fingerprint: str
     generated_fingerprint: str
     result_fingerprint: str | None = None
@@ -154,7 +157,7 @@ class MatchPackageMetadata(BaseModel):
     build_fingerprint: str
     draw_package_fingerprint: str
     active_players_fingerprint: str
-    match_engine_version: str | None = "match_engine_v1"
+    match_engine_version: str | None = MATCH_ENGINE_VERSION
     persistence_path: str | None = None
     ranking_updates_implemented: bool = False
     qualification_winners_promoted: bool = False
@@ -347,9 +350,15 @@ class SeasonMatchService:
             games_to=match.effective_match_format.format.games_to,
             win_by=match.effective_match_format.format.win_by,
         )
-        domain_result = MatchEngine(rng=DeterministicRng(sim_seed)).simulate(context)
+        input_snapshot = MatchInputSnapshot.create(
+            context=context,
+            effective_match_format=match.effective_match_format,
+            simulation_seed=sim_seed,
+            match_engine_version=MATCH_ENGINE_VERSION,
+        )
+        domain_result = MatchEngine(rng=DeterministicRng(input_snapshot.simulation_seed)).simulate(input_snapshot.context)
         result_payload = domain_result.model_dump(mode="json")
-        result_fp = self._fingerprint({"event_id": event_id, "match_id": match_id, "simulation_seed": sim_seed, "players": [match.top_player_id, match.bottom_player_id], "result": result_payload})
+        result_fp = self._fingerprint({"event_id": event_id, "match_id": match_id, "match_input_snapshot_hash": input_snapshot.snapshot_hash, "result": result_payload})
         simulated = MatchSimulationResult(
             match_id=match_id,
             winner_player_id=domain_result.winner_player_id,
@@ -366,6 +375,7 @@ class SeasonMatchService:
         match.loser_player_id = domain_result.loser_player_id
         match.scoreline = simulated.scoreline
         match.simulated_result = simulated
+        match.match_input_snapshot = input_snapshot
         match.result_fingerprint = result_fp
         match.simulation_seed = sim_seed
         match.status = "completed"
@@ -617,9 +627,15 @@ class SeasonMatchService:
             games_to=match.effective_match_format.format.games_to,
             win_by=match.effective_match_format.format.win_by,
         )
-        domain_result = MatchEngine(rng=DeterministicRng(sim_seed)).simulate(context)
+        input_snapshot = MatchInputSnapshot.create(
+            context=context,
+            effective_match_format=match.effective_match_format,
+            simulation_seed=sim_seed,
+            match_engine_version=MATCH_ENGINE_VERSION,
+        )
+        domain_result = MatchEngine(rng=DeterministicRng(input_snapshot.simulation_seed)).simulate(input_snapshot.context)
         result_payload = domain_result.model_dump(mode="json")
-        result_fp = self._fingerprint({"event_id": package.event_id, "match_id": match.match_id, "simulation_seed": sim_seed, "players": [match.top_player_id, match.bottom_player_id], "result": result_payload})
+        result_fp = self._fingerprint({"event_id": package.event_id, "match_id": match.match_id, "match_input_snapshot_hash": input_snapshot.snapshot_hash, "result": result_payload})
         simulated = MatchSimulationResult(
             match_id=match.match_id,
             winner_player_id=domain_result.winner_player_id,
@@ -636,6 +652,7 @@ class SeasonMatchService:
         match.loser_player_id = domain_result.loser_player_id
         match.scoreline = simulated.scoreline
         match.simulated_result = simulated
+        match.match_input_snapshot = input_snapshot
         match.result_fingerprint = result_fp
         match.simulation_seed = sim_seed
         match.status = "completed"

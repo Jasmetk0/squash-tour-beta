@@ -140,6 +140,12 @@ def test_simulate_next_completes_first_pending_and_is_replay_deterministic(tmp_p
     a_completed = next(match for match in a.qualification_matches + a.main_draw_matches if match.status == "completed")
     b_completed = next(match for match in b.qualification_matches + b.main_draw_matches if match.status == "completed")
     assert a_completed.model_dump() == b_completed.model_dump()
+    assert a_completed.match_input_snapshot is not None
+    assert a_completed.match_input_snapshot.snapshot_hash
+    assert a_completed.match_input_snapshot.simulation_seed == a_completed.simulation_seed
+    assert a_completed.match_input_snapshot.context.player_a.player.player_id == a_completed.top_player_id
+    assert a_completed.match_input_snapshot.context.player_b.player.player_id == a_completed.bottom_player_id
+    assert a_completed.result_fingerprint == b_completed.result_fingerprint
 
 
 def test_match_package_stores_effective_format_with_nearest_override_provenance(tmp_path: Path) -> None:

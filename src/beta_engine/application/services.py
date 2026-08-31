@@ -3,14 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from beta_engine.core import DeterministicRng, SeedScope
-from beta_engine.domain.countries import Country
-from beta_engine.domain.draws import DrawEngine
-from beta_engine.domain.entries import AcceptanceList, AcceptanceStatus, EntryEngine, EntryTuningConfig, TournamentEntry
-from beta_engine.domain.players import Player
-from beta_engine.domain.rankings import CompletedTournamentPointsInput, RankingRaceEngine, RankingRaceReport
-from beta_engine.domain.tournaments import CalendarEvent, SeasonCalendar, TournamentTemplate
-from beta_engine.domain.tournaments.progression import TournamentProgressionEngine, TournamentResult
 
 from beta_engine.application.season_models import (
     ActiveTournamentState,
@@ -21,6 +13,31 @@ from beta_engine.application.season_models import (
     SimulationStepResult,
     TournamentSimulationResult,
     WeeklySimulationResult,
+)
+from beta_engine.core import DeterministicRng, SeedScope
+from beta_engine.domain.countries import Country
+from beta_engine.domain.draws import DrawEngine
+from beta_engine.domain.entries import (
+    AcceptanceList,
+    AcceptanceStatus,
+    EntryEngine,
+    EntryTuningConfig,
+    TournamentEntry,
+)
+from beta_engine.domain.players import Player
+from beta_engine.domain.rankings import (
+    CompletedTournamentPointsInput,
+    RankingRaceEngine,
+    RankingRaceReport,
+)
+from beta_engine.domain.tournaments import (
+    CalendarEvent,
+    SeasonCalendar,
+    TournamentTemplate,
+)
+from beta_engine.domain.tournaments.progression import (
+    TournamentProgressionEngine,
+    TournamentResult,
 )
 
 
@@ -54,7 +71,7 @@ class SeasonSimulationOrchestrator:
         wildcard_assignments_by_event: dict[str, dict[int, str]] | None = None,
         pre_draw_withdrawal_replacements_by_event: dict[str, list[dict[str, object]]] | None = None,
         late_replacements_by_event: dict[str, list[dict[str, object]]] | None = None,
-    ) -> "SeasonSimulationOrchestrator":
+    ) -> SeasonSimulationOrchestrator:
         rng = DeterministicRng(seed)
         return cls(
             calendar=calendar,
@@ -588,7 +605,17 @@ class SeasonSimulationOrchestrator:
                 template.point_distribution.model_dump() if template.point_distribution is not None else None
             ),
             placements=[placement.model_dump() for placement in tournament.main_draw.placements],
-            rounds=[round_result.model_dump() for round_result in tournament.main_draw.rounds],
+            rounds=[
+                {
+                    "round_number": round_result.round_number,
+                    "matches": [
+                        {"loser_player_id": match.loser_player_id}
+                        for match in round_result.matches
+                        if match.loser_player_id is not None
+                    ],
+                }
+                for round_result in tournament.main_draw.rounds
+            ],
         )
 
     def _validate_state(self, state: SeasonState) -> None:

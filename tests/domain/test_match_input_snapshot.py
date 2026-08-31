@@ -50,7 +50,7 @@ def _snapshot() -> MatchInputSnapshot:
         context=context,
         effective_match_format=official_match_format_snapshot(),
         simulation_seed=777,
-        match_engine_version="match_engine_v1",
+        match_engine_version="match_engine_v2",
     )
 
 
@@ -61,11 +61,8 @@ def test_match_input_snapshot_round_trips_exact_current_engine_inputs() -> None:
     assert restored == snapshot
     assert restored.context.player_a.player.player_id == "A"
     assert restored.context.player_b.player.player_id == "B"
-    assert restored.unsupported_future_inputs == (
-        "active_gameplans",
-        "rally_model_configuration",
-        "rally_seed_stream",
-    )
+    assert restored.schema_version == "match_input_snapshot.v2"
+    assert restored.unsupported_future_inputs == ("active_gameplans",)
 
 
 def test_match_input_snapshot_rejects_player_or_seed_tampering() -> None:
@@ -86,3 +83,32 @@ def test_match_input_snapshot_rejects_format_context_mismatch() -> None:
 
     with pytest.raises(ValidationError, match="does not match effective format"):
         MatchInputSnapshot.model_validate(payload)
+
+
+def test_v1_match_input_snapshot_remains_readable() -> None:
+    current = _snapshot()
+    unsupported = (
+        "active_gameplans",
+        "rally_model_configuration",
+        "rally_seed_stream",
+    )
+    hash_payload = MatchInputSnapshot._hash_payload(
+        schema_version="match_input_snapshot.v1",
+        match_id=current.match_id,
+        simulation_seed=current.simulation_seed,
+        match_engine_version="match_engine_v1",
+        effective_match_format=current.effective_match_format,
+        context=current.context,
+        unsupported_future_inputs=unsupported,
+    )
+    payload = current.model_dump(mode="json")
+    payload.update(
+        schema_version="match_input_snapshot.v1",
+        match_engine_version="match_engine_v1",
+        unsupported_future_inputs=unsupported,
+        snapshot_hash=MatchInputSnapshot._content_hash(hash_payload),
+    )
+
+    restored = MatchInputSnapshot.model_validate(payload)
+
+    assert restored.schema_version == "match_input_snapshot.v1"

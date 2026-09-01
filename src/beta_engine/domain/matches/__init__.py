@@ -18,6 +18,15 @@ from beta_engine.domain.matches.models import (
     RetirementTrigger,
     SetResult,
 )
+from beta_engine.domain.matches.rallies import (
+    MatchRallyLog,
+    PostRallyStateSnapshot,
+    RallyAnalyticalAttribution,
+    RallyEvent,
+    RallyScoreMutation,
+    RallyScoreSnapshot,
+    RallyTerminalTrigger,
+)
 
 __all__ = [
     "OFFICIAL_MATCH_FORMAT",
@@ -27,8 +36,15 @@ __all__ = [
     "MatchFormat",
     "MatchInputSnapshot",
     "MatchParticipantContext",
+    "MatchRallyLog",
     "MatchResult",
     "MatchTerminationReason",
+    "PostRallyStateSnapshot",
+    "RallyAnalyticalAttribution",
+    "RallyEvent",
+    "RallyScoreMutation",
+    "RallyScoreSnapshot",
+    "RallyTerminalTrigger",
     "RetirementRule",
     "RetirementTrigger",
     "SetResult",

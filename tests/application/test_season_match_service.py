@@ -127,7 +127,9 @@ def test_simulate_rejects_non_pending_and_missing_player_match(tmp_path: Path) -
         service.simulate_match(event_id=event_id, match_id="missing", request=MatchSimulateRequest(seed=1))
 
 
-def test_simulate_next_completes_first_pending_and_is_replay_deterministic(tmp_path: Path) -> None:
+def test_simulate_next_completes_first_pending_and_is_replay_deterministic(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     service_a, event_id_a = make_match_service(tmp_path / "a")
     service_b, event_id_b = make_match_service(tmp_path / "b")
     service_a.generate_match_package(event_id=event_id_a, request=MatchPackageGenerateRequest(seed=101, dry_run=False))
@@ -146,6 +148,24 @@ def test_simulate_next_completes_first_pending_and_is_replay_deterministic(tmp_p
     assert a_completed.match_input_snapshot.context.player_a.player.player_id == a_completed.top_player_id
     assert a_completed.match_input_snapshot.context.player_b.player.player_id == a_completed.bottom_player_id
     assert a_completed.result_fingerprint == b_completed.result_fingerprint
+    assert a_completed.simulated_result is not None
+    assert a_completed.simulated_result.rally_log is not None
+    assert (
+        a_completed.simulated_result.rally_log.input_snapshot_hash
+        == a_completed.match_input_snapshot.snapshot_hash
+    )
+
+    def fail_if_rng_is_rerun(*args: object, **kwargs: object) -> None:
+        raise AssertionError("stored replay must not rerun MatchEngine")
+
+    monkeypatch.setattr("beta_engine.application.season_match_service.MatchEngine.simulate", fail_if_rng_is_rerun)
+    replay = service_a.get_match_replay(
+        event_id=event_id_a, match_id=a_completed.match_id
+    )
+    assert replay.verified is True
+    assert replay.rng_rerun is False
+    assert replay.replay_source == "stored_authoritative_events"
+    assert replay.rally_log == a_completed.simulated_result.rally_log
 
 
 def test_match_package_stores_effective_format_with_nearest_override_provenance(tmp_path: Path) -> None:

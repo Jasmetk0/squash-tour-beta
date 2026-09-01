@@ -15,7 +15,9 @@ from beta_engine.domain.matches.models import MatchContext
 class MatchInputSnapshot(BaseModel):
     """Immutable current-engine truth needed to reproduce one simulated match."""
 
-    schema_version: Literal["match_input_snapshot.v1"] = "match_input_snapshot.v1"
+    schema_version: Literal["match_input_snapshot.v1", "match_input_snapshot.v2"] = (
+        "match_input_snapshot.v2"
+    )
     match_id: str = Field(min_length=1)
     simulation_seed: int
     match_engine_version: str = Field(min_length=1)
@@ -28,11 +30,7 @@ class MatchInputSnapshot(BaseModel):
             "rally_seed_stream",
         ],
         ...,
-    ] = (
-        "active_gameplans",
-        "rally_model_configuration",
-        "rally_seed_stream",
-    )
+    ] = ("active_gameplans",)
     snapshot_hash_algorithm: Literal["sha256"] = "sha256"
     snapshot_hash: str
 
@@ -46,17 +44,13 @@ class MatchInputSnapshot(BaseModel):
         match_engine_version: str,
     ) -> MatchInputSnapshot:
         payload = cls._hash_payload(
-            schema_version="match_input_snapshot.v1",
+            schema_version="match_input_snapshot.v2",
             match_id=context.match_id,
             simulation_seed=simulation_seed,
             match_engine_version=match_engine_version,
             effective_match_format=effective_match_format,
             context=context,
-            unsupported_future_inputs=(
-                "active_gameplans",
-                "rally_model_configuration",
-                "rally_seed_stream",
-            ),
+            unsupported_future_inputs=("active_gameplans",),
         )
         return cls(
             match_id=context.match_id,

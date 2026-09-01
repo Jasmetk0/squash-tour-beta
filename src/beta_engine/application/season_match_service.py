@@ -26,6 +26,7 @@ from beta_engine.domain.matches import (
     MatchEngine,
     MatchFormat,
     MatchInputSnapshot,
+    MatchRallyLog,
     official_match_format_snapshot,
     resolve_effective_match_format,
 )
@@ -44,7 +45,7 @@ MatchValidationSeverity = Literal["warning", "error"]
 ProgressionStatusValue = Literal["not_started", "in_progress", "completed", "not_applicable"]
 EventProgressionStatusValue = Literal["not_started", "in_progress", "completed", "blocked"]
 ProgressionAction = Literal["process_byes", "refresh_status", "simulate_round", "simulate_draw", "promote_qualifiers", "advance_completed"]
-MATCH_ENGINE_VERSION = "match_engine_v1"
+MATCH_ENGINE_VERSION = "match_engine_v2"
 
 
 
@@ -69,6 +70,20 @@ class MatchSimulationResult(BaseModel):
     walkover: bool = False
     simulation_fingerprint: str
     seed: int
+    rally_log: MatchRallyLog | None = None
+    match_log_hash: str | None = None
+    rally_elapsed_seconds: float | None = None
+
+
+class MatchReplayResponse(BaseModel):
+    event_id: str
+    match_id: str
+    match_input_snapshot: MatchInputSnapshot
+    rally_log: MatchRallyLog
+    final_result: MatchSimulationResult
+    replay_source: Literal["stored_authoritative_events"] = "stored_authoritative_events"
+    rng_rerun: Literal[False] = False
+    verified: Literal[True] = True
 
 
 class TournamentProgressionStatus(BaseModel):
@@ -245,6 +260,28 @@ class SeasonMatchService:
             match_package_exists=True,
         )
 
+    def get_match_replay(self, *, event_id: str, match_id: str) -> MatchReplayResponse:
+        _, package = self._persisted_package(event_id)
+        match = self._find_match(package, match_id)
+        if match.status != "completed" or match.simulated_result is None:
+            raise ValueError(f"Match '{match_id}' has no completed stored result to replay.")
+        if match.match_input_snapshot is None or match.simulated_result.rally_log is None:
+            raise ValueError(f"Match '{match_id}' predates the authoritative rally-log schema.")
+        rally_log = match.simulated_result.rally_log
+        if rally_log.input_snapshot_hash != match.match_input_snapshot.snapshot_hash:
+            raise ValueError("Stored rally log is not anchored to the match input snapshot.")
+        if match.simulated_result.match_log_hash != rally_log.match_log_hash:
+            raise ValueError("Stored match result and rally log hashes do not agree.")
+        if match.result_fingerprint != match.simulated_result.simulation_fingerprint:
+            raise ValueError("Stored match record and simulation fingerprints do not agree.")
+        return MatchReplayResponse(
+            event_id=event_id,
+            match_id=match_id,
+            match_input_snapshot=match.match_input_snapshot,
+            rally_log=rally_log,
+            final_result=match.simulated_result,
+        )
+
     def generate_match_package(self, *, event_id: str, request: MatchPackageGenerateRequest) -> SeasonEventMatchPackageResult:
         registry = self._load_registry()
         existing = registry.matches_by_event_id.get(event_id)
@@ -356,7 +393,10 @@ class SeasonMatchService:
             simulation_seed=sim_seed,
             match_engine_version=MATCH_ENGINE_VERSION,
         )
-        domain_result = MatchEngine(rng=DeterministicRng(input_snapshot.simulation_seed)).simulate(input_snapshot.context)
+        domain_result = MatchEngine(rng=DeterministicRng(input_snapshot.simulation_seed)).simulate(
+            input_snapshot.context,
+            log_anchor_hash=input_snapshot.snapshot_hash,
+        )
         result_payload = domain_result.model_dump(mode="json")
         result_fp = self._fingerprint({"event_id": event_id, "match_id": match_id, "match_input_snapshot_hash": input_snapshot.snapshot_hash, "result": result_payload})
         simulated = MatchSimulationResult(
@@ -370,6 +410,9 @@ class SeasonMatchService:
             walkover=False,
             simulation_fingerprint=result_fp,
             seed=sim_seed,
+            rally_log=domain_result.rally_log,
+            match_log_hash=domain_result.rally_log.match_log_hash if domain_result.rally_log else None,
+            rally_elapsed_seconds=domain_result.rally_log.rally_elapsed_seconds if domain_result.rally_log else None,
         )
         match.winner_player_id = domain_result.winner_player_id
         match.loser_player_id = domain_result.loser_player_id
@@ -633,7 +676,10 @@ class SeasonMatchService:
             simulation_seed=sim_seed,
             match_engine_version=MATCH_ENGINE_VERSION,
         )
-        domain_result = MatchEngine(rng=DeterministicRng(input_snapshot.simulation_seed)).simulate(input_snapshot.context)
+        domain_result = MatchEngine(rng=DeterministicRng(input_snapshot.simulation_seed)).simulate(
+            input_snapshot.context,
+            log_anchor_hash=input_snapshot.snapshot_hash,
+        )
         result_payload = domain_result.model_dump(mode="json")
         result_fp = self._fingerprint({"event_id": package.event_id, "match_id": match.match_id, "match_input_snapshot_hash": input_snapshot.snapshot_hash, "result": result_payload})
         simulated = MatchSimulationResult(
@@ -647,6 +693,9 @@ class SeasonMatchService:
             walkover=False,
             simulation_fingerprint=result_fp,
             seed=sim_seed,
+            rally_log=domain_result.rally_log,
+            match_log_hash=domain_result.rally_log.match_log_hash if domain_result.rally_log else None,
+            rally_elapsed_seconds=domain_result.rally_log.rally_elapsed_seconds if domain_result.rally_log else None,
         )
         match.winner_player_id = domain_result.winner_player_id
         match.loser_player_id = domain_result.loser_player_id

@@ -3315,6 +3315,9 @@ export type MatchSimulationResult = {
   walkover: boolean
   simulation_fingerprint: string
   seed: number
+  rally_log: MatchRallyLog | null
+  match_log_hash: string | null
+  rally_elapsed_seconds: number | null
 }
 
 export type MatchFormat = {
@@ -3333,7 +3336,7 @@ export type EffectiveMatchFormatSnapshot = {
 }
 
 export type MatchInputSnapshot = {
-  schema_version: 'match_input_snapshot.v1'
+  schema_version: 'match_input_snapshot.v1' | 'match_input_snapshot.v2'
   match_id: string
   simulation_seed: number
   match_engine_version: string
@@ -3344,6 +3347,103 @@ export type MatchInputSnapshot = {
   >
   snapshot_hash_algorithm: 'sha256'
   snapshot_hash: string
+}
+
+export type RallyScoreSnapshot = {
+  player_a_id: string
+  player_b_id: string
+  sets_a: number
+  sets_b: number
+  points_a: number
+  points_b: number
+}
+
+export type RallyScoreMutation = {
+  mutation_type: 'POINT_AWARDED'
+  player_id: string
+  reason: 'RALLY_RESULT' | 'CONDUCT_STROKE' | 'OFFICIAL_ADJUSTMENT'
+}
+
+export type RallyEvent = {
+  schema_version: 'rally_event.v1'
+  match_id: string
+  rally_index: number
+  set_number: number
+  rally_in_set: number
+  serving_player_id: string
+  winner_player_id: string
+  primary_terminal_trigger:
+    | 'GOOD_RETURN_UNANSWERED'
+    | 'SERVE_FAULT'
+    | 'RETURN_DOWN'
+    | 'RETURN_OUT'
+    | 'RETURN_NOT_UP'
+    | 'INTERFERENCE_STOP'
+    | 'BALL_HIT_PLAYER'
+    | 'PROCEDURAL_OR_OFFICIAL_STOP'
+    | 'BALL_COURT_OR_EXTERNAL_STOP'
+    | 'HEALTH_STOP'
+    | 'CONDUCT_STOP'
+  terminal_subtype: string | null
+  official_resolution: 'POINT_AWARDED'
+  analytical_attribution:
+    | 'CLEAN_WINNER'
+    | 'FORCED_ERROR'
+    | 'UNFORCED_ERROR'
+    | 'OFFICIAL_AWARD'
+    | 'NEUTRAL_REPLAY'
+  score_before: RallyScoreSnapshot
+  score_mutations: RallyScoreMutation[]
+  score_after: RallyScoreSnapshot
+  abstract_segments: number
+  estimated_shot_count: number
+  elapsed_seconds: number
+  rally_seed: string
+  post_rally_state: {
+    score: RallyScoreSnapshot
+    next_server_player_id: string
+    set_complete: boolean
+    match_complete: boolean
+    unsupported_dynamic_state: Array<
+      'physical_stamina' | 'explosive_stamina' | 'mental_stamina'
+    >
+  }
+  side_incidents: Array<Record<string, unknown>>
+  previous_event_hash: string
+  event_hash_algorithm: 'sha256'
+  event_hash: string
+}
+
+export type MatchRallyLog = {
+  schema_version: 'match_rally_log.v1'
+  match_id: string
+  input_snapshot_hash: string
+  events: RallyEvent[]
+  total_rallies: number
+  rally_elapsed_seconds: number
+  estimated_shot_count: number
+  unsupported_timeline_components: Array<
+    | 'between_rally_intervals'
+    | 'game_breaks'
+    | 'medical_breaks'
+    | 'dynamic_stamina'
+    | 'non_scoring_replay_rallies'
+    | 'interference_and_official_calls'
+    | 'health_and_conduct_incidents'
+  >
+  match_log_hash_algorithm: 'sha256'
+  match_log_hash: string
+}
+
+export type MatchReplayResponse = {
+  event_id: string
+  match_id: string
+  match_input_snapshot: MatchInputSnapshot
+  rally_log: MatchRallyLog
+  final_result: MatchSimulationResult
+  replay_source: 'stored_authoritative_events'
+  rng_rerun: false
+  verified: true
 }
 
 export type SeasonMatchRecord = {

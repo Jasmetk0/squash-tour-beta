@@ -71,6 +71,9 @@ def test_every_simulated_point_is_an_ordered_authoritative_rally_event() -> None
     )
     assert log.rally_elapsed_seconds > 0
     assert log.estimated_shot_count >= log.total_rallies
+    assert log.schema_version == "match_rally_log.v2"
+    assert "between_rally_intervals" not in log.unsupported_timeline_components
+    assert "game_breaks" not in log.unsupported_timeline_components
 
 
 def test_reloading_stored_log_does_not_run_rng_and_preserves_truth() -> None:
@@ -80,6 +83,22 @@ def test_reloading_stored_log_does_not_run_rng_and_preserves_truth() -> None:
     restored = MatchRallyLog.model_validate(result.rally_log.model_dump(mode="json"))
 
     assert restored == result.rally_log
+
+
+def test_v1_rally_log_remains_readable() -> None:
+    result = _result()
+    assert result.rally_log is not None
+    payload = result.rally_log.model_dump(mode="json")
+    payload["schema_version"] = "match_rally_log.v1"
+    payload["unsupported_timeline_components"] = [
+        "between_rally_intervals",
+        "game_breaks",
+        *payload["unsupported_timeline_components"],
+    ]
+
+    restored = MatchRallyLog.model_validate(payload)
+
+    assert restored.schema_version == "match_rally_log.v1"
 
 
 def test_rally_event_rejects_score_tampering() -> None:

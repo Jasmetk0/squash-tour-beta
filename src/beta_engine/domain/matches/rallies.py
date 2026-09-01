@@ -191,7 +191,9 @@ class RallyEvent(BaseModel):
 
 
 class MatchRallyLog(BaseModel):
-    schema_version: Literal["match_rally_log.v1"] = "match_rally_log.v1"
+    schema_version: Literal["match_rally_log.v1", "match_rally_log.v2"] = (
+        "match_rally_log.v2"
+    )
     match_id: str = Field(min_length=1)
     input_snapshot_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     events: tuple[RallyEvent, ...]
@@ -210,8 +212,6 @@ class MatchRallyLog(BaseModel):
         ],
         ...,
     ] = (
-        "between_rally_intervals",
-        "game_breaks",
         "medical_breaks",
         "dynamic_stamina",
         "non_scoring_replay_rallies",

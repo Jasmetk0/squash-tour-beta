@@ -3316,14 +3316,44 @@ export type MatchSimulationResult = {
   simulation_fingerprint: string
   seed: number
   rally_log: MatchRallyLog | null
+  timeline_log: MatchTimelineLog | null
   match_log_hash: string | null
   rally_elapsed_seconds: number | null
+  match_elapsed_seconds: number | null
 }
 
 export type MatchFormat = {
   best_of: number
   games_to: number
   win_by: number
+}
+
+export type RestartIntent = 'ACCELERATE' | 'NATURAL' | 'DELAY'
+export type RestartDecisionFactor =
+  | 'NATURAL_TENDENCY'
+  | 'PREVIOUS_RALLY_LOAD'
+  | 'CLOSE_ENDGAME'
+
+export type PlayerRestartTimingProfile = {
+  player_id: string
+  serve_tendency: RestartIntent
+  return_tendency: RestartIntent
+}
+
+export type MatchTimingOverride = {
+  nominal_game_break_seconds?: number | null
+  player_restart_profiles?: PlayerRestartTimingProfile[]
+}
+
+export type EffectiveMatchTimingSnapshot = {
+  schema_version: 'effective_match_timing.v1'
+  nominal_game_break_seconds: number
+  player_restart_profiles: PlayerRestartTimingProfile[]
+  between_rally_calibration_profile: 'pre_alpha_men_v1'
+  source_scope: 'official_default' | 'match_simulation_override'
+  source_key: string
+  snapshot_hash_algorithm: 'sha256'
+  snapshot_hash: string
 }
 
 export type EffectiveMatchFormatSnapshot = {
@@ -3336,11 +3366,12 @@ export type EffectiveMatchFormatSnapshot = {
 }
 
 export type MatchInputSnapshot = {
-  schema_version: 'match_input_snapshot.v1' | 'match_input_snapshot.v2'
+  schema_version: 'match_input_snapshot.v1' | 'match_input_snapshot.v2' | 'match_input_snapshot.v3'
   match_id: string
   simulation_seed: number
   match_engine_version: string
   effective_match_format: EffectiveMatchFormatSnapshot
+  effective_match_timing: EffectiveMatchTimingSnapshot | null
   context: Record<string, unknown>
   unsupported_future_inputs: Array<
     'active_gameplans' | 'rally_model_configuration' | 'rally_seed_stream'
@@ -3415,7 +3446,7 @@ export type RallyEvent = {
 }
 
 export type MatchRallyLog = {
-  schema_version: 'match_rally_log.v1'
+  schema_version: 'match_rally_log.v1' | 'match_rally_log.v2'
   match_id: string
   input_snapshot_hash: string
   events: RallyEvent[]
@@ -3435,11 +3466,100 @@ export type MatchRallyLog = {
   match_log_hash: string
 }
 
+export type RallyTimelineEvent = {
+  schema_version: 'rally_timeline_event.v1'
+  event_type: 'RALLY'
+  match_id: string
+  timeline_index: number
+  rally_index: number
+  set_number: number
+  rally_event_hash: string
+  elapsed_seconds: number
+  previous_event_hash: string
+  event_hash_algorithm: 'sha256'
+  event_hash: string
+}
+
+export type BetweenRallyIntervalEvent = {
+  schema_version: 'between_rally_interval_event.v1'
+  event_type: 'BETWEEN_RALLY_INTERVAL'
+  match_id: string
+  timeline_index: number
+  after_rally_index: number
+  set_number: number
+  server_player_id: string
+  receiver_player_id: string
+  server_intent: RestartIntent
+  receiver_intent: RestartIntent
+  server_decision_factors: RestartDecisionFactor[]
+  receiver_decision_factors: RestartDecisionFactor[]
+  server_ready_seconds: number
+  receiver_ready_seconds: number
+  official_ready_seconds: number
+  court_ready_seconds: number
+  dominant_readiness: 'SERVER' | 'RECEIVER' | 'OFFICIAL' | 'COURT'
+  conduct_outcome: 'NONE'
+  interval_seed: string
+  elapsed_seconds: number
+  previous_event_hash: string
+  event_hash_algorithm: 'sha256'
+  event_hash: string
+}
+
+export type GameBreakEvent = {
+  schema_version: 'game_break_event.v1'
+  event_type: 'GAME_BREAK'
+  match_id: string
+  timeline_index: number
+  after_rally_index: number
+  completed_set_number: number
+  nominal_seconds: number
+  duration_source: 'NOMINAL_RULE'
+  dynamic_recovery_applied: false
+  elapsed_seconds: number
+  previous_event_hash: string
+  event_hash_algorithm: 'sha256'
+  event_hash: string
+}
+
+export type MatchTimelineEvent =
+  | RallyTimelineEvent
+  | BetweenRallyIntervalEvent
+  | GameBreakEvent
+
+export type MatchTimelineLog = {
+  schema_version: 'match_timeline_log.v1'
+  match_id: string
+  input_snapshot_hash: string
+  events: MatchTimelineEvent[]
+  total_timeline_events: number
+  rally_event_count: number
+  between_rally_interval_count: number
+  game_break_count: number
+  rally_elapsed_seconds: number
+  between_rally_elapsed_seconds: number
+  game_break_elapsed_seconds: number
+  total_elapsed_seconds: number
+  unsupported_timeline_components: Array<
+    | 'medical_breaks'
+    | 'objective_delay_events'
+    | 'dynamic_stamina_recovery'
+    | 'conduct_escalation'
+    | 'non_scoring_replay_rallies'
+    | 'variable_game_break_duration'
+    | 'restart_rhythm_effects'
+    | 'full_situational_restart_ai'
+  >
+  match_log_hash_algorithm: 'sha256'
+  match_log_hash: string
+}
+
 export type MatchReplayResponse = {
   event_id: string
   match_id: string
   match_input_snapshot: MatchInputSnapshot
   rally_log: MatchRallyLog
+  timeline_log: MatchTimelineLog | null
   final_result: MatchSimulationResult
   replay_source: 'stored_authoritative_events'
   rng_rerun: false
@@ -3535,6 +3655,7 @@ export type MatchGeneratePayload = {
 
 export type MatchSimulatePayload = {
   seed: number
+  timing_override?: MatchTimingOverride | null
 }
 
 export type TournamentProgressionStatus = {

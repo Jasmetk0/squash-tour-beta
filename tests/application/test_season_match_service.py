@@ -17,7 +17,12 @@ from beta_engine.application.season_match_service import (
     SeasonMatchService,
     SimulateRoundRequest,
 )
-from beta_engine.domain.matches import MatchFormat
+from beta_engine.domain.matches import (
+    MatchFormat,
+    MatchTimingOverride,
+    PlayerRestartTimingProfile,
+    RestartIntent,
+)
 
 
 def make_match_service(tmp_path: Path, *, active: bool = True, draw: bool = True) -> tuple[SeasonMatchService, str]:
@@ -127,6 +132,60 @@ def test_simulate_rejects_non_pending_and_missing_player_match(tmp_path: Path) -
         service.simulate_match(event_id=event_id, match_id="missing", request=MatchSimulateRequest(seed=1))
 
 
+def test_match_timing_override_is_snapshotted_and_replayed(tmp_path: Path) -> None:
+    service, event_id = make_match_service(tmp_path / "timing-override")
+    service.generate_match_package(event_id=event_id, request=MatchPackageGenerateRequest(seed=101, dry_run=False))
+    package = service.get_match_package(event_id=event_id).match_package
+    assert package is not None
+    pending = next(
+        match
+        for match in package.qualification_matches + package.main_draw_matches
+        if match.status == "pending" and match.top_player_id and match.bottom_player_id
+    )
+
+    result = service.simulate_match(
+        event_id=event_id,
+        match_id=pending.match_id,
+        request=MatchSimulateRequest(
+            seed=555,
+            timing_override=MatchTimingOverride(
+                nominal_game_break_seconds=90,
+                player_restart_profiles=(
+                    PlayerRestartTimingProfile(
+                        player_id=pending.top_player_id,
+                        serve_tendency=RestartIntent.ACCELERATE,
+                    ),
+                    PlayerRestartTimingProfile(
+                        player_id=pending.bottom_player_id,
+                        return_tendency=RestartIntent.DELAY,
+                    ),
+                ),
+            ),
+        ),
+    ).match_package
+
+    assert result is not None
+    completed = next(
+        match
+        for match in result.qualification_matches + result.main_draw_matches
+        if match.match_id == pending.match_id
+    )
+    assert completed.match_input_snapshot is not None
+    timing = completed.match_input_snapshot.effective_match_timing
+    assert timing is not None
+    assert timing.nominal_game_break_seconds == 90
+    assert timing.source_scope == "match_simulation_override"
+    assert completed.simulated_result is not None
+    assert completed.simulated_result.timeline_log is not None
+    assert all(
+        event.elapsed_seconds == 90
+        for event in completed.simulated_result.timeline_log.events
+        if event.event_type == "GAME_BREAK"
+    )
+    replay = service.get_match_replay(event_id=event_id, match_id=pending.match_id)
+    assert replay.timeline_log == completed.simulated_result.timeline_log
+
+
 def test_simulate_next_completes_first_pending_and_is_replay_deterministic(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -144,16 +203,24 @@ def test_simulate_next_completes_first_pending_and_is_replay_deterministic(
     assert a_completed.model_dump() == b_completed.model_dump()
     assert a_completed.match_input_snapshot is not None
     assert a_completed.match_input_snapshot.snapshot_hash
+    assert a_completed.match_input_snapshot.schema_version == "match_input_snapshot.v3"
+    assert a_completed.match_input_snapshot.effective_match_timing is not None
+    assert a_completed.match_input_snapshot.effective_match_timing.nominal_game_break_seconds == 120
     assert a_completed.match_input_snapshot.simulation_seed == a_completed.simulation_seed
     assert a_completed.match_input_snapshot.context.player_a.player.player_id == a_completed.top_player_id
     assert a_completed.match_input_snapshot.context.player_b.player.player_id == a_completed.bottom_player_id
     assert a_completed.result_fingerprint == b_completed.result_fingerprint
     assert a_completed.simulated_result is not None
     assert a_completed.simulated_result.rally_log is not None
+    assert a_completed.simulated_result.timeline_log is not None
     assert (
         a_completed.simulated_result.rally_log.input_snapshot_hash
         == a_completed.match_input_snapshot.snapshot_hash
     )
+    assert a_completed.simulated_result.timeline_log.input_snapshot_hash == a_completed.match_input_snapshot.snapshot_hash
+    assert a_completed.simulated_result.match_log_hash == a_completed.simulated_result.timeline_log.match_log_hash
+    assert a_completed.simulated_result.match_elapsed_seconds == a_completed.simulated_result.timeline_log.total_elapsed_seconds
+    assert a_completed.simulated_result.match_elapsed_seconds > a_completed.simulated_result.rally_elapsed_seconds
 
     def fail_if_rng_is_rerun(*args: object, **kwargs: object) -> None:
         raise AssertionError("stored replay must not rerun MatchEngine")
@@ -166,6 +233,7 @@ def test_simulate_next_completes_first_pending_and_is_replay_deterministic(
     assert replay.rng_rerun is False
     assert replay.replay_source == "stored_authoritative_events"
     assert replay.rally_log == a_completed.simulated_result.rally_log
+    assert replay.timeline_log == a_completed.simulated_result.timeline_log
 
 
 def test_match_package_stores_effective_format_with_nearest_override_provenance(tmp_path: Path) -> None:

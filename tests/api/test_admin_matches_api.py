@@ -74,7 +74,11 @@ def test_simulate_selected_and_next(tmp_path: Path) -> None:
         _, persisted = call("POST", f"{server.base_url}/admin/matches/{event_id}/generate", {"seed": 333, "dry_run": False, "overwrite_existing": False})
         match = next(item for item in persisted["match_package"]["qualification_matches"] + persisted["match_package"]["main_draw_matches"] if item["status"] == "pending")
 
-        status, selected = call("POST", f"{server.base_url}/admin/matches/{event_id}/simulate/{match['match_id']}", {"seed": 444})
+        status, selected = call(
+            "POST",
+            f"{server.base_url}/admin/matches/{event_id}/simulate/{match['match_id']}",
+            {"seed": 444, "timing_override": {"nominal_game_break_seconds": 90}},
+        )
         assert status == 200
         completed = next(item for item in selected["match_package"]["qualification_matches"] + selected["match_package"]["main_draw_matches"] if item["match_id"] == match["match_id"])
         assert completed["status"] == "completed"
@@ -84,6 +88,9 @@ def test_simulate_selected_and_next(tmp_path: Path) -> None:
         assert completed["result_fingerprint"]
         assert completed["simulated_result"]["match_log_hash"]
         assert completed["simulated_result"]["rally_log"]["events"]
+        assert completed["simulated_result"]["timeline_log"]["events"]
+        assert completed["simulated_result"]["match_elapsed_seconds"] > completed["simulated_result"]["rally_elapsed_seconds"]
+        assert completed["match_input_snapshot"]["effective_match_timing"]["nominal_game_break_seconds"] == 90
 
         replay_status, replay = call(
             "GET",
@@ -94,7 +101,7 @@ def test_simulate_selected_and_next(tmp_path: Path) -> None:
         assert replay["verified"] is True
         assert replay["replay_source"] == "stored_authoritative_events"
         assert (
-            replay["rally_log"]["match_log_hash"]
+            replay["timeline_log"]["match_log_hash"]
             == completed["simulated_result"]["match_log_hash"]
         )
 

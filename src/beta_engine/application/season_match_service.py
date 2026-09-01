@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from beta_engine.application.season_draw_service import (
     DrawBracket,
@@ -23,10 +23,13 @@ from beta_engine.application.season_player_bootstrap_service import (
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.matches import (
     EffectiveMatchFormatSnapshot,
+    EffectiveMatchTimingSnapshot,
     MatchEngine,
     MatchFormat,
     MatchInputSnapshot,
     MatchRallyLog,
+    MatchTimelineLog,
+    MatchTimingOverride,
     official_match_format_snapshot,
     resolve_effective_match_format,
 )
@@ -45,7 +48,7 @@ MatchValidationSeverity = Literal["warning", "error"]
 ProgressionStatusValue = Literal["not_started", "in_progress", "completed", "not_applicable"]
 EventProgressionStatusValue = Literal["not_started", "in_progress", "completed", "blocked"]
 ProgressionAction = Literal["process_byes", "refresh_status", "simulate_round", "simulate_draw", "promote_qualifiers", "advance_completed"]
-MATCH_ENGINE_VERSION = "match_engine_v2"
+MATCH_ENGINE_VERSION = "match_engine_v3"
 
 
 
@@ -71,8 +74,38 @@ class MatchSimulationResult(BaseModel):
     simulation_fingerprint: str
     seed: int
     rally_log: MatchRallyLog | None = None
+    timeline_log: MatchTimelineLog | None = None
     match_log_hash: str | None = None
     rally_elapsed_seconds: float | None = None
+    match_elapsed_seconds: float | None = None
+
+    @model_validator(mode="after")
+    def validate_authoritative_logs(self) -> MatchSimulationResult:
+        if self.timeline_log is not None:
+            if self.rally_log is None:
+                raise ValueError("stored match timeline requires a rally log")
+            if self.timeline_log.input_snapshot_hash != self.rally_log.input_snapshot_hash:
+                raise ValueError("stored match logs use different input anchors")
+            if self.match_log_hash != self.timeline_log.match_log_hash:
+                raise ValueError("stored result and timeline hashes do not agree")
+            if self.match_elapsed_seconds != self.timeline_log.total_elapsed_seconds:
+                raise ValueError("stored result and timeline durations do not agree")
+            if self.timeline_log.rally_elapsed_seconds != self.rally_log.rally_elapsed_seconds:
+                raise ValueError("stored rally log and timeline durations do not agree")
+            markers = [event for event in self.timeline_log.events if event.event_type == "RALLY"]
+            if len(markers) != len(self.rally_log.events) or any(
+                marker.rally_event_hash != rally.event_hash
+                or marker.rally_index != rally.rally_index
+                or marker.set_number != rally.set_number
+                or marker.elapsed_seconds != rally.elapsed_seconds
+                for marker, rally in zip(markers, self.rally_log.events, strict=False)
+            ):
+                raise ValueError("stored timeline does not reference the authoritative rallies")
+        elif self.rally_log is not None and self.match_log_hash != self.rally_log.match_log_hash:
+            raise ValueError("stored legacy result and rally log hashes do not agree")
+        if self.rally_log is not None and self.rally_elapsed_seconds != self.rally_log.rally_elapsed_seconds:
+            raise ValueError("stored result and rally durations do not agree")
+        return self
 
 
 class MatchReplayResponse(BaseModel):
@@ -80,6 +113,7 @@ class MatchReplayResponse(BaseModel):
     match_id: str
     match_input_snapshot: MatchInputSnapshot
     rally_log: MatchRallyLog
+    timeline_log: MatchTimelineLog | None = None
     final_result: MatchSimulationResult
     replay_source: Literal["stored_authoritative_events"] = "stored_authoritative_events"
     rng_rerun: Literal[False] = False
@@ -216,6 +250,7 @@ class MatchPackageGenerateRequest(BaseModel):
 
 class MatchSimulateRequest(BaseModel):
     seed: int = 12345
+    timing_override: MatchTimingOverride | None = None
 
 
 class ProgressionCommandRequest(BaseModel):
@@ -270,8 +305,14 @@ class SeasonMatchService:
         rally_log = match.simulated_result.rally_log
         if rally_log.input_snapshot_hash != match.match_input_snapshot.snapshot_hash:
             raise ValueError("Stored rally log is not anchored to the match input snapshot.")
-        if match.simulated_result.match_log_hash != rally_log.match_log_hash:
-            raise ValueError("Stored match result and rally log hashes do not agree.")
+        timeline_log = match.simulated_result.timeline_log
+        if timeline_log is not None:
+            if timeline_log.input_snapshot_hash != match.match_input_snapshot.snapshot_hash:
+                raise ValueError("Stored match timeline is not anchored to the input snapshot.")
+            if match.simulated_result.match_log_hash != timeline_log.match_log_hash:
+                raise ValueError("Stored match result and timeline hashes do not agree.")
+        elif match.simulated_result.match_log_hash != rally_log.match_log_hash:
+            raise ValueError("Stored legacy result and rally log hashes do not agree.")
         if match.result_fingerprint != match.simulated_result.simulation_fingerprint:
             raise ValueError("Stored match record and simulation fingerprints do not agree.")
         return MatchReplayResponse(
@@ -279,6 +320,7 @@ class SeasonMatchService:
             match_id=match_id,
             match_input_snapshot=match.match_input_snapshot,
             rally_log=rally_log,
+            timeline_log=timeline_log,
             final_result=match.simulated_result,
         )
 
@@ -387,15 +429,22 @@ class SeasonMatchService:
             games_to=match.effective_match_format.format.games_to,
             win_by=match.effective_match_format.format.win_by,
         )
+        effective_timing = EffectiveMatchTimingSnapshot.create(
+            player_a_id=context.player_a.player.player_id,
+            player_b_id=context.player_b.player.player_id,
+            override=request.timing_override,
+        )
         input_snapshot = MatchInputSnapshot.create(
             context=context,
             effective_match_format=match.effective_match_format,
+            effective_match_timing=effective_timing,
             simulation_seed=sim_seed,
             match_engine_version=MATCH_ENGINE_VERSION,
         )
         domain_result = MatchEngine(rng=DeterministicRng(input_snapshot.simulation_seed)).simulate(
             input_snapshot.context,
             log_anchor_hash=input_snapshot.snapshot_hash,
+            effective_match_timing=input_snapshot.effective_match_timing,
         )
         result_payload = domain_result.model_dump(mode="json")
         result_fp = self._fingerprint({"event_id": event_id, "match_id": match_id, "match_input_snapshot_hash": input_snapshot.snapshot_hash, "result": result_payload})
@@ -411,8 +460,18 @@ class SeasonMatchService:
             simulation_fingerprint=result_fp,
             seed=sim_seed,
             rally_log=domain_result.rally_log,
-            match_log_hash=domain_result.rally_log.match_log_hash if domain_result.rally_log else None,
+            timeline_log=domain_result.timeline_log,
+            match_log_hash=(
+                domain_result.timeline_log.match_log_hash
+                if domain_result.timeline_log
+                else domain_result.rally_log.match_log_hash if domain_result.rally_log else None
+            ),
             rally_elapsed_seconds=domain_result.rally_log.rally_elapsed_seconds if domain_result.rally_log else None,
+            match_elapsed_seconds=(
+                domain_result.timeline_log.total_elapsed_seconds
+                if domain_result.timeline_log
+                else domain_result.rally_log.rally_elapsed_seconds if domain_result.rally_log else None
+            ),
         )
         match.winner_player_id = domain_result.winner_player_id
         match.loser_player_id = domain_result.loser_player_id
@@ -670,15 +729,21 @@ class SeasonMatchService:
             games_to=match.effective_match_format.format.games_to,
             win_by=match.effective_match_format.format.win_by,
         )
+        effective_timing = EffectiveMatchTimingSnapshot.create(
+            player_a_id=context.player_a.player.player_id,
+            player_b_id=context.player_b.player.player_id,
+        )
         input_snapshot = MatchInputSnapshot.create(
             context=context,
             effective_match_format=match.effective_match_format,
+            effective_match_timing=effective_timing,
             simulation_seed=sim_seed,
             match_engine_version=MATCH_ENGINE_VERSION,
         )
         domain_result = MatchEngine(rng=DeterministicRng(input_snapshot.simulation_seed)).simulate(
             input_snapshot.context,
             log_anchor_hash=input_snapshot.snapshot_hash,
+            effective_match_timing=input_snapshot.effective_match_timing,
         )
         result_payload = domain_result.model_dump(mode="json")
         result_fp = self._fingerprint({"event_id": package.event_id, "match_id": match.match_id, "match_input_snapshot_hash": input_snapshot.snapshot_hash, "result": result_payload})
@@ -694,8 +759,18 @@ class SeasonMatchService:
             simulation_fingerprint=result_fp,
             seed=sim_seed,
             rally_log=domain_result.rally_log,
-            match_log_hash=domain_result.rally_log.match_log_hash if domain_result.rally_log else None,
+            timeline_log=domain_result.timeline_log,
+            match_log_hash=(
+                domain_result.timeline_log.match_log_hash
+                if domain_result.timeline_log
+                else domain_result.rally_log.match_log_hash if domain_result.rally_log else None
+            ),
             rally_elapsed_seconds=domain_result.rally_log.rally_elapsed_seconds if domain_result.rally_log else None,
+            match_elapsed_seconds=(
+                domain_result.timeline_log.total_elapsed_seconds
+                if domain_result.timeline_log
+                else domain_result.rally_log.rally_elapsed_seconds if domain_result.rally_log else None
+            ),
         )
         match.winner_player_id = domain_result.winner_player_id
         match.loser_player_id = domain_result.loser_player_id

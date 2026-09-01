@@ -50,7 +50,7 @@ def _snapshot() -> MatchInputSnapshot:
         context=context,
         effective_match_format=official_match_format_snapshot(),
         simulation_seed=777,
-        match_engine_version="match_engine_v2",
+        match_engine_version="match_engine_v3",
     )
 
 
@@ -61,17 +61,25 @@ def test_match_input_snapshot_round_trips_exact_current_engine_inputs() -> None:
     assert restored == snapshot
     assert restored.context.player_a.player.player_id == "A"
     assert restored.context.player_b.player.player_id == "B"
-    assert restored.schema_version == "match_input_snapshot.v2"
+    assert restored.schema_version == "match_input_snapshot.v3"
     assert restored.unsupported_future_inputs == ("active_gameplans",)
+    assert restored.effective_match_timing is not None
+    assert restored.effective_match_timing.nominal_game_break_seconds == 120
+    assert {
+        profile.player_id
+        for profile in restored.effective_match_timing.player_restart_profiles
+    } == {"A", "B"}
 
 
 def test_match_input_snapshot_rejects_player_or_seed_tampering() -> None:
-    for field in ("player", "seed"):
+    for field in ("player", "seed", "timing"):
         payload = _snapshot().model_dump(mode="json")
         if field == "player":
             payload["context"]["player_a"]["player"]["technique"] = 1
-        else:
+        elif field == "seed":
             payload["simulation_seed"] = 778
+        else:
+            payload["effective_match_timing"]["nominal_game_break_seconds"] = 90
 
         with pytest.raises(ValidationError, match="snapshot hash mismatch"):
             MatchInputSnapshot.model_validate(payload)
@@ -85,30 +93,50 @@ def test_match_input_snapshot_rejects_format_context_mismatch() -> None:
         MatchInputSnapshot.model_validate(payload)
 
 
-def test_v1_match_input_snapshot_remains_readable() -> None:
+@pytest.mark.parametrize(
+    ("schema_version", "engine_version", "unsupported"),
+    [
+        (
+            "match_input_snapshot.v1",
+            "match_engine_v1",
+            (
+                "active_gameplans",
+                "rally_model_configuration",
+                "rally_seed_stream",
+            ),
+        ),
+        (
+            "match_input_snapshot.v2",
+            "match_engine_v2",
+            ("active_gameplans",),
+        ),
+    ],
+)
+def test_legacy_match_input_snapshots_remain_readable(
+    schema_version: str,
+    engine_version: str,
+    unsupported: tuple[str, ...],
+) -> None:
     current = _snapshot()
-    unsupported = (
-        "active_gameplans",
-        "rally_model_configuration",
-        "rally_seed_stream",
-    )
     hash_payload = MatchInputSnapshot._hash_payload(
-        schema_version="match_input_snapshot.v1",
+        schema_version=schema_version,
         match_id=current.match_id,
         simulation_seed=current.simulation_seed,
-        match_engine_version="match_engine_v1",
+        match_engine_version=engine_version,
         effective_match_format=current.effective_match_format,
         context=current.context,
         unsupported_future_inputs=unsupported,
     )
     payload = current.model_dump(mode="json")
+    payload.pop("effective_match_timing")
     payload.update(
-        schema_version="match_input_snapshot.v1",
-        match_engine_version="match_engine_v1",
+        schema_version=schema_version,
+        match_engine_version=engine_version,
         unsupported_future_inputs=unsupported,
         snapshot_hash=MatchInputSnapshot._content_hash(hash_payload),
     )
 
     restored = MatchInputSnapshot.model_validate(payload)
 
-    assert restored.schema_version == "match_input_snapshot.v1"
+    assert restored.schema_version == schema_version
+    assert restored.effective_match_timing is None

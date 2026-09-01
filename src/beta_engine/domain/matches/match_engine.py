@@ -26,6 +26,19 @@ from beta_engine.domain.matches.rallies import (
     RallyScoreSnapshot,
     RallyTerminalTrigger,
 )
+from beta_engine.domain.matches.timeline import (
+    BetweenRallyIntervalEvent,
+    GameBreakEvent,
+    MatchTimelineEvent,
+    MatchTimelineLog,
+    RallyTimelineEvent,
+    ReadinessComponent,
+)
+from beta_engine.domain.matches.timing import (
+    EffectiveMatchTimingSnapshot,
+    RestartDecisionFactor,
+    RestartIntent,
+)
 
 
 @dataclass(slots=True)
@@ -62,14 +75,38 @@ class MatchEngine:
         ("quick interceptor", "late-blooming worker"): -0.008,
     }
 
-    def simulate(self, context: MatchContext, *, log_anchor_hash: str | None = None) -> MatchResult:
+    def simulate(
+        self,
+        context: MatchContext,
+        *,
+        log_anchor_hash: str | None = None,
+        effective_match_timing: EffectiveMatchTimingSnapshot | None = None,
+    ) -> MatchResult:
         player_a = context.player_a.player
         player_b = context.player_b.player
-        match_rng = self.rng.branch(SeedScope.MATCH, context.match_id, player_a.player_id, player_b.player_id)
+        match_rng = self.rng.branch(
+            SeedScope.MATCH, context.match_id, player_a.player_id, player_b.player_id
+        )
+        timing = effective_match_timing or EffectiveMatchTimingSnapshot.create(
+            player_a_id=player_a.player_id,
+            player_b_id=player_b.player_id,
+        )
+        if {profile.player_id for profile in timing.player_restart_profiles} != {
+            player_a.player_id,
+            player_b.player_id,
+        }:
+            raise ValueError(
+                "effective match timing profiles must match both participants"
+            )
 
         strength_a = self._base_strength(context.player_a)
         strength_b = self._base_strength(context.player_b)
-        matchup_a, matchup_b = self._style_and_archetype_adjustment(player_a.play_style, player_b.play_style, player_a.archetype, player_b.archetype)
+        matchup_a, matchup_b = self._style_and_archetype_adjustment(
+            player_a.play_style,
+            player_b.play_style,
+            player_a.archetype,
+            player_b.archetype,
+        )
         strength_a += matchup_a
         strength_b += matchup_b
 
@@ -85,89 +122,140 @@ class MatchEngine:
         input_hash = log_anchor_hash or self._default_log_anchor(context)
 
         for set_number in range(1, context.best_of + 1):
-            retired_player_id = self._retirement_if_triggered(context, set_number, match_rng)
+            retired_player_id = self._retirement_if_triggered(
+                context, set_number, match_rng
+            )
             if retired_player_id is not None:
-                winner_id = player_b.player_id if retired_player_id == player_a.player_id else player_a.player_id
-                return MatchResult(
-                    match_id=context.match_id,
+                winner_id = (
+                    player_b.player_id
+                    if retired_player_id == player_a.player_id
+                    else player_a.player_id
+                )
+                return self._build_result(
+                    context=context,
                     winner_player_id=winner_id,
                     loser_player_id=retired_player_id,
-                    player_a_id=player_a.player_id,
-                    player_b_id=player_b.player_id,
-                    best_of=context.best_of,
-                    games_to=context.games_to,
-                    win_by=context.win_by,
                     sets=sets,
                     sets_won=sets_won,
                     termination_reason=MatchTerminationReason.RETIREMENT,
                     retired_player_id=retired_player_id,
                     retired_at_set_start=set_number,
-                    rally_log=MatchRallyLog.create(
-                        match_id=context.match_id,
-                        input_snapshot_hash=input_hash,
-                        events=rally_events,
-                    ),
+                    rally_events=rally_events,
+                    input_hash=input_hash,
+                    match_rng=match_rng,
+                    timing=timing,
                 )
 
-            set_winner, set_result, set_events, rally_index, server_player_id = self._simulate_set(
-                set_number=set_number,
-                player_a_id=player_a.player_id,
-                player_b_id=player_b.player_id,
-                strength_a=strength_a,
-                strength_b=strength_b,
-                momentum_owner=momentum_owner,
-                context=context,
-                match_rng=match_rng,
-                sets_won=sets_won,
-                target_sets=target_sets,
-                first_rally_index=rally_index,
-                server_player_id=server_player_id,
-                previous_event_hash=rally_events[-1].event_hash if rally_events else input_hash,
+            set_winner, set_result, set_events, rally_index, server_player_id = (
+                self._simulate_set(
+                    set_number=set_number,
+                    player_a_id=player_a.player_id,
+                    player_b_id=player_b.player_id,
+                    strength_a=strength_a,
+                    strength_b=strength_b,
+                    momentum_owner=momentum_owner,
+                    context=context,
+                    match_rng=match_rng,
+                    sets_won=sets_won,
+                    target_sets=target_sets,
+                    first_rally_index=rally_index,
+                    server_player_id=server_player_id,
+                    previous_event_hash=rally_events[-1].event_hash
+                    if rally_events
+                    else input_hash,
+                )
             )
             rally_events.extend(set_events)
             sets.append(set_result)
             sets_won[set_winner] += 1
             momentum_owner = set_winner
             if sets_won[set_winner] >= target_sets:
-                loser_id = player_b.player_id if set_winner == player_a.player_id else player_a.player_id
-                return MatchResult(
-                    match_id=context.match_id,
+                loser_id = (
+                    player_b.player_id
+                    if set_winner == player_a.player_id
+                    else player_a.player_id
+                )
+                return self._build_result(
+                    context=context,
                     winner_player_id=set_winner,
                     loser_player_id=loser_id,
-                    player_a_id=player_a.player_id,
-                    player_b_id=player_b.player_id,
-                    best_of=context.best_of,
-                    games_to=context.games_to,
-                    win_by=context.win_by,
                     sets=sets,
                     sets_won=sets_won,
                     termination_reason=MatchTerminationReason.COMPLETED,
-                    rally_log=MatchRallyLog.create(
-                        match_id=context.match_id,
-                        input_snapshot_hash=input_hash,
-                        events=rally_events,
-                    ),
+                    rally_events=rally_events,
+                    input_hash=input_hash,
+                    match_rng=match_rng,
+                    timing=timing,
                 )
 
-        winner_id = player_a.player_id if sets_won[player_a.player_id] > sets_won[player_b.player_id] else player_b.player_id
-        loser_id = player_b.player_id if winner_id == player_a.player_id else player_a.player_id
-        return MatchResult(
-            match_id=context.match_id,
+        winner_id = (
+            player_a.player_id
+            if sets_won[player_a.player_id] > sets_won[player_b.player_id]
+            else player_b.player_id
+        )
+        loser_id = (
+            player_b.player_id
+            if winner_id == player_a.player_id
+            else player_a.player_id
+        )
+        return self._build_result(
+            context=context,
             winner_player_id=winner_id,
             loser_player_id=loser_id,
-            player_a_id=player_a.player_id,
-            player_b_id=player_b.player_id,
+            sets=sets,
+            sets_won=sets_won,
+            termination_reason=MatchTerminationReason.COMPLETED,
+            rally_events=rally_events,
+            input_hash=input_hash,
+            match_rng=match_rng,
+            timing=timing,
+        )
+
+    def _build_result(
+        self,
+        *,
+        context: MatchContext,
+        winner_player_id: str,
+        loser_player_id: str,
+        sets: list[SetResult],
+        sets_won: dict[str, int],
+        termination_reason: MatchTerminationReason,
+        rally_events: list[RallyEvent],
+        input_hash: str,
+        match_rng: DeterministicRng,
+        timing: EffectiveMatchTimingSnapshot,
+        retired_player_id: str | None = None,
+        retired_at_set_start: int | None = None,
+    ) -> MatchResult:
+        rally_log = MatchRallyLog.create(
+            match_id=context.match_id,
+            input_snapshot_hash=input_hash,
+            events=rally_events,
+        )
+        timeline_log = self._build_timeline(
+            context=context,
+            match_rng=match_rng,
+            rally_log=rally_log,
+            timing=timing,
+            termination_reason=termination_reason,
+            retired_at_set_start=retired_at_set_start,
+        )
+        return MatchResult(
+            match_id=context.match_id,
+            winner_player_id=winner_player_id,
+            loser_player_id=loser_player_id,
+            player_a_id=context.player_a.player.player_id,
+            player_b_id=context.player_b.player.player_id,
             best_of=context.best_of,
             games_to=context.games_to,
             win_by=context.win_by,
             sets=sets,
             sets_won=sets_won,
-            termination_reason=MatchTerminationReason.COMPLETED,
-            rally_log=MatchRallyLog.create(
-                match_id=context.match_id,
-                input_snapshot_hash=input_hash,
-                events=rally_events,
-            ),
+            termination_reason=termination_reason,
+            retired_player_id=retired_player_id,
+            retired_at_set_start=retired_at_set_start,
+            rally_log=rally_log,
+            timeline_log=timeline_log,
         )
 
     def _simulate_set(
@@ -189,8 +277,12 @@ class MatchEngine:
     ) -> tuple[str, SetResult, list[RallyEvent], int, str]:
         set_rng = match_rng.branch(SeedScope.MATCH, "set", set_number)
         momentum_adjustment = 0.035
-        adjusted_a = strength_a + (momentum_adjustment if momentum_owner == player_a_id else 0.0)
-        adjusted_b = strength_b + (momentum_adjustment if momentum_owner == player_b_id else 0.0)
+        adjusted_a = strength_a + (
+            momentum_adjustment if momentum_owner == player_a_id else 0.0
+        )
+        adjusted_b = strength_b + (
+            momentum_adjustment if momentum_owner == player_b_id else 0.0
+        )
 
         upset_roll = set_rng.uniform(-context.upset_variance, context.upset_variance)
         adjusted_a += upset_roll
@@ -203,7 +295,9 @@ class MatchEngine:
         rally_index = first_rally_index
         rally_in_set = 1
 
-        while not self._set_finished(games_a, games_b, context.games_to, context.win_by):
+        while not self._set_finished(
+            games_a, games_b, context.games_to, context.win_by
+        ):
             game_prob_a = self._game_probability(
                 adjusted_a=adjusted_a,
                 adjusted_b=adjusted_b,
@@ -231,9 +325,15 @@ class MatchEngine:
                 games_b += 1
                 rally_winner = player_b_id
 
-            set_complete = self._set_finished(games_a, games_b, context.games_to, context.win_by)
-            projected_sets_a = sets_won[player_a_id] + (1 if set_complete and games_a > games_b else 0)
-            projected_sets_b = sets_won[player_b_id] + (1 if set_complete and games_b > games_a else 0)
+            set_complete = self._set_finished(
+                games_a, games_b, context.games_to, context.win_by
+            )
+            projected_sets_a = sets_won[player_a_id] + (
+                1 if set_complete and games_a > games_b else 0
+            )
+            projected_sets_b = sets_won[player_b_id] + (
+                1 if set_complete and games_b > games_a else 0
+            )
             score_after = RallyScoreSnapshot(
                 player_a_id=player_a_id,
                 player_b_id=player_b_id,
@@ -300,6 +400,257 @@ class MatchEngine:
             server_player_id,
         )
 
+    def _build_timeline(
+        self,
+        *,
+        context: MatchContext,
+        match_rng: DeterministicRng,
+        rally_log: MatchRallyLog,
+        timing: EffectiveMatchTimingSnapshot,
+        termination_reason: MatchTerminationReason,
+        retired_at_set_start: int | None,
+    ) -> MatchTimelineLog:
+        """Build time truth from an isolated RNG branch after scoring is complete."""
+
+        timeline_events: list[MatchTimelineEvent] = []
+        previous_hash = rally_log.input_snapshot_hash
+        timeline_rng = match_rng.branch(SeedScope.MATCH, "timeline-v1")
+
+        for position, rally in enumerate(rally_log.events):
+            marker = RallyTimelineEvent.create(
+                match_id=context.match_id,
+                timeline_index=len(timeline_events) + 1,
+                rally_index=rally.rally_index,
+                set_number=rally.set_number,
+                rally_event_hash=rally.event_hash,
+                elapsed_seconds=rally.elapsed_seconds,
+                previous_event_hash=previous_hash,
+            )
+            timeline_events.append(marker)
+            previous_hash = marker.event_hash
+
+            next_rally = (
+                rally_log.events[position + 1]
+                if position + 1 < len(rally_log.events)
+                else None
+            )
+            if next_rally is not None and next_rally.set_number == rally.set_number:
+                interval = self._between_rally_interval(
+                    context=context,
+                    timing=timing,
+                    previous_rally=rally,
+                    interval_rng=timeline_rng.branch(
+                        SeedScope.MATCH, "between-rally", rally.rally_index
+                    ),
+                    timeline_index=len(timeline_events) + 1,
+                    previous_event_hash=previous_hash,
+                )
+                timeline_events.append(interval)
+                previous_hash = interval.event_hash
+            elif next_rally is not None or (
+                termination_reason == MatchTerminationReason.RETIREMENT
+                and retired_at_set_start is not None
+                and retired_at_set_start > rally.set_number
+            ):
+                game_break = self._game_break_event(
+                    context=context,
+                    timing=timing,
+                    previous_rally=rally,
+                    timeline_index=len(timeline_events) + 1,
+                    previous_event_hash=previous_hash,
+                )
+                timeline_events.append(game_break)
+                previous_hash = game_break.event_hash
+
+        return MatchTimelineLog.create(
+            match_id=context.match_id,
+            input_snapshot_hash=rally_log.input_snapshot_hash,
+            events=timeline_events,
+        )
+
+    def _between_rally_interval(
+        self,
+        *,
+        context: MatchContext,
+        timing: EffectiveMatchTimingSnapshot,
+        previous_rally: RallyEvent,
+        interval_rng: DeterministicRng,
+        timeline_index: int,
+        previous_event_hash: str,
+    ) -> BetweenRallyIntervalEvent:
+        player_a_id = context.player_a.player.player_id
+        player_b_id = context.player_b.player.player_id
+        server_player_id = previous_rally.winner_player_id
+        receiver_player_id = (
+            player_b_id if server_player_id == player_a_id else player_a_id
+        )
+        server_profile = timing.profile_for(server_player_id)
+        receiver_profile = timing.profile_for(receiver_player_id)
+        server_intent, server_factors = self._sample_restart_intent(
+            rng=interval_rng.branch(SeedScope.MATCH, "server-intent"),
+            tendency=server_profile.serve_tendency,
+            previous_rally=previous_rally,
+            games_to=context.games_to,
+        )
+        receiver_intent, receiver_factors = self._sample_restart_intent(
+            rng=interval_rng.branch(SeedScope.MATCH, "receiver-intent"),
+            tendency=receiver_profile.return_tendency,
+            previous_rally=previous_rally,
+            games_to=context.games_to,
+        )
+        server_ready = self._player_ready_seconds(
+            rng=interval_rng.branch(SeedScope.MATCH, "server-ready"),
+            intent=server_intent,
+            previous_rally=previous_rally,
+            role="server",
+        )
+        receiver_ready = self._player_ready_seconds(
+            rng=interval_rng.branch(SeedScope.MATCH, "receiver-ready"),
+            intent=receiver_intent,
+            previous_rally=previous_rally,
+            role="receiver",
+        )
+        official_ready = round(
+            interval_rng.branch(SeedScope.MATCH, "official-ready").uniform(5.5, 9.5),
+            3,
+        )
+        court_ready = round(
+            interval_rng.branch(SeedScope.MATCH, "court-ready").uniform(4.0, 8.5),
+            3,
+        )
+        readiness = {
+            ReadinessComponent.SERVER: server_ready,
+            ReadinessComponent.RECEIVER: receiver_ready,
+            ReadinessComponent.OFFICIAL: official_ready,
+            ReadinessComponent.COURT: court_ready,
+        }
+        dominant = max(readiness, key=readiness.__getitem__)
+        return BetweenRallyIntervalEvent.create(
+            match_id=context.match_id,
+            timeline_index=timeline_index,
+            after_rally_index=previous_rally.rally_index,
+            set_number=previous_rally.set_number,
+            server_player_id=server_player_id,
+            receiver_player_id=receiver_player_id,
+            server_intent=server_intent,
+            receiver_intent=receiver_intent,
+            server_decision_factors=server_factors,
+            receiver_decision_factors=receiver_factors,
+            server_ready_seconds=server_ready,
+            receiver_ready_seconds=receiver_ready,
+            official_ready_seconds=official_ready,
+            court_ready_seconds=court_ready,
+            dominant_readiness=dominant,
+            elapsed_seconds=round(max(readiness.values()), 3),
+            interval_seed=str(interval_rng.seed.value),
+            previous_event_hash=previous_event_hash,
+        )
+
+    @staticmethod
+    def _game_break_event(
+        *,
+        context: MatchContext,
+        timing: EffectiveMatchTimingSnapshot,
+        previous_rally: RallyEvent,
+        timeline_index: int,
+        previous_event_hash: str,
+    ) -> GameBreakEvent:
+        return GameBreakEvent.create(
+            match_id=context.match_id,
+            timeline_index=timeline_index,
+            after_rally_index=previous_rally.rally_index,
+            completed_set_number=previous_rally.set_number,
+            nominal_seconds=timing.nominal_game_break_seconds,
+            elapsed_seconds=timing.nominal_game_break_seconds,
+            previous_event_hash=previous_event_hash,
+        )
+
+    @staticmethod
+    def _sample_restart_intent(
+        *,
+        rng: DeterministicRng,
+        tendency: RestartIntent,
+        previous_rally: RallyEvent,
+        games_to: int,
+    ) -> tuple[RestartIntent, tuple[RestartDecisionFactor, ...]]:
+        factors = [RestartDecisionFactor.NATURAL_TENDENCY]
+        weights = {
+            RestartIntent.ACCELERATE: 0.18,
+            RestartIntent.NATURAL: 0.64,
+            RestartIntent.DELAY: 0.18,
+        }
+        weights[tendency] += 0.32
+        weights[RestartIntent.NATURAL] -= 0.16
+        opposite = (
+            RestartIntent.DELAY
+            if tendency == RestartIntent.ACCELERATE
+            else RestartIntent.ACCELERATE
+        )
+        if tendency != RestartIntent.NATURAL:
+            weights[opposite] -= 0.16
+
+        physically_demanding = (
+            previous_rally.elapsed_seconds >= 16
+            or previous_rally.estimated_shot_count >= 24
+        )
+        score = previous_rally.score_after
+        close_endgame = (
+            max(score.points_a, score.points_b) >= games_to - 2
+            and abs(score.points_a - score.points_b) <= 2
+        )
+        recovery_shift = 0.0
+        if physically_demanding:
+            recovery_shift += 0.12
+            factors.append(RestartDecisionFactor.PREVIOUS_RALLY_LOAD)
+        if close_endgame:
+            recovery_shift += 0.05
+            factors.append(RestartDecisionFactor.CLOSE_ENDGAME)
+        if recovery_shift:
+            weights[RestartIntent.DELAY] += recovery_shift
+            weights[RestartIntent.NATURAL] -= recovery_shift
+
+        roll = rng.random()
+        total = sum(weights.values())
+        cumulative = 0.0
+        for intent in (
+            RestartIntent.ACCELERATE,
+            RestartIntent.NATURAL,
+            RestartIntent.DELAY,
+        ):
+            cumulative += weights[intent] / total
+            if roll < cumulative:
+                return intent, tuple(factors)
+        return RestartIntent.DELAY, tuple(factors)
+
+    @staticmethod
+    def _player_ready_seconds(
+        *,
+        rng: DeterministicRng,
+        intent: RestartIntent,
+        previous_rally: RallyEvent,
+        role: str,
+    ) -> float:
+        lower, upper = (7.5, 13.0) if role == "server" else (8.0, 13.5)
+        base = rng.uniform(lower, upper)
+        workload_delay = min(
+            3.0,
+            max(0.0, previous_rally.elapsed_seconds - 8.0) * 0.06
+            + max(0, previous_rally.estimated_shot_count - 12) * 0.045,
+        )
+        intent_adjustment = {
+            RestartIntent.ACCELERATE: -1.8,
+            RestartIntent.NATURAL: 0.0,
+            RestartIntent.DELAY: 2.4,
+        }[intent]
+        return round(
+            MatchEngine._clamp(
+                base + workload_delay + intent_adjustment,
+                5.0,
+                22.0,
+            ),
+            3,
+        )
+
     @staticmethod
     def _base_strength(participant: MatchParticipantContext) -> float:
         p = participant.player
@@ -327,7 +678,9 @@ class MatchEngine:
         archetype_a: str,
         archetype_b: str,
     ) -> tuple[float, float]:
-        adj_a = MatchEngine.STYLE_MATCHUP_EDGES.get((style_a, style_b), 0.0) + MatchEngine.ARCHETYPE_MATCHUP_EDGES.get(
+        adj_a = MatchEngine.STYLE_MATCHUP_EDGES.get(
+            (style_a, style_b), 0.0
+        ) + MatchEngine.ARCHETYPE_MATCHUP_EDGES.get(
             (archetype_a, archetype_b),
             0.0,
         )
@@ -335,7 +688,9 @@ class MatchEngine:
 
     @staticmethod
     def _set_finished(games_a: int, games_b: int, games_to: int, win_by: int) -> bool:
-        return (games_a >= games_to or games_b >= games_to) and abs(games_a - games_b) >= win_by
+        return (games_a >= games_to or games_b >= games_to) and abs(
+            games_a - games_b
+        ) >= win_by
 
     @staticmethod
     def _clamp(value: float, min_value: float, max_value: float) -> float:
@@ -355,7 +710,9 @@ class MatchEngine:
         strength_delta = adjusted_a - adjusted_b
         base_probability = 1.0 / (1.0 + exp(-(strength_delta * 5.1)))
 
-        close_phase = games_a >= context.games_to - 2 and games_b >= context.games_to - 2
+        close_phase = (
+            games_a >= context.games_to - 2 and games_b >= context.games_to - 2
+        )
         if close_phase:
             clutch_a = context.player_a.player.clutch / 99.0
             clutch_b = context.player_b.player.clutch / 99.0
@@ -364,10 +721,14 @@ class MatchEngine:
             pressure_shift = ((clutch_a + mental_a) - (clutch_b + mental_b)) * 0.18
             base_probability += pressure_shift
 
-        consistency_delta = (context.player_a.player.consistency - context.player_b.player.consistency) / 99.0
+        consistency_delta = (
+            context.player_a.player.consistency - context.player_b.player.consistency
+        ) / 99.0
         base_probability += consistency_delta * 0.06
 
-        recovery_delta = (context.player_a.player.recovery - context.player_b.player.recovery) / 99.0
+        recovery_delta = (
+            context.player_a.player.recovery - context.player_b.player.recovery
+        ) / 99.0
         fatigue_weight = (games_a + games_b) / 20.0
         base_probability += recovery_delta * 0.04 * fatigue_weight
 
@@ -428,7 +789,9 @@ class MatchEngine:
         return hashlib.sha256(encoded).hexdigest()
 
     @staticmethod
-    def _retirement_if_triggered(context: MatchContext, set_number: int, match_rng: DeterministicRng) -> str | None:
+    def _retirement_if_triggered(
+        context: MatchContext, set_number: int, match_rng: DeterministicRng
+    ) -> str | None:
         rule = context.retirement_rule
         if not rule.enabled or rule.retired_player_id is None:
             return None

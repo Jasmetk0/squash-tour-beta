@@ -19,16 +19,21 @@ from beta_engine.domain.matches.models import (
 )
 from beta_engine.domain.matches.rallies import (
     MatchRallyLog,
+    PlayerRallyStaminaImpact,
     PostRallyStateSnapshot,
     RallyAnalyticalAttribution,
     RallyEvent,
     RallyScoreMutation,
     RallyScoreSnapshot,
+    RallyStaminaOutcomeContext,
     RallyTerminalTrigger,
 )
 from beta_engine.domain.matches.stamina import (
     EffectiveMatchStaminaSnapshot,
     MatchStaminaLog,
+    PlayerStaminaState,
+    StaminaDimension,
+    StaminaTransitionCause,
 )
 from beta_engine.domain.matches.timeline import (
     BetweenRallyIntervalEvent,
@@ -135,6 +140,11 @@ class MatchEngine:
             [player_a.player_id, player_b.player_id]
         )
         input_hash = log_anchor_hash or self._default_log_anchor(context)
+        stamina_states = MatchStaminaLog.create_initial_states(
+            effective=stamina,
+            player_ids=(player_a.player_id, player_b.player_id),
+        )
+        timeline_rng = match_rng.branch(SeedScope.MATCH, "timeline-v1")
 
         for set_number in range(1, context.best_of + 1):
             retired_player_id = self._retirement_if_triggered(
@@ -160,9 +170,17 @@ class MatchEngine:
                     match_rng=match_rng,
                     timing=timing,
                     stamina=stamina,
+                    expected_final_stamina_states=stamina_states,
                 )
 
-            set_winner, set_result, set_events, rally_index, server_player_id = (
+            (
+                set_winner,
+                set_result,
+                set_events,
+                rally_index,
+                server_player_id,
+                stamina_states,
+            ) = (
                 self._simulate_set(
                     set_number=set_number,
                     player_a_id=player_a.player_id,
@@ -179,6 +197,10 @@ class MatchEngine:
                     previous_event_hash=rally_events[-1].event_hash
                     if rally_events
                     else input_hash,
+                    timing=timing,
+                    stamina=stamina,
+                    stamina_states=stamina_states,
+                    timeline_rng=timeline_rng,
                 )
             )
             rally_events.extend(set_events)
@@ -203,7 +225,15 @@ class MatchEngine:
                     match_rng=match_rng,
                     timing=timing,
                     stamina=stamina,
+                    expected_final_stamina_states=stamina_states,
                 )
+            _, stamina_states = MatchStaminaLog.advance_states(
+                effective=stamina,
+                states=stamina_states,
+                cause=StaminaTransitionCause.GAME_BREAK_RECOVERY,
+                elapsed_seconds=timing.nominal_game_break_seconds,
+                workload_units=0.0,
+            )
 
         winner_id = (
             player_a.player_id
@@ -227,6 +257,7 @@ class MatchEngine:
             match_rng=match_rng,
             timing=timing,
             stamina=stamina,
+            expected_final_stamina_states=stamina_states,
         )
 
     def _build_result(
@@ -243,6 +274,9 @@ class MatchEngine:
         match_rng: DeterministicRng,
         timing: EffectiveMatchTimingSnapshot,
         stamina: EffectiveMatchStaminaSnapshot,
+        expected_final_stamina_states: tuple[
+            PlayerStaminaState, PlayerStaminaState
+        ],
         retired_player_id: str | None = None,
         retired_at_set_start: int | None = None,
     ) -> MatchResult:
@@ -265,6 +299,8 @@ class MatchEngine:
             rally_events=rally_log.events,
             effective=stamina,
         )
+        if stamina_log.final_states != expected_final_stamina_states:
+            raise ValueError("live stamina state diverged from authoritative timeline")
         return MatchResult(
             match_id=context.match_id,
             winner_player_id=winner_player_id,
@@ -300,7 +336,18 @@ class MatchEngine:
         first_rally_index: int,
         server_player_id: str,
         previous_event_hash: str,
-    ) -> tuple[str, SetResult, list[RallyEvent], int, str]:
+        timing: EffectiveMatchTimingSnapshot,
+        stamina: EffectiveMatchStaminaSnapshot,
+        stamina_states: tuple[PlayerStaminaState, PlayerStaminaState],
+        timeline_rng: DeterministicRng,
+    ) -> tuple[
+        str,
+        SetResult,
+        list[RallyEvent],
+        int,
+        str,
+        tuple[PlayerStaminaState, PlayerStaminaState],
+    ]:
         set_rng = match_rng.branch(SeedScope.MATCH, "set", set_number)
         momentum_adjustment = 0.035
         adjusted_a = strength_a + (
@@ -324,14 +371,14 @@ class MatchEngine:
         while not self._set_finished(
             games_a, games_b, context.games_to, context.win_by
         ):
-            game_prob_a = self._game_probability(
+            game_prob_a, stamina_outcome = self._game_probability(
                 adjusted_a=adjusted_a,
                 adjusted_b=adjusted_b,
                 context=context,
                 games_a=games_a,
                 games_b=games_b,
-                player_a_id=player_a_id,
-                player_b_id=player_b_id,
+                stamina=stamina,
+                stamina_states=stamina_states,
             )
             if games_a >= context.games_to - 2 and games_b >= context.games_to - 2:
                 was_close_endgame = True
@@ -375,6 +422,7 @@ class MatchEngine:
                 winner_player_id=rally_winner,
             )
             event = RallyEvent.create(
+                schema_version="rally_event.v2",
                 match_id=context.match_id,
                 rally_index=rally_index,
                 set_number=set_number,
@@ -396,10 +444,37 @@ class MatchEngine:
                     set_complete=set_complete,
                     match_complete=set_complete
                     and max(projected_sets_a, projected_sets_b) >= target_sets,
+                    unsupported_dynamic_state=("mental_stamina",),
                 ),
+                stamina_outcome_context=stamina_outcome,
                 previous_event_hash=previous_event_hash,
             )
             rally_events.append(event)
+            _, stamina_states = MatchStaminaLog.advance_states(
+                effective=stamina,
+                states=stamina_states,
+                cause=StaminaTransitionCause.RALLY_WORKLOAD,
+                elapsed_seconds=event.elapsed_seconds,
+                workload_units=MatchStaminaLog.rally_workload(event),
+            )
+            if not set_complete:
+                interval = self._between_rally_interval(
+                    context=context,
+                    timing=timing,
+                    previous_rally=event,
+                    interval_rng=timeline_rng.branch(
+                        SeedScope.MATCH, "between-rally", event.rally_index
+                    ),
+                    timeline_index=event.rally_index * 2,
+                    previous_event_hash="0" * 64,
+                )
+                _, stamina_states = MatchStaminaLog.advance_states(
+                    effective=stamina,
+                    states=stamina_states,
+                    cause=StaminaTransitionCause.BETWEEN_RALLY_RECOVERY,
+                    elapsed_seconds=interval.elapsed_seconds,
+                    workload_units=0.0,
+                )
             previous_event_hash = event.event_hash
             server_player_id = rally_winner
             rally_index += 1
@@ -424,6 +499,7 @@ class MatchEngine:
             rally_events,
             rally_index,
             server_player_id,
+            stamina_states,
         )
 
     def _build_timeline(
@@ -732,11 +808,22 @@ class MatchEngine:
         context: MatchContext,
         games_a: int,
         games_b: int,
-        player_a_id: str,
-        player_b_id: str,
-    ) -> float:
+        stamina: EffectiveMatchStaminaSnapshot,
+        stamina_states: tuple[PlayerStaminaState, PlayerStaminaState],
+    ) -> tuple[float, RallyStaminaOutcomeContext]:
         strength_delta = adjusted_a - adjusted_b
         base_probability = 1.0 / (1.0 + exp(-(strength_delta * 5.1)))
+        impact_a = self._stamina_impact(stamina_states[0], enabled=stamina.outcome_effect_applied)
+        impact_b = self._stamina_impact(stamina_states[1], enabled=stamina.outcome_effect_applied)
+        adjusted_probability = 1.0 / (
+            1.0
+            + exp(
+                -(
+                    (strength_delta - impact_a.strength_penalty + impact_b.strength_penalty)
+                    * 5.1
+                )
+            )
+        )
 
         close_phase = (
             games_a >= context.games_to - 2 and games_b >= context.games_to - 2
@@ -748,19 +835,51 @@ class MatchEngine:
             mental_b = context.player_b.player.mental / 99.0
             pressure_shift = ((clutch_a + mental_a) - (clutch_b + mental_b)) * 0.18
             base_probability += pressure_shift
+            adjusted_probability += pressure_shift
 
         consistency_delta = (
             context.player_a.player.consistency - context.player_b.player.consistency
         ) / 99.0
         base_probability += consistency_delta * 0.06
+        adjusted_probability += consistency_delta * 0.06
 
-        recovery_delta = (
-            context.player_a.player.recovery - context.player_b.player.recovery
-        ) / 99.0
-        fatigue_weight = (games_a + games_b) / 20.0
-        base_probability += recovery_delta * 0.04 * fatigue_weight
+        base_probability = round(self._clamp(base_probability, 0.05, 0.95), 8)
+        adjusted_probability = round(
+            self._clamp(adjusted_probability, 0.05, 0.95), 8
+        )
+        return adjusted_probability, RallyStaminaOutcomeContext(
+            base_probability_player_a=base_probability,
+            adjusted_probability_player_a=adjusted_probability,
+            player_impacts=(impact_a, impact_b),
+        )
 
-        return self._clamp(base_probability, 0.05, 0.95)
+    @staticmethod
+    def _stamina_impact(
+        state: PlayerStaminaState, *, enabled: bool
+    ) -> PlayerRallyStaminaImpact:
+        fills = {
+            bar.dimension: round(bar.current / bar.capacity, 8)
+            for bar in state.bars
+        }
+        nonlinear = {
+            dimension: (1.0 - fills[dimension]) ** 2.2
+            for dimension in StaminaDimension
+        }
+        weighted_deficit = (
+            nonlinear[StaminaDimension.EXPLOSIVE] * 0.45
+            + nonlinear[StaminaDimension.RALLY] * 0.35
+            + nonlinear[StaminaDimension.MATCH] * 0.20
+        )
+        weighted_deficit = round(weighted_deficit, 8)
+        penalty = 0.18 * weighted_deficit if enabled else 0.0
+        return PlayerRallyStaminaImpact(
+            player_id=state.player_id,
+            explosive_fill_ratio=fills[StaminaDimension.EXPLOSIVE],
+            rally_fill_ratio=fills[StaminaDimension.RALLY],
+            match_fill_ratio=fills[StaminaDimension.MATCH],
+            weighted_nonlinear_deficit=weighted_deficit,
+            strength_penalty=round(penalty, 8),
+        )
 
     @staticmethod
     def _rally_detail(

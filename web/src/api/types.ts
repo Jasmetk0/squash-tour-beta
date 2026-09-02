@@ -3383,9 +3383,9 @@ export type PlayerStaminaProfile = {
 
 export type EffectiveMatchStaminaSnapshot = {
   schema_version: 'effective_match_stamina.v1'
-  calibration_version: 'pre_alpha_physical_v1'
+  calibration_version: 'pre_alpha_physical_v1' | 'pre_alpha_physical_v2'
   player_profiles: [PlayerStaminaProfile, PlayerStaminaProfile]
-  outcome_effect_applied: false
+  outcome_effect_applied: boolean
   unsupported_components: Array<
     | 'stamina_outcome_coupling'
     | 'within_rally_effort_changes'
@@ -3401,6 +3401,7 @@ export type MatchInputSnapshot = {
     | 'match_input_snapshot.v2'
     | 'match_input_snapshot.v3'
     | 'match_input_snapshot.v4'
+    | 'match_input_snapshot.v5'
   match_id: string
   simulation_seed: number
   match_engine_version: string
@@ -3430,8 +3431,24 @@ export type RallyScoreMutation = {
   reason: 'RALLY_RESULT' | 'CONDUCT_STROKE' | 'OFFICIAL_ADJUSTMENT'
 }
 
+export type PlayerRallyStaminaImpact = {
+  player_id: string
+  explosive_fill_ratio: number
+  rally_fill_ratio: number
+  match_fill_ratio: number
+  weighted_nonlinear_deficit: number
+  strength_penalty: number
+}
+
+export type RallyStaminaOutcomeContext = {
+  calibration_version: 'pre_alpha_outcome_v1'
+  base_probability_player_a: number
+  adjusted_probability_player_a: number
+  player_impacts: [PlayerRallyStaminaImpact, PlayerRallyStaminaImpact]
+}
+
 export type RallyEvent = {
-  schema_version: 'rally_event.v1'
+  schema_version: 'rally_event.v1' | 'rally_event.v2'
   match_id: string
   rally_index: number
   set_number: number
@@ -3474,6 +3491,7 @@ export type RallyEvent = {
       'physical_stamina' | 'explosive_stamina' | 'mental_stamina'
     >
   }
+  stamina_outcome_context: RallyStaminaOutcomeContext | null
   side_incidents: Array<Record<string, unknown>>
   previous_event_hash: string
   event_hash_algorithm: 'sha256'
@@ -3631,12 +3649,12 @@ export type MatchStaminaLog = {
   schema_version: 'match_stamina_log.v1'
   match_id: string
   timeline_log_hash: string
-  calibration_version: 'pre_alpha_physical_v1'
+  calibration_version: 'pre_alpha_physical_v1' | 'pre_alpha_physical_v2'
   initial_states: [PlayerStaminaState, PlayerStaminaState]
   transitions: StaminaTransition[]
   final_states: [PlayerStaminaState, PlayerStaminaState]
   total_transitions: number
-  outcome_effect_applied: false
+  outcome_effect_applied: boolean
   unsupported_components: EffectiveMatchStaminaSnapshot['unsupported_components']
   match_log_hash_algorithm: 'sha256'
   match_log_hash: string

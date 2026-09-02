@@ -203,7 +203,7 @@ def test_simulate_next_completes_first_pending_and_is_replay_deterministic(
     assert a_completed.model_dump() == b_completed.model_dump()
     assert a_completed.match_input_snapshot is not None
     assert a_completed.match_input_snapshot.snapshot_hash
-    assert a_completed.match_input_snapshot.schema_version == "match_input_snapshot.v4"
+    assert a_completed.match_input_snapshot.schema_version == "match_input_snapshot.v5"
     assert a_completed.match_input_snapshot.effective_match_timing is not None
     assert a_completed.match_input_snapshot.effective_match_timing.nominal_game_break_seconds == 120
     assert a_completed.match_input_snapshot.simulation_seed == a_completed.simulation_seed

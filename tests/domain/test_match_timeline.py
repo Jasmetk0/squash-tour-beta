@@ -157,7 +157,7 @@ def test_pre_alpha_interval_calibration_stays_in_decided_working_corridor() -> N
     assert within_corridor >= 0.95
 
 
-def test_timing_override_changes_only_timeline_not_sporting_result() -> None:
+def test_timing_override_changes_causal_recovery_timeline() -> None:
     default_result = _result()
     timing = EffectiveMatchTimingSnapshot.create(
         player_a_id="A",
@@ -180,10 +180,8 @@ def test_timing_override_changes_only_timeline_not_sporting_result() -> None:
     )
     overridden_result = _result(timing=timing)
 
-    assert overridden_result.winner_player_id == default_result.winner_player_id
-    assert overridden_result.sets == default_result.sets
-    assert overridden_result.rally_log == default_result.rally_log
     assert overridden_result.timeline_log != default_result.timeline_log
+    assert overridden_result.stamina_log != default_result.stamina_log
     assert overridden_result.timeline_log is not None
     assert all(
         event.elapsed_seconds == 75

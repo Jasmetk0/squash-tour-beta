@@ -77,8 +77,30 @@ class PostRallyStateSnapshot(BaseModel):
     ] = ("physical_stamina", "explosive_stamina", "mental_stamina")
 
 
+class PlayerRallyStaminaImpact(BaseModel):
+    player_id: str = Field(min_length=1)
+    explosive_fill_ratio: float = Field(ge=0, le=1)
+    rally_fill_ratio: float = Field(ge=0, le=1)
+    match_fill_ratio: float = Field(ge=0, le=1)
+    weighted_nonlinear_deficit: float = Field(ge=0, le=1)
+    strength_penalty: float = Field(ge=0, le=0.25)
+
+
+class RallyStaminaOutcomeContext(BaseModel):
+    calibration_version: Literal["pre_alpha_outcome_v1"] = "pre_alpha_outcome_v1"
+    base_probability_player_a: float = Field(ge=0, le=1)
+    adjusted_probability_player_a: float = Field(ge=0, le=1)
+    player_impacts: tuple[PlayerRallyStaminaImpact, PlayerRallyStaminaImpact]
+
+    @model_validator(mode="after")
+    def validate_players(self) -> RallyStaminaOutcomeContext:
+        if len({impact.player_id for impact in self.player_impacts}) != 2:
+            raise ValueError("rally stamina impact requires two distinct players")
+        return self
+
+
 class RallyEvent(BaseModel):
-    schema_version: Literal["rally_event.v1"] = "rally_event.v1"
+    schema_version: Literal["rally_event.v1", "rally_event.v2"] = "rally_event.v1"
     match_id: str = Field(min_length=1)
     rally_index: int = Field(ge=1)
     set_number: int = Field(ge=1)
@@ -97,6 +119,7 @@ class RallyEvent(BaseModel):
     elapsed_seconds: float = Field(gt=0)
     rally_seed: str = Field(pattern=r"^[0-9]+$")
     post_rally_state: PostRallyStateSnapshot
+    stamina_outcome_context: RallyStaminaOutcomeContext | None = None
     side_incidents: tuple[dict[str, object], ...] = ()
     previous_event_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     event_hash_algorithm: Literal["sha256"] = "sha256"
@@ -164,6 +187,19 @@ class RallyEvent(BaseModel):
             )
         if self.post_rally_state.next_server_player_id != self.winner_player_id:
             raise ValueError("rally winner must serve next in current individual rules")
+        if self.schema_version == "rally_event.v2":
+            if self.stamina_outcome_context is None:
+                raise ValueError("v2 rally event requires stamina outcome context")
+            if tuple(
+                impact.player_id
+                for impact in self.stamina_outcome_context.player_impacts
+            ) != (
+                self.score_before.player_a_id,
+                self.score_before.player_b_id,
+            ):
+                raise ValueError("rally stamina impacts do not match participant order")
+        elif self.stamina_outcome_context is not None:
+            raise ValueError("v1 rally event cannot contain stamina outcome context")
         if self.event_hash != self._content_hash(
             self._hash_payload(
                 self.model_dump(
@@ -176,11 +212,14 @@ class RallyEvent(BaseModel):
 
     @staticmethod
     def _hash_payload(values: dict[str, object]) -> dict[str, object]:
-        return {
+        payload = {
             key: _json_value(value)
             for key, value in values.items()
             if key not in {"event_hash", "event_hash_algorithm"}
         }
+        if values.get("schema_version") == "rally_event.v1":
+            payload.pop("stamina_outcome_context", None)
+        return payload
 
     @staticmethod
     def _content_hash(payload: dict[str, object]) -> str:

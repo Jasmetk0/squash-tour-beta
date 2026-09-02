@@ -3317,6 +3317,7 @@ export type MatchSimulationResult = {
   seed: number
   rally_log: MatchRallyLog | null
   timeline_log: MatchTimelineLog | null
+  stamina_log: MatchStaminaLog | null
   match_log_hash: string | null
   rally_elapsed_seconds: number | null
   match_elapsed_seconds: number | null
@@ -3365,13 +3366,47 @@ export type EffectiveMatchFormatSnapshot = {
   snapshot_hash: string
 }
 
+export type StaminaDimension = 'EXPLOSIVE' | 'RALLY' | 'MATCH'
+
+export type StaminaBarProfile = {
+  dimension: StaminaDimension
+  capacity: number
+  workload_cost_factor: number
+  recovery_per_second: number
+}
+
+export type PlayerStaminaProfile = {
+  player_id: string
+  initial_readiness_factor: number
+  bars: StaminaBarProfile[]
+}
+
+export type EffectiveMatchStaminaSnapshot = {
+  schema_version: 'effective_match_stamina.v1'
+  calibration_version: 'pre_alpha_physical_v1'
+  player_profiles: [PlayerStaminaProfile, PlayerStaminaProfile]
+  outcome_effect_applied: false
+  unsupported_components: Array<
+    | 'stamina_outcome_coupling'
+    | 'within_rally_effort_changes'
+    | 'within_rally_explosive_recovery'
+    | 'carried_reserves_between_matches'
+    | 'injury_specific_cost_profiles'
+  >
+}
+
 export type MatchInputSnapshot = {
-  schema_version: 'match_input_snapshot.v1' | 'match_input_snapshot.v2' | 'match_input_snapshot.v3'
+  schema_version:
+    | 'match_input_snapshot.v1'
+    | 'match_input_snapshot.v2'
+    | 'match_input_snapshot.v3'
+    | 'match_input_snapshot.v4'
   match_id: string
   simulation_seed: number
   match_engine_version: string
   effective_match_format: EffectiveMatchFormatSnapshot
   effective_match_timing: EffectiveMatchTimingSnapshot | null
+  effective_match_stamina: EffectiveMatchStaminaSnapshot | null
   context: Record<string, unknown>
   unsupported_future_inputs: Array<
     'active_gameplans' | 'rally_model_configuration' | 'rally_seed_stream'
@@ -3515,7 +3550,7 @@ export type GameBreakEvent = {
   completed_set_number: number
   nominal_seconds: number
   duration_source: 'NOMINAL_RULE'
-  dynamic_recovery_applied: false
+  dynamic_recovery_applied: boolean
   elapsed_seconds: number
   previous_event_hash: string
   event_hash_algorithm: 'sha256'
@@ -3554,12 +3589,66 @@ export type MatchTimelineLog = {
   match_log_hash: string
 }
 
+export type StaminaBarState = {
+  dimension: StaminaDimension
+  capacity: number
+  current: number
+}
+
+export type PlayerStaminaState = {
+  player_id: string
+  bars: StaminaBarState[]
+}
+
+export type PlayerStaminaDelta = {
+  player_id: string
+  explosive: number
+  rally: number
+  match: number
+}
+
+export type StaminaTransition = {
+  schema_version: 'stamina_transition.v1'
+  match_id: string
+  transition_index: number
+  source_timeline_index: number
+  source_timeline_event_hash: string
+  cause:
+    | 'RALLY_WORKLOAD'
+    | 'BETWEEN_RALLY_RECOVERY'
+    | 'GAME_BREAK_RECOVERY'
+  elapsed_seconds: number
+  workload_units: number
+  states_before: [PlayerStaminaState, PlayerStaminaState]
+  deltas: [PlayerStaminaDelta, PlayerStaminaDelta]
+  states_after: [PlayerStaminaState, PlayerStaminaState]
+  previous_transition_hash: string
+  transition_hash_algorithm: 'sha256'
+  transition_hash: string
+}
+
+export type MatchStaminaLog = {
+  schema_version: 'match_stamina_log.v1'
+  match_id: string
+  timeline_log_hash: string
+  calibration_version: 'pre_alpha_physical_v1'
+  initial_states: [PlayerStaminaState, PlayerStaminaState]
+  transitions: StaminaTransition[]
+  final_states: [PlayerStaminaState, PlayerStaminaState]
+  total_transitions: number
+  outcome_effect_applied: false
+  unsupported_components: EffectiveMatchStaminaSnapshot['unsupported_components']
+  match_log_hash_algorithm: 'sha256'
+  match_log_hash: string
+}
+
 export type MatchReplayResponse = {
   event_id: string
   match_id: string
   match_input_snapshot: MatchInputSnapshot
   rally_log: MatchRallyLog
   timeline_log: MatchTimelineLog | null
+  stamina_log: MatchStaminaLog | null
   final_result: MatchSimulationResult
   replay_source: 'stored_authoritative_events'
   rng_rerun: false

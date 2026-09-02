@@ -26,6 +26,10 @@ from beta_engine.domain.matches.rallies import (
     RallyScoreSnapshot,
     RallyTerminalTrigger,
 )
+from beta_engine.domain.matches.stamina import (
+    EffectiveMatchStaminaSnapshot,
+    MatchStaminaLog,
+)
 from beta_engine.domain.matches.timeline import (
     BetweenRallyIntervalEvent,
     GameBreakEvent,
@@ -81,6 +85,7 @@ class MatchEngine:
         *,
         log_anchor_hash: str | None = None,
         effective_match_timing: EffectiveMatchTimingSnapshot | None = None,
+        effective_match_stamina: EffectiveMatchStaminaSnapshot | None = None,
     ) -> MatchResult:
         player_a = context.player_a.player
         player_b = context.player_b.player
@@ -91,12 +96,22 @@ class MatchEngine:
             player_a_id=player_a.player_id,
             player_b_id=player_b.player_id,
         )
+        stamina = effective_match_stamina or EffectiveMatchStaminaSnapshot.create(
+            context=context
+        )
         if {profile.player_id for profile in timing.player_restart_profiles} != {
             player_a.player_id,
             player_b.player_id,
         }:
             raise ValueError(
                 "effective match timing profiles must match both participants"
+            )
+        if tuple(profile.player_id for profile in stamina.player_profiles) != (
+            player_a.player_id,
+            player_b.player_id,
+        ):
+            raise ValueError(
+                "effective stamina profiles must match participant order"
             )
 
         strength_a = self._base_strength(context.player_a)
@@ -144,6 +159,7 @@ class MatchEngine:
                     input_hash=input_hash,
                     match_rng=match_rng,
                     timing=timing,
+                    stamina=stamina,
                 )
 
             set_winner, set_result, set_events, rally_index, server_player_id = (
@@ -186,6 +202,7 @@ class MatchEngine:
                     input_hash=input_hash,
                     match_rng=match_rng,
                     timing=timing,
+                    stamina=stamina,
                 )
 
         winner_id = (
@@ -209,6 +226,7 @@ class MatchEngine:
             input_hash=input_hash,
             match_rng=match_rng,
             timing=timing,
+            stamina=stamina,
         )
 
     def _build_result(
@@ -224,6 +242,7 @@ class MatchEngine:
         input_hash: str,
         match_rng: DeterministicRng,
         timing: EffectiveMatchTimingSnapshot,
+        stamina: EffectiveMatchStaminaSnapshot,
         retired_player_id: str | None = None,
         retired_at_set_start: int | None = None,
     ) -> MatchResult:
@@ -239,6 +258,12 @@ class MatchEngine:
             timing=timing,
             termination_reason=termination_reason,
             retired_at_set_start=retired_at_set_start,
+        )
+        stamina_log = MatchStaminaLog.build(
+            context=context,
+            timeline=timeline_log,
+            rally_events=rally_log.events,
+            effective=stamina,
         )
         return MatchResult(
             match_id=context.match_id,
@@ -256,6 +281,7 @@ class MatchEngine:
             retired_at_set_start=retired_at_set_start,
             rally_log=rally_log,
             timeline_log=timeline_log,
+            stamina_log=stamina_log,
         )
 
     def _simulate_set(
@@ -466,6 +492,7 @@ class MatchEngine:
             match_id=context.match_id,
             input_snapshot_hash=rally_log.input_snapshot_hash,
             events=timeline_events,
+            dynamic_stamina_recovery=True,
         )
 
     def _between_rally_interval(
@@ -562,6 +589,7 @@ class MatchEngine:
             completed_set_number=previous_rally.set_number,
             nominal_seconds=timing.nominal_game_break_seconds,
             elapsed_seconds=timing.nominal_game_break_seconds,
+            dynamic_recovery_applied=True,
             previous_event_hash=previous_event_hash,
         )
 

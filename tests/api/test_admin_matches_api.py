@@ -89,6 +89,8 @@ def test_simulate_selected_and_next(tmp_path: Path) -> None:
         assert completed["simulated_result"]["match_log_hash"]
         assert completed["simulated_result"]["rally_log"]["events"]
         assert completed["simulated_result"]["timeline_log"]["events"]
+        assert completed["simulated_result"]["stamina_log"]["transitions"]
+        assert completed["match_input_snapshot"]["effective_match_stamina"]["calibration_version"] == "pre_alpha_physical_v1"
         assert completed["simulated_result"]["match_elapsed_seconds"] > completed["simulated_result"]["rally_elapsed_seconds"]
         assert completed["match_input_snapshot"]["effective_match_timing"]["nominal_game_break_seconds"] == 90
 
@@ -101,8 +103,12 @@ def test_simulate_selected_and_next(tmp_path: Path) -> None:
         assert replay["verified"] is True
         assert replay["replay_source"] == "stored_authoritative_events"
         assert (
-            replay["timeline_log"]["match_log_hash"]
+            replay["stamina_log"]["match_log_hash"]
             == completed["simulated_result"]["match_log_hash"]
+        )
+        assert (
+            replay["stamina_log"]["timeline_log_hash"]
+            == replay["timeline_log"]["match_log_hash"]
         )
 
 

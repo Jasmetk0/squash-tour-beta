@@ -81,8 +81,9 @@ def test_effective_profile_derives_three_distinct_bars_from_player_inputs() -> N
     assert profile_a.bar(StaminaDimension.MATCH).recovery_per_second > profile_b.bar(
         StaminaDimension.MATCH
     ).recovery_per_second
-    assert effective.calibration_version == "pre_alpha_physical_v2"
+    assert effective.calibration_version == "pre_alpha_physical_v3"
     assert effective.outcome_effect_applied is True
+    assert effective.pre_rally_effort_applied is True
     assert "stamina_outcome_coupling" not in effective.unsupported_components
 
 
@@ -227,6 +228,24 @@ def test_stamina_log_rejects_hash_and_state_tampering() -> None:
         MatchStaminaLog.model_validate(payload)
 
 
+def test_v1_stamina_transition_remains_hash_compatible_without_player_workloads() -> None:
+    inactive = EffectiveMatchStaminaSnapshot.create(
+        context=_context(), outcome_effect_applied=False
+    )
+    result = _result(stamina=inactive)
+    assert result.stamina_log is not None
+    payload = result.stamina_log.model_dump(mode="json")
+    payload["schema_version"] = "match_stamina_log.v1"
+    payload.pop("pre_rally_effort_applied")
+    for transition in payload["transitions"]:
+        transition.pop("player_workloads")
+
+    restored = MatchStaminaLog.model_validate(payload)
+
+    assert restored.schema_version == "match_stamina_log.v1"
+    assert restored.pre_rally_effort_applied is False
+
+
 def test_every_rally_records_the_live_nonlinear_stamina_effect() -> None:
     result = _result()
     assert result.rally_log is not None
@@ -234,7 +253,7 @@ def test_every_rally_records_the_live_nonlinear_stamina_effect() -> None:
     assert result.stamina_log.outcome_effect_applied is True
 
     contexts = [event.stamina_outcome_context for event in result.rally_log.events]
-    assert all(event.schema_version == "rally_event.v2" for event in result.rally_log.events)
+    assert all(event.schema_version == "rally_event.v3" for event in result.rally_log.events)
     assert all(context is not None for context in contexts)
     assert any(
         impact.strength_penalty > 0
@@ -243,6 +262,95 @@ def test_every_rally_records_the_live_nonlinear_stamina_effect() -> None:
         for impact in context.player_impacts
     )
     result.stamina_log.validate_rally_outcomes(result.rally_log.events)
+
+
+def test_each_rally_records_asymmetric_player_effort_and_workload() -> None:
+    result = _result()
+    assert result.rally_log is not None
+    assert result.stamina_log is not None
+
+    rally_transitions = [
+        transition
+        for transition in result.stamina_log.transitions
+        if transition.cause == StaminaTransitionCause.RALLY_WORKLOAD
+    ]
+    observed_levels = set()
+    for rally, transition in zip(
+        result.rally_log.events, rally_transitions, strict=True
+    ):
+        assert rally.effort_context is not None
+        efforts = rally.effort_context.player_efforts
+        observed_levels.update(effort.intended_level for effort in efforts)
+        assert rally.effort_context.base_workload_units == transition.workload_units
+        assert tuple(
+            (workload.player_id, workload.workload_units)
+            for workload in transition.player_workloads
+        ) == tuple((effort.player_id, effort.workload_units) for effort in efforts)
+        assert efforts[0].workload_units != efforts[1].workload_units
+
+    assert len(observed_levels) >= 3
+
+
+def test_effort_ai_conserves_low_reserve_and_movement_changes_energy_cost() -> None:
+    context = _context()
+    effective = EffectiveMatchStaminaSnapshot.create(context=context)
+    rested = MatchStaminaLog.create_initial_states(
+        effective=effective, player_ids=("A", "B")
+    )[0]
+    depleted = PlayerStaminaState(
+        player_id="A",
+        bars=tuple(
+            bar.model_copy(update={"current": bar.capacity * 0.10})
+            for bar in rested.bars
+        ),
+    )
+    conserve = MatchEngine._select_rally_effort(
+        participant=context.player_a,
+        state=depleted,
+        own_points=4,
+        opponent_points=4,
+        games_to=11,
+        rng=DeterministicRng(55),
+    )
+    less_efficient_player = context.player_a.player.model_copy(update={"movement": 45})
+    less_efficient = MatchEngine._select_rally_effort(
+        participant=context.player_a.model_copy(
+            update={"player": less_efficient_player}
+        ),
+        state=rested,
+        own_points=4,
+        opponent_points=4,
+        games_to=11,
+        rng=DeterministicRng(55),
+    )
+    efficient = MatchEngine._select_rally_effort(
+        participant=context.player_a,
+        state=rested,
+        own_points=4,
+        opponent_points=4,
+        games_to=11,
+        rng=DeterministicRng(55),
+    )
+
+    assert conserve.intended_level.value == "CONSERVE"
+    assert conserve.executed_intensity_multiplier == conserve.requested_intensity_multiplier
+    assert efficient.movement_efficiency_factor < less_efficient.movement_efficiency_factor
+
+
+def test_replay_rejects_individual_workload_tampering() -> None:
+    result = _result()
+    assert result.rally_log is not None
+    assert result.stamina_log is not None
+    payload = result.stamina_log.model_dump(mode="json")
+    first_rally = next(
+        transition
+        for transition in payload["transitions"]
+        if transition["cause"] == "RALLY_WORKLOAD"
+    )
+    first_rally["player_workloads"][0]["workload_units"] += 0.25
+
+    with pytest.raises(ValidationError, match="hash mismatch"):
+        MatchStaminaLog.model_validate(payload)
 
 
 def test_stamina_penalty_is_continuous_and_steepens_near_empty() -> None:

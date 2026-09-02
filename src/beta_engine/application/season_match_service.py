@@ -49,7 +49,7 @@ MatchValidationSeverity = Literal["warning", "error"]
 ProgressionStatusValue = Literal["not_started", "in_progress", "completed", "not_applicable"]
 EventProgressionStatusValue = Literal["not_started", "in_progress", "completed", "blocked"]
 ProgressionAction = Literal["process_byes", "refresh_status", "simulate_round", "simulate_draw", "promote_qualifiers", "advance_completed"]
-MATCH_ENGINE_VERSION = "match_engine_v5"
+MATCH_ENGINE_VERSION = "match_engine_v6"
 
 
 
@@ -324,6 +324,7 @@ class SeasonMatchService:
         if match.match_input_snapshot.schema_version in {
             "match_input_snapshot.v4",
             "match_input_snapshot.v5",
+            "match_input_snapshot.v6",
         }:
             if stamina_log is None or effective_stamina is None:
                 raise ValueError("Stored v4 match is missing authoritative stamina data.")

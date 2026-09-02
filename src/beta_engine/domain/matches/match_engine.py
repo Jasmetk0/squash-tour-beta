@@ -19,9 +19,13 @@ from beta_engine.domain.matches.models import (
 )
 from beta_engine.domain.matches.rallies import (
     MatchRallyLog,
+    PlayerRallyEffort,
     PlayerRallyStaminaImpact,
     PostRallyStateSnapshot,
     RallyAnalyticalAttribution,
+    RallyEffortContext,
+    RallyEffortDecisionFactor,
+    RallyEffortLevel,
     RallyEvent,
     RallyScoreMutation,
     RallyScoreSnapshot,
@@ -371,6 +375,27 @@ class MatchEngine:
         while not self._set_finished(
             games_a, games_b, context.games_to, context.win_by
         ):
+            effort_rng = set_rng.branch(
+                SeedScope.MATCH, "rally-effort", rally_in_set
+            )
+            efforts = (
+                self._select_rally_effort(
+                    participant=context.player_a,
+                    state=stamina_states[0],
+                    own_points=games_a,
+                    opponent_points=games_b,
+                    games_to=context.games_to,
+                    rng=effort_rng.branch(SeedScope.MATCH, player_a_id),
+                ),
+                self._select_rally_effort(
+                    participant=context.player_b,
+                    state=stamina_states[1],
+                    own_points=games_b,
+                    opponent_points=games_a,
+                    games_to=context.games_to,
+                    rng=effort_rng.branch(SeedScope.MATCH, player_b_id),
+                ),
+            ) if stamina.pre_rally_effort_applied else None
             game_prob_a, stamina_outcome = self._game_probability(
                 adjusted_a=adjusted_a,
                 adjusted_b=adjusted_b,
@@ -379,6 +404,7 @@ class MatchEngine:
                 games_b=games_b,
                 stamina=stamina,
                 stamina_states=stamina_states,
+                efforts=efforts,
             )
             if games_a >= context.games_to - 2 and games_b >= context.games_to - 2:
                 was_close_endgame = True
@@ -421,8 +447,39 @@ class MatchEngine:
                 server_player_id=server_player_id,
                 winner_player_id=rally_winner,
             )
+            effort_context = None
+            player_workloads = None
+            if efforts is not None:
+                base_workload = MatchStaminaLog.workload_from_detail(
+                    elapsed_seconds=elapsed,
+                    estimated_shot_count=shots,
+                    abstract_segments=segments,
+                )
+                completed_efforts = tuple(
+                    self._complete_rally_effort(
+                        effort=effort,
+                        base_workload=base_workload,
+                        won_rally=effort.player_id == rally_winner,
+                        attribution=attribution,
+                    )
+                    for effort in efforts
+                )
+                effort_context = RallyEffortContext(
+                    base_workload_units=base_workload,
+                    probability_before_effort_player_a=(
+                        stamina_outcome.adjusted_probability_player_a
+                    ),
+                    probability_after_effort_player_a=game_prob_a,
+                    player_efforts=completed_efforts,
+                )
+                player_workloads = {
+                    effort.player_id: effort.workload_units
+                    for effort in completed_efforts
+                }
             event = RallyEvent.create(
-                schema_version="rally_event.v2",
+                schema_version=(
+                    "rally_event.v3" if effort_context is not None else "rally_event.v2"
+                ),
                 match_id=context.match_id,
                 rally_index=rally_index,
                 set_number=set_number,
@@ -447,6 +504,7 @@ class MatchEngine:
                     unsupported_dynamic_state=("mental_stamina",),
                 ),
                 stamina_outcome_context=stamina_outcome,
+                effort_context=effort_context,
                 previous_event_hash=previous_event_hash,
             )
             rally_events.append(event)
@@ -456,6 +514,7 @@ class MatchEngine:
                 cause=StaminaTransitionCause.RALLY_WORKLOAD,
                 elapsed_seconds=event.elapsed_seconds,
                 workload_units=MatchStaminaLog.rally_workload(event),
+                player_workload_units=player_workloads,
             )
             if not set_complete:
                 interval = self._between_rally_interval(
@@ -800,6 +859,169 @@ class MatchEngine:
     def _clamp(value: float, min_value: float, max_value: float) -> float:
         return max(min_value, min(max_value, value))
 
+    @classmethod
+    def _select_rally_effort(
+        cls,
+        *,
+        participant: MatchParticipantContext,
+        state: PlayerStaminaState,
+        own_points: int,
+        opponent_points: int,
+        games_to: int,
+        rng: DeterministicRng,
+    ) -> PlayerRallyEffort:
+        """Choose an imperfect pre-rally effort intent from information the player has."""
+
+        player = participant.player
+        # Explicit pre-alpha calibration only: the Master fixes the four choices and
+        # limited perception, while leaving their exact decision mathematics open.
+        actual_reserve = (
+            state.current(StaminaDimension.EXPLOSIVE)
+            / next(
+                bar.capacity
+                for bar in state.bars
+                if bar.dimension == StaminaDimension.EXPLOSIVE
+            )
+            * 0.45
+            + state.current(StaminaDimension.RALLY)
+            / next(
+                bar.capacity
+                for bar in state.bars
+                if bar.dimension == StaminaDimension.RALLY
+            )
+            * 0.35
+            + state.current(StaminaDimension.MATCH)
+            / next(
+                bar.capacity
+                for bar in state.bars
+                if bar.dimension == StaminaDimension.MATCH
+            )
+            * 0.20
+        )
+        perception_error = 0.085 - player.mental / 99.0 * 0.045
+        perceived_reserve = round(
+            cls._clamp(
+                actual_reserve + rng.uniform(-perception_error, perception_error),
+                0.0,
+                1.0,
+            ),
+            8,
+        )
+
+        factors = [RallyEffortDecisionFactor.NATURAL_STYLE]
+        score = {
+            "attacking": 0.35,
+            "retrieving": 0.20,
+            "front-court": 0.20,
+            "counter-punching": 0.05,
+            "tempo-controller": -0.10,
+        }.get(player.play_style, 0.0)
+        if perceived_reserve < 0.38:
+            score -= 0.85
+            factors.append(RallyEffortDecisionFactor.PERCEIVED_LOW_RESERVE)
+        elif perceived_reserve < 0.58:
+            score -= 0.35
+            factors.append(RallyEffortDecisionFactor.PERCEIVED_LOW_RESERVE)
+
+        close_endgame = (
+            own_points >= games_to - 2
+            and opponent_points >= games_to - 2
+            and abs(own_points - opponent_points) <= 2
+        )
+        if close_endgame:
+            score += 0.65
+            factors.append(RallyEffortDecisionFactor.CLOSE_ENDGAME)
+        elif own_points <= opponent_points - 3:
+            score += 0.35
+            factors.append(RallyEffortDecisionFactor.TRAILING_SCORE)
+        elif own_points >= opponent_points + 4:
+            score -= 0.25
+            factors.append(RallyEffortDecisionFactor.LEADING_SCORE)
+
+        tactical_noise = rng.uniform(-0.38, 0.38)
+        score += tactical_noise
+        if abs(tactical_noise) >= 0.25:
+            factors.append(RallyEffortDecisionFactor.TACTICAL_VARIATION)
+
+        if score < -0.45:
+            level = RallyEffortLevel.CONSERVE
+        elif score < 0.45:
+            level = RallyEffortLevel.NORMAL
+        elif score < 0.95:
+            level = RallyEffortLevel.INCREASED
+        else:
+            level = RallyEffortLevel.MAXIMUM
+
+        requested = {
+            RallyEffortLevel.CONSERVE: 0.78,
+            RallyEffortLevel.NORMAL: 1.00,
+            RallyEffortLevel.INCREASED: 1.16,
+            RallyEffortLevel.MAXIMUM: 1.32,
+        }[level]
+        physical_execution = cls._clamp(
+            0.45 + actual_reserve * 0.40 + player.physical / 99.0 * 0.15,
+            0.45,
+            1.0,
+        )
+        executed = (
+            1.0 + (requested - 1.0) * physical_execution
+            if requested > 1.0
+            else requested
+        )
+        movement_efficiency = cls._clamp(
+            1.12 - player.movement / 450.0 - player.physical / 900.0,
+            0.82,
+            1.12,
+        )
+        style_workload = {
+            "attacking": 1.05,
+            "retrieving": 1.10,
+            "front-court": 1.02,
+            "counter-punching": 0.98,
+            "tempo-controller": 0.94,
+        }.get(player.play_style, 1.0)
+        outcome_adjustment = (executed - 1.0) * 0.10
+        return PlayerRallyEffort(
+            player_id=player.player_id,
+            intended_level=level,
+            decision_factors=tuple(factors),
+            perceived_reserve=perceived_reserve,
+            requested_intensity_multiplier=round(requested, 8),
+            executed_intensity_multiplier=round(executed, 8),
+            outcome_strength_adjustment=round(outcome_adjustment, 8),
+            movement_efficiency_factor=round(movement_efficiency, 8),
+            style_workload_factor=round(style_workload, 8),
+            pressure_workload_factor=1.0,
+            workload_units=0.0,
+        )
+
+    @staticmethod
+    def _complete_rally_effort(
+        *,
+        effort: PlayerRallyEffort,
+        base_workload: float,
+        won_rally: bool,
+        attribution: RallyAnalyticalAttribution,
+    ) -> PlayerRallyEffort:
+        # Until hidden control states are active, the terminal result is a bounded
+        # proxy for who carried more pressure load; it is logged and replaceable.
+        pressure_factor = 0.96 if won_rally else 1.08
+        if not won_rally and attribution == RallyAnalyticalAttribution.FORCED_ERROR:
+            pressure_factor += 0.05
+        workload = (
+            base_workload
+            * effort.executed_intensity_multiplier
+            * effort.movement_efficiency_factor
+            * effort.style_workload_factor
+            * pressure_factor
+        )
+        return effort.model_copy(
+            update={
+                "pressure_workload_factor": round(pressure_factor, 8),
+                "workload_units": round(workload, 4),
+            }
+        )
+
     def _game_probability(
         self,
         *,
@@ -810,6 +1032,7 @@ class MatchEngine:
         games_b: int,
         stamina: EffectiveMatchStaminaSnapshot,
         stamina_states: tuple[PlayerStaminaState, PlayerStaminaState],
+        efforts: tuple[PlayerRallyEffort, PlayerRallyEffort] | None = None,
     ) -> tuple[float, RallyStaminaOutcomeContext]:
         strength_delta = adjusted_a - adjusted_b
         base_probability = 1.0 / (1.0 + exp(-(strength_delta * 5.1)))
@@ -847,11 +1070,23 @@ class MatchEngine:
         adjusted_probability = round(
             self._clamp(adjusted_probability, 0.05, 0.95), 8
         )
-        return adjusted_probability, RallyStaminaOutcomeContext(
+        stamina_outcome = RallyStaminaOutcomeContext(
             base_probability_player_a=base_probability,
             adjusted_probability_player_a=adjusted_probability,
             player_impacts=(impact_a, impact_b),
         )
+        if efforts is not None:
+            adjusted_probability = round(
+                self._clamp(
+                    adjusted_probability
+                    + efforts[0].outcome_strength_adjustment
+                    - efforts[1].outcome_strength_adjustment,
+                    0.05,
+                    0.95,
+                ),
+                8,
+            )
+        return adjusted_probability, stamina_outcome
 
     @staticmethod
     def _stamina_impact(

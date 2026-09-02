@@ -51,7 +51,7 @@ def _snapshot() -> MatchInputSnapshot:
         context=context,
         effective_match_format=official_match_format_snapshot(),
         simulation_seed=777,
-        match_engine_version="match_engine_v5",
+        match_engine_version="match_engine_v6",
     )
 
 
@@ -62,12 +62,13 @@ def test_match_input_snapshot_round_trips_exact_current_engine_inputs() -> None:
     assert restored == snapshot
     assert restored.context.player_a.player.player_id == "A"
     assert restored.context.player_b.player.player_id == "B"
-    assert restored.schema_version == "match_input_snapshot.v5"
+    assert restored.schema_version == "match_input_snapshot.v6"
     assert restored.unsupported_future_inputs == ("active_gameplans",)
     assert restored.effective_match_timing is not None
     assert restored.effective_match_stamina is not None
-    assert restored.effective_match_stamina.calibration_version == "pre_alpha_physical_v2"
+    assert restored.effective_match_stamina.calibration_version == "pre_alpha_physical_v3"
     assert restored.effective_match_stamina.outcome_effect_applied is True
+    assert restored.effective_match_stamina.pre_rally_effort_applied is True
     assert restored.effective_match_timing.nominal_game_break_seconds == 120
     assert {
         profile.player_id
@@ -144,7 +145,6 @@ def test_legacy_match_input_snapshots_remain_readable(
         unsupported_future_inputs=unsupported,
         snapshot_hash=MatchInputSnapshot._content_hash(hash_payload),
     )
-
     restored = MatchInputSnapshot.model_validate(payload)
 
     assert restored.schema_version == schema_version
@@ -208,3 +208,46 @@ def test_v4_observational_stamina_snapshot_remains_readable() -> None:
     assert restored.schema_version == "match_input_snapshot.v4"
     assert restored.effective_match_stamina == legacy_stamina
     assert restored.effective_match_stamina.outcome_effect_applied is False
+
+
+def test_v5_active_stamina_snapshot_remains_readable_without_effort() -> None:
+    current = _snapshot()
+    assert current.effective_match_stamina is not None
+    legacy_stamina = EffectiveMatchStaminaSnapshot(
+        schema_version="effective_match_stamina.v1",
+        calibration_version="pre_alpha_physical_v2",
+        player_profiles=current.effective_match_stamina.player_profiles,
+        outcome_effect_applied=True,
+        pre_rally_effort_applied=False,
+        unsupported_components=(
+            "within_rally_effort_changes",
+            "within_rally_explosive_recovery",
+            "carried_reserves_between_matches",
+            "injury_specific_cost_profiles",
+        ),
+    )
+    hash_payload = MatchInputSnapshot._hash_payload(
+        schema_version="match_input_snapshot.v5",
+        match_id=current.match_id,
+        simulation_seed=current.simulation_seed,
+        match_engine_version="match_engine_v5",
+        effective_match_format=current.effective_match_format,
+        effective_match_timing=current.effective_match_timing,
+        effective_match_stamina=legacy_stamina,
+        context=current.context,
+        unsupported_future_inputs=("active_gameplans",),
+    )
+    payload = current.model_dump(mode="json")
+    payload.update(
+        schema_version="match_input_snapshot.v5",
+        match_engine_version="match_engine_v5",
+        effective_match_stamina=legacy_stamina.model_dump(mode="json"),
+        snapshot_hash=MatchInputSnapshot._content_hash(hash_payload),
+    )
+    payload["effective_match_stamina"].pop("pre_rally_effort_applied")
+
+    restored = MatchInputSnapshot.model_validate(payload)
+
+    assert restored.schema_version == "match_input_snapshot.v5"
+    assert restored.effective_match_stamina == legacy_stamina
+    assert restored.effective_match_stamina.pre_rally_effort_applied is False

@@ -71,7 +71,7 @@ def test_every_simulated_point_is_an_ordered_authoritative_rally_event() -> None
     )
     assert log.rally_elapsed_seconds > 0
     assert log.estimated_shot_count >= log.total_rallies
-    assert log.schema_version == "match_rally_log.v2"
+    assert log.schema_version == "match_rally_log.v3"
     assert "between_rally_intervals" not in log.unsupported_timeline_components
     assert "game_breaks" not in log.unsupported_timeline_components
 
@@ -91,6 +91,7 @@ def test_v1_rally_event_remains_hash_compatible_without_stamina_context() -> Non
     payload = result.rally_log.events[0].model_dump(mode="json")
     payload["schema_version"] = "rally_event.v1"
     payload.pop("stamina_outcome_context")
+    payload.pop("effort_context")
     payload["event_hash"] = RallyEvent._content_hash(
         RallyEvent._hash_payload(payload)
     )
@@ -135,6 +136,20 @@ def test_v2_rally_event_rejects_missing_stamina_outcome_context() -> None:
 
     with pytest.raises(ValidationError, match="requires stamina outcome context"):
         RallyEvent.model_validate(payload)
+
+
+def test_v2_rally_event_remains_hash_compatible_without_effort_context() -> None:
+    result = _result()
+    assert result.rally_log is not None
+    payload = result.rally_log.events[0].model_dump(mode="json")
+    payload["schema_version"] = "rally_event.v2"
+    payload.pop("effort_context")
+    payload["event_hash"] = RallyEvent._content_hash(RallyEvent._hash_payload(payload))
+
+    restored = RallyEvent.model_validate(payload)
+
+    assert restored.schema_version == "rally_event.v2"
+    assert restored.effort_context is None
 
 
 def test_rally_log_rejects_removed_or_reordered_event() -> None:

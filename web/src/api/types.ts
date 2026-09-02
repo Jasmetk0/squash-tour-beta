@@ -3382,10 +3382,14 @@ export type PlayerStaminaProfile = {
 }
 
 export type EffectiveMatchStaminaSnapshot = {
-  schema_version: 'effective_match_stamina.v1'
-  calibration_version: 'pre_alpha_physical_v1' | 'pre_alpha_physical_v2'
+  schema_version: 'effective_match_stamina.v1' | 'effective_match_stamina.v2'
+  calibration_version:
+    | 'pre_alpha_physical_v1'
+    | 'pre_alpha_physical_v2'
+    | 'pre_alpha_physical_v3'
   player_profiles: [PlayerStaminaProfile, PlayerStaminaProfile]
   outcome_effect_applied: boolean
+  pre_rally_effort_applied: boolean
   unsupported_components: Array<
     | 'stamina_outcome_coupling'
     | 'within_rally_effort_changes'
@@ -3402,6 +3406,7 @@ export type MatchInputSnapshot = {
     | 'match_input_snapshot.v3'
     | 'match_input_snapshot.v4'
     | 'match_input_snapshot.v5'
+    | 'match_input_snapshot.v6'
   match_id: string
   simulation_seed: number
   match_engine_version: string
@@ -3447,8 +3452,40 @@ export type RallyStaminaOutcomeContext = {
   player_impacts: [PlayerRallyStaminaImpact, PlayerRallyStaminaImpact]
 }
 
+export type RallyEffortLevel = 'CONSERVE' | 'NORMAL' | 'INCREASED' | 'MAXIMUM'
+
+export type RallyEffortDecisionFactor =
+  | 'NATURAL_STYLE'
+  | 'PERCEIVED_LOW_RESERVE'
+  | 'CLOSE_ENDGAME'
+  | 'TRAILING_SCORE'
+  | 'LEADING_SCORE'
+  | 'TACTICAL_VARIATION'
+
+export type PlayerRallyEffort = {
+  player_id: string
+  intended_level: RallyEffortLevel
+  decision_factors: RallyEffortDecisionFactor[]
+  perceived_reserve: number
+  requested_intensity_multiplier: number
+  executed_intensity_multiplier: number
+  outcome_strength_adjustment: number
+  movement_efficiency_factor: number
+  style_workload_factor: number
+  pressure_workload_factor: number
+  workload_units: number
+}
+
+export type RallyEffortContext = {
+  calibration_version: 'pre_alpha_effort_v1'
+  base_workload_units: number
+  probability_before_effort_player_a: number
+  probability_after_effort_player_a: number
+  player_efforts: [PlayerRallyEffort, PlayerRallyEffort]
+}
+
 export type RallyEvent = {
-  schema_version: 'rally_event.v1' | 'rally_event.v2'
+  schema_version: 'rally_event.v1' | 'rally_event.v2' | 'rally_event.v3'
   match_id: string
   rally_index: number
   set_number: number
@@ -3492,6 +3529,7 @@ export type RallyEvent = {
     >
   }
   stamina_outcome_context: RallyStaminaOutcomeContext | null
+  effort_context: RallyEffortContext | null
   side_incidents: Array<Record<string, unknown>>
   previous_event_hash: string
   event_hash_algorithm: 'sha256'
@@ -3499,7 +3537,7 @@ export type RallyEvent = {
 }
 
 export type MatchRallyLog = {
-  schema_version: 'match_rally_log.v1' | 'match_rally_log.v2'
+  schema_version: 'match_rally_log.v1' | 'match_rally_log.v2' | 'match_rally_log.v3'
   match_id: string
   input_snapshot_hash: string
   events: RallyEvent[]
@@ -3626,7 +3664,7 @@ export type PlayerStaminaDelta = {
 }
 
 export type StaminaTransition = {
-  schema_version: 'stamina_transition.v1'
+  schema_version: 'stamina_transition.v1' | 'stamina_transition.v2'
   match_id: string
   transition_index: number
   source_timeline_index: number
@@ -3637,6 +3675,7 @@ export type StaminaTransition = {
     | 'GAME_BREAK_RECOVERY'
   elapsed_seconds: number
   workload_units: number
+  player_workloads: Array<{ player_id: string; workload_units: number }>
   states_before: [PlayerStaminaState, PlayerStaminaState]
   deltas: [PlayerStaminaDelta, PlayerStaminaDelta]
   states_after: [PlayerStaminaState, PlayerStaminaState]
@@ -3646,15 +3685,19 @@ export type StaminaTransition = {
 }
 
 export type MatchStaminaLog = {
-  schema_version: 'match_stamina_log.v1'
+  schema_version: 'match_stamina_log.v1' | 'match_stamina_log.v2'
   match_id: string
   timeline_log_hash: string
-  calibration_version: 'pre_alpha_physical_v1' | 'pre_alpha_physical_v2'
+  calibration_version:
+    | 'pre_alpha_physical_v1'
+    | 'pre_alpha_physical_v2'
+    | 'pre_alpha_physical_v3'
   initial_states: [PlayerStaminaState, PlayerStaminaState]
   transitions: StaminaTransition[]
   final_states: [PlayerStaminaState, PlayerStaminaState]
   total_transitions: number
   outcome_effect_applied: boolean
+  pre_rally_effort_applied: boolean
   unsupported_components: EffectiveMatchStaminaSnapshot['unsupported_components']
   match_log_hash_algorithm: 'sha256'
   match_log_hash: string

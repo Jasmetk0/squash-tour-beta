@@ -86,6 +86,52 @@ class PlayerRallyStaminaImpact(BaseModel):
     strength_penalty: float = Field(ge=0, le=0.25)
 
 
+class RallyEffortLevel(str, Enum):
+    CONSERVE = "CONSERVE"
+    NORMAL = "NORMAL"
+    INCREASED = "INCREASED"
+    MAXIMUM = "MAXIMUM"
+
+
+class RallyEffortDecisionFactor(str, Enum):
+    NATURAL_STYLE = "NATURAL_STYLE"
+    PERCEIVED_LOW_RESERVE = "PERCEIVED_LOW_RESERVE"
+    CLOSE_ENDGAME = "CLOSE_ENDGAME"
+    TRAILING_SCORE = "TRAILING_SCORE"
+    LEADING_SCORE = "LEADING_SCORE"
+    TACTICAL_VARIATION = "TACTICAL_VARIATION"
+
+
+class PlayerRallyEffort(BaseModel):
+    player_id: str = Field(min_length=1)
+    intended_level: RallyEffortLevel
+    decision_factors: tuple[RallyEffortDecisionFactor, ...]
+    perceived_reserve: float = Field(ge=0, le=1)
+    requested_intensity_multiplier: float = Field(ge=0.5, le=1.5)
+    executed_intensity_multiplier: float = Field(ge=0.5, le=1.5)
+    outcome_strength_adjustment: float = Field(ge=-0.1, le=0.1)
+    movement_efficiency_factor: float = Field(ge=0.5, le=1.5)
+    style_workload_factor: float = Field(ge=0.5, le=1.5)
+    pressure_workload_factor: float = Field(ge=0.5, le=1.5)
+    workload_units: float = Field(ge=0)
+
+
+class RallyEffortContext(BaseModel):
+    """Logged pre-rally intent and resulting per-player physical cost."""
+
+    calibration_version: Literal["pre_alpha_effort_v1"] = "pre_alpha_effort_v1"
+    base_workload_units: float = Field(ge=0)
+    probability_before_effort_player_a: float = Field(ge=0, le=1)
+    probability_after_effort_player_a: float = Field(ge=0, le=1)
+    player_efforts: tuple[PlayerRallyEffort, PlayerRallyEffort]
+
+    @model_validator(mode="after")
+    def validate_players(self) -> RallyEffortContext:
+        if len({effort.player_id for effort in self.player_efforts}) != 2:
+            raise ValueError("rally effort context requires two distinct players")
+        return self
+
+
 class RallyStaminaOutcomeContext(BaseModel):
     calibration_version: Literal["pre_alpha_outcome_v1"] = "pre_alpha_outcome_v1"
     base_probability_player_a: float = Field(ge=0, le=1)
@@ -100,7 +146,9 @@ class RallyStaminaOutcomeContext(BaseModel):
 
 
 class RallyEvent(BaseModel):
-    schema_version: Literal["rally_event.v1", "rally_event.v2"] = "rally_event.v1"
+    schema_version: Literal[
+        "rally_event.v1", "rally_event.v2", "rally_event.v3"
+    ] = "rally_event.v1"
     match_id: str = Field(min_length=1)
     rally_index: int = Field(ge=1)
     set_number: int = Field(ge=1)
@@ -120,6 +168,7 @@ class RallyEvent(BaseModel):
     rally_seed: str = Field(pattern=r"^[0-9]+$")
     post_rally_state: PostRallyStateSnapshot
     stamina_outcome_context: RallyStaminaOutcomeContext | None = None
+    effort_context: RallyEffortContext | None = None
     side_incidents: tuple[dict[str, object], ...] = ()
     previous_event_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     event_hash_algorithm: Literal["sha256"] = "sha256"
@@ -187,7 +236,7 @@ class RallyEvent(BaseModel):
             )
         if self.post_rally_state.next_server_player_id != self.winner_player_id:
             raise ValueError("rally winner must serve next in current individual rules")
-        if self.schema_version == "rally_event.v2":
+        if self.schema_version in {"rally_event.v2", "rally_event.v3"}:
             if self.stamina_outcome_context is None:
                 raise ValueError("v2 rally event requires stamina outcome context")
             if tuple(
@@ -200,6 +249,18 @@ class RallyEvent(BaseModel):
                 raise ValueError("rally stamina impacts do not match participant order")
         elif self.stamina_outcome_context is not None:
             raise ValueError("v1 rally event cannot contain stamina outcome context")
+        if self.schema_version == "rally_event.v3":
+            if self.effort_context is None:
+                raise ValueError("v3 rally event requires effort context")
+            if tuple(
+                effort.player_id for effort in self.effort_context.player_efforts
+            ) != (
+                self.score_before.player_a_id,
+                self.score_before.player_b_id,
+            ):
+                raise ValueError("rally effort does not match participant order")
+        elif self.effort_context is not None:
+            raise ValueError("legacy rally event cannot contain effort context")
         if self.event_hash != self._content_hash(
             self._hash_payload(
                 self.model_dump(
@@ -219,6 +280,8 @@ class RallyEvent(BaseModel):
         }
         if values.get("schema_version") == "rally_event.v1":
             payload.pop("stamina_outcome_context", None)
+        if values.get("schema_version") in {"rally_event.v1", "rally_event.v2"}:
+            payload.pop("effort_context", None)
         return payload
 
     @staticmethod
@@ -230,8 +293,10 @@ class RallyEvent(BaseModel):
 
 
 class MatchRallyLog(BaseModel):
-    schema_version: Literal["match_rally_log.v1", "match_rally_log.v2"] = (
-        "match_rally_log.v2"
+    schema_version: Literal[
+        "match_rally_log.v1", "match_rally_log.v2", "match_rally_log.v3"
+    ] = (
+        "match_rally_log.v3"
     )
     match_id: str = Field(min_length=1)
     input_snapshot_hash: str = Field(pattern=r"^[0-9a-f]{64}$")

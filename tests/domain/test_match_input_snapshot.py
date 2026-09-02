@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from beta_engine.domain.matches import (
+    EffectiveMatchStaminaSnapshot,
     MatchContext,
     MatchInputSnapshot,
     MatchParticipantContext,
@@ -50,7 +51,7 @@ def _snapshot() -> MatchInputSnapshot:
         context=context,
         effective_match_format=official_match_format_snapshot(),
         simulation_seed=777,
-        match_engine_version="match_engine_v4",
+        match_engine_version="match_engine_v5",
     )
 
 
@@ -61,11 +62,12 @@ def test_match_input_snapshot_round_trips_exact_current_engine_inputs() -> None:
     assert restored == snapshot
     assert restored.context.player_a.player.player_id == "A"
     assert restored.context.player_b.player.player_id == "B"
-    assert restored.schema_version == "match_input_snapshot.v4"
+    assert restored.schema_version == "match_input_snapshot.v5"
     assert restored.unsupported_future_inputs == ("active_gameplans",)
     assert restored.effective_match_timing is not None
     assert restored.effective_match_stamina is not None
-    assert restored.effective_match_stamina.calibration_version == "pre_alpha_physical_v1"
+    assert restored.effective_match_stamina.calibration_version == "pre_alpha_physical_v2"
+    assert restored.effective_match_stamina.outcome_effect_applied is True
     assert restored.effective_match_timing.nominal_game_break_seconds == 120
     assert {
         profile.player_id
@@ -175,3 +177,34 @@ def test_v3_timing_snapshot_remains_readable_without_stamina() -> None:
     assert restored.schema_version == "match_input_snapshot.v3"
     assert restored.effective_match_timing == current.effective_match_timing
     assert restored.effective_match_stamina is None
+
+
+def test_v4_observational_stamina_snapshot_remains_readable() -> None:
+    current = _snapshot()
+    legacy_stamina = EffectiveMatchStaminaSnapshot.create(
+        context=current.context, outcome_effect_applied=False
+    )
+    hash_payload = MatchInputSnapshot._hash_payload(
+        schema_version="match_input_snapshot.v4",
+        match_id=current.match_id,
+        simulation_seed=current.simulation_seed,
+        match_engine_version="match_engine_v4",
+        effective_match_format=current.effective_match_format,
+        effective_match_timing=current.effective_match_timing,
+        effective_match_stamina=legacy_stamina,
+        context=current.context,
+        unsupported_future_inputs=("active_gameplans",),
+    )
+    payload = current.model_dump(mode="json")
+    payload.update(
+        schema_version="match_input_snapshot.v4",
+        match_engine_version="match_engine_v4",
+        effective_match_stamina=legacy_stamina.model_dump(mode="json"),
+        snapshot_hash=MatchInputSnapshot._content_hash(hash_payload),
+    )
+
+    restored = MatchInputSnapshot.model_validate(payload)
+
+    assert restored.schema_version == "match_input_snapshot.v4"
+    assert restored.effective_match_stamina == legacy_stamina
+    assert restored.effective_match_stamina.outcome_effect_applied is False

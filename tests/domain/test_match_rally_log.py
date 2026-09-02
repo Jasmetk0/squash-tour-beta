@@ -85,6 +85,22 @@ def test_reloading_stored_log_does_not_run_rng_and_preserves_truth() -> None:
     assert restored == result.rally_log
 
 
+def test_v1_rally_event_remains_hash_compatible_without_stamina_context() -> None:
+    result = _result()
+    assert result.rally_log is not None
+    payload = result.rally_log.events[0].model_dump(mode="json")
+    payload["schema_version"] = "rally_event.v1"
+    payload.pop("stamina_outcome_context")
+    payload["event_hash"] = RallyEvent._content_hash(
+        RallyEvent._hash_payload(payload)
+    )
+
+    restored = RallyEvent.model_validate(payload)
+
+    assert restored.schema_version == "rally_event.v1"
+    assert restored.stamina_outcome_context is None
+
+
 def test_v1_rally_log_remains_readable() -> None:
     result = _result()
     assert result.rally_log is not None
@@ -108,6 +124,16 @@ def test_rally_event_rejects_score_tampering() -> None:
     payload["score_after"]["points_a"] += 1
 
     with pytest.raises(ValidationError, match="point mutation|hash mismatch"):
+        RallyEvent.model_validate(payload)
+
+
+def test_v2_rally_event_rejects_missing_stamina_outcome_context() -> None:
+    result = _result()
+    assert result.rally_log is not None
+    payload = result.rally_log.events[0].model_dump(mode="json")
+    payload["stamina_outcome_context"] = None
+
+    with pytest.raises(ValidationError, match="requires stamina outcome context"):
         RallyEvent.model_validate(payload)
 
 

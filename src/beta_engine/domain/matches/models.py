@@ -241,4 +241,5 @@ class MatchResult(BaseModel):
                 )
             if self.stamina_log is not None:
                 self.stamina_log.validate_timeline(timeline)
+                self.stamina_log.validate_rally_outcomes(self.rally_log.events)
         return self

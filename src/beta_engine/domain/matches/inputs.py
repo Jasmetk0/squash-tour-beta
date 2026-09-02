@@ -22,7 +22,8 @@ class MatchInputSnapshot(BaseModel):
         "match_input_snapshot.v2",
         "match_input_snapshot.v3",
         "match_input_snapshot.v4",
-    ] = "match_input_snapshot.v4"
+        "match_input_snapshot.v5",
+    ] = "match_input_snapshot.v5"
     match_id: str = Field(min_length=1)
     simulation_seed: int
     match_engine_version: str = Field(min_length=1)
@@ -60,7 +61,7 @@ class MatchInputSnapshot(BaseModel):
             context=context
         )
         payload = cls._hash_payload(
-            schema_version="match_input_snapshot.v4",
+            schema_version="match_input_snapshot.v5",
             match_id=context.match_id,
             simulation_seed=simulation_seed,
             match_engine_version=match_engine_version,
@@ -98,7 +99,11 @@ class MatchInputSnapshot(BaseModel):
             raise ValueError(
                 "match input context does not match effective format snapshot"
             )
-        if self.schema_version in {"match_input_snapshot.v3", "match_input_snapshot.v4"}:
+        if self.schema_version in {
+            "match_input_snapshot.v3",
+            "match_input_snapshot.v4",
+            "match_input_snapshot.v5",
+        }:
             if self.effective_match_timing is None:
                 raise ValueError(
                     "v3+ match input snapshot requires effective match timing"
@@ -119,7 +124,7 @@ class MatchInputSnapshot(BaseModel):
             raise ValueError(
                 "legacy match input snapshot cannot contain unprotected timing data"
             )
-        if self.schema_version == "match_input_snapshot.v4":
+        if self.schema_version in {"match_input_snapshot.v4", "match_input_snapshot.v5"}:
             if self.effective_match_stamina is None:
                 raise ValueError("v4 match input snapshot requires effective stamina")
             stamina_player_ids = tuple(
@@ -134,6 +139,11 @@ class MatchInputSnapshot(BaseModel):
                 raise ValueError(
                     "effective match stamina does not match snapshot participants"
                 )
+            if (
+                self.schema_version == "match_input_snapshot.v5"
+                and not self.effective_match_stamina.outcome_effect_applied
+            ):
+                raise ValueError("v5 match input requires active stamina outcome coupling")
         elif self.effective_match_stamina is not None:
             raise ValueError(
                 "legacy match input snapshot cannot contain unprotected stamina data"
@@ -177,13 +187,17 @@ class MatchInputSnapshot(BaseModel):
             "context": context.model_dump(mode="json"),
             "unsupported_future_inputs": unsupported_future_inputs,
         }
-        if schema_version in {"match_input_snapshot.v3", "match_input_snapshot.v4"}:
+        if schema_version in {
+            "match_input_snapshot.v3",
+            "match_input_snapshot.v4",
+            "match_input_snapshot.v5",
+        }:
             payload["effective_match_timing"] = (
                 effective_match_timing.model_dump(mode="json")
                 if effective_match_timing is not None
                 else None
             )
-        if schema_version == "match_input_snapshot.v4":
+        if schema_version in {"match_input_snapshot.v4", "match_input_snapshot.v5"}:
             payload["effective_match_stamina"] = (
                 effective_match_stamina.model_dump(mode="json")
                 if effective_match_stamina is not None

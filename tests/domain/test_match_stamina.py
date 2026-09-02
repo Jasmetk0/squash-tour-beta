@@ -12,6 +12,8 @@ from beta_engine.domain.matches import (
     MatchEngine,
     MatchParticipantContext,
     MatchStaminaLog,
+    PlayerStaminaState,
+    StaminaBarState,
     StaminaDimension,
     StaminaTransitionCause,
 )
@@ -79,8 +81,9 @@ def test_effective_profile_derives_three_distinct_bars_from_player_inputs() -> N
     assert profile_a.bar(StaminaDimension.MATCH).recovery_per_second > profile_b.bar(
         StaminaDimension.MATCH
     ).recovery_per_second
-    assert effective.calibration_version == "pre_alpha_physical_v1"
-    assert effective.outcome_effect_applied is False
+    assert effective.calibration_version == "pre_alpha_physical_v2"
+    assert effective.outcome_effect_applied is True
+    assert "stamina_outcome_coupling" not in effective.unsupported_components
 
 
 def test_negative_carried_modifiers_reduce_initial_fill_without_changing_capacity() -> None:
@@ -178,8 +181,11 @@ def test_game_break_recovers_both_players_without_resetting_bars() -> None:
         )
 
 
-def test_calibration_changes_stamina_log_but_not_sporting_or_timing_truth() -> None:
-    default = _result()
+def test_legacy_inactive_calibration_does_not_change_sporting_or_timing_truth() -> None:
+    default_stamina = EffectiveMatchStaminaSnapshot.create(
+        context=_context(), outcome_effect_applied=False
+    )
+    default = _result(stamina=default_stamina)
     alternate_context = MatchContext(
         match_id="alternate-calibration-source",
         player_a=MatchParticipantContext(
@@ -189,13 +195,20 @@ def test_calibration_changes_stamina_log_but_not_sporting_or_timing_truth() -> N
             player=_player("B", physical=96, movement=95, recovery=97)
         ),
     )
-    alternate = EffectiveMatchStaminaSnapshot.create(context=alternate_context)
+    alternate = EffectiveMatchStaminaSnapshot.create(
+        context=alternate_context, outcome_effect_applied=False
+    )
     changed = _result(stamina=alternate)
 
     assert changed.winner_player_id == default.winner_player_id
     assert changed.sets == default.sets
-    assert changed.rally_log == default.rally_log
-    assert changed.timeline_log == default.timeline_log
+    assert changed.rally_log is not None and default.rally_log is not None
+    assert [event.winner_player_id for event in changed.rally_log.events] == [
+        event.winner_player_id for event in default.rally_log.events
+    ]
+    assert [event.elapsed_seconds for event in changed.rally_log.events] == [
+        event.elapsed_seconds for event in default.rally_log.events
+    ]
     assert changed.stamina_log != default.stamina_log
 
 
@@ -212,3 +225,109 @@ def test_stamina_log_rejects_hash_and_state_tampering() -> None:
     payload["transitions"][1]["previous_transition_hash"] = "0" * 64
     with pytest.raises(ValidationError, match="hash mismatch|chain is broken"):
         MatchStaminaLog.model_validate(payload)
+
+
+def test_every_rally_records_the_live_nonlinear_stamina_effect() -> None:
+    result = _result()
+    assert result.rally_log is not None
+    assert result.stamina_log is not None
+    assert result.stamina_log.outcome_effect_applied is True
+
+    contexts = [event.stamina_outcome_context for event in result.rally_log.events]
+    assert all(event.schema_version == "rally_event.v2" for event in result.rally_log.events)
+    assert all(context is not None for context in contexts)
+    assert any(
+        impact.strength_penalty > 0
+        for context in contexts
+        if context is not None
+        for impact in context.player_impacts
+    )
+    result.stamina_log.validate_rally_outcomes(result.rally_log.events)
+
+
+def test_stamina_penalty_is_continuous_and_steepens_near_empty() -> None:
+    def state(fill: float) -> PlayerStaminaState:
+        return PlayerStaminaState(
+            player_id="A",
+            bars=tuple(
+                StaminaBarState(
+                    dimension=dimension,
+                    capacity=100,
+                    current=100 * fill,
+                )
+                for dimension in StaminaDimension
+            ),
+        )
+
+    full = MatchEngine._stamina_impact(state(1.0), enabled=True)
+    medium = MatchEngine._stamina_impact(state(0.5), enabled=True)
+    low = MatchEngine._stamina_impact(state(0.1), enabled=True)
+
+    assert full.strength_penalty == 0
+    assert 0 < medium.strength_penalty < low.strength_penalty < 0.18
+    assert low.strength_penalty - medium.strength_penalty > medium.strength_penalty
+
+
+def test_more_exhausted_player_gets_lower_rally_probability() -> None:
+    engine = MatchEngine(rng=DeterministicRng(1))
+    context = MatchContext(
+        match_id="equal-players",
+        player_a=MatchParticipantContext(
+            player=_player("A", physical=82, movement=82, recovery=82)
+        ),
+        player_b=MatchParticipantContext(
+            player=_player("B", physical=82, movement=82, recovery=82)
+        ),
+        upset_variance=0,
+    )
+    effective = EffectiveMatchStaminaSnapshot.create(context=context)
+    states = MatchStaminaLog.create_initial_states(
+        effective=effective, player_ids=("A", "B")
+    )
+    tired_a = PlayerStaminaState(
+        player_id="A",
+        bars=tuple(
+            bar.model_copy(update={"current": bar.capacity * 0.15})
+            for bar in states[0].bars
+        ),
+    )
+
+    probability, outcome = engine._game_probability(
+        adjusted_a=0.8,
+        adjusted_b=0.8,
+        context=context,
+        games_a=5,
+        games_b=5,
+        stamina=effective,
+        stamina_states=(tired_a, states[1]),
+    )
+
+    assert outcome.base_probability_player_a == 0.5
+    assert probability == outcome.adjusted_probability_player_a
+    assert probability < 0.5
+    assert outcome.player_impacts[0].strength_penalty > outcome.player_impacts[1].strength_penalty
+
+
+def test_active_stamina_changes_some_but_not_all_reference_match_paths() -> None:
+    changed_paths = 0
+    samples = 10
+    for seed in range(1000, 1000 + samples):
+        context = _context()
+        inactive = EffectiveMatchStaminaSnapshot.create(
+            context=context, outcome_effect_applied=False
+        )
+        active_result = MatchEngine(rng=DeterministicRng(seed)).simulate(context)
+        inactive_result = MatchEngine(rng=DeterministicRng(seed)).simulate(
+            context, effective_match_stamina=inactive
+        )
+        assert active_result.rally_log is not None
+        assert inactive_result.rally_log is not None
+        active_path = [
+            event.winner_player_id for event in active_result.rally_log.events
+        ]
+        inactive_path = [
+            event.winner_player_id for event in inactive_result.rally_log.events
+        ]
+        changed_paths += active_path != inactive_path
+
+    assert 1 <= changed_paths <= 7

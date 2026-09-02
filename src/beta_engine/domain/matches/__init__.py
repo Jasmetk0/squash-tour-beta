@@ -20,11 +20,13 @@ from beta_engine.domain.matches.models import (
 )
 from beta_engine.domain.matches.rallies import (
     MatchRallyLog,
+    PlayerRallyStaminaImpact,
     PostRallyStateSnapshot,
     RallyAnalyticalAttribution,
     RallyEvent,
     RallyScoreMutation,
     RallyScoreSnapshot,
+    RallyStaminaOutcomeContext,
     RallyTerminalTrigger,
 )
 from beta_engine.domain.matches.stamina import (
@@ -72,6 +74,7 @@ __all__ = [
     "MatchTerminationReason",
     "MatchTimelineLog",
     "MatchTimingOverride",
+    "PlayerRallyStaminaImpact",
     "PlayerRestartTimingProfile",
     "PlayerStaminaDelta",
     "PlayerStaminaProfile",
@@ -81,6 +84,7 @@ __all__ = [
     "RallyEvent",
     "RallyScoreMutation",
     "RallyScoreSnapshot",
+    "RallyStaminaOutcomeContext",
     "RallyTerminalTrigger",
     "RallyTimelineEvent",
     "ReadinessComponent",

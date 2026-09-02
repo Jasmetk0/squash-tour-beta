@@ -49,7 +49,7 @@ MatchValidationSeverity = Literal["warning", "error"]
 ProgressionStatusValue = Literal["not_started", "in_progress", "completed", "not_applicable"]
 EventProgressionStatusValue = Literal["not_started", "in_progress", "completed", "blocked"]
 ProgressionAction = Literal["process_byes", "refresh_status", "simulate_round", "simulate_draw", "promote_qualifiers", "advance_completed"]
-MATCH_ENGINE_VERSION = "match_engine_v4"
+MATCH_ENGINE_VERSION = "match_engine_v5"
 
 
 
@@ -112,6 +112,7 @@ class MatchSimulationResult(BaseModel):
                 raise ValueError("stored timeline does not reference the authoritative rallies")
             if self.stamina_log is not None:
                 self.stamina_log.validate_timeline(self.timeline_log)
+                self.stamina_log.validate_rally_outcomes(self.rally_log.events)
         elif self.rally_log is not None and self.match_log_hash != self.rally_log.match_log_hash:
             raise ValueError("stored legacy result and rally log hashes do not agree")
         if self.rally_log is not None and self.rally_elapsed_seconds != self.rally_log.rally_elapsed_seconds:
@@ -320,7 +321,10 @@ class SeasonMatchService:
         timeline_log = match.simulated_result.timeline_log
         stamina_log = match.simulated_result.stamina_log
         effective_stamina = match.match_input_snapshot.effective_match_stamina
-        if match.match_input_snapshot.schema_version == "match_input_snapshot.v4":
+        if match.match_input_snapshot.schema_version in {
+            "match_input_snapshot.v4",
+            "match_input_snapshot.v5",
+        }:
             if stamina_log is None or effective_stamina is None:
                 raise ValueError("Stored v4 match is missing authoritative stamina data.")
             stamina_log.validate_effective_snapshot(effective_stamina)
@@ -329,6 +333,7 @@ class SeasonMatchService:
                 raise ValueError("Stored match timeline is not anchored to the input snapshot.")
             if stamina_log is not None:
                 stamina_log.validate_timeline(timeline_log)
+                stamina_log.validate_rally_outcomes(rally_log.events)
             expected_hash = (
                 stamina_log.match_log_hash
                 if stamina_log is not None

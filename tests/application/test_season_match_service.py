@@ -203,7 +203,7 @@ def test_simulate_next_completes_first_pending_and_is_replay_deterministic(
     assert a_completed.model_dump() == b_completed.model_dump()
     assert a_completed.match_input_snapshot is not None
     assert a_completed.match_input_snapshot.snapshot_hash
-    assert a_completed.match_input_snapshot.schema_version == "match_input_snapshot.v3"
+    assert a_completed.match_input_snapshot.schema_version == "match_input_snapshot.v4"
     assert a_completed.match_input_snapshot.effective_match_timing is not None
     assert a_completed.match_input_snapshot.effective_match_timing.nominal_game_break_seconds == 120
     assert a_completed.match_input_snapshot.simulation_seed == a_completed.simulation_seed
@@ -213,12 +213,20 @@ def test_simulate_next_completes_first_pending_and_is_replay_deterministic(
     assert a_completed.simulated_result is not None
     assert a_completed.simulated_result.rally_log is not None
     assert a_completed.simulated_result.timeline_log is not None
+    assert a_completed.simulated_result.stamina_log is not None
     assert (
         a_completed.simulated_result.rally_log.input_snapshot_hash
         == a_completed.match_input_snapshot.snapshot_hash
     )
     assert a_completed.simulated_result.timeline_log.input_snapshot_hash == a_completed.match_input_snapshot.snapshot_hash
-    assert a_completed.simulated_result.match_log_hash == a_completed.simulated_result.timeline_log.match_log_hash
+    assert (
+        a_completed.simulated_result.match_log_hash
+        == a_completed.simulated_result.stamina_log.match_log_hash
+    )
+    assert (
+        a_completed.simulated_result.stamina_log.timeline_log_hash
+        == a_completed.simulated_result.timeline_log.match_log_hash
+    )
     assert a_completed.simulated_result.match_elapsed_seconds == a_completed.simulated_result.timeline_log.total_elapsed_seconds
     assert a_completed.simulated_result.match_elapsed_seconds > a_completed.simulated_result.rally_elapsed_seconds
 
@@ -234,6 +242,7 @@ def test_simulate_next_completes_first_pending_and_is_replay_deterministic(
     assert replay.replay_source == "stored_authoritative_events"
     assert replay.rally_log == a_completed.simulated_result.rally_log
     assert replay.timeline_log == a_completed.simulated_result.timeline_log
+    assert replay.stamina_log == a_completed.simulated_result.stamina_log
 
 
 def test_match_package_stores_effective_format_with_nearest_override_provenance(tmp_path: Path) -> None:

@@ -8,6 +8,7 @@ from itertools import pairwise
 from pydantic import BaseModel, Field, model_validator
 
 from beta_engine.domain.matches.rallies import MatchRallyLog
+from beta_engine.domain.matches.stamina import MatchStaminaLog
 from beta_engine.domain.matches.timeline import MatchTimelineLog
 from beta_engine.domain.players.models import Player
 
@@ -107,11 +108,14 @@ class MatchResult(BaseModel):
     retired_at_set_start: int | None = None
     rally_log: MatchRallyLog | None = None
     timeline_log: MatchTimelineLog | None = None
+    stamina_log: MatchStaminaLog | None = None
 
     @model_validator(mode="after")
     def validate_rally_log_result(self) -> MatchResult:
         if self.timeline_log is not None and self.rally_log is None:
             raise ValueError("match timeline requires an authoritative rally log")
+        if self.stamina_log is not None and self.timeline_log is None:
+            raise ValueError("stamina log requires an authoritative timeline")
         if self.rally_log is None:
             return self
         if self.rally_log.match_id != self.match_id:
@@ -235,4 +239,6 @@ class MatchResult(BaseModel):
                 raise ValueError(
                     "terminal game break requires retirement before the next set"
                 )
+            if self.stamina_log is not None:
+                self.stamina_log.validate_timeline(timeline)
         return self

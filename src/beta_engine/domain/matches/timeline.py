@@ -110,7 +110,7 @@ class GameBreakEvent(MatchTimelineEventBase):
     completed_set_number: int = Field(ge=1)
     nominal_seconds: float = Field(gt=0)
     duration_source: Literal["NOMINAL_RULE"] = "NOMINAL_RULE"
-    dynamic_recovery_applied: Literal[False] = False
+    dynamic_recovery_applied: bool = False
 
     @model_validator(mode="after")
     def validate_nominal_duration(self) -> GameBreakEvent:
@@ -172,6 +172,7 @@ class MatchTimelineLog(BaseModel):
         match_id: str,
         input_snapshot_hash: str,
         events: list[MatchTimelineEvent],
+        dynamic_stamina_recovery: bool = False,
     ) -> MatchTimelineLog:
         rally_events = [event for event in events if event.event_type == "RALLY"]
         intervals = [
@@ -183,6 +184,9 @@ class MatchTimelineLog(BaseModel):
         game_break_seconds = round(
             sum(event.elapsed_seconds for event in game_breaks), 3
         )
+        unsupported = list(cls.model_fields["unsupported_timeline_components"].default)
+        if dynamic_stamina_recovery:
+            unsupported.remove("dynamic_stamina_recovery")
         return cls(
             match_id=match_id,
             input_snapshot_hash=input_snapshot_hash,
@@ -197,6 +201,7 @@ class MatchTimelineLog(BaseModel):
             total_elapsed_seconds=round(
                 rally_seconds + interval_seconds + game_break_seconds, 3
             ),
+            unsupported_timeline_components=tuple(unsupported),
             match_log_hash=(events[-1].event_hash if events else input_snapshot_hash),
         )
 

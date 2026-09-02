@@ -28,6 +28,7 @@ from beta_engine.domain.matches import (
     MatchFormat,
     MatchInputSnapshot,
     MatchRallyLog,
+    MatchStaminaLog,
     MatchTimelineLog,
     MatchTimingOverride,
     official_match_format_snapshot,
@@ -48,7 +49,7 @@ MatchValidationSeverity = Literal["warning", "error"]
 ProgressionStatusValue = Literal["not_started", "in_progress", "completed", "not_applicable"]
 EventProgressionStatusValue = Literal["not_started", "in_progress", "completed", "blocked"]
 ProgressionAction = Literal["process_byes", "refresh_status", "simulate_round", "simulate_draw", "promote_qualifiers", "advance_completed"]
-MATCH_ENGINE_VERSION = "match_engine_v3"
+MATCH_ENGINE_VERSION = "match_engine_v4"
 
 
 
@@ -75,19 +76,27 @@ class MatchSimulationResult(BaseModel):
     seed: int
     rally_log: MatchRallyLog | None = None
     timeline_log: MatchTimelineLog | None = None
+    stamina_log: MatchStaminaLog | None = None
     match_log_hash: str | None = None
     rally_elapsed_seconds: float | None = None
     match_elapsed_seconds: float | None = None
 
     @model_validator(mode="after")
     def validate_authoritative_logs(self) -> MatchSimulationResult:
+        if self.stamina_log is not None and self.timeline_log is None:
+            raise ValueError("stored stamina log requires a match timeline")
         if self.timeline_log is not None:
             if self.rally_log is None:
                 raise ValueError("stored match timeline requires a rally log")
             if self.timeline_log.input_snapshot_hash != self.rally_log.input_snapshot_hash:
                 raise ValueError("stored match logs use different input anchors")
-            if self.match_log_hash != self.timeline_log.match_log_hash:
-                raise ValueError("stored result and timeline hashes do not agree")
+            expected_hash = (
+                self.stamina_log.match_log_hash
+                if self.stamina_log is not None
+                else self.timeline_log.match_log_hash
+            )
+            if self.match_log_hash != expected_hash:
+                raise ValueError("stored result and authoritative log hashes do not agree")
             if self.match_elapsed_seconds != self.timeline_log.total_elapsed_seconds:
                 raise ValueError("stored result and timeline durations do not agree")
             if self.timeline_log.rally_elapsed_seconds != self.rally_log.rally_elapsed_seconds:
@@ -101,6 +110,8 @@ class MatchSimulationResult(BaseModel):
                 for marker, rally in zip(markers, self.rally_log.events, strict=False)
             ):
                 raise ValueError("stored timeline does not reference the authoritative rallies")
+            if self.stamina_log is not None:
+                self.stamina_log.validate_timeline(self.timeline_log)
         elif self.rally_log is not None and self.match_log_hash != self.rally_log.match_log_hash:
             raise ValueError("stored legacy result and rally log hashes do not agree")
         if self.rally_log is not None and self.rally_elapsed_seconds != self.rally_log.rally_elapsed_seconds:
@@ -114,6 +125,7 @@ class MatchReplayResponse(BaseModel):
     match_input_snapshot: MatchInputSnapshot
     rally_log: MatchRallyLog
     timeline_log: MatchTimelineLog | None = None
+    stamina_log: MatchStaminaLog | None = None
     final_result: MatchSimulationResult
     replay_source: Literal["stored_authoritative_events"] = "stored_authoritative_events"
     rng_rerun: Literal[False] = False
@@ -306,11 +318,24 @@ class SeasonMatchService:
         if rally_log.input_snapshot_hash != match.match_input_snapshot.snapshot_hash:
             raise ValueError("Stored rally log is not anchored to the match input snapshot.")
         timeline_log = match.simulated_result.timeline_log
+        stamina_log = match.simulated_result.stamina_log
+        effective_stamina = match.match_input_snapshot.effective_match_stamina
+        if match.match_input_snapshot.schema_version == "match_input_snapshot.v4":
+            if stamina_log is None or effective_stamina is None:
+                raise ValueError("Stored v4 match is missing authoritative stamina data.")
+            stamina_log.validate_effective_snapshot(effective_stamina)
         if timeline_log is not None:
             if timeline_log.input_snapshot_hash != match.match_input_snapshot.snapshot_hash:
                 raise ValueError("Stored match timeline is not anchored to the input snapshot.")
-            if match.simulated_result.match_log_hash != timeline_log.match_log_hash:
-                raise ValueError("Stored match result and timeline hashes do not agree.")
+            if stamina_log is not None:
+                stamina_log.validate_timeline(timeline_log)
+            expected_hash = (
+                stamina_log.match_log_hash
+                if stamina_log is not None
+                else timeline_log.match_log_hash
+            )
+            if match.simulated_result.match_log_hash != expected_hash:
+                raise ValueError("Stored match result and authoritative log hashes do not agree.")
         elif match.simulated_result.match_log_hash != rally_log.match_log_hash:
             raise ValueError("Stored legacy result and rally log hashes do not agree.")
         if match.result_fingerprint != match.simulated_result.simulation_fingerprint:
@@ -321,6 +346,7 @@ class SeasonMatchService:
             match_input_snapshot=match.match_input_snapshot,
             rally_log=rally_log,
             timeline_log=timeline_log,
+            stamina_log=stamina_log,
             final_result=match.simulated_result,
         )
 
@@ -445,6 +471,7 @@ class SeasonMatchService:
             input_snapshot.context,
             log_anchor_hash=input_snapshot.snapshot_hash,
             effective_match_timing=input_snapshot.effective_match_timing,
+            effective_match_stamina=input_snapshot.effective_match_stamina,
         )
         result_payload = domain_result.model_dump(mode="json")
         result_fp = self._fingerprint({"event_id": event_id, "match_id": match_id, "match_input_snapshot_hash": input_snapshot.snapshot_hash, "result": result_payload})
@@ -461,8 +488,11 @@ class SeasonMatchService:
             seed=sim_seed,
             rally_log=domain_result.rally_log,
             timeline_log=domain_result.timeline_log,
+            stamina_log=domain_result.stamina_log,
             match_log_hash=(
-                domain_result.timeline_log.match_log_hash
+                domain_result.stamina_log.match_log_hash
+                if domain_result.stamina_log
+                else domain_result.timeline_log.match_log_hash
                 if domain_result.timeline_log
                 else domain_result.rally_log.match_log_hash if domain_result.rally_log else None
             ),
@@ -744,6 +774,7 @@ class SeasonMatchService:
             input_snapshot.context,
             log_anchor_hash=input_snapshot.snapshot_hash,
             effective_match_timing=input_snapshot.effective_match_timing,
+            effective_match_stamina=input_snapshot.effective_match_stamina,
         )
         result_payload = domain_result.model_dump(mode="json")
         result_fp = self._fingerprint({"event_id": package.event_id, "match_id": match.match_id, "match_input_snapshot_hash": input_snapshot.snapshot_hash, "result": result_payload})
@@ -760,8 +791,11 @@ class SeasonMatchService:
             seed=sim_seed,
             rally_log=domain_result.rally_log,
             timeline_log=domain_result.timeline_log,
+            stamina_log=domain_result.stamina_log,
             match_log_hash=(
-                domain_result.timeline_log.match_log_hash
+                domain_result.stamina_log.match_log_hash
+                if domain_result.stamina_log
+                else domain_result.timeline_log.match_log_hash
                 if domain_result.timeline_log
                 else domain_result.rally_log.match_log_hash if domain_result.rally_log else None
             ),

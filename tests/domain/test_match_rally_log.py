@@ -71,7 +71,7 @@ def test_every_simulated_point_is_an_ordered_authoritative_rally_event() -> None
     )
     assert log.rally_elapsed_seconds > 0
     assert log.estimated_shot_count >= log.total_rallies
-    assert log.schema_version == "match_rally_log.v3"
+    assert log.schema_version == "match_rally_log.v4"
     assert "between_rally_intervals" not in log.unsupported_timeline_components
     assert "game_breaks" not in log.unsupported_timeline_components
 
@@ -92,9 +92,8 @@ def test_v1_rally_event_remains_hash_compatible_without_stamina_context() -> Non
     payload["schema_version"] = "rally_event.v1"
     payload.pop("stamina_outcome_context")
     payload.pop("effort_context")
-    payload["event_hash"] = RallyEvent._content_hash(
-        RallyEvent._hash_payload(payload)
-    )
+    payload.pop("control_trace")
+    payload["event_hash"] = RallyEvent._content_hash(RallyEvent._hash_payload(payload))
 
     restored = RallyEvent.model_validate(payload)
 
@@ -144,12 +143,27 @@ def test_v2_rally_event_remains_hash_compatible_without_effort_context() -> None
     payload = result.rally_log.events[0].model_dump(mode="json")
     payload["schema_version"] = "rally_event.v2"
     payload.pop("effort_context")
+    payload.pop("control_trace")
     payload["event_hash"] = RallyEvent._content_hash(RallyEvent._hash_payload(payload))
 
     restored = RallyEvent.model_validate(payload)
 
     assert restored.schema_version == "rally_event.v2"
     assert restored.effort_context is None
+
+
+def test_v4_rally_log_rejects_an_event_from_an_older_schema_generation() -> None:
+    result = _result()
+    assert result.rally_log is not None
+    payload = result.rally_log.model_dump(mode="json")
+    payload["events"][0]["schema_version"] = "rally_event.v3"
+    payload["events"][0].pop("control_trace")
+    payload["events"][0]["event_hash"] = RallyEvent._content_hash(
+        RallyEvent._hash_payload(payload["events"][0])
+    )
+
+    with pytest.raises(ValidationError, match="schema versions do not agree"):
+        MatchRallyLog.model_validate(payload)
 
 
 def test_rally_log_rejects_removed_or_reordered_event() -> None:

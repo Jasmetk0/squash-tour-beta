@@ -51,7 +51,7 @@ def _snapshot() -> MatchInputSnapshot:
         context=context,
         effective_match_format=official_match_format_snapshot(),
         simulation_seed=777,
-        match_engine_version="match_engine_v7",
+        match_engine_version="match_engine_v8",
     )
 
 
@@ -62,8 +62,8 @@ def test_match_input_snapshot_round_trips_exact_current_engine_inputs() -> None:
     assert restored == snapshot
     assert restored.context.player_a.player.player_id == "A"
     assert restored.context.player_b.player.player_id == "B"
-    assert restored.schema_version == "match_input_snapshot.v7"
-    assert restored.unsupported_future_inputs == ("active_gameplans",)
+    assert restored.schema_version == "match_input_snapshot.v8"
+    assert restored.unsupported_future_inputs == ()
     assert restored.effective_match_timing is not None
     assert restored.effective_match_stamina is not None
     assert (
@@ -76,6 +76,14 @@ def test_match_input_snapshot_round_trips_exact_current_engine_inputs() -> None:
     assert (
         restored.rally_calibration_profile.calibration_version == "pre_alpha_control_v1"
     )
+    assert restored.effective_match_gameplans is not None
+    assert (
+        restored.effective_match_gameplans.calibration_version
+        == "pre_alpha_gameplan_v1"
+    )
+    assert tuple(
+        plan.player_id for plan in restored.effective_match_gameplans.initial_gameplans
+    ) == ("A", "B")
     assert restored.effective_match_timing.nominal_game_break_seconds == 120
     assert {
         profile.player_id
@@ -84,7 +92,14 @@ def test_match_input_snapshot_round_trips_exact_current_engine_inputs() -> None:
 
 
 def test_match_input_snapshot_rejects_protected_input_tampering() -> None:
-    for field in ("player", "seed", "timing", "stamina", "rally_calibration"):
+    for field in (
+        "player",
+        "seed",
+        "timing",
+        "stamina",
+        "rally_calibration",
+        "gameplans",
+    ):
         payload = _snapshot().model_dump(mode="json")
         if field == "player":
             payload["context"]["player_a"]["player"]["technique"] = 1
@@ -96,8 +111,12 @@ def test_match_input_snapshot_rejects_protected_input_tampering() -> None:
             payload["effective_match_stamina"]["player_profiles"][0]["bars"][0][
                 "capacity"
             ] -= 1
-        else:
+        elif field == "rally_calibration":
             payload["rally_calibration_profile"]["stay_transition_weight"] += 0.01
+        else:
+            payload["effective_match_gameplans"]["initial_gameplans"][0][
+                "confidence"
+            ] -= 0.01
 
         with pytest.raises(ValidationError, match="snapshot hash mismatch"):
             MatchInputSnapshot.model_validate(payload)
@@ -149,6 +168,7 @@ def test_legacy_match_input_snapshots_remain_readable(
     payload.pop("effective_match_timing")
     payload.pop("effective_match_stamina")
     payload.pop("rally_calibration_profile")
+    payload.pop("effective_match_gameplans")
     payload.update(
         schema_version=schema_version,
         match_engine_version=engine_version,
@@ -177,9 +197,11 @@ def test_v3_timing_snapshot_remains_readable_without_stamina() -> None:
     payload = current.model_dump(mode="json")
     payload.pop("effective_match_stamina")
     payload.pop("rally_calibration_profile")
+    payload.pop("effective_match_gameplans")
     payload.update(
         schema_version="match_input_snapshot.v3",
         match_engine_version="match_engine_v3",
+        unsupported_future_inputs=("active_gameplans",),
         snapshot_hash=MatchInputSnapshot._content_hash(hash_payload),
     )
 
@@ -208,10 +230,12 @@ def test_v4_observational_stamina_snapshot_remains_readable() -> None:
     )
     payload = current.model_dump(mode="json")
     payload.pop("rally_calibration_profile")
+    payload.pop("effective_match_gameplans")
     payload.update(
         schema_version="match_input_snapshot.v4",
         match_engine_version="match_engine_v4",
         effective_match_stamina=legacy_stamina.model_dump(mode="json"),
+        unsupported_future_inputs=("active_gameplans",),
         snapshot_hash=MatchInputSnapshot._content_hash(hash_payload),
     )
 
@@ -251,10 +275,12 @@ def test_v5_active_stamina_snapshot_remains_readable_without_effort() -> None:
     )
     payload = current.model_dump(mode="json")
     payload.pop("rally_calibration_profile")
+    payload.pop("effective_match_gameplans")
     payload.update(
         schema_version="match_input_snapshot.v5",
         match_engine_version="match_engine_v5",
         effective_match_stamina=legacy_stamina.model_dump(mode="json"),
+        unsupported_future_inputs=("active_gameplans",),
         snapshot_hash=MatchInputSnapshot._content_hash(hash_payload),
     )
     payload["effective_match_stamina"].pop("pre_rally_effort_applied")
@@ -298,10 +324,12 @@ def test_v6_pre_rally_effort_snapshot_remains_readable_without_control_profile()
     )
     payload = current.model_dump(mode="json")
     payload.pop("rally_calibration_profile")
+    payload.pop("effective_match_gameplans")
     payload.update(
         schema_version="match_input_snapshot.v6",
         match_engine_version="match_engine_v6",
         effective_match_stamina=legacy_stamina.snapshot_payload(),
+        unsupported_future_inputs=("active_gameplans",),
         snapshot_hash=MatchInputSnapshot._content_hash(hash_payload),
     )
 
@@ -311,3 +339,36 @@ def test_v6_pre_rally_effort_snapshot_remains_readable_without_control_profile()
     assert restored.rally_calibration_profile is None
     assert restored.effective_match_stamina == legacy_stamina
     assert restored.effective_match_stamina.within_rally_effort_applied is False
+
+
+def test_v7_hidden_control_snapshot_remains_readable_without_gameplans() -> None:
+    current = _snapshot()
+    assert current.effective_match_timing is not None
+    assert current.effective_match_stamina is not None
+    assert current.rally_calibration_profile is not None
+    hash_payload = MatchInputSnapshot._hash_payload(
+        schema_version="match_input_snapshot.v7",
+        match_id=current.match_id,
+        simulation_seed=current.simulation_seed,
+        match_engine_version="match_engine_v7",
+        effective_match_format=current.effective_match_format,
+        effective_match_timing=current.effective_match_timing,
+        effective_match_stamina=current.effective_match_stamina,
+        rally_calibration_profile=current.rally_calibration_profile,
+        context=current.context,
+        unsupported_future_inputs=("active_gameplans",),
+    )
+    payload = current.model_dump(mode="json")
+    payload.pop("effective_match_gameplans")
+    payload.update(
+        schema_version="match_input_snapshot.v7",
+        match_engine_version="match_engine_v7",
+        unsupported_future_inputs=("active_gameplans",),
+        snapshot_hash=MatchInputSnapshot._content_hash(hash_payload),
+    )
+
+    restored = MatchInputSnapshot.model_validate(payload)
+
+    assert restored.schema_version == "match_input_snapshot.v7"
+    assert restored.effective_match_gameplans is None
+    assert restored.rally_calibration_profile == current.rally_calibration_profile

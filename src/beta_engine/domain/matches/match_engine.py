@@ -10,6 +10,18 @@ from typing import ClassVar
 
 from beta_engine.core import DeterministicRng, SeedScope
 from beta_engine.domain.matches.control import RallyCalibrationProfile
+from beta_engine.domain.matches.gameplans import (
+    EffectiveMatchGameplanSnapshot,
+    GameplanDecisionAction,
+    GameplanDecisionReason,
+    GameplanStrategy,
+    GameplanTimeHorizon,
+    PlayerActiveGameplan,
+    PlayerGameplanRallyEffect,
+    PlayerGameplanState,
+    PlayerRallyGameplanDecision,
+    RallyGameplanContext,
+)
 from beta_engine.domain.matches.models import (
     MatchContext,
     MatchParticipantContext,
@@ -129,6 +141,7 @@ class MatchEngine:
         effective_match_timing: EffectiveMatchTimingSnapshot | None = None,
         effective_match_stamina: EffectiveMatchStaminaSnapshot | None = None,
         rally_calibration_profile: RallyCalibrationProfile | None = None,
+        effective_match_gameplans: EffectiveMatchGameplanSnapshot | None = None,
     ) -> MatchResult:
         player_a = context.player_a.player
         player_b = context.player_b.player
@@ -143,6 +156,10 @@ class MatchEngine:
             context=context
         )
         rally_calibration = rally_calibration_profile or RallyCalibrationProfile()
+        gameplans = effective_match_gameplans or EffectiveMatchGameplanSnapshot.create(
+            context=context,
+            simulation_seed=self.rng.seed.value,
+        )
         if {profile.player_id for profile in timing.player_restart_profiles} != {
             player_a.player_id,
             player_b.player_id,
@@ -155,6 +172,12 @@ class MatchEngine:
             player_b.player_id,
         ):
             raise ValueError("effective stamina profiles must match participant order")
+        if tuple(profile.player_id for profile in gameplans.natural_style_profiles) != (
+            player_a.player_id,
+            player_b.player_id,
+        ):
+            raise ValueError("effective gameplans must match participant order")
+        gameplan_applied = stamina.within_rally_effort_applied
 
         strength_a = self._base_strength(context.player_a)
         strength_b = self._base_strength(context.player_b)
@@ -163,6 +186,7 @@ class MatchEngine:
             player_b.play_style,
             player_a.archetype,
             player_b.archetype,
+            include_style=not gameplan_applied,
         )
         strength_a += matchup_a
         strength_b += matchup_b
@@ -180,6 +204,16 @@ class MatchEngine:
         stamina_states = MatchStaminaLog.create_initial_states(
             effective=stamina,
             player_ids=(player_a.player_id, player_b.player_id),
+        )
+        gameplan_states = tuple(
+            PlayerGameplanState(
+                player_id=plan.player_id,
+                active_plan=plan,
+                rallies_since_reassessment=0,
+                points_won_since_reassessment=0,
+                points_lost_since_reassessment=0,
+            )
+            for plan in gameplans.initial_gameplans
         )
         timeline_rng = match_rng.branch(SeedScope.MATCH, "timeline-v1")
 
@@ -208,6 +242,7 @@ class MatchEngine:
                     timing=timing,
                     stamina=stamina,
                     expected_final_stamina_states=stamina_states,
+                    gameplan_applied=gameplan_applied,
                 )
 
             (
@@ -217,6 +252,7 @@ class MatchEngine:
                 rally_index,
                 server_player_id,
                 stamina_states,
+                gameplan_states,
             ) = self._simulate_set(
                 set_number=set_number,
                 player_a_id=player_a.player_id,
@@ -238,6 +274,9 @@ class MatchEngine:
                 stamina_states=stamina_states,
                 timeline_rng=timeline_rng,
                 rally_calibration=rally_calibration,
+                gameplans=gameplans,
+                gameplan_states=gameplan_states,
+                gameplan_applied=gameplan_applied,
             )
             rally_events.extend(set_events)
             sets.append(set_result)
@@ -262,6 +301,7 @@ class MatchEngine:
                     timing=timing,
                     stamina=stamina,
                     expected_final_stamina_states=stamina_states,
+                    gameplan_applied=gameplan_applied,
                 )
             _, stamina_states = MatchStaminaLog.advance_states(
                 effective=stamina,
@@ -294,6 +334,7 @@ class MatchEngine:
             timing=timing,
             stamina=stamina,
             expected_final_stamina_states=stamina_states,
+            gameplan_applied=gameplan_applied,
         )
 
     def _build_result(
@@ -311,6 +352,7 @@ class MatchEngine:
         timing: EffectiveMatchTimingSnapshot,
         stamina: EffectiveMatchStaminaSnapshot,
         expected_final_stamina_states: tuple[PlayerStaminaState, PlayerStaminaState],
+        gameplan_applied: bool,
         retired_player_id: str | None = None,
         retired_at_set_start: int | None = None,
     ) -> MatchResult:
@@ -319,7 +361,9 @@ class MatchEngine:
             input_snapshot_hash=input_hash,
             events=rally_events,
             schema_version=(
-                "match_rally_log.v4"
+                "match_rally_log.v5"
+                if gameplan_applied
+                else "match_rally_log.v4"
                 if stamina.within_rally_effort_applied
                 else "match_rally_log.v3"
                 if stamina.pre_rally_effort_applied
@@ -382,6 +426,9 @@ class MatchEngine:
         stamina_states: tuple[PlayerStaminaState, PlayerStaminaState],
         timeline_rng: DeterministicRng,
         rally_calibration: RallyCalibrationProfile,
+        gameplans: EffectiveMatchGameplanSnapshot,
+        gameplan_states: tuple[PlayerGameplanState, PlayerGameplanState],
+        gameplan_applied: bool,
     ) -> tuple[
         str,
         SetResult,
@@ -389,6 +436,7 @@ class MatchEngine:
         int,
         str,
         tuple[PlayerStaminaState, PlayerStaminaState],
+        tuple[PlayerGameplanState, PlayerGameplanState],
     ]:
         set_rng = match_rng.branch(SeedScope.MATCH, "set", set_number)
         momentum_adjustment = 0.035
@@ -413,6 +461,26 @@ class MatchEngine:
         while not self._set_finished(
             games_a, games_b, context.games_to, context.win_by
         ):
+            gameplan_context = None
+            if gameplan_applied:
+                gameplan_context, gameplan_states = self._prepare_rally_gameplans(
+                    context=context,
+                    effective=gameplans,
+                    states=gameplan_states,
+                    stamina_states=stamina_states,
+                    rally_index=rally_index,
+                    rng=match_rng.branch(
+                        SeedScope.MATCH, "gameplan-decision", rally_index
+                    ),
+                )
+            gameplan_decisions = (
+                {
+                    decision.player_id: decision
+                    for decision in gameplan_context.player_decisions
+                }
+                if gameplan_context is not None
+                else {}
+            )
             effort_rng = set_rng.branch(SeedScope.MATCH, "rally-effort", rally_in_set)
             efforts = (
                 (
@@ -423,6 +491,7 @@ class MatchEngine:
                         opponent_points=games_b,
                         games_to=context.games_to,
                         rng=effort_rng.branch(SeedScope.MATCH, player_a_id),
+                        gameplan=gameplan_decisions.get(player_a_id),
                     ),
                     self._select_rally_effort(
                         participant=context.player_b,
@@ -431,6 +500,7 @@ class MatchEngine:
                         opponent_points=games_a,
                         games_to=context.games_to,
                         rng=effort_rng.branch(SeedScope.MATCH, player_b_id),
+                        gameplan=gameplan_decisions.get(player_b_id),
                     ),
                 )
                 if stamina.pre_rally_effort_applied
@@ -476,6 +546,7 @@ class MatchEngine:
                     calibration=rally_calibration,
                     terminal_roll=terminal_roll,
                     rng=detail_rng.branch(SeedScope.MATCH, "hidden-control"),
+                    gameplan_context=gameplan_context,
                 )
             else:
                 rally_winner = (
@@ -553,7 +624,9 @@ class MatchEngine:
                 }
             event = RallyEvent.create(
                 schema_version=(
-                    "rally_event.v4"
+                    "rally_event.v5"
+                    if gameplan_context is not None and control_trace is not None
+                    else "rally_event.v4"
                     if control_trace is not None
                     else "rally_event.v3"
                     if effort_context is not None
@@ -585,9 +658,15 @@ class MatchEngine:
                 stamina_outcome_context=stamina_outcome,
                 effort_context=effort_context,
                 control_trace=control_trace,
+                gameplan_context=gameplan_context,
                 previous_event_hash=previous_event_hash,
             )
             rally_events.append(event)
+            if gameplan_applied:
+                gameplan_states = self._record_gameplan_outcome(
+                    states=gameplan_states,
+                    winner_player_id=rally_winner,
+                )
             _, stamina_states = MatchStaminaLog.advance_states(
                 effective=stamina,
                 states=stamina_states,
@@ -639,6 +718,7 @@ class MatchEngine:
             rally_index,
             server_player_id,
             stamina_states,
+            gameplan_states,
         )
 
     def _build_timeline(
@@ -920,10 +1000,15 @@ class MatchEngine:
         style_b: str,
         archetype_a: str,
         archetype_b: str,
+        *,
+        include_style: bool = True,
     ) -> tuple[float, float]:
-        adj_a = MatchEngine.STYLE_MATCHUP_EDGES.get(
-            (style_a, style_b), 0.0
-        ) + MatchEngine.ARCHETYPE_MATCHUP_EDGES.get(
+        style_adjustment = (
+            MatchEngine.STYLE_MATCHUP_EDGES.get((style_a, style_b), 0.0)
+            if include_style
+            else 0.0
+        )
+        adj_a = style_adjustment + MatchEngine.ARCHETYPE_MATCHUP_EDGES.get(
             (archetype_a, archetype_b),
             0.0,
         )
@@ -940,6 +1025,234 @@ class MatchEngine:
         return max(min_value, min(max_value, value))
 
     @classmethod
+    def _prepare_rally_gameplans(
+        cls,
+        *,
+        context: MatchContext,
+        effective: EffectiveMatchGameplanSnapshot,
+        states: tuple[PlayerGameplanState, PlayerGameplanState],
+        stamina_states: tuple[PlayerStaminaState, PlayerStaminaState],
+        rally_index: int,
+        rng: DeterministicRng,
+    ) -> tuple[
+        RallyGameplanContext,
+        tuple[PlayerGameplanState, PlayerGameplanState],
+    ]:
+        """Choose from information available before this rally, then expose effects."""
+
+        participants = (context.player_a, context.player_b)
+        player_ids = tuple(participant.player.player_id for participant in participants)
+        if tuple(state.player_id for state in states) != player_ids:
+            raise ValueError("runtime gameplan states must match participant order")
+        current_plans = tuple(state.active_plan for state in states)
+        decisions: list[PlayerRallyGameplanDecision] = []
+        next_states: list[PlayerGameplanState] = []
+        for player_index, participant in enumerate(participants):
+            decision, next_state = cls._review_player_gameplan(
+                participant=participant,
+                opponent_active_plan=current_plans[1 - player_index],
+                effective=effective,
+                state=states[player_index],
+                rally_index=rally_index,
+                rng=rng.branch(SeedScope.MATCH, player_ids[player_index]),
+            )
+            decisions.append(decision)
+            next_states.append(next_state)
+
+        active_plans = tuple(state.active_plan for state in next_states)
+        effects: list[PlayerGameplanRallyEffect] = []
+        for player_index, plan in enumerate(active_plans):
+            profile = effective.profile_for(plan.player_id)
+            reserve = cls._stamina_reserve(stamina_states[player_index])
+            execution_factor = cls._clamp(
+                plan.base_execution_factor * (0.78 + reserve * 0.22),
+                0.35,
+                1.08,
+            )
+            counter_fit = effective.counter_fit(
+                plan.axes, active_plans[1 - player_index].axes
+            )
+            natural_fit = 1.0 - plan.axes.mean_distance(profile.axes)
+            tactical_fit = (
+                counter_fit
+                if plan.strategy == GameplanStrategy.COUNTER_ESTIMATE
+                else natural_fit
+            )
+            control_signal = cls._clamp(
+                (execution_factor - 0.76) * 0.19 + (tactical_fit - 0.60) * 0.09,
+                -0.25,
+                0.25,
+            )
+            pace_signal = cls._clamp(
+                (plan.axes.tempo - 0.5) * 0.34 + (plan.axes.risk - 0.5) * 0.08,
+                -0.30,
+                0.30,
+            )
+            closure_signal = cls._clamp(
+                (plan.axes.risk - 0.5) * 0.055 + (plan.axes.tempo - 0.5) * 0.018,
+                -0.10,
+                0.10,
+            )
+            workload_factor = cls._clamp(
+                1.0
+                + (plan.axes.tempo - 0.5) * 0.10
+                + (plan.axes.court_positioning - 0.5) * 0.06
+                + (1.0 - plan.style_familiarity) * 0.13
+                + max(0.0, 0.78 - execution_factor) * 0.08,
+                0.75,
+                1.35,
+            )
+            effects.append(
+                PlayerGameplanRallyEffect(
+                    player_id=plan.player_id,
+                    execution_factor=round(execution_factor, 8),
+                    actual_counter_fit=round(counter_fit, 8),
+                    control_execution_signal=round(control_signal, 8),
+                    pace_preference_signal=round(pace_signal, 8),
+                    closure_pressure_signal=round(closure_signal, 8),
+                    workload_factor=round(workload_factor, 8),
+                )
+            )
+
+        gameplan_context = RallyGameplanContext(
+            player_decisions=tuple(decisions),
+            player_effects=tuple(effects),
+            control_drive_adjustment_player_a=round(
+                effects[0].control_execution_signal
+                - effects[1].control_execution_signal,
+                8,
+            ),
+            shared_pace_signal=round(
+                sum(effect.pace_preference_signal for effect in effects) / 2.0,
+                8,
+            ),
+            shared_closure_probability_adjustment=round(
+                sum(effect.closure_pressure_signal for effect in effects) / 2.0,
+                8,
+            ),
+        )
+        return gameplan_context, tuple(next_states)
+
+    @classmethod
+    def _review_player_gameplan(
+        cls,
+        *,
+        participant: MatchParticipantContext,
+        opponent_active_plan: PlayerActiveGameplan,
+        effective: EffectiveMatchGameplanSnapshot,
+        state: PlayerGameplanState,
+        rally_index: int,
+        rng: DeterministicRng,
+    ) -> tuple[PlayerRallyGameplanDecision, PlayerGameplanState]:
+        plan = state.active_plan
+        observed_rallies = state.rallies_since_reassessment
+        point_differential = (
+            state.points_won_since_reassessment - state.points_lost_since_reassessment
+        )
+        raw_signal = point_differential / observed_rallies if observed_rallies else 0.0
+        profile = effective.profile_for(state.player_id)
+
+        if rally_index == 1 and observed_rallies == 0:
+            action = GameplanDecisionAction.START
+            reason = GameplanDecisionReason.INITIAL_SELECTION
+            perceived_signal = 0.0
+            next_state = state
+        elif observed_rallies < plan.reassessment_after_rallies:
+            action = GameplanDecisionAction.STICK
+            reason = GameplanDecisionReason.REVIEW_NOT_DUE
+            perceived_signal = raw_signal
+            next_state = state
+        else:
+            perception_error = (
+                0.08
+                + (1.0 - profile.adaptability_proxy) * 0.15
+                + (1.0 - plan.opponent_estimate.confidence) * 0.16
+            )
+            perceived_signal = cls._clamp(
+                raw_signal + rng.uniform(-perception_error, perception_error),
+                -1.0,
+                1.0,
+            )
+            poor_signal = perceived_signal < -0.16
+            expected_later = (
+                plan.time_horizon == GameplanTimeHorizon.MATCH_LONG
+                and rally_index
+                < plan.selected_before_rally_index
+                + plan.anticipated_payoff_after_rallies
+            )
+            stick_score = (
+                plan.confidence * 0.44
+                + (1.0 - profile.adaptability_proxy) * 0.24
+                + (0.28 if expected_later else 0.0)
+                + rng.uniform(-0.18, 0.18)
+            )
+            if poor_signal and stick_score < 0.53:
+                plan = effective.revise_plan(
+                    participant=participant,
+                    opponent_active_axes=opponent_active_plan.axes,
+                    previous_plan=plan,
+                    selected_before_rally_index=rally_index,
+                    rng=rng.branch(SeedScope.MATCH, "adapt", plan.revision + 1),
+                )
+                action = GameplanDecisionAction.ADAPT
+                reason = GameplanDecisionReason.NEGATIVE_REASSESSMENT
+            else:
+                action = GameplanDecisionAction.STICK
+                if expected_later and poor_signal:
+                    reason = GameplanDecisionReason.EXPECTED_LATER_PAYOFF
+                elif raw_signal < -0.16 <= perceived_signal:
+                    reason = GameplanDecisionReason.MISREAD_PERFORMANCE_STICK
+                elif poor_signal and profile.adaptability_proxy < 0.52:
+                    reason = GameplanDecisionReason.LOW_ADAPTABILITY_STICK
+                elif poor_signal:
+                    reason = GameplanDecisionReason.HIGH_CONFIDENCE_STICK
+                else:
+                    reason = GameplanDecisionReason.OBSERVED_PLAN_WORKING
+            next_state = PlayerGameplanState(
+                player_id=state.player_id,
+                active_plan=plan,
+                rallies_since_reassessment=0,
+                points_won_since_reassessment=0,
+                points_lost_since_reassessment=0,
+            )
+
+        decision = PlayerRallyGameplanDecision(
+            player_id=state.player_id,
+            active_plan=plan,
+            action=action,
+            reason=reason,
+            observed_rallies=observed_rallies,
+            observed_point_differential=point_differential,
+            perceived_performance_signal=round(perceived_signal, 8),
+        )
+        return decision, next_state
+
+    @staticmethod
+    def _record_gameplan_outcome(
+        *,
+        states: tuple[PlayerGameplanState, PlayerGameplanState],
+        winner_player_id: str,
+    ) -> tuple[PlayerGameplanState, PlayerGameplanState]:
+        if winner_player_id not in {state.player_id for state in states}:
+            raise ValueError("gameplan outcome winner must be a match participant")
+        return tuple(
+            PlayerGameplanState(
+                player_id=state.player_id,
+                active_plan=state.active_plan,
+                rallies_since_reassessment=state.rallies_since_reassessment + 1,
+                points_won_since_reassessment=(
+                    state.points_won_since_reassessment
+                    + (state.player_id == winner_player_id)
+                ),
+                points_lost_since_reassessment=(
+                    state.points_lost_since_reassessment
+                    + (state.player_id != winner_player_id)
+                ),
+            )
+            for state in states
+        )
+
+    @classmethod
     def _select_rally_effort(
         cls,
         *,
@@ -949,6 +1262,7 @@ class MatchEngine:
         opponent_points: int,
         games_to: int,
         rng: DeterministicRng,
+        gameplan: PlayerRallyGameplanDecision | None = None,
     ) -> PlayerRallyEffort:
         """Choose an imperfect pre-rally effort intent from information the player has."""
 
@@ -989,13 +1303,17 @@ class MatchEngine:
         )
 
         factors = [RallyEffortDecisionFactor.NATURAL_STYLE]
-        score = {
-            "attacking": 0.35,
-            "retrieving": 0.20,
-            "front-court": 0.20,
-            "counter-punching": 0.05,
-            "tempo-controller": -0.10,
-        }.get(player.play_style, 0.0)
+        score = (
+            (gameplan.axes.risk - 0.5) * 0.72 + (gameplan.axes.tempo - 0.5) * 0.24
+            if gameplan is not None
+            else {
+                "attacking": 0.35,
+                "retrieving": 0.20,
+                "front-court": 0.20,
+                "counter-punching": 0.05,
+                "tempo-controller": -0.10,
+            }.get(player.play_style, 0.0)
+        )
         if perceived_reserve < 0.38:
             score -= 0.85
             factors.append(RallyEffortDecisionFactor.PERCEIVED_LOW_RESERVE)
@@ -1114,6 +1432,7 @@ class MatchEngine:
         calibration: RallyCalibrationProfile,
         terminal_roll: float,
         rng: DeterministicRng,
+        gameplan_context: RallyGameplanContext | None = None,
     ) -> tuple[
         str,
         RallyTerminalTrigger,
@@ -1131,6 +1450,24 @@ class MatchEngine:
             raise ValueError("rally stamina must use match participant order")
         if server_player_id not in player_ids:
             raise ValueError("rally server must be a match participant")
+        if (
+            gameplan_context is not None
+            and tuple(
+                decision.player_id for decision in gameplan_context.player_decisions
+            )
+            != player_ids
+        ):
+            raise ValueError("rally gameplans must use match participant order")
+        gameplan_effects = (
+            gameplan_context.player_effects
+            if gameplan_context is not None
+            else (None, None)
+        )
+        gameplan_decisions = (
+            gameplan_context.player_decisions
+            if gameplan_context is not None
+            else (None, None)
+        )
 
         opening_rng = rng.branch(SeedScope.MATCH, "opening")
         opening_state = cls._opening_control_state(
@@ -1138,6 +1475,7 @@ class MatchEngine:
             server_player_id=server_player_id,
             base_probability_player_a=base_probability_player_a,
             rng=opening_rng.branch(SeedScope.MATCH, "control"),
+            gameplan_context=gameplan_context,
         )
         current_levels = [effort.intended_level for effort in efforts]
         actual_reserves = [cls._stamina_reserve(state) for state in stamina_states]
@@ -1149,6 +1487,11 @@ class MatchEngine:
                     + 0.08
                     * sum(effort.executed_intensity_multiplier for effort in efforts)
                     / 2.0
+                )
+                + (
+                    gameplan_context.shared_closure_probability_adjustment * 0.40
+                    if gameplan_context is not None
+                    else 0.0
                 ),
                 0.03,
                 0.16,
@@ -1179,6 +1522,11 @@ class MatchEngine:
                 * effort.executed_intensity_multiplier
                 * effort.movement_efficiency_factor
                 * effort.style_workload_factor
+                * (
+                    gameplan_effects[player_index].workload_factor
+                    if gameplan_effects[player_index] is not None
+                    else 1.0
+                )
                 * pressure_factor,
                 4,
             )
@@ -1228,6 +1576,11 @@ class MatchEngine:
                             * effort.executed_intensity_multiplier
                             * effort.movement_efficiency_factor
                             * effort.style_workload_factor
+                            * (
+                                gameplan_effects[player_index].workload_factor
+                                if gameplan_effects[player_index] is not None
+                                else 1.0
+                            )
                             * pressure_factor,
                             4,
                         )
@@ -1300,6 +1653,7 @@ class MatchEngine:
                         "effort",
                         participant.player.player_id,
                     ),
+                    gameplan=gameplan_decisions[player_index],
                 )
                 current_levels[player_index] = next_level
                 if change is not None:
@@ -1325,6 +1679,11 @@ class MatchEngine:
                 intensity_b=intensities[1],
                 calibration=calibration,
                 rng=segment_rng.branch(SeedScope.MATCH, "transition"),
+                gameplan_control_drive=(
+                    gameplan_context.control_drive_adjustment_player_a
+                    if gameplan_context is not None
+                    else 0.0
+                ),
             )
             transition_distance = abs(
                 cls.CONTROL_VALUE[next_state] - cls.CONTROL_VALUE[current_state]
@@ -1342,6 +1701,7 @@ class MatchEngine:
                 participants=participants,
                 intensities=intensities,
                 rng=segment_rng.branch(SeedScope.MATCH, "pace"),
+                gameplan_context=gameplan_context,
             )
             segment_shots = cls._segment_shot_count(
                 pace=pace,
@@ -1372,6 +1732,11 @@ class MatchEngine:
                     * intensities[player_index]
                     * effort.movement_efficiency_factor
                     * effort.style_workload_factor
+                    * (
+                        gameplan_effects[player_index].workload_factor
+                        if gameplan_effects[player_index] is not None
+                        else 1.0
+                    )
                     * pressure_factor,
                     4,
                 )
@@ -1395,6 +1760,11 @@ class MatchEngine:
                 pace=pace,
                 mean_intensity=sum(intensities) / 2.0,
                 calibration=calibration,
+                gameplan_closure_adjustment=(
+                    gameplan_context.shared_closure_probability_adjustment
+                    if gameplan_context is not None
+                    else 0.0
+                ),
             )
             closure_roll = segment_rng.branch(SeedScope.MATCH, "closure").random()
             closed_rally = closure_roll < closure_probability
@@ -1480,6 +1850,11 @@ class MatchEngine:
                 )
                 * effort.movement_efficiency_factor
                 * effort.style_workload_factor
+                * (
+                    gameplan_effects[player_index].workload_factor
+                    if gameplan_effects[player_index] is not None
+                    else 1.0
+                )
                 * pressure_factor,
                 4,
             )
@@ -1543,6 +1918,7 @@ class MatchEngine:
         server_player_id: str,
         base_probability_player_a: float,
         rng: DeterministicRng,
+        gameplan_context: RallyGameplanContext | None = None,
     ) -> RallyControlState:
         player_a = context.player_a.player
         player_b = context.player_b.player
@@ -1560,7 +1936,17 @@ class MatchEngine:
         if server.player_id != player_a.player_id:
             role_edge_for_a *= -1
         base_edge = cls._probability_logit(base_probability_player_a) / 5.0
-        signal = base_edge + role_edge_for_a * 0.90 + rng.uniform(-0.68, 0.68)
+        gameplan_drive = (
+            gameplan_context.control_drive_adjustment_player_a * 1.55
+            if gameplan_context is not None
+            else 0.0
+        )
+        signal = (
+            base_edge
+            + role_edge_for_a * 0.90
+            + gameplan_drive
+            + rng.uniform(-0.68, 0.68)
+        )
         if signal >= 0.76:
             return RallyControlState.STRONG_CONTROL_A
         if signal >= 0.20:
@@ -1582,6 +1968,7 @@ class MatchEngine:
         perceived_reserve: float,
         calibration: RallyCalibrationProfile,
         rng: DeterministicRng,
+        gameplan: PlayerRallyGameplanDecision | None = None,
     ) -> tuple[RallyEffortLevel, RallyEffortChange | None]:
         state_value = cls.CONTROL_VALUE[control_state]
         own_control = state_value if player_index == 0 else -state_value
@@ -1607,7 +1994,9 @@ class MatchEngine:
                 reason = RallyEffortChangeReason.RESPOND_TO_PRESSURE
         elif own_control > 0 and level_index < len(cls.EFFORT_LEVELS) - 1:
             style_factor = (
-                1.0
+                0.55 + gameplan.axes.risk * 0.70
+                if gameplan is not None
+                else 1.0
                 if participant.player.play_style in {"attacking", "front-court"}
                 else 0.48
             )
@@ -1621,10 +2010,11 @@ class MatchEngine:
                 0.72 + participant.player.mental / 99.0 * 0.56
             )
             if decision_roll < tactical_probability:
-                prefer_up = pressure > 0 or participant.player.play_style in {
-                    "attacking",
-                    "front-court",
-                }
+                prefer_up = pressure > 0 or (
+                    gameplan.axes.risk >= 0.58
+                    if gameplan is not None
+                    else participant.player.play_style in {"attacking", "front-court"}
+                )
                 if perceived_reserve < 0.48:
                     prefer_up = False
                 direction = 1 if prefer_up else -1
@@ -1651,11 +2041,16 @@ class MatchEngine:
         intensity_b: float,
         calibration: RallyCalibrationProfile,
         rng: DeterministicRng,
+        gameplan_control_drive: float = 0.0,
     ) -> RallyControlState:
         current_value = cls.CONTROL_VALUE[current_state]
         base_drive = cls._probability_logit(base_probability_player_a) / 3.5
         effort_drive = (intensity_a - intensity_b) * 1.15
-        direction_drive = cls._clamp(base_drive + effort_drive, -1.5, 1.5)
+        direction_drive = cls._clamp(
+            base_drive + effort_drive + gameplan_control_drive * 2.25,
+            -1.5,
+            1.5,
+        )
         weighted_states: list[tuple[RallyControlState, float]] = []
         for candidate_value in range(-2, 3):
             distance = abs(candidate_value - current_value)
@@ -1698,6 +2093,7 @@ class MatchEngine:
         participants: tuple[MatchParticipantContext, MatchParticipantContext],
         intensities: tuple[float, float],
         rng: DeterministicRng,
+        gameplan_context: RallyGameplanContext | None = None,
     ) -> RallyPhasePace:
         style_pace = {
             "attacking": 0.10,
@@ -1706,14 +2102,19 @@ class MatchEngine:
             "retrieving": -0.04,
             "tempo-controller": -0.08,
         }
-        signal = (
-            sum(intensities) / 2.0
-            - 1.0
-            + sum(
+        plan_or_style_signal = (
+            gameplan_context.shared_pace_signal
+            if gameplan_context is not None
+            else sum(
                 style_pace.get(participant.player.play_style, 0.0)
                 for participant in participants
             )
             / 2.0
+        )
+        signal = (
+            sum(intensities) / 2.0
+            - 1.0
+            + plan_or_style_signal
             + rng.uniform(-0.15, 0.15)
         )
         if signal > 0.08:
@@ -1765,6 +2166,7 @@ class MatchEngine:
         pace: RallyPhasePace,
         mean_intensity: float,
         calibration: RallyCalibrationProfile,
+        gameplan_closure_adjustment: float = 0.0,
     ) -> float:
         if segment_index == calibration.maximum_control_segments:
             return 1.0
@@ -1776,6 +2178,7 @@ class MatchEngine:
             + abs(cls.CONTROL_VALUE[control_state]) * 0.01
             - (0.008 if pace == RallyPhasePace.PATIENT else 0.0)
             + (mean_intensity - 1.0) * 0.035
+            + gameplan_closure_adjustment
         )
         return round(cls._clamp(probability, 0.035, 0.96), 8)
 

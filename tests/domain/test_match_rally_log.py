@@ -71,7 +71,7 @@ def test_every_simulated_point_is_an_ordered_authoritative_rally_event() -> None
     )
     assert log.rally_elapsed_seconds > 0
     assert log.estimated_shot_count >= log.total_rallies
-    assert log.schema_version == "match_rally_log.v4"
+    assert log.schema_version == "match_rally_log.v5"
     assert "between_rally_intervals" not in log.unsupported_timeline_components
     assert "game_breaks" not in log.unsupported_timeline_components
 
@@ -93,6 +93,7 @@ def test_v1_rally_event_remains_hash_compatible_without_stamina_context() -> Non
     payload.pop("stamina_outcome_context")
     payload.pop("effort_context")
     payload.pop("control_trace")
+    payload.pop("gameplan_context")
     payload["event_hash"] = RallyEvent._content_hash(RallyEvent._hash_payload(payload))
 
     restored = RallyEvent.model_validate(payload)
@@ -144,6 +145,7 @@ def test_v2_rally_event_remains_hash_compatible_without_effort_context() -> None
     payload["schema_version"] = "rally_event.v2"
     payload.pop("effort_context")
     payload.pop("control_trace")
+    payload.pop("gameplan_context")
     payload["event_hash"] = RallyEvent._content_hash(RallyEvent._hash_payload(payload))
 
     restored = RallyEvent.model_validate(payload)
@@ -152,12 +154,12 @@ def test_v2_rally_event_remains_hash_compatible_without_effort_context() -> None
     assert restored.effort_context is None
 
 
-def test_v4_rally_log_rejects_an_event_from_an_older_schema_generation() -> None:
+def test_v5_rally_log_rejects_an_event_from_an_older_schema_generation() -> None:
     result = _result()
     assert result.rally_log is not None
     payload = result.rally_log.model_dump(mode="json")
-    payload["events"][0]["schema_version"] = "rally_event.v3"
-    payload["events"][0].pop("control_trace")
+    payload["events"][0]["schema_version"] = "rally_event.v4"
+    payload["events"][0].pop("gameplan_context")
     payload["events"][0]["event_hash"] = RallyEvent._content_hash(
         RallyEvent._hash_payload(payload["events"][0])
     )
@@ -174,6 +176,71 @@ def test_rally_log_rejects_removed_or_reordered_event() -> None:
     payload["total_rallies"] -= 1
 
     with pytest.raises(ValidationError, match="identity or event order|hash chain"):
+        MatchRallyLog.model_validate(payload)
+
+
+def test_rally_log_rejects_rehashed_gameplan_revision_forgery() -> None:
+    result = _result()
+    assert result.rally_log is not None
+    payload = result.rally_log.model_dump(mode="json")
+    forged_index = next(
+        index
+        for index in range(1, len(payload["events"]))
+        if payload["events"][index]["gameplan_context"]["player_decisions"][0][
+            "active_plan"
+        ]["revision"]
+        == payload["events"][index - 1]["gameplan_context"]["player_decisions"][0][
+            "active_plan"
+        ]["revision"]
+        >= 2
+    )
+    forged = payload["events"][forged_index]
+    decision = forged["gameplan_context"]["player_decisions"][0]
+    decision["action"] = "ADAPT"
+    decision["reason"] = "NEGATIVE_REASSESSMENT"
+    decision["active_plan"]["selected_before_rally_index"] = forged["rally_index"]
+
+    previous_hash = payload["events"][forged_index - 1]["event_hash"]
+    for event in payload["events"][forged_index:]:
+        event["previous_event_hash"] = previous_hash
+        event["event_hash"] = RallyEvent._content_hash(RallyEvent._hash_payload(event))
+        previous_hash = event["event_hash"]
+    payload["match_log_hash"] = previous_hash
+
+    with pytest.raises(ValidationError, match="revision must increment"):
+        MatchRallyLog.model_validate(payload)
+
+
+def test_legacy_log_label_cannot_bypass_gameplan_revision_validation() -> None:
+    result = _result()
+    assert result.rally_log is not None
+    payload = result.rally_log.model_dump(mode="json")
+    payload["schema_version"] = "match_rally_log.v1"
+    forged_index = next(
+        index
+        for index in range(1, len(payload["events"]))
+        if payload["events"][index]["gameplan_context"]["player_decisions"][0][
+            "active_plan"
+        ]["revision"]
+        == payload["events"][index - 1]["gameplan_context"]["player_decisions"][0][
+            "active_plan"
+        ]["revision"]
+        >= 2
+    )
+    forged = payload["events"][forged_index]
+    decision = forged["gameplan_context"]["player_decisions"][0]
+    decision["action"] = "ADAPT"
+    decision["reason"] = "NEGATIVE_REASSESSMENT"
+    decision["active_plan"]["selected_before_rally_index"] = forged["rally_index"]
+
+    previous_hash = payload["events"][forged_index - 1]["event_hash"]
+    for event in payload["events"][forged_index:]:
+        event["previous_event_hash"] = previous_hash
+        event["event_hash"] = RallyEvent._content_hash(RallyEvent._hash_payload(event))
+        previous_hash = event["event_hash"]
+    payload["match_log_hash"] = previous_hash
+
+    with pytest.raises(ValidationError, match="revision must increment"):
         MatchRallyLog.model_validate(payload)
 
 

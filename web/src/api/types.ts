@@ -3404,6 +3404,79 @@ export type EffectiveMatchStaminaSnapshot = {
   >
 }
 
+export type StyleAxes = {
+  risk: number
+  tempo: number
+  court_positioning: number
+  variation: number
+}
+
+export type GameplanStrategy =
+  | 'OWN_STRENGTH'
+  | 'COUNTER_ESTIMATE'
+  | 'DELAYED_PAYOFF'
+
+export type GameplanMechanism =
+  | 'IMPOSE_NATURAL_PATTERN'
+  | 'DISRUPT_ESTIMATED_PATTERN'
+  | 'EXTEND_PHYSICAL_TEST'
+
+export type GameplanTimeHorizon = 'IMMEDIATE' | 'GAME_PHASE' | 'MATCH_LONG'
+
+export type PlayerNaturalStyleProfile = {
+  player_id: string
+  source_play_style: string
+  axes: StyleAxes
+  adaptability_proxy: number
+  familiarity_baseline: number
+  profile_seed: string
+  profile_source: 'legacy_style_materialization_v1'
+}
+
+export type OpponentStyleEstimate = {
+  opponent_player_id: string
+  estimated_axes: StyleAxes
+  confidence: number
+  mean_absolute_error: number
+}
+
+export type PlayerActiveGameplan = {
+  player_id: string
+  revision: number
+  selected_before_rally_index: number
+  strategy: GameplanStrategy
+  intended_mechanism: GameplanMechanism
+  time_horizon: GameplanTimeHorizon
+  axes: StyleAxes
+  style_familiarity: number
+  base_execution_factor: number
+  confidence: number
+  reassessment_after_rallies: number
+  anticipated_payoff_after_rallies: number
+  opponent_estimate: OpponentStyleEstimate
+  selection_seed: string
+  source: 'PLAYER_AI_PRE_ALPHA_V1'
+}
+
+export type EffectiveMatchGameplanSnapshot = {
+  schema_version: 'effective_match_gameplans.v1'
+  calibration_version: 'pre_alpha_gameplan_v1'
+  natural_style_profiles: [
+    PlayerNaturalStyleProfile,
+    PlayerNaturalStyleProfile,
+  ]
+  initial_gameplans: [PlayerActiveGameplan, PlayerActiveGameplan]
+  four_axis_execution_applied: true
+  imperfect_opponent_estimates_applied: true
+  in_match_reassessment_applied: true
+  unsupported_components: Array<
+    | 'persistent_authored_style_profiles'
+    | 'match_preparation'
+    | 'scouting_history_and_memory'
+    | 'mental_bar_execution_coupling'
+  >
+}
+
 export type RallyCalibrationProfile = {
   schema_version: 'rally_calibration_profile.v1'
   calibration_version: 'pre_alpha_control_v1'
@@ -3446,6 +3519,7 @@ export type MatchInputSnapshot = {
     | 'match_input_snapshot.v5'
     | 'match_input_snapshot.v6'
     | 'match_input_snapshot.v7'
+    | 'match_input_snapshot.v8'
   match_id: string
   simulation_seed: number
   match_engine_version: string
@@ -3453,6 +3527,7 @@ export type MatchInputSnapshot = {
   effective_match_timing: EffectiveMatchTimingSnapshot | null
   effective_match_stamina: EffectiveMatchStaminaSnapshot | null
   rally_calibration_profile: RallyCalibrationProfile | null
+  effective_match_gameplans: EffectiveMatchGameplanSnapshot | null
   context: Record<string, unknown>
   unsupported_future_inputs: Array<
     'active_gameplans' | 'rally_model_configuration' | 'rally_seed_stream'
@@ -3616,12 +3691,57 @@ export type RallyControlTrace = {
   ]
 }
 
+export type GameplanDecisionAction = 'START' | 'STICK' | 'ADAPT'
+
+export type GameplanDecisionReason =
+  | 'INITIAL_SELECTION'
+  | 'REVIEW_NOT_DUE'
+  | 'OBSERVED_PLAN_WORKING'
+  | 'EXPECTED_LATER_PAYOFF'
+  | 'HIGH_CONFIDENCE_STICK'
+  | 'LOW_ADAPTABILITY_STICK'
+  | 'MISREAD_PERFORMANCE_STICK'
+  | 'NEGATIVE_REASSESSMENT'
+
+export type PlayerRallyGameplanDecision = {
+  player_id: string
+  active_plan: PlayerActiveGameplan
+  action: GameplanDecisionAction
+  reason: GameplanDecisionReason
+  observed_rallies: number
+  observed_point_differential: number
+  perceived_performance_signal: number
+}
+
+export type PlayerGameplanRallyEffect = {
+  player_id: string
+  execution_factor: number
+  actual_counter_fit: number
+  control_execution_signal: number
+  pace_preference_signal: number
+  closure_pressure_signal: number
+  workload_factor: number
+}
+
+export type RallyGameplanContext = {
+  calibration_version: 'pre_alpha_gameplan_v1'
+  player_decisions: [
+    PlayerRallyGameplanDecision,
+    PlayerRallyGameplanDecision,
+  ]
+  player_effects: [PlayerGameplanRallyEffect, PlayerGameplanRallyEffect]
+  control_drive_adjustment_player_a: number
+  shared_pace_signal: number
+  shared_closure_probability_adjustment: number
+}
+
 export type RallyEvent = {
   schema_version:
     | 'rally_event.v1'
     | 'rally_event.v2'
     | 'rally_event.v3'
     | 'rally_event.v4'
+    | 'rally_event.v5'
   match_id: string
   rally_index: number
   set_number: number
@@ -3667,6 +3787,7 @@ export type RallyEvent = {
   stamina_outcome_context: RallyStaminaOutcomeContext | null
   effort_context: RallyEffortContext | null
   control_trace: RallyControlTrace | null
+  gameplan_context: RallyGameplanContext | null
   side_incidents: Array<Record<string, unknown>>
   previous_event_hash: string
   event_hash_algorithm: 'sha256'
@@ -3679,6 +3800,7 @@ export type MatchRallyLog = {
     | 'match_rally_log.v2'
     | 'match_rally_log.v3'
     | 'match_rally_log.v4'
+    | 'match_rally_log.v5'
   match_id: string
   input_snapshot_hash: string
   events: RallyEvent[]

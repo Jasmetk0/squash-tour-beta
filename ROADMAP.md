@@ -53,6 +53,7 @@ This is a milestone summary, not a second product constitution. **Master Vision 
 - Follow the newer V1 direction that these three physical bars derive from the lighter underlying attribute/state model rather than becoming three independent standalone trainable attributes; exact derivation remains open.
 - Add one or more mental match-state dimensions only as a provisional direction until count/names/mechanics are explicitly decided.
 - Let player AI estimate opponent fatigue and vary effort; it must not read hidden Admin truth directly.
+- Keep the implemented four-axis Active Gameplan V1 historically snapshotted and replayable; later replace its explicit legacy style/adaptability proxies with authored career profiles, Match Preparation and richer scouting inputs.
 - Keep serve influence squash-appropriate and relatively weak.
 - Use simplified `No Let / Yes Let / Stroke` interference in v1.
 - Persist compact authoritative rally and timing data.

@@ -9,6 +9,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
+from beta_engine.domain.matches.gameplans import RallyGameplanContext
+
 
 def _json_value(value: object) -> object:
     if isinstance(value, BaseModel):
@@ -362,7 +364,11 @@ class RallyStaminaOutcomeContext(BaseModel):
 
 class RallyEvent(BaseModel):
     schema_version: Literal[
-        "rally_event.v1", "rally_event.v2", "rally_event.v3", "rally_event.v4"
+        "rally_event.v1",
+        "rally_event.v2",
+        "rally_event.v3",
+        "rally_event.v4",
+        "rally_event.v5",
     ] = "rally_event.v1"
     match_id: str = Field(min_length=1)
     rally_index: int = Field(ge=1)
@@ -385,6 +391,7 @@ class RallyEvent(BaseModel):
     stamina_outcome_context: RallyStaminaOutcomeContext | None = None
     effort_context: RallyEffortContext | None = None
     control_trace: RallyControlTrace | None = None
+    gameplan_context: RallyGameplanContext | None = None
     side_incidents: tuple[dict[str, object], ...] = ()
     previous_event_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     event_hash_algorithm: Literal["sha256"] = "sha256"
@@ -456,6 +463,7 @@ class RallyEvent(BaseModel):
             "rally_event.v2",
             "rally_event.v3",
             "rally_event.v4",
+            "rally_event.v5",
         }:
             if self.stamina_outcome_context is None:
                 raise ValueError("v2 rally event requires stamina outcome context")
@@ -469,7 +477,11 @@ class RallyEvent(BaseModel):
                 raise ValueError("rally stamina impacts do not match participant order")
         elif self.stamina_outcome_context is not None:
             raise ValueError("v1 rally event cannot contain stamina outcome context")
-        if self.schema_version in {"rally_event.v3", "rally_event.v4"}:
+        if self.schema_version in {
+            "rally_event.v3",
+            "rally_event.v4",
+            "rally_event.v5",
+        }:
             if self.effort_context is None:
                 raise ValueError("v3 rally event requires effort context")
             if tuple(
@@ -481,7 +493,7 @@ class RallyEvent(BaseModel):
                 raise ValueError("rally effort does not match participant order")
         elif self.effort_context is not None:
             raise ValueError("legacy rally event cannot contain effort context")
-        if self.schema_version == "rally_event.v4":
+        if self.schema_version in {"rally_event.v4", "rally_event.v5"}:
             if self.control_trace is None or self.effort_context is None:
                 raise ValueError("v4 rally event requires effort and control contexts")
             if (
@@ -504,8 +516,7 @@ class RallyEvent(BaseModel):
             if self.winner_player_id != expected_winner:
                 raise ValueError("rally winner does not match control terminal roll")
             if tuple(
-                workload.player_id
-                for workload in self.control_trace.player_workloads
+                workload.player_id for workload in self.control_trace.player_workloads
             ) != (
                 self.score_before.player_a_id,
                 self.score_before.player_b_id,
@@ -538,6 +549,29 @@ class RallyEvent(BaseModel):
                     raise ValueError("segment workload uses the wrong effort level")
         elif self.control_trace is not None:
             raise ValueError("legacy rally event cannot contain control trace")
+        if self.schema_version == "rally_event.v5":
+            if self.gameplan_context is None:
+                raise ValueError("v5 rally event requires active gameplan context")
+            if tuple(
+                decision.player_id
+                for decision in self.gameplan_context.player_decisions
+            ) != (
+                self.score_before.player_a_id,
+                self.score_before.player_b_id,
+            ):
+                raise ValueError("rally gameplans do not match participant order")
+            for decision in self.gameplan_context.player_decisions:
+                selected_at = decision.active_plan.selected_before_rally_index
+                if decision.action.value == "START" and (
+                    self.rally_index != 1 or selected_at != 1
+                ):
+                    raise ValueError("initial gameplan must start before rally one")
+                if decision.action.value == "ADAPT" and selected_at != self.rally_index:
+                    raise ValueError("adapted gameplan must start at the current rally")
+                if selected_at > self.rally_index:
+                    raise ValueError("rally cannot use a future gameplan revision")
+        elif self.gameplan_context is not None:
+            raise ValueError("legacy rally event cannot contain gameplan context")
         if self.event_hash != self._content_hash(
             self._hash_payload(
                 self.model_dump(
@@ -565,6 +599,13 @@ class RallyEvent(BaseModel):
             "rally_event.v3",
         }:
             payload.pop("control_trace", None)
+        if values.get("schema_version") in {
+            "rally_event.v1",
+            "rally_event.v2",
+            "rally_event.v3",
+            "rally_event.v4",
+        }:
+            payload.pop("gameplan_context", None)
         return payload
 
     @staticmethod
@@ -581,7 +622,8 @@ class MatchRallyLog(BaseModel):
         "match_rally_log.v2",
         "match_rally_log.v3",
         "match_rally_log.v4",
-    ] = "match_rally_log.v4"
+        "match_rally_log.v5",
+    ] = "match_rally_log.v5"
     match_id: str = Field(min_length=1)
     input_snapshot_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     events: tuple[RallyEvent, ...]
@@ -621,12 +663,15 @@ class MatchRallyLog(BaseModel):
             "match_rally_log.v2",
             "match_rally_log.v3",
             "match_rally_log.v4",
+            "match_rally_log.v5",
         ]
         | None = None,
     ) -> MatchRallyLog:
         event_versions = {event.schema_version for event in events}
         inferred_schema_version = (
-            "match_rally_log.v4"
+            "match_rally_log.v5"
+            if "rally_event.v5" in event_versions
+            else "match_rally_log.v4"
             if "rally_event.v4" in event_versions
             else "match_rally_log.v3"
             if "rally_event.v3" in event_versions
@@ -649,12 +694,24 @@ class MatchRallyLog(BaseModel):
 
     @model_validator(mode="after")
     def validate_chain(self) -> MatchRallyLog:
+        if self.schema_version == "match_rally_log.v5" and any(
+            event.schema_version != "rally_event.v5" for event in self.events
+        ):
+            raise ValueError("rally log and event schema versions do not agree")
         if self.schema_version == "match_rally_log.v4" and any(
             event.schema_version != "rally_event.v4" for event in self.events
         ):
             raise ValueError("rally log and event schema versions do not agree")
+        has_gameplan_events = any(
+            event.schema_version == "rally_event.v5" for event in self.events
+        )
+        if has_gameplan_events and any(
+            event.schema_version != "rally_event.v5" for event in self.events
+        ):
+            raise ValueError("gameplan rally events cannot be mixed with older events")
         previous_hash = self.input_snapshot_hash
         previous_event: RallyEvent | None = None
+        previous_plan_revisions: dict[str, int] = {}
         for expected_index, event in enumerate(self.events, start=1):
             if event.match_id != self.match_id or event.rally_index != expected_index:
                 raise ValueError(
@@ -662,6 +719,31 @@ class MatchRallyLog(BaseModel):
                 )
             if event.previous_event_hash != previous_hash:
                 raise ValueError("rally log hash chain is broken")
+            # Validate v5 semantics from the protected event data as well as the
+            # outer label, so changing only the log schema cannot bypass plan
+            # revision continuity.
+            if event.schema_version == "rally_event.v5":
+                assert event.gameplan_context is not None
+                for decision in event.gameplan_context.player_decisions:
+                    prior_revision = previous_plan_revisions.get(decision.player_id)
+                    if prior_revision is None:
+                        if decision.action.value != "START":
+                            raise ValueError(
+                                "first logged gameplan decision must start"
+                            )
+                    elif decision.action.value == "ADAPT":
+                        if decision.active_plan.revision != prior_revision + 1:
+                            raise ValueError(
+                                "adapted gameplan revision must increment exactly once"
+                            )
+                    elif (
+                        decision.action.value != "STICK"
+                        or decision.active_plan.revision != prior_revision
+                    ):
+                        raise ValueError("gameplan revision continuity is broken")
+                    previous_plan_revisions[decision.player_id] = (
+                        decision.active_plan.revision
+                    )
             if previous_event is not None:
                 previous_score = previous_event.score_after
                 current_score = event.score_before

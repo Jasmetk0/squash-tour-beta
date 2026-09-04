@@ -131,7 +131,7 @@ def test_active_match_records_one_causal_control_trace_per_rally() -> None:
     assert result.stamina_log is not None
 
     for event in result.rally_log.events:
-        assert event.schema_version == "rally_event.v4"
+        assert event.schema_version == "rally_event.v5"
         assert event.control_trace is not None
         trace = event.control_trace
         expected_winner = (
@@ -165,7 +165,7 @@ def test_first_set_retirement_keeps_current_empty_log_schemas() -> None:
 
     assert result.termination_reason == MatchTerminationReason.RETIREMENT
     assert result.rally_log is not None
-    assert result.rally_log.schema_version == "match_rally_log.v4"
+    assert result.rally_log.schema_version == "match_rally_log.v5"
     assert result.rally_log.events == ()
     assert result.stamina_log is not None
     assert result.stamina_log.schema_version == "match_stamina_log.v3"

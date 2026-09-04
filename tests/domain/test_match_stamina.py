@@ -262,7 +262,7 @@ def test_every_rally_records_the_live_nonlinear_stamina_effect() -> None:
 
     contexts = [event.stamina_outcome_context for event in result.rally_log.events]
     assert all(
-        event.schema_version == "rally_event.v4" for event in result.rally_log.events
+        event.schema_version == "rally_event.v5" for event in result.rally_log.events
     )
     assert all(context is not None for context in contexts)
     assert any(

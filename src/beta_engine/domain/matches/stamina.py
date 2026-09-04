@@ -64,16 +64,20 @@ class EffectiveMatchStaminaSnapshot(BaseModel):
     """Hash-protected, replaceable pre-alpha calibration used by one match."""
 
     schema_version: Literal[
-        "effective_match_stamina.v1", "effective_match_stamina.v2"
-    ] = "effective_match_stamina.v2"
+        "effective_match_stamina.v1",
+        "effective_match_stamina.v2",
+        "effective_match_stamina.v3",
+    ] = "effective_match_stamina.v3"
     calibration_version: Literal[
         "pre_alpha_physical_v1",
         "pre_alpha_physical_v2",
         "pre_alpha_physical_v3",
-    ] = "pre_alpha_physical_v3"
+        "pre_alpha_physical_v4",
+    ] = "pre_alpha_physical_v4"
     player_profiles: tuple[PlayerStaminaProfile, PlayerStaminaProfile]
     outcome_effect_applied: bool = True
     pre_rally_effort_applied: bool = False
+    within_rally_effort_applied: bool = False
     unsupported_components: tuple[
         Literal[
             "stamina_outcome_coupling",
@@ -99,15 +103,17 @@ class EffectiveMatchStaminaSnapshot(BaseModel):
     ) -> EffectiveMatchStaminaSnapshot:
         unsupported = list(cls.model_fields["unsupported_components"].default)
         calibration_version = (
-            "pre_alpha_physical_v3"
+            "pre_alpha_physical_v4"
             if outcome_effect_applied
             else "pre_alpha_physical_v1"
         )
         if not outcome_effect_applied:
             unsupported.insert(0, "stamina_outcome_coupling")
+        else:
+            unsupported.remove("within_rally_effort_changes")
         return cls(
             schema_version=(
-                "effective_match_stamina.v2"
+                "effective_match_stamina.v3"
                 if outcome_effect_applied
                 else "effective_match_stamina.v1"
             ),
@@ -118,11 +124,17 @@ class EffectiveMatchStaminaSnapshot(BaseModel):
             ),
             outcome_effect_applied=outcome_effect_applied,
             pre_rally_effort_applied=outcome_effect_applied,
+            within_rally_effort_applied=outcome_effect_applied,
             unsupported_components=tuple(unsupported),
         )
 
     def snapshot_payload(self) -> dict[str, object]:
         payload = self.model_dump(mode="json")
+        if self.schema_version in {
+            "effective_match_stamina.v1",
+            "effective_match_stamina.v2",
+        }:
+            payload.pop("within_rally_effort_applied", None)
         if self.schema_version == "effective_match_stamina.v1":
             payload.pop("pre_rally_effort_applied", None)
         return payload
@@ -142,9 +154,15 @@ class EffectiveMatchStaminaSnapshot(BaseModel):
         # They use only existing physical inputs and can be replaced without
         # reinterpreting historical matches.
         capacities = {
-            StaminaDimension.EXPLOSIVE: 55 + player.physical * 0.25 + player.movement * 0.20,
-            StaminaDimension.RALLY: 55 + player.physical * 0.30 + player.movement * 0.15,
-            StaminaDimension.MATCH: 55 + player.physical * 0.25 + player.recovery * 0.20,
+            StaminaDimension.EXPLOSIVE: 55
+            + player.physical * 0.25
+            + player.movement * 0.20,
+            StaminaDimension.RALLY: 55
+            + player.physical * 0.30
+            + player.movement * 0.15,
+            StaminaDimension.MATCH: 55
+            + player.physical * 0.25
+            + player.recovery * 0.20,
         }
         cost_factors = {
             StaminaDimension.EXPLOSIVE: 1.18 - player.movement * 0.0025,
@@ -152,9 +170,15 @@ class EffectiveMatchStaminaSnapshot(BaseModel):
             StaminaDimension.MATCH: 0.58 - player.physical * 0.0012,
         }
         recovery_rates = {
-            StaminaDimension.EXPLOSIVE: 0.028 + player.recovery * 0.00022 + player.physical * 0.00010,
-            StaminaDimension.RALLY: 0.018 + player.recovery * 0.00017 + player.physical * 0.00008,
-            StaminaDimension.MATCH: 0.008 + player.recovery * 0.00010 + player.physical * 0.00005,
+            StaminaDimension.EXPLOSIVE: 0.028
+            + player.recovery * 0.00022
+            + player.physical * 0.00010,
+            StaminaDimension.RALLY: 0.018
+            + player.recovery * 0.00017
+            + player.physical * 0.00008,
+            StaminaDimension.MATCH: 0.008
+            + player.recovery * 0.00010
+            + player.physical * 0.00005,
         }
         return PlayerStaminaProfile(
             player_id=player.player_id,
@@ -175,14 +199,23 @@ class EffectiveMatchStaminaSnapshot(BaseModel):
         if len({profile.player_id for profile in self.player_profiles}) != 2:
             raise ValueError("effective stamina requires two distinct players")
         if self.schema_version == "effective_match_stamina.v1":
-            if self.pre_rally_effort_applied:
+            if self.pre_rally_effort_applied or self.within_rally_effort_applied:
                 raise ValueError("v1 effective stamina cannot activate rally effort")
-        elif (
+        elif self.schema_version == "effective_match_stamina.v2" and (
             self.calibration_version != "pre_alpha_physical_v3"
             or not self.outcome_effect_applied
             or not self.pre_rally_effort_applied
+            or self.within_rally_effort_applied
         ):
             raise ValueError("v2 effective stamina requires active v3 rally effort")
+        elif self.schema_version == "effective_match_stamina.v3" and (
+            self.calibration_version != "pre_alpha_physical_v4"
+            or not self.outcome_effect_applied
+            or not self.pre_rally_effort_applied
+            or not self.within_rally_effort_applied
+            or "within_rally_effort_changes" in self.unsupported_components
+        ):
+            raise ValueError("v3 effective stamina requires active hidden-rally effort")
         return self
 
     def profile_for(self, player_id: str) -> PlayerStaminaProfile:
@@ -244,9 +277,9 @@ class PlayerStaminaWorkload(BaseModel):
 
 
 class StaminaTransition(BaseModel):
-    schema_version: Literal[
-        "stamina_transition.v1", "stamina_transition.v2"
-    ] = "stamina_transition.v1"
+    schema_version: Literal["stamina_transition.v1", "stamina_transition.v2"] = (
+        "stamina_transition.v1"
+    )
     match_id: str = Field(min_length=1)
     transition_index: int = Field(ge=1)
     source_timeline_index: int = Field(ge=1)
@@ -273,7 +306,11 @@ class StaminaTransition(BaseModel):
         before_ids = [state.player_id for state in self.states_before]
         after_ids = [state.player_id for state in self.states_after]
         delta_ids = [delta.player_id for delta in self.deltas]
-        if before_ids != after_ids or before_ids != delta_ids or len(set(before_ids)) != 2:
+        if (
+            before_ids != after_ids
+            or before_ids != delta_ids
+            or len(set(before_ids)) != 2
+        ):
             raise ValueError("stamina transition participants do not agree")
         if self.schema_version == "stamina_transition.v2":
             if tuple(workload.player_id for workload in self.player_workloads) != tuple(
@@ -331,14 +368,15 @@ class StaminaTransition(BaseModel):
 
 class MatchStaminaLog(BaseModel):
     schema_version: Literal[
-        "match_stamina_log.v1", "match_stamina_log.v2"
-    ] = "match_stamina_log.v2"
+        "match_stamina_log.v1", "match_stamina_log.v2", "match_stamina_log.v3"
+    ] = "match_stamina_log.v3"
     match_id: str = Field(min_length=1)
     timeline_log_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     calibration_version: Literal[
         "pre_alpha_physical_v1",
         "pre_alpha_physical_v2",
         "pre_alpha_physical_v3",
+        "pre_alpha_physical_v4",
     ]
     initial_states: tuple[PlayerStaminaState, PlayerStaminaState]
     transitions: tuple[StaminaTransition, ...]
@@ -346,6 +384,7 @@ class MatchStaminaLog(BaseModel):
     total_transitions: int = Field(ge=0)
     outcome_effect_applied: bool = False
     pre_rally_effort_applied: bool = False
+    within_rally_effort_applied: bool = False
     unsupported_components: tuple[
         Literal[
             "stamina_outcome_coupling",
@@ -413,9 +452,7 @@ class MatchStaminaLog(BaseModel):
                 elapsed_seconds=source.elapsed_seconds,
                 workload_units=workload,
                 player_workloads=tuple(
-                    PlayerStaminaWorkload(
-                        player_id=player_id, workload_units=units
-                    )
+                    PlayerStaminaWorkload(player_id=player_id, workload_units=units)
                     for player_id, units in (player_workloads or {}).items()
                 ),
                 states_before=current,
@@ -427,6 +464,13 @@ class MatchStaminaLog(BaseModel):
             current = after
             previous_hash = transition.transition_hash
         return cls(
+            schema_version=(
+                "match_stamina_log.v3"
+                if effective.within_rally_effort_applied
+                else "match_stamina_log.v2"
+                if effective.pre_rally_effort_applied
+                else "match_stamina_log.v1"
+            ),
             match_id=context.match_id,
             timeline_log_hash=timeline.match_log_hash,
             calibration_version=effective.calibration_version,
@@ -436,6 +480,7 @@ class MatchStaminaLog(BaseModel):
             total_transitions=len(transitions),
             outcome_effect_applied=effective.outcome_effect_applied,
             pre_rally_effort_applied=effective.pre_rally_effort_applied,
+            within_rally_effort_applied=effective.within_rally_effort_applied,
             unsupported_components=effective.unsupported_components,
             match_log_hash=previous_hash,
         )
@@ -522,13 +567,13 @@ class MatchStaminaLog(BaseModel):
                 recovery_efficiency = 1.0
                 if match_stamina_limits_recovery:
                     match_bar = profile.bar(StaminaDimension.MATCH)
-                    match_fill = state.current(StaminaDimension.MATCH) / match_bar.capacity
+                    match_fill = (
+                        state.current(StaminaDimension.MATCH) / match_bar.capacity
+                    )
                     recovery_efficiency = 0.45 + 0.55 * (match_fill**0.7)
                 value = min(
                     missing,
-                    elapsed_seconds
-                    * bar.recovery_per_second
-                    * recovery_efficiency,
+                    elapsed_seconds * bar.recovery_per_second * recovery_efficiency,
                 )
             values[dimension] = _round(value)
         return PlayerStaminaDelta(
@@ -587,7 +632,11 @@ class MatchStaminaLog(BaseModel):
                 ),
                 match_stamina_limits_recovery=(
                     effective.calibration_version
-                    in {"pre_alpha_physical_v2", "pre_alpha_physical_v3"}
+                    in {
+                        "pre_alpha_physical_v2",
+                        "pre_alpha_physical_v3",
+                        "pre_alpha_physical_v4",
+                    }
                 ),
             ),
             cls._delta(
@@ -602,7 +651,11 @@ class MatchStaminaLog(BaseModel):
                 ),
                 match_stamina_limits_recovery=(
                     effective.calibration_version
-                    in {"pre_alpha_physical_v2", "pre_alpha_physical_v3"}
+                    in {
+                        "pre_alpha_physical_v2",
+                        "pre_alpha_physical_v3",
+                        "pre_alpha_physical_v4",
+                    }
                 ),
             ),
         )
@@ -634,10 +687,25 @@ class MatchStaminaLog(BaseModel):
             raise ValueError("stamina final states do not match transition chain")
         if self.match_log_hash != previous_hash:
             raise ValueError("stamina log final hash mismatch")
+        if self.schema_version == "match_stamina_log.v1" and (
+            self.pre_rally_effort_applied or self.within_rally_effort_applied
+        ):
+            raise ValueError("v1 stamina log cannot activate rally effort")
+        if self.schema_version == "match_stamina_log.v2" and (
+            not self.pre_rally_effort_applied or self.within_rally_effort_applied
+        ):
+            raise ValueError("v2 stamina log requires only pre-rally effort")
+        if self.schema_version == "match_stamina_log.v3" and not (
+            self.pre_rally_effort_applied and self.within_rally_effort_applied
+        ):
+            raise ValueError("v3 stamina log requires within-rally effort")
         return self
 
     def validate_timeline(self, timeline: MatchTimelineLog) -> None:
-        if self.match_id != timeline.match_id or self.timeline_log_hash != timeline.match_log_hash:
+        if (
+            self.match_id != timeline.match_id
+            or self.timeline_log_hash != timeline.match_log_hash
+        ):
             raise ValueError("stamina log does not match authoritative timeline")
         if len(self.transitions) != len(timeline.events):
             raise ValueError("stamina log must cover every timeline event")
@@ -653,7 +721,9 @@ class MatchStaminaLog(BaseModel):
                 or transition.elapsed_seconds != source.elapsed_seconds
                 or transition.cause != expected_cause
             ):
-                raise ValueError("stamina transition references the wrong timeline event")
+                raise ValueError(
+                    "stamina transition references the wrong timeline event"
+                )
 
     def validate_effective_snapshot(
         self, effective: EffectiveMatchStaminaSnapshot
@@ -666,11 +736,19 @@ class MatchStaminaLog(BaseModel):
         if self.initial_states != expected:
             raise ValueError("stamina initial state does not match effective input")
         if self.unsupported_components != effective.unsupported_components:
-            raise ValueError("stamina log support boundary does not match effective input")
+            raise ValueError(
+                "stamina log support boundary does not match effective input"
+            )
         if self.outcome_effect_applied != effective.outcome_effect_applied:
-            raise ValueError("stamina log outcome boundary does not match effective input")
+            raise ValueError(
+                "stamina log outcome boundary does not match effective input"
+            )
         if self.pre_rally_effort_applied != effective.pre_rally_effort_applied:
-            raise ValueError("stamina log effort boundary does not match effective input")
+            raise ValueError(
+                "stamina log effort boundary does not match effective input"
+            )
+        if self.within_rally_effort_applied != effective.within_rally_effort_applied:
+            raise ValueError("stamina log within-rally boundary does not match input")
 
     def validate_rally_outcomes(self, rally_events: tuple[RallyEvent, ...]) -> None:
         transitions = tuple(
@@ -684,7 +762,9 @@ class MatchStaminaLog(BaseModel):
             context = rally.stamina_outcome_context
             if context is None:
                 if self.outcome_effect_applied:
-                    raise ValueError("active stamina log requires rally outcome context")
+                    raise ValueError(
+                        "active stamina log requires rally outcome context"
+                    )
                 continue
             for state, impact in zip(
                 transition.states_before, context.player_impacts, strict=True
@@ -710,9 +790,7 @@ class MatchStaminaLog(BaseModel):
                     8,
                 )
                 expected_penalty = round(
-                    0.18 * nonlinear_deficit
-                    if self.outcome_effect_applied
-                    else 0.0,
+                    0.18 * nonlinear_deficit if self.outcome_effect_applied else 0.0,
                     8,
                 )
                 if (
@@ -729,7 +807,9 @@ class MatchStaminaLog(BaseModel):
                     raise ValueError("legacy rally cannot carry individual workload")
                 continue
             if not self.pre_rally_effort_applied:
-                raise ValueError("inactive effort log cannot contain rally effort context")
+                raise ValueError(
+                    "inactive effort log cannot contain rally effort context"
+                )
             if effort_context.base_workload_units != self.rally_workload(rally):
                 raise ValueError("rally effort uses the wrong base workload")
             expected_workloads = tuple(
@@ -740,7 +820,15 @@ class MatchStaminaLog(BaseModel):
                 for effort in effort_context.player_efforts
             )
             if transition.player_workloads != expected_workloads:
-                raise ValueError("rally individual workload does not match effort context")
+                raise ValueError(
+                    "rally individual workload does not match effort context"
+                )
+            if self.within_rally_effort_applied and rally.control_trace is None:
+                raise ValueError("active within-rally log requires control trace")
+            if not self.within_rally_effort_applied and rally.control_trace is not None:
+                raise ValueError(
+                    "inactive within-rally log cannot contain control trace"
+                )
             if (
                 context.adjusted_probability_player_a
                 != effort_context.probability_before_effort_player_a

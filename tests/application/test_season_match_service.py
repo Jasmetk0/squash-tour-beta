@@ -203,7 +203,9 @@ def test_simulate_next_completes_first_pending_and_is_replay_deterministic(
     assert a_completed.model_dump() == b_completed.model_dump()
     assert a_completed.match_input_snapshot is not None
     assert a_completed.match_input_snapshot.snapshot_hash
-    assert a_completed.match_input_snapshot.schema_version == "match_input_snapshot.v6"
+    assert a_completed.match_input_snapshot.schema_version == "match_input_snapshot.v7"
+    assert a_completed.match_input_snapshot.rally_calibration_profile is not None
+    assert a_completed.match_input_snapshot.rally_calibration_profile.calibration_version == "pre_alpha_control_v1"
     assert a_completed.match_input_snapshot.effective_match_timing is not None
     assert a_completed.match_input_snapshot.effective_match_timing.nominal_game_break_seconds == 120
     assert a_completed.match_input_snapshot.simulation_seed == a_completed.simulation_seed
@@ -212,6 +214,8 @@ def test_simulate_next_completes_first_pending_and_is_replay_deterministic(
     assert a_completed.result_fingerprint == b_completed.result_fingerprint
     assert a_completed.simulated_result is not None
     assert a_completed.simulated_result.rally_log is not None
+    assert a_completed.simulated_result.rally_log.schema_version == "match_rally_log.v4"
+    assert all(rally.control_trace is not None for rally in a_completed.simulated_result.rally_log.events)
     assert a_completed.simulated_result.timeline_log is not None
     assert a_completed.simulated_result.stamina_log is not None
     assert (

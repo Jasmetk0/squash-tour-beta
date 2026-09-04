@@ -31,6 +31,7 @@ from beta_engine.domain.matches import (
     MatchStaminaLog,
     MatchTimelineLog,
     MatchTimingOverride,
+    RallyCalibrationProfile,
     official_match_format_snapshot,
     resolve_effective_match_format,
 )
@@ -49,7 +50,7 @@ MatchValidationSeverity = Literal["warning", "error"]
 ProgressionStatusValue = Literal["not_started", "in_progress", "completed", "not_applicable"]
 EventProgressionStatusValue = Literal["not_started", "in_progress", "completed", "blocked"]
 ProgressionAction = Literal["process_byes", "refresh_status", "simulate_round", "simulate_draw", "promote_qualifiers", "advance_completed"]
-MATCH_ENGINE_VERSION = "match_engine_v6"
+MATCH_ENGINE_VERSION = "match_engine_v7"
 
 
 
@@ -325,6 +326,7 @@ class SeasonMatchService:
             "match_input_snapshot.v4",
             "match_input_snapshot.v5",
             "match_input_snapshot.v6",
+            "match_input_snapshot.v7",
         }:
             if stamina_log is None or effective_stamina is None:
                 raise ValueError("Stored v4 match is missing authoritative stamina data.")
@@ -472,12 +474,14 @@ class SeasonMatchService:
             effective_match_timing=effective_timing,
             simulation_seed=sim_seed,
             match_engine_version=MATCH_ENGINE_VERSION,
+            rally_calibration_profile=RallyCalibrationProfile(),
         )
         domain_result = MatchEngine(rng=DeterministicRng(input_snapshot.simulation_seed)).simulate(
             input_snapshot.context,
             log_anchor_hash=input_snapshot.snapshot_hash,
             effective_match_timing=input_snapshot.effective_match_timing,
             effective_match_stamina=input_snapshot.effective_match_stamina,
+            rally_calibration_profile=input_snapshot.rally_calibration_profile,
         )
         result_payload = domain_result.model_dump(mode="json")
         result_fp = self._fingerprint({"event_id": event_id, "match_id": match_id, "match_input_snapshot_hash": input_snapshot.snapshot_hash, "result": result_payload})
@@ -775,12 +779,14 @@ class SeasonMatchService:
             effective_match_timing=effective_timing,
             simulation_seed=sim_seed,
             match_engine_version=MATCH_ENGINE_VERSION,
+            rally_calibration_profile=RallyCalibrationProfile(),
         )
         domain_result = MatchEngine(rng=DeterministicRng(input_snapshot.simulation_seed)).simulate(
             input_snapshot.context,
             log_anchor_hash=input_snapshot.snapshot_hash,
             effective_match_timing=input_snapshot.effective_match_timing,
             effective_match_stamina=input_snapshot.effective_match_stamina,
+            rally_calibration_profile=input_snapshot.rally_calibration_profile,
         )
         result_payload = domain_result.model_dump(mode="json")
         result_fp = self._fingerprint({"event_id": package.event_id, "match_id": match.match_id, "match_input_snapshot_hash": input_snapshot.snapshot_hash, "result": result_payload})

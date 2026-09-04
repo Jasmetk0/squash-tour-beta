@@ -90,8 +90,11 @@ def test_simulate_selected_and_next(tmp_path: Path) -> None:
         assert completed["simulated_result"]["rally_log"]["events"]
         assert completed["simulated_result"]["timeline_log"]["events"]
         assert completed["simulated_result"]["stamina_log"]["transitions"]
-        assert completed["match_input_snapshot"]["effective_match_stamina"]["calibration_version"] == "pre_alpha_physical_v3"
+        assert completed["match_input_snapshot"]["effective_match_stamina"]["calibration_version"] == "pre_alpha_physical_v4"
         assert completed["match_input_snapshot"]["effective_match_stamina"]["pre_rally_effort_applied"] is True
+        assert completed["match_input_snapshot"]["effective_match_stamina"]["within_rally_effort_applied"] is True
+        assert completed["match_input_snapshot"]["rally_calibration_profile"]["calibration_version"] == "pre_alpha_control_v1"
+        assert all(event["control_trace"] is not None for event in completed["simulated_result"]["rally_log"]["events"])
         assert completed["simulated_result"]["match_elapsed_seconds"] > completed["simulated_result"]["rally_elapsed_seconds"]
         assert completed["match_input_snapshot"]["effective_match_timing"]["nominal_game_break_seconds"] == 90
 

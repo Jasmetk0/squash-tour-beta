@@ -102,6 +102,221 @@ class RallyEffortDecisionFactor(str, Enum):
     TACTICAL_VARIATION = "TACTICAL_VARIATION"
 
 
+class RallyControlState(str, Enum):
+    STRONG_CONTROL_A = "STRONG_CONTROL_A"
+    SLIGHT_CONTROL_A = "SLIGHT_CONTROL_A"
+    NEUTRAL = "NEUTRAL"
+    SLIGHT_CONTROL_B = "SLIGHT_CONTROL_B"
+    STRONG_CONTROL_B = "STRONG_CONTROL_B"
+
+
+class RallyControlTransitionKind(str, Enum):
+    STAY = "STAY"
+    LOCAL_SHIFT = "LOCAL_SHIFT"
+    SIGNIFICANT_BREAK = "SIGNIFICANT_BREAK"
+    DIRECT_REVERSAL = "DIRECT_REVERSAL"
+
+
+class RallyPhasePace(str, Enum):
+    PATIENT = "PATIENT"
+    BALANCED = "BALANCED"
+    FAST = "FAST"
+
+
+class RallyClosureReason(str, Enum):
+    OPENING_TERMINAL = "OPENING_TERMINAL"
+    NATURAL_TERMINAL = "NATURAL_TERMINAL"
+    HARD_SEGMENT_CAP = "HARD_SEGMENT_CAP"
+
+
+class RallyEffortChangeReason(str, Enum):
+    CONSERVE_LOW_RESERVE = "CONSERVE_LOW_RESERVE"
+    RESPOND_TO_PRESSURE = "RESPOND_TO_PRESSURE"
+    PRESS_CONTROL_ADVANTAGE = "PRESS_CONTROL_ADVANTAGE"
+    TACTICAL_VARIATION = "TACTICAL_VARIATION"
+
+
+class RallyEffortChange(BaseModel):
+    player_id: str = Field(min_length=1)
+    from_level: RallyEffortLevel
+    to_level: RallyEffortLevel
+    reason: RallyEffortChangeReason
+
+    @model_validator(mode="after")
+    def validate_change(self) -> RallyEffortChange:
+        order = list(RallyEffortLevel)
+        if abs(order.index(self.to_level) - order.index(self.from_level)) != 1:
+            raise ValueError("within-rally effort changes must move exactly one level")
+        return self
+
+
+class PlayerControlSegmentWorkload(BaseModel):
+    player_id: str = Field(min_length=1)
+    effort_level: RallyEffortLevel
+    intensity_multiplier: float = Field(ge=0.5, le=1.5)
+    control_pressure_factor: float = Field(ge=0.5, le=1.5)
+    workload_units: float = Field(ge=0)
+
+
+class RallyControlSegment(BaseModel):
+    segment_index: int = Field(ge=1, le=24)
+    state_before: RallyControlState
+    state_after: RallyControlState
+    transition_kind: RallyControlTransitionKind
+    phase_pace: RallyPhasePace
+    estimated_shot_count: int = Field(ge=1, le=5)
+    elapsed_seconds: float = Field(gt=0)
+    closure_probability: float = Field(ge=0, le=1)
+    closure_roll: float = Field(ge=0, lt=1)
+    closed_rally: bool
+    effort_changes: tuple[RallyEffortChange, ...] = ()
+    player_workloads: tuple[PlayerControlSegmentWorkload, PlayerControlSegmentWorkload]
+
+    @model_validator(mode="after")
+    def validate_transition(self) -> RallyControlSegment:
+        values = {
+            RallyControlState.STRONG_CONTROL_A: 2,
+            RallyControlState.SLIGHT_CONTROL_A: 1,
+            RallyControlState.NEUTRAL: 0,
+            RallyControlState.SLIGHT_CONTROL_B: -1,
+            RallyControlState.STRONG_CONTROL_B: -2,
+        }
+        distance = abs(values[self.state_after] - values[self.state_before])
+        expected = (
+            RallyControlTransitionKind.STAY
+            if distance == 0
+            else RallyControlTransitionKind.LOCAL_SHIFT
+            if distance == 1
+            else RallyControlTransitionKind.DIRECT_REVERSAL
+            if distance == 4
+            else RallyControlTransitionKind.SIGNIFICANT_BREAK
+        )
+        if self.transition_kind != expected:
+            raise ValueError("control transition kind does not match its distance")
+        player_ids = tuple(workload.player_id for workload in self.player_workloads)
+        if len(set(player_ids)) != 2:
+            raise ValueError("control segment requires two distinct player workloads")
+        if any(change.player_id not in player_ids for change in self.effort_changes):
+            raise ValueError("effort change references a non-participant")
+        if len({change.player_id for change in self.effort_changes}) != len(
+            self.effort_changes
+        ):
+            raise ValueError("a player may change effort only once per segment")
+        if self.closed_rally != (self.closure_roll < self.closure_probability):
+            raise ValueError("segment closure does not match its probability roll")
+        return self
+
+
+class PlayerRallyControlWorkload(BaseModel):
+    player_id: str = Field(min_length=1)
+    opening_workload_units: float = Field(ge=0)
+    segment_workload_units: float = Field(ge=0)
+    terminal_workload_units: float = Field(ge=0)
+    mean_control_pressure_factor: float = Field(ge=0.5, le=1.5)
+    total_workload_units: float = Field(ge=0)
+
+    @model_validator(mode="after")
+    def validate_total(self) -> PlayerRallyControlWorkload:
+        expected = round(
+            self.opening_workload_units
+            + self.segment_workload_units
+            + self.terminal_workload_units,
+            4,
+        )
+        if self.total_workload_units != expected:
+            raise ValueError("control workload phases do not match total")
+        return self
+
+
+class RallyControlTrace(BaseModel):
+    calibration_version: Literal["pre_alpha_control_v1"] = "pre_alpha_control_v1"
+    trace_seed: str = Field(pattern=r"^[0-9]+$")
+    opening_state: RallyControlState
+    opening_terminal_probability: float = Field(ge=0, le=1)
+    opening_terminal_roll: float = Field(ge=0, lt=1)
+    segments: tuple[RallyControlSegment, ...]
+    final_state: RallyControlState
+    closure_reason: RallyClosureReason
+    control_segment_count: int = Field(ge=0, le=24)
+    opening_shot_count: int = Field(ge=1, le=2)
+    terminal_shot_count: int = Field(ge=0, le=1)
+    estimated_shot_count: int = Field(ge=1)
+    opening_elapsed_seconds: float = Field(gt=0)
+    terminal_elapsed_seconds: float = Field(ge=0)
+    active_rally_duration: float = Field(gt=0)
+    probability_before_control_player_a: float = Field(ge=0, le=1)
+    terminal_probability_player_a: float = Field(ge=0, le=1)
+    terminal_roll: float = Field(ge=0, lt=1)
+    player_workloads: tuple[PlayerRallyControlWorkload, PlayerRallyControlWorkload]
+
+    @model_validator(mode="after")
+    def validate_trace(self) -> RallyControlTrace:
+        if self.control_segment_count != len(self.segments):
+            raise ValueError("control segment count does not match trace")
+        if self.closure_reason == RallyClosureReason.OPENING_TERMINAL:
+            if self.segments:
+                raise ValueError("opening terminal cannot contain control segments")
+            if self.opening_terminal_roll >= self.opening_terminal_probability:
+                raise ValueError("opening terminal does not match its probability roll")
+            if self.terminal_shot_count != 0:
+                raise ValueError("opening terminal cannot add a later terminal shot")
+        elif not self.segments:
+            raise ValueError("non-opening terminal requires control segments")
+        elif self.opening_terminal_roll < self.opening_terminal_probability:
+            raise ValueError("continued rally contradicts its opening-terminal roll")
+        elif self.terminal_shot_count != 1:
+            raise ValueError("continued rally requires one abstract terminal shot")
+        previous = self.opening_state
+        for expected_index, segment in enumerate(self.segments, start=1):
+            if (
+                segment.segment_index != expected_index
+                or segment.state_before != previous
+            ):
+                raise ValueError("control trace continuity is broken")
+            if segment.closed_rally != (expected_index == len(self.segments)):
+                raise ValueError("only the final control segment may close the rally")
+            previous = segment.state_after
+        if self.final_state != previous:
+            raise ValueError("control trace final state does not match segments")
+        if (
+            self.closure_reason == RallyClosureReason.HARD_SEGMENT_CAP
+            and self.control_segment_count != 24
+        ):
+            raise ValueError("hard-cap closure requires segment 24")
+        if (
+            self.control_segment_count == 24
+            and self.closure_reason != RallyClosureReason.HARD_SEGMENT_CAP
+        ):
+            raise ValueError("segment 24 must be recorded as the hard-cap closure")
+        expected_shots = (
+            self.opening_shot_count
+            + sum(segment.estimated_shot_count for segment in self.segments)
+            + self.terminal_shot_count
+        )
+        if self.estimated_shot_count != expected_shots:
+            raise ValueError("control trace shot total is inconsistent")
+        expected_duration = round(
+            self.opening_elapsed_seconds
+            + sum(segment.elapsed_seconds for segment in self.segments)
+            + self.terminal_elapsed_seconds,
+            3,
+        )
+        if self.active_rally_duration != expected_duration:
+            raise ValueError("control trace duration total is inconsistent")
+        if len({workload.player_id for workload in self.player_workloads}) != 2:
+            raise ValueError("control trace requires two distinct player workloads")
+        workload_player_ids = tuple(
+            workload.player_id for workload in self.player_workloads
+        )
+        if any(
+            tuple(workload.player_id for workload in segment.player_workloads)
+            != workload_player_ids
+            for segment in self.segments
+        ):
+            raise ValueError("control segment workload order is inconsistent")
+        return self
+
+
 class PlayerRallyEffort(BaseModel):
     player_id: str = Field(min_length=1)
     intended_level: RallyEffortLevel
@@ -147,7 +362,7 @@ class RallyStaminaOutcomeContext(BaseModel):
 
 class RallyEvent(BaseModel):
     schema_version: Literal[
-        "rally_event.v1", "rally_event.v2", "rally_event.v3"
+        "rally_event.v1", "rally_event.v2", "rally_event.v3", "rally_event.v4"
     ] = "rally_event.v1"
     match_id: str = Field(min_length=1)
     rally_index: int = Field(ge=1)
@@ -169,6 +384,7 @@ class RallyEvent(BaseModel):
     post_rally_state: PostRallyStateSnapshot
     stamina_outcome_context: RallyStaminaOutcomeContext | None = None
     effort_context: RallyEffortContext | None = None
+    control_trace: RallyControlTrace | None = None
     side_incidents: tuple[dict[str, object], ...] = ()
     previous_event_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     event_hash_algorithm: Literal["sha256"] = "sha256"
@@ -236,7 +452,11 @@ class RallyEvent(BaseModel):
             )
         if self.post_rally_state.next_server_player_id != self.winner_player_id:
             raise ValueError("rally winner must serve next in current individual rules")
-        if self.schema_version in {"rally_event.v2", "rally_event.v3"}:
+        if self.schema_version in {
+            "rally_event.v2",
+            "rally_event.v3",
+            "rally_event.v4",
+        }:
             if self.stamina_outcome_context is None:
                 raise ValueError("v2 rally event requires stamina outcome context")
             if tuple(
@@ -249,7 +469,7 @@ class RallyEvent(BaseModel):
                 raise ValueError("rally stamina impacts do not match participant order")
         elif self.stamina_outcome_context is not None:
             raise ValueError("v1 rally event cannot contain stamina outcome context")
-        if self.schema_version == "rally_event.v3":
+        if self.schema_version in {"rally_event.v3", "rally_event.v4"}:
             if self.effort_context is None:
                 raise ValueError("v3 rally event requires effort context")
             if tuple(
@@ -261,6 +481,63 @@ class RallyEvent(BaseModel):
                 raise ValueError("rally effort does not match participant order")
         elif self.effort_context is not None:
             raise ValueError("legacy rally event cannot contain effort context")
+        if self.schema_version == "rally_event.v4":
+            if self.control_trace is None or self.effort_context is None:
+                raise ValueError("v4 rally event requires effort and control contexts")
+            if (
+                self.control_trace.control_segment_count != self.abstract_segments
+                or self.control_trace.estimated_shot_count != self.estimated_shot_count
+                or self.control_trace.active_rally_duration != self.elapsed_seconds
+            ):
+                raise ValueError("rally summary does not match control trace")
+            if (
+                self.effort_context.probability_after_effort_player_a
+                != self.control_trace.probability_before_control_player_a
+            ):
+                raise ValueError("effort and control probabilities do not connect")
+            expected_winner = (
+                self.score_before.player_a_id
+                if self.control_trace.terminal_roll
+                < self.control_trace.terminal_probability_player_a
+                else self.score_before.player_b_id
+            )
+            if self.winner_player_id != expected_winner:
+                raise ValueError("rally winner does not match control terminal roll")
+            if tuple(
+                workload.player_id
+                for workload in self.control_trace.player_workloads
+            ) != (
+                self.score_before.player_a_id,
+                self.score_before.player_b_id,
+            ):
+                raise ValueError(
+                    "control workloads do not match match participant order"
+                )
+            workload_by_player = {
+                workload.player_id: workload.total_workload_units
+                for workload in self.control_trace.player_workloads
+            }
+            if any(
+                effort.workload_units != workload_by_player.get(effort.player_id)
+                for effort in self.effort_context.player_efforts
+            ):
+                raise ValueError("effort workload does not match control trace")
+            effort_levels = {
+                effort.player_id: effort.intended_level
+                for effort in self.effort_context.player_efforts
+            }
+            for segment in self.control_trace.segments:
+                for change in segment.effort_changes:
+                    if effort_levels[change.player_id] != change.from_level:
+                        raise ValueError("control effort change sequence is broken")
+                    effort_levels[change.player_id] = change.to_level
+                if any(
+                    workload.effort_level != effort_levels[workload.player_id]
+                    for workload in segment.player_workloads
+                ):
+                    raise ValueError("segment workload uses the wrong effort level")
+        elif self.control_trace is not None:
+            raise ValueError("legacy rally event cannot contain control trace")
         if self.event_hash != self._content_hash(
             self._hash_payload(
                 self.model_dump(
@@ -282,6 +559,12 @@ class RallyEvent(BaseModel):
             payload.pop("stamina_outcome_context", None)
         if values.get("schema_version") in {"rally_event.v1", "rally_event.v2"}:
             payload.pop("effort_context", None)
+        if values.get("schema_version") in {
+            "rally_event.v1",
+            "rally_event.v2",
+            "rally_event.v3",
+        }:
+            payload.pop("control_trace", None)
         return payload
 
     @staticmethod
@@ -294,10 +577,11 @@ class RallyEvent(BaseModel):
 
 class MatchRallyLog(BaseModel):
     schema_version: Literal[
-        "match_rally_log.v1", "match_rally_log.v2", "match_rally_log.v3"
-    ] = (
-        "match_rally_log.v3"
-    )
+        "match_rally_log.v1",
+        "match_rally_log.v2",
+        "match_rally_log.v3",
+        "match_rally_log.v4",
+    ] = "match_rally_log.v4"
     match_id: str = Field(min_length=1)
     input_snapshot_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     events: tuple[RallyEvent, ...]
@@ -327,9 +611,31 @@ class MatchRallyLog(BaseModel):
 
     @classmethod
     def create(
-        cls, *, match_id: str, input_snapshot_hash: str, events: list[RallyEvent]
+        cls,
+        *,
+        match_id: str,
+        input_snapshot_hash: str,
+        events: list[RallyEvent],
+        schema_version: Literal[
+            "match_rally_log.v1",
+            "match_rally_log.v2",
+            "match_rally_log.v3",
+            "match_rally_log.v4",
+        ]
+        | None = None,
     ) -> MatchRallyLog:
+        event_versions = {event.schema_version for event in events}
+        inferred_schema_version = (
+            "match_rally_log.v4"
+            if "rally_event.v4" in event_versions
+            else "match_rally_log.v3"
+            if "rally_event.v3" in event_versions
+            else "match_rally_log.v2"
+            if "rally_event.v2" in event_versions
+            else "match_rally_log.v1"
+        )
         return cls(
+            schema_version=schema_version or inferred_schema_version,
             match_id=match_id,
             input_snapshot_hash=input_snapshot_hash,
             events=tuple(events),
@@ -343,6 +649,10 @@ class MatchRallyLog(BaseModel):
 
     @model_validator(mode="after")
     def validate_chain(self) -> MatchRallyLog:
+        if self.schema_version == "match_rally_log.v4" and any(
+            event.schema_version != "rally_event.v4" for event in self.events
+        ):
+            raise ValueError("rally log and event schema versions do not agree")
         previous_hash = self.input_snapshot_hash
         previous_event: RallyEvent | None = None
         for expected_index, event in enumerate(self.events, start=1):

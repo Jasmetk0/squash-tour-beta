@@ -55,6 +55,16 @@ from beta_engine.domain.matches.rallies import (
     RallyStaminaOutcomeContext,
     RallyTerminalTrigger,
 )
+from beta_engine.domain.matches.rally_rules import (
+    BallHitPlayerRuleContext,
+    EffectiveRallyRulesSnapshot,
+    ExternalInterruptionRuleContext,
+    InterferenceRuleContext,
+    OfficialRallyCall,
+    RallyRulesResolution,
+    RallyRulesResolver,
+    StandardRallyRuleContext,
+)
 from beta_engine.domain.matches.stamina import (
     EffectiveMatchStaminaSnapshot,
     MatchStaminaLog,
@@ -67,6 +77,7 @@ from beta_engine.domain.matches.timeline import (
     GameBreakEvent,
     MatchTimelineEvent,
     MatchTimelineLog,
+    ObjectiveDelayEvent,
     RallyTimelineEvent,
     ReadinessComponent,
 )
@@ -142,6 +153,7 @@ class MatchEngine:
         effective_match_stamina: EffectiveMatchStaminaSnapshot | None = None,
         rally_calibration_profile: RallyCalibrationProfile | None = None,
         effective_match_gameplans: EffectiveMatchGameplanSnapshot | None = None,
+        effective_rally_rules: EffectiveRallyRulesSnapshot | None = None,
     ) -> MatchResult:
         player_a = context.player_a.player
         player_b = context.player_b.player
@@ -156,6 +168,7 @@ class MatchEngine:
             context=context
         )
         rally_calibration = rally_calibration_profile or RallyCalibrationProfile()
+        rules = effective_rally_rules or EffectiveRallyRulesSnapshot()
         gameplans = effective_match_gameplans or EffectiveMatchGameplanSnapshot.create(
             context=context,
             simulation_seed=self.rng.seed.value,
@@ -277,6 +290,7 @@ class MatchEngine:
                 gameplans=gameplans,
                 gameplan_states=gameplan_states,
                 gameplan_applied=gameplan_applied,
+                rules=rules,
             )
             rally_events.extend(set_events)
             sets.append(set_result)
@@ -361,7 +375,7 @@ class MatchEngine:
             input_snapshot_hash=input_hash,
             events=rally_events,
             schema_version=(
-                "match_rally_log.v5"
+                "match_rally_log.v6"
                 if gameplan_applied
                 else "match_rally_log.v4"
                 if stamina.within_rally_effort_applied
@@ -429,6 +443,7 @@ class MatchEngine:
         gameplans: EffectiveMatchGameplanSnapshot,
         gameplan_states: tuple[PlayerGameplanState, PlayerGameplanState],
         gameplan_applied: bool,
+        rules: EffectiveRallyRulesSnapshot,
     ) -> tuple[
         str,
         SetResult,
@@ -457,6 +472,10 @@ class MatchEngine:
         rally_events: list[RallyEvent] = []
         rally_index = first_rally_index
         rally_in_set = 1
+        consecutive_replays = 0
+        service_box = match_rng.branch(
+            SeedScope.MATCH, "service-box", first_rally_index
+        ).choice(["LEFT", "RIGHT"])
 
         while not self._set_finished(
             games_a, games_b, context.games_to, context.win_by
@@ -575,9 +594,34 @@ class MatchEngine:
                     else None
                 )
 
+            resolution = None
+            if gameplan_applied:
+                resolution = self._resolve_rally_situation(
+                    context=context,
+                    rules=rules,
+                    trigger=trigger,
+                    provisional_winner=rally_winner,
+                    server_player_id=server_player_id,
+                    trace=control_trace,
+                    consecutive_replays=consecutive_replays,
+                    rng=detail_rng.branch(SeedScope.MATCH, "rule-situation-v1"),
+                )
+                rally_winner = resolution.point_winner_player_id
+                if resolution.context.kind != "STANDARD":
+                    trigger = {
+                        "INTERFERENCE": RallyTerminalTrigger.INTERFERENCE_STOP,
+                        "BALL_HIT_PLAYER": RallyTerminalTrigger.BALL_HIT_PLAYER,
+                        "EXTERNAL_INTERRUPTION": RallyTerminalTrigger.BALL_COURT_OR_EXTERNAL_STOP,
+                    }[resolution.context.kind]
+                    attribution = (
+                        RallyAnalyticalAttribution.NEUTRAL_REPLAY
+                        if resolution.replay_required
+                        else RallyAnalyticalAttribution.OFFICIAL_AWARD
+                    )
+            consecutive_replays = consecutive_replays + 1 if rally_winner is None else 0
             if rally_winner == player_a_id:
                 games_a += 1
-            else:
+            elif rally_winner == player_b_id:
                 games_b += 1
 
             if control_trace is not None:
@@ -622,9 +666,21 @@ class MatchEngine:
                     effort.player_id: effort.workload_units
                     for effort in completed_efforts
                 }
+            next_server = rally_winner or server_player_id
+            next_service_box = (
+                service_box
+                if rally_winner is None
+                else match_rng.branch(
+                    SeedScope.MATCH, "service-box", rally_index + 1
+                ).choice(["LEFT", "RIGHT"])
+                if set_complete or next_server != server_player_id
+                else "RIGHT"
+                if service_box == "LEFT"
+                else "LEFT"
+            )
             event = RallyEvent.create(
                 schema_version=(
-                    "rally_event.v5"
+                    "rally_event.v6"
                     if gameplan_context is not None and control_trace is not None
                     else "rally_event.v4"
                     if control_trace is not None
@@ -641,7 +697,17 @@ class MatchEngine:
                 primary_terminal_trigger=trigger,
                 analytical_attribution=attribution,
                 score_before=score_before,
-                score_mutations=(RallyScoreMutation(player_id=rally_winner),),
+                score_mutations=(
+                    RallyScoreMutation(
+                        player_id=rally_winner,
+                        reason="OFFICIAL_ADJUSTMENT"
+                        if resolution is not None
+                        and resolution.context.kind != "STANDARD"
+                        else "RALLY_RESULT",
+                    ),
+                )
+                if rally_winner is not None
+                else (),
                 score_after=score_after,
                 abstract_segments=segments,
                 estimated_shot_count=shots,
@@ -649,7 +715,7 @@ class MatchEngine:
                 rally_seed=str(detail_rng.seed.value),
                 post_rally_state=PostRallyStateSnapshot(
                     score=score_after,
-                    next_server_player_id=rally_winner,
+                    next_server_player_id=next_server,
                     set_complete=set_complete,
                     match_complete=set_complete
                     and max(projected_sets_a, projected_sets_b) >= target_sets,
@@ -659,6 +725,12 @@ class MatchEngine:
                 effort_context=effort_context,
                 control_trace=control_trace,
                 gameplan_context=gameplan_context,
+                rules_resolution=resolution,
+                official_resolution=resolution.final_call
+                if resolution is not None
+                else OfficialRallyCall.POINT_AWARDED,
+                service_box=service_box if resolution is not None else None,
+                next_service_box=next_service_box if resolution is not None else None,
                 previous_event_hash=previous_event_hash,
             )
             rally_events.append(event)
@@ -689,12 +761,17 @@ class MatchEngine:
                 _, stamina_states = MatchStaminaLog.advance_states(
                     effective=stamina,
                     states=stamina_states,
-                    cause=StaminaTransitionCause.BETWEEN_RALLY_RECOVERY,
+                    cause=(
+                        StaminaTransitionCause.OBJECTIVE_DELAY_RECOVERY
+                        if interval.event_type == "OBJECTIVE_DELAY"
+                        else StaminaTransitionCause.BETWEEN_RALLY_RECOVERY
+                    ),
                     elapsed_seconds=interval.elapsed_seconds,
                     workload_units=0.0,
                 )
             previous_event_hash = event.event_hash
-            server_player_id = rally_winner
+            server_player_id = next_server
+            service_box = next_service_box
             rally_index += 1
             rally_in_set += 1
 
@@ -720,6 +797,124 @@ class MatchEngine:
             stamina_states,
             gameplan_states,
         )
+
+    @classmethod
+    def _resolve_rally_situation(
+        cls,
+        *,
+        context: MatchContext,
+        rules: EffectiveRallyRulesSnapshot,
+        trigger: RallyTerminalTrigger,
+        provisional_winner: str,
+        server_player_id: str,
+        trace: RallyControlTrace,
+        consecutive_replays: int,
+        rng: DeterministicRng,
+    ) -> RallyRulesResolution:
+        """Generate abstract terminal facts; the resolver alone awards the point.
+
+        Coefficients are provisional calibration v1, not measured incident rates.
+        No geometric collision simulation or referee-error roll is implied.
+        """
+        player_a, player_b = context.player_a.player, context.player_b.player
+        ids = (player_a.player_id, player_b.player_id)
+        loser = ids[1] if provisional_winner == ids[0] else ids[0]
+        standard = StandardRallyRuleContext(
+            striker_player_id=provisional_winner
+            if trigger == RallyTerminalTrigger.GOOD_RETURN_UNANSWERED
+            else loser,
+            non_striker_player_id=loser
+            if trigger == RallyTerminalTrigger.GOOD_RETURN_UNANSWERED
+            else provisional_winner,
+            terminal_trigger=trigger,
+        )
+        # Faults and serve/first-return openings already have terminal truth.
+        # At the generation guard, generate an ordinary finish, never overturn a let.
+        if (
+            trace.estimated_shot_count <= 2
+            or trigger == RallyTerminalTrigger.SERVE_FAULT
+            or consecutive_replays >= rules.max_consecutive_replays
+        ):
+            return RallyRulesResolver.resolve(standard)
+        pressure = abs(cls.CONTROL_VALUE[trace.final_state]) / 2.0
+        movement_deficit = 1 - (player_a.movement + player_b.movement) / 198.0
+        interference_probability = rules.interference_probability * (
+            0.75 + 0.35 * pressure + 0.4 * movement_deficit
+        )
+        roll = rng.random()
+        # At an interrupted terminal attempt, identify the would-be striker from
+        # alternating service/return order. Counts remain abstract estimates.
+        striker = (
+            server_player_id
+            if trace.estimated_shot_count % 2
+            else (ids[1] if server_player_id == ids[0] else ids[0])
+        )
+        other = ids[1] if striker == ids[0] else ids[0]
+        player = player_a if striker == ids[0] else player_b
+        non_striker = player_b if striker == ids[0] else player_a
+        common = {"striker_player_id": striker, "non_striker_player_id": other}
+        if roll < interference_probability:
+            obstruction = rng.choice(("VIEW", "ACCESS", "SWING", "FRONT_WALL"))
+            good = rng.random() < cls._clamp(
+                0.58 + player.movement / 350 - pressure * 0.12, 0.35, 0.95
+            )
+            swing_blocked = obstruction == "SWING"
+            facts = InterferenceRuleContext(
+                **common,
+                fair_view=obstruction != "VIEW",
+                direct_access=obstruction != "ACCESS",
+                reasonable_swing=not swing_blocked,
+                front_wall_freedom=obstruction != "FRONT_WALL",
+                good_return_possible=good,
+                winning_return=good and rng.random() < 0.12,
+                clearing_effort=rng.random() < 0.55 + non_striker.movement / 300,
+                striker_effort=rng.random() >= 0.04,
+                self_created_path=rng.random() < 0.03,
+                minimal_interference=rng.random() < 0.1,
+                played_through=rng.random() < 0.025,
+                swing_prevented=swing_blocked and rng.random() < 0.25,
+                turning=rng.random() < 0.06,
+                attempt="FURTHER" if rng.random() < 0.035 else "FIRST",
+                non_striker_had_time_to_clear=rng.random() >= 0.2,
+                front_wall_path="VIA_OTHER_WALL" if rng.random() < 0.25 else "DIRECT",
+            )
+            return RallyRulesResolver.resolve(facts)
+        if roll < interference_probability + rules.ball_hit_probability:
+            outbound = rng.random() < 0.8
+            good = rng.random() < 0.85
+            if not outbound:
+                # Once the struck ball returns from the front wall, the receiver
+                # is the striker; the previous shot-maker is the non-striker.
+                common = {"striker_player_id": other, "non_striker_player_id": striker}
+            facts = BallHitPlayerRuleContext(
+                **common,
+                hit_player="NON_STRIKER" if rng.random() < 0.9 else "STRIKER",
+                ball_phase="TO_FRONT_WALL" if outbound else "FROM_FRONT_WALL",
+                good_return_possible=good,
+                winning_return=good and rng.random() < 0.1,
+                front_wall_path="DIRECT" if rng.random() < 0.75 else "VIA_OTHER_WALL",
+                attempt=("FURTHER" if rng.random() < 0.1 else "FIRST")
+                if outbound
+                else rng.choice(("NONE", "FIRST", "FURTHER")),
+                turning=outbound and rng.random() < 0.06,
+            )
+            return RallyRulesResolver.resolve(facts)
+        if (
+            roll
+            < interference_probability
+            + rules.ball_hit_probability
+            + rules.external_interruption_probability
+        ):
+            return RallyRulesResolver.resolve(
+                ExternalInterruptionRuleContext(
+                    **common,
+                    reason=rng.choice(
+                        ("COURT_CONDITION", "EXTERNAL_DISTRACTION", "BROKEN_BALL")
+                    ),
+                    interruption_elapsed_seconds=round(rng.uniform(30, 90), 3),
+                )
+            )
+        return RallyRulesResolver.resolve(standard)
 
     def _build_timeline(
         self,
@@ -788,6 +983,7 @@ class MatchEngine:
             input_snapshot_hash=rally_log.input_snapshot_hash,
             events=timeline_events,
             dynamic_stamina_recovery=True,
+            rules_applied=rally_log.schema_version == "match_rally_log.v6",
         )
 
     def _between_rally_interval(
@@ -799,10 +995,10 @@ class MatchEngine:
         interval_rng: DeterministicRng,
         timeline_index: int,
         previous_event_hash: str,
-    ) -> BetweenRallyIntervalEvent:
+    ) -> BetweenRallyIntervalEvent | ObjectiveDelayEvent:
         player_a_id = context.player_a.player.player_id
         player_b_id = context.player_b.player.player_id
-        server_player_id = previous_rally.winner_player_id
+        server_player_id = previous_rally.post_rally_state.next_server_player_id
         receiver_player_id = (
             player_b_id if server_player_id == player_a_id else player_a_id
         )
@@ -847,6 +1043,23 @@ class MatchEngine:
             ReadinessComponent.COURT: court_ready,
         }
         dominant = max(readiness, key=readiness.__getitem__)
+        if previous_rally.rules_resolution is not None and isinstance(
+            previous_rally.rules_resolution.context, ExternalInterruptionRuleContext
+        ):
+            facts = previous_rally.rules_resolution.context
+            return ObjectiveDelayEvent.create(
+                match_id=context.match_id,
+                timeline_index=timeline_index,
+                after_rally_index=previous_rally.rally_index,
+                set_number=previous_rally.set_number,
+                reason=facts.reason,
+                interruption_elapsed_seconds=facts.interruption_elapsed_seconds,
+                restart_ready_seconds=round(max(readiness.values()), 3),
+                elapsed_seconds=round(
+                    max(facts.interruption_elapsed_seconds, *readiness.values()), 3
+                ),
+                previous_event_hash=previous_event_hash,
+            )
         return BetweenRallyIntervalEvent.create(
             match_id=context.match_id,
             timeline_index=timeline_index,
@@ -1222,6 +1435,7 @@ class MatchEngine:
             action=action,
             reason=reason,
             observed_rallies=observed_rallies,
+            observed_neutral_replays=state.neutral_replays_since_reassessment,
             observed_point_differential=point_differential,
             perceived_performance_signal=round(perceived_signal, 8),
         )
@@ -1231,9 +1445,11 @@ class MatchEngine:
     def _record_gameplan_outcome(
         *,
         states: tuple[PlayerGameplanState, PlayerGameplanState],
-        winner_player_id: str,
+        winner_player_id: str | None,
     ) -> tuple[PlayerGameplanState, PlayerGameplanState]:
-        if winner_player_id not in {state.player_id for state in states}:
+        if winner_player_id is not None and winner_player_id not in {
+            state.player_id for state in states
+        }:
             raise ValueError("gameplan outcome winner must be a match participant")
         return tuple(
             PlayerGameplanState(
@@ -1246,8 +1462,13 @@ class MatchEngine:
                 ),
                 points_lost_since_reassessment=(
                     state.points_lost_since_reassessment
-                    + (state.player_id != winner_player_id)
+                    + (
+                        winner_player_id is not None
+                        and state.player_id != winner_player_id
+                    )
                 ),
+                neutral_replays_since_reassessment=state.neutral_replays_since_reassessment
+                + (winner_player_id is None),
             )
             for state in states
         )

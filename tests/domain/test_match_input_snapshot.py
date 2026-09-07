@@ -51,7 +51,7 @@ def _snapshot() -> MatchInputSnapshot:
         context=context,
         effective_match_format=official_match_format_snapshot(),
         simulation_seed=777,
-        match_engine_version="match_engine_v8",
+        match_engine_version="match_engine_v9",
     )
 
 
@@ -62,7 +62,7 @@ def test_match_input_snapshot_round_trips_exact_current_engine_inputs() -> None:
     assert restored == snapshot
     assert restored.context.player_a.player.player_id == "A"
     assert restored.context.player_b.player.player_id == "B"
-    assert restored.schema_version == "match_input_snapshot.v8"
+    assert restored.schema_version == "match_input_snapshot.v9"
     assert restored.unsupported_future_inputs == ()
     assert restored.effective_match_timing is not None
     assert restored.effective_match_stamina is not None
@@ -169,6 +169,7 @@ def test_legacy_match_input_snapshots_remain_readable(
     payload.pop("effective_match_stamina")
     payload.pop("rally_calibration_profile")
     payload.pop("effective_match_gameplans")
+    payload.pop("effective_rally_rules")
     payload.update(
         schema_version=schema_version,
         match_engine_version=engine_version,
@@ -198,6 +199,7 @@ def test_v3_timing_snapshot_remains_readable_without_stamina() -> None:
     payload.pop("effective_match_stamina")
     payload.pop("rally_calibration_profile")
     payload.pop("effective_match_gameplans")
+    payload.pop("effective_rally_rules")
     payload.update(
         schema_version="match_input_snapshot.v3",
         match_engine_version="match_engine_v3",
@@ -231,6 +233,7 @@ def test_v4_observational_stamina_snapshot_remains_readable() -> None:
     payload = current.model_dump(mode="json")
     payload.pop("rally_calibration_profile")
     payload.pop("effective_match_gameplans")
+    payload.pop("effective_rally_rules")
     payload.update(
         schema_version="match_input_snapshot.v4",
         match_engine_version="match_engine_v4",
@@ -276,6 +279,7 @@ def test_v5_active_stamina_snapshot_remains_readable_without_effort() -> None:
     payload = current.model_dump(mode="json")
     payload.pop("rally_calibration_profile")
     payload.pop("effective_match_gameplans")
+    payload.pop("effective_rally_rules")
     payload.update(
         schema_version="match_input_snapshot.v5",
         match_engine_version="match_engine_v5",
@@ -325,6 +329,7 @@ def test_v6_pre_rally_effort_snapshot_remains_readable_without_control_profile()
     payload = current.model_dump(mode="json")
     payload.pop("rally_calibration_profile")
     payload.pop("effective_match_gameplans")
+    payload.pop("effective_rally_rules")
     payload.update(
         schema_version="match_input_snapshot.v6",
         match_engine_version="match_engine_v6",
@@ -360,6 +365,7 @@ def test_v7_hidden_control_snapshot_remains_readable_without_gameplans() -> None
     )
     payload = current.model_dump(mode="json")
     payload.pop("effective_match_gameplans")
+    payload.pop("effective_rally_rules")
     payload.update(
         schema_version="match_input_snapshot.v7",
         match_engine_version="match_engine_v7",

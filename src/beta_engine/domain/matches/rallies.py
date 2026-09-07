@@ -5,11 +5,21 @@ from __future__ import annotations
 import hashlib
 import json
 from enum import Enum
-from typing import Literal
+from itertools import pairwise
+from typing import TYPE_CHECKING, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
 from beta_engine.domain.matches.gameplans import RallyGameplanContext
+from beta_engine.domain.matches.rally_rules import (
+    OfficialRallyCall,
+    RallyRulesResolution,
+    RallyTerminalTrigger,
+    StandardRallyRuleContext,
+)
+
+if TYPE_CHECKING:
+    from beta_engine.domain.matches.timeline import MatchTimelineLog
 
 
 def _json_value(value: object) -> object:
@@ -22,20 +32,6 @@ def _json_value(value: object) -> object:
     if isinstance(value, (list, tuple)):
         return [_json_value(item) for item in value]
     return value
-
-
-class RallyTerminalTrigger(str, Enum):
-    GOOD_RETURN_UNANSWERED = "GOOD_RETURN_UNANSWERED"
-    SERVE_FAULT = "SERVE_FAULT"
-    RETURN_DOWN = "RETURN_DOWN"
-    RETURN_OUT = "RETURN_OUT"
-    RETURN_NOT_UP = "RETURN_NOT_UP"
-    INTERFERENCE_STOP = "INTERFERENCE_STOP"
-    BALL_HIT_PLAYER = "BALL_HIT_PLAYER"
-    PROCEDURAL_OR_OFFICIAL_STOP = "PROCEDURAL_OR_OFFICIAL_STOP"
-    BALL_COURT_OR_EXTERNAL_STOP = "BALL_COURT_OR_EXTERNAL_STOP"
-    HEALTH_STOP = "HEALTH_STOP"
-    CONDUCT_STOP = "CONDUCT_STOP"
 
 
 class RallyAnalyticalAttribution(str, Enum):
@@ -369,16 +365,17 @@ class RallyEvent(BaseModel):
         "rally_event.v3",
         "rally_event.v4",
         "rally_event.v5",
+        "rally_event.v6",
     ] = "rally_event.v1"
     match_id: str = Field(min_length=1)
     rally_index: int = Field(ge=1)
     set_number: int = Field(ge=1)
     rally_in_set: int = Field(ge=1)
     serving_player_id: str = Field(min_length=1)
-    winner_player_id: str = Field(min_length=1)
+    winner_player_id: str | None = Field(min_length=1)
     primary_terminal_trigger: RallyTerminalTrigger
     terminal_subtype: str | None = None
-    official_resolution: Literal["POINT_AWARDED"] = "POINT_AWARDED"
+    official_resolution: OfficialRallyCall = OfficialRallyCall.POINT_AWARDED
     analytical_attribution: RallyAnalyticalAttribution
     score_before: RallyScoreSnapshot
     score_mutations: tuple[RallyScoreMutation, ...]
@@ -392,6 +389,9 @@ class RallyEvent(BaseModel):
     effort_context: RallyEffortContext | None = None
     control_trace: RallyControlTrace | None = None
     gameplan_context: RallyGameplanContext | None = None
+    rules_resolution: RallyRulesResolution | None = None
+    service_box: Literal["LEFT", "RIGHT"] | None = None
+    next_service_box: Literal["LEFT", "RIGHT"] | None = None
     side_incidents: tuple[dict[str, object], ...] = ()
     previous_event_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     event_hash_algorithm: Literal["sha256"] = "sha256"
@@ -415,14 +415,99 @@ class RallyEvent(BaseModel):
             or self.score_before.player_b_id != self.score_after.player_b_id
         ):
             raise ValueError("rally score snapshots have mismatched participants")
-        if (
-            self.serving_player_id not in participants
-            or self.winner_player_id not in participants
+        if self.serving_player_id not in participants or (
+            self.winner_player_id is not None
+            and self.winner_player_id not in participants
         ):
             raise ValueError("rally server and winner must be match participants")
-        if not self.score_mutations or (
-            self.score_mutations[0].player_id != self.winner_player_id
-            or self.score_mutations[0].reason != "RALLY_RESULT"
+        replay = self.official_resolution == OfficialRallyCall.YES_LET
+        if self.schema_version != "rally_event.v6" and (
+            self.rules_resolution is not None
+            or self.service_box is not None
+            or self.next_service_box is not None
+            or self.official_resolution != OfficialRallyCall.POINT_AWARDED
+            or self.winner_player_id is None
+        ):
+            raise ValueError("legacy rally event cannot contain rules resolution data")
+        if self.schema_version == "rally_event.v6":
+            if (
+                self.rules_resolution is None
+                or self.service_box is None
+                or self.next_service_box is None
+            ):
+                raise ValueError(
+                    "v6 rally event requires rules resolution and service boxes"
+                )
+            rules = self.rules_resolution
+            if (
+                rules.final_call != self.official_resolution
+                or rules.point_winner_player_id != self.winner_player_id
+                or {
+                    rules.context.striker_player_id,
+                    rules.context.non_striker_player_id,
+                }
+                != participants
+            ):
+                raise ValueError("rally summary does not match rules resolution")
+            expected_trigger = (
+                rules.context.terminal_trigger
+                if isinstance(rules.context, StandardRallyRuleContext)
+                else {
+                    "INTERFERENCE": RallyTerminalTrigger.INTERFERENCE_STOP,
+                    "BALL_HIT_PLAYER": RallyTerminalTrigger.BALL_HIT_PLAYER,
+                    "EXTERNAL_INTERRUPTION": RallyTerminalTrigger.BALL_COURT_OR_EXTERNAL_STOP,
+                }[rules.context.kind]
+            )
+            if self.primary_terminal_trigger != expected_trigger:
+                raise ValueError("rally terminal trigger does not match rules context")
+            if (
+                self.primary_terminal_trigger == RallyTerminalTrigger.SERVE_FAULT
+                and rules.context.striker_player_id != self.serving_player_id
+            ):
+                raise ValueError("serve fault must belong to the server")
+            if replay and (
+                self.winner_player_id is not None
+                or self.score_mutations
+                or self.score_before != self.score_after
+                or self.post_rally_state.set_complete
+                or self.post_rally_state.match_complete
+                or self.service_box != self.next_service_box
+                or self.analytical_attribution
+                != RallyAnalyticalAttribution.NEUTRAL_REPLAY
+            ):
+                raise ValueError(
+                    "Yes Let must replay the same score and service box without a point"
+                )
+            if (
+                not replay
+                and rules.context.kind != "STANDARD"
+                and self.analytical_attribution
+                != RallyAnalyticalAttribution.OFFICIAL_AWARD
+            ):
+                raise ValueError(
+                    "official point requires official analytical attribution"
+                )
+            if not replay and len(self.score_mutations) != 1:
+                raise ValueError("v6 scoring rally requires exactly one point mutation")
+            if (
+                not replay
+                and self.winner_player_id == self.serving_player_id
+                and not self.post_rally_state.set_complete
+                and self.service_box == self.next_service_box
+            ):
+                raise ValueError("retained serve must alternate service box")
+        expected_reason = (
+            "OFFICIAL_ADJUSTMENT"
+            if self.rules_resolution is not None
+            and self.rules_resolution.context.kind != "STANDARD"
+            else "RALLY_RESULT"
+        )
+        if not replay and (
+            not self.score_mutations
+            or (
+                self.score_mutations[0].player_id != self.winner_player_id
+                or self.score_mutations[0].reason != expected_reason
+            )
         ):
             raise ValueError(
                 "completed scoring rally must start with its winner point mutation"
@@ -457,13 +542,16 @@ class RallyEvent(BaseModel):
             raise ValueError(
                 "post-rally state does not contain authoritative score_after"
             )
-        if self.post_rally_state.next_server_player_id != self.winner_player_id:
+        if self.post_rally_state.next_server_player_id != (
+            self.serving_player_id if replay else self.winner_player_id
+        ):
             raise ValueError("rally winner must serve next in current individual rules")
         if self.schema_version in {
             "rally_event.v2",
             "rally_event.v3",
             "rally_event.v4",
             "rally_event.v5",
+            "rally_event.v6",
         }:
             if self.stamina_outcome_context is None:
                 raise ValueError("v2 rally event requires stamina outcome context")
@@ -481,6 +569,7 @@ class RallyEvent(BaseModel):
             "rally_event.v3",
             "rally_event.v4",
             "rally_event.v5",
+            "rally_event.v6",
         }:
             if self.effort_context is None:
                 raise ValueError("v3 rally event requires effort context")
@@ -493,7 +582,11 @@ class RallyEvent(BaseModel):
                 raise ValueError("rally effort does not match participant order")
         elif self.effort_context is not None:
             raise ValueError("legacy rally event cannot contain effort context")
-        if self.schema_version in {"rally_event.v4", "rally_event.v5"}:
+        if self.schema_version in {
+            "rally_event.v4",
+            "rally_event.v5",
+            "rally_event.v6",
+        }:
             if self.control_trace is None or self.effort_context is None:
                 raise ValueError("v4 rally event requires effort and control contexts")
             if (
@@ -513,7 +606,10 @@ class RallyEvent(BaseModel):
                 < self.control_trace.terminal_probability_player_a
                 else self.score_before.player_b_id
             )
-            if self.winner_player_id != expected_winner:
+            if self.winner_player_id != expected_winner and (
+                self.rules_resolution is None
+                or self.rules_resolution.context.kind == "STANDARD"
+            ):
                 raise ValueError("rally winner does not match control terminal roll")
             if tuple(
                 workload.player_id for workload in self.control_trace.player_workloads
@@ -549,7 +645,7 @@ class RallyEvent(BaseModel):
                     raise ValueError("segment workload uses the wrong effort level")
         elif self.control_trace is not None:
             raise ValueError("legacy rally event cannot contain control trace")
-        if self.schema_version == "rally_event.v5":
+        if self.schema_version in {"rally_event.v5", "rally_event.v6"}:
             if self.gameplan_context is None:
                 raise ValueError("v5 rally event requires active gameplan context")
             if tuple(
@@ -561,6 +657,13 @@ class RallyEvent(BaseModel):
             ):
                 raise ValueError("rally gameplans do not match participant order")
             for decision in self.gameplan_context.player_decisions:
+                if (
+                    self.schema_version == "rally_event.v5"
+                    and decision.observed_neutral_replays
+                ):
+                    raise ValueError(
+                        "legacy gameplan cannot contain neutral replay evidence"
+                    )
                 selected_at = decision.active_plan.selected_before_rally_index
                 if decision.action.value == "START" and (
                     self.rally_index != 1 or selected_at != 1
@@ -589,6 +692,13 @@ class RallyEvent(BaseModel):
             for key, value in values.items()
             if key not in {"event_hash", "event_hash_algorithm"}
         }
+        if values.get("schema_version") != "rally_event.v6":
+            for key in ("rules_resolution", "service_box", "next_service_box"):
+                payload.pop(key, None)
+            gameplan = payload.get("gameplan_context")
+            if gameplan is not None:
+                for decision in gameplan["player_decisions"]:
+                    decision.pop("observed_neutral_replays", None)
         if values.get("schema_version") == "rally_event.v1":
             payload.pop("stamina_outcome_context", None)
         if values.get("schema_version") in {"rally_event.v1", "rally_event.v2"}:
@@ -623,11 +733,14 @@ class MatchRallyLog(BaseModel):
         "match_rally_log.v3",
         "match_rally_log.v4",
         "match_rally_log.v5",
-    ] = "match_rally_log.v5"
+        "match_rally_log.v6",
+    ] = "match_rally_log.v6"
     match_id: str = Field(min_length=1)
     input_snapshot_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     events: tuple[RallyEvent, ...]
     total_rallies: int = Field(ge=0)
+    scoring_rallies: int | None = Field(default=None, ge=0)
+    replay_rallies: int | None = Field(default=None, ge=0)
     rally_elapsed_seconds: float = Field(ge=0)
     estimated_shot_count: int = Field(ge=0)
     unsupported_timeline_components: tuple[
@@ -651,6 +764,45 @@ class MatchRallyLog(BaseModel):
     match_log_hash_algorithm: Literal["sha256"] = "sha256"
     match_log_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
 
+    def validate_rules_timeline(self, timeline: MatchTimelineLog) -> None:
+        """Shared by live results and stored service replay (without running RNG)."""
+        current = self.schema_version == "match_rally_log.v6"
+        if current != (timeline.schema_version == "match_timeline_log.v2"):
+            raise ValueError("rally and timeline schema generations do not agree")
+        if not current:
+            return
+        time_events = {
+            event.after_rally_index: event
+            for event in timeline.events
+            if event.event_type != "RALLY"
+        }
+        for rally, following in pairwise(self.events):
+            gap = time_events.get(rally.rally_index)
+            facts = rally.rules_resolution.context
+            expected_type = (
+                "GAME_BREAK"
+                if following.set_number != rally.set_number
+                else "OBJECTIVE_DELAY"
+                if facts.kind == "EXTERNAL_INTERRUPTION"
+                else "BETWEEN_RALLY_INTERVAL"
+            )
+            if gap is None or gap.event_type != expected_type:
+                raise ValueError(
+                    "timeline uses the wrong elapsed event for its rally rules"
+                )
+            if gap.event_type == "OBJECTIVE_DELAY" and (
+                gap.reason != facts.reason
+                or gap.interruption_elapsed_seconds
+                != facts.interruption_elapsed_seconds
+            ):
+                raise ValueError("objective delay does not match its rally facts")
+            if gap.event_type == "BETWEEN_RALLY_INTERVAL" and (
+                gap.server_player_id != rally.post_rally_state.next_server_player_id
+                or {gap.server_player_id, gap.receiver_player_id}
+                != {rally.score_before.player_a_id, rally.score_before.player_b_id}
+            ):
+                raise ValueError("restart participants do not match post-rally state")
+
     @classmethod
     def create(
         cls,
@@ -664,12 +816,15 @@ class MatchRallyLog(BaseModel):
             "match_rally_log.v3",
             "match_rally_log.v4",
             "match_rally_log.v5",
+            "match_rally_log.v6",
         ]
         | None = None,
     ) -> MatchRallyLog:
         event_versions = {event.schema_version for event in events}
         inferred_schema_version = (
-            "match_rally_log.v5"
+            "match_rally_log.v6"
+            if "rally_event.v6" in event_versions
+            else "match_rally_log.v5"
             if "rally_event.v5" in event_versions
             else "match_rally_log.v4"
             if "rally_event.v4" in event_versions
@@ -679,12 +834,32 @@ class MatchRallyLog(BaseModel):
             if "rally_event.v2" in event_versions
             else "match_rally_log.v1"
         )
+        selected_version = schema_version or inferred_schema_version
+        unsupported = cls.model_fields["unsupported_timeline_components"].default
+        current = selected_version == "match_rally_log.v6"
+        if current:
+            unsupported = tuple(
+                item
+                for item in unsupported
+                if item
+                not in {
+                    "non_scoring_replay_rallies",
+                    "interference_and_official_calls",
+                }
+            )
         return cls(
-            schema_version=schema_version or inferred_schema_version,
+            schema_version=selected_version,
             match_id=match_id,
             input_snapshot_hash=input_snapshot_hash,
             events=tuple(events),
             total_rallies=len(events),
+            scoring_rallies=sum(event.winner_player_id is not None for event in events)
+            if current
+            else None,
+            replay_rallies=sum(event.winner_player_id is None for event in events)
+            if current
+            else None,
+            unsupported_timeline_components=unsupported,
             rally_elapsed_seconds=round(
                 sum(event.elapsed_seconds for event in events), 3
             ),
@@ -694,6 +869,29 @@ class MatchRallyLog(BaseModel):
 
     @model_validator(mode="after")
     def validate_chain(self) -> MatchRallyLog:
+        current = self.schema_version == "match_rally_log.v6"
+        if any(
+            (event.schema_version == "rally_event.v6") != current
+            for event in self.events
+        ):
+            raise ValueError("rally log and event schema versions do not agree")
+        if current:
+            if self.scoring_rallies != sum(
+                event.winner_player_id is not None for event in self.events
+            ) or self.replay_rallies != sum(
+                event.winner_player_id is None for event in self.events
+            ):
+                raise ValueError("rally log scoring/replay counts mismatch")
+            if any(
+                item in self.unsupported_timeline_components
+                for item in (
+                    "non_scoring_replay_rallies",
+                    "interference_and_official_calls",
+                )
+            ):
+                raise ValueError("v6 rally log cannot mark rules or replay unsupported")
+        elif self.scoring_rallies is not None or self.replay_rallies is not None:
+            raise ValueError("legacy rally log cannot contain scoring/replay counters")
         if self.schema_version == "match_rally_log.v5" and any(
             event.schema_version != "rally_event.v5" for event in self.events
         ):
@@ -703,15 +901,18 @@ class MatchRallyLog(BaseModel):
         ):
             raise ValueError("rally log and event schema versions do not agree")
         has_gameplan_events = any(
-            event.schema_version == "rally_event.v5" for event in self.events
+            event.schema_version in {"rally_event.v5", "rally_event.v6"}
+            for event in self.events
         )
         if has_gameplan_events and any(
-            event.schema_version != "rally_event.v5" for event in self.events
+            event.schema_version not in {"rally_event.v5", "rally_event.v6"}
+            for event in self.events
         ):
             raise ValueError("gameplan rally events cannot be mixed with older events")
         previous_hash = self.input_snapshot_hash
         previous_event: RallyEvent | None = None
         previous_plan_revisions: dict[str, int] = {}
+        evidence: dict[str, tuple[int, int, int]] = {}
         for expected_index, event in enumerate(self.events, start=1):
             if event.match_id != self.match_id or event.rally_index != expected_index:
                 raise ValueError(
@@ -719,12 +920,58 @@ class MatchRallyLog(BaseModel):
                 )
             if event.previous_event_hash != previous_hash:
                 raise ValueError("rally log hash chain is broken")
+            if (
+                current
+                and expected_index == 1
+                and (
+                    event.set_number != 1
+                    or event.rally_in_set != 1
+                    or any(
+                        (
+                            event.score_before.points_a,
+                            event.score_before.points_b,
+                            event.score_before.sets_a,
+                            event.score_before.sets_b,
+                        )
+                    )
+                )
+            ):
+                raise ValueError(
+                    "current rally log must begin at the unplayed match state"
+                )
             # Validate v5 semantics from the protected event data as well as the
             # outer label, so changing only the log schema cannot bypass plan
             # revision continuity.
-            if event.schema_version == "rally_event.v5":
+            if event.schema_version in {"rally_event.v5", "rally_event.v6"}:
                 assert event.gameplan_context is not None
                 for decision in event.gameplan_context.player_decisions:
+                    if current:
+                        observed = evidence.get(decision.player_id, (0, 0, 0))
+                        if (
+                            decision.observed_rallies,
+                            decision.observed_point_differential,
+                            decision.observed_neutral_replays,
+                        ) != observed:
+                            raise ValueError(
+                                "gameplan evidence does not match prior rally outcomes"
+                            )
+                        if decision.reason.value not in {
+                            "INITIAL_SELECTION",
+                            "REVIEW_NOT_DUE",
+                        }:
+                            observed = (0, 0, 0)
+                        point_delta = (
+                            0
+                            if event.winner_player_id is None
+                            else 1
+                            if decision.player_id == event.winner_player_id
+                            else -1
+                        )
+                        evidence[decision.player_id] = (
+                            observed[0] + 1,
+                            observed[1] + point_delta,
+                            observed[2] + int(event.winner_player_id is None),
+                        )
                     prior_revision = previous_plan_revisions.get(decision.player_id)
                     if prior_revision is None:
                         if decision.action.value != "START":
@@ -745,12 +992,29 @@ class MatchRallyLog(BaseModel):
                         decision.active_plan.revision
                     )
             if previous_event is not None:
+                if current and (
+                    event.serving_player_id
+                    != previous_event.post_rally_state.next_server_player_id
+                    or event.service_box != previous_event.next_service_box
+                ):
+                    raise ValueError("rally log service continuity is broken")
                 previous_score = previous_event.score_after
                 current_score = event.score_before
                 if event.set_number == previous_event.set_number:
+                    if current and (
+                        previous_event.post_rally_state.set_complete
+                        or event.rally_in_set != previous_event.rally_in_set + 1
+                    ):
+                        raise ValueError("rally log set/rally boundary is broken")
                     if current_score != previous_score:
                         raise ValueError("rally log score continuity is broken")
                 elif event.set_number == previous_event.set_number + 1:
+                    if current and (
+                        not previous_event.post_rally_state.set_complete
+                        or previous_event.post_rally_state.match_complete
+                        or event.rally_in_set != 1
+                    ):
+                        raise ValueError("rally log new set boundary is broken")
                     if (
                         current_score.sets_a != previous_score.sets_a
                         or current_score.sets_b != previous_score.sets_b

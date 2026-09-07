@@ -3520,6 +3520,7 @@ export type MatchInputSnapshot = {
     | 'match_input_snapshot.v6'
     | 'match_input_snapshot.v7'
     | 'match_input_snapshot.v8'
+    | 'match_input_snapshot.v9'
   match_id: string
   simulation_seed: number
   match_engine_version: string
@@ -3528,6 +3529,7 @@ export type MatchInputSnapshot = {
   effective_match_stamina: EffectiveMatchStaminaSnapshot | null
   rally_calibration_profile: RallyCalibrationProfile | null
   effective_match_gameplans: EffectiveMatchGameplanSnapshot | null
+  effective_rally_rules: EffectiveRallyRulesSnapshot | null
   context: Record<string, unknown>
   unsupported_future_inputs: Array<
     'active_gameplans' | 'rally_model_configuration' | 'rally_seed_stream'
@@ -3709,6 +3711,7 @@ export type PlayerRallyGameplanDecision = {
   action: GameplanDecisionAction
   reason: GameplanDecisionReason
   observed_rallies: number
+  observed_neutral_replays: number
   observed_point_differential: number
   perceived_performance_signal: number
 }
@@ -3735,6 +3738,101 @@ export type RallyGameplanContext = {
   shared_closure_probability_adjustment: number
 }
 
+export type OfficialRallyCall = 'POINT_AWARDED' | 'NO_LET' | 'YES_LET' | 'STROKE'
+
+export type EffectiveRallyRulesSnapshot = {
+  schema_version: 'effective_rally_rules.v1'
+  ruleset_version: 'world_squash_singles_2025_v1_2_2'
+  resolver_version: 'pre_alpha_rules_v1'
+  calibration_version: 'pre_alpha_rule_situations_v1'
+  interference_probability: number
+  ball_hit_probability: number
+  external_interruption_probability: number
+  max_consecutive_replays: number
+  unsupported_components: string[]
+}
+
+type RallyRulePlayers = { striker_player_id: string; non_striker_player_id: string }
+
+export type InterferenceRuleContext = RallyRulePlayers & {
+  kind: 'INTERFERENCE'
+  fair_view: boolean
+  direct_access: boolean
+  reasonable_swing: boolean
+  front_wall_freedom: boolean
+  reasonable_fear_of_injury: boolean
+  good_return_possible: boolean
+  winning_return: boolean
+  clearing_effort: boolean
+  striker_effort: boolean
+  self_created_path: boolean
+  wrong_footed_recovery: boolean
+  minimal_interference: boolean
+  played_through: boolean
+  swing_prevented: boolean
+  excessive_swing: 'NONE' | 'CAUSED' | 'EXAGGERATED'
+  turning: boolean
+  turned_to_create_request: boolean
+  attempt: 'FIRST' | 'FURTHER'
+  non_striker_had_time_to_clear: boolean
+  front_wall_path: 'DIRECT' | 'VIA_OTHER_WALL'
+}
+
+export type RallyRuleContext =
+  | (RallyRulePlayers & {
+      kind: 'STANDARD'
+      terminal_trigger: 'GOOD_RETURN_UNANSWERED' | 'SERVE_FAULT' | 'RETURN_DOWN' | 'RETURN_OUT' | 'RETURN_NOT_UP'
+    })
+  | InterferenceRuleContext
+  | (RallyRulePlayers & {
+      kind: 'BALL_HIT_PLAYER'
+      hit_player: 'STRIKER' | 'NON_STRIKER'
+      ball_phase: 'TO_FRONT_WALL' | 'FROM_FRONT_WALL'
+      good_return_possible: boolean
+      winning_return: boolean
+      front_wall_path: 'DIRECT' | 'VIA_OTHER_WALL'
+      attempt: 'NONE' | 'FIRST' | 'FURTHER'
+      turning: boolean
+      deliberate_interception: boolean
+      striker_position_caused_hit: boolean
+      interference: InterferenceRuleContext | null
+    })
+  | (RallyRulePlayers & {
+      kind: 'EXTERNAL_INTERRUPTION'
+      reason: ObjectiveDelayEvent['reason']
+      during_live_rally: true
+      neither_player_at_fault: true
+      interruption_elapsed_seconds: number
+    })
+
+export type RallyRulesResolution = {
+  ruleset_version: EffectiveRallyRulesSnapshot['ruleset_version']
+  resolver_version: EffectiveRallyRulesSnapshot['resolver_version']
+  context: RallyRuleContext
+  initial_call: OfficialRallyCall
+  final_call: OfficialRallyCall
+  point_winner_player_id: string | null
+  replay_required: boolean
+  decision_code: string
+}
+
+export type ObjectiveDelayEvent = {
+  schema_version: 'objective_delay_event.v1'
+  event_type: 'OBJECTIVE_DELAY'
+  match_id: string
+  timeline_index: number
+  after_rally_index: number
+  set_number: number
+  reason: 'COURT_CONDITION' | 'EXTERNAL_DISTRACTION' | 'BROKEN_BALL'
+  interruption_elapsed_seconds: number
+  restart_ready_seconds: number
+  elapsed_seconds: number
+  dynamic_recovery_applied: true
+  previous_event_hash: string
+  event_hash_algorithm: 'sha256'
+  event_hash: string
+}
+
 export type RallyEvent = {
   schema_version:
     | 'rally_event.v1'
@@ -3742,12 +3840,16 @@ export type RallyEvent = {
     | 'rally_event.v3'
     | 'rally_event.v4'
     | 'rally_event.v5'
+    | 'rally_event.v6'
   match_id: string
   rally_index: number
   set_number: number
   rally_in_set: number
   serving_player_id: string
-  winner_player_id: string
+  winner_player_id: string | null
+  service_box: 'LEFT' | 'RIGHT' | null
+  next_service_box: 'LEFT' | 'RIGHT' | null
+  rules_resolution: RallyRulesResolution | null
   primary_terminal_trigger:
     | 'GOOD_RETURN_UNANSWERED'
     | 'SERVE_FAULT'
@@ -3761,7 +3863,7 @@ export type RallyEvent = {
     | 'HEALTH_STOP'
     | 'CONDUCT_STOP'
   terminal_subtype: string | null
-  official_resolution: 'POINT_AWARDED'
+  official_resolution: OfficialRallyCall
   analytical_attribution:
     | 'CLEAN_WINNER'
     | 'FORCED_ERROR'
@@ -3801,10 +3903,13 @@ export type MatchRallyLog = {
     | 'match_rally_log.v3'
     | 'match_rally_log.v4'
     | 'match_rally_log.v5'
+    | 'match_rally_log.v6'
   match_id: string
   input_snapshot_hash: string
   events: RallyEvent[]
   total_rallies: number
+  scoring_rallies: number | null
+  replay_rallies: number | null
   rally_elapsed_seconds: number
   estimated_shot_count: number
   unsupported_timeline_components: Array<
@@ -3880,9 +3985,10 @@ export type MatchTimelineEvent =
   | RallyTimelineEvent
   | BetweenRallyIntervalEvent
   | GameBreakEvent
+  | ObjectiveDelayEvent
 
 export type MatchTimelineLog = {
-  schema_version: 'match_timeline_log.v1'
+  schema_version: 'match_timeline_log.v1' | 'match_timeline_log.v2'
   match_id: string
   input_snapshot_hash: string
   events: MatchTimelineEvent[]
@@ -3890,6 +3996,8 @@ export type MatchTimelineLog = {
   rally_event_count: number
   between_rally_interval_count: number
   game_break_count: number
+  objective_delay_count: number
+  objective_delay_elapsed_seconds: number
   rally_elapsed_seconds: number
   between_rally_elapsed_seconds: number
   game_break_elapsed_seconds: number
@@ -3936,6 +4044,7 @@ export type StaminaTransition = {
     | 'RALLY_WORKLOAD'
     | 'BETWEEN_RALLY_RECOVERY'
     | 'GAME_BREAK_RECOVERY'
+    | 'OBJECTIVE_DELAY_RECOVERY'
   elapsed_seconds: number
   workload_units: number
   player_workloads: Array<{ player_id: string; workload_units: number }>

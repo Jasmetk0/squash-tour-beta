@@ -34,6 +34,7 @@ class StaminaTransitionCause(str, Enum):
     RALLY_WORKLOAD = "RALLY_WORKLOAD"
     BETWEEN_RALLY_RECOVERY = "BETWEEN_RALLY_RECOVERY"
     GAME_BREAK_RECOVERY = "GAME_BREAK_RECOVERY"
+    OBJECTIVE_DELAY_RECOVERY = "OBJECTIVE_DELAY_RECOVERY"
 
 
 class StaminaBarProfile(BaseModel):
@@ -426,6 +427,10 @@ class MatchStaminaLog(BaseModel):
                 workload = 0.0
                 player_workloads = None
                 cause = StaminaTransitionCause.BETWEEN_RALLY_RECOVERY
+            elif source.event_type == "OBJECTIVE_DELAY":
+                workload = 0.0
+                player_workloads = None
+                cause = StaminaTransitionCause.OBJECTIVE_DELAY_RECOVERY
             else:
                 workload = 0.0
                 player_workloads = None
@@ -714,6 +719,7 @@ class MatchStaminaLog(BaseModel):
                 "RALLY": StaminaTransitionCause.RALLY_WORKLOAD,
                 "BETWEEN_RALLY_INTERVAL": StaminaTransitionCause.BETWEEN_RALLY_RECOVERY,
                 "GAME_BREAK": StaminaTransitionCause.GAME_BREAK_RECOVERY,
+                "OBJECTIVE_DELAY": StaminaTransitionCause.OBJECTIVE_DELAY_RECOVERY,
             }[source.event_type]
             if (
                 transition.source_timeline_event_hash != source.event_hash

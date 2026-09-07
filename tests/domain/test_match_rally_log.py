@@ -5,6 +5,7 @@ from pydantic import ValidationError
 
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.matches import (
+    EffectiveRallyRulesSnapshot,
     MatchContext,
     MatchEngine,
     MatchParticipantContext,
@@ -43,14 +44,22 @@ def _player(player_id: str, strength: int) -> Player:
     )
 
 
-def _result():
+def _result(*, no_incidents=False):
     context = MatchContext(
         match_id="logged-match",
         player_a=MatchParticipantContext(player=_player("A", 84)),
         player_b=MatchParticipantContext(player=_player("B", 81)),
     )
     return MatchEngine(rng=DeterministicRng(777)).simulate(
-        context, log_anchor_hash="a" * 64
+        context,
+        log_anchor_hash="a" * 64,
+        effective_rally_rules=EffectiveRallyRulesSnapshot(
+            interference_probability=0,
+            ball_hit_probability=0,
+            external_interruption_probability=0,
+        )
+        if no_incidents
+        else None,
     )
 
 
@@ -59,19 +68,20 @@ def test_every_simulated_point_is_an_ordered_authoritative_rally_event() -> None
     assert result.rally_log is not None
     log = result.rally_log
 
-    assert log.total_rallies == sum(
+    assert log.scoring_rallies == sum(
         set_result.winner_games + set_result.loser_games for set_result in result.sets
     )
     assert log.match_log_hash == log.events[-1].event_hash
     assert log.events[0].previous_event_hash == "a" * 64
     assert log.events[-1].post_rally_state.match_complete is True
     assert all(
-        event.post_rally_state.next_server_player_id == event.winner_player_id
+        event.post_rally_state.next_server_player_id
+        == (event.winner_player_id or event.serving_player_id)
         for event in log.events
     )
     assert log.rally_elapsed_seconds > 0
     assert log.estimated_shot_count >= log.total_rallies
-    assert log.schema_version == "match_rally_log.v5"
+    assert log.schema_version == "match_rally_log.v6"
     assert "between_rally_intervals" not in log.unsupported_timeline_components
     assert "game_breaks" not in log.unsupported_timeline_components
 
@@ -94,6 +104,8 @@ def test_v1_rally_event_remains_hash_compatible_without_stamina_context() -> Non
     payload.pop("effort_context")
     payload.pop("control_trace")
     payload.pop("gameplan_context")
+    for key in ("rules_resolution", "service_box", "next_service_box"):
+        payload.pop(key)
     payload["event_hash"] = RallyEvent._content_hash(RallyEvent._hash_payload(payload))
 
     restored = RallyEvent.model_validate(payload)
@@ -103,10 +115,29 @@ def test_v1_rally_event_remains_hash_compatible_without_stamina_context() -> Non
 
 
 def test_v1_rally_log_remains_readable() -> None:
-    result = _result()
+    result = _result(no_incidents=True)
     assert result.rally_log is not None
     payload = result.rally_log.model_dump(mode="json")
     payload["schema_version"] = "match_rally_log.v1"
+    payload.pop("scoring_rallies")
+    payload.pop("replay_rallies")
+    previous_hash = payload["input_snapshot_hash"]
+    for event in payload["events"]:
+        event["schema_version"] = "rally_event.v1"
+        for key in (
+            "stamina_outcome_context",
+            "effort_context",
+            "control_trace",
+            "gameplan_context",
+            "rules_resolution",
+            "service_box",
+            "next_service_box",
+        ):
+            event.pop(key)
+        event["previous_event_hash"] = previous_hash
+        event["event_hash"] = RallyEvent._content_hash(RallyEvent._hash_payload(event))
+        previous_hash = event["event_hash"]
+    payload["match_log_hash"] = previous_hash
     payload["unsupported_timeline_components"] = [
         "between_rally_intervals",
         "game_breaks",
@@ -146,6 +177,8 @@ def test_v2_rally_event_remains_hash_compatible_without_effort_context() -> None
     payload.pop("effort_context")
     payload.pop("control_trace")
     payload.pop("gameplan_context")
+    for key in ("rules_resolution", "service_box", "next_service_box"):
+        payload.pop(key)
     payload["event_hash"] = RallyEvent._content_hash(RallyEvent._hash_payload(payload))
 
     restored = RallyEvent.model_validate(payload)
@@ -160,6 +193,8 @@ def test_v5_rally_log_rejects_an_event_from_an_older_schema_generation() -> None
     payload = result.rally_log.model_dump(mode="json")
     payload["events"][0]["schema_version"] = "rally_event.v4"
     payload["events"][0].pop("gameplan_context")
+    for key in ("rules_resolution", "service_box", "next_service_box"):
+        payload["events"][0].pop(key)
     payload["events"][0]["event_hash"] = RallyEvent._content_hash(
         RallyEvent._hash_payload(payload["events"][0])
     )
@@ -174,6 +209,7 @@ def test_rally_log_rejects_removed_or_reordered_event() -> None:
     payload = result.rally_log.model_dump(mode="json")
     payload["events"] = payload["events"][1:]
     payload["total_rallies"] -= 1
+    payload["scoring_rallies"] -= 1
 
     with pytest.raises(ValidationError, match="identity or event order|hash chain"):
         MatchRallyLog.model_validate(payload)
@@ -211,7 +247,7 @@ def test_rally_log_rejects_rehashed_gameplan_revision_forgery() -> None:
         MatchRallyLog.model_validate(payload)
 
 
-def test_legacy_log_label_cannot_bypass_gameplan_revision_validation() -> None:
+def test_legacy_log_label_cannot_bypass_current_schema_validation() -> None:
     result = _result()
     assert result.rally_log is not None
     payload = result.rally_log.model_dump(mode="json")
@@ -240,7 +276,7 @@ def test_legacy_log_label_cannot_bypass_gameplan_revision_validation() -> None:
         previous_hash = event["event_hash"]
     payload["match_log_hash"] = previous_hash
 
-    with pytest.raises(ValidationError, match="revision must increment"):
+    with pytest.raises(ValidationError, match="schema versions do not agree"):
         MatchRallyLog.model_validate(payload)
 
 

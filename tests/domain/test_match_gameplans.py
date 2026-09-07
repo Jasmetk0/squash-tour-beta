@@ -132,7 +132,7 @@ def test_every_current_rally_logs_plan_decision_and_causal_effects() -> None:
         _context(), log_anchor_hash="c" * 64
     )
     assert result.rally_log is not None
-    assert result.rally_log.schema_version == "match_rally_log.v5"
+    assert result.rally_log.schema_version == "match_rally_log.v6"
     assert result.rally_log.events
 
     first_context = result.rally_log.events[0].gameplan_context
@@ -148,7 +148,7 @@ def test_every_current_rally_logs_plan_decision_and_causal_effects() -> None:
     reviewed_reasons: set[GameplanDecisionReason] = set()
     closure_verified = False
     for event in result.rally_log.events:
-        assert event.schema_version == "rally_event.v5"
+        assert event.schema_version == "rally_event.v6"
         assert event.gameplan_context is not None
         gameplan = event.gameplan_context
         assert tuple(effect.player_id for effect in gameplan.player_effects) == (

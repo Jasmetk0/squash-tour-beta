@@ -121,14 +121,40 @@ class GameBreakEvent(MatchTimelineEventBase):
         return self
 
 
+class ObjectiveDelayEvent(MatchTimelineEventBase):
+    schema_version: Literal["objective_delay_event.v1"] = "objective_delay_event.v1"
+    event_type: Literal["OBJECTIVE_DELAY"] = "OBJECTIVE_DELAY"
+    after_rally_index: int = Field(ge=1)
+    set_number: int = Field(ge=1)
+    reason: Literal["COURT_CONDITION", "EXTERNAL_DISTRACTION", "BROKEN_BALL"]
+    interruption_elapsed_seconds: float = Field(gt=0, allow_inf_nan=False)
+    restart_ready_seconds: float = Field(ge=0)
+    dynamic_recovery_applied: Literal[True] = True
+
+    @model_validator(mode="after")
+    def validate_duration(self) -> ObjectiveDelayEvent:
+        if self.elapsed_seconds != round(
+            max(self.interruption_elapsed_seconds, self.restart_ready_seconds), 3
+        ):
+            raise ValueError(
+                "objective delay must count overlapping readiness only once"
+            )
+        return self
+
+
 MatchTimelineEvent = Annotated[
-    RallyTimelineEvent | BetweenRallyIntervalEvent | GameBreakEvent,
+    RallyTimelineEvent
+    | BetweenRallyIntervalEvent
+    | GameBreakEvent
+    | ObjectiveDelayEvent,
     Field(discriminator="event_type"),
 ]
 
 
 class MatchTimelineLog(BaseModel):
-    schema_version: Literal["match_timeline_log.v1"] = "match_timeline_log.v1"
+    schema_version: Literal["match_timeline_log.v1", "match_timeline_log.v2"] = (
+        "match_timeline_log.v1"
+    )
     match_id: str = Field(min_length=1)
     input_snapshot_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     events: tuple[MatchTimelineEvent, ...]
@@ -136,6 +162,8 @@ class MatchTimelineLog(BaseModel):
     rally_event_count: int = Field(ge=0)
     between_rally_interval_count: int = Field(ge=0)
     game_break_count: int = Field(ge=0)
+    objective_delay_count: int = Field(default=0, ge=0)
+    objective_delay_elapsed_seconds: float = Field(default=0, ge=0)
     rally_elapsed_seconds: float = Field(ge=0)
     between_rally_elapsed_seconds: float = Field(ge=0)
     game_break_elapsed_seconds: float = Field(ge=0)
@@ -173,12 +201,15 @@ class MatchTimelineLog(BaseModel):
         input_snapshot_hash: str,
         events: list[MatchTimelineEvent],
         dynamic_stamina_recovery: bool = False,
+        rules_applied: bool = False,
     ) -> MatchTimelineLog:
         rally_events = [event for event in events if event.event_type == "RALLY"]
         intervals = [
             event for event in events if event.event_type == "BETWEEN_RALLY_INTERVAL"
         ]
         game_breaks = [event for event in events if event.event_type == "GAME_BREAK"]
+        delays = [event for event in events if event.event_type == "OBJECTIVE_DELAY"]
+        delay_seconds = round(sum(event.elapsed_seconds for event in delays), 3)
         rally_seconds = round(sum(event.elapsed_seconds for event in rally_events), 3)
         interval_seconds = round(sum(event.elapsed_seconds for event in intervals), 3)
         game_break_seconds = round(
@@ -187,7 +218,13 @@ class MatchTimelineLog(BaseModel):
         unsupported = list(cls.model_fields["unsupported_timeline_components"].default)
         if dynamic_stamina_recovery:
             unsupported.remove("dynamic_stamina_recovery")
+        if rules_applied:
+            unsupported.remove("non_scoring_replay_rallies")
+            unsupported.remove("objective_delay_events")
         return cls(
+            schema_version="match_timeline_log.v2"
+            if rules_applied
+            else "match_timeline_log.v1",
             match_id=match_id,
             input_snapshot_hash=input_snapshot_hash,
             events=tuple(events),
@@ -195,11 +232,13 @@ class MatchTimelineLog(BaseModel):
             rally_event_count=len(rally_events),
             between_rally_interval_count=len(intervals),
             game_break_count=len(game_breaks),
+            objective_delay_count=len(delays),
+            objective_delay_elapsed_seconds=delay_seconds,
             rally_elapsed_seconds=rally_seconds,
             between_rally_elapsed_seconds=interval_seconds,
             game_break_elapsed_seconds=game_break_seconds,
             total_elapsed_seconds=round(
-                rally_seconds + interval_seconds + game_break_seconds, 3
+                rally_seconds + interval_seconds + game_break_seconds + delay_seconds, 3
             ),
             unsupported_timeline_components=tuple(unsupported),
             match_log_hash=(events[-1].event_hash if events else input_snapshot_hash),
@@ -207,6 +246,26 @@ class MatchTimelineLog(BaseModel):
 
     @model_validator(mode="after")
     def validate_chain_and_totals(self) -> MatchTimelineLog:
+        if self.schema_version == "match_timeline_log.v2" and any(
+            item in self.unsupported_timeline_components
+            for item in ("non_scoring_replay_rallies", "objective_delay_events")
+        ):
+            raise ValueError(
+                "v2 timeline cannot mark replay or objective delays unsupported"
+            )
+        delays = [
+            event for event in self.events if event.event_type == "OBJECTIVE_DELAY"
+        ]
+        if self.schema_version == "match_timeline_log.v1" and (
+            delays or self.objective_delay_count or self.objective_delay_elapsed_seconds
+        ):
+            raise ValueError("legacy timeline cannot contain objective delays")
+        if self.objective_delay_count != len(
+            delays
+        ) or self.objective_delay_elapsed_seconds != round(
+            sum(event.elapsed_seconds for event in delays), 3
+        ):
+            raise ValueError("match timeline objective delay totals mismatch")
         previous_hash = self.input_snapshot_hash
         previous_event: MatchTimelineEvent | None = None
         rally_indices: list[int] = []
@@ -236,7 +295,10 @@ class MatchTimelineLog(BaseModel):
             raise ValueError("match timeline rally references are not contiguous")
         if self.events and self.events[0].event_type != "RALLY":
             raise ValueError("match timeline must start with a rally")
-        if self.events and self.events[-1].event_type == "BETWEEN_RALLY_INTERVAL":
+        if self.events and self.events[-1].event_type in {
+            "BETWEEN_RALLY_INTERVAL",
+            "OBJECTIVE_DELAY",
+        }:
             raise ValueError("between-rally interval cannot end a match timeline")
         rally_positions = [
             index
@@ -256,7 +318,10 @@ class MatchTimelineLog(BaseModel):
                 if current.set_number == following.set_number
                 else "GAME_BREAK"
             )
-            if elapsed[0].event_type != expected_type:
+            if elapsed[0].event_type != expected_type and not (
+                expected_type == "BETWEEN_RALLY_INTERVAL"
+                and elapsed[0].event_type == "OBJECTIVE_DELAY"
+            ):
                 raise ValueError(
                     "match timeline uses the wrong event between rally sets"
                 )
@@ -265,7 +330,7 @@ class MatchTimelineLog(BaseModel):
                     "match timeline elapsed event references the wrong rally"
                 )
             if (
-                elapsed[0].event_type == "BETWEEN_RALLY_INTERVAL"
+                elapsed[0].event_type in {"BETWEEN_RALLY_INTERVAL", "OBJECTIVE_DELAY"}
                 and elapsed[0].set_number != current.set_number
             ) or (
                 elapsed[0].event_type == "GAME_BREAK"
@@ -325,7 +390,9 @@ class MatchTimelineLog(BaseModel):
         if self.total_elapsed_seconds != round(
             expected_rally_seconds
             + expected_interval_seconds
-            + expected_game_break_seconds,
+            + expected_game_break_seconds
+            + self.objective_delay_elapsed_seconds,
+            # Objective interruptions overlap ordinary readiness, not another gap.
             3,
         ):
             raise ValueError("match timeline total elapsed time mismatch")

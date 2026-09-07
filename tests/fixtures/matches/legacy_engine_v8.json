@@ -1,0 +1,1361 @@
+{
+  "source_commit": "41151cfe80d2465961f8337158f9a88d06134526",
+  "input": {
+    "schema_version": "match_input_snapshot.v8",
+    "match_id": "legacy-v8-fixture",
+    "simulation_seed": 777,
+    "match_engine_version": "match_engine_v8",
+    "effective_match_format": {
+      "schema_version": "effective_match_format.v1",
+      "format": {
+        "best_of": 1,
+        "games_to": 1,
+        "win_by": 1
+      },
+      "source_scope": "tournament_edition_override",
+      "source_key": "legacy-regression-fixture",
+      "snapshot_hash_algorithm": "sha256",
+      "snapshot_hash": "7f3cabf1e0483f1e050b41a9466603551b5d15696284d9c510a15dcd34134773"
+    },
+    "effective_match_timing": {
+      "schema_version": "effective_match_timing.v1",
+      "nominal_game_break_seconds": 120.0,
+      "player_restart_profiles": [
+        {
+          "player_id": "A",
+          "serve_tendency": "NATURAL",
+          "return_tendency": "NATURAL"
+        },
+        {
+          "player_id": "B",
+          "serve_tendency": "NATURAL",
+          "return_tendency": "NATURAL"
+        }
+      ],
+      "between_rally_calibration_profile": "pre_alpha_men_v1",
+      "source_scope": "official_default",
+      "source_key": "official:match-timing",
+      "snapshot_hash_algorithm": "sha256",
+      "snapshot_hash": "d3affe2b49c14c1ced751f1a09ad051cffdf87fad2902d8c9630aa6395116852"
+    },
+    "effective_match_stamina": {
+      "schema_version": "effective_match_stamina.v3",
+      "calibration_version": "pre_alpha_physical_v4",
+      "player_profiles": [
+        {
+          "player_id": "A",
+          "initial_readiness_factor": 1.0,
+          "bars": [
+            {
+              "dimension": "EXPLOSIVE",
+              "capacity": 92.8,
+              "workload_cost_factor": 0.97,
+              "recovery_per_second": 0.0549
+            },
+            {
+              "dimension": "RALLY",
+              "capacity": 92.8,
+              "workload_cost_factor": 0.952,
+              "recovery_per_second": 0.039
+            },
+            {
+              "dimension": "MATCH",
+              "capacity": 92.8,
+              "workload_cost_factor": 0.4792,
+              "recovery_per_second": 0.0206
+            }
+          ]
+        },
+        {
+          "player_id": "B",
+          "initial_readiness_factor": 1.0,
+          "bars": [
+            {
+              "dimension": "EXPLOSIVE",
+              "capacity": 91.45,
+              "workload_cost_factor": 0.9775,
+              "recovery_per_second": 0.0539
+            },
+            {
+              "dimension": "RALLY",
+              "capacity": 91.45,
+              "workload_cost_factor": 0.958,
+              "recovery_per_second": 0.0382
+            },
+            {
+              "dimension": "MATCH",
+              "capacity": 91.45,
+              "workload_cost_factor": 0.4828,
+              "recovery_per_second": 0.0202
+            }
+          ]
+        }
+      ],
+      "outcome_effect_applied": true,
+      "pre_rally_effort_applied": true,
+      "within_rally_effort_applied": true,
+      "unsupported_components": [
+        "within_rally_explosive_recovery",
+        "carried_reserves_between_matches",
+        "injury_specific_cost_profiles"
+      ]
+    },
+    "rally_calibration_profile": {
+      "schema_version": "rally_calibration_profile.v1",
+      "calibration_version": "pre_alpha_control_v1",
+      "cohort_profile": "elite_men",
+      "maximum_control_segments": 24,
+      "opening_terminal_probability": 0.075,
+      "base_segment_closure_probability": 0.14,
+      "early_closure_growth_per_segment": 0.012,
+      "late_closure_starts_after_segment": 10,
+      "late_closure_growth_per_segment": 0.045,
+      "fast_segment_shot_cdf": [
+        0.12,
+        0.6,
+        0.89,
+        0.975
+      ],
+      "balanced_segment_shot_cdf": [
+        0.1,
+        0.54,
+        0.86,
+        0.97
+      ],
+      "patient_segment_shot_cdf": [
+        0.06,
+        0.38,
+        0.76,
+        0.94
+      ],
+      "fast_seconds_per_shot_range": [
+        0.72,
+        0.98
+      ],
+      "balanced_seconds_per_shot_range": [
+        0.94,
+        1.24
+      ],
+      "patient_seconds_per_shot_range": [
+        1.14,
+        1.48
+      ],
+      "opening_elapsed_seconds_range": [
+        1.05,
+        1.7
+      ],
+      "serve_fault_elapsed_seconds_range": [
+        0.48,
+        0.82
+      ],
+      "terminal_elapsed_seconds_range": [
+        0.45,
+        0.85
+      ],
+      "stay_transition_weight": 0.58,
+      "local_transition_weight": 0.185,
+      "significant_break_weight": 0.022,
+      "direct_reversal_weight": 0.0015,
+      "transition_direction_log_weight": 0.38,
+      "final_control_logit_weight": 0.42,
+      "mean_control_logit_weight": 0.18,
+      "pressure_workload_per_control_step": 0.075,
+      "controlled_workload_relief_per_step": 0.035,
+      "low_reserve_effort_change_probability": 0.42,
+      "strong_pressure_effort_change_probability": 0.28,
+      "tactical_effort_change_probability": 0.035
+    },
+    "effective_match_gameplans": {
+      "schema_version": "effective_match_gameplans.v1",
+      "calibration_version": "pre_alpha_gameplan_v1",
+      "natural_style_profiles": [
+        {
+          "player_id": "A",
+          "source_play_style": "tempo-controller",
+          "axes": {
+            "risk": 0.45436383,
+            "tempo": 0.34325013,
+            "court_positioning": 0.41727504,
+            "variation": 0.76723601
+          },
+          "adaptability_proxy": 0.84848485,
+          "familiarity_baseline": 0.87336073,
+          "profile_seed": "120567412635632440280278579667212524955",
+          "profile_source": "legacy_style_materialization_v1"
+        },
+        {
+          "player_id": "B",
+          "source_play_style": "tempo-controller",
+          "axes": {
+            "risk": 0.43037523,
+            "tempo": 0.31271959,
+            "court_positioning": 0.42145315,
+            "variation": 0.80028475
+          },
+          "adaptability_proxy": 0.81818182,
+          "familiarity_baseline": 0.78305946,
+          "profile_seed": "70416234448359494956072295538152166383",
+          "profile_source": "legacy_style_materialization_v1"
+        }
+      ],
+      "initial_gameplans": [
+        {
+          "player_id": "A",
+          "revision": 1,
+          "selected_before_rally_index": 1,
+          "strategy": "COUNTER_ESTIMATE",
+          "intended_mechanism": "DISRUPT_ESTIMATED_PATTERN",
+          "time_horizon": "GAME_PHASE",
+          "axes": {
+            "risk": 0.53429943,
+            "tempo": 0.51232582,
+            "court_positioning": 0.48887032,
+            "variation": 0.67421696
+          },
+          "style_familiarity": 0.83889193,
+          "base_execution_factor": 0.91648558,
+          "confidence": 0.69664492,
+          "reassessment_after_rallies": 7,
+          "anticipated_payoff_after_rallies": 4,
+          "opponent_estimate": {
+            "opponent_player_id": "B",
+            "estimated_axes": {
+              "risk": 0.35780555,
+              "tempo": 0.35856782,
+              "court_positioning": 0.51151544,
+              "variation": 0.6760698
+            },
+            "confidence": 0.69636364,
+            "mean_absolute_error": 0.08317379
+          },
+          "selection_seed": "258787512720719365184742750502381058887",
+          "source": "PLAYER_AI_PRE_ALPHA_V1"
+        },
+        {
+          "player_id": "B",
+          "revision": 1,
+          "selected_before_rally_index": 1,
+          "strategy": "OWN_STRENGTH",
+          "intended_mechanism": "IMPOSE_NATURAL_PATTERN",
+          "time_horizon": "IMMEDIATE",
+          "axes": {
+            "risk": 0.43037523,
+            "tempo": 0.31271959,
+            "court_positioning": 0.42145315,
+            "variation": 0.80028475
+          },
+          "style_familiarity": 0.78305946,
+          "base_execution_factor": 0.88611609,
+          "confidence": 0.63981141,
+          "reassessment_after_rallies": 5,
+          "anticipated_payoff_after_rallies": 0,
+          "opponent_estimate": {
+            "opponent_player_id": "A",
+            "estimated_axes": {
+              "risk": 0.51857648,
+              "tempo": 0.44042145,
+              "court_positioning": 0.42197355,
+              "variation": 0.73055874
+            },
+            "confidence": 0.68363636,
+            "mean_absolute_error": 0.05068994
+          },
+          "selection_seed": "1473382538683834328095514705802144611",
+          "source": "PLAYER_AI_PRE_ALPHA_V1"
+        }
+      ],
+      "four_axis_execution_applied": true,
+      "imperfect_opponent_estimates_applied": true,
+      "in_match_reassessment_applied": true,
+      "unsupported_components": [
+        "persistent_authored_style_profiles",
+        "match_preparation",
+        "scouting_history_and_memory",
+        "mental_bar_execution_coupling"
+      ]
+    },
+    "context": {
+      "match_id": "legacy-v8-fixture",
+      "player_a": {
+        "player": {
+          "player_id": "A",
+          "name": "A",
+          "age": 27,
+          "birth_year": null,
+          "birth_year_week": null,
+          "nationality": "TST",
+          "technique": 84,
+          "movement": 84,
+          "physical": 84,
+          "mental": 84,
+          "consistency": 84,
+          "clutch": 84,
+          "recovery": 84,
+          "play_style": "tempo-controller",
+          "archetype": "all-court tactician",
+          "hidden_career_traits": {
+            "potential_ceiling": 90,
+            "growth_curve": "balanced",
+            "professionalism": 0.7,
+            "ambition": 0.7,
+            "travel_tolerance": 0.7,
+            "schedule_aggression": 0.6,
+            "injury_proneness": 0.2,
+            "resilience": 0.8
+          }
+        },
+        "form_modifier": 0.0,
+        "fatigue_modifier": 0.0,
+        "health_modifier": 0.0,
+        "travel_modifier": 0.0
+      },
+      "player_b": {
+        "player": {
+          "player_id": "B",
+          "name": "B",
+          "age": 27,
+          "birth_year": null,
+          "birth_year_week": null,
+          "nationality": "TST",
+          "technique": 81,
+          "movement": 81,
+          "physical": 81,
+          "mental": 81,
+          "consistency": 81,
+          "clutch": 81,
+          "recovery": 81,
+          "play_style": "tempo-controller",
+          "archetype": "all-court tactician",
+          "hidden_career_traits": {
+            "potential_ceiling": 90,
+            "growth_curve": "balanced",
+            "professionalism": 0.7,
+            "ambition": 0.7,
+            "travel_tolerance": 0.7,
+            "schedule_aggression": 0.6,
+            "injury_proneness": 0.2,
+            "resilience": 0.8
+          }
+        },
+        "form_modifier": 0.0,
+        "fatigue_modifier": 0.0,
+        "health_modifier": 0.0,
+        "travel_modifier": 0.0
+      },
+      "best_of": 1,
+      "games_to": 1,
+      "win_by": 1,
+      "upset_variance": 0.12,
+      "retirement_rule": {
+        "enabled": false,
+        "retired_player_id": null,
+        "trigger": "EXPLICIT_SET_START",
+        "set_number": null,
+        "probability": 0.0
+      }
+    },
+    "unsupported_future_inputs": [],
+    "snapshot_hash_algorithm": "sha256",
+    "snapshot_hash": "a12d905b878fcfaf3f00ca0bb8a93f0f1db1c57d9db8f8c1ba0426af7533630b"
+  },
+  "result": {
+    "match_id": "legacy-v8-fixture",
+    "winner_player_id": "A",
+    "loser_player_id": "B",
+    "player_a_id": "A",
+    "player_b_id": "B",
+    "best_of": 1,
+    "games_to": 1,
+    "win_by": 1,
+    "sets": [
+      {
+        "set_number": 1,
+        "winner_player_id": "A",
+        "loser_player_id": "B",
+        "winner_games": 1,
+        "loser_games": 0,
+        "was_close_endgame": true,
+        "ended_by_retirement": false
+      }
+    ],
+    "sets_won": {
+      "A": 1,
+      "B": 0
+    },
+    "termination_reason": "COMPLETED",
+    "retired_player_id": null,
+    "retired_at_set_start": null,
+    "rally_log": {
+      "schema_version": "match_rally_log.v5",
+      "match_id": "legacy-v8-fixture",
+      "input_snapshot_hash": "a12d905b878fcfaf3f00ca0bb8a93f0f1db1c57d9db8f8c1ba0426af7533630b",
+      "events": [
+        {
+          "schema_version": "rally_event.v5",
+          "match_id": "legacy-v8-fixture",
+          "rally_index": 1,
+          "set_number": 1,
+          "rally_in_set": 1,
+          "serving_player_id": "A",
+          "winner_player_id": "A",
+          "primary_terminal_trigger": "RETURN_OUT",
+          "terminal_subtype": null,
+          "official_resolution": "POINT_AWARDED",
+          "analytical_attribution": "FORCED_ERROR",
+          "score_before": {
+            "player_a_id": "A",
+            "player_b_id": "B",
+            "sets_a": 0,
+            "sets_b": 0,
+            "points_a": 0,
+            "points_b": 0
+          },
+          "score_mutations": [
+            {
+              "mutation_type": "POINT_AWARDED",
+              "player_id": "A",
+              "reason": "RALLY_RESULT"
+            }
+          ],
+          "score_after": {
+            "player_a_id": "A",
+            "player_b_id": "B",
+            "sets_a": 1,
+            "sets_b": 0,
+            "points_a": 1,
+            "points_b": 0
+          },
+          "abstract_segments": 14,
+          "estimated_shot_count": 41,
+          "elapsed_seconds": 42.937,
+          "rally_seed": "290316903190672310977184647033958942217",
+          "post_rally_state": {
+            "score": {
+              "player_a_id": "A",
+              "player_b_id": "B",
+              "sets_a": 1,
+              "sets_b": 0,
+              "points_a": 1,
+              "points_b": 0
+            },
+            "next_server_player_id": "A",
+            "set_complete": true,
+            "match_complete": true,
+            "unsupported_dynamic_state": [
+              "mental_stamina"
+            ]
+          },
+          "stamina_outcome_context": {
+            "calibration_version": "pre_alpha_outcome_v1",
+            "base_probability_player_a": 0.55547426,
+            "adjusted_probability_player_a": 0.55547426,
+            "player_impacts": [
+              {
+                "player_id": "A",
+                "explosive_fill_ratio": 1.0,
+                "rally_fill_ratio": 1.0,
+                "match_fill_ratio": 1.0,
+                "weighted_nonlinear_deficit": 0.0,
+                "strength_penalty": 0.0
+              },
+              {
+                "player_id": "B",
+                "explosive_fill_ratio": 1.0,
+                "rally_fill_ratio": 1.0,
+                "match_fill_ratio": 1.0,
+                "weighted_nonlinear_deficit": 0.0,
+                "strength_penalty": 0.0
+              }
+            ]
+          },
+          "effort_context": {
+            "calibration_version": "pre_alpha_effort_v1",
+            "base_workload_units": 4.0419,
+            "probability_before_effort_player_a": 0.55547426,
+            "probability_after_effort_player_a": 0.55554698,
+            "player_efforts": [
+              {
+                "player_id": "A",
+                "intended_level": "INCREASED",
+                "decision_factors": [
+                  "NATURAL_STYLE",
+                  "CLOSE_ENDGAME"
+                ],
+                "perceived_reserve": 0.98072241,
+                "requested_intensity_multiplier": 1.16,
+                "executed_intensity_multiplier": 1.15636364,
+                "outcome_strength_adjustment": 0.01563636,
+                "movement_efficiency_factor": 0.84,
+                "style_workload_factor": 0.94,
+                "pressure_workload_factor": 0.99631613,
+                "workload_units": 3.6175
+              },
+              {
+                "player_id": "B",
+                "intended_level": "INCREASED",
+                "decision_factors": [
+                  "NATURAL_STYLE",
+                  "CLOSE_ENDGAME"
+                ],
+                "perceived_reserve": 1.0,
+                "requested_intensity_multiplier": 1.16,
+                "executed_intensity_multiplier": 1.15563636,
+                "outcome_strength_adjustment": 0.01556364,
+                "movement_efficiency_factor": 0.85,
+                "style_workload_factor": 0.94,
+                "pressure_workload_factor": 1.03042306,
+                "workload_units": 3.5456
+              }
+            ]
+          },
+          "control_trace": {
+            "calibration_version": "pre_alpha_control_v1",
+            "trace_seed": "285311373676843511806947658466581065569",
+            "opening_state": "SLIGHT_CONTROL_B",
+            "opening_terminal_probability": 0.07491758,
+            "opening_terminal_roll": 0.6918413877838001,
+            "segments": [
+              {
+                "segment_index": 1,
+                "state_before": "SLIGHT_CONTROL_B",
+                "state_after": "NEUTRAL",
+                "transition_kind": "LOCAL_SHIFT",
+                "phase_pace": "BALANCED",
+                "estimated_shot_count": 2,
+                "elapsed_seconds": 2.538,
+                "closure_probability": 0.14290548,
+                "closure_roll": 0.24714139195600204,
+                "closed_rally": false,
+                "effort_changes": [],
+                "player_workloads": [
+                  {
+                    "player_id": "A",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15610774,
+                    "control_pressure_factor": 1.0375,
+                    "workload_units": 0.2063
+                  },
+                  {
+                    "player_id": "B",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15540781,
+                    "control_pressure_factor": 0.9825,
+                    "workload_units": 0.1943
+                  }
+                ]
+              },
+              {
+                "segment_index": 2,
+                "state_before": "NEUTRAL",
+                "state_after": "NEUTRAL",
+                "transition_kind": "STAY",
+                "phase_pace": "FAST",
+                "estimated_shot_count": 1,
+                "elapsed_seconds": 1.088,
+                "closure_probability": 0.1549001,
+                "closure_roll": 0.5914106517754693,
+                "closed_rally": false,
+                "effort_changes": [],
+                "player_workloads": [
+                  {
+                    "player_id": "A",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.1559493,
+                    "control_pressure_factor": 1.0,
+                    "workload_units": 0.1174
+                  },
+                  {
+                    "player_id": "B",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15525858,
+                    "control_pressure_factor": 1.0,
+                    "workload_units": 0.1168
+                  }
+                ]
+              },
+              {
+                "segment_index": 3,
+                "state_before": "NEUTRAL",
+                "state_after": "SLIGHT_CONTROL_B",
+                "transition_kind": "LOCAL_SHIFT",
+                "phase_pace": "BALANCED",
+                "estimated_shot_count": 4,
+                "elapsed_seconds": 4.273,
+                "closure_probability": 0.17418149,
+                "closure_roll": 0.29506812266896654,
+                "closed_rally": false,
+                "effort_changes": [
+                  {
+                    "player_id": "B",
+                    "from_level": "INCREASED",
+                    "to_level": "NORMAL",
+                    "reason": "TACTICAL_VARIATION"
+                  }
+                ],
+                "player_workloads": [
+                  {
+                    "player_id": "A",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15585914,
+                    "control_pressure_factor": 1.0375,
+                    "workload_units": 0.3243
+                  },
+                  {
+                    "player_id": "B",
+                    "effort_level": "NORMAL",
+                    "intensity_multiplier": 1.0,
+                    "control_pressure_factor": 0.9825,
+                    "workload_units": 0.2645
+                  }
+                ]
+              },
+              {
+                "segment_index": 4,
+                "state_before": "SLIGHT_CONTROL_B",
+                "state_after": "NEUTRAL",
+                "transition_kind": "LOCAL_SHIFT",
+                "phase_pace": "FAST",
+                "estimated_shot_count": 2,
+                "elapsed_seconds": 1.881,
+                "closure_probability": 0.17617714,
+                "closure_roll": 0.9703731308804756,
+                "closed_rally": false,
+                "effort_changes": [],
+                "player_workloads": [
+                  {
+                    "player_id": "A",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15561007,
+                    "control_pressure_factor": 1.0375,
+                    "workload_units": 0.1776
+                  },
+                  {
+                    "player_id": "B",
+                    "effort_level": "NORMAL",
+                    "intensity_multiplier": 1.0,
+                    "control_pressure_factor": 0.9825,
+                    "workload_units": 0.1449
+                  }
+                ]
+              },
+              {
+                "segment_index": 5,
+                "state_before": "NEUTRAL",
+                "state_after": "NEUTRAL",
+                "transition_kind": "STAY",
+                "phase_pace": "BALANCED",
+                "estimated_shot_count": 4,
+                "elapsed_seconds": 4.552,
+                "closure_probability": 0.18817475,
+                "closure_roll": 0.8616607126156841,
+                "closed_rally": false,
+                "effort_changes": [],
+                "player_workloads": [
+                  {
+                    "player_id": "A",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15547368,
+                    "control_pressure_factor": 1.0,
+                    "workload_units": 0.3242
+                  },
+                  {
+                    "player_id": "B",
+                    "effort_level": "NORMAL",
+                    "intensity_multiplier": 1.0,
+                    "control_pressure_factor": 1.0,
+                    "workload_units": 0.2792
+                  }
+                ]
+              },
+              {
+                "segment_index": 6,
+                "state_before": "NEUTRAL",
+                "state_after": "NEUTRAL",
+                "transition_kind": "STAY",
+                "phase_pace": "PATIENT",
+                "estimated_shot_count": 1,
+                "elapsed_seconds": 1.461,
+                "closure_probability": 0.19217039,
+                "closure_roll": 0.9413991646228361,
+                "closed_rally": false,
+                "effort_changes": [],
+                "player_workloads": [
+                  {
+                    "player_id": "A",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15522469,
+                    "control_pressure_factor": 1.0,
+                    "workload_units": 0.133
+                  },
+                  {
+                    "player_id": "B",
+                    "effort_level": "NORMAL",
+                    "intensity_multiplier": 1.0,
+                    "control_pressure_factor": 1.0,
+                    "workload_units": 0.1146
+                  }
+                ]
+              },
+              {
+                "segment_index": 7,
+                "state_before": "NEUTRAL",
+                "state_after": "NEUTRAL",
+                "transition_kind": "STAY",
+                "phase_pace": "BALANCED",
+                "estimated_shot_count": 2,
+                "elapsed_seconds": 2.444,
+                "closure_probability": 0.2121686,
+                "closure_roll": 0.948160119620168,
+                "closed_rally": false,
+                "effort_changes": [],
+                "player_workloads": [
+                  {
+                    "player_id": "A",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15512255,
+                    "control_pressure_factor": 1.0,
+                    "workload_units": 0.1947
+                  },
+                  {
+                    "player_id": "B",
+                    "effort_level": "NORMAL",
+                    "intensity_multiplier": 1.0,
+                    "control_pressure_factor": 1.0,
+                    "workload_units": 0.1678
+                  }
+                ]
+              },
+              {
+                "segment_index": 8,
+                "state_before": "NEUTRAL",
+                "state_after": "SLIGHT_CONTROL_A",
+                "transition_kind": "LOCAL_SHIFT",
+                "phase_pace": "BALANCED",
+                "estimated_shot_count": 2,
+                "elapsed_seconds": 2.264,
+                "closure_probability": 0.23416599,
+                "closure_roll": 0.31866280603082675,
+                "closed_rally": false,
+                "effort_changes": [],
+                "player_workloads": [
+                  {
+                    "player_id": "A",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15497302,
+                    "control_pressure_factor": 0.9825,
+                    "workload_units": 0.1839
+                  },
+                  {
+                    "player_id": "B",
+                    "effort_level": "NORMAL",
+                    "intensity_multiplier": 1.0,
+                    "control_pressure_factor": 1.0375,
+                    "workload_units": 0.1673
+                  }
+                ]
+              },
+              {
+                "segment_index": 9,
+                "state_before": "SLIGHT_CONTROL_A",
+                "state_after": "SLIGHT_CONTROL_A",
+                "transition_kind": "STAY",
+                "phase_pace": "BALANCED",
+                "estimated_shot_count": 3,
+                "elapsed_seconds": 3.744,
+                "closure_probability": 0.24886367,
+                "closure_roll": 0.8046028047060085,
+                "closed_rally": false,
+                "effort_changes": [
+                  {
+                    "player_id": "B",
+                    "from_level": "NORMAL",
+                    "to_level": "INCREASED",
+                    "reason": "RESPOND_TO_PRESSURE"
+                  }
+                ],
+                "player_workloads": [
+                  {
+                    "player_id": "A",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15483178,
+                    "control_pressure_factor": 0.965,
+                    "workload_units": 0.2602
+                  },
+                  {
+                    "player_id": "B",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15429467,
+                    "control_pressure_factor": 1.075,
+                    "workload_units": 0.2884
+                  }
+                ]
+              },
+              {
+                "segment_index": 10,
+                "state_before": "SLIGHT_CONTROL_A",
+                "state_after": "SLIGHT_CONTROL_A",
+                "transition_kind": "STAY",
+                "phase_pace": "FAST",
+                "estimated_shot_count": 3,
+                "elapsed_seconds": 2.509,
+                "closure_probability": 0.2608563,
+                "closure_roll": 0.5433307882297231,
+                "closed_rally": false,
+                "effort_changes": [],
+                "player_workloads": [
+                  {
+                    "player_id": "A",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15463195,
+                    "control_pressure_factor": 0.965,
+                    "workload_units": 0.2102
+                  },
+                  {
+                    "player_id": "B",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15407318,
+                    "control_pressure_factor": 1.075,
+                    "workload_units": 0.233
+                  }
+                ]
+              },
+              {
+                "segment_index": 11,
+                "state_before": "SLIGHT_CONTROL_A",
+                "state_after": "SLIGHT_CONTROL_A",
+                "transition_kind": "STAY",
+                "phase_pace": "FAST",
+                "estimated_shot_count": 4,
+                "elapsed_seconds": 3.606,
+                "closure_probability": 0.31785034,
+                "closure_roll": 0.3491393986949832,
+                "closed_rally": false,
+                "effort_changes": [],
+                "player_workloads": [
+                  {
+                    "player_id": "A",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15447052,
+                    "control_pressure_factor": 0.965,
+                    "workload_units": 0.2743
+                  },
+                  {
+                    "player_id": "B",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15389423,
+                    "control_pressure_factor": 1.075,
+                    "workload_units": 0.304
+                  }
+                ]
+              },
+              {
+                "segment_index": 12,
+                "state_before": "SLIGHT_CONTROL_A",
+                "state_after": "SLIGHT_CONTROL_A",
+                "transition_kind": "STAY",
+                "phase_pace": "BALANCED",
+                "estimated_shot_count": 4,
+                "elapsed_seconds": 4.173,
+                "closure_probability": 0.37484257,
+                "closure_roll": 0.75399199032415,
+                "closed_rally": false,
+                "effort_changes": [],
+                "player_workloads": [
+                  {
+                    "player_id": "A",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15425985,
+                    "control_pressure_factor": 0.965,
+                    "workload_units": 0.2972
+                  },
+                  {
+                    "player_id": "B",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15366076,
+                    "control_pressure_factor": 1.075,
+                    "workload_units": 0.3293
+                  }
+                ]
+              },
+              {
+                "segment_index": 13,
+                "state_before": "SLIGHT_CONTROL_A",
+                "state_after": "SLIGHT_CONTROL_A",
+                "transition_kind": "STAY",
+                "phase_pace": "FAST",
+                "estimated_shot_count": 4,
+                "elapsed_seconds": 3.826,
+                "closure_probability": 0.43183415,
+                "closure_roll": 0.9885554420386121,
+                "closed_rally": false,
+                "effort_changes": [],
+                "player_workloads": [
+                  {
+                    "player_id": "A",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.1540316,
+                    "control_pressure_factor": 0.965,
+                    "workload_units": 0.2831
+                  },
+                  {
+                    "player_id": "B",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15340786,
+                    "control_pressure_factor": 1.075,
+                    "workload_units": 0.3137
+                  }
+                ]
+              },
+              {
+                "segment_index": 14,
+                "state_before": "SLIGHT_CONTROL_A",
+                "state_after": "SLIGHT_CONTROL_A",
+                "transition_kind": "STAY",
+                "phase_pace": "BALANCED",
+                "estimated_shot_count": 2,
+                "elapsed_seconds": 2.406,
+                "closure_probability": 0.48882613,
+                "closure_roll": 0.20883483109564838,
+                "closed_rally": true,
+                "effort_changes": [],
+                "player_workloads": [
+                  {
+                    "player_id": "A",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15381418,
+                    "control_pressure_factor": 0.965,
+                    "workload_units": 0.1861
+                  },
+                  {
+                    "player_id": "B",
+                    "effort_level": "INCREASED",
+                    "intensity_multiplier": 1.15316694,
+                    "control_pressure_factor": 1.075,
+                    "workload_units": 0.2063
+                  }
+                ]
+              }
+            ],
+            "final_state": "SLIGHT_CONTROL_A",
+            "closure_reason": "NATURAL_TERMINAL",
+            "control_segment_count": 14,
+            "opening_shot_count": 2,
+            "terminal_shot_count": 1,
+            "estimated_shot_count": 41,
+            "opening_elapsed_seconds": 1.559,
+            "terminal_elapsed_seconds": 0.613,
+            "active_rally_duration": 42.937,
+            "probability_before_control_player_a": 0.55554698,
+            "terminal_probability_player_a": 0.67152904,
+            "terminal_roll": 0.6436005546620122,
+            "player_workloads": [
+              {
+                "player_id": "A",
+                "opening_workload_units": 0.3332,
+                "segment_workload_units": 3.1725,
+                "terminal_workload_units": 0.1118,
+                "mean_control_pressure_factor": 0.99631613,
+                "total_workload_units": 3.6175
+              },
+              {
+                "player_id": "B",
+                "opening_workload_units": 0.2976,
+                "segment_workload_units": 3.1241,
+                "terminal_workload_units": 0.1239,
+                "mean_control_pressure_factor": 1.03042306,
+                "total_workload_units": 3.5456
+              }
+            ]
+          },
+          "gameplan_context": {
+            "calibration_version": "pre_alpha_gameplan_v1",
+            "player_decisions": [
+              {
+                "player_id": "A",
+                "active_plan": {
+                  "player_id": "A",
+                  "revision": 1,
+                  "selected_before_rally_index": 1,
+                  "strategy": "COUNTER_ESTIMATE",
+                  "intended_mechanism": "DISRUPT_ESTIMATED_PATTERN",
+                  "time_horizon": "GAME_PHASE",
+                  "axes": {
+                    "risk": 0.53429943,
+                    "tempo": 0.51232582,
+                    "court_positioning": 0.48887032,
+                    "variation": 0.67421696
+                  },
+                  "style_familiarity": 0.83889193,
+                  "base_execution_factor": 0.91648558,
+                  "confidence": 0.69664492,
+                  "reassessment_after_rallies": 7,
+                  "anticipated_payoff_after_rallies": 4,
+                  "opponent_estimate": {
+                    "opponent_player_id": "B",
+                    "estimated_axes": {
+                      "risk": 0.35780555,
+                      "tempo": 0.35856782,
+                      "court_positioning": 0.51151544,
+                      "variation": 0.6760698
+                    },
+                    "confidence": 0.69636364,
+                    "mean_absolute_error": 0.08317379
+                  },
+                  "selection_seed": "258787512720719365184742750502381058887",
+                  "source": "PLAYER_AI_PRE_ALPHA_V1"
+                },
+                "action": "START",
+                "reason": "INITIAL_SELECTION",
+                "observed_rallies": 0,
+                "observed_point_differential": 0,
+                "perceived_performance_signal": 0.0
+              },
+              {
+                "player_id": "B",
+                "active_plan": {
+                  "player_id": "B",
+                  "revision": 1,
+                  "selected_before_rally_index": 1,
+                  "strategy": "OWN_STRENGTH",
+                  "intended_mechanism": "IMPOSE_NATURAL_PATTERN",
+                  "time_horizon": "IMMEDIATE",
+                  "axes": {
+                    "risk": 0.43037523,
+                    "tempo": 0.31271959,
+                    "court_positioning": 0.42145315,
+                    "variation": 0.80028475
+                  },
+                  "style_familiarity": 0.78305946,
+                  "base_execution_factor": 0.88611609,
+                  "confidence": 0.63981141,
+                  "reassessment_after_rallies": 5,
+                  "anticipated_payoff_after_rallies": 0,
+                  "opponent_estimate": {
+                    "opponent_player_id": "A",
+                    "estimated_axes": {
+                      "risk": 0.51857648,
+                      "tempo": 0.44042145,
+                      "court_positioning": 0.42197355,
+                      "variation": 0.73055874
+                    },
+                    "confidence": 0.68363636,
+                    "mean_absolute_error": 0.05068994
+                  },
+                  "selection_seed": "1473382538683834328095514705802144611",
+                  "source": "PLAYER_AI_PRE_ALPHA_V1"
+                },
+                "action": "START",
+                "reason": "INITIAL_SELECTION",
+                "observed_rallies": 0,
+                "observed_point_differential": 0,
+                "perceived_performance_signal": 0.0
+              }
+            ],
+            "player_effects": [
+              {
+                "player_id": "A",
+                "execution_factor": 0.91648558,
+                "actual_counter_fit": 0.94607675,
+                "control_execution_signal": 0.06087917,
+                "pace_preference_signal": 0.00693473,
+                "closure_pressure_signal": 0.00210833,
+                "workload_factor": 1.02150885
+              },
+              {
+                "player_id": "B",
+                "execution_factor": 0.88611609,
+                "actual_counter_fit": 0.80385145,
+                "control_execution_signal": 0.05996206,
+                "pace_preference_signal": -0.06924532,
+                "closure_pressure_signal": -0.00720041,
+                "workload_factor": 1.00476142
+              }
+            ],
+            "control_drive_adjustment_player_a": 0.00091711,
+            "shared_pace_signal": -0.03115529,
+            "shared_closure_probability_adjustment": -0.00254604
+          },
+          "side_incidents": [],
+          "previous_event_hash": "a12d905b878fcfaf3f00ca0bb8a93f0f1db1c57d9db8f8c1ba0426af7533630b",
+          "event_hash_algorithm": "sha256",
+          "event_hash": "57031bfe891098b3289b510639184867a6933bb83086532862047c9d63d757f9"
+        }
+      ],
+      "total_rallies": 1,
+      "rally_elapsed_seconds": 42.937,
+      "estimated_shot_count": 41,
+      "unsupported_timeline_components": [
+        "medical_breaks",
+        "dynamic_stamina",
+        "non_scoring_replay_rallies",
+        "interference_and_official_calls",
+        "health_and_conduct_incidents"
+      ],
+      "match_log_hash_algorithm": "sha256",
+      "match_log_hash": "57031bfe891098b3289b510639184867a6933bb83086532862047c9d63d757f9"
+    },
+    "timeline_log": {
+      "schema_version": "match_timeline_log.v1",
+      "match_id": "legacy-v8-fixture",
+      "input_snapshot_hash": "a12d905b878fcfaf3f00ca0bb8a93f0f1db1c57d9db8f8c1ba0426af7533630b",
+      "events": [
+        {
+          "match_id": "legacy-v8-fixture",
+          "timeline_index": 1,
+          "elapsed_seconds": 42.937,
+          "previous_event_hash": "a12d905b878fcfaf3f00ca0bb8a93f0f1db1c57d9db8f8c1ba0426af7533630b",
+          "event_hash_algorithm": "sha256",
+          "event_hash": "0647e7b4e49310ce863cd13c0ad08f4c9affdea7aa081322d1759cd35f3cc7c1",
+          "schema_version": "rally_timeline_event.v1",
+          "event_type": "RALLY",
+          "rally_index": 1,
+          "set_number": 1,
+          "rally_event_hash": "57031bfe891098b3289b510639184867a6933bb83086532862047c9d63d757f9"
+        }
+      ],
+      "total_timeline_events": 1,
+      "rally_event_count": 1,
+      "between_rally_interval_count": 0,
+      "game_break_count": 0,
+      "rally_elapsed_seconds": 42.937,
+      "between_rally_elapsed_seconds": 0.0,
+      "game_break_elapsed_seconds": 0.0,
+      "total_elapsed_seconds": 42.937,
+      "unsupported_timeline_components": [
+        "medical_breaks",
+        "objective_delay_events",
+        "conduct_escalation",
+        "non_scoring_replay_rallies",
+        "variable_game_break_duration",
+        "restart_rhythm_effects",
+        "full_situational_restart_ai"
+      ],
+      "match_log_hash_algorithm": "sha256",
+      "match_log_hash": "0647e7b4e49310ce863cd13c0ad08f4c9affdea7aa081322d1759cd35f3cc7c1"
+    },
+    "stamina_log": {
+      "schema_version": "match_stamina_log.v3",
+      "match_id": "legacy-v8-fixture",
+      "timeline_log_hash": "0647e7b4e49310ce863cd13c0ad08f4c9affdea7aa081322d1759cd35f3cc7c1",
+      "calibration_version": "pre_alpha_physical_v4",
+      "initial_states": [
+        {
+          "player_id": "A",
+          "bars": [
+            {
+              "dimension": "EXPLOSIVE",
+              "capacity": 92.8,
+              "current": 92.8
+            },
+            {
+              "dimension": "RALLY",
+              "capacity": 92.8,
+              "current": 92.8
+            },
+            {
+              "dimension": "MATCH",
+              "capacity": 92.8,
+              "current": 92.8
+            }
+          ]
+        },
+        {
+          "player_id": "B",
+          "bars": [
+            {
+              "dimension": "EXPLOSIVE",
+              "capacity": 91.45,
+              "current": 91.45
+            },
+            {
+              "dimension": "RALLY",
+              "capacity": 91.45,
+              "current": 91.45
+            },
+            {
+              "dimension": "MATCH",
+              "capacity": 91.45,
+              "current": 91.45
+            }
+          ]
+        }
+      ],
+      "transitions": [
+        {
+          "schema_version": "stamina_transition.v2",
+          "match_id": "legacy-v8-fixture",
+          "transition_index": 1,
+          "source_timeline_index": 1,
+          "source_timeline_event_hash": "0647e7b4e49310ce863cd13c0ad08f4c9affdea7aa081322d1759cd35f3cc7c1",
+          "cause": "RALLY_WORKLOAD",
+          "elapsed_seconds": 42.937,
+          "workload_units": 4.0419,
+          "player_workloads": [
+            {
+              "player_id": "A",
+              "workload_units": 3.6175
+            },
+            {
+              "player_id": "B",
+              "workload_units": 3.5456
+            }
+          ],
+          "states_before": [
+            {
+              "player_id": "A",
+              "bars": [
+                {
+                  "dimension": "EXPLOSIVE",
+                  "capacity": 92.8,
+                  "current": 92.8
+                },
+                {
+                  "dimension": "RALLY",
+                  "capacity": 92.8,
+                  "current": 92.8
+                },
+                {
+                  "dimension": "MATCH",
+                  "capacity": 92.8,
+                  "current": 92.8
+                }
+              ]
+            },
+            {
+              "player_id": "B",
+              "bars": [
+                {
+                  "dimension": "EXPLOSIVE",
+                  "capacity": 91.45,
+                  "current": 91.45
+                },
+                {
+                  "dimension": "RALLY",
+                  "capacity": 91.45,
+                  "current": 91.45
+                },
+                {
+                  "dimension": "MATCH",
+                  "capacity": 91.45,
+                  "current": 91.45
+                }
+              ]
+            }
+          ],
+          "deltas": [
+            {
+              "player_id": "A",
+              "explosive": -3.509,
+              "rally": -3.4439,
+              "match": -1.7335
+            },
+            {
+              "player_id": "B",
+              "explosive": -3.4658,
+              "rally": -3.3967,
+              "match": -1.7118
+            }
+          ],
+          "states_after": [
+            {
+              "player_id": "A",
+              "bars": [
+                {
+                  "dimension": "EXPLOSIVE",
+                  "capacity": 92.8,
+                  "current": 89.291
+                },
+                {
+                  "dimension": "RALLY",
+                  "capacity": 92.8,
+                  "current": 89.3561
+                },
+                {
+                  "dimension": "MATCH",
+                  "capacity": 92.8,
+                  "current": 91.0665
+                }
+              ]
+            },
+            {
+              "player_id": "B",
+              "bars": [
+                {
+                  "dimension": "EXPLOSIVE",
+                  "capacity": 91.45,
+                  "current": 87.9842
+                },
+                {
+                  "dimension": "RALLY",
+                  "capacity": 91.45,
+                  "current": 88.0533
+                },
+                {
+                  "dimension": "MATCH",
+                  "capacity": 91.45,
+                  "current": 89.7382
+                }
+              ]
+            }
+          ],
+          "previous_transition_hash": "0647e7b4e49310ce863cd13c0ad08f4c9affdea7aa081322d1759cd35f3cc7c1",
+          "transition_hash_algorithm": "sha256",
+          "transition_hash": "f3237f4224aca083b4426db50563e8afa1a9d7333fe28c0983cb3a1224e88bf6"
+        }
+      ],
+      "final_states": [
+        {
+          "player_id": "A",
+          "bars": [
+            {
+              "dimension": "EXPLOSIVE",
+              "capacity": 92.8,
+              "current": 89.291
+            },
+            {
+              "dimension": "RALLY",
+              "capacity": 92.8,
+              "current": 89.3561
+            },
+            {
+              "dimension": "MATCH",
+              "capacity": 92.8,
+              "current": 91.0665
+            }
+          ]
+        },
+        {
+          "player_id": "B",
+          "bars": [
+            {
+              "dimension": "EXPLOSIVE",
+              "capacity": 91.45,
+              "current": 87.9842
+            },
+            {
+              "dimension": "RALLY",
+              "capacity": 91.45,
+              "current": 88.0533
+            },
+            {
+              "dimension": "MATCH",
+              "capacity": 91.45,
+              "current": 89.7382
+            }
+          ]
+        }
+      ],
+      "total_transitions": 1,
+      "outcome_effect_applied": true,
+      "pre_rally_effort_applied": true,
+      "within_rally_effort_applied": true,
+      "unsupported_components": [
+        "within_rally_explosive_recovery",
+        "carried_reserves_between_matches",
+        "injury_specific_cost_profiles"
+      ],
+      "match_log_hash_algorithm": "sha256",
+      "match_log_hash": "f3237f4224aca083b4426db50563e8afa1a9d7333fe28c0983cb3a1224e88bf6"
+    }
+  }
+}

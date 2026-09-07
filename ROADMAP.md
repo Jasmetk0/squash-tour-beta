@@ -55,7 +55,7 @@ This is a milestone summary, not a second product constitution. **Master Vision 
 - Let player AI estimate opponent fatigue and vary effort; it must not read hidden Admin truth directly.
 - Keep the implemented four-axis Active Gameplan V1 historically snapshotted and replayable; later replace its explicit legacy style/adaptability proxies with authored career profiles, Match Preparation and richer scouting inputs.
 - Keep serve influence squash-appropriate and relatively weak.
-- Use simplified `No Let / Yes Let / Stroke` interference in v1.
+- Keep the implemented simplified `No Let / Yes Let / Stroke`, ball-hit-player and short external-interruption resolver historically versioned; tune its provisional situation generator without reinterpreting stored matches. See `docs/RALLY_RULES_RESOLVER_V1.md`.
 - Persist compact authoritative rally and timing data.
 - Referee errors, detailed review, deliberate delay and detailed court-condition simulation remain later scope.
 

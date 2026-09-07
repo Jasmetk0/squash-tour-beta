@@ -594,13 +594,16 @@ class PlayerGameplanState(BaseModel):
     rallies_since_reassessment: int = Field(ge=0)
     points_won_since_reassessment: int = Field(ge=0)
     points_lost_since_reassessment: int = Field(ge=0)
+    neutral_replays_since_reassessment: int = Field(default=0, ge=0)
 
     @model_validator(mode="after")
     def validate_plan_owner(self) -> PlayerGameplanState:
         if self.active_plan.player_id != self.player_id:
             raise ValueError("runtime gameplan state and active plan owners differ")
         if self.rallies_since_reassessment != (
-            self.points_won_since_reassessment + self.points_lost_since_reassessment
+            self.points_won_since_reassessment
+            + self.points_lost_since_reassessment
+            + self.neutral_replays_since_reassessment
         ):
             raise ValueError("gameplan evidence must account for every observed rally")
         return self
@@ -622,6 +625,7 @@ class PlayerRallyGameplanDecision(BaseModel):
     action: GameplanDecisionAction
     reason: GameplanDecisionReason
     observed_rallies: int = Field(ge=0)
+    observed_neutral_replays: int = Field(default=0, ge=0)
     observed_point_differential: int
     perceived_performance_signal: float = Field(ge=-1, le=1)
 
@@ -630,8 +634,15 @@ class PlayerRallyGameplanDecision(BaseModel):
         if self.active_plan.player_id != self.player_id:
             raise ValueError("rally gameplan decision and active plan owners differ")
         if (
-            abs(self.observed_point_differential) > self.observed_rallies
-            or (self.observed_rallies - self.observed_point_differential) % 2
+            self.observed_neutral_replays > self.observed_rallies
+            or abs(self.observed_point_differential)
+            > self.observed_rallies - self.observed_neutral_replays
+            or (
+                self.observed_rallies
+                - self.observed_neutral_replays
+                - self.observed_point_differential
+            )
+            % 2
         ):
             raise ValueError("gameplan point evidence is internally inconsistent")
         if self.action == GameplanDecisionAction.START and (

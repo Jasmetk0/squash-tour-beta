@@ -120,7 +120,39 @@ class MatchResult(BaseModel):
             return self
         if self.rally_log.match_id != self.match_id:
             raise ValueError("match result and rally log identities do not agree")
-        if self.rally_log.total_rallies != sum(
+        current_rules = self.rally_log.schema_version == "match_rally_log.v6"
+        if current_rules:
+            for event in self.rally_log.events:
+                before, after = event.score_before, event.score_after
+                if (before.player_a_id, before.player_b_id) != (
+                    self.player_a_id,
+                    self.player_b_id,
+                ):
+                    raise ValueError("rally participants do not match match result")
+                completed = (
+                    max(after.points_a, after.points_b) >= self.games_to
+                    and abs(after.points_a - after.points_b) >= self.win_by
+                )
+                if event.post_rally_state.set_complete != completed:
+                    raise ValueError(
+                        "rally set completion does not follow stored match format"
+                    )
+                expected_sets = (
+                    before.sets_a + int(completed and after.points_a > after.points_b),
+                    before.sets_b + int(completed and after.points_b > after.points_a),
+                )
+                if (after.sets_a, after.sets_b) != expected_sets:
+                    raise ValueError("rally set award does not follow its score")
+                if event.post_rally_state.match_complete != (
+                    max(expected_sets) >= self.best_of // 2 + 1
+                ):
+                    raise ValueError(
+                        "rally match completion does not follow stored match format"
+                    )
+        scoring_rallies = sum(
+            len(event.score_mutations) for event in self.rally_log.events
+        )
+        if scoring_rallies != sum(
             set_result.winner_games + set_result.loser_games for set_result in self.sets
         ):
             raise ValueError("match result score and rally count do not agree")
@@ -169,6 +201,7 @@ class MatchResult(BaseModel):
                 )
         if self.timeline_log is not None:
             timeline = self.timeline_log
+            self.rally_log.validate_rules_timeline(timeline)
             if timeline.match_id != self.match_id:
                 raise ValueError("match result and timeline identities do not agree")
             if timeline.input_snapshot_hash != self.rally_log.input_snapshot_hash:
@@ -202,7 +235,13 @@ class MatchResult(BaseModel):
                         "timeline must contain exactly one elapsed event between rallies"
                     )
                 expected_type = (
-                    "BETWEEN_RALLY_INTERVAL"
+                    (
+                        "OBJECTIVE_DELAY"
+                        if current_rally.rules_resolution is not None
+                        and current_rally.rules_resolution.context.kind
+                        == "EXTERNAL_INTERRUPTION"
+                        else "BETWEEN_RALLY_INTERVAL"
+                    )
                     if current_rally.set_number == next_rally.set_number
                     else "GAME_BREAK"
                 )
@@ -214,6 +253,22 @@ class MatchResult(BaseModel):
                     raise ValueError(
                         "timeline elapsed event references the wrong preceding rally"
                     )
+                if between[0].event_type == "OBJECTIVE_DELAY":
+                    facts = current_rally.rules_resolution.context
+                    if (
+                        between[0].reason != facts.reason
+                        or between[0].interruption_elapsed_seconds
+                        != facts.interruption_elapsed_seconds
+                    ):
+                        raise ValueError(
+                            "objective delay does not match its rally facts"
+                        )
+                if (
+                    between[0].event_type == "BETWEEN_RALLY_INTERVAL"
+                    and between[0].server_player_id
+                    != current_rally.post_rally_state.next_server_player_id
+                ):
+                    raise ValueError("restart server does not match post-rally state")
             if timeline.rally_elapsed_seconds != self.rally_log.rally_elapsed_seconds:
                 raise ValueError("timeline and rally log elapsed times do not agree")
             if (
@@ -225,16 +280,14 @@ class MatchResult(BaseModel):
                     "completed match timeline must end with its final rally"
                 )
             terminal_game_break = (
-                bool(timeline.events)
-                and timeline.events[-1].event_type == "GAME_BREAK"
+                bool(timeline.events) and timeline.events[-1].event_type == "GAME_BREAK"
             )
             if terminal_game_break and (
-                    self.termination_reason != MatchTerminationReason.RETIREMENT
-                    or self.retired_at_set_start is None
-                    or not self.rally_log.events
-                    or self.retired_at_set_start
-                    != self.rally_log.events[-1].set_number + 1
-                    or not self.rally_log.events[-1].post_rally_state.set_complete
+                self.termination_reason != MatchTerminationReason.RETIREMENT
+                or self.retired_at_set_start is None
+                or not self.rally_log.events
+                or self.retired_at_set_start != self.rally_log.events[-1].set_number + 1
+                or not self.rally_log.events[-1].post_rally_state.set_complete
             ):
                 raise ValueError(
                     "terminal game break requires retirement before the next set"

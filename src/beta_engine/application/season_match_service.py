@@ -50,7 +50,7 @@ MatchValidationSeverity = Literal["warning", "error"]
 ProgressionStatusValue = Literal["not_started", "in_progress", "completed", "not_applicable"]
 EventProgressionStatusValue = Literal["not_started", "in_progress", "completed", "blocked"]
 ProgressionAction = Literal["process_byes", "refresh_status", "simulate_round", "simulate_draw", "promote_qualifiers", "advance_completed"]
-MATCH_ENGINE_VERSION = "match_engine_v8"
+MATCH_ENGINE_VERSION = "match_engine_v9"
 
 
 
@@ -89,6 +89,7 @@ class MatchSimulationResult(BaseModel):
         if self.timeline_log is not None:
             if self.rally_log is None:
                 raise ValueError("stored match timeline requires a rally log")
+            self.rally_log.validate_rules_timeline(self.timeline_log)
             if self.timeline_log.input_snapshot_hash != self.rally_log.input_snapshot_hash:
                 raise ValueError("stored match logs use different input anchors")
             expected_hash = (
@@ -317,6 +318,9 @@ class SeasonMatchService:
         if match.match_input_snapshot is None or match.simulated_result.rally_log is None:
             raise ValueError(f"Match '{match_id}' predates the authoritative rally-log schema.")
         rally_log = match.simulated_result.rally_log
+        current_rules = match.match_input_snapshot.schema_version == "match_input_snapshot.v9"
+        if current_rules != (rally_log.schema_version == "match_rally_log.v6"):
+            raise ValueError("Stored rules snapshot and rally log generations do not agree.")
         if rally_log.input_snapshot_hash != match.match_input_snapshot.snapshot_hash:
             raise ValueError("Stored rally log is not anchored to the match input snapshot.")
         timeline_log = match.simulated_result.timeline_log
@@ -328,6 +332,7 @@ class SeasonMatchService:
             "match_input_snapshot.v6",
             "match_input_snapshot.v7",
             "match_input_snapshot.v8",
+            "match_input_snapshot.v9",
         }:
             if stamina_log is None or effective_stamina is None:
                 raise ValueError("Stored v4 match is missing authoritative stamina data.")
@@ -484,6 +489,7 @@ class SeasonMatchService:
             effective_match_stamina=input_snapshot.effective_match_stamina,
             rally_calibration_profile=input_snapshot.rally_calibration_profile,
             effective_match_gameplans=input_snapshot.effective_match_gameplans,
+            effective_rally_rules=input_snapshot.effective_rally_rules,
         )
         result_payload = domain_result.model_dump(mode="json")
         result_fp = self._fingerprint({"event_id": event_id, "match_id": match_id, "match_input_snapshot_hash": input_snapshot.snapshot_hash, "result": result_payload})
@@ -790,6 +796,7 @@ class SeasonMatchService:
             effective_match_stamina=input_snapshot.effective_match_stamina,
             rally_calibration_profile=input_snapshot.rally_calibration_profile,
             effective_match_gameplans=input_snapshot.effective_match_gameplans,
+            effective_rally_rules=input_snapshot.effective_rally_rules,
         )
         result_payload = domain_result.model_dump(mode="json")
         result_fp = self._fingerprint({"event_id": package.event_id, "match_id": match.match_id, "match_input_snapshot_hash": input_snapshot.snapshot_hash, "result": result_payload})

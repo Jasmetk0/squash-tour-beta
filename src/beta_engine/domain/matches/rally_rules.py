@@ -86,6 +86,12 @@ class InterferenceRuleContext(RuleFacts):
             raise ValueError("a winning return must be a possible good return")
         if self.swing_prevented and self.reasonable_swing:
             raise ValueError("prevented swing cannot also be unobstructed")
+        if self.minimal_interference and not all(
+            (self.fair_view, self.reasonable_swing, self.front_wall_freedom)
+        ):
+            raise ValueError(
+                "minimal interference cannot deny view, swing or front-wall freedom"
+            )
         if self.turned_to_create_request and not self.turning:
             raise ValueError("manufactured turning request requires turning")
         return self

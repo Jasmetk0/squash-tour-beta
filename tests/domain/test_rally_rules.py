@@ -352,6 +352,10 @@ def test_invalid_ground_truth_is_rejected():
         )
     with pytest.raises(ValidationError, match="unobstructed"):
         InterferenceRuleContext(**PLAYERS, swing_prevented=True)
+    with pytest.raises(ValidationError, match="minimal interference"):
+        InterferenceRuleContext(
+            **PLAYERS, minimal_interference=True, reasonable_swing=False
+        )
     with pytest.raises(ValidationError, match="attempted shot"):
         BallHitPlayerRuleContext(
             **PLAYERS,
@@ -421,7 +425,9 @@ def test_rehashed_objective_delay_cannot_change_the_rally_reason():
     for event in result.timeline_log.events:
         values = event.model_dump(exclude={"event_hash", "event_hash_algorithm"})
         if event.event_type == "OBJECTIVE_DELAY" and not changed:
-            values["reason"] = "BROKEN_BALL" if event.reason != "BROKEN_BALL" else "COURT_CONDITION"
+            values["reason"] = (
+                "BROKEN_BALL" if event.reason != "BROKEN_BALL" else "COURT_CONDITION"
+            )
             changed = True
         values["previous_event_hash"] = previous_hash
         replacement = type(event).create(**values)
@@ -429,8 +435,11 @@ def test_rehashed_objective_delay_cannot_change_the_rally_reason():
         previous_hash = replacement.event_hash
     assert changed
     timeline = MatchTimelineLog.create(
-        match_id=result.match_id, input_snapshot_hash=result.timeline_log.input_snapshot_hash,
-        events=events, dynamic_stamina_recovery=True, rules_applied=True,
+        match_id=result.match_id,
+        input_snapshot_hash=result.timeline_log.input_snapshot_hash,
+        events=events,
+        dynamic_stamina_recovery=True,
+        rules_applied=True,
     )
     with pytest.raises(ValueError, match="rally facts"):
         result.rally_log.validate_rules_timeline(timeline)
@@ -442,7 +451,12 @@ def test_rehashed_tactical_evidence_cannot_treat_a_let_as_a_scored_rally():
     changed = False
     previous_hash = payload["input_snapshot_hash"]
     for event in payload["events"]:
-        if not changed and event["gameplan_context"]["player_decisions"][0]["observed_neutral_replays"]:
+        if (
+            not changed
+            and event["gameplan_context"]["player_decisions"][0][
+                "observed_neutral_replays"
+            ]
+        ):
             for decision in event["gameplan_context"]["player_decisions"]:
                 decision["observed_rallies"] += 1
                 decision["observed_neutral_replays"] += 1

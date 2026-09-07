@@ -870,7 +870,7 @@ class MatchEngine:
                 clearing_effort=rng.random() < 0.55 + non_striker.movement / 300,
                 striker_effort=rng.random() >= 0.04,
                 self_created_path=rng.random() < 0.03,
-                minimal_interference=rng.random() < 0.1,
+                minimal_interference=rng.random() < 0.1 and obstruction == "ACCESS",
                 played_through=rng.random() < 0.025,
                 swing_prevented=swing_blocked and rng.random() < 0.25,
                 turning=rng.random() < 0.06,

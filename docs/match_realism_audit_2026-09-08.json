@@ -1,0 +1,244 @@
+{
+  "source_commit": "c2582ec52b7c5144e1df3777f1cbcf84414fdb24",
+  "samples_per_scenario": 500,
+  "seed_base": 20260908,
+  "elapsed_seconds": 133.78344580799998,
+  "scenarios": [
+    [
+      "equal_84",
+      84,
+      84,
+      "tempo-controller",
+      "tempo-controller"
+    ],
+    [
+      "gap_6",
+      90,
+      84,
+      "tempo-controller",
+      "tempo-controller"
+    ],
+    [
+      "gap_22",
+      90,
+      68,
+      "tempo-controller",
+      "tempo-controller"
+    ],
+    [
+      "attack_retrieve",
+      84,
+      84,
+      "attacking",
+      "retrieving"
+    ],
+    [
+      "front_counter",
+      84,
+      84,
+      "front-court",
+      "counter-punching"
+    ],
+    [
+      "equal_60",
+      60,
+      60,
+      "tempo-controller",
+      "tempo-controller"
+    ]
+  ],
+  "summary": {
+    "equal_84": {
+      "matches": 500,
+      "a_win_rate": 0.506,
+      "a_win_wilson_95": [
+        0.46229784108368,
+        0.5496106634939493
+      ],
+      "a_win_rate_by_side": {
+        "A": 0.504,
+        "B": 0.508
+      },
+      "mean_minutes": 38.03542983333333,
+      "median_minutes": 37.700925,
+      "p10_minutes": 25.802933333333332,
+      "p90_minutes": 50.21973333333334,
+      "game_counts": {
+        "4": 173,
+        "5": 159,
+        "3": 168
+      },
+      "rallies": 33781,
+      "mean_rally_seconds": 16.49216059323288,
+      "mean_match_rally_seconds": 16.47861150232293,
+      "max_rally_seconds": 69.218,
+      "rally_under_10_fraction": 0.3476510464462272,
+      "rally_over_21_fraction": 0.3041354607619668,
+      "rally_over_60_fraction": 0.0006512536633018561,
+      "mean_interval_seconds": 12.68831335621831,
+      "server_point_fraction": 0.5468180586091618,
+      "first_server_match_win_fraction": 0.498,
+      "deuce_game_fraction": 0.07533902561526871
+    },
+    "gap_6": {
+      "matches": 500,
+      "a_win_rate": 0.804,
+      "a_win_wilson_95": [
+        0.7669417867660043,
+        0.8364224451672065
+      ],
+      "a_win_rate_by_side": {
+        "A": 0.788,
+        "B": 0.82
+      },
+      "mean_minutes": 35.98433026666667,
+      "median_minutes": 35.20205833333333,
+      "p10_minutes": 24.805366666666664,
+      "p90_minutes": 48.46485,
+      "game_counts": {
+        "3": 207,
+        "5": 130,
+        "4": 163
+      },
+      "rallies": 32092,
+      "mean_rally_seconds": 16.356570173251903,
+      "mean_match_rally_seconds": 16.37655399206276,
+      "max_rally_seconds": 77.098,
+      "rally_under_10_fraction": 0.3520191948149071,
+      "rally_over_21_fraction": 0.3015704848560389,
+      "rally_over_60_fraction": 0.000779010345257385,
+      "mean_interval_seconds": 12.680019310527888,
+      "server_point_fraction": 0.554474893077776,
+      "first_server_match_win_fraction": 0.474,
+      "deuce_game_fraction": 0.07592303692147685
+    },
+    "gap_22": {
+      "matches": 500,
+      "a_win_rate": 1.0,
+      "a_win_wilson_95": [
+        0.9923753814690964,
+        0.9999999999999999
+      ],
+      "a_win_rate_by_side": {
+        "A": 1,
+        "B": 1
+      },
+      "mean_minutes": 24.170273866666665,
+      "median_minutes": 23.489383333333336,
+      "p10_minutes": 20.46345,
+      "p90_minutes": 28.085383333333333,
+      "game_counts": {
+        "3": 474,
+        "4": 25,
+        "5": 1
+      },
+      "rallies": 21484,
+      "mean_rally_seconds": 16.20849134239434,
+      "mean_match_rally_seconds": 16.213108569574562,
+      "max_rally_seconds": 75.201,
+      "rally_under_10_fraction": 0.3541239992552597,
+      "rally_over_21_fraction": 0.29463787004282255,
+      "rally_over_60_fraction": 0.0006981940048408117,
+      "mean_interval_seconds": 12.660829345372461,
+      "server_point_fraction": 0.6894122097697073,
+      "first_server_match_win_fraction": 0.46,
+      "deuce_game_fraction": 0.012442698100851343
+    },
+    "attack_retrieve": {
+      "matches": 500,
+      "a_win_rate": 0.522,
+      "a_win_wilson_95": [
+        0.4782146879120214,
+        0.565449828872619
+      ],
+      "a_win_rate_by_side": {
+        "A": 0.544,
+        "B": 0.5
+      },
+      "mean_minutes": 36.09867893333333,
+      "median_minutes": 35.51385833333333,
+      "p10_minutes": 24.8146,
+      "p90_minutes": 49.225033333333336,
+      "game_counts": {
+        "3": 184,
+        "5": 150,
+        "4": 166
+      },
+      "rallies": 33234,
+      "mean_rally_seconds": 15.397904916651623,
+      "mean_match_rally_seconds": 15.351434164782404,
+      "max_rally_seconds": 70.163,
+      "rally_under_10_fraction": 0.37533850875609315,
+      "rally_over_21_fraction": 0.26773785881928147,
+      "rally_over_60_fraction": 0.0003610760064993681,
+      "mean_interval_seconds": 12.611803622863727,
+      "server_point_fraction": 0.5487472850194255,
+      "first_server_match_win_fraction": 0.506,
+      "deuce_game_fraction": 0.07375381485249237
+    },
+    "front_counter": {
+      "matches": 500,
+      "a_win_rate": 0.464,
+      "a_win_wilson_95": [
+        0.4207274028995594,
+        0.5078215696346657
+      ],
+      "a_win_rate_by_side": {
+        "A": 0.456,
+        "B": 0.472
+      },
+      "mean_minutes": 35.6989793,
+      "median_minutes": 35.70903333333334,
+      "p10_minutes": 24.397383333333334,
+      "p90_minutes": 47.17176666666667,
+      "game_counts": {
+        "4": 176,
+        "5": 158,
+        "3": 166
+      },
+      "rallies": 33813,
+      "mean_rally_seconds": 14.51276556354065,
+      "mean_match_rally_seconds": 14.521098471840814,
+      "max_rally_seconds": 68.821,
+      "rally_under_10_fraction": 0.3973619613758022,
+      "rally_over_21_fraction": 0.23369709874900185,
+      "rally_over_60_fraction": 0.00017744654422855114,
+      "mean_interval_seconds": 12.55537794136152,
+      "server_point_fraction": 0.5459982568448892,
+      "first_server_match_win_fraction": 0.532,
+      "deuce_game_fraction": 0.07530120481927711
+    },
+    "equal_60": {
+      "matches": 500,
+      "a_win_rate": 0.538,
+      "a_win_wilson_95": [
+        0.4941760408295009,
+        0.5812444881621506
+      ],
+      "a_win_rate_by_side": {
+        "A": 0.52,
+        "B": 0.556
+      },
+      "mean_minutes": 39.31721253333333,
+      "median_minutes": 38.68714166666666,
+      "p10_minutes": 26.319633333333336,
+      "p90_minutes": 52.983066666666666,
+      "game_counts": {
+        "4": 177,
+        "5": 161,
+        "3": 162
+      },
+      "rallies": 33668,
+      "mean_rally_seconds": 17.64780860163954,
+      "mean_match_rally_seconds": 17.54258924621158,
+      "max_rally_seconds": 81.865,
+      "rally_under_10_fraction": 0.3279969110134252,
+      "rally_over_21_fraction": 0.3390162765831056,
+      "rally_over_60_fraction": 0.003415706308661043,
+      "mean_interval_seconds": 12.768402224750348,
+      "server_point_fraction": 0.5484775399457341,
+      "first_server_match_win_fraction": 0.474,
+      "deuce_game_fraction": 0.06653326663331666
+    }
+  }
+}

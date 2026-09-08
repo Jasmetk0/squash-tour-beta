@@ -9,7 +9,10 @@ from urllib.error import HTTPError
 
 import uvicorn
 
-from beta_engine.application.season_player_bootstrap_service import SeasonActivePlayer, SeasonActivePlayersRegistry
+from beta_engine.application.season_player_bootstrap_service import (
+    SeasonActivePlayer,
+    SeasonActivePlayersRegistry,
+)
 from beta_engine.domain.players.initial_pool import GeneratedPlayerAttributes
 from beta_engine.domain.players.models import HiddenCareerTraits
 from beta_engine.main import create_app
@@ -71,6 +74,11 @@ class Server:
         if active:
             write_active(active_path)
         self.entry_path = tmp_path / "entries.json"
+        points_path = tmp_path / "point_baselines.json"
+        points_path.write_text(json.dumps({"point_distributions": {"world": {
+            "champion": 100, "finalist": 60, "semifinal": 30, "quarterfinal": 15,
+            "qualification_winner": 5, "qualification_final": 2,
+        }}}), encoding="utf-8")
         app = create_app(
             database_url=f"sqlite:///{tmp_path / 'api.db'}",
             countries_config_path=str(countries_path),
@@ -79,6 +87,8 @@ class Server:
             season_active_players_config_path=str(active_path),
             season_calendar_registry_path=str(tmp_path / "calendars.json"),
             season_entry_lists_registry_path=str(self.entry_path),
+            season_category_points_registry_path=str(tmp_path / "category_points.json"),
+            points_config_path=str(points_path),
         )
         self.server = uvicorn.Server(uvicorn.Config(app=app, host="127.0.0.1", port=self.port, log_level="error"))
         self.thread = threading.Thread(target=self.server.run, daemon=True)
@@ -99,6 +109,7 @@ class Server:
         self.thread.join(timeout=10)
 
     def persist_calendar(self) -> str:
+        call("POST", f"{self.base_url}/admin/seasons/2000%2F2001/category-points/initialize", {})
         _, body = call("POST", f"{self.base_url}/admin/seasons/2000%2F2001/calendar/build", {"seed": 1, "dry_run": False, "overwrite_existing": False, "season_start_calendar_year": 2000, "season_start_year_week": 37, "include_inactive_templates": False, "max_events": 1})
         return body["calendar"]["events"][0]["event_id"]
 

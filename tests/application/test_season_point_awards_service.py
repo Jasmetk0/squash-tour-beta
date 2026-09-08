@@ -3,11 +3,16 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
-from beta_engine.application.season_event_results_service import EventResultExtractRequest
-from beta_engine.application.season_point_awards_service import PointAwardApplyRequest, PointAwardGenerateRequest, SeasonPointAwardsService
-from beta_engine.application.season_player_bootstrap_service import SeasonActivePlayersRegistry
 from test_season_event_results_service import _persist_synthetic_package
+
+from beta_engine.application.season_event_results_service import (
+    EventResultExtractRequest,
+)
+from beta_engine.application.season_point_awards_service import (
+    PointAwardApplyRequest,
+    PointAwardGenerateRequest,
+    SeasonPointAwardsService,
+)
 
 
 def make_points_service(tmp_path: Path, *, incomplete: bool = False) -> tuple[SeasonPointAwardsService, str]:
@@ -50,9 +55,9 @@ def test_dry_run_awards_do_not_persist_or_mutate_players(tmp_path: Path) -> None
     assert package is not None
     assert package.persisted is False
     assert result.award_package_exists is False
-    assert package.summary.champion_points == 1000
-    assert package.summary.finalist_points == 650
-    assert any(issue.code == "point_distribution_fallback_used" for issue in package.validation_warnings)
+    assert package.summary.champion_points == 100
+    assert package.summary.finalist_points == 60
+    assert not any(issue.code == "point_distribution_fallback_used" for issue in package.validation_warnings)
     assert service.get_event_point_awards(event_id=event_id).award_package_exists is False
     after = {p.player_id: (p.ranking_points, p.race_points) for p in service.active_players_service.get_active_players(season="2000/2001").players}
     assert after == before
@@ -71,11 +76,12 @@ def test_persist_get_overwrite_safety_and_stage_mapping(tmp_path: Path) -> None:
     overwritten = service.generate_event_point_awards(event_id=event_id, request=PointAwardGenerateRequest(seed=78, dry_run=False, overwrite_existing=True))
     assert overwritten.metadata and overwritten.metadata.seed == 78
     stage_points = {award.reached_stage: award.ranking_points_awarded for award in overwritten.award_package.awards}  # type: ignore[union-attr]
-    assert stage_points["champion"] == 1000
-    assert stage_points["finalist"] == 650
-    assert stage_points["semifinal"] == 400
+    assert stage_points["champion"] == 100
+    assert stage_points["finalist"] == 60
+    assert stage_points["semifinal"] == 30
+    assert stage_points["qualification_final"] == 1
     if "qualification_winner" in stage_points:
-        assert stage_points["qualification_winner"] == 25
+        assert stage_points["qualification_winner"] == 3
 
 
 def test_apply_mutates_only_awarded_players_and_blocks_duplicates(tmp_path: Path) -> None:

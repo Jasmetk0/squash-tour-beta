@@ -25,6 +25,73 @@ from beta_engine.domain.matches import (
 )
 from beta_engine.domain.players import HiddenCareerTraits, Player
 
+PACE_NAMES = ("PATIENT", "BALANCED", "FAST")
+CLOSURE_NAMES = ("OPENING_TERMINAL", "NATURAL_TERMINAL", "HARD_SEGMENT_CAP")
+
+
+def rally_diagnostics(rallies):
+    """Read existing traces only; missing historical traces are not zeroes."""
+    metrics = {
+        "traced_rallies": 0,
+        "estimated_shots": 0,
+        "control_seconds": 0.0,
+        "opening_seconds": 0.0,
+        "terminal_seconds": 0.0,
+    }
+    for name in CLOSURE_NAMES:
+        metrics[f"closure_{name}"] = 0
+    for name in PACE_NAMES:
+        for unit in ("segments", "shots", "seconds"):
+            metrics[f"pace_{name}_{unit}"] = 0
+    for rally in rallies:
+        trace = rally.control_trace
+        if trace is None:
+            continue
+        metrics["traced_rallies"] += 1
+        metrics["estimated_shots"] += trace.estimated_shot_count
+        metrics["opening_seconds"] += trace.opening_elapsed_seconds
+        metrics["terminal_seconds"] += trace.terminal_elapsed_seconds
+        metrics[f"closure_{trace.closure_reason.value}"] += 1
+        for segment in trace.segments:
+            prefix = f"pace_{segment.phase_pace.value}"
+            metrics[f"{prefix}_segments"] += 1
+            metrics[f"{prefix}_shots"] += segment.estimated_shot_count
+            metrics[f"{prefix}_seconds"] += segment.elapsed_seconds
+            metrics["control_seconds"] += segment.elapsed_seconds
+    return metrics
+
+
+def summarize_diagnostics(rows):
+    totals = {key: sum(row[key] for row in rows) for key in rally_diagnostics(())}
+    traced = totals["traced_rallies"]
+    return {
+        "traced_rallies": traced,
+        "trace_coverage": traced / sum(row["rallies"] for row in rows),
+        "mean_estimated_shots": totals["estimated_shots"] / traced if traced else None,
+        "closure_fractions": {
+            name: totals[f"closure_{name}"] / traced if traced else None
+            for name in CLOSURE_NAMES
+        },
+        "seconds_by_phase": {
+            name: totals[f"{name}_seconds"]
+            for name in ("opening", "control", "terminal")
+        },
+        "pace": {
+            name: {
+                "segments": totals[f"pace_{name}_segments"],
+                "estimated_shots": totals[f"pace_{name}_shots"],
+                "seconds": totals[f"pace_{name}_seconds"],
+                "seconds_per_estimated_shot": (
+                    totals[f"pace_{name}_seconds"] / totals[f"pace_{name}_shots"]
+                    if totals[f"pace_{name}_shots"]
+                    else None
+                ),
+            }
+            for name in PACE_NAMES
+        },
+    }
+
+
 SCENARIOS = (
     ("equal_84", 84, 84, "tempo-controller", "tempo-controller"),
     ("gap_6", 90, 84, "tempo-controller", "tempo-controller"),
@@ -113,6 +180,7 @@ def run_match(task):
         "deuce_games": sum(s.loser_games >= 10 for s in result.sets),
         "runtime_seconds": runtime,
         "log_hash": result.rally_log.match_log_hash,
+        **rally_diagnostics(rallies),
     }
 
 
@@ -165,6 +233,7 @@ def summarize(rows):
             ),
             "deuce_game_fraction": sum(r["deuce_games"] for r in subset)
             / sum(r["games"] for r in subset),
+            "rally_diagnostics": summarize_diagnostics(subset),
         }
     return output
 
@@ -178,7 +247,8 @@ def main():
     args = parser.parse_args()
     if args.samples < 1 or args.workers < 1:
         parser.error("samples and workers must be positive")
-    args.output.mkdir(parents=True, exist_ok=True)
+    # An audit is evidence: never silently overwrite an earlier batch.
+    args.output.mkdir(parents=True, exist_ok=False)
     tasks = [
         (scenario, i, args.seed_base)
         for scenario in SCENARIOS
@@ -201,6 +271,7 @@ def main():
                 stream.flush()
                 print(f"Completed {len(rows)}/{len(tasks)}", flush=True)
     summary = {
+        "audit_schema_version": 2,
         "source_commit": subprocess.check_output(
             ["git", "rev-parse", "HEAD"], text=True
         ).strip(),

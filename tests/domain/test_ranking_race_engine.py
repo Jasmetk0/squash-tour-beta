@@ -1,7 +1,47 @@
 from __future__ import annotations
 
-from beta_engine.domain.rankings import CompletedTournamentPointsInput, RankingRaceEngine
+import pytest
+
+from beta_engine.domain.rankings import (
+    CompletedTournamentPointsInput,
+    RankingRaceEngine,
+)
 from beta_engine.infrastructure.points_config import load_points_config
+
+
+@pytest.mark.parametrize("inline", [False, True])
+@pytest.mark.parametrize("legacy", [False, True])
+def test_authored_stage_names_have_identical_awards_without_mutating_inputs(inline: bool, legacy: bool) -> None:
+    table = ({"winner": 100, "semifinalist": 30, "quarterfinalist": 0} if legacy
+             else {"champion": 100, "semifinal": 30, "quarterfinal": 0})
+    original = dict(table)
+    engine = RankingRaceEngine(point_distributions_by_ref={"test": table})
+    tournament = _tournament(
+        event_id="event", season=2027, week=1,
+        point_distribution_ref=None if inline else "test",
+        point_distribution=table if inline else None,
+        placements=[{"player_id": player, "finish": finish} for player, finish in
+                    [("p1", "CHAMPION"), ("p2", "SEMIFINALIST"), ("p3", "QUARTERFINALIST")]],
+    )
+    awards = engine.resolve_point_awards(completed_tournaments=[tournament])
+    assert {award.player_id: award.points_awarded for award in awards} == {"p1": 100, "p2": 30, "p3": 0}
+    assert table == original
+    if inline:
+        assert tournament.point_distribution == original
+
+
+@pytest.mark.parametrize("inline", [False, True])
+def test_ambiguous_legacy_and_canonical_stages_are_rejected(inline: bool) -> None:
+    table = {"winner": 100, "champion": 200}
+    engine = RankingRaceEngine(point_distributions_by_ref={"test": table})
+    tournament = _tournament(
+        event_id="event", season=2027, week=1,
+        point_distribution_ref=None if inline else "test",
+        point_distribution=table if inline else None,
+        placements=[{"player_id": "p1", "finish": "CHAMPION"}],
+    )
+    with pytest.raises(ValueError, match="authored more than once"):
+        engine.resolve_point_awards(completed_tournaments=[tournament])
 
 
 def _tournament(

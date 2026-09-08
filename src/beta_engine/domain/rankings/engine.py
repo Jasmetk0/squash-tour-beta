@@ -15,12 +15,13 @@ from beta_engine.domain.rankings.models import (
     RankingTable,
     TournamentPointAward,
 )
+from beta_engine.domain.rankings.points import normalize_ranking_points_table
 
 FINISH_TO_POINTS_KEY: dict[str, str] = {
-    "CHAMPION": "winner",
+    "CHAMPION": "champion",
     "FINALIST": "finalist",
-    "SEMIFINALIST": "semifinalist",
-    "QUARTERFINALIST": "quarterfinalist",
+    "SEMIFINALIST": "semifinal",
+    "QUARTERFINALIST": "quarterfinal",
     "ROUND_OF_16": "round_of_16",
     "ROUND_OF_32": "round_of_32",
 }
@@ -177,7 +178,7 @@ class RankingRaceEngine:
 
     def _resolve_point_distribution(self, tournament: CompletedTournamentPointsInput) -> dict[str, int]:
         if tournament.point_distribution is not None:
-            return dict(tournament.point_distribution)
+            return normalize_ranking_points_table(tournament.point_distribution)
         if tournament.point_distribution_ref is None:
             raise ValueError(
                 f"Tournament {tournament.event_id} must provide point_distribution or point_distribution_ref"
@@ -187,7 +188,7 @@ class RankingRaceEngine:
                 f"Tournament {tournament.event_id} references unknown point distribution: "
                 f"{tournament.point_distribution_ref}"
             )
-        return dict(self.point_distributions_by_ref[tournament.point_distribution_ref])
+        return normalize_ranking_points_table(self.point_distributions_by_ref[tournament.point_distribution_ref])
 
     def _extract_finishes(self, tournament: CompletedTournamentPointsInput) -> list[tuple[str, str]]:
         results: dict[tuple[str, str], None] = {}

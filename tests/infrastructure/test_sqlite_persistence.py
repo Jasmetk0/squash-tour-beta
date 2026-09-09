@@ -88,6 +88,7 @@ def test_database_bootstrap_creates_required_tables(tmp_path) -> None:
         "next_season_players",
         "official_branch_selection_commands",
         "official_ranking_candidates",
+        "official_ranking_commands",
         "official_ranking_result_versions",
         "player_season_transitions",
         "race_snapshots",

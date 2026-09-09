@@ -27,7 +27,7 @@ class RankingCandidateStore(Protocol):
     ) -> OfficialRankingSnapshot: ...
 
 
-class ResolvedRankingTransition(FrozenInput):
+class RankingTransitionContext(FrozenInput):
     run_id: str
     branch_id: str
     completed_week: RankingWeek
@@ -35,9 +35,37 @@ class ResolvedRankingTransition(FrozenInput):
     # Explicit even at rollover: never infer the next season's effective policy.
     policy: OfficialRankingPolicy
     players: tuple[OfficialRankingPlayer, ...]
-    results: tuple[OfficialRankingResult, ...]
     # Required acknowledgement of this calculator's supported scope.
     discipline: Literal["none"]
+
+
+class ResolvedRankingTransition(RankingTransitionContext):
+    results: tuple[OfficialRankingResult, ...]
+
+
+class RankingResultHistory(Protocol):
+    def resolve(
+        self, *, run_id: str, branch_id: str, week: RankingWeek
+    ) -> tuple[OfficialRankingResult, ...]: ...
+
+
+def stage_official_ranking_from_history(
+    store: RankingCandidateStore,
+    sources: RankingResultHistory,
+    context: RankingTransitionContext,
+) -> OfficialRankingSnapshot:
+    """Resolve persisted sources at the target boundary, then calculate/stage.
+
+    Both adapters must participate in the same caller-owned transaction.
+    Lifecycle, policy and token resolution still belong to the caller.
+    """
+    context = RankingTransitionContext.model_validate_json(context.model_dump_json())
+    results = sources.resolve(
+        run_id=context.run_id, branch_id=context.branch_id, week=context.target_week
+    )
+    return stage_official_ranking_transition(
+        store, ResolvedRankingTransition(**context.model_dump(), results=results)
+    )
 
 
 def stage_official_ranking_transition(

@@ -23,6 +23,20 @@ class Base(DeclarativeBase):
     """Declarative SQLAlchemy base for persistence tables."""
 
 
+class OfficialRankingCandidateModel(Base):
+    """Append-only calculation history; not a Viewer publication marker."""
+
+    __tablename__ = "official_ranking_candidates"
+    __table_args__ = (
+        CheckConstraint("week_ordinal >= 0 AND week_ordinal < 3050", name="ck_official_candidate_week"),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class SimulationRunModel(Base):
     __tablename__ = "simulation_runs"
 

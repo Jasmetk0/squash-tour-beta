@@ -1320,3 +1320,11 @@ export function getPlayerTransitions(runId: string, toSeason: number): Promise<P
 }
 
 export { ApiError }
+
+export async function getRankingCandidates(runId: string, branchId: string): Promise<import('./rankingCandidates').RankingCandidateHistory> {
+  const data = await request<import('./rankingCandidates').RankingCandidateHistory>(`/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/ranking-candidates`)
+  if (data.run_id !== runId || data.branch_id !== branchId || data.publication_status !== 'candidate_only' || !Array.isArray(data.candidates) || data.candidates.some(c => c.publication_status !== 'candidate_only' || c.snapshot.run_id !== runId || c.snapshot.branch_id !== branchId)) {
+    throw new Error('Ranking response does not match the requested Run and Branch.')
+  }
+  return data
+}

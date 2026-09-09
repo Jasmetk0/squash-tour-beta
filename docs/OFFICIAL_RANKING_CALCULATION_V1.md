@@ -53,6 +53,28 @@ an invented upper product limit; further Admin policy validation remains separat
 
 ## Verification
 
+### Stored snapshot integrity
+
+Rows validate player ownership, unique Edition results and their point sum.
+Snapshots validate unique players, contiguous ordered ranks, descending totals,
+Best N capacity, canonical counted profiles and eligibility at the stored week.
+Fingerprint references must be lowercase SHA-256 strings. Previous snapshots
+are revalidated before calculation, including objects created using unchecked
+`model_copy(update=...)`.
+
+`load_official_ranking_snapshot` additionally checks the requested Run/Branch/week
+and an independently trusted expected fingerprint, without recomputing ranking.
+Rehashing a malformed point sum does not bypass structural validation. A valid
+but altered payload fails against the trusted fingerprint. This is integrity
+checking, not authentication: an attacker controlling both payload and trusted
+metadata cannot be detected by a plain hash.
+
+These checks preserve valid V1 serialization/fingerprints and add no sport rules.
+They cannot prove that omitted source results were included, that the supplied
+player lifecycle was true, or that tie-break tokens were correctly assigned:
+those require the full source inputs and trusted publication service. This
+increment does not publish a ranking, advance a week or mutate persistence.
+
 Domain tests cover deferred eligibility, delayed initial publication, expiry,
 Week 61 rollover, Best N and inheritance, additive Q/main components, Unranked and
 Abandoned inputs, lifecycle, each tie-break level, unique ranks, order independence,

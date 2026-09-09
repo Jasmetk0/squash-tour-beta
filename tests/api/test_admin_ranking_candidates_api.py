@@ -1,9 +1,10 @@
 """Real FastAPI routing and SQLite inspection, with persisted candidate fixtures."""
 
 import sqlite3
+from types import SimpleNamespace
 
 import pytest
-from fastapi.testclient import TestClient
+from test_saved_revision_history_api import ApiServer, _request
 
 from beta_engine.domain.rankings.official import (
     OfficialRankingPlayer,
@@ -21,15 +22,27 @@ from beta_engine.infrastructure.db.models import (
 from beta_engine.infrastructure.db.official_rankings import (
     OfficialRankingCandidateStore,
 )
-from beta_engine.main import create_app
+
+
+class HttpClient:
+    def __init__(self, base_url):
+        self.base_url = base_url
+
+    def get(self, path):
+        status, body = _request("GET", self.base_url + path)
+        return SimpleNamespace(status_code=status, json=lambda: body)
+
+    def post(self, path, *, json):
+        status, body = _request("POST", self.base_url + path, json)
+        return SimpleNamespace(status_code=status, json=lambda: body)
 
 
 @pytest.fixture
 def api(tmp_path):
     path = tmp_path / "api.db"
-    app = create_app(database_url=f"sqlite:///{path}")
-    with TestClient(app) as client:
-        factory = app.state.runtime.repository._session_factory
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        client = HttpClient(server.base_url)
+        factory = server.app.state.runtime.repository._session_factory
         with factory.begin() as session:
             session.add(
                 RunContainerModel(

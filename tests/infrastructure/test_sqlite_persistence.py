@@ -87,6 +87,7 @@ def test_database_bootstrap_creates_required_tables(tmp_path) -> None:
         "legacy_simulation_run_mappings",
         "next_season_players",
         "official_branch_selection_commands",
+        "official_ranking_candidates",
         "player_season_transitions",
         "race_snapshots",
         "ranking_snapshots",

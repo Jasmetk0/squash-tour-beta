@@ -212,3 +212,218 @@ def test_late_batch_failure_rolls_back_earlier_player_writes(packages, database)
         assert OfficialRankingResultStore(session).history(
             run_id="run", branch_id="branch"
         ) == (conflict,)
+
+
+def ranking_command(packages, database, *, command_id="prepare-week"):
+    from beta_engine.application.ranking_week_command import RankingWeekCommand
+
+    _, binding, result, _ = packages
+    players = tuple(
+        OfficialRankingPlayer(
+            player_id=p.player_id,
+            tie_break_token=p.player_id,
+            tour_entry_week=RankingWeek(season_index=0, week=1),
+        )
+        for p in result.player_results
+    )
+    policy = OfficialRankingPolicy(policy_id="policy")
+    with database.begin() as session:
+        OfficialRankingCandidateStore(session).append(
+            calculate_official_ranking(
+                run_id="run",
+                branch_id="branch",
+                week=binding.completed_week,
+                policy=policy,
+                players=players,
+                results=(),
+            ),
+            bootstrap=True,
+        )
+    return RankingWeekCommand(
+        command_id=command_id,
+        tournaments=(binding,),
+        context=RankingTransitionContext(
+            run_id="run",
+            branch_id="branch",
+            completed_week=binding.completed_week,
+            target_week=binding.first_publication_week,
+            policy=policy,
+            players=players,
+            discipline="none",
+        ),
+    )
+
+
+def test_owned_command_commits_and_replays_without_rereading_legacy_files(
+    packages, database
+):
+    from beta_engine.infrastructure.db.ranking_week_command import (
+        RankingWeekCommandRunner,
+    )
+
+    command = ranking_command(packages, database)
+    service = packages[0]
+    runner = RankingWeekCommandRunner(database, service)
+    first = runner.execute(command)
+    assert {r.player_id: r.points for r in first.rows} == {
+        a.player_id: a.ranking_points_awarded for a in packages[3].awards
+    }
+    service.awards_path.write_text("invalid current JSON")
+    reordered = command.model_copy(
+        update={
+            "context": command.context.model_copy(
+                update={"players": tuple(reversed(command.context.players))}
+            )
+        }
+    )
+    assert runner.execute(reordered) == first
+    with pytest.raises(ValueError, match="already staged"):
+        runner.execute(command.model_copy(update={"command_id": "different-id"}))
+    with pytest.raises(ValueError, match="different request"):
+        runner.execute(command.model_copy(update={"tournaments": ()}))
+
+
+def test_owned_command_rolls_back_sources_when_ranking_fails(packages, database):
+    from sqlalchemy import select
+
+    from beta_engine.infrastructure.db.models import OfficialRankingCommandModel
+    from beta_engine.infrastructure.db.ranking_week_command import (
+        RankingWeekCommandRunner,
+    )
+
+    command = ranking_command(packages, database)
+    # Ingestion succeeds for all players, but calculation rejects the missing roster member.
+    command = command.model_copy(
+        update={
+            "context": command.context.model_copy(
+                update={"players": command.context.players[:-1]}
+            )
+        }
+    )
+    with pytest.raises(ValueError, match="unknown player"):
+        RankingWeekCommandRunner(database, packages[0]).execute(command)
+    with database() as session:
+        assert (
+            OfficialRankingResultStore(session).history(
+                run_id="run", branch_id="branch"
+            )
+            == ()
+        )
+        assert (
+            len(
+                OfficialRankingCandidateStore(session).history(
+                    run_id="run", branch_id="branch"
+                )
+            )
+            == 1
+        )
+        assert session.scalars(select(OfficialRankingCommandModel)).all() == []
+
+
+def test_receipt_detects_deleted_candidate_tail(packages, database):
+    from beta_engine.infrastructure.db.models import OfficialRankingCandidateModel
+    from beta_engine.infrastructure.db.ranking_week_command import (
+        RankingWeekCommandRunner,
+    )
+
+    command = ranking_command(packages, database)
+    runner = RankingWeekCommandRunner(database, packages[0])
+    runner.execute(command)
+    with database.begin() as session:
+        record = session.get(
+            OfficialRankingCandidateModel,
+            ("run", "branch", command.context.target_week.ordinal),
+        )
+        session.delete(record)
+    with pytest.raises(ValueError, match="missing or corrupt snapshot"):
+        runner.execute(command)
+
+
+@pytest.mark.parametrize("damage", ["scope", "duplicate", "boundary"])
+def test_command_validates_batch_before_writing(packages, database, damage):
+    from beta_engine.infrastructure.db.ranking_week_command import (
+        RankingWeekCommandRunner,
+    )
+
+    command = ranking_command(packages, database)
+    binding = command.tournaments[0]
+    if damage == "scope":
+        bindings = (binding.model_copy(update={"branch_id": "other"}),)
+    elif damage == "duplicate":
+        bindings = (binding, binding)
+    else:
+        bindings = (
+            binding.model_copy(
+                update={"first_publication_week": RankingWeek(season_index=0, week=61)}
+            ),
+        )
+    with pytest.raises(ValueError):
+        RankingWeekCommandRunner(database, packages[0]).execute(
+            command.model_copy(update={"tournaments": bindings})
+        )
+    with database() as session:
+        assert (
+            OfficialRankingResultStore(session).history(
+                run_id="run", branch_id="branch"
+            )
+            == ()
+        )
+
+
+def test_second_tournament_failure_rolls_back_first_tournament(packages, database):
+    from beta_engine.infrastructure.db.ranking_week_command import (
+        RankingWeekCommandRunner,
+    )
+
+    command = ranking_command(packages, database)
+    missing = command.tournaments[0].model_copy(
+        update={"edition_id": "zz-missing", "event_id": "missing-event"}
+    )
+    command = command.model_copy(
+        update={"tournaments": (*command.tournaments, missing)}
+    )
+    with pytest.raises(ValueError, match="Persisted tournament"):
+        RankingWeekCommandRunner(database, packages[0]).execute(command)
+    with database() as session:
+        assert (
+            OfficialRankingResultStore(session).history(
+                run_id="run", branch_id="branch"
+            )
+            == ()
+        )
+
+
+def test_receipt_write_failure_rolls_back_candidate_and_sources(packages, database):
+    from sqlalchemy import event
+
+    from beta_engine.infrastructure.db.models import OfficialRankingCommandModel
+    from beta_engine.infrastructure.db.ranking_week_command import (
+        RankingWeekCommandRunner,
+    )
+
+    command = ranking_command(packages, database)
+
+    def fail_receipt(*args):
+        raise RuntimeError("receipt write failed")
+
+    event.listen(OfficialRankingCommandModel, "before_insert", fail_receipt)
+    try:
+        with pytest.raises(RuntimeError, match="receipt write failed"):
+            RankingWeekCommandRunner(database, packages[0]).execute(command)
+    finally:
+        event.remove(OfficialRankingCommandModel, "before_insert", fail_receipt)
+    with database() as session:
+        assert (
+            OfficialRankingResultStore(session).history(
+                run_id="run", branch_id="branch"
+            )
+            == ()
+        )
+        assert (
+            len(
+                OfficialRankingCandidateStore(session).history(
+                    run_id="run", branch_id="branch"
+                )
+            )
+            == 1
+        )

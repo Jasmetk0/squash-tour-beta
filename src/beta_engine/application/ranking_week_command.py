@@ -1,0 +1,55 @@
+"""Validated request for atomic ranking preparation, not full week advancement."""
+
+import hashlib
+import json
+
+from pydantic import Field, model_validator
+
+from beta_engine.application.official_ranking_transition import RankingTransitionContext
+from beta_engine.application.ranking_tournament_ingestion import (
+    TournamentRankingBinding,
+)
+from beta_engine.domain.rankings.official import FrozenInput
+
+
+class RankingWeekCommand(FrozenInput):
+    command_id: str = Field(min_length=1, max_length=128)
+    context: RankingTransitionContext
+    tournaments: tuple[TournamentRankingBinding, ...]
+
+    @model_validator(mode="after")
+    def validate_batch(self):
+        context = self.context
+        if (
+            not context.run_id
+            or not context.branch_id
+            or context.target_week.ordinal != context.completed_week.ordinal + 1
+        ):
+            raise ValueError(
+                "Ranking command requires a scoped consecutive week boundary"
+            )
+        editions = [t.edition_id for t in self.tournaments]
+        events = [t.event_id for t in self.tournaments]
+        if len(set(editions)) != len(editions) or len(set(events)) != len(events):
+            raise ValueError("Duplicate tournament in ranking command")
+        for tournament in self.tournaments:
+            if (tournament.run_id, tournament.branch_id) != (
+                context.run_id,
+                context.branch_id,
+            ):
+                raise ValueError("Tournament and ranking command scope mismatch")
+            if (
+                tournament.first_publication_week != context.target_week
+                or tournament.completed_week.ordinal > context.completed_week.ordinal
+            ):
+                raise ValueError("Tournament lies outside ranking command boundary")
+        return self
+
+    @property
+    def fingerprint(self):
+        payload = self.model_dump(mode="json")
+        payload["context"]["players"].sort(key=lambda p: p["player_id"])
+        payload["tournaments"].sort(key=lambda t: t["edition_id"])
+        return hashlib.sha256(
+            json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()

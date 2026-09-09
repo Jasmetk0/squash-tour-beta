@@ -23,6 +23,18 @@ class Base(DeclarativeBase):
     """Declarative SQLAlchemy base for persistence tables."""
 
 
+class OfficialRankingCommandModel(Base):
+    """Idempotency receipt for an internal ranking preparation command."""
+
+    __tablename__ = "official_ranking_commands"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    target_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    snapshot_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
 class OfficialRankingCandidateModel(Base):
     """Append-only calculation history; not a Viewer publication marker."""
 

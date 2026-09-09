@@ -97,7 +97,9 @@ jobs:
             src/pages/TalentPreviewPage.test.tsx \
             src/pages/AdminSeasonsPage.test.tsx \
             src/pages/TournamentTemplatesPage.test.tsx \
-            src/pages/RunPage.test.tsx
+            src/pages/RunPage.test.tsx \
+            src/pages/AdminRankingCandidatesPage.test.tsx \
+            src/pages/AdminRunBranchesPage.test.tsx
       - name: Run web build
         run: npm run build
 

@@ -1008,6 +1008,13 @@ class SimulationPersistenceRepository:
         self._engine = engine
         self._session_factory = session_factory
 
+    def inspect_official_ranking_history(self, *, run_id: str, branch_id: str):
+        from beta_engine.infrastructure.db.ranking_inspection import inspect_ranking_history
+
+        with self._session_factory() as session:
+            session.execute(text("BEGIN"))
+            return inspect_ranking_history(session, run_id=run_id, branch_id=branch_id)
+
     def bootstrap_schema(self) -> None:
         try:
             Base.metadata.create_all(self._engine)

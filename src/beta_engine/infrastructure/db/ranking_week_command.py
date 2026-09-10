@@ -10,8 +10,11 @@ from beta_engine.application.ranking_tournament_ingestion import (
     ingest_tournament_ranking_sources,
 )
 from beta_engine.application.ranking_week_command import RankingWeekCommand
+from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
-from beta_engine.domain.rankings.official import OfficialRankingSnapshot
+from beta_engine.domain.rankings.official import (
+    OfficialRankingSnapshot, calculate_official_ranking,
+)
 from beta_engine.infrastructure.db.models import OfficialRankingCommandModel
 from beta_engine.infrastructure.db.official_rankings import (
     OfficialRankingCandidateStore,
@@ -29,13 +32,13 @@ class RankingWeekCommandRunner:
     """
 
     def __init__(
-        self, factory: sessionmaker[Session], awards: SeasonPointAwardsService
+        self, factory: sessionmaker[Session], awards: SeasonPointAwardsService | None = None
     ):
         self.factory = factory
         self.awards = awards
 
-    def execute(self, command: RankingWeekCommand) -> OfficialRankingSnapshot:
-        command = RankingWeekCommand.model_validate_json(command.model_dump_json())
+    def execute(self, command: RankingWeekCommand | RankingBootstrapCommand) -> OfficialRankingSnapshot:
+        command = _validated_command(command)
         with self.factory.begin() as session:
             # Lock before reading the head/receipt: competing SQLite commands
             # cannot both decide that a request is new and then stage different data.
@@ -45,8 +48,8 @@ class RankingWeekCommandRunner:
 
 def stage_ranking_week_command(
     session: Session,
-    awards: SeasonPointAwardsService,
-    command: RankingWeekCommand,
+    awards: SeasonPointAwardsService | None,
+    command: RankingWeekCommand | RankingBootstrapCommand,
 ) -> OfficialRankingSnapshot:
     """Prepare inside a caller-owned SQLite transaction, without committing it.
 
@@ -55,7 +58,7 @@ def stage_ranking_week_command(
     even when the caller catches that failure. Existing pending ORM work is flushed
     by SQLAlchemy before the savepoint and remains the caller's responsibility.
     """
-    command = RankingWeekCommand.model_validate_json(command.model_dump_json())
+    command = _validated_command(command)
     if not session.in_transaction():
         raise ValueError("Ranking staging requires an active caller transaction")
     connection = session.connection()
@@ -66,7 +69,7 @@ def stage_ranking_week_command(
         # ORM autobegin alone is insufficient: under sqlite legacy transaction
         # control, releasing the first SAVEPOINT could otherwise commit the work.
         raise ValueError("Ranking staging requires a physical SQLite transaction")
-    context = command.context
+    context = command if isinstance(command, RankingBootstrapCommand) else command.context
     with session.begin_nested():
         candidates = OfficialRankingCandidateStore(session)
         history = candidates.history(
@@ -95,15 +98,27 @@ def stage_ranking_week_command(
             return snapshot
         if any(s.week == context.target_week for s in history):
             raise ValueError("Ranking target already staged by another command or pathway")
-        sources = OfficialRankingResultStore(session)
-        for binding in sorted(command.tournaments, key=lambda t: t.edition_id):
-            ingest_tournament_ranking_sources(awards, sources, binding)
-        for correction in sorted(
-            command.corrections,
-            key=lambda v: (v.result.edition_id, v.result.player_id),
-        ):
-            sources.append(correction)
-        snapshot = stage_official_ranking_from_history(candidates, sources, context)
+        if isinstance(command, RankingBootstrapCommand):
+            snapshot = candidates.append(
+                calculate_official_ranking(
+                    run_id=command.run_id, branch_id=command.branch_id,
+                    week=command.target_week, policy=command.policy,
+                    players=command.players, results=(),
+                ),
+                bootstrap=True,
+            )
+        else:
+            if command.tournaments and awards is None:
+                raise ValueError("Tournament ingestion requires an award service")
+            sources = OfficialRankingResultStore(session)
+            for binding in sorted(command.tournaments, key=lambda t: t.edition_id):
+                ingest_tournament_ranking_sources(awards, sources, binding)
+            for correction in sorted(
+                command.corrections,
+                key=lambda v: (v.result.edition_id, v.result.player_id),
+            ):
+                sources.append(correction)
+            snapshot = stage_official_ranking_from_history(candidates, sources, context)
         session.add(
             OfficialRankingCommandModel(
                 run_id=context.run_id,
@@ -116,3 +131,10 @@ def stage_ranking_week_command(
         )
         session.flush()
         return snapshot
+
+
+def _validated_command(
+    command: RankingWeekCommand | RankingBootstrapCommand,
+) -> RankingWeekCommand | RankingBootstrapCommand:
+    model = RankingBootstrapCommand if isinstance(command, RankingBootstrapCommand) else RankingWeekCommand
+    return model.model_validate_json(command.model_dump_json())

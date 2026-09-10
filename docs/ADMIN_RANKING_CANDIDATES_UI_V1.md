@@ -29,3 +29,9 @@ Backend tests exercise real HTTP routing and SQLite, correction boundaries,
 nonmutation and corruption; frontend tests mock the API for loading, retry,
 uncounted results, scope navigation and candidate mismatch. Browser screenshot
 verification remains unavailable in this environment.
+
+For candidates prepared with complete input manifests, source inspection now also
+compares all effective source results against those frozen inputs. Deleting or
+changing an uncounted result is detected. The earlier completeness limitation still
+applies to legacy candidates without a manifest; manifests do not prove that the
+original command supplied every eligible real-world input.

@@ -46,6 +46,8 @@ def inspect_ranking_history(
         snapshot = by_week.get(receipt.target_ordinal)
         if snapshot is None or snapshot.fingerprint != receipt.snapshot_fingerprint:
             raise ValueError("Ranking command receipt has missing or corrupt snapshot")
+        from beta_engine.infrastructure.db.ranking_week_command import verify_ranking_command_inputs
+        verify_ranking_command_inputs(receipt, snapshot, snapshots)
         commands.setdefault(receipt.target_ordinal, []).append(receipt.command_id)
     return RankingCandidateHistory(
         run_id=run_id,
@@ -73,6 +75,16 @@ def inspect_ranking_sources(session: Session, *, run_id: str, branch_id: str, we
     for version in OfficialRankingResultStore(session).history(run_id=run_id, branch_id=branch_id):
         if version.effective_week.ordinal <= week.ordinal:
             latest[(version.result.edition_id, version.result.player_id)] = version
+    from beta_engine.infrastructure.db.ranking_week_command import verify_ranking_command_inputs
+    for command_id in candidate.command_ids:
+        receipt = session.get(OfficialRankingCommandModel, (run_id, branch_id, command_id))
+        manifest = verify_ranking_command_inputs(
+            receipt, candidate.snapshot, tuple(c.snapshot for c in history.candidates),
+        )
+        if manifest is not None and {
+            (r.edition_id, r.player_id): r for r in manifest.results
+        } != {key: v.result for key, v in latest.items()}:
+            raise ValueError("Stored source history differs from complete ranking input manifest")
     counted = {
         (r.edition_id, r.player_id): r
         for row in candidate.snapshot.rows for r in row.counted_results

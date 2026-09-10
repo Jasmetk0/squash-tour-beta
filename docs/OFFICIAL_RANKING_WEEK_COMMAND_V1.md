@@ -131,3 +131,29 @@ Its explicit initial-week scope does not replace a future import/mid-run bootstr
 or fork adapter. SQLite tests cover initial-to-next-week progression, canonical
 replay, conflicts, outer rollback, invalid scope/roster/week, read-only/fork guards,
 and empty initialization. The core command/transaction tests are included in smoke CI.
+
+## Complete input manifests
+
+New command receipts store version 1 input manifests alongside their candidate
+hash: the complete resolved roster (including NR/retired players and tie-break
+tokens) and all resolved result inputs, including results outside Best N. Policy,
+week, scope and predecessor are already protected by the candidate snapshot.
+The manifest is stored in the same savepoint/transaction, including bootstrap.
+
+Command replay and Admin history verification reconstruct the candidate using
+these frozen inputs and its stored predecessor/policy, and compare the complete
+candidate fingerprint. This is verification only: no history is replaced and no
+current legacy award files are read. A missing payload, unknown manifest version,
+changed input or nonmatching reconstruction fails closed. Source inspection also
+compares its full effective result set against the stored manifest, detecting
+missing or changed uncounted results as well as counted ones.
+
+Two nullable receipt columns are added through the existing idempotent SQLite
+compatibility migration. Legacy receipts with both columns null retain their old
+read/replay behavior; their missing inputs are not reconstructed from current data.
+A manifest proves the exact supplied calculation inputs, not the caller's authority
+or completeness against the whole world. Coordinated corruption of the manifest
+version marker and payload to impersonate a legacy receipt is not detected without
+an external immutable revision anchor. Full Saved Revision/publication integration
+is still outstanding. Future calculator changes must retain verification support
+for the persisted version-1 calculation contract.

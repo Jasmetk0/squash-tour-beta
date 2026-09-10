@@ -16,6 +16,7 @@ from beta_engine.domain.rankings.official import (
     OfficialRankingSnapshot, calculate_official_ranking,
 )
 from beta_engine.infrastructure.db.models import OfficialRankingCommandModel
+from beta_engine.domain.rankings.input_manifest import RankingInputManifest
 from beta_engine.infrastructure.db.official_rankings import (
     OfficialRankingCandidateStore,
 )
@@ -95,6 +96,7 @@ def stage_ranking_week_command(
                 raise ValueError(
                     "Ranking command receipt has missing or corrupt snapshot"
                 )
+            verify_ranking_command_inputs(receipt, snapshot, history)
             return snapshot
         if any(s.week == context.target_week for s in history):
             raise ValueError("Ranking target already staged by another command or pathway")
@@ -119,6 +121,14 @@ def stage_ranking_week_command(
             ):
                 sources.append(correction)
             snapshot = stage_official_ranking_from_history(candidates, sources, context)
+        manifest = RankingInputManifest(
+            players=tuple(sorted(context.players, key=lambda p: p.player_id)),
+            results=() if isinstance(command, RankingBootstrapCommand) else sources.resolve(
+                run_id=context.run_id, branch_id=context.branch_id, week=context.target_week,
+            ),
+        )
+        previous = next((s for s in history if s.fingerprint == snapshot.previous_fingerprint), None)
+        manifest.verify(snapshot, previous)
         session.add(
             OfficialRankingCommandModel(
                 run_id=context.run_id,
@@ -127,6 +137,8 @@ def stage_ranking_week_command(
                 request_fingerprint=command.fingerprint,
                 target_ordinal=context.target_week.ordinal,
                 snapshot_fingerprint=snapshot.fingerprint,
+                input_manifest_version=1,
+                input_manifest_json=manifest.model_dump_json(),
             )
         )
         session.flush()
@@ -138,3 +150,15 @@ def _validated_command(
 ) -> RankingWeekCommand | RankingBootstrapCommand:
     model = RankingBootstrapCommand if isinstance(command, RankingBootstrapCommand) else RankingWeekCommand
     return model.model_validate_json(command.model_dump_json())
+
+
+def verify_ranking_command_inputs(receipt, snapshot, history) -> RankingInputManifest | None:
+    """Legacy receipts remain readable; versioned manifests must verify fully."""
+    if receipt.input_manifest_version is None and receipt.input_manifest_json is None:
+        return
+    if receipt.input_manifest_version != 1 or receipt.input_manifest_json is None:
+        raise ValueError("Missing or unsupported ranking input manifest")
+    manifest = RankingInputManifest.model_validate_json(receipt.input_manifest_json)
+    previous = next((s for s in history if s.fingerprint == snapshot.previous_fingerprint), None)
+    manifest.verify(snapshot, previous)
+    return manifest

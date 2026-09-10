@@ -102,3 +102,47 @@ def test_bootstrap_rejects_invalid_initial_context(database, damage):
 def test_empty_initial_roster_is_explicitly_supported(database):
     snapshot = RankingWeekCommandRunner(database).execute(command().model_copy(update={"players": ()}))
     assert snapshot.rows == ()
+
+
+def test_bootstrap_manifest_keeps_nr_roster(database):
+    from beta_engine.domain.rankings.input_manifest import RankingInputManifest
+
+    request = command()
+    snapshot = RankingWeekCommandRunner(database).execute(request)
+    assert snapshot.rows == ()
+    with database() as session:
+        receipt = session.get(OfficialRankingCommandModel, ("run", "branch", request.command_id))
+        manifest = RankingInputManifest.model_validate_json(receipt.input_manifest_json)
+        assert manifest.players == request.players
+        manifest.verify(snapshot, None)
+
+
+@pytest.mark.smoke
+def test_legacy_receipt_schema_upgrade_preserves_receipt_and_is_repeatable(database):
+    from beta_engine.infrastructure.db.repositories import SimulationPersistenceRepository
+
+    engine = database.kw["bind"]
+    with engine.begin() as connection:
+        connection.execute(text("ALTER TABLE official_ranking_commands DROP COLUMN input_manifest_version"))
+        connection.execute(text("ALTER TABLE official_ranking_commands DROP COLUMN input_manifest_json"))
+        connection.execute(text("INSERT INTO official_ranking_commands (run_id, branch_id, command_id, request_fingerprint, target_ordinal, snapshot_fingerprint) VALUES ('run', 'branch', 'legacy', 'request', 0, 'snapshot')"))
+    repository = SimulationPersistenceRepository(engine=engine, session_factory=database)
+    repository.bootstrap_schema()
+    repository.bootstrap_schema()
+    with database() as session:
+        receipt = session.get(OfficialRankingCommandModel, ("run", "branch", "legacy"))
+        assert receipt.request_fingerprint == "request"
+        assert receipt.snapshot_fingerprint == "snapshot"
+        assert receipt.input_manifest_version is None
+        assert receipt.input_manifest_json is None
+
+
+def test_legacy_receipt_without_manifest_remains_replayable(database):
+    request = command()
+    runner = RankingWeekCommandRunner(database)
+    snapshot = runner.execute(request)
+    with database.begin() as session:
+        receipt = session.get(OfficialRankingCommandModel, ("run", "branch", request.command_id))
+        receipt.input_manifest_version = None
+        receipt.input_manifest_json = None
+    assert runner.execute(request) == snapshot

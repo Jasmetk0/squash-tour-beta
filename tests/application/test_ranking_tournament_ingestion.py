@@ -427,3 +427,79 @@ def test_receipt_write_failure_rolls_back_candidate_and_sources(packages, databa
             )
             == 1
         )
+
+
+def assert_only_bootstrap(session):
+    from sqlalchemy import select
+    from beta_engine.infrastructure.db.models import OfficialRankingCommandModel
+
+    assert OfficialRankingResultStore(session).history(run_id="run", branch_id="branch") == ()
+    assert len(OfficialRankingCandidateStore(session).history(run_id="run", branch_id="branch")) == 1
+    assert session.scalars(select(OfficialRankingCommandModel)).all() == []
+
+
+@pytest.mark.smoke
+def test_composed_command_waits_for_outer_commit_and_replays(packages, database):
+    from sqlalchemy import text
+    from beta_engine.infrastructure.db.ranking_week_command import stage_ranking_week_command
+
+    command = ranking_command(packages, database)
+    with database.begin() as session:
+        session.execute(text("BEGIN IMMEDIATE"))
+        first = stage_ranking_week_command(session, packages[0], command)
+        assert stage_ranking_week_command(session, packages[0], command) == first
+        with database() as reader:
+            assert_only_bootstrap(reader)
+    with database() as reader:
+        assert OfficialRankingCandidateStore(reader).history(run_id="run", branch_id="branch")[-1] == first
+
+
+@pytest.mark.smoke
+def test_later_transition_failure_rolls_back_successful_ranking(packages, database):
+    from sqlalchemy import text
+    from beta_engine.infrastructure.db.ranking_week_command import stage_ranking_week_command
+
+    command = ranking_command(packages, database)
+    with pytest.raises(RuntimeError, match="later transition failed"):
+        with database.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            stage_ranking_week_command(session, packages[0], command)
+            raise RuntimeError("later transition failed")
+    with database() as reader:
+        assert_only_bootstrap(reader)
+
+
+@pytest.mark.smoke
+def test_caught_component_failure_preserves_outer_work_without_partial_ranking(packages, database):
+    from sqlalchemy import text
+    from beta_engine.infrastructure.db.ranking_week_command import stage_ranking_week_command
+
+    command = ranking_command(packages, database)
+    invalid = command.model_copy(update={"context": command.context.model_copy(
+        update={"players": command.context.players[:-1]}
+    )})
+    with database.begin() as session:
+        session.execute(text("BEGIN IMMEDIATE"))
+        session.get(RunBranchModel, "branch").display_name = "Renamed timeline"
+        with pytest.raises(ValueError, match="unknown player"):
+            stage_ranking_week_command(session, packages[0], invalid)
+        assert_only_bootstrap(session)
+    with database() as reader:
+        assert_only_bootstrap(reader)
+        assert reader.get(RunBranchModel, "branch").display_name == "Renamed timeline"
+
+
+@pytest.mark.smoke
+@pytest.mark.parametrize("autobegin", [False, True])
+def test_composed_command_rejects_missing_physical_transaction(packages, database, autobegin):
+    from sqlalchemy import text
+    from beta_engine.infrastructure.db.ranking_week_command import stage_ranking_week_command
+
+    command = ranking_command(packages, database)
+    with database() as session:
+        if autobegin:
+            session.execute(text("SELECT 1"))
+        with pytest.raises(ValueError, match="transaction"):
+            stage_ranking_week_command(session, packages[0], command)
+    with database() as reader:
+        assert_only_bootstrap(reader)

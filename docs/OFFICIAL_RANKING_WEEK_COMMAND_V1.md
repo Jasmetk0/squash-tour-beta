@@ -42,3 +42,36 @@ source insertion and receipt failure after candidate insertion. Existing ranking
 and ingestion tests remain in the focused verification set; no full season/API
 acceptance is claimed. Qualification/exceptions, production scheduling/bindings,
 roster/policy/token resolution, discipline and full revision/fork integration remain.
+
+## Composition in a larger transaction
+
+`stage_ranking_week_command(session, awards, command)` now exposes the same
+validated preparation and receipt/replay path without committing the caller's
+transaction. The standalone runner delegates to it. A future Week Transition can
+call this component between its other stages and commit everything once:
+
+```python
+with factory.begin() as session:
+    session.execute(text("BEGIN IMMEDIATE"))
+    # Resolve and validate transition inputs under the same transaction.
+    candidate = stage_ranking_week_command(session, awards, command)
+    # Complete the other transition stages; any failure aborts the outer transaction.
+```
+
+The component requires an already active physical SQLite transaction, not just
+SQLAlchemy autobegin. This prevents SQLite legacy transaction control from
+committing a standalone savepoint when it is released. The caller must acquire
+the write lock before reading transition inputs; the guard checks physical
+transaction presence, not the lock mode. Busy/lock failures still require retrying
+the complete outer command.
+
+A nested savepoint rolls back this component's source, candidate and receipt
+writes if preparation fails, even if the caller catches the exception. SQLAlchemy
+flushes previously pending ORM work before creating that savepoint; that work
+belongs to the caller. Successful preparation remains invisible to other sessions
+until the outer commit, and a later stage's failure rolls it all back.
+
+Real SQLite tests cover delayed visibility, replay within one transaction, later
+outer failure, caught calculation failure preserving unrelated outer work, and
+rejection of absent/ORM-only transactions. This is a composable ranking stage,
+not yet a production Week Transition orchestrator or public ranking publication.

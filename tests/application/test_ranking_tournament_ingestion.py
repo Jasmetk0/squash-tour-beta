@@ -614,3 +614,67 @@ def test_tournament_command_requires_award_service_before_writing(packages, data
         RankingWeekCommandRunner(database).execute(request)
     with database() as session:
         assert_only_bootstrap(session)
+
+
+@pytest.mark.smoke
+def test_manifest_keeps_uncounted_inputs_and_replay_is_independent_of_live_sources(packages, database):
+    from beta_engine.domain.rankings.input_manifest import RankingInputManifest
+    from beta_engine.domain.rankings.result_history import RankingResultVersion
+    from beta_engine.infrastructure.db.models import OfficialRankingCommandModel, OfficialRankingResultVersionModel
+    from sqlalchemy import delete
+
+    runner, request, before, versions = correction_command(packages, database)
+    extra = RankingResultVersion(
+        run_id="run", branch_id="branch", previous_fingerprint=None,
+        effective_week=request.context.target_week,
+        result=versions[0].result.model_copy(update={
+            "edition_id": "uncounted-edition", "ranked": False,
+            "first_publication_week": request.context.target_week,
+        }),
+    )
+    with database.begin() as session:
+        OfficialRankingResultStore(session).append(extra)
+    snapshot = runner.execute(request)
+    with database.begin() as session:
+        receipt = session.get(OfficialRankingCommandModel, ("run", "branch", request.command_id))
+        assert receipt.input_manifest_version == 1
+        manifest = RankingInputManifest.model_validate_json(receipt.input_manifest_json)
+        assert len(manifest.results) == len(versions) + 1
+        assert any(r.edition_id == "uncounted-edition" for r in manifest.results)
+        assert all(r.edition_id != "uncounted-edition" for row in snapshot.rows for r in row.counted_results)
+        manifest.verify(snapshot, before)
+        session.execute(delete(OfficialRankingResultVersionModel).where(OfficialRankingResultVersionModel.edition_id == "uncounted-edition"))
+    assert runner.execute(request) == snapshot
+    from beta_engine.infrastructure.db.ranking_inspection import inspect_ranking_sources
+    with database() as session, pytest.raises(ValueError, match="complete ranking input manifest"):
+        inspect_ranking_sources(session, run_id="run", branch_id="branch", week=request.context.target_week)
+
+
+@pytest.mark.smoke
+@pytest.mark.parametrize("damage", ["missing", "version", "roster", "results"])
+def test_command_and_inspection_reject_damaged_manifest(packages, database, damage):
+    import json
+    from beta_engine.infrastructure.db.models import OfficialRankingCommandModel
+    from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
+    from beta_engine.infrastructure.db.ranking_inspection import inspect_ranking_history
+
+    request = ranking_command(packages, database)
+    runner = RankingWeekCommandRunner(database, packages[0])
+    runner.execute(request)
+    with database.begin() as session:
+        receipt = session.get(OfficialRankingCommandModel, ("run", "branch", request.command_id))
+        if damage == "missing":
+            receipt.input_manifest_json = None
+        elif damage == "version":
+            receipt.input_manifest_version = 99
+        else:
+            data = json.loads(receipt.input_manifest_json)
+            if damage == "roster":
+                data["players"][0]["tie_break_token"] += "changed"
+            else:
+                data["results"][0]["main_points"] += 1
+            receipt.input_manifest_json = json.dumps(data)
+    with pytest.raises(ValueError):
+        runner.execute(request)
+    with database() as session, pytest.raises(ValueError):
+        inspect_ranking_history(session, run_id="run", branch_id="branch")

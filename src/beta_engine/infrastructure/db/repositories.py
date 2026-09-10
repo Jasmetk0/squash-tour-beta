@@ -1034,6 +1034,8 @@ class SimulationPersistenceRepository:
 
     def _ensure_schema_compatibility(self) -> None:
         with self._engine.begin() as connection:
+            self._ensure_column(connection=connection, table_name="official_ranking_commands", column_name="input_manifest_version", column_type="INTEGER")
+            self._ensure_column(connection=connection, table_name="official_ranking_commands", column_name="input_manifest_json", column_type="TEXT")
             self._ensure_runs_world_id_nullable(connection=connection)
             self._ensure_run_display_name_unique_index(connection=connection)
             self._ensure_column(

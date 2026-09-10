@@ -36,51 +36,78 @@ class RankingWeekCommandRunner:
 
     def execute(self, command: RankingWeekCommand) -> OfficialRankingSnapshot:
         command = RankingWeekCommand.model_validate_json(command.model_dump_json())
-        context = command.context
         with self.factory.begin() as session:
             # Lock before reading the head/receipt: competing SQLite commands
             # cannot both decide that a request is new and then stage different data.
             session.execute(text("BEGIN IMMEDIATE"))
-            candidates = OfficialRankingCandidateStore(session)
-            history = candidates.history(
-                run_id=context.run_id, branch_id=context.branch_id
-            )
-            key = (context.run_id, context.branch_id, command.command_id)
-            receipt = session.get(OfficialRankingCommandModel, key)
-            if receipt is not None:
-                if (
-                    receipt.request_fingerprint != command.fingerprint
-                    or receipt.target_ordinal != context.target_week.ordinal
-                ):
-                    raise ValueError(
-                        "Ranking command ID already has a different request"
-                    )
-                snapshot = next(
-                    (s for s in history if s.week == context.target_week), None
+            return stage_ranking_week_command(session, self.awards, command)
+
+
+def stage_ranking_week_command(
+    session: Session,
+    awards: SeasonPointAwardsService,
+    command: RankingWeekCommand,
+) -> OfficialRankingSnapshot:
+    """Prepare inside a caller-owned SQLite transaction, without committing it.
+
+    The caller starts BEGIN IMMEDIATE before reading transition inputs and owns
+    final commit/rollback. A savepoint removes this component's writes on failure,
+    even when the caller catches that failure. Existing pending ORM work is flushed
+    by SQLAlchemy before the savepoint and remains the caller's responsibility.
+    """
+    command = RankingWeekCommand.model_validate_json(command.model_dump_json())
+    if not session.in_transaction():
+        raise ValueError("Ranking staging requires an active caller transaction")
+    connection = session.connection()
+    if (
+        connection.dialect.name != "sqlite"
+        or not connection.connection.driver_connection.in_transaction
+    ):
+        # ORM autobegin alone is insufficient: under sqlite legacy transaction
+        # control, releasing the first SAVEPOINT could otherwise commit the work.
+        raise ValueError("Ranking staging requires a physical SQLite transaction")
+    context = command.context
+    with session.begin_nested():
+        candidates = OfficialRankingCandidateStore(session)
+        history = candidates.history(
+            run_id=context.run_id, branch_id=context.branch_id
+        )
+        key = (context.run_id, context.branch_id, command.command_id)
+        receipt = session.get(OfficialRankingCommandModel, key)
+        if receipt is not None:
+            if (
+                receipt.request_fingerprint != command.fingerprint
+                or receipt.target_ordinal != context.target_week.ordinal
+            ):
+                raise ValueError(
+                    "Ranking command ID already has a different request"
                 )
-                if (
-                    snapshot is None
-                    or snapshot.fingerprint != receipt.snapshot_fingerprint
-                ):
-                    raise ValueError(
-                        "Ranking command receipt has missing or corrupt snapshot"
-                    )
-                return snapshot
-            if any(s.week == context.target_week for s in history):
-                raise ValueError("Ranking target already staged by another command or pathway")
-            sources = OfficialRankingResultStore(session)
-            for binding in sorted(command.tournaments, key=lambda t: t.edition_id):
-                ingest_tournament_ranking_sources(self.awards, sources, binding)
-            snapshot = stage_official_ranking_from_history(candidates, sources, context)
-            session.add(
-                OfficialRankingCommandModel(
-                    run_id=context.run_id,
-                    branch_id=context.branch_id,
-                    command_id=command.command_id,
-                    request_fingerprint=command.fingerprint,
-                    target_ordinal=context.target_week.ordinal,
-                    snapshot_fingerprint=snapshot.fingerprint,
-                )
+            snapshot = next(
+                (s for s in history if s.week == context.target_week), None
             )
-            session.flush()
+            if (
+                snapshot is None
+                or snapshot.fingerprint != receipt.snapshot_fingerprint
+            ):
+                raise ValueError(
+                    "Ranking command receipt has missing or corrupt snapshot"
+                )
             return snapshot
+        if any(s.week == context.target_week for s in history):
+            raise ValueError("Ranking target already staged by another command or pathway")
+        sources = OfficialRankingResultStore(session)
+        for binding in sorted(command.tournaments, key=lambda t: t.edition_id):
+            ingest_tournament_ranking_sources(awards, sources, binding)
+        snapshot = stage_official_ranking_from_history(candidates, sources, context)
+        session.add(
+            OfficialRankingCommandModel(
+                run_id=context.run_id,
+                branch_id=context.branch_id,
+                command_id=command.command_id,
+                request_fingerprint=command.fingerprint,
+                target_ordinal=context.target_week.ordinal,
+                snapshot_fingerprint=snapshot.fingerprint,
+            )
+        )
+        session.flush()
+        return snapshot

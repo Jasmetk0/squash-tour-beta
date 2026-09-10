@@ -1015,6 +1015,13 @@ class SimulationPersistenceRepository:
             session.execute(text("BEGIN"))
             return inspect_ranking_history(session, run_id=run_id, branch_id=branch_id)
 
+    def inspect_official_ranking_sources(self, *, run_id: str, branch_id: str, week):
+        from beta_engine.infrastructure.db.ranking_inspection import inspect_ranking_sources
+
+        with self._session_factory() as session:
+            session.execute(text("BEGIN"))
+            return inspect_ranking_sources(session, run_id=run_id, branch_id=branch_id, week=week)
+
     def bootstrap_schema(self) -> None:
         try:
             Base.metadata.create_all(self._engine)

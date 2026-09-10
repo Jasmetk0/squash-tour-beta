@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event'
 import type { RankingCandidateHistory } from '../api/rankingCandidates'
 import { MemoryRouter, Route, Routes, Link } from 'react-router-dom'
 import { beforeEach, expect, it, vi } from 'vitest'
-import { getRankingCandidates } from '../api/client'
+import { getRankingCandidates, getRankingCandidateSources } from '../api/client'
 import { AdminRankingCandidatesPage } from './AdminRankingCandidatesPage'
-vi.mock('../api/client', async (importOriginal) => ({ ...await importOriginal<typeof import('../api/client')>(), getRankingCandidates: vi.fn() }))
+vi.mock('../api/client', async (importOriginal) => ({ ...await importOriginal<typeof import('../api/client')>(), getRankingCandidates: vi.fn(), getRankingCandidateSources: vi.fn() }))
 const fetchHistory = vi.mocked(getRankingCandidates)
 function show(suffix = '') {
   render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><MemoryRouter initialEntries={['/admin/runs/run/branches/branch/ranking-candidates' + suffix]}><Link to="/admin/runs/run/branches/other/ranking-candidates/0/2">Other Branch</Link><Routes><Route path="/admin/runs/:runId/branches/:branchId/ranking-candidates" element={<AdminRankingCandidatesPage />} /><Route path="/admin/runs/:runId/branches/:branchId/ranking-candidates/:seasonIndex/:week" element={<AdminRankingCandidatesPage />} /></Routes></MemoryRouter></QueryClientProvider>)
@@ -71,4 +71,46 @@ it('does not show another stored week instead of the requested week', async () =
   show('/0/3')
   expect(await screen.findByRole('alert')).toHaveTextContent('No candidate is stored for this week.')
   expect(screen.queryByText('player-a')).not.toBeInTheDocument()
+})
+
+const fetchSources = vi.mocked(getRankingCandidateSources)
+it('loads historical sources on demand and displays uncounted results', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchSources.mockResolvedValue({
+    run_id: 'run', branch_id: 'branch', week: { season_index: 0, week: 2 },
+    publication_status: 'candidate_only', candidate_fingerprint: 'hash',
+    sources: [{ fingerprint: 'source-version', counted: false, version: {
+      run_id: 'run', branch_id: 'branch', effective_week: { season_index: 0, week: 2 }, previous_fingerprint: 'prior-version',
+      result: { edition_id: 'source-edition', player_id: 'player-a', source_fingerprint: 'award-hash', qualification_points: 0, main_points: 20, first_publication_week: { season_index: 0, week: 2 }, validity_weeks: 61, ranked: false },
+    } }],
+  })
+  show('/0/2')
+  const load = await screen.findByRole('button', { name: 'Load source results' })
+  expect(fetchSources).not.toHaveBeenCalled()
+  await userEvent.click(load)
+  expect(await screen.findByText(/Not counted in this candidate/)).toBeVisible()
+  expect(fetchSources).toHaveBeenCalledWith('run', 'branch', 0, 2)
+  await userEvent.click(screen.getByText('Source provenance'))
+  expect(screen.getByText(/Previous version: prior-version/)).toBeVisible()
+  await userEvent.click(screen.getByRole('link', { name: 'Other Branch' }))
+  expect(screen.queryByText(/Previous version: prior-version/)).not.toBeInTheDocument()
+})
+it('keeps the candidate visible when source loading fails and supports retry', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchSources.mockRejectedValueOnce(new Error('Sources unavailable')).mockResolvedValue({
+    run_id: 'run', branch_id: 'branch', week: { season_index: 0, week: 2 }, publication_status: 'candidate_only', candidate_fingerprint: 'hash', sources: [],
+  })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button', { name: 'Load source results' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Sources unavailable')
+  expect(screen.getByText('player-a')).toBeVisible()
+  await userEvent.click(screen.getByRole('button', { name: 'Retry source results' }))
+  expect(await screen.findByText('No source results at this boundary.')).toBeVisible()
+})
+it('rejects sources linked to a different candidate', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchSources.mockResolvedValue({ run_id: 'run', branch_id: 'branch', week: { season_index: 0, week: 2 }, publication_status: 'candidate_only', candidate_fingerprint: 'different', sources: [] })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button', { name: 'Load source results' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Source history does not match this candidate.')
 })

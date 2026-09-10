@@ -32,3 +32,32 @@ rejection, damaged input/source/week/receipt/scope and external hash verificatio
 This is the ranking component's serialization contract; Saved Revision save/restore
 installation, branch remapping, full Week Transition and public publication remain
 separate integration work. No sporting rules or realism parameters change.
+
+## Installation into empty ranking storage
+
+`install_ranking_revision_state` now installs a trusted same-Run/Branch payload into
+an existing, empty ranking subsystem. It verifies the payload and external hash,
+then installs source versions, candidates and reconstructed command receipts with
+complete input manifests in one savepoint. A final recapture must match the trusted
+fingerprint. Original command replay therefore remains available after installation.
+
+The caller starts `BEGIN IMMEDIATE` before restore reads and owns the outer commit.
+A later component failure rolls back the ranking installation. A caught installation
+failure rolls back all its writes, while unrelated caller work remains. As with
+other SQLAlchemy savepoint components, pending caller ORM work is flushed at
+savepoint entry; callers should flush their own work before inspecting targets.
+
+An exactly matching installed state is a no-write retry, including read-only scopes.
+A different nonempty, partial, corrupt or legacy state is rejected. A new installation
+requires a writable supported scope. No rows are deleted or overwritten, and there
+is no branch identity remapping. Empty bundles remain valid no-op installations.
+
+This is a ranking component installer for a larger recovery transaction, not a full
+Run restore command. Run/Branch metadata must already exist; the caller must obtain
+the trusted payload/hash from an authoritative Saved Revision and coordinate all
+other world components. There is no public restore endpoint, Viewer selection,
+clock advancement or replacement of an existing timeline in this change.
+
+Additional real SQLite tests cover install/recapture equality, exact retry and
+original command replay, outer rollback, caught receipt-write failure, existing
+history conflicts, wrong hash/scope, read-only writes and transaction guards.

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { RankingCandidateInputsPanel } from './RankingCandidateInputsPanel'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { getRankingCandidates, getRankingCandidateSources } from '../api/client'
@@ -27,6 +28,7 @@ export function AdminRankingCandidatesPage(): JSX.Element {
         {selected.snapshot.rows.length === 0 ? <EmptyState message="This candidate contains no ranked players." /> : <div className="table-scroll" role="region" aria-label="Candidate ranking table" tabIndex={0}><table><thead><tr><th>Rank</th><th>Player ID</th><th>Points</th><th>Counted results</th></tr></thead><tbody>{selected.snapshot.rows.map(row => <tr key={row.player_id}>
           <td>{row.rank}</td><td>{row.player_id}</td><td>{row.points}</td><td>{row.counted_results.length === 0 ? 'No counted results' : <details><summary>{row.counted_results.length} counted results for {row.player_id}</summary><ul>{row.counted_results.map(r => <li key={r.edition_id}><strong>{r.edition_id}</strong>: {r.qualification_points + r.main_points} points ({r.qualification_points} qualification + {r.main_points} main). Completed {label(r.completed_week)}; first publication {label(r.first_publication_week)}; validity {r.validity_weeks} weeks.</li>)}</ul></details>}</td>
         </tr>)}</tbody></table></div>}
+        <RankingCandidateInputsPanel key={`inputs/${runId}/${branchId}/${selected.fingerprint}`} runId={runId} branchId={branchId} week={selected.snapshot.week} fingerprint={selected.fingerprint} />
         <RankingSources key={`${runId}/${branchId}/${selected.fingerprint}`} runId={runId} branchId={branchId} week={selected.snapshot.week} fingerprint={selected.fingerprint} />
         <details><summary>Technical provenance</summary><p>Policy: {selected.snapshot.policy.policy_id}</p><p style={{ overflowWrap: 'anywhere' }}>Fingerprint: {selected.fingerprint}</p><p>Commands: {selected.command_ids.join(', ') || 'No command receipt'}</p></details>
       </SectionCard> : query.data.candidates.length > 0 && <p>Select a week to inspect its ranking.</p>}

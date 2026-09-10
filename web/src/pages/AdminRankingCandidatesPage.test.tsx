@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event'
 import type { RankingCandidateHistory } from '../api/rankingCandidates'
 import { MemoryRouter, Route, Routes, Link } from 'react-router-dom'
 import { beforeEach, expect, it, vi } from 'vitest'
-import { getRankingCandidates, getRankingCandidateSources } from '../api/client'
+import { getRankingCandidates, getRankingCandidateSources, getRankingCandidateInputs } from '../api/client'
 import { AdminRankingCandidatesPage } from './AdminRankingCandidatesPage'
-vi.mock('../api/client', async (importOriginal) => ({ ...await importOriginal<typeof import('../api/client')>(), getRankingCandidates: vi.fn(), getRankingCandidateSources: vi.fn() }))
+vi.mock('../api/client', async (importOriginal) => ({ ...await importOriginal<typeof import('../api/client')>(), getRankingCandidates: vi.fn(), getRankingCandidateSources: vi.fn(), getRankingCandidateInputs: vi.fn() }))
 const fetchHistory = vi.mocked(getRankingCandidates)
 function show(suffix = '') {
   render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><MemoryRouter initialEntries={['/admin/runs/run/branches/branch/ranking-candidates' + suffix]}><Link to="/admin/runs/run/branches/other/ranking-candidates/0/2">Other Branch</Link><Routes><Route path="/admin/runs/:runId/branches/:branchId/ranking-candidates" element={<AdminRankingCandidatesPage />} /><Route path="/admin/runs/:runId/branches/:branchId/ranking-candidates/:seasonIndex/:week" element={<AdminRankingCandidatesPage />} /></Routes></MemoryRouter></QueryClientProvider>)
@@ -113,4 +113,42 @@ it('rejects sources linked to a different candidate', async () => {
   show('/0/2')
   await userEvent.click(await screen.findByRole('button', { name: 'Load source results' }))
   expect(await screen.findByRole('alert')).toHaveTextContent('Source history does not match this candidate.')
+})
+
+const fetchInputs = vi.mocked(getRankingCandidateInputs)
+it('inspects frozen inputs on demand including players outside the ranking', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchInputs.mockResolvedValue({ run_id: 'run', branch_id: 'branch', week: { season_index: 0, week: 2 }, candidate_fingerprint: 'hash', publication_status: 'candidate_only', verification_status: 'complete_manifest', manifest: {
+    players: [{ player_id: 'nr-player', tie_break_token: 'frozen-token', tour_entry_week: { season_index: 0, week: 2 }, retired: false }], results: [],
+  } })
+  show('/0/2')
+  const button = await screen.findByRole('button', { name: 'Inspect stored inputs' })
+  expect(fetchInputs).not.toHaveBeenCalled()
+  await userEvent.click(button)
+  expect(await screen.findByText('nr-player')).toBeVisible()
+  expect(fetchInputs).toHaveBeenCalledWith('run', 'branch', 0, 2)
+  await userEvent.click(screen.getByText('Stored tie-break token'))
+  expect(screen.getByText('frozen-token')).toBeVisible()
+  expect(screen.getByText('No result inputs were supplied.')).toBeVisible()
+  await userEvent.click(screen.getByRole('link', { name: 'Other Branch' }))
+  expect(screen.queryByText('frozen-token')).not.toBeInTheDocument()
+})
+it('distinguishes legacy missing inputs from a verified empty manifest', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchInputs.mockResolvedValue({ run_id: 'run', branch_id: 'branch', week: { season_index: 0, week: 2 }, candidate_fingerprint: 'hash', publication_status: 'candidate_only', verification_status: 'legacy_without_manifest', manifest: null })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button', { name: 'Inspect stored inputs' }))
+  expect(await screen.findByText(/Legacy candidate: complete calculation inputs were not stored/)).toBeVisible()
+  expect(screen.queryByText('The stored roster is empty.')).not.toBeInTheDocument()
+})
+it('rejects mismatched input candidates and allows retry', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  const empty = { run_id: 'run', branch_id: 'branch', week: { season_index: 0, week: 2 }, candidate_fingerprint: 'wrong', publication_status: 'candidate_only' as const, verification_status: 'complete_manifest' as const, manifest: { players: [], results: [] } }
+  fetchInputs.mockResolvedValueOnce(empty).mockResolvedValue({ ...empty, candidate_fingerprint: 'hash' })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button', { name: 'Inspect stored inputs' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Stored inputs do not match this candidate.')
+  expect(screen.getByText('player-a')).toBeVisible()
+  await userEvent.click(screen.getByRole('button', { name: 'Retry stored inputs' }))
+  expect(await screen.findByText('The stored roster is empty.')).toBeVisible()
 })

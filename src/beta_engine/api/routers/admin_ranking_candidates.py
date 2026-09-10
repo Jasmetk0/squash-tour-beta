@@ -9,6 +9,7 @@ from beta_engine.application.ranking_inspection import (
     RankingCandidateDetail,
     RankingCandidateHistory,
     RankingCandidateSources,
+    RankingCandidateInputs,
 )
 
 router = APIRouter(
@@ -81,4 +82,28 @@ def get_sources(
         raise HTTPException(status_code=409, detail={
             "code": "ranking_sources_unavailable",
             "message": "Stored ranking sources could not be verified.",
+        }) from exc
+
+
+@router.get("/{season_index}/{week}/inputs", response_model=RankingCandidateInputs)
+def get_inputs(
+    run_id: str,
+    branch_id: str,
+    season_index: Annotated[int, Path(ge=0, le=49)],
+    week: Annotated[int, Path(ge=1, le=61)],
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    from beta_engine.domain.rankings.official import RankingWeek
+
+    try:
+        return runtime.repository.inspect_official_ranking_inputs(
+            run_id=run_id, branch_id=branch_id,
+            week=RankingWeek(season_index=season_index, week=week),
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Ranking scope or candidate week not found") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "ranking_inputs_unavailable",
+            "message": "Stored ranking inputs could not be verified.",
         }) from exc

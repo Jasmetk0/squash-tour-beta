@@ -604,3 +604,13 @@ def test_empty_corrections_keep_legacy_command_fingerprint(packages, database):
     legacy["tournaments"].sort(key=lambda t: t["edition_id"])
     expected = hashlib.sha256(json.dumps(legacy, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     assert command.fingerprint == expected
+
+
+def test_tournament_command_requires_award_service_before_writing(packages, database):
+    from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
+
+    request = ranking_command(packages, database)
+    with pytest.raises(ValueError, match="requires an award service"):
+        RankingWeekCommandRunner(database).execute(request)
+    with database() as session:
+        assert_only_bootstrap(session)

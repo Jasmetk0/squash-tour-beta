@@ -104,3 +104,30 @@ remain the caller's responsibility. Tests use real persisted synthetic tournamen
 packages and SQLite, including multi-result rollback, old-history preservation,
 canonical replay, legacy hash compatibility, invalid scope/boundary and attempts
 to change original validity.
+
+## Initial candidate command
+
+`RankingBootstrapCommand` provides an explicit first-week entry point through
+`RankingWeekCommandRunner.execute` and the caller-owned staging function. It
+requires a resolved policy, roster/tokens and the supported `discipline="none"`
+scope. Its target is restricted to 2000/01 Week 1. The operation uses no tournament
+results: no completed tournament can first become eligible before this boundary.
+Existing kernel lifecycle rules still apply: players entering in Week 1 remain NR
+in that snapshot and first appear in Week 2, including zero-point players.
+
+The initial candidate and its command receipt are written atomically. Exact replay
+returns validated saved history even after later weeks; changed requests or another
+command trying to claim the existing initial candidate are rejected. Fork ancestry,
+read-only scope and invalid roster guards remain enforced by the existing layers.
+The versioned bootstrap request has a distinct hash shape from weekly requests.
+
+An award service is optional for bootstrap and weeks with no tournament ingestion;
+commands with tournament bindings require it. This permits initialization and
+empty-week progression without unrelated legacy tournament files. Empty roster is
+supported, but creation of an empty Run does not automatically initialize rankings.
+
+This command does not publish to Viewer, create a Saved Revision or move time.
+Its explicit initial-week scope does not replace a future import/mid-run bootstrap
+or fork adapter. SQLite tests cover initial-to-next-week progression, canonical
+replay, conflicts, outer rollback, invalid scope/roster/week, read-only/fork guards,
+and empty initialization. The core command/transaction tests are included in smoke CI.

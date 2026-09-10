@@ -22,3 +22,13 @@ export type RankingCandidateSources = {
     result: { edition_id: string; player_id: string; source_fingerprint: string; qualification_points: number; main_points: number; first_publication_week: CandidateWeek; validity_weeks: number; ranked: boolean }
   } }[]
 }
+
+export type RankingCandidateInputs = {
+  run_id: string; branch_id: string; week: CandidateWeek
+  candidate_fingerprint: string; publication_status: 'candidate_only'
+  verification_status: 'complete_manifest' | 'legacy_without_manifest'
+  manifest: null | {
+    players: { player_id: string; tie_break_token: string; tour_entry_week: CandidateWeek; retired: boolean }[]
+    results: RankingCandidateSources['sources'][number]['version']['result'][]
+  }
+}

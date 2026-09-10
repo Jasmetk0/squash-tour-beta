@@ -99,3 +99,27 @@ def inspect_ranking_sources(session: Session, *, run_id: str, branch_id: str, we
             version=latest[key], fingerprint=latest[key].fingerprint, counted=key in counted,
         ) for key in sorted(latest)),
     )
+
+
+def inspect_ranking_inputs(session: Session, *, run_id: str, branch_id: str, week):
+    from beta_engine.application.ranking_inspection import RankingCandidateInputs
+    from beta_engine.infrastructure.db.ranking_week_command import verify_ranking_command_inputs
+
+    history = inspect_ranking_history(session, run_id=run_id, branch_id=branch_id)
+    candidate = next((c for c in history.candidates if c.snapshot.week == week), None)
+    if candidate is None:
+        raise KeyError("Ranking candidate week not found")
+    manifest = None
+    for command_id in candidate.command_ids:
+        receipt = session.get(OfficialRankingCommandModel, (run_id, branch_id, command_id))
+        verified = verify_ranking_command_inputs(
+            receipt, candidate.snapshot, tuple(c.snapshot for c in history.candidates),
+        )
+        if verified is not None:
+            manifest = verified
+    return RankingCandidateInputs(
+        run_id=run_id, branch_id=branch_id, week=week,
+        candidate_fingerprint=candidate.fingerprint,
+        verification_status="complete_manifest" if manifest is not None else "legacy_without_manifest",
+        manifest=manifest,
+    )

@@ -291,3 +291,72 @@ def test_corrupt_future_source_error_does_not_expose_future_payload(source_api):
     assert response.status_code == 409
     assert response.json()["detail"]["message"] == "Stored ranking sources could not be verified."
     assert "not-yet-known" not in str(response.json())
+
+
+@pytest.fixture
+def input_api(api):
+    from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
+    from beta_engine.application.ranking_week_command import RankingWeekCommand
+    from beta_engine.application.official_ranking_transition import RankingTransitionContext
+    from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
+
+    client, factory, path, _, _ = api
+    runner = RankingWeekCommandRunner(factory)
+    player = OfficialRankingPlayer(player_id="nr-player", tie_break_token="frozen-token", tour_entry_week=RankingWeek(season_index=0, week=1))
+    first = runner.execute(RankingBootstrapCommand(
+        command_id="bootstrap", run_id="run", branch_id="empty", policy=OfficialRankingPolicy(policy_id="policy"), players=(player,), discipline="none",
+    ))
+    runner.execute(RankingWeekCommand(
+        command_id="later", tournaments=(), context=RankingTransitionContext(
+            run_id="run", branch_id="empty", completed_week=first.week, target_week=RankingWeek(season_index=0, week=2),
+            policy=first.policy, players=(player.model_copy(update={"retired": True}),), discipline="none",
+        ),
+    ))
+    return client, factory, path, first
+
+
+@pytest.mark.smoke
+def test_inputs_return_frozen_nr_roster_without_later_lifecycle_changes(input_api):
+    client, factory, path, first = input_api
+    with factory.begin() as session:
+        session.get(RunBranchModel, "empty").read_only = True
+    before = dump(path)
+    prefix = PREFIX.replace("/branches/branch/", "/branches/empty/")
+    data = client.get(prefix + "/0/1/inputs")
+    assert data.status_code == 200
+    data = data.json()
+    assert data["verification_status"] == "complete_manifest"
+    assert data["candidate_fingerprint"] == first.fingerprint
+    assert first.rows == ()
+    assert data["manifest"]["players"][0]["player_id"] == "nr-player"
+    assert data["manifest"]["players"][0]["tie_break_token"] == "frozen-token"
+    assert data["manifest"]["players"][0]["retired"] is False
+    assert client.get(prefix + "/0/2/inputs").json()["manifest"]["players"][0]["retired"] is True
+    assert client.get(prefix + "/0/3/inputs").status_code == 404
+    assert client.get(prefix.replace("/runs/run/", "/runs/other-run/") + "/0/1/inputs").status_code == 404
+    assert client.get(prefix + "/50/1/inputs").status_code == 422
+    assert dump(path) == before
+
+
+@pytest.mark.smoke
+def test_legacy_inputs_are_explicitly_unavailable_without_fabrication(api):
+    client, _, path, _, _ = api
+    before = dump(path)
+    response = client.get(PREFIX + "/1/1/inputs")
+    assert response.status_code == 200
+    assert response.json()["verification_status"] == "legacy_without_manifest"
+    assert response.json()["manifest"] is None
+    assert dump(path) == before
+
+
+@pytest.mark.smoke
+def test_damaged_inputs_fail_closed_without_returning_payload(input_api):
+    client, factory, path, _ = input_api
+    with factory.begin() as session:
+        session.get(OfficialRankingCommandModel, ("run", "empty", "bootstrap")).input_manifest_json = '{"secret": "hidden-input"}'
+    before = dump(path)
+    response = client.get(PREFIX.replace("/branches/branch/", "/branches/empty/") + "/0/1/inputs")
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "ranking_inputs_unavailable"
+    assert "hidden-input" not in str(response.json())
+    assert dump(path) == before

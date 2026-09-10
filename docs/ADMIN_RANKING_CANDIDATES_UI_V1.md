@@ -35,3 +35,27 @@ compares all effective source results against those frozen inputs. Deleting or
 changing an uncounted result is detected. The earlier completeness limitation still
 applies to legacy candidates without a manifest; manifests do not prove that the
 original command supplied every eligible real-world input.
+
+## Inspect stored calculation inputs
+
+The candidate detail now offers an on-demand Stored calculation inputs panel.
+`GET /admin/runs/{run_id}/branches/{branch_id}/ranking-candidates/{season_index}/{week}/inputs`
+returns the verified frozen roster and result manifest for that exact candidate,
+including NR/retired players and tie-break tokens. Later lifecycle updates do not
+replace the stored inputs. The endpoint uses the existing manifest reconstruction
+checks and a single SQLite read transaction; it does not read current award files
+or mutate history.
+
+Responses distinguish `complete_manifest` from `legacy_without_manifest`. Legacy
+candidates return a null manifest, not a fabricated empty roster; the UI explains
+that complete inputs were not stored. Verified empty manifests have their own
+empty states. Corrupt/unsupported inputs return 409 with a generic error, missing
+scope/week returns 404, and invalid coordinates return 422. All data remains
+Admin-only and candidate-only, with no publication or clock advancement.
+
+The panel validates scope/week and candidate hash, loads only on request, isolates
+its cache by candidate identity and supports retry. API tests use real HTTP/SQLite
+for historical lifecycle, read-only nonmutation, missing scope/week, legacy status
+and corrupted-input redaction. Page tests mock the API for lazy NR-roster display,
+branch navigation, legacy versus empty status and mismatch/retry. Browser screenshot
+verification remains unavailable; no visual QA is claimed.

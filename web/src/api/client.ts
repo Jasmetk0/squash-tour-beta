@@ -1334,3 +1334,13 @@ export async function getRankingCandidateSources(runId: string, branchId: string
   if (data.run_id !== runId || data.branch_id !== branchId || data.week.season_index !== seasonIndex || data.week.week !== week || data.publication_status !== 'candidate_only') throw new Error('Ranking sources do not match the requested scope and week.')
   return data
 }
+
+export async function getRankingCandidateInputs(runId: string, branchId: string, seasonIndex: number, week: number): Promise<import('./rankingCandidates').RankingCandidateInputs> {
+  const data = await request<import('./rankingCandidates').RankingCandidateInputs>(`/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/ranking-candidates/${seasonIndex}/${week}/inputs`)
+  if (data.run_id !== runId || data.branch_id !== branchId || data.week.season_index !== seasonIndex || data.week.week !== week || data.publication_status !== 'candidate_only' ||
+    (data.verification_status !== 'complete_manifest' && data.verification_status !== 'legacy_without_manifest') ||
+    (data.verification_status === 'complete_manifest' ? (!data.manifest || !Array.isArray(data.manifest.players) || !Array.isArray(data.manifest.results)) : data.manifest !== null)) {
+    throw new Error('Ranking inputs do not match the requested scope or verification status.')
+  }
+  return data
+}

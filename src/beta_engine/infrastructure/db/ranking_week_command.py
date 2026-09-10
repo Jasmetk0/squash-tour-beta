@@ -98,6 +98,11 @@ def stage_ranking_week_command(
         sources = OfficialRankingResultStore(session)
         for binding in sorted(command.tournaments, key=lambda t: t.edition_id):
             ingest_tournament_ranking_sources(awards, sources, binding)
+        for correction in sorted(
+            command.corrections,
+            key=lambda v: (v.result.edition_id, v.result.player_id),
+        ):
+            sources.append(correction)
         snapshot = stage_official_ranking_from_history(candidates, sources, context)
         session.add(
             OfficialRankingCommandModel(

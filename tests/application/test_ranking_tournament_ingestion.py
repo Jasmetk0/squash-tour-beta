@@ -503,3 +503,104 @@ def test_composed_command_rejects_missing_physical_transaction(packages, databas
             stage_ranking_week_command(session, packages[0], command)
     with database() as reader:
         assert_only_bootstrap(reader)
+
+
+def correction_command(packages, database):
+    from beta_engine.domain.rankings.result_history import RankingResultVersion
+    from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
+
+    original = ranking_command(packages, database)
+    runner = RankingWeekCommandRunner(database, packages[0])
+    before = runner.execute(original)
+    target = RankingWeek(season_index=0, week=before.week.week + 1)
+    with database() as session:
+        versions = OfficialRankingResultStore(session).history(run_id="run", branch_id="branch")
+    corrections = tuple(
+        RankingResultVersion(
+            run_id="run", branch_id="branch", effective_week=target,
+            previous_fingerprint=v.fingerprint,
+            result=v.result.model_copy(update={"main_points": v.result.main_points + 100,
+                                              "source_fingerprint": "corrected-" + v.result.player_id}),
+        ) for v in versions
+    )
+    command = original.model_copy(update={
+        "command_id": "correct-next-week", "tournaments": (), "corrections": corrections,
+        "context": original.context.model_copy(update={"completed_week": before.week, "target_week": target}),
+    })
+    return runner, command, before, versions
+
+
+@pytest.mark.smoke
+def test_week_corrections_preserve_history_timing_and_canonical_replay(packages, database):
+    runner, command, before, versions = correction_command(packages, database)
+    after = runner.execute(command)
+    old_points = {r.player_id: r.points for r in before.rows}
+    assert {r.player_id: r.points for r in after.rows} == {p: n + 100 for p, n in old_points.items()}
+    old_results = {v.result.player_id: v.result for v in versions}
+    for row in after.rows:
+        result = row.counted_results[0]
+        original = old_results[row.player_id]
+        assert result.first_publication_week == original.first_publication_week
+        assert result.validity_weeks == original.validity_weeks
+    reordered = command.model_copy(update={"corrections": tuple(reversed(command.corrections))})
+    assert reordered.fingerprint == command.fingerprint
+    packages[0].awards_path.write_text("invalid current JSON")
+    assert runner.execute(reordered) == after
+    with database() as session:
+        history = OfficialRankingCandidateStore(session).history(run_id="run", branch_id="branch")
+        assert history[-2] == before
+        assert len(OfficialRankingResultStore(session).history(run_id="run", branch_id="branch")) == 2 * len(versions)
+    with pytest.raises(ValueError, match="different request"):
+        runner.execute(command.model_copy(update={"corrections": ()}))
+
+
+@pytest.mark.smoke
+def test_second_correction_failure_rolls_back_first_and_receipt(packages, database):
+    from sqlalchemy import select
+    from beta_engine.infrastructure.db.models import OfficialRankingCommandModel
+
+    runner, command, before, versions = correction_command(packages, database)
+    assert len(command.corrections) > 1
+    damaged = (*command.corrections[:-1], command.corrections[-1].model_copy(
+        update={"previous_fingerprint": "0" * 64}
+    ))
+    with pytest.raises(ValueError, match="extend its source lineage"):
+        runner.execute(command.model_copy(update={"corrections": damaged}))
+    with database() as session:
+        assert OfficialRankingResultStore(session).history(run_id="run", branch_id="branch") == versions
+        assert OfficialRankingCandidateStore(session).history(run_id="run", branch_id="branch")[-1] == before
+        assert len(session.scalars(select(OfficialRankingCommandModel)).all()) == 1
+    assert runner.execute(command).week == command.context.target_week
+
+
+@pytest.mark.parametrize("damage", ["scope", "boundary", "duplicate", "initial", "lifetime"])
+def test_invalid_week_corrections_are_rejected_without_writes(packages, database, damage):
+    runner, command, before, versions = correction_command(packages, database)
+    correction = command.corrections[0]
+    if damage == "scope":
+        correction = correction.model_copy(update={"branch_id": "other"})
+    elif damage == "boundary":
+        correction = correction.model_copy(update={"effective_week": before.week})
+    elif damage == "initial":
+        correction = correction.model_copy(update={"previous_fingerprint": None})
+    elif damage == "lifetime":
+        correction = correction.model_copy(update={"result": correction.result.model_copy(update={"validity_weeks": 62})})
+    corrections = (correction, correction) if damage == "duplicate" else (correction,)
+    with pytest.raises(ValueError):
+        runner.execute(command.model_copy(update={"corrections": corrections}))
+    with database() as session:
+        assert OfficialRankingResultStore(session).history(run_id="run", branch_id="branch") == versions
+        assert OfficialRankingCandidateStore(session).history(run_id="run", branch_id="branch")[-1] == before
+
+
+@pytest.mark.smoke
+def test_empty_corrections_keep_legacy_command_fingerprint(packages, database):
+    import hashlib
+    import json
+
+    command = ranking_command(packages, database)
+    legacy = command.model_dump(mode="json", exclude={"corrections"})
+    legacy["context"]["players"].sort(key=lambda p: p["player_id"])
+    legacy["tournaments"].sort(key=lambda t: t["edition_id"])
+    expected = hashlib.sha256(json.dumps(legacy, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    assert command.fingerprint == expected

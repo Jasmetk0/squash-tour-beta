@@ -75,3 +75,32 @@ Real SQLite tests cover delayed visibility, replay within one transaction, later
 outer failure, caught calculation failure preserving unrelated outer work, and
 rejection of absent/ORM-only transactions. This is a composable ranking stage,
 not yet a production Week Transition orchestrator or public ranking publication.
+
+## Corrections at the target boundary
+
+`RankingWeekCommand.corrections` is an optional tuple of `RankingResultVersion`
+records for previously ingested Edition/player results. Each correction must be
+scoped to the command, effective exactly at its target week, and reference a prior
+version of a result first published in an earlier week. Duplicate Edition/player
+corrections and simultaneous initial ingestion/correction of one Edition are
+rejected. The source store verifies the predecessor fingerprint and preserves
+original completion, first-publication and validity timing.
+
+Corrections are appended after initial tournament ingestion and before historical
+source resolution, within the same savepoint/outer transaction as candidate and
+receipt. A failed correction rolls back the entire batch; an accepted correction
+changes the new candidate without rewriting earlier source versions or candidates.
+There is no extension of result lifetime. This also supports correction-only weeks.
+
+Correction ordering is canonicalized by Edition/player in the command fingerprint.
+Empty corrections are omitted from its hash payload to preserve replay of receipts
+created before this field existed. Nonempty corrections participate in the request
+hash, so changed corrections cannot reuse the same command ID.
+
+Inputs remain explicitly resolved, trusted application inputs: this is not an
+Admin editing endpoint or an automatic importer of changed legacy award files.
+Correction authorization/provenance resolution and full Week Transition publication
+remain the caller's responsibility. Tests use real persisted synthetic tournament
+packages and SQLite, including multi-result rollback, old-history preservation,
+canonical replay, legacy hash compatibility, invalid scope/boundary and attempts
+to change original validity.

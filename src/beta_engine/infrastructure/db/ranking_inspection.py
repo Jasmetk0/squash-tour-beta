@@ -59,3 +59,31 @@ def inspect_ranking_history(
             for s in snapshots
         ),
     )
+
+
+def inspect_ranking_sources(session: Session, *, run_id: str, branch_id: str, week):
+    from beta_engine.application.ranking_inspection import RankingCandidateSources, RankingSourceDetail
+    from beta_engine.infrastructure.db.ranking_result_history import OfficialRankingResultStore
+
+    history = inspect_ranking_history(session, run_id=run_id, branch_id=branch_id)
+    candidate = next((c for c in history.candidates if c.snapshot.week == week), None)
+    if candidate is None:
+        raise KeyError("Ranking candidate week not found")
+    latest = {}
+    for version in OfficialRankingResultStore(session).history(run_id=run_id, branch_id=branch_id):
+        if version.effective_week.ordinal <= week.ordinal:
+            latest[(version.result.edition_id, version.result.player_id)] = version
+    counted = {
+        (r.edition_id, r.player_id): r
+        for row in candidate.snapshot.rows for r in row.counted_results
+    }
+    for key, result in counted.items():
+        if key not in latest or latest[key].result != result:
+            raise ValueError("Candidate counted result has missing or inconsistent source history")
+    return RankingCandidateSources(
+        run_id=run_id, branch_id=branch_id, week=week,
+        candidate_fingerprint=candidate.fingerprint,
+        sources=tuple(RankingSourceDetail(
+            version=latest[key], fingerprint=latest[key].fingerprint, counted=key in counted,
+        ) for key in sorted(latest)),
+    )

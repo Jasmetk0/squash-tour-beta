@@ -13,3 +13,12 @@ export type RankingCandidateHistory = {
     }
   }[]
 }
+
+export type RankingCandidateSources = {
+  run_id: string; branch_id: string; week: CandidateWeek
+  candidate_fingerprint: string; publication_status: 'candidate_only'
+  sources: { fingerprint: string; counted: boolean; version: {
+    run_id: string; branch_id: string; effective_week: CandidateWeek; previous_fingerprint: string | null
+    result: { edition_id: string; player_id: string; source_fingerprint: string; qualification_points: number; main_points: number; first_publication_week: CandidateWeek; validity_weeks: number; ranked: boolean }
+  } }[]
+}

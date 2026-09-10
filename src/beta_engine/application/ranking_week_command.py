@@ -10,12 +10,14 @@ from beta_engine.application.ranking_tournament_ingestion import (
     TournamentRankingBinding,
 )
 from beta_engine.domain.rankings.official import FrozenInput
+from beta_engine.domain.rankings.result_history import RankingResultVersion
 
 
 class RankingWeekCommand(FrozenInput):
     command_id: str = Field(min_length=1, max_length=128)
     context: RankingTransitionContext
     tournaments: tuple[TournamentRankingBinding, ...]
+    corrections: tuple[RankingResultVersion, ...] = ()
 
     @model_validator(mode="after")
     def validate_batch(self):
@@ -43,11 +45,35 @@ class RankingWeekCommand(FrozenInput):
                 or tournament.completed_week.ordinal > context.completed_week.ordinal
             ):
                 raise ValueError("Tournament lies outside ranking command boundary")
+        keys = [(v.result.edition_id, v.result.player_id) for v in self.corrections]
+        if len(set(keys)) != len(keys):
+            raise ValueError("Duplicate result correction in ranking command")
+        for correction in self.corrections:
+            if (correction.run_id, correction.branch_id) != (
+                context.run_id, context.branch_id
+            ):
+                raise ValueError("Correction and ranking command scope mismatch")
+            if (
+                correction.effective_week != context.target_week
+                or correction.result.first_publication_week.ordinal
+                >= context.target_week.ordinal
+                or correction.previous_fingerprint is None
+            ):
+                raise ValueError("Correction must update an earlier result at the target boundary")
+            if correction.result.edition_id in editions:
+                raise ValueError("Cannot ingest and correct the same Edition in one command")
         return self
 
     @property
     def fingerprint(self):
         payload = self.model_dump(mode="json")
+        if payload["corrections"]:
+            payload["corrections"].sort(
+                key=lambda v: (v["result"]["edition_id"], v["result"]["player_id"])
+            )
+        else:
+            # Preserve receipt compatibility with commands persisted before corrections.
+            del payload["corrections"]
         payload["context"]["players"].sort(key=lambda p: p["player_id"])
         payload["tournaments"].sort(key=lambda t: t["edition_id"])
         return hashlib.sha256(

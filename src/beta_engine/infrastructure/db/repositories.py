@@ -86,6 +86,7 @@ from beta_engine.infrastructure.db.models import (
 )
 from beta_engine.infrastructure.db.saved_revision_rankings import (
     RANKING_COMPONENT_KEY, capture_saved_ranking_component, load_saved_ranking_component,
+    restore_saved_ranking_component,
 )
 from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_EVENT_LEGACY_STATE,
@@ -2440,7 +2441,7 @@ class SimulationPersistenceRepository:
                         "Run has no coherent current Viewer Branch"
                     )
 
-                # These preparation tables are not captured by current Saved Revisions.
+                # Legacy empty revisions cannot protect live ranking preparation.
                 # Check row presence, including malformed/partial histories, without
                 # requiring a valid ranking chain or supported ranking fork ancestry.
                 has_uncaptured_ranking = any(
@@ -2455,7 +2456,7 @@ class SimulationPersistenceRepository:
                         OfficialRankingResultVersionModel,
                     )
                 )
-                if has_uncaptured_ranking:
+                if has_uncaptured_ranking and RANKING_COMPONENT_KEY not in state.saved_revision.payload.get("content", {}):
                     raise SavedRevisionRestoreUnsupportedError(
                         "restore is blocked because the Saved Revision does not yet "
                         "capture the complete ranking preparation state"
@@ -2485,8 +2486,10 @@ class SimulationPersistenceRepository:
                     not in supported_payload_schemas
                     or target_revision.payload_schema_version
                     not in supported_payload_schemas
-                    or current_content != {}
-                    or target_content != {}
+                    or not isinstance(current_content, dict)
+                    or not isinstance(target_content, dict)
+                    or set(current_content) - {RANKING_COMPONENT_KEY}
+                    or set(target_content) - {RANKING_COMPONENT_KEY}
                     or has_unrestorable_run_state
                 ):
                     raise SavedRevisionRestoreUnsupportedError(
@@ -2525,6 +2528,18 @@ class SimulationPersistenceRepository:
                     raise SavedRevisionRestoreIdentityConflictError(
                         "generated restore identity is already in use"
                     )
+
+                if RANKING_COMPONENT_KEY in current_content or RANKING_COMPONENT_KEY in target_content:
+                    try:
+                        restore_saved_ranking_component(
+                            session, current_payload=state.saved_revision.payload,
+                            target_payload=target_revision.payload, run_id=run_id,
+                            branch_id=branch_id, command_id=restore_saved_revision_id,
+                        )
+                    except ValueError as exc:
+                        raise SavedRevisionRestoreUnsupportedError(
+                            f"Cannot restore ranking preparation: {exc}"
+                        ) from exc
 
                 payload = viewer_branch_saved_revision_payload(
                     base_payload=target_revision.payload,

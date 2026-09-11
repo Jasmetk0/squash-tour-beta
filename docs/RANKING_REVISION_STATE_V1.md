@@ -131,3 +131,28 @@ This adds ranking capture to the existing Save command. It does not yet add a se
 ranking-only Working Draft change or allow a clean draft to be saved just because
 ranking preparation changed. Full-world revision completeness, ranking restoration,
 branch remapping and weekly publication remain integration work.
+
+## Saved Revision ranking recovery integration
+
+The public confirmed restore now supports revisions whose content is empty or contains
+only `ranking_preparation`, provided the existing guards find no other sporting or
+legacy-backed Run state. This supersedes the blanket rejection of ranking-bearing
+content described in earlier sections. It does not claim complete world recovery.
+
+Live ranking must equal the verified current Saved Revision's ranking component.
+Unsaved advances, missing data, malformed history and legacy uncaptured ranking rows
+reject recovery without writes. The target component is loaded from the verified,
+reachable Saved Revision; an empty legacy target means empty ranking state. No branch
+identity remapping is performed. Existing empty-fork restoration remains unchanged.
+
+Ranking replacement and its full predecessor checkpoint participate in the same
+outer transaction as the new linear Saved Revision, pre-restore revision checkpoint,
+audit, draft and Viewer change. Later failures roll back all of them. The immutable
+previous revisions remain reachable, so a subsequent explicit restore can return to
+a newer saved ranking after restoring an older one. Ranking recovery does not advance
+the simulation clock or publish ranking candidates. Independent ranking Save/draft
+integration and full sporting-world restoration remain unfinished.
+
+Tests cover older/empty ranking targets, forward recovery after reopening SQLite,
+unsaved-state rejection, failures during ranking receipt and revision audit insertion,
+whole-database rollback, and the real HTTP restore endpoint.

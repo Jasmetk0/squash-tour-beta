@@ -5,9 +5,10 @@ historical sources and owns the transaction around this and other components.
 """
 
 from typing import Literal, Protocol
+from pydantic import model_validator
 
 from beta_engine.domain.rankings.official import (
-    FrozenInput,
+    WithDisciplinaryZeros,
     OfficialRankingPlayer,
     OfficialRankingPolicy,
     OfficialRankingResult,
@@ -27,7 +28,7 @@ class RankingCandidateStore(Protocol):
     ) -> OfficialRankingSnapshot: ...
 
 
-class RankingTransitionContext(FrozenInput):
+class RankingTransitionContext(WithDisciplinaryZeros):
     run_id: str
     branch_id: str
     completed_week: RankingWeek
@@ -36,7 +37,14 @@ class RankingTransitionContext(FrozenInput):
     policy: OfficialRankingPolicy
     players: tuple[OfficialRankingPlayer, ...]
     # Required acknowledgement of this calculator's supported scope.
-    discipline: Literal["none"]
+    discipline: Literal["none", "resolved_zeros"]
+
+    @model_validator(mode="after")
+    def acknowledge_discipline(self):
+        if self.disciplinary_zeros and self.discipline != "resolved_zeros":
+            raise ValueError("Disciplinary zeros require explicit resolved_zeros mode")
+        return self
+
 
 
 class ResolvedRankingTransition(RankingTransitionContext):
@@ -103,6 +111,6 @@ def stage_official_ranking_transition(
         policy=request.policy,
         players=request.players,
         results=request.results,
-        previous=previous,
+        previous=previous, disciplinary_zeros=request.disciplinary_zeros,
     )
     return store.append(candidate)

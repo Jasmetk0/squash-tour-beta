@@ -162,3 +162,13 @@ it('shows verified tie reasons with historical completion weeks', async () => {
   await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
   expect(await screen.findByText(/player-a precedes 2. player-b at 120 points/)).toHaveTextContent('Newer completion at result slot 2: 2001/02 · Week 1 versus 2000/01 · Week 61')
 })
+
+it('shows mandatory zero slots separately from tournament awards', async () => {
+  const data = structuredClone(populated)
+  data.candidates[0].snapshot.rows[0].disciplinary_zeros = [{zero_id:'sanction-1',run_id:'run',branch_id:'branch',player_id:'player-a',source_fingerprint:'source',effective_week:{season_index:0,week:2},duration_weeks:3}]
+  fetchHistory.mockResolvedValue(data)
+  show('/0/2')
+  await userEvent.click(await screen.findByText('1 active disciplinary zeros'))
+  expect(screen.getByText('14 tournament result slots available.')).toBeVisible()
+  expect(screen.getByText('sanction-1: effective 2000/01 · Week 2 for 3 weeks.')).toBeVisible()
+})

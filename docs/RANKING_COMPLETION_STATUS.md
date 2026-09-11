@@ -1,6 +1,6 @@
 # Ranking completion evidence
 
-Status after independent ranking Save and historical tie explanations (follow-up to #712). Rankings are **not
+Status after resolved disciplinary zero support (follow-up to #713). Rankings are **not
 complete**. This is an implementation checklist, not a new product contract. Master
 v64 and subsequent explicit decisions remain authoritative; open product questions
 must not receive invented defaults.
@@ -13,7 +13,7 @@ must not receive invented defaults.
 | Inspection | Admin candidate, source and input APIs/UI, with verified equal-point tie explanations | Public historically faithful Viewer ranking path |
 | Recovery | Versioned bundles, Save capture, independent explicit Save, guarded saved-component restore | Complete sporting-world snapshot/recovery and ranking-bearing forks |
 | Season Closing Ranking | Master 18.5.1 requires a separate archived closing ranking including Week 61 under outgoing policy | Dedicated calculation, persistence, closure marker and season summary; final season must not create Week 1 of season 51 |
-| Disciplinary changes | Limited calculation explicitly rejects unsupported disciplinary scenarios | Mandatory temporary zero slots and point adjustments, history and policy integration; exact tariff/duration calibration must remain explicit |
+| Disciplinary changes | Explicit resolved zeros reserve Best N slots, expire independently and survive frozen-manifest/revision verification | Sanction issuance/history/resolution and point deductions; exact tariff/duration calibration must remain explicit |
 | Protected Ranking | Master 18.4 defines a separate entry value and versioned case policy | Verify/implement policy snapshots, absence, activation/use and entry integration; unresolved seeding/LL questions are not implicit defaults |
 | Race and downstream consumers | Legacy paths exist but are not proof of completion of the new Official path | Audit and integrate Race, Finals qualification, entries and seeds with authoritative historical snapshots |
 

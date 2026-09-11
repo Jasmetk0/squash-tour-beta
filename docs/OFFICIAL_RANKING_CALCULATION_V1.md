@@ -102,3 +102,10 @@ without complete inputs retain their explicit unavailable state. No active playe
 records, current policy or live tokens substitute for historical inputs. Inspection
 is read-only and neither publishes candidates nor advances time. This feature does
 not complete discipline, PR, season closing or the Week Transition publication path.
+
+## Resolved disciplinary zero extension
+
+Explicit mandatory zeros are now supported through calculation, preparation commands,
+frozen inputs and Admin inspection. See `RANKING_DISCIPLINARY_ZEROS.md`; this supersedes
+the earlier blanket exclusion of mandatory zeros, but not the remaining discipline
+policy, source-history or point-deduction limitations.

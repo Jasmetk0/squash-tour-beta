@@ -46,6 +46,11 @@ export function RankingCandidateInputsPanel({ runId, branchId, week, fingerprint
           <strong>{player.player_id}</strong> · Entry {weekLabel(player.tour_entry_week)} · {player.retired ? 'Retired at this boundary' : 'Not retired at this boundary'}
           <details><summary>Stored tie-break token</summary><p style={{ overflowWrap: 'anywhere' }}>{player.tie_break_token}</p></details>
         </li>)}</ul>}
+        {Boolean(query.data.manifest.disciplinary_zeros?.length) && <>
+          <h4>Resolved disciplinary zero inputs</h4>
+          <p>Each active zero reserves one Best N slot. These are stored inputs, not an automatic sanction decision.</p>
+          <ul>{query.data.manifest.disciplinary_zeros?.map(z => <li key={z.zero_id}>{z.player_id} · {z.zero_id} · Effective {weekLabel(z.effective_week)} for {z.duration_weeks} weeks.<details><summary>Disciplinary source</summary>{z.source_fingerprint}</details></li>)}</ul>
+        </>}
         <h4>Stored result inputs ({query.data.manifest.results.length})</h4>
         {query.data.manifest.results.length === 0 ? <p>No result inputs were supplied.</p> : <ul>{query.data.manifest.results.map(result => <li key={JSON.stringify([result.edition_id, result.player_id])}>
           <strong>{result.player_id} · {result.edition_id}</strong> · Award {result.qualification_points + result.main_points} points · {result.ranked ? 'Ranked result' : 'Unranked result'}

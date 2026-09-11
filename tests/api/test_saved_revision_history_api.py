@@ -433,3 +433,42 @@ def test_saved_revision_restore_api_rejects_uncaptured_ranking(tmp_path) -> None
         assert "ranking preparation" in result["detail"]["message"]
         assert _request("GET", history_url) == before
         assert _request("GET", draft_url) == draft_before
+
+
+def test_saved_revision_restore_api_restores_captured_ranking_to_empty(tmp_path) -> None:
+    from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
+    from beta_engine.domain.rankings.official import OfficialRankingPolicy
+    from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
+    from beta_engine.infrastructure.db.ranking_revision_state import capture_ranking_revision_state
+
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'restore-captured-ranking-api.db'}") as server:
+        run_id, branch_id, initial_id = _create_run(server, display_name="Captured ranking recovery")
+        root = f"{server.base_url}/run-containers/{run_id}"
+        status, fork = _request("POST", f"{root}/branches", {
+            "source_branch_id": branch_id, "source_saved_revision_id": initial_id,
+        })
+        assert status == 201
+        repo = server.app.state.runtime.repository
+        RankingWeekCommandRunner(repo._session_factory).execute(RankingBootstrapCommand(
+            command_id="bootstrap", run_id=run_id, branch_id=branch_id,
+            policy=OfficialRankingPolicy(policy_id="policy"), players=(), discipline="none",
+        ))
+        draft_url = f"{root}/branches/{branch_id}/working-draft"
+        status, staged = _request("PUT", f"{draft_url}/viewer-branch", {
+            "viewer_branch_id": fork["branch_id"], "expected_draft_version": 0,
+        })
+        assert status == 200
+        status, saved = _request("POST", f"{draft_url}/save", {"expected_draft_version": staged["draft_version"]})
+        assert status == 201
+        status, restored = _request("POST", f"{root}/branches/{branch_id}/saved-revisions/{initial_id}/restore", {
+            "expected_head_saved_revision_id": saved["saved_revision"]["revision_id"],
+            "expected_draft_version": saved["working_draft"]["draft_version"],
+            "expected_current_viewer_branch_id": fork["branch_id"], "explicit_confirmation": True,
+        })
+        assert status == 201
+        assert restored["viewer_branch_id"] == branch_id
+        assert restored["safety_checkpoint"]["saved_revision_id"] == saved["saved_revision"]["revision_id"]
+        with repo._session_factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            ranking = capture_ranking_revision_state(session, run_id=run_id, branch_id=branch_id)
+            assert ranking.entries == () and ranking.sources == ()

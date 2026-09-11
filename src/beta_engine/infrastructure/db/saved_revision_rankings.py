@@ -42,3 +42,24 @@ def capture_saved_ranking_component(session: Session, payload: dict, *, run_id: 
         return
     state = capture_ranking_revision_state(session, run_id=run_id, branch_id=branch_id)
     content[RANKING_COMPONENT_KEY] = {"fingerprint": state.fingerprint, "state": state.model_dump(mode="json")}
+
+
+def restore_saved_ranking_component(
+    session: Session, *, current_payload: dict, target_payload: dict,
+    run_id: str, branch_id: str, command_id: str,
+) -> None:
+    """Restore only when live preparation still equals the saved head.
+
+    The enclosing Saved Revision transaction owns validation, writer lock and
+    commit. Its pre-restore checkpoint references the verified current revision.
+    """
+    from beta_engine.infrastructure.db.ranking_state_restore import restore_ranking_revision_state
+
+    empty = RankingRevisionState(run_id=run_id, branch_id=branch_id, entries=(), sources=())
+    current = load_saved_ranking_component(current_payload, run_id=run_id, branch_id=branch_id) or empty
+    target = load_saved_ranking_component(target_payload, run_id=run_id, branch_id=branch_id) or empty
+    restore_ranking_revision_state(
+        session, target.model_dump_json(), expected_fingerprint=target.fingerprint,
+        expected_current_fingerprint=current.fingerprint, command_id=command_id,
+        run_id=run_id, branch_id=branch_id,
+    )

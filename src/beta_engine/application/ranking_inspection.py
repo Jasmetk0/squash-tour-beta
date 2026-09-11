@@ -1,6 +1,7 @@
 """Read-only Admin contracts for unpublished ranking candidates."""
 
 from typing import Literal
+from beta_engine.domain.rankings.tie_explanations import RankingTieExplanation
 
 from beta_engine.domain.rankings.official import FrozenInput, OfficialRankingSnapshot, RankingWeek
 from beta_engine.domain.rankings.result_history import RankingResultVersion
@@ -44,3 +45,4 @@ class RankingCandidateInputs(FrozenInput):
     publication_status: Literal["candidate_only"] = "candidate_only"
     verification_status: Literal["complete_manifest", "legacy_without_manifest"]
     manifest: RankingInputManifest | None
+    tie_explanations: tuple[RankingTieExplanation, ...] = ()

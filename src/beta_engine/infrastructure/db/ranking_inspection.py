@@ -117,9 +117,12 @@ def inspect_ranking_inputs(session: Session, *, run_id: str, branch_id: str, wee
         )
         if verified is not None:
             manifest = verified
+    from beta_engine.domain.rankings.tie_explanations import explain_ranking_ties
+    previous = next((c.snapshot for c in history.candidates if c.snapshot.week.ordinal == week.ordinal - 1), None)
+    explanations = explain_ranking_ties(candidate.snapshot, manifest, previous) if manifest is not None else ()
     return RankingCandidateInputs(
         run_id=run_id, branch_id=branch_id, week=week,
         candidate_fingerprint=candidate.fingerprint,
         verification_status="complete_manifest" if manifest is not None else "legacy_without_manifest",
-        manifest=manifest,
+        manifest=manifest, tie_explanations=explanations,
     )

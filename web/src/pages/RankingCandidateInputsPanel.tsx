@@ -30,6 +30,17 @@ export function RankingCandidateInputsPanel({ runId, branchId, week, fingerprint
       : query.data?.verification_status === 'legacy_without_manifest' ? <p>Legacy candidate: complete calculation inputs were not stored. They cannot be reconstructed from current data.</p>
       : query.data?.manifest && <>
         <p>Verified: stored inputs reproduce this candidate. This does not verify completeness against the entire world.</p>
+        <h4>Why equal-point players are ordered this way</h4>
+        {query.data.tie_explanations === undefined ? <p>Tie explanations are unavailable from this server.</p>
+          : query.data.tie_explanations.length === 0 ? <p>No adjacent players have equal points.</p>
+          : <ul>{query.data.tie_explanations.map(tie => {
+            const reason = { result_profile: 'Counted points at result slot', completion_age: 'Newer completion at result slot', previous_position: 'Previous Official position', stored_token: 'Stored tie-break token' }[tie.reason]
+            const value = (v: number | string | null): string => v === null ? 'None' : tie.reason === 'completion_age' && typeof v === 'number' ? weekLabel({season_index: Math.floor(v / 61), week: v % 61 + 1}) : String(v)
+            return <li key={`${tie.higher_rank}/${tie.lower_rank}`}>
+              {tie.higher_rank}. {tie.higher_player_id} precedes {tie.lower_rank}. {tie.lower_player_id} at {tie.points} points.
+              {' '}{reason}{tie.result_slot === null ? '' : ` ${tie.result_slot}`}: {value(tie.higher_value)} versus {value(tie.lower_value)}.
+            </li>
+          })}</ul>}
         <h4>Stored roster ({query.data.manifest.players.length})</h4>
         {query.data.manifest.players.length === 0 ? <p>The stored roster is empty.</p> : <ul>{query.data.manifest.players.map(player => <li key={player.player_id}>
           <strong>{player.player_id}</strong> · Entry {weekLabel(player.tour_entry_week)} · {player.retired ? 'Retired at this boundary' : 'Not retired at this boundary'}

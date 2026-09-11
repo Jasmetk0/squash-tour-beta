@@ -10,7 +10,7 @@ import hashlib
 import json
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, model_serializer
 
 
 class FrozenInput(BaseModel):
@@ -24,6 +24,30 @@ class RankingWeek(FrozenInput):
     @property
     def ordinal(self) -> int:
         return self.season_index * 61 + self.week - 1
+
+
+class DisciplinaryZero(FrozenInput):
+    zero_id: str = Field(min_length=1)
+    run_id: str = Field(min_length=1)
+    branch_id: str = Field(min_length=1)
+    player_id: str = Field(min_length=1)
+    source_fingerprint: str = Field(min_length=1)
+    effective_week: RankingWeek
+    duration_weeks: int = Field(ge=1)
+
+    def active_at(self, week: RankingWeek) -> bool:
+        return 0 <= week.ordinal - self.effective_week.ordinal < self.duration_weeks
+
+
+class WithDisciplinaryZeros(FrozenInput):
+    disciplinary_zeros: tuple[DisciplinaryZero, ...] = ()
+
+    @model_serializer(mode="wrap")
+    def serialize_zeros(self, handler):
+        data = handler(self)
+        if not self.disciplinary_zeros:
+            data.pop("disciplinary_zeros", None)
+        return data
 
 
 class OfficialRankingPolicy(FrozenInput):
@@ -91,7 +115,7 @@ class OfficialRankingResult(FrozenInput):
         return self.qualification_points + self.main_points
 
 
-class OfficialRankingRow(FrozenInput):
+class OfficialRankingRow(WithDisciplinaryZeros):
     rank: int = Field(ge=1)
     player_id: str = Field(min_length=1)
     points: int = Field(ge=0)
@@ -99,6 +123,10 @@ class OfficialRankingRow(FrozenInput):
 
     @model_validator(mode="after")
     def validate_counted_results(self) -> OfficialRankingRow:
+        if any(z.player_id != self.player_id for z in self.disciplinary_zeros):
+            raise ValueError("Disciplinary zero belongs to another player")
+        if self.disciplinary_zeros != tuple(sorted(self.disciplinary_zeros, key=lambda z: z.zero_id)) or len({z.zero_id for z in self.disciplinary_zeros}) != len(self.disciplinary_zeros):
+            raise ValueError("Disciplinary zeros must have unique canonical identities")
         if any(r.player_id != self.player_id for r in self.counted_results):
             raise ValueError("Counted result belongs to another player")
         editions = [r.edition_id for r in self.counted_results]
@@ -130,8 +158,14 @@ class OfficialRankingSnapshot(FrozenInput):
             raise ValueError("Duplicate ranking player")
         if any(a.points < b.points for a, b in zip(self.rows, self.rows[1:])):
             raise ValueError("Ranking points must be descending")
+        zero_ids = [z.zero_id for row in self.rows for z in row.disciplinary_zeros]
+        if len(set(zero_ids)) != len(zero_ids):
+            raise ValueError("Duplicate disciplinary zero identity across ranking rows")
         for row in self.rows:
-            if len(row.counted_results) > self.policy.best_n:
+            for zero in row.disciplinary_zeros:
+                if (zero.run_id, zero.branch_id) != (self.run_id, self.branch_id) or not zero.active_at(self.week):
+                    raise ValueError("Disciplinary zero has invalid scope or effective week")
+            if len(row.counted_results) > max(0, self.policy.best_n - len(row.disciplinary_zeros)):
                 raise ValueError("Counted results exceed Best N")
             if row.counted_results != tuple(
                 sorted(
@@ -211,13 +245,14 @@ def calculate_official_ranking(
     players: tuple[OfficialRankingPlayer, ...],
     results: tuple[OfficialRankingResult, ...],
     previous: OfficialRankingSnapshot | None = None,
+    disciplinary_zeros: tuple[DisciplinaryZero, ...] = (),
 ) -> OfficialRankingSnapshot:
     """Calculate an immutable candidate; caller validates/commits the transition.
 
     Previous must be the immediately preceding week in the same scope. A missing
     previous is for explicit bootstrap only, not permission to skip publication.
     Tokens must already be persisted and unique; calculation draws no randomness.
-    Disciplinary changes and Season Closing Ranking are outside this calculator.
+    Resolved mandatory zeros are supported; point deductions and Season Closing Ranking are not.
     """
     if previous is not None:
         # model_copy(update=...) can bypass Pydantic validation. Never propagate
@@ -246,6 +281,13 @@ def calculate_official_ranking(
     if any(r.player_id not in known_players for r in results):
         raise ValueError("Result references an unknown player")
 
+    zeros = tuple(DisciplinaryZero.model_validate_json(z.model_dump_json()) for z in disciplinary_zeros)
+    if len({z.zero_id for z in zeros}) != len(zeros):
+        raise ValueError("Duplicate disciplinary zero identity")
+    if any((z.run_id, z.branch_id) != (run_id, branch_id) or z.player_id not in known_players for z in zeros):
+        raise ValueError("Disciplinary zero has unknown player or mismatched scope")
+    active_zeros = {p: tuple(sorted((z for z in zeros if z.player_id == p and z.active_at(week)), key=lambda z: z.zero_id)) for p in known_players}
+
     previous_ranks = (
         {row.player_id: row.rank for row in previous.rows} if previous else {}
     )
@@ -270,7 +312,7 @@ def calculate_official_ranking(
                     -r.completed_week.ordinal,
                     r.edition_id,
                 ),
-            )[: policy.best_n]
+            )[: max(0, policy.best_n - len(active_zeros[player.player_id]))]
         )
         points = sum(r.points for r in counted)
         key = ranking_order_key(player, counted, previous_ranks, policy.best_n)
@@ -284,6 +326,7 @@ def calculate_official_ranking(
         previous_fingerprint=previous.fingerprint if previous else None,
         input_fingerprint=_fingerprint(
             {
+                **({"disciplinary_zeros": [z.model_dump(mode="json") for z in sorted(zeros, key=lambda z: z.zero_id)]} if zeros else {}),
                 "players": [
                     p.model_dump(mode="json")
                     for p in sorted(players, key=lambda p: p.player_id)
@@ -296,7 +339,7 @@ def calculate_official_ranking(
         ),
         rows=tuple(
             OfficialRankingRow(
-                rank=i, player_id=pid, points=points, counted_results=counted
+                rank=i, player_id=pid, points=points, counted_results=counted, disciplinary_zeros=active_zeros[pid]
             )
             for i, (_, pid, points, counted) in enumerate(candidates, start=1)
         ),

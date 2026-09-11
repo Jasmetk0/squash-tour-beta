@@ -7,14 +7,14 @@ from typing import Literal
 from pydantic import Field, model_validator
 
 from beta_engine.domain.rankings.official import (
-    FrozenInput,
+    WithDisciplinaryZeros,
     OfficialRankingPlayer,
     OfficialRankingPolicy,
     RankingWeek,
 )
 
 
-class RankingBootstrapCommand(FrozenInput):
+class RankingBootstrapCommand(WithDisciplinaryZeros):
     kind: Literal["initial_ranking.v1"] = "initial_ranking.v1"
     command_id: str = Field(min_length=1, max_length=128)
     run_id: str = Field(min_length=1)
@@ -22,7 +22,14 @@ class RankingBootstrapCommand(FrozenInput):
     target_week: RankingWeek = RankingWeek(season_index=0, week=1)
     policy: OfficialRankingPolicy
     players: tuple[OfficialRankingPlayer, ...]
-    discipline: Literal["none"]
+    discipline: Literal["none", "resolved_zeros"]
+
+    @model_validator(mode="after")
+    def acknowledge_discipline(self):
+        if self.disciplinary_zeros and self.discipline != "resolved_zeros":
+            raise ValueError("Disciplinary zeros require explicit resolved_zeros mode")
+        return self
+
 
     @model_validator(mode="after")
     def require_initial_week(self):
@@ -33,6 +40,8 @@ class RankingBootstrapCommand(FrozenInput):
     @property
     def fingerprint(self) -> str:
         payload = self.model_dump(mode="json")
+        if "disciplinary_zeros" in payload:
+            payload["disciplinary_zeros"].sort(key=lambda z: z["zero_id"])
         payload["players"].sort(key=lambda p: p["player_id"])
         return hashlib.sha256(
             json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()

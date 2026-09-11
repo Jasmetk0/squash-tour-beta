@@ -105,7 +105,7 @@ def stage_ranking_week_command(
                 calculate_official_ranking(
                     run_id=command.run_id, branch_id=command.branch_id,
                     week=command.target_week, policy=command.policy,
-                    players=command.players, results=(),
+                    players=command.players, results=(), disciplinary_zeros=command.disciplinary_zeros,
                 ),
                 bootstrap=True,
             )
@@ -122,6 +122,7 @@ def stage_ranking_week_command(
                 sources.append(correction)
             snapshot = stage_official_ranking_from_history(candidates, sources, context)
         manifest = RankingInputManifest(
+            disciplinary_zeros=tuple(sorted(context.disciplinary_zeros, key=lambda z: z.zero_id)),
             players=tuple(sorted(context.players, key=lambda p: p.player_id)),
             results=() if isinstance(command, RankingBootstrapCommand) else sources.resolve(
                 run_id=context.run_id, branch_id=context.branch_id, week=context.target_week,

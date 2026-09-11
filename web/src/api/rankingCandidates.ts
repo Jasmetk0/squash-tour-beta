@@ -1,3 +1,7 @@
+export type RankingDisciplinaryZero = {
+  zero_id: string; run_id: string; branch_id: string; player_id: string; source_fingerprint: string
+  effective_week: CandidateWeek; duration_weeks: number
+}
 export type CandidateWeek = { season_index: number; week: number }
 export type RankingCandidateHistory = {
   run_id: string; branch_id: string; publication_status: 'candidate_only'
@@ -6,7 +10,7 @@ export type RankingCandidateHistory = {
     snapshot: {
       run_id: string; branch_id: string; week: CandidateWeek
       policy: { policy_id: string; best_n: number }
-      rows: { rank: number; player_id: string; points: number; counted_results: {
+      rows: { rank: number; player_id: string; points: number; disciplinary_zeros?: RankingDisciplinaryZero[]; counted_results: {
         edition_id: string; qualification_points: number; main_points: number
         completed_week: CandidateWeek; first_publication_week: CandidateWeek; validity_weeks: number
       }[] }[]
@@ -33,6 +37,7 @@ export type RankingCandidateInputs = {
   }[]
   verification_status: 'complete_manifest' | 'legacy_without_manifest'
   manifest: null | {
+    disciplinary_zeros?: RankingDisciplinaryZero[]
     players: { player_id: string; tie_break_token: string; tour_entry_week: CandidateWeek; retired: boolean }[]
     results: RankingCandidateSources['sources'][number]['version']['result'][]
   }

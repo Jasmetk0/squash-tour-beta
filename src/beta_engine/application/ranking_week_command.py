@@ -74,6 +74,8 @@ class RankingWeekCommand(FrozenInput):
         else:
             # Preserve receipt compatibility with commands persisted before corrections.
             del payload["corrections"]
+        if "disciplinary_zeros" in payload["context"]:
+            payload["context"]["disciplinary_zeros"].sort(key=lambda z: z["zero_id"])
         payload["context"]["players"].sort(key=lambda p: p["player_id"])
         payload["tournaments"].sort(key=lambda t: t["edition_id"])
         return hashlib.sha256(

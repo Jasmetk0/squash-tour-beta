@@ -156,3 +156,20 @@ integration and full sporting-world restoration remain unfinished.
 Tests cover older/empty ranking targets, forward recovery after reopening SQLite,
 unsaved-state rejection, failures during ranking receipt and revision audit insertion,
 whole-database rollback, and the real HTTP restore endpoint.
+
+## Independent ranking Save
+
+Admin ranking preparation can now be saved directly from a clean Working Draft,
+without staging a Viewer Branch change. The explicit command accepts the reviewed
+ranking fingerprint and draft version. Under the same writer reservation it checks
+both, captures ranking, rejects unchanged content, writes a `ranking_preparation`
+Saved Revision and audit, and advances the clean draft base. It preserves the Run's
+current Viewer selection even if this differs from the editing Branch's old revision.
+A pending draft change must be resolved first; it is never silently discarded.
+
+`GET .../ranking-candidates/save/preview` returns a read-only consistent inspection
+of the fingerprint, draft version and availability. `POST .../ranking-candidates/save`
+performs the explicit save. Admin's ranking page offers review, Save and refresh;
+a failed Save refreshes the review without automatically retrying the mutation.
+Duplicate/stale requests conflict without writes. This is recoverable preparation,
+not Official ranking publication or a clock transition.

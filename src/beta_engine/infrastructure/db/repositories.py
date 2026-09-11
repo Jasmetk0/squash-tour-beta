@@ -2733,6 +2733,27 @@ class SimulationPersistenceRepository:
             audit_event=audit,
         )
 
+    def preview_ranking_save(self, *, run_id: str, branch_id: str) -> dict:
+        from beta_engine.infrastructure.db.ranking_revision_state import capture_ranking_revision_state
+        with self._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
+            draft = self._viewer_branch_working_draft_in_session(session=session, run_id=run_id, branch_id=branch_id)
+            ranking = capture_ranking_revision_state(session, run_id=run_id, branch_id=branch_id)
+            state = self._validated_branch_revision_state_in_session(session=session, branch=session.get(RunBranchModel, branch_id))
+            saved = load_saved_ranking_component(state.saved_revision.payload, run_id=run_id, branch_id=branch_id)
+            changed = bool(ranking.entries or ranking.sources) if saved is None else saved.fingerprint != ranking.fingerprint
+            return {
+                "run_id": run_id, "branch_id": branch_id,
+                "ranking_fingerprint": ranking.fingerprint,
+                "saved_head_revision_id": state.saved_head_revision_id,
+                "draft_version": draft.draft_version,
+                "has_unsaved_changes": changed,
+                "can_save": changed and draft.status == CLEAN_WORKING_DRAFT_STATUS
+                    and not session.get(RunContainerModel, run_id).read_only
+                    and not session.get(RunBranchModel, branch_id).read_only
+                    and session.get(RunBranchModel, branch_id).status == "active",
+            }
+
     def save_viewer_branch_selection_atomically(
         self,
         *,
@@ -2741,9 +2762,12 @@ class SimulationPersistenceRepository:
         expected_draft_version: int,
         revision_id: str,
         audit_event_id: str,
+        expected_ranking_fingerprint: str | None = None,
     ) -> ViewerBranchSaveResult:
         """Commit one dirty draft as revision, audit, Viewer pointer, and clean draft."""
 
+        ranking_only = expected_ranking_fingerprint is not None
+        revision_kind = "ranking_preparation" if ranking_only else VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND
         previous_current_viewer_id = ""
         target_viewer_id = ""
         try:
@@ -2767,11 +2791,13 @@ class SimulationPersistenceRepository:
                         f"expected draft version {expected_draft_version}, "
                         f"found {draft.draft_version}"
                     )
-                if not draft.can_save:
+                if ranking_only and draft.status != CLEAN_WORKING_DRAFT_STATUS:
+                    raise WorkingDraftConflictError("Resolve the pending Working Draft before saving ranking separately")
+                if not ranking_only and not draft.can_save:
                     raise WorkingDraftConflictError(
                         "Working Draft is clean and has nothing to save"
                     )
-                target_viewer_id = draft.proposed_viewer_branch_id
+                target_viewer_id = draft.current_viewer_branch_id if ranking_only else draft.proposed_viewer_branch_id
                 target = session.get(RunBranchModel, target_viewer_id)
                 if target is None or target.run_id != run_id:
                     raise WorkingDraftConflictError(
@@ -2800,7 +2826,7 @@ class SimulationPersistenceRepository:
                     saved_viewer_id = saved_viewer_branch_id(
                         state.saved_revision.payload
                     )
-                    parsed_target_id = viewer_branch_id_from_changes(
+                    parsed_target_id = target_viewer_id if ranking_only else viewer_branch_id_from_changes(
                         state.working_draft.changes
                     )
                 except (BranchRevisionStateConflictError, ValueError) as exc:
@@ -2809,7 +2835,7 @@ class SimulationPersistenceRepository:
                     raise WorkingDraftConflictError(
                         "pending Viewer Branch is inconsistent"
                     )
-                if saved_viewer_id == target_viewer_id:
+                if not ranking_only and saved_viewer_id == target_viewer_id:
                     raise WorkingDraftConflictError(
                         "Working Draft contains no effective Viewer Branch change"
                     )
@@ -2842,6 +2868,17 @@ class SimulationPersistenceRepository:
                     previous_viewer_branch_id=saved_viewer_id,
                     viewer_branch_id=target_viewer_id,
                 )
+                if ranking_only:
+                    component = payload["content"].get(RANKING_COMPONENT_KEY)
+                    if component is None or component["fingerprint"] != expected_ranking_fingerprint:
+                        raise WorkingDraftConflictError("Ranking preparation changed since preview")
+                    previous_component = state.saved_revision.payload["content"].get(RANKING_COMPONENT_KEY)
+                    if previous_component == component:
+                        raise WorkingDraftConflictError("Ranking preparation is already saved")
+                    summary = {
+                        "kind": "ranking_preparation", "summary": "Saved ranking preparation",
+                        "ranking_fingerprint": component["fingerprint"],
+                    }
                 sequence = state.saved_revision.sequence + 1
                 content_hash = saved_revision_content_hash(
                     revision_id=revision_id,
@@ -2849,7 +2886,7 @@ class SimulationPersistenceRepository:
                     branch_id=branch_id,
                     sequence=sequence,
                     parent_revision_id=state.saved_revision.revision_id,
-                    kind=VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND,
+                    kind=revision_kind,
                     payload_schema_version=(
                         RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION
                     ),
@@ -2891,7 +2928,7 @@ class SimulationPersistenceRepository:
                         branch_id=branch_id,
                         sequence=sequence,
                         parent_revision_id=state.saved_revision.revision_id,
-                        kind=VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND,
+                        kind=revision_kind,
                         payload_schema_version=(
                             RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION
                         ),

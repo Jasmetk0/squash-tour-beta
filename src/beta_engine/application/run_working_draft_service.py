@@ -78,3 +78,18 @@ class RunWorkingDraftService:
             revision_id=revision_id,
             audit_event_id=audit_event_id,
         )
+
+    def save_ranking(
+        self, *, run_id: str, branch_id: str, expected_draft_version: int,
+        expected_ranking_fingerprint: str,
+    ) -> ViewerBranchSaveResult:
+        if not isinstance(expected_ranking_fingerprint, str) or len(expected_ranking_fingerprint) != 64 or any(
+            c not in "0123456789abcdef" for c in expected_ranking_fingerprint
+        ):
+            raise ValueError("Expected ranking fingerprint must be SHA-256")
+        return self.repository.save_viewer_branch_selection_atomically(
+            run_id=run_id, branch_id=branch_id, expected_draft_version=expected_draft_version,
+            expected_ranking_fingerprint=expected_ranking_fingerprint,
+            revision_id=_validated_entity_id(self.id_factory("saved-revision"), kind="saved revision"),
+            audit_event_id=_validated_entity_id(self.id_factory("revision-audit-event"), kind="revision audit event"),
+        )

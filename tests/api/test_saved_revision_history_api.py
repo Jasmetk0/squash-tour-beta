@@ -472,3 +472,27 @@ def test_saved_revision_restore_api_restores_captured_ranking_to_empty(tmp_path)
             session.execute(text("BEGIN IMMEDIATE"))
             ranking = capture_ranking_revision_state(session, run_id=run_id, branch_id=branch_id)
             assert ranking.entries == () and ranking.sources == ()
+
+
+def test_independent_ranking_save_api(tmp_path) -> None:
+    from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
+    from beta_engine.domain.rankings.official import OfficialRankingPolicy
+    from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'independent-ranking-api.db'}") as server:
+        run_id, branch_id, initial_id = _create_run(server, display_name='Independent ranking Save')
+        repo = server.app.state.runtime.repository
+        RankingWeekCommandRunner(repo._session_factory).execute(RankingBootstrapCommand(
+            command_id='bootstrap', run_id=run_id, branch_id=branch_id,
+            policy=OfficialRankingPolicy(policy_id='policy'), players=(), discipline='none',
+        ))
+        root = f'{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/ranking-candidates'
+        status, preview = _request('GET', f'{root}/save/preview')
+        assert status == 200 and preview['can_save']
+        body = dict(expected_draft_version=preview['draft_version'], expected_ranking_fingerprint=preview['ranking_fingerprint'])
+        status, result = _request('POST', f'{root}/save', body)
+        assert status == 201
+        assert result['saved_revision']['kind'] == 'ranking_preparation'
+        assert result['saved_revision']['parent_revision_id'] == initial_id
+        assert repo.get_run_container(run_id=run_id).viewer_branch_id == branch_id
+        assert _request('POST', f'{root}/save', body)[0] == 409
+        assert _request('GET', f'{root}/save/preview')[1]['can_save'] is False

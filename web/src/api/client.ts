@@ -1344,3 +1344,18 @@ export async function getRankingCandidateInputs(runId: string, branchId: string,
   }
   return data
 }
+
+export interface RankingSavePreview {
+  run_id: string; branch_id: string; ranking_fingerprint: string; saved_head_revision_id: string;
+  draft_version: number; has_unsaved_changes: boolean; can_save: boolean;
+}
+export async function previewRankingSave(runId: string, branchId: string): Promise<RankingSavePreview> {
+  const data = await request<RankingSavePreview>(`/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/ranking-candidates/save/preview`)
+  if (data.run_id !== runId || data.branch_id !== branchId) throw new Error('Ranking Save scope mismatch.')
+  return data
+}
+export async function saveRankingPreparation(runId: string, branchId: string, preview: RankingSavePreview): Promise<unknown> {
+  return request(`/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/ranking-candidates/save`, {
+    method: 'POST', body: JSON.stringify({ expected_draft_version: preview.draft_version, expected_ranking_fingerprint: preview.ranking_fingerprint })
+  })
+}

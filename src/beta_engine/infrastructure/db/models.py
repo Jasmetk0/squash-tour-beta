@@ -80,6 +80,22 @@ class OfficialRankingResultVersionModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class OfficialRankingZeroVersionModel(Base):
+    """Immutable source revisions for scoped historical ranking calculation."""
+
+    __tablename__ = "official_ranking_zero_versions"
+    __table_args__ = (
+        CheckConstraint("effective_ordinal >= 0 AND effective_ordinal < 3050", name="ck_ranking_zero_week"),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    zero_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    effective_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+
 class SimulationRunModel(Base):
     __tablename__ = "simulation_runs"
 

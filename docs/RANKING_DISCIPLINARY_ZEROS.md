@@ -18,20 +18,57 @@ the existing profile padding. Zero-point classification rules are unchanged.
 
 The pure calculator rejects duplicate zero identities, unknown players and mismatched
 scope, and canonicalizes input ordering. Snapshot validation verifies active scope,
-identity and remaining Best N capacity. Explicit `resolved_zeros` mode is required
-on bootstrap/weekly preparation commands; `none` cannot carry zero inputs. Unsupported
-point deductions remain unsupported. Callers remain responsible for resolving the
-complete authoritative sanction state at each boundary, including corrections.
+identity and remaining Best N capacity. Explicit `resolved_zeros` mode is required for caller-supplied zero inputs;
+`stored_zeros` resolves them from persisted decisions instead. `none` cannot carry zeros. Unsupported
+point deductions remain unsupported. Caller-resolved mode remains supported for branches without stored zero decisions.
+Once a branch has zero source history, new commands require `stored_zeros`.
 
 Frozen manifests store all supplied zero inputs, including currently inactive ones;
 rows store the active ones for classified players. Verification reconstructs the same
 candidate, and existing revision capture/install/restore retains this evidence.
-There is no new sanction registry or sanction history editor: independently verifying
-that no sanctions were omitted, and auditing issuance/modification, remain integration
-work. A caller-supplied source fingerprint is provenance data, not authentication.
+The stored zero history described below verifies resolution against recorded decisions.
+An Admin editor and auditing/authorization of sanction issuance remain integration work. A caller-supplied source fingerprint is provenance data, not authentication.
 
 Empty zero fields are omitted from serialization so existing non-disciplinary row,
 manifest and command payloads retain their representation and hashes. Admin shows
 active zero identities, durations and remaining result capacity, and exposes the
 resolved inputs separately from tournament sources. This does not publish candidates
 or complete Week/Season Transition, Protected Ranking or the full discipline system.
+
+
+## Persisted zero decision history
+
+`RankingZeroVersion` records a decision's effective week and predecessor fingerprint.
+The initial version starts at the zero's original effective week. Later versions must
+extend the latest version at a strictly later week and retain Run, Branch, player,
+zero identity and original start. They may change the explicit duration/provenance;
+a shortened duration can therefore make the zero already expired at the correction
+week. Earlier candidates remain unchanged. This is a storage capability, not a new
+policy on when appeals, extensions or reductions are permitted.
+
+`OfficialRankingZeroStore.append` participates in the caller's transaction (acquire
+`BEGIN IMMEDIATE` before source reads/writes). It accepts exact retries, rejects
+conflicting versions, missing predecessors, writes to read-only/forked scopes and
+backdating into staged ranking history. Reads verify scope, keys, hashes and lineage.
+No source write publishes a ranking or changes the world clock.
+
+Bootstrap and weekly commands explicitly select `stored_zeros` with no caller-supplied
+zeros. Inside the same transaction they resolve each latest version effective at the
+target week. Future versions are excluded, expired decisions retained for evidence,
+and the calculator determines active capacity. Existing command retries use their
+frozen manifest. A stored-mode manifest records `zeros_from_history`; revision
+validation checks its zero inputs against historical resolution at that exact week.
+The lower-level resolved transition adapter rejects unresolved `stored_zeros` requests.
+
+Saved ranking bundles retain the complete ordered `zero_sources` history, including
+future prepared decisions and branches with no candidates yet. Capture, install,
+internal replacement, public Save/Restore and unsaved-state guards include this table.
+Recovery restores zero history in the same transaction as candidates and receipts.
+Empty extension fields are omitted, preserving old manifest/revision serialization.
+The existing database initialization creates the additional table on reopening.
+
+There is no automatic import of old caller-resolved zeros into source history: that
+would require backdating and trusted decision provenance. No sanction editor/API,
+automatic issuance, tariff selection, point deductions or fork identity remapping
+is introduced here. Callers must supply authoritative decisions and a complete roster;
+missing players still block calculation rather than silently discard sanctions.

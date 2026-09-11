@@ -99,3 +99,36 @@ def test_restore_failure_rolls_back_all_world_and_ranking_writes(prepared, faile
     finally:
         event.remove(failed_model, "before_insert", fail)
     assert dump(path) == before
+
+
+@pytest.mark.smoke
+def test_saved_future_zero_history_restores_and_unsaved_correction_blocks(prepared):
+    from beta_engine.domain.rankings.official import DisciplinaryZero
+    from beta_engine.domain.rankings.zero_history import RankingZeroVersion
+    from beta_engine.infrastructure.db.ranking_zero_history import OfficialRankingZeroStore
+    path, repo, *_ = prepared
+    first = RankingZeroVersion(effective_week=RankingWeek(season_index=0, week=2), previous_fingerprint=None,
+        zero=DisciplinaryZero(zero_id='zero', run_id='run-one', branch_id='branch-one', player_id='future-player',
+            source_fingerprint='decision', effective_week=RankingWeek(season_index=0, week=2), duration_weeks=3))
+    with repo._session_factory.begin() as session:
+        session.execute(text('BEGIN IMMEDIATE'))
+        OfficialRankingZeroStore(session).append(first)
+    save(prepared)
+    before = capture(repo)
+    assert before.zero_sources == (first,)
+    result = restore(repo, 'revision-one', head='revision-three', version=4, viewer='branch-one')
+    assert capture(repo).zero_sources == ()
+    reopened = _repository(f'sqlite:///{path}')
+    restored = restore(reopened, 'revision-three', head=result.saved_revision.revision_id, version=5,
+                       viewer='branch-one', suffix='forward-zeros')
+    assert capture(reopened) == before
+    correction = RankingZeroVersion(effective_week=RankingWeek(season_index=0, week=3), previous_fingerprint=first.fingerprint,
+        zero=first.zero.model_copy(update={'duration_weeks': 1, 'source_fingerprint': 'correction'}))
+    with reopened._session_factory.begin() as session:
+        session.execute(text('BEGIN IMMEDIATE'))
+        OfficialRankingZeroStore(session).append(correction)
+    unsaved = dump(path)
+    with pytest.raises(SavedRevisionRestoreUnsupportedError, match='stale'):
+        restore(reopened, 'revision-one', head=restored.saved_revision.revision_id, version=6,
+                viewer='branch-one', suffix='unsaved-zero')
+    assert dump(path) == unsaved

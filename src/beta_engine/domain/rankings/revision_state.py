@@ -4,7 +4,8 @@ import hashlib
 import json
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, model_validator, model_serializer
+from beta_engine.domain.rankings.zero_history import RankingZeroVersion, validate_zero_successor, resolve_zero_versions
 
 from beta_engine.domain.rankings.official import FrozenInput, OfficialRankingSnapshot
 from beta_engine.domain.rankings.input_manifest import RankingInputManifest
@@ -28,6 +29,14 @@ class RankingRevisionState(FrozenInput):
     branch_id: str = Field(min_length=1)
     entries: tuple[RankingRevisionEntry, ...]
     sources: tuple[RankingResultVersion, ...]
+    zero_sources: tuple[RankingZeroVersion, ...] = ()
+
+    @model_serializer(mode="wrap")
+    def serialize_state(self, handler):
+        data = handler(self)
+        if not self.zero_sources:
+            data.pop("zero_sources", None)
+        return data
 
     @model_validator(mode="after")
     def validate_complete_state(self):
@@ -44,6 +53,19 @@ class RankingRevisionState(FrozenInput):
             elif version.previous_fingerprint is not None:
                 raise ValueError("Ranking revision source predecessor is missing")
             latest[key] = version
+        zero_keys = [(v.zero.zero_id, v.effective_week.ordinal) for v in self.zero_sources]
+        if zero_keys != sorted(set(zero_keys)):
+            raise ValueError("Ranking zero source order or uniqueness is invalid")
+        latest_zeros = {}
+        for version in self.zero_sources:
+            if (version.zero.run_id, version.zero.branch_id) != (self.run_id, self.branch_id):
+                raise ValueError("Ranking zero source scope mismatch")
+            previous_zero = latest_zeros.get(version.zero.zero_id)
+            if previous_zero is not None:
+                validate_zero_successor(previous_zero, version)
+            elif version.previous_fingerprint is not None:
+                raise ValueError("Ranking zero source predecessor is missing")
+            latest_zeros[version.zero.zero_id] = version
         previous = None
         command_ids = set()
         for entry in self.entries:
@@ -53,6 +75,8 @@ class RankingRevisionState(FrozenInput):
             if previous is None and snapshot.week.ordinal != 0:
                 raise ValueError("Ranking revision requires complete history from Week 1")
             entry.inputs.verify(snapshot, previous)
+            if entry.inputs.zeros_from_history and entry.inputs.disciplinary_zeros != resolve_zero_versions(self.zero_sources, snapshot.week):
+                raise ValueError("Ranking zero history differs from frozen inputs")
             resolved = {}
             for version in self.sources:
                 if version.effective_week.ordinal <= snapshot.week.ordinal:

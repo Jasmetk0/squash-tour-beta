@@ -1,6 +1,7 @@
 """Read-only capture inside the caller's consistent SQLite transaction."""
 
 from sqlalchemy.orm import Session
+from beta_engine.infrastructure.db.ranking_zero_history import OfficialRankingZeroStore
 
 from beta_engine.domain.rankings.revision_state import (
     RankingRevisionState, RankingRevisionEntry, RankingRevisionReceipt,
@@ -36,6 +37,7 @@ def capture_ranking_revision_state(session: Session, *, run_id: str, branch_id: 
     return RankingRevisionState(
         run_id=run_id, branch_id=branch_id, entries=tuple(entries),
         sources=OfficialRankingResultStore(session).history(run_id=run_id, branch_id=branch_id),
+        zero_sources=OfficialRankingZeroStore(session).history(run_id=run_id, branch_id=branch_id),
     )
 
 
@@ -60,7 +62,7 @@ def install_ranking_revision_state(
     current = capture_ranking_revision_state(session, run_id=run_id, branch_id=branch_id)
     if current.fingerprint == state.fingerprint:
         return current
-    if current.entries or current.sources:
+    if current.entries or current.sources or current.zero_sources:
         raise ValueError("Ranking restore target is not empty and differs from saved state")
     if session.get(RunContainerModel, run_id).read_only or session.get(RunBranchModel, branch_id).read_only:
         raise ValueError("Ranking restore target is read-only")
@@ -70,6 +72,9 @@ def install_ranking_revision_state(
         sources = OfficialRankingResultStore(session)
         for version in state.sources:
             sources.append(version)
+        zeros = OfficialRankingZeroStore(session)
+        for version in state.zero_sources:
+            zeros.append(version)
         candidates = OfficialRankingCandidateStore(session)
         for index, entry in enumerate(state.entries):
             candidates.append(entry.snapshot, bootstrap=index == 0)

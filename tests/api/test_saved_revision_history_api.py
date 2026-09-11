@@ -394,3 +394,42 @@ def test_saved_revision_recovery_activity_api_is_scoped_and_fail_closed(
         assert corrupt["detail"]["code"] == (
             "saved_revision_recovery_activity_conflict"
         )
+
+
+def test_saved_revision_restore_api_rejects_uncaptured_ranking(tmp_path) -> None:
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'restore-ranking-api.db'}") as server:
+        run_id, branch_id, initial_id = _create_run(server, display_name="Ranking restore guard")
+        root = f"{server.base_url}/run-containers/{run_id}"
+        status, fork = _request("POST", f"{root}/branches", {
+            "source_branch_id": branch_id, "source_saved_revision_id": initial_id,
+        })
+        assert status == 201
+        draft_url = f"{root}/branches/{branch_id}/working-draft"
+        status, staged = _request("PUT", f"{draft_url}/viewer-branch", {
+            "viewer_branch_id": fork["branch_id"], "expected_draft_version": 0,
+        })
+        assert status == 200
+        status, saved = _request("POST", f"{draft_url}/save", {
+            "expected_draft_version": staged["draft_version"],
+        })
+        assert status == 201
+        with server.app.state.runtime.repository._engine.begin() as connection:
+            connection.execute(text(
+                "INSERT INTO official_ranking_candidates "
+                "(run_id, branch_id, week_ordinal, fingerprint, payload_json) "
+                "VALUES (:run_id, :branch_id, 0, :fingerprint, :payload)"
+            ), dict(run_id=run_id, branch_id=branch_id, fingerprint="0" * 64, payload="broken"))
+        history_url = f"{root}/branches/{branch_id}/saved-revisions"
+        before = _request("GET", history_url)
+        draft_before = _request("GET", draft_url)
+        status, result = _request("POST", f"{history_url}/{initial_id}/restore", {
+            "expected_head_saved_revision_id": saved["saved_revision"]["revision_id"],
+            "expected_draft_version": saved["working_draft"]["draft_version"],
+            "expected_current_viewer_branch_id": fork["branch_id"],
+            "explicit_confirmation": True,
+        })
+        assert status == 409
+        assert result["detail"]["code"] == "saved_revision_restore_unsupported"
+        assert "ranking preparation" in result["detail"]["message"]
+        assert _request("GET", history_url) == before
+        assert _request("GET", draft_url) == draft_before

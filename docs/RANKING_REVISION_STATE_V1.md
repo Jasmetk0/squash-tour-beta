@@ -91,3 +91,21 @@ Real SQLite tests cover predecessor retention, scope isolation, original command
 replay, read-only retry, stale requests, conflicting command reuse, changed state,
 damaged checkpoints, caught installation failure and outer rollback. No public
 restore endpoint or full-world Saved Revision integration is introduced here.
+
+## Current Saved Revision restore boundary
+
+The public Saved Revision restore still supports only empty-content snapshots.
+It now rejects any candidate, command receipt or source-version row in the restored
+Run/Branch, including partial or malformed ranking histories. Previously these rows
+could survive an apparently successful restore to empty content. The guard returns
+the existing `saved_revision_restore_unsupported` conflict before writing a revision,
+checkpoint, audit event, draft or Viewer selection. Rows in other scopes do not block
+this operation. Internal recovery checkpoints alone are retained history, not live
+ranking preparation state.
+
+The restore transaction acquires SQLite's writer reservation with `BEGIN IMMEDIATE`
+before its first state read, closing the race between checking for ranking state and
+committing the restore. This guard must be replaced by coordinated capture/restore
+when Saved Revisions include ranking; it does not wire the ranking-only restore
+component into the public command. Tests cover database-wide non-mutation on rejection,
+partial row types, scope isolation, competing writes and the real HTTP error contract.

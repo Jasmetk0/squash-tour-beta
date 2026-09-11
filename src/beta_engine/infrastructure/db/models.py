@@ -23,6 +23,18 @@ class Base(DeclarativeBase):
     """Declarative SQLAlchemy base for persistence tables."""
 
 
+class RankingRestoreCheckpointModel(Base):
+    """Immutable predecessor and target hashes for an internal ranking restore."""
+
+    __tablename__ = "ranking_restore_checkpoints"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    before_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    before_payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    target_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
 class OfficialRankingCommandModel(Base):
     """Idempotency receipt for an internal ranking preparation command."""
 

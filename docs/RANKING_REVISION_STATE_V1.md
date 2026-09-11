@@ -61,3 +61,33 @@ clock advancement or replacement of an existing timeline in this change.
 Additional real SQLite tests cover install/recapture equality, exact retry and
 original command replay, outer rollback, caught receipt-write failure, existing
 history conflicts, wrong hash/scope, read-only writes and transaction guards.
+
+## Guarded replacement of existing ranking storage
+
+`restore_ranking_revision_state` is a separate internal component for replacing an
+existing, valid ranking history with a trusted same-scope bundle. It requires both
+the target's trusted fingerprint and the expected current fingerprint. A stale
+current fingerprint rejects the operation before any writes. Corrupt, legacy and
+unsupported fork histories remain rejected; this is not a corruption repair tool.
+
+A new restore command requires a writable scope. In one savepoint it stores the
+complete predecessor payload and its fingerprint in `ranking_restore_checkpoints`,
+records the target fingerprint, removes only this Run/Branch's ranking rows, and
+uses the verified installer above. The checkpoint and replacement commit together.
+Caught failures restore the deleted history and remove the checkpoint; failures in
+the caller's larger recovery transaction also roll everything back. The caller must
+start `BEGIN IMMEDIATE` before reading state and flush pending ORM work beforehand.
+
+A repeated command ID must have identical before/target fingerprints, a valid
+predecessor checkpoint and a current state equal to its original target. Such a
+retry performs no writes, even if the scope has since become read-only. Changed
+requests or subsequent ranking changes reject replay instead of rewinding again.
+Checkpoint rows survive subsequent ranking replacements and are not included in the
+ranking bundle. They are internal recovery records, not authoritative Saved Revisions
+or the general Audit Log. Full-world restore must still coordinate sporting state,
+clock and other components and supply authoritative payload/hash provenance.
+
+Real SQLite tests cover predecessor retention, scope isolation, original command
+replay, read-only retry, stale requests, conflicting command reuse, changed state,
+damaged checkpoints, caught installation failure and outer rollback. No public
+restore endpoint or full-world Saved Revision integration is introduced here.

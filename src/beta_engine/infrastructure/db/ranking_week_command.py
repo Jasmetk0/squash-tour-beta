@@ -17,6 +17,8 @@ from beta_engine.domain.rankings.official import (
 )
 from beta_engine.infrastructure.db.models import OfficialRankingCommandModel
 from beta_engine.domain.rankings.input_manifest import RankingInputManifest
+from beta_engine.domain.rankings.zero_history import resolve_zero_versions
+from beta_engine.infrastructure.db.ranking_zero_history import OfficialRankingZeroStore
 from beta_engine.infrastructure.db.official_rankings import (
     OfficialRankingCandidateStore,
 )
@@ -100,12 +102,21 @@ def stage_ranking_week_command(
             return snapshot
         if any(s.week == context.target_week for s in history):
             raise ValueError("Ranking target already staged by another command or pathway")
+        stored_zeros = context.discipline == "stored_zeros"
+        zero_history = OfficialRankingZeroStore(session).history(run_id=context.run_id, branch_id=context.branch_id)
+        if zero_history and not stored_zeros:
+            raise ValueError("Persisted zero history requires stored_zeros mode")
+        if stored_zeros:
+            context = context.model_copy(update={
+                "discipline": "resolved_zeros",
+                "disciplinary_zeros": resolve_zero_versions(zero_history, context.target_week),
+            })
         if isinstance(command, RankingBootstrapCommand):
             snapshot = candidates.append(
                 calculate_official_ranking(
                     run_id=command.run_id, branch_id=command.branch_id,
                     week=command.target_week, policy=command.policy,
-                    players=command.players, results=(), disciplinary_zeros=command.disciplinary_zeros,
+                    players=command.players, results=(), disciplinary_zeros=context.disciplinary_zeros,
                 ),
                 bootstrap=True,
             )
@@ -122,6 +133,7 @@ def stage_ranking_week_command(
                 sources.append(correction)
             snapshot = stage_official_ranking_from_history(candidates, sources, context)
         manifest = RankingInputManifest(
+            zeros_from_history=stored_zeros,
             disciplinary_zeros=tuple(sorted(context.disciplinary_zeros, key=lambda z: z.zero_id)),
             players=tuple(sorted(context.players, key=lambda p: p.player_id)),
             results=() if isinstance(command, RankingBootstrapCommand) else sources.resolve(

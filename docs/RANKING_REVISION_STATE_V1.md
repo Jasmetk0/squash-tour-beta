@@ -173,3 +173,16 @@ performs the explicit save. Admin's ranking page offers review, Save and refresh
 a failed Save refreshes the review without automatically retrying the mutation.
 Duplicate/stale requests conflict without writes. This is recoverable preparation,
 not Official ranking publication or a clock transition.
+
+
+## Zero source history extension
+
+The optional `zero_sources` collection retains immutable zero decision versions,
+ordered by zero identity/effective week. Empty collections are omitted to preserve
+existing v1 hashes. Manifests opt into historical zero resolution with
+`zeros_from_history=true`; state validation compares their frozen zeros with the
+versions effective at the candidate week. Caller-resolved legacy manifests retain
+verification through the calculator without claiming persisted decision provenance.
+All capture/install/restore paths and scoped presence guards include zero source rows,
+including source-only states and future prepared decisions. Restore reinstalls sources
+before candidates and checks the complete target fingerprint within its savepoint.

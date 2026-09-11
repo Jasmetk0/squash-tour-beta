@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from beta_engine.domain.rankings.revision_state import RankingRevisionState, load_ranking_revision_state
 from beta_engine.infrastructure.db.models import (
     OfficialRankingCandidateModel, OfficialRankingCommandModel,
-    OfficialRankingResultVersionModel, RankingRestoreCheckpointModel,
+    OfficialRankingResultVersionModel, OfficialRankingZeroVersionModel, RankingRestoreCheckpointModel,
     RunBranchModel, RunContainerModel,
 )
 from beta_engine.infrastructure.db.ranking_revision_state import capture_ranking_revision_state, install_ranking_revision_state
@@ -46,6 +46,6 @@ def restore_ranking_revision_state(
             target_fingerprint=target.fingerprint,
         ))
         session.flush()
-        for model in (OfficialRankingCommandModel, OfficialRankingCandidateModel, OfficialRankingResultVersionModel):
+        for model in (OfficialRankingCommandModel, OfficialRankingCandidateModel, OfficialRankingResultVersionModel, OfficialRankingZeroVersionModel):
             session.execute(delete(model).where(model.run_id == run_id, model.branch_id == branch_id))
         return install_ranking_revision_state(session, payload, expected_fingerprint=target.fingerprint, run_id=run_id, branch_id=branch_id)

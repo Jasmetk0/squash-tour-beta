@@ -37,7 +37,7 @@ class RankingTransitionContext(WithDisciplinaryZeros):
     policy: OfficialRankingPolicy
     players: tuple[OfficialRankingPlayer, ...]
     # Required acknowledgement of this calculator's supported scope.
-    discipline: Literal["none", "resolved_zeros"]
+    discipline: Literal["none", "resolved_zeros", "stored_zeros"]
 
     @model_validator(mode="after")
     def acknowledge_discipline(self):
@@ -86,6 +86,8 @@ def stage_official_ranking_transition(
     The adapter validates observable boundaries, not the truth of source claims.
     """
     request = ResolvedRankingTransition.model_validate_json(request.model_dump_json())
+    if request.discipline == "stored_zeros":
+        raise ValueError("Stored zeros require a persisted history resolver")
     if not request.run_id or not request.branch_id:
         raise ValueError("Ranking Run/Branch identity is required")
     if request.target_week.ordinal != request.completed_week.ordinal + 1:

@@ -22,7 +22,7 @@ class RankingBootstrapCommand(WithDisciplinaryZeros):
     target_week: RankingWeek = RankingWeek(season_index=0, week=1)
     policy: OfficialRankingPolicy
     players: tuple[OfficialRankingPlayer, ...]
-    discipline: Literal["none", "resolved_zeros"]
+    discipline: Literal["none", "resolved_zeros", "stored_zeros"]
 
     @model_validator(mode="after")
     def acknowledge_discipline(self):

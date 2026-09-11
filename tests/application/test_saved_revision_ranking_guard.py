@@ -11,7 +11,7 @@ from beta_engine.application.run_saved_revision_restore_service import RunSavedR
 from beta_engine.domain.rankings.official import OfficialRankingPolicy
 from beta_engine.infrastructure.db import SavedRevisionRestoreUnsupportedError
 from beta_engine.infrastructure.db.models import (
-    OfficialRankingCandidateModel, OfficialRankingCommandModel, OfficialRankingResultVersionModel,
+    OfficialRankingCandidateModel, OfficialRankingCommandModel, OfficialRankingResultVersionModel, OfficialRankingZeroVersionModel,
 )
 from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
 
@@ -46,7 +46,7 @@ def test_valid_prepared_ranking_blocks_restore_without_any_database_changes(tmp_
     assert dump(path) == before
 
 
-@pytest.mark.parametrize("kind", ["candidate", "receipt", "source"])
+@pytest.mark.parametrize("kind", ["candidate", "receipt", "source", "zero_source"])
 @pytest.mark.parametrize("scope", ["current", "other_branch", "other_run"])
 def test_partial_ranking_rows_are_blocking_only_in_restored_scope(tmp_path, kind, scope):
     path = tmp_path / "ranking-fragment.db"
@@ -60,6 +60,9 @@ def test_partial_ranking_rows_are_blocking_only_in_restored_scope(tmp_path, kind
     elif kind == "receipt":
         row = OfficialRankingCommandModel(**values, command_id="orphan", request_fingerprint="0" * 64,
                                           target_ordinal=0, snapshot_fingerprint="0" * 64)
+    elif kind == "zero_source":
+        row = OfficialRankingZeroVersionModel(**values, zero_id="zero", effective_ordinal=1,
+                                              fingerprint="0" * 64, payload_json="broken")
     else:
         row = OfficialRankingResultVersionModel(**values, edition_id="edition", player_id="player",
                                                 effective_ordinal=1, fingerprint="0" * 64, payload_json="broken")

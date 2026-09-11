@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from beta_engine.domain.rankings.revision_state import RankingRevisionState, load_ranking_revision_state
-from beta_engine.infrastructure.db.models import OfficialRankingCandidateModel, OfficialRankingCommandModel, OfficialRankingResultVersionModel
+from beta_engine.infrastructure.db.models import OfficialRankingCandidateModel, OfficialRankingCommandModel, OfficialRankingResultVersionModel, OfficialRankingZeroVersionModel
 from beta_engine.infrastructure.db.ranking_revision_state import capture_ranking_revision_state
 
 RANKING_COMPONENT_KEY = "ranking_preparation"
@@ -35,7 +35,7 @@ def capture_saved_ranking_component(session: Session, payload: dict, *, run_id: 
     has_rows = any(session.scalar(select(model.run_id).where(
         model.run_id == run_id, model.branch_id == branch_id,
     ).limit(1)) is not None for model in (
-        OfficialRankingCandidateModel, OfficialRankingCommandModel, OfficialRankingResultVersionModel,
+        OfficialRankingCandidateModel, OfficialRankingCommandModel, OfficialRankingResultVersionModel, OfficialRankingZeroVersionModel,
     ))
     # Preserve the exact legacy empty representation, including empty forks.
     if not has_rows and RANKING_COMPONENT_KEY not in content:

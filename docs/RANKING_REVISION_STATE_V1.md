@@ -109,3 +109,25 @@ committing the restore. This guard must be replaced by coordinated capture/resto
 when Saved Revisions include ranking; it does not wire the ranking-only restore
 component into the public command. Tests cover database-wide non-mutation on rejection,
 partial row types, scope isolation, competing writes and the real HTTP error contract.
+
+## Ranking capture during the current Save operation
+
+The existing Viewer Branch Working Draft Save now captures live ranking preparation
+in `content.ranking_preparation` before hashing the new Saved Revision. The component
+contains `state` (the full versioned bundle) and `fingerprint`; the enclosing revision
+hash covers both. Capture, revision, audit, draft cleanup and Viewer activation share
+one `BEGIN IMMEDIATE` transaction. Invalid or incomplete live ranking data blocks the
+whole Save. Later Saves recapture the live component instead of copying stale ranking
+content from the previous revision. Old revisions remain immutable.
+
+Empty legacy Saves retain `content: {}` when no ranking rows or previous component
+exist. The capture concerns the active editing Branch, not the selected Viewer Branch.
+Read adapters validate the component's shape, scope, hash and internal calculations.
+Creating a Branch from a ranking-bearing revision is currently rejected because
+ranking identity remapping is not implemented; branching from an older empty revision
+remains available. Public restore still rejects sporting content as documented above.
+
+This adds ranking capture to the existing Save command. It does not yet add a separate
+ranking-only Working Draft change or allow a clean draft to be saved just because
+ranking preparation changed. Full-world revision completeness, ranking restoration,
+branch remapping and weekly publication remain integration work.

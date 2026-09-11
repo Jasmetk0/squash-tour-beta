@@ -80,3 +80,25 @@ Week 61 rollover, Best N and inheritance, additive Q/main components, Unranked a
 Abandoned inputs, lifecycle, each tie-break level, unique ranks, order independence,
 immutable history/JSON reload, distinct unchanged weekly snapshots and invalid
 identity, timing and status inputs. These are domain tests, not integration tests.
+
+## Historical tie explanations
+
+`explain_ranking_ties` reports the first deciding layer between adjacent players
+with equal totals. It first reconstructs the candidate from its complete stored
+manifest and predecessor. Calculation and explanation share `ranking_order_key`;
+this refactor preserves existing calculation output and fingerprints.
+
+Evidence identifies both players/ranks, total points, the deciding layer and values.
+Result profile and completion-age comparisons include the one-based counted-result
+slot. Completion values are absolute zero-based week ordinals (rendered as Season
+Week in Admin); absent previous rank/completion is null. Zero-point comparisons
+still skip completion age. Missing classifications never become invented ranks.
+No tie explanation is emitted for different totals. Adjacent comparisons describe
+the existing order, not all possible pairs inside a tied group.
+
+The Admin stored-inputs response includes these explanations for complete manifests,
+and its UI renders the first deciding criterion and evidence. Legacy candidates
+without complete inputs retain their explicit unavailable state. No active player
+records, current policy or live tokens substitute for historical inputs. Inspection
+is read-only and neither publishes candidates nor advances time. This feature does
+not complete discipline, PR, season closing or the Week Transition publication path.

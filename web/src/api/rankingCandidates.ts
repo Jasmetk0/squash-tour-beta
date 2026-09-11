@@ -26,6 +26,11 @@ export type RankingCandidateSources = {
 export type RankingCandidateInputs = {
   run_id: string; branch_id: string; week: CandidateWeek
   candidate_fingerprint: string; publication_status: 'candidate_only'
+  tie_explanations?: {
+    higher_player_id: string; lower_player_id: string; higher_rank: number; lower_rank: number; points: number
+    reason: 'result_profile' | 'completion_age' | 'previous_position' | 'stored_token'
+    result_slot: number | null; higher_value: number | string | null; lower_value: number | string | null
+  }[]
   verification_status: 'complete_manifest' | 'legacy_without_manifest'
   manifest: null | {
     players: { player_id: string; tie_break_token: string; tour_entry_week: CandidateWeek; retired: boolean }[]

@@ -187,6 +187,21 @@ def load_official_ranking_snapshot(
     return snapshot
 
 
+def ranking_order_key(player, counted, previous_ranks, best_n):
+    """Shared canonical ordering for calculation and historical explanations."""
+    point_profile = tuple(-r.points for r in counted)
+    point_profile += (0,) * (best_n - len(counted))
+    age_profile = tuple(-r.completed_week.ordinal for r in counted)
+    age_profile += (1,) * (best_n - len(counted))
+    points = sum(r.points for r in counted)
+    if points == 0:
+        age_profile = ()
+    return (
+        -points, point_profile, age_profile,
+        previous_ranks.get(player.player_id, float("inf")), player.tie_break_token,
+    )
+
+
 def calculate_official_ranking(
     *,
     run_id: str,
@@ -257,22 +272,8 @@ def calculate_official_ranking(
                 ),
             )[: policy.best_n]
         )
-        point_profile = tuple(-r.points for r in counted)
-        # Pad zero results so a different result count is not a hidden tie-break.
-        point_profile += (0,) * (policy.best_n - len(counted))
-        age_profile = tuple(-r.completed_week.ordinal for r in counted)
-        age_profile += (1,) * (policy.best_n - len(counted))
         points = sum(r.points for r in counted)
-        # Zero-point players use previous classification/token, per Master 18.2.
-        if points == 0:
-            age_profile = ()
-        key = (
-            -points,
-            point_profile,
-            age_profile,
-            previous_ranks.get(player.player_id, float("inf")),
-            player.tie_break_token,
-        )
+        key = ranking_order_key(player, counted, previous_ranks, policy.best_n)
         candidates.append((key, player.player_id, points, counted))
     candidates.sort(key=lambda item: item[0])
     return OfficialRankingSnapshot(

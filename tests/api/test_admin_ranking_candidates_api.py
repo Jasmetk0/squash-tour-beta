@@ -360,3 +360,26 @@ def test_damaged_inputs_fail_closed_without_returning_payload(input_api):
     assert response.json()["detail"]["code"] == "ranking_inputs_unavailable"
     assert "hidden-input" not in str(response.json())
     assert dump(path) == before
+
+
+@pytest.mark.smoke
+def test_tie_explanation_uses_verified_historical_tokens_without_writes(api):
+    from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
+    from beta_engine.application.ranking_week_command import RankingWeekCommand
+    from beta_engine.application.official_ranking_transition import RankingTransitionContext
+    from beta_engine.domain.rankings.official import OfficialRankingPlayer, OfficialRankingPolicy, RankingWeek
+    from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
+    client, factory, path, _, _ = api
+    players = tuple(OfficialRankingPlayer(player_id=p, tie_break_token=t, tour_entry_week=RankingWeek(season_index=0, week=1)) for p,t in [('a','second'),('b','first')])
+    runner = RankingWeekCommandRunner(factory)
+    first = runner.execute(RankingBootstrapCommand(command_id='ties-bootstrap',run_id='run',branch_id='empty',policy=OfficialRankingPolicy(policy_id='ties-policy'),players=players,discipline='none'))
+    second = runner.execute(RankingWeekCommand(command_id='ties-week2',tournaments=(),context=RankingTransitionContext(
+        run_id='run',branch_id='empty',completed_week=first.week,target_week=RankingWeek(season_index=0,week=2),policy=first.policy,players=players,discipline='none',
+    )))
+    before = dump(path)
+    response = client.get(PREFIX.replace('/branches/branch/','/branches/empty/')+'/0/2/inputs')
+    assert response.status_code == 200
+    data=response.json()
+    assert data['candidate_fingerprint']==second.fingerprint
+    assert data['tie_explanations']==[dict(higher_player_id='b',lower_player_id='a',higher_rank=1,lower_rank=2,points=0,reason='stored_token',result_slot=None,higher_value='first',lower_value='second')]
+    assert dump(path)==before

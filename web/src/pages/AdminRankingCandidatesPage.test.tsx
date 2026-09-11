@@ -152,3 +152,13 @@ it('rejects mismatched input candidates and allows retry', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Retry stored inputs' }))
   expect(await screen.findByText('The stored roster is empty.')).toBeVisible()
 })
+
+it('shows verified tie reasons with historical completion weeks', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  vi.mocked(getRankingCandidateInputs).mockResolvedValue({ run_id:'run', branch_id:'branch', week:{season_index:0,week:2}, candidate_fingerprint:'hash', publication_status:'candidate_only', verification_status:'complete_manifest', manifest:{players:[],results:[]}, tie_explanations:[{
+    higher_player_id:'player-a',lower_player_id:'player-b',higher_rank:1,lower_rank:2,points:120,reason:'completion_age',result_slot:2,higher_value:61,lower_value:60,
+  }] })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByText(/player-a precedes 2. player-b at 120 points/)).toHaveTextContent('Newer completion at result slot 2: 2001/02 · Week 1 versus 2000/01 · Week 61')
+})

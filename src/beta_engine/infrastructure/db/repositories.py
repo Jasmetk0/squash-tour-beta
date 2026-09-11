@@ -57,6 +57,9 @@ from beta_engine.infrastructure.db.models import (
     BranchSavedRevisionModel,
     BranchSimulationCommandModel,
     OfficialBranchSelectionCommandModel,
+    OfficialRankingCandidateModel,
+    OfficialRankingCommandModel,
+    OfficialRankingResultVersionModel,
     BranchCheckpointModel,
     BranchStateModel,
     BranchWorkingDraftModel,
@@ -2341,6 +2344,9 @@ class SimulationPersistenceRepository:
         restored_viewer_branch_id = ""
         try:
             with self._session_factory.begin() as session:
+                # Hold the SQLite writer reservation from the first recovery read.
+                # Ranking commands must not slip in after the empty-state check.
+                session.execute(text("BEGIN IMMEDIATE"))
                 run = session.get(RunContainerModel, run_id)
                 if run is None:
                     raise SavedRevisionRestoreNotFoundError(
@@ -2417,6 +2423,27 @@ class SimulationPersistenceRepository:
                 ):
                     raise SavedRevisionRestoreConflictError(
                         "Run has no coherent current Viewer Branch"
+                    )
+
+                # These preparation tables are not captured by current Saved Revisions.
+                # Check row presence, including malformed/partial histories, without
+                # requiring a valid ranking chain or supported ranking fork ancestry.
+                has_uncaptured_ranking = any(
+                    session.scalar(
+                        select(model.run_id).where(
+                            model.run_id == run_id, model.branch_id == branch_id
+                        ).limit(1)
+                    ) is not None
+                    for model in (
+                        OfficialRankingCandidateModel,
+                        OfficialRankingCommandModel,
+                        OfficialRankingResultVersionModel,
+                    )
+                )
+                if has_uncaptured_ranking:
+                    raise SavedRevisionRestoreUnsupportedError(
+                        "restore is blocked because the Saved Revision does not yet "
+                        "capture the complete ranking preparation state"
                     )
 
                 supported_payload_schemas = {

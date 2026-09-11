@@ -84,6 +84,9 @@ from beta_engine.infrastructure.db.models import (
     SeasonStateModel,
     SimulationRunModel,
 )
+from beta_engine.infrastructure.db.saved_revision_rankings import (
+    RANKING_COMPONENT_KEY, capture_saved_ranking_component, load_saved_ranking_component,
+)
 from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_EVENT_LEGACY_STATE,
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_WEEK_LEGACY_STATE,
@@ -1764,6 +1767,12 @@ class SimulationPersistenceRepository:
                         "the source Saved Revision is not part of the selected Branch history"
                     )
 
+                if RANKING_COMPONENT_KEY in source_revision.payload.get("content", {}):
+                    raise SavedRevisionBranchForkConflictError(
+                        "Branch creation from ranking-bearing Saved Revisions requires "
+                        "ranking identity remapping, which is not yet supported"
+                    )
+
                 if session.get(RunBranchModel, branch_id) is not None:
                     raise BranchCreationIdentityConflictError(
                         f"branch_id {branch_id!r} is already in use"
@@ -1872,6 +1881,12 @@ class SimulationPersistenceRepository:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {model.revision_id} contains malformed JSON"
             )
+        try:
+            load_saved_ranking_component(payload, run_id=model.run_id, branch_id=model.branch_id)
+        except (TypeError, ValueError) as exc:
+            raise BranchRevisionStateConflictError(
+                f"Saved Revision {model.revision_id} has invalid ranking content: {exc}"
+            ) from exc
         return BranchSavedRevisionRecord(
             revision_id=model.revision_id,
             run_id=model.run_id,
@@ -2718,6 +2733,7 @@ class SimulationPersistenceRepository:
         target_viewer_id = ""
         try:
             with self._session_factory.begin() as session:
+                session.execute(text("BEGIN IMMEDIATE"))
                 draft = self._viewer_branch_working_draft_in_session(
                     session=session, run_id=run_id, branch_id=branch_id
                 )
@@ -2799,6 +2815,14 @@ class SimulationPersistenceRepository:
                     ),
                     viewer_branch_id=target_viewer_id,
                 )
+                try:
+                    capture_saved_ranking_component(
+                        session, payload, run_id=run_id, branch_id=branch_id
+                    )
+                except ValueError as exc:
+                    raise WorkingDraftConflictError(
+                        f"Cannot save complete ranking preparation: {exc}"
+                    ) from exc
                 summary = viewer_branch_saved_revision_change_summary(
                     previous_viewer_branch_id=saved_viewer_id,
                     viewer_branch_id=target_viewer_id,

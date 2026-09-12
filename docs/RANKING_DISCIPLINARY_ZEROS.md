@@ -72,3 +72,20 @@ would require backdating and trusted decision provenance. No sanction editor/API
 automatic issuance, tariff selection, point deductions or fork identity remapping
 is introduced here. Callers must supply authoritative decisions and a complete roster;
 missing players still block calculation rather than silently discard sanctions.
+
+
+## Admin inspection of historical decision evidence
+
+The existing candidate `/inputs` read now reports `zero_history_status` and
+`zero_sources`. Stored-mode candidates verify the full source lineage and require its
+resolution at the selected week to equal the frozen zero inputs. The response includes
+only versions effective by that week, in zero/week order, with version/predecessor
+fingerprints and one impact: superseded, expired, reserves a slot, or active while the
+player is outside classification. Future decision payloads are never returned by this
+historical view; corrupted history returns the existing generic 409 input error.
+
+Caller-resolved and legacy candidates explicitly report their weaker provenance and
+do not borrow a current registry to fabricate historical evidence. Empty verified
+history is distinct from unavailable history. The Admin stored-input panel shows these
+states and expandable provenance. Reads remain in a single SQLite transaction, work
+on read-only scopes and do not save, publish, issue or modify decisions.

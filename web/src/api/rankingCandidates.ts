@@ -50,3 +50,15 @@ export type RankingCandidateInputs = {
     results: RankingCandidateSources['sources'][number]['version']['result'][]
   }
 }
+
+export type RankingCandidateDetail = RankingCandidateHistory['candidates'][number]
+export type RankingPreparationCommand = {
+  command_id: string
+  audit: { actor_label: string; reason: string }
+  zero_versions: { effective_week: CandidateWeek; previous_fingerprint: string | null; zero: RankingDisciplinaryZero }[]
+} & (
+  { run_id: string; branch_id: string; target_week: CandidateWeek; policy: {policy_id: string; best_n: number}; players: RankingPreparationPlayer[]; discipline: 'stored_zeros' }
+  | { context: { run_id: string; branch_id: string; completed_week: CandidateWeek; target_week: CandidateWeek; policy: {policy_id: string; best_n: number}; players: RankingPreparationPlayer[]; discipline: 'stored_zeros' }; tournaments: [] }
+)
+export type RankingPreparationPlayer = {player_id: string; tie_break_token: string; tour_entry_week: CandidateWeek; retired: boolean}
+export type RankingPreparationPreview = {preview_only: true; request_fingerprint: string; candidate: RankingCandidateDetail}

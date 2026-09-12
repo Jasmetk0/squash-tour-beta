@@ -1979,3 +1979,11 @@ textarea:focus-visible {
 .category-sticker--zinc { background: #ede9fe; border-color: #8b5cf6; }
 .category-sticker--challenger { background: #ecfeff; border-color: #06b6d4; }
 .category-sticker--future { background: #f0fdf4; border-color: #22c55e; }
+
+
+.ranking-preparation { margin: 1rem 0; }
+.ranking-preparation fieldset { min-width: 0; margin: 0.8rem 0; padding: 1rem; border: 1px solid #cbd5e1; border-radius: 8px; }
+.ranking-preparation legend { font-weight: 600; padding: 0 0.3rem; }
+.ranking-preparation textarea { min-height: 5rem; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; resize: vertical; }
+.ranking-preparation input, .ranking-preparation select, .ranking-preparation textarea { min-width: 0; }
+.ranking-preparation button { margin: 0.3rem 0.4rem 0.3rem 0; }

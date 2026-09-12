@@ -1015,7 +1015,7 @@ class SimulationPersistenceRepository:
         self._engine = engine
         self._session_factory = session_factory
 
-    def prepare_official_ranking(self, *, run_id: str, branch_id: str, command):
+    def prepare_official_ranking(self, *, run_id: str, branch_id: str, command, preview: bool = False, expected_snapshot_fingerprint: str | None = None):
         from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
         from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
 
@@ -1028,7 +1028,10 @@ class SimulationPersistenceRepository:
         # ingestion behind the trusted internal adapter until that is resolved.
         if not isinstance(command, RankingBootstrapCommand) and command.tournaments:
             raise ValueError("Admin preparation cannot ingest unscoped tournament files")
-        return RankingWeekCommandRunner(self._session_factory).execute(command)
+        runner = RankingWeekCommandRunner(self._session_factory)
+        if preview:
+            return runner.preview(command)
+        return runner.execute(command, expected_snapshot_fingerprint=expected_snapshot_fingerprint)
 
     def inspect_official_ranking_history(self, *, run_id: str, branch_id: str):
         from beta_engine.infrastructure.db.ranking_inspection import inspect_ranking_history

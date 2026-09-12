@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { RankingPreparationPanel } from './RankingPreparationPanel'
 import { RankingSavePanel } from './RankingSavePanel'
 import { RankingCandidateInputsPanel } from './RankingCandidateInputsPanel'
 import { useQuery } from '@tanstack/react-query'
@@ -21,6 +22,7 @@ export function AdminRankingCandidatesPage(): JSX.Element {
     <PageIntro title="Ranking candidates" subtitle="Unpublished preparation history. Viewing does not publish rankings or advance time." meta={`Run: ${runId} · Branch: ${branchId}`} />
     <Link to={`/admin/runs/${encodeURIComponent(runId)}/branches`}>Back to Branches</Link>
     {!valid ? <p role="alert">Invalid season or week.</p> : query.isPending ? <p role="status">Loading ranking history…</p> : query.isError ? <div role="alert"><p>{formatApiError(query.error)}</p><button type="button" onClick={() => void query.refetch()}>Retry loading</button></div> : query.data && <>
+      <RankingPreparationPanel key={`prepare/${runId}/${branchId}`} runId={runId} branchId={branchId} latest={query.data.candidates[query.data.candidates.length - 1]} />
       <RankingSavePanel key={`save/${runId}/${branchId}`} runId={runId} branchId={branchId} />
       <SectionCard title="Candidate weeks">
         {query.data.candidates.length === 0 ? <EmptyState message="No ranking candidates have been prepared for this Branch." /> : <ul>{query.data.candidates.map(c => <li key={c.fingerprint}><Link to={`${base}/${c.snapshot.week.season_index}/${c.snapshot.week.week}`} aria-current={selected?.fingerprint === c.fingerprint ? 'page' : undefined}>{label(c.snapshot.week)}</Link> — {c.snapshot.rows.length} players · Best {c.snapshot.policy.best_n} · Unpublished candidate</li>)}</ul>}

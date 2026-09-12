@@ -5,6 +5,7 @@ import json
 from typing import Literal
 
 from pydantic import Field, model_validator, model_serializer
+from beta_engine.domain.rankings.command_audit import verify_request_payload
 from beta_engine.domain.rankings.zero_history import RankingZeroVersion, validate_zero_successor, resolve_zero_versions
 
 from beta_engine.domain.rankings.official import FrozenInput, OfficialRankingSnapshot
@@ -15,6 +16,14 @@ from beta_engine.domain.rankings.result_history import RankingResultVersion, val
 class RankingRevisionReceipt(FrozenInput):
     command_id: str = Field(min_length=1, max_length=128)
     request_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    request_payload_json: str | None = None
+
+    @model_serializer(mode="wrap")
+    def serialize_receipt(self, handler):
+        data = handler(self)
+        if self.request_payload_json is None:
+            data.pop("request_payload_json", None)
+        return data
 
 
 class RankingRevisionEntry(FrozenInput):
@@ -83,6 +92,13 @@ class RankingRevisionState(FrozenInput):
                     resolved[(version.result.edition_id, version.result.player_id)] = version.result
             if resolved != {(r.edition_id, r.player_id): r for r in entry.inputs.results}:
                 raise ValueError("Ranking revision sources differ from frozen inputs")
+            for receipt in entry.receipts:
+                if entry.inputs.command_request_fingerprint is not None and (
+                    receipt.request_payload_json is None or receipt.request_fingerprint != entry.inputs.command_request_fingerprint
+                ):
+                    raise ValueError("Ranking revision requires original command payload")
+                verify_request_payload(receipt.request_payload_json, request_fingerprint=receipt.request_fingerprint,
+                                       command_id=receipt.command_id, snapshot=snapshot)
             ids = [r.command_id for r in entry.receipts]
             if ids != sorted(set(ids)) or command_ids.intersection(ids):
                 raise ValueError("Ranking revision command identities are not unique and ordered")

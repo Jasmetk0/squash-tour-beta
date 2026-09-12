@@ -30,6 +30,11 @@ export function RankingCandidateInputsPanel({ runId, branchId, week, fingerprint
       : query.data?.verification_status === 'legacy_without_manifest' ? <p>Legacy candidate: complete calculation inputs were not stored. They cannot be reconstructed from current data.</p>
       : query.data?.manifest && <>
         <p>Verified: stored inputs reproduce this candidate. This does not verify completeness against the entire world.</p>
+        <h4>Preparation audit</h4>
+        {query.data.command_audits?.length ? <ul>{query.data.command_audits.map(entry => <li key={entry.command_id}>
+          <strong>{entry.audit.actor_label}</strong> · {entry.audit.reason}
+          <details><summary>Preparation command</summary>{entry.command_id}</details>
+        </li>)}</ul> : <p>No preparation audit was recorded for this candidate.</p>}
         <h4>Why equal-point players are ordered this way</h4>
         {query.data.tie_explanations === undefined ? <p>Tie explanations are unavailable from this server.</p>
           : query.data.tie_explanations.length === 0 ? <p>No adjacent players have equal points.</p>

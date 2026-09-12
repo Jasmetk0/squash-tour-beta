@@ -1015,6 +1015,21 @@ class SimulationPersistenceRepository:
         self._engine = engine
         self._session_factory = session_factory
 
+    def prepare_official_ranking(self, *, run_id: str, branch_id: str, command):
+        from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
+        from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
+
+        context = command if isinstance(command, RankingBootstrapCommand) else command.context
+        if (context.run_id, context.branch_id) != (run_id, branch_id):
+            raise ValueError("Ranking request scope mismatch")
+        if command.audit is None:
+            raise ValueError("Admin preparation requires an audit label and reason")
+        # Legacy file-based bindings lack authoritative product scope. Keep their
+        # ingestion behind the trusted internal adapter until that is resolved.
+        if not isinstance(command, RankingBootstrapCommand) and command.tournaments:
+            raise ValueError("Admin preparation cannot ingest unscoped tournament files")
+        return RankingWeekCommandRunner(self._session_factory).execute(command)
+
     def inspect_official_ranking_history(self, *, run_id: str, branch_id: str):
         from beta_engine.infrastructure.db.ranking_inspection import inspect_ranking_history
 
@@ -1048,6 +1063,7 @@ class SimulationPersistenceRepository:
 
     def _ensure_schema_compatibility(self) -> None:
         with self._engine.begin() as connection:
+            self._ensure_column(connection=connection, table_name="official_ranking_commands", column_name="request_payload_json", column_type="TEXT")
             self._ensure_column(connection=connection, table_name="official_ranking_commands", column_name="input_manifest_version", column_type="INTEGER")
             self._ensure_column(connection=connection, table_name="official_ranking_commands", column_name="input_manifest_json", column_type="TEXT")
             self._ensure_runs_world_id_nullable(connection=connection)

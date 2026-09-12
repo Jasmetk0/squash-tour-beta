@@ -5,6 +5,7 @@ from beta_engine.domain.rankings.tie_explanations import RankingTieExplanation
 
 from beta_engine.domain.rankings.official import FrozenInput, OfficialRankingSnapshot, RankingWeek
 from beta_engine.domain.rankings.result_history import RankingResultVersion
+from beta_engine.domain.rankings.command_audit import RankingCommandAudit
 from beta_engine.domain.rankings.zero_history import RankingZeroVersion
 from beta_engine.domain.rankings.input_manifest import RankingInputManifest
 
@@ -44,6 +45,11 @@ class RankingZeroSourceDetail(FrozenInput):
     impact: Literal["superseded", "expired", "reserves_slot", "player_not_classified"]
 
 
+class RankingCommandAuditDetail(FrozenInput):
+    command_id: str
+    audit: RankingCommandAudit
+
+
 class RankingCandidateInputs(FrozenInput):
     run_id: str
     branch_id: str
@@ -55,3 +61,4 @@ class RankingCandidateInputs(FrozenInput):
     tie_explanations: tuple[RankingTieExplanation, ...] = ()
     zero_history_status: Literal["verified_stored_history", "caller_resolved", "legacy_without_manifest"]
     zero_sources: tuple[RankingZeroSourceDetail, ...] = ()
+    command_audits: tuple[RankingCommandAuditDetail, ...] = ()

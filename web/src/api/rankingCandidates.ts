@@ -30,6 +30,7 @@ export type RankingCandidateSources = {
 export type RankingCandidateInputs = {
   run_id: string; branch_id: string; week: CandidateWeek
   candidate_fingerprint: string; publication_status: 'candidate_only'
+  command_audits?: { command_id: string; audit: { actor_label: string; reason: string } }[]
   zero_history_status?: 'verified_stored_history' | 'caller_resolved' | 'legacy_without_manifest'
   zero_sources?: {
     fingerprint: string

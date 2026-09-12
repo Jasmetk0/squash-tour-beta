@@ -1,6 +1,6 @@
 """Complete immutable inputs for verifying an already stored ranking calculation."""
 
-from pydantic import model_serializer
+from pydantic import Field, model_serializer
 
 from beta_engine.domain.rankings.official import (
     WithDisciplinaryZeros, OfficialRankingPlayer, OfficialRankingResult,
@@ -10,10 +10,13 @@ from beta_engine.domain.rankings.official import (
 
 class RankingInputManifest(WithDisciplinaryZeros):
     zeros_from_history: bool = False
+    command_request_fingerprint: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
 
     @model_serializer(mode="wrap")
     def serialize_manifest(self, handler):
         data = handler(self)
+        if self.command_request_fingerprint is None:
+            data.pop("command_request_fingerprint", None)
         if not self.disciplinary_zeros:
             data.pop("disciplinary_zeros", None)
         if not self.zeros_from_history:

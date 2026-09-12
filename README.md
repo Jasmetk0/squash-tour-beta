@@ -50,17 +50,21 @@ Viewer never exposes internal technical alerts or future-only information. Publi
 - Historically versioned ranking policies and snapshots. Ranking formulae are configuration/history, not globally hard-coded constants.
 - Operation-scoped validation: unrelated incomplete data should not block an otherwise valid operation.
 
+## Project continuity
+
+Start with [CURRENT_STATE.md](CURRENT_STATE.md) for verified implementation and the next Codex task, [ROADMAP.md](ROADMAP.md) for the pre-alpha path, and [Master Vision](SQUASH_ENGINE_MASTER_VISION.md) for product rules and the development model.
+
 ## Documentation authority
 
 Use this order when documentation conflicts:
 
 1. explicit newer product decisions,
-2. **Squash Engine Master Vision v54** and later audited revisions,
+2. [`SQUASH_ENGINE_MASTER_VISION.md`](SQUASH_ENGINE_MASTER_VISION.md),
 3. [`PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`](PROJECT_CONSTITUTION_TECHNICAL_PLAN.md), including newer post-v42 decisions recorded there,
 4. subordinate migration guidance such as [`docs/ENGINE_UX_SPEC.md`](docs/ENGINE_UX_SPEC.md),
 5. older documents, handoffs, and existing beta behavior as historical or implementation evidence only.
 
-`PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` is the active shorter repository constitution governed by Master Vision v54. It may lag Master detail but intentionally preserves still-valid earlier canon. `Beta_Engine.docx` and documents that describe earlier phase-specific designs are non-authoritative background unless the current constitution explicitly reconfirms them. See [`ROADMAP.md`](ROADMAP.md) for the current milestone sequence.
+`PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` is the active shorter repository constitution governed by the canonical Master Vision. It may lag Master detail but intentionally preserves still-valid earlier canon. `Beta_Engine.docx` and documents that describe earlier phase-specific designs are non-authoritative background unless the current constitution explicitly reconfirms them. See [`ROADMAP.md`](ROADMAP.md) for the current milestone sequence.
 
 Decision status matters: **decided**, **provisional**, **target**, **open**, **deferred**, and **later** must not be silently collapsed into one level of certainty.
 

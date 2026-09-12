@@ -6,7 +6,7 @@ This document is **implementation/migration guidance**, not a second product con
 
 The current product-level authority order is:
 
-- **Squash Engine Master Vision v50** (updated 24 Aug 2026)
+- [Canonical Master Vision](../SQUASH_ENGINE_MASTER_VISION.md), version declared inside
 - `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`, the shorter repository distillation that may lag Master detail
 
 If this guide, older beta code, `Beta_Engine.docx`, an old handoff or an older UX proposal conflicts with the current constitution/Master/newer explicit decision, the higher-authority source wins.

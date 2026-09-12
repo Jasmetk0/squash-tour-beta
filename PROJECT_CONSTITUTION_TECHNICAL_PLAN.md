@@ -1,9 +1,9 @@
 # Squash Engine / FAX Squash / MSA World Tour
 
-## Active Product Constitution — governed by Master Vision v54
+## Active Product Constitution — governed by the canonical Master Vision
 
-**Repository status:** canonical repository-level product constitution for current design and implementation decisions.  
-**Latest Master authority:** Squash Engine Master Vision **v54**, updated **29. 8. 2026**.
+**Repository status:** subordinate repository-facing product/technical distillation; the full canonical Master is authoritative.
+**Master authority:** [`SQUASH_ENGINE_MASTER_VISION.md`](SQUASH_ENGINE_MASTER_VISION.md), with its current version declared inside. See `CURRENT_STATE.md` for implemented evidence.
 **Synchronization rule:** this shorter repository distillation may lag details in the Master. It preserves still-valid earlier canon and records selected later decisions; synchronization must be additive unless the Master explicitly supersedes an older rule.
 
 > This constitution is a repository-facing distillation, not a lossless copy of the full Master Vision. A specified target does **not** imply that the repository already implements it. When a task depends on detail not stated here, use the latest audited Master or an explicit newer user decision rather than inventing the missing rule.
@@ -34,7 +34,7 @@ Independent scope axis:
 When sources disagree, use this order:
 
 1. explicit newer user/product decisions,
-2. latest audited Master Vision — currently v54,
+2. canonical `SQUASH_ENGINE_MASTER_VISION.md`,
 3. this constitution,
 4. subordinate migration guidance such as `docs/ENGINE_UX_SPEC.md`,
 5. `README.md`, `ROADMAP.md`, and `AGENTS.md` as summaries/operating guidance,

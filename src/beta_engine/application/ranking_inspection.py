@@ -62,3 +62,9 @@ class RankingCandidateInputs(FrozenInput):
     zero_history_status: Literal["verified_stored_history", "caller_resolved", "legacy_without_manifest"]
     zero_sources: tuple[RankingZeroSourceDetail, ...] = ()
     command_audits: tuple[RankingCommandAuditDetail, ...] = ()
+
+
+class RankingPreparationPreview(FrozenInput):
+    preview_only: Literal[True] = True
+    request_fingerprint: str
+    candidate: RankingCandidateDetail

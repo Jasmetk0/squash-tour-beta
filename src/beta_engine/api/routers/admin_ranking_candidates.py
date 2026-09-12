@@ -7,7 +7,7 @@ from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCo
 from beta_engine.application.ranking_week_command import RankingWeekCommand
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
 
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException, Path, Header
 
 from beta_engine.api.deps import ApiRuntime, get_runtime, get_run_working_draft_service
 from beta_engine.application.ranking_inspection import (
@@ -15,6 +15,7 @@ from beta_engine.application.ranking_inspection import (
     RankingCandidateHistory,
     RankingCandidateSources,
     RankingCandidateInputs,
+    RankingPreparationPreview,
 )
 
 router = APIRouter(
@@ -52,7 +53,7 @@ def get_history(
 
 
 
-def _prepare(runtime, run_id, branch_id, payload, model):
+def _prepare(runtime, run_id, branch_id, payload, model, *, preview=False, expected=None, expected_request=None):
     try:
         # Strict domain tuples validate in JSON mode; arrays are their wire form.
         command = model.model_validate_json(json.dumps(payload))
@@ -62,23 +63,42 @@ def _prepare(runtime, run_id, branch_id, payload, model):
         raise HTTPException(status_code=422, detail={"code": "invalid_ranking_command",
                             "message": "A valid ranking command with audit label and reason is required."}) from exc
     try:
-        snapshot = runtime.repository.prepare_official_ranking(run_id=run_id, branch_id=branch_id, command=command)
+        if expected_request is not None and command.fingerprint != expected_request:
+            raise ValueError("Ranking command changed since preview")
+        snapshot = runtime.repository.prepare_official_ranking(run_id=run_id, branch_id=branch_id, command=command, preview=preview, expected_snapshot_fingerprint=expected)
     except ValueError as exc:
         raise HTTPException(status_code=409, detail={"code": "ranking_preparation_conflict",
                             "message": "Ranking preparation was rejected; verify scope, history and input dependencies."}) from exc
-    return RankingCandidateDetail(snapshot=snapshot, fingerprint=snapshot.fingerprint, command_ids=(command.command_id,))
+    candidate = RankingCandidateDetail(snapshot=snapshot, fingerprint=snapshot.fingerprint, command_ids=(command.command_id,))
+    return RankingPreparationPreview(request_fingerprint=command.fingerprint, candidate=candidate) if preview else candidate
 
 
 @router.post("/prepare/initial", response_model=RankingCandidateDetail, status_code=201)
 def prepare_initial(run_id: str, branch_id: str, payload: dict,
-                    runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
-    return _prepare(runtime, run_id, branch_id, payload, RankingBootstrapCommand)
+                    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+                    expected: Annotated[str | None, Header(alias="X-Ranking-Preview-Fingerprint", pattern=r"^[0-9a-f]{64}$")] = None,
+                    expected_request: Annotated[str | None, Header(alias="X-Ranking-Preview-Request", pattern=r"^[0-9a-f]{64}$")] = None):
+    return _prepare(runtime, run_id, branch_id, payload, RankingBootstrapCommand, expected=expected, expected_request=expected_request)
 
 
 @router.post("/prepare/week", response_model=RankingCandidateDetail, status_code=201)
 def prepare_week(run_id: str, branch_id: str, payload: dict,
+                 runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+                 expected: Annotated[str | None, Header(alias="X-Ranking-Preview-Fingerprint", pattern=r"^[0-9a-f]{64}$")] = None,
+                 expected_request: Annotated[str | None, Header(alias="X-Ranking-Preview-Request", pattern=r"^[0-9a-f]{64}$")] = None):
+    return _prepare(runtime, run_id, branch_id, payload, RankingWeekCommand, expected=expected, expected_request=expected_request)
+
+
+@router.post("/prepare/initial/preview", response_model=RankingPreparationPreview)
+def preview_initial(run_id: str, branch_id: str, payload: dict,
+                    runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
+    return _prepare(runtime, run_id, branch_id, payload, RankingBootstrapCommand, preview=True)
+
+
+@router.post("/prepare/week/preview", response_model=RankingPreparationPreview)
+def preview_week(run_id: str, branch_id: str, payload: dict,
                  runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
-    return _prepare(runtime, run_id, branch_id, payload, RankingWeekCommand)
+    return _prepare(runtime, run_id, branch_id, payload, RankingWeekCommand, preview=True)
 
 
 class RankingSaveRequest(BaseModel):

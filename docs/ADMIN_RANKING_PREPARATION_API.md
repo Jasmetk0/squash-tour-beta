@@ -62,3 +62,12 @@ Existing databases gain a nullable request column when opened. Legacy receipts l
 both request evidence and the new manifest binding remain readable and receive no
 invented audit. Empty audit/request extensions are omitted from old model serialization;
 unaudited existing command fingerprints retain their previous canonical representation.
+
+
+## Form and preview follow-up
+
+Admin now provides a structured preparation form with preview and explicit confirmation,
+including roster/policy review and zero issuance/duration correction inputs. Preview
+endpoints and guarded confirmation are described in `RANKING_PREPARATION_WORKFLOW.md`.
+This supersedes the earlier missing-form boundary. Automated issuance rules and scoped
+legacy tournament ingestion remain outside this workflow.

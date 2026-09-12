@@ -40,13 +40,26 @@ class RankingWeekCommandRunner:
         self.factory = factory
         self.awards = awards
 
-    def execute(self, command: RankingWeekCommand | RankingBootstrapCommand) -> OfficialRankingSnapshot:
+    def execute(self, command: RankingWeekCommand | RankingBootstrapCommand, *, expected_snapshot_fingerprint: str | None = None) -> OfficialRankingSnapshot:
         command = _validated_command(command)
         with self.factory.begin() as session:
             # Lock before reading the head/receipt: competing SQLite commands
             # cannot both decide that a request is new and then stage different data.
             session.execute(text("BEGIN IMMEDIATE"))
-            return stage_ranking_week_command(session, self.awards, command)
+            snapshot = stage_ranking_week_command(session, self.awards, command)
+            if expected_snapshot_fingerprint is not None and snapshot.fingerprint != expected_snapshot_fingerprint:
+                raise ValueError("Ranking inputs changed since preview")
+            return snapshot
+
+    def preview(self, command: RankingWeekCommand | RankingBootstrapCommand) -> OfficialRankingSnapshot:
+        """Exercise the real preparation transaction, then unconditionally roll it back."""
+        command = _validated_command(command)
+        with self.factory() as session:
+            try:
+                session.execute(text("BEGIN IMMEDIATE"))
+                return stage_ranking_week_command(session, self.awards, command)
+            finally:
+                session.rollback()
 
 
 def stage_ranking_week_command(

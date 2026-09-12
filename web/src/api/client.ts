@@ -1359,3 +1359,26 @@ export async function saveRankingPreparation(runId: string, branchId: string, pr
     method: 'POST', body: JSON.stringify({ expected_draft_version: preview.draft_version, expected_ranking_fingerprint: preview.ranking_fingerprint })
   })
 }
+
+export async function previewRankingCommand(runId: string, branchId: string, command: import('./rankingCandidates').RankingPreparationCommand): Promise<import('./rankingCandidates').RankingPreparationPreview> {
+  const kind = 'context' in command ? 'week' : 'initial'
+  const data = await request<import('./rankingCandidates').RankingPreparationPreview>(`/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/ranking-candidates/prepare/${kind}/preview`, {method:'POST',body:JSON.stringify(command)})
+  if (data.preview_only !== true || !/^[0-9a-f]{64}$/.test(data.request_fingerprint)) throw new Error('Invalid preparation preview.')
+  verifyPreparationCandidate(runId, branchId, command, data.candidate)
+  return data
+}
+
+function verifyPreparationCandidate(runId: string, branchId: string, command: import('./rankingCandidates').RankingPreparationCommand, data: import('./rankingCandidates').RankingCandidateDetail) {
+  const context = 'context' in command ? command.context : command
+  if (data.publication_status !== 'candidate_only' || data.snapshot.run_id !== runId || data.snapshot.branch_id !== branchId ||
+      data.snapshot.week.season_index !== context.target_week.season_index || data.snapshot.week.week !== context.target_week.week ||
+      !/^[0-9a-f]{64}$/.test(data.fingerprint) || !data.command_ids.includes(command.command_id)) throw new Error('Prepared ranking does not match the requested scope, week or command.')
+}
+
+export async function confirmRankingCommand(runId: string, branchId: string, command: import('./rankingCandidates').RankingPreparationCommand, preview: import('./rankingCandidates').RankingPreparationPreview): Promise<import('./rankingCandidates').RankingCandidateDetail> {
+  const kind = 'context' in command ? 'week' : 'initial'
+  const data = await request<import('./rankingCandidates').RankingCandidateDetail>(`/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/ranking-candidates/prepare/${kind}`, {method:'POST',body:JSON.stringify(command),headers:{'Content-Type':'application/json','X-Ranking-Preview-Fingerprint':preview.candidate.fingerprint,'X-Ranking-Preview-Request':preview.request_fingerprint}})
+  verifyPreparationCandidate(runId, branchId, command, data)
+  if (data.fingerprint !== preview.candidate.fingerprint) throw new Error('Prepared ranking differs from the reviewed preview.')
+  return data
+}

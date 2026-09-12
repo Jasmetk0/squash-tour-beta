@@ -23,7 +23,7 @@ export type RankingCandidateSources = {
   candidate_fingerprint: string; publication_status: 'candidate_only'
   sources: { fingerprint: string; counted: boolean; version: {
     run_id: string; branch_id: string; effective_week: CandidateWeek; previous_fingerprint: string | null
-    result: { edition_id: string; player_id: string; source_fingerprint: string; qualification_points: number; main_points: number; first_publication_week: CandidateWeek; validity_weeks: number; ranked: boolean }
+    result: { edition_id: string; player_id: string; source_fingerprint: string; qualification_points: number; main_points: number; first_publication_week: CandidateWeek; validity_weeks: number; ranked: boolean; completed_week: CandidateWeek; terminal_status: 'completed' | 'abandoned' }
   } }[]
 }
 
@@ -58,7 +58,9 @@ export type RankingPreparationCommand = {
   zero_versions: { effective_week: CandidateWeek; previous_fingerprint: string | null; zero: RankingDisciplinaryZero }[]
 } & (
   { run_id: string; branch_id: string; target_week: CandidateWeek; policy: {policy_id: string; best_n: number}; players: RankingPreparationPlayer[]; discipline: 'stored_zeros' }
-  | { context: { run_id: string; branch_id: string; completed_week: CandidateWeek; target_week: CandidateWeek; policy: {policy_id: string; best_n: number}; players: RankingPreparationPlayer[]; discipline: 'stored_zeros' }; tournaments: [] }
+  | { context: { run_id: string; branch_id: string; completed_week: CandidateWeek; target_week: CandidateWeek; policy: {policy_id: string; best_n: number}; players: RankingPreparationPlayer[]; discipline: 'stored_zeros' }; tournaments: []; corrections?: RankingResultCorrection[] }
 )
 export type RankingPreparationPlayer = {player_id: string; tie_break_token: string; tour_entry_week: CandidateWeek; retired: boolean}
 export type RankingPreparationPreview = {preview_only: true; request_fingerprint: string; candidate: RankingCandidateDetail}
+
+export type RankingResultCorrection = RankingCandidateSources['sources'][number]['version']

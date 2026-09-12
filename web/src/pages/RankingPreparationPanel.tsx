@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { confirmRankingCommand, getRankingCandidateInputs, previewRankingCommand } from '../api/client'
 import type { CandidateWeek, RankingCandidateDetail, RankingCandidateInputs, RankingDisciplinaryZero, RankingPreparationCommand, RankingPreparationPlayer, RankingPreparationPreview } from '../api/rankingCandidates'
+import { RankingResultCorrections } from './RankingResultCorrections'
+import type { RankingResultCorrection } from '../api/rankingCandidates'
 import { formatApiError } from '../utils/apiErrors'
 
 const label = (w: CandidateWeek) => `${2000 + w.season_index}/${String(2001 + w.season_index).slice(-2)} · Week ${w.week}`
@@ -44,6 +46,7 @@ export function RankingPreparationPanel({runId, branchId, latest}: {runId:string
 
 type ZeroChange = {version:NonNullable<RankingCandidateInputs['zero_sources']>[number];enabled:boolean;duration:number;source:string}
 function PreparationForm({runId,branchId,latest,inputs,target,onDone}: {runId:string;branchId:string;latest?:RankingCandidateDetail;inputs?:RankingCandidateInputs;target:CandidateWeek;onDone:()=>void}): JSX.Element {
+  const [corrections,setCorrections] = useState<RankingResultCorrection[]>([])
   const [players,setPlayers] = useState<RankingPreparationPlayer[]>(() => structuredClone(inputs?.manifest?.players ?? []))
   const [policyId,setPolicyId] = useState(latest?.snapshot.policy.policy_id ?? '')
   const [bestN,setBestN] = useState(latest?.snapshot.policy.best_n ?? 15)
@@ -69,7 +72,7 @@ function PreparationForm({runId,branchId,latest,inputs,target,onDone}: {runId:st
       ...newZeros.map(zero => ({effective_week:target,previous_fingerprint:null,zero:structuredClone(zero)})),
       ...changes.filter(c => c.enabled).map(c => ({effective_week:target,previous_fingerprint:c.version.fingerprint,zero:{...c.version.version.zero,duration_weeks:c.duration,source_fingerprint:c.source}})),
     ]}
-    return latest ? {...common,context:{...context,completed_week:latest.snapshot.week},tournaments:[]} : {...common,...context}
+    return latest ? {...common,context:{...context,completed_week:latest.snapshot.week},tournaments:[],...(corrections.length ? {corrections:structuredClone(corrections)} : {})} : {...common,...context}
   }
   return <div>
     <p>Prepare {label(target)} using stored tournament results. Review the complete roster, policy and decisions for this boundary.</p>
@@ -92,6 +95,7 @@ function PreparationForm({runId,branchId,latest,inputs,target,onDone}: {runId:st
           <button type="button" onClick={() => setPlayers(old => old.filter((_,i) => i !== index))}>Remove player {index+1}</button>
         </fieldset>)}
         <button type="button" onClick={() => setPlayers(old => [...old,{player_id:'',tie_break_token:crypto.randomUUID(),tour_entry_week:{...target},retired:false}])}>Add player</button>
+        {latest && <RankingResultCorrections runId={runId} branchId={branchId} latest={latest} target={target} onChange={setCorrections} />}
         <h3>Disciplinary zeros</h3>
         <p>New decisions apply at {label(target)}. Duration changes preserve each zero’s original start. Durations are explicit reviewed decisions.</p>
         {changes.map((change,index) => <fieldset key={change.version.fingerprint}>
@@ -122,7 +126,7 @@ function PreparationForm({runId,branchId,latest,inputs,target,onDone}: {runId:st
     {preview.isError && <p role="alert">{formatApiError(preview.error)}</p>}
     {review && <section aria-label="Ranking preview">
       <h3>Review {label(review.preview.candidate.snapshot.week)}</h3>
-      <p>Preview only · Best {review.preview.candidate.snapshot.policy.best_n} · {review.preview.candidate.snapshot.rows.length} ranked players · {review.command.zero_versions.length} decision changes</p>
+      <p>Preview only · Best {review.preview.candidate.snapshot.policy.best_n} · {review.preview.candidate.snapshot.rows.length} ranked players · {review.command.zero_versions.length} zero changes · {'context' in review.command ? review.command.corrections?.length ?? 0 : 0} result corrections</p>
       {review.preview.candidate.snapshot.rows.length === 0 ? <p>No players are classified at this boundary.</p> : <div className="table-scroll"><table><thead><tr><th>Rank</th><th>Player</th><th>Points</th><th>Active zeros</th></tr></thead><tbody>{review.preview.candidate.snapshot.rows.map(row => <tr key={row.player_id}><td>{row.rank}</td><td>{row.player_id}</td><td>{row.points}</td><td>{row.disciplinary_zeros?.length ?? 0}</td></tr>)}</tbody></table></div>}
       <button type="button" disabled={busy} onClick={() => confirm.mutate()}>{confirm.isError ? 'Retry this exact preparation' : 'Confirm candidate preparation'}</button>
       <button type="button" disabled={busy} onClick={() => {setReview(null);preview.reset();confirm.reset();setReviewed(false)}}>Edit inputs and recalculate</button>

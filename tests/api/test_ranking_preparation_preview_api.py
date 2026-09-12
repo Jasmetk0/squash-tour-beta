@@ -122,3 +122,89 @@ def test_confirmation_binds_audit_and_exact_request_as_well_as_snapshot(api):
         request.urlopen(req)
     assert rejected.value.code == 409
     assert dump(path) == before
+
+
+@pytest.mark.smoke
+def test_result_correction_preview_confirm_history_and_recovery(api):
+    from beta_engine.domain.rankings.result_history import RankingResultVersion
+    from beta_engine.infrastructure.db.ranking_result_history import OfficialRankingResultStore
+    from test_admin_ranking_preparation_api import capture
+    from beta_engine.infrastructure.db.ranking_state_restore import restore_ranking_revision_state
+
+    client, factory, path, *_ = api
+    assert client.post(PREFIX + '/prepare/initial', json=initial()).status_code == 201
+    original = RankingResultVersion.model_validate_json(json.dumps(dict(
+        run_id='run', branch_id='empty', effective_week={'season_index':0,'week':2}, previous_fingerprint=None,
+        result=dict(edition_id='edition', player_id='p', source_fingerprint='award',
+                    completed_week={'season_index':0,'week':1}, first_publication_week={'season_index':0,'week':2},
+                    qualification_points=10, main_points=100))))
+    with factory.begin() as session:
+        session.execute(text('BEGIN IMMEDIATE'))
+        OfficialRankingResultStore(session).append(original)
+    second = weekly() | {'zero_versions':[]}
+    old = client.post(PREFIX + '/prepare/week', json=second).json()
+    assert old['snapshot']['rows'][0]['points'] == 110
+    source = client.get(PREFIX + '/0/2/sources').json()['sources'][0]
+    prior_state = capture(factory)
+    req = second | {'command_id':'correct-award', 'context':second['context'] | {
+        'completed_week':{'season_index':0,'week':2}, 'target_week':{'season_index':0,'week':3}},
+        'corrections':[source['version'] | {'effective_week':{'season_index':0,'week':3},
+            'previous_fingerprint':source['fingerprint'], 'result':source['version']['result'] | {
+                'qualification_points':20, 'main_points':200, 'source_fingerprint':'appeal'}}]}
+    before = dump(path)
+    preview = client.post(PREFIX + '/prepare/week/preview', json=req)
+    assert preview.status_code == 200 and dump(path) == before
+    assert preview.json()['candidate']['snapshot']['rows'][0]['points'] == 220
+    status, candidate = confirm(client, 'week', req, preview.json()['candidate']['fingerprint'])
+    assert status == 201
+    assert client.get(PREFIX + '/0/2').json() == old
+    assert client.get(PREFIX + '/0/2/sources').json()['sources'][0] == source
+    corrected = client.get(PREFIX + '/0/3/sources').json()['sources'][0]['version']
+    for field in ('completed_week', 'first_publication_week', 'validity_weeks'):
+        assert corrected['result'][field] == source['version']['result'][field]
+    state = capture(factory)
+    assert len(state.sources) == 2
+    for index, target_state in enumerate((prior_state, state)):
+        current = capture(factory)
+        with factory.begin() as session:
+            session.execute(text('BEGIN IMMEDIATE'))
+            restore_ranking_revision_state(session, target_state.model_dump_json(), expected_fingerprint=target_state.fingerprint,
+                expected_current_fingerprint=current.fingerprint, command_id=f'corrected-recovery-{index}', run_id='run', branch_id='empty')
+        assert capture(factory).fingerprint == target_state.fingerprint
+    assert client.get(PREFIX + '/0/3/sources').json()['sources'][0]['version'] == corrected
+    before = dump(path)
+    assert confirm(client, 'week', req, candidate['fingerprint']) == (201, candidate)
+    assert dump(path) == before
+
+
+@pytest.mark.parametrize('damage', ['timing', 'stale_predecessor'])
+def test_invalid_result_correction_rolls_back_zero_batch(api, damage):
+    from beta_engine.domain.rankings.result_history import RankingResultVersion
+    from beta_engine.infrastructure.db.ranking_result_history import OfficialRankingResultStore
+
+    client, factory, path, *_ = api
+    assert client.post(PREFIX + '/prepare/initial', json=initial()).status_code == 201
+    source = RankingResultVersion.model_validate_json(json.dumps(dict(run_id='run', branch_id='empty',
+        effective_week={'season_index':0,'week':2}, previous_fingerprint=None,
+        result=dict(edition_id='edition', player_id='p', source_fingerprint='award', main_points=100,
+                    completed_week={'season_index':0,'week':1}, first_publication_week={'season_index':0,'week':2}))))
+    with factory.begin() as session:
+        session.execute(text('BEGIN IMMEDIATE'))
+        OfficialRankingResultStore(session).append(source)
+    assert client.post(PREFIX + '/prepare/week', json=weekly() | {'zero_versions':[]}).status_code == 201
+    req = weekly()
+    target = {'season_index':0,'week':3}
+    req['command_id'] = 'bad-correction'
+    req['context'].update(completed_week={'season_index':0,'week':2}, target_week=target)
+    req['zero_versions'][0]['effective_week'] = target
+    req['zero_versions'][0]['zero']['effective_week'] = target
+    correction = source.model_dump(mode='json') | {'effective_week':target, 'previous_fingerprint':source.fingerprint}
+    if damage == 'timing':
+        correction['result']['validity_weeks'] = 62
+    else:
+        correction['previous_fingerprint'] = '0'*64
+    req['corrections'] = [correction]
+    before = dump(path)
+    assert client.post(PREFIX + '/prepare/week/preview', json=req).status_code == 409
+    assert client.post(PREFIX + '/prepare/week', json=req).status_code == 409
+    assert dump(path) == before

@@ -62,3 +62,31 @@ checks and final-season bounds. These tests are included in Fast CI.
 No automatic sanction issuance, authoritative roster/policy resolution, full-world
 Week/Season Transition, public publication, Season Closing Ranking or Protected Ranking
 is claimed. The operator still supplies and reviews the complete boundary inputs.
+
+## Stored result corrections
+
+The weekly preparation form can load the latest stored source versions effective
+at the selected ranking. The source response must match the Run, Branch, week and
+candidate fingerprint. Loading or retrying this read selects no corrections.
+Counted and uncounted sources are both offered: correction eligibility is not
+limited to the current Best N.
+
+Selecting a result adds an explicit correction to the same audited weekly command
+as roster, policy and zero changes. Admin may change Q/main points, ranking
+eligibility and terminal status and must supply a correction reference. The
+original completion week, first publication and validity are carried unchanged;
+the stored predecessor fingerprint is included. Deselecting removes the correction
+from the batch. This is correction of a previously stored award, not ingestion of
+a new tournament or an automatic disciplinary policy.
+
+Preview uses the real transactional runner and rolls back all writes. Confirmation
+retains the exact reviewed batch and both preview guards. Result lineage or timing
+errors roll back the entire command, including any zero changes. Old candidate
+and source reads retain their historical values. Versioned recovery includes both
+original and corrected sources; an exact retry after recovery remains idempotent.
+Save is still explicit and this workflow does not publish rankings or advance time.
+
+Verification: real HTTP/SQLite correction preview, confirmation, historical reads,
+rollback and restore/retry tests; component tests at mocked API boundaries cover
+form values, preserved timing, locked review, exact retry and mismatched-source
+read retry. These existing test files are already included in Fast CI.

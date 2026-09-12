@@ -1,6 +1,6 @@
 # Ranking completion evidence
 
-Status after the structured preparation/preview/confirmation workflow (follow-up to #718). Rankings are **not
+Status after the stored-result correction workflow (follow-up to #719). Rankings are **not
 complete**. This is an implementation checklist, not a new product contract. Master
 v64 and subsequent explicit decisions remain authoritative; open product questions
 must not receive invented defaults.
@@ -9,7 +9,7 @@ must not receive invented defaults.
 | --- | --- | --- |
 | Official calculation | `domain/rankings/official.py`: Best N, Q/main result components, expiry, lifecycle eligibility, tie-breaks, deterministic immutable candidates | Full discipline and authoritative roster/token lifecycle |
 | Historical inputs | Stored result versions, corrections, receipts and complete input manifests | Full branch ancestry and identity remapping |
-| Preparation commands | Structured Admin form, real preview, guarded confirmation, audited API and atomic internal batches | Scoped tournament-source adapter, authoritative lifecycle/policy resolution, full-world Week/Season Transition and publication |
+| Preparation commands | Structured Admin form including stored-result corrections, real preview, guarded confirmation, audited API and atomic batches | Scoped tournament-source adapter, authoritative lifecycle/policy resolution, full-world Week/Season Transition and publication |
 | Inspection | Admin candidate, source and input APIs/UI, with verified equal-point tie explanations and historical zero decision evidence | Public historically faithful Viewer ranking path |
 | Recovery | Versioned bundles, Save capture, independent explicit Save, guarded saved-component restore | Complete sporting-world snapshot/recovery and ranking-bearing forks |
 | Season Closing Ranking | Master 18.5.1 requires a separate archived closing ranking including Week 61 under outgoing policy | Dedicated calculation, persistence, closure marker and season summary; final season must not create Week 1 of season 51 |

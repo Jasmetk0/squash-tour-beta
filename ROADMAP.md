@@ -1,6 +1,27 @@
 # Squash Engine roadmap
 
-This is a milestone summary, not a second product constitution. **Master Vision v54** plus newer explicit decisions take precedence over `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`; `docs/ENGINE_UX_SPEC.md` provides subordinate migration guidance. Planned behavior must not be described as implemented unless verified in the repository.
+This is a milestone summary, not a second product constitution. [`SQUASH_ENGINE_MASTER_VISION.md`](SQUASH_ENGINE_MASTER_VISION.md) plus newer explicit decisions take precedence over `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`; `docs/ENGINE_UX_SPEC.md` provides subordinate migration guidance. Planned behavior must not be described as implemented unless verified in the repository.
+
+## Active pre-alpha dependency path (audit after #720)
+
+This sequence is a technical plan, not a new product-rule registry. Re-evaluate
+it after each merge using `CURRENT_STATE.md`. Existing detailed targets below
+remain valid; their numbering is not a mandate to implement them in that order.
+
+| Gate | Coherent outcome | Evidence required to advance |
+|---|---|---|
+| 0 — synchronize | One canonical Master, clear authority, verified state and next Codex task | Documentation preservation/link checks; no invented product decisions |
+| 1 — source bridge (next) | Supported real main-draw results/awards become owned Run/Branch sources, feed Official candidate and survive Save/Restore | Real producer + API/SQLite; scope collisions, preview, rollback, retry and reopen |
+| 2 — one true week boundary | Authoritative completed-week world/player/policy state feeds Master-order Week Transition, Official snapshot and public events in one transaction | Real Week N -> N+1, deterministic replay, failure rollback, saved Viewer boundary and empty-week behavior |
+| 3 — repeated sporting flow | Entries/draw/match/close/ranking consumers use the same scoped timeline across weeks | Multiple weeks without manual DB repair; slot simultaneity, expiry, corrections, historical reads and recovery |
+| 4 — season boundary | Outgoing Season Closing + summary/marker; incoming policy + Week 1; final season terminates without season 51 | Whole season and rollover; outgoing/incoming policy separation, final Run edge, save/reload/replay |
+| 5 — pre-alpha acceptance | Both Master 31.3 flows, including required minimum Reconstruction/player/AI scope | Official season -> next season and empty Run -> two manual players -> standalone match, repeatedly without history damage |
+
+Full-Run/multi-season stress checks follow progressively; do not confuse a long
+successful batch with empirically calibrated realism. Protected Ranking and other
+required downstream rules enter where their consumers require them, not as an
+unbounded ranking detour. Genuinely open product questions remain explicit gates.
+Consider an integration checkpoint after 5–10 significant PRs or a major subsystem.
 
 ## 1. Canonical foundation and migration safety
 
@@ -95,7 +116,7 @@ This is a milestone summary, not a second product constitution. **Master Vision 
 
 - Build branch map/timeline, versions, checkpoints and recoverable saves with shared pre-divergence history stored once.
 - Preserve the Working Draft boundary for Viewer Branch changes: Viewer switches only through an atomic Save that also creates the Saved Revision and audit event.
-- Expose the complete validated Saved Revision lineage and scoped revision detail as a read-only foundation for historical branching; keep pagination, restore, comparison UI and public Audit Event reads as later slices.
+- Expose the complete validated Saved Revision lineage and scoped revision detail as a read-only foundation for historical branching; recognize that guarded restore and paired recovery activity already exist; pagination, general comparison and complete sporting restore remain follow-ups (see CURRENT_STATE.md).
 - Expand historically correct rankings, statistics, H2H and records from authoritative branch/week data.
 - Rivalries exist as a product concept; detailed detection, group behavior, scoring and Viewer placement remain partially provisional.
 - Tournament Prestige/Tournament Appeal must remain at their actual provisional strengths.

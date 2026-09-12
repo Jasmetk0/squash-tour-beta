@@ -11,8 +11,10 @@ tie-break tokens) and result set, not only the previous snapshot's Best N rows.
 It must resolve Ranked status, retirement, corrections and original first
 publication before calling. Future completed results and future publication
 inputs are rejected. These checks cannot prove source completeness or provenance.
-Discipline must be explicitly `none`; this is an internal supported-scope claim,
-not a public bypass for sanctions. No API is exposed by this increment.
+The original increment accepted only `none`. Subsequent zero support accepts
+resolved zeros and resolves `stored_zeros` through the command runner; see
+`RANKING_DISCIPLINARY_ZEROS.md` and `ADMIN_RANKING_PREPARATION_API.md`. Never use
+`none` to bypass stored decisions. This staging function itself exposes no API.
 
 The previous candidate is selected by the completed week, so replay of an older
 successful request remains verifiable after later weeks have been staged.
@@ -22,8 +24,9 @@ The caller owns the transaction: no independent commit is introduced, and a late
 component failure rolls back the newly computed candidate with other writes.
 
 This is an integrated calculation/storage component, not public Official Ranking
-publication. Production source resolution, command/revision anchoring, fork
-ancestry, discipline and wiring into the full Week/Season Transition remain.
+publication. Command/revision anchoring and explicit zero history are now implemented in
+later components. Production source resolution, fork ancestry and wiring into
+the full Week/Season Transition remain; see `../CURRENT_STATE.md`.
 Legacy simulation and Viewer paths retain their existing behavior.
 
 Real file-backed SQLite tests cover calculated Q+main points, explicit rollover

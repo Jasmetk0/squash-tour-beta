@@ -7,7 +7,7 @@ Build a deterministic, data-driven manager and simulator of the fictional men's 
 When sources conflict, use this precedence:
 
 1. explicit newer user/product decisions,
-2. the latest audited **Squash Engine Master Vision** — currently v61 plus newer explicit decisions,
+2. the canonical [`SQUASH_ENGINE_MASTER_VISION.md`](SQUASH_ENGINE_MASTER_VISION.md) plus newer explicit decisions,
 3. `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` (the active repository constitution, including newer decisions recorded there),
 4. subordinate guidance such as `docs/ENGINE_UX_SPEC.md` and explicit current-version decision specs such as `docs/COUNTRY_ATTRIBUTES_V1.md`,
 5. older documents, handoffs, and current beta behavior as history/implementation evidence only.
@@ -15,6 +15,27 @@ When sources conflict, use this precedence:
 `Beta_Engine.docx` is non-authoritative background. `README.md` is an overview and `ROADMAP.md` is a milestone summary; neither may override the constitution. Mark assumptions and distinguish implemented behavior from target behavior.
 
 Never collapse status labels. A `[DECIDED]` rule, `[PROVISIONAL]` direction, `[TARGET]` capability, `[OPEN]` question, `[DEFERRED]` item and `[LATER]` idea are not interchangeable. Never silently delete an older still-valid decided rule merely because a newer summary omits it.
+
+## Start here and working model
+
+Read `CURRENT_STATE.md` for the audited baseline, gaps and next Codex task, then
+`ROADMAP.md` for the pre-alpha dependency path. The Master chapter 36 owns the
+Development Operating Model: user = product owner and merge decision; Work =
+technical lead/continuity/task preparation; Codex = implementation and review.
+Verify current `buuk`, latest merge and actual code before choosing work. One
+coherent vertical slice per PR; prefer integration blockers over isolated polish.
+Update current-state evidence when its boundary changes, and consolidate Master
+updates at checkpoints/on request. Return the complete Master after changing it.
+Consider an integration checkpoint after 5–10 significant PRs or a subsystem.
+Do not claim full integration from mocks or green smoke CI. For risky changes,
+perform a distinct adversarial review pass. Technical/documentation choices are
+autonomous; genuinely open product mechanics require the owner's decision.
+
+Project map: `src/beta_engine/domain` pure rules; `application` commands/services;
+`infrastructure` persistence/adapters; `api/routers` HTTP; `web/src` Admin/Viewer;
+`tests` mirrors backend layers; `docs` contains scoped contracts. Legacy season
+files and new Run/Branch revision state coexist: never infer shared ownership or
+transactional consistency from similar names. Keep all protections below.
 
 ## Current canonical product rules
 
@@ -28,7 +49,7 @@ Never collapse status labels. A `[DECIDED]` rule, `[PROVISIONAL]` direction, `[T
 - The initial Branch is named `Timeline 1`. Each later ordinary Branch proposes the first unused exact `Timeline N` name within the Run; the user may replace that proposal before creation, and every stored Branch name remains unique within its Run.
 - When a Package is applied to a Run, its selected content becomes an independent, versioned Run snapshot; provenance remains, but there is no live source link.
 - Viewer is historically faithful and read-only. Admin is authoritative and has distinct Global Admin and Run Admin scopes.
-- **Country Game Attributes V1:** authored country ratings are exactly `Squash Popularity`, `Squash Access`, `Development Quality`, `Competition Quality`, `Elite Support`, and `Squash Tradition`, each 1–5. Population/area/region/travel region/**timezone area**/court count are factual data, while Effective Squash Pool, Competitive Depth, Talent Discovery Rate, Professional Conversion Rate and current country strength are derived. Country ratings may affect sampling and development/conversion, but must not directly make innate/generational potential more likely by nationality or create national technical, mental, personality or style DNA. `style_dna` is deferred beyond V1. Travel Region and Timezone Area are distinct geography layers; the currently missing Timezone Area registry is implementation debt, not permission to collapse the concepts. See `docs/COUNTRY_ATTRIBUTES_V1.md`.
+- **Country Game Attributes V1:** authored country ratings are exactly `Squash Popularity`, `Squash Access`, `Development Quality`, `Competition Quality`, `Elite Support`, and `Squash Tradition`, each 1–5. Population/area/region/travel region/**timezone area**/court count are factual data, while Effective Squash Pool, Competitive Depth, Talent Discovery Rate, Professional Conversion Rate and current country strength are derived. Country ratings may affect sampling and development/conversion, but must not directly make innate/generational potential more likely by nationality or create national technical, mental, personality or style DNA. `style_dna` is deferred beyond V1. Travel Region and Timezone Area are distinct geography layers; the package registry/assignment implementation does not permit collapsing the concepts or inventing deferred travel mechanics. See `docs/COUNTRY_ATTRIBUTES_V1.md`.
 - Ranking policies and snapshots are historically versioned/configurable. The Official Run begins season `2000/01` with Best 15; each later season initially inherits the previous season's effective Best N but remains independently configurable.
 - Week progression uses explicit **Week Transition**; season rollover uses **Season Transition**. A week contains a variable chronological sequence of **Simulation Slots**.
 - Events in the same Simulation Slot are simultaneous and must read from the same pre-slot snapshot.

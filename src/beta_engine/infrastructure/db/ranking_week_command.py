@@ -103,7 +103,10 @@ def stage_ranking_week_command(
         if any(s.week == context.target_week for s in history):
             raise ValueError("Ranking target already staged by another command or pathway")
         stored_zeros = context.discipline == "stored_zeros"
-        zero_history = OfficialRankingZeroStore(session).history(run_id=context.run_id, branch_id=context.branch_id)
+        zeros = OfficialRankingZeroStore(session)
+        for version in sorted(command.zero_versions, key=lambda v: v.zero.zero_id):
+            zeros.append(version)
+        zero_history = zeros.history(run_id=context.run_id, branch_id=context.branch_id)
         if zero_history and not stored_zeros:
             raise ValueError("Persisted zero history requires stored_zeros mode")
         if stored_zeros:

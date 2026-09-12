@@ -3,7 +3,10 @@
 import hashlib
 import json
 
-from pydantic import Field, model_validator
+from pydantic import Field, model_validator, model_serializer
+
+from beta_engine.domain.rankings.zero_history import RankingZeroVersion
+from beta_engine.application.ranking_zero_batch import validate_zero_batch, canonicalize_zero_batch
 
 from beta_engine.application.official_ranking_transition import RankingTransitionContext
 from beta_engine.application.ranking_tournament_ingestion import (
@@ -19,9 +22,19 @@ class RankingWeekCommand(FrozenInput):
     tournaments: tuple[TournamentRankingBinding, ...]
     corrections: tuple[RankingResultVersion, ...] = ()
 
+    zero_versions: tuple[RankingZeroVersion, ...] = ()
+
+    @model_serializer(mode="wrap")
+    def serialize_command(self, handler):
+        payload = handler(self)
+        if not self.zero_versions:
+            payload.pop("zero_versions", None)
+        return payload
+
     @model_validator(mode="after")
     def validate_batch(self):
         context = self.context
+        validate_zero_batch(self.zero_versions, context)
         if (
             not context.run_id
             or not context.branch_id
@@ -67,6 +80,7 @@ class RankingWeekCommand(FrozenInput):
     @property
     def fingerprint(self):
         payload = self.model_dump(mode="json")
+        canonicalize_zero_batch(payload)
         if payload["corrections"]:
             payload["corrections"].sort(
                 key=lambda v: (v["result"]["edition_id"], v["result"]["player_id"])

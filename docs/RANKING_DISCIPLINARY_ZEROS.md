@@ -89,3 +89,25 @@ do not borrow a current registry to fabricate historical evidence. Empty verifie
 history is distinct from unavailable history. The Admin stored-input panel shows these
 states and expandable provenance. Reads remain in a single SQLite transaction, work
 on read-only scopes and do not save, publish, issue or modify decisions.
+
+
+## Atomic decision batches in preparation commands
+
+Bootstrap and weekly preparation now accept optional `zero_versions`. Each batch
+requires `stored_zeros`, contains at most one version per zero, and is scoped to the
+command's Run/Branch, target week and supplied roster. Initial Week 1 decisions can
+be submitted with bootstrap; later new decisions and corrections can be submitted
+with their weekly candidate. Existing lineage validation still requires corrections
+to retain the original player, identity and start, and reference the latest version.
+
+The runner appends the batch before resolving inputs inside its existing SQLite
+savepoint. Decisions, tournament/result corrections, candidate and command receipt
+succeed or fail together. Exact retries return the frozen candidate without applying
+versions again; changed batches under the same command ID are rejected. Batch order
+is canonicalized in the request fingerprint and empty batches are omitted to retain
+legacy command payloads/hashes. Saved revision capture and restore retain the decisions,
+frozen inputs and original command receipts, so retries work after recovery too.
+
+These are explicit internal preparation commands. An Admin issuance/editor API and
+its actor/reason audit workflow remain outstanding. No offense tariff, sanction
+eligibility rule, automatic effective date or duration is selected by this adapter.

@@ -51,6 +51,23 @@ export function RankingCandidateInputsPanel({ runId, branchId, week, fingerprint
           <p>Each active zero reserves one Best N slot. These are stored inputs, not an automatic sanction decision.</p>
           <ul>{query.data.manifest.disciplinary_zeros?.map(z => <li key={z.zero_id}>{z.player_id} · {z.zero_id} · Effective {weekLabel(z.effective_week)} for {z.duration_weeks} weeks.<details><summary>Disciplinary source</summary>{z.source_fingerprint}</details></li>)}</ul>
         </>}
+        <h4>Disciplinary decision history</h4>
+        {query.data.zero_history_status === 'verified_stored_history' ? <>
+          <p>Verified against the stored decisions effective by this ranking week. Later changes are excluded.</p>
+          {query.data.zero_sources?.length === 0 ? <p>No zero decisions were effective by this week.</p>
+            : <ul>{query.data.zero_sources?.map(source => <li key={source.fingerprint}>
+              <strong>{source.version.zero.player_id} · {source.version.zero.zero_id}</strong>
+              <p>Version effective {weekLabel(source.version.effective_week)} · Original start {weekLabel(source.version.zero.effective_week)} · Duration {source.version.zero.duration_weeks} weeks</p>
+              <p>{({ superseded: 'Replaced by a later version at this boundary.', expired: 'Expired at this boundary.', reserves_slot: 'Active: reserves one Best N slot.', player_not_classified: 'Active decision; player is outside this ranking.' })[source.impact]}</p>
+              <details><summary>Decision provenance</summary>
+                <p style={{ overflowWrap: 'anywhere' }}>Source: {source.version.zero.source_fingerprint}</p>
+                <p style={{ overflowWrap: 'anywhere' }}>Version: {source.fingerprint}</p>
+                <p style={{ overflowWrap: 'anywhere' }}>Previous version: {source.version.previous_fingerprint ?? 'Initial decision'}</p>
+              </details>
+            </li>)}</ul>}
+        </> : query.data.zero_history_status === 'caller_resolved'
+          ? <p>Zeros were supplied by the caller. This candidate does not verify their provenance against stored decision history.</p>
+          : <p>Decision history verification is unavailable from this server.</p>}
         <h4>Stored result inputs ({query.data.manifest.results.length})</h4>
         {query.data.manifest.results.length === 0 ? <p>No result inputs were supplied.</p> : <ul>{query.data.manifest.results.map(result => <li key={JSON.stringify([result.edition_id, result.player_id])}>
           <strong>{result.player_id} · {result.edition_id}</strong> · Award {result.qualification_points + result.main_points} points · {result.ranked ? 'Ranked result' : 'Unranked result'}

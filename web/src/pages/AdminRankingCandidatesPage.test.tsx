@@ -172,3 +172,29 @@ it('shows mandatory zero slots separately from tournament awards', async () => {
   expect(screen.getByText('14 tournament result slots available.')).toBeVisible()
   expect(screen.getByText('sanction-1: effective 2000/01 · Week 2 for 3 weeks.')).toBeVisible()
 })
+
+it('shows historical decision versions and their impact at the candidate week', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  const zero = {zero_id:'zero-a',run_id:'run',branch_id:'branch',player_id:'player-a',source_fingerprint:'decision',effective_week:{season_index:0,week:1},duration_weeks:3}
+  fetchInputs.mockResolvedValue({run_id:'run',branch_id:'branch',week:{season_index:0,week:2},candidate_fingerprint:'hash',publication_status:'candidate_only',verification_status:'complete_manifest',manifest:{players:[],results:[],zeros_from_history:true},zero_history_status:'verified_stored_history',zero_sources:[
+    {fingerprint:'initial-version',impact:'superseded',version:{effective_week:{season_index:0,week:1},previous_fingerprint:null,zero}},
+    {fingerprint:'corrected-version',impact:'expired',version:{effective_week:{season_index:0,week:2},previous_fingerprint:'initial-version',zero:{...zero,duration_weeks:1}}},
+  ]})
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByText(/Verified against the stored decisions effective by this ranking week/)).toBeVisible()
+  expect(screen.getByText('Replaced by a later version at this boundary.')).toBeVisible()
+  expect(screen.getByText('Expired at this boundary.')).toBeVisible()
+  expect(screen.getByText(/Version effective 2000\/01 · Week 2/)).toHaveTextContent('Original start 2000/01 · Week 1 · Duration 1 weeks')
+  await userEvent.click(screen.getAllByText('Decision provenance')[1])
+  expect(screen.getByText('Previous version: initial-version')).toBeVisible()
+})
+
+it.each(['caller_resolved', 'verified_stored_history'] as const)('distinguishes %s from unavailable decision history', async status => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchInputs.mockResolvedValue({run_id:'run',branch_id:'branch',week:{season_index:0,week:2},candidate_fingerprint:'hash',publication_status:'candidate_only',verification_status:'complete_manifest',manifest:{players:[],results:[]},zero_history_status:status,zero_sources:[]})
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByText(status === 'caller_resolved' ? /Zeros were supplied by the caller/ : 'No zero decisions were effective by this week.')).toBeVisible()
+  expect(screen.queryByText('Decision history verification is unavailable from this server.')).not.toBeInTheDocument()
+})

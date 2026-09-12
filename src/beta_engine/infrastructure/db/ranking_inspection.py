@@ -125,4 +125,37 @@ def inspect_ranking_inputs(session: Session, *, run_id: str, branch_id: str, wee
         candidate_fingerprint=candidate.fingerprint,
         verification_status="complete_manifest" if manifest is not None else "legacy_without_manifest",
         manifest=manifest, tie_explanations=explanations,
+        zero_history_status=("legacy_without_manifest" if manifest is None else
+                             "verified_stored_history" if manifest.zeros_from_history else "caller_resolved"),
+        zero_sources=_inspect_zero_sources(session, candidate.snapshot, manifest),
     )
+
+
+def _inspect_zero_sources(session: Session, snapshot, manifest):
+    """Explain only decision versions effective by this candidate's boundary."""
+    from beta_engine.application.ranking_inspection import RankingZeroSourceDetail
+    from beta_engine.domain.rankings.zero_history import resolve_zero_versions
+    from beta_engine.infrastructure.db.ranking_zero_history import OfficialRankingZeroStore
+
+    # Legacy/caller-resolved inputs make no claim about stored source provenance.
+    if manifest is None or not manifest.zeros_from_history:
+        return ()
+    versions = OfficialRankingZeroStore(session).history(
+        run_id=snapshot.run_id, branch_id=snapshot.branch_id,
+    )
+    if resolve_zero_versions(versions, snapshot.week) != manifest.disciplinary_zeros:
+        raise ValueError("Stored zero history differs from frozen ranking inputs")
+    visible = tuple(v for v in versions if v.effective_week.ordinal <= snapshot.week.ordinal)
+    latest = {v.zero.zero_id: v for v in visible}
+    classified = {row.player_id for row in snapshot.rows}
+    def impact(version):
+        if latest[version.zero.zero_id] != version:
+            return "superseded"
+        if not version.zero.active_at(snapshot.week):
+            return "expired"
+        if version.zero.player_id not in classified:
+            return "player_not_classified"
+        return "reserves_slot"
+    return tuple(RankingZeroSourceDetail(
+        version=v, fingerprint=v.fingerprint, impact=impact(v),
+    ) for v in visible)

@@ -30,6 +30,12 @@ export type RankingCandidateSources = {
 export type RankingCandidateInputs = {
   run_id: string; branch_id: string; week: CandidateWeek
   candidate_fingerprint: string; publication_status: 'candidate_only'
+  zero_history_status?: 'verified_stored_history' | 'caller_resolved' | 'legacy_without_manifest'
+  zero_sources?: {
+    fingerprint: string
+    impact: 'superseded' | 'expired' | 'reserves_slot' | 'player_not_classified'
+    version: { effective_week: CandidateWeek; previous_fingerprint: string | null; zero: RankingDisciplinaryZero }
+  }[]
   tie_explanations?: {
     higher_player_id: string; lower_player_id: string; higher_rank: number; lower_rank: number; points: number
     reason: 'result_profile' | 'completion_age' | 'previous_position' | 'stored_token'
@@ -38,6 +44,7 @@ export type RankingCandidateInputs = {
   verification_status: 'complete_manifest' | 'legacy_without_manifest'
   manifest: null | {
     disciplinary_zeros?: RankingDisciplinaryZero[]
+    zeros_from_history?: boolean
     players: { player_id: string; tie_break_token: string; tour_entry_week: CandidateWeek; retired: boolean }[]
     results: RankingCandidateSources['sources'][number]['version']['result'][]
   }

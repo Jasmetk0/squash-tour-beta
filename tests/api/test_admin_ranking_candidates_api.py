@@ -383,3 +383,95 @@ def test_tie_explanation_uses_verified_historical_tokens_without_writes(api):
     assert data['candidate_fingerprint']==second.fingerprint
     assert data['tie_explanations']==[dict(higher_player_id='b',lower_player_id='a',higher_rank=1,lower_rank=2,points=0,reason='stored_token',result_slot=None,higher_value='first',lower_value='second')]
     assert dump(path)==before
+
+
+@pytest.fixture
+def zero_input_api(api):
+    from sqlalchemy import text
+    from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
+    from beta_engine.application.ranking_week_command import RankingWeekCommand
+    from beta_engine.application.official_ranking_transition import RankingTransitionContext
+    from beta_engine.domain.rankings.official import DisciplinaryZero
+    from beta_engine.domain.rankings.zero_history import RankingZeroVersion
+    from beta_engine.infrastructure.db.ranking_zero_history import OfficialRankingZeroStore
+    from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
+
+    client, factory, path, _, _ = api
+    week = lambda n: RankingWeek(season_index=0, week=n)
+    initial = RankingZeroVersion(effective_week=week(1), previous_fingerprint=None,
+        zero=DisciplinaryZero(zero_id='zero', run_id='run', branch_id='empty', player_id='p',
+            source_fingerprint='initial-decision', effective_week=week(1), duration_weeks=4))
+    correction = RankingZeroVersion(effective_week=week(2), previous_fingerprint=initial.fingerprint,
+        zero=initial.zero.model_copy(update={'duration_weeks': 1, 'source_fingerprint': 'shortening'}))
+    future = RankingZeroVersion(effective_week=week(3), previous_fingerprint=correction.fingerprint,
+        zero=initial.zero.model_copy(update={'source_fingerprint': 'future-secret'}))
+    active = RankingZeroVersion(effective_week=week(2), previous_fingerprint=None,
+        zero=initial.zero.model_copy(update={'zero_id': 'active', 'effective_week': week(2)}))
+    with factory.begin() as session:
+        session.execute(text('BEGIN IMMEDIATE'))
+        for version in (initial, correction, future, active):
+            OfficialRankingZeroStore(session).append(version)
+    player = OfficialRankingPlayer(player_id='p', tie_break_token='token', tour_entry_week=week(1))
+    runner = RankingWeekCommandRunner(factory)
+    first = runner.execute(RankingBootstrapCommand(command_id='zero-first', run_id='run', branch_id='empty',
+        policy=OfficialRankingPolicy(policy_id='policy'), players=(player,), discipline='stored_zeros'))
+    runner.execute(RankingWeekCommand(command_id='zero-second', tournaments=(), context=RankingTransitionContext(
+        run_id='run', branch_id='empty', completed_week=week(1), target_week=week(2), policy=first.policy,
+        players=(player,), discipline='stored_zeros')))
+    return client, factory, path, initial, correction, future
+
+
+@pytest.mark.smoke
+def test_zero_history_inspection_uses_candidate_boundary_without_writes(zero_input_api):
+    client, factory, path, initial, correction, future = zero_input_api
+    prefix = PREFIX.replace('/branches/branch/', '/branches/empty/')
+    with factory.begin() as session:
+        session.get(RunBranchModel, 'empty').read_only = True
+    before = dump(path)
+    earlier = client.get(prefix + '/0/1/inputs')
+    assert earlier.status_code == 200
+    assert earlier.json()['zero_history_status'] == 'verified_stored_history'
+    assert earlier.json()['zero_sources'] == [dict(version=initial.model_dump(mode='json'),
+        fingerprint=initial.fingerprint, impact='player_not_classified')]
+    later = client.get(prefix + '/0/2/inputs')
+    assert later.status_code == 200
+    sources = later.json()['zero_sources']
+    assert [s['impact'] for s in sources] == ['reserves_slot', 'superseded', 'expired']
+    assert sources[-1]['fingerprint'] == correction.fingerprint
+    assert sources[-1]['version']['previous_fingerprint'] == initial.fingerprint
+    assert future.fingerprint not in str(later.json())
+    assert 'future-secret' not in str(later.json())
+    assert 'shortening' not in str(earlier.json())
+    assert client.get(prefix.replace('/runs/run/', '/runs/other-run/') + '/0/2/inputs').status_code == 404
+    assert dump(path) == before
+
+
+@pytest.mark.smoke
+@pytest.mark.parametrize('damage', ['missing', 'hash', 'future_payload'])
+def test_zero_history_damage_fails_closed_without_leaking_payload(zero_input_api, damage):
+    from sqlalchemy import delete
+    from beta_engine.infrastructure.db.models import OfficialRankingZeroVersionModel
+    client, factory, path, _, _, _ = zero_input_api
+    with factory.begin() as session:
+        if damage == 'missing':
+            session.execute(delete(OfficialRankingZeroVersionModel))
+        elif damage == 'hash':
+            session.get(OfficialRankingZeroVersionModel, ('run', 'empty', 'zero', 0)).fingerprint = '0' * 64
+        else:
+            session.get(OfficialRankingZeroVersionModel, ('run', 'empty', 'zero', 2)).payload_json = '{"future_secret": "do-not-expose"}'
+    before = dump(path)
+    response = client.get(PREFIX.replace('/branches/branch/', '/branches/empty/') + '/0/2/inputs')
+    assert response.status_code == 409
+    assert response.json()['detail']['code'] == 'ranking_inputs_unavailable'
+    assert 'do-not-expose' not in str(response.json())
+    assert dump(path) == before
+
+
+def test_caller_and_legacy_inputs_do_not_claim_zero_source_verification(input_api):
+    client, _, _, _ = input_api
+    response = client.get(PREFIX.replace('/branches/branch/', '/branches/empty/') + '/0/1/inputs').json()
+    assert response['zero_history_status'] == 'caller_resolved'
+    assert response['zero_sources'] == []
+    legacy = client.get(PREFIX + '/1/1/inputs').json()
+    assert legacy['zero_history_status'] == 'legacy_without_manifest'
+    assert legacy['zero_sources'] == []

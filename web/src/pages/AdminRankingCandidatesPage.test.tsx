@@ -81,7 +81,7 @@ it('loads historical sources on demand and displays uncounted results', async ()
     publication_status: 'candidate_only', candidate_fingerprint: 'hash',
     sources: [{ fingerprint: 'source-version', counted: false, version: {
       run_id: 'run', branch_id: 'branch', effective_week: { season_index: 0, week: 2 }, previous_fingerprint: 'prior-version',
-      result: { edition_id: 'source-edition', player_id: 'player-a', source_fingerprint: 'award-hash', qualification_points: 0, main_points: 20, first_publication_week: { season_index: 0, week: 2 }, validity_weeks: 61, ranked: false },
+      result: { edition_id: 'source-edition', player_id: 'player-a', source_fingerprint: 'award-hash', qualification_points: 0, main_points: 20, first_publication_week: { season_index: 0, week: 2 }, validity_weeks: 61, ranked: false, completed_week: {season_index:0,week:1}, terminal_status: 'completed' },
     } }],
   })
   show('/0/2')

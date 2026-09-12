@@ -2,11 +2,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, expect, it, vi } from 'vitest'
-import { confirmRankingCommand, getRankingCandidateInputs, previewRankingCommand, previewRankingSave, saveRankingPreparation } from '../api/client'
+import { confirmRankingCommand, getRankingCandidateSources, getRankingCandidateInputs, previewRankingCommand, previewRankingSave, saveRankingPreparation } from '../api/client'
 import type { RankingCandidateDetail, RankingPreparationCommand, RankingPreparationPreview } from '../api/rankingCandidates'
 import { RankingPreparationPanel, nextRankingWeek } from './RankingPreparationPanel'
 import { RankingSavePanel } from './RankingSavePanel'
-vi.mock('../api/client', async importOriginal => ({...await importOriginal<typeof import('../api/client')>(),confirmRankingCommand:vi.fn(),getRankingCandidateInputs:vi.fn(),previewRankingCommand:vi.fn(),previewRankingSave:vi.fn(),saveRankingPreparation:vi.fn()}))
+vi.mock('../api/client', async importOriginal => ({...await importOriginal<typeof import('../api/client')>(),confirmRankingCommand:vi.fn(),getRankingCandidateSources:vi.fn(),getRankingCandidateInputs:vi.fn(),previewRankingCommand:vi.fn(),previewRankingSave:vi.fn(),saveRankingPreparation:vi.fn()}))
 const player = {player_id:'p',tie_break_token:'stable',tour_entry_week:{season_index:0,week:1},retired:false}
 const latest:RankingCandidateDetail = {publication_status:'candidate_only',fingerprint:'a'.repeat(64),command_ids:['previous'],snapshot:{run_id:'run',branch_id:'branch',week:{season_index:0,week:1},policy:{policy_id:'policy',best_n:15},rows:[]}}
 function result(command:RankingPreparationCommand):RankingPreparationPreview {
@@ -140,4 +140,42 @@ it('stops at the final week and handles season rollover without adding a year', 
   show({...latest,snapshot:{...latest.snapshot,week:{season_index:49,week:61}}})
   expect(screen.getByText(/No season 51 ranking can be created/)).toBeVisible()
   expect(screen.queryByRole('button',{name:'Prepare next ranking'})).not.toBeInTheDocument()
+})
+
+it('reviews result corrections with original timing and retains the whole batch on retry', async () => {
+  const head = {...latest,snapshot:{...latest.snapshot,week:{season_index:0,week:2}}}
+  vi.mocked(getRankingCandidateInputs).mockResolvedValue({run_id:'run',branch_id:'branch',week:head.snapshot.week,candidate_fingerprint:head.fingerprint,publication_status:'candidate_only',verification_status:'complete_manifest',manifest:{players:[player],results:[],zeros_from_history:true}})
+  const source = {fingerprint:'f'.repeat(64),counted:false,version:{run_id:'run',branch_id:'branch',effective_week:{season_index:0,week:2},previous_fingerprint:null,
+    result:{edition_id:'edition',player_id:'p',source_fingerprint:'award',qualification_points:10,main_points:100,completed_week:{season_index:0,week:1},first_publication_week:{season_index:0,week:2},validity_weeks:61,ranked:true,terminal_status:'completed' as const}}}
+  vi.mocked(getRankingCandidateSources).mockResolvedValue({run_id:'run',branch_id:'branch',week:head.snapshot.week,candidate_fingerprint:latest.fingerprint,publication_status:'candidate_only',sources:[source]})
+  vi.mocked(confirmRankingCommand).mockRejectedValueOnce(new Error('Connection lost')).mockImplementation(async (_r,_b,_c,p) => p.candidate)
+  show(head)
+  await userEvent.click(screen.getByRole('button',{name:'Prepare next ranking'}))
+  await userEvent.click(await screen.findByRole('button',{name:'Load stored results to correct'}))
+  await userEvent.click(await screen.findByLabelText('Correct p / edition'))
+  await userEvent.clear(screen.getByLabelText('Corrected main points'))
+  await userEvent.type(screen.getByLabelText('Corrected main points'),'250')
+  await userEvent.type(screen.getByLabelText('Result correction reference'),'appeal')
+  await audit()
+  await userEvent.click(screen.getByRole('button',{name:'Calculate preview'}))
+  await screen.findByRole('region',{name:'Ranking preview'})
+  const command = vi.mocked(previewRankingCommand).mock.calls[0][2]
+  expect(command).toMatchObject({corrections:[{run_id:'run',branch_id:'branch',effective_week:{season_index:0,week:3},previous_fingerprint:source.fingerprint,result:{...source.version.result,main_points:250,source_fingerprint:'appeal'}}]})
+  expect(screen.getByLabelText('Corrected main points')).toBeDisabled()
+  await userEvent.click(screen.getByRole('button',{name:'Confirm candidate preparation'}))
+  await userEvent.click(await screen.findByRole('button',{name:'Retry this exact preparation'}))
+  await screen.findByText(/Candidate prepared/)
+  expect(vi.mocked(confirmRankingCommand).mock.calls[1]).toEqual(vi.mocked(confirmRankingCommand).mock.calls[0])
+})
+
+it('rejects mismatched correction sources and supports a read retry without selecting any', async () => {
+  vi.mocked(getRankingCandidateSources).mockResolvedValueOnce({run_id:'run',branch_id:'wrong',week:latest.snapshot.week,candidate_fingerprint:latest.fingerprint,publication_status:'candidate_only',sources:[]})
+    .mockResolvedValue({run_id:'run',branch_id:'branch',week:latest.snapshot.week,candidate_fingerprint:latest.fingerprint,publication_status:'candidate_only',sources:[]})
+  show(latest)
+  await userEvent.click(screen.getByRole('button',{name:'Prepare next ranking'}))
+  await userEvent.click(await screen.findByRole('button',{name:'Load stored results to correct'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('no longer match')
+  await userEvent.click(screen.getByRole('button',{name:'Retry result sources'}))
+  expect(await screen.findByText('No stored results are available to correct.')).toBeVisible()
+  expect(previewRankingCommand).not.toHaveBeenCalled()
 })

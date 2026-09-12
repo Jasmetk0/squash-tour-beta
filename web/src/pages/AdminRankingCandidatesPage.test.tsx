@@ -198,3 +198,14 @@ it.each(['caller_resolved', 'verified_stored_history'] as const)('distinguishes 
   expect(await screen.findByText(status === 'caller_resolved' ? /Zeros were supplied by the caller/ : 'No zero decisions were effective by this week.')).toBeVisible()
   expect(screen.queryByText('Decision history verification is unavailable from this server.')).not.toBeInTheDocument()
 })
+
+it('shows the recorded preparation operator and reason', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchInputs.mockResolvedValue({run_id:'run',branch_id:'branch',week:{season_index:0,week:2},candidate_fingerprint:'hash',publication_status:'candidate_only',verification_status:'complete_manifest',manifest:{players:[],results:[]},command_audits:[{command_id:'reviewed-command',audit:{actor_label:'Declared operator',reason:'Reviewed correction'}}]})
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByText('Declared operator')).toBeVisible()
+  expect(screen.getByText(/Reviewed correction/)).toBeVisible()
+  await userEvent.click(screen.getByText('Preparation command'))
+  expect(screen.getByText('reviewed-command')).toBeVisible()
+})

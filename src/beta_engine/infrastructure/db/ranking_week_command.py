@@ -136,6 +136,7 @@ def stage_ranking_week_command(
                 sources.append(correction)
             snapshot = stage_official_ranking_from_history(candidates, sources, context)
         manifest = RankingInputManifest(
+            command_request_fingerprint=command.fingerprint,
             zeros_from_history=stored_zeros,
             disciplinary_zeros=tuple(sorted(context.disciplinary_zeros, key=lambda z: z.zero_id)),
             players=tuple(sorted(context.players, key=lambda p: p.player_id)),
@@ -151,6 +152,7 @@ def stage_ranking_week_command(
                 branch_id=context.branch_id,
                 command_id=command.command_id,
                 request_fingerprint=command.fingerprint,
+                request_payload_json=command.canonical_request_json,
                 target_ordinal=context.target_week.ordinal,
                 snapshot_fingerprint=snapshot.fingerprint,
                 input_manifest_version=1,
@@ -170,11 +172,18 @@ def _validated_command(
 
 def verify_ranking_command_inputs(receipt, snapshot, history) -> RankingInputManifest | None:
     """Legacy receipts remain readable; versioned manifests must verify fully."""
+    from beta_engine.domain.rankings.command_audit import verify_request_payload
+    verify_request_payload(receipt.request_payload_json, request_fingerprint=receipt.request_fingerprint,
+                           command_id=receipt.command_id, snapshot=snapshot)
     if receipt.input_manifest_version is None and receipt.input_manifest_json is None:
         return
     if receipt.input_manifest_version != 1 or receipt.input_manifest_json is None:
         raise ValueError("Missing or unsupported ranking input manifest")
     manifest = RankingInputManifest.model_validate_json(receipt.input_manifest_json)
+    if manifest.command_request_fingerprint is not None and (
+        receipt.request_payload_json is None or manifest.command_request_fingerprint != receipt.request_fingerprint
+    ):
+        raise ValueError("Ranking manifest requires its original command payload")
     previous = next((s for s in history if s.fingerprint == snapshot.previous_fingerprint), None)
     manifest.verify(snapshot, previous)
     return manifest

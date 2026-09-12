@@ -102,7 +102,8 @@ def inspect_ranking_sources(session: Session, *, run_id: str, branch_id: str, we
 
 
 def inspect_ranking_inputs(session: Session, *, run_id: str, branch_id: str, week):
-    from beta_engine.application.ranking_inspection import RankingCandidateInputs
+    from beta_engine.application.ranking_inspection import RankingCandidateInputs, RankingCommandAuditDetail
+    from beta_engine.domain.rankings.command_audit import verify_request_payload
     from beta_engine.infrastructure.db.ranking_week_command import verify_ranking_command_inputs
 
     history = inspect_ranking_history(session, run_id=run_id, branch_id=branch_id)
@@ -110,6 +111,7 @@ def inspect_ranking_inputs(session: Session, *, run_id: str, branch_id: str, wee
     if candidate is None:
         raise KeyError("Ranking candidate week not found")
     manifest = None
+    audits = []
     for command_id in candidate.command_ids:
         receipt = session.get(OfficialRankingCommandModel, (run_id, branch_id, command_id))
         verified = verify_ranking_command_inputs(
@@ -117,6 +119,10 @@ def inspect_ranking_inputs(session: Session, *, run_id: str, branch_id: str, wee
         )
         if verified is not None:
             manifest = verified
+        audit = verify_request_payload(receipt.request_payload_json, request_fingerprint=receipt.request_fingerprint,
+                                       command_id=command_id, snapshot=candidate.snapshot)
+        if audit is not None:
+            audits.append(RankingCommandAuditDetail(command_id=command_id, audit=audit))
     from beta_engine.domain.rankings.tie_explanations import explain_ranking_ties
     previous = next((c.snapshot for c in history.candidates if c.snapshot.week.ordinal == week.ordinal - 1), None)
     explanations = explain_ranking_ties(candidate.snapshot, manifest, previous) if manifest is not None else ()
@@ -124,7 +130,7 @@ def inspect_ranking_inputs(session: Session, *, run_id: str, branch_id: str, wee
         run_id=run_id, branch_id=branch_id, week=week,
         candidate_fingerprint=candidate.fingerprint,
         verification_status="complete_manifest" if manifest is not None else "legacy_without_manifest",
-        manifest=manifest, tie_explanations=explanations,
+        manifest=manifest, tie_explanations=explanations, command_audits=tuple(audits),
         zero_history_status=("legacy_without_manifest" if manifest is None else
                              "verified_stored_history" if manifest.zeros_from_history else "caller_resolved"),
         zero_sources=_inspect_zero_sources(session, candidate.snapshot, manifest),

@@ -45,6 +45,7 @@ class OfficialRankingCommandModel(Base):
     request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     target_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
     snapshot_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    request_payload_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     input_manifest_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
     input_manifest_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 

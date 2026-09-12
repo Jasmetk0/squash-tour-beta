@@ -111,3 +111,13 @@ frozen inputs and original command receipts, so retries work after recovery too.
 These are explicit internal preparation commands. An Admin issuance/editor API and
 its actor/reason audit workflow remain outstanding. No offense tariff, sanction
 eligibility rule, automatic effective date or duration is selected by this adapter.
+
+
+## Audited Admin command access
+
+The preparation API now accepts explicit zero batches as part of initial/weekly
+commands with a required declared operator label and reason. It stores the canonical
+request and binds it to the frozen manifest/receipt. Audit metadata survives recovery
+and is visible in Admin input inspection. This supersedes the earlier internal-only
+API boundary above; an issuance editor, account authentication and automatic sanction
+policy remain separate work. See `ADMIN_RANKING_PREPARATION_API.md` for scope and limits.

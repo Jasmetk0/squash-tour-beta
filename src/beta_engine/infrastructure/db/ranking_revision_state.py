@@ -30,7 +30,7 @@ def capture_ranking_revision_state(session: Session, *, run_id: str, branch_id: 
             if inputs is None:
                 raise ValueError("Legacy ranking receipt has no complete input manifest")
             manifest = inputs
-            receipts.append(RankingRevisionReceipt(command_id=command_id, request_fingerprint=receipt.request_fingerprint))
+            receipts.append(RankingRevisionReceipt(command_id=command_id, request_fingerprint=receipt.request_fingerprint, request_payload_json=receipt.request_payload_json))
         if manifest is None:
             raise ValueError("Ranking candidate has no complete command inputs")
         entries.append(RankingRevisionEntry(snapshot=candidate.snapshot, inputs=manifest, receipts=tuple(receipts)))
@@ -82,6 +82,7 @@ def install_ranking_revision_state(
                 session.add(OfficialRankingCommandModel(
                     run_id=run_id, branch_id=branch_id, command_id=receipt.command_id,
                     request_fingerprint=receipt.request_fingerprint,
+                    request_payload_json=receipt.request_payload_json,
                     target_ordinal=entry.snapshot.week.ordinal,
                     snapshot_fingerprint=entry.snapshot.fingerprint,
                     input_manifest_version=1,

@@ -186,3 +186,12 @@ verification through the calculator without claiming persisted decision provenan
 All capture/install/restore paths and scoped presence guards include zero source rows,
 including source-only states and future prepared decisions. Restore reinstalls sources
 before candidates and checks the complete target fingerprint within its savepoint.
+
+
+## Canonical command evidence
+
+New receipts retain optional `request_payload_json`; manifests bind it using
+`command_request_fingerprint`. Validation checks its SHA-256, command identity,
+Run/Branch and target week. Missing required payloads and altered audit data are rejected.
+Capture/install/restore preserve canonical requests with the other ranking state in one
+transaction. Legacy absent evidence is omitted from serialization and is not fabricated.

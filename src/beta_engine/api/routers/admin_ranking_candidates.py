@@ -1,7 +1,10 @@
 """Admin ranking inspection and explicit preparation Save; no publication."""
 
 from typing import Annotated
-from pydantic import BaseModel, ConfigDict, Field
+import json
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
+from beta_engine.application.ranking_week_command import RankingWeekCommand
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
 
 from fastapi import APIRouter, Depends, HTTPException, Path
@@ -47,6 +50,35 @@ def get_history(
 
 
 
+
+
+def _prepare(runtime, run_id, branch_id, payload, model):
+    try:
+        # Strict domain tuples validate in JSON mode; arrays are their wire form.
+        command = model.model_validate_json(json.dumps(payload))
+        if command.audit is None:
+            raise ValueError("Admin audit is required")
+    except (ValidationError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail={"code": "invalid_ranking_command",
+                            "message": "A valid ranking command with audit label and reason is required."}) from exc
+    try:
+        snapshot = runtime.repository.prepare_official_ranking(run_id=run_id, branch_id=branch_id, command=command)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail={"code": "ranking_preparation_conflict",
+                            "message": "Ranking preparation was rejected; verify scope, history and input dependencies."}) from exc
+    return RankingCandidateDetail(snapshot=snapshot, fingerprint=snapshot.fingerprint, command_ids=(command.command_id,))
+
+
+@router.post("/prepare/initial", response_model=RankingCandidateDetail, status_code=201)
+def prepare_initial(run_id: str, branch_id: str, payload: dict,
+                    runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
+    return _prepare(runtime, run_id, branch_id, payload, RankingBootstrapCommand)
+
+
+@router.post("/prepare/week", response_model=RankingCandidateDetail, status_code=201)
+def prepare_week(run_id: str, branch_id: str, payload: dict,
+                 runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
+    return _prepare(runtime, run_id, branch_id, payload, RankingWeekCommand)
 
 
 class RankingSaveRequest(BaseModel):

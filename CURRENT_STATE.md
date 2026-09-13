@@ -65,6 +65,10 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   Revision API and simulation-service suites. The acceptance test uses the real
   four-player producer, HTTP routes and file-backed SQLite, then explicitly saves,
   reopens, restores before adoption and restores the adopted revision again.
+- Pre-merge compatibility follow-up verifies historical `ranking_revision_state.v1`
+  hashes against equivalent live V2 captures without rewriting either wire format;
+  V1↔V2 restore, exact retry and real changed-state rejection are covered. The
+  resulting Fast CI backend smoke selection passed **96 tests** locally.
 - No full-suite, browser E2E, whole-season or full-Run execution in this task.
   Earlier baseline failures are not silently cleared. Docs CI validates docs only.
 

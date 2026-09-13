@@ -3,7 +3,11 @@
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
-from beta_engine.domain.rankings.revision_state import RankingRevisionState, load_ranking_revision_state
+from beta_engine.domain.rankings.revision_state import (
+    RankingRevisionState,
+    load_ranking_revision_state,
+    ranking_revision_states_equivalent,
+)
 from beta_engine.infrastructure.db.models import (
     OfficialRankingCandidateModel, OfficialRankingCommandModel,
     OfficialRankingResultVersionModel, OfficialRankingZeroVersionModel, RankingRestoreCheckpointModel,
@@ -16,6 +20,7 @@ from beta_engine.infrastructure.db.ranking_revision_state import capture_ranking
 def restore_ranking_revision_state(
     session: Session, payload: str, *, expected_fingerprint: str,
     expected_current_fingerprint: str, command_id: str, run_id: str, branch_id: str,
+    expected_current_payload: str | None = None,
 ) -> RankingRevisionState:
     """Restore a verified same-scope state, retaining the exact predecessor.
 
@@ -27,23 +32,35 @@ def restore_ranking_revision_state(
         raise ValueError("Ranking restore requires a valid command ID")
     target = load_ranking_revision_state(payload, expected_fingerprint=expected_fingerprint, run_id=run_id, branch_id=branch_id)
     current = capture_ranking_revision_state(session, run_id=run_id, branch_id=branch_id)
+    expected_current = None
+    if expected_current_payload is not None:
+        expected_current = load_ranking_revision_state(
+            expected_current_payload,
+            expected_fingerprint=expected_current_fingerprint,
+            run_id=run_id,
+            branch_id=branch_id,
+        )
     key = (run_id, branch_id, command_id)
     checkpoint = session.get(RankingRestoreCheckpointModel, key)
     if checkpoint is not None:
         if (checkpoint.before_fingerprint, checkpoint.target_fingerprint) != (expected_current_fingerprint, expected_fingerprint):
             raise ValueError("Ranking restore command ID already has a different request")
         load_ranking_revision_state(checkpoint.before_payload_json, expected_fingerprint=checkpoint.before_fingerprint, run_id=run_id, branch_id=branch_id)
-        if current.fingerprint != target.fingerprint:
+        if not ranking_revision_states_equivalent(current, target):
             raise ValueError("Ranking state changed after this restore; retry cannot overwrite it")
         return current
-    if current.fingerprint != expected_current_fingerprint:
+    if current.fingerprint != expected_current_fingerprint and (
+        expected_current is None
+        or not ranking_revision_states_equivalent(current, expected_current)
+    ):
         raise ValueError("Ranking restore expected current state is stale")
     if session.get(RunContainerModel, run_id).read_only or session.get(RunBranchModel, branch_id).read_only:
         raise ValueError("Ranking restore target is read-only")
     with session.begin_nested():
         session.add(RankingRestoreCheckpointModel(
             run_id=run_id, branch_id=branch_id, command_id=command_id,
-            before_fingerprint=current.fingerprint, before_payload_json=current.model_dump_json(),
+            before_fingerprint=expected_current_fingerprint,
+            before_payload_json=(expected_current_payload or current.model_dump_json()),
             target_fingerprint=target.fingerprint,
         ))
         session.flush()

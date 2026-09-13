@@ -61,5 +61,6 @@ def restore_saved_ranking_component(
     restore_ranking_revision_state(
         session, target.model_dump_json(), expected_fingerprint=target.fingerprint,
         expected_current_fingerprint=current.fingerprint, command_id=command_id,
+        expected_current_payload=current.model_dump_json(),
         run_id=run_id, branch_id=branch_id,
     )

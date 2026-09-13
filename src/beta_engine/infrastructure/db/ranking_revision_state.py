@@ -53,7 +53,9 @@ def install_ranking_revision_state(
     restored components together. An identical installed state is a read-only
     retry. No existing history is deleted or replaced by this component.
     """
-    from beta_engine.domain.rankings.revision_state import load_ranking_revision_state
+    from beta_engine.domain.rankings.revision_state import (
+        load_ranking_revision_state, ranking_revision_states_equivalent,
+    )
     from beta_engine.infrastructure.db.models import RunBranchModel, RunContainerModel
     from beta_engine.infrastructure.db.official_rankings import OfficialRankingCandidateStore
 
@@ -95,6 +97,6 @@ def install_ranking_revision_state(
                 ))
         session.flush()
         installed = capture_ranking_revision_state(session, run_id=run_id, branch_id=branch_id)
-        if installed.fingerprint != expected_fingerprint:
+        if not ranking_revision_states_equivalent(installed, state):
             raise ValueError("Installed ranking state differs from trusted saved state")
         return installed

@@ -53,6 +53,8 @@ class RankingRevisionState(FrozenInput):
 
     @model_validator(mode="after")
     def validate_complete_state(self):
+        if self.schema_version == "ranking_revision_state.v1" and self.tournament_sources:
+            raise ValueError("Ranking revision state v1 cannot contain tournament sources")
         owned_keys = [(s.binding.edition_id, s.binding.event_id) for s in self.tournament_sources]
         if owned_keys != sorted(set(owned_keys)):
             raise ValueError("Owned tournament source order or uniqueness is invalid")
@@ -128,3 +130,18 @@ def load_ranking_revision_state(payload: str, *, expected_fingerprint: str, run_
     if (state.run_id, state.branch_id) != (run_id, branch_id) or state.fingerprint != expected_fingerprint:
         raise ValueError("Ranking revision identity or fingerprint mismatch")
     return state
+
+
+def ranking_revision_states_equivalent(
+    left: RankingRevisionState, right: RankingRevisionState
+) -> bool:
+    """Compare authoritative content while preserving each historical wire hash.
+
+    V1 had no tournament-source field.  An empty V2 source collection therefore
+    represents the same live state; non-empty V2 evidence never does.
+    """
+    return left.model_copy(
+        update={"schema_version": "ranking_revision_state.v2"}
+    ).model_dump(mode="json") == right.model_copy(
+        update={"schema_version": "ranking_revision_state.v2"}
+    ).model_dump(mode="json")

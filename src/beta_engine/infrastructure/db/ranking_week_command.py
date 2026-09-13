@@ -7,7 +7,7 @@ from beta_engine.application.official_ranking_transition import (
     stage_official_ranking_from_history,
 )
 from beta_engine.application.ranking_tournament_ingestion import (
-    ingest_tournament_ranking_sources,
+    ingest_frozen_tournament_ranking_sources, prepare_tournament_ranking_sources,
 )
 from beta_engine.application.ranking_week_command import RankingWeekCommand
 from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
@@ -25,6 +25,9 @@ from beta_engine.infrastructure.db.official_rankings import (
 from beta_engine.infrastructure.db.ranking_result_history import (
     OfficialRankingResultStore,
 )
+from beta_engine.infrastructure.db.owned_tournament_sources import OwnedTournamentRankingSourceStore
+from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
+from beta_engine.infrastructure.db.models import RunBranchModel, RunContainerModel
 
 
 class RankingWeekCommandRunner:
@@ -140,8 +143,31 @@ def stage_ranking_week_command(
             if command.tournaments and awards is None:
                 raise ValueError("Tournament ingestion requires an award service")
             sources = OfficialRankingResultStore(session)
+            owned = OwnedTournamentRankingSourceStore(session)
             for binding in sorted(command.tournaments, key=lambda t: t.edition_id):
-                ingest_tournament_ranking_sources(awards, sources, binding)
+                frozen = owned.get(run_id=context.run_id, branch_id=context.branch_id, edition_id=binding.edition_id)
+                if frozen is None:
+                    run = session.get(RunContainerModel, context.run_id)
+                    branch = session.get(RunBranchModel, context.branch_id)
+                    if run is None or branch is None or branch.run_id != context.run_id:
+                        raise ValueError("Tournament adoption Run/Branch scope not found")
+                    if run.read_only or branch.read_only or branch.status != "active":
+                        raise ValueError("Tournament adoption requires a writable active Run/Branch")
+                    result = awards.result_service.get_event_result(event_id=binding.event_id).result_package
+                    award_package = awards.get_event_point_awards(event_id=binding.event_id).award_package
+                    if result is None or award_package is None:
+                        raise ValueError("Persisted tournament results and awards are required")
+                    # Complete validation deliberately precedes the first adoption write.
+                    prepare_tournament_ranking_sources(binding, result, award_package)
+                    frozen = owned.append(OwnedTournamentRankingSource(
+                        binding=binding, result=result, awards=award_package,
+                        adopted_by_command_id=command.command_id,
+                    ))
+                elif frozen.binding != binding:
+                    raise ValueError("Tournament binding conflicts with its owned frozen source")
+                ingest_frozen_tournament_ranking_sources(
+                    sources, binding, frozen.result, frozen.awards
+                )
             for correction in sorted(
                 command.corrections,
                 key=lambda v: (v.result.edition_id, v.result.player_id),

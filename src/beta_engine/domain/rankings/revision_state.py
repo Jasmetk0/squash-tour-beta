@@ -11,6 +11,7 @@ from beta_engine.domain.rankings.zero_history import RankingZeroVersion, validat
 from beta_engine.domain.rankings.official import FrozenInput, OfficialRankingSnapshot
 from beta_engine.domain.rankings.input_manifest import RankingInputManifest
 from beta_engine.domain.rankings.result_history import RankingResultVersion, validate_result_successor
+from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
 
 
 class RankingRevisionReceipt(FrozenInput):
@@ -33,22 +34,33 @@ class RankingRevisionEntry(FrozenInput):
 
 
 class RankingRevisionState(FrozenInput):
-    schema_version: Literal["ranking_revision_state.v1"] = "ranking_revision_state.v1"
+    schema_version: Literal["ranking_revision_state.v1", "ranking_revision_state.v2"] = "ranking_revision_state.v2"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     entries: tuple[RankingRevisionEntry, ...]
     sources: tuple[RankingResultVersion, ...]
     zero_sources: tuple[RankingZeroVersion, ...] = ()
+    tournament_sources: tuple[OwnedTournamentRankingSource, ...] = ()
 
     @model_serializer(mode="wrap")
     def serialize_state(self, handler):
         data = handler(self)
         if not self.zero_sources:
             data.pop("zero_sources", None)
+        if not self.tournament_sources:
+            data.pop("tournament_sources", None)
         return data
 
     @model_validator(mode="after")
     def validate_complete_state(self):
+        if self.schema_version == "ranking_revision_state.v1" and self.tournament_sources:
+            raise ValueError("Ranking revision state v1 cannot contain tournament sources")
+        owned_keys = [(s.binding.edition_id, s.binding.event_id) for s in self.tournament_sources]
+        if owned_keys != sorted(set(owned_keys)):
+            raise ValueError("Owned tournament source order or uniqueness is invalid")
+        for source in self.tournament_sources:
+            if (source.binding.run_id, source.binding.branch_id) != (self.run_id, self.branch_id):
+                raise ValueError("Owned tournament source scope mismatch")
         source_keys = [(v.result.edition_id, v.result.player_id, v.effective_week.ordinal) for v in self.sources]
         if source_keys != sorted(set(source_keys)):
             raise ValueError("Ranking revision source order or uniqueness is invalid")
@@ -118,3 +130,18 @@ def load_ranking_revision_state(payload: str, *, expected_fingerprint: str, run_
     if (state.run_id, state.branch_id) != (run_id, branch_id) or state.fingerprint != expected_fingerprint:
         raise ValueError("Ranking revision identity or fingerprint mismatch")
     return state
+
+
+def ranking_revision_states_equivalent(
+    left: RankingRevisionState, right: RankingRevisionState
+) -> bool:
+    """Compare authoritative content while preserving each historical wire hash.
+
+    V1 had no tournament-source field.  An empty V2 source collection therefore
+    represents the same live state; non-empty V2 evidence never does.
+    """
+    return left.model_copy(
+        update={"schema_version": "ranking_revision_state.v2"}
+    ).model_dump(mode="json") == right.model_copy(
+        update={"schema_version": "ranking_revision_state.v2"}
+    ).model_dump(mode="json")

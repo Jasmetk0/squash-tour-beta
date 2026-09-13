@@ -22,9 +22,24 @@ duplicate-generation rejection. It checks that player records remain unchanged.
 Existing match API tests separately verify stored event Replay without RNG reruns.
 The reference scenario does not cover a complete qualification/WC lifecycle.
 
+## Owned Official-ranking source bridge
+
+The supported ordinary four-player main-draw path can now be selected explicitly
+in an audited Admin ranking command. Before its first database mutation, the command
+validates the complete persisted result and authored award packages, identities,
+completion status and both fingerprints. It then freezes an immutable, independently
+Run/Branch-owned copy and prepares the next Official candidate in the same SQLite
+transaction. Preview rolls this work back; exact retries use the frozen copy rather
+than mutable legacy files. Saved Revision ranking components capture and restore the
+copy together with result versions, manifests, receipts and candidates.
+
+This is an explicit adoption boundary, not proof that the legacy producer itself is
+Run/Branch-owned. Qualification, BYE, W/O, RET, fallback/unauthored points, future
+weeks and fingerprint drift remain rejected.
+
 ## Remaining boundary
 
-Persisting awards is not publication of an Official Ranking. The existing legacy
+Preparing and saving a candidate is not publication of an Official Ranking. The existing legacy
 apply endpoint updates active-player totals, and the existing snapshot foundation
 copies those totals. This change does not implement the Master contract for
 Week Transition, delayed result eligibility, rolling expiration, season-inherited

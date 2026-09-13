@@ -230,3 +230,14 @@ def ingest_tournament_ranking_sources(
         raise ValueError("Persisted tournament results and awards are required")
     versions = prepare_tournament_ranking_sources(binding, result, awards)
     return tuple(writer.append(version) for version in versions)
+
+
+def ingest_frozen_tournament_ranking_sources(
+    writer: RankingSourceWriter,
+    binding: TournamentRankingBinding,
+    result: SeasonEventResultPackage,
+    awards: EventPointAwardPackage,
+) -> tuple[RankingResultVersion, ...]:
+    """Ingest a previously adopted immutable package without consulting files."""
+    versions = prepare_tournament_ranking_sources(binding, result, awards)
+    return tuple(writer.append(version) for version in versions)

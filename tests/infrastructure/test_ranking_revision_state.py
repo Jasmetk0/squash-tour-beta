@@ -15,6 +15,14 @@ from beta_engine.infrastructure.db.models import OfficialRankingCommandModel, Ru
 from beta_engine.infrastructure.db.ranking_result_history import OfficialRankingResultStore
 from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner, stage_ranking_week_command
 from beta_engine.infrastructure.db.ranking_revision_state import capture_ranking_revision_state
+from beta_engine.infrastructure.db.saved_revision_rankings import restore_saved_ranking_component
+
+
+def saved_component(state):
+    return {"content": {"ranking_preparation": {
+        "fingerprint": state.fingerprint,
+        "state": state.model_dump(mode="json"),
+    }}}
 
 
 @pytest.fixture
@@ -62,6 +70,80 @@ def test_capture_roundtrip_preserves_history_and_corrections(database, captured)
         again = capture_ranking_revision_state(session, run_id="run", branch_id="branch")
         assert again.fingerprint == captured.fingerprint
         assert not session.new and not session.dirty and not session.deleted
+
+
+@pytest.mark.smoke
+def test_unchanged_v1_saved_component_restores_and_retries(database, captured):
+    legacy = captured.model_copy(update={
+        "schema_version": "ranking_revision_state.v1",
+        "tournament_sources": (),
+    })
+    legacy_payload = saved_component(legacy)
+    with database.begin() as session:
+        session.execute(text("BEGIN IMMEDIATE"))
+        restore_saved_ranking_component(
+            session, current_payload=legacy_payload, target_payload=legacy_payload,
+            run_id="run", branch_id="branch", command_id="restore-v1-same",
+        )
+    # An exact lost-response retry accepts the V2 live capture as equivalent to V1.
+    with database.begin() as session:
+        session.execute(text("BEGIN IMMEDIATE"))
+        restore_saved_ranking_component(
+            session, current_payload=legacy_payload, target_payload=legacy_payload,
+            run_id="run", branch_id="branch", command_id="restore-v1-same",
+        )
+
+
+@pytest.mark.smoke
+def test_restore_v1_and_v2_equivalent_components_both_directions(database, captured):
+    legacy = captured.model_copy(update={
+        "schema_version": "ranking_revision_state.v1",
+        "tournament_sources": (),
+    })
+    legacy_payload = saved_component(legacy)
+    current_payload = saved_component(captured)
+    with database.begin() as session:
+        session.execute(text("BEGIN IMMEDIATE"))
+        restore_saved_ranking_component(
+            session, current_payload=current_payload, target_payload=legacy_payload,
+            run_id="run", branch_id="branch", command_id="restore-to-v1",
+        )
+    with database.begin() as session:
+        session.execute(text("BEGIN IMMEDIATE"))
+        restore_saved_ranking_component(
+            session, current_payload=legacy_payload, target_payload=current_payload,
+            run_id="run", branch_id="branch", command_id="restore-to-v2",
+        )
+        restored = capture_ranking_revision_state(session, run_id="run", branch_id="branch")
+        assert restored.fingerprint == captured.fingerprint
+
+
+def test_v1_compatibility_still_rejects_changed_live_data(database, captured):
+    legacy = captured.model_copy(update={
+        "schema_version": "ranking_revision_state.v1",
+        "tournament_sources": (),
+    })
+    initial = command()
+    previous = captured.entries[-1].snapshot
+    RankingWeekCommandRunner(database).execute(RankingWeekCommand(
+        command_id="week-4", tournaments=(), context=RankingTransitionContext(
+            run_id="run", branch_id="branch", completed_week=previous.week,
+            target_week=RankingWeek(season_index=0, week=4), policy=previous.policy,
+            players=initial.players, discipline="none",
+        ),
+    ))
+    with pytest.raises(ValueError, match="stale"), database.begin() as session:
+        session.execute(text("BEGIN IMMEDIATE"))
+        restore_saved_ranking_component(
+            session, current_payload=saved_component(legacy),
+            target_payload=saved_component(legacy), run_id="run", branch_id="branch",
+            command_id="reject-changed-v1",
+        )
+    with database.begin() as session:
+        session.execute(text("BEGIN"))
+        assert capture_ranking_revision_state(
+            session, run_id="run", branch_id="branch"
+        ).entries[-1].snapshot.week.week == 4
 
 
 @pytest.mark.smoke

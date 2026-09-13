@@ -10,6 +10,7 @@ from beta_engine.infrastructure.db.models import OfficialRankingCommandModel
 from beta_engine.infrastructure.db.ranking_inspection import inspect_ranking_history
 from beta_engine.infrastructure.db.ranking_result_history import OfficialRankingResultStore
 from beta_engine.infrastructure.db.ranking_week_command import verify_ranking_command_inputs
+from beta_engine.infrastructure.db.owned_tournament_sources import OwnedTournamentRankingSourceStore
 
 
 def capture_ranking_revision_state(session: Session, *, run_id: str, branch_id: str) -> RankingRevisionState:
@@ -38,6 +39,7 @@ def capture_ranking_revision_state(session: Session, *, run_id: str, branch_id: 
         run_id=run_id, branch_id=branch_id, entries=tuple(entries),
         sources=OfficialRankingResultStore(session).history(run_id=run_id, branch_id=branch_id),
         zero_sources=OfficialRankingZeroStore(session).history(run_id=run_id, branch_id=branch_id),
+        tournament_sources=OwnedTournamentRankingSourceStore(session).history(run_id=run_id, branch_id=branch_id),
     )
 
 
@@ -62,11 +64,14 @@ def install_ranking_revision_state(
     current = capture_ranking_revision_state(session, run_id=run_id, branch_id=branch_id)
     if current.fingerprint == state.fingerprint:
         return current
-    if current.entries or current.sources or current.zero_sources:
+    if current.entries or current.sources or current.zero_sources or current.tournament_sources:
         raise ValueError("Ranking restore target is not empty and differs from saved state")
     if session.get(RunContainerModel, run_id).read_only or session.get(RunBranchModel, branch_id).read_only:
         raise ValueError("Ranking restore target is read-only")
     with session.begin_nested():
+        owned = OwnedTournamentRankingSourceStore(session)
+        for source in state.tournament_sources:
+            owned.append(source)
         # Sources precede candidates because ordinary source writes cannot backdate
         # into an already staged history. All are still inside the same savepoint.
         sources = OfficialRankingResultStore(session)

@@ -1,11 +1,11 @@
 # Current implementation and next action
 
-Audited 12 September 2026 against `buuk` **08a29074250675a61434ba58fb42a185474648d5**
-(PR #720 merged). This file is an evidence/index snapshot, not product authority.
+Audited 13 September 2026 from `buuk` **2bdc6ae** (PR #721 merged), including the
+owned tournament-source bridge in the current implementation PR. This file is an
+evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
 statuses live in [Master Vision](SQUASH_ENGINE_MASTER_VISION.md); the development
-protocol is chapter 36. The proposed documentation synchronization is not yet
-merged at the time of this snapshot.
+protocol is chapter 36. PR #721 merged the documentation synchronization.
 
 ## What exists, and where integration stops
 
@@ -14,11 +14,11 @@ merged at the time of this snapshot.
 | Run foundation | `application/run_container_creation_service.py`, `run_working_draft_service.py`, `run_saved_revision_*`, DB revision models | New Run roots/revisions coexist with legacy simulation identities; full sporting state is not covered by every save/restore path |
 | Branch isolation/recovery | `infrastructure/db/repositories.py` validates ancestry, receipts and checkpoints; rejects ranking-bearing forks | Ranking identity remapping and complete sporting-world recovery remain |
 | Packages/players | World package, initial pool, season bootstrap and Run prospect services | File-backed `SeasonActivePlayer` is not proof of authoritative Branch/week roster/lifecycle resolution |
-| Tournament flow | `season_event_simulation_service.py`, result/award services; `docs/TOURNAMENT_INTEGRATION_STABILIZATION.md` | Four-player main-draw path exists; Q/WC/LL and complete scoped lifecycle are not certified by that test |
+| Tournament flow | `season_event_simulation_service.py`, result/award services, `owned_tournament_sources.py`; real producer/API/SQLite test | Supported four-player main draw can be explicitly adopted as immutable Run/Branch evidence; producer files remain legacy/global and Q/WC/LL/abnormal sources remain rejected |
 | Match engine | `domain/matches/match_engine.py`, immutable input/format contracts and recorded replay; Master 35.9–35.20 | Stored match/replay does not prove whole-world mid-match restore, global slot scheduling or finished realism |
 | Official ranking | `domain/rankings/official.py`, `application/ranking_week_command.py`, DB ranking stores/runner | Candidate computation/history exists; full authoritative source/roster/policy resolution and world publication do not |
-| Ranking Admin | `admin_ranking_candidates.py`, `RankingPreparationPanel.tsx`, `RankingResultCorrections.tsx` | Preview/confirm, manual input review, zeros and stored-result corrections; new tournament ingestion is explicitly rejected at the API boundary |
-| Ranking Save | `saved_revision_rankings.py`, `ranking_revision_state.py`, `ranking_state_restore.py` | Verified component recovery, not full sporting-world recovery |
+| Ranking Admin | `admin_ranking_candidates.py`, `RankingPreparationPanel.tsx`, `RankingResultCorrections.tsx` | Preview/confirm, manual input review, zeros, corrections and explicit supported tournament binding; minimum API flow exists but no broader tournament picker redesign |
+| Ranking Save | `saved_revision_rankings.py`, `ranking_revision_state.py`, `ranking_state_restore.py` | Owned source packages, candidates, inputs and audit survive explicit Save/reload/restore; still not full sporting-world recovery |
 | Week execution | `season_week_simulation_execution_service.py` declares `NO_ROLLBACK_WARNING` | Legacy event loop is not the atomic Master Week Transition; snapshot service copies active-player totals |
 | Season rollover | `rollover_service.py`, `run_bootstrap_service.py` use persisted MVP rollover/legacy simulation runs | Not the Master Season Closing + new-policy Week 1 + final Run completion contract |
 | Viewer/downstream | Legacy ranking/Race/Finals paths and Viewer exist | New Official history is not wired through historically faithful public ranking, entries/seeding and Finals |
@@ -60,16 +60,21 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   `test_match_input_snapshot.py`, `test_ranking_preparation_preview_api.py`.
   Some legacy orchestration tests use substitutes; real HTTP/SQLite ranking
   preview/restore tests do not prove a complete week or season.
+- Current source-bridge implementation run: **109 passed in 103.96s** across the
+  tournament producer/ingestion, ranking API, revision capture/restore, Saved
+  Revision API and simulation-service suites. The acceptance test uses the real
+  four-player producer, HTTP routes and file-backed SQLite, then explicitly saves,
+  reopens, restores before adoption and restores the adopted revision again.
 - No full-suite, browser E2E, whole-season or full-Run execution in this task.
   Earlier baseline failures are not silently cleared. Docs CI validates docs only.
 
 ## Best next implementation slice
 
-**Scoped completed tournament → Official ranking candidate → Save/reload/restore.**
-This removes the concrete source-ownership blocker before attempting the atomic
-Week Transition. Do not spend the next PR on deeper ranking UI, Protected Ranking
-or realism calibration. Next, integrate authoritative world/player/policy state and
-Week Transition in Master order; see [ROADMAP.md](ROADMAP.md).
+**One true Week Transition boundary.** The supported source bridge now removes the
+concrete ownership blocker for its narrow main-draw case. Next integrate authoritative
+world/player/policy state with the Master-order Week Transition and Official snapshot;
+do not mistake the saved candidate for publication or broaden ranking UI/realism first.
+See [ROADMAP.md](ROADMAP.md).
 
 ## Ready-to-paste Codex prompt
 

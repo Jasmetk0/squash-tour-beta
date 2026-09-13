@@ -431,11 +431,30 @@ def test_receipt_write_failure_rolls_back_candidate_and_sources(packages, databa
 
 def assert_only_bootstrap(session):
     from sqlalchemy import select
-    from beta_engine.infrastructure.db.models import OfficialRankingCommandModel
+    from beta_engine.infrastructure.db.models import OfficialRankingCommandModel, OwnedTournamentRankingSourceModel
 
     assert OfficialRankingResultStore(session).history(run_id="run", branch_id="branch") == ()
     assert len(OfficialRankingCandidateStore(session).history(run_id="run", branch_id="branch")) == 1
     assert session.scalars(select(OfficialRankingCommandModel)).all() == []
+    assert session.scalars(select(OwnedTournamentRankingSourceModel)).all() == []
+
+
+def test_preview_source_change_is_rejected_without_adoption(packages, database):
+    from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
+    from beta_engine.infrastructure.db.models import OwnedTournamentRankingSourceModel
+    from sqlalchemy import select
+
+    command = ranking_command(packages, database)
+    runner = RankingWeekCommandRunner(database, packages[0])
+    preview = runner.preview(command)
+    registry = packages[0]._load_registry()
+    registry.awards_by_event_id[command.tournaments[0].event_id].awards[0].ranking_points_awarded += 1
+    packages[0]._save_registry(registry)
+    with pytest.raises(ValueError, match="fingerprint"):
+        runner.execute(command, expected_snapshot_fingerprint=preview.fingerprint)
+    with database() as session:
+        assert_only_bootstrap(session)
+        assert session.scalars(select(OwnedTournamentRankingSourceModel)).all() == []
 
 
 @pytest.mark.smoke

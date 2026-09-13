@@ -1015,7 +1015,7 @@ class SimulationPersistenceRepository:
         self._engine = engine
         self._session_factory = session_factory
 
-    def prepare_official_ranking(self, *, run_id: str, branch_id: str, command, preview: bool = False, expected_snapshot_fingerprint: str | None = None):
+    def prepare_official_ranking(self, *, run_id: str, branch_id: str, command, preview: bool = False, expected_snapshot_fingerprint: str | None = None, awards=None):
         from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
         from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
 
@@ -1024,11 +1024,7 @@ class SimulationPersistenceRepository:
             raise ValueError("Ranking request scope mismatch")
         if command.audit is None:
             raise ValueError("Admin preparation requires an audit label and reason")
-        # Legacy file-based bindings lack authoritative product scope. Keep their
-        # ingestion behind the trusted internal adapter until that is resolved.
-        if not isinstance(command, RankingBootstrapCommand) and command.tournaments:
-            raise ValueError("Admin preparation cannot ingest unscoped tournament files")
-        runner = RankingWeekCommandRunner(self._session_factory)
+        runner = RankingWeekCommandRunner(self._session_factory, awards)
         if preview:
             return runner.preview(command)
         return runner.execute(command, expected_snapshot_fingerprint=expected_snapshot_fingerprint)

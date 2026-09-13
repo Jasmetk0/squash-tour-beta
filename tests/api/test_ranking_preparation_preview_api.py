@@ -128,6 +128,15 @@ def test_authoritative_week_inputs_are_server_resolved_and_preview_is_read_only(
             'adopted_by_command_id': 'adopt-week-2', 'audit': bootstrap['audit'],
         }
         assert _request('POST', root + '/transition-authorities', authority)[0] == 201
+        # Saving the unchanged manually declared source must carry its exact hash
+        # forward rather than making it stale merely because the base ID changed.
+        status, review = _request('GET', root + '/save/preview')
+        assert status == 200 and review['can_save']
+        status, authority_saved = _request('POST', root + '/save', {
+            'expected_draft_version': review['draft_version'],
+            'expected_ranking_fingerprint': review['ranking_fingerprint'],
+        })
+        assert status == 201
         request_body = {'command_id': 'authority-week-2', 'target_week': authority['target_week'],
                         'tournaments': [], 'audit': bootstrap['audit']}
         before = dump(path)
@@ -153,6 +162,34 @@ def test_authoritative_week_inputs_are_server_resolved_and_preview_is_read_only(
     with ApiServer(database_url=f'sqlite:///{path}') as reopened:
         root = f'{reopened.base_url}/admin/runs/{run_id}/branches/{branch_id}/ranking-candidates'
         assert _request('GET', root + '/save/preview')[1]['has_unsaved_changes'] is False
+        before_retry = dump(path)
+        assert _request('POST', root + '/prepare/week/authoritative', request_body)[0] == 201
+        assert dump(path) == before_retry
+        restore_url = (f'{reopened.base_url}/run-containers/{run_id}/branches/{branch_id}'
+                       f'/saved-revisions/{revision_id}/restore')
+        bad = {
+            'expected_head_saved_revision_id': authority_saved['saved_revision']['revision_id'],
+            'expected_draft_version': saved['working_draft']['draft_version'],
+            'expected_current_viewer_branch_id': branch_id, 'explicit_confirmation': True,
+        }
+        before_failed_restore = dump(path)
+        assert _request('POST', restore_url, bad)[0] == 409
+        assert dump(path) == before_failed_restore
+        good = bad | {'expected_head_saved_revision_id': saved['saved_revision']['revision_id']}
+        status, restored = _request('POST', restore_url, good)
+        assert status == 201
+        assert restored['target_saved_revision_id'] == revision_id
+        # A real restore to state before adoption removes the authority. An old
+        # client request cannot use an arbitrary ancestor after source change.
+        assert _request('POST', root + '/prepare/week/authoritative/preview', request_body)[0] == 409
+        reinstall_url = (f'{reopened.base_url}/run-containers/{run_id}/branches/{branch_id}'
+                         f"/saved-revisions/{saved['saved_revision']['revision_id']}/restore")
+        status, reinstalled = _request('POST', reinstall_url, {
+            'expected_head_saved_revision_id': restored['saved_revision']['revision_id'],
+            'expected_draft_version': restored['working_draft']['draft_version'],
+            'expected_current_viewer_branch_id': branch_id, 'explicit_confirmation': True,
+        })
+        assert status == 201
         assert _request('POST', root + '/prepare/week/authoritative', request_body)[0] == 201
 
 

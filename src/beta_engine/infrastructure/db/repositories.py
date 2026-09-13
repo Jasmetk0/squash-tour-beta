@@ -1046,7 +1046,7 @@ class SimulationPersistenceRepository:
             return RankingTransitionAuthorityStore(session).append(authority)
 
     def resolve_ranking_transition_authority(self, *, run_id: str, branch_id: str, target_ordinal: int):
-        from beta_engine.infrastructure.db.ranking_transition_authority import RankingTransitionAuthorityStore
+        from beta_engine.infrastructure.db.ranking_transition_authority import RankingTransitionAuthorityStore, authority_carried_to_saved_head
         with self._session_factory() as session:
             session.execute(text("BEGIN"))
             value = RankingTransitionAuthorityStore(session).get(run_id=run_id, branch_id=branch_id, target_ordinal=target_ordinal)
@@ -1054,9 +1054,8 @@ class SimulationPersistenceRepository:
                 raise ValueError("Authoritative ranking transition inputs are missing")
             draft = session.scalar(select(BranchWorkingDraftModel).where(BranchWorkingDraftModel.branch_id == branch_id))
             branch = session.get(RunBranchModel, branch_id)
-            prepared = session.get(OfficialRankingCandidateModel, (run_id, branch_id, target_ordinal))
-            if draft is None or branch is None or branch.run_id != run_id or (
-                value.base_revision_id != draft.base_revision_id and prepared is None
+            if draft is None or branch is None or branch.run_id != run_id or not authority_carried_to_saved_head(
+                session, value, branch, draft
             ):
                 raise ValueError("Authoritative ranking transition source revision is stale")
             return value

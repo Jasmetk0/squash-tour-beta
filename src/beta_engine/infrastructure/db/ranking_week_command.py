@@ -29,7 +29,7 @@ from beta_engine.infrastructure.db.owned_tournament_sources import OwnedTourname
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
 from beta_engine.infrastructure.db.models import RunBranchModel, RunContainerModel
 from beta_engine.infrastructure.db.models import BranchWorkingDraftModel
-from beta_engine.infrastructure.db.ranking_transition_authority import RankingTransitionAuthorityStore
+from beta_engine.infrastructure.db.ranking_transition_authority import RankingTransitionAuthorityStore, authority_carried_to_saved_head
 from sqlalchemy import select
 
 
@@ -113,7 +113,10 @@ def stage_ranking_week_command(
             draft = session.scalar(select(BranchWorkingDraftModel).where(
                 BranchWorkingDraftModel.branch_id == context.branch_id
             ))
-            if draft is None or (draft.base_revision_id != authority.base_revision_id and receipt is None):
+            branch = session.get(RunBranchModel, context.branch_id)
+            if draft is None or branch is None or (
+                receipt is None and not authority_carried_to_saved_head(session, authority, branch, draft)
+            ):
                 raise ValueError("Authoritative ranking transition source revision is stale")
         if receipt is not None:
             if (

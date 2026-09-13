@@ -75,7 +75,7 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
 ## Best next implementation slice
 
 **Complete the real Week Transition orchestrator.** Ranking preparation now has an
-explicit immutable Run/Branch authority snapshot for its completed/target boundary,
+explicit manually declared, immutable Run/Branch authority snapshot for its completed/target boundary,
 base Saved Revision, canonical roster/tie-break identity, lifecycle eligibility,
 effective policy and provenance. The ordinary authoritative Admin route derives the
 ranking context server-side and preserves it through Save/restore. This remains only
@@ -86,8 +86,10 @@ world clock, lifecycle/development boundary state and public World Events.
 ## Current limitations
 
 - The explicit authority adoption command is the supported bridge until world/player
-  state has its own complete branch-revision projection; it is not inferred from the
-  legacy season files.
+  state has its own complete branch-revision projection. Scope, base revision and
+  structural invariants are checked, but roster completeness, lifecycle truth and
+  historical policy effectiveness are not yet resolved from stored world state; they
+  remain audited declarations and are not inferred from legacy season files.
 - Ranking-bearing branch fork remapping, Protected Ranking, abnormal tournament
   inputs, clock advancement and Viewer publication remain unsupported.
 - The legacy season execution service still has no rollback and is not the Week

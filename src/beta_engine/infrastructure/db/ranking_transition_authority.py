@@ -7,6 +7,25 @@ from beta_engine.domain.rankings.transition_authority import RankingTransitionAu
 from beta_engine.infrastructure.db.models import RankingTransitionAuthorityModel
 
 
+def authority_carried_to_saved_head(session: Session, authority, branch, draft) -> bool:
+    """Accept a newer base only when its saved payload carries the exact snapshot."""
+    if draft.base_revision_id == authority.base_revision_id:
+        return True
+    from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
+    from beta_engine.infrastructure.db.saved_revision_rankings import load_saved_ranking_component
+    import json
+
+    revision = session.get(BranchSavedRevisionModel, draft.base_revision_id)
+    if revision is None or (revision.run_id, revision.branch_id) != (authority.run_id, authority.branch_id):
+        return False
+    state = load_saved_ranking_component(
+        json.loads(revision.payload_json), run_id=authority.run_id, branch_id=authority.branch_id
+    )
+    return branch.saved_head_revision_id == draft.base_revision_id and state is not None and any(
+        a.fingerprint == authority.fingerprint for a in state.transition_authorities
+    )
+
+
 class RankingTransitionAuthorityStore:
     def __init__(self, session: Session):
         self.session = session

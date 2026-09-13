@@ -60,6 +60,7 @@ from beta_engine.infrastructure.db.models import (
     OfficialRankingCandidateModel,
     OfficialRankingCommandModel,
     OfficialRankingResultVersionModel, OfficialRankingZeroVersionModel,
+    RankingTransitionAuthorityModel,
     BranchCheckpointModel,
     BranchStateModel,
     BranchWorkingDraftModel,
@@ -1028,6 +1029,37 @@ class SimulationPersistenceRepository:
         if preview:
             return runner.preview(command)
         return runner.execute(command, expected_snapshot_fingerprint=expected_snapshot_fingerprint)
+
+    def adopt_ranking_transition_authority(self, authority):
+        from beta_engine.infrastructure.db.ranking_transition_authority import RankingTransitionAuthorityStore
+        with self._session_factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            run = session.get(RunContainerModel, authority.run_id)
+            branch = session.get(RunBranchModel, authority.branch_id)
+            draft = session.scalar(select(BranchWorkingDraftModel).where(BranchWorkingDraftModel.branch_id == authority.branch_id))
+            if run is None or branch is None or branch.run_id != authority.run_id or draft is None:
+                raise ValueError("Ranking authority Run/Branch scope not found")
+            if run.read_only or branch.read_only or branch.status != "active":
+                raise ValueError("Ranking authority requires a writable active Run/Branch")
+            if authority.base_revision_id != draft.base_revision_id or branch.saved_head_revision_id != draft.base_revision_id:
+                raise ValueError("Ranking authority base revision is stale")
+            return RankingTransitionAuthorityStore(session).append(authority)
+
+    def resolve_ranking_transition_authority(self, *, run_id: str, branch_id: str, target_ordinal: int):
+        from beta_engine.infrastructure.db.ranking_transition_authority import RankingTransitionAuthorityStore
+        with self._session_factory() as session:
+            session.execute(text("BEGIN"))
+            value = RankingTransitionAuthorityStore(session).get(run_id=run_id, branch_id=branch_id, target_ordinal=target_ordinal)
+            if value is None:
+                raise ValueError("Authoritative ranking transition inputs are missing")
+            draft = session.scalar(select(BranchWorkingDraftModel).where(BranchWorkingDraftModel.branch_id == branch_id))
+            branch = session.get(RunBranchModel, branch_id)
+            prepared = session.get(OfficialRankingCandidateModel, (run_id, branch_id, target_ordinal))
+            if draft is None or branch is None or branch.run_id != run_id or (
+                value.base_revision_id != draft.base_revision_id and prepared is None
+            ):
+                raise ValueError("Authoritative ranking transition source revision is stale")
+            return value
 
     def inspect_official_ranking_history(self, *, run_id: str, branch_id: str):
         from beta_engine.infrastructure.db.ranking_inspection import inspect_ranking_history
@@ -2469,6 +2501,7 @@ class SimulationPersistenceRepository:
                         OfficialRankingCandidateModel,
                         OfficialRankingCommandModel,
                         OfficialRankingResultVersionModel, OfficialRankingZeroVersionModel,
+                        RankingTransitionAuthorityModel,
                     )
                 )
                 if has_uncaptured_ranking and RANKING_COMPONENT_KEY not in state.saved_revision.payload.get("content", {}):
@@ -2756,7 +2789,7 @@ class SimulationPersistenceRepository:
             ranking = capture_ranking_revision_state(session, run_id=run_id, branch_id=branch_id)
             state = self._validated_branch_revision_state_in_session(session=session, branch=session.get(RunBranchModel, branch_id))
             saved = load_saved_ranking_component(state.saved_revision.payload, run_id=run_id, branch_id=branch_id)
-            changed = bool(ranking.entries or ranking.sources) if saved is None else saved.fingerprint != ranking.fingerprint
+            changed = bool(ranking.entries or ranking.sources or ranking.transition_authorities) if saved is None else saved.fingerprint != ranking.fingerprint
             return {
                 "run_id": run_id, "branch_id": branch_id,
                 "ranking_fingerprint": ranking.fingerprint,

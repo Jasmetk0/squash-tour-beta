@@ -25,12 +25,15 @@ class RankingWeekCommand(FrozenInput):
 
     zero_versions: tuple[RankingZeroVersion, ...] = ()
     audit: RankingCommandAudit | None = None
+    authority_fingerprint: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
 
     @model_serializer(mode="wrap")
     def serialize_command(self, handler):
         payload = handler(self)
         if self.audit is None:
             payload.pop("audit", None)
+        if self.authority_fingerprint is None:
+            payload.pop("authority_fingerprint", None)
         if not self.zero_versions:
             payload.pop("zero_versions", None)
         return payload

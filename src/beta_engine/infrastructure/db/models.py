@@ -96,6 +96,19 @@ class OfficialRankingZeroVersionModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class OwnedTournamentRankingSourceModel(Base):
+    """Immutable adopted tournament evidence owned by one Run/Branch."""
+
+    __tablename__ = "owned_tournament_ranking_sources"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    edition_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    source_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    adopted_by_command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 
 class SimulationRunModel(Base):
     __tablename__ = "simulation_runs"

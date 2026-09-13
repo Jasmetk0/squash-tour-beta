@@ -11,8 +11,8 @@ remain valid; their numbering is not a mandate to implement them in that order.
 | Gate | Coherent outcome | Evidence required to advance |
 |---|---|---|
 | 0 — synchronize | One canonical Master, clear authority, verified state and next Codex task | Documentation preservation/link checks; no invented product decisions |
-| 1 — source bridge (next) | Supported real main-draw results/awards become owned Run/Branch sources, feed Official candidate and survive Save/Restore | Real producer + API/SQLite; scope collisions, preview, rollback, retry and reopen |
-| 2 — one true week boundary | Authoritative completed-week world/player/policy state feeds Master-order Week Transition, Official snapshot and public events in one transaction | Real Week N -> N+1, deterministic replay, failure rollback, saved Viewer boundary and empty-week behavior |
+| 1 — source bridge (implemented slice) | Supported real main-draw results/awards become owned Run/Branch sources, feed Official candidate and survive Save/Restore | Real producer + API/SQLite covers preview, rollback, retry, reopen and recovery; broader source types remain guarded |
+| 2 — one true week boundary (next) | Authoritative completed-week world/player/policy state feeds Master-order Week Transition, Official snapshot and public events in one transaction | Real Week N -> N+1, deterministic replay, failure rollback, saved Viewer boundary and empty-week behavior |
 | 3 — repeated sporting flow | Entries/draw/match/close/ranking consumers use the same scoped timeline across weeks | Multiple weeks without manual DB repair; slot simultaneity, expiry, corrections, historical reads and recovery |
 | 4 — season boundary | Outgoing Season Closing + summary/marker; incoming policy + Week 1; final season terminates without season 51 | Whole season and rollover; outgoing/incoming policy separation, final Run edge, save/reload/replay |
 | 5 — pre-alpha acceptance | Both Master 31.3 flows, including required minimum Reconstruction/player/AI scope | Official season -> next season and empty Run -> two manual players -> standalone match, repeatedly without history damage |

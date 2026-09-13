@@ -110,6 +110,109 @@ def test_real_run_preview_confirm_save_and_reopen(tmp_path):
         assert _request('GET', root + '/0/1/inputs')[1]['command_audits'][0]['audit'] == command['audit']
 
 
+@pytest.mark.smoke
+def test_real_tournament_adoption_candidate_save_reopen_and_restore(tmp_path):
+    """Production tournament files -> HTTP -> SQLite -> Saved Revision recovery."""
+    import sys
+    from pathlib import Path
+    from test_saved_revision_history_api import ApiServer, _create_run, _request
+    sys.path.insert(0, str(Path(__file__).parents[1] / 'application'))
+    from test_season_event_simulation_service import make_simulation_service
+    from beta_engine.application.season_event_simulation_service import SimulateOneEventRequest
+
+    simulation, event_id = make_simulation_service(tmp_path / 'sport')
+    outcome = simulation.simulate_one_event(
+        event_id=event_id, request=SimulateOneEventRequest(dry_run=False, seed=71)
+    )
+    assert outcome.report is not None and not outcome.validation_errors
+    points = simulation.point_awards_service
+    result = points.result_service.get_event_result(event_id=event_id).result_package
+    awards = points.get_event_point_awards(event_id=event_id).award_package
+    assert result is not None and awards is not None
+    path = tmp_path / 'owned-workflow.db'
+    with ApiServer(database_url=f'sqlite:///{path}') as server:
+        app = server.app
+        app.state.season_active_players_config_path = points.active_players_service.active_players_path
+        app.state.season_calendar_registry_path = points.calendar_service.calendar_registry_path
+        app.state.tournament_templates_config_path = points.template_service.config_path
+        app.state.season_matches_registry_path = points.result_service.match_service.matches_path
+        app.state.season_event_results_registry_path = points.result_service.results_path
+        app.state.season_point_awards_registry_path = points.awards_path
+        app.state.points_config_path = points.points_config_path
+        run_id, branch_id, initial_revision = _create_run(server, display_name='Owned tournament workflow')
+        root = f'{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/ranking-candidates'
+        players = [dict(player_id=p.player_id, tie_break_token=p.player_id,
+                        tour_entry_week={'season_index':0, 'week':1}) for p in result.player_results]
+        bootstrap = dict(kind='initial_ranking.v1', command_id='owned-bootstrap', run_id=run_id,
+            branch_id=branch_id, target_week={'season_index':0,'week':1},
+            policy={'policy_id':'owned-policy'}, players=players, discipline='none',
+            audit={'actor_label':'Admin operator', 'reason':'Establish pre-tournament baseline'})
+        assert _request('POST', root + '/prepare/initial', bootstrap)[0] == 201
+        if result.season_week > 1:
+            assert result.season_week == 2
+            bridge = dict(command_id='prepare-pre-event-week', tournaments=[], corrections=[],
+                context=dict(run_id=run_id, branch_id=branch_id,
+                    completed_week={'season_index':0,'week':1}, target_week={'season_index':0,'week':2},
+                    policy={'policy_id':'owned-policy'}, players=players, discipline='none'),
+                audit={'actor_label':'Admin operator', 'reason':'Prepare the event completion week'})
+            assert _request('POST', root + '/prepare/week', bridge)[0] == 201
+        binding = dict(run_id=run_id, branch_id=branch_id, edition_id='owned-edition', event_id=event_id,
+            completed_week={'season_index':0,'week':result.season_week}, first_publication_week={'season_index':0,'week':result.season_week + 1},
+            validity_weeks=61, ranking_status='ranked',
+            expected_result_fingerprint=result.metadata.build_fingerprint,
+            expected_award_fingerprint=awards.metadata.build_fingerprint)
+        weekly_command = dict(command_id='adopt-and-rank', tournaments=[binding], corrections=[],
+            context=dict(run_id=run_id, branch_id=branch_id,
+                    completed_week={'season_index':0,'week':result.season_week},
+                    target_week={'season_index':0,'week':result.season_week + 1},
+                policy={'policy_id':'owned-policy'}, players=players, discipline='none'),
+            audit={'actor_label':'Admin operator', 'reason':'Review and prepare Official candidate'})
+        before = dump(path)
+        status, preview = _request('POST', root + '/prepare/week/preview', weekly_command)
+        assert status == 200, preview
+        assert dump(path) == before
+        req = request.Request(root + '/prepare/week', data=json.dumps(weekly_command).encode(), method='POST',
+            headers={'Content-Type':'application/json',
+                     'X-Ranking-Preview-Fingerprint':preview['candidate']['fingerprint'],
+                     'X-Ranking-Preview-Request':preview['request_fingerprint']})
+        with request.urlopen(req) as response:
+            candidate = json.loads(response.read())
+        assert {row['player_id']: row['points'] for row in candidate['snapshot']['rows']} == {
+            award.player_id: award.ranking_points_awarded for award in awards.awards
+        }
+        # Lost-response retry is byte-for-byte idempotent and no longer reads files.
+        points.awards_path.write_text('changed after adoption')
+        with request.urlopen(req) as response:
+            assert json.loads(response.read()) == candidate
+        save_status, review = _request('GET', root + '/save/preview')
+        assert save_status == 200 and review['can_save']
+        save_status, saved = _request('POST', root + '/save', {
+            'expected_draft_version':review['draft_version'],
+            'expected_ranking_fingerprint':review['ranking_fingerprint']})
+        assert save_status == 201
+        saved_revision = saved['saved_revision']['revision_id']
+        state = saved['saved_revision']['payload']['content']['ranking_preparation']['state']
+        assert state['tournament_sources'][0]['binding'] == binding
+        assert state['tournament_sources'][0]['awards']['metadata']['build_fingerprint'] == awards.metadata.build_fingerprint
+    with ApiServer(database_url=f'sqlite:///{path}') as reopened:
+        root = f'{reopened.base_url}/admin/runs/{run_id}/branches/{branch_id}/ranking-candidates'
+        assert _request('GET', root + f'/0/{result.season_week + 1}')[1] == candidate
+        # Restore the parent removes adoption; restoring the saved revision reinstalls all evidence.
+        restore_root = f'{reopened.base_url}/run-containers/{run_id}/branches/{branch_id}/saved-revisions'
+        restore_request = {'expected_head_saved_revision_id':saved_revision,
+            'expected_draft_version':saved['working_draft']['draft_version'],
+            'expected_current_viewer_branch_id':branch_id, 'explicit_confirmation':True}
+        status, restored = _request('POST', restore_root + f'/{initial_revision}/restore', restore_request)
+        assert status == 201
+        assert _request('GET', root)[1]['candidates'] == []
+        restore_request = {'expected_head_saved_revision_id':restored['saved_revision']['revision_id'],
+            'expected_draft_version':restored['working_draft']['draft_version'],
+            'expected_current_viewer_branch_id':branch_id, 'explicit_confirmation':True}
+        status, _ = _request('POST', restore_root + f'/{saved_revision}/restore', restore_request)
+        assert status == 201
+        assert _request('GET', root + f'/0/{result.season_week + 1}')[1] == candidate
+
+
 def test_confirmation_binds_audit_and_exact_request_as_well_as_snapshot(api):
     client, _, path, *_ = api
     preview = client.post(PREFIX + '/prepare/initial/preview', json=initial()).json()

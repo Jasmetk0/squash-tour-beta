@@ -38,6 +38,7 @@ def _resolved_initial_world(run_id: str, branch_id: str, payload: InitialWorldAd
         bootstrap_seed=payload.bootstrap_seed, bootstrap_fingerprint=result.metadata.bootstrap_fingerprint,
         adopted_by_command_id=payload.command_id, audit_label=payload.audit_label,
         audit_reason=payload.audit_reason,
+        adoption_request_fingerprint=payload.fingerprint_for_scope(run_id=run_id, branch_id=branch_id),
     )
 
 
@@ -62,6 +63,14 @@ def adopt_initial_world(run_id: str, branch_id: str, payload: InitialWorldAdopti
                         bootstrap: InitialPoolSeasonBootstrapService = Depends(get_initial_pool_season_bootstrap_service),
                         runtime: ApiRuntime = Depends(get_runtime)):
     try:
+        current = runtime.repository.get_initial_world(run_id=run_id, branch_id=branch_id)
+        if current is not None:
+            request_fingerprint = payload.fingerprint_for_scope(run_id=run_id, branch_id=branch_id)
+            if (current.adopted_by_command_id != payload.command_id
+                    or current.adoption_request_fingerprint != request_fingerprint
+                    or current.fingerprint != expected):
+                raise ValueError("Initial-world adoption retry differs from the stored request")
+            return current
         state = _resolved_initial_world(run_id, branch_id, payload, bootstrap)
         if state.fingerprint != expected:
             raise ValueError("Production initial-player source changed since preview")

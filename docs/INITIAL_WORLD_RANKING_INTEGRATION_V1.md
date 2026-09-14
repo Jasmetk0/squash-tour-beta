@@ -24,9 +24,11 @@ roster and policy for deterministic continuation.
 ## Integrity and history
 
 Both initial-world adoption and derived ranking confirmation bind their previews to SHA-256
-fingerprints. Ranking staging rechecks the initial-world fingerprint inside its SQLite write
-transaction, so even a source change yielding the same ranking rows is stale. Idempotency
-receipts retain the complete derived command. Initial-world state is a distinct Saved
+fingerprints. Ranking staging rechecks the initial-world fingerprint and the complete server-derived roster,
+policy and tie-break identities inside its SQLite write transaction, so even a forged input
+set yielding the same ranking rows is rejected. Idempotency
+receipts retain the complete derived command. Exact adoption retries verify the original
+scoped request and return the owned snapshot without reopening a changed or removed global source. Initial-world state is a distinct Saved
 Revision component: an explicit save can occur before ranking preparation, restart/reopen
 preserves it, and restore removes or reinstalls it together with ranking state.
 

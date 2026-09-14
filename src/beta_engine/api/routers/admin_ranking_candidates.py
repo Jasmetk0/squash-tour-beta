@@ -10,8 +10,7 @@ from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
 from beta_engine.domain.rankings.command_audit import RankingCommandAudit
-from beta_engine.domain.rankings.official import OfficialRankingPlayer
-import hashlib
+from beta_engine.application.initial_world import derive_initial_ranking_inputs
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Header
 
@@ -115,21 +114,10 @@ def _derived_initial(runtime: ApiRuntime, run_id: str, branch_id: str, payload: 
         world = runtime.repository.get_initial_world(run_id=run_id, branch_id=branch_id)
         if world is None:
             raise ValueError("Run/Branch initial-player snapshot is missing")
-        if len(world.policies) != 1:
-            raise ValueError("Exactly one first-season ranking policy is required")
-        players = []
-        for player in world.players:
-            # Stable identity facts, rather than legacy ranking points, define the
-            # deterministic final tie-break token. No result history is invented.
-            identity = json.dumps({"player_id": player.player_id, "birth_year": player.birth_year,
-                "birth_year_week": player.birth_year_week, "source": player.source_generation_fingerprint},
-                sort_keys=True, separators=(",", ":"))
-            players.append(OfficialRankingPlayer(player_id=player.player_id,
-                tie_break_token=hashlib.sha256(identity.encode()).hexdigest(),
-                tour_entry_week=RankingWeek(season_index=0, week=1), retired=False))
+        policy, players = derive_initial_ranking_inputs(world)
         command = {"kind": "initial_ranking.v1", "command_id": request.command_id,
             "run_id": run_id, "branch_id": branch_id, "target_week": {"season_index": 0, "week": 1},
-            "policy": world.policies[0].model_dump(mode="json"),
+            "policy": policy.model_dump(mode="json"),
             "players": [p.model_dump(mode="json") for p in players], "discipline": "none",
             "initial_world_fingerprint": world.fingerprint,
             "audit": request.audit.model_dump(mode="json")}

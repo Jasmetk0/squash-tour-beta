@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from beta_engine.application.season_player_bootstrap_service import SeasonActivePlayer
 from beta_engine.domain.rankings.official import OfficialRankingPolicy
+from beta_engine.domain.rankings.official import OfficialRankingPlayer, RankingWeek
 
 
 class InitialWorldState(BaseModel):
@@ -28,6 +29,7 @@ class InitialWorldState(BaseModel):
     adopted_by_command_id: str = Field(min_length=1, max_length=128)
     audit_label: str = Field(min_length=1, max_length=160)
     audit_reason: str = Field(min_length=1, max_length=1000)
+    adoption_request_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
 
     @model_validator(mode="after")
     def validate_complete_state(self) -> "InitialWorldState":
@@ -67,3 +69,36 @@ class InitialWorldAdoptionRequest(BaseModel):
         if not self.official_run and self.best_n is None:
             raise ValueError("Custom Run requires an explicit first-season Best N")
         return self
+
+    def fingerprint_for_scope(self, *, run_id: str, branch_id: str) -> str:
+        payload = {"run_id": run_id, "branch_id": branch_id, **self.model_dump(mode="json")}
+        return hashlib.sha256(json.dumps(
+            payload, sort_keys=True, separators=(",", ":")
+        ).encode()).hexdigest()
+
+
+def derive_initial_ranking_inputs(
+    state: InitialWorldState,
+) -> tuple[OfficialRankingPolicy, tuple[OfficialRankingPlayer, ...]]:
+    """Derive the only world-backed initial ranking inputs from owned state."""
+    if len(state.policies) != 1:
+        raise ValueError("Exactly one first-season ranking policy is required")
+    players = []
+    for player in state.players:
+        identity = json.dumps(
+            {
+                "player_id": player.player_id,
+                "birth_year": player.birth_year,
+                "birth_year_week": player.birth_year_week,
+                "source": player.source_generation_fingerprint,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        players.append(OfficialRankingPlayer(
+            player_id=player.player_id,
+            tie_break_token=hashlib.sha256(identity.encode()).hexdigest(),
+            tour_entry_week=RankingWeek(season_index=0, week=1),
+            retired=False,
+        ))
+    return state.policies[0], tuple(players)

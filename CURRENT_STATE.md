@@ -1,11 +1,12 @@
 # Current implementation and next action
 
-Audited 14 September 2026 from `buuk` **ab97720** (PR #723 merged), including the
-initial-world/ranking integration in the current implementation PR. This file is an
+Audited 14 September 2026 from `buuk` **239260b67c8c37bc68c01699f36c02aa2b4421dc**
+(PR #724 merged), including the first transaction-owning Week Transition slice in
+the current implementation PR. This file is an
 evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
 statuses live in [Master Vision](SQUASH_ENGINE_MASTER_VISION.md); the development
-protocol is chapter 36. PR #723 is the latest verified merge.
+protocol is chapter 36. PR #724 is the latest verified merge.
 
 ## What exists, and where integration stops
 
@@ -16,10 +17,10 @@ protocol is chapter 36. PR #723 is the latest verified merge.
 | Packages/players | World package, initial pool, season bootstrap, Run prospect services and `initial_world_states` | The supported initial production pool can be independently adopted/saved/restored per Run/Branch; later lifecycle/week state is not yet resolved |
 | Tournament flow | `season_event_simulation_service.py`, result/award services, `owned_tournament_sources.py`; real producer/API/SQLite test | Supported four-player main draw can be explicitly adopted as immutable Run/Branch evidence; producer files remain legacy/global and Q/WC/LL/abnormal sources remain rejected |
 | Match engine | `domain/matches/match_engine.py`, immutable input/format contracts and recorded replay; Master 35.9–35.20 | Stored match/replay does not prove whole-world mid-match restore, global slot scheduling or finished realism |
-| Official ranking | `domain/rankings/official.py`, `application/ranking_week_command.py`, DB ranking stores/runner | Initial candidate roster/policy are server-derived from owned state; later Week Transition resolution and Viewer publication remain |
+| Official ranking | `domain/rankings/official.py`, `application/ranking_week_command.py`, `infrastructure/db/authoritative_week_transition.py` | The supported Week 1→2 boundary now publishes an immutable Official Ranking and advances the scoped world clock atomically; Viewer/history consumers and broader lifecycle resolution remain |
 | Ranking Admin | `admin_ranking_candidates.py`, `RankingPreparationPanel.tsx`, `RankingResultCorrections.tsx` | Preview/confirm, manual input review, zeros, corrections and explicit supported tournament binding; minimum API flow exists but no broader tournament picker redesign |
 | Ranking Save | `saved_revision_rankings.py`, `ranking_revision_state.py`, `ranking_state_restore.py` | Owned source packages, candidates, inputs and audit survive explicit Save/reload/restore; still not full sporting-world recovery |
-| Week execution | `season_week_simulation_execution_service.py` declares `NO_ROLLBACK_WARNING` | Legacy event loop is not the atomic Master Week Transition; snapshot service copies active-player totals |
+| Week execution | `infrastructure/db/authoritative_week_transition.py` owns one `BEGIN IMMEDIATE`; `season_week_simulation_execution_service.py` still declares `NO_ROLLBACK_WARNING` | The new supported ranking-publication slice is atomic and Saved-Revision-covered; player development, lifecycle, slots and legacy tournament production remain outside it |
 | Season rollover | `rollover_service.py`, `run_bootstrap_service.py` use persisted MVP rollover/legacy simulation runs | Not the Master Season Closing + new-policy Week 1 + final Run completion contract |
 | Viewer/downstream | Legacy ranking/Race/Finals paths and Viewer exist | New Official history is not wired through historically faithful public ranking, entries/seeding and Finals |
 | Other pre-alpha scope | Master 31 remains authoritative | Minimum Reconstruction, player development/AI and lifecycle must not be dropped merely because ranking work dominated recent PRs |
@@ -70,19 +71,24 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   V1↔V2 restore, exact retry and real changed-state rejection are covered. The
   resulting Fast CI backend smoke selection passed **96 tests** locally.
 - Current initial-world integration run: **98 smoke tests passed in 111.53s**. A focused real HTTP/file-backed SQLite suite passed **53 tests in 22.11s**, including production generation, independent adoption, derived preview/confirm, Save/reopen and bidirectional restore.
+- Current Week Transition slice: **4 real HTTP/file-backed SQLite acceptance cases**
+  cover preview rollback, three forced failure boundaries, confirm, exact retry,
+  changed-request conflict, publication/clock/event cardinality, Save/reopen and
+  bidirectional restore. The broader targeted ranking/revision set passed **67**
+  tests and the Fast CI backend smoke equivalent passed **99** tests.
 - No full-suite, browser E2E, whole-season or full-Run execution in this task.
   Earlier baseline failures are not silently cleared. Docs CI validates docs only.
 
 ## Best next implementation slice
 
-**Complete the real Week Transition orchestrator.** Ranking preparation now has an
+**Expand the real Week Transition orchestrator without inventing lifecycle rules.** Ranking preparation now has an
 explicit manually declared, immutable Run/Branch authority snapshot for its completed/target boundary,
 base Saved Revision, canonical roster/tie-break identity, lifecycle eligibility,
 effective policy and provenance. The ordinary authoritative Admin route derives the
-ranking context server-side and preserves it through Save/restore. This remains only
-a candidate preparation prerequisite: it does not advance the clock or publish an
-Official Ranking. Next integrate it into the Master 6.5 transaction with the real
-world clock, lifecycle/development boundary state and public World Events.
+ranking context server-side and preserves it through Save/restore. The new narrow
+transaction owner uses it to publish Official Ranking, advance its scoped world
+clock and append the transition World Event/receipt. Next replace the declared
+lifecycle boundary with real owned player/development state in Master 6.5 order.
 
 ## Current limitations
 
@@ -92,6 +98,6 @@ world clock, lifecycle/development boundary state and public World Events.
   historical policy effectiveness are not yet resolved from stored world state; they
   remain audited declarations and are not inferred from legacy season files.
 - Ranking-bearing branch fork remapping, Protected Ranking, abnormal tournament
-  inputs, clock advancement and Viewer publication remain unsupported.
+  inputs and Viewer consumption of the new publication remain unsupported.
 - The legacy season execution service still has no rollback and is not the Week
   Transition transaction owner.

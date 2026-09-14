@@ -13,6 +13,8 @@ from beta_engine.infrastructure.db.models import (
     OfficialRankingResultVersionModel, OfficialRankingZeroVersionModel, RankingRestoreCheckpointModel,
     OwnedTournamentRankingSourceModel,
     RankingTransitionAuthorityModel,
+    AuthoritativeWorldStateModel, PublishedOfficialRankingModel,
+    AuthoritativeWeekTransitionReceiptModel, AuthoritativeWorldEventModel,
     RunBranchModel, RunContainerModel,
 )
 from beta_engine.infrastructure.db.ranking_revision_state import capture_ranking_revision_state, install_ranking_revision_state
@@ -65,6 +67,10 @@ def restore_ranking_revision_state(
             target_fingerprint=target.fingerprint,
         ))
         session.flush()
-        for model in (OfficialRankingCommandModel, OfficialRankingCandidateModel, OfficialRankingResultVersionModel, OfficialRankingZeroVersionModel, OwnedTournamentRankingSourceModel, RankingTransitionAuthorityModel):
+        for model in (AuthoritativeWeekTransitionReceiptModel, AuthoritativeWorldEventModel,
+                      PublishedOfficialRankingModel, AuthoritativeWorldStateModel,
+                      OfficialRankingCommandModel, OfficialRankingCandidateModel,
+                      OfficialRankingResultVersionModel, OfficialRankingZeroVersionModel,
+                      OwnedTournamentRankingSourceModel, RankingTransitionAuthorityModel):
             session.execute(delete(model).where(model.run_id == run_id, model.branch_id == branch_id))
         return install_ranking_revision_state(session, payload, expected_fingerprint=target.fingerprint, run_id=run_id, branch_id=branch_id)

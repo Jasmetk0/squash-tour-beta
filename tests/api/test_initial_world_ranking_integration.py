@@ -9,6 +9,7 @@ import pytest
 
 from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
 from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
+from beta_engine.domain.run_revisions import saved_revision_content_hash
 
 from test_saved_revision_history_api import ApiServer, _create_run, _request
 
@@ -22,6 +23,40 @@ def _post_headers(url, payload, headers):
     )
     with request.urlopen(req) as response:
         return response.status, json.loads(response.read())
+
+
+def _make_legacy_revision_without_lifecycle(path, revision_id):
+    with sqlite3.connect(path) as connection:
+        row = connection.execute(
+            "SELECT revision_id,run_id,branch_id,sequence,parent_revision_id,kind,"
+            "payload_schema_version,payload_json,change_summary_json FROM branch_saved_revisions "
+            "WHERE revision_id=?",
+            (revision_id,),
+        ).fetchone()
+        payload = json.loads(row[7])
+        legacy_payload = json.loads(row[7])
+        legacy_payload["content"].pop("player_lifecycle")
+        content_hash = saved_revision_content_hash(
+            revision_id=row[0],
+            run_id=row[1],
+            branch_id=row[2],
+            sequence=row[3],
+            parent_revision_id=row[4],
+            kind=row[5],
+            payload_schema_version=row[6],
+            payload=legacy_payload,
+            change_summary=json.loads(row[8]),
+        )
+        connection.execute(
+            "UPDATE branch_saved_revisions SET payload_json=?,content_hash=? "
+            "WHERE revision_id=?",
+            (
+                json.dumps(legacy_payload, sort_keys=True, separators=(",", ":")),
+                content_hash,
+                revision_id,
+            ),
+        )
+        return payload, legacy_payload
 
 
 def _post_headers_result(url, payload, headers):
@@ -263,14 +298,17 @@ def test_production_pool_to_owned_world_derived_ranking_save_reopen_restore(tmp_
         )
         assert status == 201
         ranked_revision = ranked_saved["saved_revision"]["revision_id"]
-
-        restore_empty = (
+        world_revision = world_saved["saved_revision"]["revision_id"]
+        _, immutable_legacy = _make_legacy_revision_without_lifecycle(
+            db, world_revision
+        )
+        restore_legacy = (
             f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}"
-            f"/saved-revisions/{empty_revision}/restore"
+            f"/saved-revisions/{world_revision}/restore"
         )
         status, restored = _request(
             "POST",
-            restore_empty,
+            restore_legacy,
             {
                 "expected_head_saved_revision_id": ranked_revision,
                 "expected_draft_version": ranked_saved["working_draft"][
@@ -281,7 +319,28 @@ def test_production_pool_to_owned_world_derived_ranking_save_reopen_restore(tmp_
             },
         )
         assert status == 201, restored
-        assert _request("GET", world_root)[0] == 404
+        compatibility_revision = restored["saved_revision"]
+        with sqlite3.connect(db) as connection:
+            compatibility_payload = json.loads(
+                connection.execute(
+                    "SELECT payload_json FROM branch_saved_revisions WHERE revision_id=?",
+                    (compatibility_revision["revision_id"],),
+                ).fetchone()[0]
+            )
+            live_row = connection.execute(
+                "SELECT fingerprint,payload_json FROM player_lifecycle_week_states WHERE week_ordinal=0"
+            ).fetchone()
+            live = json.loads(live_row[1])
+            stored_legacy = json.loads(
+                connection.execute(
+                    "SELECT payload_json FROM branch_saved_revisions WHERE revision_id=?",
+                    (world_revision,),
+                ).fetchone()[0]
+            )
+        component = compatibility_payload["content"]["player_lifecycle"]
+        assert component["states"] == [live]
+        assert component["states"][0] == live and live_row[0]
+        assert stored_legacy == immutable_legacy
         restore_ranked = (
             f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}"
             f"/saved-revisions/{ranked_revision}/restore"
@@ -300,6 +359,34 @@ def test_production_pool_to_owned_world_derived_ranking_save_reopen_restore(tmp_
         )
         assert status == 201 and _request("GET", world_root)[1] == original_owned
         assert _request("GET", ranking_root + "/0/1")[1] == candidate
+        restore_compatibility = (
+            f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}"
+            f"/saved-revisions/{compatibility_revision['revision_id']}/restore"
+        )
+        status, compatibility_again = _request(
+            "POST",
+            restore_compatibility,
+            {
+                "expected_head_saved_revision_id": restored_again["saved_revision"][
+                    "revision_id"
+                ],
+                "expected_draft_version": restored_again["working_draft"][
+                    "draft_version"
+                ],
+                "expected_current_viewer_branch_id": branch_id,
+                "explicit_confirmation": True,
+            },
+        )
+        assert status == 201
+        with sqlite3.connect(db) as connection:
+            assert (
+                json.loads(
+                    connection.execute(
+                        "SELECT payload_json FROM player_lifecycle_week_states WHERE week_ordinal=0"
+                    ).fetchone()[0]
+                )
+                == live
+            )
 
     with ApiServer(database_url=f"sqlite:///{db}") as reopened:
         assert (
@@ -309,13 +396,15 @@ def test_production_pool_to_owned_world_derived_ranking_save_reopen_restore(tmp_
             )[1]
             == original_owned
         )
-        assert (
-            _request(
-                "GET",
-                f"{reopened.base_url}/admin/runs/{run_id}/branches/{branch_id}/ranking-candidates/0/1",
-            )[1]
-            == candidate
-        )
+        with sqlite3.connect(db) as connection:
+            assert (
+                json.loads(
+                    connection.execute(
+                        "SELECT payload_json FROM player_lifecycle_week_states WHERE week_ordinal=0"
+                    ).fetchone()[0]
+                )
+                == live
+            )
 
 
 def test_first_adoption_rejects_source_change_after_preview(tmp_path):

@@ -79,6 +79,7 @@ from beta_engine.infrastructure.db.models import (
     CompletedTournamentInputModel,
     LegacySimulationRunMappingModel,
     InitialWorldStateModel,
+    PlayerLifecycleWeekStateModel,
     RaceSnapshotModel,
     RankingSnapshotModel,
     RunGeneratedPlayerProvenanceModel,
@@ -97,6 +98,10 @@ from beta_engine.infrastructure.db.saved_revision_rankings import (
 from beta_engine.infrastructure.db.initial_world_state import (
     INITIAL_WORLD_COMPONENT_KEY, capture_saved_initial_world, get_initial_world,
     load_saved_initial_world, put_initial_world, restore_saved_initial_world,
+)
+from beta_engine.infrastructure.db.player_lifecycle_state import (
+    PLAYER_LIFECYCLE_COMPONENT_KEY, bootstrap_lifecycle, capture_saved_lifecycle,
+    restore_saved_lifecycle,
 )
 from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_EVENT_LEGACY_STATE,
@@ -1053,7 +1058,9 @@ class SimulationPersistenceRepository:
                 raise ValueError("Initial-world Run/Branch scope not found")
             if run.read_only or branch.read_only or branch.status != "active":
                 raise ValueError("Initial-world adoption requires a writable active Run/Branch")
-            return put_initial_world(session, state)
+            installed = put_initial_world(session, state)
+            bootstrap_lifecycle(session, installed)
+            return installed
 
     def adopt_ranking_transition_authority(self, authority):
         from beta_engine.infrastructure.db.ranking_transition_authority import RankingTransitionAuthorityStore
@@ -2547,6 +2554,12 @@ class SimulationPersistenceRepository:
                     raise SavedRevisionRestoreUnsupportedError(
                         "restore is blocked because the Saved Revision does not capture the initial world"
                     )
+                has_uncaptured_lifecycle = session.scalar(select(PlayerLifecycleWeekStateModel.run_id).where(
+                    PlayerLifecycleWeekStateModel.run_id == run_id,
+                    PlayerLifecycleWeekStateModel.branch_id == branch_id).limit(1)) is not None
+                if has_uncaptured_lifecycle and PLAYER_LIFECYCLE_COMPONENT_KEY not in state.saved_revision.payload.get("content", {}):
+                    raise SavedRevisionRestoreUnsupportedError(
+                        "restore is blocked because the Saved Revision does not capture player lifecycle state")
 
                 supported_payload_schemas = {
                     INITIAL_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
@@ -2574,8 +2587,8 @@ class SimulationPersistenceRepository:
                     not in supported_payload_schemas
                     or not isinstance(current_content, dict)
                     or not isinstance(target_content, dict)
-                    or set(current_content) - {RANKING_COMPONENT_KEY, INITIAL_WORLD_COMPONENT_KEY}
-                    or set(target_content) - {RANKING_COMPONENT_KEY, INITIAL_WORLD_COMPONENT_KEY}
+                    or set(current_content) - {RANKING_COMPONENT_KEY, INITIAL_WORLD_COMPONENT_KEY, PLAYER_LIFECYCLE_COMPONENT_KEY}
+                    or set(target_content) - {RANKING_COMPONENT_KEY, INITIAL_WORLD_COMPONENT_KEY, PLAYER_LIFECYCLE_COMPONENT_KEY}
                     or has_unrestorable_run_state
                 ):
                     raise SavedRevisionRestoreUnsupportedError(
@@ -2636,6 +2649,12 @@ class SimulationPersistenceRepository:
                         raise SavedRevisionRestoreUnsupportedError(
                             f"Cannot restore initial world: {exc}"
                         ) from exc
+                if PLAYER_LIFECYCLE_COMPONENT_KEY in current_content or PLAYER_LIFECYCLE_COMPONENT_KEY in target_content:
+                    try:
+                        restore_saved_lifecycle(session, current_payload=state.saved_revision.payload,
+                            target_payload=target_revision.payload, run_id=run_id, branch_id=branch_id)
+                    except ValueError as exc:
+                        raise SavedRevisionRestoreUnsupportedError(f"Cannot restore player lifecycle: {exc}") from exc
 
                 payload = viewer_branch_saved_revision_payload(
                     base_payload=target_revision.payload,
@@ -2982,6 +3001,7 @@ class SimulationPersistenceRepository:
                         f"Cannot save complete ranking preparation: {exc}"
                     ) from exc
                 capture_saved_initial_world(session, payload, run_id=run_id, branch_id=branch_id)
+                capture_saved_lifecycle(session, payload, run_id=run_id, branch_id=branch_id)
                 summary = viewer_branch_saved_revision_change_summary(
                     previous_viewer_branch_id=saved_viewer_id,
                     viewer_branch_id=target_viewer_id,

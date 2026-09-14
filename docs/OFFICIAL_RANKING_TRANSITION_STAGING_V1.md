@@ -23,10 +23,35 @@ The infrastructure store retains scope, read-only, lineage and append guards.
 The caller owns the transaction: no independent commit is introduced, and a later
 component failure rolls back the newly computed candidate with other writes.
 
-This is an integrated calculation/storage component, not public Official Ranking
-publication. Command/revision anchoring and explicit zero history are now implemented in
-later components. Production source resolution, fork ancestry and wiring into
-the full Week/Season Transition remain; see `../CURRENT_STATE.md`.
+This staging function remains a calculation/storage component, not publication.
+The transaction-owning adapter in
+`infrastructure/db/authoritative_week_transition.py` is now the sole supported
+authoritative publication path for the narrow Week 1→2 slice. Under one SQLite
+`BEGIN IMMEDIATE` it revalidates the writable Run/Branch, exact Saved Revision,
+authority and owned source fingerprints, stages with this same kernel, publishes
+the immutable Official Ranking, advances the scoped clock, and appends a World
+Event plus idempotency receipt. Preview executes that production path and always
+rolls it back; confirm repeats all reads under the writer lock. Exact command
+retry verifies and returns the stored result, while a changed canonical request
+conflicts. Saved Revision ranking state V4 captures and restores publications,
+clock, events and receipts together with candidates and source evidence.
+Confirm requires both the preview's canonical request fingerprint and its
+calculated Official Ranking fingerprint. A changed audit reason therefore cannot
+be confirmed merely because it happens to calculate the same table. V1 accepts
+only an in-season `Week N → Week N+1` boundary; `Week 61 → next-season Week 1`
+fails closed because it belongs to the still-unimplemented Season Transition.
+Historical exact retry validates its immutable publication and canonical World
+Event even after the world head has advanced, while also validating that the
+current head points to a real, fingerprint-valid publication.
+
+This does **not** make the legacy week executor authoritative. The frozen
+`RankingTransitionAuthority` is still the explicit boundary input for lifecycle
+facts that the owned world cannot yet derive. Player development, retirement,
+injury, prospect entry, AI, slots, public Viewer consumption, Season Transition,
+fork identity remapping and broader tournament shapes remain unsupported; no
+no-op sporting default is inferred for them. Production tournament files remain
+a legacy producer only after their result/award evidence is explicitly adopted.
+See `../CURRENT_STATE.md`.
 Legacy simulation and Viewer paths retain their existing behavior.
 
 Real file-backed SQLite tests cover calculated Q+main points, explicit rollover

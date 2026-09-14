@@ -12,13 +12,19 @@ from beta_engine.infrastructure.db.ranking_result_history import OfficialRanking
 from beta_engine.infrastructure.db.ranking_week_command import verify_ranking_command_inputs
 from beta_engine.infrastructure.db.owned_tournament_sources import OwnedTournamentRankingSourceStore
 from beta_engine.infrastructure.db.ranking_transition_authority import RankingTransitionAuthorityStore
+from beta_engine.infrastructure.db.models import (AuthoritativeWorldStateModel,
+    PublishedOfficialRankingModel, AuthoritativeWeekTransitionReceiptModel,
+    AuthoritativeWorldEventModel)
+from sqlalchemy import select
 
 
 def capture_ranking_revision_state(session: Session, *, run_id: str, branch_id: str) -> RankingRevisionState:
     if not session.in_transaction():
         raise ValueError("Ranking revision capture requires a caller transaction")
     connection = session.connection()
-    if connection.dialect.name != "sqlite" or not connection.connection.driver_connection.in_transaction:
+    driver_connection = connection.connection.driver_connection
+    if (connection.dialect.name != "sqlite" or driver_connection is None
+            or not driver_connection.in_transaction):
         raise ValueError("Ranking revision capture requires a physical SQLite transaction")
     history = inspect_ranking_history(session, run_id=run_id, branch_id=branch_id)
     snapshots = tuple(c.snapshot for c in history.candidates)
@@ -28,6 +34,8 @@ def capture_ranking_revision_state(session: Session, *, run_id: str, branch_id: 
         receipts = []
         for command_id in candidate.command_ids:
             receipt = session.get(OfficialRankingCommandModel, (run_id, branch_id, command_id))
+            if receipt is None:
+                raise ValueError("Ranking candidate receipt is missing")
             inputs = verify_ranking_command_inputs(receipt, candidate.snapshot, snapshots)
             if inputs is None:
                 raise ValueError("Legacy ranking receipt has no complete input manifest")
@@ -36,12 +44,30 @@ def capture_ranking_revision_state(session: Session, *, run_id: str, branch_id: 
         if manifest is None:
             raise ValueError("Ranking candidate has no complete command inputs")
         entries.append(RankingRevisionEntry(snapshot=candidate.snapshot, inputs=manifest, receipts=tuple(receipts)))
+    world = session.get(AuthoritativeWorldStateModel, (run_id, branch_id))
+    def rows(model, order):
+        values = session.scalars(select(model).where(model.run_id == run_id, model.branch_id == branch_id).order_by(order)).all()
+        return [dict((column.name, getattr(value, column.name)) for column in model.__table__.columns) for value in values]
+    transition_state = None
+    publications = rows(PublishedOfficialRankingModel, PublishedOfficialRankingModel.week_ordinal)
+    receipts = rows(AuthoritativeWeekTransitionReceiptModel, AuthoritativeWeekTransitionReceiptModel.command_id)
+    events = rows(AuthoritativeWorldEventModel, AuthoritativeWorldEventModel.command_id)
+    if world is not None or publications or receipts or events:
+        transition_state = {"world": None if world is None else {
+            "run_id": world.run_id, "branch_id": world.branch_id,
+            "current_ordinal": world.current_ordinal, "ranking_fingerprint": world.ranking_fingerprint},
+            "publications": publications, "receipts": receipts, "events": events}
+    tournament_sources = OwnedTournamentRankingSourceStore(session).history(run_id=run_id, branch_id=branch_id)
+    authorities = RankingTransitionAuthorityStore(session).history(run_id=run_id, branch_id=branch_id)
+    if any(value is None for value in tournament_sources) or any(value is None for value in authorities):
+        raise ValueError("Ranking revision source identity is missing")
     return RankingRevisionState(
         run_id=run_id, branch_id=branch_id, entries=tuple(entries),
         sources=OfficialRankingResultStore(session).history(run_id=run_id, branch_id=branch_id),
         zero_sources=OfficialRankingZeroStore(session).history(run_id=run_id, branch_id=branch_id),
-        tournament_sources=OwnedTournamentRankingSourceStore(session).history(run_id=run_id, branch_id=branch_id),
-        transition_authorities=RankingTransitionAuthorityStore(session).history(run_id=run_id, branch_id=branch_id),
+        tournament_sources=tuple(value for value in tournament_sources if value is not None),
+        transition_authorities=tuple(value for value in authorities if value is not None),
+        authoritative_transition_state=transition_state,
     )
 
 
@@ -70,7 +96,11 @@ def install_ranking_revision_state(
         return current
     if current.entries or current.sources or current.zero_sources or current.tournament_sources or current.transition_authorities:
         raise ValueError("Ranking restore target is not empty and differs from saved state")
-    if session.get(RunContainerModel, run_id).read_only or session.get(RunBranchModel, branch_id).read_only:
+    run = session.get(RunContainerModel, run_id)
+    branch = session.get(RunBranchModel, branch_id)
+    if run is None or branch is None:
+        raise ValueError("Ranking restore scope does not exist")
+    if run.read_only or branch.read_only:
         raise ValueError("Ranking restore target is read-only")
     with session.begin_nested():
         owned = OwnedTournamentRankingSourceStore(session)
@@ -100,6 +130,16 @@ def install_ranking_revision_state(
                     input_manifest_version=1,
                     input_manifest_json=entry.inputs.model_dump_json(),
                 ))
+        transition = state.authoritative_transition_state
+        if transition is not None:
+            if transition["world"] is not None:
+                session.add(AuthoritativeWorldStateModel(**transition["world"]))
+            for row in transition["publications"]:
+                session.add(PublishedOfficialRankingModel(**row))
+            for row in transition["receipts"]:
+                session.add(AuthoritativeWeekTransitionReceiptModel(**row))
+            for row in transition["events"]:
+                session.add(AuthoritativeWorldEventModel(**row))
         session.flush()
         installed = capture_ranking_revision_state(session, run_id=run_id, branch_id=branch_id)
         if not ranking_revision_states_equivalent(installed, state):

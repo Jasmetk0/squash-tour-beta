@@ -61,6 +61,10 @@ from beta_engine.infrastructure.db.models import (
     OfficialRankingCommandModel,
     OfficialRankingResultVersionModel, OfficialRankingZeroVersionModel,
     RankingTransitionAuthorityModel,
+    AuthoritativeWorldStateModel,
+    PublishedOfficialRankingModel,
+    AuthoritativeWeekTransitionReceiptModel,
+    AuthoritativeWorldEventModel,
     BranchCheckpointModel,
     BranchStateModel,
     BranchWorkingDraftModel,
@@ -2527,6 +2531,10 @@ class SimulationPersistenceRepository:
                         OfficialRankingCommandModel,
                         OfficialRankingResultVersionModel, OfficialRankingZeroVersionModel,
                         RankingTransitionAuthorityModel,
+                        AuthoritativeWorldStateModel,
+                        PublishedOfficialRankingModel,
+                        AuthoritativeWeekTransitionReceiptModel,
+                        AuthoritativeWorldEventModel,
                     )
                 )
                 if has_uncaptured_ranking and RANKING_COMPONENT_KEY not in state.saved_revision.payload.get("content", {}):

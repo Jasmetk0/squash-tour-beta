@@ -8,7 +8,12 @@ from pydantic import Field, model_validator, model_serializer
 from beta_engine.domain.rankings.command_audit import verify_request_payload
 from beta_engine.domain.rankings.zero_history import RankingZeroVersion, validate_zero_successor, resolve_zero_versions
 
-from beta_engine.domain.rankings.official import FrozenInput, OfficialRankingSnapshot
+from beta_engine.domain.rankings.official import (
+    FrozenInput,
+    OfficialRankingSnapshot,
+    RankingWeek,
+    load_official_ranking_snapshot,
+)
 from beta_engine.domain.rankings.input_manifest import RankingInputManifest
 from beta_engine.domain.rankings.result_history import RankingResultVersion, validate_result_successor
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
@@ -35,7 +40,7 @@ class RankingRevisionEntry(FrozenInput):
 
 
 class RankingRevisionState(FrozenInput):
-    schema_version: Literal["ranking_revision_state.v1", "ranking_revision_state.v2", "ranking_revision_state.v3"] = "ranking_revision_state.v3"
+    schema_version: Literal["ranking_revision_state.v1", "ranking_revision_state.v2", "ranking_revision_state.v3", "ranking_revision_state.v4"] = "ranking_revision_state.v4"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     entries: tuple[RankingRevisionEntry, ...]
@@ -43,6 +48,7 @@ class RankingRevisionState(FrozenInput):
     zero_sources: tuple[RankingZeroVersion, ...] = ()
     tournament_sources: tuple[OwnedTournamentRankingSource, ...] = ()
     transition_authorities: tuple[RankingTransitionAuthority, ...] = ()
+    authoritative_transition_state: dict | None = None
 
     @model_serializer(mode="wrap")
     def serialize_state(self, handler):
@@ -53,6 +59,8 @@ class RankingRevisionState(FrozenInput):
             data.pop("tournament_sources", None)
         if not self.transition_authorities:
             data.pop("transition_authorities", None)
+        if self.authoritative_transition_state is None:
+            data.pop("authoritative_transition_state", None)
         return data
 
     @model_validator(mode="after")
@@ -61,6 +69,43 @@ class RankingRevisionState(FrozenInput):
             raise ValueError("Ranking revision state v1 cannot contain tournament sources")
         if self.schema_version in ("ranking_revision_state.v1", "ranking_revision_state.v2") and self.transition_authorities:
             raise ValueError("Legacy ranking revision state cannot contain transition authority")
+        if self.schema_version != "ranking_revision_state.v4" and self.authoritative_transition_state is not None:
+            raise ValueError("Legacy ranking revision state cannot contain Week Transition state")
+        if self.authoritative_transition_state is not None:
+            state = self.authoritative_transition_state
+            if set(state) != {"world", "publications", "receipts", "events"}:
+                raise ValueError("Invalid authoritative Week Transition revision state")
+            world = state["world"]
+            if world is not None and (world["run_id"], world["branch_id"]) != (self.run_id, self.branch_id):
+                raise ValueError("Authoritative world state scope mismatch")
+            ordinals = [row["week_ordinal"] for row in state["publications"]]
+            if ordinals != sorted(set(ordinals)):
+                raise ValueError("Official Ranking publication order is invalid")
+            if ordinals and ordinals != list(range(ordinals[0], ordinals[-1] + 1)):
+                raise ValueError("Official Ranking publication lineage has a gap")
+            for row in state["publications"]:
+                if (row["run_id"], row["branch_id"]) != (self.run_id, self.branch_id):
+                    raise ValueError("Official Ranking publication scope mismatch")
+                load_official_ranking_snapshot(
+                    row["payload_json"],
+                    expected_fingerprint=row["snapshot_fingerprint"],
+                    run_id=self.run_id,
+                    branch_id=self.branch_id,
+                    week=RankingWeek(
+                        season_index=row["week_ordinal"] // 61,
+                        week=row["week_ordinal"] % 61 + 1,
+                    ),
+                )
+            receipt_ids = [row["command_id"] for row in state["receipts"]]
+            event_ids = [row["command_id"] for row in state["events"]]
+            if receipt_ids != sorted(set(receipt_ids)) or event_ids != receipt_ids:
+                raise ValueError("Week Transition receipts and World Events do not pair")
+            for row in (*state["receipts"], *state["events"]):
+                if (row["run_id"], row["branch_id"]) != (self.run_id, self.branch_id):
+                    raise ValueError("Week Transition audit scope mismatch")
+            if world is not None and (not ordinals or world["current_ordinal"] != ordinals[-1]
+                    or world["ranking_fingerprint"] != state["publications"][-1]["snapshot_fingerprint"]):
+                raise ValueError("Authoritative world head differs from published ranking")
         ordinals = [a.target_week.ordinal for a in self.transition_authorities]
         if ordinals != sorted(set(ordinals)):
             raise ValueError("Ranking transition authority order or uniqueness is invalid")
@@ -152,7 +197,7 @@ def ranking_revision_states_equivalent(
     represents the same live state; non-empty V2 evidence never does.
     """
     return left.model_copy(
-        update={"schema_version": "ranking_revision_state.v3"}
+        update={"schema_version": "ranking_revision_state.v4"}
     ).model_dump(mode="json") == right.model_copy(
-        update={"schema_version": "ranking_revision_state.v3"}
+        update={"schema_version": "ranking_revision_state.v4"}
     ).model_dump(mode="json")

@@ -119,6 +119,51 @@ class RankingTransitionAuthorityModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class AuthoritativeWorldStateModel(Base):
+    """Current clock and published ranking head for one canonical timeline."""
+
+    __tablename__ = "authoritative_world_states"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    current_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    ranking_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class PublishedOfficialRankingModel(Base):
+    """Immutable Official Ranking publication, distinct from a candidate."""
+
+    __tablename__ = "published_official_rankings"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    snapshot_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class AuthoritativeWeekTransitionReceiptModel(Base):
+    """Idempotency receipt for the transaction-owning Week Transition."""
+
+    __tablename__ = "authoritative_week_transition_receipts"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    request_payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    result_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class AuthoritativeWorldEventModel(Base):
+    """Canonical World Event emitted only by a completed Week Transition."""
+
+    __tablename__ = "authoritative_world_events"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    event_kind: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class InitialWorldStateModel(Base):
     """Current independent initial-world snapshot owned by one Run/Branch."""
     __tablename__ = "initial_world_states"

@@ -2,7 +2,7 @@
 
 This is a milestone summary, not a second product constitution. [`SQUASH_ENGINE_MASTER_VISION.md`](SQUASH_ENGINE_MASTER_VISION.md) plus newer explicit decisions take precedence over `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`; `docs/ENGINE_UX_SPEC.md` provides subordinate migration guidance. Planned behavior must not be described as implemented unless verified in the repository.
 
-## Active pre-alpha dependency path (audit after #720)
+## Active pre-alpha dependency path (audit after #724)
 
 This sequence is a technical plan, not a new product-rule registry. Re-evaluate
 it after each merge using `CURRENT_STATE.md`. Existing detailed targets below
@@ -12,7 +12,7 @@ remain valid; their numbering is not a mandate to implement them in that order.
 |---|---|---|
 | 0 — synchronize | One canonical Master, clear authority, verified state and next Codex task | Documentation preservation/link checks; no invented product decisions |
 | 1 — source bridge (implemented slice) | Supported real main-draw results/awards become owned Run/Branch sources, feed Official candidate and survive Save/Restore | Real producer + API/SQLite covers preview, rollback, retry, reopen and recovery; broader source types remain guarded |
-| 2 — one true week boundary (in progress) | Persisted ranking authority bridge is implemented; next make authoritative world/player state feed Master-order Week Transition, Official snapshot and public events in one transaction | Real Week N -> N+1, deterministic replay, failure rollback, saved Viewer boundary and empty-week behavior |
+| 2 — one true week boundary (implemented first slice; expansion in progress) | One SQLite owner now revalidates the frozen authority and owned ranking inputs, publishes Official Ranking, advances the clock, emits a World Event/receipt and survives Save/Restore atomically | Next add authoritative player development/lifecycle and public consumers only after their open inputs are resolved; prove repeated and empty-week behavior |
 | 3 — repeated sporting flow | Entries/draw/match/close/ranking consumers use the same scoped timeline across weeks | Multiple weeks without manual DB repair; slot simultaneity, expiry, corrections, historical reads and recovery |
 | 4 — season boundary | Outgoing Season Closing + summary/marker; incoming policy + Week 1; final season terminates without season 51 | Whole season and rollover; outgoing/incoming policy separation, final Run edge, save/reload/replay |
 | 5 — pre-alpha acceptance | Both Master 31.3 flows, including required minimum Reconstruction/player/AI scope | Official season -> next season and empty Run -> two manual players -> standalone match, repeatedly without history damage |
@@ -89,7 +89,7 @@ Consider an integration checkpoint after 5–10 significant PRs or a major subsy
 - Official Run season `2000/01` starts with Best 15; later seasons initially inherit the previous season's effective Best N while remaining independently configurable.
 - Preserve historical ranking-policy snapshots.
 - **Implemented initial slice:** explicitly adopt the complete production initial pool and an explicit first-season policy into an independent Run/Branch snapshot; derive the initial ranking candidate server-side and preserve both through Save/reopen/restore. See `docs/INITIAL_WORLD_RANKING_INTEGRATION_V1.md`.
-- Next connect that owned starting state to the real Week Transition; later-week lifecycle resolution remains incomplete.
+- The first supported Week 1→2 transition now connects that owned starting state to atomic Official Ranking publication and clock advancement. Later-week player/lifecycle resolution remains incomplete and must fail closed rather than acquire invented no-op rules.
 
 ## 8. Match Reconstruction v1
 

@@ -4,7 +4,9 @@ from __future__ import annotations
 import pytest
 
 from beta_engine.domain.countries.models import Country
-from beta_engine.domain.countries.population_resolver import resolve_effective_population
+from beta_engine.domain.countries.population_resolver import (
+    resolve_effective_population,
+)
 
 
 def _country(**overrides: object) -> Country:
@@ -24,7 +26,9 @@ def _country(**overrides: object) -> Country:
 
 
 def test_exact_population_year_returns_authored_value() -> None:
-    result = resolve_effective_population(_country(population_by_year={"1987": 123_000_000}), 1987)
+    result = resolve_effective_population(
+        _country(population_by_year={"1987": 123_000_000}), 1987
+    )
 
     assert result.requested_year == 1987
     assert result.effective_population == 123_000_000
@@ -67,7 +71,9 @@ def test_tied_nearest_population_year_prefers_earlier_year() -> None:
 
 
 def test_null_exact_population_year_is_ignored() -> None:
-    result = resolve_effective_population(_country(population_by_year={"1987": None, "1985": 110_000_000}), 1987)
+    result = resolve_effective_population(
+        _country(population_by_year={"1987": None, "1985": 110_000_000}), 1987
+    )
 
     assert result.effective_population == 110_000_000
     assert result.source_type == "nearest_population_year"
@@ -76,7 +82,9 @@ def test_null_exact_population_year_is_ignored() -> None:
 
 
 def test_null_population_year_values_are_ignored_entirely() -> None:
-    result = resolve_effective_population(_country(population_by_year={"1980": None, "1990": 120_000_000}), 1982)
+    result = resolve_effective_population(
+        _country(population_by_year={"1980": None, "1990": 120_000_000}), 1982
+    )
 
     assert result.effective_population == 120_000_000
     assert result.source_type == "nearest_population_year"
@@ -120,7 +128,9 @@ def test_falls_back_to_default_population_when_all_population_years_are_null() -
 
 
 def test_default_population_is_not_estimated_for_2020_request() -> None:
-    result = resolve_effective_population(_country(default_population_year=2020, default_population=169_702_055), 2020)
+    result = resolve_effective_population(
+        _country(default_population_year=2020, default_population=169_702_055), 2020
+    )
 
     assert result.effective_population == 169_702_055
     assert result.source_type == "default_population"
@@ -139,15 +149,30 @@ def test_falls_back_to_legacy_population_when_default_population_missing() -> No
 
 @pytest.mark.parametrize("requested_year", [1955, 2050])
 def test_boundary_years_are_accepted(requested_year: int) -> None:
-    result = resolve_effective_population(_country(population_by_year={str(requested_year): 1_000_000}), requested_year)
+    result = resolve_effective_population(
+        _country(population_by_year={str(requested_year): 1_000_000}), requested_year
+    )
 
     assert result.effective_population == 1_000_000
     assert result.source_type == "exact_population_year"
 
 
-@pytest.mark.parametrize("requested_year", [1954, 2051])
+def test_initial_pool_birth_year_1954_uses_nearest_authored_year() -> None:
+    result = resolve_effective_population(
+        _country(population_by_year={"1955": 1_000_000}), 1954
+    )
+    assert (result.effective_population, result.source_year, result.source_type) == (
+        1_000_000,
+        1955,
+        "nearest_population_year",
+    )
+
+
+@pytest.mark.parametrize("requested_year", [1953, 2051])
 def test_out_of_range_requested_years_are_rejected(requested_year: int) -> None:
-    with pytest.raises(ValueError, match="requested population year must be between 1955 and 2050"):
+    with pytest.raises(
+        ValueError, match="requested population year must be between 1954 and 2050"
+    ):
         resolve_effective_population(_country(), requested_year)
 
 
@@ -179,7 +204,11 @@ def test_tied_nearest_population_year_above_2035_prefers_earlier_year() -> None:
 
 def test_resolver_does_not_mutate_population_by_year_or_fill_missing_years() -> None:
     country = _country(population_by_year={"1980": 100_000_000, "1990": None})
-    before = country.population_by_year.copy() if country.population_by_year is not None else None
+    before = (
+        country.population_by_year.copy()
+        if country.population_by_year is not None
+        else None
+    )
 
     resolve_effective_population(country, 1987)
 
@@ -190,7 +219,11 @@ def test_resolver_does_not_mutate_population_by_year_or_fill_missing_years() -> 
 def test_official_fax_world_ger_uses_authored_2020_population_year_as_nearest() -> None:
     from tests.support.world_packages import load_fax_reference_countries
 
-    germany = next(country for country in load_fax_reference_countries().countries if country.code == "GER")
+    germany = next(
+        country
+        for country in load_fax_reference_countries().countries
+        if country.code == "GER"
+    )
 
     result = resolve_effective_population(germany, 1987)
 

@@ -15,7 +15,8 @@ from beta_engine.application.season_calendar_service import SeasonCalendarServic
 from beta_engine.application.season_player_bootstrap_service import InitialPoolSeasonBootstrapService, SeasonActivePlayer
 from beta_engine.core import DeterministicRng, SeedScope
 from beta_engine.domain.entries import EntryDecision, EntryEngine, EntryTarget
-from beta_engine.domain.players.lifecycle import MAX_RUNTIME_PLAYER_AGE, MIN_RUNTIME_PLAYER_AGE
+MIN_RUNTIME_PLAYER_AGE = 15
+MAX_RUNTIME_PLAYER_AGE = 46  # legacy DTO bound, not authoritative lifecycle policy
 from beta_engine.domain.players.models import Player
 from beta_engine.domain.tournaments import LuckyLoserRules, SeasonCalendarEvent, TournamentTemplate
 from beta_engine.infrastructure.entry_config import load_entry_tuning_config

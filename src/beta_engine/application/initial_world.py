@@ -38,8 +38,13 @@ class InitialWorldState(BaseModel):
             raise ValueError("Initial player source is empty")
         if ids != sorted(set(ids)):
             raise ValueError("Initial players must have unique canonical player IDs")
-        if any(player.season != self.season or player.active_status != "active" for player in self.players):
-            raise ValueError("Initial world requires active players for its first season")
+        if any(
+            player.season != self.season or player.active_status != "active"
+            for player in self.players
+        ):
+            raise ValueError(
+                "Initial world requires active players for its first season"
+            )
         policy_ids = [policy.policy_id for policy in self.policies]
         if policy_ids != sorted(set(policy_ids)):
             raise ValueError("Ranking policies must have unique canonical identities")
@@ -47,9 +52,11 @@ class InitialWorldState(BaseModel):
 
     @property
     def fingerprint(self) -> str:
-        return hashlib.sha256(json.dumps(
-            self.model_dump(mode="json"), sort_keys=True, separators=(",", ":")
-        ).encode()).hexdigest()
+        return hashlib.sha256(
+            json.dumps(
+                self.model_dump(mode="json"), sort_keys=True, separators=(",", ":")
+            ).encode()
+        ).hexdigest()
 
 
 class InitialWorldAdoptionRequest(BaseModel):
@@ -61,6 +68,7 @@ class InitialWorldAdoptionRequest(BaseModel):
     audit_reason: str = Field(min_length=1, max_length=1000)
     official_run: bool = False
     best_n: int | None = Field(default=None, ge=1)
+    automatic_retirement_age: int | None = Field(default=None, ge=16, le=120)
 
     @model_validator(mode="after")
     def policy_is_explicit(self) -> "InitialWorldAdoptionRequest":
@@ -68,13 +76,18 @@ class InitialWorldAdoptionRequest(BaseModel):
             raise ValueError("Official Run first-season policy is Best 15")
         if not self.official_run and self.best_n is None:
             raise ValueError("Custom Run requires an explicit first-season Best N")
+        if self.official_run and self.automatic_retirement_age not in (None, 46):
+            raise ValueError("Official Run automatic retirement age is 46")
         return self
 
     def fingerprint_for_scope(self, *, run_id: str, branch_id: str) -> str:
-        payload = {"run_id": run_id, "branch_id": branch_id, **self.model_dump(mode="json")}
-        return hashlib.sha256(json.dumps(
-            payload, sort_keys=True, separators=(",", ":")
-        ).encode()).hexdigest()
+        request = self.model_dump(mode="json")
+        if request["automatic_retirement_age"] is None:
+            request.pop("automatic_retirement_age")
+        payload = {"run_id": run_id, "branch_id": branch_id, **request}
+        return hashlib.sha256(
+            json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
 
 
 def derive_initial_ranking_inputs(
@@ -95,10 +108,12 @@ def derive_initial_ranking_inputs(
             sort_keys=True,
             separators=(",", ":"),
         )
-        players.append(OfficialRankingPlayer(
-            player_id=player.player_id,
-            tie_break_token=hashlib.sha256(identity.encode()).hexdigest(),
-            tour_entry_week=RankingWeek(season_index=0, week=1),
-            retired=False,
-        ))
+        players.append(
+            OfficialRankingPlayer(
+                player_id=player.player_id,
+                tie_break_token=hashlib.sha256(identity.encode()).hexdigest(),
+                tour_entry_week=RankingWeek(season_index=0, week=1),
+                retired=False,
+            )
+        )
     return state.policies[0], tuple(players)

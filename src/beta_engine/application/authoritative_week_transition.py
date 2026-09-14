@@ -7,7 +7,9 @@ import json
 
 from pydantic import Field, model_validator
 
-from beta_engine.application.ranking_tournament_ingestion import TournamentRankingBinding
+from beta_engine.application.ranking_tournament_ingestion import (
+    TournamentRankingBinding,
+)
 from beta_engine.domain.rankings.command_audit import RankingCommandAudit
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 from beta_engine.domain.rankings.result_history import RankingResultVersion
@@ -44,7 +46,9 @@ class AuthoritativeWeekTransitionCommand(FrozenInput):
 
     @property
     def canonical_request_json(self) -> str:
-        return json.dumps(self.model_dump(mode="json"), sort_keys=True, separators=(",", ":"))
+        return json.dumps(
+            self.model_dump(mode="json"), sort_keys=True, separators=(",", ":")
+        )
 
     @property
     def fingerprint(self) -> str:
@@ -58,4 +62,5 @@ class AuthoritativeWeekTransitionResult(FrozenInput):
     completed_week: RankingWeek
     target_week: RankingWeek
     official_ranking_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    player_lifecycle_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     world_event_kind: str = "week_transition_completed"

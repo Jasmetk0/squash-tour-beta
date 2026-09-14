@@ -7,7 +7,10 @@ from typing import Literal
 
 from beta_engine.domain.countries.models import Country
 
-MIN_POPULATION_YEAR = 1955
+# Initial 2000/01 players who are 45 at YW37 and have a later birthday have
+# canonical birth year 1954. Authored timelines still begin at 1955; resolution
+# of 1954 deliberately uses the existing nearest/default fallback contract.
+MIN_POPULATION_YEAR = 1954
 MAX_POPULATION_YEAR = 2050
 DEFAULT_POPULATION_YEAR = 2020
 
@@ -30,7 +33,9 @@ class EffectivePopulationResult:
     is_estimated: bool
 
 
-def resolve_effective_population(country: Country, requested_year: int) -> EffectivePopulationResult:
+def resolve_effective_population(
+    country: Country, requested_year: int
+) -> EffectivePopulationResult:
     """Resolve country population for ``requested_year`` using authored timeline fallbacks.
 
     Legacy ``country.population`` has no explicit source year in the country model, so
@@ -38,7 +43,7 @@ def resolve_effective_population(country: Country, requested_year: int) -> Effec
     """
 
     if not MIN_POPULATION_YEAR <= requested_year <= MAX_POPULATION_YEAR:
-        raise ValueError("requested population year must be between 1955 and 2050")
+        raise ValueError("requested population year must be between 1954 and 2050")
 
     usable_population_by_year = _usable_population_by_year(country.population_by_year)
     exact_population = usable_population_by_year.get(requested_year)
@@ -82,7 +87,13 @@ def resolve_effective_population(country: Country, requested_year: int) -> Effec
     )
 
 
-def _usable_population_by_year(population_by_year: dict[int, int | None] | None) -> dict[int, int]:
+def _usable_population_by_year(
+    population_by_year: dict[int, int | None] | None,
+) -> dict[int, int]:
     if not population_by_year:
         return {}
-    return {year: population for year, population in population_by_year.items() if population is not None}
+    return {
+        year: population
+        for year, population in population_by_year.items()
+        if population is not None
+    }

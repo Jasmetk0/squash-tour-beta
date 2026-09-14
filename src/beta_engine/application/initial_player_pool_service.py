@@ -36,7 +36,11 @@ class InitialPlayerPoolService:
             self.identity_config_path = Path(self.identity_config_path)
 
     def get_pool(self, *, season: str = "2000/2001") -> InitialPoolResult:
-        players = [player for player in self._load().players if player.created_for_season == season]
+        players = [
+            player
+            for player in self._load().players
+            if player.created_for_season == season
+        ]
         generator = self._generator()
         return generator.generate(
             countries=self.countries_service.list_countries(),
@@ -47,7 +51,9 @@ class InitialPlayerPoolService:
             dry_run=True,
         )
 
-    def get_audit_events(self, *, season: str | None = None, player_id: str | None = None) -> InitialPoolAuditList:
+    def get_audit_events(
+        self, *, season: str | None = None, player_id: str | None = None
+    ) -> InitialPoolAuditList:
         events = self._load().audit_events
         if season is not None:
             events = [event for event in events if event.season == season]
@@ -55,9 +61,15 @@ class InitialPlayerPoolService:
             events = [event for event in events if event.player_id == player_id]
         return InitialPoolAuditList(audit_events=events)
 
-    def generate_pool(self, *, season: str, seed: int, target_pool_size: int, dry_run: bool) -> InitialPoolResult:
+    def generate_pool(
+        self, *, season: str, seed: int, target_pool_size: int, dry_run: bool
+    ) -> InitialPoolResult:
         registry = self._load()
-        locked = [player for player in registry.players if player.created_for_season == season and player.locked]
+        locked = [
+            player
+            for player in registry.players
+            if player.created_for_season == season and player.locked
+        ]
         before = self._season_fingerprint(registry.players, season=season)
         result = self._generator().generate(
             countries=self.countries_service.list_countries(),
@@ -80,7 +92,9 @@ class InitialPlayerPoolService:
                     reason=None,
                     changed_fields=["players"],
                     before_fingerprint=before,
-                    after_fingerprint=self._season_fingerprint(result.players, season=season),
+                    after_fingerprint=self._season_fingerprint(
+                        result.players, season=season
+                    ),
                 ),
             )
         return result
@@ -96,9 +110,16 @@ class InitialPlayerPoolService:
         dry_run: bool,
     ) -> InitialPoolResult:
         registry = self._load()
-        current = [player for player in registry.players if player.created_for_season == season]
+        current = [
+            player for player in registry.players if player.created_for_season == season
+        ]
         if not current:
-            return self.generate_pool(season=season, seed=seed, target_pool_size=target_pool_size or 128, dry_run=dry_run)
+            return self.generate_pool(
+                season=season,
+                seed=seed,
+                target_pool_size=target_pool_size or 128,
+                dry_run=dry_run,
+            )
         before = self._season_fingerprint(registry.players, season=season)
         result = self._generator().regenerate_unlocked(
             countries=self.countries_service.list_countries(),
@@ -128,19 +149,36 @@ class InitialPlayerPoolService:
                     reason=None,
                     changed_fields=changed_fields,
                     before_fingerprint=before,
-                    after_fingerprint=self._season_fingerprint(result.players, season=season),
+                    after_fingerprint=self._season_fingerprint(
+                        result.players, season=season
+                    ),
                 ),
             )
         return result
 
-    def create_custom_player(self, payload: CustomInitialPoolPlayerCreate) -> InitialPoolGeneratedPlayer:
+    def create_custom_player(
+        self, payload: CustomInitialPoolPlayerCreate
+    ) -> InitialPoolGeneratedPlayer:
         registry = self._load()
         self._validate_country(payload.country_code)
-        player_id = payload.player_id or self._custom_player_id(payload=payload, registry=registry)
+        player_id = payload.player_id or self._custom_player_id(
+            payload=payload, registry=registry
+        )
         if any(player.player_id == player_id for player in registry.players):
             raise ValueError(f"player_id '{player_id}' already exists")
         season_start_year = int(payload.created_for_season.split("/")[0])
-        age = season_start_year - payload.birth_year
+        from beta_engine.domain.calendar.season_weeks import (
+            age_at_calendar_position,
+            season_week_to_calendar_position,
+        )
+
+        initial_position = season_week_to_calendar_position(season_start_year, 1)
+        age = age_at_calendar_position(
+            birth_year=payload.birth_year,
+            birth_year_week=payload.birth_year_week,
+            calendar_year=initial_position.calendar_year,
+            year_week=initial_position.year_week,
+        )
         base = {
             "player_id": player_id,
             "name": payload.name,
@@ -166,7 +204,9 @@ class InitialPlayerPoolService:
             "created_for_season": payload.created_for_season,
         }
         fingerprint = self._manual_player_fingerprint(base)
-        created = InitialPoolGeneratedPlayer.model_validate({**base, "generation_fingerprint": fingerprint})
+        created = InitialPoolGeneratedPlayer.model_validate(
+            {**base, "generation_fingerprint": fingerprint}
+        )
         event = self._audit_event(
             registry=registry,
             action="create_custom_player",
@@ -178,10 +218,17 @@ class InitialPlayerPoolService:
             before_fingerprint=None,
             after_fingerprint=created.generation_fingerprint,
         )
-        self._save(InitialPoolRegistry(players=[*registry.players, created], audit_events=[*registry.audit_events, event]))
+        self._save(
+            InitialPoolRegistry(
+                players=[*registry.players, created],
+                audit_events=[*registry.audit_events, event],
+            )
+        )
         return created
 
-    def update_player(self, *, player_id: str, payload: InitialPoolPlayerUpdate) -> InitialPoolGeneratedPlayer:
+    def update_player(
+        self, *, player_id: str, payload: InitialPoolPlayerUpdate
+    ) -> InitialPoolGeneratedPlayer:
         registry = self._load()
         updated_players: list[InitialPoolGeneratedPlayer] = []
         updated: InitialPoolGeneratedPlayer | None = None
@@ -200,13 +247,32 @@ class InitialPlayerPoolService:
                 if candidate_data.get(field) != value:
                     changed_fields.append(field)
                     candidate_data[field] = value
+            if {"birth_year", "birth_year_week"} & patch.keys():
+                from beta_engine.domain.calendar.season_weeks import (
+                    age_at_calendar_position,
+                    season_week_to_calendar_position,
+                )
+
+                start_year = int(candidate_data["created_for_season"].split("/")[0])
+                position = season_week_to_calendar_position(start_year, 1)
+                canonical_age = age_at_calendar_position(
+                    birth_year=candidate_data["birth_year"],
+                    birth_year_week=candidate_data["birth_year_week"],
+                    calendar_year=position.calendar_year,
+                    year_week=position.year_week,
+                )
+                candidate_data["age_at_generation"] = canonical_age
+                candidate_data["current_age_years"] = canonical_age
+                changed_fields.extend(["age_at_generation", "current_age_years"])
             if not player.locked:
                 changed_fields.append("locked")
                 candidate_data["locked"] = True
             if not player.manual_override:
                 changed_fields.append("manual_override")
                 candidate_data["manual_override"] = True
-            candidate_data["generation_fingerprint"] = self._manual_player_fingerprint(candidate_data)
+            candidate_data["generation_fingerprint"] = self._manual_player_fingerprint(
+                candidate_data
+            )
             if candidate_data["generation_fingerprint"] != before_fingerprint:
                 changed_fields.append("generation_fingerprint")
             updated = InitialPoolGeneratedPlayer.model_validate(candidate_data)
@@ -224,7 +290,11 @@ class InitialPlayerPoolService:
             before_fingerprint=before_fingerprint,
             after_fingerprint=updated.generation_fingerprint,
         )
-        self._save(InitialPoolRegistry(players=updated_players, audit_events=[*registry.audit_events, event]))
+        self._save(
+            InitialPoolRegistry(
+                players=updated_players, audit_events=[*registry.audit_events, event]
+            )
+        )
         return updated
 
     def set_lock(self, *, player_id: str, locked: bool) -> InitialPoolGeneratedPlayer:
@@ -252,37 +322,66 @@ class InitialPlayerPoolService:
             before_fingerprint=before_fingerprint,
             after_fingerprint=updated.generation_fingerprint,
         )
-        self._save(InitialPoolRegistry(players=players, audit_events=[*registry.audit_events, event]))
+        self._save(
+            InitialPoolRegistry(
+                players=players, audit_events=[*registry.audit_events, event]
+            )
+        )
         return updated
 
     def _generator(self) -> InitialPlayerPoolGenerator:
-        identity = load_player_identity_config(self.identity_config_path) if self.identity_config_path.exists() else None
+        identity = (
+            load_player_identity_config(self.identity_config_path)
+            if self.identity_config_path.exists()
+            else None
+        )
         return InitialPlayerPoolGenerator(identity_config=identity)
 
     def _load(self) -> InitialPoolRegistry:
         if not self.config_path.exists():
             return InitialPoolRegistry()
-        return InitialPoolRegistry.model_validate(json.loads(self.config_path.read_text(encoding="utf-8")))
+        return InitialPoolRegistry.model_validate(
+            json.loads(self.config_path.read_text(encoding="utf-8"))
+        )
 
     def _save(self, registry: InitialPoolRegistry) -> None:
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
-        self.config_path.write_text(json.dumps(registry.model_dump(mode="json"), indent=2) + "\n", encoding="utf-8")
+        self.config_path.write_text(
+            json.dumps(registry.model_dump(mode="json"), indent=2) + "\n",
+            encoding="utf-8",
+        )
 
-    def _replace_season(self, *, season: str, players: list[InitialPoolGeneratedPlayer], audit_event: InitialPoolAuditEvent | None = None) -> None:
+    def _replace_season(
+        self,
+        *,
+        season: str,
+        players: list[InitialPoolGeneratedPlayer],
+        audit_event: InitialPoolAuditEvent | None = None,
+    ) -> None:
         registry = self._load()
-        retained = [player for player in registry.players if player.created_for_season != season]
+        retained = [
+            player for player in registry.players if player.created_for_season != season
+        ]
         audit_events = [*registry.audit_events]
         if audit_event is not None:
             audit_events.append(audit_event)
-        self._save(InitialPoolRegistry(players=[*retained, *players], audit_events=audit_events))
+        self._save(
+            InitialPoolRegistry(
+                players=[*retained, *players], audit_events=audit_events
+            )
+        )
 
     def _validate_country(self, country_code: str) -> None:
         if self.countries_service.get_country(country_code) is None:
             raise ValueError(f"country_code '{country_code}' is not configured")
 
-    def _custom_player_id(self, *, payload: CustomInitialPoolPlayerCreate, registry: InitialPoolRegistry) -> str:
+    def _custom_player_id(
+        self, *, payload: CustomInitialPoolPlayerCreate, registry: InitialPoolRegistry
+    ) -> str:
         season_start_year = int(payload.created_for_season.split("/")[0])
-        slug = re.sub(r"[^A-Z0-9]+", "-", payload.name.upper()).strip("-")[:24] or "PLAYER"
+        slug = (
+            re.sub(r"[^A-Z0-9]+", "-", payload.name.upper()).strip("-")[:24] or "PLAYER"
+        )
         prefix = f"CUST-{season_start_year}-{payload.country_code}-{slug}"
         existing = {player.player_id for player in registry.players}
         if prefix not in existing:
@@ -295,12 +394,23 @@ class InitialPlayerPoolService:
     def _manual_player_fingerprint(self, data: dict[str, Any]) -> str:
         material = dict(data)
         material.pop("generation_fingerprint", None)
-        return hashlib.blake2b(json.dumps(material, default=str, sort_keys=True).encode(), digest_size=16).hexdigest()
+        return hashlib.blake2b(
+            json.dumps(material, default=str, sort_keys=True).encode(), digest_size=16
+        ).hexdigest()
 
-    def _season_fingerprint(self, players: list[InitialPoolGeneratedPlayer], *, season: str) -> str:
-        season_players = [player for player in players if player.created_for_season == season]
-        material = "|".join(player.model_dump_json() for player in sorted(season_players, key=lambda item: item.player_id))
-        return hashlib.blake2b(f"{season}|{material}".encode(), digest_size=16).hexdigest()
+    def _season_fingerprint(
+        self, players: list[InitialPoolGeneratedPlayer], *, season: str
+    ) -> str:
+        season_players = [
+            player for player in players if player.created_for_season == season
+        ]
+        material = "|".join(
+            player.model_dump_json()
+            for player in sorted(season_players, key=lambda item: item.player_id)
+        )
+        return hashlib.blake2b(
+            f"{season}|{material}".encode(), digest_size=16
+        ).hexdigest()
 
     def _audit_event(
         self,

@@ -1,12 +1,12 @@
 # Current implementation and next action
 
-Audited 14 September 2026 from `buuk` **239260b67c8c37bc68c01699f36c02aa2b4421dc**
-(PR #724 merged), including the first transaction-owning Week Transition slice in
-the current implementation PR. This file is an
+Audited 14 September 2026 from `buuk` **f343778491a21b7607af57c9a1c1a260af7ccb6a**
+(PR #725 merged), plus the authoritative player-lifecycle slice in the current
+implementation PR. This file is an
 evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
 statuses live in [Master Vision](SQUASH_ENGINE_MASTER_VISION.md); the development
-protocol is chapter 36. PR #724 is the latest verified merge.
+protocol is chapter 36. PR #725 is the latest verified merge.
 
 ## What exists, and where integration stops
 
@@ -14,13 +14,13 @@ protocol is chapter 36. PR #724 is the latest verified merge.
 |---|---|---|
 | Run foundation | `application/run_container_creation_service.py`, `run_working_draft_service.py`, `run_saved_revision_*`, DB revision models | New Run roots/revisions coexist with legacy simulation identities; full sporting state is not covered by every save/restore path |
 | Branch isolation/recovery | `infrastructure/db/repositories.py` validates ancestry, receipts and checkpoints; rejects ranking-bearing forks | Ranking identity remapping and complete sporting-world recovery remain |
-| Packages/players | World package, initial pool, season bootstrap, Run prospect services and `initial_world_states` | The supported initial production pool can be independently adopted/saved/restored per Run/Branch; later lifecycle/week state is not yet resolved |
+| Packages/players | World package, initial pool, season bootstrap, Run prospect services and `initial_world_states` | Initial age derives from birth identity at FAX YW37; ordinary birthdays use canonical Season-Week→Year-Week mapping; development/recovery remain open and target-week Run prospects fail closed pending a Branch-owned source bridge |
 | Tournament flow | `season_event_simulation_service.py`, result/award services, `owned_tournament_sources.py`; real producer/API/SQLite test | Supported four-player main draw can be explicitly adopted as immutable Run/Branch evidence; producer files remain legacy/global and Q/WC/LL/abnormal sources remain rejected |
 | Match engine | `domain/matches/match_engine.py`, immutable input/format contracts and recorded replay; Master 35.9–35.20 | Stored match/replay does not prove whole-world mid-match restore, global slot scheduling or finished realism |
 | Official ranking | `domain/rankings/official.py`, `application/ranking_week_command.py`, `infrastructure/db/authoritative_week_transition.py` | The supported Week 1→2 boundary now publishes an immutable Official Ranking and advances the scoped world clock atomically; Viewer/history consumers and broader lifecycle resolution remain |
 | Ranking Admin | `admin_ranking_candidates.py`, `RankingPreparationPanel.tsx`, `RankingResultCorrections.tsx` | Preview/confirm, manual input review, zeros, corrections and explicit supported tournament binding; minimum API flow exists but no broader tournament picker redesign |
 | Ranking Save | `saved_revision_rankings.py`, `ranking_revision_state.py`, `ranking_state_restore.py` | Owned source packages, candidates, inputs and audit survive explicit Save/reload/restore; still not full sporting-world recovery |
-| Week execution | `infrastructure/db/authoritative_week_transition.py` owns one `BEGIN IMMEDIATE`; `season_week_simulation_execution_service.py` still declares `NO_ROLLBACK_WARNING` | The new supported ranking-publication slice is atomic and Saved-Revision-covered; player development, lifecycle, slots and legacy tournament production remain outside it |
+| Week execution | `infrastructure/db/authoritative_week_transition.py` owns one `BEGIN IMMEDIATE`; `season_week_simulation_execution_service.py` still declares `NO_ROLLBACK_WARNING` | Lifecycle target state and server-derived roster now share the ranking/publication transaction; player development/recovery, slots, prospects and legacy tournament production remain outside it |
 | Season rollover | `rollover_service.py`, `run_bootstrap_service.py` use persisted MVP rollover/legacy simulation runs | Not the Master Season Closing + new-policy Week 1 + final Run completion contract |
 | Viewer/downstream | Legacy ranking/Race/Finals paths and Viewer exist | New Official history is not wired through historically faithful public ranking, entries/seeding and Finals |
 | Other pre-alpha scope | Master 31 remains authoritative | Minimum Reconstruction, player development/AI and lifecycle must not be dropped merely because ranking work dominated recent PRs |

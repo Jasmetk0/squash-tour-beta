@@ -11,7 +11,12 @@ from sqlalchemy import Engine, Select, func, select, text, update
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 
-from beta_engine.application.season_models import RaceSnapshot, RankingSnapshot, SeasonState, TournamentSimulationResult
+from beta_engine.application.season_models import (
+    RaceSnapshot,
+    RankingSnapshot,
+    SeasonState,
+    TournamentSimulationResult,
+)
 from beta_engine.application.finals_models import FinalsSimulationResult
 from beta_engine.domain.careers import NextSeasonPlayerState, PlayerSeasonTransition
 from beta_engine.domain.finals import FinalsQualificationResult, FinalsResult
@@ -59,7 +64,8 @@ from beta_engine.infrastructure.db.models import (
     OfficialBranchSelectionCommandModel,
     OfficialRankingCandidateModel,
     OfficialRankingCommandModel,
-    OfficialRankingResultVersionModel, OfficialRankingZeroVersionModel,
+    OfficialRankingResultVersionModel,
+    OfficialRankingZeroVersionModel,
     RankingTransitionAuthorityModel,
     AuthoritativeWorldStateModel,
     PublishedOfficialRankingModel,
@@ -79,6 +85,7 @@ from beta_engine.infrastructure.db.models import (
     CompletedTournamentInputModel,
     LegacySimulationRunMappingModel,
     InitialWorldStateModel,
+    PlayerLifecycleWeekStateModel,
     RaceSnapshotModel,
     RankingSnapshotModel,
     RunGeneratedPlayerProvenanceModel,
@@ -91,12 +98,24 @@ from beta_engine.infrastructure.db.models import (
     SimulationRunModel,
 )
 from beta_engine.infrastructure.db.saved_revision_rankings import (
-    RANKING_COMPONENT_KEY, capture_saved_ranking_component, load_saved_ranking_component,
+    RANKING_COMPONENT_KEY,
+    capture_saved_ranking_component,
+    load_saved_ranking_component,
     restore_saved_ranking_component,
 )
 from beta_engine.infrastructure.db.initial_world_state import (
-    INITIAL_WORLD_COMPONENT_KEY, capture_saved_initial_world, get_initial_world,
-    load_saved_initial_world, put_initial_world, restore_saved_initial_world,
+    INITIAL_WORLD_COMPONENT_KEY,
+    capture_saved_initial_world,
+    get_initial_world,
+    load_saved_initial_world,
+    put_initial_world,
+    restore_saved_initial_world,
+)
+from beta_engine.infrastructure.db.player_lifecycle_state import (
+    PLAYER_LIFECYCLE_COMPONENT_KEY,
+    bootstrap_lifecycle,
+    capture_saved_lifecycle,
+    restore_saved_lifecycle,
 )
 from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_EVENT_LEGACY_STATE,
@@ -597,87 +616,210 @@ class BranchForkSourceStateMismatchError(BranchForkValidationError):
 class BranchSimulationError(ValueError):
     """Base error for atomic Branch simulation commands."""
 
-class BranchSimulationValidationError(BranchSimulationError): pass
-class BranchSimulationConflictError(BranchSimulationError): pass
-class BranchSimulationIdempotencyConflictError(BranchSimulationConflictError): pass
+
+class BranchSimulationValidationError(BranchSimulationError):
+    pass
+
+
+class BranchSimulationConflictError(BranchSimulationError):
+    pass
+
+
+class BranchSimulationIdempotencyConflictError(BranchSimulationConflictError):
+    pass
+
 
 @dataclass(frozen=True)
 class BranchSimulateNextMatchCommand:
-    product_run_id: str; branch_id: str; expected_head_checkpoint_id: str
-    command_id: str; audit_reason: str; explicit_confirmation: bool
+    product_run_id: str
+    branch_id: str
+    expected_head_checkpoint_id: str
+    command_id: str
+    audit_reason: str
+    explicit_confirmation: bool
+
 
 @dataclass(frozen=True)
 class BranchSimulateNextMatchResult:
-    product_run_id: str; branch_id: str; legacy_simulation_run_id: str; command_id: str
-    request_fingerprint: str; idempotent_replay: bool; previous_head_checkpoint_id: str; new_head_checkpoint_id: str
-    previous_season: int; previous_week: int | None; previous_event_id: str | None; previous_event_sequence: int | None
-    current_season: int; current_week: int | None; current_event_id: str | None; current_event_sequence: int | None
-    official_branch_changed: bool; simulation_result: dict[str, object]
+    product_run_id: str
+    branch_id: str
+    legacy_simulation_run_id: str
+    command_id: str
+    request_fingerprint: str
+    idempotent_replay: bool
+    previous_head_checkpoint_id: str
+    new_head_checkpoint_id: str
+    previous_season: int
+    previous_week: int | None
+    previous_event_id: str | None
+    previous_event_sequence: int | None
+    current_season: int
+    current_week: int | None
+    current_event_id: str | None
+    current_event_sequence: int | None
+    official_branch_changed: bool
+    simulation_result: dict[str, object]
+
 
 @dataclass(frozen=True)
 class BranchSimulateNextRoundCommand:
-    product_run_id: str; branch_id: str; expected_head_checkpoint_id: str
-    command_id: str; audit_reason: str; explicit_confirmation: bool
+    product_run_id: str
+    branch_id: str
+    expected_head_checkpoint_id: str
+    command_id: str
+    audit_reason: str
+    explicit_confirmation: bool
+
 
 @dataclass(frozen=True)
 class BranchSimulateNextRoundResult:
-    product_run_id: str; branch_id: str; legacy_simulation_run_id: str; command_id: str
-    request_fingerprint: str; idempotent_replay: bool; previous_head_checkpoint_id: str; new_head_checkpoint_id: str
-    previous_season: int; previous_week: int | None; previous_event_id: str | None; previous_event_sequence: int | None
-    current_season: int; current_week: int | None; current_event_id: str | None; current_event_sequence: int | None
-    official_branch_changed: bool; simulation_result: dict[str, object]
+    product_run_id: str
+    branch_id: str
+    legacy_simulation_run_id: str
+    command_id: str
+    request_fingerprint: str
+    idempotent_replay: bool
+    previous_head_checkpoint_id: str
+    new_head_checkpoint_id: str
+    previous_season: int
+    previous_week: int | None
+    previous_event_id: str | None
+    previous_event_sequence: int | None
+    current_season: int
+    current_week: int | None
+    current_event_id: str | None
+    current_event_sequence: int | None
+    official_branch_changed: bool
+    simulation_result: dict[str, object]
+
 
 @dataclass(frozen=True)
 class BranchSimulateNextWeekCommand:
-    product_run_id: str; branch_id: str; expected_head_checkpoint_id: str
-    command_id: str; audit_reason: str; explicit_confirmation: bool
+    product_run_id: str
+    branch_id: str
+    expected_head_checkpoint_id: str
+    command_id: str
+    audit_reason: str
+    explicit_confirmation: bool
+
 
 @dataclass(frozen=True)
 class BranchSimulateNextWeekResult:
-    product_run_id: str; branch_id: str; legacy_simulation_run_id: str; command_id: str
-    request_fingerprint: str; idempotent_replay: bool; previous_head_checkpoint_id: str; new_head_checkpoint_id: str
-    previous_season: int; previous_week: int | None; previous_event_id: str | None; previous_event_sequence: int | None
-    current_season: int; current_week: int | None; current_event_id: str | None; current_event_sequence: int | None
-    official_branch_changed: bool; simulation_result: dict[str, object]
+    product_run_id: str
+    branch_id: str
+    legacy_simulation_run_id: str
+    command_id: str
+    request_fingerprint: str
+    idempotent_replay: bool
+    previous_head_checkpoint_id: str
+    new_head_checkpoint_id: str
+    previous_season: int
+    previous_week: int | None
+    previous_event_id: str | None
+    previous_event_sequence: int | None
+    current_season: int
+    current_week: int | None
+    current_event_id: str | None
+    current_event_sequence: int | None
+    official_branch_changed: bool
+    simulation_result: dict[str, object]
+
 
 @dataclass(frozen=True)
 class BranchSimulateNextTournamentCommand:
-    product_run_id: str; branch_id: str; expected_head_checkpoint_id: str
-    command_id: str; audit_reason: str; explicit_confirmation: bool
+    product_run_id: str
+    branch_id: str
+    expected_head_checkpoint_id: str
+    command_id: str
+    audit_reason: str
+    explicit_confirmation: bool
+
 
 @dataclass(frozen=True)
 class BranchSimulateNextTournamentResult:
-    product_run_id: str; branch_id: str; legacy_simulation_run_id: str; command_id: str
-    request_fingerprint: str; idempotent_replay: bool; previous_head_checkpoint_id: str; new_head_checkpoint_id: str
-    previous_season: int; previous_week: int | None; previous_event_id: str | None; previous_event_sequence: int | None
-    current_season: int; current_week: int | None; current_event_id: str | None; current_event_sequence: int | None
-    official_branch_changed: bool; simulation_result: dict[str, object]
+    product_run_id: str
+    branch_id: str
+    legacy_simulation_run_id: str
+    command_id: str
+    request_fingerprint: str
+    idempotent_replay: bool
+    previous_head_checkpoint_id: str
+    new_head_checkpoint_id: str
+    previous_season: int
+    previous_week: int | None
+    previous_event_id: str | None
+    previous_event_sequence: int | None
+    current_season: int
+    current_week: int | None
+    current_event_id: str | None
+    current_event_sequence: int | None
+    official_branch_changed: bool
+    simulation_result: dict[str, object]
+
 
 @dataclass(frozen=True)
 class BranchSimulateFullSeasonCommand:
-    product_run_id: str; branch_id: str; expected_head_checkpoint_id: str
-    command_id: str; audit_reason: str; explicit_confirmation: bool
+    product_run_id: str
+    branch_id: str
+    expected_head_checkpoint_id: str
+    command_id: str
+    audit_reason: str
+    explicit_confirmation: bool
+
 
 @dataclass(frozen=True)
 class BranchSimulateFullSeasonResult:
-    product_run_id: str; branch_id: str; legacy_simulation_run_id: str; command_id: str
-    request_fingerprint: str; idempotent_replay: bool; previous_head_checkpoint_id: str; new_head_checkpoint_id: str
-    previous_season: int; previous_week: int | None; previous_event_id: str | None; previous_event_sequence: int | None
-    current_season: int; current_week: int | None; current_event_id: str | None; current_event_sequence: int | None
-    official_branch_changed: bool; simulation_result: dict[str, object]
+    product_run_id: str
+    branch_id: str
+    legacy_simulation_run_id: str
+    command_id: str
+    request_fingerprint: str
+    idempotent_replay: bool
+    previous_head_checkpoint_id: str
+    new_head_checkpoint_id: str
+    previous_season: int
+    previous_week: int | None
+    previous_event_id: str | None
+    previous_event_sequence: int | None
+    current_season: int
+    current_week: int | None
+    current_event_id: str | None
+    current_event_sequence: int | None
+    official_branch_changed: bool
+    simulation_result: dict[str, object]
+
 
 @dataclass(frozen=True)
 class BranchSimulateWorldTourFinalsCommand:
-    product_run_id: str; branch_id: str; expected_head_checkpoint_id: str
-    command_id: str; audit_reason: str; explicit_confirmation: bool
+    product_run_id: str
+    branch_id: str
+    expected_head_checkpoint_id: str
+    command_id: str
+    audit_reason: str
+    explicit_confirmation: bool
+
 
 @dataclass(frozen=True)
 class BranchSimulateWorldTourFinalsResult:
-    product_run_id: str; branch_id: str; legacy_simulation_run_id: str; command_id: str
-    request_fingerprint: str; idempotent_replay: bool; previous_head_checkpoint_id: str; new_head_checkpoint_id: str
-    previous_season: int; previous_week: int | None; previous_event_id: str | None; previous_event_sequence: int | None
-    current_season: int; current_week: int | None; current_event_id: str | None; current_event_sequence: int | None
-    official_branch_changed: bool; finals: FinalsSimulationResult
+    product_run_id: str
+    branch_id: str
+    legacy_simulation_run_id: str
+    command_id: str
+    request_fingerprint: str
+    idempotent_replay: bool
+    previous_head_checkpoint_id: str
+    new_head_checkpoint_id: str
+    previous_season: int
+    previous_week: int | None
+    previous_event_id: str | None
+    previous_event_sequence: int | None
+    current_season: int
+    current_week: int | None
+    current_event_id: str | None
+    current_event_sequence: int | None
+    official_branch_changed: bool
+    finals: FinalsSimulationResult
+
 
 @dataclass(frozen=True)
 class ReviewedFinalsPhaseDescriptor:
@@ -686,53 +828,89 @@ class ReviewedFinalsPhaseDescriptor:
     result_exists: bool
     result_hash: str | None
 
+
 @dataclass(frozen=True)
 class _BranchSimulationActionSpec:
     action_kind: str
     checkpoint_command_kind: str
     checkpoint_command_boundary: str
     label: str
-    result_type: type[BranchSimulateNextMatchResult] | type[BranchSimulateNextRoundResult] | type[BranchSimulateNextWeekResult] | type[BranchSimulateNextTournamentResult] | type[BranchSimulateFullSeasonResult]
+    result_type: (
+        type[BranchSimulateNextMatchResult]
+        | type[BranchSimulateNextRoundResult]
+        | type[BranchSimulateNextWeekResult]
+        | type[BranchSimulateNextTournamentResult]
+        | type[BranchSimulateFullSeasonResult]
+    )
     summary_builder: Callable[[object], dict[str, object]]
 
+
 def _branch_step_summary(mode: str, step: object) -> dict[str, object]:
-    active = step.season_state.active_tournament.event if step.season_state.active_tournament else None
-    return {"mode": mode, "active_tournament": active.event_id if active else None,
-            "completed_event_count": len(step.season_state.completed_event_ids),
-            "next_event_index": step.season_state.next_event_index}
+    active = (
+        step.season_state.active_tournament.event
+        if step.season_state.active_tournament
+        else None
+    )
+    return {
+        "mode": mode,
+        "active_tournament": active.event_id if active else None,
+        "completed_event_count": len(step.season_state.completed_event_ids),
+        "next_event_index": step.season_state.next_event_index,
+    }
+
 
 _NEXT_MATCH_ACTION = _BranchSimulationActionSpec(
-    "simulate_next_match", BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_MATCH_BRANCH,
-    BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_MATCH_PERSISTED, "Branch Next Match",
-    BranchSimulateNextMatchResult, lambda step: _branch_step_summary("simulate_next_match", step),
+    "simulate_next_match",
+    BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_MATCH_BRANCH,
+    BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_MATCH_PERSISTED,
+    "Branch Next Match",
+    BranchSimulateNextMatchResult,
+    lambda step: _branch_step_summary("simulate_next_match", step),
 )
 _NEXT_ROUND_ACTION = _BranchSimulationActionSpec(
-    "simulate_next_round", BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_ROUND_BRANCH,
-    BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_ROUND_PERSISTED, "Branch Next Round",
-    BranchSimulateNextRoundResult, lambda step: _branch_step_summary("simulate_next_round", step),
+    "simulate_next_round",
+    BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_ROUND_BRANCH,
+    BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_ROUND_PERSISTED,
+    "Branch Next Round",
+    BranchSimulateNextRoundResult,
+    lambda step: _branch_step_summary("simulate_next_round", step),
 )
 _NEXT_WEEK_ACTION = _BranchSimulationActionSpec(
-    "simulate_next_week", BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_WEEK_BRANCH,
-    BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_WEEK_PERSISTED, "Branch Next Week",
-    BranchSimulateNextWeekResult, lambda step: _branch_step_summary("simulate_next_week", step),
+    "simulate_next_week",
+    BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_WEEK_BRANCH,
+    BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_WEEK_PERSISTED,
+    "Branch Next Week",
+    BranchSimulateNextWeekResult,
+    lambda step: _branch_step_summary("simulate_next_week", step),
 )
 _NEXT_TOURNAMENT_ACTION = _BranchSimulationActionSpec(
-    "simulate_next_tournament", BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_TOURNAMENT_BRANCH,
-    BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_TOURNAMENT_PERSISTED, "Branch Next Tournament",
-    BranchSimulateNextTournamentResult, lambda step: _branch_step_summary("simulate_next_tournament", step),
+    "simulate_next_tournament",
+    BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_NEXT_TOURNAMENT_BRANCH,
+    BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_NEXT_TOURNAMENT_PERSISTED,
+    "Branch Next Tournament",
+    BranchSimulateNextTournamentResult,
+    lambda step: _branch_step_summary("simulate_next_tournament", step),
 )
+
+
 def _full_season_summary(step: object) -> dict[str, object]:
     summary = _branch_step_summary("simulate_full_season", step)
     summary.update(
-        completed_in_command_count=0, completed_week_group_count=len(step.season_result.weekly_results),
-        season_complete=step.season_state.active_tournament is None and step.season_state.next_event_index == len(step.season_state.ordered_events),
+        completed_in_command_count=0,
+        completed_week_group_count=len(step.season_result.weekly_results),
+        season_complete=step.season_state.active_tournament is None
+        and step.season_state.next_event_index == len(step.season_state.ordered_events),
     )
     return summary
 
+
 _FULL_SEASON_ACTION = _BranchSimulationActionSpec(
-    "simulate_full_season", BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_FULL_SEASON_BRANCH,
-    BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_FULL_SEASON_PERSISTED, "Branch Full Season",
-    BranchSimulateFullSeasonResult, _full_season_summary,
+    "simulate_full_season",
+    BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_FULL_SEASON_BRANCH,
+    BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_FULL_SEASON_PERSISTED,
+    "Branch Full Season",
+    BranchSimulateFullSeasonResult,
+    _full_season_summary,
 )
 
 
@@ -761,17 +939,29 @@ class LegacyRunCloneResult:
 
 @dataclass(frozen=True)
 class ForkRunBranchCommand:
-    product_run_id: str; source_branch_id: str; source_checkpoint_id: str
-    target_branch_id: str; target_branch_display_name: str
-    target_legacy_simulation_run_id: str; target_branch_seed: int; command_id: str
+    product_run_id: str
+    source_branch_id: str
+    source_checkpoint_id: str
+    target_branch_id: str
+    target_branch_display_name: str
+    target_legacy_simulation_run_id: str
+    target_branch_seed: int
+    command_id: str
 
 
 @dataclass(frozen=True)
 class ForkRunBranchResult:
-    product_run_id: str; source_branch_id: str; source_checkpoint_id: str
-    target_branch_id: str; target_legacy_simulation_run_id: str; target_checkpoint_id: str
-    target_branch_seed: int; source_inventory_hash: str; normalized_clone_equivalence_hash: str
-    request_fingerprint: str; idempotent_replay: bool
+    product_run_id: str
+    source_branch_id: str
+    source_checkpoint_id: str
+    target_branch_id: str
+    target_legacy_simulation_run_id: str
+    target_checkpoint_id: str
+    target_branch_seed: int
+    source_inventory_hash: str
+    normalized_clone_equivalence_hash: str
+    request_fingerprint: str
+    idempotent_replay: bool
     created_mapping: bool = False
     official_branch_changed: bool = False
 
@@ -788,7 +978,9 @@ class OfficialBranchSelectionConflictError(OfficialBranchSelectionError):
     """Raised when optimistic concurrency fails."""
 
 
-class OfficialBranchSelectionIdempotencyConflictError(OfficialBranchSelectionConflictError):
+class OfficialBranchSelectionIdempotencyConflictError(
+    OfficialBranchSelectionConflictError
+):
     """Raised when a command id is reused with different content."""
 
 
@@ -798,31 +990,67 @@ class OfficialBranchSelectionStateMismatchError(OfficialBranchSelectionConflictE
 
 @dataclass(frozen=True)
 class SetOfficialRunBranchCommand:
-    product_run_id: str; target_branch_id: str; expected_current_official_branch_id: str | None
-    command_id: str; audit_reason: str; explicit_confirmation: bool
+    product_run_id: str
+    target_branch_id: str
+    expected_current_official_branch_id: str | None
+    command_id: str
+    audit_reason: str
+    explicit_confirmation: bool
 
 
 @dataclass(frozen=True)
 class SetOfficialRunBranchResult:
-    product_run_id: str; previous_official_branch_id: str | None; official_branch_id: str | None
-    target_branch_id: str; changed: bool; idempotent_replay: bool; request_fingerprint: str
+    product_run_id: str
+    previous_official_branch_id: str | None
+    official_branch_id: str | None
+    target_branch_id: str
+    changed: bool
+    idempotent_replay: bool
+    request_fingerprint: str
 
 
 @dataclass(frozen=True)
 class BranchCheckpointRecord:
-    checkpoint_id: str; run_id: str; branch_id: str; parent_checkpoint_id: str | None; sequence: int; kind: str
-    season: int; week: int | None; event_id: str | None; event_sequence: int | None
-    command_id: str; command_kind: str; command_boundary: str
-    config_version: str | None; config_fingerprint: str | None; world_id: str; world_fingerprint: str | None
-    global_seed: int | None; branch_seed: int | None; seed_namespace: dict[str, object]
-    payload_schema_version: str; content_hash_algorithm: str; content_hash: str; payload: dict[str, object]
+    checkpoint_id: str
+    run_id: str
+    branch_id: str
+    parent_checkpoint_id: str | None
+    sequence: int
+    kind: str
+    season: int
+    week: int | None
+    event_id: str | None
+    event_sequence: int | None
+    command_id: str
+    command_kind: str
+    command_boundary: str
+    config_version: str | None
+    config_fingerprint: str | None
+    world_id: str
+    world_fingerprint: str | None
+    global_seed: int | None
+    branch_seed: int | None
+    seed_namespace: dict[str, object]
+    payload_schema_version: str
+    content_hash_algorithm: str
+    content_hash: str
+    payload: dict[str, object]
 
 
 @dataclass(frozen=True)
 class HistoricalBranchSeasonStateRecord:
-    product_run_id: str; branch_id: str; checkpoint_id: str; checkpoint_sequence: int; checkpoint_kind: str
-    checkpoint_content_hash: str; payload_schema_version: str; checkpoint_season: int; checkpoint_week: int | None
-    checkpoint_event_id: str | None; checkpoint_event_sequence: int | None; season_state: SeasonState
+    product_run_id: str
+    branch_id: str
+    checkpoint_id: str
+    checkpoint_sequence: int
+    checkpoint_kind: str
+    checkpoint_content_hash: str
+    payload_schema_version: str
+    checkpoint_season: int
+    checkpoint_week: int | None
+    checkpoint_event_id: str | None
+    checkpoint_event_sequence: int | None
+    season_state: SeasonState
 
 
 class HistoricalSeasonStateUnavailableError(ValueError):
@@ -1000,6 +1228,7 @@ def deterministic_prospect_id(
     digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()[:20].upper()
     return f"PR-{season_start_year}-W{season_week:02d}-{country_code.upper()}-{local_sequence:04d}-{digest}"
 
+
 @dataclass(frozen=True)
 class PersistedGeneratedPlayerProvenanceRecord:
     run_id: str
@@ -1021,15 +1250,32 @@ class PersistedGeneratedPlayerProvenanceRecord:
 class SimulationPersistenceRepository:
     """SQLAlchemy repository for deterministic simulation persistence."""
 
-    def __init__(self, *, engine: Engine, session_factory: sessionmaker[Session]) -> None:
+    def __init__(
+        self, *, engine: Engine, session_factory: sessionmaker[Session]
+    ) -> None:
         self._engine = engine
         self._session_factory = session_factory
 
-    def prepare_official_ranking(self, *, run_id: str, branch_id: str, command, preview: bool = False, expected_snapshot_fingerprint: str | None = None, awards=None):
-        from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
-        from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
+    def prepare_official_ranking(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        command,
+        preview: bool = False,
+        expected_snapshot_fingerprint: str | None = None,
+        awards=None,
+    ):
+        from beta_engine.application.ranking_bootstrap_command import (
+            RankingBootstrapCommand,
+        )
+        from beta_engine.infrastructure.db.ranking_week_command import (
+            RankingWeekCommandRunner,
+        )
 
-        context = command if isinstance(command, RankingBootstrapCommand) else command.context
+        context = (
+            command if isinstance(command, RankingBootstrapCommand) else command.context
+        )
         if (context.run_id, context.branch_id) != (run_id, branch_id):
             raise ValueError("Ranking request scope mismatch")
         if command.audit is None:
@@ -1037,14 +1283,28 @@ class SimulationPersistenceRepository:
         runner = RankingWeekCommandRunner(self._session_factory, awards)
         if preview:
             return runner.preview(command)
-        return runner.execute(command, expected_snapshot_fingerprint=expected_snapshot_fingerprint)
+        return runner.execute(
+            command, expected_snapshot_fingerprint=expected_snapshot_fingerprint
+        )
 
     def get_initial_world(self, *, run_id: str, branch_id: str):
         with self._session_factory() as session:
             session.execute(text("BEGIN"))
             return get_initial_world(session, run_id=run_id, branch_id=branch_id)
 
-    def adopt_initial_world(self, state):
+    def ensure_initial_world_lifecycle(self, state, *, policy):
+        with self._session_factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            stored = get_initial_world(
+                session, run_id=state.run_id, branch_id=state.branch_id
+            )
+            if stored is None or stored.fingerprint != state.fingerprint:
+                raise ValueError(
+                    "Stored InitialWorldState changed during lifecycle backfill"
+                )
+            return bootstrap_lifecycle(session, stored, policy)
+
+    def adopt_initial_world(self, state, lifecycle_policy=None):
         with self._session_factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
             run = session.get(RunContainerModel, state.run_id)
@@ -1052,59 +1312,124 @@ class SimulationPersistenceRepository:
             if run is None or branch is None or branch.run_id != state.run_id:
                 raise ValueError("Initial-world Run/Branch scope not found")
             if run.read_only or branch.read_only or branch.status != "active":
-                raise ValueError("Initial-world adoption requires a writable active Run/Branch")
-            return put_initial_world(session, state)
+                raise ValueError(
+                    "Initial-world adoption requires a writable active Run/Branch"
+                )
+            installed = put_initial_world(session, state)
+            bootstrap_lifecycle(session, installed, lifecycle_policy)
+            return installed
 
     def adopt_ranking_transition_authority(self, authority):
-        from beta_engine.infrastructure.db.ranking_transition_authority import RankingTransitionAuthorityStore
+        from beta_engine.infrastructure.db.ranking_transition_authority import (
+            RankingTransitionAuthorityStore,
+        )
+
         with self._session_factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
             run = session.get(RunContainerModel, authority.run_id)
             branch = session.get(RunBranchModel, authority.branch_id)
-            draft = session.scalar(select(BranchWorkingDraftModel).where(BranchWorkingDraftModel.branch_id == authority.branch_id))
-            if run is None or branch is None or branch.run_id != authority.run_id or draft is None:
+            draft = session.scalar(
+                select(BranchWorkingDraftModel).where(
+                    BranchWorkingDraftModel.branch_id == authority.branch_id
+                )
+            )
+            if (
+                run is None
+                or branch is None
+                or branch.run_id != authority.run_id
+                or draft is None
+            ):
                 raise ValueError("Ranking authority Run/Branch scope not found")
             if run.read_only or branch.read_only or branch.status != "active":
-                raise ValueError("Ranking authority requires a writable active Run/Branch")
-            if authority.base_revision_id != draft.base_revision_id or branch.saved_head_revision_id != draft.base_revision_id:
+                raise ValueError(
+                    "Ranking authority requires a writable active Run/Branch"
+                )
+            if (
+                authority.base_revision_id != draft.base_revision_id
+                or branch.saved_head_revision_id != draft.base_revision_id
+            ):
                 raise ValueError("Ranking authority base revision is stale")
             return RankingTransitionAuthorityStore(session).append(authority)
 
-    def resolve_ranking_transition_authority(self, *, run_id: str, branch_id: str, target_ordinal: int):
-        from beta_engine.infrastructure.db.ranking_transition_authority import RankingTransitionAuthorityStore, authority_carried_to_saved_head
+    def resolve_ranking_transition_authority(
+        self, *, run_id: str, branch_id: str, target_ordinal: int
+    ):
+        from beta_engine.infrastructure.db.ranking_transition_authority import (
+            RankingTransitionAuthorityStore,
+            authority_carried_to_saved_head,
+        )
+
         with self._session_factory() as session:
             session.execute(text("BEGIN"))
-            value = RankingTransitionAuthorityStore(session).get(run_id=run_id, branch_id=branch_id, target_ordinal=target_ordinal)
+            value = RankingTransitionAuthorityStore(session).get(
+                run_id=run_id, branch_id=branch_id, target_ordinal=target_ordinal
+            )
             if value is None:
                 raise ValueError("Authoritative ranking transition inputs are missing")
-            draft = session.scalar(select(BranchWorkingDraftModel).where(BranchWorkingDraftModel.branch_id == branch_id))
+            draft = session.scalar(
+                select(BranchWorkingDraftModel).where(
+                    BranchWorkingDraftModel.branch_id == branch_id
+                )
+            )
             branch = session.get(RunBranchModel, branch_id)
-            if draft is None or branch is None or branch.run_id != run_id or not authority_carried_to_saved_head(
-                session, value, branch, draft
+            if (
+                draft is None
+                or branch is None
+                or branch.run_id != run_id
+                or not authority_carried_to_saved_head(session, value, branch, draft)
             ):
-                raise ValueError("Authoritative ranking transition source revision is stale")
+                raise ValueError(
+                    "Authoritative ranking transition source revision is stale"
+                )
             return value
 
+    def derive_lifecycle_ranking_roster(
+        self, *, run_id: str, branch_id: str, completed_week, target_week
+    ):
+        from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
+        from beta_engine.domain.players.lifecycle import advance_lifecycle
+
+        with self._session_factory() as session:
+            session.execute(text("BEGIN"))
+            predecessor = get_lifecycle(
+                session, run_id=run_id, branch_id=branch_id, week=completed_week
+            )
+            if predecessor is None:
+                raise ValueError(
+                    "Authoritative predecessor player lifecycle snapshot is missing"
+                )
+            return advance_lifecycle(predecessor, target_week).ranking_roster()
+
     def inspect_official_ranking_history(self, *, run_id: str, branch_id: str):
-        from beta_engine.infrastructure.db.ranking_inspection import inspect_ranking_history
+        from beta_engine.infrastructure.db.ranking_inspection import (
+            inspect_ranking_history,
+        )
 
         with self._session_factory() as session:
             session.execute(text("BEGIN"))
             return inspect_ranking_history(session, run_id=run_id, branch_id=branch_id)
 
     def inspect_official_ranking_sources(self, *, run_id: str, branch_id: str, week):
-        from beta_engine.infrastructure.db.ranking_inspection import inspect_ranking_sources
+        from beta_engine.infrastructure.db.ranking_inspection import (
+            inspect_ranking_sources,
+        )
 
         with self._session_factory() as session:
             session.execute(text("BEGIN"))
-            return inspect_ranking_sources(session, run_id=run_id, branch_id=branch_id, week=week)
+            return inspect_ranking_sources(
+                session, run_id=run_id, branch_id=branch_id, week=week
+            )
 
     def inspect_official_ranking_inputs(self, *, run_id: str, branch_id: str, week):
-        from beta_engine.infrastructure.db.ranking_inspection import inspect_ranking_inputs
+        from beta_engine.infrastructure.db.ranking_inspection import (
+            inspect_ranking_inputs,
+        )
 
         with self._session_factory() as session:
             session.execute(text("BEGIN"))
-            return inspect_ranking_inputs(session, run_id=run_id, branch_id=branch_id, week=week)
+            return inspect_ranking_inputs(
+                session, run_id=run_id, branch_id=branch_id, week=week
+            )
 
     def bootstrap_schema(self) -> None:
         try:
@@ -1118,9 +1443,24 @@ class SimulationPersistenceRepository:
 
     def _ensure_schema_compatibility(self) -> None:
         with self._engine.begin() as connection:
-            self._ensure_column(connection=connection, table_name="official_ranking_commands", column_name="request_payload_json", column_type="TEXT")
-            self._ensure_column(connection=connection, table_name="official_ranking_commands", column_name="input_manifest_version", column_type="INTEGER")
-            self._ensure_column(connection=connection, table_name="official_ranking_commands", column_name="input_manifest_json", column_type="TEXT")
+            self._ensure_column(
+                connection=connection,
+                table_name="official_ranking_commands",
+                column_name="request_payload_json",
+                column_type="TEXT",
+            )
+            self._ensure_column(
+                connection=connection,
+                table_name="official_ranking_commands",
+                column_name="input_manifest_version",
+                column_type="INTEGER",
+            )
+            self._ensure_column(
+                connection=connection,
+                table_name="official_ranking_commands",
+                column_name="input_manifest_json",
+                column_type="TEXT",
+            )
             self._ensure_runs_world_id_nullable(connection=connection)
             self._ensure_run_display_name_unique_index(connection=connection)
             self._ensure_column(
@@ -1162,14 +1502,54 @@ class SimulationPersistenceRepository:
                 column_name="source_type",
                 column_type="TEXT",
             )
-            self._ensure_column(connection=connection, table_name="run_generated_player_provenance", column_name="override_id", column_type="TEXT")
-            self._ensure_column(connection=connection, table_name="run_generated_player_provenance", column_name="origin_source_type", column_type="TEXT")
-            self._ensure_column(connection=connection, table_name="run_generated_player_provenance", column_name="origin_quality_band", column_type="TEXT")
-            self._ensure_column(connection=connection, table_name="run_generated_player_provenance", column_name="origin_override_id", column_type="TEXT")
-            self._ensure_column(connection=connection, table_name="run_generated_player_provenance", column_name="origin_season", column_type="INTEGER")
-            self._ensure_column(connection=connection, table_name="run_talent_country_allocations", column_name="dampener_json", column_type="TEXT")
-            self._ensure_column(connection=connection, table_name="simulation_runs", column_name="world_id", column_type="TEXT")
-            self._ensure_column(connection=connection, table_name="simulation_runs", column_name="world_generation_fingerprint", column_type="TEXT")
+            self._ensure_column(
+                connection=connection,
+                table_name="run_generated_player_provenance",
+                column_name="override_id",
+                column_type="TEXT",
+            )
+            self._ensure_column(
+                connection=connection,
+                table_name="run_generated_player_provenance",
+                column_name="origin_source_type",
+                column_type="TEXT",
+            )
+            self._ensure_column(
+                connection=connection,
+                table_name="run_generated_player_provenance",
+                column_name="origin_quality_band",
+                column_type="TEXT",
+            )
+            self._ensure_column(
+                connection=connection,
+                table_name="run_generated_player_provenance",
+                column_name="origin_override_id",
+                column_type="TEXT",
+            )
+            self._ensure_column(
+                connection=connection,
+                table_name="run_generated_player_provenance",
+                column_name="origin_season",
+                column_type="INTEGER",
+            )
+            self._ensure_column(
+                connection=connection,
+                table_name="run_talent_country_allocations",
+                column_name="dampener_json",
+                column_type="TEXT",
+            )
+            self._ensure_column(
+                connection=connection,
+                table_name="simulation_runs",
+                column_name="world_id",
+                column_type="TEXT",
+            )
+            self._ensure_column(
+                connection=connection,
+                table_name="simulation_runs",
+                column_name="world_generation_fingerprint",
+                column_type="TEXT",
+            )
 
     @staticmethod
     def _ensure_runs_world_id_nullable(*, connection) -> None:
@@ -1190,7 +1570,9 @@ class SimulationPersistenceRepository:
 
         legacy_table = "runs__world_id_required_legacy"
         if list(connection.execute(text(f"PRAGMA table_info({legacy_table})"))):
-            raise RuntimeError(f"unfinished Run schema migration table {legacy_table} already exists")
+            raise RuntimeError(
+                f"unfinished Run schema migration table {legacy_table} already exists"
+            )
 
         # The index may exist in a partially upgraded database and its global
         # SQLite name would otherwise collide while the replacement is built.
@@ -1198,7 +1580,10 @@ class SimulationPersistenceRepository:
         connection.execute(text(f"ALTER TABLE runs RENAME TO {legacy_table}"))
         RunContainerModel.__table__.create(bind=connection, checkfirst=False)
 
-        old_columns = {row[1] for row in connection.execute(text(f"PRAGMA table_info({legacy_table})"))}
+        old_columns = {
+            row[1]
+            for row in connection.execute(text(f"PRAGMA table_info({legacy_table})"))
+        }
         new_columns = [column.name for column in RunContainerModel.__table__.columns]
         shared_columns = [column for column in new_columns if column in old_columns]
         column_list = ", ".join(shared_columns)
@@ -1239,15 +1624,29 @@ class SimulationPersistenceRepository:
         index; preserve that data rather than rewriting historical records.
         """
         indexes = (
-            ("uq_branch_checkpoints_one_initial_per_branch", "branch_id", BRANCH_CHECKPOINT_KIND_INITIAL),
-            ("uq_branch_checkpoints_one_event_completed_per_branch_event_sequence", "branch_id, event_sequence", BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED),
-            ("uq_branch_checkpoints_one_week_completed_per_branch_season_week", "branch_id, season, week", BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED),
+            (
+                "uq_branch_checkpoints_one_initial_per_branch",
+                "branch_id",
+                BRANCH_CHECKPOINT_KIND_INITIAL,
+            ),
+            (
+                "uq_branch_checkpoints_one_event_completed_per_branch_event_sequence",
+                "branch_id, event_sequence",
+                BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED,
+            ),
+            (
+                "uq_branch_checkpoints_one_week_completed_per_branch_season_week",
+                "branch_id, season, week",
+                BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
+            ),
         )
         for name, columns, kind in indexes:
             try:
-                connection.execute(text(
-                    f"CREATE UNIQUE INDEX IF NOT EXISTS {name} ON branch_checkpoints ({columns}) WHERE kind = '{kind}'"
-                ))
+                connection.execute(
+                    text(
+                        f"CREATE UNIQUE INDEX IF NOT EXISTS {name} ON branch_checkpoints ({columns}) WHERE kind = '{kind}'"
+                    )
+                )
             except IntegrityError:
                 # Repository validation reports a clear conflict on later use.
                 continue
@@ -1274,12 +1673,16 @@ class SimulationPersistenceRepository:
             return
 
     @staticmethod
-    def _ensure_column(*, connection, table_name: str, column_name: str, column_type: str) -> None:
+    def _ensure_column(
+        *, connection, table_name: str, column_name: str, column_type: str
+    ) -> None:
         result = connection.execute(text(f"PRAGMA table_info({table_name})"))
         existing_columns = {row[1] for row in result}
         if column_name in existing_columns:
             return
-        connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}"))
+        connection.execute(
+            text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}")
+        )
 
     def upsert_simulation_run(self, run: SimulationRunInfo) -> None:
         with self._session_factory.begin() as session:
@@ -1317,15 +1720,25 @@ class SimulationPersistenceRepository:
         self.ensure_run_container_for_simulation_run(simulation_run_id=run.run_id)
 
     @staticmethod
-    def _to_run_container(model: RunContainerModel, mapped_simulation_run_count: int = 0) -> RunContainerRecord:
+    def _to_run_container(
+        model: RunContainerModel, mapped_simulation_run_count: int = 0
+    ) -> RunContainerRecord:
         return RunContainerRecord(
-            run_id=model.run_id, display_name=model.display_name, storage_kind=model.storage_kind,
-            read_only=bool(model.read_only), world_id=model.world_id,
-            world_package_fingerprint=model.world_package_fingerprint, config_version=model.config_version,
-            config_fingerprint=model.config_fingerprint, global_seed=model.global_seed,
-            timeline_start_season=model.timeline_start_season, timeline_end_season=model.timeline_end_season,
-            official_branch_id=model.official_branch_id, status=model.status,
-            metadata=_from_json(model.metadata_json), mapped_simulation_run_count=mapped_simulation_run_count,
+            run_id=model.run_id,
+            display_name=model.display_name,
+            storage_kind=model.storage_kind,
+            read_only=bool(model.read_only),
+            world_id=model.world_id,
+            world_package_fingerprint=model.world_package_fingerprint,
+            config_version=model.config_version,
+            config_fingerprint=model.config_fingerprint,
+            global_seed=model.global_seed,
+            timeline_start_season=model.timeline_start_season,
+            timeline_end_season=model.timeline_end_season,
+            official_branch_id=model.official_branch_id,
+            status=model.status,
+            metadata=_from_json(model.metadata_json),
+            mapped_simulation_run_count=mapped_simulation_run_count,
         )
 
     def create_run_container(self, record: RunContainerRecord) -> RunContainerRecord:
@@ -1334,15 +1747,24 @@ class SimulationPersistenceRepository:
         with self._session_factory.begin() as session:
             model = session.get(RunContainerModel, record.run_id)
             if model is None:
-                session.add(RunContainerModel(
-                    run_id=record.run_id, display_name=record.display_name, storage_kind=record.storage_kind,
-                    read_only=int(record.read_only), world_id=record.world_id,
-                    world_package_fingerprint=record.world_package_fingerprint, config_version=record.config_version,
-                    config_fingerprint=record.config_fingerprint, global_seed=record.global_seed,
-                    timeline_start_season=record.timeline_start_season, timeline_end_season=record.timeline_end_season,
-                    official_branch_id=record.official_branch_id, status=record.status,
-                    metadata_json=_to_json(record.metadata),
-                ))
+                session.add(
+                    RunContainerModel(
+                        run_id=record.run_id,
+                        display_name=record.display_name,
+                        storage_kind=record.storage_kind,
+                        read_only=int(record.read_only),
+                        world_id=record.world_id,
+                        world_package_fingerprint=record.world_package_fingerprint,
+                        config_version=record.config_version,
+                        config_fingerprint=record.config_fingerprint,
+                        global_seed=record.global_seed,
+                        timeline_start_season=record.timeline_start_season,
+                        timeline_end_season=record.timeline_end_season,
+                        official_branch_id=record.official_branch_id,
+                        status=record.status,
+                        metadata_json=_to_json(record.metadata),
+                    )
+                )
             # Containers are immutable in R1; return the persisted creation lock unchanged.
         return self.get_run_container(run_id=record.run_id)  # type: ignore[return-value]
 
@@ -1357,21 +1779,34 @@ class SimulationPersistenceRepository:
         """Persist the complete canonical empty Run aggregate in one transaction."""
 
         if run.storage_kind != "custom_local" or run.read_only:
-            raise ValueError("an empty user-created Run must be editable custom_local storage")
+            raise ValueError(
+                "an empty user-created Run must be editable custom_local storage"
+            )
         if run.display_name is None or not run.display_name.strip():
-            raise ValueError("an empty user-created Run requires a non-blank display name")
+            raise ValueError(
+                "an empty user-created Run requires a non-blank display name"
+            )
         if run.display_name != run.display_name.strip():
             raise ValueError("Run display name must already be normalized")
         if branch.run_id != run.run_id:
             raise ValueError("initial Branch must belong to the created Run")
         if run.official_branch_id != branch.branch_id:
             raise ValueError("the initial Branch must be selected as the Viewer Branch")
-        if branch.head_checkpoint_id is not None or branch.legacy_simulation_run_id is not None:
-            raise ValueError("an empty Run's initial Branch cannot have simulation state")
+        if (
+            branch.head_checkpoint_id is not None
+            or branch.legacy_simulation_run_id is not None
+        ):
+            raise ValueError(
+                "an empty Run's initial Branch cannot have simulation state"
+            )
         if branch.saved_head_revision_id != revision.revision_id:
-            raise ValueError("the initial Branch must point at its first Saved Revision")
+            raise ValueError(
+                "the initial Branch must point at its first Saved Revision"
+            )
         if revision.run_id != run.run_id or revision.branch_id != branch.branch_id:
-            raise ValueError("the initial Saved Revision must belong to the created Run and Branch")
+            raise ValueError(
+                "the initial Saved Revision must belong to the created Run and Branch"
+            )
         if (
             revision.sequence != INITIAL_SAVED_REVISION_SEQUENCE
             or revision.parent_revision_id is not None
@@ -1379,7 +1814,9 @@ class SimulationPersistenceRepository:
             or revision.payload_schema_version
             != INITIAL_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION
         ):
-            raise ValueError("the first Saved Revision must be the parentless initial revision")
+            raise ValueError(
+                "the first Saved Revision must be the parentless initial revision"
+            )
         expected_payload = initial_saved_revision_payload(
             run_id=run.run_id,
             display_name=run.display_name,
@@ -1410,7 +1847,9 @@ class SimulationPersistenceRepository:
             or working_draft.base_revision_id != revision.revision_id
             or working_draft.draft_schema_version != WORKING_DRAFT_SCHEMA_VERSION
         ):
-            raise ValueError("the initial Working Draft must be based on the first Saved Revision")
+            raise ValueError(
+                "the initial Working Draft must be based on the first Saved Revision"
+            )
         if (
             working_draft.status != CLEAN_WORKING_DRAFT_STATUS
             or working_draft.change_count != 0
@@ -1418,19 +1857,31 @@ class SimulationPersistenceRepository:
             or working_draft.changes != []
             or working_draft.has_changes
         ):
-            raise ValueError("the initial Working Draft must be clean and contain no changes")
+            raise ValueError(
+                "the initial Working Draft must be clean and contain no changes"
+            )
 
         try:
             with self._session_factory.begin() as session:
                 if session.get(RunContainerModel, run.run_id) is not None:
-                    raise RunIdentityConflictError(f"run_id {run.run_id!r} is already in use")
+                    raise RunIdentityConflictError(
+                        f"run_id {run.run_id!r} is already in use"
+                    )
                 if session.get(RunBranchModel, branch.branch_id) is not None:
-                    raise RunIdentityConflictError(f"branch_id {branch.branch_id!r} is already in use")
-                if session.get(BranchSavedRevisionModel, revision.revision_id) is not None:
+                    raise RunIdentityConflictError(
+                        f"branch_id {branch.branch_id!r} is already in use"
+                    )
+                if (
+                    session.get(BranchSavedRevisionModel, revision.revision_id)
+                    is not None
+                ):
                     raise RunIdentityConflictError(
                         f"revision_id {revision.revision_id!r} is already in use"
                     )
-                if session.get(BranchWorkingDraftModel, working_draft.draft_id) is not None:
+                if (
+                    session.get(BranchWorkingDraftModel, working_draft.draft_id)
+                    is not None
+                ):
                     raise RunIdentityConflictError(
                         f"draft_id {working_draft.draft_id!r} is already in use"
                     )
@@ -1546,52 +1997,103 @@ class SimulationPersistenceRepository:
             model = session.get(RunContainerModel, run_id)
             if model is None:
                 return None
-            count = session.scalar(select(func.count(LegacySimulationRunMappingModel.simulation_run_id)).where(LegacySimulationRunMappingModel.run_id == run_id)) or 0
+            count = (
+                session.scalar(
+                    select(
+                        func.count(LegacySimulationRunMappingModel.simulation_run_id)
+                    ).where(LegacySimulationRunMappingModel.run_id == run_id)
+                )
+                or 0
+            )
             return self._to_run_container(model, int(count))
 
     def list_run_containers(self) -> list[RunContainerRecord]:
         with self._session_factory() as session:
-            counts = dict(session.execute(select(LegacySimulationRunMappingModel.run_id, func.count()).group_by(LegacySimulationRunMappingModel.run_id)).all())
-            return [self._to_run_container(model, int(counts.get(model.run_id, 0))) for model in session.execute(select(RunContainerModel).order_by(RunContainerModel.run_id)).scalars()]
+            counts = dict(
+                session.execute(
+                    select(
+                        LegacySimulationRunMappingModel.run_id, func.count()
+                    ).group_by(LegacySimulationRunMappingModel.run_id)
+                ).all()
+            )
+            return [
+                self._to_run_container(model, int(counts.get(model.run_id, 0)))
+                for model in session.execute(
+                    select(RunContainerModel).order_by(RunContainerModel.run_id)
+                ).scalars()
+            ]
 
-    def get_run_container_for_simulation_run(self, *, simulation_run_id: str) -> RunContainerRecord | None:
+    def get_run_container_for_simulation_run(
+        self, *, simulation_run_id: str
+    ) -> RunContainerRecord | None:
         with self._session_factory() as session:
             mapping = session.get(LegacySimulationRunMappingModel, simulation_run_id)
             if mapping is None:
                 return None
         return self.get_run_container(run_id=mapping.run_id)
 
-    def ensure_run_container_for_simulation_run(self, *, simulation_run_id: str) -> RunContainerRecord | None:
+    def ensure_run_container_for_simulation_run(
+        self, *, simulation_run_id: str
+    ) -> RunContainerRecord | None:
         legacy = self.get_simulation_run(run_id=simulation_run_id)
         if legacy is None:
             return None
-        container = self.create_run_container(RunContainerRecord(
-            run_id=legacy.run_id, display_name=None, storage_kind="custom_local", read_only=False,
-            world_id=legacy.world_id, world_package_fingerprint=legacy.world_generation_fingerprint,
-            config_version=legacy.config_version, config_fingerprint=legacy.config_fingerprint, global_seed=legacy.seed,
-            timeline_start_season=legacy.season, timeline_end_season=legacy.season, official_branch_id=None,
-            status="active", metadata={},
-        ))
+        container = self.create_run_container(
+            RunContainerRecord(
+                run_id=legacy.run_id,
+                display_name=None,
+                storage_kind="custom_local",
+                read_only=False,
+                world_id=legacy.world_id,
+                world_package_fingerprint=legacy.world_generation_fingerprint,
+                config_version=legacy.config_version,
+                config_fingerprint=legacy.config_fingerprint,
+                global_seed=legacy.seed,
+                timeline_start_season=legacy.season,
+                timeline_end_season=legacy.season,
+                official_branch_id=None,
+                status="active",
+                metadata={},
+            )
+        )
         with self._session_factory.begin() as session:
             if session.get(LegacySimulationRunMappingModel, simulation_run_id) is None:
-                session.add(LegacySimulationRunMappingModel(simulation_run_id=simulation_run_id, run_id=container.run_id))
-        self.ensure_default_branch_for_simulation_run(simulation_run_id=simulation_run_id)
+                session.add(
+                    LegacySimulationRunMappingModel(
+                        simulation_run_id=simulation_run_id, run_id=container.run_id
+                    )
+                )
+        self.ensure_default_branch_for_simulation_run(
+            simulation_run_id=simulation_run_id
+        )
         return self.get_run_container(run_id=container.run_id)
 
     def backfill_run_containers_for_existing_simulation_runs(self) -> None:
         for legacy in self.list_simulation_runs():
-            self.ensure_run_container_for_simulation_run(simulation_run_id=legacy.run_id)
+            self.ensure_run_container_for_simulation_run(
+                simulation_run_id=legacy.run_id
+            )
 
     @staticmethod
-    def deterministic_default_branch_id(*, run_id: str, legacy_simulation_run_id: str) -> str:
-        digest = hashlib.sha256(f"{run_id}\x00{legacy_simulation_run_id}".encode("utf-8")).hexdigest()[:24]
+    def deterministic_default_branch_id(
+        *, run_id: str, legacy_simulation_run_id: str
+    ) -> str:
+        digest = hashlib.sha256(
+            f"{run_id}\x00{legacy_simulation_run_id}".encode("utf-8")
+        ).hexdigest()[:24]
         return f"branch-{digest}"
 
     @staticmethod
-    def _to_run_branch(model: RunBranchModel, *, official_branch_id: str | None) -> RunBranchRecord:
+    def _to_run_branch(
+        model: RunBranchModel, *, official_branch_id: str | None
+    ) -> RunBranchRecord:
         return RunBranchRecord(
-            branch_id=model.branch_id, run_id=model.run_id, display_name=model.display_name,
-            status=model.status, read_only=bool(model.read_only), branch_seed=model.branch_seed,
+            branch_id=model.branch_id,
+            run_id=model.run_id,
+            display_name=model.display_name,
+            status=model.status,
+            read_only=bool(model.read_only),
+            branch_seed=model.branch_seed,
             forked_from_branch_id=model.forked_from_branch_id,
             forked_from_checkpoint_id=model.forked_from_checkpoint_id,
             forked_from_saved_revision_id=model.forked_from_saved_revision_id,
@@ -1605,19 +2107,25 @@ class SimulationPersistenceRepository:
     def create_run_branch(self, record: RunBranchRecord) -> RunBranchRecord:
         with self._session_factory.begin() as session:
             if session.get(RunBranchModel, record.branch_id) is None:
-                session.add(RunBranchModel(
-                    branch_id=record.branch_id, run_id=record.run_id, display_name=record.display_name,
-                    status=record.status, read_only=int(record.read_only), branch_seed=record.branch_seed,
-                    forked_from_branch_id=record.forked_from_branch_id,
-                    forked_from_checkpoint_id=record.forked_from_checkpoint_id,
-                    forked_from_saved_revision_id=(
-                        record.forked_from_saved_revision_id
-                    ),
-                    saved_head_revision_id=record.saved_head_revision_id,
-                    head_checkpoint_id=record.head_checkpoint_id,
-                    legacy_simulation_run_id=record.legacy_simulation_run_id,
-                    metadata_json=_to_json(record.metadata),
-                ))
+                session.add(
+                    RunBranchModel(
+                        branch_id=record.branch_id,
+                        run_id=record.run_id,
+                        display_name=record.display_name,
+                        status=record.status,
+                        read_only=int(record.read_only),
+                        branch_seed=record.branch_seed,
+                        forked_from_branch_id=record.forked_from_branch_id,
+                        forked_from_checkpoint_id=record.forked_from_checkpoint_id,
+                        forked_from_saved_revision_id=(
+                            record.forked_from_saved_revision_id
+                        ),
+                        saved_head_revision_id=record.saved_head_revision_id,
+                        head_checkpoint_id=record.head_checkpoint_id,
+                        legacy_simulation_run_id=record.legacy_simulation_run_id,
+                        metadata_json=_to_json(record.metadata),
+                    )
+                )
         created = self.get_run_branch(branch_id=record.branch_id)
         self.ensure_branch_state_for_branch(branch_id=record.branch_id)
         return created  # type: ignore[return-value]
@@ -1628,7 +2136,10 @@ class SimulationPersistenceRepository:
             if model is None:
                 return None
             container = session.get(RunContainerModel, model.run_id)
-            return self._to_run_branch(model, official_branch_id=container.official_branch_id if container else None)
+            return self._to_run_branch(
+                model,
+                official_branch_id=container.official_branch_id if container else None,
+            )
 
     def _validated_saved_revision_in_session(
         self,
@@ -1844,7 +2355,9 @@ class SimulationPersistenceRepository:
                         "Branch creation from ranking-bearing Saved Revisions requires "
                         "ranking identity remapping, which is not yet supported"
                     )
-                if INITIAL_WORLD_COMPONENT_KEY in source_revision.payload.get("content", {}):
+                if INITIAL_WORLD_COMPONENT_KEY in source_revision.payload.get(
+                    "content", {}
+                ):
                     raise SavedRevisionBranchForkConflictError(
                         "Branch creation from initial-world Saved Revisions requires "
                         "player snapshot identity remapping, which is not yet supported"
@@ -1959,7 +2472,9 @@ class SimulationPersistenceRepository:
                 f"Saved Revision {model.revision_id} contains malformed JSON"
             )
         try:
-            load_saved_ranking_component(payload, run_id=model.run_id, branch_id=model.branch_id)
+            load_saved_ranking_component(
+                payload, run_id=model.run_id, branch_id=model.branch_id
+            )
         except (TypeError, ValueError) as exc:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {model.revision_id} has invalid ranking content: {exc}"
@@ -2032,9 +2547,7 @@ class SimulationPersistenceRepository:
         with self._session_factory() as session:
             run = session.get(RunContainerModel, run_id)
             if run is None:
-                raise SavedRevisionHistoryNotFoundError(
-                    f"Run {run_id!r} was not found"
-                )
+                raise SavedRevisionHistoryNotFoundError(f"Run {run_id!r} was not found")
             branch = session.get(RunBranchModel, branch_id)
             if branch is None or branch.run_id != run_id:
                 raise SavedRevisionHistoryNotFoundError(
@@ -2082,9 +2595,7 @@ class SimulationPersistenceRepository:
             and revision.content_hash == _saved_revision_record_content_hash(revision)
         )
 
-    def get_branch_revision_state(
-        self, *, branch_id: str
-    ) -> BranchRevisionStateRecord:
+    def get_branch_revision_state(self, *, branch_id: str) -> BranchRevisionStateRecord:
         """Load the coherent Saved Revision/Working Draft boundary for a Branch."""
 
         with self._session_factory() as session:
@@ -2172,9 +2683,7 @@ class SimulationPersistenceRepository:
             state = self._validated_branch_revision_state_in_session(
                 session=session, branch=branch
             )
-            saved_viewer_id = saved_viewer_branch_id(
-                state.saved_revision.payload
-            )
+            saved_viewer_id = saved_viewer_branch_id(state.saved_revision.payload)
             if state.working_draft.status == CLEAN_WORKING_DRAFT_STATUS:
                 proposed_viewer_id = saved_viewer_id
             else:
@@ -2261,9 +2770,7 @@ class SimulationPersistenceRepository:
             else:
                 status_value = DIRTY_WORKING_DRAFT_STATUS
                 changes = [
-                    viewer_branch_selection_change(
-                        viewer_branch_id=viewer_branch_id
-                    )
+                    viewer_branch_selection_change(viewer_branch_id=viewer_branch_id)
                 ]
             if (
                 status_value == draft.status
@@ -2275,8 +2782,7 @@ class SimulationPersistenceRepository:
                 update(BranchWorkingDraftModel)
                 .where(
                     BranchWorkingDraftModel.draft_id == draft.draft_id,
-                    BranchWorkingDraftModel.draft_version
-                    == expected_draft_version,
+                    BranchWorkingDraftModel.draft_version == expected_draft_version,
                 )
                 .values(
                     status=status_value,
@@ -2292,9 +2798,7 @@ class SimulationPersistenceRepository:
                     "Working Draft changed concurrently"
                 )
 
-        return self.get_viewer_branch_working_draft(
-            run_id=run_id, branch_id=branch_id
-        )
+        return self.get_viewer_branch_working_draft(run_id=run_id, branch_id=branch_id)
 
     @staticmethod
     def _to_branch_revision_audit_event(
@@ -2343,9 +2847,7 @@ class SimulationPersistenceRepository:
                     BranchRevisionAuditEventModel.audit_event_id,
                 )
             )
-            return [
-                self._to_branch_revision_audit_event(model) for model in models
-            ]
+            return [self._to_branch_revision_audit_event(model) for model in models]
 
     @staticmethod
     def _to_branch_saved_revision_checkpoint(
@@ -2412,8 +2914,7 @@ class SimulationPersistenceRepository:
                 )
             )
             return [
-                self._to_branch_saved_revision_checkpoint(model)
-                for model in models
+                self._to_branch_saved_revision_checkpoint(model) for model in models
             ]
 
     def restore_branch_saved_revision_atomically(
@@ -2505,9 +3006,7 @@ class SimulationPersistenceRepository:
                     raise SavedRevisionRestoreVersionConflictError(
                         "Viewer Branch changed since restore preview"
                     )
-                previous_viewer = session.get(
-                    RunBranchModel, previous_viewer_branch_id
-                )
+                previous_viewer = session.get(RunBranchModel, previous_viewer_branch_id)
                 if (
                     previous_viewer is None
                     or previous_viewer.run_id != run_id
@@ -2522,14 +3021,16 @@ class SimulationPersistenceRepository:
                 # requiring a valid ranking chain or supported ranking fork ancestry.
                 has_uncaptured_ranking = any(
                     session.scalar(
-                        select(model.run_id).where(
-                            model.run_id == run_id, model.branch_id == branch_id
-                        ).limit(1)
-                    ) is not None
+                        select(model.run_id)
+                        .where(model.run_id == run_id, model.branch_id == branch_id)
+                        .limit(1)
+                    )
+                    is not None
                     for model in (
                         OfficialRankingCandidateModel,
                         OfficialRankingCommandModel,
-                        OfficialRankingResultVersionModel, OfficialRankingZeroVersionModel,
+                        OfficialRankingResultVersionModel,
+                        OfficialRankingZeroVersionModel,
                         RankingTransitionAuthorityModel,
                         AuthoritativeWorldStateModel,
                         PublishedOfficialRankingModel,
@@ -2537,15 +3038,44 @@ class SimulationPersistenceRepository:
                         AuthoritativeWorldEventModel,
                     )
                 )
-                if has_uncaptured_ranking and RANKING_COMPONENT_KEY not in state.saved_revision.payload.get("content", {}):
+                if (
+                    has_uncaptured_ranking
+                    and RANKING_COMPONENT_KEY
+                    not in state.saved_revision.payload.get("content", {})
+                ):
                     raise SavedRevisionRestoreUnsupportedError(
                         "restore is blocked because the Saved Revision does not yet "
                         "capture the complete ranking preparation state"
                     )
-                has_uncaptured_initial_world = session.get(InitialWorldStateModel, (run_id, branch_id)) is not None
-                if has_uncaptured_initial_world and INITIAL_WORLD_COMPONENT_KEY not in state.saved_revision.payload.get("content", {}):
+                has_uncaptured_initial_world = (
+                    session.get(InitialWorldStateModel, (run_id, branch_id)) is not None
+                )
+                if (
+                    has_uncaptured_initial_world
+                    and INITIAL_WORLD_COMPONENT_KEY
+                    not in state.saved_revision.payload.get("content", {})
+                ):
                     raise SavedRevisionRestoreUnsupportedError(
                         "restore is blocked because the Saved Revision does not capture the initial world"
+                    )
+                has_uncaptured_lifecycle = (
+                    session.scalar(
+                        select(PlayerLifecycleWeekStateModel.run_id)
+                        .where(
+                            PlayerLifecycleWeekStateModel.run_id == run_id,
+                            PlayerLifecycleWeekStateModel.branch_id == branch_id,
+                        )
+                        .limit(1)
+                    )
+                    is not None
+                )
+                if (
+                    has_uncaptured_lifecycle
+                    and PLAYER_LIFECYCLE_COMPONENT_KEY
+                    not in state.saved_revision.payload.get("content", {})
+                ):
+                    raise SavedRevisionRestoreUnsupportedError(
+                        "restore is blocked because the Saved Revision does not capture player lifecycle state"
                     )
 
                 supported_payload_schemas = {
@@ -2574,8 +3104,18 @@ class SimulationPersistenceRepository:
                     not in supported_payload_schemas
                     or not isinstance(current_content, dict)
                     or not isinstance(target_content, dict)
-                    or set(current_content) - {RANKING_COMPONENT_KEY, INITIAL_WORLD_COMPONENT_KEY}
-                    or set(target_content) - {RANKING_COMPONENT_KEY, INITIAL_WORLD_COMPONENT_KEY}
+                    or set(current_content)
+                    - {
+                        RANKING_COMPONENT_KEY,
+                        INITIAL_WORLD_COMPONENT_KEY,
+                        PLAYER_LIFECYCLE_COMPONENT_KEY,
+                    }
+                    or set(target_content)
+                    - {
+                        RANKING_COMPONENT_KEY,
+                        INITIAL_WORLD_COMPONENT_KEY,
+                        PLAYER_LIFECYCLE_COMPONENT_KEY,
+                    }
                     or has_unrestorable_run_state
                 ):
                     raise SavedRevisionRestoreUnsupportedError(
@@ -2589,9 +3129,7 @@ class SimulationPersistenceRepository:
                     )
                 except ValueError as exc:
                     raise SavedRevisionRestoreConflictError(str(exc)) from exc
-                restored_viewer = session.get(
-                    RunBranchModel, restored_viewer_branch_id
-                )
+                restored_viewer = session.get(RunBranchModel, restored_viewer_branch_id)
                 if (
                     restored_viewer is None
                     or restored_viewer.run_id != run_id
@@ -2604,9 +3142,7 @@ class SimulationPersistenceRepository:
                 if (
                     session.get(BranchSavedRevisionCheckpointModel, checkpoint_id)
                     is not None
-                    or session.get(
-                        BranchSavedRevisionModel, restore_saved_revision_id
-                    )
+                    or session.get(BranchSavedRevisionModel, restore_saved_revision_id)
                     is not None
                     or session.get(BranchRevisionAuditEventModel, audit_event_id)
                     is not None
@@ -2615,26 +3151,54 @@ class SimulationPersistenceRepository:
                         "generated restore identity is already in use"
                     )
 
-                if RANKING_COMPONENT_KEY in current_content or RANKING_COMPONENT_KEY in target_content:
+                if (
+                    RANKING_COMPONENT_KEY in current_content
+                    or RANKING_COMPONENT_KEY in target_content
+                ):
                     try:
                         restore_saved_ranking_component(
-                            session, current_payload=state.saved_revision.payload,
-                            target_payload=target_revision.payload, run_id=run_id,
-                            branch_id=branch_id, command_id=restore_saved_revision_id,
+                            session,
+                            current_payload=state.saved_revision.payload,
+                            target_payload=target_revision.payload,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                            command_id=restore_saved_revision_id,
                         )
                     except ValueError as exc:
                         raise SavedRevisionRestoreUnsupportedError(
                             f"Cannot restore ranking preparation: {exc}"
                         ) from exc
-                if INITIAL_WORLD_COMPONENT_KEY in current_content or INITIAL_WORLD_COMPONENT_KEY in target_content:
+                if (
+                    INITIAL_WORLD_COMPONENT_KEY in current_content
+                    or INITIAL_WORLD_COMPONENT_KEY in target_content
+                ):
                     try:
                         restore_saved_initial_world(
-                            session, current_payload=state.saved_revision.payload,
-                            target_payload=target_revision.payload, run_id=run_id, branch_id=branch_id,
+                            session,
+                            current_payload=state.saved_revision.payload,
+                            target_payload=target_revision.payload,
+                            run_id=run_id,
+                            branch_id=branch_id,
                         )
                     except ValueError as exc:
                         raise SavedRevisionRestoreUnsupportedError(
                             f"Cannot restore initial world: {exc}"
+                        ) from exc
+                if (
+                    PLAYER_LIFECYCLE_COMPONENT_KEY in current_content
+                    or PLAYER_LIFECYCLE_COMPONENT_KEY in target_content
+                ):
+                    try:
+                        restore_saved_lifecycle(
+                            session,
+                            current_payload=state.saved_revision.payload,
+                            target_payload=target_revision.payload,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                        )
+                    except ValueError as exc:
+                        raise SavedRevisionRestoreUnsupportedError(
+                            f"Cannot restore player lifecycle: {exc}"
                         ) from exc
 
                 payload = viewer_branch_saved_revision_payload(
@@ -2652,6 +3216,12 @@ class SimulationPersistenceRepository:
                         branch.forked_from_saved_revision_id
                     ),
                     viewer_branch_id=restored_viewer_branch_id,
+                )
+                # A compatibility restore may have reconstructed lifecycle from an
+                # immutable legacy target. The new restore revision must describe
+                # the actual post-restore state, without rewriting that target.
+                capture_saved_lifecycle(
+                    session, payload, run_id=run_id, branch_id=branch_id
                 )
                 summary = branch_restore_saved_revision_change_summary(
                     previous_head_revision_id=previous_head_revision_id,
@@ -2691,10 +3261,8 @@ class SimulationPersistenceRepository:
                         == state.working_draft.draft_id,
                         BranchWorkingDraftModel.base_revision_id
                         == expected_head_saved_revision_id,
-                        BranchWorkingDraftModel.draft_version
-                        == expected_draft_version,
-                        BranchWorkingDraftModel.status
-                        == CLEAN_WORKING_DRAFT_STATUS,
+                        BranchWorkingDraftModel.draft_version == expected_draft_version,
+                        BranchWorkingDraftModel.status == CLEAN_WORKING_DRAFT_STATUS,
                     )
                     .values(
                         base_revision_id=restore_saved_revision_id,
@@ -2784,9 +3352,7 @@ class SimulationPersistenceRepository:
                                 "previous_saved_head_revision_id": (
                                     previous_head_revision_id
                                 ),
-                                "target_saved_revision_id": (
-                                    target_saved_revision_id
-                                ),
+                                "target_saved_revision_id": (target_saved_revision_id),
                                 "previous_viewer_branch_id": (
                                     previous_viewer_branch_id
                                 ),
@@ -2808,9 +3374,7 @@ class SimulationPersistenceRepository:
         checkpoint = self.get_branch_saved_revision_checkpoint(
             checkpoint_id=checkpoint_id
         )
-        revision = self.get_branch_saved_revision(
-            revision_id=restore_saved_revision_id
-        )
+        revision = self.get_branch_saved_revision(revision_id=restore_saved_revision_id)
         audit = self.get_branch_revision_audit_event(audit_event_id=audit_event_id)
         if checkpoint is None or revision is None or audit is None:  # pragma: no cover
             raise RuntimeError("Saved Revision restore result could not be reloaded")
@@ -2830,44 +3394,76 @@ class SimulationPersistenceRepository:
         )
 
     def preview_ranking_save(self, *, run_id: str, branch_id: str) -> dict:
-        from beta_engine.infrastructure.db.ranking_revision_state import capture_ranking_revision_state
+        from beta_engine.infrastructure.db.ranking_revision_state import (
+            capture_ranking_revision_state,
+        )
+
         with self._session_factory.begin() as session:
             session.execute(text("BEGIN"))
-            draft = self._viewer_branch_working_draft_in_session(session=session, run_id=run_id, branch_id=branch_id)
-            ranking = capture_ranking_revision_state(session, run_id=run_id, branch_id=branch_id)
-            state = self._validated_branch_revision_state_in_session(session=session, branch=session.get(RunBranchModel, branch_id))
-            saved = load_saved_ranking_component(state.saved_revision.payload, run_id=run_id, branch_id=branch_id)
-            changed = bool(ranking.entries or ranking.sources or ranking.transition_authorities) if saved is None else saved.fingerprint != ranking.fingerprint
+            draft = self._viewer_branch_working_draft_in_session(
+                session=session, run_id=run_id, branch_id=branch_id
+            )
+            ranking = capture_ranking_revision_state(
+                session, run_id=run_id, branch_id=branch_id
+            )
+            state = self._validated_branch_revision_state_in_session(
+                session=session, branch=session.get(RunBranchModel, branch_id)
+            )
+            saved = load_saved_ranking_component(
+                state.saved_revision.payload, run_id=run_id, branch_id=branch_id
+            )
+            changed = (
+                bool(
+                    ranking.entries or ranking.sources or ranking.transition_authorities
+                )
+                if saved is None
+                else saved.fingerprint != ranking.fingerprint
+            )
             return {
-                "run_id": run_id, "branch_id": branch_id,
+                "run_id": run_id,
+                "branch_id": branch_id,
                 "ranking_fingerprint": ranking.fingerprint,
                 "saved_head_revision_id": state.saved_head_revision_id,
                 "draft_version": draft.draft_version,
                 "has_unsaved_changes": changed,
-                "can_save": changed and draft.status == CLEAN_WORKING_DRAFT_STATUS
-                    and not session.get(RunContainerModel, run_id).read_only
-                    and not session.get(RunBranchModel, branch_id).read_only
-                    and session.get(RunBranchModel, branch_id).status == "active",
+                "can_save": changed
+                and draft.status == CLEAN_WORKING_DRAFT_STATUS
+                and not session.get(RunContainerModel, run_id).read_only
+                and not session.get(RunBranchModel, branch_id).read_only
+                and session.get(RunBranchModel, branch_id).status == "active",
             }
 
     def preview_initial_world_save(self, *, run_id: str, branch_id: str) -> dict:
         with self._session_factory.begin() as session:
             session.execute(text("BEGIN"))
-            draft = self._viewer_branch_working_draft_in_session(session=session, run_id=run_id, branch_id=branch_id)
+            draft = self._viewer_branch_working_draft_in_session(
+                session=session, run_id=run_id, branch_id=branch_id
+            )
             world = get_initial_world(session, run_id=run_id, branch_id=branch_id)
             if world is None:
                 raise ValueError("Initial world has not been adopted")
-            state = self._validated_branch_revision_state_in_session(session=session, branch=session.get(RunBranchModel, branch_id))
-            saved = load_saved_initial_world(state.saved_revision.payload, run_id=run_id, branch_id=branch_id)
+            state = self._validated_branch_revision_state_in_session(
+                session=session, branch=session.get(RunBranchModel, branch_id)
+            )
+            saved = load_saved_initial_world(
+                state.saved_revision.payload, run_id=run_id, branch_id=branch_id
+            )
             changed = saved is None or saved.fingerprint != world.fingerprint
             run = session.get(RunContainerModel, run_id)
             branch = session.get(RunBranchModel, branch_id)
-            return {"run_id": run_id, "branch_id": branch_id,
-                    "initial_world_fingerprint": world.fingerprint,
-                    "saved_head_revision_id": state.saved_head_revision_id,
-                    "draft_version": draft.draft_version, "has_unsaved_changes": changed,
-                    "can_save": changed and draft.status == CLEAN_WORKING_DRAFT_STATUS
-                    and not run.read_only and not branch.read_only and branch.status == "active"}
+            return {
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "initial_world_fingerprint": world.fingerprint,
+                "saved_head_revision_id": state.saved_head_revision_id,
+                "draft_version": draft.draft_version,
+                "has_unsaved_changes": changed,
+                "can_save": changed
+                and draft.status == CLEAN_WORKING_DRAFT_STATUS
+                and not run.read_only
+                and not branch.read_only
+                and branch.status == "active",
+            }
 
     def save_viewer_branch_selection_atomically(
         self,
@@ -2882,9 +3478,20 @@ class SimulationPersistenceRepository:
     ) -> ViewerBranchSaveResult:
         """Commit one dirty draft as revision, audit, Viewer pointer, and clean draft."""
 
-        component_only = expected_ranking_fingerprint is not None or expected_initial_world_fingerprint is not None
+        component_only = (
+            expected_ranking_fingerprint is not None
+            or expected_initial_world_fingerprint is not None
+        )
         ranking_only = expected_ranking_fingerprint is not None
-        revision_kind = "ranking_preparation" if ranking_only else ("initial_world" if component_only else VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND)
+        revision_kind = (
+            "ranking_preparation"
+            if ranking_only
+            else (
+                "initial_world"
+                if component_only
+                else VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND
+            )
+        )
         previous_current_viewer_id = ""
         target_viewer_id = ""
         try:
@@ -2909,12 +3516,18 @@ class SimulationPersistenceRepository:
                         f"found {draft.draft_version}"
                     )
                 if component_only and draft.status != CLEAN_WORKING_DRAFT_STATUS:
-                    raise WorkingDraftConflictError("Resolve the pending Working Draft before saving a component separately")
+                    raise WorkingDraftConflictError(
+                        "Resolve the pending Working Draft before saving a component separately"
+                    )
                 if not component_only and not draft.can_save:
                     raise WorkingDraftConflictError(
                         "Working Draft is clean and has nothing to save"
                     )
-                target_viewer_id = draft.current_viewer_branch_id if component_only else draft.proposed_viewer_branch_id
+                target_viewer_id = (
+                    draft.current_viewer_branch_id
+                    if component_only
+                    else draft.proposed_viewer_branch_id
+                )
                 target = session.get(RunBranchModel, target_viewer_id)
                 if target is None or target.run_id != run_id:
                     raise WorkingDraftConflictError(
@@ -2943,8 +3556,10 @@ class SimulationPersistenceRepository:
                     saved_viewer_id = saved_viewer_branch_id(
                         state.saved_revision.payload
                     )
-                    parsed_target_id = target_viewer_id if component_only else viewer_branch_id_from_changes(
-                        state.working_draft.changes
+                    parsed_target_id = (
+                        target_viewer_id
+                        if component_only
+                        else viewer_branch_id_from_changes(state.working_draft.changes)
                     )
                 except (BranchRevisionStateConflictError, ValueError) as exc:
                     raise WorkingDraftConflictError(str(exc)) from exc
@@ -2981,30 +3596,61 @@ class SimulationPersistenceRepository:
                     raise WorkingDraftConflictError(
                         f"Cannot save complete ranking preparation: {exc}"
                     ) from exc
-                capture_saved_initial_world(session, payload, run_id=run_id, branch_id=branch_id)
+                capture_saved_initial_world(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
+                capture_saved_lifecycle(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
                 summary = viewer_branch_saved_revision_change_summary(
                     previous_viewer_branch_id=saved_viewer_id,
                     viewer_branch_id=target_viewer_id,
                 )
                 if ranking_only:
                     component = payload["content"].get(RANKING_COMPONENT_KEY)
-                    if component is None or component["fingerprint"] != expected_ranking_fingerprint:
-                        raise WorkingDraftConflictError("Ranking preparation changed since preview")
-                    previous_component = state.saved_revision.payload["content"].get(RANKING_COMPONENT_KEY)
+                    if (
+                        component is None
+                        or component["fingerprint"] != expected_ranking_fingerprint
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Ranking preparation changed since preview"
+                        )
+                    previous_component = state.saved_revision.payload["content"].get(
+                        RANKING_COMPONENT_KEY
+                    )
                     if previous_component == component:
-                        raise WorkingDraftConflictError("Ranking preparation is already saved")
+                        raise WorkingDraftConflictError(
+                            "Ranking preparation is already saved"
+                        )
                     summary = {
-                        "kind": "ranking_preparation", "summary": "Saved ranking preparation",
+                        "kind": "ranking_preparation",
+                        "summary": "Saved ranking preparation",
                         "ranking_fingerprint": component["fingerprint"],
                     }
                 elif expected_initial_world_fingerprint is not None:
                     component = payload["content"].get(INITIAL_WORLD_COMPONENT_KEY)
-                    if component is None or component["fingerprint"] != expected_initial_world_fingerprint:
-                        raise WorkingDraftConflictError("Initial world changed since preview")
-                    if state.saved_revision.payload["content"].get(INITIAL_WORLD_COMPONENT_KEY) == component:
-                        raise WorkingDraftConflictError("Initial world is already saved")
-                    summary = {"kind": "initial_world", "summary": "Saved initial world",
-                               "initial_world_fingerprint": component["fingerprint"]}
+                    if (
+                        component is None
+                        or component["fingerprint"]
+                        != expected_initial_world_fingerprint
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Initial world changed since preview"
+                        )
+                    if (
+                        state.saved_revision.payload["content"].get(
+                            INITIAL_WORLD_COMPONENT_KEY
+                        )
+                        == component
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Initial world is already saved"
+                        )
+                    summary = {
+                        "kind": "initial_world",
+                        "summary": "Saved initial world",
+                        "initial_world_fingerprint": component["fingerprint"],
+                    }
                 sequence = state.saved_revision.sequence + 1
                 content_hash = saved_revision_content_hash(
                     revision_id=revision_id,
@@ -3013,24 +3659,19 @@ class SimulationPersistenceRepository:
                     sequence=sequence,
                     parent_revision_id=state.saved_revision.revision_id,
                     kind=revision_kind,
-                    payload_schema_version=(
-                        RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION
-                    ),
+                    payload_schema_version=(RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION),
                     payload=payload,
                     change_summary=summary,
                 )
                 previous_current_viewer_id = (run.official_branch_id or "").strip()
                 if not previous_current_viewer_id:
-                    raise WorkingDraftConflictError(
-                        "Run has no current Viewer Branch"
-                    )
+                    raise WorkingDraftConflictError("Run has no current Viewer Branch")
 
                 claimed = session.execute(
                     update(BranchWorkingDraftModel)
                     .where(
                         BranchWorkingDraftModel.draft_id == draft.draft_id,
-                        BranchWorkingDraftModel.draft_version
-                        == expected_draft_version,
+                        BranchWorkingDraftModel.draft_version == expected_draft_version,
                     )
                     .values(
                         base_revision_id=revision_id,
@@ -3095,9 +3736,7 @@ class SimulationPersistenceRepository:
             ) from exc
 
         revision = self.get_branch_saved_revision(revision_id=revision_id)
-        audit = self.get_branch_revision_audit_event(
-            audit_event_id=audit_event_id
-        )
+        audit = self.get_branch_revision_audit_event(audit_event_id=audit_event_id)
         if revision is None or audit is None:  # pragma: no cover
             raise RuntimeError("saved revision result could not be reloaded")
         return ViewerBranchSaveResult(
@@ -3112,41 +3751,74 @@ class SimulationPersistenceRepository:
             audit_event=audit,
         )
 
-    def get_viewer_official_run_context(self, *, product_run_id: str) -> ViewerOfficialRunContext:
+    def get_viewer_official_run_context(
+        self, *, product_run_id: str
+    ) -> ViewerOfficialRunContext:
         """Resolve the current official Branch and legacy Viewer namespace without mutation."""
         with self._session_factory() as session:
             container = session.get(RunContainerModel, product_run_id)
             if container is None:
-                raise ViewerOfficialRunContextNotFoundError(f"product run {product_run_id} was not found")
+                raise ViewerOfficialRunContextNotFoundError(
+                    f"product run {product_run_id} was not found"
+                )
             official_branch_id = (container.official_branch_id or "").strip()
             if not official_branch_id:
-                raise ViewerOfficialRunContextConflictError("product run has no official branch")
+                raise ViewerOfficialRunContextConflictError(
+                    "product run has no official branch"
+                )
             branch = session.get(RunBranchModel, official_branch_id)
             if branch is None or branch.run_id != product_run_id:
-                raise ViewerOfficialRunContextConflictError("official branch is missing or belongs to another product run")
+                raise ViewerOfficialRunContextConflictError(
+                    "official branch is missing or belongs to another product run"
+                )
             legacy_simulation_run_id = (branch.legacy_simulation_run_id or "").strip()
-            if not legacy_simulation_run_id or session.get(SimulationRunModel, legacy_simulation_run_id) is None:
-                raise ViewerOfficialRunContextConflictError("official branch has no valid legacy simulation run binding")
+            if (
+                not legacy_simulation_run_id
+                or session.get(SimulationRunModel, legacy_simulation_run_id) is None
+            ):
+                raise ViewerOfficialRunContextConflictError(
+                    "official branch has no valid legacy simulation run binding"
+                )
             state = session.get(BranchStateModel, official_branch_id)
             if state is None or state.run_id != product_run_id:
-                raise ViewerOfficialRunContextConflictError("official branch state is missing or belongs to another product run")
+                raise ViewerOfficialRunContextConflictError(
+                    "official branch state is missing or belongs to another product run"
+                )
             if branch.head_checkpoint_id != state.head_checkpoint_id:
-                raise ViewerOfficialRunContextConflictError("official branch and branch state heads disagree")
+                raise ViewerOfficialRunContextConflictError(
+                    "official branch and branch state heads disagree"
+                )
             head_checkpoint_id = (state.head_checkpoint_id or "").strip()
             if not head_checkpoint_id:
-                raise ViewerOfficialRunContextConflictError("official branch has no effective head checkpoint")
+                raise ViewerOfficialRunContextConflictError(
+                    "official branch has no effective head checkpoint"
+                )
             checkpoint = session.get(BranchCheckpointModel, head_checkpoint_id)
-            if checkpoint is None or checkpoint.branch_id != official_branch_id or checkpoint.run_id != product_run_id:
-                raise ViewerOfficialRunContextConflictError("effective head checkpoint is missing or incoherent")
+            if (
+                checkpoint is None
+                or checkpoint.branch_id != official_branch_id
+                or checkpoint.run_id != product_run_id
+            ):
+                raise ViewerOfficialRunContextConflictError(
+                    "effective head checkpoint is missing or incoherent"
+                )
             return ViewerOfficialRunContext(
-                product_run_id=container.run_id, product_run_display_name=container.display_name or container.run_id,
-                product_run_status=container.status, product_run_storage_kind=container.storage_kind,
-                product_run_read_only=bool(container.read_only), official_branch_id=branch.branch_id,
-                official_branch_display_name=branch.display_name, official_branch_status=branch.status,
-                official_branch_read_only=bool(branch.read_only), official_branch_seed=branch.branch_seed,
-                legacy_simulation_run_id=legacy_simulation_run_id, head_checkpoint_id=checkpoint.checkpoint_id,
-                head_checkpoint_kind=checkpoint.kind, current_season=state.current_season,
-                current_week=state.current_week, current_event_id=state.current_event_id,
+                product_run_id=container.run_id,
+                product_run_display_name=container.display_name or container.run_id,
+                product_run_status=container.status,
+                product_run_storage_kind=container.storage_kind,
+                product_run_read_only=bool(container.read_only),
+                official_branch_id=branch.branch_id,
+                official_branch_display_name=branch.display_name,
+                official_branch_status=branch.status,
+                official_branch_read_only=bool(branch.read_only),
+                official_branch_seed=branch.branch_seed,
+                legacy_simulation_run_id=legacy_simulation_run_id,
+                head_checkpoint_id=checkpoint.checkpoint_id,
+                head_checkpoint_kind=checkpoint.kind,
+                current_season=state.current_season,
+                current_week=state.current_week,
+                current_event_id=state.current_event_id,
                 current_event_sequence=state.current_event_sequence,
             )
 
@@ -3223,8 +3895,15 @@ class SimulationPersistenceRepository:
         ]
         # Sorting canonicalized rows makes the inventory independent of SQL row order.
         rows.sort(key=lambda row: _to_json(row))
-        content_hash = hashlib.sha256(_to_json({"name": name, "rows": rows}).encode("utf-8")).hexdigest()
-        return LegacyRunCloneInventorySection(name=name, count=len(rows), content_hash=content_hash, copy_policy=copy_policy)
+        content_hash = hashlib.sha256(
+            _to_json({"name": name, "rows": rows}).encode("utf-8")
+        ).hexdigest()
+        return LegacyRunCloneInventorySection(
+            name=name,
+            count=len(rows),
+            content_hash=content_hash,
+            copy_policy=copy_policy,
+        )
 
     def inspect_legacy_run_clone_inventory(
         self,
@@ -3242,48 +3921,137 @@ class SimulationPersistenceRepository:
         with self._session_factory() as session:
             simulation_run = session.get(SimulationRunModel, simulation_run_id)
             if simulation_run is None:
-                raise UnsupportedCloneSourceError(f"legacy simulation run {simulation_run_id} was not found")
+                raise UnsupportedCloneSourceError(
+                    f"legacy simulation run {simulation_run_id} was not found"
+                )
 
             mapping = session.get(LegacySimulationRunMappingModel, simulation_run_id)
-            selected_branch = session.get(RunBranchModel, branch_id) if branch_id else None
+            selected_branch = (
+                session.get(RunBranchModel, branch_id) if branch_id else None
+            )
             if selected_branch is None and branch_id is None:
-                selected_branch = session.execute(
-                    select(RunBranchModel).where(RunBranchModel.legacy_simulation_run_id == simulation_run_id).order_by(RunBranchModel.branch_id)
-                ).scalars().first()
-            resolved_branch_id = selected_branch.branch_id if selected_branch is not None else branch_id
-            product_run_id = selected_branch.run_id if selected_branch is not None else (mapping.run_id if mapping is not None else None)
-            checkpoint = session.get(BranchCheckpointModel, checkpoint_id) if checkpoint_id else None
+                selected_branch = (
+                    session.execute(
+                        select(RunBranchModel)
+                        .where(
+                            RunBranchModel.legacy_simulation_run_id == simulation_run_id
+                        )
+                        .order_by(RunBranchModel.branch_id)
+                    )
+                    .scalars()
+                    .first()
+                )
+            resolved_branch_id = (
+                selected_branch.branch_id if selected_branch is not None else branch_id
+            )
+            product_run_id = (
+                selected_branch.run_id
+                if selected_branch is not None
+                else (mapping.run_id if mapping is not None else None)
+            )
+            checkpoint = (
+                session.get(BranchCheckpointModel, checkpoint_id)
+                if checkpoint_id
+                else None
+            )
 
-            scoped = lambda model: session.execute(select(model).where(model.run_id == simulation_run_id)).scalars().all()
+            scoped = lambda model: (
+                session.execute(select(model).where(model.run_id == simulation_run_id))
+                .scalars()
+                .all()
+            )
             sections = [
-                self._clone_inventory_section(name="simulation_run", models=[simulation_run]),
-                self._clone_inventory_section(name="season_state", models=scoped(SeasonStateModel)),
-                self._clone_inventory_section(name="completed_events", models=scoped(CompletedEventModel)),
-                self._clone_inventory_section(name="completed_event_metadata", models=scoped(CompletedEventMetadataModel)),
-                self._clone_inventory_section(name="completed_tournament_inputs", models=scoped(CompletedTournamentInputModel)),
-                self._clone_inventory_section(name="ranking_snapshots", models=scoped(RankingSnapshotModel)),
-                self._clone_inventory_section(name="race_snapshots", models=scoped(RaceSnapshotModel)),
-                self._clone_inventory_section(name="finals_qualification", models=scoped(FinalsQualificationModel)),
-                self._clone_inventory_section(name="finals_results", models=scoped(FinalsResultModel)),
-                self._clone_inventory_section(name="admin_actions", models=scoped(AdminActionModel)),
-                self._clone_inventory_section(name="season_rollovers", models=scoped(SeasonRolloverModel)),
-                self._clone_inventory_section(name="player_season_transitions", models=scoped(PlayerSeasonTransitionModel)),
-                self._clone_inventory_section(name="next_season_players", models=scoped(NextSeasonPlayerModel)),
-                self._clone_inventory_section(name="run_talent_plans", models=scoped(RunTalentPlanModel)),
-                self._clone_inventory_section(name="run_talent_country_allocations", models=scoped(RunTalentCountryAllocationModel)),
-                self._clone_inventory_section(name="run_generated_player_provenance", models=scoped(RunGeneratedPlayerProvenanceModel)),
-                self._clone_inventory_section(name="run_prospects", models=scoped(RunProspectModel), copy_policy="unsupported"),
+                self._clone_inventory_section(
+                    name="simulation_run", models=[simulation_run]
+                ),
+                self._clone_inventory_section(
+                    name="season_state", models=scoped(SeasonStateModel)
+                ),
+                self._clone_inventory_section(
+                    name="completed_events", models=scoped(CompletedEventModel)
+                ),
+                self._clone_inventory_section(
+                    name="completed_event_metadata",
+                    models=scoped(CompletedEventMetadataModel),
+                ),
+                self._clone_inventory_section(
+                    name="completed_tournament_inputs",
+                    models=scoped(CompletedTournamentInputModel),
+                ),
+                self._clone_inventory_section(
+                    name="ranking_snapshots", models=scoped(RankingSnapshotModel)
+                ),
+                self._clone_inventory_section(
+                    name="race_snapshots", models=scoped(RaceSnapshotModel)
+                ),
+                self._clone_inventory_section(
+                    name="finals_qualification", models=scoped(FinalsQualificationModel)
+                ),
+                self._clone_inventory_section(
+                    name="finals_results", models=scoped(FinalsResultModel)
+                ),
+                self._clone_inventory_section(
+                    name="admin_actions", models=scoped(AdminActionModel)
+                ),
+                self._clone_inventory_section(
+                    name="season_rollovers", models=scoped(SeasonRolloverModel)
+                ),
+                self._clone_inventory_section(
+                    name="player_season_transitions",
+                    models=scoped(PlayerSeasonTransitionModel),
+                ),
+                self._clone_inventory_section(
+                    name="next_season_players", models=scoped(NextSeasonPlayerModel)
+                ),
+                self._clone_inventory_section(
+                    name="run_talent_plans", models=scoped(RunTalentPlanModel)
+                ),
+                self._clone_inventory_section(
+                    name="run_talent_country_allocations",
+                    models=scoped(RunTalentCountryAllocationModel),
+                ),
+                self._clone_inventory_section(
+                    name="run_generated_player_provenance",
+                    models=scoped(RunGeneratedPlayerProvenanceModel),
+                ),
+                self._clone_inventory_section(
+                    name="run_prospects",
+                    models=scoped(RunProspectModel),
+                    copy_policy="unsupported",
+                ),
             ]
             if product_run_id is not None:
-                product_scoped = lambda model: session.execute(select(model).where(model.run_id == product_run_id)).scalars().all()
-                sections.extend([
-                    self._clone_inventory_section(name="run_branches", models=product_scoped(RunBranchModel), copy_policy="excluded_metadata"),
-                    self._clone_inventory_section(name="branch_states", models=product_scoped(BranchStateModel), copy_policy="excluded_metadata"),
-                    self._clone_inventory_section(name="branch_checkpoints", models=product_scoped(BranchCheckpointModel), copy_policy="excluded_metadata"),
-                ])
+                product_scoped = lambda model: (
+                    session.execute(select(model).where(model.run_id == product_run_id))
+                    .scalars()
+                    .all()
+                )
+                sections.extend(
+                    [
+                        self._clone_inventory_section(
+                            name="run_branches",
+                            models=product_scoped(RunBranchModel),
+                            copy_policy="excluded_metadata",
+                        ),
+                        self._clone_inventory_section(
+                            name="branch_states",
+                            models=product_scoped(BranchStateModel),
+                            copy_policy="excluded_metadata",
+                        ),
+                        self._clone_inventory_section(
+                            name="branch_checkpoints",
+                            models=product_scoped(BranchCheckpointModel),
+                            copy_policy="excluded_metadata",
+                        ),
+                    ]
+                )
             else:
                 for name in ("run_branches", "branch_states", "branch_checkpoints"):
-                    sections.append(self._clone_inventory_section(name=name, models=[], copy_policy="excluded_metadata"))
+                    sections.append(
+                        self._clone_inventory_section(
+                            name=name, models=[], copy_policy="excluded_metadata"
+                        )
+                    )
 
             state = session.get(SeasonStateModel, simulation_run_id)
             reasons: list[str] = []
@@ -3296,7 +4064,10 @@ class SimulationPersistenceRepository:
                     reasons.append("source_branch_not_found")
                 elif selected_branch.legacy_simulation_run_id != simulation_run_id:
                     reasons.append("source_branch_legacy_simulation_run_mismatch")
-                elif product_run_id is not None and selected_branch.run_id != product_run_id:
+                elif (
+                    product_run_id is not None
+                    and selected_branch.run_id != product_run_id
+                ):
                     reasons.append("source_branch_product_run_mismatch")
                 elif mapping is not None and mapping.run_id != selected_branch.run_id:
                     reasons.append("source_branch_mapping_product_run_mismatch")
@@ -3304,15 +4075,27 @@ class SimulationPersistenceRepository:
                 if checkpoint is None:
                     reasons.append("source_checkpoint_not_found")
                 else:
-                    if checkpoint.kind not in {BRANCH_CHECKPOINT_KIND_INITIAL, BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE}:
-                        reasons.append(f"checkpoint_kind_{checkpoint.kind}_is_not_clone_safe_yet")
+                    if checkpoint.kind not in {
+                        BRANCH_CHECKPOINT_KIND_INITIAL,
+                        BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE,
+                    }:
+                        reasons.append(
+                            f"checkpoint_kind_{checkpoint.kind}_is_not_clone_safe_yet"
+                        )
                     if product_run_id is None or checkpoint.run_id != product_run_id:
                         reasons.append("source_checkpoint_product_run_mismatch")
-                    if branch_id is not None and (selected_branch is None or checkpoint.branch_id != selected_branch.branch_id):
+                    if branch_id is not None and (
+                        selected_branch is None
+                        or checkpoint.branch_id != selected_branch.branch_id
+                    ):
                         reasons.append("source_checkpoint_branch_mismatch")
-            prospects = next(section for section in sections if section.name == "run_prospects")
+            prospects = next(
+                section for section in sections if section.name == "run_prospects"
+            )
             if prospects.count:
-                reasons.append("run_prospects_are_legacy_run_scoped_and_not_clone_safe_yet")
+                reasons.append(
+                    "run_prospects_are_legacy_run_scoped_and_not_clone_safe_yet"
+                )
 
             checkpoint_kind = checkpoint.kind if checkpoint is not None else None
             inventory_fields = {
@@ -3326,12 +4109,21 @@ class SimulationPersistenceRepository:
                 "next_event_index": state.next_event_index if state else None,
                 "sections": tuple(sections),
             }
-            inventory_hash_payload = {**inventory_fields, "sections": [section.__dict__ for section in sections]}
+            inventory_hash_payload = {
+                **inventory_fields,
+                "sections": [section.__dict__ for section in sections],
+            }
             inventory = LegacyRunCloneInventory(
                 **inventory_fields,
-                inventory_hash=hashlib.sha256(_to_json(inventory_hash_payload).encode("utf-8")).hexdigest(),
+                inventory_hash=hashlib.sha256(
+                    _to_json(inventory_hash_payload).encode("utf-8")
+                ).hexdigest(),
             )
-            return LegacyRunClonePreflightResult(inventory=inventory, clone_safe=not reasons, unsupported_reasons=tuple(reasons))
+            return LegacyRunClonePreflightResult(
+                inventory=inventory,
+                clone_safe=not reasons,
+                unsupported_reasons=tuple(reasons),
+            )
 
     @classmethod
     def _normalized_clone_content_hash(
@@ -3339,20 +4131,36 @@ class SimulationPersistenceRepository:
     ) -> str:
         """Hash all cloned durable data after normalizing namespace/provenance."""
         models = (
-            SimulationRunModel, SeasonStateModel, CompletedEventModel, CompletedEventMetadataModel,
-            CompletedTournamentInputModel, RankingSnapshotModel, RaceSnapshotModel,
-            FinalsQualificationModel, FinalsResultModel, AdminActionModel, SeasonRolloverModel,
-            PlayerSeasonTransitionModel, NextSeasonPlayerModel, RunTalentPlanModel,
-            RunTalentCountryAllocationModel, RunGeneratedPlayerProvenanceModel,
+            SimulationRunModel,
+            SeasonStateModel,
+            CompletedEventModel,
+            CompletedEventMetadataModel,
+            CompletedTournamentInputModel,
+            RankingSnapshotModel,
+            RaceSnapshotModel,
+            FinalsQualificationModel,
+            FinalsResultModel,
+            AdminActionModel,
+            SeasonRolloverModel,
+            PlayerSeasonTransitionModel,
+            NextSeasonPlayerModel,
+            RunTalentPlanModel,
+            RunTalentCountryAllocationModel,
+            RunGeneratedPlayerProvenanceModel,
         )
         sections: dict[str, list[dict[str, object]]] = {}
         for model in models:
-            rows = session.execute(select(model).where(model.run_id == run_id)).scalars().all()
+            rows = (
+                session.execute(select(model).where(model.run_id == run_id))
+                .scalars()
+                .all()
+            )
             canonical_rows = []
             for row in rows:
                 item = {
                     column.name: cls._clone_inventory_value(getattr(row, column.name))
-                    for column in model.__table__.columns if column.name != "id"
+                    for column in model.__table__.columns
+                    if column.name != "id"
                 }
                 item["run_id"] = "<legacy-run>"
                 if model is SimulationRunModel:
@@ -3366,42 +4174,130 @@ class SimulationPersistenceRepository:
         return hashlib.sha256(_to_json(sections).encode("utf-8")).hexdigest()
 
     def _clone_legacy_simulation_run_namespace_in_session(
-        self, *, session: Session, source_simulation_run_id: str, target_simulation_run_id: str,
-        target_seed: int | None = None, preserve_source_seed: bool = False,
+        self,
+        *,
+        session: Session,
+        source_simulation_run_id: str,
+        target_simulation_run_id: str,
+        target_seed: int | None = None,
+        preserve_source_seed: bool = False,
     ) -> tuple[SimulationRunModel, SeasonStateModel, str]:
         """Copy a legacy namespace without opening or committing a transaction."""
         if session.get(SimulationRunModel, target_simulation_run_id) is not None:
-            raise BranchForkTargetExistsError(f"target legacy simulation run {target_simulation_run_id} already exists")
+            raise BranchForkTargetExistsError(
+                f"target legacy simulation run {target_simulation_run_id} already exists"
+            )
         source_run = session.get(SimulationRunModel, source_simulation_run_id)
         source_state = session.get(SeasonStateModel, source_simulation_run_id)
         if source_run is None or source_state is None:
-            raise BranchForkSourceStateMismatchError("source simulation run or season state is missing")
-        copy_models = (CompletedEventModel, CompletedEventMetadataModel, CompletedTournamentInputModel,
-            RankingSnapshotModel, RaceSnapshotModel, FinalsQualificationModel, FinalsResultModel,
-            AdminActionModel, SeasonRolloverModel, PlayerSeasonTransitionModel, NextSeasonPlayerModel,
-            RunTalentPlanModel, RunTalentCountryAllocationModel, RunGeneratedPlayerProvenanceModel)
-        run_values = {column.name: getattr(source_run, column.name) for column in SimulationRunModel.__table__.columns}
-        run_values.update({"run_id": target_simulation_run_id, "seed": source_run.seed if preserve_source_seed else (target_seed if target_seed is not None else source_run.seed), "parent_run_id": source_simulation_run_id, "source_type": "branch_clone"})
-        target_run = SimulationRunModel(**run_values); session.add(target_run)
-        state_values = {column.name: getattr(source_state, column.name) for column in SeasonStateModel.__table__.columns}; state_values["run_id"] = target_simulation_run_id
-        target_state = SeasonStateModel(**state_values); session.add(target_state)
+            raise BranchForkSourceStateMismatchError(
+                "source simulation run or season state is missing"
+            )
+        copy_models = (
+            CompletedEventModel,
+            CompletedEventMetadataModel,
+            CompletedTournamentInputModel,
+            RankingSnapshotModel,
+            RaceSnapshotModel,
+            FinalsQualificationModel,
+            FinalsResultModel,
+            AdminActionModel,
+            SeasonRolloverModel,
+            PlayerSeasonTransitionModel,
+            NextSeasonPlayerModel,
+            RunTalentPlanModel,
+            RunTalentCountryAllocationModel,
+            RunGeneratedPlayerProvenanceModel,
+        )
+        run_values = {
+            column.name: getattr(source_run, column.name)
+            for column in SimulationRunModel.__table__.columns
+        }
+        run_values.update(
+            {
+                "run_id": target_simulation_run_id,
+                "seed": source_run.seed
+                if preserve_source_seed
+                else (target_seed if target_seed is not None else source_run.seed),
+                "parent_run_id": source_simulation_run_id,
+                "source_type": "branch_clone",
+            }
+        )
+        target_run = SimulationRunModel(**run_values)
+        session.add(target_run)
+        state_values = {
+            column.name: getattr(source_state, column.name)
+            for column in SeasonStateModel.__table__.columns
+        }
+        state_values["run_id"] = target_simulation_run_id
+        target_state = SeasonStateModel(**state_values)
+        session.add(target_state)
         for model in copy_models:
-            for row in session.execute(select(model).where(model.run_id == source_simulation_run_id).order_by(*model.__table__.primary_key.columns)).scalars():
-                values = {column.name: getattr(row, column.name) for column in model.__table__.columns if column.name != "id"}; values["run_id"] = target_simulation_run_id
+            for row in session.execute(
+                select(model)
+                .where(model.run_id == source_simulation_run_id)
+                .order_by(*model.__table__.primary_key.columns)
+            ).scalars():
+                values = {
+                    column.name: getattr(row, column.name)
+                    for column in model.__table__.columns
+                    if column.name != "id"
+                }
+                values["run_id"] = target_simulation_run_id
                 session.add(model(**values))
         session.flush()
-        expected = self._normalized_clone_content_hash(session=session, run_id=source_simulation_run_id, expected_clone_seed=source_run.seed if preserve_source_seed else (target_seed if target_seed is not None else source_run.seed))
-        actual = self._normalized_clone_content_hash(session=session, run_id=target_simulation_run_id)
+        expected = self._normalized_clone_content_hash(
+            session=session,
+            run_id=source_simulation_run_id,
+            expected_clone_seed=source_run.seed
+            if preserve_source_seed
+            else (target_seed if target_seed is not None else source_run.seed),
+        )
+        actual = self._normalized_clone_content_hash(
+            session=session, run_id=target_simulation_run_id
+        )
         if actual != expected:
-            raise LegacyRunCloneError("cloned namespace failed normalized durable-content equivalence verification")
+            raise LegacyRunCloneError(
+                "cloned namespace failed normalized durable-content equivalence verification"
+            )
         return target_run, target_state, actual
 
-    def _season_state_payload_in_session(self, *, session: Session, model: SeasonStateModel) -> dict[str, object]:
+    def _season_state_payload_in_session(
+        self, *, session: Session, model: SeasonStateModel
+    ) -> dict[str, object]:
         """Return the canonical SeasonState payload without opening a second Session."""
-        completed_inputs = self._load_completed_inputs(session=session, run_id=model.run_id)
-        return SeasonState.model_validate({"season": model.season, "ordered_events": _from_json(model.ordered_events_json), "next_event_index": model.next_event_index, "completed_event_ids": _from_json(model.completed_event_ids_json), "completed_tournament_inputs": [payload.model_dump() for payload in completed_inputs], "ranking_snapshot": _from_json(model.ranking_snapshot_json) if model.ranking_snapshot_json else None, "race_snapshot": _from_json(model.race_snapshot_json) if model.race_snapshot_json else None, "active_tournament": _from_json(model.active_tournament_json) if model.active_tournament_json else None}).model_dump(mode="json")
+        completed_inputs = self._load_completed_inputs(
+            session=session, run_id=model.run_id
+        )
+        return SeasonState.model_validate(
+            {
+                "season": model.season,
+                "ordered_events": _from_json(model.ordered_events_json),
+                "next_event_index": model.next_event_index,
+                "completed_event_ids": _from_json(model.completed_event_ids_json),
+                "completed_tournament_inputs": [
+                    payload.model_dump() for payload in completed_inputs
+                ],
+                "ranking_snapshot": _from_json(model.ranking_snapshot_json)
+                if model.ranking_snapshot_json
+                else None,
+                "race_snapshot": _from_json(model.race_snapshot_json)
+                if model.race_snapshot_json
+                else None,
+                "active_tournament": _from_json(model.active_tournament_json)
+                if model.active_tournament_json
+                else None,
+            }
+        ).model_dump(mode="json")
 
-    def _legacy_run_clone_inventory_hash_in_session(self, *, session: Session, simulation_run_id: str, branch_id: str, checkpoint_id: str) -> str:
+    def _legacy_run_clone_inventory_hash_in_session(
+        self,
+        *,
+        session: Session,
+        simulation_run_id: str,
+        branch_id: str,
+        checkpoint_id: str,
+    ) -> str:
         """Compute the R4C0 inventory hash in an existing transaction."""
         simulation_run = session.get(SimulationRunModel, simulation_run_id)
         mapping = session.get(LegacySimulationRunMappingModel, simulation_run_id)
@@ -3410,36 +4306,110 @@ class SimulationPersistenceRepository:
         if simulation_run is None or branch is None or checkpoint is None:
             raise BranchForkSourceStateMismatchError("fork inventory source is missing")
         if branch.legacy_simulation_run_id != simulation_run_id:
-            raise BranchForkSourceStateMismatchError("fork inventory branch legacy binding mismatch")
+            raise BranchForkSourceStateMismatchError(
+                "fork inventory branch legacy binding mismatch"
+            )
         product_run_id = branch.run_id
         if mapping is not None and mapping.run_id != product_run_id:
-            raise BranchForkSourceStateMismatchError("fork inventory mapping product run mismatch")
-        scoped = lambda model: session.execute(select(model).where(model.run_id == simulation_run_id)).scalars().all()
-        sections = [self._clone_inventory_section(name=name, models=scoped(model), copy_policy=policy) for name, model, policy in (
-            ("simulation_run", SimulationRunModel, "copy"), ("season_state", SeasonStateModel, "copy"), ("completed_events", CompletedEventModel, "copy"), ("completed_event_metadata", CompletedEventMetadataModel, "copy"), ("completed_tournament_inputs", CompletedTournamentInputModel, "copy"), ("ranking_snapshots", RankingSnapshotModel, "copy"), ("race_snapshots", RaceSnapshotModel, "copy"), ("finals_qualification", FinalsQualificationModel, "copy"), ("finals_results", FinalsResultModel, "copy"), ("admin_actions", AdminActionModel, "copy"), ("season_rollovers", SeasonRolloverModel, "copy"), ("player_season_transitions", PlayerSeasonTransitionModel, "copy"), ("next_season_players", NextSeasonPlayerModel, "copy"), ("run_talent_plans", RunTalentPlanModel, "copy"), ("run_talent_country_allocations", RunTalentCountryAllocationModel, "copy"), ("run_generated_player_provenance", RunGeneratedPlayerProvenanceModel, "copy"), ("run_prospects", RunProspectModel, "unsupported"))]
+            raise BranchForkSourceStateMismatchError(
+                "fork inventory mapping product run mismatch"
+            )
+        scoped = lambda model: (
+            session.execute(select(model).where(model.run_id == simulation_run_id))
+            .scalars()
+            .all()
+        )
+        sections = [
+            self._clone_inventory_section(
+                name=name, models=scoped(model), copy_policy=policy
+            )
+            for name, model, policy in (
+                ("simulation_run", SimulationRunModel, "copy"),
+                ("season_state", SeasonStateModel, "copy"),
+                ("completed_events", CompletedEventModel, "copy"),
+                ("completed_event_metadata", CompletedEventMetadataModel, "copy"),
+                ("completed_tournament_inputs", CompletedTournamentInputModel, "copy"),
+                ("ranking_snapshots", RankingSnapshotModel, "copy"),
+                ("race_snapshots", RaceSnapshotModel, "copy"),
+                ("finals_qualification", FinalsQualificationModel, "copy"),
+                ("finals_results", FinalsResultModel, "copy"),
+                ("admin_actions", AdminActionModel, "copy"),
+                ("season_rollovers", SeasonRolloverModel, "copy"),
+                ("player_season_transitions", PlayerSeasonTransitionModel, "copy"),
+                ("next_season_players", NextSeasonPlayerModel, "copy"),
+                ("run_talent_plans", RunTalentPlanModel, "copy"),
+                (
+                    "run_talent_country_allocations",
+                    RunTalentCountryAllocationModel,
+                    "copy",
+                ),
+                (
+                    "run_generated_player_provenance",
+                    RunGeneratedPlayerProvenanceModel,
+                    "copy",
+                ),
+                ("run_prospects", RunProspectModel, "unsupported"),
+            )
+        ]
         # SimulationRun is primary-key scoped and is the sole exception to run_id filtering.
-        sections[0] = self._clone_inventory_section(name="simulation_run", models=[simulation_run])
-        for name, model in (("run_branches", RunBranchModel), ("branch_states", BranchStateModel), ("branch_checkpoints", BranchCheckpointModel)):
-            rows = session.execute(select(model).where(model.run_id == product_run_id)).scalars().all()
-            sections.append(self._clone_inventory_section(name=name, models=rows, copy_policy="excluded_metadata"))
+        sections[0] = self._clone_inventory_section(
+            name="simulation_run", models=[simulation_run]
+        )
+        for name, model in (
+            ("run_branches", RunBranchModel),
+            ("branch_states", BranchStateModel),
+            ("branch_checkpoints", BranchCheckpointModel),
+        ):
+            rows = (
+                session.execute(select(model).where(model.run_id == product_run_id))
+                .scalars()
+                .all()
+            )
+            sections.append(
+                self._clone_inventory_section(
+                    name=name, models=rows, copy_policy="excluded_metadata"
+                )
+            )
         state = session.get(SeasonStateModel, simulation_run_id)
-        fields = {"source_legacy_simulation_run_id": simulation_run_id, "source_product_run_id": product_run_id, "source_branch_id": branch_id, "source_checkpoint_id": checkpoint_id, "source_checkpoint_kind": checkpoint.kind, "season": state.season if state else simulation_run.season, "week": checkpoint.week, "next_event_index": state.next_event_index if state else None, "sections": tuple(sections)}
-        return hashlib.sha256(_to_json({**fields, "sections": [item.__dict__ for item in sections]}).encode("utf-8")).hexdigest()
+        fields = {
+            "source_legacy_simulation_run_id": simulation_run_id,
+            "source_product_run_id": product_run_id,
+            "source_branch_id": branch_id,
+            "source_checkpoint_id": checkpoint_id,
+            "source_checkpoint_kind": checkpoint.kind,
+            "season": state.season if state else simulation_run.season,
+            "week": checkpoint.week,
+            "next_event_index": state.next_event_index if state else None,
+            "sections": tuple(sections),
+        }
+        return hashlib.sha256(
+            _to_json(
+                {**fields, "sections": [item.__dict__ for item in sections]}
+            ).encode("utf-8")
+        ).hexdigest()
 
     @staticmethod
-    def _insert_fork_run_branch_in_session(*, session: Session, model: RunBranchModel) -> None:
+    def _insert_fork_run_branch_in_session(
+        *, session: Session, model: RunBranchModel
+    ) -> None:
         session.add(model)
 
     @staticmethod
-    def _insert_fork_branch_state_in_session(*, session: Session, model: BranchStateModel) -> None:
+    def _insert_fork_branch_state_in_session(
+        *, session: Session, model: BranchStateModel
+    ) -> None:
         session.add(model)
 
     @staticmethod
-    def _insert_fork_checkpoint_in_session(*, session: Session, model: BranchCheckpointModel) -> None:
+    def _insert_fork_checkpoint_in_session(
+        *, session: Session, model: BranchCheckpointModel
+    ) -> None:
         session.add(model)
 
     @staticmethod
-    def _insert_fork_command_in_session(*, session: Session, model: BranchForkCommandModel) -> None:
+    def _insert_fork_command_in_session(
+        *, session: Session, model: BranchForkCommandModel
+    ) -> None:
         session.add(model)
 
     def clone_legacy_simulation_run_namespace(
@@ -3457,9 +4427,13 @@ class SimulationPersistenceRepository:
         restore operation.  The target is an unmapped legacy simulation run.
         """
         if not target_simulation_run_id or not target_simulation_run_id.strip():
-            raise LegacyRunCloneError("target legacy simulation run id must not be empty")
+            raise LegacyRunCloneError(
+                "target legacy simulation run id must not be empty"
+            )
         if target_simulation_run_id == source_simulation_run_id:
-            raise LegacyRunCloneError("target legacy simulation run id must differ from source")
+            raise LegacyRunCloneError(
+                "target legacy simulation run id must differ from source"
+            )
         preflight = self.inspect_legacy_run_clone_inventory(
             simulation_run_id=source_simulation_run_id,
             branch_id=source_branch_id,
@@ -3467,7 +4441,8 @@ class SimulationPersistenceRepository:
         )
         if not preflight.clone_safe:
             raise UnsafeLegacyRunCloneSourceError(
-                "legacy simulation run is not clone safe: " + ", ".join(preflight.unsupported_reasons)
+                "legacy simulation run is not clone safe: "
+                + ", ".join(preflight.unsupported_reasons)
             )
 
         with self._session_factory.begin() as session:
@@ -3479,220 +4454,792 @@ class SimulationPersistenceRepository:
             source_state = session.get(SeasonStateModel, source_simulation_run_id)
             if source_run is None or source_state is None:
                 # The source may have changed since the separate read-only preflight.
-                raise UnsafeLegacyRunCloneSourceError("source changed after clone preflight")
+                raise UnsafeLegacyRunCloneSourceError(
+                    "source changed after clone preflight"
+                )
             if source_checkpoint_id is not None:
                 checkpoint = session.get(BranchCheckpointModel, source_checkpoint_id)
-                branch = session.get(RunBranchModel, source_branch_id) if source_branch_id else None
+                branch = (
+                    session.get(RunBranchModel, source_branch_id)
+                    if source_branch_id
+                    else None
+                )
                 if checkpoint is None:
-                    raise UnsafeLegacyRunCloneSourceError("source checkpoint no longer exists")
+                    raise UnsafeLegacyRunCloneSourceError(
+                        "source checkpoint no longer exists"
+                    )
                 if source_branch_id is not None:
-                    effective_head = (session.get(BranchStateModel, source_branch_id).head_checkpoint_id
-                                      if session.get(BranchStateModel, source_branch_id) is not None
-                                      else branch.head_checkpoint_id if branch is not None else None)
+                    effective_head = (
+                        session.get(
+                            BranchStateModel, source_branch_id
+                        ).head_checkpoint_id
+                        if session.get(BranchStateModel, source_branch_id) is not None
+                        else branch.head_checkpoint_id
+                        if branch is not None
+                        else None
+                    )
                     if effective_head != checkpoint.checkpoint_id:
-                        raise UnsafeLegacyRunCloneSourceError("source checkpoint is not the current effective branch head")
+                        raise UnsafeLegacyRunCloneSourceError(
+                            "source checkpoint is not the current effective branch head"
+                        )
                 if checkpoint.kind == BRANCH_CHECKPOINT_KIND_INITIAL:
-                    if source_state.next_event_index != 0 or source_state.active_tournament_json not in (None, "", "null", "{}", "[]") or session.execute(select(CompletedEventModel).where(CompletedEventModel.run_id == source_simulation_run_id)).scalars().first() is not None:
-                        raise UnsafeLegacyRunCloneSourceError("initial checkpoint source is no longer at season start")
+                    if (
+                        source_state.next_event_index != 0
+                        or source_state.active_tournament_json
+                        not in (None, "", "null", "{}", "[]")
+                        or session.execute(
+                            select(CompletedEventModel).where(
+                                CompletedEventModel.run_id == source_simulation_run_id
+                            )
+                        )
+                        .scalars()
+                        .first()
+                        is not None
+                    ):
+                        raise UnsafeLegacyRunCloneSourceError(
+                            "initial checkpoint source is no longer at season start"
+                        )
                 elif checkpoint.kind == BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE:
                     payload = _from_json(checkpoint.payload_json)
-                    captured = payload.get("season_state") if isinstance(payload, dict) else None
-                    current = self._season_state_payload_in_session(session=session, model=source_state)
-                    if not isinstance(captured, dict) or _to_json(captured) != _to_json(current):
-                        raise UnsafeLegacyRunCloneSourceError("current_state_capture cannot be proven to match current persisted source state")
+                    captured = (
+                        payload.get("season_state")
+                        if isinstance(payload, dict)
+                        else None
+                    )
+                    current = self._season_state_payload_in_session(
+                        session=session, model=source_state
+                    )
+                    if not isinstance(captured, dict) or _to_json(captured) != _to_json(
+                        current
+                    ):
+                        raise UnsafeLegacyRunCloneSourceError(
+                            "current_state_capture cannot be proven to match current persisted source state"
+                        )
 
             try:
-                _, _, target_normalized_clone_hash = self._clone_legacy_simulation_run_namespace_in_session(
-                    session=session, source_simulation_run_id=source_simulation_run_id,
-                    target_simulation_run_id=target_simulation_run_id, target_seed=target_seed,
+                _, _, target_normalized_clone_hash = (
+                    self._clone_legacy_simulation_run_namespace_in_session(
+                        session=session,
+                        source_simulation_run_id=source_simulation_run_id,
+                        target_simulation_run_id=target_simulation_run_id,
+                        target_seed=target_seed,
+                    )
                 )
             except BranchForkTargetExistsError as exc:
                 raise LegacyRunCloneTargetExistsError(str(exc)) from exc
             except BranchForkSourceStateMismatchError as exc:
                 raise UnsafeLegacyRunCloneSourceError(str(exc)) from exc
 
-        target = self.inspect_legacy_run_clone_inventory(simulation_run_id=target_simulation_run_id)
-        counts = tuple(LegacyRunCloneSectionResult(section.name, section.count) for section in preflight.inventory.sections if section.copy_policy == "copy")
+        target = self.inspect_legacy_run_clone_inventory(
+            simulation_run_id=target_simulation_run_id
+        )
+        counts = tuple(
+            LegacyRunCloneSectionResult(section.name, section.count)
+            for section in preflight.inventory.sections
+            if section.copy_policy == "copy"
+        )
         return LegacyRunCloneResult(
-            source_legacy_simulation_run_id=source_simulation_run_id, target_legacy_simulation_run_id=target_simulation_run_id,
-            source_branch_id=preflight.inventory.source_branch_id, source_checkpoint_id=source_checkpoint_id,
-            source_checkpoint_kind=preflight.inventory.source_checkpoint_kind, source_inventory_hash=preflight.inventory.inventory_hash,
-            target_inventory_hash=target.inventory.inventory_hash, cloned_section_counts=counts,
+            source_legacy_simulation_run_id=source_simulation_run_id,
+            target_legacy_simulation_run_id=target_simulation_run_id,
+            source_branch_id=preflight.inventory.source_branch_id,
+            source_checkpoint_id=source_checkpoint_id,
+            source_checkpoint_kind=preflight.inventory.source_checkpoint_kind,
+            source_inventory_hash=preflight.inventory.inventory_hash,
+            target_inventory_hash=target.inventory.inventory_hash,
+            cloned_section_counts=counts,
             normalized_clone_equivalence_hash=target_normalized_clone_hash,
-            source_product_run_id=preflight.inventory.source_product_run_id, target_product_run_id=None,
+            source_product_run_id=preflight.inventory.source_product_run_id,
+            target_product_run_id=None,
         )
 
-    def fork_run_branch_atomically(self, command: ForkRunBranchCommand) -> ForkRunBranchResult:
+    def fork_run_branch_atomically(
+        self, command: ForkRunBranchCommand
+    ) -> ForkRunBranchResult:
         """Atomically materialize a Branch fork and its legacy execution namespace."""
         fields = command.__dict__
-        if any(not isinstance(value, str) or not value.strip() for key, value in fields.items() if key != "target_branch_seed") or not isinstance(command.target_branch_seed, int):
-            raise BranchForkValidationError("fork command fields must be non-empty and target_branch_seed must be an integer")
-        canonical = {key: (value.strip() if isinstance(value, str) else value) for key, value in fields.items()}
+        if any(
+            not isinstance(value, str) or not value.strip()
+            for key, value in fields.items()
+            if key != "target_branch_seed"
+        ) or not isinstance(command.target_branch_seed, int):
+            raise BranchForkValidationError(
+                "fork command fields must be non-empty and target_branch_seed must be an integer"
+            )
+        canonical = {
+            key: (value.strip() if isinstance(value, str) else value)
+            for key, value in fields.items()
+        }
         command = ForkRunBranchCommand(**canonical)
         with self._session_factory.begin() as session:
             container = session.get(RunContainerModel, command.product_run_id)
             branch = session.get(RunBranchModel, command.source_branch_id)
-            checkpoint = session.get(BranchCheckpointModel, command.source_checkpoint_id)
-            source_run = session.get(SimulationRunModel, branch.legacy_simulation_run_id) if branch and branch.legacy_simulation_run_id else None
-            provenance = {"run_world_id": container.world_id if container else None, "run_config_version": container.config_version if container else None, "run_config_fingerprint": container.config_fingerprint if container else None, "run_global_seed": container.global_seed if container else None, "source_checkpoint_hash": checkpoint.content_hash if checkpoint else None, "source_legacy_seed": source_run.seed if source_run else None}
-            fingerprint = hashlib.sha256(self.canonical_json({"command": canonical, "source_provenance": provenance}).encode("utf-8")).hexdigest()
+            checkpoint = session.get(
+                BranchCheckpointModel, command.source_checkpoint_id
+            )
+            source_run = (
+                session.get(SimulationRunModel, branch.legacy_simulation_run_id)
+                if branch and branch.legacy_simulation_run_id
+                else None
+            )
+            provenance = {
+                "run_world_id": container.world_id if container else None,
+                "run_config_version": container.config_version if container else None,
+                "run_config_fingerprint": container.config_fingerprint
+                if container
+                else None,
+                "run_global_seed": container.global_seed if container else None,
+                "source_checkpoint_hash": checkpoint.content_hash
+                if checkpoint
+                else None,
+                "source_legacy_seed": source_run.seed if source_run else None,
+            }
+            fingerprint = hashlib.sha256(
+                self.canonical_json(
+                    {"command": canonical, "source_provenance": provenance}
+                ).encode("utf-8")
+            ).hexdigest()
             existing = session.get(BranchForkCommandModel, command.command_id)
             if existing is not None:
                 if existing.request_fingerprint != fingerprint:
-                    raise BranchForkIdempotencyConflictError("command_id already exists with different fork request")
+                    raise BranchForkIdempotencyConflictError(
+                        "command_id already exists with different fork request"
+                    )
                 result_branch = session.get(RunBranchModel, existing.result_branch_id)
                 result_state = session.get(BranchStateModel, existing.result_branch_id)
-                result_checkpoint = session.get(BranchCheckpointModel, existing.result_checkpoint_id)
-                result_run = session.get(SimulationRunModel, existing.result_legacy_simulation_run_id)
-                result_season_state = session.get(SeasonStateModel, existing.result_legacy_simulation_run_id)
-                mapping = session.get(LegacySimulationRunMappingModel, existing.result_legacy_simulation_run_id)
-                if (result_branch is None or result_state is None or result_checkpoint is None or result_run is None or result_season_state is None or mapping is not None
-                    or existing.target_branch_id != command.target_branch_id or existing.target_legacy_simulation_run_id != command.target_legacy_simulation_run_id
-                    or existing.result_branch_id != command.target_branch_id or existing.result_legacy_simulation_run_id != command.target_legacy_simulation_run_id
-                    or result_branch.run_id != command.product_run_id or result_state.run_id != command.product_run_id
-                    or result_branch.legacy_simulation_run_id != existing.result_legacy_simulation_run_id
-                    or result_branch.head_checkpoint_id != result_state.head_checkpoint_id or result_branch.head_checkpoint_id != existing.result_checkpoint_id
-                    or result_checkpoint.checkpoint_id != existing.result_checkpoint_id or result_checkpoint.branch_id != existing.result_branch_id
-                    or result_checkpoint.run_id != command.product_run_id or result_checkpoint.kind != BRANCH_CHECKPOINT_KIND_BRANCH_FORK_START):
-                    raise BranchForkSourceStateMismatchError("idempotent fork result is missing or inconsistent")
+                result_checkpoint = session.get(
+                    BranchCheckpointModel, existing.result_checkpoint_id
+                )
+                result_run = session.get(
+                    SimulationRunModel, existing.result_legacy_simulation_run_id
+                )
+                result_season_state = session.get(
+                    SeasonStateModel, existing.result_legacy_simulation_run_id
+                )
+                mapping = session.get(
+                    LegacySimulationRunMappingModel,
+                    existing.result_legacy_simulation_run_id,
+                )
+                if (
+                    result_branch is None
+                    or result_state is None
+                    or result_checkpoint is None
+                    or result_run is None
+                    or result_season_state is None
+                    or mapping is not None
+                    or existing.target_branch_id != command.target_branch_id
+                    or existing.target_legacy_simulation_run_id
+                    != command.target_legacy_simulation_run_id
+                    or existing.result_branch_id != command.target_branch_id
+                    or existing.result_legacy_simulation_run_id
+                    != command.target_legacy_simulation_run_id
+                    or result_branch.run_id != command.product_run_id
+                    or result_state.run_id != command.product_run_id
+                    or result_branch.legacy_simulation_run_id
+                    != existing.result_legacy_simulation_run_id
+                    or result_branch.head_checkpoint_id
+                    != result_state.head_checkpoint_id
+                    or result_branch.head_checkpoint_id != existing.result_checkpoint_id
+                    or result_checkpoint.checkpoint_id != existing.result_checkpoint_id
+                    or result_checkpoint.branch_id != existing.result_branch_id
+                    or result_checkpoint.run_id != command.product_run_id
+                    or result_checkpoint.kind
+                    != BRANCH_CHECKPOINT_KIND_BRANCH_FORK_START
+                ):
+                    raise BranchForkSourceStateMismatchError(
+                        "idempotent fork result is missing or inconsistent"
+                    )
                 metadata = _from_json(existing.metadata_json)
-                return ForkRunBranchResult(command.product_run_id, command.source_branch_id, command.source_checkpoint_id, command.target_branch_id, command.target_legacy_simulation_run_id, existing.result_checkpoint_id, command.target_branch_seed, metadata["source_inventory_hash"], metadata["normalized_clone_equivalence_hash"], fingerprint, True)
-            if container is None: raise BranchForkValidationError("product run was not found")
-            if container.storage_kind != "custom_local" or container.read_only or container.status != "active": raise BranchForkValidationError("product run is not editable and active")
-            if branch is None or branch.run_id != command.product_run_id: raise BranchForkValidationError("source branch was not found in product run")
-            if branch.read_only or branch.status != "active" or not (branch.legacy_simulation_run_id or "").strip(): raise BranchForkValidationError("source branch is not writable and active with a legacy binding")
-            branch_state = session.get(BranchStateModel, command.source_branch_id)
-            if branch_state is None: raise BranchForkValidationError("source branch state was not found")
-            if branch.head_checkpoint_id != branch_state.head_checkpoint_id: raise BranchForkSourceStateMismatchError("source branch and branch state heads disagree")
-            if checkpoint is None or checkpoint.run_id != command.product_run_id or checkpoint.branch_id != command.source_branch_id or checkpoint.checkpoint_id != branch_state.head_checkpoint_id: raise BranchForkSourceStateMismatchError("source checkpoint is not the effective branch head")
-            record = self._to_branch_checkpoint(checkpoint)
-            if record.content_hash_algorithm != "sha256" or self.checkpoint_envelope_content_hash(record) != record.content_hash: raise BranchForkSourceStateMismatchError("source checkpoint content hash is invalid")
-            if checkpoint.kind not in {BRANCH_CHECKPOINT_KIND_INITIAL, BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE}: raise BranchForkValidationError("source checkpoint kind is not fork-safe")
-            source_run = session.get(SimulationRunModel, branch.legacy_simulation_run_id)
-            source_state = session.get(SeasonStateModel, branch.legacy_simulation_run_id)
-            if source_run is None or source_state is None: raise BranchForkSourceStateMismatchError("source legacy state is missing")
-            if source_state.active_tournament_json not in (None, "", "null", "{}", "[]"): raise BranchForkValidationError("source has an active tournament")
-            if session.execute(select(RunProspectModel).where(RunProspectModel.run_id == source_run.run_id)).scalars().first() is not None: raise BranchForkValidationError("source has unsupported run prospects")
-            if checkpoint.kind == BRANCH_CHECKPOINT_KIND_INITIAL and (source_state.next_event_index != 0 or session.execute(select(CompletedEventModel).where(CompletedEventModel.run_id == source_run.run_id)).scalars().first() is not None): raise BranchForkSourceStateMismatchError("initial source is no longer season start")
-            if checkpoint.kind == BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE:
-                payload = _from_json(checkpoint.payload_json); captured = payload.get("season_state") if isinstance(payload, dict) else None
-                if not isinstance(captured, dict) or _to_json(captured) != _to_json(self._season_state_payload_in_session(session=session, model=source_state)): raise BranchForkSourceStateMismatchError("current state capture is stale")
-            if container.world_id != source_run.world_id or container.world_id != checkpoint.world_id: raise BranchForkSourceStateMismatchError("locked world_id provenance mismatch")
-            if (container.config_version and checkpoint.config_version and container.config_version != checkpoint.config_version) or (container.config_fingerprint and checkpoint.config_fingerprint and container.config_fingerprint != checkpoint.config_fingerprint) or (container.global_seed is not None and checkpoint.global_seed is not None and container.global_seed != checkpoint.global_seed): raise BranchForkSourceStateMismatchError("run provenance mismatch")
-            if command.target_branch_id == command.source_branch_id or session.get(RunBranchModel, command.target_branch_id) is not None: raise BranchForkTargetExistsError("target branch already exists or equals source")
-            if command.target_legacy_simulation_run_id == source_run.run_id or session.get(SimulationRunModel, command.target_legacy_simulation_run_id) is not None or session.execute(select(RunBranchModel).where(RunBranchModel.legacy_simulation_run_id == command.target_legacy_simulation_run_id)).scalar_one_or_none() is not None: raise BranchForkTargetExistsError("target legacy simulation run already exists or is bound")
-            if session.execute(select(RunBranchModel.branch_id).where(RunBranchModel.run_id == command.product_run_id, RunBranchModel.display_name == command.target_branch_display_name)).scalar_one_or_none() is not None: raise BranchForkValidationError("target branch display name already exists in product run")
-            source_inventory_hash = self._legacy_run_clone_inventory_hash_in_session(session=session, simulation_run_id=source_run.run_id, branch_id=command.source_branch_id, checkpoint_id=command.source_checkpoint_id)
-            target_run, target_state, equivalence_hash = self._clone_legacy_simulation_run_namespace_in_session(session=session, source_simulation_run_id=source_run.run_id, target_simulation_run_id=command.target_legacy_simulation_run_id, preserve_source_seed=True)
-            if target_run.world_id != container.world_id: raise BranchForkSourceStateMismatchError("cloned target world_id mismatch")
-            checkpoint_material = "\x00".join(("branch-fork-v1", command.target_branch_id, command.command_id))
-            checkpoint_digest = hashlib.sha256(checkpoint_material.encode("utf-8")).hexdigest()[:24]
-            checkpoint_id = f"checkpoint-{checkpoint_digest}"
-            seed_namespace = {"hierarchy": ["global", "branch"], "global_seed": container.global_seed, "source_branch_seed": branch.branch_seed, "source_legacy_simulation_run_seed": source_run.seed, "target_branch_seed": command.target_branch_seed}
-            payload = {"product_run_id": command.product_run_id, "source_branch_id": command.source_branch_id, "source_checkpoint_id": command.source_checkpoint_id, "source_checkpoint_kind": checkpoint.kind, "source_checkpoint_content_hash": checkpoint.content_hash, "source_legacy_simulation_run_id": source_run.run_id, "target_branch_id": command.target_branch_id, "target_legacy_simulation_run_id": command.target_legacy_simulation_run_id, "source_inventory_hash": source_inventory_hash, "normalized_clone_equivalence_hash": equivalence_hash, "request_fingerprint": fingerprint, "provenance": {"world_id": container.world_id, "world_fingerprint": container.world_package_fingerprint, "config_version": container.config_version, "config_fingerprint": container.config_fingerprint, "global_seed": container.global_seed, "source_branch_seed": branch.branch_seed, "source_legacy_simulation_run_seed": source_run.seed, "target_branch_seed": command.target_branch_seed}, "fork_semantics": "cloned_current_state_not_checkpoint_replay"}
-            branch_metadata = {"fork_command_id": command.command_id, "request_fingerprint": fingerprint, "source_checkpoint_id": checkpoint.checkpoint_id}
-            self._insert_fork_run_branch_in_session(session=session, model=RunBranchModel(branch_id=command.target_branch_id, run_id=command.product_run_id, display_name=command.target_branch_display_name, status="active", read_only=0, branch_seed=command.target_branch_seed, forked_from_branch_id=command.source_branch_id, forked_from_checkpoint_id=command.source_checkpoint_id, head_checkpoint_id=checkpoint_id, legacy_simulation_run_id=command.target_legacy_simulation_run_id, metadata_json=_to_json(branch_metadata)))
-            state_metadata = {"fork_command_id": command.command_id, "source_checkpoint_id": checkpoint.checkpoint_id}
-            self._insert_fork_branch_state_in_session(session=session, model=BranchStateModel(branch_id=command.target_branch_id, run_id=command.product_run_id, head_checkpoint_id=checkpoint_id, current_season=target_state.season, current_week=checkpoint.week, current_event_id=checkpoint.event_id, current_event_sequence=checkpoint.event_sequence, state_schema_version="branch_state_v1", status="active", metadata_json=_to_json(state_metadata)))
-            incomplete = BranchCheckpointRecord(checkpoint_id, command.product_run_id, command.target_branch_id, None, 1, BRANCH_CHECKPOINT_KIND_BRANCH_FORK_START, target_state.season, checkpoint.week, checkpoint.event_id, checkpoint.event_sequence, command.command_id, BRANCH_CHECKPOINT_COMMAND_KIND_FORK_BRANCH, BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_ATOMIC_FORK_MATERIALIZATION, container.config_version, container.config_fingerprint, container.world_id, container.world_package_fingerprint, container.global_seed, command.target_branch_seed, seed_namespace, "branch_checkpoint_payload_v1", "sha256", "", payload)
-            fork_checkpoint = BranchCheckpointRecord(**{**incomplete.__dict__, "content_hash": self.checkpoint_envelope_content_hash(incomplete)})
-            self._insert_fork_checkpoint_in_session(session=session, model=BranchCheckpointModel(checkpoint_id=fork_checkpoint.checkpoint_id, run_id=fork_checkpoint.run_id, branch_id=fork_checkpoint.branch_id, parent_checkpoint_id=None, sequence=1, kind=fork_checkpoint.kind, season=fork_checkpoint.season, week=fork_checkpoint.week, event_id=fork_checkpoint.event_id, event_sequence=fork_checkpoint.event_sequence, command_id=fork_checkpoint.command_id, command_kind=fork_checkpoint.command_kind, command_boundary=fork_checkpoint.command_boundary, config_version=fork_checkpoint.config_version, config_fingerprint=fork_checkpoint.config_fingerprint, world_id=fork_checkpoint.world_id, world_fingerprint=fork_checkpoint.world_fingerprint, global_seed=fork_checkpoint.global_seed, branch_seed=fork_checkpoint.branch_seed, seed_namespace_json=self.canonical_json(fork_checkpoint.seed_namespace), payload_schema_version=fork_checkpoint.payload_schema_version, content_hash_algorithm="sha256", content_hash=fork_checkpoint.content_hash, payload_json=self.canonical_json(fork_checkpoint.payload)))
-            metadata = {"source_inventory_hash": source_inventory_hash, "normalized_clone_equivalence_hash": equivalence_hash}
-            self._insert_fork_command_in_session(session=session, model=BranchForkCommandModel(command_id=command.command_id, product_run_id=command.product_run_id, request_fingerprint=fingerprint, source_branch_id=command.source_branch_id, source_checkpoint_id=command.source_checkpoint_id, target_branch_id=command.target_branch_id, target_legacy_simulation_run_id=command.target_legacy_simulation_run_id, result_branch_id=command.target_branch_id, result_checkpoint_id=checkpoint_id, result_legacy_simulation_run_id=command.target_legacy_simulation_run_id, metadata_json=_to_json(metadata)))
-            try: session.flush()
-            except IntegrityError as exc: raise BranchForkTargetExistsError("fork target conflicts with existing durable state") from exc
-            return ForkRunBranchResult(command.product_run_id, command.source_branch_id, command.source_checkpoint_id, command.target_branch_id, command.target_legacy_simulation_run_id, checkpoint_id, command.target_branch_seed, source_inventory_hash, equivalence_hash, fingerprint, False)
-
-
-    def set_official_run_branch_atomically(self, command: SetOfficialRunBranchCommand) -> SetOfficialRunBranchResult:
-        """Atomically validate and publish an existing Branch as a Run's official Branch."""
-        if (not all(isinstance(value, str) and value.strip() for value in (command.product_run_id, command.target_branch_id, command.command_id, command.audit_reason))
-                or command.expected_current_official_branch_id is not None and (not isinstance(command.expected_current_official_branch_id, str) or not command.expected_current_official_branch_id.strip())
-                or command.explicit_confirmation is not True):
-            raise OfficialBranchSelectionValidationError("official Branch selection requires non-empty fields and explicit confirmation")
-        canonical = {key: (value.strip() if isinstance(value, str) else value) for key, value in command.__dict__.items()}
-        command = SetOfficialRunBranchCommand(**canonical)
-        fingerprint = hashlib.sha256(self.canonical_json(canonical).encode("utf-8")).hexdigest()
-        with self._session_factory.begin() as session:
-            existing = session.get(OfficialBranchSelectionCommandModel, command.command_id)
-            if existing is not None:
-                if existing.request_fingerprint != fingerprint:
-                    raise OfficialBranchSelectionIdempotencyConflictError("command_id already exists with different official Branch selection request")
-                container = session.get(RunContainerModel, command.product_run_id)
-                if container is None or container.official_branch_id != existing.result_official_branch_id:
-                    raise OfficialBranchSelectionStateMismatchError("official Branch changed since recorded command result")
-                return SetOfficialRunBranchResult(command.product_run_id, existing.result_previous_official_branch_id, existing.result_official_branch_id, existing.target_branch_id, existing.result_previous_official_branch_id != existing.result_official_branch_id, True, fingerprint)
-            container = session.get(RunContainerModel, command.product_run_id)
+                return ForkRunBranchResult(
+                    command.product_run_id,
+                    command.source_branch_id,
+                    command.source_checkpoint_id,
+                    command.target_branch_id,
+                    command.target_legacy_simulation_run_id,
+                    existing.result_checkpoint_id,
+                    command.target_branch_seed,
+                    metadata["source_inventory_hash"],
+                    metadata["normalized_clone_equivalence_hash"],
+                    fingerprint,
+                    True,
+                )
             if container is None:
-                raise KeyError(f"product_run_id {command.product_run_id} was not found")
-            if container.storage_kind == "built_in" or container.read_only or container.status != "active":
-                raise OfficialBranchSelectionValidationError("product run is not editable and active")
-            if container.official_branch_id != command.expected_current_official_branch_id:
-                raise OfficialBranchSelectionConflictError("current official Branch does not match expected official Branch")
-            branch = session.get(RunBranchModel, command.target_branch_id)
-            if branch is None:
-                raise KeyError(f"target_branch_id {command.target_branch_id} was not found")
-            if branch.run_id != command.product_run_id or branch.status != "active" or not (branch.legacy_simulation_run_id or "").strip():
-                raise OfficialBranchSelectionValidationError("target Branch is not active in product run with a legacy binding")
-            if session.get(SimulationRunModel, branch.legacy_simulation_run_id) is None:
-                raise OfficialBranchSelectionValidationError("target Branch legacy SimulationRun was not found")
-            state = session.get(BranchStateModel, command.target_branch_id)
-            if state is None or state.run_id != command.product_run_id:
-                raise OfficialBranchSelectionValidationError("target BranchState is missing or belongs to another product run")
-            if branch.head_checkpoint_id != state.head_checkpoint_id:
-                raise OfficialBranchSelectionValidationError("target Branch and BranchState heads disagree")
-            head = branch.head_checkpoint_id
-            checkpoint = session.get(BranchCheckpointModel, head) if head else None
-            if checkpoint is None or checkpoint.branch_id != command.target_branch_id or checkpoint.run_id != command.product_run_id:
-                raise OfficialBranchSelectionValidationError("target effective head checkpoint is missing or incoherent")
-            previous = container.official_branch_id
-            container.official_branch_id = command.target_branch_id
-            session.add(OfficialBranchSelectionCommandModel(command_id=command.command_id, product_run_id=command.product_run_id, request_fingerprint=fingerprint, expected_previous_official_branch_id=command.expected_current_official_branch_id, target_branch_id=command.target_branch_id, result_previous_official_branch_id=previous, result_official_branch_id=command.target_branch_id, audit_reason=command.audit_reason))
+                raise BranchForkValidationError("product run was not found")
+            if (
+                container.storage_kind != "custom_local"
+                or container.read_only
+                or container.status != "active"
+            ):
+                raise BranchForkValidationError(
+                    "product run is not editable and active"
+                )
+            if branch is None or branch.run_id != command.product_run_id:
+                raise BranchForkValidationError(
+                    "source branch was not found in product run"
+                )
+            if (
+                branch.read_only
+                or branch.status != "active"
+                or not (branch.legacy_simulation_run_id or "").strip()
+            ):
+                raise BranchForkValidationError(
+                    "source branch is not writable and active with a legacy binding"
+                )
+            branch_state = session.get(BranchStateModel, command.source_branch_id)
+            if branch_state is None:
+                raise BranchForkValidationError("source branch state was not found")
+            if branch.head_checkpoint_id != branch_state.head_checkpoint_id:
+                raise BranchForkSourceStateMismatchError(
+                    "source branch and branch state heads disagree"
+                )
+            if (
+                checkpoint is None
+                or checkpoint.run_id != command.product_run_id
+                or checkpoint.branch_id != command.source_branch_id
+                or checkpoint.checkpoint_id != branch_state.head_checkpoint_id
+            ):
+                raise BranchForkSourceStateMismatchError(
+                    "source checkpoint is not the effective branch head"
+                )
+            record = self._to_branch_checkpoint(checkpoint)
+            if (
+                record.content_hash_algorithm != "sha256"
+                or self.checkpoint_envelope_content_hash(record) != record.content_hash
+            ):
+                raise BranchForkSourceStateMismatchError(
+                    "source checkpoint content hash is invalid"
+                )
+            if checkpoint.kind not in {
+                BRANCH_CHECKPOINT_KIND_INITIAL,
+                BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE,
+            }:
+                raise BranchForkValidationError(
+                    "source checkpoint kind is not fork-safe"
+                )
+            source_run = session.get(
+                SimulationRunModel, branch.legacy_simulation_run_id
+            )
+            source_state = session.get(
+                SeasonStateModel, branch.legacy_simulation_run_id
+            )
+            if source_run is None or source_state is None:
+                raise BranchForkSourceStateMismatchError(
+                    "source legacy state is missing"
+                )
+            if source_state.active_tournament_json not in (
+                None,
+                "",
+                "null",
+                "{}",
+                "[]",
+            ):
+                raise BranchForkValidationError("source has an active tournament")
+            if (
+                session.execute(
+                    select(RunProspectModel).where(
+                        RunProspectModel.run_id == source_run.run_id
+                    )
+                )
+                .scalars()
+                .first()
+                is not None
+            ):
+                raise BranchForkValidationError("source has unsupported run prospects")
+            if checkpoint.kind == BRANCH_CHECKPOINT_KIND_INITIAL and (
+                source_state.next_event_index != 0
+                or session.execute(
+                    select(CompletedEventModel).where(
+                        CompletedEventModel.run_id == source_run.run_id
+                    )
+                )
+                .scalars()
+                .first()
+                is not None
+            ):
+                raise BranchForkSourceStateMismatchError(
+                    "initial source is no longer season start"
+                )
+            if checkpoint.kind == BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE:
+                payload = _from_json(checkpoint.payload_json)
+                captured = (
+                    payload.get("season_state") if isinstance(payload, dict) else None
+                )
+                if not isinstance(captured, dict) or _to_json(captured) != _to_json(
+                    self._season_state_payload_in_session(
+                        session=session, model=source_state
+                    )
+                ):
+                    raise BranchForkSourceStateMismatchError(
+                        "current state capture is stale"
+                    )
+            if (
+                container.world_id != source_run.world_id
+                or container.world_id != checkpoint.world_id
+            ):
+                raise BranchForkSourceStateMismatchError(
+                    "locked world_id provenance mismatch"
+                )
+            if (
+                (
+                    container.config_version
+                    and checkpoint.config_version
+                    and container.config_version != checkpoint.config_version
+                )
+                or (
+                    container.config_fingerprint
+                    and checkpoint.config_fingerprint
+                    and container.config_fingerprint != checkpoint.config_fingerprint
+                )
+                or (
+                    container.global_seed is not None
+                    and checkpoint.global_seed is not None
+                    and container.global_seed != checkpoint.global_seed
+                )
+            ):
+                raise BranchForkSourceStateMismatchError("run provenance mismatch")
+            if (
+                command.target_branch_id == command.source_branch_id
+                or session.get(RunBranchModel, command.target_branch_id) is not None
+            ):
+                raise BranchForkTargetExistsError(
+                    "target branch already exists or equals source"
+                )
+            if (
+                command.target_legacy_simulation_run_id == source_run.run_id
+                or session.get(
+                    SimulationRunModel, command.target_legacy_simulation_run_id
+                )
+                is not None
+                or session.execute(
+                    select(RunBranchModel).where(
+                        RunBranchModel.legacy_simulation_run_id
+                        == command.target_legacy_simulation_run_id
+                    )
+                ).scalar_one_or_none()
+                is not None
+            ):
+                raise BranchForkTargetExistsError(
+                    "target legacy simulation run already exists or is bound"
+                )
+            if (
+                session.execute(
+                    select(RunBranchModel.branch_id).where(
+                        RunBranchModel.run_id == command.product_run_id,
+                        RunBranchModel.display_name
+                        == command.target_branch_display_name,
+                    )
+                ).scalar_one_or_none()
+                is not None
+            ):
+                raise BranchForkValidationError(
+                    "target branch display name already exists in product run"
+                )
+            source_inventory_hash = self._legacy_run_clone_inventory_hash_in_session(
+                session=session,
+                simulation_run_id=source_run.run_id,
+                branch_id=command.source_branch_id,
+                checkpoint_id=command.source_checkpoint_id,
+            )
+            target_run, target_state, equivalence_hash = (
+                self._clone_legacy_simulation_run_namespace_in_session(
+                    session=session,
+                    source_simulation_run_id=source_run.run_id,
+                    target_simulation_run_id=command.target_legacy_simulation_run_id,
+                    preserve_source_seed=True,
+                )
+            )
+            if target_run.world_id != container.world_id:
+                raise BranchForkSourceStateMismatchError(
+                    "cloned target world_id mismatch"
+                )
+            checkpoint_material = "\x00".join(
+                ("branch-fork-v1", command.target_branch_id, command.command_id)
+            )
+            checkpoint_digest = hashlib.sha256(
+                checkpoint_material.encode("utf-8")
+            ).hexdigest()[:24]
+            checkpoint_id = f"checkpoint-{checkpoint_digest}"
+            seed_namespace = {
+                "hierarchy": ["global", "branch"],
+                "global_seed": container.global_seed,
+                "source_branch_seed": branch.branch_seed,
+                "source_legacy_simulation_run_seed": source_run.seed,
+                "target_branch_seed": command.target_branch_seed,
+            }
+            payload = {
+                "product_run_id": command.product_run_id,
+                "source_branch_id": command.source_branch_id,
+                "source_checkpoint_id": command.source_checkpoint_id,
+                "source_checkpoint_kind": checkpoint.kind,
+                "source_checkpoint_content_hash": checkpoint.content_hash,
+                "source_legacy_simulation_run_id": source_run.run_id,
+                "target_branch_id": command.target_branch_id,
+                "target_legacy_simulation_run_id": command.target_legacy_simulation_run_id,
+                "source_inventory_hash": source_inventory_hash,
+                "normalized_clone_equivalence_hash": equivalence_hash,
+                "request_fingerprint": fingerprint,
+                "provenance": {
+                    "world_id": container.world_id,
+                    "world_fingerprint": container.world_package_fingerprint,
+                    "config_version": container.config_version,
+                    "config_fingerprint": container.config_fingerprint,
+                    "global_seed": container.global_seed,
+                    "source_branch_seed": branch.branch_seed,
+                    "source_legacy_simulation_run_seed": source_run.seed,
+                    "target_branch_seed": command.target_branch_seed,
+                },
+                "fork_semantics": "cloned_current_state_not_checkpoint_replay",
+            }
+            branch_metadata = {
+                "fork_command_id": command.command_id,
+                "request_fingerprint": fingerprint,
+                "source_checkpoint_id": checkpoint.checkpoint_id,
+            }
+            self._insert_fork_run_branch_in_session(
+                session=session,
+                model=RunBranchModel(
+                    branch_id=command.target_branch_id,
+                    run_id=command.product_run_id,
+                    display_name=command.target_branch_display_name,
+                    status="active",
+                    read_only=0,
+                    branch_seed=command.target_branch_seed,
+                    forked_from_branch_id=command.source_branch_id,
+                    forked_from_checkpoint_id=command.source_checkpoint_id,
+                    head_checkpoint_id=checkpoint_id,
+                    legacy_simulation_run_id=command.target_legacy_simulation_run_id,
+                    metadata_json=_to_json(branch_metadata),
+                ),
+            )
+            state_metadata = {
+                "fork_command_id": command.command_id,
+                "source_checkpoint_id": checkpoint.checkpoint_id,
+            }
+            self._insert_fork_branch_state_in_session(
+                session=session,
+                model=BranchStateModel(
+                    branch_id=command.target_branch_id,
+                    run_id=command.product_run_id,
+                    head_checkpoint_id=checkpoint_id,
+                    current_season=target_state.season,
+                    current_week=checkpoint.week,
+                    current_event_id=checkpoint.event_id,
+                    current_event_sequence=checkpoint.event_sequence,
+                    state_schema_version="branch_state_v1",
+                    status="active",
+                    metadata_json=_to_json(state_metadata),
+                ),
+            )
+            incomplete = BranchCheckpointRecord(
+                checkpoint_id,
+                command.product_run_id,
+                command.target_branch_id,
+                None,
+                1,
+                BRANCH_CHECKPOINT_KIND_BRANCH_FORK_START,
+                target_state.season,
+                checkpoint.week,
+                checkpoint.event_id,
+                checkpoint.event_sequence,
+                command.command_id,
+                BRANCH_CHECKPOINT_COMMAND_KIND_FORK_BRANCH,
+                BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_ATOMIC_FORK_MATERIALIZATION,
+                container.config_version,
+                container.config_fingerprint,
+                container.world_id,
+                container.world_package_fingerprint,
+                container.global_seed,
+                command.target_branch_seed,
+                seed_namespace,
+                "branch_checkpoint_payload_v1",
+                "sha256",
+                "",
+                payload,
+            )
+            fork_checkpoint = BranchCheckpointRecord(
+                **{
+                    **incomplete.__dict__,
+                    "content_hash": self.checkpoint_envelope_content_hash(incomplete),
+                }
+            )
+            self._insert_fork_checkpoint_in_session(
+                session=session,
+                model=BranchCheckpointModel(
+                    checkpoint_id=fork_checkpoint.checkpoint_id,
+                    run_id=fork_checkpoint.run_id,
+                    branch_id=fork_checkpoint.branch_id,
+                    parent_checkpoint_id=None,
+                    sequence=1,
+                    kind=fork_checkpoint.kind,
+                    season=fork_checkpoint.season,
+                    week=fork_checkpoint.week,
+                    event_id=fork_checkpoint.event_id,
+                    event_sequence=fork_checkpoint.event_sequence,
+                    command_id=fork_checkpoint.command_id,
+                    command_kind=fork_checkpoint.command_kind,
+                    command_boundary=fork_checkpoint.command_boundary,
+                    config_version=fork_checkpoint.config_version,
+                    config_fingerprint=fork_checkpoint.config_fingerprint,
+                    world_id=fork_checkpoint.world_id,
+                    world_fingerprint=fork_checkpoint.world_fingerprint,
+                    global_seed=fork_checkpoint.global_seed,
+                    branch_seed=fork_checkpoint.branch_seed,
+                    seed_namespace_json=self.canonical_json(
+                        fork_checkpoint.seed_namespace
+                    ),
+                    payload_schema_version=fork_checkpoint.payload_schema_version,
+                    content_hash_algorithm="sha256",
+                    content_hash=fork_checkpoint.content_hash,
+                    payload_json=self.canonical_json(fork_checkpoint.payload),
+                ),
+            )
+            metadata = {
+                "source_inventory_hash": source_inventory_hash,
+                "normalized_clone_equivalence_hash": equivalence_hash,
+            }
+            self._insert_fork_command_in_session(
+                session=session,
+                model=BranchForkCommandModel(
+                    command_id=command.command_id,
+                    product_run_id=command.product_run_id,
+                    request_fingerprint=fingerprint,
+                    source_branch_id=command.source_branch_id,
+                    source_checkpoint_id=command.source_checkpoint_id,
+                    target_branch_id=command.target_branch_id,
+                    target_legacy_simulation_run_id=command.target_legacy_simulation_run_id,
+                    result_branch_id=command.target_branch_id,
+                    result_checkpoint_id=checkpoint_id,
+                    result_legacy_simulation_run_id=command.target_legacy_simulation_run_id,
+                    metadata_json=_to_json(metadata),
+                ),
+            )
             try:
                 session.flush()
             except IntegrityError as exc:
-                raise OfficialBranchSelectionConflictError("official Branch selection conflicts with existing durable state") from exc
-            return SetOfficialRunBranchResult(command.product_run_id, previous, command.target_branch_id, command.target_branch_id, previous != command.target_branch_id, False, fingerprint)
+                raise BranchForkTargetExistsError(
+                    "fork target conflicts with existing durable state"
+                ) from exc
+            return ForkRunBranchResult(
+                command.product_run_id,
+                command.source_branch_id,
+                command.source_checkpoint_id,
+                command.target_branch_id,
+                command.target_legacy_simulation_run_id,
+                checkpoint_id,
+                command.target_branch_seed,
+                source_inventory_hash,
+                equivalence_hash,
+                fingerprint,
+                False,
+            )
 
-    def get_branch_next_match_command_replay(self, command: BranchSimulateNextMatchCommand) -> BranchSimulateNextMatchResult | None:
+    def set_official_run_branch_atomically(
+        self, command: SetOfficialRunBranchCommand
+    ) -> SetOfficialRunBranchResult:
+        """Atomically validate and publish an existing Branch as a Run's official Branch."""
+        if (
+            not all(
+                isinstance(value, str) and value.strip()
+                for value in (
+                    command.product_run_id,
+                    command.target_branch_id,
+                    command.command_id,
+                    command.audit_reason,
+                )
+            )
+            or command.expected_current_official_branch_id is not None
+            and (
+                not isinstance(command.expected_current_official_branch_id, str)
+                or not command.expected_current_official_branch_id.strip()
+            )
+            or command.explicit_confirmation is not True
+        ):
+            raise OfficialBranchSelectionValidationError(
+                "official Branch selection requires non-empty fields and explicit confirmation"
+            )
+        canonical = {
+            key: (value.strip() if isinstance(value, str) else value)
+            for key, value in command.__dict__.items()
+        }
+        command = SetOfficialRunBranchCommand(**canonical)
+        fingerprint = hashlib.sha256(
+            self.canonical_json(canonical).encode("utf-8")
+        ).hexdigest()
+        with self._session_factory.begin() as session:
+            existing = session.get(
+                OfficialBranchSelectionCommandModel, command.command_id
+            )
+            if existing is not None:
+                if existing.request_fingerprint != fingerprint:
+                    raise OfficialBranchSelectionIdempotencyConflictError(
+                        "command_id already exists with different official Branch selection request"
+                    )
+                container = session.get(RunContainerModel, command.product_run_id)
+                if (
+                    container is None
+                    or container.official_branch_id
+                    != existing.result_official_branch_id
+                ):
+                    raise OfficialBranchSelectionStateMismatchError(
+                        "official Branch changed since recorded command result"
+                    )
+                return SetOfficialRunBranchResult(
+                    command.product_run_id,
+                    existing.result_previous_official_branch_id,
+                    existing.result_official_branch_id,
+                    existing.target_branch_id,
+                    existing.result_previous_official_branch_id
+                    != existing.result_official_branch_id,
+                    True,
+                    fingerprint,
+                )
+            container = session.get(RunContainerModel, command.product_run_id)
+            if container is None:
+                raise KeyError(f"product_run_id {command.product_run_id} was not found")
+            if (
+                container.storage_kind == "built_in"
+                or container.read_only
+                or container.status != "active"
+            ):
+                raise OfficialBranchSelectionValidationError(
+                    "product run is not editable and active"
+                )
+            if (
+                container.official_branch_id
+                != command.expected_current_official_branch_id
+            ):
+                raise OfficialBranchSelectionConflictError(
+                    "current official Branch does not match expected official Branch"
+                )
+            branch = session.get(RunBranchModel, command.target_branch_id)
+            if branch is None:
+                raise KeyError(
+                    f"target_branch_id {command.target_branch_id} was not found"
+                )
+            if (
+                branch.run_id != command.product_run_id
+                or branch.status != "active"
+                or not (branch.legacy_simulation_run_id or "").strip()
+            ):
+                raise OfficialBranchSelectionValidationError(
+                    "target Branch is not active in product run with a legacy binding"
+                )
+            if session.get(SimulationRunModel, branch.legacy_simulation_run_id) is None:
+                raise OfficialBranchSelectionValidationError(
+                    "target Branch legacy SimulationRun was not found"
+                )
+            state = session.get(BranchStateModel, command.target_branch_id)
+            if state is None or state.run_id != command.product_run_id:
+                raise OfficialBranchSelectionValidationError(
+                    "target BranchState is missing or belongs to another product run"
+                )
+            if branch.head_checkpoint_id != state.head_checkpoint_id:
+                raise OfficialBranchSelectionValidationError(
+                    "target Branch and BranchState heads disagree"
+                )
+            head = branch.head_checkpoint_id
+            checkpoint = session.get(BranchCheckpointModel, head) if head else None
+            if (
+                checkpoint is None
+                or checkpoint.branch_id != command.target_branch_id
+                or checkpoint.run_id != command.product_run_id
+            ):
+                raise OfficialBranchSelectionValidationError(
+                    "target effective head checkpoint is missing or incoherent"
+                )
+            previous = container.official_branch_id
+            container.official_branch_id = command.target_branch_id
+            session.add(
+                OfficialBranchSelectionCommandModel(
+                    command_id=command.command_id,
+                    product_run_id=command.product_run_id,
+                    request_fingerprint=fingerprint,
+                    expected_previous_official_branch_id=command.expected_current_official_branch_id,
+                    target_branch_id=command.target_branch_id,
+                    result_previous_official_branch_id=previous,
+                    result_official_branch_id=command.target_branch_id,
+                    audit_reason=command.audit_reason,
+                )
+            )
+            try:
+                session.flush()
+            except IntegrityError as exc:
+                raise OfficialBranchSelectionConflictError(
+                    "official Branch selection conflicts with existing durable state"
+                ) from exc
+            return SetOfficialRunBranchResult(
+                command.product_run_id,
+                previous,
+                command.target_branch_id,
+                command.target_branch_id,
+                previous != command.target_branch_id,
+                False,
+                fingerprint,
+            )
+
+    def get_branch_next_match_command_replay(
+        self, command: BranchSimulateNextMatchCommand
+    ) -> BranchSimulateNextMatchResult | None:
         return self._get_branch_simulation_command_replay(command, _NEXT_MATCH_ACTION)  # type: ignore[return-value]
 
-    def get_branch_next_round_command_replay(self, command: BranchSimulateNextRoundCommand) -> BranchSimulateNextRoundResult | None:
+    def get_branch_next_round_command_replay(
+        self, command: BranchSimulateNextRoundCommand
+    ) -> BranchSimulateNextRoundResult | None:
         return self._get_branch_simulation_command_replay(command, _NEXT_ROUND_ACTION)  # type: ignore[return-value]
 
-    def get_branch_next_week_command_replay(self, command: BranchSimulateNextWeekCommand) -> BranchSimulateNextWeekResult | None:
+    def get_branch_next_week_command_replay(
+        self, command: BranchSimulateNextWeekCommand
+    ) -> BranchSimulateNextWeekResult | None:
         return self._get_branch_simulation_command_replay(command, _NEXT_WEEK_ACTION)  # type: ignore[return-value]
 
-    def get_branch_next_tournament_command_replay(self, command: BranchSimulateNextTournamentCommand) -> BranchSimulateNextTournamentResult | None:
-        return self._get_branch_simulation_command_replay(command, _NEXT_TOURNAMENT_ACTION)  # type: ignore[return-value]
+    def get_branch_next_tournament_command_replay(
+        self, command: BranchSimulateNextTournamentCommand
+    ) -> BranchSimulateNextTournamentResult | None:
+        return self._get_branch_simulation_command_replay(
+            command, _NEXT_TOURNAMENT_ACTION
+        )  # type: ignore[return-value]
 
-    def get_branch_full_season_command_replay(self, command: BranchSimulateFullSeasonCommand) -> BranchSimulateFullSeasonResult | None:
+    def get_branch_full_season_command_replay(
+        self, command: BranchSimulateFullSeasonCommand
+    ) -> BranchSimulateFullSeasonResult | None:
         return self._get_branch_simulation_command_replay(command, _FULL_SEASON_ACTION)  # type: ignore[return-value]
 
     @staticmethod
-    def _finals_request_fingerprint(command: BranchSimulateWorldTourFinalsCommand) -> str:
-        canonical = {"product_run_id": command.product_run_id, "branch_id": command.branch_id,
-                     "expected_head_checkpoint_id": command.expected_head_checkpoint_id,
-                     "action_kind": "simulate_world_tour_finals", "audit_reason": command.audit_reason,
-                     "explicit_confirmation": True}
-        return hashlib.sha256(SimulationPersistenceRepository.canonical_json(canonical).encode()).hexdigest()
+    def _finals_request_fingerprint(
+        command: BranchSimulateWorldTourFinalsCommand,
+    ) -> str:
+        canonical = {
+            "product_run_id": command.product_run_id,
+            "branch_id": command.branch_id,
+            "expected_head_checkpoint_id": command.expected_head_checkpoint_id,
+            "action_kind": "simulate_world_tour_finals",
+            "audit_reason": command.audit_reason,
+            "explicit_confirmation": True,
+        }
+        return hashlib.sha256(
+            SimulationPersistenceRepository.canonical_json(canonical).encode()
+        ).hexdigest()
 
     @staticmethod
     def _normalize_and_validate_world_tour_finals_command(
         command: BranchSimulateWorldTourFinalsCommand,
     ) -> BranchSimulateWorldTourFinalsCommand:
-        normalized = BranchSimulateWorldTourFinalsCommand(**{
-            key: value.strip() if isinstance(value, str) else value
-            for key, value in command.__dict__.items()
-        })
+        normalized = BranchSimulateWorldTourFinalsCommand(
+            **{
+                key: value.strip() if isinstance(value, str) else value
+                for key, value in command.__dict__.items()
+            }
+        )
         if (
-            not all(isinstance(value, str) and value for value in (
-                normalized.product_run_id,
-                normalized.branch_id,
-                normalized.expected_head_checkpoint_id,
-                normalized.command_id,
-                normalized.audit_reason,
-            ))
+            not all(
+                isinstance(value, str) and value
+                for value in (
+                    normalized.product_run_id,
+                    normalized.branch_id,
+                    normalized.expected_head_checkpoint_id,
+                    normalized.command_id,
+                    normalized.audit_reason,
+                )
+            )
             or normalized.explicit_confirmation is not True
         ):
             raise BranchSimulationValidationError(
@@ -3701,192 +5248,892 @@ class SimulationPersistenceRepository:
         return normalized
 
     @staticmethod
-    def _finals_replay_result(payload: dict[str, object]) -> BranchSimulateWorldTourFinalsResult:
+    def _finals_replay_result(
+        payload: dict[str, object],
+    ) -> BranchSimulateWorldTourFinalsResult:
         values = dict(payload)
         values["finals"] = FinalsSimulationResult.model_validate(values["finals"])
         values["idempotent_replay"] = True
         return BranchSimulateWorldTourFinalsResult(**values)  # type: ignore[arg-type]
 
-    def get_branch_world_tour_finals_command_replay(self, command: BranchSimulateWorldTourFinalsCommand) -> BranchSimulateWorldTourFinalsResult | None:
+    def get_branch_world_tour_finals_command_replay(
+        self, command: BranchSimulateWorldTourFinalsCommand
+    ) -> BranchSimulateWorldTourFinalsResult | None:
         command = self._normalize_and_validate_world_tour_finals_command(command)
         fingerprint = self._finals_request_fingerprint(command)
         with self._session_factory() as session:
             existing = session.get(BranchSimulationCommandModel, command.command_id)
             if existing is None:
                 return None
-            if existing.request_fingerprint != fingerprint or existing.action_kind != "simulate_world_tour_finals":
-                raise BranchSimulationIdempotencyConflictError("command_id already exists with a different Branch simulation request")
+            if (
+                existing.request_fingerprint != fingerprint
+                or existing.action_kind != "simulate_world_tour_finals"
+            ):
+                raise BranchSimulationIdempotencyConflictError(
+                    "command_id already exists with a different Branch simulation request"
+                )
             return self._finals_replay_result(_from_json(existing.result_json))  # type: ignore[arg-type]
 
-    def get_finals_phase_descriptor(self, *, run_id: str, season: int) -> ReviewedFinalsPhaseDescriptor:
+    def get_finals_phase_descriptor(
+        self, *, run_id: str, season: int
+    ) -> ReviewedFinalsPhaseDescriptor:
         with self._session_factory() as session:
-            return self._finals_phase_descriptor_in_session(session=session, run_id=run_id, season=season)
+            return self._finals_phase_descriptor_in_session(
+                session=session, run_id=run_id, season=season
+            )
 
     @classmethod
-    def _finals_phase_descriptor_in_session(cls, *, session: Session, run_id: str, season: int) -> ReviewedFinalsPhaseDescriptor:
-        qualification = session.execute(select(FinalsQualificationModel).where(FinalsQualificationModel.run_id == run_id, FinalsQualificationModel.season == season)).scalar_one_or_none()
-        result = session.execute(select(FinalsResultModel).where(FinalsResultModel.run_id == run_id, FinalsResultModel.season == season)).scalar_one_or_none()
-        q_payload = ({"source_as_of_season": qualification.source_as_of_season, "source_as_of_week": qualification.source_as_of_week, "qualification": _from_json(qualification.payload_json)} if qualification else None)
-        r_payload = ({"event_id": result.event_id, "source_as_of_season": result.source_as_of_season, "source_as_of_week": result.source_as_of_week, "result": _from_json(result.payload_json)} if result else None)
-        return ReviewedFinalsPhaseDescriptor(qualification is not None, cls.checkpoint_content_hash(q_payload) if q_payload else None, result is not None, cls.checkpoint_content_hash(r_payload) if r_payload else None)
+    def _finals_phase_descriptor_in_session(
+        cls, *, session: Session, run_id: str, season: int
+    ) -> ReviewedFinalsPhaseDescriptor:
+        qualification = session.execute(
+            select(FinalsQualificationModel).where(
+                FinalsQualificationModel.run_id == run_id,
+                FinalsQualificationModel.season == season,
+            )
+        ).scalar_one_or_none()
+        result = session.execute(
+            select(FinalsResultModel).where(
+                FinalsResultModel.run_id == run_id, FinalsResultModel.season == season
+            )
+        ).scalar_one_or_none()
+        q_payload = (
+            {
+                "source_as_of_season": qualification.source_as_of_season,
+                "source_as_of_week": qualification.source_as_of_week,
+                "qualification": _from_json(qualification.payload_json),
+            }
+            if qualification
+            else None
+        )
+        r_payload = (
+            {
+                "event_id": result.event_id,
+                "source_as_of_season": result.source_as_of_season,
+                "source_as_of_week": result.source_as_of_week,
+                "result": _from_json(result.payload_json),
+            }
+            if result
+            else None
+        )
+        return ReviewedFinalsPhaseDescriptor(
+            qualification is not None,
+            cls.checkpoint_content_hash(q_payload) if q_payload else None,
+            result is not None,
+            cls.checkpoint_content_hash(r_payload) if r_payload else None,
+        )
 
-    def simulate_world_tour_finals_on_branch_atomically(self, command: BranchSimulateWorldTourFinalsCommand, *, finals: FinalsSimulationResult, reviewed_pre_state_fingerprint: str, reviewed_finals_phase: ReviewedFinalsPhaseDescriptor) -> BranchSimulateWorldTourFinalsResult:
+    def simulate_world_tour_finals_on_branch_atomically(
+        self,
+        command: BranchSimulateWorldTourFinalsCommand,
+        *,
+        finals: FinalsSimulationResult,
+        reviewed_pre_state_fingerprint: str,
+        reviewed_finals_phase: ReviewedFinalsPhaseDescriptor,
+    ) -> BranchSimulateWorldTourFinalsResult:
         command = self._normalize_and_validate_world_tour_finals_command(command)
         fingerprint = self._finals_request_fingerprint(command)
         with self._session_factory.begin() as session:
             existing = session.get(BranchSimulationCommandModel, command.command_id)
             if existing is not None:
-                if existing.request_fingerprint != fingerprint or existing.action_kind != "simulate_world_tour_finals":
-                    raise BranchSimulationIdempotencyConflictError("command_id already exists with a different Branch simulation request")
+                if (
+                    existing.request_fingerprint != fingerprint
+                    or existing.action_kind != "simulate_world_tour_finals"
+                ):
+                    raise BranchSimulationIdempotencyConflictError(
+                        "command_id already exists with a different Branch simulation request"
+                    )
                 return self._finals_replay_result(_from_json(existing.result_json))  # type: ignore[arg-type]
             container = session.get(RunContainerModel, command.product_run_id)
-            if container is None: raise KeyError(f"product_run_id {command.product_run_id} was not found")
-            if container.storage_kind == "built_in" or container.read_only or container.status != "active": raise BranchSimulationConflictError("product run is not writable and active")
+            if container is None:
+                raise KeyError(f"product_run_id {command.product_run_id} was not found")
+            if (
+                container.storage_kind == "built_in"
+                or container.read_only
+                or container.status != "active"
+            ):
+                raise BranchSimulationConflictError(
+                    "product run is not writable and active"
+                )
             branch = session.get(RunBranchModel, command.branch_id)
-            if branch is None: raise KeyError(f"branch_id {command.branch_id} was not found")
-            if branch.run_id != command.product_run_id: raise BranchSimulationConflictError("branch belongs to another product run")
+            if branch is None:
+                raise KeyError(f"branch_id {command.branch_id} was not found")
+            if branch.run_id != command.product_run_id:
+                raise BranchSimulationConflictError(
+                    "branch belongs to another product run"
+                )
             legacy_id = (branch.legacy_simulation_run_id or "").strip()
-            if branch.read_only or branch.status != "active" or not legacy_id: raise BranchSimulationConflictError("branch is not writable and active with a legacy binding")
-            legacy, state_model = session.get(SimulationRunModel, legacy_id), session.get(SeasonStateModel, legacy_id)
-            if legacy is None: raise KeyError(f"legacy SimulationRun {legacy_id} was not found")
-            if state_model is None: raise BranchSimulationConflictError("legacy SimulationRun has no SeasonState")
+            if branch.read_only or branch.status != "active" or not legacy_id:
+                raise BranchSimulationConflictError(
+                    "branch is not writable and active with a legacy binding"
+                )
+            legacy, state_model = (
+                session.get(SimulationRunModel, legacy_id),
+                session.get(SeasonStateModel, legacy_id),
+            )
+            if legacy is None:
+                raise KeyError(f"legacy SimulationRun {legacy_id} was not found")
+            if state_model is None:
+                raise BranchSimulationConflictError(
+                    "legacy SimulationRun has no SeasonState"
+                )
             branch_state = session.get(BranchStateModel, command.branch_id)
-            if branch_state is None: raise BranchSimulationConflictError("BranchState was not found")
-            if branch_state.run_id != command.product_run_id or branch.head_checkpoint_id != branch_state.head_checkpoint_id: raise BranchSimulationConflictError("Branch and BranchState heads disagree")
+            if branch_state is None:
+                raise BranchSimulationConflictError("BranchState was not found")
+            if (
+                branch_state.run_id != command.product_run_id
+                or branch.head_checkpoint_id != branch_state.head_checkpoint_id
+            ):
+                raise BranchSimulationConflictError(
+                    "Branch and BranchState heads disagree"
+                )
             head = branch.head_checkpoint_id
-            if head != command.expected_head_checkpoint_id: raise BranchSimulationConflictError("expected head checkpoint is stale")
+            if head != command.expected_head_checkpoint_id:
+                raise BranchSimulationConflictError("expected head checkpoint is stale")
             checkpoint = session.get(BranchCheckpointModel, head)
-            if checkpoint is None: raise KeyError(f"expected checkpoint {head} was not found")
-            if checkpoint.branch_id != command.branch_id or checkpoint.run_id != command.product_run_id: raise BranchSimulationConflictError("effective head checkpoint is incoherent")
-            before = self._season_state_payload_in_session(session=session, model=state_model)
-            if checkpoint.kind not in {BRANCH_CHECKPOINT_KIND_INITIAL, BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE, BRANCH_CHECKPOINT_KIND_BRANCH_FORK_START}: raise BranchSimulationConflictError("effective head checkpoint kind cannot prove current legacy state")
+            if checkpoint is None:
+                raise KeyError(f"expected checkpoint {head} was not found")
+            if (
+                checkpoint.branch_id != command.branch_id
+                or checkpoint.run_id != command.product_run_id
+            ):
+                raise BranchSimulationConflictError(
+                    "effective head checkpoint is incoherent"
+                )
+            before = self._season_state_payload_in_session(
+                session=session, model=state_model
+            )
+            if checkpoint.kind not in {
+                BRANCH_CHECKPOINT_KIND_INITIAL,
+                BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE,
+                BRANCH_CHECKPOINT_KIND_BRANCH_FORK_START,
+            }:
+                raise BranchSimulationConflictError(
+                    "effective head checkpoint kind cannot prove current legacy state"
+                )
             checkpoint_payload = _from_json(checkpoint.payload_json)
             if checkpoint.kind != BRANCH_CHECKPOINT_KIND_BRANCH_FORK_START:
-                captured = checkpoint_payload.get("season_state") if isinstance(checkpoint_payload, dict) else None
-                if not isinstance(captured, dict) or _to_json(captured) != _to_json(before):
-                    raise BranchSimulationConflictError("effective head does not match current legacy state")
-            elif not isinstance(checkpoint_payload, dict) or checkpoint_payload.get("target_legacy_simulation_run_id") != legacy_id:
-                raise BranchSimulationConflictError("fork head provenance cannot prove selected legacy namespace")
+                captured = (
+                    checkpoint_payload.get("season_state")
+                    if isinstance(checkpoint_payload, dict)
+                    else None
+                )
+                if not isinstance(captured, dict) or _to_json(captured) != _to_json(
+                    before
+                ):
+                    raise BranchSimulationConflictError(
+                        "effective head does not match current legacy state"
+                    )
+            elif (
+                not isinstance(checkpoint_payload, dict)
+                or checkpoint_payload.get("target_legacy_simulation_run_id")
+                != legacy_id
+            ):
+                raise BranchSimulationConflictError(
+                    "fork head provenance cannot prove selected legacy namespace"
+                )
             state_hash = self.checkpoint_content_hash(before)
-            if state_hash != reviewed_pre_state_fingerprint: raise BranchSimulationConflictError("legacy SeasonState changed after Finals review")
-            current_phase = self._finals_phase_descriptor_in_session(session=session, run_id=legacy_id, season=legacy.season)
-            if current_phase != reviewed_finals_phase: raise BranchSimulationConflictError("Finals artifacts changed after review")
-            if current_phase.result_exists: raise BranchSimulationConflictError("World Tour Finals result already exists")
-            self._upsert_finals_qualification_in_session(session=session, run_id=legacy_id, season=legacy.season, source_as_of_season=finals.qualification.source_as_of_season, source_as_of_week=finals.qualification.source_as_of_week, qualification=finals.qualification.qualification)
-            self._upsert_finals_result_in_session(session=session, run_id=legacy_id, season=legacy.season, event_id=finals.event_id, source_as_of_season=finals.result.source_as_of_season, source_as_of_week=finals.result.source_as_of_week, result=finals.result.result)
-            sequence = session.execute(select(func.max(BranchCheckpointModel.sequence)).where(BranchCheckpointModel.branch_id == command.branch_id)).scalar_one() or 0
-            checkpoint_id = "checkpoint-" + hashlib.sha256((command.branch_id + "\x00" + command.command_id).encode()).hexdigest()[:24]
-            locator = (branch_state.current_season if branch_state.current_season is not None else legacy.season, branch_state.current_week, branch_state.current_event_id, branch_state.current_event_sequence)
-            summary = {"mode": "simulate_world_tour_finals", "season": legacy.season, "event_id": finals.event_id, "qualification_source_season": finals.qualification.source_as_of_season, "qualification_source_week": finals.qualification.source_as_of_week, "already_simulated": False, "regular_season_completed_event_count": len(before["completed_event_ids"]), "season_state_fingerprint": state_hash}
-            payload = {"run_id": command.product_run_id, "branch_id": command.branch_id, "legacy_simulation_run_id": legacy_id, "parent_checkpoint_id": head, "season_state": before, "before_state_fingerprint": state_hash, "after_state_fingerprint": state_hash, "simulation_result": summary, "command_id": command.command_id, "request_fingerprint": fingerprint, "provenance": {"world_id": container.world_id, "config_version": container.config_version, "config_fingerprint": container.config_fingerprint, "global_seed": container.global_seed}}
-            incomplete = BranchCheckpointRecord(checkpoint_id, command.product_run_id, command.branch_id, head, int(sequence)+1, BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE, locator[0], locator[1], locator[2], locator[3], command.command_id, BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_WORLD_TOUR_FINALS_BRANCH, BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_WORLD_TOUR_FINALS_PERSISTED, container.config_version, container.config_fingerprint, container.world_id, container.world_package_fingerprint, container.global_seed, branch.branch_seed, {"hierarchy": ["global", "branch"], "global_seed": container.global_seed, "branch_seed": branch.branch_seed}, "branch_checkpoint_payload_v1", "sha256", "", payload)
-            record = BranchCheckpointRecord(**{**incomplete.__dict__, "content_hash": self.checkpoint_envelope_content_hash(incomplete)})
-            session.add(BranchCheckpointModel(checkpoint_id=record.checkpoint_id, run_id=record.run_id, branch_id=record.branch_id, parent_checkpoint_id=record.parent_checkpoint_id, sequence=record.sequence, kind=record.kind, season=record.season, week=record.week, event_id=record.event_id, event_sequence=record.event_sequence, command_id=record.command_id, command_kind=record.command_kind, command_boundary=record.command_boundary, config_version=record.config_version, config_fingerprint=record.config_fingerprint, world_id=record.world_id, world_fingerprint=record.world_fingerprint, global_seed=record.global_seed, branch_seed=record.branch_seed, seed_namespace_json=_to_json(record.seed_namespace), payload_schema_version=record.payload_schema_version, content_hash_algorithm="sha256", content_hash=record.content_hash, payload_json=_to_json(record.payload)))
-            if session.execute(update(RunBranchModel).where(RunBranchModel.branch_id == command.branch_id, RunBranchModel.run_id == command.product_run_id, RunBranchModel.head_checkpoint_id == head).values(head_checkpoint_id=checkpoint_id)).rowcount != 1: raise BranchSimulationConflictError("Branch head changed concurrently")
-            if session.execute(update(BranchStateModel).where(BranchStateModel.branch_id == command.branch_id, BranchStateModel.run_id == command.product_run_id, BranchStateModel.head_checkpoint_id == head).values(head_checkpoint_id=checkpoint_id)).rowcount != 1: raise BranchSimulationConflictError("BranchState head changed concurrently")
-            result = BranchSimulateWorldTourFinalsResult(command.product_run_id, command.branch_id, legacy_id, command.command_id, fingerprint, False, head, checkpoint_id, *locator, *locator, False, finals)
+            if state_hash != reviewed_pre_state_fingerprint:
+                raise BranchSimulationConflictError(
+                    "legacy SeasonState changed after Finals review"
+                )
+            current_phase = self._finals_phase_descriptor_in_session(
+                session=session, run_id=legacy_id, season=legacy.season
+            )
+            if current_phase != reviewed_finals_phase:
+                raise BranchSimulationConflictError(
+                    "Finals artifacts changed after review"
+                )
+            if current_phase.result_exists:
+                raise BranchSimulationConflictError(
+                    "World Tour Finals result already exists"
+                )
+            self._upsert_finals_qualification_in_session(
+                session=session,
+                run_id=legacy_id,
+                season=legacy.season,
+                source_as_of_season=finals.qualification.source_as_of_season,
+                source_as_of_week=finals.qualification.source_as_of_week,
+                qualification=finals.qualification.qualification,
+            )
+            self._upsert_finals_result_in_session(
+                session=session,
+                run_id=legacy_id,
+                season=legacy.season,
+                event_id=finals.event_id,
+                source_as_of_season=finals.result.source_as_of_season,
+                source_as_of_week=finals.result.source_as_of_week,
+                result=finals.result.result,
+            )
+            sequence = (
+                session.execute(
+                    select(func.max(BranchCheckpointModel.sequence)).where(
+                        BranchCheckpointModel.branch_id == command.branch_id
+                    )
+                ).scalar_one()
+                or 0
+            )
+            checkpoint_id = (
+                "checkpoint-"
+                + hashlib.sha256(
+                    (command.branch_id + "\x00" + command.command_id).encode()
+                ).hexdigest()[:24]
+            )
+            locator = (
+                branch_state.current_season
+                if branch_state.current_season is not None
+                else legacy.season,
+                branch_state.current_week,
+                branch_state.current_event_id,
+                branch_state.current_event_sequence,
+            )
+            summary = {
+                "mode": "simulate_world_tour_finals",
+                "season": legacy.season,
+                "event_id": finals.event_id,
+                "qualification_source_season": finals.qualification.source_as_of_season,
+                "qualification_source_week": finals.qualification.source_as_of_week,
+                "already_simulated": False,
+                "regular_season_completed_event_count": len(
+                    before["completed_event_ids"]
+                ),
+                "season_state_fingerprint": state_hash,
+            }
+            payload = {
+                "run_id": command.product_run_id,
+                "branch_id": command.branch_id,
+                "legacy_simulation_run_id": legacy_id,
+                "parent_checkpoint_id": head,
+                "season_state": before,
+                "before_state_fingerprint": state_hash,
+                "after_state_fingerprint": state_hash,
+                "simulation_result": summary,
+                "command_id": command.command_id,
+                "request_fingerprint": fingerprint,
+                "provenance": {
+                    "world_id": container.world_id,
+                    "config_version": container.config_version,
+                    "config_fingerprint": container.config_fingerprint,
+                    "global_seed": container.global_seed,
+                },
+            }
+            incomplete = BranchCheckpointRecord(
+                checkpoint_id,
+                command.product_run_id,
+                command.branch_id,
+                head,
+                int(sequence) + 1,
+                BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE,
+                locator[0],
+                locator[1],
+                locator[2],
+                locator[3],
+                command.command_id,
+                BRANCH_CHECKPOINT_COMMAND_KIND_SIMULATE_WORLD_TOUR_FINALS_BRANCH,
+                BRANCH_CHECKPOINT_COMMAND_BOUNDARY_AFTER_BRANCH_WORLD_TOUR_FINALS_PERSISTED,
+                container.config_version,
+                container.config_fingerprint,
+                container.world_id,
+                container.world_package_fingerprint,
+                container.global_seed,
+                branch.branch_seed,
+                {
+                    "hierarchy": ["global", "branch"],
+                    "global_seed": container.global_seed,
+                    "branch_seed": branch.branch_seed,
+                },
+                "branch_checkpoint_payload_v1",
+                "sha256",
+                "",
+                payload,
+            )
+            record = BranchCheckpointRecord(
+                **{
+                    **incomplete.__dict__,
+                    "content_hash": self.checkpoint_envelope_content_hash(incomplete),
+                }
+            )
+            session.add(
+                BranchCheckpointModel(
+                    checkpoint_id=record.checkpoint_id,
+                    run_id=record.run_id,
+                    branch_id=record.branch_id,
+                    parent_checkpoint_id=record.parent_checkpoint_id,
+                    sequence=record.sequence,
+                    kind=record.kind,
+                    season=record.season,
+                    week=record.week,
+                    event_id=record.event_id,
+                    event_sequence=record.event_sequence,
+                    command_id=record.command_id,
+                    command_kind=record.command_kind,
+                    command_boundary=record.command_boundary,
+                    config_version=record.config_version,
+                    config_fingerprint=record.config_fingerprint,
+                    world_id=record.world_id,
+                    world_fingerprint=record.world_fingerprint,
+                    global_seed=record.global_seed,
+                    branch_seed=record.branch_seed,
+                    seed_namespace_json=_to_json(record.seed_namespace),
+                    payload_schema_version=record.payload_schema_version,
+                    content_hash_algorithm="sha256",
+                    content_hash=record.content_hash,
+                    payload_json=_to_json(record.payload),
+                )
+            )
+            if (
+                session.execute(
+                    update(RunBranchModel)
+                    .where(
+                        RunBranchModel.branch_id == command.branch_id,
+                        RunBranchModel.run_id == command.product_run_id,
+                        RunBranchModel.head_checkpoint_id == head,
+                    )
+                    .values(head_checkpoint_id=checkpoint_id)
+                ).rowcount
+                != 1
+            ):
+                raise BranchSimulationConflictError("Branch head changed concurrently")
+            if (
+                session.execute(
+                    update(BranchStateModel)
+                    .where(
+                        BranchStateModel.branch_id == command.branch_id,
+                        BranchStateModel.run_id == command.product_run_id,
+                        BranchStateModel.head_checkpoint_id == head,
+                    )
+                    .values(head_checkpoint_id=checkpoint_id)
+                ).rowcount
+                != 1
+            ):
+                raise BranchSimulationConflictError(
+                    "BranchState head changed concurrently"
+                )
+            result = BranchSimulateWorldTourFinalsResult(
+                command.product_run_id,
+                command.branch_id,
+                legacy_id,
+                command.command_id,
+                fingerprint,
+                False,
+                head,
+                checkpoint_id,
+                *locator,
+                *locator,
+                False,
+                finals,
+            )
             result_json = {**result.__dict__, "finals": finals.model_dump(mode="json")}
-            session.add(BranchSimulationCommandModel(command_id=command.command_id, product_run_id=command.product_run_id, branch_id=command.branch_id, action_kind="simulate_world_tour_finals", expected_head_checkpoint_id=head, previous_head_checkpoint_id=head, resulting_head_checkpoint_id=checkpoint_id, legacy_simulation_run_id=legacy_id, request_fingerprint=fingerprint, result_json=_to_json(result_json), audit_reason=command.audit_reason))
-            try: session.flush()
-            except IntegrityError as exc: raise BranchSimulationConflictError("concurrent Branch World Tour Finals command conflict") from exc
+            session.add(
+                BranchSimulationCommandModel(
+                    command_id=command.command_id,
+                    product_run_id=command.product_run_id,
+                    branch_id=command.branch_id,
+                    action_kind="simulate_world_tour_finals",
+                    expected_head_checkpoint_id=head,
+                    previous_head_checkpoint_id=head,
+                    resulting_head_checkpoint_id=checkpoint_id,
+                    legacy_simulation_run_id=legacy_id,
+                    request_fingerprint=fingerprint,
+                    result_json=_to_json(result_json),
+                    audit_reason=command.audit_reason,
+                )
+            )
+            try:
+                session.flush()
+            except IntegrityError as exc:
+                raise BranchSimulationConflictError(
+                    "concurrent Branch World Tour Finals command conflict"
+                ) from exc
             return result
 
-    def _get_branch_simulation_command_replay(self, command: BranchSimulateNextMatchCommand | BranchSimulateNextRoundCommand | BranchSimulateNextWeekCommand | BranchSimulateNextTournamentCommand, action: _BranchSimulationActionSpec) -> BranchSimulateNextMatchResult | BranchSimulateNextRoundResult | BranchSimulateNextWeekResult | BranchSimulateNextTournamentResult | None:
+    def _get_branch_simulation_command_replay(
+        self,
+        command: BranchSimulateNextMatchCommand
+        | BranchSimulateNextRoundCommand
+        | BranchSimulateNextWeekCommand
+        | BranchSimulateNextTournamentCommand,
+        action: _BranchSimulationActionSpec,
+    ) -> (
+        BranchSimulateNextMatchResult
+        | BranchSimulateNextRoundResult
+        | BranchSimulateNextWeekResult
+        | BranchSimulateNextTournamentResult
+        | None
+    ):
         """Journal-only idempotency check; deliberately performs no Branch resolution."""
-        if not all(isinstance(v, str) and v.strip() for v in (command.product_run_id, command.branch_id, command.expected_head_checkpoint_id, command.command_id, command.audit_reason)) or command.explicit_confirmation is not True:
-            raise BranchSimulationValidationError(f"{action.label} requires non-empty identifiers, audit reason, and explicit confirmation")
-        normalized = {k: (v.strip() if isinstance(v, str) else v) for k, v in command.__dict__.items()}
-        fingerprint = hashlib.sha256(self.canonical_json({"product_run_id": normalized["product_run_id"], "branch_id": normalized["branch_id"], "expected_head_checkpoint_id": normalized["expected_head_checkpoint_id"], "action_kind": action.action_kind, "audit_reason": normalized["audit_reason"], "explicit_confirmation": True}).encode("utf-8")).hexdigest()
+        if (
+            not all(
+                isinstance(v, str) and v.strip()
+                for v in (
+                    command.product_run_id,
+                    command.branch_id,
+                    command.expected_head_checkpoint_id,
+                    command.command_id,
+                    command.audit_reason,
+                )
+            )
+            or command.explicit_confirmation is not True
+        ):
+            raise BranchSimulationValidationError(
+                f"{action.label} requires non-empty identifiers, audit reason, and explicit confirmation"
+            )
+        normalized = {
+            k: (v.strip() if isinstance(v, str) else v)
+            for k, v in command.__dict__.items()
+        }
+        fingerprint = hashlib.sha256(
+            self.canonical_json(
+                {
+                    "product_run_id": normalized["product_run_id"],
+                    "branch_id": normalized["branch_id"],
+                    "expected_head_checkpoint_id": normalized[
+                        "expected_head_checkpoint_id"
+                    ],
+                    "action_kind": action.action_kind,
+                    "audit_reason": normalized["audit_reason"],
+                    "explicit_confirmation": True,
+                }
+            ).encode("utf-8")
+        ).hexdigest()
         with self._session_factory() as session:
-            existing = session.get(BranchSimulationCommandModel, normalized["command_id"])
-            if existing is None: return None
-            if existing.request_fingerprint != fingerprint: raise BranchSimulationIdempotencyConflictError(f"command_id already exists with different {action.label} request")
-            return action.result_type(**{**_from_json(existing.result_json), "idempotent_replay": True})
+            existing = session.get(
+                BranchSimulationCommandModel, normalized["command_id"]
+            )
+            if existing is None:
+                return None
+            if existing.request_fingerprint != fingerprint:
+                raise BranchSimulationIdempotencyConflictError(
+                    f"command_id already exists with different {action.label} request"
+                )
+            return action.result_type(
+                **{**_from_json(existing.result_json), "idempotent_replay": True}
+            )
 
-    def simulate_next_match_on_branch_atomically(self, command: BranchSimulateNextMatchCommand, *, step: object, reviewed_pre_state: object | None = None, reviewed_pre_state_fingerprint: str) -> BranchSimulateNextMatchResult:
-        return self._simulate_on_branch_atomically(command, action=_NEXT_MATCH_ACTION, step=step, reviewed_pre_state=reviewed_pre_state, reviewed_pre_state_fingerprint=reviewed_pre_state_fingerprint)  # type: ignore[return-value]
+    def simulate_next_match_on_branch_atomically(
+        self,
+        command: BranchSimulateNextMatchCommand,
+        *,
+        step: object,
+        reviewed_pre_state: object | None = None,
+        reviewed_pre_state_fingerprint: str,
+    ) -> BranchSimulateNextMatchResult:
+        return self._simulate_on_branch_atomically(
+            command,
+            action=_NEXT_MATCH_ACTION,
+            step=step,
+            reviewed_pre_state=reviewed_pre_state,
+            reviewed_pre_state_fingerprint=reviewed_pre_state_fingerprint,
+        )  # type: ignore[return-value]
 
-    def simulate_next_round_on_branch_atomically(self, command: BranchSimulateNextRoundCommand, *, step: object, reviewed_pre_state: object | None = None, reviewed_pre_state_fingerprint: str) -> BranchSimulateNextRoundResult:
-        return self._simulate_on_branch_atomically(command, action=_NEXT_ROUND_ACTION, step=step, reviewed_pre_state=reviewed_pre_state, reviewed_pre_state_fingerprint=reviewed_pre_state_fingerprint)  # type: ignore[return-value]
+    def simulate_next_round_on_branch_atomically(
+        self,
+        command: BranchSimulateNextRoundCommand,
+        *,
+        step: object,
+        reviewed_pre_state: object | None = None,
+        reviewed_pre_state_fingerprint: str,
+    ) -> BranchSimulateNextRoundResult:
+        return self._simulate_on_branch_atomically(
+            command,
+            action=_NEXT_ROUND_ACTION,
+            step=step,
+            reviewed_pre_state=reviewed_pre_state,
+            reviewed_pre_state_fingerprint=reviewed_pre_state_fingerprint,
+        )  # type: ignore[return-value]
 
-    def simulate_next_week_on_branch_atomically(self, command: BranchSimulateNextWeekCommand, *, step: object, reviewed_pre_state: object, reviewed_pre_state_fingerprint: str) -> BranchSimulateNextWeekResult:
-        return self._simulate_on_branch_atomically(command, action=_NEXT_WEEK_ACTION, step=step, reviewed_pre_state=reviewed_pre_state, reviewed_pre_state_fingerprint=reviewed_pre_state_fingerprint)  # type: ignore[return-value]
+    def simulate_next_week_on_branch_atomically(
+        self,
+        command: BranchSimulateNextWeekCommand,
+        *,
+        step: object,
+        reviewed_pre_state: object,
+        reviewed_pre_state_fingerprint: str,
+    ) -> BranchSimulateNextWeekResult:
+        return self._simulate_on_branch_atomically(
+            command,
+            action=_NEXT_WEEK_ACTION,
+            step=step,
+            reviewed_pre_state=reviewed_pre_state,
+            reviewed_pre_state_fingerprint=reviewed_pre_state_fingerprint,
+        )  # type: ignore[return-value]
 
-    def simulate_next_tournament_on_branch_atomically(self, command: BranchSimulateNextTournamentCommand, *, step: object, reviewed_pre_state: object, reviewed_pre_state_fingerprint: str) -> BranchSimulateNextTournamentResult:
-        return self._simulate_on_branch_atomically(command, action=_NEXT_TOURNAMENT_ACTION, step=step, reviewed_pre_state=reviewed_pre_state, reviewed_pre_state_fingerprint=reviewed_pre_state_fingerprint)  # type: ignore[return-value]
+    def simulate_next_tournament_on_branch_atomically(
+        self,
+        command: BranchSimulateNextTournamentCommand,
+        *,
+        step: object,
+        reviewed_pre_state: object,
+        reviewed_pre_state_fingerprint: str,
+    ) -> BranchSimulateNextTournamentResult:
+        return self._simulate_on_branch_atomically(
+            command,
+            action=_NEXT_TOURNAMENT_ACTION,
+            step=step,
+            reviewed_pre_state=reviewed_pre_state,
+            reviewed_pre_state_fingerprint=reviewed_pre_state_fingerprint,
+        )  # type: ignore[return-value]
 
-    def simulate_full_season_on_branch_atomically(self, command: BranchSimulateFullSeasonCommand, *, step: object, reviewed_pre_state: object, reviewed_pre_state_fingerprint: str) -> BranchSimulateFullSeasonResult:
-        return self._simulate_on_branch_atomically(command, action=_FULL_SEASON_ACTION, step=step, reviewed_pre_state=reviewed_pre_state, reviewed_pre_state_fingerprint=reviewed_pre_state_fingerprint)  # type: ignore[return-value]
+    def simulate_full_season_on_branch_atomically(
+        self,
+        command: BranchSimulateFullSeasonCommand,
+        *,
+        step: object,
+        reviewed_pre_state: object,
+        reviewed_pre_state_fingerprint: str,
+    ) -> BranchSimulateFullSeasonResult:
+        return self._simulate_on_branch_atomically(
+            command,
+            action=_FULL_SEASON_ACTION,
+            step=step,
+            reviewed_pre_state=reviewed_pre_state,
+            reviewed_pre_state_fingerprint=reviewed_pre_state_fingerprint,
+        )  # type: ignore[return-value]
 
-    def _simulate_on_branch_atomically(self, command: BranchSimulateNextMatchCommand | BranchSimulateNextRoundCommand | BranchSimulateNextWeekCommand | BranchSimulateNextTournamentCommand, *, action: _BranchSimulationActionSpec, step: object, reviewed_pre_state: object | None, reviewed_pre_state_fingerprint: str) -> BranchSimulateNextMatchResult | BranchSimulateNextRoundResult | BranchSimulateNextWeekResult | BranchSimulateNextTournamentResult:
+    def _simulate_on_branch_atomically(
+        self,
+        command: BranchSimulateNextMatchCommand
+        | BranchSimulateNextRoundCommand
+        | BranchSimulateNextWeekCommand
+        | BranchSimulateNextTournamentCommand,
+        *,
+        action: _BranchSimulationActionSpec,
+        step: object,
+        reviewed_pre_state: object | None,
+        reviewed_pre_state_fingerprint: str,
+    ) -> (
+        BranchSimulateNextMatchResult
+        | BranchSimulateNextRoundResult
+        | BranchSimulateNextWeekResult
+        | BranchSimulateNextTournamentResult
+    ):
         """Commit one legacy progression step, checkpoint, locators, and journal as one unit."""
-        if (not all(isinstance(v, str) and v.strip() for v in (command.product_run_id, command.branch_id, command.expected_head_checkpoint_id, command.command_id, command.audit_reason)) or command.explicit_confirmation is not True):
-            raise BranchSimulationValidationError(f"{action.label} requires non-empty identifiers, audit reason, and explicit confirmation")
-        command = type(command)(**{k: (v.strip() if isinstance(v, str) else v) for k, v in command.__dict__.items()})
-        canonical = {"product_run_id": command.product_run_id, "branch_id": command.branch_id, "expected_head_checkpoint_id": command.expected_head_checkpoint_id, "action_kind": action.action_kind, "audit_reason": command.audit_reason, "explicit_confirmation": True}
-        fingerprint = hashlib.sha256(self.canonical_json(canonical).encode("utf-8")).hexdigest()
+        if (
+            not all(
+                isinstance(v, str) and v.strip()
+                for v in (
+                    command.product_run_id,
+                    command.branch_id,
+                    command.expected_head_checkpoint_id,
+                    command.command_id,
+                    command.audit_reason,
+                )
+            )
+            or command.explicit_confirmation is not True
+        ):
+            raise BranchSimulationValidationError(
+                f"{action.label} requires non-empty identifiers, audit reason, and explicit confirmation"
+            )
+        command = type(command)(
+            **{
+                k: (v.strip() if isinstance(v, str) else v)
+                for k, v in command.__dict__.items()
+            }
+        )
+        canonical = {
+            "product_run_id": command.product_run_id,
+            "branch_id": command.branch_id,
+            "expected_head_checkpoint_id": command.expected_head_checkpoint_id,
+            "action_kind": action.action_kind,
+            "audit_reason": command.audit_reason,
+            "explicit_confirmation": True,
+        }
+        fingerprint = hashlib.sha256(
+            self.canonical_json(canonical).encode("utf-8")
+        ).hexdigest()
         with self._session_factory.begin() as session:
             existing = session.get(BranchSimulationCommandModel, command.command_id)
             if existing is not None:
-                if existing.request_fingerprint != fingerprint: raise BranchSimulationIdempotencyConflictError(f"command_id already exists with different {action.label} request")
+                if existing.request_fingerprint != fingerprint:
+                    raise BranchSimulationIdempotencyConflictError(
+                        f"command_id already exists with different {action.label} request"
+                    )
                 data = _from_json(existing.result_json)
                 return action.result_type(**{**data, "idempotent_replay": True})
             container = session.get(RunContainerModel, command.product_run_id)
-            if container is None: raise KeyError(f"product_run_id {command.product_run_id} was not found")
-            if container.storage_kind == "built_in" or container.read_only or container.status != "active": raise BranchSimulationConflictError("product run is not writable and active")
+            if container is None:
+                raise KeyError(f"product_run_id {command.product_run_id} was not found")
+            if (
+                container.storage_kind == "built_in"
+                or container.read_only
+                or container.status != "active"
+            ):
+                raise BranchSimulationConflictError(
+                    "product run is not writable and active"
+                )
             branch = session.get(RunBranchModel, command.branch_id)
-            if branch is None: raise KeyError(f"branch_id {command.branch_id} was not found")
-            if branch.run_id != command.product_run_id: raise BranchSimulationConflictError("branch belongs to another product run")
+            if branch is None:
+                raise KeyError(f"branch_id {command.branch_id} was not found")
+            if branch.run_id != command.product_run_id:
+                raise BranchSimulationConflictError(
+                    "branch belongs to another product run"
+                )
             legacy_id = (branch.legacy_simulation_run_id or "").strip()
-            if branch.read_only or branch.status != "active" or not legacy_id: raise BranchSimulationConflictError("branch is not writable and active with a legacy binding")
+            if branch.read_only or branch.status != "active" or not legacy_id:
+                raise BranchSimulationConflictError(
+                    "branch is not writable and active with a legacy binding"
+                )
             legacy = session.get(SimulationRunModel, legacy_id)
             state_model = session.get(SeasonStateModel, legacy_id)
-            if legacy is None: raise KeyError(f"legacy SimulationRun {legacy_id} was not found")
-            if state_model is None: raise BranchSimulationConflictError("legacy SimulationRun has no SeasonState")
+            if legacy is None:
+                raise KeyError(f"legacy SimulationRun {legacy_id} was not found")
+            if state_model is None:
+                raise BranchSimulationConflictError(
+                    "legacy SimulationRun has no SeasonState"
+                )
             branch_state = session.get(BranchStateModel, command.branch_id)
-            if branch_state is None: raise BranchSimulationConflictError("BranchState was not found")
-            if branch_state.run_id != command.product_run_id or branch.head_checkpoint_id != branch_state.head_checkpoint_id: raise BranchSimulationConflictError("Branch and BranchState heads disagree")
+            if branch_state is None:
+                raise BranchSimulationConflictError("BranchState was not found")
+            if (
+                branch_state.run_id != command.product_run_id
+                or branch.head_checkpoint_id != branch_state.head_checkpoint_id
+            ):
+                raise BranchSimulationConflictError(
+                    "Branch and BranchState heads disagree"
+                )
             head = branch.head_checkpoint_id
-            if head != command.expected_head_checkpoint_id: raise BranchSimulationConflictError("expected head checkpoint is stale")
+            if head != command.expected_head_checkpoint_id:
+                raise BranchSimulationConflictError("expected head checkpoint is stale")
             checkpoint = session.get(BranchCheckpointModel, head)
-            if checkpoint is None: raise KeyError(f"expected checkpoint {head} was not found")
-            if checkpoint.branch_id != command.branch_id or checkpoint.run_id != command.product_run_id: raise BranchSimulationConflictError("effective head checkpoint is incoherent")
-            if checkpoint.kind not in {BRANCH_CHECKPOINT_KIND_INITIAL, BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE, BRANCH_CHECKPOINT_KIND_BRANCH_FORK_START}: raise BranchSimulationConflictError("effective head checkpoint kind cannot prove current legacy state")
+            if checkpoint is None:
+                raise KeyError(f"expected checkpoint {head} was not found")
+            if (
+                checkpoint.branch_id != command.branch_id
+                or checkpoint.run_id != command.product_run_id
+            ):
+                raise BranchSimulationConflictError(
+                    "effective head checkpoint is incoherent"
+                )
+            if checkpoint.kind not in {
+                BRANCH_CHECKPOINT_KIND_INITIAL,
+                BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE,
+                BRANCH_CHECKPOINT_KIND_BRANCH_FORK_START,
+            }:
+                raise BranchSimulationConflictError(
+                    "effective head checkpoint kind cannot prove current legacy state"
+                )
             payload = _from_json(checkpoint.payload_json)
             if checkpoint.kind != BRANCH_CHECKPOINT_KIND_BRANCH_FORK_START:
-                captured = payload.get("season_state") if isinstance(payload, dict) else None
-                if not isinstance(captured, dict) or _to_json(captured) != _to_json(self._season_state_payload_in_session(session=session, model=state_model)): raise BranchSimulationConflictError("effective head does not match current legacy state")
-            elif not isinstance(payload, dict) or payload.get("target_legacy_simulation_run_id") != legacy_id: raise BranchSimulationConflictError("fork head provenance cannot prove selected legacy namespace")
-            before = self._season_state_payload_in_session(session=session, model=state_model)
-            if self.checkpoint_content_hash(before) != reviewed_pre_state_fingerprint: raise BranchSimulationConflictError(f"legacy SeasonState changed after {action.label} review")
-            previous_locator = (branch_state.current_season, branch_state.current_week, branch_state.current_event_id, branch_state.current_event_sequence)
+                captured = (
+                    payload.get("season_state") if isinstance(payload, dict) else None
+                )
+                if not isinstance(captured, dict) or _to_json(captured) != _to_json(
+                    self._season_state_payload_in_session(
+                        session=session, model=state_model
+                    )
+                ):
+                    raise BranchSimulationConflictError(
+                        "effective head does not match current legacy state"
+                    )
+            elif (
+                not isinstance(payload, dict)
+                or payload.get("target_legacy_simulation_run_id") != legacy_id
+            ):
+                raise BranchSimulationConflictError(
+                    "fork head provenance cannot prove selected legacy namespace"
+                )
+            before = self._season_state_payload_in_session(
+                session=session, model=state_model
+            )
+            if self.checkpoint_content_hash(before) != reviewed_pre_state_fingerprint:
+                raise BranchSimulationConflictError(
+                    f"legacy SeasonState changed after {action.label} review"
+                )
+            previous_locator = (
+                branch_state.current_season,
+                branch_state.current_week,
+                branch_state.current_event_id,
+                branch_state.current_event_sequence,
+            )
             self._persist_branch_simulation_step_in_session(
-                session=session, run_id=legacy_id, step=step,
+                session=session,
+                run_id=legacy_id,
+                step=step,
                 reviewed_pre_state=reviewed_pre_state,
             )
             # Materialize pending tournament artifacts before capturing the
             # canonical state represented by the new effective head.
             session.flush()
-            after_model = session.get(SeasonStateModel, legacy_id); after = self._season_state_payload_in_session(session=session, model=after_model)
-            active = step.season_state.active_tournament.event if step.season_state.active_tournament else None
-            sequence = session.execute(select(func.max(BranchCheckpointModel.sequence)).where(BranchCheckpointModel.branch_id == command.branch_id)).scalar_one() or 0
-            checkpoint_id = "checkpoint-" + hashlib.sha256((command.branch_id + "\x00" + command.command_id).encode()).hexdigest()[:24]
+            after_model = session.get(SeasonStateModel, legacy_id)
+            after = self._season_state_payload_in_session(
+                session=session, model=after_model
+            )
+            active = (
+                step.season_state.active_tournament.event
+                if step.season_state.active_tournament
+                else None
+            )
+            sequence = (
+                session.execute(
+                    select(func.max(BranchCheckpointModel.sequence)).where(
+                        BranchCheckpointModel.branch_id == command.branch_id
+                    )
+                ).scalar_one()
+                or 0
+            )
+            checkpoint_id = (
+                "checkpoint-"
+                + hashlib.sha256(
+                    (command.branch_id + "\x00" + command.command_id).encode()
+                ).hexdigest()[:24]
+            )
             summary = action.summary_builder(step)
             if action.action_kind == "simulate_full_season":
-                summary["completed_in_command_count"] = len(step.season_state.completed_event_ids) - len(reviewed_pre_state.completed_event_ids)
-            checkpoint_payload = {"run_id": command.product_run_id, "branch_id": command.branch_id, "legacy_simulation_run_id": legacy_id, "parent_checkpoint_id": head, "season_state": after, "before_state_fingerprint": self.checkpoint_content_hash(before), "after_state_fingerprint": self.checkpoint_content_hash(after), "simulation_result": summary, "command_id": command.command_id, "request_fingerprint": fingerprint, "provenance": {"world_id": container.world_id, "config_version": container.config_version, "config_fingerprint": container.config_fingerprint, "global_seed": container.global_seed}}
-            incomplete = BranchCheckpointRecord(checkpoint_id, command.product_run_id, command.branch_id, head, int(sequence) + 1, BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE, step.season_state.season, active.week if active else None, active.event_id if active else None, step.season_state.next_event_index if active else None, command.command_id, action.checkpoint_command_kind, action.checkpoint_command_boundary, container.config_version, container.config_fingerprint, container.world_id, container.world_package_fingerprint, container.global_seed, branch.branch_seed, {"hierarchy": ["global", "branch"], "global_seed": container.global_seed, "branch_seed": branch.branch_seed}, "branch_checkpoint_payload_v1", "sha256", "", checkpoint_payload)
-            record = BranchCheckpointRecord(**{**incomplete.__dict__, "content_hash": self.checkpoint_envelope_content_hash(incomplete)})
-            session.add(BranchCheckpointModel(checkpoint_id=record.checkpoint_id, run_id=record.run_id, branch_id=record.branch_id, parent_checkpoint_id=record.parent_checkpoint_id, sequence=record.sequence, kind=record.kind, season=record.season, week=record.week, event_id=record.event_id, event_sequence=record.event_sequence, command_id=record.command_id, command_kind=record.command_kind, command_boundary=record.command_boundary, config_version=record.config_version, config_fingerprint=record.config_fingerprint, world_id=record.world_id, world_fingerprint=record.world_fingerprint, global_seed=record.global_seed, branch_seed=record.branch_seed, seed_namespace_json=_to_json(record.seed_namespace), payload_schema_version=record.payload_schema_version, content_hash_algorithm="sha256", content_hash=record.content_hash, payload_json=_to_json(record.payload)))
-            branch_updated = session.execute(update(RunBranchModel).where(RunBranchModel.branch_id == command.branch_id, RunBranchModel.run_id == command.product_run_id, RunBranchModel.head_checkpoint_id == head).values(head_checkpoint_id=checkpoint_id)).rowcount
-            state_updated = session.execute(update(BranchStateModel).where(BranchStateModel.branch_id == command.branch_id, BranchStateModel.run_id == command.product_run_id, BranchStateModel.head_checkpoint_id == head).values(head_checkpoint_id=checkpoint_id, current_season=record.season, current_week=record.week, current_event_id=record.event_id, current_event_sequence=record.event_sequence)).rowcount
-            if branch_updated != 1 or state_updated != 1: raise BranchSimulationConflictError("Branch head changed concurrently")
-            result = action.result_type(command.product_run_id, command.branch_id, legacy_id, command.command_id, fingerprint, False, head, checkpoint_id, previous_locator[0] if previous_locator[0] is not None else before["season"], previous_locator[1], previous_locator[2], previous_locator[3], record.season, record.week, record.event_id, record.event_sequence, False, summary)
-            session.add(BranchSimulationCommandModel(command_id=command.command_id, product_run_id=command.product_run_id, branch_id=command.branch_id, action_kind=action.action_kind, expected_head_checkpoint_id=head, previous_head_checkpoint_id=head, resulting_head_checkpoint_id=checkpoint_id, legacy_simulation_run_id=legacy_id, request_fingerprint=fingerprint, result_json=_to_json(result.__dict__), audit_reason=command.audit_reason))
-            try: session.flush()
-            except IntegrityError as exc: raise BranchSimulationConflictError(f"concurrent {action.label} command conflict") from exc
+                summary["completed_in_command_count"] = len(
+                    step.season_state.completed_event_ids
+                ) - len(reviewed_pre_state.completed_event_ids)
+            checkpoint_payload = {
+                "run_id": command.product_run_id,
+                "branch_id": command.branch_id,
+                "legacy_simulation_run_id": legacy_id,
+                "parent_checkpoint_id": head,
+                "season_state": after,
+                "before_state_fingerprint": self.checkpoint_content_hash(before),
+                "after_state_fingerprint": self.checkpoint_content_hash(after),
+                "simulation_result": summary,
+                "command_id": command.command_id,
+                "request_fingerprint": fingerprint,
+                "provenance": {
+                    "world_id": container.world_id,
+                    "config_version": container.config_version,
+                    "config_fingerprint": container.config_fingerprint,
+                    "global_seed": container.global_seed,
+                },
+            }
+            incomplete = BranchCheckpointRecord(
+                checkpoint_id,
+                command.product_run_id,
+                command.branch_id,
+                head,
+                int(sequence) + 1,
+                BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE,
+                step.season_state.season,
+                active.week if active else None,
+                active.event_id if active else None,
+                step.season_state.next_event_index if active else None,
+                command.command_id,
+                action.checkpoint_command_kind,
+                action.checkpoint_command_boundary,
+                container.config_version,
+                container.config_fingerprint,
+                container.world_id,
+                container.world_package_fingerprint,
+                container.global_seed,
+                branch.branch_seed,
+                {
+                    "hierarchy": ["global", "branch"],
+                    "global_seed": container.global_seed,
+                    "branch_seed": branch.branch_seed,
+                },
+                "branch_checkpoint_payload_v1",
+                "sha256",
+                "",
+                checkpoint_payload,
+            )
+            record = BranchCheckpointRecord(
+                **{
+                    **incomplete.__dict__,
+                    "content_hash": self.checkpoint_envelope_content_hash(incomplete),
+                }
+            )
+            session.add(
+                BranchCheckpointModel(
+                    checkpoint_id=record.checkpoint_id,
+                    run_id=record.run_id,
+                    branch_id=record.branch_id,
+                    parent_checkpoint_id=record.parent_checkpoint_id,
+                    sequence=record.sequence,
+                    kind=record.kind,
+                    season=record.season,
+                    week=record.week,
+                    event_id=record.event_id,
+                    event_sequence=record.event_sequence,
+                    command_id=record.command_id,
+                    command_kind=record.command_kind,
+                    command_boundary=record.command_boundary,
+                    config_version=record.config_version,
+                    config_fingerprint=record.config_fingerprint,
+                    world_id=record.world_id,
+                    world_fingerprint=record.world_fingerprint,
+                    global_seed=record.global_seed,
+                    branch_seed=record.branch_seed,
+                    seed_namespace_json=_to_json(record.seed_namespace),
+                    payload_schema_version=record.payload_schema_version,
+                    content_hash_algorithm="sha256",
+                    content_hash=record.content_hash,
+                    payload_json=_to_json(record.payload),
+                )
+            )
+            branch_updated = session.execute(
+                update(RunBranchModel)
+                .where(
+                    RunBranchModel.branch_id == command.branch_id,
+                    RunBranchModel.run_id == command.product_run_id,
+                    RunBranchModel.head_checkpoint_id == head,
+                )
+                .values(head_checkpoint_id=checkpoint_id)
+            ).rowcount
+            state_updated = session.execute(
+                update(BranchStateModel)
+                .where(
+                    BranchStateModel.branch_id == command.branch_id,
+                    BranchStateModel.run_id == command.product_run_id,
+                    BranchStateModel.head_checkpoint_id == head,
+                )
+                .values(
+                    head_checkpoint_id=checkpoint_id,
+                    current_season=record.season,
+                    current_week=record.week,
+                    current_event_id=record.event_id,
+                    current_event_sequence=record.event_sequence,
+                )
+            ).rowcount
+            if branch_updated != 1 or state_updated != 1:
+                raise BranchSimulationConflictError("Branch head changed concurrently")
+            result = action.result_type(
+                command.product_run_id,
+                command.branch_id,
+                legacy_id,
+                command.command_id,
+                fingerprint,
+                False,
+                head,
+                checkpoint_id,
+                previous_locator[0]
+                if previous_locator[0] is not None
+                else before["season"],
+                previous_locator[1],
+                previous_locator[2],
+                previous_locator[3],
+                record.season,
+                record.week,
+                record.event_id,
+                record.event_sequence,
+                False,
+                summary,
+            )
+            session.add(
+                BranchSimulationCommandModel(
+                    command_id=command.command_id,
+                    product_run_id=command.product_run_id,
+                    branch_id=command.branch_id,
+                    action_kind=action.action_kind,
+                    expected_head_checkpoint_id=head,
+                    previous_head_checkpoint_id=head,
+                    resulting_head_checkpoint_id=checkpoint_id,
+                    legacy_simulation_run_id=legacy_id,
+                    request_fingerprint=fingerprint,
+                    result_json=_to_json(result.__dict__),
+                    audit_reason=command.audit_reason,
+                )
+            )
+            try:
+                session.flush()
+            except IntegrityError as exc:
+                raise BranchSimulationConflictError(
+                    f"concurrent {action.label} command conflict"
+                ) from exc
             return result
-
 
     def list_run_branches(self, *, run_id: str | None = None) -> list[RunBranchRecord]:
         with self._session_factory() as session:
@@ -3898,19 +6145,39 @@ class SimulationPersistenceRepository:
                 container.run_id: container.official_branch_id
                 for container in session.execute(select(RunContainerModel)).scalars()
             }
-            return [self._to_run_branch(model, official_branch_id=official_by_run.get(model.run_id)) for model in models]
+            return [
+                self._to_run_branch(
+                    model, official_branch_id=official_by_run.get(model.run_id)
+                )
+                for model in models
+            ]
 
-    def ensure_default_branch_for_simulation_run(self, *, simulation_run_id: str) -> RunBranchRecord | None:
-        container = self.get_run_container_for_simulation_run(simulation_run_id=simulation_run_id)
+    def ensure_default_branch_for_simulation_run(
+        self, *, simulation_run_id: str
+    ) -> RunBranchRecord | None:
+        container = self.get_run_container_for_simulation_run(
+            simulation_run_id=simulation_run_id
+        )
         if container is None:
             return None
-        branch_id = self.deterministic_default_branch_id(run_id=container.run_id, legacy_simulation_run_id=simulation_run_id)
-        record = self.create_run_branch(RunBranchRecord(
-            branch_id=branch_id, run_id=container.run_id, display_name="Main", status="active",
-            read_only=container.read_only, branch_seed=container.global_seed,
-            forked_from_branch_id=None, forked_from_checkpoint_id=None, head_checkpoint_id=None,
-            legacy_simulation_run_id=simulation_run_id, metadata={},
-        ))
+        branch_id = self.deterministic_default_branch_id(
+            run_id=container.run_id, legacy_simulation_run_id=simulation_run_id
+        )
+        record = self.create_run_branch(
+            RunBranchRecord(
+                branch_id=branch_id,
+                run_id=container.run_id,
+                display_name="Main",
+                status="active",
+                read_only=container.read_only,
+                branch_seed=container.global_seed,
+                forked_from_branch_id=None,
+                forked_from_checkpoint_id=None,
+                head_checkpoint_id=None,
+                legacy_simulation_run_id=simulation_run_id,
+                metadata={},
+            )
+        )
         with self._session_factory.begin() as session:
             model = session.get(RunContainerModel, container.run_id)
             if model is not None and model.official_branch_id is None:
@@ -3920,26 +6187,39 @@ class SimulationPersistenceRepository:
     def backfill_default_branches_for_existing_run_containers(self) -> None:
         self.backfill_run_containers_for_existing_simulation_runs()
         for legacy in self.list_simulation_runs():
-            self.ensure_default_branch_for_simulation_run(simulation_run_id=legacy.run_id)
+            self.ensure_default_branch_for_simulation_run(
+                simulation_run_id=legacy.run_id
+            )
 
     @staticmethod
     def _to_branch_state(model: BranchStateModel) -> RunBranchStateRecord:
         return RunBranchStateRecord(
-            branch_id=model.branch_id, run_id=model.run_id, head_checkpoint_id=model.head_checkpoint_id,
-            current_season=model.current_season, current_week=model.current_week,
-            current_event_id=model.current_event_id, current_event_sequence=model.current_event_sequence,
-            state_schema_version=model.state_schema_version, status=model.status,
+            branch_id=model.branch_id,
+            run_id=model.run_id,
+            head_checkpoint_id=model.head_checkpoint_id,
+            current_season=model.current_season,
+            current_week=model.current_week,
+            current_event_id=model.current_event_id,
+            current_event_sequence=model.current_event_sequence,
+            state_schema_version=model.state_schema_version,
+            status=model.status,
             metadata=_from_json(model.metadata_json),
         )
 
-    def create_or_update_branch_state(self, record: RunBranchStateRecord) -> RunBranchStateRecord:
+    def create_or_update_branch_state(
+        self, record: RunBranchStateRecord
+    ) -> RunBranchStateRecord:
         with self._session_factory.begin() as session:
             model = session.get(BranchStateModel, record.branch_id)
             values = {
-                "run_id": record.run_id, "head_checkpoint_id": record.head_checkpoint_id,
-                "current_season": record.current_season, "current_week": record.current_week,
-                "current_event_id": record.current_event_id, "current_event_sequence": record.current_event_sequence,
-                "state_schema_version": record.state_schema_version, "status": record.status,
+                "run_id": record.run_id,
+                "head_checkpoint_id": record.head_checkpoint_id,
+                "current_season": record.current_season,
+                "current_week": record.current_week,
+                "current_event_id": record.current_event_id,
+                "current_event_sequence": record.current_event_sequence,
+                "state_schema_version": record.state_schema_version,
+                "status": record.status,
                 "metadata_json": _to_json(record.metadata),
             }
             if model is None:
@@ -3954,18 +6234,27 @@ class SimulationPersistenceRepository:
             model = session.get(BranchStateModel, branch_id)
             return self._to_branch_state(model) if model is not None else None
 
-    def list_branch_states(self, *, run_id: str | None = None) -> list[RunBranchStateRecord]:
+    def list_branch_states(
+        self, *, run_id: str | None = None
+    ) -> list[RunBranchStateRecord]:
         with self._session_factory() as session:
             statement = select(BranchStateModel).order_by(BranchStateModel.branch_id)
             if run_id is not None:
                 statement = statement.where(BranchStateModel.run_id == run_id)
-            return [self._to_branch_state(model) for model in session.execute(statement).scalars()]
+            return [
+                self._to_branch_state(model)
+                for model in session.execute(statement).scalars()
+            ]
 
-    def ensure_branch_state_for_branch(self, *, branch_id: str) -> RunBranchStateRecord | None:
+    def ensure_branch_state_for_branch(
+        self, *, branch_id: str
+    ) -> RunBranchStateRecord | None:
         branch = self.get_run_branch(branch_id=branch_id)
         if branch is None:
             return None
-        return self.ensure_branch_state_for_checkpoint(checkpoint_id=branch.head_checkpoint_id, branch=branch)
+        return self.ensure_branch_state_for_checkpoint(
+            checkpoint_id=branch.head_checkpoint_id, branch=branch
+        )
 
     def ensure_branch_state_for_checkpoint(
         self, *, checkpoint_id: str | None, branch: RunBranchRecord | None = None
@@ -3979,15 +6268,27 @@ class SimulationPersistenceRepository:
             branch = self.get_run_branch(branch_id=checkpoint.branch_id)
         if branch is None:
             return None
-        checkpoint = self.get_branch_checkpoint(checkpoint_id=checkpoint_id) if checkpoint_id is not None else None
-        return self.create_or_update_branch_state(RunBranchStateRecord(
-            branch_id=branch.branch_id, run_id=branch.run_id, head_checkpoint_id=checkpoint_id,
-            current_season=checkpoint.season if checkpoint else None,
-            current_week=checkpoint.week if checkpoint else None,
-            current_event_id=checkpoint.event_id if checkpoint else None,
-            current_event_sequence=checkpoint.event_sequence if checkpoint else None,
-            state_schema_version="branch_state_v1", status=branch.status, metadata={},
-        ))
+        checkpoint = (
+            self.get_branch_checkpoint(checkpoint_id=checkpoint_id)
+            if checkpoint_id is not None
+            else None
+        )
+        return self.create_or_update_branch_state(
+            RunBranchStateRecord(
+                branch_id=branch.branch_id,
+                run_id=branch.run_id,
+                head_checkpoint_id=checkpoint_id,
+                current_season=checkpoint.season if checkpoint else None,
+                current_week=checkpoint.week if checkpoint else None,
+                current_event_id=checkpoint.event_id if checkpoint else None,
+                current_event_sequence=checkpoint.event_sequence
+                if checkpoint
+                else None,
+                state_schema_version="branch_state_v1",
+                status=branch.status,
+                metadata={},
+            )
+        )
 
     def backfill_branch_states_for_existing_branches(self) -> None:
         for branch in self.list_run_branches():
@@ -3996,7 +6297,9 @@ class SimulationPersistenceRepository:
     @staticmethod
     def canonical_json(payload: object) -> str:
         """Serialize deterministic JSON for payload hashes and checkpoint envelopes."""
-        return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return json.dumps(
+            payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        )
 
     @classmethod
     def checkpoint_content_hash(cls, payload: dict[str, object]) -> str:
@@ -4034,123 +6337,238 @@ class SimulationPersistenceRepository:
     @classmethod
     def checkpoint_envelope_content_hash(cls, record: BranchCheckpointRecord) -> str:
         """Return the SHA-256 hash of the full deterministic checkpoint envelope."""
-        return hashlib.sha256(cls.canonical_json(cls.checkpoint_hash_envelope(record)).encode("utf-8")).hexdigest()
+        return hashlib.sha256(
+            cls.canonical_json(cls.checkpoint_hash_envelope(record)).encode("utf-8")
+        ).hexdigest()
 
     @staticmethod
     def _to_branch_checkpoint(model: BranchCheckpointModel) -> BranchCheckpointRecord:
         return BranchCheckpointRecord(
-            checkpoint_id=model.checkpoint_id, run_id=model.run_id, branch_id=model.branch_id,
-            parent_checkpoint_id=model.parent_checkpoint_id, sequence=model.sequence, kind=model.kind,
-            season=model.season, week=model.week, event_id=model.event_id, event_sequence=model.event_sequence,
-            command_id=model.command_id, command_kind=model.command_kind, command_boundary=model.command_boundary,
-            config_version=model.config_version, config_fingerprint=model.config_fingerprint, world_id=model.world_id,
-            world_fingerprint=model.world_fingerprint, global_seed=model.global_seed, branch_seed=model.branch_seed,
-            seed_namespace=_from_json(model.seed_namespace_json), payload_schema_version=model.payload_schema_version,
-            content_hash_algorithm=model.content_hash_algorithm, content_hash=model.content_hash,
+            checkpoint_id=model.checkpoint_id,
+            run_id=model.run_id,
+            branch_id=model.branch_id,
+            parent_checkpoint_id=model.parent_checkpoint_id,
+            sequence=model.sequence,
+            kind=model.kind,
+            season=model.season,
+            week=model.week,
+            event_id=model.event_id,
+            event_sequence=model.event_sequence,
+            command_id=model.command_id,
+            command_kind=model.command_kind,
+            command_boundary=model.command_boundary,
+            config_version=model.config_version,
+            config_fingerprint=model.config_fingerprint,
+            world_id=model.world_id,
+            world_fingerprint=model.world_fingerprint,
+            global_seed=model.global_seed,
+            branch_seed=model.branch_seed,
+            seed_namespace=_from_json(model.seed_namespace_json),
+            payload_schema_version=model.payload_schema_version,
+            content_hash_algorithm=model.content_hash_algorithm,
+            content_hash=model.content_hash,
             payload=_from_json(model.payload_json),
         )
 
     def next_checkpoint_sequence(self, *, branch_id: str) -> int:
         with self._session_factory() as session:
-            value = session.execute(select(func.max(BranchCheckpointModel.sequence)).where(BranchCheckpointModel.branch_id == branch_id)).scalar_one()
+            value = session.execute(
+                select(func.max(BranchCheckpointModel.sequence)).where(
+                    BranchCheckpointModel.branch_id == branch_id
+                )
+            ).scalar_one()
             return 1 if value is None else int(value) + 1
 
-    def get_branch_checkpoint(self, *, checkpoint_id: str) -> BranchCheckpointRecord | None:
+    def get_branch_checkpoint(
+        self, *, checkpoint_id: str
+    ) -> BranchCheckpointRecord | None:
         with self._session_factory() as session:
             model = session.get(BranchCheckpointModel, checkpoint_id)
             return self._to_branch_checkpoint(model) if model is not None else None
 
-    def get_branch_checkpoint_season_state(self, *, product_run_id: str, branch_id: str, checkpoint_id: str) -> HistoricalBranchSeasonStateRecord:
+    def get_branch_checkpoint_season_state(
+        self, *, product_run_id: str, branch_id: str, checkpoint_id: str
+    ) -> HistoricalBranchSeasonStateRecord:
         """Validate checkpoint identity, integrity and its canonical historical SeasonState."""
         if self.get_run_container(run_id=product_run_id) is None:
             raise KeyError(f"product Run {product_run_id} was not found")
         branch = self.get_run_branch(branch_id=branch_id)
         if branch is None or branch.run_id != product_run_id:
-            raise KeyError(f"Branch {branch_id} was not found in product Run {product_run_id}")
+            raise KeyError(
+                f"Branch {branch_id} was not found in product Run {product_run_id}"
+            )
         try:
             checkpoint = self.get_branch_checkpoint(checkpoint_id=checkpoint_id)
         except (TypeError, ValueError, json.JSONDecodeError) as exc:
-            raise HistoricalSeasonStateUnavailableError("historical SeasonState unavailable: malformed checkpoint payload JSON") from exc
-        if checkpoint is None or checkpoint.run_id != product_run_id or checkpoint.branch_id != branch_id or checkpoint.checkpoint_id != checkpoint_id:
-            raise KeyError(f"checkpoint {checkpoint_id} was not found in Branch {branch_id} of product Run {product_run_id}")
+            raise HistoricalSeasonStateUnavailableError(
+                "historical SeasonState unavailable: malformed checkpoint payload JSON"
+            ) from exc
+        if (
+            checkpoint is None
+            or checkpoint.run_id != product_run_id
+            or checkpoint.branch_id != branch_id
+            or checkpoint.checkpoint_id != checkpoint_id
+        ):
+            raise KeyError(
+                f"checkpoint {checkpoint_id} was not found in Branch {branch_id} of product Run {product_run_id}"
+            )
         if not self.verify_branch_checkpoint_hash(checkpoint_id=checkpoint_id):
-            raise HistoricalSeasonStateUnavailableError("historical SeasonState unavailable: checkpoint content integrity validation failed")
+            raise HistoricalSeasonStateUnavailableError(
+                "historical SeasonState unavailable: checkpoint content integrity validation failed"
+            )
         if checkpoint.payload_schema_version != "branch_checkpoint_payload_v1":
-            raise HistoricalSeasonStateUnavailableError("historical SeasonState unavailable: unsupported checkpoint payload schema")
+            raise HistoricalSeasonStateUnavailableError(
+                "historical SeasonState unavailable: unsupported checkpoint payload schema"
+            )
         payload = checkpoint.payload
-        if not isinstance(payload, dict) or not isinstance(payload.get("season_state"), dict):
-            raise HistoricalSeasonStateUnavailableError("historical SeasonState unavailable: checkpoint has no canonical season_state")
+        if not isinstance(payload, dict) or not isinstance(
+            payload.get("season_state"), dict
+        ):
+            raise HistoricalSeasonStateUnavailableError(
+                "historical SeasonState unavailable: checkpoint has no canonical season_state"
+            )
         for key, expected in (("run_id", product_run_id), ("branch_id", branch_id)):
             if key in payload and payload[key] != expected:
-                raise HistoricalSeasonStateUnavailableError(f"historical SeasonState unavailable: payload {key} identity is inconsistent")
+                raise HistoricalSeasonStateUnavailableError(
+                    f"historical SeasonState unavailable: payload {key} identity is inconsistent"
+                )
         try:
             season_state = SeasonState.model_validate(payload["season_state"])
         except Exception as exc:
-            raise HistoricalSeasonStateUnavailableError("historical SeasonState unavailable: malformed canonical season_state") from exc
-        return HistoricalBranchSeasonStateRecord(product_run_id, branch_id, checkpoint_id, checkpoint.sequence, checkpoint.kind,
-            checkpoint.content_hash, checkpoint.payload_schema_version, checkpoint.season, checkpoint.week, checkpoint.event_id,
-            checkpoint.event_sequence, season_state)
+            raise HistoricalSeasonStateUnavailableError(
+                "historical SeasonState unavailable: malformed canonical season_state"
+            ) from exc
+        return HistoricalBranchSeasonStateRecord(
+            product_run_id,
+            branch_id,
+            checkpoint_id,
+            checkpoint.sequence,
+            checkpoint.kind,
+            checkpoint.content_hash,
+            checkpoint.payload_schema_version,
+            checkpoint.season,
+            checkpoint.week,
+            checkpoint.event_id,
+            checkpoint.event_sequence,
+            season_state,
+        )
 
-    def get_branch_checkpoint_by_command_id(self, *, branch_id: str, command_id: str) -> BranchCheckpointRecord | None:
-        with self._session_factory() as session:
-            model = session.execute(select(BranchCheckpointModel).where(BranchCheckpointModel.branch_id == branch_id, BranchCheckpointModel.command_id == command_id)).scalar_one_or_none()
-            return self._to_branch_checkpoint(model) if model is not None else None
-
-    def get_initial_branch_checkpoint(self, *, branch_id: str) -> BranchCheckpointRecord | None:
+    def get_branch_checkpoint_by_command_id(
+        self, *, branch_id: str, command_id: str
+    ) -> BranchCheckpointRecord | None:
         with self._session_factory() as session:
             model = session.execute(
                 select(BranchCheckpointModel).where(
                     BranchCheckpointModel.branch_id == branch_id,
-                    BranchCheckpointModel.kind == BRANCH_CHECKPOINT_KIND_INITIAL,
+                    BranchCheckpointModel.command_id == command_id,
                 )
-            ).scalars().first()
+            ).scalar_one_or_none()
             return self._to_branch_checkpoint(model) if model is not None else None
 
-    def get_event_completed_branch_checkpoint(self, *, branch_id: str, event_sequence: int) -> BranchCheckpointRecord | None:
+    def get_initial_branch_checkpoint(
+        self, *, branch_id: str
+    ) -> BranchCheckpointRecord | None:
+        with self._session_factory() as session:
+            model = (
+                session.execute(
+                    select(BranchCheckpointModel).where(
+                        BranchCheckpointModel.branch_id == branch_id,
+                        BranchCheckpointModel.kind == BRANCH_CHECKPOINT_KIND_INITIAL,
+                    )
+                )
+                .scalars()
+                .first()
+            )
+            return self._to_branch_checkpoint(model) if model is not None else None
+
+    def get_event_completed_branch_checkpoint(
+        self, *, branch_id: str, event_sequence: int
+    ) -> BranchCheckpointRecord | None:
         """Return the sole capture-only event boundary for a branch/event sequence."""
         with self._session_factory() as session:
-            model = session.execute(select(BranchCheckpointModel).where(
-                BranchCheckpointModel.branch_id == branch_id,
-                BranchCheckpointModel.kind == BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED,
-                BranchCheckpointModel.event_sequence == event_sequence,
-            )).scalars().first()
+            model = (
+                session.execute(
+                    select(BranchCheckpointModel).where(
+                        BranchCheckpointModel.branch_id == branch_id,
+                        BranchCheckpointModel.kind
+                        == BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED,
+                        BranchCheckpointModel.event_sequence == event_sequence,
+                    )
+                )
+                .scalars()
+                .first()
+            )
             return self._to_branch_checkpoint(model) if model is not None else None
 
-    def get_week_completed_branch_checkpoint(self, *, branch_id: str, season: int, week: int) -> BranchCheckpointRecord | None:
+    def get_week_completed_branch_checkpoint(
+        self, *, branch_id: str, season: int, week: int
+    ) -> BranchCheckpointRecord | None:
         """Return the sole capture-only completed-week boundary for a branch/week."""
         with self._session_factory() as session:
-            model = session.execute(select(BranchCheckpointModel).where(
-                BranchCheckpointModel.branch_id == branch_id,
-                BranchCheckpointModel.kind == BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
-                BranchCheckpointModel.season == season,
-                BranchCheckpointModel.week == week,
-            )).scalars().first()
+            model = (
+                session.execute(
+                    select(BranchCheckpointModel).where(
+                        BranchCheckpointModel.branch_id == branch_id,
+                        BranchCheckpointModel.kind
+                        == BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
+                        BranchCheckpointModel.season == season,
+                        BranchCheckpointModel.week == week,
+                    )
+                )
+                .scalars()
+                .first()
+            )
             return self._to_branch_checkpoint(model) if model is not None else None
 
-    def get_admin_action_applied_branch_checkpoint(self, *, branch_id: str, action_sequence: int) -> BranchCheckpointRecord | None:
+    def get_admin_action_applied_branch_checkpoint(
+        self, *, branch_id: str, action_sequence: int
+    ) -> BranchCheckpointRecord | None:
         """Return the sole R3H capture for a legacy ordered admin-action sequence."""
         for checkpoint in self.list_branch_checkpoints(branch_id=branch_id):
             if checkpoint.kind != BRANCH_CHECKPOINT_KIND_ADMIN_ACTION_APPLIED:
                 continue
             action = checkpoint.payload.get("admin_action", {})
-            if isinstance(action, dict) and action.get("action_sequence") == action_sequence:
+            if (
+                isinstance(action, dict)
+                and action.get("action_sequence") == action_sequence
+            ):
                 return checkpoint
         return None
 
-    def get_season_rollover_branch_checkpoint(self, *, branch_id: str, from_season: int, to_season: int) -> BranchCheckpointRecord | None:
+    def get_season_rollover_branch_checkpoint(
+        self, *, branch_id: str, from_season: int, to_season: int
+    ) -> BranchCheckpointRecord | None:
         """Find the sole capture-only checkpoint for a persisted rollover locator."""
         for checkpoint in self.list_branch_checkpoints(branch_id=branch_id):
             rollover = checkpoint.payload.get("rollover", {})
-            if checkpoint.kind == BRANCH_CHECKPOINT_KIND_SEASON_ROLLOVER and isinstance(rollover, dict) and rollover.get("from_season") == from_season and rollover.get("to_season") == to_season:
+            if (
+                checkpoint.kind == BRANCH_CHECKPOINT_KIND_SEASON_ROLLOVER
+                and isinstance(rollover, dict)
+                and rollover.get("from_season") == from_season
+                and rollover.get("to_season") == to_season
+            ):
                 return checkpoint
         return None
 
-    def list_branch_checkpoints(self, *, branch_id: str | None = None, run_id: str | None = None) -> list[BranchCheckpointRecord]:
+    def list_branch_checkpoints(
+        self, *, branch_id: str | None = None, run_id: str | None = None
+    ) -> list[BranchCheckpointRecord]:
         with self._session_factory() as session:
             statement = select(BranchCheckpointModel)
-            if branch_id is not None: statement = statement.where(BranchCheckpointModel.branch_id == branch_id)
-            if run_id is not None: statement = statement.where(BranchCheckpointModel.run_id == run_id)
-            return [self._to_branch_checkpoint(model) for model in session.execute(statement.order_by(BranchCheckpointModel.branch_id, BranchCheckpointModel.sequence)).scalars()]
+            if branch_id is not None:
+                statement = statement.where(
+                    BranchCheckpointModel.branch_id == branch_id
+                )
+            if run_id is not None:
+                statement = statement.where(BranchCheckpointModel.run_id == run_id)
+            return [
+                self._to_branch_checkpoint(model)
+                for model in session.execute(
+                    statement.order_by(
+                        BranchCheckpointModel.branch_id, BranchCheckpointModel.sequence
+                    )
+                ).scalars()
+            ]
 
     def verify_branch_checkpoint_hash(self, *, checkpoint_id: str) -> bool:
         record = self.get_branch_checkpoint(checkpoint_id=checkpoint_id)
@@ -4160,89 +6578,212 @@ class SimulationPersistenceRepository:
             and self.checkpoint_envelope_content_hash(record) == record.content_hash
         )
 
-    def create_branch_checkpoint(self, record: BranchCheckpointRecord) -> BranchCheckpointRecord:
-        if record.content_hash_algorithm != "sha256" or self.checkpoint_envelope_content_hash(record) != record.content_hash:
+    def create_branch_checkpoint(
+        self, record: BranchCheckpointRecord
+    ) -> BranchCheckpointRecord:
+        if (
+            record.content_hash_algorithm != "sha256"
+            or self.checkpoint_envelope_content_hash(record) != record.content_hash
+        ):
             raise ValueError("branch checkpoint content hash is invalid")
         with self._session_factory.begin() as session:
             existing = session.get(BranchCheckpointModel, record.checkpoint_id)
             if existing is not None:
                 persisted = self._to_branch_checkpoint(existing)
-                if persisted == record: return persisted
-                raise ValueError(f"checkpoint_id {record.checkpoint_id} already exists with different content")
-            by_command = session.execute(select(BranchCheckpointModel).where(BranchCheckpointModel.branch_id == record.branch_id, BranchCheckpointModel.command_id == record.command_id)).scalar_one_or_none()
-            if by_command is not None: return self._to_branch_checkpoint(by_command)
-            if record.kind == BRANCH_CHECKPOINT_KIND_INITIAL:
-                existing_initial = session.execute(
-                    select(BranchCheckpointModel).where(
-                        BranchCheckpointModel.branch_id == record.branch_id,
-                        BranchCheckpointModel.kind == BRANCH_CHECKPOINT_KIND_INITIAL,
-                    )
-                ).scalars().first()
-                if existing_initial is not None:
-                    raise ValueError(f"branch_id {record.branch_id} already has an initial checkpoint")
-            if record.kind == BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED:
-                existing_event = session.execute(select(BranchCheckpointModel).where(
+                if persisted == record:
+                    return persisted
+                raise ValueError(
+                    f"checkpoint_id {record.checkpoint_id} already exists with different content"
+                )
+            by_command = session.execute(
+                select(BranchCheckpointModel).where(
                     BranchCheckpointModel.branch_id == record.branch_id,
-                    BranchCheckpointModel.kind == BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED,
-                    BranchCheckpointModel.event_sequence == record.event_sequence,
-                )).scalars().first()
+                    BranchCheckpointModel.command_id == record.command_id,
+                )
+            ).scalar_one_or_none()
+            if by_command is not None:
+                return self._to_branch_checkpoint(by_command)
+            if record.kind == BRANCH_CHECKPOINT_KIND_INITIAL:
+                existing_initial = (
+                    session.execute(
+                        select(BranchCheckpointModel).where(
+                            BranchCheckpointModel.branch_id == record.branch_id,
+                            BranchCheckpointModel.kind
+                            == BRANCH_CHECKPOINT_KIND_INITIAL,
+                        )
+                    )
+                    .scalars()
+                    .first()
+                )
+                if existing_initial is not None:
+                    raise ValueError(
+                        f"branch_id {record.branch_id} already has an initial checkpoint"
+                    )
+            if record.kind == BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED:
+                existing_event = (
+                    session.execute(
+                        select(BranchCheckpointModel).where(
+                            BranchCheckpointModel.branch_id == record.branch_id,
+                            BranchCheckpointModel.kind
+                            == BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED,
+                            BranchCheckpointModel.event_sequence
+                            == record.event_sequence,
+                        )
+                    )
+                    .scalars()
+                    .first()
+                )
                 if existing_event is not None:
                     raise ValueError(
                         f"branch_id {record.branch_id} already has an event_completed checkpoint "
                         f"for event_sequence {record.event_sequence}"
                     )
             if record.kind == BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED:
-                existing_week = session.execute(select(BranchCheckpointModel).where(
-                    BranchCheckpointModel.branch_id == record.branch_id,
-                    BranchCheckpointModel.kind == BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
-                    BranchCheckpointModel.season == record.season,
-                    BranchCheckpointModel.week == record.week,
-                )).scalars().first()
+                existing_week = (
+                    session.execute(
+                        select(BranchCheckpointModel).where(
+                            BranchCheckpointModel.branch_id == record.branch_id,
+                            BranchCheckpointModel.kind
+                            == BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
+                            BranchCheckpointModel.season == record.season,
+                            BranchCheckpointModel.week == record.week,
+                        )
+                    )
+                    .scalars()
+                    .first()
+                )
                 if existing_week is not None:
                     raise ValueError(
                         f"branch_id {record.branch_id} already has a week_completed checkpoint "
                         f"for season {record.season} week {record.week}"
                     )
-            expected = session.execute(select(func.max(BranchCheckpointModel.sequence)).where(BranchCheckpointModel.branch_id == record.branch_id)).scalar_one()
-            if record.sequence != (1 if expected is None else int(expected) + 1): raise ValueError("branch checkpoint sequence must increase by one")
-            if record.kind == BRANCH_CHECKPOINT_KIND_INITIAL and record.parent_checkpoint_id is not None: raise ValueError("initial checkpoint parent must be null")
-            session.add(BranchCheckpointModel(
-                checkpoint_id=record.checkpoint_id, run_id=record.run_id, branch_id=record.branch_id, parent_checkpoint_id=record.parent_checkpoint_id,
-                sequence=record.sequence, kind=record.kind, season=record.season, week=record.week, event_id=record.event_id,
-                event_sequence=record.event_sequence, command_id=record.command_id, command_kind=record.command_kind,
-                command_boundary=record.command_boundary, config_version=record.config_version, config_fingerprint=record.config_fingerprint,
-                world_id=record.world_id, world_fingerprint=record.world_fingerprint, global_seed=record.global_seed, branch_seed=record.branch_seed,
-                seed_namespace_json=self.canonical_json(record.seed_namespace), payload_schema_version=record.payload_schema_version,
-                content_hash_algorithm=record.content_hash_algorithm, content_hash=record.content_hash, payload_json=self.canonical_json(record.payload),
-            ))
+            expected = session.execute(
+                select(func.max(BranchCheckpointModel.sequence)).where(
+                    BranchCheckpointModel.branch_id == record.branch_id
+                )
+            ).scalar_one()
+            if record.sequence != (1 if expected is None else int(expected) + 1):
+                raise ValueError("branch checkpoint sequence must increase by one")
+            if (
+                record.kind == BRANCH_CHECKPOINT_KIND_INITIAL
+                and record.parent_checkpoint_id is not None
+            ):
+                raise ValueError("initial checkpoint parent must be null")
+            session.add(
+                BranchCheckpointModel(
+                    checkpoint_id=record.checkpoint_id,
+                    run_id=record.run_id,
+                    branch_id=record.branch_id,
+                    parent_checkpoint_id=record.parent_checkpoint_id,
+                    sequence=record.sequence,
+                    kind=record.kind,
+                    season=record.season,
+                    week=record.week,
+                    event_id=record.event_id,
+                    event_sequence=record.event_sequence,
+                    command_id=record.command_id,
+                    command_kind=record.command_kind,
+                    command_boundary=record.command_boundary,
+                    config_version=record.config_version,
+                    config_fingerprint=record.config_fingerprint,
+                    world_id=record.world_id,
+                    world_fingerprint=record.world_fingerprint,
+                    global_seed=record.global_seed,
+                    branch_seed=record.branch_seed,
+                    seed_namespace_json=self.canonical_json(record.seed_namespace),
+                    payload_schema_version=record.payload_schema_version,
+                    content_hash_algorithm=record.content_hash_algorithm,
+                    content_hash=record.content_hash,
+                    payload_json=self.canonical_json(record.payload),
+                )
+            )
             try:
                 session.flush()
             except IntegrityError as exc:
-                raise ValueError(f"branch checkpoint boundary conflict for branch_id {record.branch_id}") from exc
+                raise ValueError(
+                    f"branch checkpoint boundary conflict for branch_id {record.branch_id}"
+                ) from exc
         return record
 
-    def capture_initial_checkpoint_for_legacy_simulation_run(self, *, simulation_run_id: str, command_id: str | None = None) -> BranchCheckpointRecord:
+    def capture_initial_checkpoint_for_legacy_simulation_run(
+        self, *, simulation_run_id: str, command_id: str | None = None
+    ) -> BranchCheckpointRecord:
         legacy = self.get_simulation_run(run_id=simulation_run_id)
-        if legacy is None: raise KeyError(f"run_id {simulation_run_id} was not found")
-        branch = self.ensure_default_branch_for_simulation_run(simulation_run_id=simulation_run_id)
-        if branch is None: raise KeyError(f"default branch for run_id {simulation_run_id} was not found")
+        if legacy is None:
+            raise KeyError(f"run_id {simulation_run_id} was not found")
+        branch = self.ensure_default_branch_for_simulation_run(
+            simulation_run_id=simulation_run_id
+        )
+        if branch is None:
+            raise KeyError(
+                f"default branch for run_id {simulation_run_id} was not found"
+            )
         state = self.load_season_state(run_id=simulation_run_id)
-        if state is None: raise ValueError(f"run_id {simulation_run_id} has no season state")
+        if state is None:
+            raise ValueError(f"run_id {simulation_run_id} has no season state")
         command_id = command_id or f"legacy-initial-capture:{simulation_run_id}"
-        existing = self.get_branch_checkpoint_by_command_id(branch_id=branch.branch_id, command_id=command_id)
+        existing = self.get_branch_checkpoint_by_command_id(
+            branch_id=branch.branch_id, command_id=command_id
+        )
         if existing is not None:
             self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
             return existing
-        existing_initial = self.get_initial_branch_checkpoint(branch_id=branch.branch_id)
+        existing_initial = self.get_initial_branch_checkpoint(
+            branch_id=branch.branch_id
+        )
         if existing_initial is not None:
             self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
             return existing_initial
-        actions = [action.__dict__ for action in self.list_admin_actions(run_id=simulation_run_id)]
-        seed_namespace = {"hierarchy": ["global", "season", "entries", "draws", "tournament_progression"], "global_seed": legacy.seed, "branch_seed": branch.branch_seed}
-        payload: dict[str, object] = {"fork_capability": "not_forkable_player_state_not_migrated", "capture_mode": "legacy_initial_capture_only", "payload_schema_version": "branch_checkpoint_payload_v1", "run_id": branch.run_id, "branch_id": branch.branch_id, "legacy_simulation_run_id": simulation_run_id, "simulation_run": legacy.__dict__, "season_state": state.model_dump(mode="json"), "admin": {"actions": actions, "admin_actions_hash": self.checkpoint_content_hash({"actions": actions})}, "provenance": {"world_id": legacy.world_id, "world_fingerprint": legacy.world_generation_fingerprint, "config_version": legacy.config_version, "config_fingerprint": legacy.config_fingerprint, "global_seed": legacy.seed, "branch_seed": branch.branch_seed, "seed_namespace": seed_namespace}, "limitations": {"player_state": "hash_only_or_not_migrated", "prospects": "legacy_run_scoped_not_captured_as_durable_identity", "forkable": False}}
+        actions = [
+            action.__dict__
+            for action in self.list_admin_actions(run_id=simulation_run_id)
+        ]
+        seed_namespace = {
+            "hierarchy": [
+                "global",
+                "season",
+                "entries",
+                "draws",
+                "tournament_progression",
+            ],
+            "global_seed": legacy.seed,
+            "branch_seed": branch.branch_seed,
+        }
+        payload: dict[str, object] = {
+            "fork_capability": "not_forkable_player_state_not_migrated",
+            "capture_mode": "legacy_initial_capture_only",
+            "payload_schema_version": "branch_checkpoint_payload_v1",
+            "run_id": branch.run_id,
+            "branch_id": branch.branch_id,
+            "legacy_simulation_run_id": simulation_run_id,
+            "simulation_run": legacy.__dict__,
+            "season_state": state.model_dump(mode="json"),
+            "admin": {
+                "actions": actions,
+                "admin_actions_hash": self.checkpoint_content_hash(
+                    {"actions": actions}
+                ),
+            },
+            "provenance": {
+                "world_id": legacy.world_id,
+                "world_fingerprint": legacy.world_generation_fingerprint,
+                "config_version": legacy.config_version,
+                "config_fingerprint": legacy.config_fingerprint,
+                "global_seed": legacy.seed,
+                "branch_seed": branch.branch_seed,
+                "seed_namespace": seed_namespace,
+            },
+            "limitations": {
+                "player_state": "hash_only_or_not_migrated",
+                "prospects": "legacy_run_scoped_not_captured_as_durable_identity",
+                "forkable": False,
+            },
+        }
         separator = "\x00"
         checkpoint_identity = separator.join([branch.branch_id, command_id])
-        checkpoint_suffix = hashlib.sha256(checkpoint_identity.encode("utf-8")).hexdigest()[:24]
+        checkpoint_suffix = hashlib.sha256(
+            checkpoint_identity.encode("utf-8")
+        ).hexdigest()[:24]
         checkpoint_id = f"checkpoint-{checkpoint_suffix}"
         checkpoint_without_hash = BranchCheckpointRecord(
             checkpoint_id=checkpoint_id,
@@ -4273,13 +6814,16 @@ class SimulationPersistenceRepository:
         checkpoint = BranchCheckpointRecord(
             **{
                 **checkpoint_without_hash.__dict__,
-                "content_hash": self.checkpoint_envelope_content_hash(checkpoint_without_hash),
+                "content_hash": self.checkpoint_envelope_content_hash(
+                    checkpoint_without_hash
+                ),
             }
         )
         created = self.create_branch_checkpoint(checkpoint)
         with self._session_factory.begin() as session:
             model = session.get(RunBranchModel, branch.branch_id)
-            if model is not None and model.head_checkpoint_id is None: model.head_checkpoint_id = created.checkpoint_id
+            if model is not None and model.head_checkpoint_id is None:
+                model.head_checkpoint_id = created.checkpoint_id
         self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
         return created
 
@@ -4294,9 +6838,13 @@ class SimulationPersistenceRepository:
         legacy = self.get_simulation_run(run_id=simulation_run_id)
         if legacy is None:
             raise KeyError(f"run_id {simulation_run_id} was not found")
-        branch = self.ensure_default_branch_for_simulation_run(simulation_run_id=simulation_run_id)
+        branch = self.ensure_default_branch_for_simulation_run(
+            simulation_run_id=simulation_run_id
+        )
         if branch is None:
-            raise KeyError(f"default branch for run_id {simulation_run_id} was not found")
+            raise KeyError(
+                f"default branch for run_id {simulation_run_id} was not found"
+            )
         state = self.load_season_state(run_id=simulation_run_id)
         if state is None:
             raise ValueError(f"run_id {simulation_run_id} has no season state")
@@ -4305,17 +6853,36 @@ class SimulationPersistenceRepository:
         # not have one yet, in which case it is backfilled from run_branches.
         branch_state = self.get_branch_state(branch_id=branch.branch_id)
         if branch_state is None:
-            branch_state = self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
-        effective_head_id = branch_state.head_checkpoint_id if branch_state is not None else branch.head_checkpoint_id
+            branch_state = self.ensure_branch_state_for_branch(
+                branch_id=branch.branch_id
+            )
+        effective_head_id = (
+            branch_state.head_checkpoint_id
+            if branch_state is not None
+            else branch.head_checkpoint_id
+        )
         if effective_head_id is None:
-            raise ValueError(f"branch {branch.branch_id} has no existing head checkpoint; capture initial first")
+            raise ValueError(
+                f"branch {branch.branch_id} has no existing head checkpoint; capture initial first"
+            )
         parent = self.get_branch_checkpoint(checkpoint_id=effective_head_id)
         if parent is None:
-            raise ValueError(f"branch {branch.branch_id} head checkpoint {effective_head_id} was not found")
+            raise ValueError(
+                f"branch {branch.branch_id} head checkpoint {effective_head_id} was not found"
+            )
 
-        actions = [action.__dict__ for action in self.list_admin_actions(run_id=simulation_run_id)]
+        actions = [
+            action.__dict__
+            for action in self.list_admin_actions(run_id=simulation_run_id)
+        ]
         seed_namespace = {
-            "hierarchy": ["global", "season", "entries", "draws", "tournament_progression"],
+            "hierarchy": [
+                "global",
+                "season",
+                "entries",
+                "draws",
+                "tournament_progression",
+            ],
             "global_seed": legacy.seed,
             "branch_seed": branch.branch_seed,
         }
@@ -4330,7 +6897,12 @@ class SimulationPersistenceRepository:
             "parent_checkpoint_id": effective_head_id,
             "simulation_run": legacy.__dict__,
             "season_state": serialized_state,
-            "admin": {"actions": actions, "admin_actions_hash": self.checkpoint_content_hash({"actions": actions})},
+            "admin": {
+                "actions": actions,
+                "admin_actions_hash": self.checkpoint_content_hash(
+                    {"actions": actions}
+                ),
+            },
             "provenance": {
                 "world_id": legacy.world_id,
                 "world_fingerprint": legacy.world_generation_fingerprint,
@@ -4350,35 +6922,66 @@ class SimulationPersistenceRepository:
         # The default command identity represents the captured logical legacy state,
         # not the mutable branch head.  Keeping the parent out makes a repeated
         # no-command capture idempotent even after its first call advances the head.
-        state_fingerprint = self.checkpoint_content_hash({
-            key: value for key, value in payload.items() if key != "parent_checkpoint_id"
-        })
-        command_id = command_id or f"legacy-current-capture:{simulation_run_id}:{state_fingerprint[:24]}"
-        existing = self.get_branch_checkpoint_by_command_id(branch_id=branch.branch_id, command_id=command_id)
+        state_fingerprint = self.checkpoint_content_hash(
+            {
+                key: value
+                for key, value in payload.items()
+                if key != "parent_checkpoint_id"
+            }
+        )
+        command_id = (
+            command_id
+            or f"legacy-current-capture:{simulation_run_id}:{state_fingerprint[:24]}"
+        )
+        existing = self.get_branch_checkpoint_by_command_id(
+            branch_id=branch.branch_id, command_id=command_id
+        )
         if existing is not None:
             self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
             return existing
 
-        checkpoint_suffix = hashlib.sha256(f"{branch.branch_id}\x00{command_id}".encode("utf-8")).hexdigest()[:24]
-        active_event = state.active_tournament.event if state.active_tournament is not None else None
+        checkpoint_suffix = hashlib.sha256(
+            f"{branch.branch_id}\x00{command_id}".encode("utf-8")
+        ).hexdigest()[:24]
+        active_event = (
+            state.active_tournament.event
+            if state.active_tournament is not None
+            else None
+        )
         checkpoint_without_hash = BranchCheckpointRecord(
-            checkpoint_id=f"checkpoint-{checkpoint_suffix}", run_id=branch.run_id, branch_id=branch.branch_id,
-            parent_checkpoint_id=effective_head_id, sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id),
-            kind=BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE, season=state.season,
+            checkpoint_id=f"checkpoint-{checkpoint_suffix}",
+            run_id=branch.run_id,
+            branch_id=branch.branch_id,
+            parent_checkpoint_id=effective_head_id,
+            sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id),
+            kind=BRANCH_CHECKPOINT_KIND_CURRENT_STATE_CAPTURE,
+            season=state.season,
             week=active_event.week if active_event is not None else None,
             event_id=active_event.event_id if active_event is not None else None,
             event_sequence=state.next_event_index if active_event is not None else None,
-            command_id=command_id, command_kind=BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_CURRENT_LEGACY_STATE, command_boundary="after_legacy_state_load",
-            config_version=legacy.config_version, config_fingerprint=legacy.config_fingerprint,
-            world_id=legacy.world_id, world_fingerprint=legacy.world_generation_fingerprint,
-            global_seed=legacy.seed, branch_seed=branch.branch_seed, seed_namespace=seed_namespace,
-            payload_schema_version="branch_checkpoint_payload_v1", content_hash_algorithm="sha256", content_hash="",
+            command_id=command_id,
+            command_kind=BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_CURRENT_LEGACY_STATE,
+            command_boundary="after_legacy_state_load",
+            config_version=legacy.config_version,
+            config_fingerprint=legacy.config_fingerprint,
+            world_id=legacy.world_id,
+            world_fingerprint=legacy.world_generation_fingerprint,
+            global_seed=legacy.seed,
+            branch_seed=branch.branch_seed,
+            seed_namespace=seed_namespace,
+            payload_schema_version="branch_checkpoint_payload_v1",
+            content_hash_algorithm="sha256",
+            content_hash="",
             payload=payload,
         )
-        checkpoint = BranchCheckpointRecord(**{
-            **checkpoint_without_hash.__dict__,
-            "content_hash": self.checkpoint_envelope_content_hash(checkpoint_without_hash),
-        })
+        checkpoint = BranchCheckpointRecord(
+            **{
+                **checkpoint_without_hash.__dict__,
+                "content_hash": self.checkpoint_envelope_content_hash(
+                    checkpoint_without_hash
+                ),
+            }
+        )
         created = self.create_branch_checkpoint(checkpoint)
         with self._session_factory.begin() as session:
             model = session.get(RunBranchModel, branch.branch_id)
@@ -4388,8 +6991,12 @@ class SimulationPersistenceRepository:
         return created
 
     def capture_completed_event_checkpoint_for_legacy_simulation_run(
-        self, *, simulation_run_id: str, event_id: str | None = None,
-        event_sequence: int | None = None, command_id: str | None = None,
+        self,
+        *,
+        simulation_run_id: str,
+        event_id: str | None = None,
+        event_sequence: int | None = None,
+        command_id: str | None = None,
     ) -> BranchCheckpointRecord:
         """Capture an already persisted legacy event; this does not replay or fork it."""
         if event_id is None and event_sequence is None:
@@ -4397,69 +7004,222 @@ class SimulationPersistenceRepository:
         legacy = self.get_simulation_run(run_id=simulation_run_id)
         if legacy is None:
             raise KeyError(f"run_id {simulation_run_id} was not found")
-        branch = self.ensure_default_branch_for_simulation_run(simulation_run_id=simulation_run_id)
+        branch = self.ensure_default_branch_for_simulation_run(
+            simulation_run_id=simulation_run_id
+        )
         if branch is None:
-            raise KeyError(f"default branch for run_id {simulation_run_id} was not found")
+            raise KeyError(
+                f"default branch for run_id {simulation_run_id} was not found"
+            )
         state = self.load_season_state(run_id=simulation_run_id)
         if state is None:
             raise ValueError(f"run_id {simulation_run_id} has no season state")
         events = self.list_completed_events(run_id=simulation_run_id)
-        by_id = next((item for item in events if item.event_id == event_id), None) if event_id is not None else None
-        by_sequence = next((item for item in events if item.event_sequence == event_sequence), None) if event_sequence is not None else None
-        if event_id is not None and event_sequence is not None and (by_id is None or by_sequence is None or by_id.event_id != by_sequence.event_id):
-            raise ValueError("event_id and event_sequence identify different completed events")
+        by_id = (
+            next((item for item in events if item.event_id == event_id), None)
+            if event_id is not None
+            else None
+        )
+        by_sequence = (
+            next(
+                (item for item in events if item.event_sequence == event_sequence), None
+            )
+            if event_sequence is not None
+            else None
+        )
+        if (
+            event_id is not None
+            and event_sequence is not None
+            and (
+                by_id is None
+                or by_sequence is None
+                or by_id.event_id != by_sequence.event_id
+            )
+        ):
+            raise ValueError(
+                "event_id and event_sequence identify different completed events"
+            )
         target = by_id or by_sequence
         if target is None:
             raise ValueError("completed event locator was not found")
         if target.event_id not in state.completed_event_ids:
-            raise ValueError(f"event_id {target.event_id} is not completed in the current season state")
+            raise ValueError(
+                f"event_id {target.event_id} is not completed in the current season state"
+            )
 
-        branch_state = self.get_branch_state(branch_id=branch.branch_id) or self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
-        effective_head_id = branch_state.head_checkpoint_id if branch_state is not None else branch.head_checkpoint_id
+        branch_state = self.get_branch_state(
+            branch_id=branch.branch_id
+        ) or self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+        effective_head_id = (
+            branch_state.head_checkpoint_id
+            if branch_state is not None
+            else branch.head_checkpoint_id
+        )
         if effective_head_id is None:
-            raise ValueError(f"branch {branch.branch_id} has no existing head checkpoint; capture initial first")
+            raise ValueError(
+                f"branch {branch.branch_id} has no existing head checkpoint; capture initial first"
+            )
         if self.get_branch_checkpoint(checkpoint_id=effective_head_id) is None:
-            raise ValueError(f"branch {branch.branch_id} head checkpoint {effective_head_id} was not found")
+            raise ValueError(
+                f"branch {branch.branch_id} head checkpoint {effective_head_id} was not found"
+            )
         # A branch has one durable historical event boundary per legacy event.
-        existing_event = self.get_event_completed_branch_checkpoint(branch_id=branch.branch_id, event_sequence=target.event_sequence)
+        existing_event = self.get_event_completed_branch_checkpoint(
+            branch_id=branch.branch_id, event_sequence=target.event_sequence
+        )
         if existing_event is not None:
             self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
             return existing_event
 
-        completed_input = next((item.model_dump(mode="json") for item in state.completed_tournament_inputs if item.event_id == target.event_id), None)
-        actions = [action.__dict__ for action in self.list_admin_actions(run_id=simulation_run_id)]
-        seed_namespace = {"hierarchy": ["global", "season", "entries", "draws", "tournament_progression"], "global_seed": legacy.seed, "branch_seed": branch.branch_seed}
-        ranking_refs = [item.__dict__ for item in self.list_ranking_snapshot_records(run_id=simulation_run_id) if item.source_event_id == target.event_id]
-        race_refs = [item.__dict__ for item in self.list_race_snapshot_records(run_id=simulation_run_id) if item.source_event_id == target.event_id]
-        serialized_state = state.model_dump(mode="json")
-        event_payload = {"event_id": target.event_id, "event_sequence": target.event_sequence, "season": target.season or state.season, "week": target.week, "template_id": target.template_id, "source": "legacy_completed_event"}
-        payload: dict[str, object] = {
-            "fork_capability": "not_forkable_player_state_not_migrated", "capture_mode": "legacy_event_completed_capture_only",
-            "payload_schema_version": "branch_checkpoint_payload_v1", "run_id": branch.run_id, "branch_id": branch.branch_id,
-            "legacy_simulation_run_id": simulation_run_id, "parent_checkpoint_id": effective_head_id, "event": event_payload,
-            "simulation_run": legacy.__dict__, "season_state": serialized_state,
-            "completed_event": {"record": target.__dict__, "metadata": {"season": target.season, "week": target.week, "template_id": target.template_id}, "tournament_result": target.tournament_result, "tournament_result_hash": self.checkpoint_content_hash(target.tournament_result or {}), "completed_tournament_input": completed_input, "completed_tournament_input_hash": self.checkpoint_content_hash(completed_input or {})},
-            "publications": {"ranking_snapshot_references": ranking_refs, "race_snapshot_references": race_refs},
-            "admin": {"actions": actions, "admin_actions_hash": self.checkpoint_content_hash({"actions": actions})},
-            "provenance": {"world_id": legacy.world_id, "world_fingerprint": legacy.world_generation_fingerprint, "config_version": legacy.config_version, "config_fingerprint": legacy.config_fingerprint, "global_seed": legacy.seed, "branch_seed": branch.branch_seed, "seed_namespace": seed_namespace},
-            "limitations": {"forkable": False, "replayable": False, "player_state": "hash_only_or_not_migrated", "prospects": "legacy_run_scoped_not_captured_as_durable_identity", "simulation_source": "legacy_simulation_run_state", "match_level_checkpoints": "declared_future_boundary_not_supported_by_current_precomputed_tournament_model"},
+        completed_input = next(
+            (
+                item.model_dump(mode="json")
+                for item in state.completed_tournament_inputs
+                if item.event_id == target.event_id
+            ),
+            None,
+        )
+        actions = [
+            action.__dict__
+            for action in self.list_admin_actions(run_id=simulation_run_id)
+        ]
+        seed_namespace = {
+            "hierarchy": [
+                "global",
+                "season",
+                "entries",
+                "draws",
+                "tournament_progression",
+            ],
+            "global_seed": legacy.seed,
+            "branch_seed": branch.branch_seed,
         }
-        logical_fingerprint = self.checkpoint_content_hash({key: value for key, value in payload.items() if key != "parent_checkpoint_id"})
-        command_id = command_id or f"legacy-event-completed-capture:{simulation_run_id}:{target.event_id}:{target.event_sequence}:{logical_fingerprint[:24]}"
-        existing = self.get_branch_checkpoint_by_command_id(branch_id=branch.branch_id, command_id=command_id)
+        ranking_refs = [
+            item.__dict__
+            for item in self.list_ranking_snapshot_records(run_id=simulation_run_id)
+            if item.source_event_id == target.event_id
+        ]
+        race_refs = [
+            item.__dict__
+            for item in self.list_race_snapshot_records(run_id=simulation_run_id)
+            if item.source_event_id == target.event_id
+        ]
+        serialized_state = state.model_dump(mode="json")
+        event_payload = {
+            "event_id": target.event_id,
+            "event_sequence": target.event_sequence,
+            "season": target.season or state.season,
+            "week": target.week,
+            "template_id": target.template_id,
+            "source": "legacy_completed_event",
+        }
+        payload: dict[str, object] = {
+            "fork_capability": "not_forkable_player_state_not_migrated",
+            "capture_mode": "legacy_event_completed_capture_only",
+            "payload_schema_version": "branch_checkpoint_payload_v1",
+            "run_id": branch.run_id,
+            "branch_id": branch.branch_id,
+            "legacy_simulation_run_id": simulation_run_id,
+            "parent_checkpoint_id": effective_head_id,
+            "event": event_payload,
+            "simulation_run": legacy.__dict__,
+            "season_state": serialized_state,
+            "completed_event": {
+                "record": target.__dict__,
+                "metadata": {
+                    "season": target.season,
+                    "week": target.week,
+                    "template_id": target.template_id,
+                },
+                "tournament_result": target.tournament_result,
+                "tournament_result_hash": self.checkpoint_content_hash(
+                    target.tournament_result or {}
+                ),
+                "completed_tournament_input": completed_input,
+                "completed_tournament_input_hash": self.checkpoint_content_hash(
+                    completed_input or {}
+                ),
+            },
+            "publications": {
+                "ranking_snapshot_references": ranking_refs,
+                "race_snapshot_references": race_refs,
+            },
+            "admin": {
+                "actions": actions,
+                "admin_actions_hash": self.checkpoint_content_hash(
+                    {"actions": actions}
+                ),
+            },
+            "provenance": {
+                "world_id": legacy.world_id,
+                "world_fingerprint": legacy.world_generation_fingerprint,
+                "config_version": legacy.config_version,
+                "config_fingerprint": legacy.config_fingerprint,
+                "global_seed": legacy.seed,
+                "branch_seed": branch.branch_seed,
+                "seed_namespace": seed_namespace,
+            },
+            "limitations": {
+                "forkable": False,
+                "replayable": False,
+                "player_state": "hash_only_or_not_migrated",
+                "prospects": "legacy_run_scoped_not_captured_as_durable_identity",
+                "simulation_source": "legacy_simulation_run_state",
+                "match_level_checkpoints": "declared_future_boundary_not_supported_by_current_precomputed_tournament_model",
+            },
+        }
+        logical_fingerprint = self.checkpoint_content_hash(
+            {
+                key: value
+                for key, value in payload.items()
+                if key != "parent_checkpoint_id"
+            }
+        )
+        command_id = (
+            command_id
+            or f"legacy-event-completed-capture:{simulation_run_id}:{target.event_id}:{target.event_sequence}:{logical_fingerprint[:24]}"
+        )
+        existing = self.get_branch_checkpoint_by_command_id(
+            branch_id=branch.branch_id, command_id=command_id
+        )
         if existing is not None:
             self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
             return existing
-        suffix = hashlib.sha256(f"{branch.branch_id}\x00{command_id}".encode("utf-8")).hexdigest()[:24]
+        suffix = hashlib.sha256(
+            f"{branch.branch_id}\x00{command_id}".encode("utf-8")
+        ).hexdigest()[:24]
         incomplete = BranchCheckpointRecord(
-            checkpoint_id=f"checkpoint-{suffix}", run_id=branch.run_id, branch_id=branch.branch_id, parent_checkpoint_id=effective_head_id,
-            sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id), kind=BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED, season=target.season or state.season,
-            week=target.week, event_id=target.event_id, event_sequence=target.event_sequence, command_id=command_id,
-            command_kind=BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_EVENT_LEGACY_STATE, command_boundary="after_completed_event_persisted",
-            config_version=legacy.config_version, config_fingerprint=legacy.config_fingerprint, world_id=legacy.world_id,
-            world_fingerprint=legacy.world_generation_fingerprint, global_seed=legacy.seed, branch_seed=branch.branch_seed,
-            seed_namespace=seed_namespace, payload_schema_version="branch_checkpoint_payload_v1", content_hash_algorithm="sha256", content_hash="", payload=payload)
-        checkpoint = BranchCheckpointRecord(**{**incomplete.__dict__, "content_hash": self.checkpoint_envelope_content_hash(incomplete)})
+            checkpoint_id=f"checkpoint-{suffix}",
+            run_id=branch.run_id,
+            branch_id=branch.branch_id,
+            parent_checkpoint_id=effective_head_id,
+            sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id),
+            kind=BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED,
+            season=target.season or state.season,
+            week=target.week,
+            event_id=target.event_id,
+            event_sequence=target.event_sequence,
+            command_id=command_id,
+            command_kind=BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_EVENT_LEGACY_STATE,
+            command_boundary="after_completed_event_persisted",
+            config_version=legacy.config_version,
+            config_fingerprint=legacy.config_fingerprint,
+            world_id=legacy.world_id,
+            world_fingerprint=legacy.world_generation_fingerprint,
+            global_seed=legacy.seed,
+            branch_seed=branch.branch_seed,
+            seed_namespace=seed_namespace,
+            payload_schema_version="branch_checkpoint_payload_v1",
+            content_hash_algorithm="sha256",
+            content_hash="",
+            payload=payload,
+        )
+        checkpoint = BranchCheckpointRecord(
+            **{
+                **incomplete.__dict__,
+                "content_hash": self.checkpoint_envelope_content_hash(incomplete),
+            }
+        )
         created = self.create_branch_checkpoint(checkpoint)
         with self._session_factory.begin() as session:
             model = session.get(RunBranchModel, branch.branch_id)
@@ -4469,7 +7229,11 @@ class SimulationPersistenceRepository:
         return created
 
     def capture_completed_week_checkpoint_for_legacy_simulation_run(
-        self, *, simulation_run_id: str, week: int, command_id: str | None = None,
+        self,
+        *,
+        simulation_run_id: str,
+        week: int,
+        command_id: str | None = None,
     ) -> BranchCheckpointRecord:
         """Capture an already completed scheduled legacy week without replaying or forking it."""
         if not 1 <= week <= 61:
@@ -4477,73 +7241,219 @@ class SimulationPersistenceRepository:
         legacy = self.get_simulation_run(run_id=simulation_run_id)
         if legacy is None:
             raise KeyError(f"run_id {simulation_run_id} was not found")
-        branch = self.ensure_default_branch_for_simulation_run(simulation_run_id=simulation_run_id)
+        branch = self.ensure_default_branch_for_simulation_run(
+            simulation_run_id=simulation_run_id
+        )
         if branch is None:
-            raise KeyError(f"default branch for run_id {simulation_run_id} was not found")
+            raise KeyError(
+                f"default branch for run_id {simulation_run_id} was not found"
+            )
         state = self.load_season_state(run_id=simulation_run_id)
         if state is None:
             raise ValueError(f"run_id {simulation_run_id} has no season state")
         scheduled = [event for event in state.ordered_events if event.week == week]
         if not scheduled:
-            raise ValueError(f"week {week} has no scheduled events; empty-week checkpoints are not supported")
+            raise ValueError(
+                f"week {week} has no scheduled events; empty-week checkpoints are not supported"
+            )
         scheduled_ids = [event.event_id for event in scheduled]
-        incomplete = [event_id for event_id in scheduled_ids if event_id not in state.completed_event_ids]
+        incomplete = [
+            event_id
+            for event_id in scheduled_ids
+            if event_id not in state.completed_event_ids
+        ]
         if incomplete:
-            raise ValueError(f"week {week} is not completed; scheduled events are incomplete: {', '.join(incomplete)}")
-        persisted_by_id = {item.event_id: item for item in self.list_completed_events(run_id=simulation_run_id)}
-        missing = [event_id for event_id in scheduled_ids if event_id not in persisted_by_id]
+            raise ValueError(
+                f"week {week} is not completed; scheduled events are incomplete: {', '.join(incomplete)}"
+            )
+        persisted_by_id = {
+            item.event_id: item
+            for item in self.list_completed_events(run_id=simulation_run_id)
+        }
+        missing = [
+            event_id for event_id in scheduled_ids if event_id not in persisted_by_id
+        ]
         if missing:
-            raise ValueError(f"week {week} has completed events without persisted completed-event records: {', '.join(missing)}")
-        branch_state = self.get_branch_state(branch_id=branch.branch_id) or self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
-        effective_head_id = branch_state.head_checkpoint_id if branch_state is not None else branch.head_checkpoint_id
+            raise ValueError(
+                f"week {week} has completed events without persisted completed-event records: {', '.join(missing)}"
+            )
+        branch_state = self.get_branch_state(
+            branch_id=branch.branch_id
+        ) or self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+        effective_head_id = (
+            branch_state.head_checkpoint_id
+            if branch_state is not None
+            else branch.head_checkpoint_id
+        )
         if effective_head_id is None:
-            raise ValueError(f"branch {branch.branch_id} has no existing head checkpoint; capture initial first")
+            raise ValueError(
+                f"branch {branch.branch_id} has no existing head checkpoint; capture initial first"
+            )
         if self.get_branch_checkpoint(checkpoint_id=effective_head_id) is None:
-            raise ValueError(f"branch {branch.branch_id} head checkpoint {effective_head_id} was not found")
-        existing_week = self.get_week_completed_branch_checkpoint(branch_id=branch.branch_id, season=state.season, week=week)
+            raise ValueError(
+                f"branch {branch.branch_id} head checkpoint {effective_head_id} was not found"
+            )
+        existing_week = self.get_week_completed_branch_checkpoint(
+            branch_id=branch.branch_id, season=state.season, week=week
+        )
         if existing_week is not None:
             self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
             return existing_week
         completed = [persisted_by_id[event_id] for event_id in scheduled_ids]
         completed.sort(key=lambda item: item.event_sequence)
         completed_inputs = {
-            item.event_id: item.model_dump(mode="json") for item in state.completed_tournament_inputs
+            item.event_id: item.model_dump(mode="json")
+            for item in state.completed_tournament_inputs
             if item.event_id in set(scheduled_ids)
         }
-        actions = [action.__dict__ for action in self.list_admin_actions(run_id=simulation_run_id)]
-        seed_namespace = {"hierarchy": ["global", "season", "entries", "draws", "tournament_progression"], "global_seed": legacy.seed, "branch_seed": branch.branch_seed}
-        ranking_refs = [item.__dict__ for item in self.list_ranking_snapshot_records(run_id=simulation_run_id) if item.source_event_id in scheduled_ids]
-        race_refs = [item.__dict__ for item in self.list_race_snapshot_records(run_id=simulation_run_id) if item.source_event_id in scheduled_ids]
-        event_rows = [{"record": item.__dict__, "metadata": {"season": item.season, "week": item.week, "template_id": item.template_id}, "tournament_result": item.tournament_result, "tournament_result_hash": self.checkpoint_content_hash(item.tournament_result or {}), "completed_tournament_input": completed_inputs.get(item.event_id), "completed_tournament_input_hash": self.checkpoint_content_hash(completed_inputs.get(item.event_id) or {})} for item in completed]
+        actions = [
+            action.__dict__
+            for action in self.list_admin_actions(run_id=simulation_run_id)
+        ]
+        seed_namespace = {
+            "hierarchy": [
+                "global",
+                "season",
+                "entries",
+                "draws",
+                "tournament_progression",
+            ],
+            "global_seed": legacy.seed,
+            "branch_seed": branch.branch_seed,
+        }
+        ranking_refs = [
+            item.__dict__
+            for item in self.list_ranking_snapshot_records(run_id=simulation_run_id)
+            if item.source_event_id in scheduled_ids
+        ]
+        race_refs = [
+            item.__dict__
+            for item in self.list_race_snapshot_records(run_id=simulation_run_id)
+            if item.source_event_id in scheduled_ids
+        ]
+        event_rows = [
+            {
+                "record": item.__dict__,
+                "metadata": {
+                    "season": item.season,
+                    "week": item.week,
+                    "template_id": item.template_id,
+                },
+                "tournament_result": item.tournament_result,
+                "tournament_result_hash": self.checkpoint_content_hash(
+                    item.tournament_result or {}
+                ),
+                "completed_tournament_input": completed_inputs.get(item.event_id),
+                "completed_tournament_input_hash": self.checkpoint_content_hash(
+                    completed_inputs.get(item.event_id) or {}
+                ),
+            }
+            for item in completed
+        ]
         sequences = [item.event_sequence for item in completed]
         payload: dict[str, object] = {
-            "fork_capability": "not_forkable_player_state_not_migrated", "capture_mode": "legacy_week_completed_capture_only",
-            "payload_schema_version": "branch_checkpoint_payload_v1", "run_id": branch.run_id, "branch_id": branch.branch_id,
-            "legacy_simulation_run_id": simulation_run_id, "parent_checkpoint_id": effective_head_id,
-            "week": {"season": state.season, "week": week, "source": "legacy_completed_week", "scheduled_event_count": len(scheduled), "completed_event_count": len(completed), "completed_event_ids": scheduled_ids, "completed_event_sequences": sequences},
-            "simulation_run": legacy.__dict__, "season_state": state.model_dump(mode="json"), "completed_events": event_rows,
-            "publications": {"ranking_snapshot_references": ranking_refs, "race_snapshot_references": race_refs},
-            "admin": {"actions": actions, "admin_actions_hash": self.checkpoint_content_hash({"actions": actions})},
-            "provenance": {"world_id": legacy.world_id, "world_fingerprint": legacy.world_generation_fingerprint, "config_version": legacy.config_version, "config_fingerprint": legacy.config_fingerprint, "global_seed": legacy.seed, "branch_seed": branch.branch_seed, "seed_namespace": seed_namespace},
-            "limitations": {"forkable": False, "replayable": False, "player_state": "hash_only_or_not_migrated", "prospects": "legacy_run_scoped_not_captured_as_durable_identity", "simulation_source": "legacy_simulation_run_state", "empty_week_checkpoints": "not_supported_until_calendar_week_state_exists", "match_level_checkpoints": "declared_future_boundary_not_supported_by_current_precomputed_tournament_model"},
+            "fork_capability": "not_forkable_player_state_not_migrated",
+            "capture_mode": "legacy_week_completed_capture_only",
+            "payload_schema_version": "branch_checkpoint_payload_v1",
+            "run_id": branch.run_id,
+            "branch_id": branch.branch_id,
+            "legacy_simulation_run_id": simulation_run_id,
+            "parent_checkpoint_id": effective_head_id,
+            "week": {
+                "season": state.season,
+                "week": week,
+                "source": "legacy_completed_week",
+                "scheduled_event_count": len(scheduled),
+                "completed_event_count": len(completed),
+                "completed_event_ids": scheduled_ids,
+                "completed_event_sequences": sequences,
+            },
+            "simulation_run": legacy.__dict__,
+            "season_state": state.model_dump(mode="json"),
+            "completed_events": event_rows,
+            "publications": {
+                "ranking_snapshot_references": ranking_refs,
+                "race_snapshot_references": race_refs,
+            },
+            "admin": {
+                "actions": actions,
+                "admin_actions_hash": self.checkpoint_content_hash(
+                    {"actions": actions}
+                ),
+            },
+            "provenance": {
+                "world_id": legacy.world_id,
+                "world_fingerprint": legacy.world_generation_fingerprint,
+                "config_version": legacy.config_version,
+                "config_fingerprint": legacy.config_fingerprint,
+                "global_seed": legacy.seed,
+                "branch_seed": branch.branch_seed,
+                "seed_namespace": seed_namespace,
+            },
+            "limitations": {
+                "forkable": False,
+                "replayable": False,
+                "player_state": "hash_only_or_not_migrated",
+                "prospects": "legacy_run_scoped_not_captured_as_durable_identity",
+                "simulation_source": "legacy_simulation_run_state",
+                "empty_week_checkpoints": "not_supported_until_calendar_week_state_exists",
+                "match_level_checkpoints": "declared_future_boundary_not_supported_by_current_precomputed_tournament_model",
+            },
         }
-        logical_fingerprint = self.checkpoint_content_hash({key: value for key, value in payload.items() if key != "parent_checkpoint_id"})
-        command_id = command_id or f"legacy-week-completed-capture:{simulation_run_id}:{state.season}:{week}:{','.join(scheduled_ids)}:{','.join(map(str, sequences))}:{logical_fingerprint[:24]}"
-        existing = self.get_branch_checkpoint_by_command_id(branch_id=branch.branch_id, command_id=command_id)
+        logical_fingerprint = self.checkpoint_content_hash(
+            {
+                key: value
+                for key, value in payload.items()
+                if key != "parent_checkpoint_id"
+            }
+        )
+        command_id = (
+            command_id
+            or f"legacy-week-completed-capture:{simulation_run_id}:{state.season}:{week}:{','.join(scheduled_ids)}:{','.join(map(str, sequences))}:{logical_fingerprint[:24]}"
+        )
+        existing = self.get_branch_checkpoint_by_command_id(
+            branch_id=branch.branch_id, command_id=command_id
+        )
         if existing is not None:
             self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
             return existing
-        suffix = hashlib.sha256(f"{branch.branch_id}\x00{command_id}".encode("utf-8")).hexdigest()[:24]
+        suffix = hashlib.sha256(
+            f"{branch.branch_id}\x00{command_id}".encode("utf-8")
+        ).hexdigest()[:24]
         incomplete_checkpoint = BranchCheckpointRecord(
-            checkpoint_id=f"checkpoint-{suffix}", run_id=branch.run_id, branch_id=branch.branch_id, parent_checkpoint_id=effective_head_id,
-            sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id), kind=BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED, season=state.season, week=week,
-            event_id=None, event_sequence=max(sequences) if sequences else None, command_id=command_id,
-            command_kind=BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_WEEK_LEGACY_STATE, command_boundary="after_completed_week_persisted",
-            config_version=legacy.config_version, config_fingerprint=legacy.config_fingerprint, world_id=legacy.world_id,
-            world_fingerprint=legacy.world_generation_fingerprint, global_seed=legacy.seed, branch_seed=branch.branch_seed,
-            seed_namespace=seed_namespace, payload_schema_version="branch_checkpoint_payload_v1", content_hash_algorithm="sha256", content_hash="", payload=payload,
+            checkpoint_id=f"checkpoint-{suffix}",
+            run_id=branch.run_id,
+            branch_id=branch.branch_id,
+            parent_checkpoint_id=effective_head_id,
+            sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id),
+            kind=BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
+            season=state.season,
+            week=week,
+            event_id=None,
+            event_sequence=max(sequences) if sequences else None,
+            command_id=command_id,
+            command_kind=BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_WEEK_LEGACY_STATE,
+            command_boundary="after_completed_week_persisted",
+            config_version=legacy.config_version,
+            config_fingerprint=legacy.config_fingerprint,
+            world_id=legacy.world_id,
+            world_fingerprint=legacy.world_generation_fingerprint,
+            global_seed=legacy.seed,
+            branch_seed=branch.branch_seed,
+            seed_namespace=seed_namespace,
+            payload_schema_version="branch_checkpoint_payload_v1",
+            content_hash_algorithm="sha256",
+            content_hash="",
+            payload=payload,
         )
-        checkpoint = BranchCheckpointRecord(**{**incomplete_checkpoint.__dict__, "content_hash": self.checkpoint_envelope_content_hash(incomplete_checkpoint)})
+        checkpoint = BranchCheckpointRecord(
+            **{
+                **incomplete_checkpoint.__dict__,
+                "content_hash": self.checkpoint_envelope_content_hash(
+                    incomplete_checkpoint
+                ),
+            }
+        )
         created = self.create_branch_checkpoint(checkpoint)
         with self._session_factory.begin() as session:
             model = session.get(RunBranchModel, branch.branch_id)
@@ -4553,73 +7463,265 @@ class SimulationPersistenceRepository:
         return created
 
     def capture_season_rollover_checkpoint_for_legacy_simulation_run(
-        self, *, simulation_run_id: str, from_season: int | None = None,
-        to_season: int | None = None, command_id: str | None = None,
+        self,
+        *,
+        simulation_run_id: str,
+        from_season: int | None = None,
+        to_season: int | None = None,
+        command_id: str | None = None,
     ) -> BranchCheckpointRecord:
         """Capture an already persisted legacy season rollover; never execute or replay it."""
         legacy = self.get_simulation_run(run_id=simulation_run_id)
-        if legacy is None: raise KeyError(f"run_id {simulation_run_id} was not found")
-        branch = self.ensure_default_branch_for_simulation_run(simulation_run_id=simulation_run_id)
-        if branch is None: raise KeyError(f"default branch for run_id {simulation_run_id} was not found")
+        if legacy is None:
+            raise KeyError(f"run_id {simulation_run_id} was not found")
+        branch = self.ensure_default_branch_for_simulation_run(
+            simulation_run_id=simulation_run_id
+        )
+        if branch is None:
+            raise KeyError(
+                f"default branch for run_id {simulation_run_id} was not found"
+            )
         state = self.load_season_state(run_id=simulation_run_id)
-        if state is None: raise ValueError(f"run_id {simulation_run_id} has no season state")
+        if state is None:
+            raise ValueError(f"run_id {simulation_run_id} has no season state")
         rollovers = self.list_season_rollovers(run_id=simulation_run_id)
-        if not rollovers: raise ValueError(f"run_id {simulation_run_id} has no persisted season rollover artifact")
-        matches = [row for row in rollovers if (from_season is None or row.from_season == from_season) and (to_season is None or row.to_season == to_season)]
-        if not matches: raise ValueError("rollover locator does not match a persisted season rollover artifact")
-        if len(matches) > 1: raise ValueError("season rollover locator is ambiguous; provide from_season and to_season")
+        if not rollovers:
+            raise ValueError(
+                f"run_id {simulation_run_id} has no persisted season rollover artifact"
+            )
+        matches = [
+            row
+            for row in rollovers
+            if (from_season is None or row.from_season == from_season)
+            and (to_season is None or row.to_season == to_season)
+        ]
+        if not matches:
+            raise ValueError(
+                "rollover locator does not match a persisted season rollover artifact"
+            )
+        if len(matches) > 1:
+            raise ValueError(
+                "season rollover locator is ambiguous; provide from_season and to_season"
+            )
         rollover = matches[0]
-        branch_state = self.get_branch_state(branch_id=branch.branch_id) or self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
-        head_id = branch_state.head_checkpoint_id if branch_state is not None else branch.head_checkpoint_id
-        if head_id is None: raise ValueError(f"branch {branch.branch_id} has no existing head checkpoint; capture initial first")
-        if self.get_branch_checkpoint(checkpoint_id=head_id) is None: raise ValueError(f"branch {branch.branch_id} head checkpoint {head_id} was not found")
-        existing_rollover = self.get_season_rollover_branch_checkpoint(branch_id=branch.branch_id, from_season=rollover.from_season, to_season=rollover.to_season)
+        branch_state = self.get_branch_state(
+            branch_id=branch.branch_id
+        ) or self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+        head_id = (
+            branch_state.head_checkpoint_id
+            if branch_state is not None
+            else branch.head_checkpoint_id
+        )
+        if head_id is None:
+            raise ValueError(
+                f"branch {branch.branch_id} has no existing head checkpoint; capture initial first"
+            )
+        if self.get_branch_checkpoint(checkpoint_id=head_id) is None:
+            raise ValueError(
+                f"branch {branch.branch_id} head checkpoint {head_id} was not found"
+            )
+        existing_rollover = self.get_season_rollover_branch_checkpoint(
+            branch_id=branch.branch_id,
+            from_season=rollover.from_season,
+            to_season=rollover.to_season,
+        )
         if existing_rollover is not None:
             # Keep both mutable head locators aligned with the durable branch head.
             self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
             return existing_rollover
-        transitions = [row.__dict__ | {"transition": row.transition.model_dump(mode="json")} for row in self.list_player_transitions(run_id=simulation_run_id, to_season=rollover.to_season)]
-        next_players = [row.__dict__ | {"state": row.state.model_dump(mode="json")} for row in self.list_next_season_players(run_id=simulation_run_id, to_season=rollover.to_season)]
+        transitions = [
+            row.__dict__ | {"transition": row.transition.model_dump(mode="json")}
+            for row in self.list_player_transitions(
+                run_id=simulation_run_id, to_season=rollover.to_season
+            )
+        ]
+        next_players = [
+            row.__dict__ | {"state": row.state.model_dump(mode="json")}
+            for row in self.list_next_season_players(
+                run_id=simulation_run_id, to_season=rollover.to_season
+            )
+        ]
         rollover_record = rollover.__dict__
-        artifacts = {"player_transition_rows": transitions, "player_transition_rows_hash": self.checkpoint_content_hash({"rows": transitions}), "next_season_player_rows": next_players, "next_season_player_rows_hash": self.checkpoint_content_hash({"rows": next_players}), "rollover_summary": rollover_record}
+        artifacts = {
+            "player_transition_rows": transitions,
+            "player_transition_rows_hash": self.checkpoint_content_hash(
+                {"rows": transitions}
+            ),
+            "next_season_player_rows": next_players,
+            "next_season_player_rows_hash": self.checkpoint_content_hash(
+                {"rows": next_players}
+            ),
+            "rollover_summary": rollover_record,
+        }
         artifacts["rollover_artifacts_hash"] = self.checkpoint_content_hash(artifacts)
-        actions = [action.__dict__ for action in self.list_admin_actions(run_id=simulation_run_id)]
-        seed_namespace = {"hierarchy": ["global", "season", "entries", "draws", "tournament_progression"], "global_seed": legacy.seed, "branch_seed": branch.branch_seed}
-        payload: dict[str, object] = {"fork_capability": "not_forkable_player_state_not_migrated", "capture_mode": "legacy_season_rollover_capture_only", "payload_schema_version": "branch_checkpoint_payload_v1", "run_id": branch.run_id, "branch_id": branch.branch_id, "legacy_simulation_run_id": simulation_run_id, "parent_checkpoint_id": head_id, "rollover": {"locator": {"from_season": rollover.from_season, "to_season": rollover.to_season}, "from_season": rollover.from_season, "to_season": rollover.to_season, "source_run_id": rollover.run_id, "target_run_id": None, "target_run_id_source": "not_available_in_legacy_rollover_artifact", "record": rollover_record, "source": "legacy_season_rollover"}, "simulation_run": legacy.__dict__, "season_state": state.model_dump(mode="json"), "rollover_artifacts": artifacts, "publications": {"latest_ranking_snapshot_references": [x.__dict__ for x in self.list_ranking_snapshot_records(run_id=simulation_run_id)][-1:], "latest_race_snapshot_references": [x.__dict__ for x in self.list_race_snapshot_records(run_id=simulation_run_id)][-1:]}, "admin": {"actions": actions, "admin_actions_hash": self.checkpoint_content_hash({"actions": actions})}, "provenance": {"world_id": legacy.world_id, "world_fingerprint": legacy.world_generation_fingerprint, "config_version": legacy.config_version, "config_fingerprint": legacy.config_fingerprint, "global_seed": legacy.seed, "branch_seed": branch.branch_seed, "seed_namespace": seed_namespace}, "limitations": {"forkable": False, "replayable": False, "player_state": "hash_only_or_not_migrated", "prospects": "legacy_run_scoped_not_captured_as_durable_identity", "simulation_source": "legacy_simulation_run_state", "rollover_replay": "not_supported_yet", "bootstrap_state": "not_captured_by_season_rollover_checkpoint"}}
-        logical = self.checkpoint_content_hash({key: value for key, value in payload.items() if key != "parent_checkpoint_id"})
-        command_id = command_id or f"legacy-season-rollover-capture:{simulation_run_id}:{rollover.from_season}:{rollover.to_season}:{artifacts['rollover_artifacts_hash'][:24]}:{logical[:16]}"
-        existing = self.get_branch_checkpoint_by_command_id(branch_id=branch.branch_id, command_id=command_id)
+        actions = [
+            action.__dict__
+            for action in self.list_admin_actions(run_id=simulation_run_id)
+        ]
+        seed_namespace = {
+            "hierarchy": [
+                "global",
+                "season",
+                "entries",
+                "draws",
+                "tournament_progression",
+            ],
+            "global_seed": legacy.seed,
+            "branch_seed": branch.branch_seed,
+        }
+        payload: dict[str, object] = {
+            "fork_capability": "not_forkable_player_state_not_migrated",
+            "capture_mode": "legacy_season_rollover_capture_only",
+            "payload_schema_version": "branch_checkpoint_payload_v1",
+            "run_id": branch.run_id,
+            "branch_id": branch.branch_id,
+            "legacy_simulation_run_id": simulation_run_id,
+            "parent_checkpoint_id": head_id,
+            "rollover": {
+                "locator": {
+                    "from_season": rollover.from_season,
+                    "to_season": rollover.to_season,
+                },
+                "from_season": rollover.from_season,
+                "to_season": rollover.to_season,
+                "source_run_id": rollover.run_id,
+                "target_run_id": None,
+                "target_run_id_source": "not_available_in_legacy_rollover_artifact",
+                "record": rollover_record,
+                "source": "legacy_season_rollover",
+            },
+            "simulation_run": legacy.__dict__,
+            "season_state": state.model_dump(mode="json"),
+            "rollover_artifacts": artifacts,
+            "publications": {
+                "latest_ranking_snapshot_references": [
+                    x.__dict__
+                    for x in self.list_ranking_snapshot_records(
+                        run_id=simulation_run_id
+                    )
+                ][-1:],
+                "latest_race_snapshot_references": [
+                    x.__dict__
+                    for x in self.list_race_snapshot_records(run_id=simulation_run_id)
+                ][-1:],
+            },
+            "admin": {
+                "actions": actions,
+                "admin_actions_hash": self.checkpoint_content_hash(
+                    {"actions": actions}
+                ),
+            },
+            "provenance": {
+                "world_id": legacy.world_id,
+                "world_fingerprint": legacy.world_generation_fingerprint,
+                "config_version": legacy.config_version,
+                "config_fingerprint": legacy.config_fingerprint,
+                "global_seed": legacy.seed,
+                "branch_seed": branch.branch_seed,
+                "seed_namespace": seed_namespace,
+            },
+            "limitations": {
+                "forkable": False,
+                "replayable": False,
+                "player_state": "hash_only_or_not_migrated",
+                "prospects": "legacy_run_scoped_not_captured_as_durable_identity",
+                "simulation_source": "legacy_simulation_run_state",
+                "rollover_replay": "not_supported_yet",
+                "bootstrap_state": "not_captured_by_season_rollover_checkpoint",
+            },
+        }
+        logical = self.checkpoint_content_hash(
+            {
+                key: value
+                for key, value in payload.items()
+                if key != "parent_checkpoint_id"
+            }
+        )
+        command_id = (
+            command_id
+            or f"legacy-season-rollover-capture:{simulation_run_id}:{rollover.from_season}:{rollover.to_season}:{artifacts['rollover_artifacts_hash'][:24]}:{logical[:16]}"
+        )
+        existing = self.get_branch_checkpoint_by_command_id(
+            branch_id=branch.branch_id, command_id=command_id
+        )
         if existing is not None:
             self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
             return existing
-        suffix = hashlib.sha256(f"{branch.branch_id}\x00{command_id}".encode()).hexdigest()[:24]
-        incomplete = BranchCheckpointRecord(checkpoint_id=f"checkpoint-{suffix}", run_id=branch.run_id, branch_id=branch.branch_id, parent_checkpoint_id=head_id, sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id), kind=BRANCH_CHECKPOINT_KIND_SEASON_ROLLOVER, season=rollover.from_season, week=61, event_id=None, event_sequence=None, command_id=command_id, command_kind=BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_SEASON_ROLLOVER_LEGACY_STATE, command_boundary="after_season_rollover_persisted", config_version=legacy.config_version, config_fingerprint=legacy.config_fingerprint, world_id=legacy.world_id, world_fingerprint=legacy.world_generation_fingerprint, global_seed=legacy.seed, branch_seed=branch.branch_seed, seed_namespace=seed_namespace, payload_schema_version="branch_checkpoint_payload_v1", content_hash_algorithm="sha256", content_hash="", payload=payload)
-        checkpoint = BranchCheckpointRecord(**{**incomplete.__dict__, "content_hash": self.checkpoint_envelope_content_hash(incomplete)})
+        suffix = hashlib.sha256(
+            f"{branch.branch_id}\x00{command_id}".encode()
+        ).hexdigest()[:24]
+        incomplete = BranchCheckpointRecord(
+            checkpoint_id=f"checkpoint-{suffix}",
+            run_id=branch.run_id,
+            branch_id=branch.branch_id,
+            parent_checkpoint_id=head_id,
+            sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id),
+            kind=BRANCH_CHECKPOINT_KIND_SEASON_ROLLOVER,
+            season=rollover.from_season,
+            week=61,
+            event_id=None,
+            event_sequence=None,
+            command_id=command_id,
+            command_kind=BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_SEASON_ROLLOVER_LEGACY_STATE,
+            command_boundary="after_season_rollover_persisted",
+            config_version=legacy.config_version,
+            config_fingerprint=legacy.config_fingerprint,
+            world_id=legacy.world_id,
+            world_fingerprint=legacy.world_generation_fingerprint,
+            global_seed=legacy.seed,
+            branch_seed=branch.branch_seed,
+            seed_namespace=seed_namespace,
+            payload_schema_version="branch_checkpoint_payload_v1",
+            content_hash_algorithm="sha256",
+            content_hash="",
+            payload=payload,
+        )
+        checkpoint = BranchCheckpointRecord(
+            **{
+                **incomplete.__dict__,
+                "content_hash": self.checkpoint_envelope_content_hash(incomplete),
+            }
+        )
         created = self.create_branch_checkpoint(checkpoint)
         with self._session_factory.begin() as session:
             model = session.get(RunBranchModel, branch.branch_id)
-            if model is not None: model.head_checkpoint_id = created.checkpoint_id
+            if model is not None:
+                model.head_checkpoint_id = created.checkpoint_id
         self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
         return created
 
-    def get_bootstrap_start_branch_checkpoint(self, *, branch_id: str, simulation_run_id: str,
-                                               source_run_id: str | None, from_season: int | None,
-                                               to_season: int | None) -> BranchCheckpointRecord | None:
+    def get_bootstrap_start_branch_checkpoint(
+        self,
+        *,
+        branch_id: str,
+        simulation_run_id: str,
+        source_run_id: str | None,
+        from_season: int | None,
+        to_season: int | None,
+    ) -> BranchCheckpointRecord | None:
         """Find the single capture-only bootstrap boundary for its persisted locator."""
         for checkpoint in self.list_branch_checkpoints(branch_id=branch_id):
             bootstrap = checkpoint.payload.get("bootstrap", {})
-            if checkpoint.kind == BRANCH_CHECKPOINT_KIND_BOOTSTRAP_START and isinstance(bootstrap, dict) and (
-                bootstrap.get("simulation_run_id") == simulation_run_id
-                and bootstrap.get("source_run_id") == source_run_id
-                and bootstrap.get("from_season") == from_season
-                and bootstrap.get("to_season") == to_season
+            if (
+                checkpoint.kind == BRANCH_CHECKPOINT_KIND_BOOTSTRAP_START
+                and isinstance(bootstrap, dict)
+                and (
+                    bootstrap.get("simulation_run_id") == simulation_run_id
+                    and bootstrap.get("source_run_id") == source_run_id
+                    and bootstrap.get("from_season") == from_season
+                    and bootstrap.get("to_season") == to_season
+                )
             ):
                 return checkpoint
         return None
 
     def capture_bootstrap_start_checkpoint_for_legacy_simulation_run(
-        self, *, simulation_run_id: str, source_run_id: str | None = None,
-        from_season: int | None = None, to_season: int | None = None,
+        self,
+        *,
+        simulation_run_id: str,
+        source_run_id: str | None = None,
+        from_season: int | None = None,
+        to_season: int | None = None,
         command_id: str | None = None,
     ) -> BranchCheckpointRecord:
         """Capture an already persisted rollover-bootstrap target state, without replaying it."""
@@ -4629,77 +7731,251 @@ class SimulationPersistenceRepository:
         if legacy.source_type != "rollover_bootstrap" or not (
             legacy.parent_run_id or legacy.source_rollover_run_id
         ):
-            raise ValueError(f"run_id {simulation_run_id} has no stable bootstrap/rollover provenance")
+            raise ValueError(
+                f"run_id {simulation_run_id} has no stable bootstrap/rollover provenance"
+            )
         persisted_source = legacy.source_rollover_run_id or legacy.parent_run_id
-        if source_run_id is not None and source_run_id not in {legacy.parent_run_id, legacy.source_rollover_run_id}:
-            raise ValueError("source_run_id does not match persisted bootstrap provenance")
-        if from_season is not None and from_season != legacy.source_rollover_from_season:
-            raise ValueError("from_season does not match persisted bootstrap provenance")
+        if source_run_id is not None and source_run_id not in {
+            legacy.parent_run_id,
+            legacy.source_rollover_run_id,
+        }:
+            raise ValueError(
+                "source_run_id does not match persisted bootstrap provenance"
+            )
+        if (
+            from_season is not None
+            and from_season != legacy.source_rollover_from_season
+        ):
+            raise ValueError(
+                "from_season does not match persisted bootstrap provenance"
+            )
         if to_season is not None and to_season != legacy.source_rollover_to_season:
             raise ValueError("to_season does not match persisted bootstrap provenance")
-        if legacy.source_rollover_from_season is None or legacy.source_rollover_to_season is None:
-            raise ValueError(f"run_id {simulation_run_id} has incomplete stable bootstrap/rollover provenance")
-        branch = self.ensure_default_branch_for_simulation_run(simulation_run_id=simulation_run_id)
+        if (
+            legacy.source_rollover_from_season is None
+            or legacy.source_rollover_to_season is None
+        ):
+            raise ValueError(
+                f"run_id {simulation_run_id} has incomplete stable bootstrap/rollover provenance"
+            )
+        branch = self.ensure_default_branch_for_simulation_run(
+            simulation_run_id=simulation_run_id
+        )
         if branch is None:
-            raise KeyError(f"default branch for run_id {simulation_run_id} was not found")
+            raise KeyError(
+                f"default branch for run_id {simulation_run_id} was not found"
+            )
         state = self.load_season_state(run_id=simulation_run_id)
         if state is None:
             raise ValueError(f"run_id {simulation_run_id} has no season state")
-        branch_state = self.get_branch_state(branch_id=branch.branch_id) or self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
-        head_id = branch_state.head_checkpoint_id if branch_state is not None else branch.head_checkpoint_id
+        branch_state = self.get_branch_state(
+            branch_id=branch.branch_id
+        ) or self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+        head_id = (
+            branch_state.head_checkpoint_id
+            if branch_state is not None
+            else branch.head_checkpoint_id
+        )
         if head_id is None:
-            raise ValueError(f"branch {branch.branch_id} has no existing head checkpoint; capture initial first")
+            raise ValueError(
+                f"branch {branch.branch_id} has no existing head checkpoint; capture initial first"
+            )
         if self.get_branch_checkpoint(checkpoint_id=head_id) is None:
-            raise ValueError(f"branch {branch.branch_id} head checkpoint {head_id} was not found")
+            raise ValueError(
+                f"branch {branch.branch_id} head checkpoint {head_id} was not found"
+            )
         # Normalize omitted locators to durable target provenance for one-per-bootstrap identity.
         locator_source = source_run_id or persisted_source
-        locator_from = from_season if from_season is not None else legacy.source_rollover_from_season
-        locator_to = to_season if to_season is not None else legacy.source_rollover_to_season
+        locator_from = (
+            from_season
+            if from_season is not None
+            else legacy.source_rollover_from_season
+        )
+        locator_to = (
+            to_season if to_season is not None else legacy.source_rollover_to_season
+        )
         existing_bootstrap = self.get_bootstrap_start_branch_checkpoint(
-            branch_id=branch.branch_id, simulation_run_id=simulation_run_id, source_run_id=locator_source,
-            from_season=locator_from, to_season=locator_to,
+            branch_id=branch.branch_id,
+            simulation_run_id=simulation_run_id,
+            source_run_id=locator_source,
+            from_season=locator_from,
+            to_season=locator_to,
         )
         if existing_bootstrap is not None:
             self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
             return existing_bootstrap
-        transitions = [row.__dict__ | {"transition": row.transition.model_dump(mode="json")} for row in self.list_player_transitions(run_id=persisted_source, to_season=locator_to)]
-        next_players = [row.__dict__ | {"state": row.state.model_dump(mode="json")} for row in self.list_next_season_players(run_id=persisted_source, to_season=locator_to)]
-        source_rollovers = [row.__dict__ for row in self.list_season_rollovers(run_id=persisted_source) if row.from_season == locator_from and row.to_season == locator_to]
+        transitions = [
+            row.__dict__ | {"transition": row.transition.model_dump(mode="json")}
+            for row in self.list_player_transitions(
+                run_id=persisted_source, to_season=locator_to
+            )
+        ]
+        next_players = [
+            row.__dict__ | {"state": row.state.model_dump(mode="json")}
+            for row in self.list_next_season_players(
+                run_id=persisted_source, to_season=locator_to
+            )
+        ]
+        source_rollovers = [
+            row.__dict__
+            for row in self.list_season_rollovers(run_id=persisted_source)
+            if row.from_season == locator_from and row.to_season == locator_to
+        ]
         initial_player_refs = [{"player_id": row["player_id"]} for row in next_players]
         artifacts: dict[str, object] = {
             "target_initial_player_state_refs": initial_player_refs,
             "source_rollover_references": source_rollovers,
             "source_transition_rows": transitions,
             "source_next_season_player_rows": next_players,
-            "target_initial_player_state_refs_hash": self.checkpoint_content_hash({"rows": initial_player_refs}),
-            "source_rollover_references_hash": self.checkpoint_content_hash({"rows": source_rollovers}),
-            "source_transition_rows_hash": self.checkpoint_content_hash({"rows": transitions}),
-            "source_next_season_player_rows_hash": self.checkpoint_content_hash({"rows": next_players}),
+            "target_initial_player_state_refs_hash": self.checkpoint_content_hash(
+                {"rows": initial_player_refs}
+            ),
+            "source_rollover_references_hash": self.checkpoint_content_hash(
+                {"rows": source_rollovers}
+            ),
+            "source_transition_rows_hash": self.checkpoint_content_hash(
+                {"rows": transitions}
+            ),
+            "source_next_season_player_rows_hash": self.checkpoint_content_hash(
+                {"rows": next_players}
+            ),
         }
         artifacts["bootstrap_artifacts_hash"] = self.checkpoint_content_hash(artifacts)
-        actions = [action.__dict__ for action in self.list_admin_actions(run_id=simulation_run_id)]
-        seed_namespace = {"hierarchy": ["global", "season", "entries", "draws", "tournament_progression"], "global_seed": legacy.seed, "branch_seed": branch.branch_seed}
+        actions = [
+            action.__dict__
+            for action in self.list_admin_actions(run_id=simulation_run_id)
+        ]
+        seed_namespace = {
+            "hierarchy": [
+                "global",
+                "season",
+                "entries",
+                "draws",
+                "tournament_progression",
+            ],
+            "global_seed": legacy.seed,
+            "branch_seed": branch.branch_seed,
+        }
         serialized_state = state.model_dump(mode="json")
         payload: dict[str, object] = {
-            "fork_capability": "not_forkable_player_state_not_migrated", "capture_mode": "legacy_bootstrap_start_capture_only",
-            "payload_schema_version": "branch_checkpoint_payload_v1", "run_id": branch.run_id, "branch_id": branch.branch_id,
-            "legacy_simulation_run_id": simulation_run_id, "parent_checkpoint_id": head_id,
-            "bootstrap": {"locator": {"source_run_id": locator_source, "from_season": locator_from, "to_season": locator_to}, "target_run_id": simulation_run_id, "simulation_run_id": simulation_run_id, "source_run_id": persisted_source, "from_season": locator_from, "to_season": locator_to, "source_type": legacy.source_type, "parent_run_id": legacy.parent_run_id, "source_rollover_run_id": legacy.source_rollover_run_id, "source_rollover_from_season": legacy.source_rollover_from_season, "source_rollover_to_season": legacy.source_rollover_to_season, "source": "legacy_bootstrap_start"},
-            "simulation_run": legacy.__dict__, "season_state": serialized_state, "bootstrap_artifacts": artifacts,
-            "publications": {"latest_ranking_snapshot_references": [x.__dict__ for x in self.list_ranking_snapshot_records(run_id=simulation_run_id)][-1:], "latest_race_snapshot_references": [x.__dict__ for x in self.list_race_snapshot_records(run_id=simulation_run_id)][-1:]},
-            "admin": {"actions": actions, "admin_actions_hash": self.checkpoint_content_hash({"actions": actions})},
-            "provenance": {"world_id": legacy.world_id, "world_fingerprint": legacy.world_generation_fingerprint, "config_version": legacy.config_version, "config_fingerprint": legacy.config_fingerprint, "global_seed": legacy.seed, "branch_seed": branch.branch_seed, "seed_namespace": seed_namespace},
-            "limitations": {"forkable": False, "replayable": False, "player_state": "hash_only_or_not_migrated", "prospects": "legacy_run_scoped_not_captured_as_durable_identity", "simulation_source": "legacy_simulation_run_state", "bootstrap_replay": "not_supported_yet", "cross_run_parent_link": "not_supported_in_r3j", "branch_timeline_stitching": "not_supported_yet"},
+            "fork_capability": "not_forkable_player_state_not_migrated",
+            "capture_mode": "legacy_bootstrap_start_capture_only",
+            "payload_schema_version": "branch_checkpoint_payload_v1",
+            "run_id": branch.run_id,
+            "branch_id": branch.branch_id,
+            "legacy_simulation_run_id": simulation_run_id,
+            "parent_checkpoint_id": head_id,
+            "bootstrap": {
+                "locator": {
+                    "source_run_id": locator_source,
+                    "from_season": locator_from,
+                    "to_season": locator_to,
+                },
+                "target_run_id": simulation_run_id,
+                "simulation_run_id": simulation_run_id,
+                "source_run_id": persisted_source,
+                "from_season": locator_from,
+                "to_season": locator_to,
+                "source_type": legacy.source_type,
+                "parent_run_id": legacy.parent_run_id,
+                "source_rollover_run_id": legacy.source_rollover_run_id,
+                "source_rollover_from_season": legacy.source_rollover_from_season,
+                "source_rollover_to_season": legacy.source_rollover_to_season,
+                "source": "legacy_bootstrap_start",
+            },
+            "simulation_run": legacy.__dict__,
+            "season_state": serialized_state,
+            "bootstrap_artifacts": artifacts,
+            "publications": {
+                "latest_ranking_snapshot_references": [
+                    x.__dict__
+                    for x in self.list_ranking_snapshot_records(
+                        run_id=simulation_run_id
+                    )
+                ][-1:],
+                "latest_race_snapshot_references": [
+                    x.__dict__
+                    for x in self.list_race_snapshot_records(run_id=simulation_run_id)
+                ][-1:],
+            },
+            "admin": {
+                "actions": actions,
+                "admin_actions_hash": self.checkpoint_content_hash(
+                    {"actions": actions}
+                ),
+            },
+            "provenance": {
+                "world_id": legacy.world_id,
+                "world_fingerprint": legacy.world_generation_fingerprint,
+                "config_version": legacy.config_version,
+                "config_fingerprint": legacy.config_fingerprint,
+                "global_seed": legacy.seed,
+                "branch_seed": branch.branch_seed,
+                "seed_namespace": seed_namespace,
+            },
+            "limitations": {
+                "forkable": False,
+                "replayable": False,
+                "player_state": "hash_only_or_not_migrated",
+                "prospects": "legacy_run_scoped_not_captured_as_durable_identity",
+                "simulation_source": "legacy_simulation_run_state",
+                "bootstrap_replay": "not_supported_yet",
+                "cross_run_parent_link": "not_supported_in_r3j",
+                "branch_timeline_stitching": "not_supported_yet",
+            },
         }
-        logical = self.checkpoint_content_hash({key: value for key, value in payload.items() if key != "parent_checkpoint_id"})
-        command_id = command_id or f"legacy-bootstrap-start-capture:{simulation_run_id}:{locator_source}:{locator_from}:{locator_to}:{artifacts['bootstrap_artifacts_hash'][:24]}:{logical[:16]}"
-        existing = self.get_branch_checkpoint_by_command_id(branch_id=branch.branch_id, command_id=command_id)
+        logical = self.checkpoint_content_hash(
+            {
+                key: value
+                for key, value in payload.items()
+                if key != "parent_checkpoint_id"
+            }
+        )
+        command_id = (
+            command_id
+            or f"legacy-bootstrap-start-capture:{simulation_run_id}:{locator_source}:{locator_from}:{locator_to}:{artifacts['bootstrap_artifacts_hash'][:24]}:{logical[:16]}"
+        )
+        existing = self.get_branch_checkpoint_by_command_id(
+            branch_id=branch.branch_id, command_id=command_id
+        )
         if existing is not None:
             self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
             return existing
-        suffix = hashlib.sha256(f"{branch.branch_id}\x00{command_id}".encode()).hexdigest()[:24]
-        incomplete = BranchCheckpointRecord(checkpoint_id=f"checkpoint-{suffix}", run_id=branch.run_id, branch_id=branch.branch_id, parent_checkpoint_id=head_id, sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id), kind=BRANCH_CHECKPOINT_KIND_BOOTSTRAP_START, season=legacy.season, week=1 if state.next_event_index == 0 else None, event_id=None, event_sequence=None, command_id=command_id, command_kind=BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_BOOTSTRAP_START_LEGACY_STATE, command_boundary="after_bootstrap_start_persisted", config_version=legacy.config_version, config_fingerprint=legacy.config_fingerprint, world_id=legacy.world_id, world_fingerprint=legacy.world_generation_fingerprint, global_seed=legacy.seed, branch_seed=branch.branch_seed, seed_namespace=seed_namespace, payload_schema_version="branch_checkpoint_payload_v1", content_hash_algorithm="sha256", content_hash="", payload=payload)
-        checkpoint = BranchCheckpointRecord(**{**incomplete.__dict__, "content_hash": self.checkpoint_envelope_content_hash(incomplete)})
+        suffix = hashlib.sha256(
+            f"{branch.branch_id}\x00{command_id}".encode()
+        ).hexdigest()[:24]
+        incomplete = BranchCheckpointRecord(
+            checkpoint_id=f"checkpoint-{suffix}",
+            run_id=branch.run_id,
+            branch_id=branch.branch_id,
+            parent_checkpoint_id=head_id,
+            sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id),
+            kind=BRANCH_CHECKPOINT_KIND_BOOTSTRAP_START,
+            season=legacy.season,
+            week=1 if state.next_event_index == 0 else None,
+            event_id=None,
+            event_sequence=None,
+            command_id=command_id,
+            command_kind=BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_BOOTSTRAP_START_LEGACY_STATE,
+            command_boundary="after_bootstrap_start_persisted",
+            config_version=legacy.config_version,
+            config_fingerprint=legacy.config_fingerprint,
+            world_id=legacy.world_id,
+            world_fingerprint=legacy.world_generation_fingerprint,
+            global_seed=legacy.seed,
+            branch_seed=branch.branch_seed,
+            seed_namespace=seed_namespace,
+            payload_schema_version="branch_checkpoint_payload_v1",
+            content_hash_algorithm="sha256",
+            content_hash="",
+            payload=payload,
+        )
+        checkpoint = BranchCheckpointRecord(
+            **{
+                **incomplete.__dict__,
+                "content_hash": self.checkpoint_envelope_content_hash(incomplete),
+            }
+        )
         created = self.create_branch_checkpoint(checkpoint)
         with self._session_factory.begin() as session:
             model = session.get(RunBranchModel, branch.branch_id)
@@ -4709,8 +7985,12 @@ class SimulationPersistenceRepository:
         return created
 
     def capture_admin_action_checkpoint_for_legacy_simulation_run(
-        self, *, simulation_run_id: str, action_id: str | None = None,
-        action_sequence: int | None = None, command_id: str | None = None,
+        self,
+        *,
+        simulation_run_id: str,
+        action_id: str | None = None,
+        action_sequence: int | None = None,
+        command_id: str | None = None,
     ) -> BranchCheckpointRecord:
         """Capture a persisted legacy admin action without replaying or applying it.
 
@@ -4720,7 +8000,9 @@ class SimulationPersistenceRepository:
         sequence, then immutable database row order.
         """
         if action_id is not None:
-            raise ValueError("legacy admin actions do not have stable action_id; use action_sequence")
+            raise ValueError(
+                "legacy admin actions do not have stable action_id; use action_sequence"
+            )
         if action_sequence is None:
             raise ValueError("an action_id or action_sequence is required")
         if action_sequence < 1:
@@ -4728,63 +8010,175 @@ class SimulationPersistenceRepository:
         legacy = self.get_simulation_run(run_id=simulation_run_id)
         if legacy is None:
             raise KeyError(f"run_id {simulation_run_id} was not found")
-        branch = self.ensure_default_branch_for_simulation_run(simulation_run_id=simulation_run_id)
+        branch = self.ensure_default_branch_for_simulation_run(
+            simulation_run_id=simulation_run_id
+        )
         if branch is None:
-            raise KeyError(f"default branch for run_id {simulation_run_id} was not found")
+            raise KeyError(
+                f"default branch for run_id {simulation_run_id} was not found"
+            )
         state = self.load_season_state(run_id=simulation_run_id)
         if state is None:
             raise ValueError(f"run_id {simulation_run_id} has no season state")
-        branch_state = self.get_branch_state(branch_id=branch.branch_id) or self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
-        effective_head_id = branch_state.head_checkpoint_id if branch_state is not None else branch.head_checkpoint_id
+        branch_state = self.get_branch_state(
+            branch_id=branch.branch_id
+        ) or self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
+        effective_head_id = (
+            branch_state.head_checkpoint_id
+            if branch_state is not None
+            else branch.head_checkpoint_id
+        )
         if effective_head_id is None:
-            raise ValueError(f"branch {branch.branch_id} has no existing head checkpoint; capture initial first")
+            raise ValueError(
+                f"branch {branch.branch_id} has no existing head checkpoint; capture initial first"
+            )
         if self.get_branch_checkpoint(checkpoint_id=effective_head_id) is None:
-            raise ValueError(f"branch {branch.branch_id} head checkpoint {effective_head_id} was not found")
-        actions = [action.__dict__ for action in self.list_admin_actions(run_id=simulation_run_id)]
+            raise ValueError(
+                f"branch {branch.branch_id} head checkpoint {effective_head_id} was not found"
+            )
+        actions = [
+            action.__dict__
+            for action in self.list_admin_actions(run_id=simulation_run_id)
+        ]
         if action_sequence > len(actions):
-            raise ValueError(f"legacy admin action sequence {action_sequence} was not found for run_id {simulation_run_id}")
+            raise ValueError(
+                f"legacy admin action sequence {action_sequence} was not found for run_id {simulation_run_id}"
+            )
         target = actions[action_sequence - 1]
-        existing_action = self.get_admin_action_applied_branch_checkpoint(branch_id=branch.branch_id, action_sequence=action_sequence)
+        existing_action = self.get_admin_action_applied_branch_checkpoint(
+            branch_id=branch.branch_id, action_sequence=action_sequence
+        )
         if existing_action is not None:
             self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
             return existing_action
         target_hash = self.checkpoint_content_hash(target)
-        active_event = state.active_tournament.event if state.active_tournament is not None else None
-        event = next((item for item in state.ordered_events if item.event_id == target["event_id"]), None)
-        event_sequence = state.ordered_events.index(event) if event is not None else None
-        week = event.week if event is not None else (active_event.week if active_event is not None else None)
+        active_event = (
+            state.active_tournament.event
+            if state.active_tournament is not None
+            else None
+        )
+        event = next(
+            (
+                item
+                for item in state.ordered_events
+                if item.event_id == target["event_id"]
+            ),
+            None,
+        )
+        event_sequence = (
+            state.ordered_events.index(event) if event is not None else None
+        )
+        week = (
+            event.week
+            if event is not None
+            else (active_event.week if active_event is not None else None)
+        )
         serialized_state = state.model_dump(mode="json")
-        seed_namespace = {"hierarchy": ["global", "season", "entries", "draws", "tournament_progression"], "global_seed": legacy.seed, "branch_seed": branch.branch_seed}
+        seed_namespace = {
+            "hierarchy": [
+                "global",
+                "season",
+                "entries",
+                "draws",
+                "tournament_progression",
+            ],
+            "global_seed": legacy.seed,
+            "branch_seed": branch.branch_seed,
+        }
         payload: dict[str, object] = {
-            "fork_capability": "not_forkable_player_state_not_migrated", "capture_mode": "legacy_admin_action_applied_capture_only",
-            "payload_schema_version": "branch_checkpoint_payload_v1", "run_id": branch.run_id, "branch_id": branch.branch_id,
-            "legacy_simulation_run_id": simulation_run_id, "parent_checkpoint_id": effective_head_id,
-            "admin_action": {"locator": "legacy_admin_action_sequence", "action_id": None, "action_sequence": action_sequence, "record": target, "source": "legacy_admin_action"},
+            "fork_capability": "not_forkable_player_state_not_migrated",
+            "capture_mode": "legacy_admin_action_applied_capture_only",
+            "payload_schema_version": "branch_checkpoint_payload_v1",
+            "run_id": branch.run_id,
+            "branch_id": branch.branch_id,
+            "legacy_simulation_run_id": simulation_run_id,
+            "parent_checkpoint_id": effective_head_id,
+            "admin_action": {
+                "locator": "legacy_admin_action_sequence",
+                "action_id": None,
+                "action_sequence": action_sequence,
+                "record": target,
+                "source": "legacy_admin_action",
+            },
             "simulation_run": legacy.__dict__,
             "season_state": serialized_state,
-            "admin": {"actions": actions, "admin_actions_hash": self.checkpoint_content_hash({"actions": actions}), "target_admin_action_hash": target_hash},
-            "provenance": {"world_id": legacy.world_id, "world_fingerprint": legacy.world_generation_fingerprint, "config_version": legacy.config_version,
-                "config_fingerprint": legacy.config_fingerprint, "global_seed": legacy.seed, "branch_seed": branch.branch_seed, "seed_namespace": seed_namespace},
-            "limitations": {"forkable": False, "replayable": False, "player_state": "hash_only_or_not_migrated",
-                "prospects": "legacy_run_scoped_not_captured_as_durable_identity", "simulation_source": "legacy_simulation_run_state", "admin_action_replay": "not_supported_yet"},
+            "admin": {
+                "actions": actions,
+                "admin_actions_hash": self.checkpoint_content_hash(
+                    {"actions": actions}
+                ),
+                "target_admin_action_hash": target_hash,
+            },
+            "provenance": {
+                "world_id": legacy.world_id,
+                "world_fingerprint": legacy.world_generation_fingerprint,
+                "config_version": legacy.config_version,
+                "config_fingerprint": legacy.config_fingerprint,
+                "global_seed": legacy.seed,
+                "branch_seed": branch.branch_seed,
+                "seed_namespace": seed_namespace,
+            },
+            "limitations": {
+                "forkable": False,
+                "replayable": False,
+                "player_state": "hash_only_or_not_migrated",
+                "prospects": "legacy_run_scoped_not_captured_as_durable_identity",
+                "simulation_source": "legacy_simulation_run_state",
+                "admin_action_replay": "not_supported_yet",
+            },
         }
-        state_fingerprint = self.checkpoint_content_hash({key: value for key, value in payload.items() if key != "parent_checkpoint_id"})
-        command_id = command_id or f"legacy-admin-action-capture:{simulation_run_id}:{action_sequence}:{target_hash[:24]}:{state_fingerprint[:24]}"
-        existing = self.get_branch_checkpoint_by_command_id(branch_id=branch.branch_id, command_id=command_id)
+        state_fingerprint = self.checkpoint_content_hash(
+            {
+                key: value
+                for key, value in payload.items()
+                if key != "parent_checkpoint_id"
+            }
+        )
+        command_id = (
+            command_id
+            or f"legacy-admin-action-capture:{simulation_run_id}:{action_sequence}:{target_hash[:24]}:{state_fingerprint[:24]}"
+        )
+        existing = self.get_branch_checkpoint_by_command_id(
+            branch_id=branch.branch_id, command_id=command_id
+        )
         if existing is not None:
             self.ensure_branch_state_for_branch(branch_id=branch.branch_id)
             return existing
-        suffix = hashlib.sha256(f"{branch.branch_id}\x00{command_id}".encode("utf-8")).hexdigest()[:24]
+        suffix = hashlib.sha256(
+            f"{branch.branch_id}\x00{command_id}".encode("utf-8")
+        ).hexdigest()[:24]
         incomplete = BranchCheckpointRecord(
-            checkpoint_id=f"checkpoint-{suffix}", run_id=branch.run_id, branch_id=branch.branch_id, parent_checkpoint_id=effective_head_id,
-            sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id), kind=BRANCH_CHECKPOINT_KIND_ADMIN_ACTION_APPLIED,
-            season=state.season, week=week, event_id=target["event_id"], event_sequence=event_sequence, command_id=command_id,
-            command_kind=BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_ADMIN_ACTION_LEGACY_STATE, command_boundary="after_admin_action_persisted",
-            config_version=legacy.config_version, config_fingerprint=legacy.config_fingerprint, world_id=legacy.world_id,
-            world_fingerprint=legacy.world_generation_fingerprint, global_seed=legacy.seed, branch_seed=branch.branch_seed,
-            seed_namespace=seed_namespace, payload_schema_version="branch_checkpoint_payload_v1", content_hash_algorithm="sha256", content_hash="", payload=payload,
+            checkpoint_id=f"checkpoint-{suffix}",
+            run_id=branch.run_id,
+            branch_id=branch.branch_id,
+            parent_checkpoint_id=effective_head_id,
+            sequence=self.next_checkpoint_sequence(branch_id=branch.branch_id),
+            kind=BRANCH_CHECKPOINT_KIND_ADMIN_ACTION_APPLIED,
+            season=state.season,
+            week=week,
+            event_id=target["event_id"],
+            event_sequence=event_sequence,
+            command_id=command_id,
+            command_kind=BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_ADMIN_ACTION_LEGACY_STATE,
+            command_boundary="after_admin_action_persisted",
+            config_version=legacy.config_version,
+            config_fingerprint=legacy.config_fingerprint,
+            world_id=legacy.world_id,
+            world_fingerprint=legacy.world_generation_fingerprint,
+            global_seed=legacy.seed,
+            branch_seed=branch.branch_seed,
+            seed_namespace=seed_namespace,
+            payload_schema_version="branch_checkpoint_payload_v1",
+            content_hash_algorithm="sha256",
+            content_hash="",
+            payload=payload,
         )
-        checkpoint = BranchCheckpointRecord(**{**incomplete.__dict__, "content_hash": self.checkpoint_envelope_content_hash(incomplete)})
+        checkpoint = BranchCheckpointRecord(
+            **{
+                **incomplete.__dict__,
+                "content_hash": self.checkpoint_envelope_content_hash(incomplete),
+            }
+        )
         created = self.create_branch_checkpoint(checkpoint)
         with self._session_factory.begin() as session:
             model = session.get(RunBranchModel, branch.branch_id)
@@ -4796,11 +8190,25 @@ class SimulationPersistenceRepository:
     def save_season_state(self, *, run_id: str, state: SeasonState) -> None:
         with self._session_factory.begin() as session:
             model = session.get(SeasonStateModel, run_id)
-            ordered_events_json = _to_json([event.model_dump() for event in state.ordered_events])
+            ordered_events_json = _to_json(
+                [event.model_dump() for event in state.ordered_events]
+            )
             completed_event_ids_json = _to_json(state.completed_event_ids)
-            ranking_snapshot_json = _to_json(state.ranking_snapshot.model_dump()) if state.ranking_snapshot else None
-            race_snapshot_json = _to_json(state.race_snapshot.model_dump()) if state.race_snapshot else None
-            active_tournament_json = _to_json(state.active_tournament.model_dump()) if state.active_tournament else None
+            ranking_snapshot_json = (
+                _to_json(state.ranking_snapshot.model_dump())
+                if state.ranking_snapshot
+                else None
+            )
+            race_snapshot_json = (
+                _to_json(state.race_snapshot.model_dump())
+                if state.race_snapshot
+                else None
+            )
+            active_tournament_json = (
+                _to_json(state.active_tournament.model_dump())
+                if state.active_tournament
+                else None
+            )
             if model is None:
                 session.add(
                     SeasonStateModel(
@@ -4823,58 +8231,143 @@ class SimulationPersistenceRepository:
                 model.race_snapshot_json = race_snapshot_json
                 model.active_tournament_json = active_tournament_json
 
-            self._upsert_completed_inputs(session=session, run_id=run_id, completed_inputs=state.completed_tournament_inputs)
-            self._upsert_completed_events(session=session, run_id=run_id, completed_event_ids=state.completed_event_ids)
+            self._upsert_completed_inputs(
+                session=session,
+                run_id=run_id,
+                completed_inputs=state.completed_tournament_inputs,
+            )
+            self._upsert_completed_events(
+                session=session,
+                run_id=run_id,
+                completed_event_ids=state.completed_event_ids,
+            )
 
     def _persist_completed_tournament_artifacts_in_session(
-        self, *, session: Session, run_id: str, event_sequence: int, tournament: object,
+        self,
+        *,
+        session: Session,
+        run_id: str,
+        event_sequence: int,
+        tournament: object,
     ) -> None:
         """Persist one completed tournament and its tournament-bound snapshots."""
-        if tournament.ranking_snapshot is None or tournament.race_snapshot is None or tournament.completed_tournament_input is None:
-            raise ValueError("completed tournament persistence requires ranking/race snapshots and completed input")
-        metadata = session.execute(select(CompletedEventMetadataModel).where(
-            CompletedEventMetadataModel.run_id == run_id,
-            CompletedEventMetadataModel.event_id == tournament.event.event_id,
-        )).scalar_one_or_none()
+        if (
+            tournament.ranking_snapshot is None
+            or tournament.race_snapshot is None
+            or tournament.completed_tournament_input is None
+        ):
+            raise ValueError(
+                "completed tournament persistence requires ranking/race snapshots and completed input"
+            )
+        metadata = session.execute(
+            select(CompletedEventMetadataModel).where(
+                CompletedEventMetadataModel.run_id == run_id,
+                CompletedEventMetadataModel.event_id == tournament.event.event_id,
+            )
+        ).scalar_one_or_none()
         payload = _to_json(tournament.tournament_result.model_dump())
         if metadata is None:
-            session.add(CompletedEventMetadataModel(
-                run_id=run_id, event_id=tournament.event.event_id, season=tournament.event.season,
-                week=tournament.event.week, template_id=tournament.event.template_id,
-                tournament_result_json=payload,
-            ))
+            session.add(
+                CompletedEventMetadataModel(
+                    run_id=run_id,
+                    event_id=tournament.event.event_id,
+                    season=tournament.event.season,
+                    week=tournament.event.week,
+                    template_id=tournament.event.template_id,
+                    tournament_result_json=payload,
+                )
+            )
         else:
-            metadata.season, metadata.week, metadata.template_id = tournament.event.season, tournament.event.week, tournament.event.template_id
+            metadata.season, metadata.week, metadata.template_id = (
+                tournament.event.season,
+                tournament.event.week,
+                tournament.event.template_id,
+            )
             metadata.tournament_result_json = payload
-        self._upsert_completed_events(session=session, run_id=run_id, completed_event_ids=[tournament.event.event_id], start_sequence=event_sequence)
-        self._upsert_completed_inputs(session=session, run_id=run_id, completed_inputs=[tournament.completed_tournament_input], start_sequence=event_sequence)
-        self._upsert_ranking_snapshot(session=session, run_id=run_id, snapshot_sequence=event_sequence * 10 + 1, snapshot_kind="tournament", source_event_id=tournament.event.event_id, snapshot=tournament.ranking_snapshot)
-        self._upsert_race_snapshot(session=session, run_id=run_id, snapshot_sequence=event_sequence * 10 + 1, snapshot_kind="tournament", source_event_id=tournament.event.event_id, snapshot=tournament.race_snapshot)
+        self._upsert_completed_events(
+            session=session,
+            run_id=run_id,
+            completed_event_ids=[tournament.event.event_id],
+            start_sequence=event_sequence,
+        )
+        self._upsert_completed_inputs(
+            session=session,
+            run_id=run_id,
+            completed_inputs=[tournament.completed_tournament_input],
+            start_sequence=event_sequence,
+        )
+        self._upsert_ranking_snapshot(
+            session=session,
+            run_id=run_id,
+            snapshot_sequence=event_sequence * 10 + 1,
+            snapshot_kind="tournament",
+            source_event_id=tournament.event.event_id,
+            snapshot=tournament.ranking_snapshot,
+        )
+        self._upsert_race_snapshot(
+            session=session,
+            run_id=run_id,
+            snapshot_sequence=event_sequence * 10 + 1,
+            snapshot_kind="tournament",
+            source_event_id=tournament.event.event_id,
+            snapshot=tournament.race_snapshot,
+        )
 
-    def _persist_branch_simulation_step_in_session(self, *, session: Session, run_id: str, step: object, reviewed_pre_state: object | None = None) -> None:
+    def _persist_branch_simulation_step_in_session(
+        self,
+        *,
+        session: Session,
+        run_id: str,
+        step: object,
+        reviewed_pre_state: object | None = None,
+    ) -> None:
         """Persist a shared deterministic simulation step without a nested transaction."""
         state = step.season_state
         model = session.get(SeasonStateModel, run_id)
-        values = dict(season=state.season, next_event_index=state.next_event_index,
-            ordered_events_json=_to_json([event.model_dump() for event in state.ordered_events]),
+        values = dict(
+            season=state.season,
+            next_event_index=state.next_event_index,
+            ordered_events_json=_to_json(
+                [event.model_dump() for event in state.ordered_events]
+            ),
             completed_event_ids_json=_to_json(state.completed_event_ids),
-            ranking_snapshot_json=_to_json(state.ranking_snapshot.model_dump()) if state.ranking_snapshot else None,
-            race_snapshot_json=_to_json(state.race_snapshot.model_dump()) if state.race_snapshot else None,
-            active_tournament_json=_to_json(state.active_tournament.model_dump()) if state.active_tournament else None)
-        if model is None: session.add(SeasonStateModel(run_id=run_id, **values))
+            ranking_snapshot_json=_to_json(state.ranking_snapshot.model_dump())
+            if state.ranking_snapshot
+            else None,
+            race_snapshot_json=_to_json(state.race_snapshot.model_dump())
+            if state.race_snapshot
+            else None,
+            active_tournament_json=_to_json(state.active_tournament.model_dump())
+            if state.active_tournament
+            else None,
+        )
+        if model is None:
+            session.add(SeasonStateModel(run_id=run_id, **values))
         else:
-            for key, value in values.items(): setattr(model, key, value)
+            for key, value in values.items():
+                setattr(model, key, value)
         tournament = step.tournament_result
         if tournament is not None and state.active_tournament is None:
             self._persist_completed_tournament_artifacts_in_session(
-                session=session, run_id=run_id, event_sequence=state.next_event_index - 1,
+                session=session,
+                run_id=run_id,
+                event_sequence=state.next_event_index - 1,
                 tournament=tournament,
             )
         weekly = step.weekly_result
-        next_week_sequence = state.next_event_index - len(weekly.tournaments) if weekly is not None else state.next_event_index
-        if step.mode == "simulate_next_week" and reviewed_pre_state is not None and reviewed_pre_state.active_tournament is not None:
+        next_week_sequence = (
+            state.next_event_index - len(weekly.tournaments)
+            if weekly is not None
+            else state.next_event_index
+        )
+        if (
+            step.mode == "simulate_next_week"
+            and reviewed_pre_state is not None
+            and reviewed_pre_state.active_tournament is not None
+        ):
             self._persist_completed_tournament_artifacts_in_session(
-                session=session, run_id=run_id,
+                session=session,
+                run_id=run_id,
                 event_sequence=reviewed_pre_state.next_event_index,
                 tournament=reviewed_pre_state.active_tournament.full_result,
             )
@@ -4884,30 +8377,71 @@ class SimulationPersistenceRepository:
             for offset, completed in enumerate(weekly.tournaments):
                 event_sequence = start_sequence + offset
                 self._persist_completed_tournament_artifacts_in_session(
-                    session=session, run_id=run_id, event_sequence=event_sequence,
+                    session=session,
+                    run_id=run_id,
+                    event_sequence=event_sequence,
                     tournament=completed,
                 )
             source_event_id = weekly.tournaments[-1].event.event_id
-            self._upsert_ranking_snapshot(session=session, run_id=run_id, snapshot_sequence=end_sequence * 10 + 9, snapshot_kind="week", source_event_id=source_event_id, snapshot=weekly.ranking_snapshot)
-            self._upsert_race_snapshot(session=session, run_id=run_id, snapshot_sequence=end_sequence * 10 + 9, snapshot_kind="week", source_event_id=source_event_id, snapshot=weekly.race_snapshot)
-        if step.mode == "simulate_full_season" and reviewed_pre_state is not None and reviewed_pre_state.active_tournament is not None:
+            self._upsert_ranking_snapshot(
+                session=session,
+                run_id=run_id,
+                snapshot_sequence=end_sequence * 10 + 9,
+                snapshot_kind="week",
+                source_event_id=source_event_id,
+                snapshot=weekly.ranking_snapshot,
+            )
+            self._upsert_race_snapshot(
+                session=session,
+                run_id=run_id,
+                snapshot_sequence=end_sequence * 10 + 9,
+                snapshot_kind="week",
+                source_event_id=source_event_id,
+                snapshot=weekly.race_snapshot,
+            )
+        if (
+            step.mode == "simulate_full_season"
+            and reviewed_pre_state is not None
+            and reviewed_pre_state.active_tournament is not None
+        ):
             self._persist_completed_tournament_artifacts_in_session(
-                session=session, run_id=run_id, event_sequence=reviewed_pre_state.next_event_index,
+                session=session,
+                run_id=run_id,
+                event_sequence=reviewed_pre_state.next_event_index,
                 tournament=reviewed_pre_state.active_tournament.full_result,
             )
         if step.season_result is not None:
-            season_events_count = sum(len(group.tournaments) for group in step.season_result.weekly_results)
+            season_events_count = sum(
+                len(group.tournaments) for group in step.season_result.weekly_results
+            )
             event_sequence = len(state.completed_event_ids) - season_events_count - 1
             for group in step.season_result.weekly_results:
                 for completed in group.tournaments:
                     event_sequence += 1
                     self._persist_completed_tournament_artifacts_in_session(
-                        session=session, run_id=run_id, event_sequence=event_sequence, tournament=completed,
+                        session=session,
+                        run_id=run_id,
+                        event_sequence=event_sequence,
+                        tournament=completed,
                     )
                 if group.tournaments:
                     source_event_id = group.tournaments[-1].event.event_id
-                    self._upsert_ranking_snapshot(session=session, run_id=run_id, snapshot_sequence=event_sequence * 10 + 9, snapshot_kind="week", source_event_id=source_event_id, snapshot=group.ranking_snapshot)
-                    self._upsert_race_snapshot(session=session, run_id=run_id, snapshot_sequence=event_sequence * 10 + 9, snapshot_kind="week", source_event_id=source_event_id, snapshot=group.race_snapshot)
+                    self._upsert_ranking_snapshot(
+                        session=session,
+                        run_id=run_id,
+                        snapshot_sequence=event_sequence * 10 + 9,
+                        snapshot_kind="week",
+                        source_event_id=source_event_id,
+                        snapshot=group.ranking_snapshot,
+                    )
+                    self._upsert_race_snapshot(
+                        session=session,
+                        run_id=run_id,
+                        snapshot_sequence=event_sequence * 10 + 9,
+                        snapshot_kind="week",
+                        source_event_id=source_event_id,
+                        snapshot=group.race_snapshot,
+                    )
 
     def save_completed_tournament_result(
         self,
@@ -4917,11 +8451,16 @@ class SimulationPersistenceRepository:
         tournament_result: TournamentSimulationResult,
     ) -> None:
         if tournament_result.completed_tournament_input is None:
-            raise ValueError("tournament_result.completed_tournament_input is required for completed-event persistence")
+            raise ValueError(
+                "tournament_result.completed_tournament_input is required for completed-event persistence"
+            )
         with self._session_factory.begin() as session:
-            statement: Select[tuple[CompletedEventMetadataModel]] = select(CompletedEventMetadataModel).where(
+            statement: Select[tuple[CompletedEventMetadataModel]] = select(
+                CompletedEventMetadataModel
+            ).where(
                 CompletedEventMetadataModel.run_id == run_id,
-                CompletedEventMetadataModel.event_id == tournament_result.event.event_id,
+                CompletedEventMetadataModel.event_id
+                == tournament_result.event.event_id,
             )
             model = session.execute(statement).scalar_one_or_none()
             payload = _to_json(tournament_result.tournament_result.model_dump())
@@ -4989,19 +8528,39 @@ class SimulationPersistenceRepository:
             if model is None:
                 return None
 
-            completed_inputs = self._load_completed_inputs(session=session, run_id=run_id)
-            ranking_snapshot = RankingSnapshot.model_validate(_from_json(model.ranking_snapshot_json)) if model.ranking_snapshot_json else None
-            race_snapshot = RaceSnapshot.model_validate(_from_json(model.race_snapshot_json)) if model.race_snapshot_json else None
-            active_tournament = _from_json(model.active_tournament_json) if model.active_tournament_json else None
+            completed_inputs = self._load_completed_inputs(
+                session=session, run_id=run_id
+            )
+            ranking_snapshot = (
+                RankingSnapshot.model_validate(_from_json(model.ranking_snapshot_json))
+                if model.ranking_snapshot_json
+                else None
+            )
+            race_snapshot = (
+                RaceSnapshot.model_validate(_from_json(model.race_snapshot_json))
+                if model.race_snapshot_json
+                else None
+            )
+            active_tournament = (
+                _from_json(model.active_tournament_json)
+                if model.active_tournament_json
+                else None
+            )
             return SeasonState.model_validate(
                 {
                     "season": model.season,
                     "ordered_events": _from_json(model.ordered_events_json),
                     "next_event_index": model.next_event_index,
                     "completed_event_ids": _from_json(model.completed_event_ids_json),
-                    "completed_tournament_inputs": [payload.model_dump() for payload in completed_inputs],
-                    "ranking_snapshot": ranking_snapshot.model_dump() if ranking_snapshot else None,
-                    "race_snapshot": race_snapshot.model_dump() if race_snapshot else None,
+                    "completed_tournament_inputs": [
+                        payload.model_dump() for payload in completed_inputs
+                    ],
+                    "ranking_snapshot": ranking_snapshot.model_dump()
+                    if ranking_snapshot
+                    else None,
+                    "race_snapshot": race_snapshot.model_dump()
+                    if race_snapshot
+                    else None,
                     "active_tournament": active_tournament,
                 }
             )
@@ -5043,7 +8602,9 @@ class SimulationPersistenceRepository:
 
     def list_simulation_runs(self) -> list[SimulationRunInfo]:
         with self._session_factory() as session:
-            statement = select(SimulationRunModel).order_by(SimulationRunModel.run_id.asc())
+            statement = select(SimulationRunModel).order_by(
+                SimulationRunModel.run_id.asc()
+            )
             return [
                 SimulationRunInfo(
                     run_id=model.run_id,
@@ -5065,11 +8626,17 @@ class SimulationPersistenceRepository:
     def list_child_run_counts(self) -> dict[str, int]:
         with self._session_factory() as session:
             statement = (
-                select(SimulationRunModel.parent_run_id, func.count(SimulationRunModel.run_id))
+                select(
+                    SimulationRunModel.parent_run_id,
+                    func.count(SimulationRunModel.run_id),
+                )
                 .where(SimulationRunModel.parent_run_id.is_not(None))
                 .group_by(SimulationRunModel.parent_run_id)
             )
-            return {str(parent_run_id): int(count) for parent_run_id, count in session.execute(statement).all()}
+            return {
+                str(parent_run_id): int(count)
+                for parent_run_id, count in session.execute(statement).all()
+            }
 
     def list_child_runs(self, *, parent_run_id: str) -> list[RunLineageRecord]:
         with self._session_factory() as session:
@@ -5092,7 +8659,9 @@ class SimulationPersistenceRepository:
 
     def save_run_talent_plan(self, record: PersistedRunTalentPlanRecord) -> None:
         with self._session_factory.begin() as session:
-            statement: Select[tuple[RunTalentPlanModel]] = select(RunTalentPlanModel).where(
+            statement: Select[tuple[RunTalentPlanModel]] = select(
+                RunTalentPlanModel
+            ).where(
                 RunTalentPlanModel.run_id == record.run_id,
                 RunTalentPlanModel.season == record.season,
             )
@@ -5116,7 +8685,9 @@ class SimulationPersistenceRepository:
             model.config_version = record.config_version
             model.config_fingerprint = record.config_fingerprint
 
-    def get_run_talent_plan(self, *, run_id: str) -> PersistedRunTalentPlanRecord | None:
+    def get_run_talent_plan(
+        self, *, run_id: str
+    ) -> PersistedRunTalentPlanRecord | None:
         with self._session_factory() as session:
             statement: Select[tuple[RunTalentPlanModel]] = (
                 select(RunTalentPlanModel)
@@ -5163,7 +8734,9 @@ class SimulationPersistenceRepository:
                     )
                 )
 
-    def list_run_talent_country_allocations(self, *, run_id: str) -> list[PersistedRunTalentCountryAllocationRecord]:
+    def list_run_talent_country_allocations(
+        self, *, run_id: str
+    ) -> list[PersistedRunTalentCountryAllocationRecord]:
         with self._session_factory() as session:
             statement: Select[tuple[RunTalentCountryAllocationModel]] = (
                 select(RunTalentCountryAllocationModel)
@@ -5187,11 +8760,12 @@ class SimulationPersistenceRepository:
                 for model in session.execute(statement).scalars().all()
             ]
 
-
     def upsert_run_prospects(self, records: list[RunProspectRecord]) -> None:
         with self._session_factory.begin() as session:
             for record in records:
-                statement: Select[tuple[RunProspectModel]] = select(RunProspectModel).where(
+                statement: Select[tuple[RunProspectModel]] = select(
+                    RunProspectModel
+                ).where(
                     RunProspectModel.run_id == record.run_id,
                     RunProspectModel.prospect_id == record.prospect_id,
                 )
@@ -5227,12 +8801,20 @@ class SimulationPersistenceRepository:
                     trait_json=_to_json(record.trait_json),
                 )
                 if model is None:
-                    session.add(RunProspectModel(prospect_id=record.prospect_id, run_id=record.run_id, **payload))
+                    session.add(
+                        RunProspectModel(
+                            prospect_id=record.prospect_id,
+                            run_id=record.run_id,
+                            **payload,
+                        )
+                    )
                 else:
                     for key, value in payload.items():
                         setattr(model, key, value)
 
-    def delete_run_prospects_by_ids(self, *, run_id: str, prospect_ids: list[str]) -> None:
+    def delete_run_prospects_by_ids(
+        self, *, run_id: str, prospect_ids: list[str]
+    ) -> None:
         """Delete only the explicitly identified prospects for a run."""
         if not prospect_ids:
             return
@@ -5254,52 +8836,109 @@ class SimulationPersistenceRepository:
         offset: int = 0,
     ) -> list[RunProspectRecord]:
         with self._session_factory() as session:
-            statement: Select[tuple[RunProspectModel]] = select(RunProspectModel).where(RunProspectModel.run_id == run_id)
+            statement: Select[tuple[RunProspectModel]] = select(RunProspectModel).where(
+                RunProspectModel.run_id == run_id
+            )
             if country_code is not None:
-                statement = statement.where(RunProspectModel.country_code == country_code.upper())
+                statement = statement.where(
+                    RunProspectModel.country_code == country_code.upper()
+                )
             if status is not None:
                 statement = statement.where(RunProspectModel.status == status)
             if season_start_year is not None:
-                statement = statement.where(RunProspectModel.season_start_year == season_start_year)
+                statement = statement.where(
+                    RunProspectModel.season_start_year == season_start_year
+                )
             if season_week is not None:
                 statement = statement.where(RunProspectModel.season_week == season_week)
-            statement = statement.order_by(RunProspectModel.season_start_year.asc(), RunProspectModel.season_week.asc(), RunProspectModel.country_code.asc(), RunProspectModel.prospect_id.asc())
+            statement = statement.order_by(
+                RunProspectModel.season_start_year.asc(),
+                RunProspectModel.season_week.asc(),
+                RunProspectModel.country_code.asc(),
+                RunProspectModel.prospect_id.asc(),
+            )
             if offset > 0:
                 statement = statement.offset(offset)
             if limit is not None:
                 statement = statement.limit(limit)
-            return [self._to_run_prospect_record(model) for model in session.execute(statement).scalars().all()]
+            return [
+                self._to_run_prospect_record(model)
+                for model in session.execute(statement).scalars().all()
+            ]
 
-    def count_run_prospects(self, *, run_id: str, country_code: str | None = None, status: str | None = None, season_start_year: int | None = None, season_week: int | None = None) -> int:
+    def count_run_prospects(
+        self,
+        *,
+        run_id: str,
+        country_code: str | None = None,
+        status: str | None = None,
+        season_start_year: int | None = None,
+        season_week: int | None = None,
+    ) -> int:
         with self._session_factory() as session:
-            statement = select(func.count()).select_from(RunProspectModel).where(RunProspectModel.run_id == run_id)
+            statement = (
+                select(func.count())
+                .select_from(RunProspectModel)
+                .where(RunProspectModel.run_id == run_id)
+            )
             if country_code is not None:
-                statement = statement.where(RunProspectModel.country_code == country_code.upper())
+                statement = statement.where(
+                    RunProspectModel.country_code == country_code.upper()
+                )
             if status is not None:
                 statement = statement.where(RunProspectModel.status == status)
             if season_start_year is not None:
-                statement = statement.where(RunProspectModel.season_start_year == season_start_year)
+                statement = statement.where(
+                    RunProspectModel.season_start_year == season_start_year
+                )
             if season_week is not None:
                 statement = statement.where(RunProspectModel.season_week == season_week)
             return int(session.execute(statement).scalar_one())
 
-    def get_run_prospect(self, *, run_id: str, prospect_id: str) -> RunProspectRecord | None:
+    def get_run_prospect(
+        self, *, run_id: str, prospect_id: str
+    ) -> RunProspectRecord | None:
         with self._session_factory() as session:
-            statement = select(RunProspectModel).where(RunProspectModel.run_id == run_id, RunProspectModel.prospect_id == prospect_id)
+            statement = select(RunProspectModel).where(
+                RunProspectModel.run_id == run_id,
+                RunProspectModel.prospect_id == prospect_id,
+            )
             model = session.execute(statement).scalar_one_or_none()
             return None if model is None else self._to_run_prospect_record(model)
 
     @staticmethod
     def _to_run_prospect_record(model: RunProspectModel) -> RunProspectRecord:
         return RunProspectRecord(
-            prospect_id=model.prospect_id, run_id=model.run_id, world_id=model.world_id, season_start_year=model.season_start_year,
-            season_label=model.season_label, season_week=model.season_week, calendar_year=model.calendar_year, year_week=model.year_week,
-            birth_year=model.birth_year, birth_year_week=model.birth_year_week, age=model.age, country_code=model.country_code,
-            country_name=model.country_name, status=model.status, source_type=model.source_type, cohort_policy_version=model.cohort_policy_version,
-            profile_version=model.profile_version, first_name=model.first_name, last_name=model.last_name, display_name=model.display_name,
-            short_name=model.short_name, identity_seed=model.identity_seed, profile_seed=model.profile_seed, development_seed=model.development_seed,
-            potential_seed=model.potential_seed, trait_seed=model.trait_seed, profile_json=_from_json(model.profile_json or "{}"),
-            development_json=_from_json(model.development_json or "{}"), potential_json=_from_json(model.potential_json or "{}"), trait_json=_from_json(model.trait_json or "{}"),
+            prospect_id=model.prospect_id,
+            run_id=model.run_id,
+            world_id=model.world_id,
+            season_start_year=model.season_start_year,
+            season_label=model.season_label,
+            season_week=model.season_week,
+            calendar_year=model.calendar_year,
+            year_week=model.year_week,
+            birth_year=model.birth_year,
+            birth_year_week=model.birth_year_week,
+            age=model.age,
+            country_code=model.country_code,
+            country_name=model.country_name,
+            status=model.status,
+            source_type=model.source_type,
+            cohort_policy_version=model.cohort_policy_version,
+            profile_version=model.profile_version,
+            first_name=model.first_name,
+            last_name=model.last_name,
+            display_name=model.display_name,
+            short_name=model.short_name,
+            identity_seed=model.identity_seed,
+            profile_seed=model.profile_seed,
+            development_seed=model.development_seed,
+            potential_seed=model.potential_seed,
+            trait_seed=model.trait_seed,
+            profile_json=_from_json(model.profile_json or "{}"),
+            development_json=_from_json(model.development_json or "{}"),
+            potential_json=_from_json(model.potential_json or "{}"),
+            trait_json=_from_json(model.trait_json or "{}"),
         )
 
     def replace_generated_player_provenance(
@@ -5322,7 +8961,11 @@ class SimulationPersistenceRepository:
                         player_id=record.player_id,
                         country_code=record.country_code,
                         talent_sequence=record.talent_sequence,
-                        talent_seed_value=(str(record.talent_seed_value) if record.talent_seed_value is not None else None),
+                        talent_seed_value=(
+                            str(record.talent_seed_value)
+                            if record.talent_seed_value is not None
+                            else None
+                        ),
                         quality_band=record.quality_band,
                         is_top_band=1 if record.is_top_band else 0,
                         source_type=record.source_type,
@@ -5344,13 +8987,18 @@ class SimulationPersistenceRepository:
         offset: int = 0,
     ) -> list[PersistedGeneratedPlayerProvenanceRecord]:
         with self._session_factory() as session:
-            statement: Select[tuple[RunGeneratedPlayerProvenanceModel]] = select(RunGeneratedPlayerProvenanceModel).where(
-                RunGeneratedPlayerProvenanceModel.run_id == run_id
-            )
+            statement: Select[tuple[RunGeneratedPlayerProvenanceModel]] = select(
+                RunGeneratedPlayerProvenanceModel
+            ).where(RunGeneratedPlayerProvenanceModel.run_id == run_id)
             if country_code is not None:
-                statement = statement.where(RunGeneratedPlayerProvenanceModel.country_code == country_code.upper())
+                statement = statement.where(
+                    RunGeneratedPlayerProvenanceModel.country_code
+                    == country_code.upper()
+                )
             if quality_band is not None:
-                statement = statement.where(RunGeneratedPlayerProvenanceModel.quality_band == quality_band)
+                statement = statement.where(
+                    RunGeneratedPlayerProvenanceModel.quality_band == quality_band
+                )
             statement = statement.order_by(
                 RunGeneratedPlayerProvenanceModel.season.asc(),
                 RunGeneratedPlayerProvenanceModel.country_code.asc(),
@@ -5371,7 +9019,11 @@ class SimulationPersistenceRepository:
                     player_id=model.player_id,
                     country_code=model.country_code,
                     talent_sequence=model.talent_sequence,
-                    talent_seed_value=(int(model.talent_seed_value) if model.talent_seed_value is not None else None),
+                    talent_seed_value=(
+                        int(model.talent_seed_value)
+                        if model.talent_seed_value is not None
+                        else None
+                    ),
                     quality_band=model.quality_band,
                     is_top_band=model.is_top_band > 0,
                     source_type=model.source_type or "planner_generated",
@@ -5409,7 +9061,11 @@ class SimulationPersistenceRepository:
                 player_id=model.player_id,
                 country_code=model.country_code,
                 talent_sequence=model.talent_sequence,
-                talent_seed_value=(int(model.talent_seed_value) if model.talent_seed_value is not None else None),
+                talent_seed_value=(
+                    int(model.talent_seed_value)
+                    if model.talent_seed_value is not None
+                    else None
+                ),
                 quality_band=model.quality_band,
                 is_top_band=model.is_top_band > 0,
                 source_type=model.source_type or "planner_generated",
@@ -5430,19 +9086,27 @@ class SimulationPersistenceRepository:
         world_id: str | None = None,
     ) -> list[PersistedGeneratedPlayerProvenanceRecord]:
         with self._session_factory() as session:
-            statement: Select[tuple[RunGeneratedPlayerProvenanceModel]] = select(RunGeneratedPlayerProvenanceModel).where(
-                RunGeneratedPlayerProvenanceModel.season < season_lt
-            )
+            statement: Select[tuple[RunGeneratedPlayerProvenanceModel]] = select(
+                RunGeneratedPlayerProvenanceModel
+            ).where(RunGeneratedPlayerProvenanceModel.season < season_lt)
             if season_gte is not None:
-                statement = statement.where(RunGeneratedPlayerProvenanceModel.season >= season_gte)
+                statement = statement.where(
+                    RunGeneratedPlayerProvenanceModel.season >= season_gte
+                )
             if country_code is not None:
-                statement = statement.where(RunGeneratedPlayerProvenanceModel.country_code == country_code.upper())
+                statement = statement.where(
+                    RunGeneratedPlayerProvenanceModel.country_code
+                    == country_code.upper()
+                )
             if source_type is not None:
-                statement = statement.where(RunGeneratedPlayerProvenanceModel.source_type == source_type)
+                statement = statement.where(
+                    RunGeneratedPlayerProvenanceModel.source_type == source_type
+                )
             if world_id is not None:
                 statement = statement.join(
                     SimulationRunModel,
-                    SimulationRunModel.run_id == RunGeneratedPlayerProvenanceModel.run_id,
+                    SimulationRunModel.run_id
+                    == RunGeneratedPlayerProvenanceModel.run_id,
                 ).where(SimulationRunModel.world_id == world_id)
             statement = statement.order_by(
                 RunGeneratedPlayerProvenanceModel.season.desc(),
@@ -5460,7 +9124,11 @@ class SimulationPersistenceRepository:
                     player_id=model.player_id,
                     country_code=model.country_code,
                     talent_sequence=model.talent_sequence,
-                    talent_seed_value=(int(model.talent_seed_value) if model.talent_seed_value is not None else None),
+                    talent_seed_value=(
+                        int(model.talent_seed_value)
+                        if model.talent_seed_value is not None
+                        else None
+                    ),
                     quality_band=model.quality_band,
                     is_top_band=model.is_top_band > 0,
                     source_type=model.source_type or "planner_generated",
@@ -5516,7 +9184,9 @@ class SimulationPersistenceRepository:
         action_kind: str | None = None,
     ) -> list[PersistedAdminActionRecord]:
         with self._session_factory() as session:
-            statement = select(AdminActionModel).where(AdminActionModel.run_id == run_id)
+            statement = select(AdminActionModel).where(
+                AdminActionModel.run_id == run_id
+            )
             if event_id is not None:
                 statement = statement.where(AdminActionModel.event_id == event_id)
             if action_kind is not None:
@@ -5537,7 +9207,9 @@ class SimulationPersistenceRepository:
                 for row in session.execute(statement).scalars().all()
             ]
 
-    def get_wildcard_assignments_for_event(self, *, run_id: str, event_id: str) -> dict[int, str]:
+    def get_wildcard_assignments_for_event(
+        self, *, run_id: str, event_id: str
+    ) -> dict[int, str]:
         assignments: dict[int, str] = {}
         for action in self.list_admin_actions(
             run_id=run_id,
@@ -5552,12 +9224,16 @@ class SimulationPersistenceRepository:
                     continue
                 raw_slot_index = raw_assignment.get("slot_index")
                 raw_player_id = raw_assignment.get("player_id")
-                if not isinstance(raw_slot_index, int) or not isinstance(raw_player_id, str):
+                if not isinstance(raw_slot_index, int) or not isinstance(
+                    raw_player_id, str
+                ):
                     continue
                 assignments[raw_slot_index] = raw_player_id
         return assignments
 
-    def get_wildcard_assignments_for_run(self, *, run_id: str) -> dict[str, dict[int, str]]:
+    def get_wildcard_assignments_for_run(
+        self, *, run_id: str
+    ) -> dict[str, dict[int, str]]:
         event_ids = {
             action.event_id
             for action in self.list_admin_actions(
@@ -5566,11 +9242,15 @@ class SimulationPersistenceRepository:
             )
         }
         return {
-            event_id: self.get_wildcard_assignments_for_event(run_id=run_id, event_id=event_id)
+            event_id: self.get_wildcard_assignments_for_event(
+                run_id=run_id, event_id=event_id
+            )
             for event_id in sorted(event_ids)
         }
 
-    def get_pre_draw_withdrawal_replacements_for_event(self, *, run_id: str, event_id: str) -> list[dict[str, object]]:
+    def get_pre_draw_withdrawal_replacements_for_event(
+        self, *, run_id: str, event_id: str
+    ) -> list[dict[str, object]]:
         return [
             dict(action.payload)
             for action in self.list_admin_actions(
@@ -5580,15 +9260,23 @@ class SimulationPersistenceRepository:
             )
         ]
 
-    def get_pre_draw_withdrawal_replacements_for_run(self, *, run_id: str) -> dict[str, list[dict[str, object]]]:
-        actions = self.list_admin_actions(run_id=run_id, action_kind="pre_draw_withdrawal_replacement")
+    def get_pre_draw_withdrawal_replacements_for_run(
+        self, *, run_id: str
+    ) -> dict[str, list[dict[str, object]]]:
+        actions = self.list_admin_actions(
+            run_id=run_id, action_kind="pre_draw_withdrawal_replacement"
+        )
         event_ids = sorted({action.event_id for action in actions})
         return {
-            event_id: self.get_pre_draw_withdrawal_replacements_for_event(run_id=run_id, event_id=event_id)
+            event_id: self.get_pre_draw_withdrawal_replacements_for_event(
+                run_id=run_id, event_id=event_id
+            )
             for event_id in event_ids
         }
 
-    def get_late_replacements_for_event(self, *, run_id: str, event_id: str) -> list[dict[str, object]]:
+    def get_late_replacements_for_event(
+        self, *, run_id: str, event_id: str
+    ) -> list[dict[str, object]]:
         return [
             dict(action.payload)
             for action in self.list_admin_actions(
@@ -5598,11 +9286,17 @@ class SimulationPersistenceRepository:
             )
         ]
 
-    def get_late_replacements_for_run(self, *, run_id: str) -> dict[str, list[dict[str, object]]]:
-        actions = self.list_admin_actions(run_id=run_id, action_kind="late_replacement_lucky_loser")
+    def get_late_replacements_for_run(
+        self, *, run_id: str
+    ) -> dict[str, list[dict[str, object]]]:
+        actions = self.list_admin_actions(
+            run_id=run_id, action_kind="late_replacement_lucky_loser"
+        )
         event_ids = sorted({action.event_id for action in actions})
         return {
-            event_id: self.get_late_replacements_for_event(run_id=run_id, event_id=event_id)
+            event_id: self.get_late_replacements_for_event(
+                run_id=run_id, event_id=event_id
+            )
             for event_id in event_ids
         }
 
@@ -5611,16 +9305,24 @@ class SimulationPersistenceRepository:
             statement = (
                 select(CompletedEventModel)
                 .where(CompletedEventModel.run_id == run_id)
-                .order_by(CompletedEventModel.event_sequence.asc(), CompletedEventModel.id.asc())
+                .order_by(
+                    CompletedEventModel.event_sequence.asc(),
+                    CompletedEventModel.id.asc(),
+                )
             )
             return [row.event_id for row in session.execute(statement).scalars().all()]
 
-    def list_completed_events(self, *, run_id: str) -> list[PersistedCompletedEventRecord]:
+    def list_completed_events(
+        self, *, run_id: str
+    ) -> list[PersistedCompletedEventRecord]:
         with self._session_factory() as session:
             statement = (
                 select(CompletedEventModel)
                 .where(CompletedEventModel.run_id == run_id)
-                .order_by(CompletedEventModel.event_sequence.asc(), CompletedEventModel.id.asc())
+                .order_by(
+                    CompletedEventModel.event_sequence.asc(),
+                    CompletedEventModel.id.asc(),
+                )
             )
             events = session.execute(statement).scalars().all()
             records: list[PersistedCompletedEventRecord] = []
@@ -5638,13 +9340,17 @@ class SimulationPersistenceRepository:
                         week=metadata.week if metadata else None,
                         template_id=metadata.template_id if metadata else None,
                         tournament_result=(
-                            _from_json(metadata.tournament_result_json) if metadata and metadata.tournament_result_json else None
+                            _from_json(metadata.tournament_result_json)
+                            if metadata and metadata.tournament_result_json
+                            else None
                         ),
                     )
                 )
             return records
 
-    def get_completed_event(self, *, run_id: str, event_id: str) -> PersistedCompletedEventRecord | None:
+    def get_completed_event(
+        self, *, run_id: str, event_id: str
+    ) -> PersistedCompletedEventRecord | None:
         with self._session_factory() as session:
             event_statement = select(CompletedEventModel).where(
                 CompletedEventModel.run_id == run_id,
@@ -5666,16 +9372,23 @@ class SimulationPersistenceRepository:
                 week=metadata.week if metadata else None,
                 template_id=metadata.template_id if metadata else None,
                 tournament_result=(
-                    _from_json(metadata.tournament_result_json) if metadata and metadata.tournament_result_json else None
+                    _from_json(metadata.tournament_result_json)
+                    if metadata and metadata.tournament_result_json
+                    else None
                 ),
             )
 
-    def list_ranking_snapshot_records(self, *, run_id: str) -> list[PersistedSnapshotRecord]:
+    def list_ranking_snapshot_records(
+        self, *, run_id: str
+    ) -> list[PersistedSnapshotRecord]:
         with self._session_factory() as session:
             statement = (
                 select(RankingSnapshotModel)
                 .where(RankingSnapshotModel.run_id == run_id)
-                .order_by(RankingSnapshotModel.snapshot_sequence.asc(), RankingSnapshotModel.id.asc())
+                .order_by(
+                    RankingSnapshotModel.snapshot_sequence.asc(),
+                    RankingSnapshotModel.id.asc(),
+                )
             )
             return [
                 PersistedSnapshotRecord(
@@ -5688,12 +9401,17 @@ class SimulationPersistenceRepository:
                 for row in session.execute(statement).scalars().all()
             ]
 
-    def list_ranking_snapshots(self, *, run_id: str) -> list[tuple[int, str, str | None, RankingSnapshot]]:
+    def list_ranking_snapshots(
+        self, *, run_id: str
+    ) -> list[tuple[int, str, str | None, RankingSnapshot]]:
         with self._session_factory() as session:
             statement = (
                 select(RankingSnapshotModel)
                 .where(RankingSnapshotModel.run_id == run_id)
-                .order_by(RankingSnapshotModel.snapshot_sequence.asc(), RankingSnapshotModel.id.asc())
+                .order_by(
+                    RankingSnapshotModel.snapshot_sequence.asc(),
+                    RankingSnapshotModel.id.asc(),
+                )
             )
             rows = session.execute(statement).scalars().all()
             return [
@@ -5731,12 +9449,17 @@ class SimulationPersistenceRepository:
                 RankingSnapshot.model_validate(_from_json(row.payload_json)),
             )
 
-    def list_race_snapshot_records(self, *, run_id: str) -> list[PersistedSnapshotRecord]:
+    def list_race_snapshot_records(
+        self, *, run_id: str
+    ) -> list[PersistedSnapshotRecord]:
         with self._session_factory() as session:
             statement = (
                 select(RaceSnapshotModel)
                 .where(RaceSnapshotModel.run_id == run_id)
-                .order_by(RaceSnapshotModel.snapshot_sequence.asc(), RaceSnapshotModel.id.asc())
+                .order_by(
+                    RaceSnapshotModel.snapshot_sequence.asc(),
+                    RaceSnapshotModel.id.asc(),
+                )
             )
             return [
                 PersistedSnapshotRecord(
@@ -5749,12 +9472,17 @@ class SimulationPersistenceRepository:
                 for row in session.execute(statement).scalars().all()
             ]
 
-    def list_race_snapshots(self, *, run_id: str) -> list[tuple[int, str, str | None, RaceSnapshot]]:
+    def list_race_snapshots(
+        self, *, run_id: str
+    ) -> list[tuple[int, str, str | None, RaceSnapshot]]:
         with self._session_factory() as session:
             statement = (
                 select(RaceSnapshotModel)
                 .where(RaceSnapshotModel.run_id == run_id)
-                .order_by(RaceSnapshotModel.snapshot_sequence.asc(), RaceSnapshotModel.id.asc())
+                .order_by(
+                    RaceSnapshotModel.snapshot_sequence.asc(),
+                    RaceSnapshotModel.id.asc(),
+                )
             )
             rows = session.execute(statement).scalars().all()
             return [
@@ -5808,31 +9536,49 @@ class SimulationPersistenceRepository:
         qualification: FinalsQualificationResult,
     ) -> None:
         with self._session_factory.begin() as session:
-            self._upsert_finals_qualification_in_session(session=session, run_id=run_id, season=season, source_as_of_season=source_as_of_season, source_as_of_week=source_as_of_week, qualification=qualification)
-
-    def _upsert_finals_qualification_in_session(self, *, session: Session, run_id: str, season: int, source_as_of_season: int, source_as_of_week: int, qualification: FinalsQualificationResult) -> None:
-            statement = select(FinalsQualificationModel).where(
-                FinalsQualificationModel.run_id == run_id,
-                FinalsQualificationModel.season == season,
+            self._upsert_finals_qualification_in_session(
+                session=session,
+                run_id=run_id,
+                season=season,
+                source_as_of_season=source_as_of_season,
+                source_as_of_week=source_as_of_week,
+                qualification=qualification,
             )
-            model = session.execute(statement).scalar_one_or_none()
-            payload = _to_json(qualification.model_dump())
-            if model is None:
-                session.add(
-                    FinalsQualificationModel(
-                        run_id=run_id,
-                        season=season,
-                        source_as_of_season=source_as_of_season,
-                        source_as_of_week=source_as_of_week,
-                        payload_json=payload,
-                    )
-                )
-            else:
-                model.source_as_of_season = source_as_of_season
-                model.source_as_of_week = source_as_of_week
-                model.payload_json = payload
 
-    def get_finals_qualification(self, *, run_id: str, season: int) -> PersistedFinalsQualificationRecord | None:
+    def _upsert_finals_qualification_in_session(
+        self,
+        *,
+        session: Session,
+        run_id: str,
+        season: int,
+        source_as_of_season: int,
+        source_as_of_week: int,
+        qualification: FinalsQualificationResult,
+    ) -> None:
+        statement = select(FinalsQualificationModel).where(
+            FinalsQualificationModel.run_id == run_id,
+            FinalsQualificationModel.season == season,
+        )
+        model = session.execute(statement).scalar_one_or_none()
+        payload = _to_json(qualification.model_dump())
+        if model is None:
+            session.add(
+                FinalsQualificationModel(
+                    run_id=run_id,
+                    season=season,
+                    source_as_of_season=source_as_of_season,
+                    source_as_of_week=source_as_of_week,
+                    payload_json=payload,
+                )
+            )
+        else:
+            model.source_as_of_season = source_as_of_season
+            model.source_as_of_week = source_as_of_week
+            model.payload_json = payload
+
+    def get_finals_qualification(
+        self, *, run_id: str, season: int
+    ) -> PersistedFinalsQualificationRecord | None:
         with self._session_factory() as session:
             statement = select(FinalsQualificationModel).where(
                 FinalsQualificationModel.run_id == run_id,
@@ -5846,7 +9592,9 @@ class SimulationPersistenceRepository:
                 season=model.season,
                 source_as_of_season=model.source_as_of_season,
                 source_as_of_week=model.source_as_of_week,
-                qualification=FinalsQualificationResult.model_validate(_from_json(model.payload_json)),
+                qualification=FinalsQualificationResult.model_validate(
+                    _from_json(model.payload_json)
+                ),
             )
 
     def upsert_finals_result(
@@ -5860,33 +9608,53 @@ class SimulationPersistenceRepository:
         result: FinalsResult,
     ) -> None:
         with self._session_factory.begin() as session:
-            self._upsert_finals_result_in_session(session=session, run_id=run_id, season=season, event_id=event_id, source_as_of_season=source_as_of_season, source_as_of_week=source_as_of_week, result=result)
-
-    def _upsert_finals_result_in_session(self, *, session: Session, run_id: str, season: int, event_id: str, source_as_of_season: int, source_as_of_week: int, result: FinalsResult) -> None:
-            statement = select(FinalsResultModel).where(
-                FinalsResultModel.run_id == run_id,
-                FinalsResultModel.season == season,
+            self._upsert_finals_result_in_session(
+                session=session,
+                run_id=run_id,
+                season=season,
+                event_id=event_id,
+                source_as_of_season=source_as_of_season,
+                source_as_of_week=source_as_of_week,
+                result=result,
             )
-            model = session.execute(statement).scalar_one_or_none()
-            payload = _to_json(result.model_dump())
-            if model is None:
-                session.add(
-                    FinalsResultModel(
-                        run_id=run_id,
-                        season=season,
-                        event_id=event_id,
-                        source_as_of_season=source_as_of_season,
-                        source_as_of_week=source_as_of_week,
-                        payload_json=payload,
-                    )
-                )
-            else:
-                model.event_id = event_id
-                model.source_as_of_season = source_as_of_season
-                model.source_as_of_week = source_as_of_week
-                model.payload_json = payload
 
-    def get_finals_result(self, *, run_id: str, season: int) -> PersistedFinalsResultRecord | None:
+    def _upsert_finals_result_in_session(
+        self,
+        *,
+        session: Session,
+        run_id: str,
+        season: int,
+        event_id: str,
+        source_as_of_season: int,
+        source_as_of_week: int,
+        result: FinalsResult,
+    ) -> None:
+        statement = select(FinalsResultModel).where(
+            FinalsResultModel.run_id == run_id,
+            FinalsResultModel.season == season,
+        )
+        model = session.execute(statement).scalar_one_or_none()
+        payload = _to_json(result.model_dump())
+        if model is None:
+            session.add(
+                FinalsResultModel(
+                    run_id=run_id,
+                    season=season,
+                    event_id=event_id,
+                    source_as_of_season=source_as_of_season,
+                    source_as_of_week=source_as_of_week,
+                    payload_json=payload,
+                )
+            )
+        else:
+            model.event_id = event_id
+            model.source_as_of_season = source_as_of_season
+            model.source_as_of_week = source_as_of_week
+            model.payload_json = payload
+
+    def get_finals_result(
+        self, *, run_id: str, season: int
+    ) -> PersistedFinalsResultRecord | None:
         with self._session_factory() as session:
             statement = select(FinalsResultModel).where(
                 FinalsResultModel.run_id == run_id,
@@ -5904,12 +9672,17 @@ class SimulationPersistenceRepository:
                 result=FinalsResult.model_validate(_from_json(model.payload_json)),
             )
 
-    def list_finals_qualifications(self, *, run_id: str) -> list[PersistedFinalsQualificationRecord]:
+    def list_finals_qualifications(
+        self, *, run_id: str
+    ) -> list[PersistedFinalsQualificationRecord]:
         with self._session_factory() as session:
             statement = (
                 select(FinalsQualificationModel)
                 .where(FinalsQualificationModel.run_id == run_id)
-                .order_by(FinalsQualificationModel.season.asc(), FinalsQualificationModel.id.asc())
+                .order_by(
+                    FinalsQualificationModel.season.asc(),
+                    FinalsQualificationModel.id.asc(),
+                )
             )
             return [
                 PersistedFinalsQualificationRecord(
@@ -5917,7 +9690,9 @@ class SimulationPersistenceRepository:
                     season=model.season,
                     source_as_of_season=model.source_as_of_season,
                     source_as_of_week=model.source_as_of_week,
-                    qualification=FinalsQualificationResult.model_validate(_from_json(model.payload_json)),
+                    qualification=FinalsQualificationResult.model_validate(
+                        _from_json(model.payload_json)
+                    ),
                 )
                 for model in session.execute(statement).scalars().all()
             ]
@@ -5980,7 +9755,9 @@ class SimulationPersistenceRepository:
                     PlayerSeasonTransitionModel.to_season == to_season,
                     PlayerSeasonTransitionModel.player_id == transition.player_id,
                 )
-                transition_model = session.execute(transition_statement).scalar_one_or_none()
+                transition_model = session.execute(
+                    transition_statement
+                ).scalar_one_or_none()
                 transition_payload = _to_json(transition.model_dump())
                 if transition_model is None:
                     session.add(
@@ -6003,7 +9780,9 @@ class SimulationPersistenceRepository:
                     NextSeasonPlayerModel.to_season == to_season,
                     NextSeasonPlayerModel.player_id == next_player_id,
                 )
-                next_state_model = session.execute(next_state_statement).scalar_one_or_none()
+                next_state_model = session.execute(
+                    next_state_statement
+                ).scalar_one_or_none()
                 next_state_payload = _to_json(next_state.model_dump())
                 if next_state_model is None:
                     session.add(
@@ -6019,7 +9798,9 @@ class SimulationPersistenceRepository:
                     next_state_model.from_season = from_season
                     next_state_model.payload_json = next_state_payload
 
-    def get_season_rollover(self, *, run_id: str, to_season: int) -> PersistedSeasonRolloverRecord | None:
+    def get_season_rollover(
+        self, *, run_id: str, to_season: int
+    ) -> PersistedSeasonRolloverRecord | None:
         with self._session_factory() as session:
             statement = select(SeasonRolloverModel).where(
                 SeasonRolloverModel.run_id == run_id,
@@ -6036,12 +9817,16 @@ class SimulationPersistenceRepository:
                 metadata=_from_json(model.metadata_json),
             )
 
-    def get_latest_season_rollover(self, *, run_id: str) -> PersistedSeasonRolloverRecord | None:
+    def get_latest_season_rollover(
+        self, *, run_id: str
+    ) -> PersistedSeasonRolloverRecord | None:
         with self._session_factory() as session:
             statement = (
                 select(SeasonRolloverModel)
                 .where(SeasonRolloverModel.run_id == run_id)
-                .order_by(SeasonRolloverModel.to_season.desc(), SeasonRolloverModel.id.desc())
+                .order_by(
+                    SeasonRolloverModel.to_season.desc(), SeasonRolloverModel.id.desc()
+                )
                 .limit(1)
             )
             model = session.execute(statement).scalar_one_or_none()
@@ -6055,12 +9840,16 @@ class SimulationPersistenceRepository:
                 metadata=_from_json(model.metadata_json),
             )
 
-    def list_season_rollovers(self, *, run_id: str) -> list[PersistedSeasonRolloverRecord]:
+    def list_season_rollovers(
+        self, *, run_id: str
+    ) -> list[PersistedSeasonRolloverRecord]:
         with self._session_factory() as session:
             statement = (
                 select(SeasonRolloverModel)
                 .where(SeasonRolloverModel.run_id == run_id)
-                .order_by(SeasonRolloverModel.to_season.asc(), SeasonRolloverModel.id.asc())
+                .order_by(
+                    SeasonRolloverModel.to_season.asc(), SeasonRolloverModel.id.asc()
+                )
             )
             return [
                 PersistedSeasonRolloverRecord(
@@ -6073,7 +9862,9 @@ class SimulationPersistenceRepository:
                 for model in session.execute(statement).scalars().all()
             ]
 
-    def list_player_transitions(self, *, run_id: str, to_season: int) -> list[PersistedPlayerTransitionRecord]:
+    def list_player_transitions(
+        self, *, run_id: str, to_season: int
+    ) -> list[PersistedPlayerTransitionRecord]:
         with self._session_factory() as session:
             statement = (
                 select(PlayerSeasonTransitionModel)
@@ -6081,7 +9872,10 @@ class SimulationPersistenceRepository:
                     PlayerSeasonTransitionModel.run_id == run_id,
                     PlayerSeasonTransitionModel.to_season == to_season,
                 )
-                .order_by(PlayerSeasonTransitionModel.player_id.asc(), PlayerSeasonTransitionModel.id.asc())
+                .order_by(
+                    PlayerSeasonTransitionModel.player_id.asc(),
+                    PlayerSeasonTransitionModel.id.asc(),
+                )
             )
             return [
                 PersistedPlayerTransitionRecord(
@@ -6089,12 +9883,16 @@ class SimulationPersistenceRepository:
                     from_season=row.from_season,
                     to_season=row.to_season,
                     player_id=row.player_id,
-                    transition=PlayerSeasonTransition.model_validate(_from_json(row.payload_json)),
+                    transition=PlayerSeasonTransition.model_validate(
+                        _from_json(row.payload_json)
+                    ),
                 )
                 for row in session.execute(statement).scalars().all()
             ]
 
-    def list_next_season_players(self, *, run_id: str, to_season: int) -> list[NextSeasonPlayerRecord]:
+    def list_next_season_players(
+        self, *, run_id: str, to_season: int
+    ) -> list[NextSeasonPlayerRecord]:
         with self._session_factory() as session:
             statement = (
                 select(NextSeasonPlayerModel)
@@ -6102,7 +9900,10 @@ class SimulationPersistenceRepository:
                     NextSeasonPlayerModel.run_id == run_id,
                     NextSeasonPlayerModel.to_season == to_season,
                 )
-                .order_by(NextSeasonPlayerModel.player_id.asc(), NextSeasonPlayerModel.id.asc())
+                .order_by(
+                    NextSeasonPlayerModel.player_id.asc(),
+                    NextSeasonPlayerModel.id.asc(),
+                )
             )
             return [
                 NextSeasonPlayerRecord(
@@ -6110,7 +9911,9 @@ class SimulationPersistenceRepository:
                     from_season=row.from_season,
                     to_season=row.to_season,
                     player_id=row.player_id,
-                    state=NextSeasonPlayerState.model_validate(_from_json(row.payload_json)),
+                    state=NextSeasonPlayerState.model_validate(
+                        _from_json(row.payload_json)
+                    ),
                 )
                 for row in session.execute(statement).scalars().all()
             ]
@@ -6265,11 +10068,19 @@ class SimulationPersistenceRepository:
         model.payload_json = payload
 
     @staticmethod
-    def _load_completed_inputs(*, session: Session, run_id: str) -> list[CompletedTournamentPointsInput]:
+    def _load_completed_inputs(
+        *, session: Session, run_id: str
+    ) -> list[CompletedTournamentPointsInput]:
         statement = (
             select(CompletedTournamentInputModel)
             .where(CompletedTournamentInputModel.run_id == run_id)
-            .order_by(CompletedTournamentInputModel.event_sequence.asc(), CompletedTournamentInputModel.id.asc())
+            .order_by(
+                CompletedTournamentInputModel.event_sequence.asc(),
+                CompletedTournamentInputModel.id.asc(),
+            )
         )
         rows = session.execute(statement).scalars().all()
-        return [CompletedTournamentPointsInput.model_validate(_from_json(row.payload_json)) for row in rows]
+        return [
+            CompletedTournamentPointsInput.model_validate(_from_json(row.payload_json))
+            for row in rows
+        ]

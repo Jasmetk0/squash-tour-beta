@@ -119,6 +119,8 @@ def test_authoritative_week_inputs_are_server_resolved_and_preview_is_read_only(
         root = f'{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/ranking-candidates'
         bootstrap = initial() | {'run_id': run_id, 'branch_id': branch_id}
         assert _request('POST', root + '/prepare/initial', bootstrap)[0] == 201
+        from test_authoritative_week_transition_api import install_owned_lifecycle
+        install_owned_lifecycle(server, run_id, branch_id, bootstrap['players'])
         authority = {
             'run_id': run_id, 'branch_id': branch_id, 'base_revision_id': revision_id,
             'completed_week': {'season_index': 0, 'week': 1},

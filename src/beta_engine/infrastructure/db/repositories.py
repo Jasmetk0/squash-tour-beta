@@ -3217,6 +3217,12 @@ class SimulationPersistenceRepository:
                     ),
                     viewer_branch_id=restored_viewer_branch_id,
                 )
+                # A compatibility restore may have reconstructed lifecycle from an
+                # immutable legacy target. The new restore revision must describe
+                # the actual post-restore state, without rewriting that target.
+                capture_saved_lifecycle(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
                 summary = branch_restore_saved_revision_change_summary(
                     previous_head_revision_id=previous_head_revision_id,
                     target_saved_revision_id=target_saved_revision_id,

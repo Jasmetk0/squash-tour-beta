@@ -5,9 +5,8 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from beta_engine.domain.players import Player
-
 MIN_RUNTIME_PLAYER_AGE = 15
-MAX_RUNTIME_PLAYER_AGE = 46  # legacy season-rollover DTO bound
+MAX_RUNTIME_PLAYER_AGE = 46  # legacy DTO bound, not authoritative lifecycle policy
 
 
 class SeasonHealthInput(BaseModel):
@@ -65,7 +64,5 @@ class SeasonRolloverResult(BaseModel):
     to_season: int = Field(ge=1900)
     transitions: list[PlayerSeasonTransition] = Field(default_factory=list)
     next_players: list[Player] = Field(default_factory=list)
-    next_states_by_player_id: dict[str, NextSeasonPlayerState] = Field(
-        default_factory=dict
-    )
+    next_states_by_player_id: dict[str, NextSeasonPlayerState] = Field(default_factory=dict)
     placeholders: list[str] = Field(default_factory=list)

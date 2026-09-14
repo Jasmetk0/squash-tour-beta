@@ -5,9 +5,8 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from beta_engine.domain.calendar import DEFAULT_WEEKS_PER_CALENDAR_YEAR
-
 MIN_RUNTIME_PLAYER_AGE = 15
-MAX_RUNTIME_PLAYER_AGE = 46  # legacy player DTO bound, not lifecycle policy
+MAX_RUNTIME_PLAYER_AGE = 46  # legacy DTO bound, not authoritative lifecycle policy
 
 
 class HiddenCareerTraits(BaseModel):
@@ -26,9 +25,7 @@ class Player(BaseModel):
     name: str
     age: int = Field(ge=MIN_RUNTIME_PLAYER_AGE, le=MAX_RUNTIME_PLAYER_AGE)
     birth_year: int | None = Field(default=None, ge=1900, le=2100)
-    birth_year_week: int | None = Field(
-        default=None, ge=1, le=DEFAULT_WEEKS_PER_CALENDAR_YEAR
-    )
+    birth_year_week: int | None = Field(default=None, ge=1, le=DEFAULT_WEEKS_PER_CALENDAR_YEAR)
     nationality: str
     technique: int = Field(ge=1, le=99)
     movement: int = Field(ge=1, le=99)

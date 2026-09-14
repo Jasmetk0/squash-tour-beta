@@ -153,6 +153,10 @@ def prepared_transition(server, name, *, retirement_player=False):
 
 def test_real_http_retirement_preview_confirm_and_exact_retry(tmp_path):
     path = tmp_path / "retirement.db"
+    retired_revision = None
+    retired_draft_version = None
+    run_id = branch_id = None
+    predecessor_revision = None
     with ApiServer(database_url=f"sqlite:///{path}") as server:
         run_id, branch_id, command = prepared_transition(
             server, "automatic retirement", retirement_player=True
@@ -201,6 +205,61 @@ def test_real_http_retirement_preview_confirm_and_exact_retry(tmp_path):
                 "SELECT payload_json FROM player_lifecycle_week_states WHERE week_ordinal=1"
             ).fetchone()[0]
         assert json.loads(payload_retry) == payload
+        ranking = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/ranking-candidates"
+        review = _request("GET", ranking + "/save/preview")[1]
+        status, saved = _request(
+            "POST",
+            ranking + "/save",
+            {
+                "expected_draft_version": review["draft_version"],
+                "expected_ranking_fingerprint": review["ranking_fingerprint"],
+            },
+        )
+        assert status == 201
+        retired_revision = saved["saved_revision"]["revision_id"]
+        retired_draft_version = saved["working_draft"]["draft_version"]
+        predecessor_revision = command["base_revision_id"]
+
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        with sqlite3.connect(path) as connection:
+            reopened = json.loads(
+                connection.execute(
+                    "SELECT payload_json FROM player_lifecycle_week_states WHERE week_ordinal=1"
+                ).fetchone()[0]
+            )
+        assert reopened == payload
+        restore_root = f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}/saved-revisions"
+        status, back = _request(
+            "POST",
+            f"{restore_root}/{predecessor_revision}/restore",
+            {
+                "expected_head_saved_revision_id": retired_revision,
+                "expected_draft_version": retired_draft_version,
+                "expected_current_viewer_branch_id": branch_id,
+                "explicit_confirmation": True,
+            },
+        )
+        assert status == 201
+        status, forward = _request(
+            "POST",
+            f"{restore_root}/{retired_revision}/restore",
+            {
+                "expected_head_saved_revision_id": back["saved_revision"][
+                    "revision_id"
+                ],
+                "expected_draft_version": back["working_draft"]["draft_version"],
+                "expected_current_viewer_branch_id": branch_id,
+                "explicit_confirmation": True,
+            },
+        )
+        assert status == 201
+        with sqlite3.connect(path) as connection:
+            restored = json.loads(
+                connection.execute(
+                    "SELECT payload_json FROM player_lifecycle_week_states WHERE week_ordinal=1"
+                ).fetchone()[0]
+            )
+        assert restored == payload
 
 
 @pytest.mark.parametrize(

@@ -262,6 +262,63 @@ def test_real_http_retirement_preview_confirm_and_exact_retry(tmp_path):
         assert restored == payload
 
 
+def test_post_transition_legacy_revision_without_lifecycle_restore_is_atomic(tmp_path):
+    """A legacy target after Week 1 cannot be reconstructed and changes nothing."""
+    from test_initial_world_ranking_integration import (
+        _make_legacy_revision_without_lifecycle,
+    )
+
+    path = tmp_path / "post-transition-legacy.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        run_id, branch_id, command = prepared_transition(
+            server, "legacy post transition"
+        )
+        transition_root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/week-transitions"
+        preview = _request("POST", transition_root + "/preview", command)[1]
+        assert confirm(transition_root, command, preview)[0] == 201
+        ranking_root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/ranking-candidates"
+        review = _request("GET", ranking_root + "/save/preview")[1]
+        status, saved = _request(
+            "POST",
+            ranking_root + "/save",
+            {
+                "expected_draft_version": review["draft_version"],
+                "expected_ranking_fingerprint": review["ranking_fingerprint"],
+            },
+        )
+        assert status == 201
+        post_transition_revision = saved["saved_revision"]["revision_id"]
+        restore_root = f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}/saved-revisions"
+        status, predecessor = _request(
+            "POST",
+            f"{restore_root}/{command['base_revision_id']}/restore",
+            {
+                "expected_head_saved_revision_id": post_transition_revision,
+                "expected_draft_version": saved["working_draft"]["draft_version"],
+                "expected_current_viewer_branch_id": branch_id,
+                "explicit_confirmation": True,
+            },
+        )
+        assert status == 201
+        _make_legacy_revision_without_lifecycle(path, post_transition_revision)
+        before = dump(path)
+        status, rejected = _request(
+            "POST",
+            f"{restore_root}/{post_transition_revision}/restore",
+            {
+                "expected_head_saved_revision_id": predecessor["saved_revision"][
+                    "revision_id"
+                ],
+                "expected_draft_version": predecessor["working_draft"]["draft_version"],
+                "expected_current_viewer_branch_id": branch_id,
+                "explicit_confirmation": True,
+            },
+        )
+        assert status == 409
+        assert "cannot be reconstructed unambiguously" in str(rejected)
+        assert dump(path) == before
+
+
 @pytest.mark.parametrize(
     "failure_point",
     [

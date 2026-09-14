@@ -5,6 +5,8 @@ import json
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
 from beta_engine.application.ranking_week_command import RankingWeekCommand
+from beta_engine.domain.rankings.transition_authority import RankingTransitionAuthority
+from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
 
@@ -109,6 +111,69 @@ class RankingSaveRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     expected_draft_version: int = Field(ge=0)
     expected_ranking_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+@router.post("/transition-authorities", response_model=RankingTransitionAuthority, status_code=201)
+def adopt_transition_authority(run_id: str, branch_id: str, payload: dict,
+                               runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
+    try:
+        authority = RankingTransitionAuthority.model_validate_json(json.dumps(payload))
+        if (authority.run_id, authority.branch_id) != (run_id, branch_id):
+            raise ValueError("Ranking authority request scope mismatch")
+        return runtime.repository.adopt_ranking_transition_authority(authority)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail={"code": "invalid_ranking_authority", "message": str(exc)}) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail={"code": "ranking_authority_conflict", "message": str(exc)}) from exc
+
+
+class AuthoritativeWeekPreparation(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    command_id: str = Field(min_length=1, max_length=128)
+    target_week: RankingWeek
+    tournaments: tuple = ()
+    corrections: tuple = ()
+    zero_versions: tuple = ()
+    audit: dict
+
+
+def _authoritative_prepare(runtime, awards, run_id, branch_id, payload, *, preview, expected=None, expected_request=None):
+    try:
+        request = AuthoritativeWeekPreparation.model_validate_json(json.dumps(payload))
+        authority = runtime.repository.resolve_ranking_transition_authority(
+            run_id=run_id, branch_id=branch_id, target_ordinal=request.target_week.ordinal)
+        command_payload = request.model_dump(mode="json")
+        command_payload.pop("target_week")
+        command_payload["authority_fingerprint"] = authority.fingerprint
+        command_payload["context"] = {
+            "run_id": run_id, "branch_id": branch_id,
+            "completed_week": authority.completed_week.model_dump(mode="json"),
+            "target_week": authority.target_week.model_dump(mode="json"),
+            "policy": authority.policy.model_dump(mode="json"),
+            "players": [p.model_dump(mode="json") for p in authority.players],
+            "discipline": "stored_zeros",
+        }
+        return _prepare(runtime, run_id, branch_id, command_payload, RankingWeekCommand,
+                        preview=preview, expected=expected, expected_request=expected_request, awards=awards)
+    except (ValidationError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail={"code": "ranking_authority_unavailable", "message": str(exc)}) from exc
+
+
+@router.post("/prepare/week/authoritative/preview", response_model=RankingPreparationPreview)
+def preview_authoritative_week(run_id: str, branch_id: str, payload: dict,
+        runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+        awards: Annotated[SeasonPointAwardsService, Depends(get_season_point_awards_service)]):
+    return _authoritative_prepare(runtime, awards, run_id, branch_id, payload, preview=True)
+
+
+@router.post("/prepare/week/authoritative", response_model=RankingCandidateDetail, status_code=201)
+def prepare_authoritative_week(run_id: str, branch_id: str, payload: dict,
+        runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+        awards: Annotated[SeasonPointAwardsService, Depends(get_season_point_awards_service)],
+        expected: Annotated[str | None, Header(alias="X-Ranking-Preview-Fingerprint", pattern=r"^[0-9a-f]{64}$")] = None,
+        expected_request: Annotated[str | None, Header(alias="X-Ranking-Preview-Request", pattern=r"^[0-9a-f]{64}$")] = None):
+    return _authoritative_prepare(runtime, awards, run_id, branch_id, payload, preview=False,
+                                  expected=expected, expected_request=expected_request)
 
 
 @router.get("/save/preview")

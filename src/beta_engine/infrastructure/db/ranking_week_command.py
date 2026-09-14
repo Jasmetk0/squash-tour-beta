@@ -28,6 +28,9 @@ from beta_engine.infrastructure.db.ranking_result_history import (
 from beta_engine.infrastructure.db.owned_tournament_sources import OwnedTournamentRankingSourceStore
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
 from beta_engine.infrastructure.db.models import RunBranchModel, RunContainerModel
+from beta_engine.infrastructure.db.models import BranchWorkingDraftModel
+from beta_engine.infrastructure.db.ranking_transition_authority import RankingTransitionAuthorityStore, authority_carried_to_saved_head
+from sqlalchemy import select
 
 
 class RankingWeekCommandRunner:
@@ -96,6 +99,25 @@ def stage_ranking_week_command(
         )
         key = (context.run_id, context.branch_id, command.command_id)
         receipt = session.get(OfficialRankingCommandModel, key)
+        if isinstance(command, RankingWeekCommand) and command.authority_fingerprint is not None:
+            authority = RankingTransitionAuthorityStore(session).get(
+                run_id=context.run_id, branch_id=context.branch_id,
+                target_ordinal=context.target_week.ordinal,
+            )
+            if authority is None or authority.fingerprint != command.authority_fingerprint:
+                raise ValueError("Authoritative ranking transition inputs changed")
+            if (authority.completed_week, authority.target_week, authority.policy, authority.players) != (
+                context.completed_week, context.target_week, context.policy, context.players
+            ):
+                raise ValueError("Resolved ranking context differs from stored authority")
+            draft = session.scalar(select(BranchWorkingDraftModel).where(
+                BranchWorkingDraftModel.branch_id == context.branch_id
+            ))
+            branch = session.get(RunBranchModel, context.branch_id)
+            if draft is None or branch is None or (
+                receipt is None and not authority_carried_to_saved_head(session, authority, branch, draft)
+            ):
+                raise ValueError("Authoritative ranking transition source revision is stale")
         if receipt is not None:
             if (
                 receipt.request_fingerprint != command.fingerprint

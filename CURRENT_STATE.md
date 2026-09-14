@@ -74,106 +74,23 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
 
 ## Best next implementation slice
 
-**One true Week Transition boundary.** The supported source bridge now removes the
-concrete ownership blocker for its narrow main-draw case. Next integrate authoritative
-world/player/policy state with the Master-order Week Transition and Official snapshot;
-do not mistake the saved candidate for publication or broaden ranking UI/realism first.
-See [ROADMAP.md](ROADMAP.md).
+**Complete the real Week Transition orchestrator.** Ranking preparation now has an
+explicit manually declared, immutable Run/Branch authority snapshot for its completed/target boundary,
+base Saved Revision, canonical roster/tie-break identity, lifecycle eligibility,
+effective policy and provenance. The ordinary authoritative Admin route derives the
+ranking context server-side and preserves it through Save/restore. This remains only
+a candidate preparation prerequisite: it does not advance the clock or publish an
+Official Ranking. Next integrate it into the Master 6.5 transaction with the real
+world clock, lifecycle/development boundary state and public World Events.
 
-## Ready-to-paste Codex prompt
+## Current limitations
 
-```text
-Work in Jasmetk0/squash-tour-beta. Implement one coherent vertical slice:
-real persisted supported main-draw tournament results and awards -> independently
-owned Run/Branch-scoped source snapshot -> next Official ranking candidate ->
-explicit Save -> reload and supported restore, preserving audit and history.
-
-Why now: after #720 the ranking API can correct stored results but rejects new
-tournament bindings because legacy files do not prove product Run/Branch ownership.
-That boundary blocks useful ranking/world integration. Fix the boundary before
-attempting a full Week Transition; do not merely add another candidate-only form.
-
-Before editing, fetch current buuk, inspect AGENTS.md, SQUASH_ENGINE_MASTER_VISION.md
-(especially 6.5, 18, 31 and 36), CURRENT_STATE.md, ROADMAP.md and the actual source.
-Do not assume the old baseline 08a29074250675a61434ba58fb42a185474648d5 is current.
-Preserve newer work. Verify the documentation synchronization has been merged;
-if not, read it from its PR without overwriting unrelated changes.
-
-Inspect existing production paths before deciding the smallest implementation:
-- application/ranking_tournament_ingestion.py and its tests: supports ordinary
-  completed main draws; rejects qualification/BYE/W/O/RET and unauthored awards.
-- season_event_simulation_service.py, season_event_results_service.py,
-  season_point_awards_service.py and tournament integration tests.
-- infrastructure/db/repositories.py: prepare_official_ranking rejects tournaments;
-  new RunContainer/RunBranch/revision models coexist with legacy simulation mappings.
-- ranking_week_command.py runner/stage/preview, result history and input manifests.
-- saved_revision_rankings.py, ranking_revision_state.py, ranking_state_restore.py
-  and independent Save/restore API tests.
-- API preparation router and web preparation/confirmation transport if touched.
-All paths are under src/beta_engine unless stated. Verify current paths yourself.
-
-In scope:
-1. Establish a persisted, verifiable source ownership boundary for one supported
-   completed tournament. Reuse authoritative existing mappings where they actually
-   prove ownership. Otherwise use an explicit audited adoption/import of an
-   independent frozen snapshot into the selected Run/Branch, with honest provenance.
-   A request's run_id/branch_id, identical event name, path or hash alone is not
-   proof that global source data belongs to that branch. Never silently relabel it.
-2. Validate the full source snapshot, completion boundary, identities, result/award
-   fingerprints and authored points before mutation. Read later computations from
-   this frozen owned snapshot, not a live global file. Decide storage technically
-   using existing versioned component patterns; avoid a second generic state engine.
-3. Connect the source to the existing audited ranking preparation command with
-   production preview, confirmation and exact retry. Reuse the current calculator,
-   ingestion validation, version history and manifests. Freeze the provenance used
-   by the calculation. Reject changed/stale preview inputs before any partial write.
-4. Include every newly authoritative persisted record in compatible Save/reload/
-   restore semantics, or atomically preserve its full evidence in an existing
-   captured component. No hidden table outside recovery. Keep old revisions readable.
-5. Provide a usable explicit Admin command/API flow. Reuse existing UI controls
-   where sensible; add only the minimum selection/review surface needed for this
-   slice, without visual redesign. No raw database edits required for normal flow.
-
-Non-goals: full Week/Season Transition, advancing world time, public publication,
-Protected Ranking, automatic sanctions, broad Q/WC/LL/abnormal result support,
-ranking-bearing branch remapping, realism tuning, visual polish or unrelated cleanup.
-This does not remove any of those requirements from pre-alpha. Preserve current
-unsupported-scope guards. Do not invent a sporting rule to make the demo pass.
-
-Invariants: deterministic domain calculations and injected RNG; immutable original
-result timing/expiry; isolated Run/Branch and historical snapshots; no future inputs;
-operation-scoped validation; preview has no writes; source adoption + ranking writes
-form the declared atomic command; error rolls back all of it; idempotent exact retry;
-Viewer reads saved state and never becomes authority; Save stays explicit; old
-payload hashes/receipts remain valid or receive an explicit backward-safe migration.
-If an explicit import ownership choice truly changes undecided product behavior,
-finish the technical investigation and ask the owner that precise question rather
-than assume an answer or ask generic technical questions.
-
-Acceptance criteria and integration evidence:
-- A fresh Run and a real isolated four-player main-draw production pipeline can
-  yield authored results/awards, explicitly adopt them in the intended Branch,
-  preview the next candidate, confirm, Save, reopen and inspect the same points,
-  source hashes, timing and audit without manually inserting result rows.
-- Production service/API + real file-backed SQLite, not mocked award producers.
-- Preview database/source state is unchanged. Inject a failure after source staging
-  and after ranking staging: no partial state/receipts or changed draft remain.
-- Lost-response retry uses the same command; repeats do not duplicate anything;
-  changed payload/lineage conflicts. Editing source after preview rejects commit
-  or leaves the explicitly frozen snapshot unchanged under the documented contract.
-- Two Runs/Branches with colliding event names cannot leak sources. Cross-scope,
-  wrong hash, future week and unsupported source cases reject without mutation.
-- Save/reload and restore before/after adoption preserve the complete new evidence;
-  older revisions still load. Existing unsupported fork guard stays safe.
-- Earlier ranking/source history is unchanged; original validity is never restarted.
-- Run relevant regression tests, static checks/build and UI tests if touched. Say
-  which boundaries are mocked; never call those full integration. Add critical
-  tests to the appropriate CI gate. No unnecessary full-suite repetitions.
-
-After implementation do a distinct review for scope, rollback, retries, migration,
-Save/Restore, source completeness and preview/commit drift. Fix material findings.
-Update CURRENT_STATE.md and affected scoped contract docs truthfully. Do not inflate
-Master with per-file PR logs or mark this as full Week Transition/pre-alpha.
-Open one reviewable PR against buuk, report changed files and why, actual test
-results, remaining boundaries and recommended next step. Do not merge it yourself.
-```
+- The explicit authority adoption command is the supported bridge until world/player
+  state has its own complete branch-revision projection. Scope, base revision and
+  structural invariants are checked, but roster completeness, lifecycle truth and
+  historical policy effectiveness are not yet resolved from stored world state; they
+  remain audited declarations and are not inferred from legacy season files.
+- Ranking-bearing branch fork remapping, Protected Ranking, abnormal tournament
+  inputs, clock advancement and Viewer publication remain unsupported.
+- The legacy season execution service still has no rollback and is not the Week
+  Transition transaction owner.

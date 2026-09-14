@@ -12,6 +12,7 @@ from beta_engine.domain.rankings.official import FrozenInput, OfficialRankingSna
 from beta_engine.domain.rankings.input_manifest import RankingInputManifest
 from beta_engine.domain.rankings.result_history import RankingResultVersion, validate_result_successor
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
+from beta_engine.domain.rankings.transition_authority import RankingTransitionAuthority
 
 
 class RankingRevisionReceipt(FrozenInput):
@@ -34,13 +35,14 @@ class RankingRevisionEntry(FrozenInput):
 
 
 class RankingRevisionState(FrozenInput):
-    schema_version: Literal["ranking_revision_state.v1", "ranking_revision_state.v2"] = "ranking_revision_state.v2"
+    schema_version: Literal["ranking_revision_state.v1", "ranking_revision_state.v2", "ranking_revision_state.v3"] = "ranking_revision_state.v3"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     entries: tuple[RankingRevisionEntry, ...]
     sources: tuple[RankingResultVersion, ...]
     zero_sources: tuple[RankingZeroVersion, ...] = ()
     tournament_sources: tuple[OwnedTournamentRankingSource, ...] = ()
+    transition_authorities: tuple[RankingTransitionAuthority, ...] = ()
 
     @model_serializer(mode="wrap")
     def serialize_state(self, handler):
@@ -49,12 +51,21 @@ class RankingRevisionState(FrozenInput):
             data.pop("zero_sources", None)
         if not self.tournament_sources:
             data.pop("tournament_sources", None)
+        if not self.transition_authorities:
+            data.pop("transition_authorities", None)
         return data
 
     @model_validator(mode="after")
     def validate_complete_state(self):
         if self.schema_version == "ranking_revision_state.v1" and self.tournament_sources:
             raise ValueError("Ranking revision state v1 cannot contain tournament sources")
+        if self.schema_version in ("ranking_revision_state.v1", "ranking_revision_state.v2") and self.transition_authorities:
+            raise ValueError("Legacy ranking revision state cannot contain transition authority")
+        ordinals = [a.target_week.ordinal for a in self.transition_authorities]
+        if ordinals != sorted(set(ordinals)):
+            raise ValueError("Ranking transition authority order or uniqueness is invalid")
+        if any((a.run_id, a.branch_id) != (self.run_id, self.branch_id) for a in self.transition_authorities):
+            raise ValueError("Ranking transition authority scope mismatch")
         owned_keys = [(s.binding.edition_id, s.binding.event_id) for s in self.tournament_sources]
         if owned_keys != sorted(set(owned_keys)):
             raise ValueError("Owned tournament source order or uniqueness is invalid")
@@ -141,7 +152,7 @@ def ranking_revision_states_equivalent(
     represents the same live state; non-empty V2 evidence never does.
     """
     return left.model_copy(
-        update={"schema_version": "ranking_revision_state.v2"}
+        update={"schema_version": "ranking_revision_state.v3"}
     ).model_dump(mode="json") == right.model_copy(
-        update={"schema_version": "ranking_revision_state.v2"}
+        update={"schema_version": "ranking_revision_state.v3"}
     ).model_dump(mode="json")

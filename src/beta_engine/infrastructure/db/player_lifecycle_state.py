@@ -12,6 +12,10 @@ from beta_engine.domain.players.lifecycle import (
     advance_lifecycle,
 )
 from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.domain.calendar.season_weeks import (
+    age_at_calendar_position,
+    season_week_to_calendar_position,
+)
 from beta_engine.infrastructure.db.models import PlayerLifecycleWeekStateModel
 
 PLAYER_LIFECYCLE_COMPONENT_KEY = "player_lifecycle"
@@ -91,7 +95,14 @@ def bootstrap_lifecycle(session: Session, world: InitialWorldState):
                 tie_break_token=hashlib.sha256(provenance.encode()).hexdigest(),
                 tie_break_provenance=provenance,
                 tour_entry_week=week,
-                age=p.age_years_at_season_start,
+                age=age_at_calendar_position(
+                    birth_year=p.birth_year,
+                    birth_year_week=p.birth_year_week,
+                    calendar_year=season_week_to_calendar_position(
+                        2000, 1
+                    ).calendar_year,
+                    year_week=season_week_to_calendar_position(2000, 1).year_week,
+                ),
                 status="active",
                 origin=f"initial_world:{world.fingerprint}",
             )
@@ -175,6 +186,14 @@ def load_saved_lifecycle(payload, *, run_id, branch_id):
         (s.run_id, s.branch_id) != (run_id, branch_id) for s in states
     ):
         raise ValueError("Saved player-lifecycle identity or fingerprint mismatch")
+    for predecessor, target in zip(states, states[1:], strict=False):
+        if (
+            target.week.ordinal != predecessor.week.ordinal + 1
+            or target.predecessor_fingerprint != predecessor.fingerprint
+            or target.source_initial_world_fingerprint
+            != predecessor.source_initial_world_fingerprint
+        ):
+            raise ValueError("Saved player-lifecycle predecessor chain is corrupt")
     return states
 
 

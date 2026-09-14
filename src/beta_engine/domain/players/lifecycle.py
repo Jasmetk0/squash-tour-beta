@@ -13,6 +13,11 @@ from beta_engine.domain.rankings.official import (
     OfficialRankingPlayer,
     RankingWeek,
 )
+from beta_engine.domain.calendar.season_weeks import (
+    age_at_calendar_position,
+    season_week_to_calendar_position,
+    season_week_to_year_week,
+)
 
 MIN_RUNTIME_PLAYER_AGE = 15
 MAX_ACTIVE_TOUR_AGE = 45
@@ -72,6 +77,25 @@ class PlayerLifecycleWeekState(FrozenInput):
             for p in self.players
         ):
             raise ValueError("Lifecycle state contains a future Tour entrant")
+        position = season_week_to_calendar_position(
+            2000 + self.week.season_index, self.week.week
+        )
+        for player in self.players:
+            expected_age = age_at_calendar_position(
+                birth_year=player.birth_year,
+                birth_year_week=player.birth_year_week,
+                calendar_year=position.calendar_year,
+                year_week=position.year_week,
+            )
+            if player.age != expected_age:
+                raise ValueError("Lifecycle age differs from canonical birth identity")
+            if player.status == "active" and player.age >= 46:
+                raise ValueError("Active lifecycle player cannot be age 46 or older")
+            if (
+                player.retirement_effective_week is not None
+                and player.retirement_effective_week.ordinal > self.week.ordinal
+            ):
+                raise ValueError("Retirement effective week cannot be in the future")
         return self
 
     @property
@@ -115,14 +139,16 @@ def advance_lifecycle(
         )
     players = []
     for player in predecessor.players:
-        if player.status == "active" and player.birth_year_week == target.week:
+        if player.birth_year_week == season_week_to_year_week(target.week):
             age = player.age + 1
-            retired = age == 46
+            newly_retired = player.status == "active" and age == 46
             player = player.model_copy(
                 update={
                     "age": age,
-                    "status": "retired" if retired else "active",
-                    "retirement_effective_week": target if retired else None,
+                    "status": "retired" if newly_retired else player.status,
+                    "retirement_effective_week": (
+                        target if newly_retired else player.retirement_effective_week
+                    ),
                 }
             )
         players.append(player)

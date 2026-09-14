@@ -113,6 +113,33 @@ def season_week_to_year_week(season_week: int) -> int:
     ) + 1
 
 
+def age_at_calendar_position(
+    *, birth_year: int, birth_year_week: int, calendar_year: int, year_week: int
+) -> int:
+    """Return completed FAX years at an authoritative calendar position."""
+
+    _validate_year_week(birth_year_week)
+    _validate_year_week(year_week)
+    if birth_year > calendar_year:
+        raise ValueError("birth year cannot be after the current calendar year")
+    age = calendar_year - birth_year - (year_week < birth_year_week)
+    if age < 0:
+        raise ValueError("birth identity lies after the current calendar position")
+    return age
+
+
+def birth_year_for_age_at_calendar_position(
+    *, age: int, birth_year_week: int, calendar_year: int, year_week: int
+) -> int:
+    """Derive birth year after birth week is known, preserving an intended age."""
+
+    if age < 0:
+        raise ValueError("age must be non-negative")
+    _validate_year_week(birth_year_week)
+    _validate_year_week(year_week)
+    return calendar_year - age - (birth_year_week > year_week)
+
+
 def year_week_to_season_week(year_week: int) -> int:
     """Map a 1-based FAX Year Week to its 1-based Season Week."""
 

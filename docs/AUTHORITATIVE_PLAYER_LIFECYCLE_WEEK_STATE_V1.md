@@ -16,6 +16,19 @@ Week 1 is bootstrapped during initial-world adoption solely from owned
 `InitialWorldState`, never live global player JSON. Prospects are not generated;
 missing authoritative owned lifecycle input fails closed.
 
+Birthdays compare `birth_year_week` with the canonical FAX Year Week obtained
+from the target Season Week through `season_week_to_year_week`; the two week
+coordinates are never treated as interchangeable. Initial age is the number of
+completed FAX years at the Week-1 calendar position (2000 / Year Week 37 for the
+first season), derived from birth year and birth Year Week rather than the legacy
+coarse season-start age. Initial-pool generation preserves its sampled starting
+age by deriving birth year after its branch-scoped birth-week draw.
+
+Existing `run_prospects` are Run-scoped rather than Branch-owned. A row matching
+the target calendar/season week therefore blocks transition before lifecycle
+staging with an explicit missing-source-bridge error; this slice neither consumes
+that row nor invents prospect generation or Tour-entry AI.
+
 The existing `AuthoritativeWeekTransitionRunner` remains the sole
 `BEGIN IMMEDIATE` owner. It validates predecessor lifecycle, stages target state,
 applies target-week birthdays and age-46 retirement, derives the ranking roster,

@@ -21,6 +21,7 @@ from beta_engine.infrastructure.db.models import (
     PublishedOfficialRankingModel,
     RunBranchModel,
     RunContainerModel,
+    RunProspectModel,
 )
 from beta_engine.infrastructure.db.official_rankings import (
     OfficialRankingCandidateStore,
@@ -40,6 +41,7 @@ from beta_engine.domain.rankings.official import (
     RankingWeek,
     load_official_ranking_snapshot,
 )
+from beta_engine.domain.calendar.season_weeks import season_week_to_calendar_position
 
 
 def _fault_injection_point(_name: str) -> None:
@@ -229,6 +231,27 @@ def transition_in_transaction(session: Session, awards, command):
         command.target_week,
     ):
         raise ValueError("Ranking transition authority boundary differs")
+
+    target_position = season_week_to_calendar_position(
+        2000 + command.target_week.season_index, command.target_week.week
+    )
+    pending_prospect = session.scalar(
+        select(RunProspectModel.prospect_id)
+        .where(
+            RunProspectModel.run_id == command.run_id,
+            RunProspectModel.season_start_year
+            == 2000 + command.target_week.season_index,
+            RunProspectModel.season_week == command.target_week.week,
+            RunProspectModel.calendar_year == target_position.calendar_year,
+            RunProspectModel.year_week == target_position.year_week,
+        )
+        .limit(1)
+    )
+    if pending_prospect is not None:
+        raise ValueError(
+            "Target week has Run-scoped prospect intake but no authoritative "
+            "Run/Branch-owned player source bridge"
+        )
 
     candidates = OfficialRankingCandidateStore(session).history(
         run_id=command.run_id, branch_id=command.branch_id

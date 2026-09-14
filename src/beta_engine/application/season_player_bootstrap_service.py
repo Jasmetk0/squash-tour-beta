@@ -13,7 +13,11 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from beta_engine.application.initial_player_pool_service import InitialPlayerPoolService
 from beta_engine.domain.calendar import DEFAULT_WEEKS_PER_CALENDAR_YEAR
-from beta_engine.domain.players.initial_pool import GeneratedPlayerAttributes, InitialPoolGeneratedPlayer, PotentialTier
+from beta_engine.domain.players.initial_pool import (
+    GeneratedPlayerAttributes,
+    InitialPoolGeneratedPlayer,
+    PotentialTier,
+)
 from beta_engine.domain.players.models import HiddenCareerTraits
 
 SourceGeneration = Literal["initial_pool", "manual", "imported"]
@@ -63,7 +67,9 @@ class SeasonActivePlayer(BaseModel):
     @model_validator(mode="after")
     def validate_active_player(self) -> "SeasonActivePlayer":
         if self.current_ability > self.potential_ability + 4:
-            raise ValueError("current_ability may not exceed potential_ability by more than 4")
+            raise ValueError(
+                "current_ability may not exceed potential_ability by more than 4"
+            )
         if self.hidden_career_traits.potential_ceiling < self.potential_ability:
             raise ValueError("potential_ceiling must be at least potential_ability")
         return self
@@ -116,16 +122,24 @@ class SeasonActivePlayersRegistry(BaseModel):
     """
 
     players_by_season: dict[str, list[SeasonActivePlayer]] = Field(default_factory=dict)
-    bootstrap_metadata_by_season: dict[str, SeasonBootstrapMetadata] = Field(default_factory=dict)
+    bootstrap_metadata_by_season: dict[str, SeasonBootstrapMetadata] = Field(
+        default_factory=dict
+    )
 
     @model_validator(mode="before")
     @classmethod
     def load_legacy_registry(cls, value: object) -> object:
         if isinstance(value, list):
-            return {"players_by_season": {"2000/2001": value}, "bootstrap_metadata_by_season": {}}
+            return {
+                "players_by_season": {"2000/2001": value},
+                "bootstrap_metadata_by_season": {},
+            }
         if isinstance(value, dict) and "players" in value and "season" in value:
             season = str(value.get("season"))
-            return {"players_by_season": {season: value.get("players", [])}, "bootstrap_metadata_by_season": {}}
+            return {
+                "players_by_season": {season: value.get("players", [])},
+                "bootstrap_metadata_by_season": {},
+            }
         if isinstance(value, dict) and "players_by_season" not in value:
             return {"players_by_season": value, "bootstrap_metadata_by_season": {}}
         return value
@@ -163,22 +177,49 @@ class InitialPoolSeasonBootstrapService:
         source_result = self.initial_pool_service.get_pool(season=source)
         source_players = list(source_result.players)
         if not source_players:
-            raise ValueError("Cannot bootstrap season because initial pool is empty. Persist an initial pool first.")
+            raise ValueError(
+                "Cannot bootstrap season because initial pool is empty. Persist an initial pool first."
+            )
         self._validate_source_players(source_players)
 
         registry = self._load_registry()
-        if not dry_run and registry.players_by_season.get(season) and not overwrite_existing:
-            raise ValueError(f"Active players already exist for season '{season}'. Set overwrite_existing=true to replace only that season.")
+        if (
+            not dry_run
+            and registry.players_by_season.get(season)
+            and not overwrite_existing
+        ):
+            raise ValueError(
+                f"Active players already exist for season '{season}'. Set overwrite_existing=true to replace only that season."
+            )
 
-        source_fingerprint = self._source_pool_fingerprint(source_players, source_season=source)
-        bootstrap_id = self._bootstrap_id(season=season, source_season=source, seed=seed, source_fingerprint=source_fingerprint)
+        source_fingerprint = self._source_pool_fingerprint(
+            source_players, source_season=source
+        )
+        bootstrap_id = self._bootstrap_id(
+            season=season,
+            source_season=source,
+            seed=seed,
+            source_fingerprint=source_fingerprint,
+        )
         players = [
-            self._convert_player(player, season=season, seed=seed, bootstrap_id=bootstrap_id, source_fingerprint=source_fingerprint)
+            self._convert_player(
+                player,
+                season=season,
+                seed=seed,
+                bootstrap_id=bootstrap_id,
+                source_fingerprint=source_fingerprint,
+            )
             for player in sorted(source_players, key=lambda item: item.player_id)
         ]
         warnings = self._warnings(players)
         summary = self._summary(players)
-        operation_fingerprint = self._operation_fingerprint(players=players, season=season, source_season=source, seed=seed, source_fingerprint=source_fingerprint)
+        operation_fingerprint = self._operation_fingerprint(
+            players=players,
+            season=season,
+            source_season=source,
+            seed=seed,
+            source_fingerprint=source_fingerprint,
+        )
         metadata = SeasonBootstrapMetadata(
             season=season,
             source_season=source,
@@ -192,13 +233,20 @@ class InitialPoolSeasonBootstrapService:
             persistence_path=None if dry_run else str(self.active_players_path),
             ranking_seeding_implemented=False,
         )
-        result = SeasonBootstrapResult(players=players, summary=summary, metadata=metadata, warnings=warnings)
+        result = SeasonBootstrapResult(
+            players=players, summary=summary, metadata=metadata, warnings=warnings
+        )
         if not dry_run:
             next_players = dict(registry.players_by_season)
             next_metadata = dict(registry.bootstrap_metadata_by_season)
             next_players[season] = players
             next_metadata[season] = metadata
-            self._save_registry(SeasonActivePlayersRegistry(players_by_season=next_players, bootstrap_metadata_by_season=next_metadata))
+            self._save_registry(
+                SeasonActivePlayersRegistry(
+                    players_by_season=next_players,
+                    bootstrap_metadata_by_season=next_metadata,
+                )
+            )
         return result
 
     def _convert_player(
@@ -211,9 +259,26 @@ class InitialPoolSeasonBootstrapService:
         source_fingerprint: str,
     ) -> SeasonActivePlayer:
         season_start_year = self._season_start_year(season)
-        age_years = season_start_year - player.birth_year
-        age_weeks = max(0, age_years * 52 + (1 - player.birth_year_week))
-        source_generation: SourceGeneration = "manual" if player.manual_override or player.generation_source == "manual" else "initial_pool"
+        from beta_engine.domain.calendar.season_weeks import (
+            age_at_calendar_position,
+            season_week_to_calendar_position,
+        )
+
+        initial_position = season_week_to_calendar_position(season_start_year, 1)
+        age_years = age_at_calendar_position(
+            birth_year=player.birth_year,
+            birth_year_week=player.birth_year_week,
+            calendar_year=initial_position.calendar_year,
+            year_week=initial_position.year_week,
+        )
+        age_weeks = max(
+            0, age_years * 61 + (initial_position.year_week - player.birth_year_week)
+        )
+        source_generation: SourceGeneration = (
+            "manual"
+            if player.manual_override or player.generation_source == "manual"
+            else "initial_pool"
+        )
         fingerprint = self._player_bootstrap_fingerprint(
             season=season,
             seed=seed,
@@ -257,54 +322,104 @@ class InitialPoolSeasonBootstrapService:
     def _load_registry(self) -> SeasonActivePlayersRegistry:
         if not self.active_players_path.exists():
             return SeasonActivePlayersRegistry()
-        return SeasonActivePlayersRegistry.model_validate(json.loads(self.active_players_path.read_text(encoding="utf-8")))
+        return SeasonActivePlayersRegistry.model_validate(
+            json.loads(self.active_players_path.read_text(encoding="utf-8"))
+        )
 
     def _save_registry(self, registry: SeasonActivePlayersRegistry) -> None:
         self.active_players_path.parent.mkdir(parents=True, exist_ok=True)
-        self.active_players_path.write_text(json.dumps(registry.model_dump(mode="json"), indent=2) + "\n", encoding="utf-8")
+        self.active_players_path.write_text(
+            json.dumps(registry.model_dump(mode="json"), indent=2) + "\n",
+            encoding="utf-8",
+        )
 
     @staticmethod
     def _season_start_year(season: str) -> int:
         try:
             return int(season.split("/", 1)[0])
         except (TypeError, ValueError) as exc:
-            raise ValueError(f"Invalid season '{season}'. Expected a label like 2000/2001.") from exc
+            raise ValueError(
+                f"Invalid season '{season}'. Expected a label like 2000/2001."
+            ) from exc
 
     @staticmethod
     def _hash(material: str, *, digest_size: int = 16) -> str:
         return hashlib.blake2b(material.encode(), digest_size=digest_size).hexdigest()
 
-    def _source_pool_fingerprint(self, players: list[InitialPoolGeneratedPlayer], *, source_season: str) -> str:
-        material = "|".join(player.model_dump_json() for player in sorted(players, key=lambda item: item.player_id))
+    def _source_pool_fingerprint(
+        self, players: list[InitialPoolGeneratedPlayer], *, source_season: str
+    ) -> str:
+        material = "|".join(
+            player.model_dump_json()
+            for player in sorted(players, key=lambda item: item.player_id)
+        )
         return self._hash(f"initial-pool|{source_season}|{material}")
 
-    def _bootstrap_id(self, *, season: str, source_season: str, seed: int, source_fingerprint: str) -> str:
-        suffix = self._hash(f"bootstrap-id|{season}|{source_season}|{seed}|{source_fingerprint}", digest_size=8)
+    def _bootstrap_id(
+        self, *, season: str, source_season: str, seed: int, source_fingerprint: str
+    ) -> str:
+        suffix = self._hash(
+            f"bootstrap-id|{season}|{source_season}|{seed}|{source_fingerprint}",
+            digest_size=8,
+        )
         return f"BOOT-{season.split('/')[0]}-{suffix}"
 
-    def _player_bootstrap_fingerprint(self, *, season: str, seed: int, source_fingerprint: str, player_id: str, player_fingerprint: str) -> str:
-        return self._hash(f"player-bootstrap|{season}|{seed}|{source_fingerprint}|{player_id}|{player_fingerprint}")
+    def _player_bootstrap_fingerprint(
+        self,
+        *,
+        season: str,
+        seed: int,
+        source_fingerprint: str,
+        player_id: str,
+        player_fingerprint: str,
+    ) -> str:
+        return self._hash(
+            f"player-bootstrap|{season}|{seed}|{source_fingerprint}|{player_id}|{player_fingerprint}"
+        )
 
-    def _operation_fingerprint(self, *, players: list[SeasonActivePlayer], season: str, source_season: str, seed: int, source_fingerprint: str) -> str:
-        material = "|".join(player.bootstrap_fingerprint for player in sorted(players, key=lambda item: item.player_id))
-        return self._hash(f"operation|{season}|{source_season}|{seed}|{source_fingerprint}|{material}")
+    def _operation_fingerprint(
+        self,
+        *,
+        players: list[SeasonActivePlayer],
+        season: str,
+        source_season: str,
+        seed: int,
+        source_fingerprint: str,
+    ) -> str:
+        material = "|".join(
+            player.bootstrap_fingerprint
+            for player in sorted(players, key=lambda item: item.player_id)
+        )
+        return self._hash(
+            f"operation|{season}|{source_season}|{seed}|{source_fingerprint}|{material}"
+        )
 
-    def _validate_source_players(self, players: list[InitialPoolGeneratedPlayer]) -> None:
+    def _validate_source_players(
+        self, players: list[InitialPoolGeneratedPlayer]
+    ) -> None:
         ids = [player.player_id for player in players]
-        duplicates = sorted(player_id for player_id, count in Counter(ids).items() if count > 1)
+        duplicates = sorted(
+            player_id for player_id, count in Counter(ids).items() if count > 1
+        )
         if duplicates:
-            raise ValueError(f"Duplicate source initial-pool player IDs are not allowed: {', '.join(duplicates)}")
+            raise ValueError(
+                f"Duplicate source initial-pool player IDs are not allowed: {', '.join(duplicates)}"
+            )
 
     def _warnings(self, players: list[SeasonActivePlayer]) -> list[str]:
         warnings: list[str] = []
         if len(players) < 32:
-            warnings.append("Source initial pool is very small for a professional tour bootstrap.")
+            warnings.append(
+                "Source initial pool is very small for a professional tour bootstrap."
+            )
         if not any(player.potential_tier in {"S", "A"} for player in players):
             warnings.append("Source initial pool has no S/A-tier players.")
         if not {player.country_code for player in players}:
             warnings.append("Source initial pool has no countries represented.")
         if not any(player.manual_override for player in players):
-            warnings.append("Source initial pool has no manual players; this is informational only.")
+            warnings.append(
+                "Source initial pool has no manual players; this is informational only."
+            )
         return warnings
 
     def _summary(self, players: list[SeasonActivePlayer]) -> SeasonBootstrapSummary:
@@ -315,9 +430,17 @@ class InitialPoolSeasonBootstrapService:
             total_active_players=len(players),
             countries_represented=len({player.country_code for player in players}),
             manual_players=sum(1 for player in players if player.manual_override),
-            generated_players=sum(1 for player in players if player.source_generation == "initial_pool"),
-            locked_from_initial_pool=sum(1 for player in players if player.locked_from_initial_pool),
-            average_current_ability=round(sum(player.current_ability for player in players) / len(players), 2),
-            average_potential_ability=round(sum(player.potential_ability for player in players) / len(players), 2),
+            generated_players=sum(
+                1 for player in players if player.source_generation == "initial_pool"
+            ),
+            locked_from_initial_pool=sum(
+                1 for player in players if player.locked_from_initial_pool
+            ),
+            average_current_ability=round(
+                sum(player.current_ability for player in players) / len(players), 2
+            ),
+            average_potential_ability=round(
+                sum(player.potential_ability for player in players) / len(players), 2
+            ),
             by_potential_tier=dict(sorted(by_tier.items())),
         )

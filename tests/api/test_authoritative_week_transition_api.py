@@ -11,7 +11,12 @@ from beta_engine.domain.players.lifecycle import (
     PlayerLifecycleWeekState,
 )
 from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.domain.calendar.season_weeks import (
+    birth_year_for_age_at_calendar_position,
+    season_week_to_calendar_position,
+)
 from beta_engine.infrastructure.db.player_lifecycle_state import put_lifecycle
+from beta_engine.infrastructure.db.models import RunProspectModel
 
 from test_admin_ranking_preparation_api import initial
 from test_ranking_preparation_preview_api import dump
@@ -55,10 +60,16 @@ def counts(path):
 def install_owned_lifecycle(server, run_id, branch_id, players):
     """This legacy ranking fixture predates initial-world adoption; install owned test truth."""
     week = RankingWeek(season_index=0, week=1)
+    position = season_week_to_calendar_position(2000, 1)
     identities = tuple(
         PlayerLifecycleIdentity(
             player_id=player["player_id"],
-            birth_year=1970 + index,
+            birth_year=birth_year_for_age_at_calendar_position(
+                age=30 - index,
+                birth_year_week=40 + index,
+                calendar_year=position.calendar_year,
+                year_week=position.year_week,
+            ),
             birth_year_week=40 + index,
             age=30 - index,
             tie_break_token=player["tie_break_token"],
@@ -130,7 +141,12 @@ def prepared_transition(server, name):
 
 @pytest.mark.parametrize(
     "failure_point",
-    ["after_ranking_staging", "before_publication", "after_publication"],
+    [
+        "after_lifecycle_staging",
+        "after_ranking_staging",
+        "before_publication",
+        "after_publication",
+    ],
 )
 def test_failure_at_each_write_boundary_rolls_back_everything(
     tmp_path, monkeypatch, failure_point
@@ -155,6 +171,69 @@ def test_failure_at_each_write_boundary_rolls_back_everything(
                     json.dumps(command)
                 )
             )
+        assert dump(path) == before and counts(path) == (0, 0, 0, 0)
+
+
+def test_target_week_unowned_run_prospect_blocks_preview_and_confirm(tmp_path):
+    path = tmp_path / "prospect-blocker.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        run_id, branch_id, command = prepared_transition(server, "prospect blocker")
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            session.add(
+                RunProspectModel(
+                    prospect_id="prospect-w2",
+                    run_id=run_id,
+                    world_id="world",
+                    season_start_year=2000,
+                    season_label="2000/2001",
+                    season_week=2,
+                    calendar_year=2000,
+                    year_week=38,
+                    birth_year=1985,
+                    birth_year_week=38,
+                    age=15,
+                    country_code="EGY",
+                    status="prospect",
+                    source_type="weekly_15yo_cohort",
+                    cohort_policy_version="v1",
+                    profile_version="v1",
+                    display_name="Prospect",
+                    identity_seed="i",
+                    profile_seed="p",
+                    development_seed="d",
+                    potential_seed="x",
+                    trait_seed="t",
+                    profile_json="{}",
+                    development_json="{}",
+                    potential_json="{}",
+                    trait_json="{}",
+                )
+            )
+        before = dump(path)
+        root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/week-transitions"
+        status, blocked = _request("POST", root + "/preview", command)
+        assert (
+            status == 409
+            and "no authoritative Run/Branch-owned player source bridge" in str(blocked)
+        )
+        frozen = (
+            transition_module.AuthoritativeWeekTransitionCommand.model_validate_json(
+                json.dumps(command)
+            )
+        )
+        req = request.Request(
+            root,
+            data=json.dumps(command).encode(),
+            method="POST",
+            headers={
+                "Content-Type": "application/json",
+                "X-Week-Transition-Request-Fingerprint": frozen.fingerprint,
+                "X-Week-Transition-Ranking-Fingerprint": "0" * 64,
+            },
+        )
+        with pytest.raises(error.HTTPError) as exc:
+            request.urlopen(req)
+        assert exc.value.code == 409
         assert dump(path) == before and counts(path) == (0, 0, 0, 0)
 
 

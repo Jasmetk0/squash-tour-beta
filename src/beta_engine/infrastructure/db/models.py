@@ -194,6 +194,16 @@ class PlayerSportingWeekStateModel(Base):
 
 
 
+class CompletedWeekSportingContextModel(Base):
+    """Explicit Run/Branch-owned completed-week sporting evidence projection."""
+    __tablename__ = "completed_week_sporting_contexts"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class SimulationRunModel(Base):
     __tablename__ = "simulation_runs"
 

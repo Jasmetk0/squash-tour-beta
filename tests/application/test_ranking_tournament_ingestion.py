@@ -697,3 +697,110 @@ def test_command_and_inspection_reject_damaged_manifest(packages, database, dama
         runner.execute(request)
     with database() as session, pytest.raises(ValueError):
         inspect_ranking_history(session, run_id="run", branch_id="branch")
+
+
+def test_owned_completed_matches_resolve_match_aware_sharpness_context(
+    packages, database
+):
+    from beta_engine.infrastructure.db.ranking_week_command import (
+        RankingWeekCommandRunner,
+    )
+    from beta_engine.infrastructure.db.player_sporting_state import (
+        resolve_completed_context_from_owned_sources,
+    )
+    from beta_engine.infrastructure.db.owned_tournament_sources import (
+        OwnedTournamentRankingSourceStore,
+    )
+    from beta_engine.domain.players.attribute_catalog import CANONICAL_PLAYER_ATTRIBUTES
+    from beta_engine.domain.players.sporting import (
+        PlayerSportingRecord,
+        PlayerSportingWeekState,
+        between_week_state_update,
+        weekly_player_development_update,
+    )
+
+    command = ranking_command(packages, database, command_id="sporting-evidence")
+    RankingWeekCommandRunner(database, packages[0]).execute(command)
+    participant = packages[2].match_result_refs[0].winner_player_id
+    nonparticipant = "owned-player-with-no-match"
+    with database.begin() as session:
+        context = resolve_completed_context_from_owned_sources(
+            session,
+            run_id="run",
+            branch_id="branch",
+            completed_week=command.context.completed_week,
+            player_ids=(participant, nonparticipant),
+            source_ids=(packages[1].edition_id,),
+        )
+    assert context.match_count(participant) > 0
+    assert context.match_count(nonparticipant) == 0
+    with database() as session:
+        source = OwnedTournamentRankingSourceStore(session).get(
+            run_id="run", branch_id="branch", edition_id="edition"
+        )
+    assert source is not None
+    assert context.source_fingerprints == (source.fingerprint,)
+    with database.begin() as session:
+        future = source.model_copy(
+            update={
+                "binding": source.binding.model_copy(
+                    update={
+                        "edition_id": "future-edition",
+                        "completed_week": command.context.target_week,
+                        "first_publication_week": RankingWeek(
+                            season_index=0,
+                            week=command.context.target_week.week + 1,
+                        ),
+                    }
+                )
+            }
+        )
+        OwnedTournamentRankingSourceStore(session).append(future)
+        after_future_change = resolve_completed_context_from_owned_sources(
+            session,
+            run_id="run",
+            branch_id="branch",
+            completed_week=command.context.completed_week,
+            player_ids=(participant, nonparticipant),
+            source_ids=(packages[1].edition_id,),
+        )
+    assert after_future_change == context
+    assert after_future_change.fingerprint == context.fingerprint
+    players = tuple(
+        PlayerSportingRecord(
+            player_id=player_id,
+            attributes=tuple((name, 100) for name in CANONICAL_PLAYER_ATTRIBUTES),
+            potential_ovr=120,
+            potential_identity=f"potential:{player_id}",
+            potential_provenance="test",
+            development_timing="Standard",
+            current_form=100,
+            long_term_form_norm=100,
+            match_sharpness=80,
+            long_term_fatigue=10,
+        )
+        for player_id in sorted((participant, nonparticipant))
+    )
+    predecessor = PlayerSportingWeekState(
+        run_id="run",
+        branch_id="branch",
+        week=command.context.completed_week,
+        players=players,
+        completed_context_fingerprint="bootstrap",
+        source_initial_world_fingerprint="world",
+        stage_provenance="test",
+    )
+    developed = weekly_player_development_update(
+        predecessor,
+        target=command.context.target_week,
+        player_ages={participant: 25, nonparticipant: 25},
+        context=context,
+    )
+    final = between_week_state_update(
+        developed,
+        context=context,
+        target_effective_development_policy=predecessor.effective_development_policy,
+    )
+    values = {player.player_id: player.match_sharpness for player in final.players}
+    assert values[participant] == 80
+    assert values[nonparticipant] == 78

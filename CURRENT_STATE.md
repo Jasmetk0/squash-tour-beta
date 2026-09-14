@@ -20,7 +20,7 @@ protocol is chapter 36. PR #726 is the latest verified merge.
 | Official ranking | `domain/rankings/official.py`, `application/ranking_week_command.py`, `infrastructure/db/authoritative_week_transition.py` | The supported Week 1→2 boundary now publishes an immutable Official Ranking and advances the scoped world clock atomically; Viewer/history consumers and broader lifecycle resolution remain |
 | Ranking Admin | `admin_ranking_candidates.py`, `RankingPreparationPanel.tsx`, `RankingResultCorrections.tsx` | Preview/confirm, manual input review, zeros, corrections and explicit supported tournament binding; minimum API flow exists but no broader tournament picker redesign |
 | Ranking Save | `saved_revision_rankings.py`, `ranking_revision_state.py`, `ranking_state_restore.py` | Owned source packages, candidates, inputs and audit survive explicit Save/reload/restore; still not full sporting-world recovery |
-| Week execution | `infrastructure/db/authoritative_week_transition.py` owns one `BEGIN IMMEDIATE`; `season_week_simulation_execution_service.py` still declares `NO_ROLLBACK_WARNING` | Sporting development then between-week recovery, lifecycle, ranking/publication/event/receipt now share the transaction; slots, completed-match sporting updates, prospects and legacy tournament production remain outside it |
+| Week execution | `infrastructure/db/authoritative_week_transition.py` owns one `BEGIN IMMEDIATE`; owned complete tournament result manifests can resolve completed-match counts | Sporting development then between-week recovery, lifecycle, ranking/publication/event/receipt share the transaction; a missing/empty authoritative sporting context fails closed, while broader match-state updates, slots and prospects remain outside it |
 | Season rollover | `rollover_service.py`, `run_bootstrap_service.py` use persisted MVP rollover/legacy simulation runs | Not the Master Season Closing + new-policy Week 1 + final Run completion contract |
 | Viewer/downstream | Legacy ranking/Race/Finals paths and Viewer exist | New Official history is not wired through historically faithful public ranking, entries/seeding and Finals |
 | Other pre-alpha scope | Master 31 remains authoritative | Minimum Reconstruction, player development/AI and lifecycle must not be dropped merely because ranking work dominated recent PRs |
@@ -75,7 +75,8 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   cover preview rollback, six forced failure boundaries, confirm, exact retry,
   changed-request conflict, publication/clock/event cardinality, Save/reopen and
   bidirectional restore. The broader targeted ranking/revision set passed **67**
-  tests. The expanded sporting slice passed **141** targeted lifecycle, ranking,
+  tests. Review hardening passed **134** targeted lifecycle, sporting-context,
+  ranking,
   revision, Match Engine and HTTP/SQLite tests; Fast CI backend smoke passed
   **99** tests.
   Review hardening additionally rejects Week 61 rollover, requires both reviewed
@@ -86,14 +87,15 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
 
 ## Best next implementation slice
 
-**Connect authoritative completed matches to sporting context and repeat the real Week Transition.** Ranking preparation now has an
+**Broaden completed-match sporting inputs beyond match counts and connect the configuration scheduler.** Ranking preparation now has an
 explicit manually declared, immutable Run/Branch authority snapshot for its completed/target boundary,
 base Saved Revision, canonical roster/tie-break identity, lifecycle eligibility,
 effective policy and provenance. The ordinary authoritative Admin route derives the
 ranking context server-side and preserves it through Save/restore. The transaction
-owner now also persists canonical player sporting history and the ordered provisional
-development/between-week stages. Next replace its explicit zero-match sporting
-context with owned completed-match inputs without adding future-week leakage.
+owner now persists canonical player sporting history and the ordered provisional
+development/between-week stages. An explicit manifest of owned complete tournament
+sources supplies competitive match counts; missing evidence fails closed. Next add
+match-derived Form/Sharpness/Fatigue changes and scheduled target-policy resolution.
 
 ## Current limitations
 

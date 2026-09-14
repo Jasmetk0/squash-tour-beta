@@ -17,7 +17,8 @@ The only absolute clamp is the decided attribute space `0..200`.
 contains canonical sporting records, fixed development timing (`Early Bloomer`,
 `Standard`, `Late Bloomer`), current Form and its individual long-term norm,
 Match Sharpness `0..100`, long-term Fatigue `0..100`, the effective historical
-development policy, completed-context fingerprint, predecessor fingerprint,
+effective target-week development policy, identity/fingerprint of the policy
+used for the completed-week update, completed-context fingerprint, predecessor fingerprint,
 owned InitialWorld fingerprint, stage provenance and stable snapshot
 fingerprint. Identity, birth, Tour entry and retirement remain exclusively in
 `PlayerLifecycleWeekState`. Health is explicitly `unsupported`; this slice does
@@ -50,12 +51,26 @@ target-week event/config payload. It may grow, hold, or decline attributes;
 physical/movement decline can begin earlier, while other groups can hold longer.
 Development timing shifts age, never potential. Potential is unchanged.
 
+The completed-week context has no implicit default. Production resolves it from
+an explicitly enumerated manifest of immutable Run/Branch-owned, persisted,
+complete tournament result sources. Each referenced played match requires its
+stored result fingerprint; the context stores canonical per-player counts and
+all source fingerprints. An absent context and an empty source manifest fail
+closed—absence of a bridge is never interpreted as zero matches. Target-week
+sources are not inspected.
+
 The following separate between-week kernel then regresses Form gradually toward
 the player's norm, decays Sharpness only when the owned completed-week context
 reports no competitive match, and recovers rather than resets Fatigue. Match
 gain is deliberately not fabricated. Development therefore observes the final
 pre-regression Form of the completed week, while the target snapshot stores the
 post-between-week values.
+
+Development always uses the predecessor snapshot's effective policy. The
+between-week activation seam installs the resolved target effective policy on
+the target snapshot and records the predecessor policy identity/fingerprint as
+the policy actually applied. Until a general configuration scheduler exists,
+production explicitly inherits the predecessor policy at this seam.
 
 ## Persistence, transition, and recovery
 

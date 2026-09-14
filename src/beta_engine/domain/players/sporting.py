@@ -32,11 +32,9 @@ class PlayerSportingBootstrapPolicy(FrozenInput):
 class PlayerDevelopmentPolicy(FrozenInput):
     policy_id: str = "weekly-player-development.provisional.v1"
     bootstrap_policy: PlayerSportingBootstrapPolicy = PlayerSportingBootstrapPolicy()
-    timing_shift_years: dict[DevelopmentTiming, int] = {
-        "Early Bloomer": -3,
-        "Standard": 0,
-        "Late Bloomer": 3,
-    }
+    early_bloomer_shift_years: int = -3
+    standard_shift_years: int = 0
+    late_bloomer_shift_years: int = 3
     physical_decline_age: int = 30
     other_decline_age: int = 34
     growth_end_age: int = 27
@@ -47,21 +45,52 @@ class PlayerDevelopmentPolicy(FrozenInput):
     fatigue_recovery: int = Field(default=8, ge=0, le=100)
     provenance: str = "Provisional deterministic pre-alpha calibration; all numeric values are tuneable"
 
+    def timing_shift(self, timing: DevelopmentTiming) -> int:
+        return {
+            "Early Bloomer": self.early_bloomer_shift_years,
+            "Standard": self.standard_shift_years,
+            "Late Bloomer": self.late_bloomer_shift_years,
+        }[timing]
+
+
+class CompetitiveMatchCount(FrozenInput):
+    player_id: str = Field(min_length=1)
+    count: int = Field(ge=0)
+
 
 class CompletedWeekSportingContext(FrozenInput):
     schema_version: Literal["completed_week_sporting_context.v1"] = (
         "completed_week_sporting_context.v1"
     )
-    competitive_match_counts: dict[str, int] = {}
-    provenance: str = (
-        "No Branch-owned completed-match sporting bridge; zero matches only"
-    )
+    run_id: str = Field(min_length=1)
+    branch_id: str = Field(min_length=1)
+    completed_week: RankingWeek
+    competitive_match_counts: tuple[CompetitiveMatchCount, ...]
+    source_fingerprints: tuple[str, ...]
+    provenance: str = Field(min_length=1)
 
     @model_validator(mode="after")
     def non_negative_counts(self):
-        if any(count < 0 for count in self.competitive_match_counts.values()):
-            raise ValueError("Competitive match counts cannot be negative")
+        ids = [item.player_id for item in self.competitive_match_counts]
+        if ids != sorted(set(ids)):
+            raise ValueError(
+                "Competitive match counts require canonical player identities"
+            )
+        if tuple(sorted(set(self.source_fingerprints))) != self.source_fingerprints:
+            raise ValueError(
+                "Completed sporting sources require canonical fingerprints"
+            )
         return self
+
+    def match_count(self, player_id: str) -> int:
+        return next(
+            (
+                item.count
+                for item in self.competitive_match_counts
+                if item.player_id == player_id
+            ),
+            0,
+        )
 
     @property
     def fingerprint(self) -> str:
@@ -70,7 +99,7 @@ class CompletedWeekSportingContext(FrozenInput):
 
 class PlayerSportingRecord(FrozenInput):
     player_id: str = Field(min_length=1)
-    attributes: dict[str, int]
+    attributes: tuple[tuple[str, int], ...]
     potential_ovr: int = Field(ge=0, le=200)
     potential_identity: str = Field(min_length=1)
     potential_provenance: str = Field(min_length=1)
@@ -83,13 +112,14 @@ class PlayerSportingRecord(FrozenInput):
 
     @model_validator(mode="after")
     def exact_catalog(self):
-        if set(self.attributes) != set(CANONICAL_PLAYER_ATTRIBUTES):
+        names = [name for name, _ in self.attributes]
+        if tuple(names) != CANONICAL_PLAYER_ATTRIBUTES:
             raise ValueError(
                 "Sporting state requires exactly the canonical 57 attributes"
             )
         if any(
             type(value) is not int or not 0 <= value <= 200
-            for value in self.attributes.values()
+            for _, value in self.attributes
         ):
             raise ValueError("Canonical attributes must be integers from 0 through 200")
         return self
@@ -97,7 +127,10 @@ class PlayerSportingRecord(FrozenInput):
     @property
     def ovr(self) -> int:
         # Provisional display calculation, deliberately separate from stored attributes.
-        return round(sum(self.attributes.values()) / len(self.attributes))
+        return round(sum(value for _, value in self.attributes) / len(self.attributes))
+
+    def attribute_value(self, name: str) -> int:
+        return next(value for candidate, value in self.attributes if candidate == name)
 
 
 class PlayerSportingWeekState(FrozenInput):
@@ -108,7 +141,9 @@ class PlayerSportingWeekState(FrozenInput):
     branch_id: str = Field(min_length=1)
     week: RankingWeek
     players: tuple[PlayerSportingRecord, ...]
-    policy: PlayerDevelopmentPolicy = PlayerDevelopmentPolicy()
+    effective_development_policy: PlayerDevelopmentPolicy = PlayerDevelopmentPolicy()
+    applied_development_policy_id: str | None = None
+    applied_development_policy_fingerprint: str | None = None
     completed_context_fingerprint: str = Field(min_length=1)
     source_initial_world_fingerprint: str = Field(min_length=1)
     predecessor_fingerprint: str | None = None
@@ -150,7 +185,13 @@ def weekly_player_development_update(
     """Develop from completed-week inputs; target-week state is intentionally absent."""
     if target.ordinal != predecessor.week.ordinal + 1:
         raise ValueError("Sporting development requires consecutive weeks")
-    unknown = set(context.competitive_match_counts) - {
+    if (context.run_id, context.branch_id, context.completed_week) != (
+        predecessor.run_id,
+        predecessor.branch_id,
+        predecessor.week,
+    ):
+        raise ValueError("Completed sporting context scope or week differs")
+    unknown = {item.player_id for item in context.competitive_match_counts} - {
         p.player_id for p in predecessor.players
     }
     if unknown:
@@ -158,48 +199,59 @@ def weekly_player_development_update(
     developed = []
     for player in sorted(predecessor.players, key=lambda item: item.player_id):
         age = player_ages[player.player_id]
-        shifted_age = (
-            age - predecessor.policy.timing_shift_years[player.development_timing]
+        shifted_age = age - predecessor.effective_development_policy.timing_shift(
+            player.development_timing
         )
         values = {}
         for attribute in CANONICAL_PLAYER_ATTRIBUTES:
             group = ATTRIBUTE_TO_GROUP[attribute]
             decline_age = (
-                predecessor.policy.physical_decline_age
+                predecessor.effective_development_policy.physical_decline_age
                 if group in {"Physical", "Move"}
-                else predecessor.policy.other_decline_age
+                else predecessor.effective_development_policy.other_decline_age
             )
             direction = (
                 1
-                if shifted_age <= predecessor.policy.growth_end_age
+                if shifted_age
+                <= predecessor.effective_development_policy.growth_end_age
                 else (-1 if shifted_age >= decline_age else 0)
             )
             form_adjustment = (
                 player.current_form - player.long_term_form_norm
-            ) * predecessor.policy.form_influence_basis_points
+            ) * predecessor.effective_development_policy.form_influence_basis_points
             threshold = max(
-                0, predecessor.policy.weekly_change_basis_points + form_adjustment
+                0,
+                predecessor.effective_development_policy.weekly_change_basis_points
+                + form_adjustment,
             )
             roll = _roll(
                 predecessor.run_id,
                 predecessor.branch_id,
                 predecessor.fingerprint,
                 predecessor.week.ordinal,
-                predecessor.policy.policy_id,
+                predecessor.effective_development_policy.policy_id,
                 context.fingerprint,
                 player.player_id,
                 attribute,
                 modulus=10000,
             )
             delta = direction if roll < threshold else 0
-            values[attribute] = min(200, max(0, player.attributes[attribute] + delta))
-        developed.append(player.model_copy(update={"attributes": values}))
+            values[attribute] = min(
+                200, max(0, player.attribute_value(attribute) + delta)
+            )
+        developed.append(
+            player.model_copy(update={"attributes": tuple(values.items())})
+        )
     return PlayerSportingWeekState(
         run_id=predecessor.run_id,
         branch_id=predecessor.branch_id,
         week=target,
         players=tuple(developed),
-        policy=predecessor.policy,
+        effective_development_policy=predecessor.effective_development_policy,
+        applied_development_policy_id=predecessor.effective_development_policy.policy_id,
+        applied_development_policy_fingerprint=_fingerprint(
+            predecessor.effective_development_policy.model_dump(mode="json")
+        ),
         completed_context_fingerprint=context.fingerprint,
         source_initial_world_fingerprint=predecessor.source_initial_world_fingerprint,
         predecessor_fingerprint=predecessor.fingerprint,
@@ -211,24 +263,33 @@ def between_week_state_update(
     developed: PlayerSportingWeekState,
     *,
     context: CompletedWeekSportingContext,
+    target_effective_development_policy: PlayerDevelopmentPolicy,
 ) -> PlayerSportingWeekState:
     players = []
     for player in developed.players:
         difference = player.long_term_form_norm - player.current_form
-        regression = int(difference / developed.policy.form_regression_divisor)
+        regression = int(
+            difference / developed.effective_development_policy.form_regression_divisor
+        )
         if regression == 0 and difference:
             regression = 1 if difference > 0 else -1
-        played = context.competitive_match_counts.get(player.player_id, 0)
+        played = context.match_count(player.player_id)
         sharpness = player.match_sharpness
         if played == 0:
-            sharpness = max(0, sharpness - developed.policy.inactive_sharpness_decay)
+            sharpness = max(
+                0,
+                sharpness
+                - developed.effective_development_policy.inactive_sharpness_decay,
+            )
         players.append(
             player.model_copy(
                 update={
                     "current_form": player.current_form + regression,
                     "match_sharpness": sharpness,
                     "long_term_fatigue": max(
-                        0, player.long_term_fatigue - developed.policy.fatigue_recovery
+                        0,
+                        player.long_term_fatigue
+                        - developed.effective_development_policy.fatigue_recovery,
                     ),
                 }
             )
@@ -236,6 +297,7 @@ def between_week_state_update(
     return developed.model_copy(
         update={
             "players": tuple(players),
+            "effective_development_policy": target_effective_development_policy,
             "stage_provenance": "between_week_state_update.v1:post-regression-recovery;health-unsupported",
         }
     )

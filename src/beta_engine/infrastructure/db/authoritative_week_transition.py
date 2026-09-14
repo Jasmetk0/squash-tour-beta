@@ -39,6 +39,7 @@ from beta_engine.infrastructure.db.player_lifecycle_state import (
 )
 from beta_engine.infrastructure.db.player_sporting_state import (
     get_sporting,
+    resolve_completed_context_from_owned_sources,
     transition_sporting,
 )
 from beta_engine.domain.rankings.official import (
@@ -321,6 +322,17 @@ def transition_in_transaction(session: Session, awards, command):
     if predecessor_lifecycle is None:
         raise ValueError(
             "Authoritative predecessor player lifecycle snapshot is missing"
+        )
+    if command.tournaments:
+        resolve_completed_context_from_owned_sources(
+            session,
+            run_id=command.run_id,
+            branch_id=command.branch_id,
+            completed_week=command.completed_week,
+            player_ids=tuple(
+                player.player_id for player in predecessor_lifecycle.players
+            ),
+            source_ids=tuple(binding.edition_id for binding in command.tournaments),
         )
     sporting = transition_sporting(
         session,

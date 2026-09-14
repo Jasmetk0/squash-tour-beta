@@ -18,10 +18,15 @@ from beta_engine.domain.calendar.season_weeks import (
 from beta_engine.infrastructure.db.player_lifecycle_state import put_lifecycle
 from beta_engine.domain.players.attribute_catalog import CANONICAL_PLAYER_ATTRIBUTES
 from beta_engine.domain.players.sporting import (
+    CompletedWeekSportingContext,
+    CompetitiveMatchCount,
     PlayerSportingRecord,
     PlayerSportingWeekState,
 )
-from beta_engine.infrastructure.db.player_sporting_state import put_sporting
+from beta_engine.infrastructure.db.player_sporting_state import (
+    put_completed_context,
+    put_sporting,
+)
 from beta_engine.infrastructure.db.models import RunProspectModel
 
 from test_admin_ranking_preparation_api import initial
@@ -110,7 +115,9 @@ def install_owned_lifecycle(
                 players=tuple(
                     PlayerSportingRecord(
                         player_id=identity.player_id,
-                        attributes={name: 100 for name in CANONICAL_PLAYER_ATTRIBUTES},
+                        attributes=tuple(
+                            (name, 100) for name in CANONICAL_PLAYER_ATTRIBUTES
+                        ),
                         potential_ovr=120,
                         potential_identity=f"fixture:{identity.player_id}",
                         potential_provenance="isolated acceptance fixture",
@@ -125,6 +132,20 @@ def install_owned_lifecycle(
                 completed_context_fingerprint="fixture-bootstrap",
                 source_initial_world_fingerprint="acceptance-fixture",
                 stage_provenance="isolated acceptance fixture",
+            ),
+        )
+        put_completed_context(
+            session,
+            CompletedWeekSportingContext(
+                run_id=run_id,
+                branch_id=branch_id,
+                completed_week=week,
+                competitive_match_counts=tuple(
+                    CompetitiveMatchCount(player_id=identity.player_id, count=0)
+                    for identity in identities
+                ),
+                source_fingerprints=("isolated-authoritative-fixture",),
+                provenance="isolated test authority explicitly proves no matches",
             ),
         )
 
@@ -330,10 +351,10 @@ def test_real_http_retirement_preview_confirm_and_exact_retry(tmp_path):
         assert restored_sporting == sporting_payload
 
 
-def test_post_transition_legacy_revision_without_lifecycle_restore_is_atomic(tmp_path):
+def test_post_transition_legacy_revision_without_sporting_restore_is_atomic(tmp_path):
     """A legacy target after Week 1 cannot be reconstructed and changes nothing."""
     from test_initial_world_ranking_integration import (
-        _make_legacy_revision_without_lifecycle,
+        _make_legacy_revision_without_sporting,
     )
 
     path = tmp_path / "post-transition-legacy.db"
@@ -368,7 +389,7 @@ def test_post_transition_legacy_revision_without_lifecycle_restore_is_atomic(tmp
             },
         )
         assert status == 201
-        _make_legacy_revision_without_lifecycle(path, post_transition_revision)
+        _make_legacy_revision_without_sporting(path, post_transition_revision)
         before = dump(path)
         status, rejected = _request(
             "POST",
@@ -383,6 +404,7 @@ def test_post_transition_legacy_revision_without_lifecycle_restore_is_atomic(tmp
             },
         )
         assert status == 409
+        assert "sporting" in str(rejected)
         assert "cannot be reconstructed unambiguously" in str(rejected)
         assert dump(path) == before
 
@@ -733,3 +755,130 @@ def test_exact_retry_rejects_corrupt_canonical_world_event(tmp_path):
         before = dump(path)
         assert confirm(root, command, preview)[0] == 409
         assert dump(path) == before
+
+
+def test_missing_completed_week_sporting_evidence_fails_closed(tmp_path):
+    path = tmp_path / "missing-sporting-context.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        run_id, branch_id, command = prepared_transition(server, "missing context")
+        with sqlite3.connect(path) as connection:
+            connection.execute("DELETE FROM completed_week_sporting_contexts")
+        before = dump(path)
+        root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/week-transitions"
+        status, rejected = _request("POST", root + "/preview", command)
+        assert status == 409
+        assert "zero matches cannot be inferred" in str(rejected)
+        assert dump(path) == before
+
+
+def test_reopened_week_two_is_a_real_predecessor_for_week_three(tmp_path):
+    path = tmp_path / "repeated-transition.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        run_id, branch_id, first_command = prepared_transition(server, "Repeated path")
+        transition_root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/week-transitions"
+        first_preview = _request("POST", transition_root + "/preview", first_command)[1]
+        first_result = confirm(transition_root, first_command, first_preview)[1]
+        ranking_root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/ranking-candidates"
+        save_preview = _request("GET", ranking_root + "/save/preview")[1]
+        saved = _request(
+            "POST",
+            ranking_root + "/save",
+            {
+                "expected_draft_version": save_preview["draft_version"],
+                "expected_ranking_fingerprint": save_preview["ranking_fingerprint"],
+            },
+        )[1]
+        week_two_revision = saved["saved_revision"]["revision_id"]
+
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
+        from beta_engine.infrastructure.db.official_rankings import (
+            OfficialRankingCandidateStore,
+        )
+
+        factory = server.app.state.runtime.repository._session_factory
+        week_two = RankingWeek(season_index=0, week=2)
+        week_three = RankingWeek(season_index=0, week=3)
+        with factory.begin() as session:
+            lifecycle = get_lifecycle(
+                session, run_id=run_id, branch_id=branch_id, week=week_two
+            )
+            assert lifecycle is not None
+            put_completed_context(
+                session,
+                CompletedWeekSportingContext(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    completed_week=week_two,
+                    competitive_match_counts=tuple(
+                        CompetitiveMatchCount(player_id=p.player_id, count=0)
+                        for p in lifecycle.players
+                    ),
+                    source_fingerprints=("authoritative-week-two-empty-manifest",),
+                    provenance="test authority explicitly proves Week 2 had no matches",
+                ),
+            )
+            ranking = OfficialRankingCandidateStore(session).history(
+                run_id=run_id, branch_id=branch_id
+            )[-1]
+            roster = lifecycle.ranking_roster()
+        authority_payload = {
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "base_revision_id": week_two_revision,
+            "completed_week": week_two.model_dump(mode="json"),
+            "target_week": week_three.model_dump(mode="json"),
+            "players": [player.model_dump(mode="json") for player in roster],
+            "policy": ranking.policy.model_dump(mode="json"),
+            "provenance": "Repeated acceptance frozen boundary",
+            "adopted_by_command_id": "authority-week-three",
+            "audit": first_command["audit"],
+        }
+        ranking_root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/ranking-candidates"
+        status, authority = _request(
+            "POST", ranking_root + "/transition-authorities", authority_payload
+        )
+        assert status == 201
+        save_preview = _request("GET", ranking_root + "/save/preview")[1]
+        saved_authority = _request(
+            "POST",
+            ranking_root + "/save",
+            {
+                "expected_draft_version": save_preview["draft_version"],
+                "expected_ranking_fingerprint": save_preview["ranking_fingerprint"],
+            },
+        )[1]
+        second_command = {
+            "command_id": "transition-week-three",
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "base_revision_id": saved_authority["saved_revision"]["revision_id"],
+            "completed_week": week_two.model_dump(mode="json"),
+            "target_week": week_three.model_dump(mode="json"),
+            "authority_fingerprint": RankingTransitionAuthority.model_validate_json(
+                json.dumps(authority)
+            ).fingerprint,
+            "tournaments": [],
+            "audit": first_command["audit"],
+        }
+        transition_root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/week-transitions"
+        second_preview = _request("POST", transition_root + "/preview", second_command)[
+            1
+        ]
+        second = confirm(transition_root, second_command, second_preview)[1]
+        assert (
+            second["result"]["player_sporting_fingerprint"]
+            == second_preview["result"]["player_sporting_fingerprint"]
+        )
+        with sqlite3.connect(path) as connection:
+            states = [
+                json.loads(row[0])
+                for row in connection.execute(
+                    "SELECT payload_json FROM player_sporting_week_states ORDER BY week_ordinal"
+                )
+            ]
+        assert len(states) == 3
+        assert (
+            states[2]["predecessor_fingerprint"]
+            == first_result["result"]["player_sporting_fingerprint"]
+        )

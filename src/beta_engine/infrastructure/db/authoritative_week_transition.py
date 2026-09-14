@@ -37,6 +37,10 @@ from beta_engine.infrastructure.db.player_lifecycle_state import (
     get_lifecycle,
     transition_lifecycle,
 )
+from beta_engine.infrastructure.db.player_sporting_state import (
+    get_sporting,
+    transition_sporting,
+)
 from beta_engine.domain.rankings.official import (
     RankingWeek,
     load_official_ranking_snapshot,
@@ -49,7 +53,10 @@ def _fault_injection_point(_name: str) -> None:
 
 
 def _world_event_payload(
-    command, ranking_fingerprint: str, lifecycle_fingerprint: str
+    command,
+    ranking_fingerprint: str,
+    lifecycle_fingerprint: str,
+    sporting_fingerprint: str,
 ) -> str:
     return json.dumps(
         {
@@ -58,6 +65,7 @@ def _world_event_payload(
             "target_week": command.target_week.model_dump(mode="json"),
             "official_ranking_fingerprint": ranking_fingerprint,
             "player_lifecycle_fingerprint": lifecycle_fingerprint,
+            "player_sporting_fingerprint": sporting_fingerprint,
         },
         sort_keys=True,
         separators=(",", ":"),
@@ -151,6 +159,7 @@ def transition_in_transaction(session: Session, awards, command):
                     command,
                     result.official_ranking_fingerprint,
                     result.player_lifecycle_fingerprint,
+                    result.player_sporting_fingerprint,
                 )
             )
         ):
@@ -191,6 +200,19 @@ def transition_in_transaction(session: Session, awards, command):
             raise ValueError("Completed Week Transition player lifecycle is missing")
         if lifecycle.fingerprint != result.player_lifecycle_fingerprint:
             raise ValueError("Completed Week Transition player lifecycle is corrupt")
+        sporting = get_sporting(
+            session,
+            run_id=command.run_id,
+            branch_id=command.branch_id,
+            week=result.target_week,
+        )
+        if (
+            sporting is None
+            or sporting.fingerprint != result.player_sporting_fingerprint
+        ):
+            raise ValueError(
+                "Completed Week Transition player sporting state is corrupt"
+            )
         return result
 
     run = session.get(RunContainerModel, command.run_id)
@@ -290,6 +312,25 @@ def transition_in_transaction(session: Session, awards, command):
     ):
         raise ValueError("Authoritative world predecessor state differs")
 
+    predecessor_lifecycle = get_lifecycle(
+        session,
+        run_id=command.run_id,
+        branch_id=command.branch_id,
+        week=command.completed_week,
+    )
+    if predecessor_lifecycle is None:
+        raise ValueError(
+            "Authoritative predecessor player lifecycle snapshot is missing"
+        )
+    sporting = transition_sporting(
+        session,
+        run_id=command.run_id,
+        branch_id=command.branch_id,
+        completed=command.completed_week,
+        target=command.target_week,
+        lifecycle=predecessor_lifecycle,
+        stage_hook=_fault_injection_point,
+    )
     lifecycle = transition_lifecycle(
         session,
         run_id=command.run_id,
@@ -352,7 +393,7 @@ def transition_in_transaction(session: Session, awards, command):
     world.current_ordinal = command.target_week.ordinal
     world.ranking_fingerprint = snapshot.fingerprint
     event_payload = _world_event_payload(
-        command, snapshot.fingerprint, lifecycle.fingerprint
+        command, snapshot.fingerprint, lifecycle.fingerprint, sporting.fingerprint
     )
     session.add(
         AuthoritativeWorldEventModel(
@@ -372,6 +413,7 @@ def transition_in_transaction(session: Session, awards, command):
         target_week=command.target_week,
         official_ranking_fingerprint=snapshot.fingerprint,
         player_lifecycle_fingerprint=lifecycle.fingerprint,
+        player_sporting_fingerprint=sporting.fingerprint,
     )
     session.add(
         AuthoritativeWeekTransitionReceiptModel(

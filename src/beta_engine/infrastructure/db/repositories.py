@@ -86,6 +86,7 @@ from beta_engine.infrastructure.db.models import (
     LegacySimulationRunMappingModel,
     InitialWorldStateModel,
     PlayerLifecycleWeekStateModel,
+    PlayerSportingWeekStateModel,
     RaceSnapshotModel,
     RankingSnapshotModel,
     RunGeneratedPlayerProvenanceModel,
@@ -116,6 +117,12 @@ from beta_engine.infrastructure.db.player_lifecycle_state import (
     bootstrap_lifecycle,
     capture_saved_lifecycle,
     restore_saved_lifecycle,
+)
+from beta_engine.infrastructure.db.player_sporting_state import (
+    PLAYER_SPORTING_COMPONENT_KEY,
+    bootstrap_sporting,
+    capture_saved_sporting,
+    restore_saved_sporting,
 )
 from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_EVENT_LEGACY_STATE,
@@ -1302,7 +1309,9 @@ class SimulationPersistenceRepository:
                 raise ValueError(
                     "Stored InitialWorldState changed during lifecycle backfill"
                 )
-            return bootstrap_lifecycle(session, stored, policy)
+            lifecycle = bootstrap_lifecycle(session, stored, policy)
+            bootstrap_sporting(session, stored)
+            return lifecycle
 
     def adopt_initial_world(self, state, lifecycle_policy=None):
         with self._session_factory.begin() as session:
@@ -1317,6 +1326,7 @@ class SimulationPersistenceRepository:
                 )
             installed = put_initial_world(session, state)
             bootstrap_lifecycle(session, installed, lifecycle_policy)
+            bootstrap_sporting(session, installed)
             return installed
 
     def adopt_ranking_transition_authority(self, authority):
@@ -3077,6 +3087,16 @@ class SimulationPersistenceRepository:
                     raise SavedRevisionRestoreUnsupportedError(
                         "restore is blocked because the Saved Revision does not capture player lifecycle state"
                     )
+                has_uncaptured_sporting = session.scalar(
+                    select(PlayerSportingWeekStateModel.run_id).where(
+                        PlayerSportingWeekStateModel.run_id == run_id,
+                        PlayerSportingWeekStateModel.branch_id == branch_id,
+                    ).limit(1)
+                ) is not None
+                if has_uncaptured_sporting and PLAYER_SPORTING_COMPONENT_KEY not in state.saved_revision.payload.get("content", {}):
+                    raise SavedRevisionRestoreUnsupportedError(
+                        "restore is blocked because the Saved Revision does not capture player sporting state"
+                    )
 
                 supported_payload_schemas = {
                     INITIAL_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
@@ -3109,12 +3129,14 @@ class SimulationPersistenceRepository:
                         RANKING_COMPONENT_KEY,
                         INITIAL_WORLD_COMPONENT_KEY,
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
+                        PLAYER_SPORTING_COMPONENT_KEY,
                     }
                     or set(target_content)
                     - {
                         RANKING_COMPONENT_KEY,
                         INITIAL_WORLD_COMPONENT_KEY,
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
+                        PLAYER_SPORTING_COMPONENT_KEY,
                     }
                     or has_unrestorable_run_state
                 ):
@@ -3200,6 +3222,22 @@ class SimulationPersistenceRepository:
                         raise SavedRevisionRestoreUnsupportedError(
                             f"Cannot restore player lifecycle: {exc}"
                         ) from exc
+                if (
+                    PLAYER_SPORTING_COMPONENT_KEY in current_content
+                    or PLAYER_SPORTING_COMPONENT_KEY in target_content
+                ):
+                    try:
+                        restore_saved_sporting(
+                            session,
+                            current_payload=state.saved_revision.payload,
+                            target_payload=target_revision.payload,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                        )
+                    except ValueError as exc:
+                        raise SavedRevisionRestoreUnsupportedError(
+                            f"Cannot restore player sporting state: {exc}"
+                        ) from exc
 
                 payload = viewer_branch_saved_revision_payload(
                     base_payload=target_revision.payload,
@@ -3221,6 +3259,9 @@ class SimulationPersistenceRepository:
                 # immutable legacy target. The new restore revision must describe
                 # the actual post-restore state, without rewriting that target.
                 capture_saved_lifecycle(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
+                capture_saved_sporting(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 summary = branch_restore_saved_revision_change_summary(
@@ -3600,6 +3641,9 @@ class SimulationPersistenceRepository:
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_lifecycle(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
+                capture_saved_sporting(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 summary = viewer_branch_saved_revision_change_summary(

@@ -36,6 +36,7 @@ def _make_legacy_revision_without_lifecycle(path, revision_id):
         payload = json.loads(row[7])
         legacy_payload = json.loads(row[7])
         legacy_payload["content"].pop("player_lifecycle")
+        legacy_payload["content"].pop("player_sporting_state", None)
         content_hash = saved_revision_content_hash(
             revision_id=row[0],
             run_id=row[1],
@@ -331,6 +332,10 @@ def test_production_pool_to_owned_world_derived_ranking_save_reopen_restore(tmp_
                 "SELECT fingerprint,payload_json FROM player_lifecycle_week_states WHERE week_ordinal=0"
             ).fetchone()
             live = json.loads(live_row[1])
+            sporting_live_row = connection.execute(
+                "SELECT fingerprint,payload_json FROM player_sporting_week_states WHERE week_ordinal=0"
+            ).fetchone()
+            sporting_live = json.loads(sporting_live_row[1])
             stored_legacy = json.loads(
                 connection.execute(
                     "SELECT payload_json FROM branch_saved_revisions WHERE revision_id=?",
@@ -341,6 +346,10 @@ def test_production_pool_to_owned_world_derived_ranking_save_reopen_restore(tmp_
         assert component["states"] == [live]
         assert component["states"][0] == live and live_row[0]
         assert stored_legacy == immutable_legacy
+        assert compatibility_payload["content"]["player_sporting_state"]["states"] == [
+            sporting_live
+        ]
+        assert sporting_live_row[0]
         restore_ranked = (
             f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}"
             f"/saved-revisions/{ranked_revision}/restore"

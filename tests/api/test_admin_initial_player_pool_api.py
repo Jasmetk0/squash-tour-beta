@@ -104,7 +104,7 @@ def test_generate_preview_dry_run_and_lock_workflow(tmp_path) -> None:
             preview["metadata"]["population_weighting"]
             == "effective_population_birth_year_aggregate"
         )
-        assert preview["metadata"]["population_year_min"] == 1955
+        assert preview["metadata"]["population_year_min"] == 1954
         assert preview["metadata"]["population_year_max"] == 1985
         diagnostics = preview["metadata"]["population_weighting_diagnostics"]
         assert diagnostics

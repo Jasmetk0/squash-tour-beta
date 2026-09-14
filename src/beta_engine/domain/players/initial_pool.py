@@ -367,29 +367,51 @@ def initial_pool_effective_population_quantity(
     ).effective_population_quantity
 
 
+def initial_pool_birth_year_weights(season_start_year: int) -> dict[int, float]:
+    """Expected birth-year distribution under uniform FAX birth weeks."""
+    from beta_engine.domain.calendar.season_weeks import (
+        birth_year_for_age_at_calendar_position,
+        season_week_to_calendar_position,
+    )
+
+    position = season_week_to_calendar_position(season_start_year, 1)
+    result: dict[int, float] = {}
+    for age, age_weight in initial_pool_age_weights().items():
+        for birth_week in range(1, DEFAULT_WEEKS_PER_CALENDAR_YEAR + 1):
+            birth_year = birth_year_for_age_at_calendar_position(
+                age=age,
+                birth_year_week=birth_week,
+                calendar_year=position.calendar_year,
+                year_week=position.year_week,
+            )
+            result[birth_year] = (
+                result.get(birth_year, 0.0)
+                + age_weight / DEFAULT_WEEKS_PER_CALENDAR_YEAR
+            )
+    return dict(sorted(result.items()))
+
+
 def initial_pool_effective_population_diagnostics(
     country: Country, season_start_year: int
 ) -> InitialPoolPopulationWeightingDiagnostic:
     """Explain the weighted effective-population aggregate without mutating country data."""
 
     age_weights = initial_pool_age_weights()
+    birth_year_weights = initial_pool_birth_year_weights(season_start_year)
     source_type_weight_shares: dict[str, float] = {}
     estimated_weight_share = 0.0
     source_years: list[int] = []
     effective_population_quantity = sum(
-        resolve_effective_population(
-            country, season_start_year - age
-        ).effective_population
-        * age_weight
-        for age, age_weight in age_weights.items()
+        resolve_effective_population(country, year).effective_population * weight
+        for year, weight in birth_year_weights.items()
     )
-    for age, age_weight in age_weights.items():
-        resolved = resolve_effective_population(country, season_start_year - age)
+    for year, weight in birth_year_weights.items():
+        resolved = resolve_effective_population(country, year)
         source_type_weight_shares[resolved.source_type] = (
-            source_type_weight_shares.get(resolved.source_type, 0.0) + age_weight
+            source_type_weight_shares.get(resolved.source_type, 0.0) + weight
         )
         if resolved.is_estimated:
-            estimated_weight_share += age_weight
+            estimated_weight_share += weight
         if resolved.source_year is not None:
             source_years.append(resolved.source_year)
     source_type_weight_shares = {
@@ -406,8 +428,8 @@ def initial_pool_effective_population_diagnostics(
         final_country_count=0,
         effective_population_quantity=effective_population_quantity,
         legacy_population=country.population,
-        population_year_min=season_start_year - max(age_weights),
-        population_year_max=season_start_year - min(age_weights),
+        population_year_min=min(birth_year_weights),
+        population_year_max=max(birth_year_weights),
         age_min=min(age_weights),
         age_max=max(age_weights),
         source_type_weight_shares=dict(sorted(source_type_weight_shares.items())),
@@ -803,10 +825,11 @@ class InitialPlayerPoolGenerator:
     ) -> dict[str, int | str | list[InitialPoolPopulationWeightingDiagnostic]]:
         season_start_year = self._season_start_year(season)
         age_weights = initial_pool_age_weights()
+        birth_year_weights = initial_pool_birth_year_weights(season_start_year)
         return {
             "population_weighting": "effective_population_birth_year_aggregate",
-            "population_year_min": season_start_year - max(age_weights),
-            "population_year_max": season_start_year - min(age_weights),
+            "population_year_min": min(birth_year_weights),
+            "population_year_max": max(birth_year_weights),
             "default_population_year": DEFAULT_POPULATION_YEAR,
             "age_min": min(age_weights),
             "age_max": max(age_weights),

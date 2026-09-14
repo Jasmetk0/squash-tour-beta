@@ -140,6 +140,22 @@ def birth_year_for_age_at_calendar_position(
     return calendar_year - age - (birth_year_week > year_week)
 
 
+def completed_weeks_at_calendar_position(
+    *, birth_year: int, birth_year_week: int, calendar_year: int, year_week: int
+) -> int:
+    """Return absolute completed FAX weeks since the birth calendar position."""
+    _validate_year_week(birth_year_week)
+    _validate_year_week(year_week)
+    weeks = (
+        (calendar_year - birth_year) * DEFAULT_WEEKS_PER_CALENDAR_YEAR
+        + year_week
+        - birth_year_week
+    )
+    if weeks < 0:
+        raise ValueError("birth identity lies after the current calendar position")
+    return weeks
+
+
 def year_week_to_season_week(year_week: int) -> int:
     """Map a 1-based FAX Year Week to its 1-based Season Week."""
 

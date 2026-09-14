@@ -23,6 +23,11 @@ completed FAX years at the Week-1 calendar position (2000 / Year Week 37 for the
 first season), derived from birth year and birth Year Week rather than the legacy
 coarse season-start age. Initial-pool generation preserves its sampled starting
 age by deriving birth year after its branch-scoped birth-week draw.
+Country allocation preserves `populationYear = birthYear` before individual
+birth-week draws by aggregating each age bucket uniformly over all 61 possible
+birth Year Weeks and resolving population for the resulting birth years. Absolute
+season-start age weeks use the same calendar coordinates rather than completed
+years, so birthdays after YW37 do not lose a FAX year.
 
 Existing `run_prospects` are Run-scoped rather than Branch-owned. A row matching
 the target calendar/season week therefore blocks transition before lifecycle

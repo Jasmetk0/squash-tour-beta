@@ -261,6 +261,7 @@ class InitialPoolSeasonBootstrapService:
         season_start_year = self._season_start_year(season)
         from beta_engine.domain.calendar.season_weeks import (
             age_at_calendar_position,
+            completed_weeks_at_calendar_position,
             season_week_to_calendar_position,
         )
 
@@ -271,8 +272,11 @@ class InitialPoolSeasonBootstrapService:
             calendar_year=initial_position.calendar_year,
             year_week=initial_position.year_week,
         )
-        age_weeks = max(
-            0, age_years * 61 + (initial_position.year_week - player.birth_year_week)
+        age_weeks = completed_weeks_at_calendar_position(
+            birth_year=player.birth_year,
+            birth_year_week=player.birth_year_week,
+            calendar_year=initial_position.calendar_year,
+            year_week=initial_position.year_week,
         )
         source_generation: SourceGeneration = (
             "manual"

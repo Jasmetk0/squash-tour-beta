@@ -1,6 +1,9 @@
 import pytest
 
 from beta_engine.domain.countries import Country
+from beta_engine.domain.countries.population_resolver import (
+    resolve_effective_population,
+)
 from beta_engine.domain.calendar.season_weeks import (
     age_at_calendar_position,
     season_week_to_year_week,
@@ -10,6 +13,7 @@ from beta_engine.domain.players.initial_pool import (
     initial_pool_age_weights,
     initial_pool_effective_population_diagnostics,
     initial_pool_effective_population_quantity,
+    initial_pool_birth_year_weights,
 )
 
 
@@ -67,8 +71,8 @@ def test_effective_population_quantity_uses_birth_year_window_not_season_year() 
 
     quantity = initial_pool_effective_population_quantity(c, 2000)
     expected = sum(
-        timeline[2000 - age] * weight
-        for age, weight in initial_pool_age_weights().items()
+        resolve_effective_population(c, year).effective_population * weight
+        for year, weight in initial_pool_birth_year_weights(2000).items()
     )
 
     assert quantity == pytest.approx(expected)
@@ -110,13 +114,14 @@ def test_effective_population_diagnostics_exact_source_type() -> None:
 
     diagnostics = initial_pool_effective_population_diagnostics(c, 2000)
     expected = sum(
-        timeline[2000 - age] * weight
-        for age, weight in initial_pool_age_weights().items()
+        resolve_effective_population(c, year).effective_population * weight
+        for year, weight in initial_pool_birth_year_weights(2000).items()
     )
 
     assert diagnostics.effective_population_quantity == pytest.approx(expected)
-    assert diagnostics.source_type_weight_shares == {"exact_population_year": 1.0}
-    assert diagnostics.estimated_weight_share == 0.0
+    assert diagnostics.source_type_weight_shares["exact_population_year"] < 1.0
+    assert diagnostics.source_type_weight_shares["nearest_population_year"] > 0.0
+    assert diagnostics.estimated_weight_share > 0.0
     assert diagnostics.source_year_min == 1955
     assert diagnostics.source_year_max == 1985
 
@@ -189,8 +194,34 @@ def test_effective_population_diagnostics_use_initial_pool_age_weights() -> None
     assert sum(diagnostics.source_type_weight_shares.values()) == pytest.approx(1.0)
     assert diagnostics.age_min == 15
     assert diagnostics.age_max == 45
-    assert diagnostics.population_year_min == 1955
+    assert diagnostics.population_year_min == 1954
     assert diagnostics.population_year_max == 1985
+
+
+def test_birth_year_weighting_uses_both_years_for_one_age_bucket(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "beta_engine.domain.players.initial_pool.initial_pool_age_weights",
+        lambda: {25: 1.0},
+    )
+    weights = initial_pool_birth_year_weights(2000)
+    assert weights == pytest.approx({1974: 24 / 61, 1975: 37 / 61})
+    timeline = {1974: 610, 1975: 61}
+    c = country(
+        "YWK",
+        population=1,
+        population_by_year=timeline,
+        system=3,
+        popularity=3,
+        tradition=3,
+    )
+    diagnostic = initial_pool_effective_population_diagnostics(c, 2000)
+    assert diagnostic.effective_population_quantity == pytest.approx(
+        610 * 24 / 61 + 61 * 37 / 61
+    )
+    assert (diagnostic.population_year_min, diagnostic.population_year_max) == (
+        1974,
+        1975,
+    )
 
 
 def test_initial_pool_allocation_favors_higher_birth_year_effective_population() -> (

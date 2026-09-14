@@ -299,9 +299,15 @@ def transition_in_transaction(session: Session, awards, command):
     )
     _fault_injection_point("after_lifecycle_staging")
     derived_players = lifecycle.ranking_roster()
-    if authority.players != derived_players:
+    authority_identity = tuple(
+        (p.player_id, p.tie_break_token, p.tour_entry_week) for p in authority.players
+    )
+    derived_identity = tuple(
+        (p.player_id, p.tie_break_token, p.tour_entry_week) for p in derived_players
+    )
+    if authority_identity != derived_identity:
         raise ValueError(
-            "Ranking transition roster differs from authoritative player lifecycle state"
+            "Ranking transition roster identity differs from authoritative player lifecycle state"
         )
 
     ranking_command = RankingWeekCommand(

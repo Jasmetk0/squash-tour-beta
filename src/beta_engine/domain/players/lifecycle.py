@@ -19,9 +19,11 @@ from beta_engine.domain.calendar.season_weeks import (
     season_week_to_year_week,
 )
 
-MIN_RUNTIME_PLAYER_AGE = 15
-MAX_ACTIVE_TOUR_AGE = 45
-MAX_RUNTIME_PLAYER_AGE = 46
+
+class PlayerLifecyclePolicy(FrozenInput):
+    policy_id: str = Field(min_length=1)
+    automatic_retirement_age: int = Field(ge=16, le=120)
+    provenance: str = Field(min_length=1)
 
 
 def derive_birth_year_from_age(season_start_year: int, age: int) -> int:
@@ -64,6 +66,11 @@ class PlayerLifecycleWeekState(FrozenInput):
     players: tuple[PlayerLifecycleIdentity, ...]
     source_initial_world_fingerprint: str = Field(min_length=1)
     predecessor_fingerprint: str | None = None
+    policy: PlayerLifecyclePolicy = PlayerLifecyclePolicy(
+        policy_id="official-fax-lifecycle.v1",
+        automatic_retirement_age=46,
+        provenance="Official Run default; legacy v1 lifecycle migration",
+    )
 
     @model_validator(mode="after")
     def canonical_roster(self):
@@ -89,8 +96,13 @@ class PlayerLifecycleWeekState(FrozenInput):
             )
             if player.age != expected_age:
                 raise ValueError("Lifecycle age differs from canonical birth identity")
-            if player.status == "active" and player.age >= 46:
-                raise ValueError("Active lifecycle player cannot be age 46 or older")
+            if (
+                player.status == "active"
+                and player.age >= self.policy.automatic_retirement_age
+            ):
+                raise ValueError(
+                    "Active lifecycle player reached the stored automatic retirement age"
+                )
             if (
                 player.retirement_effective_week is not None
                 and player.retirement_effective_week.ordinal > self.week.ordinal
@@ -141,7 +153,10 @@ def advance_lifecycle(
     for player in predecessor.players:
         if player.birth_year_week == season_week_to_year_week(target.week):
             age = player.age + 1
-            newly_retired = player.status == "active" and age == 46
+            newly_retired = (
+                player.status == "active"
+                and age == predecessor.policy.automatic_retirement_age
+            )
             player = player.model_copy(
                 update={
                     "age": age,
@@ -159,4 +174,5 @@ def advance_lifecycle(
         players=tuple(players),
         source_initial_world_fingerprint=predecessor.source_initial_world_fingerprint,
         predecessor_fingerprint=predecessor.fingerprint,
+        policy=predecessor.policy,
     )

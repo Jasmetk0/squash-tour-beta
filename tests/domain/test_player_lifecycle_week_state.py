@@ -10,13 +10,16 @@ from beta_engine.domain.calendar.season_weeks import (
 )
 from beta_engine.domain.players.lifecycle import (
     PlayerLifecycleIdentity,
+    PlayerLifecyclePolicy,
     PlayerLifecycleWeekState,
     advance_lifecycle,
 )
 from beta_engine.domain.rankings.official import RankingWeek
 
 
-def state(*, age=30, birthday=38, season_week=1, status="active", retirement=None):
+def state(
+    *, age=30, birthday=38, season_week=1, status="active", retirement=None, policy=None
+):
     position = season_week_to_calendar_position(2000, season_week)
     birth_year = birth_year_for_age_at_calendar_position(
         age=age,
@@ -29,6 +32,7 @@ def state(*, age=30, birthday=38, season_week=1, status="active", retirement=Non
         branch_id="branch",
         week=RankingWeek(season_index=0, week=season_week),
         source_initial_world_fingerprint="world",
+        **({"policy": policy} if policy is not None else {}),
         players=(
             PlayerLifecycleIdentity(
                 player_id="p1",
@@ -77,6 +81,27 @@ def test_birthday_and_retirement_are_effective_in_opened_week():
         RankingWeek(season_index=0, week=2),
     )
     assert after.ranking_roster()[0].retired is True
+
+
+def test_stored_policy_controls_custom_retirement_age_and_fingerprint():
+    custom = PlayerLifecyclePolicy(
+        policy_id="custom-50",
+        automatic_retirement_age=50,
+        provenance="Explicit custom test policy",
+    )
+    snapshot = state(age=46, policy=custom)
+    validated = PlayerLifecycleWeekState.model_validate(snapshot.model_dump())
+    assert validated.players[0].status == "active"
+    assert (
+        validated.fingerprint
+        == PlayerLifecycleWeekState.model_validate(validated.model_dump()).fingerprint
+    )
+    assert (
+        validated.fingerprint
+        != state(
+            age=46, policy=custom.model_copy(update={"automatic_retirement_age": 51})
+        ).fingerprint
+    )
 
 
 def test_retired_player_keeps_aging_and_original_retirement_week():

@@ -11,10 +11,19 @@ preserves player and birth identity, current age, status, retirement effective
 week, authoritative Tour-entry week, tie-break identity/provenance, origin,
 initial-world fingerprint, predecessor fingerprint and a stable fingerprint. It
 does not duplicate sporting attributes.
+Each snapshot also embeds the effective `PlayerLifecyclePolicy` identity,
+automatic-retirement age and provenance. Age 46 is the Official Run default;
+custom Runs may author another age, and validation/progression always use the
+stored historical policy rather than a global engine constant.
 
 Week 1 is bootstrapped during initial-world adoption solely from owned
 `InitialWorldState`, never live global player JSON. Prospects are not generated;
 missing authoritative owned lifecycle input fails closed.
+An exact adoption retry atomically verifies or backfills Week 1 solely from its
+already-owned `InitialWorldState`, so deletion or change of the global pool is
+irrelevant. Restore of a legacy revision similarly backfills when its owned
+Initial World and Week-1 ranking boundary make reconstruction unambiguous;
+post-transition legacy state without lifecycle fails closed.
 
 Birthdays compare `birth_year_week` with the canonical FAX Year Week obtained
 from the target Season Week through `season_week_to_year_week`; the two week

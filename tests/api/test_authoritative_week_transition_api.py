@@ -57,7 +57,9 @@ def counts(path):
         )
 
 
-def install_owned_lifecycle(server, run_id, branch_id, players):
+def install_owned_lifecycle(
+    server, run_id, branch_id, players, *, ages=None, birth_weeks=None
+):
     """This legacy ranking fixture predates initial-world adoption; install owned test truth."""
     week = RankingWeek(season_index=0, week=1)
     position = season_week_to_calendar_position(2000, 1)
@@ -65,13 +67,15 @@ def install_owned_lifecycle(server, run_id, branch_id, players):
         PlayerLifecycleIdentity(
             player_id=player["player_id"],
             birth_year=birth_year_for_age_at_calendar_position(
-                age=30 - index,
-                birth_year_week=40 + index,
+                age=(ages or {}).get(player["player_id"], 30 - index),
+                birth_year_week=(birth_weeks or {}).get(
+                    player["player_id"], 40 + index
+                ),
                 calendar_year=position.calendar_year,
                 year_week=position.year_week,
             ),
-            birth_year_week=40 + index,
-            age=30 - index,
+            birth_year_week=(birth_weeks or {}).get(player["player_id"], 40 + index),
+            age=(ages or {}).get(player["player_id"], 30 - index),
             tie_break_token=player["tie_break_token"],
             tie_break_provenance="acceptance fixture",
             tour_entry_week=week,
@@ -93,14 +97,22 @@ def install_owned_lifecycle(server, run_id, branch_id, players):
         )
 
 
-def prepared_transition(server, name):
+def prepared_transition(server, name, *, retirement_player=False):
     run_id, branch_id, empty_revision = _create_run(server, display_name=name)
     ranking = (
         f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/ranking-candidates"
     )
     bootstrap = initial() | {"run_id": run_id, "branch_id": branch_id}
     assert _request("POST", ranking + "/prepare/initial", bootstrap)[0] == 201
-    install_owned_lifecycle(server, run_id, branch_id, bootstrap["players"])
+    selected = bootstrap["players"][0]["player_id"]
+    install_owned_lifecycle(
+        server,
+        run_id,
+        branch_id,
+        bootstrap["players"],
+        ages={selected: 45} if retirement_player else None,
+        birth_weeks={selected: 38} if retirement_player else None,
+    )
     authority = {
         "run_id": run_id,
         "branch_id": branch_id,
@@ -137,6 +149,58 @@ def prepared_transition(server, name):
         "audit": bootstrap["audit"],
     }
     return run_id, branch_id, command
+
+
+def test_real_http_retirement_preview_confirm_and_exact_retry(tmp_path):
+    path = tmp_path / "retirement.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        run_id, branch_id, command = prepared_transition(
+            server, "automatic retirement", retirement_player=True
+        )
+        root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/week-transitions"
+        status, preview = _request("POST", root + "/preview", command)
+        assert status == 200, preview
+        lifecycle_fp = preview["result"]["player_lifecycle_fingerprint"]
+        with sqlite3.connect(path) as connection:
+            assert (
+                connection.execute(
+                    "SELECT COUNT(*) FROM player_lifecycle_week_states WHERE week_ordinal=1"
+                ).fetchone()[0]
+                == 0
+            )
+        status, result = confirm(root, command, preview)
+        assert (
+            status == 201
+            and result["result"]["player_lifecycle_fingerprint"] == lifecycle_fp
+        )
+        with sqlite3.connect(path) as connection:
+            payload = json.loads(
+                connection.execute(
+                    "SELECT payload_json FROM player_lifecycle_week_states WHERE week_ordinal=1"
+                ).fetchone()[0]
+            )
+            ranking_request = json.loads(
+                connection.execute(
+                    "SELECT request_payload_json FROM official_ranking_commands WHERE target_ordinal=1"
+                ).fetchone()[0]
+            )
+        retired = next(player for player in payload["players"] if player["age"] == 46)
+        assert retired["status"] == "retired"
+        assert retired["retirement_effective_week"] == {"season_index": 0, "week": 2}
+        assert (
+            next(
+                player
+                for player in ranking_request["context"]["players"]
+                if player["player_id"] == retired["player_id"]
+            )["retired"]
+            is True
+        )
+        assert confirm(root, command, preview) == (201, result)
+        with sqlite3.connect(path) as connection:
+            payload_retry = connection.execute(
+                "SELECT payload_json FROM player_lifecycle_week_states WHERE week_ordinal=1"
+            ).fetchone()[0]
+        assert json.loads(payload_retry) == payload
 
 
 @pytest.mark.parametrize(

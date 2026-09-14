@@ -9,6 +9,7 @@ from beta_engine.application.initial_world import InitialWorldState
 from beta_engine.domain.players.lifecycle import (
     PlayerLifecycleIdentity,
     PlayerLifecycleWeekState,
+    PlayerLifecyclePolicy,
     advance_lifecycle,
 )
 from beta_engine.domain.rankings.official import RankingWeek
@@ -68,13 +69,12 @@ def put_lifecycle(
     return installed
 
 
-def bootstrap_lifecycle(session: Session, world: InitialWorldState):
+def bootstrap_lifecycle(
+    session: Session,
+    world: InitialWorldState,
+    policy: PlayerLifecyclePolicy | None = None,
+):
     week = RankingWeek(season_index=0, week=1)
-    existing = get_lifecycle(
-        session, run_id=world.run_id, branch_id=world.branch_id, week=week
-    )
-    if existing:
-        return existing
     players = []
     for p in world.players:
         provenance = json.dumps(
@@ -115,6 +115,7 @@ def bootstrap_lifecycle(session: Session, world: InitialWorldState):
             week=week,
             players=tuple(players),
             source_initial_world_fingerprint=world.fingerprint,
+            policy=policy or PlayerLifecycleWeekState.model_fields["policy"].default,
         ),
     )
 
@@ -202,6 +203,32 @@ def restore_saved_lifecycle(
 ):
     expected = load_saved_lifecycle(current_payload, run_id=run_id, branch_id=branch_id)
     target = load_saved_lifecycle(target_payload, run_id=run_id, branch_id=branch_id)
+    target_world = None
+    if target is None:
+        from beta_engine.infrastructure.db.initial_world_state import (
+            load_saved_initial_world,
+        )
+        from beta_engine.infrastructure.db.saved_revision_rankings import (
+            load_saved_ranking_component,
+        )
+
+        target_world = load_saved_initial_world(
+            target_payload, run_id=run_id, branch_id=branch_id
+        )
+        target_ranking = load_saved_ranking_component(
+            target_payload, run_id=run_id, branch_id=branch_id
+        )
+        authoritative = (
+            target_ranking.authoritative_transition_state if target_ranking else None
+        )
+        world_clock = authoritative.get("world") if authoritative else None
+        if (target_world is None and target_ranking is not None) or (
+            world_clock is not None and world_clock["current_ordinal"] > 0
+        ):
+            raise ValueError(
+                "Legacy Saved Revision has no lifecycle component and cannot be "
+                "reconstructed unambiguously from its owned target state"
+            )
     rows = session.scalars(
         select(PlayerLifecycleWeekStateModel)
         .where(
@@ -233,3 +260,12 @@ def restore_saved_lifecycle(
     )
     for state in target or ():
         put_lifecycle(session, state)
+    if target is None and target_world is not None:
+        from beta_engine.infrastructure.db.initial_world_state import get_initial_world
+
+        world = get_initial_world(session, run_id=run_id, branch_id=branch_id)
+        if world is None:  # transaction ordering/integrity guard
+            raise ValueError(
+                "Target InitialWorldState is unavailable for lifecycle backfill"
+            )
+        bootstrap_lifecycle(session, world)

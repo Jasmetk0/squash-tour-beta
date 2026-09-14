@@ -119,6 +119,15 @@ class RankingTransitionAuthorityModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class InitialWorldStateModel(Base):
+    """Current independent initial-world snapshot owned by one Run/Branch."""
+    __tablename__ = "initial_world_states"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 
 class SimulationRunModel(Base):
     __tablename__ = "simulation_runs"

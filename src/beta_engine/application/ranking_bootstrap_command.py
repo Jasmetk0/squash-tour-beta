@@ -27,6 +27,7 @@ class RankingBootstrapCommand(WithDisciplinaryZeros):
     policy: OfficialRankingPolicy
     players: tuple[OfficialRankingPlayer, ...]
     discipline: Literal["none", "resolved_zeros", "stored_zeros"]
+    initial_world_fingerprint: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
 
     zero_versions: tuple[RankingZeroVersion, ...] = ()
     audit: RankingCommandAudit | None = None
@@ -40,6 +41,8 @@ class RankingBootstrapCommand(WithDisciplinaryZeros):
             payload.pop("zero_versions", None)
         if not self.disciplinary_zeros:
             payload.pop("disciplinary_zeros", None)
+        if self.initial_world_fingerprint is None:
+            payload.pop("initial_world_fingerprint", None)
         return payload
 
     @model_validator(mode="after")

@@ -93,6 +93,11 @@ def stage_ranking_week_command(
         raise ValueError("Ranking staging requires a physical SQLite transaction")
     context = command if isinstance(command, RankingBootstrapCommand) else command.context
     with session.begin_nested():
+        if isinstance(command, RankingBootstrapCommand) and command.initial_world_fingerprint is not None:
+            from beta_engine.infrastructure.db.initial_world_state import get_initial_world
+            world = get_initial_world(session, run_id=command.run_id, branch_id=command.branch_id)
+            if world is None or world.fingerprint != command.initial_world_fingerprint:
+                raise ValueError("Initial-world source changed since ranking preparation")
         candidates = OfficialRankingCandidateStore(session)
         history = candidates.history(
             run_id=context.run_id, branch_id=context.branch_id

@@ -1,8 +1,14 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 
-from beta_engine.api.deps import get_initial_player_pool_service
+from beta_engine.api.deps import get_initial_player_pool_service, get_initial_pool_season_bootstrap_service, get_runtime, get_run_working_draft_service
+from beta_engine.api.deps import ApiRuntime
+from beta_engine.application.season_player_bootstrap_service import InitialPoolSeasonBootstrapService
+from beta_engine.application.run_working_draft_service import RunWorkingDraftService
+from beta_engine.application.initial_world import InitialWorldAdoptionRequest, InitialWorldState
+from beta_engine.domain.rankings.official import OfficialRankingPolicy
+from pydantic import BaseModel, ConfigDict, Field
 from beta_engine.api.schemas import (
     CustomInitialPoolPlayerCreateRequest,
     InitialPoolGenerateRequest,
@@ -13,6 +19,95 @@ from beta_engine.application.initial_player_pool_service import InitialPlayerPoo
 from beta_engine.domain.players.initial_pool import InitialPoolAuditList, InitialPoolGeneratedPlayer, InitialPoolResult
 
 router = APIRouter(prefix="/admin/players", tags=["admin-players"])
+
+
+def _resolved_initial_world(run_id: str, branch_id: str, payload: InitialWorldAdoptionRequest,
+                            bootstrap: InitialPoolSeasonBootstrapService) -> InitialWorldState:
+    result = bootstrap.bootstrap_from_initial_pool(
+        season="2000/2001", source_season=payload.source_season,
+        seed=payload.bootstrap_seed, dry_run=True, overwrite_existing=False,
+    )
+    best_n = 15 if payload.official_run else payload.best_n
+    if best_n is None:  # model validation normally makes this unreachable
+        raise ValueError("Custom Run requires an explicit first-season Best N")
+    return InitialWorldState(
+        run_id=run_id, branch_id=branch_id, players=tuple(sorted(result.players, key=lambda p: p.player_id)),
+        policies=(OfficialRankingPolicy(policy_id="msa-official-2000-01", best_n=best_n),),
+        source_kind="production_initial_pool.v1", source_season=payload.source_season,
+        source_fingerprint=result.metadata.source_initial_pool_fingerprint,
+        bootstrap_seed=payload.bootstrap_seed, bootstrap_fingerprint=result.metadata.bootstrap_fingerprint,
+        adopted_by_command_id=payload.command_id, audit_label=payload.audit_label,
+        audit_reason=payload.audit_reason,
+        adoption_request_fingerprint=payload.fingerprint_for_scope(run_id=run_id, branch_id=branch_id),
+    )
+
+
+@router.post("/runs/{run_id}/branches/{branch_id}/initial-world/preview")
+def preview_initial_world(run_id: str, branch_id: str, payload: InitialWorldAdoptionRequest,
+                          bootstrap: InitialPoolSeasonBootstrapService = Depends(get_initial_pool_season_bootstrap_service),
+                          runtime: ApiRuntime = Depends(get_runtime)):
+    # Validate product scope even though preview remains strictly read-only.
+    try:
+        branch = runtime.repository.get_run_branch(branch_id=branch_id)
+        if branch is None or branch.run_id != run_id:
+            raise KeyError("Initial-world Run/Branch scope not found")
+        state = _resolved_initial_world(run_id, branch_id, payload, bootstrap)
+        return {"preview_only": True, "state": state, "fingerprint": state.fingerprint}
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail={"code": "initial_world_unavailable", "message": str(exc)}) from exc
+
+
+@router.post("/runs/{run_id}/branches/{branch_id}/initial-world", status_code=201)
+def adopt_initial_world(run_id: str, branch_id: str, payload: InitialWorldAdoptionRequest,
+                        expected: str = Header(alias="X-Initial-World-Preview-Fingerprint", pattern=r"^[0-9a-f]{64}$"),
+                        bootstrap: InitialPoolSeasonBootstrapService = Depends(get_initial_pool_season_bootstrap_service),
+                        runtime: ApiRuntime = Depends(get_runtime)):
+    try:
+        current = runtime.repository.get_initial_world(run_id=run_id, branch_id=branch_id)
+        if current is not None:
+            request_fingerprint = payload.fingerprint_for_scope(run_id=run_id, branch_id=branch_id)
+            if (current.adopted_by_command_id != payload.command_id
+                    or current.adoption_request_fingerprint != request_fingerprint
+                    or current.fingerprint != expected):
+                raise ValueError("Initial-world adoption retry differs from the stored request")
+            return current
+        state = _resolved_initial_world(run_id, branch_id, payload, bootstrap)
+        if state.fingerprint != expected:
+            raise ValueError("Production initial-player source changed since preview")
+        return runtime.repository.adopt_initial_world(state)
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail={"code": "initial_world_conflict", "message": str(exc)}) from exc
+
+
+@router.get("/runs/{run_id}/branches/{branch_id}/initial-world")
+def read_initial_world(run_id: str, branch_id: str, runtime: ApiRuntime = Depends(get_runtime)):
+    try:
+        state = runtime.repository.get_initial_world(run_id=run_id, branch_id=branch_id)
+        if state is None:
+            raise KeyError("Initial world not found")
+        return state
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+class InitialWorldSaveRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    expected_draft_version: int = Field(ge=0)
+    expected_initial_world_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+@router.get("/runs/{run_id}/branches/{branch_id}/initial-world/save/preview")
+def preview_initial_world_save(run_id: str, branch_id: str, runtime: ApiRuntime = Depends(get_runtime)):
+    return runtime.repository.preview_initial_world_save(run_id=run_id, branch_id=branch_id)
+
+
+@router.post("/runs/{run_id}/branches/{branch_id}/initial-world/save", status_code=201)
+def save_initial_world(run_id: str, branch_id: str, payload: InitialWorldSaveRequest,
+                       service: RunWorkingDraftService = Depends(get_run_working_draft_service)):
+    try:
+        return service.save_initial_world(run_id=run_id, branch_id=branch_id, **payload.model_dump())
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail={"code": "initial_world_save_conflict", "message": str(exc)}) from exc
 
 
 @router.get("/initial-pool", response_model=InitialPoolResult)

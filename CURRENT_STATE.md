@@ -1,11 +1,11 @@
 # Current implementation and next action
 
-Audited 13 September 2026 from `buuk` **2bdc6ae** (PR #721 merged), including the
-owned tournament-source bridge in the current implementation PR. This file is an
+Audited 14 September 2026 from `buuk` **ab97720** (PR #723 merged), including the
+initial-world/ranking integration in the current implementation PR. This file is an
 evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
 statuses live in [Master Vision](SQUASH_ENGINE_MASTER_VISION.md); the development
-protocol is chapter 36. PR #721 merged the documentation synchronization.
+protocol is chapter 36. PR #723 is the latest verified merge.
 
 ## What exists, and where integration stops
 
@@ -13,10 +13,10 @@ protocol is chapter 36. PR #721 merged the documentation synchronization.
 |---|---|---|
 | Run foundation | `application/run_container_creation_service.py`, `run_working_draft_service.py`, `run_saved_revision_*`, DB revision models | New Run roots/revisions coexist with legacy simulation identities; full sporting state is not covered by every save/restore path |
 | Branch isolation/recovery | `infrastructure/db/repositories.py` validates ancestry, receipts and checkpoints; rejects ranking-bearing forks | Ranking identity remapping and complete sporting-world recovery remain |
-| Packages/players | World package, initial pool, season bootstrap and Run prospect services | File-backed `SeasonActivePlayer` is not proof of authoritative Branch/week roster/lifecycle resolution |
+| Packages/players | World package, initial pool, season bootstrap, Run prospect services and `initial_world_states` | The supported initial production pool can be independently adopted/saved/restored per Run/Branch; later lifecycle/week state is not yet resolved |
 | Tournament flow | `season_event_simulation_service.py`, result/award services, `owned_tournament_sources.py`; real producer/API/SQLite test | Supported four-player main draw can be explicitly adopted as immutable Run/Branch evidence; producer files remain legacy/global and Q/WC/LL/abnormal sources remain rejected |
 | Match engine | `domain/matches/match_engine.py`, immutable input/format contracts and recorded replay; Master 35.9–35.20 | Stored match/replay does not prove whole-world mid-match restore, global slot scheduling or finished realism |
-| Official ranking | `domain/rankings/official.py`, `application/ranking_week_command.py`, DB ranking stores/runner | Candidate computation/history exists; full authoritative source/roster/policy resolution and world publication do not |
+| Official ranking | `domain/rankings/official.py`, `application/ranking_week_command.py`, DB ranking stores/runner | Initial candidate roster/policy are server-derived from owned state; later Week Transition resolution and Viewer publication remain |
 | Ranking Admin | `admin_ranking_candidates.py`, `RankingPreparationPanel.tsx`, `RankingResultCorrections.tsx` | Preview/confirm, manual input review, zeros, corrections and explicit supported tournament binding; minimum API flow exists but no broader tournament picker redesign |
 | Ranking Save | `saved_revision_rankings.py`, `ranking_revision_state.py`, `ranking_state_restore.py` | Owned source packages, candidates, inputs and audit survive explicit Save/reload/restore; still not full sporting-world recovery |
 | Week execution | `season_week_simulation_execution_service.py` declares `NO_ROLLBACK_WARNING` | Legacy event loop is not the atomic Master Week Transition; snapshot service copies active-player totals |
@@ -69,6 +69,7 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   hashes against equivalent live V2 captures without rewriting either wire format;
   V1↔V2 restore, exact retry and real changed-state rejection are covered. The
   resulting Fast CI backend smoke selection passed **96 tests** locally.
+- Current initial-world integration run: **98 smoke tests passed in 111.53s**. A focused real HTTP/file-backed SQLite suite passed **53 tests in 22.11s**, including production generation, independent adoption, derived preview/confirm, Save/reopen and bidirectional restore.
 - No full-suite, browser E2E, whole-season or full-Run execution in this task.
   Earlier baseline failures are not silently cleared. Docs CI validates docs only.
 
@@ -85,8 +86,8 @@ world clock, lifecycle/development boundary state and public World Events.
 
 ## Current limitations
 
-- The explicit authority adoption command is the supported bridge until world/player
-  state has its own complete branch-revision projection. Scope, base revision and
+- The explicit later-week authority adoption command remains the supported bridge after the
+  new initial player/policy projection; complete later-week player lifecycle state is not yet owned. Scope, base revision and
   structural invariants are checked, but roster completeness, lifecycle truth and
   historical policy effectiveness are not yet resolved from stored world state; they
   remain audited declarations and are not inferred from legacy season files.

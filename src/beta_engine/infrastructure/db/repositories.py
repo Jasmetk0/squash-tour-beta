@@ -74,6 +74,7 @@ from beta_engine.infrastructure.db.models import (
     CompletedEventModel,
     CompletedTournamentInputModel,
     LegacySimulationRunMappingModel,
+    InitialWorldStateModel,
     RaceSnapshotModel,
     RankingSnapshotModel,
     RunGeneratedPlayerProvenanceModel,
@@ -88,6 +89,10 @@ from beta_engine.infrastructure.db.models import (
 from beta_engine.infrastructure.db.saved_revision_rankings import (
     RANKING_COMPONENT_KEY, capture_saved_ranking_component, load_saved_ranking_component,
     restore_saved_ranking_component,
+)
+from beta_engine.infrastructure.db.initial_world_state import (
+    INITIAL_WORLD_COMPONENT_KEY, capture_saved_initial_world, get_initial_world,
+    load_saved_initial_world, put_initial_world, restore_saved_initial_world,
 )
 from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_EVENT_LEGACY_STATE,
@@ -1030,6 +1035,22 @@ class SimulationPersistenceRepository:
             return runner.preview(command)
         return runner.execute(command, expected_snapshot_fingerprint=expected_snapshot_fingerprint)
 
+    def get_initial_world(self, *, run_id: str, branch_id: str):
+        with self._session_factory() as session:
+            session.execute(text("BEGIN"))
+            return get_initial_world(session, run_id=run_id, branch_id=branch_id)
+
+    def adopt_initial_world(self, state):
+        with self._session_factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            run = session.get(RunContainerModel, state.run_id)
+            branch = session.get(RunBranchModel, state.branch_id)
+            if run is None or branch is None or branch.run_id != state.run_id:
+                raise ValueError("Initial-world Run/Branch scope not found")
+            if run.read_only or branch.read_only or branch.status != "active":
+                raise ValueError("Initial-world adoption requires a writable active Run/Branch")
+            return put_initial_world(session, state)
+
     def adopt_ranking_transition_authority(self, authority):
         from beta_engine.infrastructure.db.ranking_transition_authority import RankingTransitionAuthorityStore
         with self._session_factory.begin() as session:
@@ -1819,6 +1840,11 @@ class SimulationPersistenceRepository:
                         "Branch creation from ranking-bearing Saved Revisions requires "
                         "ranking identity remapping, which is not yet supported"
                     )
+                if INITIAL_WORLD_COMPONENT_KEY in source_revision.payload.get("content", {}):
+                    raise SavedRevisionBranchForkConflictError(
+                        "Branch creation from initial-world Saved Revisions requires "
+                        "player snapshot identity remapping, which is not yet supported"
+                    )
 
                 if session.get(RunBranchModel, branch_id) is not None:
                     raise BranchCreationIdentityConflictError(
@@ -2508,6 +2534,11 @@ class SimulationPersistenceRepository:
                         "restore is blocked because the Saved Revision does not yet "
                         "capture the complete ranking preparation state"
                     )
+                has_uncaptured_initial_world = session.get(InitialWorldStateModel, (run_id, branch_id)) is not None
+                if has_uncaptured_initial_world and INITIAL_WORLD_COMPONENT_KEY not in state.saved_revision.payload.get("content", {}):
+                    raise SavedRevisionRestoreUnsupportedError(
+                        "restore is blocked because the Saved Revision does not capture the initial world"
+                    )
 
                 supported_payload_schemas = {
                     INITIAL_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
@@ -2535,8 +2566,8 @@ class SimulationPersistenceRepository:
                     not in supported_payload_schemas
                     or not isinstance(current_content, dict)
                     or not isinstance(target_content, dict)
-                    or set(current_content) - {RANKING_COMPONENT_KEY}
-                    or set(target_content) - {RANKING_COMPONENT_KEY}
+                    or set(current_content) - {RANKING_COMPONENT_KEY, INITIAL_WORLD_COMPONENT_KEY}
+                    or set(target_content) - {RANKING_COMPONENT_KEY, INITIAL_WORLD_COMPONENT_KEY}
                     or has_unrestorable_run_state
                 ):
                     raise SavedRevisionRestoreUnsupportedError(
@@ -2586,6 +2617,16 @@ class SimulationPersistenceRepository:
                     except ValueError as exc:
                         raise SavedRevisionRestoreUnsupportedError(
                             f"Cannot restore ranking preparation: {exc}"
+                        ) from exc
+                if INITIAL_WORLD_COMPONENT_KEY in current_content or INITIAL_WORLD_COMPONENT_KEY in target_content:
+                    try:
+                        restore_saved_initial_world(
+                            session, current_payload=state.saved_revision.payload,
+                            target_payload=target_revision.payload, run_id=run_id, branch_id=branch_id,
+                        )
+                    except ValueError as exc:
+                        raise SavedRevisionRestoreUnsupportedError(
+                            f"Cannot restore initial world: {exc}"
                         ) from exc
 
                 payload = viewer_branch_saved_revision_payload(
@@ -2801,6 +2842,25 @@ class SimulationPersistenceRepository:
                     and session.get(RunBranchModel, branch_id).status == "active",
             }
 
+    def preview_initial_world_save(self, *, run_id: str, branch_id: str) -> dict:
+        with self._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
+            draft = self._viewer_branch_working_draft_in_session(session=session, run_id=run_id, branch_id=branch_id)
+            world = get_initial_world(session, run_id=run_id, branch_id=branch_id)
+            if world is None:
+                raise ValueError("Initial world has not been adopted")
+            state = self._validated_branch_revision_state_in_session(session=session, branch=session.get(RunBranchModel, branch_id))
+            saved = load_saved_initial_world(state.saved_revision.payload, run_id=run_id, branch_id=branch_id)
+            changed = saved is None or saved.fingerprint != world.fingerprint
+            run = session.get(RunContainerModel, run_id)
+            branch = session.get(RunBranchModel, branch_id)
+            return {"run_id": run_id, "branch_id": branch_id,
+                    "initial_world_fingerprint": world.fingerprint,
+                    "saved_head_revision_id": state.saved_head_revision_id,
+                    "draft_version": draft.draft_version, "has_unsaved_changes": changed,
+                    "can_save": changed and draft.status == CLEAN_WORKING_DRAFT_STATUS
+                    and not run.read_only and not branch.read_only and branch.status == "active"}
+
     def save_viewer_branch_selection_atomically(
         self,
         *,
@@ -2810,11 +2870,13 @@ class SimulationPersistenceRepository:
         revision_id: str,
         audit_event_id: str,
         expected_ranking_fingerprint: str | None = None,
+        expected_initial_world_fingerprint: str | None = None,
     ) -> ViewerBranchSaveResult:
         """Commit one dirty draft as revision, audit, Viewer pointer, and clean draft."""
 
+        component_only = expected_ranking_fingerprint is not None or expected_initial_world_fingerprint is not None
         ranking_only = expected_ranking_fingerprint is not None
-        revision_kind = "ranking_preparation" if ranking_only else VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND
+        revision_kind = "ranking_preparation" if ranking_only else ("initial_world" if component_only else VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND)
         previous_current_viewer_id = ""
         target_viewer_id = ""
         try:
@@ -2838,13 +2900,13 @@ class SimulationPersistenceRepository:
                         f"expected draft version {expected_draft_version}, "
                         f"found {draft.draft_version}"
                     )
-                if ranking_only and draft.status != CLEAN_WORKING_DRAFT_STATUS:
-                    raise WorkingDraftConflictError("Resolve the pending Working Draft before saving ranking separately")
-                if not ranking_only and not draft.can_save:
+                if component_only and draft.status != CLEAN_WORKING_DRAFT_STATUS:
+                    raise WorkingDraftConflictError("Resolve the pending Working Draft before saving a component separately")
+                if not component_only and not draft.can_save:
                     raise WorkingDraftConflictError(
                         "Working Draft is clean and has nothing to save"
                     )
-                target_viewer_id = draft.current_viewer_branch_id if ranking_only else draft.proposed_viewer_branch_id
+                target_viewer_id = draft.current_viewer_branch_id if component_only else draft.proposed_viewer_branch_id
                 target = session.get(RunBranchModel, target_viewer_id)
                 if target is None or target.run_id != run_id:
                     raise WorkingDraftConflictError(
@@ -2873,7 +2935,7 @@ class SimulationPersistenceRepository:
                     saved_viewer_id = saved_viewer_branch_id(
                         state.saved_revision.payload
                     )
-                    parsed_target_id = target_viewer_id if ranking_only else viewer_branch_id_from_changes(
+                    parsed_target_id = target_viewer_id if component_only else viewer_branch_id_from_changes(
                         state.working_draft.changes
                     )
                 except (BranchRevisionStateConflictError, ValueError) as exc:
@@ -2882,7 +2944,7 @@ class SimulationPersistenceRepository:
                     raise WorkingDraftConflictError(
                         "pending Viewer Branch is inconsistent"
                     )
-                if not ranking_only and saved_viewer_id == target_viewer_id:
+                if not component_only and saved_viewer_id == target_viewer_id:
                     raise WorkingDraftConflictError(
                         "Working Draft contains no effective Viewer Branch change"
                     )
@@ -2911,6 +2973,7 @@ class SimulationPersistenceRepository:
                     raise WorkingDraftConflictError(
                         f"Cannot save complete ranking preparation: {exc}"
                     ) from exc
+                capture_saved_initial_world(session, payload, run_id=run_id, branch_id=branch_id)
                 summary = viewer_branch_saved_revision_change_summary(
                     previous_viewer_branch_id=saved_viewer_id,
                     viewer_branch_id=target_viewer_id,
@@ -2926,6 +2989,14 @@ class SimulationPersistenceRepository:
                         "kind": "ranking_preparation", "summary": "Saved ranking preparation",
                         "ranking_fingerprint": component["fingerprint"],
                     }
+                elif expected_initial_world_fingerprint is not None:
+                    component = payload["content"].get(INITIAL_WORLD_COMPONENT_KEY)
+                    if component is None or component["fingerprint"] != expected_initial_world_fingerprint:
+                        raise WorkingDraftConflictError("Initial world changed since preview")
+                    if state.saved_revision.payload["content"].get(INITIAL_WORLD_COMPONENT_KEY) == component:
+                        raise WorkingDraftConflictError("Initial world is already saved")
+                    summary = {"kind": "initial_world", "summary": "Saved initial world",
+                               "initial_world_fingerprint": component["fingerprint"]}
                 sequence = state.saved_revision.sequence + 1
                 content_hash = saved_revision_content_hash(
                     revision_id=revision_id,

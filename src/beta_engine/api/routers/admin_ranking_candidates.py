@@ -9,6 +9,8 @@ from beta_engine.domain.rankings.transition_authority import RankingTransitionAu
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
+from beta_engine.domain.rankings.command_audit import RankingCommandAudit
+from beta_engine.application.initial_world import derive_initial_ranking_inputs
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Header
 
@@ -97,6 +99,47 @@ def prepare_week(run_id: str, branch_id: str, payload: dict,
 def preview_initial(run_id: str, branch_id: str, payload: dict,
                     runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
     return _prepare(runtime, run_id, branch_id, payload, RankingBootstrapCommand, preview=True)
+
+
+class DerivedInitialPreparation(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    command_id: str = Field(min_length=1, max_length=128)
+    audit: RankingCommandAudit
+
+
+def _derived_initial(runtime: ApiRuntime, run_id: str, branch_id: str, payload: dict,
+                     *, preview: bool, expected=None, expected_request=None):
+    try:
+        request = DerivedInitialPreparation.model_validate_json(json.dumps(payload))
+        world = runtime.repository.get_initial_world(run_id=run_id, branch_id=branch_id)
+        if world is None:
+            raise ValueError("Run/Branch initial-player snapshot is missing")
+        policy, players = derive_initial_ranking_inputs(world)
+        command = {"kind": "initial_ranking.v1", "command_id": request.command_id,
+            "run_id": run_id, "branch_id": branch_id, "target_week": {"season_index": 0, "week": 1},
+            "policy": policy.model_dump(mode="json"),
+            "players": [p.model_dump(mode="json") for p in players], "discipline": "none",
+            "initial_world_fingerprint": world.fingerprint,
+            "audit": request.audit.model_dump(mode="json")}
+        return _prepare(runtime, run_id, branch_id, command, RankingBootstrapCommand,
+                        preview=preview, expected=expected, expected_request=expected_request)
+    except (ValidationError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail={"code": "initial_world_ranking_unavailable", "message": str(exc)}) from exc
+
+
+@router.post("/prepare/initial/derived/preview", response_model=RankingPreparationPreview)
+def preview_derived_initial(run_id: str, branch_id: str, payload: dict,
+                            runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
+    return _derived_initial(runtime, run_id, branch_id, payload, preview=True)
+
+
+@router.post("/prepare/initial/derived", response_model=RankingCandidateDetail, status_code=201)
+def prepare_derived_initial(run_id: str, branch_id: str, payload: dict,
+                            runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+                            expected: Annotated[str | None, Header(alias="X-Ranking-Preview-Fingerprint", pattern=r"^[0-9a-f]{64}$")] = None,
+                            expected_request: Annotated[str | None, Header(alias="X-Ranking-Preview-Request", pattern=r"^[0-9a-f]{64}$")] = None):
+    return _derived_initial(runtime, run_id, branch_id, payload, preview=False,
+                            expected=expected, expected_request=expected_request)
 
 
 @router.post("/prepare/week/preview", response_model=RankingPreparationPreview)

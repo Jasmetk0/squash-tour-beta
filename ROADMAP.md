@@ -88,6 +88,8 @@ Consider an integration checkpoint after 5–10 significant PRs or a major subsy
 - Preserve v42 handling of W/O, DQ, RET and abnormal/no-contest cases.
 - Official Run season `2000/01` starts with Best 15; later seasons initially inherit the previous season's effective Best N while remaining independently configurable.
 - Preserve historical ranking-policy snapshots.
+- **Implemented initial slice:** explicitly adopt the complete production initial pool and an explicit first-season policy into an independent Run/Branch snapshot; derive the initial ranking candidate server-side and preserve both through Save/reopen/restore. See `docs/INITIAL_WORLD_RANKING_INTEGRATION_V1.md`.
+- Next connect that owned starting state to the real Week Transition; later-week lifecycle resolution remains incomplete.
 
 ## 8. Match Reconstruction v1
 

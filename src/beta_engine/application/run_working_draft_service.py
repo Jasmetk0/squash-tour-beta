@@ -93,3 +93,14 @@ class RunWorkingDraftService:
             revision_id=_validated_entity_id(self.id_factory("saved-revision"), kind="saved revision"),
             audit_event_id=_validated_entity_id(self.id_factory("revision-audit-event"), kind="revision audit event"),
         )
+
+    def save_initial_world(self, *, run_id: str, branch_id: str, expected_draft_version: int,
+                           expected_initial_world_fingerprint: str) -> ViewerBranchSaveResult:
+        if not isinstance(expected_initial_world_fingerprint, str) or len(expected_initial_world_fingerprint) != 64:
+            raise ValueError("Expected initial-world fingerprint must be SHA-256")
+        return self.repository.save_viewer_branch_selection_atomically(
+            run_id=run_id, branch_id=branch_id, expected_draft_version=expected_draft_version,
+            expected_initial_world_fingerprint=expected_initial_world_fingerprint,
+            revision_id=_validated_entity_id(self.id_factory("saved-revision"), kind="saved revision"),
+            audit_event_id=_validated_entity_id(self.id_factory("revision-audit-event"), kind="revision audit event"),
+        )

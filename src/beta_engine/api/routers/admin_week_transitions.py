@@ -14,14 +14,17 @@ from beta_engine.infrastructure.db.authoritative_week_transition import Authorit
 router = APIRouter(prefix="/admin/runs/{run_id}/branches/{branch_id}/week-transitions", tags=["admin-week-transitions"])
 
 
-def _run(runtime, awards, run_id, branch_id, payload, *, preview, expected=None):
+def _run(runtime, awards, run_id, branch_id, payload, *, preview,
+         expected_ranking=None, expected_request=None):
     try:
         command = AuthoritativeWeekTransitionCommand.model_validate_json(json.dumps(payload))
         if (command.run_id, command.branch_id) != (run_id, branch_id):
             raise ValueError("Week Transition request scope mismatch")
+        if not preview and command.fingerprint != expected_request:
+            raise ValueError("Week Transition command changed since preview")
         runner = AuthoritativeWeekTransitionRunner(runtime.repository._session_factory, awards)
         result = runner.preview(command) if preview else runner.execute(
-            command, expected_ranking_fingerprint=expected)
+            command, expected_ranking_fingerprint=expected_ranking)
         return {"request_fingerprint": command.fingerprint, "result": result}
     except ValidationError as exc:
         raise HTTPException(status_code=422, detail={"code": "invalid_week_transition", "message": str(exc)}) from exc
@@ -40,5 +43,7 @@ def preview_week_transition(run_id: str, branch_id: str, payload: dict,
 def confirm_week_transition(run_id: str, branch_id: str, payload: dict,
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
     awards: Annotated[SeasonPointAwardsService, Depends(get_season_point_awards_service)],
-    expected: Annotated[str | None, Header(alias="X-Week-Transition-Ranking-Fingerprint", pattern=r"^[0-9a-f]{64}$")] = None):
-    return _run(runtime, awards, run_id, branch_id, payload, preview=False, expected=expected)
+    expected_ranking: Annotated[str, Header(alias="X-Week-Transition-Ranking-Fingerprint", pattern=r"^[0-9a-f]{64}$")],
+    expected_request: Annotated[str, Header(alias="X-Week-Transition-Request-Fingerprint", pattern=r"^[0-9a-f]{64}$")]):
+    return _run(runtime, awards, run_id, branch_id, payload, preview=False,
+                expected_ranking=expected_ranking, expected_request=expected_request)

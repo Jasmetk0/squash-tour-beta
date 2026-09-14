@@ -32,8 +32,14 @@ class AuthoritativeWeekTransitionCommand(FrozenInput):
 
     @model_validator(mode="after")
     def validate_boundary(self):
-        if self.target_week.ordinal != self.completed_week.ordinal + 1:
-            raise ValueError("Week Transition requires a consecutive boundary")
+        if (
+            self.target_week.season_index != self.completed_week.season_index
+            or self.target_week.week != self.completed_week.week + 1
+        ):
+            raise ValueError(
+                "Week Transition requires consecutive weeks within one season; "
+                "Week 61 rollover requires Season Transition"
+            )
         return self
 
     @property

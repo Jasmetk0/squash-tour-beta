@@ -28,11 +28,20 @@ from beta_engine.infrastructure.db.ranking_transition_authority import (
     authority_carried_to_saved_head,
 )
 from beta_engine.infrastructure.db.ranking_week_command import stage_ranking_week_command
-from beta_engine.domain.rankings.official import load_official_ranking_snapshot
+from beta_engine.domain.rankings.official import RankingWeek, load_official_ranking_snapshot
 
 
 def _fault_injection_point(_name: str) -> None:
     """Test seam for proving rollback at otherwise unreachable failure points."""
+
+
+def _world_event_payload(command, ranking_fingerprint: str) -> str:
+    return json.dumps({
+        "audit": command.audit.model_dump(mode="json"),
+        "completed_week": command.completed_week.model_dump(mode="json"),
+        "target_week": command.target_week.model_dump(mode="json"),
+        "official_ranking_fingerprint": ranking_fingerprint,
+    }, sort_keys=True, separators=(",", ":"))
 
 
 class AuthoritativeWeekTransitionRunner:
@@ -66,14 +75,26 @@ def transition_in_transaction(session: Session, awards, command):
         if receipt.request_fingerprint != command.fingerprint or receipt.request_payload_json != command.canonical_request_json:
             raise ValueError("Week Transition command ID already has a different request")
         result = AuthoritativeWeekTransitionResult.model_validate_json(receipt.result_json)
+        if (result.run_id, result.branch_id, result.command_id,
+                result.completed_week, result.target_week) != (
+                command.run_id, command.branch_id, command.command_id,
+                command.completed_week, command.target_week):
+            raise ValueError("Completed Week Transition receipt identity is corrupt")
         publication = session.get(PublishedOfficialRankingModel, (
             command.run_id, command.branch_id, result.target_week.ordinal))
         event = session.get(AuthoritativeWorldEventModel, key)
         world = session.get(AuthoritativeWorldStateModel, (command.run_id, command.branch_id))
         if publication is None or event is None or world is None or (
             publication.snapshot_fingerprint != result.official_ranking_fingerprint
-            or world.current_ordinal != result.target_week.ordinal
-            or world.ranking_fingerprint != result.official_ranking_fingerprint
+            or world.current_ordinal < result.target_week.ordinal
+            or event.run_id != command.run_id
+            or event.branch_id != command.branch_id
+            or event.command_id != command.command_id
+            or event.week_ordinal != result.target_week.ordinal
+            or event.event_kind != result.world_event_kind
+            or event.payload_json != _world_event_payload(
+                command, result.official_ranking_fingerprint
+            )
         ):
             raise ValueError("Completed Week Transition receipt is corrupt")
         load_official_ranking_snapshot(
@@ -82,6 +103,21 @@ def transition_in_transaction(session: Session, awards, command):
             run_id=command.run_id,
             branch_id=command.branch_id,
             week=result.target_week,
+        )
+        head_publication = session.get(PublishedOfficialRankingModel, (
+            command.run_id, command.branch_id, world.current_ordinal))
+        if (head_publication is None
+                or head_publication.snapshot_fingerprint != world.ranking_fingerprint):
+            raise ValueError("Authoritative world ranking head is corrupt")
+        load_official_ranking_snapshot(
+            head_publication.payload_json,
+            expected_fingerprint=head_publication.snapshot_fingerprint,
+            run_id=command.run_id,
+            branch_id=command.branch_id,
+            week=RankingWeek(
+                season_index=world.current_ordinal // 61,
+                week=world.current_ordinal % 61 + 1,
+            ),
         )
         return result
 
@@ -154,12 +190,7 @@ def transition_in_transaction(session: Session, awards, command):
     _fault_injection_point("after_publication")
     world.current_ordinal = command.target_week.ordinal
     world.ranking_fingerprint = snapshot.fingerprint
-    event_payload = json.dumps({
-        "audit": command.audit.model_dump(mode="json"),
-        "completed_week": command.completed_week.model_dump(mode="json"),
-        "target_week": command.target_week.model_dump(mode="json"),
-        "official_ranking_fingerprint": snapshot.fingerprint,
-    }, sort_keys=True, separators=(",", ":"))
+    event_payload = _world_event_payload(command, snapshot.fingerprint)
     session.add(AuthoritativeWorldEventModel(
         run_id=command.run_id, branch_id=command.branch_id, command_id=command.command_id,
         week_ordinal=command.target_week.ordinal, event_kind="week_transition_completed",

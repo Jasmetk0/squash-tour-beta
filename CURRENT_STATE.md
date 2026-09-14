@@ -71,11 +71,14 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   V1↔V2 restore, exact retry and real changed-state rejection are covered. The
   resulting Fast CI backend smoke selection passed **96 tests** locally.
 - Current initial-world integration run: **98 smoke tests passed in 111.53s**. A focused real HTTP/file-backed SQLite suite passed **53 tests in 22.11s**, including production generation, independent adoption, derived preview/confirm, Save/reopen and bidirectional restore.
-- Current Week Transition slice: **4 real HTTP/file-backed SQLite acceptance cases**
+- Current Week Transition slice: **7 real HTTP/file-backed SQLite acceptance cases**
   cover preview rollback, three forced failure boundaries, confirm, exact retry,
   changed-request conflict, publication/clock/event cardinality, Save/reopen and
   bidirectional restore. The broader targeted ranking/revision set passed **67**
   tests and the Fast CI backend smoke equivalent passed **99** tests.
+  Review hardening additionally rejects Week 61 rollover, requires both reviewed
+  request and ranking fingerprints at confirm, validates canonical World Events,
+  and preserves historical exact retry after a later coherent world head.
 - No full-suite, browser E2E, whole-season or full-Run execution in this task.
   Earlier baseline failures are not silently cleared. Docs CI validates docs only.
 

@@ -35,6 +35,14 @@ rolls it back; confirm repeats all reads under the writer lock. Exact command
 retry verifies and returns the stored result, while a changed canonical request
 conflicts. Saved Revision ranking state V4 captures and restores publications,
 clock, events and receipts together with candidates and source evidence.
+Confirm requires both the preview's canonical request fingerprint and its
+calculated Official Ranking fingerprint. A changed audit reason therefore cannot
+be confirmed merely because it happens to calculate the same table. V1 accepts
+only an in-season `Week N → Week N+1` boundary; `Week 61 → next-season Week 1`
+fails closed because it belongs to the still-unimplemented Season Transition.
+Historical exact retry validates its immutable publication and canonical World
+Event even after the world head has advanced, while also validating that the
+current head points to a real, fingerprint-valid publication.
 
 This does **not** make the legacy week executor authoritative. The frozen
 `RankingTransitionAuthority` is still the explicit boundary input for lifecycle

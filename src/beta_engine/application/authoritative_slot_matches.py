@@ -18,6 +18,7 @@ from beta_engine.domain.matches import (
     official_match_format_snapshot,
 )
 from beta_engine.domain.matches.models import MatchResult
+from beta_engine.application.season_match_service import SeasonEventMatchPackage
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.simulation_slots import (
     AuthoritativeMatchInput,
@@ -71,20 +72,27 @@ def execute_supported_four_player_tournament(
     event_id: str,
     ordered_player_ids: tuple[str, str, str, str],
     seed: int,
+    match_ids: tuple[str, str, str] | None = None,
+    draw_source_fingerprint: str = "internal-four-player-helper",
 ) -> AuthoritativeFourPlayerTournamentResult:
     """Production application path for the deliberately narrow four-player draw."""
     executor = AuthoritativeSlotMatchExecutor(session)
+    match_ids = match_ids or (
+        f"{event_id}:sf1",
+        f"{event_id}:sf2",
+        f"{event_id}:final",
+    )
     semifinal_plans = (
         SimulationMatchEventPlan(
             group_id=f"{event_id}:sf1",
             event_id=event_id,
-            match_id=f"{event_id}:sf1",
+            match_id=match_ids[0],
             direct_player_ids=ordered_player_ids[:2],
         ),
         SimulationMatchEventPlan(
             group_id=f"{event_id}:sf2",
             event_id=event_id,
-            match_id=f"{event_id}:sf2",
+            match_id=match_ids[1],
             direct_player_ids=ordered_player_ids[2:],
         ),
     )
@@ -96,6 +104,7 @@ def execute_supported_four_player_tournament(
         ordinal=1,
         group_ids=tuple(item.group_id for item in semifinal_plans),
         match_events=semifinal_plans,
+        provenance=f"adopted-draw:{draw_source_fingerprint}",
     )
     semifinal_one = executor.execute_match_group(
         run_id=run_id,
@@ -128,7 +137,7 @@ def execute_supported_four_player_tournament(
     final_plan = SimulationMatchEventPlan(
         group_id=f"{event_id}:final",
         event_id=event_id,
-        match_id=f"{event_id}:final",
+        match_id=match_ids[2],
         feeder_group_ids=feeder_ids,
     )
     second = executor.create_slot(
@@ -140,6 +149,7 @@ def execute_supported_four_player_tournament(
         group_ids=(final_plan.group_id,),
         match_events=(final_plan,),
         dependency_ids=feeder_ids,
+        provenance=f"adopted-draw:{draw_source_fingerprint}",
     )
     finalists = (
         semifinal_one.result.winner_player_id,
@@ -171,6 +181,97 @@ def execute_supported_four_player_tournament(
     )
 
 
+def execute_adopted_four_player_match_package(
+    session,
+    *,
+    run_id: str,
+    branch_id: str,
+    week: RankingWeek,
+    package: SeasonEventMatchPackage,
+    seed: int,
+) -> AuthoritativeFourPlayerTournamentResult:
+    """Project an existing persisted four-player Main Draw into owned slots."""
+    if package.qualification_matches or len(package.main_draw_matches) != 3:
+        raise ValueError(
+            "supported authoritative bridge requires exactly three Main Draw matches"
+        )
+    matches = sorted(
+        package.main_draw_matches,
+        key=lambda item: (item.round_number, item.bracket_position),
+    )
+    semifinals, final = matches[:2], matches[2]
+    if (
+        tuple(item.round_number for item in matches) != (1, 1, 2)
+        or any(
+            item.top_player_id is None or item.bottom_player_id is None
+            for item in semifinals
+        )
+        or any(
+            item.winner_to_match_id not in {None, final.match_id} for item in semifinals
+        )
+    ):
+        raise ValueError(
+            "persisted Main Draw does not have supported semifinal/final topology"
+        )
+    ordered_players = cast(
+        tuple[str, str, str, str],
+        (
+            semifinals[0].top_player_id,
+            semifinals[0].bottom_player_id,
+            semifinals[1].top_player_id,
+            semifinals[1].bottom_player_id,
+        ),
+    )
+    return execute_supported_four_player_tournament(
+        session,
+        run_id=run_id,
+        branch_id=branch_id,
+        week=week,
+        event_id=package.event_id,
+        ordered_player_ids=ordered_players,
+        seed=seed,
+        match_ids=(semifinals[0].match_id, semifinals[1].match_id, final.match_id),
+        draw_source_fingerprint=package.metadata.build_fingerprint,
+    )
+
+
+def publish_authoritative_tournament_to_existing_completion(
+    match_service,
+    *,
+    package: SeasonEventMatchPackage,
+    authoritative: AuthoritativeFourPlayerTournamentResult,
+) -> SeasonEventMatchPackage:
+    """Compatibility publication adapter; slot ledger remains result authority."""
+    if package.event_id != authoritative.event_id:
+        raise ValueError(
+            "authoritative tournament and persisted package identity differ"
+        )
+    groups = (*authoritative.semifinal_groups, authoritative.final_group)
+    by_match = {group.authoritative_input.match_id: group for group in groups}
+    if set(by_match) != {match.match_id for match in package.main_draw_matches}:
+        raise ValueError(
+            "authoritative result universe differs from persisted Main Draw"
+        )
+    projected = package.model_copy(deep=True)
+    projected.qualification_matches = []
+    for match in projected.main_draw_matches:
+        group = by_match[match.match_id]
+        result = group.result
+        match.status = "completed"
+        match.winner_player_id = result.winner_player_id
+        match.loser_player_id = result.loser_player_id
+        match.scoreline = " ".join(
+            f"{item.winner_games}-{item.loser_games}" for item in result.sets
+        )
+        match.result_fingerprint = group.result_fingerprint
+        match.match_input_snapshot = group.authoritative_input.engine_input
+        match.simulation_seed = group.authoritative_input.engine_input.simulation_seed
+    registry = match_service._load_registry()
+    registry.matches_by_event_id[package.event_id] = projected
+    match_service._save_registry(registry)
+    return projected
+
+
 class AuthoritativeSlotMatchExecutor:
     """Owns slot snapshots and atomic event-group commits in the caller transaction."""
 
@@ -188,6 +289,7 @@ class AuthoritativeSlotMatchExecutor:
         group_ids: tuple[str, ...],
         match_events: tuple[SimulationMatchEventPlan, ...],
         dependency_ids: tuple[str, ...] = (),
+        provenance: str = "topological tournament-match scheduler",
     ) -> SimulationSlotPlan:
         key = (run_id, branch_id, week.ordinal, slot_id)
         current = self.session.get(SimulationSlotModel, key)
@@ -199,6 +301,7 @@ class AuthoritativeSlotMatchExecutor:
                 or stored.match_events
                 != tuple(sorted(match_events, key=lambda item: item.group_id))
                 or stored.ordered_dependency_ids != dependency_ids
+                or stored.provenance != f"{provenance}; slot is not a draw position"
             ):
                 raise ValueError("Simulation Slot retry conflicts with stored plan")
             return stored
@@ -269,7 +372,7 @@ class AuthoritativeSlotMatchExecutor:
             group_ids=tuple(sorted(group_ids)),
             match_events=tuple(sorted(match_events, key=lambda item: item.group_id)),
             slot_start_fingerprint=slot_start,
-            provenance="topological tournament-match scheduler; slot is not a draw position",
+            provenance=f"{provenance}; slot is not a draw position",
         )
         initial = PlayerSportingCheckpoint(
             run_id=run_id,

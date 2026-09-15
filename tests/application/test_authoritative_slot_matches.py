@@ -12,9 +12,25 @@ from sqlalchemy.orm import Session
 from beta_engine.application.authoritative_slot_matches import (
     AuthoritativeSlotMatchExecutor,
     execute_supported_four_player_tournament,
+    execute_adopted_four_player_match_package,
+    publish_authoritative_tournament_to_existing_completion,
 )
 from beta_engine.application.initial_world import InitialWorldState
 from beta_engine.application.season_player_bootstrap_service import SeasonActivePlayer
+from beta_engine.application.season_event_results_service import (
+    EventResultExtractRequest,
+)
+from beta_engine.application.season_point_awards_service import (
+    PointAwardGenerateRequest,
+)
+from beta_engine.application.ranking_tournament_ingestion import (
+    TournamentRankingBinding,
+    prepare_tournament_ranking_sources,
+)
+from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
+from beta_engine.infrastructure.db.owned_tournament_sources import (
+    OwnedTournamentRankingSourceStore,
+)
 from beta_engine.domain.players.attribute_catalog import CANONICAL_PLAYER_ATTRIBUTES
 from beta_engine.domain.players.lifecycle import (
     PlayerLifecycleIdentity,
@@ -74,7 +90,11 @@ def player(player_id: str, value: int) -> PlayerSportingRecord:
     )
 
 
-def session_at(path: Path) -> Session:
+def session_at(
+    path: Path,
+    player_ids: tuple[str, str, str, str] = ("a", "b", "c", "d"),
+    week: RankingWeek = WEEK,
+) -> Session:
     engine = create_engine(f"sqlite:///{path}")
     Base.metadata.create_all(engine)
     session = Session(engine)
@@ -125,17 +145,21 @@ def session_at(path: Path) -> Session:
             bootstrap_seed=1,
             bootstrap_id="bootstrap",
         )
-        for pid, style, archetype in (
-            ("a", "attacking", "Power Attacker"),
-            ("b", "retrieving", "Retriever"),
-            ("c", "tempo-controller", "Control Player"),
-            ("d", "front-court", "Shot Maker"),
+        for pid, (style, archetype) in zip(
+            player_ids,
+            (
+                ("attacking", "Power Attacker"),
+                ("retrieving", "Retriever"),
+                ("tempo-controller", "Control Player"),
+                ("front-court", "Shot Maker"),
+            ),
+            strict=True,
         )
     )
     world = InitialWorldState(
         run_id="run",
         branch_id="branch",
-        players=profiles,
+        players=tuple(sorted(profiles, key=lambda player: player.player_id)),
         source_kind="production_initial_pool.v1",
         source_season="2000/2001",
         source_fingerprint="source",
@@ -152,7 +176,7 @@ def session_at(path: Path) -> Session:
         PlayerLifecycleWeekState(
             run_id="run",
             branch_id="branch",
-            week=WEEK,
+            week=week,
             source_initial_world_fingerprint=world.fingerprint,
             players=tuple(
                 PlayerLifecycleIdentity(
@@ -161,12 +185,12 @@ def session_at(path: Path) -> Session:
                     birth_year_week=1,
                     tie_break_token=f"token:{pid}",
                     tie_break_provenance="test",
-                    tour_entry_week=WEEK,
+                    tour_entry_week=week,
                     age=25,
                     status="active",
                     origin="test",
                 )
-                for pid in ("a", "b", "c", "d")
+                for pid in sorted(player_ids)
             ),
         ),
     )
@@ -175,10 +199,17 @@ def session_at(path: Path) -> Session:
         PlayerSportingWeekState(
             run_id="run",
             branch_id="branch",
-            week=WEEK,
+            week=week,
             players=tuple(
-                player(pid, value)
-                for pid, value in (("a", 130), ("b", 100), ("c", 125), ("d", 95))
+                sorted(
+                    (
+                        player(pid, value)
+                        for pid, value in zip(
+                            player_ids, (130, 100, 125, 95), strict=True
+                        )
+                    ),
+                    key=lambda item: item.player_id,
+                )
             ),
             effective_development_policy=PlayerDevelopmentPolicy(),
             completed_context_fingerprint="bootstrap",
@@ -280,6 +311,106 @@ def test_production_four_player_application_path_derives_topology_and_result_ref
     assert final_ids == tuple(
         item.result.winner_player_id for item in result.semifinal_groups
     )
+
+
+def test_persisted_supported_main_draw_is_adopted_as_slot_truth(tmp_path):
+    from test_season_point_awards_service import make_points_service
+
+    service, event_id = make_points_service(tmp_path / "legacy-source")
+    package = service.result_service.match_service._load_registry().matches_by_event_id[
+        event_id
+    ]
+    package.qualification_matches = []
+    semifinal_matches = sorted(
+        (match for match in package.main_draw_matches if match.round_number == 1),
+        key=lambda match: match.bracket_position,
+    )
+    player_ids = tuple(
+        player_id
+        for match in semifinal_matches
+        for player_id in (match.top_player_id, match.bottom_player_id)
+    )
+    tournament_week = RankingWeek(season_index=0, week=package.season_week)
+    session = session_at(tmp_path / "adopted.sqlite", player_ids, tournament_week)
+    result = execute_adopted_four_player_match_package(
+        session,
+        run_id="run",
+        branch_id="branch",
+        week=tournament_week,
+        package=package,
+        seed=700,
+    )
+    assert tuple(
+        group.authoritative_input.match_id
+        for group in (*result.semifinal_groups, result.final_group)
+    ) == tuple(
+        match.match_id
+        for match in sorted(
+            package.main_draw_matches,
+            key=lambda match: (match.round_number, match.bracket_position),
+        )
+    )
+    assert all(
+        group.authoritative_input.slot_start_fingerprint
+        for group in (*result.semifinal_groups, result.final_group)
+    )
+    publish_authoritative_tournament_to_existing_completion(
+        service.result_service.match_service,
+        package=package,
+        authoritative=result,
+    )
+    completion = service.result_service.extract_event_result(
+        event_id=event_id,
+        request=EventResultExtractRequest(
+            seed=701, dry_run=False, overwrite_existing=True
+        ),
+    ).result_package
+    assert tuple(
+        ref.result_fingerprint for ref in completion.match_result_refs
+    ) == tuple(
+        group.result_fingerprint
+        for group in (*result.semifinal_groups, result.final_group)
+    )
+    awards = service.generate_event_point_awards(
+        event_id=event_id,
+        request=PointAwardGenerateRequest(seed=702, dry_run=False),
+    ).award_package
+    binding = TournamentRankingBinding(
+        run_id="run",
+        branch_id="branch",
+        edition_id="owned-edition",
+        event_id=event_id,
+        completed_week=tournament_week,
+        first_publication_week=RankingWeek(
+            season_index=0, week=tournament_week.week + 1
+        ),
+        validity_weeks=61,
+        ranking_status="ranked",
+        expected_result_fingerprint=completion.metadata.build_fingerprint,
+        expected_award_fingerprint=awards.metadata.build_fingerprint,
+    )
+    assert prepare_tournament_ranking_sources(binding, completion, awards)
+    owned = OwnedTournamentRankingSourceStore(session).append(
+        OwnedTournamentRankingSource(
+            binding=binding,
+            result=completion,
+            awards=awards,
+            adopted_by_command_id="authoritative-slot-bridge",
+        )
+    )
+    session.commit()
+    reloaded = OwnedTournamentRankingSourceStore(session).get(
+        run_id="run", branch_id="branch", edition_id="owned-edition"
+    )
+    assert reloaded.fingerprint == owned.fingerprint
+    assert (
+        tuple(ref.result_fingerprint for ref in reloaded.result.match_result_refs)
+        == result.match_result_fingerprints
+    )
+    corrupt = completion.model_copy(deep=True)
+    corrupt.match_result_refs[0].result_fingerprint = "0" * 64
+    with pytest.raises(ValueError, match="result fingerprint mismatch"):
+        prepare_tournament_ranking_sources(binding, corrupt, awards)
 
 
 def test_semifinal_effects_feed_later_final_and_replay_is_historical(tmp_path):

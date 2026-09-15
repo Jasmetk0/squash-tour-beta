@@ -2,9 +2,9 @@
 
 This is a milestone summary, not a second product constitution. [`SQUASH_ENGINE_MASTER_VISION.md`](SQUASH_ENGINE_MASTER_VISION.md) plus newer explicit decisions take precedence over `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`; `docs/ENGINE_UX_SPEC.md` provides subordinate migration guidance. Planned behavior must not be described as implemented unless verified in the repository.
 
-## Immediate next integration
+## Implemented narrow tournament integration
 
-The current slice owns narrow global-Slot match execution and intra-week sporting effects. Next connect its completed match/result fingerprints to owned tournament completion and awards through a production Admin/API command, then expand scheduler/draw ownership. Do not rebuild global JSON authority. Entries, AI, cross-tournament scheduling, health and broader events remain later Gate 3 work.
+The current slice explicitly adopts the existing persisted supported four-player Main Draw, preserves its three match identities, publishes the exact authoritative Slot result fingerprints through the existing tournament completion and award contracts, and persists the existing `OwnedTournamentRankingSource`. General draws, Qualification, WC/LL, Entries, AI, cross-tournament scheduling, health and broader events remain later Gate 3 work.
 
 ## Active pre-alpha dependency path (audit after #727 plus current slot slice)
 

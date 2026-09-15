@@ -8,7 +8,7 @@ PR #728 review hardening preserves owned InitialWorld style/profile truth, carri
 
 The follow-up compatibility correction assigns Sharpness-aware matches to `match_input_snapshot.v10` / `match_engine_v10`; v1-v9 hash payloads continue to omit the later Sharpness field and retain their historical identities.
 
-Gate 3 is not complete. Entries, general authoritative draws, tournament award/publication integration, cross-tournament scheduling, AI, health and broader event types remain gaps.
+The supported persisted four-player Main Draw now has an explicit compatibility projection into the slot ledger and back through the existing tournament completion, authored awards, ranking validation and `OwnedTournamentRankingSource`; all three completion refs retain the exact Slot result fingerprints. Gate 3 is not complete: Entries, general draws, Qualification, WC/LL, cross-tournament scheduling, AI, health and broader event types remain gaps.
 
 This file is an evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
